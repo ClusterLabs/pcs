@@ -177,6 +177,7 @@ def load_module(env, middleware_factory, name):
             env,
             middleware.build(middleware_factory.cib),
             {
+                "add_link": cluster.add_link,
                 "add_nodes": cluster.add_nodes,
                 "node_clear": cluster.node_clear,
                 "remove_links": cluster.remove_links,

@@ -255,14 +255,14 @@ def invalid_options(info):
 def corosync_bad_node_addresses_count(info):
     if info["min_count"] == info["max_count"]:
         template = (
-            "{max_count} address{_s_allowed} can be specified for a node, "
+            "{max_count} address{_s_allowed} must be specified for a node, "
             "{actual_count} address{_s_specified} specified{_node_desc}"
         )
     else:
         template = (
             "At least {min_count} and at most {max_count} address{_s_allowed} "
-            "can be specified for a node, {actual_count} address{_s_specified} "
-            "specified{_node_desc}"
+            "must be specified for a node, {actual_count} "
+            "address{_s_specified} specified{_node_desc}"
         )
     node_template = " for node '{}'"
     return template.format(
@@ -821,9 +821,12 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
 
     codes.COROSYNC_ADDRESS_IP_VERSION_WRONG_FOR_LINK: lambda info:
         (
-            "Address '{address}' cannot be used in link '{link_number}' "
+            "Address '{address}' cannot be used in {_link} "
             "because the link uses {expected_address_type} addresses"
-        ).format(**info)
+        ).format(
+            _link=format_optional(info["link_number"], "link '{}'", "the link"),
+            **info
+        )
     ,
 
     codes.COROSYNC_BAD_NODE_ADDRESSES_COUNT:
@@ -833,9 +836,13 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
     codes.COROSYNC_IP_VERSION_MISMATCH_IN_LINKS: lambda info:
         (
             "Using both IPv4 and IPv6 in one link is not allowed; please, use "
-            "either IPv4 or IPv6 in links {_links}"
+            "either IPv4 or IPv6{_links}"
         ).format(
-            _links=format_list(info["link_numbers"])
+            _links=(
+                " in links {}".format(format_list(info["link_numbers"]))
+                if info["link_numbers"]
+                else ""
+            )
         )
     ,
 
@@ -930,6 +937,10 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
             _s_limit=("" if info["links_limit_count"] == 1 else "s"),
             **info
         )
+    ,
+
+    codes.COROSYNC_LINK_ALREADY_EXISTS_CANNOT_ADD: lambda info:
+        "Cannot add link '{link_number}', it already exists".format(**info)
     ,
 
     codes.COROSYNC_LINK_DOES_NOT_EXIST_CANNOT_REMOVE: lambda info:

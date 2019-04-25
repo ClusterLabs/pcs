@@ -871,6 +871,14 @@ Commands:
         removed node is still considered by the cluster to be a member of the
         cluster.
 
+    link add <node_name>=<node_address>... [options <link options>]
+        Add a corosync link. One address must be specified for each cluster
+        node. If no linknumber is specified, pcs will use the lowest available
+        linknumber.
+        Link options (documented in corosync.conf(5) man page) are:
+            link_priority, linknumber, mcastport, ping_interval,
+            ping_precision, ping_timeout, pong_count, transport (udp or sctp)
+
     link delete <linknumber> [<linknumber>]...
         Remove specified corosync links.
 

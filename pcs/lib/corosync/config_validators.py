@@ -1,3 +1,4 @@
+# pylint: disable=too-many-lines
 from collections import Counter, defaultdict, namedtuple
 from itertools import zip_longest
 
@@ -33,14 +34,16 @@ class _LinkAddrType(
 def create(
     cluster_name, node_list, transport, ip_version, force_unresolvable=False
 ):
-    # pylint: disable=too-many-locals, too-many-branches, too-many-statements
+    # pylint: disable=too-many-locals
+    # pylint: disable=too-many-branches
+    # pylint: disable=too-many-statements
     """
     Validate creating a new minimalistic corosync.conf
 
     string cluster_name -- the name of the new cluster
     list node_list -- nodes of the new cluster; dict: name, addrs
     string transport -- corosync transport used in the new cluster
-    string ip_version -- which IP version node addresses should be
+    string ip_version -- which IP family node addresses should be
     bool force_unresolvable -- if True, report unresolvable addresses as
         warnings instead of errors
     """
@@ -110,44 +113,16 @@ def create(
         # the get returns None and len(None) raises an exception.
         for link_index, addr in enumerate(node.get("addrs") or []):
             all_addrs_count[addr] += 1
-            addr_types.append(get_addr_type(addr))
-            if get_addr_type(addr) == ADDR_UNRESOLVABLE:
-                unresolvable_addresses.add(addr)
-            elif (
-                get_addr_type(addr) == ADDR_IPV4
-                and
-                ip_version == constants.IP_VERSION_6
-            ):
-                report_items.append(
-                    reports.corosync_address_ip_version_wrong_for_link(
-                        addr, ADDR_IPV6, link_index
-                    )
-                )
-            elif (
-                get_addr_type(addr) == ADDR_IPV6
-                and
-                ip_version == constants.IP_VERSION_4
-            ):
-                report_items.append(
-                    reports.corosync_address_ip_version_wrong_for_link(
-                        addr, ADDR_IPV4, link_index
-                    )
-                )
+            _validate_addr_type(
+                addr, link_index, ip_version, get_addr_type,
+                # these will get populated in the function
+                addr_types, unresolvable_addresses, report_items
+            )
         addr_types_per_node.append(addr_types)
     # Report all unresolvable addresses at once instead on each own.
-    if unresolvable_addresses:
-        severity = ReportItemSeverity.ERROR
-        forceable = report_codes.FORCE_NODE_ADDRESSES_UNRESOLVABLE
-        if force_unresolvable:
-            severity = ReportItemSeverity.WARNING
-            forceable = None
-        report_items.append(
-            reports.node_addresses_unresolvable(
-                unresolvable_addresses,
-                severity,
-                forceable
-            )
-        )
+    report_items += _report_unresolvable_addresses_if_any(
+        unresolvable_addresses, force_unresolvable
+    )
 
     # Reporting single-node errors finished.
     # Now report nodelist and inter-node errors.
@@ -218,21 +193,9 @@ def _addr_type_analyzer():
         return cache[addr]
     return analyzer
 
-def add_nodes(
-    node_list, coro_existing_nodes, pcmk_existing_nodes,
-    force_unresolvable=False
+def _extract_existing_addrs_and_names(
+    coro_existing_nodes, pcmk_existing_nodes, pcmk_names=True
 ):
-    # pylint: disable=too-many-locals, too-many-branches, too-many-statements
-    """
-    Validate adding nodes to a config with a nonempty nodelist
-
-    list node_list -- new nodes data; list of dict: name, addrs
-    list coro_existing_nodes -- existing corosync nodes; list of CorosyncNode
-    list pcmk_existing_nodes -- existing pacemaker nodes; list of PacemakerNode
-    bool force_unresolvable -- if True, report unresolvable addresses as
-        warnings instead of errors
-    """
-    # extract info from existing nodes
     existing_names = set()
     existing_addrs = set()
     existing_addr_types_dict = dict()
@@ -248,8 +211,78 @@ def add_nodes(
             ):
                 existing_addr_types_dict[addr.link] = addr.type
     for node in pcmk_existing_nodes:
-        existing_names.add(node.name)
+        if pcmk_names:
+            existing_names.add(node.name)
         existing_addrs.add(node.addr)
+    return existing_addrs, existing_addr_types_dict, existing_names
+
+def _validate_addr_type(
+    addr, link_index, ip_version, get_addr_type,
+    # these will get populated in the function
+    addr_types, unresolvable_addresses, report_items
+):
+    addr_types.append(get_addr_type(addr))
+    if get_addr_type(addr) == ADDR_UNRESOLVABLE:
+        unresolvable_addresses.add(addr)
+    elif (
+        get_addr_type(addr) == ADDR_IPV4
+        and
+        ip_version == constants.IP_VERSION_6
+    ):
+        report_items.append(
+            reports.corosync_address_ip_version_wrong_for_link(
+                addr, ADDR_IPV6, link_number=link_index
+            )
+        )
+    elif (
+        get_addr_type(addr) == ADDR_IPV6
+        and
+        ip_version == constants.IP_VERSION_4
+    ):
+        report_items.append(
+            reports.corosync_address_ip_version_wrong_for_link(
+                addr, ADDR_IPV4, link_number=link_index
+            )
+        )
+
+def _report_unresolvable_addresses_if_any(
+    unresolvable_addresses, force_unresolvable
+):
+    if not unresolvable_addresses:
+        return []
+    severity = ReportItemSeverity.ERROR
+    forceable = report_codes.FORCE_NODE_ADDRESSES_UNRESOLVABLE
+    if force_unresolvable:
+        severity = ReportItemSeverity.WARNING
+        forceable = None
+    return [
+        reports.node_addresses_unresolvable(
+            unresolvable_addresses,
+            severity,
+            forceable
+        )
+    ]
+
+def add_nodes(
+    node_list, coro_existing_nodes, pcmk_existing_nodes,
+    force_unresolvable=False
+):
+    # pylint: disable=too-many-locals, too-many-branches, too-many-statements
+    """
+    Validate adding nodes to a config with a nonempty nodelist
+
+    list node_list -- new nodes data; list of dict: name, addrs
+    list coro_existing_nodes -- existing corosync nodes; list of CorosyncNode
+    list pcmk_existing_nodes -- existing pacemaker nodes; list of PacemakerNode
+    bool force_unresolvable -- if True, report unresolvable addresses as
+        warnings instead of errors
+    """
+    # extract info from existing nodes
+    existing_addrs, existing_addr_types_dict, existing_names = (
+        _extract_existing_addrs_and_names(
+            coro_existing_nodes, pcmk_existing_nodes
+        )
+    )
     existing_addr_types = sorted([
         _LinkAddrType(link_number, addr_type)
         for link_number, addr_type in existing_addr_types_dict.items()
@@ -496,6 +529,38 @@ def create_link_list_knet(link_list, max_allowed_link_count):
         # also possible to set link options for only some of the links.
         return []
 
+    report_items = []
+    used_link_number = defaultdict(int)
+    for options in link_list:
+        if "linknumber" in options:
+            used_link_number[options["linknumber"]] += 1
+            if validate.is_integer(
+                options["linknumber"], 0, constants.LINKS_KNET_MAX - 1
+            ):
+                if int(options["linknumber"]) >= max_allowed_link_count:
+                    # first link is link0, hence >=
+                    report_items.append(
+                        # Links are defined by node addresses. Therefore we
+                        # update link options here, we do not create links.
+                        reports.corosync_link_does_not_exist_cannot_update(
+                            options["linknumber"],
+                            link_count=max_allowed_link_count
+                        )
+                    )
+        report_items += _validate_link_options_knet(options)
+    non_unique_linknumbers = [
+        number for number, count in used_link_number.items() if count > 1
+    ]
+    if non_unique_linknumbers:
+        report_items.append(
+            reports.corosync_link_number_duplication(non_unique_linknumbers)
+        )
+    report_items.extend(
+        _check_link_options_count(len(link_list), max_allowed_link_count)
+    )
+    return report_items
+
+def _validate_link_options_knet(options):
     allowed_options = [
         "linknumber",
         "link_priority",
@@ -507,6 +572,11 @@ def create_link_list_knet(link_list, max_allowed_link_count):
         "transport",
     ]
     validators = [
+        validate.value_integer_in_range(
+            "linknumber",
+            0,
+            constants.LINKS_KNET_MAX - 1
+        ),
         validate.value_integer_in_range("link_priority", 0, 255),
         validate.value_port_number("mcastport"),
         validate.value_nonnegative_integer("ping_interval"),
@@ -527,47 +597,132 @@ def create_link_list_knet(link_list, max_allowed_link_count):
         validate.value_nonnegative_integer("pong_count"),
         validate.value_in("transport", ("sctp", "udp")),
     ]
-    report_items = []
-    used_link_number = defaultdict(int)
-    for options in link_list:
-        if "linknumber" in options:
-            used_link_number[options["linknumber"]] += 1
-            if validate.is_integer(
-                options["linknumber"], 0, constants.LINKS_KNET_MAX - 1
-            ):
-                if int(options["linknumber"]) >= max_allowed_link_count:
-                    # first link is link0, hence >=
-                    report_items.append(
-                        # Links are defined by node addresses. Therefore we
-                        # update link options here, we do not create links.
-                        reports.corosync_link_does_not_exist_cannot_update(
-                            options["linknumber"],
-                            link_count=max_allowed_link_count
-                        )
-                    )
-            else:
-                report_items.append(
-                    reports.invalid_option_value(
-                        "linknumber",
-                        options["linknumber"],
-                        f"0..{constants.LINKS_KNET_MAX - 1}"
-                    )
-                )
-        report_items += (
-            validate.run_collection_of_option_validators(options, validators)
-            +
-            validate.names_in(allowed_options, options.keys(), "link")
-        )
-    non_unique_linknumbers = [
-        number for number, count in used_link_number.items() if count > 1
-    ]
-    if non_unique_linknumbers:
-        report_items.append(
-            reports.corosync_link_number_duplication(non_unique_linknumbers)
-        )
-    report_items.extend(
-        _check_link_options_count(len(link_list), max_allowed_link_count)
+    return (
+        validate.run_collection_of_option_validators(options, validators)
+        +
+        validate.names_in(allowed_options, options.keys(), "link")
     )
+
+def add_link(
+    node_addr_map, link_options,
+    coro_existing_nodes, pcmk_existing_nodes, linknumbers_existing, transport,
+    ip_version,
+    force_unresolvable=False
+):
+    # pylint: disable=too-many-locals
+    """
+    Validate adding a link
+
+    dict node_addr_map -- key: node name, value: node address for the new link
+    dict link_options -- link options
+    list coro_existing_nodes -- existing corosync nodes; list of CorosyncNode
+    list pcmk_existing_nodes -- existing pacemaker nodes; list of PacemakerNode
+    iterable linknumbers_existing -- all currently existing links (linknumbers)
+    string transport -- corosync transport used in the cluster
+    string ip_version -- ip family defined to be used in the cluster
+    bool force_unresolvable -- if True, report unresolvable addresses as
+        warnings instead of errors
+    """
+    report_items = []
+    # We only support adding one link (that's the "1"), this may change later.
+    number_of_links_to_add = 1
+
+    # Check the transport supports adding links
+    if transport not in constants.TRANSPORTS_KNET:
+        report_items.append(
+            reports.corosync_cannot_add_remove_links_bad_transport(
+                transport,
+                constants.TRANSPORTS_KNET,
+                add_or_not_remove=True,
+            )
+        )
+        return report_items
+
+    # Check the allowed number of links is not exceeded
+    if (
+        len(linknumbers_existing) + number_of_links_to_add
+        >
+        constants.LINKS_KNET_MAX
+    ):
+        report_items.append(
+            reports.corosync_cannot_add_remove_links_too_many_few_links(
+                number_of_links_to_add,
+                len(linknumbers_existing) + number_of_links_to_add,
+                constants.LINKS_KNET_MAX,
+                add_or_not_remove=True,
+            )
+        )
+        # Since only one link can be added there is no point in validating the
+        # link if it cannot be added. If it was possible to add more links at
+        # once, it would make sense to continue walidating them (e.g. adding 4
+        # links to a cluster with 5 links where max number of links is 8).
+        return report_items
+
+    # Check all nodes have their addresses specified
+    existing_addrs, dummy_existing_addr_types_dict, existing_names = (
+        _extract_existing_addrs_and_names(
+            coro_existing_nodes, pcmk_existing_nodes, pcmk_names=False
+        )
+    )
+    nodes_missing_addr = existing_names - frozenset(node_addr_map.keys())
+    nodes_unknown = frozenset(node_addr_map.keys()) - existing_names
+    if nodes_missing_addr:
+        for node in sorted(nodes_missing_addr):
+            report_items.append(
+                reports.corosync_bad_node_addresses_count(
+                    actual_count=0,
+                    min_count=number_of_links_to_add,
+                    max_count=number_of_links_to_add,
+                    node_name=node
+                )
+            )
+    if nodes_unknown:
+        for node in sorted(nodes_unknown):
+            report_items.append(reports.node_not_found(node))
+
+    get_addr_type = _addr_type_analyzer()
+    unresolvable_addresses = set()
+    addr_types = []
+    for dummy_node_name, node_addr in node_addr_map.items():
+        _validate_addr_type(
+            node_addr, None, ip_version, get_addr_type,
+            # these will get appended in the function
+            addr_types, unresolvable_addresses, report_items
+        )
+    report_items += _report_unresolvable_addresses_if_any(
+        unresolvable_addresses, force_unresolvable
+    )
+
+    # Check mixing IPv4 and IPv6 in the link
+    if ADDR_IPV4 in addr_types and ADDR_IPV6 in addr_types:
+        report_items.append(reports.corosync_ip_version_mismatch_in_links())
+
+    # Check addresses are unique
+    already_existing_addrs = existing_addrs.intersection(node_addr_map.values())
+    if already_existing_addrs:
+        report_items.append(
+            reports.node_addresses_already_exist(already_existing_addrs)
+        )
+    non_unique_addrs = {
+        addr
+        for addr, count in Counter(node_addr_map.values()).items()
+        if count > 1
+    }
+    if non_unique_addrs:
+        report_items.append(
+            reports.node_addresses_duplication(non_unique_addrs)
+        )
+
+    # Check link options
+    report_items += _validate_link_options_knet(link_options)
+    if "linknumber" in link_options:
+        if link_options["linknumber"] in linknumbers_existing:
+            report_items.append(
+                reports.corosync_link_already_exists_cannot_add(
+                    link_options["linknumber"]
+                )
+            )
+
     return report_items
 
 def remove_links(linknumbers_to_remove, linknumbers_existing, transport):

@@ -1065,7 +1065,7 @@ def corosync_bad_node_addresses_count(
         }
     )
 
-def corosync_ip_version_mismatch_in_links(link_numbers):
+def corosync_ip_version_mismatch_in_links(link_numbers=None):
     """
     Mixing IPv4 and IPv6 in one or more links, which is not allowed
 
@@ -1079,7 +1079,7 @@ def corosync_ip_version_mismatch_in_links(link_numbers):
     )
 
 def corosync_address_ip_version_wrong_for_link(
-    address, expected_address_type, link_number
+    address, expected_address_type, link_number=None
 ):
     """
     Cannot use an address in a link as it does not match the link's IP version.
@@ -1250,6 +1250,17 @@ def corosync_cannot_add_remove_links_too_many_few_links(
             "links_new_count": links_new_count,
             "links_limit_count": links_limit_count,
             "add_or_not_remove": add_or_not_remove,
+        }
+    )
+
+def corosync_link_already_exists_cannot_add(link_number):
+    """
+    Cannot add a link with specified linknumber as it already exists
+    """
+    return ReportItem.error(
+        report_codes.COROSYNC_LINK_ALREADY_EXISTS_CANNOT_ADD,
+        info={
+            "link_number": link_number,
         }
     )
 

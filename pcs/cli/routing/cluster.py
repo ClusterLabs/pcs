@@ -35,6 +35,7 @@ cluster_cmd = create_router(
         "edit": cluster.cluster_edit,
         "link": create_router(
             {
+                "add": cluster.link_add,
                 "delete": cluster.link_remove,
                 "remove": cluster.link_remove,
             },

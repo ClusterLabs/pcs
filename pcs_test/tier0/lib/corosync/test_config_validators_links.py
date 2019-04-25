@@ -2,9 +2,481 @@ from unittest import TestCase
 
 from pcs_test.tools import fixture
 from pcs_test.tools.assertions import assert_report_item_list_equal
+from pcs_test.tools.custom_mock import patch_getaddrinfo
 
 from pcs.common import report_codes
-from pcs.lib.corosync import config_validators
+from pcs.lib.cib.node import PacemakerNode
+from pcs.lib.corosync import config_validators, constants, node
+
+class AddLink(TestCase):
+    def setUp(self):
+        self.new_addrs = {
+            "node1": "addr1-new",
+            "node2": "addr2-new",
+            "node3": "addr3-new",
+        }
+        self.transport = constants.TRANSPORTS_KNET[0]
+        self.existing_link_list = ["0", "1", "3"]
+        self.coro_nodes = [
+            node.CorosyncNode(
+                f"node{i}",
+                [
+                    node.CorosyncNodeAddress(f"addr{i}-{j}", f"{j}")
+                    for j in self.existing_link_list
+                ],
+                i
+            )
+            for i in [1, 2, 3]
+        ]
+        self.pcmk_nodes = []
+        patch_getaddrinfo(self, self.new_addrs.values())
+
+    def test_success(self):
+        assert_report_item_list_equal(
+            config_validators.add_link(
+                self.new_addrs,
+                {
+                    "linknumber": "2",
+                    "link_priority": "2",
+                    "mcastport": "5405",
+                    "ping_interval": "100",
+                    "ping_precision": "10",
+                    "ping_timeout": "50",
+                    "pong_count": "5",
+                    "transport": "udp",
+                },
+                self.coro_nodes,
+                self.pcmk_nodes,
+                self.existing_link_list,
+                self.transport,
+                constants.IP_VERSION_64
+            ),
+            []
+        )
+
+    def test_success_no_options(self):
+        assert_report_item_list_equal(
+            config_validators.add_link(
+                self.new_addrs,
+                {},
+                self.coro_nodes,
+                self.pcmk_nodes,
+                self.existing_link_list,
+                self.transport,
+                constants.IP_VERSION_64
+            ),
+            []
+        )
+
+    def _assert_bad_transport(self, transport):
+        assert_report_item_list_equal(
+            config_validators.add_link(
+                self.new_addrs,
+                {},
+                self.coro_nodes,
+                self.pcmk_nodes,
+                self.existing_link_list,
+                transport,
+                constants.IP_VERSION_64
+            ),
+            [
+                fixture.error(
+                    report_codes.COROSYNC_CANNOT_ADD_REMOVE_LINKS_BAD_TRANSPORT,
+                    add_or_not_remove=True,
+                    actual_transport=transport,
+                    required_transport_list=["knet"]
+                )
+            ]
+        )
+
+    def test_transport_udp(self):
+        self._assert_bad_transport("udp")
+
+    def test_transport_udpu(self):
+        self._assert_bad_transport("udpu")
+
+    def test_too_many_links(self):
+        existing_link_list = [str(x) for x in range(constants.LINKS_KNET_MAX)]
+        coro_nodes = [
+            node.CorosyncNode(
+                f"node{i}",
+                [
+                    node.CorosyncNodeAddress(f"addr{i}-{j}", f"{j}")
+                    for j in existing_link_list
+                ],
+                i
+            )
+            for i in [1, 2, 3]
+        ]
+        assert_report_item_list_equal(
+            config_validators.add_link(
+                self.new_addrs,
+                {},
+                coro_nodes,
+                self.pcmk_nodes,
+                existing_link_list,
+                self.transport,
+                constants.IP_VERSION_64
+            ),
+            [
+                fixture.error(
+                    report_codes
+                        .COROSYNC_CANNOT_ADD_REMOVE_LINKS_TOO_MANY_FEW_LINKS
+                    ,
+                    links_change_count=1,
+                    links_new_count=(constants.LINKS_KNET_MAX + 1),
+                    links_limit_count=constants.LINKS_KNET_MAX,
+                    add_or_not_remove=True,
+                )
+            ]
+        )
+
+    def test_add_last_allowed_link(self):
+        existing_link_list = [
+            str(x) for x in range(constants.LINKS_KNET_MAX - 1)
+        ]
+        coro_nodes = [
+            node.CorosyncNode(
+                f"node{i}",
+                [
+                    node.CorosyncNodeAddress(f"addr{i}-{j}", f"{j}")
+                    for j in existing_link_list
+                ],
+                i
+            )
+            for i in [1, 2, 3]
+        ]
+        assert_report_item_list_equal(
+            config_validators.add_link(
+                self.new_addrs,
+                {},
+                coro_nodes,
+                self.pcmk_nodes,
+                existing_link_list,
+                self.transport,
+                constants.IP_VERSION_64
+            ),
+            []
+        )
+
+    def test_link_already_exists(self):
+        linknumber = self.existing_link_list[1]
+        assert_report_item_list_equal(
+            config_validators.add_link(
+                self.new_addrs,
+                {"linknumber": linknumber},
+                self.coro_nodes,
+                self.pcmk_nodes,
+                self.existing_link_list,
+                self.transport,
+                constants.IP_VERSION_64
+            ),
+            [
+                fixture.error(
+                    report_codes.COROSYNC_LINK_ALREADY_EXISTS_CANNOT_ADD,
+                    link_number=linknumber,
+                )
+            ]
+        )
+
+    def test_missing_node_addrs(self):
+        broken_nodes = sorted(self.new_addrs.keys())[1:2]
+        for node_name in broken_nodes:
+            del self.new_addrs[node_name]
+        pcmk_nodes = [
+            PacemakerNode("node-remote", "addr-remote")
+        ]
+        assert_report_item_list_equal(
+            config_validators.add_link(
+                self.new_addrs,
+                {},
+                self.coro_nodes,
+                pcmk_nodes,
+                self.existing_link_list,
+                self.transport,
+                constants.IP_VERSION_64
+            ),
+            [
+                fixture.error(
+                    report_codes.COROSYNC_BAD_NODE_ADDRESSES_COUNT,
+                    actual_count=0,
+                    min_count=1,
+                    max_count=1,
+                    node_name=node_name,
+                    node_index=None,
+                )
+                for node_name in broken_nodes
+            ]
+        )
+
+    def test_used_addrs(self):
+        pcmk_nodes = [
+            PacemakerNode("node-remote", "addr-remote")
+        ]
+        already_existing_addrs = [
+            pcmk_nodes[0].addr,
+            self.coro_nodes[0].addrs_plain[0],
+        ]
+        self.new_addrs["node2"], self.new_addrs["node3"] = (
+            already_existing_addrs
+        )
+        assert_report_item_list_equal(
+            config_validators.add_link(
+                self.new_addrs,
+                {},
+                self.coro_nodes,
+                pcmk_nodes,
+                self.existing_link_list,
+                self.transport,
+                constants.IP_VERSION_64
+            ),
+            [
+                fixture.error(
+                    report_codes.NODE_ADDRESSES_ALREADY_EXIST,
+                    address_list=already_existing_addrs,
+                ),
+            ]
+        )
+
+    def test_unknown_node(self):
+        unknown_nodes = ["node4", "node5"]
+        for node_name in unknown_nodes:
+            self.new_addrs[node_name] = f"{node_name}-addr"
+        assert_report_item_list_equal(
+            config_validators.add_link(
+                self.new_addrs,
+                {},
+                self.coro_nodes,
+                self.pcmk_nodes,
+                self.existing_link_list,
+                self.transport,
+                constants.IP_VERSION_64
+            ),
+            [
+                fixture.error(
+                    report_codes.NODE_NOT_FOUND,
+                    node=node_name,
+                    searched_types=[],
+                )
+                for node_name in unknown_nodes
+            ]
+        )
+
+    def test_duplicate_addrs(self):
+        self.new_addrs["node1"] = self.new_addrs["node2"]
+        assert_report_item_list_equal(
+            config_validators.add_link(
+                self.new_addrs,
+                {},
+                self.coro_nodes,
+                self.pcmk_nodes,
+                self.existing_link_list,
+                self.transport,
+                constants.IP_VERSION_64
+            ),
+            [
+                fixture.error(
+                    report_codes.NODE_ADDRESSES_DUPLICATION,
+                    address_list=[self.new_addrs["node1"]],
+                )
+            ]
+        )
+
+    def test_unresolvable_addrs(self):
+        patch_getaddrinfo(self, list(self.new_addrs.values())[2:])
+        assert_report_item_list_equal(
+            config_validators.add_link(
+                self.new_addrs,
+                {},
+                self.coro_nodes,
+                self.pcmk_nodes,
+                self.existing_link_list,
+                self.transport,
+                constants.IP_VERSION_64
+            ),
+            [
+                fixture.error(
+                    report_codes.NODE_ADDRESSES_UNRESOLVABLE,
+                    force_code=report_codes.FORCE_NODE_ADDRESSES_UNRESOLVABLE,
+                    address_list=list(self.new_addrs.values())[:2],
+                )
+            ]
+        )
+
+    def test_unresolvable_addrs_forced(self):
+        patch_getaddrinfo(self, list(self.new_addrs.values())[2:])
+        assert_report_item_list_equal(
+            config_validators.add_link(
+                self.new_addrs,
+                {},
+                self.coro_nodes,
+                self.pcmk_nodes,
+                self.existing_link_list,
+                self.transport,
+                constants.IP_VERSION_64,
+                force_unresolvable=True
+            ),
+            [
+                fixture.warn(
+                    report_codes.NODE_ADDRESSES_UNRESOLVABLE,
+                    address_list=list(self.new_addrs.values())[:2],
+                )
+            ]
+        )
+
+    def test_mixing_ip_families(self):
+        new_addrs = {
+            "node1": "addr1-new",
+            "node2": "10.0.2.2",
+            "node3": "::ffff:10:0:2:3",
+        }
+        assert_report_item_list_equal(
+            config_validators.add_link(
+                new_addrs,
+                {},
+                self.coro_nodes,
+                self.pcmk_nodes,
+                self.existing_link_list,
+                self.transport,
+                constants.IP_VERSION_64
+            ),
+            [
+                fixture.error(
+                    report_codes.COROSYNC_IP_VERSION_MISMATCH_IN_LINKS,
+                    link_numbers=None,
+                ),
+            ]
+        )
+
+    def test_wrong_ip_family_4(self):
+        self.new_addrs["node2"] = "::ffff:10:0:2:2"
+        assert_report_item_list_equal(
+            config_validators.add_link(
+                self.new_addrs,
+                {},
+                self.coro_nodes,
+                self.pcmk_nodes,
+                self.existing_link_list,
+                self.transport,
+                constants.IP_VERSION_4
+            ),
+            [
+                fixture.error(
+                    report_codes.COROSYNC_ADDRESS_IP_VERSION_WRONG_FOR_LINK,
+                    address=self.new_addrs["node2"],
+                    expected_address_type=node.ADDR_IPV4,
+                    link_number=None
+                ),
+            ]
+        )
+
+    def test_wrong_ip_family_6(self):
+        self.new_addrs["node2"] = "10.0.2.2"
+        assert_report_item_list_equal(
+            config_validators.add_link(
+                self.new_addrs,
+                {},
+                self.coro_nodes,
+                self.pcmk_nodes,
+                self.existing_link_list,
+                self.transport,
+                constants.IP_VERSION_6
+            ),
+            [
+                fixture.error(
+                    report_codes.COROSYNC_ADDRESS_IP_VERSION_WRONG_FOR_LINK,
+                    address=self.new_addrs["node2"],
+                    expected_address_type=node.ADDR_IPV6,
+                    link_number=None
+                ),
+            ]
+        )
+
+    def test_link_options(self):
+        assert_report_item_list_equal(
+            config_validators.add_link(
+                self.new_addrs,
+                {
+                    "linknumber": "ln",
+                    "link_priority": "lp",
+                    "mcastport": "mp",
+                    "ping_interval": "pi",
+                    "ping_precision": "pp",
+                    "wrong": "option",
+                    "ping_timeout": "pt",
+                    "pong_count": "pc",
+                    "bad": "option",
+                    "transport": "t",
+                },
+                self.coro_nodes,
+                self.pcmk_nodes,
+                self.existing_link_list,
+                self.transport,
+                constants.IP_VERSION_64
+            ),
+            [
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_name="linknumber",
+                    option_value="ln",
+                    allowed_values="0..7",
+                ),
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_name="link_priority",
+                    option_value="lp",
+                    allowed_values="0..255",
+                ),
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_name="mcastport",
+                    option_value="mp",
+                    allowed_values="a port number (1-65535)",
+                ),
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_name="ping_interval",
+                    option_value="pi",
+                    allowed_values="a non-negative integer",
+                ),
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_name="ping_precision",
+                    option_value="pp",
+                    allowed_values="a non-negative integer",
+                ),
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_name="ping_timeout",
+                    option_value="pt",
+                    allowed_values="a non-negative integer",
+                ),
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_name="pong_count",
+                    option_value="pc",
+                    allowed_values="a non-negative integer",
+                ),
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_name="transport",
+                    option_value="t",
+                    allowed_values=("sctp", "udp"),
+                ),
+                fixture.error(
+                    report_codes.INVALID_OPTIONS,
+                    option_names=["bad", "wrong"],
+                    option_type="link",
+                    allowed=[
+                        "link_priority", "linknumber", "mcastport",
+                        "ping_interval", "ping_precision", "ping_timeout",
+                        "pong_count", "transport",
+                    ],
+                    allowed_patterns=[],
+                ),
+            ]
+        )
+
 
 class RemoveLinks(TestCase):
     def setUp(self):

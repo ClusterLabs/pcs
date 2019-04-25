@@ -1603,6 +1603,39 @@ def remove_nodes_from_cib(lib, argv, modifiers):
         raise CmdLineInputError("No nodes specified")
     lib.cluster.remove_nodes_from_cib(argv)
 
+def link_add(lib, argv, modifiers):
+    """
+    Options:
+      * --force - treat validation issues and not resolvable addresses as
+        warnings instead of errors
+      * --skip-offline - skip unreachable nodes
+      * --request-timeout - HTTP request timeout
+    """
+    modifiers.ensure_only_supported(
+        "--force", "--request-timeout", "--skip-offline"
+    )
+    if not argv:
+        raise CmdLineInputError()
+
+    force_flags = []
+    if modifiers.get("--force"):
+        force_flags.append(report_codes.FORCE)
+    if modifiers.get("--skip-offline"):
+        force_flags.append(report_codes.SKIP_OFFLINE_NODES)
+
+    parsed = parse_args.group_by_keywords(
+        argv,
+        {"options"},
+        implicit_first_group_key="nodes",
+        keyword_repeat_allowed=False
+    )
+
+    lib.cluster.add_link(
+        parse_args.prepare_options(parsed["nodes"]),
+        parse_args.prepare_options(parsed["options"]),
+        force_flags=force_flags,
+    )
+
 def link_remove(lib, argv, modifiers):
     """
     Options:

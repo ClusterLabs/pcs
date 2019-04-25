@@ -2112,22 +2112,34 @@ class CibLoadErrorBadFormat(NameBuildTest):
 
 class CorosyncAddressIpVersionWrongForLink(NameBuildTest):
     code = codes.COROSYNC_ADDRESS_IP_VERSION_WRONG_FOR_LINK
-    def test_message(self):
-        self.assert_message_from_info(
+    def test_without_links(self):
+        self.assert_message_from_report(
+            "Address '192.168.100.42' cannot be used in the link because "
+                "the link uses IPv6 addresses"
+            ,
+            reports.corosync_address_ip_version_wrong_for_link(
+                "192.168.100.42",
+                "IPv6",
+            )
+        )
+
+    def test_with_links(self):
+        self.assert_message_from_report(
             "Address '192.168.100.42' cannot be used in link '3' because "
-            "the link uses IPv6 addresses",
-            {
-                "address": "192.168.100.42",
-                "expected_address_type": "IPv6",
-                "link_number": 3,
-            }
+                "the link uses IPv6 addresses"
+            ,
+            reports.corosync_address_ip_version_wrong_for_link(
+                "192.168.100.42",
+                "IPv6",
+                3,
+            )
         )
 
 class CorosyncBadNodeAddressesCount(NameBuildTest):
     code = codes.COROSYNC_BAD_NODE_ADDRESSES_COUNT
     def test_no_node_info(self):
         self.assert_message_from_info(
-            "At least 1 and at most 4 addresses can be specified for a node, "
+            "At least 1 and at most 4 addresses must be specified for a node, "
             "5 addresses specified",
             {
                 "actual_count": 5,
@@ -2138,7 +2150,7 @@ class CorosyncBadNodeAddressesCount(NameBuildTest):
 
     def test_node_name(self):
         self.assert_message_from_info(
-            "At least 1 and at most 4 addresses can be specified for a node, "
+            "At least 1 and at most 4 addresses must be specified for a node, "
             "5 addresses specified for node 'node1'",
             {
                 "actual_count": 5,
@@ -2150,7 +2162,7 @@ class CorosyncBadNodeAddressesCount(NameBuildTest):
 
     def test_node_id(self):
         self.assert_message_from_info(
-            "At least 1 and at most 4 addresses can be specified for a node, "
+            "At least 1 and at most 4 addresses must be specified for a node, "
             "5 addresses specified for node '2'",
             {
                 "actual_count": 5,
@@ -2162,7 +2174,7 @@ class CorosyncBadNodeAddressesCount(NameBuildTest):
 
     def test_node_name_and_id(self):
         self.assert_message_from_info(
-            "At least 1 and at most 4 addresses can be specified for a node, "
+            "At least 1 and at most 4 addresses must be specified for a node, "
             "5 addresses specified for node 'node2'",
             {
                 "actual_count": 5,
@@ -2175,7 +2187,7 @@ class CorosyncBadNodeAddressesCount(NameBuildTest):
 
     def test_one_address_allowed(self):
         self.assert_message_from_info(
-            "At least 0 and at most 1 address can be specified for a node, "
+            "At least 0 and at most 1 address must be specified for a node, "
             "2 addresses specified for node 'node2'",
             {
                 "actual_count": 2,
@@ -2188,7 +2200,7 @@ class CorosyncBadNodeAddressesCount(NameBuildTest):
 
     def test_one_address_specified(self):
         self.assert_message_from_info(
-            "At least 2 and at most 4 addresses can be specified for a node, "
+            "At least 2 and at most 4 addresses must be specified for a node, "
             "1 address specified for node 'node2'",
             {
                 "actual_count": 1,
@@ -2201,7 +2213,7 @@ class CorosyncBadNodeAddressesCount(NameBuildTest):
 
     def test_exactly_one_address_allowed(self):
         self.assert_message_from_info(
-            "1 address can be specified for a node, "
+            "1 address must be specified for a node, "
             "2 addresses specified for node 'node2'",
             {
                 "actual_count": 2,
@@ -2214,7 +2226,7 @@ class CorosyncBadNodeAddressesCount(NameBuildTest):
 
     def test_exactly_two_addresses_allowed(self):
         self.assert_message_from_info(
-            "2 addresses can be specified for a node, "
+            "2 addresses must be specified for a node, "
             "1 address specified for node 'node2'",
             {
                 "actual_count": 1,
@@ -2228,14 +2240,20 @@ class CorosyncBadNodeAddressesCount(NameBuildTest):
 
 class CorosyncIpVersionMismatchInLinks(NameBuildTest):
     code = codes.COROSYNC_IP_VERSION_MISMATCH_IN_LINKS
-    def test_message(self):
-        self.assert_message_from_info(
+    def test_without_links(self):
+        self.assert_message_from_report(
+            "Using both IPv4 and IPv6 in one link is not allowed; please, use "
+                "either IPv4 or IPv6"
+            ,
+            reports.corosync_ip_version_mismatch_in_links()
+        )
+
+    def test_with_links(self):
+        self.assert_message_from_report(
             "Using both IPv4 and IPv6 in one link is not allowed; please, use "
                 "either IPv4 or IPv6 in links '0', '3', '4'"
             ,
-            {
-                "link_numbers": [3, 0, 4]
-            }
+            reports.corosync_ip_version_mismatch_in_links(["3", "0", "4"])
         )
 
 
@@ -2454,6 +2472,14 @@ class CorosyncCannotAddRemoveLinksTooManyFewLinks(NameBuildTest):
             reports.corosync_cannot_add_remove_links_too_many_few_links(
                 3, 0, 2, add_or_not_remove=False
             )
+        )
+
+class CorosyncLinkAlreadyExistsCannotAdd(NameBuildTest):
+    code = codes.COROSYNC_LINK_ALREADY_EXISTS_CANNOT_ADD
+    def test_message(self):
+        self.assert_message_from_report(
+            "Cannot add link '2', it already exists",
+            reports.corosync_link_already_exists_cannot_add("2")
         )
 
 class CorosyncLinkDoesNotExistCannotRemove(NameBuildTest):

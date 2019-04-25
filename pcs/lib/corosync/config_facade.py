@@ -263,12 +263,53 @@ class ConfigFacade:
         for link in sorted(links, key=lambda item: item["linknumber"]):
             self._add_link_options(link)
 
+    def add_link(self, node_addr_map, options):
+        """
+        Add a new link to nodelist and create an interface section with options
+
+        dict node_addr_map -- key: node name, value: node address for the link
+        dict link_options -- link options
+        """
+        # Get a linknumber
+        if "linknumber" in options:
+            linknumber = options["linknumber"]
+        else:
+            linknumber = None
+            used_links = self.get_used_linknumber_list()
+            available_links = range(constants.LINKS_KNET_MAX)
+            for candidate in available_links:
+                if str(candidate) not in used_links:
+                    linknumber = candidate
+                    break
+            if linknumber is None:
+                raise AssertionError("No link number available")
+            options["linknumber"] = linknumber
+
+        # Add addresses
+        for nodelist_section in self.config.get_sections("nodelist"):
+            for node_section in nodelist_section.get_sections("node"):
+                node_name = self._get_node_data(node_section).get("name")
+                if node_name in node_addr_map:
+                    node_section.add_attribute(
+                        f"ring{linknumber}_addr",
+                        node_addr_map[node_name]
+                    )
+
+        # Add link options.
+        if options:
+            self._add_link_options(options)
+
     def _add_link_options(self, options):
         """
-        Add a new link
+        Add a new interface section with link options
 
         dict options -- link options
         """
+        # If the only option is "linknumber" then there is no point in adding
+        # the options at all.
+        if not [name for name in options if name != "linknumber"]:
+            return
+
         options_translate = {
             "link_priority": "knet_link_priority",
             "ping_interval": "knet_ping_interval",
@@ -329,6 +370,17 @@ class ConfigFacade:
             for transport_attr in totem_section.get_attributes("transport"):
                 transport = transport_attr[1]
         return transport if transport else constants.TRANSPORT_DEFAULT
+
+    def get_ip_version(self):
+        ip_version = None
+        for totem_section in self.config.get_sections("totem"):
+            for ip_version_attr in totem_section.get_attributes("ip_version"):
+                ip_version = ip_version_attr[1]
+        if ip_version:
+            return ip_version
+        if self.get_transport() == "udp":
+            return constants.IP_VERSION_4
+        return constants.IP_VERSION_64
 
     def set_transport_udp_options(self, options):
         """

@@ -129,6 +129,59 @@ class GetTransport(GetSimpleValueMixin, TestCase):
         )
 
 
+class GetIpVersion(GetSimpleValueMixin, TestCase):
+    transport_ip_list = [
+        ("udp", constants.IP_VERSION_4),
+        ("udpu", constants.IP_VERSION_64),
+        ("knet", constants.IP_VERSION_64),
+    ]
+
+    @staticmethod
+    def getter(facade):
+        return facade.get_ip_version()
+
+    def test_empty_config(self):
+        self.assert_value(
+            constants.IP_VERSION_64,
+            ""
+        )
+
+    def test_no_name(self):
+        for transport, ip in self.transport_ip_list:
+            with self.subTest(transport=transport, ip=ip):
+                self.assert_value(
+                    ip,
+                    f"totem {{\n transport: {transport}\n}}\n"
+                )
+
+    def test_no_value(self):
+        for transport, ip in self.transport_ip_list:
+            with self.subTest(transport=transport, ip=ip):
+                self.assert_value(
+                    ip,
+                    f"totem {{\n transport: {transport}\n ip_version:\n}}\n"
+                )
+
+    def test_one_name(self):
+        self.assert_value(
+            "ipv4-6",
+            "totem {\n transport: udp\n ip_version: ipv4-6\n}\n"
+        )
+
+    def test_more_names(self):
+        self.assert_value(
+            "ipv6",
+            "totem {\ntransport: udp\nip_version: ipv4-6\nip_version: ipv6\n}\n"
+        )
+
+    def test_more_sections(self):
+        self.assert_value(
+            "ipv6",
+            "totem {\n transport: knet\n ip_version: ipv4-6\n}\n"
+                "totem {\n ip_version: ipv6\n}\n"
+        )
+
+
 class GetNodesTest(TestCase):
     def assert_equal_nodelist(self, expected, real):
         real_nodes = [
@@ -714,6 +767,461 @@ class RemoveNodes(TestCase):
         }
         """)
         ac(expected_config, facade.config.export())
+
+
+class AddLink(TestCase):
+    before = dedent("""\
+        totem {
+            transport: knet
+
+            interface {
+                linknumber: 1
+                knet_transport: udp
+            }
+        }
+
+        nodelist {
+            node {
+                ring0_addr: node1-addr0
+                ring1_addr: node1-addr1
+                name: node1
+                nodeid: 1
+            }
+
+            node {
+                ring1_addr: node2-addr1
+                ring0_addr: node2-addr0
+                name: node2
+                nodeid: 2
+            }
+        }
+        """
+    )
+    def _assert_add(self, node_addr_map, options, before, after):
+        facade = lib.ConfigFacade.from_string(before)
+        facade.add_link(node_addr_map, options)
+        ac(after, facade.config.export())
+
+    def test_addrs_only(self):
+        self._assert_add(
+            {"node1": "node1-addr2", "node2": "node2-addr2"},
+            {},
+            self.before,
+            dedent("""\
+                totem {
+                    transport: knet
+
+                    interface {
+                        linknumber: 1
+                        knet_transport: udp
+                    }
+                }
+
+                nodelist {
+                    node {
+                        ring0_addr: node1-addr0
+                        ring1_addr: node1-addr1
+                        name: node1
+                        nodeid: 1
+                        ring2_addr: node1-addr2
+                    }
+
+                    node {
+                        ring1_addr: node2-addr1
+                        ring0_addr: node2-addr0
+                        name: node2
+                        nodeid: 2
+                        ring2_addr: node2-addr2
+                    }
+                }
+                """
+            )
+        )
+
+    def test_options_no_linknumber(self):
+        self._assert_add(
+            {"node1": "node1-addr2", "node2": "node2-addr2"},
+            {
+                "link_priority": "10",
+                "mcastport": "5405",
+                "ping_interval": "100",
+                "ping_precision": "10",
+                "ping_timeout": "20",
+                "pong_count": "5",
+                "transport": "sctp",
+            },
+            self.before,
+            dedent("""\
+                totem {
+                    transport: knet
+
+                    interface {
+                        linknumber: 1
+                        knet_transport: udp
+                    }
+
+                    interface {
+                        knet_link_priority: 10
+                        knet_ping_interval: 100
+                        knet_ping_precision: 10
+                        knet_ping_timeout: 20
+                        knet_pong_count: 5
+                        knet_transport: sctp
+                        linknumber: 2
+                        mcastport: 5405
+                    }
+                }
+
+                nodelist {
+                    node {
+                        ring0_addr: node1-addr0
+                        ring1_addr: node1-addr1
+                        name: node1
+                        nodeid: 1
+                        ring2_addr: node1-addr2
+                    }
+
+                    node {
+                        ring1_addr: node2-addr1
+                        ring0_addr: node2-addr0
+                        name: node2
+                        nodeid: 2
+                        ring2_addr: node2-addr2
+                    }
+                }
+                """
+            )
+        )
+
+    def test_custom_link_number_no_options(self):
+        self._assert_add(
+            {"node1": "node1-addr2", "node2": "node2-addr2"},
+            {"linknumber": "4"},
+            self.before,
+            dedent("""\
+                totem {
+                    transport: knet
+
+                    interface {
+                        linknumber: 1
+                        knet_transport: udp
+                    }
+                }
+
+                nodelist {
+                    node {
+                        ring0_addr: node1-addr0
+                        ring1_addr: node1-addr1
+                        name: node1
+                        nodeid: 1
+                        ring4_addr: node1-addr2
+                    }
+
+                    node {
+                        ring1_addr: node2-addr1
+                        ring0_addr: node2-addr0
+                        name: node2
+                        nodeid: 2
+                        ring4_addr: node2-addr2
+                    }
+                }
+                """
+            )
+        )
+
+    def test_custom_link_number_options(self):
+        self._assert_add(
+            {"node1": "node1-addr2", "node2": "node2-addr2"},
+            {"linknumber": "4", "transport": "sctp"},
+            self.before,
+            dedent("""\
+                totem {
+                    transport: knet
+
+                    interface {
+                        linknumber: 1
+                        knet_transport: udp
+                    }
+
+                    interface {
+                        knet_transport: sctp
+                        linknumber: 4
+                    }
+                }
+
+                nodelist {
+                    node {
+                        ring0_addr: node1-addr0
+                        ring1_addr: node1-addr1
+                        name: node1
+                        nodeid: 1
+                        ring4_addr: node1-addr2
+                    }
+
+                    node {
+                        ring1_addr: node2-addr1
+                        ring0_addr: node2-addr0
+                        name: node2
+                        nodeid: 2
+                        ring4_addr: node2-addr2
+                    }
+                }
+                """
+            )
+        )
+
+    def test_set_as_link_0_if_available(self):
+        before = dedent("""\
+            totem {
+                transport: knet
+
+                interface {
+                    linknumber: 1
+                    knet_transport: udp
+                }
+            }
+
+            nodelist {
+                node {
+                    ring2_addr: node1-addr2
+                    ring1_addr: node1-addr1
+                    name: node1
+                    nodeid: 1
+                }
+
+                node {
+                    ring1_addr: node2-addr1
+                    ring2_addr: node2-addr2
+                    name: node2
+                    nodeid: 2
+                }
+            }
+            """
+        )
+        after = dedent("""\
+            totem {
+                transport: knet
+
+                interface {
+                    linknumber: 1
+                    knet_transport: udp
+                }
+
+                interface {
+                    knet_transport: sctp
+                    linknumber: 0
+                }
+            }
+
+            nodelist {
+                node {
+                    ring2_addr: node1-addr2
+                    ring1_addr: node1-addr1
+                    name: node1
+                    nodeid: 1
+                    ring0_addr: node1-addr0
+                }
+
+                node {
+                    ring1_addr: node2-addr1
+                    ring2_addr: node2-addr2
+                    name: node2
+                    nodeid: 2
+                    ring0_addr: node2-addr0
+                }
+            }
+            """
+        )
+        self._assert_add(
+            {"node1": "node1-addr0", "node2": "node2-addr0"},
+            {"transport": "sctp"},
+            before,
+            after
+        )
+
+    def test_set_as_first_available_link(self):
+        before = dedent("""\
+            totem {
+                transport: knet
+
+                interface {
+                    linknumber: 2
+                    knet_transport: udp
+                }
+            }
+
+            nodelist {
+                node {
+                    ring0_addr: node1-addr0
+                    ring2_addr: node1-addr2
+                    name: node1
+                    nodeid: 1
+                }
+
+                node {
+                    ring2_addr: node2-addr2
+                    ring0_addr: node2-addr0
+                    name: node2
+                    nodeid: 2
+                }
+            }
+            """
+        )
+        after = dedent("""\
+            totem {
+                transport: knet
+
+                interface {
+                    linknumber: 2
+                    knet_transport: udp
+                }
+            }
+
+            nodelist {
+                node {
+                    ring0_addr: node1-addr0
+                    ring2_addr: node1-addr2
+                    name: node1
+                    nodeid: 1
+                    ring1_addr: node1-addr1
+                }
+
+                node {
+                    ring2_addr: node2-addr2
+                    ring0_addr: node2-addr0
+                    name: node2
+                    nodeid: 2
+                    ring1_addr: node2-addr1
+                }
+            }
+            """
+        )
+        self._assert_add(
+            {"node1": "node1-addr1", "node2": "node2-addr1"},
+            {},
+            before,
+            after
+        )
+
+    def test_no_linknumber_available(self):
+        before = dedent("""\
+            totem {
+                transport: knet
+            }
+
+            nodelist {
+                node {
+                    ring0_addr: node1-addr0
+                    ring1_addr: node1-addr1
+                    ring2_addr: node1-addr2
+                    ring3_addr: node1-addr3
+                    ring4_addr: node1-addr4
+                    ring5_addr: node1-addr5
+                    ring6_addr: node1-addr6
+                    ring7_addr: node1-addr7
+                    name: node1
+                    nodeid: 1
+                }
+
+                node {
+                    ring0_addr: node2-addr0
+                    ring1_addr: node2-addr1
+                    ring2_addr: node2-addr2
+                    ring3_addr: node2-addr3
+                    ring4_addr: node2-addr4
+                    ring5_addr: node2-addr5
+                    ring6_addr: node2-addr6
+                    ring7_addr: node2-addr7
+                    name: node2
+                    nodeid: 2
+                }
+            }
+            """
+        )
+        with self.assertRaises(AssertionError) as cm:
+            self._assert_add(
+                {"node1": "node1-addr-new", "node2": "node2-addr-new"},
+                {},
+                before,
+                "does not matter"
+            )
+        self.assertEqual(str(cm.exception), "No link number available")
+
+    def test_more_sections(self):
+        before = dedent("""\
+            totem {
+                interface {
+                    linknumber: 1
+                    knet_transport: udp
+                }
+            }
+
+            totem {
+                transport: knet
+            }
+
+            nodelist {
+                node {
+                    ring0_addr: node1-addr0
+                    ring1_addr: node1-addr1
+                    name: node1
+                    nodeid: 1
+                }
+            }
+
+            nodelist {
+                node {
+                    ring1_addr: node2-addr1
+                    ring0_addr: node2-addr0
+                    name: node2
+                    nodeid: 2
+                }
+            }
+            """
+        )
+        self._assert_add(
+            {"node1": "node1-addr4", "node2": "node2-addr4"},
+            {"linknumber": "4", "transport": "sctp"},
+            before,
+            dedent("""\
+                totem {
+                    interface {
+                        linknumber: 1
+                        knet_transport: udp
+                    }
+                }
+
+                totem {
+                    transport: knet
+
+                    interface {
+                        knet_transport: sctp
+                        linknumber: 4
+                    }
+                }
+
+                nodelist {
+                    node {
+                        ring0_addr: node1-addr0
+                        ring1_addr: node1-addr1
+                        name: node1
+                        nodeid: 1
+                        ring4_addr: node1-addr4
+                    }
+                }
+
+                nodelist {
+                    node {
+                        ring1_addr: node2-addr1
+                        ring0_addr: node2-addr0
+                        name: node2
+                        nodeid: 2
+                        ring4_addr: node2-addr4
+                    }
+                }
+                """
+            )
+        )
 
 
 class RemoveLinks(TestCase):
