@@ -713,6 +713,13 @@
         pcs commands: config checkpoint [ view | restore ]
       </description>
     </capability>
+    <capability id="pcmk.cib.checkpoints.diff" in-pcs="1" in-pcsd="0">
+      <description>
+        Show differences between two specified checkpoints.
+
+        pcs commands: config checkpoint diff
+      </description>
+    </capability>
     <capability id="pcmk.cib.set" in-pcs="1" in-pcsd="0">
       <description>
         Push a CIB XML to a cluster, support CIB scope, pushing the
@@ -1189,6 +1196,15 @@
         pcs commands: resource bundle
       </description>
     </capability>
+    <capability id="pcmk.resource.bundle.reset" in-pcs="1" in-pcsd="0">
+      <description>
+        Configure specified bundle with given options. Unlike update, this
+        command resets the bundle according given options - no previous options
+        are kept. Resources inside the bundle are kept as they are.
+
+        pcs commands: resource bundle reset
+      </description>
+    </capability>
     <capability id="pcmk.resource.bundle.wait" in-pcs="1" in-pcsd="0">
       <description>
         Wait for the changes to take effect when creating or updating a bundle
@@ -1269,6 +1285,15 @@
         Applies to one specified resource. Optional parameters: a node, limiting
         to a master role, a constraint lifetime. Optionally wait for the
         constraints to take effect.
+
+        pcs commands: pcs resource ( ban | clear | move )
+      </description>
+    </capability>
+    <capability id="pcmk.resource.ban-move-clear.clear-expired" in-pcs="1" in-pcsd="0">
+      <description>
+        An option to clear only constraints with expired lifetime.
+
+        pcs commands: pcs resource clear --expired
       </description>
     </capability>
     <capability id="pcmk.resource.debug" in-pcs="1" in-pcsd="0">
@@ -1672,6 +1697,11 @@
         pcs commands: stonith sbd ( enable | disable ), stonith sbd status,
           stonith sbd config
         daemon urls: remote_enable_sbd, remote_disable_sbd
+      </description>
+    </capability>
+    <capability id="sbd.option-timeout-action" in-pcs="1" in-pcsd="1">
+      <description>
+        Allows to set SBD_TIMEOUT_ACTION option.
       </description>
     </capability>
     <capability id="sbd.shared-block-device" in-pcs="1" in-pcsd="0">
