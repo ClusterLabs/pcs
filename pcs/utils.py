@@ -1873,16 +1873,13 @@ def getClusterName():
       * --corosync_conf - path to a mocked corosync.conf is set directly to
         settings
     """
-    # pylint: disable=bare-except
     try:
         f = open(settings.corosync_conf_file, 'r')
-        conf = corosync_conf_parser.parse_string(f.read())
+        conf = corosync_conf_facade(
+            corosync_conf_parser.parse_string(f.read())
+        )
         f.close()
-        # mimic corosync behavior - the last cluster_name found is used
-        cluster_name = None
-        for totem in conf.get_sections("totem"):
-            for attrs in totem.get_attributes("cluster_name"):
-                cluster_name = attrs[1]
+        cluster_name = conf.get_cluster_name()
         if cluster_name:
             return cluster_name
     except (IOError, corosync_conf_parser.CorosyncConfParserException):
@@ -1890,6 +1887,7 @@ def getClusterName():
 
     # there is no corosync.conf on remote nodes, we can try to
     # get cluster name from pacemaker
+    # pylint: disable=bare-except
     try:
         return get_set_properties("cluster-name")["cluster-name"]
     except:
