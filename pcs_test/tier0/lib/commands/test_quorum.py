@@ -1150,7 +1150,8 @@ class AddDeviceNetTest(TestCase):
             communication_list=node_2_offline_responses
         )
         self.config.env.push_corosync_conf(
-            corosync_conf_text=expected_corosync_conf
+            corosync_conf_text=expected_corosync_conf,
+            skip_offline_targets=True,
         )
         self.config.http.corosync.qdevice_client_start(
             communication_list=node_2_offline_responses
@@ -2273,7 +2274,8 @@ class RemoveDeviceNetTest(TestCase):
             cluster_nodes, node_2_offline_responses
         )
         self.config.env.push_corosync_conf(
-            corosync_conf_text=expected_conf
+            corosync_conf_text=expected_conf,
+            skip_offline_targets=True,
         )
 
         lib.remove_device(self.env_assist.get_env(), skip_offline_nodes=True)

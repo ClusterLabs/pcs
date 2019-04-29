@@ -1359,3 +1359,101 @@ def remove_nodes_from_cib(env, node_list):
                     reason=join_multilines([stderr, stdout])
                 )
             )
+
+def add_link(env, node_addr_map, link_options=None, force_flags=None):
+    """
+    Add a corosync link to a cluster
+
+    env LibraryEnvironment
+    dict node_addr_map -- key: node name, value: node address for the link
+    dict link_options -- link options
+    force_flags list -- list of flags codes
+    """
+    _ensure_live_env(env) # raises if env is not live
+
+    link_options = link_options or dict()
+    force_flags = force_flags or set()
+    force = report_codes.FORCE in force_flags
+    skip_offline = report_codes.SKIP_OFFLINE_NODES in force_flags
+
+    report_processor = SimpleReportProcessor(env.report_processor)
+    corosync_conf = env.get_corosync_conf()
+
+    # validations
+
+    dummy_cluster_nodes_names, nodes_report_list = get_existing_nodes_names(
+        corosync_conf,
+        # New link addresses are assigned to nodes based on node names. If
+        # there are nodes with no names, we cannot assign them new link
+        # addresses. This is a no-go situation.
+        error_on_missing_name=True
+    )
+    report_processor.report_list(nodes_report_list)
+
+    try:
+        cib = env.get_cib()
+        cib_nodes = get_remote_nodes(cib) + get_guest_nodes(cib)
+    except LibraryError:
+        cib_nodes = []
+        report_processor.report(
+            reports.get_problem_creator(
+                report_codes.FORCE_LOAD_NODES_FROM_CIB,
+                force
+            )(
+                reports.cib_load_error_get_nodes_for_validation
+            )
+        )
+
+    report_processor.report_list(config_validators.add_link(
+        node_addr_map,
+        link_options,
+        corosync_conf.get_nodes(),
+        cib_nodes,
+        corosync_conf.get_used_linknumber_list(),
+        corosync_conf.get_transport(),
+        corosync_conf.get_ip_version(),
+        force_unresolvable=force
+    ))
+
+    if report_processor.has_errors:
+        raise LibraryError()
+
+    # validations done
+
+    corosync_conf.add_link(node_addr_map, link_options)
+    env.push_corosync_conf(corosync_conf, skip_offline)
+
+def remove_links(env, linknumber_list, force_flags=None):
+    """
+    Remove corosync links from a cluster
+
+    env LibraryEnvironment
+    iterable linknumber_list -- linknumbers (as strings) of links to be removed
+    force_flags list -- list of flags codes
+    """
+    # TODO library interface should make sure linknumber_list is an iterable of
+    # strings. The layer in which the check should be done does not exist yet.
+    _ensure_live_env(env) # raises if env is not live
+
+    force_flags = force_flags or set()
+    skip_offline = report_codes.SKIP_OFFLINE_NODES in force_flags
+
+    report_processor = SimpleReportProcessor(env.report_processor)
+    corosync_conf = env.get_corosync_conf()
+
+    # validations
+
+    report_processor.report_list(config_validators.remove_links(
+        linknumber_list,
+        corosync_conf.get_used_linknumber_list(),
+        corosync_conf.get_transport()
+    ))
+
+    if report_processor.has_errors:
+        raise LibraryError()
+
+    # validations done
+
+    corosync_conf.remove_links(linknumber_list)
+
+    env.push_corosync_conf(corosync_conf, skip_offline)

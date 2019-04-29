@@ -80,6 +80,9 @@ def get_problem_creator(force_code=None, is_forced=False):
         return warning
     return partial(forceable_error, force_code)
 
+def _key_numeric(item):
+    return (int(item), item) if item.isdigit() else (-1, item)
+
 def resource_for_constraint_is_multiinstance(
     resource_id, parent_type, parent_id,
     severity=ReportItemSeverity.ERROR, forceable=None
@@ -1062,7 +1065,7 @@ def corosync_bad_node_addresses_count(
         }
     )
 
-def corosync_ip_version_mismatch_in_links(link_numbers):
+def corosync_ip_version_mismatch_in_links(link_numbers=None):
     """
     Mixing IPv4 and IPv6 in one or more links, which is not allowed
 
@@ -1076,7 +1079,7 @@ def corosync_ip_version_mismatch_in_links(link_numbers):
     )
 
 def corosync_address_ip_version_wrong_for_link(
-    address, expected_address_type, link_number
+    address, expected_address_type, link_number=None
 ):
     """
     Cannot use an address in a link as it does not match the link's IP version.
@@ -1103,7 +1106,7 @@ def corosync_link_number_duplication(number_list):
     return ReportItem.error(
         report_codes.COROSYNC_LINK_NUMBER_DUPLICATION,
         info={
-            "link_number_list": sorted(number_list),
+            "link_number_list": sorted(number_list, key=_key_numeric),
         }
     )
 
@@ -1194,6 +1197,87 @@ def corosync_too_many_links_options(links_options_count, links_count):
         info={
             "links_options_count": links_options_count,
             "links_count": links_count,
+        }
+    )
+
+def corosync_cannot_add_remove_links_bad_transport(
+    actual_transport, required_transports, add_or_not_remove
+):
+    """
+    Cannot add or remove corosync links, used transport does not allow that
+
+    string actual_transport -- transport used in the cluster
+    list required_transports -- transports allowing links to be added / removed
+    bool add_or_not_remove -- True for add, False for remove
+    """
+    return ReportItem.error(
+        report_codes.COROSYNC_CANNOT_ADD_REMOVE_LINKS_BAD_TRANSPORT,
+        info={
+            "add_or_not_remove": add_or_not_remove,
+            "actual_transport": actual_transport,
+            "required_transport_list": sorted(required_transports),
+        }
+    )
+
+def corosync_cannot_add_remove_links_no_links_specified(add_or_not_remove):
+    """
+    Cannot add or remove links, no links were specified
+
+    bool add_or_not_remove -- True for add, False for remove
+    """
+    return ReportItem.error(
+        report_codes.COROSYNC_CANNOT_ADD_REMOVE_LINKS_NO_LINKS_SPECIFIED,
+        info={
+            "add_or_not_remove": add_or_not_remove,
+        }
+    )
+
+def corosync_cannot_add_remove_links_too_many_few_links(
+    links_change_count, links_new_count, links_limit_count, add_or_not_remove
+):
+    """
+    Cannot add or remove links, link count would exceed allowed limits
+
+    int links_change_count -- how many links to add / remove
+    int links_new_count -- how many links would be defined after the action
+    int links_limit_count -- maximal / minimal number of links allowed
+    bool add_or_not_remove -- True for add, False for remove
+    """
+    return ReportItem.error(
+        report_codes.COROSYNC_CANNOT_ADD_REMOVE_LINKS_TOO_MANY_FEW_LINKS,
+        info={
+            "links_change_count": links_change_count,
+            "links_new_count": links_new_count,
+            "links_limit_count": links_limit_count,
+            "add_or_not_remove": add_or_not_remove,
+        }
+    )
+
+def corosync_link_already_exists_cannot_add(link_number):
+    """
+    Cannot add a link with specified linknumber as it already exists
+    """
+    return ReportItem.error(
+        report_codes.COROSYNC_LINK_ALREADY_EXISTS_CANNOT_ADD,
+        info={
+            "link_number": link_number,
+        }
+    )
+
+def corosync_link_does_not_exist_cannot_remove(
+    link_number_list, existing_link_list
+):
+    """
+    Cannot remove links which don't exist
+
+    iterable link_number_list -- links to remove which don't exist
+    iterable existing_link_list -- linknumbers of existing links
+    """
+    return ReportItem.error(
+        report_codes.COROSYNC_LINK_DOES_NOT_EXIST_CANNOT_REMOVE,
+        info={
+            "link_list": sorted(link_number_list, key=_key_numeric),
+            "existing_link_list": sorted(existing_link_list, key=_key_numeric),
         }
     )
 

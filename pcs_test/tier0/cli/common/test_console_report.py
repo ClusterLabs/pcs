@@ -2112,22 +2112,34 @@ class CibLoadErrorBadFormat(NameBuildTest):
 
 class CorosyncAddressIpVersionWrongForLink(NameBuildTest):
     code = codes.COROSYNC_ADDRESS_IP_VERSION_WRONG_FOR_LINK
-    def test_message(self):
-        self.assert_message_from_info(
+    def test_without_links(self):
+        self.assert_message_from_report(
+            "Address '192.168.100.42' cannot be used in the link because "
+                "the link uses IPv6 addresses"
+            ,
+            reports.corosync_address_ip_version_wrong_for_link(
+                "192.168.100.42",
+                "IPv6",
+            )
+        )
+
+    def test_with_links(self):
+        self.assert_message_from_report(
             "Address '192.168.100.42' cannot be used in link '3' because "
-            "the link uses IPv6 addresses",
-            {
-                "address": "192.168.100.42",
-                "expected_address_type": "IPv6",
-                "link_number": 3,
-            }
+                "the link uses IPv6 addresses"
+            ,
+            reports.corosync_address_ip_version_wrong_for_link(
+                "192.168.100.42",
+                "IPv6",
+                3,
+            )
         )
 
 class CorosyncBadNodeAddressesCount(NameBuildTest):
     code = codes.COROSYNC_BAD_NODE_ADDRESSES_COUNT
     def test_no_node_info(self):
         self.assert_message_from_info(
-            "At least 1 and at most 4 addresses can be specified for a node, "
+            "At least 1 and at most 4 addresses must be specified for a node, "
             "5 addresses specified",
             {
                 "actual_count": 5,
@@ -2138,7 +2150,7 @@ class CorosyncBadNodeAddressesCount(NameBuildTest):
 
     def test_node_name(self):
         self.assert_message_from_info(
-            "At least 1 and at most 4 addresses can be specified for a node, "
+            "At least 1 and at most 4 addresses must be specified for a node, "
             "5 addresses specified for node 'node1'",
             {
                 "actual_count": 5,
@@ -2150,7 +2162,7 @@ class CorosyncBadNodeAddressesCount(NameBuildTest):
 
     def test_node_id(self):
         self.assert_message_from_info(
-            "At least 1 and at most 4 addresses can be specified for a node, "
+            "At least 1 and at most 4 addresses must be specified for a node, "
             "5 addresses specified for node '2'",
             {
                 "actual_count": 5,
@@ -2162,7 +2174,7 @@ class CorosyncBadNodeAddressesCount(NameBuildTest):
 
     def test_node_name_and_id(self):
         self.assert_message_from_info(
-            "At least 1 and at most 4 addresses can be specified for a node, "
+            "At least 1 and at most 4 addresses must be specified for a node, "
             "5 addresses specified for node 'node2'",
             {
                 "actual_count": 5,
@@ -2175,7 +2187,7 @@ class CorosyncBadNodeAddressesCount(NameBuildTest):
 
     def test_one_address_allowed(self):
         self.assert_message_from_info(
-            "At least 0 and at most 1 address can be specified for a node, "
+            "At least 0 and at most 1 address must be specified for a node, "
             "2 addresses specified for node 'node2'",
             {
                 "actual_count": 2,
@@ -2188,7 +2200,7 @@ class CorosyncBadNodeAddressesCount(NameBuildTest):
 
     def test_one_address_specified(self):
         self.assert_message_from_info(
-            "At least 2 and at most 4 addresses can be specified for a node, "
+            "At least 2 and at most 4 addresses must be specified for a node, "
             "1 address specified for node 'node2'",
             {
                 "actual_count": 1,
@@ -2201,7 +2213,7 @@ class CorosyncBadNodeAddressesCount(NameBuildTest):
 
     def test_exactly_one_address_allowed(self):
         self.assert_message_from_info(
-            "1 address can be specified for a node, "
+            "1 address must be specified for a node, "
             "2 addresses specified for node 'node2'",
             {
                 "actual_count": 2,
@@ -2214,7 +2226,7 @@ class CorosyncBadNodeAddressesCount(NameBuildTest):
 
     def test_exactly_two_addresses_allowed(self):
         self.assert_message_from_info(
-            "2 addresses can be specified for a node, "
+            "2 addresses must be specified for a node, "
             "1 address specified for node 'node2'",
             {
                 "actual_count": 1,
@@ -2228,14 +2240,20 @@ class CorosyncBadNodeAddressesCount(NameBuildTest):
 
 class CorosyncIpVersionMismatchInLinks(NameBuildTest):
     code = codes.COROSYNC_IP_VERSION_MISMATCH_IN_LINKS
-    def test_message(self):
-        self.assert_message_from_info(
+    def test_without_links(self):
+        self.assert_message_from_report(
+            "Using both IPv4 and IPv6 in one link is not allowed; please, use "
+                "either IPv4 or IPv6"
+            ,
+            reports.corosync_ip_version_mismatch_in_links()
+        )
+
+    def test_with_links(self):
+        self.assert_message_from_report(
             "Using both IPv4 and IPv6 in one link is not allowed; please, use "
                 "either IPv4 or IPv6 in links '0', '3', '4'"
             ,
-            {
-                "link_numbers": [3, 0, 4]
-            }
+            reports.corosync_ip_version_mismatch_in_links(["3", "0", "4"])
         )
 
 
@@ -2364,6 +2382,119 @@ class CorosyncTooManyLinksOptions(NameBuildTest):
             reports.corosync_too_many_links_options(7, 3),
         )
 
+class CorosyncCannotAddRemoveLinksBadTransport(NameBuildTest):
+    code = codes.COROSYNC_CANNOT_ADD_REMOVE_LINKS_BAD_TRANSPORT
+    def test_add(self):
+        self.assert_message_from_report(
+            (
+                "Cluster is using udp transport which does not support "
+                "adding links"
+            ),
+            reports.corosync_cannot_add_remove_links_bad_transport(
+                "udp",
+                ["knet1", "knet2"],
+                add_or_not_remove=True
+            )
+        )
+
+    def test_remove(self):
+        self.assert_message_from_report(
+            (
+                "Cluster is using udpu transport which does not support "
+                "removing links"
+            ),
+            reports.corosync_cannot_add_remove_links_bad_transport(
+                "udpu",
+                ["knet"],
+                add_or_not_remove=False
+            )
+        )
+
+class CorosyncCannotAddRemoveLinksNoLinksSpecified(NameBuildTest):
+    code = codes.COROSYNC_CANNOT_ADD_REMOVE_LINKS_NO_LINKS_SPECIFIED
+    def test_add(self):
+        self.assert_message_from_report(
+            "Cannot add links, no links to add specified",
+            reports.corosync_cannot_add_remove_links_no_links_specified(
+                add_or_not_remove=True
+            )
+        )
+
+    def test_remove(self):
+        self.assert_message_from_report(
+            "Cannot remove links, no links to remove specified",
+            reports.corosync_cannot_add_remove_links_no_links_specified(
+                add_or_not_remove=False
+            )
+        )
+
+class CorosyncCannotAddRemoveLinksTooManyFewLinks(NameBuildTest):
+    code = codes.COROSYNC_CANNOT_ADD_REMOVE_LINKS_TOO_MANY_FEW_LINKS
+    def test_add(self):
+        self.assert_message_from_report(
+            (
+                "Cannot add 1 link, there would be 1 link defined which is "
+                "more than allowed number of 1 link"
+            ),
+            reports.corosync_cannot_add_remove_links_too_many_few_links(
+                1, 1, 1, add_or_not_remove=True
+            )
+        )
+
+    def test_add_s(self):
+        self.assert_message_from_report(
+            (
+                "Cannot add 2 links, there would be 4 links defined which is "
+                "more than allowed number of 3 links"
+            ),
+            reports.corosync_cannot_add_remove_links_too_many_few_links(
+                2, 4, 3, add_or_not_remove=True
+            )
+        )
+
+    def test_remove(self):
+        self.assert_message_from_report(
+            (
+                "Cannot remove 1 link, there would be 1 link defined which is "
+                "less than allowed number of 1 link"
+            ),
+            reports.corosync_cannot_add_remove_links_too_many_few_links(
+                1, 1, 1, add_or_not_remove=False
+            )
+        )
+
+    def test_remove_s(self):
+        self.assert_message_from_report(
+            (
+                "Cannot remove 3 links, there would be 0 links defined which "
+                "is less than allowed number of 2 links"
+            ),
+            reports.corosync_cannot_add_remove_links_too_many_few_links(
+                3, 0, 2, add_or_not_remove=False
+            )
+        )
+
+class CorosyncLinkAlreadyExistsCannotAdd(NameBuildTest):
+    code = codes.COROSYNC_LINK_ALREADY_EXISTS_CANNOT_ADD
+    def test_message(self):
+        self.assert_message_from_report(
+            "Cannot add link '2', it already exists",
+            reports.corosync_link_already_exists_cannot_add("2")
+        )
+
+class CorosyncLinkDoesNotExistCannotRemove(NameBuildTest):
+    code = codes.COROSYNC_LINK_DOES_NOT_EXIST_CANNOT_REMOVE
+    def test_message(self):
+        self.assert_message_from_report(
+            (
+                "Cannot remove non-existent links '0', '1', 'abc', existing "
+                "links: '2', '3', '5'"
+            ),
+            reports.corosync_link_does_not_exist_cannot_remove(
+                ["1", "0", "abc"],
+                ["3", "2", "5"]
+            )
+        )
 
 class CorosyncLinkDoesNotExistCannotUpdate(NameBuildTest):
     code = codes.COROSYNC_LINK_DOES_NOT_EXIST_CANNOT_UPDATE

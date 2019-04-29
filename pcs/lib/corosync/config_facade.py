@@ -174,14 +174,14 @@ class ConfigFacade:
             if attr_name in constants.NODE_OPTIONS
         }
 
-    def _get_used_linkid_list(self):
+    def get_used_linknumber_list(self):
         for nodelist_section in self.config.get_sections("nodelist"):
             for node_section in nodelist_section.get_sections("node"):
                 node_data = self._get_node_data(node_section)
                 if not node_data:
                     continue
                 return [
-                    i for i in range(constants.LINKS_MAX)
+                    str(i) for i in range(constants.LINKS_MAX)
                     if node_data.get(f"ring{i}_addr")
                 ]
 
@@ -211,7 +211,7 @@ class ConfigFacade:
                 self._create_node_section(
                     next(node_id_generator),
                     node_options,
-                    self._get_used_linkid_list()
+                    self.get_used_linknumber_list()
                 )
             )
         self.__update_two_node()
@@ -261,14 +261,55 @@ class ConfigFacade:
             links.append(link)
 
         for link in sorted(links, key=lambda item: item["linknumber"]):
-            self.add_link(link)
+            self._add_link_options(link)
 
-    def add_link(self, options):
+    def add_link(self, node_addr_map, options):
         """
-        Add a new link
+        Add a new link to nodelist and create an interface section with options
+
+        dict node_addr_map -- key: node name, value: node address for the link
+        dict link_options -- link options
+        """
+        # Get a linknumber
+        if "linknumber" in options:
+            linknumber = options["linknumber"]
+        else:
+            linknumber = None
+            used_links = self.get_used_linknumber_list()
+            available_links = range(constants.LINKS_KNET_MAX)
+            for candidate in available_links:
+                if str(candidate) not in used_links:
+                    linknumber = candidate
+                    break
+            if linknumber is None:
+                raise AssertionError("No link number available")
+            options["linknumber"] = linknumber
+
+        # Add addresses
+        for nodelist_section in self.config.get_sections("nodelist"):
+            for node_section in nodelist_section.get_sections("node"):
+                node_name = self._get_node_data(node_section).get("name")
+                if node_name in node_addr_map:
+                    node_section.add_attribute(
+                        f"ring{linknumber}_addr",
+                        node_addr_map[node_name]
+                    )
+
+        # Add link options.
+        if options:
+            self._add_link_options(options)
+
+    def _add_link_options(self, options):
+        """
+        Add a new interface section with link options
 
         dict options -- link options
         """
+        # If the only option is "linknumber" then there is no point in adding
+        # the options at all.
+        if not [name for name in options if name != "linknumber"]:
+            return
+
         options_translate = {
             "link_priority": "knet_link_priority",
             "ping_interval": "knet_ping_interval",
@@ -292,6 +333,54 @@ class ConfigFacade:
         self.__set_section_options([new_link_section], options_to_set)
         totem_section.add_section(new_link_section)
         self.__remove_empty_sections(self.config)
+
+    def remove_links(self, link_list):
+        """
+        Remove links from nodelist and relevant interface sections from totem
+
+        iterable link_list -- list of linknumbers (strings) to be removed
+        """
+        # Do not break when the interface / address is found to be sure to
+        # remove all of them (config format allows to have more interface
+        # sections / addresses for one link).
+        for totem_section in self.config.get_sections("totem"):
+            for interface_section in totem_section.get_sections("interface"):
+                interface_number_list = interface_section.get_attributes(
+                    "linknumber"
+                )
+                if interface_number_list:
+                    # get the value of the last attribute
+                    interface_number = interface_number_list[-1][1]
+                else:
+                    # if no linknumber is set, corosync treats it as 0
+                    interface_number = "0"
+                if interface_number in link_list:
+                    totem_section.del_section(interface_section)
+        for link_number in link_list:
+            for nodelist_section in self.config.get_sections("nodelist"):
+                for node_section in nodelist_section.get_sections("node"):
+                    node_section.del_attributes_by_name(
+                        f"ring{link_number}_addr"
+                    )
+        self.__remove_empty_sections(self.config)
+
+    def get_transport(self):
+        transport = None
+        for totem_section in self.config.get_sections("totem"):
+            for transport_attr in totem_section.get_attributes("transport"):
+                transport = transport_attr[1]
+        return transport if transport else constants.TRANSPORT_DEFAULT
+
+    def get_ip_version(self):
+        ip_version = None
+        for totem_section in self.config.get_sections("totem"):
+            for ip_version_attr in totem_section.get_attributes("ip_version"):
+                ip_version = ip_version_attr[1]
+        if ip_version:
+            return ip_version
+        if self.get_transport() == "udp":
+            return constants.IP_VERSION_4
+        return constants.IP_VERSION_64
 
     def set_transport_udp_options(self, options):
         """

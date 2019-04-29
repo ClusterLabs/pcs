@@ -39,6 +39,15 @@ def get_push_corosync_conf(call_queue):
                     prepare_diff(to_push, expected_call.corosync_conf_text)
                 )
             )
+        if skip_offline_nodes != expected_call.skip_offline_targets:
+            raise AssertionError(
+                "Trying to call env.push_corosync_conf but the skip_offline "
+                "flag is not as expected:\nexpected '{0}' != actual '{1}'"
+                .format(
+                    expected_call.skip_offline_targets,
+                    skip_offline_nodes,
+                )
+            )
 
     return push_corosync_conf
 

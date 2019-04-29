@@ -370,6 +370,17 @@ Shutdown specified guest node and remove it from the cluster. The node\-identifi
 node clear <node name>
 Remove specified node from various cluster caches. Use this if a removed node is still considered by the cluster to be a member of the cluster.
 .TP
+link add <node_name>=<node_address>... [options <link options>]
+Add a corosync link. One address must be specified for each cluster node. If no linknumber is specified, pcs will use the lowest available linknumber.
+.br
+Link options (documented in corosync.conf(5) man page) are: link_priority, linknumber, mcastport, ping_interval, ping_precision, ping_timeout, pong_count, transport (udp or sctp)
+.TP
+link delete <linknumber> [<linknumber>]...
+Remove specified corosync links.
+.TP
+link remove <linknumber> [<linknumber>]...
+Remove specified corosync links.
+.TP
 uidgid
 List the current configured uids and gids of users allowed to connect to corosync.
 .TP
