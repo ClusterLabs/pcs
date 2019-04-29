@@ -250,16 +250,13 @@ def _report_unresolvable_addresses_if_any(
 ):
     if not unresolvable_addresses:
         return []
-    severity = ReportItemSeverity.ERROR
-    forceable = report_codes.FORCE_NODE_ADDRESSES_UNRESOLVABLE
-    if force_unresolvable:
-        severity = ReportItemSeverity.WARNING
-        forceable = None
     return [
-        reports.node_addresses_unresolvable(
+        reports.get_problem_creator(
+            force_code=report_codes.FORCE_NODE_ADDRESSES_UNRESOLVABLE,
+            is_forced=force_unresolvable,
+        )(
+            reports.node_addresses_unresolvable,
             unresolvable_addresses,
-            severity,
-            forceable
         )
     ]
 
