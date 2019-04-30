@@ -98,6 +98,47 @@ class SectionTest(TestCase):
             []
         )
 
+    def test_attribute_get_dict(self):
+        section = config_parser.Section("mySection")
+        self.assertEqual(section.get_attributes_dict(), {})
+
+        section = config_parser.Section("mySection")
+        section.add_attribute("name1", "value1")
+        section.add_attribute("name2", "value2")
+        section.add_attribute("name3", "value3")
+        self.assertEqual(
+            section.get_attributes_dict(),
+            {"name1": "value1", "name2": "value2", "name3": "value3", }
+        )
+
+        section = config_parser.Section("mySection")
+        section.add_attribute("name1", "value1")
+        section.add_attribute("name2", "value2")
+        section.add_attribute("name3", "value3")
+        section.add_attribute("name1", "value1A")
+        section.add_attribute("name3", "value3A")
+        section.add_attribute("name1", "")
+        self.assertEqual(
+            section.get_attributes_dict(),
+            {"name1": "", "name2": "value2", "name3": "value3A", }
+        )
+
+    def test_attribute_value(self):
+        section = config_parser.Section("mySection")
+        self.assertEqual(section.get_attribute_value("name"), None)
+
+        section = config_parser.Section("mySection")
+        section.add_attribute("name1", "value1")
+        section.add_attribute("name2", "value2")
+        self.assertEqual(section.get_attribute_value("name", "value"), "value")
+
+        section = config_parser.Section("mySection")
+        section.add_attribute("name", "value")
+        section.add_attribute("name1", "value1")
+        section.add_attribute("name", "valueA")
+        section.add_attribute("name1", "value1A")
+        self.assertEqual(section.get_attribute_value("name"), "valueA")
+
     def test_attribute_set(self):
         section = config_parser.Section("mySection")
 

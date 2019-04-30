@@ -127,11 +127,15 @@ class EnvConfig:
 
     def push_corosync_conf(
         self, name="env.push_corosync_conf", corosync_conf_text="",
-        skip_offline_targets=False, before=None, instead=None
+        skip_offline_targets=False, raises=False, before=None, instead=None
     ):
         self.__calls.place(
             name,
-            PushCorosyncConfCall(corosync_conf_text, skip_offline_targets),
+            PushCorosyncConfCall(
+                corosync_conf_text,
+                skip_offline_targets,
+                raises=raises
+            ),
             instead=instead,
             before=before
         )

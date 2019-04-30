@@ -51,6 +51,12 @@ class Section:
             attr for attr in self._attr_list if name is None or attr[0] == name
         ]
 
+    def get_attributes_dict(self):
+        return {attr[0]: attr[1] for attr in self._attr_list}
+
+    def get_attribute_value(self, name, default=None):
+        return self.get_attributes_dict().get(name, default)
+
     def add_attribute(self, name, value):
         self._attr_list.append([name, value])
         return self

@@ -9,20 +9,15 @@ from pcs.lib.communication import qdevice
 from pcs.lib.communication.corosync import (
     CheckCorosyncOffline,
     DistributeCorosyncConf,
+    ReloadCorosyncConf,
 )
 from pcs.lib.communication.tools import (
     run,
     run_and_raise,
 )
 from pcs.lib.corosync.config_facade import ConfigFacade as CorosyncConfigFacade
-from pcs.lib.corosync.live import (
-    get_local_corosync_conf,
-    reload_config as reload_corosync_config,
-)
-from pcs.lib.external import (
-    is_service_running,
-    CommandRunner,
-)
+from pcs.lib.corosync.live import get_local_corosync_conf
+from pcs.lib.external import CommandRunner
 from pcs.lib.errors import LibraryError
 from pcs.lib.node_communication import (
     LibCommunicatorLogger,
@@ -298,22 +293,24 @@ class LibraryEnvironment:
         self, target_list, corosync_conf_data, need_stopped_cluster,
         need_qdevice_reload, skip_offline_nodes
     ):
+        # Check if the cluster is stopped when needed
         if need_stopped_cluster:
             com_cmd = CheckCorosyncOffline(
                 self.report_processor, skip_offline_nodes
             )
             com_cmd.set_targets(target_list)
             run_and_raise(self.get_node_communicator(), com_cmd)
+        # Distribute corosync.conf
         com_cmd = DistributeCorosyncConf(
             self.report_processor, corosync_conf_data, skip_offline_nodes
         )
         com_cmd.set_targets(target_list)
         run_and_raise(self.get_node_communicator(), com_cmd)
-        if is_service_running(self.cmd_runner(), "corosync"):
-            reload_corosync_config(self.cmd_runner())
-            self.report_processor.process(
-                reports.corosync_config_reloaded()
-            )
+        # Reload corosync
+        com_cmd = ReloadCorosyncConf(self.report_processor)
+        com_cmd.set_targets(target_list)
+        run_and_raise(self.get_node_communicator(), com_cmd)
+        # Reload qdevice if needed
         if need_qdevice_reload:
             self.report_processor.process(
                 reports.qdevice_client_reload_started()

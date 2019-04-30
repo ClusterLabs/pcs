@@ -1,8 +1,7 @@
+from functools import partial
 import os
 import shutil
-import unittest
-from unittest import mock
-from functools import partial
+from unittest import mock, TestCase
 
 from pcs_test.tools.assertions import (
     ac,
@@ -23,14 +22,8 @@ from pcs import cluster
 from pcs.cli.common.errors import CmdLineInputError
 from pcs.common import report_codes
 
-# pylint: disable=invalid-name, too-many-statements, bad-whitespace, line-too-long, too-many-public-methods
-
-empty_cib = rc("cib-empty-withnodes.xml")
-temp_cib = rc("temp-cib.xml")
-
-
-
-class UidGidTest(unittest.TestCase):
+class UidGidTest(TestCase):
+    # pylint: disable=invalid-name
     def setUp(self):
         self.uid_gid_dir = rc("uid_gid.d")
         if not os.path.exists(self.uid_gid_dir):
@@ -40,44 +33,55 @@ class UidGidTest(unittest.TestCase):
         shutil.rmtree(self.uid_gid_dir)
 
     def testUIDGID(self):
+        # pylint: disable=too-many-statements
         _pcs = partial(
             pcs,
             None,
             mock_settings={"corosync_uidgid_dir": self.uid_gid_dir}
         )
-        o,r = _pcs("cluster uidgid")
+        o, r = _pcs("cluster uidgid")
         ac(o, "No uidgids configured\n")
         assert r == 0
 
-        o,r = _pcs("cluster uidgid add")
+        o, r = _pcs("cluster uidgid add")
         assert r == 1
         assert o.startswith("\nUsage:")
 
-        o,r = _pcs("cluster uidgid rm")
+        o, r = _pcs("cluster uidgid rm")
         assert r == 1
         assert o.startswith("\nUsage:")
 
-        o,r = _pcs("cluster uidgid xx")
+        o, r = _pcs("cluster uidgid xx")
         assert r == 1
         assert o.startswith("\nUsage:")
 
-        o,r = _pcs("cluster uidgid add uid=testuid gid=testgid")
+        o, r = _pcs("cluster uidgid add uid=testuid gid=testgid")
         assert r == 0
         ac(o, "")
 
-        o,r = _pcs("cluster uidgid add uid=testuid gid=testgid")
-        ac(o, "Error: uidgid file with uid=testuid and gid=testgid already exists\n")
+        o, r = _pcs("cluster uidgid add uid=testuid gid=testgid")
+        ac(
+            o,
+            "Error: uidgid file with uid=testuid and gid=testgid already "
+                "exists\n"
+        )
         assert r == 1
 
-        o,r = _pcs("cluster uidgid delete uid=testuid2 gid=testgid2")
+        o, r = _pcs("cluster uidgid delete uid=testuid2 gid=testgid2")
         assert r == 1
-        ac(o, "Error: no uidgid files with uid=testuid2 and gid=testgid2 found\n")
+        ac(
+            o,
+            "Error: no uidgid files with uid=testuid2 and gid=testgid2 found\n"
+        )
 
-        o,r = _pcs("cluster uidgid remove uid=testuid gid=testgid2")
+        o, r = _pcs("cluster uidgid remove uid=testuid gid=testgid2")
         assert r == 1
-        ac(o, "Error: no uidgid files with uid=testuid and gid=testgid2 found\n")
+        ac(
+            o,
+            "Error: no uidgid files with uid=testuid and gid=testgid2 found\n"
+        )
 
-        o,r = _pcs("cluster uidgid rm uid=testuid2 gid=testgid")
+        o, r = _pcs("cluster uidgid rm uid=testuid2 gid=testgid")
         assert r == 1
         ac(
             o,
@@ -86,35 +90,35 @@ class UidGidTest(unittest.TestCase):
             "Error: no uidgid files with uid=testuid2 and gid=testgid found\n"
         )
 
-        o,r = _pcs("cluster uidgid")
+        o, r = _pcs("cluster uidgid")
         assert r == 0
         ac(o, "UID/GID: uid=testuid gid=testgid\n")
 
-        o,r = _pcs("cluster uidgid delete uid=testuid gid=testgid")
+        o, r = _pcs("cluster uidgid delete uid=testuid gid=testgid")
         ac(o, "")
         assert r == 0
 
-        o,r = _pcs("cluster uidgid add uid=testuid gid=testgid")
+        o, r = _pcs("cluster uidgid add uid=testuid gid=testgid")
         assert r == 0
         ac(o, "")
 
-        o,r = _pcs("cluster uidgid")
+        o, r = _pcs("cluster uidgid")
         assert r == 0
         ac(o, "UID/GID: uid=testuid gid=testgid\n")
 
-        o,r = _pcs("cluster uidgid remove uid=testuid gid=testgid")
+        o, r = _pcs("cluster uidgid remove uid=testuid gid=testgid")
         ac(o, "")
         assert r == 0
 
-        o,r = _pcs("cluster uidgid add uid=testuid gid=testgid")
+        o, r = _pcs("cluster uidgid add uid=testuid gid=testgid")
         assert r == 0
         ac(o, "")
 
-        o,r = _pcs("cluster uidgid")
+        o, r = _pcs("cluster uidgid")
         assert r == 0
         ac(o, "UID/GID: uid=testuid gid=testgid\n")
 
-        o,r = _pcs("cluster uidgid rm uid=testuid gid=testgid")
+        o, r = _pcs("cluster uidgid rm uid=testuid gid=testgid")
         ac(
             o,
             "'pcs cluster uidgid rm' has been deprecated, use 'pcs cluster "
@@ -122,68 +126,70 @@ class UidGidTest(unittest.TestCase):
         )
         assert r == 0
 
-        o,r = _pcs("cluster uidgid")
+        o, r = _pcs("cluster uidgid")
         assert r == 0
         ac(o, "No uidgids configured\n")
 
 
-class ClusterUpgradeTest(unittest.TestCase, AssertPcsMixin):
+class ClusterUpgradeTest(TestCase, AssertPcsMixin):
     def setUp(self):
-        shutil.copy(rc("cib-empty-1.2.xml"), temp_cib)
-        self.pcs_runner = PcsRunner(temp_cib)
+        self.temp_cib = rc("temp-cib.xml")
+        shutil.copy(rc("cib-empty-1.2.xml"), self.temp_cib)
+        self.pcs_runner = PcsRunner(self.temp_cib)
 
     @skip_unless_pacemaker_version((2, 0, 0), "CIB schema upgrade")
-    def testClusterUpgrade(self):
+    def test_cluster_upgrade(self):
         # pylint: disable=no-self-use
-        with open(temp_cib) as myfile:
+        # pylint: disable=invalid-name
+        with open(self.temp_cib) as myfile:
             data = myfile.read()
             assert data.find("pacemaker-1.2") != -1
             assert data.find("pacemaker-2.") == -1
 
-        o,r = pcs(temp_cib, "cluster cib-upgrade")
-        ac(o,"Cluster CIB has been upgraded to latest version\n")
+        o, r = pcs(self.temp_cib, "cluster cib-upgrade")
+        ac(o, "Cluster CIB has been upgraded to latest version\n")
         assert r == 0
 
-        with open(temp_cib) as myfile:
+        with open(self.temp_cib) as myfile:
             data = myfile.read()
             assert data.find("pacemaker-1.2") == -1
             assert data.find("pacemaker-2.") == -1
             assert data.find("pacemaker-3.") != -1
 
-        o,r = pcs(temp_cib, "cluster cib-upgrade")
-        ac(o,"Cluster CIB has been upgraded to latest version\n")
+        o, r = pcs(self.temp_cib, "cluster cib-upgrade")
+        ac(o, "Cluster CIB has been upgraded to latest version\n")
         assert r == 0
 
 
 @skip_unless_root()
-class ClusterStartStop(unittest.TestCase, AssertPcsMixin):
+class ClusterStartStop(TestCase, AssertPcsMixin):
     def setUp(self):
         self.pcs_runner = PcsRunner(cib_file=None)
 
     def test_all_and_nodelist(self):
         self.assert_pcs_fail(
             "cluster stop rh7-1 rh7-2 --all",
-            stdout_full="Error: Cannot specify both --all and a list of nodes.\n"
+            "Error: Cannot specify both --all and a list of nodes.\n"
         )
         self.assert_pcs_fail(
             "cluster start rh7-1 rh7-2 --all",
-            stdout_full="Error: Cannot specify both --all and a list of nodes.\n"
+            "Error: Cannot specify both --all and a list of nodes.\n"
         )
 
 
 @skip_unless_root()
-class ClusterEnableDisable(unittest.TestCase, AssertPcsMixin):
+class ClusterEnableDisable(TestCase, AssertPcsMixin):
     def setUp(self):
         self.pcs_runner = PcsRunner(cib_file=None)
 
     def test_all_and_nodelist(self):
         self.assert_pcs_fail(
             "cluster enable rh7-1 rh7-2 --all",
-            stdout_full="Error: Cannot specify both --all and a list of nodes.\n"
+            "Error: Cannot specify both --all and a list of nodes.\n"
         )
         self.assert_pcs_fail(
             "cluster disable rh7-1 rh7-2 --all",
-            stdout_full="Error: Cannot specify both --all and a list of nodes.\n"
+            "Error: Cannot specify both --all and a list of nodes.\n"
         )
 
 def _node(name, **kwargs):
@@ -191,7 +197,8 @@ def _node(name, **kwargs):
     return dict(name=name, **kwargs)
 
 DEFAULT_TRANSPORT_TYPE = "knet"
-class ClusterSetup(unittest.TestCase):
+class ClusterSetup(TestCase):
+    # pylint: disable=too-many-public-methods
     def setUp(self):
         self.lib = mock.Mock(spec_set=["cluster"])
         self.cluster = mock.Mock(spec_set=["setup"])
@@ -536,7 +543,8 @@ class ClusterSetup(unittest.TestCase):
         )
 
 
-class NodeAdd(unittest.TestCase):
+class NodeAdd(TestCase):
+    # pylint: disable=too-many-public-methods
     def setUp(self):
         self.lib = mock.Mock(spec_set=["cluster"])
         self.cluster = mock.Mock(spec_set=["add_nodes"])
@@ -702,12 +710,16 @@ class NodeAdd(unittest.TestCase):
                 start=True,
                 wait="15",
                 no_watchdog_validation=True,
-                force_flags=[report_codes.FORCE, report_codes.SKIP_OFFLINE_NODES],
+                force_flags=[
+                    report_codes.FORCE,
+                    report_codes.SKIP_OFFLINE_NODES
+                ],
             )
         )
 
 
-class AddLink(unittest.TestCase):
+class AddLink(TestCase):
+    # pylint: disable=too-many-public-methods
     def setUp(self):
         self.lib = mock.Mock(spec_set=["cluster"])
         self.cluster = mock.Mock(spec_set=["add_link"])
@@ -920,7 +932,7 @@ class AddLink(unittest.TestCase):
         )
 
 
-class RemoveLink(unittest.TestCase):
+class RemoveLink(TestCase):
     def setUp(self):
         self.lib = mock.Mock(spec_set=["cluster"])
         self.cluster = mock.Mock(spec_set=["remove_links"])

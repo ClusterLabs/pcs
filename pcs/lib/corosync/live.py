@@ -2,7 +2,6 @@ import os.path
 import re
 
 from pcs import settings
-from pcs.common.tools import join_multilines
 from pcs.lib import reports
 from pcs.lib.errors import LibraryError
 
@@ -15,19 +14,6 @@ def get_local_corosync_conf():
         return open(path).read()
     except EnvironmentError as e:
         raise LibraryError(reports.corosync_config_read_error(path, e.strerror))
-
-
-def reload_config(runner):
-    """
-    Ask corosync to reload its configuration
-    """
-    stdout, stderr, retval = runner.run([
-        os.path.join(settings.corosync_binaries, "corosync-cfgtool"),
-        "-R"
-    ])
-    message = join_multilines([stderr, stdout])
-    if retval != 0 or "invalid option" in message:
-        raise LibraryError(reports.corosync_config_reload_error(message))
 
 def get_quorum_status_text(runner):
     """

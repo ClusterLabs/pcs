@@ -114,11 +114,10 @@ class ConfigFacade:
         return self._need_qdevice_reload
 
     def get_cluster_name(self):
-        cluster_name = ""
+        name = ""
         for totem in self.config.get_sections("totem"):
-            for attrs in totem.get_attributes("cluster_name"):
-                cluster_name = attrs[1]
-        return cluster_name
+            name = totem.get_attribute_value("cluster_name", name)
+        return name
 
     # To get a list of nodenames use pcs.lib.node.get_existing_nodes_names
 
@@ -345,15 +344,11 @@ class ConfigFacade:
         # sections / addresses for one link).
         for totem_section in self.config.get_sections("totem"):
             for interface_section in totem_section.get_sections("interface"):
-                interface_number_list = interface_section.get_attributes(
-                    "linknumber"
-                )
-                if interface_number_list:
-                    # get the value of the last attribute
-                    interface_number = interface_number_list[-1][1]
-                else:
+                interface_number = interface_section.get_attribute_value(
+                    "linknumber",
                     # if no linknumber is set, corosync treats it as 0
-                    interface_number = "0"
+                    "0"
+                )
                 if interface_number in link_list:
                     totem_section.del_section(interface_section)
         for link_number in link_list:
@@ -366,16 +361,14 @@ class ConfigFacade:
 
     def get_transport(self):
         transport = None
-        for totem_section in self.config.get_sections("totem"):
-            for transport_attr in totem_section.get_attributes("transport"):
-                transport = transport_attr[1]
+        for totem in self.config.get_sections("totem"):
+            transport = totem.get_attribute_value("transport", transport)
         return transport if transport else constants.TRANSPORT_DEFAULT
 
     def get_ip_version(self):
         ip_version = None
-        for totem_section in self.config.get_sections("totem"):
-            for ip_version_attr in totem_section.get_attributes("ip_version"):
-                ip_version = ip_version_attr[1]
+        for totem in self.config.get_sections("totem"):
+            ip_version = totem.get_attribute_value("ip_version", ip_version)
         if ip_version:
             return ip_version
         if self.get_transport() == "udp":
@@ -458,11 +451,10 @@ class ConfigFacade:
         """
         Returns True if auto tie braker option is enabled, False otherwise.
         """
-        auto_tie_breaker = "0"
+        atb = "0"
         for quorum in self.config.get_sections("quorum"):
-            for attr in quorum.get_attributes("auto_tie_breaker"):
-                auto_tie_breaker = attr[1]
-        return auto_tie_breaker == "1"
+            atb = quorum.get_attribute_value("auto_tie_breaker", atb)
+        return atb == "1"
 
     def has_quorum_device(self):
         """
@@ -677,14 +669,12 @@ class ConfigFacade:
         for quorum in self.config.get_sections("quorum"):
             for device in quorum.get_sections("device"):
                 device_sections.append(device)
-                for dummy_name, value in device.get_attributes("model"):
-                    model = value
+                model = device.get_attribute_value("model", model)
         for device in device_sections:
             for model_section in device.get_sections(model):
-                for dummy_name, value in model_section.get_attributes(
-                    "algorithm"
-                ):
-                    algorithm = value
+                algorithm = model_section.get_attribute_value(
+                    "algorithm", algorithm
+                )
         if model == "net":
             if algorithm == "ffsplit":
                 self.__set_section_options(device_sections, {"votes": "1"})

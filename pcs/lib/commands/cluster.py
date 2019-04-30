@@ -89,13 +89,7 @@ def node_clear(env, node_name, allow_clear_cluster_node=False):
     bool allow_clear_cluster_node -- flag allows to clear node even if it's
         still in a cluster
     """
-    mocked_envs = []
-    if not env.is_cib_live:
-        mocked_envs.append("CIB")
-    if not env.is_corosync_conf_live:
-        mocked_envs.append("COROSYNC_CONF")
-    if mocked_envs:
-        raise LibraryError(reports.live_environment_required(mocked_envs))
+    _ensure_live_env(env) # raises if env is not live
 
     current_nodes, report_list = get_existing_nodes_names(
         env.get_corosync_conf(),

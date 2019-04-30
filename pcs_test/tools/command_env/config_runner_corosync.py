@@ -31,27 +31,6 @@ class CorosyncShortcuts:
             instead=instead
         )
 
-    def reload(
-        self,
-        name="runner.corosync.reload",
-        instead=None,
-        before=None
-    ):
-        self.__calls.place(
-            name,
-            RunnerCall(
-                "corosync-cfgtool -R",
-                stdout=outdent(
-                    """\
-                    Reloading corosync.conf...
-                    Done
-                    """
-                )
-            ),
-            before=before,
-            instead=instead
-        )
-
     def qdevice_generate_cert(
         self, cluster_name, cert_req_path="cert_path", stdout=None, stderr="",
         returncode=0, name="runner.corosync.qdevice_generate_cert"

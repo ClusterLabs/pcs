@@ -25,7 +25,7 @@ def _get_corosync_conf_text_with_atb(orig_cfg_file):
 
 
 def _sbd_enable_successful_report_list_fixture(
-    online_node_list, skipped_offline_node_list=(), err_msg="err", atb_set=False
+    online_node_list, skipped_offline_node_list=(), atb_set=False
 ):
     report_list = (
         [
@@ -41,59 +41,10 @@ def _sbd_enable_successful_report_list_fixture(
         ]
     )
     if atb_set:
-        report_list += (
-            [
-                fixture.warn(
-                    report_codes.COROSYNC_QUORUM_ATB_WILL_BE_ENABLED_DUE_TO_SBD
-                ),
-                fixture.info(report_codes.COROSYNC_NOT_RUNNING_CHECK_STARTED),
-            ]
-            +
-            [
-                fixture.info(
-                    report_codes.COROSYNC_NOT_RUNNING_ON_NODE, node=node
-                ) for node in online_node_list
-            ]
-            +
-            [
-                fixture.warn(
-                    report_codes.NODE_COMMUNICATION_ERROR_UNABLE_TO_CONNECT,
-                    node=node,
-                    reason=err_msg,
-                    command="remote/status",
-                ) for node in skipped_offline_node_list
-            ]
-            +
-            [
-                fixture.warn(
-                    report_codes.COROSYNC_NOT_RUNNING_CHECK_NODE_ERROR,
-                    node=node,
-                ) for node in skipped_offline_node_list
-            ]
-            +
-            [fixture.info(report_codes.COROSYNC_CONFIG_DISTRIBUTION_STARTED)]
-            +
-            [
-                fixture.warn(
-                    report_codes.NODE_COMMUNICATION_ERROR_UNABLE_TO_CONNECT,
-                    node=node,
-                    reason=err_msg,
-                    command="remote/set_corosync_conf",
-                ) for node in skipped_offline_node_list
-            ]
-            +
-            [
-                fixture.warn(
-                    report_codes.COROSYNC_CONFIG_DISTRIBUTION_NODE_ERROR,
-                    node=node,
-                ) for node in skipped_offline_node_list
-            ]
-            +
-            [
-                fixture.info(
-                    report_codes.COROSYNC_CONFIG_ACCEPTED_BY_NODE, node=node
-                ) for node in online_node_list
-            ]
+        report_list.append(
+            fixture.warn(
+                report_codes.COROSYNC_QUORUM_ATB_WILL_BE_ENABLED_DUE_TO_SBD
+            )
         )
     return (
         report_list
@@ -457,14 +408,11 @@ class EvenNumOfNodes(TestCase):
                 for node in self.node_list
             ]
         )
-        self.config.http.corosync.check_corosync_offline(
-            node_labels=self.node_list
+        self.config.env.push_corosync_conf(
+            corosync_conf_text=_get_corosync_conf_text_with_atb(
+                self.corosync_conf_name
+            )
         )
-        self.config.http.corosync.set_corosync_conf(
-            _get_corosync_conf_text_with_atb(self.corosync_conf_name),
-            node_labels=self.node_list,
-        )
-        self.config.runner.systemctl.is_active("corosync", is_active=False)
         self.config.http.sbd.set_sbd_config(
             config_generator=config_generator, node_labels=self.node_list,
         )
@@ -651,14 +599,12 @@ class OfflineNodes(TestCase):
                 for node in self.online_node_list
             ]
         )
-        self.config.http.corosync.check_corosync_offline(
-            communication_list=self.offline_communication_list
+        self.config.env.push_corosync_conf(
+            corosync_conf_text=_get_corosync_conf_text_with_atb(
+                self.corosync_conf_name
+            ),
+            skip_offline_targets=True
         )
-        self.config.http.corosync.set_corosync_conf(
-            _get_corosync_conf_text_with_atb(self.corosync_conf_name),
-            communication_list=self.offline_communication_list,
-        )
-        self.config.runner.systemctl.is_active("corosync", is_active=False)
         self.config.http.sbd.set_sbd_config(
             config_generator=self.sbd_config_generator,
             node_labels=self.online_node_list,
@@ -678,7 +624,6 @@ class OfflineNodes(TestCase):
             _sbd_enable_successful_report_list_fixture(
                 self.online_node_list,
                 skipped_offline_node_list=self.offline_node_list,
-                err_msg=self.err_msg,
                 atb_set=True,
             )
         )
@@ -1221,14 +1166,11 @@ class FailureHandling(TestCase):
                 for node in self.node_list
             ]
         )
-        self.config.http.corosync.check_corosync_offline(
-            node_labels=self.node_list
+        self.config.env.push_corosync_conf(
+            corosync_conf_text=_get_corosync_conf_text_with_atb(
+                self.corosync_conf_name
+            )
         )
-        self.config.http.corosync.set_corosync_conf(
-            _get_corosync_conf_text_with_atb(self.corosync_conf_name),
-            node_labels=self.node_list,
-        )
-        self.config.runner.systemctl.is_active("corosync", is_active=False)
         self.config.http.sbd.set_sbd_config(
             config_generator=self.sbd_config_generator,
             node_labels=self.node_list,
@@ -1469,10 +1411,12 @@ class FailureHandling(TestCase):
         )
 
     def test_set_corosync_conf_failed(self):
-        self._remove_calls(7)
-        self.config.http.corosync.set_corosync_conf(
-            _get_corosync_conf_text_with_atb(self.corosync_conf_name),
-            communication_list=self.communication_list_failure,
+        self._remove_calls(5)
+        self.config.env.push_corosync_conf(
+            corosync_conf_text=_get_corosync_conf_text_with_atb(
+                self.corosync_conf_name
+            ),
+            raises=True
         )
         self.env_assist.assert_raise_library_error(
             lambda: enable_sbd(
@@ -1486,148 +1430,11 @@ class FailureHandling(TestCase):
         self.env_assist.assert_reports(
             _sbd_enable_successful_report_list_fixture(
                 self.node_list, atb_set=True
-            )[:-9]
-            +
-            [
-                fixture.error(
-                    report_codes.NODE_COMMUNICATION_COMMAND_UNSUCCESSFUL,
-                    node=self.node_list[0],
-                    reason=self.reason,
-                    command="remote/set_corosync_conf",
-                    force_code=report_codes.SKIP_OFFLINE_NODES,
-                ),
-                fixture.error(
-                    report_codes.COROSYNC_CONFIG_DISTRIBUTION_NODE_ERROR,
-                    node=self.node_list[0],
-                    force_code=report_codes.SKIP_OFFLINE_NODES,
-                ),
-                fixture.info(
-                    report_codes.COROSYNC_CONFIG_ACCEPTED_BY_NODE,
-                    node=self.node_list[1],
-                )
-            ]
-        )
-
-    def test_set_corosync_conf_not_connected(self):
-        self._remove_calls(7)
-        self.config.http.corosync.set_corosync_conf(
-            _get_corosync_conf_text_with_atb(self.corosync_conf_name),
-            communication_list=self.communication_list_not_connected,
-        )
-        self.env_assist.assert_raise_library_error(
-            lambda: enable_sbd(
-                self.env_assist.get_env(),
-                default_watchdog=self.watchdog,
-                watchdog_dict={},
-                sbd_options={},
-            ),
-            []
-        )
-        self.env_assist.assert_reports(
-            _sbd_enable_successful_report_list_fixture(
-                self.node_list, atb_set=True
-            )[:-9]
-            +
-            [
-                fixture.error(
-                    report_codes.NODE_COMMUNICATION_ERROR_UNABLE_TO_CONNECT,
-                    node=self.node_list[0],
-                    reason=self.reason,
-                    command="remote/set_corosync_conf",
-                    force_code=report_codes.SKIP_OFFLINE_NODES,
-                ),
-                fixture.error(
-                    report_codes.COROSYNC_CONFIG_DISTRIBUTION_NODE_ERROR,
-                    node=self.node_list[0],
-                    force_code=report_codes.SKIP_OFFLINE_NODES,
-                ),
-                fixture.info(
-                    report_codes.COROSYNC_CONFIG_ACCEPTED_BY_NODE,
-                    node=self.node_list[1],
-                )
-            ]
-        )
-
-    def test_corosync_not_running_failed(self):
-        self._remove_calls(9)
-        self.config.http.corosync.check_corosync_offline(
-            communication_list=self.communication_list_failure,
-        )
-        self.env_assist.assert_raise_library_error(
-            lambda: enable_sbd(
-                self.env_assist.get_env(),
-                default_watchdog=self.watchdog,
-                watchdog_dict={},
-                sbd_options={},
-            ),
-            []
-        )
-        self.env_assist.assert_reports(
-            _sbd_enable_successful_report_list_fixture(
-                self.node_list, atb_set=True
-            )[:-12]
-            +
-            [
-                fixture.error(
-                    report_codes.NODE_COMMUNICATION_COMMAND_UNSUCCESSFUL,
-                    node=self.node_list[0],
-                    reason=self.reason,
-                    command="remote/status",
-                    force_code=report_codes.SKIP_OFFLINE_NODES,
-                ),
-                fixture.error(
-                    report_codes.COROSYNC_NOT_RUNNING_CHECK_NODE_ERROR,
-                    node=self.node_list[0],
-                    force_code=report_codes.SKIP_OFFLINE_NODES,
-                ),
-                fixture.info(
-                    report_codes.COROSYNC_NOT_RUNNING_ON_NODE,
-                    node=self.node_list[1]
-                )
-            ]
-        )
-
-    def test_corosync_not_running_not_connected(self):
-        self._remove_calls(9)
-        self.config.http.corosync.check_corosync_offline(
-            communication_list=self.communication_list_not_connected,
-        )
-        self.env_assist.assert_raise_library_error(
-            lambda: enable_sbd(
-                self.env_assist.get_env(),
-                default_watchdog=self.watchdog,
-                watchdog_dict={},
-                sbd_options={},
-            ),
-            []
-        )
-        self.env_assist.assert_reports(
-            _sbd_enable_successful_report_list_fixture(
-                self.node_list, atb_set=True
-            )[:-12]
-            +
-            [
-                fixture.error(
-                    report_codes.NODE_COMMUNICATION_ERROR_UNABLE_TO_CONNECT,
-                    node=self.node_list[0],
-                    reason=self.reason,
-                    command="remote/status",
-                    force_code=report_codes.SKIP_OFFLINE_NODES,
-                ),
-                fixture.error(
-                    report_codes.COROSYNC_NOT_RUNNING_CHECK_NODE_ERROR,
-                    node=self.node_list[0],
-                    force_code=report_codes.SKIP_OFFLINE_NODES,
-                ),
-                fixture.info(
-                    report_codes.COROSYNC_NOT_RUNNING_ON_NODE,
-                    node=self.node_list[1]
-                )
-            ]
+            )[:-7]
         )
 
     def test_check_sbd_invalid_data_format(self):
-        self._remove_calls(11)
+        self._remove_calls(7)
         self.config.http.sbd.check_sbd(
             communication_list=[
                 dict(
@@ -1667,7 +1474,7 @@ class FailureHandling(TestCase):
         )
 
     def test_check_sbd_failure(self):
-        self._remove_calls(11)
+        self._remove_calls(7)
         self.config.http.sbd.check_sbd(
             communication_list=[
                 dict(
@@ -1710,7 +1517,7 @@ class FailureHandling(TestCase):
         )
 
     def test_check_sbd_not_connected(self):
-        self._remove_calls(11)
+        self._remove_calls(7)
         self.config.http.sbd.check_sbd(
             communication_list=[
                 dict(
@@ -1754,7 +1561,7 @@ class FailureHandling(TestCase):
         )
 
     def test_get_online_targets_failed(self):
-        self._remove_calls(13)
+        self._remove_calls(9)
         self.config.http.host.check_auth(
             communication_list=self.communication_list_failure
         )
@@ -1779,7 +1586,7 @@ class FailureHandling(TestCase):
         )
 
     def test_get_online_targets_not_connected(self):
-        self._remove_calls(13)
+        self._remove_calls(9)
         self.config.http.host.check_auth(
             communication_list=self.communication_list_not_connected
         )
