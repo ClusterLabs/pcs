@@ -1408,7 +1408,7 @@ class CreateTransportKnet(TestCase):
                     option_value="strongest",
                     option_name="cipher",
                     allowed_values=(
-                        "none", "aes256", "aes192", "aes128", "3des"
+                        "none", "aes256", "aes192", "aes128"
                     )
                 ),
                 fixture.error(

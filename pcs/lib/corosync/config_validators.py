@@ -883,7 +883,7 @@ def create_transport_knet(generic_options, compression_options, crypto_options):
     crypto_validators = [
         validate.value_in(
             "cipher",
-            ("none", "aes256", "aes192", "aes128", "3des")
+            ("none", "aes256", "aes192", "aes128")
         ),
         validate.value_in(
             "hash",

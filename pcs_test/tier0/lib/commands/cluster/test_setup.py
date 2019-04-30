@@ -1878,7 +1878,7 @@ class TransportKnetSuccess(TestCase):
             threshold="10",
         )
         crypto_options = dict(
-            cipher="3des",
+            cipher="aes256",
             hash="sha512",
             model="openssl",
         )

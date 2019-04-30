@@ -61,6 +61,8 @@
 - Fixed inability to setup cluster in web UI when knet links are not specified
   ([rhbz#1687562])
 - `--force` works correctly in `pcs quorum unblock` (broken since pcs-0.10.1)
+- Removed `3des` from allowed knet crypto ciphers since it is actually not
+  supported by corosync
 
 ### Changed
 - Do not check whether watchdog is defined as an absolute path when enabling
