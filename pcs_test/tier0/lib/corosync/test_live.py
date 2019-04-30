@@ -39,46 +39,6 @@ class GetLocalCorosyncConfTest(TestCase):
         )
 
 
-class ReloadConfigTest(TestCase):
-    def path(self, name):
-        return os.path.join(settings.corosync_binaries, name)
-
-    def test_success(self):
-        cmd_retval = 0
-        cmd_stdout = "cmd output"
-        cmd_stderr = ""
-        mock_runner = mock.MagicMock(spec_set=CommandRunner)
-        mock_runner.run.return_value = (cmd_stdout, cmd_stderr, cmd_retval)
-
-        lib.reload_config(mock_runner)
-
-        mock_runner.run.assert_called_once_with([
-            self.path("corosync-cfgtool"), "-R"
-        ])
-
-    def test_error(self):
-        cmd_retval = 1
-        cmd_stdout = "cmd output"
-        cmd_stderr = "cmd error"
-        mock_runner = mock.MagicMock(spec_set=CommandRunner)
-        mock_runner.run.return_value = (cmd_stdout, cmd_stderr, cmd_retval)
-
-        assert_raise_library_error(
-            lambda: lib.reload_config(mock_runner),
-            (
-                severity.ERROR,
-                report_codes.COROSYNC_CONFIG_RELOAD_ERROR,
-                {
-                    "reason": "\n".join([cmd_stderr, cmd_stdout]),
-                }
-            )
-        )
-
-        mock_runner.run.assert_called_once_with([
-            self.path("corosync-cfgtool"), "-R"
-        ])
-
-
 class GetQuorumStatusTextTest(TestCase):
     def setUp(self):
         self.mock_runner = mock.MagicMock(spec_set=CommandRunner)
