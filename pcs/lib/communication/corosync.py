@@ -127,6 +127,7 @@ class ReloadCorosyncConf(
                     severity=ReportItemSeverity.WARNING,
                 ))
         except (ValueError, LookupError):
+            self.__has_failures = True
             self._report(reports.invalid_response_format(
                 node,
                 severity=ReportItemSeverity.WARNING,

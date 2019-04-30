@@ -1,15 +1,17 @@
 from pcs_test.tools.assertions import prepare_diff
 
 from pcs.lib.corosync.config_facade import ConfigFacade
+from pcs.lib.errors import LibraryError
 
 CALL_TYPE_PUSH_COROSYNC_CONF = "CALL_TYPE_PUSH_COROSYNC_CONF"
 
 class Call:
     type = CALL_TYPE_PUSH_COROSYNC_CONF
 
-    def __init__(self, corosync_conf_text, skip_offline_targets):
+    def __init__(self, corosync_conf_text, skip_offline_targets, raises=False):
         self.corosync_conf_text = corosync_conf_text
         self.skip_offline_targets = skip_offline_targets
+        self.raises = raises
 
     def __repr__(self):
         return str("<CorosyncConfPush skip-offline='{0}'>").format(
@@ -48,6 +50,8 @@ def get_push_corosync_conf(call_queue):
                     skip_offline_nodes,
                 )
             )
+        if expected_call.raises:
+            raise LibraryError()
 
     return push_corosync_conf
 
