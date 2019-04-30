@@ -1238,7 +1238,7 @@ Commands:
         If id is omitted one is generated from the resource id. If
         resource-discovery is omitted it defaults to 'always'.
 
-    location [show [resources|nodes [<node> | <resource>]...] [--full]]
+    location [show [resources [<resource>...]] | [nodes [<node>...]]] [--full]
         List all the current location constraints. If 'resources' is specified,
         location constraints are displayed per resource (default). If 'nodes'
         is specified, location constraints are displayed per node. If specific

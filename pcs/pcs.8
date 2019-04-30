@@ -630,7 +630,7 @@ Creates a location rule on the specified resource where the expression looks lik
 .br
 where duration options and date spec options are: hours, monthdays, weekdays, yeardays, months, weeks, years, weekyears, moon. Resource may be either a resource id <resource_id> or %<resource_id> or resource%<resource_id>, or a resource name regular expression regexp%<resource_pattern>. If score is omitted it defaults to INFINITY. If id is omitted one is generated from the resource id. If resource\-discovery is omitted it defaults to 'always'.
 .TP
-location [show [resources|nodes [<node>|<resource>]...] [\fB\-\-full\fR]]
+location [show [resources [<resource>...]] | [nodes [<node>...]]] [\fB\-\-full\fR]
 List all the current location constraints. If 'resources' is specified, location constraints are displayed per resource (default). If 'nodes' is specified, location constraints are displayed per node. If specific nodes or resources are specified then we only show information about them. Resource may be either a resource id <resource_id> or %<resource_id> or resource%<resource_id>, or a resource name regular expression regexp%<resource_pattern>. If \fB\-\-full\fR is specified show the internal constraint id's as well.
 .TP
 location add <id> <resource> <node> <score> [resource\-discovery=<option>]
