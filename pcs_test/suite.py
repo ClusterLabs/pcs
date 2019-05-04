@@ -13,6 +13,7 @@ except ImportError:
 
 
 # pylint: disable=redefined-outer-name, unused-argument, invalid-name
+# pylint: disable=ungrouped-imports
 
 if "BUNDLED_LIB_LOCATION" in os.environ:
     sys.path.insert(0, os.environ["BUNDLED_LIB_LOCATION"])
@@ -25,6 +26,10 @@ if "--installed" in sys.argv:
     sys.path.append(PACKAGE_DIR)
     from pcs_test.tools import pcs_runner
     pcs_runner.test_installed = True
+
+    from pcs import settings
+    if settings.pcs_bundled_pacakges_dir not in sys.path:
+        sys.path.insert(0, settings.pcs_bundled_pacakges_dir)
 else:
     sys.path.insert(0, PACKAGE_DIR)
 
