@@ -1,9 +1,9 @@
-FROM fedora:29
+FROM fedora:30
 
 ARG src_path
 
 # repo updates-testing temporarily disabled because of metadata fetching error
-RUN dnf install -y --disablerepo updates-testing \
+RUN dnf install -y \
         # python
         python3 \
         python3-lxml \
