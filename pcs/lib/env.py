@@ -307,9 +307,13 @@ class LibraryEnvironment:
         com_cmd.set_targets(target_list)
         run_and_raise(self.get_node_communicator(), com_cmd)
         # Reload corosync
-        com_cmd = ReloadCorosyncConf(self.report_processor)
-        com_cmd.set_targets(target_list)
-        run_and_raise(self.get_node_communicator(), com_cmd)
+        if not need_stopped_cluster:
+            # If cluster must be stopped then we cannot reload corosync because
+            # the cluster is stopped. If it is not stopped, we do not even get
+            # here.
+            com_cmd = ReloadCorosyncConf(self.report_processor)
+            com_cmd.set_targets(target_list)
+            run_and_raise(self.get_node_communicator(), com_cmd)
         # Reload qdevice if needed
         if need_qdevice_reload:
             self.report_processor.process(
