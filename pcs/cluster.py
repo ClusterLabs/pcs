@@ -1392,7 +1392,7 @@ def cluster_auth_cmd(lib, argv, modifiers):
         for node_name in not_authorized_node_name_list:
             for node in cluster_node_list:
                 if node.name == node_name:
-                    if node.addrs_plain:
+                    if node.addrs_plain():
                         not_auth_node_list.append(node)
                     else:
                         print(
@@ -1405,7 +1405,7 @@ def cluster_auth_cmd(lib, argv, modifiers):
                 username=username,
                 password=password,
                 dest_list=[dict(
-                    addr=node.addrs_plain[0],
+                    addr=node.addrs_plain()[0],
                     port=settings.pcsd_default_port,
                 )],
             ) for node in not_auth_node_list
@@ -1651,3 +1651,38 @@ def link_remove(lib, argv, modifiers):
         force_flags.append(report_codes.SKIP_OFFLINE_NODES)
 
     lib.cluster.remove_links(argv, force_flags=force_flags)
+
+def link_update(lib, argv, modifiers):
+    """
+    Options:
+      * --force - treat validation issues and not resolvable addresses as
+        warnings instead of errors
+      * --skip-offline - skip unreachable nodes
+      * --request-timeout - HTTP request timeout
+    """
+    modifiers.ensure_only_supported(
+        "--force", "--request-timeout", "--skip-offline"
+    )
+    if len(argv) < 2:
+        raise CmdLineInputError()
+
+    force_flags = []
+    if modifiers.get("--force"):
+        force_flags.append(report_codes.FORCE)
+    if modifiers.get("--skip-offline"):
+        force_flags.append(report_codes.SKIP_OFFLINE_NODES)
+
+    linknumber = argv[0]
+    parsed = parse_args.group_by_keywords(
+        argv[1:],
+        {"options"},
+        implicit_first_group_key="nodes",
+        keyword_repeat_allowed=False
+    )
+
+    lib.cluster.update_link(
+        linknumber,
+        parse_args.prepare_options(parsed["nodes"]),
+        parse_args.prepare_options(parsed["options"]),
+        force_flags=force_flags,
+    )

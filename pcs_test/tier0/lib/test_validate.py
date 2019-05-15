@@ -1248,3 +1248,82 @@ class IsTimeInterval(TestCase):
                 ),
             ]
         )
+
+class WrapWithEmptyOrValid(TestCase):
+    def setUp(self):
+        self.validators = {
+            "a": validate.value_in("a", ["x", "y", "z"]),
+            "b": validate.value_integer_in_range("b", 0, 9),
+        }
+
+    def test_no_wrap(self):
+        validators = validate.wrap_with_empty_or_valid(
+            self.validators, wrap=False
+        )
+        validators.append(validate.value_port_number("c"))
+
+        assert_report_item_list_equal(
+            validate.run_collection_of_option_validators(
+                {"a": "", "b": "", "c": ""},
+                validators
+            ),
+            [
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_name="a",
+                    option_value="",
+                    allowed_values=["x", "y", "z"],
+                ),
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_name="b",
+                    option_value="",
+                    allowed_values="0..9",
+                ),
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_name="c",
+                    option_value="",
+                    allowed_values="a port number (1-65535)",
+                ),
+            ]
+        )
+
+    def test_wrap(self):
+        validators = validate.wrap_with_empty_or_valid(self.validators)
+        validators.append(validate.value_port_number("c"))
+
+        assert_report_item_list_equal(
+            validate.run_collection_of_option_validators(
+                {"a": "", "b": "", "c": ""},
+                validators
+            ),
+            [
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_name="c",
+                    option_value="",
+                    allowed_values="a port number (1-65535)",
+                ),
+            ]
+        )
+        assert_report_item_list_equal(
+            validate.run_collection_of_option_validators(
+                {"a": "X", "b": "Y"},
+                validators
+            ),
+            [
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_name="a",
+                    option_value="X",
+                    allowed_values=["x", "y", "z"],
+                ),
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_name="b",
+                    option_value="Y",
+                    allowed_values="0..9",
+                ),
+            ]
+        )

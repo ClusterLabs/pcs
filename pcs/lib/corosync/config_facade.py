@@ -137,7 +137,10 @@ class ConfigFacade:
                 result.append(node.CorosyncNode(
                     node_data.get("name"),
                     [
-                        node.CorosyncNodeAddress(node_data[f"ring{i}_addr"], i)
+                        node.CorosyncNodeAddress(
+                            node_data[f"ring{i}_addr"],
+                            str(i)
+                        )
                         for i in range(constants.LINKS_MAX)
                         if node_data.get(f"ring{i}_addr")
                     ],
@@ -260,7 +263,7 @@ class ConfigFacade:
             links.append(link)
 
         for link in sorted(links, key=lambda item: item["linknumber"]):
-            self._add_link_options(link)
+            self._set_link_options(link)
 
     def add_link(self, node_addr_map, options):
         """
@@ -296,41 +299,33 @@ class ConfigFacade:
 
         # Add link options.
         if options:
-            self._add_link_options(options)
+            self._set_link_options(options)
 
-    def _add_link_options(self, options):
+    def _set_link_options(
+        self, options, interface_section_list=None, linknumber=None
+    ):
         """
-        Add a new interface section with link options
+        Add a new or change an existing interface section with link options
 
         dict options -- link options
+        list interface_section_list -- list of existing sections to be changed
+        string linknumber -- linknumber to set to a newly created section
         """
         # If the only option is "linknumber" then there is no point in adding
-        # the options at all.
+        # the options at all. It would mean there are no options for the
+        # particular link.
         if not [name for name in options if name != "linknumber"]:
             return
 
-        options_translate = {
-            "link_priority": "knet_link_priority",
-            "ping_interval": "knet_ping_interval",
-            "ping_precision": "knet_ping_precision",
-            "ping_timeout": "knet_ping_timeout",
-            "pong_count": "knet_pong_count",
-            "transport": "knet_transport",
-        }
-        totem_section = self.__ensure_section(self.config, "totem")[-1]
-        new_link_section = config_parser.Section("interface")
-        options_to_set = {}
-        for name, value in options.items():
-            if name == "broadcast":
-                # If broadcast == 1, transform it to broadcast == yes. Else do
-                # not put the option to the config at all.
-                if value in ("1", 1):
-                    value = "yes"
-                else:
-                    continue
-            options_to_set[options_translate.get(name, name)] = value
-        self.__set_section_options([new_link_section], options_to_set)
-        totem_section.add_section(new_link_section)
+        options_to_set = self.__translate_link_options(options)
+        if not interface_section_list:
+            new_section = config_parser.Section("interface")
+            if linknumber:
+                new_section.set_attribute("linknumber", linknumber)
+            totem_section = self.__ensure_section(self.config, "totem")[-1]
+            totem_section.add_section(new_section)
+            interface_section_list = [new_section]
+        self.__set_section_options(interface_section_list, options_to_set)
         self.__remove_empty_sections(self.config)
 
     def remove_links(self, link_list):
@@ -358,6 +353,79 @@ class ConfigFacade:
                         f"ring{link_number}_addr"
                     )
         self.__remove_empty_sections(self.config)
+
+    def update_link(self, linknumber, node_addr_map, options):
+        """
+        Change an existing link - node addresses and/or link options
+
+        string linknumber -- link to be changed
+        dict node_addr_map -- key: node name, value: node address for the link
+        dict link_options -- link options
+        """
+        self._need_stopped_cluster = True
+        # make sure we do not change the linknumber
+        if "linknumber" in options:
+            del options["linknumber"]
+        # change addresses
+        if node_addr_map:
+            for nodelist_section in self.config.get_sections("nodelist"):
+                for node_section in nodelist_section.get_sections("node"):
+                    node_name = self._get_node_data(node_section).get("name")
+                    if node_name in node_addr_map:
+                        node_section.set_attribute(
+                            f"ring{linknumber}_addr",
+                            node_addr_map[node_name]
+                        )
+        # change options
+        if options:
+            target_interface_section_list = []
+            for totem_section in self.config.get_sections("totem"):
+                for interface_section in totem_section.get_sections(
+                    "interface"
+                ):
+                    if (
+                        linknumber
+                        ==
+                        # if no linknumber is set, corosync treats it as 0
+                        interface_section.get_attribute_value("linknumber", "0")
+                    ):
+                        target_interface_section_list.append(interface_section)
+            self._set_link_options(
+                options,
+                interface_section_list=target_interface_section_list,
+                linknumber=linknumber
+            )
+        self.__remove_empty_sections(self.config)
+
+    def get_links_options(self):
+        """
+        Get all links' options in a dict: key=linknumber value=dict of options
+        """
+        transport = self.get_transport()
+        allowed_options = (
+            constants.LINK_OPTIONS_UDP
+            if transport in constants.TRANSPORTS_UDP
+            else constants.LINK_OPTIONS_KNET_COROSYNC
+        )
+        raw_options = dict()
+        for totem_section in self.config.get_sections("totem"):
+            for interface_section in totem_section.get_sections("interface"):
+                # if no linknumber is set, corosync treats it as 0
+                linknumber = interface_section.get_attribute_value(
+                    "linknumber", "0"
+                )
+                if linknumber not in raw_options:
+                    raw_options[linknumber] = dict()
+                for name, value in interface_section.get_attributes():
+                    if name in allowed_options:
+                        raw_options[linknumber][name] = value
+                # make sure the linknumber is present for knet
+                if transport in constants.TRANSPORTS_KNET:
+                    raw_options[linknumber]["linknumber"] = linknumber
+        return {
+            linknumber: self.__translate_link_options(options, False)
+            for linknumber, options in raw_options.items()
+        }
 
     def get_transport(self):
         transport = None
@@ -704,9 +772,52 @@ class ConfigFacade:
     def __remove_empty_sections(self, parent_section):
         for section in parent_section.get_sections():
             self.__remove_empty_sections(section)
-            if section.empty:
+            if (
+                section.empty
+                or
+                (
+                    section.name == "interface"
+                    and
+                    list(section.get_attributes_dict().keys()) == ["linknumber"]
+                )
+            ):
                 parent_section.del_section(section)
 
+
+    @staticmethod
+    def __translate_link_options(options, input_to_corosync=True):
+        pairs = constants.LINK_OPTIONS_KNET_TRANSLATION
+        if input_to_corosync:
+            translate_map = {pair[0]: pair[1] for pair in pairs}
+        else:
+            translate_map = {pair[1]: pair[0] for pair in pairs}
+        result = {
+            translate_map.get(name, name): value
+            for name, value in options.items()
+        }
+
+        if "broadcast" in result:
+            if input_to_corosync:
+                # If broadcast == 1, transform it to broadcast == yes. If this
+                # is called from an update where broadcast is being disabled,
+                # remove broadcast from corosync.conf. Else do not put the
+                # option to the config at all. From man corosync.conf, there is
+                # only one allowed value: "yes".
+                if result["broadcast"] in ("1", 1):
+                    result["broadcast"] = "yes"
+                elif result["broadcast"] in ("0", 0, ""):
+                    result["broadcast"] = ""
+                else:
+                    del result["broadcast"]
+            else:
+                # When displaying config to users, do the opposite
+                # transformation: only "yes" is allowed.
+                if result["broadcast"] == "yes":
+                    result["broadcast"] = "1"
+                else:
+                    del result["broadcast"]
+
+        return result
 
 def _add_prefix_to_dict_keys(prefix, data):
     return {"{}{}".format(prefix, key): value for key, value in data.items()}

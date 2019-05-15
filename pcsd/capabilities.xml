@@ -266,6 +266,13 @@
         pcs commands: pcs cluster link delete | remove
       </description>
     </capability>
+    <capability id="corosync.link.update" in-pcs="1" in-pcsd="0">
+      <description>
+        Change addresses and/or options of an existing corosync link.
+
+        pcs commands: pcs cluster link update
+      </description>
+    </capability>
     <capability id="corosync.qdevice.model.net" in-pcs="1" in-pcsd="0">
       <description>
         Set up and manage a corosync qdevice model "net": setup, destroy, start,

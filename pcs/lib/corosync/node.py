@@ -36,8 +36,17 @@ class CorosyncNode(
     def __new__(cls, name, addrs, nodeid):
         return super().__new__(cls, name, tuple(addrs), nodeid)
 
-    @property
-    def addrs_plain(self):
+    def addr_plain_for_link(self, link):
+        for addr in self.addrs:
+            if addr.link == link:
+                return addr.addr
+        return None
+
+    def addrs_plain(self, except_link=None):
+        if except_link:
+            return [
+                addr.addr for addr in self.addrs if addr.link != except_link
+            ]
         if self._addrs_plain is None:
             self._addrs_plain = [addr.addr for addr in self.addrs]
         return self._addrs_plain

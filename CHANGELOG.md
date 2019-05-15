@@ -13,7 +13,7 @@
   ([rhbz#1667053])
 - Support for sbd option SBD\_TIMEOUT\_ACTION ([rhbz#1664828])
 - Support for clearing expired moves and bans of resources ([rhbz#1625386])
-- Commands for adding and removing knet links ([rhbz#1667058])
+- Commands for adding, changing and removing corosync links ([rhbz#1667058])
 
 ### Fixed
 - Corosync config file parser updated and made more strict to match changes in

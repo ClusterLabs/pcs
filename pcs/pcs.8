@@ -381,6 +381,15 @@ Remove specified corosync links.
 link remove <linknumber> [<linknumber>]...
 Remove specified corosync links.
 .TP
+link update <linknumber> [<node_name>=<node_address>...] [options <link options>]
+Change node addresses / link options of an existing corosync link. Use this if you cannot add / remove links which is the preferred way.
+.br
+Link options (documented in corosync.conf(5) man page) are:
+.br
+for knet transport: link_priority, mcastport, ping_interval, ping_precision, ping_timeout, pong_count, transport (udp or sctp)
+.br
+for udp and udpu transports: bindnetaddr, broadcast, mcastaddr, mcastport, ttl
+.TP
 uidgid
 List the current configured uids and gids of users allowed to connect to corosync.
 .TP

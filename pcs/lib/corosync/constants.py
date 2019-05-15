@@ -25,6 +25,37 @@ IP_VERSION_VALUES = (
     IP_VERSION_4, IP_VERSION_6, IP_VERSION_46, IP_VERSION_64
 )
 
+# This must list ALL knet options even if they translate to themselves.
+# The list is used to get a set of allowed options.
+LINK_OPTIONS_KNET_TRANSLATION = (
+    # (user facing name, corosync.conf name)
+    ("linknumber", "linknumber"),
+    ("link_priority", "knet_link_priority"),
+    ("mcastport", "mcastport"),
+    ("ping_interval", "knet_ping_interval"),
+    ("ping_precision", "knet_ping_precision"),
+    ("ping_timeout", "knet_ping_timeout"),
+    ("pong_count", "knet_pong_count"),
+    ("transport", "knet_transport"),
+)
+# This is what pcs expects to get from users. Actual names in corosync.conf are
+# different.
+LINK_OPTIONS_KNET_USER = tuple(sorted([
+    pair[0] for pair in LINK_OPTIONS_KNET_TRANSLATION
+]))
+# This is what corsync works with.
+LINK_OPTIONS_KNET_COROSYNC = tuple(sorted([
+    pair[1] for pair in LINK_OPTIONS_KNET_TRANSLATION
+]))
+
+LINK_OPTIONS_UDP = (
+    "bindnetaddr",
+    "broadcast",
+    "mcastaddr",
+    "mcastport",
+    "ttl",
+)
+
 QUORUM_OPTIONS = (
     "auto_tie_breaker",
     "last_man_standing",

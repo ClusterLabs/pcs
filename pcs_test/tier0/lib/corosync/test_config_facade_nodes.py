@@ -56,8 +56,12 @@ class GetNodesTest(TestCase):
         nodes = self.nodes_from_config(config)
         self.assert_equal_nodelist(
             [
-                {"id": "1", "name": "n1n", "addrs": [(0, "n1a")]},
-                {"id": "2", "name": "n2n", "addrs": [(0, "n2a"), (1, "n2b")]}
+                {"id": "1", "name": "n1n", "addrs": [("0", "n1a")]},
+                {
+                    "id": "2",
+                    "name": "n2n",
+                    "addrs": [("0", "n2a"), ("1", "n2b")],
+                },
             ],
             nodes
         )
@@ -83,8 +87,12 @@ class GetNodesTest(TestCase):
         nodes = self.nodes_from_config(config)
         self.assert_equal_nodelist(
             [
-                {"id": "1", "name": "n1n", "addrs": [(0, "n1a")]},
-                {"id": "2", "name": "n2n", "addrs": [(0, "n2a"), (1, "n2b")]}
+                {"id": "1", "name": "n1n", "addrs": [("0", "n1a")]},
+                {
+                    "id": "2",
+                    "name": "n2n",
+                    "addrs": [("0", "n2a"), ("1", "n2b")],
+                },
             ],
             nodes
         )
@@ -123,19 +131,23 @@ class GetNodesTest(TestCase):
         nodes = self.nodes_from_config(config)
         self.assert_equal_nodelist(
             [
-                {"id": "1", "name": None, "addrs": [(0, "n1a")]},
-                {"id": None, "name": "n2n", "addrs": [(0, "n2a")]},
+                {"id": "1", "name": None, "addrs": [("0", "n1a")]},
+                {"id": None, "name": "n2n", "addrs": [("0", "n2a")]},
                 {"id": "3", "name": "n3n", "addrs": []},
-                {"id": "4", "name": "n4n", "addrs": [(1, "n4b")]},
-                {"id": "5", "name": "n5n", "addrs": [(1, "n5b"), (3, "n5d")]},
+                {"id": "4", "name": "n4n", "addrs": [("1", "n4b")]},
+                {
+                    "id": "5",
+                    "name": "n5n",
+                    "addrs": [("1", "n5b"), ("3", "n5d")],
+                },
             ],
             nodes
         )
-        self.assertEqual(["n1a"], nodes[0].addrs_plain)
-        self.assertEqual(["n2a"], nodes[1].addrs_plain)
-        self.assertEqual([], nodes[2].addrs_plain)
-        self.assertEqual(["n4b"], nodes[3].addrs_plain)
-        self.assertEqual(["n5b", "n5d"], nodes[4].addrs_plain)
+        self.assertEqual(["n1a"], nodes[0].addrs_plain())
+        self.assertEqual(["n2a"], nodes[1].addrs_plain())
+        self.assertEqual([], nodes[2].addrs_plain())
+        self.assertEqual(["n4b"], nodes[3].addrs_plain())
+        self.assertEqual(["n5b", "n5d"], nodes[4].addrs_plain())
 
     def test_sort_rings(self):
         config = dedent("""\
@@ -155,7 +167,7 @@ class GetNodesTest(TestCase):
                 {
                     "id": "1",
                     "name": "n1n",
-                    "addrs": [(0, "n1a"), (1, "n1b"), (3, "n1d")]
+                    "addrs": [("0", "n1a"), ("1", "n1b"), ("3", "n1d")]
                 },
             ],
             nodes

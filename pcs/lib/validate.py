@@ -636,6 +636,21 @@ def allow_extra_names(code_to_allow, allow):
         "extra_names_allowed": allow,
     }
 
+def wrap_with_empty_or_valid(validators_dict, wrap=True):
+    """
+    Turn a dict of validators to a list, wrapping them with value_empty_or_valid
+
+    dict validators_dict -- key: option name, value: option validator
+    bool wrap -- set to False to get the original validators
+    """
+    if not wrap:
+        # return a list so we can call its append / extend methods
+        return list(validators_dict.values())
+    return [
+        value_empty_or_valid(option_name, validator)
+        for option_name, validator in validators_dict.items()
+    ]
+
 def _if_option_exists(option_name):
     def params_wrapper(validate_func):
         def prepare(option_dict):
