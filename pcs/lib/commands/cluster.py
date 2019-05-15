@@ -1,3 +1,4 @@
+# pylint: disable=too-many-lines
 import math
 import os.path
 import time
@@ -1450,4 +1451,64 @@ def remove_links(env, linknumber_list, force_flags=None):
 
     corosync_conf.remove_links(linknumber_list)
 
+    env.push_corosync_conf(corosync_conf, skip_offline)
+
+def update_link(
+    env, linknumber, node_addr_map=None, link_options=None, force_flags=None
+):
+    """
+    Change an existing corosync link
+
+    env LibraryEnvironment
+    string linknumber -- the link to be changed
+    dict node_addr_map -- key: node name, value: node address for the link
+    dict link_options -- link options
+    force_flags list -- list of flags codes
+    """
+    _ensure_live_env(env) # raises if env is not live
+
+    node_addr_map = node_addr_map or dict()
+    link_options = link_options or dict()
+    force_flags = force_flags or set()
+    force = report_codes.FORCE in force_flags
+    skip_offline = report_codes.SKIP_OFFLINE_NODES in force_flags
+
+    report_processor = SimpleReportProcessor(env.report_processor)
+    corosync_conf = env.get_corosync_conf()
+
+    # validations
+
+    dummy_cluster_nodes_names, nodes_report_list = get_existing_nodes_names(
+        corosync_conf,
+        # Pcs is unable to communicate with nodes missing names. It cannot send
+        # new corosync.conf to them. That might break the cluster. Hence we
+        # error out.
+        # This check is done later as well, when sending corosync.conf to
+        # nodes. But we need node names to be present so we can set new
+        # addresses to them. We may as well do the check right now.
+        error_on_missing_name=True
+    )
+    report_processor.report_list(nodes_report_list)
+
+    report_processor.report_list(config_validators.update_link(
+        linknumber,
+        node_addr_map,
+        link_options,
+        corosync_conf.get_links_options().get(linknumber, {}),
+        corosync_conf.get_nodes(),
+        # cluster must be stopped for updating a link and then we cannot get
+        # nodes from CIB
+        [],
+        corosync_conf.get_used_linknumber_list(),
+        corosync_conf.get_transport(),
+        corosync_conf.get_ip_version(),
+        force_unresolvable=force
+    ))
+
+    if report_processor.has_errors:
+        raise LibraryError()
+
+    # validations done
+
+    corosync_conf.update_link(linknumber, node_addr_map, link_options)
     env.push_corosync_conf(corosync_conf, skip_offline)

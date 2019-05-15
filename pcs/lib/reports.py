@@ -1136,6 +1136,19 @@ def node_addresses_already_exist(address_list):
         }
     )
 
+def node_addresses_cannot_be_empty(node_name_list):
+    """
+    Trying to set an empty node address or remove a node address in an update
+
+    iterable node_name_list -- list of node names with empty addresses
+    """
+    return ReportItem.error(
+        report_codes.NODE_ADDRESSES_CANNOT_BE_EMPTY,
+        info={
+            "node_name_list": sorted(node_name_list),
+        }
+    )
+
 def node_addresses_duplication(address_list):
     """
     Trying to set one address for more nodes or links, addresses must be unique

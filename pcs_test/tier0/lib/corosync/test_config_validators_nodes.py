@@ -263,6 +263,27 @@ class AddNodes(TestCase):
             ]
         )
 
+    def test_node_addr_empty(self):
+        assert_report_item_list_equal(
+            config_validators.add_nodes(
+                [
+                    {"name": "node3", "addrs": ["", "addr13"]},
+                    {"name": "node4", "addrs": ["addr04", "addr14"]},
+                    {"name": "node5", "addrs": ["addr05", ""]},
+                    {"name": "node6", "addrs": ["", ""]},
+                    {"name": None, "addrs": ["", ""]},
+                ],
+                self.fixture_coronodes_2_links,
+                []
+            ),
+            [
+                fixture.error(
+                    report_codes.NODE_ADDRESSES_CANNOT_BE_EMPTY,
+                    node_name_list=["node3", "node5", "node6"],
+                ),
+            ]
+        )
+
     def test_node_addrs_unresolvable(self):
         assert_report_item_list_equal(
             config_validators.add_nodes(

@@ -2309,6 +2309,26 @@ class NodeAddressesAlreadyExist(NameBuildTest):
             }
         )
 
+class NodeAddressesCannotBeEmpty(NameBuildTest):
+    code = codes.NODE_ADDRESSES_CANNOT_BE_EMPTY
+    def test_one_node(self):
+        self.assert_message_from_report(
+            (
+                "Empty address set for node 'node2', "
+                "an address cannot be empty"
+            ),
+            reports.node_addresses_cannot_be_empty(["node2"])
+        )
+
+    def test_more_nodes(self):
+        self.assert_message_from_report(
+            (
+                "Empty address set for nodes 'node1', 'node2', "
+                "an address cannot be empty"
+            ),
+            reports.node_addresses_cannot_be_empty(["node2", "node1"])
+        )
+
 class NodeAddressesDuplication(NameBuildTest):
     code = codes.NODE_ADDRESSES_DUPLICATION
     def test_message(self):

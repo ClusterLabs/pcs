@@ -66,5 +66,5 @@ def __get_nodes_names(
 def __get_nodes_addrs(corosync_nodes, remote_and_guest_nodes):
     nodes_addrs = [node.addr for node in remote_and_guest_nodes]
     for node in corosync_nodes:
-        nodes_addrs += node.addrs_plain
+        nodes_addrs += node.addrs_plain()
     return nodes_addrs

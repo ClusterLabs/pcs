@@ -863,6 +863,16 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
         )
     ,
 
+    codes.NODE_ADDRESSES_CANNOT_BE_EMPTY: lambda info:
+        (
+            "Empty address set for node{_s} {_nodes}, "
+            "an address cannot be empty"
+        ).format(
+            _s=("s" if len(info["node_name_list"]) > 1 else ""),
+            _nodes=format_list(info["node_name_list"])
+        )
+    ,
+
     codes.NODE_ADDRESSES_DUPLICATION: lambda info:
         "Node addresses must be unique, duplicate addresses: {_addrs}".format(
             _addrs=format_list(info["address_list"])

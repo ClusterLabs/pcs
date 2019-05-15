@@ -529,9 +529,6 @@ class PushCorosyncConfLiveNoQdeviceTest(PushCorosyncConfLiveBase):
                 self.corosync_conf_text,
                 node_labels=self.node_labels
             )
-            .http.corosync.reload_corosync_conf(
-                node_labels=self.node_labels[:1]
-            )
         )
         self.env_assistant.get_env().push_corosync_conf(
             self.corosync_conf_facade
@@ -554,10 +551,6 @@ class PushCorosyncConfLiveNoQdeviceTest(PushCorosyncConfLiveBase):
             fixture.info(
                 report_codes.COROSYNC_CONFIG_ACCEPTED_BY_NODE,
                 node="node-2",
-            ),
-            fixture.info(
-                report_codes.COROSYNC_CONFIG_RELOADED,
-                node="node-1"
             ),
         ])
 
@@ -740,22 +733,6 @@ class PushCorosyncConfLiveNoQdeviceTest(PushCorosyncConfLiveBase):
                     )
                 ]
             )
-            .http.corosync.reload_corosync_conf(
-                communication_list=[
-                    [
-                        {
-                            "label": self.node_labels[0],
-                            "response_code": 401,
-                            "output": """{"notauthorized":"true"}"""
-                        },
-                    ],
-                    [
-                        {
-                            "label": self.node_labels[1],
-                        },
-                    ],
-                ]
-            )
         )
         self.env_assistant.get_env().push_corosync_conf(
             self.corosync_conf_facade, skip_offline_nodes=True
@@ -790,16 +767,6 @@ class PushCorosyncConfLiveNoQdeviceTest(PushCorosyncConfLiveBase):
             fixture.info(
                 report_codes.COROSYNC_CONFIG_ACCEPTED_BY_NODE,
                 node="node-2",
-            ),
-            fixture.warn(
-                report_codes.NODE_COMMUNICATION_ERROR_NOT_AUTHORIZED,
-                node="node-1",
-                reason="HTTP error: 401",
-                command="remote/reload_corosync_conf",
-            ),
-            fixture.info(
-                report_codes.COROSYNC_CONFIG_RELOADED,
-                node="node-2"
             ),
         ])
 

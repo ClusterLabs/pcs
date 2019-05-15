@@ -1,9 +1,185 @@
+# pylint: disable=too-many-lines
 from textwrap import dedent
 from unittest import TestCase
 
 from pcs_test.tools.assertions import ac
 
 import pcs.lib.corosync.config_facade as lib
+
+class GetLinkOptions(TestCase):
+    def _assert_options(self, config, options):
+        facade = lib.ConfigFacade.from_string(config)
+        self.assertEqual(options, facade.get_links_options())
+        self.assertFalse(facade.need_stopped_cluster)
+        self.assertFalse(facade.need_qdevice_reload)
+
+    def test_no_options(self):
+        self._assert_options("", {})
+
+        self._assert_options(
+            dedent("""\
+                totem {
+                }
+            """),
+            {}
+        )
+
+    def test_no_linknumber(self):
+        self._assert_options(
+            dedent("""\
+                totem {
+                    interface {
+                    }
+                }
+            """),
+            {"0": {"linknumber": "0"}}
+        )
+
+    def test_no_linknumber_more_sections(self):
+        self._assert_options(
+            dedent("""\
+                totem {
+                    transport: knet
+                    interface {
+                        mcastport: 1234
+                    }
+                    interface {
+                        linknumber: 1
+                        mcastport: 2345
+                    }
+                    interface {
+                        mcastport: 3456
+                    }
+                }
+            """),
+            {
+                "0": {"linknumber": "0", "mcastport": "3456"},
+                "1": {"linknumber": "1", "mcastport": "2345"},
+            }
+        )
+
+    def test_all_options_knet(self):
+        self._assert_options(
+            dedent("""\
+                totem {
+                    transport: knet
+                    interface {
+                        linknumber: 1
+                        mcastport: 2345
+                        knet_link_priority: 2
+                        knet_ping_interval: 3
+                        knet_ping_precision: 4
+                        knet_ping_timeout: 5
+                        knet_pong_count: 6
+                        knet_transport: sctp
+                        unknown: option
+                    }
+                }
+            """),
+            {
+                "1": {
+                    "linknumber": "1",
+                    "mcastport": "2345",
+                    "link_priority": "2",
+                    "ping_interval": "3",
+                    "ping_precision": "4",
+                    "ping_timeout": "5",
+                    "pong_count": "6",
+                    "transport": "sctp",
+                },
+            }
+        )
+
+    def test_all_options_udp(self):
+        self._assert_options(
+            dedent("""\
+                totem {
+                    transport: udp
+                    interface {
+                        bindnetaddr: 10.0.0.1
+                        broadcast: yes
+                        mcastaddr: 10.0.0.2
+                        mcastport: 1234
+                        ttl: 123
+                    }
+                }
+            """),
+            {
+                "0": {
+                   "bindnetaddr": "10.0.0.1",
+                   "broadcast": "1",
+                   "mcastaddr": "10.0.0.2",
+                   "mcastport": "1234",
+                   "ttl": "123",
+                },
+            }
+        )
+
+    def test_translate_conflict(self):
+        self._assert_options(
+            dedent("""\
+                totem {
+                    transport: knet
+                    interface {
+                        linknumber: 1
+                        link_priority: 0
+                        knet_link_priority: 2
+                        link_priority: 3
+                    }
+                    interface {
+                        linknumber: 1
+                        link_priority: 4
+                    }
+                }
+            """),
+            {
+                "1": {
+                    "linknumber": "1",
+                    "link_priority": "2",
+                },
+            }
+        )
+
+    def test_more_sections_and_conflicting_options(self):
+        self._assert_options(
+            dedent("""\
+                totem {
+                    transport: knet
+                    interface {
+                        linknumber: 0
+                        knet_link_priority: 3
+                        knet_transport: sctp
+                    }
+                    interface {
+                        linknumber: 1
+                        knet_transport: udp
+                    }
+                    interface {
+                        linknumber: 0
+                        knet_link_priority: 4
+                        knet_ping_interval: 2
+                    }
+                }
+                totem {
+                    interface {
+                        linknumber: 0
+                        knet_transport: udp
+                    }
+                }
+            """),
+            {
+                "0": {
+                    "linknumber": "0",
+                    "link_priority": "4",
+                    "ping_interval": "2",
+                    "transport": "udp",
+                },
+                "1": {
+                    "linknumber": "1",
+                    "transport": "udp",
+                },
+            }
+        )
 
 class AddLink(TestCase):
     before = dedent("""\
@@ -865,3 +1041,539 @@ class RemoveLinks(TestCase):
             }
         """)
         self.assert_remove(["0"], before, after)
+
+class UpdateLink(TestCase):
+    def _assert_update(self, before, after, linknumber, options, node_addr_map):
+        facade = lib.ConfigFacade.from_string(before)
+        facade.update_link(linknumber, node_addr_map, options)
+        ac(after, facade.config.export())
+        self.assertTrue(facade.need_stopped_cluster)
+        self.assertFalse(facade.need_qdevice_reload)
+
+    def test_no_changes(self):
+        config = dedent("""\
+            totem {
+                transport: knet
+
+                interface {
+                    linknumber: 1
+                    knet_transport: udp
+                }
+            }
+
+            nodelist {
+                node {
+                    ring0_addr: node1-addr0
+                    ring1_addr: node1-addr1
+                    name: node1
+                    nodeid: 1
+                }
+
+                node {
+                    ring0_addr: node2-addr0
+                    ring1_addr: node2-addr1
+                    name: node2
+                    nodeid: 2
+                }
+            }
+        """)
+        self._assert_update(config, config, "1", {}, {})
+
+    def test_wrong_linknumber(self):
+        before = dedent("""\
+            totem {
+                transport: knet
+
+                interface {
+                    linknumber: 1
+                    knet_transport: udp
+                }
+            }
+
+            nodelist {
+                node {
+                    ring0_addr: node1-addr0
+                    ring1_addr: node1-addr1
+                    name: node1
+                    nodeid: 1
+                }
+
+                node {
+                    ring0_addr: node2-addr0
+                    ring1_addr: node2-addr1
+                    name: node2
+                    nodeid: 2
+                }
+            }
+        """)
+        after = dedent("""\
+            totem {
+                transport: knet
+
+                interface {
+                    linknumber: 1
+                    knet_transport: udp
+                }
+
+                interface {
+                    linknumber: 2
+                    knet_transport: sctp
+                }
+            }
+
+            nodelist {
+                node {
+                    ring0_addr: node1-addr0
+                    ring1_addr: node1-addr1
+                    name: node1
+                    nodeid: 1
+                    ring2_addr: new-addr
+                }
+
+                node {
+                    ring0_addr: node2-addr0
+                    ring1_addr: node2-addr1
+                    name: node2
+                    nodeid: 2
+                }
+            }
+        """)
+        self._assert_update(
+            before,
+            after,
+            "2",
+            {"transport": "sctp"},
+            {"node1": "new-addr"}
+        )
+
+    def test_do_not_allow_linknumber_change(self):
+        before = dedent("""\
+            totem {
+                transport: knet
+
+                interface {
+                    linknumber: 1
+                    knet_transport: udp
+                }
+            }
+
+            nodelist {
+                node {
+                    ring0_addr: node1-addr0
+                    ring1_addr: node1-addr1
+                    name: node1
+                    nodeid: 1
+                }
+
+                node {
+                    ring0_addr: node2-addr0
+                    ring1_addr: node2-addr1
+                    name: node2
+                    nodeid: 2
+                }
+            }
+        """)
+        after = dedent("""\
+            totem {
+                transport: knet
+
+                interface {
+                    linknumber: 1
+                    knet_transport: sctp
+                }
+            }
+
+            nodelist {
+                node {
+                    ring0_addr: node1-addr0
+                    ring1_addr: new-addr
+                    name: node1
+                    nodeid: 1
+                }
+
+                node {
+                    ring0_addr: node2-addr0
+                    ring1_addr: node2-addr1
+                    name: node2
+                    nodeid: 2
+                }
+            }
+        """)
+        self._assert_update(
+            before,
+            after,
+            "1",
+            {"linknumber": "2", "transport": "sctp"},
+            {"node1": "new-addr"}
+        )
+
+    def test_addresses(self):
+        before = dedent("""\
+            totem {
+                transport: knet
+            }
+
+            nodelist {
+                node {
+                    ring0_addr: node1-addr0
+                    ring1_addr: node1-addr1
+                    name: node1
+                    nodeid: 1
+                }
+
+                node {
+                    ring0_addr: node2-addr0
+                    ring1_addr: node2-addr1
+                    name: node2
+                    nodeid: 2
+                }
+            }
+        """)
+        after = dedent("""\
+            totem {
+                transport: knet
+            }
+
+            nodelist {
+                node {
+                    ring0_addr: node1-addr0
+                    ring1_addr: new-addr
+                    name: node1
+                    nodeid: 1
+                }
+
+                node {
+                    ring0_addr: node2-addr0
+                    ring1_addr: node2-addr1
+                    name: node2
+                    nodeid: 2
+                }
+            }
+        """)
+        self._assert_update(
+            before,
+            after,
+            "1",
+            {},
+            {"node1": "new-addr", "nodeX": "addrX"}
+        )
+
+    def test_addresses_more_sections(self):
+        before = dedent("""\
+            totem {
+                transport: knet
+            }
+
+            nodelist {
+                node {
+                    ring0_addr: node1-addr0
+                    ring1_addr: node1-addr1
+                    ring0_addr: node1-addr0a
+                    name: node1
+                    nodeid: 1
+                }
+
+                node {
+                    ring0_addr: node2-addr0
+                    ring1_addr: node2-addr1
+                    name: node2
+                    nodeid: 2
+                }
+            }
+
+            nodelist {
+                node {
+                    ring0_addr: node1-addr0b
+                    name: node1
+                    nodeid: 1
+                }
+            }
+        """)
+        after = dedent("""\
+            totem {
+                transport: knet
+            }
+
+            nodelist {
+                node {
+                    ring0_addr: new-addr
+                    ring1_addr: node1-addr1
+                    name: node1
+                    nodeid: 1
+                }
+
+                node {
+                    ring0_addr: node2-addr0
+                    ring1_addr: node2-addr1
+                    name: node2
+                    nodeid: 2
+                }
+            }
+
+            nodelist {
+                node {
+                    ring0_addr: new-addr
+                    name: node1
+                    nodeid: 1
+                }
+            }
+        """)
+        self._assert_update(
+            before,
+            after,
+            "0",
+            {},
+            {"node1": "new-addr"}
+        )
+
+    def test_options(self):
+        before = dedent("""\
+            totem {
+                transport: knet
+
+                interface {
+                    linknumber: 0
+                    knet_transport: sctp
+                }
+
+                interface {
+                    linknumber: 1
+                    knet_transport: udp
+                    mcastport: 1234
+                }
+            }
+        """)
+        after = dedent("""\
+            totem {
+                transport: knet
+
+                interface {
+                    linknumber: 0
+                    knet_transport: sctp
+                }
+
+                interface {
+                    linknumber: 1
+                    knet_transport: sctp
+                    knet_pong_count: 10
+                }
+            }
+        """)
+        self._assert_update(
+            before,
+            after,
+            "1",
+            {"transport": "sctp", "mcastport": "", "pong_count": "10"},
+            {}
+        )
+
+    def test_options_more_interface_sections(self):
+        before = dedent("""\
+            totem {
+                transport: knet
+
+                interface {
+                    linknumber: 1
+                    knet_transport: udp
+                    mcastport: 1234
+                }
+
+                interface {
+                    linknumber: 0
+                    knet_transport: sctp
+                }
+
+                interface {
+                    linknumber: 1
+                    mcastport: 2345
+                }
+            }
+
+            totem {
+                interface {
+                    linknumber: 1
+                    mcastport: 3456
+                }
+            }
+        """)
+        after = dedent("""\
+            totem {
+                transport: knet
+
+                interface {
+                    linknumber: 1
+                    knet_transport: udp
+                }
+
+                interface {
+                    linknumber: 0
+                    knet_transport: sctp
+                }
+            }
+
+            totem {
+                interface {
+                    linknumber: 1
+                    mcastport: 9876
+                }
+            }
+        """)
+        self._assert_update(
+            before,
+            after,
+            "1",
+            {"mcastport": "9876"},
+            {}
+        )
+
+    def test_remove_all_options_removes_linknumber_and_section(self):
+        before = dedent("""\
+            totem {
+                transport: knet
+
+                interface {
+                    linknumber: 0
+                    knet_transport: udp
+                }
+
+                interface {
+                    linknumber: 1
+                    knet_transport: udp
+                }
+            }
+        """)
+        after = dedent("""\
+            totem {
+                transport: knet
+
+                interface {
+                    linknumber: 1
+                    knet_transport: udp
+                }
+            }
+        """)
+        self._assert_update(
+            before,
+            after,
+            "0",
+            {"transport": ""},
+            {}
+        )
+
+    def test_create_interface_section(self):
+        before = dedent("""\
+            totem {
+                transport: knet
+
+                interface {
+                    linknumber: 0
+                    knet_transport: udp
+                }
+            }
+        """)
+        after = dedent("""\
+            totem {
+                transport: knet
+
+                interface {
+                    linknumber: 0
+                    knet_transport: udp
+                }
+
+                interface {
+                    linknumber: 1
+                    knet_transport: sctp
+                }
+            }
+        """)
+        self._assert_update(
+            before,
+            after,
+            "1",
+            {"transport": "sctp"},
+            {}
+        )
+
+    def test_enable_broadcast(self):
+        before = dedent("""\
+            totem {
+                transport: udp
+
+                interface {
+                    mcastport: 1234
+                }
+            }
+        """)
+        after = dedent("""\
+            totem {
+                transport: udp
+
+                interface {
+                    mcastport: 1234
+                    broadcast: yes
+                }
+            }
+        """)
+        self._assert_update(
+            before,
+            after,
+            "0",
+            {"broadcast": "1"},
+            {}
+        )
+
+    def test_disable_broadcast(self):
+        before = dedent("""\
+            totem {
+                transport: udp
+
+                interface {
+                    mcastport: 1234
+                    broadcast: yes
+                }
+            }
+        """)
+        after = dedent("""\
+            totem {
+                transport: udp
+
+                interface {
+                    mcastport: 1234
+                }
+            }
+        """)
+        self._assert_update(
+            before,
+            after,
+            "0",
+            {"broadcast": "0"},
+            {}
+        )
+
+    def test_default_broadcast(self):
+        before = dedent("""\
+            totem {
+                transport: udp
+
+                interface {
+                    mcastport: 1234
+                    broadcast: yes
+                }
+            }
+        """)
+        after = dedent("""\
+            totem {
+                transport: udp
+
+                interface {
+                    mcastport: 1234
+                }
+            }
+        """)
+        self._assert_update(
+            before,
+            after,
+            "0",
+            {"broadcast": ""},
+            {}
+        )

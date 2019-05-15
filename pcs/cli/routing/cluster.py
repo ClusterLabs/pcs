@@ -38,6 +38,7 @@ cluster_cmd = create_router(
                 "add": cluster.link_add,
                 "delete": cluster.link_remove,
                 "remove": cluster.link_remove,
+                "update": cluster.link_update,
             },
             ["cluster", "link"]
         ),
