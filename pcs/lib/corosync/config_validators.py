@@ -67,6 +67,7 @@ def create(
     all_addrs_count = defaultdict(int)
     addr_types_per_node = []
     unresolvable_addresses = set()
+    nodes_with_empty_addr = set()
     # First, validate each node on its own. Also extract some info which will
     # be needed when validating the nodelist and inter-node dependencies.
     for i, node in enumerate(node_list, 1):
@@ -112,6 +113,12 @@ def create(
         # Cannot use node.get("addrs", []) - if node["addrs"] == None then
         # the get returns None and len(None) raises an exception.
         for link_index, addr in enumerate(node.get("addrs") or []):
+            if addr == "":
+                if node.get("name"):
+                    # No way to report name if none is set. Unnamed nodes cause
+                    # errors anyway.
+                    nodes_with_empty_addr.add(node.get("name"))
+                continue
             all_addrs_count[addr] += 1
             _validate_addr_type(
                 addr, link_index, ip_version, get_addr_type,
@@ -120,6 +127,11 @@ def create(
             )
         addr_types_per_node.append(addr_types)
     # Report all unresolvable addresses at once instead on each own.
+    # Report all empty and unresolvable addresses at once instead on each own.
+    if nodes_with_empty_addr:
+        report_items.append(
+            reports.node_addresses_cannot_be_empty(nodes_with_empty_addr)
+        )
     report_items += _report_unresolvable_addresses_if_any(
         unresolvable_addresses, force_unresolvable
     )
@@ -137,7 +149,11 @@ def create(
             reports.node_names_duplication(non_unique_names)
         )
     non_unique_addrs = {
-        addr for addr, count in all_addrs_count.items() if count > 1
+        addr
+        for addr, count in all_addrs_count.items()
+        # empty strings are not valid addresses and they are reported
+        # from a different piece of code in a different report
+        if count > 1 and addr != ""
     }
     if non_unique_addrs:
         report_items.append(
@@ -294,6 +310,7 @@ def add_nodes(
     new_addr_types_per_node = []
     links_ip_mismatch_reported = set()
     unresolvable_addresses = set()
+    nodes_with_empty_addr = set()
 
     # First, validate each node on its own. Also extract some info which will
     # be needed when validating the nodelist and inter-node dependencies.
@@ -327,6 +344,12 @@ def add_nodes(
         # Cannot use node.get("addrs", []) - if node["addrs"] == None then
         # the get returns None and len(None) raises an exception.
         for link_index, addr in enumerate(node.get("addrs") or []):
+            if addr == "":
+                if node.get("name"):
+                    # No way to report name if none is set. Unnamed nodes cause
+                    # errors anyway.
+                    nodes_with_empty_addr.add(node.get("name"))
+                continue
             new_addrs_count[addr] += 1
             addr_types.append(get_addr_type(addr))
             if get_addr_type(addr) == ADDR_UNRESOLVABLE:
@@ -355,20 +378,14 @@ def add_nodes(
                 )
 
         new_addr_types_per_node.append(addr_types)
-    # Report all unresolvable addresses at once instead on each own.
-    if unresolvable_addresses:
-        severity = ReportItemSeverity.ERROR
-        forceable = report_codes.FORCE_NODE_ADDRESSES_UNRESOLVABLE
-        if force_unresolvable:
-            severity = ReportItemSeverity.WARNING
-            forceable = None
+    # Report all empty and unresolvable addresses at once instead on each own.
+    if nodes_with_empty_addr:
         report_items.append(
-            reports.node_addresses_unresolvable(
-                unresolvable_addresses,
-                severity,
-                forceable
-            )
+            reports.node_addresses_cannot_be_empty(nodes_with_empty_addr)
         )
+    report_items += _report_unresolvable_addresses_if_any(
+        unresolvable_addresses, force_unresolvable
+    )
 
     # Reporting single-node errors finished.
     # Now report nodelist and inter-node errors.
@@ -753,12 +770,20 @@ def add_link(
 
     get_addr_type = _addr_type_analyzer()
     unresolvable_addresses = set()
+    nodes_with_empty_addr = set()
     addr_types = []
-    for dummy_node_name, node_addr in node_addr_map.items():
-        _validate_addr_type(
-            node_addr, None, ip_version, get_addr_type,
-            # these will get appended in the function
-            addr_types, unresolvable_addresses, report_items
+    for node_name, node_addr in node_addr_map.items():
+        if node_addr == "":
+            nodes_with_empty_addr.add(node_name)
+        else:
+            _validate_addr_type(
+                node_addr, None, ip_version, get_addr_type,
+                # these will get appended in the function
+                addr_types, unresolvable_addresses, report_items
+            )
+    if nodes_with_empty_addr:
+        report_items.append(
+            reports.node_addresses_cannot_be_empty(nodes_with_empty_addr)
         )
     report_items += _report_unresolvable_addresses_if_any(
         unresolvable_addresses, force_unresolvable
@@ -960,7 +985,9 @@ def _report_non_unique_addresses(existing_addrs, new_addrs):
     non_unique_addrs = {
         addr
         for addr, count in Counter(new_addrs).items()
-        if count > 1
+        # empty strings are not valid addresses and they should be reported
+        # from a different piece of code in a different report
+        if count > 1 and addr != ""
     }
     if non_unique_addrs:
         report_items.append(

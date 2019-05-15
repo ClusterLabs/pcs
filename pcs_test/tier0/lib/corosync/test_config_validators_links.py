@@ -10,6 +10,7 @@ from pcs.lib.cib.node import PacemakerNode
 from pcs.lib.corosync import config_validators, constants, node
 
 class AddLink(TestCase):
+    # pylint: disable=too-many-public-methods
     def setUp(self):
         self.new_addrs = {
             "node1": "addr1-new",
@@ -257,6 +258,28 @@ class AddLink(TestCase):
                     node_index=None,
                 )
                 for node_name in broken_nodes
+            ]
+        )
+
+    def test_empty_node_addr(self):
+        broken_nodes = sorted(self.new_addrs.keys())[1:]
+        for node_name in broken_nodes:
+            self.new_addrs[node_name] = ""
+        assert_report_item_list_equal(
+            config_validators.add_link(
+                self.new_addrs,
+                {},
+                self.coro_nodes,
+                self.pcmk_nodes,
+                self.existing_link_list,
+                self.transport,
+                constants.IP_VERSION_64
+            ),
+            [
+                fixture.error(
+                    report_codes.NODE_ADDRESSES_CANNOT_BE_EMPTY,
+                    node_name_list=broken_nodes,
+                ),
             ]
         )
 

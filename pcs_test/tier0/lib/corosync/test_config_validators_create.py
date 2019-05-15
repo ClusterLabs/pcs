@@ -337,6 +337,34 @@ class Create(TestCase):
             ]
         )
 
+    def test_node_addrs_empty(self):
+        assert_report_item_list_equal(
+            config_validators.create(
+                "test-cluster",
+                [
+                    {"name": "node1", "addrs": ["", "addr01"]},
+                    {"name": "node2", "addrs": ["addr02", ""]},
+                    {"name": "node3", "addrs": ["addr03", "addr04"]},
+                    {"name": "node4", "addrs": ["", ""]},
+                    {"name": None, "addrs": ["", ""]},
+                    {"addrs": ["", ""]},
+                ],
+                "knet",
+                "ipv6-4"
+            ),
+            [
+                fixture.error(
+                    report_codes.REQUIRED_OPTION_IS_MISSING,
+                    option_names=["name"],
+                    option_type="node 6"
+                ),
+                fixture.error(
+                    report_codes.NODE_ADDRESSES_CANNOT_BE_EMPTY,
+                    node_name_list=["node1", "node2", "node4"],
+                ),
+            ]
+        )
+
     def test_node_addrs_unresolvable(self):
         assert_report_item_list_equal(
             config_validators.create(
