@@ -1369,8 +1369,7 @@ class AddDeviceNetTest(TestCase):
                     option_names=["exec_bad.name"],
                     option_type="heuristics",
                     allowed_description=(
-                        "exec_NAME cannot contain '.:{}#' and whitespace "
-                        "characters"
+                        "exec_NAME may contain a-z A-Z 0-9 /_- characters only"
                     )
                 ),
             ]
@@ -2787,7 +2786,7 @@ class UpdateDeviceTest(TestCase):
                 lib_env,
                 {},
                 {"bad_option": "bad_value", },
-                {"mode": "bad mode"}
+                {"mode": "bad mode", "exec_bad.name": ""}
             ),
             (
                 severity.ERROR,
@@ -2806,6 +2805,14 @@ class UpdateDeviceTest(TestCase):
                 option_name="mode",
                 option_value="bad mode",
                 allowed_values=("off", "on", "sync")
+            ),
+            fixture.error(
+                report_codes.INVALID_USERDEFINED_OPTIONS,
+                option_names=["exec_bad.name"],
+                option_type="heuristics",
+                allowed_description=(
+                    "exec_NAME may contain a-z A-Z 0-9 /_- characters only"
+                )
             ),
         )
 

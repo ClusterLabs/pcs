@@ -7,6 +7,18 @@ from pcs.common import report_codes
 from pcs.lib.corosync import config_validators
 from pcs.lib.errors import ReportItemSeverity as severity
 
+
+fixture_report_exec_names = fixture.error(
+    report_codes.INVALID_USERDEFINED_OPTIONS,
+    option_names=[
+        "exec_ls bad", "exec_ls#bad", "exec_ls.bad",
+        "exec_ls:bad", "exec_ls{bad", "exec_ls}bad",
+        "exec_lsčbad",
+    ],
+    option_type="heuristics",
+    allowed_description="exec_NAME may contain a-z A-Z 0-9 /_- characters only"
+)
+
 class BaseQuorumOptions():
     # pylint: disable=no-member
     def test_no_options(self):
@@ -596,6 +608,7 @@ class AddQuorumDevice(TestCase):
                     "exec_ls{bad": "test -f /tmp/test",
                     "exec_ls}bad": "test -f /tmp/test",
                     "exec_ls#bad": "test -f /tmp/test",
+                    "exec_lsčbad": "test -f /tmp/test",
                 },
                 self.node_ids
             ),
@@ -749,18 +762,7 @@ class AddQuorumDevice(TestCase):
                     option_value="",
                     allowed_values="a command to be run"
                 ),
-                fixture.error(
-                    report_codes.INVALID_USERDEFINED_OPTIONS,
-                    option_names=[
-                        "exec_ls bad", "exec_ls#bad", "exec_ls.bad",
-                        "exec_ls:bad", "exec_ls{bad", "exec_ls}bad",
-                    ],
-                    option_type="heuristics",
-                    allowed_description=(
-                        "exec_NAME cannot contain '.:{}#' and whitespace "
-                        "characters"
-                    )
-                )
+                fixture_report_exec_names,
             ]
         )
 
@@ -927,23 +929,13 @@ class AddQuorumDevice(TestCase):
                     "exec_ls{bad": "test -f /tmp/test",
                     "exec_ls}bad": "test -f /tmp/test",
                     "exec_ls#bad": "test -f /tmp/test",
+                    "exec_lsčbad": "test -f /tmp/test",
                 },
                 self.node_ids,
                 force_options=True
             ),
             [
-                fixture.error(
-                    report_codes.INVALID_USERDEFINED_OPTIONS,
-                    option_names=[
-                        "exec_ls bad", "exec_ls#bad", "exec_ls.bad",
-                        "exec_ls:bad", "exec_ls{bad", "exec_ls}bad",
-                    ],
-                    option_type="heuristics",
-                    allowed_description=(
-                        "exec_NAME cannot contain '.:{}#' and whitespace "
-                        "characters"
-                    )
-                )
+                fixture_report_exec_names,
             ]
         )
 
@@ -1399,6 +1391,7 @@ class UpdateQuorumDevice(TestCase):
                     "exec_ls{bad": "test -f /tmp/test",
                     "exec_ls}bad": "test -f /tmp/test",
                     "exec_ls#bad": "test -f /tmp/test",
+                    "exec_lsčbad": "test -f /tmp/test",
                 },
                 self.node_ids
             ),
@@ -1431,18 +1424,7 @@ class UpdateQuorumDevice(TestCase):
                     option_value="-5",
                     allowed_values="a positive integer"
                 ),
-                fixture.error(
-                    report_codes.INVALID_USERDEFINED_OPTIONS,
-                    option_names=[
-                        "exec_ls bad", "exec_ls#bad", "exec_ls.bad",
-                        "exec_ls:bad", "exec_ls{bad", "exec_ls}bad",
-                    ],
-                    option_type="heuristics",
-                    allowed_description=(
-                        "exec_NAME cannot contain '.:{}#' and whitespace "
-                        "characters"
-                    )
-                )
+                fixture_report_exec_names,
             ]
         )
 
@@ -1486,5 +1468,28 @@ class UpdateQuorumDevice(TestCase):
                     option_value="-5",
                     allowed_values="a positive integer"
                 ),
+            ]
+        )
+
+    def test_cannot_force_bad_heuristics_exec_name(self):
+        assert_report_item_list_equal(
+            config_validators.update_quorum_device(
+                "net",
+                {},
+                {},
+                {
+                    "exec_ls.bad": "test -f /tmp/test",
+                    "exec_ls:bad": "test -f /tmp/test",
+                    "exec_ls bad": "test -f /tmp/test",
+                    "exec_ls{bad": "test -f /tmp/test",
+                    "exec_ls}bad": "test -f /tmp/test",
+                    "exec_ls#bad": "test -f /tmp/test",
+                    "exec_lsčbad": "test -f /tmp/test",
+                },
+                self.node_ids,
+                force_options=True
+            ),
+            [
+                fixture_report_exec_names,
             ]
         )

@@ -1698,7 +1698,7 @@ def _validate_heuristics_exec_option_names(options_exec):
         report_list.append(
             reports.invalid_userdefined_options(
                 not_valid_options,
-                "exec_NAME cannot contain '.:{}#' and whitespace characters",
+                "exec_NAME may contain a-z A-Z 0-9 /_- characters only",
                 "heuristics",
                 severity=ReportItemSeverity.ERROR,
                 forceable=None

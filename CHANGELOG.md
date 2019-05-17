@@ -63,6 +63,7 @@
 - `--force` works correctly in `pcs quorum unblock` (broken since pcs-0.10.1)
 - Removed `3des` from allowed knet crypto ciphers since it is actually not
   supported by corosync
+- Improved validation of qdevice heuristics exec options ([rhbz#1679197])
 
 ### Changed
 - Do not check whether watchdog is defined as an absolute path when enabling
@@ -97,6 +98,7 @@
 [rhbz#1674005]: https://bugzilla.redhat.com/show_bug.cgi?id=1674005
 [rhbz#1676945]: https://bugzilla.redhat.com/show_bug.cgi?id=1676945
 [rhbz#1676957]: https://bugzilla.redhat.com/show_bug.cgi?id=1676957
+[rhbz#1679197]: https://bugzilla.redhat.com/show_bug.cgi?id=1679197
 [rhbz#1687562]: https://bugzilla.redhat.com/show_bug.cgi?id=1687562
 [rhbz#1687965]: https://bugzilla.redhat.com/show_bug.cgi?id=1687965
 
