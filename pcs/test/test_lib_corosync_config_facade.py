@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from __future__ import (
     absolute_import,
     division,
@@ -22,6 +23,17 @@ from pcs.lib.errors import ReportItemSeverity as severity
 
 import pcs.lib.corosync.config_facade as lib
 
+
+fixture_report_exec_names = fixture.error(
+    report_codes.INVALID_USERDEFINED_OPTIONS,
+    option_names=[
+        "exec_ls bad", "exec_ls#bad", "exec_ls.bad",
+        "exec_ls:bad", "exec_ls{bad", "exec_ls}bad",
+        "exec_lsčbad",
+    ],
+    option_type="heuristics",
+    allowed_description="exec_NAME may contain a-z A-Z 0-9 /_- characters only"
+)
 
 class FromStringTest(TestCase):
     def test_success(self):
@@ -1400,6 +1412,7 @@ quorum {
                     "exec_ls{bad": "test -f /tmp/test",
                     "exec_ls}bad": "test -f /tmp/test",
                     "exec_ls#bad": "test -f /tmp/test",
+                    "exec_lsčbad": "test -f /tmp/test",
                 }
             ),
             (
@@ -1550,17 +1563,7 @@ quorum {
                 option_value="",
                 allowed_values="a command to be run"
             ),
-            fixture.error(
-                report_codes.INVALID_USERDEFINED_OPTIONS,
-                option_names=[
-                    "exec_ls bad", "exec_ls#bad", "exec_ls.bad", "exec_ls:bad",
-                    "exec_ls{bad", "exec_ls}bad",
-                ],
-                option_type="heuristics",
-                allowed_description=(
-                    "exec_NAME cannot contain '.:{}#' and whitespace characters"
-                )
-            )
+            fixture_report_exec_names,
         )
         self.assertFalse(facade.need_stopped_cluster)
         self.assertFalse(facade.need_qdevice_reload)
@@ -1627,20 +1630,11 @@ quorum {
                     "exec_ls{bad": "test -f /tmp/test",
                     "exec_ls}bad": "test -f /tmp/test",
                     "exec_ls#bad": "test -f /tmp/test",
+                    "exec_lsčbad": "test -f /tmp/test",
                 },
                 force_options=True
             ),
-            fixture.error(
-                report_codes.INVALID_USERDEFINED_OPTIONS,
-                option_names=[
-                    "exec_ls bad", "exec_ls#bad", "exec_ls.bad", "exec_ls:bad",
-                    "exec_ls{bad", "exec_ls}bad",
-                ],
-                option_type="heuristics",
-                allowed_description=(
-                    "exec_NAME cannot contain '.:{}#' and whitespace characters"
-                )
-            )
+            fixture_report_exec_names
         )
         self.assertFalse(facade.need_stopped_cluster)
         self.assertFalse(facade.need_qdevice_reload)
@@ -2719,6 +2713,7 @@ class UpdateQuorumDeviceTest(TestCase):
                     "exec_ls{bad": "test -f /tmp/test",
                     "exec_ls}bad": "test -f /tmp/test",
                     "exec_ls#bad": "test -f /tmp/test",
+                    "exec_lsčbad": "test -f /tmp/test",
                 }
             ),
             fixture.error(
@@ -2749,17 +2744,7 @@ class UpdateQuorumDeviceTest(TestCase):
                 option_value="-5",
                 allowed_values="a positive integer"
             ),
-            fixture.error(
-                report_codes.INVALID_USERDEFINED_OPTIONS,
-                option_names=[
-                    "exec_ls bad", "exec_ls#bad", "exec_ls.bad", "exec_ls:bad",
-                    "exec_ls{bad", "exec_ls}bad",
-                ],
-                option_type="heuristics",
-                allowed_description=(
-                    "exec_NAME cannot contain '.:{}#' and whitespace characters"
-                )
-            )
+            fixture_report_exec_names,
         )
         self.assertFalse(facade.need_stopped_cluster)
         self.assertFalse(facade.need_qdevice_reload)
@@ -2825,6 +2810,34 @@ class UpdateQuorumDeviceTest(TestCase):
                 ),
             ]
         )
+
+    def test_cannot_force_bad_heuristics_exec_name(self):
+        config = self.fixture_add_device(
+            open(rc("corosync-3nodes.conf")).read()
+        )
+        reporter = MockLibraryReportProcessor()
+        facade = lib.ConfigFacade.from_string(config)
+        assert_raise_library_error(
+            lambda: facade.update_quorum_device(
+                reporter,
+                {},
+                {},
+                {
+                    "exec_ls.bad": "test -f /tmp/test",
+                    "exec_ls:bad": "test -f /tmp/test",
+                    "exec_ls bad": "test -f /tmp/test",
+                    "exec_ls{bad": "test -f /tmp/test",
+                    "exec_ls}bad": "test -f /tmp/test",
+                    "exec_ls#bad": "test -f /tmp/test",
+                    "exec_lsčbad": "test -f /tmp/test",
+                },
+                force_options=True
+            ),
+            fixture_report_exec_names
+        )
+        self.assertFalse(facade.need_stopped_cluster)
+        self.assertFalse(facade.need_qdevice_reload)
+        ac(config, facade.config.export())
 
 
 class RemoveQuorumDeviceTest(TestCase):

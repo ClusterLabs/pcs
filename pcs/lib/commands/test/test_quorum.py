@@ -1384,8 +1384,7 @@ class AddDeviceNetTest(TestCase):
                     option_names=["exec_bad.name"],
                     option_type="heuristics",
                     allowed_description=(
-                        "exec_NAME cannot contain '.:{}#' and whitespace "
-                        "characters"
+                        "exec_NAME may contain a-z A-Z 0-9 /_- characters only"
                     )
                 ),
             ]

@@ -28,7 +28,9 @@ class ConfigFacade(object):
         "last_man_standing",
         "last_man_standing_window",
     )
-    __QUORUM_DEVICE_HEURISTICS_EXEC_NAME_RE = re.compile("^exec_[^.:{}#\s]+$")
+    __QUORUM_DEVICE_HEURISTICS_EXEC_NAME_RE = re.compile(
+        r"^exec_[-_/a-zA-Z0-9]+$"
+    )
 
     @classmethod
     def from_string(cls, config_string):
@@ -670,7 +672,7 @@ class ConfigFacade(object):
             report_list.append(
                 reports.invalid_userdefined_options(
                     not_valid_options,
-                    "exec_NAME cannot contain '.:{}#' and whitespace characters",
+                    "exec_NAME may contain a-z A-Z 0-9 /_- characters only",
                     "heuristics",
                     severity=ReportItemSeverity.ERROR,
                     forceable=None
