@@ -6,3 +6,4 @@
 /pcs/bundled/
 /pcsd/.bundle
 /pcsd/vendor
+/pcsd/public/ui

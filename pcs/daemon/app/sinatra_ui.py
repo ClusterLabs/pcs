@@ -1,27 +1,10 @@
 import os.path
 
-from tornado.web import StaticFileHandler, Finish
-
-from pcs.daemon import app_session, ruby_pcsd, session
-from pcs.daemon.app_common import BaseHandler, EnhanceHeadersMixin, Sinatra
-
-class AjaxMixin:
-    """
-    AjaxMixin adds methods for an ajax request detection and common unauthorized
-    response.
-    """
-    @property
-    def is_ajax(self):
-        return (
-            self.request.headers.get("X-Requested-With", default=None)
-            ==
-            "XMLHttpRequest"
-        )
-
-    def unauthorized(self):
-        self.set_status(401)
-        self.write('{"notauthorized":"true"}')
-        return Finish()
+from pcs.daemon import ruby_pcsd, session
+from pcs.daemon.app import session as app_session
+from pcs.daemon.app.common import BaseHandler
+from pcs.daemon.app.sinatra_common import Sinatra
+from pcs.daemon.app.ui_common import AjaxMixin, StaticFile
 
 class SinatraGui(app_session.Mixin, Sinatra):
     """
@@ -133,20 +116,6 @@ class Login(SinatraGui, AjaxMixin):
 
         self.redirect("/login", status=303) #post -> get resource (303)
 
-class LoginStatus(app_session.Mixin, AjaxMixin, BaseHandler):
-    """
-    LoginStatus handles urls for obtaining current login status via ajax.
-    """
-    # This is for ajax. However, non-ajax requests are allowed as well. It
-    # worked the same way in ruby.
-    async def get(self, *args, **kwargs):
-        await self.init_session()
-        self.enhance_headers()
-        if not self.session.is_authenticated:
-            raise self.unauthorized()
-        self.sid_to_cookies()
-        self.write(self.session.ajax_id)
-
 class Logout(app_session.Mixin, AjaxMixin, BaseHandler):
     """
     Logout handles url for logout. It is used for both ajax and non-ajax
@@ -162,21 +131,6 @@ class Logout(app_session.Mixin, AjaxMixin, BaseHandler):
         else:
             self.redirect("/login", status=302) #redirect temporary (302)
 
-class StaticFile(EnhanceHeadersMixin, StaticFileHandler):
-    # abstract method `data_received` does need to be overriden. This
-    # method should be implemented to handle streamed request data.
-    # BUT static files are not streamed SO:
-    #pylint: disable=abstract-method
-    def initialize(self, path, default_filename=None):
-        #pylint: disable=arguments-differ
-        super().initialize(path, default_filename)
-        # In ruby server the header X-Content-Type-Options was sent and we
-        # keep it here to keep compatibility for simplifying testing. There is
-        # no another special reason for it. So, maybe, it can be removed in
-        # future.
-        self.set_header_nosniff_content_type()
-        self.set_strict_transport_security()
-
 def get_routes(
     session_storage: session.Storage,
     ruby_pcsd_wrapper: ruby_pcsd.Wrapper,
@@ -191,7 +145,6 @@ def get_routes(
         (r"/images/(.*)", StaticFile, static_path("images")),
 
         (r"/login", Login, {**sessions, **ruby_wrapper}),
-        (r"/login-status", LoginStatus, sessions),
         (r"/logout", Logout, sessions),
 
         # The protection by session was moved from ruby code to python code
