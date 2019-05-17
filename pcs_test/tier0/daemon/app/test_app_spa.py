@@ -99,24 +99,6 @@ class Login(AppTest):
             self.session_storage.provide(self.extract_sid(response)).ajax_id
         )
 
-class LoginStatus(AppTest):
-    def test_not_authenticated(self):
-        self.assert_unauth_ajax(self.get(f"{PREFIX}login-status"))
-        self.assert_unauth_ajax(
-            self.get(f"{PREFIX}login-status", is_ajax=True)
-        )
-
-    def test_authenticated(self):
-        session1 = self.create_login_session()
-        response = self.get(
-            f"{PREFIX}login-status",
-            sid=session1.sid,
-            is_ajax=True
-        )
-        self.assert_success_response(response, session1.ajax_id)
-        self.assert_session_in_response(response, session1.sid)
-
-
 class Logout(AppTest):
     def test_can_logout(self):
         session1 = self.create_login_session()

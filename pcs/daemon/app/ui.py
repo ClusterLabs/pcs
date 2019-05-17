@@ -41,20 +41,6 @@ class Login(SPAHandler, app_session.Mixin, AjaxMixin):
 
         self.write(self.session.ajax_id)
 
-class LoginStatus(app_session.Mixin, AjaxMixin, BaseHandler):
-    """
-    LoginStatus handles urls for obtaining current login status via ajax.
-    """
-    # This is for ajax. However, non-ajax requests are allowed as well. It
-    # worked the same way in ruby.
-    async def get(self, *args, **kwargs):
-        await self.init_session()
-        self.enhance_headers()
-        if not self.session.is_authenticated:
-            raise self.unauthorized()
-        self.sid_to_cookies()
-        self.write(self.session.ajax_id)
-
 class Logout(app_session.Mixin, AjaxMixin, BaseHandler):
     """
     Logout handles url for logout. It is used for both ajax and non-ajax
