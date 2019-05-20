@@ -14,7 +14,7 @@ PASSWORD = "password"
 LOGIN_BODY = {"username": USER, "password": PASSWORD}
 PUBLIC_DIR = rc("web_public")
 PREFIX = "/ui/"
-SPA_DIR = os.path.join(PUBLIC_DIR, PREFIX)
+SPA_DIR = os.path.join(PUBLIC_DIR, "ui")
 FALLBACK = os.path.join(PUBLIC_DIR, "fallback.html")
 INDEX = os.path.join(SPA_DIR, "index.html")
 
