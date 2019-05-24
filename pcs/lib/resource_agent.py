@@ -561,7 +561,7 @@ class Agent():
         )
         if missing_parameters:
             forcible, severity = self._validate_report_forcible_severity(force)
-            report_items.append(reports.required_option_is_missing(
+            report_items.append(reports.required_options_are_missing(
                 sorted(missing_parameters),
                 self._agent_type_label,
                 severity=severity,
@@ -617,7 +617,7 @@ class Agent():
         )
         if missing_parameters:
             forcible, severity = self._validate_report_forcible_severity(force)
-            report_items.append(reports.required_option_is_missing(
+            report_items.append(reports.required_options_are_missing(
                 sorted(missing_parameters),
                 self._agent_type_label,
                 severity=severity,

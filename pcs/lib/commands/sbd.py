@@ -383,7 +383,9 @@ def initialize_block_devices(lib_env, device_list, option_dict):
     """
     report_item_list = []
     if not device_list:
-        report_item_list.append(reports.required_option_is_missing(["device"]))
+        report_item_list.append(
+            reports.required_options_are_missing(["device"])
+        )
 
     supported_options = sbd.DEVICE_INITIALIZATION_OPTIONS_MAPPING.keys()
 
@@ -463,7 +465,7 @@ def set_message(lib_env, device, node_name, message):
         missing_options.append("node")
     if missing_options:
         report_item_list.append(
-            reports.required_option_is_missing(missing_options)
+            reports.required_options_are_missing(missing_options)
         )
     supported_messages = settings.sbd_message_types
     if message not in supported_messages:

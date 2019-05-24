@@ -354,11 +354,11 @@ class AddQuorumDevice(TestCase):
             ),
             [
                 fixture.error(
-                    report_codes.REQUIRED_OPTION_IS_MISSING,
+                    report_codes.REQUIRED_OPTIONS_ARE_MISSING,
                     option_names=["algorithm"],
                 ),
                 fixture.error(
-                    report_codes.REQUIRED_OPTION_IS_MISSING,
+                    report_codes.REQUIRED_OPTIONS_ARE_MISSING,
                     option_names=["host"],
                 )
             ]
@@ -377,11 +377,11 @@ class AddQuorumDevice(TestCase):
             ),
             [
                 fixture.error(
-                    report_codes.REQUIRED_OPTION_IS_MISSING,
+                    report_codes.REQUIRED_OPTIONS_ARE_MISSING,
                     option_names=["algorithm"],
                 ),
                 fixture.error(
-                    report_codes.REQUIRED_OPTION_IS_MISSING,
+                    report_codes.REQUIRED_OPTIONS_ARE_MISSING,
                     option_names=["host"],
                 )
             ]

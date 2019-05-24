@@ -134,7 +134,7 @@ def depends_on_option(
 def is_required(option_name, option_type=""):
     """
     Return a the function that takes option_dict and returns report list
-    (with REQUIRED_OPTION_IS_MISSING when option_dict does not contain
+    (with REQUIRED_OPTIONS_IS_MISSING when option_dict does not contain
     option_name).
 
     string option_name is name of option of option_dict that will be tested
@@ -142,7 +142,7 @@ def is_required(option_name, option_type=""):
     """
     def validate(option_dict):
         if option_name not in option_dict:
-            return [reports.required_option_is_missing(
+            return [reports.required_options_are_missing(
                 [option_name],
                 option_type,
             )]

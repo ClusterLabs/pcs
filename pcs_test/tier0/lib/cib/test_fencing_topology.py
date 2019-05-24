@@ -767,7 +767,7 @@ class ValidateDevices(TestCase):
         lib._validate_devices(reporter, self.resources_el, [])
         report = [(
             severity.ERROR,
-            report_codes.REQUIRED_OPTION_IS_MISSING,
+            report_codes.REQUIRED_OPTIONS_ARE_MISSING,
             {
                 "option_type": None,
                 "option_names": ["stonith devices"],

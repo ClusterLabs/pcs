@@ -523,7 +523,7 @@ class InitializeBlockDevicesTest(CommonTest):
             lambda: cmd_sbd.initialize_block_devices(self.env, [], option_dict),
             (
                 Severities.ERROR,
-                report_codes.REQUIRED_OPTION_IS_MISSING,
+                report_codes.REQUIRED_OPTIONS_ARE_MISSING,
                 {
                     "option_names": ["device"],
                     "option_type": None,
@@ -713,7 +713,7 @@ class SetMessageTest(CommonTest):
             lambda: cmd_sbd.set_message(self.env, "", "", ""),
             (
                 Severities.ERROR,
-                report_codes.REQUIRED_OPTION_IS_MISSING,
+                report_codes.REQUIRED_OPTIONS_ARE_MISSING,
                 {
                     "option_names": ["device", "node"],
                     "option_type": None,

@@ -254,7 +254,7 @@ def _validate_devices(
 ):
     if not devices:
         reporter.append(
-            reports.required_option_is_missing(["stonith devices"])
+            reports.required_options_are_missing(["stonith devices"])
         )
     invalid_devices = []
     for dev in devices:

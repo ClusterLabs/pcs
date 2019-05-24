@@ -119,7 +119,7 @@ class Create(TestCase):
             ),
             [
                 fixture.error(
-                    report_codes.REQUIRED_OPTION_IS_MISSING,
+                    report_codes.REQUIRED_OPTIONS_ARE_MISSING,
                     option_names=["name"],
                     option_type="node 2"
                 ),
@@ -175,7 +175,7 @@ class Create(TestCase):
                     allowed_values="a non-empty string"
                 ),
                 fixture.error(
-                    report_codes.REQUIRED_OPTION_IS_MISSING,
+                    report_codes.REQUIRED_OPTIONS_ARE_MISSING,
                     option_names=["name"],
                     option_type="node 2"
                 ),
@@ -354,7 +354,7 @@ class Create(TestCase):
             ),
             [
                 fixture.error(
-                    report_codes.REQUIRED_OPTION_IS_MISSING,
+                    report_codes.REQUIRED_OPTIONS_ARE_MISSING,
                     option_names=["name"],
                     option_type="node 6"
                 ),

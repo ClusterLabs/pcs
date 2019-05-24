@@ -171,8 +171,8 @@ class InvalidUserdefinedOptions(NameBuildTest):
         )
 
 
-class RequiredOptionIsMissing(NameBuildTest):
-    code = codes.REQUIRED_OPTION_IS_MISSING
+class RequiredOptionsAreMissing(NameBuildTest):
+    code = codes.REQUIRED_OPTIONS_ARE_MISSING
     def test_build_message_with_type(self):
         self.assert_message_from_info(
             "required TYPE option 'NAME' is missing",

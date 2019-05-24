@@ -206,7 +206,7 @@ class ParametrizedContainerMixin(SetUpMixin):
             [
                 (
                     severities.ERROR,
-                    report_codes.REQUIRED_OPTION_IS_MISSING,
+                    report_codes.REQUIRED_OPTIONS_ARE_MISSING,
                     {
                         "option_type": "container",
                         "option_names": ["image", ],
@@ -848,7 +848,7 @@ class StorageMapMixin(SetUpMixin):
                 ),
                 (
                     severities.ERROR,
-                    report_codes.REQUIRED_OPTION_IS_MISSING,
+                    report_codes.REQUIRED_OPTIONS_ARE_MISSING,
                     {
                         "option_type": "storage-map",
                         "option_names": ["target-dir", ],

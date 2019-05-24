@@ -394,7 +394,7 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
 
     codes.EMPTY_RESOURCE_SET_LIST: "Resource set list is empty",
 
-    codes.REQUIRED_OPTION_IS_MISSING: lambda info:
+    codes.REQUIRED_OPTIONS_ARE_MISSING: lambda info:
         "required {desc}option{s} {option_names_list} {are} missing"
         .format(
             desc=format_optional(info["option_type"], "{0} "),
