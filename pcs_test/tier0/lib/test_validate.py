@@ -6,11 +6,12 @@ from pcs_test.tools import fixture
 from pcs_test.tools.assertions import assert_report_item_list_equal
 
 from pcs.common import report_codes
-from pcs.lib import validate
+from pcs.lib import reports, validate
 from pcs.lib.cib.tools import IdProvider
-from pcs.lib.errors import ReportItemSeverity as severities
 
 # pylint: disable=no-self-use
+
+### normalization
 
 class ValuesToPairs(TestCase):
     def test_create_from_plain_values(self):
@@ -86,847 +87,270 @@ class OptionValueNormalization(TestCase):
         normalize = validate.option_value_normalization({})
         self.assertEqual("one", normalize("first", "one"))
 
+### compound validators
 
-class DependsOn(TestCase):
+class ValidatorAll(TestCase):
+    def test_collect_all_errors_from_specifications(self):
+        assert_report_item_list_equal(
+            validate.ValidatorAll(
+                [
+                    validate.NamesIn(["x", "y"]),
+                    validate.MutuallyExclusive(["x", "y"]),
+                    validate.ValuePositiveInteger("x"),
+                    validate.ValueIn("y", ["a", "b"]),
+                ]
+            ).validate({
+                "x": "abcd",
+                "y": "defg",
+                "z": "hijk",
+            }),
+            [
+                fixture.error(
+                    report_codes.INVALID_OPTIONS,
+                    option_names=["z"],
+                    option_type=None,
+                    allowed=["x", "y"],
+                    allowed_patterns=[],
+                ),
+                fixture.error(
+                    report_codes.MUTUALLY_EXCLUSIVE_OPTIONS,
+                    option_names=["x", "y"],
+                    option_type=None
+                ),
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_value="abcd",
+                    option_name="x",
+                    allowed_values="a positive integer",
+                ),
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_value="defg",
+                    option_name="y",
+                    allowed_values=["a", "b"],
+                ),
+            ]
+        )
+
+### keys validators
+
+class DependsOnOption(TestCase):
     def test_success_when_dependency_present(self):
         assert_report_item_list_equal(
-            validate.depends_on_option("name", "prerequisite", "type")({
-                "name": "value",
-                "prerequisite": "value",
-            }),
+            validate
+                .DependsOnOption(["name"], "prerequisite", option_type="type")
+                .validate({
+                    "name": "value",
+                    "prerequisite": "value",
+                })
+            ,
             []
         )
 
     def test_report_when_dependency_missing(self):
         assert_report_item_list_equal(
-            validate.depends_on_option(
-                "name", "prerequisite", "type1", "type2"
-            )({
-                "name": "value",
-            }),
+            validate
+                .DependsOnOption(
+                    ["name"],
+                    "prerequisite",
+                    option_type="type1",
+                    prerequisite_type="type2"
+                )
+                .validate({"name": "value"})
+            ,
             [
-                (
-                    severities.ERROR,
+                fixture.error(
                     report_codes.PREREQUISITE_OPTION_IS_MISSING,
-                    {
-                        "option_name": "name",
-                        "option_type": "type1",
-                        "prerequisite_name": "prerequisite",
-                        "prerequisite_type": "type2",
-                    },
-                    None
+                    option_name="name",
+                    option_type="type1",
+                    prerequisite_name="prerequisite",
+                    prerequisite_type="type2",
                 ),
             ]
         )
 
+    def test_more_options(self):
+        assert_report_item_list_equal(
+            validate
+                .DependsOnOption(["name1", "name2", "name3"], "prerequisite")
+                .validate({
+                    "name1": "value",
+                    "name3": "value",
+                })
+            ,
+            [
+                fixture.error(
+                    report_codes.PREREQUISITE_OPTION_IS_MISSING,
+                    option_name=name,
+                    option_type=None,
+                    prerequisite_name="prerequisite",
+                    prerequisite_type=None,
+                ) for name in ["name1", "name3"]
+            ]
+        )
 
-class IsRequired(TestCase):
+class IsRequiredAll(TestCase):
     def test_returns_no_report_when_required_is_present(self):
         assert_report_item_list_equal(
-            validate.is_required("name", "some type")({"name": "monitor"}),
+            validate
+                .IsRequiredAll(["name"], "some type")
+                .validate({"name": "monitor"})
+            ,
             []
         )
 
     def test_returns_report_when_required_is_missing(self):
         assert_report_item_list_equal(
-            validate.is_required("name", "some type")({}),
+            validate
+                .IsRequiredAll(["name"], "some type")
+                .validate({})
+            ,
             [
-                (
-                    severities.ERROR,
+                fixture.error(
                     report_codes.REQUIRED_OPTIONS_ARE_MISSING,
-                    {
-                        "option_names": ["name"],
-                        "option_type": "some type",
-                    },
-                    None
+                    option_names=["name"],
+                    option_type="some type",
                 ),
             ]
         )
 
+    def test_more_options(self):
+        assert_report_item_list_equal(
+            validate
+                .IsRequiredAll(["name1", "name2", "name3"], "some type")
+                .validate({"name2": "value2"})
+            ,
+            [
+                fixture.error(
+                    report_codes.REQUIRED_OPTIONS_ARE_MISSING,
+                    option_names=["name1", "name3"],
+                    option_type="some type",
+                ),
+            ]
+        )
 
-class IsRequiredSomeOf(TestCase):
+class IsRequiredSome(TestCase):
     def test_returns_no_report_when_first_is_present(self):
         assert_report_item_list_equal(
-            validate.is_required_some_of(["first", "second"], "type")({
-                "first": "value",
-            }),
+            validate
+            .IsRequiredSome(["first", "second"], "type")
+                .validate({"first": "value"})
+            ,
             []
         )
 
     def test_returns_no_report_when_second_is_present(self):
         assert_report_item_list_equal(
-            validate.is_required_some_of(["first", "second"], "type")({
-                "second": "value",
-            }),
+            validate
+                .IsRequiredSome(["first", "second"], "type")
+                .validate({"second": "value"})
+            ,
             []
         )
 
     def test_returns_report_when_missing(self):
         assert_report_item_list_equal(
-            validate.is_required_some_of(["first", "second"], "type")({
-                "third": "value",
-            }),
+            validate
+                .IsRequiredSome(["first", "second"], "type")
+                .validate({"third": "value"})
+            ,
             [
-                (
-                    severities.ERROR,
+                fixture.error(
                     report_codes.REQUIRED_OPTION_OF_ALTERNATIVES_IS_MISSING,
-                    {
-                        "option_names": ["first", "second"],
-                        "option_type": "type",
-                    },
-                    None
+                    option_names=["first", "second"],
+                    option_type="type",
                 ),
             ]
         )
-
-
-class ValueCondTest(TestCase):
-    def setUp(self):
-        self.predicate = lambda a: a == "b"
-
-    def test_returns_empty_report_on_valid_option(self):
-        self.assertEqual(
-            [],
-            validate.value_cond("a", self.predicate, "test")({"a": "b"})
-        )
-
-    def test_returns_empty_report_on_valid_normalized_option(self):
-        self.assertEqual(
-            [],
-            validate.value_cond("a", self.predicate, "test")(
-                {"a": validate.ValuePair(original="C", normalized="b")}
-            ),
-        )
-
-    def test_returns_report_about_invalid_option(self):
-        assert_report_item_list_equal(
-            validate.value_cond("a", self.predicate, "test")({"a": "c"}),
-            [
-                (
-                    severities.ERROR,
-                    report_codes.INVALID_OPTION_VALUE,
-                    {
-                        "option_name": "a",
-                        "option_value": "c",
-                        "allowed_values": "test",
-                    },
-                    None
-                ),
-            ]
-        )
-
-    def test_support_option_value_pair(self):
-        assert_report_item_list_equal(
-            validate.value_cond("a", self.predicate, "test")(
-                {"a": validate.ValuePair(original="b", normalized="c")}
-            ),
-            [
-                (
-                    severities.ERROR,
-                    report_codes.INVALID_OPTION_VALUE,
-                    {
-                        "option_name": "a",
-                        "option_value": "b",
-                        "allowed_values": "test",
-                    },
-                    None
-                ),
-            ]
-        )
-
-    def test_supports_another_report_option_name(self):
-        assert_report_item_list_equal(
-            validate.value_cond(
-                "a", self.predicate, "test", option_name_for_report="option a"
-            )(
-                {"a": "c"}
-            ),
-            [
-                (
-                    severities.ERROR,
-                    report_codes.INVALID_OPTION_VALUE,
-                    {
-                        "option_name": "option a",
-                        "option_value": "c",
-                        "allowed_values": "test",
-                    },
-                    None
-                ),
-            ]
-        )
-
-    def test_supports_forceable_errors(self):
-        assert_report_item_list_equal(
-            validate.value_cond(
-                "a", self.predicate, "test", code_to_allow_extra_values="FORCE"
-            )(
-                {"a": "c"}
-            ),
-            [
-                (
-                    severities.ERROR,
-                    report_codes.INVALID_OPTION_VALUE,
-                    {
-                        "option_name": "a",
-                        "option_value": "c",
-                        "allowed_values": "test",
-                    },
-                    "FORCE"
-                ),
-            ]
-        )
-
-    def test_supports_warning(self):
-        assert_report_item_list_equal(
-            validate.value_cond(
-                "a",
-                self.predicate,
-                "test",
-                code_to_allow_extra_values="FORCE",
-                extra_values_allowed=True
-            )(
-                {"a": "c"}
-            ),
-            [
-                (
-                    severities.WARNING,
-                    report_codes.INVALID_OPTION_VALUE,
-                    {
-                        "option_name": "a",
-                        "option_value": "c",
-                        "allowed_values": "test",
-                    },
-                    None
-                ),
-            ]
-        )
-
-
-class ValueEmptyOrValid(TestCase):
-    def setUp(self):
-        self.validator = validate.value_cond("a", lambda a: a == "b", "test")
-
-    def test_missing(self):
-        assert_report_item_list_equal(
-            validate.value_empty_or_valid("a", self.validator)({"b": "c"}),
-            [
-            ]
-        )
-
-    def test_empty(self):
-        assert_report_item_list_equal(
-            validate.value_empty_or_valid("a", self.validator)({"a": ""}),
-            [
-            ]
-        )
-
-    def test_valid(self):
-        assert_report_item_list_equal(
-            validate.value_empty_or_valid("a", self.validator)({"a": "b"}),
-            [
-            ]
-        )
-
-    def test_not_valid(self):
-        assert_report_item_list_equal(
-            validate.value_empty_or_valid("a", self.validator)({"a": "c"}),
-            [
-                (
-                    severities.ERROR,
-                    report_codes.INVALID_OPTION_VALUE,
-                    {
-                        "option_name": "a",
-                        "option_value": "c",
-                        "allowed_values": "test",
-                    },
-                    None
-                ),
-            ]
-        )
-
-
-class ValueId(TestCase):
-    def test_empty_id(self):
-        assert_report_item_list_equal(
-            validate.value_id("id", "test id")({"id": ""}),
-            [
-                (
-                    severities.ERROR,
-                    report_codes.EMPTY_ID,
-                    {
-                        "id": "",
-                        "id_description": "test id",
-                    },
-                    None
-                ),
-            ]
-        )
-
-    def test_invalid_first_char(self):
-        assert_report_item_list_equal(
-            validate.value_id("id", "test id")({"id": "0-test"}),
-            [
-                (
-                    severities.ERROR,
-                    report_codes.INVALID_ID,
-                    {
-                        "id": "0-test",
-                        "id_description": "test id",
-                        "invalid_character": "0",
-                        "is_first_char": True,
-                    },
-                    None
-                ),
-            ]
-        )
-
-    def test_invalid_char(self):
-        assert_report_item_list_equal(
-            validate.value_id("id", "test id")({"id": "te#st"}),
-            [
-                (
-                    severities.ERROR,
-                    report_codes.INVALID_ID,
-                    {
-                        "id": "te#st",
-                        "id_description": "test id",
-                        "invalid_character": "#",
-                        "is_first_char": False,
-                    },
-                    None
-                ),
-            ]
-        )
-
-    def test_used_id(self):
-        id_provider = IdProvider(etree.fromstring("<a><test id='used' /></a>"))
-        assert_report_item_list_equal(
-            validate.value_id("id", "test id", id_provider)({"id": "used"}),
-            [
-                (
-                    severities.ERROR,
-                    report_codes.ID_ALREADY_EXISTS,
-                    {
-                        "id": "used",
-                    },
-                    None
-                ),
-            ]
-        )
-
-    def test_pair_invalid(self):
-        assert_report_item_list_equal(
-            validate.value_id("id", "test id")({
-                "id": validate.ValuePair("@&#", "")
-            }),
-            [
-                (
-                    severities.ERROR,
-                    report_codes.EMPTY_ID,
-                    {
-                        # TODO: This should be "@&#". However an old validator
-                        # is used and it doesn't work with pairs.
-                        "id": "",
-                        "id_description": "test id",
-                    },
-                    None
-                ),
-            ]
-        )
-
-    def test_pair_used_id(self):
-        id_provider = IdProvider(etree.fromstring("<a><test id='used' /></a>"))
-        assert_report_item_list_equal(
-            validate.value_id("id", "test id", id_provider)({
-                "id": validate.ValuePair("not-used", "used")
-            }),
-            [
-                (
-                    severities.ERROR,
-                    report_codes.ID_ALREADY_EXISTS,
-                    {
-                        # TODO: This should be "not-used". However an old
-                        # validator is used and it doesn't work with pairs.
-                        "id": "used",
-                    },
-                    None
-                ),
-            ]
-        )
-
-    def test_success(self):
-        id_provider = IdProvider(etree.fromstring("<a><test id='used' /></a>"))
-        assert_report_item_list_equal(
-            validate.value_id("id", "test id", id_provider)({"id": "correct"}),
-            []
-        )
-
-    def test_pair_success(self):
-        id_provider = IdProvider(etree.fromstring("<a><test id='used' /></a>"))
-        assert_report_item_list_equal(
-            validate.value_id("id", "test id", id_provider)({
-                "id": validate.ValuePair("correct", "correct")
-            }),
-            []
-        )
-
-
-class ValueIn(TestCase):
-    def test_returns_empty_report_on_valid_option(self):
-        self.assertEqual(
-            [],
-            validate.value_in("a", ["b"])({"a": "b"})
-        )
-
-    def test_returns_empty_report_on_valid_normalized_option(self):
-        self.assertEqual(
-            [],
-            validate.value_in("a", ["b"])(
-                {"a": validate.ValuePair(original="C", normalized="b")}
-            ),
-        )
-
-    def test_returns_report_about_invalid_option(self):
-        assert_report_item_list_equal(
-            validate.value_in("a", ["b"])({"a": "c"}),
-            [
-                (
-                    severities.ERROR,
-                    report_codes.INVALID_OPTION_VALUE,
-                    {
-                        "option_name": "a",
-                        "option_value": "c",
-                        "allowed_values": ["b"],
-                    },
-                    None
-                ),
-            ]
-        )
-
-    def test_support_option_value_pair(self):
-        assert_report_item_list_equal(
-            validate.value_in("a", ["b"])(
-                {"a": validate.ValuePair(original="C", normalized="c")}
-            ),
-            [
-                (
-                    severities.ERROR,
-                    report_codes.INVALID_OPTION_VALUE,
-                    {
-                        "option_name": "a",
-                        "option_value": "C",
-                        "allowed_values": ["b"],
-                    },
-                    None
-                ),
-            ]
-        )
-
-    def test_supports_another_report_option_name(self):
-        assert_report_item_list_equal(
-            validate.value_in("a", ["b"], option_name_for_report="option a")(
-                {"a": "c"}
-            ),
-            [
-                (
-                    severities.ERROR,
-                    report_codes.INVALID_OPTION_VALUE,
-                    {
-                        "option_name": "option a",
-                        "option_value": "c",
-                        "allowed_values": ["b"],
-                    },
-                    None
-                ),
-            ]
-        )
-
-    def test_supports_forceable_errors(self):
-        assert_report_item_list_equal(
-            validate.value_in("a", ["b"], code_to_allow_extra_values="FORCE")(
-                {"a": "c"}
-            ),
-            [
-                (
-                    severities.ERROR,
-                    report_codes.INVALID_OPTION_VALUE,
-                    {
-                        "option_name": "a",
-                        "option_value": "c",
-                        "allowed_values": ["b"],
-                    },
-                    "FORCE"
-                ),
-            ]
-        )
-
-    def test_supports_warning(self):
-        assert_report_item_list_equal(
-            validate.value_in(
-                "a",
-                ["b"],
-                code_to_allow_extra_values="FORCE",
-                extra_values_allowed=True
-            )(
-                {"a": "c"}
-            ),
-            [
-                (
-                    severities.WARNING,
-                    report_codes.INVALID_OPTION_VALUE,
-                    {
-                        "option_name": "a",
-                        "option_value": "c",
-                        "allowed_values": ["b"],
-                    },
-                    None
-                ),
-            ]
-        )
-
-
-class ValueIntegerInRange(TestCase):
-    # The real code only calls value_cond and is_integer which are both heavily
-    # tested on their own => only basic tests here.
-    def fixture_validator(self):
-        return validate.value_integer_in_range("key", -5, 5)
-
-    def test_empty_report_on_valid_option(self):
-        assert_report_item_list_equal(
-            self.fixture_validator()({"key": "2"}),
-            []
-        )
-
-    def test_report_invalid_value(self):
-        assert_report_item_list_equal(
-            self.fixture_validator()({"key": "6"}),
-            [
-                (
-                    severities.ERROR,
-                    report_codes.INVALID_OPTION_VALUE,
-                    {
-                        "option_name": "key",
-                        "option_value": "6",
-                        "allowed_values": "-5..5",
-                    },
-                    None
-                ),
-            ]
-        )
-
-
-class ValueIpAddress(TestCase):
-    # The real code only calls value_cond and is_integer which are both heavily
-    # tested on their own => only basic tests here.
-    def fixture_validator(self):
-        return validate.value_ip_address("key")
-
-    def test_empty_report_on_ipv4(self):
-        assert_report_item_list_equal(
-            self.fixture_validator()({"key": "192.168.123.42"}),
-            []
-        )
-
-    def test_empty_report_on_ipv6(self):
-        assert_report_item_list_equal(
-            self.fixture_validator()({"key": "::192:168:123:42"}),
-            []
-        )
-
-    def test_report_invalid_value(self):
-        assert_report_item_list_equal(
-            self.fixture_validator()({"key": "abcd"}),
-            [
-                (
-                    severities.ERROR,
-                    report_codes.INVALID_OPTION_VALUE,
-                    {
-                        "option_name": "key",
-                        "option_value": "abcd",
-                        "allowed_values": "an IP address",
-                    },
-                    None
-                ),
-            ]
-        )
-
-
-class ValueNonnegativeInteger(TestCase):
-    # The real code only calls value_cond => only basic tests here.
-    def test_empty_report_on_valid_option(self):
-        assert_report_item_list_equal(
-            validate.value_nonnegative_integer("key")({"key": "10"}),
-            []
-        )
-
-    def test_report_invalid_value(self):
-        assert_report_item_list_equal(
-            validate.value_nonnegative_integer("key")({"key": "-10"}),
-            [
-                (
-                    severities.ERROR,
-                    report_codes.INVALID_OPTION_VALUE,
-                    {
-                        "option_name": "key",
-                        "option_value": "-10",
-                        "allowed_values": "a non-negative integer",
-                    },
-                    None
-                ),
-            ]
-        )
-
-
-class ValueNotEmpty(TestCase):
-    def test_empty_report_on_not_empty_value(self):
-        assert_report_item_list_equal(
-            validate.value_not_empty("key", "description")({"key": "abc"}),
-            []
-        )
-
-    def test_empty_report_on_zero_int_value(self):
-        assert_report_item_list_equal(
-            validate.value_not_empty("key", "description")({"key": 0}),
-            []
-        )
-
-    def test_report_on_empty_string(self):
-        assert_report_item_list_equal(
-            validate.value_not_empty("key", "description")({"key": ""}),
-            [
-                (
-                    severities.ERROR,
-                    report_codes.INVALID_OPTION_VALUE,
-                    {
-                        "option_name": "key",
-                        "option_value": "",
-                        "allowed_values": "description",
-                    },
-                    None
-                ),
-            ]
-        )
-
-
-class ValuePortNumber(TestCase):
-    # The real code only calls value_cond => only basic tests here.
-    def test_empty_report_on_valid_option(self):
-        assert_report_item_list_equal(
-            validate.value_port_number("key")({"key": "54321"}),
-            []
-        )
-
-    def test_report_invalid_value(self):
-        assert_report_item_list_equal(
-            validate.value_port_number("key")({"key": "65536"}),
-            [
-                (
-                    severities.ERROR,
-                    report_codes.INVALID_OPTION_VALUE,
-                    {
-                        "option_name": "key",
-                        "option_value": "65536",
-                        "allowed_values": "a port number (1-65535)",
-                    },
-                    None
-                ),
-            ]
-        )
-
-
-class ValuePortRange(TestCase):
-    # The real code only calls value_cond => only basic tests here.
-    def test_empty_report_on_valid_option(self):
-        assert_report_item_list_equal(
-            validate.value_port_range("key")({"key": "100-200"}),
-            []
-        )
-
-    def test_report_nonsense(self):
-        assert_report_item_list_equal(
-            validate.value_port_range("key")({"key": "10-20-30"}),
-            [
-                (
-                    severities.ERROR,
-                    report_codes.INVALID_OPTION_VALUE,
-                    {
-                        "option_name": "key",
-                        "option_value": "10-20-30",
-                        "allowed_values": "port-port",
-                    },
-                    None
-                ),
-            ]
-        )
-
-    def test_report_bad_start(self):
-        assert_report_item_list_equal(
-            validate.value_port_range("key")({"key": "0-100"}),
-            [
-                (
-                    severities.ERROR,
-                    report_codes.INVALID_OPTION_VALUE,
-                    {
-                        "option_name": "key",
-                        "option_value": "0-100",
-                        "allowed_values": "port-port",
-                    },
-                    None
-                ),
-            ]
-        )
-
-    def test_report_bad_end(self):
-        assert_report_item_list_equal(
-            validate.value_port_range("key")({"key": "100-65536"}),
-            [
-                (
-                    severities.ERROR,
-                    report_codes.INVALID_OPTION_VALUE,
-                    {
-                        "option_name": "key",
-                        "option_value": "100-65536",
-                        "allowed_values": "port-port",
-                    },
-                    None
-                ),
-            ]
-        )
-
-
-class ValuePositiveInteger(TestCase):
-    # The real code only calls value_cond => only basic tests here.
-    def test_empty_report_on_valid_option(self):
-        assert_report_item_list_equal(
-            validate.value_positive_integer("key")({"key": "10"}),
-            []
-        )
-
-    def test_report_invalid_value(self):
-        assert_report_item_list_equal(
-            validate.value_positive_integer("key")({"key": "0"}),
-            [
-                (
-                    severities.ERROR,
-                    report_codes.INVALID_OPTION_VALUE,
-                    {
-                        "option_name": "key",
-                        "option_value": "0",
-                        "allowed_values": "a positive integer",
-                    },
-                    None
-                ),
-            ]
-        )
-
 
 class MutuallyExclusive(TestCase):
     def test_returns_empty_report_when_valid(self):
         assert_report_item_list_equal(
-            validate.mutually_exclusive(["a", "b"])({"a": "A"}),
+            validate
+                .MutuallyExclusive(["a", "b"])
+                .validate({"a": "A"})
+            ,
             [],
         )
 
     def test_returns_mutually_exclusive_report_on_2_names_conflict(self):
         assert_report_item_list_equal(
-            validate.mutually_exclusive(["a", "b", "c"])({
-                "a": "A",
-                "b": "B",
-                "d": "D",
-            }),
+            validate
+                .MutuallyExclusive(["a", "b", "c"])
+                .validate({
+                    "a": "A",
+                    "b": "B",
+                    "d": "D",
+                })
+            ,
             [
-                (
-                    severities.ERROR,
+                fixture.error(
                     report_codes.MUTUALLY_EXCLUSIVE_OPTIONS,
-                    {
-                        "option_type": "option",
-                        "option_names": ["a", "b"],
-                    },
-                    None
+                    option_type=None,
+                    option_names=["a", "b"],
                 ),
             ],
         )
 
     def test_returns_mutually_exclusive_report_on_multiple_name_conflict(self):
         assert_report_item_list_equal(
-            validate.mutually_exclusive(["a", "b", "c", "e"])({
-                "a": "A",
-                "b": "B",
-                "c": "C",
-                "d": "D",
-            }),
+            validate
+                .MutuallyExclusive(["a", "b", "c", "e"], option_type="option")
+                .validate({
+                    "a": "A",
+                    "b": "B",
+                    "c": "C",
+                    "d": "D",
+                })
+            ,
             [
-                (
-                    severities.ERROR,
+                fixture.error(
                     report_codes.MUTUALLY_EXCLUSIVE_OPTIONS,
-                    {
-                        "option_type": "option",
-                        "option_names": ["a", "b", "c"],
-                    },
-                    None
+                    option_type="option",
+                    option_names=["a", "b", "c"],
                 ),
             ],
-        )
-
-class CollectOptionValidations(TestCase):
-    def test_collect_all_errors_from_specifications(self):
-        specification = [
-            lambda option_dict: ["A{0}".format(option_dict["x"])],
-            lambda option_dict: ["B"],
-        ]
-
-        self.assertEqual(
-            ["Ay", "B"],
-            validate.run_collection_of_option_validators(
-                {"x": "y"},
-                specification
-            )
         )
 
 class NamesIn(TestCase):
     def test_return_empty_report_on_allowed_names(self):
         assert_report_item_list_equal(
-            validate.names_in(
-                ["a", "b", "c"],
-                ["a", "b"],
-            ),
-            [],
+            validate
+                .NamesIn(["a", "b", "c"])
+                .validate({"a": "A", "b": "B"})
+            ,
+            []
         )
 
     def test_return_error_on_not_allowed_names(self):
         assert_report_item_list_equal(
-            validate.names_in(
-                ["a", "b", "c"],
-                ["x", "y"],
-            ),
+            validate
+                .NamesIn(["a", "b", "c"], option_type="option")
+                .validate({"x": "X", "y": "Y"})
+            ,
             [
-                (
-                    severities.ERROR,
+                fixture.error(
                     report_codes.INVALID_OPTIONS,
-                    {
-                        "option_names": ["x", "y"],
-                        "allowed": ["a", "b", "c"],
-                        "option_type": "option",
-                        "allowed_patterns": [],
-                    },
-                    None
+                    option_names=["x", "y"],
+                    allowed=["a", "b", "c"],
+                    option_type="option",
+                    allowed_patterns=[],
                 )
             ]
         )
 
     def test_return_error_on_banned_names(self):
         assert_report_item_list_equal(
-            validate.names_in(
-                ["a", "b"],
-                ["x", "a", "z"],
-                banned_name_list=["x", "y", "z"],
-            ),
+            validate
+                .NamesIn(["a", "b"], banned_name_list=["x", "y", "z"])
+                .validate({"x": "X", "a": "A", "z": "Z"})
+            ,
             [
                 fixture.error(
                     report_codes.INVALID_OPTIONS,
                     option_names=["x", "z"],
                     allowed=["a", "b"],
-                    option_type="option",
+                    option_type=None,
                     allowed_patterns=[],
                 )
             ]
@@ -934,17 +358,16 @@ class NamesIn(TestCase):
 
     def test_return_error_on_not_allowed_and_banned_names(self):
         assert_report_item_list_equal(
-            validate.names_in(
-                ["a", "b"],
-                ["x", "a", "z", "c"],
-                banned_name_list=["x", "y", "z"],
-            ),
+            validate
+                .NamesIn(["a", "b"], banned_name_list=["x", "y", "z"])
+                .validate({"x": "X", "a": "A", "z": "Z", "c": "C"})
+            ,
             [
                 fixture.error(
                     report_codes.INVALID_OPTIONS,
                     option_names=["c", "x", "z"],
                     allowed=["a", "b"],
-                    option_type="option",
+                    option_type=None,
                     allowed_patterns=[],
                 )
             ]
@@ -953,26 +376,28 @@ class NamesIn(TestCase):
     def test_return_error_on_not_allowed_and_banned_names_forceable(self):
         code = "force_code"
         assert_report_item_list_equal(
-            validate.names_in(
-                ["a", "b"],
-                ["x", "a", "z", "c", "d"],
-                banned_name_list=["x", "y", "z"],
-                code_to_allow_extra_names=code
-            ),
+            validate
+                .NamesIn(
+                    ["a", "b"],
+                    banned_name_list=["x", "y", "z"],
+                    code_for_warning=code,
+                )
+                .validate({"x": "X", "a": "A", "z": "Z", "c": "C", "d": "D"})
+            ,
             [
                 fixture.error(
                     report_codes.INVALID_OPTIONS,
+                    force_code=code,
                     option_names=["c", "d"],
                     allowed=["a", "b"],
-                    option_type="option",
+                    option_type=None,
                     allowed_patterns=[],
-                    force_code=code,
                 ),
                 fixture.error(
                     report_codes.INVALID_OPTIONS,
                     option_names=["x", "z"],
                     allowed=["a", "b"],
-                    option_type="option",
+                    option_type=None,
                     allowed_patterns=[],
                 ),
             ]
@@ -981,26 +406,28 @@ class NamesIn(TestCase):
     def test_return_error_on_not_allowed_and_banned_names_forced(self):
         code = "force_code"
         assert_report_item_list_equal(
-            validate.names_in(
-                ["a", "b"],
-                ["x", "a", "z", "c", "d"],
-                banned_name_list=["x", "y", "z"],
-                code_to_allow_extra_names=code,
-                extra_names_allowed=True,
-            ),
+            validate
+                .NamesIn(
+                    ["a", "b"],
+                    banned_name_list=["x", "y", "z"],
+                    code_for_warning=code,
+                    produce_warning=True,
+                )
+                .validate({"x": "X", "a": "A", "z": "Z", "c": "C", "d": "D"})
+            ,
             [
                 fixture.warn(
                     report_codes.INVALID_OPTIONS,
                     option_names=["c", "d"],
                     allowed=["a", "b"],
-                    option_type="option",
+                    option_type=None,
                     allowed_patterns=[],
                 ),
                 fixture.error(
                     report_codes.INVALID_OPTIONS,
                     option_names=["x", "z"],
                     allowed=["a", "b"],
-                    option_type="option",
+                    option_type=None,
                     allowed_patterns=[],
                 ),
             ]
@@ -1008,96 +435,674 @@ class NamesIn(TestCase):
 
     def test_return_error_with_allowed_patterns(self):
         assert_report_item_list_equal(
-            validate.names_in(
-                ["a", "b", "c"],
-                ["x", "y"],
-                allowed_option_patterns=["pattern"]
-            ),
+            validate
+                .NamesIn(
+                    ["a", "b", "c"],
+                    allowed_option_patterns=["pattern"]
+                )
+                .validate({"x": "X", "y": "Y"})
+            ,
             [
-                (
-                    severities.ERROR,
+                fixture.error(
                     report_codes.INVALID_OPTIONS,
-                    {
-                        "option_names": ["x", "y"],
-                        "allowed": ["a", "b", "c"],
-                        "option_type": "option",
-                        "allowed_patterns": ["pattern"],
-                    },
-                    None
+                    option_names=["x", "y"],
+                    allowed=["a", "b", "c"],
+                    option_type=None,
+                    allowed_patterns=["pattern"],
                 )
             ]
         )
 
     def test_return_error_on_not_allowed_names_without_force_code(self):
         assert_report_item_list_equal(
-            validate.names_in(
-                ["a", "b", "c"],
-                ["x", "y"],
-                 #does now work without code_to_allow_extra_names
-                extra_names_allowed=True,
-            ),
+            validate
+                .NamesIn(
+                    ["a", "b", "c"],
+                    #does now work without code_for_warning
+                    produce_warning=True,
+                )
+                .validate({"x": "X", "y": "Y"})
+            ,
             [
-                (
-                    severities.ERROR,
+                fixture.error(
                     report_codes.INVALID_OPTIONS,
-                    {
-                        "option_names": ["x", "y"],
-                        "allowed": ["a", "b", "c"],
-                        "option_type": "option",
-                        "allowed_patterns": [],
-                    },
-                    None
+                    option_names=["x", "y"],
+                    allowed=["a", "b", "c"],
+                    option_type=None,
+                    allowed_patterns=[],
                 )
             ]
         )
 
     def test_return_forceable_error_on_not_allowed_names(self):
         assert_report_item_list_equal(
-            validate.names_in(
-                ["a", "b", "c"],
-                ["x", "y"],
-                option_type="some option",
-                code_to_allow_extra_names="FORCE_CODE",
-            ),
+            validate
+                .NamesIn(
+                    ["a", "b", "c"],
+                    option_type="some option",
+                    code_for_warning="FORCE_CODE",
+                )
+                .validate({"x": "X", "y": "Y"})
+            ,
             [
-                (
-                    severities.ERROR,
+                fixture.error(
                     report_codes.INVALID_OPTIONS,
-                    {
-                        "option_names": ["x", "y"],
-                        "allowed": ["a", "b", "c"],
-                        "option_type": "some option",
-                        "allowed_patterns": [],
-                    },
-                    "FORCE_CODE"
+                    force_code="FORCE_CODE",
+                    option_names=["x", "y"],
+                    allowed=["a", "b", "c"],
+                    option_type="some option",
+                    allowed_patterns=[],
                 )
             ]
         )
 
     def test_return_warning_on_not_allowed_names(self):
         assert_report_item_list_equal(
-            validate.names_in(
-                ["a", "b", "c"],
-                ["x", "y"],
-                option_type="some option",
-                code_to_allow_extra_names="FORCE_CODE",
-                extra_names_allowed=True,
-            ),
+            validate
+                .NamesIn(
+                    ["a", "b", "c"],
+                    option_type="some option",
+                    code_for_warning="FORCE_CODE",
+                    produce_warning=True,
+                )
+                .validate({"x": "X", "y": "Y"})
+            ,
             [
-                (
-                    severities.WARNING,
+                fixture.warn(
                     report_codes.INVALID_OPTIONS,
-                    {
-                        "option_names": ["x", "y"],
-                        "allowed": ["a", "b", "c"],
-                        "option_type": "some option",
-                        "allowed_patterns": [],
-                    },
-                    None
+                    option_names=["x", "y"],
+                    allowed=["a", "b", "c"],
+                    option_type="some option",
+                    allowed_patterns=[],
                 )
             ]
         )
 
+### values validators
+
+class ValueValidatorImplementation(validate.ValueValidator):
+    def _validate_value(self, value):
+        return [
+            reports.invalid_option_value(
+                self._option_name,
+                value.original,
+                "test report",
+            )
+        ]
+
+class ValueValidator(TestCase):
+    def test_value_not_specified(self):
+        assert_report_item_list_equal(
+            ValueValidatorImplementation("name")
+                .validate({"name1": "value1"})
+            ,
+            []
+        )
+
+    def test_value_empty_and_empty_not_allowed(self):
+        assert_report_item_list_equal(
+            ValueValidatorImplementation("name")
+                .validate({"name": ""})
+            ,
+            [
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_name="name",
+                    option_value="",
+                    allowed_values="test report",
+                )
+            ]
+        )
+
+    def test_value_empty_and_empty_allowed(self):
+        validator = ValueValidatorImplementation("name")
+        validator.empty_string_valid = True
+        assert_report_item_list_equal(
+            validator.validate({"name": ""}),
+            []
+        )
+
+    def test_value_not_valid(self):
+        assert_report_item_list_equal(
+            ValueValidatorImplementation("name")
+                .validate({"name": "value"})
+            ,
+            [
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_name="name",
+                    option_value="value",
+                    allowed_values="test report",
+                )
+            ]
+        )
+
+class ValuePredicateImplementation(validate.ValuePredicateBase):
+    def _is_valid(self, value):
+        return value == "b"
+
+    def _get_allowed_values(self):
+        return "allowed values"
+
+class ValuePredicateBase(TestCase):
+    def test_returns_empty_report_on_valid_option(self):
+        assert_report_item_list_equal(
+            ValuePredicateImplementation("a")
+                .validate({"a": "b"})
+            ,
+            []
+        )
+
+    def test_returns_empty_report_on_valid_normalized_option(self):
+        assert_report_item_list_equal(
+            ValuePredicateImplementation("a")
+            .validate({"a": validate.ValuePair(original="C", normalized="b")})
+            ,
+            []
+        )
+
+    def test_returns_report_about_invalid_option(self):
+        assert_report_item_list_equal(
+            ValuePredicateImplementation("a")
+                .validate({"a": "c"})
+            ,
+            [
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_name="a",
+                    option_value="c",
+                    allowed_values="allowed values",
+                )
+            ]
+        )
+
+    def test_support_option_value_pair(self):
+        assert_report_item_list_equal(
+            ValuePredicateImplementation("a")
+            .validate({"a": validate.ValuePair(original="b", normalized="c")})
+            ,
+            [
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_name="a",
+                    option_value="b",
+                    allowed_values="allowed values",
+                )
+            ]
+        )
+
+    def test_supports_another_report_option_name(self):
+        assert_report_item_list_equal(
+            ValuePredicateImplementation("a", option_name_for_report="option a")
+                .validate({"a": "c"})
+            ,
+            [
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_name="option a",
+                    option_value="c",
+                    allowed_values="allowed values",
+                )
+            ]
+        )
+
+    def test_supports_forceable_errors(self):
+        assert_report_item_list_equal(
+            ValuePredicateImplementation("a", code_for_warning="FORCE")
+                .validate({"a": "c"})
+            ,
+            [
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    force_code="FORCE",
+                    option_name="a",
+                    option_value="c",
+                    allowed_values="allowed values",
+                )
+            ]
+        )
+
+    def test_supports_warning(self):
+        assert_report_item_list_equal(
+            ValuePredicateImplementation(
+                "a", code_for_warning="FORCE", produce_warning=True
+            ).validate({"a": "c"})
+            ,
+            [
+                fixture.warn(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_name="a",
+                    option_value="c",
+                    allowed_values="allowed values",
+                )
+            ]
+        )
+
+class ValueId(TestCase):
+    def test_empty_id(self):
+        assert_report_item_list_equal(
+            validate.ValueId("id").validate({"id": ""}),
+            [
+                fixture.error(
+                    report_codes.EMPTY_ID,
+                    id="",
+                    id_description=None,
+                ),
+            ]
+        )
+
+    def test_invalid_first_char(self):
+        assert_report_item_list_equal(
+            validate.ValueId("id", option_name_for_report="test id")
+                .validate({"id": "0-test"})
+            ,
+            [
+                fixture.error(
+                    report_codes.INVALID_ID,
+                    id="0-test",
+                    id_description="test id",
+                    invalid_character="0",
+                    is_first_char=True,
+                ),
+            ]
+        )
+
+    def test_invalid_char(self):
+        assert_report_item_list_equal(
+            validate.ValueId("id").validate({"id": "te#st"}),
+            [
+                fixture.error(
+                    report_codes.INVALID_ID,
+                    id="te#st",
+                    id_description=None,
+                    invalid_character="#",
+                    is_first_char=False,
+                ),
+            ]
+        )
+
+    def test_used_id(self):
+        id_provider = IdProvider(etree.fromstring("<a><test id='used' /></a>"))
+        assert_report_item_list_equal(
+            validate.ValueId("id", id_provider=id_provider)
+                .validate({"id": "used"})
+            ,
+            [
+                fixture.error(
+                    report_codes.ID_ALREADY_EXISTS,
+                    id="used",
+                ),
+            ]
+        )
+
+    def test_pair_invalid(self):
+        assert_report_item_list_equal(
+            validate.ValueId("id")
+                .validate({"id": validate.ValuePair("@&#", "")})
+            ,
+            [
+                fixture.error(
+                    report_codes.EMPTY_ID,
+                    # TODO: This should be "@&#". However an old validator
+                    # is used and it doesn't work with pairs.
+                    id="",
+                    id_description=None,
+                ),
+            ]
+        )
+
+    def test_pair_used_id(self):
+        id_provider = IdProvider(etree.fromstring("<a><test id='used' /></a>"))
+        assert_report_item_list_equal(
+            validate.ValueId("id", id_provider=id_provider)
+                .validate({
+                    "id": validate.ValuePair("not-used", "used")
+                })
+            ,
+            [
+                fixture.error(
+                    report_codes.ID_ALREADY_EXISTS,
+                    # TODO: This should be "not-used". However an old
+                    # validator is used and it doesn't work with pairs.
+                    id="used",
+                ),
+            ]
+        )
+
+    def test_success(self):
+        id_provider = IdProvider(etree.fromstring("<a><test id='used' /></a>"))
+        assert_report_item_list_equal(
+            validate.ValueId("id", id_provider=id_provider)
+                .validate({"id": "correct"})
+            ,
+            []
+        )
+
+    def test_pair_success(self):
+        id_provider = IdProvider(etree.fromstring("<a><test id='used' /></a>"))
+        assert_report_item_list_equal(
+            validate.ValueId("id", id_provider=id_provider)
+                .validate({"id": validate.ValuePair("correct", "correct")})
+            ,
+            []
+        )
+
+class ValueIn(TestCase):
+    def test_returns_empty_report_on_valid_option(self):
+        assert_report_item_list_equal(
+            validate.ValueIn("a", ["b"]).validate({"a": "b"}),
+            []
+        )
+
+    def test_returns_empty_report_on_valid_normalized_option(self):
+        assert_report_item_list_equal(
+            validate.ValueIn("a", ["b"])
+                .validate(
+                    {"a": validate.ValuePair(original="C", normalized="b")}
+                )
+            ,
+            []
+        )
+
+    def test_returns_report_about_invalid_option(self):
+        assert_report_item_list_equal(
+            validate.ValueIn("a", ["b"]).validate({"a": "c"}),
+            [
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_name="a",
+                    option_value="c",
+                    allowed_values=["b"],
+                ),
+            ]
+        )
+
+    def test_support_option_value_pair(self):
+        assert_report_item_list_equal(
+            validate.ValueIn("a", ["b"])
+                .validate(
+                    {"a": validate.ValuePair(original="C", normalized="c")}
+                )
+            ,
+            [
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_name="a",
+                    option_value="C",
+                    allowed_values=["b"],
+                ),
+            ]
+        )
+
+    def test_supports_another_report_option_name(self):
+        assert_report_item_list_equal(
+            validate.ValueIn("a", ["b"], option_name_for_report="option a")
+                .validate({"a": "c"})
+            ,
+            [
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_name="option a",
+                    option_value="c",
+                    allowed_values=["b"],
+                ),
+            ]
+        )
+
+    def test_supports_forceable_errors(self):
+        assert_report_item_list_equal(
+            validate.ValueIn("a", ["b"], code_for_warning="FORCE")
+                .validate({"a": "c"})
+            ,
+            [
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    force_code="FORCE",
+                    option_name="a",
+                    option_value="c",
+                    allowed_values=["b"],
+                ),
+            ]
+        )
+
+    def test_supports_warning(self):
+        assert_report_item_list_equal(
+            validate.ValueIn(
+                "a",
+                ["b"],
+                code_for_warning="FORCE",
+                produce_warning=True
+            ).validate({"a": "c"})
+            ,
+            [
+                fixture.warn(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_name="a",
+                    option_value="c",
+                    allowed_values=["b"],
+                ),
+            ]
+        )
+
+class ValueIntegerInRange(TestCase):
+    # The real code only calls ValuePredicateBase and is_integer which are both
+    # heavily tested on their own => only basic tests here.
+    def fixture_validator(self):
+        return validate.ValueIntegerInRange("key", -5, 5)
+
+    def test_empty_report_on_valid_option(self):
+        assert_report_item_list_equal(
+            self.fixture_validator().validate({"key": "2"}),
+            []
+        )
+
+    def test_report_invalid_value(self):
+        assert_report_item_list_equal(
+            self.fixture_validator().validate({"key": "6"}),
+            [
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_name="key",
+                    option_value="6",
+                    allowed_values="-5..5",
+                ),
+            ]
+        )
+
+class ValueIpAddress(TestCase):
+    # The real code only calls ValuePredicateBase and is_ipv4_address and
+    # is_ipv6_address which are both heavily tested on their own => only basic
+    # tests here.
+    def fixture_validator(self):
+        return validate.ValueIpAddress("key")
+
+    def test_empty_report_on_ipv4(self):
+        assert_report_item_list_equal(
+            self.fixture_validator().validate({"key": "192.168.123.42"}),
+            []
+        )
+
+    def test_empty_report_on_ipv6(self):
+        assert_report_item_list_equal(
+            self.fixture_validator().validate({"key": "::192:168:123:42"}),
+            []
+        )
+
+    def test_report_invalid_value(self):
+        assert_report_item_list_equal(
+            self.fixture_validator().validate({"key": "abcd"}),
+            [
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_name="key",
+                    option_value="abcd",
+                    allowed_values="an IP address",
+                ),
+            ]
+        )
+
+class ValueNonnegativeInteger(TestCase):
+    # The real code only calls ValuePredicateBase => only basic tests here.
+    def test_empty_report_on_valid_option(self):
+        assert_report_item_list_equal(
+            validate.ValueNonnegativeInteger("key").validate({"key": "10"}),
+            []
+        )
+
+    def test_report_invalid_value(self):
+        assert_report_item_list_equal(
+            validate.ValueNonnegativeInteger("key").validate({"key": "-10"}),
+            [
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_name="key",
+                    option_value="-10",
+                    allowed_values="a non-negative integer",
+                ),
+            ]
+        )
+
+class ValueNotEmpty(TestCase):
+    # The real code only calls ValuePredicateBase => only basic tests here.
+    def test_empty_report_on_not_empty_value(self):
+        assert_report_item_list_equal(
+            validate.ValueNotEmpty("key", "description")
+                .validate({"key": "abc"})
+            ,
+            []
+        )
+
+    def test_empty_report_on_zero_int_value(self):
+        assert_report_item_list_equal(
+            validate.ValueNotEmpty("key", "description").validate({"key": 0}),
+            []
+        )
+
+    def test_report_on_empty_string(self):
+        assert_report_item_list_equal(
+            validate.ValueNotEmpty("key", "description").validate({"key": ""}),
+            [
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_name="key",
+                    option_value="",
+                    allowed_values="description",
+                ),
+            ]
+        )
+
+class ValuePortNumber(TestCase):
+    # The real code only calls ValuePredicateBase => only basic tests here.
+    def test_empty_report_on_valid_option(self):
+        assert_report_item_list_equal(
+            validate.ValuePortNumber("key").validate({"key": "54321"}),
+            []
+        )
+
+    def test_report_invalid_value(self):
+        assert_report_item_list_equal(
+            validate.ValuePortNumber("key").validate({"key": "65536"}),
+            [
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_name="key",
+                    option_value="65536",
+                    allowed_values="a port number (1..65535)",
+                ),
+            ]
+        )
+
+class ValuePortRange(TestCase):
+    # The real code only calls ValuePredicateBase => only basic tests here.
+    def test_empty_report_on_valid_option(self):
+        assert_report_item_list_equal(
+            validate.ValuePortRange("key").validate({"key": "100-200"}),
+            []
+        )
+
+    def test_report_nonsense(self):
+        assert_report_item_list_equal(
+            validate.ValuePortRange("key").validate({"key": "10-20-30"}),
+            [
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_name="key",
+                    option_value="10-20-30",
+                    allowed_values="port-port",
+                ),
+            ]
+        )
+
+    def test_report_bad_start(self):
+        assert_report_item_list_equal(
+            validate.ValuePortRange("key").validate({"key": "0-100"}),
+            [
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_name="key",
+                    option_value="0-100",
+                    allowed_values="port-port",
+                ),
+            ]
+        )
+
+    def test_report_bad_end(self):
+        assert_report_item_list_equal(
+            validate.ValuePortRange("key").validate({"key": "100-65536"}),
+            [
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_name="key",
+                    option_value="100-65536",
+                    allowed_values="port-port",
+                ),
+            ]
+        )
+
+class ValuePositiveInteger(TestCase):
+    # The real code only calls ValuePredicateBase => only basic tests here.
+    def test_empty_report_on_valid_option(self):
+        assert_report_item_list_equal(
+            validate.ValuePositiveInteger("key").validate({"key": "10"}),
+            []
+        )
+
+    def test_report_invalid_value(self):
+        assert_report_item_list_equal(
+            validate.ValuePositiveInteger("key").validate({"key": "0"}),
+            [
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_name="key",
+                    option_value="0",
+                    allowed_values="a positive integer",
+                ),
+            ]
+        )
+
+class ValueTimeInterval(TestCase):
+    def test_no_reports_for_valid_time_interval(self):
+        for interval in ["0", "1s", "2sec", "3m", "4min", "5h", "6hr"]:
+            with self.subTest(value=interval):
+                assert_report_item_list_equal(
+                    validate.ValueTimeInterval("a").validate({"a": interval}),
+                    []
+                )
+
+    def test_reports_about_invalid_interval(self):
+        assert_report_item_list_equal(
+            validate.ValueTimeInterval("a").validate({"a": "invalid_value"}),
+            [
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_name="a",
+                    option_value="invalid_value",
+                    allowed_values="time interval (e.g. 1, 2s, 3m, 4h, ...)",
+                ),
+            ]
+        )
+
+### predicates
 
 class IsInteger(TestCase):
     def test_no_range(self):
@@ -1147,7 +1152,6 @@ class IsInteger(TestCase):
         self.assertFalse(validate.is_integer("3", 4, 6))
         self.assertFalse(validate.is_integer("7", 4, 6))
 
-
 class IsIpv4Address(TestCase):
     def test_valid(self):
         self.assertTrue(validate.is_ipv4_address("192.168.1.1"))
@@ -1161,7 +1165,6 @@ class IsIpv4Address(TestCase):
         self.assertFalse(validate.is_ipv4_address("3232235521"))
         self.assertFalse(validate.is_ipv4_address("::1"))
 
-
 class IsIpv6Address(TestCase):
     def test_valid(self):
         self.assertTrue(validate.is_ipv6_address("fe80::5054:ff:fec6:8eaf"))
@@ -1170,7 +1173,6 @@ class IsIpv6Address(TestCase):
     def test_bad(self):
         self.assertFalse(validate.is_ipv6_address("abcd"))
         self.assertFalse(validate.is_ipv6_address("192.168.1.1"))
-
 
 class IsPortNumber(TestCase):
     def test_valid_port(self):
@@ -1189,7 +1191,6 @@ class IsPortNumber(TestCase):
         self.assertFalse(validate.is_port_number(-128))
         self.assertFalse(validate.is_port_number("-128"))
         self.assertFalse(validate.is_port_number("abcd"))
-
 
 class MatchesRegexp(TestCase):
     def test_matches_string(self):
@@ -1210,7 +1211,6 @@ class MatchesRegexp(TestCase):
             re.compile("^[a-d]+$", re.IGNORECASE)
         ))
 
-
 class IsEmptyString(TestCase):
     def test_empty_string(self):
         self.assertTrue(validate.is_empty_string(""))
@@ -1219,111 +1219,3 @@ class IsEmptyString(TestCase):
         self.assertFalse(validate.is_empty_string("a"))
         self.assertFalse(validate.is_empty_string("0"))
         self.assertFalse(validate.is_empty_string(0))
-
-
-class IsTimeInterval(TestCase):
-    def test_no_reports_for_valid_time_interval(self):
-        for interval in ["0", "1s", "2sec", "3m", "4min", "5h", "6hr"]:
-            self.assertEqual(
-                [],
-                validate.value_time_interval("a")({"a": interval}),
-                "interval: {0}".format(interval)
-            )
-
-    def test_reports_about_invalid_interval(self):
-        assert_report_item_list_equal(
-            validate.value_time_interval("a")({"a": "invalid_value"}),
-            [
-                (
-                    severities.ERROR,
-                    report_codes.INVALID_OPTION_VALUE,
-                    {
-                        "option_name": "a",
-                        "option_value": "invalid_value",
-                        "allowed_values":
-                            "time interval (e.g. 1, 2s, 3m, 4h, ...)"
-                        ,
-                    },
-                    None
-                ),
-            ]
-        )
-
-class WrapWithEmptyOrValid(TestCase):
-    def setUp(self):
-        self.validators = {
-            "a": validate.value_in("a", ["x", "y", "z"]),
-            "b": validate.value_integer_in_range("b", 0, 9),
-        }
-
-    def test_no_wrap(self):
-        validators = validate.wrap_with_empty_or_valid(
-            self.validators, wrap=False
-        )
-        validators.append(validate.value_port_number("c"))
-
-        assert_report_item_list_equal(
-            validate.run_collection_of_option_validators(
-                {"a": "", "b": "", "c": ""},
-                validators
-            ),
-            [
-                fixture.error(
-                    report_codes.INVALID_OPTION_VALUE,
-                    option_name="a",
-                    option_value="",
-                    allowed_values=["x", "y", "z"],
-                ),
-                fixture.error(
-                    report_codes.INVALID_OPTION_VALUE,
-                    option_name="b",
-                    option_value="",
-                    allowed_values="0..9",
-                ),
-                fixture.error(
-                    report_codes.INVALID_OPTION_VALUE,
-                    option_name="c",
-                    option_value="",
-                    allowed_values="a port number (1-65535)",
-                ),
-            ]
-        )
-
-    def test_wrap(self):
-        validators = validate.wrap_with_empty_or_valid(self.validators)
-        validators.append(validate.value_port_number("c"))
-
-        assert_report_item_list_equal(
-            validate.run_collection_of_option_validators(
-                {"a": "", "b": "", "c": ""},
-                validators
-            ),
-            [
-                fixture.error(
-                    report_codes.INVALID_OPTION_VALUE,
-                    option_name="c",
-                    option_value="",
-                    allowed_values="a port number (1-65535)",
-                ),
-            ]
-        )
-        assert_report_item_list_equal(
-            validate.run_collection_of_option_validators(
-                {"a": "X", "b": "Y"},
-                validators
-            ),
-            [
-                fixture.error(
-                    report_codes.INVALID_OPTION_VALUE,
-                    option_name="a",
-                    option_value="X",
-                    allowed_values=["x", "y", "z"],
-                ),
-                fixture.error(
-                    report_codes.INVALID_OPTION_VALUE,
-                    option_name="b",
-                    option_value="Y",
-                    allowed_values="0..9",
-                ),
-            ]
-        )
