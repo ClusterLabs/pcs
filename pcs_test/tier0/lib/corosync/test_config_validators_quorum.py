@@ -355,12 +355,8 @@ class AddQuorumDevice(TestCase):
             [
                 fixture.error(
                     report_codes.REQUIRED_OPTIONS_ARE_MISSING,
-                    option_names=["algorithm"],
+                    option_names=["algorithm", "host"],
                 ),
-                fixture.error(
-                    report_codes.REQUIRED_OPTIONS_ARE_MISSING,
-                    option_names=["host"],
-                )
             ]
         )
 
@@ -378,12 +374,8 @@ class AddQuorumDevice(TestCase):
             [
                 fixture.error(
                     report_codes.REQUIRED_OPTIONS_ARE_MISSING,
-                    option_names=["algorithm"],
+                    option_names=["algorithm", "host"],
                 ),
-                fixture.error(
-                    report_codes.REQUIRED_OPTIONS_ARE_MISSING,
-                    option_names=["host"],
-                )
             ]
         )
 
@@ -506,7 +498,7 @@ class AddQuorumDevice(TestCase):
                     {
                         "option_name": "port",
                         "option_value": "",
-                        "allowed_values": "a port number (1-65535)",
+                        "allowed_values": "a port number (1..65535)",
                     },
                     report_codes.FORCE_OPTIONS
                 ),
@@ -673,7 +665,7 @@ class AddQuorumDevice(TestCase):
                     {
                         "option_name": "port",
                         "option_value": "65537",
-                        "allowed_values": "a port number (1-65535)",
+                        "allowed_values": "a port number (1..65535)",
                     },
                     report_codes.FORCE_OPTIONS
                 ),
@@ -845,7 +837,7 @@ class AddQuorumDevice(TestCase):
                     {
                         "option_name": "port",
                         "option_value": "65537",
-                        "allowed_values": "a port number (1-65535)",
+                        "allowed_values": "a port number (1..65535)",
                     }
                 ),
                 (
@@ -1145,7 +1137,7 @@ class UpdateQuorumDevice(TestCase):
                     {
                         "option_name": "port",
                         "option_value": "65537",
-                        "allowed_values": "a port number (1-65535)",
+                        "allowed_values": "a port number (1..65535)",
                     },
                     report_codes.FORCE_OPTIONS
                 ),
@@ -1230,7 +1222,7 @@ class UpdateQuorumDevice(TestCase):
                     {
                         "option_name": "port",
                         "option_value": "65537",
-                        "allowed_values": "a port number (1-65535)",
+                        "allowed_values": "a port number (1..65535)",
                     },
                 ),
                 (

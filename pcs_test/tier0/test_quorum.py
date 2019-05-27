@@ -246,8 +246,7 @@ class DeviceAddTest(TestBase):
         self.assert_pcs_fail_regardless_of_force(
             "quorum device add model net",
             [
-                "Error: required quorum device model option 'algorithm' is missing",
-                "Error: required quorum device model option 'host' is missing",
+                "Error: required quorum device model options 'algorithm', 'host' are missing",
                 "Error: Errors have occurred, therefore pcs is unable to continue",
             ]
         )
@@ -257,12 +256,12 @@ class DeviceAddTest(TestBase):
             "quorum device add a=b timeout=-1 model net host=127.0.0.1 "
                 "algorithm=x c=d heuristics mode=bad e=f",
             """\
-Error: 'x' is not a valid algorithm value, use ffsplit, lms, use --force to override
 Error: invalid quorum device model option 'c', allowed options are: algorithm, connect_timeout, force_ip_version, host, port, tie_breaker, use --force to override
-Error: '-1' is not a valid timeout value, use a positive integer, use --force to override
+Error: 'x' is not a valid algorithm value, use ffsplit, lms, use --force to override
 Error: invalid quorum device option 'a', allowed options are: sync_timeout, timeout, use --force to override
-Error: 'bad' is not a valid mode value, use off, on, sync, use --force to override
+Error: '-1' is not a valid timeout value, use a positive integer, use --force to override
 Error: invalid heuristics option 'e', allowed options are: interval, mode, sync_timeout, timeout and options matching patterns: exec_NAME, use --force to override
+Error: 'bad' is not a valid mode value, use off, on, sync, use --force to override
 Error: Errors have occurred, therefore pcs is unable to continue
 """
         )
@@ -271,12 +270,12 @@ Error: Errors have occurred, therefore pcs is unable to continue
             "quorum device add a=b timeout=-1 model net host=127.0.0.1 "
                 "algorithm=x c=d heuristics mode=bad e=f --force",
             """\
-Warning: 'x' is not a valid algorithm value, use ffsplit, lms
 Warning: invalid quorum device model option 'c', allowed options are: algorithm, connect_timeout, force_ip_version, host, port, tie_breaker
-Warning: '-1' is not a valid timeout value, use a positive integer
+Warning: 'x' is not a valid algorithm value, use ffsplit, lms
 Warning: invalid quorum device option 'a', allowed options are: sync_timeout, timeout
-Warning: 'bad' is not a valid mode value, use off, on, sync
+Warning: '-1' is not a valid timeout value, use a positive integer
 Warning: invalid heuristics option 'e', allowed options are: interval, mode, sync_timeout, timeout and options matching patterns: exec_NAME
+Warning: 'bad' is not a valid mode value, use off, on, sync
 """
         )
         self.assert_pcs_success(
@@ -546,19 +545,19 @@ class DeviceUpdateTest(TestBase):
         self.assert_pcs_fail(
             "quorum device update a=b timeout=-1 model port=x c=d",
             """\
-Error: 'x' is not a valid port value, use a port number (1-65535), use --force to override
 Error: invalid quorum device model option 'c', allowed options are: algorithm, connect_timeout, force_ip_version, host, port, tie_breaker, use --force to override
-Error: '-1' is not a valid timeout value, use a positive integer, use --force to override
+Error: 'x' is not a valid port value, use a port number (1..65535), use --force to override
 Error: invalid quorum device option 'a', allowed options are: sync_timeout, timeout, use --force to override
+Error: '-1' is not a valid timeout value, use a positive integer, use --force to override
 """
         )
         self.assert_pcs_success(
             "quorum device update a=b timeout=-1 model port=x c=d --force",
             """\
-Warning: 'x' is not a valid port value, use a port number (1-65535)
 Warning: invalid quorum device model option 'c', allowed options are: algorithm, connect_timeout, force_ip_version, host, port, tie_breaker
-Warning: '-1' is not a valid timeout value, use a positive integer
+Warning: 'x' is not a valid port value, use a port number (1..65535)
 Warning: invalid quorum device option 'a', allowed options are: sync_timeout, timeout
+Warning: '-1' is not a valid timeout value, use a positive integer
 """
         )
         self.assert_pcs_success(

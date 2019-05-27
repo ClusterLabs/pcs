@@ -25,9 +25,7 @@ _QDEVICE_NET_OPTIONAL_OPTIONS = (
     "tie_breaker",
 )
 
-class _LinkAddrType(
-    namedtuple("_LinkAddrType", "link addr_type")
-):
+class _LinkAddrType(namedtuple("_LinkAddrType", "link addr_type")):
     pass
 
 
@@ -49,16 +47,17 @@ def create(
     """
     # cluster name and transport validation
     validators = [
-        validate.value_not_empty("name", "a non-empty string", "cluster name"),
-        validate.value_in("transport", constants.TRANSPORTS_ALL)
+        validate.ValueNotEmpty(
+            "name",
+            "a non-empty string",
+            option_name_for_report="cluster name"
+        ),
+        validate.ValueIn("transport", constants.TRANSPORTS_ALL)
     ]
-    report_items = validate.run_collection_of_option_validators(
-        {
-            "name": cluster_name,
-            "transport": transport
-        },
-        validators
-    )
+    report_items = validate.ValidatorAll(validators).validate({
+        "name": cluster_name,
+        "transport": transport
+    })
 
     # nodelist validation
     get_addr_type = _addr_type_analyzer()
@@ -72,12 +71,7 @@ def create(
     # be needed when validating the nodelist and inter-node dependencies.
     for i, node in enumerate(node_list, 1):
         report_items.extend(
-            validate.run_collection_of_option_validators(
-                node,
-                _get_node_name_validators(i)
-            )
-            +
-            validate.names_in(["addrs", "name"], node.keys(), "node")
+            validate.ValidatorAll(_get_node_name_validators(i)).validate(node)
         )
         if "name" in node and node["name"]:
             # Count occurrences of each node name. Do not bother counting
@@ -193,12 +187,13 @@ def create(
 
 def _get_node_name_validators(node_index):
     return [
-        validate.is_required("name", f"node {node_index}"),
-        validate.value_not_empty(
+        validate.NamesIn(["addrs", "name"], option_type="node"),
+        validate.IsRequiredAll(["name"], option_type=f"node {node_index}"),
+        validate.ValueNotEmpty(
             "name",
             "a non-empty string",
             option_name_for_report=f"node {node_index} name"
-        )
+        ),
     ]
 
 def _addr_type_analyzer():
@@ -316,12 +311,7 @@ def add_nodes(
     # be needed when validating the nodelist and inter-node dependencies.
     for i, node in enumerate(node_list, 1):
         report_items.extend(
-            validate.run_collection_of_option_validators(
-                node,
-                _get_node_name_validators(i)
-            )
-            +
-            validate.names_in(["addrs", "name"], node.keys(), "node")
+            validate.ValidatorAll(_get_node_name_validators(i)).validate(node)
         )
         if "name" in node and node["name"]:
             # Count occurrences of each node name. Do not bother counting
@@ -486,28 +476,24 @@ def _check_link_options_count(link_count, max_allowed_link_count):
 def _get_link_options_validators_udp(allow_empty_values=False):
     # This only returns validators checking single values. Add checks for
     # intervalues relationships as needed.
-    validators = {
-        "bindnetaddr": validate.value_ip_address("bindnetaddr"),
-        "broadcast": validate.value_in("broadcast", ("0", "1")),
-        "mcastaddr": validate.value_ip_address("mcastaddr"),
-        "mcastport": validate.value_port_number("mcastport"),
-        "ttl": validate.value_integer_in_range("ttl", 0, 255),
-    }
-    return validate.wrap_with_empty_or_valid(
-        validators,
-        wrap=allow_empty_values
-    )
+    validators = [
+        validate.ValueIpAddress("bindnetaddr"),
+        validate.ValueIn("broadcast", ("0", "1")),
+        validate.ValueIpAddress("mcastaddr"),
+        validate.ValuePortNumber("mcastport"),
+        validate.ValueIntegerInRange("ttl", 0, 255),
+    ]
+    if allow_empty_values:
+        for val in validators:
+            val.empty_string_valid = True
+    return [
+        validate.NamesIn(constants.LINK_OPTIONS_UDP, option_type="link")
+    ] + validators
 
 def _update_link_options_udp(new_options, current_options):
-    allowed_options = constants.LINK_OPTIONS_UDP
-    validators = _get_link_options_validators_udp(allow_empty_values=True)
-    report_items = (
-        validate.run_collection_of_option_validators(
-            new_options, validators
-        )
-        +
-        validate.names_in(allowed_options, new_options.keys(), "link")
-    )
+    report_items = validate.ValidatorAll(
+        _get_link_options_validators_udp(allow_empty_values=True)
+    ).validate(new_options)
 
     # default values taken from `man corosync.conf`
     target_broadcast = _get_option_after_update(
@@ -540,14 +526,10 @@ def create_link_list_udp(link_list, max_allowed_link_count):
         # provided, everything is fine and we have nothing to validate.
         return []
 
-    allowed_options = constants.LINK_OPTIONS_UDP
-    validators = _get_link_options_validators_udp()
     options = link_list[0]
-    report_items = (
-        validate.run_collection_of_option_validators(options, validators)
-        +
-        validate.names_in(allowed_options, options.keys(), "link")
-    )
+    report_items = validate.ValidatorAll(
+        _get_link_options_validators_udp(allow_empty_values=False)
+    ).validate(options)
     # default values taken from `man corosync.conf`
     if options.get("broadcast", "0") == "1" and "mcastaddr" in options:
         report_items.append(
@@ -612,67 +594,55 @@ def _get_link_options_validators_knet(
 ):
     # This only returns validators checking single values. Add checks for
     # intervalues relationships as needed.
-    validators = {
-        "link_priority": validate.value_integer_in_range(
-            "link_priority", 0, 255
-        ),
-        "mcastport": validate.value_port_number("mcastport"),
-        "ping_interval": validate.value_nonnegative_integer("ping_interval"),
-        "ping_precision": validate.value_nonnegative_integer("ping_precision"),
-        "ping_timeout": validate.value_nonnegative_integer("ping_timeout"),
-        "pong_count": validate.value_nonnegative_integer("pong_count"),
-        "transport": validate.value_in("transport", ("sctp", "udp")),
-    }
+    validators = [
+        validate.ValueIntegerInRange("link_priority", 0, 255),
+        validate.ValuePortNumber("mcastport"),
+        validate.ValueNonnegativeInteger("ping_interval"),
+        validate.ValueNonnegativeInteger("ping_precision"),
+        validate.ValueNonnegativeInteger("ping_timeout"),
+        validate.ValueNonnegativeInteger("pong_count"),
+        validate.ValueIn("transport", ("sctp", "udp")),
+    ]
+
     if including_linknumber:
-        validators["linknumber"] = validate.value_integer_in_range(
-            "linknumber",
-            0,
-            constants.LINKS_KNET_MAX - 1
+        validators.append(
+            validate.ValueIntegerInRange(
+                "linknumber", 0, constants.LINKS_KNET_MAX - 1
+            )
         )
-    return validate.wrap_with_empty_or_valid(
-        validators,
-        wrap=allow_empty_values
-    )
+        allowed_options = constants.LINK_OPTIONS_KNET_USER
+    else:
+        allowed_options = [
+            option for option in constants.LINK_OPTIONS_KNET_USER
+            if option != "linknumber"
+        ]
+
+    if allow_empty_values:
+        for val in validators:
+            val.empty_string_valid = True
+    return [validate.NamesIn(allowed_options, option_type="link")] + validators
 
 def _get_link_options_validators_knet_relations():
+    types = dict(option_type="link", prerequisite_type="link")
     return [
-        validate.depends_on_option(
-            "ping_interval",
-            "ping_timeout",
-            option_type="link",
-            prerequisite_type="link"
-        ),
-        validate.depends_on_option(
-            "ping_timeout",
-            "ping_interval",
-            option_type="link",
-            prerequisite_type="link"
-        ),
+        validate.DependsOnOption(["ping_interval"], "ping_timeout", **types),
+        validate.DependsOnOption(["ping_timeout"], "ping_interval", **types),
     ]
 
 def _add_link_options_knet(options):
-    allowed_options = constants.LINK_OPTIONS_KNET_USER
-    validators = _get_link_options_validators_knet()
-    validators += _get_link_options_validators_knet_relations()
-    return (
-        validate.run_collection_of_option_validators(options, validators)
+    return validate.ValidatorAll(
+        _get_link_options_validators_knet(
+            allow_empty_values=False, including_linknumber=True
+        )
         +
-        validate.names_in(allowed_options, options.keys(), "link")
-    )
+        _get_link_options_validators_knet_relations()
+    ).validate(options)
 
 def _update_link_options_knet(new_options, current_options):
     # Changing linknumber is not allowed in update. It would effectivelly
     # delete one link and add a new one. Link update is meant for the cases
     # when there is only one link which cannot be removed and another one
     # cannot be added.
-    allowed_options = [
-        option for option in constants.LINK_OPTIONS_KNET_USER
-        if option != "linknumber"
-    ]
-    validators = _get_link_options_validators_knet(
-        allow_empty_values=True, including_linknumber=False
-    )
-    validators_relations = _get_link_options_validators_knet_relations()
 
     # check dependencies in resulting options
     after_update = {}
@@ -684,13 +654,14 @@ def _update_link_options_knet(new_options, current_options):
             after_update[option_name] = option_value
 
     return (
-        validate.run_collection_of_option_validators(new_options, validators)
+        validate.ValidatorAll(
+            _get_link_options_validators_knet(
+                allow_empty_values=True, including_linknumber=False
+            )
+        ).validate(new_options)
         +
-        validate.run_collection_of_option_validators(
-            after_update, validators_relations
-        )
-        +
-        validate.names_in(allowed_options, new_options.keys(), "link")
+        validate.ValidatorAll(_get_link_options_validators_knet_relations())
+            .validate(after_update)
     )
 
 def add_link(
@@ -1015,21 +986,12 @@ def create_transport_udp(generic_options, compression_options, crypto_options):
         "netmtu",
     ]
     validators = [
-        validate.value_in("ip_version", constants.IP_VERSION_VALUES),
-        validate.value_positive_integer("netmtu"),
+        validate.NamesIn(allowed_options, option_type="udp/udpu transport"),
+        validate.ValueIn("ip_version", constants.IP_VERSION_VALUES),
+        validate.ValuePositiveInteger("netmtu"),
     ]
-    report_items = (
-        validate.run_collection_of_option_validators(
-            generic_options,
-            validators
-        )
-        +
-        validate.names_in(
-            allowed_options,
-            generic_options.keys(),
-            "udp/udpu transport"
-        )
-    )
+    report_items = validate.ValidatorAll(validators).validate(generic_options)
+
     if compression_options:
         report_items.append(
             reports.corosync_transport_unsupported_options(
@@ -1046,6 +1008,7 @@ def create_transport_udp(generic_options, compression_options, crypto_options):
                 ("knet", )
             )
         )
+
     return report_items
 
 def create_transport_knet(generic_options, compression_options, crypto_options):
@@ -1068,74 +1031,54 @@ def create_transport_knet(generic_options, compression_options, crypto_options):
         "link_mode",
     ]
     generic_validators = [
-        validate.value_in("ip_version", constants.IP_VERSION_VALUES),
-        validate.value_nonnegative_integer("knet_pmtud_interval"),
-        validate.value_in("link_mode", ("active", "passive", "rr")),
+        validate.NamesIn(generic_allowed, option_type="knet transport"),
+        validate.ValueIn("ip_version", constants.IP_VERSION_VALUES),
+        validate.ValueNonnegativeInteger("knet_pmtud_interval"),
+        validate.ValueIn("link_mode", ("active", "passive", "rr")),
     ]
+
     compression_allowed = [
         "level",
         "model",
         "threshold",
     ]
     compression_validators = [
-        validate.value_nonnegative_integer("level"),
-        validate.value_not_empty(
+        validate.NamesIn(compression_allowed, option_type="compression"),
+        validate.ValueNonnegativeInteger("level"),
+        validate.ValueNotEmpty(
             "model",
             "a compression model e.g. zlib, lz4 or bzip2"
         ),
-        validate.value_nonnegative_integer("threshold"),
+        validate.ValueNonnegativeInteger("threshold"),
     ]
-    crypto_type = "crypto"
+
     crypto_allowed = [
         "cipher",
         "hash",
         "model",
     ]
     crypto_validators = [
-        validate.value_in(
+        validate.NamesIn(crypto_allowed, option_type="crypto"),
+        validate.ValueIn(
             "cipher",
             ("none", "aes256", "aes192", "aes128")
         ),
-        validate.value_in(
+        validate.ValueIn(
             "hash",
             ("none", "md5", "sha1", "sha256", "sha384", "sha512")
         ),
-        validate.value_in("model", ("nss", "openssl")),
+        validate.ValueIn("model", ("nss", "openssl")),
     ]
+
     report_items = (
-        validate.run_collection_of_option_validators(
-            generic_options,
-            generic_validators
-        )
+        validate.ValidatorAll(generic_validators).validate(generic_options)
         +
-        validate.names_in(
-            generic_allowed,
-            generic_options.keys(),
-            "knet transport"
-        )
+        validate.ValidatorAll(compression_validators)
+            .validate(compression_options)
         +
-        validate.run_collection_of_option_validators(
-            compression_options,
-            compression_validators
-        )
-        +
-        validate.names_in(
-            compression_allowed,
-            compression_options.keys(),
-            "compression"
-        )
-        +
-        validate.run_collection_of_option_validators(
-            crypto_options,
-            crypto_validators
-        )
-        +
-        validate.names_in(
-            crypto_allowed,
-            crypto_options.keys(),
-            crypto_type
-        )
+        validate.ValidatorAll(crypto_validators).validate(crypto_options)
     )
+
     if (
         # default values taken from `man corosync.conf`
         crypto_options.get("cipher", "none") != "none"
@@ -1150,6 +1093,7 @@ def create_transport_knet(generic_options, compression_options, crypto_options):
                 prerequisite_type="crypto"
             )
         )
+
     return report_items
 
 def create_totem(options):
@@ -1183,32 +1127,26 @@ def create_totem(options):
         "window_size",
     ]
     validators = [
-        validate.value_nonnegative_integer("consensus"),
-        validate.value_nonnegative_integer("downcheck"),
-        validate.value_nonnegative_integer("fail_recv_const"),
-        validate.value_nonnegative_integer("heartbeat_failures_allowed"),
-        validate.value_nonnegative_integer("hold"),
-        validate.value_nonnegative_integer("join"),
-        validate.value_nonnegative_integer("max_messages"),
-        validate.value_nonnegative_integer("max_network_delay"),
-        validate.value_nonnegative_integer("merge"),
-        validate.value_nonnegative_integer("miss_count_const"),
-        validate.value_nonnegative_integer("send_join"),
-        validate.value_nonnegative_integer("seqno_unchanged_const"),
-        validate.value_nonnegative_integer("token"),
-        validate.value_nonnegative_integer("token_coefficient"),
-        validate.value_nonnegative_integer("token_retransmit"),
-        validate.value_nonnegative_integer(
-            "token_retransmits_before_loss_const"
-        ),
-        validate.value_nonnegative_integer("window_size"),
+        validate.NamesIn(allowed_options, option_type="totem"),
+        validate.ValueNonnegativeInteger("consensus"),
+        validate.ValueNonnegativeInteger("downcheck"),
+        validate.ValueNonnegativeInteger("fail_recv_const"),
+        validate.ValueNonnegativeInteger("heartbeat_failures_allowed"),
+        validate.ValueNonnegativeInteger("hold"),
+        validate.ValueNonnegativeInteger("join"),
+        validate.ValueNonnegativeInteger("max_messages"),
+        validate.ValueNonnegativeInteger("max_network_delay"),
+        validate.ValueNonnegativeInteger("merge"),
+        validate.ValueNonnegativeInteger("miss_count_const"),
+        validate.ValueNonnegativeInteger("send_join"),
+        validate.ValueNonnegativeInteger("seqno_unchanged_const"),
+        validate.ValueNonnegativeInteger("token"),
+        validate.ValueNonnegativeInteger("token_coefficient"),
+        validate.ValueNonnegativeInteger("token_retransmit"),
+        validate.ValueNonnegativeInteger("token_retransmits_before_loss_const"),
+        validate.ValueNonnegativeInteger("window_size"),
     ]
-    report_items = (
-        validate.run_collection_of_option_validators(options, validators)
-        +
-        validate.names_in(allowed_options, options.keys(), "totem")
-    )
-    return report_items
+    return validate.ValidatorAll(validators).validate(options)
 
 def create_quorum_options(options, has_qdevice):
     """
@@ -1282,12 +1220,10 @@ def update_quorum_options(options, has_qdevice, current_options):
     return report_items
 
 def _validate_quorum_options(options, has_qdevice, allow_empty_values):
-    validators = _get_quorum_options_validators(allow_empty_values)
-    report_items = (
-        validate.run_collection_of_option_validators(options, validators)
-        +
-        validate.names_in(constants.QUORUM_OPTIONS, options.keys(), "quorum")
-    )
+    report_items = validate.ValidatorAll(
+        _get_quorum_options_validators(allow_empty_values=allow_empty_values)
+    ).validate(options)
+
     if has_qdevice:
         qdevice_incompatible_options = [
             name for name in options
@@ -1299,31 +1235,23 @@ def _validate_quorum_options(options, has_qdevice, allow_empty_values):
                     qdevice_incompatible_options
                 )
             )
+
     return report_items
 
 def _get_quorum_options_validators(allow_empty_values=False):
     allowed_bool = ("0", "1")
-    validators = {
-        "auto_tie_breaker": validate.value_in(
-            "auto_tie_breaker",
-            allowed_bool
-        ),
-        "last_man_standing": validate.value_in(
-            "last_man_standing",
-            allowed_bool
-        ),
-        "last_man_standing_window": validate.value_positive_integer(
-            "last_man_standing_window"
-        ),
-        "wait_for_all": validate.value_in(
-            "wait_for_all",
-            allowed_bool
-        ),
-    }
-    return validate.wrap_with_empty_or_valid(
-        validators,
-        wrap=allow_empty_values
-    )
+    validators = [
+        validate.ValueIn("auto_tie_breaker", allowed_bool),
+        validate.ValueIn("last_man_standing", allowed_bool),
+        validate.ValuePositiveInteger("last_man_standing_window"),
+        validate.ValueIn("wait_for_all", allowed_bool),
+    ]
+    if allow_empty_values:
+        for val in validators:
+            val.empty_string_valid = True
+    return [
+        validate.NamesIn(constants.QUORUM_OPTIONS, option_type="quorum")
+    ] + validators
 
 def add_quorum_device(
     model, model_options, generic_options, heuristics_options, node_ids,
@@ -1346,28 +1274,25 @@ def add_quorum_device(
         "net": lambda: _qdevice_add_model_net_options(
             model_options,
             node_ids,
-            force_options
+            force_options=force_options,
         ),
     }
     if model in model_validators:
         report_items += model_validators[model]()
     else:
-        report_items += validate.run_collection_of_option_validators(
-            {"model": model},
-            [
-                validate.value_in(
-                    "model",
-                    list(model_validators.keys()),
-                    **validate.allow_extra_values(
-                        report_codes.FORCE_QDEVICE_MODEL, force_model
-                    )
-                )
-            ]
-        )
+        report_items += validate.ValueIn(
+            "model",
+            list(model_validators.keys()),
+            **validate.set_warning(
+                report_codes.FORCE_QDEVICE_MODEL, force_model
+            )
+        ).validate({"model": model})
     return (
         report_items
         +
-        _qdevice_add_generic_options(generic_options, force_options)
+        validate.ValidatorAll(
+            _get_qdevice_generic_options_validators(force_options=force_options)
+        ).validate(generic_options)
         +
         _qdevice_add_heuristics_options(heuristics_options, force_options)
     )
@@ -1400,58 +1325,15 @@ def update_quorum_device(
     return (
         report_items
         +
-        _qdevice_update_generic_options(generic_options, force_options)
+        validate.ValidatorAll(
+            _get_qdevice_generic_options_validators(
+                allow_empty_values=True,
+                force_options=force_options
+            )
+        ).validate(generic_options)
         +
-        _qdevice_update_heuristics_options(
-            heuristics_options,
-            force_options
-        )
+        _qdevice_update_heuristics_options(heuristics_options, force_options)
     )
-
-def _qdevice_add_generic_options(options, force_options=False):
-    """
-    Validate quorum device generic options when adding a quorum device
-
-    dict options -- generic options
-    bool force_options -- turn forceable errors into warnings
-    """
-    validators = _get_qdevice_generic_options_validators(
-        force_options=force_options
-    )
-    report_items = validate.run_collection_of_option_validators(
-        options,
-        validators
-    )
-    report_items.extend(
-        _validate_qdevice_generic_options_names(
-            options,
-            force_options=force_options
-        )
-    )
-    return report_items
-
-def _qdevice_update_generic_options(options, force_options=False):
-    """
-    Validate quorum device generic options when updating a quorum device
-
-    dict options -- generic options
-    bool force_options -- turn forceable errors into warnings
-    """
-    validators = _get_qdevice_generic_options_validators(
-        allow_empty_values=True,
-        force_options=force_options
-    )
-    report_items = validate.run_collection_of_option_validators(
-        options,
-        validators
-    )
-    report_items.extend(
-        _validate_qdevice_generic_options_names(
-            options,
-            force_options=force_options
-        )
-    )
-    return report_items
 
 def _qdevice_add_heuristics_options(options, force_options=False):
     """
@@ -1461,23 +1343,20 @@ def _qdevice_add_heuristics_options(options, force_options=False):
     bool force_options -- turn forceable errors into warnings
     """
     options_nonexec, options_exec = _split_heuristics_exec_options(options)
-    validators = _get_qdevice_heuristics_options_validators(
+    validators_nonexec = _get_qdevice_heuristics_nonexec_options_validators(
         force_options=force_options
     )
     exec_options_reports, valid_exec_options = (
         _validate_heuristics_exec_option_names(options_exec)
     )
-    for option in valid_exec_options:
-        validators.append(
-            validate.value_not_empty(option, "a command to be run")
-        )
+    validators_exec = [
+        validate.ValueNotEmpty(option, "a command to be run")
+        for option in valid_exec_options
+    ]
     return (
-        validate.run_collection_of_option_validators(options, validators)
+        validate.ValidatorAll(validators_nonexec).validate(options_nonexec)
         +
-        _validate_heuristics_noexec_option_names(
-            options_nonexec,
-            force_options=force_options
-        )
+        validate.ValidatorAll(validators_exec).validate(options_exec)
         +
         exec_options_reports
     )
@@ -1490,7 +1369,7 @@ def _qdevice_update_heuristics_options(options, force_options=False):
     bool force_options -- turn forceable errors into warnings
     """
     options_nonexec, options_exec = _split_heuristics_exec_options(options)
-    validators = _get_qdevice_heuristics_options_validators(
+    validators_nonexec = _get_qdevice_heuristics_nonexec_options_validators(
         allow_empty_values=True,
         force_options=force_options
     )
@@ -1500,12 +1379,7 @@ def _qdevice_update_heuristics_options(options, force_options=False):
         _validate_heuristics_exec_option_names(options_exec)
     )
     return (
-        validate.run_collection_of_option_validators(options, validators)
-        +
-        _validate_heuristics_noexec_option_names(
-            options_nonexec,
-            force_options=force_options
-        )
+        validate.ValidatorAll(validators_nonexec).validate(options_nonexec)
         +
         exec_options_reports
     )
@@ -1518,33 +1392,18 @@ def _qdevice_add_model_net_options(options, node_ids, force_options=False):
     list node_ids -- list of existing node ids
     bool force_options -- turn forceable errors into warnings
     """
-    allowed_options = (
-        _QDEVICE_NET_REQUIRED_OPTIONS + _QDEVICE_NET_OPTIONAL_OPTIONS
-    )
-    option_type = "quorum device model"
-    validators = (
+    return validate.ValidatorAll(
         [
-            validate.is_required(option_name, option_type)
-            for option_name in _QDEVICE_NET_REQUIRED_OPTIONS
+            validate.IsRequiredAll(
+                _QDEVICE_NET_REQUIRED_OPTIONS, option_type="quorum device model"
+            )
         ]
         +
         _get_qdevice_model_net_options_validators(
             node_ids,
             force_options=force_options
         )
-    )
-    return (
-        validate.run_collection_of_option_validators(options, validators)
-        +
-        validate.names_in(
-            allowed_options,
-            options.keys(),
-            option_type,
-            **validate.allow_extra_names(
-                report_codes.FORCE_OPTIONS, force_options
-            )
-        )
-    )
+    ).validate(options)
 
 def _qdevice_update_model_net_options(options, node_ids, force_options=False):
     """
@@ -1554,92 +1413,35 @@ def _qdevice_update_model_net_options(options, node_ids, force_options=False):
     list node_ids -- list of existing node ids
     bool force_options -- turn forceable errors into warnings
     """
-    allowed_options = (
-        _QDEVICE_NET_REQUIRED_OPTIONS + _QDEVICE_NET_OPTIONAL_OPTIONS
-    )
-    option_type = "quorum device model"
-    validators = _get_qdevice_model_net_options_validators(
-        node_ids,
-        allow_empty_values=True,
-        force_options=force_options
-    )
-    return (
-        validate.run_collection_of_option_validators(options, validators)
-        +
-        validate.names_in(
-            allowed_options,
-            options.keys(),
-            option_type,
-            **validate.allow_extra_names(
-                report_codes.FORCE_OPTIONS, force_options
-            )
+    return validate.ValidatorAll(
+        _get_qdevice_model_net_options_validators(
+            node_ids,
+            allow_empty_values=True,
+            force_options=force_options
         )
-    )
+    ).validate(options)
 
 def _get_qdevice_generic_options_validators(
     allow_empty_values=False, force_options=False
 ):
-    allow_extra_values = validate.allow_extra_values(
-        report_codes.FORCE_OPTIONS, force_options
-    )
-    validators = {
-        "sync_timeout": validate.value_positive_integer(
-            "sync_timeout",
-            **allow_extra_values
-        ),
-        "timeout": validate.value_positive_integer(
-            "timeout",
-            **allow_extra_values
-        ),
-    }
-    return validate.wrap_with_empty_or_valid(
-        validators,
-        wrap=allow_empty_values
-    )
+    kwargs = validate.set_warning(report_codes.FORCE_OPTIONS, force_options)
 
-def _validate_qdevice_generic_options_names(options, force_options=False):
-    option_type = "quorum device"
-    allowed_options = [
-        "sync_timeout",
-        "timeout",
+    validators = [
+        validate.ValuePositiveInteger("sync_timeout", **kwargs),
+        validate.ValuePositiveInteger("timeout", **kwargs),
     ]
-    report_items = []
-    # In corosync.conf, generic options contain the "model" option. We treat
-    # that option separately in pcs so we must not allow it to be passed in
-    # generic options. That's why a standard validate.names_in cannot be used
-    # in here.
-    model_found = False
-    invalid_options = []
-    for name in options:
-        if name not in allowed_options:
-            if name == "model":
-                model_found = True
-            else:
-                invalid_options.append(name)
-    if model_found:
-        report_items.append(
-            reports.invalid_options(
-                ["model"],
-                allowed_options,
-                option_type,
-            )
+    if allow_empty_values:
+        for val in validators:
+            val.empty_string_valid = True
+
+    return [
+        validate.NamesIn(
+            ["sync_timeout", "timeout"],
+            option_type="quorum device",
+            banned_name_list=["model"],
+            **kwargs
         )
-    if invalid_options:
-        report_items.append(
-            reports.invalid_options(
-                invalid_options,
-                allowed_options,
-                option_type,
-                severity=(
-                    ReportItemSeverity.WARNING if force_options
-                    else ReportItemSeverity.ERROR
-                ),
-                forceable=(
-                    None if force_options else report_codes.FORCE_OPTIONS
-                )
-            )
-        )
-    return report_items
+    ] + validators
 
 def _split_heuristics_exec_options(options):
     options_exec = dict()
@@ -1651,35 +1453,35 @@ def _split_heuristics_exec_options(options):
             options_nonexec[name] = value
     return options_nonexec, options_exec
 
-def _get_qdevice_heuristics_options_validators(
+def _get_qdevice_heuristics_nonexec_options_validators(
     allow_empty_values=False, force_options=False
 ):
-    allow_extra_values = validate.allow_extra_values(
-        report_codes.FORCE_OPTIONS, force_options
-    )
-    validators = {
-        "mode": validate.value_in(
-            "mode",
-            ("off", "on", "sync"),
-            **allow_extra_values
-        ),
-        "interval": validate.value_positive_integer(
-            "interval",
-            **allow_extra_values
-        ),
-        "sync_timeout": validate.value_positive_integer(
-            "sync_timeout",
-            **allow_extra_values
-        ),
-        "timeout": validate.value_positive_integer(
-            "timeout",
-            **allow_extra_values
-        ),
-    }
-    return validate.wrap_with_empty_or_valid(
-        validators,
-        wrap=allow_empty_values
-    )
+    kwargs = validate.set_warning(report_codes.FORCE_OPTIONS, force_options)
+
+    allowed_options = [
+        "interval",
+        "mode",
+        "sync_timeout",
+        "timeout",
+    ]
+    validators = [
+        validate.ValueIn("mode", ("off", "on", "sync"), **kwargs),
+        validate.ValuePositiveInteger("interval", **kwargs),
+        validate.ValuePositiveInteger("sync_timeout", **kwargs),
+        validate.ValuePositiveInteger("timeout", **kwargs),
+    ]
+
+    if allow_empty_values:
+        for val in validators:
+            val.empty_string_valid = True
+    return [
+        validate.NamesIn(
+            allowed_options,
+            allowed_option_patterns=["exec_NAME"],
+            option_type="heuristics",
+            **kwargs
+        )
+    ] + validators
 
 def _validate_heuristics_exec_option_names(options_exec):
     # We must be strict and do not allow to override this validation,
@@ -1706,100 +1508,45 @@ def _validate_heuristics_exec_option_names(options_exec):
         )
     return report_list, valid_options
 
-def _validate_heuristics_noexec_option_names(
-    options_nonexec, force_options=False
-):
-    allowed_options = [
-        "interval",
-        "mode",
-        "sync_timeout",
-        "timeout",
-    ]
-    return validate.names_in(
-        allowed_options,
-        options_nonexec.keys(),
-        "heuristics",
-        report_codes.FORCE_OPTIONS,
-        extra_names_allowed=force_options,
-        allowed_option_patterns=["exec_NAME"]
-    )
-
 def _get_qdevice_model_net_options_validators(
     node_ids, allow_empty_values=False, force_options=False
 ):
-    allow_extra_values = validate.allow_extra_values(
-        report_codes.FORCE_OPTIONS, force_options
-    )
-    validators = {
-        "connect_timeout": validate.value_integer_in_range(
+    kwargs = validate.set_warning(report_codes.FORCE_OPTIONS, force_options)
+    allowed_algorithms = ("ffsplit", "lms")
+
+    validators_required_options = [
+        validate.ValidatorFirstError([
+            validate.ValueNotEmpty("algorithm", allowed_algorithms),
+            validate.ValueIn("algorithm", allowed_algorithms, **kwargs),
+        ]),
+        validate.ValueNotEmpty("host", "a qdevice host address"),
+    ]
+    validators_optional_options = [
+        validate.ValueIntegerInRange(
             "connect_timeout",
             1000,
             2*60*1000,
-            **allow_extra_values
+            **kwargs
         ),
-        "force_ip_version": validate.value_in(
-            "force_ip_version",
-            ("0", "4", "6"),
-            **allow_extra_values
-        ),
-        "port": validate.value_port_number(
-            "port",
-            **allow_extra_values
-        ),
-        "tie_breaker": validate.value_in(
+        validate.ValueIn("force_ip_version", ("0", "4", "6"), **kwargs),
+        validate.ValuePortNumber("port", **kwargs),
+        validate.ValueIn(
             "tie_breaker",
             ["lowest", "highest"] + node_ids,
-            **allow_extra_values
+            **kwargs
         ),
-    }
-    if not allow_empty_values:
-        return (
-            [
-                validate.value_not_empty("host", "a qdevice host address"),
-                _validate_qdevice_net_algorithm(**allow_extra_values)
-            ]
-            +
-            # explicitely convert to a list for python 3
-            list(validators.values())
-        )
-    return (
-        [
-            validate.value_not_empty("host", "a qdevice host address"),
-            _validate_qdevice_net_algorithm(**allow_extra_values)
-        ]
-        +
-        [
-            validate.value_empty_or_valid(option_name, validator)
-            for option_name, validator in validators.items()
-        ]
-    )
+    ]
 
-def _validate_qdevice_net_algorithm(
-    code_to_allow_extra_values=None, extra_values_allowed=False
-):
-    # pylint: disable=protected-access
-    @validate._if_option_exists("algorithm")
-    def validate_func(option_dict):
-        allowed_algorithms = (
-            "ffsplit",
-            "lms",
+    if allow_empty_values:
+        for val in validators_optional_options:
+            val.empty_string_valid = True
+    return [
+        validate.NamesIn(
+            _QDEVICE_NET_REQUIRED_OPTIONS + _QDEVICE_NET_OPTIONAL_OPTIONS,
+            option_type="quorum device model",
+            **kwargs
         )
-        value = validate.ValuePair.get(option_dict["algorithm"])
-        if validate.is_empty_string(value.normalized):
-            return [
-                reports.invalid_option_value(
-                    "algorithm",
-                    value.original,
-                    allowed_algorithms
-                )
-            ]
-        return validate.value_in(
-            "algorithm",
-            allowed_algorithms,
-            code_to_allow_extra_values=code_to_allow_extra_values,
-            extra_values_allowed=extra_values_allowed
-        )(option_dict)
-    return validate_func
+    ] + validators_required_options + validators_optional_options
 
 def _get_option_after_update(
     new_options, current_options, option_name, default_value

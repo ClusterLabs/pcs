@@ -861,7 +861,7 @@ class CreateLinkListUdp(CreateLinkListCommonMixin, TestCase):
                     report_codes.INVALID_OPTION_VALUE,
                     option_value="0",
                     option_name="mcastport",
-                    allowed_values="a port number (1-65535)"
+                    allowed_values="a port number (1..65535)"
                 ),
                 fixture.error(
                     report_codes.INVALID_OPTION_VALUE,
@@ -1026,7 +1026,7 @@ class CreateLinkListKnet(CreateLinkListCommonMixin, TestCase):
                     report_codes.INVALID_OPTION_VALUE,
                     option_value="65536",
                     option_name="mcastport",
-                    allowed_values="a port number (1-65535)"
+                    allowed_values="a port number (1..65535)"
                 ),
                 fixture.error(
                     report_codes.INVALID_OPTION_VALUE,

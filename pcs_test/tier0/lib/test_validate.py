@@ -132,6 +132,82 @@ class ValidatorAll(TestCase):
             ]
         )
 
+class ValidatorFirstError(TestCase):
+    class Validator(validate.ValueValidator):
+        def _validate_value(self, value):
+            creator = None
+            if value.normalized == "a":
+                creator = reports.error
+            if value.normalized == "b":
+                creator = reports.warning
+            if creator is None:
+                return []
+            return [
+                creator(
+                    reports.invalid_option_value,
+                    self._option_name,
+                    value.original,
+                    "test report",
+                )
+            ]
+
+    def setUp(self):
+        self.validator = validate.ValidatorFirstError([
+            self.Validator("name1"),
+            self.Validator("name2"),
+        ])
+
+    def test_no_reports(self):
+        assert_report_item_list_equal(
+            self.validator.validate({"name1": "c", "name2": "d"}),
+            []
+        )
+
+    def test_first_errors(self):
+        assert_report_item_list_equal(
+            self.validator.validate({"name1": "a", "name2": "d"}),
+            [
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_name="name1",
+                    option_value="a",
+                    allowed_values="test report",
+                ),
+            ]
+        )
+
+    def test_second_errors(self):
+        assert_report_item_list_equal(
+            self.validator.validate({"name1": "c", "name2": "a"}),
+            [
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_name="name2",
+                    option_value="a",
+                    allowed_values="test report",
+                ),
+            ]
+        )
+
+    def test_keep_warnings(self):
+        assert_report_item_list_equal(
+            self.validator.validate({"name1": "b", "name2": "a"}),
+            [
+                fixture.warn(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_name="name1",
+                    option_value="b",
+                    allowed_values="test report",
+                ),
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_name="name2",
+                    option_value="a",
+                    allowed_values="test report",
+                ),
+            ]
+        )
+
 ### keys validators
 
 class DependsOnOption(TestCase):

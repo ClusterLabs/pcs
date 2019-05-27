@@ -32,6 +32,7 @@ import ipaddress
 import re
 
 from pcs.lib import reports
+from pcs.lib.errors import ReportItemSeverity
 from pcs.lib.pacemaker.values import (
     timeout_to_seconds,
     validate_id,
@@ -124,6 +125,24 @@ class ValidatorAll(CompoundValidator):
         report_list = []
         for validator in self._validator_list:
             report_list.extend(validator.validate(option_dict))
+        return report_list
+
+class ValidatorFirstError(CompoundValidator):
+    """
+    Run validators in sequence, return reports once one reports an error
+    """
+    def validate(self, option_dict):
+        report_list = []
+        for validator in self._validator_list:
+            new_report_list = validator.validate(option_dict)
+            report_list.extend(new_report_list)
+            error_reported = False
+            for report_item in new_report_list:
+                if report_item.severity == ReportItemSeverity.ERROR:
+                    error_reported = True
+                    break
+            if error_reported:
+                break
         return report_list
 
 ### keys validators
