@@ -192,33 +192,6 @@ class DependsOnOption(KeyValidator):
             )
         ]
 
-def depends_on_option(
-    option_name, prerequisite_option, option_type="", prerequisite_type=""
-):
-    # TODO remove
-    """
-    Get a validator reporting REQUIRED_OPTION_IS_MISSING when the option_dict
-    does not contain the prerequisite_option and contains the option_name.
-
-    string option_name -- name of the option to check
-    string prerequisite_option -- name of the option which is a prerequisite
-    string option_type -- describes a type of the option for reporting purposes
-    """
-    def validate(option_dict):
-        if (
-            option_name in option_dict
-            and
-            prerequisite_option not in option_dict
-        ):
-            return [reports.prerequisite_option_is_missing(
-                option_name,
-                prerequisite_option,
-                option_type,
-                prerequisite_type
-            )]
-        return []
-    return validate
-
 class IsRequiredAll(KeyValidator):
     """
     Report REQUIRED_OPTIONS_ARE_MISSING with all option_name_list options
@@ -232,25 +205,6 @@ class IsRequiredAll(KeyValidator):
                 self._option_type,
             )]
         return []
-
-def is_required(option_name, option_type=""):
-    # TODO remove
-    """
-    Return a the function that takes option_dict and returns report list
-    (with REQUIRED_OPTIONS_IS_MISSING when option_dict does not contain
-    option_name).
-
-    string option_name is name of option of option_dict that will be tested
-    string option_type describes type of option for reporting purposes
-    """
-    def validate(option_dict):
-        if option_name not in option_dict:
-            return [reports.required_options_are_missing(
-                [option_name],
-                option_type,
-            )]
-        return []
-    return validate
 
 class IsRequiredSome(KeyValidator):
     """
@@ -266,28 +220,6 @@ class IsRequiredSome(KeyValidator):
             )]
         return []
 
-def is_required_some_of(option_name_list, option_type=""):
-    # TODO remove
-    """
-    Get a validator reporting REQUIRED_OPTION_IS_MISSING report when the
-    option_dict does not contain at least one item from the option_name_list.
-
-    iterable option_name_list -- names of options of the option_dict to test
-    string option_type -- describes a type of the option for reporting purposes
-    """
-    def validate(option_dict):
-        found_names = set.intersection(
-            set(option_dict.keys()),
-            set(option_name_list)
-        )
-        if not found_names:
-            return [reports.required_option_of_alternatives_is_missing(
-                sorted(option_name_list),
-                option_type,
-            )]
-        return []
-    return validate
-
 class MutuallyExclusive(KeyValidator):
     """
     Report MUTUALLY_EXCLUSIVE_OPTIONS when there is more than one of
@@ -301,29 +233,6 @@ class MutuallyExclusive(KeyValidator):
                 self._option_type,
             )]
         return []
-
-def mutually_exclusive(mutually_exclusive_names, option_type="option"):
-    # TODO remove
-    """
-    Return a list with report MUTUALLY_EXCLUSIVE_OPTIONS when in option_dict
-    appears more than one of mutually_exclusive_names.
-
-    list|set mutually_exclusive_names contains option names that cannot appear
-        together
-    string option_type describes type of option for reporting purposes
-    """
-    def validate(option_dict):
-        found_names = set.intersection(
-            set(option_dict.keys()),
-            set(mutually_exclusive_names)
-        )
-        if len(found_names) > 1:
-            return [reports.mutually_exclusive_options(
-                sorted(found_names),
-                option_type,
-            )]
-        return []
-    return validate
 
 class NamesIn(KeyValidator):
     """
@@ -374,57 +283,6 @@ class NamesIn(KeyValidator):
                 self._option_type,
             ))
         return report_list
-
-def names_in(
-    allowed_name_list, name_list, option_type="option",
-    code_to_allow_extra_names=None, extra_names_allowed=False,
-    allowed_option_patterns=None, banned_name_list=None,
-):
-    # TODO remove
-    """
-    Return a list with report INVALID_OPTIONS when in name_list is a name that
-    is not in allowed_name_list.
-
-    list allowed_name_list contains names which are valid
-    list name_list contains names for validation
-    string option_type describes type of option for reporting purposes
-    string code_to_allow_extra_names is code for forcing invalid names. If it is
-        empty report INVALID_OPTIONS is non-forceable error. If it is not empty
-        report INVALID_OPTIONS is forceable error or warning.
-    bool extra_names_allowed is flag that complements code_to_allow_extra_names
-        and determines wheter is report INVALID_OPTIONS forceable error or
-        warning.
-    mixed allowed_option_patterns -- option patterns to be added to a report
-    list banned_name_list -- list of options which cannot be forced
-    """
-    name_set = set(name_list)
-    banned_set = set(banned_name_list or [])
-    banned_names = set()
-    if not (code_to_allow_extra_names is None and not extra_names_allowed):
-        banned_names = name_set & banned_set
-    invalid_names = name_set - set(allowed_name_list) - banned_names
-
-    report_list = []
-
-    create_report = reports.get_problem_creator(
-        code_to_allow_extra_names,
-        extra_names_allowed
-    )
-    if invalid_names:
-        report_list.append(create_report(
-            reports.invalid_options,
-            sorted(invalid_names),
-            sorted(allowed_name_list),
-            option_type,
-            allowed_option_patterns=sorted(allowed_option_patterns or [])
-        ))
-    if banned_names:
-        report_list.append(reports.invalid_options(
-            sorted(banned_names),
-            sorted(allowed_name_list),
-            option_type,
-        ))
-    return report_list
 
 ### values validators
 
@@ -493,48 +351,6 @@ class ValuePredicateBase(ValueValidator):
     def _get_allowed_values(self):
         raise NotImplementedError()
 
-def value_cond(
-    option_name, predicate, value_type_or_enum, option_name_for_report=None,
-    code_to_allow_extra_values=None, extra_values_allowed=False
-):
-    # TODO remove
-    """
-    Return a validation  function that takes option_dict and returns report list
-    (with INVALID_OPTION_VALUE when option_name is not in allowed_values).
-
-    string option_name is name of option of option_dict that will be tested
-    function predicate takes one parameter, normalized value
-    list or string value_type_or_enum list of possible values or string
-        description of value type
-    string option_name_for_report is substitued by option name if is None
-    string code_to_allow_extra_values is code for forcing invalid names. If it
-        is empty report INVALID_OPTION_VALUE is non-forceable error. If it is
-        not empty report INVALID_OPTION_VALUE is forceable error or warning.
-    bool extra_values_allowed flag that complements code_to_allow_extra_values
-        and determines wheter is report INVALID_OPTION_VALUE forceable error or
-        warning.
-    """
-    @_if_option_exists(option_name)
-    def validate(option_dict):
-        value = ValuePair.get(option_dict[option_name])
-
-        if not predicate(value.normalized):
-            create_report = reports.get_problem_creator(
-                code_to_allow_extra_values,
-                extra_values_allowed
-            )
-            return [create_report(
-                reports.invalid_option_value,
-                option_name_for_report if option_name_for_report is not None
-                    else option_name
-                ,
-                value.original,
-                value_type_or_enum,
-            )]
-
-        return []
-    return validate
-
 class ValueId(ValueValidator):
     """
     Report ID errors and optionally book IDs along the way
@@ -560,27 +376,6 @@ class ValueId(ValueValidator):
             )
         return report_list
 
-def value_id(option_name, option_name_for_report=None, id_provider=None):
-    # TODO remove
-    """
-    Get a validator reporting ID errors and optionally booking IDs along the way
-
-    string option_name -- name of the option to check
-    string option_name_for_report -- substitued by the option_name if not set
-    IdProvider id_provider -- used to check id uniqueness if set
-    """
-    @_if_option_exists(option_name)
-    def validate(option_dict):
-        value = ValuePair.get(option_dict[option_name])
-        report_list = []
-        validate_id(value.normalized, option_name_for_report, report_list)
-        if id_provider is not None and not report_list:
-            report_list.extend(
-                id_provider.book_ids(value.normalized)
-            )
-        return report_list
-    return validate
-
 class ValueIn(ValuePredicateBase):
     """
     Report INVALID_OPTION_VALUE when a value is not in a set of allowed values
@@ -605,34 +400,6 @@ class ValueIn(ValuePredicateBase):
 
     def _get_allowed_values(self):
         return self._allowed_value_list
-
-def value_in(
-    option_name, allowed_values, option_name_for_report=None,
-    code_to_allow_extra_values=None, extra_values_allowed=False
-):
-    # TODO remove
-    """
-    Special case of value_cond function.returned function checks whenever value
-    is included allowed_values. If not list of ReportItem will be returned.
-
-    option_name -- string, name of option to check
-    allowed_values -- list of strings, list of possible values
-    option_name_for_report -- string, it is substitued by option name if is None
-    code_to_allow_extra_values -- string, code for forcing invalid names. If it
-        is empty report INVALID_OPTION_VALUE is non-forceable error. If it is
-        not empty report INVALID_OPTION_VALUE is forceable error or warning.
-    extra_values_allowed -- bool flag complementing code_to_allow_extra_values
-        and determines wheter is report INVALID_OPTION_VALUE forceable error or
-        warning.
-    """
-    return value_cond(
-        option_name,
-        lambda normalized_value: normalized_value in allowed_values,
-        allowed_values,
-        option_name_for_report=option_name_for_report,
-        code_to_allow_extra_values=code_to_allow_extra_values,
-        extra_values_allowed=extra_values_allowed,
-    )
 
 class ValueIntegerInRange(ValuePredicateBase):
     """
@@ -662,31 +429,6 @@ class ValueIntegerInRange(ValuePredicateBase):
     def _get_allowed_values(self):
         return f"{self._at_least}..{self._at_most}"
 
-def value_integer_in_range(
-    option_name, at_least, at_most, option_name_for_report=None,
-    code_to_allow_extra_values=None, extra_values_allowed=False
-):
-    # TODO remove
-    """
-    Get a validator reporting INVALID_OPTION_VALUE when the value is not an
-    integer such that at_least <= value <= at_most
-
-    string option_name -- name of the option to check
-    int at_least -- minimal allowed value
-    int at_most -- maximal allowed value
-    string option_name_for_report -- substitued by the option_name if not set
-    string code_to_allow_extra_values -- create a report forceable by this code
-    bool extra_values_allowed -- create a warning instead of an error if True
-    """
-    return value_cond(
-        option_name,
-        lambda value: is_integer(value, at_least, at_most),
-        "{min}..{max}".format(min=at_least, max=at_most),
-        option_name_for_report=option_name_for_report,
-        code_to_allow_extra_values=code_to_allow_extra_values,
-        extra_values_allowed=extra_values_allowed,
-    )
-
 class ValueIpAddress(ValuePredicateBase):
     """
     Report INVALID_OPTION_VALUE when the value is not an IP address
@@ -697,29 +439,6 @@ class ValueIpAddress(ValuePredicateBase):
     def _get_allowed_values(self):
         return "an IP address"
 
-def value_ip_address(
-    option_name, option_name_for_report=None,
-    code_to_allow_extra_values=None, extra_values_allowed=False
-):
-    # TODO remove
-    """
-    Get a validator reporting INVALID_OPTION_VALUE when the value is not
-    an IP address
-
-    string option_name -- name of the option to check
-    string option_name_for_report -- substitued by the option_name if not set
-    string code_to_allow_extra_values -- create a report forceable by this code
-    bool extra_values_allowed -- create a warning instead of an error if True
-    """
-    return value_cond(
-        option_name,
-        lambda value: is_ipv4_address(value) or is_ipv6_address(value),
-        "an IP address",
-        option_name_for_report=option_name_for_report,
-        code_to_allow_extra_values=code_to_allow_extra_values,
-        extra_values_allowed=extra_values_allowed,
-    )
-
 class ValueNonnegativeInteger(ValuePredicateBase):
     """
     Report INVALID_OPTION_VALUE when the value is not an integer greater than -1
@@ -729,29 +448,6 @@ class ValueNonnegativeInteger(ValuePredicateBase):
 
     def _get_allowed_values(self):
         return "a non-negative integer"
-
-def value_nonnegative_integer(
-    option_name, option_name_for_report=None,
-    code_to_allow_extra_values=None, extra_values_allowed=False
-):
-    # TODO remove
-    """
-    Get a validator reporting INVALID_OPTION_VALUE when the value is not
-    an integer greater than -1
-
-    string option_name -- name of the option to check
-    string option_name_for_report -- substitued by the option_name if not set
-    string code_to_allow_extra_values -- create a report forceable by this code
-    bool extra_values_allowed -- create a warning instead of an error if True
-    """
-    return value_cond(
-        option_name,
-        lambda value: is_integer(value, 0),
-        "a non-negative integer",
-        option_name_for_report=option_name_for_report,
-        code_to_allow_extra_values=code_to_allow_extra_values,
-        extra_values_allowed=extra_values_allowed,
-    )
 
 class ValueNotEmpty(ValuePredicateBase):
     """
@@ -778,28 +474,6 @@ class ValueNotEmpty(ValuePredicateBase):
     def _get_allowed_values(self):
         return self._value_desc_or_enum
 
-def value_not_empty(
-    option_name, value_type_or_enum, option_name_for_report=None,
-    code_to_allow_extra_values=None, extra_values_allowed=False
-):
-    # TODO remove
-    """
-    Get a validator reporting INVALID_OPTION_VALUE when the value is empty
-
-    string option_name -- name of the option to check
-    string option_name_for_report -- substitued by the option_name if not set
-    string code_to_allow_extra_values -- create a report forceable by this code
-    bool extra_values_allowed -- create a warning instead of an error if True
-    """
-    return value_cond(
-        option_name,
-        lambda value: not is_empty_string(value),
-        value_type_or_enum,
-        option_name_for_report=option_name_for_report,
-        code_to_allow_extra_values=code_to_allow_extra_values,
-        extra_values_allowed=extra_values_allowed,
-    )
-
 class ValuePortNumber(ValuePredicateBase):
     """
     Report INVALID_OPTION_VALUE when the value is not a TCP or UDP port number
@@ -809,29 +483,6 @@ class ValuePortNumber(ValuePredicateBase):
 
     def _get_allowed_values(self):
         return "a port number (1..65535)"
-
-def value_port_number(
-    option_name, option_name_for_report=None,
-    code_to_allow_extra_values=None, extra_values_allowed=False
-):
-    # TODO remove
-    """
-    Get a validator reporting INVALID_OPTION_VALUE when the value is not a TCP
-    or UDP port number
-
-    string option_name -- name of the option to check
-    string option_name_for_report -- substitued by the option_name if not set
-    string code_to_allow_extra_values -- create a report forceable by this code
-    bool extra_values_allowed -- create a warning instead of an error if True
-    """
-    return value_cond(
-        option_name,
-        is_port_number,
-        "a port number (1-65535)",
-        option_name_for_report=option_name_for_report,
-        code_to_allow_extra_values=code_to_allow_extra_values,
-        extra_values_allowed=extra_values_allowed,
-    )
 
 class ValuePortRange(ValuePredicateBase):
     """
@@ -847,33 +498,6 @@ class ValuePortRange(ValuePredicateBase):
     def _get_allowed_values(self):
         return "port-port"
 
-def value_port_range(
-    option_name, option_name_for_report=None,
-    code_to_allow_extra_values=None, extra_values_allowed=False
-):
-    # TODO remove
-    """
-    Get a validator reporting INVALID_OPTION_VALUE when the value is not a TCP
-    or UDP port range
-
-    string option_name -- name of the option to check
-    string option_name_for_report -- substitued by the option_name if not set
-    string code_to_allow_extra_values -- create a report forceable by this code
-    bool extra_values_allowed -- create a warning instead of an error if True
-    """
-    return value_cond(
-        option_name,
-        lambda value: (
-            matches_regexp(value, "^[0-9]+-[0-9]+$")
-            and
-            all([is_port_number(part) for part in value.split("-", 1)])
-        ),
-        "port-port",
-        option_name_for_report=option_name_for_report,
-        code_to_allow_extra_values=code_to_allow_extra_values,
-        extra_values_allowed=extra_values_allowed,
-    )
-
 class ValuePositiveInteger(ValuePredicateBase):
     """
     Report INVALID_OPTION_VALUE when the value is not an integer greater than 0
@@ -883,29 +507,6 @@ class ValuePositiveInteger(ValuePredicateBase):
 
     def _get_allowed_values(self):
         return "a positive integer"
-
-def value_positive_integer(
-    option_name, option_name_for_report=None,
-    code_to_allow_extra_values=None, extra_values_allowed=False
-):
-    # TODO remove
-    """
-    Get a validator reporting INVALID_OPTION_VALUE when the value is not
-    an integer greater than zero
-
-    string option_name -- name of the option to check
-    string option_name_for_report -- substitued by the option_name if not set
-    string code_to_allow_extra_values -- create a report forceable by this code
-    bool extra_values_allowed -- create a warning instead of an error if True
-    """
-    return value_cond(
-        option_name,
-        lambda value: is_integer(value, 1),
-        "a positive integer",
-        option_name_for_report=option_name_for_report,
-        code_to_allow_extra_values=code_to_allow_extra_values,
-        extra_values_allowed=extra_values_allowed,
-    )
 
 class ValueTimeInterval(ValuePredicateBase):
     """
@@ -917,50 +518,7 @@ class ValueTimeInterval(ValuePredicateBase):
     def _get_allowed_values(self):
         return "time interval (e.g. 1, 2s, 3m, 4h, ...)"
 
-def value_time_interval(option_name, option_name_for_report=None):
-    # TODO remove
-    return value_cond(
-        option_name,
-        lambda normalized_value:
-            timeout_to_seconds(normalized_value) is not None
-        ,
-        "time interval (e.g. 1, 2s, 3m, 4h, ...)",
-        option_name_for_report=option_name_for_report,
-    )
-
-def value_empty_or_valid(option_name, validator):
-    # TODO remove
-    """
-    Get a validator running the specified validator if the value is not empty
-
-    string option_name -- name of the option to check
-    function validator -- validator to run when the value is not an empty string
-    """
-    @_if_option_exists(option_name)
-    def validate(option_dict):
-        value = ValuePair.get(option_dict[option_name])
-        return (
-            [] if is_empty_string(value.normalized)
-            else validator(option_dict)
-        )
-    return validate
-
 ### predicates
-
-def run_collection_of_option_validators(option_dict, validator_list):
-    # TODO remove
-    """
-    Return a list with reports (ReportItems) about problems inside items of
-    option_dict.
-
-    dict option_dict is source of values to validate according to specification
-    list validator_list contains callables that takes option_dict and returns
-        list of reports
-    """
-    report_list = []
-    for validate in validator_list:
-        report_list.extend(validate(option_dict))
-    return report_list
 
 def is_empty_string(value):
     """
@@ -1054,55 +612,3 @@ def set_warning(code_for_warning, produce_warning):
         "code_for_warning": code_for_warning,
         "produce_warning": produce_warning,
     }
-
-def allow_extra_values(code_to_allow, allow):
-    # TODO remove
-    """
-    A usefull shortcut for calling validators
-
-    string code_to_allow -- code to force an error
-    bool allow -- make extra values emit a warning
-    """
-    return {
-        "code_to_allow_extra_values": code_to_allow,
-        "extra_values_allowed": allow,
-    }
-
-def allow_extra_names(code_to_allow, allow):
-    # TODO remove
-    """
-    A usefull shortcut for calling validators
-
-    string code_to_allow -- code to force an error
-    bool allow -- make extra names emit a warning
-    """
-    return {
-        "code_to_allow_extra_names": code_to_allow,
-        "extra_names_allowed": allow,
-    }
-
-def wrap_with_empty_or_valid(validators_dict, wrap=True):
-    # TODO remove
-    """
-    Turn a dict of validators to a list, wrapping them with value_empty_or_valid
-
-    dict validators_dict -- key: option name, value: option validator
-    bool wrap -- set to False to get the original validators
-    """
-    if not wrap:
-        # return a list so we can call its append / extend methods
-        return list(validators_dict.values())
-    return [
-        value_empty_or_valid(option_name, validator)
-        for option_name, validator in validators_dict.items()
-    ]
-
-def _if_option_exists(option_name):
-    # TODO remove
-    def params_wrapper(validate_func):
-        def prepare(option_dict):
-            if option_name not in option_dict:
-                return []
-            return validate_func(option_dict)
-        return prepare
-    return params_wrapper
