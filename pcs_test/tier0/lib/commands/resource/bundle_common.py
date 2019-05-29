@@ -403,36 +403,26 @@ class NetworkMixin(SetUpMixin):
                 }
             ),
             [
-                (
-                    severities.ERROR,
+                fixture.error(
                     report_codes.INVALID_OPTION_VALUE,
-                    {
-                        "option_name": "control-port",
-                        "option_value": "0",
-                        "allowed_values": "a port number (1-65535)",
-                    },
-                    None
+                    option_name="control-port",
+                    option_value="0",
+                    allowed_values="a port number (1..65535)",
                 ),
-                (
-                    severities.ERROR,
+                fixture.error(
                     report_codes.INVALID_OPTION_VALUE,
-                    {
-                        "option_name": "host-netmask",
-                        "option_value": "abc",
-                        "allowed_values": "a number of bits of the mask (1-32)",
-                    },
-                    report_codes.FORCE_OPTIONS
+                    force_code=report_codes.FORCE_OPTIONS,
+                    option_name="host-netmask",
+                    option_value="abc",
+                    allowed_values="a number of bits of the mask (1..32)",
                 ),
-                (
-                    severities.ERROR,
+                fixture.error(
                     report_codes.INVALID_OPTIONS,
-                    {
-                        "option_names": ["extra", ],
-                        "option_type": "network",
-                        "allowed": sorted(list(NETWORK_OPTIONS)),
-                        "allowed_patterns": [],
-                    },
-                    report_codes.FORCE_OPTIONS
+                    force_code=report_codes.FORCE_OPTIONS,
+                    option_names=["extra"],
+                    option_type="network",
+                    allowed=sorted(NETWORK_OPTIONS),
+                    allowed_patterns=[],
                 ),
             ]
         )
@@ -468,7 +458,7 @@ class NetworkMixin(SetUpMixin):
                 {
                     "option_name": "host-netmask",
                     "option_value": "abc",
-                    "allowed_values": "a number of bits of the mask (1-32)",
+                    "allowed_values": "a number of bits of the mask (1..32)",
                 },
                 None
             ),
@@ -622,7 +612,7 @@ class PortMapMixin(SetUpMixin):
                     {
                         "option_name": "port",
                         "option_value": "abc",
-                        "allowed_values": "a port number (1-65535)",
+                        "allowed_values": "a port number (1..65535)",
                     },
                     None
                 ),
@@ -642,7 +632,7 @@ class PortMapMixin(SetUpMixin):
                     {
                         "option_name": "internal-port",
                         "option_value": "def",
-                        "allowed_values": "a port number (1-65535)",
+                        "allowed_values": "a port number (1..65535)",
                     },
                     None
                 ),
