@@ -1240,6 +1240,7 @@ class IsIpv4Address(TestCase):
         self.assertFalse(validate.is_ipv4_address("192 168 1 1"))
         self.assertFalse(validate.is_ipv4_address("3232235521"))
         self.assertFalse(validate.is_ipv4_address("::1"))
+        self.assertFalse(validate.is_ipv4_address(1234))
 
 class IsIpv6Address(TestCase):
     def test_valid(self):
@@ -1249,6 +1250,7 @@ class IsIpv6Address(TestCase):
     def test_bad(self):
         self.assertFalse(validate.is_ipv6_address("abcd"))
         self.assertFalse(validate.is_ipv6_address("192.168.1.1"))
+        self.assertFalse(validate.is_ipv6_address(1234))
 
 class IsPortNumber(TestCase):
     def test_valid_port(self):

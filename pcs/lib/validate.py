@@ -559,7 +559,7 @@ def is_ipv4_address(value):
             ipaddress.IPv4Address(value)
             return True
         return False
-    except ValueError:
+    except (TypeError, ValueError):
         # not an IP address
         return False
 
@@ -576,7 +576,7 @@ def is_ipv6_address(value):
             ipaddress.IPv6Address(value)
             return True
         return False
-    except ValueError:
+    except (TypeError, ValueError):
         # not an IP address
         return False
 
