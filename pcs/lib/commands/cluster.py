@@ -15,7 +15,7 @@ from pcs.common.tools import (
     join_multilines,
 )
 from pcs.common.reports import SimpleReportProcessor
-from pcs.lib import reports, node_communication_format, sbd
+from pcs.lib import reports, node_communication_format, sbd, validate
 from pcs.lib.booth import sync as booth_sync
 from pcs.lib.cib import fencing_topology
 from pcs.lib.cib.resource.remote_node import find_node_list as get_remote_nodes
@@ -78,7 +78,6 @@ from pcs.lib.tools import (
     environment_file_to_dict,
     generate_binary_key,
 )
-from pcs.lib.validate import names_in as validate_names_in
 
 
 def node_clear(env, node_name, allow_clear_cluster_node=False):
@@ -559,15 +558,16 @@ def add_nodes(
     # and SBD options respectively, and we need to check for any surplus
     # options here.
     report_processor.report_list(
-        validate_names_in(
+        validate.NamesIn(
             corosync_node_options | sbd_node_options,
-            {
-                option
-                for node_options in [node.keys() for node in new_nodes]
-                for option in node_options
-            },
             option_type="node"
-        )
+        ).validate({
+            # Get a dict containing options of all nodes. Values don't matter
+            # for validate.NamesIn validator.
+            option_name: None
+            for node_option_names in [node.keys() for node in new_nodes]
+            for option_name in node_option_names
+        })
     )
 
     # Validate inputs - corosync part

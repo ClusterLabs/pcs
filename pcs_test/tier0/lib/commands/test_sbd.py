@@ -534,7 +534,7 @@ class InitializeBlockDevicesTest(CommonTest):
                 report_codes.INVALID_OPTIONS,
                 {
                     "option_names": sorted(["another_one", "unknown_option"]),
-                    "option_type": "option",
+                    "option_type": None,
                     "allowed": sorted(allowed_options),
                     "allowed_patterns": [],
                 }
