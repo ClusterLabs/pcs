@@ -2,6 +2,7 @@ from functools import partial
 from unittest import mock, TestCase
 from lxml import etree
 
+from pcs_test.tools import fixture
 from pcs_test.tools.assertions import assert_report_item_list_equal
 from pcs_test.tools.custom_mock import MockLibraryReportProcessor
 from pcs_test.tools.misc import create_patcher
@@ -248,12 +249,70 @@ class ValidateOperation(TestCase):
         )
 
     def test_validate_all_individual_options(self):
-        self.assertEqual(
-            ["REQUIRES REPORT", "ROLE REPORT"],
-            sorted(operations.validate_operation({"name": "monitor"}, [
-                mock.Mock(return_value=["ROLE REPORT"]),
-                mock.Mock(return_value=["REQUIRES REPORT"]),
-            ]))
+        self.assert_operation_produces_report(
+            {
+                "name": "monitro",
+                "role": "a",
+                "on-fail": "b",
+                "record-pending": "c",
+                "enabled": "d",
+                "id": "0",
+                "unknown": "invalid",
+            },
+            [
+                fixture.error(
+                    report_codes.INVALID_OPTIONS,
+                    option_names=["unknown"],
+                    option_type="resource operation",
+                    allowed=[
+                        "OCF_CHECK_LEVEL", "description", "enabled", "id",
+                        "interval", "interval-origin", "name", "on-fail",
+                        "record-pending", "role", "start-delay", "timeout",
+                    ],
+                    allowed_patterns=[]
+                ),
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    force_code=report_codes.FORCE_OPTIONS,
+                    option_value="monitro",
+                    option_name="operation name",
+                    allowed_values=["monitor"],
+                ),
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_value="a",
+                    option_name="role",
+                    allowed_values=["Stopped", "Started", "Slave", "Master"],
+                ),
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_value="b",
+                    option_name="on-fail",
+                    allowed_values=[
+                        "ignore", "block", "stop", "restart", "standby",
+                        "fence", "restart-container",
+                    ],
+                ),
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_value="c",
+                    option_name="record-pending",
+                    allowed_values=["0", "1", "true", "false"],
+                ),
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_value="d",
+                    option_name="enabled",
+                    allowed_values=["0", "1", "true", "false"],
+                ),
+                fixture.error(
+                    report_codes.INVALID_ID,
+                    id="0",
+                    id_description="operation id",
+                    is_first_char=True,
+                    invalid_character="0",
+                ),
+            ],
         )
 
     def test_return_error_when_unknown_operation_attribute(self):

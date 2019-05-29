@@ -119,49 +119,33 @@ def normalized_to_operations(normalized_pairs):
 def validate_operation_list(
     operation_list, allowed_operation_name_list, allow_invalid=False
 ):
-    options_validators = [
-        validate.is_required("name", "resource operation"),
-        validate.value_in("role", ROLE_VALUES),
-        validate.value_in("on-fail", ON_FAIL_VALUES),
-        validate.value_in("record-pending", BOOLEAN_VALUES),
-        validate.value_in("enabled", BOOLEAN_VALUES),
-        validate.mutually_exclusive(
-            ["interval-origin", "start-delay"],
-            "resource operation"
-        ),
-        validate.value_in(
+    kwargs = validate.set_warning(report_codes.FORCE_OPTIONS, allow_invalid)
+    option_type = "resource operation"
+
+    validators = [
+        validate.NamesIn(ATTRIBUTES, option_type=option_type),
+        validate.IsRequiredAll(["name"], option_type=option_type),
+        validate.ValueIn(
             "name",
             allowed_operation_name_list,
             option_name_for_report="operation name",
-            code_to_allow_extra_values=report_codes.FORCE_OPTIONS,
-            extra_values_allowed=allow_invalid,
+            **kwargs
         ),
-        validate.value_id("id", option_name_for_report="operation id"),
+        validate.ValueIn("role", ROLE_VALUES),
+        validate.ValueIn("on-fail", ON_FAIL_VALUES),
+        validate.ValueIn("record-pending", BOOLEAN_VALUES),
+        validate.ValueIn("enabled", BOOLEAN_VALUES),
+        validate.MutuallyExclusive(
+            ["interval-origin", "start-delay"],
+            option_type=option_type
+        ),
+        validate.ValueId("id", option_name_for_report="operation id"),
     ]
+    validator_all = validate.ValidatorAll(validators)
+
     report_list = []
     for operation in operation_list:
-        report_list.extend(
-            validate_operation(operation, options_validators)
-        )
-    return report_list
-
-def validate_operation(operation, options_validator_list):
-    """
-    Return a list with reports (ReportItems) about problems inside
-        operation.
-    dict operation contains attributes of operation
-    """
-    report_list = validate.names_in(
-        ATTRIBUTES,
-        operation.keys(),
-        "resource operation",
-    )
-
-    report_list.extend(validate.run_collection_of_option_validators(
-        operation,
-        options_validator_list
-    ))
-
+        report_list.extend(validator_all.validate(operation))
     return report_list
 
 def get_remaining_defaults(

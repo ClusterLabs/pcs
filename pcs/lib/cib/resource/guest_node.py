@@ -52,36 +52,21 @@ def get_guest_option_value(options, default=None):
 def validate_set_as_guest(
     tree, existing_nodes_names, existing_nodes_addrs, node_name, options
 ):
-    report_list = validate.names_in(
-        GUEST_OPTIONS,
-        options.keys(),
-        "guest",
-    )
-
     validator_list = [
-        validate.value_time_interval("remote-connect-timeout"),
-        validate.value_port_number("remote-port"),
+        validate.NamesIn(GUEST_OPTIONS, option_type="guest"),
+        validate.ValueTimeInterval("remote-connect-timeout"),
+        validate.ValuePortNumber("remote-port"),
     ]
-    report_list.extend(
-        validate.run_collection_of_option_validators(options, validator_list)
-    )
-
-    report_list.extend(
+    return (
+        validate.ValidatorAll(validator_list).validate(options)
+        +
+        validate.ValueNotEmpty("node name", "no empty value")
+            .validate({"node name": node_name.strip()})
+        +
         validate_conflicts(
             tree, existing_nodes_names, existing_nodes_addrs, node_name, options
         )
     )
-
-    if not node_name.strip():
-        report_list.append(
-            reports.invalid_option_value(
-                "node name",
-                node_name,
-                "no empty value",
-            )
-        )
-
-    return report_list
 
 def is_guest_node(resource_element):
     """

@@ -546,13 +546,11 @@ class Agent():
 
         # report unknown parameters
         report_items.extend(
-            validate.names_in(
+            validate.NamesIn(
                 {param["name"] for param in self.get_parameters()},
-                parameters.keys(),
-                self._agent_type_label,
-                report_codes.FORCE_OPTIONS,
-                force
-            )
+                option_type=self._agent_type_label,
+                **validate.set_warning(report_codes.FORCE_OPTIONS, force)
+            ).validate(parameters)
         )
 
         # report missing required parameters
@@ -600,14 +598,17 @@ class Agent():
 
         # report unknown parameters
         report_items.extend(
-            validate.names_in(
+            validate.NamesIn(
                 {param["name"] for param in self.get_parameters()},
+                option_type=self._agent_type_label,
+                **validate.set_warning(report_codes.FORCE_OPTIONS, force)
+            ).validate(
                 # Do not report unknown parameters already set in the CIB. They
                 # have been reported already when the were added to the CIB.
-                set(new_parameters.keys()) - set(current_parameters.keys()),
-                self._agent_type_label,
-                report_codes.FORCE_OPTIONS,
-                force
+                {
+                    name: value for name, value in new_parameters.items()
+                    if name not in current_parameters
+                }
             )
         )
 

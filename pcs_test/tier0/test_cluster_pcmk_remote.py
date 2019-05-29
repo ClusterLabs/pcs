@@ -278,7 +278,7 @@ class NodeAddGuest(RemoteTest):
         self.assert_pcs_fail(
             "cluster node add-guest node-name G remote-port=70000 remote-addr=a",
             "Error: '70000' is not a valid remote-port value, use a port number"
-                " (1-65535)\n"
+                " (1..65535)\n"
             "Error: Errors have occurred, therefore pcs is unable to continue\n"
             "Unable to check if there is a conflict with nodes set in corosync "
                 "because the command does not run on a live cluster (e.g. -f "
