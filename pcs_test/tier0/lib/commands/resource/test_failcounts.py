@@ -66,7 +66,9 @@ class GetFailcounts(TestCase):
                     report_codes.INVALID_OPTION_VALUE,
                     option_name="interval",
                     option_value="often",
-                    allowed_values="time interval (e.g. 1, 2s, 3m, 4h, ...)"
+                    allowed_values="time interval (e.g. 1, 2s, 3m, 4h, ...)",
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
                 ),
             ],
             expected_in_processor=False
@@ -89,7 +91,9 @@ class GetFailcounts(TestCase):
                     report_codes.INVALID_OPTION_VALUE,
                     option_name="interval",
                     option_value="often",
-                    allowed_values="time interval (e.g. 1, 2s, 3m, 4h, ...)"
+                    allowed_values="time interval (e.g. 1, 2s, 3m, 4h, ...)",
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
                 ),
             ],
             expected_in_processor=False

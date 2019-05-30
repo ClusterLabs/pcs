@@ -537,7 +537,7 @@ class DeviceUpdateTest(TestBase):
         self.fixture_conf_qdevice()
         self.assert_pcs_fail_regardless_of_force(
             "quorum device update model host=",
-            "Error: '' is not a valid host value, use a qdevice host address\n"
+            "Error: host cannot be empty, use a qdevice host address\n"
         )
 
     def test_bad_options(self):

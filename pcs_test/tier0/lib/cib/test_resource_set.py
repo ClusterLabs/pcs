@@ -52,6 +52,8 @@ class PrepareSetTest(TestCase):
                 'option_name': 'role',
                 'allowed_values': ('Stopped', 'Started', 'Master', 'Slave'),
                 'option_value': 'invalid',
+                'cannot_be_empty': False,
+                'forbidden_characters': None,
             }),
         )
 

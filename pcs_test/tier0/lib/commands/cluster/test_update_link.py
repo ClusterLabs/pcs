@@ -270,7 +270,9 @@ class UpdateLinkKnet(TestCase):
                     report_codes.INVALID_OPTION_VALUE,
                     option_value="unknown",
                     option_name="transport",
-                    allowed_values=("sctp", "udp")
+                    allowed_values=("sctp", "udp"),
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
                 ),
                 fixture.error(
                     report_codes.INVALID_OPTIONS,
@@ -417,6 +419,8 @@ class UpdateLinkUdp(TestCase):
                     option_value="address",
                     option_name="mcastaddr",
                     allowed_values="an IP address",
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
                 ),
                 fixture.error(
                     report_codes.INVALID_OPTIONS,

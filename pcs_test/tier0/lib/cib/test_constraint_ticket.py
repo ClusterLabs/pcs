@@ -83,6 +83,8 @@ class PrepareOptionsPlainTest(TestCase):
                 'allowed_values': ('Stopped', 'Started', 'Master', 'Slave'),
                 'option_value': 'bad_role',
                 'option_name': 'rsc-role',
+                'cannot_be_empty': False,
+                'forbidden_characters': None,
             }),
         )
 
@@ -127,6 +129,8 @@ class PrepareOptionsPlainTest(TestCase):
                 'allowed_values': ('fence', 'stop', 'freeze', 'demote'),
                 'option_value': 'unknown',
                 'option_name': 'loss-policy',
+                'cannot_be_empty': False,
+                'forbidden_characters': None,
             }),
         )
 
@@ -210,6 +214,8 @@ class PrepareOptionsWithSetTest(TestCase):
                 'allowed_values': ('fence', 'stop', 'freeze', 'demote'),
                 'option_value': 'unknown',
                 'option_name': 'loss-policy',
+                'cannot_be_empty': False,
+                'forbidden_characters': None,
             }),
         )
 

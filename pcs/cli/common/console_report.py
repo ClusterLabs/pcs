@@ -74,13 +74,17 @@ def format_fencing_level_target(target_type, target_value):
         return "{0}={1}".format(target_value[0], target_value[1])
     return target_value
 
-def format_list(a_list):
+def format_list(a_list, quotes=True):
+    template = "'{}'" if quotes else "{}"
     return ", ".join([
-        "'{0}'".format(x) for x in sorted(a_list)
+        template.format(x) for x in sorted(a_list)
     ])
 
 def format_file_role(role):
     return _file_role_translation.get(role, role)
+
+def is_iterable_not_str(value):
+    return isinstance(value, Iterable) and not isinstance(value, str)
 
 def service_operation_started(operation, info):
     return "{operation} {service}{instance_suffix}...".format(
@@ -249,6 +253,29 @@ def invalid_options(info):
         option_names_list=joined_list(info["option_names"]),
         plural_options=("s:" if len(info["option_names"]) > 1 else ""),
         plural_allowed=("s are:" if len(info["allowed"]) > 1 else " is"),
+        **info
+    )
+
+def invalid_option_value(info):
+    if info["cannot_be_empty"]:
+        template = "{option_name} cannot be empty"
+    elif info["forbidden_characters"]:
+        template = (
+            "{option_name} cannot contain {forbidden_characters} characters"
+        )
+    else:
+        template = "'{option_value}' is not a valid {option_name} value"
+    if info["allowed_values"]:
+        template += ", use {_hint}"
+    return template.format(
+        _hint=(
+            # "allowed_values" value is overloaded:
+            # * it can be a list -> it expreses possible option values
+            # * it can be a string -> it is a textual description of the value
+            format_list(info["allowed_values"], quotes=False)
+            if is_iterable_not_str(info["allowed_values"])
+            else info["allowed_values"]
+        ),
         **info
     )
 
@@ -464,22 +491,7 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
 
     codes.INVALID_OPTIONS: invalid_options,
 
-    codes.INVALID_OPTION_VALUE: lambda info:
-        #value on key "allowed_values" is overloaded:
-        # * it can be a list - then it express possible option values
-        # * it can be a string - then it is verbal description of value
-        "'{option_value}' is not a valid {option_name} value, use {hint}"
-        .format(
-            hint=(
-                ", ".join(sorted(info["allowed_values"])) if (
-                    isinstance(info["allowed_values"], Iterable)
-                    and
-                    not isinstance(info["allowed_values"], str)
-                ) else info["allowed_values"]
-            ),
-            **info
-        )
-    ,
+    codes.INVALID_OPTION_VALUE: invalid_option_value,
 
     codes.INVALID_OPTION_TYPE: lambda info:
         #value on key "allowed_types" is overloaded:

@@ -60,41 +60,37 @@ class BaseQuorumOptions():
                 has_qdevice
             ),
             [
-                (
-                    severity.ERROR,
+                fixture.error(
                     report_codes.INVALID_OPTION_VALUE,
-                    {
-                        "option_name": "auto_tie_breaker",
-                        "option_value": "atb",
-                        "allowed_values": ("0", "1"),
-                    }
+                    option_name="auto_tie_breaker",
+                    option_value="atb",
+                    allowed_values=("0", "1"),
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
                 ),
-                (
-                    severity.ERROR,
+                fixture.error(
                     report_codes.INVALID_OPTION_VALUE,
-                    {
-                        "option_name": "last_man_standing",
-                        "option_value": "lms",
-                        "allowed_values": ("0", "1"),
-                    }
+                    option_name="last_man_standing",
+                    option_value="lms",
+                    allowed_values=("0", "1"),
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
                 ),
-                (
-                    severity.ERROR,
+                fixture.error(
                     report_codes.INVALID_OPTION_VALUE,
-                    {
-                        "option_name": "last_man_standing_window",
-                        "option_value": "lmsw",
-                        "allowed_values": "a positive integer",
-                    }
+                    option_name="last_man_standing_window",
+                    option_value="lmsw",
+                    allowed_values="a positive integer",
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
                 ),
-                (
-                    severity.ERROR,
+                fixture.error(
                     report_codes.INVALID_OPTION_VALUE,
-                    {
-                        "option_name": "wait_for_all",
-                        "option_value": "wfa",
-                        "allowed_values": ("0", "1"),
-                    }
+                    option_name="wait_for_all",
+                    option_value="wfa",
+                    allowed_values=("0", "1"),
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
                 ),
             ]
         )
@@ -111,20 +107,17 @@ class BaseQuorumOptions():
                 has_qdevice
             ),
             [
-                (
-                    severity.ERROR,
+                fixture.error(
                     report_codes.INVALID_OPTIONS,
-                    {
-                        "option_names": ["nonsense1", "nonsense2"],
-                        "option_type": "quorum",
-                        "allowed": [
-                            "auto_tie_breaker",
-                            "last_man_standing",
-                            "last_man_standing_window",
-                            "wait_for_all"
-                        ],
-                        "allowed_patterns": [],
-                    }
+                    option_names=["nonsense1", "nonsense2"],
+                    option_type="quorum",
+                    allowed=[
+                        "auto_tie_breaker",
+                        "last_man_standing",
+                        "last_man_standing_window",
+                        "wait_for_all"
+                    ],
+                    allowed_patterns=[],
                 ),
             ]
         )
@@ -307,15 +300,14 @@ class AddQuorumDevice(TestCase):
                 self.node_ids
             ),
             [
-                (
-                    severity.ERROR,
+                fixture.error(
                     report_codes.INVALID_OPTION_VALUE,
-                    {
-                        "option_name": "model",
-                        "option_value": "invalid",
-                        "allowed_values": ["net", ],
-                    },
-                    report_codes.FORCE_QDEVICE_MODEL
+                    force_code=report_codes.FORCE_QDEVICE_MODEL,
+                    option_name="model",
+                    option_value="invalid",
+                    allowed_values=["net", ],
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
                 )
             ]
         )
@@ -331,14 +323,13 @@ class AddQuorumDevice(TestCase):
                 force_model=True
             ),
             [
-                (
-                    severity.WARNING,
+                fixture.warn(
                     report_codes.INVALID_OPTION_VALUE,
-                    {
-                        "option_name": "model",
-                        "option_value": "invalid",
-                        "allowed_values": ["net", ],
-                    },
+                    option_name="model",
+                    option_value="invalid",
+                    allowed_values=["net", ],
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
                 )
             ]
         )
@@ -393,13 +384,17 @@ class AddQuorumDevice(TestCase):
                     report_codes.INVALID_OPTION_VALUE,
                     option_name="host",
                     option_value="",
-                    allowed_values="a qdevice host address"
+                    allowed_values="a qdevice host address",
+                    cannot_be_empty=True,
+                    forbidden_characters=None,
                 ),
                 fixture.error(
                     report_codes.INVALID_OPTION_VALUE,
                     option_name="algorithm",
                     option_value="",
-                    allowed_values=("ffsplit", "lms")
+                    allowed_values=("ffsplit", "lms"),
+                    cannot_be_empty=True,
+                    forbidden_characters=None,
                 )
             ]
         )
@@ -420,13 +415,17 @@ class AddQuorumDevice(TestCase):
                     report_codes.INVALID_OPTION_VALUE,
                     option_name="host",
                     option_value="",
-                    allowed_values="a qdevice host address"
+                    allowed_values="a qdevice host address",
+                    cannot_be_empty=True,
+                    forbidden_characters=None,
                 ),
                 fixture.error(
                     report_codes.INVALID_OPTION_VALUE,
                     option_name="algorithm",
                     option_value="",
-                    allowed_values=("ffsplit", "lms")
+                    allowed_values=("ffsplit", "lms"),
+                    cannot_be_empty=True,
+                    forbidden_characters=None,
                 )
             ]
         )
@@ -461,110 +460,115 @@ class AddQuorumDevice(TestCase):
                     report_codes.INVALID_OPTION_VALUE,
                     option_name="host",
                     option_value="",
-                    allowed_values="a qdevice host address"
+                    allowed_values="a qdevice host address",
+                    cannot_be_empty=True,
+                    forbidden_characters=None,
                 ),
-                (
-                    severity.ERROR,
+                fixture.error(
                     report_codes.INVALID_OPTION_VALUE,
-                    {
-                        "option_name": "algorithm",
-                        "option_value": "",
-                        "allowed_values": ("ffsplit", "lms"),
-                    },
-                ),
-                (
-                    severity.ERROR,
-                    report_codes.INVALID_OPTION_VALUE,
-                    {
-                        "option_name": "connect_timeout",
-                        "option_value": "",
-                        "allowed_values": "1000..120000",
-                    },
-                    report_codes.FORCE_OPTIONS
-                ),
-                (
-                    severity.ERROR,
-                    report_codes.INVALID_OPTION_VALUE,
-                    {
-                        "option_name": "force_ip_version",
-                        "option_value": "",
-                        "allowed_values": ("0", "4", "6"),
-                    },
-                    report_codes.FORCE_OPTIONS
-                ),
-                (
-                    severity.ERROR,
-                    report_codes.INVALID_OPTION_VALUE,
-                    {
-                        "option_name": "port",
-                        "option_value": "",
-                        "allowed_values": "a port number (1..65535)",
-                    },
-                    report_codes.FORCE_OPTIONS
-                ),
-                (
-                    severity.ERROR,
-                    report_codes.INVALID_OPTION_VALUE,
-                    {
-                        "option_name": "tie_breaker",
-                        "option_value": "",
-                        "allowed_values": ["lowest", "highest"] + self.node_ids,
-                    },
-                    report_codes.FORCE_OPTIONS
-                ),
-                (
-                    severity.ERROR,
-                    report_codes.INVALID_OPTION_VALUE,
-                    {
-                        "option_name": "sync_timeout",
-                        "option_value": "",
-                        "allowed_values": "a positive integer",
-                    },
-                    report_codes.FORCE_OPTIONS
-                ),
-                (
-                    severity.ERROR,
-                    report_codes.INVALID_OPTION_VALUE,
-                    {
-                        "option_name": "timeout",
-                        "option_value": "",
-                        "allowed_values": "a positive integer",
-                    },
-                    report_codes.FORCE_OPTIONS
+                    option_name="algorithm",
+                    option_value="",
+                    allowed_values=("ffsplit", "lms"),
+                    cannot_be_empty=True,
+                    forbidden_characters=None,
                 ),
                 fixture.error(
                     report_codes.INVALID_OPTION_VALUE,
                     force_code=report_codes.FORCE_OPTIONS,
-                    option_name="mode",
+                    option_name="connect_timeout",
                     option_value="",
-                    allowed_values=("off", "on", "sync")
+                    allowed_values="1000..120000",
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
                 ),
                 fixture.error(
                     report_codes.INVALID_OPTION_VALUE,
                     force_code=report_codes.FORCE_OPTIONS,
-                    option_name="interval",
+                    option_name="force_ip_version",
                     option_value="",
-                    allowed_values="a positive integer"
+                    allowed_values=("0", "4", "6"),
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
+                ),
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    force_code=report_codes.FORCE_OPTIONS,
+                    option_name="port",
+                    option_value="",
+                    allowed_values="a port number (1..65535)",
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
+                ),
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    force_code=report_codes.FORCE_OPTIONS,
+                    option_name="tie_breaker",
+                    option_value="",
+                    allowed_values=["lowest", "highest"] + self.node_ids,
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
                 ),
                 fixture.error(
                     report_codes.INVALID_OPTION_VALUE,
                     force_code=report_codes.FORCE_OPTIONS,
                     option_name="sync_timeout",
                     option_value="",
-                    allowed_values="a positive integer"
+                    allowed_values="a positive integer",
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
                 ),
                 fixture.error(
                     report_codes.INVALID_OPTION_VALUE,
                     force_code=report_codes.FORCE_OPTIONS,
                     option_name="timeout",
                     option_value="",
-                    allowed_values="a positive integer"
+                    allowed_values="a positive integer",
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
+                ),
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    force_code=report_codes.FORCE_OPTIONS,
+                    option_name="mode",
+                    option_value="",
+                    allowed_values=("off", "on", "sync"),
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
+                ),
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    force_code=report_codes.FORCE_OPTIONS,
+                    option_name="interval",
+                    option_value="",
+                    allowed_values="a positive integer",
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
+                ),
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    force_code=report_codes.FORCE_OPTIONS,
+                    option_name="sync_timeout",
+                    option_value="",
+                    allowed_values="a positive integer",
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
+                ),
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    force_code=report_codes.FORCE_OPTIONS,
+                    option_name="timeout",
+                    option_value="",
+                    allowed_values="a positive integer",
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
                 ),
                 fixture.error(
                     report_codes.INVALID_OPTION_VALUE,
                     option_name="exec_ping",
                     option_value="",
-                    allowed_values="a command to be run"
+                    allowed_values="a command to be run",
+                    cannot_be_empty=True,
+                    forbidden_characters=None,
                 ),
             ]
         )
@@ -609,17 +613,18 @@ class AddQuorumDevice(TestCase):
                     report_codes.INVALID_OPTION_VALUE,
                     option_name="host",
                     option_value="",
-                    allowed_values="a qdevice host address"
+                    allowed_values="a qdevice host address",
+                    cannot_be_empty=True,
+                    forbidden_characters=None,
                 ),
-                (
-                    severity.ERROR,
+                fixture.error(
                     report_codes.INVALID_OPTION_VALUE,
-                    {
-                        "option_name": "algorithm",
-                        "option_value": "bad algorithm",
-                        "allowed_values": ("ffsplit", "lms"),
-                    },
-                    report_codes.FORCE_OPTIONS
+                    force_code=report_codes.FORCE_OPTIONS,
+                    option_name="algorithm",
+                    option_value="bad algorithm",
+                    allowed_values=("ffsplit", "lms"),
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
                 ),
                 (
                     severity.ERROR,
@@ -639,45 +644,41 @@ class AddQuorumDevice(TestCase):
                     },
                     report_codes.FORCE_OPTIONS
                 ),
-                (
-                    severity.ERROR,
+                fixture.error(
                     report_codes.INVALID_OPTION_VALUE,
-                    {
-                        "option_name": "connect_timeout",
-                        "option_value": "-1",
-                        "allowed_values": "1000..120000",
-                    },
-                    report_codes.FORCE_OPTIONS
+                    force_code=report_codes.FORCE_OPTIONS,
+                    option_name="connect_timeout",
+                    option_value="-1",
+                    allowed_values="1000..120000",
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
                 ),
-                (
-                    severity.ERROR,
+                fixture.error(
                     report_codes.INVALID_OPTION_VALUE,
-                    {
-                        "option_name": "force_ip_version",
-                        "option_value": "3",
-                        "allowed_values": ("0", "4", "6"),
-                    },
-                    report_codes.FORCE_OPTIONS
+                    force_code=report_codes.FORCE_OPTIONS,
+                    option_name="force_ip_version",
+                    option_value="3",
+                    allowed_values=("0", "4", "6"),
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
                 ),
-                (
-                    severity.ERROR,
+                fixture.error(
                     report_codes.INVALID_OPTION_VALUE,
-                    {
-                        "option_name": "port",
-                        "option_value": "65537",
-                        "allowed_values": "a port number (1..65535)",
-                    },
-                    report_codes.FORCE_OPTIONS
+                    force_code=report_codes.FORCE_OPTIONS,
+                    option_name="port",
+                    option_value="65537",
+                    allowed_values="a port number (1..65535)",
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
                 ),
-                (
-                    severity.ERROR,
+                fixture.error(
                     report_codes.INVALID_OPTION_VALUE,
-                    {
-                        "option_name": "tie_breaker",
-                        "option_value": "125",
-                        "allowed_values": ["lowest", "highest"] + self.node_ids,
-                    },
-                    report_codes.FORCE_OPTIONS
+                    force_code=report_codes.FORCE_OPTIONS,
+                    option_name="tie_breaker",
+                    option_value="125",
+                    allowed_values=["lowest", "highest"] + self.node_ids,
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
                 ),
                 (
                     severity.ERROR,
@@ -700,59 +701,67 @@ class AddQuorumDevice(TestCase):
                         "allowed_patterns": [],
                     }
                 ),
-                (
-                    severity.ERROR,
+                fixture.error(
                     report_codes.INVALID_OPTION_VALUE,
-                    {
-                        "option_name": "sync_timeout",
-                        "option_value": "-3",
-                        "allowed_values": "a positive integer",
-                    },
-                    report_codes.FORCE_OPTIONS
+                    force_code=report_codes.FORCE_OPTIONS,
+                    option_name="sync_timeout",
+                    option_value="-3",
+                    allowed_values="a positive integer",
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
                 ),
-                (
-                    severity.ERROR,
+                fixture.error(
                     report_codes.INVALID_OPTION_VALUE,
-                    {
-                        "option_name": "timeout",
-                        "option_value": "-2",
-                        "allowed_values": "a positive integer",
-                    },
-                    report_codes.FORCE_OPTIONS
+                    force_code=report_codes.FORCE_OPTIONS,
+                    option_name="timeout",
+                    option_value="-2",
+                    allowed_values="a positive integer",
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
                 ),
                 fixture.error(
                     report_codes.INVALID_OPTION_VALUE,
                     force_code=report_codes.FORCE_OPTIONS,
                     option_name="mode",
                     option_value="bad mode",
-                    allowed_values=("off", "on", "sync")
+                    allowed_values=("off", "on", "sync"),
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
                 ),
                 fixture.error(
                     report_codes.INVALID_OPTION_VALUE,
                     force_code=report_codes.FORCE_OPTIONS,
                     option_name="interval",
                     option_value="-30",
-                    allowed_values="a positive integer"
+                    allowed_values="a positive integer",
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
                 ),
                 fixture.error(
                     report_codes.INVALID_OPTION_VALUE,
                     force_code=report_codes.FORCE_OPTIONS,
                     option_name="sync_timeout",
                     option_value="-15",
-                    allowed_values="a positive integer"
+                    allowed_values="a positive integer",
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
                 ),
                 fixture.error(
                     report_codes.INVALID_OPTION_VALUE,
                     force_code=report_codes.FORCE_OPTIONS,
                     option_name="timeout",
                     option_value="-5",
-                    allowed_values="a positive integer"
+                    allowed_values="a positive integer",
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
                 ),
                 fixture.error(
                     report_codes.INVALID_OPTION_VALUE,
                     option_name="exec_ping",
                     option_value="",
-                    allowed_values="a command to be run"
+                    allowed_values="a command to be run",
+                    cannot_be_empty=True,
+                    forbidden_characters=None,
                 ),
                 fixture_report_exec_names,
             ]
@@ -787,14 +796,13 @@ class AddQuorumDevice(TestCase):
                 force_options=True
             ),
             [
-                (
-                    severity.WARNING,
+                fixture.warn(
                     report_codes.INVALID_OPTION_VALUE,
-                    {
-                        "option_name": "algorithm",
-                        "option_value": "bad algorithm",
-                        "allowed_values": ("ffsplit", "lms"),
-                    }
+                    option_name="algorithm",
+                    option_value="bad algorithm",
+                    allowed_values=("ffsplit", "lms"),
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
                 ),
                 (
                     severity.WARNING,
@@ -813,93 +821,92 @@ class AddQuorumDevice(TestCase):
                         "allowed_patterns": [],
                     }
                 ),
-                (
-                    severity.WARNING,
+                fixture.warn(
                     report_codes.INVALID_OPTION_VALUE,
-                    {
-                        "option_name": "connect_timeout",
-                        "option_value": "-1",
-                        "allowed_values": "1000..120000",
-                    }
+                    option_name="connect_timeout",
+                    option_value="-1",
+                    allowed_values="1000..120000",
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
                 ),
-                (
-                    severity.WARNING,
+                fixture.warn(
                     report_codes.INVALID_OPTION_VALUE,
-                    {
-                        "option_name": "force_ip_version",
-                        "option_value": "3",
-                        "allowed_values": ("0", "4", "6"),
-                    }
+                    option_name="force_ip_version",
+                    option_value="3",
+                    allowed_values=("0", "4", "6"),
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
                 ),
-                (
-                    severity.WARNING,
+                fixture.warn(
                     report_codes.INVALID_OPTION_VALUE,
-                    {
-                        "option_name": "port",
-                        "option_value": "65537",
-                        "allowed_values": "a port number (1..65535)",
-                    }
+                    option_name="port",
+                    option_value="65537",
+                    allowed_values="a port number (1..65535)",
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
                 ),
-                (
-                    severity.WARNING,
+                fixture.warn(
                     report_codes.INVALID_OPTION_VALUE,
-                    {
-                        "option_name": "tie_breaker",
-                        "option_value": "125",
-                        "allowed_values": ["lowest", "highest"] + self.node_ids,
-                    }
+                    option_name="tie_breaker",
+                    option_value="125",
+                    allowed_values=["lowest", "highest"] + self.node_ids,
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
                 ),
-                (
-                    severity.WARNING,
+                fixture.warn(
                     report_codes.INVALID_OPTIONS,
-                    {
-                        "option_names": ["bad_generic_option"],
-                        "option_type": "quorum device",
-                        "allowed": ["sync_timeout", "timeout"],
-                        "allowed_patterns": [],
-                    }
+                    option_names=["bad_generic_option"],
+                    option_type="quorum device",
+                    allowed=["sync_timeout", "timeout"],
+                    allowed_patterns=[],
                 ),
-                (
-                    severity.WARNING,
+                fixture.warn(
                     report_codes.INVALID_OPTION_VALUE,
-                    {
-                        "option_name": "sync_timeout",
-                        "option_value": "-3",
-                        "allowed_values": "a positive integer",
-                    }
+                    option_name="sync_timeout",
+                    option_value="-3",
+                    allowed_values="a positive integer",
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
                 ),
-                (
-                    severity.WARNING,
+                fixture.warn(
                     report_codes.INVALID_OPTION_VALUE,
-                    {
-                        "option_name": "timeout",
-                        "option_value": "-2",
-                        "allowed_values": "a positive integer",
-                    }
+                    option_name="timeout",
+                    option_value="-2",
+                    allowed_values="a positive integer",
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
                 ),
                 fixture.warn(
                     report_codes.INVALID_OPTION_VALUE,
                     option_name="mode",
                     option_value="bad mode",
-                    allowed_values=("off", "on", "sync")
+                    allowed_values=("off", "on", "sync"),
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
                 ),
                 fixture.warn(
                     report_codes.INVALID_OPTION_VALUE,
                     option_name="interval",
                     option_value="-30",
-                    allowed_values="a positive integer"
+                    allowed_values="a positive integer",
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
                 ),
                 fixture.warn(
                     report_codes.INVALID_OPTION_VALUE,
                     option_name="sync_timeout",
                     option_value="-15",
-                    allowed_values="a positive integer"
+                    allowed_values="a positive integer",
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
                 ),
                 fixture.warn(
                     report_codes.INVALID_OPTION_VALUE,
                     option_name="timeout",
                     option_value="-5",
-                    allowed_values="a positive integer"
+                    allowed_values="a positive integer",
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
                 ),
             ]
         )
@@ -1026,13 +1033,17 @@ class UpdateQuorumDevice(TestCase):
                     report_codes.INVALID_OPTION_VALUE,
                     option_name="host",
                     option_value="",
-                    allowed_values="a qdevice host address"
+                    allowed_values="a qdevice host address",
+                    cannot_be_empty=True,
+                    forbidden_characters=None,
                 ),
                 fixture.error(
                     report_codes.INVALID_OPTION_VALUE,
                     option_name="algorithm",
                     option_value="",
-                    allowed_values=("ffsplit", "lms")
+                    allowed_values=("ffsplit", "lms"),
+                    cannot_be_empty=True,
+                    forbidden_characters=None,
                 )
             ]
         )
@@ -1055,13 +1066,17 @@ class UpdateQuorumDevice(TestCase):
                     report_codes.INVALID_OPTION_VALUE,
                     option_name="host",
                     option_value="",
-                    allowed_values="a qdevice host address"
+                    allowed_values="a qdevice host address",
+                    cannot_be_empty=True,
+                    forbidden_characters=None,
                 ),
                 fixture.error(
                     report_codes.INVALID_OPTION_VALUE,
                     option_name="algorithm",
                     option_value="",
-                    allowed_values=("ffsplit", "lms")
+                    allowed_values=("ffsplit", "lms"),
+                    cannot_be_empty=True,
+                    forbidden_characters=None,
                 )
             ]
         )
@@ -1083,73 +1098,65 @@ class UpdateQuorumDevice(TestCase):
                 self.node_ids
             ),
             [
-                (
-                    severity.ERROR,
+                fixture.error(
                     report_codes.INVALID_OPTION_VALUE,
-                    {
-                        "option_name": "algorithm",
-                        "option_value": "bad algorithm",
-                        "allowed_values": ("ffsplit", "lms"),
-                    },
-                    report_codes.FORCE_OPTIONS
+                    report_codes.FORCE_OPTIONS,
+                    option_name="algorithm",
+                    option_value="bad algorithm",
+                    allowed_values=("ffsplit", "lms"),
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
                 ),
-                (
-                    severity.ERROR,
+                fixture.error(
                     report_codes.INVALID_OPTIONS,
-                    {
-                        "option_names": ["bad_model_option"],
-                        "option_type": "quorum device model",
-                        "allowed": [
-                            "algorithm",
-                            "connect_timeout",
-                            "force_ip_version",
-                            "host",
-                            "port",
-                            "tie_breaker",
-                        ],
-                        "allowed_patterns": [],
-                    },
-                    report_codes.FORCE_OPTIONS
+                    report_codes.FORCE_OPTIONS,
+                    option_names=["bad_model_option"],
+                    option_type="quorum device model",
+                    allowed=[
+                        "algorithm",
+                        "connect_timeout",
+                        "force_ip_version",
+                        "host",
+                        "port",
+                        "tie_breaker",
+                    ],
+                    allowed_patterns=[],
                 ),
-                (
-                    severity.ERROR,
+                fixture.error(
                     report_codes.INVALID_OPTION_VALUE,
-                    {
-                        "option_name": "connect_timeout",
-                        "option_value": "-1",
-                        "allowed_values": "1000..120000",
-                    },
-                    report_codes.FORCE_OPTIONS
+                    report_codes.FORCE_OPTIONS,
+                    option_name="connect_timeout",
+                    option_value="-1",
+                    allowed_values="1000..120000",
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
                 ),
-                (
-                    severity.ERROR,
+                fixture.error(
                     report_codes.INVALID_OPTION_VALUE,
-                    {
-                        "option_name": "force_ip_version",
-                        "option_value": "3",
-                        "allowed_values": ("0", "4", "6"),
-                    },
-                    report_codes.FORCE_OPTIONS
+                    report_codes.FORCE_OPTIONS,
+                    option_name="force_ip_version",
+                    option_value="3",
+                    allowed_values=("0", "4", "6"),
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
                 ),
-                (
-                    severity.ERROR,
+                fixture.error(
                     report_codes.INVALID_OPTION_VALUE,
-                    {
-                        "option_name": "port",
-                        "option_value": "65537",
-                        "allowed_values": "a port number (1..65535)",
-                    },
-                    report_codes.FORCE_OPTIONS
+                    report_codes.FORCE_OPTIONS,
+                    option_name="port",
+                    option_value="65537",
+                    allowed_values="a port number (1..65535)",
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
                 ),
-                (
-                    severity.ERROR,
+                fixture.error(
                     report_codes.INVALID_OPTION_VALUE,
-                    {
-                        "option_name": "tie_breaker",
-                        "option_value": "125",
-                        "allowed_values": ["lowest", "highest"] + self.node_ids,
-                    },
-                    report_codes.FORCE_OPTIONS
+                    report_codes.FORCE_OPTIONS,
+                    option_name="tie_breaker",
+                    option_value="125",
+                    allowed_values=["lowest", "highest"] + self.node_ids,
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
                 ),
             ]
         )
@@ -1172,67 +1179,59 @@ class UpdateQuorumDevice(TestCase):
                 force_options=True
             ),
             [
-                (
-                    severity.WARNING,
+                fixture.warn(
                     report_codes.INVALID_OPTION_VALUE,
-                    {
-                        "option_name": "algorithm",
-                        "option_value": "bad algorithm",
-                        "allowed_values": ("ffsplit", "lms"),
-                    },
+                    option_name="algorithm",
+                    option_value="bad algorithm",
+                    allowed_values=("ffsplit", "lms"),
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
                 ),
-                (
-                    severity.WARNING,
+                fixture.warn(
                     report_codes.INVALID_OPTIONS,
-                    {
-                        "option_names": ["bad_model_option"],
-                        "option_type": "quorum device model",
-                        "allowed": [
-                            "algorithm",
-                            "connect_timeout",
-                            "force_ip_version",
-                            "host",
-                            "port",
-                            "tie_breaker",
-                        ],
-                        "allowed_patterns": [],
-                    },
+                    option_names=["bad_model_option"],
+                    option_type="quorum device model",
+                    allowed=[
+                        "algorithm",
+                        "connect_timeout",
+                        "force_ip_version",
+                        "host",
+                        "port",
+                        "tie_breaker",
+                    ],
+                    allowed_patterns=[],
                 ),
-                (
-                    severity.WARNING,
+                fixture.warn(
                     report_codes.INVALID_OPTION_VALUE,
-                    {
-                        "option_name": "connect_timeout",
-                        "option_value": "-1",
-                        "allowed_values": "1000..120000",
-                    },
+                    option_name="connect_timeout",
+                    option_value="-1",
+                    allowed_values="1000..120000",
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
                 ),
-                (
-                    severity.WARNING,
+                fixture.warn(
                     report_codes.INVALID_OPTION_VALUE,
-                    {
-                        "option_name": "force_ip_version",
-                        "option_value": "3",
-                        "allowed_values": ("0", "4", "6"),
-                    },
+                    option_name="force_ip_version",
+                    option_value="3",
+                    allowed_values=("0", "4", "6"),
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
                 ),
-                (
-                    severity.WARNING,
+                fixture.warn(
                     report_codes.INVALID_OPTION_VALUE,
-                    {
-                        "option_name": "port",
-                        "option_value": "65537",
-                        "allowed_values": "a port number (1..65535)",
-                    },
+                    option_name="port",
+                    option_value="65537",
+                    allowed_values="a port number (1..65535)",
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
                 ),
-                (
-                    severity.WARNING,
+                fixture.warn(
                     report_codes.INVALID_OPTION_VALUE,
-                    {
-                        "option_name": "tie_breaker",
-                        "option_value": "125",
-                        "allowed_values": ["lowest", "highest"] + self.node_ids,
-                    },
+                    option_name="tie_breaker",
+                    option_value="125",
+                    allowed_values=["lowest", "highest"] + self.node_ids,
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
                 ),
             ]
         )
@@ -1273,25 +1272,23 @@ class UpdateQuorumDevice(TestCase):
                         "allowed_patterns": [],
                     }
                 ),
-                (
-                    severity.ERROR,
+                fixture.error(
                     report_codes.INVALID_OPTION_VALUE,
-                    {
-                        "option_name": "sync_timeout",
-                        "option_value": "-3",
-                        "allowed_values": "a positive integer",
-                    },
-                    report_codes.FORCE_OPTIONS
+                    report_codes.FORCE_OPTIONS,
+                    option_name="sync_timeout",
+                    option_value="-3",
+                    allowed_values="a positive integer",
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
                 ),
-                (
-                    severity.ERROR,
+                fixture.error(
                     report_codes.INVALID_OPTION_VALUE,
-                    {
-                        "option_name": "timeout",
-                        "option_value": "-2",
-                        "allowed_values": "a positive integer",
-                    },
-                    report_codes.FORCE_OPTIONS
+                    report_codes.FORCE_OPTIONS,
+                    option_name="timeout",
+                    option_value="-2",
+                    allowed_values="a positive integer",
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
                 )
             ]
         )
@@ -1345,23 +1342,21 @@ class UpdateQuorumDevice(TestCase):
                         "allowed_patterns": [],
                     },
                 ),
-                (
-                    severity.WARNING,
+                fixture.warn(
                     report_codes.INVALID_OPTION_VALUE,
-                    {
-                        "option_name": "sync_timeout",
-                        "option_value": "-3",
-                        "allowed_values": "a positive integer",
-                    },
+                    option_name="sync_timeout",
+                    option_value="-3",
+                    allowed_values="a positive integer",
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
                 ),
-                (
-                    severity.WARNING,
+                fixture.warn(
                     report_codes.INVALID_OPTION_VALUE,
-                    {
-                        "option_name": "timeout",
-                        "option_value": "-2",
-                        "allowed_values": "a positive integer",
-                    },
+                    option_name="timeout",
+                    option_value="-2",
+                    allowed_values="a positive integer",
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
                 )
             ]
         )
@@ -1393,28 +1388,36 @@ class UpdateQuorumDevice(TestCase):
                     force_code=report_codes.FORCE_OPTIONS,
                     option_name="mode",
                     option_value="bad mode",
-                    allowed_values=("off", "on", "sync")
+                    allowed_values=("off", "on", "sync"),
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
                 ),
                 fixture.error(
                     report_codes.INVALID_OPTION_VALUE,
                     force_code=report_codes.FORCE_OPTIONS,
                     option_name="interval",
                     option_value="-30",
-                    allowed_values="a positive integer"
+                    allowed_values="a positive integer",
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
                 ),
                 fixture.error(
                     report_codes.INVALID_OPTION_VALUE,
                     force_code=report_codes.FORCE_OPTIONS,
                     option_name="sync_timeout",
                     option_value="-15",
-                    allowed_values="a positive integer"
+                    allowed_values="a positive integer",
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
                 ),
                 fixture.error(
                     report_codes.INVALID_OPTION_VALUE,
                     force_code=report_codes.FORCE_OPTIONS,
                     option_name="timeout",
                     option_value="-5",
-                    allowed_values="a positive integer"
+                    allowed_values="a positive integer",
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
                 ),
                 fixture_report_exec_names,
             ]
@@ -1440,25 +1443,33 @@ class UpdateQuorumDevice(TestCase):
                     report_codes.INVALID_OPTION_VALUE,
                     option_name="mode",
                     option_value="bad mode",
-                    allowed_values=("off", "on", "sync")
+                    allowed_values=("off", "on", "sync"),
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
                 ),
                 fixture.warn(
                     report_codes.INVALID_OPTION_VALUE,
                     option_name="interval",
                     option_value="-30",
-                    allowed_values="a positive integer"
+                    allowed_values="a positive integer",
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
                 ),
                 fixture.warn(
                     report_codes.INVALID_OPTION_VALUE,
                     option_name="sync_timeout",
                     option_value="-15",
-                    allowed_values="a positive integer"
+                    allowed_values="a positive integer",
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
                 ),
                 fixture.warn(
                     report_codes.INVALID_OPTION_VALUE,
                     option_name="timeout",
                     option_value="-5",
-                    allowed_values="a positive integer"
+                    allowed_values="a positive integer",
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
                 ),
             ]
         )

@@ -76,6 +76,8 @@ class ValidateTicketOptionsTest(TestCase):
                     "option_name": "timeout",
                     "option_value": " ",
                     "allowed_values": "no-empty",
+                    "cannot_be_empty": False,
+                    "forbidden_characters": None,
                 },
             ),
             (

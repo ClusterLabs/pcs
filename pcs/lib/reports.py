@@ -331,16 +331,20 @@ def invalid_option_type(option_name, allowed_types):
     )
 
 def invalid_option_value(
-    option_name, option_value, allowed_values,
+    option_name, option_value, allowed_values, cannot_be_empty=False,
+    forbidden_characters=None,
     severity=ReportItemSeverity.ERROR, forceable=None
 ):
     """
     specified value is not valid for the option, usualy an error or a warning
-    option_name specified option name whose value is not valid
-    option_value specified value which is not valid
-    allowed_options list of allowed values or string description
-    severity report item severity
-    forceable is this report item forceable? by what category?
+
+    string option_name -- specified option name whose value is not valid
+    string option_value -- specified value which is not valid
+    mixed allowed_options -- a list of allowed values or a string description
+    bool cannot_be_empty -- the value is empty and that is not allowed
+    iterable forbidden_characters -- characters the value cannot contain
+    string severity -- report item severity
+    mixed forceable -- is this report item forceable? by what category?
     """
     return ReportItem(
         report_codes.INVALID_OPTION_VALUE,
@@ -349,6 +353,8 @@ def invalid_option_value(
             "option_value": option_value,
             "option_name": option_name,
             "allowed_values": allowed_values,
+            "cannot_be_empty": cannot_be_empty,
+            "forbidden_characters": forbidden_characters,
         },
         forceable=forceable
     )

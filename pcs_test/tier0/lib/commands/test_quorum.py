@@ -725,7 +725,9 @@ class AddDeviceNetTest(TestCase):
                 force_code=report_codes.FORCE_QDEVICE_MODEL,
                 option_name="model",
                 option_value="bad model",
-                allowed_values=["net", ]
+                allowed_values=["net"],
+                cannot_be_empty=False,
+                forbidden_characters=None,
             ),
         ])
 
@@ -753,7 +755,9 @@ class AddDeviceNetTest(TestCase):
                 force_code=report_codes.FORCE_QDEVICE_MODEL,
                 option_name="model",
                 option_value="bad model",
-                allowed_values=["net", ]
+                allowed_values=["net"],
+                cannot_be_empty=False,
+                forbidden_characters=None,
             ),
         ])
 
@@ -1354,7 +1358,9 @@ class AddDeviceNetTest(TestCase):
                     force_code=report_codes.FORCE_OPTIONS,
                     option_name="mode",
                     option_value="bad-mode",
-                    allowed_values=("off", "on", "sync")
+                    allowed_values=("off", "on", "sync"),
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
                 ),
                 fixture.error(
                     report_codes.INVALID_OPTIONS,
@@ -1446,7 +1452,9 @@ class AddDeviceNetTest(TestCase):
                 report_codes.INVALID_OPTION_VALUE,
                 option_name="mode",
                 option_value="bad-mode",
-                allowed_values=("off", "on", "sync")
+                allowed_values=("off", "on", "sync"),
+                cannot_be_empty=False,
+                forbidden_characters=None,
             ),
             fixture.warn(
                 report_codes.INVALID_OPTIONS,
@@ -1508,7 +1516,9 @@ class AddDeviceNetTest(TestCase):
                     force_code=report_codes.FORCE_QDEVICE_MODEL,
                     option_name="model",
                     option_value="bad_model",
-                    allowed_values=["net", ],
+                    allowed_values=["net"],
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
                 ),
             ]
         )
@@ -1554,7 +1564,9 @@ class AddDeviceNetTest(TestCase):
                 report_codes.INVALID_OPTION_VALUE,
                 option_name="model",
                 option_value="bad_model",
-                allowed_values=["net", ],
+                allowed_values=["net"],
+                cannot_be_empty=False,
+                forbidden_characters=None,
             ),
         ] + [
             fixture.info(
@@ -2804,7 +2816,9 @@ class UpdateDeviceTest(TestCase):
                 force_code=report_codes.FORCE_OPTIONS,
                 option_name="mode",
                 option_value="bad mode",
-                allowed_values=("off", "on", "sync")
+                allowed_values=("off", "on", "sync"),
+                cannot_be_empty=False,
+                forbidden_characters=None,
             ),
             fixture.error(
                 report_codes.INVALID_USERDEFINED_OPTIONS,
@@ -2851,7 +2865,9 @@ class UpdateDeviceTest(TestCase):
                     report_codes.INVALID_OPTION_VALUE,
                     option_name="mode",
                     option_value="bad mode",
-                    allowed_values=("off", "on", "sync")
+                    allowed_values=("off", "on", "sync"),
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
                 ),
             ]
         )
@@ -2902,13 +2918,14 @@ class SetExpectedVotesLiveTest(TestCase):
         assert_raise_library_error(
             lambda: lib.set_expected_votes_live(lib_env, "-5"),
             (
-                severity.ERROR,
-                report_codes.INVALID_OPTION_VALUE,
-                {
-                    "option_name": "expected votes",
-                    "option_value": "-5",
-                    "allowed_values": "positive integer",
-                }
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_name="expected votes",
+                    option_value="-5",
+                    allowed_values="positive integer",
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
+                )
             )
         )
         mock_set_votes.assert_not_called()

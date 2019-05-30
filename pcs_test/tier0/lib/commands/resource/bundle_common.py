@@ -213,25 +213,21 @@ class ParametrizedContainerMixin(SetUpMixin):
                     },
                     None
                 ),
-                (
-                    severities.ERROR,
+                fixture.error(
                     report_codes.INVALID_OPTION_VALUE,
-                    {
-                        "option_name": "masters",
-                        "option_value": "-1",
-                        "allowed_values": "a non-negative integer",
-                    },
-                    None
+                    option_name="masters",
+                    option_value="-1",
+                    allowed_values="a non-negative integer",
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
                 ),
-                (
-                    severities.ERROR,
+                fixture.error(
                     report_codes.INVALID_OPTION_VALUE,
-                    {
-                        "option_name": "promoted-max",
-                        "option_value": "-2",
-                        "allowed_values": "a non-negative integer",
-                    },
-                    None
+                    option_name="promoted-max",
+                    option_value="-2",
+                    allowed_values="a non-negative integer",
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
                 ),
                 (
                     severities.ERROR,
@@ -242,25 +238,21 @@ class ParametrizedContainerMixin(SetUpMixin):
                     },
                     None
                 ),
-                (
-                    severities.ERROR,
+                fixture.error(
                     report_codes.INVALID_OPTION_VALUE,
-                    {
-                        "option_name": "replicas",
-                        "option_value": "0",
-                        "allowed_values": "a positive integer",
-                    },
-                    None
+                    option_name="replicas",
+                    option_value="0",
+                    allowed_values="a positive integer",
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
                 ),
-                (
-                    severities.ERROR,
+                fixture.error(
                     report_codes.INVALID_OPTION_VALUE,
-                    {
-                        "option_name": "replicas-per-host",
-                        "option_value": "0",
-                        "allowed_values": "a positive integer",
-                    },
-                    None
+                    option_name="replicas-per-host",
+                    option_value="0",
+                    allowed_values="a positive integer",
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
                 ),
             ]
         )
@@ -286,15 +278,13 @@ class ParametrizedContainerMixin(SetUpMixin):
                 force_options=True
             ),
             [
-                (
-                    severities.ERROR,
+                fixture.error(
                     report_codes.INVALID_OPTION_VALUE,
-                    {
-                        "option_name": "image",
-                        "option_value": "",
-                        "allowed_values": "image name",
-                    },
-                    None
+                    option_name="image",
+                    option_value="",
+                    allowed_values="image name",
+                    cannot_be_empty=True,
+                    forbidden_characters=None,
                 ),
             ]
         )
@@ -408,6 +398,8 @@ class NetworkMixin(SetUpMixin):
                     option_name="control-port",
                     option_value="0",
                     allowed_values="a port number (1..65535)",
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
                 ),
                 fixture.error(
                     report_codes.INVALID_OPTION_VALUE,
@@ -415,6 +407,8 @@ class NetworkMixin(SetUpMixin):
                     option_name="host-netmask",
                     option_value="abc",
                     allowed_values="a number of bits of the mask (1..32)",
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
                 ),
                 fixture.error(
                     report_codes.INVALID_OPTIONS,
@@ -452,15 +446,13 @@ class NetworkMixin(SetUpMixin):
         )
 
         self.env_assist.assert_reports([
-            (
-                severities.WARNING,
+            fixture.warn(
                 report_codes.INVALID_OPTION_VALUE,
-                {
-                    "option_name": "host-netmask",
-                    "option_value": "abc",
-                    "allowed_values": "a number of bits of the mask (1..32)",
-                },
-                None
+                option_name="host-netmask",
+                option_value="abc",
+                allowed_values="a number of bits of the mask (1..32)",
+                cannot_be_empty=False,
+                forbidden_characters=None,
             ),
             (
                 severities.WARNING,
@@ -606,15 +598,13 @@ class PortMapMixin(SetUpMixin):
                     None
                 ),
                 # fourth
-                (
-                    severities.ERROR,
+                fixture.error(
                     report_codes.INVALID_OPTION_VALUE,
-                    {
-                        "option_name": "port",
-                        "option_value": "abc",
-                        "allowed_values": "a port number (1..65535)",
-                    },
-                    None
+                    option_name="port",
+                    option_value="abc",
+                    allowed_values="a port number (1..65535)",
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
                 ),
                 # fifth
                 (
@@ -626,15 +616,13 @@ class PortMapMixin(SetUpMixin):
                     },
                     None
                 ),
-                (
-                    severities.ERROR,
+                fixture.error(
                     report_codes.INVALID_OPTION_VALUE,
-                    {
-                        "option_name": "internal-port",
-                        "option_value": "def",
-                        "allowed_values": "a port number (1..65535)",
-                    },
-                    None
+                    option_name="internal-port",
+                    option_value="def",
+                    allowed_values="a port number (1..65535)",
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
                 ),
             ]
         )
@@ -661,15 +649,14 @@ class PortMapMixin(SetUpMixin):
                     },
                     report_codes.FORCE_OPTIONS
                 ),
-                (
-                    severities.ERROR,
+                fixture.error(
                     report_codes.INVALID_OPTION_VALUE,
-                    {
-                        "option_name": "range",
-                        "option_value": "3000",
-                        "allowed_values": "port-port",
-                    },
-                    report_codes.FORCE_OPTIONS
+                    force_code=report_codes.FORCE_OPTIONS,
+                    option_name="range",
+                    option_value="3000",
+                    allowed_values="port-port",
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
                 ),
             ]
         )
@@ -719,15 +706,13 @@ class PortMapMixin(SetUpMixin):
                 },
                 None
             ),
-            (
-                severities.WARNING,
+            fixture.warn(
                 report_codes.INVALID_OPTION_VALUE,
-                {
-                    "option_name": "range",
-                    "option_value": "3000",
-                    "allowed_values": "port-port",
-                },
-                None
+                option_name="range",
+                option_value="3000",
+                allowed_values="port-port",
+                cannot_be_empty=False,
+                forbidden_characters=None,
             ),
         ])
 

@@ -140,7 +140,9 @@ class AddNodes(TestCase):
                     report_codes.INVALID_OPTION_VALUE,
                     option_value="",
                     option_name="node 1 name",
-                    allowed_values="a non-empty string"
+                    allowed_values=None,
+                    cannot_be_empty=True,
+                    forbidden_characters=None,
                 ),
                 fixture.error(
                     report_codes.REQUIRED_OPTIONS_ARE_MISSING,
@@ -169,13 +171,17 @@ class AddNodes(TestCase):
                     report_codes.INVALID_OPTION_VALUE,
                     option_value="",
                     option_name="node 3 name",
-                    allowed_values="a non-empty string"
+                    allowed_values=None,
+                    cannot_be_empty=True,
+                    forbidden_characters=None,
                 ),
                 fixture.error(
                     report_codes.INVALID_OPTION_VALUE,
                     option_value="",
                     option_name="node 4 name",
-                    allowed_values="a non-empty string"
+                    allowed_values=None,
+                    cannot_be_empty=True,
+                    forbidden_characters=None,
                 ),
                 fixture.error(
                     report_codes.NODE_NAMES_DUPLICATION,

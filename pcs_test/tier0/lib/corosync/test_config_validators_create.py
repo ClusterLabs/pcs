@@ -85,13 +85,17 @@ class Create(TestCase):
                     report_codes.INVALID_OPTION_VALUE,
                     option_value="",
                     option_name="cluster name",
-                    allowed_values="a non-empty string"
+                    allowed_values=None,
+                    cannot_be_empty=True,
+                    forbidden_characters=None,
                 ),
                 fixture.error(
                     report_codes.INVALID_OPTION_VALUE,
                     option_value="tcp",
                     option_name="transport",
-                    allowed_values=("knet", "udp", "udpu")
+                    allowed_values=("knet", "udp", "udpu"),
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
                 ),
             ]
         )
@@ -172,7 +176,9 @@ class Create(TestCase):
                     report_codes.INVALID_OPTION_VALUE,
                     option_value="",
                     option_name="node 1 name",
-                    allowed_values="a non-empty string"
+                    allowed_values=None,
+                    cannot_be_empty=True,
+                    forbidden_characters=None,
                 ),
                 fixture.error(
                     report_codes.REQUIRED_OPTIONS_ARE_MISSING,
@@ -204,13 +210,17 @@ class Create(TestCase):
                     report_codes.INVALID_OPTION_VALUE,
                     option_value="",
                     option_name="node 6 name",
-                    allowed_values="a non-empty string"
+                    allowed_values=None,
+                    cannot_be_empty=True,
+                    forbidden_characters=None,
                 ),
                 fixture.error(
                     report_codes.INVALID_OPTION_VALUE,
                     option_value="",
                     option_name="node 7 name",
-                    allowed_values="a non-empty string"
+                    allowed_values=None,
+                    cannot_be_empty=True,
+                    forbidden_characters=None,
                 ),
                 fixture.error(
                     report_codes.NODE_NAMES_DUPLICATION,
@@ -617,7 +627,9 @@ class Create(TestCase):
                     report_codes.INVALID_OPTION_VALUE,
                     option_value="",
                     option_name="node 2 name",
-                    allowed_values="a non-empty string"
+                    allowed_values=None,
+                    cannot_be_empty=True,
+                    forbidden_characters=None,
                 ),
             ]
         )
@@ -843,31 +855,41 @@ class CreateLinkListUdp(CreateLinkListCommonMixin, TestCase):
                     report_codes.INVALID_OPTION_VALUE,
                     option_value="my-network",
                     option_name="bindnetaddr",
-                    allowed_values="an IP address"
+                    allowed_values="an IP address",
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
                 ),
                 fixture.error(
                     report_codes.INVALID_OPTION_VALUE,
                     option_value="yes",
                     option_name="broadcast",
-                    allowed_values=("0", "1")
+                    allowed_values=("0", "1"),
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
                 ),
                 fixture.error(
                     report_codes.INVALID_OPTION_VALUE,
                     option_value="my-group",
                     option_name="mcastaddr",
-                    allowed_values="an IP address"
+                    allowed_values="an IP address",
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
                 ),
                 fixture.error(
                     report_codes.INVALID_OPTION_VALUE,
                     option_value="0",
                     option_name="mcastport",
-                    allowed_values="a port number (1..65535)"
+                    allowed_values="a port number (1..65535)",
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
                 ),
                 fixture.error(
                     report_codes.INVALID_OPTION_VALUE,
                     option_value="256",
                     option_name="ttl",
-                    allowed_values="0..255"
+                    allowed_values="0..255",
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
                 ),
             ]
         )
@@ -1014,55 +1036,73 @@ class CreateLinkListKnet(CreateLinkListCommonMixin, TestCase):
                     report_codes.INVALID_OPTION_VALUE,
                     option_value="-1",
                     option_name="linknumber",
-                    allowed_values="0..7"
+                    allowed_values="0..7",
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
                 ),
                 fixture.error(
                     report_codes.INVALID_OPTION_VALUE,
                     option_value="256",
                     option_name="link_priority",
-                    allowed_values="0..255"
+                    allowed_values="0..255",
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
                 ),
                 fixture.error(
                     report_codes.INVALID_OPTION_VALUE,
                     option_value="65536",
                     option_name="mcastport",
-                    allowed_values="a port number (1..65535)"
+                    allowed_values="a port number (1..65535)",
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
                 ),
                 fixture.error(
                     report_codes.INVALID_OPTION_VALUE,
                     option_value="tcp",
                     option_name="transport",
-                    allowed_values=("sctp", "udp")
+                    allowed_values=("sctp", "udp"),
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
                 ),
                 fixture.error(
                     report_codes.INVALID_OPTION_VALUE,
                     option_value="-250",
                     option_name="ping_interval",
-                    allowed_values="a non-negative integer"
+                    allowed_values="a non-negative integer",
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
                 ),
                 fixture.error(
                     report_codes.INVALID_OPTION_VALUE,
                     option_value="-15",
                     option_name="ping_precision",
-                    allowed_values="a non-negative integer"
+                    allowed_values="a non-negative integer",
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
                 ),
                 fixture.error(
                     report_codes.INVALID_OPTION_VALUE,
                     option_value="-750",
                     option_name="ping_timeout",
-                    allowed_values="a non-negative integer"
+                    allowed_values="a non-negative integer",
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
                 ),
                 fixture.error(
                     report_codes.INVALID_OPTION_VALUE,
                     option_value="-10",
                     option_name="pong_count",
-                    allowed_values="a non-negative integer"
+                    allowed_values="a non-negative integer",
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
                 ),
                 fixture.error(
                     report_codes.INVALID_OPTION_VALUE,
                     option_value="udpu",
                     option_name="transport",
-                    allowed_values=("sctp", "udp")
+                    allowed_values=("sctp", "udp"),
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
                 ),
             ]
         )
@@ -1184,13 +1224,17 @@ class CreateLinkListKnet(CreateLinkListCommonMixin, TestCase):
                     report_codes.INVALID_OPTION_VALUE,
                     option_value="",
                     option_name="ping_interval",
-                    allowed_values="a non-negative integer"
+                    allowed_values="a non-negative integer",
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
                 ),
                 fixture.error(
                     report_codes.INVALID_OPTION_VALUE,
                     option_value="",
                     option_name="ping_timeout",
-                    allowed_values="a non-negative integer"
+                    allowed_values="a non-negative integer",
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
                 ),
             ]
         )
@@ -1292,13 +1336,17 @@ class CreateTransportUdp(TestCase):
                     report_codes.INVALID_OPTION_VALUE,
                     option_value="ipv5",
                     option_name="ip_version",
-                    allowed_values=("ipv4", "ipv6", "ipv4-6", "ipv6-4")
+                    allowed_values=("ipv4", "ipv6", "ipv4-6", "ipv6-4"),
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
                 ),
                 fixture.error(
                     report_codes.INVALID_OPTION_VALUE,
                     option_value="-5",
                     option_name="netmtu",
-                    allowed_values="a positive integer"
+                    allowed_values="a positive integer",
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
                 ),
             ]
         )
@@ -1399,37 +1447,51 @@ class CreateTransportKnet(TestCase):
                     report_codes.INVALID_OPTION_VALUE,
                     option_value="ipv5",
                     option_name="ip_version",
-                    allowed_values=("ipv4", "ipv6", "ipv4-6", "ipv6-4")
+                    allowed_values=("ipv4", "ipv6", "ipv4-6", "ipv6-4"),
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
                 ),
                 fixture.error(
                     report_codes.INVALID_OPTION_VALUE,
                     option_value="a minute",
                     option_name="knet_pmtud_interval",
-                    allowed_values="a non-negative integer"
+                    allowed_values="a non-negative integer",
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
                 ),
                 fixture.error(
                     report_codes.INVALID_OPTION_VALUE,
                     option_value="random",
                     option_name="link_mode",
-                    allowed_values=("active", "passive", "rr")
+                    allowed_values=("active", "passive", "rr"),
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
                 ),
                 fixture.error(
                     report_codes.INVALID_OPTION_VALUE,
                     option_value="maximum",
                     option_name="level",
-                    allowed_values="a non-negative integer"
+                    allowed_values="a non-negative integer",
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
                 ),
                 fixture.error(
                     report_codes.INVALID_OPTION_VALUE,
                     option_value="",
                     option_name="model",
-                    allowed_values="a compression model e.g. zlib, lz4 or bzip2"
+                    allowed_values=(
+                        "a compression model e.g. zlib, lz4 or bzip2"
+                    ),
+                    cannot_be_empty=True,
+                    forbidden_characters=None,
                 ),
                 fixture.error(
                     report_codes.INVALID_OPTION_VALUE,
                     option_value="reasonable",
                     option_name="threshold",
-                    allowed_values="a non-negative integer"
+                    allowed_values="a non-negative integer",
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
                 ),
                 fixture.error(
                     report_codes.INVALID_OPTION_VALUE,
@@ -1437,7 +1499,9 @@ class CreateTransportKnet(TestCase):
                     option_name="cipher",
                     allowed_values=(
                         "none", "aes256", "aes192", "aes128"
-                    )
+                    ),
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
                 ),
                 fixture.error(
                     report_codes.INVALID_OPTION_VALUE,
@@ -1445,13 +1509,17 @@ class CreateTransportKnet(TestCase):
                     option_name="hash",
                     allowed_values=(
                         "none", "md5", "sha1", "sha256", "sha384", "sha512"
-                    )
+                    ),
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
                 ),
                 fixture.error(
                     report_codes.INVALID_OPTION_VALUE,
                     option_value="best",
                     option_name="model",
-                    allowed_values=("nss", "openssl")
+                    allowed_values=("nss", "openssl"),
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
                 ),
             ]
         )
@@ -1651,7 +1719,9 @@ class CreateTotem(TestCase):
                     report_codes.INVALID_OPTION_VALUE,
                     option_value="x",
                     option_name=name,
-                    allowed_values="a non-negative integer"
+                    allowed_values="a non-negative integer",
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
                 )
                 for name in self.allowed_options
             ]

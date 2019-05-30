@@ -48,9 +48,7 @@ def create(
     # cluster name and transport validation
     validators = [
         validate.ValueNotEmpty(
-            "name",
-            "a non-empty string",
-            option_name_for_report="cluster name"
+            "name", None, option_name_for_report="cluster name"
         ),
         validate.ValueIn("transport", constants.TRANSPORTS_ALL)
     ]
@@ -190,9 +188,7 @@ def _get_node_name_validators(node_index):
         validate.NamesIn(["addrs", "name"], option_type="node"),
         validate.IsRequiredAll(["name"], option_type=f"node {node_index}"),
         validate.ValueNotEmpty(
-            "name",
-            "a non-empty string",
-            option_name_for_report=f"node {node_index} name"
+            "name", None, option_name_for_report=f"node {node_index} name"
         ),
     ]
 

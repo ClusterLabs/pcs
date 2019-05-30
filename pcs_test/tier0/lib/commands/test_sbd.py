@@ -67,10 +67,12 @@ class ValidateSbdOptionsTest(TestCase):
             [
                 fixture.error(
                     report_codes.INVALID_OPTION_VALUE,
+                    force_code=report_codes.FORCE_OPTIONS,
                     option_name="SBD_TIMEOUT_ACTION",
                     option_value="flush,noflush",
                     allowed_values=self.timeout_action_allowed_values,
-                    force_code=report_codes.FORCE_OPTIONS
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
                 ),
             ]
         )
@@ -89,6 +91,8 @@ class ValidateSbdOptionsTest(TestCase):
                     option_name="SBD_TIMEOUT_ACTION",
                     option_value="flush,noflush",
                     allowed_values=self.timeout_action_allowed_values,
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
                 ),
             ]
         )
@@ -247,15 +251,13 @@ class ValidateSbdOptionsTest(TestCase):
         assert_report_item_list_equal(
             cmd_sbd._validate_sbd_options(config),
             [
-                (
-                    Severities.ERROR,
+                fixture.error(
                     report_codes.INVALID_OPTION_VALUE,
-                    {
-                        "option_name": "SBD_WATCHDOG_TIMEOUT",
-                        "option_value": "-1",
-                        "allowed_values": "a non-negative integer",
-                    },
-                    None
+                    option_name="SBD_WATCHDOG_TIMEOUT",
+                    option_value="-1",
+                    allowed_values="a non-negative integer",
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
                 )
             ]
         )
@@ -269,15 +271,13 @@ class ValidateSbdOptionsTest(TestCase):
         assert_report_item_list_equal(
             cmd_sbd._validate_sbd_options(config),
             [
-                (
-                    Severities.ERROR,
+                fixture.error(
                     report_codes.INVALID_OPTION_VALUE,
-                    {
-                        "option_name": "SBD_WATCHDOG_TIMEOUT",
-                        "option_value": "not int",
-                        "allowed_values": "a non-negative integer",
-                    },
-                    None
+                    option_name="SBD_WATCHDOG_TIMEOUT",
+                    option_value="not int",
+                    allowed_values="a non-negative integer",
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
                 )
             ]
         )
@@ -291,15 +291,13 @@ class ValidateSbdOptionsTest(TestCase):
         assert_report_item_list_equal(
             cmd_sbd._validate_sbd_options(config),
             [
-                (
-                    Severities.ERROR,
+                fixture.error(
                     report_codes.INVALID_OPTION_VALUE,
-                    {
-                        "option_name": "SBD_WATCHDOG_TIMEOUT",
-                        "option_value": None,
-                        "allowed_values": "a non-negative integer",
-                    },
-                    None
+                    option_name="SBD_WATCHDOG_TIMEOUT",
+                    option_value=None,
+                    allowed_values="a non-negative integer",
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
                 )
             ]
         )
@@ -445,14 +443,13 @@ class InitializeBlockDevicesTest(CommonTest):
 
     @staticmethod
     def fixture_invalid_value(option, value):
-        return (
-            Severities.ERROR,
+        return fixture.error(
             report_codes.INVALID_OPTION_VALUE,
-            {
-                "option_name": option,
-                "option_value": value,
-                "allowed_values": "a non-negative integer",
-            }
+            option_name=option,
+            option_value=value,
+            allowed_values="a non-negative integer",
+            cannot_be_empty=False,
+            forbidden_characters=None,
         )
 
     def test_all_options(self):
@@ -719,28 +716,26 @@ class SetMessageTest(CommonTest):
                     "option_type": None,
                 }
             ),
-            (
-                Severities.ERROR,
+            fixture.error(
                 report_codes.INVALID_OPTION_VALUE,
-                {
-                    "option_name": "message",
-                    "option_value": "",
-                    "allowed_values": settings.sbd_message_types,
-                }
+                option_name="message",
+                option_value="",
+                allowed_values=settings.sbd_message_types,
+                cannot_be_empty=False,
+                forbidden_characters=None,
             )
         )
 
     def test_invalid_message_type(self):
         assert_raise_library_error(
             lambda: cmd_sbd.set_message(self.env, "device", "node1", "message"),
-            (
-                Severities.ERROR,
+            fixture.error(
                 report_codes.INVALID_OPTION_VALUE,
-                {
-                    "option_name": "message",
-                    "option_value": "message",
-                    "allowed_values": settings.sbd_message_types,
-                }
+                option_name="message",
+                option_value="message",
+                allowed_values=settings.sbd_message_types,
+                cannot_be_empty=False,
+                forbidden_characters=None,
             )
         )
 

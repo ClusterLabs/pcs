@@ -325,6 +325,8 @@ class ValuePredicateBase(ValueValidator):
         )
         self._code_for_warning = code_for_warning
         self._produce_warning = produce_warning
+        self._value_cannot_be_empty = False
+        self._forbidden_characters = None
 
     def _validate_value(self, value):
         if not self._is_valid(value.normalized):
@@ -341,6 +343,8 @@ class ValuePredicateBase(ValueValidator):
                 ),
                 value.original,
                 self._get_allowed_values(),
+                cannot_be_empty=self._value_cannot_be_empty,
+                forbidden_characters=self._forbidden_characters,
             )]
 
         return []
@@ -467,6 +471,7 @@ class ValueNotEmpty(ValuePredicateBase):
             produce_warning=produce_warning,
         )
         self._value_desc_or_enum = value_desc_or_enum
+        self._value_cannot_be_empty = True
 
     def _is_valid(self, value):
         return not is_empty_string(value)

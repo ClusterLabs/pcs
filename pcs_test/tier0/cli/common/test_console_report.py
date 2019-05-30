@@ -202,24 +202,58 @@ class RequiredOptionsAreMissing(NameBuildTest):
 
 class BuildInvalidOptionValueMessageTest(NameBuildTest):
     code = codes.INVALID_OPTION_VALUE
-    def test_build_message_with_multiple_allowed_values(self):
-        self.assert_message_from_info(
+    def test_multiple_allowed_values(self):
+        self.assert_message_from_report(
             "'VALUE' is not a valid NAME value, use FIRST, SECOND",
-            {
-                "option_name": "NAME",
-                "option_value": "VALUE",
-                "allowed_values": sorted(["FIRST", "SECOND"]),
-            }
+            reports.invalid_option_value("NAME", "VALUE", ["SECOND", "FIRST"])
         )
 
-    def test_build_message_with_hint(self):
-        self.assert_message_from_info(
+    def test_textual_hint(self):
+        self.assert_message_from_report(
             "'VALUE' is not a valid NAME value, use some hint",
-            {
-                "option_name": "NAME",
-                "option_value": "VALUE",
-                "allowed_values": "some hint",
-            }
+            reports.invalid_option_value("NAME", "VALUE", "some hint")
+        )
+
+    def test_cannot_be_empty(self):
+        self.assert_message_from_report(
+            "NAME cannot be empty",
+            reports.invalid_option_value(
+                "NAME", "VALUE", None, cannot_be_empty=True
+            )
+        )
+
+    def test_cannot_be_empty_with_hint(self):
+        self.assert_message_from_report(
+            "NAME cannot be empty, use FIRST, SECOND",
+            reports.invalid_option_value(
+                "NAME", "VALUE", ["SECOND", "FIRST"], cannot_be_empty=True
+            )
+        )
+
+    def test_forbidden_characters(self):
+        self.assert_message_from_report(
+            r"NAME cannot contain }{\r\n characters",
+            reports.invalid_option_value(
+                "NAME", "VALUE", None, forbidden_characters="}{\\r\\n"
+            )
+        )
+
+    def test_forbidden_characters_with_hint(self):
+        self.assert_message_from_report(
+            r"NAME cannot contain }{\r\n characters, use FIRST, SECOND",
+            reports.invalid_option_value(
+                "NAME", "VALUE", ["SECOND", "FIRST"],
+                forbidden_characters="}{\\r\\n"
+            )
+        )
+
+    def test_cannot_be_empty_and_forbidden_characters(self):
+        self.assert_message_from_report(
+            "NAME cannot be empty, use FIRST, SECOND",
+            reports.invalid_option_value(
+                "NAME", "VALUE", ["SECOND", "FIRST"], cannot_be_empty=True,
+                forbidden_characters="{}"
+            )
         )
 
 class BuildServiceStartErrorTest(NameBuildTest):
