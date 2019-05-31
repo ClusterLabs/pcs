@@ -478,9 +478,9 @@ class SuccessOperations(ResourceTest):
                 </primitive>
             </resources>"""
             ,
-            "Warning: 'monitro' is not a valid operation name value, use"
-                " meta-data, migrate_from, migrate_to, monitor, reload, start,"
-                " stop, validate-all\n"
+            "Warning: 'monitro' is not a valid operation name value, use "
+                "'meta-data', 'migrate_from', 'migrate_to', 'monitor', "
+                "'reload', 'start', 'stop', 'validate-all'\n"
         )
 
     def test_op_id(self):
@@ -938,7 +938,8 @@ class FailOrWarn(ResourceTest):
         self.assert_pcs_fail(
             "resource create R ocf:heartbeat:Dummy a=b c=d",
             "Error: invalid resource options: 'a', 'c', allowed options are: "
-                "fake, state, trace_file, trace_ra, use --force to override\n"
+                "'fake', 'state', 'trace_file', 'trace_ra', use --force to "
+                "override\n"
         )
 
     def test_for_missing_options_of_resource_agent(self):
@@ -997,8 +998,9 @@ class FailOrWarn(ResourceTest):
         self.assert_pcs_fail(
             "resource create R ocf:heartbeat:Dummy op monitro interval=100",
             "Error: 'monitro' is not a valid operation name value, use"
-                " meta-data, migrate_from, migrate_to, monitor, reload, start,"
-                " stop, validate-all, use --force to override\n"
+                " 'meta-data', 'migrate_from', 'migrate_to', 'monitor',"
+                " 'reload', 'start', 'stop', 'validate-all', use --force to"
+                " override\n"
         )
 
     def test_fail_on_ambiguous_value_of_option(self):
@@ -1100,9 +1102,9 @@ class FailOrWarnOp(ResourceTest):
                 " monitor interval=1min moni=tor timeout=80s"
             ,
             "Error: invalid resource operation option 'moni', allowed options"
-                " are: OCF_CHECK_LEVEL, description, enabled, id, interval,"
-                " interval-origin, name, on-fail, record-pending,"
-                " role, start-delay, timeout\n"
+                " are: 'OCF_CHECK_LEVEL', 'description', 'enabled', 'id',"
+                " 'interval', 'interval-origin', 'name', 'on-fail',"
+                " 'record-pending', 'role', 'start-delay', 'timeout'\n"
         )
 
     def test_fail_on_invalid_role(self):
@@ -1110,8 +1112,8 @@ class FailOrWarnOp(ResourceTest):
             "resource create --no-default-ops R ocf:heartbeat:Dummy op"
                 " monitor role=abc"
             ,
-            "Error: 'abc' is not a valid role value, use Master, Slave,"
-                " Started, Stopped\n"
+            "Error: 'abc' is not a valid role value, use 'Master', 'Slave',"
+                " 'Started', 'Stopped'\n"
         )
 
     def test_force_invalid_role(self):
@@ -1119,8 +1121,8 @@ class FailOrWarnOp(ResourceTest):
             "resource create --no-default-ops R ocf:heartbeat:Dummy op"
                 " monitor role=abc --force"
             ,
-            "Error: 'abc' is not a valid role value, use Master, Slave,"
-                " Started, Stopped\n"
+            "Error: 'abc' is not a valid role value, use 'Master', 'Slave',"
+                " 'Started', 'Stopped'\n"
         )
 
     def test_fail_on_invalid_on_fail(self):
@@ -1128,8 +1130,8 @@ class FailOrWarnOp(ResourceTest):
             "resource create --no-default-ops R ocf:heartbeat:Dummy op"
                 " monitor on-fail=Abc"
             ,
-            "Error: 'Abc' is not a valid on-fail value, use block, fence,"
-                " ignore, restart, restart-container, standby, stop\n"
+            "Error: 'Abc' is not a valid on-fail value, use 'block', 'fence',"
+                " 'ignore', 'restart', 'restart-container', 'standby', 'stop'\n"
         )
 
     def test_fail_on_invalid_record_pending(self):
@@ -1137,8 +1139,8 @@ class FailOrWarnOp(ResourceTest):
             "resource create --no-default-ops R ocf:heartbeat:Dummy op"
                 " monitor record-pending=Abc"
             ,
-            "Error: 'Abc' is not a valid record-pending value, use 0, 1, false,"
-                " true\n"
+            "Error: 'Abc' is not a valid record-pending value, use '0', '1', "
+                "'false', 'true'\n"
         )
 
     def test_fail_on_invalid_enabled(self):
@@ -1146,7 +1148,8 @@ class FailOrWarnOp(ResourceTest):
             "resource create --no-default-ops R ocf:heartbeat:Dummy op"
                 " monitor enabled=Abc"
             ,
-            "Error: 'Abc' is not a valid enabled value, use 0, 1, false, true\n"
+            "Error: 'Abc' is not a valid enabled value, use '0', '1', 'false', "
+                "'true'\n"
         )
 
     def test_fail_on_combination_of_start_delay_and_interval_origin(self):

@@ -39,7 +39,7 @@ class NodeAddRemote(RemoteTest):
         self.assert_pcs_fail(
             "cluster node add-remote remote-node ADDRESS server=DIFFERENT",
             "Error: invalid resource option 'server', allowed options"
-                " are: port, reconnect_interval, trace_file, trace_ra\n"
+                " are: 'port', 'reconnect_interval', 'trace_file', 'trace_ra'\n"
             "Error: Errors have occurred, therefore pcs is unable to continue\n"
             "Unable to check if there is a conflict with nodes set in corosync "
                 "because the command does not run on a live cluster (e.g. -f "
@@ -50,8 +50,8 @@ class NodeAddRemote(RemoteTest):
         self.assert_pcs_fail(
             "cluster node add-remote remote-node ADDRESS abcd=efgh",
             "Error: invalid resource option 'abcd', allowed options"
-                " are: port, reconnect_interval, trace_file, trace_ra, use"
-                " --force to override\n"
+                " are: 'port', 'reconnect_interval', 'trace_file', 'trace_ra', "
+                "use --force to override\n"
             "Error: Errors have occurred, therefore pcs is unable to continue\n"
             "Unable to check if there is a conflict with nodes set in corosync "
                 "because the command does not run on a live cluster (e.g. -f "
@@ -212,8 +212,8 @@ class NodeAddGuest(RemoteTest):
         self.assert_pcs_fail(
             "cluster node add-guest node-name G remote-node=node-name",
             stdout_start="Error: invalid guest option 'remote-node',"
-                " allowed options are: remote-addr, remote-connect-timeout,"
-                " remote-port\n"
+                " allowed options are: 'remote-addr', 'remote-connect-timeout',"
+                " 'remote-port'\n"
         )
 
     def test_fail_when_resource_has_already_remote_node_meta(self):
@@ -239,7 +239,7 @@ class NodeAddGuest(RemoteTest):
         self.assert_pcs_fail(
             "cluster node add-guest node-name G a=b remote-addr=a",
             "Error: invalid guest option 'a', allowed options are:"
-                " remote-addr, remote-connect-timeout, remote-port\n"
+                " 'remote-addr', 'remote-connect-timeout', 'remote-port'\n"
             "Error: resource 'G' does not exist\n"
             "Error: Errors have occurred, therefore pcs is unable to continue\n"
             "Unable to check if there is a conflict with nodes set in corosync "
@@ -252,7 +252,7 @@ class NodeAddGuest(RemoteTest):
         self.assert_pcs_fail(
             "cluster node add-guest node-name G a=b remote-addr=a",
             "Error: invalid guest option 'a', allowed options are:"
-                " remote-addr, remote-connect-timeout, remote-port\n"
+                " 'remote-addr', 'remote-connect-timeout', 'remote-port'\n"
             "Error: Errors have occurred, therefore pcs is unable to continue\n"
             "Unable to check if there is a conflict with nodes set in corosync "
                 "because the command does not run on a live cluster (e.g. -f "

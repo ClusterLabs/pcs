@@ -56,7 +56,9 @@ class BuildInvalidOptionsMessageTest(NameBuildTest):
     code = codes.INVALID_OPTIONS
     def test_build_message_with_type(self):
         self.assert_message_from_info(
-            "invalid TYPE option 'NAME', allowed options are: FIRST, SECOND",
+            "invalid TYPE option 'NAME', allowed options are: 'FIRST', "
+                "'SECOND'"
+            ,
             {
                 "option_names": ["NAME"],
                 "option_type": "TYPE",
@@ -67,7 +69,7 @@ class BuildInvalidOptionsMessageTest(NameBuildTest):
 
     def test_build_message_without_type(self):
         self.assert_message_from_info(
-            "invalid option 'NAME', allowed options are: FIRST, SECOND",
+            "invalid option 'NAME', allowed options are: 'FIRST', 'SECOND'",
             {
                 "option_names": ["NAME"],
                 "option_type": "",
@@ -78,7 +80,7 @@ class BuildInvalidOptionsMessageTest(NameBuildTest):
 
     def test_build_message_with_multiple_names(self):
         self.assert_message_from_info(
-            "invalid options: 'ANOTHER', 'NAME', allowed option is FIRST",
+            "invalid options: 'ANOTHER', 'NAME', allowed option is 'FIRST'",
             {
                 "option_names": ["NAME", "ANOTHER"],
                 "option_type": "",
@@ -91,7 +93,7 @@ class BuildInvalidOptionsMessageTest(NameBuildTest):
         self.assert_message_from_info(
             (
                 "invalid option 'NAME', allowed are options matching patterns: "
-                "exec_<name>"
+                "'exec_<name>'"
             ),
             {
                 "option_names": ["NAME"],
@@ -104,8 +106,8 @@ class BuildInvalidOptionsMessageTest(NameBuildTest):
     def test_allowed_and_patterns(self):
         self.assert_message_from_info(
             (
-                "invalid option 'NAME', allowed option is FIRST and options "
-                "matching patterns: exec_<name>"
+                "invalid option 'NAME', allowed option is 'FIRST' and options "
+                "matching patterns: 'exec_<name>'"
             ),
             {
                 "option_names": ["NAME"],
@@ -204,7 +206,7 @@ class BuildInvalidOptionValueMessageTest(NameBuildTest):
     code = codes.INVALID_OPTION_VALUE
     def test_multiple_allowed_values(self):
         self.assert_message_from_report(
-            "'VALUE' is not a valid NAME value, use FIRST, SECOND",
+            "'VALUE' is not a valid NAME value, use 'FIRST', 'SECOND'",
             reports.invalid_option_value("NAME", "VALUE", ["SECOND", "FIRST"])
         )
 
@@ -224,7 +226,7 @@ class BuildInvalidOptionValueMessageTest(NameBuildTest):
 
     def test_cannot_be_empty_with_hint(self):
         self.assert_message_from_report(
-            "NAME cannot be empty, use FIRST, SECOND",
+            "NAME cannot be empty, use 'FIRST', 'SECOND'",
             reports.invalid_option_value(
                 "NAME", "VALUE", ["SECOND", "FIRST"], cannot_be_empty=True
             )
@@ -240,7 +242,7 @@ class BuildInvalidOptionValueMessageTest(NameBuildTest):
 
     def test_forbidden_characters_with_hint(self):
         self.assert_message_from_report(
-            r"NAME cannot contain }{\r\n characters, use FIRST, SECOND",
+            r"NAME cannot contain }{\r\n characters, use 'FIRST', 'SECOND'",
             reports.invalid_option_value(
                 "NAME", "VALUE", ["SECOND", "FIRST"],
                 forbidden_characters="}{\\r\\n"
@@ -249,7 +251,7 @@ class BuildInvalidOptionValueMessageTest(NameBuildTest):
 
     def test_cannot_be_empty_and_forbidden_characters(self):
         self.assert_message_from_report(
-            "NAME cannot be empty, use FIRST, SECOND",
+            "NAME cannot be empty, use 'FIRST', 'SECOND'",
             reports.invalid_option_value(
                 "NAME", "VALUE", ["SECOND", "FIRST"], cannot_be_empty=True,
                 forbidden_characters="{}"
@@ -525,7 +527,7 @@ class InvalidOptionType(NameBuildTest):
 
     def test_allowed_list(self):
         self.assert_message_from_info(
-            "specified option name is not valid, use allowed, types",
+            "specified option name is not valid, use 'allowed', 'types'",
             {
                 "option_name": "option name",
                 "allowed_types": ["allowed", "types"],

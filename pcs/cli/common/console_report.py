@@ -74,12 +74,6 @@ def format_fencing_level_target(target_type, target_value):
         return "{0}={1}".format(target_value[0], target_value[1])
     return target_value
 
-def format_list(a_list, quotes=True):
-    template = "'{}'" if quotes else "{}"
-    return ", ".join([
-        template.format(x) for x in sorted(a_list)
-    ])
-
 def format_file_role(role):
     return _file_role_translation.get(role, role)
 
@@ -224,35 +218,35 @@ def resource_running_on_nodes(info):
             "{run_type} on node{s} {node_list}".format(
                 run_type=run_type,
                 s="s" if len(node_list) > 1 else "",
-                node_list=joined_list(node_list)
+                node_list=format_list(node_list)
             )
             for run_type, node_list in state_info.items()
         ]))
     )
 
 def invalid_options(info):
-    template = "invalid {desc}option{plural_options} {option_names_list},"
+    template = "invalid {_desc}option{_plural_options} {_option_names_list},"
     if not info["allowed"] and not info["allowed_patterns"]:
         template += " there are no options allowed"
     elif not info["allowed_patterns"]:
-        template += " allowed option{plural_allowed} {allowed_values}"
+        template += " allowed option{_plural_allowed} {_allowed_values}"
     elif not info["allowed"]:
         template += (
-            " allowed are options matching patterns: {allowed_patterns_values}"
+            " allowed are options matching patterns: {_allowed_patterns_values}"
         )
     else:
         template += (
-            " allowed option{plural_allowed} {allowed_values}"
+            " allowed option{_plural_allowed} {_allowed_values}"
             " and"
-            " options matching patterns: {allowed_patterns_values}"
+            " options matching patterns: {_allowed_patterns_values}"
         )
     return template.format(
-        desc=format_optional(info["option_type"], "{0} "),
-        allowed_values=", ".join(sorted(info["allowed"])),
-        allowed_patterns_values=", ".join(sorted(info["allowed_patterns"])),
-        option_names_list=joined_list(info["option_names"]),
-        plural_options=("s:" if len(info["option_names"]) > 1 else ""),
-        plural_allowed=("s are:" if len(info["allowed"]) > 1 else " is"),
+        _desc=format_optional(info["option_type"], "{0} "),
+        _allowed_values=format_list(info["allowed"]),
+        _allowed_patterns_values=format_list(info["allowed_patterns"]),
+        _option_names_list=format_list(info["option_names"]),
+        _plural_options=("s:" if len(info["option_names"]) > 1 else ""),
+        _plural_allowed=("s are:" if len(info["allowed"]) > 1 else " is"),
         **info
     )
 
@@ -272,7 +266,7 @@ def invalid_option_value(info):
             # "allowed_values" value is overloaded:
             # * it can be a list -> it expreses possible option values
             # * it can be a string -> it is a textual description of the value
-            format_list(info["allowed_values"], quotes=False)
+            format_list(info["allowed_values"])
             if is_iterable_not_str(info["allowed_values"])
             else info["allowed_values"]
         ),
@@ -404,7 +398,7 @@ def build_node_description(node_types):
 
     return "nor " + " or ".join([label(ntype) for ntype in node_types])
 
-def joined_list(item_list, optional_transformations=None):
+def format_list(item_list, optional_transformations=None):
     if not optional_transformations:
         optional_transformations = {}
 
@@ -425,7 +419,7 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
         "required {desc}option{s} {option_names_list} {are} missing"
         .format(
             desc=format_optional(info["option_type"], "{0} "),
-            option_names_list=joined_list(info["option_names"]),
+            option_names_list=format_list(info["option_names"]),
             s=("s" if len(info["option_names"]) > 1 else ""),
             are=(
                 "are" if len(info["option_names"]) > 1
@@ -497,14 +491,12 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
         #value on key "allowed_types" is overloaded:
         # * it can be a list - then it express possible option types
         # * it can be a string - then it is verbal description of the type
-        "specified {option_name} is not valid, use {hint}"
+        "specified {option_name} is not valid, use {_hint}"
         .format(
-            hint=(
-                ", ".join(sorted(info["allowed_types"])) if (
-                    isinstance(info["allowed_types"], Iterable)
-                    and
-                    not isinstance(info["allowed_types"], str)
-                ) else info["allowed_types"]
+            _hint=(
+                format_list(info["allowed_types"])
+                if is_iterable_not_str(info["allowed_types"])
+                else info["allowed_types"]
             ),
             **info
         )
@@ -516,7 +508,7 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
             "{allowed_description}"
         ).format(
             desc=format_optional(info["option_type"], "{0} "),
-            option_names_list=joined_list(info["option_names"]),
+            option_names_list=format_list(info["option_names"]),
             plural_options=("s:" if len(info["option_names"]) > 1 else ""),
             **info
         )
@@ -544,7 +536,7 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
         "Only one of {desc}options {option_names} can be used".format(
             desc=format_optional(info["option_type"], "{0} "),
             option_names=(
-                joined_list(sorted(info["option_names"])[:-1])
+                format_list(sorted(info["option_names"])[:-1])
                 +
                 " and '{0}'".format(sorted(info["option_names"])[-1])
             )
@@ -1335,7 +1327,7 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
     codes.MULTIPLE_RESULTS_FOUND: lambda info:
         "multiple {result_type} {search_description} found: {what_found}"
         .format(
-            what_found=joined_list(info["result_identifier_list"]),
+            what_found=format_list(info["result_identifier_list"]),
             search_description="" if not info["search_description"]
                 else "for '{0}'".format(info["search_description"])
             ,
@@ -1502,9 +1494,9 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
         "Sending {_description}{_where}".format(
             _where=(
                 "" if not info["node_list"]
-                else " to " + joined_list(info["node_list"])
+                else " to " + format_list(info["node_list"])
             ),
-            _description=joined_list(info["file_list"])
+            _description=format_list(info["file_list"])
         )
     ,
 
@@ -1513,8 +1505,8 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
             "Distribution of {_files} to {_nodes} was skipped because "
             "{_reason}. Please, distribute the file(s) manually."
         ).format(
-            _files=joined_list(info["file_list"]),
-            _nodes=joined_list(info["node_list"]),
+            _files=format_list(info["file_list"]),
+            _nodes=format_list(info["node_list"]),
             _reason=skip_reason_to_string(info["reason_type"])
         )
     ,
@@ -1537,9 +1529,9 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
         "Requesting remove {_description}{_where}".format(
             _where=(
                 "" if not info["node_list"]
-                else " from " + joined_list(info["node_list"])
+                else " from " + format_list(info["node_list"])
             ),
-            _description=joined_list(info["file_list"])
+            _description=format_list(info["file_list"])
         )
     ,
 
@@ -1548,8 +1540,8 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
             "Removing {_files} from {_nodes} was skipped because {_reason}. "
             "Please, remove the file(s) manually."
         ).format(
-            _files=joined_list(info["file_list"]),
-            _nodes=joined_list(info["node_list"]),
+            _files=format_list(info["file_list"]),
+            _nodes=format_list(info["node_list"]),
             _reason=skip_reason_to_string(info["reason_type"])
         )
     ,
@@ -1573,9 +1565,9 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
         "Requesting {_description}{_where}".format(
             _where=(
                 "" if not info["node_list"]
-                else " on " + joined_list(info["node_list"])
+                else " on " + format_list(info["node_list"])
             ),
-            _description=joined_list(info["action_list"])
+            _description=format_list(info["action_list"])
         )
     ,
 
@@ -1584,8 +1576,8 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
             "Running action(s) {_actions} on {_nodes} was skipped because "
             "{_reason}. Please, run the action(s) manually."
         ).format(
-            _actions=joined_list(info["action_list"]),
-            _nodes=joined_list(info["node_list"]),
+            _actions=format_list(info["action_list"]),
+            _nodes=format_list(info["node_list"]),
             _reason=skip_reason_to_string(info["reason_type"])
         )
     ,
@@ -1768,7 +1760,7 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
     codes.LIVE_ENVIRONMENT_REQUIRED: lambda info:
         "This command does not support {forbidden_options}"
         .format(
-            forbidden_options=joined_list(info["forbidden_options"], {
+            forbidden_options=format_list(info["forbidden_options"], {
                 "BOOTH_CONF": "--booth-conf",
                 "BOOTH_KEY": "--booth-key",
                 "CIB": "-f",

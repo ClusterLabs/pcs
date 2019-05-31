@@ -243,7 +243,8 @@ class BundleCreate(BundleCreateCommon):
     def test_fail_when_missing_container_type(self):
         self.assert_pcs_fail_regardless_of_force(
             "resource bundle create B1",
-            "Error: '' is not a valid container type value, use docker, podman, rkt\n"
+            "Error: '' is not a valid container type value, use 'docker', "
+                "'podman', 'rkt'\n"
         )
 
     def test_fail_when_missing_required(self):
@@ -259,8 +260,9 @@ class BundleCreate(BundleCreateCommon):
                 extra=option
             """,
             "Error: invalid container option 'extra', allowed options are: "
-                "image, masters, network, options, promoted-max, replicas, "
-                "replicas-per-host, run-command, use --force to override\n"
+                "'image', 'masters', 'network', 'options', 'promoted-max', "
+                "'replicas', 'replicas-per-host', 'run-command', use --force "
+                "to override\n"
         )
 
     def test_unknown_option_forced(self):
@@ -573,8 +575,9 @@ class BundleUpdate(BundleCreateCommon):
         self.assert_pcs_fail(
             "resource bundle update B container extra=option",
             "Error: invalid container option 'extra', allowed options are: "
-                "image, masters, network, options, promoted-max, replicas, "
-                "replicas-per-host, run-command, use --force to override\n"
+                "'image', 'masters', 'network', 'options', 'promoted-max', "
+                "'replicas', 'replicas-per-host', 'run-command', use --force "
+                "to override\n"
         )
         # Test that pcs allows to specify options it does not know about. This
         # ensures some kind of forward compatibility, so the user will be able

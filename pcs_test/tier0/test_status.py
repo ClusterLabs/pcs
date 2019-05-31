@@ -34,8 +34,8 @@ class StonithWarningTest(TestCase, AssertPcsMixin):
                 "method=cycle --force"
             ,
             "Warning: invalid resource options: 'action', 'method', allowed "
-                "options are: envfile, fail_start_on, fake, op_sleep, passwd, "
-                "state, trace_file, trace_ra\n"
+                "options are: 'envfile', 'fail_start_on', 'fake', 'op_sleep', "
+                "'passwd', 'state', 'trace_file', 'trace_ra'\n"
         )
 
     def test_warning_stonith_action(self):
