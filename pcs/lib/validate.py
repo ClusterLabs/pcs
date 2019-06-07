@@ -38,6 +38,8 @@ from pcs.lib.pacemaker.values import (
     validate_id,
 )
 
+_INTEGER_RE = re.compile(r"^[+-]?[0-9]+$")
+
 ### normalization
 
 class ValuePair(namedtuple("ValuePair", "original normalized")):
@@ -541,6 +543,8 @@ def is_integer(value, at_least=None, at_most=None):
     """
     try:
         if value is None or isinstance(value, float):
+            return False
+        if isinstance(value, str) and not _INTEGER_RE.fullmatch(value):
             return False
         value_int = int(value)
         if at_least is not None and value_int < at_least:
