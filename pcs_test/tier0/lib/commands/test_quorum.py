@@ -1374,9 +1374,15 @@ class AddDeviceNetTest(TestCase):
                     report_codes.INVALID_USERDEFINED_OPTIONS,
                     option_names=["exec_bad.name"],
                     option_type="heuristics",
-                    allowed_description=(
-                        "exec_NAME may contain a-z A-Z 0-9 /_- characters only"
-                    )
+                    allowed_characters="a-z A-Z 0-9 /_-",
+                ),
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_name="exec_bad.name",
+                    option_value="",
+                    allowed_values="a command to be run",
+                    cannot_be_empty=True,
+                    forbidden_characters=None,
                 ),
             ]
         )
@@ -2824,9 +2830,7 @@ class UpdateDeviceTest(TestCase):
                 report_codes.INVALID_USERDEFINED_OPTIONS,
                 option_names=["exec_bad.name"],
                 option_type="heuristics",
-                allowed_description=(
-                    "exec_NAME may contain a-z A-Z 0-9 /_- characters only"
-                )
+                allowed_characters="a-z A-Z 0-9 /_-",
             ),
         )
 

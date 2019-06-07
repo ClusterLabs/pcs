@@ -32,6 +32,7 @@ import ipaddress
 import re
 
 from pcs.lib import reports
+from pcs.lib.corosync import constants as corosync_constants
 from pcs.lib.errors import ReportItemSeverity
 from pcs.lib.pacemaker.values import (
     timeout_to_seconds,
@@ -160,6 +161,33 @@ class KeyValidator(ValidatorInterface):
 
     def validate(self, option_dict):
         raise NotImplementedError()
+
+class CorosyncOption(KeyValidator):
+    """
+    Report INVALID_USERDEFINED_OPTIONS when the option_dict contains names not
+    suitable for corosync.conf
+    """
+    def __init__(self, option_type=None):
+        super().__init__(None, option_type=option_type)
+
+    def validate(self, option_dict):
+        not_valid_options = [
+            name
+            for name in option_dict
+            if corosync_constants.OPTION_NAME_RE.fullmatch(name) is None
+        ]
+        if not_valid_options:
+            # We must be strict and do not allow to override this validation,
+            # otherwise setting a cratfed option name could be misused for
+            # setting arbitrary corosync.conf settings.
+            return [
+                reports.invalid_userdefined_options(
+                    not_valid_options,
+                    self._option_type,
+                    "a-z A-Z 0-9 /_-"
+                )
+            ]
+        return []
 
 class DependsOnOption(KeyValidator):
     """
@@ -306,6 +334,13 @@ class ValueValidator(ValidatorInterface):
             return []
         return self._validate_value(value)
 
+    def _get_option_name_for_report(self):
+        return (
+            self._option_name_for_report
+                if self._option_name_for_report is not None
+                else self._option_name
+        )
+
     def _validate_value(self, value):
         raise NotImplementedError()
 
@@ -338,11 +373,7 @@ class ValuePredicateBase(ValueValidator):
             )
             return [create_report(
                 reports.invalid_option_value,
-                (
-                    self._option_name_for_report
-                    if self._option_name_for_report is not None
-                    else self._option_name
-                ),
+                self._get_option_name_for_report(),
                 value.original,
                 self._get_allowed_values(),
                 cannot_be_empty=self._value_cannot_be_empty,
@@ -356,6 +387,40 @@ class ValuePredicateBase(ValueValidator):
 
     def _get_allowed_values(self):
         raise NotImplementedError()
+
+class ValueCorosyncValue(ValueValidator):
+    """
+    Report INVALID_OPTION_VALUE when a value is not a valid corosync value
+
+    This is meant to prevent entering characters which could be used to add
+    custom sections / values to corosync.conf. It must never be allowed to
+    force this validator.
+    Other validators are meant to check if the value is otherwise valid
+    (ValueIn, ValueIntegerInRange...) and empty / not empty. Their errors may be
+    made forcible.
+    """
+    def _validate_value(self, value):
+        if not isinstance(value.normalized, str):
+            return []
+        forbidden_characters = "{}\n\r"
+        if set(value.normalized) & set(forbidden_characters):
+            # We must be strict and do not allow to override this validation,
+            # otherwise setting a cratfed option value could be misused for
+            # setting arbitrary corosync.conf settings.
+            return [
+                reports.invalid_option_value(
+                    self._get_option_name_for_report(),
+                    value.original,
+                    None,
+                    # Make it actually print "\n" and "\r" strings instead of
+                    # going to the next line.
+                    # Let the user know all forbidden characters right away. Do
+                    # not let them try them one by one by only reporting those
+                    # actually used in the value.
+                    forbidden_characters="{}\\n\\r"
+                )
+            ]
+        return []
 
 class ValueId(ValueValidator):
     """

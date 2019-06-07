@@ -10,6 +10,12 @@ from pcs.lib.corosync import config_validators
 
 # pylint: disable=no-self-use
 
+forbidden_characters_kwargs = dict(
+    allowed_values=None,
+    cannot_be_empty=False,
+    forbidden_characters=r"{}\n\r",
+)
+
 class Create(TestCase):
     # pylint: disable=too-many-public-methods
     def setUp(self):
@@ -722,6 +728,57 @@ class Create(TestCase):
             ]
         )
 
+    def test_forbidden_characters(self):
+        assert_report_item_list_equal(
+            config_validators.create(
+                "test-{cluster",
+                [
+                    {"name": "node1}", "addrs": ["addr\r01"]},
+                ],
+                "udp\n",
+                "ipv4"
+            ),
+            [
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_value="test-{cluster",
+                    option_name="name",
+                    **forbidden_characters_kwargs
+                ),
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_value="udp\n",
+                    option_name="transport",
+                    allowed_values=("knet", "udp", "udpu"),
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
+                ),
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_value="udp\n",
+                    option_name="transport",
+                    **forbidden_characters_kwargs
+                ),
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_value="node1}",
+                    option_name="node 1 name",
+                    **forbidden_characters_kwargs
+                ),
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_value="addr\r01",
+                    option_name="node address",
+                    **forbidden_characters_kwargs
+                ),
+                fixture.error(
+                    report_codes.NODE_ADDRESSES_UNRESOLVABLE,
+                    force_code=report_codes.FORCE_NODE_ADDRESSES_UNRESOLVABLE,
+                    address_list=["addr\r01"],
+                ),
+            ]
+        )
+
 
 class CreateLinkListCommonMixin():
     def test_no_links(self):
@@ -970,6 +1027,103 @@ class CreateLinkListUdp(CreateLinkListCommonMixin, TestCase):
                     option_type="link",
                     prerequisite_name="broadcast",
                     prerequisite_type="link"
+                ),
+            ]
+        )
+
+    def test_forbidden_characters(self):
+        assert_report_item_list_equal(
+            config_validators.create_link_list_udp(
+                [
+                    {
+                        "bindnetaddr": "{10.0.0.1",
+                        "broadcast": "}0",
+                        "mcastaddr": "\r225.0.0.1",
+                        "mcastport": "\n5405",
+                        "ttl": "12",
+                        "op:.tion": "va}l{ue",
+                    }
+                ],
+                1
+            ),
+            [
+                fixture.error(
+                    report_codes.INVALID_OPTIONS,
+                    option_names=["op:.tion"],
+                    option_type="link",
+                    allowed=[
+                        "bindnetaddr", "broadcast", "mcastaddr", "mcastport",
+                        "ttl"
+                    ],
+                    allowed_patterns=[],
+                ),
+                fixture.error(
+                    report_codes.INVALID_USERDEFINED_OPTIONS,
+                    option_names=["op:.tion"],
+                    option_type="link",
+                    allowed_characters="a-z A-Z 0-9 /_-",
+                ),
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_value="{10.0.0.1",
+                    option_name="bindnetaddr",
+                    **forbidden_characters_kwargs
+                ),
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_value="}0",
+                    option_name="broadcast",
+                    **forbidden_characters_kwargs
+                ),
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_value="\r225.0.0.1",
+                    option_name="mcastaddr",
+                    **forbidden_characters_kwargs
+                ),
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_value="\n5405",
+                    option_name="mcastport",
+                    **forbidden_characters_kwargs
+                ),
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_value="va}l{ue",
+                    option_name="op:.tion",
+                    **forbidden_characters_kwargs
+                ),
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_value="{10.0.0.1",
+                    option_name="bindnetaddr",
+                    allowed_values="an IP address",
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
+                ),
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_value="}0",
+                    option_name="broadcast",
+                    allowed_values=("0", "1"),
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
+                ),
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_value="\r225.0.0.1",
+                    option_name="mcastaddr",
+                    allowed_values="an IP address",
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
+                ),
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_value="\n5405",
+                    option_name="mcastport",
+                    allowed_values="a port number (1..65535)",
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
                 ),
             ]
         )
@@ -1300,6 +1454,163 @@ class CreateLinkListKnet(CreateLinkListCommonMixin, TestCase):
             ]
         )
 
+    def test_forbidden_characters(self):
+        assert_report_item_list_equal(
+            config_validators.create_link_list_knet(
+                [
+                    {
+                        "linknumber": "0{",
+                        "link_priority": "20}",
+                        "mcastport": "5405\r",
+                        "ping_interval": "250\n",
+                        "ping_precision": "{}15",
+                        "ping_timeout": "\r\n750",
+                        "pong_count": "{10}",
+                        "transport": "\rsctp\n",
+                        "op:.tion": "va}l{ue",
+                    },
+                ],
+                2
+            ),
+            [
+                fixture.error(
+                    report_codes.INVALID_OPTIONS,
+                    option_names=["op:.tion"],
+                    option_type="link",
+                    allowed=[
+                        "link_priority", "linknumber", "mcastport",
+                        "ping_interval", "ping_precision", "ping_timeout",
+                        "pong_count", "transport",
+                    ],
+                    allowed_patterns=[],
+                ),
+                fixture.error(
+                    report_codes.INVALID_USERDEFINED_OPTIONS,
+                    option_names=["op:.tion"],
+                    option_type="link",
+                    allowed_characters="a-z A-Z 0-9 /_-",
+                ),
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_value="0{",
+                    option_name="linknumber",
+                    **forbidden_characters_kwargs
+                ),
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_value="20}",
+                    option_name="link_priority",
+                    **forbidden_characters_kwargs
+                ),
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_value="5405\r",
+                    option_name="mcastport",
+                    **forbidden_characters_kwargs
+                ),
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_value="250\n",
+                    option_name="ping_interval",
+                    **forbidden_characters_kwargs
+                ),
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_value="{}15",
+                    option_name="ping_precision",
+                    **forbidden_characters_kwargs
+                ),
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_value="\r\n750",
+                    option_name="ping_timeout",
+                    **forbidden_characters_kwargs
+                ),
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_value="{10}",
+                    option_name="pong_count",
+                    **forbidden_characters_kwargs
+                ),
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_value="\rsctp\n",
+                    option_name="transport",
+                    **forbidden_characters_kwargs
+                ),
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_value="va}l{ue",
+                    option_name="op:.tion",
+                    **forbidden_characters_kwargs
+                ),
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_value="20}",
+                    option_name="link_priority",
+                    allowed_values="0..255",
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
+                ),
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_value="5405\r",
+                    option_name="mcastport",
+                    allowed_values="a port number (1..65535)",
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
+                ),
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_value="250\n",
+                    option_name="ping_interval",
+                    allowed_values="a non-negative integer",
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
+                ),
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_value="{}15",
+                    option_name="ping_precision",
+                    allowed_values="a non-negative integer",
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
+                ),
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_value="\r\n750",
+                    option_name="ping_timeout",
+                    allowed_values="a non-negative integer",
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
+                ),
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_value="{10}",
+                    option_name="pong_count",
+                    allowed_values="a non-negative integer",
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
+                ),
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_value="\rsctp\n",
+                    option_name="transport",
+                    allowed_values=("sctp", "udp"),
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
+                ),
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_value="0{",
+                    option_name="linknumber",
+                    allowed_values="0..7",
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
+                ),
+            ]
+        )
+
 
 class CreateTransportUdp(TestCase):
     def test_no_options(self):
@@ -1392,6 +1703,67 @@ class CreateTransportUdp(TestCase):
             ]
         )
 
+    def test_forbidden_characters(self):
+        assert_report_item_list_equal(
+            config_validators.create_transport_udp(
+                {
+                    "ip_version": "}ipv4{",
+                    "netmtu": "\r1234\n",
+                    "op:.tion": "va}l{ue",
+                },
+                {},
+                {}
+            ),
+            [
+                fixture.error(
+                    report_codes.INVALID_OPTIONS,
+                    option_names=["op:.tion"],
+                    option_type="udp/udpu transport",
+                    allowed=["ip_version", "netmtu"],
+                    allowed_patterns=[],
+                ),
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_value="}ipv4{",
+                    option_name="ip_version",
+                    allowed_values=("ipv4", "ipv6", "ipv4-6", "ipv6-4"),
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
+                ),
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_value="\r1234\n",
+                    option_name="netmtu",
+                    allowed_values="a positive integer",
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
+                ),
+                fixture.error(
+                    report_codes.INVALID_USERDEFINED_OPTIONS,
+                    option_names=["op:.tion"],
+                    option_type="udp/udpu transport",
+                    allowed_characters="a-z A-Z 0-9 /_-",
+                ),
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_value="}ipv4{",
+                    option_name="ip_version",
+                    **forbidden_characters_kwargs
+                ),
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_value="\r1234\n",
+                    option_name="netmtu",
+                    **forbidden_characters_kwargs
+                ),
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_value="va}l{ue",
+                    option_name="op:.tion",
+                    **forbidden_characters_kwargs
+                ),
+            ]
+        )
 
 
 class CreateTransportKnet(TestCase):
@@ -1668,6 +2040,208 @@ class CreateTransportKnet(TestCase):
             []
         )
 
+    def test_forbidden_characters(self):
+        assert_report_item_list_equal(
+            config_validators.create_transport_knet(
+                {
+                    "ip_version": "ipv4\r",
+                    "knet_pmtud_interval": "\n1234",
+                    "link_mode": "a{ctive",
+                    "op:.tionA": "va}l{ueA",
+                },
+                {
+                    "level": "}5",
+                    "model": "zl\rib",
+                    "threshold": "1\n234",
+                    "op:.tionB": "va}l{ueB",
+                },
+                {
+                    "cipher": "aes{256",
+                    "hash": "sha256}",
+                    "model": "nss\n",
+                    "op:.tionC": "va}l{ueC",
+                }
+            ),
+            [
+                fixture.error(
+                    report_codes.INVALID_OPTIONS,
+                    option_names=["op:.tionA"],
+                    option_type="knet transport",
+                    allowed=["ip_version", "knet_pmtud_interval", "link_mode"],
+                    allowed_patterns=[],
+                ),
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_value="ipv4\r",
+                    option_name="ip_version",
+                    allowed_values=("ipv4", "ipv6", "ipv4-6", "ipv6-4"),
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
+                ),
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_value="\n1234",
+                    option_name="knet_pmtud_interval",
+                    allowed_values="a non-negative integer",
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
+                ),
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_value="a{ctive",
+                    option_name="link_mode",
+                    allowed_values=("active", "passive", "rr"),
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
+                ),
+                fixture.error(
+                    report_codes.INVALID_USERDEFINED_OPTIONS,
+                    option_names=["op:.tionA"],
+                    option_type="knet transport",
+                    allowed_characters="a-z A-Z 0-9 /_-",
+                ),
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_value="ipv4\r",
+                    option_name="ip_version",
+                    **forbidden_characters_kwargs
+                ),
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_value="\n1234",
+                    option_name="knet_pmtud_interval",
+                    **forbidden_characters_kwargs
+                ),
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_value="a{ctive",
+                    option_name="link_mode",
+                    **forbidden_characters_kwargs
+                ),
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_value="va}l{ueA",
+                    option_name="op:.tionA",
+                    **forbidden_characters_kwargs
+                ),
+                fixture.error(
+                    report_codes.INVALID_OPTIONS,
+                    option_names=["op:.tionB"],
+                    option_type="compression",
+                    allowed=["level", "model", "threshold"],
+                    allowed_patterns=[],
+                ),
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_value="}5",
+                    option_name="level",
+                    allowed_values="a non-negative integer",
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
+                ),
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_value="1\n234",
+                    option_name="threshold",
+                    allowed_values="a non-negative integer",
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
+                ),
+                fixture.error(
+                    report_codes.INVALID_USERDEFINED_OPTIONS,
+                    option_names=["op:.tionB"],
+                    option_type="compression",
+                    allowed_characters="a-z A-Z 0-9 /_-",
+                ),
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_value="}5",
+                    option_name="level",
+                    **forbidden_characters_kwargs
+                ),
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_value="zl\rib",
+                    option_name="model",
+                    **forbidden_characters_kwargs
+                ),
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_value="1\n234",
+                    option_name="threshold",
+                    **forbidden_characters_kwargs
+                ),
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_value="va}l{ueB",
+                    option_name="op:.tionB",
+                    **forbidden_characters_kwargs
+                ),
+                fixture.error(
+                    report_codes.INVALID_OPTIONS,
+                    option_names=["op:.tionC"],
+                    option_type="crypto",
+                    allowed=["cipher", "hash", "model"],
+                    allowed_patterns=[],
+                ),
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_value="aes{256",
+                    option_name="cipher",
+                    allowed_values=("none", "aes256", "aes192", "aes128"),
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
+                ),
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_value="sha256}",
+                    option_name="hash",
+                    allowed_values=(
+                        "none", "md5", "sha1", "sha256", "sha384", "sha512"
+                    ),
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
+                ),
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_value="nss\n",
+                    option_name="model",
+                    allowed_values=("nss", "openssl"),
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
+                ),
+                fixture.error(
+                    report_codes.INVALID_USERDEFINED_OPTIONS,
+                    option_names=["op:.tionC"],
+                    option_type="crypto",
+                    allowed_characters="a-z A-Z 0-9 /_-",
+                ),
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_value="aes{256",
+                    option_name="cipher",
+                    **forbidden_characters_kwargs
+                ),
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_value="sha256}",
+                    option_name="hash",
+                    **forbidden_characters_kwargs
+                ),
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_value="nss\n",
+                    option_name="model",
+                    **forbidden_characters_kwargs
+                ),
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_value="va}l{ueC",
+                    option_name="op:.tionC",
+                    **forbidden_characters_kwargs
+                ),
+            ]
+        )
 
 class CreateTotem(TestCase):
     allowed_options = [
@@ -1689,6 +2263,7 @@ class CreateTotem(TestCase):
         "token_retransmits_before_loss_const",
         "window_size",
     ]
+
     def test_no_options(self):
         assert_report_item_list_equal(
             config_validators.create_totem({}),
@@ -1742,6 +2317,62 @@ class CreateTotem(TestCase):
                     option_type="totem",
                     allowed=self.allowed_options,
                     allowed_patterns=[],
+                ),
+            ]
+        )
+
+    def test_forbidden_characters(self):
+        forbidden = "{}\r\n"
+        options = {
+            name: f"{value}{forbidden[value % len(forbidden)]}"
+            for value, name in enumerate(self.allowed_options)
+        }
+        all_options = dict(options)
+        all_options["op:.tion"] = "va}l{ue"
+
+        assert_report_item_list_equal(
+            config_validators.create_totem(all_options),
+            [
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_value=value,
+                    option_name=name,
+                    **forbidden_characters_kwargs
+                )
+                for name, value in options.items()
+            ]
+            +
+            [
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_value=value,
+                    option_name=name,
+                    allowed_values="a non-negative integer",
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
+                )
+                for name, value in options.items()
+            ]
+            +
+            [
+                fixture.error(
+                    report_codes.INVALID_USERDEFINED_OPTIONS,
+                    option_names=["op:.tion"],
+                    option_type="totem",
+                    allowed_characters="a-z A-Z 0-9 /_-",
+                ),
+                fixture.error(
+                    report_codes.INVALID_OPTIONS,
+                    option_names=["op:.tion"],
+                    option_type="totem",
+                    allowed=self.allowed_options,
+                    allowed_patterns=[],
+                ),
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_value="va}l{ue",
+                    option_name="op:.tion",
+                    **forbidden_characters_kwargs
                 ),
             ]
         )

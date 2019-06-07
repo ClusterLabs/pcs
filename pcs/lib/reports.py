@@ -286,10 +286,7 @@ def invalid_options(
         }
     )
 
-def invalid_userdefined_options(
-    option_names, allowed_description, option_type,
-    severity=ReportItemSeverity.ERROR, forceable=None
-):
+def invalid_userdefined_options(option_names, option_type, allowed_characters):
     """
     specified option names defined by a user are not valid
 
@@ -300,19 +297,15 @@ def invalid_userdefined_options(
     underlying tools).
 
     list option_names -- specified invalid option names
-    string allowed_description -- describes what option names should look like
+    string allowed_characters -- which characters are allowed in the names
     string option_type -- describes the option
-    string severity -- report item severity
-    mixed forceable -- is this report item forceable? by what category?
     """
-    return ReportItem(
+    return ReportItem.error(
         report_codes.INVALID_USERDEFINED_OPTIONS,
-        severity,
-        forceable,
         info={
             "option_names": sorted(option_names),
             "option_type": option_type,
-            "allowed_description": allowed_description,
+            "allowed_characters": allowed_characters,
         }
     )
 

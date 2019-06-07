@@ -9,6 +9,12 @@ from pcs.common import report_codes
 from pcs.lib.cib.node import PacemakerNode
 from pcs.lib.corosync import config_validators, constants, node
 
+forbidden_characters_kwargs = dict(
+    allowed_values=None,
+    cannot_be_empty=False,
+    forbidden_characters=r"{}\n\r",
+)
+
 class AddLink(TestCase):
     # pylint: disable=too-many-public-methods
     def setUp(self):
@@ -567,6 +573,186 @@ class AddLink(TestCase):
             ]
         )
 
+    def test_forbidden_characters(self):
+        assert_report_item_list_equal(
+            config_validators.add_link(
+                {
+                    "node1": "addr1-new\n",
+                    "node2": "addr2{-}new",
+                    "node3": "addr3-new",
+                },
+                {
+                    "linknumber": "\n2",
+                    "link_priority": "2\r",
+                    "mcastport": "}5405",
+                    "ping_interval": "100{",
+                    "ping_precision": "\r10\n",
+                    "ping_timeout": "{50}",
+                    "pong_count": "5\n",
+                    "transport": "udp}",
+                    "op:.tion": "va}l{ue",
+                },
+                self.coro_nodes,
+                self.pcmk_nodes,
+                self.existing_link_list,
+                self.transport,
+                constants.IP_VERSION_64
+            ),
+            [
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_value="addr1-new\n",
+                    option_name="node address",
+                    **forbidden_characters_kwargs
+                ),
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_value="addr2{-}new",
+                    option_name="node address",
+                    **forbidden_characters_kwargs
+                ),
+                fixture.error(
+                    report_codes.NODE_ADDRESSES_UNRESOLVABLE,
+                    force_code=report_codes.FORCE_NODE_ADDRESSES_UNRESOLVABLE,
+                    address_list=["addr1-new\n", "addr2{-}new"],
+                ),
+                fixture.error(
+                    report_codes.INVALID_OPTIONS,
+                    option_names=["op:.tion"],
+                    option_type="link",
+                    allowed=[
+                        "link_priority", "linknumber", "mcastport",
+                        "ping_interval", "ping_precision", "ping_timeout",
+                        "pong_count", "transport"
+                    ],
+                    allowed_patterns=[],
+                ),
+                fixture.error(
+                    report_codes.INVALID_USERDEFINED_OPTIONS,
+                    option_names=["op:.tion"],
+                    option_type="link",
+                    allowed_characters="a-z A-Z 0-9 /_-",
+                ),
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_value="\n2",
+                    option_name="linknumber",
+                    **forbidden_characters_kwargs
+                ),
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_value="2\r",
+                    option_name="link_priority",
+                    **forbidden_characters_kwargs
+                ),
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_value="}5405",
+                    option_name="mcastport",
+                    **forbidden_characters_kwargs
+                ),
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_value="100{",
+                    option_name="ping_interval",
+                    **forbidden_characters_kwargs
+                ),
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_value="\r10\n",
+                    option_name="ping_precision",
+                    **forbidden_characters_kwargs
+                ),
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_value="{50}",
+                    option_name="ping_timeout",
+                    **forbidden_characters_kwargs
+                ),
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_value="5\n",
+                    option_name="pong_count",
+                    **forbidden_characters_kwargs
+                ),
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_value="udp}",
+                    option_name="transport",
+                    **forbidden_characters_kwargs
+                ),
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_value="va}l{ue",
+                    option_name="op:.tion",
+                    **forbidden_characters_kwargs
+                ),
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_value="2\r",
+                    option_name="link_priority",
+                    allowed_values="0..255",
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
+                ),
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_value="}5405",
+                    option_name="mcastport",
+                    allowed_values="a port number (1..65535)",
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
+                ),
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_value="100{",
+                    option_name="ping_interval",
+                    allowed_values="a non-negative integer",
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
+                ),
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_value="\r10\n",
+                    option_name="ping_precision",
+                    allowed_values="a non-negative integer",
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
+                ),
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_value="{50}",
+                    option_name="ping_timeout",
+                    allowed_values="a non-negative integer",
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
+                ),
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_value="5\n",
+                    option_name="pong_count",
+                    allowed_values="a non-negative integer",
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
+                ),
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_value="udp}",
+                    option_name="transport",
+                    allowed_values=("sctp", "udp"),
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
+                ),
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_value="\n2",
+                    option_name="linknumber",
+                    allowed_values="0..7",
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
+                ),
+            ]
+        )
 
 class RemoveLinks(TestCase):
     def setUp(self):
@@ -976,6 +1162,42 @@ class UpdateLinkAddressesMixin():
                     node="nodeX",
                     searched_types=[],
                 )
+            ]
+        )
+
+    def test_forbidden_characters(self):
+        new_addrs = {
+            self.coro_nodes[0].name: "addr-new1\n",
+            self.coro_nodes[1].name: "}addr-new2{",
+            self.coro_nodes[2].name: "addr-new3",
+        }
+        patch_getaddrinfo(self, new_addrs.values())
+
+        assert_report_item_list_equal(
+            config_validators.update_link(
+                self.linknumber,
+                new_addrs,
+                {},
+                {},
+                self.coro_nodes,
+                [],
+                self.existing_link_list,
+                self.transport,
+                constants.IP_VERSION_64
+            ),
+            [
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_value="addr-new1\n",
+                    option_name="node address",
+                    **forbidden_characters_kwargs
+                ),
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_value="}addr-new2{",
+                    option_name="node address",
+                    **forbidden_characters_kwargs
+                ),
             ]
         )
 
@@ -1452,6 +1674,154 @@ class UpdateLinkKnet(TestCase):
             []
         )
 
+    @staticmethod
+    def test_forbidden_characters():
+        assert_report_item_list_equal(
+            config_validators.update_link(
+                "2",
+                {},
+                {
+                    "link_priority": "2\r",
+                    "mcastport": "}5405",
+                    "ping_interval": "100{",
+                    "ping_precision": "\r10\n",
+                    "ping_timeout": "{50}",
+                    "pong_count": "5\n",
+                    "transport": "udp}",
+                    "op:.tion": "va}l{ue",
+                },
+                {},
+                [],
+                [],
+                ["2",],
+                constants.TRANSPORTS_KNET[0],
+                constants.IP_VERSION_64
+            ),
+            [
+                fixture.error(
+                    report_codes.INVALID_OPTIONS,
+                    option_names=["op:.tion"],
+                    option_type="link",
+                    allowed=[
+                        "link_priority", "mcastport", "ping_interval",
+                        "ping_precision", "ping_timeout", "pong_count",
+                        "transport"
+                    ],
+                    allowed_patterns=[],
+                ),
+                fixture.error(
+                    report_codes.INVALID_USERDEFINED_OPTIONS,
+                    option_names=["op:.tion"],
+                    option_type="link",
+                    allowed_characters="a-z A-Z 0-9 /_-",
+                ),
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_value="2\r",
+                    option_name="link_priority",
+                    **forbidden_characters_kwargs
+                ),
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_value="}5405",
+                    option_name="mcastport",
+                    **forbidden_characters_kwargs
+                ),
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_value="100{",
+                    option_name="ping_interval",
+                    **forbidden_characters_kwargs
+                ),
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_value="\r10\n",
+                    option_name="ping_precision",
+                    **forbidden_characters_kwargs
+                ),
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_value="{50}",
+                    option_name="ping_timeout",
+                    **forbidden_characters_kwargs
+                ),
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_value="5\n",
+                    option_name="pong_count",
+                    **forbidden_characters_kwargs
+                ),
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_value="udp}",
+                    option_name="transport",
+                    **forbidden_characters_kwargs
+                ),
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_value="va}l{ue",
+                    option_name="op:.tion",
+                    **forbidden_characters_kwargs
+                ),
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_value="2\r",
+                    option_name="link_priority",
+                    allowed_values="0..255",
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
+                ),
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_value="}5405",
+                    option_name="mcastport",
+                    allowed_values="a port number (1..65535)",
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
+                ),
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_value="100{",
+                    option_name="ping_interval",
+                    allowed_values="a non-negative integer",
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
+                ),
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_value="\r10\n",
+                    option_name="ping_precision",
+                    allowed_values="a non-negative integer",
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
+                ),
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_value="{50}",
+                    option_name="ping_timeout",
+                    allowed_values="a non-negative integer",
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
+                ),
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_value="5\n",
+                    option_name="pong_count",
+                    allowed_values="a non-negative integer",
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
+                ),
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_value="udp}",
+                    option_name="transport",
+                    allowed_values=("sctp", "udp"),
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
+                ),
+            ]
+        )
+
 class UpdateLinkUdp(TestCase):
     broadcast_values = (None, "", "0", "1")
     mcastaddr_values = (None, "", "225.1.2.3")
@@ -1645,4 +2015,121 @@ class UpdateLinkUdp(TestCase):
         )
         self._assert_broadcast_mcast_dependencies(
             initial_options, error_expected_for_input
+        )
+
+    @staticmethod
+    def test_forbidden_characters():
+        assert_report_item_list_equal(
+            config_validators.update_link(
+                "0",
+                {},
+                {
+                    "bindnetaddr": "10.1.2.0\n",
+                    "broadcast": "1\r",
+                    "mcastaddr": "248.251.1.10{",
+                    "mcastport": "5405}",
+                    "ttl": "128{}",
+                    "op:.tion": "va}l{ue",
+                },
+                {},
+                [],
+                [],
+                ["0",],
+                constants.TRANSPORTS_UDP[0],
+                constants.IP_VERSION_4
+            ),
+            [
+                fixture.error(
+                    report_codes.INVALID_OPTIONS,
+                    option_names=["op:.tion"],
+                    option_type="link",
+                    allowed=[
+                        "bindnetaddr", "broadcast", "mcastaddr", "mcastport",
+                        "ttl"
+                    ],
+                    allowed_patterns=[],
+                ),
+                fixture.error(
+                    report_codes.INVALID_USERDEFINED_OPTIONS,
+                    option_names=["op:.tion"],
+                    option_type="link",
+                    allowed_characters="a-z A-Z 0-9 /_-",
+                ),
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_value="10.1.2.0\n",
+                    option_name="bindnetaddr",
+                    **forbidden_characters_kwargs
+                ),
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_value="1\r",
+                    option_name="broadcast",
+                    **forbidden_characters_kwargs
+                ),
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_value="248.251.1.10{",
+                    option_name="mcastaddr",
+                    **forbidden_characters_kwargs
+                ),
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_value="5405}",
+                    option_name="mcastport",
+                    **forbidden_characters_kwargs
+                ),
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_value="128{}",
+                    option_name="ttl",
+                    **forbidden_characters_kwargs
+                ),
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_value="va}l{ue",
+                    option_name="op:.tion",
+                    **forbidden_characters_kwargs
+                ),
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_value="10.1.2.0\n",
+                    option_name="bindnetaddr",
+                    allowed_values="an IP address",
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
+                ),
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_value="1\r",
+                    option_name="broadcast",
+                    allowed_values=("0", "1"),
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
+                ),
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_value="248.251.1.10{",
+                    option_name="mcastaddr",
+                    allowed_values="an IP address",
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
+                ),
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_value="5405}",
+                    option_name="mcastport",
+                    allowed_values="a port number (1..65535)",
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
+                ),
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_value="128{}",
+                    option_name="ttl",
+                    allowed_values="0..255",
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
+                ),
+            ]
         )

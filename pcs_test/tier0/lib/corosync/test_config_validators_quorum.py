@@ -1,3 +1,4 @@
+# pylint: disable=too-many-lines
 from unittest import TestCase
 
 from pcs_test.tools import fixture
@@ -5,7 +6,6 @@ from pcs_test.tools.assertions import assert_report_item_list_equal
 
 from pcs.common import report_codes
 from pcs.lib.corosync import config_validators
-from pcs.lib.errors import ReportItemSeverity as severity
 
 
 fixture_report_exec_names = fixture.error(
@@ -16,7 +16,12 @@ fixture_report_exec_names = fixture.error(
         "exec_lsčbad",
     ],
     option_type="heuristics",
-    allowed_description="exec_NAME may contain a-z A-Z 0-9 /_- characters only"
+    allowed_characters="a-z A-Z 0-9 /_-"
+)
+forbidden_characters_kwargs = dict(
+    allowed_values=None,
+    cannot_be_empty=False,
+    forbidden_characters=r"{}\n\r",
 )
 
 class BaseQuorumOptions():
@@ -135,16 +140,13 @@ class BaseQuorumOptions():
                 has_qdevice
             ),
             [
-                (
-                    severity.ERROR,
+                fixture.error(
                     report_codes.COROSYNC_OPTIONS_INCOMPATIBLE_WITH_QDEVICE,
-                    {
-                        "options_names": [
-                            "auto_tie_breaker",
-                            "last_man_standing",
-                            "last_man_standing_window",
-                        ],
-                    }
+                    options_names=[
+                        "auto_tie_breaker",
+                        "last_man_standing",
+                        "last_man_standing_window",
+                    ],
                 ),
             ]
         )
@@ -199,6 +201,101 @@ class BaseQuorumOptions():
                     prerequisite_name="last_man_standing",
                     prerequisite_type="quorum"
                 )
+            ]
+        )
+
+    def test_forbidden_characters(self):
+        has_qdevice = False
+        assert_report_item_list_equal(
+            self.validator(
+                {
+                    "auto_tie_breaker": "0}",
+                    "last_man_standing": "1{",
+                    "last_man_standing_window": "1000\n",
+                    "wait_for_all": "0\r",
+                    "op:.tion": "va}l{ue",
+                },
+                has_qdevice
+            ),
+            [
+                fixture.error(
+                    report_codes.INVALID_OPTIONS,
+                    option_names=["op:.tion"],
+                    option_type="quorum",
+                    allowed=[
+                        "auto_tie_breaker", "last_man_standing",
+                        "last_man_standing_window", "wait_for_all"
+                    ],
+                    allowed_patterns=[],
+                ),
+                fixture.error(
+                    report_codes.INVALID_USERDEFINED_OPTIONS,
+                    option_names=["op:.tion"],
+                    option_type="quorum",
+                    allowed_characters="a-z A-Z 0-9 /_-",
+                ),
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_value="0}",
+                    option_name="auto_tie_breaker",
+                    **forbidden_characters_kwargs
+                ),
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_value="1{",
+                    option_name="last_man_standing",
+                    **forbidden_characters_kwargs
+                ),
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_value="1000\n",
+                    option_name="last_man_standing_window",
+                    **forbidden_characters_kwargs
+                ),
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_value="0\r",
+                    option_name="wait_for_all",
+                    **forbidden_characters_kwargs
+                ),
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_value="va}l{ue",
+                    option_name="op:.tion",
+                    **forbidden_characters_kwargs
+                ),
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_value="0}",
+                    option_name="auto_tie_breaker",
+                    allowed_values=("0", "1"),
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
+                ),
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_value="1{",
+                    option_name="last_man_standing",
+                    allowed_values=("0", "1"),
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
+                ),
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_value="1000\n",
+                    option_name="last_man_standing_window",
+                    allowed_values="a positive integer",
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
+                ),
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_value="0\r",
+                    option_name="wait_for_all",
+                    allowed_values=("0", "1"),
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
+                ),
             ]
         )
 
@@ -305,10 +402,10 @@ class AddQuorumDevice(TestCase):
                     force_code=report_codes.FORCE_QDEVICE_MODEL,
                     option_name="model",
                     option_value="invalid",
-                    allowed_values=["net", ],
+                    allowed_values=["net"],
                     cannot_be_empty=False,
                     forbidden_characters=None,
-                )
+                ),
             ]
         )
 
@@ -327,10 +424,10 @@ class AddQuorumDevice(TestCase):
                     report_codes.INVALID_OPTION_VALUE,
                     option_name="model",
                     option_value="invalid",
-                    allowed_values=["net", ],
+                    allowed_values=["net"],
                     cannot_be_empty=False,
                     forbidden_characters=None,
-                )
+                ),
             ]
         )
 
@@ -626,13 +723,12 @@ class AddQuorumDevice(TestCase):
                     cannot_be_empty=False,
                     forbidden_characters=None,
                 ),
-                (
-                    severity.ERROR,
+                fixture.error(
                     report_codes.INVALID_OPTIONS,
-                    {
-                        "option_names": ["bad_model_option"],
-                        "option_type": "quorum device model",
-                        "allowed": [
+                    force_code=report_codes.FORCE_OPTIONS,
+                        option_names=["bad_model_option"],
+                        option_type="quorum device model",
+                        allowed=[
                             "algorithm",
                             "connect_timeout",
                             "force_ip_version",
@@ -640,9 +736,7 @@ class AddQuorumDevice(TestCase):
                             "port",
                             "tie_breaker",
                         ],
-                        "allowed_patterns": [],
-                    },
-                    report_codes.FORCE_OPTIONS
+                        allowed_patterns=[],
                 ),
                 fixture.error(
                     report_codes.INVALID_OPTION_VALUE,
@@ -680,26 +774,20 @@ class AddQuorumDevice(TestCase):
                     cannot_be_empty=False,
                     forbidden_characters=None,
                 ),
-                (
-                    severity.ERROR,
+                fixture.error(
                     report_codes.INVALID_OPTIONS,
-                    {
-                        "option_names": ["bad_generic_option"],
-                        "option_type": "quorum device",
-                        "allowed": ["sync_timeout", "timeout"],
-                        "allowed_patterns": [],
-                    },
-                    report_codes.FORCE_OPTIONS
+                    force_code=report_codes.FORCE_OPTIONS,
+                    option_names=["bad_generic_option"],
+                    option_type="quorum device",
+                    allowed=["sync_timeout", "timeout"],
+                    allowed_patterns=[],
                 ),
-                (
-                    severity.ERROR,
+                fixture.error(
                     report_codes.INVALID_OPTIONS,
-                    {
-                        "option_names": ["model"],
-                        "option_type": "quorum device",
-                        "allowed": ["sync_timeout", "timeout"],
-                        "allowed_patterns": [],
-                    }
+                    option_names=["model"],
+                    option_type="quorum device",
+                    allowed=["sync_timeout", "timeout"],
+                    allowed_patterns=[],
                 ),
                 fixture.error(
                     report_codes.INVALID_OPTION_VALUE,
@@ -804,22 +892,19 @@ class AddQuorumDevice(TestCase):
                     cannot_be_empty=False,
                     forbidden_characters=None,
                 ),
-                (
-                    severity.WARNING,
+                fixture.warn(
                     report_codes.INVALID_OPTIONS,
-                    {
-                        "option_names": ["bad_model_option"],
-                        "option_type": "quorum device model",
-                        "allowed": [
-                            "algorithm",
-                            "connect_timeout",
-                            "force_ip_version",
-                            "host",
-                            "port",
-                            "tie_breaker",
-                        ],
-                        "allowed_patterns": [],
-                    }
+                    option_names=["bad_model_option"],
+                    option_type="quorum device model",
+                    allowed=[
+                        "algorithm",
+                        "connect_timeout",
+                        "force_ip_version",
+                        "host",
+                        "port",
+                        "tie_breaker",
+                    ],
+                    allowed_patterns=[],
                 ),
                 fixture.warn(
                     report_codes.INVALID_OPTION_VALUE,
@@ -905,6 +990,135 @@ class AddQuorumDevice(TestCase):
                     option_name="timeout",
                     option_value="-5",
                     allowed_values="a positive integer",
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
+                ),
+            ]
+        )
+
+    def test_cannot_force_forbidden_characters(self):
+        assert_report_item_list_equal(
+            config_validators.add_quorum_device(
+                "net{",
+                {
+                    "algorithm": "bad\nalgorithm\r",
+                    "any_}model{_option": "bad}model{value",
+                },
+                {
+                    "sync_timeout": "}-3",
+                    "any\rgeneric\noption": "bad\r\ngeneric{}value",
+                },
+                {
+                    "mode": "{bad mode}",
+                    "any_:heuristics._option": "bad{}heuristics\n\rvalue",
+                    "exec_ls": "test -f /tmp/test {abc}\nsomething\r",
+                },
+                self.node_ids,
+                force_model=True,
+                force_options=True,
+            ),
+            [
+                fixture.warn(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_name="model",
+                    option_value="net{",
+                    allowed_values=["net"],
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
+                ),
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_name="model",
+                    option_value="net{",
+                    **forbidden_characters_kwargs
+                ),
+                fixture.error(
+                    report_codes.INVALID_USERDEFINED_OPTIONS,
+                    option_names=["any_}model{_option"],
+                    option_type="quorum device model",
+                    allowed_characters="a-z A-Z 0-9 /_-"
+                ),
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_name="algorithm",
+                    option_value="bad\nalgorithm\r",
+                    **forbidden_characters_kwargs
+                ),
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_name="any_}model{_option",
+                    option_value="bad}model{value",
+                    **forbidden_characters_kwargs
+                ),
+                fixture.warn(
+                    report_codes.INVALID_OPTIONS,
+                    option_names=["any\rgeneric\noption"],
+                    option_type="quorum device",
+                    allowed=["sync_timeout", "timeout"],
+                    allowed_patterns=[],
+                ),
+                fixture.error(
+                    report_codes.INVALID_USERDEFINED_OPTIONS,
+                    option_names=["any\rgeneric\noption"],
+                    option_type="quorum device",
+                    allowed_characters="a-z A-Z 0-9 /_-"
+                ),
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_name="sync_timeout",
+                    option_value="}-3",
+                    **forbidden_characters_kwargs
+                ),
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_name="any\rgeneric\noption",
+                    option_value="bad\r\ngeneric{}value",
+                    **forbidden_characters_kwargs
+                ),
+                fixture.warn(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_name="sync_timeout",
+                    option_value="}-3",
+                    allowed_values="a positive integer",
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
+                ),
+                fixture.error(
+                    report_codes.INVALID_USERDEFINED_OPTIONS,
+                    option_names=["any_:heuristics._option"],
+                    option_type="heuristics",
+                    allowed_characters="a-z A-Z 0-9 /_-"
+                ),
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_name="mode",
+                    option_value="{bad mode}",
+                    **forbidden_characters_kwargs
+                ),
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_name="any_:heuristics._option",
+                    option_value="bad{}heuristics\n\rvalue",
+                    **forbidden_characters_kwargs
+                ),
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_name="exec_ls",
+                    option_value="test -f /tmp/test {abc}\nsomething\r",
+                    **forbidden_characters_kwargs
+                ),
+                fixture.warn(
+                    report_codes.INVALID_OPTIONS,
+                    option_names=["any_:heuristics._option"],
+                    option_type="heuristics",
+                    allowed=["interval", "mode", "sync_timeout", "timeout"],
+                    allowed_patterns=["exec_NAME"],
+                ),
+                fixture.warn(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_name="mode",
+                    option_value="{bad mode}",
+                    allowed_values=("off", "on", "sync"),
                     cannot_be_empty=False,
                     forbidden_characters=None,
                 ),
@@ -1251,26 +1465,20 @@ class UpdateQuorumDevice(TestCase):
                 self.node_ids
             ),
             [
-                (
-                    severity.ERROR,
+                fixture.error(
                     report_codes.INVALID_OPTIONS,
-                    {
-                        "option_names": ["bad_generic_option"],
-                        "option_type": "quorum device",
-                        "allowed": ["sync_timeout", "timeout"],
-                        "allowed_patterns": [],
-                    },
-                    report_codes.FORCE_OPTIONS
+                    force_code=report_codes.FORCE_OPTIONS,
+                    option_names=["bad_generic_option"],
+                    option_type="quorum device",
+                    allowed=["sync_timeout", "timeout"],
+                    allowed_patterns=[],
                 ),
-                (
-                    severity.ERROR,
+                fixture.error(
                     report_codes.INVALID_OPTIONS,
-                    {
-                        "option_names": ["model"],
-                        "option_type": "quorum device",
-                        "allowed": ["sync_timeout", "timeout"],
-                        "allowed_patterns": [],
-                    }
+                    option_names=["model"],
+                    option_type="quorum device",
+                    allowed=["sync_timeout", "timeout"],
+                    allowed_patterns=[],
                 ),
                 fixture.error(
                     report_codes.INVALID_OPTION_VALUE,
@@ -1304,15 +1512,12 @@ class UpdateQuorumDevice(TestCase):
                 force_options=True
             ),
             [
-                (
-                    severity.ERROR,
+                fixture.error(
                     report_codes.INVALID_OPTIONS,
-                    {
-                        "option_names": ["model"],
-                        "option_type": "quorum device",
-                        "allowed": ["sync_timeout", "timeout"],
-                        "allowed_patterns": [],
-                    }
+                    option_names=["model"],
+                    option_type="quorum device",
+                    allowed=["sync_timeout", "timeout"],
+                    allowed_patterns=[],
                 )
             ]
         )
@@ -1332,15 +1537,12 @@ class UpdateQuorumDevice(TestCase):
                 force_options=True
             ),
             [
-                (
-                    severity.WARNING,
+                fixture.warn(
                     report_codes.INVALID_OPTIONS,
-                    {
-                        "option_names": ["bad_generic_option"],
-                        "option_type": "quorum device",
-                        "allowed": ["sync_timeout", "timeout"],
-                        "allowed_patterns": [],
-                    },
+                    option_names=["bad_generic_option"],
+                    option_type="quorum device",
+                    allowed=["sync_timeout", "timeout"],
+                    allowed_patterns=[],
                 ),
                 fixture.warn(
                     report_codes.INVALID_OPTION_VALUE,
@@ -1468,6 +1670,142 @@ class UpdateQuorumDevice(TestCase):
                     option_name="timeout",
                     option_value="-5",
                     allowed_values="a positive integer",
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
+                ),
+            ]
+        )
+
+    def test_cannot_force_forbidden_characters(self):
+        assert_report_item_list_equal(
+            config_validators.update_quorum_device(
+                "net",
+                {
+                    "algorithm": "bad\nalgorithm\r",
+                    "any_}model{_option": "bad}model{value",
+                },
+                {
+                    "sync_timeout": "}-3",
+                    "any\rgeneric\noption": "bad\r\ngeneric{}value",
+                },
+                {
+                    "mode": "{bad mode}",
+                    "any_:heuristics._option": "bad{}heuristics\n\rvalue",
+                    "exec_ls": "test -f /tmp/test {abc}\nsomething\r",
+                },
+                self.node_ids,
+                force_options=True
+            ),
+            [
+                fixture.warn(
+                    report_codes.INVALID_OPTIONS,
+                    option_names=["any_}model{_option"],
+                    option_type="quorum device model",
+                        allowed=[
+                            "algorithm",
+                            "connect_timeout",
+                            "force_ip_version",
+                            "host",
+                            "port",
+                            "tie_breaker",
+                        ],
+                    allowed_patterns=[],
+                ),
+                fixture.warn(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_name="algorithm",
+                    option_value="bad\nalgorithm\r",
+                    allowed_values=("ffsplit", "lms"),
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
+                ),
+                fixture.error(
+                    report_codes.INVALID_USERDEFINED_OPTIONS,
+                    option_names=["any_}model{_option"],
+                    option_type="quorum device model",
+                    allowed_characters="a-z A-Z 0-9 /_-"
+                ),
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_name="algorithm",
+                    option_value="bad\nalgorithm\r",
+                    **forbidden_characters_kwargs
+                ),
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_name="any_}model{_option",
+                    option_value="bad}model{value",
+                    **forbidden_characters_kwargs
+                ),
+                fixture.warn(
+                    report_codes.INVALID_OPTIONS,
+                    option_names=["any\rgeneric\noption"],
+                    option_type="quorum device",
+                    allowed=["sync_timeout", "timeout"],
+                    allowed_patterns=[],
+                ),
+                fixture.error(
+                    report_codes.INVALID_USERDEFINED_OPTIONS,
+                    option_names=["any\rgeneric\noption"],
+                    option_type="quorum device",
+                    allowed_characters="a-z A-Z 0-9 /_-"
+                ),
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_name="sync_timeout",
+                    option_value="}-3",
+                    **forbidden_characters_kwargs
+                ),
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_name="any\rgeneric\noption",
+                    option_value="bad\r\ngeneric{}value",
+                    **forbidden_characters_kwargs
+                ),
+                fixture.warn(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_name="sync_timeout",
+                    option_value="}-3",
+                    allowed_values="a positive integer",
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
+                ),
+                fixture.error(
+                    report_codes.INVALID_USERDEFINED_OPTIONS,
+                    option_names=["any_:heuristics._option"],
+                    option_type="heuristics",
+                    allowed_characters="a-z A-Z 0-9 /_-"
+                ),
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_name="mode",
+                    option_value="{bad mode}",
+                    **forbidden_characters_kwargs
+                ),
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_name="any_:heuristics._option",
+                    option_value="bad{}heuristics\n\rvalue",
+                    **forbidden_characters_kwargs
+                ),
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_name="exec_ls",
+                    option_value="test -f /tmp/test {abc}\nsomething\r",
+                    **forbidden_characters_kwargs
+                ),
+                fixture.warn(
+                    report_codes.INVALID_OPTIONS,
+                    option_names=["any_:heuristics._option"],
+                    option_type="heuristics",
+                    allowed=["interval", "mode", "sync_timeout", "timeout"],
+                    allowed_patterns=["exec_NAME"],
+                ),
+                fixture.warn(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_name="mode",
+                    option_value="{bad mode}",
+                    allowed_values=("off", "on", "sync"),
                     cannot_be_empty=False,
                     forbidden_characters=None,
                 ),

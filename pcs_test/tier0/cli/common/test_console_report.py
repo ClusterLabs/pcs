@@ -131,45 +131,37 @@ class BuildInvalidOptionsMessageTest(NameBuildTest):
 
 class InvalidUserdefinedOptions(NameBuildTest):
     code = codes.INVALID_USERDEFINED_OPTIONS
-
     def test_without_type(self):
-        self.assert_message_from_info(
+        self.assert_message_from_report(
             (
-                "invalid option 'exec_NAME', "
-                "exec_NAME cannot contain . and whitespace characters"
+                "invalid option 'exec_NAME', options may contain "
+                "a-z A-Z 0-9 /_- characters only"
             ),
-            {
-                "option_names": ["exec_NAME"],
-                "option_type": "",
-                "allowed_description":
-                    "exec_NAME cannot contain . and whitespace characters"
-                ,
-            }
+            reports.invalid_userdefined_options(
+                ["exec_NAME"], "", "a-z A-Z 0-9 /_-"
+            )
         )
 
     def test_with_type(self):
-        self.assert_message_from_info(
+        self.assert_message_from_report(
             (
-                "invalid heuristics option 'exec_NAME', "
-                "exec_NAME cannot contain . and whitespace characters"
+                "invalid heuristics option 'exec_NAME', heuristics options may "
+                "contain a-z A-Z 0-9 /_- characters only"
             ),
-            {
-                "option_names": ["exec_NAME"],
-                "option_type": "heuristics",
-                "allowed_description":
-                    "exec_NAME cannot contain . and whitespace characters"
-                ,
-            }
+            reports.invalid_userdefined_options(
+                ["exec_NAME"], "heuristics", "a-z A-Z 0-9 /_-"
+            )
         )
 
     def test_more_options(self):
-        self.assert_message_from_info(
-            "invalid TYPE options: 'ANOTHER', 'NAME', DESC",
-            {
-                "option_names": ["NAME", "ANOTHER"],
-                "option_type": "TYPE",
-                "allowed_description": "DESC",
-            }
+        self.assert_message_from_report(
+            (
+                "invalid TYPE options: 'ANOTHER', 'NAME', TYPE options may "
+                "contain a-z A-Z 0-9 /_- characters only"
+            ),
+            reports.invalid_userdefined_options(
+                ["NAME", "ANOTHER"], "TYPE", "a-z A-Z 0-9 /_-"
+            )
         )
 
 

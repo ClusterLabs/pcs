@@ -222,6 +222,47 @@ class ValidatorFirstError(TestCase):
 
 ### keys validators
 
+class CorosyncOption(TestCase):
+    def test_valid(self):
+        assert_report_item_list_equal(
+            validate.CorosyncOption().validate({
+                "name_-/NAME09": "value",
+            }),
+            []
+        )
+
+    def test_forbidden_characters(self):
+        bad_names = [f"na{char}me" for char in ".: {}#č"]
+        assert_report_item_list_equal(
+            validate.CorosyncOption().validate({
+                name: "value" for name in bad_names
+            }),
+            [
+                fixture.error(
+                    report_codes.INVALID_USERDEFINED_OPTIONS,
+                    option_names=sorted(bad_names),
+                    option_type=None,
+                    allowed_characters="a-z A-Z 0-9 /_-"
+                )
+            ]
+        )
+
+    def test_option_type(self):
+        bad_names = [f"na{char}me" for char in ".: {}#č"]
+        assert_report_item_list_equal(
+            validate.CorosyncOption(option_type="type").validate({
+                name: "value" for name in bad_names
+            }),
+            [
+                fixture.error(
+                    report_codes.INVALID_USERDEFINED_OPTIONS,
+                    option_names=sorted(bad_names),
+                    option_type="type",
+                    allowed_characters="a-z A-Z 0-9 /_-"
+                )
+            ]
+        )
+
 class DependsOnOption(TestCase):
     def test_success_when_dependency_present(self):
         assert_report_item_list_equal(
@@ -823,6 +864,53 @@ class ValuePredicateBase(TestCase):
                 )
             ]
         )
+
+class ValueCorosyncValue(TestCase):
+    def test_value_ok(self):
+        assert_report_item_list_equal(
+            validate.ValueCorosyncValue("a").validate({"a": "valid_value"}),
+            []
+        )
+
+    def test_empty_value(self):
+        assert_report_item_list_equal(
+            validate.ValueCorosyncValue("a").validate({"a": ""}),
+            []
+        )
+
+    def test_escaped_new_lines(self):
+        assert_report_item_list_equal(
+            validate.ValueCorosyncValue("a").validate({"a": "\\n\\r"}),
+            []
+        )
+
+    def test_forbidden_characters_reported(self):
+        bad_value_list = [
+            "{",
+            "}",
+            "\n",
+            "\r",
+            "bad{value",
+            "bad}value",
+            "bad\nvalue",
+            "bad\rvalue"
+            "value\r\nsection {\n\rnew_key: new_value\r\n}\n\r",
+        ]
+        for value in bad_value_list:
+            with self.subTest(value=value):
+                assert_report_item_list_equal(
+                    validate.ValueCorosyncValue("a").validate({"a": value}),
+                    [
+                        fixture.error(
+                            report_codes.INVALID_OPTION_VALUE,
+                            option_value=value,
+                            option_name="a",
+                            allowed_values=None,
+                            cannot_be_empty=False,
+                            forbidden_characters=r"{}\n\r",
+                        ),
+                    ]
+                )
 
 class ValueId(TestCase):
     def test_empty_id(self):

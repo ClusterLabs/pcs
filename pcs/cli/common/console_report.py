@@ -504,12 +504,12 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
 
     codes.INVALID_USERDEFINED_OPTIONS: lambda info:
         (
-            "invalid {desc}option{plural_options} {option_names_list}, "
-            "{allowed_description}"
+            "invalid {_desc}option{_plural_options} {_option_names_list}, "
+            "{_desc}options may contain {allowed_characters} characters only"
         ).format(
-            desc=format_optional(info["option_type"], "{0} "),
-            option_names_list=format_list(info["option_names"]),
-            plural_options=("s:" if len(info["option_names"]) > 1 else ""),
+            _desc=format_optional(info["option_type"], "{0} "),
+            _option_names_list=format_list(info["option_names"]),
+            _plural_options=("s:" if len(info["option_names"]) > 1 else ""),
             **info
         )
     ,
