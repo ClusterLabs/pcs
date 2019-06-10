@@ -16,6 +16,9 @@ from pcs.lib.communication.tools import (
     run_and_raise,
 )
 from pcs.lib.corosync.config_facade import ConfigFacade as CorosyncConfigFacade
+from pcs.lib.corosync.config_parser import (
+    verify_section as verify_corosync_section
+)
 from pcs.lib.corosync.live import get_local_corosync_conf
 from pcs.lib.external import CommandRunner
 from pcs.lib.errors import LibraryError
@@ -265,6 +268,15 @@ class LibraryEnvironment:
     def push_corosync_conf(
         self, corosync_conf_facade, skip_offline_nodes=False
     ):
+        bad_sections, bad_attr_names, bad_attr_values = verify_corosync_section(
+            corosync_conf_facade.config
+        )
+        if bad_sections or bad_attr_names or bad_attr_values:
+            raise LibraryError(
+                reports.corosync_config_cannot_save_invalid_names_values(
+                    bad_sections, bad_attr_names, bad_attr_values
+                )
+            )
         corosync_conf_data = corosync_conf_facade.config.export()
         if self.is_corosync_conf_live:
             node_name_list, report_list = get_existing_nodes_names(

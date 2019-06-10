@@ -1362,3 +1362,110 @@ class ParserTest(TestCase):
             """
         )
         self.assertEqual(str(config_parser.parse_string(string)), parsed)
+
+
+class VerifySection(TestCase):
+    def test_empty_section(self):
+        section = config_parser.Section("mySection")
+        self.assertEqual(
+            config_parser.verify_section(section),
+            ([], [], [])
+        )
+
+    def test_all_valid(self):
+        text = outdent("""\
+            name1: value1
+            name2: value2
+
+            child1 {
+                name1_1: value1.1
+                name1_2: value1.2
+
+                child1A {
+                    name1A1: value
+                }
+                child1B {
+                    name1B1: value
+                    name1B2: value
+                }
+            }
+
+            child2 {
+                child2 {
+                    name: value
+                }
+            }
+            """
+        )
+        section = config_parser.parse_string(text)
+        self.assertEqual(
+            config_parser.verify_section(section),
+            ([], [], [])
+        )
+
+    def test_bad_section(self):
+        section = config_parser.Section("my#section")
+        self.assertEqual(
+            config_parser.verify_section(section),
+            (["my#section"], [], [])
+        )
+
+    def test_bad_attr_name(self):
+        section = config_parser.Section("mySection")
+        section.add_attribute("bad#name", "value1")
+        section.add_attribute("good_name", "value2")
+        self.assertEqual(
+            config_parser.verify_section(section),
+            ([], ["mySection.bad#name"], [])
+        )
+
+    def test_bad_attr_value(self):
+        section = config_parser.Section("mySection")
+        section.add_attribute("bad_value", "va{l}ue1")
+        section.add_attribute("good_value", "value2")
+        self.assertEqual(
+            config_parser.verify_section(section),
+            ([], [], [("mySection.bad_value", "va{l}ue1")])
+        )
+
+    def test_complex(self):
+        text = outdent("""\
+            name1: value1
+            name#2: value2
+
+            child1 {
+                name1_1: value1.1
+                name1#2: value1.2
+
+                child1A {
+                    name1A1: value
+                }
+                child1B# {
+                    name#1B1: value
+                    name1B2: value
+                }
+            }
+
+            child2 {
+                child2# {
+                    na#me: value
+                }
+            }
+            """
+        )
+        section = config_parser.parse_string(text)
+        # this would be rejected by the parser
+        section.add_attribute("name1_3", "va{l}ue")
+        self.assertEqual(
+            config_parser.verify_section(section),
+            (
+                ["child1.child1B#", "child2.child2#"],
+                [
+                    "name#2",
+                    "child1.name1#2",
+                    "child1.child1B#.name#1B1",
+                    "child2.child2#.na#me",
+                ],
+                [("name1_3", "va{l}ue")],
+            )
+        )

@@ -3753,3 +3753,105 @@ class ResourceUnmoveUnbanPcmkExpiredNotSupported(NameBuildTest):
             "--expired is not supported, please upgrade pacemaker",
             reports.resource_unmove_unban_pcmk_expired_not_supported()
         )
+
+class CorosyncConfigCannotSaveInvalidNamesValues(NameBuildTest):
+    code = codes.COROSYNC_CONFIG_CANNOT_SAVE_INVALID_NAMES_VALUES
+    def test_empty(self):
+        self.assert_message_from_report(
+            "Cannot save corosync.conf containing invalid section names, "
+                "option names or option values"
+            ,
+            reports.corosync_config_cannot_save_invalid_names_values(
+                [],
+                [],
+                []
+            )
+        )
+
+    def test_one_section(self):
+        self.assert_message_from_report(
+            "Cannot save corosync.conf containing "
+                "invalid section name(s): 'SECTION'"
+            ,
+            reports.corosync_config_cannot_save_invalid_names_values(
+                ["SECTION"],
+                [],
+                []
+            )
+        )
+
+    def test_more_sections(self):
+        self.assert_message_from_report(
+            "Cannot save corosync.conf containing "
+                "invalid section name(s): 'SECTION1', 'SECTION2'"
+            ,
+            reports.corosync_config_cannot_save_invalid_names_values(
+                ["SECTION1", "SECTION2"],
+                [],
+                []
+            )
+        )
+
+    def test_one_attr_name(self):
+        self.assert_message_from_report(
+            "Cannot save corosync.conf containing "
+                "invalid option name(s): 'ATTR'"
+            ,
+            reports.corosync_config_cannot_save_invalid_names_values(
+                [],
+                ["ATTR"],
+                []
+            )
+        )
+
+    def test_more_attr_names(self):
+        self.assert_message_from_report(
+            "Cannot save corosync.conf containing "
+                "invalid option name(s): 'ATTR1', 'ATTR2'"
+            ,
+            reports.corosync_config_cannot_save_invalid_names_values(
+                [],
+                ["ATTR1", "ATTR2"],
+                []
+            )
+        )
+
+    def test_one_attr_value(self):
+        self.assert_message_from_report(
+            "Cannot save corosync.conf containing "
+                "invalid option value(s): 'VALUE' (option 'ATTR')"
+            ,
+            reports.corosync_config_cannot_save_invalid_names_values(
+                [],
+                [],
+                [("ATTR", "VALUE")]
+            )
+        )
+
+    def test_more_attr_values(self):
+        self.assert_message_from_report(
+            "Cannot save corosync.conf containing "
+                "invalid option value(s): 'VALUE1' (option 'ATTR1'), "
+                "'VALUE2' (option 'ATTR2')"
+            ,
+            reports.corosync_config_cannot_save_invalid_names_values(
+                [],
+                [],
+                [("ATTR1", "VALUE1"), ("ATTR2", "VALUE2")]
+            )
+        )
+
+    def test_all(self):
+        self.assert_message_from_report(
+            "Cannot save corosync.conf containing "
+                "invalid section name(s): 'SECTION1', 'SECTION2'; "
+                "invalid option name(s): 'ATTR1', 'ATTR2'; "
+                "invalid option value(s): 'VALUE3' (option 'ATTR3'), "
+                "'VALUE4' (option 'ATTR4')"
+            ,
+            reports.corosync_config_cannot_save_invalid_names_values(
+                ["SECTION1", "SECTION2"],
+                ["ATTR1", "ATTR2"],
+                [("ATTR3", "VALUE3"), ("ATTR4", "VALUE4")]
+            )
+        )

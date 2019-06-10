@@ -1004,6 +1004,23 @@ def corosync_config_parser_other_error():
         report_codes.PARSE_ERROR_COROSYNC_CONF,
     )
 
+def corosync_config_cannot_save_invalid_names_values(sections, names, values):
+    """
+    cannot save corosync.conf - it contains forbidden characters which break it
+
+    iterable sections -- bad names of sections
+    iterable names -- bad names of attributes
+    iterable values -- tuples (attribute_name, its_bad_value)
+    """
+    return ReportItem.error(
+        report_codes.COROSYNC_CONFIG_CANNOT_SAVE_INVALID_NAMES_VALUES,
+        info={
+            "section_name_list": sections,
+            "attribute_name_list": names,
+            "attribute_value_pairs": values,
+        }
+    )
+
 def corosync_config_missing_names_of_nodes(fatal=False):
     """
     Some nodes in corosync.conf do not have their name set, they will be omitted

@@ -54,6 +54,7 @@ from pcs.lib.communication.tools import (
 )
 from pcs.lib.corosync import (
     config_facade,
+    config_parser,
     config_validators,
     constants as corosync_constants,
     qdevice_net,
@@ -406,6 +407,7 @@ def setup(
     elif transport_type in corosync_constants.TRANSPORTS_UDP:
         corosync_conf.set_transport_udp_options(transport_options)
 
+    _verify_corosync_conf(corosync_conf) # raises if corosync not valid
     com_cmd = DistributeFilesWithoutForces(
         env.report_processor,
         node_communication_format.corosync_conf_file(
@@ -891,6 +893,7 @@ def add_nodes(
     if atb_has_to_be_enabled:
         corosync_conf.set_quorum_options(dict(auto_tie_breaker="1"))
 
+    _verify_corosync_conf(corosync_conf) # raises if corosync not valid
     com_cmd = DistributeCorosyncConf(
         env.report_processor,
         corosync_conf.config.export(),
@@ -1139,6 +1142,20 @@ def _is_ssl_cert_sync_enabled(report_processor):
         )
     return False
 
+def _verify_corosync_conf(corosync_conf_facade):
+    # This is done in pcs.lib.env.LibraryEnvironment.push_corosync_conf
+    # usually. But there are special cases here which use custom corosync.conf
+    # pushing so the check must be done individually.
+    bad_sections, bad_attr_names, bad_attr_values = (
+        config_parser.verify_section(corosync_conf_facade.config)
+    )
+    if bad_sections or bad_attr_names or bad_attr_values:
+        raise LibraryError(
+            reports.corosync_config_cannot_save_invalid_names_values(
+                bad_sections, bad_attr_names, bad_attr_values
+            )
+        )
+
 def remove_nodes(env, node_list, force_flags=None):
     # pylint: disable=too-many-locals, too-many-branches, too-many-statements
     """
@@ -1296,6 +1313,7 @@ def remove_nodes(env, node_list, force_flags=None):
     if atb_has_to_be_enabled:
         corosync_conf.set_quorum_options(dict(auto_tie_breaker="1"))
 
+    _verify_corosync_conf(corosync_conf) # raises if corosync not valid
     com_cmd = DistributeCorosyncConf(
         env.report_processor,
         corosync_conf.config.export(),

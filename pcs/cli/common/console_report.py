@@ -273,6 +273,35 @@ def invalid_option_value(info):
         **info
     )
 
+def corosync_config_cannot_save_invalid_names_values(info):
+    prefix = "Cannot save corosync.conf containing "
+    if (
+        not info["section_name_list"]
+        and
+        not info["attribute_name_list"]
+        and
+        not info["attribute_value_pairs"]
+    ):
+        return prefix + "invalid section names, option names or option values"
+    parts = []
+    if info["section_name_list"]:
+        parts.append(
+            "invalid section name(s): " + format_list(info["section_name_list"])
+        )
+    if info["attribute_name_list"]:
+        parts.append(
+            "invalid option name(s): "
+            +
+            format_list(info["attribute_name_list"])
+        )
+    if info["attribute_value_pairs"]:
+        pairs = ", ".join([
+            f"'{value}' (option '{name}')"
+            for name, value in info["attribute_value_pairs"]
+        ])
+        parts.append("invalid option value(s): " + pairs)
+    return prefix + "; ".join(parts)
+
 def corosync_bad_node_addresses_count(info):
     if info["min_count"] == info["max_count"]:
         template = (
@@ -813,6 +842,10 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
 
     codes.PARSE_ERROR_COROSYNC_CONF:
         "Unable to parse corosync config"
+    ,
+
+    codes.COROSYNC_CONFIG_CANNOT_SAVE_INVALID_NAMES_VALUES:
+        corosync_config_cannot_save_invalid_names_values
     ,
 
     codes.COROSYNC_CONFIG_MISSING_NAMES_OF_NODES: lambda info:
