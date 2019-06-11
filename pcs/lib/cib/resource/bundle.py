@@ -77,13 +77,12 @@ def validate_new(
     bool force_options -- return warnings instead of forceable errors
     """
     return (
-        validate.run_collection_of_option_validators(
-            {"id": bundle_id},
-            [
-                # with id_provider it validates that the id is available as well
-                validate.value_id("id", "bundle name", id_provider),
-            ]
-        )
+        validate.ValueId(
+            "id",
+            option_name_for_report="bundle name",
+            # with id_provider it validates that the id is available as well
+            id_provider=id_provider
+        ).validate({"id": bundle_id})
         +
         validate_reset(
             id_provider,
@@ -432,14 +431,23 @@ def _validate_container(container_type, container_options, force_options=False):
         ]
 
     validators = [
-        validate.is_required("image", "container"),
-        validate.value_not_empty("image", "image name"),
-        validate.value_nonnegative_integer("masters"),
-        validate.value_nonnegative_integer("promoted-max"),
-        validate.mutually_exclusive(["masters", "promoted-max"], "container"),
-        validate.value_positive_integer("replicas"),
-        validate.value_positive_integer("replicas-per-host"),
+        validate.NamesIn(
+            GENERIC_CONTAINER_OPTIONS,
+            option_type="container",
+            **validate.set_warning(report_codes.FORCE_OPTIONS, force_options)
+        ),
+        validate.IsRequiredAll(["image"], option_type="container"),
+        validate.ValueNotEmpty("image", "image name"),
+        validate.ValueNonnegativeInteger("masters"),
+        validate.ValueNonnegativeInteger("promoted-max"),
+        validate.MutuallyExclusive(
+            ["masters", "promoted-max"],
+            option_type="container",
+        ),
+        validate.ValuePositiveInteger("replicas"),
+        validate.ValuePositiveInteger("replicas-per-host"),
     ]
+
     deprecation_reports = []
     if "masters" in container_options:
         deprecation_reports.append(
@@ -448,46 +456,35 @@ def _validate_container(container_type, container_options, force_options=False):
                 severity=ReportItemSeverity.WARNING
             )
         )
+
     return (
-        validate.run_collection_of_option_validators(
-            container_options,
-            validators
-        )
+        validate.ValidatorAll(validators).validate(container_options)
         +
         deprecation_reports
-        +
-        validate.names_in(
-            GENERIC_CONTAINER_OPTIONS,
-            container_options.keys(),
-            "container",
-            report_codes.FORCE_OPTIONS,
-            force_options
-        )
     )
 
 def _validate_generic_container_options_update(
     docker_el, options, force_options
 ):
-    validators = [
-        # image is a mandatory attribute and cannot be removed
-        validate.value_not_empty("image", "image name"),
-        validate.value_empty_or_valid(
-            "masters",
-            validate.value_nonnegative_integer("masters")
-        ),
-        validate.value_empty_or_valid(
-            "promoted-max",
-            validate.value_nonnegative_integer("promoted-max")
-        ),
-        validate.value_empty_or_valid(
-            "replicas",
-            validate.value_positive_integer("replicas")
-        ),
-        validate.value_empty_or_valid(
-            "replicas-per-host",
-            validate.value_positive_integer("replicas-per-host")
-        ),
+    validators_optional_options = [
+        validate.ValueNonnegativeInteger("masters"),
+        validate.ValueNonnegativeInteger("promoted-max"),
+        validate.ValuePositiveInteger("replicas"),
+        validate.ValuePositiveInteger("replicas-per-host"),
     ]
+    for val in validators_optional_options:
+        val.empty_string_valid = True
+    validators = [
+        validate.NamesIn(
+            # allow to remove options even if they are not allowed
+            GENERIC_CONTAINER_OPTIONS | _options_to_remove(options),
+            option_type="container",
+            **validate.set_warning(report_codes.FORCE_OPTIONS, force_options)
+        ),
+        # image is a mandatory attribute and cannot be removed
+        validate.ValueNotEmpty("image", "image name")
+    ] + validators_optional_options
+
     # CIB does not allow both to be set. Deleting both is not a problem,
     # though. Deleting one while setting another also works and is further
     # checked bellow.
@@ -497,9 +494,9 @@ def _validate_generic_container_options_update(
         options.get("promoted-max", "") == ""
     ):
         validators.append(
-            validate.mutually_exclusive(
+            validate.MutuallyExclusive(
                 ["masters", "promoted-max"],
-                "container"
+                option_type="container",
             )
         )
 
@@ -539,37 +536,22 @@ def _validate_generic_container_options_update(
         )
 
     return (
-        validate.run_collection_of_option_validators(options, validators)
+        validate.ValidatorAll(validators).validate(options)
         +
         deprecation_reports
-        +
-        validate.names_in(
-            # allow to remove options even if they are not allowed
-            GENERIC_CONTAINER_OPTIONS | _options_to_remove(options),
-            options.keys(),
-            "container",
-            report_codes.FORCE_OPTIONS,
-            force_options
-        )
     )
 
 def _validate_network_options_new(options, force_options):
+    kwargs = validate.set_warning(report_codes.FORCE_OPTIONS, force_options)
     validators = [
         # TODO add validators for other keys (ip-range-start - IPv4)
-        validate.value_port_number("control-port"),
-        _value_host_netmask("host-netmask", force_options),
+        validate.NamesIn(NETWORK_OPTIONS, option_type="network", **kwargs),
+        validate.ValuePortNumber("control-port"),
+        # Leaving a possibility to force this validation for the case pacemaker
+        # starts supporting IPv6 or other format of the netmask.
+        ValueHostNetmask("host-netmask", **kwargs),
     ]
-    return (
-        validate.run_collection_of_option_validators(options, validators)
-        +
-        validate.names_in(
-            NETWORK_OPTIONS,
-            options.keys(),
-            "network",
-            report_codes.FORCE_OPTIONS,
-            force_options
-        )
-    )
+    return validate.ValidatorAll(validators).validate(options)
 
 def _is_pcmk_remote_acccessible_after_update(network_el, options):
     port_name = "control-port"
@@ -608,84 +590,84 @@ def _validate_network_options_update(
                 inner_primitive.get("id")
             )
         )
-    validators = [
+
+    kwargs = validate.set_warning(report_codes.FORCE_OPTIONS, force_options)
+    validators_optional_options = [
         # TODO add validators for other keys (ip-range-start - IPv4)
-        validate.value_empty_or_valid(
-            "control-port",
-            validate.value_port_number("control-port"),
-        ),
-        validate.value_empty_or_valid(
-            "host-netmask",
-            _value_host_netmask("host-netmask", force_options),
-        ),
+        validate.ValuePortNumber("control-port"),
+        # Leaving a possibility to force this validation for the case pacemaker
+        # starts supporting IPv6 or other format of the netmask.
+        ValueHostNetmask("host-netmask", **kwargs),
     ]
+    for val in validators_optional_options:
+        val.empty_string_valid = True
+    validators = [
+        validate.NamesIn(
+            # allow to remove options even if they are not allowed
+            NETWORK_OPTIONS | _options_to_remove(options),
+            option_type="network",
+            **kwargs
+        )
+    ] + validators_optional_options
+
     return (
         report_list
         +
-        validate.run_collection_of_option_validators(options, validators)
-        +
-        validate.names_in(
-            # allow to remove options even if they are not allowed
-            NETWORK_OPTIONS | _options_to_remove(options),
-            options.keys(),
-            "network",
-            report_codes.FORCE_OPTIONS,
-            force_options
-        )
+        validate.ValidatorAll(validators).validate(options)
     )
 
 def _validate_port_map_list(options_list, id_provider, force_options):
+    kwargs = validate.set_warning(report_codes.FORCE_OPTIONS, force_options)
+    option_type = "port-map"
     validators = [
-        validate.value_id("id", "port-map id", id_provider),
-        validate.depends_on_option(
-            "internal-port", "port", "port-map", "port-map"
+        validate.NamesIn(PORT_MAP_OPTIONS, option_type=option_type, **kwargs),
+        validate.ValueId(
+            "id", option_name_for_report="port-map id", id_provider=id_provider
         ),
-        validate.is_required_some_of(["port", "range"], "port-map"),
-        validate.mutually_exclusive(["port", "range"], "port-map"),
-        validate.value_port_number("port"),
-        validate.value_port_number("internal-port"),
-        validate.value_port_range(
-            "range",
-            code_to_allow_extra_values=report_codes.FORCE_OPTIONS,
-            extra_values_allowed=force_options
+        validate.DependsOnOption(
+            ["internal-port"], "port",
+            option_type=option_type, prerequisite_type=option_type,
         ),
+        validate.IsRequiredSome(["port", "range"], option_type=option_type),
+        validate.MutuallyExclusive(["port", "range"], option_type=option_type),
+        validate.ValuePortNumber("port"),
+        validate.ValuePortNumber("internal-port"),
+        validate.ValuePortRange("range", **kwargs),
     ]
+    validator_all = validate.ValidatorAll(validators)
+
     report_list = []
     for options in options_list:
-        report_list.extend(
-            validate.run_collection_of_option_validators(options, validators)
-            +
-            validate.names_in(
-                PORT_MAP_OPTIONS,
-                options.keys(),
-                "port-map",
-                report_codes.FORCE_OPTIONS,
-                force_options
-            )
-        )
+        report_list.extend(validator_all.validate(options))
     return report_list
 
 def _validate_storage_map_list(options_list, id_provider, force_options):
-    source_dir_options = ["source-dir", "source-dir-root"]
+    kwargs = validate.set_warning(report_codes.FORCE_OPTIONS, force_options)
+    option_type = "storage-map"
     validators = [
-        validate.value_id("id", "storage-map id", id_provider),
-        validate.is_required_some_of(source_dir_options, "storage-map"),
-        validate.mutually_exclusive(source_dir_options, "storage-map"),
-        validate.is_required("target-dir", "storage-map"),
+        validate.NamesIn(
+            STORAGE_MAP_OPTIONS, option_type=option_type, **kwargs
+        ),
+        validate.ValueId(
+            "id",
+            option_name_for_report="storage-map id",
+            id_provider=id_provider
+        ),
+        validate.IsRequiredSome(
+            ["source-dir", "source-dir-root"],
+            option_type=option_type,
+        ),
+        validate.MutuallyExclusive(
+            ["source-dir", "source-dir-root"],
+            option_type=option_type,
+        ),
+        validate.IsRequiredAll(["target-dir"], option_type=option_type),
     ]
+    validator_all = validate.ValidatorAll(validators)
+
     report_list = []
     for options in options_list:
-        report_list.extend(
-            validate.run_collection_of_option_validators(options, validators)
-            +
-            validate.names_in(
-                STORAGE_MAP_OPTIONS,
-                options.keys(),
-                "storage-map",
-                report_codes.FORCE_OPTIONS,
-                force_options
-            )
-        )
+        report_list.extend(validator_all.validate(options))
     return report_list
 
 def _validate_map_ids_exist(bundle_el, map_type, map_label, id_list):
@@ -698,16 +680,12 @@ def _validate_map_ids_exist(bundle_el, map_type, map_label, id_list):
             report_list.extend(searcher.get_errors())
     return report_list
 
-def _value_host_netmask(option_name, force_options):
-    return validate.value_cond(
-        option_name,
-        lambda value: validate.is_integer(value, 1, 32),
-        "a number of bits of the mask (1-32)",
-        # Leaving a possibility to force this validation, if pacemaker
-        # starts supporting IPv6 or other format of the netmask
-        code_to_allow_extra_values=report_codes.FORCE_OPTIONS,
-        extra_values_allowed=force_options
-    )
+class ValueHostNetmask(validate.ValuePredicateBase):
+    def _is_valid(self, value):
+        return validate.is_integer(value, 1, 32)
+
+    def _get_allowed_values(self):
+        return "a number of bits of the mask (1..32)"
 
 def _append_container(bundle_element, container_type, container_options):
     # Do not add options with empty values. When updating, an empty value means

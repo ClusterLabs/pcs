@@ -135,7 +135,7 @@ def empty_resource_set_list():
         report_codes.EMPTY_RESOURCE_SET_LIST,
     )
 
-def required_option_is_missing(
+def required_options_are_missing(
     option_names, option_type=None,
     severity=ReportItemSeverity.ERROR, forceable=None
 ):
@@ -147,11 +147,11 @@ def required_option_is_missing(
     forceable is this report item forceable? by what category?
     """
     return ReportItem(
-        report_codes.REQUIRED_OPTION_IS_MISSING,
+        report_codes.REQUIRED_OPTIONS_ARE_MISSING,
         severity,
         forceable=forceable,
         info={
-            "option_names": option_names,
+            "option_names": sorted(option_names),
             "option_type": option_type,
         }
     )
@@ -255,7 +255,7 @@ def required_option_of_alternatives_is_missing(
         severity,
         forceable=forceable,
         info={
-            "option_names": option_names,
+            "option_names": sorted(option_names),
             "option_type": option_type,
         }
     )
@@ -279,7 +279,7 @@ def invalid_options(
         severity,
         forceable,
         info={
-            "option_names": option_names,
+            "option_names": sorted(option_names),
             "option_type": option_type,
             "allowed": sorted(allowed_options),
             "allowed_patterns": sorted(allowed_option_patterns or []),
@@ -386,7 +386,7 @@ def mutually_exclusive_options(option_names, option_type):
     return ReportItem.error(
         report_codes.MUTUALLY_EXCLUSIVE_OPTIONS,
         info={
-            "option_names": option_names,
+            "option_names": sorted(option_names),
             "option_type": option_type,
         },
     )

@@ -279,7 +279,7 @@ def create_subelement_id(context_element, suffix, id_provider):
     return id_provider.allocate_id(proposed_id)
 
 # DEPRECATED
-# use ElementSearcher, IdProvider or pcs.lib.validate.value_id instead
+# use ElementSearcher, IdProvider or pcs.lib.validate.ValueId instead
 def check_new_id_applicable(tree, description, _id):
     validate_id(_id, description)
     validate_id_does_not_exist(tree, _id)

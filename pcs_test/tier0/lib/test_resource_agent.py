@@ -1392,7 +1392,7 @@ class AgentMetadataValidateParamsCreate(TestCase):
             ),
             [
                 fixture.error(
-                    report_codes.REQUIRED_OPTION_IS_MISSING,
+                    report_codes.REQUIRED_OPTIONS_ARE_MISSING,
                     force_code=report_codes.FORCE_OPTIONS,
                     option_names=["req1_new", "req2_new"],
                     option_type="agent",
@@ -1410,7 +1410,7 @@ class AgentMetadataValidateParamsCreate(TestCase):
             ),
             [
                 fixture.warn(
-                    report_codes.REQUIRED_OPTION_IS_MISSING,
+                    report_codes.REQUIRED_OPTIONS_ARE_MISSING,
                     option_names=["req1_new", "req2_new"],
                     option_type="agent",
                 ),
@@ -1507,7 +1507,7 @@ class AgentMetadataValidateParamsUpdate(TestCase):
             ),
             [
                 fixture.error(
-                    report_codes.REQUIRED_OPTION_IS_MISSING,
+                    report_codes.REQUIRED_OPTIONS_ARE_MISSING,
                     force_code=report_codes.FORCE_OPTIONS,
                     option_names=["req1_new"],
                     option_type="agent",
@@ -1529,7 +1529,7 @@ class AgentMetadataValidateParamsUpdate(TestCase):
             ),
             [
                 fixture.error(
-                    report_codes.REQUIRED_OPTION_IS_MISSING,
+                    report_codes.REQUIRED_OPTIONS_ARE_MISSING,
                     force_code=report_codes.FORCE_OPTIONS,
                     option_names=["req2_new"],
                     option_type="agent",

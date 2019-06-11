@@ -304,7 +304,7 @@ class CreateMixin():
                 allowed_patterns=[]
             ),
             fixture.warn(
-                report_codes.REQUIRED_OPTION_IS_MISSING,
+                report_codes.REQUIRED_OPTIONS_ARE_MISSING,
                 option_names=["must-set", "must-set-new"],
                 option_type="stonith",
             ),

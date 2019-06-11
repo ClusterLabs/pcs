@@ -57,7 +57,7 @@ class CreateAlertTest(TestCase):
             [
                 (
                     Severities.ERROR,
-                    report_codes.REQUIRED_OPTION_IS_MISSING,
+                    report_codes.REQUIRED_OPTIONS_ARE_MISSING,
                     {"option_names": ["path"]},
                     None
                 ),
@@ -340,7 +340,7 @@ class AddRecipientTest(TestCase):
             [
                 (
                     Severities.ERROR,
-                    report_codes.REQUIRED_OPTION_IS_MISSING,
+                    report_codes.REQUIRED_OPTIONS_ARE_MISSING,
                     {"option_names": ["value"]}
                 )
             ],

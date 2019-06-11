@@ -32,7 +32,7 @@ def create_alert(
     description -- alert description description
     """
     if not path:
-        raise LibraryError(reports.required_option_is_missing(["path"]))
+        raise LibraryError(reports.required_options_are_missing(["path"]))
 
     cib = lib_env.get_cib(REQUIRED_CIB_VERSION)
     id_provider = IdProvider(cib)
@@ -123,7 +123,7 @@ def add_recipient(
     """
     if not recipient_value:
         raise LibraryError(
-            reports.required_option_is_missing(["value"])
+            reports.required_options_are_missing(["value"])
         )
 
     cib = lib_env.get_cib(REQUIRED_CIB_VERSION)

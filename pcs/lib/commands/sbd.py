@@ -26,11 +26,6 @@ from pcs.lib.errors import (
     ReportItemSeverity as Severities
 )
 from pcs.lib.node import get_existing_nodes_names
-from pcs.lib.validate import (
-    names_in,
-    run_collection_of_option_validators,
-    value_nonnegative_integer,
-)
 
 
 UNSUPPORTED_SBD_OPTION_LIST = [
@@ -67,28 +62,23 @@ def _validate_sbd_options(
     allow_unknown_opts -- if True, accept also unknown options.
     """
     validators = [
-        validate.value_nonnegative_integer("SBD_WATCHDOG_TIMEOUT"),
-        validate.value_in(
+        validate.NamesIn(
+            ALLOWED_SBD_OPTION_LIST,
+            banned_name_list=UNSUPPORTED_SBD_OPTION_LIST,
+            **validate.set_warning(
+                report_codes.FORCE_OPTIONS, allow_unknown_opts
+            )
+        ),
+        validate.ValueNonnegativeInteger("SBD_WATCHDOG_TIMEOUT"),
+        validate.ValueIn(
             "SBD_TIMEOUT_ACTION",
             TIMEOUT_ACTION_ALLOWED_VALUE_LIST,
-            code_to_allow_extra_values=report_codes.FORCE_OPTIONS,
-            extra_values_allowed=allow_invalid_option_values,
+            **validate.set_warning(
+                report_codes.FORCE_OPTIONS, allow_invalid_option_values
+            )
         ),
     ]
-
-    return (
-        validate.names_in(
-            ALLOWED_SBD_OPTION_LIST,
-            sbd_config.keys(),
-            option_type=None,
-            banned_name_list=UNSUPPORTED_SBD_OPTION_LIST,
-            code_to_allow_extra_names=report_codes.FORCE_OPTIONS,
-            extra_names_allowed=allow_unknown_opts,
-        )
-        +
-        validate.run_collection_of_option_validators(sbd_config, validators)
-
-    )
+    return validate.ValidatorAll(validators).validate(sbd_config)
 
 
 def _validate_watchdog_dict(watchdog_dict):
@@ -383,19 +373,20 @@ def initialize_block_devices(lib_env, device_list, option_dict):
     """
     report_item_list = []
     if not device_list:
-        report_item_list.append(reports.required_option_is_missing(["device"]))
+        report_item_list.append(
+            reports.required_options_are_missing(["device"])
+        )
 
     supported_options = sbd.DEVICE_INITIALIZATION_OPTIONS_MAPPING.keys()
 
-    report_item_list += names_in(supported_options, option_dict.keys())
-    validator_list = [
-        value_nonnegative_integer(key)
-        for key in supported_options
-    ]
-
-    report_item_list += run_collection_of_option_validators(
-        option_dict, validator_list
+    report_item_list += (
+        validate.NamesIn(supported_options).validate(option_dict)
     )
+
+    report_item_list += validate.ValidatorAll([
+            validate.ValueNonnegativeInteger(key)
+            for key in supported_options
+        ]).validate(option_dict)
 
     lib_env.report_processor.process_list(report_item_list)
     sbd.initialize_block_devices(
@@ -463,7 +454,7 @@ def set_message(lib_env, device, node_name, message):
         missing_options.append("node")
     if missing_options:
         report_item_list.append(
-            reports.required_option_is_missing(missing_options)
+            reports.required_options_are_missing(missing_options)
         )
     supported_messages = settings.sbd_message_types
     if message not in supported_messages:

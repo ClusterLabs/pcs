@@ -119,7 +119,7 @@ class Create(TestCase):
             ),
             [
                 fixture.error(
-                    report_codes.REQUIRED_OPTION_IS_MISSING,
+                    report_codes.REQUIRED_OPTIONS_ARE_MISSING,
                     option_names=["name"],
                     option_type="node 2"
                 ),
@@ -175,7 +175,7 @@ class Create(TestCase):
                     allowed_values="a non-empty string"
                 ),
                 fixture.error(
-                    report_codes.REQUIRED_OPTION_IS_MISSING,
+                    report_codes.REQUIRED_OPTIONS_ARE_MISSING,
                     option_names=["name"],
                     option_type="node 2"
                 ),
@@ -354,7 +354,7 @@ class Create(TestCase):
             ),
             [
                 fixture.error(
-                    report_codes.REQUIRED_OPTION_IS_MISSING,
+                    report_codes.REQUIRED_OPTIONS_ARE_MISSING,
                     option_names=["name"],
                     option_type="node 6"
                 ),
@@ -861,7 +861,7 @@ class CreateLinkListUdp(CreateLinkListCommonMixin, TestCase):
                     report_codes.INVALID_OPTION_VALUE,
                     option_value="0",
                     option_name="mcastport",
-                    allowed_values="a port number (1-65535)"
+                    allowed_values="a port number (1..65535)"
                 ),
                 fixture.error(
                     report_codes.INVALID_OPTION_VALUE,
@@ -1026,7 +1026,7 @@ class CreateLinkListKnet(CreateLinkListCommonMixin, TestCase):
                     report_codes.INVALID_OPTION_VALUE,
                     option_value="65536",
                     option_name="mcastport",
-                    allowed_values="a port number (1-65535)"
+                    allowed_values="a port number (1..65535)"
                 ),
                 fixture.error(
                     report_codes.INVALID_OPTION_VALUE,

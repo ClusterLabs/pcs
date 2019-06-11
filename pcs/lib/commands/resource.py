@@ -40,7 +40,7 @@ from pcs.lib.pacemaker.values import (
 from pcs.lib.resource_agent import(
     find_valid_resource_agent_by_name as get_agent
 )
-from pcs.lib.validate import value_time_interval
+from pcs.lib.validate import ValueTimeInterval
 
 @contextmanager
 def resource_environment(
@@ -955,7 +955,7 @@ def get_failcounts(
         )
     if interval is not None:
         report_items.extend(
-            value_time_interval("interval")({"interval": interval})
+            ValueTimeInterval("interval").validate({"interval": interval})
         )
     if report_items:
         raise LibraryError(*report_items)

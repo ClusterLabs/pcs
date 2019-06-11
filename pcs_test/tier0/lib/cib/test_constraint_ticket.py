@@ -93,7 +93,7 @@ class PrepareOptionsPlainTest(TestCase):
             ),
             (
                 severities.ERROR,
-                report_codes.REQUIRED_OPTION_IS_MISSING,
+                report_codes.REQUIRED_OPTIONS_ARE_MISSING,
                 {
                     "option_names": ["ticket"]
                 }
@@ -107,7 +107,7 @@ class PrepareOptionsPlainTest(TestCase):
             ),
             (
                 severities.ERROR,
-                report_codes.REQUIRED_OPTION_IS_MISSING,
+                report_codes.REQUIRED_OPTIONS_ARE_MISSING,
                 {
                     "option_names": ["rsc"],
                 }
@@ -218,7 +218,7 @@ class PrepareOptionsWithSetTest(TestCase):
             lambda: self.prepare({"loss-policy": "stop", "id": "id"}),
             (
                 severities.ERROR,
-                report_codes.REQUIRED_OPTION_IS_MISSING,
+                report_codes.REQUIRED_OPTIONS_ARE_MISSING,
                 {"option_names": ["ticket"]}
             )
         )
@@ -232,7 +232,7 @@ class PrepareOptionsWithSetTest(TestCase):
             }),
             (
                 severities.ERROR,
-                report_codes.REQUIRED_OPTION_IS_MISSING,
+                report_codes.REQUIRED_OPTIONS_ARE_MISSING,
                 {"option_names": ["ticket"]}
             )
         )

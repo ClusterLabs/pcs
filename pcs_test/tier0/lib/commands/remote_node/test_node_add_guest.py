@@ -460,7 +460,7 @@ class AddGuest(TestCase):
                     report_codes.INVALID_OPTION_VALUE,
                     option_name="remote-port",
                     option_value="abc",
-                    allowed_values="a port number (1-65535)"
+                    allowed_values="a port number (1..65535)"
                 )
             ]
         )
@@ -727,7 +727,7 @@ class NotLive(TestCase):
                 report_codes.INVALID_OPTION_VALUE,
                 option_name="remote-port",
                 option_value="abc",
-                allowed_values="a port number (1-65535)"
+                allowed_values="a port number (1..65535)"
             )
         ])
 

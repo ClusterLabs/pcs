@@ -505,7 +505,7 @@ class AddLink(TestCase):
                     report_codes.INVALID_OPTION_VALUE,
                     option_name="mcastport",
                     option_value="mp",
-                    allowed_values="a port number (1-65535)",
+                    allowed_values="a port number (1..65535)",
                 ),
                 fixture.error(
                     report_codes.INVALID_OPTION_VALUE,
@@ -1230,7 +1230,7 @@ class UpdateLinkKnet(TestCase):
                     report_codes.INVALID_OPTION_VALUE,
                     option_name="mcastport",
                     option_value="mp",
-                    allowed_values="a port number (1-65535)",
+                    allowed_values="a port number (1..65535)",
                 ),
                 fixture.error(
                     report_codes.INVALID_OPTION_VALUE,
@@ -1486,7 +1486,7 @@ class UpdateLinkUdp(TestCase):
                     report_codes.INVALID_OPTION_VALUE,
                     option_value="0",
                     option_name="mcastport",
-                    allowed_values="a port number (1-65535)"
+                    allowed_values="a port number (1..65535)"
                 ),
                 fixture.error(
                     report_codes.INVALID_OPTION_VALUE,
