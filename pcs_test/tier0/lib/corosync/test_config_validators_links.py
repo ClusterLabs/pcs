@@ -900,8 +900,8 @@ class RemoveLinks(TestCase):
 class UpdateLinkCommon(TestCase):
     # Link update validator is complex, this class tests common cases. For more
     # specific tests see other UpdateLink* classes.
-    @staticmethod
-    def test_no_addrs_no_options():
+    def test_no_addrs_no_options(self):
+        # pylint: disable=no-self-use
         assert_report_item_list_equal(
             config_validators.update_link(
                 "0",
@@ -917,8 +917,8 @@ class UpdateLinkCommon(TestCase):
             []
         )
 
-    @staticmethod
-    def test_nonexistent_link():
+    def test_nonexistent_link(self):
+        # pylint: disable=no-self-use
         assert_report_item_list_equal(
             config_validators.update_link(
                 "1",
@@ -1433,8 +1433,8 @@ class UpdateLinkAddressesKnet(UpdateLinkAddressesMixin, TestCase):
         )
 
 class UpdateLinkKnet(TestCase):
-    @staticmethod
-    def test_individual_options_set():
+    def test_individual_options_set(self):
+        # pylint: disable=no-self-use
         assert_report_item_list_equal(
             config_validators.update_link(
                 "2",
@@ -1528,8 +1528,8 @@ class UpdateLinkKnet(TestCase):
             ]
         )
 
-    @staticmethod
-    def test_individual_options_unset():
+    def test_individual_options_unset(self):
+        # pylint: disable=no-self-use
         assert_report_item_list_equal(
             config_validators.update_link(
                 "2",
@@ -1654,8 +1654,8 @@ class UpdateLinkKnet(TestCase):
                         reports
                     )
 
-    @staticmethod
-    def test_ping_interval_ping_timeout_initially_broken():
+    def test_ping_interval_ping_timeout_initially_broken(self):
+        # pylint: disable=no-self-use
         assert_report_item_list_equal(
             config_validators.update_link(
                 "2",
@@ -1674,8 +1674,8 @@ class UpdateLinkKnet(TestCase):
             []
         )
 
-    @staticmethod
-    def test_forbidden_characters():
+    def test_forbidden_characters(self):
+        # pylint: disable=no-self-use
         assert_report_item_list_equal(
             config_validators.update_link(
                 "2",
@@ -1842,8 +1842,8 @@ class UpdateLinkUdp(TestCase):
             new_values["mcastaddr"] = mcastaddr
         return new_values
 
-    @staticmethod
-    def test_individual_options_set():
+    def test_individual_options_set(self):
+        # pylint: disable=no-self-use
         assert_report_item_list_equal(
             config_validators.update_link(
                 "0",
@@ -1917,8 +1917,8 @@ class UpdateLinkUdp(TestCase):
             ]
         )
 
-    @staticmethod
-    def test_individual_options_unset():
+    def test_individual_options_unset(self):
+        # pylint: disable=no-self-use
         assert_report_item_list_equal(
             config_validators.update_link(
                 "0",
@@ -2017,8 +2017,8 @@ class UpdateLinkUdp(TestCase):
             initial_options, error_expected_for_input
         )
 
-    @staticmethod
-    def test_forbidden_characters():
+    def test_forbidden_characters(self):
+        # pylint: disable=no-self-use
         assert_report_item_list_equal(
             config_validators.update_link(
                 "0",

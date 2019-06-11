@@ -20,8 +20,8 @@ class FromStringTest(TestCase):
         self.assertFalse(facade.need_stopped_cluster)
         self.assertFalse(facade.need_qdevice_reload)
 
-    @staticmethod
-    def test_parse_error_missing_brace():
+    def test_parse_error_missing_brace(self):
+        # pylint: disable=no-self-use
         config = "section {"
         assert_raise_library_error(
             lambda: lib.ConfigFacade.from_string(config),
@@ -32,8 +32,8 @@ class FromStringTest(TestCase):
             )
         )
 
-    @staticmethod
-    def test_parse_error_unexpected_brace():
+    def test_parse_error_unexpected_brace(self):
+        # pylint: disable=no-self-use
         config = "}"
         assert_raise_library_error(
             lambda: lib.ConfigFacade.from_string(config),

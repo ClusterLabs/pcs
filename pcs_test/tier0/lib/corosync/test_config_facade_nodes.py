@@ -198,8 +198,8 @@ class GetNodesTest(TestCase):
 
 
 class AddNodesTest(TestCase):
-    @staticmethod
-    def test_adding_two_nodes():
+    def test_adding_two_nodes(self):
+        # pylint: disable=no-self-use
         config = dedent("""\
             nodelist {
                 node {
@@ -248,8 +248,8 @@ class AddNodesTest(TestCase):
         """)
         ac(expected_config, facade.config.export())
 
-    @staticmethod
-    def test_skipped_and_out_of_order_links_and_nodes_ids():
+    def test_skipped_and_out_of_order_links_and_nodes_ids(self):
+        # pylint: disable=no-self-use
         config = dedent("""\
             nodelist {
                 node {
@@ -346,8 +346,8 @@ class AddNodesTest(TestCase):
         """)
         ac(expected_config, facade.config.export())
 
-    @staticmethod
-    def test_enable_two_node():
+    def test_enable_two_node(self):
+        # pylint: disable=no-self-use
         config = dedent("""\
             nodelist {
                 node {
@@ -387,8 +387,8 @@ class AddNodesTest(TestCase):
         """)
         ac(expected_config, facade.config.export())
 
-    @staticmethod
-    def test_disable_two_node():
+    def test_disable_two_node(self):
+        # pylint: disable=no-self-use
         config = dedent("""\
             nodelist {
                 node {
@@ -442,8 +442,8 @@ class AddNodesTest(TestCase):
 
 
 class RemoveNodes(TestCase):
-    @staticmethod
-    def test_remove():
+    def test_remove(self):
+        # pylint: disable=no-self-use
         config = dedent("""\
             nodelist {
                 node {
@@ -520,8 +520,8 @@ class RemoveNodes(TestCase):
         """)
         ac(expected_config, facade.config.export())
 
-    @staticmethod
-    def test_enable_two_nodes():
+    def test_enable_two_nodes(self):
+        # pylint: disable=no-self-use
         config = dedent("""\
             nodelist {
                 node {
@@ -571,8 +571,8 @@ class RemoveNodes(TestCase):
         """)
         ac(expected_config, facade.config.export())
 
-    @staticmethod
-    def test_disable_two_nodes():
+    def test_disable_two_nodes(self):
+        # pylint: disable=no-self-use
         config = dedent("""\
             nodelist {
                 node {
