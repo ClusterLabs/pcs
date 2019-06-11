@@ -454,13 +454,17 @@ class AddGuest(TestCase):
                     report_codes.INVALID_OPTION_VALUE,
                     option_name="remote-connect-timeout",
                     option_value="def",
-                    allowed_values="time interval (e.g. 1, 2s, 3m, 4h, ...)"
+                    allowed_values="time interval (e.g. 1, 2s, 3m, 4h, ...)",
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
                 ),
                 fixture.error(
                     report_codes.INVALID_OPTION_VALUE,
                     option_name="remote-port",
                     option_value="abc",
-                    allowed_values="a port number (1..65535)"
+                    allowed_values="a port number (1..65535)",
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
                 )
             ]
         )
@@ -721,13 +725,17 @@ class NotLive(TestCase):
                 report_codes.INVALID_OPTION_VALUE,
                 option_name="remote-connect-timeout",
                 option_value="def",
-                allowed_values="time interval (e.g. 1, 2s, 3m, 4h, ...)"
+                allowed_values="time interval (e.g. 1, 2s, 3m, 4h, ...)",
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
             ),
             fixture.error(
                 report_codes.INVALID_OPTION_VALUE,
                 option_name="remote-port",
                 option_value="abc",
-                allowed_values="a port number (1..65535)"
+                allowed_values="a port number (1..65535)",
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
             )
         ])
 

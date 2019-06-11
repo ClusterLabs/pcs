@@ -59,6 +59,8 @@ class PrepareOptionsWithSetTest(TestCase):
                 'allowed_values': ('Optional', 'Mandatory', 'Serialize'),
                 'option_value': 'unknown',
                 'option_name': 'kind',
+                'cannot_be_empty': False,
+                'forbidden_characters': None,
             }),
         )
 
@@ -73,6 +75,8 @@ class PrepareOptionsWithSetTest(TestCase):
                 'allowed_values': ('true', 'false'),
                 'option_value': 'unknown',
                 'option_name': 'symmetrical',
+                'cannot_be_empty': False,
+                'forbidden_characters': None,
             }),
         )
 

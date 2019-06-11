@@ -228,8 +228,9 @@ class AddTicketTest(BoothTest):
         self.assert_pcs_fail(
             "booth ticket add TicketA site=a timeout=", console_report(
                 "Error: invalid booth ticket option 'site', allowed options"
-                    " are: acquire-after, attr-prereq, before-acquire-handler,"
-                    " expire, renewal-freq, retries, timeout, weights"
+                    " are: 'acquire-after', 'attr-prereq', "
+                    "'before-acquire-handler', 'expire', 'renewal-freq', "
+                    "'retries', 'timeout', 'weights'"
                 ,
                 "Error: '' is not a valid timeout value, use no-empty",
             )
@@ -238,8 +239,8 @@ class AddTicketTest(BoothTest):
     def test_forceable_fail_on_unknown_options(self):
         msg = (
             "invalid booth ticket option 'unknown', allowed options"
-            " are: acquire-after, attr-prereq, before-acquire-handler,"
-            " expire, renewal-freq, retries, timeout, weights"
+            " are: 'acquire-after', 'attr-prereq', 'before-acquire-handler',"
+            " 'expire', 'renewal-freq', 'retries', 'timeout', 'weights'"
         )
         self.assert_pcs_fail(
             "booth ticket add TicketA unknown=a", console_report(

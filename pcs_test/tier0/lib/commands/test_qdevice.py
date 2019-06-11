@@ -41,6 +41,8 @@ class QdeviceBadModelTest(QdeviceTestCase):
                     "option_name": "model",
                     "option_value": "bad model",
                     "allowed_values": ["net"],
+                    "cannot_be_empty": False,
+                    "forbidden_characters": None,
                 }
             )
         )
@@ -965,6 +967,8 @@ class QdeviceNetSignCertificateRequestTest(QdeviceTestCase):
                     "option_name": "qnetd certificate request",
                     "option_value": qdevice_func_input,
                     "allowed_values": ["base64 encoded certificate"],
+                    "cannot_be_empty": False,
+                    "forbidden_characters": None,
                 }
             )
         )
@@ -1001,6 +1005,8 @@ class ClientNetSetupTest(QdeviceTestCase):
                     "option_name": "qnetd CA certificate",
                     "option_value": qdevice_func_input,
                     "allowed_values": ["base64 encoded certificate"],
+                    "cannot_be_empty": False,
+                    "forbidden_characters": None,
                 }
             )
         )
@@ -1045,6 +1051,8 @@ class ClientNetImportCertificateTest(QdeviceTestCase):
                     "option_name": "qnetd client certificate",
                     "option_value": qdevice_func_input,
                     "allowed_values": ["base64 encoded certificate"],
+                    "cannot_be_empty": False,
+                    "forbidden_characters": None,
                 }
             )
         )

@@ -239,15 +239,13 @@ class ContainerParametrized(TestCase):
                 force_options=True
             ),
             [
-                (
-                    severities.ERROR,
+                fixture.error(
                     report_codes.INVALID_OPTION_VALUE,
-                    {
-                        "option_name": "image",
-                        "option_value": "",
-                        "allowed_values": "image name",
-                    },
-                    None
+                    option_name="image",
+                    option_value="",
+                    allowed_values="image name",
+                    cannot_be_empty=True,
+                    forbidden_characters=None,
                 ),
             ]
         )
@@ -382,25 +380,21 @@ class ContainerParametrized(TestCase):
                 }
             ),
             [
-                (
-                    severities.ERROR,
+                fixture.error(
                     report_codes.INVALID_OPTION_VALUE,
-                    {
-                        "option_name": "masters",
-                        "option_value": "-1",
-                        "allowed_values": "a non-negative integer",
-                    },
-                    None
+                    option_name="masters",
+                    option_value="-1",
+                    allowed_values="a non-negative integer",
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
                 ),
-                (
-                    severities.ERROR,
+                fixture.error(
                     report_codes.INVALID_OPTION_VALUE,
-                    {
-                        "option_name": "promoted-max",
-                        "option_value": "-2",
-                        "allowed_values": "a non-negative integer",
-                    },
-                    None
+                    option_name="promoted-max",
+                    option_value="-2",
+                    allowed_values="a non-negative integer",
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
                 ),
                 (
                     severities.ERROR,
@@ -411,25 +405,21 @@ class ContainerParametrized(TestCase):
                     },
                     None
                 ),
-                (
-                    severities.ERROR,
+                fixture.error(
                     report_codes.INVALID_OPTION_VALUE,
-                    {
-                        "option_name": "replicas",
-                        "option_value": "0",
-                        "allowed_values": "a positive integer",
-                    },
-                    None
+                    option_name="replicas",
+                    option_value="0",
+                    allowed_values="a positive integer",
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
                 ),
-                (
-                    severities.ERROR,
+                fixture.error(
                     report_codes.INVALID_OPTION_VALUE,
-                    {
-                        "option_name": "replicas-per-host",
-                        "option_value": "0",
-                        "allowed_values": "a positive integer",
-                    },
-                    None
+                    option_name="replicas-per-host",
+                    option_value="0",
+                    allowed_values="a positive integer",
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
                 ),
             ]
         )

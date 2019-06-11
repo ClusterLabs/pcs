@@ -14,7 +14,14 @@ from pcs.lib.corosync.node import (
 
 # pylint: disable=no-self-use
 
+forbidden_characters_kwargs = dict(
+    allowed_values=None,
+    cannot_be_empty=False,
+    forbidden_characters=r"{}\n\r",
+)
+
 class AddNodes(TestCase):
+    # pylint: disable=too-many-public-methods
     fixture_coronodes_1_link = [
         CNode("node1", [CAddr("addr01", 1)], 1),
         CNode("node2", [CAddr("addr02", 1)], 2),
@@ -140,7 +147,9 @@ class AddNodes(TestCase):
                     report_codes.INVALID_OPTION_VALUE,
                     option_value="",
                     option_name="node 1 name",
-                    allowed_values="a non-empty string"
+                    allowed_values=None,
+                    cannot_be_empty=True,
+                    forbidden_characters=None,
                 ),
                 fixture.error(
                     report_codes.REQUIRED_OPTIONS_ARE_MISSING,
@@ -169,13 +178,17 @@ class AddNodes(TestCase):
                     report_codes.INVALID_OPTION_VALUE,
                     option_value="",
                     option_name="node 3 name",
-                    allowed_values="a non-empty string"
+                    allowed_values=None,
+                    cannot_be_empty=True,
+                    forbidden_characters=None,
                 ),
                 fixture.error(
                     report_codes.INVALID_OPTION_VALUE,
                     option_value="",
                     option_name="node 4 name",
-                    allowed_values="a non-empty string"
+                    allowed_values=None,
+                    cannot_be_empty=True,
+                    forbidden_characters=None,
                 ),
                 fixture.error(
                     report_codes.NODE_NAMES_DUPLICATION,
@@ -627,6 +640,36 @@ class AddNodes(TestCase):
                     report_codes.COROSYNC_IP_VERSION_MISMATCH_IN_LINKS,
                     link_numbers=[3]
                 )
+            ]
+        )
+
+    def test_forbidden_characters(self):
+        assert_report_item_list_equal(
+            config_validators.add_nodes(
+                [
+                    {"name": "node{3}", "addrs": ["\raddr03\n"]},
+                ],
+                self.fixture_coronodes_1_link,
+                []
+            ),
+            [
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_value="node{3}",
+                    option_name="node 1 name",
+                    **forbidden_characters_kwargs
+                ),
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_value="\raddr03\n",
+                    option_name="node address",
+                    **forbidden_characters_kwargs
+                ),
+                fixture.error(
+                    report_codes.NODE_ADDRESSES_UNRESOLVABLE,
+                    force_code=report_codes.FORCE_NODE_ADDRESSES_UNRESOLVABLE,
+                    address_list=["\raddr03\n"],
+                ),
             ]
         )
 

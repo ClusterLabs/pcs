@@ -761,10 +761,12 @@ class Validations(TestCase):
             [
                 fixture.error(
                     report_codes.INVALID_OPTION_VALUE,
+                    force_code=report_codes.FORCE_OPTIONS,
                     option_name="SBD_TIMEOUT_ACTION",
                     option_value="noflush,flush",
                     allowed_values=TIMEOUT_ACTION_ALLOWED_VALUE_LIST,
-                    force_code=report_codes.FORCE_OPTIONS
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
                 ),
             ]
         )
@@ -799,6 +801,8 @@ class Validations(TestCase):
                 option_name="SBD_TIMEOUT_ACTION",
                 option_value="noflush,flush",
                 allowed_values=TIMEOUT_ACTION_ALLOWED_VALUE_LIST,
+                cannot_be_empty=False,
+                forbidden_characters=None,
             ),
         ])
 

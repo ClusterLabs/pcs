@@ -286,10 +286,7 @@ def invalid_options(
         }
     )
 
-def invalid_userdefined_options(
-    option_names, allowed_description, option_type,
-    severity=ReportItemSeverity.ERROR, forceable=None
-):
+def invalid_userdefined_options(option_names, option_type, allowed_characters):
     """
     specified option names defined by a user are not valid
 
@@ -300,19 +297,15 @@ def invalid_userdefined_options(
     underlying tools).
 
     list option_names -- specified invalid option names
-    string allowed_description -- describes what option names should look like
+    string allowed_characters -- which characters are allowed in the names
     string option_type -- describes the option
-    string severity -- report item severity
-    mixed forceable -- is this report item forceable? by what category?
     """
-    return ReportItem(
+    return ReportItem.error(
         report_codes.INVALID_USERDEFINED_OPTIONS,
-        severity,
-        forceable,
         info={
             "option_names": sorted(option_names),
             "option_type": option_type,
-            "allowed_description": allowed_description,
+            "allowed_characters": allowed_characters,
         }
     )
 
@@ -331,16 +324,20 @@ def invalid_option_type(option_name, allowed_types):
     )
 
 def invalid_option_value(
-    option_name, option_value, allowed_values,
+    option_name, option_value, allowed_values, cannot_be_empty=False,
+    forbidden_characters=None,
     severity=ReportItemSeverity.ERROR, forceable=None
 ):
     """
     specified value is not valid for the option, usualy an error or a warning
-    option_name specified option name whose value is not valid
-    option_value specified value which is not valid
-    allowed_options list of allowed values or string description
-    severity report item severity
-    forceable is this report item forceable? by what category?
+
+    string option_name -- specified option name whose value is not valid
+    string option_value -- specified value which is not valid
+    mixed allowed_options -- a list of allowed values or a string description
+    bool cannot_be_empty -- the value is empty and that is not allowed
+    iterable forbidden_characters -- characters the value cannot contain
+    string severity -- report item severity
+    mixed forceable -- is this report item forceable? by what category?
     """
     return ReportItem(
         report_codes.INVALID_OPTION_VALUE,
@@ -349,6 +346,8 @@ def invalid_option_value(
             "option_value": option_value,
             "option_name": option_name,
             "allowed_values": allowed_values,
+            "cannot_be_empty": cannot_be_empty,
+            "forbidden_characters": forbidden_characters,
         },
         forceable=forceable
     )
@@ -1003,6 +1002,23 @@ def corosync_config_parser_other_error():
     """
     return ReportItem.error(
         report_codes.PARSE_ERROR_COROSYNC_CONF,
+    )
+
+def corosync_config_cannot_save_invalid_names_values(sections, names, values):
+    """
+    cannot save corosync.conf - it contains forbidden characters which break it
+
+    iterable sections -- bad names of sections
+    iterable names -- bad names of attributes
+    iterable values -- tuples (attribute_name, its_bad_value)
+    """
+    return ReportItem.error(
+        report_codes.COROSYNC_CONFIG_CANNOT_SAVE_INVALID_NAMES_VALUES,
+        info={
+            "section_name_list": sections,
+            "attribute_name_list": names,
+            "attribute_value_pairs": values,
+        }
     )
 
 def corosync_config_missing_names_of_nodes(fatal=False):

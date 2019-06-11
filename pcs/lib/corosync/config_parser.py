@@ -1,10 +1,12 @@
+from pcs.lib.corosync import constants
+
 class Section:
 
     def __init__(self, name):
         self._parent = None
         self._attr_list = []
         self._section_list = []
-        self._name = name
+        self._name = str(name)
 
     @property
     def parent(self):
@@ -58,6 +60,7 @@ class Section:
         return self.get_attributes_dict().get(name, default)
 
     def add_attribute(self, name, value):
+        name, value = str(name), str(value)
         self._attr_list.append([name, value])
         return self
 
@@ -75,6 +78,7 @@ class Section:
         return self
 
     def set_attribute(self, name, value):
+        name, value = str(name), str(value)
         found = False
         new_attr_list = []
         for attr in self._attr_list:
@@ -159,6 +163,46 @@ def _parse_section(lines, section):
             raise LineIsNotSectionNorKeyValueException()
     if section.parent:
         raise MissingClosingBraceException()
+
+
+def verify_section(section, path_prefix=""):
+    # prevents putting in any characters which break corosync.conf structure
+    bad_section_name_list = []
+    bad_attribute_name_list = []
+    bad_attribute_value_list = []
+
+    path = _prefix_path(path_prefix, section.name)
+    # the root section has no name yet it is valid
+    if section.name != "" and not _is_valid_name(section.name):
+        bad_section_name_list.append(path)
+    for name, value in section.get_attributes():
+        if not _is_valid_name(name):
+            bad_attribute_name_list.append(_prefix_path(path, name))
+        if not _is_valid_value(value):
+            bad_attribute_value_list.append((_prefix_path(path, name), value))
+    for child_section in section.get_sections():
+        bad_sections, bad_attr_names, bad_attr_values = verify_section(
+            child_section, path
+        )
+        bad_section_name_list += bad_sections
+        bad_attribute_name_list += bad_attr_names
+        bad_attribute_value_list += bad_attr_values
+
+    return (
+        bad_section_name_list,
+        bad_attribute_name_list,
+        bad_attribute_value_list
+    )
+
+def _prefix_path(prefix, path):
+    return f"{prefix}.{path}" if prefix and path else path
+
+def _is_valid_name(name):
+    return constants.OPTION_NAME_RE.fullmatch(name) is not None
+
+def _is_valid_value(value):
+    # pylint: disable=superfluous-parens
+    return not (set(value) & set("{}\n\r"))
 
 
 class CorosyncConfParserException(Exception):

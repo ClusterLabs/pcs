@@ -606,6 +606,8 @@ class ValidateLevel(TestCase):
                     "option_value": value,
                     "option_name": "level",
                     "allowed_values": "a positive integer",
+                    "cannot_be_empty": False,
+                    "forbidden_characters": None,
                 },
                 None
             ))

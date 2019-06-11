@@ -122,12 +122,16 @@ class ValidatorAll(TestCase):
                     option_value="abcd",
                     option_name="x",
                     allowed_values="a positive integer",
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
                 ),
                 fixture.error(
                     report_codes.INVALID_OPTION_VALUE,
                     option_value="defg",
                     option_name="y",
                     allowed_values=["a", "b"],
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
                 ),
             ]
         )
@@ -172,6 +176,8 @@ class ValidatorFirstError(TestCase):
                     option_name="name1",
                     option_value="a",
                     allowed_values="test report",
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
                 ),
             ]
         )
@@ -185,6 +191,8 @@ class ValidatorFirstError(TestCase):
                     option_name="name2",
                     option_value="a",
                     allowed_values="test report",
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
                 ),
             ]
         )
@@ -198,17 +206,62 @@ class ValidatorFirstError(TestCase):
                     option_name="name1",
                     option_value="b",
                     allowed_values="test report",
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
                 ),
                 fixture.error(
                     report_codes.INVALID_OPTION_VALUE,
                     option_name="name2",
                     option_value="a",
                     allowed_values="test report",
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
                 ),
             ]
         )
 
 ### keys validators
+
+class CorosyncOption(TestCase):
+    def test_valid(self):
+        assert_report_item_list_equal(
+            validate.CorosyncOption().validate({
+                "name_-/NAME09": "value",
+            }),
+            []
+        )
+
+    def test_forbidden_characters(self):
+        bad_names = [f"na{char}me" for char in ".: {}#č"]
+        assert_report_item_list_equal(
+            validate.CorosyncOption().validate({
+                name: "value" for name in bad_names
+            }),
+            [
+                fixture.error(
+                    report_codes.INVALID_USERDEFINED_OPTIONS,
+                    option_names=sorted(bad_names),
+                    option_type=None,
+                    allowed_characters="a-z A-Z 0-9 /_-"
+                )
+            ]
+        )
+
+    def test_option_type(self):
+        bad_names = [f"na{char}me" for char in ".: {}#č"]
+        assert_report_item_list_equal(
+            validate.CorosyncOption(option_type="type").validate({
+                name: "value" for name in bad_names
+            }),
+            [
+                fixture.error(
+                    report_codes.INVALID_USERDEFINED_OPTIONS,
+                    option_names=sorted(bad_names),
+                    option_type="type",
+                    allowed_characters="a-z A-Z 0-9 /_-"
+                )
+            ]
+        )
 
 class DependsOnOption(TestCase):
     def test_success_when_dependency_present(self):
@@ -626,6 +679,8 @@ class ValueValidator(TestCase):
                     option_name="name",
                     option_value="",
                     allowed_values="test report",
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
                 )
             ]
         )
@@ -649,6 +704,8 @@ class ValueValidator(TestCase):
                     option_name="name",
                     option_value="value",
                     allowed_values="test report",
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
                 )
             ]
         )
@@ -659,6 +716,14 @@ class ValuePredicateImplementation(validate.ValuePredicateBase):
 
     def _get_allowed_values(self):
         return "allowed values"
+
+    def set_value_cannot_be_empty(self, value):
+        self._value_cannot_be_empty = value
+        return self
+
+    def set_forbidden_characters(self, value):
+        self._forbidden_characters = value
+        return self
 
 class ValuePredicateBase(TestCase):
     def test_returns_empty_report_on_valid_option(self):
@@ -688,6 +753,44 @@ class ValuePredicateBase(TestCase):
                     option_name="a",
                     option_value="c",
                     allowed_values="allowed values",
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
+                )
+            ]
+        )
+
+    def test_value_cannot_be_empty(self):
+        assert_report_item_list_equal(
+            ValuePredicateImplementation("a")
+                .set_value_cannot_be_empty(True)
+                .validate({"a": "c"})
+            ,
+            [
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_name="a",
+                    option_value="c",
+                    allowed_values="allowed values",
+                    cannot_be_empty=True,
+                    forbidden_characters=None,
+                )
+            ]
+        )
+
+    def test_forbidden_characters(self):
+        assert_report_item_list_equal(
+            ValuePredicateImplementation("a")
+                .set_forbidden_characters("xyz")
+                .validate({"a": "c"})
+            ,
+            [
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_name="a",
+                    option_value="c",
+                    allowed_values="allowed values",
+                    cannot_be_empty=False,
+                    forbidden_characters="xyz",
                 )
             ]
         )
@@ -703,6 +806,8 @@ class ValuePredicateBase(TestCase):
                     option_name="a",
                     option_value="b",
                     allowed_values="allowed values",
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
                 )
             ]
         )
@@ -718,6 +823,8 @@ class ValuePredicateBase(TestCase):
                     option_name="option a",
                     option_value="c",
                     allowed_values="allowed values",
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
                 )
             ]
         )
@@ -734,6 +841,8 @@ class ValuePredicateBase(TestCase):
                     option_name="a",
                     option_value="c",
                     allowed_values="allowed values",
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
                 )
             ]
         )
@@ -750,9 +859,58 @@ class ValuePredicateBase(TestCase):
                     option_name="a",
                     option_value="c",
                     allowed_values="allowed values",
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
                 )
             ]
         )
+
+class ValueCorosyncValue(TestCase):
+    def test_value_ok(self):
+        assert_report_item_list_equal(
+            validate.ValueCorosyncValue("a").validate({"a": "valid_value"}),
+            []
+        )
+
+    def test_empty_value(self):
+        assert_report_item_list_equal(
+            validate.ValueCorosyncValue("a").validate({"a": ""}),
+            []
+        )
+
+    def test_escaped_new_lines(self):
+        assert_report_item_list_equal(
+            validate.ValueCorosyncValue("a").validate({"a": "\\n\\r"}),
+            []
+        )
+
+    def test_forbidden_characters_reported(self):
+        bad_value_list = [
+            "{",
+            "}",
+            "\n",
+            "\r",
+            "bad{value",
+            "bad}value",
+            "bad\nvalue",
+            "bad\rvalue"
+            "value\r\nsection {\n\rnew_key: new_value\r\n}\n\r",
+        ]
+        for value in bad_value_list:
+            with self.subTest(value=value):
+                assert_report_item_list_equal(
+                    validate.ValueCorosyncValue("a").validate({"a": value}),
+                    [
+                        fixture.error(
+                            report_codes.INVALID_OPTION_VALUE,
+                            option_value=value,
+                            option_name="a",
+                            allowed_values=None,
+                            cannot_be_empty=False,
+                            forbidden_characters=r"{}\n\r",
+                        ),
+                    ]
+                )
 
 class ValueId(TestCase):
     def test_empty_id(self):
@@ -889,6 +1047,8 @@ class ValueIn(TestCase):
                     option_name="a",
                     option_value="c",
                     allowed_values=["b"],
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
                 ),
             ]
         )
@@ -906,6 +1066,8 @@ class ValueIn(TestCase):
                     option_name="a",
                     option_value="C",
                     allowed_values=["b"],
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
                 ),
             ]
         )
@@ -921,6 +1083,8 @@ class ValueIn(TestCase):
                     option_name="option a",
                     option_value="c",
                     allowed_values=["b"],
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
                 ),
             ]
         )
@@ -937,6 +1101,8 @@ class ValueIn(TestCase):
                     option_name="a",
                     option_value="c",
                     allowed_values=["b"],
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
                 ),
             ]
         )
@@ -956,6 +1122,8 @@ class ValueIn(TestCase):
                     option_name="a",
                     option_value="c",
                     allowed_values=["b"],
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
                 ),
             ]
         )
@@ -981,6 +1149,8 @@ class ValueIntegerInRange(TestCase):
                     option_name="key",
                     option_value="6",
                     allowed_values="-5..5",
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
                 ),
             ]
         )
@@ -1013,6 +1183,8 @@ class ValueIpAddress(TestCase):
                     option_name="key",
                     option_value="abcd",
                     allowed_values="an IP address",
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
                 ),
             ]
         )
@@ -1034,6 +1206,8 @@ class ValueNonnegativeInteger(TestCase):
                     option_name="key",
                     option_value="-10",
                     allowed_values="a non-negative integer",
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
                 ),
             ]
         )
@@ -1063,6 +1237,8 @@ class ValueNotEmpty(TestCase):
                     option_name="key",
                     option_value="",
                     allowed_values="description",
+                    cannot_be_empty=True,
+                    forbidden_characters=None,
                 ),
             ]
         )
@@ -1084,6 +1260,8 @@ class ValuePortNumber(TestCase):
                     option_name="key",
                     option_value="65536",
                     allowed_values="a port number (1..65535)",
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
                 ),
             ]
         )
@@ -1105,6 +1283,8 @@ class ValuePortRange(TestCase):
                     option_name="key",
                     option_value="10-20-30",
                     allowed_values="port-port",
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
                 ),
             ]
         )
@@ -1118,6 +1298,8 @@ class ValuePortRange(TestCase):
                     option_name="key",
                     option_value="0-100",
                     allowed_values="port-port",
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
                 ),
             ]
         )
@@ -1131,6 +1313,8 @@ class ValuePortRange(TestCase):
                     option_name="key",
                     option_value="100-65536",
                     allowed_values="port-port",
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
                 ),
             ]
         )
@@ -1152,6 +1336,8 @@ class ValuePositiveInteger(TestCase):
                     option_name="key",
                     option_value="0",
                     allowed_values="a positive integer",
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
                 ),
             ]
         )
@@ -1174,6 +1360,8 @@ class ValueTimeInterval(TestCase):
                     option_name="a",
                     option_value="invalid_value",
                     allowed_values="time interval (e.g. 1, 2s, 3m, 4h, ...)",
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
                 ),
             ]
         )
@@ -1188,9 +1376,13 @@ class IsInteger(TestCase):
         self.assertTrue(validate.is_integer("-1"))
         self.assertTrue(validate.is_integer(+1))
         self.assertTrue(validate.is_integer("+1"))
-        self.assertTrue(validate.is_integer(" 1"))
-        self.assertTrue(validate.is_integer("-1 "))
-        self.assertTrue(validate.is_integer("+1 "))
+
+        self.assertFalse(validate.is_integer(" 1"))
+        self.assertFalse(validate.is_integer("\n-1"))
+        self.assertFalse(validate.is_integer("\r+1"))
+        self.assertFalse(validate.is_integer("1\n"))
+        self.assertFalse(validate.is_integer("-1 "))
+        self.assertFalse(validate.is_integer("+1\r"))
 
         self.assertFalse(validate.is_integer(""))
         self.assertFalse(validate.is_integer("1a"))
@@ -1240,6 +1432,7 @@ class IsIpv4Address(TestCase):
         self.assertFalse(validate.is_ipv4_address("192 168 1 1"))
         self.assertFalse(validate.is_ipv4_address("3232235521"))
         self.assertFalse(validate.is_ipv4_address("::1"))
+        self.assertFalse(validate.is_ipv4_address(1234))
 
 class IsIpv6Address(TestCase):
     def test_valid(self):
@@ -1249,6 +1442,7 @@ class IsIpv6Address(TestCase):
     def test_bad(self):
         self.assertFalse(validate.is_ipv6_address("abcd"))
         self.assertFalse(validate.is_ipv6_address("192.168.1.1"))
+        self.assertFalse(validate.is_ipv6_address(1234))
 
 class IsPortNumber(TestCase):
     def test_valid_port(self):
@@ -1257,13 +1451,13 @@ class IsPortNumber(TestCase):
         self.assertTrue(validate.is_port_number(65535))
         self.assertTrue(validate.is_port_number("65535"))
         self.assertTrue(validate.is_port_number(8192))
-        self.assertTrue(validate.is_port_number(" 8192 "))
 
     def test_bad_port(self):
         self.assertFalse(validate.is_port_number(0))
         self.assertFalse(validate.is_port_number("0"))
         self.assertFalse(validate.is_port_number(65536))
         self.assertFalse(validate.is_port_number("65536"))
+        self.assertFalse(validate.is_port_number(" 8192 "))
         self.assertFalse(validate.is_port_number(-128))
         self.assertFalse(validate.is_port_number("-128"))
         self.assertFalse(validate.is_port_number("abcd"))

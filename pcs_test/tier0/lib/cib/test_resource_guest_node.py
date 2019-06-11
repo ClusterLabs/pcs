@@ -160,6 +160,8 @@ class ValidateOptions(TestCase):
                     {
                         "option_name": "remote-connect-timeout",
                         "option_value": "invalid",
+                        "cannot_be_empty": False,
+                        "forbidden_characters": None,
                     },
                     None
                 ),

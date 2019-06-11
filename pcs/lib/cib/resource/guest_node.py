@@ -60,7 +60,7 @@ def validate_set_as_guest(
     return (
         validate.ValidatorAll(validator_list).validate(options)
         +
-        validate.ValueNotEmpty("node name", "no empty value")
+        validate.ValueNotEmpty("node name", None)
             .validate({"node name": node_name.strip()})
         +
         validate_conflicts(

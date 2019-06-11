@@ -841,13 +841,17 @@ class Validation(TestCase):
                     report_codes.INVALID_OPTION_VALUE,
                     option_value="",
                     option_name="cluster name",
-                    allowed_values="a non-empty string"
+                    allowed_values=None,
+                    cannot_be_empty=True,
+                    forbidden_characters=None,
                 ),
                 fixture.error(
                     report_codes.INVALID_OPTION_VALUE,
                     option_value="tcp",
                     option_name="transport",
-                    allowed_values=("knet", "udp", "udpu")
+                    allowed_values=("knet", "udp", "udpu"),
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
                 ),
                 fixture.error(
                     report_codes.COROSYNC_NODES_MISSING
@@ -1741,7 +1745,9 @@ class Validation(TestCase):
                     report_codes.INVALID_OPTION_VALUE,
                     option_value="tcp",
                     option_name="transport",
-                    allowed_values=("knet", "udp", "udpu")
+                    allowed_values=("knet", "udp", "udpu"),
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
                 ),
                 fixture.error(
                     report_codes.WAIT_FOR_NODE_STARTUP_WITHOUT_START,

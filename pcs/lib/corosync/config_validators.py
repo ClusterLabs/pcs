@@ -12,7 +12,6 @@ from pcs.lib.corosync.node import(
     ADDR_UNRESOLVABLE,
     get_address_type
 )
-from pcs.lib.errors import ReportItemSeverity
 
 _QDEVICE_NET_REQUIRED_OPTIONS = (
     "algorithm",
@@ -48,11 +47,11 @@ def create(
     # cluster name and transport validation
     validators = [
         validate.ValueNotEmpty(
-            "name",
-            "a non-empty string",
-            option_name_for_report="cluster name"
+            "name", None, option_name_for_report="cluster name"
         ),
-        validate.ValueIn("transport", constants.TRANSPORTS_ALL)
+        validate.ValueCorosyncValue("name"),
+        validate.ValueIn("transport", constants.TRANSPORTS_ALL),
+        validate.ValueCorosyncValue("transport"),
     ]
     report_items = validate.ValidatorAll(validators).validate({
         "name": cluster_name,
@@ -120,7 +119,6 @@ def create(
                 addr_types, unresolvable_addresses, report_items
             )
         addr_types_per_node.append(addr_types)
-    # Report all unresolvable addresses at once instead on each own.
     # Report all empty and unresolvable addresses at once instead on each own.
     if nodes_with_empty_addr:
         report_items.append(
@@ -186,14 +184,13 @@ def create(
     return report_items
 
 def _get_node_name_validators(node_index):
+    _type = f"node {node_index}"
+    _name = f"node {node_index} name"
     return [
         validate.NamesIn(["addrs", "name"], option_type="node"),
-        validate.IsRequiredAll(["name"], option_type=f"node {node_index}"),
-        validate.ValueNotEmpty(
-            "name",
-            "a non-empty string",
-            option_name_for_report=f"node {node_index} name"
-        ),
+        validate.IsRequiredAll(["name"], option_type=_type),
+        validate.ValueNotEmpty("name", None, option_name_for_report=_name),
+        validate.ValueCorosyncValue("name", option_name_for_report=_name),
     ]
 
 def _addr_type_analyzer():
@@ -255,6 +252,9 @@ def _validate_addr_type(
                 addr, ADDR_IPV4, link_number=link_index
             )
         )
+    report_items += validate.ValueCorosyncValue(
+        "addr", option_name_for_report="node address"
+    ).validate({"addr": addr})
 
 def _report_unresolvable_addresses_if_any(
     unresolvable_addresses, force_unresolvable
@@ -366,6 +366,9 @@ def add_nodes(
                         existing_addr_types[link_index].link,
                     )
                 )
+            report_items += validate.ValueCorosyncValue(
+                "addr", option_name_for_report="node address"
+            ).validate({"addr": addr})
 
         new_addr_types_per_node.append(addr_types)
     # Report all empty and unresolvable addresses at once instead on each own.
@@ -473,7 +476,7 @@ def _check_link_options_count(link_count, max_allowed_link_count):
         )
     return report_items
 
-def _get_link_options_validators_udp(allow_empty_values=False):
+def _get_link_options_validators_udp(options, allow_empty_values=False):
     # This only returns validators checking single values. Add checks for
     # intervalues relationships as needed.
     validators = [
@@ -486,13 +489,19 @@ def _get_link_options_validators_udp(allow_empty_values=False):
     if allow_empty_values:
         for val in validators:
             val.empty_string_valid = True
-    return [
-        validate.NamesIn(constants.LINK_OPTIONS_UDP, option_type="link")
-    ] + validators
+    return (
+        [
+            validate.NamesIn(constants.LINK_OPTIONS_UDP, option_type="link")
+        ]
+        +
+        _get_unsuitable_keys_and_values_validators(options, option_type="link")
+        +
+        validators
+    )
 
 def _update_link_options_udp(new_options, current_options):
     report_items = validate.ValidatorAll(
-        _get_link_options_validators_udp(allow_empty_values=True)
+        _get_link_options_validators_udp(new_options, allow_empty_values=True)
     ).validate(new_options)
 
     # default values taken from `man corosync.conf`
@@ -528,7 +537,7 @@ def create_link_list_udp(link_list, max_allowed_link_count):
 
     options = link_list[0]
     report_items = validate.ValidatorAll(
-        _get_link_options_validators_udp(allow_empty_values=False)
+        _get_link_options_validators_udp(options, allow_empty_values=False)
     ).validate(options)
     # default values taken from `man corosync.conf`
     if options.get("broadcast", "0") == "1" and "mcastaddr" in options:
@@ -590,7 +599,7 @@ def create_link_list_knet(link_list, max_allowed_link_count):
     return report_items
 
 def _get_link_options_validators_knet(
-    allow_empty_values=False, including_linknumber=True
+    options, allow_empty_values=False, including_linknumber=True
 ):
     # This only returns validators checking single values. Add checks for
     # intervalues relationships as needed.
@@ -620,7 +629,15 @@ def _get_link_options_validators_knet(
     if allow_empty_values:
         for val in validators:
             val.empty_string_valid = True
-    return [validate.NamesIn(allowed_options, option_type="link")] + validators
+    return (
+        [
+            validate.NamesIn(allowed_options, option_type="link")
+        ]
+        +
+        _get_unsuitable_keys_and_values_validators(options, option_type="link")
+        +
+        validators
+    )
 
 def _get_link_options_validators_knet_relations():
     types = dict(option_type="link", prerequisite_type="link")
@@ -632,7 +649,7 @@ def _get_link_options_validators_knet_relations():
 def _add_link_options_knet(options):
     return validate.ValidatorAll(
         _get_link_options_validators_knet(
-            allow_empty_values=False, including_linknumber=True
+            options, allow_empty_values=False, including_linknumber=True
         )
         +
         _get_link_options_validators_knet_relations()
@@ -656,7 +673,7 @@ def _update_link_options_knet(new_options, current_options):
     return (
         validate.ValidatorAll(
             _get_link_options_validators_knet(
-                allow_empty_values=True, including_linknumber=False
+                new_options, allow_empty_values=True, including_linknumber=False
             )
         ).validate(new_options)
         +
@@ -989,7 +1006,9 @@ def create_transport_udp(generic_options, compression_options, crypto_options):
         validate.NamesIn(allowed_options, option_type="udp/udpu transport"),
         validate.ValueIn("ip_version", constants.IP_VERSION_VALUES),
         validate.ValuePositiveInteger("netmtu"),
-    ]
+    ] + _get_unsuitable_keys_and_values_validators(
+        generic_options, option_type="udp/udpu transport"
+    )
     report_items = validate.ValidatorAll(validators).validate(generic_options)
 
     if compression_options:
@@ -1035,7 +1054,9 @@ def create_transport_knet(generic_options, compression_options, crypto_options):
         validate.ValueIn("ip_version", constants.IP_VERSION_VALUES),
         validate.ValueNonnegativeInteger("knet_pmtud_interval"),
         validate.ValueIn("link_mode", ("active", "passive", "rr")),
-    ]
+    ] + _get_unsuitable_keys_and_values_validators(
+        generic_options, option_type="knet transport"
+    )
 
     compression_allowed = [
         "level",
@@ -1050,7 +1071,9 @@ def create_transport_knet(generic_options, compression_options, crypto_options):
             "a compression model e.g. zlib, lz4 or bzip2"
         ),
         validate.ValueNonnegativeInteger("threshold"),
-    ]
+    ] + _get_unsuitable_keys_and_values_validators(
+        compression_options, option_type="compression"
+    )
 
     crypto_allowed = [
         "cipher",
@@ -1068,7 +1091,9 @@ def create_transport_knet(generic_options, compression_options, crypto_options):
             ("none", "md5", "sha1", "sha256", "sha384", "sha512")
         ),
         validate.ValueIn("model", ("nss", "openssl")),
-    ]
+    ] + _get_unsuitable_keys_and_values_validators(
+        crypto_options, option_type="crypto"
+    )
 
     report_items = (
         validate.ValidatorAll(generic_validators).validate(generic_options)
@@ -1145,7 +1170,7 @@ def create_totem(options):
         validate.ValueNonnegativeInteger("token_retransmit"),
         validate.ValueNonnegativeInteger("token_retransmits_before_loss_const"),
         validate.ValueNonnegativeInteger("window_size"),
-    ]
+    ] + _get_unsuitable_keys_and_values_validators(options, option_type="totem")
     return validate.ValidatorAll(validators).validate(options)
 
 def create_quorum_options(options, has_qdevice):
@@ -1221,7 +1246,9 @@ def update_quorum_options(options, has_qdevice, current_options):
 
 def _validate_quorum_options(options, has_qdevice, allow_empty_values):
     report_items = validate.ValidatorAll(
-        _get_quorum_options_validators(allow_empty_values=allow_empty_values)
+        _get_quorum_options_validators(
+            options, allow_empty_values=allow_empty_values
+        )
     ).validate(options)
 
     if has_qdevice:
@@ -1238,7 +1265,7 @@ def _validate_quorum_options(options, has_qdevice, allow_empty_values):
 
     return report_items
 
-def _get_quorum_options_validators(allow_empty_values=False):
+def _get_quorum_options_validators(options, allow_empty_values=False):
     allowed_bool = ("0", "1")
     validators = [
         validate.ValueIn("auto_tie_breaker", allowed_bool),
@@ -1249,9 +1276,17 @@ def _get_quorum_options_validators(allow_empty_values=False):
     if allow_empty_values:
         for val in validators:
             val.empty_string_valid = True
-    return [
-        validate.NamesIn(constants.QUORUM_OPTIONS, option_type="quorum")
-    ] + validators
+    return (
+        [
+            validate.NamesIn(constants.QUORUM_OPTIONS, option_type="quorum")
+        ]
+        +
+        _get_unsuitable_keys_and_values_validators(
+            options, option_type="quorum"
+        )
+        +
+        validators
+    )
 
 def add_quorum_device(
     model, model_options, generic_options, heuristics_options, node_ids,
@@ -1268,8 +1303,6 @@ def add_quorum_device(
     bool force_model -- continue even if the model is not valid
     bool force_options -- turn forceable errors into warnings
     """
-    report_items = []
-
     model_validators = {
         "net": lambda: _qdevice_add_model_net_options(
             model_options,
@@ -1278,20 +1311,33 @@ def add_quorum_device(
         ),
     }
     if model in model_validators:
-        report_items += model_validators[model]()
+        model_report_items = model_validators[model]()
     else:
-        report_items += validate.ValueIn(
-            "model",
-            list(model_validators.keys()),
-            **validate.set_warning(
-                report_codes.FORCE_QDEVICE_MODEL, force_model
-            )
-        ).validate({"model": model})
+        model_report_items = validate.ValidatorAll([
+            validate.ValueIn(
+                "model",
+                list(model_validators.keys()),
+                **validate.set_warning(
+                    report_codes.FORCE_QDEVICE_MODEL, force_model
+                )
+            ),
+            validate.ValueCorosyncValue("model"),
+        ]).validate({"model": model})
+
     return (
-        report_items
+        model_report_items
         +
         validate.ValidatorAll(
-            _get_qdevice_generic_options_validators(force_options=force_options)
+            _get_unsuitable_keys_and_values_validators(
+                model_options, "quorum device model"
+            )
+        ).validate(model_options)
+        +
+        validate.ValidatorAll(
+            _get_qdevice_generic_options_validators(
+                generic_options,
+                force_options=force_options
+            )
         ).validate(generic_options)
         +
         _qdevice_add_heuristics_options(heuristics_options, force_options)
@@ -1311,8 +1357,6 @@ def update_quorum_device(
     list node_ids -- list of existing node ids
     bool force_options -- turn forceable errors into warnings
     """
-    report_items = []
-
     model_validators = {
         "net": lambda: _qdevice_update_model_net_options(
             model_options,
@@ -1321,12 +1365,22 @@ def update_quorum_device(
         ),
     }
     if model in model_validators:
-        report_items += model_validators[model]()
+        model_report_items = model_validators[model]()
+    else:
+        model_report_items = []
+
     return (
-        report_items
+        model_report_items
+        +
+        validate.ValidatorAll(
+            _get_unsuitable_keys_and_values_validators(
+                model_options, "quorum device model"
+            )
+        ).validate(model_options)
         +
         validate.ValidatorAll(
             _get_qdevice_generic_options_validators(
+                generic_options,
                 allow_empty_values=True,
                 force_options=force_options
             )
@@ -1346,19 +1400,18 @@ def _qdevice_add_heuristics_options(options, force_options=False):
     validators_nonexec = _get_qdevice_heuristics_nonexec_options_validators(
         force_options=force_options
     )
-    exec_options_reports, valid_exec_options = (
-        _validate_heuristics_exec_option_names(options_exec)
-    )
     validators_exec = [
         validate.ValueNotEmpty(option, "a command to be run")
-        for option in valid_exec_options
+        for option in options_exec
     ]
     return (
+        validate.ValidatorAll(
+            _get_unsuitable_keys_and_values_validators(options, "heuristics")
+        ).validate(options)
+        +
         validate.ValidatorAll(validators_nonexec).validate(options_nonexec)
         +
         validate.ValidatorAll(validators_exec).validate(options_exec)
-        +
-        exec_options_reports
     )
 
 def _qdevice_update_heuristics_options(options, force_options=False):
@@ -1368,20 +1421,21 @@ def _qdevice_update_heuristics_options(options, force_options=False):
     dict options -- heuristics options
     bool force_options -- turn forceable errors into warnings
     """
-    options_nonexec, options_exec = _split_heuristics_exec_options(options)
+    options_nonexec, dummy_options_exec = _split_heuristics_exec_options(
+        options
+    )
     validators_nonexec = _get_qdevice_heuristics_nonexec_options_validators(
         allow_empty_values=True,
         force_options=force_options
     )
-    # No validation necessary for values of valid exec options - they are
-    # either empty (meaning they will be removed) or nonempty strings.
-    exec_options_reports, dummy_valid_exec_options = (
-        _validate_heuristics_exec_option_names(options_exec)
-    )
+    # No validation necessary for values of exec options - they are either
+    # empty (meaning they will be removed) or nonempty strings.
     return (
-        validate.ValidatorAll(validators_nonexec).validate(options_nonexec)
+        validate.ValidatorAll(
+            _get_unsuitable_keys_and_values_validators(options, "heuristics")
+        ).validate(options)
         +
-        exec_options_reports
+        validate.ValidatorAll(validators_nonexec).validate(options_nonexec)
     )
 
 def _qdevice_add_model_net_options(options, node_ids, force_options=False):
@@ -1422,7 +1476,7 @@ def _qdevice_update_model_net_options(options, node_ids, force_options=False):
     ).validate(options)
 
 def _get_qdevice_generic_options_validators(
-    allow_empty_values=False, force_options=False
+    options, allow_empty_values=False, force_options=False
 ):
     kwargs = validate.set_warning(report_codes.FORCE_OPTIONS, force_options)
 
@@ -1434,14 +1488,20 @@ def _get_qdevice_generic_options_validators(
         for val in validators:
             val.empty_string_valid = True
 
-    return [
-        validate.NamesIn(
-            ["sync_timeout", "timeout"],
-            option_type="quorum device",
-            banned_name_list=["model"],
-            **kwargs
-        )
-    ] + validators
+    return (
+        [
+            validate.NamesIn(
+                ["sync_timeout", "timeout"],
+                option_type="quorum device",
+                banned_name_list=["model"],
+                **kwargs
+            )
+        ]
+        +
+        _get_unsuitable_keys_and_values_validators(options, "quorum device")
+        +
+        validators
+    )
 
 def _split_heuristics_exec_options(options):
     options_exec = dict()
@@ -1482,31 +1542,6 @@ def _get_qdevice_heuristics_nonexec_options_validators(
             **kwargs
         )
     ] + validators
-
-def _validate_heuristics_exec_option_names(options_exec):
-    # We must be strict and do not allow to override this validation,
-    # otherwise setting a cratfed exec_NAME could be misused for setting
-    # arbitrary corosync.conf settings.
-    regexp = constants.QUORUM_DEVICE_HEURISTICS_EXEC_NAME_RE
-    report_list = []
-    valid_options = []
-    not_valid_options = []
-    for name in options_exec:
-        if regexp.match(name) is None:
-            not_valid_options.append(name)
-        else:
-            valid_options.append(name)
-    if not_valid_options:
-        report_list.append(
-            reports.invalid_userdefined_options(
-                not_valid_options,
-                "exec_NAME may contain a-z A-Z 0-9 /_- characters only",
-                "heuristics",
-                severity=ReportItemSeverity.ERROR,
-                forceable=None
-            )
-        )
-    return report_list, valid_options
 
 def _get_qdevice_model_net_options_validators(
     node_ids, allow_empty_values=False, force_options=False
@@ -1556,3 +1591,10 @@ def _get_option_after_update(
             return default_value
         return new_options[option_name]
     return current_options.get(option_name, default_value)
+
+def _get_unsuitable_keys_and_values_validators(option_dict, option_type=None):
+    return (
+        [validate.CorosyncOption(option_type=option_type)]
+        +
+        [validate.ValueCorosyncValue(name) for name in option_dict]
+    )

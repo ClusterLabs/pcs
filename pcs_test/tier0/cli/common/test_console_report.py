@@ -56,7 +56,9 @@ class BuildInvalidOptionsMessageTest(NameBuildTest):
     code = codes.INVALID_OPTIONS
     def test_build_message_with_type(self):
         self.assert_message_from_info(
-            "invalid TYPE option 'NAME', allowed options are: FIRST, SECOND",
+            "invalid TYPE option 'NAME', allowed options are: 'FIRST', "
+                "'SECOND'"
+            ,
             {
                 "option_names": ["NAME"],
                 "option_type": "TYPE",
@@ -67,7 +69,7 @@ class BuildInvalidOptionsMessageTest(NameBuildTest):
 
     def test_build_message_without_type(self):
         self.assert_message_from_info(
-            "invalid option 'NAME', allowed options are: FIRST, SECOND",
+            "invalid option 'NAME', allowed options are: 'FIRST', 'SECOND'",
             {
                 "option_names": ["NAME"],
                 "option_type": "",
@@ -78,7 +80,7 @@ class BuildInvalidOptionsMessageTest(NameBuildTest):
 
     def test_build_message_with_multiple_names(self):
         self.assert_message_from_info(
-            "invalid options: 'ANOTHER', 'NAME', allowed option is FIRST",
+            "invalid options: 'ANOTHER', 'NAME', allowed option is 'FIRST'",
             {
                 "option_names": ["NAME", "ANOTHER"],
                 "option_type": "",
@@ -91,7 +93,7 @@ class BuildInvalidOptionsMessageTest(NameBuildTest):
         self.assert_message_from_info(
             (
                 "invalid option 'NAME', allowed are options matching patterns: "
-                "exec_<name>"
+                "'exec_<name>'"
             ),
             {
                 "option_names": ["NAME"],
@@ -104,8 +106,8 @@ class BuildInvalidOptionsMessageTest(NameBuildTest):
     def test_allowed_and_patterns(self):
         self.assert_message_from_info(
             (
-                "invalid option 'NAME', allowed option is FIRST and options "
-                "matching patterns: exec_<name>"
+                "invalid option 'NAME', allowed option is 'FIRST' and options "
+                "matching patterns: 'exec_<name>'"
             ),
             {
                 "option_names": ["NAME"],
@@ -129,45 +131,37 @@ class BuildInvalidOptionsMessageTest(NameBuildTest):
 
 class InvalidUserdefinedOptions(NameBuildTest):
     code = codes.INVALID_USERDEFINED_OPTIONS
-
     def test_without_type(self):
-        self.assert_message_from_info(
+        self.assert_message_from_report(
             (
-                "invalid option 'exec_NAME', "
-                "exec_NAME cannot contain . and whitespace characters"
+                "invalid option 'exec_NAME', options may contain "
+                "a-z A-Z 0-9 /_- characters only"
             ),
-            {
-                "option_names": ["exec_NAME"],
-                "option_type": "",
-                "allowed_description":
-                    "exec_NAME cannot contain . and whitespace characters"
-                ,
-            }
+            reports.invalid_userdefined_options(
+                ["exec_NAME"], "", "a-z A-Z 0-9 /_-"
+            )
         )
 
     def test_with_type(self):
-        self.assert_message_from_info(
+        self.assert_message_from_report(
             (
-                "invalid heuristics option 'exec_NAME', "
-                "exec_NAME cannot contain . and whitespace characters"
+                "invalid heuristics option 'exec_NAME', heuristics options may "
+                "contain a-z A-Z 0-9 /_- characters only"
             ),
-            {
-                "option_names": ["exec_NAME"],
-                "option_type": "heuristics",
-                "allowed_description":
-                    "exec_NAME cannot contain . and whitespace characters"
-                ,
-            }
+            reports.invalid_userdefined_options(
+                ["exec_NAME"], "heuristics", "a-z A-Z 0-9 /_-"
+            )
         )
 
     def test_more_options(self):
-        self.assert_message_from_info(
-            "invalid TYPE options: 'ANOTHER', 'NAME', DESC",
-            {
-                "option_names": ["NAME", "ANOTHER"],
-                "option_type": "TYPE",
-                "allowed_description": "DESC",
-            }
+        self.assert_message_from_report(
+            (
+                "invalid TYPE options: 'ANOTHER', 'NAME', TYPE options may "
+                "contain a-z A-Z 0-9 /_- characters only"
+            ),
+            reports.invalid_userdefined_options(
+                ["NAME", "ANOTHER"], "TYPE", "a-z A-Z 0-9 /_-"
+            )
         )
 
 
@@ -202,24 +196,58 @@ class RequiredOptionsAreMissing(NameBuildTest):
 
 class BuildInvalidOptionValueMessageTest(NameBuildTest):
     code = codes.INVALID_OPTION_VALUE
-    def test_build_message_with_multiple_allowed_values(self):
-        self.assert_message_from_info(
-            "'VALUE' is not a valid NAME value, use FIRST, SECOND",
-            {
-                "option_name": "NAME",
-                "option_value": "VALUE",
-                "allowed_values": sorted(["FIRST", "SECOND"]),
-            }
+    def test_multiple_allowed_values(self):
+        self.assert_message_from_report(
+            "'VALUE' is not a valid NAME value, use 'FIRST', 'SECOND'",
+            reports.invalid_option_value("NAME", "VALUE", ["SECOND", "FIRST"])
         )
 
-    def test_build_message_with_hint(self):
-        self.assert_message_from_info(
+    def test_textual_hint(self):
+        self.assert_message_from_report(
             "'VALUE' is not a valid NAME value, use some hint",
-            {
-                "option_name": "NAME",
-                "option_value": "VALUE",
-                "allowed_values": "some hint",
-            }
+            reports.invalid_option_value("NAME", "VALUE", "some hint")
+        )
+
+    def test_cannot_be_empty(self):
+        self.assert_message_from_report(
+            "NAME cannot be empty",
+            reports.invalid_option_value(
+                "NAME", "VALUE", None, cannot_be_empty=True
+            )
+        )
+
+    def test_cannot_be_empty_with_hint(self):
+        self.assert_message_from_report(
+            "NAME cannot be empty, use 'FIRST', 'SECOND'",
+            reports.invalid_option_value(
+                "NAME", "VALUE", ["SECOND", "FIRST"], cannot_be_empty=True
+            )
+        )
+
+    def test_forbidden_characters(self):
+        self.assert_message_from_report(
+            r"NAME cannot contain }{\r\n characters",
+            reports.invalid_option_value(
+                "NAME", "VALUE", None, forbidden_characters="}{\\r\\n"
+            )
+        )
+
+    def test_forbidden_characters_with_hint(self):
+        self.assert_message_from_report(
+            r"NAME cannot contain }{\r\n characters, use 'FIRST', 'SECOND'",
+            reports.invalid_option_value(
+                "NAME", "VALUE", ["SECOND", "FIRST"],
+                forbidden_characters="}{\\r\\n"
+            )
+        )
+
+    def test_cannot_be_empty_and_forbidden_characters(self):
+        self.assert_message_from_report(
+            "NAME cannot be empty, use 'FIRST', 'SECOND'",
+            reports.invalid_option_value(
+                "NAME", "VALUE", ["SECOND", "FIRST"], cannot_be_empty=True,
+                forbidden_characters="{}"
+            )
         )
 
 class BuildServiceStartErrorTest(NameBuildTest):
@@ -491,7 +519,7 @@ class InvalidOptionType(NameBuildTest):
 
     def test_allowed_list(self):
         self.assert_message_from_info(
-            "specified option name is not valid, use allowed, types",
+            "specified option name is not valid, use 'allowed', 'types'",
             {
                 "option_name": "option name",
                 "allowed_types": ["allowed", "types"],
@@ -3724,4 +3752,106 @@ class ResourceUnmoveUnbanPcmkExpiredNotSupported(NameBuildTest):
         self.assert_message_from_report(
             "--expired is not supported, please upgrade pacemaker",
             reports.resource_unmove_unban_pcmk_expired_not_supported()
+        )
+
+class CorosyncConfigCannotSaveInvalidNamesValues(NameBuildTest):
+    code = codes.COROSYNC_CONFIG_CANNOT_SAVE_INVALID_NAMES_VALUES
+    def test_empty(self):
+        self.assert_message_from_report(
+            "Cannot save corosync.conf containing invalid section names, "
+                "option names or option values"
+            ,
+            reports.corosync_config_cannot_save_invalid_names_values(
+                [],
+                [],
+                []
+            )
+        )
+
+    def test_one_section(self):
+        self.assert_message_from_report(
+            "Cannot save corosync.conf containing "
+                "invalid section name(s): 'SECTION'"
+            ,
+            reports.corosync_config_cannot_save_invalid_names_values(
+                ["SECTION"],
+                [],
+                []
+            )
+        )
+
+    def test_more_sections(self):
+        self.assert_message_from_report(
+            "Cannot save corosync.conf containing "
+                "invalid section name(s): 'SECTION1', 'SECTION2'"
+            ,
+            reports.corosync_config_cannot_save_invalid_names_values(
+                ["SECTION1", "SECTION2"],
+                [],
+                []
+            )
+        )
+
+    def test_one_attr_name(self):
+        self.assert_message_from_report(
+            "Cannot save corosync.conf containing "
+                "invalid option name(s): 'ATTR'"
+            ,
+            reports.corosync_config_cannot_save_invalid_names_values(
+                [],
+                ["ATTR"],
+                []
+            )
+        )
+
+    def test_more_attr_names(self):
+        self.assert_message_from_report(
+            "Cannot save corosync.conf containing "
+                "invalid option name(s): 'ATTR1', 'ATTR2'"
+            ,
+            reports.corosync_config_cannot_save_invalid_names_values(
+                [],
+                ["ATTR1", "ATTR2"],
+                []
+            )
+        )
+
+    def test_one_attr_value(self):
+        self.assert_message_from_report(
+            "Cannot save corosync.conf containing "
+                "invalid option value(s): 'VALUE' (option 'ATTR')"
+            ,
+            reports.corosync_config_cannot_save_invalid_names_values(
+                [],
+                [],
+                [("ATTR", "VALUE")]
+            )
+        )
+
+    def test_more_attr_values(self):
+        self.assert_message_from_report(
+            "Cannot save corosync.conf containing "
+                "invalid option value(s): 'VALUE1' (option 'ATTR1'), "
+                "'VALUE2' (option 'ATTR2')"
+            ,
+            reports.corosync_config_cannot_save_invalid_names_values(
+                [],
+                [],
+                [("ATTR1", "VALUE1"), ("ATTR2", "VALUE2")]
+            )
+        )
+
+    def test_all(self):
+        self.assert_message_from_report(
+            "Cannot save corosync.conf containing "
+                "invalid section name(s): 'SECTION1', 'SECTION2'; "
+                "invalid option name(s): 'ATTR1', 'ATTR2'; "
+                "invalid option value(s): 'VALUE3' (option 'ATTR3'), "
+                "'VALUE4' (option 'ATTR4')"
+            ,
+            reports.corosync_config_cannot_save_invalid_names_values(
+                ["SECTION1", "SECTION2"],
+                ["ATTR1", "ATTR2"],
+                [("ATTR3", "VALUE3"), ("ATTR4", "VALUE4")]
+            )
         )

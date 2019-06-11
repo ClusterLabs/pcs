@@ -78,6 +78,8 @@ class ValidatePermissionsTest(LibraryAclTest):
                     "option_value": "unknown",
                     "option_name": "permission",
                     "allowed_values": self.allowed_permissions,
+                    "cannot_be_empty": False,
+                    "forbidden_characters": None,
                 },
                 None
             ),
@@ -88,6 +90,8 @@ class ValidatePermissionsTest(LibraryAclTest):
                     "option_value": "allow",
                     "option_name": "permission",
                     "allowed_values": self.allowed_permissions,
+                    "cannot_be_empty": False,
+                    "forbidden_characters": None,
                 },
                 None
             )
@@ -109,6 +113,8 @@ class ValidatePermissionsTest(LibraryAclTest):
                     "option_value": "not_id",
                     "option_name": "scope type",
                     "allowed_values": self.allowed_scopes,
+                    "cannot_be_empty": False,
+                    "forbidden_characters": None,
                 },
                 None
             ),
@@ -119,6 +125,8 @@ class ValidatePermissionsTest(LibraryAclTest):
                     "option_value": "not_xpath",
                     "option_name": "scope type",
                     "allowed_values": self.allowed_scopes,
+                    "cannot_be_empty": False,
+                    "forbidden_characters": None,
                 },
                 None
             )

@@ -4275,7 +4275,7 @@ class MetaAttrs(
                 " test5=test5a test6=test6a"
             ,
             "Warning: invalid resource options: 'test', 'test2', allowed"
-                " options are: fake, state, trace_file, trace_ra\n"
+                " options are: 'fake', 'state', 'trace_file', 'trace_ra'\n"
         )
 
         self.assert_pcs_success(
@@ -4283,7 +4283,7 @@ class MetaAttrs(
                 " test=testA test2=test2a op monitor interval=30"
             ,
             "Warning: invalid resource options: 'test', 'test2', allowed"
-                " options are: fake, state, trace_file, trace_ra\n"
+                " options are: 'fake', 'state', 'trace_file', 'trace_ra'\n"
         )
 
         self.assert_pcs_success(
@@ -4445,8 +4445,8 @@ class UpdateInstanceAttrs(
                 " meta test7=test7a test6="
             ,
             "Error: invalid resource options: 'test', 'test2', 'test4',"
-                " allowed options are: fake, state, trace_file, trace_ra, "
-                "use --force to override\n"
+                " allowed options are: 'fake', 'state', 'trace_file', "
+                "'trace_ra', use --force to override\n"
         )
 
         self.assert_pcs_success(
@@ -4455,20 +4455,22 @@ class UpdateInstanceAttrs(
                 " meta test7=test7a test6="
             ,
             "Warning: invalid resource options: 'test', 'test2', 'test4',"
-                " allowed options are: fake, state, trace_file, trace_ra\n"
+                " allowed options are: 'fake', 'state', 'trace_file', "
+                "'trace_ra'\n"
         )
 
         self.assert_pcs_fail(
             "resource update D0 test=testA test2=testB test3=testD",
             "Error: invalid resource option 'test3', allowed options"
-                " are: fake, state, trace_file, trace_ra, use --force to"
-                " override\n"
+                " are: 'fake', 'state', 'trace_file', 'trace_ra', use --force "
+                "to override\n"
         )
 
         self.assert_pcs_success(
             "resource update D0 test=testB test2=testC test3=testD --force",
             "Warning: invalid resource option 'test3',"
-                " allowed options are: fake, state, trace_file, trace_ra\n"
+                " allowed options are: 'fake', 'state', 'trace_file', "
+                "'trace_ra'\n"
         )
 
         self.assert_pcs_success("resource config D0", outdent(

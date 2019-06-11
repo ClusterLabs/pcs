@@ -16,6 +16,7 @@ from pcs_test.tools.misc import (
 
 from pcs.common import report_codes
 from pcs.lib.corosync.config_facade import ConfigFacade as CorosyncConfigFacade
+from pcs.lib.corosync.config_parser import Section as CorosyncSection
 from pcs.lib.env import LibraryEnvironment
 from pcs.lib.errors import ReportItemSeverity as severity
 
@@ -1231,6 +1232,83 @@ class PushCorosyncConfFile(TestCase):
         env.push_corosync_conf(
             CorosyncConfigFacade.from_string(new_corosync_conf_data)
         )
+
+
+class PushCorosyncConfBadCharsMixin():
+    def test_bad_section(self):
+        section = CorosyncSection("sec#tion")
+        section.add_attribute("name", "value")
+        new_conf = CorosyncConfigFacade(section)
+
+        env = self.env_assistant.get_env()
+        assert_raise_library_error(
+            lambda: env.push_corosync_conf(new_conf),
+            fixture.error(
+                report_codes.COROSYNC_CONFIG_CANNOT_SAVE_INVALID_NAMES_VALUES,
+                section_name_list=["sec#tion"],
+                attribute_name_list=[],
+                attribute_value_pairs=[],
+            )
+        )
+
+    def test_bad_attr(self):
+        section = CorosyncSection("section")
+        section.add_attribute("na#me", "value")
+        new_conf = CorosyncConfigFacade(section)
+
+        env = self.env_assistant.get_env()
+        assert_raise_library_error(
+            lambda: env.push_corosync_conf(new_conf),
+            fixture.error(
+                report_codes.COROSYNC_CONFIG_CANNOT_SAVE_INVALID_NAMES_VALUES,
+                section_name_list=[],
+                attribute_name_list=["section.na#me"],
+                attribute_value_pairs=[],
+            )
+        )
+
+    def test_bad_value(self):
+        section = CorosyncSection("section")
+        section.add_attribute("name", "va}l{ue")
+        new_conf = CorosyncConfigFacade(section)
+
+        env = self.env_assistant.get_env()
+        assert_raise_library_error(
+            lambda: env.push_corosync_conf(new_conf),
+            fixture.error(
+                report_codes.COROSYNC_CONFIG_CANNOT_SAVE_INVALID_NAMES_VALUES,
+                section_name_list=[],
+                attribute_name_list=[],
+                attribute_value_pairs=[("section.name", "va}l{ue")],
+            )
+        )
+
+    def test_bad_all(self):
+        section = CorosyncSection("sec#tion")
+        section.add_attribute("na#me", "va}l{ue")
+        new_conf = CorosyncConfigFacade(section)
+
+        env = self.env_assistant.get_env()
+        assert_raise_library_error(
+            lambda: env.push_corosync_conf(new_conf),
+            fixture.error(
+                report_codes.COROSYNC_CONFIG_CANNOT_SAVE_INVALID_NAMES_VALUES,
+                section_name_list=["sec#tion"],
+                attribute_name_list=["sec#tion.na#me"],
+                attribute_value_pairs=[("sec#tion.na#me", "va}l{ue")],
+            )
+        )
+
+
+class PushCorosyncConfBadCharsLive(PushCorosyncConfBadCharsMixin, TestCase):
+    def setUp(self):
+        self.env_assistant, self.config = get_env_tools(self)
+
+
+class PushCorosyncConfBadCharsFile(PushCorosyncConfBadCharsMixin, TestCase):
+    def setUp(self):
+        self.env_assistant, self.config = get_env_tools(self)
+        self.config.env.set_corosync_conf_data("totem {\n    version: 2\n}\n")
 
 
 class GetCorosyncConfFile(TestCase):

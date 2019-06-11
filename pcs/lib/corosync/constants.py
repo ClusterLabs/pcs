@@ -69,4 +69,5 @@ QUORUM_OPTIONS_INCOMPATIBLE_WITH_QDEVICE = (
     "last_man_standing_window",
 )
 
+OPTION_NAME_RE = re.compile(r"^[-_/a-zA-Z0-9]+$")
 QUORUM_DEVICE_HEURISTICS_EXEC_NAME_RE = re.compile(r"^exec_[-_/a-zA-Z0-9]+$")
