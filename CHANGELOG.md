@@ -1,6 +1,6 @@
 # Change Log
 
-## [Unreleased]
+## [0.10.2] - 2019-06-12
 
 ### Added
 - Command `pcs config checkpoint diff` for displaying differences between two
