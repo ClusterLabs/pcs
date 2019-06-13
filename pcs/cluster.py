@@ -547,9 +547,14 @@ def stop_cluster(argv):
         return
 
     if "--force" not in utils.pcs_options:
+        # corosync 3.0.1 and older:
+        # - retval is 0 on success if a node is not in a partition with quorum
+        # - retval is 1 on error OR on success if a node has quorum
+        # corosync 3.0.2 and newer:
+        # - retval is 0 on success if a node has quorum
+        # - retval is 1 on error
+        # - retval is 2 on success if a node is not in a partition with quorum
         output, dummy_retval = utils.run(["corosync-quorumtool", "-p", "-s"])
-        # retval is 0 on success if node is not in partition with quorum
-        # retval is 1 on error OR on success if node has quorum
         try:
             if (
                 corosync_live.QuorumStatus.from_string(output)
