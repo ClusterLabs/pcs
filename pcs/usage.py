@@ -162,6 +162,12 @@ Control and configure pacemaker and corosync.
 Options:
     -h, --help         Display usage and exit.
     -f file            Perform actions on file instead of active CIB.
+                       Commands supporting the option use the initial state of
+                       the specified file as their input and then overwrite the
+                       file with the state reflecting the requested
+                       operation(s).
+                       A few commands only use the specified file in read-only
+                       mode since their effect is not a CIB modification.
     --debug            Print all network traffic and external commands run.
     --version          Print pcs version information. List pcs capabilities if
                        --full is specified.

@@ -13,6 +13,10 @@ Display usage and exit.
 .TP
 \fB\-f\fR file
 Perform actions on file instead of active CIB.
+.br
+Commands supporting the option use the initial state of the specified file as their input and then overwrite the file with the state reflecting the requested operation(s).
+.br
+A few commands only use the specified file in read\-only mode since their effect is not a CIB modification.
 .TP
 \fB\-\-debug\fR
 Print all network traffic and external commands run.
