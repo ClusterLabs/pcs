@@ -852,7 +852,8 @@ module Cfgsync
     fetcher = ConfigFetcher.new(
       PCSAuth.getSuperuserAuth(), [config_new.class], nodes, cluster_name
     )
-    fetched_tokens, _ = fetcher.fetch_all()[config_new.class.name]
+    fetched_configs, _node_connected = fetcher.fetch_all()
+    fetched_tokens = fetched_configs[config_new.class.name]
     config_new = Cfgsync::merge_tokens_files(
       config, fetched_tokens, new_tokens, new_ports
     )
