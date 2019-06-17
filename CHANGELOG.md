@@ -1,5 +1,11 @@
 # Change Log
 
+## [Unreleased]
+
+### Fixed
+- Fixed crashes in the `pcs host auth` command
+
+
 ## [0.10.2] - 2019-06-12
 
 ### Added

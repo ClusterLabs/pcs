@@ -826,7 +826,8 @@ module Cfgsync
       PCSAuth.getSuperuserAuth(), [config_new.class], target_nodes,
       cluster_name, new_hosts
     )
-    fetched_hosts, _ = fetcher.fetch_all()[config_new.class.name]
+    fetched_configs, _node_connected = fetcher.fetch_all()
+    fetched_hosts = fetched_configs[config_new.class.name]
     config_new = Cfgsync::merge_known_host_files(
       config_old, fetched_hosts, new_hosts, remove_hosts_names
     )
