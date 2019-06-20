@@ -578,7 +578,7 @@ def bundle_create(
             resource.common.disable(bundle_element)
 
 def bundle_reset(
-    env, bundle_id, container_type, container_options=None,
+    env, bundle_id, container_options=None,
     network_options=None, port_map=None, storage_map=None, meta_attributes=None,
     force_options=False,
     ensure_disabled=False,
@@ -590,7 +590,6 @@ def bundle_reset(
 
     LibraryEnvironment env -- provides communication with externals
     string bundle_id -- id of the bundle to reset
-    string container_type -- container engine name (docker, lxc...)
     dict container_options -- container options
     dict network_options -- network options
     list of dict port_map -- a list of port mapping options
@@ -621,7 +620,6 @@ def bundle_reset(
         env.report_processor.process_list(
             resource.bundle.validate_reset(
                 id_provider,
-                container_type,
                 container_options,
                 network_options,
                 port_map,
@@ -636,7 +634,6 @@ def bundle_reset(
             bundle_element,
             id_provider,
             bundle_id,
-            container_type,
             container_options,
             network_options,
             port_map,

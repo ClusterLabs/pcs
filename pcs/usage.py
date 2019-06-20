@@ -450,7 +450,7 @@ Commands:
         to start and then return 0 on success or 1 on error. If 'n' is not
         specified it defaults to 60 minutes.
 
-    bundle reset <bundle id> container <container type> [<container options>]
+    bundle reset <bundle id> [container <container options>]
             [network <network options>] [port-map <port options>]...
             [storage-map <storage options>]... [meta <meta options>]
             [--disabled] [--wait[=n]]

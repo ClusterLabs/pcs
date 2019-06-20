@@ -102,6 +102,27 @@ def parse_bundle_create_options(arg_list):
     }
     return parts
 
+def parse_bundle_reset_options(arg_list):
+    """
+    Commandline options: no options
+    """
+    groups = _parse_bundle_groups(arg_list)
+    container_options = groups.get("container", [])
+    parts = {
+        "container": prepare_options(container_options),
+        "network": prepare_options(groups.get("network", [])),
+        "port_map": [
+            prepare_options(port_map)
+            for port_map in groups.get("port-map", [])
+        ],
+        "storage_map": [
+            prepare_options(storage_map)
+            for storage_map in groups.get("storage-map", [])
+        ],
+        "meta": prepare_options(groups.get("meta", []))
+    }
+    return parts
+
 def _split_bundle_map_update_op_and_options(
     map_arg_list, result_parts, map_name
 ):

@@ -24,16 +24,13 @@ class BaseMixin(FixturesMixin):
     def initial_resources(self):
         return self.fixture_resources_bundle_simple
 
-    def bundle_reset(
-        self, bundle_id=None, container_type=None, **params
-    ):
+    def bundle_reset(self, bundle_id=None, **params):
         if "container_options" not in params:
             params["container_options"] = {"image": self.image}
 
         bundle_reset(
             self.env_assist.get_env(),
             bundle_id=bundle_id or self.bundle_id,
-            container_type=container_type or self.container_type,
             **params
         )
 
@@ -211,8 +208,8 @@ class Full(BaseMixin, SetUpMixin, TestCase):
                             <storage-mapping
                                 id="{bundle_id}-storage-map"
                                 options="extra options 2"
-                                source-dir="/tmp/{container_type}2a"
-                                target-dir="/tmp/{container_type}2b"
+                                source-dir="/tmp/{container_type}2aa"
+                                target-dir="/tmp/{container_type}2bb"
                             />
                         </storage>
                         <meta_attributes id="{bundle_id}-meta_attributes">
@@ -251,8 +248,8 @@ class Full(BaseMixin, SetUpMixin, TestCase):
             storage_map=[
                 {
                     "options": "extra options 2",
-                    "source-dir": "/tmp/{0}2a".format(self.container_type),
-                    "target-dir": "/tmp/{0}2b".format(self.container_type),
+                    "source-dir": "/tmp/{0}2aa".format(self.container_type),
+                    "target-dir": "/tmp/{0}2bb".format(self.container_type),
                 },
             ],
             meta_attributes={
