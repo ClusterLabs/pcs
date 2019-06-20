@@ -3,7 +3,9 @@
 ## [Unreleased]
 
 ### Fixed
-- Fixed crashes in the `pcs host auth` command
+- Fixed crashes in the `pcs host auth` command ([rhbz#1676957])
+
+[rhbz#1676957]: https://bugzilla.redhat.com/show_bug.cgi?id=1676957
 
 
 ## [0.10.2] - 2019-06-12
