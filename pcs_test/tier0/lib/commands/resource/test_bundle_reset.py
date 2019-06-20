@@ -26,16 +26,13 @@ class BaseMixin(FixturesMixin):
     def initial_resources(self):
         return self.fixture_resources_bundle_simple
 
-    def bundle_reset(
-        self, bundle_id=None, container_type=None, **params
-    ):
+    def bundle_reset(self, bundle_id=None, **params):
         if "container_options" not in params:
             params["container_options"] = {"image": self.image}
 
         bundle_reset(
             self.env_assist.get_env(),
             bundle_id=bundle_id or self.bundle_id,
-            container_type=container_type or self.container_type,
             **params
         )
 
@@ -44,7 +41,6 @@ class BaseMixin(FixturesMixin):
 
 class MinimalMixin(BaseMixin, SetUpMixin):
     container_type = None
-    new_container_type = None
     initial_cib_filename = "cib-empty-3.2.xml"
 
     def test_success_zero_change(self):
@@ -63,13 +59,12 @@ class MinimalMixin(BaseMixin, SetUpMixin):
                 """
                 .format(
                     bundle_id=self.bundle_id,
-                    container_type=self.new_container_type,
+                    container_type=self.container_type,
                     image=new_image,
                 )
             ,
         })
         self.bundle_reset(
-            container_type=self.new_container_type,
             container_options={"image": new_image},
         )
 
@@ -94,7 +89,6 @@ class MinimalMixin(BaseMixin, SetUpMixin):
 
 class FullMixin(SetUpMixin, BaseMixin):
     container_type = None
-    new_container_type = None
     fixture_primitive = """
         <primitive class="ocf" id="A" provider="heartbeat" type="Dummy"/>
     """
@@ -174,7 +168,7 @@ class FullMixin(SetUpMixin, BaseMixin):
                     </bundle>
                 """
                 .format(
-                    container_type=self.new_container_type,
+                    container_type=self.container_type,
                     bundle_id=self.bundle_id,
                     fixture_primitive=self.fixture_primitive,
                     image=new_image,
@@ -183,7 +177,6 @@ class FullMixin(SetUpMixin, BaseMixin):
         })
 
         self.bundle_reset(
-            container_type=self.new_container_type,
             container_options={"image": new_image},
         )
 
@@ -220,8 +213,8 @@ class FullMixin(SetUpMixin, BaseMixin):
                             <storage-mapping
                                 id="{bundle_id}-storage-map"
                                 options="extra options 2"
-                                source-dir="/tmp/{container_type}2a"
-                                target-dir="/tmp/{container_type}2b"
+                                source-dir="/tmp/{container_type}2aa"
+                                target-dir="/tmp/{container_type}2bb"
                             />
                         </storage>
                         <meta_attributes id="{bundle_id}-meta_attributes">
@@ -234,7 +227,7 @@ class FullMixin(SetUpMixin, BaseMixin):
                     </bundle>
                 """
                 .format(
-                    container_type=self.new_container_type,
+                    container_type=self.container_type,
                     bundle_id=self.bundle_id,
                     fixture_primitive=self.fixture_primitive,
                     image=new_image,
@@ -242,7 +235,6 @@ class FullMixin(SetUpMixin, BaseMixin):
             ,
         })
         self.bundle_reset(
-            container_type=self.new_container_type,
             container_options={
                 "image": new_image,
                 "promoted-max": "1",
@@ -262,8 +254,8 @@ class FullMixin(SetUpMixin, BaseMixin):
             storage_map=[
                 {
                     "options": "extra options 2",
-                    "source-dir": f"/tmp/{self.new_container_type}2a",
-                    "target-dir": f"/tmp/{self.new_container_type}2b",
+                    "source-dir": f"/tmp/{self.container_type}2aa",
+                    "target-dir": f"/tmp/{self.container_type}2bb",
                 },
             ],
             meta_attributes={
@@ -278,39 +270,33 @@ class ResetParametrizedContainerMixin(
 
 class MinimalRkt(MinimalMixin, TestCase):
     container_type = "rkt"
-    new_container_type = "docker"
 
 class MinimalPodman(MinimalMixin, TestCase):
     container_type = "podman"
-    new_container_type = "rkt"
 
 class MinimalDocker(MinimalMixin, TestCase):
     container_type = "docker"
-    new_container_type = "rkt"
 
 class FullRkt(FullMixin, TestCase):
     container_type = "rkt"
-    new_container_type = "docker"
 
 class FullPodman(FullMixin, TestCase):
     container_type = "podman"
-    new_container_type = "rkt"
 
 class FullDocker(FullMixin, TestCase):
     container_type = "docker"
-    new_container_type = "docker"
 
 class CreateParametrizedPodman(ResetParametrizedContainerMixin, TestCase):
     container_type = "podman"
-    upgraded_cib_filename = "cib-empty-3.1.xml"
+    old_version_cib_filename = "cib-empty-2.6.xml"
 
 class CreateParametrizedDocker(ResetParametrizedContainerMixin, TestCase):
     container_type = "docker"
-    upgraded_cib_filename = "cib-empty-2.0.xml"
+    old_version_cib_filename = "cib-empty-2.0.xml"
 
 class CreateParametrizedRkt(ResetParametrizedContainerMixin, TestCase):
     container_type = "rkt"
-    upgraded_cib_filename = "cib-empty-2.9.xml"
+    old_version_cib_filename = "cib-empty-2.6.xml"
 
 class ResetWithNetwork(BaseMixin, NetworkMixin, TestCase):
     container_type = "docker"

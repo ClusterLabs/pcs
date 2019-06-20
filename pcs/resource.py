@@ -22,6 +22,7 @@ from pcs.cli.common.parse_args import (
 )
 from pcs.cli.resource.parse_args import (
     parse_bundle_create_options,
+    parse_bundle_reset_options,
     parse_bundle_update_options,
     parse_create as parse_create_args,
 )
@@ -2929,19 +2930,26 @@ def resource_bundle_create_cmd(lib, argv, modifiers):
       * --wait
       * -f - CIB file
     """
-    _resource_bundle_configure(lib.resource.bundle_create, argv, modifiers)
+    modifiers.ensure_only_supported("--force", "--disabled", "--wait", "-f")
+    if not argv:
+        raise CmdLineInputError()
+
+    bundle_id = argv[0]
+    parts = parse_bundle_create_options(argv[1:])
+    lib.resource.bundle_create(
+        bundle_id,
+        parts["container_type"],
+        container_options=parts["container"],
+        network_options=parts["network"],
+        port_map=parts["port_map"],
+        storage_map=parts["storage_map"],
+        meta_attributes=parts["meta"],
+        force_options=modifiers.get("--force"),
+        ensure_disabled=modifiers.get("--disabled"),
+        wait=modifiers.get("--wait"),
+    )
 
 def resource_bundle_reset_cmd(lib, argv, modifiers):
-    """
-    Options:
-      * --force - allow unknown options
-      * --disabled - create as a stopped bundle
-      * --wait
-      * -f - CIB file
-    """
-    _resource_bundle_configure(lib.resource.bundle_reset, argv, modifiers)
-
-def _resource_bundle_configure(call_lib, argv, modifiers):
     """
     Options:
       * --force - allow unknown options
@@ -2954,10 +2962,9 @@ def _resource_bundle_configure(call_lib, argv, modifiers):
         raise CmdLineInputError()
 
     bundle_id = argv[0]
-    parts = parse_bundle_create_options(argv[1:])
-    call_lib(
+    parts = parse_bundle_reset_options(argv[1:])
+    lib.resource.bundle_reset(
         bundle_id,
-        parts["container_type"],
         container_options=parts["container"],
         network_options=parts["network"],
         port_map=parts["port_map"],

@@ -84,15 +84,13 @@ def validate_new(
             id_provider=id_provider
         ).validate({"id": bundle_id})
         +
-        validate_reset(
-            id_provider,
-            container_type,
-            container_options,
-            network_options,
-            port_map,
-            storage_map,
-            force_options
-        )
+        _validate_container(container_type, container_options, force_options)
+        +
+        _validate_network_options_new(network_options, force_options)
+        +
+        _validate_port_map_list(port_map, id_provider, force_options)
+        +
+        _validate_storage_map_list(storage_map, id_provider, force_options)
     )
 
 def append_new(
@@ -130,14 +128,13 @@ def append_new(
     return bundle_element
 
 def validate_reset(
-    id_provider, container_type, container_options, network_options,
-    port_map, storage_map, force_options=False
+    id_provider, container_options, network_options, port_map, storage_map,
+    force_options=False
 ):
     """
     Validate bundle parameters, return list of report items
 
     IdProvider id_provider -- elements' ids generator and uniqueness checker
-    string container_type -- bundle container type
     dict container_options -- container options
     dict network_options -- network options
     list of dict port_map -- list of port mapping options
@@ -145,7 +142,7 @@ def validate_reset(
     bool force_options -- return warnings instead of forceable errors
     """
     return (
-        _validate_container(container_type, container_options, force_options)
+        _validate_container_options(container_options, force_options)
         +
         _validate_network_options_new(network_options, force_options)
         +
@@ -155,7 +152,7 @@ def validate_reset(
     )
 
 def reset(
-    bundle_element, id_provider, bundle_id, container_type, container_options,
+    bundle_element, id_provider, bundle_id, container_options,
     network_options, port_map, storage_map, meta_attributes
 ):
     """
@@ -164,7 +161,6 @@ def reset(
     etree bundle_element -- the bundle element that will be reset
     IdProvider id_provider -- elements' ids generator
     string bundle_id -- id of the bundle
-    string container_type -- bundle container type
     dict container_options -- container options
     dict network_options -- network options
     list of dict port_map -- list of port mapping options
@@ -190,10 +186,15 @@ def reset(
     # deleted tags and we will ensure creation minimal relevant elements at
     # least.
     indelible_tags = []
+
+    container_type = ""
     for child in list(bundle_element):
         if child.tag in ["network", "storage", META_ATTRIBUTES_TAG]:
             indelible_tags.append(child.tag)
-        elif child.tag not in list(GENERIC_CONTAINER_TYPES):
+        elif child.tag in list(GENERIC_CONTAINER_TYPES):
+            # There must be one of containers tag.
+            container_type = child.tag
+        else:
             # Only primitive should be found here, currently.
             # The order of various element tags has no practical impact so we
             # don't care about it here.
@@ -421,7 +422,7 @@ def get_inner_resource(bundle_el):
     return None
 
 def _validate_container(container_type, container_options, force_options=False):
-    if not container_type in GENERIC_CONTAINER_TYPES:
+    if container_type not in GENERIC_CONTAINER_TYPES:
         return [
             reports.invalid_option_value(
                 "container type",
@@ -429,7 +430,10 @@ def _validate_container(container_type, container_options, force_options=False):
                 GENERIC_CONTAINER_TYPES,
             )
         ]
+    return _validate_container_options(container_options, force_options)
 
+
+def _validate_container_options(container_options, force_options=False):
     validators = [
         validate.NamesIn(
             GENERIC_CONTAINER_OPTIONS,

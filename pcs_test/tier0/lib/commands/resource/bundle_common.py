@@ -50,13 +50,13 @@ class SetUpMixin:
         )
 
 class UpgradeMixin(FixturesMixin):
-    upgraded_cib_filename = None
+    old_version_cib_filename = None
 
     def test_cib_upgrade(self):
         (self.config
             .runner.cib.load(
                 name="load_cib_old_version",
-                filename=self.upgraded_cib_filename,
+                filename=self.old_version_cib_filename,
                 before="runner.cib.load"
             )
             .runner.cib.upgrade(before="runner.cib.load")

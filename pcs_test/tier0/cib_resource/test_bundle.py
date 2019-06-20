@@ -79,7 +79,7 @@ class BundleReset(BundleCreateCommon):
             "resource bundle create B2 container docker image=pcs:test"
         )
         self.assert_effect(
-            "resource bundle reset B1 container docker image=pcs:new",
+            "resource bundle reset B1 container image=pcs:new",
             """
                 <resources>
                     <bundle id="B1">

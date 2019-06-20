@@ -180,7 +180,9 @@ def _check_special_cases(
 
 _find_bundle = partial(find_element_by_tag_and_id, resource.bundle.TAG)
 
-def _get_required_cib_version_for_container(container_type, container_options):
+def _get_required_cib_version_for_container(
+    container_options, container_type=None
+):
     if container_type == "podman":
         return Version(3, 2, 0)
 
@@ -567,8 +569,8 @@ def bundle_create(
             resource.common.are_meta_disabled(meta_attributes)
         ),
         required_cib_version=_get_required_cib_version_for_container(
+            container_options,
             container_type,
-            container_options
         ),
     ) as resources_section:
         # no need to run validations related to remote and guest nodes as those
@@ -602,7 +604,7 @@ def bundle_create(
             resource.common.disable(bundle_element, id_provider)
 
 def bundle_reset(
-    env, bundle_id, container_type, container_options=None,
+    env, bundle_id, container_options=None,
     network_options=None, port_map=None, storage_map=None, meta_attributes=None,
     force_options=False,
     ensure_disabled=False,
@@ -614,7 +616,6 @@ def bundle_reset(
 
     LibraryEnvironment env -- provides communication with externals
     string bundle_id -- id of the bundle to reset
-    string container_type -- container engine name (docker, lxc...)
     dict container_options -- container options
     dict network_options -- network options
     list of dict port_map -- a list of port mapping options
@@ -640,7 +641,6 @@ def bundle_reset(
             resource.common.are_meta_disabled(meta_attributes)
         ),
         required_cib_version=_get_required_cib_version_for_container(
-            container_type,
             container_options
         ),
     ) as resources_section:
@@ -648,7 +648,6 @@ def bundle_reset(
         env.report_processor.process_list(
             resource.bundle.validate_reset(
                 id_provider,
-                container_type,
                 container_options,
                 network_options,
                 port_map,
@@ -663,7 +662,6 @@ def bundle_reset(
             bundle_element,
             id_provider,
             bundle_id,
-            container_type,
             container_options,
             network_options,
             port_map,
@@ -706,14 +704,13 @@ def bundle_update(
     storage_map_remove = storage_map_remove or []
     meta_attributes = meta_attributes or {}
 
-    required_cib_version = Version(2, 8, 0)
-    if "promoted-max" in container_options:
-        required_cib_version = Version(3, 0, 0)
     with resource_environment(
         env,
         wait,
         [bundle_id],
-        required_cib_version=required_cib_version
+        required_cib_version=_get_required_cib_version_for_container(
+            container_options
+        ),
     ) as resources_section:
         # no need to run validations related to remote and guest nodes as those
         # nodes can only be created from primitive resources
