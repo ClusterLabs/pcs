@@ -2947,6 +2947,16 @@ def system_will_reset():
         report_codes.SYSTEM_WILL_RESET,
     )
 
+def resource_bundle_unsupported_container_type(
+    bundle_id, supported_container_types
+):
+    return ReportItem.error(
+        report_codes.RESOURCE_BUNDLE_UNSUPPORTED_CONTAINER_TYPE,
+        info=dict(
+            bundle_id=bundle_id,
+            supported_container_types=sorted(supported_container_types),
+        ),
+    )
 
 def resource_in_bundle_not_accessible(
     bundle_id, inner_resource_id,

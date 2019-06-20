@@ -17,6 +17,8 @@
 - Pcs does not crash due to unhandled LibraryError exceptions ([rhbz#1710750])
 - `pcs config restore` does not fail with "Invalid cross-device link" error any
   more ([rhbz#1712315])
+- Fixed id conflict with current bundle configuration in
+  `pcs resource bundle reset` ([rhbz#1725849])
 
 ### Changed
 Command `pcs resource bundle reset` no longer accepts the container type
@@ -29,6 +31,7 @@ Command `pcs resource bundle reset` no longer accepts the container type
 [rhbz#1676956]: https://bugzilla.redhat.com/show_bug.cgi?id=1676956
 [rhbz#1710750]: https://bugzilla.redhat.com/show_bug.cgi?id=1710750
 [rhbz#1712315]: https://bugzilla.redhat.com/show_bug.cgi?id=1712315
+[rhbz#1725849]: https://bugzilla.redhat.com/show_bug.cgi?id=1725849
 
 
 ## [0.9.167] - 2019-03-18
