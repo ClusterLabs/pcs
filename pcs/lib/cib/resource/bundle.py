@@ -18,6 +18,7 @@ from pcs.lib.xml_tools import (
     append_when_useful,
     get_sub_element,
     update_attributes_remove_empty,
+    reset_element,
 )
 
 TAG = "bundle"
@@ -128,13 +129,14 @@ def append_new(
     return bundle_element
 
 def validate_reset(
-    id_provider, container_options, network_options, port_map, storage_map,
-    force_options=False
+    id_provider, bundle_el, container_options, network_options, port_map,
+    storage_map, force_options=False
 ):
     """
     Validate bundle parameters, return list of report items
 
     IdProvider id_provider -- elements' ids generator and uniqueness checker
+    etree bundle_el -- the bundle to be reset
     dict container_options -- container options
     dict network_options -- network options
     list of dict port_map -- list of port mapping options
@@ -142,7 +144,7 @@ def validate_reset(
     bool force_options -- return warnings instead of forceable errors
     """
     return (
-        _validate_container_options(container_options, force_options)
+        _validate_container_reset(bundle_el, container_options, force_options)
         +
         _validate_network_options_new(network_options, force_options)
         +
@@ -151,76 +153,46 @@ def validate_reset(
         _validate_storage_map_list(storage_map, id_provider, force_options)
     )
 
-def reset(
-    bundle_element, id_provider, bundle_id, container_options,
-    network_options, port_map, storage_map, meta_attributes
-):
+def validate_reset_to_minimal(bundle_element):
     """
-    Remove configuration of bundle_element and create new one.
+    Validate removing configuration of bundle_element and keep the minimal one.
 
     etree bundle_element -- the bundle element that will be reset
-    IdProvider id_provider -- elements' ids generator
-    string bundle_id -- id of the bundle
-    dict container_options -- container options
-    dict network_options -- network options
-    list of dict port_map -- list of port mapping options
-    list of dict storage_map -- list of storage mapping options
-    dict meta_attributes -- meta attributes
     """
-    # pylint: disable=too-many-arguments
+    if not _is_supported_container(_get_container_element(bundle_element)):
+        return [_get_report_unsupported_container(bundle_element)]
+    return []
 
-    # Old bundle configuration is removed and re-created. We aren't trying
-    # to keep ids:
-    # * It doesn't make sense to reference these ids.
-    # * Newly created ids are based on (are prefixed by) the bundle element id,
-    #   which does not change. Therefore, it is VERY HIGHLY probable the newly
-    #   created ids will be the same as the original ones.
-    elements_without_reset_impact = []
+def reset_to_minimal(bundle_element):
+    """
+    Remove configuration of bundle_element and keep the minimal one.
 
+    etree bundle_element -- the bundle element that will be reset
+    """
     # Elements network, storage and meta_attributes must be kept even if they
     # are without children.
     # See https://bugzilla.redhat.com/show_bug.cgi?id=1642514
-    #
-    # The only scenario that makes sense is that these elements are empty
-    # and no attributes or children are requested for them. So we collect only
-    # deleted tags and we will ensure creation minimal relevant elements at
-    # least.
-    indelible_tags = []
+    # Element of container type is required.
 
-    container_type = ""
+    # There can be other elements beside bundle configuration (e.g. primitive).
+    # These elements stay untouched.
+    # Like any function that manipulates with cib, this also assumes prior
+    # validation that container is supported.
     for child in list(bundle_element):
-        if child.tag in ["network", "storage", META_ATTRIBUTES_TAG]:
-            indelible_tags.append(child.tag)
-        elif child.tag in list(GENERIC_CONTAINER_TYPES):
-            # There must be one of containers tag.
-            container_type = child.tag
-        else:
-            # Only primitive should be found here, currently.
-            # The order of various element tags has no practical impact so we
-            # don't care about it here.
-            elements_without_reset_impact.append(child)
-        bundle_element.remove(child)
+        if child.tag in ["network", "storage"]:
+            reset_element(child)
+        if child.tag == META_ATTRIBUTES_TAG:
+            reset_element(child, keep_attrs=["id"])
+        if child.tag in list(GENERIC_CONTAINER_TYPES):
+            # GENERIC_CONTAINER_TYPES elements require the "image" attribute to
+            # be set.
+            reset_element(child, keep_attrs=["image"])
 
-    _append_container(bundle_element, container_type, container_options)
-    if network_options or port_map or "network" in indelible_tags:
-        _append_network(
-            bundle_element,
-            id_provider,
-            bundle_id,
-            network_options,
-            port_map,
-        )
-    if storage_map or "storage" in indelible_tags:
-        _append_storage(bundle_element, id_provider, bundle_id, storage_map)
-    if meta_attributes or META_ATTRIBUTES_TAG in indelible_tags:
-        append_new_meta_attributes(
-            bundle_element,
-            meta_attributes,
-            id_provider,
-            enforce_append=True,
-        )
-    for element in elements_without_reset_impact:
-        bundle_element.append(element)
+def _get_report_unsupported_container(bundle_el):
+    return reports.resource_bundle_unsupported_container_type(
+        bundle_el.get("id"),
+        GENERIC_CONTAINER_TYPES,
+    )
 
 def validate_update(
     id_provider, bundle_el, container_options, network_options,
@@ -241,65 +213,26 @@ def validate_update(
     list of string storage_map_remove -- list of storage mapping ids to remove
     bool force_options -- return warnings instead of forceable errors
     """
-    report_list = []
-
-    # validate container options only if they are being updated
-    if container_options:
-        container_el = _get_container_element(bundle_el)
-        if (
-            container_el is not None
-            and
-            container_el.tag in GENERIC_CONTAINER_TYPES
-        ):
-            report_list.extend(
-                _validate_generic_container_options_update(
-                    container_el,
-                    container_options,
-                    force_options
-                )
-            )
-        else:
-            report_list.append(
-                reports.resource_bundle_unsupported_container_type(
-                    bundle_el.get("id"), GENERIC_CONTAINER_TYPES
-                )
-            )
-
-    network_el = bundle_el.find("network")
-    if network_el is None:
-        report_list.extend(
-            _validate_network_options_new(network_options, force_options)
-        )
-    else:
-        report_list.extend(
-            _validate_network_options_update(
-                bundle_el,
-                network_el,
-                network_options,
-                force_options
-            )
-        )
-
     # TODO It will probably be needed to split the following validators to
     # create and update variants. It should be done once the need exists and
     # not sooner.
-    report_list.extend(
+    return (
+        _validate_container_update(bundle_el, container_options, force_options)
+        +
+        _validate_network_update(bundle_el, network_options, force_options)
+        +
         _validate_port_map_list(port_map_add, id_provider, force_options)
-    )
-    report_list.extend(
+        +
         _validate_storage_map_list(storage_map_add, id_provider, force_options)
-    )
-    report_list.extend(
+        +
         _validate_map_ids_exist(
             bundle_el, "port-mapping", "port-map", port_map_remove
         )
-    )
-    report_list.extend(
+        +
         _validate_map_ids_exist(
             bundle_el, "storage-mapping", "storage-map", storage_map_remove
         )
     )
-    return report_list
 
 def update(
     id_provider, bundle_el, container_options, network_options,
@@ -421,6 +354,13 @@ def get_inner_resource(bundle_el):
         return resources[0]
     return None
 
+def _is_supported_container(container_el):
+    return (
+        container_el is not None
+        and
+        container_el.tag in GENERIC_CONTAINER_TYPES
+    )
+
 def _validate_container(container_type, container_options, force_options=False):
     if container_type not in GENERIC_CONTAINER_TYPES:
         return [
@@ -430,10 +370,10 @@ def _validate_container(container_type, container_options, force_options=False):
                 GENERIC_CONTAINER_TYPES,
             )
         ]
-    return _validate_container_options(container_options, force_options)
+    return _validate_generic_container_options(container_options, force_options)
 
 
-def _validate_container_options(container_options, force_options=False):
+def _validate_generic_container_options(container_options, force_options=False):
     validators = [
         validate.NamesIn(
             GENERIC_CONTAINER_OPTIONS,
@@ -467,8 +407,32 @@ def _validate_container_options(container_options, force_options=False):
         deprecation_reports
     )
 
+def _validate_container_reset(bundle_el, container_options, force_options):
+    # Unlike in the case of update, in reset empty options are not necessary
+    # valid - user MUST set everything (including required options e.g. image).
+    if (
+        container_options
+        and
+        not _is_supported_container(_get_container_element(bundle_el))
+    ):
+        return [_get_report_unsupported_container(bundle_el)]
+    return _validate_generic_container_options(container_options, force_options)
+
+def _validate_container_update(bundle_el, options, force_options):
+    # Validate container options only if they are being updated. Empty options
+    # are valid - user DOESN'T NEED to change anything.
+    if not options:
+        return []
+
+    container_el = _get_container_element(bundle_el)
+    if not _is_supported_container(container_el):
+        return [_get_report_unsupported_container(bundle_el)]
+    return _validate_generic_container_options_update(
+        container_el, options, force_options
+    )
+
 def _validate_generic_container_options_update(
-    docker_el, options, force_options
+    container_el, options, force_options
 ):
     validators_optional_options = [
         validate.ValueNonnegativeInteger("masters"),
@@ -521,7 +485,7 @@ def _validate_generic_container_options_update(
     if (
         options.get("masters")
         and
-        docker_el.get("promoted-max") and options.get("promoted-max") != ""
+        container_el.get("promoted-max") and options.get("promoted-max") != ""
     ):
         deprecation_reports.append(
             reports.prerequisite_option_must_not_be_set(
@@ -531,7 +495,7 @@ def _validate_generic_container_options_update(
     if (
         options.get("promoted-max")
         and
-        docker_el.get("masters") and options.get("masters") != ""
+        container_el.get("masters") and options.get("masters") != ""
     ):
         deprecation_reports.append(
             reports.prerequisite_option_must_not_be_set(
@@ -574,6 +538,14 @@ def _is_pcmk_remote_acccessible_after_update(network_el, options):
     case3 = port and ip and removing(port_name) and removing(ip_name)
 
     return not (case1 or case2 or case3)
+
+def _validate_network_update(bundle_el, options, force_options):
+    network_el = bundle_el.find("network")
+    if network_el is None:
+        return _validate_network_options_new(options, force_options)
+    return _validate_network_options_update(
+        bundle_el, network_el, options, force_options
+    )
 
 def _validate_network_options_update(
     bundle_el, network_el, options, force_options

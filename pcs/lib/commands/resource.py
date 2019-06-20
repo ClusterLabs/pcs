@@ -644,10 +644,17 @@ def bundle_reset(
             container_options
         ),
     ) as resources_section:
+        bundle_element = _find_bundle(resources_section, bundle_id)
+        env.report_processor.process_list(
+            resource.bundle.validate_reset_to_minimal(bundle_element)
+        )
+        resource.bundle.reset_to_minimal(bundle_element)
+
         id_provider = IdProvider(resources_section)
         env.report_processor.process_list(
             resource.bundle.validate_reset(
                 id_provider,
+                bundle_element,
                 container_options,
                 network_options,
                 port_map,
@@ -657,21 +664,20 @@ def bundle_reset(
             )
         )
 
-        bundle_element = _find_bundle(resources_section, bundle_id)
-        resource.bundle.reset(
-            bundle_element,
+        resource.bundle.update(
             id_provider,
-            bundle_id,
+            bundle_element,
             container_options,
             network_options,
-            port_map,
-            storage_map,
-            meta_attributes,
+            port_map_add=port_map,
+            port_map_remove=[],
+            storage_map_add=storage_map,
+            storage_map_remove=[],
+            meta_attributes=meta_attributes,
         )
 
         if ensure_disabled:
             resource.common.disable(bundle_element, id_provider)
-
 
 def bundle_update(
     env, bundle_id, container_options=None, network_options=None,

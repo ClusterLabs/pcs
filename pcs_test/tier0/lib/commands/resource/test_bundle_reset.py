@@ -12,6 +12,7 @@ from pcs_test.tier0.lib.commands.resource.bundle_common import(
     AllOptionsMixin,
     WaitMixin,
 )
+from pcs_test.tools import fixture
 
 from pcs.common import report_codes
 from pcs.lib.commands.resource import bundle_reset
@@ -44,6 +45,8 @@ class MinimalMixin(BaseMixin, SetUpMixin):
     initial_cib_filename = "cib-empty-3.2.xml"
 
     def test_success_zero_change(self):
+        # Resets a bundle with only an image set to a bundle with the same
+        # image set and no other options.
         self.config.env.push_cib(resources=self.initial_resources)
         self.bundle_reset()
 
@@ -87,6 +90,18 @@ class MinimalMixin(BaseMixin, SetUpMixin):
             expected_in_processor=False,
         )
 
+    def test_no_options_set(self):
+        self.env_assist.assert_raise_library_error(
+            lambda: bundle_reset(self.env_assist.get_env(), self.bundle_id),
+            [
+                fixture.error(
+                    report_codes.REQUIRED_OPTIONS_ARE_MISSING,
+                    option_names=["image"],
+                    option_type="container",
+                ),
+            ]
+        )
+
 class FullMixin(SetUpMixin, BaseMixin):
     container_type = None
     fixture_primitive = """
@@ -98,25 +113,12 @@ class FullMixin(SetUpMixin, BaseMixin):
         return """
             <resources>
                 <bundle id="{bundle_id}">
-                    <meta_attributes id="{bundle_id}-meta_attributes">
-                        <nvpair id="{bundle_id}-meta_attributes-target-role"
-                            name="target-role"
-                            value="Stopped"
-                        />
-                    </meta_attributes>
                     <{container_type}
                         image="{image}"
                         promoted-max="0"
-                        replicas="0"
-                        replicas-per-host="0"
+                        replicas="1"
+                        replicas-per-host="1"
                     />
-                    <meta_attributes id="{bundle_id}-meta_attributes">
-                        <nvpair
-                            id="{bundle_id}-meta_attributes-is-managed"
-                            name="is-managed"
-                            value="false"
-                        />
-                    </meta_attributes>
                     <network
                         control-port="12345"
                         host-interface="eth0"
@@ -141,6 +143,13 @@ class FullMixin(SetUpMixin, BaseMixin):
                             target-dir="/tmp/{container_type}2b"
                         />
                     </storage>
+                    <meta_attributes id="{bundle_id}-meta_attributes">
+                        <nvpair
+                            id="{bundle_id}-meta_attributes-target-role"
+                            name="target-role"
+                            value="Stopped"
+                        />
+                    </meta_attributes>
                     {fixture_primitive}
                 </bundle>
             </resources>
@@ -218,7 +227,8 @@ class FullMixin(SetUpMixin, BaseMixin):
                             />
                         </storage>
                         <meta_attributes id="{bundle_id}-meta_attributes">
-                            <nvpair id="{bundle_id}-meta_attributes-target-role"
+                            <nvpair
+                                id="{bundle_id}-meta_attributes-target-role"
                                 name="target-role"
                                 value="Started"
                             />
@@ -263,6 +273,80 @@ class FullMixin(SetUpMixin, BaseMixin):
             }
         )
 
+    def test_success_keep_map_ids(self):
+        self.config.env.push_cib(replace={
+            ".//resources/bundle/network":
+                f"""
+                    <network
+                        control-port="12345"
+                        host-interface="eth0"
+                        host-netmask="24"
+                        ip-range-start="192.168.100.200"
+                    >
+                        <port-mapping
+                            id="{self.bundle_id}-port-map-1001"
+                            internal-port="3002"
+                            port="3000"
+                        />
+                        <port-mapping
+                            id="{self.bundle_id}-port-map-3000-3300"
+                            range="4000-4400"
+                        />
+                    </network>
+                """
+            ,
+            ".//resources/bundle/storage":
+                f"""
+                    <storage>
+                        <storage-mapping
+                            id="{self.bundle_id}-storage-map"
+                            options="extra options 2"
+                            source-dir="/tmp/{self.container_type}2aa"
+                            target-dir="/tmp/{self.container_type}2bb"
+                        />
+                    </storage>
+                """
+            ,
+        })
+
+        # Every value is kept as before except port_map and storage_map.
+        self.bundle_reset(
+            container_options={
+                "image": self.image,
+                "promoted-max": "0",
+                "replicas": "1",
+                "replicas-per-host": "1",
+            },
+            network_options={
+                "control-port": "12345",
+                "host-interface": "eth0",
+                "host-netmask": "24",
+                "ip-range-start": "192.168.100.200",
+            },
+            port_map=[
+                {
+                    "id": f"{self.bundle_id}-port-map-1001",
+                    "internal-port": "3002",
+                    "port": "3000",
+                },
+                {
+                    "id": f"{self.bundle_id}-port-map-3000-3300",
+                    "range": "4000-4400",
+                },
+            ],
+            storage_map=[
+                {
+                    "id": f"{self.bundle_id}-storage-map",
+                    "options": "extra options 2",
+                    "source-dir": f"/tmp/{self.container_type}2aa",
+                    "target-dir": f"/tmp/{self.container_type}2bb",
+                },
+            ],
+            meta_attributes={
+                "target-role": "Stopped",
+            }
+        )
+
 class ResetParametrizedContainerMixin(
     BaseMixin, ParametrizedContainerMixin, UpgradeMixin
 ):
@@ -286,15 +370,15 @@ class FullPodman(FullMixin, TestCase):
 class FullDocker(FullMixin, TestCase):
     container_type = "docker"
 
-class CreateParametrizedPodman(ResetParametrizedContainerMixin, TestCase):
+class ResetParametrizedPodman(ResetParametrizedContainerMixin, TestCase):
     container_type = "podman"
     old_version_cib_filename = "cib-empty-2.6.xml"
 
-class CreateParametrizedDocker(ResetParametrizedContainerMixin, TestCase):
+class ResetParametrizedDocker(ResetParametrizedContainerMixin, TestCase):
     container_type = "docker"
     old_version_cib_filename = "cib-empty-2.0.xml"
 
-class CreateParametrizedRkt(ResetParametrizedContainerMixin, TestCase):
+class ResetParametrizedRkt(ResetParametrizedContainerMixin, TestCase):
     container_type = "rkt"
     old_version_cib_filename = "cib-empty-2.6.xml"
 
@@ -309,9 +393,114 @@ class ResetWithStorageMap(BaseMixin, StorageMapMixin, TestCase):
 
 class ResetWithMetaMap(BaseMixin, MetaMixin, TestCase):
     container_type = "docker"
+    def test_success(self):
+        # When there is no meta attributes the new one are put on the first
+        # possition (since reset now uses update internally). This is the reason
+        # for reimplementation of this MetaMixin test.
+        self.config.env.push_cib(
+            resources="""
+                <resources>
+                    <bundle id="{bundle_id}">
+                        <meta_attributes id="{bundle_id}-meta_attributes">
+                            <nvpair id="{bundle_id}-meta_attributes-is-managed"
+                                name="is-managed" value="false" />
+                            <nvpair id="{bundle_id}-meta_attributes-target-role"
+                                name="target-role" value="Stopped" />
+                        </meta_attributes>
+                        <{container_type} image="{image}" />
+                    </bundle>
+                </resources>
+            """
+            .format(
+                container_type=self.container_type,
+                bundle_id=self.bundle_id,
+                image=self.image,
+            )
+        )
+        self.run_bundle_cmd(
+            meta_attributes={
+                "target-role": "Stopped",
+                "is-managed": "false",
+            }
+        )
 
 class ResetWithAllOptions(BaseMixin, AllOptionsMixin, TestCase):
     container_type = "docker"
 
 class ResetWithWait(BaseMixin, WaitMixin, TestCase):
     container_type = "docker"
+
+class ResetUnknownContainerType(BaseMixin, SetUpMixin, TestCase):
+    container_type = "unknown"
+    def test_error_or_unknown_container(self):
+        self.env_assist.assert_raise_library_error(
+            lambda: bundle_reset(self.env_assist.get_env(), self.bundle_id),
+            [
+                fixture.error(
+                    report_codes.RESOURCE_BUNDLE_UNSUPPORTED_CONTAINER_TYPE,
+                    bundle_id="B1",
+                    supported_container_types=["docker", "podman", "rkt"],
+                ),
+            ]
+        )
+
+class NoMetaIdRegenerationMixin(BaseMixin, SetUpMixin):
+    @property
+    def initial_resources(self):
+        return """
+            <resources>
+                <bundle id="{bundle_id}">
+                    <{container_type}
+                        image="{image}"
+                        promoted-max="0"
+                        replicas="1"
+                        replicas-per-host="1"
+                    />
+                    <meta_attributes id="CUSTOM_ID">
+                        <nvpair
+                            id="ANOTHER_ID-target-role"
+                            name="target-role"
+                            value="Stopped"
+                        />
+                    </meta_attributes>
+                </bundle>
+            </resources>
+        """.format(
+            container_type=self.container_type,
+            bundle_id=self.bundle_id,
+            image=self.image,
+        )
+    def test_dont_regenerate_meta_attributes_id(self):
+        self.config.env.push_cib(replace={
+            ".//resources/bundle/meta_attributes":
+                f"""
+                    <meta_attributes id="CUSTOM_ID">
+                        <nvpair
+                            id="CUSTOM_ID-target-role"
+                            name="target-role"
+                            value="Stopped"
+                        />
+                    </meta_attributes>
+                """
+            ,
+        })
+        self.bundle_reset(
+            container_options={
+                "image": self.image,
+                "promoted-max": "0",
+                "replicas": "1",
+                "replicas-per-host": "1",
+            },
+            meta_attributes={
+                "target-role": "Stopped",
+            }
+        )
+
+class NoMetaIdRegenerationDocker(NoMetaIdRegenerationMixin, TestCase):
+    container_type = "docker"
+
+class NoMetaIdRegenerationPodman(NoMetaIdRegenerationMixin, TestCase):
+    container_type = "podman"
+
+class NoMetaIdRegenerationRkt(NoMetaIdRegenerationMixin, TestCase):
+    container_type = "rkt"
