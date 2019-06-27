@@ -9,7 +9,8 @@
 
 ### Changed
 - Command `pcs resource bundle reset` no longer accepts the container type
-  ([rhbz#1657166]
+  ([rhbz#1657166])
+
 [rhbz#1657166]: https://bugzilla.redhat.com/show_bug.cgi?id=1657166
 [rhbz#1676957]: https://bugzilla.redhat.com/show_bug.cgi?id=1676957
 
