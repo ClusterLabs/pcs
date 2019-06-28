@@ -33,13 +33,80 @@ from pcs import (
 from pcs.cli.common import (
     capabilities,
     completion,
+    errors,
     parse_args,
 )
+from pcs.lib.errors import LibraryError
 
 
 logging.basicConfig()
 usefile = False
 filename = ""
+
+def _non_root_run(argv_cmd):
+    """
+    This function will run commands which has to be run as root for users which
+    are not root. If it required to run such command as root it will do that by
+    sending it to the local pcsd and then it will exit.
+    """
+    # specific commands need to be run under root account, pass them to pcsd
+    # don't forget to allow each command in pcsd.rb in "post /run_pcs do"
+    root_command_list = [
+        ['cluster', 'auth', '...'],
+        ['cluster', 'corosync', '...'],
+        ['cluster', 'destroy', '...'],
+        ['cluster', 'disable', '...'],
+        ['cluster', 'enable', '...'],
+        ['cluster', 'node', '...'],
+        ['cluster', 'pcsd-status', '...'],
+        ['cluster', 'setup', '...'],
+        ['cluster', 'start', '...'],
+        ['cluster', 'stop', '...'],
+        ['cluster', 'sync', '...'],
+        # ['config', 'restore', '...'], # handled in config.config_restore
+        ['pcsd', 'sync-certificates'],
+        ["quorum", "device", "status", "..."],
+        ["quorum", "status", "..."],
+        ['status', 'corosync', '...'],
+        ['status', 'nodes', 'corosync-id'],
+        ['status', 'nodes', 'pacemaker-id'],
+        ['status', 'pcsd', '...'],
+        ['status', 'quorum', '...'],
+    ]
+    orig_argv = argv_cmd[:]
+    for root_cmd in root_command_list:
+        if (
+            (argv_cmd == root_cmd)
+            or
+            (
+                root_cmd[-1] == "..."
+                and
+                argv_cmd[:len(root_cmd)-1] == root_cmd[:-1]
+            )
+        ):
+            # handle interactivity of 'pcs cluster auth'
+            if argv_cmd[0:2] == ["cluster", "auth"]:
+                if "-u" not in utils.pcs_options:
+                    username = utils.get_terminal_input('Username: ')
+                    orig_argv.extend(["-u", username])
+                if "-p" not in utils.pcs_options:
+                    password = utils.get_terminal_password()
+                    orig_argv.extend(["-p", password])
+
+            # call the local pcsd
+            err_msgs, exitcode, std_out, std_err = utils.call_local_pcsd(
+                orig_argv
+            )
+            if err_msgs:
+                for msg in err_msgs:
+                    utils.err(msg, False)
+                sys.exit(1)
+            if std_out.strip():
+                print(std_out)
+            if std_err.strip():
+                sys.stderr.write(std_err)
+            sys.exit(exitcode)
+
 def main(argv=None):
     if completion.has_applicable_environment(os.environ):
         print(completion.make_suggestions(
@@ -51,7 +118,6 @@ def main(argv=None):
     argv = argv if argv else sys.argv[1:]
     utils.subprocess_setup()
     global filename, usefile
-    orig_argv = argv[:]
     utils.pcs_options = {}
 
     argv = parse_args.upgrade_args(argv)
@@ -79,6 +145,7 @@ def main(argv=None):
         print(err)
         usage.main()
         sys.exit(1)
+    argv_with_options = argv[:]
     argv = parse_args.filter_out_options(argv)
 
     full = False
@@ -156,6 +223,11 @@ def main(argv=None):
     logger.propagate = 0
     logger.handlers = []
 
+    # root can run everything directly, also help can be displayed,
+    # working on a local file also do not need to run under root
+    if (os.getuid() != 0) and (argv and argv[0] != "help") and not usefile:
+        _non_root_run(argv_with_options)
+
     command = argv.pop(0)
     if (command == "-h" or command == "help"):
         usage.main()
@@ -212,68 +284,15 @@ def main(argv=None):
     if command not in cmd_map:
         usage.main()
         sys.exit(1)
-    # root can run everything directly, also help can be displayed,
-    # working on a local file also do not need to run under root
-    if (os.getuid() == 0) or (argv and argv[0] == "help") or usefile:
-        cmd_map[command](argv)
-        return
-    # specific commands need to be run under root account, pass them to pcsd
-    # don't forget to allow each command in pcsd.rb in "post /run_pcs do"
-    root_command_list = [
-        ['cluster', 'auth', '...'],
-        ['cluster', 'corosync', '...'],
-        ['cluster', 'destroy', '...'],
-        ['cluster', 'disable', '...'],
-        ['cluster', 'enable', '...'],
-        ['cluster', 'node', '...'],
-        ['cluster', 'pcsd-status', '...'],
-        ['cluster', 'setup', '...'],
-        ['cluster', 'start', '...'],
-        ['cluster', 'stop', '...'],
-        ['cluster', 'sync', '...'],
-        # ['config', 'restore', '...'], # handled in config.config_restore
-        ['pcsd', 'sync-certificates'],
-        ["quorum", "device", "status", "..."],
-        ["quorum", "status", "..."],
-        ['status', 'corosync', '...'],
-        ['status', 'nodes', 'corosync-id'],
-        ['status', 'nodes', 'pacemaker-id'],
-        ['status', 'pcsd', '...'],
-        ['status', 'quorum', '...'],
-    ]
-    argv_cmd = argv[:]
-    argv_cmd.insert(0, command)
-    for root_cmd in root_command_list:
-        if (
-            (argv_cmd == root_cmd)
-            or
-            (
-                root_cmd[-1] == "..."
-                and
-                argv_cmd[:len(root_cmd)-1] == root_cmd[:-1]
-            )
-        ):
-            # handle interactivity of 'pcs cluster auth'
-            if argv_cmd[0:2] == ["cluster", "auth"]:
-                if "-u" not in utils.pcs_options:
-                    username = utils.get_terminal_input('Username: ')
-                    orig_argv.extend(["-u", username])
-                if "-p" not in utils.pcs_options:
-                    password = utils.get_terminal_password()
-                    orig_argv.extend(["-p", password])
 
-            # call the local pcsd
-            err_msgs, exitcode, std_out, std_err = utils.call_local_pcsd(
-                orig_argv
-            )
-            if err_msgs:
-                for msg in err_msgs:
-                    utils.err(msg, False)
-                sys.exit(1)
-            if std_out.strip():
-                print(std_out)
-            if std_err.strip():
-                sys.stderr.write(std_err)
-            sys.exit(exitcode)
-            return
-    cmd_map[command](argv)
+    try:
+        cmd_map[command](argv)
+    except LibraryError as e:
+        utils.process_library_reports(e.args)
+    except errors.CmdLineInputError:
+        argv = [command] + argv
+        if argv and argv[0] in cmd_map:
+            usage.show(argv[0], argv[1:])
+        else:
+            usage.main()
+        sys.exit(1)
