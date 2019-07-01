@@ -15,12 +15,15 @@
 - Improved validation of qdevice heuristics exec options ([rhbz#1551663])
 - Fixed crashes in the `pcs cluster auth` command ([rhbz#1676956])
 - Pcs does not crash due to unhandled LibraryError exceptions ([rhbz#1710750])
+- `pcs config restore` does not fail with "Invalid cross-device link" error any
+  more ([rhbz#1712315])
 
 [rhbz#1551663]: https://bugzilla.redhat.com/show_bug.cgi?id=1551663
 [rhbz#1665898]: https://bugzilla.redhat.com/show_bug.cgi?id=1665898
 [rhbz#1671174]: https://bugzilla.redhat.com/show_bug.cgi?id=1671174
 [rhbz#1676956]: https://bugzilla.redhat.com/show_bug.cgi?id=1676956
 [rhbz#1710750]: https://bugzilla.redhat.com/show_bug.cgi?id=1710750
+[rhbz#1712315]: https://bugzilla.redhat.com/show_bug.cgi?id=1712315
 
 
 ## [0.9.167] - 2019-03-18
