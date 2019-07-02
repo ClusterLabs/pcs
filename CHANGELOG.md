@@ -6,6 +6,8 @@
 - Fixed crashes in the `pcs host auth` command ([rhbz#1676957])
 - Fixed id conflict with current bundle configuration in
   `pcs resource bundle reset` ([rhbz#1657166])
+- Options starting with - and -- are no longer ignored for non-root users
+  (broken since pcs-0.10.2) ([rhbz#1725183])
 
 ### Changed
 - Command `pcs resource bundle reset` no longer accepts the container type
@@ -13,6 +15,7 @@
 
 [rhbz#1657166]: https://bugzilla.redhat.com/show_bug.cgi?id=1657166
 [rhbz#1676957]: https://bugzilla.redhat.com/show_bug.cgi?id=1676957
+[rhbz#1725183]: https://bugzilla.redhat.com/show_bug.cgi?id=1725183
 
 
 ## [0.10.2] - 2019-06-12
