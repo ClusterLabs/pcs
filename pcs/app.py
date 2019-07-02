@@ -49,6 +49,15 @@ def _non_root_run(argv_cmd):
     are not root. If it required to run such command as root it will do that by
     sending it to the local pcsd and then it will exit.
     """
+    # matching the commands both in here and in pcsd expects -o and --options
+    # to be at the end of a command
+    argv_and_options = argv_cmd[:]
+    for option, value in utils.pcs_options.items():
+        if parse_args.is_option_expecting_value(option):
+            argv_and_options.extend([option, value])
+        else:
+            argv_and_options.append(option)
+
     # specific commands need to be run under root account, pass them to pcsd
     # don't forget to allow each command in pcsd.rb in "post /run_pcs do"
     root_command_list = [
@@ -73,29 +82,28 @@ def _non_root_run(argv_cmd):
         ['status', 'pcsd', '...'],
         ['status', 'quorum', '...'],
     ]
-    orig_argv = argv_cmd[:]
     for root_cmd in root_command_list:
         if (
-            (argv_cmd == root_cmd)
+            (argv_and_options == root_cmd)
             or
             (
                 root_cmd[-1] == "..."
                 and
-                argv_cmd[:len(root_cmd)-1] == root_cmd[:-1]
+                argv_and_options[:len(root_cmd)-1] == root_cmd[:-1]
             )
         ):
             # handle interactivity of 'pcs cluster auth'
-            if argv_cmd[0:2] == ["cluster", "auth"]:
+            if argv_and_options[0:2] == ["cluster", "auth"]:
                 if "-u" not in utils.pcs_options:
                     username = utils.get_terminal_input('Username: ')
-                    orig_argv.extend(["-u", username])
+                    argv_and_options.extend(["-u", username])
                 if "-p" not in utils.pcs_options:
                     password = utils.get_terminal_password()
-                    orig_argv.extend(["-p", password])
+                    argv_and_options.extend(["-p", password])
 
             # call the local pcsd
             err_msgs, exitcode, std_out, std_err = utils.call_local_pcsd(
-                orig_argv
+                argv_and_options
             )
             if err_msgs:
                 for msg in err_msgs:
@@ -145,7 +153,6 @@ def main(argv=None):
         print(err)
         usage.main()
         sys.exit(1)
-    argv_with_options = argv[:]
     argv = parse_args.filter_out_options(argv)
 
     full = False
@@ -226,7 +233,7 @@ def main(argv=None):
     # root can run everything directly, also help can be displayed,
     # working on a local file also do not need to run under root
     if (os.getuid() != 0) and (argv and argv[0] != "help") and not usefile:
-        _non_root_run(argv_with_options)
+        _non_root_run(argv)
 
     command = argv.pop(0)
     if (command == "-h" or command == "help"):
