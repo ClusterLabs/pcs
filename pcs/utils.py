@@ -839,8 +839,9 @@ def run_pcsdcli(command, data=None):
         env_var["PCSD_NETWORK_TIMEOUT"] = str(settings.default_request_timeout)
     pcsd_dir_path = settings.pcsd_exec_location
     pcsdcli_path = os.path.join(pcsd_dir_path, 'pcsd-cli.rb')
-    gem_home = os.path.join(pcsd_dir_path, settings.pcsd_gem_path)
-    env_var["GEM_HOME"] = gem_home
+    if settings.pcsd_gem_path is not None:
+        gem_home = os.path.join(pcsd_dir_path, settings.pcsd_gem_path)
+        env_var["GEM_HOME"] = gem_home
     stdout, dummy_stderr, retval = cmd_runner().run(
         [settings.ruby_executable, "-I" + pcsd_dir_path, pcsdcli_path, command],
         json.dumps(data),

@@ -8,11 +8,14 @@
   `pcs resource bundle reset` ([rhbz#1657166])
 - Options starting with - and -- are no longer ignored for non-root users
   (broken since pcs-0.10.2) ([rhbz#1725183])
+- Fixed crashes when pcs is configured that no rubygems are bundled in pcs
+  package ([ghissue#208])
 
 ### Changed
 - Command `pcs resource bundle reset` no longer accepts the container type
   ([rhbz#1657166])
 
+[ghissue#208]: https://github.com/ClusterLabs/pcs/issues/208
 [rhbz#1657166]: https://bugzilla.redhat.com/show_bug.cgi?id=1657166
 [rhbz#1676957]: https://bugzilla.redhat.com/show_bug.cgi?id=1676957
 [rhbz#1725183]: https://bugzilla.redhat.com/show_bug.cgi?id=1725183
