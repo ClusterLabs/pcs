@@ -2164,6 +2164,20 @@ class NodeCommunicationErrorNotAuthorized(NameBuildTest):
             }
         )
 
+class ResourceBundleUnsupportedContainerType(NameBuildTest):
+    code = codes.RESOURCE_BUNDLE_UNSUPPORTED_CONTAINER_TYPE
+    def test_success(self):
+        self.assert_message_from_report(
+            (
+                "Bundle 'bundle id' uses unsupported container type, therefore "
+                "it is not possible to set its container options. Supported "
+                "container types are: 'a', 'b', 'c'"
+            ),
+            reports.resource_bundle_unsupported_container_type(
+                "bundle id", ["b", "a", "c"]
+            ),
+        )
+
 class ResourceInBundleNotAccessible(NameBuildTest):
     code = codes.RESOURCE_IN_BUNDLE_NOT_ACCESSIBLE
     def test_success(self):

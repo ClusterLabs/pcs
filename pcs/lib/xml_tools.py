@@ -129,3 +129,18 @@ def remove_when_pointless(element, attribs_important=True):
 
     if not is_element_useful:
         element.getparent().remove(element)
+
+def reset_element(element, keep_attrs=None):
+    """
+    Remove all subelements and all attributes (except mentioned in keep_attrs)
+    of given element.
+
+    lxml.etree.element element -- element to reset
+    list keep_attrs -- names of attributes thas should be kept
+    """
+    keep_attrs = keep_attrs or []
+    for child in list(element):
+        element.remove(child)
+    for key in element.attrib.keys():
+        if key not in keep_attrs:
+            del element.attrib[key]

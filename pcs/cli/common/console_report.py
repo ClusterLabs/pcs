@@ -1478,6 +1478,16 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
     codes.SYSTEM_WILL_RESET:
         "System will reset shortly"
     ,
+    codes.RESOURCE_BUNDLE_UNSUPPORTED_CONTAINER_TYPE: lambda info:
+        (
+            "Bundle '{bundle_id}' uses unsupported container type, therefore "
+            "it is not possible to set its container options. Supported "
+            "container types are: {_container_types}"
+        ).format(
+            _container_types=format_list(info["supported_container_types"]),
+            **info
+        )
+    ,
     codes.RESOURCE_IN_BUNDLE_NOT_ACCESSIBLE: lambda info:
         (
             "Resource '{inner_resource_id}' will not be accessible by the "

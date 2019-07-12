@@ -578,7 +578,7 @@ def bundle_create(
             resource.common.disable(bundle_element)
 
 def bundle_reset(
-    env, bundle_id, container_type, container_options=None,
+    env, bundle_id, container_options=None,
     network_options=None, port_map=None, storage_map=None, meta_attributes=None,
     force_options=False,
     ensure_disabled=False,
@@ -590,7 +590,6 @@ def bundle_reset(
 
     LibraryEnvironment env -- provides communication with externals
     string bundle_id -- id of the bundle to reset
-    string container_type -- container engine name (docker, lxc...)
     dict container_options -- container options
     dict network_options -- network options
     list of dict port_map -- a list of port mapping options
@@ -617,11 +616,17 @@ def bundle_reset(
         ),
         required_cib_version=Version(2, 8, 0),
     ) as resources_section:
+        bundle_element = _find_bundle(resources_section, bundle_id)
+        env.report_processor.process_list(
+            resource.bundle.validate_reset_to_minimal(bundle_element)
+        )
+        resource.bundle.reset_to_minimal(bundle_element)
+
         id_provider = IdProvider(resources_section)
         env.report_processor.process_list(
             resource.bundle.validate_reset(
                 id_provider,
-                container_type,
+                bundle_element,
                 container_options,
                 network_options,
                 port_map,
@@ -631,22 +636,20 @@ def bundle_reset(
             )
         )
 
-        bundle_element = _find_bundle(resources_section, bundle_id)
-        resource.bundle.reset(
-            bundle_element,
+        resource.bundle.update(
             id_provider,
-            bundle_id,
-            container_type,
+            bundle_element,
             container_options,
             network_options,
-            port_map,
-            storage_map,
-            meta_attributes,
+            port_map_add=port_map,
+            port_map_remove=[],
+            storage_map_add=storage_map,
+            storage_map_remove=[],
+            meta_attributes=meta_attributes,
         )
 
         if ensure_disabled:
             resource.common.disable(bundle_element)
-
 
 def bundle_update(
     env, bundle_id, container_options=None, network_options=None,
