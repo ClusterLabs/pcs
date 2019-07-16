@@ -406,6 +406,15 @@ Confirm to the cluster that the specified node is powered off. This allows the c
 
 NOTE: It is not checked if the specified node exists in the cluster in order to be able to work with nodes not visible from the local cluster partition.
 .TP
+history [show [<node>]]
+Show fencing history for the specified node or all nodes if no node specified.
+.TP
+history cleanup [<node>]
+Cleanup fence history of the specified node or all nodes if no node specified.
+.TP
+history update
+Update fence history from all nodes.
+.TP
 sbd enable [\fB\-\-watchdog\fR=<path>[@<node>]] ... [\fB\-\-device\fR=<path>[@<node>]] ... [<SBD_OPTION>=<value>] ... [\fB\-\-no\-watchdog\-validation\fR]
 Enable SBD in cluster. Default path for watchdog device is /dev/watchdog. Allowed SBD options: SBD_WATCHDOG_TIMEOUT (default: 5), SBD_DELAY_START (default: no) and SBD_STARTMODE (default: always). It is possible to specify up to 3 devices per node. If \fB\-\-no\-watchdog\-validation\fR is specified, validation of watchdogs will be skipped.
 

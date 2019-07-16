@@ -2385,3 +2385,19 @@ class CannotGroupResourceNextToItself(NameBuildTest):
             "Cannot put resource 'R' next to itself",
             reports.cannot_group_resource_next_to_itself("R", "G")
         )
+
+class FenceHistoryCommandError(NameBuildTest):
+    code = codes.FENCE_HISTORY_COMMAND_ERROR
+    def test_success(self):
+        self.assert_message_from_report(
+            "Unable to show fence history: reason",
+            reports.fence_history_command_error("reason", "show")
+        )
+
+class FenceHistoryNotSupported(NameBuildTest):
+    code = codes.FENCE_HISTORY_NOT_SUPPORTED
+    def test_success(self):
+        self.assert_message_from_report(
+            "Fence history is not supported, please upgrade pacemaker",
+            reports.fence_history_not_supported()
+        )

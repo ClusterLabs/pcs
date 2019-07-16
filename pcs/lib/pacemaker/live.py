@@ -28,6 +28,8 @@ __RESOURCE_REFRESH_OPERATION_COUNT_THRESHOLD = 100
 class CrmMonErrorException(LibraryError):
     pass
 
+class FenceHistoryCommandErrorException(Exception):
+    pass
 
 ### status
 
@@ -370,6 +372,55 @@ def resource_refresh(runner, resource=None, node=None, full=False, force=None):
         )
     # usefull output (what has been done) goes to stderr
     return join_multilines([stdout, stderr])
+
+### fence history
+
+def is_fence_history_supported():
+    try:
+        crm_mon_rng = xml_fromstring(open(settings.crm_mon_schema, "r").read())
+        # Namespaces must be provided otherwise xpath won't match anything.
+        # 'None' namespace is not supported, so we rename it.
+        namespaces_map = {
+            "ns": crm_mon_rng.nsmap.pop(None)
+        }
+        history_elements = crm_mon_rng.xpath(
+            ".//ns:element[@name='fence_history']",
+            namespaces=namespaces_map
+        )
+        if len(history_elements):
+            return True
+    except (EnvironmentError, etree.XMLSyntaxError):
+        # if we cannot tell for sure fence_history is supported, we will
+        # continue as if it was not supported
+        pass
+    return False
+
+def fence_history_cleanup(runner, node=None):
+    return _run_fence_history_command(runner, "--cleanup", node)
+
+def fence_history_text(runner, node=None):
+    return _run_fence_history_command(runner, "--verbose", node)
+
+def fence_history_update(runner):
+    # Pacemaker always prints "gather fencing-history from all nodes" even if a
+    # node is specified. However, --history expects a value, so we must provide
+    # it. Otherwise "--broadcast" would be considered a value of "--history".
+    return _run_fence_history_command(runner, "--broadcast", node=None)
+
+def _run_fence_history_command(runner, command, node=None):
+    stdout, stderr, retval = runner.run(
+        [
+            __exec("stonith_admin"),
+            "--history",
+            node if node else "*",
+            command
+        ]
+    )
+    if retval != 0:
+        raise FenceHistoryCommandErrorException(
+            join_multilines([stderr, stdout])
+        )
+    return stdout.strip()
 
 ### tools
 

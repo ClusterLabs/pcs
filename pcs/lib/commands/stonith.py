@@ -4,11 +4,20 @@ from __future__ import (
     print_function,
 )
 
+from pcs.lib import reports
 from pcs.lib.cib import resource
 from pcs.lib.cib.resource.common import are_meta_disabled
 from pcs.lib.commands.resource import (
     _ensure_disabled_after_wait,
     resource_environment
+)
+from pcs.lib.errors import LibraryError
+from pcs.lib.pacemaker.live import (
+    FenceHistoryCommandErrorException,
+    fence_history_cleanup,
+    fence_history_text,
+    fence_history_update,
+    is_fence_history_supported,
 )
 from pcs.lib.pacemaker.values import validate_id
 from pcs.lib.resource_agent import find_valid_stonith_agent_by_name as get_agent
@@ -151,4 +160,54 @@ def create_in_group(
             stonith_element,
             adjacent_resource_id,
             put_after_adjacent,
+        )
+
+def history_get_text(env, node=None):
+    """
+    Get full fencing history in plain text
+
+    LibraryEnvironment env
+    string node -- get history for the specified node or all nodes if None
+    """
+    if not is_fence_history_supported():
+        raise LibraryError(reports.fence_history_not_supported())
+
+    try:
+        return fence_history_text(env.cmd_runner(), node)
+    except FenceHistoryCommandErrorException as e:
+        raise LibraryError(
+            reports.fence_history_command_error(str(e), "show")
+        )
+
+def history_cleanup(env, node=None):
+    """
+    Clear fencing history
+
+    LibraryEnvironment env
+    string node -- clear history for the specified node or all nodes if None
+    """
+    if not is_fence_history_supported():
+        raise LibraryError(reports.fence_history_not_supported())
+
+    try:
+        return fence_history_cleanup(env.cmd_runner(), node)
+    except FenceHistoryCommandErrorException as e:
+        raise LibraryError(
+            reports.fence_history_command_error(str(e), "cleanup")
+        )
+
+def history_update(env):
+    """
+    Update fencing history in a cluster (sync with other nodes)
+
+    LibraryEnvironment env
+    """
+    if not is_fence_history_supported():
+        raise LibraryError(reports.fence_history_not_supported())
+
+    try:
+        return fence_history_update(env.cmd_runner())
+    except FenceHistoryCommandErrorException as e:
+        raise LibraryError(
+            reports.fence_history_command_error(str(e), "update")
         )

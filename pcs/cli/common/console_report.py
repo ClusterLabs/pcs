@@ -1510,4 +1510,10 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
     codes.CANNOT_GROUP_RESOURCE_NEXT_TO_ITSELF: lambda info:
         "Cannot put resource '{resource_id}' next to itself".format(**info)
     ,
+    codes.FENCE_HISTORY_COMMAND_ERROR: lambda info:
+        "Unable to {command_label} fence history: {reason}".format(**info)
+    ,
+    codes.FENCE_HISTORY_NOT_SUPPORTED:
+        "Fence history is not supported, please upgrade pacemaker"
+    ,
 }

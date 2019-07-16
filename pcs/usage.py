@@ -992,6 +992,17 @@ Commands:
         in order to be able to work with nodes not visible from the local
         cluster partition.
 
+    history [show [<node>]]
+        Show fencing history for the specified node or all nodes if no node
+        specified.
+
+    history cleanup [<node>]
+        Cleanup fence history of the specified node or all nodes if no node
+        specified.
+
+    history update
+        Update fence history from all nodes.
+
     sbd enable [--watchdog=<path>[@<node>]] ... [--device=<path>[@<node>]] ...
                [<SBD_OPTION>=<value>] ... [--no-watchdog-validation]
         Enable SBD in cluster. Default path for watchdog device is

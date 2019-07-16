@@ -51,6 +51,74 @@ class PcmkShortcuts(object):
         self.default_wait_timeout = DEFAULT_WAIT_TIMEOUT
         self.default_wait_error_returncode = WAIT_TIMEOUT_EXPIRED_RETURNCODE
 
+    def fence_history_get(
+        self, name="runner.pcmk.fence_history_get", node=None, stdout="",
+        stderr="", returncode=0
+    ):
+        """
+        Create call for getting plain text fencing history.
+
+        string name -- key of the call
+        string node -- a node to get a history from
+        string stdout -- pacemaker's stdout
+        string stderr -- pacemaker's stderr
+        int returncode -- pacemaker's returncode
+        """
+        self.__calls.place(
+            name,
+            RunnerCall(
+                "/usr/sbin/stonith_admin --history {0} --verbose".format(node),
+                stdout=stdout,
+                stderr=stderr,
+                returncode=returncode,
+            ),
+        )
+
+    def fence_history_cleanup(
+        self, name="runner.pcmk.fence_history_cleanup", node=None, stdout="",
+        stderr="", returncode=0
+    ):
+        """
+        Create call for cleaning fencing history up.
+
+        string name -- key of the call
+        string node -- a node to clean a history from
+        string stdout -- pacemaker's stdout
+        string stderr -- pacemaker's stderr
+        int returncode -- pacemaker's returncode
+        """
+        self.__calls.place(
+            name,
+            RunnerCall(
+                "/usr/sbin/stonith_admin --history {0} --cleanup".format(node),
+                stdout=stdout,
+                stderr=stderr,
+                returncode=returncode,
+            ),
+        )
+
+    def fence_history_update(
+        self, name="runner.pcmk.fence_history_update", stdout="", stderr="",
+        returncode=0
+    ):
+        """
+        Create call for updating fencing history.
+
+        string name -- key of the call
+        string stdout -- pacemaker's stdout
+        string stderr -- pacemaker's stderr
+        int returncode -- pacemaker's returncode
+        """
+        self.__calls.place(
+            name,
+            RunnerCall(
+                "/usr/sbin/stonith_admin --history * --broadcast",
+                stdout=stdout,
+                stderr=stderr,
+                returncode=returncode,
+            ),
+        )
+
     def load_state(
         self, name="runner.pcmk.load_state", filename="crm_mon.minimal.xml",
         resources=None, raw_resources=None

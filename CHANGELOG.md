@@ -8,6 +8,12 @@
   by setting `PCSD_SSL_CERT_SYNC_ENABLED` to `false` in pcsd config file
   ([rhbz#1665898])
 - Length of DH key for SSL key exchange can be set in pcsd config file
+- `pcs status` now shows failed and pending fencing actions and `pcs status
+  --full` shows the whole fencing history. Pacemaker supporting fencing history
+  is required. ([rhbz#1466088])
+- `pcs stonith history` commands for displaying, synchronizing and cleaning up
+  fencing history. Pacemaker supporting fencing history is required.
+  ([rhbz#1595444])
 
 ### Fixed
 - Pcs works even when PATH environment variable is not set ([rhbz#1671174])
@@ -24,7 +30,9 @@
 Command `pcs resource bundle reset` no longer accepts the container type
 ([rhbz#1598197])
 
+[rhbz#1466088]: https://bugzilla.redhat.com/show_bug.cgi?id=1466088
 [rhbz#1551663]: https://bugzilla.redhat.com/show_bug.cgi?id=1551663
+[rhbz#1595444]: https://bugzilla.redhat.com/show_bug.cgi?id=1595444
 [rhbz#1598197]: https://bugzilla.redhat.com/show_bug.cgi?id=1598197
 [rhbz#1665898]: https://bugzilla.redhat.com/show_bug.cgi?id=1665898
 [rhbz#1671174]: https://bugzilla.redhat.com/show_bug.cgi?id=1671174
