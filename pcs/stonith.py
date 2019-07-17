@@ -7,6 +7,7 @@ from pcs import (
 from pcs.cli.common import parse_args
 from pcs.cli.common.console_report import indent, error
 from pcs.cli.common.errors import CmdLineInputError
+from pcs.cli.common.reports import process_library_reports
 from pcs.cli.fencing_topology import target_type_map_cli_to_lib
 from pcs.cli.resource.parse_args import parse_create_simple as parse_create_args
 from pcs.common import report_codes
@@ -459,11 +460,11 @@ def get_fence_agent_info(lib, argv, modifiers):
         info["name"] = "stonith:{0}".format(info["name"])
         print(json.dumps(info))
     except lib_ra.ResourceAgentError as e:
-        utils.process_library_reports(
+        process_library_reports(
             [lib_ra.resource_agent_error_to_report_item(e)]
         )
     except LibraryError as e:
-        utils.process_library_reports(e.args)
+        process_library_reports(e.args)
 
 
 def sbd_watchdog_list(lib, argv, modifiers):

@@ -7,6 +7,7 @@ from pcs import (
 )
 from pcs.cli.common.console_report import indent
 from pcs.cli.common.errors import CmdLineInputError
+from pcs.cli.common.reports import process_library_reports
 from pcs.lib import reports
 from pcs.lib.node import get_existing_nodes_names
 from pcs.lib.errors import LibraryError
@@ -204,7 +205,7 @@ def nodes_status(lib, argv, modifiers):
                 utils.get_corosync_conf_facade()
             )
             if report_list:
-                utils.process_library_reports(report_list)
+                process_library_reports(report_list)
         else:
             corosync_nodes = []
         try:
@@ -214,7 +215,7 @@ def nodes_status(lib, argv, modifiers):
                 if node.attrs.type != 'remote'
             ])
         except LibraryError as e:
-            utils.process_library_reports(e.args)
+            process_library_reports(e.args)
         print("Corosync Nodes:")
         if corosync_nodes:
             print(" " + " ".join(corosync_nodes))
@@ -230,7 +231,7 @@ def nodes_status(lib, argv, modifiers):
             utils.get_corosync_conf_facade()
         )
         if report_list:
-            utils.process_library_reports(report_list)
+            process_library_reports(report_list)
         online_nodes = utils.getCorosyncActiveNodes()
         offline_nodes = []
         for node in all_nodes:
@@ -428,7 +429,7 @@ def cluster_pcsd_status(lib, argv, modifiers, dont_exit=False):
         if not nodes and not dont_exit:
             report_list.append(reports.corosync_config_no_nodes_defined())
         if report_list:
-            utils.process_library_reports(report_list)
+            process_library_reports(report_list)
         bad_nodes = check_nodes(nodes, "  ")
     else:
         bad_nodes = check_nodes(argv, "  ")

@@ -5,6 +5,7 @@ from pcs import (
 from pcs.cli.common import parse_args
 from pcs.cli.common.console_report import indent
 from pcs.cli.common.errors import CmdLineInputError
+from pcs.cli.common.reports import process_library_reports
 from pcs.lib.node import get_existing_nodes_names
 
 
@@ -259,7 +260,7 @@ def quorum_unblock_cmd(lib, argv, modifiers):
         utils.get_corosync_conf_facade()
     )
     if report_list:
-        utils.process_library_reports(report_list)
+        process_library_reports(report_list)
 
     unjoined_nodes = set(all_nodes) - set(utils.getCorosyncActiveNodes())
     if not unjoined_nodes:

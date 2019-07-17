@@ -40,6 +40,7 @@ from pcs import (
 from pcs.cli.common import middleware
 from pcs.cli.common.console_report import indent
 from pcs.cli.common.errors import CmdLineInputError
+from pcs.cli.common.reports import process_library_reports
 from pcs.cli.constraint import command as constraint_command
 from pcs.cli.constraint_colocation import (
     console_report as colocation_console_report,
@@ -87,7 +88,7 @@ def config_show(lib, argv, modifiers):
             config = lib_quorum.get_config(utils.get_lib_env())
             print("\n".join(indent(quorum.quorum_config_to_str(config))))
         except LibraryError as e:
-            utils.process_library_reports(e.args)
+            process_library_reports(e.args)
 
 def _config_show_cib_lines(lib):
     """
@@ -312,7 +313,7 @@ def config_restore_remote(infile_name, infile_obj):
         )
     )
     if report_list:
-        utils.process_library_reports(report_list)
+        process_library_reports(report_list)
     if not node_list:
         utils.err("no nodes found in the tarball")
 

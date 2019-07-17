@@ -16,6 +16,7 @@ from pcs.cli.common import (
     parse_args,
     routing,
 )
+from pcs.cli.common.reports import process_library_reports
 from pcs.cli.routing import (
     acl,
     alert,
@@ -244,7 +245,7 @@ def main(argv=None):
             utils.get_library_wrapper(), argv, utils.get_input_modifiers()
         )
     except LibraryError as e:
-        utils.process_library_reports(e.args)
+        process_library_reports(e.args)
     except errors.CmdLineInputError:
         if argv and argv[0] in cmd_map:
             usage.show(argv[0], [])

@@ -15,6 +15,7 @@ from pcs.cli import (
 from pcs.cli.common import parse_args
 from pcs.cli.common.console_report import warn
 from pcs.cli.common.errors import CmdLineInputError
+from pcs.cli.common.reports import process_library_reports
 import pcs.cli.constraint_colocation.command as colocation_command
 import pcs.cli.constraint_order.command as order_command
 from pcs.cli.constraint_ticket import command as ticket_command
@@ -895,7 +896,7 @@ def location_add(lib, argv, modifiers):
                 forceable=report_codes.FORCE_NODE_DOES_NOT_EXIST
             ))
         if report_list:
-            utils.process_library_reports(report_list)
+            process_library_reports(report_list)
     else:
         warn(LOCATION_NODE_VALIDATION_SKIP_MSG)
 

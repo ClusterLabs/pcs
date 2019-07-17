@@ -162,7 +162,7 @@ def sync_nodes(lib, argv, modifiers):
     if not nodes:
         report_list.append(reports.corosync_config_no_nodes_defined())
     if report_list:
-        utils.process_library_reports(report_list)
+        process_library_reports(report_list)
 
     for node in nodes:
         utils.setCorosyncConfig(node, config)
@@ -219,7 +219,7 @@ def start_cluster_all():
     if not all_nodes:
         report_list.append(reports.corosync_config_no_nodes_defined())
     if report_list:
-        utils.process_library_reports(report_list)
+        process_library_reports(report_list)
 
     start_cluster_nodes(all_nodes)
     if wait:
@@ -338,7 +338,7 @@ def stop_cluster_all():
     if not all_nodes:
         report_list.append(reports.corosync_config_no_nodes_defined())
     if report_list:
-        utils.process_library_reports(report_list)
+        process_library_reports(report_list)
 
     stop_cluster_nodes(all_nodes)
 
@@ -354,7 +354,7 @@ def stop_cluster_nodes(nodes):
     unknown_nodes = set(nodes) - set(all_nodes)
     if unknown_nodes:
         if report_list:
-            utils.process_library_reports(report_list)
+            process_library_reports(report_list)
         utils.err(
             "nodes '%s' do not appear to exist in configuration"
             % "', '".join(sorted(unknown_nodes))
@@ -469,7 +469,7 @@ def enable_cluster_all():
     if not all_nodes:
         report_list.append(reports.corosync_config_no_nodes_defined())
     if report_list:
-        utils.process_library_reports(report_list)
+        process_library_reports(report_list)
 
     enable_cluster_nodes(all_nodes)
 
@@ -484,7 +484,7 @@ def disable_cluster_all():
     if not all_nodes:
         report_list.append(reports.corosync_config_no_nodes_defined())
     if report_list:
-        utils.process_library_reports(report_list)
+        process_library_reports(report_list)
 
     disable_cluster_nodes(all_nodes)
 
@@ -1149,7 +1149,7 @@ def cluster_destroy(lib, argv, modifiers):
         if not corosync_nodes:
             report_list.append(reports.corosync_config_no_nodes_defined())
         if report_list:
-            utils.process_library_reports(report_list)
+            process_library_reports(report_list)
 
         # destroy remote and guest nodes
         if cib is not None:
@@ -1158,7 +1158,7 @@ def cluster_destroy(lib, argv, modifiers):
                     cib=cib
                 )
                 if report_list:
-                    utils.process_library_reports(report_list)
+                    process_library_reports(report_list)
                 if all_remote_nodes:
                     _destroy_pcmk_remote_env(
                         lib_env,
@@ -1167,7 +1167,7 @@ def cluster_destroy(lib, argv, modifiers):
                         allow_fails=True
                     )
             except LibraryError as e:
-                utils.process_library_reports(e.args)
+                process_library_reports(e.args)
 
         # destroy full-stack nodes
         destroy_cluster(corosync_nodes)

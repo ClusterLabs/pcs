@@ -20,6 +20,7 @@ from pcs.cli.common.parse_args import (
     prepare_options,
     prepare_options_allowed,
 )
+from pcs.cli.common.reports import process_library_reports
 from pcs.cli.resource.parse_args import (
     parse_bundle_create_options,
     parse_bundle_reset_options,
@@ -681,17 +682,17 @@ def resource_update(lib, args, modifiers, deal_with_guest_change=True):
             force=modifiers.get("--force"),
         )
         if report_list:
-            utils.process_library_reports(report_list)
+            process_library_reports(report_list)
     except lib_ra.ResourceAgentError as e:
         severity = (
             ReportItemSeverity.WARNING if modifiers.get("--force")
             else ReportItemSeverity.ERROR
         )
-        utils.process_library_reports(
+        process_library_reports(
             [lib_ra.resource_agent_error_to_report_item(e, severity)]
         )
     except LibraryError as e:
-        utils.process_library_reports(e.args)
+        process_library_reports(e.args)
 
     utils.dom_update_instance_attr(resource, params)
 
@@ -2918,7 +2919,7 @@ def get_resource_agent_info(lib, argv, modifiers):
         metadata = lib_ra.ResourceAgent(runner, agent)
         print(json.dumps(metadata.get_full_info()))
     except lib_ra.ResourceAgentError as e:
-        utils.process_library_reports(
+        process_library_reports(
             [lib_ra.resource_agent_error_to_report_item(e)]
         )
 
