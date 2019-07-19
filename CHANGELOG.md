@@ -14,6 +14,7 @@
 - `pcs stonith history` commands for displaying, synchronizing and cleaning up
   fencing history. Pacemaker supporting fencing history is required.
   ([rhbz#1595444])
+- Support for clearing expired moves and bans of resources ([rhbz#1673829])
 
 ### Fixed
 - Pcs works even when PATH environment variable is not set ([rhbz#1671174])
@@ -36,6 +37,7 @@ Command `pcs resource bundle reset` no longer accepts the container type
 [rhbz#1598197]: https://bugzilla.redhat.com/show_bug.cgi?id=1598197
 [rhbz#1665898]: https://bugzilla.redhat.com/show_bug.cgi?id=1665898
 [rhbz#1671174]: https://bugzilla.redhat.com/show_bug.cgi?id=1671174
+[rhbz#1673829]: https://bugzilla.redhat.com/show_bug.cgi?id=1673829
 [rhbz#1676956]: https://bugzilla.redhat.com/show_bug.cgi?id=1676956
 [rhbz#1710750]: https://bugzilla.redhat.com/show_bug.cgi?id=1710750
 [rhbz#1712315]: https://bugzilla.redhat.com/show_bug.cgi?id=1712315

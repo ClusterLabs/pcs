@@ -1185,6 +1185,13 @@
         constraints to take effect.
       </description>
     </capability>
+    <capability id="pcmk.resource.ban-move-clear.clear-expired" in-pcs="1" in-pcsd="0">
+      <description>
+        An option to clear only constraints with expired lifetime.
+
+        pcs commands: pcs resource clear --expired
+      </description>
+    </capability>
     <capability id="pcmk.resource.debug" in-pcs="1" in-pcsd="0">
       <description>
         Force a resource operation to happen on the local node and show debug

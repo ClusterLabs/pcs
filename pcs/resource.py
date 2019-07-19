@@ -483,7 +483,13 @@ def resource_create(lib, argv, modifiers):
         )
 
 def resource_move(argv,clear=False,ban=False):
-    other_options = []
+    if clear:
+        usage_arg = ["clear"]
+    elif ban:
+        usage_arg = ["ban"]
+    else:
+        usage_arg = ["move"]
+
     if len(argv) == 0:
         if clear:
             msg = "must specify a resource to clear"
@@ -496,7 +502,7 @@ def resource_move(argv,clear=False,ban=False):
     resource_id = argv.pop(0)
 
     if (clear and len(argv) > 1) or len(argv) > 2:
-        usage.resource()
+        usage.resource(usage_arg)
         sys.exit(1)
 
     dest_node = None
@@ -505,7 +511,7 @@ def resource_move(argv,clear=False,ban=False):
         arg = argv.pop(0)
         if arg.startswith("lifetime="):
             if lifetime:
-                usage.resource()
+                usage.resource(usage_arg)
                 sys.exit(1)
             lifetime = arg.split("=")[1]
             if lifetime and lifetime[0].isdigit():
@@ -513,12 +519,19 @@ def resource_move(argv,clear=False,ban=False):
         elif not dest_node:
             dest_node = arg
         else:
-            usage.resource()
+            usage.resource(usage_arg)
             sys.exit(1)
 
     if clear and lifetime:
-        usage.resource()
+        usage.resource(usage_arg)
         sys.exit(1)
+
+    expired = "--expired" in utils.pcs_options
+    if expired:
+        if not clear:
+            usage.resource(usage_arg)
+            sys.exit(1)
+        utils.check_pacemaker_supports_clearing_expired_moves_bans()
 
     dom = utils.get_cib_dom()
     if (
@@ -597,10 +610,13 @@ def resource_move(argv,clear=False,ban=False):
                     running_on["nodes_master"] + running_on["nodes_started"]
                 )
 
+    other_options = []
     if "--master" in utils.pcs_options:
         other_options.append("--master")
     if lifetime is not None:
         other_options.append("--lifetime=%s" % lifetime)
+    if expired:
+        other_options.append("--expired")
 
     if clear:
         if dest_node:

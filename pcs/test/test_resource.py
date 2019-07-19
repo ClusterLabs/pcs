@@ -9,6 +9,7 @@ import re
 from random import shuffle
 import shutil
 from textwrap import dedent
+from time import sleep
 
 from pcs.test.tools import pcs_unittest as unittest
 from pcs.test.tools.assertions import (
@@ -21,6 +22,7 @@ from pcs.test.tools.misc import (
     get_test_resource as rc,
     outdent,
     skip_unless_pacemaker_supports_bundle,
+    skip_unless_pacemaker_version,
 )
 from pcs.test.tools.pcs_runner import (
     pcs,
@@ -36,9 +38,22 @@ temp_cib = rc("temp-cib.xml")
 large_cib = rc("cib-large.xml")
 temp_large_cib  = rc("temp-cib-large.xml")
 
+skip_unless_crm_resource_supports_expired = skip_unless_pacemaker_version(
+    (1, 1, 20),
+    "--expired option in 'pcs resource clear'"
+)
+
 LOCATION_NODE_VALIDATION_SKIP_WARNING = (
     "Warning: Validation for node existence in the cluster will be skipped\n"
 )
+
+def replace_date(output):
+    return re.sub(
+        "\d{4}-\d\d-\d\d \d\d:\d\d:\d\d(Z|( [+-]?\d\d:\d\d))",
+        "{datetime}",
+        output
+    )
+
 
 class ResourceDescribeTest(unittest.TestCase, AssertPcsMixin):
     def setUp(self):
@@ -2475,13 +2490,6 @@ Ticket Constraints:
         )
 
     def testResourceMoveBanClear(self):
-        def replace_date(output):
-            return re.sub(
-                "\d{4}-\d\d-\d\d \d\d:\d\d:\d\d(Z|( [+-]?\d\d:\d\d))",
-                "{datetime}",
-                output
-            )
-
         # Load nodes into cib so move will work
         utils.usefile = True
         utils.filename = temp_cib
@@ -2643,6 +2651,157 @@ Ticket Constraints:
 Error: when specifying --master you must use the master id
 """)
         self.assertEqual(1, returnVal)
+
+    @skip_unless_crm_resource_supports_expired
+    def test_move_ban_clear_expired(self):
+        # Load nodes into cib so move will work
+        utils.usefile = True
+        utils.filename = temp_cib
+        output, returnVal = utils.run([
+            "cibadmin", "-M", '--xml-text',
+            """
+                <nodes>
+                    <node id="1" uname="rh7-1">
+                        <instance_attributes id="nodes-1"/>
+                    </node>
+                    <node id="2" uname="rh7-2">
+                        <instance_attributes id="nodes-2"/>
+                    </node>
+                    <node id="3" uname="rh7-3">
+                        <instance_attributes id="nodes-3"/>
+                    </node>
+                    <node id="4" uname="rh7-4">
+                        <instance_attributes id="nodes-4"/>
+                    </node>
+                </nodes>
+            """
+        ])
+        ac(output, "")
+        self.assertEqual(0, returnVal)
+
+        # fixture: resources
+        self.assert_pcs_success("resource create d1 ocf:heartbeat:Dummy")
+        self.assert_pcs_success("resource create d2 ocf:heartbeat:Dummy")
+
+        # test: --expired does not work with move and ban
+        self.assert_pcs_fail_regardless_of_force(
+            "resource move d1 --expired",
+            stdout_start="\nUsage: pcs resource move...\n"
+        )
+        self.assert_pcs_fail_regardless_of_force(
+            "resource ban d1 --expired",
+            stdout_start="\nUsage: pcs resource ban...\n"
+        )
+
+        # fixture: constraints
+        ban_msg = (
+            "Warning: Creating location constraint cli-ban-{rsc}-on-{node} "
+            "with a score of -INFINITY for resource {rsc} on node {node}.\n"
+            "This will prevent {rsc} from running on {node} until the "
+            "constraint is removed. This will be the case even if {node} is "
+            "the last node in the cluster.\n"
+        )
+        self.assert_pcs_success(
+            "resource ban d1 rh7-1 lifetime=1H",
+            ban_msg.format(node="rh7-1", rsc="d1")
+        )
+        self.assert_pcs_success(
+            "resource ban d1 rh7-2 lifetime=1S",
+            ban_msg.format(node="rh7-2", rsc="d1")
+        )
+        self.assert_pcs_success(
+            "resource ban d1 rh7-3",
+            ban_msg.format(node="rh7-3", rsc="d1")
+        )
+        self.assert_pcs_success(
+            "resource ban d1 rh7-4 lifetime=1S",
+            ban_msg.format(node="rh7-4", rsc="d1")
+        )
+        self.assert_pcs_success(
+            "resource ban d2 rh7-2 lifetime=1S",
+            ban_msg.format(node="rh7-2", rsc="d2")
+        )
+
+        # check: constraints were created as expected
+        sleep(5)
+        output, returnVal = pcs(temp_cib, "constraint location")
+        output = replace_date(output)
+        ac(
+            output,
+            dedent("""\
+            Location Constraints:
+              Resource: d1
+                Disabled on: rh7-3 (score:-INFINITY) (role: Started)
+                Constraint: cli-ban-d1-on-rh7-1
+                  Rule: boolean-op=and score=-INFINITY
+                    Expression: #uname eq string rh7-1
+                    Expression: date lt {datetime}
+                Constraint: cli-ban-d1-on-rh7-2
+                  Rule: boolean-op=and score=-INFINITY
+                    Expression: #uname eq string rh7-2
+                    Expression: date lt {datetime}
+                Constraint: cli-ban-d1-on-rh7-4
+                  Rule: boolean-op=and score=-INFINITY
+                    Expression: #uname eq string rh7-4
+                    Expression: date lt {datetime}
+              Resource: d2
+                Constraint: cli-ban-d2-on-rh7-2
+                  Rule: boolean-op=and score=-INFINITY
+                    Expression: #uname eq string rh7-2
+                    Expression: date lt {datetime}
+            """)
+        )
+        self.assertEqual(0, returnVal)
+
+        # test: remove expired constraints limited by a resource and a node
+        self.assert_pcs_success("resource clear d1 rh7-2 --expired")
+        output, returnVal = pcs(temp_cib, "constraint location")
+        output = replace_date(output)
+        ac(
+            output,
+            dedent("""\
+            Location Constraints:
+              Resource: d1
+                Disabled on: rh7-3 (score:-INFINITY) (role: Started)
+                Constraint: cli-ban-d1-on-rh7-1
+                  Rule: boolean-op=and score=-INFINITY
+                    Expression: #uname eq string rh7-1
+                    Expression: date lt {datetime}
+                Constraint: cli-ban-d1-on-rh7-4
+                  Rule: boolean-op=and score=-INFINITY
+                    Expression: #uname eq string rh7-4
+                    Expression: date lt {datetime}
+              Resource: d2
+                Constraint: cli-ban-d2-on-rh7-2
+                  Rule: boolean-op=and score=-INFINITY
+                    Expression: #uname eq string rh7-2
+                    Expression: date lt {datetime}
+            """)
+        )
+        self.assertEqual(0, returnVal)
+
+        # test: remove expired constraints limited by a resource
+        self.assert_pcs_success("resource clear d1 --expired")
+        output, returnVal = pcs(temp_cib, "constraint location")
+        output = replace_date(output)
+        ac(
+            output,
+            dedent("""\
+            Location Constraints:
+              Resource: d1
+                Disabled on: rh7-3 (score:-INFINITY) (role: Started)
+                Constraint: cli-ban-d1-on-rh7-1
+                  Rule: boolean-op=and score=-INFINITY
+                    Expression: #uname eq string rh7-1
+                    Expression: date lt {datetime}
+              Resource: d2
+                Constraint: cli-ban-d2-on-rh7-2
+                  Rule: boolean-op=and score=-INFINITY
+                    Expression: #uname eq string rh7-2
+                    Expression: date lt {datetime}
+            """)
+        )
+        self.assertEqual(0, returnVal)
 
     def testCloneMoveBanClear(self):
         # Load nodes into cib so move will work

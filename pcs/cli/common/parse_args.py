@@ -36,6 +36,8 @@ PCS_LONG_OPTIONS = [
     "hide-inactive",
     # pcs resource (un)manage - enable or disable monitor operations
     "monitor",
+    # "pcs resource clear --expired" - only clear expired moves and bans
+    "expired",
 ]
 
 def split_list(arg_list, separator):

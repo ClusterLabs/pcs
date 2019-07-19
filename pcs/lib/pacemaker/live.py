@@ -208,12 +208,7 @@ def _upgrade_cib(runner):
 ### wait for idle
 
 def has_wait_for_idle_support(runner):
-    # returns 1 on success so we don't care about retval
-    stdout, stderr, dummy_retval = runner.run(
-        [__exec("crm_resource"), "-?"]
-    )
-    # help goes to stderr but we check stdout as well if that gets changed
-    return "--wait" in stderr or "--wait" in stdout
+    return __is_in_crm_resource_help(runner, "--wait")
 
 def ensure_wait_for_idle_support(runner):
     if not has_wait_for_idle_support(runner):
@@ -373,6 +368,9 @@ def resource_refresh(runner, resource=None, node=None, full=False, force=None):
     # usefull output (what has been done) goes to stderr
     return join_multilines([stdout, stderr])
 
+def has_resource_unmove_unban_expired_support(runner):
+    return __is_in_crm_resource_help(runner, "--expired")
+
 ### fence history
 
 def is_fence_history_supported():
@@ -427,3 +425,11 @@ def _run_fence_history_command(runner, command, node=None):
 # shortcut for getting a full path to a pacemaker executable
 def __exec(name):
     return os.path.join(settings.pacemaker_binaries, name)
+
+def __is_in_crm_resource_help(runner, text):
+    # returns 1 on success so we don't care about retval
+    stdout, stderr, dummy_retval = runner.run(
+        [__exec("crm_resource"), "-?"]
+    )
+    # help goes to stderr but we check stdout as well if that gets changed
+    return text in stderr or text in stdout

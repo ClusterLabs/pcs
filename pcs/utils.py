@@ -71,6 +71,7 @@ import pcs.lib.corosync.config_parser as corosync_conf_parser
 from pcs.lib.corosync.config_facade import ConfigFacade as corosync_conf_facade
 from pcs.lib.pacemaker.live import (
     EXITCODE_CIB_SCHEMA_IS_THE_LATEST_AVAILABLE,
+    has_resource_unmove_unban_expired_support,
     has_wait_for_idle_support,
 )
 from pcs.lib.pacemaker.state import ClusterState
@@ -1686,6 +1687,10 @@ def check_pacemaker_supports_resource_wait():
     if not has_wait_for_idle_support(cmd_runner()):
         err("crm_resource does not support --wait, please upgrade pacemaker")
 
+def check_pacemaker_supports_clearing_expired_moves_bans():
+    if not has_resource_unmove_unban_expired_support(cmd_runner()):
+        err("crm_resource does not support --expired, please upgrade pacemaker")
+
 def validate_wait_get_timeout(need_cib_support=True):
     if need_cib_support:
         check_pacemaker_supports_resource_wait()
@@ -2959,6 +2964,7 @@ def get_modifiers():
         "disabled": "--disabled" in pcs_options,
         "enable": "--enable" in pcs_options,
         "encryption": pcs_options.get("--encryption", "0"),
+        "expired": "--expired" in pcs_options,
         "force": "--force" in pcs_options,
         "full": "--full" in pcs_options,
         "group": pcs_options.get("--group", None),
