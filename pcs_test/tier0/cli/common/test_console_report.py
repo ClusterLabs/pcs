@@ -7,10 +7,7 @@ from pcs.cli.common.console_report import(
     format_optional,
 )
 from pcs.cli.common.reports import CODE_BUILDER_MAP
-from pcs.common import (
-    env_file_role_codes,
-    report_codes as codes,
-)
+from pcs.common import env_file_role_codes
 from pcs.common.fencing_topology import (
     TARGET_TYPE_NODE,
     TARGET_TYPE_REGEXP,
@@ -36,101 +33,66 @@ class NameBuildTest(TestCase):
     """
     Base class for the testing of message building.
     """
-    code = None
-
-    def assert_message_from_info(self, message, info=None):
-        info = info if info else {}
-        build = CODE_BUILDER_MAP[self.code]
+    def assert_message_from_report(self, message, report):
+        if not isinstance(report, ReportItem):
+            raise AssertionError("report is not an instance of ReportItem")
+        info = report.info if report.info else {}
+        build = CODE_BUILDER_MAP[report.code]
         self.assertEqual(
             message,
             build(info) if callable(build) else build
         )
 
-    def assert_message_from_report(self, message, report):
-        if not isinstance(report, ReportItem):
-            raise AssertionError("report is not an instance of ReportItem")
-        self.assert_message_from_info(message, report.info)
-
 
 class BuildInvalidOptionsMessageTest(NameBuildTest):
-    code = codes.INVALID_OPTIONS
     def test_build_message_with_type(self):
-        self.assert_message_from_info(
+        self.assert_message_from_report(
             "invalid TYPE option 'NAME', allowed options are: 'FIRST', "
                 "'SECOND'"
             ,
-            {
-                "option_names": ["NAME"],
-                "option_type": "TYPE",
-                "allowed": ["SECOND", "FIRST"],
-                "allowed_patterns": [],
-            }
+            reports.invalid_options(["NAME"], ["SECOND", "FIRST"], "TYPE")
         )
 
     def test_build_message_without_type(self):
-        self.assert_message_from_info(
+        self.assert_message_from_report(
             "invalid option 'NAME', allowed options are: 'FIRST', 'SECOND'",
-            {
-                "option_names": ["NAME"],
-                "option_type": "",
-                "allowed": ["FIRST", "SECOND"],
-                "allowed_patterns": [],
-            }
+            reports.invalid_options(["NAME"], ["FIRST", "SECOND"], "")
         )
 
     def test_build_message_with_multiple_names(self):
-        self.assert_message_from_info(
+        self.assert_message_from_report(
             "invalid options: 'ANOTHER', 'NAME', allowed option is 'FIRST'",
-            {
-                "option_names": ["NAME", "ANOTHER"],
-                "option_type": "",
-                "allowed": ["FIRST"],
-                "allowed_patterns": [],
-            }
+            reports.invalid_options(["NAME", "ANOTHER"], ["FIRST"], "")
         )
 
     def test_pattern(self):
-        self.assert_message_from_info(
+        self.assert_message_from_report(
             (
                 "invalid option 'NAME', allowed are options matching patterns: "
                 "'exec_<name>'"
             ),
-            {
-                "option_names": ["NAME"],
-                "option_type": "",
-                "allowed": [],
-                "allowed_patterns": ["exec_<name>"],
-            }
+            reports.invalid_options(["NAME"], [], "", ["exec_<name>"])
         )
 
     def test_allowed_and_patterns(self):
-        self.assert_message_from_info(
+        self.assert_message_from_report(
             (
                 "invalid option 'NAME', allowed option is 'FIRST' and options "
                 "matching patterns: 'exec_<name>'"
             ),
-            {
-                "option_names": ["NAME"],
-                "option_type": "",
-                "allowed": ["FIRST"],
-                "allowed_patterns": ["exec_<name>"],
-            }
+            reports.invalid_options(
+                ["NAME"], ["FIRST"], "",
+                allowed_option_patterns=["exec_<name>"])
         )
 
     def test_no_allowed_options(self):
-        self.assert_message_from_info(
+        self.assert_message_from_report(
             "invalid options: 'ANOTHER', 'NAME', there are no options allowed",
-            {
-                "option_names": ["NAME", "ANOTHER"],
-                "option_type": "",
-                "allowed": [],
-                "allowed_patterns": [],
-            }
+            reports.invalid_options(["NAME", "ANOTHER"], [], "")
         )
 
 
 class InvalidUserdefinedOptions(NameBuildTest):
-    code = codes.INVALID_USERDEFINED_OPTIONS
     def test_without_type(self):
         self.assert_message_from_report(
             (
@@ -166,36 +128,28 @@ class InvalidUserdefinedOptions(NameBuildTest):
 
 
 class RequiredOptionsAreMissing(NameBuildTest):
-    code = codes.REQUIRED_OPTIONS_ARE_MISSING
     def test_build_message_with_type(self):
-        self.assert_message_from_info(
+        self.assert_message_from_report(
             "required TYPE option 'NAME' is missing",
-            {
-                "option_names": ["NAME"],
-                "option_type": "TYPE",
-            }
+            reports.required_options_are_missing(
+                ["NAME"],
+                option_type="TYPE"
+            )
         )
 
     def test_build_message_without_type(self):
-        self.assert_message_from_info(
+        self.assert_message_from_report(
             "required option 'NAME' is missing",
-            {
-                "option_names": ["NAME"],
-                "option_type": "",
-            }
+            reports.required_options_are_missing(["NAME"])
         )
 
     def test_build_message_with_multiple_names(self):
-        self.assert_message_from_info(
+        self.assert_message_from_report(
             "required options 'ANOTHER', 'NAME' are missing",
-            {
-                "option_names": ["NAME", "ANOTHER"],
-                "option_type": "",
-            }
+            reports.required_options_are_missing(["NAME", "ANOTHER"])
         )
 
 class BuildInvalidOptionValueMessageTest(NameBuildTest):
-    code = codes.INVALID_OPTION_VALUE
     def test_multiple_allowed_values(self):
         self.assert_message_from_report(
             "'VALUE' is not a valid NAME value, use 'FIRST', 'SECOND'",
@@ -212,7 +166,9 @@ class BuildInvalidOptionValueMessageTest(NameBuildTest):
         self.assert_message_from_report(
             "NAME cannot be empty",
             reports.invalid_option_value(
-                "NAME", "VALUE", None, cannot_be_empty=True
+                "NAME", "VALUE",
+                allowed_values=None,
+                cannot_be_empty=True
             )
         )
 
@@ -220,7 +176,8 @@ class BuildInvalidOptionValueMessageTest(NameBuildTest):
         self.assert_message_from_report(
             "NAME cannot be empty, use 'FIRST', 'SECOND'",
             reports.invalid_option_value(
-                "NAME", "VALUE", ["SECOND", "FIRST"], cannot_be_empty=True
+                "NAME", "VALUE", ["SECOND", "FIRST"],
+                cannot_be_empty=True
             )
         )
 
@@ -228,7 +185,9 @@ class BuildInvalidOptionValueMessageTest(NameBuildTest):
         self.assert_message_from_report(
             r"NAME cannot contain }{\r\n characters",
             reports.invalid_option_value(
-                "NAME", "VALUE", None, forbidden_characters="}{\\r\\n"
+                "NAME", "VALUE",
+                allowed_values=None,
+                forbidden_characters="}{\\r\\n"
             )
         )
 
@@ -245,140 +204,106 @@ class BuildInvalidOptionValueMessageTest(NameBuildTest):
         self.assert_message_from_report(
             "NAME cannot be empty, use 'FIRST', 'SECOND'",
             reports.invalid_option_value(
-                "NAME", "VALUE", ["SECOND", "FIRST"], cannot_be_empty=True,
-                forbidden_characters="{}"
+                "NAME", "VALUE", ["SECOND", "FIRST"], True
             )
         )
 
 class BuildServiceStartErrorTest(NameBuildTest):
-    code = codes.SERVICE_START_ERROR
     def test_build_message_with_instance_and_node(self):
-        self.assert_message_from_info(
+        self.assert_message_from_report(
             "NODE: Unable to start SERVICE@INSTANCE: REASON",
-            {
-                "service": "SERVICE",
-                "reason": "REASON",
-                "node": "NODE",
-                "instance": "INSTANCE",
-            }
+            reports.service_start_error("SERVICE", "REASON", "NODE", "INSTANCE")
         )
     def test_build_message_with_instance_only(self):
-        self.assert_message_from_info(
+        self.assert_message_from_report(
             "Unable to start SERVICE@INSTANCE: REASON",
-            {
-                "service": "SERVICE",
-                "reason": "REASON",
-                "node": "",
-                "instance": "INSTANCE",
-            }
+            reports.service_start_error(
+                "SERVICE", "REASON",
+                instance="INSTANCE"
+            )
         )
 
     def test_build_message_with_node_only(self):
-        self.assert_message_from_info(
+        self.assert_message_from_report(
             "NODE: Unable to start SERVICE: REASON",
-            {
-                "service": "SERVICE",
-                "reason": "REASON",
-                "node": "NODE",
-                "instance": "",
-            }
+            reports.service_start_error("SERVICE", "REASON", "NODE")
         )
 
     def test_build_message_without_node_and_instance(self):
-        self.assert_message_from_info(
+        self.assert_message_from_report(
             "Unable to start SERVICE: REASON",
-            {
-                "service": "SERVICE",
-                "reason": "REASON",
-                "node": "",
-                "instance": "",
-            }
+            reports.service_start_error("SERVICE", "REASON")
         )
 
 class InvalidCibContent(NameBuildTest):
-    code = codes.INVALID_CIB_CONTENT
     def test_build_message(self):
         report = "report\nlines"
-        self.assert_message_from_info(
+        self.assert_message_from_report(
             "invalid cib: \n{0}".format(report),
-            {
-                "report": report,
-            }
+            reports.invalid_cib_content(report)
         )
 
 class BuildInvalidIdTest(NameBuildTest):
-    code = codes.INVALID_ID
     def test_build_message_with_first_char_invalid(self):
-        self.assert_message_from_info(
+        self.assert_message_from_report(
             (
                 "invalid ID_DESCRIPTION 'ID', 'INVALID_CHARACTER' is not a"
                 " valid first character for a ID_DESCRIPTION"
             ),
-            {
-                "id_description": "ID_DESCRIPTION",
-                "id": "ID",
-                "invalid_character": "INVALID_CHARACTER",
-                "is_first_char": True,
-            }
+            reports.invalid_id_bad_char(
+                "ID", "ID_DESCRIPTION", "INVALID_CHARACTER",
+                is_first_char=True
+            )
         )
     def test_build_message_with_non_first_char_invalid(self):
-        self.assert_message_from_info(
+        self.assert_message_from_report(
             (
                 "invalid ID_DESCRIPTION 'ID', 'INVALID_CHARACTER' is not a"
                 " valid character for a ID_DESCRIPTION"
             ),
-            {
-                "id_description": "ID_DESCRIPTION",
-                "id": "ID",
-                "invalid_character": "INVALID_CHARACTER",
-                "is_first_char": False,
-            }
+            reports.invalid_id_bad_char(
+                "ID", "ID_DESCRIPTION", "INVALID_CHARACTER",
+                is_first_char=False
+            )
         )
 
 class BuildRunExternalStartedTest(NameBuildTest):
-    code = codes.RUN_EXTERNAL_PROCESS_STARTED
 
     def test_build_message_minimal(self):
-        self.assert_message_from_info(
+        self.assert_message_from_report(
             "Running: COMMAND\nEnvironment:\n",
-            {
-                "command": "COMMAND",
-                "stdin": "",
-                "environment": dict(),
-            }
+            reports.run_external_process_started(
+                "COMMAND", "", dict()
+            )
         )
 
     def test_build_message_with_stdin(self):
-        self.assert_message_from_info(
+        self.assert_message_from_report(
             (
                 "Running: COMMAND\nEnvironment:\n"
                 "--Debug Input Start--\n"
                 "STDIN\n"
                 "--Debug Input End--\n"
             ),
-            {
-                "command": "COMMAND",
-                "stdin": "STDIN",
-                "environment": dict(),
-            }
+            reports.run_external_process_started(
+                "COMMAND", "STDIN", dict()
+            )
         )
 
     def test_build_message_with_env(self):
-        self.assert_message_from_info(
+        self.assert_message_from_report(
             (
                 "Running: COMMAND\nEnvironment:\n"
                 "  env_a=A\n"
                 "  env_b=B\n"
             ),
-            {
-                "command": "COMMAND",
-                "stdin": "",
-                "environment": {"env_a": "A", "env_b": "B",},
-            }
+            reports.run_external_process_started(
+                "COMMAND", "", {"env_a": "A", "env_b": "B",}
+            )
         )
 
     def test_build_message_maximal(self):
-        self.assert_message_from_info(
+        self.assert_message_from_report(
             (
                 "Running: COMMAND\nEnvironment:\n"
                 "  env_a=A\n"
@@ -387,15 +312,13 @@ class BuildRunExternalStartedTest(NameBuildTest):
                 "STDIN\n"
                 "--Debug Input End--\n"
             ),
-            {
-                "command": "COMMAND",
-                "stdin": "STDIN",
-                "environment": {"env_a": "A", "env_b": "B",},
-            }
+            reports.run_external_process_started(
+                "COMMAND", "STDIN", {"env_a": "A", "env_b": "B",}
+            )
         )
 
     def test_insidious_environment(self):
-        self.assert_message_from_info(
+        self.assert_message_from_report(
             (
                 "Running: COMMAND\nEnvironment:\n"
                 "  test=a:{green},b:{red}\n"
@@ -403,55 +326,49 @@ class BuildRunExternalStartedTest(NameBuildTest):
                 "STDIN\n"
                 "--Debug Input End--\n"
             ),
-            {
-                "command": "COMMAND",
-                "stdin": "STDIN",
-                "environment": {"test": "a:{green},b:{red}",},
-            }
+            reports.run_external_process_started(
+                "COMMAND", "STDIN", {"test": "a:{green},b:{red}",}
+            )
         )
 
 
 class BuildNodeCommunicationStartedTest(NameBuildTest):
-    code = codes.NODE_COMMUNICATION_STARTED
 
     def test_build_message_with_data(self):
-        self.assert_message_from_info(
+        self.assert_message_from_report(
             (
                 "Sending HTTP Request to: TARGET\n"
                 "--Debug Input Start--\n"
                 "DATA\n"
                 "--Debug Input End--\n"
             ),
-            {
-                "target": "TARGET",
-                "data": "DATA",
-            }
+            reports.node_communication_started(
+                "TARGET", "DATA"
+            )
         )
 
     def test_build_message_without_data(self):
-        self.assert_message_from_info(
+        self.assert_message_from_report(
             "Sending HTTP Request to: TARGET\n",
-            {
-                "target": "TARGET",
-                "data": "",
-            }
+            reports.node_communication_started(
+                "TARGET", ""
+            )
         )
 
 
 class NodeCommunicationErrorTimedOut(NameBuildTest):
-    code = codes.NODE_COMMUNICATION_ERROR_TIMED_OUT
     def test_success(self):
-        self.assert_message_from_info(
+        self.assert_message_from_report(
             (
                 "node-1: Connection timeout, try setting higher timeout in "
                 "--request-timeout option (Connection timed out after 60049 "
                 "milliseconds)"
             ),
-            {
-                "node": "node-1",
-                "command": "/remote/command",
-                "reason": "Connection timed out after 60049 milliseconds",
-            }
+            reports.node_communication_error_timed_out(
+                "node-1",
+                "/remote/command",
+                "Connection timed out after 60049 milliseconds"
+            )
         )
 
 
@@ -467,273 +384,205 @@ class FormatOptionalTest(TestCase):
 
 
 class AgentNameGuessedTest(NameBuildTest):
-    code = codes.AGENT_NAME_GUESSED
     def test_build_message_with_data(self):
-        self.assert_message_from_info(
-            "Assumed agent name 'ocf:heratbeat:Delay' (deduced from 'Delay')",
-            {
-                "entered_name": "Delay",
-                "guessed_name": "ocf:heratbeat:Delay",
-            }
+        self.assert_message_from_report(
+            "Assumed agent name 'ocf:heartbeat:Delay' (deduced from 'Delay')",
+            reports.agent_name_guessed("Delay", "ocf:heartbeat:Delay")
         )
 
 class InvalidResourceAgentNameTest(NameBuildTest):
-    code = codes.INVALID_RESOURCE_AGENT_NAME
     def test_build_message_with_data(self):
-        self.assert_message_from_info(
+        self.assert_message_from_report(
             "Invalid resource agent name ':name'."
                 " Use standard:provider:type when standard is 'ocf' or"
                 " standard:type otherwise. List of standards and providers can"
                 " be obtained by using commands 'pcs resource standards' and"
                 " 'pcs resource providers'"
             ,
-            {
-                "name": ":name",
-            }
+            reports.invalid_resource_agent_name(":name")
         )
 
 class InvalidiStonithAgentNameTest(NameBuildTest):
-    code = codes.INVALID_STONITH_AGENT_NAME
     def test_build_message_with_data(self):
-        self.assert_message_from_info(
+        self.assert_message_from_report(
             "Invalid stonith agent name 'fence:name'. List of agents can be"
                 " obtained by using command 'pcs stonith list'. Do not use the"
                 " 'stonith:' prefix. Agent name cannot contain the ':'"
                 " character."
             ,
-            {
-                "name": "fence:name",
-            }
+            reports.invalid_stonith_agent_name("fence:name")
         )
 
 class InvalidOptionType(NameBuildTest):
-    code = codes.INVALID_OPTION_TYPE
     def test_allowed_string(self):
-        self.assert_message_from_info(
+        self.assert_message_from_report(
             "specified option name is not valid, use allowed types",
-            {
-                "option_name": "option name",
-                "allowed_types": "allowed types",
-            }
+            reports.invalid_option_type("option name", "allowed types")
         )
 
     def test_allowed_list(self):
-        self.assert_message_from_info(
+        self.assert_message_from_report(
             "specified option name is not valid, use 'allowed', 'types'",
-            {
-                "option_name": "option name",
-                "allowed_types": ["allowed", "types"],
-            }
+            reports.invalid_option_type("option name", ["allowed", "types"])
         )
 
 
 class DeprecatedOption(NameBuildTest):
-    code = codes.DEPRECATED_OPTION
 
     def test_no_desc_hint_array(self):
-        self.assert_message_from_info(
+        self.assert_message_from_report(
             "option 'option name' is deprecated and should not be used,"
                 " use new_a, new_b instead"
             ,
-            {
-                "option_name": "option name",
-                "option_type": "",
-                "replaced_by": ["new_b", "new_a"],
-            }
+            reports.deprecated_option("option name", ["new_b", "new_a"], "")
         )
 
     def test_desc_hint_string(self):
-        self.assert_message_from_info(
+        self.assert_message_from_report(
             "option type option 'option name' is deprecated and should not be"
                 " used, use new option instead"
             ,
-            {
-                "option_name": "option name",
-                "option_type": "option type",
-                "replaced_by": "new option",
-            }
+            reports.deprecated_option(
+                "option name", ["new option"], "option type"
+            )
         )
 
 
 class StonithResourcesDoNotExist(NameBuildTest):
-    code = codes.STONITH_RESOURCES_DO_NOT_EXIST
     def test_success(self):
-        self.assert_message_from_info(
+        self.assert_message_from_report(
             "Stonith resource(s) 'device1', 'device2' do not exist",
-            {
-                "stonith_ids": ["device1", "device2"],
-            }
+            reports.stonith_resources_do_not_exist(["device1", "device2"])
         )
 
 class FencingLevelAlreadyExists(NameBuildTest):
-    code = codes.CIB_FENCING_LEVEL_ALREADY_EXISTS
     def test_target_node(self):
-        self.assert_message_from_info(
+        self.assert_message_from_report(
             "Fencing level for 'nodeA' at level '1' with device(s) "
                 "'device1,device2' already exists",
-            {
-                "level": "1",
-                "target_type": TARGET_TYPE_NODE,
-                "target_value": "nodeA",
-                "devices": ["device1", "device2"],
-            }
+            reports.fencing_level_already_exists(
+                "1", TARGET_TYPE_NODE, "nodeA", ["device1", "device2"]
+            )
         )
 
     def test_target_pattern(self):
-        self.assert_message_from_info(
+        self.assert_message_from_report(
             "Fencing level for 'node-\\d+' at level '1' with device(s) "
                 "'device1,device2' already exists",
-            {
-                "level": "1",
-                "target_type": TARGET_TYPE_REGEXP,
-                "target_value": "node-\\d+",
-                "devices": ["device1", "device2"],
-            }
+            reports.fencing_level_already_exists(
+                "1", TARGET_TYPE_REGEXP, "node-\\d+", ["device1", "device2"]
+            )
         )
 
     def test_target_attribute(self):
-        self.assert_message_from_info(
+        self.assert_message_from_report(
             "Fencing level for 'name=value' at level '1' with device(s) "
                 "'device1,device2' already exists",
-            {
-                "level": "1",
-                "target_type": TARGET_TYPE_ATTRIBUTE,
-                "target_value": ("name", "value"),
-                "devices": ["device1", "device2"],
-            }
+            reports.fencing_level_already_exists(
+                "1", TARGET_TYPE_ATTRIBUTE, ("name", "value"),
+                ["device1", "device2"]
+            )
         )
 
 class FencingLevelDoesNotExist(NameBuildTest):
-    code = codes.CIB_FENCING_LEVEL_DOES_NOT_EXIST
     def test_full_info(self):
-        self.assert_message_from_info(
+        self.assert_message_from_report(
             "Fencing level for 'nodeA' at level '1' with device(s) "
                 "'device1,device2' does not exist",
-            {
-                "level": "1",
-                "target_type": TARGET_TYPE_NODE,
-                "target_value": "nodeA",
-                "devices": ["device1", "device2"],
-            }
+            reports.fencing_level_does_not_exist(
+                "1", TARGET_TYPE_NODE, "nodeA", ["device1", "device2"]
+            )
         )
 
     def test_only_level(self):
-        self.assert_message_from_info(
+        self.assert_message_from_report(
             "Fencing level at level '1' does not exist",
-            {
-                "level": "1",
-                "target_type": None,
-                "target_value": None,
-                "devices": None,
-            }
+            reports.fencing_level_does_not_exist("1", None, None, None)
         )
 
     def test_only_target(self):
-        self.assert_message_from_info(
+        self.assert_message_from_report(
             "Fencing level for 'name=value' does not exist",
-            {
-                "level": None,
-                "target_type": TARGET_TYPE_ATTRIBUTE,
-                "target_value": ("name", "value"),
-                "devices": None,
-            }
+            reports.fencing_level_does_not_exist(
+                None, TARGET_TYPE_ATTRIBUTE, ("name", "value"), None
+            )
         )
 
     def test_only_devices(self):
-        self.assert_message_from_info(
+        self.assert_message_from_report(
             "Fencing level with device(s) 'device1,device2' does not exist",
-            {
-                "level": None,
-                "target_type": None,
-                "target_value": None,
-                "devices": ["device1", "device2"],
-            }
+            reports.fencing_level_does_not_exist(
+                None, None, None, ["device1", "device2"]
+            )
         )
 
     def test_no_info(self):
-        self.assert_message_from_info(
+        self.assert_message_from_report(
             "Fencing level does not exist",
-            {
-                "level": None,
-                "target_type": None,
-                "target_value": None,
-                "devices": None,
-            }
+            reports.fencing_level_does_not_exist(None, None, None, None)
         )
 
 
 class ResourceBundleAlreadyContainsAResource(NameBuildTest):
-    code = codes.RESOURCE_BUNDLE_ALREADY_CONTAINS_A_RESOURCE
     def test_build_message_with_data(self):
-        self.assert_message_from_info(
+        self.assert_message_from_report(
             (
                 "bundle 'test_bundle' already contains resource "
                 "'test_resource', a bundle may contain at most one resource"
             ),
-            {
-                "resource_id": "test_resource",
-                "bundle_id": "test_bundle",
-            }
+            reports.resource_bundle_already_contains_a_resource(
+                "test_bundle", "test_resource"
+            )
         )
 
 
 class ResourceOperationIntevalDuplicationTest(NameBuildTest):
-    code = codes.RESOURCE_OPERATION_INTERVAL_DUPLICATION
     def test_build_message_with_data(self):
-        self.assert_message_from_info(
+        self.assert_message_from_report(
             "multiple specification of the same operation with the same"
                 " interval:"
                 "\nmonitor with intervals 3600s, 60m, 1h"
                 "\nmonitor with intervals 60s, 1m"
             ,
-            {
-                "duplications":  {
+            reports.resource_operation_interval_duplication(
+                {
                     "monitor": [
                         ["3600s", "60m", "1h"],
                         ["60s", "1m"],
                     ],
-                },
-            }
+                }
+            )
         )
 
 class ResourceOperationIntevalAdaptedTest(NameBuildTest):
-    code = codes.RESOURCE_OPERATION_INTERVAL_ADAPTED
     def test_build_message_with_data(self):
-        self.assert_message_from_info(
+        self.assert_message_from_report(
             "changing a monitor operation interval from 10 to 11 to make the"
                 " operation unique"
             ,
-            {
-                "operation_name": "monitor",
-                "original_interval": "10",
-                "adapted_interval": "11",
-            }
+            reports.resource_operation_interval_adapted(
+                "monitor", "10", "11"
+            )
         )
 
 class IdBelongsToUnexpectedType(NameBuildTest):
-    code = codes.ID_BELONGS_TO_UNEXPECTED_TYPE
     def test_build_message_with_data(self):
-        self.assert_message_from_info(
+        self.assert_message_from_report(
             "'ID' is not a clone/resource",
-            {
-                "id": "ID",
-                "expected_types": ["primitive", "clone"],
-                "current_type": "op",
-            }
+            reports.id_belongs_to_unexpected_type(
+                "ID", ["primitive", "clone"], "op"
+            )
         )
 
     def test_build_message_with_transformation_and_article(self):
-        self.assert_message_from_info(
+        self.assert_message_from_report(
             "'ID' is not an ACL group/ACL user",
-            {
-                "id": "ID",
-                "expected_types": ["acl_target", "acl_group"],
-                "current_type": "op",
-            }
+            reports.id_belongs_to_unexpected_type(
+                "ID", ["acl_target", "acl_group"], "op",
+            )
         )
 
 class ObjectWithIdInUnexpectedContext(NameBuildTest):
-    code = codes.OBJECT_WITH_ID_IN_UNEXPECTED_CONTEXT
     def test_with_context_id(self):
         self.assert_message_from_report(
             "resource 'R' exists but does not belong to group 'G'",
@@ -751,268 +600,212 @@ class ObjectWithIdInUnexpectedContext(NameBuildTest):
         )
 
 class ResourceRunOnNodes(NameBuildTest):
-    code = codes.RESOURCE_RUNNING_ON_NODES
     def test_one_node(self):
-        self.assert_message_from_info(
+        self.assert_message_from_report(
             "resource 'R' is running on node 'node1'",
-            {
-                "resource_id": "R",
-                "roles_with_nodes": {"Started": ["node1"]},
-            }
+            reports.resource_running_on_nodes("R", {"Started": ["node1"]})
         )
     def test_multiple_nodes(self):
-        self.assert_message_from_info(
+        self.assert_message_from_report(
             "resource 'R' is running on nodes 'node1', 'node2'",
-            {
-                "resource_id": "R",
-                "roles_with_nodes": {"Started": ["node1", "node2"]},
-            }
+            reports.resource_running_on_nodes(
+                "R", {"Started": ["node1", "node2"]}
+            )
         )
     def test_multiple_role_multiple_nodes(self):
-        self.assert_message_from_info(
+        self.assert_message_from_report(
             "resource 'R' is master on node 'node3'"
             "; running on nodes 'node1', 'node2'"
             ,
-            {
-                "resource_id": "R",
-                "roles_with_nodes": {
+            reports.resource_running_on_nodes(
+                "R",
+                {
                     "Started": ["node1", "node2"],
                     "Master": ["node3"],
-                },
-            }
+                }
+            )
         )
 
 class ResourceDoesNotRun(NameBuildTest):
-    code = codes.RESOURCE_DOES_NOT_RUN
     def test_build_message(self):
-        self.assert_message_from_info(
+        self.assert_message_from_report(
             "resource 'R' is not running on any node",
-            {
-                "resource_id": "R",
-            }
+            reports.resource_does_not_run("R")
         )
 
 class MutuallyExclusiveOptions(NameBuildTest):
-    code = codes.MUTUALLY_EXCLUSIVE_OPTIONS
     def test_build_message(self):
-        self.assert_message_from_info(
+        self.assert_message_from_report(
             "Only one of some options 'a' and 'b' can be used",
-            {
-                "option_type": "some",
-                "option_names": ["a", "b"],
-            }
+            reports.mutually_exclusive_options(["a", "b"], "some")
         )
 
 class ResourceIsUnmanaged(NameBuildTest):
-    code = codes.RESOURCE_IS_UNMANAGED
     def test_build_message(self):
-        self.assert_message_from_info(
+        self.assert_message_from_report(
             "'R' is unmanaged",
-            {
-                "resource_id": "R",
-            }
+            reports.resource_is_unmanaged("R")
         )
 
 class ResourceManagedNoMonitorEnabled(NameBuildTest):
-    code = codes.RESOURCE_MANAGED_NO_MONITOR_ENABLED
     def test_build_message(self):
-        self.assert_message_from_info(
+        self.assert_message_from_report(
             "Resource 'R' has no enabled monitor operations."
                 " Re-run with '--monitor' to enable them."
             ,
-            {
-                "resource_id": "R",
-            }
+            reports.resource_managed_no_monitor_enabled("R")
         )
 
 
 class SbdDeviceInitializationStarted(NameBuildTest):
-    code = codes.SBD_DEVICE_INITIALIZATION_STARTED
     def test_build_message(self):
-        self.assert_message_from_info(
-            "Initializing device(s) /dev1, /dev2, /dev3...",
-            {
-                "device_list": ["/dev1", "/dev2", "/dev3"],
-            }
+        self.assert_message_from_report(
+            "Initializing devices '/dev1', '/dev2', '/dev3'...",
+            reports.sbd_device_initialization_started(
+                ["/dev1", "/dev2", "/dev3"]
+            )
         )
+        #TODO: Test 1 device.
 
 
 class SbdDeviceInitializationError(NameBuildTest):
-    code = codes.SBD_DEVICE_INITIALIZATION_ERROR
     def test_build_message(self):
-        self.assert_message_from_info(
-            "Initialization of device(s) failed: this is reason",
-            {
-                "reason": "this is reason"
-            }
+        self.assert_message_from_report(
+            "Initialization of devices '/dev1', '/dev2' failed: this is reason",
+            reports.sbd_device_initialization_error(
+                ["/dev2", "/dev1"], "this is reason"
+            )
         )
+    #TODO: Add test for 1 device
 
 
 class SbdDeviceListError(NameBuildTest):
-    code = codes.SBD_DEVICE_LIST_ERROR
     def test_build_message(self):
-        self.assert_message_from_info(
+        self.assert_message_from_report(
             "Unable to get list of messages from device '/dev': this is reason",
-            {
-                "device": "/dev",
-                "reason": "this is reason",
-            }
+            reports.sbd_device_list_error("/dev", "this is reason")
         )
 
 
 class SbdDeviceMessageError(NameBuildTest):
-    code = codes.SBD_DEVICE_MESSAGE_ERROR
     def test_build_message(self):
-        self.assert_message_from_info(
-            "Unable to set message 'test' for node 'node1' on device '/dev1'",
-            {
-                "message": "test",
-                "node": "node1",
-                "device": "/dev1",
-            }
+        self.assert_message_from_report(
+            (
+                "Unable to set message 'test' for node 'node1' on device "
+                "'/dev1': this is reason"
+            ),
+            reports.sbd_device_message_error(
+                "/dev1", "node1", "test", "this is reason"
+            )
         )
 
 
 class SbdDeviceDumpError(NameBuildTest):
-    code = codes.SBD_DEVICE_DUMP_ERROR
     def test_build_message(self):
-        self.assert_message_from_info(
+        self.assert_message_from_report(
             "Unable to get SBD headers from device '/dev1': this is reason",
-            {
-                "device": "/dev1",
-                "reason": "this is reason",
-            }
+            reports.sbd_device_dump_error("/dev1", "this is reason")
         )
 
 
 class SbdDevcePathNotAbsolute(NameBuildTest):
-    code = codes.SBD_DEVICE_PATH_NOT_ABSOLUTE
     def test_build_message(self):
-        self.assert_message_from_info(
+        self.assert_message_from_report(
             "Device path '/dev' on node 'node1' is not absolute",
-            {
-                "device": "/dev",
-                "node": "node1",
-            }
+            reports.sbd_device_path_not_absolute("/dev", "node1")
         )
 
     def test_build_message_without_node(self):
-        self.assert_message_from_info(
+        self.assert_message_from_report(
             "Device path '/dev' is not absolute",
-            {
-                "device": "/dev",
-                "node": None,
-            }
+            reports.sbd_device_path_not_absolute("/dev")
         )
 
 
 class SbdDeviceDoesNotExist(NameBuildTest):
-    code = codes.SBD_DEVICE_DOES_NOT_EXIST
     def test_build_message(self):
-        self.assert_message_from_info(
+        self.assert_message_from_report(
             "node1: device '/dev' not found",
-            {
-                "node": "node1",
-                "device": "/dev",
-            }
+            reports.sbd_device_does_not_exist("/dev", "node1")
         )
 
 
 class SbdDeviceISNotBlockDevice(NameBuildTest):
-    code = codes.SBD_DEVICE_IS_NOT_BLOCK_DEVICE
     def test_build_message(self):
-        self.assert_message_from_info(
+        self.assert_message_from_report(
             "node1: device '/dev' is not a block device",
-            {
-                "node": "node1",
-                "device": "/dev",
-            }
+            reports.sbd_device_is_not_block_device("/dev", "node1")
         )
 
 class SbdNotUsedCannotSetSbdOptions(NameBuildTest):
-    code = codes.SBD_NOT_USED_CANNOT_SET_SBD_OPTIONS
     def test_success(self):
-        self.assert_message_from_info(
+        self.assert_message_from_report(
             "Cluster is not configured to use SBD, cannot specify SBD option(s)"
             " 'device', 'watchdog' for node 'node1'"
             ,
-            {
-                "node": "node1",
-                "options": ["device", "watchdog"],
-            }
+            reports.sbd_not_used_cannot_set_sbd_options(
+                ["device", "watchdog"], "node1"
+            )
         )
 
 class SbdWithDevicesNotUsedCannotSetDevice(NameBuildTest):
-    code = codes.SBD_WITH_DEVICES_NOT_USED_CANNOT_SET_DEVICE
     def test_success(self):
-        self.assert_message_from_info(
+        self.assert_message_from_report(
             "Cluster is not configured to use SBD with shared storage, cannot "
                 "specify SBD devices for node 'node1'"
             ,
-            {
-                "node": "node1",
-            }
+            reports.sbd_with_devices_not_used_cannot_set_device("node1")
         )
 
-class SbdNoDEviceForNode(NameBuildTest):
-    code = codes.SBD_NO_DEVICE_FOR_NODE
+class SbdNoDeviceForNode(NameBuildTest):
     def test_not_enabled(self):
-        self.assert_message_from_info(
+        self.assert_message_from_report(
             "No SBD device specified for node 'node1'",
-            {
-                "node": "node1",
-                "sbd_enabled_in_cluster": False,
-            }
+            reports.sbd_no_device_for_node("node1")
         )
 
     def test_enabled(self):
-        self.assert_message_from_info(
+        self.assert_message_from_report(
             "Cluster uses SBD with shared storage so SBD devices must be "
                 "specified for all nodes, no device specified for node 'node1'"
             ,
-            {
-                "node": "node1",
-                "sbd_enabled_in_cluster": True,
-            }
+            reports.sbd_no_device_for_node(
+                "node1",
+                sbd_enabled_in_cluster=True
+            )
         )
 
 
 class SbdTooManyDevicesForNode(NameBuildTest):
-    code = codes.SBD_TOO_MANY_DEVICES_FOR_NODE
     def test_build_messages(self):
-        self.assert_message_from_info(
+        self.assert_message_from_report(
             "At most 3 SBD devices can be specified for a node, '/dev1', "
                 "'/dev2', '/dev3' specified for node 'node1'"
             ,
-            {
-                "max_devices": 3,
-                "node": "node1",
-                "device_list": ["/dev1", "/dev2", "/dev3"]
-            }
+            reports.sbd_too_many_devices_for_node(
+                "node1", ["/dev1", "/dev2", "/dev3"], 3
+            )
         )
 
 class RequiredOptionOfAlternativesIsMissing(NameBuildTest):
-    code = codes.REQUIRED_OPTION_OF_ALTERNATIVES_IS_MISSING
     def test_without_type(self):
-        self.assert_message_from_info(
+        self.assert_message_from_report(
             "option 'aAa' or 'bBb' or 'cCc' has to be specified",
-            {
-                "option_names": ["aAa", "bBb", "cCc"],
-            }
+            reports.required_option_of_alternatives_is_missing(
+                ["aAa", "bBb", "cCc"]
+            )
         )
 
     def test_with_type(self):
-        self.assert_message_from_info(
+        self.assert_message_from_report(
             "test option 'aAa' or 'bBb' or 'cCc' has to be specified",
-            {
-                "option_type": "test",
-                "option_names": ["aAa", "bBb", "cCc"],
-            }
+            reports.required_option_of_alternatives_is_missing(
+                ["aAa", "bBb", "cCc"], "test"
+            )
         )
 
 
 class PrerequisiteOptionMustNotBeSet(NameBuildTest):
-    code = codes.PREREQUISITE_OPTION_MUST_NOT_BE_SET
     def test_without_type(self):
         self.assert_message_from_report(
             "Cannot set option 'a' because option 'b' is already set",
@@ -1027,86 +820,68 @@ class PrerequisiteOptionMustNotBeSet(NameBuildTest):
                 "already set"
             ,
             reports.prerequisite_option_must_not_be_set(
-                "a", "b", option_type="some", prerequisite_type="other",
+                "a", "b",
+                option_type="some",
+                prerequisite_type="other",
             )
         )
 
 
 class PrerequisiteOptionMustBeDisabled(NameBuildTest):
-    code = codes.PREREQUISITE_OPTION_MUST_BE_DISABLED
     def test_without_type(self):
-        self.assert_message_from_info(
+        self.assert_message_from_report(
             "If option 'a' is enabled, option 'b' must be disabled",
-            {
-                "option_name": "a",
-                "prerequisite_name": "b",
-            }
+            reports.prerequisite_option_must_be_disabled(
+                "a", "b"
+            )
         )
 
     def test_with_type(self):
-        self.assert_message_from_info(
+        self.assert_message_from_report(
             "If some option 'a' is enabled, other option 'b' must be disabled",
-            {
-                "option_name": "a",
-                "option_type": "some",
-                "prerequisite_name": "b",
-                "prerequisite_type": "other",
-            }
+            reports.prerequisite_option_must_be_disabled(
+                "a", "b", "some", "other"
+            )
         )
 
 
 class PrerequisiteOptionMustBeEnabledAsWell(NameBuildTest):
-    code = codes.PREREQUISITE_OPTION_MUST_BE_ENABLED_AS_WELL
     def test_without_type(self):
-        self.assert_message_from_info(
+        self.assert_message_from_report(
             "If option 'a' is enabled, option 'b' must be enabled as well",
-            {
-                "option_name": "a",
-                "prerequisite_name": "b",
-            }
+            reports.prerequisite_option_must_be_enabled_as_well("a", "b")
         )
 
     def test_with_type(self):
-        self.assert_message_from_info(
+        self.assert_message_from_report(
             "If some option 'a' is enabled, "
                 "other option 'b' must be enabled as well"
             ,
-            {
-                "option_name": "a",
-                "option_type": "some",
-                "prerequisite_name": "b",
-                "prerequisite_type": "other",
-            }
+            reports.prerequisite_option_must_be_enabled_as_well(
+                "a", "b", "some", "other"
+            )
         )
 
 
 class PrerequisiteOptionIsMissing(NameBuildTest):
-    code = codes.PREREQUISITE_OPTION_IS_MISSING
     def test_without_type(self):
-        self.assert_message_from_info(
+        self.assert_message_from_report(
             "If option 'a' is specified, option 'b' must be specified as well",
-            {
-                "option_name": "a",
-                "prerequisite_name": "b",
-            }
+            reports.prerequisite_option_is_missing("a", "b")
         )
 
     def test_with_type(self):
-        self.assert_message_from_info(
+        self.assert_message_from_report(
             "If some option 'a' is specified, "
                 "other option 'b' must be specified as well"
             ,
-            {
-                "option_name": "a",
-                "option_type": "some",
-                "prerequisite_name": "b",
-                "prerequisite_type": "other",
-            }
+            reports.prerequisite_option_is_missing(
+                "a", "b", "some", "other"
+            )
         )
 
 
 class FileDistributionStarted(NameBuildTest):
-    code = codes.FILES_DISTRIBUTION_STARTED
     def test_build_messages(self):
         self.assert_message_from_report(
             "Sending 'first', 'second'",
@@ -1124,71 +899,53 @@ class FileDistributionStarted(NameBuildTest):
 
 
 class FileDistributionSucess(NameBuildTest):
-    code = codes.FILE_DISTRIBUTION_SUCCESS
     def test_build_messages(self):
-        self.assert_message_from_info(
+        self.assert_message_from_report(
             "node1: successful distribution of the file 'some authfile'",
-            {
-                "nodes_success_files": None,
-                "node": "node1",
-                "file_description": "some authfile",
-            }
+            reports.file_distribution_success("node1", "some authfile")
         )
 
 class FileDistributionError(NameBuildTest):
-    code = codes.FILE_DISTRIBUTION_ERROR
     def test_build_messages(self):
-        self.assert_message_from_info(
+        self.assert_message_from_report(
             "node1: unable to distribute file 'file1': permission denied",
-            {
-                "node_file_errors": None,
-                "node": "node1",
-                "file_description": "file1",
-                "reason": "permission denied",
-            }
+            reports.file_distribution_error(
+                "node1", "file1", "permission denied"
+            )
         )
 
 
 class FileRemoveFromNodesStarted(NameBuildTest):
-    code = codes.FILES_REMOVE_FROM_NODES_STARTED
     def test_build_messages(self):
-        self.assert_message_from_info(
+        self.assert_message_from_report(
             "Requesting remove 'first', 'second' from 'node1', 'node2'",
-            {
-                "file_list": ["first", "second"],
-                "node_list": ["node1", "node2"],
-            }
+            reports.files_remove_from_nodes_started(
+                ["first", "second"],
+                ["node1", "node2"],
+            )
         )
 
 
 class FileRemoveFromNodeSucess(NameBuildTest):
-    code = codes.FILE_REMOVE_FROM_NODE_SUCCESS
     def test_build_messages(self):
-        self.assert_message_from_info(
+        self.assert_message_from_report(
             "node1: successful removal of the file 'some authfile'",
-            {
-                "nodes_success_files": None,
-                "node": "node1",
-                "file_description": "some authfile",
-            }
+            reports.file_remove_from_node_success(
+                "node1", "some authfile"
+            )
         )
 
 class FileRemoveFromNodeError(NameBuildTest):
-    code = codes.FILE_REMOVE_FROM_NODE_ERROR
     def test_build_messages(self):
-        self.assert_message_from_info(
+        self.assert_message_from_report(
             "node1: unable to remove file 'file1': permission denied",
-            {
-                "node_file_errors": None,
-                "node": "node1",
-                "file_description": "file1",
-                "reason": "permission denied",
-            }
+            reports.file_remove_from_node_error(
+                "node1", "file1", "permission denied"
+            )
         )
 
 
 class ServiceCommandsOnNodesStarted(NameBuildTest):
-    code = codes.SERVICE_COMMANDS_ON_NODES_STARTED
     def test_build_messages(self):
         self.assert_message_from_report(
             "Requesting 'action1', 'action2'",
@@ -1207,59 +964,45 @@ class ServiceCommandsOnNodesStarted(NameBuildTest):
         )
 
 
-class ActionsOnNodesSuccess(NameBuildTest):
-    code = codes.SERVICE_COMMAND_ON_NODE_SUCCESS
+class ServiceCommandOnNodeSuccess(NameBuildTest):
     def test_build_messages(self):
-        self.assert_message_from_info(
+        self.assert_message_from_report(
             "node1: successful run of 'service enable'",
-            {
-                "nodes_success_actions": None,
-                "node": "node1",
-                "service_command_description": "service enable",
-            }
+            reports.service_command_on_node_success(
+                "node1", "service enable"
+            )
         )
 
-class ActionOnNodesError(NameBuildTest):
-    code = codes.SERVICE_COMMAND_ON_NODE_ERROR
+class ServiceCommandOnNodeError(NameBuildTest):
     def test_build_messages(self):
-        self.assert_message_from_info(
+        self.assert_message_from_report(
             "node1: service command failed: service1 start: permission denied",
-            {
-                "node_action_errors": None,
-                "node": "node1",
-                "service_command_description": "service1 start",
-                "reason": "permission denied",
-            }
+            reports.service_command_on_node_error(
+                "node1", "service1 start", "permission denied"
+            )
         )
 
 class ResourceIsGuestNodeAlready(NameBuildTest):
-    code = codes.RESOURCE_IS_GUEST_NODE_ALREADY
     def test_build_messages(self):
-        self.assert_message_from_info(
+        self.assert_message_from_report(
             "the resource 'some-resource' is already a guest node",
-            {"resource_id": "some-resource"}
+            reports.resource_is_guest_node_already("some-resource")
         )
 
 class LiveEnvironmentRequired(NameBuildTest):
-    code = codes.LIVE_ENVIRONMENT_REQUIRED
     def test_build_messages(self):
-        self.assert_message_from_info(
+        self.assert_message_from_report(
             "This command does not support '--corosync_conf'",
-            {
-                "forbidden_options": ["--corosync_conf"]
-            }
+            reports.live_environment_required(["--corosync_conf"])
         )
 
     def test_build_messages_transformable_codes(self):
-        self.assert_message_from_info(
+        self.assert_message_from_report(
             "This command does not support '--corosync_conf', '-f'",
-            {
-                "forbidden_options": ["COROSYNC_CONF", "CIB"]
-            }
+            reports.live_environment_required(["COROSYNC_CONF", "CIB"])
         )
 
 class CorosyncNodeConflictCheckSkipped(NameBuildTest):
-    code = codes.COROSYNC_NODE_CONFLICT_CHECK_SKIPPED
     def test_success(self):
         self.assert_message_from_report(
             "Unable to check if there is a conflict with nodes set in corosync "
@@ -1271,7 +1014,6 @@ class CorosyncNodeConflictCheckSkipped(NameBuildTest):
 
 
 class FilesDistributionSkipped(NameBuildTest):
-    code = codes.FILES_DISTRIBUTION_SKIPPED
     def test_not_live(self):
         self.assert_message_from_report(
             "Distribution of 'file1' to 'nodeA', 'nodeB' was skipped because "
@@ -1313,7 +1055,6 @@ class FilesDistributionSkipped(NameBuildTest):
 
 
 class FilesRemoveFromNodesSkipped(NameBuildTest):
-    code = codes.FILES_REMOVE_FROM_NODES_SKIPPED
     def test_not_live(self):
         self.assert_message_from_report(
             "Removing 'file1' from 'nodeA', 'nodeB' was skipped because the "
@@ -1354,7 +1095,6 @@ class FilesRemoveFromNodesSkipped(NameBuildTest):
         )
 
 class ServiceCommandsOnNodesSkipped(NameBuildTest):
-    code = codes.SERVICE_COMMANDS_ON_NODES_SKIPPED
     def test_not_live(self):
         self.assert_message_from_report(
             "Running action(s) 'pacemaker_remote enable', 'pacemaker_remote "
@@ -1397,106 +1137,81 @@ class ServiceCommandsOnNodesSkipped(NameBuildTest):
 
 
 class NodeAddressesUnresolvable(NameBuildTest):
-    code = codes.NODE_ADDRESSES_UNRESOLVABLE
     def test_one_address(self):
-        self.assert_message_from_info(
+        self.assert_message_from_report(
             "Unable to resolve addresses: 'node1'",
-            {
-                "address_list": ["node1",],
-            }
+            reports.node_addresses_unresolvable(["node1"])
         )
 
     def test_more_address(self):
-        self.assert_message_from_info(
+        self.assert_message_from_report(
             "Unable to resolve addresses: 'node1', 'node2', 'node3'",
-            {
-                "address_list": ["node1", "node2", "node3"],
-            }
+            reports.node_addresses_unresolvable(["node1", "node2", "node3"])
         )
 
 
 class NodeNotFound(NameBuildTest):
-    code = codes.NODE_NOT_FOUND
     def test_build_messages(self):
-        self.assert_message_from_info(
+        self.assert_message_from_report(
             "Node 'SOME_NODE' does not appear to exist in configuration",
-            {
-                "node": "SOME_NODE",
-                "searched_types": []
-            }
+            reports.node_not_found("SOME_NODE")
         )
 
     def test_build_messages_with_one_search_types(self):
-        self.assert_message_from_info(
+        self.assert_message_from_report(
             "remote node 'SOME_NODE' does not appear to exist in configuration",
-            {
-                "node": "SOME_NODE",
-                "searched_types": ["remote"]
-            }
+            reports.node_not_found("SOME_NODE", ["remote"])
         )
 
     def test_build_messages_with_string_search_types(self):
-        self.assert_message_from_info(
+        self.assert_message_from_report(
             "remote node 'SOME_NODE' does not appear to exist in configuration",
-            {
-                "node": "SOME_NODE",
-                "searched_types": "remote"
-            }
+            reports.node_not_found("SOME_NODE", "remote")
         )
 
     def test_build_messages_with_multiple_search_types(self):
-        self.assert_message_from_info(
+        self.assert_message_from_report(
             "nor remote node or guest node 'SOME_NODE' does not appear to exist"
                 " in configuration"
             ,
-            {
-                "node": "SOME_NODE",
-                "searched_types": ["remote", "guest"]
-            }
+            reports.node_not_found("SOME_NODE", ["remote", "guest"])
         )
 
 class MultipleResultFound(NameBuildTest):
-    code = codes.MULTIPLE_RESULTS_FOUND
     def test_build_messages(self):
-        self.assert_message_from_info(
+        self.assert_message_from_report(
             "multiple resource for 'NODE-NAME' found: 'ID1', 'ID2'",
-            {
-                "result_type": "resource",
-                "result_identifier_list": ["ID1", "ID2"],
-                "search_description": "NODE-NAME",
-            }
+            reports.multiple_result_found(
+                "resource", ["ID1", "ID2"], "NODE-NAME"
+            )
         )
 
 class UseCommandNodeAddRemote(NameBuildTest):
-    code = codes.USE_COMMAND_NODE_ADD_REMOTE
     def test_build_messages(self):
-        self.assert_message_from_info(
+        self.assert_message_from_report(
             "this command is not sufficient for creating a remote connection,"
                 " use 'pcs cluster node add-remote'"
             ,
-            {}
+            reports.use_command_node_add_remote()
         )
 
 class UseCommandNodeAddGuest(NameBuildTest):
-    code = codes.USE_COMMAND_NODE_ADD_GUEST
     def test_build_messages(self):
-        self.assert_message_from_info(
+        self.assert_message_from_report(
             "this command is not sufficient for creating a guest node, use "
             "'pcs cluster node add-guest'",
-            {}
+            reports.use_command_node_add_guest()
         )
 
 class UseCommandNodeRemoveGuest(NameBuildTest):
-    code = codes.USE_COMMAND_NODE_REMOVE_GUEST
     def test_build_messages(self):
-        self.assert_message_from_info(
+        self.assert_message_from_report(
             "this command is not sufficient for removing a guest node, use "
             "'pcs cluster node remove-guest'",
-            {}
+            reports.use_command_node_remove_guest()
         )
 
 class NodeRemoveInPacemakerFailed(NameBuildTest):
-    code = codes.NODE_REMOVE_IN_PACEMAKER_FAILED
     def test_without_node(self):
         self.assert_message_from_report(
             "Unable to remove node(s) 'NODE' from pacemaker: reason",
@@ -1520,290 +1235,198 @@ class NodeRemoveInPacemakerFailed(NameBuildTest):
         )
 
 class NodeToClearIsStillInCluster(NameBuildTest):
-    code = codes.NODE_TO_CLEAR_IS_STILL_IN_CLUSTER
     def test_build_messages(self):
-        self.assert_message_from_info(
+        self.assert_message_from_report(
             "node 'node1' seems to be still in the cluster"
                 "; this command should be used only with nodes that have been"
                 " removed from the cluster"
             ,
-            {
-                "node": "node1"
-            }
+            reports.node_to_clear_is_still_in_cluster("node1")
         )
 
 
 class ServiceStartStarted(NameBuildTest):
-    code = codes.SERVICE_START_STARTED
     def test_minimal(self):
-        self.assert_message_from_info(
+        self.assert_message_from_report(
             "Starting a_service...",
-            {
-                "service": "a_service",
-                "instance": None,
-            }
+            reports.service_start_started("a_service")
         )
 
     def test_with_instance(self):
-        self.assert_message_from_info(
+        self.assert_message_from_report(
             "Starting a_service@an_instance...",
-            {
-                "service": "a_service",
-                "instance": "an_instance",
-            }
+            reports.service_start_started("a_service", "an_instance")
         )
 
 
 class ServiceStartError(NameBuildTest):
-    code = codes.SERVICE_START_ERROR
     def test_minimal(self):
-        self.assert_message_from_info(
+        self.assert_message_from_report(
             "Unable to start a_service: a_reason",
-            {
-                "service": "a_service",
-                "reason": "a_reason",
-                "node": None,
-                "instance": None,
-            }
+            reports.service_start_error("a_service", "a_reason")
         )
 
     def test_node(self):
-        self.assert_message_from_info(
+        self.assert_message_from_report(
             "a_node: Unable to start a_service: a_reason",
-            {
-                "service": "a_service",
-                "reason": "a_reason",
-                "node": "a_node",
-                "instance": None,
-            }
+            reports.service_start_error("a_service", "a_reason", "a_node")
         )
 
     def test_instance(self):
-        self.assert_message_from_info(
+        self.assert_message_from_report(
             "Unable to start a_service@an_instance: a_reason",
-            {
-                "service": "a_service",
-                "reason": "a_reason",
-                "node": None,
-                "instance": "an_instance",
-            }
+            reports.service_start_error(
+                "a_service", "a_reason", instance="an_instance"
+            )
         )
 
     def test_all(self):
-        self.assert_message_from_info(
+        self.assert_message_from_report(
             "a_node: Unable to start a_service@an_instance: a_reason",
-            {
-                "service": "a_service",
-                "reason": "a_reason",
-                "node": "a_node",
-                "instance": "an_instance",
-            }
+            reports.service_start_error(
+                "a_service", "a_reason", "a_node", "an_instance"
+            )
         )
 
 
 class ServiceStartSuccess(NameBuildTest):
-    code = codes.SERVICE_START_SUCCESS
     def test_minimal(self):
-        self.assert_message_from_info(
+        self.assert_message_from_report(
             "a_service started",
-            {
-                "service": "a_service",
-                "node": None,
-                "instance": None,
-            }
+            reports.service_start_success("a_service")
         )
 
     def test_node(self):
-        self.assert_message_from_info(
+        self.assert_message_from_report(
             "a_node: a_service started",
-            {
-                "service": "a_service",
-                "node": "a_node",
-                "instance": None,
-            }
+            reports.service_start_success(
+                "a_service",
+                node="a_node"
+            )
         )
 
     def test_instance(self):
-        self.assert_message_from_info(
+        self.assert_message_from_report(
             "a_service@an_instance started",
-            {
-                "service": "a_service",
-                "node": None,
-                "instance": "an_instance",
-            }
+            reports.service_start_success(
+                "a_service",
+                instance="an_instance"
+            )
         )
 
     def test_all(self):
-        self.assert_message_from_info(
+        self.assert_message_from_report(
             "a_node: a_service@an_instance started",
-            {
-                "service": "a_service",
-                "node": "a_node",
-                "instance": "an_instance",
-            }
+            reports.service_start_success("a_service", "a_node", "an_instance")
         )
 
 
 class ServiceStartSkipped(NameBuildTest):
-    code = codes.SERVICE_START_SKIPPED
     def test_minimal(self):
-        self.assert_message_from_info(
+        self.assert_message_from_report(
             "not starting a_service: a_reason",
-            {
-                "service": "a_service",
-                "reason": "a_reason",
-                "node": None,
-                "instance": None,
-            }
+            reports.service_start_skipped("a_service", "a_reason")
         )
 
     def test_node(self):
-        self.assert_message_from_info(
+        self.assert_message_from_report(
             "a_node: not starting a_service: a_reason",
-            {
-                "service": "a_service",
-                "reason": "a_reason",
-                "node": "a_node",
-                "instance": None,
-            }
+            reports.service_start_skipped("a_service", "a_reason", "a_node")
         )
 
     def test_instance(self):
-        self.assert_message_from_info(
+        self.assert_message_from_report(
             "not starting a_service@an_instance: a_reason",
-            {
-                "service": "a_service",
-                "reason": "a_reason",
-                "node": None,
-                "instance": "an_instance",
-            }
+            reports.service_start_skipped(
+                "a_service", "a_reason",
+                instance="an_instance"
+            )
         )
 
     def test_all(self):
-        self.assert_message_from_info(
+        self.assert_message_from_report(
             "a_node: not starting a_service@an_instance: a_reason",
-            {
-                "service": "a_service",
-                "reason": "a_reason",
-                "node": "a_node",
-                "instance": "an_instance",
-            }
+            reports.service_start_skipped(
+                "a_service", "a_reason", "a_node", "an_instance"
+            )
         )
 
 
 class ServiceStopStarted(NameBuildTest):
-    code = codes.SERVICE_STOP_STARTED
     def test_minimal(self):
-        self.assert_message_from_info(
+        self.assert_message_from_report(
             "Stopping a_service...",
-            {
-                "service": "a_service",
-                "instance": None,
-            }
+            reports.service_stop_started("a_service")
         )
 
     def test_with_instance(self):
-        self.assert_message_from_info(
+        self.assert_message_from_report(
             "Stopping a_service@an_instance...",
-            {
-                "service": "a_service",
-                "instance": "an_instance",
-            }
+            reports.service_stop_started("a_service", "an_instance")
         )
 
 
 class ServiceStopError(NameBuildTest):
-    code = codes.SERVICE_STOP_ERROR
     def test_minimal(self):
-        self.assert_message_from_info(
+        self.assert_message_from_report(
             "Unable to stop a_service: a_reason",
-            {
-                "service": "a_service",
-                "reason": "a_reason",
-                "node": None,
-                "instance": None,
-            }
+            reports.service_stop_error("a_service", "a_reason")
         )
 
     def test_node(self):
-        self.assert_message_from_info(
+        self.assert_message_from_report(
             "a_node: Unable to stop a_service: a_reason",
-            {
-                "service": "a_service",
-                "reason": "a_reason",
-                "node": "a_node",
-                "instance": None,
-            }
+            reports.service_stop_error("a_service", "a_reason", "a_node")
         )
 
     def test_instance(self):
-        self.assert_message_from_info(
+        self.assert_message_from_report(
             "Unable to stop a_service@an_instance: a_reason",
-            {
-                "service": "a_service",
-                "reason": "a_reason",
-                "node": None,
-                "instance": "an_instance",
-            }
+            reports.service_stop_error(
+                "a_service", "a_reason",
+                instance="an_instance"
+            )
         )
 
     def test_all(self):
-        self.assert_message_from_info(
+        self.assert_message_from_report(
             "a_node: Unable to stop a_service@an_instance: a_reason",
-            {
-                "service": "a_service",
-                "reason": "a_reason",
-                "node": "a_node",
-                "instance": "an_instance",
-            }
+            reports.service_stop_error(
+                "a_service", "a_reason", "a_node", "an_instance"
+            )
         )
 
 
 class ServiceStopSuccess(NameBuildTest):
-    code = codes.SERVICE_STOP_SUCCESS
     def test_minimal(self):
-        self.assert_message_from_info(
+        self.assert_message_from_report(
             "a_service stopped",
-            {
-                "service": "a_service",
-                "node": None,
-                "instance": None,
-            }
+            reports.service_stop_success("a_service")
         )
 
     def test_node(self):
-        self.assert_message_from_info(
+        self.assert_message_from_report(
             "a_node: a_service stopped",
-            {
-                "service": "a_service",
-                "node": "a_node",
-                "instance": None,
-            }
+            reports.service_stop_success("a_service", "a_node")
         )
 
     def test_instance(self):
-        self.assert_message_from_info(
+        self.assert_message_from_report(
             "a_service@an_instance stopped",
-            {
-                "service": "a_service",
-                "node": None,
-                "instance": "an_instance",
-            }
+            reports.service_stop_success(
+                "a_service",
+                instance="an_instance"
+            )
         )
 
     def test_all(self):
-        self.assert_message_from_info(
+        self.assert_message_from_report(
             "a_node: a_service@an_instance stopped",
-            {
-                "service": "a_service",
-                "node": "a_node",
-                "instance": "an_instance",
-            }
+            reports.service_stop_success("a_service", "a_node", "an_instance")
         )
 
 
 class ServiceKillError(NameBuildTest):
-    code = codes.SERVICE_KILL_ERROR
     def test_success(self):
         self.assert_message_from_report(
             "Unable to kill A, B, C: some reason",
@@ -1812,7 +1435,6 @@ class ServiceKillError(NameBuildTest):
 
 
 class ServiceKillSuccess(NameBuildTest):
-    code = codes.SERVICE_KILL_SUCCESS
     def test_success(self):
         self.assert_message_from_report(
             "A, B, C killed",
@@ -1821,333 +1443,244 @@ class ServiceKillSuccess(NameBuildTest):
 
 
 class ServiceEnableStarted(NameBuildTest):
-    code = codes.SERVICE_ENABLE_STARTED
     def test_minimal(self):
-        self.assert_message_from_info(
+        self.assert_message_from_report(
             "Enabling a_service...",
-            {
-                "service": "a_service",
-                "instance": None,
-            }
+            reports.service_enable_started("a_service")
         )
 
     def test_with_instance(self):
-        self.assert_message_from_info(
+        self.assert_message_from_report(
             "Enabling a_service@an_instance...",
-            {
-                "service": "a_service",
-                "instance": "an_instance",
-            }
+            reports.service_enable_started("a_service", "an_instance")
         )
 
 
 class ServiceEnableError(NameBuildTest):
-    code = codes.SERVICE_ENABLE_ERROR
     def test_minimal(self):
-        self.assert_message_from_info(
+        self.assert_message_from_report(
             "Unable to enable a_service: a_reason",
-            {
-                "service": "a_service",
-                "reason": "a_reason",
-                "node": None,
-                "instance": None,
-            }
+            reports.service_enable_error("a_service", "a_reason")
         )
 
     def test_node(self):
-        self.assert_message_from_info(
+        self.assert_message_from_report(
             "a_node: Unable to enable a_service: a_reason",
-            {
-                "service": "a_service",
-                "reason": "a_reason",
-                "node": "a_node",
-                "instance": None,
-            }
+            reports.service_enable_error(
+                "a_service", "a_reason",
+                node="a_node"
+            )
         )
 
     def test_instance(self):
-        self.assert_message_from_info(
+        self.assert_message_from_report(
             "Unable to enable a_service@an_instance: a_reason",
-            {
-                "service": "a_service",
-                "reason": "a_reason",
-                "node": None,
-                "instance": "an_instance",
-            }
+            reports.service_enable_error(
+                "a_service", "a_reason",
+                instance="an_instance"
+            )
         )
 
     def test_all(self):
-        self.assert_message_from_info(
+        self.assert_message_from_report(
             "a_node: Unable to enable a_service@an_instance: a_reason",
-            {
-                "service": "a_service",
-                "reason": "a_reason",
-                "node": "a_node",
-                "instance": "an_instance",
-            }
+            reports.service_enable_error(
+                "a_service", "a_reason", "a_node", "an_instance"
+            )
         )
 
 
 class ServiceEnableSuccess(NameBuildTest):
-    code = codes.SERVICE_ENABLE_SUCCESS
     def test_minimal(self):
-        self.assert_message_from_info(
+        self.assert_message_from_report(
             "a_service enabled",
-            {
-                "service": "a_service",
-                "node": None,
-                "instance": None,
-            }
+            reports.service_enable_success("a_service")
         )
 
     def test_node(self):
-        self.assert_message_from_info(
+        self.assert_message_from_report(
             "a_node: a_service enabled",
-            {
-                "service": "a_service",
-                "node": "a_node",
-                "instance": None,
-            }
+            reports.service_enable_success(
+                "a_service",
+                node="a_node")
         )
 
     def test_instance(self):
-        self.assert_message_from_info(
+        self.assert_message_from_report(
             "a_service@an_instance enabled",
-            {
-                "service": "a_service",
-                "node": None,
-                "instance": "an_instance",
-            }
+            reports.service_enable_success(
+                "a_service",
+                instance="an_instance"
+            )
         )
 
     def test_all(self):
-        self.assert_message_from_info(
+        self.assert_message_from_report(
             "a_node: a_service@an_instance enabled",
-            {
-                "service": "a_service",
-                "node": "a_node",
-                "instance": "an_instance",
-            }
+            reports.service_enable_success("a_service", "a_node", "an_instance")
         )
 
 
 class ServiceEnableSkipped(NameBuildTest):
-    code = codes.SERVICE_ENABLE_SKIPPED
     def test_minimal(self):
-        self.assert_message_from_info(
+        self.assert_message_from_report(
             "not enabling a_service: a_reason",
-            {
-                "service": "a_service",
-                "reason": "a_reason",
-                "node": None,
-                "instance": None,
-            }
+            reports.service_enable_skipped("a_service", "a_reason")
         )
 
     def test_node(self):
-        self.assert_message_from_info(
+        self.assert_message_from_report(
             "a_node: not enabling a_service: a_reason",
-            {
-                "service": "a_service",
-                "reason": "a_reason",
-                "node": "a_node",
-                "instance": None,
-            }
+            reports.service_enable_skipped(
+                "a_service", "a_reason",
+                node="a_node"
+            )
         )
 
     def test_instance(self):
-        self.assert_message_from_info(
+        self.assert_message_from_report(
             "not enabling a_service@an_instance: a_reason",
-            {
-                "service": "a_service",
-                "reason": "a_reason",
-                "node": None,
-                "instance": "an_instance",
-            }
+            reports.service_enable_skipped(
+                "a_service", "a_reason",
+                instance="an_instance"
+            )
         )
 
     def test_all(self):
-        self.assert_message_from_info(
+        self.assert_message_from_report(
             "a_node: not enabling a_service@an_instance: a_reason",
-            {
-                "service": "a_service",
-                "reason": "a_reason",
-                "node": "a_node",
-                "instance": "an_instance",
-            }
+            reports.service_enable_skipped(
+                "a_service", "a_reason", "a_node", "an_instance"
+            )
         )
 
 
 class ServiceDisableStarted(NameBuildTest):
-    code = codes.SERVICE_DISABLE_STARTED
     def test_minimal(self):
-        self.assert_message_from_info(
+        self.assert_message_from_report(
             "Disabling a_service...",
-            {
-                "service": "a_service",
-                "instance": None,
-            }
+            reports.service_disable_started("a_service")
         )
 
     def test_with_instance(self):
-        self.assert_message_from_info(
+        self.assert_message_from_report(
             "Disabling a_service@an_instance...",
-            {
-                "service": "a_service",
-                "instance": "an_instance",
-            }
+            reports.service_disable_started("a_service", "an_instance")
         )
 
 
 class ServiceDisableError(NameBuildTest):
-    code = codes.SERVICE_DISABLE_ERROR
     def test_minimal(self):
-        self.assert_message_from_info(
+        self.assert_message_from_report(
             "Unable to disable a_service: a_reason",
-            {
-                "service": "a_service",
-                "reason": "a_reason",
-                "node": None,
-                "instance": None,
-            }
+            reports.service_disable_error("a_service", "a_reason")
         )
 
     def test_node(self):
-        self.assert_message_from_info(
+        self.assert_message_from_report(
             "a_node: Unable to disable a_service: a_reason",
-            {
-                "service": "a_service",
-                "reason": "a_reason",
-                "node": "a_node",
-                "instance": None,
-            }
+            reports.service_disable_error("a_service", "a_reason", "a_node")
         )
 
     def test_instance(self):
-        self.assert_message_from_info(
+        self.assert_message_from_report(
             "Unable to disable a_service@an_instance: a_reason",
-            {
-                "service": "a_service",
-                "reason": "a_reason",
-                "node": None,
-                "instance": "an_instance",
-            }
+            reports.service_disable_error(
+                "a_service", "a_reason", instance="an_instance"
+            )
         )
 
     def test_all(self):
-        self.assert_message_from_info(
+        self.assert_message_from_report(
             "a_node: Unable to disable a_service@an_instance: a_reason",
-            {
-                "service": "a_service",
-                "reason": "a_reason",
-                "node": "a_node",
-                "instance": "an_instance",
-            }
+            reports.service_disable_error(
+                "a_service", "a_reason", "a_node", "an_instance"
+            )
         )
 
 
 class ServiceDisableSuccess(NameBuildTest):
-    code = codes.SERVICE_DISABLE_SUCCESS
     def test_minimal(self):
-        self.assert_message_from_info(
+        self.assert_message_from_report(
             "a_service disabled",
-            {
-                "service": "a_service",
-                "node": None,
-                "instance": None,
-            }
+            reports.service_disable_success("a_service")
         )
 
     def test_node(self):
-        self.assert_message_from_info(
+        self.assert_message_from_report(
             "a_node: a_service disabled",
-            {
-                "service": "a_service",
-                "node": "a_node",
-                "instance": None,
-            }
+            reports.service_disable_success("a_service", "a_node")
         )
 
     def test_instance(self):
-        self.assert_message_from_info(
+        self.assert_message_from_report(
             "a_service@an_instance disabled",
-            {
-                "service": "a_service",
-                "node": None,
-                "instance": "an_instance",
-            }
+            reports.service_disable_success(
+                "a_service",
+                instance="an_instance"
+            )
         )
 
     def test_all(self):
-        self.assert_message_from_info(
+        self.assert_message_from_report(
             "a_node: a_service@an_instance disabled",
-            {
-                "service": "a_service",
-                "node": "a_node",
-                "instance": "an_instance",
-            }
+            reports.service_disable_success(
+                "a_service", "a_node", "an_instance"
+            )
         )
 
 
 class CibDiffError(NameBuildTest):
-    code = codes.CIB_DIFF_ERROR
     def test_success(self):
-        self.assert_message_from_info(
+        self.assert_message_from_report(
             "Unable to diff CIB: error message\n<cib-new />",
-            {
-                "reason": "error message",
-                "cib_old": "<cib-old />",
-                "cib_new": "<cib-new />",
-            }
+            reports.cib_diff_error(
+                "error message", "<cib-old />", "<cib-new />"
+            )
         )
 
 
 class TmpFileWrite(NameBuildTest):
-    code = codes.TMP_FILE_WRITE
     def test_success(self):
-        self.assert_message_from_info(
+        self.assert_message_from_report(
             (
                 "Writing to a temporary file /tmp/pcs/test.tmp:\n"
                 "--Debug Content Start--\n"
                 "test file\ncontent\n\n"
                 "--Debug Content End--\n"
             ),
-            {
-                "file_path": "/tmp/pcs/test.tmp",
-                "content": "test file\ncontent\n",
-            }
+            reports.tmp_file_write(
+                "/tmp/pcs/test.tmp", "test file\ncontent\n"
+            )
         )
 
 
 class DefaultsCanBeOverriden(NameBuildTest):
-    code = codes.DEFAULTS_CAN_BE_OVERRIDEN
     def test_message(self):
-        self.assert_message_from_info(
-            "Defaults do not apply to resources which override them with their "
-            "own defined values"
+        self.assert_message_from_report(
+            (
+                "Defaults do not apply to resources which override them with "
+                "their own defined values"
+            ),
+            reports.defaults_can_be_overriden()
         )
 
 
 class CibLoadErrorBadFormat(NameBuildTest):
-    code = codes.CIB_LOAD_ERROR_BAD_FORMAT
     def test_message(self):
-        self.assert_message_from_info(
+        self.assert_message_from_report(
             "unable to get cib, something wrong",
-            {
-                "reason": "something wrong"
-            }
+            reports.cib_load_error_invalid_format("something wrong")
         )
 
 class CorosyncAddressIpVersionWrongForLink(NameBuildTest):
-    code = codes.COROSYNC_ADDRESS_IP_VERSION_WRONG_FOR_LINK
     def test_without_links(self):
         self.assert_message_from_report(
             "Address '192.168.100.42' cannot be used in the link because "
                 "the link uses IPv6 addresses"
             ,
             reports.corosync_address_ip_version_wrong_for_link(
-                "192.168.100.42",
-                "IPv6",
+                "192.168.100.42", "IPv6",
             )
         )
 
@@ -2157,117 +1690,72 @@ class CorosyncAddressIpVersionWrongForLink(NameBuildTest):
                 "the link uses IPv6 addresses"
             ,
             reports.corosync_address_ip_version_wrong_for_link(
-                "192.168.100.42",
-                "IPv6",
-                3,
+                "192.168.100.42", "IPv6", 3,
             )
         )
 
 class CorosyncBadNodeAddressesCount(NameBuildTest):
-    code = codes.COROSYNC_BAD_NODE_ADDRESSES_COUNT
     def test_no_node_info(self):
-        self.assert_message_from_info(
+        self.assert_message_from_report(
             "At least 1 and at most 4 addresses must be specified for a node, "
             "5 addresses specified",
-            {
-                "actual_count": 5,
-                "min_count": 1,
-                "max_count": 4,
-            }
+            reports.corosync_bad_node_addresses_count(5, 1, 4)
         )
 
     def test_node_name(self):
-        self.assert_message_from_info(
+        self.assert_message_from_report(
             "At least 1 and at most 4 addresses must be specified for a node, "
             "5 addresses specified for node 'node1'",
-            {
-                "actual_count": 5,
-                "min_count": 1,
-                "max_count": 4,
-                "node_name": "node1",
-            }
+            reports.corosync_bad_node_addresses_count(5, 1, 4, "node1")
         )
 
     def test_node_id(self):
-        self.assert_message_from_info(
+        self.assert_message_from_report(
             "At least 1 and at most 4 addresses must be specified for a node, "
             "5 addresses specified for node '2'",
-            {
-                "actual_count": 5,
-                "min_count": 1,
-                "max_count": 4,
-                "node_index": 2,
-            }
+            reports.corosync_bad_node_addresses_count(
+                5, 1, 4,
+                node_index=2
+            )
         )
 
     def test_node_name_and_id(self):
-        self.assert_message_from_info(
+        self.assert_message_from_report(
             "At least 1 and at most 4 addresses must be specified for a node, "
             "5 addresses specified for node 'node2'",
-            {
-                "actual_count": 5,
-                "min_count": 1,
-                "max_count": 4,
-                "node_name": "node2",
-                "node_index": 2,
-            }
+            reports.corosync_bad_node_addresses_count(5, 1, 4, "node2", 2)
         )
 
     def test_one_address_allowed(self):
-        self.assert_message_from_info(
+        self.assert_message_from_report(
             "At least 0 and at most 1 address must be specified for a node, "
             "2 addresses specified for node 'node2'",
-            {
-                "actual_count": 2,
-                "min_count": 0,
-                "max_count": 1,
-                "node_name": "node2",
-                "node_index": 2,
-            }
+            reports.corosync_bad_node_addresses_count(2, 0, 1, "node2", 2)
         )
 
     def test_one_address_specified(self):
-        self.assert_message_from_info(
+        self.assert_message_from_report(
             "At least 2 and at most 4 addresses must be specified for a node, "
             "1 address specified for node 'node2'",
-            {
-                "actual_count": 1,
-                "min_count": 2,
-                "max_count": 4,
-                "node_name": "node2",
-                "node_index": 2,
-            }
+            reports.corosync_bad_node_addresses_count(1, 2, 4, "node2", 2)
         )
 
     def test_exactly_one_address_allowed(self):
-        self.assert_message_from_info(
+        self.assert_message_from_report(
             "1 address must be specified for a node, "
             "2 addresses specified for node 'node2'",
-            {
-                "actual_count": 2,
-                "min_count": 1,
-                "max_count": 1,
-                "node_name": "node2",
-                "node_index": 2,
-            }
+            reports.corosync_bad_node_addresses_count(2, 1, 1, "node2", 2)
         )
 
     def test_exactly_two_addresses_allowed(self):
-        self.assert_message_from_info(
+        self.assert_message_from_report(
             "2 addresses must be specified for a node, "
             "1 address specified for node 'node2'",
-            {
-                "actual_count": 1,
-                "min_count": 2,
-                "max_count": 2,
-                "node_name": "node2",
-                "node_index": 2,
-            }
+            reports.corosync_bad_node_addresses_count(1, 2, 2, "node2", 2)
         )
 
 
 class CorosyncIpVersionMismatchInLinks(NameBuildTest):
-    code = codes.COROSYNC_IP_VERSION_MISMATCH_IN_LINKS
     def test_without_links(self):
         self.assert_message_from_report(
             "Using both IPv4 and IPv6 in one link is not allowed; please, use "
@@ -2286,59 +1774,49 @@ class CorosyncIpVersionMismatchInLinks(NameBuildTest):
 
 
 class CorosyncNodeAddressCountMismatch(NameBuildTest):
-    code = codes.COROSYNC_NODE_ADDRESS_COUNT_MISMATCH
     def test_message(self):
-        self.assert_message_from_info(
+        self.assert_message_from_report(
             "All nodes must have the same number of addresses; "
                 "nodes 'node3', 'node4', 'node6' have 1 address; "
                 "nodes 'node2', 'node5' have 3 addresses; "
                 "node 'node1' has 2 addresses"
             ,
-            {
-                "node_addr_count": {
+            reports.corosync_node_address_count_mismatch(
+                {
                     "node1": 2,
                     "node2": 3,
                     "node3": 1,
                     "node4": 1,
                     "node5": 3,
                     "node6": 1,
-                },
-            }
+                }
+            )
         )
 
 
 class CorosyncLinkNumberDuplication(NameBuildTest):
-    code = codes.COROSYNC_LINK_NUMBER_DUPLICATION
     def test_message(self):
-        self.assert_message_from_info(
+        self.assert_message_from_report(
             "Link numbers must be unique, duplicate link numbers: '1', '3'",
-            {
-                "link_number_list": ["1", "3"],
-            }
+            reports.corosync_link_number_duplication(["1", "3"])
         )
 
 class NodeAddressesAlreadyExist(NameBuildTest):
-    code = codes.NODE_ADDRESSES_ALREADY_EXIST
     def test_one_address(self):
-        self.assert_message_from_info(
+        self.assert_message_from_report(
             "Node address 'node1' is already used by existing nodes; please, "
             "use other address",
-            {
-                "address_list": ["node1"],
-            }
+            reports.node_addresses_already_exist(["node1"])
         )
 
     def test_more_addresses(self):
-        self.assert_message_from_info(
+        self.assert_message_from_report(
             "Node addresses 'node1', 'node3' are already used by existing "
             "nodes; please, use other addresses",
-            {
-                "address_list": ["node1", "node3"],
-            }
+            reports.node_addresses_already_exist(["node1", "node3"])
         )
 
 class NodeAddressesCannotBeEmpty(NameBuildTest):
-    code = codes.NODE_ADDRESSES_CANNOT_BE_EMPTY
     def test_one_node(self):
         self.assert_message_from_report(
             (
@@ -2358,69 +1836,55 @@ class NodeAddressesCannotBeEmpty(NameBuildTest):
         )
 
 class NodeAddressesDuplication(NameBuildTest):
-    code = codes.NODE_ADDRESSES_DUPLICATION
     def test_message(self):
-        self.assert_message_from_info(
+        self.assert_message_from_report(
             "Node addresses must be unique, duplicate addresses: "
                 "'node1', 'node3'"
             ,
-            {
-                "address_list": ["node1", "node3"],
-            }
+            reports.node_addresses_duplication(["node1", "node3"])
         )
 
 class NodeNamesAlreadyExist(NameBuildTest):
-    code = codes.NODE_NAMES_ALREADY_EXIST
     def test_one_address(self):
-        self.assert_message_from_info(
+        self.assert_message_from_report(
             "Node name 'node1' is already used by existing nodes; please, "
             "use other name",
-            {
-                "name_list": ["node1"],
-            }
+            reports.node_names_already_exist(["node1"])
         )
 
     def test_more_addresses(self):
-        self.assert_message_from_info(
+        self.assert_message_from_report(
             "Node names 'node1', 'node3' are already used by existing "
             "nodes; please, use other names",
-            {
-                "name_list": ["node1", "node3"],
-            }
+            reports.node_names_already_exist(["node1", "node3"])
         )
 
 class NodeNamesDuplication(NameBuildTest):
-    code = codes.NODE_NAMES_DUPLICATION
     def test_message(self):
-        self.assert_message_from_info(
+        self.assert_message_from_report(
             "Node names must be unique, duplicate names: 'node1', 'node3'",
-            {
-                "name_list": ["node1", "node3"],
-            }
+            reports.node_names_duplication(["node1", "node3"])
         )
 
 
 class CorosyncNodesMissing(NameBuildTest):
-    code = codes.COROSYNC_NODES_MISSING
     def test_message(self):
-        self.assert_message_from_info(
+        self.assert_message_from_report(
             "No nodes have been specified",
-            {
-            }
+            reports.corosync_nodes_missing()
         )
 
 
 class CorosyncQuorumHeuristicsEnabledWithNoExec(NameBuildTest):
-    code = codes.COROSYNC_QUORUM_HEURISTICS_ENABLED_WITH_NO_EXEC
     def test_message(self):
-        self.assert_message_from_info(
+        self.assert_message_from_report(
             "No exec_NAME options are specified, so heuristics are effectively "
-                "disabled"
+                "disabled",
+            reports.corosync_quorum_heuristics_enabled_with_no_exec()
         )
 
 
 class CorosyncTooManyLinksOptions(NameBuildTest):
-    code = codes.COROSYNC_TOO_MANY_LINKS_OPTIONS
     def test_message(self):
         self.assert_message_from_report(
             (
@@ -2431,7 +1895,6 @@ class CorosyncTooManyLinksOptions(NameBuildTest):
         )
 
 class CorosyncCannotAddRemoveLinksBadTransport(NameBuildTest):
-    code = codes.COROSYNC_CANNOT_ADD_REMOVE_LINKS_BAD_TRANSPORT
     def test_add(self):
         self.assert_message_from_report(
             (
@@ -2459,7 +1922,6 @@ class CorosyncCannotAddRemoveLinksBadTransport(NameBuildTest):
         )
 
 class CorosyncCannotAddRemoveLinksNoLinksSpecified(NameBuildTest):
-    code = codes.COROSYNC_CANNOT_ADD_REMOVE_LINKS_NO_LINKS_SPECIFIED
     def test_add(self):
         self.assert_message_from_report(
             "Cannot add links, no links to add specified",
@@ -2477,7 +1939,6 @@ class CorosyncCannotAddRemoveLinksNoLinksSpecified(NameBuildTest):
         )
 
 class CorosyncCannotAddRemoveLinksTooManyFewLinks(NameBuildTest):
-    code = codes.COROSYNC_CANNOT_ADD_REMOVE_LINKS_TOO_MANY_FEW_LINKS
     def test_add(self):
         self.assert_message_from_report(
             (
@@ -2485,7 +1946,8 @@ class CorosyncCannotAddRemoveLinksTooManyFewLinks(NameBuildTest):
                 "more than allowed number of 1 link"
             ),
             reports.corosync_cannot_add_remove_links_too_many_few_links(
-                1, 1, 1, add_or_not_remove=True
+                1, 1, 1,
+                add_or_not_remove=True
             )
         )
 
@@ -2496,7 +1958,8 @@ class CorosyncCannotAddRemoveLinksTooManyFewLinks(NameBuildTest):
                 "more than allowed number of 3 links"
             ),
             reports.corosync_cannot_add_remove_links_too_many_few_links(
-                2, 4, 3, add_or_not_remove=True
+                2, 4, 3,
+                add_or_not_remove=True
             )
         )
 
@@ -2507,7 +1970,8 @@ class CorosyncCannotAddRemoveLinksTooManyFewLinks(NameBuildTest):
                 "less than allowed number of 1 link"
             ),
             reports.corosync_cannot_add_remove_links_too_many_few_links(
-                1, 1, 1, add_or_not_remove=False
+                1, 1, 1,
+                add_or_not_remove=False
             )
         )
 
@@ -2518,12 +1982,12 @@ class CorosyncCannotAddRemoveLinksTooManyFewLinks(NameBuildTest):
                 "is less than allowed number of 2 links"
             ),
             reports.corosync_cannot_add_remove_links_too_many_few_links(
-                3, 0, 2, add_or_not_remove=False
+                3, 0, 2,
+                add_or_not_remove=False
             )
         )
 
 class CorosyncLinkAlreadyExistsCannotAdd(NameBuildTest):
-    code = codes.COROSYNC_LINK_ALREADY_EXISTS_CANNOT_ADD
     def test_message(self):
         self.assert_message_from_report(
             "Cannot add link '2', it already exists",
@@ -2531,7 +1995,6 @@ class CorosyncLinkAlreadyExistsCannotAdd(NameBuildTest):
         )
 
 class CorosyncLinkDoesNotExistCannotRemove(NameBuildTest):
-    code = codes.COROSYNC_LINK_DOES_NOT_EXIST_CANNOT_REMOVE
     def test_message(self):
         self.assert_message_from_report(
             (
@@ -2539,13 +2002,11 @@ class CorosyncLinkDoesNotExistCannotRemove(NameBuildTest):
                 "links: '2', '3', '5'"
             ),
             reports.corosync_link_does_not_exist_cannot_remove(
-                ["1", "0", "abc"],
-                ["3", "2", "5"]
+                ["1", "0", "abc"], ["3", "2", "5"]
             )
         )
 
 class CorosyncLinkDoesNotExistCannotUpdate(NameBuildTest):
-    code = codes.COROSYNC_LINK_DOES_NOT_EXIST_CANNOT_UPDATE
     def test_no_optional_info(self):
         self.assert_message_from_report(
             "Cannot set options for non-existent link '3'",
@@ -2602,192 +2063,143 @@ class CorosyncLinkDoesNotExistCannotUpdate(NameBuildTest):
 
 
 class CorosyncTransportUnsupportedOptions(NameBuildTest):
-    code = codes.COROSYNC_TRANSPORT_UNSUPPORTED_OPTIONS
     def test_udp(self):
-        self.assert_message_from_info(
+        self.assert_message_from_report(
             "The udp/udpu transport does not support 'crypto' options, use "
                 "'knet' transport"
             ,
-            {
-                "option_type": "crypto",
-                "actual_transport": "udp/udpu",
-                "required_transport_list": ["knet"],
-            }
+            reports.corosync_transport_unsupported_options(
+                "crypto", "udp/udpu", ["knet"]
+            )
         )
 
 
 class ResourceCleanupError(NameBuildTest):
-    code = codes.RESOURCE_CLEANUP_ERROR
 
     def test_minimal(self):
-        self.assert_message_from_info(
+        self.assert_message_from_report(
             "Unable to forget failed operations of resources\nsomething wrong",
-            {
-                "reason": "something wrong",
-                "resource": None,
-                "node": None,
-            }
+            reports.resource_cleanup_error("something wrong")
         )
 
     def test_node(self):
-        self.assert_message_from_info(
+        self.assert_message_from_report(
             "Unable to forget failed operations of resources\nsomething wrong",
-            {
-                "reason": "something wrong",
-                "resource": None,
-                "node": "N1",
-            }
+            reports.resource_cleanup_error(
+                "something wrong",
+                node="N1"
+            )
         )
 
     def test_resource(self):
-        self.assert_message_from_info(
+        self.assert_message_from_report(
             "Unable to forget failed operations of resource: R1\n"
                 "something wrong"
             ,
-            {
-                "reason": "something wrong",
-                "resource": "R1",
-                "node": None,
-            }
+            reports.resource_cleanup_error("something wrong", "R1")
         )
 
     def test_resource_and_node(self):
-        self.assert_message_from_info(
+        self.assert_message_from_report(
             "Unable to forget failed operations of resource: R1\n"
                 "something wrong"
             ,
-            {
-                "reason": "something wrong",
-                "resource": "R1",
-                "node": "N1",
-            }
+            reports.resource_cleanup_error(
+                "something wrong", "R1", "N1"
+            )
         )
 
 
 class ResourceRefreshError(NameBuildTest):
-    code = codes.RESOURCE_REFRESH_ERROR
 
     def test_minimal(self):
-        self.assert_message_from_info(
+        self.assert_message_from_report(
             "Unable to delete history of resources\nsomething wrong",
-            {
-                "reason": "something wrong",
-                "resource": None,
-                "node": None,
-            }
+            reports.resource_refresh_error("something wrong")
         )
 
     def test_node(self):
-        self.assert_message_from_info(
+        self.assert_message_from_report(
             "Unable to delete history of resources\nsomething wrong",
-            {
-                "reason": "something wrong",
-                "resource": None,
-                "node": "N1",
-            }
+            reports.resource_refresh_error(
+                "something wrong",
+                node="N1",
+            )
         )
 
     def test_resource(self):
-        self.assert_message_from_info(
+        self.assert_message_from_report(
             "Unable to delete history of resource: R1\nsomething wrong",
-            {
-                "reason": "something wrong",
-                "resource": "R1",
-                "node": None,
-            }
+            reports.resource_refresh_error("something wrong", "R1")
         )
 
     def test_resource_and_node(self):
-        self.assert_message_from_info(
+        self.assert_message_from_report(
             "Unable to delete history of resource: R1\nsomething wrong",
-            {
-                "reason": "something wrong",
-                "resource": "R1",
-                "node": "N1",
-            }
+            reports.resource_refresh_error("something wrong", "R1", "N1")
         )
 
 
 class ResourceRefreshTooTimeConsuming(NameBuildTest):
-    code = codes.RESOURCE_REFRESH_TOO_TIME_CONSUMING
     def test_success(self):
-        self.assert_message_from_info(
+        self.assert_message_from_report(
             "Deleting history of all resources on all nodes will execute more "
                 "than 25 operations in the cluster, which may negatively "
                 "impact the responsiveness of the cluster. Consider specifying "
                 "resource and/or node"
             ,
-            {
-                "threshold": 25,
-            }
+            reports.resource_refresh_too_time_consuming(25)
         )
 
 
 class IdNotFound(NameBuildTest):
-    code = codes.ID_NOT_FOUND
     def test_id(self):
-        self.assert_message_from_info(
+        self.assert_message_from_report(
             "'ID' does not exist",
-            {
-                "id": "ID",
-                "expected_types": [],
-                "context_type": "",
-                "context_id": "",
-            }
+            reports.id_not_found("ID", [])
         )
 
     def test_id_and_type(self):
-        self.assert_message_from_info(
+        self.assert_message_from_report(
             "clone/resource 'ID' does not exist",
-            {
-                "id": "ID",
-                "expected_types": ["primitive", "clone"],
-                "context_type": "",
-                "context_id": "",
-            }
+            reports.id_not_found("ID", ["primitive", "clone"])
         )
 
     def test_context(self):
-        self.assert_message_from_info(
+        self.assert_message_from_report(
             "there is no 'ID' in the C_TYPE 'C_ID'",
-            {
-                "id": "ID",
-                "expected_types": [],
-                "context_type": "C_TYPE",
-                "context_id": "C_ID",
-            }
+            reports.id_not_found(
+                "ID", [],
+                context_type="C_TYPE",
+                context_id="C_ID"
+            )
         )
 
     def test_type_and_context(self):
-        self.assert_message_from_info(
+        self.assert_message_from_report(
             "there is no ACL user 'ID' in the C_TYPE 'C_ID'",
-            {
-                "id": "ID",
-                "expected_types": ["acl_target"],
-                "context_type": "C_TYPE",
-                "context_id": "C_ID",
-            }
+            reports.id_not_found(
+                "ID", ["acl_target"],
+                context_type="C_TYPE",
+                context_id="C_ID"
+            )
         )
 
 
 class CibPushForcedFullDueToCrmFeatureSet(NameBuildTest):
-    code = codes.CIB_PUSH_FORCED_FULL_DUE_TO_CRM_FEATURE_SET
     def test_success(self):
-        self.assert_message_from_info(
+        self.assert_message_from_report(
             (
                 "Replacing the whole CIB instead of applying a diff, a race "
                 "condition may happen if the CIB is pushed more than once "
                 "simultaneously. To fix this, upgrade pacemaker to get "
                 "crm_feature_set at least 3.0.9, current is 3.0.6."
             ),
-            {
-                "required_set": "3.0.9",
-                "current_set": "3.0.6",
-            }
+            reports.cib_push_forced_full_due_to_crm_feature_set(
+                "3.0.9", "3.0.6")
         )
 
 class NodeCommunicationRetrying(NameBuildTest):
-    code = codes.NODE_COMMUNICATION_RETRYING
     def test_success(self):
         self.assert_message_from_report(
             (
@@ -2796,17 +2208,12 @@ class NodeCommunicationRetrying(NameBuildTest):
                 "'next.address' and port '2225'"
             ),
             reports.node_communication_retrying(
-                "node_name",
-                "failed.address",
-                "2224",
-                "next.address",
-                "2225",
+                "node_name", "failed.address", "2224", "next.address", "2225",
                 "my/request",
             )
         )
 
 class NodeCommunicationNoMoreAddresses(NameBuildTest):
-    code = codes.NODE_COMMUNICATION_NO_MORE_ADDRESSES
     def test_success(self):
         self.assert_message_from_report(
             "Unable to connect to 'node_name' via any of its addresses",
@@ -2817,202 +2224,161 @@ class NodeCommunicationNoMoreAddresses(NameBuildTest):
         )
 
 class HostNotFound(NameBuildTest):
-    code = codes.HOST_NOT_FOUND
     def test_single_host(self):
-        self.assert_message_from_info(
+        self.assert_message_from_report(
             (
                 "Host 'unknown_host' is not known to pcs, try to authenticate "
                 "the host using 'pcs host auth unknown_host' command"
             ),
-            {
-                "host_list": ["unknown_host"],
-            }
+            reports.host_not_found(["unknown_host"])
         )
 
     def test_multiple_hosts(self):
-        self.assert_message_from_info(
+        self.assert_message_from_report(
             (
                 "Hosts 'another_one', 'unknown_host' are not known to pcs, try "
                 "to authenticate the hosts using 'pcs host auth another_one "
                 "unknown_host' command"
             ),
-            {
-                "host_list": ["unknown_host", "another_one"],
-            }
+            reports.host_not_found(["unknown_host", "another_one"])
         )
 
 class HostAlreadyAuthorized(NameBuildTest):
-    code = codes.HOST_ALREADY_AUTHORIZED
     def test_success(self):
-        self.assert_message_from_info(
+        self.assert_message_from_report(
             "host: Already authorized",
-            {
-                "host_name": "host",
-            }
+            reports.host_already_authorized("host")
         )
 
 class NodeCommunicationErrorNotAuthorized(NameBuildTest):
-    code = codes.NODE_COMMUNICATION_ERROR_NOT_AUTHORIZED
     def test_success(self):
-        self.assert_message_from_info(
+        self.assert_message_from_report(
             (
                 "Unable to authenticate to node1 (some error), try running "
                 "'pcs host auth node1'"
             ),
-            {
-                "node": "node1",
-                "reason": "some error",
-            }
+            reports.node_communication_error_not_authorized(
+                "node1", "some-command", "some error"
+            )
         )
 
 class ClusterDestroyStarted(NameBuildTest):
-    code = codes.CLUSTER_DESTROY_STARTED
     def test_multiple_hosts(self):
-        self.assert_message_from_info(
+        self.assert_message_from_report(
             "Destroying cluster on hosts: 'node1', 'node2', 'node3'...",
-            {
-                "host_name_list": ["node1", "node3", "node2"],
-            }
+            reports.cluster_destroy_started(["node1", "node3", "node2"])
         )
 
     def test_single_host(self):
-        self.assert_message_from_info(
+        self.assert_message_from_report(
             "Destroying cluster on hosts: 'node1'...",
-            {
-                "host_name_list": ["node1"],
-            }
+            reports.cluster_destroy_started(["node1"])
         )
 
 class ClusterDestroySuccess(NameBuildTest):
-    code = codes.CLUSTER_DESTROY_SUCCESS
     def test_success(self):
-        self.assert_message_from_info(
+        self.assert_message_from_report(
             "node1: Successfully destroyed cluster",
-            {
-                "node": "node1",
-            }
+            reports.cluster_destroy_success("node1")
         )
 
 class ClusterEnableStarted(NameBuildTest):
-    code = codes.CLUSTER_ENABLE_STARTED
     def test_multiple_hosts(self):
-        self.assert_message_from_info(
+        self.assert_message_from_report(
             "Enabling cluster on hosts: 'node1', 'node2', 'node3'...",
-            {
-                "host_name_list": ["node1", "node3", "node2"],
-            }
+            reports.cluster_enable_started(["node1", "node3", "node2"])
         )
 
     def test_single_host(self):
-        self.assert_message_from_info(
+        self.assert_message_from_report(
             "Enabling cluster on hosts: 'node1'...",
-            {
-                "host_name_list": ["node1"],
-            }
+            reports.cluster_enable_started(["node1"])
         )
 
 class ClusterEnableSuccess(NameBuildTest):
-    code = codes.CLUSTER_ENABLE_SUCCESS
     def test_success(self):
-        self.assert_message_from_info(
+        self.assert_message_from_report(
             "node1: Cluster enabled",
-            {
-                "node": "node1",
-            }
+            reports.cluster_enable_success("node1")
         )
 
 class ClusterStartStarted(NameBuildTest):
-    code = codes.CLUSTER_START_STARTED
     def test_multiple_hosts(self):
-        self.assert_message_from_info(
+        self.assert_message_from_report(
             "Starting cluster on hosts: 'node1', 'node2', 'node3'...",
-            {
-                "host_name_list": ["node1", "node3", "node2"],
-            }
+            reports.cluster_start_started(["node1", "node3", "node2"])
         )
 
     def test_single_host(self):
-        self.assert_message_from_info(
+        self.assert_message_from_report(
             "Starting cluster on hosts: 'node1'...",
-            {
-                "host_name_list": ["node1"],
-            }
+            reports.cluster_start_started(["node1"])
         )
 
 class ServiceNotInstalled(NameBuildTest):
-    code = codes.SERVICE_NOT_INSTALLED
     def test_multiple_services(self):
-        self.assert_message_from_info(
+        self.assert_message_from_report(
             "node1: Required cluster services not installed: 'service1', "
                 "'service2', 'service3'"
             ,
-            {
-                "service_list": ["service1", "service3", "service2"],
-                "node": "node1",
-            }
+            reports.service_not_installed(
+                "node1", ["service1", "service3", "service2"]
+            )
         )
 
     def test_single_service(self):
-        self.assert_message_from_info(
+        self.assert_message_from_report(
             "node1: Required cluster services not installed: 'service'",
-            {
-                "service_list": ["service"],
-                "node": "node1",
-            }
+            reports.service_not_installed(
+                "node1", ["service"]
+            )
         )
 
 
 class HostAlreadyInClusterConfig(NameBuildTest):
-    code = codes.HOST_ALREADY_IN_CLUSTER_CONFIG
     def test_success(self):
-        self.assert_message_from_info(
+        self.assert_message_from_report(
             "host: Cluster configuration files found, the host seems to be in "
                 "a cluster already"
             ,
-            {
-                "host_name": "host",
-            }
+            reports.host_already_in_cluster_config("host")
         )
 
 
 class HostAlreadyInClusterServices(NameBuildTest):
-    code = codes.HOST_ALREADY_IN_CLUSTER_SERVICES
     def test_multiple_services(self):
-        self.assert_message_from_info(
+        self.assert_message_from_report(
             (
                 "node1: Running cluster services: 'service1', 'service2', "
                 "'service3', the host seems to be in a cluster already"
             ),
-            {
-                "service_list": ["service1", "service3", "service2"],
-                "host_name": "node1",
-            }
+            reports.host_already_in_cluster_services(
+                "node1", ["service1", "service3", "service2"]
+            )
         )
 
     def test_single_service(self):
-        self.assert_message_from_info(
+        self.assert_message_from_report(
             "node1: Running cluster services: 'service', the host seems to be "
                 "in a cluster already"
             ,
-            {
-                "service_list": ["service"],
-                "host_name": "node1",
-            }
+            reports.host_already_in_cluster_services(
+                "node1", ["service"]
+            )
         )
 
 
 class ServiceVersionMismatch(NameBuildTest):
-    code = codes.SERVICE_VERSION_MISMATCH
     def test_success(self):
-        self.assert_message_from_info(
+        self.assert_message_from_report(
             "Hosts do not have the same version of 'service'; "
                 "hosts 'host4', 'host5', 'host6' have version 2.0; "
                 "hosts 'host1', 'host3' have version 1.0; "
                 "host 'host2' has version 1.2"
             ,
-            {
-                "service": "service",
-                "hosts_version": {
+            reports.service_version_mismatch(
+                "service",
+                {
                     "host1": 1.0,
                     "host2": 1.2,
                     "host3": 1.0,
@@ -3020,223 +2386,175 @@ class ServiceVersionMismatch(NameBuildTest):
                     "host5": 2.0,
                     "host6": 2.0,
                 }
-            }
+            )
         )
 
 class WaitForNodeStartupStarted(NameBuildTest):
-    code = codes.WAIT_FOR_NODE_STARTUP_STARTED
     def test_success(self):
-        self.assert_message_from_info(
+        self.assert_message_from_report(
             "Waiting for nodes to start: 'node1', 'node2', 'node3'...",
-            {
-                "node_name_list": ["node1", "node3", "node2"],
-            }
+            reports.wait_for_node_startup_started(["node1", "node3", "node2"])
         )
 
 class PcsdVersionTooOld(NameBuildTest):
-    code = codes.PCSD_VERSION_TOO_OLD
     def test_success(self):
-        self.assert_message_from_info(
+        self.assert_message_from_report(
             (
                 "node1: Old version of pcsd is running on the node, therefore "
                 "it is unable to perform the action"
             ),
-            {
-                "node": "node1",
-            }
+            reports.pcsd_version_too_old("node1")
         )
 
 class PcsdSslCertAndKeyDistributionStarted(NameBuildTest):
-    code = codes.PCSD_SSL_CERT_AND_KEY_DISTRIBUTION_STARTED
     def test_success(self):
-        self.assert_message_from_info(
+        self.assert_message_from_report(
             "Synchronizing pcsd SSL certificates on nodes 'node1', 'node2', "
                 "'node3'..."
             ,
-            {
-                "node_name_list": ["node1", "node3", "node2"],
-            }
+            reports.pcsd_ssl_cert_and_key_distribution_started(
+                ["node1", "node3", "node2"]
+            )
         )
 
 class PcsdSslCertAndKeySetSuccess(NameBuildTest):
-    code = codes.PCSD_SSL_CERT_AND_KEY_SET_SUCCESS
     def test_success(self):
-        self.assert_message_from_info(
+        self.assert_message_from_report(
             "node1: Success",
-            {
-                "node": "node1",
-            }
+            reports.pcsd_ssl_cert_and_key_set_success("node1")
         )
 
 class UsingKnownHostAddressForHost(NameBuildTest):
-    code = codes.USING_KNOWN_HOST_ADDRESS_FOR_HOST
     def test_success(self):
-        self.assert_message_from_info(
+        self.assert_message_from_report(
             "No addresses specified for host 'node-name', using 'node-addr'",
-            {
-                "host_name": "node-name",
-                "address": "node-addr"
-            }
+            reports.using_known_host_address_for_host("node-name", "node-addr")
         )
 
 class ResourceInBundleNotAccessible(NameBuildTest):
-    code = codes.RESOURCE_IN_BUNDLE_NOT_ACCESSIBLE
     def test_success(self):
-        self.assert_message_from_info(
+        self.assert_message_from_report(
             (
                 "Resource 'resourceA' will not be accessible by the cluster "
                 "inside bundle 'bundleA', at least one of bundle options "
                 "'control-port' or 'ip-range-start' has to be specified"
             ),
-            dict(
-                bundle_id="bundleA",
-                inner_resource_id="resourceA",
-            )
+            reports.resource_in_bundle_not_accessible("bundleA", "resourceA")
         )
 
 class FileAlreadyExists(NameBuildTest):
-    code = codes.FILE_ALREADY_EXISTS
     def test_minimal(self):
-        self.assert_message_from_info(
+        self.assert_message_from_report(
             "Corosync authkey file '/etc/corosync/key' already exists",
-            {
-                "file_role": "COROSYNC_AUTHKEY",
-                "file_path": "/etc/corosync/key",
-                "node": None,
-            }
+            reports.file_already_exists("COROSYNC_AUTHKEY", "/etc/corosync/key")
         )
 
     def test_with_node(self):
-        self.assert_message_from_info(
+        self.assert_message_from_report(
             "node1: pcs configuration file '/var/lib/pcsd/conf' already exists",
-            {
-                "file_role": "PCS_SETTINGS_CONF",
-                "file_path": "/var/lib/pcsd/conf",
-                "node": "node1",
-            }
+            reports.file_already_exists(
+                "PCS_SETTINGS_CONF", "/var/lib/pcsd/conf",
+                node="node1"
+            )
         )
 
 class FileDoesNotExist(NameBuildTest):
-    code = codes.FILE_DOES_NOT_EXIST
     def test_success(self):
-        self.assert_message_from_info(
+        self.assert_message_from_report(
             "UNKNOWN_ROLE file '/etc/cluster/something' does not exist",
-            {
-                "file_role": "UNKNOWN_ROLE",
-                "file_path": "/etc/cluster/something",
-            }
+            reports.file_does_not_exist(
+                "UNKNOWN_ROLE", "/etc/cluster/something"
+            )
         )
 
 class FileIoError(NameBuildTest):
-    code = codes.FILE_IO_ERROR
     def test_success_a(self):
-        self.assert_message_from_info(
+        self.assert_message_from_report(
             "Unable to chown Booth key '/etc/booth/booth.key': Failed",
-            {
-                "file_role": env_file_role_codes.BOOTH_KEY,
-                "file_path": "/etc/booth/booth.key",
-                "reason": "Failed",
-                "operation": "chown",
-            }
+            reports.file_io_error(
+                env_file_role_codes.BOOTH_KEY, "/etc/booth/booth.key", "Failed",
+                "chown"
+            )
         )
 
     def test_success_b(self):
-        self.assert_message_from_info(
+        self.assert_message_from_report(
             "Unable to chmod Booth configuration '/etc/booth/main.cfg': Failed",
-            {
-                "file_role": env_file_role_codes.BOOTH_CONFIG,
-                "file_path": "/etc/booth/main.cfg",
-                "reason": "Failed",
-                "operation": "chmod",
-            }
+            reports.file_io_error(
+                env_file_role_codes.BOOTH_CONFIG, "/etc/booth/main.cfg",
+                "Failed", "chmod"
+            )
         )
 
     def test_success_c(self):
-        self.assert_message_from_info(
+        self.assert_message_from_report(
             "Unable to remove Pacemaker authkey '/etc/pacemaker/key': Failed",
-            {
-                "file_role": env_file_role_codes.PACEMAKER_AUTHKEY,
-                "file_path": "/etc/pacemaker/key",
-                "reason": "Failed",
-                "operation": "remove",
-            }
+            reports.file_io_error(
+                env_file_role_codes.PACEMAKER_AUTHKEY, "/etc/pacemaker/key",
+                "Failed", "remove"
+            )
         )
 
     def test_success_d(self):
-        self.assert_message_from_info(
+        self.assert_message_from_report(
             "Unable to read pcsd SSL certificate '/var/lib/pcsd.crt': Failed",
-            {
-                "file_role": env_file_role_codes.PCSD_SSL_CERT,
-                "file_path": "/var/lib/pcsd.crt",
-                "reason": "Failed",
-                "operation": "read",
-            }
+            reports.file_io_error(
+                env_file_role_codes.PCSD_SSL_CERT, "/var/lib/pcsd.crt",
+                "Failed", "read"
+            )
         )
 
     def test_success_e(self):
-        self.assert_message_from_info(
+        self.assert_message_from_report(
             "Unable to write pcsd SSL key '/var/lib/pcsd.key': Failed",
-            {
-                "file_role": env_file_role_codes.PCSD_SSL_KEY,
-                "file_path": "/var/lib/pcsd.key",
-                "reason": "Failed",
-                "operation": "write",
-            }
+            reports.file_io_error(
+                env_file_role_codes.PCSD_SSL_KEY, "/var/lib/pcsd.key", "Failed",
+                "write"
+            )
         )
 
     def test_success_f(self):
-        self.assert_message_from_info(
+        self.assert_message_from_report(
             "Unable to read pcsd configuration '/etc/sysconfig/pcsd': Failed",
-            {
-                "file_role": env_file_role_codes.PCSD_ENVIRONMENT_CONFIG,
-                "file_path": "/etc/sysconfig/pcsd",
-                "reason": "Failed",
-                "operation": "read",
-            }
+            reports.file_io_error(
+                env_file_role_codes.PCSD_ENVIRONMENT_CONFIG,
+                "/etc/sysconfig/pcsd", "Failed", "read"
+            )
         )
 
 class UsingDefaultWatchdog(NameBuildTest):
-    code = codes.USING_DEFAULT_WATCHDOG
     def test_success(self):
-        self.assert_message_from_info(
+        self.assert_message_from_report(
             (
                 "No watchdog has been specified for node 'node1'. Using "
                 "default watchdog '/dev/watchdog'"
             ),
-            {
-                "node": "node1",
-                "watchdog": "/dev/watchdog",
-            }
+            reports.using_default_watchdog("/dev/watchdog", "node1")
         )
 
 class CorosyncQuorumAtbCannotBeDisabledDueToSbd(NameBuildTest):
-    code = codes.COROSYNC_QUORUM_ATB_CANNOT_BE_DISABLED_DUE_TO_SBD
     def test_success(self):
-        self.assert_message_from_info(
+        self.assert_message_from_report(
             (
                 "Unable to disable auto_tie_breaker, SBD fencing would have no "
                 "effect"
             ),
-            {
-            }
+            reports.corosync_quorum_atb_cannot_be_disabled_due_to_sbd()
         )
 
 class CorosyncQuorumAtbWillBeEnabledDueToSbd(NameBuildTest):
-    code = codes.COROSYNC_QUORUM_ATB_WILL_BE_ENABLED_DUE_TO_SBD
     def test_success(self):
-        self.assert_message_from_info(
+        self.assert_message_from_report(
             (
                 "auto_tie_breaker quorum option will be enabled to make SBD "
                 "fencing effective. Cluster has to be offline to be able to "
                 "make this change."
             ),
-            {
-            }
+            reports.corosync_quorum_atb_will_be_enabled_due_to_sbd()
         )
 
 
 class CorosyncConfigReloaded(NameBuildTest):
-    code = codes.COROSYNC_CONFIG_RELOADED
     def test_with_node(self):
         self.assert_message_from_report(
             "node1: Corosync configuration reloaded",
@@ -3251,7 +2569,6 @@ class CorosyncConfigReloaded(NameBuildTest):
 
 
 class CorosyncConfigReloadNotPossible(NameBuildTest):
-    code = codes.COROSYNC_CONFIG_RELOAD_NOT_POSSIBLE
     def test_success(self):
         self.assert_message_from_report(
             (
@@ -3263,7 +2580,6 @@ class CorosyncConfigReloadNotPossible(NameBuildTest):
 
 
 class CorosyncConfigReloadError(NameBuildTest):
-    code = codes.COROSYNC_CONFIG_RELOAD_ERROR
     def test_with_node(self):
         self.assert_message_from_report(
             "node1: Unable to reload corosync configuration: a reason",
@@ -3277,7 +2593,6 @@ class CorosyncConfigReloadError(NameBuildTest):
         )
 
 class CorosyncConfigMissingNamesOfNodes(NameBuildTest):
-    code = codes.COROSYNC_CONFIG_MISSING_NAMES_OF_NODES
     def test_non_fatal(self):
         self.assert_message_from_report(
             "Some nodes are missing names in corosync.conf, "
@@ -3289,11 +2604,12 @@ class CorosyncConfigMissingNamesOfNodes(NameBuildTest):
         self.assert_message_from_report(
             "Some nodes are missing names in corosync.conf, "
                 "unable to continue",
-            reports.corosync_config_missing_names_of_nodes(fatal=True)
+            reports.corosync_config_missing_names_of_nodes(
+                fatal=True
+            )
         )
 
 class CorosyncConfigNoNodesDefined(NameBuildTest):
-    code = codes.COROSYNC_CONFIG_NO_NODES_DEFINED
     def test_success(self):
         self.assert_message_from_report(
             "No nodes found in corosync.conf",
@@ -3301,7 +2617,6 @@ class CorosyncConfigNoNodesDefined(NameBuildTest):
         )
 
 class CannotRemoveAllClusterNodes(NameBuildTest):
-    code = codes.CANNOT_REMOVE_ALL_CLUSTER_NODES
     def test_success(self):
         self.assert_message_from_report(
             (
@@ -3313,7 +2628,6 @@ class CannotRemoveAllClusterNodes(NameBuildTest):
         )
 
 class NodeUsedAsTieBreaker(NameBuildTest):
-    code = codes.NODE_USED_AS_TIE_BREAKER
     def test_success(self):
         self.assert_message_from_report(
             (
@@ -3325,7 +2639,6 @@ class NodeUsedAsTieBreaker(NameBuildTest):
         )
 
 class UnableToConnectToAllRemainingNode(NameBuildTest):
-    code = codes.UNABLE_TO_CONNECT_TO_ALL_REMAINING_NODE
     def test_success(self):
         self.assert_message_from_report(
             (
@@ -3339,7 +2652,6 @@ class UnableToConnectToAllRemainingNode(NameBuildTest):
         )
 
 class NodesToRemoveUnreachable(NameBuildTest):
-    code = codes.NODES_TO_REMOVE_UNREACHABLE
     def test_success(self):
         self.assert_message_from_report(
             (
@@ -3351,7 +2663,6 @@ class NodesToRemoveUnreachable(NameBuildTest):
         )
 
 class CorosyncQuorumGetStatusError(NameBuildTest):
-    code = codes.COROSYNC_QUORUM_GET_STATUS_ERROR
     def test_success(self):
         self.assert_message_from_report(
             "Unable to get quorum status: a reason",
@@ -3366,7 +2677,6 @@ class CorosyncQuorumGetStatusError(NameBuildTest):
 
 
 class SbdListWatchdogError(NameBuildTest):
-    code = codes.SBD_LIST_WATCHDOG_ERROR
     def test_success(self):
         self.assert_message_from_report(
             "Unable to query available watchdogs from sbd: this is a reason",
@@ -3375,7 +2685,6 @@ class SbdListWatchdogError(NameBuildTest):
 
 
 class SbdWatchdogNotSupported(NameBuildTest):
-    code = codes.SBD_WATCHDOG_NOT_SUPPORTED
     def test_success(self):
         self.assert_message_from_report(
             (
@@ -3387,7 +2696,6 @@ class SbdWatchdogNotSupported(NameBuildTest):
 
 
 class SbdWatchdogTestError(NameBuildTest):
-    code = codes.SBD_WATCHDOG_TEST_ERROR
     def test_success(self):
         self.assert_message_from_report(
             "Unable to initialize test of the watchdog: some reason",
@@ -3396,7 +2704,6 @@ class SbdWatchdogTestError(NameBuildTest):
 
 
 class ResourceBundleUnsupportedContainerType(NameBuildTest):
-    code = codes.RESOURCE_BUNDLE_UNSUPPORTED_CONTAINER_TYPE
     def test_success(self):
         self.assert_message_from_report(
             (
@@ -3410,7 +2717,6 @@ class ResourceBundleUnsupportedContainerType(NameBuildTest):
         )
 
 class FenceHistoryCommandError(NameBuildTest):
-    code = codes.FENCE_HISTORY_COMMAND_ERROR
     def test_success(self):
         self.assert_message_from_report(
             "Unable to show fence history: reason",
@@ -3418,7 +2724,6 @@ class FenceHistoryCommandError(NameBuildTest):
         )
 
 class FenceHistoryNotSupported(NameBuildTest):
-    code = codes.FENCE_HISTORY_NOT_SUPPORTED
     def test_success(self):
         self.assert_message_from_report(
             "Fence history is not supported, please upgrade pacemaker",
@@ -3427,7 +2732,6 @@ class FenceHistoryNotSupported(NameBuildTest):
 
 
 class ResourceInstanceAttrValueNotUnique(NameBuildTest):
-    code = codes.RESOURCE_INSTANCE_ATTR_VALUE_NOT_UNIQUE
     def test_one_resource(self):
         self.assert_message_from_report(
             (
@@ -3453,7 +2757,6 @@ class ResourceInstanceAttrValueNotUnique(NameBuildTest):
         )
 
 class CannotGroupResourceAdjacentResourceForNewGroup(NameBuildTest):
-    code = codes.CANNOT_GROUP_RESOURCE_ADJACENT_RESOURCE_FOR_NEW_GROUP
     def test_success(self):
         self.assert_message_from_report(
             (
@@ -3466,7 +2769,6 @@ class CannotGroupResourceAdjacentResourceForNewGroup(NameBuildTest):
         )
 
 class CannotGroupResourceAdjacentResourceNotInGroup(NameBuildTest):
-    code = codes.CANNOT_GROUP_RESOURCE_ADJACENT_RESOURCE_NOT_IN_GROUP
     def test_success(self):
         self.assert_message_from_report(
             (
@@ -3479,7 +2781,6 @@ class CannotGroupResourceAdjacentResourceNotInGroup(NameBuildTest):
         )
 
 class CannotGroupResourceAlreadyInTheGroup(NameBuildTest):
-    code = codes.CANNOT_GROUP_RESOURCE_ALREADY_IN_THE_GROUP
     def test_single_resource(self):
         self.assert_message_from_report(
             "'R' already exists in 'G'",
@@ -3493,7 +2794,6 @@ class CannotGroupResourceAlreadyInTheGroup(NameBuildTest):
         )
 
 class CannotGroupResourceMoreThanOnce(NameBuildTest):
-    code = codes.CANNOT_GROUP_RESOURCE_MORE_THAN_ONCE
     def test_success(self):
         self.assert_message_from_report(
             "Resources specified more than once: 'A', 'B'",
@@ -3501,7 +2801,6 @@ class CannotGroupResourceMoreThanOnce(NameBuildTest):
         )
 
 class CannotGroupResourceNextToItself(NameBuildTest):
-    code = codes.CANNOT_GROUP_RESOURCE_NEXT_TO_ITSELF
     def test_success(self):
         self.assert_message_from_report(
             "Cannot put resource 'R' next to itself",
@@ -3509,7 +2808,6 @@ class CannotGroupResourceNextToItself(NameBuildTest):
         )
 
 class CannotGroupResourceNoResources(NameBuildTest):
-    code = codes.CANNOT_GROUP_RESOURCE_NO_RESOURCES
     def test_success(self):
         self.assert_message_from_report(
             "No resources to add",
@@ -3517,7 +2815,6 @@ class CannotGroupResourceNoResources(NameBuildTest):
         )
 
 class CannotGroupResourceWrongType(NameBuildTest):
-    code = codes.CANNOT_GROUP_RESOURCE_WRONG_TYPE
     def test_success(self):
         self.assert_message_from_report(
             (
@@ -3528,7 +2825,6 @@ class CannotGroupResourceWrongType(NameBuildTest):
         )
 
 class CannotMoveResourceBundle(NameBuildTest):
-    code = codes.CANNOT_MOVE_RESOURCE_BUNDLE
     def test_success(self):
         self.assert_message_from_report(
             "cannot move bundle resources",
@@ -3536,7 +2832,6 @@ class CannotMoveResourceBundle(NameBuildTest):
         )
 
 class CannotMoveResourceClone(NameBuildTest):
-    code = codes.CANNOT_MOVE_RESOURCE_CLONE
     def test_success(self):
         self.assert_message_from_report(
             "cannot move cloned resources",
@@ -3544,7 +2839,6 @@ class CannotMoveResourceClone(NameBuildTest):
         )
 
 class CannotMoveResourceMasterResourceNotPromotable(NameBuildTest):
-    code = codes.CANNOT_MOVE_RESOURCE_MASTER_RESOURCE_NOT_PROMOTABLE
     def test_without_promotable(self):
         self.assert_message_from_report(
             "when specifying --master you must use the promotable clone id",
@@ -3555,12 +2849,12 @@ class CannotMoveResourceMasterResourceNotPromotable(NameBuildTest):
         self.assert_message_from_report(
             "when specifying --master you must use the promotable clone id (P)",
             reports.cannot_move_resource_master_resource_not_promotable(
-                "R", promotable_id="P"
+                "R",
+                promotable_id="P"
             )
         )
 
 class CannotMoveResourcePromotableNotMaster(NameBuildTest):
-    code = codes.CANNOT_MOVE_RESOURCE_PROMOTABLE_NOT_MASTER
     def test_success(self):
         self.assert_message_from_report(
             (
@@ -3571,7 +2865,6 @@ class CannotMoveResourcePromotableNotMaster(NameBuildTest):
         )
 
 class CannotMoveResourceStoppedNoNodeSpecified(NameBuildTest):
-    code = codes.CANNOT_MOVE_RESOURCE_STOPPED_NO_NODE_SPECIFIED
     def test_success(self):
         self.assert_message_from_report(
             "You must specify a node when moving/banning a stopped resource",
@@ -3579,7 +2872,6 @@ class CannotMoveResourceStoppedNoNodeSpecified(NameBuildTest):
         )
 
 class ResourceMovePcmkEerror(NameBuildTest):
-    code = codes.RESOURCE_MOVE_PCMK_ERROR
     def test_success(self):
         self.assert_message_from_report(
             "cannot move resource 'R'\nstdout1\n  stdout2\nstderr1\n  stderr2",
@@ -3591,7 +2883,6 @@ class ResourceMovePcmkEerror(NameBuildTest):
         )
 
 class ResourceMovePcmkSuccess(NameBuildTest):
-    code = codes.RESOURCE_MOVE_PCMK_SUCCESS
     def test_success(self):
         self.assert_message_from_report(
             "stdout1\n  stdout2\nstderr1\n  stderr2",
@@ -3630,7 +2921,6 @@ class ResourceMovePcmkSuccess(NameBuildTest):
         )
 
 class CannotBanResourceMasterResourceNotPromotable(NameBuildTest):
-    code = codes.CANNOT_BAN_RESOURCE_MASTER_RESOURCE_NOT_PROMOTABLE
     def test_without_promotable(self):
         self.assert_message_from_report(
             "when specifying --master you must use the promotable clone id",
@@ -3641,12 +2931,12 @@ class CannotBanResourceMasterResourceNotPromotable(NameBuildTest):
         self.assert_message_from_report(
             "when specifying --master you must use the promotable clone id (P)",
             reports.cannot_ban_resource_master_resource_not_promotable(
-                "R", promotable_id="P"
+                "R",
+                promotable_id="P"
             )
         )
 
 class CannotBanResourceStoppedNoNodeSpecified(NameBuildTest):
-    code = codes.CANNOT_BAN_RESOURCE_STOPPED_NO_NODE_SPECIFIED
     def test_success(self):
         self.assert_message_from_report(
             "You must specify a node when moving/banning a stopped resource",
@@ -3654,7 +2944,6 @@ class CannotBanResourceStoppedNoNodeSpecified(NameBuildTest):
         )
 
 class ResourceBanPcmkEerror(NameBuildTest):
-    code = codes.RESOURCE_BAN_PCMK_ERROR
     def test_success(self):
         self.assert_message_from_report(
             "cannot ban resource 'R'\nstdout1\n  stdout2\nstderr1\n  stderr2",
@@ -3666,7 +2955,6 @@ class ResourceBanPcmkEerror(NameBuildTest):
         )
 
 class ResourceBanPcmkSuccess(NameBuildTest):
-    code = codes.RESOURCE_BAN_PCMK_SUCCESS
     def test_success(self):
         self.assert_message_from_report(
             "stdout1\n  stdout2\nstderr1\n  stderr2",
@@ -3705,7 +2993,6 @@ class ResourceBanPcmkSuccess(NameBuildTest):
         )
 
 class CannotUnmoveUnbanResourceMasterResourceNotPromotable(NameBuildTest):
-    code = codes.CANNOT_UNMOVE_UNBAN_RESOURCE_MASTER_RESOURCE_NOT_PROMOTABLE
     def test_without_promotable(self):
         self.assert_message_from_report(
             "when specifying --master you must use the promotable clone id",
@@ -3718,12 +3005,12 @@ class CannotUnmoveUnbanResourceMasterResourceNotPromotable(NameBuildTest):
         self.assert_message_from_report(
             "when specifying --master you must use the promotable clone id (P)",
             reports.cannot_unmove_unban_resource_master_resource_not_promotable(
-                "R", promotable_id="P"
+                "R",
+                promotable_id="P"
             )
         )
 
 class ResourceUnmoveUnbanPcmkEerror(NameBuildTest):
-    code = codes.RESOURCE_UNMOVE_UNBAN_PCMK_ERROR
     def test_success(self):
         self.assert_message_from_report(
             "cannot clear resource 'R'\nstdout1\n  stdout2\nstderr1\n  stderr2",
@@ -3735,7 +3022,6 @@ class ResourceUnmoveUnbanPcmkEerror(NameBuildTest):
         )
 
 class ResourceUnmoveUnbanPcmkSuccess(NameBuildTest):
-    code = codes.RESOURCE_UNMOVE_UNBAN_PCMK_SUCCESS
     def test_success(self):
         self.assert_message_from_report(
             "stdout1\n  stdout2\nstderr1\n  stderr2",
@@ -3747,7 +3033,6 @@ class ResourceUnmoveUnbanPcmkSuccess(NameBuildTest):
         )
 
 class ResourceUnmoveUnbanPcmkExpiredNotSupported(NameBuildTest):
-    code = codes.RESOURCE_UNMOVE_UNBAN_PCMK_EXPIRED_NOT_SUPPORTED
     def test_success(self):
         self.assert_message_from_report(
             "--expired is not supported, please upgrade pacemaker",
@@ -3755,17 +3040,12 @@ class ResourceUnmoveUnbanPcmkExpiredNotSupported(NameBuildTest):
         )
 
 class CorosyncConfigCannotSaveInvalidNamesValues(NameBuildTest):
-    code = codes.COROSYNC_CONFIG_CANNOT_SAVE_INVALID_NAMES_VALUES
     def test_empty(self):
         self.assert_message_from_report(
             "Cannot save corosync.conf containing invalid section names, "
                 "option names or option values"
             ,
-            reports.corosync_config_cannot_save_invalid_names_values(
-                [],
-                [],
-                []
-            )
+            reports.corosync_config_cannot_save_invalid_names_values([], [], [])
         )
 
     def test_one_section(self):
@@ -3774,9 +3054,7 @@ class CorosyncConfigCannotSaveInvalidNamesValues(NameBuildTest):
                 "invalid section name(s): 'SECTION'"
             ,
             reports.corosync_config_cannot_save_invalid_names_values(
-                ["SECTION"],
-                [],
-                []
+                ["SECTION"], [], []
             )
         )
 
@@ -3786,9 +3064,7 @@ class CorosyncConfigCannotSaveInvalidNamesValues(NameBuildTest):
                 "invalid section name(s): 'SECTION1', 'SECTION2'"
             ,
             reports.corosync_config_cannot_save_invalid_names_values(
-                ["SECTION1", "SECTION2"],
-                [],
-                []
+                ["SECTION1", "SECTION2"], [], []
             )
         )
 
@@ -3798,9 +3074,7 @@ class CorosyncConfigCannotSaveInvalidNamesValues(NameBuildTest):
                 "invalid option name(s): 'ATTR'"
             ,
             reports.corosync_config_cannot_save_invalid_names_values(
-                [],
-                ["ATTR"],
-                []
+                [], ["ATTR"], []
             )
         )
 
@@ -3810,9 +3084,7 @@ class CorosyncConfigCannotSaveInvalidNamesValues(NameBuildTest):
                 "invalid option name(s): 'ATTR1', 'ATTR2'"
             ,
             reports.corosync_config_cannot_save_invalid_names_values(
-                [],
-                ["ATTR1", "ATTR2"],
-                []
+                [], ["ATTR1", "ATTR2"], []
             )
         )
 
@@ -3822,9 +3094,7 @@ class CorosyncConfigCannotSaveInvalidNamesValues(NameBuildTest):
                 "invalid option value(s): 'VALUE' (option 'ATTR')"
             ,
             reports.corosync_config_cannot_save_invalid_names_values(
-                [],
-                [],
-                [("ATTR", "VALUE")]
+                [], [], [("ATTR", "VALUE")]
             )
         )
 
@@ -3835,9 +3105,7 @@ class CorosyncConfigCannotSaveInvalidNamesValues(NameBuildTest):
                 "'VALUE2' (option 'ATTR2')"
             ,
             reports.corosync_config_cannot_save_invalid_names_values(
-                [],
-                [],
-                [("ATTR1", "VALUE1"), ("ATTR2", "VALUE2")]
+                [], [], [("ATTR1", "VALUE1"), ("ATTR2", "VALUE2")]
             )
         )
 

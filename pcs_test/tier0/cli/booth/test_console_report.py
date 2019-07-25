@@ -1,11 +1,9 @@
 from pcs_test.tier0.cli.common.test_console_report import NameBuildTest
 
-from pcs.common import report_codes as codes
 from pcs.lib.booth import reports
 
 
 class BoothConfigAccetedByNodeTest(NameBuildTest):
-    code = codes.BOOTH_CONFIG_ACCEPTED_BY_NODE
 
     def test_empty_name_list(self):
         self.assert_message_from_report(
@@ -49,7 +47,6 @@ class BoothConfigAccetedByNodeTest(NameBuildTest):
         )
 
 class BoothConfigDistributionNodeErrorTest(NameBuildTest):
-    code = codes.BOOTH_CONFIG_DISTRIBUTION_NODE_ERROR
 
     def test_empty_name(self):
         self.assert_message_from_report(
@@ -76,7 +73,6 @@ class BoothConfigDistributionNodeErrorTest(NameBuildTest):
         )
 
 class BoothConfigReadErrorTest(NameBuildTest):
-    code = codes.BOOTH_CONFIG_READ_ERROR
 
     def test_empty_name(self):
         self.assert_message_from_report(
@@ -97,7 +93,6 @@ class BoothConfigReadErrorTest(NameBuildTest):
         )
 
 class BoothFetchingConfigFromNodeTest(NameBuildTest):
-    code = codes.BOOTH_FETCHING_CONFIG_FROM_NODE
 
     def test_empty_name(self):
         self.assert_message_from_report(
@@ -122,7 +117,6 @@ class BoothFetchingConfigFromNodeTest(NameBuildTest):
         )
 
 class BoothUnsupportedFileLocation(NameBuildTest):
-    code = codes.BOOTH_UNSUPPORTED_FILE_LOCATION
     def test_success(self):
         self.assert_message_from_report(
             "Path '/some/file' is not supported for booth config files",

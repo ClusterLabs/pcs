@@ -317,12 +317,9 @@ def corosync_bad_node_addresses_count(info):
     node_template = " for node '{}'"
     return template.format(
         _node_desc=(
-            node_template.format(info["node_name"])
-            if "node_name" in info
-            else
-            node_template.format(info["node_index"])
-            if "node_index" in info
-            else ""
+            format_optional(info["node_name"], node_template)
+            or
+            format_optional(info["node_index"], node_template)
         ),
         _s_allowed=("es" if info["max_count"] > 1 else ""),
         _s_specified=("es" if info["actual_count"] > 1 else ""),
@@ -545,16 +542,12 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
 
     codes.DEPRECATED_OPTION: lambda info:
         (
-            "{desc}option '{option_name}' is deprecated and should not be "
-            "used, use {hint} instead"
+            "{_desc}option '{option_name}' is deprecated and should not be "
+            "used, use {_hint} instead"
         ).format(
-            desc=format_optional(info["option_type"], "{0} "),
-            hint=(
-                ", ".join(sorted(info["replaced_by"])) if (
-                    isinstance(info["replaced_by"], Iterable)
-                    and
-                    not isinstance(info["replaced_by"], str)
-                ) else info["replaced_by"]
+            _desc=format_optional(info["option_type"], "{0} "),
+            _hint=(
+                ", ".join(sorted(info["replaced_by"]))
             ),
             **info
         )
@@ -1495,16 +1488,24 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
     codes.SBD_DISABLING_STARTED: "Disabling SBD service...",
 
     codes.SBD_DEVICE_INITIALIZATION_STARTED: lambda info:
-        "Initializing device(s) {devices}..."
-        .format(devices=", ".join(info["device_list"]))
+        "Initializing device{_s} {_device_list}..."
+        .format(
+            _s=("s" if len(info["device_list"]) > 1 else ""),
+            _device_list=format_list(info["device_list"])
+        )
     ,
 
     codes.SBD_DEVICE_INITIALIZATION_SUCCESS:
         "Device(s) initialized successfuly",
 
     codes.SBD_DEVICE_INITIALIZATION_ERROR: lambda info:
-        "Initialization of device(s) failed: {reason}"
-        .format(**info)
+        (
+            "Initialization of device{_s} {_device_list} failed: {reason}"
+        ).format(
+            _s=("s" if len(info["device_list"]) > 1 else ""),
+            _device_list=format_list(info["device_list"]),
+            **info
+        )
     ,
 
     codes.SBD_DEVICE_LIST_ERROR: lambda info:
@@ -1514,7 +1515,7 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
 
     codes.SBD_DEVICE_MESSAGE_ERROR: lambda info:
         "Unable to set message '{message}' for node '{node}' on device "
-        "'{device}'"
+        "'{device}': {reason}"
         .format(**info)
     ,
 
