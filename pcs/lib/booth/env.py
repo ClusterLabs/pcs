@@ -72,6 +72,8 @@ class BoothEnv:
             if env_data["name"] is not None
             else DEFAULT_BOOTH_NAME
         )
+        # TODO pcs.cli makes sure the config is set when the key is set but we
+        # should not rely on that
         if "config_file" in env_data:
             self.__config = GhostFile(
                 file_role=env_file_role_codes.BOOTH_CONFIG,

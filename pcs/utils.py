@@ -22,6 +22,7 @@ from urllib.parse import urlencode
 from pcs import settings, usage
 
 from pcs.common import (
+    file as pcs_file,
     pcs_pycurl as pycurl,
     report_codes,
 )
@@ -41,8 +42,14 @@ from pcs.cli.common.reports import (
     LibraryReportProcessorToConsole as LibraryReportProcessorToConsole,
 )
 import pcs.cli.booth.env
+from pcs.cli.file import (
+    file_type_codes as cli_file_type_codes,
+    fs_metadata as cli_fs_metadata,
+)
 
 from pcs.lib import reports, sbd
+import pcs.lib.corosync.config_parser as corosync_conf_parser
+from pcs.lib.corosync.config_facade import ConfigFacade as corosync_conf_facade
 from pcs.lib.env import LibraryEnvironment
 from pcs.lib.errors import LibraryError
 from pcs.lib.external import (
@@ -56,8 +63,7 @@ from pcs.lib.external import (
     is_service_running,
     is_systemctl,
 )
-import pcs.lib.corosync.config_parser as corosync_conf_parser
-from pcs.lib.corosync.config_facade import ConfigFacade as corosync_conf_facade
+from pcs.lib.file.instance import FileInstance as LibFileInstance
 from pcs.lib.pacemaker.live import has_wait_for_idle_support
 from pcs.lib.pacemaker.state import ClusterState
 from pcs.lib.pacemaker.values import(
@@ -272,8 +278,9 @@ def remove_uid_gid_file(uid, gid):
 
     return file_removed
 
+# TODO remove old code
 @lru_cache()
-def read_known_hosts_file():
+def read_known_hosts_file_old():
     """
     Commandline options: no options
     """
@@ -295,6 +302,40 @@ def read_known_hosts_file():
             }
         except KeyError:
             print("Warning: Unable to parse known host file.")
+    return data
+
+@lru_cache()
+def read_known_hosts_file():
+    data = {}
+    try:
+        if os.getuid() != 0:
+            known_hosts_raw_file = pcs_file.RawFile(
+                cli_fs_metadata.for_file_type(
+                    cli_file_type_codes.PCS_KNOWN_HOSTS
+                )
+            )
+            # json.loads handles bytes, it expects utf-8, 16 or 32 encoding
+            known_hosts_struct = json.loads(known_hosts_raw_file.read())
+        else:
+            known_hosts_struct = (
+                LibFileInstance.for_known_hosts().read_to_structure()
+            )
+
+        data = {
+            name: PcsKnownHost.from_known_host_file_dict(name, host)
+            for name, host in known_hosts_struct["known_hosts"].items()
+        }
+    # TODO catch also specific parser errors coming from pcs.lib
+    except pcs_file.RawFileError as e:
+        console_report.warn(
+            "Unable to read the known-hosts file: " + e.reason
+        )
+    except json.JSONDecodeError as e:
+        console_report.warn(f"Unable to parse the known-hosts file: {e}")
+    except (TypeError, KeyError):
+        console_report.warn(
+            "Warning: Unable to parse the known-hosts file."
+        )
     return data
 
 def repeat_if_timeout(send_http_request_function, repeat_count=15):

@@ -1,3 +1,5 @@
+# TODO drop once not needed anymore
+# TODO drop LibraryEnvError from all remaining code
 import os.path
 
 from pcs.common import report_codes

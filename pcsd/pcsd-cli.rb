@@ -66,6 +66,7 @@ $cluster_name = get_cluster_name()
 # get params and run a command
 command = ARGV[0]
 allowed_commands = {
+  # TODO remove read_known_hosts
   'read_known_hosts' => {
     # returns hosts of the user who runs pcsd-cli, thus no permission check
     'only_superuser' => false,

@@ -66,6 +66,7 @@ class LibraryEnvironment:
         self._user_groups = [] if user_groups is None else user_groups
         self._cib_data = cib_data
         self._corosync_conf_data = corosync_conf_data
+        # TODO booth commands expect that BoothEnv always exists
         self._booth = (
             BoothEnv(report_processor, booth) if booth is not None else None
         )
