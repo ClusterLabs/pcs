@@ -19,8 +19,9 @@ class CleanCommand(Command):
         assert os.getcwd() == self.cwd, 'Must be in package root: %s' % self.cwd
         os.system('rm -rf ./build ./dist ./*.pyc ./*.egg-info')
 
-# The following classes (_ScriptDirSpy and ScriptDir) allows to get script
-# directory.
+
+# The following classes (_ScriptDirSpy, _SomeDir, ScriptDir, PlatLib, PureLib )
+# allow to get some directories used by setuptools.
 #
 # The root reason for introduction `scriptdir` command was the error in
 # setuptools, which caused wrong shebang in script files
@@ -33,15 +34,19 @@ class CleanCommand(Command):
 # would mean to deal with possible user options (like --root, --prefix,
 # --install-lib etc. - or its combinations) consistently with setuptools (and it
 # can be patched in some OS).
+#
+# Later it turn out that it is also necessary to obtain purelib/platlib in
+# Makefile.
 class _ScriptDirSpy(install):
     """
-    Fake install. Its task is to make the scripts directory path accessible to
-    caller.
+    Fake install. Its task is to make the some paths accessible to a caller.
     """
     def run(self):
         self.distribution.install_scripts = self.install_scripts
+        self.distribution.install_purelib = self.install_purelib
+        self.distribution.install_platlib = self.install_platlib
 
-class ScriptDir(Command):
+class _SomeDir(Command):
     user_options = []
     def initialize_options(self):
         pass
@@ -50,10 +55,10 @@ class ScriptDir(Command):
 
     def run(self):
         """
-        Print script directory to stdout.
+        Print desired path (according to subclass) to stdout.
 
         Unfortunately, setuptools automatically prints "running scriptdir" on
-        stdout. So, for example, the output will look like this:
+        stdout. So, for example, the output will look like this (for example):
         running scriptdir
         /usr/local/bin
 
@@ -70,7 +75,19 @@ class ScriptDir(Command):
         command = dist.get_command_obj('install')
         command.ensure_finalized()
         command.run()
-        print(dist.install_scripts)
+        print(self.get_dir_from_distribution(dist))
+
+class ScriptDir(_SomeDir):
+    def get_dir_from_distribution(self, dist):
+        return dist.install_scripts
+
+class PlatLib(_SomeDir):
+    def get_dir_from_distribution(self, dist):
+        return dist.install_platlib
+
+class PureLib(_SomeDir):
+    def get_dir_from_distribution(self, dist):
+        return dist.install_purelib
 
 setup(
     name='pcs',
@@ -97,5 +114,7 @@ setup(
     cmdclass={
         'clean': CleanCommand,
         'scriptdir': ScriptDir,
+        'platlib': PlatLib,
+        'purelib': PureLib,
     }
 )

@@ -34,8 +34,24 @@ ifndef PYTHON
 	PYTHON := $(shell which python3 || which python)
 endif
 
+# PYTHON_SITELIB is a path (relative to DESTDIR, e.g.
+# /usr/local/lib/python3.7/site-packages) where the command
+# `python setup.py install` puts pcs python files. The reasons to know the path
+# in makefile are that:
+# 1) There is a need to modify .../pcs/settings.py after installation (for
+#    debian) and regenerate .pyc file aftermath.
+# 2) It is needed remove pcs directory from PYTHON_SITELIB  after installation
 ifndef PYTHON_SITELIB
-  PYTHON_SITELIB=$(shell $(PYTHON) -c "from distutils.sysconfig import get_python_lib; print(get_python_lib())")
+  # USE_PYTHON_PLATLIB is a flag that instructs installation process to use
+  # platlib (e.g. /usr/local/lib64/python3.7/site-packages) instead of pureleb
+  # (e.g. /usr/local/lib/python3.7/site-packages) as default value for
+  # PYTHON_SITELIB. .../lib is preferred over .../lib64 because of hardcoded
+  # path in pcs/settings.py (more in rhel specfile).
+  ifeq ($(USE_PYTHON_PLATLIB), true)
+    PYTHON_SITELIB=$(shell $(PYTHON) setup.py platlib | tail --lines=1)
+  else
+    PYTHON_SITELIB=$(shell $(PYTHON) setup.py purelib | tail --lines=1)
+  endif
 endif
 
 # Check for an override for building gems
