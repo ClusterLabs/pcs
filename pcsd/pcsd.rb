@@ -25,7 +25,21 @@ require 'session.rb'
 
 Dir["wizards/*.rb"].each {|file| require file}
 
+
+class HstsMiddleware
+  def initialize(app)
+    @app = app
+  end
+
+  def call(env)
+    status, headers, body = @app.call(env)
+    headers['Strict-Transport-Security'] ||= 'max-age=604800'
+    [status, headers, body]
+  end
+end
+
 use Rack::CommonLogger
+use HstsMiddleware
 
 set :app_file, __FILE__
 
