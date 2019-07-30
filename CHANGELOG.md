@@ -15,6 +15,7 @@
   fencing history. Pacemaker supporting fencing history is required.
   ([rhbz#1595444])
 - Support for clearing expired moves and bans of resources ([rhbz#1673829])
+- HSTS is now enabled in pcsd ([rhbz#1558063])
 
 ### Fixed
 - Pcs works even when PATH environment variable is not set ([rhbz#1671174])
@@ -33,6 +34,7 @@ Command `pcs resource bundle reset` no longer accepts the container type
 
 [rhbz#1466088]: https://bugzilla.redhat.com/show_bug.cgi?id=1466088
 [rhbz#1551663]: https://bugzilla.redhat.com/show_bug.cgi?id=1551663
+[rhbz#1558063]: https://bugzilla.redhat.com/show_bug.cgi?id=1558063
 [rhbz#1595444]: https://bugzilla.redhat.com/show_bug.cgi?id=1595444
 [rhbz#1598197]: https://bugzilla.redhat.com/show_bug.cgi?id=1598197
 [rhbz#1665898]: https://bugzilla.redhat.com/show_bug.cgi?id=1665898
