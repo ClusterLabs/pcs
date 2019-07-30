@@ -29,12 +29,16 @@
   `pcs resource bundle reset` ([rhbz#1725849])
 - Standby nodes running resources are listed separately in `pcs status nodes`
   ([rhbz#1619253])
+- Parsing arguments in the `pcs constraint order` and `pcs constraint colocation
+  add` commands has been improved, errors which were previously silent are now
+  reported ([rhbz#1500012])
 
 ### Changed
 Command `pcs resource bundle reset` no longer accepts the container type
 ([rhbz#1598197])
 
 [rhbz#1466088]: https://bugzilla.redhat.com/show_bug.cgi?id=1466088
+[rhbz#1500012]: https://bugzilla.redhat.com/show_bug.cgi?id=1500012
 [rhbz#1551663]: https://bugzilla.redhat.com/show_bug.cgi?id=1551663
 [rhbz#1558063]: https://bugzilla.redhat.com/show_bug.cgi?id=1558063
 [rhbz#1595444]: https://bugzilla.redhat.com/show_bug.cgi?id=1595444

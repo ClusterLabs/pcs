@@ -29,13 +29,14 @@ from pcs.lib.cib.constraint.order import ATTRIB as order_attrib
 from pcs.lib.env_tools import get_nodes
 from pcs.lib.errors import LibraryError
 from pcs.lib.node import node_addresses_contain_label
-from pcs.lib.pacemaker.values import sanitize_id
+from pcs.lib.pacemaker.values import sanitize_id, SCORE_INFINITY
 
 
 OPTIONS_ACTION = resource_set.ATTRIB["action"]
 
 DEFAULT_ACTION = "start"
 DEFAULT_ROLE = "Started"
+ALLOWED_ROLES = ("Master", "Slave", "Started", "Stopped")
 
 OPTIONS_SYMMETRICAL = order_attrib["symmetrical"]
 OPTIONS_KIND = order_attrib["kind"]
@@ -75,24 +76,27 @@ def constraint_cmd(argv):
                 usage.constraint()
                 sys.exit(1)
         elif (sub_cmd == "order"):
-            if (len(argv) == 0):
-                sub_cmd2 = "show"
-            else:
-                sub_cmd2 = argv.pop(0)
+            usage_name = "order"
+            try:
+                if (len(argv) == 0):
+                    sub_cmd2 = "show"
+                else:
+                    sub_cmd2 = argv.pop(0)
 
-            if (sub_cmd2 == "set"):
-                try:
+                if (sub_cmd2 == "set"):
+                    usage_name = "order " + sub_cmd2
                     order_command.create_with_set(lib, argv, modifiers)
-                except CmdLineInputError as e:
-                    utils.exit_on_cmdline_input_errror(e, "constraint", 'order set')
-                except LibraryError as e:
-                    utils.process_library_reports(e.args)
-            elif (sub_cmd2 in ["remove","delete"]):
-                order_rm(argv)
-            elif (sub_cmd2 == "show"):
-                order_command.show(lib, argv, modifiers)
-            else:
-                order_start([sub_cmd2] + argv)
+                elif (sub_cmd2 in ["remove", "delete"]):
+                    usage_name = "order remove"
+                    order_rm(argv)
+                elif (sub_cmd2 == "show"):
+                    order_command.show(lib, argv, modifiers)
+                else:
+                    order_start([sub_cmd2] + argv)
+            except LibraryError as e:
+                utils.process_library_reports(e.args)
+            except CmdLineInputError as e:
+                utils.exit_on_cmdline_input_errror(e, "constraint", usage_name)
         elif sub_cmd == "ticket":
             usage_name = "ticket"
             try:
@@ -114,28 +118,30 @@ def constraint_cmd(argv):
                 utils.exit_on_cmdline_input_errror(e, "constraint", usage_name)
 
         elif (sub_cmd == "colocation"):
-            if (len(argv) == 0):
-                sub_cmd2 = "show"
-            else:
-                sub_cmd2 = argv.pop(0)
+            usage_name = "colocation"
+            try:
+                if (len(argv) == 0):
+                    sub_cmd2 = "show"
+                else:
+                    sub_cmd2 = argv.pop(0)
 
-            if (sub_cmd2 == "add"):
-                colocation_add(argv)
-            elif (sub_cmd2 in ["remove","delete"]):
-                colocation_rm(argv)
-            elif (sub_cmd2 == "set"):
-                try:
-
+                if (sub_cmd2 == "add"):
+                    usage_name = "colocation " + sub_cmd2
+                    colocation_add(argv)
+                elif (sub_cmd2 in ["remove", "delete"]):
+                    usage_name = "colocation remove"
+                    colocation_rm(argv)
+                elif (sub_cmd2 == "set"):
+                    usage_name = "colocation " + sub_cmd2
                     colocation_command.create_with_set(lib, argv, modifiers)
-                except LibraryError as e:
-                    utils.process_library_reports(e.args)
-                except CmdLineInputError as e:
-                    utils.exit_on_cmdline_input_errror(e, "constraint", "colocation set")
-            elif (sub_cmd2 == "show"):
-                colocation_command.show(lib, argv, modifiers)
-            else:
-                usage.constraint()
-                sys.exit(1)
+                elif (sub_cmd2 == "show"):
+                    colocation_command.show(lib, argv, modifiers)
+                else:
+                    raise CmdLineInputError()
+            except LibraryError as e:
+                utils.process_library_reports(e.args)
+            except CmdLineInputError as e:
+                utils.exit_on_cmdline_input_errror(e, "constraint", usage_name)
         elif (sub_cmd in ["remove","delete"]):
             constraint_rm(argv)
         elif (sub_cmd == "show" or sub_cmd == "list"):
@@ -181,47 +187,69 @@ def colocation_rm(argv):
     else:
         print("No matching resources found in ordering list")
 
-
-# When passed an array of arguments if the first argument doesn't have an '='
-# then it's the score, otherwise they're all arguments
-# Return a tuple with the score and array of name,value pairs
-def parse_score_options(argv):
-    if len(argv) == 0:
-        return "INFINITY",[]
-
-    arg_array = []
-    first = argv[0]
-    if first.find('=') != -1:
-        score = "INFINITY"
-    else:
-        score = argv.pop(0)
-
-    for arg in argv:
-        args = arg.split('=')
-        if (len(args) != 2):
-            continue
-        arg_array.append(args)
-    return (score, arg_array)
+def _prepare_constraint_resource(cib_dom, resource_id):
+    resource_valid, resource_error, correct_id \
+        = utils.validate_constraint_resource(cib_dom, resource_id)
+    if "--autocorrect" in utils.pcs_options and correct_id:
+        return correct_id
+    if not resource_valid:
+        utils.err(resource_error)
+    return resource_id
 
 # There are two acceptable syntaxes
 # Deprecated - colocation add <src> <tgt> [score] [options]
 # Supported - colocation add [role] <src> with [role] <tgt> [score] [options]
 def colocation_add(argv):
+    def _parse_score_options(argv):
+        # When passed an array of arguments if the first argument doesn't have
+        # an '=' then it's the score, otherwise they're all arguments. Return a
+        # tuple with the score and array of name,value pairs
+        if not argv:
+            return SCORE_INFINITY, []
+        score = SCORE_INFINITY if "=" in argv[0] else argv.pop(0)
+        # create a list of 2-tuples (name, value)
+        arg_array = [parse_args.split_option(arg) for arg in argv]
+        return score, arg_array
+
+    def _validate_and_prepare_role(role):
+        role_cleaned = role.lower().capitalize()
+        if role_cleaned not in ALLOWED_ROLES:
+            utils.err(
+                "invalid role value '{0}', allowed values are: '{1}'".format(
+                    role,
+                    "', '".join(ALLOWED_ROLES)
+                )
+            )
+        return role_cleaned
+
     if len(argv) < 2:
-        usage.constraint()
+        usage.constraint(["colocation add"])
         sys.exit(1)
 
     role1 = ""
     role2 = ""
     if len(argv) > 2:
+        # supported syntax OR deprecated syntax with options
         if not utils.is_score_or_opt(argv[2]):
+            # supported syntax
             if argv[2] == "with":
-                role1 = argv.pop(0).lower().capitalize()
+                role1 = _validate_and_prepare_role(argv.pop(0))
                 resource1 = argv.pop(0)
             else:
                 resource1 = argv.pop(0)
 
-            argv.pop(0) # Pop 'with'
+            if argv[0] == "with":
+                argv.pop(0)
+                if "with" in argv:
+                    raise CmdLineInputError(
+                        message="Multiple 'with's cannot be specified.",
+                        hint=(
+                            "Use the 'pcs constraint colocation set' command "
+                            "if you want to create a constraint for more than "
+                            "two resources."
+                        ),
+                        show_both_usage_and_message=True
+                    )
 
             if len(argv) == 1:
                 resource2 = argv.pop(0)
@@ -229,30 +257,23 @@ def colocation_add(argv):
                 if utils.is_score_or_opt(argv[1]):
                     resource2 = argv.pop(0)
                 else:
-                    role2 = argv.pop(0).lower().capitalize()
+                    role2 = _validate_and_prepare_role(argv.pop(0))
                     resource2 = argv.pop(0)
         else:
+            # deprecated syntax
             resource1 = argv.pop(0)
             resource2 = argv.pop(0)
     else:
+        # deprecated syntax without options
         resource1 = argv.pop(0)
         resource2 = argv.pop(0)
 
     cib_dom = utils.get_cib_dom()
-    resource_valid, resource_error, correct_id \
-        = utils.validate_constraint_resource(cib_dom, resource1)
-    if "--autocorrect" in utils.pcs_options and correct_id:
-        resource1 = correct_id
-    elif not resource_valid:
-        utils.err(resource_error)
-    resource_valid, resource_error, correct_id \
-        = utils.validate_constraint_resource(cib_dom, resource2)
-    if "--autocorrect" in utils.pcs_options and correct_id:
-        resource2 = correct_id
-    elif not resource_valid:
-        utils.err(resource_error)
+    resource1 = _prepare_constraint_resource(cib_dom, resource1)
+    resource2 = _prepare_constraint_resource(cib_dom, resource2)
 
-    score,nv_pairs = parse_score_options(argv)
+    score, nv_pairs = _parse_score_options(argv)
+
     id_in_nvpairs = None
     for name, value in nv_pairs:
         if name == "id":
@@ -362,7 +383,7 @@ def order_rm(argv):
 
 def order_start(argv):
     if len(argv) < 3:
-        usage.constraint()
+        usage.constraint(["order"])
         sys.exit(1)
 
     first_action = DEFAULT_ACTION
@@ -374,11 +395,11 @@ def order_start(argv):
 
     resource1 = argv.pop(0)
     if argv.pop(0) != "then":
-        usage.constraint()
+        usage.constraint(["order"])
         sys.exit(1)
 
     if len(argv) == 0:
-        usage.constraint()
+        usage.constraint(["order"])
         sys.exit(1)
 
     action = argv[0]
@@ -387,52 +408,47 @@ def order_start(argv):
         argv.pop(0)
 
     if len(argv) == 0:
-        usage.constraint()
+        usage.constraint(["order"])
         sys.exit(1)
     resource2 = argv.pop(0)
 
     order_options = []
     if len(argv) != 0:
         order_options = order_options + argv[:]
+    if "then" in order_options:
+        raise CmdLineInputError(
+            message="Multiple 'then's cannot be specified.",
+            hint=(
+                "Use the 'pcs constraint order set' command if you want to "
+                "create a constraint for more than two resources."
+            ),
+            show_both_usage_and_message=True
+        )
 
     order_options.append("first-action="+first_action)
     order_options.append("then-action="+then_action)
-    order_add([resource1, resource2] + order_options)
+    _order_add(resource1, resource2, order_options)
 
-def order_add(argv,returnElementOnly=False):
-    if len(argv) < 2:
-        usage.constraint()
-        sys.exit(1)
-
-    resource1 = argv.pop(0)
-    resource2 = argv.pop(0)
+def _order_add(resource1, resource2, options_list):
 
     cib_dom = utils.get_cib_dom()
-    resource_valid, resource_error, correct_id \
-        = utils.validate_constraint_resource(cib_dom, resource1)
-    if "--autocorrect" in utils.pcs_options and correct_id:
-        resource1 = correct_id
-    elif not resource_valid:
-        utils.err(resource_error)
-    resource_valid, resource_error, correct_id \
-        = utils.validate_constraint_resource(cib_dom, resource2)
-    if "--autocorrect" in utils.pcs_options and correct_id:
-        resource2 = correct_id
-    elif not resource_valid:
-        utils.err(resource_error)
+    resource1 = _prepare_constraint_resource(cib_dom, resource1)
+    resource2 = _prepare_constraint_resource(cib_dom, resource2)
 
     order_options = []
     id_specified = False
     sym = None
-    for arg in argv:
+    for arg in options_list:
         if arg == "symmetrical":
             sym = "true"
         elif arg == "nonsymmetrical":
             sym = "false"
-        elif "=" in arg:
-            name, value = arg.split("=", 1)
+        else:
+            name, value = parse_args.split_option(arg)
             if name == "id":
-                id_valid, id_error = utils.validate_xml_id(value, 'constraint id')
+                id_valid, id_error = utils.validate_xml_id(
+                    value, "constraint id"
+                )
                 if not id_valid:
                     utils.err(id_error)
                 if utils.does_id_exist(cib_dom, value):
@@ -502,11 +518,7 @@ def order_add(argv,returnElementOnly=False):
     print(
         "Adding " + resource1 + " " + resource2 + " ("+scorekind+")" + options
     )
-
-    if returnElementOnly == False:
-        utils.replace_cib_configuration(dom)
-    else:
-        return element.toxml()
+    utils.replace_cib_configuration(dom)
 
 def order_find_duplicates(dom, constraint_el):
     def normalize(constraint_el):
