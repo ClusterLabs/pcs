@@ -80,7 +80,7 @@ class PrepareOptionsPlainTest(TestCase):
                 {"id": "id", "rsc-role": "bad_role"}, "ticket_key", "resourceA"
             ),
             (severities.ERROR, report_codes.INVALID_OPTION_VALUE, {
-                'allowed_values': ('Stopped', 'Started', 'Master', 'Slave'),
+                'allowed_values': ('Master', 'Slave', 'Started', 'Stopped'),
                 'option_value': 'bad_role',
                 'option_name': 'rsc-role',
                 'cannot_be_empty': False,

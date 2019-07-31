@@ -6,6 +6,7 @@ from pcs.lib import reports
 from pcs.lib.cib.constraint import constraint
 from pcs.lib.cib import tools
 from pcs.lib.errors import LibraryError
+from pcs.lib.pacemaker.values import RESOURCE_ROLES
 from pcs.lib.xml_tools import remove_when_pointless
 
 TAG_NAME = 'rsc_ticket'
@@ -16,7 +17,7 @@ ATTRIB = {
 }
 ATTRIB_PLAIN = {
     "rsc": None,
-    "rsc-role": ("Stopped", "Started", "Master", "Slave"),
+    "rsc-role": RESOURCE_ROLES,
 }
 
 def _validate_options_common(options):

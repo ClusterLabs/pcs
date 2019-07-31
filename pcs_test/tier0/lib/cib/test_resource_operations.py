@@ -284,7 +284,7 @@ class ValidateOperation(TestCase):
                     report_codes.INVALID_OPTION_VALUE,
                     option_value="a",
                     option_name="role",
-                    allowed_values=["Stopped", "Started", "Slave", "Master"],
+                    allowed_values=("Master", "Slave", "Started", "Stopped"),
                     cannot_be_empty=False,
                     forbidden_characters=None,
                 ),

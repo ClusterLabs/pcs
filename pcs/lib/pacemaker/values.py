@@ -10,6 +10,7 @@ _BOOLEAN = _BOOLEAN_TRUE | _BOOLEAN_FALSE
 _ID_FIRST_CHAR_NOT_RE = re.compile("[^a-zA-Z_]")
 _ID_REST_CHARS_NOT_RE = re.compile("[^a-zA-Z0-9_.-]")
 SCORE_INFINITY = "INFINITY"
+RESOURCE_ROLES = ("Master", "Slave", "Started", "Stopped")
 
 
 def is_boolean(val):

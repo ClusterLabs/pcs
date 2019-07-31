@@ -3,13 +3,14 @@ from lxml import etree
 from pcs.lib import reports
 from pcs.lib.cib.tools import find_unique_id
 from pcs.lib.errors import LibraryError
+from pcs.lib.pacemaker.values import RESOURCE_ROLES
 from pcs.lib.xml_tools import export_attributes
 
 ATTRIB = {
     "sequential": ("true", "false"),
     "require-all":("true", "false"),
     "action" : ("start", "promote", "demote", "stop"),
-    "role" : ("Stopped", "Started", "Master", "Slave"),
+    "role" : RESOURCE_ROLES,
 }
 
 def prepare_set(find_valid_id, resource_set):

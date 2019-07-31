@@ -50,7 +50,7 @@ class PrepareSetTest(TestCase):
             }),
             (severities.ERROR, report_codes.INVALID_OPTION_VALUE, {
                 'option_name': 'role',
-                'allowed_values': ('Stopped', 'Started', 'Master', 'Slave'),
+                'allowed_values': ('Master', 'Slave', 'Started', 'Stopped'),
                 'option_value': 'invalid',
                 'cannot_be_empty': False,
                 'forbidden_characters': None,

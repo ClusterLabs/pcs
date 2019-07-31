@@ -14,6 +14,7 @@ from pcs.lib.errors import LibraryError
 from pcs.lib.pacemaker.values import (
     is_true,
     timeout_to_seconds,
+    RESOURCE_ROLES
 )
 
 OPERATION_NVPAIR_ATTRIBUTES = [
@@ -33,13 +34,6 @@ ATTRIBUTES = [
     "start-delay",
     "timeout",
     "OCF_CHECK_LEVEL",
-]
-
-ROLE_VALUES = [
-    "Stopped",
-    "Started",
-    "Slave",
-    "Master",
 ]
 
 ON_FAIL_VALUES = [
@@ -131,7 +125,7 @@ def validate_operation_list(
             option_name_for_report="operation name",
             **kwargs
         ),
-        validate.ValueIn("role", ROLE_VALUES),
+        validate.ValueIn("role", RESOURCE_ROLES),
         validate.ValueIn("on-fail", ON_FAIL_VALUES),
         validate.ValueIn("record-pending", BOOLEAN_VALUES),
         validate.ValueIn("enabled", BOOLEAN_VALUES),
