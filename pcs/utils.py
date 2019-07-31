@@ -2667,10 +2667,12 @@ def get_library_wrapper():
     return Library(get_cli_env(), get_middleware_factory())
 
 def exit_on_cmdline_input_errror(error, main_name, usage_name):
-    if error and error.message:
-        err(error.message)
-    else:
+    if not error or (not error.message or error.show_both_usage_and_message):
         usage.show(main_name, usage_name)
+    if error and error.message:
+        err(error.message, exit_after_error=False)
+    if error and error.hint:
+        sys.stderr.write("Hint: {0}\n".format(error.hint))
     sys.exit(1)
 
 def get_report_processor():
