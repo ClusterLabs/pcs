@@ -27,6 +27,8 @@
   more ([rhbz#1712315])
 - Fixed id conflict with current bundle configuration in
   `pcs resource bundle reset` ([rhbz#1725849])
+- Standby nodes running resources are listed separately in `pcs status nodes`
+  ([rhbz#1619253])
 
 ### Changed
 Command `pcs resource bundle reset` no longer accepts the container type
@@ -37,6 +39,7 @@ Command `pcs resource bundle reset` no longer accepts the container type
 [rhbz#1558063]: https://bugzilla.redhat.com/show_bug.cgi?id=1558063
 [rhbz#1595444]: https://bugzilla.redhat.com/show_bug.cgi?id=1595444
 [rhbz#1598197]: https://bugzilla.redhat.com/show_bug.cgi?id=1598197
+[rhbz#1619253]: https://bugzilla.redhat.com/show_bug.cgi?id=1619253
 [rhbz#1665898]: https://bugzilla.redhat.com/show_bug.cgi?id=1665898
 [rhbz#1671174]: https://bugzilla.redhat.com/show_bug.cgi?id=1671174
 [rhbz#1673829]: https://bugzilla.redhat.com/show_bug.cgi?id=1673829

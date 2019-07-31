@@ -265,20 +265,31 @@ def nodes_status(argv):
     onlinenodes = []
     offlinenodes = []
     standbynodes = []
+    standbynodes_with_resources = []
     maintenancenodes = []
     remote_onlinenodes = []
     remote_offlinenodes = []
     remote_standbynodes = []
+    remote_standbynodes_with_resources = []
     remote_maintenancenodes = []
     for node in nodes[0].getElementsByTagName("node"):
         node_name = node.getAttribute("name")
         node_remote = node.getAttribute("type") == "remote"
         if node.getAttribute("online") == "true":
             if node.getAttribute("standby") == "true":
+                is_running_resources = (
+                    node.getAttribute("resources_running") != "0"
+                )
                 if node_remote:
-                    remote_standbynodes.append(node_name)
+                    if is_running_resources:
+                        remote_standbynodes_with_resources.append(node_name)
+                    else:
+                        remote_standbynodes.append(node_name)
                 else:
-                    standbynodes.append(node_name)
+                    if is_running_resources:
+                        standbynodes_with_resources.append(node_name)
+                    else:
+                        standbynodes.append(node_name)
             elif node.getAttribute("maintenance") == "true":
                 if node_remote:
                     remote_maintenancenodes.append(node_name)
@@ -298,12 +309,20 @@ def nodes_status(argv):
     print("Pacemaker Nodes:")
     print(" ".join([" Online:"] + onlinenodes))
     print(" ".join([" Standby:"] + standbynodes))
+    print(" ".join(
+        [" Standby with resource(s) running:"] + standbynodes_with_resources
+    ))
     print(" ".join([" Maintenance:"] + maintenancenodes))
     print(" ".join([" Offline:"] + offlinenodes))
 
     print("Pacemaker Remote Nodes:")
     print(" ".join([" Online:"] + remote_onlinenodes))
     print(" ".join([" Standby:"] + remote_standbynodes))
+    print(" ".join(
+        [" Standby with resource(s) running:"]
+        +
+        remote_standbynodes_with_resources
+    ))
     print(" ".join([" Maintenance:"] + remote_maintenancenodes))
     print(" ".join([" Offline:"] + remote_offlinenodes))
 
