@@ -10,6 +10,7 @@
   (broken since pcs-0.10.2) ([rhbz#1725183])
 - Fixed crashes when pcs is configured that no rubygems are bundled in pcs
   package ([ghissue#208])
+- Standby nodes running resources are listed separately in `pcs status nodes`
 
 ### Changed
 - Command `pcs resource bundle reset` no longer accepts the container type
