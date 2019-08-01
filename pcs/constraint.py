@@ -24,7 +24,11 @@ from pcs.lib import reports
 from pcs.lib.cib.constraint import resource_set
 from pcs.lib.cib.constraint.order import ATTRIB as order_attrib
 from pcs.lib.node import get_existing_nodes_names
-from pcs.lib.pacemaker.values import sanitize_id
+from pcs.lib.pacemaker.values import (
+    RESOURCE_ROLES,
+    sanitize_id,
+    SCORE_INFINITY,
+)
 
 # pylint: disable=too-many-branches, too-many-statements
 # pylint: disable=invalid-name, too-many-nested-blocks
@@ -143,29 +147,11 @@ def colocation_rm(lib, argv, modifiers):
         print("No matching resources found in ordering list")
 
 
-# When passed an array of arguments if the first argument doesn't have an '='
-# then it's the score, otherwise they're all arguments
-# Return a tuple with the score and array of name,value pairs
-def parse_score_options(argv):
-    """
-    Commandline options: no options
-    """
-    if not argv:
-        return "INFINITY", []
-
-    arg_array = []
-    first = argv[0]
-    if first.find('=') != -1:
-        score = "INFINITY"
-    else:
-        score = argv.pop(0)
-
-    for arg in argv:
-        args = arg.split('=')
-        if len(args) != 2:
-            continue
-        arg_array.append(args)
-    return (score, arg_array)
+def _validate_constraint_resource(cib_dom, resource_id):
+    resource_valid, resource_error, dummy_correct_id \
+        = utils.validate_constraint_resource(cib_dom, resource_id)
+    if not resource_valid:
+        utils.err(resource_error)
 
 # Syntax: colocation add [role] <src> with [role] <tgt> [score] [options]
 # possible commands:
@@ -179,6 +165,31 @@ def colocation_add(lib, argv, modifiers):
       * -f - CIB file
       * --force - allow constraint on any resource, allow duplicate constraints
     """
+    def _parse_score_options(argv):
+        # When passed an array of arguments if the first argument doesn't have
+        # an '=' then it's the score, otherwise they're all arguments. Return a
+        # tuple with the score and array of name,value pairs
+        """
+        Commandline options: no options
+        """
+        if not argv:
+            return SCORE_INFINITY, []
+        score = SCORE_INFINITY if "=" in argv[0] else argv.pop(0)
+        # create a list of 2-tuples (name, value)
+        arg_array = [parse_args.split_option(arg) for arg in argv]
+        return score, arg_array
+
+    def _validate_and_prepare_role(role):
+        role_cleaned = role.lower().capitalize()
+        if role_cleaned not in RESOURCE_ROLES:
+            utils.err(
+                "invalid role value '{0}', allowed values are: '{1}'".format(
+                    role,
+                    "', '".join(RESOURCE_ROLES)
+                )
+            )
+        return role_cleaned
+
     del lib
     modifiers.ensure_only_supported("-f", "--force")
     if len(argv) < 3:
@@ -188,14 +199,24 @@ def colocation_add(lib, argv, modifiers):
     role2 = ""
 
     if argv[2] == "with":
-        role1 = argv.pop(0).lower().capitalize()
+        role1 = _validate_and_prepare_role(argv.pop(0))
         resource1 = argv.pop(0)
     elif argv[1] == "with":
         resource1 = argv.pop(0)
     else:
         raise CmdLineInputError()
 
-    argv.pop(0) # Pop 'with'
+    if argv.pop(0) != "with":
+        raise CmdLineInputError()
+    if "with" in argv:
+        raise CmdLineInputError(
+            message="Multiple 'with's cannot be specified.",
+            hint=(
+                "Use the 'pcs constraint colocation set' command if you want "
+                "to create a constraint for more than two resources."
+            ),
+            show_both_usage_and_message=True
+        )
 
     if not argv:
         raise CmdLineInputError()
@@ -205,21 +226,15 @@ def colocation_add(lib, argv, modifiers):
         if utils.is_score_or_opt(argv[1]):
             resource2 = argv.pop(0)
         else:
-            role2 = argv.pop(0).lower().capitalize()
+            role2 = _validate_and_prepare_role(argv.pop(0))
             resource2 = argv.pop(0)
 
-    score, nv_pairs = parse_score_options(argv)
+    score, nv_pairs = _parse_score_options(argv)
 
 
     cib_dom = utils.get_cib_dom()
-    resource_valid, resource_error, dummy_correct_id \
-        = utils.validate_constraint_resource(cib_dom, resource1)
-    if not resource_valid:
-        utils.err(resource_error)
-    resource_valid, resource_error, dummy_correct_id \
-        = utils.validate_constraint_resource(cib_dom, resource2)
-    if not resource_valid:
-        utils.err(resource_error)
+    _validate_constraint_resource(cib_dom, resource1)
+    _validate_constraint_resource(cib_dom, resource2)
 
     id_in_nvpairs = None
     for name, value in nv_pairs:
@@ -379,43 +394,40 @@ def order_start(lib, argv, modifiers):
     order_options = []
     if argv:
         order_options = order_options + argv[:]
+    if "then" in order_options:
+        raise CmdLineInputError(
+            message="Multiple 'then's cannot be specified.",
+            hint=(
+                "Use the 'pcs constraint order set' command if you want to "
+                "create a constraint for more than two resources."
+            ),
+            show_both_usage_and_message=True
+        )
 
     order_options.append("first-action="+first_action)
     order_options.append("then-action="+then_action)
-    order_add([resource1, resource2] + order_options, modifiers)
+    _order_add(resource1, resource2, order_options, modifiers)
 
-def order_add(argv, modifiers):
+def _order_add(resource1, resource2, options_list, modifiers):
     """
     Commandline options:
       * -f - CIB file
       * --force - allow constraint for any resource, allow duplicate constraints
     """
-    if len(argv) < 2:
-        raise CmdLineInputError()
-
-    resource1 = argv.pop(0)
-    resource2 = argv.pop(0)
-
     cib_dom = utils.get_cib_dom()
-    resource_valid, resource_error, dummy_correct_id \
-        = utils.validate_constraint_resource(cib_dom, resource1)
-    if not resource_valid:
-        utils.err(resource_error)
-    resource_valid, resource_error, dummy_correct_id \
-        = utils.validate_constraint_resource(cib_dom, resource2)
-    if not resource_valid:
-        utils.err(resource_error)
+    _validate_constraint_resource(cib_dom, resource1)
+    _validate_constraint_resource(cib_dom, resource2)
 
     order_options = []
     id_specified = False
     sym = None
-    for arg in argv:
+    for arg in options_list:
         if arg == "symmetrical":
             sym = "true"
         elif arg == "nonsymmetrical":
             sym = "false"
-        elif "=" in arg:
-            name, value = arg.split("=", 1)
+        else:
+            name, value = parse_args.split_option(arg)
             if name == "id":
                 id_valid, id_error = utils.validate_xml_id(
                     value,

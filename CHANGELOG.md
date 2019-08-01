@@ -11,6 +11,9 @@
 - Fixed crashes when pcs is configured that no rubygems are bundled in pcs
   package ([ghissue#208])
 - Standby nodes running resources are listed separately in `pcs status nodes`
+- Parsing arguments in the `pcs constraint order` and `pcs constraint colocation
+  add` commands has been improved, errors which were previously silent are now
+  reported ([rhbz#1734361])
 
 ### Changed
 - Command `pcs resource bundle reset` no longer accepts the container type
@@ -20,6 +23,7 @@
 [rhbz#1657166]: https://bugzilla.redhat.com/show_bug.cgi?id=1657166
 [rhbz#1676957]: https://bugzilla.redhat.com/show_bug.cgi?id=1676957
 [rhbz#1725183]: https://bugzilla.redhat.com/show_bug.cgi?id=1725183
+[rhbz#1734361]: https://bugzilla.redhat.com/show_bug.cgi?id=1734361
 
 
 ## [0.10.2] - 2019-06-12

@@ -277,6 +277,48 @@ Ticket Constraints:
         ac(o,"Location Constraints:\nOrdering Constraints:\n  stop D1 then stop D2 (kind:Mandatory) (id:order-D1-D2-mandatory)\n  start D1 then start D2 (kind:Mandatory) (id:order-D1-D2-mandatory-1)\nColocation Constraints:\nTicket Constraints:\n")
         assert r == 0
 
+    def test_order_too_many_resources(self):
+        msg = (
+            "Error: Multiple 'then's cannot be specified.\n"
+            "Hint: Use the 'pcs constraint order set' command if you want to "
+                "create a constraint for more than two resources.\n"
+        )
+
+        o, r = pcs(temp_cib, "constraint order D1 then D2 then D3")
+        self.assertIn(msg, o)
+        self.assertEqual(r, 1)
+
+        o, r = pcs(
+            temp_cib,
+            "constraint order start D1 then start D2 then start D3"
+        )
+        self.assertIn(msg, o)
+        self.assertEqual(r, 1)
+
+        o, r = pcs(temp_cib, "constraint order start D1 then D2 then D3")
+        self.assertIn(msg, o)
+        self.assertEqual(r, 1)
+
+        o, r = pcs(temp_cib, "constraint order D1 then start D2 then D3")
+        self.assertIn(msg, o)
+        self.assertEqual(r, 1)
+
+        o, r = pcs(temp_cib, "constraint order D1 then D2 then start D3")
+        self.assertIn(msg, o)
+        self.assertEqual(r, 1)
+
+        o, r = pcs(temp_cib, "constraint order start D1 then D2 then start D3")
+        self.assertIn(msg, o)
+        self.assertEqual(r, 1)
+
+        o, r = pcs(temp_cib, "constraint order D1 then start D2 then start D3")
+        self.assertIn(msg, o)
+        self.assertEqual(r, 1)
+
+        o, r = pcs(temp_cib, "constraint order start D1 then D2 then start D3")
+        self.assertIn(msg, o)
+        self.assertEqual(r, 1)
+
     @skip_unless_pacemaker_version(
         (1, 1, 12),
         "constraints with the require-all option"
@@ -560,6 +602,91 @@ Ticket Constraints:
             """
         ))
         self.assertEqual(returnVal, 0)
+
+    def test_colocation_invalid_role(self):
+        o, r = pcs(temp_cib, "constraint colocation add abc D1 with D2")
+        ac(
+            o,
+            "Error: invalid role value 'abc', allowed values are: 'Master', "
+                "'Slave', 'Started', 'Stopped'\n"
+        )
+        self.assertEqual(r, 1)
+
+        o, r = pcs(temp_cib, "constraint colocation add D1 with def D2")
+        ac(
+            o,
+            "Error: invalid role value 'def', allowed values are: 'Master', "
+                "'Slave', 'Started', 'Stopped'\n"
+        )
+        self.assertEqual(r, 1)
+
+        o, r = pcs(temp_cib, "constraint colocation add abc D1 with def D2")
+        ac(
+            o,
+            "Error: invalid role value 'abc', allowed values are: 'Master', "
+                "'Slave', 'Started', 'Stopped'\n"
+        )
+        self.assertEqual(r, 1)
+
+    def test_colocation_too_many_resources(self):
+        msg = (
+            "Error: Multiple 'with's cannot be specified.\n"
+            "Hint: Use the 'pcs constraint colocation set' command if you want "
+                "to create a constraint for more than two resources.\n"
+        )
+
+        o, r = pcs(temp_cib, "constraint colocation add D1 with D2 with D3")
+        self.assertIn(msg, o)
+        self.assertEqual(r, 1)
+
+        o, r = pcs(
+            temp_cib,
+            "constraint colocation add master D1 with D2 with D3"
+        )
+        self.assertIn(msg, o)
+        self.assertEqual(r, 1)
+
+        o, r = pcs(
+            temp_cib,
+            "constraint colocation add D1 with master D2 with D3"
+        )
+        self.assertIn(msg, o)
+        self.assertEqual(r, 1)
+
+        o, r = pcs(
+            temp_cib,
+            "constraint colocation add D1 with D2 with master D3"
+        )
+        self.assertIn(msg, o)
+        self.assertEqual(r, 1)
+
+        o, r = pcs(
+            temp_cib,
+            "constraint colocation add master D1 with master D2 with D3"
+        )
+        self.assertIn(msg, o)
+        self.assertEqual(r, 1)
+
+        o, r = pcs(
+            temp_cib,
+            "constraint colocation add master D1 with D2 with master D3"
+        )
+        self.assertIn(msg, o)
+        self.assertEqual(r, 1)
+
+        o, r = pcs(
+            temp_cib,
+            "constraint colocation add D1 with master D2 with master D3"
+        )
+        self.assertIn(msg, o)
+        self.assertEqual(r, 1)
+
+        o, r = pcs(
+            temp_cib,
+            "constraint colocation add master D1 with master D2 with master D3"
+        )
+        self.assertIn(msg, o)
+        self.assertEqual(r, 1)
 
     # see also BundleColocation
     def testColocationSets(self):
