@@ -1,6 +1,6 @@
 # Change Log
 
-## [Unreleased]
+## [0.9.168] - 2019-08-02
 
 ### Added
 - It is now possible to disable pcsd SSL certificate being synced across the
