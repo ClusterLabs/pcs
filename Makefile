@@ -34,8 +34,24 @@ ifndef PYTHON
 	PYTHON := $(shell which python3 || which python)
 endif
 
+# PYTHON_SITELIB is a path (relative to DESTDIR, e.g.
+# /usr/local/lib/python3.7/site-packages) where the command
+# `python setup.py install` puts pcs python files. The reasons to know the path
+# in makefile are that:
+# 1) There is a need to modify .../pcs/settings.py after installation (for
+#    debian) and regenerate .pyc file aftermath.
+# 2) It is needed remove pcs directory from PYTHON_SITELIB  after installation
 ifndef PYTHON_SITELIB
-  PYTHON_SITELIB=$(shell $(PYTHON) -c "from distutils.sysconfig import get_python_lib; print(get_python_lib())")
+  # USE_PYTHON_PLATLIB is a flag that instructs installation process to use
+  # platlib (e.g. /usr/local/lib64/python3.7/site-packages) instead of pureleb
+  # (e.g. /usr/local/lib/python3.7/site-packages) as default value for
+  # PYTHON_SITELIB. .../lib is preferred over .../lib64 because of hardcoded
+  # path in pcs/settings.py (more in rhel specfile).
+  ifeq ($(USE_PYTHON_PLATLIB), true)
+    PYTHON_SITELIB=$(shell $(PYTHON) setup.py platlib | tail --lines=1)
+  else
+    PYTHON_SITELIB=$(shell $(PYTHON) setup.py purelib | tail --lines=1)
+  endif
 endif
 
 # Check for an override for building gems
@@ -134,6 +150,7 @@ endif
 # ================
 
 DEST_PYTHON_SITELIB = ${DESTDIR}${PYTHON_SITELIB}
+DEST_PYTHON_SCRIPT_DIR=${DESTDIR}$(shell $(PYTHON) setup.py scriptdir | tail --lines=1)
 DEST_MAN=${DESTDIR}/usr/share/man/man8
 DEST_SYSTEMD_SYSTEM = ${DESTDIR}${SYSTEMD_UNIT_DIR}
 DEST_INIT = ${DESTDIR}${INIT_DIR}
@@ -205,20 +222,20 @@ install_python_part: install_bundled_libs
 	# fix excessive script interpreting "executable" quoting with old setuptools:
 	# https://github.com/pypa/setuptools/issues/188
 	# https://bugzilla.redhat.com/1353934
-	sed -i '1s|^\(#!\)"\(.*\)"$$|\1\2|' ${DEST_PREFIX}/bin/pcs
-	sed -i '1s|^\(#!\)"\(.*\)"$$|\1\2|' ${DEST_PREFIX}/bin/pcs_snmp_agent
-	sed -i '1s|^\(#!\)"\(.*\)"$$|\1\2|' ${DEST_PREFIX}/bin/pcs_internal
+	sed -i '1s|^\(#!\)"\(.*\)"$$|\1\2|' ${DEST_PYTHON_SCRIPT_DIR}/pcs
+	sed -i '1s|^\(#!\)"\(.*\)"$$|\1\2|' ${DEST_PYTHON_SCRIPT_DIR}/pcs_snmp_agent
+	sed -i '1s|^\(#!\)"\(.*\)"$$|\1\2|' ${DEST_PYTHON_SCRIPT_DIR}/pcs_internal
 	rm setup.cfg
 	mkdir -p ${DEST_PREFIX}/sbin/
-	mv ${DEST_PREFIX}/bin/pcs ${DEST_PREFIX}/sbin/pcs
-	mv ${DEST_PREFIX}/bin/pcsd ${DEST_PREFIX}/sbin/pcsd
+	mv ${DEST_PYTHON_SCRIPT_DIR}/pcs ${DEST_PREFIX}/sbin/pcs
+	mv ${DEST_PYTHON_SCRIPT_DIR}/pcsd ${DEST_PREFIX}/sbin/pcsd
 	install -D -m644 pcs/bash_completion ${DEST_BASH_COMPLETION}/pcs
 	install -m644 -D pcs/pcs.8 ${DEST_MAN}/pcs.8
 	# pcs_internal
 	mkdir -p ${DEST_LIB}/pcs/
-	mv ${DEST_PREFIX}/bin/pcs_internal ${DEST_LIB}/pcs/pcs_internal
+	mv ${DEST_PYTHON_SCRIPT_DIR}/pcs_internal ${DEST_LIB}/pcs/pcs_internal
 	# pcs SNMP install
-	mv ${DEST_PREFIX}/bin/pcs_snmp_agent ${DEST_LIB}/pcs/pcs_snmp_agent
+	mv ${DEST_PYTHON_SCRIPT_DIR}/pcs_snmp_agent ${DEST_LIB}/pcs/pcs_snmp_agent
 	install -d ${DEST_SNMP_MIB}
 	install -m 644 pcs/snmp/mibs/PCMK-PCS*-MIB.txt ${DEST_SNMP_MIB}
 	install -m 644 -D pcs/snmp/pcs_snmp_agent.conf ${DEST_CONF}/pcs_snmp_agent

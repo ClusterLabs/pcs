@@ -14,11 +14,13 @@
 - Parsing arguments in the `pcs constraint order` and `pcs constraint colocation
   add` commands has been improved, errors which were previously silent are now
   reported ([rhbz#1734361])
+- Fixed shebang correction in Makefile ([ghissue#206])
 
 ### Changed
 - Command `pcs resource bundle reset` no longer accepts the container type
   ([rhbz#1657166])
 
+[ghissue#206]: https://github.com/ClusterLabs/pcs/issues/206
 [ghissue#208]: https://github.com/ClusterLabs/pcs/issues/208
 [rhbz#1657166]: https://bugzilla.redhat.com/show_bug.cgi?id=1657166
 [rhbz#1676957]: https://bugzilla.redhat.com/show_bug.cgi?id=1676957
