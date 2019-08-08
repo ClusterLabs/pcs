@@ -1,5 +1,6 @@
 *.pyc
 *.swp
+pcs.spec
 /MANIFEST
 /dist/
 /pcs/bash_completion.d.pcs
@@ -7,3 +8,5 @@
 /pcsd/.bundle
 /pcsd/vendor
 /pcsd/public/ui
+/rpm_build/
+pcs-*.tar.gz
