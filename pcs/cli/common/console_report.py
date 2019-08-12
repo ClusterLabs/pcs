@@ -67,7 +67,11 @@ def indent(line_list, indent_step=2):
     ]
 
 def format_optional(value, template, empty_case=""):
-    return empty_case if not value else template.format(value)
+    # Number 0 is considered False which does not suit our needs so we check
+    # for it explicitly.
+    if value or value == 0:
+        return template.format(value)
+    return empty_case
 
 def format_fencing_level_target(target_type, target_value):
     if target_type == TARGET_TYPE_ATTRIBUTE:

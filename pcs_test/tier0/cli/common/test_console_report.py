@@ -382,6 +382,9 @@ class FormatOptionalTest(TestCase):
     def test_default_value(self):
         self.assertEqual("DEFAULT", format_optional("", "{0}: ", "DEFAULT"))
 
+    def test_integer_zero_is_not_falsy(self):
+        self.assertEqual("0: ", format_optional(0, "{0}: "))
+
 
 class AgentNameGuessedTest(NameBuildTest):
     def test_build_message_with_data(self):
@@ -1691,6 +1694,16 @@ class CorosyncAddressIpVersionWrongForLink(NameBuildTest):
             ,
             reports.corosync_address_ip_version_wrong_for_link(
                 "192.168.100.42", "IPv6", 3,
+            )
+        )
+
+    def test_with_link_zero(self):
+        self.assert_message_from_report(
+            "Address '192.168.100.42' cannot be used in link '0' because "
+                "the link uses IPv6 addresses"
+            ,
+            reports.corosync_address_ip_version_wrong_for_link(
+                "192.168.100.42", "IPv6", 0,
             )
         )
 
