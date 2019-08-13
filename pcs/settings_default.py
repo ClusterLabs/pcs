@@ -20,11 +20,14 @@ corosync_qdevice_net_client_certs_dir = os.path.join(
 )
 corosync_qdevice_net_client_ca_file_name = "qnetd-cacert.crt"
 corosync_authkey_file = os.path.join(corosync_conf_dir, "authkey")
-corosync_authkey_bytes = 384
+# Must be set to 256 for corosync to work in FIPS environment.
+corosync_authkey_bytes = 256
 corosync_log_file = "/var/log/cluster/corosync.log"
 pacemaker_authkey_file = "/etc/pacemaker/authkey"
-pacemaker_authkey_bytes = 384
+# Using the same value as for corosync. Higher values MAY work in FIPS.
+pacemaker_authkey_bytes = 256
 booth_authkey_file_mode = 0o600
+# Booth does not support keys longer than 64 bytes.
 booth_authkey_bytes = 64
 cluster_conf_file = "/etc/cluster/cluster.conf"
 fence_agent_binaries = "/usr/sbin/"

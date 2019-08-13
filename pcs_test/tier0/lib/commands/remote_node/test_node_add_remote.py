@@ -216,7 +216,7 @@ class AddRemote(TestCase):
             .env.push_cib(resources=FIXTURE_RESOURCES)
         )
         node_add_remote(self.env_assist.get_env())
-        generate_binary_key.assert_called_once_with(random_bytes_count=384)
+        generate_binary_key.assert_called_once_with(random_bytes_count=256)
         self.env_assist.assert_reports(
             REPORTS
                 .adapt(
@@ -511,7 +511,7 @@ class AddRemote(TestCase):
             .env.push_cib(resources=FIXTURE_RESOURCES)
         )
         node_add_remote(self.env_assist.get_env(), skip_offline_nodes=True)
-        generate_binary_key.assert_called_once_with(random_bytes_count=384)
+        generate_binary_key.assert_called_once_with(random_bytes_count=256)
         self.env_assist.assert_reports(
             fixture_reports_new_node_unreachable(NODE_NAME)
             + [

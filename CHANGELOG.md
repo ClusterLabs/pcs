@@ -15,6 +15,8 @@
   add` commands has been improved, errors which were previously silent are now
   reported ([rhbz#1734361])
 - Fixed shebang correction in Makefile ([ghissue#206])
+- Generate 256 bytes long corosync authkey, longer keys are not supported when
+  FIPS is enabled ([rhbz#1740218])
 
 ### Changed
 - Command `pcs resource bundle reset` no longer accepts the container type
@@ -26,6 +28,7 @@
 [rhbz#1676957]: https://bugzilla.redhat.com/show_bug.cgi?id=1676957
 [rhbz#1725183]: https://bugzilla.redhat.com/show_bug.cgi?id=1725183
 [rhbz#1734361]: https://bugzilla.redhat.com/show_bug.cgi?id=1734361
+[rhbz#1740218]: https://bugzilla.redhat.com/show_bug.cgi?id=1740218
 
 
 ## [0.10.2] - 2019-06-12
