@@ -23,18 +23,10 @@ def config_setup(lib, arg_list, modifiers):
     if "sites" not in peers or not peers["sites"]:
         raise CmdLineInputError()
 
-    booth_config = []
-    for site in peers["sites"]:
-        booth_config.append({"key": "site", "value": site, "details": []})
-    for arbitrator in peers["arbitrators"]:
-        booth_config.append({
-            "key": "arbitrator",
-            "value": arbitrator,
-            "details": [],
-        })
-
     lib.booth.config_setup(
-        booth_config, overwrite_existing=modifiers.get("--force")
+        peers["sites"],
+        peers["arbitrators"],
+        overwrite_existing=modifiers.get("--force")
     )
 
 def config_destroy(lib, arg_list, modifiers):

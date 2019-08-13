@@ -1,8 +1,13 @@
+from collections import namedtuple
 import re
 
-from pcs.lib.booth import config_structure, reports
+from pcs.lib.booth import constants, reports
 from pcs.lib.errors import LibraryError
 
+class ConfigItem(namedtuple("ConfigItem", "key value details")):
+    def __new__(cls, key, value, details=None):
+        details = details if details else []
+        return super(ConfigItem, cls).__new__(cls, key, value, details)
 
 class InvalidLines(Exception):
     pass
@@ -37,14 +42,12 @@ def organize_lines(raw_line_list):
     current_ticket = None
     for key, value in raw_line_list:
         if key == "ticket":
-            current_ticket = config_structure.ConfigItem(key, value)
+            current_ticket = ConfigItem(key, value)
             ticket_section.append(current_ticket)
-        elif key in config_structure.GLOBAL_KEYS or not current_ticket:
-            global_section.append(config_structure.ConfigItem(key, value))
+        elif key in constants.GLOBAL_KEYS or not current_ticket:
+            global_section.append(ConfigItem(key, value))
         else:
-            current_ticket.details.append(
-                config_structure.ConfigItem(key, value)
-            )
+            current_ticket.details.append(ConfigItem(key, value))
 
     return global_section + ticket_section
 

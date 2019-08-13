@@ -1,8 +1,9 @@
 import os
 import shutil
+from textwrap import dedent
 from unittest import skipUnless, TestCase, skip
 
-from pcs_test.tools.assertions import AssertPcsMixin, console_report
+from pcs_test.tools.assertions import AssertPcsMixin
 from pcs_test.tools.misc import (
     get_test_resource as rc,
     outdent,
@@ -77,11 +78,12 @@ class SetupTest(BoothMixin, TestCase):
         )
         self.assert_pcs_success(
             "booth config",
-            stdout_full=console_report(
-                "authfile = {0}".format(BOOTH_KEY_FILE),
-                "site = 1.1.1.1",
-                "site = 2.2.2.2",
-                "arbitrator = 3.3.3.3",
+            dedent("""\
+                authfile = {0}
+                site = 1.1.1.1
+                site = 2.2.2.2
+                arbitrator = 3.3.3.3
+                """.format(BOOTH_KEY_FILE)
             )
         )
         with open(BOOTH_KEY_FILE, "rb") as key_file:
@@ -121,12 +123,13 @@ class SetupTest(BoothMixin, TestCase):
     def test_fail_on_multiple_reasons(self):
         self.assert_pcs_fail(
             "booth setup sites 1.1.1.1 arbitrators 1.1.1.1 2.2.2.2 3.3.3.3",
-            console_report(
+            (
                 "Error: lack of sites for booth configuration (need 2 at least)"
-                    ": sites 1.1.1.1"
-                ,
-                "Error: odd number of peers is required (entered 4 peers)",
-                "Error: duplicate address for booth configuration: 1.1.1.1",
+                    ": sites 1.1.1.1\n"
+                "Error: odd number of peers is required (entered 4 peers)\n"
+                "Error: duplicate address for booth configuration: 1.1.1.1\n"
+                "Error: Errors have occurred, therefore pcs is unable to "
+                    "continue\n"
             )
         )
 
@@ -200,39 +203,53 @@ class AddTicketTest(BoothTest):
 
     def test_success_add_ticket(self):
         self.assert_pcs_success("booth ticket add TicketA expire=10")
-        self.assert_pcs_success("booth config", stdout_full=console_report(
-            "authfile = {0}".format(BOOTH_KEY_FILE),
-            "site = 1.1.1.1",
-            "site = 2.2.2.2",
-            "arbitrator = 3.3.3.3",
-            'ticket = "TicketA"',
-            "  expire = 10",
-        ))
+        self.assert_pcs_success(
+            "booth config",
+            dedent("""\
+                authfile = {0}
+                site = 1.1.1.1
+                site = 2.2.2.2
+                arbitrator = 3.3.3.3
+                ticket = "TicketA"
+                  expire = 10
+                """.format(BOOTH_KEY_FILE),
+            )
+        )
 
     def test_fail_on_bad_ticket_name(self):
         self.assert_pcs_fail(
             "booth ticket add @TicketA",
-            "Error: booth ticket name '@TicketA' is not valid, use alphanumeric"
-            " chars or dash\n"
+            (
+                "Error: booth ticket name '@TicketA' is not valid, use "
+                    "alphanumeric chars or dash\n"
+                "Error: Errors have occurred, therefore pcs is unable to "
+                    "continue\n"
+            )
         )
 
     def test_fail_on_duplicit_ticket_name(self):
         self.assert_pcs_success("booth ticket add TicketA")
         self.assert_pcs_fail(
             "booth ticket add TicketA",
-            "Error: booth ticket name 'TicketA' already exists in configuration"
-            "\n"
+            (
+                "Error: booth ticket name 'TicketA' already exists in "
+                    "configuration\n"
+                "Error: Errors have occurred, therefore pcs is unable to "
+                    "continue\n"
+            )
         )
 
     def test_fail_on_invalid_options(self):
         self.assert_pcs_fail(
-            "booth ticket add TicketA site=a timeout=", console_report(
+            "booth ticket add TicketA site=a timeout=",
+            (
                 "Error: invalid booth ticket option 'site', allowed options"
                     " are: 'acquire-after', 'attr-prereq', "
                     "'before-acquire-handler', 'expire', 'renewal-freq', "
-                    "'retries', 'timeout', 'weights'"
-                ,
-                "Error: '' is not a valid timeout value, use no-empty",
+                    "'retries', 'timeout', 'weights'\n"
+                "Error: timeout cannot be empty\n"
+                "Error: Errors have occurred, therefore pcs is unable to "
+                    "continue\n"
             )
         )
 
@@ -243,23 +260,28 @@ class AddTicketTest(BoothTest):
             " 'expire', 'renewal-freq', 'retries', 'timeout', 'weights'"
         )
         self.assert_pcs_fail(
-            "booth ticket add TicketA unknown=a", console_report(
-                "Error: "+msg+", use --force to override",
-            )
+            "booth ticket add TicketA unknown=a",
+            (
+                "Error: {0}, use --force to override\n"
+                "Error: Errors have occurred, therefore pcs is unable to "
+                    "continue\n"
+            ).format(msg)
         )
         self.assert_pcs_success(
             "booth ticket add TicketA unknown=a --force",
             "Warning: {0}\n".format(msg),
         )
 
-class DeleteRemoveTicketTest(BoothTest):
+class DeleteRemoveTicketMixin():
     command = None
 
+    # plyint cannot possibly know this is being mixed into TestCase classes
+    # pylint: disable=invalid-name
     def setUp(self):
         super().setUp()
         self.pcs_runner.cib_file = None
 
-    def _test_usage(self):
+    def test_usage(self):
         self.assert_pcs_fail(
             f"booth ticket {self.command}",
             stdout_start=outdent(f"""
@@ -267,39 +289,45 @@ class DeleteRemoveTicketTest(BoothTest):
                     ticket {self.command} <""")
         )
 
-    def _test_success_remove_ticket(self):
+    def test_success_remove_ticket(self):
         self.assert_pcs_success("booth ticket add TicketA")
-        self.assert_pcs_success("booth config", stdout_full=console_report(
-            "authfile = {0}".format(BOOTH_KEY_FILE),
-            "site = 1.1.1.1",
-            "site = 2.2.2.2",
-            "arbitrator = 3.3.3.3",
-            'ticket = "TicketA"',
-        ))
+        self.assert_pcs_success(
+            "booth config",
+            dedent("""\
+                authfile = {0}
+                site = 1.1.1.1
+                site = 2.2.2.2
+                arbitrator = 3.3.3.3
+                ticket = "TicketA"
+                """.format(BOOTH_KEY_FILE),
+            )
+        )
         self.assert_pcs_success(f"booth ticket {self.command} TicketA")
-        self.assert_pcs_success("booth config", stdout_full=console_report(
-            "authfile = {0}".format(BOOTH_KEY_FILE),
-            "site = 1.1.1.1",
-            "site = 2.2.2.2",
-            "arbitrator = 3.3.3.3",
-        ))
-
-    def _test_fail_when_ticket_does_not_exist(self):
-        self.assert_pcs_fail(
-            f"booth ticket {self.command} TicketA",
-            "Error: booth ticket name 'TicketA' does not exist\n"
+        self.assert_pcs_success(
+            "booth config",
+            dedent("""\
+                authfile = {0}
+                site = 1.1.1.1
+                site = 2.2.2.2
+                arbitrator = 3.3.3.3
+                """.format(BOOTH_KEY_FILE),
+            )
         )
 
-class DeleteTicketTest(
-    DeleteRemoveTicketTest,
-    metaclass=ParametrizedTestMetaClass
-):
+    def test_fail_when_ticket_does_not_exist(self):
+        self.assert_pcs_fail(
+            f"booth ticket {self.command} TicketA",
+            (
+                "Error: booth ticket name 'TicketA' does not exist\n"
+                "Error: Errors have occurred, therefore pcs is unable to "
+                    "continue\n"
+            )
+        )
+
+class DeleteTicketTest(DeleteRemoveTicketMixin, BoothTest):
     command = "delete"
 
-class RemoveTicketTest(
-    DeleteRemoveTicketTest,
-    metaclass=ParametrizedTestMetaClass
-):
+class RemoveTicketTest(DeleteRemoveTicketMixin, BoothTest):
     command = "remove"
 
 @need_booth_resource_agent

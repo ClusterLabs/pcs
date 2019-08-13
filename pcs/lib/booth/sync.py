@@ -6,11 +6,11 @@ from pcs.lib.communication.booth import BoothSaveFiles
 from pcs.lib.communication.tools import run
 from pcs.lib.errors import LibraryError
 from pcs.lib.booth import (
-    config_files as booth_conf,
-    config_structure,
+    config_files,
     config_parser,
     reports,
 )
+from pcs.lib.booth.config_facade import ConfigFacade
 
 def send_all_config_to_node(
     communicator,
@@ -30,7 +30,7 @@ def send_all_config_to_node(
     skip_wrong_config -- if True skip local configs that are unreadable
     """
     _reporter = SimpleReportProcessor(reporter)
-    config_dict = booth_conf.read_configs(reporter, skip_wrong_config)
+    config_dict = config_files.read_configs(reporter, skip_wrong_config)
     if not config_dict:
         return
 
@@ -39,16 +39,15 @@ def send_all_config_to_node(
     file_list = []
     for config, config_data in sorted(config_dict.items()):
         try:
-            authfile_path = config_structure.get_authfile(
-                config_parser.parse(config_data)
-            )
+            booth_conf = ConfigFacade(config_parser.parse(config_data))
+            authfile_path = booth_conf.get_authfile()
             file_list.append({
                 "name": config,
                 "data": config_data,
                 "is_authfile": False
             })
             if authfile_path:
-                content = booth_conf.read_authfile(reporter, authfile_path)
+                content = config_files.read_authfile(reporter, authfile_path)
                 if not content:
                     continue
                 file_list.append({

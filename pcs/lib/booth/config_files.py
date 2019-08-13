@@ -37,6 +37,7 @@ def _read_config(file_name):
         return file.read()
 
 
+# TODO switch to new files framework
 def read_configs(reporter, skip_wrong_config=False):
     """
     Returns content of all configs present on local system in dictionary,
@@ -66,6 +67,7 @@ def read_configs(reporter, skip_wrong_config=False):
     return output
 
 
+# TODO switch to new files framework
 def read_authfile(reporter, path):
     """
     Returns content of specified authfile as bytes. None if file is not in

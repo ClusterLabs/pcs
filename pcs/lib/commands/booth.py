@@ -3,17 +3,18 @@ import os.path
 from functools import partial
 
 from pcs import settings
+from pcs.common.reports import SimpleReportProcessor
 from pcs.common.tools import join_multilines
 from pcs.lib import external, reports, tools
 from pcs.lib.cib.resource import primitive, group
 from pcs.lib.booth import (
-    config_exchange,
     config_files,
-    config_structure,
+    config_validators,
     reports as booth_reports,
     resource,
     status,
 )
+from pcs.lib.booth.config_facade import ConfigFacade
 from pcs.lib.booth.config_parser import parse, build
 from pcs.lib.booth.env import get_config_file_name
 from pcs.lib.cib.tools import get_resources, IdProvider
@@ -27,29 +28,31 @@ from pcs.lib.node import get_existing_nodes_names
 from pcs.lib.resource_agent import find_valid_resource_agent_by_name
 
 
-def config_setup(env, booth_configuration, overwrite_existing=False):
+def config_setup(env, site_list, arbitrator_list, overwrite_existing=False):
     """
-    create boot configuration
-    list site_list contains site adresses of multisite
-    list arbitrator_list contains arbitrator adresses of multisite
-    """
+    create booth configuration
 
-    config_content = config_exchange.from_exchange_format(booth_configuration)
-    config_structure.validate_peers(
-        *config_structure.take_peers(config_content)
+    LibraryEnvironment env
+    list site_list -- site adresses of multisite
+    list arbitrator_list -- arbitrator adresses of multisite
+    bool overwrite_existing -- allow overwriting existing files
+    """
+    report_processor = SimpleReportProcessor(env.report_processor)
+    report_processor.report_list(
+        config_validators.create(site_list, arbitrator_list)
     )
+    if report_processor.has_errors:
+        raise LibraryError()
 
+    booth_conf = ConfigFacade.create(site_list, arbitrator_list)
     env.booth.create_key(
         tools.generate_binary_key(
             random_bytes_count=settings.booth_authkey_bytes
         ),
         overwrite_existing
     )
-    config_content = config_structure.set_authfile(
-        config_content,
-        env.booth.key_path
-    )
-    env.booth.create_config(build(config_content), overwrite_existing)
+    booth_conf.set_authfile(env.booth.key_path)
+    env.booth.create_config(build(booth_conf.config), overwrite_existing)
 
 def config_destroy(env, ignore_config_load_problems=False):
     env.booth.command_expect_live_env()
@@ -81,9 +84,8 @@ def config_destroy(env, ignore_config_load_problems=False):
 
     authfile_path = None
     try:
-        authfile_path = config_structure.get_authfile(
-            parse(env.booth.get_config_content())
-        )
+        booth_conf = ConfigFacade(parse(env.booth.get_config_content()))
+        authfile_path = booth_conf.get_authfile()
     except LibraryError:
         if not ignore_config_load_problems:
             raise LibraryError(booth_reports.booth_cannot_identify_keyfile())
@@ -130,31 +132,47 @@ def config_text(env, node_name=None):
         raise LibraryError(reports.invalid_response_format(node_name))
 
 
-def config_ticket_add(env, ticket_name, options, allow_unknown_options):
+def config_ticket_add(env, ticket_name, options, allow_unknown_options=False):
     """
-    add ticket to booth configuration
-    dict options contains options for ticket
-    bool allow_unknown_options decide if can be used options not listed in
-        ticket options nor global options
+    add a ticket to booth configuration
+
+    LibraryEnvironment env
+    string ticket_name -- the name of the ticket to be created
+    dict options -- options for the ticket
+    bool allow_unknown_options -- allow using options unknown to pcs
     """
-    booth_configuration = config_structure.add_ticket(
-        env.report_processor,
-        parse(env.booth.get_config_content()),
-        ticket_name,
-        options,
-        allow_unknown_options,
+    report_processor = SimpleReportProcessor(env.report_processor)
+    booth_conf = ConfigFacade(parse(env.booth.get_config_content()))
+    report_processor.report_list(
+        config_validators.add_ticket(
+            booth_conf,
+            ticket_name,
+            options,
+            allow_unknown_options=allow_unknown_options
+        )
     )
-    env.booth.push_config(build(booth_configuration))
+    if report_processor.has_errors:
+        raise LibraryError()
+
+    booth_conf.add_ticket(ticket_name, options)
+    env.booth.push_config(build(booth_conf.config))
 
 def config_ticket_remove(env, ticket_name):
     """
-    remove ticket from booth configuration
+    remove a ticket from booth configuration
+
+    LibraryEnvironment env
+    string ticket_name -- the name of the ticket to be removed
     """
-    booth_configuration = config_structure.remove_ticket(
-        parse(env.booth.get_config_content()),
-        ticket_name
+    report_processor = SimpleReportProcessor(env.report_processor)
+    booth_conf = ConfigFacade(parse(env.booth.get_config_content()))
+    report_processor.report_list(
+        config_validators.remove_ticket(booth_conf, ticket_name)
     )
-    env.booth.push_config(build(booth_configuration))
+    if report_processor.has_errors:
+        raise LibraryError()
+    booth_conf.remove_ticket(ticket_name)
+    env.booth.push_config(build(booth_conf.config))
 
 def create_in_cluster(env, ip, allow_absent_resource_agent=False):
     """
@@ -266,7 +284,8 @@ def config_sync(env, skip_offline_nodes=False):
     skip_offline_nodes -- if True offline nodes will be skipped
     """
     config = env.booth.get_config_content()
-    authfile_path = config_structure.get_authfile(parse(config))
+    booth_conf = ConfigFacade(parse(config))
+    authfile_path = booth_conf.get_authfile()
     authfile_content = config_files.read_authfile(
         env.report_processor, authfile_path
     )

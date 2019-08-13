@@ -4,7 +4,7 @@ from pcs_test.tools.assertions import assert_raise_library_error
 
 from pcs.common import report_codes
 from pcs.lib.booth import config_parser
-from pcs.lib.booth.config_structure import ConfigItem
+from pcs.lib.booth.config_parser import ConfigItem
 from pcs.lib.errors import ReportItemSeverity as severities
 
 
