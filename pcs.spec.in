@@ -116,8 +116,10 @@ BuildRequires: rubygems
 BuildRequires: systemd
 # pcsd fonts and font management tools for creating symlinks to fonts
 BuildRequires: fontconfig
+%if %{undefined suse_version}
 BuildRequires: liberation-sans-fonts
 BuildRequires: overpass-fonts
+%endif
 
 # for building web ui
 BuildRequires: npm
@@ -157,8 +159,8 @@ Requires(postun): systemd
 # more details: https://bugzilla.redhat.com/show_bug.cgi?id=1717113
 Requires: pam
 # pcsd fonts
-Requires: liberation-sans-fonts
-Requires: overpass-fonts
+Recommends: liberation-sans-fonts
+Recommends: overpass-fonts
 
 Provides: bundled(tornado) = %{tornado_version}
 Provides: bundled(backports) = %{version_rubygem_backports}
