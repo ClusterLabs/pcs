@@ -250,7 +250,7 @@ cp %{bundled_src_dir}/tornado/README.rst tornado_README.rst
 %define debug_package %{nil}
 
 %install
-%if 0%{?fedora} >= 29
+%if 0%{?fedora} >= 29 || 0%{?suse_version} > 1500
 %define gem_install_params --no-document
 %else
 %define gem_install_params --no-rdoc --no-ri
