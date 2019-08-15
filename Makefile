@@ -301,3 +301,72 @@ endif
 
 newversion:
 	$(PYTHON) newversion.py
+
+# RPM BUILD
+# =========
+RPM_BUILD_DIR = rpm_build
+SPEC = pcs.spec
+DIST_VERSION_NAME = $(shell if (git describe --tag --exact-match > /dev/null); then git describe --tag --exact-match; else git rev-parse HEAD; fi)
+DIST_NAME = pcs-$(DIST_VERSION_NAME)
+DIST_ARCHIVE_NAME = $(DIST_NAME).tar.gz
+RPMBUILDOPTS = --define "_sourcedir $(PWD)/$(RPM_BUILD_DIR)" \
+               --define "_specdir $(PWD)/$(RPM_BUILD_DIR)" \
+               --define "_builddir $(PWD)/$(RPM_BUILD_DIR)" \
+               --define "_srcrpmdir $(PWD)/$(RPM_BUILD_DIR)" \
+               --define "_rpmdir $(PWD)/$(RPM_BUILD_DIR)"
+BUNDLE_CONGIG_FILE = $(RPM_BUILD_DIR)/pcsd-bundle-config
+
+$(RPM_BUILD_DIR):
+	mkdir -p $@
+
+clean:
+	$(PYTHON) setup.py clean
+	rm -rf $(RPM_BUILD_DIR)
+	rm -f $(SPEC)
+	rm -rf $(BUNDLE_LOCAL_DIR)
+	rm -f pcs-*.tar.gz
+
+dist: clean
+	rm -rf /tmp/$(DIST_NAME)
+	mkdir -p /tmp/$(DIST_NAME)
+	cp -r . /tmp/$(DIST_NAME)
+	tar -zcf $(DIST_ARCHIVE_NAME) -C /tmp $(DIST_NAME)
+	rm -rf /tmp/$(DIST_NAME)
+
+$(BUNDLE_CONGIG_FILE): $(RPM_BUILD_DIR)
+	rm -f $@
+	echo '---' >> $@
+	echo 'BUNDLE_FROZEN: "true"' >> $@
+	echo 'BUNDLE_PATH: "vendor/bundle"' >> $@
+	echo 'BUNDLE_DISABLE_SHARED_GEMS: "true"' >> $@
+	echo "BUNDLE_BUILD: \"--with-ldflags='-Wl,-z,now -Wl,-z,relro'\"" >> $@
+
+$(SPEC): $(SPEC).in
+	rm -f $@-t $@
+	date="$(shell LC_ALL=C date "+%a %b %d %Y")" && \
+	gitversion="$(shell git describe --abbrev=0 --tags)" && \
+	numcommit=`git rev-list $$gitversion..HEAD | wc -l` && \
+	gitcommit="$(shell git rev-parse HEAD)" && \
+	sed \
+		-e "s#@VERSION@#$$gitversion#g" \
+		-e "s#@NUMCOMMIT@#$$numcommit#g" \
+		-e "s#@COMMIT@#$$gitcommit#g" \
+		-e "s#@DATE@#$$date#g" \
+	$< > $@-t; \
+	chmod a-w $@-t
+	mv $@-t $@
+
+sources: dist $(SPEC) $(RPM_BUILD_DIR)
+	cd $(RPM_BUILD_DIR) && \
+	cp ../$(DIST_ARCHIVE_NAME) $(DIST_ARCHIVE_NAME) && \
+	cp ../$(SPEC) $(SPEC) && \
+	spectool -S $(SPEC) | sed -En "s/^[^ ]+ (.*)$$/\1/p" | grep "^http.*" | xargs -n 1 curl -OL
+	$(MAKE) $(BUNDLE_CONGIG_FILE)
+
+srpm: sources
+	cd $(RPM_BUILD_DIR) && \
+	rpmbuild $(RPMBUILDOPTS) --nodeps -bs $(SPEC)
+
+rpm: sources
+	cd $(RPM_BUILD_DIR) && \
+	rpmbuild $(RPMBUILDOPTS) -ba $(SPEC)

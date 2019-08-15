@@ -1,0 +1,402 @@
+%global pcs_git_version @VERSION@
+%global numcommit @NUMCOMMIT@
+%global commit @COMMIT@
+
+Name: pcs
+Version: %{pcs_git_version}
+Release: 99.git.%{numcommit}.%{commit}.1%{?dist}
+# https://fedoraproject.org/wiki/Licensing:Main?rd=Licensing#Good_Licenses
+# GPLv2: pcs
+# ASL 2.0: tornado
+# MIT: handlebars
+License: GPLv2 and ASL 2.0 and MIT
+URL: https://github.com/ClusterLabs/pcs
+Summary: Pacemaker Configuration System
+
+%if "%{numcommit}" == "0"
+%global pcs_source_name %{name}-%{pcs_git_version}
+%else
+%global pcs_source_name %{name}-%{commit}
+%endif
+
+# ui_commit can be determined by hash, tag or branch
+%global ui_commit 0.1.1
+%global ui_src_name pcs-web-ui-%{ui_commit}
+
+%global pcs_snmp_pkg_name  pcs-snmp
+
+%global pyagentx_version   0.4.pcs.2
+%global tornado_version    5.0.2
+%global version_rubygem_backports  3.11.4
+%global version_rubygem_ethon  0.11.0
+%global version_rubygem_ffi  1.9.25
+%global version_rubygem_json  2.1.0
+%global version_rubygem_mustermann  1.0.3
+%global version_rubygem_open4  1.3.4
+%global version_rubygem_rack  2.0.6
+%global version_rubygem_rack_protection  2.0.4
+%global version_rubygem_rack_test  1.0.0
+%global version_rubygem_sinatra  2.0.4
+%global version_rubygem_tilt  2.0.9
+
+# We do not use _libdir macro because upstream is not prepared for it.
+# Pcs does not include binaries and thus it should live in /usr/lib. Tornado
+# and gems include binaries and thus it should live in /usr/lib64. But the
+# path to tornado/gems is hardcoded in pcs sources. Modify hard links in pcs
+# sources is not the way since then rpmdiff complains that the same file has
+# different content in different architectures.
+%global pcs_libdir %{_prefix}/lib
+%global bundled_src_dir pcs/bundled
+%global pcsd_public_dir pcsd/public
+%global rubygem_cache_dir pcsd/vendor/cache
+%global rubygem_bundle_dir pcsd/vendor/bundle/ruby
+
+# mangling shebang in /usr/lib/pcsd/vendor/bundle/ruby/gems/rack-2.0.5/test/cgi/test from /usr/bin/env ruby to #!/usr/bin/ruby
+#*** ERROR: ./usr/lib/pcsd/vendor/bundle/ruby/gems/rack-2.0.5/test/cgi/test.ru has shebang which doesn't start with '/' (../../bin/rackup)
+#mangling shebang in /usr/lib/pcsd/vendor/bundle/ruby/gems/rack-2.0.5/test/cgi/rackup_stub.rb from /usr/bin/env ruby to #!/usr/bin/ruby
+#*** WARNING: ./usr/lib/pcsd/vendor/bundle/ruby/gems/rack-2.0.5/test/cgi/sample_rackup.ru is executable but has empty or no shebang, removing executable bit
+#*** WARNING: ./usr/lib/pcsd/vendor/bundle/ruby/gems/rack-2.0.5/test/cgi/lighttpd.conf is executable but has empty or no shebang, removing executable bit
+#*** ERROR: ambiguous python shebang in /usr/lib/pcsd/vendor/bundle/ruby/gems/ffi-1.9.25/ext/ffi_c/libffi/generate-darwin-source-and-headers.py: #!/usr/bin/env python. Change it to python3 (or python2) explicitly.
+%undefine __brp_mangle_shebangs
+
+# https://fedoraproject.org/wiki/Changes/Avoid_usr_bin_python_in_RPM_Build#Python_bytecompilation
+# Enforce python3 because bytecompilation of tornado produced warnings:
+# DEPRECATION WARNING: python2 invoked with /usr/bin/python.
+#    Use /usr/bin/python3 or /usr/bin/python2
+#    /usr/bin/python will be removed or switched to Python 3 in the future.
+%global __python %{__python3}
+
+Source0: %{pcs_source_name}.tar.gz
+Source1: pcsd-bundle-config
+
+Source41: https://github.com/ondrejmular/pyagentx/archive/v%{pyagentx_version}.tar.gz#/pyagentx-%{pyagentx_version}.tar.gz
+Source42: https://github.com/tornadoweb/tornado/archive/v%{tornado_version}.tar.gz#/tornado-%{tornado_version}.tar.gz
+
+Source81: https://rubygems.org/downloads/backports-%{version_rubygem_backports}.gem
+Source82: https://rubygems.org/downloads/ethon-%{version_rubygem_ethon}.gem
+Source83: https://rubygems.org/downloads/ffi-%{version_rubygem_ffi}.gem
+Source84: https://rubygems.org/downloads/json-%{version_rubygem_json}.gem
+Source86: https://rubygems.org/downloads/mustermann-%{version_rubygem_mustermann}.gem
+Source87: https://rubygems.org/downloads/open4-%{version_rubygem_open4}.gem
+Source88: https://rubygems.org/downloads/rack-%{version_rubygem_rack}.gem
+Source89: https://rubygems.org/downloads/rack-protection-%{version_rubygem_rack_protection}.gem
+Source90: https://rubygems.org/downloads/rack-test-%{version_rubygem_rack_test}.gem
+Source91: https://rubygems.org/downloads/sinatra-%{version_rubygem_sinatra}.gem
+Source92: https://rubygems.org/downloads/tilt-%{version_rubygem_tilt}.gem
+
+Source100: https://github.com/idevat/pcs-web-ui/archive/%{ui_commit}/%{ui_src_name}.tar.gz
+Source101: https://github.com/idevat/pcs-web-ui/releases/download/%{ui_commit}/pcs-web-ui-node-modules-%{ui_commit}.tar.xz
+
+#printf from coreutils is used in makefile
+BuildRequires: coreutils
+BuildRequires: execstack
+BuildRequires: tar
+
+# python for pcs
+%if 0%{?fedora} >= 29
+BuildRequires: python3 >= 3.6
+BuildRequires: python3-setuptools
+%endif
+
+%if 0%{?rhel} >= 8
+BuildRequires: platform-python
+BuildRequires: platform-python-setuptools
+%endif
+
+BuildRequires: python3-devel
+
+# gcc for compiling custom rubygems
+BuildRequires: gcc
+BuildRequires: gcc-c++
+# ruby and gems for pcsd
+BuildRequires: ruby >= 2.2.0
+BuildRequires: ruby-devel
+BuildRequires: rubygems
+# for post, preun and postun macros
+BuildRequires: systemd
+# pcsd fonts and font management tools for creating symlinks to fonts
+BuildRequires: fontconfig
+%if %{undefined suse_version}
+BuildRequires: liberation-sans-fonts
+BuildRequires: overpass-fonts
+%endif
+
+# for building web ui
+BuildRequires: npm
+
+# python and libraries for pcs, setuptools for pcs entrypoint
+%if 0%{?fedora} >= 29
+Requires: python3 >= 3.6
+Requires: python3-setuptools
+%endif
+
+%if 0%{?rhel} >= 8
+Requires: platform-python
+Requires: platform-python-setuptools
+%endif
+
+Requires: python3-lxml
+Requires: python3-clufter => 0.70.0
+Requires: python3-pycurl
+# ruby and gems for pcsd
+Requires: ruby >= 2.2.0
+Requires: rubygems
+# for killall
+Requires: psmisc
+# for working with certificates (validation etc.)
+Requires: openssl
+Requires: python3-pyOpenSSL
+# cluster stack and related packages
+Requires: pacemaker >= 2.0.0
+Requires: corosync >= 3.0
+# pcs enables corosync encryption by default so we require libknet1-plugins-all
+Requires: libknet1-plugins-all
+# for post, preun and postun macros
+Requires(post): systemd
+Requires(preun): systemd
+Requires(postun): systemd
+# pam is used for authentication inside daemon (python ctypes)
+# more details: https://bugzilla.redhat.com/show_bug.cgi?id=1717113
+Requires: pam
+# pcsd fonts
+Recommends: liberation-sans-fonts
+Recommends: overpass-fonts
+
+Provides: bundled(tornado) = %{tornado_version}
+Provides: bundled(backports) = %{version_rubygem_backports}
+Provides: bundled(ethon) = %{version_rubygem_ethon}
+Provides: bundled(ffi) = %{version_rubygem_ffi}
+Provides: bundled(json) = %{version_rubygem_json}
+Provides: bundled(mustermann) = %{version_rubygem_mustermann}
+Provides: bundled(open4) = %{version_rubygem_open4}
+Provides: bundled(rack) = %{version_rubygem_rack}
+Provides: bundled(rack) = %{version_rubygem_rack_protection}
+Provides: bundled(rack) = %{version_rubygem_rack_test}
+Provides: bundled(sinatra) = %{version_rubygem_sinatra}
+Provides: bundled(tilt) = %{version_rubygem_tilt}
+
+%description
+pcs is a corosync and pacemaker configuration tool.  It permits users to
+easily view, modify and create pacemaker based clusters.
+
+# pcs-snmp package definition
+%package -n %{pcs_snmp_pkg_name}
+Group: System Environment/Base
+Summary: Pacemaker cluster SNMP agent
+# https://fedoraproject.org/wiki/Licensing:Main?rd=Licensing#Good_Licenses
+# GPLv2: pcs
+# BSD-2-Clause: pyagentx
+License: GPLv2 and BSD-2-Clause
+URL: https://github.com/ClusterLabs/pcs
+
+# tar for unpacking pyagetx source tar ball
+BuildRequires: tar
+
+Requires: pcs = %{version}-%{release}
+Requires: pacemaker
+Requires: net-snmp
+
+Provides: bundled(pyagentx) = %{pyagentx_version}
+
+%description -n %{pcs_snmp_pkg_name}
+SNMP agent that provides information about pacemaker cluster to the master agent (snmpd)
+
+%prep
+%autosetup -n %{pcs_source_name}
+
+# prepare dirs/files necessary for building web ui
+# inside SOURCE100 is only directory %%{ui_src_name}
+tar -xzf %SOURCE100 -C %{pcsd_public_dir}
+tar -xf %SOURCE101 -C %{pcsd_public_dir}/%{ui_src_name}
+
+# prepare dirs/files necessary for building all bundles
+# -----------------------------------------------------
+# 1) configuration for rubygems
+mkdir -p pcsd/.bundle
+cp -f %SOURCE1 pcsd/.bundle/config
+
+# 2) rubygems sources
+mkdir -p pcsd/vendor/cache
+cp -f %SOURCE81 pcsd/vendor/cache
+cp -f %SOURCE82 pcsd/vendor/cache
+cp -f %SOURCE83 pcsd/vendor/cache
+cp -f %SOURCE84 pcsd/vendor/cache
+cp -f %SOURCE86 pcsd/vendor/cache
+cp -f %SOURCE87 pcsd/vendor/cache
+cp -f %SOURCE88 pcsd/vendor/cache
+cp -f %SOURCE89 pcsd/vendor/cache
+cp -f %SOURCE90 pcsd/vendor/cache
+cp -f %SOURCE91 pcsd/vendor/cache
+cp -f %SOURCE92 pcsd/vendor/cache
+
+
+# 3) dir for python bundles
+mkdir -p %{bundled_src_dir}
+
+# 4) sources for pyagentx
+tar -xzf %SOURCE41 -C %{bundled_src_dir}
+mv %{bundled_src_dir}/pyagentx-%{pyagentx_version} %{bundled_src_dir}/pyagentx
+cp %{bundled_src_dir}/pyagentx/LICENSE.txt pyagentx_LICENSE.txt
+cp %{bundled_src_dir}/pyagentx/CONTRIBUTORS.txt pyagentx_CONTRIBUTORS.txt
+cp %{bundled_src_dir}/pyagentx/README.md pyagentx_README.md
+
+# 5) sources for tornado
+tar -xzf %SOURCE42 -C %{bundled_src_dir}
+mv %{bundled_src_dir}/tornado-%{tornado_version} %{bundled_src_dir}/tornado
+cp %{bundled_src_dir}/tornado/LICENSE tornado_LICENSE
+cp %{bundled_src_dir}/tornado/README.rst tornado_README.rst
+
+%build
+%define debug_package %{nil}
+
+%install
+%if 0%{?fedora} >= 29 || 0%{?suse_version} > 1500
+%define gem_install_params --no-document
+%else
+%define gem_install_params --no-rdoc --no-ri
+%endif
+
+# build bundled rubygems (in main install it is disabled by BUILD_GEMS=false)
+mkdir -p %{rubygem_bundle_dir}
+gem install \
+  --force --verbose -l --no-user-install %{gem_install_params} \
+  -i %{rubygem_bundle_dir} \
+  %{rubygem_cache_dir}/backports-%{version_rubygem_backports}.gem \
+  %{rubygem_cache_dir}/ethon-%{version_rubygem_ethon}.gem \
+  %{rubygem_cache_dir}/ffi-%{version_rubygem_ffi}.gem \
+  %{rubygem_cache_dir}/json-%{version_rubygem_json}.gem \
+  %{rubygem_cache_dir}/mustermann-%{version_rubygem_mustermann}.gem \
+  %{rubygem_cache_dir}/open4-%{version_rubygem_open4}.gem \
+  %{rubygem_cache_dir}/rack-%{version_rubygem_rack}.gem \
+  %{rubygem_cache_dir}/rack-protection-%{version_rubygem_rack_protection}.gem \
+  %{rubygem_cache_dir}/rack-test-%{version_rubygem_rack_test}.gem \
+  %{rubygem_cache_dir}/sinatra-%{version_rubygem_sinatra}.gem \
+  %{rubygem_cache_dir}/tilt-%{version_rubygem_tilt}.gem \
+  -- '--with-ldflags=-Wl,-z,relro -Wl,-z,ibt -Wl,-z,now -Wl,--gc-sections' \
+     '--with-cflags=-O2 -ffunction-sections'
+
+# We can remove files required for gem compilation
+rm -rf %{rubygem_bundle_dir}/gems/ffi-%{version_rubygem_ffi}/ext
+rm -rf %{rubygem_bundle_dir}/gems/json-%{version_rubygem_json}/ext
+
+
+# With this file there is "File is not stripped" problem during rpmdiff
+# See https://docs.engineering.redhat.com/display/HTD/rpmdiff-elf-stripping
+for fname in `find %{rubygem_bundle_dir}/extensions -type f -name "*.so"`; do
+  strip ${fname}
+done
+
+# build web ui and put it to pcsd
+make -C %{pcsd_public_dir}/%{ui_src_name} build
+mv %{pcsd_public_dir}/%{ui_src_name}/build  pcsd/public/ui
+rm -r %{pcsd_public_dir}/%{ui_src_name}
+
+# main pcs install
+make install \
+  DESTDIR=$RPM_BUILD_ROOT \
+  PREFIX=%{_prefix} \
+  SYSTEMD_UNIT_DIR=%{_unitdir} \
+  LIB_DIR=%{pcs_libdir} \
+  PYTHON=%{__python3} \
+  PYTHON_SITELIB=%{python3_sitelib} \
+  BASH_COMPLETION_DIR=%{_datadir}/bash-completion/completions \
+  BUNDLE_PYAGENTX_SRC_DIR=`readlink -f %{bundled_src_dir}/pyagentx` \
+  BUNDLE_TORNADO_SRC_DIR=`readlink -f %{bundled_src_dir}/tornado` \
+  BUILD_GEMS=false \
+  SYSTEMCTL_OVERRIDE=true \
+  hdrdir="%{_includedir}" \
+  rubyhdrdir="%{_includedir}" \
+  includedir="%{_includedir}"
+
+# With this file there is "File is not stripped" problem during rpmdiff
+# See https://docs.engineering.redhat.com/display/HTD/rpmdiff-elf-stripping
+for fname in `find ${RPM_BUILD_ROOT}%{pcs_libdir}/pcs/bundled/packages/tornado/ -type f -name "*.so"`; do
+  strip ${fname}
+done
+
+#after the ruby gem compilation we do not need ruby gems in the cache
+rm -r -v $RPM_BUILD_ROOT%{pcs_libdir}/%{rubygem_cache_dir}
+
+pcsd_dir=$RPM_BUILD_ROOT%{pcs_libdir}/pcsd
+#remove pcsd tests, we do not distribute them in the rpm
+rm -r -v ${pcsd_dir}/test
+
+# remove javascript testing files
+rm -r -v ${pcsd_dir}/public/js/dev
+
+%post
+%systemd_post pcsd.service
+
+%post -n %{pcs_snmp_pkg_name}
+%systemd_post pcs_snmp_agent.service
+
+%preun
+%systemd_preun pcsd.service
+
+%preun -n %{pcs_snmp_pkg_name}
+%systemd_preun pcs_snmp_agent.service
+
+%postun
+%systemd_postun_with_restart pcsd.service
+
+%postun -n %{pcs_snmp_pkg_name}
+%systemd_postun_with_restart pcs_snmp_agent.service
+
+%files
+%doc CHANGELOG.md
+%doc README.md
+%doc tornado_README.rst
+%license tornado_LICENSE
+%license COPYING
+%{python3_sitelib}/pcs
+%{python3_sitelib}/pcs-%{version}-py3.*.egg-info
+%{_sbindir}/pcs
+%{_sbindir}/pcsd
+%{pcs_libdir}/pcs/pcs_internal
+%{pcs_libdir}/pcsd/*
+%{pcs_libdir}/pcsd/.bundle/config
+%{pcs_libdir}/pcs/bundled/packages/tornado*
+%{_unitdir}/pcsd.service
+%{_datadir}/bash-completion/completions/pcs
+%{_sharedstatedir}/pcsd
+%{_sysconfdir}/pam.d/pcsd
+%dir %{_var}/log/pcsd
+%config(noreplace) %{_sysconfdir}/logrotate.d/pcsd
+%config(noreplace) %{_sysconfdir}/sysconfig/pcsd
+%ghost %config(noreplace) %attr(0600,root,root) %{_sharedstatedir}/pcsd/cfgsync_ctl
+%ghost %config(noreplace) %attr(0600,root,root) %{_sharedstatedir}/pcsd/known-hosts
+%ghost %config(noreplace) %attr(0600,root,root) %{_sharedstatedir}/pcsd/pcsd.cookiesecret
+%ghost %config(noreplace) %attr(0600,root,root) %{_sharedstatedir}/pcsd/pcsd.crt
+%ghost %config(noreplace) %attr(0600,root,root) %{_sharedstatedir}/pcsd/pcsd.key
+%ghost %config(noreplace) %attr(0644,root,root) %{_sharedstatedir}/pcsd/pcs_settings.conf
+%ghost %config(noreplace) %attr(0644,root,root) %{_sharedstatedir}/pcsd/pcs_users.conf
+%{_mandir}/man8/pcs.*
+%{_mandir}/man8/pcsd.*
+%exclude %{pcs_libdir}/pcsd/*.debian
+%exclude %{pcs_libdir}/pcsd/pcsd.service
+%exclude %{pcs_libdir}/pcsd/pcsd.conf
+%exclude %{pcs_libdir}/pcsd/pcsd.8
+%exclude %{pcs_libdir}/pcsd/public/js/dev/*
+%exclude %{pcs_libdir}/pcsd/Gemfile
+%exclude %{pcs_libdir}/pcsd/Gemfile.lock
+%exclude %{pcs_libdir}/pcsd/Makefile
+%exclude %{python3_sitelib}/pcs/bash_completion
+%exclude %{python3_sitelib}/pcs/pcs.8
+%exclude %{python3_sitelib}/pcs/pcs
+
+%files -n %{pcs_snmp_pkg_name}
+%{pcs_libdir}/pcs/pcs_snmp_agent
+%{pcs_libdir}/pcs/bundled/packages/pyagentx*
+%{_unitdir}/pcs_snmp_agent.service
+%{_datadir}/snmp/mibs/PCMK-PCS*-MIB.txt
+%{_mandir}/man8/pcs_snmp_agent.*
+%config(noreplace) %{_sysconfdir}/sysconfig/pcs_snmp_agent
+%doc CHANGELOG.md
+%doc pyagentx_CONTRIBUTORS.txt
+%doc pyagentx_README.md
+%license COPYING
+%license pyagentx_LICENSE.txt
+
+%changelog
+* @DATE@ Autotools generated version <nobody@nowhere.org> - @VERSION@-99.git.@NUMCOMMIT@.@COMMIT@.1
+- Autotools generated version
