@@ -10,7 +10,10 @@ from pcs.cli.common.console_report import(
     _add_s
 )
 from pcs.cli.common.reports import CODE_BUILDER_MAP
-from pcs.common import env_file_role_codes
+from pcs.common import (
+    env_file_role_codes,
+    file_type_codes,
+)
 from pcs.common.fencing_topology import (
     TARGET_TYPE_NODE,
     TARGET_TYPE_REGEXP,
@@ -4430,4 +4433,21 @@ class SystemWillReset(NameBuildTest):
         self.assert_message_from_report(
             "System will reset shortly",
             reports.system_will_reset()
+        )
+
+class ParseErrorJsonFile(NameBuildTest):
+    def test_success(self):
+        self.assert_message_from_report(
+            "Unable to parse known-hosts file '/tmp/known-hosts': "
+                "some reason: line 15 column 5 (char 100)"
+            ,
+            reports.parse_error_json_file(
+                file_type_codes.PCS_KNOWN_HOSTS,
+                "/tmp/known-hosts",
+                15,
+                5,
+                100,
+                "some reason",
+                "some reason: line 15 column 5 (char 100)",
+            )
         )

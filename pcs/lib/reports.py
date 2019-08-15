@@ -4125,3 +4125,31 @@ def resource_unmove_unban_pcmk_success(resource_id, stdout, stderr):
             "stderr": stderr,
         }
     )
+
+def parse_error_json_file(
+    file_type_code, file_path, line_number, column_number, position, reason,
+    full_msg
+):
+    """
+    Unable to parse a file with JSON data
+
+    string file_type_code -- item from pcs.common.file_type_codes
+    string file_path -- path to the parsed file
+    int line_number -- the line where parsing failed
+    int column_number -- the column where parsing failed
+    int position -- the start index of the file where parsing failed
+    string reason -- the unformatted error message
+    string full_msg -- full error message including above int attributes
+    """
+    return ReportItem.error(
+        report_codes.PARSE_ERROR_JSON_FILE,
+        info={
+            "file_type_code": file_type_code,
+            "file_path": file_path,
+            "line_number": line_number,
+            "column_number": column_number,
+            "position": position,
+            "reason": reason,
+            "full_msg": full_msg,
+        }
+    )

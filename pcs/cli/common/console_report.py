@@ -6,6 +6,7 @@ import sys
 
 from pcs.common import (
     env_file_role_codes,
+    file_type_codes,
     report_codes as codes,
 )
 
@@ -40,6 +41,7 @@ _file_role_translation = {
     env_file_role_codes.PCSD_SSL_CERT: "pcsd SSL certificate",
     env_file_role_codes.PCSD_SSL_KEY: "pcsd SSL key",
     env_file_role_codes.PCS_SETTINGS_CONF: "pcs configuration",
+    file_type_codes.PCS_KNOWN_HOSTS: "known-hosts",
 }
 
 def warn(message):
@@ -2240,5 +2242,12 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
     ,
     codes.RESOURCE_UNMOVE_UNBAN_PCMK_SUCCESS: lambda info:
         stdout_stderr_to_string(info["stdout"], info["stderr"])
+    ,
+
+    codes.PARSE_ERROR_JSON_FILE: lambda info:
+        "Unable to parse {_file_type} file '{file_path}': {full_msg}".format(
+            _file_type=format_file_role(info["file_type_code"]),
+            **info
+        )
     ,
 }

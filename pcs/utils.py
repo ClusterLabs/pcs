@@ -327,7 +327,12 @@ def read_known_hosts_file():
             name: PcsKnownHost.from_known_host_file_dict(name, host)
             for name, host in known_hosts_struct["known_hosts"].items()
         }
-    # TODO catch also specific parser errors coming from pcs.lib
+    except LibraryError as e:
+        # TODO remove
+        # This is here to provide known-hosts to functions not yet
+        # overhauled to pcs.lib. Cli should never read known hosts from
+        # /var/lib/pcsd/.
+        process_library_reports(e.args)
     except pcs_file.RawFileError as e:
         console_report.warn(
             "Unable to read the known-hosts file: " + e.reason

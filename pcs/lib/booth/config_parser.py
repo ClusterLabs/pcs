@@ -1,6 +1,7 @@
 from collections import namedtuple
 import re
 
+from pcs.lib import file_interfaces
 from pcs.lib.booth import constants, reports
 from pcs.lib.errors import LibraryError
 
@@ -12,6 +13,28 @@ class ConfigItem(namedtuple("ConfigItem", "key value details")):
 class InvalidLines(Exception):
     pass
 
+class Parser(file_interfaces.ParserInterface):
+    def _main_parse(self):
+        try:
+            return _organize_lines(
+                _parse_to_raw_lines(
+                    self._raw_file_data.decode("utf-8")
+                )
+            )
+        except InvalidLines as e:
+            self._parse_error = True
+            self._report_list.append(
+                reports.booth_config_unexpected_lines(e.args[0])
+            )
+
+class Exporter(file_interfaces.ExporterInterface):
+    @staticmethod
+    def export(config_structure):
+        return "\n".join(
+            _build_to_lines(config_structure) + [""]
+        ).encode("utf-8")
+
+# TODO remove
 def parse(content):
     try:
         return _organize_lines(_parse_to_raw_lines(content))
@@ -20,6 +43,7 @@ def parse(content):
             reports.booth_config_unexpected_lines(e.args[0])
         )
 
+# TODO remove
 def build(config_line_list):
     newline = [""]
     return "\n".join(_build_to_lines(config_line_list) + newline)

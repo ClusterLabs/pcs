@@ -1,8 +1,11 @@
+from pcs.lib import file_interfaces
 from pcs.lib.booth.config_parser import ConfigItem
 
-class ConfigFacade():
+class ConfigFacade(file_interfaces.FacadeInterface):
     @classmethod
     def create(cls, site_list, arbitrator_list):
+        # The parent class is too generic and cannot know its children's details
+        # pylint: disable=arguments-differ
         """
         Create a minimal config
 
@@ -14,18 +17,6 @@ class ConfigFacade():
             +
             [ConfigItem("arbitrator", arbit) for arbit in arbitrator_list]
         )
-
-    def __init__(self, parsed_config):
-        """
-        Create a facade around a parsed booth config file
-
-        parsed_config -- parsed booth config
-        """
-        self._config = parsed_config
-
-    @property
-    def config(self):
-        return self._config
 
     ### peers
 
