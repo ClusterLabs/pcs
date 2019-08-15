@@ -41,7 +41,7 @@ _toolboxes = {
         exporter=_json_exporter,
         validator=None, # TODO needed for files syncing
         version_controller=None, # TODO needed for files syncing
-    )
+    ),
 }
 
 def for_file_type(file_type_code):

@@ -5,16 +5,14 @@ from pcs.common.file import(
 )
 
 # TODO add logging (logger / debug reports ?)
-# TODO implement RealFile.backup - here or in cli?
 
 
 class RealFile(RawFile):
+    # TODO implement method "backup" in the parent
+    # pylint: disable=abstract-method
     @property
     def is_ghost(self):
         return False
-
-    def backup(self):
-        pass
 
 
 class GhostFileNotProvided(RawFileError):
@@ -31,6 +29,14 @@ class GhostFile(RawFileInterface):
     def is_ghost(self):
         return True
 
+    @property
+    def content(self):
+        return self.__file_data
+
+    @property
+    def can_overwrite_existing_file(self):
+        return self.__can_overwrite_existing_file
+
     def exists(self):
         return self.__file_data is not None
 
@@ -43,12 +49,3 @@ class GhostFile(RawFileInterface):
     def write(self, file_data, can_overwrite=False):
         self.__file_data = file_data
         self.__can_overwrite_existing_file = can_overwrite
-
-    def export(self):
-        return {
-            "content": self.__file_data,
-            # TODO drop from here and cli, it has never been set to False
-            "no_existing_file_expected": True,
-            "can_overwrite_existing_file": self.__can_overwrite_existing_file,
-            "is_binary": self.file_type.is_binary,
-        }

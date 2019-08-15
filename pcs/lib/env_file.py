@@ -1,5 +1,3 @@
-# TODO drop once not needed anymore
-# TODO drop LibraryEnvError from all remaining code
 import os.path
 
 from pcs.common import report_codes
@@ -7,6 +5,18 @@ from pcs.common.tools import format_environment_error
 from pcs.lib import reports
 from pcs.lib.errors import ReportItemSeverity, LibraryError, LibraryEnvError
 
+def export_ghost_file(ghost_file):
+    return {
+        "content": ghost_file.file_data,
+        # TODO drop from here and cli, it has never been set to False
+        "no_existing_file_expected": True,
+        "can_overwrite_existing_file": ghost_file.can_overwrite_existing_file,
+        # TODO drop from here and cli, cli should get this from its fs_metadata
+        "is_binary": ghost_file.file_type.is_binary,
+    }
+
+# TODO drop everything bellow once not needed anymore
+# TODO drop LibraryEnvError from all remaining code
 
 class GhostFile:
     is_live = False

@@ -158,3 +158,7 @@ class RawFile(RawFileInterface):
                 raise get_raw_file_error(e)
         except OSError as e:
             raise get_raw_file_error(e)
+
+    def backup(self):
+        # TODO implement
+        raise NotImplementedError()

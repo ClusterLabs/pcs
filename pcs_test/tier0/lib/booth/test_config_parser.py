@@ -43,7 +43,9 @@ class OrganizeLinesTest(TestCase):
                 ConfigItem('arbitrator', '3.3.3.3'),
                 ConfigItem("ticket", "TA"),
             ],
-            config_parser.organize_lines([
+            # testing a function which should not be used outside of the module
+            # pylint: disable=protected-access
+            config_parser._organize_lines([
                 ("site", "1.1.1.1"),
                 ("ticket", "TA"),
                 ('site', '2.2.2.2'),
@@ -70,7 +72,9 @@ class OrganizeLinesTest(TestCase):
                     ConfigItem("renewal-freq", "40"),
                 ]),
             ],
-            config_parser.organize_lines([
+            # testing a function which should not be used outside of the module
+            # pylint: disable=protected-access
+            config_parser._organize_lines([
                 ("site", "1.1.1.1"),
                 ("expire", "300"), # out of ticket content is kept global
                 ("ticket", "TA"),
@@ -96,7 +100,9 @@ class ParseRawLinesTest(TestCase):
                 ('syntactically_correct', 'nonsense'),
                 ('line-with', 'hash#literal'),
             ],
-            config_parser.parse_to_raw_lines("\n".join([
+            # testing a function which should not be used outside of the module
+            # pylint: disable=protected-access
+            config_parser._parse_to_raw_lines("\n".join([
                 "site = 1.1.1.1",
                 " site  =  2.2.2.2 ",
                 "arbitrator=3.3.3.3",
@@ -109,7 +115,9 @@ class ParseRawLinesTest(TestCase):
     def test_parse_lines_with_whole_line_comment(self):
         self.assertEqual(
             [("site", "1.1.1.1")],
-            config_parser.parse_to_raw_lines("\n".join([
+            # testing a function which should not be used outside of the module
+            # pylint: disable=protected-access
+            config_parser._parse_to_raw_lines("\n".join([
                 " # some comment",
                 "site = 1.1.1.1",
             ]))
@@ -118,7 +126,9 @@ class ParseRawLinesTest(TestCase):
     def test_skip_empty_lines(self):
         self.assertEqual(
             [("site", "1.1.1.1")],
-            config_parser.parse_to_raw_lines("\n".join([
+            # testing a function which should not be used outside of the module
+            # pylint: disable=protected-access
+            config_parser._parse_to_raw_lines("\n".join([
                 " ",
                 "site = 1.1.1.1",
             ]))
@@ -132,13 +142,17 @@ class ParseRawLinesTest(TestCase):
         ]
         line_list = ["site = 1.1.1.1"] + invalid_line_list
         with self.assertRaises(config_parser.InvalidLines) as context_manager:
-            config_parser.parse_to_raw_lines("\n".join(line_list))
+            # testing a function which should not be used outside of the module
+            # pylint: disable=protected-access
+            config_parser._parse_to_raw_lines("\n".join(line_list))
         self.assertEqual(context_manager.exception.args[0], invalid_line_list)
 
     def test_parse_lines_finishing_with_comment(self):
         self.assertEqual(
             [("site", "1.1.1.1")],
-            config_parser.parse_to_raw_lines("\n".join([
+            # testing a function which should not be used outside of the module
+            # pylint: disable=protected-access
+            config_parser._parse_to_raw_lines("\n".join([
                 "site = '1.1.1.1' #comment",
             ]))
        )

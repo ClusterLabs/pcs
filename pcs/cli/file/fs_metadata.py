@@ -1,6 +1,6 @@
 import os.path
 
-from pcs.cli.file import file_type_codes as code
+from pcs.common import file_type_codes as code
 from pcs.common.file import FileMetadata
 
 
