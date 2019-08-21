@@ -64,12 +64,15 @@ class CibShortcuts:
         if returncode != 0:
             call = RunnerCall(command, stderr=stderr, returncode=returncode)
         else:
-            cib = modify_cib(
-                open(rc(filename if filename else self.cib_filename)).read(),
-                modifiers,
-                **modifier_shortcuts
-            )
-            call = RunnerCall(command, stdout=cib)
+            with open(
+                rc(filename if filename else self.cib_filename)
+            ) as cib_file:
+                cib = modify_cib(
+                    cib_file.read(),
+                    modifiers,
+                    **modifier_shortcuts
+                )
+                call = RunnerCall(command, stdout=cib)
 
         self.__calls.place(name, call, before=before, instead=instead)
 

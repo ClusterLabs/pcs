@@ -115,10 +115,11 @@ class GetCib(TestCase, ManageCibAssertionMixin):
             .env.set_cib_data("whatever")
             .runner.cib.load(filename=cib_filename)
         )
-        assert_xml_equal(
-            etree_to_str(self.env_assist.get_env().get_cib()),
-            open(rc(cib_filename)).read()
-        )
+        with open(rc(cib_filename)) as cib_file:
+            assert_xml_equal(
+                etree_to_str(self.env_assist.get_env().get_cib()),
+                cib_file.read()
+            )
 
     def test_get_and_property(self):
         self.config.runner.cib.load()

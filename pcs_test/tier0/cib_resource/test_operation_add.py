@@ -41,7 +41,8 @@ class OperationAdd(
         #     />
         #   </operations>
         # </primitive>
-        cib_content = open(self.temp_cib).read()
+        with open(self.temp_cib) as cib_file:
+            cib_content = cib_file.read()
 
         #clean
         self.pcs_runner = None

@@ -18,10 +18,11 @@ class GetLocalCorosyncConfTest(TestCase):
     def test_success(self):
         path = rc("corosync.conf")
         settings.corosync_conf_file = path
-        self.assertEqual(
-            lib.get_local_corosync_conf(),
-            open(path).read()
-        )
+        with open(path) as a_file:
+            self.assertEqual(
+                lib.get_local_corosync_conf(),
+                a_file.read()
+            )
 
     def test_error(self):
         path = rc("corosync.conf.nonexistent")

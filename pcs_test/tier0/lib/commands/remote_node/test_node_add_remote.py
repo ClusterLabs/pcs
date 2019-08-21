@@ -575,7 +575,8 @@ class NotLive(TestCase):
     def setUp(self):
         self.env_assist, self.config = get_env_tools(self)
         self.config.env.set_known_hosts_dests(KNOWN_HOSTS_DESTS)
-        self.config.env.set_cib_data(open(rc("cib-empty.xml")).read())
+        with open(rc("cib-empty.xml")) as cib_file:
+            self.config.env.set_cib_data(cib_file.read())
 
     def test_addr_specified(self):
         (self.config

@@ -7,6 +7,11 @@ from pcs_test.tools.misc import get_test_resource as rc
 from pcs.common import report_codes
 from pcs.lib.commands.cluster import node_clear
 
+
+def _read_file(name):
+    with open(rc(name)) as a_file:
+        return a_file.read()
+
 class NodeClear(TestCase):
     def setUp(self):
         self.env_assist, self.config = get_env_tools(test_case=self)
@@ -28,7 +33,7 @@ class NodeClear(TestCase):
 
     def test_requires_live_corosync(self):
         (self.config
-            .env.set_corosync_conf_data(open(rc("corosync.conf")).read())
+            .env.set_corosync_conf_data(_read_file("corosync.conf"))
         )
         self.env_assist.assert_raise_library_error(
             lambda: node_clear(self.env_assist.get_env(), "nodeX"),
@@ -43,7 +48,7 @@ class NodeClear(TestCase):
 
     def test_requires_live(self):
         (self.config
-            .env.set_corosync_conf_data(open(rc("corosync.conf")).read())
+            .env.set_corosync_conf_data(_read_file("corosync.conf"))
             .env.set_cib_data("<cib />")
         )
         self.env_assist.assert_raise_library_error(

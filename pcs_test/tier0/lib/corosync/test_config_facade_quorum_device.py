@@ -13,6 +13,12 @@ from pcs.common import report_codes
 import pcs.lib.corosync.config_facade as lib
 from pcs.lib.errors import ReportItemSeverity as severity
 
+
+def _read_file(name):
+    with open(rc(name)) as a_file:
+        return a_file.read()
+
+
 class HasQuorumDeviceTest(TestCase):
     def test_empty_config(self):
         config = ""
@@ -22,7 +28,7 @@ class HasQuorumDeviceTest(TestCase):
         self.assertFalse(facade.need_qdevice_reload)
 
     def test_no_device(self):
-        config = open(rc("corosync.conf")).read()
+        config = _read_file("corosync.conf")
         facade = lib.ConfigFacade.from_string(config)
         self.assertFalse(facade.has_quorum_device())
         self.assertFalse(facade.need_stopped_cluster)
@@ -85,7 +91,7 @@ class GetQuorumDeviceModel(TestCase):
         self.assert_model(config, None)
 
     def test_no_device(self):
-        config = open(rc("corosync.conf")).read()
+        config = _read_file("corosync.conf")
         self.assert_model(config, None)
 
     def test_empty_device(self):
@@ -205,7 +211,7 @@ class GetQuorumDeviceSettingsTest(TestCase):
         self.assertFalse(facade.need_qdevice_reload)
 
     def test_no_device(self):
-        config = open(rc("corosync.conf")).read()
+        config = _read_file("corosync.conf")
         facade = lib.ConfigFacade.from_string(config)
         self.assertEqual(
             (None, {}, {}, {}),
@@ -403,7 +409,7 @@ class IsQuorumDeviceHeuristicsEnabledWithNoExec(TestCase):
         self.assert_result(config, False)
 
     def test_no_device(self):
-        config = open(rc("corosync.conf")).read()
+        config = _read_file("corosync.conf")
         self.assert_result(config, False)
 
     def test_empty_heuristics(self):
@@ -507,7 +513,7 @@ class IsQuorumDeviceHeuristicsEnabledWithNoExec(TestCase):
 
 class AddQuorumDeviceTest(TestCase):
     def test_success_net_minimal_ffsplit(self):
-        config = open(rc("corosync-3nodes.conf")).read()
+        config = _read_file("corosync-3nodes.conf")
         facade = lib.ConfigFacade.from_string(config)
         facade.add_quorum_device(
             "net",
@@ -538,7 +544,7 @@ class AddQuorumDeviceTest(TestCase):
         self.assertFalse(facade.need_qdevice_reload)
 
     def test_success_net_minimal_lms(self):
-        config = open(rc("corosync-3nodes.conf")).read()
+        config = _read_file("corosync-3nodes.conf")
         facade = lib.ConfigFacade.from_string(config)
         facade.add_quorum_device(
             "net",
@@ -568,7 +574,7 @@ class AddQuorumDeviceTest(TestCase):
         self.assertFalse(facade.need_qdevice_reload)
 
     def test_success_remove_nodes_votes(self):
-        config = open(rc("corosync-3nodes.conf")).read()
+        config = _read_file("corosync-3nodes.conf")
         config_votes = config.replace("node {", "node {\nquorum_votes: 2")
         facade = lib.ConfigFacade.from_string(config_votes)
         facade.add_quorum_device(
@@ -599,7 +605,7 @@ class AddQuorumDeviceTest(TestCase):
         self.assertFalse(facade.need_qdevice_reload)
 
     def test_success_net_full(self):
-        config = open(rc("corosync-3nodes.conf")).read()
+        config = _read_file("corosync-3nodes.conf")
         facade = lib.ConfigFacade.from_string(config)
         facade.add_quorum_device(
             "net",
@@ -662,7 +668,7 @@ class AddQuorumDeviceTest(TestCase):
         self.assertFalse(facade.need_qdevice_reload)
 
     def test_remove_conflicting_options(self):
-        config = open(rc("corosync.conf")).read()
+        config = _read_file("corosync.conf")
         config = config.replace(
             "    two_node: 1\n",
             "\n".join([
@@ -825,7 +831,7 @@ class UpdateQuorumDeviceTest(TestCase):
         return with_device
 
     def test_not_existing(self):
-        config = open(rc("corosync.conf")).read()
+        config = _read_file("corosync.conf")
         facade = lib.ConfigFacade.from_string(config)
         assert_raise_library_error(
             lambda: facade.update_quorum_device(
@@ -844,7 +850,7 @@ class UpdateQuorumDeviceTest(TestCase):
         ac(config, facade.config.export())
 
     def test_not_existing_add_heuristics(self):
-        config = open(rc("corosync.conf")).read()
+        config = _read_file("corosync.conf")
         facade = lib.ConfigFacade.from_string(config)
         assert_raise_library_error(
             lambda: facade.update_quorum_device(
@@ -860,7 +866,7 @@ class UpdateQuorumDeviceTest(TestCase):
 
     def test_success_model_options_net(self):
         config = self.fixture_add_device(
-            open(rc("corosync-3nodes.conf")).read(),
+            _read_file("corosync-3nodes.conf"),
             votes="1"
         )
         facade = lib.ConfigFacade.from_string(config)
@@ -881,7 +887,7 @@ class UpdateQuorumDeviceTest(TestCase):
 
     def test_success_generic_options(self):
         config = self.fixture_add_device(
-            open(rc("corosync-3nodes.conf")).read()
+            _read_file("corosync-3nodes.conf")
         )
         facade = lib.ConfigFacade.from_string(config)
         facade.update_quorum_device(
@@ -901,7 +907,7 @@ class UpdateQuorumDeviceTest(TestCase):
 
     def test_success_all_options(self):
         config = self.fixture_add_device_with_heuristics(
-            open(rc("corosync-3nodes.conf")).read()
+            _read_file("corosync-3nodes.conf")
         )
         facade = lib.ConfigFacade.from_string(config)
         facade.update_quorum_device(
@@ -922,7 +928,7 @@ class UpdateQuorumDeviceTest(TestCase):
 
     def test_success_add_heuristics(self):
         config = self.fixture_add_device(
-            open(rc("corosync-3nodes.conf")).read()
+            _read_file("corosync-3nodes.conf")
         )
         facade = lib.ConfigFacade.from_string(config)
         facade.update_quorum_device(
@@ -934,14 +940,14 @@ class UpdateQuorumDeviceTest(TestCase):
         self.assertTrue(facade.need_qdevice_reload)
         ac(
             self.fixture_add_device_with_heuristics(
-                open(rc("corosync-3nodes.conf")).read()
+                _read_file("corosync-3nodes.conf")
             ),
             facade.config.export()
         )
 
     def test_success_remove_heuristics(self):
         config = self.fixture_add_device_with_heuristics(
-            open(rc("corosync-3nodes.conf")).read()
+            _read_file("corosync-3nodes.conf")
         )
         facade = lib.ConfigFacade.from_string(config)
         facade.update_quorum_device(
@@ -953,14 +959,14 @@ class UpdateQuorumDeviceTest(TestCase):
         self.assertTrue(facade.need_qdevice_reload)
         ac(
             self.fixture_add_device(
-                open(rc("corosync-3nodes.conf")).read()
+                _read_file("corosync-3nodes.conf")
             ),
             facade.config.export()
         )
 
     def test_success_change_heuristics(self):
         config = self.fixture_add_device_with_heuristics(
-            open(rc("corosync-3nodes.conf")).read()
+            _read_file("corosync-3nodes.conf")
         )
         facade = lib.ConfigFacade.from_string(config)
         facade.update_quorum_device(
@@ -995,7 +1001,7 @@ class RemoveQuorumDeviceTest(TestCase):
         self.assertFalse(facade.need_qdevice_reload)
 
     def test_no_device(self):
-        config = open(rc("corosync-3nodes.conf")).read()
+        config = _read_file("corosync-3nodes.conf")
         facade = lib.ConfigFacade.from_string(config)
         assert_raise_library_error(
             facade.remove_quorum_device,
@@ -1009,7 +1015,7 @@ class RemoveQuorumDeviceTest(TestCase):
         self.assertFalse(facade.need_qdevice_reload)
 
     def test_remove_all_devices(self):
-        config_no_devices = open(rc("corosync-3nodes.conf")).read()
+        config_no_devices = _read_file("corosync-3nodes.conf")
         config = re.sub(
             re.compile(r"quorum {[^}]*}", re.MULTILINE | re.DOTALL),
             dedent("""\
@@ -1055,7 +1061,7 @@ class RemoveQuorumDeviceTest(TestCase):
         )
 
     def test_restore_two_node(self):
-        config_no_devices = open(rc("corosync.conf")).read()
+        config_no_devices = _read_file("corosync.conf")
         config = re.sub(
             re.compile(r"quorum {[^}]*}", re.MULTILINE | re.DOTALL),
             dedent("""\
@@ -1097,7 +1103,7 @@ class RemoveQuorumDeviceHeuristics(TestCase):
         self.assertFalse(facade.need_qdevice_reload)
 
     def test_error_on_no_device(self):
-        config = open(rc("corosync-3nodes.conf")).read()
+        config = _read_file("corosync-3nodes.conf")
         facade = lib.ConfigFacade.from_string(config)
         assert_raise_library_error(
             facade.remove_quorum_device_heuristics,
@@ -1107,7 +1113,7 @@ class RemoveQuorumDeviceHeuristics(TestCase):
         self.assertFalse(facade.need_qdevice_reload)
 
     def test_noop_on_no_heuristics(self):
-        config = open(rc("corosync-3nodes-qdevice.conf")).read()
+        config = _read_file("corosync-3nodes-qdevice.conf")
         facade = lib.ConfigFacade.from_string(config)
         facade.remove_quorum_device_heuristics()
         self.assertFalse(facade.need_stopped_cluster)
@@ -1115,7 +1121,7 @@ class RemoveQuorumDeviceHeuristics(TestCase):
         ac(config, facade.config.export())
 
     def test_remove_all_heuristics(self):
-        config_no_devices = open(rc("corosync-3nodes.conf")).read()
+        config_no_devices = _read_file("corosync-3nodes.conf")
         config_no_heuristics = re.sub(
             re.compile(r"quorum {[^}]*}", re.MULTILINE | re.DOTALL),
             dedent("""\
