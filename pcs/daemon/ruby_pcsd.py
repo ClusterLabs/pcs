@@ -5,7 +5,7 @@ from base64 import b64decode
 from collections import namedtuple
 from time import time as now
 
-from tornado.gen import Task, multi, convert_yielded
+from tornado.gen import multi, convert_yielded
 from tornado.web import HTTPError
 from tornado.httputil import split_host_and_port, HTTPServerRequest
 from tornado.process import Subprocess
@@ -125,11 +125,11 @@ class Wrapper:
             stderr=Subprocess.STREAM,
             env=env
         )
-        await Task(pcsd_ruby.stdin.write, str.encode(request_json))
+        await pcsd_ruby.stdin.write(str.encode(request_json))
         pcsd_ruby.stdin.close()
         return await multi([
-            Task(pcsd_ruby.stdout.read_until_close),
-            Task(pcsd_ruby.stderr.read_until_close),
+            pcsd_ruby.stdout.read_until_close(),
+            pcsd_ruby.stderr.read_until_close(),
             pcsd_ruby.wait_for_exit(raise_error=False),
         ])
 

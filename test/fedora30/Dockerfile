@@ -2,7 +2,6 @@ FROM fedora:30
 
 ARG src_path
 
-# repo updates-testing temporarily disabled because of metadata fetching error
 RUN dnf install -y \
         # python
         python3 \
@@ -10,7 +9,6 @@ RUN dnf install -y \
         python3-mock \
         python3-pycurl \
         python3-pyOpenSSL \
-        python3-tornado \
         # ruby
         ruby \
         ruby-devel \
@@ -39,7 +37,7 @@ RUN dnf install -y \
         # find
         findutils
 
-# Specifiec pylint version is required
-RUN pip3 install pylint==2.3.1
+# Specific pylint and tornado version is required
+RUN pip3 install pylint==2.3.1 tornado==6.0.3
 
 COPY . $src_path
