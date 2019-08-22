@@ -25,7 +25,7 @@ if not os.path.exists(SPA_DIR):
 logging.getLogger("tornado.access").setLevel(logging.CRITICAL)
 
 class AppTest(
-    fixtures_app.AppUiTest, create_setup_patch_mixin(ui.app_session)
+    fixtures_app.AppUiTestMixin, create_setup_patch_mixin(ui.app_session)
 ):
     def setUp(self):
         self.index_content = "<html/>"

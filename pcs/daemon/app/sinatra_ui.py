@@ -35,9 +35,11 @@ class SinatraGui(app_session.Mixin, Sinatra):
             self.send_sinatra_result(result)
 
     async def get(self, *args, **kwargs):
+        del args, kwargs
         await self.handle_sinatra_request()
 
     async def post(self, *args, **kwargs):
+        del args, kwargs
         await self.handle_sinatra_request()
 
 class SinatraGuiProtected(SinatraGui):
@@ -122,6 +124,7 @@ class Logout(app_session.Mixin, AjaxMixin, BaseHandler):
     requests.
     """
     async def get(self, *args, **kwargs):
+        del args, kwargs
         await self.init_session()
         self.session_logout()
         self.sid_to_cookies()
