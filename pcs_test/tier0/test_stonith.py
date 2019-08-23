@@ -674,8 +674,8 @@ class LevelTestsBase(TestCase, AssertPcsMixin):
         self.assert_pcs_success("stonith level add 2 rh7-1 F2")
         self.assert_pcs_success("stonith level add 2 rh7-2 F1")
         self.assert_pcs_success("stonith level add 1 rh7-2 F2")
-        self.assert_pcs_success("stonith level add 4 regexp%rh7-\d F3")
-        self.assert_pcs_success("stonith level add 3 regexp%rh7-\d F2 F1")
+        self.assert_pcs_success(r"stonith level add 4 regexp%rh7-\d F3")
+        self.assert_pcs_success(r"stonith level add 3 regexp%rh7-\d F2 F1")
 
         self.config = outdent(
             """\
@@ -685,7 +685,7 @@ class LevelTestsBase(TestCase, AssertPcsMixin):
             Target: rh7-2
               Level 1 - F2
               Level 2 - F1
-            Target: rh7-\d
+            Target: rh7-\\d
               Level 3 - F2,F1
               Level 4 - F3
             """
@@ -745,14 +745,14 @@ class LevelAddTargetUpgradesCib(LevelTestsBase):
     def test_regexp(self):
         self.fixture_stonith_resource("F1")
         self.assert_pcs_success(
-            "stonith level add 1 regexp%node-\d+ F1",
+            r"stonith level add 1 regexp%node-\d+ F1",
             "CIB has been upgraded to the latest schema version.\n"
         )
         self.assert_pcs_success(
             "stonith level",
             outdent(
                 """\
-                Target: node-\d+
+                Target: node-\\d+
                   Level 1 - F1
                 """
             )
@@ -882,27 +882,27 @@ class LevelAdd(LevelTestsBase):
 
     def test_add_node_pattern(self):
         self.fixture_stonith_resource("F1")
-        self.assert_pcs_success("stonith level add 1 regexp%rh7-\d F1")
+        self.assert_pcs_success(r"stonith level add 1 regexp%rh7-\d F1")
         self.assert_pcs_success(
             "stonith level",
             outdent(
                 """\
-                Target: rh7-\d
+                Target: rh7-\\d
                   Level 1 - F1
                 """
             )
         )
 
         self.assert_pcs_fail(
-            "stonith level add 1 regexp%rh7-\d F1",
-            "Error: Fencing level for 'rh7-\d' at level '1' with device(s) "
+            r"stonith level add 1 regexp%rh7-\d F1",
+            r"Error: Fencing level for 'rh7-\d' at level '1' with device(s) "
                 "'F1' already exists\n"
         )
         self.assert_pcs_success(
             "stonith level",
             outdent(
                 """\
-                Target: rh7-\d
+                Target: rh7-\\d
                   Level 1 - F1
                 """
             )
@@ -1170,7 +1170,7 @@ class LevelClear(LevelTestsBase):
         )
 
     def test_clear_pattern(self):
-        self.assert_pcs_success("stonith level clear regexp%rh7-\d")
+        self.assert_pcs_success(r"stonith level clear regexp%rh7-\d")
         self.assert_pcs_success(
             "stonith level config",
             "\n".join(self.config_lines[:6] + self.config_lines[9:]) + "\n"
@@ -1234,14 +1234,14 @@ class LevelDeleteRemove(LevelTestsBase):
 
     def _test_nonexisting_level_pattern_device(self):
         self.assert_pcs_fail(
-            f"stonith level {self.command} 1 regexp%rh7-\d F3",
-            "Error: Fencing level for 'rh7-\d' at level '1' with device(s) 'F3' does not exist\n"
+            f"stonith level {self.command} 1 regexp%rh7-\\d F3",
+            "Error: Fencing level for 'rh7-\\d' at level '1' with device(s) 'F3' does not exist\n"
         )
         self.assert_pcs_success("stonith level config", self.config)
 
         self.assert_pcs_fail(
-            f"stonith level {self.command} 3 regexp%rh7-\d F1,F2",
-            "Error: Fencing level for 'rh7-\d' at level '3' with device(s) 'F1,F2' does not exist\n"
+            f"stonith level {self.command} 3 regexp%rh7-\\d F1,F2",
+            "Error: Fencing level for 'rh7-\\d' at level '3' with device(s) 'F1,F2' does not exist\n"
         )
         self.assert_pcs_success("stonith level config", self.config)
 
@@ -1273,7 +1273,7 @@ class LevelDeleteRemove(LevelTestsBase):
         )
 
     def _test_remove_level_pattern(self):
-        self.assert_pcs_success(f"stonith level {self.command} 3 regexp%rh7-\d")
+        self.assert_pcs_success(f"stonith level {self.command} 3 regexp%rh7-\\d")
         self.assert_pcs_success(
             "stonith level config",
             "\n".join(self.config_lines[:7] + self.config_lines[8:]) + "\n"
@@ -1318,7 +1318,7 @@ class LevelDeleteRemove(LevelTestsBase):
         )
 
     def _test_remove_level_pattern_device(self):
-        self.assert_pcs_success(f"stonith level {self.command} 3 regexp%rh7-\d F2 F1")
+        self.assert_pcs_success(f"stonith level {self.command} 3 regexp%rh7-\\d F2 F1")
         self.assert_pcs_success(
             "stonith level config",
             "\n".join(self.config_lines[:7] + self.config_lines[8:]) + "\n"
@@ -1386,11 +1386,11 @@ class LevelVerify(LevelTestsBase):
             )
         )
         self.assert_pcs_success(
-            "stonith level add 4 regexp%rh7-\d FX --force",
+            r"stonith level add 4 regexp%rh7-\d FX --force",
             "Warning: Stonith resource(s) 'FX' do not exist\n"
         )
         self.assert_pcs_success(
-            "stonith level add 3 regexp%rh7-\d FY FZ --force",
+            r"stonith level add 3 regexp%rh7-\d FY FZ --force",
             "Warning: Stonith resource(s) 'FY', 'FZ' do not exist\n"
         )
 

@@ -48,10 +48,10 @@ class CibMixin:
                     id="fl4" index="2" devices="d3" target="nodeB"
                 />
                 <fencing-level
-                    id="fl5" index="1" devices="d3,d4" target-pattern="node\d+"
+                    id="fl5" index="1" devices="d3,d4" target-pattern="node\\d+"
                 />
                 <fencing-level
-                    id="fl6" index="2" devices="d1" target-pattern="node\d+"
+                    id="fl6" index="2" devices="d1" target-pattern="node\\d+"
                 />
                 <fencing-level
                     id="fl7" index="3" devices="d3,d4"
@@ -273,7 +273,7 @@ class RemoveLevelsByParams(TestCase, CibMixin):
     def test_target_pattern(self):
         lib.remove_levels_by_params(
             self.reporter, self.tree, target_type=TARGET_TYPE_REGEXP,
-            target_value="node\d+"
+            target_value=r"node\d+"
         )
         self.assertEqual(
             self.get_remaining_ids(),
@@ -404,10 +404,10 @@ class RemoveDeviceFromAllLevels(TestCase, CibMixin):
                     id="fl3" index="1" devices="d2,d1" target="nodeB"
                 />
                 <fencing-level
-                    id="fl5" index="1" devices="d4" target-pattern="node\d+"
+                    id="fl5" index="1" devices="d4" target-pattern="node\\d+"
                 />
                 <fencing-level
-                    id="fl6" index="2" devices="d1" target-pattern="node\d+"
+                    id="fl6" index="2" devices="d1" target-pattern="node\\d+"
                 />
                 <fencing-level
                     id="fl7" index="3" devices="d4"
@@ -477,13 +477,13 @@ class Export(TestCase, CibMixin):
                 {
                     "level": "1",
                     "target_type": "regexp",
-                    "target_value": "node\d+",
+                    "target_value": r"node\d+",
                     "devices": ["d3", "d4"],
                 },
                 {
                     "level": "2",
                     "target_type": "regexp",
-                    "target_value": "node\d+",
+                    "target_value": r"node\d+",
                     "devices": ["d1"],
                 },
                 {
@@ -884,14 +884,14 @@ class AppendLevelElement(TestCase):
 
     def test_node_pattern(self):
         lib._append_level_element(
-            self.tree, "2", TARGET_TYPE_REGEXP, "node-\d+", ["d1", "d2"]
+            self.tree, "2", TARGET_TYPE_REGEXP, r"node-\d+", ["d1", "d2"]
         )
         assert_xml_equal(
             """
             <fencing-topology>
                 <fencing-level
                     id="fl-node-d-2"
-                    devices="d1,d2" index="2" target-pattern="node-\d+"
+                    devices="d1,d2" index="2" target-pattern="node-\\d+"
                 />
             </fencing-topology>
             """,
