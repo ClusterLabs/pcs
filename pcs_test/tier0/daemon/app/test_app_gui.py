@@ -24,7 +24,8 @@ if not os.path.exists(CSS_DIR):
 logging.getLogger("tornado.access").setLevel(logging.CRITICAL)
 
 class AppTest(
-    fixtures_app.AppUiTest, create_setup_patch_mixin(sinatra_ui.app_session)
+    fixtures_app.AppUiTestMixin,
+    create_setup_patch_mixin(sinatra_ui.app_session),
 ):
     def setUp(self):
         self.wrapper = fixtures_app.RubyPcsdWrapper(ruby_pcsd.SINATRA_GUI)

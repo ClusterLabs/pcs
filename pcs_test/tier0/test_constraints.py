@@ -64,7 +64,8 @@ class ConstraintTest(unittest.TestCase):
     def fixture_cib(self):
         shutil.copy(empty_cib, temp_cib)
         self.setupClusterA(temp_cib)
-        cib_content = open(temp_cib).read()
+        with open(temp_cib) as cib_file:
+            cib_content = cib_file.read()
         shutil.copy(empty_cib, temp_cib)
         return cib_content
 

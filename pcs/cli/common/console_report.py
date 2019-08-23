@@ -1,9 +1,6 @@
-# pylint: disable=too-many-lines, no-name-in-module
-# no-name-in-module diabled because of issue in Travis CI:a
-#   pcs/cli/common/console_report.py:3:0: E0611: No name 'Iterable' in module
-#   'collections' (no-name-in-module)
-
-from collections import defaultdict, Iterable
+# pylint: disable=too-many-lines
+from collections import defaultdict
+from collections.abc import Iterable
 from functools import partial
 import sys
 

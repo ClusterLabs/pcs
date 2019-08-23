@@ -5,6 +5,12 @@ from pcs_test.tools.misc import get_test_resource as rc
 
 import pcs.lib.corosync.config_facade as lib
 
+
+def _read_file(name):
+    with open(rc(name)) as a_file:
+        return a_file.read()
+
+
 class GetQuorumOptionsTest(TestCase):
     def test_no_quorum(self):
         config = ""
@@ -166,7 +172,7 @@ class SetQuorumOptionsTest(TestCase):
         self.assertEqual("", facade.config.export())
 
     def test_add_all_options(self):
-        config = open(rc("corosync.conf")).read()
+        config = _read_file("corosync.conf")
         facade = lib.ConfigFacade.from_string(config)
         expected_options = {
             "auto_tie_breaker": "1",
@@ -217,7 +223,7 @@ class SetQuorumOptionsTest(TestCase):
         )
 
     def test_2nodes_atb_on(self):
-        config = open(rc("corosync.conf")).read()
+        config = _read_file("corosync.conf")
         facade = lib.ConfigFacade.from_string(config)
         self.assertEqual(2, len(facade.get_nodes()))
 
@@ -234,7 +240,7 @@ class SetQuorumOptionsTest(TestCase):
         self.assertTrue(two_node is None or two_node == "0")
 
     def test_2nodes_atb_off(self):
-        config = open(rc("corosync.conf")).read()
+        config = _read_file("corosync.conf")
         facade = lib.ConfigFacade.from_string(config)
         self.assertEqual(2, len(facade.get_nodes()))
 
@@ -251,7 +257,7 @@ class SetQuorumOptionsTest(TestCase):
         self.assertTrue(two_node == "1")
 
     def test_3nodes_atb_on(self):
-        config = open(rc("corosync-3nodes.conf")).read()
+        config = _read_file("corosync-3nodes.conf")
         facade = lib.ConfigFacade.from_string(config)
         self.assertEqual(3, len(facade.get_nodes()))
 
@@ -268,7 +274,7 @@ class SetQuorumOptionsTest(TestCase):
         self.assertTrue(two_node is None or two_node == "0")
 
     def test_3nodes_atb_off(self):
-        config = open(rc("corosync-3nodes.conf")).read()
+        config = _read_file("corosync-3nodes.conf")
         facade = lib.ConfigFacade.from_string(config)
         self.assertEqual(3, len(facade.get_nodes()))
 

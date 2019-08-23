@@ -34,6 +34,7 @@ class RubyPcsdWrapper(ruby_pcsd.Wrapper):
         }
 
 class AppTest(AsyncHTTPTestCase):
+    wrapper = None
     # pylint: disable=abstract-method
     def get_app(self):
         return Application(self.get_routes())
@@ -74,7 +75,7 @@ class AppTest(AsyncHTTPTestCase):
         self.assertEqual(response.body, self.wrapper.body)
 
 
-class AppUiTest(AppTest):
+class AppUiTestMixin(AppTest):
     def setUp(self):
         self.user_auth_info = UserAuthInfo()
         self.groups_valid = True

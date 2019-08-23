@@ -56,13 +56,16 @@ def get_assert_pcs_effect_mixin(get_cib_part):
                 alternative_cmds if isinstance(alternative_cmds, list)
                 else [alternative_cmds]
             )
-            cib_content = open(self.temp_cib).read()
+            cib_content = ""
+            with open(self.temp_cib) as cib_file:
+                cib_content = cib_file.read()
             for alternative in alternative_list[:-1]:
                 self.assert_effect_single(
                     alternative, expected_xml,
                     output, output_start, output_regexp
                 )
-                open(self.temp_cib, "w").write(cib_content)
+                with open(self.temp_cib, "w") as cib_file:
+                    cib_file.write(cib_content)
 
             self.assert_effect_single(
                 alternative_list[-1], expected_xml,

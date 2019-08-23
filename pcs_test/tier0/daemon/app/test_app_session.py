@@ -36,6 +36,7 @@ class Handler(app_session.Mixin, RequestHandler):
         }
 
     async def get(self, *args, **kwargs):
+        del args, kwargs
         if self.test.auto_init_session:
             await self.init_session()
         await self.test.on_handle(self)

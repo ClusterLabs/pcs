@@ -4,7 +4,7 @@ from unittest import TestCase
 import xml.dom.minidom
 
 from pcs import rule
-from pcs_test.tools.assertions import ac
+from pcs_test.tools.assertions import ac, assert_xml_equal
 from pcs_test.tools.misc import get_test_resource as rc
 from pcs_test.tools.pcs_runner import pcs
 
@@ -1243,7 +1243,7 @@ class CibBuilderTest(TestCase):
             cib_dom.createElement("rsc_location")
         )
         constraint_el.setAttribute("id", "location-dummy")
-        ac(
+        assert_xml_equal(
             self.builder.build(
                 constraint_el,
                 self.parser.parse(rule_expression)
@@ -1935,7 +1935,7 @@ Location Constraints:
         constraint_el.setAttribute("id", "location-dummy")
         options, rule_argv = rule.parse_argv(rule_expression)
         rule.dom_rule_add(constraint_el, options, rule_argv)
-        ac(
+        assert_xml_equal(
             constraint_el.toprettyxml(indent="    "),
             rule_xml.lstrip().rstrip(" ")
         )

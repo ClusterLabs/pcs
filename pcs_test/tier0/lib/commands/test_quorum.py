@@ -25,6 +25,15 @@ from pcs.lib.corosync.config_facade import ConfigFacade
 from pcs.lib.commands import quorum as lib
 
 
+def _read_file_rc(name):
+    return _read_file(rc(name))
+
+
+def _read_file(name):
+    with open(name) as a_file:
+        return a_file.read()
+
+
 # pylint: disable=protected-access
 
 @mock.patch.object(LibraryEnvironment, "get_corosync_conf_data")
@@ -34,7 +43,7 @@ class GetQuorumConfigTest(TestCase):
         self.mock_reporter = MockLibraryReportProcessor()
 
     def test_enabled_if_not_live(self, mock_get_corosync):
-        original_conf = open(rc("corosync.conf")).read()
+        original_conf = _read_file_rc("corosync.conf")
         mock_get_corosync.return_value = original_conf
         lib_env = LibraryEnvironment(
             self.mock_logger,
@@ -52,7 +61,7 @@ class GetQuorumConfigTest(TestCase):
         self.assertEqual([], self.mock_reporter.report_item_list)
 
     def test_no_options(self, mock_get_corosync):
-        original_conf = open(rc("corosync.conf")).read()
+        original_conf = _read_file_rc("corosync.conf")
         mock_get_corosync.return_value = original_conf
         lib_env = LibraryEnvironment(self.mock_logger, self.mock_reporter)
 
@@ -353,7 +362,7 @@ class SetQuorumOptionsTest(TestCase):
     def test_success(
         self, mock_runner, mock_get_corosync, mock_push_corosync, mock_check
     ):
-        original_conf = open(rc("corosync-3nodes.conf")).read()
+        original_conf = _read_file_rc("corosync-3nodes.conf")
         mock_get_corosync.return_value = original_conf
         mock_runner.return_value = "cmd_runner"
         lib_env = LibraryEnvironment(self.mock_logger, self.mock_reporter)
@@ -380,7 +389,7 @@ class SetQuorumOptionsTest(TestCase):
         self, mock_runner, mock_get_corosync, mock_push_corosync, mock_check
     ):
         # pylint: disable=unused-argument
-        original_conf = open(rc("corosync.conf")).read()
+        original_conf = _read_file_rc("corosync.conf")
         mock_get_corosync.return_value = original_conf
         lib_env = LibraryEnvironment(self.mock_logger, self.mock_reporter)
 
@@ -510,7 +519,8 @@ class AddDeviceNetTest(TestCase):
             # b64encode accepts bytes in python3, so we must read the file as
             # binary to get bytes instead of a string. In python2, it doesn't
             # matter.
-            plain = open(cert_info["path"], "rb").read()
+            with open(cert_info["path"], "rb") as a_file:
+                plain = a_file.read()
             cert_info["data"] = plain
             cert_info["b64data"] = base64.b64encode(plain)
 
@@ -622,9 +632,9 @@ class AddDeviceNetTest(TestCase):
         tmpfile_instance.name = rc("file.tmp")
         mock_write_tmpfile.return_value = tmpfile_instance
 
-        expected_corosync_conf = open(
+        expected_corosync_conf = _read_file(
                 rc(self.corosync_conf_name)
-            ).read().replace(
+            ).replace(
             "    provider: corosync_votequorum\n",
             outdent("""\
                     provider: corosync_votequorum
@@ -673,7 +683,7 @@ class AddDeviceNetTest(TestCase):
         self.env_assist.assert_reports(expected_reports)
 
     def test_not_live_success(self):
-        original_config = open(rc("corosync-3nodes.conf")).read()
+        original_config = _read_file_rc("corosync-3nodes.conf")
         expected_corosync_conf = original_config.replace(
             "    provider: corosync_votequorum\n",
             outdent("""\
@@ -707,7 +717,7 @@ class AddDeviceNetTest(TestCase):
 
     def test_not_live_error(self):
         (self.config
-            .env.set_corosync_conf_data(open(rc("corosync-3nodes.conf")).read())
+            .env.set_corosync_conf_data(_read_file_rc("corosync-3nodes.conf"))
         )
         self.env_assist.assert_raise_library_error(
             lambda: lib.add_device(
@@ -736,7 +746,7 @@ class AddDeviceNetTest(TestCase):
         # doesn't care about node names missing
         (self.config
             .env.set_corosync_conf_data(
-                open(rc("corosync-no-node-names.conf")).read()
+                _read_file_rc("corosync-no-node-names.conf")
             )
         )
         self.env_assist.assert_raise_library_error(
@@ -762,9 +772,9 @@ class AddDeviceNetTest(TestCase):
         ])
 
     def test_fail_if_device_already_set(self):
-        corosync_conf = open(
+        corosync_conf = _read_file(
                 rc(self.corosync_conf_name)
-            ).read().replace(
+            ).replace(
             "    provider: corosync_votequorum\n",
             outdent("""\
                     provider: corosync_votequorum
@@ -804,9 +814,9 @@ class AddDeviceNetTest(TestCase):
         tmpfile_instance.name = rc("file.tmp")
         mock_write_tmpfile.return_value = tmpfile_instance
 
-        expected_corosync_conf = open(
+        expected_corosync_conf = _read_file(
                 rc(self.corosync_conf_name)
-            ).read().replace(
+            ).replace(
             "    provider: corosync_votequorum\n",
             outdent("""\
                     provider: corosync_votequorum
@@ -890,9 +900,9 @@ class AddDeviceNetTest(TestCase):
         tmpfile_instance.name = rc("file.tmp")
         mock_write_tmpfile.return_value = tmpfile_instance
 
-        expected_corosync_conf = open(
+        expected_corosync_conf = _read_file(
                 rc(self.corosync_conf_name)
-            ).read().replace(
+            ).replace(
             "    provider: corosync_votequorum\n",
             outdent("""\
                     provider: corosync_votequorum
@@ -1015,9 +1025,9 @@ class AddDeviceNetTest(TestCase):
         tmpfile_instance.name = rc("file.tmp")
         mock_write_tmpfile.return_value = tmpfile_instance
 
-        expected_corosync_conf = open(
+        expected_corosync_conf = _read_file(
                 rc(self.corosync_conf_name)
-            ).read().replace(
+            ).replace(
             "    provider: corosync_votequorum\n",
             outdent("""\
                     provider: corosync_votequorum
@@ -1117,9 +1127,9 @@ class AddDeviceNetTest(TestCase):
         tmpfile_instance.name = rc("file.tmp")
         mock_write_tmpfile.return_value = tmpfile_instance
 
-        expected_corosync_conf = open(
+        expected_corosync_conf = _read_file(
                 rc(self.corosync_conf_name)
-            ).read().replace(
+            ).replace(
             "    provider: corosync_votequorum\n",
             outdent("""\
                     provider: corosync_votequorum
@@ -1224,7 +1234,7 @@ class AddDeviceNetTest(TestCase):
         ])
 
     def test_success_file_minimal(self):
-        original_corosync_conf = open(rc(self.corosync_conf_name)).read()
+        original_corosync_conf = _read_file_rc(self.corosync_conf_name)
         expected_corosync_conf = original_corosync_conf.replace(
             "    provider: corosync_votequorum\n",
             outdent("""\
@@ -1259,9 +1269,9 @@ class AddDeviceNetTest(TestCase):
         )
 
     def test_success_file_full(self):
-        expected_corosync_conf = open(
+        expected_corosync_conf = _read_file(
                 rc(self.corosync_conf_name)
-            ).read().replace(
+            ).replace(
             "    provider: corosync_votequorum\n",
             outdent("""\
                     provider: corosync_votequorum
@@ -1296,7 +1306,7 @@ class AddDeviceNetTest(TestCase):
 
         (self.config
             .env.set_corosync_conf_data(
-                open(rc(self.corosync_conf_name)).read()
+                _read_file_rc(self.corosync_conf_name)
             )
             .env.push_corosync_conf(
                 corosync_conf_text=expected_corosync_conf
@@ -1394,9 +1404,9 @@ class AddDeviceNetTest(TestCase):
         tmpfile_instance.name = rc("file.tmp")
         mock_write_tmpfile.return_value = tmpfile_instance
 
-        expected_corosync_conf = open(
+        expected_corosync_conf = _read_file(
                 rc(self.corosync_conf_name)
-            ).read().replace(
+            ).replace(
             "    provider: corosync_votequorum\n",
             outdent("""\
                     provider: corosync_votequorum
@@ -1530,9 +1540,9 @@ class AddDeviceNetTest(TestCase):
         )
 
     def test_invalid_model_forced(self):
-        expected_corosync_conf = open(
+        expected_corosync_conf = _read_file(
                 rc(self.corosync_conf_name)
-            ).read().replace(
+            ).replace(
             "    provider: corosync_votequorum\n",
             outdent("""\
                     provider: corosync_votequorum
@@ -1917,7 +1927,7 @@ class RemoveDeviceHeuristics(TestCase):
 
     def test_enabled_if_not_live(self):
         (self.config
-            .env.set_corosync_conf_data(open(rc("corosync-3nodes.conf")).read())
+            .env.set_corosync_conf_data(_read_file_rc("corosync-3nodes.conf"))
         )
         self.env_assist.assert_raise_library_error(
             lambda: lib.remove_device_heuristics(self.env_assist.get_env()),
@@ -1928,7 +1938,7 @@ class RemoveDeviceHeuristics(TestCase):
         )
 
     def test_success(self):
-        config_no_heuristics = open(rc("corosync-3nodes-qdevice.conf")).read()
+        config_no_heuristics = _read_file_rc("corosync-3nodes-qdevice.conf")
         config_heuristics = config_no_heuristics.replace(
             outdent("""\
                     net {
@@ -1956,7 +1966,7 @@ class RemoveDeviceHeuristics(TestCase):
 
     def test_fail_if_device_not_set(self):
         self.config.corosync_conf.load_content(
-            open(rc("corosync-3nodes.conf")).read()
+            _read_file_rc("corosync-3nodes.conf")
         )
         self.env_assist.assert_raise_library_error(
             lambda: lib.remove_device_heuristics(self.env_assist.get_env()),
@@ -1977,7 +1987,7 @@ class RemoveDeviceNetTest(TestCase):
     @staticmethod
     def conf_2nodes(quorum_line):
         cluster_nodes = ["rh7-1", "rh7-2"]
-        original_conf = open(rc("corosync-qdevice.conf")).read()
+        original_conf = _read_file_rc("corosync-qdevice.conf")
         expected_conf = original_conf.replace(
             outdent("""\
                 quorum {
@@ -2007,7 +2017,7 @@ class RemoveDeviceNetTest(TestCase):
     @staticmethod
     def conf_3nodes():
         cluster_nodes = ["rh7-1", "rh7-2", "rh7-3"]
-        original_conf = open(rc("corosync-3nodes-qdevice.conf")).read()
+        original_conf = _read_file_rc("corosync-3nodes-qdevice.conf")
         expected_conf = original_conf.replace(
             outdent("""\
                 quorum {
@@ -2139,7 +2149,7 @@ class RemoveDeviceNetTest(TestCase):
     @mock.patch("pcs.lib.sbd.get_local_sbd_device_list", lambda: [])
     def test_not_live_error(self):
         (self.config
-            .env.set_corosync_conf_data(open(rc("corosync-3nodes.conf")).read())
+            .env.set_corosync_conf_data(_read_file_rc("corosync-3nodes.conf"))
         )
         self.env_assist.assert_raise_library_error(
             lambda: lib.remove_device(self.env_assist.get_env()),
@@ -2168,7 +2178,7 @@ class RemoveDeviceNetTest(TestCase):
     @mock.patch("pcs.lib.sbd.get_local_sbd_device_list", lambda: [])
     def test_fail_if_device_not_set(self):
         self.config.corosync_conf.load_content(
-            open(rc("corosync-3nodes.conf")).read()
+            _read_file_rc("corosync-3nodes.conf")
         )
         self.env_assist.assert_raise_library_error(
             lambda: lib.remove_device(self.env_assist.get_env()),
@@ -2580,7 +2590,7 @@ class UpdateDeviceTest(TestCase):
     def assert_success_heuristics_add_no_exec(
         self, mock_get_corosync, mock_push_corosync, mode, warn
     ):
-        original_conf = open(rc("corosync-3nodes-qdevice.conf")).read()
+        original_conf = _read_file_rc("corosync-3nodes-qdevice.conf")
         mock_get_corosync.return_value = original_conf
         lib_env = LibraryEnvironment(self.mock_logger, self.mock_reporter)
 
@@ -2616,9 +2626,9 @@ class UpdateDeviceTest(TestCase):
     def assert_success_heuristics_update_no_exec(
         self, mock_get_corosync, mock_push_corosync, mode, warn
     ):
-        original_conf = open(
+        original_conf = _read_file(
             rc("corosync-3nodes-qdevice-heuristics.conf")
-        ).read()
+        )
         mock_get_corosync.return_value = original_conf
         lib_env = LibraryEnvironment(self.mock_logger, self.mock_reporter)
 
@@ -2652,7 +2662,7 @@ class UpdateDeviceTest(TestCase):
         )
 
     def test_no_device(self, mock_get_corosync, mock_push_corosync):
-        original_conf = open(rc("corosync-3nodes.conf")).read()
+        original_conf = _read_file_rc("corosync-3nodes.conf")
         mock_get_corosync.return_value = original_conf
         lib_env = LibraryEnvironment(self.mock_logger, self.mock_reporter)
 
@@ -2668,7 +2678,7 @@ class UpdateDeviceTest(TestCase):
         mock_push_corosync.assert_not_called()
 
     def test_success(self, mock_get_corosync, mock_push_corosync):
-        original_conf = open(rc("corosync-3nodes-qdevice.conf")).read()
+        original_conf = _read_file_rc("corosync-3nodes-qdevice.conf")
         mock_get_corosync.return_value = original_conf
         lib_env = LibraryEnvironment(self.mock_logger, self.mock_reporter)
 
@@ -2746,9 +2756,9 @@ class UpdateDeviceTest(TestCase):
     def test_success_heuristics_update_no_exec_present(
         self, mock_get_corosync, mock_push_corosync
     ):
-        original_conf = open(
+        original_conf = _read_file(
             rc("corosync-3nodes-qdevice-heuristics.conf")
-        ).read()
+        )
         mock_get_corosync.return_value = original_conf
         lib_env = LibraryEnvironment(self.mock_logger, self.mock_reporter)
 
@@ -2773,9 +2783,9 @@ class UpdateDeviceTest(TestCase):
     def test_success_heuristics_update_no_exec_kept(
         self, mock_get_corosync, mock_push_corosync
     ):
-        original_conf = open(
+        original_conf = _read_file(
             rc("corosync-3nodes-qdevice-heuristics.conf")
-        ).read()
+        )
         mock_get_corosync.return_value = original_conf
         lib_env = LibraryEnvironment(self.mock_logger, self.mock_reporter)
 
@@ -2795,7 +2805,7 @@ class UpdateDeviceTest(TestCase):
         )
 
     def test_invalid_options(self, mock_get_corosync, mock_push_corosync):
-        original_conf = open(rc("corosync-3nodes-qdevice.conf")).read()
+        original_conf = _read_file_rc("corosync-3nodes-qdevice.conf")
         mock_get_corosync.return_value = original_conf
         lib_env = LibraryEnvironment(self.mock_logger, self.mock_reporter)
 
@@ -2840,7 +2850,7 @@ class UpdateDeviceTest(TestCase):
     def test_invalid_options_forced(
         self, mock_get_corosync, mock_push_corosync
     ):
-        original_conf = open(rc("corosync-3nodes-qdevice.conf")).read()
+        original_conf = _read_file_rc("corosync-3nodes-qdevice.conf")
         mock_get_corosync.return_value = original_conf
         lib_env = LibraryEnvironment(self.mock_logger, self.mock_reporter)
 

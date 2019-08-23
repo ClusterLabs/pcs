@@ -450,11 +450,11 @@ class ClientSetupTest(TestCase):
             self.mock_runner,
             "qnetd CA certificate".encode("utf-8")
         )
-
-        self.assertEqual(
-            "qnetd CA certificate".encode("utf-8"),
-            open(self.ca_file_path, "rb").read()
-        )
+        with open(self.ca_file_path, "rb") as a_file:
+            self.assertEqual(
+                "qnetd CA certificate".encode("utf-8"),
+                a_file.read()
+            )
         self.mock_runner.run.assert_called_once_with([
             _client_cert_tool, "-i", "-c", self.ca_file_path
         ])
@@ -478,10 +478,12 @@ class ClientSetupTest(TestCase):
                 }
             )
         )
+        with open(self.ca_file_path, "rb") as a_file:
+            file_content = a_file.read()
 
         self.assertEqual(
             "qnetd CA certificate".encode("utf-8"),
-            open(self.ca_file_path, "rb").read()
+            file_content
         )
         self.mock_runner.run.assert_called_once_with([
             _client_cert_tool, "-i", "-c", self.ca_file_path
@@ -801,7 +803,8 @@ class GetOutputCertificateTest(TestCase):
     # pylint: disable=protected-access
     def setUp(self):
         self.file_path = get_test_resource("qdevice-certs/qnetd-cacert.crt")
-        self.file_data = open(self.file_path, "rb").read()
+        with open(self.file_path, "rb") as a_file:
+            self.file_data = a_file.read()
 
     def test_success(self):
         cert_tool_output = dedent(

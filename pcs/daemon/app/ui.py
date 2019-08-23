@@ -6,12 +6,15 @@ from pcs.daemon.app.common import BaseHandler
 from pcs.daemon.app.ui_common import AjaxMixin, StaticFile
 
 class SPAHandler(BaseHandler):
+    __index = None
+    __fallback = None
     def initialize(self, index, fallback):
         #pylint: disable=arguments-differ
         self.__index = index
         self.__fallback = fallback
 
     def get(self, *args, **kwargs):
+        del args, kwargs
         self.render(
             self.__index
             if os.path.isfile(str(self.__index))
@@ -26,6 +29,7 @@ class Login(SPAHandler, app_session.Mixin, AjaxMixin):
         SPAHandler.initialize(self, index, fallback)
 
     async def post(self, *args, **kwargs):
+        del args, kwargs
         # This is the way of old (ruby) pcsd. Post login generates a session
         # cookie. No matter if authentication succeeded or failed.
         self.enhance_headers()
@@ -47,6 +51,7 @@ class Logout(app_session.Mixin, AjaxMixin, BaseHandler):
     requests.
     """
     async def get(self, *args, **kwargs):
+        del args, kwargs
         await self.init_session()
         self.session_logout()
         self.sid_to_cookies()

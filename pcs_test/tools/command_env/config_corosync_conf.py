@@ -17,7 +17,9 @@ class CorosyncConf:
         self, node_name_list=None, name="corosync_conf.load",
         filename="corosync.conf", auto_tie_breaker=None, instead=None
     ):
-        content = open(rc(filename)).read()
+        # pylint: disable=too-many-locals
+        with open(rc(filename)) as a_file:
+            content = a_file.read()
         corosync_conf = None
         if node_name_list:
             corosync_conf = ConfigFacade.from_string(content).config

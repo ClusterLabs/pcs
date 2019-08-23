@@ -173,7 +173,8 @@ class PcmkShortcuts():
             )
             return
 
-        state = etree.fromstring(open(rc(filename)).read())
+        with open(rc(filename)) as a_file:
+            state = etree.fromstring(a_file.read())
 
         if raw_resources is not None:
             resources = fixture_state_resources_xml(**raw_resources)
@@ -261,14 +262,15 @@ class PcmkShortcuts():
             )
             return
 
-        self.__calls.place(
-            name,
-            RunnerCall(
-                "crm_resource --show-metadata {0}".format(agent_name),
-                stdout=open(rc(agent_metadata_filename)).read()
-            ),
-            instead=instead,
-        )
+        with open(rc(agent_metadata_filename)) as a_file:
+            self.__calls.place(
+                name,
+                RunnerCall(
+                    "crm_resource --show-metadata {0}".format(agent_name),
+                    stdout=a_file.read()
+                ),
+                instead=instead,
+            )
 
     def load_fenced_metadata(
         self,
@@ -291,14 +293,14 @@ class PcmkShortcuts():
         string before -- the key of a call before which this new call is to be
             placed
         """
+        if stdout is None:
+            with open(rc("fenced_metadata.xml")) as a_file:
+                stdout = a_file.read()
         self.__calls.place(
             name,
             RunnerCall(
                 "/usr/libexec/pacemaker/pacemaker-fenced metadata",
-                stdout=(
-                    stdout if stdout is not None
-                    else open(rc("fenced_metadata.xml")).read()
-                ),
+                stdout=stdout,
                 stderr=stderr,
                 returncode=returncode
             ),

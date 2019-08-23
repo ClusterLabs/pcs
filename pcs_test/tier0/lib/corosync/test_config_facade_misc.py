@@ -13,7 +13,8 @@ from pcs.lib.corosync import constants
 
 class FromStringTest(TestCase):
     def test_success(self):
-        config = open(rc("corosync.conf")).read()
+        with open(rc("corosync.conf")) as a_file:
+            config = a_file.read()
         facade = lib.ConfigFacade.from_string(config)
         self.assertEqual(facade.__class__, lib.ConfigFacade)
         self.assertEqual(facade.config.export(), config)

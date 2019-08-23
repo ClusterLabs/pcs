@@ -15,9 +15,11 @@ class SinatraRemote(Sinatra):
         self.send_sinatra_result(result)
 
     async def get(self, *args, **kwargs):
+        del args, kwargs
         await self.handle_sinatra_request()
 
     async def post(self, *args, **kwargs):
+        del args, kwargs
         await self.handle_sinatra_request()
 
 class SyncConfigMutualExclusive(SinatraRemote):
