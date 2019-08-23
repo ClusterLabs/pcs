@@ -1,6 +1,6 @@
 # Change Log
 
-## [Unreleased]
+## [0.10.3] - 2019-08-23
 
 ### Fixed
 - Fixed crashes in the `pcs host auth` command ([rhbz#1676957])
