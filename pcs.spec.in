@@ -69,8 +69,8 @@ Summary: Pacemaker Configuration System
 Source0: %{pcs_source_name}.tar.gz
 Source1: pcsd-bundle-config
 
-Source41: https://github.com/ondrejmular/pyagentx/archive/v%{pyagentx_version}.tar.gz#/pyagentx-%{pyagentx_version}.tar.gz
-Source42: https://github.com/tornadoweb/tornado/archive/v%{tornado_version}.tar.gz#/tornado-%{tornado_version}.tar.gz
+Source41: https://github.com/ondrejmular/pyagentx/archive/v%{pyagentx_version}/pyagentx-%{pyagentx_version}.tar.gz
+Source42: https://github.com/tornadoweb/tornado/archive/v%{tornado_version}/tornado-%{tornado_version}.tar.gz
 
 Source81: https://rubygems.org/downloads/backports-%{version_rubygem_backports}.gem
 Source82: https://rubygems.org/downloads/ethon-%{version_rubygem_ethon}.gem
