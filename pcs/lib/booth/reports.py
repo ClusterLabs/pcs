@@ -10,7 +10,7 @@ def booth_lack_of_sites(site_list):
     return ReportItem.error(
         report_codes.BOOTH_LACK_OF_SITES,
         info={
-            "sites": site_list,
+            "sites": sorted(site_list),
         }
     )
 
@@ -34,7 +34,7 @@ def booth_address_duplication(duplicate_addresses):
     return ReportItem.error(
         report_codes.BOOTH_ADDRESS_DUPLICATION,
         info={
-            "addresses": duplicate_addresses,
+            "addresses": sorted(duplicate_addresses),
         }
     )
 
@@ -189,7 +189,7 @@ def booth_config_accepted_by_node(node=None, name_list=None):
         report_codes.BOOTH_CONFIG_ACCEPTED_BY_NODE,
         info={
             "node": node,
-            "name_list": sorted(name_list)
+            "name_list": sorted(name_list) if name_list else ""
         }
     )
 

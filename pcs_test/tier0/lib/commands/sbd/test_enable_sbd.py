@@ -1073,7 +1073,7 @@ class Validations(TestCase):
                 },
                 default_device_list=[],
                 node_device_dict={
-                    self.node_list[0]: ["dev", "/dev0", "/dev1", "/dev2"],
+                    self.node_list[0]: ["/dev0", "/dev1", "/dev2", "dev"],
                     unknown_node_list[0]: ["/dev/device0"],
                     unknown_node_list[1]: ["/dev/device0"],
                 }
@@ -1096,7 +1096,7 @@ class Validations(TestCase):
                 fixture.error(
                     report_codes.SBD_TOO_MANY_DEVICES_FOR_NODE,
                     node=self.node_list[0],
-                    device_list=["dev", "/dev0", "/dev1", "/dev2"],
+                    device_list=["/dev0", "/dev1", "/dev2", "dev"],
                     max_devices=max_dev_num,
                 ),
                 fixture.error(

@@ -233,7 +233,7 @@ class ValidatePeersTest(TestCase):
                 severities.ERROR,
                 report_codes.BOOTH_ADDRESS_DUPLICATION,
                 {
-                    "addresses": set(["1.1.1.1"]),
+                    "addresses": ["1.1.1.1"],
                 }
             ),
         )
@@ -262,7 +262,7 @@ class ValidatePeersTest(TestCase):
                 severities.ERROR,
                 report_codes.BOOTH_ADDRESS_DUPLICATION,
                 {
-                    "addresses": set(["1.1.1.1"]),
+                    "addresses": ["1.1.1.1"],
                 }
             ),
         )

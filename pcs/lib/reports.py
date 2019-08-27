@@ -1751,7 +1751,7 @@ def stonith_resources_do_not_exist(
         report_codes.STONITH_RESOURCES_DO_NOT_EXIST,
         severity,
         info={
-            "stonith_ids": stonith_ids,
+            "stonith_ids": sorted(stonith_ids),
         },
         forceable=forceable
     )
@@ -2722,7 +2722,7 @@ def files_distribution_skipped(reason_type, file_list, node_list):
         }
     )
 
-def file_distribution_success(node=None, file_description=None):
+def file_distribution_success(node, file_description):
     """
     a file has been successfuly distributed to a node
 
@@ -2738,7 +2738,7 @@ def file_distribution_success(node=None, file_description=None):
     )
 
 def file_distribution_error(
-    node=None, file_description=None, reason=None,
+    node, file_description, reason,
     severity=ReportItemSeverity.ERROR, forceable=None
 ):
     """
@@ -2792,7 +2792,7 @@ def files_remove_from_nodes_skipped(reason_type, file_list, node_list):
         }
     )
 
-def file_remove_from_node_success(node=None, file_description=None):
+def file_remove_from_node_success(node, file_description):
     """
     files was successfuly removed nodes
 
@@ -2808,7 +2808,7 @@ def file_remove_from_node_success(node=None, file_description=None):
     )
 
 def file_remove_from_node_error(
-    node=None, file_description=None, reason=None,
+    node, file_description, reason,
     severity=ReportItemSeverity.ERROR, forceable=None
 ):
     """
@@ -2859,9 +2859,7 @@ def service_commands_on_nodes_skipped(reason_type, action_list, node_list):
         }
     )
 
-def service_command_on_node_success(
-    node=None, service_command_description=None
-):
+def service_command_on_node_success(node, service_command_description):
     """
     files was successfuly distributed on nodes
 
@@ -2877,7 +2875,7 @@ def service_command_on_node_success(
     )
 
 def service_command_on_node_error(
-    node=None, service_command_description=None, reason=None,
+    node, service_command_description, reason,
     severity=ReportItemSeverity.ERROR, forceable=None
 ):
     """
@@ -2967,7 +2965,7 @@ def sbd_too_many_devices_for_node(node, device_list, max_devices):
         report_codes.SBD_TOO_MANY_DEVICES_FOR_NODE,
         info={
             "node": node,
-            "device_list": device_list,
+            "device_list": sorted(device_list),
             "max_devices": max_devices,
         }
     )
@@ -3308,7 +3306,7 @@ def fencing_level_already_exists(level, target_type, target_value, devices):
             "level": level,
             "target_type": target_type,
             "target_value": target_value,
-            "devices": devices,
+            "devices": sorted(devices),
         }
     )
 

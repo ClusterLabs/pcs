@@ -70,6 +70,59 @@ def format_optional(value, template, empty_case=""):
         return template.format(value)
     return empty_case
 
+def _is_multiple(what):
+    """
+    Return True if 'what' does not mean one item, False otherwise
+
+    iterable/int what -- this will be counted
+    """
+    retval = False
+    if isinstance(what, int):
+        retval = abs(what) != 1
+    elif not isinstance(what, str):
+        try:
+            retval = len(what) != 1
+        except TypeError:
+            pass
+    return retval
+
+def _add_s(word):
+    """
+    add "s" or "es" to the word based on its ending
+
+    string word -- word where "s" or "es" should be added
+    """
+    if (
+        word[-1:] in ("s", "x", "o")
+        or
+        word[-2:] in ("ss", "sh", "ch")
+    ):
+        return word + "es"
+    return word + "s"
+
+def format_plural(depends_on, singular, plural=None):
+    """
+    Takes the singular word form and returns its plural form if depends_on
+    is not equal to one/contains one item
+
+    iterable/int/string depends_on -- if number (of items) isn't equal to one,
+        returns plural
+    string singular -- singular word (like: is, do, node)
+    string plural -- optional irregular plural form
+    """
+    common_plurals = {
+        "is": "are",
+        "has": "have",
+        "does": "do",
+    }
+    if not _is_multiple(depends_on):
+        return singular
+    if plural:
+        return plural
+    if singular in common_plurals:
+        return common_plurals[singular]
+    return _add_s(singular)
+
 def format_fencing_level_target(target_type, target_value):
     if target_type == TARGET_TYPE_ATTRIBUTE:
         return "{0}={1}".format(target_value[0], target_value[1])
@@ -866,13 +919,15 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
 
     codes.COROSYNC_IP_VERSION_MISMATCH_IN_LINKS: lambda info:
         (
-            "Using both IPv4 and IPv6 in one link is not allowed; please, use "
+            "Using both IPv4 and IPv6 on one link is not allowed; please, use "
             "either IPv4 or IPv6{_links}"
         ).format(
-            _links=(
-                " in links {}".format(format_list(info["link_numbers"]))
-                if info["link_numbers"]
-                else ""
+            _links=format_optional(
+                (
+                    format_list(info["link_numbers"]) if info["link_numbers"]
+                    else ""
+                ),
+                " on link(s): {}"
             )
         )
     ,
@@ -1139,9 +1194,9 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
     codes.CIB_FENCING_LEVEL_ALREADY_EXISTS: lambda info:
         (
             "Fencing level for '{target}' at level '{level}' "
-            "with device(s) '{device_list}' already exists"
+            "with device(s) {_device_list} already exists"
         ).format(
-            device_list=",".join(info["devices"]),
+            _device_list=format_list(info["devices"]),
             target=format_fencing_level_target(
                 info["target_type"], info["target_value"]
             ),
@@ -1161,8 +1216,8 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
             ),
             part_level=format_optional(info["level"], "at level '{0}' "),
             part_devices=format_optional(
-                ",".join(info["devices"]) if info["devices"] else "",
-                "with device(s) '{0}' "
+                format_list(info["devices"]) if info["devices"] else "",
+                "with device(s) {0} "
             )
         )
     ,
@@ -1352,11 +1407,11 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
     ,
 
     codes.MULTIPLE_RESULTS_FOUND: lambda info:
-        "multiple {result_type} {search_description} found: {what_found}"
+        "multiple {result_type}{search_description} found: {what_found}"
         .format(
             what_found=format_list(info["result_identifier_list"]),
             search_description="" if not info["search_description"]
-                else "for '{0}'".format(info["search_description"])
+                else " for '{0}'".format(info["search_description"])
             ,
             result_type=info["result_type"]
         )
@@ -1762,18 +1817,19 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
     ,
 
     codes.FILE_DOES_NOT_EXIST: lambda info:
-        "{_file_role} file '{file_path}' does not exist"
+        "{_file_role} file{_file_path} does not exist"
         .format(
             _file_role=format_file_role(info["file_role"]),
-            **info
+            _file_path=format_optional(info["file_path"], " '{}'")
         )
     ,
 
     codes.FILE_IO_ERROR: lambda info:
-        "Unable to {operation} {_file_role}{_file_path}: {reason}"
+        "Unable to {operation} {_file_role}{_file_path}{_reason}"
         .format(
             _file_path=format_optional(info["file_path"], " '{0}'"),
             _file_role=format_file_role(info["file_role"]),
+            _reason=format_optional(info["reason"], ": {}"),
             **info
         )
     ,
@@ -1925,7 +1981,7 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
         "Cannot specify '--wait' without specifying '--start'"
     ,
     codes.WAIT_FOR_NODE_STARTUP_STARTED: lambda info:
-        "Waiting for nodes to start: {_nodes}...".format(
+        "Waiting for node(s) to start: {_nodes}...".format(
             _nodes=format_list(info["node_name_list"])
         )
     ,
@@ -1940,7 +1996,7 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
         ).format(**info)
     ,
     codes.PCSD_SSL_CERT_AND_KEY_DISTRIBUTION_STARTED: lambda info:
-        "Synchronizing pcsd SSL certificates on nodes {_nodes}...".format(
+        "Synchronizing pcsd SSL certificates on node(s) {_nodes}...".format(
             _nodes=format_list(info["node_name_list"])
         )
     ,
@@ -1983,18 +2039,22 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
     ,
     codes.UNABLE_TO_CONNECT_TO_ALL_REMAINING_NODE: lambda info:
         (
-            "Remaining cluster nodes {_nodes} are unreachable, run 'pcs "
-            "cluster sync' on some now online node once they become available"
+            "Remaining cluster {_node_pl} {_nodes} could not be reached, run "
+            "'pcs cluster sync' on any currently online node once the "
+            "unreachable {_one_pl} become available"
         ).format(
+            _node_pl=format_plural(info["node_list"], "node"),
             _nodes=format_list(info["node_list"]),
+            _one_pl=format_plural(info["node_list"], "one")
         )
     ,
     codes.NODES_TO_REMOVE_UNREACHABLE: lambda info:
         (
-            "Removed nodes {_nodes} are unreachable, therefore it is not "
-            "possible to deconfigure them. Run 'pcs cluster destroy' on them "
-            "when available."
+            "Removed {_node_pl} {_nodes} could not be reached and subsequently "
+            "deconfigured. Run 'pcs cluster destroy' on the unreachable "
+            "{_node_pl}."
         ).format(
+            _node_pl=format_plural(info["node_list"], "node"),
             _nodes=format_list(info["node_list"]),
         )
     ,

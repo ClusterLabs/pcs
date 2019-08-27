@@ -829,11 +829,12 @@ class ValidateLevelTargetDevicesDoesNotExist(TestCase):
         reporter = MockLibraryReportProcessor()
 
         lib._validate_level_target_devices_does_not_exist(
-            reporter, "tree", "level", "target_type", "target_value", "devices"
+            reporter, "tree", "level", "target_type", "target_value",
+            ["devices"]
         )
 
         mock_find.assert_called_once_with(
-            "tree", "level", "target_type", "target_value", "devices"
+            "tree", "level", "target_type", "target_value", ["devices"]
         )
         assert_report_item_list_equal(reporter.report_item_list, [])
 
@@ -842,17 +843,18 @@ class ValidateLevelTargetDevicesDoesNotExist(TestCase):
         reporter = MockLibraryReportProcessor()
 
         lib._validate_level_target_devices_does_not_exist(
-            reporter, "tree", "level", "target_type", "target_value", "devices"
+            reporter, "tree", "level", "target_type", "target_value",
+            ["devices"]
         )
 
         mock_find.assert_called_once_with(
-            "tree", "level", "target_type", "target_value", "devices"
+            "tree", "level", "target_type", "target_value", ["devices"]
         )
         report = [(
             severity.ERROR,
             report_codes.CIB_FENCING_LEVEL_ALREADY_EXISTS,
             {
-                "devices": "devices",
+                "devices": ["devices"],
                 "target_type": "target_type",
                 "target_value": "target_value",
                 "level": "level",

@@ -1,10 +1,13 @@
 # pylint: disable=too-many-lines
 
-from unittest import TestCase
+from unittest import mock, TestCase
 
 from pcs.cli.common.console_report import(
     indent,
     format_optional,
+    format_plural,
+    _is_multiple,
+    _add_s
 )
 from pcs.cli.common.reports import CODE_BUILDER_MAP
 from pcs.common import env_file_role_codes
@@ -33,15 +36,21 @@ class NameBuildTest(TestCase):
     """
     Base class for the testing of message building.
     """
-    def assert_message_from_report(self, message, report):
+    def assert_message_from_report(self, message, report, force_text=None):
         if not isinstance(report, ReportItem):
             raise AssertionError("report is not an instance of ReportItem")
         info = report.info if report.info else {}
         build = CODE_BUILDER_MAP[report.code]
-        self.assertEqual(
-            message,
-            build(info) if callable(build) else build
-        )
+        if force_text is not None:
+            self.assertEqual(
+                message,
+                build(info, force_text)
+            )
+        else:
+            self.assertEqual(
+                message,
+                build(info) if callable(build) else build
+            )
 
 
 class BuildInvalidOptionsMessageTest(NameBuildTest):
@@ -208,39 +217,33 @@ class BuildInvalidOptionValueMessageTest(NameBuildTest):
             )
         )
 
-class BuildServiceStartErrorTest(NameBuildTest):
-    def test_build_message_with_instance_and_node(self):
-        self.assert_message_from_report(
-            "NODE: Unable to start SERVICE@INSTANCE: REASON",
-            reports.service_start_error("SERVICE", "REASON", "NODE", "INSTANCE")
-        )
-    def test_build_message_with_instance_only(self):
-        self.assert_message_from_report(
-            "Unable to start SERVICE@INSTANCE: REASON",
-            reports.service_start_error(
-                "SERVICE", "REASON",
-                instance="INSTANCE"
-            )
-        )
-
-    def test_build_message_with_node_only(self):
-        self.assert_message_from_report(
-            "NODE: Unable to start SERVICE: REASON",
-            reports.service_start_error("SERVICE", "REASON", "NODE")
-        )
-
-    def test_build_message_without_node_and_instance(self):
-        self.assert_message_from_report(
-            "Unable to start SERVICE: REASON",
-            reports.service_start_error("SERVICE", "REASON")
-        )
-
 class InvalidCibContent(NameBuildTest):
     def test_build_message(self):
         report = "report\nlines"
         self.assert_message_from_report(
             "invalid cib: \n{0}".format(report),
             reports.invalid_cib_content(report)
+        )
+
+class CibMissingMandatorySection(NameBuildTest):
+    def test_all(self):
+        self.assert_message_from_report(
+            "Unable to get section-name section of cib",
+            reports.cib_missing_mandatory_section("section-name")
+        )
+
+class CibSaveTmpError(NameBuildTest):
+    def test_all(self):
+        self.assert_message_from_report(
+            "Unable to save CIB to a temporary file: reason",
+            reports.cib_save_tmp_error("reason")
+        )
+
+class IdAlreadyExists(NameBuildTest):
+    def test_all(self):
+        self.assert_message_from_report(
+            "'id' already exists",
+            reports.id_already_exists("id")
         )
 
 class BuildInvalidIdTest(NameBuildTest):
@@ -266,6 +269,35 @@ class BuildInvalidIdTest(NameBuildTest):
                 is_first_char=False
             )
         )
+
+class InvalidIdIsEmpty(NameBuildTest):
+    def test_all(self):
+        self.assert_message_from_report(
+            "description cannot be empty",
+            reports.invalid_id_is_empty("ID", "description")
+        )
+
+class InvalidScore(NameBuildTest):
+    def test_all(self):
+        self.assert_message_from_report(
+            "invalid score '1M', use integer or INFINITY or -INFINITY",
+            reports.invalid_score("1M")
+        )
+
+class MultipleScoreOptions(NameBuildTest):
+    def test_all(self):
+        self.assert_message_from_report(
+            "you cannot specify multiple score options",
+            reports.multiple_score_options()
+        )
+
+class InvalidTimeout(NameBuildTest):
+    def test_all(self):
+        self.assert_message_from_report(
+            "'24h' is not a valid number of seconds to wait",
+            reports.invalid_timeout("24h")
+        )
+
 
 class BuildRunExternalStartedTest(NameBuildTest):
 
@@ -317,6 +349,31 @@ class BuildRunExternalStartedTest(NameBuildTest):
             )
         )
 
+class RunExternalProcessFinished(NameBuildTest):
+    def test_all(self):
+        self.assert_message_from_report(
+            (
+                "Finished running: com-mand\n"
+                "Return value: 0\n"
+                "--Debug Stdout Start--\n"
+                "STDOUT\n"
+                "--Debug Stdout End--\n"
+                "--Debug Stderr Start--\n"
+                "STDERR\n"
+                "--Debug Stderr End--\n"
+            ),
+            reports.run_external_process_finished(
+                "com-mand", 0, "STDOUT", "STDERR"
+            )
+        )
+
+class RunExternalProcessError(NameBuildTest):
+    def test_all(self):
+        self.assert_message_from_report(
+            "unable to run command com-mand: reason",
+            reports.run_external_process_error("com-mand", "reason")
+        )
+
     def test_insidious_environment(self):
         self.assert_message_from_report(
             (
@@ -355,6 +412,17 @@ class BuildNodeCommunicationStartedTest(NameBuildTest):
             )
         )
 
+class NodeCommunicationdDebugInfo(NameBuildTest):
+    def test_all(self):
+        self.assert_message_from_report(
+            (
+                "Communication debug info for calling: node1\n"
+                "--Debug Communication Info Start--\n"
+                "DATA\n"
+                "--Debug Communication Info End--\n"
+            ),
+            reports.node_communication_debug_info("node1", "DATA")
+        )
 
 class NodeCommunicationErrorTimedOut(NameBuildTest):
     def test_success(self):
@@ -371,6 +439,104 @@ class NodeCommunicationErrorTimedOut(NameBuildTest):
             )
         )
 
+class NodeCommunicationErrorPermissionDenied(NameBuildTest):
+    def test_all(self):
+        self.assert_message_from_report(
+            "node3: Permission denied (reason)",
+            reports.node_communication_error_permission_denied(
+                "node3", "com-mand", "reason"
+            )
+        )
+
+class NodeCommunicationErrorUnsupportedCommand(NameBuildTest):
+    def test_all(self):
+        self.assert_message_from_report(
+            "node1: Unsupported command (reason), try upgrading pcsd",
+            reports.node_communication_error_unsupported_command(
+                "node1", "com-mand", "reason"
+            )
+        )
+
+class NodeCommunicationErrorUnableToConnect(NameBuildTest):
+    def test_all(self):
+        self.assert_message_from_report(
+            "Unable to connect to node1 (reason)",
+            reports.node_communication_error_unable_to_connect(
+                "node1", "com-mand", "reason"
+            )
+        )
+
+class NodeCommunicationErrorOtherError(NameBuildTest):
+    def test_all(self):
+        self.assert_message_from_report(
+            "Error connecting to node1 (reason)",
+            reports.node_communication_error_other_error(
+                "node1", "com-mand", "reason"
+            )
+        )
+
+class NodeCommunicationCommandUnsuccessful(NameBuildTest):
+    def test_all(self):
+        self.assert_message_from_report(
+            "node1: reason",
+            reports.node_communication_command_unsuccessful(
+                "node1", "com-mand", "reason"
+            )
+        )
+
+class InvalidResponseFormat(NameBuildTest):
+    def test_all(self):
+        self.assert_message_from_report(
+            "node1: Invalid format of response",
+            reports.invalid_response_format("node1")
+        )
+
+class NodeCommunicationFinished(NameBuildTest):
+    def test_all(self):
+        self.assert_message_from_report(
+            (
+                "Finished calling: node1\n"
+                "Response Code: 0\n"
+                "--Debug Response Start--\n"
+                "DATA\n"
+                "--Debug Response End--\n"
+            ),
+            reports.node_communication_finished("node1", 0, "DATA")
+        )
+
+class NodeCommunicationNotConnected(NameBuildTest):
+    def test_all(self):
+        self.assert_message_from_report(
+            "Unable to connect to node2 (this is reason)",
+            reports.node_communication_not_connected("node2", "this is reason")
+        )
+
+class NodeCommunicationProxyIsSet(NameBuildTest):
+    def test_minimal(self):
+        self.assert_message_from_report(
+            "Proxy is set in environment variables, try disabling it",
+            reports.node_communication_proxy_is_set()
+        )
+
+    def test_with_node(self):
+        self.assert_message_from_report(
+            "Proxy is set in environment variables, try disabling it",
+            reports.node_communication_proxy_is_set(node="node1")
+        )
+
+    def test_with_address(self):
+        self.assert_message_from_report(
+            "Proxy is set in environment variables, try disabling it",
+            reports.node_communication_proxy_is_set(address="aaa")
+        )
+
+    def test_all(self):
+        self.assert_message_from_report(
+            "Proxy is set in environment variables, try disabling it",
+            reports.node_communication_proxy_is_set(
+                node="node1", address="aaa"
+            )
+        )
 
 class FormatOptionalTest(TestCase):
     def test_info_key_is_falsy(self):
@@ -385,12 +551,197 @@ class FormatOptionalTest(TestCase):
     def test_integer_zero_is_not_falsy(self):
         self.assertEqual("0: ", format_optional(0, "{0}: "))
 
+class IsMultipleTest(TestCase):
+    def test_unsupported(self):
+        def empty_func():
+            pass
+        self.assertFalse(_is_multiple(empty_func()))
+
+    def test_empty_string(self):
+        self.assertFalse(_is_multiple(""))
+
+    def test_string(self):
+        self.assertFalse(_is_multiple("some string"))
+
+    def test_list_empty(self):
+        self.assertTrue(_is_multiple(list()))
+
+    def test_list_single(self):
+        self.assertFalse(_is_multiple(["the only list item"]))
+
+    def test_list_multiple(self):
+        self.assertTrue(_is_multiple(["item1", "item2"]))
+
+    def test_dict_empty(self):
+        self.assertTrue(_is_multiple(dict()))
+
+    def test_dict_single(self):
+        self.assertFalse(_is_multiple({"the only index": "something"}))
+
+    def test_dict_multiple(self):
+        self.assertTrue(_is_multiple({1: "item1", 2: "item2"}))
+
+    def test_set_empty(self):
+        self.assertTrue(_is_multiple(set()))
+
+    def test_set_single(self):
+        self.assertFalse(_is_multiple({"the only set item"}))
+
+    def test_set_multiple(self):
+        self.assertTrue(_is_multiple({"item1", "item2"}))
+
+    def test_integer_zero(self):
+        self.assertTrue(_is_multiple(0))
+
+    def test_integer_one(self):
+        self.assertFalse(_is_multiple(1))
+
+    def test_integer_negative_one(self):
+        self.assertFalse(_is_multiple(-1))
+
+    def test_integer_more(self):
+        self.assertTrue(_is_multiple(3))
+
+class AddSTest(TestCase):
+    def test_add_s(self):
+        self.assertEqual(_add_s("fedora"), "fedoras")
+
+    def test_add_es_s(self):
+        self.assertEqual(_add_s("bus"), "buses")
+
+    def test_add_es_x(self):
+        self.assertEqual(_add_s("box"), "boxes")
+
+    def test_add_es_o(self):
+        self.assertEqual(_add_s("zero"), "zeroes")
+
+    def test_add_es_ss(self):
+        self.assertEqual(_add_s("address"), "addresses")
+
+    def test_add_es_sh(self):
+        self.assertEqual(_add_s("wish"), "wishes")
+
+    def test_add_es_ch(self):
+        self.assertEqual(_add_s("church"), "churches")
+
+@mock.patch("pcs.cli.common.console_report._add_s")
+@mock.patch("pcs.cli.common.console_report._is_multiple")
+class FormatPluralTest(TestCase):
+    def test_is_sg(self, mock_is_multiple, mock_add_s):
+        mock_is_multiple.return_value = False
+        self.assertEqual(
+            "is", format_plural(1, "is")
+        )
+        mock_add_s.assert_not_called()
+        mock_is_multiple.assert_called_once_with(1)
+
+    def test_is_pl(self, mock_is_multiple, mock_add_s):
+        mock_is_multiple.return_value = True
+        self.assertEqual(
+            "are", format_plural(2, "is")
+        )
+        mock_add_s.assert_not_called()
+        mock_is_multiple.assert_called_once_with(2)
+
+    def test_do_sg(self, mock_is_multiple, mock_add_s):
+        mock_is_multiple.return_value = False
+        self.assertEqual(
+            "does", format_plural("he", "does")
+        )
+        mock_add_s.assert_not_called()
+        mock_is_multiple.assert_called_once_with("he")
+
+    def test_do_pl(self, mock_is_multiple, mock_add_s):
+        mock_is_multiple.return_value = True
+        self.assertEqual(
+            "do", format_plural(["he", "she"], "does")
+        )
+        mock_add_s.assert_not_called()
+        mock_is_multiple.assert_called_once_with(["he", "she"])
+
+    def test_have_sg(self, mock_is_multiple, mock_add_s):
+        mock_is_multiple.return_value = False
+        self.assertEqual(
+            "has", format_plural("he", "has")
+        )
+        mock_add_s.assert_not_called()
+        mock_is_multiple.assert_called_once_with("he")
+
+    def test_have_pl(self, mock_is_multiple, mock_add_s):
+        mock_is_multiple.return_value = True
+        self.assertEqual(
+            "have", format_plural(["he", "she"], "has")
+        )
+        mock_add_s.assert_not_called()
+        mock_is_multiple.assert_called_once_with(["he", "she"])
+
+    def test_plural_sg(self, mock_is_multiple, mock_add_s):
+        mock_is_multiple.return_value = False
+        self.assertEqual(
+            "singular", format_plural(1, "singular", "plural")
+        )
+        mock_add_s.assert_not_called()
+        mock_is_multiple.assert_called_once_with(1)
+
+    def test_plural_pl(self, mock_is_multiple, mock_add_s):
+        mock_is_multiple.return_value = True
+        self.assertEqual(
+            "plural", format_plural(10, "singular", "plural")
+        )
+        mock_add_s.assert_not_called()
+        mock_is_multiple.assert_called_once_with(10)
+
+    def test_regular_sg(self, mock_is_multiple, mock_add_s):
+        mock_is_multiple.return_value = False
+        self.assertEqual(
+            "greeting", format_plural(1, "greeting")
+        )
+        mock_add_s.assert_not_called()
+        mock_is_multiple.assert_called_once_with(1)
+
+    def test_regular_pl(self, mock_is_multiple, mock_add_s):
+        mock_add_s.return_value = "greetings"
+        mock_is_multiple.return_value = True
+        self.assertEqual(
+            "greetings", format_plural(10, "greeting")
+        )
+        mock_add_s.assert_called_once_with("greeting")
+        mock_is_multiple.assert_called_once_with(10)
 
 class AgentNameGuessedTest(NameBuildTest):
     def test_build_message_with_data(self):
         self.assert_message_from_report(
             "Assumed agent name 'ocf:heartbeat:Delay' (deduced from 'Delay')",
             reports.agent_name_guessed("Delay", "ocf:heartbeat:Delay")
+        )
+
+class UnableToGetAgentMetadata(NameBuildTest):
+    def test_all(self):
+        self.assert_message_from_report(
+            (
+                "Agent 'agent-name' is not installed or does not provide valid "
+                "metadata: reason"
+            ),
+            reports.unable_to_get_agent_metadata("agent-name", "reason")
+        )
+
+class AgentNameGuessFoundMoreThanOne(NameBuildTest):
+    def test_all(self):
+        self.assert_message_from_report(
+            (
+                "Multiple agents match 'agent', please specify full name: "
+                "agent1, agent2"
+            ),
+            reports.agent_name_guess_found_more_than_one(
+                "agent", ["agent2", "agent1"]
+            )
+        )
+
+class AgentNameGuessFoundNone(NameBuildTest):
+    def test_all(self):
+        self.assert_message_from_report(
+            "Unable to find agent 'agent-name', try specifying its full name",
+            reports.agent_name_guess_found_none("agent-name")
         )
 
 class InvalidResourceAgentNameTest(NameBuildTest):
@@ -426,7 +777,7 @@ class InvalidOptionType(NameBuildTest):
     def test_allowed_list(self):
         self.assert_message_from_report(
             "specified option name is not valid, use 'allowed', 'types'",
-            reports.invalid_option_type("option name", ["allowed", "types"])
+            reports.invalid_option_type("option name", ["types", "allowed"])
         )
 
 
@@ -455,23 +806,23 @@ class StonithResourcesDoNotExist(NameBuildTest):
     def test_success(self):
         self.assert_message_from_report(
             "Stonith resource(s) 'device1', 'device2' do not exist",
-            reports.stonith_resources_do_not_exist(["device1", "device2"])
+            reports.stonith_resources_do_not_exist(["device2", "device1"])
         )
 
 class FencingLevelAlreadyExists(NameBuildTest):
     def test_target_node(self):
         self.assert_message_from_report(
             "Fencing level for 'nodeA' at level '1' with device(s) "
-                "'device1,device2' already exists",
+                "'device1', 'device2' already exists",
             reports.fencing_level_already_exists(
-                "1", TARGET_TYPE_NODE, "nodeA", ["device1", "device2"]
+                "1", TARGET_TYPE_NODE, "nodeA", ["device2", "device1"]
             )
         )
 
     def test_target_pattern(self):
         self.assert_message_from_report(
             "Fencing level for 'node-\\d+' at level '1' with device(s) "
-                "'device1,device2' already exists",
+                "'device1', 'device2' already exists",
             reports.fencing_level_already_exists(
                 "1", TARGET_TYPE_REGEXP, "node-\\d+", ["device1", "device2"]
             )
@@ -480,10 +831,10 @@ class FencingLevelAlreadyExists(NameBuildTest):
     def test_target_attribute(self):
         self.assert_message_from_report(
             "Fencing level for 'name=value' at level '1' with device(s) "
-                "'device1,device2' already exists",
+                "'device2' already exists",
             reports.fencing_level_already_exists(
                 "1", TARGET_TYPE_ATTRIBUTE, ("name", "value"),
-                ["device1", "device2"]
+                ["device2"]
             )
         )
 
@@ -491,9 +842,9 @@ class FencingLevelDoesNotExist(NameBuildTest):
     def test_full_info(self):
         self.assert_message_from_report(
             "Fencing level for 'nodeA' at level '1' with device(s) "
-                "'device1,device2' does not exist",
+                "'device1', 'device2' does not exist",
             reports.fencing_level_does_not_exist(
-                "1", TARGET_TYPE_NODE, "nodeA", ["device1", "device2"]
+                "1", TARGET_TYPE_NODE, "nodeA", ["device2", "device1"]
             )
         )
 
@@ -513,9 +864,9 @@ class FencingLevelDoesNotExist(NameBuildTest):
 
     def test_only_devices(self):
         self.assert_message_from_report(
-            "Fencing level with device(s) 'device1,device2' does not exist",
+            "Fencing level with device(s) 'device1' does not exist",
             reports.fencing_level_does_not_exist(
-                None, None, None, ["device1", "device2"]
+                None, None, None, ["device1"]
             )
         )
 
@@ -569,6 +920,14 @@ class ResourceOperationIntevalAdaptedTest(NameBuildTest):
         )
 
 class IdBelongsToUnexpectedType(NameBuildTest):
+    def test_build_message_with_single_type(self):
+        self.assert_message_from_report(
+            "'ID' is not an ACL permission",
+            reports.id_belongs_to_unexpected_type(
+                "ID", ["acl_permission"], "op"
+            )
+        )
+
     def test_build_message_with_data(self):
         self.assert_message_from_report(
             "'ID' is not a clone/resource",
@@ -640,7 +999,7 @@ class MutuallyExclusiveOptions(NameBuildTest):
     def test_build_message(self):
         self.assert_message_from_report(
             "Only one of some options 'a' and 'b' can be used",
-            reports.mutually_exclusive_options(["a", "b"], "some")
+            reports.mutually_exclusive_options(["b", "a"], "some")
         )
 
 class ResourceIsUnmanaged(NameBuildTest):
@@ -661,25 +1020,49 @@ class ResourceManagedNoMonitorEnabled(NameBuildTest):
 
 
 class SbdDeviceInitializationStarted(NameBuildTest):
-    def test_build_message(self):
+    def test_more_devices(self):
         self.assert_message_from_report(
             "Initializing devices '/dev1', '/dev2', '/dev3'...",
             reports.sbd_device_initialization_started(
-                ["/dev1", "/dev2", "/dev3"]
+                ["/dev3", "/dev2", "/dev1"]
             )
         )
-        #TODO: Test 1 device.
+
+    def test_one_device(self):
+        self.assert_message_from_report(
+            "Initializing device '/dev1'...",
+            reports.sbd_device_initialization_started(["/dev1"])
+        )
+
+
+class SbdDeviceInitializationSuccess(NameBuildTest):
+    def test_more_devices(self):
+        self.assert_message_from_report(
+            "Device(s) initialized successfuly",
+            reports.sbd_device_initialization_success(["/dev2", "/dev1"])
+        )
+
+    def test_one_device(self):
+        self.assert_message_from_report(
+            "Device(s) initialized successfuly",
+            reports.sbd_device_initialization_success(["/dev1"])
+        )
 
 
 class SbdDeviceInitializationError(NameBuildTest):
-    def test_build_message(self):
+    def test_more_devices(self):
         self.assert_message_from_report(
             "Initialization of devices '/dev1', '/dev2' failed: this is reason",
             reports.sbd_device_initialization_error(
                 ["/dev2", "/dev1"], "this is reason"
             )
         )
-    #TODO: Add test for 1 device
+
+    def test_one_device(self):
+        self.assert_message_from_report(
+            "Initialization of device '/dev2' failed: this is reason",
+            reports.sbd_device_initialization_error(["/dev2"], "this is reason")
+        )
 
 
 class SbdDeviceListError(NameBuildTest):
@@ -741,7 +1124,17 @@ class SbdDeviceISNotBlockDevice(NameBuildTest):
         )
 
 class SbdNotUsedCannotSetSbdOptions(NameBuildTest):
-    def test_success(self):
+    def test_single_option(self):
+        self.assert_message_from_report(
+            "Cluster is not configured to use SBD, cannot specify SBD option(s)"
+            " 'device' for node 'node1'"
+            ,
+            reports.sbd_not_used_cannot_set_sbd_options(
+                ["device"], "node1"
+            )
+        )
+
+    def test_multiple_options(self):
         self.assert_message_from_report(
             "Cluster is not configured to use SBD, cannot specify SBD option(s)"
             " 'device', 'watchdog' for node 'node1'"
@@ -786,8 +1179,83 @@ class SbdTooManyDevicesForNode(NameBuildTest):
                 "'/dev2', '/dev3' specified for node 'node1'"
             ,
             reports.sbd_too_many_devices_for_node(
-                "node1", ["/dev1", "/dev2", "/dev3"], 3
+                "node1", ["/dev1", "/dev3", "/dev2"], 3
             )
+        )
+
+class SbdCheckStarted(NameBuildTest):
+    def test_all(self):
+        self.assert_message_from_report(
+            "Running SBD pre-enabling checks...",
+            reports.sbd_check_started()
+        )
+
+class SbdCheckSuccess(NameBuildTest):
+    def test_all(self):
+        self.assert_message_from_report(
+            "node1: SBD pre-enabling checks done",
+            reports.sbd_check_success("node1")
+        )
+
+class SbdConfigDistributionStarted(NameBuildTest):
+    def test_all(self):
+        self.assert_message_from_report(
+            "Distributing SBD config...",
+            reports.sbd_config_distribution_started()
+        )
+
+class SbdConfigAcceptedByNode(NameBuildTest):
+    def test_all(self):
+        self.assert_message_from_report(
+            "node1: SBD config saved",
+            reports.sbd_config_accepted_by_node("node1")
+        )
+
+class UnableToGetSbdConfig(NameBuildTest):
+    def test_no_reason(self):
+        self.assert_message_from_report(
+            "Unable to get SBD configuration from node 'node1'",
+            reports.unable_to_get_sbd_config("node1", "")
+        )
+
+    def test_all(self):
+        self.assert_message_from_report(
+            "Unable to get SBD configuration from node 'node2': reason",
+            reports.unable_to_get_sbd_config("node2", "reason")
+        )
+
+class SbdEnablingStarted(NameBuildTest):
+    def test_all(self):
+        self.assert_message_from_report(
+            "Enabling SBD service...",
+            reports.sbd_enabling_started()
+        )
+
+class SbdDisablingStarted(NameBuildTest):
+    def test_all(self):
+        self.assert_message_from_report(
+            "Disabling SBD service...",
+            reports.sbd_disabling_started()
+        )
+
+class SbdNotInstalled(NameBuildTest):
+    def test_all(self):
+        self.assert_message_from_report(
+            "SBD is not installed on node 'node1'",
+            reports.sbd_not_installed("node1")
+        )
+
+class UnableToGetSbdStatus(NameBuildTest):
+    def test_no_reason(self):
+        self.assert_message_from_report(
+            "Unable to get status of SBD from node 'node1'",
+            reports.unable_to_get_sbd_status("node1", "")
+        )
+
+    def test_all(self):
+        self.assert_message_from_report(
+            "Unable to get status of SBD from node 'node2': reason",
+            reports.unable_to_get_sbd_status("node2", "reason")
         )
 
 class RequiredOptionOfAlternativesIsMissing(NameBuildTest):
@@ -795,15 +1263,15 @@ class RequiredOptionOfAlternativesIsMissing(NameBuildTest):
         self.assert_message_from_report(
             "option 'aAa' or 'bBb' or 'cCc' has to be specified",
             reports.required_option_of_alternatives_is_missing(
-                ["aAa", "bBb", "cCc"]
+                ["aAa", "cCc", "bBb"]
             )
         )
 
     def test_with_type(self):
         self.assert_message_from_report(
-            "test option 'aAa' or 'bBb' or 'cCc' has to be specified",
+            "test option 'aAa' has to be specified",
             reports.required_option_of_alternatives_is_missing(
-                ["aAa", "bBb", "cCc"], "test"
+                ["aAa"], "test"
             )
         )
 
@@ -891,6 +1359,12 @@ class FileDistributionStarted(NameBuildTest):
             reports.files_distribution_started(["first", "second"])
         )
 
+    def test_build_messages_with_single_node(self):
+        self.assert_message_from_report(
+            "Sending 'first' to 'node1'",
+            reports.files_distribution_started(["first"], ["node1"])
+        )
+
     def test_build_messages_with_nodes(self):
         self.assert_message_from_report(
             "Sending 'first', 'second' to 'node1', 'node2'",
@@ -901,7 +1375,7 @@ class FileDistributionStarted(NameBuildTest):
         )
 
 
-class FileDistributionSucess(NameBuildTest):
+class FileDistributionSuccess(NameBuildTest):
     def test_build_messages(self):
         self.assert_message_from_report(
             "node1: successful distribution of the file 'some authfile'",
@@ -919,7 +1393,19 @@ class FileDistributionError(NameBuildTest):
 
 
 class FileRemoveFromNodesStarted(NameBuildTest):
-    def test_build_messages(self):
+    def test_minimal(self):
+        self.assert_message_from_report(
+            "Requesting remove 'file'",
+            reports.files_remove_from_nodes_started(["file"])
+        )
+
+    def test_with_single_node(self):
+        self.assert_message_from_report(
+            "Requesting remove 'first' from 'node1'",
+            reports.files_remove_from_nodes_started(["first"], ["node1"])
+        )
+
+    def test_with_multiple_nodes(self):
         self.assert_message_from_report(
             "Requesting remove 'first', 'second' from 'node1', 'node2'",
             reports.files_remove_from_nodes_started(
@@ -929,7 +1415,7 @@ class FileRemoveFromNodesStarted(NameBuildTest):
         )
 
 
-class FileRemoveFromNodeSucess(NameBuildTest):
+class FileRemoveFromNodeSuccess(NameBuildTest):
     def test_build_messages(self):
         self.assert_message_from_report(
             "node1: successful removal of the file 'some authfile'",
@@ -954,6 +1440,15 @@ class ServiceCommandsOnNodesStarted(NameBuildTest):
             "Requesting 'action1', 'action2'",
             reports.service_commands_on_nodes_started(
                 ["action1", "action2"]
+            )
+        )
+
+    def test_build_messages_with_single_node(self):
+        self.assert_message_from_report(
+            "Requesting 'action1' on 'node1'",
+            reports.service_commands_on_nodes_started(
+                ["action1"],
+                ["node1"],
             )
         )
 
@@ -1003,6 +1498,13 @@ class LiveEnvironmentRequired(NameBuildTest):
         self.assert_message_from_report(
             "This command does not support '--corosync_conf', '-f'",
             reports.live_environment_required(["COROSYNC_CONF", "CIB"])
+        )
+
+class LiveEnvironmentRequiredForLocalNode(NameBuildTest):
+    def test_all(self):
+        self.assert_message_from_report(
+            "Node(s) must be specified if -f is used",
+            reports.live_environment_required_for_local_node()
         )
 
 class CorosyncNodeConflictCheckSkipped(NameBuildTest):
@@ -1149,7 +1651,17 @@ class NodeAddressesUnresolvable(NameBuildTest):
     def test_more_address(self):
         self.assert_message_from_report(
             "Unable to resolve addresses: 'node1', 'node2', 'node3'",
-            reports.node_addresses_unresolvable(["node1", "node2", "node3"])
+            reports.node_addresses_unresolvable(["node2", "node1", "node3"])
+        )
+
+class UnableToPerformOperationOnAnyNode(NameBuildTest):
+    def test_all(self):
+        self.assert_message_from_report(
+            (
+                "Unable to perform operation on any available node/host, "
+                "therefore it is not possible to continue"
+            ),
+            reports.unable_to_perform_operation_on_any_node()
         )
 
 
@@ -1180,12 +1692,25 @@ class NodeNotFound(NameBuildTest):
             reports.node_not_found("SOME_NODE", ["remote", "guest"])
         )
 
+class OmittingNode(NameBuildTest):
+    def test_all(self):
+        self.assert_message_from_report(
+            "Omitting node 'node1'",
+            reports.omitting_node("node1")
+        )
+
 class MultipleResultFound(NameBuildTest):
+    def test_minimal(self):
+        self.assert_message_from_report(
+            "multiple resource found: 'ID1', 'ID2'",
+            reports.multiple_result_found("resource", ["ID2", "ID1"])
+        )
+
     def test_build_messages(self):
         self.assert_message_from_report(
             "multiple resource for 'NODE-NAME' found: 'ID1', 'ID2'",
             reports.multiple_result_found(
-                "resource", ["ID1", "ID2"], "NODE-NAME"
+                "resource", ["ID2", "ID1"], "NODE-NAME"
             )
         )
 
@@ -1214,7 +1739,25 @@ class UseCommandNodeRemoveGuest(NameBuildTest):
             reports.use_command_node_remove_guest()
         )
 
+class PaceMakerLocalNodeNotFound(NameBuildTest):
+    def test_all(self):
+        self.assert_message_from_report(
+            "unable to get local node name from pacemaker: reason",
+            reports.pacemaker_local_node_name_not_found("reason")
+        )
+
 class NodeRemoveInPacemakerFailed(NameBuildTest):
+    def test_minimal(self):
+        self.assert_message_from_report(
+            (
+                "Unable to remove node(s) 'NODE1', 'NODE2' from "
+                "pacemaker"
+            ),
+            reports.node_remove_in_pacemaker_failed(
+                ["NODE2", "NODE1"]
+            )
+        )
+
     def test_without_node(self):
         self.assert_message_from_report(
             "Unable to remove node(s) 'NODE' from pacemaker: reason",
@@ -1633,6 +2176,22 @@ class ServiceDisableSuccess(NameBuildTest):
         )
 
 
+class CibAlertRecipientAlreadyExists(NameBuildTest):
+    def test_all(self):
+        self.assert_message_from_report(
+            "Recipient 'recipient' in alert 'alert-id' already exists",
+            reports.cib_alert_recipient_already_exists("alert-id", "recipient")
+        )
+
+
+class CibAlertRecipientInvalidValue(NameBuildTest):
+    def test_all(self):
+        self.assert_message_from_report(
+            "Recipient value 'recipient' is not valid.",
+            reports.cib_alert_recipient_invalid_value("recipient")
+        )
+
+
 class CibDiffError(NameBuildTest):
     def test_success(self):
         self.assert_message_from_report(
@@ -1669,11 +2228,35 @@ class DefaultsCanBeOverriden(NameBuildTest):
         )
 
 
+class CibLoadError(NameBuildTest):
+    def test_all(self):
+        self.assert_message_from_report(
+            "unable to get cib",
+            reports.cib_load_error("reason")
+        )
+
 class CibLoadErrorBadFormat(NameBuildTest):
     def test_message(self):
         self.assert_message_from_report(
             "unable to get cib, something wrong",
             reports.cib_load_error_invalid_format("something wrong")
+        )
+
+class CibLoadErrorGetNodesForValidation(NameBuildTest):
+    def test_all(self):
+        self.assert_message_from_report(
+            (
+                "Unable to load CIB to get guest and remote nodes from it, "
+                "those nodes cannot be considered in configuration validation"
+            ),
+            reports.cib_load_error_get_nodes_for_validation()
+        )
+
+class CibLoadErrorScopeMissing(NameBuildTest):
+    def test_all(self):
+        self.assert_message_from_report(
+            "unable to get cib, scope 'scope-name' not present in cib",
+            reports.cib_load_error_scope_missing("scope-name", "reason")
         )
 
 class CorosyncAddressIpVersionWrongForLink(NameBuildTest):
@@ -1697,13 +2280,20 @@ class CorosyncAddressIpVersionWrongForLink(NameBuildTest):
             )
         )
 
-    def test_with_link_zero(self):
+class CorosyncOptionsIncompatibleWithQdevice(NameBuildTest):
+    def test_single_option(self):
         self.assert_message_from_report(
-            "Address '192.168.100.42' cannot be used in link '0' because "
-                "the link uses IPv6 addresses"
-            ,
-            reports.corosync_address_ip_version_wrong_for_link(
-                "192.168.100.42", "IPv6", 0,
+            "These options cannot be set when the cluster uses a quorum "
+            "device: option1",
+            reports.corosync_options_incompatible_with_qdevice(["option1"])
+        )
+
+    def test_multiple_options(self):
+        self.assert_message_from_report(
+            "These options cannot be set when the cluster uses a quorum "
+            "device: option1, option2, option3",
+            reports.corosync_options_incompatible_with_qdevice(
+                ["option3", "option1", "option2"]
             )
         )
 
@@ -1771,16 +2361,24 @@ class CorosyncBadNodeAddressesCount(NameBuildTest):
 class CorosyncIpVersionMismatchInLinks(NameBuildTest):
     def test_without_links(self):
         self.assert_message_from_report(
-            "Using both IPv4 and IPv6 in one link is not allowed; please, use "
+            "Using both IPv4 and IPv6 on one link is not allowed; please, use "
                 "either IPv4 or IPv6"
             ,
             reports.corosync_ip_version_mismatch_in_links()
         )
 
+    def test_with_single_link(self):
+        self.assert_message_from_report(
+            "Using both IPv4 and IPv6 on one link is not allowed; please, use "
+                "either IPv4 or IPv6 on link(s): '3'"
+            ,
+            reports.corosync_ip_version_mismatch_in_links(["3"])
+        )
+
     def test_with_links(self):
         self.assert_message_from_report(
-            "Using both IPv4 and IPv6 in one link is not allowed; please, use "
-                "either IPv4 or IPv6 in links '0', '3', '4'"
+            "Using both IPv4 and IPv6 on one link is not allowed; please, use "
+                "either IPv4 or IPv6 on link(s): '0', '3', '4'"
             ,
             reports.corosync_ip_version_mismatch_in_links(["3", "0", "4"])
         )
@@ -1880,6 +2478,34 @@ class NodeNamesDuplication(NameBuildTest):
         )
 
 
+class CorosyncNotRunningCheckStarted(NameBuildTest):
+    def test_all(self):
+        self.assert_message_from_report(
+            "Checking corosync is not running on nodes...",
+            reports.corosync_not_running_check_started()
+        )
+
+class CorosyncNotRunningCheckNodeError(NameBuildTest):
+    def test_all(self):
+        self.assert_message_from_report(
+            "node1: Unable to check if corosync is not running",
+            reports.corosync_not_running_check_node_error("node1")
+        )
+
+class CorosyncNotRunningOnNodeOk(NameBuildTest):
+    def test_all(self):
+        self.assert_message_from_report(
+            "node2: corosync is not running",
+            reports.corosync_not_running_on_node_ok("node2")
+        )
+
+class CorosyncRunningOnNodeFail(NameBuildTest):
+    def test_all(self):
+        self.assert_message_from_report(
+            "node3: corosync is running",
+            reports.corosync_running_on_node_fail("node3")
+        )
+
 class CorosyncNodesMissing(NameBuildTest):
     def test_message(self):
         self.assert_message_from_report(
@@ -1896,6 +2522,30 @@ class CorosyncQuorumHeuristicsEnabledWithNoExec(NameBuildTest):
             reports.corosync_quorum_heuristics_enabled_with_no_exec()
         )
 
+
+class CorosyncQuorumSetExpectedVotesError(NameBuildTest):
+    def test_all(self):
+        self.assert_message_from_report(
+            "Unable to set expected votes: reason",
+            reports.corosync_quorum_set_expected_votes_error("reason")
+        )
+
+class CorosyncQuorumWillBeLost(NameBuildTest):
+    def test_all(self):
+        self.assert_message_from_report(
+            "This action will cause a loss of the quorum",
+            reports.corosync_quorum_will_be_lost()
+        )
+
+class CorosyncQuorumLossUnableToCheck(NameBuildTest):
+    def test_all(self):
+        self.assert_message_from_report(
+            (
+                "Unable to determine whether this action will cause "
+                "a loss of the quorum"
+            ),
+            reports.corosync_quorum_loss_unable_to_check()
+        )
 
 class CorosyncTooManyLinksOptions(NameBuildTest):
     def test_message(self):
@@ -2008,7 +2658,18 @@ class CorosyncLinkAlreadyExistsCannotAdd(NameBuildTest):
         )
 
 class CorosyncLinkDoesNotExistCannotRemove(NameBuildTest):
-    def test_message(self):
+    def test_single_link(self):
+        self.assert_message_from_report(
+            (
+                "Cannot remove non-existent link 'abc', existing "
+                "links: '5'"
+            ),
+            reports.corosync_link_does_not_exist_cannot_remove(
+                ["abc"], ["5"]
+            )
+        )
+
+    def test_multiple_links(self):
         self.assert_message_from_report(
             (
                 "Cannot remove non-existent links '0', '1', 'abc', existing "
@@ -2083,6 +2744,16 @@ class CorosyncTransportUnsupportedOptions(NameBuildTest):
             ,
             reports.corosync_transport_unsupported_options(
                 "crypto", "udp/udpu", ["knet"]
+            )
+        )
+
+    def test_multiple_supported_transports(self):
+        self.assert_message_from_report(
+            "The udp/udpu transport does not support 'crypto' options, use "
+            "'knet', 'knet2' transport"
+            ,
+            reports.corosync_transport_unsupported_options(
+                "crypto", "udp/udpu", ["knet", "knet2"]
             )
         )
 
@@ -2199,6 +2870,13 @@ class IdNotFound(NameBuildTest):
         )
 
 
+class CibPushError(NameBuildTest):
+    def test_all(self):
+        self.assert_message_from_report(
+            "Unable to update cib\nreason\npushed-cib",
+            reports.cib_push_error("reason", "pushed-cib")
+        )
+
 class CibPushForcedFullDueToCrmFeatureSet(NameBuildTest):
     def test_success(self):
         self.assert_message_from_report(
@@ -2210,6 +2888,31 @@ class CibPushForcedFullDueToCrmFeatureSet(NameBuildTest):
             ),
             reports.cib_push_forced_full_due_to_crm_feature_set(
                 "3.0.9", "3.0.6")
+        )
+
+class CibUpgradeSuccessful(NameBuildTest):
+    def test_all(self):
+        self.assert_message_from_report(
+            "CIB has been upgraded to the latest schema version.",
+            reports.cib_upgrade_successful()
+        )
+
+class CibUpgradeFailed(NameBuildTest):
+    def test_all(self):
+        self.assert_message_from_report(
+            "Upgrading of CIB to the latest schema failed: reason",
+            reports.cib_upgrade_failed("reason")
+        )
+
+class UnableToUpgradeCibToRequiredVersion(NameBuildTest):
+    def test_all(self):
+        self.assert_message_from_report(
+            (
+                "Unable to upgrade CIB to required schema version"
+                " 1.1 or higher. Current version is"
+                " 0.8. Newer version of pacemaker is needed."
+            ),
+            reports.unable_to_upgrade_cib_to_required_version("0.8", "1.1")
         )
 
 class NodeCommunicationRetrying(NameBuildTest):
@@ -2256,6 +2959,13 @@ class HostNotFound(NameBuildTest):
             reports.host_not_found(["unknown_host", "another_one"])
         )
 
+class NoneHostFound(NameBuildTest):
+    def test_all(self):
+        self.assert_message_from_report(
+            "None of hosts is known to pcs.",
+            reports.none_host_found()
+        )
+
 class HostAlreadyAuthorized(NameBuildTest):
     def test_success(self):
         self.assert_message_from_report(
@@ -2273,6 +2983,18 @@ class NodeCommunicationErrorNotAuthorized(NameBuildTest):
             reports.node_communication_error_not_authorized(
                 "node1", "some-command", "some error"
             )
+        )
+
+class ClusterWillBeDestroyed(NameBuildTest):
+    def test_all(self):
+        self.assert_message_from_report(
+            (
+                "Some nodes are already in a cluster. Enforcing this will "
+                "destroy existing cluster on those nodes. You should remove "
+                "the nodes from their clusters instead to keep the clusters "
+                "working properly"
+            ),
+            reports.cluster_will_be_destroyed()
         )
 
 class ClusterDestroyStarted(NameBuildTest):
@@ -2326,6 +3048,62 @@ class ClusterStartStarted(NameBuildTest):
         self.assert_message_from_report(
             "Starting cluster on hosts: 'node1'...",
             reports.cluster_start_started(["node1"])
+        )
+
+class ClusterStartSuccess(NameBuildTest):
+    def test_all(self):
+        self.assert_message_from_report(
+            "node1: Cluster started",
+            reports.cluster_start_success("node1")
+        )
+
+class ClusterStateCannotLoad(NameBuildTest):
+    def test_all(self):
+        self.assert_message_from_report(
+            "error running crm_mon, is pacemaker running?",
+            reports.cluster_state_cannot_load("reason")
+        )
+
+class ClusterStateInvalidFormat(NameBuildTest):
+    def test_all(self):
+        self.assert_message_from_report(
+            "cannot load cluster status, xml does not conform to the schema",
+            reports.cluster_state_invalid_format()
+        )
+
+class ClusterRestartRequiredToApplyChanges(NameBuildTest):
+    def test_all(self):
+        self.assert_message_from_report(
+            "Cluster restart is required in order to apply these changes.",
+            reports.cluster_restart_required_to_apply_changes()
+        )
+
+class WaitForIdleNotSupported(NameBuildTest):
+    def test_all(self):
+        self.assert_message_from_report(
+            "crm_resource does not support --wait, please upgrade pacemaker",
+            reports.wait_for_idle_not_supported()
+        )
+
+class WaitForIdleTimedOut(NameBuildTest):
+    def test_all(self):
+        self.assert_message_from_report(
+            "waiting timeout\n\nreason",
+            reports.wait_for_idle_timed_out("reason")
+        )
+
+class WaitForIdleError(NameBuildTest):
+    def test_all(self):
+        self.assert_message_from_report(
+            "reason",
+            reports.wait_for_idle_error("reason")
+        )
+
+class WaitForIdleNotLiveCluster(NameBuildTest):
+    def test_all(self):
+        self.assert_message_from_report(
+            "Cannot use '-f' together with '--wait'",
+            reports.wait_for_idle_not_live_cluster()
         )
 
 class ServiceNotInstalled(NameBuildTest):
@@ -2403,10 +3181,37 @@ class ServiceVersionMismatch(NameBuildTest):
         )
 
 class WaitForNodeStartupStarted(NameBuildTest):
-    def test_success(self):
+    def test_single_node(self):
         self.assert_message_from_report(
-            "Waiting for nodes to start: 'node1', 'node2', 'node3'...",
-            reports.wait_for_node_startup_started(["node1", "node3", "node2"])
+            "Waiting for node(s) to start: 'node1'...",
+            reports.wait_for_node_startup_started(["node1"])
+        )
+
+    def test_multiple_nodes(self):
+        self.assert_message_from_report(
+            "Waiting for node(s) to start: 'node1', 'node2', 'node3'...",
+            reports.wait_for_node_startup_started(["node3", "node2", "node1"])
+        )
+
+class WaitForNodeStartupTimedOut(NameBuildTest):
+    def test_all(self):
+        self.assert_message_from_report(
+            "Waiting timeout",
+            reports.wait_for_node_startup_timed_out()
+        )
+
+class WaitForNodeStartupError(NameBuildTest):
+    def test_all(self):
+        self.assert_message_from_report(
+            "Unable to verify all nodes have started",
+            reports.wait_for_node_startup_error()
+        )
+
+class WaitForNodeStartupWithoutStart(NameBuildTest):
+    def test_all(self):
+        self.assert_message_from_report(
+            "Cannot specify '--wait' without specifying '--start'",
+            reports.wait_for_node_startup_without_start()
         )
 
 class PcsdVersionTooOld(NameBuildTest):
@@ -2420,13 +3225,22 @@ class PcsdVersionTooOld(NameBuildTest):
         )
 
 class PcsdSslCertAndKeyDistributionStarted(NameBuildTest):
-    def test_success(self):
+    def test_multiple_nodes(self):
         self.assert_message_from_report(
-            "Synchronizing pcsd SSL certificates on nodes 'node1', 'node2', "
+            "Synchronizing pcsd SSL certificates on node(s) 'node1', 'node2', "
                 "'node3'..."
             ,
             reports.pcsd_ssl_cert_and_key_distribution_started(
                 ["node1", "node3", "node2"]
+            )
+        )
+
+    def test_single_node(self):
+        self.assert_message_from_report(
+            "Synchronizing pcsd SSL certificates on node(s) 'node3'..."
+            ,
+            reports.pcsd_ssl_cert_and_key_distribution_started(
+                ["node3"]
             )
         )
 
@@ -2472,7 +3286,13 @@ class FileAlreadyExists(NameBuildTest):
         )
 
 class FileDoesNotExist(NameBuildTest):
-    def test_success(self):
+    def test_minimal(self):
+        self.assert_message_from_report(
+            "UNKNOWN_ROLE file does not exist",
+            reports.file_does_not_exist("UNKNOWN_ROLE")
+        )
+
+    def test_with_path(self):
         self.assert_message_from_report(
             "UNKNOWN_ROLE file '/etc/cluster/something' does not exist",
             reports.file_does_not_exist(
@@ -2481,57 +3301,80 @@ class FileDoesNotExist(NameBuildTest):
         )
 
 class FileIoError(NameBuildTest):
-    def test_success_a(self):
+    def test_minimal(self):
         self.assert_message_from_report(
-            "Unable to chown Booth key '/etc/booth/booth.key': Failed",
+            "Unable to work with Booth configuration",
+            reports.file_io_error(env_file_role_codes.BOOTH_CONFIG)
+        )
+
+    def test_with_path(self):
+        self.assert_message_from_report(
+            "Unable to work with Booth key '/etc/booth/booth.key'",
             reports.file_io_error(
-                env_file_role_codes.BOOTH_KEY, "/etc/booth/booth.key", "Failed",
-                "chown"
+                env_file_role_codes.BOOTH_KEY, file_path="/etc/booth/booth.key"
             )
         )
 
-    def test_success_b(self):
+    def test_with_path_and_operation(self):
         self.assert_message_from_report(
-            "Unable to chmod Booth configuration '/etc/booth/main.cfg': Failed",
+            "Unable to remove Pacemaker authkey '/etc/pacemaker/key'",
             reports.file_io_error(
-                env_file_role_codes.BOOTH_CONFIG, "/etc/booth/main.cfg",
-                "Failed", "chmod"
+                env_file_role_codes.PACEMAKER_AUTHKEY,
+                file_path="/etc/pacemaker/key",
+                operation="remove"
             )
         )
 
-    def test_success_c(self):
-        self.assert_message_from_report(
-            "Unable to remove Pacemaker authkey '/etc/pacemaker/key': Failed",
-            reports.file_io_error(
-                env_file_role_codes.PACEMAKER_AUTHKEY, "/etc/pacemaker/key",
-                "Failed", "remove"
-            )
-        )
-
-    def test_success_d(self):
+    def test_all(self):
         self.assert_message_from_report(
             "Unable to read pcsd SSL certificate '/var/lib/pcsd.crt': Failed",
             reports.file_io_error(
-                env_file_role_codes.PCSD_SSL_CERT, "/var/lib/pcsd.crt",
-                "Failed", "read"
+                env_file_role_codes.PCSD_SSL_CERT,
+                file_path="/var/lib/pcsd.crt",
+                reason="Failed",
+                operation="read"
             )
         )
 
-    def test_success_e(self):
+    def test_role_translation_a(self):
         self.assert_message_from_report(
             "Unable to write pcsd SSL key '/var/lib/pcsd.key': Failed",
             reports.file_io_error(
-                env_file_role_codes.PCSD_SSL_KEY, "/var/lib/pcsd.key", "Failed",
-                "write"
+                env_file_role_codes.PCSD_SSL_KEY,
+                file_path="/var/lib/pcsd.key",
+                reason="Failed",
+                operation="write"
             )
         )
 
-    def test_success_f(self):
+    def test_role_translation_b(self):
         self.assert_message_from_report(
             "Unable to read pcsd configuration '/etc/sysconfig/pcsd': Failed",
             reports.file_io_error(
                 env_file_role_codes.PCSD_ENVIRONMENT_CONFIG,
-                "/etc/sysconfig/pcsd", "Failed", "read"
+                file_path="/etc/sysconfig/pcsd",
+                reason="Failed",
+                operation="read"
+            )
+        )
+
+    def test_role_translation_c(self):
+        self.assert_message_from_report(
+            "Unable to read Corosync authkey: Failed",
+            reports.file_io_error(
+                env_file_role_codes.COROSYNC_AUTHKEY,
+                reason="Failed",
+                operation="read"
+            )
+        )
+
+    def test_role_translation_d(self):
+        self.assert_message_from_report(
+            "Unable to write pcs configuration: Permission denied",
+            reports.file_io_error(
+                env_file_role_codes.PCS_SETTINGS_CONF,
+                reason="Permission denied",
+                operation="write"
             )
         )
 
@@ -2543,6 +3386,20 @@ class UsingDefaultWatchdog(NameBuildTest):
                 "default watchdog '/dev/watchdog'"
             ),
             reports.using_default_watchdog("/dev/watchdog", "node1")
+        )
+
+class WatchdogNotFound(NameBuildTest):
+    def test_all(self):
+        self.assert_message_from_report(
+            "Watchdog 'watchdog-name' does not exist on node 'node1'",
+            reports.watchdog_not_found("node1", "watchdog-name")
+        )
+
+class InvalidWatchdogName(NameBuildTest):
+    def test_all(self):
+        self.assert_message_from_report(
+            "Watchdog path '/dev/wdog' is invalid.",
+            reports.invalid_watchdog_path("/dev/wdog")
         )
 
 class CorosyncQuorumAtbCannotBeDisabledDueToSbd(NameBuildTest):
@@ -2566,6 +3423,27 @@ class CorosyncQuorumAtbWillBeEnabledDueToSbd(NameBuildTest):
             reports.corosync_quorum_atb_will_be_enabled_due_to_sbd()
         )
 
+
+class CorosyncConfigDistributionStarted(NameBuildTest):
+    def test_all(self):
+        self.assert_message_from_report(
+            "Sending updated corosync.conf to nodes...",
+            reports.corosync_config_distribution_started()
+        )
+
+class CorosyncConfigAcceptedByNode(NameBuildTest):
+    def test_all(self):
+        self.assert_message_from_report(
+            "node1: Succeeded",
+            reports.corosync_config_accepted_by_node("node1")
+        )
+
+class CorosyncConfigDistributionNodeError(NameBuildTest):
+    def test_all(self):
+        self.assert_message_from_report(
+            "node1: Unable to set corosync config",
+            reports.corosync_config_distribution_node_error("node1")
+        )
 
 class CorosyncConfigReloaded(NameBuildTest):
     def test_with_node(self):
@@ -2629,6 +3507,69 @@ class CorosyncConfigNoNodesDefined(NameBuildTest):
             reports.corosync_config_no_nodes_defined()
         )
 
+class CorosyncConfigReadError(NameBuildTest):
+    def test_all(self):
+        self.assert_message_from_report(
+            "Unable to read /dev/path: this is reason",
+            reports.corosync_config_read_error("/dev/path", "this is reason")
+        )
+
+class CorosyncConfigParserMissingClosingBrace(NameBuildTest):
+    def test_all(self):
+        self.assert_message_from_report(
+            "Unable to parse corosync config: missing closing brace",
+            reports.corosync_config_parser_missing_closing_brace()
+        )
+
+class CorosyncConfigParserUnexpectedClosingBrace(NameBuildTest):
+    def test_all(self):
+        self.assert_message_from_report(
+            "Unable to parse corosync config: unexpected closing brace",
+            reports.corosync_config_parser_unexpected_closing_brace()
+        )
+
+class CorosyncConfigParserMissingSectionNameBeforeOpeningBrace(NameBuildTest):
+    def test_all(self):
+        # pylint: disable=line-too-long
+        self.assert_message_from_report(
+            "Unable to parse corosync config: missing a section name before {",
+            reports.corosync_config_parser_missing_section_name_before_opening_brace()
+        )
+
+class CorosyncConfigParserExtraCharactersAfterOpeningBrace(NameBuildTest):
+    def test_all(self):
+        # pylint: disable=line-too-long
+        self.assert_message_from_report(
+            "Unable to parse corosync config: extra characters after {",
+            reports.corosync_config_parser_extra_characters_after_opening_brace()
+        )
+
+class CorosyncConfigParserExtraCharsBeforeOrAfterClosingBrace(NameBuildTest):
+    def test_all(self):
+        self.assert_message_from_report(
+            # pylint: disable=line-too-long
+            (
+                "Unable to parse corosync config: extra characters before "
+                "or after }"
+            ),
+            reports.corosync_config_parser_extra_characters_before_or_after_closing_brace()
+        )
+
+class CorosyncConfigParserLineIsNotSectionNorKeyValue(NameBuildTest):
+    def test_all(self):
+        self.assert_message_from_report(
+            "Unable to parse corosync config: a line is not opening or closing "
+            "a section or key: value",
+            reports.corosync_config_parser_line_is_not_section_nor_key_value()
+        )
+
+class CorosyncConfigParserOtherError(NameBuildTest):
+    def test_all(self):
+        self.assert_message_from_report(
+            "Unable to parse corosync config",
+            reports.corosync_config_parser_other_error()
+        )
+
 class CannotRemoveAllClusterNodes(NameBuildTest):
     def test_success(self):
         self.assert_message_from_report(
@@ -2651,13 +3592,30 @@ class NodeUsedAsTieBreaker(NameBuildTest):
             reports.node_used_as_tie_breaker("node2", 2)
         )
 
-class UnableToConnectToAllRemainingNode(NameBuildTest):
-    def test_success(self):
+class UnableToConnectToAnyRemainingNode(NameBuildTest):
+    def test_all(self):
+        self.assert_message_from_report(
+            "Unable to connect to any remaining cluster node",
+            reports.unable_to_connect_to_any_remaining_node()
+        )
+
+class UnableToConnectToAllRemainingNodes(NameBuildTest):
+    def test_single_node(self):
         self.assert_message_from_report(
             (
-                "Remaining cluster nodes 'node0', 'node1', 'node2' are "
-                "unreachable, run 'pcs cluster sync' on some now online node "
-                "once they become available"
+                "Remaining cluster node 'node1' could not be reached, run "
+                "'pcs cluster sync' on any currently online node "
+                "once the unreachable one become available"
+            ),
+            reports.unable_to_connect_to_all_remaining_node(["node1"])
+        )
+
+    def test_multiple_nodes(self):
+        self.assert_message_from_report(
+            (
+                "Remaining cluster nodes 'node0', 'node1', 'node2' could not "
+                "be reached, run 'pcs cluster sync' on any currently online "
+                "node once the unreachable ones become available"
             ),
             reports.unable_to_connect_to_all_remaining_node(
                 ["node1", "node0", "node2"]
@@ -2665,12 +3623,22 @@ class UnableToConnectToAllRemainingNode(NameBuildTest):
         )
 
 class NodesToRemoveUnreachable(NameBuildTest):
-    def test_success(self):
+    def test_single_node(self):
         self.assert_message_from_report(
             (
-                "Removed nodes 'node0', 'node1', 'node2' are unreachable, "
-                "therefore it is not possible to deconfigure them. Run 'pcs "
-                "cluster destroy' on them when available."
+                "Removed node 'node0' could not be reached and subsequently "
+                "deconfigured. Run 'pcs cluster destroy' on the unreachable "
+                "node."
+            ),
+            reports.nodes_to_remove_unreachable(["node0"])
+        )
+
+    def test_multiple_nodes(self):
+        self.assert_message_from_report(
+            (
+                "Removed nodes 'node0', 'node1', 'node2' could not be reached "
+                "and subsequently deconfigured. Run 'pcs cluster destroy' "
+                "on the unreachable nodes."
             ),
             reports.nodes_to_remove_unreachable(["node1", "node0", "node2"])
         )
@@ -2707,6 +3675,13 @@ class SbdWatchdogNotSupported(NameBuildTest):
             reports.sbd_watchdog_not_supported("node1", "/dev/watchdog"),
         )
 
+class SbdWatchdogValidationInactive(NameBuildTest):
+    def test_all(self):
+        self.assert_message_from_report(
+            "Not validating the watchdog",
+            reports.sbd_watchdog_validation_inactive()
+        )
+
 
 class SbdWatchdogTestError(NameBuildTest):
     def test_success(self):
@@ -2716,8 +3691,40 @@ class SbdWatchdogTestError(NameBuildTest):
         )
 
 
+class SbdWatchdogTestMultipleDevices(NameBuildTest):
+    def test_all(self):
+        self.assert_message_from_report(
+            (
+                "Multiple watchdog devices available, therefore, watchdog "
+                "which should be tested has to be specified. To list available "
+                "watchdog devices use command 'pcs stonith sbd watchdog list'"
+            ),
+            reports.sbd_watchdog_test_multiple_devices()
+        )
+
+
+class SbdWatchdogTestFailed(NameBuildTest):
+    def test_all(self):
+        self.assert_message_from_report(
+            "System should have been reset already",
+            reports.sbd_watchdog_test_failed()
+        )
+
+
 class ResourceBundleUnsupportedContainerType(NameBuildTest):
-    def test_success(self):
+    def test_single_type(self):
+        self.assert_message_from_report(
+            (
+                "Bundle 'bundle id' uses unsupported container type, therefore "
+                "it is not possible to set its container options. Supported "
+                "container types are: 'b'"
+            ),
+            reports.resource_bundle_unsupported_container_type(
+                "bundle id", ["b"]
+            ),
+        )
+
+    def test_multiple_types(self):
         self.assert_message_from_report(
             (
                 "Bundle 'bundle id' uses unsupported container type, therefore "
@@ -2743,6 +3750,81 @@ class FenceHistoryNotSupported(NameBuildTest):
             reports.fence_history_not_supported()
         )
 
+class DuplicateConstraintsExist(NameBuildTest):
+    def test_single_constraint_empty_force(self):
+        self.assert_message_from_report(
+            "duplicate constraint already exists\n"
+            "  resourceA with resourceD (score:score) (id:id123)",
+            reports.duplicate_constraints_exist(
+                "rsc_colocation",
+                [
+                    {
+                        "options":
+                            {
+                                "id": "id123",
+                                "rsc": "resourceA",
+                                "with-rsc": "resourceD",
+                                "score": "score"
+                            }
+                    }
+                ]
+            ),
+            force_text=""
+        )
+
+    def test_single_constraint_force(self):
+        self.assert_message_from_report(
+            "duplicate constraint already exists force text\n"
+            "  resourceA with resourceD (score:score) (id:id123)",
+            reports.duplicate_constraints_exist(
+                "rsc_colocation",
+                [
+                    {
+                        "options":
+                            {
+                                "id": "id123",
+                                "rsc": "resourceA",
+                                "with-rsc": "resourceD",
+                                "score": "score"
+                            }
+                    }
+                ]
+            ),
+            force_text=" force text"
+        )
+
+    def test_multiple_constraints_force(self):
+        self.assert_message_from_report(
+            (
+                "duplicate constraint already exists force text\n"
+                "  rsc_anotherrsc=resourceA (id:id123)\n"
+                "  rsc_anotherrsc=resourceB (id:id321)"
+            ),
+            reports.duplicate_constraints_exist(
+                "rsc_another",
+                [
+                    {
+                        "options": {"id": "id123", "rsc": "resourceA"}
+                    },
+                    {
+                        "options": {"id": "id321", "rsc": "resourceB"}
+                    }
+                ]
+            ),
+            force_text=" force text"
+        )
+
+class ResourceForConstraintIsMultiinstance(NameBuildTest):
+    def test_success(self):
+        self.assert_message_from_report(
+            (
+                "resource1 is a bundle resource, you should use the "
+                "bundle id: parent1 when adding constraints"
+            ),
+            reports.resource_for_constraint_is_multiinstance(
+                "resource1", "bundle", "parent1"
+            )
+        )
 
 class ResourceInstanceAttrValueNotUnique(NameBuildTest):
     def test_one_resource(self):
@@ -2807,7 +3889,13 @@ class CannotGroupResourceAlreadyInTheGroup(NameBuildTest):
         )
 
 class CannotGroupResourceMoreThanOnce(NameBuildTest):
-    def test_success(self):
+    def test_single_resource(self):
+        self.assert_message_from_report(
+            "Resources specified more than once: 'X'",
+            reports.cannot_group_resource_more_than_once(["X"])
+        )
+
+    def test_multiple_resources(self):
         self.assert_message_from_report(
             "Resources specified more than once: 'A', 'B'",
             reports.cannot_group_resource_more_than_once(["B", "A"])
@@ -2882,6 +3970,13 @@ class CannotMoveResourceStoppedNoNodeSpecified(NameBuildTest):
         self.assert_message_from_report(
             "You must specify a node when moving/banning a stopped resource",
             reports.cannot_move_resource_stopped_no_node_specified("R")
+        )
+
+class EmptyResourceSetList(NameBuildTest):
+    def test_success(self):
+        self.assert_message_from_report(
+            "Resource set list is empty",
+            reports.empty_resource_set_list()
         )
 
 class ResourceMovePcmkEerror(NameBuildTest):
@@ -3135,4 +4230,204 @@ class CorosyncConfigCannotSaveInvalidNamesValues(NameBuildTest):
                 ["ATTR1", "ATTR2"],
                 [("ATTR3", "VALUE3"), ("ATTR4", "VALUE4")]
             )
+        )
+
+class QdeviceAlreadyDefined(NameBuildTest):
+    def test_all(self):
+        self.assert_message_from_report(
+            "quorum device is already defined",
+            reports.qdevice_already_defined()
+        )
+
+class QdeviceNotDefined(NameBuildTest):
+    def test_all(self):
+        self.assert_message_from_report(
+            "no quorum device is defined in this cluster",
+            reports.qdevice_not_defined()
+        )
+
+class QdeviceRemoveOrClusterStopNeeded(NameBuildTest):
+    def test_all(self):
+        self.assert_message_from_report(
+            (
+                "You need to stop the cluster or remove qdevice from "
+                "the cluster to continue"
+            ),
+            reports.qdevice_remove_or_cluster_stop_needed()
+        )
+
+class QdeviceClientReloadStarted(NameBuildTest):
+    def test_all(self):
+        self.assert_message_from_report(
+            "Reloading qdevice configuration on nodes...",
+            reports.qdevice_client_reload_started()
+        )
+
+class QdeviceAlreadyInitialized(NameBuildTest):
+    def test_all(self):
+        self.assert_message_from_report(
+            "Quorum device 'model' has been already initialized",
+            reports.qdevice_already_initialized("model")
+        )
+
+class QdeviceNotInitialized(NameBuildTest):
+    def test_all(self):
+        self.assert_message_from_report(
+            "Quorum device 'model' has not been initialized yet",
+            reports.qdevice_not_initialized("model")
+        )
+
+class QdeviceInitializationSuccess(NameBuildTest):
+    def test_all(self):
+        self.assert_message_from_report(
+            "Quorum device 'model' initialized",
+            reports.qdevice_initialization_success("model")
+        )
+
+class QdeviceInitializationError(NameBuildTest):
+    def test_all(self):
+        self.assert_message_from_report(
+            "Unable to initialize quorum device 'model': reason",
+            reports.qdevice_initialization_error("model", "reason")
+        )
+
+class QdeviceCertificateDistributionStarted(NameBuildTest):
+    def test_all(self):
+        self.assert_message_from_report(
+            "Setting up qdevice certificates on nodes...",
+            reports.qdevice_certificate_distribution_started()
+        )
+
+class QdeviceCertificateAcceptedByNode(NameBuildTest):
+    def test_all(self):
+        self.assert_message_from_report(
+            "node1: Succeeded",
+            reports.qdevice_certificate_accepted_by_node("node1")
+        )
+
+class QdeviceCertificateRemovalStarted(NameBuildTest):
+    def test_all(self):
+        self.assert_message_from_report(
+            "Removing qdevice certificates from nodes...",
+            reports.qdevice_certificate_removal_started()
+        )
+
+class QdeviceCertificateRemovedFromNode(NameBuildTest):
+    def test_all(self):
+        self.assert_message_from_report(
+            "node2: Succeeded",
+            reports.qdevice_certificate_removed_from_node("node2")
+        )
+
+class QdeviceCertificateImportError(NameBuildTest):
+    def test_all(self):
+        self.assert_message_from_report(
+            "Unable to import quorum device certificate: reason",
+            reports.qdevice_certificate_import_error("reason")
+        )
+
+class QdeviceCertificateSignError(NameBuildTest):
+    def test_all(self):
+        self.assert_message_from_report(
+            "Unable to sign quorum device certificate: reason",
+            reports.qdevice_certificate_sign_error("reason")
+        )
+
+class QdeviceDestroySuccess(NameBuildTest):
+    def test_all(self):
+        self.assert_message_from_report(
+            "Quorum device 'model' configuration files removed",
+            reports.qdevice_destroy_success("model")
+        )
+
+class QdeviceDestroyError(NameBuildTest):
+    def test_all(self):
+        self.assert_message_from_report(
+            "Unable to destroy quorum device 'model': reason",
+            reports.qdevice_destroy_error("model", "reason")
+        )
+
+class QdeviceNotRunning(NameBuildTest):
+    def test_all(self):
+        self.assert_message_from_report(
+            "Quorum device 'model' is not running",
+            reports.qdevice_not_running("model")
+        )
+
+class QdeviceGetStatusError(NameBuildTest):
+    def test_all(self):
+        self.assert_message_from_report(
+            "Unable to get status of quorum device 'model': reason",
+            reports.qdevice_get_status_error("model", "reason")
+        )
+
+class QdeviceUsedByClusters(NameBuildTest):
+    def test_single_cluster(self):
+        self.assert_message_from_report(
+            "Quorum device is currently being used by cluster(s): c1",
+            reports.qdevice_used_by_clusters(["c1"])
+        )
+
+    def test_multiple_clusters(self):
+        self.assert_message_from_report(
+            "Quorum device is currently being used by cluster(s): c1, c2",
+            reports.qdevice_used_by_clusters(["c1", "c2"])
+        )
+
+class UnableToDetermineUserUid(NameBuildTest):
+    def test_all(self):
+        self.assert_message_from_report(
+            "Unable to determine uid of user 'username'",
+            reports.unable_to_determine_user_uid("username")
+        )
+
+class UnableToDetermineGroupGid(NameBuildTest):
+    def test_all(self):
+        self.assert_message_from_report(
+            "Unable to determine gid of group 'group'",
+            reports.unable_to_determine_group_gid("group")
+        )
+
+class UnsupportedOperationOnNonSystemdSystems(NameBuildTest):
+    def test_all(self):
+        self.assert_message_from_report(
+            "unsupported operation on non systemd systems",
+            reports.unsupported_operation_on_non_systemd_systems()
+        )
+
+class AclRoleIsAlreadyAssignedToTarget(NameBuildTest):
+    def test_all(self):
+        self.assert_message_from_report(
+            "Role 'role_id' is already asigned to 'target_id'",
+            reports.acl_role_is_already_assigned_to_target(
+                "role_id", "target_id"
+            )
+        )
+
+class AclRoleIsNotAssignedToTarget(NameBuildTest):
+    def test_all(self):
+        self.assert_message_from_report(
+            "Role 'role_id' is not assigned to 'target_id'",
+            reports.acl_role_is_not_assigned_to_target("role_id", "target_id")
+        )
+
+class AclTargetAlreadyExists(NameBuildTest):
+    def test_all(self):
+        self.assert_message_from_report(
+            "'target_id' already exists",
+            reports.acl_target_already_exists("target_id")
+        )
+
+class ClusterSetupSuccess(NameBuildTest):
+    def test_all(self):
+        self.assert_message_from_report(
+            "Cluster has been successfully set up.",
+            reports.cluster_setup_success()
+        )
+
+class SystemWillReset(NameBuildTest):
+    def test_all(self):
+        self.assert_message_from_report(
+            "System will reset shortly",
+            reports.system_will_reset()
         )

@@ -1226,7 +1226,7 @@ class LevelDeleteRemove(LevelTestsBase):
             outdent(
                 """\
                 Error: Fencing level for 'rh7-1' at level '1' with device(s) 'F3' does not exist
-                Error: Fencing level at level '1' with device(s) 'rh7-1,F3' does not exist
+                Error: Fencing level at level '1' with device(s) 'F3', 'rh7-1' does not exist
                 """
             )
         )
@@ -1240,8 +1240,8 @@ class LevelDeleteRemove(LevelTestsBase):
         self.assert_pcs_success("stonith level config", self.config)
 
         self.assert_pcs_fail(
-            f"stonith level {self.command} 3 regexp%rh7-\\d F1,F2",
-            "Error: Fencing level for 'rh7-\\d' at level '3' with device(s) 'F1,F2' does not exist\n"
+            f"stonith level {self.command} 3 regexp%rh7-\d F1,F2",
+            "Error: Fencing level for 'rh7-\d' at level '3' with device(s) 'F1', 'F2' does not exist\n"
         )
         self.assert_pcs_success("stonith level config", self.config)
 
