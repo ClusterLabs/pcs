@@ -1,11 +1,12 @@
 import inspect
 
 from pcs_test.tools.command_env.calls import CallListBuilder
-from pcs_test.tools.command_env.config_env import EnvConfig
 from pcs_test.tools.command_env.config_corosync_conf import CorosyncConf
-from pcs_test.tools.command_env.config_runner import RunnerConfig
-from pcs_test.tools.command_env.config_http import HttpConfig
+from pcs_test.tools.command_env.config_env import EnvConfig
 from pcs_test.tools.command_env.config_fs import FsConfig
+from pcs_test.tools.command_env.config_http import HttpConfig
+from pcs_test.tools.command_env.config_raw_file import RawFileConfig
+from pcs_test.tools.command_env.config_runner import RunnerConfig
 
 class Spy:
     def __init__(self, known_hosts):
@@ -13,6 +14,7 @@ class Spy:
 
 class Config:
     # pylint: disable=invalid-name
+    # pylint: disable=too-many-instance-attributes
     def __init__(self):
         self.__calls = CallListBuilder()
         self.runner = self.__wrap_helper(
@@ -24,6 +26,7 @@ class Config:
         )
         self.corosync_conf = self.__wrap_helper(CorosyncConf(self.__calls))
         self.fs = self.__wrap_helper(FsConfig(self.__calls))
+        self.raw_file = self.__wrap_helper(RawFileConfig(self.__calls))
 
         self.spy = None
 

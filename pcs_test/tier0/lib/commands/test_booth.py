@@ -1,225 +1,2541 @@
-from collections import namedtuple
+# pylint: disable=too-many-lines
 import os
+from textwrap import dedent
 from unittest import mock, TestCase
 
 from pcs_test.tools import fixture
 from pcs_test.tools.command_env import get_env_tools
-from pcs_test.tools.custom_mock import MockLibraryReportProcessor
-from pcs_test.tools.assertions import (
-    assert_raise_library_error,
-    assert_report_item_list_equal,
-)
-from pcs_test.tools.misc import create_patcher
+from pcs_test.tools.misc import get_test_resource as rc
+from pcs_test.tools.xml import XmlManipulation
 
 from pcs import settings
-from pcs.common import report_codes, env_file_role_codes as file_roles
-from pcs.lib.env import LibraryEnvironment
-from pcs.lib.errors import LibraryError, ReportItemSeverity as Severities
-from pcs.lib.commands import booth as commands
-from pcs.lib.external import (
-    CommandRunner,
-    EnableServiceError,
-    DisableServiceError,
-    StartServiceError,
-    StopServiceError
+from pcs.common import (
+    file_type_codes,
+    report_codes,
 )
+from pcs.common.file import RawFileError
+from pcs.lib.commands import booth as commands
 
-# pylint: disable=no-self-use, unused-argument, protected-access
+RANDOM_KEY = "I'm so random!".encode()
 
-def _booth_env_fixture(name):
-    booth_env = mock.MagicMock()
-    booth_env.name = name
-    return booth_env
+class FixtureMixin():
+    booth_dir = "/etc/booth"
+    site_ip = "192.168.122.254"
 
+    def fixture_cfg_path(self, name="booth"):
+        return os.path.join(self.booth_dir, f"{name}.conf")
 
-def _env_fixture(booth_name):
-    env = mock.MagicMock(spec_set=LibraryEnvironment)
-    env.booth = _booth_env_fixture(booth_name)
-    return env
+    def fixture_key_path(self, name="booth"):
+        return os.path.join(self.booth_dir, f"{name}.key")
 
-patch_commands = create_patcher("pcs.lib.commands.booth")
+    def fixture_cib_resources(self, name="booth"):
+        return (
+            "<resources>"
+            +
+            self.fixture_cib_booth_primitive(name=name)
+            +
+            "</resources>"
+        )
 
-@mock.patch("pcs.lib.tools.generate_binary_key", return_value=b"key value")
-@mock.patch("pcs.lib.commands.booth.build", return_value="config content")
-@mock.patch("pcs.lib.booth.config_validators.create")
-class ConfigSetupTest(TestCase):
-    def test_successfuly_build_and_write_to_std_path(
-        self, mock_validate_create, mock_build, mock_generate_binary_key
+    def fixture_cib_more_resources(self):
+        return (
+            "<resources>"
+            +
+            self.fixture_cib_booth_primitive("booth", "booth1")
+            +
+            self.fixture_cib_booth_primitive("booth", "booth2")
+            +
+            "</resources>"
+        )
+
+    def fixture_cib_booth_primitive(self, name="booth", rid="booth_resource"):
+        return f"""
+            <primitive id="{rid}" type="booth-site">
+                <instance_attributes>
+                    <nvpair
+                        name="config"
+                        value="{self.fixture_cfg_path(name)}"
+                    />
+                </instance_attributes>
+            </primitive>
+        """
+
+    def fixture_cib_booth_group(
+        self, name="booth", default_operations=False, wrap_in_resources=True
     ):
-        env = _env_fixture("booth_name")
+        return (
+            ("<resources>" if wrap_in_resources else "")
+            +
+            f"""<group id="booth-{name}-group">
+                <primitive class="ocf" provider="heartbeat" type="IPaddr2"
+                    id="booth-{name}-ip"
+                >
+                    <instance_attributes
+                        id="booth-{name}-ip-instance_attributes"
+                    >
+                        <nvpair id="booth-{name}-ip-instance_attributes-ip"
+                            name="ip" value="{self.site_ip}"
+                        />
+                    </instance_attributes>
+                    <operations>
+            """
+            + (
+            f"""
+                        <op id="booth-{name}-ip-monitor-interval-60s"
+                            interval="60s" name="monitor"
+                        />
+            """ if default_operations else
+            f"""
+                        <op id="booth-{name}-ip-monitor-interval-10s"
+                            interval="10s" name="monitor" timeout="20s"
+                        />
+                        <op id="booth-{name}-ip-start-interval-0s"
+                            interval="0s" name="start" timeout="20s"
+                        />
+                        <op id="booth-{name}-ip-stop-interval-0s"
+                            interval="0s" name="stop" timeout="20s"
+                        />
+            """
+            ) +
+            f"""
+                    </operations>
+                </primitive>
+                <primitive class="ocf" provider="pacemaker" type="booth-site"
+                    id="booth-{name}-service"
+                >
+                    <instance_attributes
+                        id="booth-{name}-service-instance_attributes"
+                    >
+                        <nvpair
+                            id="booth-{name}-service-instance_attributes-config"
+                            name="config" value="{self.fixture_cfg_path(name)}"
+                        />
+                    </instance_attributes>
+                    <operations>
+            """
+            + (
+            f"""
+                        <op id="booth-{name}-service-monitor-interval-60s"
+                            interval="60s" name="monitor"
+                        />
+            """ if default_operations else
+            f"""
+                        <op id="booth-{name}-service-monitor-interval-10"
+                            interval="10" name="monitor" start-delay="0"
+                            timeout="20"
+                        />
+                        <op id="booth-{name}-service-reload-interval-0s"
+                            interval="0s" name="reload" timeout="20"
+                        />
+                        <op id="booth-{name}-service-restart-interval-0s"
+                            interval="0s" name="restart" timeout="20"
+                        />
+                        <op id="booth-{name}-service-start-interval-0s"
+                            interval="0s" name="start" timeout="20"
+                        />
+                        <op id="booth-{name}-service-stop-interval-0s"
+                            interval="0s" name="stop" timeout="20"
+                        />
+            """
+            ) +
+            f"""
+                    </operations>
+                </primitive>
+            </group>"""
+            +
+            ("</resources>" if wrap_in_resources else "")
+        )
+
+    def fixture_cfg_content(self, key_path=None, ticket_list=None):
+        key_path = key_path or self.fixture_key_path()
+        config = dedent(f"""\
+            authfile = {key_path}
+            site = 1.1.1.1
+            site = 2.2.2.2
+            arbitrator = 3.3.3.3
+        """)
+        if ticket_list:
+            extra_lines = []
+            for ticket_name, option_list in ticket_list:
+                extra_lines.append(f'ticket = "{ticket_name}"')
+                for name, value in option_list:
+                    extra_lines.append(f"  {name} = {value}")
+            if extra_lines:
+                config += "\n".join(extra_lines) + "\n"
+        return config.encode("utf-8")
+
+
+@mock.patch(
+    "pcs.lib.tools.generate_binary_key",
+    lambda random_bytes_count: RANDOM_KEY,
+)
+class ConfigSetup(TestCase, FixtureMixin):
+    def setUp(self):
+        self.env_assist, self.config = get_env_tools(self)
+        self.sites = ["1.1.1.1", "2.2.2.2"]
+        self.arbitrators = ["3.3.3.3"]
+
+    def test_invalid_instance(self):
+        instance_name = "/tmp/booth/booth"
+
+        self.env_assist.assert_raise_library_error(
+            lambda: commands.config_setup(
+                self.env_assist.get_env(),
+                self.sites,
+                self.arbitrators,
+                instance_name=instance_name
+            )
+        )
+        self.env_assist.assert_reports([
+            fixture.error(
+                report_codes.BOOTH_INVALID_NAME,
+                name=instance_name,
+                reason="contains illegal character '/'",
+            ),
+        ])
+
+    def test_peers_not_valid(self):
+        self.env_assist.assert_raise_library_error(
+            lambda: commands.config_setup(
+                self.env_assist.get_env(),
+                ["1.1.1.1", "2.2.2.2"],
+                ["3.3.3.3", "4.4.4.4"],
+            )
+        )
+        self.env_assist.assert_reports([
+            fixture.error(
+                report_codes.BOOTH_EVEN_PEERS_NUM,
+                number=4,
+            ),
+        ])
+
+    def fixture_config_success(self, instance_name="booth"):
+        (self.config
+            .raw_file.write(
+                file_type_codes.BOOTH_KEY,
+                self.fixture_key_path(instance_name),
+                RANDOM_KEY,
+                name="raw_file.write.key",
+            )
+            .raw_file.write(
+                file_type_codes.BOOTH_CONFIG,
+                self.fixture_cfg_path(instance_name),
+                self.fixture_cfg_content(self.fixture_key_path(instance_name)),
+                name="raw_file.write.cfg",
+            )
+        )
+    def test_success_default_instance(self):
+        self.fixture_config_success()
+        commands.config_setup(
+            self.env_assist.get_env(),
+            self.sites,
+            self.arbitrators,
+        )
+
+    def test_success_custom_instance(self):
+        instance_name = "my_booth"
+        self.fixture_config_success(instance_name=instance_name)
+        commands.config_setup(
+            self.env_assist.get_env(),
+            self.sites,
+            self.arbitrators,
+            instance_name=instance_name
+        )
+
+    def test_files_exist_config(self):
+        (self.config
+            .raw_file.write(
+                file_type_codes.BOOTH_KEY,
+                self.fixture_key_path(),
+                RANDOM_KEY,
+                name="raw_file.write.key",
+            )
+            .raw_file.write(
+                file_type_codes.BOOTH_CONFIG,
+                self.fixture_cfg_path(),
+                self.fixture_cfg_content(),
+                already_exists=True,
+                name="raw_file.write.cfg",
+            )
+        )
+
+        self.env_assist.assert_raise_library_error(
+            lambda: commands.config_setup(
+                self.env_assist.get_env(),
+                self.sites,
+                self.arbitrators,
+            )
+        )
+        self.env_assist.assert_reports([
+            fixture.error(
+                report_codes.FILE_ALREADY_EXISTS,
+                force_code=report_codes.FORCE_FILE_OVERWRITE,
+                file_type_code=file_type_codes.BOOTH_CONFIG,
+                file_path=self.fixture_cfg_path(),
+                node=None,
+            ),
+        ])
+
+    def test_files_exist_key(self):
+        (self.config
+            .raw_file.write(
+                file_type_codes.BOOTH_KEY,
+                self.fixture_key_path(),
+                RANDOM_KEY,
+                already_exists=True,
+                name="raw_file.write.key",
+            )
+        )
+
+        self.env_assist.assert_raise_library_error(
+            lambda: commands.config_setup(
+                self.env_assist.get_env(),
+                self.sites,
+                self.arbitrators,
+            )
+        )
+        self.env_assist.assert_reports([
+            fixture.error(
+                report_codes.FILE_ALREADY_EXISTS,
+                force_code=report_codes.FORCE_FILE_OVERWRITE,
+                file_type_code=file_type_codes.BOOTH_KEY,
+                file_path=self.fixture_key_path(),
+                node=None,
+            ),
+        ])
+
+    def test_files_exist_forced(self):
+        (self.config
+            .raw_file.write(
+                file_type_codes.BOOTH_KEY,
+                self.fixture_key_path(),
+                RANDOM_KEY,
+                can_overwrite=True,
+                name="raw_file.write.key",
+            )
+            .raw_file.write(
+                file_type_codes.BOOTH_CONFIG,
+                self.fixture_cfg_path(),
+                self.fixture_cfg_content(),
+                can_overwrite=True,
+                name="raw_file.write.cfg",
+            )
+        )
+
+        commands.config_setup(
+            self.env_assist.get_env(),
+            self.sites,
+            self.arbitrators,
+            overwrite_existing=True,
+        )
+
+    def test_write_config_error(self):
+        error = "an error occurred"
+
+        (self.config
+            .raw_file.write(
+                file_type_codes.BOOTH_KEY,
+                self.fixture_key_path(),
+                RANDOM_KEY,
+                name="raw_file.write.key",
+            )
+            .raw_file.write(
+                file_type_codes.BOOTH_CONFIG,
+                self.fixture_cfg_path(),
+                self.fixture_cfg_content(),
+                exception_msg=error,
+                name="raw_file.write.cfg",
+            )
+        )
+
+        self.env_assist.assert_raise_library_error(
+            lambda: commands.config_setup(
+                self.env_assist.get_env(),
+                self.sites,
+                self.arbitrators,
+            )
+        )
+        self.env_assist.assert_reports([
+            fixture.error(
+                report_codes.FILE_IO_ERROR,
+                file_role=file_type_codes.BOOTH_CONFIG,
+                file_path=self.fixture_cfg_path(),
+                reason=error,
+                operation=RawFileError.ACTION_WRITE,
+            ),
+        ])
+
+    def test_write_key_error(self):
+        error = "an error occurred"
+
+        (self.config
+            .raw_file.write(
+                file_type_codes.BOOTH_KEY,
+                self.fixture_key_path(),
+                RANDOM_KEY,
+                exception_msg=error,
+                name="raw_file.write.key",
+            )
+        )
+
+        self.env_assist.assert_raise_library_error(
+            lambda: commands.config_setup(
+                self.env_assist.get_env(),
+                self.sites,
+                self.arbitrators,
+            )
+        )
+        self.env_assist.assert_reports([
+            fixture.error(
+                report_codes.FILE_IO_ERROR,
+                file_role=file_type_codes.BOOTH_KEY,
+                file_path=self.fixture_key_path(),
+                reason=error,
+                operation=RawFileError.ACTION_WRITE,
+            ),
+        ])
+
+    def test_not_live(self):
+        key_path = "/tmp/pcs_test/booth.key"
+        self.config.env.set_booth({
+            "config_data": None,
+            "key_data": None,
+            "key_path": key_path,
+        })
+        env = self.env_assist.get_env()
+
         commands.config_setup(
             env,
-            ["1.1.1.1", "2.2.2.2"],
-            ["3.3.3.3"]
+            self.sites,
+            self.arbitrators,
         )
-        env.booth.create_config.assert_called_once_with(
-            "config content",
-            False
+
+        self.assertEqual(
+            env.get_booth_env(name="").export(),
+            {
+                "config_file": {
+                    "content": self.fixture_cfg_content(key_path),
+                },
+                "key_file": {
+                    "content": RANDOM_KEY,
+                },
+            }
         )
-        env.booth.create_key.assert_called_once_with(
-            b"key value",
-            False
-        )
-        mock_validate_create.assert_called_once_with(
-            ["1.1.1.1", "2.2.2.2"], ["3.3.3.3"]
-        )
-        mock_generate_binary_key.assert_called_once_with(random_bytes_count=64)
 
-    def test_sanitize_peers_before_validation(
-        self, mock_validate_peers, mock_build, mock_generate_binary_key
-    ):
-        commands.config_setup(_env_fixture("booth_name"), [], [])
-        mock_validate_peers.assert_called_once_with([], [])
-        mock_generate_binary_key.assert_called_once_with(random_bytes_count=64)
-
-
-class ConfigDestroyTest(TestCase):
-    @patch_commands("external.is_systemctl", mock.Mock(return_value=True))
-    @patch_commands("external.is_service_enabled", mock.Mock(return_value=True))
-    @patch_commands("external.is_service_running", mock.Mock(return_value=True))
-    @patch_commands("resource.find_for_config", mock.Mock(return_value=[True]))
-    def test_raises_when_booth_config_in_use(self):
-        env = _env_fixture("somename")
-
-        assert_raise_library_error(
-            lambda: commands.config_destroy(env),
-            (
-                Severities.ERROR,
-                report_codes.BOOTH_CONFIG_IS_USED,
-                {
-                    "name": "somename",
-                    "detail": "in cluster resource",
-                }
+    def test_partially_not_life(self):
+        self.config.env.set_booth({
+            "config_data": None,
+        })
+        self.env_assist.assert_raise_library_error(
+            lambda: commands.config_setup(
+                self.env_assist.get_env(),
+                self.sites,
+                self.arbitrators,
             ),
-            (
-                Severities.ERROR,
-                report_codes.BOOTH_CONFIG_IS_USED,
-                {
-                    "name": "somename",
-                    "detail": "(enabled in systemd)",
-                }
+            [
+                fixture.error(
+                    report_codes.LIVE_ENVIRONMENT_NOT_CONSISTENT,
+                    mocked_files=[file_type_codes.BOOTH_CONFIG],
+                    required_files=[file_type_codes.BOOTH_KEY],
+                ),
+            ],
+            expected_in_processor=False
+        )
+
+
+class ConfigDestroy(TestCase, FixtureMixin):
+    # pylint: disable=too-many-public-methods
+    def setUp(self):
+        self.env_assist, self.config = get_env_tools(self)
+
+    def fixture_config_booth_not_used(self, instance_name="booth"):
+        (self.config
+            .runner.cib.load()
+            .runner.systemctl.is_active(
+                f"booth@{instance_name}",
+                is_active=False
+            )
+            .runner.systemctl.is_enabled(
+                f"booth@{instance_name}",
+                is_enabled=False
+            )
+        )
+
+    def fixture_config_success(self, instance_name="booth"):
+        self.fixture_config_booth_not_used(instance_name)
+        (self.config
+            .raw_file.read(
+                file_type_codes.BOOTH_CONFIG,
+                self.fixture_cfg_path(instance_name),
+                content=self.fixture_cfg_content(
+                    self.fixture_key_path(instance_name)
+                ),
+            )
+            .raw_file.remove(
+                file_type_codes.BOOTH_KEY,
+                self.fixture_key_path(instance_name),
+                fail_if_file_not_found=False,
+                name="raw_file.remove.key",
+            )
+            .raw_file.remove(
+                file_type_codes.BOOTH_CONFIG,
+                self.fixture_cfg_path(instance_name),
+                fail_if_file_not_found=True,
+                name="raw_file.remove.cfg",
+            )
+        )
+
+    def test_invalid_instance(self):
+        instance_name = "/tmp/booth/booth"
+
+        self.env_assist.assert_raise_library_error(
+            lambda: commands.config_destroy(
+                self.env_assist.get_env(),
+                instance_name=instance_name
+            )
+        )
+        self.env_assist.assert_reports([
+            fixture.error(
+                report_codes.BOOTH_INVALID_NAME,
+                name=instance_name,
+                reason="contains illegal character '/'",
             ),
-            (
-                Severities.ERROR,
+        ])
+
+    def test_success_default_instance(self):
+        self.fixture_config_success()
+        commands.config_destroy(
+            self.env_assist.get_env(),
+        )
+
+    def test_success_custom_instance(self):
+        instance_name = "my_booth"
+        self.fixture_config_success(instance_name)
+        commands.config_destroy(
+            self.env_assist.get_env(),
+            instance_name=instance_name
+        )
+
+    def test_success_no_booth_key(self):
+        self.fixture_config_booth_not_used()
+        (self.config
+            .raw_file.read(
+                file_type_codes.BOOTH_CONFIG,
+                self.fixture_cfg_path(),
+                content=bytes(),
+            )
+            .raw_file.remove(
+                file_type_codes.BOOTH_CONFIG,
+                self.fixture_cfg_path(),
+                fail_if_file_not_found=True,
+                name="raw_file.remove.cfg",
+            )
+        )
+
+        commands.config_destroy(
+            self.env_assist.get_env(),
+        )
+
+    def test_not_live_booth(self):
+        self.config.env.set_booth({
+            "config_data": "some config data",
+            "key_data": "some key data",
+            "key_path": "some key path",
+        })
+        self.env_assist.assert_raise_library_error(
+            lambda: commands.config_destroy(
+                self.env_assist.get_env(),
+            ),
+            [
+                fixture.error(
+                    report_codes.LIVE_ENVIRONMENT_REQUIRED,
+                    forbidden_options=[
+                        file_type_codes.BOOTH_CONFIG,
+                        file_type_codes.BOOTH_KEY,
+                    ],
+                ),
+            ],
+            expected_in_processor=False
+        )
+
+    def test_not_live_cib(self):
+        self.config.env.set_cib_data("<cib/>")
+        self.env_assist.assert_raise_library_error(
+            lambda: commands.config_destroy(
+                self.env_assist.get_env(),
+            ),
+            [
+                fixture.error(
+                    report_codes.LIVE_ENVIRONMENT_REQUIRED,
+                    forbidden_options=[
+                        file_type_codes.CIB,
+                    ],
+                ),
+            ],
+            expected_in_processor=False
+        )
+
+    def test_not_live(self):
+        self.config.env.set_booth({
+            "config_data": "some config data",
+            "key_data": "some key data",
+            "key_path": "some key path",
+        })
+        self.config.env.set_cib_data("<cib/>")
+        self.env_assist.assert_raise_library_error(
+            lambda: commands.config_destroy(
+                self.env_assist.get_env(),
+            ),
+            [
+                fixture.error(
+                    report_codes.LIVE_ENVIRONMENT_REQUIRED,
+                    forbidden_options=[
+                        file_type_codes.BOOTH_CONFIG,
+                        file_type_codes.BOOTH_KEY,
+                        file_type_codes.CIB,
+                    ],
+                ),
+            ],
+            expected_in_processor=False
+        )
+
+    def test_booth_config_in_use(self):
+        instance_name = "booth"
+
+        (self.config
+            .runner.cib.load(resources=self.fixture_cib_resources())
+            .runner.systemctl.is_active(
+                f"booth@{instance_name}",
+                is_active=True
+            )
+            .runner.systemctl.is_enabled(
+                f"booth@{instance_name}",
+                is_enabled=True
+            )
+        )
+
+        self.env_assist.assert_raise_library_error(
+            lambda: commands.config_destroy(
+                self.env_assist.get_env(),
+            ),
+        )
+
+        self.env_assist.assert_reports([
+            fixture.error(
                 report_codes.BOOTH_CONFIG_IS_USED,
-                {
-                    "name": "somename",
-                    "detail": "(running in systemd)",
-                }
+                name=instance_name,
+                detail="in cluster resource",
+            ),
+            fixture.error(
+                report_codes.BOOTH_CONFIG_IS_USED,
+                name=instance_name,
+                detail="(enabled in systemd)",
+            ),
+            fixture.error(
+                report_codes.BOOTH_CONFIG_IS_USED,
+                name=instance_name,
+                detail="(running in systemd)",
+            ),
+        ])
+
+    def test_cannot_read_config(self):
+        error = "an error"
+        self.fixture_config_booth_not_used()
+        (self.config
+            .raw_file.read(
+                file_type_codes.BOOTH_CONFIG,
+                self.fixture_cfg_path(),
+                exception_msg=error,
             )
         )
 
-    @patch_commands("external.is_systemctl", mock.Mock(return_value=False))
-    @patch_commands("resource.find_for_config", mock.Mock(return_value=[]))
-    @patch_commands("parse", mock.Mock(side_effect=LibraryError()))
-    def test_raises_when_cannot_get_content_of_config(self):
-        env = _env_fixture("somename")
-        assert_raise_library_error(
-            lambda: commands.config_destroy(env),
-            (
-                Severities.ERROR,
-                report_codes.BOOTH_CANNOT_IDENTIFY_KEYFILE,
-                {},
-                report_codes.FORCE_BOOTH_DESTROY
+        self.env_assist.assert_raise_library_error(
+            lambda: commands.config_destroy(
+                self.env_assist.get_env(),
+            ),
+        )
+        self.env_assist.assert_reports([
+            fixture.error(
+                report_codes.FILE_IO_ERROR,
+                force_code=report_codes.FORCE_BOOTH_DESTROY,
+                file_role=file_type_codes.BOOTH_CONFIG,
+                file_path=self.fixture_cfg_path(),
+                reason=error,
+                operation=RawFileError.ACTION_READ,
+            ),
+        ])
+
+    def test_cannot_read_config_forced(self):
+        error = "an error"
+        self.fixture_config_booth_not_used()
+        (self.config
+            .raw_file.read(
+                file_type_codes.BOOTH_CONFIG,
+                self.fixture_cfg_path(),
+                exception_msg=error,
+            )
+            .raw_file.remove(
+                file_type_codes.BOOTH_CONFIG,
+                self.fixture_cfg_path(),
+                fail_if_file_not_found=True,
+                name="raw_file.remove.cfg",
             )
         )
 
-    @patch_commands("external.is_systemctl", mock.Mock(return_value=False))
-    @patch_commands("resource.find_for_config", mock.Mock(return_value=[]))
-    @patch_commands("parse", mock.Mock(side_effect=LibraryError()))
-    def test_remove_config_even_if_cannot_get_its_content_when_forced(self):
-        env = _env_fixture("somename")
-        env.report_processor = MockLibraryReportProcessor()
-        commands.config_destroy(env, ignore_config_load_problems=True)
-        env.booth.remove_config.assert_called_once_with()
-        assert_report_item_list_equal(env.report_processor.report_item_list, [
-            (
-                Severities.WARNING,
-                report_codes.BOOTH_CANNOT_IDENTIFY_KEYFILE,
-                {}
+        commands.config_destroy(
+            self.env_assist.get_env(),
+            ignore_config_load_problems=True,
+        )
+        self.env_assist.assert_reports([
+            fixture.warn(
+                report_codes.FILE_IO_ERROR,
+                file_role=file_type_codes.BOOTH_CONFIG,
+                file_path=self.fixture_cfg_path(),
+                reason=error,
+                operation=RawFileError.ACTION_READ,
+            ),
+        ])
+
+    def test_config_parse_error(self):
+        self.fixture_config_booth_not_used()
+        (self.config
+            .raw_file.read(
+                file_type_codes.BOOTH_CONFIG,
+                self.fixture_cfg_path(),
+                content="invalid config".encode("utf-8"),
             )
+        )
+
+        self.env_assist.assert_raise_library_error(
+            lambda: commands.config_destroy(
+                self.env_assist.get_env(),
+            ),
+        )
+        self.env_assist.assert_reports([
+            fixture.error(
+                report_codes.BOOTH_CONFIG_UNEXPECTED_LINES,
+                force_code=report_codes.FORCE_BOOTH_DESTROY,
+                line_list=["invalid config"],
+                file_path=self.fixture_cfg_path(),
+            ),
+        ])
+
+    def test_config_parse_error_forced(self):
+        self.fixture_config_booth_not_used()
+        (self.config
+            .raw_file.read(
+                file_type_codes.BOOTH_CONFIG,
+                self.fixture_cfg_path(),
+                content="invalid config".encode("utf-8"),
+            )
+            .raw_file.remove(
+                file_type_codes.BOOTH_CONFIG,
+                self.fixture_cfg_path(),
+                fail_if_file_not_found=True,
+                name="raw_file.remove.cfg",
+            )
+        )
+
+        commands.config_destroy(
+            self.env_assist.get_env(),
+            ignore_config_load_problems=True,
+        )
+        self.env_assist.assert_reports([
+            fixture.warn(
+                report_codes.BOOTH_CONFIG_UNEXPECTED_LINES,
+                line_list=["invalid config"],
+                file_path=self.fixture_cfg_path(),
+            ),
+        ])
+
+    def test_key_already_deleted(self):
+        self.fixture_config_booth_not_used()
+        (self.config
+            .raw_file.read(
+                file_type_codes.BOOTH_CONFIG,
+                self.fixture_cfg_path(),
+                content=self.fixture_cfg_content(),
+            )
+            .raw_file.remove(
+                file_type_codes.BOOTH_KEY,
+                self.fixture_key_path(),
+                fail_if_file_not_found=False,
+                file_not_found_exception=True,
+                name="raw_file.remove.key",
+            )
+            .raw_file.remove(
+                file_type_codes.BOOTH_CONFIG,
+                self.fixture_cfg_path(),
+                fail_if_file_not_found=True,
+                name="raw_file.remove.cfg",
+            )
+        )
+
+        commands.config_destroy(
+            self.env_assist.get_env(),
+        )
+
+    def test_cannot_delete_key(self):
+        error = "an error"
+        self.fixture_config_booth_not_used()
+        (self.config
+            .raw_file.read(
+                file_type_codes.BOOTH_CONFIG,
+                self.fixture_cfg_path(),
+                content=self.fixture_cfg_content(),
+            )
+            .raw_file.remove(
+                file_type_codes.BOOTH_KEY,
+                self.fixture_key_path(),
+                fail_if_file_not_found=False,
+                exception_msg=error,
+                name="raw_file.remove.key",
+            )
+        )
+
+        self.env_assist.assert_raise_library_error(
+            lambda: commands.config_destroy(
+                self.env_assist.get_env(),
+            ),
+        )
+        self.env_assist.assert_reports([
+            fixture.error(
+                report_codes.FILE_IO_ERROR,
+                force_code=report_codes.FORCE_BOOTH_DESTROY,
+                file_role=file_type_codes.BOOTH_KEY,
+                file_path=self.fixture_key_path(),
+                reason=error,
+                operation=RawFileError.ACTION_REMOVE,
+            ),
+        ])
+
+    def test_cannot_delete_key_forced(self):
+        error = "an error"
+        self.fixture_config_booth_not_used()
+        (self.config
+            .raw_file.read(
+                file_type_codes.BOOTH_CONFIG,
+                self.fixture_cfg_path(),
+                content=self.fixture_cfg_content(),
+            )
+            .raw_file.remove(
+                file_type_codes.BOOTH_KEY,
+                self.fixture_key_path(),
+                fail_if_file_not_found=False,
+                exception_msg=error,
+                name="raw_file.remove.key",
+            )
+            .raw_file.remove(
+                file_type_codes.BOOTH_CONFIG,
+                self.fixture_cfg_path(),
+                fail_if_file_not_found=True,
+                name="raw_file.remove.cfg",
+            )
+        )
+
+        commands.config_destroy(
+            self.env_assist.get_env(),
+            ignore_config_load_problems=True,
+        )
+        self.env_assist.assert_reports([
+            fixture.warn(
+                report_codes.FILE_IO_ERROR,
+                file_role=file_type_codes.BOOTH_KEY,
+                file_path=self.fixture_key_path(),
+                reason=error,
+                operation=RawFileError.ACTION_REMOVE,
+            ),
+        ])
+
+    def test_cannot_delete_config_forced(self):
+        error = "an error"
+        self.fixture_config_booth_not_used()
+        (self.config
+            .raw_file.read(
+                file_type_codes.BOOTH_CONFIG,
+                self.fixture_cfg_path(),
+                content=self.fixture_cfg_content(),
+            )
+            .raw_file.remove(
+                file_type_codes.BOOTH_KEY,
+                self.fixture_key_path(),
+                fail_if_file_not_found=False,
+                name="raw_file.remove.key",
+            )
+            .raw_file.remove(
+                file_type_codes.BOOTH_CONFIG,
+                self.fixture_cfg_path(),
+                fail_if_file_not_found=True,
+                exception_msg=error,
+                name="raw_file.remove.cfg",
+            )
+        )
+
+        self.env_assist.assert_raise_library_error(
+            lambda: commands.config_destroy(
+                self.env_assist.get_env(),
+            ),
+        )
+        self.env_assist.assert_reports([
+            fixture.error(
+                report_codes.FILE_IO_ERROR,
+                file_role=file_type_codes.BOOTH_CONFIG,
+                file_path=self.fixture_cfg_path(),
+                reason=error,
+                operation=RawFileError.ACTION_REMOVE,
+            ),
+        ])
+
+    def test_keyfile_outside_of_booth_dir(self):
+        key_path = "/tmp/pcs_test/booth.key"
+        self.fixture_config_booth_not_used()
+        (self.config
+            .raw_file.read(
+                file_type_codes.BOOTH_CONFIG,
+                self.fixture_cfg_path(),
+                content=f"authfile = {key_path}".encode("utf-8"),
+            )
+            .raw_file.remove(
+                file_type_codes.BOOTH_CONFIG,
+                self.fixture_cfg_path(),
+                fail_if_file_not_found=True,
+                name="raw_file.remove.cfg",
+            )
+        )
+
+        commands.config_destroy(
+            self.env_assist.get_env(),
+        )
+        self.env_assist.assert_reports([
+            fixture.warn(
+                report_codes.BOOTH_UNSUPPORTED_FILE_LOCATION,
+                file_type_code=file_type_codes.BOOTH_KEY,
+                file_path=key_path,
+                expected_dir=self.booth_dir,
+            ),
         ])
 
 
-class ConfigSyncTest(TestCase):
+class ConfigText(TestCase, FixtureMixin):
     def setUp(self):
         self.env_assist, self.config = get_env_tools(self)
-        self.name = "booth"
-        self.config_path = os.path.join(
-            settings.booth_config_dir, "{}.conf".format(self.name)
+
+    def test_invalid_instance(self):
+        instance_name = "/tmp/booth/booth"
+        self.env_assist.assert_raise_library_error(
+            lambda: commands.config_text(
+                self.env_assist.get_env(),
+                instance_name=instance_name
+            )
         )
+        self.env_assist.assert_reports([
+            fixture.error(
+                report_codes.BOOTH_INVALID_NAME,
+                name=instance_name,
+                reason="contains illegal character '/'",
+            ),
+        ])
+
+    def test_success_default_instance(self):
+        config_content = "my config content".encode("utf-8")
+        (self.config
+            .raw_file.read(
+                file_type_codes.BOOTH_CONFIG,
+                self.fixture_cfg_path(),
+                content=config_content,
+            )
+        )
+        self.assertEqual(
+            commands.config_text(
+                self.env_assist.get_env(),
+            ),
+            config_content
+        )
+
+    def test_success_custom_instance(self):
+        instance_name = "my_booth"
+        config_content = "my config content".encode("utf-8")
+        (self.config
+            .raw_file.read(
+                file_type_codes.BOOTH_CONFIG,
+                self.fixture_cfg_path(instance_name),
+                content=config_content,
+            )
+        )
+        self.assertEqual(
+            commands.config_text(
+                self.env_assist.get_env(),
+                instance_name=instance_name
+            ),
+            config_content
+        )
+
+    def test_not_live(self):
+        config_content = "my config content".encode("utf-8")
+        key_path = "/tmp/pcs_test/booth.key"
+        self.config.env.set_booth({
+            "config_data": config_content,
+            "key_data": "some key data".encode("utf-8"),
+            "key_path": key_path,
+        })
+        self.env_assist.assert_raise_library_error(
+            lambda: commands.config_text(
+                self.env_assist.get_env(),
+            ),
+            [
+                fixture.error(
+                    report_codes.LIVE_ENVIRONMENT_REQUIRED,
+                    forbidden_options=[
+                        file_type_codes.BOOTH_CONFIG,
+                        file_type_codes.BOOTH_KEY,
+                    ],
+                ),
+            ],
+            expected_in_processor=False
+        )
+
+    def test_cannot_read_config(self):
+        error = "an error"
+        (self.config
+            .raw_file.read(
+                file_type_codes.BOOTH_CONFIG,
+                self.fixture_cfg_path(),
+                exception_msg=error,
+            )
+        )
+        self.env_assist.assert_raise_library_error(
+            lambda: commands.config_text(
+                self.env_assist.get_env(),
+            ),
+        )
+        self.env_assist.assert_reports([
+            fixture.error(
+                report_codes.FILE_IO_ERROR,
+                file_role=file_type_codes.BOOTH_CONFIG,
+                file_path=self.fixture_cfg_path(),
+                reason=error,
+                operation=RawFileError.ACTION_READ,
+            ),
+        ])
+
+    def test_remote_success(self):
+        instance_name = "my_booth"
+        config_content = "my config content"
+        (self.config
+            .http.booth.get_config(
+                instance_name,
+                config_data=config_content,
+                node_labels=["node1"],
+            )
+        )
+        self.assertEqual(
+            commands.config_text(
+                self.env_assist.get_env(),
+                instance_name=instance_name,
+                node_name="node1",
+            ),
+            config_content.encode("utf-8")
+        )
+
+    def test_remote_config_server_error(self):
+        instance_name = "booth"
+        node_name = "node1"
+        server_error = (
+            "some error like 'config does not exist' or 'instance name invalid'"
+        )
+        (self.config
+            .http.booth.get_config(
+                instance_name,
+                communication_list=[dict(
+                    label=node_name,
+                    response_code=400,
+                    output=server_error,
+                )]
+            )
+        )
+        self.env_assist.assert_raise_library_error(
+            lambda: commands.config_text(
+                self.env_assist.get_env(),
+                node_name=node_name,
+            ),
+        )
+        self.env_assist.assert_reports([
+            fixture.error(
+                report_codes.NODE_COMMUNICATION_COMMAND_UNSUCCESSFUL,
+                node=node_name,
+                command="remote/booth_get_config",
+                reason=server_error,
+            ),
+        ])
+
+    def test_remote_bad_reponse(self):
+        instance_name = "booth"
+        node_name = "node1"
+        (self.config
+            .http.booth.get_config(
+                instance_name,
+                communication_list=[dict(
+                    label=node_name,
+                    output="not a json",
+                )]
+            )
+        )
+        self.env_assist.assert_raise_library_error(
+            lambda: commands.config_text(
+                self.env_assist.get_env(),
+                node_name=node_name,
+            ),
+        )
+        self.env_assist.assert_reports([
+            fixture.error(
+                report_codes.INVALID_RESPONSE_FORMAT,
+                node=node_name,
+            ),
+        ])
+
+    def test_remote_connection_error(self):
+        instance_name = "booth"
+        node_name = "node1"
+        error = "an error"
+        (self.config
+            .http.booth.get_config(
+                instance_name,
+                communication_list=[dict(
+                    label=node_name,
+                    was_connected=False,
+                    errno=1,
+                    error_msg=error,
+                )]
+            )
+        )
+        self.env_assist.assert_raise_library_error(
+            lambda: commands.config_text(
+                self.env_assist.get_env(),
+                node_name=node_name,
+            ),
+        )
+        self.env_assist.assert_reports([
+            fixture.error(
+                report_codes.NODE_COMMUNICATION_ERROR_UNABLE_TO_CONNECT,
+                node=node_name,
+                command="remote/booth_get_config",
+                reason=error,
+            ),
+        ])
+
+
+class ConfigTicketAdd(TestCase, FixtureMixin):
+    def setUp(self):
+        self.env_assist, self.config = get_env_tools(self)
+
+    def test_invalid_instance(self):
+        instance_name = "/tmp/booth/booth"
+        self.env_assist.assert_raise_library_error(
+            lambda: commands.config_ticket_add(
+                self.env_assist.get_env(),
+                "ticketA",
+                {},
+                instance_name=instance_name
+            )
+        )
+        self.env_assist.assert_reports([
+            fixture.error(
+                report_codes.BOOTH_INVALID_NAME,
+                name=instance_name,
+                reason="contains illegal character '/'",
+            ),
+        ])
+
+    def fixture_config_success(self, instance_name="booth"):
+        (self.config
+            .raw_file.read(
+                file_type_codes.BOOTH_CONFIG,
+                self.fixture_cfg_path(instance_name),
+                content=self.fixture_cfg_content(
+                    self.fixture_key_path(instance_name)
+                ),
+            )
+            .raw_file.write(
+                file_type_codes.BOOTH_CONFIG,
+                self.fixture_cfg_path(instance_name),
+                self.fixture_cfg_content(
+                    self.fixture_key_path(instance_name),
+                    ticket_list=[["ticketA", []]]
+                ),
+                can_overwrite=True,
+            )
+        )
+    def test_success_default_instance(self):
+        self.fixture_config_success()
+        commands.config_ticket_add(
+            self.env_assist.get_env(),
+            "ticketA",
+            {}
+        )
+
+    def test_success_custom_instance(self):
+        instance_name = "my_booth"
+        self.fixture_config_success(instance_name=instance_name)
+        commands.config_ticket_add(
+            self.env_assist.get_env(),
+            "ticketA",
+            {},
+            instance_name=instance_name,
+        )
+
+    def test_success_not_live(self):
+        key_data = "some key data"
+        key_path = "some key path"
+        self.config.env.set_booth({
+            "config_data": self.fixture_cfg_content(),
+            "key_data": key_data,
+            "key_path": key_path,
+        })
+        env = self.env_assist.get_env()
+
+        commands.config_ticket_add(env, "ticketA", {})
+        self.assertEqual(
+            env.get_booth_env(name="").export(),
+            {
+                "config_file": {
+                    "content": self.fixture_cfg_content(
+                        ticket_list=[["ticketA", []]]
+                    ),
+                },
+                "key_file": {
+                    "content": key_data,
+                },
+            }
+        )
+
+    def test_success_ticket_options(self):
+        (self.config
+            .raw_file.read(
+                file_type_codes.BOOTH_CONFIG,
+                self.fixture_cfg_path(),
+                content=self.fixture_cfg_content(),
+            )
+            .raw_file.write(
+                file_type_codes.BOOTH_CONFIG,
+                self.fixture_cfg_path(),
+                self.fixture_cfg_content(
+                    ticket_list=[
+                        ["ticketA", [("retries", "10"), ("timeout", "20")]]
+                    ]
+                ),
+                can_overwrite=True,
+            )
+        )
+        commands.config_ticket_add(
+            self.env_assist.get_env(),
+            "ticketA",
+            {"timeout": "20", "retries": "10"}
+        )
+
+    def test_ticket_already_exists(self):
+        (self.config
+            .raw_file.read(
+                file_type_codes.BOOTH_CONFIG,
+                self.fixture_cfg_path(),
+                content=self.fixture_cfg_content(
+                    ticket_list=[["ticketA", []]]
+                ),
+            )
+        )
+        self.env_assist.assert_raise_library_error(
+            lambda: commands.config_ticket_add(
+                self.env_assist.get_env(),
+                "ticketA",
+                {},
+                allow_unknown_options=True,
+            )
+        )
+        self.env_assist.assert_reports([
+            fixture.error(
+                report_codes.BOOTH_TICKET_DUPLICATE,
+                ticket_name="ticketA",
+            ),
+        ])
+
+    def test_validator_errors(self):
+        (self.config
+            .raw_file.read(
+                file_type_codes.BOOTH_CONFIG,
+                self.fixture_cfg_path(),
+                content=self.fixture_cfg_content(),
+            )
+        )
+        self.env_assist.assert_raise_library_error(
+            lambda: commands.config_ticket_add(
+                self.env_assist.get_env(),
+                "@ticketA",
+                {"a": "A"}
+            )
+        )
+        self.env_assist.assert_reports([
+            fixture.error(
+                report_codes.BOOTH_TICKET_NAME_INVALID,
+                ticket_name="@ticketA",
+            ),
+            fixture.error(
+                report_codes.INVALID_OPTIONS,
+                force_code=report_codes.FORCE_OPTIONS,
+                option_names=["a"],
+                option_type="booth ticket",
+                allowed=[
+                    "acquire-after",
+                    "attr-prereq",
+                    "before-acquire-handler",
+                    "expire",
+                    "renewal-freq",
+                    "retries",
+                    "timeout",
+                    "weights",
+                ],
+                allowed_patterns=[],
+            ),
+        ])
+
+    def test_invalid_ticket_options_forced(self):
+        (self.config
+            .raw_file.read(
+                file_type_codes.BOOTH_CONFIG,
+                self.fixture_cfg_path(),
+                content=self.fixture_cfg_content(),
+            )
+            .raw_file.write(
+                file_type_codes.BOOTH_CONFIG,
+                self.fixture_cfg_path(),
+                self.fixture_cfg_content(
+                    ticket_list=[["ticketA", [("a", "A")]]]
+                ),
+                can_overwrite=True,
+            )
+        )
+        commands.config_ticket_add(
+            self.env_assist.get_env(),
+            "ticketA",
+            {"a": "A"},
+            allow_unknown_options=True,
+        )
+        self.env_assist.assert_reports([
+            fixture.warn(
+                report_codes.INVALID_OPTIONS,
+                option_names=["a"],
+                option_type="booth ticket",
+                allowed=[
+                    "acquire-after",
+                    "attr-prereq",
+                    "before-acquire-handler",
+                    "expire",
+                    "renewal-freq",
+                    "retries",
+                    "timeout",
+                    "weights",
+                ],
+                allowed_patterns=[],
+            ),
+        ])
+
+    def test_config_parse_error(self):
+        (self.config
+            .raw_file.read(
+                file_type_codes.BOOTH_CONFIG,
+                self.fixture_cfg_path(),
+                content="invalid config".encode("utf-8"),
+            )
+        )
+        self.env_assist.assert_raise_library_error(
+            lambda: commands.config_ticket_add(
+                self.env_assist.get_env(),
+                "ticketA",
+                {},
+            )
+        )
+        self.env_assist.assert_reports([
+            fixture.error(
+                report_codes.BOOTH_CONFIG_UNEXPECTED_LINES,
+                line_list=["invalid config"],
+                file_path=self.fixture_cfg_path(),
+            ),
+        ])
+
+    def test_cannot_read_config(self):
+        error = "an error"
+        (self.config
+            .raw_file.read(
+                file_type_codes.BOOTH_CONFIG,
+                self.fixture_cfg_path(),
+                exception_msg=error,
+            )
+        )
+        self.env_assist.assert_raise_library_error(
+            lambda: commands.config_ticket_add(
+                self.env_assist.get_env(),
+                "ticketA",
+                {},
+            )
+        )
+        self.env_assist.assert_reports([
+            fixture.error(
+                report_codes.FILE_IO_ERROR,
+                file_role=file_type_codes.BOOTH_CONFIG,
+                file_path=self.fixture_cfg_path(),
+                reason=error,
+                operation=RawFileError.ACTION_READ,
+            ),
+        ])
+
+    def test_cannot_read_config_not_live(self):
+        self.config.env.set_booth({
+            "config_data": None,
+            "key_data": None,
+            "key_path": None,
+        })
+        self.env_assist.assert_raise_library_error(
+            lambda: commands.config_ticket_add(
+                self.env_assist.get_env(),
+                "ticketA",
+                {},
+            )
+        )
+        self.env_assist.assert_reports([
+            fixture.error(
+                report_codes.FILE_IO_ERROR,
+                file_role=file_type_codes.BOOTH_CONFIG,
+                file_path="",
+                reason="No such file or directory",
+                operation=RawFileError.ACTION_READ,
+            ),
+        ])
+
+    def test_cannot_write_config(self):
+        error = "an error"
+        (self.config
+            .raw_file.read(
+                file_type_codes.BOOTH_CONFIG,
+                self.fixture_cfg_path(),
+                content=self.fixture_cfg_content(),
+            )
+            .raw_file.write(
+                file_type_codes.BOOTH_CONFIG,
+                self.fixture_cfg_path(),
+                self.fixture_cfg_content(
+                    ticket_list=[["ticketA", []]]
+                ),
+                can_overwrite=True,
+                exception_msg=error,
+            )
+        )
+        self.env_assist.assert_raise_library_error(
+            lambda: commands.config_ticket_add(
+                self.env_assist.get_env(),
+                "ticketA",
+                {},
+            )
+        )
+        self.env_assist.assert_reports([
+            fixture.error(
+                report_codes.FILE_IO_ERROR,
+                file_role=file_type_codes.BOOTH_CONFIG,
+                file_path=self.fixture_cfg_path(),
+                reason=error,
+                operation=RawFileError.ACTION_WRITE,
+            ),
+        ])
+
+
+class ConfigTicketRemove(TestCase, FixtureMixin):
+    def setUp(self):
+        self.env_assist, self.config = get_env_tools(self)
+
+    def test_invalid_instance(self):
+        instance_name = "/tmp/booth/booth"
+        self.env_assist.assert_raise_library_error(
+            lambda: commands.config_ticket_remove(
+                self.env_assist.get_env(),
+                "ticketA",
+                instance_name=instance_name
+            )
+        )
+        self.env_assist.assert_reports([
+            fixture.error(
+                report_codes.BOOTH_INVALID_NAME,
+                name=instance_name,
+                reason="contains illegal character '/'",
+            ),
+        ])
+
+    def fixture_config_success(self, instance_name="booth"):
+        (self.config
+            .raw_file.read(
+                file_type_codes.BOOTH_CONFIG,
+                self.fixture_cfg_path(instance_name),
+                self.fixture_cfg_content(
+                    self.fixture_key_path(instance_name),
+                    ticket_list=[
+                        ["ticketA", []],
+                        ["ticketB", []],
+                        ["ticketC", []],
+                    ]
+                ),
+            )
+            .raw_file.write(
+                file_type_codes.BOOTH_CONFIG,
+                self.fixture_cfg_path(instance_name),
+                self.fixture_cfg_content(
+                    self.fixture_key_path(instance_name),
+                    ticket_list=[
+                        ["ticketA", []],
+                        ["ticketC", []],
+                    ]
+                ),
+                can_overwrite=True,
+            )
+        )
+
+    def test_success_default_instance(self):
+        self.fixture_config_success()
+        commands.config_ticket_remove(
+            self.env_assist.get_env(),
+            "ticketB",
+        )
+
+    def test_success_custom_instance(self):
+        instance_name = "my_booth"
+        self.fixture_config_success(instance_name=instance_name)
+        commands.config_ticket_remove(
+            self.env_assist.get_env(),
+            "ticketB",
+            instance_name=instance_name,
+        )
+
+    def test_success_not_live(self):
+        key_data = "some key data"
+        key_path = "some key path"
+        self.config.env.set_booth({
+            "config_data": self.fixture_cfg_content(
+                ticket_list=[["ticketB", []]]
+            ),
+            "key_data": key_data,
+            "key_path": key_path,
+        })
+        env = self.env_assist.get_env()
+
+        commands.config_ticket_remove(env, "ticketB")
+        self.assertEqual(
+            env.get_booth_env(name="").export(),
+            {
+                "config_file": {
+                    "content": self.fixture_cfg_content(),
+                },
+                "key_file": {
+                    "content": key_data,
+                },
+            }
+        )
+
+    def test_success_ticket_options(self):
+        (self.config
+            .raw_file.read(
+                file_type_codes.BOOTH_CONFIG,
+                self.fixture_cfg_path(),
+                self.fixture_cfg_content(
+                    ticket_list=[
+                        ["ticketA", [("a1", "A1"), ("a2", "A2")]],
+                        ["ticketB", [("b1", "B1"), ("b2", "B2")]],
+                        ["ticketC", [("c1", "C1"), ("c2", "C2")]],
+                    ]
+                ),
+            )
+            .raw_file.write(
+                file_type_codes.BOOTH_CONFIG,
+                self.fixture_cfg_path(),
+                self.fixture_cfg_content(
+                    ticket_list=[
+                        ["ticketA", [("a1", "A1"), ("a2", "A2")]],
+                        ["ticketC", [("c1", "C1"), ("c2", "C2")]],
+                    ]
+                ),
+                can_overwrite=True,
+            )
+        )
+        commands.config_ticket_remove(
+            self.env_assist.get_env(),
+            "ticketB",
+        )
+
+    def test_ticket_does_not_exist(self):
+        (self.config
+            .raw_file.read(
+                file_type_codes.BOOTH_CONFIG,
+                self.fixture_cfg_path(),
+                self.fixture_cfg_content(
+                    ticket_list=[
+                        ["ticketA", []],
+                        ["ticketC", []],
+                    ]
+                ),
+            )
+        )
+        self.env_assist.assert_raise_library_error(
+            lambda: commands.config_ticket_remove(
+                self.env_assist.get_env(),
+                "ticketB",
+            )
+        )
+        self.env_assist.assert_reports([
+            fixture.error(
+                report_codes.BOOTH_TICKET_DOES_NOT_EXIST,
+                ticket_name="ticketB",
+            ),
+        ])
+
+    def test_config_parse_error(self):
+        (self.config
+            .raw_file.read(
+                file_type_codes.BOOTH_CONFIG,
+                self.fixture_cfg_path(),
+                content="invalid config".encode("utf-8"),
+            )
+        )
+        self.env_assist.assert_raise_library_error(
+            lambda: commands.config_ticket_remove(
+                self.env_assist.get_env(),
+                "ticketB",
+            )
+        )
+        self.env_assist.assert_reports([
+            fixture.error(
+                report_codes.BOOTH_CONFIG_UNEXPECTED_LINES,
+                line_list=["invalid config"],
+                file_path=self.fixture_cfg_path(),
+            ),
+        ])
+
+    def test_cannot_read_config(self):
+        error = "an error"
+        (self.config
+            .raw_file.read(
+                file_type_codes.BOOTH_CONFIG,
+                self.fixture_cfg_path(),
+                exception_msg=error,
+            )
+        )
+        self.env_assist.assert_raise_library_error(
+            lambda: commands.config_ticket_remove(
+                self.env_assist.get_env(),
+                "ticketB",
+            )
+        )
+        self.env_assist.assert_reports([
+            fixture.error(
+                report_codes.FILE_IO_ERROR,
+                file_role=file_type_codes.BOOTH_CONFIG,
+                file_path=self.fixture_cfg_path(),
+                reason=error,
+                operation=RawFileError.ACTION_READ,
+            ),
+        ])
+
+    def test_cannot_read_config_not_live(self):
+        self.config.env.set_booth({
+            "config_data": None,
+            "key_data": None,
+            "key_path": None,
+        })
+        self.env_assist.assert_raise_library_error(
+            lambda: commands.config_ticket_remove(
+                self.env_assist.get_env(),
+                "ticketB",
+            )
+        )
+        self.env_assist.assert_reports([
+            fixture.error(
+                report_codes.FILE_IO_ERROR,
+                file_role=file_type_codes.BOOTH_CONFIG,
+                file_path="",
+                reason="No such file or directory",
+                operation=RawFileError.ACTION_READ,
+            ),
+        ])
+
+    def test_cannot_write_config(self):
+        error = "an error"
+        (self.config
+            .raw_file.read(
+                file_type_codes.BOOTH_CONFIG,
+                self.fixture_cfg_path(),
+                self.fixture_cfg_content(
+                    ticket_list=[
+                        ["ticketB", []],
+                    ]
+                ),
+            )
+            .raw_file.write(
+                file_type_codes.BOOTH_CONFIG,
+                self.fixture_cfg_path(),
+                self.fixture_cfg_content(),
+                can_overwrite=True,
+                exception_msg=error,
+            )
+        )
+        self.env_assist.assert_raise_library_error(
+            lambda: commands.config_ticket_remove(
+                self.env_assist.get_env(),
+                "ticketB",
+            )
+        )
+        self.env_assist.assert_reports([
+            fixture.error(
+                report_codes.FILE_IO_ERROR,
+                file_role=file_type_codes.BOOTH_CONFIG,
+                file_path=self.fixture_cfg_path(),
+                reason=error,
+                operation=RawFileError.ACTION_WRITE,
+            ),
+        ])
+
+
+class CreateInCluster(TestCase, FixtureMixin):
+    def setUp(self):
+        self.env_assist, self.config = get_env_tools(self)
+
+    def test_invalid_instance(self):
+        instance_name = "/tmp/booth/booth"
+        self.env_assist.assert_raise_library_error(
+            lambda: commands.create_in_cluster(
+                self.env_assist.get_env(),
+                self.site_ip,
+                instance_name=instance_name
+            )
+        )
+        self.env_assist.assert_reports([
+            fixture.error(
+                report_codes.BOOTH_INVALID_NAME,
+                name=instance_name,
+                reason="contains illegal character '/'",
+            ),
+        ])
+
+    def fixture_config_success(self, instance_name="booth"):
+        (self.config
+            .runner.cib.load()
+            .raw_file.read(
+                file_type_codes.BOOTH_CONFIG,
+                self.fixture_cfg_path(instance_name),
+                content=self.fixture_cfg_content(
+                    self.fixture_key_path(instance_name)
+                ),
+            )
+            .runner.pcmk.load_agent(
+                agent_name="ocf:heartbeat:IPaddr2",
+                name="runner.pcmk.load_agent.ipaddr2",
+            )
+            .runner.pcmk.load_agent(
+                agent_name="ocf:pacemaker:booth-site",
+                name="runner.pcmk.load_agent.booth-site",
+            )
+            .env.push_cib(resources=self.fixture_cib_booth_group(instance_name))
+        )
+
+    def test_success_default_instance(self):
+        self.fixture_config_success()
+        commands.create_in_cluster(
+            self.env_assist.get_env(),
+            self.site_ip,
+        )
+
+    def test_success_custom_instance(self):
+        instance_name = "my_booth"
+        self.fixture_config_success(instance_name=instance_name)
+        commands.create_in_cluster(
+            self.env_assist.get_env(),
+            self.site_ip,
+            instance_name=instance_name,
+        )
+
+    def test_success_not_live_cib(self):
+        (self.config
+            .env.set_cib_data(open(rc("cib-empty.xml")).read())
+            .runner.cib.load()
+            .raw_file.read(
+                file_type_codes.BOOTH_CONFIG,
+                self.fixture_cfg_path(),
+                content=self.fixture_cfg_content(),
+            )
+            .runner.pcmk.load_agent(
+                agent_name="ocf:heartbeat:IPaddr2",
+                name="runner.pcmk.load_agent.ipaddr2",
+            )
+            .runner.pcmk.load_agent(
+                agent_name="ocf:pacemaker:booth-site",
+                name="runner.pcmk.load_agent.booth-site",
+            )
+            .env.push_cib(resources=self.fixture_cib_booth_group())
+        )
+        commands.create_in_cluster(
+            self.env_assist.get_env(),
+            self.site_ip,
+        )
+
+    def test_not_live_booth(self):
+        self.config.env.set_booth({
+            "config_data": "some config data",
+            "key_data": "some key data",
+            "key_path": "some key path",
+        })
+        self.env_assist.assert_raise_library_error(
+            lambda: commands.create_in_cluster(
+                self.env_assist.get_env(),
+                self.site_ip,
+            ),
+            [
+                fixture.error(
+                    report_codes.LIVE_ENVIRONMENT_REQUIRED,
+                    forbidden_options=[
+                        file_type_codes.BOOTH_CONFIG,
+                        file_type_codes.BOOTH_KEY,
+                    ],
+                ),
+            ],
+            expected_in_processor=False
+        )
+
+    def test_booth_resource_already_created(self):
+        (self.config
+            .runner.cib.load(resources=self.fixture_cib_booth_group())
+            .raw_file.read(
+                file_type_codes.BOOTH_CONFIG,
+                self.fixture_cfg_path(),
+                content=self.fixture_cfg_content(),
+            )
+        )
+        self.env_assist.assert_raise_library_error(
+            lambda: commands.create_in_cluster(
+                self.env_assist.get_env(),
+                self.site_ip,
+            )
+        )
+        self.env_assist.assert_reports([
+            fixture.error(
+                report_codes.BOOTH_ALREADY_IN_CIB,
+                name="booth",
+            ),
+        ])
+
+    def test_booth_config_does_not_exist(self):
+        error = "an error"
+        (self.config
+            .runner.cib.load()
+            .raw_file.read(
+                file_type_codes.BOOTH_CONFIG,
+                self.fixture_cfg_path(),
+                exception_msg=error,
+            )
+        )
+        self.env_assist.assert_raise_library_error(
+            lambda: commands.create_in_cluster(
+                self.env_assist.get_env(),
+                self.site_ip,
+            )
+        )
+        self.env_assist.assert_reports([
+            fixture.error(
+                report_codes.FILE_IO_ERROR,
+                file_role=file_type_codes.BOOTH_CONFIG,
+                file_path=self.fixture_cfg_path(),
+                reason=error,
+                operation=RawFileError.ACTION_READ,
+            ),
+        ])
+
+    def test_ip_agent_missing(self):
+        (self.config
+            .runner.cib.load()
+            .raw_file.read(
+                file_type_codes.BOOTH_CONFIG,
+                self.fixture_cfg_path(),
+                content=self.fixture_cfg_content(),
+            )
+            .runner.pcmk.load_agent(
+                agent_name="ocf:heartbeat:IPaddr2",
+                agent_is_missing=True,
+                name="runner.pcmk.load_agent.ipaddr2",
+            )
+        )
+        self.env_assist.assert_raise_library_error(
+            lambda: commands.create_in_cluster(
+                self.env_assist.get_env(),
+                self.site_ip,
+            ),
+            [
+                fixture.error(
+                    report_codes.UNABLE_TO_GET_AGENT_METADATA,
+                    force_code=report_codes.FORCE_METADATA_ISSUE,
+                    agent="ocf:heartbeat:IPaddr2",
+                ),
+            ],
+            expected_in_processor=False
+        )
+
+    def test_booth_agent_missing(self):
+        (self.config
+            .runner.cib.load()
+            .raw_file.read(
+                file_type_codes.BOOTH_CONFIG,
+                self.fixture_cfg_path(),
+                content=self.fixture_cfg_content(),
+            )
+            .runner.pcmk.load_agent(
+                agent_name="ocf:heartbeat:IPaddr2",
+                name="runner.pcmk.load_agent.ipaddr2",
+            )
+            .runner.pcmk.load_agent(
+                agent_name="ocf:pacemaker:booth-site",
+                agent_is_missing=True,
+                name="runner.pcmk.load_agent.booth-site",
+            )
+        )
+        self.env_assist.assert_raise_library_error(
+            lambda: commands.create_in_cluster(
+                self.env_assist.get_env(),
+                self.site_ip,
+            ),
+            [
+                fixture.error(
+                    report_codes.UNABLE_TO_GET_AGENT_METADATA,
+                    force_code=report_codes.FORCE_METADATA_ISSUE,
+                    agent="ocf:pacemaker:booth-site",
+                ),
+            ],
+            expected_in_processor=False
+        )
+
+    def test_agents_missing_forced(self):
+        (self.config
+            .runner.cib.load()
+            .raw_file.read(
+                file_type_codes.BOOTH_CONFIG,
+                self.fixture_cfg_path(),
+                content=self.fixture_cfg_content(),
+            )
+            .runner.pcmk.load_agent(
+                agent_name="ocf:heartbeat:IPaddr2",
+                agent_is_missing=True,
+                name="runner.pcmk.load_agent.ipaddr2",
+            )
+            .runner.pcmk.load_agent(
+                agent_name="ocf:pacemaker:booth-site",
+                agent_is_missing=True,
+                name="runner.pcmk.load_agent.booth-site",
+            )
+            .env.push_cib(
+                resources=self.fixture_cib_booth_group(default_operations=True)
+            )
+        )
+        commands.create_in_cluster(
+            self.env_assist.get_env(),
+            self.site_ip,
+            allow_absent_resource_agent=True,
+        )
+        self.env_assist.assert_reports([
+            fixture.warn(
+                report_codes.UNABLE_TO_GET_AGENT_METADATA,
+                agent="ocf:heartbeat:IPaddr2",
+            ),
+            fixture.warn(
+                report_codes.UNABLE_TO_GET_AGENT_METADATA,
+                agent="ocf:pacemaker:booth-site",
+            ),
+        ])
+
+
+class RemoveFromCluster(TestCase, FixtureMixin):
+    def setUp(self):
+        self.env_assist, self.config = get_env_tools(self)
+        # mock pcs.resource.remove function which does all the CIB editing
+        self.resource_remove = mock.Mock()
+
+    def test_invalid_instance(self):
+        instance_name = "/tmp/booth/booth"
+        self.env_assist.assert_raise_library_error(
+            lambda: commands.remove_from_cluster(
+                self.env_assist.get_env(),
+                self.resource_remove,
+                instance_name=instance_name
+            )
+        )
+        self.resource_remove.assert_not_called()
+        self.env_assist.assert_reports([
+            fixture.error(
+                report_codes.BOOTH_INVALID_NAME,
+                name=instance_name,
+                reason="contains illegal character '/'",
+            ),
+        ])
+
+    def test_success_default_instance(self):
+        (self.config
+            .runner.cib.load(resources=self.fixture_cib_booth_group())
+        )
+        commands.remove_from_cluster(
+            self.env_assist.get_env(),
+            self.resource_remove,
+        )
+        self.resource_remove.assert_has_calls([
+            mock.call("booth-booth-ip"),
+            mock.call("booth-booth-service"),
+        ])
+
+    def test_success_custom_instance(self):
+        instance_name = "my_booth"
+        (self.config
+            .runner.cib.load(
+                resources=self.fixture_cib_booth_group(instance_name)
+            )
+        )
+        commands.remove_from_cluster(
+            self.env_assist.get_env(),
+            self.resource_remove,
+            instance_name=instance_name,
+        )
+        self.resource_remove.assert_has_calls([
+            mock.call(f"booth-{instance_name}-ip"),
+            mock.call(f"booth-{instance_name}-service"),
+        ])
+
+    def test_success_not_live_cib(self):
+        cib_xml_man = XmlManipulation.from_file(rc("cib-empty.xml"))
+        cib_xml_man.append_to_first_tag_name(
+            "resources",
+            self.fixture_cib_booth_group(wrap_in_resources=False)
+        )
+        (self.config
+            # This makes env.is_cib_live return False
+            .env.set_cib_data(str(cib_xml_man))
+            # This instructs the runner to actually return our mocked cib
+            .runner.cib.load_content(str(cib_xml_man))
+        )
+        commands.remove_from_cluster(
+            self.env_assist.get_env(),
+            self.resource_remove,
+        )
+        self.resource_remove.assert_has_calls([
+            mock.call("booth-booth-ip"),
+            mock.call("booth-booth-service"),
+        ])
+
+    def test_not_live_booth(self):
+        self.config.env.set_booth({
+            "config_data": "some config data",
+            "key_data": "some key data",
+            "key_path": "some key path",
+        })
+        self.env_assist.assert_raise_library_error(
+            lambda: commands.remove_from_cluster(
+                self.env_assist.get_env(),
+                self.resource_remove,
+            ),
+            [
+                fixture.error(
+                    report_codes.LIVE_ENVIRONMENT_REQUIRED,
+                    forbidden_options=[
+                        file_type_codes.BOOTH_CONFIG,
+                        file_type_codes.BOOTH_KEY,
+                    ],
+                ),
+            ],
+            expected_in_processor=False
+        )
+        self.resource_remove.assert_not_called()
+
+    def test_booth_resource_does_not_exist(self):
+        (self.config
+            .runner.cib.load()
+        )
+        self.env_assist.assert_raise_library_error(
+            lambda: commands.remove_from_cluster(
+                self.env_assist.get_env(),
+                self.resource_remove,
+            ),
+        )
+        self.env_assist.assert_reports([
+            fixture.error(
+                report_codes.BOOTH_NOT_EXISTS_IN_CIB,
+                name="booth",
+            ),
+        ])
+        self.resource_remove.assert_not_called()
+
+    def test_more_booth_resources(self):
+        (self.config
+            .runner.cib.load(resources=self.fixture_cib_more_resources())
+        )
+        self.env_assist.assert_raise_library_error(
+            lambda: commands.remove_from_cluster(
+                self.env_assist.get_env(),
+                self.resource_remove,
+            ),
+        )
+        self.env_assist.assert_reports([
+            fixture.error(
+                report_codes.BOOTH_MULTIPLE_TIMES_IN_CIB,
+                force_code=report_codes.FORCE_BOOTH_REMOVE_FROM_CIB,
+                name="booth",
+            ),
+        ])
+        self.resource_remove.assert_not_called()
+
+    def test_more_booth_resources_forced(self):
+        (self.config
+            .runner.cib.load(resources=self.fixture_cib_more_resources())
+        )
+        commands.remove_from_cluster(
+            self.env_assist.get_env(),
+            self.resource_remove,
+            allow_remove_multiple=True,
+        )
+        self.env_assist.assert_reports([
+            fixture.warn(
+                report_codes.BOOTH_MULTIPLE_TIMES_IN_CIB,
+                name="booth",
+            ),
+        ])
+        self.resource_remove.assert_has_calls([
+            mock.call("booth1"),
+            mock.call("booth2"),
+        ])
+
+
+class Restart(TestCase, FixtureMixin):
+    def setUp(self):
+        self.env_assist, self.config = get_env_tools(self)
+        # mock pcs.resource.resource_restart function which does all the heavy
+        # lifting
+        self.resource_restart = mock.Mock()
+
+    def test_invalid_instance(self):
+        instance_name = "/tmp/booth/booth"
+        self.env_assist.assert_raise_library_error(
+            lambda: commands.restart(
+                self.env_assist.get_env(),
+                self.resource_restart,
+                instance_name=instance_name
+            )
+        )
+        self.resource_restart.assert_not_called()
+        self.env_assist.assert_reports([
+            fixture.error(
+                report_codes.BOOTH_INVALID_NAME,
+                name=instance_name,
+                reason="contains illegal character '/'",
+            ),
+        ])
+
+    def test_success_default_instance(self):
+        (self.config
+            .runner.cib.load(resources=self.fixture_cib_booth_group())
+        )
+        commands.restart(
+            self.env_assist.get_env(),
+            self.resource_restart,
+        )
+        self.resource_restart.assert_has_calls([
+            mock.call(["booth-booth-service"]),
+        ])
+
+    def test_success_custom_instance(self):
+        instance_name = "my_booth"
+        (self.config
+            .runner.cib.load(
+                resources=self.fixture_cib_booth_group(instance_name)
+            )
+        )
+        commands.restart(
+            self.env_assist.get_env(),
+            self.resource_restart,
+            instance_name=instance_name,
+        )
+        self.resource_restart.assert_has_calls([
+            mock.call([f"booth-{instance_name}-service"]),
+        ])
+
+    def test_not_live(self):
+        self.config.env.set_booth({
+            "config_data": "some config data",
+            "key_data": "some key data",
+            "key_path": "some key path",
+        })
+        self.config.env.set_cib_data("<cib />")
+        self.env_assist.assert_raise_library_error(
+            lambda: commands.restart(
+                self.env_assist.get_env(),
+                self.resource_restart,
+            ),
+            [
+                fixture.error(
+                    report_codes.LIVE_ENVIRONMENT_REQUIRED,
+                    forbidden_options=[
+                        file_type_codes.BOOTH_CONFIG,
+                        file_type_codes.BOOTH_KEY,
+                        file_type_codes.CIB,
+                    ],
+                ),
+            ],
+            expected_in_processor=False
+        )
+        self.resource_restart.assert_not_called()
+
+    def test_booth_resource_does_not_exist(self):
+        (self.config
+            .runner.cib.load()
+        )
+        self.env_assist.assert_raise_library_error(
+            lambda: commands.restart(
+                self.env_assist.get_env(),
+                self.resource_restart,
+            ),
+        )
+        self.env_assist.assert_reports([
+            fixture.error(
+                report_codes.BOOTH_NOT_EXISTS_IN_CIB,
+                name="booth",
+            ),
+        ])
+        self.resource_restart.assert_not_called()
+
+    def test_more_booth_resources(self):
+        (self.config
+            .runner.cib.load(resources=self.fixture_cib_more_resources())
+        )
+        self.env_assist.assert_raise_library_error(
+            lambda: commands.restart(
+                self.env_assist.get_env(),
+                self.resource_restart,
+            ),
+        )
+        self.env_assist.assert_reports([
+            fixture.error(
+                report_codes.BOOTH_MULTIPLE_TIMES_IN_CIB,
+                force_code=report_codes.FORCE_BOOTH_REMOVE_FROM_CIB,
+                name="booth",
+            ),
+        ])
+        self.resource_restart.assert_not_called()
+
+    def test_more_booth_resources_forced(self):
+        (self.config
+            .runner.cib.load(resources=self.fixture_cib_more_resources())
+        )
+        commands.restart(
+            self.env_assist.get_env(),
+            self.resource_restart,
+            allow_multiple=True,
+        )
+        self.env_assist.assert_reports([
+            fixture.warn(
+                report_codes.BOOTH_MULTIPLE_TIMES_IN_CIB,
+                name="booth",
+            ),
+        ])
+        self.resource_restart.assert_has_calls([
+            mock.call(["booth1"]),
+            mock.call(["booth2"]),
+        ])
+
+
+class TicketGrantRevokeMixin(FixtureMixin):
+    def setUp(self):
+        # pylint cannot know this will be mixed in a TestCase class
+        # pylint: disable=invalid-name
+        self.env_assist, self.config = get_env_tools(self)
+        self.ticket = "ticketA"
+
+    def test_invalid_instance(self):
+        instance_name = "/tmp/booth/booth"
+        self.env_assist.assert_raise_library_error(
+            lambda: self.command(
+                self.env_assist.get_env(),
+                self.ticket,
+                instance_name=instance_name
+            )
+        )
+        self.env_assist.assert_reports([
+            fixture.error(
+                report_codes.BOOTH_INVALID_NAME,
+                name=instance_name,
+                reason="contains illegal character '/'",
+            ),
+        ])
+
+    def test_not_live(self):
+        self.config.env.set_booth({
+            "config_data": "some config data",
+            "key_data": "some key data",
+            "key_path": "some key path",
+        })
+        self.config.env.set_cib_data("<cib/>")
+        self.env_assist.assert_raise_library_error(
+            lambda: self.command(
+                self.env_assist.get_env(),
+                self.ticket,
+            ),
+            [
+                fixture.error(
+                    report_codes.LIVE_ENVIRONMENT_REQUIRED,
+                    forbidden_options=[
+                        file_type_codes.BOOTH_CONFIG,
+                        file_type_codes.BOOTH_KEY,
+                        file_type_codes.CIB,
+                    ],
+                ),
+            ],
+            expected_in_processor=False
+        )
+
+    def test_success_site_ip_specified(self):
+        self.get_booth_call()(self.ticket, self.site_ip)
+        self.command(
+            self.env_assist.get_env(),
+            self.ticket,
+            site_ip=self.site_ip,
+        )
+
+    def test_success_site_ip_not_specified(self):
+        self.config.runner.cib.load(resources=self.fixture_cib_booth_group())
+        self.get_booth_call()(self.ticket, self.site_ip)
+        self.command(
+            self.env_assist.get_env(),
+            self.ticket,
+        )
+
+    def test_cannot_find_site_ip(self):
+        self.config.runner.cib.load()
+        self.env_assist.assert_raise_library_error(
+            lambda: self.command(
+                self.env_assist.get_env(),
+                self.ticket,
+            ),
+            [
+                fixture.error(
+                    report_codes.BOOTH_CANNOT_DETERMINE_LOCAL_SITE_IP,
+                ),
+            ],
+            expected_in_processor=False
+        )
+
+    def test_ticket_action_failed(self):
+        self.get_booth_call()(
+            self.ticket, self.site_ip,
+            stdout="some stdout", stderr="some stderr", returncode=1
+        )
+        self.env_assist.assert_raise_library_error(
+            lambda: self.command(
+                self.env_assist.get_env(),
+                self.ticket,
+            site_ip=self.site_ip,
+            ),
+            [
+                fixture.error(
+                    report_codes.BOOTH_TICKET_OPERATION_FAILED,
+                    operation=self.operation,
+                    ticket_name=self.ticket,
+                    site_ip=self.site_ip,
+                    reason="some stderr\nsome stdout",
+                ),
+            ],
+            expected_in_processor=False
+        )
+
+class TicketGrant(TicketGrantRevokeMixin, TestCase):
+    # without 'staticmethod' the command would become a method of this class
+    command = staticmethod(commands.ticket_grant)
+    operation = "grant"
+    def get_booth_call(self):
+        return self.config.runner.booth.ticket_grant
+
+class TicketRevoke(TicketGrantRevokeMixin, TestCase):
+    # without 'staticmethod' the command would become a method of this class
+    command = staticmethod(commands.ticket_revoke)
+    operation = "revoke"
+    def get_booth_call(self):
+        return self.config.runner.booth.ticket_revoke
+
+
+class ConfigSyncTest(TestCase, FixtureMixin):
+    # pylint: disable=too-many-public-methods
+    def setUp(self):
+        self.env_assist, self.config = get_env_tools(self)
         self.node_list = ["rh7-1", "rh7-2"]
-        self.config.env.set_booth({"name": self.name})
         self.config.env.set_known_nodes(self.node_list)
         self.reason = "fail"
 
-    def test_success(self):
-        auth_file = "auth.file"
-        auth_file_path = os.path.join(settings.booth_config_dir, auth_file)
-        config_content = "authfile={}".format(auth_file_path)
-        auth_file_content = b"auth"
+    def fixture_config_success(self, instance_name="booth"):
+        config_content = self.fixture_cfg_content(
+             self.fixture_key_path(instance_name)
+        )
+        self.fixture_config_read_success(instance_name=instance_name)
         (self.config
-            .fs.open(
-                self.config_path,
-                mock.mock_open(read_data=config_content)(),
-                name="open.conf"
-            )
-            .fs.open(
-                auth_file_path,
-                mock.mock_open(read_data=auth_file_content)(),
-                mode="rb",
-                name="open.authfile",
-            )
-            .corosync_conf.load()
             .http.booth.send_config(
-                self.name, config_content,
-                authfile=auth_file,
-                authfile_data=auth_file_content,
+                instance_name,
+                config_content.decode("utf-8"),
+                authfile=os.path.basename(self.fixture_key_path(instance_name)),
+                authfile_data=RANDOM_KEY,
                 node_labels=self.node_list,
             )
         )
 
-        commands.config_sync(self.env_assist.get_env(), self.name)
-        self.env_assist.assert_reports(
+    def fixture_config_read_success(self, instance_name="booth"):
+        config_content = self.fixture_cfg_content(
+             self.fixture_key_path(instance_name)
+        )
+        (self.config
+            .corosync_conf.load()
+            .raw_file.read(
+                file_type_codes.BOOTH_CONFIG,
+                self.fixture_cfg_path(instance_name),
+                content=config_content,
+                name="raw_file.read.conf",
+            )
+            .raw_file.read(
+                file_type_codes.BOOTH_KEY,
+                self.fixture_key_path(instance_name),
+                content=RANDOM_KEY,
+                name="raw_file.read.key",
+            )
+        )
+
+    def fixture_reports_success(self, instance_name="booth"):
+        return (
             [fixture.info(report_codes.BOOTH_CONFIG_DISTRIBUTION_STARTED)]
             +
             [
                 fixture.info(
                     report_codes.BOOTH_CONFIG_ACCEPTED_BY_NODE,
                     node=node,
-                    name_list=[self.name]
+                    name_list=[instance_name]
                 ) for node in self.node_list
             ]
         )
 
-    def test_some_node_names_missing(self):
-        auth_file = "auth.file"
-        auth_file_path = os.path.join(settings.booth_config_dir, auth_file)
-        config_content = "authfile={}".format(auth_file_path)
-        auth_file_content = b"auth"
-        nodes = ["rh7-2"]
-        (self.config
-            .fs.open(
-                self.config_path,
-                mock.mock_open(read_data=config_content)(),
-                name="open.conf"
+    def test_invalid_instance(self):
+        instance_name = "/tmp/booth/booth"
+        self.env_assist.assert_raise_library_error(
+            lambda: commands.config_sync(
+                self.env_assist.get_env(),
+                instance_name=instance_name
             )
-            .fs.open(
-                auth_file_path,
-                mock.mock_open(read_data=auth_file_content)(),
-                mode="rb",
-                name="open.authfile",
-            )
-            .corosync_conf.load(filename="corosync-some-node-names.conf")
-            .http.booth.send_config(
-                self.name, config_content,
-                authfile=auth_file,
-                authfile_data=auth_file_content,
-                node_labels=nodes,
+        )
+        self.env_assist.assert_reports([
+            fixture.error(
+                report_codes.BOOTH_INVALID_NAME,
+                name=instance_name,
+                reason="contains illegal character '/'",
+            ),
+        ])
+
+
+    def test_success_default_instance(self):
+        self.fixture_config_success()
+        commands.config_sync(
+            self.env_assist.get_env(),
+        )
+        self.env_assist.assert_reports(
+            self.fixture_reports_success()
+        )
+
+    def test_success_custom_instance(self):
+        instance_name = "my_booth"
+        self.fixture_config_success(instance_name=instance_name)
+        commands.config_sync(
+            self.env_assist.get_env(),
+            instance_name=instance_name,
+        )
+        self.env_assist.assert_reports(
+            self.fixture_reports_success(
+                instance_name=instance_name,
             )
         )
 
-        commands.config_sync(self.env_assist.get_env(), self.name)
+    def test_not_live_cib(self):
+        self.config.env.set_cib_data("<cib/>")
+        self.env_assist.assert_raise_library_error(
+            lambda: commands.config_sync(
+                self.env_assist.get_env(),
+            ),
+            [
+                fixture.error(
+                    report_codes.LIVE_ENVIRONMENT_REQUIRED,
+                    forbidden_options=[
+                        file_type_codes.CIB,
+                    ],
+                ),
+            ],
+            expected_in_processor=False
+        )
+
+    def fixture_config_success_not_live(self, instance_name="booth"):
+        key_data = RANDOM_KEY
+        key_path = "/etc/booth/some.key"
+        config_data = self.fixture_cfg_content(key_path=key_path)
+        self.config.env.set_booth({
+            "config_data": config_data,
+            "key_data": key_data,
+            "key_path": "some key path",
+        })
+        (self.config
+            .corosync_conf.load(node_name_list=self.node_list)
+            .http.booth.send_config(
+                instance_name,
+                config_data.decode("utf-8"),
+                authfile=os.path.basename(key_path),
+                authfile_data=key_data,
+                node_labels=self.node_list,
+            )
+        )
+
+    def test_not_live_booth_default_instance(self):
+        self.fixture_config_success_not_live()
+        commands.config_sync(
+            self.env_assist.get_env(),
+        )
+        self.env_assist.assert_reports(
+            self.fixture_reports_success()
+        )
+
+    def test_not_live_booth_custom_instance(self):
+        instance_name = "my_booth"
+        self.fixture_config_success_not_live(instance_name=instance_name)
+        commands.config_sync(
+            self.env_assist.get_env(),
+            instance_name=instance_name,
+        )
+        self.env_assist.assert_reports(
+            self.fixture_reports_success(
+                instance_name=instance_name,
+            )
+        )
+
+    def test_some_node_names_missing(self):
+        nodes = ["rh7-2"]
+        self.fixture_config_read_success()
+        (self.config
+            .corosync_conf.load(
+                filename="corosync-some-node-names.conf",
+                instead="corosync_conf.load",
+            )
+            .http.booth.send_config(
+                "booth",
+                self.fixture_cfg_content().decode("utf-8"),
+                authfile=os.path.basename(self.fixture_key_path()),
+                authfile_data=RANDOM_KEY,
+                node_labels=nodes,
+            )
+        )
+        commands.config_sync(
+            self.env_assist.get_env(),
+        )
         self.env_assist.assert_reports(
             [
                 fixture.info(report_codes.BOOTH_CONFIG_DISTRIBUTION_STARTED),
@@ -233,56 +2549,40 @@ class ConfigSyncTest(TestCase):
                 fixture.info(
                     report_codes.BOOTH_CONFIG_ACCEPTED_BY_NODE,
                     node=node,
-                    name_list=[self.name]
+                    name_list=["booth"]
                 ) for node in nodes
             ]
         )
 
     def test_all_node_names_missing(self):
-        auth_file = "auth.file"
-        auth_file_path = os.path.join(settings.booth_config_dir, auth_file)
-        config_content = "authfile={}".format(auth_file_path)
-        auth_file_content = b"auth"
+        self.fixture_config_read_success()
         (self.config
-            .fs.open(
-                self.config_path,
-                mock.mock_open(read_data=config_content)(),
-                name="open.conf"
+            .corosync_conf.load(
+                filename="corosync-no-node-names.conf",
+                instead="corosync_conf.load",
             )
-            .fs.open(
-                auth_file_path,
-                mock.mock_open(read_data=auth_file_content)(),
-                mode="rb",
-                name="open.authfile",
-            )
-            .corosync_conf.load(filename="corosync-no-node-names.conf")
         )
-
         self.env_assist.assert_raise_library_error(
-            lambda: commands.config_sync(self.env_assist.get_env(), self.name),
-            [
-                fixture.error(
-                    report_codes.COROSYNC_CONFIG_NO_NODES_DEFINED,
-                ),
-            ]
+            lambda: commands.config_sync(self.env_assist.get_env())
         )
         self.env_assist.assert_reports([
             fixture.warn(
                 report_codes.COROSYNC_CONFIG_MISSING_NAMES_OF_NODES,
                 fatal=False,
             ),
+            fixture.error(
+                report_codes.COROSYNC_CONFIG_NO_NODES_DEFINED,
+            ),
         ])
 
     def test_node_failure(self):
+        self.fixture_config_read_success()
         (self.config
-            .fs.open(
-                self.config_path,
-                mock.mock_open(read_data="")(),
-                name="open.conf"
-            )
-            .corosync_conf.load()
             .http.booth.send_config(
-                self.name, "",
+                "booth",
+                self.fixture_cfg_content().decode("utf-8"),
+                authfile=os.path.basename(self.fixture_key_path()),
+                authfile_data=RANDOM_KEY,
                 communication_list=[
                     dict(
                         label=self.node_list[0],
@@ -295,7 +2595,6 @@ class ConfigSyncTest(TestCase):
                 ]
             )
         )
-
         self.env_assist.assert_raise_library_error(
             lambda: commands.config_sync(self.env_assist.get_env()),
             []
@@ -306,7 +2605,7 @@ class ConfigSyncTest(TestCase):
                 fixture.info(
                     report_codes.BOOTH_CONFIG_ACCEPTED_BY_NODE,
                     node=self.node_list[1],
-                    name_list=[self.name]
+                    name_list=["booth"]
                 ),
                 fixture.error(
                     report_codes.NODE_COMMUNICATION_COMMAND_UNSUCCESSFUL,
@@ -319,15 +2618,13 @@ class ConfigSyncTest(TestCase):
         )
 
     def test_node_failure_skip_offline(self):
+        self.fixture_config_read_success()
         (self.config
-            .fs.open(
-                self.config_path,
-                mock.mock_open(read_data="")(),
-                name="open.conf"
-            )
-            .corosync_conf.load()
             .http.booth.send_config(
-                self.name, "",
+                "booth",
+                self.fixture_cfg_content().decode("utf-8"),
+                authfile=os.path.basename(self.fixture_key_path()),
+                authfile_data=RANDOM_KEY,
                 communication_list=[
                     dict(
                         label=self.node_list[0],
@@ -348,7 +2645,7 @@ class ConfigSyncTest(TestCase):
                 fixture.info(
                     report_codes.BOOTH_CONFIG_ACCEPTED_BY_NODE,
                     node=self.node_list[1],
-                    name_list=[self.name]
+                    name_list=["booth"]
                 ),
                 fixture.warn(
                     report_codes.NODE_COMMUNICATION_COMMAND_UNSUCCESSFUL,
@@ -360,15 +2657,13 @@ class ConfigSyncTest(TestCase):
         )
 
     def test_node_offline(self):
+        self.fixture_config_read_success()
         (self.config
-            .fs.open(
-                self.config_path,
-                mock.mock_open(read_data="")(),
-                name="open.conf"
-            )
-            .corosync_conf.load()
             .http.booth.send_config(
-                self.name, "",
+                "booth",
+                self.fixture_cfg_content().decode("utf-8"),
+                authfile=os.path.basename(self.fixture_key_path()),
+                authfile_data=RANDOM_KEY,
                 communication_list=[
                     dict(
                         label=self.node_list[0],
@@ -379,13 +2674,12 @@ class ConfigSyncTest(TestCase):
                     dict(
                         label=self.node_list[1],
                     )
-                ],
+                ]
             )
         )
 
         self.env_assist.assert_raise_library_error(
             lambda: commands.config_sync(self.env_assist.get_env()),
-            []
         )
         self.env_assist.assert_reports(
             [
@@ -393,7 +2687,7 @@ class ConfigSyncTest(TestCase):
                 fixture.info(
                     report_codes.BOOTH_CONFIG_ACCEPTED_BY_NODE,
                     node=self.node_list[1],
-                    name_list=[self.name]
+                    name_list=["booth"]
                 ),
                 fixture.error(
                     report_codes.NODE_COMMUNICATION_ERROR_UNABLE_TO_CONNECT,
@@ -406,15 +2700,13 @@ class ConfigSyncTest(TestCase):
         )
 
     def test_node_offline_skip_offline(self):
+        self.fixture_config_read_success()
         (self.config
-            .fs.open(
-                self.config_path,
-                mock.mock_open(read_data="")(),
-                name="open.conf"
-            )
-            .corosync_conf.load()
             .http.booth.send_config(
-                self.name, "",
+                "booth",
+                self.fixture_cfg_content().decode("utf-8"),
+                authfile=os.path.basename(self.fixture_key_path()),
+                authfile_data=RANDOM_KEY,
                 communication_list=[
                     dict(
                         label=self.node_list[0],
@@ -425,7 +2717,7 @@ class ConfigSyncTest(TestCase):
                     dict(
                         label=self.node_list[1],
                     )
-                ],
+                ]
             )
         )
 
@@ -436,7 +2728,7 @@ class ConfigSyncTest(TestCase):
                 fixture.info(
                     report_codes.BOOTH_CONFIG_ACCEPTED_BY_NODE,
                     node=self.node_list[1],
-                    name_list=[self.name]
+                    name_list=["booth"]
                 ),
                 fixture.warn(
                     report_codes.NODE_COMMUNICATION_ERROR_UNABLE_TO_CONNECT,
@@ -448,58 +2740,190 @@ class ConfigSyncTest(TestCase):
         )
 
     def test_config_not_accessible(self):
-        self.config.fs.open(
-            self.config_path,
-            side_effect=EnvironmentError(0, self.reason, self.config_path),
+        (self.config
+            .corosync_conf.load()
+            .raw_file.read(
+                file_type_codes.BOOTH_CONFIG,
+                self.fixture_cfg_path(),
+                exception_msg=self.reason,
+            )
         )
-
         self.env_assist.assert_raise_library_error(
-            lambda: commands.config_sync(self.env_assist.get_env(), self.name),
-            [
-                fixture.error(
-                    report_codes.FILE_IO_ERROR,
-                    reason="{}: '{}'".format(self.reason, self.config_path),
-                    file_role=file_roles.BOOTH_CONFIG,
-                    file_path=self.config_path,
-                    operation="read",
-                )
-            ],
-            expected_in_processor=False,
+            lambda: commands.config_sync(self.env_assist.get_env()),
         )
-        self.env_assist.assert_reports([])
+        self.env_assist.assert_reports([
+            fixture.error(
+                report_codes.FILE_IO_ERROR,
+                file_role=file_type_codes.BOOTH_CONFIG,
+                file_path=self.fixture_cfg_path(),
+                reason=self.reason,
+                operation=RawFileError.ACTION_READ,
+            )
+        ])
+
+    def test_config_not_accessible_not_live(self):
+        self.config.env.set_booth({
+            "config_data": None,
+            "key_data": None,
+            "key_path": "some key path",
+        })
+        (self.config
+            .corosync_conf.load()
+        )
+        self.env_assist.assert_raise_library_error(
+            lambda: commands.config_sync(self.env_assist.get_env()),
+        )
+        self.env_assist.assert_reports([
+            fixture.error(
+                report_codes.FILE_IO_ERROR,
+                file_role=file_type_codes.BOOTH_CONFIG,
+                file_path="",
+                reason="No such file or directory",
+                operation=RawFileError.ACTION_READ,
+            )
+        ])
+
+    def test_config_parse_error(self):
+        (self.config
+            .corosync_conf.load()
+            .raw_file.read(
+                file_type_codes.BOOTH_CONFIG,
+                self.fixture_cfg_path(),
+                content="invalid config".encode("utf-8"),
+            )
+        )
+        self.env_assist.assert_raise_library_error(
+            lambda: commands.config_sync(self.env_assist.get_env()),
+        )
+        self.env_assist.assert_reports([
+            fixture.error(
+                report_codes.BOOTH_CONFIG_UNEXPECTED_LINES,
+                line_list=["invalid config"],
+                file_path=self.fixture_cfg_path(),
+            ),
+        ])
+
+    def test_config_parse_error_not_live(self):
+        self.config.env.set_booth({
+            "config_data": "invalid config".encode("utf-8"),
+            "key_data": None,
+            "key_path": "some key path",
+        })
+        (self.config
+            .corosync_conf.load()
+        )
+        self.env_assist.assert_raise_library_error(
+            lambda: commands.config_sync(self.env_assist.get_env()),
+        )
+        self.env_assist.assert_reports([
+            fixture.error(
+                report_codes.BOOTH_CONFIG_UNEXPECTED_LINES,
+                line_list=["invalid config"],
+                file_path=None,
+            ),
+        ])
 
     def test_authfile_not_accessible(self):
-        auth_file = "auth.file"
-        auth_file_path = os.path.join(settings.booth_config_dir, auth_file)
-        config_content = "authfile={}".format(auth_file_path)
-
         (self.config
-            .fs.open(
-                self.config_path,
-                mock.mock_open(read_data=config_content)(),
-                name="open.conf"
-            )
-            .fs.open(
-                auth_file_path,
-                mode="rb",
-                name="open.authfile",
-                side_effect=EnvironmentError(0, self.reason, auth_file_path),
-            )
             .corosync_conf.load()
-            .http.booth.send_config(
-                self.name, config_content, node_labels=self.node_list,
+            .raw_file.read(
+                file_type_codes.BOOTH_CONFIG,
+                self.fixture_cfg_path(),
+                content=self.fixture_cfg_content(),
+                name="raw_file.read.conf",
+            )
+            .raw_file.read(
+                file_type_codes.BOOTH_KEY,
+                self.fixture_key_path(),
+                exception_msg=self.reason,
+                name="raw_file.read.key",
             )
         )
+        self.env_assist.assert_raise_library_error(
+            lambda: commands.config_sync(self.env_assist.get_env()),
+        )
+        self.env_assist.assert_reports([
+            fixture.error(
+                report_codes.FILE_IO_ERROR,
+                file_role=file_type_codes.BOOTH_KEY,
+                file_path=self.fixture_key_path(),
+                reason=self.reason,
+                operation=RawFileError.ACTION_READ,
+            )
+        ])
 
-        commands.config_sync(self.env_assist.get_env(), self.name)
+    def test_authfile_not_accessible_not_live(self):
+        self.config.env.set_booth({
+            "config_data": self.fixture_cfg_content(),
+            "key_data": None,
+            "key_path": "some key path",
+        })
+        (self.config
+            .corosync_conf.load()
+        )
+        self.env_assist.assert_raise_library_error(
+            lambda: commands.config_sync(self.env_assist.get_env()),
+        )
+        self.env_assist.assert_reports([
+            fixture.error(
+                report_codes.FILE_IO_ERROR,
+                file_role=file_type_codes.BOOTH_KEY,
+                file_path="",
+                reason="No such file or directory",
+                operation=RawFileError.ACTION_READ,
+            )
+        ])
+
+    def test_no_authfile(self):
+        (self.config
+            .corosync_conf.load()
+            .raw_file.read(
+                file_type_codes.BOOTH_CONFIG,
+                self.fixture_cfg_path(),
+                content=bytes(),
+            )
+            .http.booth.send_config(
+                "booth",
+                bytes().decode("utf-8"),
+                node_labels=self.node_list,
+            )
+        )
+        commands.config_sync(self.env_assist.get_env())
+        self.env_assist.assert_reports(
+            [fixture.info(report_codes.BOOTH_CONFIG_DISTRIBUTION_STARTED)]
+            +
+            [
+                fixture.info(
+                    report_codes.BOOTH_CONFIG_ACCEPTED_BY_NODE,
+                    node=node,
+                    name_list=["booth"]
+                ) for node in self.node_list
+            ]
+        )
+
+    def test_authfile_not_in_booth_dir(self):
+        config_content = "authfile=/etc/my_booth.key"
+        (self.config
+            .corosync_conf.load()
+            .raw_file.read(
+                file_type_codes.BOOTH_CONFIG,
+                self.fixture_cfg_path(),
+                content=config_content.encode("utf-8"),
+            )
+            .http.booth.send_config(
+                "booth",
+                config_content,
+                node_labels=self.node_list,
+            )
+        )
+        commands.config_sync(self.env_assist.get_env())
         self.env_assist.assert_reports(
             [
                 fixture.warn(
-                    report_codes.FILE_IO_ERROR,
-                    reason="{}: '{}'".format(self.reason, auth_file_path),
-                    file_role=file_roles.BOOTH_KEY,
-                    file_path=auth_file_path,
-                    operation="read",
+                    report_codes.BOOTH_UNSUPPORTED_FILE_LOCATION,
+                    file_type_code=file_type_codes.BOOTH_KEY,
+                    file_path="/etc/my_booth.key",
+                    expected_dir=settings.booth_config_dir,
                 ),
                 fixture.info(report_codes.BOOTH_CONFIG_DISTRIBUTION_STARTED)
             ]
@@ -508,269 +2932,175 @@ class ConfigSyncTest(TestCase):
                 fixture.info(
                     report_codes.BOOTH_CONFIG_ACCEPTED_BY_NODE,
                     node=node,
-                    name_list=[self.name]
-                ) for node in self.node_list
-            ]
-        )
-
-    def test_no_authfile(self):
-        (self.config
-            .fs.open(
-                self.config_path,
-                mock.mock_open(read_data="")(),
-                name="open.conf"
-            )
-            .corosync_conf.load()
-            .http.booth.send_config(
-                self.name, "", node_labels=self.node_list,
-            )
-        )
-
-        commands.config_sync(self.env_assist.get_env(), self.name)
-        self.env_assist.assert_reports(
-            [fixture.info(report_codes.BOOTH_CONFIG_DISTRIBUTION_STARTED)]
-            +
-            [
-                fixture.info(
-                    report_codes.BOOTH_CONFIG_ACCEPTED_BY_NODE,
-                    node=node,
-                    name_list=[self.name]
-                ) for node in self.node_list
-            ]
-        )
-
-    def test_authfile_not_in_booth_dir(self):
-        config_file_content = "authfile=/etc/my_booth.conf"
-
-        (self.config
-            .fs.open(
-                self.config_path,
-                mock.mock_open(read_data=config_file_content)(),
-                name="open.conf"
-            )
-            .corosync_conf.load()
-            .http.booth.send_config(
-                self.name, config_file_content, node_labels=self.node_list,
-            )
-        )
-
-        commands.config_sync(self.env_assist.get_env(), self.name)
-        self.env_assist.assert_reports(
-            [
-                fixture.warn(report_codes.BOOTH_UNSUPPORTED_FILE_LOCATION),
-                fixture.info(report_codes.BOOTH_CONFIG_DISTRIBUTION_STARTED)
-            ]
-            +
-            [
-                fixture.info(
-                    report_codes.BOOTH_CONFIG_ACCEPTED_BY_NODE,
-                    node=node,
-                    name_list=[self.name]
+                    name_list=["booth"]
                 ) for node in self.node_list
             ]
         )
 
 
-@mock.patch("pcs.lib.commands.booth.external.ensure_is_systemd")
-@mock.patch("pcs.lib.external.enable_service")
-class EnableBoothTest(TestCase):
+class EnableDisableStartStopMixin(FixtureMixin):
     def setUp(self):
-        self.name = "booth_name"
-        self.mock_env = _env_fixture(self.name)
-        self.mock_rep = MockLibraryReportProcessor()
-        self.mock_run = mock.MagicMock(spec_set=CommandRunner)
-        self.mock_env.cmd_runner.return_value = self.mock_run
-        self.mock_env.report_processor = self.mock_rep
+        # pylint cannot know this will be mixed in a TestCase class
+        # pylint: disable=invalid-name
+        self.env_assist, self.config = get_env_tools(self)
 
-    def test_success(self, mock_enable, mock_is_systemctl):
-        commands.enable_booth(self.mock_env)
-        mock_enable.assert_called_once_with(self.mock_run, "booth", self.name)
-        mock_is_systemctl.assert_called_once_with()
-        assert_report_item_list_equal(
-            self.mock_rep.report_item_list,
-            [(
-                Severities.INFO,
-                report_codes.SERVICE_ENABLE_SUCCESS,
-                {
-                    "service": "booth",
-                    "node": None,
-                    "instance": self.name,
-                }
-            )]
-        )
+    def fixture_config_pre_action_call(self, service):
+        # self and service is used in subclasses
+        # pylint: disable=no-self-use
+        # pylint: disable=unused-argument
+        return
 
-    def test_failed(self, mock_enable, mock_is_systemctl):
-        mock_enable.side_effect = EnableServiceError("booth", "msg", self.name)
-        assert_raise_library_error(
-            lambda: commands.enable_booth(self.mock_env),
-            (
-                Severities.ERROR,
-                report_codes.SERVICE_ENABLE_ERROR,
-                {
-                    "service": "booth",
-                    "reason": "msg",
-                    "node": None,
-                    "instance": self.name,
-                }
+    def test_invalid_instance(self):
+        instance_name = "/tmp/booth/booth"
+        self.env_assist.assert_raise_library_error(
+            lambda: self.command(
+                self.env_assist.get_env(),
+                instance_name=instance_name
             )
         )
-        mock_enable.assert_called_once_with(self.mock_run, "booth", self.name)
-        mock_is_systemctl.assert_called_once_with()
+        self.env_assist.assert_reports([
+            fixture.error(
+                report_codes.BOOTH_INVALID_NAME,
+                name=instance_name,
+                reason="contains illegal character '/'",
+            ),
+        ])
 
-
-@mock.patch("pcs.lib.commands.booth.external.ensure_is_systemd")
-@mock.patch("pcs.lib.external.disable_service")
-class DisableBoothTest(TestCase):
-    def setUp(self):
-        self.name = "booth_name"
-        self.mock_env = _env_fixture(self.name)
-        self.mock_rep = MockLibraryReportProcessor()
-        self.mock_run = mock.MagicMock(spec_set=CommandRunner)
-        self.mock_env.cmd_runner.return_value = self.mock_run
-        self.mock_env.report_processor = self.mock_rep
-
-    def test_success(self, mock_disable, mock_is_systemctl):
-        commands.disable_booth(self.mock_env)
-        mock_disable.assert_called_once_with(self.mock_run, "booth", self.name)
-        mock_is_systemctl.assert_called_once_with()
-        assert_report_item_list_equal(
-            self.mock_rep.report_item_list,
-            [(
-                Severities.INFO,
-                report_codes.SERVICE_DISABLE_SUCCESS,
-                {
-                    "service": "booth",
-                    "node": None,
-                    "instance": self.name,
-                }
-            )]
+    @mock.patch("pcs.lib.external.is_systemctl", lambda: False)
+    def test_not_systemd(self):
+        self.env_assist.assert_raise_library_error(
+            lambda: self.command(
+                self.env_assist.get_env(patch_is_systemd=False)
+            ),
+            [
+                fixture.error(
+                    report_codes.UNSUPPORTED_OPERATION_ON_NON_SYSTEMD_SYSTEMS,
+                ),
+            ],
+            expected_in_processor=False
         )
 
-    def test_failed(self, mock_disable, mock_is_systemctl):
-        mock_disable.side_effect = DisableServiceError(
-            "booth", "msg", self.name
-        )
-        assert_raise_library_error(
-            lambda: commands.disable_booth(self.mock_env),
-            (
-                Severities.ERROR,
-                report_codes.SERVICE_DISABLE_ERROR,
-                {
-                    "service": "booth",
-                    "reason": "msg",
-                    "node": None,
-                    "instance": self.name,
-                }
-            )
-        )
-        mock_disable.assert_called_once_with(self.mock_run, "booth", self.name)
-        mock_is_systemctl.assert_called_once_with()
-
-
-@mock.patch("pcs.lib.commands.booth.external.ensure_is_systemd")
-@mock.patch("pcs.lib.external.start_service")
-class StartBoothTest(TestCase):
-    def setUp(self):
-        self.name = "booth_name"
-        self.mock_env = _env_fixture(self.name)
-        self.mock_rep = MockLibraryReportProcessor()
-        self.mock_run = mock.MagicMock(spec_set=CommandRunner)
-        self.mock_env.cmd_runner.return_value = self.mock_run
-        self.mock_env.report_processor = self.mock_rep
-
-    def test_success(self, mock_start, mock_is_systemctl):
-        commands.start_booth(self.mock_env)
-        mock_start.assert_called_once_with(self.mock_run, "booth", self.name)
-        mock_is_systemctl.assert_called_once_with()
-        assert_report_item_list_equal(
-            self.mock_rep.report_item_list,
-            [(
-                Severities.INFO,
-                report_codes.SERVICE_START_SUCCESS,
-                {
-                    "service": "booth",
-                    "node": None,
-                    "instance": self.name,
-                }
-            )]
+    def test_not_live(self):
+        self.config.env.set_booth({
+            "config_data": "some config data",
+            "key_data": "some key data",
+            "key_path": "some key path",
+        })
+        self.config.env.set_cib_data("<cib/>")
+        self.env_assist.assert_raise_library_error(
+            lambda: self.command(
+                self.env_assist.get_env(),
+            ),
+            [
+                fixture.error(
+                    report_codes.LIVE_ENVIRONMENT_REQUIRED,
+                    forbidden_options=[
+                        file_type_codes.BOOTH_CONFIG,
+                        file_type_codes.BOOTH_KEY,
+                        file_type_codes.CIB,
+                    ],
+                ),
+            ],
+            expected_in_processor=False
         )
 
-    def test_failed(self, mock_start, mock_is_systemctl):
-        mock_start.side_effect = StartServiceError("booth", "msg", self.name)
-        assert_raise_library_error(
-            lambda: commands.start_booth(self.mock_env),
-            (
-                Severities.ERROR,
-                report_codes.SERVICE_START_ERROR,
-                {
-                    "service": "booth",
-                    "reason": "msg",
-                    "node": None,
-                    "instance": self.name,
-                }
-            )
+    def test_success_default_instance(self):
+        self.fixture_config_pre_action_call("booth@")
+        self.get_external_call()("booth@booth")
+        self.command(
+            self.env_assist.get_env(),
         )
-        mock_start.assert_called_once_with(self.mock_run, "booth", self.name)
-        mock_is_systemctl.assert_called_once_with()
+        self.env_assist.assert_reports([
+            fixture.info(
+                self.report_code_success,
+                service="booth",
+                instance="booth",
+                node=None,
+            ),
+        ])
 
+    def test_success_custom_instance(self):
+        instance_name = "my_booth"
+        self.fixture_config_pre_action_call("booth@")
+        self.get_external_call()("booth@my_booth")
+        self.command(
+            self.env_assist.get_env(),
+            instance_name=instance_name
+        )
+        self.env_assist.assert_reports([
+            fixture.info(
+                self.report_code_success,
+                service="booth",
+                instance="my_booth",
+                node=None,
+            ),
+        ])
 
-@mock.patch("pcs.lib.commands.booth.external.ensure_is_systemd")
-@mock.patch("pcs.lib.external.stop_service")
-class StopBoothTest(TestCase):
-    def setUp(self):
-        self.name = "booth_name"
-        self.mock_env = _env_fixture(self.name)
-        self.mock_rep = MockLibraryReportProcessor()
-        self.mock_run = mock.MagicMock(spec_set=CommandRunner)
-        self.mock_env.cmd_runner.return_value = self.mock_run
-        self.mock_env.report_processor = self.mock_rep
-
-    def test_success(self, mock_stop, mock_is_systemctl):
-        commands.stop_booth(self.mock_env)
-        mock_stop.assert_called_once_with(self.mock_run, "booth", self.name)
-        mock_is_systemctl.assert_called_once_with()
-        assert_report_item_list_equal(
-            self.mock_rep.report_item_list,
-            [(
-                Severities.INFO,
-                report_codes.SERVICE_STOP_SUCCESS,
-                {
-                    "service": "booth",
-                    "node": None,
-                    "instance": self.name,
-                }
-            )]
+    def test_fail(self):
+        self.fixture_config_pre_action_call("booth@")
+        self.get_external_call()(
+            "booth@booth",
+            stdout="some stdout", stderr="some stderr", returncode=1
+        )
+        self.env_assist.assert_raise_library_error(
+            lambda: self.command(
+                self.env_assist.get_env(),
+            ),
+            [
+                fixture.error(
+                    self.report_code_error,
+                    service="booth",
+                    instance="booth",
+                    node=None,
+                    reason="some stderr\nsome stdout",
+                ),
+            ],
+            expected_in_processor=False
         )
 
-    def test_failed(self, mock_stop, mock_is_systemctl):
-        mock_stop.side_effect = StopServiceError("booth", "msg", self.name)
-        assert_raise_library_error(
-            lambda: commands.stop_booth(self.mock_env),
-            (
-                Severities.ERROR,
-                report_codes.SERVICE_STOP_ERROR,
-                {
-                    "service": "booth",
-                    "reason": "msg",
-                    "node": None,
-                    "instance": self.name,
-                }
-            )
-        )
-        mock_stop.assert_called_once_with(self.mock_run, "booth", self.name)
-        mock_is_systemctl.assert_called_once_with()
+class Enable(EnableDisableStartStopMixin, TestCase):
+    # without 'staticmethod' the command would bVecome a method of this class
+    command = staticmethod(commands.enable_booth)
+    report_code_success = report_codes.SERVICE_ENABLE_SUCCESS
+    report_code_error = report_codes.SERVICE_ENABLE_ERROR
+    def get_external_call(self):
+        return self.config.runner.systemctl.enable
 
-def _get_booth_file_path(file):
-    return os.path.join(settings.booth_config_dir, file)
+class Disable(EnableDisableStartStopMixin, TestCase):
+    # without 'staticmethod' the command would bVecome a method of this class
+    command = staticmethod(commands.disable_booth)
+    report_code_success = report_codes.SERVICE_DISABLE_SUCCESS
+    report_code_error = report_codes.SERVICE_DISABLE_ERROR
+    def get_external_call(self):
+        return self.config.runner.systemctl.disable
+
+    def fixture_config_pre_action_call(self, service):
+        self.config.runner.systemctl.list_unit_files({service: "enabled"})
+
+class Start(EnableDisableStartStopMixin, TestCase):
+    # without 'staticmethod' the command would bVecome a method of this class
+    command = staticmethod(commands.start_booth)
+    report_code_success = report_codes.SERVICE_START_SUCCESS
+    report_code_error = report_codes.SERVICE_START_ERROR
+    def get_external_call(self):
+        return self.config.runner.systemctl.start
+
+class Stop(EnableDisableStartStopMixin, TestCase):
+    # without 'staticmethod' the command would bVecome a method of this class
+    command = staticmethod(commands.stop_booth)
+    report_code_success = report_codes.SERVICE_STOP_SUCCESS
+    report_code_error = report_codes.SERVICE_STOP_ERROR
+    def get_external_call(self):
+        return self.config.runner.systemctl.stop
 
 
-class PullConfigBase(TestCase):
+class PullConfigBase(TestCase, FixtureMixin):
     def setUp(self):
         self.env_assist, self.config = get_env_tools(self)
         self.name = "booth"
+        self.config_data = "config".encode("utf-8")
+        self.config_path = self.fixture_cfg_path(self.name)
         self.node_name = "node"
-        self.config_data = "config"
-        self.config_path = _get_booth_file_path("{}.conf".format(self.name))
         self.report_list = [
             fixture.info(
                 report_codes.BOOTH_FETCHING_CONFIG_FROM_NODE,
@@ -783,62 +3113,136 @@ class PullConfigBase(TestCase):
                 name_list=[self.name],
             )
         ]
-        self.config.env.set_booth({"name": self.name})
-
 
 class PullConfigSuccess(PullConfigBase):
     def setUp(self):
         super(PullConfigSuccess, self).setUp()
-        self.booth_cfg_open_mock = mock.mock_open()()
         (self.config
             .http.booth.get_config(
-                self.name, self.config_data, node_labels=[self.node_name]
+                self.name,
+                self.config_data.decode("utf-8"),
+                node_labels=[self.node_name],
             )
-            .fs.exists(self.config_path, False)
-            .fs.open(self.config_path, self.booth_cfg_open_mock, mode="w")
-        )
-        self.addCleanup(
-            lambda: self.booth_cfg_open_mock.write.assert_called_once_with(
-                self.config_data
+            .raw_file.write(
+                file_type_codes.BOOTH_CONFIG,
+                self.config_path,
+                self.config_data,
+                can_overwrite=True,
             )
         )
 
     def test_success(self):
         commands.pull_config(self.env_assist.get_env(), self.node_name)
-
         self.env_assist.assert_reports(self.report_list)
 
-    def test_success_config_exists(self):
-        self.config.fs.exists(self.config_path, True, instead="fs.exists")
+class PullConfigSuccessCustomInstance(TestCase, FixtureMixin):
+    def setUp(self):
+        self.env_assist, self.config = get_env_tools(self)
+        self.name = "my_booth"
+        self.config_data = "config".encode("utf-8")
+        self.config_path = self.fixture_cfg_path(self.name)
+        self.node_name = "node"
+        self.report_list = [
+            fixture.info(
+                report_codes.BOOTH_FETCHING_CONFIG_FROM_NODE,
+                node=self.node_name,
+                config=self.name
+            ),
+            fixture.info(
+                report_codes.BOOTH_CONFIG_ACCEPTED_BY_NODE,
+                node=None,
+                name_list=[self.name],
+            )
+        ]
 
-        commands.pull_config(self.env_assist.get_env(), self.node_name)
-
-        self.env_assist.assert_reports(
-            self.report_list
-            +
-            [
-                fixture.warn(
-                    report_codes.FILE_ALREADY_EXISTS,
-                    node=None,
-                    file_role=file_roles.BOOTH_CONFIG,
-                    file_path=self.config_path,
-                ),
-            ]
+    def test_success(self):
+        (self.config
+            .http.booth.get_config(
+                self.name,
+                self.config_data.decode("utf-8"),
+                node_labels=[self.node_name],
+            )
+            .raw_file.write(
+                file_type_codes.BOOTH_CONFIG,
+                self.config_path,
+                self.config_data,
+                can_overwrite=True,
+            )
         )
-
+        commands.pull_config(
+            self.env_assist.get_env(),
+            self.node_name,
+            instance_name=self.name,
+        )
+        self.env_assist.assert_reports([
+            fixture.info(
+                report_codes.BOOTH_FETCHING_CONFIG_FROM_NODE,
+                node=self.node_name,
+                config=self.name
+            ),
+            fixture.info(
+                report_codes.BOOTH_CONFIG_ACCEPTED_BY_NODE,
+                node=None,
+                name_list=[self.name],
+            )
+        ])
 
 class PullConfigFailure(PullConfigBase):
     reason = "reason"
+    def test_invalid_instance(self):
+        instance_name = "/tmp/booth/booth"
+        self.env_assist.assert_raise_library_error(
+            lambda: commands.pull_config(
+                self.env_assist.get_env(),
+                self.node_name,
+                instance_name=instance_name
+            ),
+        )
+        self.env_assist.assert_reports([
+            fixture.error(
+                report_codes.BOOTH_INVALID_NAME,
+                name=instance_name,
+                reason="contains illegal character '/'",
+            ),
+        ])
+
+    def test_not_live(self):
+        self.config.env.set_booth({
+            "config_data": "some config data",
+            "key_data": "some key data",
+            "key_path": "some key path",
+        })
+        self.config.env.set_cib_data("<cib/>")
+        self.env_assist.assert_raise_library_error(
+            lambda: commands.pull_config(
+                self.env_assist.get_env(), self.node_name
+            ),
+            [
+                fixture.error(
+                    report_codes.LIVE_ENVIRONMENT_REQUIRED,
+                    forbidden_options=[
+                        file_type_codes.BOOTH_CONFIG,
+                        file_type_codes.BOOTH_KEY,
+                        file_type_codes.CIB,
+                    ],
+                ),
+            ],
+            expected_in_processor=False
+        )
+
     def test_write_failure(self):
         (self.config
             .http.booth.get_config(
-                self.name, self.config_data, node_labels=[self.node_name]
+                self.name,
+                self.config_data.decode("utf-8"),
+                node_labels=[self.node_name],
             )
-            .fs.exists(self.config_path, False)
-            .fs.open(
+            .raw_file.write(
+                file_type_codes.BOOTH_CONFIG,
                 self.config_path,
-                mode="w",
-                side_effect=EnvironmentError(0, self.reason, self.config_path),
+                self.config_data,
+                can_overwrite=True,
+                exception_msg=self.reason,
             )
         )
 
@@ -846,18 +3250,20 @@ class PullConfigFailure(PullConfigBase):
             lambda: commands.pull_config(
                 self.env_assist.get_env(), self.node_name
             ),
+        )
+        self.env_assist.assert_reports(
+            self.report_list[:1]
+            +
             [
                 fixture.error(
                     report_codes.FILE_IO_ERROR,
-                    reason="{}: '{}'".format(self.reason, self.config_path),
-                    file_role=file_roles.BOOTH_CONFIG,
+                    file_role=file_type_codes.BOOTH_CONFIG,
                     file_path=self.config_path,
-                    operation="write",
+                    reason=self.reason,
+                    operation=RawFileError.ACTION_WRITE,
                 )
-            ],
-            expected_in_processor=False,
+            ]
         )
-        self.env_assist.assert_reports(self.report_list[:1])
 
     def test_network_failure(self):
         self.config.http.booth.get_config(
@@ -960,238 +3366,60 @@ class PullConfigFailure(PullConfigBase):
             ),
         ])
 
-
 class PullConfigWithAuthfile(PullConfigBase):
     def setUp(self):
         super(PullConfigWithAuthfile, self).setUp()
-        self.booth_cfg_open_mock = mock.mock_open()()
-        self.authfile = "authfile"
-        self.authfile_path = _get_booth_file_path(self.authfile)
+        self.authfile_path = self.fixture_key_path()
+        self.authfile = os.path.basename(self.authfile_path)
         self.authfile_data = b"auth"
-        self.pcmk_uid = 2
-        self.pcmk_gid = 3
 
         (self.config
             .http.booth.get_config(
                 self.name,
-                self.config_data,
+                self.config_data.decode("utf-8"),
                 authfile=self.authfile,
                 authfile_data=self.authfile_data,
                 node_labels=[self.node_name],
             )
-            .fs.exists(self.config_path, False)
-            .fs.open(self.config_path, self.booth_cfg_open_mock, mode="w")
-            .fs.exists(self.authfile_path, False, name="fs.exists.authfile")
         )
 
-        self.addCleanup(
-            lambda: self.booth_cfg_open_mock.write.assert_called_once_with(
-                self.config_data
-            )
-        )
-
-    def _set_pwd_mock(self, pwd_mock):
-        pwd_mock.return_value = namedtuple("Pw", "pw_uid")(self.pcmk_uid)
-        self.addCleanup(
-            lambda: pwd_mock.assert_called_once_with(settings.pacemaker_uname)
-        )
-
-    def _set_grp_mock(self, grp_mock):
-        grp_mock.return_value = namedtuple("Gr", "gr_gid")(self.pcmk_gid)
-        self.addCleanup(
-            lambda: grp_mock.assert_called_once_with(settings.pacemaker_gname)
-        )
-
-
-@mock.patch("grp.getgrnam")
-@mock.patch("pwd.getpwnam")
 class PullConfigWithAuthfileSuccess(PullConfigWithAuthfile):
     def setUp(self):
         super(PullConfigWithAuthfileSuccess, self).setUp()
-        self.booth_authfile_open_mock = mock.mock_open()()
-
         (self.config
-            .fs.open(
+            .raw_file.write(
+                file_type_codes.BOOTH_KEY,
                 self.authfile_path,
-                self.booth_authfile_open_mock,
-                mode="wb",
-                name="fs.open.authfile.write"
+                self.authfile_data,
+                can_overwrite=True,
+                name="raw_file.write.key",
             )
-            .fs.chown(self.authfile_path, self.pcmk_uid, self.pcmk_gid)
-            .fs.chmod(self.authfile_path, settings.booth_authkey_file_mode)
+            .raw_file.write(
+                file_type_codes.BOOTH_CONFIG,
+                self.config_path,
+                self.config_data,
+                can_overwrite=True,
+                name="raw_file.write.cfg",
+            )
         )
 
-        self.addCleanup(
-            lambda: self.booth_authfile_open_mock.write.assert_called_once_with(
-                self.authfile_data
-            )
-        )
-
-    def test_success(self, pwd_mock, grp_mock):
-        self._set_pwd_mock(pwd_mock)
-        self._set_grp_mock(grp_mock)
-
+    def test_success(self):
         commands.pull_config(self.env_assist.get_env(), self.node_name)
-
         self.env_assist.assert_reports(self.report_list)
 
-    def test_success_authfile_exists(self, pwd_mock, grp_mock):
-        self._set_pwd_mock(pwd_mock)
-        self._set_grp_mock(grp_mock)
-
-        self.config.fs.exists(
-            self.authfile_path, True,
-            name="fs.exists.authfile",
-            instead="fs.exists.authfile",
-        )
-
-        commands.pull_config(self.env_assist.get_env(), self.node_name)
-
-        self.env_assist.assert_reports(
-            self.report_list
-            +
-            [
-                fixture.warn(
-                    report_codes.FILE_ALREADY_EXISTS,
-                    node=None,
-                    file_role=file_roles.BOOTH_KEY,
-                    file_path=self.authfile_path,
-                )
-            ]
-        )
-
-    def test_success_config_and_authfile_exists(self, pwd_mock, grp_mock):
-        self._set_pwd_mock(pwd_mock)
-        self._set_grp_mock(grp_mock)
-
-        (self.config
-            .fs.exists(self.config_path, True, instead="fs.exists")
-            .fs.exists(
-                self.authfile_path, True,
-                name="fs.exists.authfile",
-                instead="fs.exists.authfile",
-            )
-        )
-
-        commands.pull_config(self.env_assist.get_env(), self.node_name)
-
-        self.env_assist.assert_reports(
-            self.report_list
-            +
-            [
-                fixture.warn(
-                    report_codes.FILE_ALREADY_EXISTS,
-                    node=None, file_role=role, file_path=path,
-                ) for role, path in [
-                    (file_roles.BOOTH_CONFIG, self.config_path),
-                    (file_roles.BOOTH_KEY, self.authfile_path)
-                ]
-            ]
-        )
-
-
-@mock.patch("grp.getgrnam")
-@mock.patch("pwd.getpwnam")
 class PullConfigWithAuthfileFailure(PullConfigWithAuthfile):
     def setUp(self):
         super(PullConfigWithAuthfileFailure, self).setUp()
         self.reason = "reason"
-        self.booth_authfile_open_mock = mock.mock_open()()
 
-    def assert_authfile_written(self):
-        self.booth_authfile_open_mock.write.assert_called_once_with(
-            self.authfile_data
-        )
-
-    def test_authfile_write_failure(self, pwd_mock, grp_mock):
-        self.config.fs.open(
-            self.authfile_path,
-            mode="wb",
-            name="fs.open.authfile.write",
-            side_effect=EnvironmentError(1, self.reason, self.authfile_path)
-        )
-        self.env_assist.assert_raise_library_error(
-            lambda: commands.pull_config(
-                self.env_assist.get_env(), self.node_name
-            ),
-            [
-                fixture.error(
-                    report_codes.FILE_IO_ERROR,
-                    reason="{}: '{}'".format(self.reason, self.authfile_path),
-                    file_role=file_roles.BOOTH_KEY,
-                    file_path=self.authfile_path,
-                    operation="write",
-                )
-            ],
-            expected_in_processor=False,
-        )
-        self.env_assist.assert_reports(self.report_list[:1])
-
-    def test_unable_to_get_uid(self, pwd_mock, grp_mock):
-        pwd_mock.side_effect = KeyError()
-        self.config.fs.open(
-            self.authfile_path,
-            self.booth_authfile_open_mock,
-            mode="wb",
-            name="fs.open.authfile.write"
-        )
-
-        self.env_assist.assert_raise_library_error(
-            lambda: commands.pull_config(
-                self.env_assist.get_env(), self.node_name
-            ),
-            [
-                fixture.error(
-                    report_codes.UNABLE_TO_DETERMINE_USER_UID,
-                    user=settings.pacemaker_uname,
-                )
-            ],
-            expected_in_processor=False,
-        )
-        self.assert_authfile_written()
-        pwd_mock.assert_called_once_with(settings.pacemaker_uname)
-        self.assertEqual(0, grp_mock.call_count)
-        self.env_assist.assert_reports(self.report_list[:1])
-
-    def test_unable_to_get_gid(self, pwd_mock, grp_mock):
-        self._set_pwd_mock(pwd_mock)
-        grp_mock.side_effect = KeyError()
-        self.config.fs.open(
-            self.authfile_path,
-            self.booth_authfile_open_mock,
-            mode="wb",
-            name="fs.open.authfile.write"
-        )
-
-        self.env_assist.assert_raise_library_error(
-            lambda: commands.pull_config(
-                self.env_assist.get_env(), self.node_name
-            ),
-            [
-                fixture.error(
-                    report_codes.UNABLE_TO_DETERMINE_GROUP_GID,
-                    group=settings.pacemaker_gname,
-                )
-            ],
-            expected_in_processor=False,
-        )
-        self.assert_authfile_written()
-        grp_mock.assert_called_once_with(settings.pacemaker_gname)
-        self.env_assist.assert_reports(self.report_list[:1])
-
-    def test_unable_to_set_authfile_uid_gid(self, pwd_mock, grp_mock):
-        self._set_pwd_mock(pwd_mock)
-        self._set_grp_mock(grp_mock)
+    def test_authfile_write_failure(self):
         (self.config
-            .fs.open(
+            .raw_file.write(
+                file_type_codes.BOOTH_KEY,
                 self.authfile_path,
-                self.booth_authfile_open_mock,
-                mode="wb",
-                name="fs.open.authfile.write"
-            )
-            .fs.chown(
-                self.authfile_path, self.pcmk_uid, self.pcmk_gid,
-                side_effect=EnvironmentError(1, self.reason, self.authfile_path)
+                self.authfile_data,
+                can_overwrite=True,
+                exception_msg=self.reason,
             )
         )
 
@@ -1199,164 +3427,141 @@ class PullConfigWithAuthfileFailure(PullConfigWithAuthfile):
             lambda: commands.pull_config(
                 self.env_assist.get_env(), self.node_name
             ),
+        )
+        self.env_assist.assert_reports(
+            self.report_list[:1]
+            +
             [
                 fixture.error(
                     report_codes.FILE_IO_ERROR,
-                    reason="{}: '{}'".format(self.reason, self.authfile_path),
-                    file_role=file_roles.BOOTH_KEY,
+                    file_role=file_type_codes.BOOTH_KEY,
                     file_path=self.authfile_path,
-                    operation="chown",
+                    reason=self.reason,
+                    operation=RawFileError.ACTION_WRITE,
                 )
-            ],
-            expected_in_processor=False,
+            ]
         )
-        self.assert_authfile_written()
-        self.env_assist.assert_reports(self.report_list[:1])
 
-    def test_unable_to_set_authfile_mode(self, pwd_mock, grp_mock):
-        self._set_pwd_mock(pwd_mock)
-        self._set_grp_mock(grp_mock)
+
+class GetStatus(TestCase):
+    def setUp(self):
+        self.env_assist, self.config = get_env_tools(self)
+
+    def test_invalid_instance(self):
+        instance_name = "/tmp/booth/booth"
+        self.env_assist.assert_raise_library_error(
+            lambda: commands.get_status(
+                self.env_assist.get_env(),
+                instance_name=instance_name
+            )
+        )
+        self.env_assist.assert_reports([
+            fixture.error(
+                report_codes.BOOTH_INVALID_NAME,
+                name=instance_name,
+                reason="contains illegal character '/'",
+            ),
+        ])
+
+    def test_not_live(self):
+        self.config.env.set_booth({
+            "config_data": "some config data",
+            "key_data": "some key data",
+            "key_path": "some key path",
+        })
+        self.config.env.set_cib_data("<cib/>")
+        self.env_assist.assert_raise_library_error(
+            lambda: commands.get_status(
+                self.env_assist.get_env(),
+            ),
+            [
+                fixture.error(
+                    report_codes.LIVE_ENVIRONMENT_REQUIRED,
+                    forbidden_options=[
+                        file_type_codes.BOOTH_CONFIG,
+                        file_type_codes.BOOTH_KEY,
+                        file_type_codes.CIB,
+                    ],
+                ),
+            ],
+            expected_in_processor=False
+        )
+
+    def assert_success(self, instance_name=None):
+        inner_name = instance_name or "booth"
         (self.config
-            .fs.open(
-                self.authfile_path,
-                self.booth_authfile_open_mock,
-                mode="wb",
-                name="fs.open.authfile.write"
-            )
-            .fs.chown(
-                self.authfile_path, self.pcmk_uid, self.pcmk_gid,
-            )
-            .fs.chmod(
-                self.authfile_path, settings.booth_authkey_file_mode,
-                side_effect=EnvironmentError(1, self.reason, self.authfile_path)
-            )
+            .runner.booth.status_daemon(inner_name, stdout="daemon status")
+            .runner.booth.status_tickets(inner_name, stdout="tickets status")
+            .runner.booth.status_peers(inner_name, stdout="peers status")
         )
-
-        self.env_assist.assert_raise_library_error(
-            lambda: commands.pull_config(
-                self.env_assist.get_env(), self.node_name
+        self.assertEqual(
+            commands.get_status(
+                self.env_assist.get_env(),
+                instance_name=instance_name
             ),
-            [
-                fixture.error(
-                    report_codes.FILE_IO_ERROR,
-                    reason="{}: '{}'".format(self.reason, self.authfile_path),
-                    file_role=file_roles.BOOTH_KEY,
-                    file_path=self.authfile_path,
-                    operation="chmod",
-                )
-            ],
-            expected_in_processor=False,
-        )
-        self.assert_authfile_written()
-        self.env_assist.assert_reports(self.report_list[:1])
-
-
-class TicketOperationTest(TestCase):
-    @mock.patch("pcs.lib.booth.resource.find_bound_ip")
-    def test_raises_when_implicit_site_not_found_in_cib(
-        self, mock_find_bound_ip
-    ):
-        mock_find_bound_ip.return_value = []
-        assert_raise_library_error(
-            lambda: commands._ticket_operation(
-                "grant", _env_fixture("booth_name"), "ABC", site_ip=None
-            ),
-            (
-                Severities.ERROR,
-                report_codes.BOOTH_CANNOT_DETERMINE_LOCAL_SITE_IP,
-                {}
-            ),
-        )
-
-    def test_raises_when_command_fail(self):
-        mock_run = mock.Mock(return_value=("some message", "error", 1))
-        mock_env = mock.MagicMock(
-            cmd_runner=mock.Mock(return_value=mock.MagicMock(run=mock_run))
-        )
-        assert_raise_library_error(
-            lambda: commands._ticket_operation(
-                "grant", mock_env, "ABC", site_ip="1.2.3.4"
-            ),
-            (
-                Severities.ERROR,
-                report_codes.BOOTH_TICKET_OPERATION_FAILED,
-                {
-                    "operation": "grant",
-                    "reason": "error\nsome message",
-                    "site_ip": "1.2.3.4",
-                    "ticket_name": "ABC",
-                }
-            ),
-        )
-
-class CreateInClusterTest(TestCase):
-    @patch_commands("get_resources", mock.MagicMock())
-    def test_raises_when_is_created_already(self):
-        assert_raise_library_error(
-            lambda: commands.create_in_cluster(
-                _env_fixture("somename"), ip="1.2.3.4"
-            ),
-            (
-                Severities.ERROR,
-                report_codes.BOOTH_ALREADY_IN_CIB,
-                {
-                    "name": "somename",
-                }
-            ),
-        )
-
-class FindResourceElementsForOperationTest(TestCase):
-    @patch_commands("resource.find_for_config", mock.Mock(return_value=[]))
-    def test_raises_when_no_booth_resource_found(self):
-        assert_raise_library_error(
-            lambda: commands._find_resource_elements_for_operation(
-                mock.MagicMock(),
-                "somename",
-                allow_multiple=False
-            ),
-            (
-                Severities.ERROR,
-                report_codes.BOOTH_NOT_EXISTS_IN_CIB,
-                {
-                    'name': 'somename',
-                }
-            ),
-        )
-
-    @patch_commands(
-        "resource.find_for_config", mock.Mock(return_value=["b_el1", "b_el2"])
-    )
-    def test_raises_when_multiple_booth_resource_found(self):
-        assert_raise_library_error(
-            lambda: commands._find_resource_elements_for_operation(
-                mock.MagicMock(),
-                "somename",
-                allow_multiple=False
-            ),
-            (
-                Severities.ERROR,
-                report_codes.BOOTH_MULTIPLE_TIMES_IN_CIB,
-                {
-                    'name': 'somename',
-                },
-                report_codes.FORCE_BOOTH_REMOVE_FROM_CIB,
-            ),
-        )
-
-    @patch_commands("get_resources", mock.Mock(return_value="resources"))
-    @patch_commands("resource.get_remover", mock.MagicMock())
-    @patch_commands("resource.find_for_config", mock.Mock(return_value=[1, 2]))
-    def test_warn_when_multiple_booth_resources_removed(self):
-        report_processor = MockLibraryReportProcessor()
-        commands._find_resource_elements_for_operation(
-            mock.MagicMock(report_processor=report_processor),
-            "somename",
-            allow_multiple=True,
-        )
-        assert_report_item_list_equal(report_processor.report_item_list, [(
-            Severities.WARNING,
-            report_codes.BOOTH_MULTIPLE_TIMES_IN_CIB,
             {
-                'name': 'somename',
-            },
-        )])
+                "status": "daemon status",
+                "ticket": "tickets status",
+                "peers": "peers status",
+            }
+        )
+
+    def test_success_default_instance(self):
+        self.assert_success()
+
+    def test_success_custom_instance(self):
+        self.assert_success(instance_name="my_booth")
+
+    def test_daemon_status_failure(self):
+        (self.config
+            .runner.booth.status_daemon(
+                "booth", stdout="some output", stderr="some error", returncode=1
+            )
+        )
+        self.env_assist.assert_raise_library_error(
+            lambda: commands.get_status(self.env_assist.get_env()),
+            [
+                fixture.error(
+                    report_codes.BOOTH_DAEMON_STATUS_ERROR,
+                    reason="some error\nsome output",
+                ),
+            ],
+            expected_in_processor=False
+        )
+
+    def test_ticket_status_failure(self):
+        (self.config
+            .runner.booth.status_daemon("booth", stdout="daemon status")
+            .runner.booth.status_tickets(
+                "booth", stdout="some output", stderr="some error", returncode=1
+            )
+        )
+        self.env_assist.assert_raise_library_error(
+            lambda: commands.get_status(self.env_assist.get_env()),
+            [
+                fixture.error(
+                    report_codes.BOOTH_TICKET_STATUS_ERROR,
+                    reason="some error\nsome output",
+                ),
+            ],
+            expected_in_processor=False
+        )
+
+    def test_peers_status_failure(self):
+        (self.config
+            .runner.booth.status_daemon("booth", stdout="daemon status")
+            .runner.booth.status_tickets("booth", stdout="tickets status")
+            .runner.booth.status_peers(
+                "booth", stdout="some output", stderr="some error", returncode=1
+            )
+        )
+        self.env_assist.assert_raise_library_error(
+            lambda: commands.get_status(self.env_assist.get_env()),
+            [
+                fixture.error(
+                    report_codes.BOOTH_PEERS_STATUS_ERROR,
+                    reason="some error\nsome output",
+                ),
+            ],
+            expected_in_processor=False
+        )

@@ -1,5 +1,6 @@
 from pcs_test.tier0.cli.common.test_console_report import NameBuildTest
 
+from pcs.common import file_type_codes
 from pcs.lib.booth import reports
 
 
@@ -58,13 +59,13 @@ class BoothConfigUnexpectedLinesTest(NameBuildTest):
 
     def test_single_line(self):
         self.assert_message_from_report(
-            "unexpected line appeared in config:\nline",
+            "unexpected line in booth config:\nline",
             reports.booth_config_unexpected_lines(["line"])
         )
 
     def test_multiple_lines(self):
         self.assert_message_from_report(
-            "unexpected lines appeared in config:\nline\nline2",
+            "unexpected lines in booth config:\nline\nline2",
             reports.booth_config_unexpected_lines(["line", "line2"])
         )
 
@@ -242,26 +243,6 @@ class BoothConfigDistributionNodeErrorTest(NameBuildTest):
             )
         )
 
-class BoothConfigReadErrorTest(NameBuildTest):
-
-    def test_empty_name(self):
-        self.assert_message_from_report(
-            "Unable to read booth config",
-            reports.booth_config_read_error(None)
-        )
-
-    def test_booth_name(self):
-        self.assert_message_from_report(
-            "Unable to read booth config",
-            reports.booth_config_read_error("booth")
-        )
-
-    def test_another_name(self):
-        self.assert_message_from_report(
-            "Unable to read booth config 'another'",
-            reports.booth_config_read_error("another")
-        )
-
 class BoothFetchingConfigFromNodeTest(NameBuildTest):
 
     def test_empty_name(self):
@@ -289,8 +270,15 @@ class BoothFetchingConfigFromNodeTest(NameBuildTest):
 class BoothUnsupportedFileLocation(NameBuildTest):
     def test_success(self):
         self.assert_message_from_report(
-            "Path '/some/file' is not supported for booth config files",
-            reports.booth_unsupported_file_location("/some/file")
+            (
+                "Booth configuration '/some/file' is outside of supported "
+                "booth config directory '/etc/booth/', ignoring the file"
+            ),
+            reports.booth_unsupported_file_location(
+                "/some/file",
+                "/etc/booth/",
+                file_type_codes.BOOTH_CONFIG,
+            )
         )
 
 class BoothDaemonStatusErrorTest(NameBuildTest):
@@ -348,20 +336,4 @@ class BoothTicketOperationFailedTest(NameBuildTest):
             reports.booth_ticket_operation_failed(
                 "operation", "reason", "site_ip", "ticket_name"
             )
-        )
-
-class BoothSkippingConfigTest(NameBuildTest):
-
-    def test_success(self):
-        self.assert_message_from_report(
-            "Skipping config file 'config_file': reason",
-            reports.booth_skipping_config("config_file", "reason")
-        )
-
-class BoothCannotIdentifyKeyFileTest(NameBuildTest):
-
-    def test_success(self):
-        self.assert_message_from_report(
-            "cannot identify authfile in booth configuration",
-            reports.booth_cannot_identify_keyfile()
         )

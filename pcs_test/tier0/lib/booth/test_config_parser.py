@@ -1,11 +1,12 @@
 from unittest import TestCase
 
-from pcs_test.tools.assertions import assert_raise_library_error
+from pcs_test.tools import fixture
+from pcs_test.tools.assertions import assert_report_item_list_equal
 
 from pcs.common import report_codes
+from pcs.lib.file_interfaces import ParserErrorException
 from pcs.lib.booth import config_parser
 from pcs.lib.booth.config_parser import ConfigItem
-from pcs.lib.errors import ReportItemSeverity as severities
 
 
 class BuildTest(TestCase):
@@ -20,8 +21,8 @@ class BuildTest(TestCase):
                 'ticket = "TB"',
                 "  timeout = 10",
                 "", #newline at the end
-            ]),
-            config_parser.build([
+            ]).encode("utf-8"),
+            config_parser.Exporter.export([
                 ConfigItem("authfile", "/path/to/auth.file"),
                 ConfigItem("site", "1.1.1.1"),
                 ConfigItem("site", "2.2.2.2"),
@@ -158,25 +159,60 @@ class ParseRawLinesTest(TestCase):
        )
 
 class ParseTest(TestCase):
-    # pylint: disable=no-self-use
     def test_raises_when_invalid_lines_appear(self):
         invalid_line_list = [
             "first invalid line",
             "second = 'invalid line' something else #comment"
         ]
         line_list = ["site = 1.1.1.1"] + invalid_line_list
-        assert_raise_library_error(
-            lambda:
-                config_parser.parse("\n".join(line_list))
-            ,
-            (
-                severities.ERROR,
-                report_codes.BOOTH_CONFIG_UNEXPECTED_LINES,
-                {
-                    "line_list": invalid_line_list,
-                },
+
+        with self.assertRaises(ParserErrorException) as cm:
+            config_parser.Parser.parse("\n".join(line_list).encode("utf-8"))
+
+        assert_report_item_list_equal(
+            config_parser.Parser.exception_to_report_list(
+                cm.exception, "does not matter", "path",
+                None, False
             ),
+            [
+                fixture.error(
+                    report_codes.BOOTH_CONFIG_UNEXPECTED_LINES,
+                    line_list=invalid_line_list,
+                    file_path="path",
+                ),
+            ]
+        )
+        assert_report_item_list_equal(
+            config_parser.Parser.exception_to_report_list(
+                cm.exception, "does not matter", "path",
+                report_codes.FORCE_BOOTH_DESTROY, False
+            ),
+            [
+                fixture.error(
+                    report_codes.BOOTH_CONFIG_UNEXPECTED_LINES,
+                    force_code=report_codes.FORCE_BOOTH_DESTROY,
+                    line_list=invalid_line_list,
+                    file_path="path",
+                ),
+            ]
+        )
+        assert_report_item_list_equal(
+            config_parser.Parser.exception_to_report_list(
+                cm.exception, "does not matter", "path",
+                report_codes.FORCE_BOOTH_DESTROY, True
+            ),
+            [
+                fixture.warn(
+                    report_codes.BOOTH_CONFIG_UNEXPECTED_LINES,
+                    line_list=invalid_line_list,
+                    file_path="path",
+                ),
+            ]
         )
 
     def test_do_not_raises_when_no_invalid_liens_there(self):
-        config_parser.parse("site = 1.1.1.1")
+        parsed = config_parser.Parser.parse("site = 1.1.1.1".encode("utf-8"))
+        self.assertEqual(len(parsed), 1)
+        self.assertEqual(parsed[0].key, "site")
+        self.assertEqual(parsed[0].value, "1.1.1.1")
+        self.assertEqual(parsed[0].details, [])

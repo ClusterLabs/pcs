@@ -1,95 +1,51 @@
 import os
 
-from pcs.common import report_codes, env_file_role_codes as file_roles
-from pcs.common.tools import format_environment_error
-from pcs.lib import reports as lib_reports
-from pcs.lib.booth import reports
-from pcs.lib.errors import ReportItemSeverity
-from pcs.settings import booth_config_dir as BOOTH_CONFIG_DIR
+from pcs import settings
+from pcs.common import file_type_codes
+from pcs.lib.booth import reports as booth_reports
+from pcs.lib.file.instance import FileInstance
 
 
 def get_all_configs_file_names():
     """
-    Returns list of all file names ending with '.conf' in booth configuration
-    directory.
+    Get a list of all files ending with '.conf' from booth configuration dir.
     """
-    if not os.path.isdir(BOOTH_CONFIG_DIR):
+    if not os.path.isdir(settings.booth_config_dir):
         return []
     return [
         file_name
-        for file_name in os.listdir(BOOTH_CONFIG_DIR)
+        for file_name in os.listdir(settings.booth_config_dir)
         if
             file_name.endswith(".conf")
             and
             len(file_name) > len(".conf")
             and
-            os.path.isfile(os.path.join(BOOTH_CONFIG_DIR, file_name))
+            os.path.isfile(os.path.join(settings.booth_config_dir, file_name))
     ]
 
-
-def _read_config(file_name):
+def get_authfile_name_and_data(booth_conf_facade):
     """
-    Read specified booth config from default booth config directory.
+    Get booth auth filename, content and reports based on booth config facade
 
-    file_name -- string, name of file
+    pcs.lib.booth.config_facade.ConfigFacade booth_conf_facade -- booth config
     """
-    with open(os.path.join(BOOTH_CONFIG_DIR, file_name), "r") as file:
-        return file.read()
-
-
-# TODO switch to new files framework
-def read_configs(reporter, skip_wrong_config=False):
-    """
-    Returns content of all configs present on local system in dictionary,
-    where key is name of config and value is its content.
-
-    reporter -- report processor
-    skip_wrong_config -- if True skip local configs that are unreadable
-    """
+    authfile_name = None
+    authfile_data = None
     report_list = []
-    output = {}
-    for file_name in get_all_configs_file_names():
-        try:
-            output[file_name] = _read_config(file_name)
-        except EnvironmentError:
-            report_list.append(reports.booth_config_read_error(
-                file_name,
-                (
-                    ReportItemSeverity.WARNING if skip_wrong_config
-                    else ReportItemSeverity.ERROR
-                ),
-                (
-                    None if skip_wrong_config
-                    else report_codes.SKIP_UNREADABLE_CONFIG
+
+    authfile_path = booth_conf_facade.get_authfile()
+    if authfile_path:
+        authfile_dir, authfile_name = os.path.split(authfile_path)
+        if (authfile_dir == settings.booth_config_dir) and authfile_name:
+            authfile_data = FileInstance.for_booth_key(authfile_name).read_raw()
+        else:
+            authfile_name = None
+            report_list.append(
+                booth_reports.booth_unsupported_file_location(
+                    authfile_path,
+                    settings.booth_config_dir,
+                    file_type_codes.BOOTH_KEY,
                 )
-            ))
-    reporter.process_list(report_list)
-    return output
+            )
 
-
-# TODO switch to new files framework
-def read_authfile(reporter, path):
-    """
-    Returns content of specified authfile as bytes. None if file is not in
-    default booth directory or there was some IO error.
-
-    reporter -- report processor
-    path -- path to the authfile to be read
-    """
-    if not path:
-        return None
-    if os.path.dirname(os.path.abspath(path)) != BOOTH_CONFIG_DIR:
-        reporter.process(reports.booth_unsupported_file_location(path))
-        return None
-    try:
-        with open(path, "rb") as file:
-            return file.read()
-    except EnvironmentError as e:
-        reporter.process(lib_reports.file_io_error(
-            file_roles.BOOTH_KEY,
-            path,
-            reason=format_environment_error(e),
-            operation="read",
-            severity=ReportItemSeverity.WARNING
-        ))
-        return None
+    return authfile_name, authfile_data, report_list

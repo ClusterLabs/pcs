@@ -9,6 +9,30 @@ from pcs.lib.booth.config_facade import ConfigFacade
 from pcs.lib.booth.config_parser import ConfigItem
 
 
+class CheckInstanceName(TestCase):
+    # pylint: disable=no-self-use
+    def test_success(self):
+        assert_report_item_list_equal(
+            config_validators.check_instance_name(
+                "valid_instance"
+            ),
+            []
+        )
+
+    def test_report(self):
+        instance = "/tmp/booth/invalid_instance"
+        assert_report_item_list_equal(
+            config_validators.check_instance_name(instance),
+            [
+                fixture.error(
+                    report_codes.BOOTH_INVALID_NAME,
+                    name=instance,
+                    reason="contains illegal character '/'",
+                ),
+            ]
+        )
+
+
 class Create(TestCase):
     # pylint: disable=no-self-use
     def test_no_reports_on_correct_args(self):
@@ -57,7 +81,7 @@ class Create(TestCase):
             [
                 fixture.error(
                     report_codes.BOOTH_ADDRESS_DUPLICATION,
-                    addresses=set(["1.1.1.1"]),
+                    addresses=["1.1.1.1"],
                 ),
             ]
         )
@@ -79,7 +103,7 @@ class Create(TestCase):
                 ),
                 fixture.error(
                     report_codes.BOOTH_ADDRESS_DUPLICATION,
-                    addresses=set(["1.1.1.1"]),
+                    addresses=["1.1.1.1"],
                 ),
             ]
         )

@@ -3144,14 +3144,14 @@ def unable_to_upgrade_cib_to_required_version(
     )
 
 def file_already_exists(
-        file_role, file_path, severity=ReportItemSeverity.ERROR,
+        file_type_code, file_path, severity=ReportItemSeverity.ERROR,
         forceable=None, node=None
     ):
     return ReportItem(
         report_codes.FILE_ALREADY_EXISTS,
         severity,
         info={
-            "file_role": file_role,
+            "file_type_code": file_type_code,
             "file_path": file_path,
             "node": node,
         },
@@ -3205,6 +3205,12 @@ def unsupported_operation_on_non_systemd_systems():
     )
 
 def live_environment_required(forbidden_options):
+    """
+    The command cannot operate in a non-live cluster (mocked / ghost files)
+
+    iterable forbidden_options -- list of pcs.common.file_type_codes items which
+        were given and are forbidden in the command
+    """
     return ReportItem.error(
         report_codes.LIVE_ENVIRONMENT_REQUIRED,
         info={
@@ -3219,6 +3225,21 @@ def live_environment_required_for_local_node():
     """
     return ReportItem.error(
         report_codes.LIVE_ENVIRONMENT_REQUIRED_FOR_LOCAL_NODE,
+    )
+
+def live_environment_not_consistent(mocked_files, required_files):
+    """
+    The command cannot operate with mixed live / non-live cluster configs
+
+    iterable mocked_files -- given mocked files (pcs.common.file_type_codes)
+    iterable required_files -- files that must be mocked as well
+    """
+    return ReportItem.error(
+        report_codes.LIVE_ENVIRONMENT_NOT_CONSISTENT,
+        info={
+            "mocked_files": sorted(mocked_files),
+            "required_files": sorted(required_files),
+        },
     )
 
 def corosync_node_conflict_check_skipped(reason_type):
@@ -4127,29 +4148,32 @@ def resource_unmove_unban_pcmk_success(resource_id, stdout, stderr):
     )
 
 def parse_error_json_file(
-    file_type_code, file_path, line_number, column_number, position, reason,
-    full_msg
+    file_type_code, line_number, column_number, position, reason, full_msg,
+    file_path=None, severity=ReportItemSeverity.ERROR, forceable=None,
 ):
+    # pylint: disable=too-many-arguments
     """
     Unable to parse a file with JSON data
 
     string file_type_code -- item from pcs.common.file_type_codes
-    string file_path -- path to the parsed file
     int line_number -- the line where parsing failed
     int column_number -- the column where parsing failed
     int position -- the start index of the file where parsing failed
     string reason -- the unformatted error message
     string full_msg -- full error message including above int attributes
+    string file_path -- path to the parsed file if available
     """
-    return ReportItem.error(
+    return ReportItem(
         report_codes.PARSE_ERROR_JSON_FILE,
+        severity,
         info={
             "file_type_code": file_type_code,
-            "file_path": file_path,
             "line_number": line_number,
             "column_number": column_number,
             "position": position,
             "reason": reason,
             "full_msg": full_msg,
-        }
+            "file_path": file_path,
+        },
+        forceable=forceable
     )

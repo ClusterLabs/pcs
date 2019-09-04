@@ -3,16 +3,6 @@ from unittest import TestCase
 from pcs.lib import errors
 
 
-class LibraryEnvErrorTest(TestCase):
-    def test_can_sign_solved_reports(self):
-        e = errors.LibraryEnvError("first", "second", "third")
-        # pylint: disable=not-an-iterable
-        for report in e.args:
-            if report == "second":
-                e.sign_processed(report)
-
-        self.assertEqual(["first", "third"], e.unprocessed)
-
 class ReportListAnalyzerSelectSeverities(TestCase):
     def setUp(self):
         self.severities = [

@@ -1,40 +1,15 @@
+class ParserErrorException(Exception):
+    pass
+
 class ParserInterface():
-    def __init__(self, raw_file_data, file_type_code, file_path):
-        """
-        Get a parser for a raw config file data
+    @staticmethod
+    def parse(raw_file_data):
+        raise NotImplementedError()
 
-        bytes raw_file_data -- raw config file data
-        string file_type_code -- item from pcs.common.file_type_codes
-        string file_path -- path to the parsed file
-        """
-        self._raw_file_data = raw_file_data
-        self._file_type_code = file_type_code
-        self._file_path = file_path
-        self._report_list = []
-        self._parse_error = False
-        self._parser_ran = False
-        self._parsed = None
-
-    def get_parsed(self):
-        if not self._parser_ran:
-            self._run_parser()
-        return self._parsed
-
-    def get_reports(self):
-        if not self._parser_ran:
-            self._run_parser()
-        return self._report_list
-
-    def was_error(self):
-        if not self._parser_ran:
-            self._run_parser()
-        return self._parse_error
-
-    def _run_parser(self):
-        self._parser_ran = True
-        self._main_parse()
-
-    def _main_parse(self):
+    @staticmethod
+    def exception_to_report_list(
+        exception, file_type_code, file_path, force_code, is_forced_or_warning
+    ):
         raise NotImplementedError()
 
 

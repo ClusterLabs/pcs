@@ -55,7 +55,7 @@ class LibraryEnvironment:
         user_groups=None,
         cib_data=None,
         corosync_conf_data=None,
-        booth=None,
+        booth_files_data=None,
         known_hosts_getter=None,
         request_timeout=None,
     ):
@@ -66,10 +66,7 @@ class LibraryEnvironment:
         self._user_groups = [] if user_groups is None else user_groups
         self._cib_data = cib_data
         self._corosync_conf_data = corosync_conf_data
-        # TODO booth commands expect that BoothEnv always exists
-        self._booth = (
-            BoothEnv(report_processor, booth) if booth is not None else None
-        )
+        self._booth_files_data = booth_files_data or {}
         #pacemaker is currently not mocked and it provides only an access to
         #the authkey
         self._pacemaker = PacemakerEnv()
@@ -90,6 +87,7 @@ class LibraryEnvironment:
             self.user_groups,
             self._request_timeout
         )
+        self.__loaded_booth_env = None
 
         self.__timeout_cache = {}
 
@@ -406,9 +404,10 @@ class LibraryEnvironment:
                 self._known_hosts = {}
         return self._known_hosts
 
-    @property
-    def booth(self):
-        return self._booth
+    def get_booth_env(self, name):
+        if self.__loaded_booth_env is None:
+            self.__loaded_booth_env = BoothEnv(name, self._booth_files_data)
+        return self.__loaded_booth_env
 
     @property
     def pacemaker(self):

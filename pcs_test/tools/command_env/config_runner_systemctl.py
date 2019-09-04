@@ -8,6 +8,62 @@ class SystemctlShortcuts:
     def __init__(self, calls):
         self.__calls = calls
 
+    def disable(
+        self, service, name="runner.systemctl.disable",
+        stdout="", stderr="", returncode=0
+    ):
+        self.__calls.place(
+            name,
+            RunnerCall(
+                f"{settings.systemctl_binary} disable {service}.service",
+                stdout=stdout,
+                stderr=stderr,
+                returncode=returncode,
+            )
+        )
+
+    def enable(
+        self, service, name="runner.systemctl.enable",
+        stdout="", stderr="", returncode=0
+    ):
+        self.__calls.place(
+            name,
+            RunnerCall(
+                f"{settings.systemctl_binary} enable {service}.service",
+                stdout=stdout,
+                stderr=stderr,
+                returncode=returncode,
+            )
+        )
+
+    def start(
+        self, service, name="runner.systemctl.start",
+        stdout="", stderr="", returncode=0
+    ):
+        self.__calls.place(
+            name,
+            RunnerCall(
+                f"{settings.systemctl_binary} start {service}.service",
+                stdout=stdout,
+                stderr=stderr,
+                returncode=returncode,
+            )
+        )
+
+    def stop(
+        self, service, name="runner.systemctl.stop",
+        stdout="", stderr="", returncode=0
+    ):
+        self.__calls.place(
+            name,
+            RunnerCall(
+                f"{settings.systemctl_binary} stop {service}.service",
+                stdout=stdout,
+                stderr=stderr,
+                returncode=returncode,
+            )
+        )
+
     def is_active(
         self, service, name="runner_systemctl.is_active", is_active=True
     ):

@@ -8,6 +8,20 @@ from pcs.lib.booth import constants, reports
 
 __TICKET_NAME_RE = re.compile(r"^[\w-]+$")
 
+def check_instance_name(name):
+    """
+    Check that specified booth instance name is valid
+
+    string name -- booth instance name
+    """
+    report_list = []
+    if "/" in name:
+        # TODO drop plaintext from the report
+        report_list.append(
+            reports.booth_invalid_name(name, "contains illegal character '/'")
+        )
+    return report_list
+
 def create(site_list, arbitrator_list):
     """
     Validate creating a minimal booth config

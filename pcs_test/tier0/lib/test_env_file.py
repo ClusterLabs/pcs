@@ -19,44 +19,6 @@ FILE_PATH = "/path/to.file"
 MISSING_PATH = "/no/existing/file.path"
 CONF_PATH = "/etc/booth/some-name.conf"
 
-class GhostFileInit(TestCase):
-    def test_is_not_binary_default(self):
-        ghost_file = env_file.GhostFile("some role", content=None)
-        self.assertFalse(ghost_file.export()["is_binary"])
-
-    def test_accepts_is_binary_attribute(self):
-        ghost_file = env_file.GhostFile(
-            "some role",
-            content=None,
-            is_binary=True
-        )
-        self.assertTrue(ghost_file.export()["is_binary"])
-
-class GhostFileReadTest(TestCase):
-    def test_raises_when_trying_read_nonexistent_file(self):
-        assert_raise_library_error(
-            lambda: env_file.GhostFile("some role", content=None).read(),
-            (
-                severities.ERROR,
-                report_codes.FILE_DOES_NOT_EXIST,
-                {
-                    "file_role": "some role",
-                }
-            ),
-        )
-
-class GhostFileExists(TestCase):
-    def test_return_true_if_file_exists(self):
-        self.assertTrue(env_file.GhostFile("some_role", "any content").exists)
-
-    def test_return_false_if_file_exists(self):
-        self.assertFalse(env_file.GhostFile("some_role").exists)
-
-    def test_return_true_after_write(self):
-        ghost_file = env_file.GhostFile("some_role")
-        ghost_file.write("any content")
-        self.assertTrue(ghost_file.exists)
-
 class RealFileExists(TestCase):
     # pylint: disable=unused-argument
     @patch_env_file("os.path.exists", return_value=True)

@@ -1,0 +1,52 @@
+<?xml version="1.0"?>
+<!DOCTYPE resource-agent SYSTEM "ra-api-1.dtd">
+<resource-agent name="booth-site" version="0.9">
+<version>1.0</version>
+
+
+<longdesc lang="en">
+This Resource Agent can control the BOOTH site daemon.
+It assumes that the binary boothd is in your default PATH.
+In most cases, it should be run as a primitive resource.
+</longdesc>
+<shortdesc lang="en">BOOTH site daemon</shortdesc>
+
+<parameters>
+
+<parameter name="config" unique="1">
+<longdesc lang="en">
+The configuration name (or configuration filename) to use.
+</longdesc>
+<shortdesc lang="en">BOOTH Options</shortdesc>
+<content type="string" default="/etc/booth/booth.conf" />
+</parameter>
+
+<parameter name="args" unique="1">
+<longdesc lang="en">
+Any additional options to start the BOOTH daemon with
+</longdesc>
+<shortdesc lang="en">BOOTH Options</shortdesc>
+<content type="string" default="" />
+</parameter>
+
+<parameter name="daemon" unique="1">
+<longdesc lang="en">
+The daemon to start
+</longdesc>
+<shortdesc lang="en">The daemon to start</shortdesc>
+<content type="string" default="boothd" />
+</parameter>
+
+</parameters>
+
+<actions>
+<action name="start"        timeout="20" />
+<action name="stop"         timeout="20" />
+<action name="restart"      timeout="20" />
+<action name="reload"       timeout="20" />
+<action name="monitor"      timeout="20" interval="10" depth="0" start-delay="0" />
+<action name="meta-data"    timeout="5" />
+<action name="validate-all"   timeout="30" />
+</actions>
+</resource-agent>
+

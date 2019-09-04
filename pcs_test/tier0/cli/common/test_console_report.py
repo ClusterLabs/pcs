@@ -11,7 +11,7 @@ from pcs.cli.common.console_report import(
 )
 from pcs.cli.common.reports import CODE_BUILDER_MAP
 from pcs.common import (
-    env_file_role_codes,
+    env_file_role_codes, # TODO remove
     file_type_codes,
 )
 from pcs.common.fencing_topology import (
@@ -1488,6 +1488,31 @@ class ResourceIsGuestNodeAlready(NameBuildTest):
         self.assert_message_from_report(
             "the resource 'some-resource' is already a guest node",
             reports.resource_is_guest_node_already("some-resource")
+        )
+
+class LiveEnvironmentNotConsistent(NameBuildTest):
+    def test_one_one(self):
+        self.assert_message_from_report(
+            (
+                "When '--booth-conf' is specified, "
+                "'--booth-key' must be specified as well"
+            ),
+            reports.live_environment_not_consistent(
+                [file_type_codes.BOOTH_CONFIG],
+                [file_type_codes.BOOTH_KEY],
+            )
+        )
+
+    def test_many_many(self):
+        self.assert_message_from_report(
+            (
+                "When '--booth-conf', '-f' is specified, "
+                "'--booth-key', '--corosync_conf' must be specified as well"
+            ),
+            reports.live_environment_not_consistent(
+                [file_type_codes.CIB, file_type_codes.BOOTH_CONFIG],
+                [file_type_codes.COROSYNC_CONF, file_type_codes.BOOTH_KEY],
+            )
         )
 
 class LiveEnvironmentRequired(NameBuildTest):
@@ -4443,11 +4468,11 @@ class ParseErrorJsonFile(NameBuildTest):
             ,
             reports.parse_error_json_file(
                 file_type_codes.PCS_KNOWN_HOSTS,
-                "/tmp/known-hosts",
                 15,
                 5,
                 100,
                 "some reason",
                 "some reason: line 15 column 5 (char 100)",
+                file_path="/tmp/known-hosts",
             )
         )

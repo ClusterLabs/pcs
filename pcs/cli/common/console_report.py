@@ -33,8 +33,6 @@ _type_articles = {
     "ACL permission": "an",
 }
 _file_role_translation = {
-    env_file_role_codes.BOOTH_CONFIG: "Booth configuration",
-    env_file_role_codes.BOOTH_KEY: "Booth key",
     env_file_role_codes.COROSYNC_AUTHKEY: "Corosync authkey",
     env_file_role_codes.PACEMAKER_AUTHKEY: "Pacemaker authkey",
     env_file_role_codes.PCSD_ENVIRONMENT_CONFIG: "pcsd configuration",
@@ -42,6 +40,15 @@ _file_role_translation = {
     env_file_role_codes.PCSD_SSL_KEY: "pcsd SSL key",
     env_file_role_codes.PCS_SETTINGS_CONF: "pcs configuration",
     file_type_codes.PCS_KNOWN_HOSTS: "known-hosts",
+    file_type_codes.BOOTH_CONFIG: "Booth configuration",
+    file_type_codes.BOOTH_KEY: "Booth key",
+}
+_file_role_to_option_translation = {
+    file_type_codes.BOOTH_CONFIG: "--booth-conf",
+    file_type_codes.BOOTH_KEY: "--booth-key",
+    file_type_codes.CIB: "-f",
+    # TODO use constants once defined
+    "COROSYNC_CONF": "--corosync_conf",
 }
 
 def warn(message):
@@ -1817,7 +1824,7 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
         "{_node}{_file_role} file '{file_path}' already exists"
         .format(
             _node=format_optional(info["node"], NODE_PREFIX),
-            _file_role=format_file_role(info["file_role"]),
+            _file_role=format_file_role(info["file_type_code"]),
             **info
         )
     ,
@@ -1854,15 +1861,26 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
         "unsupported operation on non systemd systems"
     ,
 
-    codes.LIVE_ENVIRONMENT_REQUIRED: lambda info:
-        "This command does not support {forbidden_options}"
+    codes.LIVE_ENVIRONMENT_NOT_CONSISTENT: lambda info:
+        "When {_given} is specified, {_missing} must be specified as well"
         .format(
-            forbidden_options=format_list(info["forbidden_options"], {
-                "BOOTH_CONF": "--booth-conf",
-                "BOOTH_KEY": "--booth-key",
-                "CIB": "-f",
-                "COROSYNC_CONF": "--corosync_conf",
-            })
+            _given=format_list(
+                info["mocked_files"],
+                _file_role_to_option_translation
+            ),
+            _missing=format_list(
+                info["required_files"],
+                _file_role_to_option_translation
+            ),
+        )
+    ,
+    codes.LIVE_ENVIRONMENT_REQUIRED: lambda info:
+        "This command does not support {_forbidden_options}"
+        .format(
+            _forbidden_options=format_list(
+                info["forbidden_options"],
+                _file_role_to_option_translation
+            ),
         )
     ,
 
@@ -2245,7 +2263,8 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
     ,
 
     codes.PARSE_ERROR_JSON_FILE: lambda info:
-        "Unable to parse {_file_type} file '{file_path}': {full_msg}".format(
+        "Unable to parse {_file_type} file{_file_path}: {full_msg}".format(
+            _file_path=format_optional(info["file_path"], " '{0}'"),
             _file_type=format_file_role(info["file_type_code"]),
             **info
         )

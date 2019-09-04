@@ -1,29 +1,56 @@
+from pcs.common import (
+    file as pcs_file,
+    file_type_codes,
+)
 from pcs.cli.common import console_report
-from pcs.common.env_file_role_codes import BOOTH_CONFIG, BOOTH_KEY
-from pcs.lib.errors import LibraryEnvError
-from pcs.cli.common import env_file
+from pcs.cli.file import fs_metadata
+from pcs.lib import reports
+from pcs.lib.errors import LibraryError
 
 
-def middleware_config(name, config_path, key_path):
+def middleware_config(config_path, key_path):
     if config_path and not key_path:
         raise console_report.error(
-            "With --booth-conf must be specified --booth-key as well"
+            "When --booth-conf is specified, "
+            "--booth-key must be specified as well"
         )
-
     if key_path and not config_path:
         raise console_report.error(
-            "With --booth-key must be specified --booth-conf as well"
+            "When --booth-key is specified, "
+            "--booth-conf must be specified as well"
         )
-
     is_mocked_environment = config_path and key_path
 
+    if is_mocked_environment:
+        config_file = pcs_file.RawFile(
+            fs_metadata.for_file_type(
+                file_type_codes.BOOTH_CONFIG, config_path
+            )
+        )
+        key_file = pcs_file.RawFile(
+            fs_metadata.for_file_type(
+                file_type_codes.BOOTH_KEY, key_path
+            )
+        )
+
     def create_booth_env():
-        if not is_mocked_environment:
-            return {"name": name}
+        try:
+            config_data = config_file.read() if config_file.exists() else None
+            key_data = key_file.read() if key_file.exists() else None
+        # TODO write custom error handling, do not use pcs.lib specific code
+        # and LibraryError
+        except pcs_file.RawFileError as e:
+            raise LibraryError(
+                reports.file_io_error(
+                    e.file_type.file_type_code,
+                    e.file_type.path,
+                    e.reason,
+                    e.action,
+                )
+            )
         return {
-            "name": name,
-            "config_file": env_file.read(config_path),
-            "key_file": env_file.read(key_path, is_binary=True),
+            "config_data": config_data,
+            "key_data": key_data,
             "key_path": key_path,
         }
 
@@ -35,33 +62,32 @@ def middleware_config(name, config_path, key_path):
             #for more information see comment in
             #pcs.cli.common.lib_wrapper.lib_env_to_cli_env
             raise console_report.error("Error during library communication")
-
-        env_file.process_no_existing_file_expectation(
-            "booth config file",
-            modified_env["config_file"],
-            config_path
-        )
-        env_file.process_no_existing_file_expectation(
-            "booth key file",
-            modified_env["key_file"],
-            key_path
-        )
-        env_file.write(modified_env["key_file"], key_path)
-        env_file.write(modified_env["config_file"], config_path)
+        try:
+            key_file.write(
+                modified_env["key_file"]["content"],
+                can_overwrite=True
+            )
+            config_file.write(
+                modified_env["config_file"]["content"],
+                can_overwrite=True
+            )
+        # TODO write custom error handling, do not use pcs.lib specific code
+        # and LibraryError
+        except pcs_file.RawFileError as e:
+            raise LibraryError(
+                reports.file_io_error(
+                    e.file_type.file_type_code,
+                    e.file_type.path,
+                    e.reason,
+                    e.action,
+                )
+            )
 
     def apply(next_in_line, env, *args, **kwargs):
-        env.booth = create_booth_env()
-        try:
-            result_of_next = next_in_line(env, *args, **kwargs)
-        except LibraryEnvError as err:
-            missing_file = env_file.MissingFileCandidateInfo
-
-            env_file.evaluate_for_missing_files(err, [
-                missing_file(BOOTH_CONFIG, "Booth config file", config_path),
-                missing_file(BOOTH_KEY, "Booth key file", key_path),
-            ])
-            raise err
-        flush(env.booth["modified_env"])
+        env.booth = create_booth_env() if is_mocked_environment else {}
+        result_of_next = next_in_line(env, *args, **kwargs)
+        if is_mocked_environment:
+            flush(env.booth["modified_env"])
         return result_of_next
 
     return apply

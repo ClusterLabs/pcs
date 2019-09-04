@@ -62,6 +62,7 @@ from pcs.lib.external import (
     is_systemctl,
 )
 from pcs.lib.file.instance import FileInstance as LibFileInstance
+from pcs.lib.file_interfaces import ParserErrorException
 from pcs.lib.pacemaker.live import has_wait_for_idle_support
 from pcs.lib.pacemaker.state import ClusterState
 from pcs.lib.pacemaker.values import(
@@ -317,9 +318,8 @@ def read_known_hosts_file():
             # This is here to provide known-hosts to functions not yet
             # overhauled to pcs.lib. Cli should never read known hosts from
             # /var/lib/pcsd/.
-            known_hosts_struct = (
-                LibFileInstance.for_known_hosts().read_to_structure()
-            )
+            known_hosts_instance = LibFileInstance.for_known_hosts()
+            known_hosts_struct = known_hosts_instance.read_to_structure()
 
         # TODO use known hosts facade for getting info from json struct once the
         # facade exists
@@ -333,6 +333,15 @@ def read_known_hosts_file():
         # overhauled to pcs.lib. Cli should never read known hosts from
         # /var/lib/pcsd/.
         process_library_reports(e.args)
+    except ParserErrorException as e:
+        # TODO remove
+        # This is here to provide known-hosts to functions not yet
+        # overhauled to pcs.lib. Cli should never read known hosts from
+        # /var/lib/pcsd/.
+        print("A")
+        process_library_reports(
+            known_hosts_instance.parser_exception_to_report_list(e)
+        )
     except pcs_file.RawFileError as e:
         console_report.warn(
             "Unable to read the known-hosts file: " + e.reason
@@ -2694,7 +2703,6 @@ def get_middleware_factory():
             pcs_options.get("--corosync_conf", None)
         ),
         booth_conf=pcs.cli.booth.env.middleware_config(
-            pcs_options.get("--name", None),
             pcs_options.get("--booth-conf", None),
             pcs_options.get("--booth-key", None),
         ),

@@ -1,11 +1,27 @@
+import errno
+import os
+
 from pcs.common.file import(
     RawFile,
     RawFileError,
     RawFileInterface,
 )
+from pcs.lib import reports
 
 # TODO add logging (logger / debug reports ?)
 
+def raw_file_error_report(error, force_code=None, is_forced_or_warning=False):
+    """
+    Translate a RawFileError instance to a report
+    """
+    return reports.get_problem_creator(force_code, is_forced_or_warning)(
+        reports.file_io_error,
+        error.file_type.file_type_code,
+        # do not report real file path if we were working with a ghost file
+        "" if isinstance(error, GhostFileError) else error.file_type.path,
+        error.reason,
+        error.action,
+    )
 
 class RealFile(RawFile):
     # TODO implement method "backup" in the parent
@@ -15,7 +31,7 @@ class RealFile(RawFile):
         return False
 
 
-class GhostFileNotProvided(RawFileError):
+class GhostFileError(RawFileError):
     pass
 
 
@@ -42,8 +58,12 @@ class GhostFile(RawFileInterface):
 
     def read(self):
         if self.__file_data is None:
-            # TODO replace by RawFileError(read, "data not provided") ???
-            raise GhostFileNotProvided(self.file_type, RawFileError.ACTION_READ)
+            raise GhostFileError(
+                self.file_type,
+                RawFileError.ACTION_READ,
+                # get "no such file" message as defined and worded in the system
+                os.strerror(errno.ENOENT)
+            )
         return self.__file_data
 
     def write(self, file_data, can_overwrite=False):

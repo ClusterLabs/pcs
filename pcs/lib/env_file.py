@@ -3,71 +3,14 @@ import os.path
 from pcs.common import report_codes
 from pcs.common.tools import format_environment_error
 from pcs.lib import reports
-from pcs.lib.errors import ReportItemSeverity, LibraryError, LibraryEnvError
+from pcs.lib.errors import ReportItemSeverity, LibraryError
 
 def export_ghost_file(ghost_file):
     return {
-        "content": ghost_file.file_data,
-        # TODO drop from here and cli, it has never been set to False
-        "no_existing_file_expected": True,
-        "can_overwrite_existing_file": ghost_file.can_overwrite_existing_file,
-        # TODO drop from here and cli, cli should get this from its fs_metadata
-        "is_binary": ghost_file.file_type.is_binary,
+        "content": ghost_file.content,
     }
 
 # TODO drop everything bellow once not needed anymore
-# TODO drop LibraryEnvError from all remaining code
-
-class GhostFile:
-    is_live = False
-    def __init__(self, file_role, content=None, is_binary=False):
-        self.__file_role = file_role
-        self.__content = content
-        self.__no_existing_file_expected = False
-        self.__can_overwrite_existing_file = False
-        self.__is_binary = is_binary
-
-    def read(self):
-        if self.__content is None:
-            raise LibraryEnvError(
-                reports.file_does_not_exist(self.__file_role)
-            )
-
-        return self.__content
-
-    @property
-    def exists(self):
-        #file will be considered to exist after writing: it is symmetrical with
-        #RealFile
-        return self.__content is not None
-
-    def remove(self, silence_no_existence):
-        # pylint: disable=no-self-use, unused-argument
-        raise AssertionError("Remove GhostFile is not supported.")
-
-    def write(self, content, file_operation=None):
-        # pylint: disable=unused-argument
-        """
-        callable file_operation is there only for RealFile compatible interface
-            it has no efect
-        """
-        self.__content = content
-
-    def assert_no_conflict_with_existing(
-        self, report_processor, can_overwrite_existing=False
-    ):
-        # pylint: disable=unused-argument
-        self.__no_existing_file_expected = True
-        self.__can_overwrite_existing_file = can_overwrite_existing
-
-    def export(self):
-        return {
-            "content": self.__content,
-            "no_existing_file_expected": self.__no_existing_file_expected,
-            "can_overwrite_existing_file": self.__can_overwrite_existing_file,
-            "is_binary": self.__is_binary,
-        }
-
 
 class RealFile:
     is_live = True

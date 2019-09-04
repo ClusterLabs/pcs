@@ -29,29 +29,70 @@ FileToolbox = namedtuple(
     ]
 )
 
+
+class JsonParserException(file_interfaces.ParserErrorException):
+    def __init__(self, json_exception):
+        super().__init__()
+        self.json_exception = json_exception
+
 class JsonParser(file_interfaces.ParserInterface):
-    def _main_parse(self):
+    @staticmethod
+    def parse(raw_file_data):
         try:
             # json.loads handles bytes, it expects utf-8, 16 or 32 encoding
-            self._parsed = json.loads(self._raw_file_data)
+            return json.loads(raw_file_data)
         except json.JSONDecodeError as e:
-            self._parse_error = True
-            self._report_list.append(
-                reports.parse_error_json_file(
-                    self._file_type_code,
-                    self._file_path,
-                    e.lineno,
-                    e.colno,
-                    e.pos,
-                    e.msg,
-                    str(e)
-                )
-            )
+            raise JsonParserException(e)
+
+    @staticmethod
+    def exception_to_report_list(
+        exception, file_type_code, file_path, force_code, is_forced_or_warning
+    ):
+        report_creator = reports.get_problem_creator(
+            force_code=force_code, is_forced=is_forced_or_warning
+        )
+        if isinstance(exception, JsonParserException):
+            if isinstance(exception.json_exception, json.JSONDecodeError):
+                return [
+                    report_creator(
+                        reports.parse_error_json_file,
+                        file_type_code,
+                        exception.json_exception.lineno,
+                        exception.json_exception.colno,
+                        exception.json_exception.pos,
+                        exception.json_exception.msg,
+                        str(exception.json_exception),
+                        file_path=file_path,
+                    )
+                ]
+        raise exception
 
 class JsonExporter(file_interfaces.ExporterInterface):
     @staticmethod
     def export(config_structure):
         return json.dumps(config_structure).encode("utf-8")
+
+
+class NoopParser(file_interfaces.ParserInterface):
+    @staticmethod
+    def parse(raw_file_data):
+        return raw_file_data
+
+    @staticmethod
+    def exception_to_report_list(
+        exception, file_type_code, file_path, force_code, is_forced_or_warning
+    ):
+        return []
+
+class NoopExporter(file_interfaces.ExporterInterface):
+    @staticmethod
+    def export(config_structure):
+        return config_structure
+
+class NoopFacade(file_interfaces.FacadeInterface):
+    @classmethod
+    def create(cls):
+        return cls(bytes())
 
 
 _toolboxes = {
@@ -60,6 +101,14 @@ _toolboxes = {
         facade=BoothConfigFacade,
         parser=BoothConfigParser,
         exporter=BoothConfigExporter,
+        validator=None, # TODO needed for files syncing
+        version_controller=None, # TODO needed for files syncing
+    ),
+    code.BOOTH_KEY: FileToolbox(
+        file_type_code=code.BOOTH_KEY,
+        facade=NoopFacade,
+        parser=NoopParser,
+        exporter=NoopExporter,
         validator=None, # TODO needed for files syncing
         version_controller=None, # TODO needed for files syncing
     ),

@@ -74,7 +74,7 @@ class RawFile(RawFileInterface):
                 content = my_file.read()
                 return (
                     content if self.file_type.is_binary
-                    else content.encode()
+                    else content.encode("utf-8")
                 )
         except OSError as e:
             # Specific expection if the file does not exist is not needed,
@@ -136,7 +136,7 @@ class RawFile(RawFileInterface):
                 # Write file data
                 my_file.write(
                     file_data if self.file_type.is_binary
-                    else file_data.decode()
+                    else file_data.decode("utf-8")
                 )
         except FileExistsError as e:
             raise FileAlreadyExists(self.file_type)

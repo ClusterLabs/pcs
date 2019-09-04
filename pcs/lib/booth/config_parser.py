@@ -1,31 +1,47 @@
 from collections import namedtuple
 import re
 
-from pcs.lib import file_interfaces
-from pcs.lib.booth import constants, reports
-from pcs.lib.errors import LibraryError
+from pcs.lib import (
+    file_interfaces,
+    reports,
+)
+from pcs.lib.booth import (
+    constants,
+    reports as booth_reports,
+)
 
 class ConfigItem(namedtuple("ConfigItem", "key value details")):
     def __new__(cls, key, value, details=None):
         details = details if details else []
         return super(ConfigItem, cls).__new__(cls, key, value, details)
 
-class InvalidLines(Exception):
+class InvalidLines(file_interfaces.ParserErrorException):
     pass
 
 class Parser(file_interfaces.ParserInterface):
-    def _main_parse(self):
-        try:
-            return _organize_lines(
-                _parse_to_raw_lines(
-                    self._raw_file_data.decode("utf-8")
+    @staticmethod
+    def parse(raw_file_data):
+        return _organize_lines(
+            _parse_to_raw_lines(raw_file_data.decode("utf-8"))
+        )
+
+    @staticmethod
+    def exception_to_report_list(
+        exception, file_type_code, file_path, force_code, is_forced_or_warning
+    ):
+        del file_type_code # this is defined by the report code
+        report_creator = reports.get_problem_creator(
+            force_code=force_code, is_forced=is_forced_or_warning
+        )
+        if isinstance(exception, InvalidLines):
+            return [
+                report_creator(
+                    booth_reports.booth_config_unexpected_lines,
+                    exception.args[0],
+                    file_path=file_path,
                 )
-            )
-        except InvalidLines as e:
-            self._parse_error = True
-            self._report_list.append(
-                reports.booth_config_unexpected_lines(e.args[0])
-            )
+            ]
+        raise exception
 
 class Exporter(file_interfaces.ExporterInterface):
     @staticmethod
@@ -33,20 +49,6 @@ class Exporter(file_interfaces.ExporterInterface):
         return "\n".join(
             _build_to_lines(config_structure) + [""]
         ).encode("utf-8")
-
-# TODO remove
-def parse(content):
-    try:
-        return _organize_lines(_parse_to_raw_lines(content))
-    except InvalidLines as e:
-        raise LibraryError(
-            reports.booth_config_unexpected_lines(e.args[0])
-        )
-
-# TODO remove
-def build(config_line_list):
-    newline = [""]
-    return "\n".join(_build_to_lines(config_line_list) + newline)
 
 def _build_to_lines(config_line_list, deep=0):
     line_list = []

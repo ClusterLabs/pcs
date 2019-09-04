@@ -1,3 +1,5 @@
+DEFAULT_INSTANCE_NAME = "booth"
+
 GLOBAL_KEYS = (
     "transport",
     "port",

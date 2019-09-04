@@ -14,6 +14,8 @@ WAIT_TIMEOUT_EXPIRED_RETURNCODE = 124
 AGENT_FILENAME_MAP = {
     "ocf:heartbeat:Dummy": "resource_agent_ocf_heartbeat_dummy.xml",
     "ocf:pacemaker:remote": "resource_agent_ocf_pacemaker_remote.xml",
+    "ocf:heartbeat:IPaddr2": "resource_agent_ocf_heartbeat_ipaddr2.xml",
+    "ocf:pacemaker:booth-site": "resource_agent_ocf_pacemaker_booth-site.xml",
 }
 
 def fixture_state_resources_xml(
