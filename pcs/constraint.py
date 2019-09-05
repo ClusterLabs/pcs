@@ -779,6 +779,22 @@ def _show_location_rules(ruleshash, showDetail, noheader=False):
                 ))
     return all_lines
 
+def _verify_node_name(node, existing_nodes):
+    report_list = []
+    if node not in existing_nodes:
+        report_list.append(reports.node_not_found(
+            node,
+            forceable=report_codes.FORCE_NODE_DOES_NOT_EXIST
+        ))
+    return report_list
+
+def _verify_score(score):
+    if not utils.is_score(score):
+        utils.err(
+            "invalid score '%s', use integer or INFINITY or -INFINITY"
+            % score
+        )
+
 def location_prefer(lib, argv, modifiers):
     """
     Options:
@@ -802,37 +818,57 @@ def location_prefer(lib, argv, modifiers):
     else:
         raise CmdLineInputError()
 
+    skip_node_check = False
+    if modifiers.is_specified("-f") or modifiers.get("--force"):
+        skip_node_check = True
+        warn(LOCATION_NODE_VALIDATION_SKIP_MSG)
+    else:
+        lib_env = utils.get_lib_env()
+        existing_nodes, report_list = get_existing_nodes_names(
+            corosync_conf=lib_env.get_corosync_conf(),
+            cib=lib_env.get_cib(),
+        )
+        if report_list:
+            process_library_reports(report_list)
 
+    report_list = []
+    parameters_list = []
     for nodeconf in argv:
         nodeconf_a = nodeconf.split("=", 1)
+        node = nodeconf_a[0]
+        if not skip_node_check:
+            report_list += _verify_node_name(node, existing_nodes)
         if len(nodeconf_a) == 1:
-            node = nodeconf_a[0]
             if prefer:
                 score = "INFINITY"
             else:
                 score = "-INFINITY"
         else:
             score = nodeconf_a[1]
-            if not utils.is_score(score):
-                utils.err(
-                    "invalid score '%s', use integer or INFINITY or -INFINITY"
-                    % score
-                )
+            _verify_score(score)
             if not prefer:
                 if score[0] == "-":
                     score = score[1:]
                 else:
                     score = "-" + score
-            node = nodeconf_a[0]
-        location_add(lib, [
-            sanitize_id("location-{0}-{1}-{2}".format(rsc_value, node, score)),
+
+        parameters_list.append([
+            sanitize_id(f"location-{rsc_value}-{node}-{score}"),
             rsc,
             node,
             score
-        ], modifiers.get_subset("--force", "-f"))
+        ])
+
+    if report_list:
+        process_library_reports(report_list)
+
+    modifiers = modifiers.get_subset("--force", "-f")
+
+    for parameters in parameters_list:
+        location_add(lib, parameters, modifiers, skip_score_and_node_check=True)
 
 
-def location_add(lib, argv, modifiers):
+def location_add(lib, argv, modifiers, skip_score_and_node_check=False):
     """
     Options:
       * --force - allow unknown options, allow constraint for any resource type
@@ -868,14 +904,24 @@ def location_add(lib, argv, modifiers):
                     "bad option '%s', use --force to override" % options[-1][0]
                 )
 
+    # Verify that specified node exists in the cluster and score is valid
+    if not skip_score_and_node_check:
+        if modifiers.is_specified("-f") or modifiers.get("--force"):
+            warn(LOCATION_NODE_VALIDATION_SKIP_MSG)
+        else:
+            lib_env = utils.get_lib_env()
+            existing_nodes, report_list = get_existing_nodes_names(
+                corosync_conf=lib_env.get_corosync_conf(),
+                cib=lib_env.get_cib(),
+            )
+            report_list = _verify_node_name(node, existing_nodes)
+            if report_list:
+                process_library_reports(report_list)
+        _verify_score(score)
+
     id_valid, id_error = utils.validate_xml_id(constraint_id, 'constraint id')
     if not id_valid:
         utils.err(id_error)
-
-    if not utils.is_score(score):
-        utils.err(
-            "invalid score '%s', use integer or INFINITY or -INFINITY" % score
-        )
 
     required_version = None
     if [x for x in options if x[0] == "resource-discovery"]:
@@ -894,24 +940,6 @@ def location_add(lib, argv, modifiers):
         )
         if not rsc_valid:
             utils.err(rsc_error)
-
-    # Verify that specified node exists in the cluster
-    if not (modifiers.is_specified("-f") or modifiers.get("--force")):
-        lib_env = utils.get_lib_env()
-        existing_nodes, report_list = get_existing_nodes_names(
-            corosync_conf=lib_env.get_corosync_conf(),
-            cib=lib_env.get_cib(),
-        )
-        if node not in existing_nodes:
-            report_list.append(reports.node_not_found(
-                node,
-                forceable=report_codes.FORCE_NODE_DOES_NOT_EXIST
-            ))
-        if report_list:
-            process_library_reports(report_list)
-    else:
-        warn(LOCATION_NODE_VALIDATION_SKIP_MSG)
-
 
     # Verify current constraint doesn't already exist
     # If it does we replace it with the new constraint

@@ -2,6 +2,7 @@
 import os
 import shutil
 import unittest
+from collections import namedtuple
 from lxml import etree
 
 from pcs_test.tools.assertions import (
@@ -867,7 +868,7 @@ Colocation Constraints:
         assert r == 0
 
         o,r = pcs(temp_cib, "constraint location add my_constraint_id crd my_node -INFINITY resource-discovery=always")
-        ac(o, "Cluster CIB has been upgraded to latest version\n" + LOCATION_NODE_VALIDATION_SKIP_WARNING)
+        ac(o, LOCATION_NODE_VALIDATION_SKIP_WARNING + "Cluster CIB has been upgraded to latest version\n")
         assert r == 0
 
         o,r = pcs(temp_cib, "constraint location add my_constraint_id2 crd1 my_node -INFINITY resource-discovery=never")
@@ -1245,22 +1246,6 @@ Ticket Constraints:
         ac(o,"Error: '25' is not a valid rule expression: missing one of 'eq', 'ne', 'lt', 'gt', 'lte', 'gte', 'in_range', 'defined', 'not_defined', 'date-spec'\n")
         assert r == 1
 
-        o,r = pcs(temp_cib, "constraint location D1 prefers rh7-1=foo")
-        ac(o,"Error: invalid score 'foo', use integer or INFINITY or -INFINITY\n")
-        assert r == 1
-
-        o,r = pcs(temp_cib, "constraint location D1 avoids rh7-1=")
-        ac(o,"Error: invalid score '', use integer or INFINITY or -INFINITY\n")
-        assert r == 1
-
-        o,r = pcs(temp_cib, "constraint location add location1 D1 rh7-1 bar")
-        ac(o,"Error: invalid score 'bar', use integer or INFINITY or -INFINITY\n")
-        assert r == 1
-
-        output, returnVal = pcs(temp_cib, "constraint location add loc:dummy D1 rh7-1 100")
-        assert returnVal == 1
-        ac(output, "Error: invalid constraint id 'loc:dummy', ':' is not a valid character for a constraint id\n")
-
     def testMasterSlaveConstraint(self):
         os.system("CIB_file="+temp_cib+" cibadmin -R --scope nodes --xml-text '<nodes><node id=\"1\" uname=\"rh7-1\"/><node id=\"2\" uname=\"rh7-2\"/></nodes>'")
 
@@ -1287,11 +1272,11 @@ Warning: changing a monitor operation interval from 10s to 11 to make the operat
         wrap_element_by_master(temp_cib, "statefulG")
 
         o,r = pcs(temp_cib, "constraint location stateful1 prefers rh7-1")
-        ac(o,"Error: stateful1 is a clone resource, you should use the clone id: stateful1-master when adding constraints. Use --force to override.\n")
+        ac(o,"Error: stateful1 is a clone resource, you should use the clone id: stateful1-master when adding constraints. Use --force to override.\n" + LOCATION_NODE_VALIDATION_SKIP_WARNING)
         assert r == 1
 
         o,r = pcs(temp_cib, "constraint location statefulG prefers rh7-1")
-        ac(o,"Error: statefulG is a clone resource, you should use the clone id: statefulG-master when adding constraints. Use --force to override.\n")
+        ac(o,"Error: statefulG is a clone resource, you should use the clone id: statefulG-master when adding constraints. Use --force to override.\n" + LOCATION_NODE_VALIDATION_SKIP_WARNING)
         assert r == 1
 
         o,r = pcs(temp_cib, "constraint location stateful1 rule #uname eq rh7-1")
@@ -1403,11 +1388,11 @@ Ticket Constraints:
         assert r == 0
 
         o,r = pcs(temp_cib, "constraint location dummy prefers rh7-1")
-        ac(o,"Error: dummy is a clone resource, you should use the clone id: dummy-clone when adding constraints. Use --force to override.\n")
+        ac(o,"Error: dummy is a clone resource, you should use the clone id: dummy-clone when adding constraints. Use --force to override.\n" + LOCATION_NODE_VALIDATION_SKIP_WARNING)
         assert r == 1
 
         o,r = pcs(temp_cib, "constraint location dummyG prefers rh7-1")
-        ac(o,"Error: dummyG is a clone resource, you should use the clone id: dummyG-clone when adding constraints. Use --force to override.\n")
+        ac(o,"Error: dummyG is a clone resource, you should use the clone id: dummyG-clone when adding constraints. Use --force to override.\n" + LOCATION_NODE_VALIDATION_SKIP_WARNING)
         assert r == 1
 
         o,r = pcs(temp_cib, "constraint location dummy rule #uname eq rh7-1")
@@ -2680,7 +2665,7 @@ class LocationTypePattern(ConstraintEffect):
         return self._stdout
 
     def test_prefers(self):
-        self._stdout += LOCATION_NODE_VALIDATION_SKIP_WARNING
+        self._stdout = LOCATION_NODE_VALIDATION_SKIP_WARNING + self._stdout
         self.assert_effect(
             "constraint location regexp%res_[0-9] prefers node1",
             """<constraints>
@@ -2692,7 +2677,7 @@ class LocationTypePattern(ConstraintEffect):
         )
 
     def test_avoids(self):
-        self._stdout += LOCATION_NODE_VALIDATION_SKIP_WARNING
+        self._stdout = LOCATION_NODE_VALIDATION_SKIP_WARNING + self._stdout
         self.assert_effect(
             "constraint location regexp%res_[0-9] avoids node1",
             """<constraints>
@@ -2704,7 +2689,7 @@ class LocationTypePattern(ConstraintEffect):
         )
 
     def test_add(self):
-        self._stdout += LOCATION_NODE_VALIDATION_SKIP_WARNING
+        self._stdout = LOCATION_NODE_VALIDATION_SKIP_WARNING + self._stdout
         self.assert_effect(
             "constraint location add my-id regexp%res_[0-9] node1 INFINITY",
             """<constraints>
@@ -3044,8 +3029,11 @@ class BundleLocation(Bundle):
         self.fixture_primitive("R", "B")
         self.assert_pcs_fail(
             "constraint location R prefers node1",
-            "Error: R is a bundle resource, you should use the bundle id: B "
-                "when adding constraints. Use --force to override.\n"
+            (
+                "Error: R is a bundle resource, you should use the bundle id: "
+                "B when adding constraints. Use --force to override.\n" +
+                LOCATION_NODE_VALIDATION_SKIP_WARNING
+            )
         )
 
     def test_primitive_prefers_force(self):
@@ -3066,8 +3054,11 @@ class BundleLocation(Bundle):
         self.fixture_primitive("R", "B")
         self.assert_pcs_fail(
             "constraint location R avoids node1",
-            "Error: R is a bundle resource, you should use the bundle id: B "
-                "when adding constraints. Use --force to override.\n"
+            (
+                "Error: R is a bundle resource, you should use the bundle id: "
+                "B when adding constraints. Use --force to override.\n" +
+                LOCATION_NODE_VALIDATION_SKIP_WARNING
+            )
         )
 
     def test_primitive_avoids_force(self):
@@ -3088,8 +3079,11 @@ class BundleLocation(Bundle):
         self.fixture_primitive("R", "B")
         self.assert_pcs_fail(
             "constraint location add id R node1 100",
-            "Error: R is a bundle resource, you should use the bundle id: B "
-                "when adding constraints. Use --force to override.\n"
+            (
+                "Error: R is a bundle resource, you should use the bundle id: "
+                "B when adding constraints. Use --force to override.\n" +
+                LOCATION_NODE_VALIDATION_SKIP_WARNING
+            )
         )
 
     def test_primitive_location_force(self):
@@ -3343,3 +3337,167 @@ class BundleTicket(Bundle):
             "Warning: R is a bundle resource, you should use the bundle id: B "
                 "when adding constraints\n"
         )
+
+NodeScore = namedtuple("NodeScore", "node score")
+
+class LocationPrefersAvoidsMixin(
+    get_assert_pcs_effect_mixin(
+        lambda cib: etree.tostring(
+            #pylint:disable=undefined-variable
+            etree.parse(cib).findall(".//constraints")[0]
+        )
+    )
+):
+    def setUp(self):
+        self.empty_cib = empty_cib
+        self.temp_cib = temp_cib
+        shutil.copy(self.empty_cib, self.temp_cib)
+        self.command = "to-be-overriden"
+
+    def xml_score(self, score):
+        return score if score else "INFINITY"
+
+    @staticmethod
+    def _unpack_node_score_list_to_cmd(node_score_list):
+        return " ".join([
+            "{node}{score}".format(
+                node=item.node,
+                score="" if item.score is None else f"={item.score}",
+            ) for item in node_score_list
+        ])
+
+    def _construct_xml(self, node_score_list):
+        return "\n".join([
+            "<constraints>",
+            "\n".join(
+                """
+                <rsc_location id="location-dummy-{node}-{score}"
+                node="{node}" rsc="dummy" score="{score}"/>
+                """.format(
+                    node=item.node,
+                    score=self.xml_score(item.score),
+                ) for item in node_score_list
+            ),
+            "</constraints>"
+        ])
+
+    def assert_success(self, node_score_list):
+        assert self.command in {"prefers", "avoids"}
+        self.fixture_primitive("dummy")
+        self.assert_effect(
+            (
+                f"constraint location dummy {self.command} "
+                +
+                self._unpack_node_score_list_to_cmd(node_score_list)
+            ),
+            self._construct_xml(node_score_list),
+            LOCATION_NODE_VALIDATION_SKIP_WARNING
+        )
+
+    def assert_failure(self, node_score_list, error_msg):
+        assert self.command in {"prefers", "avoids"}
+        self.fixture_primitive("dummy")
+        self.assert_pcs_fail(
+            (
+                f"constraint location dummy {self.command} "
+                +
+                self._unpack_node_score_list_to_cmd(node_score_list)
+            ),
+            error_msg + LOCATION_NODE_VALIDATION_SKIP_WARNING
+        )
+        self.assert_resources_xml_in_cib("<constraints/>")
+
+    def test_single_implicit_success(self):
+        node1 = NodeScore("node1", None)
+        self.assert_success([node1])
+
+    def test_single_explicit_success(self):
+        node1 = NodeScore("node1", "10")
+        self.assert_success([node1])
+
+    def test_multiple_implicit_success(self):
+        node1 = NodeScore("node1", None)
+        node2 = NodeScore("node2", None)
+        node3 = NodeScore("node3", None)
+        self.assert_success([node1, node2, node3])
+
+    def test_multiple_mixed_success(self):
+        node1 = NodeScore("node1", None)
+        node2 = NodeScore("node2", "300")
+        node3 = NodeScore("node3", None)
+        self.assert_success([node1, node2, node3])
+
+    def test_multiple_explicit_success(self):
+        node1 = NodeScore("node1", "100")
+        node2 = NodeScore("node2", "300")
+        node3 = NodeScore("node3", "200")
+        self.assert_success([node1, node2, node3])
+
+    def test_empty_score(self):
+        node1 = NodeScore("node1", "")
+        self.assert_failure(
+            [node1],
+            "Error: invalid score '', use integer or INFINITY or -INFINITY\n"
+        )
+
+    def test_single_explicit_fail(self):
+        node1 = NodeScore("node1", "aaa")
+        self.assert_failure(
+            [node1],
+            "Error: invalid score 'aaa', use integer or INFINITY or -INFINITY\n"
+        )
+
+    def test_multiple_implicit_fail(self):
+        node1 = NodeScore("node1", "whatever")
+        node2 = NodeScore("node2", "dontcare")
+        node3 = NodeScore("node3", "never")
+        self.assert_failure(
+            [node1, node2, node3],
+            "Error: invalid score 'whatever', use integer or INFINITY or "
+            "-INFINITY\n"
+        )
+
+    def test_multiple_mixed_fail(self):
+        node1 = NodeScore("node1", None)
+        node2 = NodeScore("node2", "invalid")
+        node3 = NodeScore("node3", "200")
+        self.assert_failure(
+            [node1, node2, node3],
+            "Error: invalid score 'invalid', use integer or INFINITY or "
+            "-INFINITY\n"
+        )
+
+class LocationPrefers(ConstraintEffect, LocationPrefersAvoidsMixin):
+    command = "prefers"
+
+class LocationAvoids(ConstraintEffect, LocationPrefersAvoidsMixin):
+    command = "avoids"
+
+    def xml_score(self, score):
+        score = super().xml_score(score)
+        return score[1:] if score[0] == "-" else "-" + score
+
+class LocationAdd(ConstraintEffect):
+    def test_invalid_score(self):
+        self.assert_pcs_fail(
+            "constraint location add location1 D1 rh7-1 bar",
+            (
+                "Error: invalid score 'bar', use integer or INFINITY or "
+                "-INFINITY\n"
+                +
+                LOCATION_NODE_VALIDATION_SKIP_WARNING
+            )
+        )
+        self.assert_resources_xml_in_cib("<constraints/>")
+
+    def test_invalid_location(self):
+        self.assert_pcs_fail(
+            "constraint location add loc:dummy D1 rh7-1 100",
+            (
+                "Error: invalid constraint id 'loc:dummy', ':' is not a valid "
+                "character for a constraint id\n"
+                +
+                LOCATION_NODE_VALIDATION_SKIP_WARNING
+            )
+        )
+        self.assert_resources_xml_in_cib("<constraints/>")

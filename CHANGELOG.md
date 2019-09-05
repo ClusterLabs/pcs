@@ -1,5 +1,14 @@
 # Change Log
 
+## [Unreleased]
+
+### Fixed
+- All node names and scores are validated when running `pcs constraint location
+  avoids/prefers` before writing configuration to cib ([rhbz#1673835])
+
+[rhbz#1673835]: https://bugzilla.redhat.com/show_bug.cgi?id=1673835
+
+
 ## [0.10.3] - 2019-08-23
 
 ### Fixed
