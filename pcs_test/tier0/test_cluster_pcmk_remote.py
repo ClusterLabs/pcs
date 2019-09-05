@@ -532,7 +532,7 @@ class NodeDeleteRemoveRemote(RemoteTest):
         self.fixture_multiple_remote_nodes()
         self.assert_pcs_fail(
             f"cluster node {self.command} HOST-A",
-            "Error: multiple resource for 'HOST-A' found: "
+            "Error: more than one resource for 'HOST-A' found: "
                 "'HOST-A', 'NODE-NAME', use --force to override\n"
         )
 
@@ -542,7 +542,10 @@ class NodeDeleteRemoveRemote(RemoteTest):
             f"cluster node {self.command} HOST-A --force",
             "<resources/>",
 
-            "Warning: multiple resource for 'HOST-A' found: 'HOST-A', 'NODE-NAME'\n"
+            (
+                "Warning: more than one resource for 'HOST-A' found: "
+                "'HOST-A', 'NODE-NAME'\n"
+            )
             +
             fixture_nolive_remove_report(["HOST-A", "NODE-NAME"])
             +

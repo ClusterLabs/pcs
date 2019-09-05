@@ -2,6 +2,7 @@ from pcs.common import report_codes as codes
 from pcs.cli.common.console_report import (
     format_list,
     format_optional,
+    format_plural,
 )
 
 def format_booth_default(value, template):
@@ -40,8 +41,11 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
     ,
 
     codes.BOOTH_CONFIG_UNEXPECTED_LINES: lambda info:
-        "unexpected line appeard in config: \n{0}"
-        .format("\n".join(info["line_list"]))
+        "unexpected {_line_pl} appeared in config:\n{_line_list}"
+        .format(
+            _line_pl=format_plural(info["line_list"], "line"),
+            _line_list="\n".join(info["line_list"])
+        )
     ,
 
     codes.BOOTH_INVALID_NAME: lambda info:

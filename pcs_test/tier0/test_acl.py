@@ -999,7 +999,7 @@ Role: role4
         self.assert_pcs_success("acl role assign role1 user user1")
         self.assert_pcs_fail(
             "acl role assign role1 user user1",
-            "Error: Role 'role1' is already asigned to 'user1'\n"
+            "Error: Role 'role1' is already assigned to 'user1'\n"
         )
         self.assert_pcs_success("acl role unassign role1 user user1")
         self.assert_pcs_fail(
@@ -1021,7 +1021,7 @@ Role: role4
         self.assert_pcs_success("acl role assign role1 to user user1")
         self.assert_pcs_fail(
             "acl role assign role1 to user user1",
-            "Error: Role 'role1' is already asigned to 'user1'\n"
+            "Error: Role 'role1' is already assigned to 'user1'\n"
         )
         self.assert_pcs_success("acl role unassign role1 from user user1")
         self.assert_pcs_fail(
@@ -1035,7 +1035,7 @@ Role: role4
         self.assert_pcs_success("acl role assign role1 group group1")
         self.assert_pcs_fail(
             "acl role assign role1 group group1",
-            "Error: Role 'role1' is already asigned to 'group1'\n"
+            "Error: Role 'role1' is already assigned to 'group1'\n"
         )
         self.assert_pcs_success("acl role unassign role1 group group1")
         self.assert_pcs_fail(
@@ -1057,7 +1057,7 @@ Role: role4
         self.assert_pcs_success("acl role assign role1 to group group1")
         self.assert_pcs_fail(
             "acl role assign role1 to group group1",
-            "Error: Role 'role1' is already asigned to 'group1'\n"
+            "Error: Role 'role1' is already assigned to 'group1'\n"
         )
         self.assert_pcs_success("acl role unassign role1 from group group1")
         self.assert_pcs_fail(

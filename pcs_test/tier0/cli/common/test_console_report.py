@@ -287,7 +287,7 @@ class InvalidScore(NameBuildTest):
 class MultipleScoreOptions(NameBuildTest):
     def test_all(self):
         self.assert_message_from_report(
-            "you cannot specify multiple score options",
+            "multiple score options cannot be specified",
             reports.multiple_score_options()
         )
 
@@ -1038,13 +1038,13 @@ class SbdDeviceInitializationStarted(NameBuildTest):
 class SbdDeviceInitializationSuccess(NameBuildTest):
     def test_more_devices(self):
         self.assert_message_from_report(
-            "Device(s) initialized successfuly",
+            "Devices initialized successfully",
             reports.sbd_device_initialization_success(["/dev2", "/dev1"])
         )
 
     def test_one_device(self):
         self.assert_message_from_report(
-            "Device(s) initialized successfuly",
+            "Device initialized successfully",
             reports.sbd_device_initialization_success(["/dev1"])
         )
 
@@ -1702,13 +1702,13 @@ class OmittingNode(NameBuildTest):
 class MultipleResultFound(NameBuildTest):
     def test_minimal(self):
         self.assert_message_from_report(
-            "multiple resource found: 'ID1', 'ID2'",
+            "more than one resource found: 'ID1', 'ID2'",
             reports.multiple_result_found("resource", ["ID2", "ID1"])
         )
 
     def test_build_messages(self):
         self.assert_message_from_report(
-            "multiple resource for 'NODE-NAME' found: 'ID1', 'ID2'",
+            "more than one resource for 'NODE-NAME' found: 'ID1', 'ID2'",
             reports.multiple_result_found(
                 "resource", ["ID2", "ID1"], "NODE-NAME"
             )
@@ -3196,7 +3196,7 @@ class WaitForNodeStartupStarted(NameBuildTest):
 class WaitForNodeStartupTimedOut(NameBuildTest):
     def test_all(self):
         self.assert_message_from_report(
-            "Waiting timeout",
+            "Node(s) startup timed out",
             reports.wait_for_node_startup_timed_out()
         )
 
@@ -3797,8 +3797,8 @@ class DuplicateConstraintsExist(NameBuildTest):
         self.assert_message_from_report(
             (
                 "duplicate constraint already exists force text\n"
-                "  rsc_anotherrsc=resourceA (id:id123)\n"
-                "  rsc_anotherrsc=resourceB (id:id321)"
+                "  rsc_another rsc=resourceA (id:id123)\n"
+                "  rsc_another rsc=resourceB (id:id321)"
             ),
             reports.duplicate_constraints_exist(
                 "rsc_another",
@@ -4398,7 +4398,7 @@ class UnsupportedOperationOnNonSystemdSystems(NameBuildTest):
 class AclRoleIsAlreadyAssignedToTarget(NameBuildTest):
     def test_all(self):
         self.assert_message_from_report(
-            "Role 'role_id' is already asigned to 'target_id'",
+            "Role 'role_id' is already assigned to 'target_id'",
             reports.acl_role_is_already_assigned_to_target(
                 "role_id", "target_id"
             )

@@ -58,13 +58,13 @@ class BoothConfigUnexpectedLinesTest(NameBuildTest):
 
     def test_single_line(self):
         self.assert_message_from_report(
-            "unexpected line appeard in config: \nline",
+            "unexpected line appeared in config:\nline",
             reports.booth_config_unexpected_lines(["line"])
         )
 
     def test_multiple_lines(self):
         self.assert_message_from_report(
-            "unexpected line appeard in config: \nline\nline2",
+            "unexpected lines appeared in config:\nline\nline2",
             reports.booth_config_unexpected_lines(["line", "line2"])
         )
 

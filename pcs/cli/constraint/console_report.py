@@ -1,6 +1,7 @@
 def constraint_plain(constraint_type, constraint_info, with_id=False):
-    return constraint_type + " ".join(
-        prepare_options(constraint_info["options"], with_id)
+    return "{0} {1}".format(
+        constraint_type,
+        ' '.join(prepare_options(constraint_info['options'], with_id))
     )
 
 def resource_sets(set_list, with_id=True):

@@ -651,7 +651,7 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
     ,
 
 
-    codes.MULTIPLE_SCORE_OPTIONS: "you cannot specify multiple score options",
+    codes.MULTIPLE_SCORE_OPTIONS: "multiple score options cannot be specified",
 
 
     codes.RUN_EXTERNAL_PROCESS_STARTED: lambda info:
@@ -1177,7 +1177,7 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
     ,
 
     codes.CIB_ACL_ROLE_IS_ALREADY_ASSIGNED_TO_TARGET: lambda info:
-        "Role '{role_id}' is already asigned to '{target_id}'"
+        "Role '{role_id}' is already assigned to '{target_id}'"
         .format(**info)
     ,
 
@@ -1407,7 +1407,7 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
     ,
 
     codes.MULTIPLE_RESULTS_FOUND: lambda info:
-        "multiple {result_type}{search_description} found: {what_found}"
+        "more than one {result_type}{search_description} found: {what_found}"
         .format(
             what_found=format_list(info["result_identifier_list"]),
             search_description="" if not info["search_description"]
@@ -1551,8 +1551,12 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
         )
     ,
 
-    codes.SBD_DEVICE_INITIALIZATION_SUCCESS:
-        "Device(s) initialized successfuly",
+    codes.SBD_DEVICE_INITIALIZATION_SUCCESS: lambda info:
+        "{_device_pl} initialized successfully"
+        .format(
+            _device_pl=format_plural(info["device_list"], "Device")
+        )
+    ,
 
     codes.SBD_DEVICE_INITIALIZATION_ERROR: lambda info:
         (
@@ -1985,7 +1989,7 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
             _nodes=format_list(info["node_name_list"])
         )
     ,
-    codes.WAIT_FOR_NODE_STARTUP_TIMED_OUT: "Waiting timeout",
+    codes.WAIT_FOR_NODE_STARTUP_TIMED_OUT: "Node(s) startup timed out",
     codes.WAIT_FOR_NODE_STARTUP_ERROR:
         "Unable to verify all nodes have started"
     ,

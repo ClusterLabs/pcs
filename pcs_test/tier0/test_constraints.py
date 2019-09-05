@@ -813,7 +813,7 @@ Colocation Constraints:
         self.assertEqual(1, retValue)
 
         output, retValue = pcs(temp_cib, "constraint colocation set D1 D2 setoptions score=100 score-attribute=foo")
-        ac(output, "Error: you cannot specify multiple score options\n")
+        ac(output, "Error: multiple score options cannot be specified\n")
         self.assertEqual(1, retValue)
 
         output, retValue = pcs(temp_cib, "constraint colocation set D1 D2 setoptions score-attribute=foo")
