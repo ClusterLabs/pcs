@@ -9,6 +9,7 @@ from pcs.common import (
     report_codes,
     ssl,
 )
+from pcs.common.file import RawFileError
 from pcs.common.node_communicator import HostNotFound
 from pcs.common.tools import (
     format_environment_error,
@@ -791,9 +792,9 @@ def add_nodes(
             report_processor.report(forceable_io_error_creator(
                 reports.file_io_error,
                 file_type_codes.COROSYNC_AUTHKEY,
+                RawFileError.ACTION_READ,
+                format_environment_error(e),
                 file_path=settings.corosync_authkey_file,
-                operation="read",
-                reason=format_environment_error(e)
             ))
 
     if os.path.isfile(settings.pacemaker_authkey_file):
@@ -807,9 +808,9 @@ def add_nodes(
             report_processor.report(forceable_io_error_creator(
                 reports.file_io_error,
                 file_type_codes.PACEMAKER_AUTHKEY,
+                RawFileError.ACTION_READ,
+                format_environment_error(e),
                 file_path=settings.pacemaker_authkey_file,
-                operation="read",
-                reason=format_environment_error(e)
             ))
 
     # pcs_settings.conf was previously synced using pcsdcli send_local_configs.
@@ -826,9 +827,9 @@ def add_nodes(
             report_processor.report(forceable_io_error_creator(
                 reports.file_io_error,
                 file_type_codes.PCS_SETTINGS_CONF,
+                RawFileError.ACTION_READ,
+                format_environment_error(e),
                 file_path=settings.pcsd_settings_conf_location,
-                operation="read",
-                reason=format_environment_error(e)
             ))
 
     # stop here if one of the files could not be loaded and it was not forced
@@ -858,9 +859,9 @@ def add_nodes(
             report_processor.report(
                 reports.file_io_error(
                     file_type_codes.PCSD_SSL_CERT,
+                    RawFileError.ACTION_READ,
+                    format_environment_error(e),
                     file_path=settings.pcsd_cert_location,
-                    reason=format_environment_error(e),
-                    operation="read",
                 )
             )
         try:
@@ -870,9 +871,9 @@ def add_nodes(
             report_processor.report(
                 reports.file_io_error(
                     file_type_codes.PCSD_SSL_KEY,
+                    RawFileError.ACTION_READ,
+                    format_environment_error(e),
                     file_path=settings.pcsd_key_location,
-                    reason=format_environment_error(e),
-                    operation="read",
                 )
             )
         if report_processor.has_errors:
@@ -1135,9 +1136,9 @@ def _is_ssl_cert_sync_enabled(report_processor):
         report_processor.report(
             reports.file_io_error(
                 file_type_codes.PCSD_ENVIRONMENT_CONFIG,
+                RawFileError.ACTION_READ,
+                format_environment_error(e),
                 file_path=settings.pcsd_config,
-                reason=format_environment_error(e),
-                operation="read",
             )
         )
     return False

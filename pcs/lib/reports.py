@@ -3158,24 +3158,23 @@ def file_already_exists(
         forceable=forceable,
     )
 
-def file_does_not_exist(file_role, file_path=""):
-    return ReportItem.error(
-        report_codes.FILE_DOES_NOT_EXIST,
-        info={
-            "file_role": file_role,
-            "file_path": file_path,
-        },
-    )
-
 def file_io_error(
-    file_role, file_path="", reason="", operation="work with",
+    file_type_code, operation, reason, file_path="",
     severity=ReportItemSeverity.ERROR, forceable=None,
 ):
+    """
+    Unable to work with a file
+
+    string file_type_code -- file type, item of pcs.common.file_type_codes
+    string operation -- failed action, item of pcs.common.file.RawFileError
+    string reason -- an error message
+    string file_path -- file path, optional for cases when unknown (GhostFiles)
+    """
     return ReportItem(
         report_codes.FILE_IO_ERROR,
         severity,
         info={
-            "file_role": file_role,
+            "file_type_code": file_type_code,
             "file_path": file_path,
             "reason": reason,
             "operation": operation

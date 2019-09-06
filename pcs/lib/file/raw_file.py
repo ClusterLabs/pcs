@@ -25,10 +25,12 @@ def raw_file_error_report(error, force_code=None, is_forced_or_warning=False):
     return reports.get_problem_creator(force_code, is_forced_or_warning)(
         reports.file_io_error,
         error.metadata.file_type_code,
-        # do not report real file path if we were working with a ghost file
-        "" if isinstance(error, GhostFileError) else error.metadata.path,
-        error.reason,
         error.action,
+        error.reason,
+        # do not report real file path if we were working with a ghost file
+        file_path=(
+            "" if isinstance(error, GhostFileError) else error.metadata.path
+        ),
     )
 
 def export_ghost_file(ghost_file):

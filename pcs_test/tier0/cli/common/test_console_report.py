@@ -16,6 +16,7 @@ from pcs.common.fencing_topology import (
     TARGET_TYPE_REGEXP,
     TARGET_TYPE_ATTRIBUTE,
 )
+from pcs.common.file import RawFileError
 from pcs.lib import reports
 from pcs.lib.errors import ReportItem
 
@@ -3310,43 +3311,14 @@ class FileAlreadyExists(NameBuildTest):
             )
         )
 
-class FileDoesNotExist(NameBuildTest):
-    def test_minimal(self):
-        self.assert_message_from_report(
-            "UNKNOWN_ROLE file does not exist",
-            reports.file_does_not_exist("UNKNOWN_ROLE")
-        )
-
-    def test_with_path(self):
-        self.assert_message_from_report(
-            "UNKNOWN_ROLE file '/etc/cluster/something' does not exist",
-            reports.file_does_not_exist(
-                "UNKNOWN_ROLE", "/etc/cluster/something"
-            )
-        )
-
 class FileIoError(NameBuildTest):
     def test_minimal(self):
         self.assert_message_from_report(
-            "Unable to work with Booth configuration",
-            reports.file_io_error(file_type_codes.BOOTH_CONFIG)
-        )
-
-    def test_with_path(self):
-        self.assert_message_from_report(
-            "Unable to work with Booth key '/etc/booth/booth.key'",
+            "Unable to read Booth configuration: ",
             reports.file_io_error(
-                file_type_codes.BOOTH_KEY, file_path="/etc/booth/booth.key"
-            )
-        )
-
-    def test_with_path_and_operation(self):
-        self.assert_message_from_report(
-            "Unable to remove Pacemaker authkey '/etc/pacemaker/key'",
-            reports.file_io_error(
-                file_type_codes.PACEMAKER_AUTHKEY,
-                file_path="/etc/pacemaker/key",
-                operation="remove"
+                file_type_codes.BOOTH_CONFIG,
+                RawFileError.ACTION_READ,
+                ""
             )
         )
 
@@ -3355,9 +3327,9 @@ class FileIoError(NameBuildTest):
             "Unable to read pcsd SSL certificate '/var/lib/pcsd.crt': Failed",
             reports.file_io_error(
                 file_type_codes.PCSD_SSL_CERT,
+                RawFileError.ACTION_READ,
+                "Failed",
                 file_path="/var/lib/pcsd.crt",
-                reason="Failed",
-                operation="read"
             )
         )
 
@@ -3366,40 +3338,46 @@ class FileIoError(NameBuildTest):
             "Unable to write pcsd SSL key '/var/lib/pcsd.key': Failed",
             reports.file_io_error(
                 file_type_codes.PCSD_SSL_KEY,
+                RawFileError.ACTION_WRITE,
+                "Failed",
                 file_path="/var/lib/pcsd.key",
-                reason="Failed",
-                operation="write"
             )
         )
 
     def test_role_translation_b(self):
         self.assert_message_from_report(
-            "Unable to read pcsd configuration '/etc/sysconfig/pcsd': Failed",
+            (
+                "Unable to change ownership of pcsd configuration "
+                "'/etc/sysconfig/pcsd': Failed"
+            ),
             reports.file_io_error(
                 file_type_codes.PCSD_ENVIRONMENT_CONFIG,
+                RawFileError.ACTION_CHOWN,
+                "Failed",
                 file_path="/etc/sysconfig/pcsd",
-                reason="Failed",
-                operation="read"
             )
         )
 
     def test_role_translation_c(self):
         self.assert_message_from_report(
-            "Unable to read Corosync authkey: Failed",
+            "Unable to change permissions of Corosync authkey: Failed",
             reports.file_io_error(
                 file_type_codes.COROSYNC_AUTHKEY,
-                reason="Failed",
-                operation="read"
+                RawFileError.ACTION_CHMOD,
+                "Failed",
             )
         )
 
     def test_role_translation_d(self):
         self.assert_message_from_report(
-            "Unable to write pcs configuration: Permission denied",
+            (
+                "Unable to change ownership of pcs configuration: "
+                "Permission denied"
+            ),
             reports.file_io_error(
                 file_type_codes.PCS_SETTINGS_CONF,
-                reason="Permission denied",
-                operation="write"
+                RawFileError.ACTION_CHOWN,
+                "Permission denied",
             )
         )
 

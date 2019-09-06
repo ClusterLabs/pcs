@@ -15,6 +15,7 @@ from pcs_test.tools.misc import get_test_resource as rc
 
 from pcs import settings
 from pcs.common import file_type_codes, report_codes
+from pcs.common.file import RawFileError
 from pcs.common.host import Destination
 from pcs.lib.commands.remote_node import node_add_remote as node_add_remote_orig
 
@@ -425,9 +426,9 @@ class AddRemote(TestCase):
             [
                 fixture.error(
                     report_codes.FILE_IO_ERROR,
-                    file_role=file_type_codes.PACEMAKER_AUTHKEY,
+                    file_type_code=file_type_codes.PACEMAKER_AUTHKEY,
                     file_path=LocalConfig.PCMK_AUTHKEY_PATH,
-                    operation="read",
+                    operation=RawFileError.ACTION_READ,
                 )
             ],
         )

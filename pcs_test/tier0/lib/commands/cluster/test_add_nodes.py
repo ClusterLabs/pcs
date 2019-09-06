@@ -2032,17 +2032,17 @@ class FailurePcsdSslCertSync(TestCase):
             [
                 fixture.error(
                     report_codes.FILE_IO_ERROR,
-                    file_role="PCSD_SSL_CERT",
+                    file_type_code=file_type_codes.PCSD_SSL_CERT,
                     file_path=settings.pcsd_cert_location,
                     reason="error cert",
-                    operation="read"
+                    operation=RawFileError.ACTION_READ,
                 ),
                 fixture.error(
                     report_codes.FILE_IO_ERROR,
-                    file_role="PCSD_SSL_KEY",
+                    file_type_code=file_type_codes.PCSD_SSL_KEY,
                     file_path=settings.pcsd_key_location,
                     reason="error key",
-                    operation="read"
+                    operation=RawFileError.ACTION_READ,
                 ),
             ]
         )
@@ -2219,23 +2219,23 @@ class FailureFilesDistribution(TestCase):
             [
                 fixture.error(
                     report_codes.FILE_IO_ERROR,
-                    file_role=file_type_codes.COROSYNC_AUTHKEY,
+                    force_code=report_codes.SKIP_FILE_DISTRIBUTION_ERRORS,
+                    file_type_code=file_type_codes.COROSYNC_AUTHKEY,
                     file_path=settings.corosync_authkey_file,
                     reason=(
                         f"{self.err_msg}: '{settings.corosync_authkey_file}'"
                     ),
-                    operation="read",
-                    force_code=report_codes.SKIP_FILE_DISTRIBUTION_ERRORS,
+                    operation=RawFileError.ACTION_READ,
                 ),
                 fixture.error(
                     report_codes.FILE_IO_ERROR,
-                    file_role=file_type_codes.PACEMAKER_AUTHKEY,
+                    force_code=report_codes.SKIP_FILE_DISTRIBUTION_ERRORS,
+                    file_type_code=file_type_codes.PACEMAKER_AUTHKEY,
                     file_path=settings.pacemaker_authkey_file,
                     reason=(
                         f"{self.err_msg}: '{settings.pacemaker_authkey_file}'"
                     ),
-                    operation="read",
-                    force_code=report_codes.SKIP_FILE_DISTRIBUTION_ERRORS,
+                    operation=RawFileError.ACTION_READ,
                 )
             ]
         )
@@ -2286,21 +2286,21 @@ class FailureFilesDistribution(TestCase):
             [
                 fixture.warn(
                     report_codes.FILE_IO_ERROR,
-                    file_role=file_type_codes.COROSYNC_AUTHKEY,
+                    file_type_code=file_type_codes.COROSYNC_AUTHKEY,
                     file_path=settings.corosync_authkey_file,
                     reason=(
                         f"{self.err_msg}: '{settings.corosync_authkey_file}'"
                     ),
-                    operation="read",
+                    operation=RawFileError.ACTION_READ,
                 ),
                 fixture.warn(
                     report_codes.FILE_IO_ERROR,
-                    file_role=file_type_codes.PACEMAKER_AUTHKEY,
+                    file_type_code=file_type_codes.PACEMAKER_AUTHKEY,
                     file_path=settings.pacemaker_authkey_file,
                     reason=(
                         f"{self.err_msg}: '{settings.pacemaker_authkey_file}'"
                     ),
-                    operation="read",
+                    operation=RawFileError.ACTION_READ,
                 )
             ]
         )
@@ -2671,7 +2671,7 @@ class FailureBoothConfigsDistribution(TestCase):
                 fixture.error(
                     report_codes.FILE_IO_ERROR,
                     force_code=report_codes.SKIP_UNREADABLE_CONFIG,
-                    file_role=file_type_codes.BOOTH_CONFIG,
+                    file_type_code=file_type_codes.BOOTH_CONFIG,
                     file_path=self.config_path,
                     reason=self.err_msg,
                     operation=RawFileError.ACTION_READ,
@@ -2714,7 +2714,7 @@ class FailureBoothConfigsDistribution(TestCase):
             [
                 fixture.warn(
                     report_codes.FILE_IO_ERROR,
-                    file_role=file_type_codes.BOOTH_CONFIG,
+                    file_type_code=file_type_codes.BOOTH_CONFIG,
                     file_path=self.config_path,
                     reason=self.err_msg,
                     operation=RawFileError.ACTION_READ,
@@ -2789,7 +2789,7 @@ class FailureBoothConfigsDistribution(TestCase):
             [
                 fixture.warn(
                     report_codes.FILE_IO_ERROR,
-                    file_role=file_type_codes.BOOTH_CONFIG,
+                    file_type_code=file_type_codes.BOOTH_CONFIG,
                     file_path=self.config_path,
                     reason=self.err_msg,
                     operation=RawFileError.ACTION_READ,
@@ -2826,7 +2826,7 @@ class FailureBoothConfigsDistribution(TestCase):
                 fixture.error(
                     report_codes.FILE_IO_ERROR,
                     force_code=report_codes.SKIP_UNREADABLE_CONFIG,
-                    file_role=file_type_codes.BOOTH_KEY,
+                    file_type_code=file_type_codes.BOOTH_KEY,
                     file_path=self.authfile_path,
                     reason=self.err_msg,
                     operation=RawFileError.ACTION_READ,
@@ -2878,7 +2878,7 @@ class FailureBoothConfigsDistribution(TestCase):
             [
                 fixture.warn(
                     report_codes.FILE_IO_ERROR,
-                    file_role=file_type_codes.BOOTH_KEY,
+                    file_type_code=file_type_codes.BOOTH_KEY,
                     file_path=self.authfile_path,
                     reason=self.err_msg,
                     operation=RawFileError.ACTION_READ,
@@ -2959,7 +2959,7 @@ class FailureBoothConfigsDistribution(TestCase):
             [
                 fixture.warn(
                     report_codes.FILE_IO_ERROR,
-                    file_role=file_type_codes.BOOTH_KEY,
+                    file_type_code=file_type_codes.BOOTH_KEY,
                     file_path=self.authfile_path,
                     reason=self.err_msg,
                     operation=RawFileError.ACTION_READ,

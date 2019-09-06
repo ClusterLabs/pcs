@@ -43,9 +43,9 @@ def middleware_config(config_path, key_path):
             raise LibraryError(
                 reports.file_io_error(
                     e.metadata.file_type_code,
-                    e.metadata.path,
-                    e.reason,
                     e.action,
+                    e.reason,
+                    file_path=e.metadata.path,
                 )
             )
         return {
@@ -77,9 +77,9 @@ def middleware_config(config_path, key_path):
             raise LibraryError(
                 reports.file_io_error(
                     e.metadata.file_type_code,
-                    e.metadata.path,
-                    e.reason,
                     e.action,
+                    e.reason,
+                    file_path=e.metadata.path,
                 )
             )
 

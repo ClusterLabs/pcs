@@ -8,6 +8,7 @@ from pcs.common import (
     file_type_codes,
     report_codes as codes,
 )
+from pcs.common.file import RawFileError
 
 from pcs.common.fencing_topology import TARGET_TYPE_ATTRIBUTE
 
@@ -30,6 +31,13 @@ _type_articles = {
     "ACL user": "an",
     "ACL role": "an",
     "ACL permission": "an",
+}
+_file_operation_translation = {
+    RawFileError.ACTION_CHMOD: "change permissions of",
+    RawFileError.ACTION_CHOWN: "change ownership of",
+    RawFileError.ACTION_READ: "read",
+    RawFileError.ACTION_REMOVE: "remove",
+    RawFileError.ACTION_WRITE: "write",
 }
 _file_role_translation = {
     file_type_codes.BOOTH_CONFIG: "Booth configuration",
@@ -134,6 +142,9 @@ def format_fencing_level_target(target_type, target_value):
     if target_type == TARGET_TYPE_ATTRIBUTE:
         return "{0}={1}".format(target_value[0], target_value[1])
     return target_value
+
+def format_file_action(action):
+    return _file_operation_translation.get(action, action)
 
 def format_file_role(role):
     return _file_role_translation.get(role, role)
@@ -1827,20 +1838,12 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
         )
     ,
 
-    codes.FILE_DOES_NOT_EXIST: lambda info:
-        "{_file_role} file{_file_path} does not exist"
-        .format(
-            _file_role=format_file_role(info["file_role"]),
-            _file_path=format_optional(info["file_path"], " '{}'")
-        )
-    ,
-
     codes.FILE_IO_ERROR: lambda info:
-        "Unable to {operation} {_file_role}{_file_path}{_reason}"
+        "Unable to {_action} {_file_role}{_file_path}: {reason}"
         .format(
+            _action=format_file_action(info["operation"]),
             _file_path=format_optional(info["file_path"], " '{0}'"),
-            _file_role=format_file_role(info["file_role"]),
-            _reason=format_optional(info["reason"], ": {}"),
+            _file_role=format_file_role(info["file_type_code"]),
             **info
         )
     ,

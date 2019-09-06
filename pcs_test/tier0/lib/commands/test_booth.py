@@ -361,7 +361,7 @@ class ConfigSetup(TestCase, FixtureMixin):
         self.env_assist.assert_reports([
             fixture.error(
                 report_codes.FILE_IO_ERROR,
-                file_role=file_type_codes.BOOTH_CONFIG,
+                file_type_code=file_type_codes.BOOTH_CONFIG,
                 file_path=self.fixture_cfg_path(),
                 reason=error,
                 operation=RawFileError.ACTION_WRITE,
@@ -391,7 +391,7 @@ class ConfigSetup(TestCase, FixtureMixin):
         self.env_assist.assert_reports([
             fixture.error(
                 report_codes.FILE_IO_ERROR,
-                file_role=file_type_codes.BOOTH_KEY,
+                file_type_code=file_type_codes.BOOTH_KEY,
                 file_path=self.fixture_key_path(),
                 reason=error,
                 operation=RawFileError.ACTION_WRITE,
@@ -658,7 +658,7 @@ class ConfigDestroy(TestCase, FixtureMixin):
             fixture.error(
                 report_codes.FILE_IO_ERROR,
                 force_code=report_codes.FORCE_BOOTH_DESTROY,
-                file_role=file_type_codes.BOOTH_CONFIG,
+                file_type_code=file_type_codes.BOOTH_CONFIG,
                 file_path=self.fixture_cfg_path(),
                 reason=error,
                 operation=RawFileError.ACTION_READ,
@@ -689,7 +689,7 @@ class ConfigDestroy(TestCase, FixtureMixin):
         self.env_assist.assert_reports([
             fixture.warn(
                 report_codes.FILE_IO_ERROR,
-                file_role=file_type_codes.BOOTH_CONFIG,
+                file_type_code=file_type_codes.BOOTH_CONFIG,
                 file_path=self.fixture_cfg_path(),
                 reason=error,
                 operation=RawFileError.ACTION_READ,
@@ -802,7 +802,7 @@ class ConfigDestroy(TestCase, FixtureMixin):
             fixture.error(
                 report_codes.FILE_IO_ERROR,
                 force_code=report_codes.FORCE_BOOTH_DESTROY,
-                file_role=file_type_codes.BOOTH_KEY,
+                file_type_code=file_type_codes.BOOTH_KEY,
                 file_path=self.fixture_key_path(),
                 reason=error,
                 operation=RawFileError.ACTION_REMOVE,
@@ -840,7 +840,7 @@ class ConfigDestroy(TestCase, FixtureMixin):
         self.env_assist.assert_reports([
             fixture.warn(
                 report_codes.FILE_IO_ERROR,
-                file_role=file_type_codes.BOOTH_KEY,
+                file_type_code=file_type_codes.BOOTH_KEY,
                 file_path=self.fixture_key_path(),
                 reason=error,
                 operation=RawFileError.ACTION_REMOVE,
@@ -879,7 +879,7 @@ class ConfigDestroy(TestCase, FixtureMixin):
         self.env_assist.assert_reports([
             fixture.error(
                 report_codes.FILE_IO_ERROR,
-                file_role=file_type_codes.BOOTH_CONFIG,
+                file_type_code=file_type_codes.BOOTH_CONFIG,
                 file_path=self.fixture_cfg_path(),
                 reason=error,
                 operation=RawFileError.ACTION_REMOVE,
@@ -1008,7 +1008,7 @@ class ConfigText(TestCase, FixtureMixin):
         self.env_assist.assert_reports([
             fixture.error(
                 report_codes.FILE_IO_ERROR,
-                file_role=file_type_codes.BOOTH_CONFIG,
+                file_type_code=file_type_codes.BOOTH_CONFIG,
                 file_path=self.fixture_cfg_path(),
                 reason=error,
                 operation=RawFileError.ACTION_READ,
@@ -1373,7 +1373,7 @@ class ConfigTicketAdd(TestCase, FixtureMixin):
         self.env_assist.assert_reports([
             fixture.error(
                 report_codes.FILE_IO_ERROR,
-                file_role=file_type_codes.BOOTH_CONFIG,
+                file_type_code=file_type_codes.BOOTH_CONFIG,
                 file_path=self.fixture_cfg_path(),
                 reason=error,
                 operation=RawFileError.ACTION_READ,
@@ -1396,7 +1396,7 @@ class ConfigTicketAdd(TestCase, FixtureMixin):
         self.env_assist.assert_reports([
             fixture.error(
                 report_codes.FILE_IO_ERROR,
-                file_role=file_type_codes.BOOTH_CONFIG,
+                file_type_code=file_type_codes.BOOTH_CONFIG,
                 file_path="",
                 reason="No such file or directory",
                 operation=RawFileError.ACTION_READ,
@@ -1431,7 +1431,7 @@ class ConfigTicketAdd(TestCase, FixtureMixin):
         self.env_assist.assert_reports([
             fixture.error(
                 report_codes.FILE_IO_ERROR,
-                file_role=file_type_codes.BOOTH_CONFIG,
+                file_type_code=file_type_codes.BOOTH_CONFIG,
                 file_path=self.fixture_cfg_path(),
                 reason=error,
                 operation=RawFileError.ACTION_WRITE,
@@ -1622,7 +1622,7 @@ class ConfigTicketRemove(TestCase, FixtureMixin):
         self.env_assist.assert_reports([
             fixture.error(
                 report_codes.FILE_IO_ERROR,
-                file_role=file_type_codes.BOOTH_CONFIG,
+                file_type_code=file_type_codes.BOOTH_CONFIG,
                 file_path=self.fixture_cfg_path(),
                 reason=error,
                 operation=RawFileError.ACTION_READ,
@@ -1644,7 +1644,7 @@ class ConfigTicketRemove(TestCase, FixtureMixin):
         self.env_assist.assert_reports([
             fixture.error(
                 report_codes.FILE_IO_ERROR,
-                file_role=file_type_codes.BOOTH_CONFIG,
+                file_type_code=file_type_codes.BOOTH_CONFIG,
                 file_path="",
                 reason="No such file or directory",
                 operation=RawFileError.ACTION_READ,
@@ -1680,7 +1680,7 @@ class ConfigTicketRemove(TestCase, FixtureMixin):
         self.env_assist.assert_reports([
             fixture.error(
                 report_codes.FILE_IO_ERROR,
-                file_role=file_type_codes.BOOTH_CONFIG,
+                file_type_code=file_type_codes.BOOTH_CONFIG,
                 file_path=self.fixture_cfg_path(),
                 reason=error,
                 operation=RawFileError.ACTION_WRITE,
@@ -1831,7 +1831,7 @@ class CreateInCluster(TestCase, FixtureMixin):
         self.env_assist.assert_reports([
             fixture.error(
                 report_codes.FILE_IO_ERROR,
-                file_role=file_type_codes.BOOTH_CONFIG,
+                file_type_code=file_type_codes.BOOTH_CONFIG,
                 file_path=self.fixture_cfg_path(),
                 reason=error,
                 operation=RawFileError.ACTION_READ,
@@ -2729,7 +2729,7 @@ class ConfigSyncTest(TestCase, FixtureMixin):
         self.env_assist.assert_reports([
             fixture.error(
                 report_codes.FILE_IO_ERROR,
-                file_role=file_type_codes.BOOTH_CONFIG,
+                file_type_code=file_type_codes.BOOTH_CONFIG,
                 file_path=self.fixture_cfg_path(),
                 reason=self.reason,
                 operation=RawFileError.ACTION_READ,
@@ -2751,7 +2751,7 @@ class ConfigSyncTest(TestCase, FixtureMixin):
         self.env_assist.assert_reports([
             fixture.error(
                 report_codes.FILE_IO_ERROR,
-                file_role=file_type_codes.BOOTH_CONFIG,
+                file_type_code=file_type_codes.BOOTH_CONFIG,
                 file_path="",
                 reason="No such file or directory",
                 operation=RawFileError.ACTION_READ,
@@ -2820,7 +2820,7 @@ class ConfigSyncTest(TestCase, FixtureMixin):
         self.env_assist.assert_reports([
             fixture.error(
                 report_codes.FILE_IO_ERROR,
-                file_role=file_type_codes.BOOTH_KEY,
+                file_type_code=file_type_codes.BOOTH_KEY,
                 file_path=self.fixture_key_path(),
                 reason=self.reason,
                 operation=RawFileError.ACTION_READ,
@@ -2842,7 +2842,7 @@ class ConfigSyncTest(TestCase, FixtureMixin):
         self.env_assist.assert_reports([
             fixture.error(
                 report_codes.FILE_IO_ERROR,
-                file_role=file_type_codes.BOOTH_KEY,
+                file_type_code=file_type_codes.BOOTH_KEY,
                 file_path="",
                 reason="No such file or directory",
                 operation=RawFileError.ACTION_READ,
@@ -3226,7 +3226,7 @@ class PullConfigFailure(PullConfigBase):
             [
                 fixture.error(
                     report_codes.FILE_IO_ERROR,
-                    file_role=file_type_codes.BOOTH_CONFIG,
+                    file_type_code=file_type_codes.BOOTH_CONFIG,
                     file_path=self.config_path,
                     reason=self.reason,
                     operation=RawFileError.ACTION_WRITE,
@@ -3403,7 +3403,7 @@ class PullConfigWithAuthfileFailure(PullConfigWithAuthfile):
             [
                 fixture.error(
                     report_codes.FILE_IO_ERROR,
-                    file_role=file_type_codes.BOOTH_KEY,
+                    file_type_code=file_type_codes.BOOTH_KEY,
                     file_path=self.authfile_path,
                     reason=self.reason,
                     operation=RawFileError.ACTION_WRITE,
