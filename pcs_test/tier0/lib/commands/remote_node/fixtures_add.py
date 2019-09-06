@@ -1,9 +1,8 @@
 import base64
-from unittest import mock
 
 from pcs_test.tools import fixture
 
-from pcs.common import report_codes
+from pcs.common import file_type_codes, report_codes
 
 
 OFFLINE_ERROR_MSG = "Could not resolve host"
@@ -73,21 +72,18 @@ class EnvConfigMixin():
         )
 
     def authkey_exists(self, return_value):
-        self.config.fs.exists(self.PCMK_AUTHKEY_PATH, return_value=return_value)
+        self.config.raw_file.exists(
+            file_type_codes.PACEMAKER_AUTHKEY,
+            self.PCMK_AUTHKEY_PATH,
+            exists=return_value,
+        )
 
     def open_authkey(self, pcmk_authkey_content="", fail=False):
-        kwargs = {}
-        if fail:
-            kwargs["side_effect"] = EnvironmentError("open failed")
-        else:
-            kwargs["return_value"] = mock.mock_open(
-                read_data=pcmk_authkey_content
-            )()
-
-        self.config.fs.open(
+        self.config.raw_file.read(
+            file_type_codes.PACEMAKER_AUTHKEY,
             self.PCMK_AUTHKEY_PATH,
-            mode="rb",
-            **kwargs
+            content=(pcmk_authkey_content if not fail else None),
+            exception_msg=("open failed" if fail else None),
         )
 
     def push_existing_authkey_to_remote(

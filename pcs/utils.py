@@ -277,34 +277,11 @@ def remove_uid_gid_file(uid, gid):
 
     return file_removed
 
-# TODO remove old code
 @lru_cache()
-def read_known_hosts_file_old():
+def read_known_hosts_file():
     """
     Commandline options: no options
     """
-    output, retval = run_pcsdcli("read_known_hosts")
-    data = {}
-    if (
-        retval == 0
-        and
-        output['status'] == 'ok'
-        and
-        output['data']
-        and
-        output['data'].get('known_hosts')
-    ):
-        try:
-            data = {
-                name: PcsKnownHost.from_known_host_file_dict(name, host)
-                for name, host in output['data']['known_hosts'].items()
-            }
-        except KeyError:
-            print("Warning: Unable to parse known host file.")
-    return data
-
-@lru_cache()
-def read_known_hosts_file():
     data = {}
     try:
         if os.getuid() != 0:

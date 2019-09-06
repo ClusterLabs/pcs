@@ -14,7 +14,7 @@ from pcs_test.tools.command_env import get_env_tools
 from pcs_test.tools.misc import get_test_resource as rc
 
 from pcs import settings
-from pcs.common import report_codes, env_file_role_codes
+from pcs.common import file_type_codes, report_codes
 from pcs.common.host import Destination
 from pcs.lib.commands.remote_node import node_add_remote as node_add_remote_orig
 
@@ -419,16 +419,17 @@ class AddRemote(TestCase):
         self.env_assist.assert_raise_library_error(
             lambda: node_add_remote(
                 self.env_assist.get_env(),
-            ),
+            )
+        )
+        self.env_assist.assert_reports(
             [
                 fixture.error(
                     report_codes.FILE_IO_ERROR,
-                    file_role=env_file_role_codes.PACEMAKER_AUTHKEY,
+                    file_role=file_type_codes.PACEMAKER_AUTHKEY,
                     file_path=LocalConfig.PCMK_AUTHKEY_PATH,
                     operation="read",
                 )
             ],
-            expected_in_processor=False
         )
 
     def test_validate_addr_already_exists(self):

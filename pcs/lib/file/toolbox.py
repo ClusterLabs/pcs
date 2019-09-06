@@ -36,6 +36,9 @@ class JsonParserException(file_interfaces.ParserErrorException):
         self.json_exception = json_exception
 
 class JsonParser(file_interfaces.ParserInterface):
+    """
+    Adapts standard json parser to our interfaces
+    """
     @staticmethod
     def parse(raw_file_data):
         try:
@@ -68,9 +71,14 @@ class JsonParser(file_interfaces.ParserInterface):
         raise exception
 
 class JsonExporter(file_interfaces.ExporterInterface):
+    """
+    Adapts standard json exporter to our interfaces
+    """
     @staticmethod
     def export(config_structure):
-        return json.dumps(config_structure).encode("utf-8")
+        return json.dumps(
+            config_structure, indent=4, sort_keys=True,
+        ).encode("utf-8")
 
 
 class NoopParser(file_interfaces.ParserInterface):
@@ -106,6 +114,14 @@ _toolboxes = {
     ),
     code.BOOTH_KEY: FileToolbox(
         file_type_code=code.BOOTH_KEY,
+        facade=NoopFacade,
+        parser=NoopParser,
+        exporter=NoopExporter,
+        validator=None, # TODO needed for files syncing
+        version_controller=None, # TODO needed for files syncing
+    ),
+    code.PACEMAKER_AUTHKEY: FileToolbox(
+        file_type_code=code.PACEMAKER_AUTHKEY,
         facade=NoopFacade,
         parser=NoopParser,
         exporter=NoopExporter,

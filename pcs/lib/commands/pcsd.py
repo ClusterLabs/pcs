@@ -1,5 +1,5 @@
 from pcs import settings
-from pcs.common import env_file_role_codes
+from pcs.common import file_type_codes
 from pcs.common.reports import SimpleReportProcessor
 from pcs.common.tools import format_environment_error
 from pcs.lib import reports
@@ -36,7 +36,7 @@ def synchronize_ssl_certificate(env, skip_offline=False):
     except EnvironmentError as e:
         report_processor.report(
             reports.file_io_error(
-                env_file_role_codes.PCSD_SSL_CERT,
+                file_type_codes.PCSD_SSL_CERT,
                 file_path=settings.pcsd_cert_location,
                 reason=format_environment_error(e),
                 operation="read",
@@ -48,7 +48,7 @@ def synchronize_ssl_certificate(env, skip_offline=False):
     except EnvironmentError as e:
         report_processor.report(
             reports.file_io_error(
-                env_file_role_codes.PCSD_SSL_KEY,
+                file_type_codes.PCSD_SSL_KEY,
                 file_path=settings.pcsd_key_location,
                 reason=format_environment_error(e),
                 operation="read",

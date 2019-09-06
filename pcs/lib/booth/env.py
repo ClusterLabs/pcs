@@ -1,7 +1,7 @@
 from pcs.common import file_type_codes
 from pcs.lib import reports as common_reports
-from pcs.lib.env_file import export_ghost_file
 from pcs.lib.file.instance import FileInstance
+from pcs.lib.file.raw_file import export_ghost_file
 from pcs.lib.errors import LibraryError
 
 

@@ -22,9 +22,9 @@ FileMetadata = namedtuple(
 
 
 class RawFileError(Exception):
-    # TODO Do we want a separate exception for each action? The codes must be
-    # passed in a report to cli for translating and we certainly do not want a
-    # separate report for each action.
+    # So far there has been no need to have a separate exception for each
+    # action. Actions must be passed in a report and we certainely do not want
+    # a separate report for each action.
     ACTION_CHMOD = "chmod"
     ACTION_CHOWN = "chown"
     ACTION_READ = "read"
@@ -32,6 +32,11 @@ class RawFileError(Exception):
     ACTION_WRITE = "write"
 
     def __init__(self, file_type, action, reason=""):
+        """
+        FileMetadata file_type -- describes the file involved in the error
+        string action -- possible values enumerated in RawFileError
+        string reason -- plain text error details
+        """
         super().__init__()
         self.file_type = file_type
         self.action = action
@@ -40,11 +45,17 @@ class RawFileError(Exception):
 
 class FileAlreadyExists(RawFileError):
     def __init__(self, file_type):
+        """
+        FileMetadata file_type -- describes the file involved in the error
+        """
         super().__init__(file_type, RawFileError.ACTION_WRITE)
 
 
 class RawFileInterface():
     def __init__(self, file_type):
+        """
+        FileMetadata file_type -- describes the file and provides its metadata
+        """
         self.__file_type = file_type
 
     @property
@@ -52,12 +63,24 @@ class RawFileInterface():
         return self.__file_type
 
     def exists(self):
+        """
+        Return True if file exists, False otherwise
+        """
         raise NotImplementedError()
 
     def read(self):
+        """
+        Return content of the file as bytes
+        """
         raise NotImplementedError()
 
     def write(self, file_data, can_overwrite=False):
+        """
+        Write file_data to the file
+
+        bytes file_data -- data to be written
+        bool can_overwrite -- raise if False and the file already exists
+        """
         raise NotImplementedError()
 
 
@@ -70,6 +93,8 @@ class RawFile(RawFileInterface):
         try:
             mode = "rb" if self.file_type.is_binary else "r"
             with open(self.file_type.path, mode) as my_file:
+                # the lock is released when the file gets closed on leaving the
+                # with statement
                 fcntl.flock(my_file.fileno(), fcntl.LOCK_SH)
                 content = my_file.read()
                 return (
@@ -95,6 +120,8 @@ class RawFile(RawFileInterface):
             # gives a false positive.
             # pylint: disable=bad-open-mode
             with open(self.file_type.path, mode) as my_file:
+                # the lock is released when the file gets closed on leaving the
+                # with statement
                 fcntl.flock(my_file.fileno(), fcntl.LOCK_EX)
                 # Set the ownership and permissions to cover the case when we
                 # just created the file. If the file already existed, make sure

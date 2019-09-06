@@ -5,7 +5,7 @@ import time
 
 from pcs import settings
 from pcs.common import (
-    env_file_role_codes,
+    file_type_codes,
     report_codes,
     ssl,
 )
@@ -790,7 +790,7 @@ def add_nodes(
         except EnvironmentError as e:
             report_processor.report(forceable_io_error_creator(
                 reports.file_io_error,
-                env_file_role_codes.COROSYNC_AUTHKEY,
+                file_type_codes.COROSYNC_AUTHKEY,
                 file_path=settings.corosync_authkey_file,
                 operation="read",
                 reason=format_environment_error(e)
@@ -806,7 +806,7 @@ def add_nodes(
         except EnvironmentError as e:
             report_processor.report(forceable_io_error_creator(
                 reports.file_io_error,
-                env_file_role_codes.PACEMAKER_AUTHKEY,
+                file_type_codes.PACEMAKER_AUTHKEY,
                 file_path=settings.pacemaker_authkey_file,
                 operation="read",
                 reason=format_environment_error(e)
@@ -825,7 +825,7 @@ def add_nodes(
         except EnvironmentError as e:
             report_processor.report(forceable_io_error_creator(
                 reports.file_io_error,
-                env_file_role_codes.PCS_SETTINGS_CONF,
+                file_type_codes.PCS_SETTINGS_CONF,
                 file_path=settings.pcsd_settings_conf_location,
                 operation="read",
                 reason=format_environment_error(e)
@@ -857,7 +857,7 @@ def add_nodes(
         except EnvironmentError as e:
             report_processor.report(
                 reports.file_io_error(
-                    env_file_role_codes.PCSD_SSL_CERT,
+                    file_type_codes.PCSD_SSL_CERT,
                     file_path=settings.pcsd_cert_location,
                     reason=format_environment_error(e),
                     operation="read",
@@ -869,7 +869,7 @@ def add_nodes(
         except EnvironmentError as e:
             report_processor.report(
                 reports.file_io_error(
-                    env_file_role_codes.PCSD_SSL_KEY,
+                    file_type_codes.PCSD_SSL_KEY,
                     file_path=settings.pcsd_key_location,
                     reason=format_environment_error(e),
                     operation="read",
@@ -1134,7 +1134,7 @@ def _is_ssl_cert_sync_enabled(report_processor):
     except EnvironmentError as e:
         report_processor.report(
             reports.file_io_error(
-                env_file_role_codes.PCSD_ENVIRONMENT_CONFIG,
+                file_type_codes.PCSD_ENVIRONMENT_CONFIG,
                 file_path=settings.pcsd_config,
                 reason=format_environment_error(e),
                 operation="read",

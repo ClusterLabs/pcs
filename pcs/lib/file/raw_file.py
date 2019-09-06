@@ -13,6 +13,10 @@ from pcs.lib import reports
 def raw_file_error_report(error, force_code=None, is_forced_or_warning=False):
     """
     Translate a RawFileError instance to a report
+
+    RawFileError error -- an exception to be translated
+    string force_code -- is it a forcible error? by which code?
+    bool is_forced_or_warning -- translate to a warning if True, error otherwise
     """
     return reports.get_problem_creator(force_code, is_forced_or_warning)(
         reports.file_io_error,
@@ -22,6 +26,16 @@ def raw_file_error_report(error, force_code=None, is_forced_or_warning=False):
         error.reason,
         error.action,
     )
+
+def export_ghost_file(ghost_file):
+    """
+    Export GhostFile so it can be transfered to a client
+
+    GhostFile ghost_file -- a ghost file instance
+    """
+    return {
+        "content": ghost_file.content,
+    }
 
 class RealFile(RawFile):
     # TODO implement method "backup" in the parent
@@ -37,9 +51,12 @@ class GhostFileError(RawFileError):
 
 class GhostFile(RawFileInterface):
     def __init__(self, file_type, file_data=None):
+        """
+        FileMetadata file_type -- describes the file and provides its metadata
+        bytes file_data -- data of the ghost file
+        """
         super().__init__(file_type)
         self.__file_data = file_data
-        self.__can_overwrite_existing_file = False
 
     @property
     def is_ghost(self):
@@ -47,11 +64,10 @@ class GhostFile(RawFileInterface):
 
     @property
     def content(self):
+        """
+        Export the file content
+        """
         return self.__file_data
-
-    @property
-    def can_overwrite_existing_file(self):
-        return self.__can_overwrite_existing_file
 
     def exists(self):
         return self.__file_data is not None
@@ -68,4 +84,3 @@ class GhostFile(RawFileInterface):
 
     def write(self, file_data, can_overwrite=False):
         self.__file_data = file_data
-        self.__can_overwrite_existing_file = can_overwrite

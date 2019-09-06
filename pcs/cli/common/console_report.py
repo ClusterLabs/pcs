@@ -5,7 +5,6 @@ from functools import partial
 import sys
 
 from pcs.common import (
-    env_file_role_codes,
     file_type_codes,
     report_codes as codes,
 )
@@ -33,22 +32,21 @@ _type_articles = {
     "ACL permission": "an",
 }
 _file_role_translation = {
-    env_file_role_codes.COROSYNC_AUTHKEY: "Corosync authkey",
-    env_file_role_codes.PACEMAKER_AUTHKEY: "Pacemaker authkey",
-    env_file_role_codes.PCSD_ENVIRONMENT_CONFIG: "pcsd configuration",
-    env_file_role_codes.PCSD_SSL_CERT: "pcsd SSL certificate",
-    env_file_role_codes.PCSD_SSL_KEY: "pcsd SSL key",
-    env_file_role_codes.PCS_SETTINGS_CONF: "pcs configuration",
-    file_type_codes.PCS_KNOWN_HOSTS: "known-hosts",
     file_type_codes.BOOTH_CONFIG: "Booth configuration",
     file_type_codes.BOOTH_KEY: "Booth key",
+    file_type_codes.COROSYNC_AUTHKEY: "Corosync authkey",
+    file_type_codes.PACEMAKER_AUTHKEY: "Pacemaker authkey",
+    file_type_codes.PCSD_ENVIRONMENT_CONFIG: "pcsd configuration",
+    file_type_codes.PCSD_SSL_CERT: "pcsd SSL certificate",
+    file_type_codes.PCSD_SSL_KEY: "pcsd SSL key",
+    file_type_codes.PCS_KNOWN_HOSTS: "known-hosts",
+    file_type_codes.PCS_SETTINGS_CONF: "pcs configuration",
 }
 _file_role_to_option_translation = {
     file_type_codes.BOOTH_CONFIG: "--booth-conf",
     file_type_codes.BOOTH_KEY: "--booth-key",
     file_type_codes.CIB: "-f",
-    # TODO use constants once defined
-    "COROSYNC_CONF": "--corosync_conf",
+    file_type_codes.COROSYNC_CONF: "--corosync_conf",
 }
 
 def warn(message):

@@ -34,6 +34,14 @@ _metadata = {
         permissions=0o644,
         is_binary=False,
     ),
+    code.PACEMAKER_AUTHKEY: lambda: FileMetadata(
+        file_type_code=code.PACEMAKER_AUTHKEY,
+        path=settings.pacemaker_authkey_file,
+        owner_user_name="hacluster",
+        owner_group_name="haclient",
+        permissions=0o400,
+        is_binary=True,
+    ),
     code.PCS_KNOWN_HOSTS: lambda: FileMetadata(
         file_type_code=code.PCS_KNOWN_HOSTS,
         path=settings.pcsd_known_hosts_location,
@@ -41,7 +49,7 @@ _metadata = {
         owner_group_name="root",
         permissions=0o600,
         is_binary=False,
-    )
+    ),
 }
 
 def for_file_type(file_type_code, *args, **kwargs):

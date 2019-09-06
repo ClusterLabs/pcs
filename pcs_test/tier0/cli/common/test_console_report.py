@@ -10,10 +10,7 @@ from pcs.cli.common.console_report import(
     _add_s
 )
 from pcs.cli.common.reports import CODE_BUILDER_MAP
-from pcs.common import (
-    env_file_role_codes, # TODO remove
-    file_type_codes,
-)
+from pcs.common import file_type_codes
 from pcs.common.fencing_topology import (
     TARGET_TYPE_NODE,
     TARGET_TYPE_REGEXP,
@@ -3332,14 +3329,14 @@ class FileIoError(NameBuildTest):
     def test_minimal(self):
         self.assert_message_from_report(
             "Unable to work with Booth configuration",
-            reports.file_io_error(env_file_role_codes.BOOTH_CONFIG)
+            reports.file_io_error(file_type_codes.BOOTH_CONFIG)
         )
 
     def test_with_path(self):
         self.assert_message_from_report(
             "Unable to work with Booth key '/etc/booth/booth.key'",
             reports.file_io_error(
-                env_file_role_codes.BOOTH_KEY, file_path="/etc/booth/booth.key"
+                file_type_codes.BOOTH_KEY, file_path="/etc/booth/booth.key"
             )
         )
 
@@ -3347,7 +3344,7 @@ class FileIoError(NameBuildTest):
         self.assert_message_from_report(
             "Unable to remove Pacemaker authkey '/etc/pacemaker/key'",
             reports.file_io_error(
-                env_file_role_codes.PACEMAKER_AUTHKEY,
+                file_type_codes.PACEMAKER_AUTHKEY,
                 file_path="/etc/pacemaker/key",
                 operation="remove"
             )
@@ -3357,7 +3354,7 @@ class FileIoError(NameBuildTest):
         self.assert_message_from_report(
             "Unable to read pcsd SSL certificate '/var/lib/pcsd.crt': Failed",
             reports.file_io_error(
-                env_file_role_codes.PCSD_SSL_CERT,
+                file_type_codes.PCSD_SSL_CERT,
                 file_path="/var/lib/pcsd.crt",
                 reason="Failed",
                 operation="read"
@@ -3368,7 +3365,7 @@ class FileIoError(NameBuildTest):
         self.assert_message_from_report(
             "Unable to write pcsd SSL key '/var/lib/pcsd.key': Failed",
             reports.file_io_error(
-                env_file_role_codes.PCSD_SSL_KEY,
+                file_type_codes.PCSD_SSL_KEY,
                 file_path="/var/lib/pcsd.key",
                 reason="Failed",
                 operation="write"
@@ -3379,7 +3376,7 @@ class FileIoError(NameBuildTest):
         self.assert_message_from_report(
             "Unable to read pcsd configuration '/etc/sysconfig/pcsd': Failed",
             reports.file_io_error(
-                env_file_role_codes.PCSD_ENVIRONMENT_CONFIG,
+                file_type_codes.PCSD_ENVIRONMENT_CONFIG,
                 file_path="/etc/sysconfig/pcsd",
                 reason="Failed",
                 operation="read"
@@ -3390,7 +3387,7 @@ class FileIoError(NameBuildTest):
         self.assert_message_from_report(
             "Unable to read Corosync authkey: Failed",
             reports.file_io_error(
-                env_file_role_codes.COROSYNC_AUTHKEY,
+                file_type_codes.COROSYNC_AUTHKEY,
                 reason="Failed",
                 operation="read"
             )
@@ -3400,7 +3397,7 @@ class FileIoError(NameBuildTest):
         self.assert_message_from_report(
             "Unable to write pcs configuration: Permission denied",
             reports.file_io_error(
-                env_file_role_codes.PCS_SETTINGS_CONF,
+                file_type_codes.PCS_SETTINGS_CONF,
                 reason="Permission denied",
                 operation="write"
             )

@@ -14,7 +14,6 @@ from pcs_test.tools.custom_mock import patch_getaddrinfo
 
 from pcs import settings
 from pcs.common import (
-    env_file_role_codes, # TODO remove
     file_type_codes,
     report_codes,
 )
@@ -2220,7 +2219,7 @@ class FailureFilesDistribution(TestCase):
             [
                 fixture.error(
                     report_codes.FILE_IO_ERROR,
-                    file_role=env_file_role_codes.COROSYNC_AUTHKEY,
+                    file_role=file_type_codes.COROSYNC_AUTHKEY,
                     file_path=settings.corosync_authkey_file,
                     reason=(
                         f"{self.err_msg}: '{settings.corosync_authkey_file}'"
@@ -2230,7 +2229,7 @@ class FailureFilesDistribution(TestCase):
                 ),
                 fixture.error(
                     report_codes.FILE_IO_ERROR,
-                    file_role=env_file_role_codes.PACEMAKER_AUTHKEY,
+                    file_role=file_type_codes.PACEMAKER_AUTHKEY,
                     file_path=settings.pacemaker_authkey_file,
                     reason=(
                         f"{self.err_msg}: '{settings.pacemaker_authkey_file}'"
@@ -2287,7 +2286,7 @@ class FailureFilesDistribution(TestCase):
             [
                 fixture.warn(
                     report_codes.FILE_IO_ERROR,
-                    file_role=env_file_role_codes.COROSYNC_AUTHKEY,
+                    file_role=file_type_codes.COROSYNC_AUTHKEY,
                     file_path=settings.corosync_authkey_file,
                     reason=(
                         f"{self.err_msg}: '{settings.corosync_authkey_file}'"
@@ -2296,7 +2295,7 @@ class FailureFilesDistribution(TestCase):
                 ),
                 fixture.warn(
                     report_codes.FILE_IO_ERROR,
-                    file_role=env_file_role_codes.PACEMAKER_AUTHKEY,
+                    file_role=file_type_codes.PACEMAKER_AUTHKEY,
                     file_path=settings.pacemaker_authkey_file,
                     reason=(
                         f"{self.err_msg}: '{settings.pacemaker_authkey_file}'"
