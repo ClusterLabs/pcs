@@ -28,7 +28,7 @@ from pcs.lib.communication.booth import (
 from pcs.lib.communication.tools import run_and_raise
 from pcs.lib.errors import LibraryError, ReportItemSeverity
 from pcs.lib.file.instance import FileInstance
-from pcs.lib.file.raw_file import raw_file_error_report
+from pcs.lib.file.raw_file import GhostFile, raw_file_error_report
 from pcs.lib.file_interfaces import ParserErrorException
 from pcs.lib.node import get_existing_nodes_names
 from pcs.lib.resource_agent import find_valid_resource_agent_by_name
@@ -512,7 +512,7 @@ def config_sync(env, instance_name=None, skip_offline_nodes=False):
     try:
         booth_conf_data = booth_env.config.read_raw()
         booth_conf = booth_env.config.raw_to_facade(booth_conf_data)
-        if booth_env.config.raw_file.is_ghost:
+        if isinstance(booth_env.config.raw_file, GhostFile):
             authfile_data = booth_env.key.read_raw()
             authfile_path = booth_conf.get_authfile()
             authfile_name = (

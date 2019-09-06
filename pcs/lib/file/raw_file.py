@@ -1,8 +1,12 @@
 import errno
 import os
 
+# the import makes it look like RealFile is implemented here so we don't
+# have to import RawFile from common and Ghost file from here in other
+# places
+# pylint: disable=unused-import
 from pcs.common.file import(
-    RawFile,
+    RawFile as RealFile,
     RawFileError,
     RawFileInterface,
 )
@@ -37,13 +41,6 @@ def export_ghost_file(ghost_file):
         "content": ghost_file.content,
     }
 
-class RealFile(RawFile):
-    # TODO implement method "backup" in the parent
-    # pylint: disable=abstract-method
-    @property
-    def is_ghost(self):
-        return False
-
 
 class GhostFileError(RawFileError):
     pass
@@ -57,10 +54,6 @@ class GhostFile(RawFileInterface):
         """
         super().__init__(file_type)
         self.__file_data = file_data
-
-    @property
-    def is_ghost(self):
-        return True
 
     @property
     def content(self):

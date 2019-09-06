@@ -4,8 +4,8 @@ from pcs.lib.booth import (
     config_validators,
     constants,
 )
+from pcs.lib.file import raw_file
 from pcs.lib.file.instance import FileInstance
-from pcs.lib.file.raw_file import export_ghost_file
 from pcs.lib.errors import LibraryError
 
 
@@ -14,7 +14,7 @@ class BoothEnv():
         """
         Create a new BoothEnv
 
-        string instance_name -- booth instance name
+        string|None instance_name -- booth instance name
         dict booth_files_data -- ghost files (config_data, key_data, key_path)
         """
         if (
@@ -53,7 +53,7 @@ class BoothEnv():
             f"{self._instance_name}.key",
             **self._init_file_data(booth_files_data, "key_data")
         )
-        if self._key_file.raw_file.is_ghost:
+        if isinstance(self._key_file.raw_file, raw_file.GhostFile):
             self._key_path = booth_files_data.get("key_path", "")
         else:
             self._key_path = self._key_file.raw_file.file_type.path
@@ -81,7 +81,7 @@ class BoothEnv():
 
     @property
     def config_path(self):
-        if self._config_file.raw_file.is_ghost:
+        if isinstance(self._config_file.raw_file, raw_file.GhostFile):
             raise AssertionError(
                 "Reading config path is supported only in live environment"
             )
@@ -98,9 +98,9 @@ class BoothEnv():
     @property
     def ghost_file_codes(self):
         codes = []
-        if self._config_file.raw_file.is_ghost:
+        if isinstance(self._config_file.raw_file, raw_file.GhostFile):
             codes.append(self._config_file.raw_file.file_type.file_type_code)
-        if self._key_file.raw_file.is_ghost:
+        if isinstance(self._key_file.raw_file, raw_file.GhostFile):
             codes.append(self._key_file.raw_file.file_type.file_type_code)
         return codes
 
@@ -111,9 +111,11 @@ class BoothEnv():
         )
 
     def export(self):
-        if not self._config_file.raw_file.is_ghost:
+        if not isinstance(self._config_file.raw_file, raw_file.GhostFile):
             return {}
         return {
-            "config_file": export_ghost_file(self._config_file.raw_file),
-            "key_file": export_ghost_file(self._key_file.raw_file),
+            "config_file": raw_file.export_ghost_file(
+                self._config_file.raw_file
+            ),
+            "key_file": raw_file.export_ghost_file(self._key_file.raw_file),
         }

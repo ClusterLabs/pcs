@@ -102,7 +102,10 @@ class FileInstance():
         return self._toolbox.parser.exception_to_report_list(
             exception,
             self._raw_file.file_type.file_type_code,
-            None if self._raw_file.is_ghost else self._raw_file.file_type.path,
+            (
+                None if isinstance(self._raw_file, raw_file.GhostFile)
+                else self._raw_file.file_type.path
+            ),
             force_code,
             is_forced_or_warning
         )
@@ -155,6 +158,6 @@ class FileInstance():
 
 
 def _get_raw_file(file_type, is_ghost, ghost_data):
-    if not is_ghost:
-        return raw_file.RealFile(file_type)
-    return raw_file.GhostFile(file_type, file_data=ghost_data)
+    if is_ghost:
+        return raw_file.GhostFile(file_type, file_data=ghost_data)
+    return raw_file.RealFile(file_type)

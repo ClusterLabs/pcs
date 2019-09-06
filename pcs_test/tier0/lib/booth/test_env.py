@@ -10,6 +10,7 @@ from pcs.common import (
     report_codes,
 )
 from pcs.lib.booth import env
+from pcs.lib.file.raw_file import GhostFile
 
 
 class BoothEnv(TestCase):
@@ -44,8 +45,8 @@ class BoothEnv(TestCase):
     def test_real(self):
         my_env = env.BoothEnv("my_booth", {})
         self.assertEqual("my_booth", my_env.instance_name)
-        self.assertFalse(my_env.config.raw_file.is_ghost)
-        self.assertFalse(my_env.key.raw_file.is_ghost)
+        self.assertFalse(isinstance(my_env.config.raw_file, GhostFile))
+        self.assertFalse(isinstance(my_env.key.raw_file, GhostFile))
         self.assertEqual(
             os.path.join(settings.booth_config_dir, "my_booth.conf"),
             my_env.config_path
@@ -77,8 +78,8 @@ class BoothEnv(TestCase):
             }
         )
         self.assertEqual("my_booth", my_env.instance_name)
-        self.assertTrue(my_env.config.raw_file.is_ghost)
-        self.assertTrue(my_env.key.raw_file.is_ghost)
+        self.assertTrue(isinstance(my_env.config.raw_file, GhostFile))
+        self.assertTrue(isinstance(my_env.key.raw_file, GhostFile))
         with self.assertRaises(AssertionError) as cm:
             dummy_path = my_env.config_path
         self.assertEqual(
