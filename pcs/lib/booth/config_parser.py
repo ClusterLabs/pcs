@@ -10,7 +10,6 @@ from pcs.lib.interface.file import (
     ExporterInterface,
     ParserErrorException,
     ParserInterface,
-
 )
 
 class ConfigItem(namedtuple("ConfigItem", "key value details")):

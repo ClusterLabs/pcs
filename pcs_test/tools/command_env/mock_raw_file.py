@@ -82,10 +82,10 @@ class RawFileRemoveCall(RawFileCall):
     def __repr__(self):
         return super()._repr("remove")
 
-def _check_file_type_and_path(
-    method, real_file_type, call_index, expected_call
+def _check_file_type_code_and_path(
+    method, real_metadata, call_index, expected_call
 ):
-    if real_file_type.file_type_code != expected_call.file_type_code:
+    if real_metadata.file_type_code != expected_call.file_type_code:
         raise AssertionError(
             (
                 "Trying to call RawFile.{method} (call no. {index}) "
@@ -95,11 +95,11 @@ def _check_file_type_and_path(
                 expected_ftc=expected_call.file_type_code,
                 index=call_index,
                 method=method,
-                real_ftc=real_file_type.file_type_code,
+                real_ftc=real_metadata.file_type_code,
             )
         )
 
-    if real_file_type.path != expected_call.path:
+    if real_metadata.path != expected_call.path:
         raise AssertionError(
             (
                 "Trying to call RawFile.{method} (call no. {index}) "
@@ -109,8 +109,8 @@ def _check_file_type_and_path(
                 expected_path=expected_call.path,
                 index=call_index,
                 method=method,
-                real_ftc=real_file_type.file_type_code,
-                real_path=real_file_type.path,
+                real_ftc=real_metadata.file_type_code,
+                real_path=real_metadata.path,
             )
         )
 
@@ -120,19 +120,19 @@ def get_raw_file_mock(call_queue):
             call_index, expected_call = call_queue.take(
                 CALL_TYPE_RAW_FILE_EXISTS
             )
-            _check_file_type_and_path(
-                "exists", self.file_type, call_index, expected_call
+            _check_file_type_code_and_path(
+                "exists", self.metadata, call_index, expected_call
             )
             return expected_call.exists
 
         def read(self):
             call_index, expected_call = call_queue.take(CALL_TYPE_RAW_FILE_READ)
-            _check_file_type_and_path(
-                "read", self.file_type, call_index, expected_call
+            _check_file_type_code_and_path(
+                "read", self.metadata, call_index, expected_call
             )
             if expected_call.exception_msg:
                 raise RawFileError(
-                    self.file_type,
+                    self.metadata,
                     RawFileError.ACTION_READ,
                     expected_call.exception_msg,
                 )
@@ -142,8 +142,8 @@ def get_raw_file_mock(call_queue):
             call_index, expected_call = call_queue.take(
                 CALL_TYPE_RAW_FILE_WRITE
             )
-            _check_file_type_and_path(
-                "write", self.file_type, call_index, expected_call
+            _check_file_type_code_and_path(
+                "write", self.metadata, call_index, expected_call
             )
 
             if file_data != expected_call.file_data:
@@ -155,7 +155,7 @@ def get_raw_file_mock(call_queue):
                     ).format(
                         expected_data=expected_call.file_data,
                         index=call_index,
-                        real_ftc=self.file_type.file_type_code,
+                        real_ftc=self.metadata.file_type_code,
                         real_data=file_data,
                     )
                 )
@@ -169,16 +169,16 @@ def get_raw_file_mock(call_queue):
                     ).format(
                         expected_can=expected_call.can_overwrite,
                         index=call_index,
-                        real_ftc=self.file_type.file_type_code,
+                        real_ftc=self.metadata.file_type_code,
                         real_can=can_overwrite
                     )
                 )
 
             if expected_call.already_exists:
-                raise FileAlreadyExists(self.file_type)
+                raise FileAlreadyExists(self.metadata)
             if expected_call.exception_msg:
                 raise RawFileError(
-                    self.file_type,
+                    self.metadata,
                     (
                         expected_call.exception_action
                         if expected_call.exception_action
@@ -191,8 +191,8 @@ def get_raw_file_mock(call_queue):
             call_index, expected_call = call_queue.take(
                 CALL_TYPE_RAW_FILE_REMOVE
             )
-            _check_file_type_and_path(
-                "remove", self.file_type, call_index, expected_call
+            _check_file_type_code_and_path(
+                "remove", self.metadata, call_index, expected_call
             )
 
             if fail_if_file_not_found != expected_call.fail_if_file_not_found:
@@ -205,7 +205,7 @@ def get_raw_file_mock(call_queue):
                     ).format(
                         expected_fail=expected_call.fail_if_file_not_found,
                         index=call_index,
-                        real_ftc=self.file_type.file_type_code,
+                        real_ftc=self.metadata.file_type_code,
                         real_fail=fail_if_file_not_found,
                     )
                 )
@@ -219,7 +219,7 @@ def get_raw_file_mock(call_queue):
                 exception_msg = "No such file or directory"
             if exception_msg:
                 raise RawFileError(
-                    self.file_type,
+                    self.metadata,
                     RawFileError.ACTION_REMOVE,
                     exception_msg,
                 )

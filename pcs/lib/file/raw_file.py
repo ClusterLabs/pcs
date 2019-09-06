@@ -24,9 +24,9 @@ def raw_file_error_report(error, force_code=None, is_forced_or_warning=False):
     """
     return reports.get_problem_creator(force_code, is_forced_or_warning)(
         reports.file_io_error,
-        error.file_type.file_type_code,
+        error.metadata.file_type_code,
         # do not report real file path if we were working with a ghost file
-        "" if isinstance(error, GhostFileError) else error.file_type.path,
+        "" if isinstance(error, GhostFileError) else error.metadata.path,
         error.reason,
         error.action,
     )
@@ -47,12 +47,12 @@ class GhostFileError(RawFileError):
 
 
 class GhostFile(RawFileInterface):
-    def __init__(self, file_type, file_data=None):
+    def __init__(self, metadata, file_data=None):
         """
-        FileMetadata file_type -- describes the file and provides its metadata
+        FileMetadata metadata -- describes the file and provides its metadata
         bytes file_data -- data of the ghost file
         """
-        super().__init__(file_type)
+        super().__init__(metadata)
         self.__file_data = file_data
 
     @property
@@ -68,7 +68,7 @@ class GhostFile(RawFileInterface):
     def read(self):
         if self.__file_data is None:
             raise GhostFileError(
-                self.file_type,
+                self.metadata,
                 RawFileError.ACTION_READ,
                 # get "no such file" message as defined and worded in the system
                 os.strerror(errno.ENOENT)

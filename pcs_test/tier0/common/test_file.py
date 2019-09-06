@@ -83,7 +83,7 @@ class RawFileRead(TestCase):
                 mock_open().read.assert_not_called()
         mock_open.assert_has_calls([mock.call(FILE_PATH, "r")])
         mock_flock.assert_not_called()
-        self.assertEqual(cm.exception.file_type, raw_file.file_type)
+        self.assertEqual(cm.exception.metadata, raw_file.metadata)
         self.assertEqual(cm.exception.action, RawFileError.ACTION_READ)
         self.assertEqual(cm.exception.reason, f"some error: '{FILE_PATH}'")
 
@@ -98,7 +98,7 @@ class RawFileRead(TestCase):
                 mock_open().read.assert_not_called()
         mock_open.assert_has_calls([mock.call(FILE_PATH, "r")])
         mock_flock.assert_called_once_with(123, fcntl.LOCK_SH)
-        self.assertEqual(cm.exception.file_type, raw_file.file_type)
+        self.assertEqual(cm.exception.metadata, raw_file.metadata)
         self.assertEqual(cm.exception.action, RawFileError.ACTION_READ)
         self.assertEqual(cm.exception.reason, f"some error: '{FILE_PATH}'")
 
@@ -113,7 +113,7 @@ class RawFileRead(TestCase):
             mock_open().read.assert_called_once_with()
         mock_open.assert_has_calls([mock.call(FILE_PATH, "r")])
         mock_flock.assert_called_once_with(123, fcntl.LOCK_SH)
-        self.assertEqual(cm.exception.file_type, raw_file.file_type)
+        self.assertEqual(cm.exception.metadata, raw_file.metadata)
         self.assertEqual(cm.exception.action, RawFileError.ACTION_READ)
         self.assertEqual(cm.exception.reason, f"some error: '{FILE_PATH}'")
 
@@ -246,7 +246,7 @@ class RawFileWrite(TestCase):
         mock_flock.assert_not_called()
         mock_chown.assert_not_called()
         mock_chmod.assert_not_called()
-        self.assertEqual(cm.exception.file_type, raw_file.file_type)
+        self.assertEqual(cm.exception.metadata, raw_file.metadata)
         self.assertEqual(cm.exception.action, RawFileError.ACTION_WRITE)
         self.assertEqual(cm.exception.reason, "")
 
@@ -262,7 +262,7 @@ class RawFileWrite(TestCase):
         mock_flock.assert_not_called()
         mock_chown.assert_not_called()
         mock_chmod.assert_not_called()
-        self.assertEqual(cm.exception.file_type, raw_file.file_type)
+        self.assertEqual(cm.exception.metadata, raw_file.metadata)
         self.assertEqual(cm.exception.action, RawFileError.ACTION_WRITE)
         self.assertEqual(cm.exception.reason, f"some error: '{FILE_PATH}'")
 
@@ -279,7 +279,7 @@ class RawFileWrite(TestCase):
         mock_flock.assert_called_once_with(self.fileno, fcntl.LOCK_EX)
         mock_chown.assert_not_called()
         mock_chmod.assert_not_called()
-        self.assertEqual(cm.exception.file_type, raw_file.file_type)
+        self.assertEqual(cm.exception.metadata, raw_file.metadata)
         self.assertEqual(cm.exception.action, RawFileError.ACTION_WRITE)
         self.assertEqual(cm.exception.reason, f"some error: '{FILE_PATH}'")
 
@@ -296,7 +296,7 @@ class RawFileWrite(TestCase):
         mock_flock.assert_called_once_with(self.fileno, fcntl.LOCK_EX)
         mock_chown.assert_called_once_with(FILE_PATH, FILE_OWNER, FILE_GROUP)
         mock_chmod.assert_not_called()
-        self.assertEqual(cm.exception.file_type, raw_file.file_type)
+        self.assertEqual(cm.exception.metadata, raw_file.metadata)
         self.assertEqual(cm.exception.action, RawFileError.ACTION_CHOWN)
         self.assertEqual(cm.exception.reason, "some error")
 
@@ -313,7 +313,7 @@ class RawFileWrite(TestCase):
         mock_flock.assert_called_once_with(self.fileno, fcntl.LOCK_EX)
         mock_chown.assert_called_once_with(FILE_PATH, FILE_OWNER, FILE_GROUP)
         mock_chmod.assert_not_called()
-        self.assertEqual(cm.exception.file_type, raw_file.file_type)
+        self.assertEqual(cm.exception.metadata, raw_file.metadata)
         self.assertEqual(cm.exception.action, RawFileError.ACTION_CHOWN)
         self.assertEqual(cm.exception.reason, f"some error: '{FILE_PATH}'")
 
@@ -330,7 +330,7 @@ class RawFileWrite(TestCase):
         mock_flock.assert_called_once_with(self.fileno, fcntl.LOCK_EX)
         mock_chown.assert_called_once_with(FILE_PATH, FILE_OWNER, FILE_GROUP)
         mock_chmod.assert_called_once_with(self.fileno, FILE_PERMISSIONS)
-        self.assertEqual(cm.exception.file_type, raw_file.file_type)
+        self.assertEqual(cm.exception.metadata, raw_file.metadata)
         self.assertEqual(cm.exception.action, RawFileError.ACTION_CHMOD)
         self.assertEqual(cm.exception.reason, f"some error: '{FILE_PATH}'")
 
@@ -347,7 +347,7 @@ class RawFileWrite(TestCase):
         mock_flock.assert_called_once_with(self.fileno, fcntl.LOCK_EX)
         mock_chown.assert_called_once_with(FILE_PATH, FILE_OWNER, FILE_GROUP)
         mock_chmod.assert_called_once_with(self.fileno, FILE_PERMISSIONS)
-        self.assertEqual(cm.exception.file_type, raw_file.file_type)
+        self.assertEqual(cm.exception.metadata, raw_file.metadata)
         self.assertEqual(cm.exception.action, RawFileError.ACTION_WRITE)
         self.assertEqual(cm.exception.reason, f"some error: '{FILE_PATH}'")
 
@@ -370,7 +370,7 @@ class RawFileRemove(TestCase):
         with self.assertRaises(RawFileError) as cm:
             raw_file.remove(fail_if_file_not_found=True)
         mock_remove.assert_called_once_with(FILE_PATH)
-        self.assertEqual(cm.exception.file_type, raw_file.file_type)
+        self.assertEqual(cm.exception.metadata, raw_file.metadata)
         self.assertEqual(cm.exception.action, RawFileError.ACTION_REMOVE)
         self.assertEqual(cm.exception.reason, f"some error: '{FILE_PATH}'")
 
@@ -380,6 +380,6 @@ class RawFileRemove(TestCase):
         with self.assertRaises(RawFileError) as cm:
             raw_file.remove(fail_if_file_not_found=True)
         mock_remove.assert_called_once_with(FILE_PATH)
-        self.assertEqual(cm.exception.file_type, raw_file.file_type)
+        self.assertEqual(cm.exception.metadata, raw_file.metadata)
         self.assertEqual(cm.exception.action, RawFileError.ACTION_REMOVE)
         self.assertEqual(cm.exception.reason, f"some error: '{FILE_PATH}'")

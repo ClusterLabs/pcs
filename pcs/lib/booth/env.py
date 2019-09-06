@@ -56,7 +56,7 @@ class BoothEnv():
         if isinstance(self._key_file.raw_file, raw_file.GhostFile):
             self._key_path = booth_files_data.get("key_path", "")
         else:
-            self._key_path = self._key_file.raw_file.file_type.path
+            self._key_path = self._key_file.raw_file.metadata.path
 
     @staticmethod
     def _init_file_data(booth_files_data, file_key):
@@ -85,7 +85,7 @@ class BoothEnv():
             raise AssertionError(
                 "Reading config path is supported only in live environment"
             )
-        return self._config_file.raw_file.file_type.path
+        return self._config_file.raw_file.metadata.path
 
     @property
     def key(self):
@@ -99,9 +99,9 @@ class BoothEnv():
     def ghost_file_codes(self):
         codes = []
         if isinstance(self._config_file.raw_file, raw_file.GhostFile):
-            codes.append(self._config_file.raw_file.file_type.file_type_code)
+            codes.append(self._config_file.raw_file.metadata.file_type_code)
         if isinstance(self._key_file.raw_file, raw_file.GhostFile):
-            codes.append(self._key_file.raw_file.file_type.file_type_code)
+            codes.append(self._key_file.raw_file.metadata.file_type_code)
         return codes
 
     def create_facade(self, site_list, arbitrator_list):

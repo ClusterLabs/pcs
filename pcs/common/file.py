@@ -31,36 +31,36 @@ class RawFileError(Exception):
     ACTION_REMOVE = "remove"
     ACTION_WRITE = "write"
 
-    def __init__(self, file_type, action, reason=""):
+    def __init__(self, metadata, action, reason=""):
         """
-        FileMetadata file_type -- describes the file involved in the error
+        FileMetadata metadata -- describes the file involved in the error
         string action -- possible values enumerated in RawFileError
         string reason -- plain text error details
         """
         super().__init__()
-        self.file_type = file_type
+        self.metadata = metadata
         self.action = action
         self.reason = reason
 
 
 class FileAlreadyExists(RawFileError):
-    def __init__(self, file_type):
+    def __init__(self, metadata):
         """
-        FileMetadata file_type -- describes the file involved in the error
+        FileMetadata metadata -- describes the file involved in the error
         """
-        super().__init__(file_type, RawFileError.ACTION_WRITE)
+        super().__init__(metadata, RawFileError.ACTION_WRITE)
 
 
 class RawFileInterface():
-    def __init__(self, file_type):
+    def __init__(self, metadata):
         """
-        FileMetadata file_type -- describes the file and provides its metadata
+        FileMetadata metadata -- describes the file and provides its metadata
         """
-        self.__file_type = file_type
+        self.__metadata = metadata
 
     @property
-    def file_type(self):
-        return self.__file_type
+    def metadata(self):
+        return self.__metadata
 
     def exists(self):
         """
@@ -87,25 +87,25 @@ class RawFileInterface():
 class RawFile(RawFileInterface):
     def exists(self):
         # Returns False if the file is not accessible, does not raise.
-        return os.path.exists(self.file_type.path)
+        return os.path.exists(self.metadata.path)
 
     def read(self):
         try:
-            mode = "rb" if self.file_type.is_binary else "r"
-            with open(self.file_type.path, mode) as my_file:
+            mode = "rb" if self.metadata.is_binary else "r"
+            with open(self.metadata.path, mode) as my_file:
                 # the lock is released when the file gets closed on leaving the
                 # with statement
                 fcntl.flock(my_file.fileno(), fcntl.LOCK_SH)
                 content = my_file.read()
                 return (
-                    content if self.file_type.is_binary
+                    content if self.metadata.is_binary
                     else content.encode("utf-8")
                 )
         except OSError as e:
             # Specific expection if the file does not exist is not needed,
             # anyone can and should check that using the exists method.
             raise RawFileError(
-                self.file_type,
+                self.metadata,
                 RawFileError.ACTION_READ,
                 format_os_error(e)
             )
@@ -114,12 +114,12 @@ class RawFile(RawFileInterface):
         try:
             mode = "{write_mode}{binary_mode}".format(
                 write_mode="w" if can_overwrite else "x",
-                binary_mode="b" if self.file_type.is_binary else "",
+                binary_mode="b" if self.metadata.is_binary else "",
             )
             # It seems pylint cannot process constructing the mode variable and
             # gives a false positive.
             # pylint: disable=bad-open-mode
-            with open(self.file_type.path, mode) as my_file:
+            with open(self.metadata.path, mode) as my_file:
                 # the lock is released when the file gets closed on leaving the
                 # with statement
                 fcntl.flock(my_file.fileno(), fcntl.LOCK_EX)
@@ -128,58 +128,58 @@ class RawFile(RawFileInterface):
                 # the ownership and permissions are correct before writing any
                 # data into it.
                 if (
-                    self.file_type.owner_user_name is not None
+                    self.metadata.owner_user_name is not None
                     or
-                    self.file_type.owner_group_name is not None
+                    self.metadata.owner_group_name is not None
                 ):
                     try:
                         shutil.chown(
-                            self.file_type.path,
-                            self.file_type.owner_user_name,
-                            self.file_type.owner_group_name,
+                            self.metadata.path,
+                            self.metadata.owner_user_name,
+                            self.metadata.owner_group_name,
                         )
                     except LookupError as e:
                         raise RawFileError(
-                            self.file_type,
+                            self.metadata,
                             RawFileError.ACTION_CHOWN,
                             str(e)
                         )
                     except OSError as e:
                         raise RawFileError(
-                            self.file_type,
+                            self.metadata,
                             RawFileError.ACTION_CHOWN,
                             format_os_error(e)
                         )
 
-                if self.file_type.permissions is not None:
+                if self.metadata.permissions is not None:
                     try:
-                        os.chmod(my_file.fileno(), self.file_type.permissions)
+                        os.chmod(my_file.fileno(), self.metadata.permissions)
                     except OSError as e:
                         raise RawFileError(
-                            self.file_type,
+                            self.metadata,
                             RawFileError.ACTION_CHMOD,
                             format_os_error(e)
                         )
                 # Write file data
                 my_file.write(
-                    file_data if self.file_type.is_binary
+                    file_data if self.metadata.is_binary
                     else file_data.decode("utf-8")
                 )
         except FileExistsError as e:
-            raise FileAlreadyExists(self.file_type)
+            raise FileAlreadyExists(self.metadata)
         except OSError as e:
             raise RawFileError(
-                self.file_type,
+                self.metadata,
                 RawFileError.ACTION_WRITE,
                 format_os_error(e)
             )
 
     def remove(self, fail_if_file_not_found=True):
         get_raw_file_error = lambda e: RawFileError(
-            self.file_type, RawFileError.ACTION_REMOVE, format_os_error(e)
+            self.metadata, RawFileError.ACTION_REMOVE, format_os_error(e)
         )
         try:
-            os.remove(self.file_type.path)
+            os.remove(self.metadata.path)
         except FileNotFoundError as e:
             if fail_if_file_not_found:
                 raise get_raw_file_error(e)

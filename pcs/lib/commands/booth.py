@@ -83,8 +83,8 @@ def config_setup(
         report_processor.report(
             report_creator(
                 reports.file_already_exists,
-                e.file_type.file_type_code,
-                e.file_type.path,
+                e.metadata.file_type_code,
+                e.metadata.path,
             )
         )
     except RawFileError as e:

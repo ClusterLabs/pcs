@@ -3,7 +3,7 @@ from pcs.common import (
     file_type_codes,
 )
 from pcs.cli.common import console_report
-from pcs.cli.file import fs_metadata
+from pcs.cli.file import metadata
 from pcs.lib import reports
 from pcs.lib.errors import LibraryError
 
@@ -23,12 +23,12 @@ def middleware_config(config_path, key_path):
 
     if is_mocked_environment:
         config_file = pcs_file.RawFile(
-            fs_metadata.for_file_type(
+            metadata.for_file_type(
                 file_type_codes.BOOTH_CONFIG, config_path
             )
         )
         key_file = pcs_file.RawFile(
-            fs_metadata.for_file_type(
+            metadata.for_file_type(
                 file_type_codes.BOOTH_KEY, key_path
             )
         )
@@ -42,8 +42,8 @@ def middleware_config(config_path, key_path):
         except pcs_file.RawFileError as e:
             raise LibraryError(
                 reports.file_io_error(
-                    e.file_type.file_type_code,
-                    e.file_type.path,
+                    e.metadata.file_type_code,
+                    e.metadata.path,
                     e.reason,
                     e.action,
                 )
@@ -76,8 +76,8 @@ def middleware_config(config_path, key_path):
         except pcs_file.RawFileError as e:
             raise LibraryError(
                 reports.file_io_error(
-                    e.file_type.file_type_code,
-                    e.file_type.path,
+                    e.metadata.file_type_code,
+                    e.metadata.path,
                     e.reason,
                     e.action,
                 )

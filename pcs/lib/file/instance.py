@@ -1,6 +1,6 @@
 from pcs.common import file_type_codes
 from pcs.lib.file import (
-    fs_metadata,
+    metadata,
     raw_file,
     toolbox,
 )
@@ -37,9 +37,12 @@ class FileInstance():
 
     @classmethod
     def _for_booth(cls, file_type_code, name, ghost_file, ghost_data):
-        metadata = fs_metadata.for_file_type(file_type_code, name)
         return cls(
-            _get_raw_file(metadata, ghost_file, ghost_data),
+            _get_raw_file(
+                metadata.for_file_type(file_type_code, name),
+                ghost_file,
+                ghost_data
+            ),
             toolbox.for_file_type(file_type_code)
         )
 
@@ -50,7 +53,7 @@ class FileInstance():
         """
         file_type_code = file_type_codes.PCS_KNOWN_HOSTS
         return cls(
-            raw_file.RealFile(fs_metadata.for_file_type(file_type_code)),
+            raw_file.RealFile(metadata.for_file_type(file_type_code)),
             toolbox.for_file_type(file_type_code)
         )
 
@@ -61,7 +64,7 @@ class FileInstance():
         """
         file_type_code = file_type_codes.PACEMAKER_AUTHKEY
         return cls(
-            raw_file.RealFile(fs_metadata.for_file_type(file_type_code)),
+            raw_file.RealFile(metadata.for_file_type(file_type_code)),
             toolbox.for_file_type(file_type_code)
         )
 
@@ -101,10 +104,10 @@ class FileInstance():
         """
         return self._toolbox.parser.exception_to_report_list(
             exception,
-            self._raw_file.file_type.file_type_code,
+            self._raw_file.metadata.file_type_code,
             (
                 None if isinstance(self._raw_file, raw_file.GhostFile)
-                else self._raw_file.file_type.path
+                else self._raw_file.metadata.path
             ),
             force_code,
             is_forced_or_warning
@@ -157,7 +160,7 @@ class FileInstance():
         self._raw_file.remove(fail_if_file_not_found=fail_if_file_not_found)
 
 
-def _get_raw_file(file_type, is_ghost, ghost_data):
+def _get_raw_file(metadata, is_ghost, ghost_data):
     if is_ghost:
-        return raw_file.GhostFile(file_type, file_data=ghost_data)
-    return raw_file.RealFile(file_type)
+        return raw_file.GhostFile(metadata, file_data=ghost_data)
+    return raw_file.RealFile(metadata)

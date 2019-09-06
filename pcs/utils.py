@@ -43,7 +43,7 @@ from pcs.cli.common.reports import (
     LibraryReportProcessorToConsole as LibraryReportProcessorToConsole,
 )
 import pcs.cli.booth.env
-from pcs.cli.file import fs_metadata as cli_fs_metadata
+from pcs.cli.file import metadata as cli_file_metadata
 
 from pcs.lib import reports, sbd
 import pcs.lib.corosync.config_parser as corosync_conf_parser
@@ -286,7 +286,7 @@ def read_known_hosts_file():
     try:
         if os.getuid() != 0:
             known_hosts_raw_file = pcs_file.RawFile(
-                cli_fs_metadata.for_file_type(file_type_codes.PCS_KNOWN_HOSTS)
+                cli_file_metadata.for_file_type(file_type_codes.PCS_KNOWN_HOSTS)
             )
             # json.loads handles bytes, it expects utf-8, 16 or 32 encoding
             known_hosts_struct = json.loads(known_hosts_raw_file.read())

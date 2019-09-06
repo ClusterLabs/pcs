@@ -64,23 +64,23 @@ class BoothConfTest(TestCase):
         mock_exists.return_value = True
 
         def read(this):
-            if this.file_type.file_type_code == file_type_codes.BOOTH_KEY:
+            if this.metadata.file_type_code == file_type_codes.BOOTH_KEY:
                 return key_content
-            if this.file_type.file_type_code == file_type_codes.BOOTH_CONFIG:
+            if this.metadata.file_type_code == file_type_codes.BOOTH_CONFIG:
                 return conf_content
-            raise AssertionError(f"Unexpected file type: {this.file_type}")
+            raise AssertionError(f"Unexpected file type: {this.metadata}")
         mock_read.side_effect = read
 
         def write(this, data, can_overwrite):
-            if this.file_type.file_type_code == file_type_codes.BOOTH_KEY:
+            if this.metadata.file_type_code == file_type_codes.BOOTH_KEY:
                 self.assertEqual(data, new_key)
                 self.assertTrue(can_overwrite)
                 return
-            if this.file_type.file_type_code == file_type_codes.BOOTH_CONFIG:
+            if this.metadata.file_type_code == file_type_codes.BOOTH_CONFIG:
                 self.assertEqual(data, new_conf)
                 self.assertTrue(can_overwrite)
                 return
-            raise AssertionError(f"Unexpected file type: {this.file_type}")
+            raise AssertionError(f"Unexpected file type: {this.metadata}")
         mock_write.side_effect = write
 
         mock_env = mock.MagicMock()
