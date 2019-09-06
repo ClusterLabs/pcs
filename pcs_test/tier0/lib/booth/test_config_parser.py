@@ -4,7 +4,7 @@ from pcs_test.tools import fixture
 from pcs_test.tools.assertions import assert_report_item_list_equal
 
 from pcs.common import report_codes
-from pcs.lib.file_interfaces import ParserErrorException
+from pcs.lib.interface.file import ParserErrorException
 from pcs.lib.booth import config_parser
 from pcs.lib.booth.config_parser import ConfigItem
 

@@ -29,7 +29,7 @@ from pcs.lib.communication.tools import run_and_raise
 from pcs.lib.errors import LibraryError, ReportItemSeverity
 from pcs.lib.file.instance import FileInstance
 from pcs.lib.file.raw_file import GhostFile, raw_file_error_report
-from pcs.lib.file_interfaces import ParserErrorException
+from pcs.lib.interface.file import ParserErrorException
 from pcs.lib.node import get_existing_nodes_names
 from pcs.lib.resource_agent import find_valid_resource_agent_by_name
 

@@ -62,7 +62,7 @@ from pcs.lib.external import (
     is_systemctl,
 )
 from pcs.lib.file.instance import FileInstance as LibFileInstance
-from pcs.lib.file_interfaces import ParserErrorException
+from pcs.lib.interface.file import ParserErrorException
 from pcs.lib.pacemaker.live import has_wait_for_idle_support
 from pcs.lib.pacemaker.state import ClusterState
 from pcs.lib.pacemaker.values import(

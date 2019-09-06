@@ -1,23 +1,26 @@
 from collections import namedtuple
 import re
 
-from pcs.lib import (
-    file_interfaces,
-    reports,
-)
+from pcs.lib import reports
 from pcs.lib.booth import (
     constants,
     reports as booth_reports,
+)
+from pcs.lib.interface.file import (
+    ExporterInterface,
+    ParserErrorException,
+    ParserInterface,
+
 )
 
 class ConfigItem(namedtuple("ConfigItem", "key value details")):
     def __new__(cls, key, value, details=None):
         return super().__new__(cls, key, value, details or [])
 
-class InvalidLines(file_interfaces.ParserErrorException):
+class InvalidLines(ParserErrorException):
     pass
 
-class Parser(file_interfaces.ParserInterface):
+class Parser(ParserInterface):
     @staticmethod
     def parse(raw_file_data):
         return _organize_lines(
@@ -42,7 +45,7 @@ class Parser(file_interfaces.ParserInterface):
             ]
         raise exception
 
-class Exporter(file_interfaces.ExporterInterface):
+class Exporter(ExporterInterface):
     @staticmethod
     def export(config_structure):
         return "\n".join(

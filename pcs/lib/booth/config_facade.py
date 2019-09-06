@@ -1,7 +1,7 @@
-from pcs.lib import file_interfaces
 from pcs.lib.booth.config_parser import ConfigItem
+from pcs.lib.interface.file import FacadeInterface
 
-class ConfigFacade(file_interfaces.FacadeInterface):
+class ConfigFacade(FacadeInterface):
     @classmethod
     def create(cls, site_list, arbitrator_list):
         # The parent class is too generic and cannot know its children's details

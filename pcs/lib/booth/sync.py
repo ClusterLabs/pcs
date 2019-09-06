@@ -12,7 +12,7 @@ from pcs.lib.communication.tools import run
 from pcs.lib.errors import LibraryError
 from pcs.lib.file.instance import FileInstance
 from pcs.lib.file.raw_file import raw_file_error_report
-from pcs.lib.file_interfaces import ParserErrorException
+from pcs.lib.interface.file import ParserErrorException
 
 def send_all_config_to_node(
     communicator,

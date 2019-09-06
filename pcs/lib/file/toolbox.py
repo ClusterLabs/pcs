@@ -3,11 +3,16 @@ import json
 
 from pcs.common import file_type_codes as code
 from pcs.lib import reports
-from pcs.lib import file_interfaces
 from pcs.lib.booth.config_facade import ConfigFacade as BoothConfigFacade
 from pcs.lib.booth.config_parser import (
     Exporter as BoothConfigExporter,
     Parser as BoothConfigParser,
+)
+from pcs.lib.interface.file import (
+    ExporterInterface,
+    FacadeInterface,
+    ParserErrorException,
+    ParserInterface,
 )
 
 
@@ -30,12 +35,12 @@ FileToolbox = namedtuple(
 )
 
 
-class JsonParserException(file_interfaces.ParserErrorException):
+class JsonParserException(ParserErrorException):
     def __init__(self, json_exception):
         super().__init__()
         self.json_exception = json_exception
 
-class JsonParser(file_interfaces.ParserInterface):
+class JsonParser(ParserInterface):
     """
     Adapts standard json parser to our interfaces
     """
@@ -70,7 +75,7 @@ class JsonParser(file_interfaces.ParserInterface):
                 ]
         raise exception
 
-class JsonExporter(file_interfaces.ExporterInterface):
+class JsonExporter(ExporterInterface):
     """
     Adapts standard json exporter to our interfaces
     """
@@ -81,7 +86,7 @@ class JsonExporter(file_interfaces.ExporterInterface):
         ).encode("utf-8")
 
 
-class NoopParser(file_interfaces.ParserInterface):
+class NoopParser(ParserInterface):
     @staticmethod
     def parse(raw_file_data):
         return raw_file_data
@@ -92,12 +97,12 @@ class NoopParser(file_interfaces.ParserInterface):
     ):
         return []
 
-class NoopExporter(file_interfaces.ExporterInterface):
+class NoopExporter(ExporterInterface):
     @staticmethod
     def export(config_structure):
         return config_structure
 
-class NoopFacade(file_interfaces.FacadeInterface):
+class NoopFacade(FacadeInterface):
     @classmethod
     def create(cls):
         return cls(bytes())
