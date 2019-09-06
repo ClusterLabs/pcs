@@ -1,5 +1,9 @@
 from pcs.common import file_type_codes
 from pcs.lib import reports as common_reports
+from pcs.lib.booth import (
+    config_validators,
+    constants,
+)
 from pcs.lib.file.instance import FileInstance
 from pcs.lib.file.raw_file import export_ghost_file
 from pcs.lib.errors import LibraryError
@@ -36,13 +40,17 @@ class BoothEnv():
                 )
             )
 
-        self._instance_name = instance_name
+        self._instance_name = instance_name or constants.DEFAULT_INSTANCE_NAME
+        report_list = config_validators.check_instance_name(self._instance_name)
+        if report_list:
+            raise LibraryError(*report_list)
+
         self._config_file = FileInstance.for_booth_config(
-            f"{instance_name}.conf",
+            f"{self._instance_name}.conf",
             **self._init_file_data(booth_files_data, "config_data")
         )
         self._key_file = FileInstance.for_booth_key(
-            f"{instance_name}.key",
+            f"{self._instance_name}.key",
             **self._init_file_data(booth_files_data, "key_data")
         )
         if self._key_file.raw_file.is_ghost:

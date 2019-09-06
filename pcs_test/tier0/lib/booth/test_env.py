@@ -103,3 +103,38 @@ class BoothEnv(TestCase):
         facade = my_env.create_facade(site_list, arbitrator_list)
         self.assertEqual(site_list, facade.get_sites())
         self.assertEqual(arbitrator_list, facade.get_arbitrators())
+
+    def test_invalid_instance(self):
+        # pylint: disable=no-self-use
+        assert_raise_library_error(
+            lambda: env.BoothEnv("/tmp/booth/booth", {}),
+            fixture.error(
+                report_codes.BOOTH_INVALID_NAME,
+                name="/tmp/booth/booth",
+                reason="contains illegal character '/'",
+            ),
+        )
+
+    def test_invalid_instance_ghost(self):
+        # pylint: disable=no-self-use
+        assert_raise_library_error(
+            lambda: env.BoothEnv(
+                "../../booth/booth",
+                {
+                    "config_data": "some config data",
+                    "key_data": "some key data",
+                    "key_path": "some key path",
+                }
+            ),
+            fixture.error(
+                report_codes.BOOTH_INVALID_NAME,
+                name="../../booth/booth",
+                reason="contains illegal character '/'",
+            ),
+        )
+
+    def test_default_instance(self):
+        self.assertEqual(
+            env.BoothEnv(None, {}).instance_name,
+            "booth"
+        )

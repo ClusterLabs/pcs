@@ -18,6 +18,13 @@ from pcs.lib.commands import booth as commands
 
 RANDOM_KEY = "I'm so random!".encode()
 
+def fixture_report_invalid_name(name):
+    return fixture.error(
+        report_codes.BOOTH_INVALID_NAME,
+        name=name,
+        reason="contains illegal character '/'",
+    )
+
 class FixtureMixin():
     booth_dir = "/etc/booth"
     site_ip = "192.168.122.254"
@@ -187,11 +194,7 @@ class ConfigSetup(TestCase, FixtureMixin):
             )
         )
         self.env_assist.assert_reports([
-            fixture.error(
-                report_codes.BOOTH_INVALID_NAME,
-                name=instance_name,
-                reason="contains illegal character '/'",
-            ),
+            fixture_report_invalid_name(instance_name),
         ])
 
     def test_peers_not_valid(self):
@@ -492,15 +495,12 @@ class ConfigDestroy(TestCase, FixtureMixin):
             lambda: commands.config_destroy(
                 self.env_assist.get_env(),
                 instance_name=instance_name
-            )
-        )
-        self.env_assist.assert_reports([
-            fixture.error(
-                report_codes.BOOTH_INVALID_NAME,
-                name=instance_name,
-                reason="contains illegal character '/'",
             ),
-        ])
+            [
+                fixture_report_invalid_name(instance_name),
+            ],
+            expected_in_processor=False
+        )
 
     def test_success_default_instance(self):
         self.fixture_config_success()
@@ -926,15 +926,12 @@ class ConfigText(TestCase, FixtureMixin):
             lambda: commands.config_text(
                 self.env_assist.get_env(),
                 instance_name=instance_name
-            )
-        )
-        self.env_assist.assert_reports([
-            fixture.error(
-                report_codes.BOOTH_INVALID_NAME,
-                name=instance_name,
-                reason="contains illegal character '/'",
             ),
-        ])
+            [
+                fixture_report_invalid_name(instance_name),
+            ],
+            expected_in_processor=False
+        )
 
     def test_success_default_instance(self):
         config_content = "my config content".encode("utf-8")
@@ -1136,15 +1133,12 @@ class ConfigTicketAdd(TestCase, FixtureMixin):
                 "ticketA",
                 {},
                 instance_name=instance_name
-            )
-        )
-        self.env_assist.assert_reports([
-            fixture.error(
-                report_codes.BOOTH_INVALID_NAME,
-                name=instance_name,
-                reason="contains illegal character '/'",
             ),
-        ])
+            [
+                fixture_report_invalid_name(instance_name),
+            ],
+            expected_in_processor=False
+        )
 
     def fixture_config_success(self, instance_name="booth"):
         (self.config
@@ -1456,15 +1450,12 @@ class ConfigTicketRemove(TestCase, FixtureMixin):
                 self.env_assist.get_env(),
                 "ticketA",
                 instance_name=instance_name
-            )
-        )
-        self.env_assist.assert_reports([
-            fixture.error(
-                report_codes.BOOTH_INVALID_NAME,
-                name=instance_name,
-                reason="contains illegal character '/'",
             ),
-        ])
+            [
+                fixture_report_invalid_name(instance_name),
+            ],
+            expected_in_processor=False
+        )
 
     def fixture_config_success(self, instance_name="booth"):
         (self.config
@@ -1708,15 +1699,12 @@ class CreateInCluster(TestCase, FixtureMixin):
                 self.env_assist.get_env(),
                 self.site_ip,
                 instance_name=instance_name
-            )
-        )
-        self.env_assist.assert_reports([
-            fixture.error(
-                report_codes.BOOTH_INVALID_NAME,
-                name=instance_name,
-                reason="contains illegal character '/'",
             ),
-        ])
+            [
+                fixture_report_invalid_name(instance_name),
+            ],
+            expected_in_processor=False
+        )
 
     def fixture_config_success(self, instance_name="booth"):
         (self.config
@@ -1964,16 +1952,13 @@ class RemoveFromCluster(TestCase, FixtureMixin):
                 self.env_assist.get_env(),
                 self.resource_remove,
                 instance_name=instance_name
-            )
+            ),
+            [
+                fixture_report_invalid_name(instance_name),
+            ],
+            expected_in_processor=False
         )
         self.resource_remove.assert_not_called()
-        self.env_assist.assert_reports([
-            fixture.error(
-                report_codes.BOOTH_INVALID_NAME,
-                name=instance_name,
-                reason="contains illegal character '/'",
-            ),
-        ])
 
     def test_success_default_instance(self):
         (self.config
@@ -2122,16 +2107,13 @@ class Restart(TestCase, FixtureMixin):
                 self.env_assist.get_env(),
                 self.resource_restart,
                 instance_name=instance_name
-            )
+            ),
+            [
+                fixture_report_invalid_name(instance_name),
+            ],
+            expected_in_processor=False
         )
         self.resource_restart.assert_not_called()
-        self.env_assist.assert_reports([
-            fixture.error(
-                report_codes.BOOTH_INVALID_NAME,
-                name=instance_name,
-                reason="contains illegal character '/'",
-            ),
-        ])
 
     def test_success_default_instance(self):
         (self.config
@@ -2259,15 +2241,12 @@ class TicketGrantRevokeMixin(FixtureMixin):
                 self.env_assist.get_env(),
                 self.ticket,
                 instance_name=instance_name
-            )
-        )
-        self.env_assist.assert_reports([
-            fixture.error(
-                report_codes.BOOTH_INVALID_NAME,
-                name=instance_name,
-                reason="contains illegal character '/'",
             ),
-        ])
+            [
+                fixture_report_invalid_name(instance_name),
+            ],
+            expected_in_processor=False
+        )
 
     def test_not_live(self):
         self.config.env.set_booth({
@@ -2425,16 +2404,12 @@ class ConfigSyncTest(TestCase, FixtureMixin):
             lambda: commands.config_sync(
                 self.env_assist.get_env(),
                 instance_name=instance_name
-            )
-        )
-        self.env_assist.assert_reports([
-            fixture.error(
-                report_codes.BOOTH_INVALID_NAME,
-                name=instance_name,
-                reason="contains illegal character '/'",
             ),
-        ])
-
+            [
+                fixture_report_invalid_name(instance_name),
+            ],
+            expected_in_processor=False
+        )
 
     def test_success_default_instance(self):
         self.fixture_config_success()
@@ -2956,15 +2931,12 @@ class EnableDisableStartStopMixin(FixtureMixin):
             lambda: self.command(
                 self.env_assist.get_env(),
                 instance_name=instance_name
-            )
-        )
-        self.env_assist.assert_reports([
-            fixture.error(
-                report_codes.BOOTH_INVALID_NAME,
-                name=instance_name,
-                reason="contains illegal character '/'",
             ),
-        ])
+            [
+                fixture_report_invalid_name(instance_name),
+            ],
+            expected_in_processor=False
+        )
 
     @mock.patch("pcs.lib.external.is_systemctl", lambda: False)
     def test_not_systemd(self):
@@ -3197,14 +3169,11 @@ class PullConfigFailure(PullConfigBase):
                 self.node_name,
                 instance_name=instance_name
             ),
+            [
+                fixture_report_invalid_name(instance_name),
+            ],
+            expected_in_processor=False
         )
-        self.env_assist.assert_reports([
-            fixture.error(
-                report_codes.BOOTH_INVALID_NAME,
-                name=instance_name,
-                reason="contains illegal character '/'",
-            ),
-        ])
 
     def test_not_live(self):
         self.config.env.set_booth({
@@ -3453,15 +3422,12 @@ class GetStatus(TestCase):
             lambda: commands.get_status(
                 self.env_assist.get_env(),
                 instance_name=instance_name
-            )
-        )
-        self.env_assist.assert_reports([
-            fixture.error(
-                report_codes.BOOTH_INVALID_NAME,
-                name=instance_name,
-                reason="contains illegal character '/'",
             ),
-        ])
+            [
+                fixture_report_invalid_name(instance_name),
+            ],
+            expected_in_processor=False
+        )
 
     def test_not_live(self):
         self.config.env.set_booth({

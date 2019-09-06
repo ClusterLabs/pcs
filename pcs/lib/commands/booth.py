@@ -47,7 +47,7 @@ def config_setup(
     string instance_name -- booth instance name
     bool overwrite_existing -- allow overwriting existing files
     """
-    instance_name = _get_instance_name(instance_name)
+    instance_name = instance_name or constants.DEFAULT_INSTANCE_NAME
     report_processor = SimpleReportProcessor(env.report_processor)
 
     report_processor.report_list(
@@ -104,8 +104,8 @@ def config_destroy(env, instance_name=None, ignore_config_load_problems=False):
             to read booth configs for the given booth instance
     """
     report_processor = SimpleReportProcessor(env.report_processor)
-    instance_name = _get_valid_instance_name(report_processor, instance_name)
     booth_env = env.get_booth_env(instance_name)
+    instance_name = booth_env.instance_name
     _ensure_live_env(env, booth_env)
 
     # TODO use constants in reports
@@ -195,8 +195,8 @@ def config_text(env, instance_name=None, node_name=None):
     string node_name -- get the config from specified node or local host if None
     """
     report_processor = SimpleReportProcessor(env.report_processor)
-    instance_name = _get_valid_instance_name(report_processor, instance_name)
     booth_env = env.get_booth_env(instance_name)
+    instance_name = booth_env.instance_name
     # It does not make any sense for the cli to read a ghost file and send it
     # to lib so that the lib could return it unchanged to cli. Just use 'cat'.
     # When node_name is specified, using ghost files doesn't make any sense
@@ -240,8 +240,6 @@ def config_ticket_add(
     bool allow_unknown_options -- allow using options unknown to pcs
     """
     report_processor = SimpleReportProcessor(env.report_processor)
-    instance_name = _get_valid_instance_name(report_processor, instance_name)
-
     booth_env = env.get_booth_env(instance_name)
     try:
         booth_conf = booth_env.config.read_to_facade()
@@ -276,8 +274,6 @@ def config_ticket_remove(env, ticket_name, instance_name=None):
     string instance_name -- booth instance name
     """
     report_processor = SimpleReportProcessor(env.report_processor)
-    instance_name = _get_valid_instance_name(report_processor, instance_name)
-
     booth_env = env.get_booth_env(instance_name)
     try:
         booth_conf = booth_env.config.read_to_facade()
@@ -311,7 +307,6 @@ def create_in_cluster(
         if its agent is not installed
     """
     report_processor = SimpleReportProcessor(env.report_processor)
-    instance_name = _get_valid_instance_name(report_processor, instance_name)
     booth_env = env.get_booth_env(instance_name)
     # Booth config path goes to CIB. Working with a mocked booth configs would
     # not work coorectly as the path would point to a mock file (the path to a
@@ -321,6 +316,7 @@ def create_in_cluster(
     _ensure_live_booth_env(booth_env)
     resources_section = get_resources(env.get_cib())
     id_provider = IdProvider(resources_section)
+    instance_name = booth_env.instance_name
 
     # validate
     if resource.find_for_config(resources_section, booth_env.config_path):
@@ -385,7 +381,6 @@ def remove_from_cluster(
     """
     # TODO resource_remove is provisional hack til resources are moved to lib
     report_processor = SimpleReportProcessor(env.report_processor)
-    instance_name = _get_valid_instance_name(report_processor, instance_name)
     booth_env = env.get_booth_env(instance_name)
     # This command does not work with booth config files at all, let's reject
     # them then.
@@ -395,7 +390,7 @@ def remove_from_cluster(
         _find_resource_elements_for_operation(
             report_processor,
             get_resources(env.get_cib()),
-            env.get_booth_env(instance_name),
+            booth_env,
             allow_remove_multiple,
         )
     )
@@ -412,14 +407,13 @@ def restart(env, resource_restart, instance_name=None, allow_multiple=False):
     """
     # TODO resource_remove is provisional hack til resources are moved to lib
     report_processor = SimpleReportProcessor(env.report_processor)
-    instance_name = _get_valid_instance_name(report_processor, instance_name)
     booth_env = env.get_booth_env(instance_name)
     _ensure_live_env(env, booth_env)
 
     for booth_element in _find_resource_elements_for_operation(
         report_processor,
         get_resources(env.get_cib()),
-        env.get_booth_env(instance_name),
+        booth_env,
         allow_multiple,
     ):
         resource_restart([booth_element.attrib["id"]])
@@ -462,8 +456,6 @@ def ticket_revoke(env, ticket_name, site_ip=None, instance_name=None):
 
 
 def _ticket_operation(operation, env, ticket_name, site_ip, instance_name):
-    report_processor = SimpleReportProcessor(env.report_processor)
-    instance_name = _get_valid_instance_name(report_processor, instance_name)
     booth_env = env.get_booth_env(instance_name)
     _ensure_live_env(env, booth_env)
 
@@ -502,7 +494,6 @@ def config_sync(env, instance_name=None, skip_offline_nodes=False):
     skip_offline_nodes -- if True offline nodes will be skipped
     """
     report_processor = SimpleReportProcessor(env.report_processor)
-    instance_name = _get_valid_instance_name(report_processor, instance_name)
     booth_env = env.get_booth_env(instance_name)
     if not env.is_cib_live:
         raise LibraryError(
@@ -543,7 +534,7 @@ def config_sync(env, instance_name=None, skip_offline_nodes=False):
 
     com_cmd = BoothSendConfig(
         env.report_processor,
-        instance_name,
+        booth_env.instance_name,
         booth_conf_data,
         authfile=authfile_name,
         authfile_data=authfile_data,
@@ -566,10 +557,9 @@ def enable_booth(env, instance_name=None):
     string instance_name -- booth instance name
     """
     external.ensure_is_systemd()
-    report_processor = SimpleReportProcessor(env.report_processor)
-    instance_name = _get_valid_instance_name(report_processor, instance_name)
     booth_env = env.get_booth_env(instance_name)
     _ensure_live_env(env, booth_env)
+    instance_name = booth_env.instance_name
 
     try:
         external.enable_service(env.cmd_runner(), "booth", instance_name)
@@ -590,10 +580,9 @@ def disable_booth(env, instance_name=None):
     string instance_name -- booth instance name
     """
     external.ensure_is_systemd()
-    report_processor = SimpleReportProcessor(env.report_processor)
-    instance_name = _get_valid_instance_name(report_processor, instance_name)
     booth_env = env.get_booth_env(instance_name)
     _ensure_live_env(env, booth_env)
+    instance_name = booth_env.instance_name
 
     try:
         external.disable_service(env.cmd_runner(), "booth", instance_name)
@@ -616,10 +605,9 @@ def start_booth(env, instance_name=None):
     string instance_name -- booth instance name
     """
     external.ensure_is_systemd()
-    report_processor = SimpleReportProcessor(env.report_processor)
-    instance_name = _get_valid_instance_name(report_processor, instance_name)
     booth_env = env.get_booth_env(instance_name)
     _ensure_live_env(env, booth_env)
+    instance_name = booth_env.instance_name
 
     try:
         external.start_service(env.cmd_runner(), "booth", instance_name)
@@ -640,10 +628,9 @@ def stop_booth(env, instance_name=None):
     string instance_name -- booth instance name
     """
     external.ensure_is_systemd()
-    report_processor = SimpleReportProcessor(env.report_processor)
-    instance_name = _get_valid_instance_name(report_processor, instance_name)
     booth_env = env.get_booth_env(instance_name)
     _ensure_live_env(env, booth_env)
+    instance_name = booth_env.instance_name
 
     try:
         external.stop_service(env.cmd_runner(), "booth", instance_name)
@@ -666,8 +653,8 @@ def pull_config(env, node_name, instance_name=None):
     string instance_name -- booth instance name
     """
     report_processor = SimpleReportProcessor(env.report_processor)
-    instance_name = _get_valid_instance_name(report_processor, instance_name)
     booth_env = env.get_booth_env(instance_name)
+    instance_name = booth_env.instance_name
     _ensure_live_env(env, booth_env)
 
     env.report_processor.process(
@@ -685,7 +672,6 @@ def pull_config(env, node_name, instance_name=None):
     output = run_and_raise(env.get_node_communicator(), com_cmd)[0][1]
     try:
         # TODO adapt to new file transfer framework once it is written
-        booth_env = env.get_booth_env(instance_name)
         if (
             output["authfile"]["name"] is not None
             and
@@ -726,10 +712,9 @@ def get_status(env, instance_name=None):
     LibraryEnvironment env
     string instance_name -- booth instance name
     """
-    report_processor = SimpleReportProcessor(env.report_processor)
-    instance_name = _get_valid_instance_name(report_processor, instance_name)
     booth_env = env.get_booth_env(instance_name)
     _ensure_live_env(env, booth_env)
+    instance_name = booth_env.instance_name
     return {
         "status": status.get_daemon_status(env.cmd_runner(), instance_name),
         "ticket": status.get_tickets_status(env.cmd_runner(), instance_name),
@@ -763,18 +748,6 @@ def _find_resource_elements_for_operation(
         raise LibraryError()
 
     return booth_element_list
-
-def _get_valid_instance_name(report_processor, instance_name):
-    instance_name = _get_instance_name(instance_name)
-    report_processor.report_list(
-        config_validators.check_instance_name(instance_name)
-    )
-    if report_processor.has_errors:
-        raise LibraryError()
-    return instance_name
-
-def _get_instance_name(instance_name):
-    return instance_name if instance_name else constants.DEFAULT_INSTANCE_NAME
 
 def _ensure_live_booth_env(booth_env):
     if booth_env.ghost_file_codes:

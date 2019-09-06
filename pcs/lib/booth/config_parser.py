@@ -12,8 +12,7 @@ from pcs.lib.booth import (
 
 class ConfigItem(namedtuple("ConfigItem", "key value details")):
     def __new__(cls, key, value, details=None):
-        details = details if details else []
-        return super(ConfigItem, cls).__new__(cls, key, value, details)
+        return super().__new__(cls, key, value, details or [])
 
 class InvalidLines(file_interfaces.ParserErrorException):
     pass
