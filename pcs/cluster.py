@@ -19,6 +19,8 @@ from pcs.cli.common import parse_args
 from pcs.cli.common.errors import (
     CmdLineInputError,
     ERR_NODE_LIST_AND_ALL_MUTUALLY_EXCLUSIVE,
+    HINT_SYNTAX_CHANGE,
+    msg_command_replaced,
 )
 from pcs.cli.common.reports import process_library_reports, build_report_message
 from pcs.common import report_codes
@@ -1081,7 +1083,17 @@ def cluster_uidgid(lib, argv, modifiers, silent_list=False):
                 )
 
     else:
-        raise CmdLineInputError()
+        # The hint is defined to print error messages which point users to the
+        # changes section in pcs manpage.
+        # To be removed in the next significant version.
+        raise CmdLineInputError(hint=(
+            msg_command_replaced(
+                "pcs cluster uidgid delete",
+                "pcs cluster uidgid remove",
+            )
+            if command == "rm"
+            else None
+        ))
 
 def cluster_get_corosync_conf(lib, argv, modifiers):
     """
@@ -1358,7 +1370,10 @@ def cluster_auth_cmd(lib, argv, modifiers):
         "--corosync_conf", "--request-timeout", "-u", "-p"
     )
     if argv:
-        raise CmdLineInputError()
+        # The hint is defined to print error messages which point users to the
+        # changes section in pcs manpage.
+        # To be removed in the next significant version.
+        raise CmdLineInputError(hint=HINT_SYNTAX_CHANGE)
     lib_env = utils.get_lib_env()
     target_factory = lib_env.get_node_target_factory()
     cluster_node_list = lib_env.get_corosync_conf().get_nodes()
@@ -1493,7 +1508,11 @@ def cluster_setup(lib, argv, modifiers):
         corosync and pacemaker authkeys
     """
     modifiers.ensure_only_supported(
-        "--wait", "--start", "--enable", "--force", "--no-keys-sync"
+        "--wait", "--start", "--enable", "--force", "--no-keys-sync",
+        # The hint is defined to print error messages which point users to the
+        # changes section in pcs manpage.
+        # To be removed in the next significant version.
+        hint_syntax_changed=modifiers.is_specified("--name")
     )
     # pylint: disable=invalid-name
     if len(argv) < 2:

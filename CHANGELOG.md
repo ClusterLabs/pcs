@@ -2,11 +2,16 @@
 
 ## [Unreleased]
 
+### Added
+- New section in pcs man page summarizing changes in pcs-0.10. Commands removed
+  or changed in pcs-0.10 print errors poiting to that section. ([rhbz#1728890])
+
 ### Fixed
 - All node names and scores are validated when running `pcs constraint location
   avoids/prefers` before writing configuration to cib ([rhbz#1673835])
 
 [rhbz#1673835]: https://bugzilla.redhat.com/show_bug.cgi?id=1673835
+[rhbz#1728890]: https://bugzilla.redhat.com/show_bug.cgi?id=1728890
 
 
 ## [0.10.3] - 2019-08-23

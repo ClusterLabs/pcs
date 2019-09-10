@@ -49,7 +49,10 @@ class UidGidTest(TestCase):
 
         o, r = _pcs("cluster uidgid rm")
         assert r == 1
-        assert o.startswith("\nUsage:")
+        assert o.startswith(
+            "Hint: This command has been replaced with 'pcs cluster uidgid "
+            "delete', 'pcs cluster uidgid remove'."
+        )
 
         o, r = _pcs("cluster uidgid xx")
         assert r == 1

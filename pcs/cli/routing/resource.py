@@ -4,6 +4,7 @@ from pcs import (
     resource,
     usage,
 )
+from pcs.cli.common.errors import raise_command_replaced
 from pcs.cli.common.routing import create_router
 
 
@@ -93,7 +94,15 @@ resource_cmd = create_router(
             ["resource", "bundle"]
         ),
         # internal use only
-        "get_resource_agent_info": resource.get_resource_agent_info
+        "get_resource_agent_info": resource.get_resource_agent_info,
+
+        # removed commands
+        # These print error messages which point users to the changes section in
+        # pcs manpage.
+        # To be removed in the next significant version.
+        "master": lambda lib, argv, modifiers: raise_command_replaced(
+            "pcs resource promotable"
+        ),
     },
     ["resource"],
     default_cmd="status"

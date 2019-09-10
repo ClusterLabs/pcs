@@ -1,5 +1,5 @@
 from pcs.cli.common.parse_args import group_by_keywords, prepare_options
-from pcs.cli.common.errors import CmdLineInputError
+from pcs.cli.common.errors import CmdLineInputError, HINT_SYNTAX_CHANGE
 
 
 def parse_create_simple(arg_list):
@@ -30,21 +30,29 @@ def parse_create(arg_list):
         only_found_keywords=True,
     )
 
-    parts = {
-        "meta":  prepare_options(groups.get("meta", [])),
-        "options":  prepare_options(groups.get("options", [])),
-        "op": [
-            prepare_options(op)
-            for op in build_operations(groups.get("op", []))
-        ],
-    }
+    try:
+        parts = {
+            "meta":  prepare_options(groups.get("meta", [])),
+            "options":  prepare_options(groups.get("options", [])),
+            "op": [
+                prepare_options(op)
+                for op in build_operations(groups.get("op", []))
+            ],
+        }
 
-    if "clone" in groups:
-        parts["clone"] = prepare_options(groups["clone"])
-    if "promotable" in groups:
-        parts["promotable"] = prepare_options(groups["promotable"])
-    if "bundle" in groups:
-        parts["bundle"] = groups["bundle"]
+        if "clone" in groups:
+            parts["clone"] = prepare_options(groups["clone"])
+        if "promotable" in groups:
+            parts["promotable"] = prepare_options(groups["promotable"])
+        if "bundle" in groups:
+            parts["bundle"] = groups["bundle"]
+    except CmdLineInputError as e:
+        # Print error messages which point users to the changes section in pcs
+        # manpage.
+        # To be removed in the next significant version.
+        if e.message == "missing value of 'master' option":
+            raise CmdLineInputError(message=e.message, hint=HINT_SYNTAX_CHANGE)
+        raise e
 
     return parts
 

@@ -1,5 +1,8 @@
 from pcs.cli.common.console_report import format_list
-from pcs.cli.common.errors import CmdLineInputError
+from pcs.cli.common.errors import (
+    CmdLineInputError,
+    HINT_SYNTAX_CHANGE,
+)
 
 
 ARG_TYPE_DELIMITER = "%"
@@ -394,7 +397,9 @@ class InputModifiers():
             {opt: self.get(opt) for opt in options if self.is_specified(opt)}
         )
 
-    def ensure_only_supported(self, *supported_options):
+    def ensure_only_supported(
+        self, *supported_options, hint_syntax_changed=False
+    ):
         unsupported_options = (
             # --debug is supported in all commands
             self._defined_options - set(supported_options) - set(["--debug"])
@@ -403,7 +408,11 @@ class InputModifiers():
             raise CmdLineInputError(
                 "Specified options {} are not supported in this command".format(
                     format_list(list(unsupported_options))
-                )
+                ),
+                # Print error messages which point users to the changes section
+                # in pcs manpage.
+                # To be removed in the next significant version.
+                hint=(HINT_SYNTAX_CHANGE if hint_syntax_changed else None)
             )
 
     def is_specified(self, option):

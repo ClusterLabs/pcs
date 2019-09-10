@@ -1027,6 +1027,86 @@ EDITOR
 .TP
 no_proxy, https_proxy, all_proxy, NO_PROXY, HTTPS_PROXY, ALL_PROXY
  These environment variables (listed according to their priorities) control how pcs handles proxy servers when connecting to cluster nodes. See curl(1) man page for details.
+.SH CHANGES IN PCS-0.10
+This section summarizes the most important changes in commands done in pcs-0.10.x compared to pcs-0.9.x. For detailed description of current commands see above.
+.SS "cluster"
+.TP
+auth
+The 'pcs cluster auth' command only authenticates nodes in a local cluster and does not accept a node list. The new command for authentication is 'pcs host auth'. It allows to specify host names, addresses and pcsd ports.
+.TP
+node add
+Custom node names and Corosync 3.x with knet are fully supported now, therefore the syntax has been completely changed.
+.br
+The \fB\-\-device\fR and \fB\-\-watchdog\fR options have been replaced with 'device' and 'watchdog' options, respectively.
+.TP
+quorum
+This command has been replaced with 'pcs quorum'.
+.TP
+remote\-node add
+This command has been replaced with 'pcs cluster node add\-guest'.
+.TP
+remote\-node remove
+This command has been replaced with 'pcs cluster node delete\-guest' and its alias 'pcs cluster node remove\-guest'.
+.TP
+setup
+Custom node names and Corosync 3.x with knet are fully supported now, therefore the syntax has been completely changed.
+.br
+The \fB\-\-name\fR option has been removed. The first parameter of the command is the cluster name now.
+.TP
+standby
+This command has been replaced with 'pcs node standby'.
+.TP
+uidgid rm
+This command has been deprecated, use 'pcs cluster uidgid delete' or 'pcs cluster uidgid remove' instead.
+.TP
+unstandby
+This command has been replaced with 'pcs node unstandby'.
+.TP
+verify
+The \fB\-V\fR option has been replaced with \fB\-\-full\fR.
+.br
+To specify a filename, use the \fB\-f\fR option.
+.SS "pcsd"
+.TP
+clear\-auth
+This command has been replaced with 'pcs host deauth' and 'pcs pcsd deauth'.
+.SS "property"
+.TP
+set
+The \fB\-\-node\fR option is no longer supported. Use the 'pcs node attribute' command to set node attributes.
+.TP
+show
+The \fB\-\-node\fR option is no longer supported. Use the 'pcs node attribute' command to view node attributes.
+.TP
+unset
+The \fB\-\-node\fR option is no longer supported. Use the 'pcs node attribute' command to unset node attributes.
+.SS "resource"
+.TP
+create
+The 'master' keyword has been changed to 'promotable'.
+.TP
+failcount reset
+The command has been removed as 'pcs resource cleanup' is doing exactly the same job.
+.TP
+master
+This command has been replaced with 'pcs resource promotable'.
+.TP
+show
+Previously, this command displayed either status or configuration of resources depending on the parameters specified. This was confusing, therefore the command was replaced by several new commands. To display resources status, run 'pcs resource' or 'pcs resource status'. To display resources configuration, run 'pcs resource config' or 'pcs resource config <resource name>'. To display configured resource groups, run 'pcs resource group list'.
+.SS "status"
+.TP
+groups
+This command has been replaced with 'pcs resource group list'.
+.SS "stonith"
+.TP
+sbd device setup
+The \fB\-\-device\fR option has been replaced with the 'device' option.
+.TP
+sbd enable
+The \fB\-\-device\fR and \fB\-\-watchdog\fR options have been replaced with 'device' and 'watchdog' options, respectively.
+.TP
+show
+Previously, this command displayed either status or configuration of stonith resources depending on the parameters specified. This was confusing, therefore the command was replaced by several new commands. To display stonith resources status, run 'pcs stonith' or 'pcs stonith status'. To display stonith resources configuration, run 'pcs stonith config' or 'pcs stonith config <stonith name>'.
 .SH SEE ALSO
 http://clusterlabs.org/doc/
 

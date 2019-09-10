@@ -2,6 +2,7 @@ from pcs import (
     status,
     usage,
 )
+from pcs.cli.common.errors import raise_command_replaced
 from pcs.cli.common.routing import create_router
 
 from pcs.qdevice import qdevice_status_cmd
@@ -22,6 +23,14 @@ status_cmd = create_router(
         "resources": resource_status,
         "xml": status.xml_status,
         "status": status.full_status,
+
+        # removed commands
+        # These print error messages which point users to the changes section in
+        # pcs manpage.
+        # To be removed in the next significant version.
+        "groups": lambda lib, argv, modifiers: raise_command_replaced(
+            "pcs resource group list"
+        ),
     },
     ["status"],
     default_cmd="status",

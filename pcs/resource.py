@@ -15,7 +15,7 @@ from pcs.settings import (
     pacemaker_wait_timeout_status as PACEMAKER_WAIT_TIMEOUT_STATUS,
 )
 from pcs.cli.common.console_report import error, indent, warn
-from pcs.cli.common.errors import CmdLineInputError
+from pcs.cli.common.errors import CmdLineInputError, raise_command_replaced
 from pcs.cli.common.parse_args import (
     prepare_options,
     prepare_options_allowed,
@@ -2222,6 +2222,11 @@ def resource_failcount(lib, argv, modifiers):
         raise CmdLineInputError()
 
     command = argv.pop(0)
+    # Print error messages which point users to the changes section in pcs
+    # manpage.
+    # To be removed in the next significant version.
+    if command == "reset":
+        raise_command_replaced("pcs resource cleanup")
 
     resource = argv.pop(0) if argv and "=" not in argv[0] else None
     parsed_options = prepare_options_allowed(
