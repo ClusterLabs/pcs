@@ -463,30 +463,6 @@ class CreateTest(AssertPcsMixin, TestCase):
         self.lib = mock.Mock(spec_set=["booth"])
         self.lib.booth = mock.Mock(spec_set=["create_in_cluster"])
 
-    def test_sucessfully_create_booth_resource_group(self):
-        self.assert_pcs_success("resource status", "NO resources configured\n")
-        self.assert_pcs_success("booth create ip 192.168.122.120")
-        self.assert_pcs_success("resource status", [
-             " Resource Group: booth-booth-group",
-             "     booth-booth-ip	(ocf::heartbeat:IPaddr2):	Stopped",
-             "     booth-booth-service	(ocf::pacemaker:booth-site):	Stopped",
-        ])
-        self.assert_pcs_success("resource config booth-booth-ip", [
-             " Resource: booth-booth-ip (class=ocf provider=heartbeat type=IPaddr2)",
-             "  Attributes: ip=192.168.122.120",
-             "  Operations: monitor interval=10s timeout=20s (booth-booth-ip-monitor-interval-10s)",
-             "              start interval=0s timeout=20s (booth-booth-ip-start-interval-0s)",
-             "              stop interval=0s timeout=20s (booth-booth-ip-stop-interval-0s)",
-        ])
-
-    def test_refuse_create_booth_when_config_is_already_in_use(self):
-        self.assert_pcs_success("booth create ip 192.168.122.120")
-        self.assert_pcs_fail("booth create ip 192.168.122.121", [
-            "Error: booth instance 'booth' is already created as cluster"
-                " resource",
-            "Error: Errors have occurred, therefore pcs is unable to continue",
-        ])
-
     def test_not_enough_args(self):
         self.assert_pcs_fail(
             "booth create",
@@ -564,87 +540,6 @@ class DeleteRemoveTestMixin(AssertPcsMixin):
         self.assert_pcs_fail(f"booth {self.command}", [
             "Error: booth instance 'booth' not found in cib",
             "Error: Errors have occurred, therefore pcs is unable to continue",
-        ])
-
-    def test_failed_when_multiple_booth_configuration_created(self):
-        self.assert_pcs_success("resource status", "NO resources configured\n")
-        self.assert_pcs_success("booth create ip 192.168.122.120")
-        self.assert_pcs_success(
-            "resource create some-id ocf:pacemaker:booth-site"
-            " config=/etc/booth/booth.conf --force",
-            "Warning: Value '/etc/booth/booth.conf' of option 'config' is "
-            "not unique across 'ocf:pacemaker:booth-site' resources. "
-            "Following resources are configured with the same value of the "
-            "instance attribute: 'booth-booth-service'\n"
-        )
-        self.assert_pcs_success("resource status", [
-             " Resource Group: booth-booth-group",
-             "     booth-booth-ip	(ocf::heartbeat:IPaddr2):	Stopped",
-             "     booth-booth-service	(ocf::pacemaker:booth-site):	Stopped",
-             " some-id	(ocf::pacemaker:booth-site):	Stopped",
-        ])
-        self.assert_pcs_fail(f"booth {self.command}", [
-            "Error: found more than one booth instance 'booth' in cib, use"
-                " --force to override"
-            ,
-            "Error: Errors have occurred, therefore pcs is unable to continue",
-        ])
-
-    def test_remove_added_booth_configuration(self):
-        self.assert_pcs_success("resource status", "NO resources configured\n")
-        self.assert_pcs_success("booth create ip 192.168.122.120")
-        self.assert_pcs_success("resource status", [
-             " Resource Group: booth-booth-group",
-             "     booth-booth-ip	(ocf::heartbeat:IPaddr2):	Stopped",
-             "     booth-booth-service	(ocf::pacemaker:booth-site):	Stopped",
-        ])
-        self.assert_pcs_success(f"booth {self.command}", [
-            "Deleting Resource - booth-booth-ip",
-            "Deleting Resource (and group) - booth-booth-service",
-        ])
-        self.assert_pcs_success("resource status", "NO resources configured\n")
-
-    def test_remove_when_group_disabled(self):
-        self.assert_pcs_success("resource status", "NO resources configured\n")
-        self.assert_pcs_success("booth create ip 192.168.122.120")
-        self.assert_pcs_success("resource disable booth-booth-group")
-        self.assert_pcs_success("resource status", [
-             " Resource Group: booth-booth-group",
-             "     booth-booth-ip	(ocf::heartbeat:IPaddr2):	Stopped (disabled)",
-             "     booth-booth-service	(ocf::pacemaker:booth-site):	Stopped (disabled)",
-        ])
-        self.assert_pcs_success(f"booth {self.command}", [
-            "Deleting Resource - booth-booth-ip",
-            "Deleting Resource (and group) - booth-booth-service",
-        ])
-        self.assert_pcs_success("resource status", "NO resources configured\n")
-
-    def test_remove_multiple_booth_configuration(self):
-        self.assert_pcs_success("resource status", "NO resources configured\n")
-        self.assert_pcs_success("booth create ip 192.168.122.120")
-        self.assert_pcs_success(
-            (
-                "resource create some-id ocf:pacemaker:booth-site"
-                " config=/etc/booth/booth.conf --force"
-            ),
-            (
-                "Warning: Value '/etc/booth/booth.conf' of option 'config' is "
-                "not unique across 'ocf:pacemaker:booth-site' resources. "
-                "Following resources are configured with the same value of the "
-                "instance attribute: 'booth-booth-service'\n"
-            )
-        )
-        self.assert_pcs_success("resource status", [
-             " Resource Group: booth-booth-group",
-             "     booth-booth-ip	(ocf::heartbeat:IPaddr2):	Stopped",
-             "     booth-booth-service	(ocf::pacemaker:booth-site):	Stopped",
-             " some-id	(ocf::pacemaker:booth-site):	Stopped",
-        ])
-        self.assert_pcs_success(f"booth {self.command} --force", [
-            "Warning: found more than one booth instance 'booth' in cib",
-            "Deleting Resource - booth-booth-ip",
-            "Deleting Resource (and group) - booth-booth-service",
-            "Deleting Resource - some-id",
         ])
 
     def test_lib_call_minimal(self):
