@@ -204,6 +204,8 @@ class NodeAddGuest(RemoteTest):
             "Unable to check if there is a conflict with nodes set in corosync "
                 "because the command does not run on a live cluster (e.g. -f "
                 "was used)\n"
+            "Warning: Unable to read the known-hosts file: No such file or "
+                "directory: '/var/lib/pcsd/known-hosts'\n"
             "No addresses specified for host 'node-name', using 'node-name'\n"
         )
 
