@@ -1,207 +1,141 @@
-from unittest import mock, TestCase
+import os
+from unittest import TestCase
 
+from pcs_test.tools import fixture
 from pcs_test.tools.assertions import assert_raise_library_error
-from pcs_test.tools.misc import create_patcher
 
-from pcs.common import report_codes
+from pcs import settings
+from pcs.common import (
+    file_type_codes,
+    report_codes,
+)
 from pcs.lib.booth import env
-from pcs.lib.errors import ReportItemSeverity as severities
+from pcs.lib.file.raw_file import GhostFile
 
-# pylint: disable=no-self-use
 
-patch_env = create_patcher("pcs.lib.booth.env")
-
-class GetConfigFileNameTest(TestCase):
-    @patch_env("os.path.exists")
-    def test_refuse_when_name_starts_with_slash(self, mock_path_exists):
-        mock_path_exists.return_value = True
+class BoothEnv(TestCase):
+    def test_ghost_conf_real_key(self):
+        # pylint: disable=no-self-use
         assert_raise_library_error(
-            lambda: env.get_config_file_name("/booth"),
-            (
-                severities.ERROR,
-                report_codes.BOOTH_INVALID_NAME,
-                {
-                    "name": "/booth",
-                    "reason": "contains illegal character '/'",
-                }
+            lambda: env.BoothEnv(
+                "my_booth",
+                {"config_data": "some config data".encode("utf-8")}
+            ),
+            fixture.error(
+                report_codes.LIVE_ENVIRONMENT_NOT_CONSISTENT,
+                mocked_files=[file_type_codes.BOOTH_CONFIG],
+                required_files=[file_type_codes.BOOTH_KEY],
             ),
         )
 
-class BoothEnvTest(TestCase):
-    @patch_env("RealFile")
-    def test_get_content_from_file(self, mock_real_file):
-        mock_real_file.return_value = mock.MagicMock(
-            read=mock.MagicMock(return_value="content")
+    def test_real_conf_ghost_key(self):
+        # pylint: disable=no-self-use
+        assert_raise_library_error(
+            lambda: env.BoothEnv(
+                "my_booth",
+                {"key_data": "some key data".encode("utf-8")}
+            ),
+            fixture.error(
+                report_codes.LIVE_ENVIRONMENT_NOT_CONSISTENT,
+                mocked_files=[file_type_codes.BOOTH_KEY],
+                required_files=[file_type_codes.BOOTH_CONFIG],
+            ),
+        )
+
+    def test_real(self):
+        my_env = env.BoothEnv("my_booth", {})
+        self.assertEqual("my_booth", my_env.instance_name)
+        self.assertFalse(isinstance(my_env.config.raw_file, GhostFile))
+        self.assertFalse(isinstance(my_env.key.raw_file, GhostFile))
+        self.assertEqual(
+            os.path.join(settings.booth_config_dir, "my_booth.conf"),
+            my_env.config_path
         )
         self.assertEqual(
-            "content",
-            env.BoothEnv("report processor", env_data={"name": "booth"})
-                .get_config_content()
+            os.path.join(settings.booth_config_dir, "my_booth.key"),
+            my_env.key_path
         )
+        self.assertEqual([], my_env.ghost_file_codes)
+        self.assertEqual({}, my_env.export())
 
-    @patch_env("set_keyfile_access")
-    @patch_env("RealFile")
-    def test_create_config(self, mock_real_file, mock_set_keyfile_access):
-        # pylint: disable=unused-argument
-        mock_file = mock.MagicMock(
-            assert_no_conflict_with_existing=mock.MagicMock(),
-            write=mock.MagicMock(),
-        )
-        mock_real_file.return_value = mock_file
+        site_list = ["site1", "site2"]
+        arbitrator_list = ["arbitrator1"]
+        facade = my_env.create_facade(site_list, arbitrator_list)
+        self.assertEqual(site_list, facade.get_sites())
+        self.assertEqual(arbitrator_list, facade.get_arbitrators())
 
 
-        env.BoothEnv(
-            "report processor",
-            env_data={"name": "booth"}
-        ).create_config("a", can_overwrite_existing=True)
-
-        self.assertEqual(
-            mock_file.assert_no_conflict_with_existing.mock_calls,
-            [mock.call('report processor', True)]
-        )
-        self.assertEqual(mock_file.write.mock_calls, [mock.call('a')])
-
-    @patch_env("RealFile")
-    def test_push_config(self, mock_real_file):
-        mock_file = mock.MagicMock(
-            assert_no_conflict_with_existing=mock.MagicMock(),
-            write=mock.MagicMock(),
-        )
-        mock_real_file.return_value = mock_file
-        env.BoothEnv(
-            "report processor",
-            env_data={"name": "booth"}
-        ).push_config("a")
-        mock_file.write.assert_called_once_with("a")
-
-
-
-    def test_export_config_file_when_was_present_in_env_data(self):
-        self.assertEqual(
-            env.BoothEnv(
-                "report processor",
-                {
-                    "name": "booth-name",
-                    "config_file": {
-                        "content": "a\nb",
-                    },
-                    "key_file": {
-                        "content": "secure",
-                    },
-                    "key_path": "/path/to/file.key",
-                }
-            ).export(),
+    def test_ghost(self):
+        config_data = "some config_data".encode("utf-8")
+        key_data = "some key_data".encode("utf-8")
+        key_path = "some key path"
+        my_env = env.BoothEnv(
+            "my_booth",
             {
-                "config_file": {
-                    "content": "a\nb",
-                    "can_overwrite_existing_file": False,
-                    "no_existing_file_expected": False,
-                    "is_binary": False,
-                },
-                "key_file": {
-                    "content": "secure",
-                    "can_overwrite_existing_file": False,
-                    "no_existing_file_expected": False,
-                    "is_binary": True,
-                },
+                "config_data": config_data,
+                "key_data": key_data,
+                "key_path": key_path,
             }
         )
-
-    def test_do_not_export_config_file_when_no_provided(self):
+        self.assertEqual("my_booth", my_env.instance_name)
+        self.assertTrue(isinstance(my_env.config.raw_file, GhostFile))
+        self.assertTrue(isinstance(my_env.key.raw_file, GhostFile))
+        with self.assertRaises(AssertionError) as cm:
+            dummy_path = my_env.config_path
         self.assertEqual(
-            env.BoothEnv("report processor", {"name": "booth"}).export(),
-            {}
+            "Reading config path is supported only in live environment",
+            str(cm.exception)
+        )
+        self.assertEqual(key_path, my_env.key_path)
+        self.assertEqual(
+            [file_type_codes.BOOTH_CONFIG, file_type_codes.BOOTH_KEY],
+            my_env.ghost_file_codes
+        )
+        self.assertEqual(
+            {
+                "config_file": {"content": config_data},
+                "key_file": {"content": key_data},
+            },
+            my_env.export()
         )
 
-class SetKeyfileAccessTest(TestCase):
-    @patch_env("os.chmod")
-    @patch_env("os.chown")
-    @patch_env("grp.getgrnam")
-    @patch_env("pwd.getpwnam")
-    @patch_env("settings")
-    def test_do_everything_to_set_desired_file_access(
-        self, settings, getpwnam, getgrnam, chown, chmod
-    ):
-        # pylint: disable=unused-argument
-        file_path = "/tmp/some_booth_file"
-        env.set_keyfile_access(file_path)
+        site_list = ["site1", "site2"]
+        arbitrator_list = ["arbitrator1"]
+        facade = my_env.create_facade(site_list, arbitrator_list)
+        self.assertEqual(site_list, facade.get_sites())
+        self.assertEqual(arbitrator_list, facade.get_arbitrators())
 
-        getpwnam.assert_called_once_with(settings.pacemaker_uname)
-        getgrnam.assert_called_once_with(settings.pacemaker_gname)
-
-        chown.assert_called_once_with(
-            file_path,
-            getpwnam.return_value.pw_uid,
-            getgrnam.return_value.gr_gid,
-        )
-
-    @patch_env("pwd.getpwnam", mock.MagicMock(side_effect=KeyError))
-    @patch_env("settings.pacemaker_uname", "some-user")
-    def test_raises_when_cannot_get_uid(self):
+    def test_invalid_instance(self):
+        # pylint: disable=no-self-use
         assert_raise_library_error(
-            lambda: env.set_keyfile_access("/booth"),
-            (
-                severities.ERROR,
-                report_codes.UNABLE_TO_DETERMINE_USER_UID,
-                {
-                    "user": "some-user",
-                }
+            lambda: env.BoothEnv("/tmp/booth/booth", {}),
+            fixture.error(
+                report_codes.BOOTH_INVALID_NAME,
+                name="/tmp/booth/booth",
+                reason="contains illegal character '/'",
             ),
         )
 
-    @patch_env("grp.getgrnam", mock.MagicMock(side_effect=KeyError))
-    @patch_env("pwd.getpwnam", mock.MagicMock())
-    @patch_env("settings.pacemaker_gname", "some-group")
-    def test_raises_when_cannot_get_gid(self):
+    def test_invalid_instance_ghost(self):
+        # pylint: disable=no-self-use
         assert_raise_library_error(
-            lambda: env.set_keyfile_access("/booth"),
-            (
-                severities.ERROR,
-                report_codes.UNABLE_TO_DETERMINE_GROUP_GID,
+            lambda: env.BoothEnv(
+                "../../booth/booth",
                 {
-                    "group": "some-group",
+                    "config_data": "some config data",
+                    "key_data": "some key data",
+                    "key_path": "some key path",
                 }
+            ),
+            fixture.error(
+                report_codes.BOOTH_INVALID_NAME,
+                name="../../booth/booth",
+                reason="contains illegal character '/'",
             ),
         )
 
-    @patch_env("format_environment_error", mock.Mock(return_value="err"))
-    @patch_env("os.chown", mock.MagicMock(side_effect=EnvironmentError()))
-    @patch_env("grp.getgrnam", mock.MagicMock())
-    @patch_env("pwd.getpwnam", mock.MagicMock())
-    @patch_env("settings.pacemaker_gname", "some-group")
-    def test_raises_when_cannot_chown(self):
-        assert_raise_library_error(
-            lambda: env.set_keyfile_access("/booth"),
-            (
-                severities.ERROR,
-                report_codes.FILE_IO_ERROR,
-                {
-                    'reason': 'err',
-                    'file_role': u'BOOTH_KEY',
-                    'file_path': '/booth',
-                    'operation': u'chown',
-                }
-            ),
-        )
-
-    @patch_env("format_environment_error", mock.Mock(return_value="err"))
-    @patch_env("os.chmod", mock.MagicMock(side_effect=EnvironmentError()))
-    @patch_env("os.chown", mock.MagicMock())
-    @patch_env("grp.getgrnam", mock.MagicMock())
-    @patch_env("pwd.getpwnam", mock.MagicMock())
-    @patch_env("settings.pacemaker_gname", "some-group")
-    def test_raises_when_cannot_chmod(self):
-        # pylint: disable=unused-argument
-        assert_raise_library_error(
-            lambda: env.set_keyfile_access("/booth"),
-            (
-                severities.ERROR,
-                report_codes.FILE_IO_ERROR,
-                {
-                    'reason': 'err',
-                    'file_role': u'BOOTH_KEY',
-                    'file_path': '/booth',
-                    'operation': u'chmod',
-                }
-            ),
+    def test_default_instance(self):
+        self.assertEqual(
+            env.BoothEnv(None, {}).instance_name,
+            "booth"
         )

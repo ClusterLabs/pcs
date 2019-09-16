@@ -1,5 +1,6 @@
 from pcs.common import report_codes as codes
 from pcs.cli.common.console_report import (
+    format_file_role,
     format_list,
     format_optional,
     format_plural,
@@ -41,10 +42,12 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
     ,
 
     codes.BOOTH_CONFIG_UNEXPECTED_LINES: lambda info:
-        "unexpected {_line_pl} appeared in config:\n{_line_list}"
+        "unexpected {_line_pl} in booth config{_file_path}:\n{_line_list}"
         .format(
+            _file_path=format_optional(info["file_path"], " '{0}'"),
             _line_pl=format_plural(info["line_list"], "line"),
-            _line_list="\n".join(info["line_list"])
+            _line_list="\n".join(info["line_list"]),
+            **info
         )
     ,
 
@@ -103,12 +106,6 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
         )
     ,
 
-    codes.BOOTH_CONFIG_READ_ERROR: lambda info:
-        "Unable to read booth config{_desc}".format(
-            _desc=format_booth_default(info["name"], " '{0}'")
-        )
-    ,
-
     codes.BOOTH_FETCHING_CONFIG_FROM_NODE: lambda info:
         "Fetching booth config{desc} from node '{node}'...".format(
             desc=format_booth_default(info["config"], " '{0}'"),
@@ -136,15 +133,13 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
 
     ,
 
-    codes.BOOTH_SKIPPING_CONFIG: lambda info:
-        "Skipping config file '{config_file}': {reason}".format(**info)
-    ,
-
-    codes.BOOTH_CANNOT_IDENTIFY_KEYFILE:
-        "cannot identify authfile in booth configuration"
-    ,
-
     codes.BOOTH_UNSUPPORTED_FILE_LOCATION: lambda info:
-        "Path '{file}' is not supported for booth config files".format(**info)
+        (
+            "{_file_role} '{file_path}' is outside of supported booth config "
+            "directory '{expected_dir}', ignoring the file"
+        ).format(
+            _file_role=format_file_role(info["file_type_code"]),
+            **info
+        )
     ,
 }

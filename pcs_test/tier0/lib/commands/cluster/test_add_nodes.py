@@ -14,9 +14,10 @@ from pcs_test.tools.custom_mock import patch_getaddrinfo
 
 from pcs import settings
 from pcs.common import (
-    env_file_role_codes,
+    file_type_codes,
     report_codes,
 )
+from pcs.common.file import RawFileError
 from pcs.lib.commands import cluster
 
 QDEVICE_HOST = "qdevice.host"
@@ -400,16 +401,17 @@ class LocalConfig():
                 config_path,
                 name=f"{local_prefix}fs.isfile.booth_config_file",
             )
-            .fs.open(
+            .raw_file.read(
+                file_type_codes.BOOTH_CONFIG,
                 config_path,
-                return_value=mock.mock_open(read_data=config_content)(),
-                name=f"{local_prefix}fs.open.booth_config_read",
+                content=config_content.encode("utf-8"),
+                name=f"{local_prefix}raw_file.read.booth_config_read",
             )
-            .fs.open(
+            .raw_file.read(
+                file_type_codes.BOOTH_KEY,
                 authfile_path,
-                return_value=mock.mock_open(read_data=authfile_content)(),
-                mode="rb",
-                name=f"{local_prefix}fs.open.booth_authfile_read",
+                content=authfile_content,
+                name=f"{local_prefix}raw_file.read.booth_authfile_read",
             )
             .http.booth.save_files(
                 files_data=[
@@ -2030,17 +2032,17 @@ class FailurePcsdSslCertSync(TestCase):
             [
                 fixture.error(
                     report_codes.FILE_IO_ERROR,
-                    file_role="PCSD_SSL_CERT",
+                    file_type_code=file_type_codes.PCSD_SSL_CERT,
                     file_path=settings.pcsd_cert_location,
                     reason="error cert",
-                    operation="read"
+                    operation=RawFileError.ACTION_READ,
                 ),
                 fixture.error(
                     report_codes.FILE_IO_ERROR,
-                    file_role="PCSD_SSL_KEY",
+                    file_type_code=file_type_codes.PCSD_SSL_KEY,
                     file_path=settings.pcsd_key_location,
                     reason="error key",
-                    operation="read"
+                    operation=RawFileError.ACTION_READ,
                 ),
             ]
         )
@@ -2217,23 +2219,23 @@ class FailureFilesDistribution(TestCase):
             [
                 fixture.error(
                     report_codes.FILE_IO_ERROR,
-                    file_role=env_file_role_codes.COROSYNC_AUTHKEY,
+                    force_code=report_codes.SKIP_FILE_DISTRIBUTION_ERRORS,
+                    file_type_code=file_type_codes.COROSYNC_AUTHKEY,
                     file_path=settings.corosync_authkey_file,
                     reason=(
                         f"{self.err_msg}: '{settings.corosync_authkey_file}'"
                     ),
-                    operation="read",
-                    force_code=report_codes.SKIP_FILE_DISTRIBUTION_ERRORS,
+                    operation=RawFileError.ACTION_READ,
                 ),
                 fixture.error(
                     report_codes.FILE_IO_ERROR,
-                    file_role=env_file_role_codes.PACEMAKER_AUTHKEY,
+                    force_code=report_codes.SKIP_FILE_DISTRIBUTION_ERRORS,
+                    file_type_code=file_type_codes.PACEMAKER_AUTHKEY,
                     file_path=settings.pacemaker_authkey_file,
                     reason=(
                         f"{self.err_msg}: '{settings.pacemaker_authkey_file}'"
                     ),
-                    operation="read",
-                    force_code=report_codes.SKIP_FILE_DISTRIBUTION_ERRORS,
+                    operation=RawFileError.ACTION_READ,
                 )
             ]
         )
@@ -2284,21 +2286,21 @@ class FailureFilesDistribution(TestCase):
             [
                 fixture.warn(
                     report_codes.FILE_IO_ERROR,
-                    file_role=env_file_role_codes.COROSYNC_AUTHKEY,
+                    file_type_code=file_type_codes.COROSYNC_AUTHKEY,
                     file_path=settings.corosync_authkey_file,
                     reason=(
                         f"{self.err_msg}: '{settings.corosync_authkey_file}'"
                     ),
-                    operation="read",
+                    operation=RawFileError.ACTION_READ,
                 ),
                 fixture.warn(
                     report_codes.FILE_IO_ERROR,
-                    file_role=env_file_role_codes.PACEMAKER_AUTHKEY,
+                    file_type_code=file_type_codes.PACEMAKER_AUTHKEY,
                     file_path=settings.pacemaker_authkey_file,
                     reason=(
                         f"{self.err_msg}: '{settings.pacemaker_authkey_file}'"
                     ),
-                    operation="read",
+                    operation=RawFileError.ACTION_READ,
                 )
             ]
         )
@@ -2559,6 +2561,13 @@ class FailureBoothConfigsDistribution(TestCase):
         self.config_content = "authfile = {}\n".format(self.authfile_path)
         self.authfile_content = b"booth authfile"
 
+        self.config_file2 = "booth2.conf"
+        self.authfile2 = "booth2.authfile"
+        self.config_path2 = os.path.join(config_dir, self.config_file2)
+        self.authfile_path2 = os.path.join(config_dir, self.authfile2)
+        self.config_content2 = "authfile = {}\n".format(self.authfile_path2)
+        self.authfile_content2 = b"booth authfile 2"
+
         self.config.env.set_known_nodes(self.existing_nodes + self.new_nodes)
         self.config.local.set_expected_reports_list(self.expected_reports)
         (self.config
@@ -2606,6 +2615,28 @@ class FailureBoothConfigsDistribution(TestCase):
             ) for node in self.successful_nodes
         ]
 
+    def _set_up_multibooth(self):
+        (self.config
+            .fs.listdir(
+                settings.booth_config_dir,
+                [
+                    self.config_file,
+                    "something",
+                    self.authfile,
+                    self.authfile2,
+                    self.config_file2,
+                ],
+                instead="fs.listdir"
+            )
+            .fs.isfile(self.config_path2, name="fs.isfile.booth_config_file2")
+        )
+        self.successful_reports = [
+            fixture.info(
+                report_codes.BOOTH_CONFIG_ACCEPTED_BY_NODE,
+                node=node,
+                name_list=[self.authfile2, self.config_file2],
+            ) for node in self.new_nodes
+        ]
 
     def _add_nodes_with_lib_error(self, reports=None):
         if reports is None:
@@ -2624,28 +2655,37 @@ class FailureBoothConfigsDistribution(TestCase):
         )
 
     def test_config_read_failure(self):
-        self.config.fs.open(
+        self.config.raw_file.read(
+            file_type_codes.BOOTH_CONFIG,
             self.config_path,
-            side_effect=EnvironmentError(1, self.err_msg, self.config_path),
+            exception_msg=self.err_msg,
+            name="raw_file.read.booth_config_read",
         )
 
-        expected_reports = [
-            fixture.error(
-                report_codes.BOOTH_CONFIG_READ_ERROR,
-                name=self.config_file,
-                force_code=report_codes.SKIP_UNREADABLE_CONFIG,
-            )
-        ]
+        self._add_nodes_with_lib_error()
 
-        self._add_nodes_with_lib_error(expected_reports)
-
-        self.env_assist.assert_reports(self.expected_reports + expected_reports)
+        self.env_assist.assert_reports(
+            self.expected_reports
+            +
+            [
+                fixture.error(
+                    report_codes.FILE_IO_ERROR,
+                    force_code=report_codes.SKIP_UNREADABLE_CONFIG,
+                    file_type_code=file_type_codes.BOOTH_CONFIG,
+                    file_path=self.config_path,
+                    reason=self.err_msg,
+                    operation=RawFileError.ACTION_READ,
+                ),
+            ]
+        )
 
     def test_config_read_failure_forced(self):
         (self.config
-            .fs.open(
+            .raw_file.read(
+                file_type_codes.BOOTH_CONFIG,
                 self.config_path,
-                side_effect=EnvironmentError(1, self.err_msg, self.config_path),
+                exception_msg=self.err_msg,
+                name="raw_file.read.booth_config_read",
             )
             .local.no_file_sync()
             .local.distribute_and_reload_corosync_conf(
@@ -2662,12 +2702,80 @@ class FailureBoothConfigsDistribution(TestCase):
             )
         )
 
-        expected_reports = [
-            fixture.warn(
-                report_codes.BOOTH_CONFIG_READ_ERROR,
-                name=self.config_file,
+        cluster.add_nodes(
+            self.env_assist.get_env(),
+            [{"name": node} for node in self.new_nodes],
+            force_flags=[report_codes.FORCE],
+        )
+
+        self.env_assist.assert_reports(
+            self.expected_reports
+            +
+            [
+                fixture.warn(
+                    report_codes.FILE_IO_ERROR,
+                    file_type_code=file_type_codes.BOOTH_CONFIG,
+                    file_path=self.config_path,
+                    reason=self.err_msg,
+                    operation=RawFileError.ACTION_READ,
+                ),
+            ]
+        )
+
+    def test_config_read_failure_forced_sends_other_configs(self):
+        self._set_up_multibooth()
+        (self.config
+            .raw_file.read(
+                file_type_codes.BOOTH_CONFIG,
+                self.config_path,
+                exception_msg=self.err_msg,
+                name="raw_file.read.booth_config_read",
             )
-        ]
+            .raw_file.read(
+                file_type_codes.BOOTH_CONFIG,
+                self.config_path2,
+                content=self.config_content2.encode("utf-8"),
+                name="raw_file.read.booth_config_read2",
+            )
+            .raw_file.read(
+                file_type_codes.BOOTH_KEY,
+                self.authfile_path2,
+                content=self.authfile_content2,
+                name="raw_file.read.booth_authfile_read2",
+            )
+            .http.booth.save_files(
+                files_data=[
+                    dict(
+                        name=self.config_file2,
+                        data=self.config_content2,
+                        is_authfile=False,
+                    ),
+                    dict(
+                        name=self.authfile2,
+                        data=base64.b64encode(
+                            self.authfile_content2
+                        ).decode("utf-8"),
+                        is_authfile=True,
+                    ),
+                ],
+                rewrite_existing=True,
+                saved=[self.config_file2, self.authfile2],
+                node_labels=self.new_nodes,
+            )
+            .local.no_file_sync()
+            .local.distribute_and_reload_corosync_conf(
+                corosync_conf_fixture(
+                    self.existing_corosync_nodes + [
+                        node_fixture(node, i)
+                        for i, node in enumerate(
+                            self.new_nodes, len(self.existing_nodes) + 1
+                        )
+                    ],
+                ),
+                self.existing_nodes,
+                self.new_nodes,
+            )
+        )
 
         cluster.add_nodes(
             self.env_assist.get_env(),
@@ -2675,33 +2783,70 @@ class FailureBoothConfigsDistribution(TestCase):
             force_flags=[report_codes.FORCE],
         )
 
-        self.env_assist.assert_reports(self.expected_reports + expected_reports)
+        self.env_assist.assert_reports(
+            self.expected_reports
+            +
+            [
+                fixture.warn(
+                    report_codes.FILE_IO_ERROR,
+                    file_type_code=file_type_codes.BOOTH_CONFIG,
+                    file_path=self.config_path,
+                    reason=self.err_msg,
+                    operation=RawFileError.ACTION_READ,
+                ),
+            ]
+            +
+            self.distribution_started_reports
+            +
+            self.successful_reports
+        )
 
     def test_authfile_read_failure(self):
         (self.config
-            .fs.open(
+            .raw_file.read(
+                file_type_codes.BOOTH_CONFIG,
                 self.config_path,
-                return_value=mock.mock_open(read_data=self.config_content)(),
-                name="fs.open.booth_config_read",
+                content=self.config_content.encode("utf-8"),
+                name="raw_file.read.booth_config_read",
             )
-            .fs.open(
+            .raw_file.read(
+                file_type_codes.BOOTH_KEY,
                 self.authfile_path,
-                side_effect=EnvironmentError(
-                    1, self.err_msg, self.authfile_path
-                ),
-                mode="rb",
-                name="fs.open.booth_authfile_read",
+                exception_msg=self.err_msg,
+                name="raw_file.read.booth_authfile_read",
             )
-            .http.booth.save_files(
-                files_data=[
-                    dict(
-                        name=self.config_file,
-                        data=self.config_content,
-                        is_authfile=False,
-                    ),
-                ],
-                saved=[self.config_file],
-                node_labels=self.new_nodes,
+        )
+
+        self._add_nodes_with_lib_error()
+
+        self.env_assist.assert_reports(
+            self.expected_reports
+            +
+            [
+                fixture.error(
+                    report_codes.FILE_IO_ERROR,
+                    force_code=report_codes.SKIP_UNREADABLE_CONFIG,
+                    file_type_code=file_type_codes.BOOTH_KEY,
+                    file_path=self.authfile_path,
+                    reason=self.err_msg,
+                    operation=RawFileError.ACTION_READ,
+                ),
+            ]
+        )
+
+    def test_authfile_read_failure_forced(self):
+        (self.config
+            .raw_file.read(
+                file_type_codes.BOOTH_CONFIG,
+                self.config_path,
+                content=self.config_content.encode("utf-8"),
+                name="raw_file.read.booth_config_read",
+            )
+            .raw_file.read(
+                file_type_codes.BOOTH_KEY,
+                self.authfile_path,
+                exception_msg=self.err_msg,
+                name="raw_file.read.booth_authfile_read",
             )
             .local.no_file_sync()
             .local.distribute_and_reload_corosync_conf(
@@ -2721,42 +2866,124 @@ class FailureBoothConfigsDistribution(TestCase):
             )
         )
 
-        self._add_nodes()
+        cluster.add_nodes(
+            self.env_assist.get_env(),
+            [{"name": node} for node in self.new_nodes],
+            force_flags=[report_codes.FORCE],
+        )
 
         self.env_assist.assert_reports(
             self.expected_reports
             +
-            self.distribution_started_reports
+            [
+                fixture.warn(
+                    report_codes.FILE_IO_ERROR,
+                    file_type_code=file_type_codes.BOOTH_KEY,
+                    file_path=self.authfile_path,
+                    reason=self.err_msg,
+                    operation=RawFileError.ACTION_READ,
+                ),
+            ]
+        )
+
+    def test_authfile_read_failure_forced_sends_other_configs(self):
+        self._set_up_multibooth()
+        (self.config
+            .raw_file.read(
+                file_type_codes.BOOTH_CONFIG,
+                self.config_path,
+                content=self.config_content.encode("utf-8"),
+                name="raw_file.read.booth_config_read",
+            )
+            .raw_file.read(
+                file_type_codes.BOOTH_KEY,
+                self.authfile_path,
+                exception_msg=self.err_msg,
+                name="raw_file.read.booth_authfile_read",
+            )
+            .raw_file.read(
+                file_type_codes.BOOTH_CONFIG,
+                self.config_path2,
+                content=self.config_content2.encode("utf-8"),
+                name="raw_file.read.booth_config_read2",
+            )
+            .raw_file.read(
+                file_type_codes.BOOTH_KEY,
+                self.authfile_path2,
+                content=self.authfile_content2,
+                name="raw_file.read.booth_authfile_read2",
+            )
+            .http.booth.save_files(
+                files_data=[
+                    dict(
+                        name=self.config_file2,
+                        data=self.config_content2,
+                        is_authfile=False,
+                    ),
+                    dict(
+                        name=self.authfile2,
+                        data=base64.b64encode(
+                            self.authfile_content2
+                        ).decode("utf-8"),
+                        is_authfile=True,
+                    ),
+                ],
+                rewrite_existing=True,
+                saved=[self.config_file2, self.authfile2],
+                node_labels=self.new_nodes,
+            )
+            .local.no_file_sync()
+            .local.distribute_and_reload_corosync_conf(
+                corosync_conf_fixture(
+                    self.existing_corosync_nodes + [
+                        node_fixture(node, i)
+                        for i, node in enumerate(
+                            self.new_nodes, len(self.existing_nodes) + 1
+                        )
+                    ],
+                ),
+                self.existing_nodes,
+                self.new_nodes,
+            )
+        )
+
+        cluster.add_nodes(
+            self.env_assist.get_env(),
+            [{"name": node} for node in self.new_nodes],
+            force_flags=[report_codes.FORCE],
+        )
+
+        self.env_assist.assert_reports(
+            self.expected_reports
             +
             [
                 fixture.warn(
                     report_codes.FILE_IO_ERROR,
-                    file_role=env_file_role_codes.BOOTH_KEY,
+                    file_type_code=file_type_codes.BOOTH_KEY,
                     file_path=self.authfile_path,
-                    reason=f"{self.err_msg}: '{self.authfile_path}'",
-                    operation="read",
-                )
-            ] + [
-                fixture.info(
-                    report_codes.BOOTH_CONFIG_ACCEPTED_BY_NODE,
-                    node=node,
-                    name_list=[self.config_file],
-                ) for node in self.new_nodes
+                    reason=self.err_msg,
+                    operation=RawFileError.ACTION_READ,
+                ),
             ]
+            +
+            self.distribution_started_reports
+            +
+            self.successful_reports
         )
 
     def test_write_failure(self):
         (self.config
-            .fs.open(
+            .raw_file.read(
+                file_type_codes.BOOTH_CONFIG,
                 self.config_path,
-                return_value=mock.mock_open(read_data=self.config_content)(),
-                name="fs.open.booth_config_read",
+                content=self.config_content.encode("utf-8"),
+                name="raw_file.read.booth_config_read",
             )
-            .fs.open(
+            .raw_file.read(
+                file_type_codes.BOOTH_KEY,
                 self.authfile_path,
-                return_value=mock.mock_open(read_data=self.authfile_content)(),
-                mode="rb",
-                name="fs.open.booth_authfile_read",
+                content=self.authfile_content,
+                name="raw_file.read.booth_authfile_read",
             )
             .http.booth.save_files(
                 files_data=[
@@ -2818,16 +3045,17 @@ class FailureBoothConfigsDistribution(TestCase):
 
     def test_communication_failure(self):
         (self.config
-            .fs.open(
+            .raw_file.read(
+                file_type_codes.BOOTH_CONFIG,
                 self.config_path,
-                return_value=mock.mock_open(read_data=self.config_content)(),
-                name="fs.open.booth_config_read",
+                content=self.config_content.encode("utf-8"),
+                name="raw_file.read.booth_config_read",
             )
-            .fs.open(
+            .raw_file.read(
+                file_type_codes.BOOTH_KEY,
                 self.authfile_path,
-                return_value=mock.mock_open(read_data=self.authfile_content)(),
-                mode="rb",
-                name="fs.open.booth_authfile_read",
+                content=self.authfile_content,
+                name="raw_file.read.booth_authfile_read",
             )
             .http.booth.save_files(
                 files_data=[
@@ -2876,16 +3104,17 @@ class FailureBoothConfigsDistribution(TestCase):
 
     def test_invalid_response_format(self):
         (self.config
-            .fs.open(
+            .raw_file.read(
+                file_type_codes.BOOTH_CONFIG,
                 self.config_path,
-                return_value=mock.mock_open(read_data=self.config_content)(),
-                name="fs.open.booth_config_read",
+                content=self.config_content.encode("utf-8"),
+                name="raw_file.read.booth_config_read",
             )
-            .fs.open(
+            .raw_file.read(
+                file_type_codes.BOOTH_KEY,
                 self.authfile_path,
-                return_value=mock.mock_open(read_data=self.authfile_content)(),
-                mode="rb",
-                name="fs.open.booth_authfile_read",
+                content=self.authfile_content,
+                name="raw_file.read.booth_authfile_read",
             )
             .http.booth.save_files(
                 files_data=[
@@ -2931,16 +3160,17 @@ class FailureBoothConfigsDistribution(TestCase):
 
     def test_not_connected(self):
         (self.config
-            .fs.open(
+            .raw_file.read(
+                file_type_codes.BOOTH_CONFIG,
                 self.config_path,
-                return_value=mock.mock_open(read_data=self.config_content)(),
-                name="fs.open.booth_config_read",
+                content=self.config_content.encode("utf-8"),
+                name="raw_file.read.booth_config_read",
             )
-            .fs.open(
+            .raw_file.read(
+                file_type_codes.BOOTH_KEY,
                 self.authfile_path,
-                return_value=mock.mock_open(read_data=self.authfile_content)(),
-                mode="rb",
-                name="fs.open.booth_authfile_read",
+                content=self.authfile_content,
+                name="raw_file.read.booth_authfile_read",
             )
             .http.booth.save_files(
                 files_data=[

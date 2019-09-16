@@ -5,6 +5,7 @@ from pcs_test.tools.command_env import get_env_tools
 
 from pcs import settings
 from pcs.common import report_codes
+from pcs.common.file import RawFileError
 from pcs.lib.commands import pcsd
 
 class SynchronizeSslCertificates(TestCase):
@@ -318,17 +319,17 @@ class SynchronizeSslCertificates(TestCase):
             [
                 fixture.error(
                     report_codes.FILE_IO_ERROR,
-                    file_role="PCSD_SSL_CERT",
+                    file_type_code="PCSD_SSL_CERT",
                     file_path=settings.pcsd_cert_location,
                     reason="error cert",
-                    operation="read"
+                    operation=RawFileError.ACTION_READ,
                 ),
                 fixture.error(
                     report_codes.FILE_IO_ERROR,
-                    file_role="PCSD_SSL_KEY",
+                    file_type_code="PCSD_SSL_KEY",
                     file_path=settings.pcsd_key_location,
                     reason="error key",
-                    operation="read"
+                    operation=RawFileError.ACTION_READ,
                 ),
             ]
         )

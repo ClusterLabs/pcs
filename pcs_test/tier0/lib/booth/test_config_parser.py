@@ -1,11 +1,12 @@
 from unittest import TestCase
 
-from pcs_test.tools.assertions import assert_raise_library_error
+from pcs_test.tools import fixture
+from pcs_test.tools.assertions import assert_report_item_list_equal
 
 from pcs.common import report_codes
+from pcs.lib.interface.config import ParserErrorException
 from pcs.lib.booth import config_parser
-from pcs.lib.booth.config_structure import ConfigItem
-from pcs.lib.errors import ReportItemSeverity as severities
+from pcs.lib.booth.config_parser import ConfigItem
 
 
 class BuildTest(TestCase):
@@ -20,8 +21,8 @@ class BuildTest(TestCase):
                 'ticket = "TB"',
                 "  timeout = 10",
                 "", #newline at the end
-            ]),
-            config_parser.build([
+            ]).encode("utf-8"),
+            config_parser.Exporter.export([
                 ConfigItem("authfile", "/path/to/auth.file"),
                 ConfigItem("site", "1.1.1.1"),
                 ConfigItem("site", "2.2.2.2"),
@@ -43,7 +44,9 @@ class OrganizeLinesTest(TestCase):
                 ConfigItem('arbitrator', '3.3.3.3'),
                 ConfigItem("ticket", "TA"),
             ],
-            config_parser.organize_lines([
+            # testing a function which should not be used outside of the module
+            # pylint: disable=protected-access
+            config_parser._organize_lines([
                 ("site", "1.1.1.1"),
                 ("ticket", "TA"),
                 ('site', '2.2.2.2'),
@@ -70,7 +73,9 @@ class OrganizeLinesTest(TestCase):
                     ConfigItem("renewal-freq", "40"),
                 ]),
             ],
-            config_parser.organize_lines([
+            # testing a function which should not be used outside of the module
+            # pylint: disable=protected-access
+            config_parser._organize_lines([
                 ("site", "1.1.1.1"),
                 ("expire", "300"), # out of ticket content is kept global
                 ("ticket", "TA"),
@@ -96,7 +101,9 @@ class ParseRawLinesTest(TestCase):
                 ('syntactically_correct', 'nonsense'),
                 ('line-with', 'hash#literal'),
             ],
-            config_parser.parse_to_raw_lines("\n".join([
+            # testing a function which should not be used outside of the module
+            # pylint: disable=protected-access
+            config_parser._parse_to_raw_lines("\n".join([
                 "site = 1.1.1.1",
                 " site  =  2.2.2.2 ",
                 "arbitrator=3.3.3.3",
@@ -109,7 +116,9 @@ class ParseRawLinesTest(TestCase):
     def test_parse_lines_with_whole_line_comment(self):
         self.assertEqual(
             [("site", "1.1.1.1")],
-            config_parser.parse_to_raw_lines("\n".join([
+            # testing a function which should not be used outside of the module
+            # pylint: disable=protected-access
+            config_parser._parse_to_raw_lines("\n".join([
                 " # some comment",
                 "site = 1.1.1.1",
             ]))
@@ -118,7 +127,9 @@ class ParseRawLinesTest(TestCase):
     def test_skip_empty_lines(self):
         self.assertEqual(
             [("site", "1.1.1.1")],
-            config_parser.parse_to_raw_lines("\n".join([
+            # testing a function which should not be used outside of the module
+            # pylint: disable=protected-access
+            config_parser._parse_to_raw_lines("\n".join([
                 " ",
                 "site = 1.1.1.1",
             ]))
@@ -132,37 +143,76 @@ class ParseRawLinesTest(TestCase):
         ]
         line_list = ["site = 1.1.1.1"] + invalid_line_list
         with self.assertRaises(config_parser.InvalidLines) as context_manager:
-            config_parser.parse_to_raw_lines("\n".join(line_list))
+            # testing a function which should not be used outside of the module
+            # pylint: disable=protected-access
+            config_parser._parse_to_raw_lines("\n".join(line_list))
         self.assertEqual(context_manager.exception.args[0], invalid_line_list)
 
     def test_parse_lines_finishing_with_comment(self):
         self.assertEqual(
             [("site", "1.1.1.1")],
-            config_parser.parse_to_raw_lines("\n".join([
+            # testing a function which should not be used outside of the module
+            # pylint: disable=protected-access
+            config_parser._parse_to_raw_lines("\n".join([
                 "site = '1.1.1.1' #comment",
             ]))
        )
 
 class ParseTest(TestCase):
-    # pylint: disable=no-self-use
     def test_raises_when_invalid_lines_appear(self):
         invalid_line_list = [
             "first invalid line",
             "second = 'invalid line' something else #comment"
         ]
         line_list = ["site = 1.1.1.1"] + invalid_line_list
-        assert_raise_library_error(
-            lambda:
-                config_parser.parse("\n".join(line_list))
-            ,
-            (
-                severities.ERROR,
-                report_codes.BOOTH_CONFIG_UNEXPECTED_LINES,
-                {
-                    "line_list": invalid_line_list,
-                },
+
+        with self.assertRaises(ParserErrorException) as cm:
+            config_parser.Parser.parse("\n".join(line_list).encode("utf-8"))
+
+        assert_report_item_list_equal(
+            config_parser.Parser.exception_to_report_list(
+                cm.exception, "does not matter", "path",
+                None, False
             ),
+            [
+                fixture.error(
+                    report_codes.BOOTH_CONFIG_UNEXPECTED_LINES,
+                    line_list=invalid_line_list,
+                    file_path="path",
+                ),
+            ]
+        )
+        assert_report_item_list_equal(
+            config_parser.Parser.exception_to_report_list(
+                cm.exception, "does not matter", "path",
+                report_codes.FORCE_BOOTH_DESTROY, False
+            ),
+            [
+                fixture.error(
+                    report_codes.BOOTH_CONFIG_UNEXPECTED_LINES,
+                    force_code=report_codes.FORCE_BOOTH_DESTROY,
+                    line_list=invalid_line_list,
+                    file_path="path",
+                ),
+            ]
+        )
+        assert_report_item_list_equal(
+            config_parser.Parser.exception_to_report_list(
+                cm.exception, "does not matter", "path",
+                report_codes.FORCE_BOOTH_DESTROY, True
+            ),
+            [
+                fixture.warn(
+                    report_codes.BOOTH_CONFIG_UNEXPECTED_LINES,
+                    line_list=invalid_line_list,
+                    file_path="path",
+                ),
+            ]
         )
 
     def test_do_not_raises_when_no_invalid_liens_there(self):
-        config_parser.parse("site = 1.1.1.1")
+        parsed = config_parser.Parser.parse("site = 1.1.1.1".encode("utf-8"))
+        self.assertEqual(len(parsed), 1)
+        self.assertEqual(parsed[0].key, "site")
+        self.assertEqual(parsed[0].value, "1.1.1.1")
+        self.assertEqual(parsed[0].details, [])

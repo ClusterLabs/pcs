@@ -14,6 +14,9 @@ def run_parallel(worker, data_list):
         thread.join()
 
 def format_environment_error(e):
+    return format_os_error(e)
+
+def format_os_error(e):
     if e.filename:
         return "{0}: '{1}'".format(e.strerror, e.filename)
     return e.strerror

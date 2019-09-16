@@ -1,5 +1,6 @@
 from pcs import settings
 from pcs.common import report_codes
+from pcs.common.file import RawFileError
 from pcs.common.reports import SimpleReportProcessor
 from pcs.lib import reports, node_communication_format
 from pcs.lib.tools import generate_binary_key
@@ -22,6 +23,8 @@ from pcs.lib.communication.tools import (
 )
 from pcs.lib.node import get_existing_nodes_names_addrs
 from pcs.lib.errors import LibraryError
+from pcs.lib.file.instance import FileInstance
+from pcs.lib.file.raw_file import raw_file_error_report
 from pcs.lib.pacemaker import state
 from pcs.lib.pacemaker.live import remove_node
 
@@ -137,14 +140,23 @@ def _prepare_pacemaker_remote_environment(
         )
 
     # share pacemaker authkey
-    if env.pacemaker.has_authkey:
-        authkey_content = env.pacemaker.get_authkey_content()
-        authkey_targets = online_new_target_list
-    else:
-        authkey_content = generate_binary_key(
-            random_bytes_count=settings.pacemaker_authkey_bytes
-        )
-        authkey_targets = existing_nodes_target_list + online_new_target_list
+    authkey_file = FileInstance.for_pacemaker_key()
+    try:
+        if authkey_file.raw_file.exists():
+            authkey_content = authkey_file.read_raw()
+            authkey_targets = online_new_target_list
+        else:
+            authkey_content = generate_binary_key(
+                random_bytes_count=settings.pacemaker_authkey_bytes
+            )
+            authkey_targets = (
+                existing_nodes_target_list + online_new_target_list
+            )
+    except RawFileError as e:
+        report_processor.report(raw_file_error_report(e))
+    if report_processor.has_errors:
+        raise LibraryError()
+
     if authkey_targets:
         com_cmd = DistributeFiles(
             report_processor,

@@ -12,7 +12,8 @@ from pcs_test.tools.command_env.mock_node_communicator import (
 from pcs_test.tools.custom_mock import patch_getaddrinfo
 
 from pcs import settings
-from pcs.common import report_codes
+from pcs.common import file_type_codes, report_codes
+from pcs.common.file import RawFileError
 from pcs.common.host import Destination
 from pcs.common.ssl import (
     dump_cert,
@@ -3084,10 +3085,10 @@ class SslCertSync(RemoveCallsMixin, TestCase):
             [
                 fixture.error(
                     report_codes.FILE_IO_ERROR,
-                    file_role="PCSD_ENVIRONMENT_CONFIG",
+                    file_type_code=file_type_codes.PCSD_ENVIRONMENT_CONFIG,
                     file_path=settings.pcsd_config,
                     reason="error reading pcsd config",
-                    operation="read"
+                    operation=RawFileError.ACTION_READ,
                 )
             ]
         )

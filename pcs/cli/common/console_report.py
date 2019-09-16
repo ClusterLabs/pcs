@@ -5,9 +5,10 @@ from functools import partial
 import sys
 
 from pcs.common import (
-    env_file_role_codes,
+    file_type_codes,
     report_codes as codes,
 )
+from pcs.common.file import RawFileError
 
 from pcs.common.fencing_topology import TARGET_TYPE_ATTRIBUTE
 
@@ -31,15 +32,29 @@ _type_articles = {
     "ACL role": "an",
     "ACL permission": "an",
 }
+_file_operation_translation = {
+    RawFileError.ACTION_CHMOD: "change permissions of",
+    RawFileError.ACTION_CHOWN: "change ownership of",
+    RawFileError.ACTION_READ: "read",
+    RawFileError.ACTION_REMOVE: "remove",
+    RawFileError.ACTION_WRITE: "write",
+}
 _file_role_translation = {
-    env_file_role_codes.BOOTH_CONFIG: "Booth configuration",
-    env_file_role_codes.BOOTH_KEY: "Booth key",
-    env_file_role_codes.COROSYNC_AUTHKEY: "Corosync authkey",
-    env_file_role_codes.PACEMAKER_AUTHKEY: "Pacemaker authkey",
-    env_file_role_codes.PCSD_ENVIRONMENT_CONFIG: "pcsd configuration",
-    env_file_role_codes.PCSD_SSL_CERT: "pcsd SSL certificate",
-    env_file_role_codes.PCSD_SSL_KEY: "pcsd SSL key",
-    env_file_role_codes.PCS_SETTINGS_CONF: "pcs configuration",
+    file_type_codes.BOOTH_CONFIG: "Booth configuration",
+    file_type_codes.BOOTH_KEY: "Booth key",
+    file_type_codes.COROSYNC_AUTHKEY: "Corosync authkey",
+    file_type_codes.PACEMAKER_AUTHKEY: "Pacemaker authkey",
+    file_type_codes.PCSD_ENVIRONMENT_CONFIG: "pcsd configuration",
+    file_type_codes.PCSD_SSL_CERT: "pcsd SSL certificate",
+    file_type_codes.PCSD_SSL_KEY: "pcsd SSL key",
+    file_type_codes.PCS_KNOWN_HOSTS: "known-hosts",
+    file_type_codes.PCS_SETTINGS_CONF: "pcs configuration",
+}
+_file_role_to_option_translation = {
+    file_type_codes.BOOTH_CONFIG: "--booth-conf",
+    file_type_codes.BOOTH_KEY: "--booth-key",
+    file_type_codes.CIB: "-f",
+    file_type_codes.COROSYNC_CONF: "--corosync_conf",
 }
 
 def warn(message):
@@ -127,6 +142,9 @@ def format_fencing_level_target(target_type, target_value):
     if target_type == TARGET_TYPE_ATTRIBUTE:
         return "{0}={1}".format(target_value[0], target_value[1])
     return target_value
+
+def format_file_action(action):
+    return _file_operation_translation.get(action, action)
 
 def format_file_role(role):
     return _file_role_translation.get(role, role)
@@ -1815,25 +1833,17 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
         "{_node}{_file_role} file '{file_path}' already exists"
         .format(
             _node=format_optional(info["node"], NODE_PREFIX),
-            _file_role=format_file_role(info["file_role"]),
+            _file_role=format_file_role(info["file_type_code"]),
             **info
         )
     ,
 
-    codes.FILE_DOES_NOT_EXIST: lambda info:
-        "{_file_role} file{_file_path} does not exist"
-        .format(
-            _file_role=format_file_role(info["file_role"]),
-            _file_path=format_optional(info["file_path"], " '{}'")
-        )
-    ,
-
     codes.FILE_IO_ERROR: lambda info:
-        "Unable to {operation} {_file_role}{_file_path}{_reason}"
+        "Unable to {_action} {_file_role}{_file_path}: {reason}"
         .format(
+            _action=format_file_action(info["operation"]),
             _file_path=format_optional(info["file_path"], " '{0}'"),
-            _file_role=format_file_role(info["file_role"]),
-            _reason=format_optional(info["reason"], ": {}"),
+            _file_role=format_file_role(info["file_type_code"]),
             **info
         )
     ,
@@ -1852,15 +1862,26 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
         "unsupported operation on non systemd systems"
     ,
 
-    codes.LIVE_ENVIRONMENT_REQUIRED: lambda info:
-        "This command does not support {forbidden_options}"
+    codes.LIVE_ENVIRONMENT_NOT_CONSISTENT: lambda info:
+        "When {_given} is specified, {_missing} must be specified as well"
         .format(
-            forbidden_options=format_list(info["forbidden_options"], {
-                "BOOTH_CONF": "--booth-conf",
-                "BOOTH_KEY": "--booth-key",
-                "CIB": "-f",
-                "COROSYNC_CONF": "--corosync_conf",
-            })
+            _given=format_list(
+                info["mocked_files"],
+                _file_role_to_option_translation
+            ),
+            _missing=format_list(
+                info["required_files"],
+                _file_role_to_option_translation
+            ),
+        )
+    ,
+    codes.LIVE_ENVIRONMENT_REQUIRED: lambda info:
+        "This command does not support {_forbidden_options}"
+        .format(
+            _forbidden_options=format_list(
+                info["forbidden_options"],
+                _file_role_to_option_translation
+            ),
         )
     ,
 
@@ -2240,5 +2261,13 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
     ,
     codes.RESOURCE_UNMOVE_UNBAN_PCMK_SUCCESS: lambda info:
         stdout_stderr_to_string(info["stdout"], info["stderr"])
+    ,
+
+    codes.PARSE_ERROR_JSON_FILE: lambda info:
+        "Unable to parse {_file_type} file{_file_path}: {full_msg}".format(
+            _file_path=format_optional(info["file_path"], " '{0}'"),
+            _file_type=format_file_role(info["file_type_code"]),
+            **info
+        )
     ,
 }

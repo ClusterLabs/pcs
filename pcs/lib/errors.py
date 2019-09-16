@@ -1,21 +1,6 @@
 class LibraryError(Exception):
     pass
 
-class LibraryEnvError(LibraryError):
-    def __init__(self, *args, **kwargs):
-        super(LibraryEnvError, self).__init__(*args, **kwargs)
-        self.processed = []
-
-    def sign_processed(self, report):
-        self.processed.append(report)
-
-    @property
-    def unprocessed(self):
-        # pylint: disable=not-an-iterable
-        return [report for report in self.args if report not in self.processed]
-
-
-
 class ReportItemSeverity:
     ERROR = 'ERROR'
     WARNING = 'WARNING'

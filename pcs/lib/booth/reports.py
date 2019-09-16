@@ -38,17 +38,24 @@ def booth_address_duplication(duplicate_addresses):
         }
     )
 
-def booth_config_unexpected_lines(line_list):
+def booth_config_unexpected_lines(
+    line_list, file_path=None,
+    severity=ReportItemSeverity.ERROR, forceable=None,
+):
     """
-    Booth config have defined structure. But line out of structure definition
-        appeared.
-    list line_list contains lines out of defined structure
+    Lines not conforming to expected config structure found in a booth config
+
+    list line_list -- not valid lines
+    string file_path -- path to the conf file if available
     """
-    return ReportItem.error(
+    return ReportItem(
         report_codes.BOOTH_CONFIG_UNEXPECTED_LINES,
+        severity,
         info={
             "line_list": line_list,
-        }
+            "file_path": file_path,
+        },
+        forceable=forceable
     )
 
 def booth_invalid_name(name, reason):
@@ -141,7 +148,6 @@ def booth_config_is_used(name, detail=""):
         info={
             "name": name,
             "detail": detail,
-            "detail_string": " {0}".format(detail) if detail else "",
         }
     )
 
@@ -212,24 +218,6 @@ def booth_config_distribution_node_error(node, reason, name=None):
     )
 
 
-def booth_config_read_error(
-    name, severity=ReportItemSeverity.ERROR, forceable=None
-):
-    """
-    Unable to read from specified booth instance config.
-
-    name -- name of booth instance
-    severity -- severity of report item
-    forceable -- is this report item forceable? by what category?
-    """
-    return ReportItem(
-        report_codes.BOOTH_CONFIG_READ_ERROR,
-        severity,
-        info={"name": name},
-        forceable=forceable
-    )
-
-
 def booth_fetching_config_from_node_started(node, config=None):
     """
     fetching of booth config from specified node started
@@ -246,16 +234,21 @@ def booth_fetching_config_from_node_started(node, config=None):
     )
 
 
-def booth_unsupported_file_location(file):
+def booth_unsupported_file_location(file_path, expected_dir, file_type_code):
     """
-    location of booth configuration file (config, authfile) file is not
-    supported (not in /etc/booth/)
+    a booth file (config, authfile) is not in the expected dir, skipping it
 
-    file -- file path
+    string file_path -- the actual path of the file
+    string expected_dir -- where the file is supposed to be
+    string file_type_code -- item from pcs.common.file_type_codes
     """
     return ReportItem.warning(
         report_codes.BOOTH_UNSUPPORTED_FILE_LOCATION,
-        info={"file": file}
+        info={
+            "file_path": file_path,
+            "expected_dir": expected_dir,
+            "file_type_code": file_type_code,
+        }
     )
 
 
@@ -326,28 +319,4 @@ def booth_ticket_operation_failed(operation, reason, site_ip, ticket_name):
             "site_ip": site_ip,
             "ticket_name": ticket_name,
         }
-    )
-
-def booth_skipping_config(config_file, reason):
-    """
-    Warning about skipping booth config file.
-
-    config_file -- file name of config which is skipped
-    reason -- reason
-    """
-    return ReportItem.warning(
-        report_codes.BOOTH_SKIPPING_CONFIG,
-        info={
-            "config_file": config_file,
-            "reason": reason,
-        }
-    )
-
-def booth_cannot_identify_keyfile(severity=ReportItemSeverity.ERROR):
-    return ReportItem(
-        report_codes.BOOTH_CANNOT_IDENTIFY_KEYFILE,
-        severity,
-        info={},
-        forceable=report_codes.FORCE_BOOTH_DESTROY
-            if severity == ReportItemSeverity.ERROR else None
     )

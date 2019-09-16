@@ -4,7 +4,6 @@ from pcs.lib import reports
 from pcs.lib.booth.env import BoothEnv
 from pcs.lib.cib.tools import get_cib_crm_feature_set
 from pcs.lib.node import get_existing_nodes_names
-from pcs.lib.pacemaker.env import PacemakerEnv
 from pcs.lib.communication import qdevice
 from pcs.lib.communication.corosync import (
     CheckCorosyncOffline,
@@ -55,7 +54,7 @@ class LibraryEnvironment:
         user_groups=None,
         cib_data=None,
         corosync_conf_data=None,
-        booth=None,
+        booth_files_data=None,
         known_hosts_getter=None,
         request_timeout=None,
     ):
@@ -66,12 +65,7 @@ class LibraryEnvironment:
         self._user_groups = [] if user_groups is None else user_groups
         self._cib_data = cib_data
         self._corosync_conf_data = corosync_conf_data
-        self._booth = (
-            BoothEnv(report_processor, booth) if booth is not None else None
-        )
-        #pacemaker is currently not mocked and it provides only an access to
-        #the authkey
-        self._pacemaker = PacemakerEnv()
+        self._booth_files_data = booth_files_data or {}
         self._request_timeout = request_timeout
         # TODO tokens probably should not be inserted from outside, but we're
         # postponing dealing with them, because it's not that easy to move
@@ -89,6 +83,7 @@ class LibraryEnvironment:
             self.user_groups,
             self._request_timeout
         )
+        self.__loaded_booth_env = None
 
         self.__timeout_cache = {}
 
@@ -405,10 +400,7 @@ class LibraryEnvironment:
                 self._known_hosts = {}
         return self._known_hosts
 
-    @property
-    def booth(self):
-        return self._booth
-
-    @property
-    def pacemaker(self):
-        return self._pacemaker
+    def get_booth_env(self, name):
+        if self.__loaded_booth_env is None:
+            self.__loaded_booth_env = BoothEnv(name, self._booth_files_data)
+        return self.__loaded_booth_env

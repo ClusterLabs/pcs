@@ -10,12 +10,13 @@ from pcs.cli.common.console_report import(
     _add_s
 )
 from pcs.cli.common.reports import CODE_BUILDER_MAP
-from pcs.common import env_file_role_codes
+from pcs.common import file_type_codes
 from pcs.common.fencing_topology import (
     TARGET_TYPE_NODE,
     TARGET_TYPE_REGEXP,
     TARGET_TYPE_ATTRIBUTE,
 )
+from pcs.common.file import RawFileError
 from pcs.lib import reports
 from pcs.lib.errors import ReportItem
 
@@ -1485,6 +1486,31 @@ class ResourceIsGuestNodeAlready(NameBuildTest):
         self.assert_message_from_report(
             "the resource 'some-resource' is already a guest node",
             reports.resource_is_guest_node_already("some-resource")
+        )
+
+class LiveEnvironmentNotConsistent(NameBuildTest):
+    def test_one_one(self):
+        self.assert_message_from_report(
+            (
+                "When '--booth-conf' is specified, "
+                "'--booth-key' must be specified as well"
+            ),
+            reports.live_environment_not_consistent(
+                [file_type_codes.BOOTH_CONFIG],
+                [file_type_codes.BOOTH_KEY],
+            )
+        )
+
+    def test_many_many(self):
+        self.assert_message_from_report(
+            (
+                "When '--booth-conf', '-f' is specified, "
+                "'--booth-key', '--corosync_conf' must be specified as well"
+            ),
+            reports.live_environment_not_consistent(
+                [file_type_codes.CIB, file_type_codes.BOOTH_CONFIG],
+                [file_type_codes.COROSYNC_CONF, file_type_codes.BOOTH_KEY],
+            )
         )
 
 class LiveEnvironmentRequired(NameBuildTest):
@@ -3285,43 +3311,14 @@ class FileAlreadyExists(NameBuildTest):
             )
         )
 
-class FileDoesNotExist(NameBuildTest):
-    def test_minimal(self):
-        self.assert_message_from_report(
-            "UNKNOWN_ROLE file does not exist",
-            reports.file_does_not_exist("UNKNOWN_ROLE")
-        )
-
-    def test_with_path(self):
-        self.assert_message_from_report(
-            "UNKNOWN_ROLE file '/etc/cluster/something' does not exist",
-            reports.file_does_not_exist(
-                "UNKNOWN_ROLE", "/etc/cluster/something"
-            )
-        )
-
 class FileIoError(NameBuildTest):
     def test_minimal(self):
         self.assert_message_from_report(
-            "Unable to work with Booth configuration",
-            reports.file_io_error(env_file_role_codes.BOOTH_CONFIG)
-        )
-
-    def test_with_path(self):
-        self.assert_message_from_report(
-            "Unable to work with Booth key '/etc/booth/booth.key'",
+            "Unable to read Booth configuration: ",
             reports.file_io_error(
-                env_file_role_codes.BOOTH_KEY, file_path="/etc/booth/booth.key"
-            )
-        )
-
-    def test_with_path_and_operation(self):
-        self.assert_message_from_report(
-            "Unable to remove Pacemaker authkey '/etc/pacemaker/key'",
-            reports.file_io_error(
-                env_file_role_codes.PACEMAKER_AUTHKEY,
-                file_path="/etc/pacemaker/key",
-                operation="remove"
+                file_type_codes.BOOTH_CONFIG,
+                RawFileError.ACTION_READ,
+                ""
             )
         )
 
@@ -3329,10 +3326,10 @@ class FileIoError(NameBuildTest):
         self.assert_message_from_report(
             "Unable to read pcsd SSL certificate '/var/lib/pcsd.crt': Failed",
             reports.file_io_error(
-                env_file_role_codes.PCSD_SSL_CERT,
+                file_type_codes.PCSD_SSL_CERT,
+                RawFileError.ACTION_READ,
+                "Failed",
                 file_path="/var/lib/pcsd.crt",
-                reason="Failed",
-                operation="read"
             )
         )
 
@@ -3340,41 +3337,47 @@ class FileIoError(NameBuildTest):
         self.assert_message_from_report(
             "Unable to write pcsd SSL key '/var/lib/pcsd.key': Failed",
             reports.file_io_error(
-                env_file_role_codes.PCSD_SSL_KEY,
+                file_type_codes.PCSD_SSL_KEY,
+                RawFileError.ACTION_WRITE,
+                "Failed",
                 file_path="/var/lib/pcsd.key",
-                reason="Failed",
-                operation="write"
             )
         )
 
     def test_role_translation_b(self):
         self.assert_message_from_report(
-            "Unable to read pcsd configuration '/etc/sysconfig/pcsd': Failed",
+            (
+                "Unable to change ownership of pcsd configuration "
+                "'/etc/sysconfig/pcsd': Failed"
+            ),
             reports.file_io_error(
-                env_file_role_codes.PCSD_ENVIRONMENT_CONFIG,
+                file_type_codes.PCSD_ENVIRONMENT_CONFIG,
+                RawFileError.ACTION_CHOWN,
+                "Failed",
                 file_path="/etc/sysconfig/pcsd",
-                reason="Failed",
-                operation="read"
             )
         )
 
     def test_role_translation_c(self):
         self.assert_message_from_report(
-            "Unable to read Corosync authkey: Failed",
+            "Unable to change permissions of Corosync authkey: Failed",
             reports.file_io_error(
-                env_file_role_codes.COROSYNC_AUTHKEY,
-                reason="Failed",
-                operation="read"
+                file_type_codes.COROSYNC_AUTHKEY,
+                RawFileError.ACTION_CHMOD,
+                "Failed",
             )
         )
 
     def test_role_translation_d(self):
         self.assert_message_from_report(
-            "Unable to write pcs configuration: Permission denied",
+            (
+                "Unable to change ownership of pcs configuration: "
+                "Permission denied"
+            ),
             reports.file_io_error(
-                env_file_role_codes.PCS_SETTINGS_CONF,
-                reason="Permission denied",
-                operation="write"
+                file_type_codes.PCS_SETTINGS_CONF,
+                RawFileError.ACTION_CHOWN,
+                "Permission denied",
             )
         )
 
@@ -4430,4 +4433,21 @@ class SystemWillReset(NameBuildTest):
         self.assert_message_from_report(
             "System will reset shortly",
             reports.system_will_reset()
+        )
+
+class ParseErrorJsonFile(NameBuildTest):
+    def test_success(self):
+        self.assert_message_from_report(
+            "Unable to parse known-hosts file '/tmp/known-hosts': "
+                "some reason: line 15 column 5 (char 100)"
+            ,
+            reports.parse_error_json_file(
+                file_type_codes.PCS_KNOWN_HOSTS,
+                15,
+                5,
+                100,
+                "some reason",
+                "some reason: line 15 column 5 (char 100)",
+                file_path="/tmp/known-hosts",
+            )
         )

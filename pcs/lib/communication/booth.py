@@ -1,6 +1,5 @@
 import base64
 import json
-import os
 
 from pcs.common import report_codes
 from pcs.common.node_communicator import RequestData
@@ -20,6 +19,7 @@ class BoothSendConfig(
     SimpleResponseProcessingMixin, SkipOfflineMixin, AllSameDataMixin,
     AllAtOnceStrategyMixin, RunRemotelyBase,
 ):
+    # TODO adapt to new file transfer framework once it is written
     def __init__(
         self, report_processor, booth_name, config_data,
         authfile=None, authfile_data=None, skip_offline_targets=False
@@ -27,7 +27,7 @@ class BoothSendConfig(
         super(BoothSendConfig, self).__init__(report_processor)
         self._set_skip_offline(skip_offline_targets)
         self._booth_name = booth_name
-        self._config_data = config_data
+        self._config_data = config_data.decode("utf-8")
         self._authfile = authfile
         self._authfile_data = authfile_data
 
@@ -40,7 +40,7 @@ class BoothSendConfig(
         }
         if self._authfile is not None and self._authfile_data is not None:
             data["authfile"] = {
-                "name": os.path.basename(self._authfile),
+                "name": self._authfile,
                 "data": base64.b64encode(self._authfile_data).decode("utf-8")
             }
         return RequestData(
@@ -123,10 +123,11 @@ class BoothSaveFiles(
                     target.label, list(parsed_data["saved"])
                 )
             )
-            for file in list(parsed_data["existing"]):
+            for filename in list(parsed_data["existing"]):
                 self._report(reports.file_already_exists(
-                    None,
-                    file,
+                    "", # TODO specify file type; this will be overhauled to
+                        # a generic file transport framework anyway
+                    filename,
                     severity=(
                         ReportItemSeverity.WARNING if self._rewrite_existing
                         else ReportItemSeverity.ERROR

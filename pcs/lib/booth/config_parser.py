@@ -1,35 +1,67 @@
+from collections import namedtuple
 import re
 
-from pcs.lib.booth import config_structure, reports
-from pcs.lib.errors import LibraryError
+from pcs.lib import reports
+from pcs.lib.booth import (
+    constants,
+    reports as booth_reports,
+)
+from pcs.lib.interface.config import (
+    ExporterInterface,
+    ParserErrorException,
+    ParserInterface,
+)
 
+class ConfigItem(namedtuple("ConfigItem", "key value details")):
+    def __new__(cls, key, value, details=None):
+        return super().__new__(cls, key, value, details or [])
 
-class InvalidLines(Exception):
+class InvalidLines(ParserErrorException):
     pass
 
-def parse(content):
-    try:
-        return organize_lines(parse_to_raw_lines(content))
-    except InvalidLines as e:
-        raise LibraryError(
-            reports.booth_config_unexpected_lines(e.args[0])
+class Parser(ParserInterface):
+    @staticmethod
+    def parse(raw_file_data):
+        return _organize_lines(
+            _parse_to_raw_lines(raw_file_data.decode("utf-8"))
         )
 
-def build(config_line_list):
-    newline = [""]
-    return "\n".join(build_to_lines(config_line_list) + newline)
+    @staticmethod
+    def exception_to_report_list(
+        exception, file_type_code, file_path, force_code, is_forced_or_warning
+    ):
+        del file_type_code # this is defined by the report code
+        report_creator = reports.get_problem_creator(
+            force_code=force_code, is_forced=is_forced_or_warning
+        )
+        if isinstance(exception, InvalidLines):
+            return [
+                report_creator(
+                    booth_reports.booth_config_unexpected_lines,
+                    exception.args[0],
+                    file_path=file_path,
+                )
+            ]
+        raise exception
 
-def build_to_lines(config_line_list, deep=0):
+class Exporter(ExporterInterface):
+    @staticmethod
+    def export(config_structure):
+        return "\n".join(
+            _build_to_lines(config_structure) + [""]
+        ).encode("utf-8")
+
+def _build_to_lines(config_line_list, deep=0):
     line_list = []
     for key, value, details in config_line_list:
         line_value = value if key != "ticket" else '"{0}"'.format(value)
         line_list.append("{0}{1} = {2}".format("  "*deep, key, line_value))
         if details:
-            line_list.extend(build_to_lines(details, deep+1))
+            line_list.extend(_build_to_lines(details, deep+1))
     return line_list
 
 
-def organize_lines(raw_line_list):
+def _organize_lines(raw_line_list):
     #Decision: Global key is moved up when is below ticket. Alternative is move
     #it below all ticket details. But it is confusing.
     global_section = []
@@ -37,18 +69,16 @@ def organize_lines(raw_line_list):
     current_ticket = None
     for key, value in raw_line_list:
         if key == "ticket":
-            current_ticket = config_structure.ConfigItem(key, value)
+            current_ticket = ConfigItem(key, value)
             ticket_section.append(current_ticket)
-        elif key in config_structure.GLOBAL_KEYS or not current_ticket:
-            global_section.append(config_structure.ConfigItem(key, value))
+        elif key in constants.GLOBAL_KEYS or not current_ticket:
+            global_section.append(ConfigItem(key, value))
         else:
-            current_ticket.details.append(
-                config_structure.ConfigItem(key, value)
-            )
+            current_ticket.details.append(ConfigItem(key, value))
 
     return global_section + ticket_section
 
-def search_with_multiple_re(re_object_list, string):
+def _search_with_multiple_re(re_object_list, string):
     """
     return MatchObject of first matching regular expression object or None
     list re_object_list contains regular expresssion objects (products of
@@ -60,7 +90,7 @@ def search_with_multiple_re(re_object_list, string):
             return match
     return None
 
-def parse_to_raw_lines(config_content):
+def _parse_to_raw_lines(config_content):
     keyword_part = r"^(?P<key>[a-zA-Z0-9_-]+)\s*=\s*"
     expression_list = [re.compile(pattern.format(keyword_part)) for pattern in [
         r"""{0}(?P<value>[^'"]+)$""",
@@ -72,7 +102,7 @@ def parse_to_raw_lines(config_content):
     invalid_line_list = []
     for line in config_content.splitlines():
         line = line.strip()
-        match = search_with_multiple_re(expression_list, line)
+        match = _search_with_multiple_re(expression_list, line)
         if match:
             line_list.append((match.group("key"), match.group("value")))
         elif line and not line.startswith("#"):

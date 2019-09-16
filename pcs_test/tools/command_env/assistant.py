@@ -1,3 +1,4 @@
+import inspect
 import logging
 import os
 import os.path
@@ -28,15 +29,17 @@ from pcs_test.tools.command_env.mock_push_corosync_conf import(
     get_push_corosync_conf,
     is_push_corosync_conf_call_in,
 )
+from pcs_test.tools.command_env.mock_raw_file import get_raw_file_mock
 from pcs_test.tools.command_env.mock_runner import Runner
 from pcs_test.tools.custom_mock import MockLibraryReportProcessor
 
+from pcs.common.file import RawFile
 from pcs.common.node_communicator import NodeCommunicatorFactory
 from pcs.lib.env import LibraryEnvironment
 
 patch_lib_env = partial(mock.patch.object, LibraryEnvironment)
 
-def patch_env(call_queue, config, init_env):
+def patch_env(call_queue, config, init_env, patch_is_systemd=True):
     #It is mandatory to patch some env objects/methods. It is ok when command
     #does not use this objects/methods and specify no call for it. But it would
     #be a problem when the test succeded because the live call respond correctly
@@ -71,13 +74,15 @@ def patch_env(call_queue, config, init_env):
         ),
 
         patch_lib_env("communicator_factory", mock_communicator_factory),
-
+    ]
+    if patch_is_systemd:
         # In all the tests we assume that we are running on top of a systemd
         # running system. If needed, this may be turned off for some particular
         # tests. Note that the patched function is cached therefore is patched
         # here and not in every tests.
-        mock.patch("pcs.lib.external.is_systemctl", lambda: True),
-    ]
+        patcher_list.append(
+            mock.patch("pcs.lib.external.is_systemctl", lambda: True)
+        )
 
     if is_fs_call_in(call_queue):
         fs_mock = get_fs_mock(call_queue)
@@ -115,6 +120,26 @@ def patch_env(call_queue, config, init_env):
                 fs_mock("os.chown", os.chown)
             ),
         ])
+
+    raw_file_mock = get_raw_file_mock(call_queue)
+    for method_name, dummy_method in inspect.getmembers(
+        RawFile, inspect.isfunction
+    ):
+        # patch all public methods
+        # inspect.isfunction must be used instead of ismethod because we are
+        # working with a class and not an instance - no method is bound yet so
+        # it would return an empty list
+        # "protected" methods start with _
+        # "private" methods start with _<class_name>__
+        if method_name.startswith("_"):
+            continue
+        patcher_list.append(
+            mock.patch.object(
+                RawFile,
+                method_name,
+                getattr(raw_file_mock, method_name)
+            )
+        )
 
     # It is not always desirable to patch these methods. Some tests may patch
     # only the internals (runner etc.). So these methods are only patched when
@@ -222,7 +247,7 @@ class EnvAssistant:
                 )
 
 
-    def get_env(self):
+    def get_env(self, patch_is_systemd=True):
         self.__call_queue = CallQueue(self.__config.calls)
         #pylint: disable=attribute-defined-outside-init
         self._env = LibraryEnvironment(
@@ -234,9 +259,12 @@ class EnvAssistant:
                 (lambda: self.__config.spy.known_hosts) if self.__config.spy
                 else self.__config.env.known_hosts_getter
             ),
-            booth=self.__config.env.booth,
+            booth_files_data=self.__config.env.booth,
         )
-        self.__unpatch = patch_env(self.__call_queue, self.__config, self._env)
+        self.__unpatch = patch_env(
+            self.__call_queue, self.__config, self._env,
+            patch_is_systemd=patch_is_systemd
+        )
         # If pushing corosync.conf has not been patched in the
         # LibraryEnvironment, store any corosync.conf passed to the
         # LibraryEnvironment for check for changes in cleanup.

@@ -66,23 +66,6 @@ $cluster_name = get_cluster_name()
 # get params and run a command
 command = ARGV[0]
 allowed_commands = {
-  'read_known_hosts' => {
-    # returns hosts of the user who runs pcsd-cli, thus no permission check
-    'only_superuser' => false,
-    'permissions' => nil,
-    'call' => lambda { |params, auth_user_|
-      out_hosts = {}
-      get_known_hosts().each { |name, host|
-        out_hosts[name] = {
-          'dest_list' => host.dest_list,
-          'token' => host.token,
-        }
-      }
-      return {
-        'known_hosts' => out_hosts,
-      }
-    },
-  },
   'remove_known_hosts' => {
     # changes hosts of the user who runs pcsd-cli, thus no permission check
     'only_superuser' => false,

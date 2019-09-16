@@ -41,10 +41,14 @@ crm_verify = os.path.join(pacemaker_binaries, "crm_verify")
 cibadmin = os.path.join(pacemaker_binaries, "cibadmin")
 crm_mon_schema = '/usr/share/pacemaker/crm_mon.rng'
 agent_metadata_schema = "/usr/share/resource-agents/ra-api-1.dtd"
-pcsd_cert_location = "/var/lib/pcsd/pcsd.crt"
-pcsd_key_location = "/var/lib/pcsd/pcsd.key"
-pcsd_users_conf_location = "/var/lib/pcsd/pcs_users.conf"
-pcsd_settings_conf_location = "/var/lib/pcsd/pcs_settings.conf"
+pcsd_var_location = "/var/lib/pcsd/"
+pcsd_cert_location = os.path.join(pcsd_var_location, "pcsd.crt")
+pcsd_key_location = os.path.join(pcsd_var_location, "pcsd.key")
+pcsd_known_hosts_location = os.path.join(pcsd_var_location, "known-hosts")
+pcsd_users_conf_location = os.path.join(pcsd_var_location, "pcs_users.conf")
+pcsd_settings_conf_location = os.path.join(
+    pcsd_var_location, "pcs_settings.conf"
+)
 pcsd_exec_location = "/usr/lib/pcsd/"
 pcsd_log_location = "/var/log/pcsd/pcsd.log"
 pcsd_default_port = 2224

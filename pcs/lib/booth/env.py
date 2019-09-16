@@ -1,153 +1,121 @@
-import os
-import pwd
-import grp
-
-from pcs import settings
-from pcs.common import env_file_role_codes
-from pcs.common.tools import format_environment_error
+from pcs.common import file_type_codes
 from pcs.lib import reports as common_reports
-from pcs.lib.booth import reports
-from pcs.lib.env_file import GhostFile, RealFile
+from pcs.lib.booth import (
+    config_validators,
+    constants,
+)
+from pcs.lib.file import raw_file
+from pcs.lib.file.instance import FileInstance
 from pcs.lib.errors import LibraryError
-from pcs.settings import booth_config_dir as BOOTH_CONFIG_DIR
-
-DEFAULT_BOOTH_NAME = "booth"
 
 
-def get_booth_env_file_name(name, extension):
-    report_list = []
-    if "/" in name:
-        report_list.append(
-            reports.booth_invalid_name(name, "contains illegal character '/'")
-        )
-    if report_list:
-        raise LibraryError(*report_list)
-    return "{0}.{1}".format(os.path.join(BOOTH_CONFIG_DIR, name), extension)
+class BoothEnv():
+    def __init__(self, instance_name, booth_files_data):
+        """
+        Create a new BoothEnv
 
-def get_config_file_name(name):
-    return get_booth_env_file_name(name, "conf")
-
-def get_key_path(name):
-    return get_booth_env_file_name(name, "key")
-
-def report_keyfile_io_error(file_path, operation, e):
-    return LibraryError(common_reports.file_io_error(
-        file_role=env_file_role_codes.BOOTH_KEY,
-        file_path=file_path,
-        operation=operation,
-        reason=format_environment_error(e)
-    ))
-
-def set_keyfile_access(file_path):
-    #shutil.chown is not in python2
-    try:
-        uid = pwd.getpwnam(settings.pacemaker_uname).pw_uid
-    except KeyError:
-        raise LibraryError(common_reports.unable_to_determine_user_uid(
-            settings.pacemaker_uname
-        ))
-    try:
-        gid = grp.getgrnam(settings.pacemaker_gname).gr_gid
-    except KeyError:
-        raise LibraryError(common_reports.unable_to_determine_group_gid(
-            settings.pacemaker_gname
-        ))
-    try:
-        os.chown(file_path, uid, gid)
-    except EnvironmentError as e:
-        raise report_keyfile_io_error(file_path, "chown", e)
-    try:
-        # According to booth documentation, user and group of booth authfile
-        # should be set to hacluster/haclient (created and used by pacemaker)
-        # but mode of file doesn't need to be same as pacemaker authfile.
-        os.chmod(file_path, settings.booth_authkey_file_mode)
-    except EnvironmentError as e:
-        raise report_keyfile_io_error(file_path, "chmod", e)
-
-class BoothEnv:
-    def __init__(self, report_processor, env_data):
-        self.__report_processor = report_processor
-        self.__name = (
-            env_data["name"]
-            if env_data["name"] is not None
-            else DEFAULT_BOOTH_NAME
-        )
-        if "config_file" in env_data:
-            self.__config = GhostFile(
-                file_role=env_file_role_codes.BOOTH_CONFIG,
-                content=env_data["config_file"]["content"]
+        string|None instance_name -- booth instance name
+        dict booth_files_data -- ghost files (config_data, key_data, key_path)
+        """
+        if (
+            "config_data" in booth_files_data
+            and
+            "key_data" not in booth_files_data
+        ):
+            raise LibraryError(
+                common_reports.live_environment_not_consistent(
+                    [file_type_codes.BOOTH_CONFIG],
+                    [file_type_codes.BOOTH_KEY],
+                )
             )
-            self.__key_path = env_data["key_path"]
-            self.__key = GhostFile(
-                file_role=env_file_role_codes.BOOTH_KEY,
-                content=env_data["key_file"]["content"],
-                is_binary=True
+        if (
+            "config_data" not in booth_files_data
+            and
+            "key_data" in booth_files_data
+        ):
+            raise LibraryError(
+                common_reports.live_environment_not_consistent(
+                    [file_type_codes.BOOTH_KEY],
+                    [file_type_codes.BOOTH_CONFIG],
+                )
             )
+
+        self._instance_name = instance_name or constants.DEFAULT_INSTANCE_NAME
+        report_list = config_validators.check_instance_name(self._instance_name)
+        if report_list:
+            raise LibraryError(*report_list)
+
+        self._config_file = FileInstance.for_booth_config(
+            f"{self._instance_name}.conf",
+            **self._init_file_data(booth_files_data, "config_data")
+        )
+        self._key_file = FileInstance.for_booth_key(
+            f"{self._instance_name}.key",
+            **self._init_file_data(booth_files_data, "key_data")
+        )
+        if isinstance(self._key_file.raw_file, raw_file.GhostFile):
+            self._key_path = booth_files_data.get("key_path", "")
         else:
-            self.__config = RealFile(
-                file_role=env_file_role_codes.BOOTH_CONFIG,
-                file_path=get_config_file_name(self.name),
-            )
-            self.__set_key_path(get_key_path(self.name))
+            self._key_path = self._key_file.raw_file.metadata.path
 
-    def __set_key_path(self, path):
-        self.__key_path = path
-        self.__key = RealFile(
-            file_role=env_file_role_codes.BOOTH_KEY,
-            file_path=path,
-            is_binary=True
+    @staticmethod
+    def _init_file_data(booth_files_data, file_key):
+        # ghost file not specified
+        if not file_key in booth_files_data:
+            return dict(
+                ghost_file=False,
+                ghost_data=None,
+            )
+        return dict(
+            ghost_file=True,
+            ghost_data=booth_files_data[file_key],
         )
-
-    def command_expect_live_env(self):
-        if not self.__config.is_live:
-            raise LibraryError(common_reports.live_environment_required([
-                "BOOTH_CONF",
-                "BOOTH_KEY",
-            ]))
-
-    def set_key_path(self, path):
-        if not self.__config.is_live:
-            raise AssertionError(
-                "Set path of keyfile is supported only in live environment"
-            )
-        self.__set_key_path(path)
 
     @property
-    def name(self):
-        return self.__name
+    def instance_name(self):
+        return self._instance_name
+
+    @property
+    def config(self):
+        return self._config_file
+
+    @property
+    def config_path(self):
+        if isinstance(self._config_file.raw_file, raw_file.GhostFile):
+            raise AssertionError(
+                "Reading config path is supported only in live environment"
+            )
+        return self._config_file.raw_file.metadata.path
+
+    @property
+    def key(self):
+        return self._key_file
 
     @property
     def key_path(self):
-        return self.__key_path
+        return self._key_path
 
-    def get_config_content(self):
-        return self.__config.read()
+    @property
+    def ghost_file_codes(self):
+        codes = []
+        if isinstance(self._config_file.raw_file, raw_file.GhostFile):
+            codes.append(self._config_file.raw_file.metadata.file_type_code)
+        if isinstance(self._key_file.raw_file, raw_file.GhostFile):
+            codes.append(self._key_file.raw_file.metadata.file_type_code)
+        return codes
 
-    def create_config(self, content, can_overwrite_existing=False):
-        self.__config.assert_no_conflict_with_existing(
-            self.__report_processor,
-            can_overwrite_existing
+    def create_facade(self, site_list, arbitrator_list):
+        return self._config_file.toolbox.facade.create(
+            site_list,
+            arbitrator_list
         )
-        self.__config.write(content)
-
-    def create_key(self, key_content, can_overwrite_existing=False):
-        self.__key.assert_no_conflict_with_existing(
-            self.__report_processor,
-            can_overwrite_existing
-        )
-        self.__key.write(key_content, set_keyfile_access)
-
-    def push_config(self, content):
-        self.__config.write(content)
-
-    def remove_key(self):
-        self.__key.remove(silence_no_existence=True)
-
-    def remove_config(self):
-        self.__config.remove()
 
     def export(self):
-        return {} if self.__config.is_live else {
-            "config_file": self.__config.export(),
-            "key_file": self.__key.export(),
+        if not isinstance(self._config_file.raw_file, raw_file.GhostFile):
+            return {}
+        return {
+            "config_file": raw_file.export_ghost_file(
+                self._config_file.raw_file
+            ),
+            "key_file": raw_file.export_ghost_file(self._key_file.raw_file),
         }

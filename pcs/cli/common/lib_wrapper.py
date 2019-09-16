@@ -1,9 +1,7 @@
 import logging
-import sys
 from collections import namedtuple
 
 from pcs.cli.common import middleware
-from pcs.cli.common.reports import process_library_reports
 from pcs.lib.commands import (
     acl,
     alert,
@@ -28,7 +26,6 @@ from pcs.lib.commands.constraint import (
     ticket as constraint_ticket
 )
 from pcs.lib.env import LibraryEnvironment
-from pcs.lib.errors import LibraryEnvError
 
 
 _CACHE = {}
@@ -44,7 +41,7 @@ def cli_env_to_lib_env(cli_env):
         cli_env.groups,
         cli_env.cib_data,
         cli_env.corosync_conf_data,
-        booth=cli_env.booth,
+        booth_files_data=cli_env.booth,
         known_hosts_getter=cli_env.known_hosts_getter,
         request_timeout=cli_env.request_timeout,
     )
@@ -55,17 +52,17 @@ def lib_env_to_cli_env(lib_env, cli_env):
     if not lib_env.is_corosync_conf_live:
         cli_env.corosync_conf_data = lib_env.get_corosync_conf_data()
 
-    #TODO
-    #now we know: if is in cli_env booth is in lib_env as well
-    #when we communicate with the library over the network we will need extra
-    #sanitization here
+    # TODO
+    # We expect that when there is booth set up in cli_env then there is booth
+    # set up in lib_env as well. The code works like that now. Once we start
+    # communicate over the network, we must do extra checks in here to make
+    # sure what the status really is.
     #this applies generally, not only for booth
     #corosync_conf and cib suffers with this problem as well but in this cases
     #it is dangerously hidden: when inconsistency between cli and lib
-    #environment inconsitency occurs, original content is put to file (which is
-    #wrong)
+    #environment occurs, original content is put to file (which is wrong)
     if cli_env.booth:
-        cli_env.booth["modified_env"] = lib_env.booth.export()
+        cli_env.booth["modified_env"] = lib_env.get_booth_env(name="").export()
 
     return cli_env
 
@@ -82,13 +79,7 @@ def bind(cli_env, run_with_middleware, run_library_command):
         return lib_call_result
 
     def decorated_run(*args, **kwargs):
-        try:
-            return run_with_middleware(run, cli_env, *args, **kwargs)
-        except LibraryEnvError as e:
-            process_library_reports(e.unprocessed)
-            #TODO we use explicit exit here - process_library_reports stil has
-            #possibility to not exit - it will need deeper rethinking
-            sys.exit(1)
+        return run_with_middleware(run, cli_env, *args, **kwargs)
 
     return decorated_run
 
@@ -161,12 +152,12 @@ def load_module(env, middleware_factory, name):
                 "remove_from_cluster": booth.remove_from_cluster,
                 "restart": booth.restart,
                 "config_sync": booth.config_sync,
-                "enable": booth.enable_booth,
-                "disable": booth.disable_booth,
-                "start": booth.start_booth,
-                "stop": booth.stop_booth,
-                "pull": booth.pull_config,
-                "status": booth.get_status,
+                "enable_booth": booth.enable_booth,
+                "disable_booth": booth.disable_booth,
+                "start_booth": booth.start_booth,
+                "stop_booth": booth.stop_booth,
+                "pull_config": booth.pull_config,
+                "get_status": booth.get_status,
                 "ticket_grant": booth.ticket_grant,
                 "ticket_revoke": booth.ticket_revoke,
             }

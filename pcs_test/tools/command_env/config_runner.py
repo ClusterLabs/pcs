@@ -1,6 +1,7 @@
+from pcs_test.tools.command_env.config_runner_booth import BoothShortcuts
 from pcs_test.tools.command_env.config_runner_cib import CibShortcuts
-from pcs_test.tools.command_env.config_runner_pcmk import PcmkShortcuts
 from pcs_test.tools.command_env.config_runner_corosync import CorosyncShortcuts
+from pcs_test.tools.command_env.config_runner_pcmk import PcmkShortcuts
 from pcs_test.tools.command_env.config_runner_sbd import SbdShortcuts
 from pcs_test.tools.command_env.config_runner_systemctl import (
     SystemctlShortcuts,
@@ -12,9 +13,10 @@ class RunnerConfig:
     def __init__(self, call_collection, wrap_helper):
         self.__calls = call_collection
 
+        self.booth = wrap_helper(BoothShortcuts(self.__calls))
         self.cib = wrap_helper(CibShortcuts(self.__calls))
-        self.pcmk = wrap_helper(PcmkShortcuts(self.__calls))
         self.corosync = wrap_helper(CorosyncShortcuts(self.__calls))
+        self.pcmk = wrap_helper(PcmkShortcuts(self.__calls))
         self.sbd = wrap_helper(SbdShortcuts(self.__calls))
         self.systemctl = wrap_helper(SystemctlShortcuts(self.__calls))
 

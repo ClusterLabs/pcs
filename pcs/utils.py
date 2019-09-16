@@ -22,6 +22,8 @@ from urllib.parse import urlencode
 from pcs import settings, usage
 
 from pcs.common import (
+    file as pcs_file,
+    file_type_codes,
     pcs_pycurl as pycurl,
     report_codes,
 )
@@ -41,8 +43,11 @@ from pcs.cli.common.reports import (
     LibraryReportProcessorToConsole as LibraryReportProcessorToConsole,
 )
 import pcs.cli.booth.env
+from pcs.cli.file import metadata as cli_file_metadata
 
 from pcs.lib import reports, sbd
+import pcs.lib.corosync.config_parser as corosync_conf_parser
+from pcs.lib.corosync.config_facade import ConfigFacade as corosync_conf_facade
 from pcs.lib.env import LibraryEnvironment
 from pcs.lib.errors import LibraryError
 from pcs.lib.external import (
@@ -56,8 +61,8 @@ from pcs.lib.external import (
     is_service_running,
     is_systemctl,
 )
-import pcs.lib.corosync.config_parser as corosync_conf_parser
-from pcs.lib.corosync.config_facade import ConfigFacade as corosync_conf_facade
+from pcs.lib.file.instance import FileInstance as LibFileInstance
+from pcs.lib.interface.config import ParserErrorException
 from pcs.lib.pacemaker.live import has_wait_for_idle_support
 from pcs.lib.pacemaker.state import ClusterState
 from pcs.lib.pacemaker.values import(
@@ -277,24 +282,53 @@ def read_known_hosts_file():
     """
     Commandline options: no options
     """
-    output, retval = run_pcsdcli("read_known_hosts")
     data = {}
-    if (
-        retval == 0
-        and
-        output['status'] == 'ok'
-        and
-        output['data']
-        and
-        output['data'].get('known_hosts')
-    ):
-        try:
-            data = {
-                name: PcsKnownHost.from_known_host_file_dict(name, host)
-                for name, host in output['data']['known_hosts'].items()
-            }
-        except KeyError:
-            print("Warning: Unable to parse known host file.")
+    try:
+        if os.getuid() != 0:
+            known_hosts_raw_file = pcs_file.RawFile(
+                cli_file_metadata.for_file_type(file_type_codes.PCS_KNOWN_HOSTS)
+            )
+            # json.loads handles bytes, it expects utf-8, 16 or 32 encoding
+            known_hosts_struct = json.loads(known_hosts_raw_file.read())
+        else:
+            # TODO remove
+            # This is here to provide known-hosts to functions not yet
+            # overhauled to pcs.lib. Cli should never read known hosts from
+            # /var/lib/pcsd/.
+            known_hosts_instance = LibFileInstance.for_known_hosts()
+            known_hosts_struct = known_hosts_instance.read_to_structure()
+
+        # TODO use known hosts facade for getting info from json struct once the
+        # facade exists
+        data = {
+            name: PcsKnownHost.from_known_host_file_dict(name, host)
+            for name, host in known_hosts_struct["known_hosts"].items()
+        }
+    except LibraryError as e:
+        # TODO remove
+        # This is here to provide known-hosts to functions not yet
+        # overhauled to pcs.lib. Cli should never read known hosts from
+        # /var/lib/pcsd/.
+        process_library_reports(e.args)
+    except ParserErrorException as e:
+        # TODO remove
+        # This is here to provide known-hosts to functions not yet
+        # overhauled to pcs.lib. Cli should never read known hosts from
+        # /var/lib/pcsd/.
+        print("A")
+        process_library_reports(
+            known_hosts_instance.parser_exception_to_report_list(e)
+        )
+    except pcs_file.RawFileError as e:
+        console_report.warn(
+            "Unable to read the known-hosts file: " + e.reason
+        )
+    except json.JSONDecodeError as e:
+        console_report.warn(f"Unable to parse the known-hosts file: {e}")
+    except (TypeError, KeyError):
+        console_report.warn(
+            "Warning: Unable to parse the known-hosts file."
+        )
     return data
 
 def repeat_if_timeout(send_http_request_function, repeat_count=15):
@@ -2646,7 +2680,6 @@ def get_middleware_factory():
             pcs_options.get("--corosync_conf", None)
         ),
         booth_conf=pcs.cli.booth.env.middleware_config(
-            pcs_options.get("--name", None),
             pcs_options.get("--booth-conf", None),
             pcs_options.get("--booth-key", None),
         ),

@@ -1,16 +1,18 @@
-import os
 import base64
 
+from pcs.common import report_codes
+from pcs.common.file import RawFileError
 from pcs.common.reports import SimpleReportProcessor
+from pcs.lib.booth import (
+    config_files,
+    reports as booth_reports,
+)
 from pcs.lib.communication.booth import BoothSaveFiles
 from pcs.lib.communication.tools import run
 from pcs.lib.errors import LibraryError
-from pcs.lib.booth import (
-    config_files as booth_conf,
-    config_structure,
-    config_parser,
-    reports,
-)
+from pcs.lib.file.instance import FileInstance
+from pcs.lib.file.raw_file import raw_file_error_report
+from pcs.lib.interface.config import ParserErrorException
 
 def send_all_config_to_node(
     communicator,
@@ -29,38 +31,56 @@ def send_all_config_to_node(
     rewrite_existing -- if True rewrite existing file
     skip_wrong_config -- if True skip local configs that are unreadable
     """
+    # TODO adapt to new file transfer framework once it is written
+    # TODO the function is not modular enough - it raises LibraryError
     _reporter = SimpleReportProcessor(reporter)
-    config_dict = booth_conf.read_configs(reporter, skip_wrong_config)
-    if not config_dict:
-        return
-
-    _reporter.report(reports.booth_config_distribution_started())
 
     file_list = []
-    for config, config_data in sorted(config_dict.items()):
+    for conf_file_name in sorted(config_files.get_all_configs_file_names()):
+        config_file = FileInstance.for_booth_config(conf_file_name)
         try:
-            authfile_path = config_structure.get_authfile(
-                config_parser.parse(config_data)
+            booth_conf_data = config_file.raw_file.read()
+            authfile_name, authfile_data, authfile_report_list = (
+                config_files.get_authfile_name_and_data(
+                    config_file.raw_to_facade(booth_conf_data)
+                )
             )
+            _reporter.report_list(authfile_report_list)
             file_list.append({
-                "name": config,
-                "data": config_data,
+                "name": conf_file_name,
+                "data": booth_conf_data.decode("utf-8"),
                 "is_authfile": False
             })
-            if authfile_path:
-                content = booth_conf.read_authfile(reporter, authfile_path)
-                if not content:
-                    continue
+            if authfile_name and authfile_data:
                 file_list.append({
-                    "name": os.path.basename(authfile_path),
-                    "data": base64.b64encode(content).decode("utf-8"),
+                    "name": authfile_name,
+                    "data": base64.b64encode(authfile_data).decode("utf-8"),
                     "is_authfile": True
                 })
-        except LibraryError:
-            _reporter.report(reports.booth_skipping_config(
-                config, "unable to parse config"
-            ))
+        except RawFileError as e:
+            _reporter.report(
+                raw_file_error_report(
+                    e,
+                    force_code=report_codes.SKIP_UNREADABLE_CONFIG,
+                    is_forced_or_warning=skip_wrong_config,
+                )
+            )
+        except ParserErrorException as e:
+            _reporter.report_list(
+                config_file.parser_exception_to_report_list(
+                    e,
+                    force_code=report_codes.SKIP_UNREADABLE_CONFIG,
+                    is_forced_or_warning=skip_wrong_config,
+                )
+            )
+    if _reporter.has_errors:
+        raise LibraryError()
 
+    if not file_list:
+        # no booth configs exist, nothing to be synced
+        return
+
+    _reporter.report(booth_reports.booth_config_distribution_started())
     com_cmd = BoothSaveFiles(
         _reporter, file_list, rewrite_existing=rewrite_existing
     )
