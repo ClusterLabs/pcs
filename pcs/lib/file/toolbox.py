@@ -8,7 +8,7 @@ from pcs.lib.booth.config_parser import (
     Exporter as BoothConfigExporter,
     Parser as BoothConfigParser,
 )
-from pcs.lib.interface.file import (
+from pcs.lib.interface.config import (
     ExporterInterface,
     FacadeInterface,
     ParserErrorException,

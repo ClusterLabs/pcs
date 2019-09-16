@@ -25,13 +25,12 @@ class ExporterInterface():
 
 
 class FacadeInterface():
-    @classmethod
-    def create(cls):
-        """
-        Create a minimal config
-        """
-        raise NotImplementedError()
-
+    # Facades should also implement a 'create' classmethod which creates a new
+    # facade with a minimalistic config in it. This method for sure has
+    # different interface in each class (depending on which config's facade it
+    # is). The create method is not used by the files framework (there is no
+    # need and also due to mentioned interface differences). Therefore the
+    # create method is not defined here in the interface.
     def __init__(self, parsed_config):
         """
         Create a facade around a parsed config file

@@ -156,11 +156,8 @@ class FileInstance():
         """
         self._raw_file.write(raw_file_data, can_overwrite=can_overwrite)
 
-    def remove(self, fail_if_file_not_found=True):
-        self._raw_file.remove(fail_if_file_not_found=fail_if_file_not_found)
 
-
-def _get_raw_file(metadata, is_ghost, ghost_data):
+def _get_raw_file(file_metadata, is_ghost, ghost_data):
     if is_ghost:
-        return raw_file.GhostFile(metadata, file_data=ghost_data)
-    return raw_file.RealFile(metadata)
+        return raw_file.GhostFile(file_metadata, file_data=ghost_data)
+    return raw_file.RealFile(file_metadata)

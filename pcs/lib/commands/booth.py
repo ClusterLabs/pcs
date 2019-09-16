@@ -29,7 +29,7 @@ from pcs.lib.communication.tools import run_and_raise
 from pcs.lib.errors import LibraryError, ReportItemSeverity
 from pcs.lib.file.instance import FileInstance
 from pcs.lib.file.raw_file import GhostFile, raw_file_error_report
-from pcs.lib.interface.file import ParserErrorException
+from pcs.lib.interface.config import ParserErrorException
 from pcs.lib.node import get_existing_nodes_names
 from pcs.lib.resource_agent import find_valid_resource_agent_by_name
 
@@ -158,7 +158,7 @@ def config_destroy(env, instance_name=None, ignore_config_load_problems=False):
         if (authfile_dir == settings.booth_config_dir) and authfile_name:
             try:
                 key_file = FileInstance.for_booth_key(authfile_name)
-                key_file.remove(fail_if_file_not_found=False)
+                key_file.raw_file.remove(fail_if_file_not_found=False)
             except RawFileError as e:
                 report_processor.report(
                     raw_file_error_report(
@@ -179,7 +179,7 @@ def config_destroy(env, instance_name=None, ignore_config_load_problems=False):
         raise LibraryError()
 
     try:
-        booth_env.config.remove()
+        booth_env.config.raw_file.remove()
     except RawFileError as e:
         report_processor.report(raw_file_error_report(e))
 

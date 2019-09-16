@@ -6,7 +6,7 @@ from pcs.lib.booth import (
     constants,
     reports as booth_reports,
 )
-from pcs.lib.interface.file import (
+from pcs.lib.interface.config import (
     ExporterInterface,
     ParserErrorException,
     ParserInterface,
