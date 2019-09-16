@@ -69,6 +69,12 @@ class BoothConfigUnexpectedLinesTest(NameBuildTest):
             reports.booth_config_unexpected_lines(["line", "line2"])
         )
 
+    def test_file_path(self):
+        self.assert_message_from_report(
+            "unexpected line in booth config 'PATH':\nline",
+            reports.booth_config_unexpected_lines(["line"], file_path="PATH")
+        )
+
 class BoothInvalidNameTest(NameBuildTest):
 
     def test_success(self):
