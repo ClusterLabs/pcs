@@ -315,7 +315,6 @@ def read_known_hosts_file():
         # This is here to provide known-hosts to functions not yet
         # overhauled to pcs.lib. Cli should never read known hosts from
         # /var/lib/pcsd/.
-        print("A")
         process_library_reports(
             known_hosts_instance.parser_exception_to_report_list(e)
         )

@@ -223,7 +223,6 @@ def node_add_remote(
     env.ensure_wait_satisfiable(wait)
 
     report_processor = SimpleReportProcessor(env.report_processor)
-    target_factory = env.get_node_target_factory()
     cib = env.get_cib()
     id_provider = IdProvider(cib)
     if env.is_cib_live:
@@ -248,6 +247,7 @@ def node_add_remote(
 
     existing_target_list = []
     if env.is_cib_live:
+        target_factory = env.get_node_target_factory()
         existing_target_list, new_target_list = _get_targets_for_add(
             target_factory, report_processor, existing_nodes_names, [node_name],
             skip_offline_nodes
@@ -367,7 +367,6 @@ def node_add_guest(
     env.ensure_wait_satisfiable(wait)
 
     report_processor = SimpleReportProcessor(env.report_processor)
-    target_factory = env.get_node_target_factory()
     cib = env.get_cib()
     id_provider = IdProvider(cib)
     if env.is_cib_live:
@@ -387,6 +386,7 @@ def node_add_guest(
 
     existing_target_list = []
     if env.is_cib_live:
+        target_factory = env.get_node_target_factory()
         existing_target_list, new_target_list = _get_targets_for_add(
             target_factory, report_processor, existing_nodes_names, [node_name],
             skip_offline_nodes
