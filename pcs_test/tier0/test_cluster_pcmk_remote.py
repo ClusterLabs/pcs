@@ -196,19 +196,6 @@ class NodeAddGuest(RemoteTest):
             stdout_start="\nUsage: pcs cluster node add-guest..."
         )
 
-    def test_fail_when_resource_does_not_exist(self):
-        self.assert_pcs_fail(
-            "cluster node add-guest node-name non-existent",
-            "Error: resource 'non-existent' does not exist\n"
-            "Error: Errors have occurred, therefore pcs is unable to continue\n"
-            "Unable to check if there is a conflict with nodes set in corosync "
-                "because the command does not run on a live cluster (e.g. -f "
-                "was used)\n"
-            "Warning: Unable to read the known-hosts file: No such file or "
-                "directory: '/var/lib/pcsd/known-hosts'\n"
-            "No addresses specified for host 'node-name', using 'node-name'\n"
-        )
-
     def test_fail_when_option_remote_node_specified(self):
         self.create_resource()
         self.assert_pcs_fail(
