@@ -7,6 +7,7 @@ RUN dnf install -y \
         python3 \
         python3-lxml \
         python3-mock \
+        python3-pip \
         python3-pycurl \
         python3-pyOpenSSL \
         # ruby
@@ -37,8 +38,8 @@ RUN dnf install -y \
         # find
         findutils
 
-# Specific pylint and tornado version is required
-RUN pip3 install pylint==2.3.1 tornado==6.0.3
-
 COPY . $src_path
+
+# install python packages required for tests and static code analysis checks
+RUN pip3 install -r $src_path/requirements.txt
 

@@ -38,7 +38,7 @@ RUN dnf install -y --disablerepo updates-testing \
         # find
         findutils
 
-# Specific pylint and tornado version is required
-RUN pip3 install pylint==2.3.1 tornado==6.0.3
-
 COPY . $src_path
+
+# install python packages required for tests and static code analysis checks
+RUN pip3 install -r $src_path/requirements.txt
