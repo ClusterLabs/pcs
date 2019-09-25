@@ -3,6 +3,9 @@
 # of pylint when using this command to run the linter on the whole project:
 # $ ./run_pylint.sh
 
+[MASTER]
+extension-pkg-whitelist=lxml.etree,pycurl
+
 [MESSAGES CONTROL]
 disable=missing-docstring, fixme, bad-continuation
 # Everything in module context is a constant, but our naming convetion allows

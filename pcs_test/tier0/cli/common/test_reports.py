@@ -57,8 +57,8 @@ class ReportsTranslated(TestCase):
             frozenset(),
             f"{len(untranslated)} report codes have no translation in CLI. "
             "Add translations for the report codes. Add force codes to "
-            f"{__class__.__module__}.{__class__.__name__}.force_codes "
-            "so they won't get reported here."
+            f"{self.__class__.__module__}.{self.__class__.__name__}."
+            "force_codes so they won't get reported here."
         )
 
 
