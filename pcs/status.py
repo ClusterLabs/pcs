@@ -340,8 +340,7 @@ def cluster_status(lib, argv, modifiers):
                 break
             first_empty_line = True
             continue
-        else:
-            print("", line)
+        print("", line)
 
     if not modifiers.is_specified("-f") and utils.hasCorosyncConf():
         print()

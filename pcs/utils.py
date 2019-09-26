@@ -714,11 +714,9 @@ def getCorosyncActiveNodes():
     )
 
     node_names = nodename_re.findall(output)
-    node_statuses = nodestatus_re.findall(output)
-    node_ids = nodenameid_mapping_re.findall(output)
 
-    index_to_id = {index:nodeid for index, nodeid in node_ids}
-    id_to_status = {nodeid:status for nodeid, status in node_statuses}
+    index_to_id = dict(nodenameid_mapping_re.findall(output))
+    id_to_status = dict(nodestatus_re.findall(output))
 
     node_status = {}
     for index, node_name in node_names:
@@ -1835,6 +1833,7 @@ def getTerminalSize(fd=1):
     """
     # pylint: disable=bare-except
     try:
+        # pylint: disable=import-outside-toplevel
         import fcntl
         import termios
         import struct

@@ -1060,7 +1060,7 @@ class StonithAgent(CrmAgent):
         for param in parameters:
             if param["name"] in remove_parameters:
                 continue
-            elif param["name"] == "action":
+            if param["name"] == "action":
                 # However we still need the user to be able to set 'action' due
                 # to backward compatibility reasons. So we just mark it as not
                 # required. We also move it to advanced params to indicate users

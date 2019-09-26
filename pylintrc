@@ -1,4 +1,4 @@
-# Required version of pylint: 2.3.1
+# Required version of pylint: 2.4.1
 # This project should not containt any issues reported by the required version
 # of pylint when using this command to run the linter on the whole project:
 # $ ./run_pylint.sh

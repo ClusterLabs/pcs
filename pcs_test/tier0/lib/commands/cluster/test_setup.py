@@ -559,10 +559,9 @@ class SetupSuccessAddresses(TestCase):
             [Destination("node3-addr", 2227)],
         ]
         self.node_coros = ["node1-corosync", "node2-corosync", "node3-corosync"]
-        self.config.env.set_known_hosts_dests({
-            name: dest
-            for name, dest in zip(self.node_names, self.node_dests)
-        })
+        self.config.env.set_known_hosts_dests(
+            dict(zip(self.node_names, self.node_dests))
+        )
         patch_getaddrinfo(self, self.node_coros)
         config_succes_minimal_fixture(
             self.config,

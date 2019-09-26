@@ -9,7 +9,7 @@ class RunParallelTestCase(TestCase):
         data_list = [([i], {}) for i in range(5)]
         out_list = []
         tools.run_parallel(out_list.append, data_list)
-        self.assertEqual(sorted(out_list), [i for i in range(5)])
+        self.assertEqual(sorted(out_list), list(range(5)))
 
     def test_parallelism(self):
         timeout = 5

@@ -1462,14 +1462,13 @@ def constraint_rule(lib, argv, modifiers):
                         print("Removing Rule: {0}".format(rule.get("id")))
                         loc_con.remove(rule)
                         found = True
-                        break
                     else:
                         print(
                             "Removing Constraint: {0}".format(loc_con.get("id"))
                         )
                         constraints.remove(loc_con)
                         found = True
-                        break
+                    break
 
             if found:
                 break
