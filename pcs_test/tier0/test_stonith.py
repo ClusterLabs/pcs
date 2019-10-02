@@ -14,6 +14,7 @@ from pcs_test.tools.misc import (
     get_test_resource as rc,
     is_minimum_pacemaker_version,
     skip_unless_pacemaker_version,
+    skip_unless_crm_rule,
     outdent,
     ParametrizedTestMetaClass,
 )
@@ -107,6 +108,7 @@ class StonithTest(TestCase, AssertPcsMixin):
         )
         shutil.copy(empty_cib, temp_cib)
 
+    @skip_unless_crm_rule
     def testStonithCreation(self):
         self.assert_pcs_fail(
             "stonith create test1 fence_noexist",
@@ -1058,6 +1060,7 @@ class LevelAdd(LevelTestsBase):
 
 
 @skip_unless_fencing_level_supported
+@skip_unless_crm_rule
 class LevelConfig(LevelTestsBase):
     full_config = outdent(
         """\

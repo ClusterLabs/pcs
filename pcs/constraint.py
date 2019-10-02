@@ -1,10 +1,13 @@
 import sys
 from collections import defaultdict
+from os.path import isfile
 import xml.dom.minidom
 from xml.dom.minidom import parseString
+from enum import Enum
 
 from pcs import (
     rule as rule_utils,
+    settings,
     usage,
     utils,
 )
@@ -32,7 +35,7 @@ from pcs.lib.pacemaker.values import (
 
 # pylint: disable=too-many-branches, too-many-statements
 # pylint: disable=invalid-name, too-many-nested-blocks
-# pylint: disable=too-many-locals
+# pylint: disable=too-many-locals, too-many-lines
 
 OPTIONS_ACTION = resource_set.ATTRIB["action"]
 
@@ -45,9 +48,23 @@ OPTIONS_KIND = order_attrib["kind"]
 LOCATION_NODE_VALIDATION_SKIP_MSG = (
     "Validation for node existence in the cluster will be skipped"
 )
+CRM_RULE_MISSING_MSG = (
+    "Warning: crm_rule is not available, therefore expired constraints may be "
+    "shown. Consider upgrading pacemaker.\n"
+)
 
 RESOURCE_TYPE_RESOURCE = "resource"
 RESOURCE_TYPE_REGEXP = "regexp"
+
+RULE_IN_EFFECT = "in effect"
+RULE_EXPIRED = "expired"
+RULE_NOT_IN_EFFECT = "not yet in effect"
+RULE_UNKNOWN_STATUS = "unknown status"
+
+class CrmRuleReturnCode(Enum):
+    IN_EFFECT = 0
+    EXPIRED = 110
+    TO_BE_IN_EFFECT = 111
 
 
 def constraint_location_cmd(lib, argv, modifiers):
@@ -100,13 +117,14 @@ def constraint_order_cmd(lib, argv, modifiers):
 def constraint_show(lib, argv, modifiers):
     """
     Options:
+      * --all - print expired constraints
       * -f - CIB file
       * --full
     """
     location_show(lib, argv, modifiers)
-    order_command.show(lib, argv, modifiers)
-    colocation_command.show(lib, argv, modifiers)
-    ticket_command.show(lib, argv, modifiers)
+    order_command.show(lib, argv, modifiers.get_subset("--full", "-f"))
+    colocation_command.show(lib, argv, modifiers.get_subset("--full", "-f"))
+    ticket_command.show(lib, argv, modifiers.get_subset("--full", "-f"))
 
 
 def colocation_rm(lib, argv, modifiers):
@@ -531,23 +549,19 @@ def order_find_duplicates(dom, constraint_el):
 def location_show(lib, argv, modifiers):
     """
     Options:
+      * --all - print expired constraints
       * --full - print all details
       * -f - CIB file
     """
     del lib
-    modifiers.ensure_only_supported("-f", "--full")
+    modifiers.ensure_only_supported("-f", "--full", "--all")
+    by_node = False
+
     if argv and argv[0] == "nodes":
-        byNode = True
-        showDetail = False
-    elif modifiers.get("--full"):
-        byNode = False
-        showDetail = True
-    else:
-        byNode = False
-        showDetail = False
+        by_node = True
 
     if len(argv) > 1:
-        if byNode:
+        if by_node:
             valid_noderes = argv[1:]
         else:
             valid_noderes = [
@@ -564,13 +578,15 @@ def location_show(lib, argv, modifiers):
     (dummy_dom, constraintsElement) = getCurrentConstraints()
     print("\n".join(location_lines(
         constraintsElement,
-        showDetail=showDetail,
-        byNode=byNode,
-        valid_noderes=valid_noderes
+        showDetail=modifiers.get("--full"),
+        byNode=by_node,
+        valid_noderes=valid_noderes,
+        show_expired=modifiers.get("--all"),
     )))
 
 def location_lines(
-    constraintsElement, showDetail=False, byNode=False, valid_noderes=None
+    constraintsElement, showDetail=False, byNode=False, valid_noderes=None,
+    show_expired=False, verify_expiration=True
 ):
     """
     Commandline options: no options
@@ -584,6 +600,12 @@ def location_lines(
     all_loc_constraints = constraintsElement.getElementsByTagName(
         'rsc_location'
     )
+    cib = utils.get_cib()
+
+    if not isfile(settings.crm_rule):
+        if verify_expiration:
+            sys.stderr.write(CRM_RULE_MISSING_MSG)
+        verify_expiration = False
 
     all_lines.append("Location Constraints:")
     for rsc_loc in all_loc_constraints:
@@ -669,66 +691,76 @@ def location_lines(
                 (nodehashon, "    Allowed to run:"),
                 (nodehashoff, "    Not allowed to run:")
             )
-            for nodehash, label in nodehash_label:
-                if node in nodehash:
-                    all_lines.append(label)
-                    for options in nodehash[node]:
-                        line_parts = [(
-                            "      " + options["rsc_label"]
-                            + " (" + options["id"] + ")"
-                        )]
-                        if options["role"]:
-                            line_parts.append(
-                                "(role: {0})".format(options["role"])
-                            )
-                        if options["resource-discovery"]:
-                            line_parts.append(
-                                "(resource-discovery={0})".format(
-                                    options["resource-discovery"]
-                                )
-                            )
-                        line_parts.append("Score: " + options["score"])
-                        all_lines.append(" ".join(line_parts))
-        all_lines += _show_location_rules(ruleshash, showDetail)
+            all_lines += _hashtable_to_lines(
+                nodehash_label, "rsc_label", node, showDetail
+            )
+        all_lines += _show_location_rules(
+            ruleshash, cib, show_detail=showDetail, show_expired=show_expired,
+            verify_expiration=verify_expiration
+        )
     else:
         for rsc in rsclist:
+            rsc_lines = []
             if valid_noderes:
                 if rsc[0:2] not in valid_noderes:
                     continue
-            all_lines.append("  {0}".format(rsc[2]))
+            rsc_lines.append("  {0}".format(rsc[2]))
             rschash_label = (
                 (rschashon, "    Enabled on:"),
                 (rschashoff, "    Disabled on:"),
             )
-            for rschash, label in rschash_label:
-                if rsc in rschash:
-                    for options in rschash[rsc]:
-                        if not options["node"]:
-                            continue
-                        line_parts = [
-                            label,
-                            options["node"],
-                            "(score:{0})".format(options["score"]),
-                        ]
-                        if options["role"]:
-                            line_parts.append(
-                                "(role: {0})".format(options["role"])
-                            )
-                        if options["resource-discovery"]:
-                            line_parts.append(
-                                "(resource-discovery={0})".format(
-                                    options["resource-discovery"]
-                                )
-                            )
-                        if showDetail:
-                            line_parts.append("(id:{0})".format(options["id"]))
-                        all_lines.append(" ".join(line_parts))
+            rsc_lines += _hashtable_to_lines(
+                rschash_label, "node", rsc, showDetail
+            )
             miniruleshash = {}
             miniruleshash[rsc] = ruleshash[rsc]
-            all_lines += _show_location_rules(miniruleshash, showDetail, True)
+            rsc_lines += _show_location_rules(
+                miniruleshash,
+                cib,
+                show_detail=showDetail,
+                show_expired=show_expired,
+                verify_expiration=verify_expiration,
+                noheader=True,
+            )
+            # Append to all_lines only if the resource has any constraints
+            if len(rsc_lines) > 2:
+                all_lines += rsc_lines
     return all_lines
 
-def _show_location_rules(ruleshash, showDetail, noheader=False):
+def _hashtable_to_lines(hash_label, hash_type, hash_key, show_detail):
+    hash_lines = []
+    for hashtable, label in hash_label:
+        if hash_key in hashtable:
+            labeled_lines = []
+            for options in hashtable[hash_key]:
+                # Skips nodeless constraints and prints nodes/resources
+                if not options[hash_type]:
+                    continue
+                line_parts = ["      {0}{1}".format(
+                    "Node: " if hash_type == "node" else "",
+                    options[hash_type]
+                )]
+                line_parts.append(f"(score:{options['score']})")
+                if options["role"]:
+                    line_parts.append(f"(role:{options['role']})")
+                if options["resource-discovery"]:
+                    line_parts.append(
+                        "(resource-discovery={0})".format(
+                            options["resource-discovery"]
+                        )
+                    )
+                if show_detail:
+                    line_parts.append(f"(id:{options['id']})")
+                labeled_lines.append(" ".join(line_parts))
+            if labeled_lines:
+                labeled_lines.insert(0, label)
+            hash_lines += labeled_lines
+    return hash_lines
+
+def _show_location_rules(
+        ruleshash, cib, show_detail, show_expired=False, verify_expiration=True,
+        noheader=False
+):
     """
     Commandline options: no options
     """
@@ -770,13 +802,36 @@ def _show_location_rules(ruleshash, showDetail, noheader=False):
             else:
                 constraint_option_info = ""
 
-            all_lines.append(
-                "    Constraint: " + constraint_id + constraint_option_info
-            )
+            rule_lines = []
+            # When expiration check is needed, starting value should be True and
+            # when it's not, check is skipped so the initial value must be False
+            # to print the constraint
+            is_constraint_expired = verify_expiration
             for rule in constrainthash[constraint_id]:
-                all_lines.append(rule_utils.ExportDetailed().get_string(
-                    rule, showDetail, "      "
+                rule_status = RULE_UNKNOWN_STATUS
+                if verify_expiration:
+                    rule_status = _get_rule_status(rule.getAttribute("id"), cib)
+                    if rule_status != RULE_EXPIRED:
+                        is_constraint_expired = False
+
+                rule_lines.append(rule_utils.ExportDetailed().get_string(
+                    rule,
+                    rule_status == RULE_EXPIRED and show_expired,
+                    show_detail,
+                    indent="      "
                 ))
+
+            if not show_expired and is_constraint_expired:
+                continue
+
+            all_lines.append(
+                "    Constraint{0}: {1}{2}".format(
+                    " (expired)" if is_constraint_expired else "",
+                    constraint_id,
+                    constraint_option_info
+                )
+            )
+            all_lines += rule_lines
     return all_lines
 
 def _verify_node_name(node, existing_nodes):
@@ -794,6 +849,18 @@ def _verify_score(score):
             "invalid score '%s', use integer or INFINITY or -INFINITY"
             % score
         )
+
+def _get_rule_status(rule_id, cib):
+    _, _, retval = utils.cmd_runner().run(
+        [settings.crm_rule, "--check", "--rule=" + rule_id, "-X-"],
+        cib
+    )
+    translation_map = {
+        CrmRuleReturnCode.IN_EFFECT.value: RULE_IN_EFFECT,
+        CrmRuleReturnCode.EXPIRED.value: RULE_EXPIRED,
+        CrmRuleReturnCode.TO_BE_IN_EFFECT.value: RULE_NOT_IN_EFFECT,
+    }
+    return translation_map.get(retval, RULE_UNKNOWN_STATUS)
 
 def location_prefer(lib, argv, modifiers):
     """
@@ -1118,7 +1185,7 @@ def location_rule_check_duplicates(dom, constraint_el, force):
                 lines.append("  Constraint: %s" % dup.getAttribute("id"))
                 for dup_rule in utils.dom_get_children_by_tag_name(dup, "rule"):
                     lines.append(rule_utils.ExportDetailed().get_string(
-                        dup_rule, True, "    "
+                        dup_rule, False, True, indent="    "
                     ))
             utils.err(
                 "duplicate constraint already exists, use --force to override\n"

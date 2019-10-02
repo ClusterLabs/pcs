@@ -107,13 +107,20 @@ class ExportDetailed:
 
     def __init__(self):
         self.show_detail = False
+        self.rule_expired = False
 
-    def get_string(self, rule, show_detail, indent=""):
+    def get_string(
+            self, rule, rule_expired, show_detail, indent=""
+    ):
         self.show_detail = show_detail
+        self.rule_expired = rule_expired
         return indent + ("\n" + indent).join(self.list_rule(rule))
 
     def list_rule(self, rule):
-        rule_parts = ["Rule: %s" % " ".join(self._list_attributes(rule))]
+        rule_parts = ["Rule{0}: {1}".format(
+            " (expired)" if self.rule_expired else "",
+            " ".join(self._list_attributes(rule))
+        )]
         for child in rule.childNodes:
             if child.nodeType == xml.dom.minidom.Node.TEXT_NODE:
                 continue
@@ -140,7 +147,7 @@ class ExportDetailed:
                 expression.getAttribute("attribute")
             ]
         if self.show_detail:
-            exp_parts.append(" (id:%s)" % expression.getAttribute("id"))
+            exp_parts.append("(id:%s)" % expression.getAttribute("id"))
         return ["Expression: %s" % " ".join(exp_parts)]
 
     def list_date_expression(self, expression):
@@ -151,7 +158,7 @@ class ExportDetailed:
             )
             exp_parts = ["Expression:"]
             if self.show_detail:
-                exp_parts.append(" (id:%s)" % expression.getAttribute("id"))
+                exp_parts.append("(id:%s)" % expression.getAttribute("id"))
             return self.indent_append(
                 [" ".join(exp_parts)],
                 ["Date Spec: %s" % " ".join(date_spec_parts)]
@@ -167,7 +174,7 @@ class ExportDetailed:
                 exp_parts.append("duration")
                 duration_parts = self._list_attributes(durations[0])
             if self.show_detail:
-                exp_parts.append(" (id:%s)" % expression.getAttribute("id"))
+                exp_parts.append("(id:%s)" % expression.getAttribute("id"))
             result = ["Expression: %s" % " ".join(exp_parts)]
             if durations:
                 self.indent_append(
@@ -181,13 +188,13 @@ class ExportDetailed:
         if expression.hasAttribute("end"):
             exp_parts.append(expression.getAttribute("end"))
         if self.show_detail:
-            exp_parts.append(" (id:%s)" % expression.getAttribute("id"))
+            exp_parts.append("(id:%s)" % expression.getAttribute("id"))
         return ["Expression: " + " ".join(exp_parts)]
 
     def _list_attributes(self, element):
         attributes = utils.dom_attrs_to_list(element, with_id=False)
         if self.show_detail:
-            attributes.append(" (id:%s)" % (element.getAttribute("id")))
+            attributes.append("(id:%s)" % (element.getAttribute("id")))
         return attributes
 
     @staticmethod

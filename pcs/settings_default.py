@@ -37,6 +37,7 @@ pacemaker_based = "/usr/libexec/pacemaker/pacemaker-based"
 pacemaker_fenced = "/usr/libexec/pacemaker/pacemaker-fenced"
 pcs_version = "0.10.3"
 crm_report = os.path.join(pacemaker_binaries, "crm_report")
+crm_rule = os.path.join(pacemaker_binaries, "crm_rule")
 crm_verify = os.path.join(pacemaker_binaries, "crm_verify")
 cibadmin = os.path.join(pacemaker_binaries, "cibadmin")
 crm_mon_schema = '/usr/share/pacemaker/crm_mon.rng'

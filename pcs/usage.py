@@ -1218,9 +1218,10 @@ Usage: pcs constraint [constraints]...
 Manage resource constraints
 
 Commands:
-    [list|show] --full
-        List all current constraints. If --full is specified also list the
-        constraint ids.
+    [list|show] [--all] [--full]
+        List all current constraints that are not expired. If --all
+        is specified also show expired constraints. If --full is specified
+        also list the constraint ids.
 
     location <resource> prefers <node>[=<score>] [<node>[=<score>]]...
         Create a location constraint on a resource to prefer the specified node
@@ -1255,15 +1256,17 @@ Commands:
         If id is omitted one is generated from the resource id. If
         resource-discovery is omitted it defaults to 'always'.
 
-    location [show [resources [<resource>...]] | [nodes [<node>...]]] [--full]
-        List all the current location constraints. If 'resources' is specified,
-        location constraints are displayed per resource (default). If 'nodes'
-        is specified, location constraints are displayed per node. If specific
-        nodes or resources are specified then we only show information about
-        them. Resource may be either a resource id <resource_id> or
-        %<resource_id> or resource%<resource_id>, or a resource name regular
-        expression regexp%<resource_pattern>. If --full is specified show the
-        internal constraint id's as well.
+    location [show [resources [<resource>...]] | [nodes [<node>...]]] [--all]
+            [--full]
+        List all the current location constraints that are not expired. If
+        'resources' is specified, location constraints are displayed per
+        resource (default). If 'nodes' is specified, location constraints are
+        displayed per node. If specific nodes or resources are specified then
+        we only show information about them. Resource may be either a resource
+        id <resource_id> or %<resource_id> or resource%<resource_id>, or a
+        resource name regular expression regexp%<resource_pattern>. If --full
+        is specified show the internal constraint id's. If --all is
+        specified show the expired constraints.
 
     location add <id> <resource> <node> <score> [resource-discovery=<option>]
         Add a location constraint with the appropriate id for the specified

@@ -10,6 +10,12 @@
 - All node names and scores are validated when running `pcs constraint location
   avoids/prefers` before writing configuration to cib ([rhbz#1673835])
 
+### Changed
+- Expired location constraints are now hidden by default when listing
+  constraints in any way. Using `--all` will list and denote them with
+  `(expired)`. All expired rules are then marked the same way. ([rhbz#1442116])
+
+[rhbz#1442116]: https://bugzilla.redhat.com/show_bug.cgi?id=1442116
 [rhbz#1673835]: https://bugzilla.redhat.com/show_bug.cgi?id=1673835
 [rhbz#1728890]: https://bugzilla.redhat.com/show_bug.cgi?id=1728890
 

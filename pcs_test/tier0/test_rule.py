@@ -6,6 +6,7 @@ import xml.dom.minidom
 from pcs import rule
 from pcs_test.tools.assertions import ac, assert_xml_equal
 from pcs_test.tools.misc import get_test_resource as rc
+from pcs_test.tools.misc import skip_unless_crm_rule
 from pcs_test.tools.pcs_runner import pcs
 
 # pylint: disable=invalid-name, line-too-long
@@ -1748,6 +1749,7 @@ class DomRuleAddTest(TestCase):
             """
         )
 
+    @skip_unless_crm_rule
     def test_success(self):
         output, returnVal = pcs(
             temp_cib,
@@ -1775,21 +1777,21 @@ class DomRuleAddTest(TestCase):
 Location Constraints:
   Resource: dummy1
     Constraint: location-dummy1
-      Rule: score=INFINITY  (id:location-dummy1-rule)
-        Expression: #uname eq node1  (id:location-dummy1-rule-expr)
+      Rule: score=INFINITY (id:location-dummy1-rule)
+        Expression: #uname eq node1 (id:location-dummy1-rule-expr)
     Constraint: location-dummy1-1
-      Rule: role=master score=100  (id:MyRule)
-        Expression: #uname eq node2  (id:MyRule-expr)
+      Rule: role=master score=100 (id:MyRule)
+        Expression: #uname eq node2 (id:MyRule-expr)
     Constraint: location-dummy1-2
-      Rule: boolean-op=or score=INFINITY  (id:complexRule)
-        Rule: boolean-op=and score=0  (id:complexRule-rule)
-          Expression: #uname eq node3  (id:complexRule-rule-expr)
-          Expression: foo gt version 1.2  (id:complexRule-rule-expr-1)
-        Rule: boolean-op=and score=0  (id:complexRule-rule-1)
-          Expression:  (id:complexRule-rule-1-expr)
-            Date Spec: hours=12-23 weekdays=1-5  (id:complexRule-rule-1-expr-datespec)
-          Expression: date in_range 2014-07-26 to duration  (id:complexRule-rule-1-expr-1)
-            Duration: months=1  (id:complexRule-rule-1-expr-1-duration)
+      Rule: boolean-op=or score=INFINITY (id:complexRule)
+        Rule: boolean-op=and score=0 (id:complexRule-rule)
+          Expression: #uname eq node3 (id:complexRule-rule-expr)
+          Expression: foo gt version 1.2 (id:complexRule-rule-expr-1)
+        Rule: boolean-op=and score=0 (id:complexRule-rule-1)
+          Expression: (id:complexRule-rule-1-expr)
+            Date Spec: hours=12-23 weekdays=1-5 (id:complexRule-rule-1-expr-datespec)
+          Expression: date in_range 2014-07-26 to duration (id:complexRule-rule-1-expr-1)
+            Duration: months=1 (id:complexRule-rule-1-expr-1-duration)
 """)
         self.assertEqual(0, returnVal)
 
@@ -1816,6 +1818,7 @@ Location Constraints:
 """)
         self.assertEqual(0, returnVal)
 
+    @skip_unless_crm_rule
     def test_invalid_score(self):
         output, returnVal = pcs(
             temp_cib,
@@ -1833,8 +1836,8 @@ Location Constraints:
 Location Constraints:
   Resource: dummy1
     Constraint: location-dummy1
-      Rule: score-attribute=pingd  (id:location-dummy1-rule)
-        Expression: defined pingd  (id:location-dummy1-rule-expr)
+      Rule: score-attribute=pingd (id:location-dummy1-rule)
+        Expression: defined pingd (id:location-dummy1-rule-expr)
 """)
         self.assertEqual(0, returnVal)
 
@@ -1868,6 +1871,7 @@ Location Constraints:
         )
         self.assertEqual(1, returnVal)
 
+    @skip_unless_crm_rule
     def test_ivalid_options(self):
         output, returnVal = pcs(
             temp_cib,
@@ -1910,8 +1914,8 @@ Location Constraints:
 Location Constraints:
   Resource: dummy1
     Constraint: location-dummy1
-      Rule: score=INFINITY  (id:MyRule)
-        Expression: #uname eq node1  (id:MyRule-expr)
+      Rule: score=INFINITY (id:MyRule)
+        Expression: #uname eq node1 (id:MyRule-expr)
 """)
         self.assertEqual(0, returnVal)
 

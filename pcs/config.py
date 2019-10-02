@@ -134,7 +134,12 @@ def _config_show_cib_lines(lib):
     all_lines.append("")
     constraints_element = cib_dom.getElementsByTagName('constraints')[0]
     all_lines.extend(
-        constraint.location_lines(constraints_element, showDetail=True)
+        constraint.location_lines(
+            constraints_element,
+            showDetail=True,
+            show_expired=True,
+            verify_expiration=False
+        )
     )
     all_lines.extend(constraint_command.show(
         "Ordering Constraints:",

@@ -1,5 +1,6 @@
 # pylint: disable=too-many-lines
 import os
+import datetime
 import shutil
 import unittest
 from collections import namedtuple
@@ -21,12 +22,16 @@ from pcs_test.tools.misc import (
     get_test_resource as rc,
     skip_unless_pacemaker_supports_bundle,
     skip_unless_pacemaker_version,
+    skip_unless_crm_rule,
     outdent,
     ParametrizedTestMetaClass,
 )
 from pcs_test.tools.pcs_runner import pcs, PcsRunner
 
-from pcs.constraint import LOCATION_NODE_VALIDATION_SKIP_MSG
+from pcs.constraint import (
+    LOCATION_NODE_VALIDATION_SKIP_MSG,
+    CRM_RULE_MISSING_MSG,
+)
 
 # pylint: disable=line-too-long, too-many-public-methods, invalid-name, no-self-use, bad-whitespace, redefined-outer-name, too-many-statements
 
@@ -49,6 +54,7 @@ skip_unless_location_rsc_pattern = skip_unless_pacemaker_version(
     "location constraints with resource patterns"
 )
 
+@skip_unless_crm_rule
 class ConstraintTest(unittest.TestCase):
     def setUp(self):
         shutil.copy(empty_cib, temp_cib)
@@ -149,47 +155,47 @@ class ConstraintTest(unittest.TestCase):
         assert returnVal == 0
         assert output == "", [output]
 
-        output, returnVal = pcs(temp_cib, "constraint --full")
+        output, returnVal = pcs(temp_cib, "constraint --full --all")
         assert returnVal == 0
         ac(output, """\
 Location Constraints:
   Resource: C1-group
     Constraint: location-C1-group
-      Rule: score-attribute=pingd  (id:location-C1-group-rule)
-        Expression: defined pingd  (id:location-C1-group-rule-expr)
+      Rule: score-attribute=pingd (id:location-C1-group-rule)
+        Expression: defined pingd (id:location-C1-group-rule-expr)
   Resource: D1
     Constraint: location-D1
-      Rule: score=222  (id:location-D1-rule)
-        Expression: #uname eq c00n03  (id:location-D1-rule-expr)
+      Rule: score=222 (id:location-D1-rule)
+        Expression: #uname eq c00n03 (id:location-D1-rule-expr)
   Resource: D2
     Constraint: location-D2
-      Rule: score=-INFINITY  (id:location-D2-rule)
-        Expression: #uname eq c00n04  (id:location-D2-rule-expr)
+      Rule: score=-INFINITY (id:location-D2-rule)
+        Expression: #uname eq c00n04 (id:location-D2-rule-expr)
   Resource: D3
     Constraint: location-D3
-      Rule: score-attribute=pingd  (id:location-D3-rule)
-        Expression: defined pingd  (id:location-D3-rule-expr)
+      Rule: score-attribute=pingd (id:location-D3-rule)
+        Expression: defined pingd (id:location-D3-rule-expr)
     Constraint: location-D3-1
-      Rule: boolean-op=or score=-INFINITY  (id:location-D3-1-rule)
-        Expression: not_defined pingd  (id:location-D3-1-rule-expr)
-        Expression: pingd lte 0  (id:location-D3-1-rule-expr-1)
+      Rule: boolean-op=or score=-INFINITY (id:location-D3-1-rule)
+        Expression: not_defined pingd (id:location-D3-1-rule-expr)
+        Expression: pingd lte 0 (id:location-D3-1-rule-expr-1)
     Constraint: location-D3-2
-      Rule: boolean-op=and score=-INFINITY  (id:location-D3-2-rule)
-        Expression: not_defined pingd  (id:location-D3-2-rule-expr)
-        Expression: pingd lte 0  (id:location-D3-2-rule-expr-1)
+      Rule: boolean-op=and score=-INFINITY (id:location-D3-2-rule)
+        Expression: not_defined pingd (id:location-D3-2-rule-expr)
+        Expression: pingd lte 0 (id:location-D3-2-rule-expr-1)
   Resource: D4
     Constraint: location-D4
-      Rule: score=INFINITY  (id:location-D4-rule)
-        Expression: date gt 2005-001  (id:location-D4-rule-expr)
+      Rule: score=INFINITY (id:location-D4-rule)
+        Expression: date gt 2005-001 (id:location-D4-rule-expr)
   Resource: D5
-    Constraint: location-D5
-      Rule: score=INFINITY  (id:location-D5-rule)
-        Expression: date in_range 2005-001 to 2006-001  (id:location-D5-rule-expr)
+    Constraint (expired): location-D5
+      Rule (expired): score=INFINITY (id:location-D5-rule)
+        Expression: date in_range 2005-001 to 2006-001 (id:location-D5-rule-expr)
   Resource: D6
     Constraint: location-D6
-      Rule: score=INFINITY  (id:location-D6-rule)
-        Expression:  (id:location-D6-rule-expr)
-          Date Spec: years=2005  (id:location-D6-rule-expr-datespec)
+      Rule: score=INFINITY (id:location-D6-rule)
+        Expression: (id:location-D6-rule-expr)
+          Date Spec: years=2005 (id:location-D6-rule-expr-datespec)
 Ordering Constraints:
 Colocation Constraints:
 Ticket Constraints:
@@ -203,39 +209,39 @@ Ticket Constraints:
         ac(o,"")
         assert r == 0
 
-        output, returnVal = pcs(temp_cib, "constraint --full")
+        output, returnVal = pcs(temp_cib, "constraint --full --all")
         assert returnVal == 0
         ac(output, """\
 Location Constraints:
   Resource: D1
     Constraint: location-D1
-      Rule: score=222  (id:location-D1-rule)
-        Expression: #uname eq c00n03  (id:location-D1-rule-expr)
+      Rule: score=222 (id:location-D1-rule)
+        Expression: #uname eq c00n03 (id:location-D1-rule-expr)
   Resource: D2
     Constraint: location-D2
-      Rule: score=-INFINITY  (id:location-D2-rule)
-        Expression: #uname eq c00n04  (id:location-D2-rule-expr)
+      Rule: score=-INFINITY (id:location-D2-rule)
+        Expression: #uname eq c00n04 (id:location-D2-rule-expr)
   Resource: D3
     Constraint: location-D3
-      Rule: score-attribute=pingd  (id:location-D3-rule)
-        Expression: defined pingd  (id:location-D3-rule-expr)
+      Rule: score-attribute=pingd (id:location-D3-rule)
+        Expression: defined pingd (id:location-D3-rule-expr)
     Constraint: location-D3-1
-      Rule: boolean-op=or score=-INFINITY  (id:location-D3-1-rule)
-        Expression: not_defined pingd  (id:location-D3-1-rule-expr)
-        Expression: pingd lte 0  (id:location-D3-1-rule-expr-1)
+      Rule: boolean-op=or score=-INFINITY (id:location-D3-1-rule)
+        Expression: not_defined pingd (id:location-D3-1-rule-expr)
+        Expression: pingd lte 0 (id:location-D3-1-rule-expr-1)
     Constraint: location-D3-2
-      Rule: boolean-op=and score=-INFINITY  (id:location-D3-2-rule)
-        Expression: not_defined pingd  (id:location-D3-2-rule-expr)
-        Expression: pingd lte 0  (id:location-D3-2-rule-expr-1)
+      Rule: boolean-op=and score=-INFINITY (id:location-D3-2-rule)
+        Expression: not_defined pingd (id:location-D3-2-rule-expr)
+        Expression: pingd lte 0 (id:location-D3-2-rule-expr-1)
   Resource: D5
-    Constraint: location-D5
-      Rule: score=INFINITY  (id:location-D5-rule)
-        Expression: date in_range 2005-001 to 2006-001  (id:location-D5-rule-expr)
+    Constraint (expired): location-D5
+      Rule (expired): score=INFINITY (id:location-D5-rule)
+        Expression: date in_range 2005-001 to 2006-001 (id:location-D5-rule-expr)
   Resource: D6
     Constraint: location-D6
-      Rule: score=INFINITY  (id:location-D6-rule)
-        Expression:  (id:location-D6-rule-expr)
-          Date Spec: years=2005  (id:location-D6-rule-expr-datespec)
+      Rule: score=INFINITY (id:location-D6-rule)
+        Expression: (id:location-D6-rule-expr)
+          Date Spec: years=2005 (id:location-D6-rule-expr-datespec)
 Ordering Constraints:
 Colocation Constraints:
 Ticket Constraints:
@@ -253,9 +259,9 @@ Ticket Constraints:
 Location Constraints:
   Resource: D1
     Constraint: location-D1
-      Rule: boolean-op=or score=INFINITY  (id:location-D1-rule)
-        Expression: not_defined pingd  (id:location-D1-rule-expr)
-        Expression: pingd lte 0  (id:location-D1-rule-expr-1)
+      Rule: boolean-op=or score=INFINITY (id:location-D1-rule)
+        Expression: not_defined pingd (id:location-D1-rule-expr)
+        Expression: pingd lte 0 (id:location-D1-rule-expr-1)
 Ordering Constraints:
 Colocation Constraints:
 Ticket Constraints:
@@ -358,11 +364,35 @@ Ticket Constraints:
 
         output, returnVal = pcs(temp_cib, "constraint --full")
         assert returnVal == 0
-        ac (output,"Location Constraints:\n  Resource: D5\n    Enabled on: node1 (score:INFINITY) (id:location-D5-node1-INFINITY)\nOrdering Constraints:\n  start Master then start D5 (kind:Mandatory) (id:order-Master-D5-mandatory)\nColocation Constraints:\n  Master with D5 (score:INFINITY) (id:colocation-Master-D5-INFINITY)\nTicket Constraints:\n")
+        ac(output, outdent(
+            """\
+            Location Constraints:
+              Resource: D5
+                Enabled on:
+                  Node: node1 (score:INFINITY) (id:location-D5-node1-INFINITY)
+            Ordering Constraints:
+              start Master then start D5 (kind:Mandatory) (id:order-Master-D5-mandatory)
+            Colocation Constraints:
+              Master with D5 (score:INFINITY) (id:colocation-Master-D5-INFINITY)
+            Ticket Constraints:
+            """
+        ))
 
         output, returnVal = pcs(temp_cib, "constraint show --full")
         assert returnVal == 0
-        ac(output,"Location Constraints:\n  Resource: D5\n    Enabled on: node1 (score:INFINITY) (id:location-D5-node1-INFINITY)\nOrdering Constraints:\n  start Master then start D5 (kind:Mandatory) (id:order-Master-D5-mandatory)\nColocation Constraints:\n  Master with D5 (score:INFINITY) (id:colocation-Master-D5-INFINITY)\nTicket Constraints:\n")
+        ac(output, outdent(
+            """\
+            Location Constraints:
+              Resource: D5
+                Enabled on:
+                  Node: node1 (score:INFINITY) (id:location-D5-node1-INFINITY)
+            Ordering Constraints:
+              start Master then start D5 (kind:Mandatory) (id:order-Master-D5-mandatory)
+            Colocation Constraints:
+              Master with D5 (score:INFINITY) (id:colocation-Master-D5-INFINITY)
+            Ticket Constraints:
+            """
+        ))
 
     # see also BundleLocation
     def testLocationConstraints(self):
@@ -389,8 +419,10 @@ Ticket Constraints:
             """\
             Location Constraints:
               Resource: D5
-                Enabled on: node1 (score:INFINITY) (id:location-D5-node1-INFINITY)
-                Disabled on: node2 (score:-INFINITY) (id:location-D5-node2--INFINITY)
+                Enabled on:
+                  Node: node1 (score:INFINITY) (id:location-D5-node1-INFINITY)
+                Disabled on:
+                  Node: node2 (score:-INFINITY) (id:location-D5-node2--INFINITY)
             Ordering Constraints:
             Colocation Constraints:
             Ticket Constraints:
@@ -429,7 +461,17 @@ Ticket Constraints:
         assert returnVal == 1 and output.startswith("Error: Unable to find constraint - 'blahblah'"), output
 
         output, returnVal = pcs(temp_cib, "constraint location show --full")
-        ac(output, "Location Constraints:\n  Resource: D5\n    Enabled on: node1 (score:INFINITY) (id:location-D5-node1-INFINITY)\n  Resource: D6\n    Enabled on: node1 (score:INFINITY) (id:location-D6-node1-INFINITY)\n")
+        ac(output, outdent(
+            """\
+            Location Constraints:
+              Resource: D5
+                Enabled on:
+                  Node: node1 (score:INFINITY) (id:location-D5-node1-INFINITY)
+              Resource: D6
+                Enabled on:
+                  Node: node1 (score:INFINITY) (id:location-D6-node1-INFINITY)
+            """
+        ))
         assert returnVal == 0
 
         output, returnVal = pcs(temp_cib, "constraint remove location-D5-node1-INFINITY location-D6-node1-INFINITY")
@@ -844,13 +886,13 @@ Colocation Constraints:
             'Location Constraints:',
             '  Resource: crd',
             '    Constraint: location-crd (resource-discovery=exclusive)',
-            '      Rule: boolean-op=and score=-INFINITY  (id:location-crd-rule)',
-            '        Expression: opsrole ne controller0  (id:location-crd-rule-expr)',
-            '        Expression: opsrole ne controller1  (id:location-crd-rule-expr-1)',
+            '      Rule: boolean-op=and score=-INFINITY (id:location-crd-rule)',
+            '        Expression: opsrole ne controller0 (id:location-crd-rule-expr)',
+            '        Expression: opsrole ne controller1 (id:location-crd-rule-expr-1)',
             '  Resource: crd1',
             '    Constraint: location-crd1 (resource-discovery=exclusive)',
-            '      Rule: score=-INFINITY  (id:location-crd1-rule)',
-            '        Expression: opsrole2 ne controller2  (id:location-crd1-rule-expr)',
+            '      Rule: score=-INFINITY (id:location-crd1-rule)',
+            '        Expression: opsrole2 ne controller2 (id:location-crd1-rule-expr)',
             'Ordering Constraints:',
             'Colocation Constraints:',
             'Ticket Constraints:',
@@ -876,7 +918,20 @@ Colocation Constraints:
         assert r == 0
 
         o,r = pcs(temp_cib, "constraint --full")
-        ac(o,"Location Constraints:\n  Resource: crd\n    Disabled on: my_node (score:-INFINITY) (resource-discovery=always) (id:my_constraint_id)\n  Resource: crd1\n    Disabled on: my_node (score:-INFINITY) (resource-discovery=never) (id:my_constraint_id2)\nOrdering Constraints:\nColocation Constraints:\nTicket Constraints:\n")
+        ac(o, outdent(
+            """\
+            Location Constraints:
+              Resource: crd
+                Disabled on:
+                  Node: my_node (score:-INFINITY) (resource-discovery=always) (id:my_constraint_id)
+              Resource: crd1
+                Disabled on:
+                  Node: my_node (score:-INFINITY) (resource-discovery=never) (id:my_constraint_id2)
+            Ordering Constraints:
+            Colocation Constraints:
+            Ticket Constraints:
+            """
+            ))
         assert r == 0
 
         o,r = pcs(temp_cib, "constraint location add my_constraint_id3 crd1 my_node2 -INFINITY bad-opt=test")
@@ -1134,17 +1189,17 @@ Ticket Constraints:
 Location Constraints:
   Resource: D1
     Constraint: location-D1-rh7-1-INFINITY
-      Rule: score=INFINITY  (id:location-D1-rh7-1-INFINITY-rule)
-        Expression: #uname eq rh7-1  (id:location-D1-rh7-1-INFINITY-rule-expr)
-      Rule: score=INFINITY  (id:location-D1-rh7-1-INFINITY-rule-1)
-        Expression: #uname eq rh7-1  (id:location-D1-rh7-1-INFINITY-rule-1-expr)
-      Rule: score=INFINITY  (id:location-D1-rh7-1-INFINITY-rule-2)
-        Expression: #uname eq rh7-1  (id:location-D1-rh7-1-INFINITY-rule-2-expr)
+      Rule: score=INFINITY (id:location-D1-rh7-1-INFINITY-rule)
+        Expression: #uname eq rh7-1 (id:location-D1-rh7-1-INFINITY-rule-expr)
+      Rule: score=INFINITY (id:location-D1-rh7-1-INFINITY-rule-1)
+        Expression: #uname eq rh7-1 (id:location-D1-rh7-1-INFINITY-rule-1-expr)
+      Rule: score=INFINITY (id:location-D1-rh7-1-INFINITY-rule-2)
+        Expression: #uname eq rh7-1 (id:location-D1-rh7-1-INFINITY-rule-2-expr)
   Resource: D2
     Constraint: location-D2-rh7-2-INFINITY
-      Rule: score=INFINITY  (id:location-D2-rh7-2-INFINITY-rule)
-        Expression:  (id:location-D2-rh7-2-INFINITY-rule-expr)
-          Date Spec: hours=9-16 weekdays=1-5  (id:location-D2-rh7-2-INFINITY-rule-expr-datespec)
+      Rule: score=INFINITY (id:location-D2-rh7-2-INFINITY-rule)
+        Expression: (id:location-D2-rh7-2-INFINITY-rule-expr)
+          Date Spec: hours=9-16 weekdays=1-5 (id:location-D2-rh7-2-INFINITY-rule-expr-datespec)
 Ordering Constraints:
 Colocation Constraints:
 Ticket Constraints:
@@ -1163,13 +1218,13 @@ Ticket Constraints:
 Location Constraints:
   Resource: D1
     Constraint: location-D1-rh7-1-INFINITY
-      Rule: score=INFINITY  (id:location-D1-rh7-1-INFINITY-rule)
-        Expression: #uname eq rh7-1  (id:location-D1-rh7-1-INFINITY-rule-expr)
+      Rule: score=INFINITY (id:location-D1-rh7-1-INFINITY-rule)
+        Expression: #uname eq rh7-1 (id:location-D1-rh7-1-INFINITY-rule-expr)
   Resource: D2
     Constraint: location-D2-rh7-2-INFINITY
-      Rule: score=INFINITY  (id:location-D2-rh7-2-INFINITY-rule)
-        Expression:  (id:location-D2-rh7-2-INFINITY-rule-expr)
-          Date Spec: hours=9-16 weekdays=1-5  (id:location-D2-rh7-2-INFINITY-rule-expr-datespec)
+      Rule: score=INFINITY (id:location-D2-rh7-2-INFINITY-rule)
+        Expression: (id:location-D2-rh7-2-INFINITY-rule-expr)
+          Date Spec: hours=9-16 weekdays=1-5 (id:location-D2-rh7-2-INFINITY-rule-expr-datespec)
 Ordering Constraints:
 Colocation Constraints:
 Ticket Constraints:
@@ -1184,9 +1239,9 @@ Ticket Constraints:
 Location Constraints:
   Resource: D2
     Constraint: location-D2-rh7-2-INFINITY
-      Rule: score=INFINITY  (id:location-D2-rh7-2-INFINITY-rule)
-        Expression:  (id:location-D2-rh7-2-INFINITY-rule-expr)
-          Date Spec: hours=9-16 weekdays=1-5  (id:location-D2-rh7-2-INFINITY-rule-expr-datespec)
+      Rule: score=INFINITY (id:location-D2-rh7-2-INFINITY-rule)
+        Expression: (id:location-D2-rh7-2-INFINITY-rule-expr)
+          Date Spec: hours=9-16 weekdays=1-5 (id:location-D2-rh7-2-INFINITY-rule-expr-datespec)
 Ordering Constraints:
 Colocation Constraints:
 Ticket Constraints:
@@ -1222,8 +1277,8 @@ Ticket Constraints:
 Location Constraints:
   Resource: stateful0
     Constraint: location-stateful0
-      Rule: role=master score=INFINITY  (id:location-stateful0-rule)
-        Expression: #uname eq rh7-1  (id:location-stateful0-rule-expr)
+      Rule: role=master score=INFINITY (id:location-stateful0-rule)
+        Expression: #uname eq rh7-1 (id:location-stateful0-rule-expr)
 Ordering Constraints:
 Colocation Constraints:
 Ticket Constraints:
@@ -1351,11 +1406,12 @@ Warning: changing a monitor operation interval from 10s to 11 to make the operat
         ac(o, """\
 Location Constraints:
   Resource: stateful1
-    Enabled on: rh7-1 (score:INFINITY) (id:location-stateful1-rh7-1-INFINITY)
+    Enabled on:
+      Node: rh7-1 (score:INFINITY) (id:location-stateful1-rh7-1-INFINITY)
   Resource: statefulG
     Constraint: location-statefulG
-      Rule: score=INFINITY  (id:location-statefulG-rule)
-        Expression: #uname eq rh7-1  (id:location-statefulG-rule-expr)
+      Rule: score=INFINITY (id:location-statefulG-rule)
+        Expression: #uname eq rh7-1 (id:location-statefulG-rule-expr)
 Ordering Constraints:
   start stateful1 then start dummy1 (kind:Mandatory) (id:order-stateful1-dummy1-mandatory)
   Resource Sets:
@@ -1467,11 +1523,12 @@ Ticket Constraints:
         ac(o, """\
 Location Constraints:
   Resource: dummy
-    Enabled on: rh7-1 (score:INFINITY) (id:location-dummy-rh7-1-INFINITY)
+    Enabled on:
+      Node: rh7-1 (score:INFINITY) (id:location-dummy-rh7-1-INFINITY)
   Resource: dummyG
     Constraint: location-dummyG
-      Rule: score=INFINITY  (id:location-dummyG-rule)
-        Expression: #uname eq rh7-1  (id:location-dummyG-rule-expr)
+      Rule: score=INFINITY (id:location-dummyG-rule)
+        Expression: #uname eq rh7-1 (id:location-dummyG-rule-expr)
 Ordering Constraints:
   start dummy then start dummy1 (kind:Mandatory) (id:order-dummy-dummy1-mandatory)
   Resource Sets:
@@ -1494,7 +1551,19 @@ Ticket Constraints:
         os.system("CIB_file="+temp_cib+" cibadmin -R --scope constraints --xml-text '<constraints><rsc_location id=\"cli-prefer-stateful0-master\" role=\"Master\" rsc=\"stateful0-master\" node=\"rh7-1\" score=\"INFINITY\"/><rsc_location id=\"cli-ban-stateful0-master-on-rh7-1\" rsc=\"stateful0-master\" role=\"Slave\" node=\"rh7-1\" score=\"-INFINITY\"/></constraints>'")
 
         o,r = pcs(temp_cib, "constraint")
-        ac(o,"Location Constraints:\n  Resource: stateful0-master\n    Enabled on: rh7-1 (score:INFINITY) (role: Master)\n    Disabled on: rh7-1 (score:-INFINITY) (role: Slave)\nOrdering Constraints:\nColocation Constraints:\nTicket Constraints:\n")
+        ac(o, outdent(
+            """\
+            Location Constraints:
+              Resource: stateful0-master
+                Enabled on:
+                  Node: rh7-1 (score:INFINITY) (role:Master)
+                Disabled on:
+                  Node: rh7-1 (score:-INFINITY) (role:Slave)
+            Ordering Constraints:
+            Colocation Constraints:
+            Ticket Constraints:
+            """
+            ))
         assert r == 0
 
     def testManyConstraints(self):
@@ -1505,7 +1574,14 @@ Ticket Constraints:
         assert returnVal == 0
 
         output, returnVal = pcs(temp_cib, "constraint location show resources dummy --full")
-        ac(output, "Location Constraints:\n  Resource: dummy\n    Enabled on: rh7-1 (score:INFINITY) (id:location-dummy-rh7-1-INFINITY)\n")
+        ac(output, outdent(
+            """\
+            Location Constraints:
+              Resource: dummy
+                Enabled on:
+                  Node: rh7-1 (score:INFINITY) (id:location-dummy-rh7-1-INFINITY)
+            """
+            ))
         assert returnVal == 0
 
         output, returnVal = pcs(temp_cib, "constraint location remove location-dummy-rh7-1-INFINITY")
@@ -1533,7 +1609,14 @@ Ticket Constraints:
         assert returnVal == 0
 
         output, returnVal = pcs(temp_cib, "constraint location show resources dummy --full")
-        ac(output, "Location Constraints:\n  Resource: dummy\n    Enabled on: rh7-1 (score:INFINITY) (id:location-dummy-rh7-1-INFINITY)\n")
+        ac(output, outdent(
+            """\
+            Location Constraints:
+              Resource: dummy
+                Enabled on:
+                  Node: rh7-1 (score:INFINITY) (id:location-dummy-rh7-1-INFINITY)
+            """
+        ))
         assert returnVal == 0
 
         output, returnVal = pcs(temp_cib, "constraint remove location-dummy-rh7-1-INFINITY")
@@ -1571,7 +1654,8 @@ Adding D6 D1 (kind: Mandatory) (Options: first-action=start then-action=start)
         ac(output, """\
 Location Constraints:
   Resource: D1-clone
-    Enabled on: rh7-1 (score:INFINITY) (id:location-D1-rh7-1-INFINITY)
+    Enabled on:
+      Node: rh7-1 (score:INFINITY) (id:location-D1-rh7-1-INFINITY)
 Ordering Constraints:
   start D1-clone then start D5 (kind:Mandatory) (id:order-D1-D5-mandatory)
   start D6 then start D1-clone (kind:Mandatory) (id:order-D6-D1-mandatory)
@@ -1616,7 +1700,8 @@ Adding D6 DG (kind: Mandatory) (Options: first-action=start then-action=start)
         ac(output, """\
 Location Constraints:
   Resource: DG-clone
-    Enabled on: rh7-1 (score:INFINITY) (id:location-DG-rh7-1-INFINITY)
+    Enabled on:
+      Node: rh7-1 (score:INFINITY) (id:location-DG-rh7-1-INFINITY)
 Ordering Constraints:
   start DG-clone then start D5 (kind:Mandatory) (id:order-DG-D5-mandatory)
   start D6 then start DG-clone (kind:Mandatory) (id:order-D6-DG-mandatory)
@@ -1671,11 +1756,13 @@ Ticket Constraints:
         ac(output, """\
 Location Constraints:
   Resource: D1
-    Enabled on: node1 (score:100) (id:location-D1-node1-100)
-    Enabled on: guest1 (score:200) (id:location-D1-guest1-200)
+    Enabled on:
+      Node: node1 (score:100) (id:location-D1-node1-100)
+      Node: guest1 (score:200) (id:location-D1-guest1-200)
   Resource: D2
-    Disabled on: node2 (score:-300) (id:location-D2-node2--300)
-    Disabled on: guest1 (score:-400) (id:location-D2-guest1--400)
+    Disabled on:
+      Node: node2 (score:-300) (id:location-D2-node2--300)
+      Node: guest1 (score:-400) (id:location-D2-guest1--400)
 Ordering Constraints:
 Colocation Constraints:
 Ticket Constraints:
@@ -1696,9 +1783,11 @@ Ticket Constraints:
         ac(output, """\
 Location Constraints:
   Resource: D1
-    Enabled on: node1 (score:100) (id:location-D1-node1-100)
+    Enabled on:
+      Node: node1 (score:100) (id:location-D1-node1-100)
   Resource: D2
-    Disabled on: node2 (score:-300) (id:location-D2-node2--300)
+    Disabled on:
+      Node: node2 (score:-300) (id:location-D2-node2--300)
 Ordering Constraints:
 Colocation Constraints:
 Ticket Constraints:
@@ -1736,11 +1825,13 @@ Ticket Constraints:
         ac(output, """\
 Location Constraints:
   Resource: D1
-    Enabled on: node1 (score:100) (id:location-D1-node1-100)
-    Enabled on: guest1 (score:200) (id:location-D1-guest1-200)
+    Enabled on:
+      Node: node1 (score:100) (id:location-D1-node1-100)
+      Node: guest1 (score:200) (id:location-D1-guest1-200)
   Resource: D2
-    Disabled on: node2 (score:-300) (id:location-D2-node2--300)
-    Disabled on: guest1 (score:-400) (id:location-D2-guest1--400)
+    Disabled on:
+      Node: node2 (score:-300) (id:location-D2-node2--300)
+      Node: guest1 (score:-400) (id:location-D2-guest1--400)
 Ordering Constraints:
 Colocation Constraints:
 Ticket Constraints:
@@ -1765,11 +1856,13 @@ Ticket Constraints:
         ac(output, """\
 Location Constraints:
   Resource: D1
-    Enabled on: node1 (score:100) (id:location-D1-node1-100)
-    Enabled on: guest1 (score:200) (id:location-D1-guest1-200)
+    Enabled on:
+      Node: node1 (score:100) (id:location-D1-node1-100)
+      Node: guest1 (score:200) (id:location-D1-guest1-200)
   Resource: D2
-    Disabled on: node2 (score:-300) (id:location-D2-node2--300)
-    Disabled on: guest1 (score:-400) (id:location-D2-guest1--400)
+    Disabled on:
+      Node: node2 (score:-300) (id:location-D2-node2--300)
+      Node: guest1 (score:-400) (id:location-D2-guest1--400)
 Ordering Constraints:
 Colocation Constraints:
 Ticket Constraints:
@@ -2103,8 +2196,8 @@ Ticket Constraints:
         ac(output, """\
 Error: duplicate constraint already exists, use --force to override
   Constraint: location-D1
-    Rule: score=INFINITY  (id:location-D1-rule)
-      Expression: #uname eq node1  (id:location-D1-rule-expr)
+    Rule: score=INFINITY (id:location-D1-rule)
+      Expression: #uname eq node1 (id:location-D1-rule-expr)
 """)
         self.assertEqual(1, returnVal)
 
@@ -2130,9 +2223,9 @@ Error: duplicate constraint already exists, use --force to override
         ac(output, """\
 Error: duplicate constraint already exists, use --force to override
   Constraint: location-D2-1
-    Rule: boolean-op=or score=INFINITY  (id:location-D2-1-rule)
-      Expression: #uname eq node1  (id:location-D2-1-rule-expr)
-      Expression: #uname eq node2  (id:location-D2-1-rule-expr-1)
+    Rule: boolean-op=or score=INFINITY (id:location-D2-1-rule)
+      Expression: #uname eq node1 (id:location-D2-1-rule-expr)
+      Expression: #uname eq node2 (id:location-D2-1-rule-expr-1)
 """)
         self.assertEqual(1, returnVal)
 
@@ -2142,9 +2235,9 @@ Error: duplicate constraint already exists, use --force to override
         ac(output, """\
 Error: duplicate constraint already exists, use --force to override
   Constraint: location-D2-1
-    Rule: boolean-op=or score=INFINITY  (id:location-D2-1-rule)
-      Expression: #uname eq node1  (id:location-D2-1-rule-expr)
-      Expression: #uname eq node2  (id:location-D2-1-rule-expr-1)
+    Rule: boolean-op=or score=INFINITY (id:location-D2-1-rule)
+      Expression: #uname eq node1 (id:location-D2-1-rule-expr)
+      Expression: #uname eq node2 (id:location-D2-1-rule-expr-1)
 """)
         self.assertEqual(1, returnVal)
 
@@ -2159,23 +2252,23 @@ Error: duplicate constraint already exists, use --force to override
 Location Constraints:
   Resource: D1
     Constraint: location-D1
-      Rule: score=INFINITY  (id:location-D1-rule)
-        Expression: #uname eq node1  (id:location-D1-rule-expr)
+      Rule: score=INFINITY (id:location-D1-rule)
+        Expression: #uname eq node1 (id:location-D1-rule-expr)
     Constraint: location-D1-1
-      Rule: score=INFINITY  (id:location-D1-1-rule)
-        Expression: #uname eq node1  (id:location-D1-1-rule-expr)
+      Rule: score=INFINITY (id:location-D1-1-rule)
+        Expression: #uname eq node1 (id:location-D1-1-rule-expr)
   Resource: D2
     Constraint: location-D2
-      Rule: score=INFINITY  (id:location-D2-rule)
-        Expression: #uname eq node1  (id:location-D2-rule-expr)
+      Rule: score=INFINITY (id:location-D2-rule)
+        Expression: #uname eq node1 (id:location-D2-rule-expr)
     Constraint: location-D2-1
-      Rule: boolean-op=or score=INFINITY  (id:location-D2-1-rule)
-        Expression: #uname eq node1  (id:location-D2-1-rule-expr)
-        Expression: #uname eq node2  (id:location-D2-1-rule-expr-1)
+      Rule: boolean-op=or score=INFINITY (id:location-D2-1-rule)
+        Expression: #uname eq node1 (id:location-D2-1-rule-expr)
+        Expression: #uname eq node2 (id:location-D2-1-rule-expr-1)
     Constraint: location-D2-2
-      Rule: boolean-op=or score=INFINITY  (id:location-D2-2-rule)
-        Expression: #uname eq node2  (id:location-D2-2-rule-expr)
-        Expression: #uname eq node1  (id:location-D2-2-rule-expr-1)
+      Rule: boolean-op=or score=INFINITY (id:location-D2-2-rule)
+        Expression: #uname eq node2 (id:location-D2-2-rule-expr)
+        Expression: #uname eq node1 (id:location-D2-2-rule-expr-1)
 Ordering Constraints:
 Colocation Constraints:
 Ticket Constraints:
@@ -2349,12 +2442,12 @@ Error: id 'id9' is already in use, please specify another one
 Location Constraints:
   Resource: D1
     Constraint: id9
-      Rule: score=INFINITY  (id:id9-rule)
-        Expression: defined pingd  (id:id9-rule-expr)
+      Rule: score=INFINITY (id:id9-rule)
+        Expression: defined pingd (id:id9-rule-expr)
   Resource: D2
     Constraint: id10
-      Rule: score=100  (id:rule1)
-        Expression: defined pingd  (id:rule1-expr)
+      Rule: score=100 (id:rule1)
+        Expression: defined pingd (id:rule1-expr)
 Ordering Constraints:
   start D1 then start D2 (kind:Mandatory) (id:id7)
   start D2 then start D1 (kind:Optional) (id:id8)
@@ -2723,6 +2816,7 @@ class LocationTypePatternWithCibUpgrade(LocationTypePattern):
 
 
 @skip_unless_location_rsc_pattern
+@skip_unless_crm_rule
 class LocationShowWithPattern(ConstraintBaseTest):
     # This was written while implementing rsc-pattern to location constraints.
     # Thus it focuses only the new feature (rsc-pattern) and it is NOT a
@@ -2757,45 +2851,53 @@ class LocationShowWithPattern(ConstraintBaseTest):
     def test_show(self):
         self.fixture()
         self.assert_pcs_success(
-            "constraint location show --full",
+            "constraint location show --all --full",
             outdent(
             """\
             Location Constraints:
               Resource pattern: R_[0-9]+
-                Enabled on: node1 (score:INFINITY) (id:location-R_0-9-node1-INFINITY)
-                Enabled on: node2 (score:20) (id:location-R_0-9-node2-20)
-                Disabled on: node3 (score:-30) (id:location-R_0-9-node3--30)
-                Disabled on: node4 (score:-INFINITY) (resource-discovery=never) (id:my-id3)
+                Enabled on:
+                  Node: node1 (score:INFINITY) (id:location-R_0-9-node1-INFINITY)
+                  Node: node2 (score:20) (id:location-R_0-9-node2-20)
+                Disabled on:
+                  Node: node3 (score:-30) (id:location-R_0-9-node3--30)
+                  Node: node4 (score:-INFINITY) (resource-discovery=never) (id:my-id3)
                 Constraint: location-R_0-9
-                  Rule: score=-INFINITY  (id:location-R_0-9-rule)
-                    Expression:  (id:location-R_0-9-rule-expr)
-                      Date Spec: years=2006  (id:location-R_0-9-rule-expr-datespec)
+                  Rule: score=-INFINITY (id:location-R_0-9-rule)
+                    Expression: (id:location-R_0-9-rule-expr)
+                      Date Spec: years=2006 (id:location-R_0-9-rule-expr-datespec)
                 Constraint: location-R_0-9-1
-                  Rule: score=20  (id:location-R_0-9-1-rule)
-                    Expression: defined pingd  (id:location-R_0-9-1-rule-expr)
+                  Rule: score=20 (id:location-R_0-9-1-rule)
+                    Expression: defined pingd (id:location-R_0-9-1-rule-expr)
               Resource pattern: R_[a-z]+
-                Disabled on: node3 (score:-30) (id:location-R_a-z-node3--30)
+                Disabled on:
+                  Node: node3 (score:-30) (id:location-R_a-z-node3--30)
               Resource: R1
-                Enabled on: node1 (score:INFINITY) (id:location-R1-node1-INFINITY)
-                Enabled on: node2 (score:20) (id:location-R1-node2-20)
-                Disabled on: node3 (score:-30) (id:location-R1-node3--30)
-                Disabled on: node4 (score:-INFINITY) (id:location-R1-node4--INFINITY)
+                Enabled on:
+                  Node: node1 (score:INFINITY) (id:location-R1-node1-INFINITY)
+                  Node: node2 (score:20) (id:location-R1-node2-20)
+                Disabled on:
+                  Node: node3 (score:-30) (id:location-R1-node3--30)
+                  Node: node4 (score:-INFINITY) (id:location-R1-node4--INFINITY)
                 Constraint: location-R1
-                  Rule: score=-INFINITY  (id:location-R1-rule)
-                    Expression:  (id:location-R1-rule-expr)
-                      Date Spec: years=2005  (id:location-R1-rule-expr-datespec)
+                  Rule: score=-INFINITY (id:location-R1-rule)
+                    Expression: (id:location-R1-rule-expr)
+                      Date Spec: years=2005 (id:location-R1-rule-expr-datespec)
                 Constraint: location-R1-1
-                  Rule: score=-INFINITY  (id:location-R1-1-rule)
-                    Expression:  (id:location-R1-1-rule-expr)
-                      Date Spec: years=2007  (id:location-R1-1-rule-expr-datespec)
+                  Rule: score=-INFINITY (id:location-R1-1-rule)
+                    Expression: (id:location-R1-1-rule-expr)
+                      Date Spec: years=2007 (id:location-R1-1-rule-expr-datespec)
               Resource: R2
-                Enabled on: node3 (score:INFINITY) (id:location-R2-node3-INFINITY)
-                Enabled on: node4 (score:20) (id:location-R2-node4-20)
-                Disabled on: node1 (score:-30) (id:location-R2-node1--30)
-                Disabled on: node2 (score:-INFINITY) (id:location-R2-node2--INFINITY)
+                Enabled on:
+                  Node: node3 (score:INFINITY) (id:location-R2-node3-INFINITY)
+                  Node: node4 (score:20) (id:location-R2-node4-20)
+                Disabled on:
+                  Node: node1 (score:-30) (id:location-R2-node1--30)
+                  Node: node2 (score:-INFINITY) (id:location-R2-node2--INFINITY)
               Resource: R3
-                Disabled on: node1 (score:-INFINITY) (resource-discovery=never) (id:my-id1)
-                Disabled on: node2 (score:-INFINITY) (resource-discovery=never) (id:my-id2)
+                Disabled on:
+                  Node: node1 (score:-INFINITY) (resource-discovery=never) (id:my-id1)
+                  Node: node2 (score:-INFINITY) (resource-discovery=never) (id:my-id2)
             """
             )
         )
@@ -2806,10 +2908,12 @@ class LocationShowWithPattern(ConstraintBaseTest):
             """\
             Location Constraints:
               Resource pattern: R_[0-9]+
-                Enabled on: node1 (score:INFINITY)
-                Enabled on: node2 (score:20)
-                Disabled on: node3 (score:-30)
-                Disabled on: node4 (score:-INFINITY) (resource-discovery=never)
+                Enabled on:
+                  Node: node1 (score:INFINITY)
+                  Node: node2 (score:20)
+                Disabled on:
+                  Node: node3 (score:-30)
+                  Node: node4 (score:-INFINITY) (resource-discovery=never)
                 Constraint: location-R_0-9
                   Rule: score=-INFINITY
                     Expression:
@@ -2818,12 +2922,15 @@ class LocationShowWithPattern(ConstraintBaseTest):
                   Rule: score=20
                     Expression: defined pingd
               Resource pattern: R_[a-z]+
-                Disabled on: node3 (score:-30)
+                Disabled on:
+                  Node: node3 (score:-30)
               Resource: R1
-                Enabled on: node1 (score:INFINITY)
-                Enabled on: node2 (score:20)
-                Disabled on: node3 (score:-30)
-                Disabled on: node4 (score:-INFINITY)
+                Enabled on:
+                  Node: node1 (score:INFINITY)
+                  Node: node2 (score:20)
+                Disabled on:
+                  Node: node3 (score:-30)
+                  Node: node4 (score:-INFINITY)
                 Constraint: location-R1
                   Rule: score=-INFINITY
                     Expression:
@@ -2833,13 +2940,16 @@ class LocationShowWithPattern(ConstraintBaseTest):
                     Expression:
                       Date Spec: years=2007
               Resource: R2
-                Enabled on: node3 (score:INFINITY)
-                Enabled on: node4 (score:20)
-                Disabled on: node1 (score:-30)
-                Disabled on: node2 (score:-INFINITY)
+                Enabled on:
+                  Node: node3 (score:INFINITY)
+                  Node: node4 (score:20)
+                Disabled on:
+                  Node: node1 (score:-30)
+                  Node: node2 (score:-INFINITY)
               Resource: R3
-                Disabled on: node1 (score:-INFINITY) (resource-discovery=never)
-                Disabled on: node2 (score:-INFINITY) (resource-discovery=never)
+                Disabled on:
+                  Node: node1 (score:-INFINITY) (resource-discovery=never)
+                  Node: node2 (score:-INFINITY) (resource-discovery=never)
             """
             )
         )
@@ -2852,54 +2962,54 @@ class LocationShowWithPattern(ConstraintBaseTest):
             Location Constraints:
               Node: 
                 Allowed to run:
-                  Resource: R1 (location-R1) Score: 0
-                  Resource: R1 (location-R1-1) Score: 0
-                  Resource pattern: R_[0-9]+ (location-R_0-9) Score: 0
-                  Resource pattern: R_[0-9]+ (location-R_0-9-1) Score: 0
+                  Resource: R1 (score:0) (id:location-R1)
+                  Resource: R1 (score:0) (id:location-R1-1)
+                  Resource pattern: R_[0-9]+ (score:0) (id:location-R_0-9)
+                  Resource pattern: R_[0-9]+ (score:0) (id:location-R_0-9-1)
               Node: node1
                 Allowed to run:
-                  Resource: R1 (location-R1-node1-INFINITY) Score: INFINITY
-                  Resource pattern: R_[0-9]+ (location-R_0-9-node1-INFINITY) Score: INFINITY
+                  Resource: R1 (score:INFINITY) (id:location-R1-node1-INFINITY)
+                  Resource pattern: R_[0-9]+ (score:INFINITY) (id:location-R_0-9-node1-INFINITY)
                 Not allowed to run:
-                  Resource: R2 (location-R2-node1--30) Score: -30
-                  Resource: R3 (my-id1) (resource-discovery=never) Score: -INFINITY
+                  Resource: R2 (score:-30) (id:location-R2-node1--30)
+                  Resource: R3 (score:-INFINITY) (resource-discovery=never) (id:my-id1)
               Node: node2
                 Allowed to run:
-                  Resource: R1 (location-R1-node2-20) Score: 20
-                  Resource pattern: R_[0-9]+ (location-R_0-9-node2-20) Score: 20
+                  Resource: R1 (score:20) (id:location-R1-node2-20)
+                  Resource pattern: R_[0-9]+ (score:20) (id:location-R_0-9-node2-20)
                 Not allowed to run:
-                  Resource: R2 (location-R2-node2--INFINITY) Score: -INFINITY
-                  Resource: R3 (my-id2) (resource-discovery=never) Score: -INFINITY
+                  Resource: R2 (score:-INFINITY) (id:location-R2-node2--INFINITY)
+                  Resource: R3 (score:-INFINITY) (resource-discovery=never) (id:my-id2)
               Node: node3
                 Allowed to run:
-                  Resource: R2 (location-R2-node3-INFINITY) Score: INFINITY
+                  Resource: R2 (score:INFINITY) (id:location-R2-node3-INFINITY)
                 Not allowed to run:
-                  Resource: R1 (location-R1-node3--30) Score: -30
-                  Resource pattern: R_[0-9]+ (location-R_0-9-node3--30) Score: -30
-                  Resource pattern: R_[a-z]+ (location-R_a-z-node3--30) Score: -30
+                  Resource: R1 (score:-30) (id:location-R1-node3--30)
+                  Resource pattern: R_[0-9]+ (score:-30) (id:location-R_0-9-node3--30)
+                  Resource pattern: R_[a-z]+ (score:-30) (id:location-R_a-z-node3--30)
               Node: node4
                 Allowed to run:
-                  Resource: R2 (location-R2-node4-20) Score: 20
+                  Resource: R2 (score:20) (id:location-R2-node4-20)
                 Not allowed to run:
-                  Resource: R1 (location-R1-node4--INFINITY) Score: -INFINITY
-                  Resource pattern: R_[0-9]+ (my-id3) (resource-discovery=never) Score: -INFINITY
+                  Resource: R1 (score:-INFINITY) (id:location-R1-node4--INFINITY)
+                  Resource pattern: R_[0-9]+ (score:-INFINITY) (resource-discovery=never) (id:my-id3)
               Resource pattern: R_[0-9]+
                 Constraint: location-R_0-9
-                  Rule: score=-INFINITY
-                    Expression:
-                      Date Spec: years=2006
+                  Rule: score=-INFINITY (id:location-R_0-9-rule)
+                    Expression: (id:location-R_0-9-rule-expr)
+                      Date Spec: years=2006 (id:location-R_0-9-rule-expr-datespec)
                 Constraint: location-R_0-9-1
-                  Rule: score=20
-                    Expression: defined pingd
+                  Rule: score=20 (id:location-R_0-9-1-rule)
+                    Expression: defined pingd (id:location-R_0-9-1-rule-expr)
               Resource: R1
                 Constraint: location-R1
-                  Rule: score=-INFINITY
-                    Expression:
-                      Date Spec: years=2005
+                  Rule: score=-INFINITY (id:location-R1-rule)
+                    Expression: (id:location-R1-rule-expr)
+                      Date Spec: years=2005 (id:location-R1-rule-expr-datespec)
                 Constraint: location-R1-1
-                  Rule: score=-INFINITY
-                    Expression:
-                      Date Spec: years=2007
+                  Rule: score=-INFINITY (id:location-R1-1-rule)
+                    Expression: (id:location-R1-1-rule-expr)
+                      Date Spec: years=2007 (id:location-R1-1-rule-expr-datespec)
             """
             )
         )
@@ -2911,11 +3021,11 @@ class LocationShowWithPattern(ConstraintBaseTest):
             Location Constraints:
               Node: node2
                 Allowed to run:
-                  Resource: R1 (location-R1-node2-20) Score: 20
-                  Resource pattern: R_[0-9]+ (location-R_0-9-node2-20) Score: 20
+                  Resource: R1 (score:20)
+                  Resource pattern: R_[0-9]+ (score:20)
                 Not allowed to run:
-                  Resource: R2 (location-R2-node2--INFINITY) Score: -INFINITY
-                  Resource: R3 (my-id2) (resource-discovery=never) Score: -INFINITY
+                  Resource: R2 (score:-INFINITY)
+                  Resource: R3 (score:-INFINITY) (resource-discovery=never)
               Resource pattern: R_[0-9]+
                 Constraint: location-R_0-9
                   Rule: score=-INFINITY
@@ -2943,10 +3053,12 @@ class LocationShowWithPattern(ConstraintBaseTest):
             """\
             Location Constraints:
               Resource pattern: R_[0-9]+
-                Enabled on: node1 (score:INFINITY)
-                Enabled on: node2 (score:20)
-                Disabled on: node3 (score:-30)
-                Disabled on: node4 (score:-INFINITY) (resource-discovery=never)
+                Enabled on:
+                  Node: node1 (score:INFINITY)
+                  Node: node2 (score:20)
+                Disabled on:
+                  Node: node3 (score:-30)
+                  Node: node4 (score:-INFINITY) (resource-discovery=never)
                 Constraint: location-R_0-9
                   Rule: score=-INFINITY
                     Expression:
@@ -3501,3 +3613,605 @@ class LocationAdd(ConstraintEffect):
             )
         )
         self.assert_resources_xml_in_cib("<constraints/>")
+
+@skip_unless_crm_rule
+class ExpiredConstraints(ConstraintBaseTest):
+    _tomorrow = (
+            datetime.date.today()
+            +
+            datetime.timedelta(days=1)
+    ).strftime("%Y-%m-%d")
+
+    def fixture_group(self):
+        self.assert_pcs_success("resource create dummy1 ocf:heartbeat:Dummy")
+        self.assert_pcs_success("resource create dummy2 ocf:heartbeat:Dummy")
+        self.assert_pcs_success(
+            "resource group add dummy_group dummy1 dummy2"
+        )
+
+    def fixture_primitive(self):
+        self.assert_pcs_success("resource create dummy ocf:heartbeat:Dummy")
+
+    def fixture_multiple_primitive(self):
+        self.assert_pcs_success("resource create D1 ocf:heartbeat:Dummy")
+        self.assert_pcs_success("resource create D2 ocf:heartbeat:Dummy")
+        self.assert_pcs_success("resource create D3 ocf:heartbeat:Dummy")
+
+    def test_crm_rule_missing(self):
+        self.pcs_runner = PcsRunner(
+            self.temp_cib, mock_settings={"crm_rule": ""}
+        )
+        self.fixture_primitive()
+        self.assert_pcs_success(
+            "constraint location dummy rule id=test-rule score=INFINITY "
+            "date lt 2019-01-01"
+        )
+        self.assert_pcs_result(
+            "constraint",
+            CRM_RULE_MISSING_MSG
+            +
+            outdent(
+                """\
+                Location Constraints:
+                  Resource: dummy
+                    Constraint: location-dummy
+                      Rule: score=INFINITY
+                        Expression: date lt 2019-01-01
+                Ordering Constraints:
+                Colocation Constraints:
+                Ticket Constraints:
+                """
+            )
+        )
+
+    def test_in_effect_primitive_plain(self):
+        self.fixture_primitive()
+        self.assert_pcs_success(
+            "constraint location dummy rule id=test-rule score=INFINITY "
+            "date gt 2019-01-01"
+        )
+        self.assert_pcs_result(
+            "constraint",
+            outdent(
+            """\
+            Location Constraints:
+              Resource: dummy
+                Constraint: location-dummy
+                  Rule: score=INFINITY
+                    Expression: date gt 2019-01-01
+            Ordering Constraints:
+            Colocation Constraints:
+            Ticket Constraints:
+            """
+            )
+        )
+
+    def test_in_effect_primitive_full(self):
+        self.fixture_primitive()
+        self.assert_pcs_success(
+            "constraint location dummy rule id=test-rule score=INFINITY "
+            "date gt 2019-01-01"
+        )
+        self.assert_pcs_result(
+            "constraint --full",
+            outdent(
+            """\
+            Location Constraints:
+              Resource: dummy
+                Constraint: location-dummy
+                  Rule: score=INFINITY (id:test-rule)
+                    Expression: date gt 2019-01-01 (id:test-rule-expr)
+            Ordering Constraints:
+            Colocation Constraints:
+            Ticket Constraints:
+            """
+            )
+        )
+
+    def test_in_effect_primitive_all(self):
+        self.fixture_primitive()
+        self.assert_pcs_success(
+            "constraint location dummy rule id=test-rule score=INFINITY "
+            "date gt 2019-01-01"
+        )
+        self.assert_pcs_result(
+            "constraint --all",
+            outdent(
+            """\
+            Location Constraints:
+              Resource: dummy
+                Constraint: location-dummy
+                  Rule: score=INFINITY
+                    Expression: date gt 2019-01-01
+            Ordering Constraints:
+            Colocation Constraints:
+            Ticket Constraints:
+            """
+            )
+        )
+
+    def test_in_effect_primitive_full_all(self):
+        self.fixture_primitive()
+        self.assert_pcs_success(
+            "constraint location dummy rule id=test-rule score=INFINITY "
+            "date gt 2019-01-01"
+        )
+        self.assert_pcs_result(
+            "constraint --full --all",
+            outdent(
+                """\
+                Location Constraints:
+                  Resource: dummy
+                    Constraint: location-dummy
+                      Rule: score=INFINITY (id:test-rule)
+                        Expression: date gt 2019-01-01 (id:test-rule-expr)
+                Ordering Constraints:
+                Colocation Constraints:
+                Ticket Constraints:
+                """
+            )
+        )
+
+    def test_in_effect_group_plain(self):
+        self.fixture_group()
+        self.assert_pcs_success(
+            "constraint location dummy_group rule id=test-rule score=INFINITY "
+            "date gt 2019-01-01"
+        )
+        self.assert_pcs_result(
+            "constraint",
+            outdent(
+            """\
+            Location Constraints:
+              Resource: dummy_group
+                Constraint: location-dummy_group
+                  Rule: score=INFINITY
+                    Expression: date gt 2019-01-01
+            Ordering Constraints:
+            Colocation Constraints:
+            Ticket Constraints:
+            """
+            )
+        )
+
+    def test_expired_primitive_plain(self):
+        self.fixture_primitive()
+        self.assert_pcs_success(
+            "constraint location dummy rule id=test-rule score=INFINITY "
+            "date lt 2019-01-01"
+        )
+        self.assert_pcs_result(
+            "constraint",
+            outdent(
+                """\
+                Location Constraints:
+                Ordering Constraints:
+                Colocation Constraints:
+                Ticket Constraints:
+                """
+            )
+        )
+
+    def test_expired_primitive_full(self):
+        self.fixture_primitive()
+        self.assert_pcs_success(
+            "constraint location dummy rule id=test-rule score=INFINITY "
+            "date lt 2019-01-01"
+        )
+        self.assert_pcs_result(
+            "constraint --full",
+            outdent(
+                """\
+                Location Constraints:
+                Ordering Constraints:
+                Colocation Constraints:
+                Ticket Constraints:
+                """
+            )
+        )
+
+    def test_expired_primitive_all(self):
+        self.fixture_primitive()
+        self.assert_pcs_success(
+            "constraint location dummy rule id=test-rule score=INFINITY "
+            "date lt 2019-01-01"
+        )
+        self.assert_pcs_result(
+            "constraint --all",
+            outdent(
+                """\
+                Location Constraints:
+                  Resource: dummy
+                    Constraint (expired): location-dummy
+                      Rule (expired): score=INFINITY
+                        Expression: date lt 2019-01-01
+                Ordering Constraints:
+                Colocation Constraints:
+                Ticket Constraints:
+                """
+            )
+        )
+
+    def test_expired_primitive_full_all(self):
+        self.fixture_primitive()
+        self.assert_pcs_success(
+            "constraint location dummy rule id=test-rule score=INFINITY "
+            "date lt 2019-01-01"
+        )
+        self.assert_pcs_result(
+            "constraint --full --all",
+            outdent(
+                """\
+                Location Constraints:
+                  Resource: dummy
+                    Constraint (expired): location-dummy
+                      Rule (expired): score=INFINITY (id:test-rule)
+                        Expression: date lt 2019-01-01 (id:test-rule-expr)
+                Ordering Constraints:
+                Colocation Constraints:
+                Ticket Constraints:
+                """
+            )
+        )
+
+    def test_expired_group_plain(self):
+        self.fixture_group()
+        self.assert_pcs_success(
+            "constraint location dummy_group rule id=test-rule score=INFINITY "
+            "date lt 2019-01-01"
+        )
+        self.assert_pcs_result(
+            "constraint",
+            outdent(
+                """\
+                Location Constraints:
+                Ordering Constraints:
+                Colocation Constraints:
+                Ticket Constraints:
+                """
+            )
+        )
+
+    def test_indeterminate_primitive_plain(self):
+        self.fixture_primitive()
+        self.assert_pcs_success(
+            "constraint location dummy rule id=test-rule score=INFINITY "
+            "date eq 2019-01-01 or date eq 2019-03-01"
+        )
+        self.assert_pcs_result(
+            "constraint",
+            outdent(
+                """\
+                Location Constraints:
+                  Resource: dummy
+                    Constraint: location-dummy
+                      Rule: boolean-op=or score=INFINITY
+                        Expression: date eq 2019-01-01
+                        Expression: date eq 2019-03-01
+                Ordering Constraints:
+                Colocation Constraints:
+                Ticket Constraints:
+                """
+            )
+        )
+
+    def test_indeterminate_primitive_full(self):
+        self.fixture_primitive()
+        self.assert_pcs_success(
+            "constraint location dummy rule id=test-rule score=INFINITY "
+            "date eq 2019-01-01 or date eq 2019-03-01"
+        )
+        self.assert_pcs_result(
+            "constraint --full",
+            outdent(
+                """\
+                Location Constraints:
+                  Resource: dummy
+                    Constraint: location-dummy
+                      Rule: boolean-op=or score=INFINITY (id:test-rule)
+                        Expression: date eq 2019-01-01 (id:test-rule-expr)
+                        Expression: date eq 2019-03-01 (id:test-rule-expr-1)
+                Ordering Constraints:
+                Colocation Constraints:
+                Ticket Constraints:
+                """
+            )
+        )
+
+    def test_indeterminate_primitive_all(self):
+        self.fixture_primitive()
+        self.assert_pcs_success(
+            "constraint location dummy rule id=test-rule score=INFINITY "
+            "date eq 2019-01-01 or date eq 2019-03-01"
+        )
+        self.assert_pcs_result(
+            "constraint --all",
+            outdent(
+                """\
+                Location Constraints:
+                  Resource: dummy
+                    Constraint: location-dummy
+                      Rule: boolean-op=or score=INFINITY
+                        Expression: date eq 2019-01-01
+                        Expression: date eq 2019-03-01
+                Ordering Constraints:
+                Colocation Constraints:
+                Ticket Constraints:
+                """
+            )
+        )
+
+    def test_indeterminate_primitive_full_all(self):
+        self.fixture_primitive()
+        self.assert_pcs_success(
+            "constraint location dummy rule id=test-rule score=INFINITY "
+            "date eq 2019-01-01 or date eq 2019-03-01"
+        )
+        self.assert_pcs_result(
+            "constraint --full --all",
+            outdent(
+                """\
+                Location Constraints:
+                  Resource: dummy
+                    Constraint: location-dummy
+                      Rule: boolean-op=or score=INFINITY (id:test-rule)
+                        Expression: date eq 2019-01-01 (id:test-rule-expr)
+                        Expression: date eq 2019-03-01 (id:test-rule-expr-1)
+                Ordering Constraints:
+                Colocation Constraints:
+                Ticket Constraints:
+                """
+            )
+        )
+
+    def test_indeterminate_group_plain(self):
+        self.fixture_group()
+        self.assert_pcs_success(
+            "constraint location dummy_group rule id=test-rule score=INFINITY "
+            "date eq 2019-01-01 or date eq 2019-03-01"
+        )
+        self.assert_pcs_result(
+            "constraint",
+            outdent(
+                """\
+                Location Constraints:
+                  Resource: dummy_group
+                    Constraint: location-dummy_group
+                      Rule: boolean-op=or score=INFINITY
+                        Expression: date eq 2019-01-01
+                        Expression: date eq 2019-03-01
+                Ordering Constraints:
+                Colocation Constraints:
+                Ticket Constraints:
+                """
+            )
+        )
+
+    def test_not_yet_in_effect_primitive_plain(self):
+        self.fixture_primitive()
+        self.assert_pcs_success(
+            "constraint location dummy rule id=test-rule score=INFINITY "
+            "date gt " + self._tomorrow
+        )
+        self.assert_pcs_result(
+            "constraint",
+            outdent(
+                f"""\
+                Location Constraints:
+                  Resource: dummy
+                    Constraint: location-dummy
+                      Rule: score=INFINITY
+                        Expression: date gt {self._tomorrow}
+                Ordering Constraints:
+                Colocation Constraints:
+                Ticket Constraints:
+                """
+            )
+        )
+
+    def test_not_yet_in_effect_primitive_full(self):
+        self.fixture_primitive()
+        self.assert_pcs_success(
+            "constraint location dummy rule id=test-rule score=INFINITY "
+            "date gt " + self._tomorrow
+        )
+        self.assert_pcs_result(
+            "constraint --full",
+            outdent(
+                f"""\
+                Location Constraints:
+                  Resource: dummy
+                    Constraint: location-dummy
+                      Rule: score=INFINITY (id:test-rule)
+                        Expression: date gt {self._tomorrow} (id:test-rule-expr)
+                Ordering Constraints:
+                Colocation Constraints:
+                Ticket Constraints:
+                """
+            )
+        )
+
+    def test_not_yet_in_effect_primitive_all(self):
+        self.fixture_primitive()
+        self.assert_pcs_success(
+            "constraint location dummy rule id=test-rule score=INFINITY "
+            "date gt " + self._tomorrow
+        )
+        self.assert_pcs_result(
+            "constraint --all",
+            outdent(
+                f"""\
+                Location Constraints:
+                  Resource: dummy
+                    Constraint: location-dummy
+                      Rule: score=INFINITY
+                        Expression: date gt {self._tomorrow}
+                Ordering Constraints:
+                Colocation Constraints:
+                Ticket Constraints:
+                """
+            )
+        )
+
+    def test_not_yet_in_effect_primitive_full_all(self):
+        self.fixture_primitive()
+        self.assert_pcs_success(
+            "constraint location dummy rule id=test-rule score=INFINITY "
+            "date gt " + self._tomorrow
+        )
+        self.assert_pcs_result(
+            "constraint --full --all",
+            outdent(
+                f"""\
+                Location Constraints:
+                  Resource: dummy
+                    Constraint: location-dummy
+                      Rule: score=INFINITY (id:test-rule)
+                        Expression: date gt {self._tomorrow} (id:test-rule-expr)
+                Ordering Constraints:
+                Colocation Constraints:
+                Ticket Constraints:
+                """
+            )
+        )
+
+    def test_not_yet_in_effect_group_plain(self):
+        self.fixture_group()
+        self.assert_pcs_success(
+            "constraint location dummy_group rule id=test-rule score=INFINITY "
+            "date gt " + self._tomorrow
+        )
+        self.assert_pcs_result(
+            "constraint",
+            outdent(
+                f"""\
+                Location Constraints:
+                  Resource: dummy_group
+                    Constraint: location-dummy_group
+                      Rule: score=INFINITY
+                        Expression: date gt {self._tomorrow}
+                Ordering Constraints:
+                Colocation Constraints:
+                Ticket Constraints:
+                """
+            )
+        )
+
+    def test_complex_primitive_plain(self):
+        self.fixture_multiple_primitive()
+        self.assert_pcs_success(
+            "constraint location D1 rule id=test-rule-D1-1 score=INFINITY "
+            "not_defined pingd"
+        )
+        self.assert_pcs_success(
+            "constraint location D1 rule id=test-rule-D1-2 score=INFINITY "
+            "( date eq 2019-01-01 or date eq 2019-01-30 ) and #uname eq node1"
+        )
+        self.assert_pcs_success(
+            "constraint location D2 rule id=test-constr-D2 score=INFINITY "
+            "date in_range 2019-01-01 to 2019-02-01"
+        )
+        self.assert_pcs_success(
+            "constraint rule add location-D2 id=test-duration "
+            "score=INFINITY date in_range 2019-03-01 to duration weeks=2"
+        )
+        self.assert_pcs_success(
+            "constraint location D3 rule id=test-rule-D3-0 score=INFINITY "
+            "date in_range 2019-03-01 to duration weeks=2"
+        )
+        self.assert_pcs_success(
+            "constraint rule add location-D3 id=test-defined "
+            "score=INFINITY not_defined pingd"
+        )
+
+        self.assert_pcs_result(
+            "constraint",
+            outdent(
+                """\
+                Location Constraints:
+                  Resource: D1
+                    Constraint: location-D1
+                      Rule: score=INFINITY
+                        Expression: not_defined pingd
+                    Constraint: location-D1-1
+                      Rule: boolean-op=and score=INFINITY
+                        Rule: boolean-op=or score=0
+                          Expression: date eq 2019-01-01
+                          Expression: date eq 2019-01-30
+                        Expression: #uname eq node1
+                  Resource: D3
+                    Constraint: location-D3
+                      Rule: score=INFINITY
+                        Expression: date in_range 2019-03-01 to duration
+                          Duration: weeks=2
+                      Rule: score=INFINITY
+                        Expression: not_defined pingd
+                Ordering Constraints:
+                Colocation Constraints:
+                Ticket Constraints:
+                """
+            )
+        )
+
+    def test_complex_primitive_all(self):
+        self.fixture_multiple_primitive()
+        self.assert_pcs_success(
+            "constraint location D1 rule id=test-rule-D1 score=INFINITY "
+            "not_defined pingd"
+        )
+        self.assert_pcs_success(
+            "constraint location D1 rule id=test-rule-D1-2 score=INFINITY "
+            "( date eq 2019-01-01 or date eq 2019-01-30 ) and #uname eq node1"
+        )
+        self.assert_pcs_success(
+            "constraint location D2 rule id=test-constr-D2 score=INFINITY "
+            "date in_range 2019-01-01 to 2019-02-01"
+        )
+        self.assert_pcs_success(
+            "constraint rule add location-D2 id=test-duration "
+            "score=INFINITY date in_range 2019-03-01 to duration weeks=2"
+        )
+        self.assert_pcs_success(
+            "constraint location D3 rule id=test-rule-D3-0 score=INFINITY "
+            "date in_range 2019-03-01 to duration weeks=2"
+        )
+        self.assert_pcs_success(
+            "constraint rule add location-D3 id=test-defined "
+            "score=INFINITY not_defined pingd"
+        )
+
+        self.assert_pcs_result(
+            "constraint --all",
+            outdent(
+                """\
+                Location Constraints:
+                  Resource: D1
+                    Constraint: location-D1
+                      Rule: score=INFINITY
+                        Expression: not_defined pingd
+                    Constraint: location-D1-1
+                      Rule: boolean-op=and score=INFINITY
+                        Rule: boolean-op=or score=0
+                          Expression: date eq 2019-01-01
+                          Expression: date eq 2019-01-30
+                        Expression: #uname eq node1
+                  Resource: D2
+                    Constraint (expired): location-D2
+                      Rule (expired): score=INFINITY
+                        Expression: date in_range 2019-01-01 to 2019-02-01
+                      Rule (expired): score=INFINITY
+                        Expression: date in_range 2019-03-01 to duration
+                          Duration: weeks=2
+                  Resource: D3
+                    Constraint: location-D3
+                      Rule (expired): score=INFINITY
+                        Expression: date in_range 2019-03-01 to duration
+                          Duration: weeks=2
+                      Rule: score=INFINITY
+                        Expression: not_defined pingd
+                Ordering Constraints:
+                Colocation Constraints:
+                Ticket Constraints:
+                """
+            )
+        )

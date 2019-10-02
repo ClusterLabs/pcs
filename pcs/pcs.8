@@ -613,8 +613,8 @@ Remove property from configuration.
 See \fBpacemaker-controld\fR(7) and \fBpacemaker-schedulerd\fR(7) man pages for a description of the properties.
 .SS "constraint"
 .TP
-[list|show] \fB\-\-full\fR
-List all current constraints. If \fB\-\-full\fR is specified also list the constraint ids.
+[list|show] [\fB\-\-full\fR] [\fB\-\-all\fR]
+List all current constraints that are not expired. If \fB\-\-all\fR is specified also show expired constraints. If \fB\-\-full\fR is specified also list the constraint ids.
 .TP
 location <resource> prefers <node>[=<score>] [<node>[=<score>]]...
 Create a location constraint on a resource to prefer the specified node with score (default score: INFINITY). Resource may be either a resource id <resource_id> or %<resource_id> or resource%<resource_id>, or a resource name regular expression regexp%<resource_pattern>.
@@ -643,8 +643,8 @@ Creates a location rule on the specified resource where the expression looks lik
 .br
 where duration options and date spec options are: hours, monthdays, weekdays, yeardays, months, weeks, years, weekyears, moon. Resource may be either a resource id <resource_id> or %<resource_id> or resource%<resource_id>, or a resource name regular expression regexp%<resource_pattern>. If score is omitted it defaults to INFINITY. If id is omitted one is generated from the resource id. If resource\-discovery is omitted it defaults to 'always'.
 .TP
-location [show [resources [<resource>...]] | [nodes [<node>...]]] [\fB\-\-full\fR]
-List all the current location constraints. If 'resources' is specified, location constraints are displayed per resource (default). If 'nodes' is specified, location constraints are displayed per node. If specific nodes or resources are specified then we only show information about them. Resource may be either a resource id <resource_id> or %<resource_id> or resource%<resource_id>, or a resource name regular expression regexp%<resource_pattern>. If \fB\-\-full\fR is specified show the internal constraint id's as well.
+location [show [resources [<resource>...]] | [nodes [<node>...]]] [\fB\-\-full\fR] [\fB\-\-all\fR]
+List all the current location constraints that are not expired. If 'resources' is specified, location constraints are displayed per resource (default). If 'nodes' is specified, location constraints are displayed per node. If specific nodes or resources are specified then we only show information about them. Resource may be either a resource id <resource_id> or %<resource_id> or resource%<resource_id>, or a resource name regular expression regexp%<resource_pattern>. If \fB\-\-full\fR is specified show the internal constraint id's as well. If \fB\-\-all\fR is specified show the expired constraints.
 .TP
 location add <id> <resource> <node> <score> [resource\-discovery=<option>]
 Add a location constraint with the appropriate id for the specified resource, node name and score. Resource may be either a resource id <resource_id> or %<resource_id> or resource%<resource_id>, or a resource name regular expression regexp%<resource_pattern>.

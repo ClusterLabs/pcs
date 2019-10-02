@@ -23,6 +23,7 @@ from pcs_test.tools.misc import (
     get_test_resource as rc,
     outdent,
     skip_unless_pacemaker_supports_bundle,
+    skip_unless_crm_rule,
 )
 from pcs_test.tools.pcs_runner import (
     pcs,
@@ -969,6 +970,7 @@ monitor interval=20 (A-monitor-interval-20)
         assert r == 0
         ac(o,"NO resources configured\n")
 
+    @skip_unless_crm_rule
     def testGroupUngroup(self):
         self.setupClusterA(temp_cib)
         output, returnVal = pcs(temp_cib, "constraint location ClusterIP3 prefers rh7-1")
@@ -1088,7 +1090,8 @@ monitor interval=20 (A-monitor-interval-20)
             """\
             Location Constraints:
               Resource: AGroup
-                Enabled on: rh7-1 (score:INFINITY)
+                Enabled on:
+                  Node: rh7-1 (score:INFINITY)
             Ordering Constraints:
             Colocation Constraints:
             Ticket Constraints:
@@ -1212,13 +1215,14 @@ monitor interval=20 (A-monitor-interval-20)
         ac(output, "RGA: A B C E D K J I\n")
         assert returnVal == 0
 
+    @skip_unless_crm_rule
     def testClusterConfig(self):
         self.setupClusterA(temp_cib)
 
         self.pcs_runner.mock_settings = {
             "corosync_conf_file": rc("corosync.conf"),
         }
-        self.assert_pcs_success("config",outdent("""\
+        self.assert_pcs_success("config", outdent("""\
             Cluster Name: test99
             Corosync Nodes:
              rh7-1 rh7-2
@@ -1349,6 +1353,7 @@ monitor interval=20 (A-monitor-interval-20)
         ))
         assert returnVal == 0
 
+    @skip_unless_crm_rule
     def testMasterSlaveRemove(self):
         self.setupClusterA(temp_cib)
         output, returnVal = pcs(temp_cib, "constraint location ClusterIP5 prefers rh7-1 --force")
@@ -1440,8 +1445,9 @@ monitor interval=20 (A-monitor-interval-20)
 
             Location Constraints:
               Resource: ClusterIP5
-                Enabled on: rh7-1 (score:INFINITY) (id:location-ClusterIP5-rh7-1-INFINITY)
-                Enabled on: rh7-2 (score:INFINITY) (id:location-ClusterIP5-rh7-2-INFINITY)
+                Enabled on:
+                  Node: rh7-1 (score:INFINITY) (id:location-ClusterIP5-rh7-1-INFINITY)
+                  Node: rh7-2 (score:INFINITY) (id:location-ClusterIP5-rh7-2-INFINITY)
             Ordering Constraints:
             Colocation Constraints:
             Ticket Constraints:
@@ -1539,6 +1545,7 @@ monitor interval=20 (A-monitor-interval-20)
             "Deleting Resource (and group and M/S) - D1\n"
         )
 
+    @skip_unless_crm_rule
     def testUncloneWithConstraints(self):
         o,r = pcs(
             temp_cib,
@@ -1556,7 +1563,7 @@ monitor interval=20 (A-monitor-interval-20)
         assert r == 0
 
         o,r = pcs(temp_cib, "constraint")
-        ac(o,"Location Constraints:\n  Resource: D0-clone\n    Enabled on: rh7-1 (score:INFINITY)\nOrdering Constraints:\nColocation Constraints:\nTicket Constraints:\n")
+        ac(o,"Location Constraints:\n  Resource: D0-clone\n    Enabled on:\n      Node: rh7-1 (score:INFINITY)\nOrdering Constraints:\nColocation Constraints:\nTicket Constraints:\n")
         assert r == 0
 
         o,r = pcs(temp_cib, "resource unclone D0-clone")
@@ -2274,6 +2281,7 @@ monitor interval=20 (A-monitor-interval-20)
         ac(o,"Error: cannot clone a group that has already been cloned\n")
         assert r == 1
 
+    @skip_unless_crm_rule
     def testGroupRemoveWithConstraints1(self):
         # Load nodes into cib so move will work
         utils.usefile = True
@@ -2311,7 +2319,7 @@ monitor interval=20 (A-monitor-interval-20)
 
         o,r = pcs(temp_cib, "constraint")
         assert r == 0
-        ac(o,"Location Constraints:\n  Resource: DGroup\n    Enabled on: rh7-1 (score:INFINITY) (role: Started)\nOrdering Constraints:\nColocation Constraints:\nTicket Constraints:\n")
+        ac(o,"Location Constraints:\n  Resource: DGroup\n    Enabled on:\n      Node: rh7-1 (score:INFINITY) (role:Started)\nOrdering Constraints:\nColocation Constraints:\nTicket Constraints:\n")
 
         self.assert_pcs_success(
             "resource delete D1",

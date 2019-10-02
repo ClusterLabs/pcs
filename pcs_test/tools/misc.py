@@ -135,6 +135,11 @@ def skip_unless_pacemaker_version(version_tuple, feature):
         )
     )
 
+skip_unless_crm_rule = skip_unless_pacemaker_version(
+    (2, 0, 2),
+    "listing of constraints that might be expired"
+)
+
 def skip_unless_pacemaker_features(version_tuple, feature):
     return skipUnless(
         is_minimum_pacemaker_features(*version_tuple),
