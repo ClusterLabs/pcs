@@ -1251,8 +1251,8 @@ Commands:
     location <resource> rule [id=<rule id>] [resource-discovery=<option>]
              [role=master|slave] [constraint-id=<id>]
              [score=<score> | score-attribute=<attribute>] <expression>
-        Creates a location rule on the specified resource where the expression
-        looks like one of the following:
+        Creates a location constraint with a rule on the specified resource
+        where expression looks like one of the following:
           defined|not_defined <attribute>
           <attribute> lt|gt|lte|gte|eq|ne [string|integer|version] <value>
           date gt|lt <date>
@@ -1383,8 +1383,8 @@ Commands:
 
     rule add <constraint id> [id=<rule id>] [role=master|slave]
              [score=<score>|score-attribute=<attribute>] <expression>
-        Add a rule to a constraint where the expression looks like one of
-        the following:
+        Add a rule to a location constraint specified by 'constraint id' where
+        the expression looks like one of the following:
           defined|not_defined <attribute>
           <attribute> lt|gt|lte|gte|eq|ne [string|integer|version] <value>
           date gt|lt <date>
@@ -1395,16 +1395,16 @@ Commands:
           ( <expression> )
         where duration options and date spec options are: hours, monthdays,
         weekdays, yeardays, months, weeks, years, weekyears, moon.
-        If score is omitted it defaults to INFINITY. If id is omitted one is
+        If score is omitted it defaults to INFINITY. If id is omitted, one is
         generated from the constraint id.
 
     rule delete <rule id>
-        Remove a rule if a rule id is specified, if rule is last rule in its
-        constraint, the constraint will be removed.
+        Remove a rule from its location constraint and if it's the last rule,
+        the constraint will also be removed.
 
     rule remove <rule id>
-        Remove a rule if a rule id is specified, if rule is last rule in its
-        constraint, the constraint will be removed.
+        Remove a rule from its location constraint and if it's the last rule,
+        the constraint will also be removed.
 """
     if pout:
         print(sub_usage(args, output))
