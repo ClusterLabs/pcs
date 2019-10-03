@@ -29,8 +29,10 @@ before_install:
 script:
   # python test suite
   - docker run $DIST $SRC_PATH/pcs_test/suite.py -v --vanilla $PYTHON_TEST_ARGS
+  # python static types check
+  - docker run $DIST make -C $SRC_PATH mypy
   # python linter
-  - docker run $DIST $SRC_PATH/run_pylint.sh
+  - docker run $DIST make -C $SRC_PATH pylint
   # ruby test suite
   - docker run $DIST $RUBY_BIN
      -I $SRC_PATH/pcsd

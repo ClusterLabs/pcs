@@ -35,11 +35,17 @@ RUN dnf install -y \
         fence-agents-ipmilan \
         fence-virt \
         booth-site \
-        # find
-        findutils
+        # utils
+        findutils \
+        git \
+        make \
+        tar \
+        time \
+        wget \
+        which
 
 COPY . $src_path
 
+RUN which python3
 # install python packages required for tests and static code analysis checks
-RUN pip3 install -r $src_path/requirements.txt
-
+RUN make -C $src_path python_static_code_analysis_reqirements
