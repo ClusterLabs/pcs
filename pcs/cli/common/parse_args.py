@@ -12,16 +12,17 @@ ARG_TYPE_DELIMITER = "%"
 PCS_SHORT_OPTIONS = "hf:p:u:"
 PCS_LONG_OPTIONS = [
     "debug", "version", "help", "fullhelp",
-    "force", "skip-offline", "interactive", "autodelete",
+    "force", "skip-offline", "interactive", "autodelete", "simulate",
     "all", "full", "local", "wait", "config",
     "start", "enable", "disabled", "off", "request-timeout=",
+    "safe", "strict",
     "pacemaker", "corosync",
     "no-default-ops", "defaults", "nodesc",
     "master", "name=", "group=", "node=",
     "from=", "to=", "after=", "before=",
     "corosync_conf=",
     "booth-conf=", "booth-key=", "no-watchdog-validation", "no-keys-sync",
-    #in pcs status - do not display resorce status on inactive node
+    #in pcs status - do not display resource status on inactive node
     "hide-inactive",
     # pcs resource (un)manage - enable or disable monitor operations
     "monitor",
@@ -372,8 +373,11 @@ class InputModifiers():
             "--no-watchdog-validation": "--no-watchdog-validation" in options,
             "--off": "--off" in options,
             "--pacemaker": "--pacemaker" in options,
+            "--safe": "--safe" in options,
+            "--simulate": "--simulate" in options,
             "--skip-offline": "--skip-offline" in options,
             "--start": "--start" in options,
+            "--strict": "--strict" in options,
             # string values
             "--after": options.get("--after", None),
             "--before": options.get("--before", None),
@@ -407,12 +411,33 @@ class InputModifiers():
         if unsupported_options:
             raise CmdLineInputError(
                 "Specified options {} are not supported in this command".format(
-                    format_list(list(unsupported_options))
+                    format_list(sorted(unsupported_options))
                 ),
                 # Print error messages which point users to the changes section
                 # in pcs manpage.
                 # To be removed in the next significant version.
                 hint=(HINT_SYNTAX_CHANGE if hint_syntax_changed else None)
+            )
+
+    def ensure_not_mutually_exclusive(self, *mutually_exclusive):
+        options_to_report = self._defined_options & set(mutually_exclusive)
+        if len(options_to_report) > 1:
+            raise CmdLineInputError(
+                "Only one of {} can be used".format(
+                    format_list(sorted(options_to_report))
+                )
+            )
+
+    def ensure_not_incompatible(self, checked, incompatible):
+        if not checked in self._defined_options:
+            return
+        disallowed = self._defined_options & set(incompatible)
+        if disallowed:
+            raise CmdLineInputError(
+                "'{}' cannot be used with {}".format(
+                    checked,
+                    format_list(sorted(disallowed))
+                )
             )
 
     def is_specified(self, option):

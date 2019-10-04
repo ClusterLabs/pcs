@@ -1,7 +1,7 @@
 from contextlib import contextmanager
 from functools import partial
 
-from pcs.common import report_codes
+from pcs.common import file_type_codes, report_codes
 from pcs.common.tools import Version
 from pcs.lib import reports
 from pcs.lib.cib import (
@@ -19,11 +19,13 @@ from pcs.lib.errors import (
     LibraryError,
     ReportItemSeverity as severities,
 )
+from pcs.lib.pacemaker import simulate as simulate_tools
 from pcs.lib.pacemaker.live import (
     has_resource_unmove_unban_expired_support,
     resource_ban,
     resource_move,
     resource_unmove_unban,
+    simulate_cib,
     wait_for_idle,
 )
 from pcs.lib.pacemaker.state import (
@@ -41,6 +43,7 @@ from pcs.lib.resource_agent import(
     find_valid_resource_agent_by_name as get_agent
 )
 from pcs.lib.validate import ValueTimeInterval
+from pcs.lib.xml_tools import get_root
 
 @contextmanager
 def resource_environment(
@@ -748,9 +751,25 @@ def bundle_update(
             meta_attributes
         )
 
+def _disable_validate_and_edit_cib(env, resources_section, resource_ids):
+    id_provider = IdProvider(resources_section)
+    resource_el_list = _find_resources_or_raise(
+        resources_section,
+        resource_ids
+    )
+    env.report_processor.process_list(
+        _resource_list_enable_disable(
+            resource_el_list,
+            resource.common.disable,
+            id_provider,
+            env.get_cluster_state()
+        )
+    )
+
 def disable(env, resource_ids, wait):
     """
     Disallow specified resource to be started by the cluster
+
     LibraryEnvironment env --
     strings resource_ids -- ids of the resources to be disabled
     mixed wait -- False: no wait, None: wait default timeout, int: wait timeout
@@ -758,19 +777,82 @@ def disable(env, resource_ids, wait):
     with resource_environment(
         env, wait, resource_ids, _ensure_disabled_after_wait(True)
     ) as resources_section:
-        id_provider = IdProvider(resources_section)
-        resource_el_list = _find_resources_or_raise(
-            resources_section,
-            resource_ids
+        _disable_validate_and_edit_cib(env, resources_section, resource_ids)
+
+def disable_safe(env, resource_ids, strict, wait):
+    """
+    Disallow specified resource to be started by the cluster only if there is
+    no effect on other resources
+
+    LibraryEnvironment env --
+    strings resource_ids -- ids of the resources to be disabled
+    bool strict -- if False, allow resources to be migrated
+    mixed wait -- False: no wait, None: wait default timeout, int: wait timeout
+    """
+    if not env.is_cib_live:
+        raise LibraryError(
+            reports.live_environment_required([file_type_codes.CIB])
         )
-        env.report_processor.process_list(
-            _resource_list_enable_disable(
-                resource_el_list,
-                resource.common.disable,
-                id_provider,
-                env.get_cluster_state()
+
+    with resource_environment(
+        env, wait, resource_ids, _ensure_disabled_after_wait(True)
+    ) as resources_section:
+        _disable_validate_and_edit_cib(env, resources_section, resource_ids)
+        plaintext_status, transitions, dummy_cib = simulate_cib(
+            env.cmd_runner(),
+            get_root(resources_section)
+        )
+        simulated_operations = (
+            simulate_tools.get_operations_from_transitions(transitions)
+        )
+        other_affected = set()
+        if strict:
+            other_affected = set(
+                simulate_tools.get_resources_from_operations(
+                    simulated_operations,
+                    exclude=resource_ids
+                )
             )
+        else:
+            other_affected = set(
+                simulate_tools.get_resources_left_stopped(
+                    simulated_operations,
+                    exclude=resource_ids
+                )
+                +
+                simulate_tools.get_resources_left_demoted(
+                    simulated_operations,
+                    exclude=resource_ids
+                )
+            )
+        if other_affected:
+            raise LibraryError(
+                reports.resource_disable_affects_other_resources(
+                    resource_ids,
+                    other_affected,
+                    plaintext_status,
+                )
+            )
+
+def disable_simulate(env, resource_ids):
+    """
+    Simulate disallowing specified resource to be started by the cluster
+
+    LibraryEnvironment env --
+    strings resource_ids -- ids of the resources to be disabled
+    """
+    if not env.is_cib_live:
+        raise LibraryError(
+            reports.live_environment_required([file_type_codes.CIB])
         )
+
+    resources_section = get_resources(env.get_cib())
+    _disable_validate_and_edit_cib(env, resources_section, resource_ids)
+    plaintext_status, dummy_transitions, dummy_cib = simulate_cib(
+        env.cmd_runner(),
+        get_root(resources_section)
+    )
+    return plaintext_status
 
 def enable(env, resource_ids, wait):
     """

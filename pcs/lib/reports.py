@@ -1931,6 +1931,21 @@ def cib_diff_error(reason, cib_old, cib_new):
         }
     )
 
+def cib_simulate_error(reason, cib):
+    """
+    cannot simulate effects a CIB would have on a live cluster
+
+    string reason -- error description
+    string cib -- the CIB whose effects were to be simulated
+    """
+    return ReportItem.error(
+        report_codes.CIB_SIMULATE_ERROR,
+        info={
+            "reason": reason,
+            "cib": cib,
+        }
+    )
+
 def cib_push_forced_full_due_to_crm_feature_set(required_set, current_set):
     """
     Pcs uses the "push full CIB" approach so race conditions may occur.
@@ -3213,7 +3228,7 @@ def live_environment_required(forbidden_options):
     return ReportItem.error(
         report_codes.LIVE_ENVIRONMENT_REQUIRED,
         info={
-            "forbidden_options": forbidden_options,
+            "forbidden_options": sorted(forbidden_options),
         }
     )
 
@@ -4175,4 +4190,26 @@ def parse_error_json_file(
             "file_path": file_path,
         },
         forceable=forceable
+    )
+
+def resource_disable_affects_other_resources(
+    disabled_resource_list,
+    affected_resource_list,
+    crm_simulate_plaintext_output
+):
+    """
+    User requested disabling resources without affecting other resources but
+    some resources would be affected
+
+    iterable disabled_resource_list -- list of resources to disable
+    iterable affected_resource_list -- other affected resources
+    string crm_simulate_plaintext_output -- plaintext output from pacemaker
+    """
+    return ReportItem.error(
+        report_codes.RESOURCE_DISABLE_AFFECTS_OTHER_RESOURCES,
+        info={
+            "disabled_resource_list": sorted(disabled_resource_list),
+            "affected_resource_list": sorted(affected_resource_list),
+            "crm_simulate_plaintext_output": crm_simulate_plaintext_output,
+        }
     )

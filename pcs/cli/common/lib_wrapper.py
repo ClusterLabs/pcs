@@ -338,6 +338,8 @@ def load_module(env, middleware_factory, name):
                 "create_in_group": resource.create_in_group,
                 "create_into_bundle": resource.create_into_bundle,
                 "disable": resource.disable,
+                "disable_safe": resource.disable_safe,
+                "disable_simulate": resource.disable_simulate,
                 "enable": resource.enable,
                 "get_failcounts": resource.get_failcounts,
                 "group_add": resource.group_add,

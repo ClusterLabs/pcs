@@ -8,32 +8,34 @@ from pcs_test.tools.assertions import assert_xml_equal
 
 CALL_TYPE_RUNNER = "CALL_TYPE_RUNNER"
 
-def create_check_stdin_xml(expected_stdin):
-    def stdin_xml_check(stdin, command, order_num):
-        assert_xml_equal(
-            expected_stdin,
-            stdin,
-            (
-                "Trying to run command no. {0}"
-                "\n\n    '{1}'\n\nwith expected xml stdin.\n"
-            ).format(order_num, command)
-        )
-    return stdin_xml_check
+class CheckStdinEqual():
+    def __init__(self, expected_stdin):
+        self.expected_stdin = expected_stdin
 
-def create_check_stdin_equal(expected_stdin):
-    def stdin_equal_check(stdin, command, order_num):
-        if stdin != expected_stdin:
+    def __call__(self, stdin, command, order_num):
+        if stdin != self.expected_stdin:
             raise AssertionError(
                 (
                     "With command\n\n    '{0}'"
                     "\n\nexpected stdin:\n\n'{1}'"
                     "\n\nbut was:\n\n'{2}'"
                 )
-                .format(command, expected_stdin, stdin)
+                .format(command, self.expected_stdin, stdin)
             )
 
-    return stdin_equal_check
+class CheckStdinEqualXml():
+    def __init__(self, expected_stdin):
+        self.expected_stdin = expected_stdin
 
+    def __call__(self, stdin, command, order_num):
+        assert_xml_equal(
+            self.expected_stdin,
+            stdin,
+            (
+                "Trying to run command no. {0}"
+                "\n\n    '{1}'\n\nwith expected xml stdin.\n"
+            ).format(order_num, command)
+        )
 
 def check_no_stdin(stdin, command, order_num):
     if stdin:
@@ -55,6 +57,7 @@ COMMAND_COMPLETIONS = {
     "crm_mon": path.join(settings.pacemaker_binaries, "crm_mon"),
     "crm_node": path.join(settings.pacemaker_binaries, "crm_node"),
     "crm_resource": path.join(settings.pacemaker_binaries, "crm_resource"),
+    "crm_simulate": path.join(settings.pacemaker_binaries, "crm_simulate"),
     "crm_verify": path.join(settings.pacemaker_binaries, "crm_verify"),
     "sbd": settings.sbd_binary,
 }

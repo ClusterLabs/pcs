@@ -2228,6 +2228,14 @@ class CibDiffError(NameBuildTest):
         )
 
 
+class CibSimulateError(NameBuildTest):
+    def test_success(self):
+        self.assert_message_from_report(
+            "Unable to simulate changes in CIB: error message\n<cib />",
+            reports.cib_simulate_error("error message", "<cib />")
+        )
+
+
 class TmpFileWrite(NameBuildTest):
     def test_success(self):
         self.assert_message_from_report(
@@ -4449,5 +4457,19 @@ class ParseErrorJsonFile(NameBuildTest):
                 "some reason",
                 "some reason: line 15 column 5 (char 100)",
                 file_path="/tmp/known-hosts",
+            )
+        )
+
+class ResourceDisableAffectsOtherResources(NameBuildTest):
+    def test_success(self):
+        self.assert_message_from_report(
+            (
+                "Disabling specified resources would have an effect on other "
+                "resources\n\ncrm_simulate output"
+            ),
+            reports.resource_disable_affects_other_resources(
+                ["D2", "D1"],
+                ["O2", "O1"],
+                "crm_simulate output",
             )
         )

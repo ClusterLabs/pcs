@@ -1944,14 +1944,39 @@ def resource_config(lib, argv, modifiers, stonith=False):
 def resource_disable_cmd(lib, argv, modifiers):
     """
     Options:
-      * --wait
       * -f - CIB file
+      * --safe - only disable if no other resource gets stopped or demoted
+      * --simulate - do not push the CIB, print its effects
+      * --strict - only disable if no other resource is affected
+      * --wait
     """
-    modifiers.ensure_only_supported("--wait", "-f")
+    modifiers.ensure_only_supported(
+        "-f", "--safe", "--simulate", "--strict", "--wait"
+    )
+    modifiers.ensure_not_mutually_exclusive(
+        "-f", "--simulate", "--wait"
+    )
+    modifiers.ensure_not_incompatible(
+        "--simulate",
+        {"-f", "--safe", "--strict", "--wait"}
+    )
+    modifiers.ensure_not_incompatible("--safe", {"-f", "--simulate"})
+    modifiers.ensure_not_incompatible("--strict", {"-f", "--simulate"})
+
     if not argv:
-        utils.err("You must specify resource(s) to disable")
-    resources = argv
-    lib.resource.disable(resources, modifiers.get("--wait"))
+        raise CmdLineInputError("You must specify resource(s) to disable")
+
+    if modifiers.get("--simulate"):
+        print(lib.resource.disable_simulate(argv))
+        return
+    if modifiers.get("--safe") or modifiers.get("--strict"):
+        lib.resource.disable_safe(
+            argv,
+            modifiers.get("--strict"),
+            modifiers.get("--wait"),
+        )
+        return
+    lib.resource.disable(argv, modifiers.get("--wait"))
 
 def resource_enable_cmd(lib, argv, modifiers):
     """

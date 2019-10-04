@@ -2167,6 +2167,7 @@ def tar_add_file_data(
     tarball.addfile(info, data_io)
     data_io.close()
 
+# DEPRECATED, please use pcs.lib.pacemaker.live.simulate_cib
 def simulate_cib(cib_dom):
     """
     Commandline options: no options
@@ -2193,6 +2194,8 @@ def simulate_cib(cib_dom):
     except xml.etree.ElementTree.ParseError as e:
         err("Unable to run crm_simulate:\n%s" % e)
 
+# DEPRECATED
+# please use pcs.lib.pacemaker.simulate.get_operations_from_transitions
 def get_operations_from_transitions(transitions_dom):
     """
     Commandline options: no options

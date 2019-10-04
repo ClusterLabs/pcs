@@ -587,8 +587,11 @@ class InputModifiersTest(TestCase):
             "--nodesc",
             "--off",
             "--pacemaker",
+            "--safe",
+            "--simulate",
             "--skip-offline",
             "--start",
+            "--strict",
         ]
         self.val_opts = [
             "--after",
@@ -713,3 +716,53 @@ class InputModifiersTest(TestCase):
 
     def test_not_specified_default(self):
         self.assertFalse(InputModifiers({"a": "1"}).is_specified("--debug"))
+
+    def test_mutually_exclusive_not_specified(self):
+        InputModifiers(
+            {"a": 1, "b": 2, "c": 3}
+        ).ensure_not_mutually_exclusive("x", "y")
+
+    def test_mutually_exclusive_one_specified(self):
+        InputModifiers(
+            {"a": 1, "b": 2}
+        ).ensure_not_mutually_exclusive("a", "c")
+
+    def test_mutually_exclusive_more_specified(self):
+        with self.assertRaises(CmdLineInputError) as cm:
+            InputModifiers(
+                {"a": 1, "b": 2, "c": 3}
+            ).ensure_not_mutually_exclusive("c", "a")
+        self.assertEqual(
+            str(cm.exception),
+            "Only one of 'a', 'c' can be used"
+        )
+
+    def test_incompatible_checked_not_defined(self):
+        InputModifiers(
+            {"a": 1, "b": 2, "c": 3}
+        ).ensure_not_incompatible("x", ["a", "c"])
+
+    def test_incompatible_incompatible_not_defined(self):
+        InputModifiers(
+            {"a": 1, "b": 2, "c": 3}
+        ).ensure_not_incompatible("a", ["z", "y"])
+
+    def test_incompatible_one(self):
+        with self.assertRaises(CmdLineInputError) as cm:
+            InputModifiers(
+                {"a": 1, "b": 2, "c": 3}
+            ).ensure_not_incompatible("a", ["b", "y"])
+        self.assertEqual(
+            str(cm.exception),
+            "'a' cannot be used with 'b'"
+        )
+
+    def test_incompatible_several(self):
+        with self.assertRaises(CmdLineInputError) as cm:
+            InputModifiers(
+                {"a": 1, "b": 2, "c": 3, "d": 4}
+            ).ensure_not_incompatible("a", ["d", "b"])
+        self.assertEqual(
+            str(cm.exception),
+            "'a' cannot be used with 'b', 'd'"
+        )

@@ -55,6 +55,7 @@ def write_tmpfile(data, binary=False):
     """
     mode = "w+b" if binary else "w+"
     tmpfile = tempfile.NamedTemporaryFile(mode=mode, suffix=".pcs")
-    tmpfile.write(data)
-    tmpfile.flush()
+    if data is not None:
+        tmpfile.write(data)
+        tmpfile.flush()
     return tmpfile

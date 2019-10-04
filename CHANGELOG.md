@@ -5,17 +5,20 @@
 ### Added
 - New section in pcs man page summarizing changes in pcs-0.10. Commands removed
   or changed in pcs-0.10 print errors poiting to that section. ([rhbz#1728890])
-
-### Fixed
-- All node names and scores are validated when running `pcs constraint location
-  avoids/prefers` before writing configuration to cib ([rhbz#1673835])
+- `pcs resource disable` can show effects of disabling resources and prevent
+  disabling resources if any other resources would be affected ([rhbz#1631519])
 
 ### Changed
 - Expired location constraints are now hidden by default when listing
   constraints in any way. Using `--all` will list and denote them with
   `(expired)`. All expired rules are then marked the same way. ([rhbz#1442116])
 
+### Fixed
+- All node names and scores are validated when running `pcs constraint location
+  avoids/prefers` before writing configuration to cib ([rhbz#1673835])
+
 [rhbz#1442116]: https://bugzilla.redhat.com/show_bug.cgi?id=1442116
+[rhbz#1631519]: https://bugzilla.redhat.com/show_bug.cgi?id=1631519
 [rhbz#1673835]: https://bugzilla.redhat.com/show_bug.cgi?id=1673835
 [rhbz#1728890]: https://bugzilla.redhat.com/show_bug.cgi?id=1728890
 

@@ -1,6 +1,6 @@
 from pcs_test.tools.command_env.mock_runner import(
     Call as RunnerCall,
-    create_check_stdin_xml,
+    CheckStdinEqualXml,
 )
 from pcs_test.tools.fixture_cib import modify_cib
 from pcs_test.tools.misc import get_test_resource as rc
@@ -142,7 +142,7 @@ class CibShortcuts:
                 "cibadmin --replace --verbose --xml-pipe --scope configuration",
                 stderr=stderr,
                 returncode=returncode,
-                check_stdin=create_check_stdin_xml(cib),
+                check_stdin=CheckStdinEqualXml(cib),
             ),
             instead=instead,
         )
@@ -166,7 +166,7 @@ class CibShortcuts:
             name,
             RunnerCall(
                 "cibadmin --replace --verbose --xml-pipe --scope configuration",
-                check_stdin=create_check_stdin_xml(cib),
+                check_stdin=CheckStdinEqualXml(cib),
             ),
             instead=instead,
         )
@@ -218,7 +218,7 @@ class CibShortcuts:
             name,
             RunnerCall(
                 "cibadmin --patch --verbose --xml-pipe",
-                check_stdin=create_check_stdin_xml(cib_diff),
+                check_stdin=CheckStdinEqualXml(cib_diff),
                 stdout=stdout,
                 stderr=stderr,
                 returncode=returncode,

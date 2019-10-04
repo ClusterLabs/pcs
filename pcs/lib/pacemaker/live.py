@@ -3,6 +3,7 @@ from lxml import etree
 
 from pcs import settings
 from pcs.common.tools import (
+    format_os_error,
     join_multilines,
     xml_fromstring
 )
@@ -197,6 +198,69 @@ def _upgrade_cib(runner):
     if retval != 0:
         raise LibraryError(
             reports.cib_upgrade_failed(join_multilines([stderr, stdout]))
+        )
+
+def simulate_cib_xml(runner, cib_xml):
+    """
+    Run crm_simulate to get effects the cib would have on the live cluster
+
+    CommandRunner runner -- runner
+    string cib_xml -- CIB XML to simulate
+    """
+    try:
+        new_cib_file = write_tmpfile(None)
+        transitions_file = write_tmpfile(None)
+    except OSError as e:
+        raise LibraryError(
+            reports.cib_simulate_error(format_os_error(e), cib_xml)
+        )
+
+    cmd = [
+        __exec("crm_simulate"),
+        "--simulate",
+        "--save-output", new_cib_file.name,
+        "--save-graph", transitions_file.name,
+        "--xml-pipe",
+    ]
+    stdout, stderr, retval = runner.run(cmd, stdin_string=cib_xml)
+    if retval != 0:
+        raise LibraryError(
+            reports.cib_simulate_error(stderr.strip(), cib_xml)
+        )
+
+    try:
+        new_cib_file.seek(0)
+        transitions_file.seek(0)
+        new_cib_xml = new_cib_file.read()
+        transitions_xml = transitions_file.read()
+        new_cib_file.close()
+        transitions_file.close()
+        return stdout, transitions_xml, new_cib_xml
+    except OSError as e:
+        raise LibraryError(
+            reports.cib_simulate_error(format_os_error(e), cib_xml)
+        )
+
+def simulate_cib(runner, cib):
+    """
+    Run crm_simulate to get effects the cib would have on the live cluster
+
+    CommandRunner runner -- runner
+    etree cib -- cib tree to simulate
+    """
+    cib_xml = etree_to_str(cib)
+    try:
+        plaintext_result, transitions_xml, new_cib_xml = simulate_cib_xml(
+            runner, cib_xml
+        )
+        return (
+            plaintext_result.strip(),
+            xml_fromstring(transitions_xml),
+            xml_fromstring(new_cib_xml)
+        )
+    except (etree.XMLSyntaxError, etree.DocumentInvalid) as e:
+        raise LibraryError(
+            reports.cib_simulate_error(str(e), cib_xml)
         )
 
 ### wait for idle

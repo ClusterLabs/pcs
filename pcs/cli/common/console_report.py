@@ -1272,6 +1272,11 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
         .format(**info)
     ,
 
+    codes.CIB_SIMULATE_ERROR: lambda info:
+        "Unable to simulate changes in CIB: {reason}\n{cib}"
+        .format(**info)
+    ,
+
     codes.CIB_PUSH_FORCED_FULL_DUE_TO_CRM_FEATURE_SET: lambda info:
         (
             "Replacing the whole CIB instead of applying a diff, a race "
@@ -2269,5 +2274,12 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
             _file_type=format_file_role(info["file_type_code"]),
             **info
         )
+    ,
+
+    codes.RESOURCE_DISABLE_AFFECTS_OTHER_RESOURCES: lambda info:
+        (
+            "Disabling specified resources would have an effect on other "
+            "resources\n\n{crm_simulate_plaintext_output}"
+        ).format(**info)
     ,
 }

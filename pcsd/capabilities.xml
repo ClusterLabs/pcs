@@ -1273,6 +1273,20 @@
         pcs commands: resource disable --wait, resource enable --wait
       </description>
     </capability>
+    <capability id="pcmk.resource.disable.safe" in-pcs="1" in-pcsd="0">
+      <description>
+        Do not disable resources if other resources would be affected.
+
+        pcs commands: resource disable --safe [--strict]
+      </description>
+    </capability>
+    <capability id="pcmk.resource.disable.simulate" in-pcs="1" in-pcsd="0">
+      <description>
+        Show effects caused by disabling resources.
+
+        pcs commands: resource disable --simulate
+      </description>
+    </capability>
     <capability id="pcmk.resource.manage-unmanage" in-pcs="1" in-pcsd="1">
       <description>
         Put a resource into unmanaged and managed mode.

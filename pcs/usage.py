@@ -268,14 +268,21 @@ Commands:
         started, or 1 if the resources have not yet started. If 'n' is not
         specified it defaults to 60 minutes.
 
-    disable <resource id>... [--wait[=n]]
+    disable <resource id>... [--safe [--strict]] [--simulate] [--wait[=n]]
         Attempt to stop the resources if they are running and forbid the
         cluster from starting them again. Depending on the rest of the
         configuration (constraints, options, failures, etc), the resources may
-        remain started. If --wait is specified, pcs will wait up to 'n' seconds
-        for the resources to stop and then return 0 if the resources are
-        stopped or 1 if the resources have not stopped. If 'n' is not specified
-        it defaults to 60 minutes.
+        remain started.
+        If --safe is specified, no changes to the cluster configuration will be
+        made if other than specified resources would get stopped or demoted.
+        If --strict is specified, no changes to the cluster configuration will
+        be made if other than specified resources would be affected in any way.
+        If --simulate is specified, no changes to the cluster configuration
+        will be made and the effect of the changes will be printed instead.
+        If --wait is specified, pcs will wait up to 'n' seconds for the
+        resources to stop and then return 0 if the resources are stopped or 1
+        if the resources have not stopped. If 'n' is not specified it defaults
+        to 60 minutes.
 
     restart <resource id> [node] [--wait=n]
         Restart the resource specified. If a node is specified and if the
