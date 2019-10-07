@@ -302,6 +302,32 @@ endif
 newversion:
 	$(PYTHON) newversion.py
 
+
+# CODE QUALITY
+# ===========
+
+install_pip: requirements.txt
+	$(PYTHON) -m pip install --upgrade -r $<
+
+pylint_requirements: install_pip
+
+pylint:
+	time ./run_pylint.sh
+
+get_lxml_stubs:
+	mkdir -p $(BUNDLE_LOCAL_DIR)/stubs
+	git clone https://github.com/JelleZijlstra/lxml-stubs.git $(BUNDLE_LOCAL_DIR)/stubs
+
+mypy_requirements: install_pip bundle_pyagentx_local get_lxml_stubs
+
+mypy:
+	time $(PYTHON) -m mypy -p pcs
+
+python_static_code_analysis_reqirements: pylint_requirements mypy_requirements
+
+python_static_code_analysis: pylint mypy
+
+
 # RPM BUILD
 # =========
 RPM_BUILD_DIR = rpm_build

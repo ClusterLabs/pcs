@@ -1,6 +1,8 @@
 import re
 import xml.dom.minidom
 
+from typing import List, Any, Optional
+
 from pcs import utils
 
 # pylint: disable=not-callable
@@ -344,7 +346,8 @@ class SymbolParenthesisOpen(SymbolBase):
 class SymbolOperator(SymbolBase):
 
     expression_func = None
-    allowed_child_ids = []
+    # Note: not properly typed
+    allowed_child_ids: List[Any] = []
 
     def __init__(self):
         self.children = []
@@ -412,7 +415,7 @@ class SymbolInfix(SymbolOperator):
 class SymbolTernary(SymbolOperator):
 
     advance_func = None
-    symbol_second_id = None
+    symbol_second_id: Optional[str] = None
 
     def left_denotation(self, left):
         self.children.append(left)
@@ -599,7 +602,7 @@ class DateCommonValue:
         "hours", "monthdays", "weekdays", "yeardays", "months", "weeks",
         "years", "weekyears", "moon",
     ]
-    KEYWORD = None
+    KEYWORD: Optional[str] = None
 
     def __init__(self, parts_string, keyword=None):
         self.parts = dict()

@@ -10,3 +10,4 @@ pcs.spec
 /pcsd/public/ui
 /rpm_build/
 pcs-*.tar.gz
+.mypy_cache/

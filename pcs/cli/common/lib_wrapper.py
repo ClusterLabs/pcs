@@ -1,5 +1,6 @@
 import logging
 from collections import namedtuple
+from typing import Dict, Any
 
 from pcs.cli.common import middleware
 from pcs.lib.commands import (
@@ -28,7 +29,8 @@ from pcs.lib.commands.constraint import (
 from pcs.lib.env import LibraryEnvironment
 
 
-_CACHE = {}
+# Note: not properly typed
+_CACHE: Dict[Any, Any] = {}
 
 def wrapper(dictionary):
     return namedtuple('wrapper', dictionary.keys())(**dictionary)

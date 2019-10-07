@@ -4,6 +4,7 @@ Hide information about underlaying xml is desired too.
 '''
 import os.path
 from collections import defaultdict
+from typing import Dict, Any
 
 from lxml import etree
 
@@ -74,9 +75,12 @@ class _Children:
         )
 
 class _Element:
-    required_attrs = {}
-    children = {}
-    sections = {}
+    # Note: not properly typed
+    required_attrs: Dict[Any, Any] = {}
+    # Note: not properly typed
+    children: Dict[Any, Any] = {}
+    # Note: not properly typed
+    sections: Dict[Any, Any] = {}
 
     def __init__(self, dom_part):
         self.dom_part = dom_part

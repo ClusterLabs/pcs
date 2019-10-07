@@ -1,3 +1,5 @@
+from typing import List, Any
+
 from pcs.common import report_codes
 from pcs.common.node_communicator import Request
 from pcs.common.reports import SimpleReportProcessorInterface
@@ -89,7 +91,8 @@ class RunRemotelyBase(CommunicationCommandInterface):
     #pylint: disable=abstract-method
     def __init__(self, report_processor: SimpleReportProcessorInterface):
         self.__report_processor = report_processor
-        self._error_list = []
+        # Note: not properly typed
+        self._error_list: List[Any] = []
 
     def _get_response_report(self, response):
         # pylint: disable=no-self-use

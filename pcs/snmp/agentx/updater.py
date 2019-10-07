@@ -1,5 +1,6 @@
 # pylint: disable=import-error
 from pyagentx import Updater
+from pcs.snmp.agentx.types import Oid
 
 
 class AgentxUpdaterBase(Updater):
@@ -9,7 +10,7 @@ class AgentxUpdaterBase(Updater):
     """
 
     # this has to be set by the descendants
-    _oid_tree = None
+    _oid_tree: Oid
 
     @property
     def oid_tree(self):

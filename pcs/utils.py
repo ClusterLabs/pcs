@@ -19,6 +19,8 @@ import logging
 from functools import lru_cache
 from urllib.parse import urlencode
 
+from typing import Dict, Any
+
 from pcs import settings, usage
 
 from pcs.common import (
@@ -82,7 +84,8 @@ from pcs.lib.pacemaker.values import(
 # usefile & filename variables are set in pcs module
 usefile = False
 filename = ""
-pcs_options = {}
+# Note: not properly typed
+pcs_options: Dict[Any, Any] = {}
 
 
 class UnknownPropertyException(Exception):

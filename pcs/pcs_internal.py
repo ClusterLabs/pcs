@@ -2,6 +2,11 @@ import sys
 import json
 import logging
 
+from typing import (
+    List,
+    Any,
+)
+
 from pcs import settings, utils
 from pcs.cli.common.env_cli import Env
 from pcs.cli.common.lib_wrapper import Library
@@ -49,7 +54,8 @@ def get_cli_env(options):
 
 
 class LibraryReportProcessor(LibraryReportProcessorToConsole):
-    processed_items = []
+    # Note: not properly typed
+    processed_items: List[Any] = []
     def _send(self, report_item_list, print_errors=True):
 
         self.processed_items.extend(report_item_list)
