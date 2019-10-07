@@ -345,6 +345,8 @@ def load_module(env, middleware_factory, name):
                 "group_add": resource.group_add,
                 "manage": resource.manage,
                 "move": resource.move,
+                "get_resource_relations_tree":
+                    resource.get_resource_relations_tree,
                 "unmanage": resource.unmanage,
                 "unmove_unban": resource.unmove_unban,
             }

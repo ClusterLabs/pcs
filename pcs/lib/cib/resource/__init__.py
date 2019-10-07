@@ -4,8 +4,9 @@ from pcs.lib.cib.resource import (
     common,
     group,
     guest_node,
+    hierarchy,
     operations,
     primitive,
-    relation,
+    relations,
     remote_node,
 )

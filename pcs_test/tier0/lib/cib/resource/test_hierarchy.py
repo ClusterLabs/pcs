@@ -10,7 +10,7 @@ from pcs_test.tools.assertions import (
 from pcs_test.tools.xml import etree_to_str
 
 from pcs.common import report_codes
-from pcs.lib.cib.resource import relation
+from pcs.lib.cib.resource import hierarchy
 from pcs.lib.cib.tools import IdProvider
 
 
@@ -182,7 +182,7 @@ class ValidateMoveResourcesToGroupByElements(
         return _resources(self.cib, *ids)
 
     def _validate(self, group, resources, adjacent=None):
-        return relation.ValidateMoveResourcesToGroupByElements(
+        return hierarchy.ValidateMoveResourcesToGroupByElements(
             self._resource(group),
             self._resources(resources),
             self._resource(adjacent) if adjacent else None,
@@ -218,7 +218,7 @@ class ValidateMoveResourcesToGroupByIds(
         return ids
 
     def _validate(self, group, resources, adjacent=None):
-        return relation.ValidateMoveResourcesToGroupByIds(
+        return hierarchy.ValidateMoveResourcesToGroupByIds(
             self._resource(group),
             self._resources(resources),
             self._resource(adjacent) if adjacent else None,
@@ -332,7 +332,7 @@ class MoveResourcesToGroup(TestCase):
             </resources>
         """
         cib = etree.fromstring(cib_before)
-        relation.move_resources_to_group(
+        hierarchy.move_resources_to_group(
             _resource(cib, "G"),
             _resources(cib, "R3", "R1")
         )
@@ -353,7 +353,7 @@ class MoveResourcesToGroup(TestCase):
             </resources>
         """
         cib = etree.fromstring(cib_before)
-        relation.move_resources_to_group(
+        hierarchy.move_resources_to_group(
             _resource(cib, "G"),
             _resources(cib, "R3", "R1", "RG3"),
             adjacent_resource=_resource(cib, "RG1")
@@ -375,7 +375,7 @@ class MoveResourcesToGroup(TestCase):
             </resources>
         """
         cib = etree.fromstring(cib_before)
-        relation.move_resources_to_group(
+        hierarchy.move_resources_to_group(
             _resource(cib, "G"),
             _resources(cib, "R3", "R1", "RG2"),
             adjacent_resource=_resource(cib, "RG3")
@@ -397,7 +397,7 @@ class MoveResourcesToGroup(TestCase):
             </resources>
         """
         cib = etree.fromstring(cib_before)
-        relation.move_resources_to_group(
+        hierarchy.move_resources_to_group(
             _resource(cib, "G"),
             _resources(cib, "R3", "R1", "RG3"),
             adjacent_resource=_resource(cib, "RG2"),
@@ -420,7 +420,7 @@ class MoveResourcesToGroup(TestCase):
             </resources>
         """
         cib = etree.fromstring(cib_before)
-        relation.move_resources_to_group(
+        hierarchy.move_resources_to_group(
             _resource(cib, "G"),
             _resources(cib, "R3", "R1", "RG3"),
             adjacent_resource=_resource(cib, "RG1"),
@@ -459,7 +459,7 @@ class MoveResourcesToGroup(TestCase):
             </resources>
         """
         cib = etree.fromstring(cib_before)
-        relation.move_resources_to_group(
+        hierarchy.move_resources_to_group(
             _resource(cib, "G"),
             _resources(cib, "R2"),
         )
@@ -492,7 +492,7 @@ class MoveResourcesToGroup(TestCase):
             </resources>
         """
         cib = etree.fromstring(cib_before)
-        relation.move_resources_to_group(
+        hierarchy.move_resources_to_group(
             _resource(cib, "G"),
             _resources(cib, "R1"),
         )
@@ -527,7 +527,7 @@ class MoveResourcesToGroup(TestCase):
             </resources>
         """
         cib = etree.fromstring(cib_before)
-        relation.move_resources_to_group(
+        hierarchy.move_resources_to_group(
             _resource(cib, "G"),
             _resources(cib, "R1"),
         )

@@ -199,20 +199,45 @@ class FindOneOrMoreResources(TestCase):
         )
 
 
-class FindPrimitives(TestCase):
+class FindResourcesMixin:
     def assert_find_resources(self, input_resource_id, output_resource_ids):
         self.assertEqual(
             output_resource_ids,
             [
                 element.get("id", "")
                 for element in
-                common.find_primitives(
+                self._tested_fn(
                     fixture_cib.find(
                         './/*[@id="{0}"]'.format(input_resource_id)
                     )
                 )
             ]
         )
+
+    def test_group(self):
+        self.assert_find_resources("D", ["D1", "D2"])
+
+    def test_group_in_clone(self):
+        self.assert_find_resources("E", ["E1", "E2"])
+
+    def test_group_in_master(self):
+        self.assert_find_resources("F", ["F1", "F2"])
+
+    def test_cloned_primitive(self):
+        self.assert_find_resources("B-clone", ["B"])
+
+    def test_mastered_primitive(self):
+        self.assert_find_resources("C-master", ["C"])
+
+    def test_bundle_empty(self):
+        self.assert_find_resources("G-bundle", [])
+
+    def test_bundle_with_primitive(self):
+        self.assert_find_resources("H-bundle", ["H"])
+
+
+class FindPrimitives(TestCase, FindResourcesMixin):
+    _tested_fn = staticmethod(common.find_primitives)
 
     def test_primitive(self):
         self.assert_find_resources("A", ["A"])
@@ -234,32 +259,155 @@ class FindPrimitives(TestCase):
     def test_primitive_in_bundle(self):
         self.assert_find_resources("H", ["H"])
 
-    def test_group(self):
-        self.assert_find_resources("D", ["D1", "D2"])
-
-    def test_group_in_clone(self):
-        self.assert_find_resources("E", ["E1", "E2"])
-
-    def test_group_in_master(self):
-        self.assert_find_resources("F", ["F1", "F2"])
-
-    def test_cloned_primitive(self):
-        self.assert_find_resources("B-clone", ["B"])
-
     def test_cloned_group(self):
         self.assert_find_resources("E-clone", ["E1", "E2"])
-
-    def test_mastered_primitive(self):
-        self.assert_find_resources("C-master", ["C"])
 
     def test_mastered_group(self):
         self.assert_find_resources("F-master", ["F1", "F2"])
 
+
+class GetInnerResources(TestCase, FindResourcesMixin):
+    _tested_fn = staticmethod(common.get_inner_resources)
+
+    def test_primitive(self):
+        self.assert_find_resources("A", [])
+
+    def test_primitive_in_clone(self):
+        self.assert_find_resources("B", [])
+
+    def test_primitive_in_master(self):
+        self.assert_find_resources("C", [])
+
+    def test_primitive_in_group(self):
+        self.assert_find_resources("D1", [])
+        self.assert_find_resources("D2", [])
+        self.assert_find_resources("E1", [])
+        self.assert_find_resources("E2", [])
+        self.assert_find_resources("F1", [])
+        self.assert_find_resources("F2", [])
+
+    def test_primitive_in_bundle(self):
+        self.assert_find_resources("H", [])
+
+    def test_mastered_group(self):
+        self.assert_find_resources("F-master", ["F"])
+
+    def test_cloned_group(self):
+        self.assert_find_resources("E-clone", ["E"])
+
+
+class IsWrapperResource(TestCase):
+    def assert_is_wrapper(self, res_id, is_wrapper):
+        self.assertEqual(
+            is_wrapper,
+            common.is_wrapper_resource(
+                fixture_cib.find('.//*[@id="{0}"]'.format(res_id))
+            )
+        )
+
+    def test_primitive(self):
+        self.assert_is_wrapper("A", False)
+
+    def test_primitive_in_clone(self):
+        self.assert_is_wrapper("B", False)
+
+    def test_primitive_in_master(self):
+        self.assert_is_wrapper("C", False)
+
+    def test_primitive_in_group(self):
+        self.assert_is_wrapper("D1", False)
+        self.assert_is_wrapper("D2", False)
+        self.assert_is_wrapper("E1", False)
+        self.assert_is_wrapper("E2", False)
+        self.assert_is_wrapper("F1", False)
+        self.assert_is_wrapper("F2", False)
+
+    def test_primitive_in_bundle(self):
+        self.assert_is_wrapper("H", False)
+
+    def test_cloned_group(self):
+        self.assert_is_wrapper("E-clone", True)
+
+    def test_mastered_group(self):
+        self.assert_is_wrapper("F-master", True)
+
+    def test_group(self):
+        self.assert_is_wrapper("D", True)
+
+    def test_group_in_clone(self):
+        self.assert_is_wrapper("E", True)
+
+    def test_group_in_master(self):
+        self.assert_is_wrapper("F", True)
+
+    def test_cloned_primitive(self):
+        self.assert_is_wrapper("B-clone", True)
+
+    def test_mastered_primitive(self):
+        self.assert_is_wrapper("C-master", True)
+
     def test_bundle_empty(self):
-        self.assert_find_resources("G-bundle", [])
+        self.assert_is_wrapper("G-bundle", True)
 
     def test_bundle_with_primitive(self):
-        self.assert_find_resources("H-bundle", ["H"])
+        self.assert_is_wrapper("H-bundle", True)
+
+
+class GetParentResource(TestCase):
+    def assert_parent_resource(self, input_resource_id, output_resource_id):
+        res_el = common.get_parent_resource(fixture_cib.find(
+            './/*[@id="{0}"]'.format(input_resource_id)
+        ))
+        self.assertEqual(
+            output_resource_id, res_el.get("id") if res_el is not None else None
+        )
+
+    def test_primitive(self):
+        self.assert_parent_resource("A", None)
+
+    def test_primitive_in_clone(self):
+        self.assert_parent_resource("B", "B-clone")
+
+    def test_primitive_in_master(self):
+        self.assert_parent_resource("C", "C-master")
+
+    def test_primitive_in_group(self):
+        self.assert_parent_resource("D1", "D")
+        self.assert_parent_resource("D2", "D")
+        self.assert_parent_resource("E1", "E")
+        self.assert_parent_resource("E2", "E")
+        self.assert_parent_resource("F1", "F")
+        self.assert_parent_resource("F2", "F")
+
+    def test_primitive_in_bundle(self):
+        self.assert_parent_resource("H", "H-bundle")
+
+    def test_cloned_group(self):
+        self.assert_parent_resource("E-clone", None)
+
+    def test_mastered_group(self):
+        self.assert_parent_resource("F-master", None)
+
+    def test_group(self):
+        self.assert_parent_resource("D", None)
+
+    def test_group_in_clone(self):
+        self.assert_parent_resource("E", "E-clone")
+
+    def test_group_in_master(self):
+        self.assert_parent_resource("F", "F-master")
+
+    def test_cloned_primitive(self):
+        self.assert_parent_resource("B-clone", None)
+
+    def test_mastered_primitive(self):
+        self.assert_parent_resource("C-master", None)
+
+    def test_bundle_empty(self):
+        self.assert_parent_resource("G-bundle", None)
+
+    def test_bundle_with_primitive(self):
+        self.assert_parent_resource("H-bundle", None)
 
 
 class FindResourcesToEnable(TestCase):

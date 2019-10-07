@@ -584,6 +584,12 @@ Commands:
         integer. Options may be removed by setting an option without a value.
         Example: pcs resource utilization TestResource cpu= ram=20
 
+    relations <resource id>
+        Display relations of a resource specified by its id with other resources
+        in a tree structure. Supported types of resource relations are:
+        ordering constraints, ordering set constraints, relations defined by
+        resouce hierarchy (clones, groups, bundles).
+
 Examples:
 
     pcs resource config

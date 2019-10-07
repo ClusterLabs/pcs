@@ -1,5 +1,9 @@
 from contextlib import contextmanager
 from functools import partial
+from typing import (
+    Any,
+    Mapping,
+)
 
 from pcs.common import file_type_codes, report_codes
 from pcs.common.tools import Version
@@ -14,6 +18,7 @@ from pcs.lib.cib.tools import (
     get_status,
     IdProvider,
 )
+from pcs.lib.env import LibraryEnvironment
 from pcs.lib.node import get_existing_nodes_names_addrs
 from pcs.lib.errors import (
     LibraryError,
@@ -995,7 +1000,7 @@ def group_add(
     with resource_environment(env, wait, [group_id]) as resources_section:
         id_provider = IdProvider(resources_section)
 
-        validator = resource.relation.ValidateMoveResourcesToGroupByIds(
+        validator = resource.hierarchy.ValidateMoveResourcesToGroupByIds(
             group_id,
             resource_id_list,
             adjacent_resource_id=adjacent_resource_id
@@ -1013,7 +1018,7 @@ def group_add(
                 resources_section, group_id
             )
 
-        resource.relation.move_resources_to_group(
+        resource.hierarchy.move_resources_to_group(
             group_element,
             validator.resource_element_list(),
             adjacent_resource=validator.adjacent_resource_element(),
@@ -1342,6 +1347,31 @@ def unmove_unban(
         env.report_processor.process(
             info_resource_state(env.get_cluster_state(), resource_id)
         )
+
+
+def get_resource_relations_tree(
+    env: LibraryEnvironment,
+    resource_id: str,
+) -> Mapping[str, Any]:
+    """
+    Return a dict representing tree-like structure of resources and their
+    relations.
+
+    env -- library environment
+    resource_id -- id of a resource which should be the root of the relation
+        tree
+    """
+    cib = env.get_cib()
+    _find_resources_or_raise(get_resources(cib), [resource_id])
+    resources_dict, relations_dict = (
+        resource.relations.ResourceRelationsFetcher(
+            cib
+        ).get_relations(resource_id)
+    )
+    return resource.relations.ResourceRelationTreeBuilder(
+        resources_dict, relations_dict
+    ).get_tree(resource_id).to_dto().to_dict()
+
 
 def _find_resources_or_raise(
     context_element, resource_ids, additional_search=None, resource_tags=None

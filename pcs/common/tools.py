@@ -1,5 +1,6 @@
 import threading
 from collections import namedtuple
+from enum import Enum
 from lxml import etree
 
 def run_parallel(worker, data_list):
@@ -37,6 +38,12 @@ def xml_fromstring(xml):
         #see https://bugzilla.redhat.com/show_bug.cgi?id=1506864
         etree.XMLParser(huge_tree=True)
     )
+
+class AutoNameEnum(str, Enum):
+    def _generate_next_value_(name, start, count, last_values):
+        # pylint: disable=no-self-argument
+        del start, count, last_values
+        return name
 
 class Version(namedtuple("Version", ["major", "minor", "revision"])):
     def __new__(cls, major, minor=None, revision=None):

@@ -7,6 +7,9 @@
   or changed in pcs-0.10 print errors poiting to that section. ([rhbz#1728890])
 - `pcs resource disable` can show effects of disabling resources and prevent
   disabling resources if any other resources would be affected ([rhbz#1631519])
+- `pcs resource relations` command shows relations between resources such as
+  ordering constraints, ordering set constraints and relations defined by
+  resource hierarchy ([rhbz#1631514])
 
 ### Changed
 - Expired location constraints are now hidden by default when listing
@@ -18,6 +21,7 @@
   avoids/prefers` before writing configuration to cib ([rhbz#1673835])
 
 [rhbz#1442116]: https://bugzilla.redhat.com/show_bug.cgi?id=1442116
+[rhbz#1631514]: https://bugzilla.redhat.com/show_bug.cgi?id=1631514
 [rhbz#1631519]: https://bugzilla.redhat.com/show_bug.cgi?id=1631519
 [rhbz#1673835]: https://bugzilla.redhat.com/show_bug.cgi?id=1673835
 [rhbz#1728890]: https://bugzilla.redhat.com/show_bug.cgi?id=1728890
