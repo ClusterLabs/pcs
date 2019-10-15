@@ -31,6 +31,17 @@ def __msg_node_name_already_used(node_name, cluster_name)
   return "The node '#{node_name}' is already a part of the '#{cluster_name}' cluster. You may not add a node to two different clusters."
 end
 
+def __msg_sync_conflict_detected(please_repeat=nil)
+  if not please_repeat
+    please_repeat = 'Please repeat the last action if appropriate.'
+  end
+  return "Configuration conflict detected.\n\nSome nodes had a newer configuration than the local node. Local node's configuration was updated. #{please_repeat}"
+end
+
+def __msg_sync_nodes_error(node_name_list)
+  return "Unable to save settings on local cluster node(s) #{node_name_list.join(', ')}. Make sure pcsd is running on the nodes and the nodes are authorized."
+end
+
 def getAuthUser()
   return {
     :username => $tornado_username,
@@ -367,11 +378,18 @@ post '/manage/existingcluster' do
       status['cluster_name'], node
     )
     if not new_hosts.empty?
-      pushed, _ = Cfgsync::save_sync_new_known_hosts(
+      no_conflict, sync_responses = Cfgsync::save_sync_new_known_hosts(
         new_hosts, [], get_corosync_nodes_names(), $cluster_name
       )
-      if not pushed
-        return 400, "Configuration conflict detected.\n\nSome nodes had a newer configuration than the local node. Local node's configuration was updated.  Please repeat the last action if appropriate."
+      sync_notauthorized_nodes, sync_failed_nodes = (
+        Cfgsync::get_failed_nodes_from_sync_responses(sync_responses)
+      )
+      sync_all_failures = (sync_notauthorized_nodes + sync_failed_nodes).sort
+      if not sync_all_failures.empty?
+        return 400, __msg_sync_nodes_error(sync_all_failures)
+      end
+      if not no_conflict
+        return 400, __msg_sync_conflict_detected()
       end
     end
     #auth end
@@ -379,11 +397,18 @@ post '/manage/existingcluster' do
     pcs_config.clusters << Cluster.new(status["cluster_name"], nodes)
 
     sync_config = Cfgsync::PcsdSettings.from_text(pcs_config.text())
-    pushed, _ = Cfgsync::save_sync_new_version(
+    no_conflict, sync_responses = Cfgsync::save_sync_new_version(
       sync_config, get_corosync_nodes_names(), $cluster_name, true
     )
-    if not pushed
-      return 400, "Configuration conflict detected.\n\nSome nodes had a newer configuration than the local node. Local node's configuration was updated.  Please repeat the last action if appropriate."
+    sync_notauthorized_nodes, sync_failed_nodes = (
+      Cfgsync::get_failed_nodes_from_sync_responses(sync_responses)
+    )
+    sync_all_failures = (sync_notauthorized_nodes + sync_failed_nodes).sort
+    if not sync_all_failures.empty?
+      return 400, __msg_sync_nodes_error(sync_all_failures)
+    end
+    if not no_conflict
+      return 400, __msg_sync_conflict_detected()
     end
     return 200, warning_messages.join("\n\n")
   else
@@ -477,7 +502,8 @@ post '/manage/remember-cluster' do
   if not allowed_for_superuser(auth_user)
     return 403, 'Permission denied.'
   end
-  pushed = false
+  no_conflict = false
+  sync_responses = {}
   2.times {
     # Add the new cluster to our config and publish the config.
     # If this host is a node of the new cluster, another node may send its own
@@ -488,13 +514,22 @@ post '/manage/remember-cluster' do
     pcs_config = PCSConfig.new(Cfgsync::PcsdSettings.from_file().text())
     pcs_config.clusters << Cluster.new(params[:cluster_name], params[:nodes])
     sync_config = Cfgsync::PcsdSettings.from_text(pcs_config.text())
-    pushed, _ = Cfgsync::save_sync_new_version(
+    no_conflict, sync_responses = Cfgsync::save_sync_new_version(
       sync_config, get_corosync_nodes_names(), $cluster_name, true
     )
-    break if pushed
+    break if no_conflict
   }
-  if not pushed
-    return 400, "Configuration conflict detected.\n\nSome nodes had a newer configuration than the local node. Local node's configuration has been updated. Please add the cluster manually if appropriate."
+  sync_notauthorized_nodes, sync_failed_nodes = (
+    Cfgsync::get_failed_nodes_from_sync_responses(sync_responses)
+  )
+  sync_all_failures = (sync_notauthorized_nodes + sync_failed_nodes).sort
+  if not sync_all_failures.empty?
+    return 400, __msg_sync_nodes_error(sync_all_failures)
+  end
+  if not no_conflict
+    return 400, __msg_sync_conflict_detected(
+      'Please add the cluster manually if appropriate.'
+    )
   end
 end
 
@@ -508,11 +543,18 @@ post '/manage/removecluster' do
     end
   }
   sync_config = Cfgsync::PcsdSettings.from_text(pcs_config.text())
-  pushed, _ = Cfgsync::save_sync_new_version(
+  no_conflict, sync_responses = Cfgsync::save_sync_new_version(
     sync_config, get_corosync_nodes_names(), $cluster_name, true
   )
-  if not pushed
-    return 400, "Configuration conflict detected.\n\nSome nodes had a newer configuration than the local node.  Local node's configuration was updated.  Please repeat the last action if appropriate."
+  sync_notauthorized_nodes, sync_failed_nodes = (
+    Cfgsync::get_failed_nodes_from_sync_responses(sync_responses)
+  )
+  sync_all_failures = (sync_notauthorized_nodes + sync_failed_nodes).sort
+  if not sync_all_failures.empty?
+    return 400, __msg_sync_nodes_error(sync_all_failures)
+  end
+  if not no_conflict
+    return 400, __msg_sync_conflict_detected()
   end
 end
 
@@ -606,13 +648,50 @@ post '/manage/auth_gui_against_nodes' do
   }
   threads.each { |t| t.join }
 
+  plaintext_error = []
+  local_cluster_node_auth_error = {}
   if not new_hosts.empty?
-    _sync_successful, _sync_responses = Cfgsync::save_sync_new_known_hosts(
+    sync_successful, sync_responses = Cfgsync::save_sync_new_known_hosts(
       new_hosts.values(), [], get_corosync_nodes_names(), $cluster_name
     )
+
+    if not sync_successful
+      return [
+        200,
+        JSON.generate({
+          'plaintext_error' => __msg_sync_conflict_detected()
+        })
+      ]
+    end
+
+    # If we cannot save tokens to local cluster nodes, let the user auth them
+    # as well. Otherwise the user gets into a loop:
+    # 1 the password for the new node is correct and a token is obtained
+    # 2 the token for the new node cannot be saved in the local cluster (due
+    #   to local cluster nodes not authenticated)
+    # 3 the gui asks for authenticating the new node
+    # 4 goto 1
+    sync_notauthorized_nodes, sync_failed_nodes = (
+      Cfgsync::get_failed_nodes_from_sync_responses(sync_responses)
+    )
+    if not sync_failed_nodes.empty?
+      plaintext_error << __msg_sync_nodes_error(sync_failed_nodes)
+    end
+    sync_notauthorized_nodes.each { |node_name|
+      local_cluster_node_auth_error[node_name] = 1
+    }
   end
 
-  return [200, JSON.generate({'node_auth_error' => node_auth_error})]
+  return [
+    200,
+    JSON.generate({
+      'node_auth_error' => node_auth_error,
+      # only nodes where new configs cannot be synchronized due to them not
+      # being authenticated
+      'local_cluster_node_auth_error' => local_cluster_node_auth_error,
+      'plaintext_error' => plaintext_error.join("\n\n")
+    })
+  ]
 end
 
 get '/manage/?' do

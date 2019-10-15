@@ -738,6 +738,9 @@ module Cfgsync
 
   # save and sync updated config
   # return true on success, false on version conflict
+  # Beware that "true" only means there was no version conflict! If we are
+  # unable to connect to any nodes, there is no conflict, and the result is
+  # "true" even if the configs have not been saved on any node!
   def self.save_sync_new_version(
     config, nodes, cluster_name, fetch_on_conflict, known_hosts=[]
   )
@@ -835,5 +838,24 @@ module Cfgsync
     return Cfgsync::save_sync_new_version(
       config_new, target_nodes, cluster_name, true, new_hosts
     )
+  end
+
+  def self.get_failed_nodes_from_sync_responses(sync_responses)
+    sync_failed_nodes = []
+    not_authorized_nodes = []
+    sync_responses.each { |node, response|
+      if response['status'] == 'notauthorized'
+        not_authorized_nodes << node
+      elsif response['status'] != 'ok'
+        sync_failed_nodes << node
+      else
+        response['result'].each { |config_name, node_result|
+          if not ['accepted', 'rejected'].include?(node_result)
+            sync_failed_nodes << node
+          end
+        }
+      end
+    }
+    return not_authorized_nodes, sync_failed_nodes
   end
 end

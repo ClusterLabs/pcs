@@ -1023,16 +1023,11 @@ def pcs_auth(auth_user, nodes)
   sync_successful, sync_responses = Cfgsync::save_sync_new_known_hosts(
     new_hosts, [], cluster_nodes, $cluster_name
   )
-  sync_responses.each { |node, response|
-    if response['status'] != 'ok'
-      sync_failed_nodes << node
-    else
-      node_result = response['result'][Cfgsync::PcsdKnownHosts.name]
-      if not ['accepted', 'rejected'].include?(node_result)
-        sync_failed_nodes << node
-      end
-    end
-  }
+  # sync_notauthorized_nodes is not used because clients extract that info from
+  # auth_responses themselves
+  sync_notauthorized_nodes, sync_failed_nodes = (
+    Cfgsync::get_failed_nodes_from_sync_responses(sync_responses)
+  )
   return auth_responses, sync_successful, sync_failed_nodes, sync_responses
 end
 

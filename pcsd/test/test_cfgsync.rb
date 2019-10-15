@@ -1110,3 +1110,62 @@ class TestMergeKnownHosts < Test::Unit::TestCase
     assert_equal(fixture_new_cfg(7), new_cfg.text.strip)
   end
 end
+
+
+class TestGetFailedNodesFromSyncResponses < Test::Unit::TestCase
+  def test_no_responses()
+    assert_equal(
+      Cfgsync::get_failed_nodes_from_sync_responses({}),
+      [[], []]
+    )
+  end
+
+  def test_all_ok()
+    assert_equal(
+      Cfgsync::get_failed_nodes_from_sync_responses({
+        'node1' => {
+          'status' => 'ok',
+          'result' => {
+            'config_a' => 'accepted',
+          }
+        },
+        'node2' => {
+          'status' => 'ok',
+          'result' => {
+            'config_a' => 'rejected',
+          }
+        },
+      }),
+      [[], []]
+    )
+  end
+
+  def test_ok_and_errors()
+    assert_equal(
+      Cfgsync::get_failed_nodes_from_sync_responses({
+        'node1' => {
+          'status' => 'ok',
+          'result' => {
+            'config_a' => 'accepted',
+            'config_b' => 'accepted',
+          }
+        },
+        'node2' => {
+          'status' => 'ok',
+          'result' => {
+            'config_a' => 'rejected',
+            'config_b' => 'not_supported',
+          }
+        },
+        'node3' => {
+          'status' => 'notauthorized',
+        },
+        'node4' => {
+          'status' => 'error',
+        },
+      }),
+      [["node3"], ["node2", "node4"]]
+    )
+  end
+end
+

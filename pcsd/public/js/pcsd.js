@@ -709,12 +709,41 @@ function auth_nodes(dialog) {
 function auth_nodes_dialog_update(dialog_obj, data) {
   var unauth_nodes = [];
   var node;
+  var plaintext_error = "";
+  var cannot_save_new_hosts = false;
+
+  if (data['plaintext_error']) {
+    plaintext_error += "\n\n" + data['plaintext_error'];
+  }
+
   if (data['node_auth_error']) {
     for (node in data['node_auth_error']) {
       if (data['node_auth_error'][node] != 0) {
         unauth_nodes.push(node);
       }
     }
+  }
+
+  if (data['local_cluster_node_auth_error']) {
+    for (node in data['local_cluster_node_auth_error']) {
+      if (data['local_cluster_node_auth_error'][node] != 0) {
+        unauth_nodes.push(node);
+        cannot_save_new_hosts = true;
+      }
+    }
+  }
+  if (cannot_save_new_hosts) {
+    plaintext_error += (
+      "\n\n"
+      +
+      "Unable to save new cluster settings as the local cluster nodes are not "
+      +
+      "authenticated. Please, authenticate them as well."
+    );
+  }
+
+  if (plaintext_error.length > 0) {
+    alert($.trim(plaintext_error));
   }
 
   var callback_one = dialog_obj.dialog("option", "callback_success_one_");
@@ -734,17 +763,34 @@ function auth_nodes_dialog_update(dialog_obj, data) {
     dialog_obj.find("#auth_failed_error_msg").show();
   }
 
-  if (unauth_nodes.length == 1) {
-    dialog_obj.find("#same_pass").hide();
-    dialog_obj.find('#auth_nodes_list').find('input:password').each(
-      function(){$(this).show()}
-    );
-  }
+  // add rows for local cluster nodes which are not authenticated
+  $.each(unauth_nodes, function(i, node) {
+    if (
+      dialog_obj.find("input:password[name='pass-" + node + "']").length == 0
+    ) {
+      auth_nodes_dialog_add_node_row(dialog_obj, node);
+    }
+  });
+  // hide advanced settings for new rows if appropriate
+  dialog_obj.find("input:checkbox[name='custom_addr_port']").each(
+    function(){
+      if ($(this).is(':checked')) {
+        $('#auth_nodes_form').find('.addr_port').show();
+      } else {
+        $('#auth_nodes_form').find('.addr_port').hide();
+      }
+    }
+  );
+  auth_nodes_dialog_toggle_same_pass(dialog_obj, unauth_nodes.length);
 
   var one_success = false;
-  dialog_obj.find("input:password[name$=-pass]").each(function() {
+  dialog_obj.find("input:password[name^=pass-]").each(function() {
     node = $(this).attr("name");
-    node = node.substring(0, node.length - 5);
+    if (node == "pass-all") {
+      // do not remove / modify the row common to all nodes
+      return;
+    }
+    node = node.substring("pass-".length);
     if (unauth_nodes.indexOf(node) == -1) {
       $(this).parent().parent().remove();
       one_success = true;
@@ -787,7 +833,7 @@ function auth_nodes_dialog(unauth_nodes, callback_success, callback_success_one)
     }
   ];
   var dialog_obj = $("#auth_nodes").dialog({
-    title: 'Authentification of nodes',
+    title: 'Authentication of nodes',
     modal: true,
     resizable: false,
     width: 'auto',
@@ -814,19 +860,33 @@ function auth_nodes_dialog(unauth_nodes, callback_success, callback_success_one)
     return;
   }
 
+  auth_nodes_dialog_toggle_same_pass(dialog_obj, unauth_nodes_count);
+
+  dialog_obj.find("input:checkbox[name=custom_addr_port]").prop("checked", false);
+  dialog_obj.find('#auth_nodes_list').empty();
+  dialog_obj.find('#auth_nodes_list').append('<tr><td>Node</td><td class="password">Password</td><td class="addr_port">Address</td><td class="addr_port">Port</td></tr>');
+  $.each(unauth_nodes, function(i, node) {
+    auth_nodes_dialog_add_node_row(dialog_obj, node)
+  });
+  dialog_obj.find(".addr_port").hide();
+
+}
+
+function auth_nodes_dialog_toggle_same_pass(dialog_obj, unauth_nodes_count) {
   if (unauth_nodes_count == 1) {
     dialog_obj.find("#same_pass").hide();
+    dialog_obj.find('#auth_nodes_list').find('input:password').each(
+      function(){$(this).show()}
+    );
   } else {
     dialog_obj.find("#same_pass").show();
     dialog_obj.find("input:checkbox[name=all]").prop("checked", false);
     dialog_obj.find("#pass_for_all").val("");
     dialog_obj.find("#pass_for_all").hide();
   }
+}
 
-  dialog_obj.find("input:checkbox[name=custom_addr_port]").prop("checked", false);
-  dialog_obj.find('#auth_nodes_list').empty();
-  dialog_obj.find('#auth_nodes_list').append('<tr><td>Node</td><td class="password">Password</td><td class="addr_port">Address</td><td class="addr_port">Port</td></tr>');
-  $.each(unauth_nodes, function(i, node) {
+function auth_nodes_dialog_add_node_row(dialog_obj, node) {
     var html = "<tr>";
     html += "<td>" + htmlEncode(node) + "</td>";
     html += '<td class="password"><input type="password" name="pass-' + htmlEncode(node) + '"></td>';
@@ -834,9 +894,6 @@ function auth_nodes_dialog(unauth_nodes, callback_success, callback_success_one)
     html += '<td class="addr_port">:<input type="text" size="5" name="port-' + htmlEncode(node) + '" placeholder="2224" /></td>';
     html += "</tr>";
     dialog_obj.find('#auth_nodes_list').append(html);
-  });
-  dialog_obj.find(".addr_port").hide();
-
 }
 
 function add_existing_dialog() {
@@ -1008,7 +1065,10 @@ function remove_cluster(ids) {
       Pcs.update();
     },
     error: function (xhr, status, error) {
-      alert("Unable to remove cluster: " + res + " ("+error+")");
+      alert(
+        "Unable to remove cluster "
+        + ajax_simple_error(xhr, status, error)
+      );
       $("#dialog_verify_remove_clusters.ui-dialog-content").each(function(key, item) {$(item).dialog("destroy")});
     }
   });

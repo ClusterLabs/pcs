@@ -19,12 +19,15 @@
 ### Fixed
 - All node names and scores are validated when running `pcs constraint location
   avoids/prefers` before writing configuration to cib ([rhbz#1673835])
+- It is now possible to authenticate remote clusters in web UI even if the local
+  cluster is not authenticated ([rhbz#1743735])
 
 [rhbz#1442116]: https://bugzilla.redhat.com/show_bug.cgi?id=1442116
 [rhbz#1631514]: https://bugzilla.redhat.com/show_bug.cgi?id=1631514
 [rhbz#1631519]: https://bugzilla.redhat.com/show_bug.cgi?id=1631519
 [rhbz#1673835]: https://bugzilla.redhat.com/show_bug.cgi?id=1673835
 [rhbz#1728890]: https://bugzilla.redhat.com/show_bug.cgi?id=1728890
+[rhbz#1743735]: https://bugzilla.redhat.com/show_bug.cgi?id=1743735
 
 
 ## [0.10.3] - 2019-08-23
