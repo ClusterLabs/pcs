@@ -114,9 +114,8 @@ def node_clear(env, node_name, allow_clear_cluster_node=False):
 
 def verify(env, verbose=False):
     runner = env.cmd_runner()
-    dummy_stdout, verify_stderr, verify_returncode = verify_cmd(
-        runner,
-        verbose=verbose,
+    dummy_stdout, verify_stderr, verify_returncode, can_be_more_verbose = (
+        verify_cmd(runner, verbose=verbose)
     )
 
     #1) Do not even try to think about upgrading!
@@ -124,7 +123,9 @@ def verify(env, verbose=False):
     #So env.get_cib is not best choice here (there were considerations to
     #upgrade cib at all times inside env.get_cib). Go to a lower level here.
     if verify_returncode != 0:
-        env.report_processor.append(reports.invalid_cib_content(verify_stderr))
+        env.report_processor.append(
+            reports.invalid_cib_content(verify_stderr, can_be_more_verbose)
+        )
 
         #Cib is sometimes loadable even if `crm_verify` fails (e.g. when
         #fencing topology is invalid). On the other hand cib with id duplication

@@ -196,7 +196,7 @@ class Verify(LibraryPacemakerTest):
         runner = get_runner()
         self.assertEqual(
             lib.verify(runner),
-            runner.run.return_value
+            ("", "", 0, False)
         )
         runner.run.assert_called_once_with(
             [self.path("crm_verify"), "--live-check"],
@@ -206,7 +206,7 @@ class Verify(LibraryPacemakerTest):
         fake_tmp_file = "/fake/tmp/file"
         runner = get_runner(env_vars={"CIB_file": fake_tmp_file})
 
-        self.assertEqual(lib.verify(runner), runner.run.return_value)
+        self.assertEqual(lib.verify(runner), ("", "", 0, False))
         runner.run.assert_called_once_with(
             [self.path("crm_verify"), "--xml-file", fake_tmp_file],
         )
@@ -215,10 +215,110 @@ class Verify(LibraryPacemakerTest):
         runner = get_runner()
         self.assertEqual(
             lib.verify(runner, verbose=True),
-            runner.run.return_value
+            ("", "", 0, False)
         )
         runner.run.assert_called_once_with(
-            [self.path("crm_verify"), "-V", "--live-check"],
+            [self.path("crm_verify"), "-V", "-V", "--live-check"],
+        )
+
+    def test_run_verbose_on_mocked_cib(self):
+        fake_tmp_file = "/fake/tmp/file"
+        runner = get_runner(env_vars={"CIB_file": fake_tmp_file})
+
+        self.assertEqual(
+            lib.verify(runner, verbose=True),
+            ("", "", 0, False)
+        )
+        runner.run.assert_called_once_with(
+            [self.path("crm_verify"), "-V", "-V", "--xml-file", fake_tmp_file],
+        )
+
+    @staticmethod
+    def get_in_out_filtered_stderr():
+        in_stderr = (
+            (
+                "Errors found during check: config not valid\n",
+                "  -V may provide more details\n",
+            ),
+            (
+                "Warnings found during check: config may not be valid\n",
+                "  Use -V -V for more detail\n",
+            ),
+            (
+                "some output\n",
+                "another output\n",
+                "-V -V -V more details...\n",
+            ),
+            (
+                "some output\n",
+                "before-V -V -V in the middle more detailafter\n",
+                "another output\n",
+            ),
+        )
+        out_stderr = []
+        for input_lines in in_stderr:
+            out_stderr.append([
+                line for line in input_lines if "-V" not in line
+            ])
+        return zip(in_stderr, out_stderr)
+
+    @staticmethod
+    def get_in_out_unfiltered_data():
+        in_out_data = (
+            (
+                "no verbose option in stderr\n",
+            ),
+            (
+                "some output\n",
+                "Options '-V -V' do not match\n",
+                "because line missing 'more details'\n",
+            ),
+        )
+        return zip(in_out_data, in_out_data)
+
+    def subtest_filter_stderr_and_can_be_more_verbose(
+        self, in_out_tuple_list, can_be_more_verbose, verbose=False,
+    ):
+        fake_tmp_file = "/fake/tmp/file"
+        runner = get_runner(env_vars={"CIB_file": fake_tmp_file})
+        for in_stderr, out_stderr in in_out_tuple_list:
+            with self.subTest(in_stderr=in_stderr, out_stderr=out_stderr):
+                runner = get_runner(
+                    stderr="".join(in_stderr),
+                    returncode=78,
+                    env_vars={"CIB_file": fake_tmp_file},
+                )
+                self.assertEqual(
+                    lib.verify(runner, verbose=verbose),
+                    ("", "".join(out_stderr), 78, can_be_more_verbose),
+                )
+                args = [self.path("crm_verify")]
+                if verbose:
+                    args.extend(["-V", "-V"])
+                args.extend(["--xml-file", fake_tmp_file])
+                runner.run.assert_called_once_with(args)
+
+    def test_error_can_be_more_verbose(self):
+        self.subtest_filter_stderr_and_can_be_more_verbose(
+            self.get_in_out_filtered_stderr(),
+            True,
+        )
+
+    def test_error_cannot_be_more_verbose(self):
+        self.subtest_filter_stderr_and_can_be_more_verbose(
+            self.get_in_out_unfiltered_data(),
+            False,
+        )
+
+    def test_error_cannot_be_more_verbose_in_verbose_mode(self):
+        self.subtest_filter_stderr_and_can_be_more_verbose(
+            (
+                list(self.get_in_out_filtered_stderr())
+                +
+                list(self.get_in_out_unfiltered_data())
+            ),
+            False,
+            verbose=True,
         )
 
 

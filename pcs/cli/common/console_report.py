@@ -80,8 +80,13 @@ def indent(line_list, indent_step=2):
 
 def format_optional(value, template, empty_case=""):
     # Number 0 is considered False which does not suit our needs so we check
-    # for it explicitly.
-    if value or value == 0:
+    # for it explicitly. Beware that False == 0 is true, so we must have an
+    # additional check for that (bool is a subclass of int).
+    if (
+        value
+        or
+        (isinstance(value, int) and not isinstance(value, bool) and value == 0)
+    ):
         return template.format(value)
     return empty_case
 
@@ -643,8 +648,14 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
     ,
 
     codes.INVALID_CIB_CONTENT: lambda info:
-        "invalid cib: \n{0}"
-        .format(info["report"])
+        "invalid cib:\n{report}{_more_verbose}"
+        .format(
+            _more_verbose=format_optional(
+                info["can_be_more_verbose"],
+                "\n\nUse --full for more details."
+            ),
+            **info
+        )
     ,
 
     codes.INVALID_ID: lambda info:

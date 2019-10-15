@@ -390,20 +390,21 @@ def mutually_exclusive_options(option_names, option_type):
         },
     )
 
-def invalid_cib_content(report):
+def invalid_cib_content(report, can_be_more_verbose):
     """
-    Given cib content is not valid.
-    string report -- is human readable explanation of a cib invalidity. For
-        example a stderr of `crm_verify`.
+    Given cib content is not valid
+
+    string report -- human readable explanation of a cib invalidity (a stderr
+        of `crm_verify`)
+    bool can_be_more_verbose -- can the user ask for a more verbose report
     """
     return ReportItem.error(
         report_codes.INVALID_CIB_CONTENT,
         info={
             "report": report,
+            "can_be_more_verbose": can_be_more_verbose,
         }
     )
-
-
 
 def invalid_id_is_empty(id, id_description):
     # pylint says 'id' is wrong

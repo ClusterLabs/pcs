@@ -1,4 +1,5 @@
 import os.path
+import re
 from lxml import etree
 
 from pcs import settings
@@ -71,9 +72,10 @@ def get_cib(xml):
 
 def verify(runner, verbose=False):
     crm_verify_cmd = [__exec("crm_verify")]
+    # Currently, crm_verify can suggest up to two -V options but it accepts
+    # more than two. We stick with two -V options if verbose mode was enabled.
     if verbose:
-        crm_verify_cmd.append("-V")
-
+        crm_verify_cmd.extend(["-V", "-V"])
     #With the `crm_verify` command it is not possible simply use the environment
     #variable CIB_file because `crm_verify` simply tries to connect to cib file
     #via tool that can fail because: Update does not conform to the configured
@@ -84,8 +86,24 @@ def verify(runner, verbose=False):
         crm_verify_cmd.append("--live-check")
     else:
         crm_verify_cmd.extend(["--xml-file", cib_tmp_file])
-    #the tuple (stdout, stderr, returncode) is returned here
-    return runner.run(crm_verify_cmd)
+    stdout, stderr, returncode = runner.run(crm_verify_cmd)
+    can_be_more_verbose = False
+    if returncode != 0:
+        # remove lines with -V options
+        rx_v_option = re.compile(r".*-V( -V)* .*more detail.*")
+        new_lines = []
+        for line in stderr.splitlines(keepends=True):
+            if rx_v_option.match(line):
+                can_be_more_verbose = True
+                continue
+            new_lines.append(line)
+        # pcs has only one verbose option and cannot be more verbose like
+        # `crm_verify` with more -V options. Decision has been made that pcs is
+        # limited to only two -V opions.
+        if verbose:
+            can_be_more_verbose = False
+        stderr = "".join(new_lines)
+    return stdout, stderr, returncode, can_be_more_verbose
 
 def replace_cib_configuration_xml(runner, xml):
     cmd = [

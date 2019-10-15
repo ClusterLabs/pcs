@@ -219,11 +219,18 @@ class BuildInvalidOptionValueMessageTest(NameBuildTest):
         )
 
 class InvalidCibContent(NameBuildTest):
-    def test_build_message(self):
-        report = "report\nlines"
+    def test_message_can_be_more_verbose(self):
+        report = "no verbose\noutput\n"
         self.assert_message_from_report(
-            "invalid cib: \n{0}".format(report),
-            reports.invalid_cib_content(report)
+            "invalid cib:\n{0}\n\nUse --full for more details.".format(report),
+            reports.invalid_cib_content(report, True)
+        )
+
+    def test_message_cannot_be_more_verbose(self):
+        report = "some verbose\noutput"
+        self.assert_message_from_report(
+            "invalid cib:\n{0}".format(report),
+            reports.invalid_cib_content(report, False)
         )
 
 class CibMissingMandatorySection(NameBuildTest):

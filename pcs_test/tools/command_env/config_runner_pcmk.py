@@ -599,7 +599,7 @@ class PcmkShortcuts():
             name,
             RunnerCall(
                 "crm_verify{0} {1}".format(
-                    " -V" if verbose else "",
+                    " -V -V" if verbose else "",
                     "--xml-file {0}".format(cib_tempfile) if cib_tempfile
                         else "--live-check"
                 ),
