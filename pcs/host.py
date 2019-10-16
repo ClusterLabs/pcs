@@ -30,7 +30,20 @@ def _parse_addr(addr):
         addr = "[{0}]".format(addr)
     # adding protocol so urlparse will parse hostname/ip and port correctly
     url = urlparse("http://{0}".format(addr))
-    return url.hostname, (url.port if url.port else settings.pcsd_default_port)
+
+    common_exception = CmdLineInputError(
+        "Invalid port number in address '{0}', use 1..65535".format(addr)
+    )
+    # Reading the port attribute will raise a ValueError if an invalid port is
+    # specified in the URL.
+    try:
+        port = url.port
+    except ValueError:
+        raise common_exception
+    # urlparse allow 0 as valid port number, pcs does not
+    if port == 0:
+        raise common_exception
+    return url.hostname, (port if port else settings.pcsd_default_port)
 
 
 def auth_cmd(lib, argv, modifiers):
