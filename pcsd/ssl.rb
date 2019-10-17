@@ -153,14 +153,15 @@ else
   end
 end
 
-dh_key_bits_default = 1024
-dh_key_bits = dh_key_bits_default
+dh_key_bits = 0
 if ENV['PCSD_SSL_DH_KEX_BITS']
-  dh_key_bits = Integer(ENV['PCSD_SSL_DH_KEX_BITS']) rescue dh_key_bits_default
+  dh_key_bits = Integer(ENV['PCSD_SSL_DH_KEX_BITS']) rescue 0
 end
-$logger.info "Generating #{dh_key_bits}bits long DH key..."
-dh_key = OpenSSL::PKey::DH.generate(dh_key_bits)
-$logger.info "DH key created"
+if dh_key_bits > 0
+  $logger.info "Generating #{dh_key_bits}bits long DH key..."
+  dh_key = OpenSSL::PKey::DH.generate(dh_key_bits)
+  $logger.info "DH key created"
+end
 
 default_bind = true
 # see https://github.com/ClusterLabs/pcs/issues/51
@@ -185,8 +186,10 @@ webrick_options = {
   :SSLPrivateKey      => OpenSSL::PKey::RSA.new(key),
   :SSLCertName        => [[ "CN", server_name ]],
   :SSLOptions         => get_ssl_options(),
-  :SSLTmpDhCallback   => lambda {|ctx, is_export, keylen| dh_key},
 }
+if dh_key_bits > 0
+  webrick_options[:SSLTmpDhCallback] = lambda {|ctx, is_export, keylen| dh_key }
+end
 
 server = ::Rack::Handler::WEBrick
 trap(:INT) do

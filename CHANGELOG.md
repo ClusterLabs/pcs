@@ -1,5 +1,14 @@
 # Change Log
 
+## [Unreleased]
+
+### Fixed
+- Do not generate custom DH key if it was not requested by setting its custom
+  length ([rhbz#1760434])
+
+[rhbz#1760434]: https://bugzilla.redhat.com/show_bug.cgi?id=1760434
+
+
 ## [0.9.168] - 2019-08-02
 
 ### Added
@@ -8,6 +17,7 @@
   by setting `PCSD_SSL_CERT_SYNC_ENABLED` to `false` in pcsd config file
   ([rhbz#1665898])
 - Length of DH key for SSL key exchange can be set in pcsd config file
+  ([ghissue#200])
 - `pcs status` now shows failed and pending fencing actions and `pcs status
   --full` shows the whole fencing history. Pacemaker supporting fencing history
   is required. ([rhbz#1466088])
@@ -37,6 +47,7 @@
 Command `pcs resource bundle reset` no longer accepts the container type
 ([rhbz#1598197])
 
+[ghissue#200]: https://github.com/ClusterLabs/pcs/issues/200
 [rhbz#1466088]: https://bugzilla.redhat.com/show_bug.cgi?id=1466088
 [rhbz#1500012]: https://bugzilla.redhat.com/show_bug.cgi?id=1500012
 [rhbz#1551663]: https://bugzilla.redhat.com/show_bug.cgi?id=1551663
