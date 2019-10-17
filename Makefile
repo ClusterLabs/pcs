@@ -332,15 +332,31 @@ python_static_code_analysis: pylint mypy
 # =========
 RPM_BUILD_DIR = rpm_build
 SPEC = pcs.spec
-DIST_VERSION_NAME = $(shell if (git describe --tag --exact-match > /dev/null); then git describe --tag --exact-match; else git rev-parse HEAD; fi)
-DIST_NAME = pcs-$(DIST_VERSION_NAME)
-DIST_ARCHIVE_NAME = $(DIST_NAME).tar.gz
+GIT_COMMIT_HASH := $(shell git rev-parse HEAD)
+
+ifndef GIT_TAG
+  ifeq ($(shell git describe --tag --exact-match > /dev/null; echo $$?),0)
+    GIT_TAG := $(shell git describe --tag --exact-match)
+  endif
+endif
+
+GIT_LAST_TAG := $(strip $(shell git describe --abbrev=0 --tags))
+
+ifndef GIT_TAG
+  DIST_VERSION_NAME := $(GIT_COMMIT_HASH)
+else
+  DIST_VERSION_NAME := $(GIT_TAG)
+  GIT_LAST_TAG := $(GIT_TAG)
+endif
+
+DIST_NAME := pcs-$(DIST_VERSION_NAME)
+DIST_ARCHIVE_NAME := $(DIST_NAME).tar.gz
 RPMBUILDOPTS = --define "_sourcedir $(PWD)/$(RPM_BUILD_DIR)" \
                --define "_specdir $(PWD)/$(RPM_BUILD_DIR)" \
                --define "_builddir $(PWD)/$(RPM_BUILD_DIR)" \
                --define "_srcrpmdir $(PWD)/$(RPM_BUILD_DIR)" \
                --define "_rpmdir $(PWD)/$(RPM_BUILD_DIR)"
-BUNDLE_CONGIG_FILE = $(RPM_BUILD_DIR)/pcsd-bundle-config
+BUNDLE_CONGIG_FILE := $(RPM_BUILD_DIR)/pcsd-bundle-config
 
 $(RPM_BUILD_DIR):
 	mkdir -p $@
@@ -370,9 +386,9 @@ $(BUNDLE_CONGIG_FILE): $(RPM_BUILD_DIR)
 $(SPEC): $(SPEC).in
 	rm -f $@-t $@
 	date="$(shell LC_ALL=C date "+%a %b %d %Y")" && \
-	gitversion="$(shell git describe --abbrev=0 --tags)" && \
+	gitversion="$(GIT_LAST_TAG)" && \
 	numcommit=`git rev-list $$gitversion..HEAD | wc -l` && \
-	gitcommit="$(shell git rev-parse HEAD)" && \
+	gitcommit="$(GIT_COMMIT_HASH)" && \
 	sed \
 		-e "s#@VERSION@#$$gitversion#g" \
 		-e "s#@NUMCOMMIT@#$$numcommit#g" \

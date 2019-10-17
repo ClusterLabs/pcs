@@ -1,77 +1,124 @@
 image: fedora:latest
 
-pylint:
+stages:
+  - stage1
+  - stage2
+
+rpm_build:
+  stage: stage1
   script:
-    - "dnf install -y \
-        python3 \
-        python3-lxml \
-        python3-pip \
-        python3-pycurl \
-        python3-pyOpenSSL \
-        findutils \
-        make \
-        time \
-        which \
+    - "dnf install -y
+        dnf-plugins-core
+        git
+        make
+        rpm-build
+        rpmdevtools
+        sed
+        tar
+        wget
+        which
+      "
+    - make pcs.spec GIT_TAG=ci
+    - dnf builddep -y pcs.spec
+    - make rpm GIT_TAG=ci
+    - mkdir -p rpms
+    - cp $(find rpm_build  -type f -name '*.rpm' -not -name '*.src.rpm') rpms
+  artifacts:
+    expire_in: 1 week
+    paths:
+      - rpms
+
+pylint:
+  stage: stage1
+  script:
+    - "dnf install -y
+        python3
+        python3-lxml
+        python3-pip
+        python3-pycurl
+        python3-pyOpenSSL
+        findutils
+        make
+        time
+        which
       "
     - make pylint_requirements
     - make pylint
 
 mypy:
+  stage: stage1
   script:
-    - "dnf install -y \
-        python3 \
-        python3-lxml \
-        python3-pip \
-        python3-pycurl \
-        python3-pyOpenSSL \
-        git \
-        make \
-        tar \
-        time \
-        wget \
-        which \
+    - "dnf install -y
+        python3
+        python3-lxml
+        python3-pip
+        python3-pycurl
+        python3-pyOpenSSL
+        git
+        make
+        tar
+        time
+        wget
+        which
       "
     - make mypy_requirements
     - make mypy
 
-python_tests:
-  script:
-    - "dnf install -y \
-        python3 \
-        python3-lxml \
-        python3-mock \
-        python3-pip \
-        python3-pycurl \
-        python3-pyOpenSSL \
-        corosync \
-        pacemaker \
-        pacemaker-cli \
-        fence-agents-scsi \
-        fence-agents-apc \
-        fence-agents-ipmilan \
-        fence-virt \
-        booth-site \
-        "
-    - python3 -m pip install concurrencytest -r requirements.txt
-    - pcs_test/suite.py -v
-
 ruby_tests:
+  stage: stage1
   script:
-    - "dnf install -y \
-        ruby \
-        ruby-devel \
-        rubygem-bundler \
-        rubygem-backports \
-        rubygem-ethon \
-        rubygem-ffi \
-        rubygem-io-console \
-        rubygem-json \
-        rubygem-open4 \
-        rubygem-rack \
-        rubygem-rack-protection \
-        rubygem-rack-test \
-        rubygem-sinatra \
-        rubygem-tilt \
-        rubygem-test-unit \
+    - "dnf install -y
+        ruby
+        ruby-devel
+        rubygem-bundler
+        rubygem-backports
+        rubygem-ethon
+        rubygem-ffi
+        rubygem-io-console
+        rubygem-json
+        rubygem-open4
+        rubygem-rack
+        rubygem-rack-protection
+        rubygem-rack-test
+        rubygem-sinatra
+        rubygem-tilt
+        rubygem-test-unit
         "
     - /usr/bin/ruby -I ./pcsd -I ./pcsd/test pcsd/test/test_all_suite.rb
+
+python_tier0_tests:
+  stage: stage2
+  needs:
+    - rpm_build
+  script:
+    - "dnf install -y
+        python3-mock
+        python3-pip
+        fence-agents-scsi
+        fence-agents-apc
+        fence-agents-ipmilan
+        fence-virt
+        booth-site
+        rpms/pcs-ci-*.rpm
+        "
+    - python3 -m pip install concurrencytest
+    - rm -rf pcs pcsd # make sure we are testing installed package
+    - pcs_test/suite.py -v --installed
+
+python_smoke_tests:
+  stage: stage2
+  needs:
+    - rpm_build
+  script:
+    - "dnf install -y
+        passwd
+        procps-ng
+        rpms/pcs-ci-*.rpm
+      "
+    - /usr/sbin/pcsd & # start pcsd
+    - sleep 10 # wait for pcsd to start up properly
+    - pcs_test/smoke.sh
+  artifacts:
+    paths:
+      - /var/log/pcsd/
+    when: on_failure

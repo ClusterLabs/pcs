@@ -349,7 +349,7 @@ rm -r -v ${pcsd_dir}/public/js/dev
 %license tornado_LICENSE
 %license COPYING
 %{python3_sitelib}/pcs
-%{python3_sitelib}/pcs-%{version}-py3.*.egg-info
+%{python3_sitelib}/pcs-*.egg-info
 %{_sbindir}/pcs
 %{_sbindir}/pcsd
 %{pcs_libdir}/pcs/pcs_internal
