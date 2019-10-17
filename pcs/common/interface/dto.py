@@ -4,10 +4,9 @@ from typing import (
     Type,
     TypeVar,
 )
-from typing_extensions import Protocol
 
 
-class DataTransferObject(Protocol):
+class DataTransferObject:
     def to_dict(self) -> Mapping[str, Any]:
         raise NotImplementedError()
 
@@ -16,14 +15,14 @@ class DataTransferObject(Protocol):
         raise NotImplementedError()
 
 
-class ImplementsToDto(Protocol):
+class ImplementsToDto:
     def to_dto(self) -> DataTransferObject:
         raise NotImplementedError()
 
 
 T = TypeVar("T")
 
-class ImplementsFromDto(Protocol):
+class ImplementsFromDto:
     @classmethod
     def from_dto(cls: Type[T], dto_obj: DataTransferObject) -> T:
         raise NotImplementedError()

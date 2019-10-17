@@ -162,10 +162,10 @@ class ResourceRelationsFetcher:
                 rel.id: rel for rel in self._get_resource_relations(res_el)
             }
             resources[res_id] = RelationEntityDto(
-                id=res_id,
-                type=res_el.tag,
-                metadata=dict(res_el.attrib),
-                members=list(res_relations.keys()),
+                res_id,
+                res_el.tag,
+                list(res_relations.keys()),
+                dict(res_el.attrib),
             )
             relations.update(res_relations)
             resources_to_process.update(
@@ -237,13 +237,13 @@ def _get_inner_resources_relation(
 ) -> RelationEntityDto:
     attrs = parent_resource_el.attrib
     return RelationEntityDto(
-        id=INNER_RESOURCE_ID_TEMPLATE.format(attrs["id"]),
-        type=ResourceRelationType.INNER_RESOURCES,
-        members=[
+        INNER_RESOURCE_ID_TEMPLATE.format(attrs["id"]),
+        ResourceRelationType.INNER_RESOURCES,
+        [
             res.attrib["id"]
             for res in common.get_inner_resources(parent_resource_el)
         ],
-        metadata=dict(attrs),
+        dict(attrs),
     )
 
 
@@ -252,10 +252,10 @@ def _get_outer_resource_relation(
 ) -> RelationEntityDto:
     attrs = parent_resource_el.attrib
     return RelationEntityDto(
-        id=OUTER_RESOURCE_ID_TEMPLATE.format(attrs["id"]),
-        type=ResourceRelationType.OUTER_RESOURCE,
-        members=[attrs["id"]],
-        metadata=dict(attrs),
+        OUTER_RESOURCE_ID_TEMPLATE.format(attrs["id"]),
+        ResourceRelationType.OUTER_RESOURCE,
+        [attrs["id"]],
+        dict(attrs),
     )
 
 
@@ -264,10 +264,10 @@ def _get_ordering_constraint_relation(
 ) -> RelationEntityDto:
     attrs = ord_const_el.attrib
     return RelationEntityDto(
-        id=attrs["id"],
-        type=ResourceRelationType.ORDER,
-        members=[attrs["first"], attrs["then"]],
-        metadata=dict(attrs),
+        attrs["id"],
+        ResourceRelationType.ORDER,
+        [attrs["first"], attrs["then"]],
+        dict(attrs),
     )
 
 
@@ -291,8 +291,5 @@ def _get_ordering_set_constraint_relation(
             rsc_set["members"].append(rsc_id)
 
     return RelationEntityDto(
-        id=attrs["id"],
-        type=ResourceRelationType.ORDER_SET,
-        members=sorted(members),
-        metadata=metadata,
+        attrs["id"], ResourceRelationType.ORDER_SET, sorted(members), metadata
     )

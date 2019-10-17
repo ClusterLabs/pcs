@@ -1,12 +1,13 @@
 from enum import auto
 from typing import (
+    cast,
     Any,
     Mapping,
-    NamedTuple,
     Sequence,
     Union,
 )
 
+from pcs.common.interface.dto import DataTransferObject
 from pcs.common.tools import AutoNameEnum
 
 
@@ -17,11 +18,28 @@ class ResourceRelationType(AutoNameEnum):
     OUTER_RESOURCE = auto()
 
 
-class RelationEntityDto(NamedTuple):
-    id: str
-    type: Union[ResourceRelationType, str]
-    members: Sequence[str]
-    metadata: Mapping[str, Any]
+class RelationEntityDto(DataTransferObject):
+    # Note: mypy doesn't understand recursive NamedTuple types, therefore this
+    # class cannot inherit NamedTuple
+    def __init__(
+        self,
+        id_: str,
+        type_: Union[ResourceRelationType, str],
+        members: Sequence[str],
+        metadata: Mapping[str, Any],
+    ):
+        # pylint: disable=invalid-name
+        self.id = id_
+        self.type = type_
+        self.members = members
+        self.metadata = metadata
+
+    def __eq__(self, other: object) -> bool:
+        return (
+            isinstance(other, self.__class__)
+            and
+            self.to_dict() == cast(RelationEntityDto, other).to_dict()
+        )
 
     def to_dict(self) -> Mapping[str, Any]:
         return dict(
@@ -48,7 +66,7 @@ class RelationEntityDto(NamedTuple):
         )
 
 
-class ResourceRelationDto:
+class ResourceRelationDto(DataTransferObject):
     # Note: mypy doesn't understand recursive NamedTuple types, therefore this
     # class cannot inherit NamedTuple
     def __init__(

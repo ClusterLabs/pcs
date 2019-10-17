@@ -90,12 +90,12 @@ class ResourcePrintableNode(ResourceRelationBase):
                 _type: value for value, _type in enumerate(type_priorities)
             }
             return "{_type}_{_id}".format(
-                _type=priority_map.get( # type: ignore
+                _type=priority_map.get(
                     # Hardcoded number 9 is intentional. If there is more than
                     # 10 items, it would be required to also prepend zeros for
                     # lower numbers. E.g: if there is 100 options, it should
                     # starts as 000, 001, ...
-                    item.relation_entity.type, 9
+                    item.relation_entity.type, 9 # type: ignore
                 ),
                 _id=item.relation_entity.id
             )

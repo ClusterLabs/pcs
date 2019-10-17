@@ -1,8 +1,7 @@
 from typing import Sequence
-from typing_extensions import Protocol
 
 
-class PrintableTreeNode(Protocol):
+class PrintableTreeNode:
     @property
     def members(self) -> Sequence["PrintableTreeNode"]:
         raise NotImplementedError()
