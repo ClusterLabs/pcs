@@ -65,6 +65,7 @@ class MockLibraryReportProcessor(LibraryReportProcessorToConsole):
 
 
 class MockCurl:
+    # pylint: disable=too-many-instance-attributes
     def __init__(
             self, info=None, output=b"", debug_output_list=None, exception=None,
             error=None, request=None

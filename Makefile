@@ -312,7 +312,7 @@ install_pip: requirements.txt
 pylint_requirements: install_pip
 
 pylint:
-	time ./run_pylint.sh
+	time $(PYTHON) -m pylint --rcfile pylintrc --persistent=n --reports=n --score=n --disable similarities pcs pcs_test
 
 get_lxml_stubs:
 	mkdir -p $(BUNDLE_LOCAL_DIR)/stubs
