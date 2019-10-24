@@ -6,6 +6,7 @@ from pcs.cli.common.parse_args import(
     prepare_options,
     prepare_options_allowed,
     split_list,
+    split_option,
     filter_out_non_option_negative_numbers,
     filter_out_options,
     is_num,
@@ -324,6 +325,40 @@ class SplitByKeywords(TestCase):
                 "first": [3],
             }
         )
+
+
+class SplitOption(TestCase):
+    def test_no_eq_char(self):
+        arg = "option1"
+        with self.assertRaisesRegex(
+            CmdLineInputError, f"missing value of '{arg}' option"
+        ):
+            split_option(arg)
+
+    def test_no_option_name(self):
+        arg = "=value1"
+        with self.assertRaisesRegex(
+            CmdLineInputError, f"missing key in '{arg}' option"
+        ):
+            split_option(arg)
+
+    def test_no_option_value_not_allowed(self):
+        arg = "option1"
+        with self.assertRaisesRegex(
+            CmdLineInputError, f"value of '{arg}' option is empty"
+        ):
+            split_option(f"{arg}=", allow_empty_value=False)
+
+    def test_no_option_value_allowed(self):
+        self.assertEqual(("option1", ""), split_option("option1="))
+
+    def test_multiple_eq_char(self):
+        self.assertEqual(
+            ("option1", "value2=value1"), split_option("option1=value2=value1")
+        )
+
+    def test_ok(self):
+        self.assertEqual(("option1", "value2"), split_option("option1=value2"))
 
 
 class ParseTypedArg(TestCase):

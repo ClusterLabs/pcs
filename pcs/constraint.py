@@ -194,7 +194,10 @@ def colocation_add(lib, argv, modifiers):
             return SCORE_INFINITY, []
         score = SCORE_INFINITY if "=" in argv[0] else argv.pop(0)
         # create a list of 2-tuples (name, value)
-        arg_array = [parse_args.split_option(arg) for arg in argv]
+        arg_array = [
+            parse_args.split_option(arg, allow_empty_value=False)
+            for arg in argv
+        ]
         return score, arg_array
 
     def _validate_and_prepare_role(role):
@@ -445,7 +448,7 @@ def _order_add(resource1, resource2, options_list, modifiers):
         elif arg == "nonsymmetrical":
             sym = "false"
         else:
-            name, value = parse_args.split_option(arg)
+            name, value = parse_args.split_option(arg, allow_empty_value=False)
             if name == "id":
                 id_valid, id_error = utils.validate_xml_id(
                     value,
