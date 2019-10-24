@@ -6,6 +6,8 @@
 - Do not generate custom DH key if it was not requested by setting its custom
   length ([rhbz#1760434])
 - Documentation of `pcs constraint colocation add` ([rhbz#1500012])
+- Empty constraint option are not allowed in `pcs constraint order` and `pcs
+  constraint colocation add` commands ([rhbz#1500012])
 
 [rhbz#1500012]: https://bugzilla.redhat.com/show_bug.cgi?id=1500012
 [rhbz#1760434]: https://bugzilla.redhat.com/show_bug.cgi?id=1760434

@@ -46,7 +46,7 @@ def split_list(arg_list, separator):
     bounds = zip([0]+[i+1 for i in separator_indexes], separator_indexes+[None])
     return [arg_list[i:j] for i, j in bounds]
 
-def split_option(arg):
+def split_option(arg, allow_empty_value=True):
     """
     Get (key, value) from a key=value commandline argument.
 
@@ -54,12 +54,17 @@ def split_option(arg):
     CmdLineInputError if the argument cannot be splitted.
 
     string arg -- commandline argument
+    allow_empty_value -- if True, empty value is allowed. Otherwise,
+        CmdLineInputError exception is raised
     """
     if "=" not in arg:
         raise CmdLineInputError("missing value of '{0}' option".format(arg))
     if arg.startswith("="):
         raise CmdLineInputError("missing key in '{0}' option".format(arg))
-    return arg.split("=", 1)
+    key, value = arg.split("=", 1)
+    if not (value or allow_empty_value):
+        raise CmdLineInputError("value of '{0}' option is empty".format(key))
+    return key, value
 
 def prepare_options(cmdline_args):
     """return dictionary of options from commandline key=value args"""

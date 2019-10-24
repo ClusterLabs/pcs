@@ -262,6 +262,11 @@ Ticket Constraints:
         ac(o,"Location Constraints:\nOrdering Constraints:\n  stop D1 then stop D2 (kind:Mandatory) (id:order-D1-D2-mandatory)\n  start D1 then start D2 (kind:Mandatory) (id:order-D1-D2-mandatory-1)\nColocation Constraints:\nTicket Constraints:\n")
         assert r == 0
 
+    def test_order_options_empty_value(self):
+        o, r = pcs("constraint order D1 then D2 option1=")
+        self.assertIn("value of 'option1' option is empty", o)
+        self.assertEqual(r, 1)
+
     def test_order_too_many_resources(self):
         msg = (
             "Error: Multiple 'then's cannot be specified.\n"
@@ -525,6 +530,10 @@ Ticket Constraints:
         self.assertIn(msg, o)
         self.assertEqual(r, 1)
 
+    def test_colocation_options_empty_value(self):
+        o, r = pcs("constraint colocation add D1 with D2 option1=")
+        self.assertIn("value of 'option1' option is empty", o)
+        self.assertEqual(r, 1)
 
     def testColocationSets(self):
         # see also BundleColocation
