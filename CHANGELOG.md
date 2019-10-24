@@ -25,6 +25,7 @@
   which is not recognized by pcs ([rhbz#1712347])
 - It is now possible to authenticate remote clusters in web UI even if the local
   cluster is not authenticated ([rhbz#1743735])
+- Documentation of `pcs constraint colocation add` ([rhbz#1734361])
 
 [rhbz#1442116]: https://bugzilla.redhat.com/show_bug.cgi?id=1442116
 [rhbz#1631514]: https://bugzilla.redhat.com/show_bug.cgi?id=1631514
@@ -33,6 +34,7 @@
 [rhbz#1698763]: https://bugzilla.redhat.com/show_bug.cgi?id=1698763
 [rhbz#1712347]: https://bugzilla.redhat.com/show_bug.cgi?id=1712347
 [rhbz#1728890]: https://bugzilla.redhat.com/show_bug.cgi?id=1728890
+[rhbz#1734361]: https://bugzilla.redhat.com/show_bug.cgi?id=1734361
 [rhbz#1743735]: https://bugzilla.redhat.com/show_bug.cgi?id=1743735
 
 
