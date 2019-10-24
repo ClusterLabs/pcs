@@ -562,8 +562,8 @@ Remove resource from any ordering constraint
 colocation [show] [\fB\-\-full\fR]
 List all current colocation constraints (if \fB\-\-full\fR is specified show the internal constraint id's as well).
 .TP
-colocation add [master|slave] <source resource id> with [master|slave] <target resource id> [score] [options] [id=constraint\-id]
-Request <source resource> to run on the same node where pacemaker has determined <target resource> should run.  Positive values of score mean the resources should be run on the same node, negative values mean the resources should not be run on the same node.  Specifying 'INFINITY' (or '\-INFINITY') for the score forces <source resource> to run (or not run) with <target resource> (score defaults to "INFINITY").  A role can be master or slave (if no role is specified, it defaults to 'started').
+colocation add [<role>] <source resource id> with [<role>] <target resource id> [score] [options] [id=constraint\-id]
+Request <source resource> to run on the same node where pacemaker has determined <target resource> should run.  Positive values of score mean the resources should be run on the same node, negative values mean the resources should not be run on the same node.  Specifying 'INFINITY' (or '\-INFINITY') for the score forces <source resource> to run (or not run) with <target resource> (score defaults to "INFINITY"). A role can be: 'Master', 'Slave', 'Started', 'Stopped' (if no role is specified, it defaults to 'Started').
 .TP
 colocation set <resource1> [resourceN]... [options] [set <resourceX> ... [options]] [setoptions [constraint_options]]
 Create a colocation constraint with a resource set. Available options are sequential=true/false and role=Stopped/Started/Master/Slave. Available constraint_options are id and either of: score, score\-attribute, score\-attribute\-mangle.

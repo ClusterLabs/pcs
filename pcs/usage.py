@@ -1200,7 +1200,7 @@ Commands:
         List all current colocation constraints (if --full is specified show
         the internal constraint id's as well).
 
-    colocation add [master|slave] <source resource id> with [master|slave]
+    colocation add [<role>] <source resource id> with [<role>]
                    <target resource id> [score] [options] [id=constraint-id]
         Request <source resource> to run on the same node where pacemaker has
         determined <target resource> should run.  Positive values of score
@@ -1208,8 +1208,8 @@ Commands:
         mean the resources should not be run on the same node.  Specifying
         'INFINITY' (or '-INFINITY') for the score forces <source resource> to
         run (or not run) with <target resource> (score defaults to "INFINITY").
-        A role can be master or slave (if no role is specified, it defaults to
-        'started').
+        A role can be: 'Master', 'Slave', 'Started', 'Stopped' (if no role is
+        specified, it defaults to 'Started').
 
     colocation set <resource1> [resourceN]... [options]
                [set <resourceX> ... [options]]
