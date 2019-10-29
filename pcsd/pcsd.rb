@@ -45,7 +45,7 @@ class RemoveServerHeaderMiddleware
 
   def call(env)
     status, headers, body = @app.call(env)
-    headers.delete('Server')
+    headers['Server'] = ''
     [status, headers, body]
   end
 end
