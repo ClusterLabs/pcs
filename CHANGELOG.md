@@ -9,8 +9,12 @@
 - Empty constraint option are not allowed in `pcs constraint order` and `pcs
   constraint colocation add` commands ([rhbz#1500012])
 
+### Changed
+- Pcsd no longer sends Server HTTP header ([rhbz#1765606])
+
 [rhbz#1500012]: https://bugzilla.redhat.com/show_bug.cgi?id=1500012
 [rhbz#1760434]: https://bugzilla.redhat.com/show_bug.cgi?id=1760434
+[rhbz#1765606]: https://bugzilla.redhat.com/show_bug.cgi?id=1765606
 
 
 ## [0.9.168] - 2019-08-02

@@ -38,8 +38,21 @@ class HstsMiddleware
   end
 end
 
+class RemoveServerHeaderMiddleware
+  def initialize(app)
+    @app = app
+  end
+
+  def call(env)
+    status, headers, body = @app.call(env)
+    headers.delete('Server')
+    [status, headers, body]
+  end
+end
+
 use Rack::CommonLogger
 use HstsMiddleware
+use RemoveServerHeaderMiddleware
 
 set :app_file, __FILE__
 
