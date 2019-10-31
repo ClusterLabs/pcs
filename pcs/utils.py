@@ -474,8 +474,10 @@ def sendHTTPRequest(
     if port is None:
         port = settings.pcsd_default_port
     url = "https://{host}:{port}/{request}".format(
-        host=host, request=request, port=port
-    )
+        host="[{0}]".format(host) if ":" in host else host,
+        request=request,
+        port=port
+     )
     if "--debug" in pcs_options:
         print("Sending HTTP Request to: " + url)
         print("Data: {0}".format(data))

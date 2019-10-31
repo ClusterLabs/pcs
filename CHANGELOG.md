@@ -8,6 +8,8 @@
 - Documentation of `pcs constraint colocation add` ([rhbz#1500012])
 - Empty constraint option are not allowed in `pcs constraint order` and `pcs
   constraint colocation add` commands ([rhbz#1500012])
+- Fixed an issue where some pcs commands could not connect to cluster nodes
+  over IPv6
 
 ### Changed
 - Pcsd no longer sends Server HTTP header ([rhbz#1765606])
