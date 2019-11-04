@@ -28,6 +28,7 @@
 - Documentation of `pcs constraint colocation add` ([rhbz#1734361])
 - Empty constraint option are not allowed in `pcs constraint order` and `pcs
   constraint colocation add` commands ([rhbz#1734361])
+- More fixes for the case when PATH environment variable is not set
 
 [rhbz#1442116]: https://bugzilla.redhat.com/show_bug.cgi?id=1442116
 [rhbz#1631514]: https://bugzilla.redhat.com/show_bug.cgi?id=1631514
