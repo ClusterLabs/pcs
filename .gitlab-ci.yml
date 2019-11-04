@@ -111,6 +111,7 @@ python_smoke_tests:
     - rpm_build
   script:
     - "dnf install -y
+        cracklib-dicts
         passwd
         procps-ng
         rpms/pcs-ci-*.rpm

@@ -2,7 +2,7 @@
 set -ex
 
 cluster_user=hacluster
-cluster_user_password=password
+cluster_user_password=qa57Jk27eP
 
 echo "${cluster_user_password}" | passwd --stdin $cluster_user;
 
