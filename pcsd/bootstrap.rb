@@ -63,7 +63,7 @@ end
 COROSYNC_QUORUMTOOL = COROSYNC_BINARIES + "corosync-quorumtool"
 
 if not defined? $cur_node_name
-  $cur_node_name = `hostname`.chomp
+  $cur_node_name = `/bin/hostname`.chomp
 end
 
 def configure_logger(log_device)

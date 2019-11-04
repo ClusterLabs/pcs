@@ -10,11 +10,14 @@
   constraint colocation add` commands ([rhbz#1500012])
 - Fixed an issue where some pcs commands could not connect to cluster nodes
   over IPv6
+- More fixes for the case when PATH environment variable is not set
+  ([rhbz#1671174])
 
 ### Changed
 - Pcsd no longer sends Server HTTP header ([rhbz#1765606])
 
 [rhbz#1500012]: https://bugzilla.redhat.com/show_bug.cgi?id=1500012
+[rhbz#1671174]: https://bugzilla.redhat.com/show_bug.cgi?id=1671174
 [rhbz#1760434]: https://bugzilla.redhat.com/show_bug.cgi?id=1760434
 [rhbz#1765606]: https://bugzilla.redhat.com/show_bug.cgi?id=1765606
 
