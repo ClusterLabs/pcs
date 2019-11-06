@@ -58,7 +58,7 @@ def fixture_master_xml(name, all_ops=True, meta_dict=None):
             [f'<meta_attributes id="{name}-master-meta_attributes">']
             +
             [
-                f'<nvpair id="{name}-master-meta_attributes-{key}"                   name="{key}" value="{val}"/>'
+                f'<nvpair id="{name}-master-meta_attributes-{key}" name="{key}" value="{val}"/>'
                 for key, val in meta_dict.items()
             ]
             +

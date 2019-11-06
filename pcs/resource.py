@@ -1871,13 +1871,22 @@ def resource_status(lib, argv, modifiers, stonith=False):
         else "NO resources configured"
     )
     for line in output.split('\n'):
-        if line == "No active resources":
+        if line == "No active resources": # some old pacemaker
             print(line)
             return
-        if line == "No resources":
+        if line in (
+            "  * No resources", # pacemaker >= 2.0.3
+            "No resources", # pacemaker < 2.0.3
+        ):
             print(no_resources_line)
             return
-        if line in ("Full list of resources:", "Active resources:"):
+        if line == "Full List of Resources:": # pacemaker >= 2.0.3
+            in_resources = True
+            continue
+        if line in (
+            "Full list of resources:", # pacemaker < 2.0.3
+            "Active resources:", # some old pacemaker
+        ):
             resources_header = True
             continue
         if line == "":

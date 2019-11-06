@@ -25,6 +25,7 @@ from pcs_test.tools.pcs_runner import (
 
 # pylint: disable=invalid-name, line-too-long, bad-whitespace, anomalous-backslash-in-string
 
+PCMK_2_0_3_PLUS = is_minimum_pacemaker_version(2, 0, 3)
 STONITH_TMP = rc("test_stonith")
 if not os.path.exists(STONITH_TMP):
     os.makedirs(STONITH_TMP)
@@ -513,103 +514,186 @@ class StonithTest(TestCase, AssertPcsMixin):
             "stonith level add 2 rh7-2 n2-apc1,n2-apc2,n2-apc3",
         ])
 
-        self.assert_pcs_success("stonith", outdent(
-            """\
-             n1-ipmi\t(stonith:fence_apc):\tStopped
-             n2-ipmi\t(stonith:fence_apc):\tStopped
-             n1-apc1\t(stonith:fence_apc):\tStopped
-             n1-apc2\t(stonith:fence_apc):\tStopped
-             n2-apc1\t(stonith:fence_apc):\tStopped
-             n2-apc2\t(stonith:fence_apc):\tStopped
-             n2-apc3\t(stonith:fence_apc):\tStopped
-             Target: rh7-1
-               Level 1 - n1-ipmi
-               Level 2 - n1-apc1,n1-apc2,n2-apc2
-             Target: rh7-2
-               Level 1 - n2-ipmi
-               Level 2 - n2-apc1,n2-apc2,n2-apc3
-            """
-        ))
+        if PCMK_2_0_3_PLUS:
+            self.assert_pcs_success("stonith", outdent(
+                """\
+                  * n1-ipmi\t(stonith:fence_apc):\t Stopped
+                  * n2-ipmi\t(stonith:fence_apc):\t Stopped
+                  * n1-apc1\t(stonith:fence_apc):\t Stopped
+                  * n1-apc2\t(stonith:fence_apc):\t Stopped
+                  * n2-apc1\t(stonith:fence_apc):\t Stopped
+                  * n2-apc2\t(stonith:fence_apc):\t Stopped
+                  * n2-apc3\t(stonith:fence_apc):\t Stopped
+                 Target: rh7-1
+                   Level 1 - n1-ipmi
+                   Level 2 - n1-apc1,n1-apc2,n2-apc2
+                 Target: rh7-2
+                   Level 1 - n2-ipmi
+                   Level 2 - n2-apc1,n2-apc2,n2-apc3
+                """
+            ))
+        else:
+            self.assert_pcs_success("stonith", outdent(
+                """\
+                 n1-ipmi\t(stonith:fence_apc):\tStopped
+                 n2-ipmi\t(stonith:fence_apc):\tStopped
+                 n1-apc1\t(stonith:fence_apc):\tStopped
+                 n1-apc2\t(stonith:fence_apc):\tStopped
+                 n2-apc1\t(stonith:fence_apc):\tStopped
+                 n2-apc2\t(stonith:fence_apc):\tStopped
+                 n2-apc3\t(stonith:fence_apc):\tStopped
+                 Target: rh7-1
+                   Level 1 - n1-ipmi
+                   Level 2 - n1-apc1,n1-apc2,n2-apc2
+                 Target: rh7-2
+                   Level 1 - n2-ipmi
+                   Level 2 - n2-apc1,n2-apc2,n2-apc3
+                """
+            ))
 
         self.assert_pcs_success(
             "stonith delete n2-apc2",
             "Deleting Resource - n2-apc2\n"
         )
 
-        self.assert_pcs_success("stonith", outdent(
-            """\
-             n1-ipmi\t(stonith:fence_apc):\tStopped
-             n2-ipmi\t(stonith:fence_apc):\tStopped
-             n1-apc1\t(stonith:fence_apc):\tStopped
-             n1-apc2\t(stonith:fence_apc):\tStopped
-             n2-apc1\t(stonith:fence_apc):\tStopped
-             n2-apc3\t(stonith:fence_apc):\tStopped
-             Target: rh7-1
-               Level 1 - n1-ipmi
-               Level 2 - n1-apc1,n1-apc2
-             Target: rh7-2
-               Level 1 - n2-ipmi
-               Level 2 - n2-apc1,n2-apc3
-            """
-        ))
+        if PCMK_2_0_3_PLUS:
+            self.assert_pcs_success("stonith", outdent(
+                """\
+                  * n1-ipmi\t(stonith:fence_apc):\t Stopped
+                  * n2-ipmi\t(stonith:fence_apc):\t Stopped
+                  * n1-apc1\t(stonith:fence_apc):\t Stopped
+                  * n1-apc2\t(stonith:fence_apc):\t Stopped
+                  * n2-apc1\t(stonith:fence_apc):\t Stopped
+                  * n2-apc3\t(stonith:fence_apc):\t Stopped
+                 Target: rh7-1
+                   Level 1 - n1-ipmi
+                   Level 2 - n1-apc1,n1-apc2
+                 Target: rh7-2
+                   Level 1 - n2-ipmi
+                   Level 2 - n2-apc1,n2-apc3
+                """
+            ))
+        else:
+            self.assert_pcs_success("stonith", outdent(
+                """\
+                 n1-ipmi\t(stonith:fence_apc):\tStopped
+                 n2-ipmi\t(stonith:fence_apc):\tStopped
+                 n1-apc1\t(stonith:fence_apc):\tStopped
+                 n1-apc2\t(stonith:fence_apc):\tStopped
+                 n2-apc1\t(stonith:fence_apc):\tStopped
+                 n2-apc3\t(stonith:fence_apc):\tStopped
+                 Target: rh7-1
+                   Level 1 - n1-ipmi
+                   Level 2 - n1-apc1,n1-apc2
+                 Target: rh7-2
+                   Level 1 - n2-ipmi
+                   Level 2 - n2-apc1,n2-apc3
+                """
+            ))
 
         self.assert_pcs_success(
             "stonith remove n2-apc1",
             "Deleting Resource - n2-apc1\n"
         )
 
-        self.assert_pcs_success("stonith", outdent(
-            """\
-             n1-ipmi\t(stonith:fence_apc):\tStopped
-             n2-ipmi\t(stonith:fence_apc):\tStopped
-             n1-apc1\t(stonith:fence_apc):\tStopped
-             n1-apc2\t(stonith:fence_apc):\tStopped
-             n2-apc3\t(stonith:fence_apc):\tStopped
-             Target: rh7-1
-               Level 1 - n1-ipmi
-               Level 2 - n1-apc1,n1-apc2
-             Target: rh7-2
-               Level 1 - n2-ipmi
-               Level 2 - n2-apc3
-            """
-        ))
+        if PCMK_2_0_3_PLUS:
+            self.assert_pcs_success("stonith", outdent(
+                """\
+                  * n1-ipmi\t(stonith:fence_apc):\t Stopped
+                  * n2-ipmi\t(stonith:fence_apc):\t Stopped
+                  * n1-apc1\t(stonith:fence_apc):\t Stopped
+                  * n1-apc2\t(stonith:fence_apc):\t Stopped
+                  * n2-apc3\t(stonith:fence_apc):\t Stopped
+                 Target: rh7-1
+                   Level 1 - n1-ipmi
+                   Level 2 - n1-apc1,n1-apc2
+                 Target: rh7-2
+                   Level 1 - n2-ipmi
+                   Level 2 - n2-apc3
+                """
+            ))
+        else:
+            self.assert_pcs_success("stonith", outdent(
+                """\
+                 n1-ipmi\t(stonith:fence_apc):\tStopped
+                 n2-ipmi\t(stonith:fence_apc):\tStopped
+                 n1-apc1\t(stonith:fence_apc):\tStopped
+                 n1-apc2\t(stonith:fence_apc):\tStopped
+                 n2-apc3\t(stonith:fence_apc):\tStopped
+                 Target: rh7-1
+                   Level 1 - n1-ipmi
+                   Level 2 - n1-apc1,n1-apc2
+                 Target: rh7-2
+                   Level 1 - n2-ipmi
+                   Level 2 - n2-apc3
+                """
+            ))
 
         self.assert_pcs_success(
             "stonith delete n2-apc3",
             "Deleting Resource - n2-apc3\n"
         )
 
-        self.assert_pcs_success("stonith", outdent(
-            """\
-             n1-ipmi\t(stonith:fence_apc):\tStopped
-             n2-ipmi\t(stonith:fence_apc):\tStopped
-             n1-apc1\t(stonith:fence_apc):\tStopped
-             n1-apc2\t(stonith:fence_apc):\tStopped
-             Target: rh7-1
-               Level 1 - n1-ipmi
-               Level 2 - n1-apc1,n1-apc2
-             Target: rh7-2
-               Level 1 - n2-ipmi
-            """
-        ))
+        if PCMK_2_0_3_PLUS:
+            self.assert_pcs_success("stonith", outdent(
+                """\
+                  * n1-ipmi\t(stonith:fence_apc):\t Stopped
+                  * n2-ipmi\t(stonith:fence_apc):\t Stopped
+                  * n1-apc1\t(stonith:fence_apc):\t Stopped
+                  * n1-apc2\t(stonith:fence_apc):\t Stopped
+                 Target: rh7-1
+                   Level 1 - n1-ipmi
+                   Level 2 - n1-apc1,n1-apc2
+                 Target: rh7-2
+                   Level 1 - n2-ipmi
+                """
+            ))
+        else:
+            self.assert_pcs_success("stonith", outdent(
+                """\
+                 n1-ipmi\t(stonith:fence_apc):\tStopped
+                 n2-ipmi\t(stonith:fence_apc):\tStopped
+                 n1-apc1\t(stonith:fence_apc):\tStopped
+                 n1-apc2\t(stonith:fence_apc):\tStopped
+                 Target: rh7-1
+                   Level 1 - n1-ipmi
+                   Level 2 - n1-apc1,n1-apc2
+                 Target: rh7-2
+                   Level 1 - n2-ipmi
+                """
+            ))
 
         self.assert_pcs_success(
             "resource remove n1-apc1",
             "Deleting Resource - n1-apc1\n"
         )
 
-        self.assert_pcs_success("stonith", outdent(
-            """\
-             n1-ipmi\t(stonith:fence_apc):\tStopped
-             n2-ipmi\t(stonith:fence_apc):\tStopped
-             n1-apc2\t(stonith:fence_apc):\tStopped
-             Target: rh7-1
-               Level 1 - n1-ipmi
-               Level 2 - n1-apc2
-             Target: rh7-2
-               Level 1 - n2-ipmi
-            """
-        ))
+        if PCMK_2_0_3_PLUS:
+            self.assert_pcs_success("stonith", outdent(
+                """\
+                  * n1-ipmi\t(stonith:fence_apc):\t Stopped
+                  * n2-ipmi\t(stonith:fence_apc):\t Stopped
+                  * n1-apc2\t(stonith:fence_apc):\t Stopped
+                 Target: rh7-1
+                   Level 1 - n1-ipmi
+                   Level 2 - n1-apc2
+                 Target: rh7-2
+                   Level 1 - n2-ipmi
+                """
+            ))
+        else:
+            self.assert_pcs_success("stonith", outdent(
+                """\
+                 n1-ipmi\t(stonith:fence_apc):\tStopped
+                 n2-ipmi\t(stonith:fence_apc):\tStopped
+                 n1-apc2\t(stonith:fence_apc):\tStopped
+                 Target: rh7-1
+                   Level 1 - n1-ipmi
+                   Level 2 - n1-apc2
+                 Target: rh7-2
+                   Level 1 - n2-ipmi
+                """
+            ))
 
         self.assert_pcs_success("resource delete n1-apc2", outdent(
             """\
@@ -617,16 +701,28 @@ class StonithTest(TestCase, AssertPcsMixin):
             """
         ))
 
-        self.assert_pcs_success("stonith", outdent(
-            """\
-             n1-ipmi\t(stonith:fence_apc):\tStopped
-             n2-ipmi\t(stonith:fence_apc):\tStopped
-             Target: rh7-1
-               Level 1 - n1-ipmi
-             Target: rh7-2
-               Level 1 - n2-ipmi
-            """
-        ))
+        if PCMK_2_0_3_PLUS:
+            self.assert_pcs_success("stonith", outdent(
+                """\
+                  * n1-ipmi\t(stonith:fence_apc):\t Stopped
+                  * n2-ipmi\t(stonith:fence_apc):\t Stopped
+                 Target: rh7-1
+                   Level 1 - n1-ipmi
+                 Target: rh7-2
+                   Level 1 - n2-ipmi
+                """
+            ))
+        else:
+            self.assert_pcs_success("stonith", outdent(
+                """\
+                 n1-ipmi\t(stonith:fence_apc):\tStopped
+                 n2-ipmi\t(stonith:fence_apc):\tStopped
+                 Target: rh7-1
+                   Level 1 - n1-ipmi
+                 Target: rh7-2
+                   Level 1 - n2-ipmi
+                """
+            ))
 
     def testNoStonithWarning(self):
         # pylint: disable=unused-variable
@@ -1111,15 +1207,25 @@ class LevelConfig(LevelTestsBase):
         self.fixture_full_configuration()
         self.assert_pcs_success("stonith level config", self.config)
         self.assert_pcs_success("stonith level", self.config)
-        self.assert_pcs_success(
-            "stonith",
-            outdent(
+        if PCMK_2_0_3_PLUS:
+            result = outdent(
+                """\
+                  * F1\t(stonith:fence_apc):\t Stopped
+                  * F2\t(stonith:fence_apc):\t Stopped
+                  * F3\t(stonith:fence_apc):\t Stopped
+                """
+            )
+        else:
+            result = outdent(
                 """\
                  F1\t(stonith:fence_apc):\tStopped
                  F2\t(stonith:fence_apc):\tStopped
                  F3\t(stonith:fence_apc):\tStopped
                 """
-            ) + "\n".join(indent(self.config_lines, 1)) + "\n"
+            )
+        self.assert_pcs_success(
+            "stonith",
+            result + "\n".join(indent(self.config_lines, 1)) + "\n"
         )
         self.pcs_runner.mock_settings["corosync_conf_file"] = rc(
             "corosync.conf"

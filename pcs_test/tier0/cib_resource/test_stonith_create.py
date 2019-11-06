@@ -1,5 +1,8 @@
 from pcs_test.tier0.cib_resource.common import ResourceTest
 from pcs_test.tier0.cib_resource.stonith_common import need_load_xvm_fence_agent
+from pcs_test.tools.misc import is_minimum_pacemaker_version
+
+PCMK_2_0_3_PLUS = is_minimum_pacemaker_version(2, 0, 3)
 
 class PlainStonith(ResourceTest):
     @need_load_xvm_fence_agent
@@ -46,18 +49,39 @@ class PlainStonith(ResourceTest):
         )
 
     def test_error_when_not_valid_agent(self):
-        self.assert_pcs_fail(
-            "stonith create S absent",
-            stdout_full=(
+        if PCMK_2_0_3_PLUS:
+            error = (
+                "Error: Agent 'absent' is not installed or does not provide "
+                "valid metadata: Metadata query for stonith:absent failed: "
+                "No such device, use --force to override\n"
+            )
+        else:
+            error = (
                 "Error: Agent 'absent' is not installed or does not provide "
                 "valid metadata: Agent absent not found or does not support "
                 "meta-data: Invalid argument (22)\n"
                 "Metadata query for stonith:absent failed: Input/output error, "
                 "use --force to override\n"
             )
+        self.assert_pcs_fail(
+            "stonith create S absent",
+            stdout_full=error
         )
 
     def test_warning_when_not_valid_agent(self):
+        if PCMK_2_0_3_PLUS:
+            error = (
+                "Warning: Agent 'absent' is not installed or does not provide "
+                "valid metadata: Metadata query for stonith:absent failed: "
+                "No such device\n"
+            )
+        else:
+            error = (
+                "Warning: Agent 'absent' is not installed or does not provide "
+                "valid metadata: Agent absent not found or does not support "
+                "meta-data: Invalid argument (22)\n"
+                "Metadata query for stonith:absent failed: Input/output error\n"
+            )
         self.assert_effect(
             "stonith create S absent --force",
             """<resources>
@@ -69,12 +93,7 @@ class PlainStonith(ResourceTest):
                     </operations>
                 </primitive>
             </resources>""",
-            output=(
-                "Warning: Agent 'absent' is not installed or does not provide "
-                "valid metadata: Agent absent not found or does not support "
-                "meta-data: Invalid argument (22)\n"
-                "Metadata query for stonith:absent failed: Input/output error\n"
-            )
+            output=error
         )
 
     @need_load_xvm_fence_agent

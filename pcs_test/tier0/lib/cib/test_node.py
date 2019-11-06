@@ -201,11 +201,20 @@ class EnsureNodeExists(TestCase):
         self.nodes.append(self.node1)
 
         self.state = ClusterState("""
-            <crm_mon version="1.1.15">
+            <crm_mon version="2.0.3">
                 <summary>
+                    <stack type="corosync" />
                     <current_dc present="true" />
+                    <last_update time="Wed Nov  6 13:45:41 2019" />
+                    <last_change time="Wed Nov  6 10:42:54 2019"
+                        user="hacluster" client="crmd" origin="node1"
+                    />
                     <nodes_configured number="2" />
-                    <resources_configured number="0" />
+                    <resources_configured number="0" disabled="0" blocked="0" />
+                    <cluster_options stonith-enabled="true"
+                        symmetric-cluster="true" no-quorum-policy="stop"
+                        maintenance-mode="false"
+                    />
                 </summary>
                 <nodes>
                     <node name="name-test1" id="1" online="true" standby="false"

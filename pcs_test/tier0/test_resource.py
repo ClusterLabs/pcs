@@ -21,6 +21,7 @@ from pcs_test.tools.fixture_cib import (
 from pcs_test.tools.misc import (
     dict_to_modifiers,
     get_test_resource as rc,
+    is_minimum_pacemaker_version,
     outdent,
     skip_unless_pacemaker_supports_bundle,
     skip_unless_crm_rule,
@@ -42,6 +43,8 @@ from pcs.constraint import LOCATION_NODE_VALIDATION_SKIP_MSG
 # pylint: disable=too-many-public-methods
 # pylint: disable=redefined-outer-name
 # pylint: disable=too-many-statements
+
+PCMK_2_0_3_PLUS = is_minimum_pacemaker_version(2, 0, 3)
 
 LOCATION_NODE_VALIDATION_SKIP_WARNING = (
     f"Warning: {LOCATION_NODE_VALIDATION_SKIP_MSG}\n"
@@ -949,7 +952,15 @@ monitor interval=20 (A-monitor-interval-20)
 
         o,r = pcs(temp_cib, "resource status")
         assert r == 0
-        ac(o,"""\
+        if PCMK_2_0_3_PLUS:
+            ac(o,"""\
+  * Resource Group: AGroup:
+    * A1\t(ocf::heartbeat:Dummy):\t Stopped
+    * A2\t(ocf::heartbeat:Dummy):\t Stopped
+    * A3\t(ocf::heartbeat:Dummy):\t Stopped
+""")
+        else:
+            ac(o,"""\
  Resource Group: AGroup
      A1\t(ocf::heartbeat:Dummy):\tStopped
      A2\t(ocf::heartbeat:Dummy):\tStopped
@@ -1196,7 +1207,23 @@ monitor interval=20 (A-monitor-interval-20)
 
         output, returnVal = pcs(temp_cib, "resource")
         assert returnVal == 0
-        ac(output, """\
+        if PCMK_2_0_3_PLUS:
+            ac(output, """\
+  * F\t(ocf::heartbeat:Dummy):\t Stopped
+  * G\t(ocf::heartbeat:Dummy):\t Stopped
+  * H\t(ocf::heartbeat:Dummy):\t Stopped
+  * Resource Group: RGA:
+    * A\t(ocf::heartbeat:Dummy):\t Stopped
+    * B\t(ocf::heartbeat:Dummy):\t Stopped
+    * C\t(ocf::heartbeat:Dummy):\t Stopped
+    * E\t(ocf::heartbeat:Dummy):\t Stopped
+    * D\t(ocf::heartbeat:Dummy):\t Stopped
+    * K\t(ocf::heartbeat:Dummy):\t Stopped
+    * J\t(ocf::heartbeat:Dummy):\t Stopped
+    * I\t(ocf::heartbeat:Dummy):\t Stopped
+""")
+        else:
+            ac(output, """\
  F\t(ocf::heartbeat:Dummy):\tStopped
  G\t(ocf::heartbeat:Dummy):\tStopped
  H\t(ocf::heartbeat:Dummy):\tStopped
@@ -1976,7 +2003,14 @@ monitor interval=20 (A-monitor-interval-20)
         assert r == 0
 
         o,r = pcs(temp_cib, "resource")
-        ac(o,"""\
+        if PCMK_2_0_3_PLUS:
+            ac(o,"""\
+  * Resource Group: AG:
+    * D1\t(ocf::heartbeat:Dummy):\t Stopped
+  * Clone Set: D0-clone [D0]:
+""")
+        else:
+            ac(o,"""\
  Resource Group: AG
      D1\t(ocf::heartbeat:Dummy):\tStopped
  Clone Set: D0-clone [D0]
@@ -1988,7 +2022,10 @@ monitor interval=20 (A-monitor-interval-20)
         assert r == 0
 
         o,r = pcs(temp_cib, "resource")
-        ac(o," Clone Set: D0-clone [D0]\n Clone Set: D1-clone [D1]\n")
+        if PCMK_2_0_3_PLUS:
+            ac(o,"  * Clone Set: D0-clone [D0]:\n  * Clone Set: D1-clone [D1]:\n")
+        else:
+            ac(o," Clone Set: D0-clone [D0]\n Clone Set: D1-clone [D1]\n")
         assert r == 0
 
     def testPromotableGroupMember(self):
@@ -2245,7 +2282,10 @@ monitor interval=20 (A-monitor-interval-20)
 
         o,r = pcs(temp_cib, "resource status")
         assert r == 0
-        ac(o," Clone Set: DGroup-clone [DGroup]\n")
+        if PCMK_2_0_3_PLUS:
+            ac(o,"  * Clone Set: DGroup-clone [DGroup]:\n")
+        else:
+            ac(o," Clone Set: DGroup-clone [DGroup]\n")
 
         o,r = pcs(temp_cib, "resource clone DGroup")
         ac(o,"Error: cannot clone a group that has already been cloned\n")
@@ -2307,7 +2347,14 @@ monitor interval=20 (A-monitor-interval-20)
 
         o,r = pcs(temp_cib, "resource status")
         assert r == 0
-        ac(o,"""\
+        if PCMK_2_0_3_PLUS:
+            ac(o,"""\
+  * Resource Group: DGroup:
+    * D1\t(ocf::heartbeat:Dummy):\t Stopped
+    * D2\t(ocf::heartbeat:Dummy):\t Stopped
+""")
+        else:
+            ac(o,"""\
  Resource Group: DGroup
      D1\t(ocf::heartbeat:Dummy):\tStopped
      D2\t(ocf::heartbeat:Dummy):\tStopped
@@ -3512,14 +3559,24 @@ Error: role must be: Stopped, Started, Slave or Master (use --force to override)
         ac(output, "")
         assert retVal == 0
         output, retVal = pcs(temp_cib, "resource status")
-        ac(output, outdent(
-            """\
-             Resource Group: dummies
-                 dummy1\t(ocf::heartbeat:Dummy):\tStopped
-                 dummy2\t(ocf::heartbeat:Dummy):\tStopped
-                 dummy3\t(ocf::heartbeat:Dummy):\tStopped
-            """
-        ))
+        if PCMK_2_0_3_PLUS:
+            ac(output, outdent(
+                """\
+                  * Resource Group: dummies:
+                    * dummy1\t(ocf::heartbeat:Dummy):\t Stopped
+                    * dummy2\t(ocf::heartbeat:Dummy):\t Stopped
+                    * dummy3\t(ocf::heartbeat:Dummy):\t Stopped
+                """
+            ))
+        else:
+            ac(output, outdent(
+                """\
+                 Resource Group: dummies
+                     dummy1\t(ocf::heartbeat:Dummy):\tStopped
+                     dummy2\t(ocf::heartbeat:Dummy):\tStopped
+                     dummy3\t(ocf::heartbeat:Dummy):\tStopped
+                """
+            ))
         assert retVal == 0
 
         output, retVal = pcs(temp_cib, "resource clone dummies")
@@ -3594,14 +3651,24 @@ Error: role must be: Stopped, Started, Slave or Master (use --force to override)
         ac(output, "")
         assert retVal == 0
         output, retVal = pcs(temp_cib, "resource status")
-        ac(output, outdent(
-            """\
-             Resource Group: dummies
-                 dummy1\t(ocf::heartbeat:Dummy):\tStopped
-                 dummy2\t(ocf::heartbeat:Dummy):\tStopped
-                 dummy3\t(ocf::heartbeat:Dummy):\tStopped
-            """
-        ))
+        if PCMK_2_0_3_PLUS:
+            ac(output, outdent(
+                """\
+                  * Resource Group: dummies:
+                    * dummy1\t(ocf::heartbeat:Dummy):\t Stopped
+                    * dummy2\t(ocf::heartbeat:Dummy):\t Stopped
+                    * dummy3\t(ocf::heartbeat:Dummy):\t Stopped
+                """
+            ))
+        else:
+            ac(output, outdent(
+                """\
+                 Resource Group: dummies
+                     dummy1\t(ocf::heartbeat:Dummy):\tStopped
+                     dummy2\t(ocf::heartbeat:Dummy):\tStopped
+                     dummy3\t(ocf::heartbeat:Dummy):\tStopped
+                """
+            ))
         assert retVal == 0
 
         # pcs no longer allows turning resources into masters but supports
