@@ -1,5 +1,7 @@
 import os
-from unittest import TestCase
+from unittest import mock, TestCase
+
+from OpenSSL import SSL
 
 from pcs_test.tools.misc import get_test_resource as rc
 
@@ -60,16 +62,14 @@ class Pair(TestCase):
             ]
         )
 
-    def test_error_if_short_key(self):
-        # The key length must be big enough for the key to get generated (avoid
-        # OpenSSL.crypto.Error: [('rsa routines', 'rsa_builtin_keygen', 'key
-        # size too small')]) and small enough for SSL to complain about it.
-        # Currently, 1024 works fine with FIPS both enabled and disabled.
+    @mock.patch("pcs.daemon.ssl.SSL.Context.use_privatekey")
+    def test_error_if_short_key(self, mock_use_key):
+        mock_use_key.side_effect = SSL.Error("reason")
         self.pair.regenerate(SERVER_NAME, 1024)
         errors = self.pair.check()
-        self.assertEqual(len(errors), 1)
-        self.assertTrue(
-            errors[0].startswith("Unable to load SSL certificate and/or key:")
+        self.assertEqual(
+            errors,
+            ["Unable to load SSL certificate and/or key: reason"]
         )
 
     def test_error_if_cert_does_not_match_key(self):
