@@ -664,7 +664,7 @@ class InputModifiersTest(TestCase):
         with self.assertRaises(CmdLineInputError) as cm:
             self.ensure("a", "e")
         self.assertEqual(
-            "Specified options 'e' are not supported in this command",
+            "Specified option 'e' is not supported in this command",
             cm.exception.message
         )
 

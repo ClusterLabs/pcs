@@ -902,7 +902,7 @@ class AddLink(TestCase):
             )
         self.assertEqual(
             (
-                "Specified options '--corosync_conf' are not supported "
+                "Specified option '--corosync_conf' is not supported "
                 "in this command"
             ),
             cm.exception.message
@@ -930,7 +930,7 @@ class AddLink(TestCase):
                 {"start": True}
             )
         self.assertEqual(
-            "Specified options '--start' are not supported in this command",
+            "Specified option '--start' is not supported in this command",
             cm.exception.message
         )
 
@@ -986,7 +986,7 @@ class RemoveLink(TestCase):
             self.call_cmd(["1"], {"corosync_conf": "/tmp/corosync.conf"})
         self.assertEqual(
             (
-                "Specified options '--corosync_conf' are not supported "
+                "Specified option '--corosync_conf' is not supported "
                 "in this command"
             ),
             cm.exception.message
@@ -1009,7 +1009,7 @@ class RemoveLink(TestCase):
         with self.assertRaises(CmdLineInputError) as cm:
             self.call_cmd(["1"], {"start": True})
         self.assertEqual(
-            "Specified options '--start' are not supported in this command",
+            "Specified option '--start' is not supported in this command",
             cm.exception.message
         )
 
@@ -1208,7 +1208,7 @@ class UpdateLink(TestCase):
             )
         self.assertEqual(
             (
-                "Specified options '--corosync_conf' are not supported "
+                "Specified option '--corosync_conf' is not supported "
                 "in this command"
             ),
             cm.exception.message
@@ -1237,6 +1237,6 @@ class UpdateLink(TestCase):
                 {"start": True}
             )
         self.assertEqual(
-            "Specified options '--start' are not supported in this command",
+            "Specified option '--start' is not supported in this command",
             cm.exception.message
         )

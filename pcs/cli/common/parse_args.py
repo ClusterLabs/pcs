@@ -1,4 +1,4 @@
-from pcs.cli.common.console_report import format_list
+from pcs.cli.common.console_report import format_list, format_plural
 from pcs.cli.common.errors import (
     CmdLineInputError,
     HINT_SYNTAX_CHANGE,
@@ -414,9 +414,13 @@ class InputModifiers():
             self._defined_options - set(supported_options) - set(["--debug"])
         )
         if unsupported_options:
+            pluralize = lambda word: format_plural(unsupported_options, word)
             raise CmdLineInputError(
-                "Specified options {} are not supported in this command".format(
-                    format_list(sorted(unsupported_options))
+                "Specified {option} {option_list} {_is} not supported in this "
+                "command".format(
+                    option=pluralize("option"),
+                    option_list=format_list(sorted(unsupported_options)),
+                    _is=pluralize("is"),
                 ),
                 # Print error messages which point users to the changes section
                 # in pcs manpage.
