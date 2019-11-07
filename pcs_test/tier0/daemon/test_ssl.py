@@ -64,8 +64,8 @@ class Pair(TestCase):
         # The key length must be big enough for the key to get generated (avoid
         # OpenSSL.crypto.Error: [('rsa routines', 'rsa_builtin_keygen', 'key
         # size too small')]) and small enough for SSL to complain about it.
-        # Currently, 512 works fine.
-        self.pair.regenerate(SERVER_NAME, 512)
+        # Currently, 1024 works fine with FIPS both enabled and disabled.
+        self.pair.regenerate(SERVER_NAME, 1024)
         errors = self.pair.check()
         self.assertEqual(len(errors), 1)
         self.assertTrue(
