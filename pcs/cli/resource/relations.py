@@ -29,8 +29,9 @@ def show_resource_relations_cmd(
     """
     Options:
       * -f - CIB file
+      * --full - show constraint ids and resource types
     """
-    modifiers.ensure_only_supported("-f")
+    modifiers.ensure_only_supported("-f", "--full")
     if len(argv) != 1:
         raise CmdLineInputError()
     tree = ResourcePrintableNode.from_dto(
@@ -38,7 +39,7 @@ def show_resource_relations_cmd(
             lib.resource.get_resource_relations_tree(argv[0])
         )
     )
-    for line in tree_to_lines(tree):
+    for line in tree_to_lines(tree, verbose=modifiers.get("--full")):
         print(line)
 
 
@@ -69,9 +70,9 @@ class ResourceRelationBase(PrintableTreeNode):
     def detail(self) -> Sequence[str]:
         raise NotImplementedError()
 
-    @property
-    def title(self) -> str:
+    def get_title(self, verbose: bool) -> str:
         raise NotImplementedError()
+
 
 
 class ResourcePrintableNode(ResourceRelationBase):
@@ -112,8 +113,7 @@ class ResourcePrintableNode(ResourceRelationBase):
             resource_dto.is_leaf
         )
 
-    @property
-    def title(self) -> str:
+    def get_title(self, verbose: bool) -> str:
         rsc_type = self._relation_entity.type
         metadata = self._relation_entity.metadata
         if rsc_type == "primitive":
@@ -122,7 +122,8 @@ class ResourcePrintableNode(ResourceRelationBase):
                 _provider=format_optional(metadata.get("provider"), "{}:"),
                 _type=metadata.get("type"),
             )
-        return f"{self._relation_entity.id} (resource: {rsc_type})"
+        detail = f" (resource: {rsc_type})" if verbose else ""
+        return f"{self._relation_entity.id}{detail}"
 
     @property
     def detail(self) -> Sequence[str]:
@@ -146,17 +147,21 @@ class RelationPrintableNode(ResourceRelationBase):
             relation_dto.is_leaf
         )
 
-    @property
-    def title(self) -> str:
+    def get_title(self, verbose: bool) -> str:
         rel_type_map: Mapping[Union[str, ResourceRelationType], str] = {
             ResourceRelationType.ORDER: "order",
             ResourceRelationType.ORDER_SET: "order set",
             ResourceRelationType.INNER_RESOURCES: "inner resource(s)",
             ResourceRelationType.OUTER_RESOURCE: "outer resource",
         }
-        return "{type} ({id})".format(
+        detail = (
+            " ({})".format(self._relation_entity.metadata.get("id"))
+            if verbose
+            else ""
+        )
+        return "{type}{detail}".format(
             type=rel_type_map.get(self._relation_entity.type, "<unknown>"),
-            id=self._relation_entity.metadata.get("id"),
+            detail=detail,
         )
 
     @property

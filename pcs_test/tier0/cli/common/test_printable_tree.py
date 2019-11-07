@@ -10,6 +10,10 @@ class Node:
         self.is_leaf = is_leaf
         self.members = members
 
+    def get_title(self, verbose):
+        detail = " (verbose)" if verbose else ""
+        return f"{self.title}{detail}"
+
 def node(an_id, detail=0, leaf=False, members=None):
     return Node(
         f"{an_id}-title",
@@ -19,6 +23,11 @@ def node(an_id, detail=0, leaf=False, members=None):
     )
 
 class TreeToLines(TestCase):
+    def test_verbose(self):
+        self.assertEqual(
+            ["l0-title (verbose)"], lib.tree_to_lines(node("l0"), verbose=True)
+        )
+
     def test_empty(self):
         self.assertEqual(["l0-title"], lib.tree_to_lines(node("l0")))
 

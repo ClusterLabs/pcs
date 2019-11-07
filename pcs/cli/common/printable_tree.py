@@ -11,16 +11,16 @@ class PrintableTreeNode:
         raise NotImplementedError()
 
     @property
-    def title(self) -> str:
+    def is_leaf(self) -> bool:
         raise NotImplementedError()
 
-    @property
-    def is_leaf(self) -> bool:
+    def get_title(self, verbose: bool) -> str:
         raise NotImplementedError()
 
 
 def tree_to_lines(
     node: PrintableTreeNode,
+    verbose: bool = False,
     title_prefix: str = "",
     indent: str = "",
 ) -> Sequence[str]:
@@ -32,7 +32,8 @@ def tree_to_lines(
     note = ""
     if node.is_leaf:
         note = f" [displayed elsewhere]"
-    result.append(f"{title_prefix}{node.title}{note}")
+    title = node.get_title(verbose)
+    result.append(f"{title_prefix}{title}{note}")
     if node.is_leaf:
         return result
     _indent = "|  "
@@ -49,6 +50,7 @@ def tree_to_lines(
         result.extend(
             tree_to_lines(
                 member,
+                verbose,
                 indent=f"{indent}{_indent}",
                 title_prefix=f"{indent}{_title_prefix}",
             )

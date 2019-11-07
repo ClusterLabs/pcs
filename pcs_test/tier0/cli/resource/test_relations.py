@@ -18,23 +18,6 @@ class ShowResourceRelationsCmd(TestCase):
         self.lib = mock.Mock(spec_set=["resource"])
         self.lib.resource = mock.Mock(spec_set=["get_resource_relations_tree"])
         self.lib.resource.get_resource_relations_tree = self.lib_call
-
-    def test_no_args(self):
-        with self.assertRaises(CmdLineInputError) as cm:
-            relations.show_resource_relations_cmd(
-                self.lib, [], dict_to_modifiers({})
-            )
-        self.assertIsNone(cm.exception.message)
-
-    def test_more_args(self):
-        with self.assertRaises(CmdLineInputError) as cm:
-            relations.show_resource_relations_cmd(
-                self.lib, ["a1", "a2"], dict_to_modifiers({})
-            )
-        self.assertIsNone(cm.exception.message)
-
-    @mock.patch("pcs.cli.resource.relations.print")
-    def test_success(self, mock_print):
         self.lib_call.return_value = ResourceRelationDto(
             RelationEntityDto(
                 "d1", "primitive", [], {
@@ -86,8 +69,44 @@ class ShowResourceRelationsCmd(TestCase):
             ],
             False,
         ).to_dict()
+
+    def test_no_args(self):
+        with self.assertRaises(CmdLineInputError) as cm:
+            relations.show_resource_relations_cmd(
+                self.lib, [], dict_to_modifiers({})
+            )
+        self.assertIsNone(cm.exception.message)
+
+    def test_more_args(self):
+        with self.assertRaises(CmdLineInputError) as cm:
+            relations.show_resource_relations_cmd(
+                self.lib, ["a1", "a2"], dict_to_modifiers({})
+            )
+        self.assertIsNone(cm.exception.message)
+
+    @mock.patch("pcs.cli.resource.relations.print")
+    def test_success(self, mock_print):
         relations.show_resource_relations_cmd(
             self.lib, ["d1"], dict_to_modifiers({})
+        )
+        self.lib_call.assert_called_once_with("d1")
+        self.assertEqual(
+            [
+                mock.call("d1"),
+                mock.call("|- inner resource(s)"),
+                mock.call("|  `- g1 [displayed elsewhere]"),
+                mock.call("`- order"),
+                mock.call("   |  start d1 then start d2"),
+                mock.call("   |  kind=Mandatory symmetrical=true"),
+                mock.call("   `- d2"),
+            ],
+            mock_print.call_args_list
+        )
+
+    @mock.patch("pcs.cli.resource.relations.print")
+    def test_verbose(self, mock_print):
+        relations.show_resource_relations_cmd(
+            self.lib, ["d1"], dict_to_modifiers({"full": True})
         )
         self.lib_call.assert_called_once_with("d1")
         self.assertEqual(
@@ -169,7 +188,14 @@ class ResourcePrintableNode(TestCase):
 
     def test_primitive(self):
         obj = relations.ResourcePrintableNode(D1_PRIMITIVE, [], False)
-        self.assertEqual("d1 (resource: ocf:pacemaker:Dummy)", obj.title)
+        self.assertEqual(
+            "d1 (resource: ocf:pacemaker:Dummy)", obj.get_title(verbose=True)
+        )
+        self.assertEqual([], obj.detail)
+
+    def test_primitive_not_verbose(self):
+        obj = relations.ResourcePrintableNode(D1_PRIMITIVE, [], False)
+        self.assertEqual("d1", obj.get_title(verbose=False))
         self.assertEqual([], obj.detail)
 
     def test_primitive_without_provider_class(self):
@@ -182,7 +208,7 @@ class ResourcePrintableNode(TestCase):
             [],
             False,
         )
-        self.assertEqual("d1 (resource: Dummy)", obj.title)
+        self.assertEqual("d1 (resource: Dummy)", obj.get_title(verbose=True))
         self.assertEqual([], obj.detail)
 
     def test_primitive_without_provider(self):
@@ -196,7 +222,9 @@ class ResourcePrintableNode(TestCase):
             [],
             False,
         )
-        self.assertEqual("d1 (resource: ocf:Dummy)", obj.title)
+        self.assertEqual(
+            "d1 (resource: ocf:Dummy)", obj.get_title(verbose=True)
+        )
         self.assertEqual([], obj.detail)
 
     def test_primitive_without_class(self):
@@ -210,14 +238,25 @@ class ResourcePrintableNode(TestCase):
             [],
             False,
         )
-        self.assertEqual("d1 (resource: pacemaker:Dummy)", obj.title)
+        self.assertEqual(
+            "d1 (resource: pacemaker:Dummy)", obj.get_title(verbose=True)
+        )
         self.assertEqual([], obj.detail)
 
     def test_other(self):
         obj = relations.ResourcePrintableNode(
             RelationEntityDto("an_id", "a_type", [], {}), [], False,
         )
-        self.assertEqual("an_id (resource: a_type)", obj.title)
+        self.assertEqual(
+            "an_id (resource: a_type)", obj.get_title(verbose=True)
+        )
+        self.assertEqual([], obj.detail)
+
+    def test_other_not_verbose(self):
+        obj = relations.ResourcePrintableNode(
+            RelationEntityDto("an_id", "a_type", [], {}), [], False,
+        )
+        self.assertEqual("an_id", obj.get_title(verbose=False))
         self.assertEqual([], obj.detail)
 
 
@@ -274,9 +313,14 @@ class RelationPrintableNode(TestCase):
         self.assert_member(obj.members[0], D1_PRIMITIVE)
         self.assert_member(obj.members[1], D2_PRIMITIVE)
 
+    def test_order_not_verbose(self):
+        obj = relations.RelationPrintableNode(self.order_entity, [], False)
+        self.assertEqual("order", obj.get_title(verbose=False))
+        self.assertEqual(["start d1 then start d2"], obj.detail)
+
     def test_order(self):
         obj = relations.RelationPrintableNode(self.order_entity, [], False)
-        self.assertEqual("order (order1)", obj.title)
+        self.assertEqual("order (order1)", obj.get_title(verbose=True))
         self.assertEqual(["start d1 then start d2"], obj.detail)
 
     def test_order_full(self):
@@ -287,7 +331,7 @@ class RelationPrintableNode(TestCase):
             "score": "1000",
         })
         obj = relations.RelationPrintableNode(self.order_entity, [], False)
-        self.assertEqual("order (order1)", obj.title)
+        self.assertEqual("order (order1)", obj.get_title(verbose=True))
         self.assertEqual(
             [
                 "start d1 then start d2",
@@ -296,9 +340,22 @@ class RelationPrintableNode(TestCase):
             obj.detail,
         )
 
+    def test_order_set_not_verbose(self):
+        obj = relations.RelationPrintableNode(self.order_set_entity, [], False)
+        self.assertEqual("order set", obj.get_title(verbose=False))
+        self.assertEqual(
+            [
+                "   set d1 d2 d3",
+                "   set d4 d5 d0 (require-all=false score=10 sequential=true)",
+            ],
+            obj.detail,
+        )
+
     def test_order_set(self):
         obj = relations.RelationPrintableNode(self.order_set_entity, [], False)
-        self.assertEqual("order set (order_set_id)", obj.title)
+        self.assertEqual(
+            "order set (order_set_id)", obj.get_title(verbose=True)
+        )
         self.assertEqual(
             [
                 "   set d1 d2 d3",
@@ -329,7 +386,9 @@ class RelationPrintableNode(TestCase):
             },
         })
         obj = relations.RelationPrintableNode(self.order_set_entity, [], False)
-        self.assertEqual("order set (order_set_id)", obj.title)
+        self.assertEqual(
+            "order set (order_set_id)", obj.get_title(verbose=True)
+        )
         self.assertEqual(
             [
                 "kind=Optional require-all=true score=100 symmetrical=true",
@@ -352,8 +411,21 @@ class RelationPrintableNode(TestCase):
             [],
             False,
         )
-        self.assertEqual("inner resource(s) (g1)", obj.title)
+        self.assertEqual("inner resource(s) (g1)", obj.get_title(verbose=True))
         self.assertEqual(["members: m1 m2 m0"], obj.detail)
+
+    def test_inner_resources_not_verbose(self):
+        obj = relations.RelationPrintableNode(
+            RelationEntityDto(
+                "inner:g1", ResourceRelationType.INNER_RESOURCES, ["m0"], {
+                    "id": "g1",
+                }
+            ),
+            [],
+            False,
+        )
+        self.assertEqual("inner resource(s)", obj.get_title(verbose=False))
+        self.assertEqual([], obj.detail)
 
     def test_inner_resources(self):
         obj = relations.RelationPrintableNode(
@@ -365,7 +437,20 @@ class RelationPrintableNode(TestCase):
             [],
             False,
         )
-        self.assertEqual("inner resource(s) (g1)", obj.title)
+        self.assertEqual("inner resource(s) (g1)", obj.get_title(verbose=True))
+        self.assertEqual([], obj.detail)
+
+    def test_outer_resourcenot_verbose(self):
+        obj = relations.RelationPrintableNode(
+            RelationEntityDto(
+                "outer:g1", ResourceRelationType.OUTER_RESOURCE, [], {
+                    "id": "g1",
+                }
+            ),
+            [],
+            False,
+        )
+        self.assertEqual("outer resource", obj.get_title(verbose=False))
         self.assertEqual([], obj.detail)
 
     def test_outer_resource(self):
@@ -378,7 +463,20 @@ class RelationPrintableNode(TestCase):
             [],
             False,
         )
-        self.assertEqual("outer resource (g1)", obj.title)
+        self.assertEqual("outer resource (g1)", obj.get_title(verbose=True))
+        self.assertEqual([], obj.detail)
+
+    def test_unknown_not_verbose(self):
+        obj = relations.RelationPrintableNode(
+            RelationEntityDto(
+                "random", "undifined type", [], {
+                    "id": "random_id",
+                }
+            ),
+            [],
+            False,
+        )
+        self.assertEqual("<unknown>", obj.get_title(verbose=False))
         self.assertEqual([], obj.detail)
 
     def test_unknown(self):
@@ -391,5 +489,5 @@ class RelationPrintableNode(TestCase):
             [],
             False,
         )
-        self.assertEqual("<unknown> (random_id)", obj.title)
+        self.assertEqual("<unknown> (random_id)", obj.get_title(verbose=True))
         self.assertEqual([], obj.detail)
