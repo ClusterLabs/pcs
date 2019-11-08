@@ -46,6 +46,7 @@ resource_cmd = create_router(
         "unclone": resource.resource_clone_master_remove,
         "enable": resource.resource_enable_cmd,
         "disable": resource.resource_disable_cmd,
+        "safe-disable": resource.resource_safe_disable_cmd,
         "restart": resource.resource_restart,
         "debug-start": partial(
             resource.resource_force_action, action="debug-start"

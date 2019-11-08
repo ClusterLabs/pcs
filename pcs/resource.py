@@ -6,6 +6,8 @@ import textwrap
 import time
 import json
 
+from typing import Any, List
+
 from pcs import (
     usage,
     utils,
@@ -19,6 +21,7 @@ from pcs.cli.common.errors import CmdLineInputError, raise_command_replaced
 from pcs.cli.common.parse_args import (
     prepare_options,
     prepare_options_allowed,
+    InputModifiers,
 )
 from pcs.cli.common.reports import process_library_reports
 from pcs.cli.resource.parse_args import (
@@ -1956,21 +1959,21 @@ def resource_disable_cmd(lib, argv, modifiers):
       * -f - CIB file
       * --safe - only disable if no other resource gets stopped or demoted
       * --simulate - do not push the CIB, print its effects
-      * --strict - only disable if no other resource is affected
+      * --no-strict - allow disable if other resource is affected
       * --wait
     """
     modifiers.ensure_only_supported(
-        "-f", "--safe", "--simulate", "--strict", "--wait"
+        "-f", "--safe", "--simulate", "--no-strict", "--wait"
     )
     modifiers.ensure_not_mutually_exclusive(
         "-f", "--simulate", "--wait"
     )
     modifiers.ensure_not_incompatible(
         "--simulate",
-        {"-f", "--safe", "--strict", "--wait"}
+        {"-f", "--safe", "--no-strict", "--wait"}
     )
     modifiers.ensure_not_incompatible("--safe", {"-f", "--simulate"})
-    modifiers.ensure_not_incompatible("--strict", {"-f", "--simulate"})
+    modifiers.ensure_not_incompatible("--no-strict", {"-f", "--simulate"})
 
     if not argv:
         raise CmdLineInputError("You must specify resource(s) to disable")
@@ -1978,14 +1981,48 @@ def resource_disable_cmd(lib, argv, modifiers):
     if modifiers.get("--simulate"):
         print(lib.resource.disable_simulate(argv))
         return
-    if modifiers.get("--safe") or modifiers.get("--strict"):
+    if modifiers.get("--safe") or modifiers.get("--no-strict"):
         lib.resource.disable_safe(
             argv,
-            modifiers.get("--strict"),
+            not modifiers.get("--no-strict"),
             modifiers.get("--wait"),
         )
         return
     lib.resource.disable(argv, modifiers.get("--wait"))
+
+
+def resource_safe_disable_cmd(
+    lib: Any, argv: List[str], modifiers: InputModifiers
+) -> None:
+    """
+    Options:
+      * --force - skip checks for safe resource disable
+      * --no-strict - allow disable if other resource is affected
+      * --simulate - do not push the CIB, print its effects
+      * --wait
+    """
+    modifiers.ensure_only_supported(
+        "--force", "--no-strict", "--simulate", "--wait"
+    )
+    modifiers.ensure_not_mutually_exclusive(
+        "--force", "--simulate", "--no-strict"
+    )
+    custom_options = {}
+    if modifiers.get("--force"):
+        warn(
+            "option '--force' is specified therefore checks for disabling "
+            "resource safely will be skipped"
+        )
+    elif not modifiers.get("--simulate"):
+        custom_options["--safe"] = True
+    resource_disable_cmd(
+        lib,
+        argv,
+        modifiers.get_subset(
+            "--wait", "--no-strict", "--simulate", **custom_options
+        )
+    )
+
 
 def resource_enable_cmd(lib, argv, modifiers):
     """

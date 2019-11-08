@@ -15,7 +15,7 @@ PCS_LONG_OPTIONS = [
     "force", "skip-offline", "interactive", "autodelete", "simulate",
     "all", "full", "local", "wait", "config",
     "start", "enable", "disabled", "off", "request-timeout=",
-    "safe", "strict",
+    "safe", "no-strict",
     "pacemaker", "corosync",
     "no-default-ops", "defaults", "nodesc",
     "master", "name=", "group=", "node=",
@@ -375,6 +375,7 @@ class InputModifiers():
             "--no-default-ops": "--no-default-ops" in options,
             "--nodesc": "--nodesc" in options,
             "--no-keys-sync": "--no-keys-sync" in options,
+            "--no-strict": "--no-strict" in options,
             "--no-watchdog-validation": "--no-watchdog-validation" in options,
             "--off": "--off" in options,
             "--pacemaker": "--pacemaker" in options,
@@ -382,7 +383,6 @@ class InputModifiers():
             "--simulate": "--simulate" in options,
             "--skip-offline": "--skip-offline" in options,
             "--start": "--start" in options,
-            "--strict": "--strict" in options,
             # string values
             "--after": options.get("--after", None),
             "--before": options.get("--before", None),
@@ -401,10 +401,12 @@ class InputModifiers():
             "-u": options.get("-u", None),
         })
 
-    def get_subset(self, *options):
-        return InputModifiers(
-            {opt: self.get(opt) for opt in options if self.is_specified(opt)}
-        )
+    def get_subset(self, *options, **custom_options):
+        opt_dict = {
+            opt: self.get(opt) for opt in options if self.is_specified(opt)
+        }
+        opt_dict.update(custom_options)
+        return InputModifiers(opt_dict)
 
     def ensure_only_supported(
         self, *supported_options, hint_syntax_changed=False

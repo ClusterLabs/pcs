@@ -618,6 +618,7 @@ class InputModifiersTest(TestCase):
             "--master",
             "--monitor",
             "--no-default-ops",
+            "--no-strict",
             "--no-watchdog-validation",
             "--nodesc",
             "--off",
@@ -626,7 +627,6 @@ class InputModifiersTest(TestCase):
             "--simulate",
             "--skip-offline",
             "--start",
-            "--strict",
         ]
         self.val_opts = [
             "--after",

@@ -1277,7 +1277,8 @@
       <description>
         Do not disable resources if other resources would be affected.
 
-        pcs commands: resource disable --safe [--strict]
+        pcs commands: resource disable --safe [--no-strict],
+          resource safe-disable
       </description>
     </capability>
     <capability id="pcmk.resource.disable.simulate" in-pcs="1" in-pcsd="0">

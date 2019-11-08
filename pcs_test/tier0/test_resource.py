@@ -6101,7 +6101,7 @@ class ResourceDisable(TestCase):
             dict_to_modifiers(dict(safe=True))
         )
         self.resource.disable_safe.assert_called_once_with(
-            ["R1", "R2"], False, False
+            ["R1", "R2"], True, False
         )
         self.resource.disable.assert_not_called()
         self.resource.disable_simulate.assert_not_called()
@@ -6113,31 +6113,31 @@ class ResourceDisable(TestCase):
             dict_to_modifiers(dict(safe=True, wait="10"))
         )
         self.resource.disable_safe.assert_called_once_with(
-            ["R1", "R2"], False, "10"
-        )
-        self.resource.disable.assert_not_called()
-        self.resource.disable_simulate.assert_not_called()
-
-    def test_safe_strict(self):
-        resource.resource_disable_cmd(
-            self.lib,
-            ["R1", "R2"],
-            dict_to_modifiers(dict(strict=True))
-        )
-        self.resource.disable_safe.assert_called_once_with(
-            ["R1", "R2"], True, False
-        )
-        self.resource.disable.assert_not_called()
-        self.resource.disable_simulate.assert_not_called()
-
-    def test_safe_strict_wait(self):
-        resource.resource_disable_cmd(
-            self.lib,
-            ["R1", "R2"],
-            dict_to_modifiers(dict(strict=True, wait="10"))
-        )
-        self.resource.disable_safe.assert_called_once_with(
             ["R1", "R2"], True, "10"
+        )
+        self.resource.disable.assert_not_called()
+        self.resource.disable_simulate.assert_not_called()
+
+    def test_safe_no_strict(self):
+        resource.resource_disable_cmd(
+            self.lib,
+            ["R1", "R2"],
+            dict_to_modifiers({"no-strict": True})
+        )
+        self.resource.disable_safe.assert_called_once_with(
+            ["R1", "R2"], False, False
+        )
+        self.resource.disable.assert_not_called()
+        self.resource.disable_simulate.assert_not_called()
+
+    def test_safe_no_strict_wait(self):
+        resource.resource_disable_cmd(
+            self.lib,
+            ["R1", "R2"],
+            dict_to_modifiers({"no-strict": True, "wait": "10"})
+        )
+        self.resource.disable_safe.assert_called_once_with(
+            ["R1", "R2"], False, "10"
         )
         self.resource.disable.assert_not_called()
         self.resource.disable_simulate.assert_not_called()
@@ -6175,11 +6175,13 @@ class ResourceDisable(TestCase):
             resource.resource_disable_cmd(
                 self.lib,
                 ["R1"],
-                dict_to_modifiers(dict(simulate=True, safe=True, strict=True))
+                dict_to_modifiers(
+                    {"no-strict": True, "simulate": True, "safe": True}
+                )
             )
         self.assertEqual(
             cm.exception.message,
-            "'--simulate' cannot be used with '--safe', '--strict'"
+            "'--simulate' cannot be used with '--no-strict', '--safe'"
         )
         self.resource.disable.assert_not_called()
         self.resource.disable_safe.assert_not_called()
@@ -6192,5 +6194,204 @@ class ResourceDisable(TestCase):
             dict_to_modifiers(dict(wait="10"))
         )
         self.resource.disable.assert_called_once_with(["R1", "R2"], "10")
+        self.resource.disable_safe.assert_not_called()
+        self.resource.disable_simulate.assert_not_called()
+
+
+class ResourceSafeDisable(TestCase):
+    def setUp(self):
+        self.lib = mock.Mock(spec_set=["resource"])
+        self.resource = mock.Mock(
+            spec_set=["disable", "disable_safe", "disable_simulate"]
+        )
+        self.lib.resource = self.resource
+        self.force_warning = (
+            "option '--force' is specified therefore checks for disabling "
+            "resource safely will be skipped"
+        )
+
+    def test_no_args(self):
+        with self.assertRaises(CmdLineInputError) as cm:
+            resource.resource_safe_disable_cmd(
+                self.lib, [], dict_to_modifiers({})
+            )
+        self.assertEqual(
+            cm.exception.message,
+            "You must specify resource(s) to disable"
+        )
+        self.resource.disable.assert_not_called()
+        self.resource.disable_safe.assert_not_called()
+        self.resource.disable_simulate.assert_not_called()
+
+    def test_one_resource(self):
+        resource.resource_safe_disable_cmd(
+            self.lib, ["R1"], dict_to_modifiers({})
+        )
+        self.resource.disable_safe.assert_called_once_with(["R1"], True, False)
+        self.resource.disable.assert_not_called()
+        self.resource.disable_simulate.assert_not_called()
+
+    def test_more_resources(self):
+        resource.resource_safe_disable_cmd(
+            self.lib, ["R1", "R2"], dict_to_modifiers({})
+        )
+        self.resource.disable_safe.assert_called_once_with(
+            ["R1", "R2"], True, False
+        )
+        self.resource.disable.assert_not_called()
+        self.resource.disable_simulate.assert_not_called()
+
+    def test_wait(self):
+        resource.resource_safe_disable_cmd(
+            self.lib,
+            ["R1", "R2"],
+            dict_to_modifiers(dict(wait="10"))
+        )
+        self.resource.disable_safe.assert_called_once_with(
+            ["R1", "R2"], True, "10"
+        )
+        self.resource.disable.assert_not_called()
+        self.resource.disable_simulate.assert_not_called()
+
+    def test_no_strict(self):
+        resource.resource_safe_disable_cmd(
+            self.lib,
+            ["R1", "R2"],
+            dict_to_modifiers({"no-strict": True})
+        )
+        self.resource.disable_safe.assert_called_once_with(
+            ["R1", "R2"], False, False
+        )
+        self.resource.disable.assert_not_called()
+        self.resource.disable_simulate.assert_not_called()
+
+    def test_no_strict_wait(self):
+        resource.resource_safe_disable_cmd(
+            self.lib,
+            ["R1", "R2"],
+            dict_to_modifiers({"no-strict": True, "wait": "10"})
+        )
+        self.resource.disable_safe.assert_called_once_with(
+            ["R1", "R2"], False, "10"
+        )
+        self.resource.disable.assert_not_called()
+        self.resource.disable_simulate.assert_not_called()
+
+    @mock.patch("pcs.resource.warn")
+    def test_force(self, mock_warn):
+        resource.resource_safe_disable_cmd(
+            self.lib,
+            ["R1", "R2"],
+            dict_to_modifiers({"force": True})
+        )
+        self.resource.disable.assert_called_once_with(
+            ["R1", "R2"], False
+        )
+        self.resource.disable_safe.assert_not_called()
+        self.resource.disable_simulate.assert_not_called()
+        mock_warn.assert_called_once_with(self.force_warning)
+
+    @mock.patch("pcs.resource.warn")
+    def test_force_wait(self, mock_warn):
+        resource.resource_safe_disable_cmd(
+            self.lib,
+            ["R1", "R2"],
+            dict_to_modifiers({"force": True, "wait": "10"})
+        )
+        self.resource.disable.assert_called_once_with(
+            ["R1", "R2"], "10"
+        )
+        self.resource.disable_safe.assert_not_called()
+        self.resource.disable_simulate.assert_not_called()
+        mock_warn.assert_called_once_with(self.force_warning)
+
+
+    @mock.patch("pcs.resource.print")
+    def test_simulate(self, mock_print):
+        self.resource.disable_simulate.return_value = "simulate output"
+        resource.resource_safe_disable_cmd(
+            self.lib,
+            ["R1", "R2"],
+            dict_to_modifiers(dict(simulate=True))
+        )
+        self.resource.disable_simulate.assert_called_once_with(["R1", "R2"])
+        self.resource.disable.assert_not_called()
+        self.resource.disable_safe.assert_not_called()
+        mock_print.assert_called_once_with("simulate output")
+
+    def test_simulate_wait(self):
+        with self.assertRaises(CmdLineInputError) as cm:
+            resource.resource_safe_disable_cmd(
+                self.lib,
+                ["R1"],
+                dict_to_modifiers(dict(simulate=True, wait=True))
+            )
+        self.assertEqual(
+            cm.exception.message,
+            "Only one of '--simulate', '--wait' can be used"
+        )
+        self.resource.disable.assert_not_called()
+        self.resource.disable_safe.assert_not_called()
+        self.resource.disable_simulate.assert_not_called()
+
+    def test_simulate_force(self):
+        with self.assertRaises(CmdLineInputError) as cm:
+            resource.resource_safe_disable_cmd(
+                self.lib,
+                ["R1"],
+                dict_to_modifiers(dict(simulate=True, force=True))
+            )
+        self.assertEqual(
+            cm.exception.message,
+            "Only one of '--force', '--simulate' can be used"
+        )
+        self.resource.disable.assert_not_called()
+        self.resource.disable_safe.assert_not_called()
+        self.resource.disable_simulate.assert_not_called()
+
+    def test_simulate_no_strict(self):
+        with self.assertRaises(CmdLineInputError) as cm:
+            resource.resource_safe_disable_cmd(
+                self.lib,
+                ["R1"],
+                dict_to_modifiers({"simulate": True, "no-strict": True})
+            )
+        self.assertEqual(
+            cm.exception.message,
+            "Only one of '--no-strict', '--simulate' can be used"
+        )
+        self.resource.disable.assert_not_called()
+        self.resource.disable_safe.assert_not_called()
+        self.resource.disable_simulate.assert_not_called()
+
+    def test_simulate_no_strict_force(self):
+        with self.assertRaises(CmdLineInputError) as cm:
+            resource.resource_safe_disable_cmd(
+                self.lib,
+                ["R1"],
+                dict_to_modifiers(
+                    {"simulate": True, "no-strict": True, "force": True}
+                )
+            )
+        self.assertEqual(
+            cm.exception.message,
+            "Only one of '--force', '--no-strict', '--simulate' can be used"
+        )
+        self.resource.disable.assert_not_called()
+        self.resource.disable_safe.assert_not_called()
+        self.resource.disable_simulate.assert_not_called()
+
+    def test_force_no_strict(self):
+        with self.assertRaises(CmdLineInputError) as cm:
+            resource.resource_safe_disable_cmd(
+                self.lib,
+                ["R1"],
+                dict_to_modifiers({"force": True, "no-strict": True})
+            )
+        self.assertEqual(
+            cm.exception.message,
+            "Only one of '--force', '--no-strict' can be used"
+        )
+        self.resource.disable.assert_not_called()
         self.resource.disable_safe.assert_not_called()
         self.resource.disable_simulate.assert_not_called()
