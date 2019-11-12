@@ -6150,3 +6150,32 @@ class BoothTicketOperationFailed(ReportItemMessage):
             f"unable to {self.operation} booth ticket '{self.ticket_name}'"
             f" for site '{self.site_ip}', reason: {self.reason}"
         )
+
+@dataclass(frozen=True)
+class TagCannotContainItself(ReportItemMessage):
+    """
+    List of object reference ids contains same id as specified tag_id.
+    """
+
+    _code = codes.TAG_CANNOT_CONTAIN_ITSELF
+
+    @property
+    def message(self) -> str:
+        return "Tag cannot contain itself"
+
+
+@dataclass(frozen=True)
+class TagIdsDuplication(ReportItemMessage):
+    """
+    Duplicate reference ids were found in tag specification.
+
+    tag_id -- tag id
+    """
+
+    duplicate_ids_list: List[str]
+    _code = codes.TAG_IDS_DUPLICATION
+
+    @property
+    def message(self) -> str:
+        duplicate_ids_list = format_list(self.duplicate_ids_list)
+        return f"Ids must be unique, duplicate ids: {duplicate_ids_list}"

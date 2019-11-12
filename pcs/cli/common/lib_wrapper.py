@@ -22,6 +22,7 @@ from pcs.lib.commands import (
     status,
     stonith,
     stonith_agent,
+    tag,
 )
 from pcs.lib.commands.constraint import (
     colocation as constraint_colocation,
@@ -449,6 +450,15 @@ def load_module(env, middleware_factory, name):
                 "describe_agent": stonith_agent.describe_agent,
                 "list_agents": stonith_agent.list_agents,
             },
+        )
+
+    if name == "tag":
+        return bind_all(
+            env,
+            middleware.build(middleware_factory.cib),
+            {
+                "create": tag.create,
+            }
         )
 
     raise Exception("No library part '{0}'".format(name))

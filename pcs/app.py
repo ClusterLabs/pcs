@@ -35,6 +35,7 @@ from pcs.cli.routing import (
     resource,
     status,
     stonith,
+    tag,
 )
 from pcs.lib.errors import LibraryError
 
@@ -250,6 +251,7 @@ def main(argv=None):
         "host": host.host_cmd,
         "client": client.client_cmd,
         "dr": dr.dr_cmd,
+        "tag": tag.tag_cmd,
         "help": lambda lib, argv, modifiers: usage.main(),
     }
     try:

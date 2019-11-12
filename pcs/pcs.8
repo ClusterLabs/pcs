@@ -78,6 +78,9 @@ client
 .TP
 dr
  Manage disaster recovery configuration.
+.TP
+tag
+ Manage pacemaker tags.
 .SS "resource"
 .TP
 [status [\fB\-\-hide\-inactive\fR]]
@@ -1068,6 +1071,10 @@ Set up disaster\-recovery with the local cluster being the primary site. The rec
 .TP
 destroy
 Permanently destroy disaster-recovery configuration on all sites.
+.SS "tag"
+.TP
+create <tag id> <id> [<id>]...
+Create a tag containing the specified ids.
 .SH EXAMPLES
 .TP
 Show all resources

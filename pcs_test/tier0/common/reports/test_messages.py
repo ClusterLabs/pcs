@@ -4488,3 +4488,19 @@ class BoothTicketOperationFailedTest(NameBuildTest):
                 "operation", "reason", "site_ip", "ticket_name"
             ),
         )
+
+
+class TagCannotContainItself(NameBuildTest):
+    def test_message(self):
+        self.assert_message_from_report(
+            "Tag cannot contain itself",
+            reports.TagCannotContainItself()
+        )
+
+
+class TagIdsDuplication(NameBuildTest):
+    def test_message(self):
+        self.assert_message_from_report(
+            "Ids must be unique, duplicate ids: 'dup1', 'dup2'",
+            reports.TagIdsDuplication(["dup1", "dup2"]),
+        )

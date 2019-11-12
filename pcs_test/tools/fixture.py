@@ -184,7 +184,7 @@ class ReportStore:
         return ReportStore(self.__names + [name], self.__reports + [report])
 
 
-def report_not_found(res_id, context_type=""):
+def report_not_found(res_id, context_type="", expected_types=None):
     return (
         severities.ERROR,
         report_codes.ID_NOT_FOUND,
@@ -198,7 +198,21 @@ def report_not_found(res_id, context_type=""):
                 "group",
                 "master",
                 "primitive",
-            ],
+            ] if expected_types is None else expected_types,
+        },
+        None
+    )
+
+
+def report_invalid_id(_id, invalid_char, id_description="id"):
+    return (
+        severities.ERROR,
+        report_codes.INVALID_ID_BAD_CHAR,
+        {
+            "id": _id,
+            "id_description": id_description,
+            "is_first_char": _id.index(invalid_char) == 0,
+            "invalid_character": invalid_char,
         },
         None,
     )

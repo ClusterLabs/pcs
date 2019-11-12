@@ -367,6 +367,15 @@ class GetFencingTopology(CibToolsTest):
         self.assertEqual("fencing-topology", ft_el.tag)
         self.assertEqual("configuration", ft_el.getparent().tag)
 
+class GetTagsTest(CibToolsTest):
+    def test_success_if_exists(self):
+        self.cib.append_to_first_tag_name("configuration", "<tags/>")
+        self.assertEqual("tags", lib.get_tags(self.cib.tree).tag)
+
+    def test_success_if_missing(self):
+        tags_el = lib.get_tags(self.cib.tree)
+        self.assertEqual("tags", tags_el.tag)
+        self.assertEqual("configuration", tags_el.getparent().tag)
 
 @mock.patch("pcs.lib.cib.tools.does_id_exist")
 class ValidateIdDoesNotExistsTest(TestCase):
