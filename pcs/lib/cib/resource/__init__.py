@@ -12,5 +12,6 @@ from pcs.lib.cib.resource import (
     guest_node,
     operations,
     primitive,
+    relations,
     remote_node,
 )

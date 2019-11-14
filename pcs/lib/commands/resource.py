@@ -897,6 +897,28 @@ def get_failcounts(
         interval=interval_ms
     )
 
+
+def get_resource_relations_tree(env, resource_id):
+    """
+    Return a dict representing tree-like structure of resources and their
+    relations.
+
+    env -- library environment
+    resource_id -- id of a resource which should be the root of the relation
+        tree
+    """
+    cib = env.get_cib()
+    _find_resources_or_raise(get_resources(cib), [resource_id])
+    resources_dict, relations_dict = (
+        resource.relations.ResourceRelationsFetcher(
+            cib
+        ).get_relations(resource_id)
+    )
+    return resource.relations.ResourceRelationTreeBuilder(
+        resources_dict, relations_dict
+    ).get_tree(resource_id).to_dto().to_dict()
+
+
 def _find_resources_or_raise(
     resources_section, resource_ids, additional_search=None
 ):

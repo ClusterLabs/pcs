@@ -132,6 +132,9 @@ MODIFIER_GENERATORS = {
     "append": append_all,
     "resources": lambda xml: replace_all({"./configuration/resources": xml}),
     "optional_in_conf": lambda xml: put_or_replace("./configuration", xml),
+    "constraints": lambda xml: replace_all(
+        {"./configuration/constraints": xml}
+    ),
     #common modifier `put_or_replace` makes not sense - see explanation inside
     #this function - all occurences should be satisfied by `optional_in_conf`
 }

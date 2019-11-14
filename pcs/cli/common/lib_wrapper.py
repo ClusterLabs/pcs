@@ -348,6 +348,8 @@ def load_module(env, middleware_factory, name):
                 "get_failcounts": resource.get_failcounts,
                 "manage": resource.manage,
                 "unmanage": resource.unmanage,
+                "get_resource_relations_tree":
+                    resource.get_resource_relations_tree,
             }
         )
 

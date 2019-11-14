@@ -10,7 +10,7 @@ RUN yum install -y \
         python \
         python-devel \
         python-lxml \
-        python-mock \
+        python-pip \
         python-pycurl \
         # ruby
         ruby \
@@ -39,6 +39,8 @@ RUN yum install -y \
         fence-agents-evacuate \
         fence-virt \
         booth-site
+
+RUN pip install mock
 
 COPY . $src_path
 

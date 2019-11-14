@@ -28,6 +28,7 @@ from pcs.cli.resource.parse_args import (
     parse_bundle_update_options,
     parse_create as parse_create_args,
 )
+from pcs.cli.resource.relations import show_resource_relations_cmd
 import pcs.lib.cib.acl as lib_acl
 from pcs.lib.cib.resource import (
     guest_node,
@@ -200,6 +201,8 @@ def resource_cmd(argv):
             get_resource_agent_info(argv_next)
         elif sub_cmd == "bundle":
             resource_bundle_cmd(lib, argv_next, modifiers)
+        elif sub_cmd == "relations":
+            show_resource_relations_cmd(lib, argv_next, modifiers)
         else:
             usage.resource()
             sys.exit(1)

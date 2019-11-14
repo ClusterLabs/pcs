@@ -1261,6 +1261,14 @@
         pcs commands: resource restart
       </description>
     </capability>
+    <capability id="pcmk.resource.relations" in-pcs="1" in-pcsd="0">
+      <description>
+        Display relations of a resource specified by its id with other resources
+        in a tree structure.
+
+        pcs commands: resource relations
+      </description>
+    </capability>
 
 
 

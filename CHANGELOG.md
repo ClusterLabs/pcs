@@ -2,6 +2,11 @@
 
 ## [Unreleased]
 
+### Added
+- `pcs resource relations` command shows relations between resources such as
+  ordering constraints, ordering set constraints and relations defined by
+  resource hierarchy ([rhbz#1770975])
+
 ### Fixed
 - Do not generate custom DH key if it was not requested by setting its custom
   length ([rhbz#1760434])
@@ -20,6 +25,7 @@
 [rhbz#1671174]: https://bugzilla.redhat.com/show_bug.cgi?id=1671174
 [rhbz#1760434]: https://bugzilla.redhat.com/show_bug.cgi?id=1760434
 [rhbz#1765606]: https://bugzilla.redhat.com/show_bug.cgi?id=1765606
+[rhbz#1770975]: https://bugzilla.redhat.com/show_bug.cgi?id=1770975
 
 
 ## [0.9.168] - 2019-08-02

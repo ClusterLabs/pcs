@@ -209,6 +209,9 @@ Remove all constraints created by the 'relocate run' command.
 .TP
 utilization [<resource id> [<name>=<value> ...]]
 Add specified utilization options to specified resource. If resource is not specified, shows utilization of all resources. If utilization options are not specified, shows utilization of specified resource. Utilization option should be in format name=value, value has to be integer. Options may be removed by setting an option without a value. Example: pcs resource utilization TestResource cpu= ram=20
+.TP
+relations <resource id> [\fB\-\-full\fR]
+Display relations of a resource specified by its id with other resources in a tree structure. Supported types of resource relations are: ordering constraints, ordering set constraints, relations defined by resource hierarchy (clones, groups, bundles). If \fB\-\-full\fR is used, more verbose output will be printed.
 .SS "cluster"
 .TP
 auth [<node>[:<port>]] [...] [\fB\-u\fR <username>] [\fB\-p\fR <password>] [\fB\-\-force\fR] [\fB\-\-local\fR]

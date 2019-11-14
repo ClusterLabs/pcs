@@ -51,6 +51,54 @@ def find_primitives(resource_el):
         return [resource_el]
     return []
 
+def get_inner_resources(resource_el):
+    """
+    Return list of inner resources (direct descendants) of a resource
+    specified as resource_el.
+    Example: for clone containing a group, this function will return only
+    group and not resource inside the group
+
+    resource_el -- resource element to get its inner resources
+    """
+    if is_bundle(resource_el):
+        in_bundle = get_bundle_inner_resource(resource_el)
+        return [in_bundle] if in_bundle is not None else []
+    if is_any_clone(resource_el):
+        return [get_clone_inner_resource(resource_el)]
+    if is_group(resource_el):
+        return get_group_inner_resources(resource_el)
+    return []
+
+def is_wrapper_resource(resource_el):
+    """
+    Return True for resource_el of types that can contain other resource(s)
+    (these are: group, bundle, clone) and False otherwise.
+
+    resource_el -- resource element to check
+    """
+    return (
+        is_group(resource_el)
+        or
+        is_bundle(resource_el)
+        or
+        is_any_clone(resource_el)
+    )
+
+def get_parent_resource(resource_el):
+    """
+    Return a direct ancestor of a specified resource or None if the resource
+    has no ancestor.
+    Example: for a resource in group which is in clone, this function will
+    return group element.
+
+    resource_el -- resource element of which parent resource should be returned
+    """
+    parent_el = resource_el.getparent()
+    if parent_el is not None and is_wrapper_resource(parent_el):
+        return parent_el
+    return None
+
+
 def find_resources_to_enable(resource_el):
     """
     Get resources to enable in order to enable specified resource succesfully
