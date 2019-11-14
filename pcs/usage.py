@@ -607,7 +607,7 @@ Commands:
         Display relations of a resource specified by its id with other resources
         in a tree structure. Supported types of resource relations are:
         ordering constraints, ordering set constraints, relations defined by
-        resouce hierarchy (clones, groups, bundles). If --full is used, more
+        resource hierarchy (clones, groups, bundles). If --full is used, more
         verbose output will be printed.
 
 Examples:
