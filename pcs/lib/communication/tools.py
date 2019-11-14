@@ -1,47 +1,11 @@
-from typing import List, Any
-
 from pcs.common import report_codes
 from pcs.common.node_communicator import Request
-from pcs.common.reports import SimpleReportProcessorInterface
 from pcs.lib import reports
 from pcs.lib.node_communication import response_to_report_item
 from pcs.lib.errors import (
     LibraryError,
     ReportItemSeverity,
 )
-
-
-def run(communicator, cmd):
-    """
-    Run communication command. Returns return value of method on_complete() of
-    communcation command after run.
-
-    NodeCommunicator communicator -- object used for communication
-    CommunicationCommandInterface cmd
-    """
-    cmd.before()
-    communicator.add_requests(cmd.get_initial_request_list())
-    for response in communicator.start_loop():
-        extra_requests = cmd.on_response(response)
-        if extra_requests:
-            communicator.add_requests(extra_requests)
-    return cmd.on_complete()
-
-
-def run_and_raise(communicator, cmd):
-    """
-    Run communication command. Returns return value of method on_complete() of
-    communcation command after run.
-    Raises LibraryError (with no report item) when some errors occured while
-    running communication command.
-
-    NodeCommunicator communicator -- object used for communication
-    CommunicationCommandInterface cmd
-    """
-    to_return = run(communicator, cmd)
-    if cmd.error_list:
-        raise LibraryError()
-    return to_return
 
 
 class CommunicationCommandInterface:
@@ -83,26 +47,62 @@ class CommunicationCommandInterface:
         raise NotImplementedError()
 
 
+def run(communicator, cmd):
+    """
+    Run communication command. Returns return value of method on_complete() of
+    communcation command after run.
+
+    NodeCommunicator communicator -- object used for communication
+    CommunicationCommandInterface cmd
+    """
+    cmd.before()
+    communicator.add_requests(cmd.get_initial_request_list())
+    for response in communicator.start_loop():
+        extra_requests = cmd.on_response(response)
+        if extra_requests:
+            communicator.add_requests(extra_requests)
+    return cmd.on_complete()
+
+
+def run_and_raise(communicator, cmd):
+    """
+    Run communication command. Returns return value of method on_complete() of
+    communcation command after run.
+    Raises LibraryError (with no report item) when some errors occured while
+    running communication command.
+
+    NodeCommunicator communicator -- object used for communication
+    CommunicationCommandInterface cmd
+    """
+    to_return = run(communicator, cmd)
+    if cmd.error_list:
+        raise LibraryError()
+    return to_return
+
+
 class RunRemotelyBase(CommunicationCommandInterface):
     """
     Abstract class for communication commands. This class provides methods for
     reporting.
     """
-    #pylint: disable=abstract-method
-    def __init__(self, report_processor: SimpleReportProcessorInterface):
+    # pylint: disable=abstract-method
+    _report_pcsd_too_old_on_404 = False
+
+    def __init__(self, report_processor):
         self.__report_processor = report_processor
-        # Note: not properly typed
-        self._error_list: List[Any] = []
+        self._error_list = []
 
     def _get_response_report(self, response):
-        # pylint: disable=no-self-use
         """
         Convert specified response to report item. Returns None if the response
         has no failures.
 
         Response response -- a response to be converted
         """
-        return response_to_report_item(response)
+        return response_to_report_item(
+            response,
+            report_pcsd_too_old_on_404=self._report_pcsd_too_old_on_404,
+        )
 
     def _report_list(self, report_list):
         """
@@ -314,6 +314,7 @@ class SkipOfflineMixin:
     """
     _failure_severity = ReportItemSeverity.ERROR
     _failure_forceable = None
+    _report_pcsd_too_old_on_404: bool
 
     def _set_skip_offline(
         self, skip_offline_targets, force_code=report_codes.SKIP_OFFLINE_NODES
@@ -333,12 +334,5 @@ class SkipOfflineMixin:
             response,
             severity=self._failure_severity,
             forceable=self._failure_forceable,
+            report_pcsd_too_old_on_404=self._report_pcsd_too_old_on_404,
         )
-
-
-class NotSupportedHandlerMixin:
-    def _get_response_report(self, response):
-        report = super()._get_response_report(response)
-        if response.was_connected and response.response_code == 404:
-            report = reports.pcsd_version_too_old(response.request.target.label)
-        return report

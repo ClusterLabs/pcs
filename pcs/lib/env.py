@@ -1,4 +1,9 @@
-from pcs.common.node_communicator import NodeCommunicatorFactory
+from typing import (
+    Optional,
+)
+from xml.etree.ElementTree import Element
+
+from pcs.common.node_communicator import Communicator, NodeCommunicatorFactory
 from pcs.common.tools import Version
 from pcs.lib import reports
 from pcs.lib.booth.env import BoothEnv
@@ -103,7 +108,7 @@ class LibraryEnvironment:
     def user_groups(self):
         return self._user_groups
 
-    def get_cib(self, minimal_version=None):
+    def get_cib(self, minimal_version: Optional[Version] = None) -> Element:
         if self.__loaded_cib_diff_source is not None:
             raise AssertionError("CIB has already been loaded")
         self.__loaded_cib_diff_source = get_cib_xml(self.cmd_runner())
@@ -257,7 +262,7 @@ class LibraryEnvironment:
             return get_local_corosync_conf()
         return self._corosync_conf_data
 
-    def get_corosync_conf(self):
+    def get_corosync_conf(self) -> CorosyncConfigFacade:
         return CorosyncConfigFacade.from_string(self.get_corosync_conf_data())
 
     def push_corosync_conf(
@@ -341,7 +346,7 @@ class LibraryEnvironment:
     def is_corosync_conf_live(self):
         return self._corosync_conf_data is None
 
-    def cmd_runner(self):
+    def cmd_runner(self) -> CommandRunner:
         runner_env = {
             # make sure to get output of external processes in English and ASCII
             "LC_ALL": "C",
@@ -374,12 +379,15 @@ class LibraryEnvironment:
     def communicator_factory(self):
         return self._communicator_factory
 
-    def get_node_communicator(self, request_timeout=None):
+    def get_node_communicator(
+        self,
+        request_timeout: Optional[int] = None,
+    ) -> Communicator:
         return self.communicator_factory.get_communicator(
             request_timeout=request_timeout
         )
 
-    def get_node_target_factory(self):
+    def get_node_target_factory(self) -> NodeTargetLibFactory:
         return NodeTargetLibFactory(
             self.__get_known_hosts(), self.report_processor
         )

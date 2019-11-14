@@ -6,7 +6,6 @@ from pcs.lib import reports, node_communication_format
 from pcs.lib.communication.tools import (
     AllAtOnceStrategyMixin,
     AllSameDataMixin,
-    NotSupportedHandlerMixin,
     RunRemotelyBase,
     SkipOfflineMixin,
     SimpleResponseProcessingMixin,
@@ -46,6 +45,34 @@ class GetOnlineTargets(
         return self._online_target_list
 
 
+class CheckReachability(
+    AllSameDataMixin, AllAtOnceStrategyMixin, RunRemotelyBase
+):
+    REACHABLE = "REACHABLE"
+    UNREACHABLE = "UNREACHABLE"
+    UNAUTH = "UNAUTH"
+
+    def __init__(self, report_processor):
+        super().__init__(report_processor)
+        self._node_reachability = {}
+
+    def _get_request_data(self):
+        return RequestData("remote/check_auth", [("check_auth_only", 1)])
+
+    def _process_response(self, response):
+        host = response.request.host_label
+        if not response.was_connected:
+            self._node_reachability[host] = self.UNREACHABLE
+            return
+        if response.response_code == 401:
+            self._node_reachability[host] = self.UNAUTH
+            return
+        self._node_reachability[host] = self.REACHABLE
+
+    def on_complete(self):
+        return self._node_reachability
+
+
 class CheckAuth(AllSameDataMixin, AllAtOnceStrategyMixin, RunRemotelyBase):
     def __init__(self, report_processor):
         super(CheckAuth, self).__init__(report_processor)
@@ -77,11 +104,9 @@ class CheckAuth(AllSameDataMixin, AllAtOnceStrategyMixin, RunRemotelyBase):
         return self._not_authorized_host_name_list
 
 
-class GetHostInfo(
-    NotSupportedHandlerMixin, AllSameDataMixin, AllAtOnceStrategyMixin,
-    RunRemotelyBase,
-):
+class GetHostInfo(AllSameDataMixin, AllAtOnceStrategyMixin, RunRemotelyBase):
     _responses = None
+    _report_pcsd_too_old_on_404 = True
 
     def _get_request_data(self):
         return RequestData("remote/check_host")

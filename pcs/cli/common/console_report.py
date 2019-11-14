@@ -9,8 +9,11 @@ from pcs.common import (
     report_codes as codes,
 )
 from pcs.common.file import RawFileError
-
 from pcs.common.fencing_topology import TARGET_TYPE_ATTRIBUTE
+from pcs.common.tools import (
+    format_list,
+    indent,
+)
 
 INSTANCE_SUFFIX = "@{0}"
 NODE_PREFIX = "{0}: "
@@ -66,17 +69,6 @@ def format_message(message, prefix):
 def error(message):
     sys.stderr.write(format_message(message, "Error: "))
     return SystemExit(1)
-
-def indent(line_list, indent_step=2):
-    """
-    return line list where each line of input is prefixed by N spaces
-    list of string line_list are original lines
-    int indent_step is count of spaces for line prefix
-    """
-    return [
-        "{0}{1}".format(" "*indent_step, line) if line else line
-        for line in line_list
-    ]
 
 def format_optional(value, template, empty_case=""):
     # Number 0 is considered False which does not suit our needs so we check
@@ -500,15 +492,6 @@ def build_node_description(node_types):
         return label(node_types[0])
 
     return "nor " + " or ".join([label(ntype) for ntype in node_types])
-
-def format_list(item_list, optional_transformations=None):
-    if not optional_transformations:
-        optional_transformations = {}
-
-    return ", ".join(sorted([
-        "'{0}'".format(optional_transformations.get(item, item))
-        for item in item_list
-    ]))
 
 #Each value (a callable taking report_item.info) returns a message.
 #Force text will be appended if necessary.
@@ -1302,8 +1285,16 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
         .format(**info)
     ,
 
-    codes.CRM_MON_ERROR:
-        "error running crm_mon, is pacemaker running?"
+    codes.CRM_MON_ERROR: lambda info:
+        "error running crm_mon, is pacemaker running?{_reason}"
+        .format(
+            _reason=(
+                ("\n" + "\n".join(indent(info["reason"].strip().splitlines())))
+                if info["reason"].strip()
+                else ""
+            ),
+            **info
+        )
     ,
 
     codes.BAD_CLUSTER_STATE_FORMAT:

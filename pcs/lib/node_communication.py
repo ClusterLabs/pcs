@@ -143,14 +143,11 @@ class NodeTargetLibFactory(NodeTargetFactory):
 
         report_list = []
         if unknown_host_list:
-            report_kwargs = (
-                dict(severity=ReportItemSeverity.WARNING) if skip_non_existing
-                else dict(
-                    forceable=(
-                        report_codes.SKIP_OFFLINE_NODES if allow_skip else None
-                    )
-                )
-            )
+            report_kwargs = {}
+            if skip_non_existing:
+                report_kwargs["severity"] = ReportItemSeverity.WARNING
+            elif allow_skip:
+                report_kwargs["forceable"] = report_codes.SKIP_OFFLINE_NODES
             report_list.append(reports.host_not_found(
                 unknown_host_list, **report_kwargs
             ))
@@ -173,7 +170,8 @@ class NodeTargetLibFactory(NodeTargetFactory):
 
 
 def response_to_report_item(
-    response, severity=ReportItemSeverity.ERROR, forceable=None
+    response, severity=ReportItemSeverity.ERROR, forceable=None,
+    report_pcsd_too_old_on_404=False,
 ):
     """
     Returns report item which corresponds to response if was not successful.
@@ -182,10 +180,19 @@ def response_to_report_item(
     Response response -- response from which report item shoculd be created
     ReportItemseverity severity -- severity of report item
     string forceable -- force code
+    bool report_pcsd_too_old_on_404 -- if False, report unsupported command
     """
     response_code = response.response_code
     report = None
     reason = None
+    if (
+        report_pcsd_too_old_on_404
+        and
+        response.was_connected
+        and
+        response_code == 404
+    ):
+        return reports.pcsd_version_too_old(response.request.host_label)
     if response.was_connected:
         if response_code == 400:
             # old pcsd protocol: error messages are commonly passed in plain

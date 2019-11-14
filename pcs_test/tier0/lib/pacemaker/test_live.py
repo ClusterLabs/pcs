@@ -76,6 +76,144 @@ class GetClusterStatusXmlTest(LibraryPacemakerTest):
 
         mock_runner.run.assert_called_once_with(self.crm_mon_cmd())
 
+class GetClusterStatusText(TestCase):
+    def setUp(self):
+        self.mock_fencehistory_supported = mock.patch(
+            "pcs.lib.pacemaker.live.is_fence_history_supported",
+            return_value=True
+        )
+        self.mock_fencehistory_supported.start()
+        self.expected_stdout = "cluster status"
+        self.expected_stderr = ""
+        self.expected_retval = 0
+
+    def tearDown(self):
+        self.mock_fencehistory_supported.stop()
+
+    def get_runner(self, stdout=None, stderr=None, retval=None):
+        return get_runner(
+            self.expected_stdout if stdout is None else stdout,
+            self.expected_stderr if stderr is None else stderr,
+            self.expected_retval if retval is None else retval,
+        )
+
+    def test_success_minimal(self):
+        mock_runner = self.get_runner()
+        real_status, warnings = lib.get_cluster_status_text(
+            mock_runner, False, False
+        )
+
+        mock_runner.run.assert_called_once_with([
+            "/usr/sbin/crm_mon", "--one-shot", "--inactive"
+        ])
+        self.assertEqual(self.expected_stdout, real_status)
+        self.assertEqual(warnings, [])
+
+    def test_success_verbose(self):
+        mock_runner = self.get_runner()
+        real_status, warnings = lib.get_cluster_status_text(
+            mock_runner, False, True
+        )
+
+        mock_runner.run.assert_called_once_with([
+            "/usr/sbin/crm_mon", "--one-shot", "--inactive", "--show-detail",
+            "--show-node-attributes", "--failcounts", "--fence-history=3",
+        ])
+        self.assertEqual(self.expected_stdout, real_status)
+        self.assertEqual(warnings, [])
+
+    def test_success_no_fence_history(self):
+        self.mock_fencehistory_supported.stop()
+        self.mock_fencehistory_supported = mock.patch(
+            "pcs.lib.pacemaker.live.is_fence_history_supported",
+            return_value=False
+        )
+        self.mock_fencehistory_supported.start()
+
+        mock_runner = self.get_runner()
+        real_status, warnings = lib.get_cluster_status_text(
+            mock_runner, False, True
+        )
+
+        mock_runner.run.assert_called_once_with([
+            "/usr/sbin/crm_mon", "--one-shot", "--inactive", "--show-detail",
+            "--show-node-attributes", "--failcounts",
+        ])
+        self.assertEqual(self.expected_stdout, real_status)
+        self.assertEqual(warnings, [])
+
+    def test_success_hide_inactive(self):
+        mock_runner = self.get_runner()
+        real_status, warnings = lib.get_cluster_status_text(
+            mock_runner, True, False
+        )
+
+        mock_runner.run.assert_called_once_with([
+            "/usr/sbin/crm_mon", "--one-shot"
+        ])
+        self.assertEqual(self.expected_stdout, real_status)
+        self.assertEqual(warnings, [])
+
+    def test_success_hide_inactive_verbose(self):
+        mock_runner = self.get_runner()
+        real_status, warnings = lib.get_cluster_status_text(
+            mock_runner, True, True
+        )
+
+        mock_runner.run.assert_called_once_with([
+            "/usr/sbin/crm_mon", "--one-shot", "--show-detail",
+            "--show-node-attributes", "--failcounts", "--fence-history=3",
+        ])
+        self.assertEqual(self.expected_stdout, real_status)
+        self.assertEqual(warnings, [])
+
+    def test_error(self):
+        mock_runner = self.get_runner("stdout", "stderr", 1)
+        assert_raise_library_error(
+            lambda: lib.get_cluster_status_text(mock_runner, False, False),
+            (
+                fixture.error(
+                    report_codes.CRM_MON_ERROR,
+                    reason="stderr\nstdout"
+                )
+            )
+        )
+        mock_runner.run.assert_called_once_with([
+            "/usr/sbin/crm_mon", "--one-shot", "--inactive"
+        ])
+
+    def test_warnings(self):
+        mock_runner = self.get_runner(
+            stderr="msgA\nDEBUG: msgB\nmsgC\nDEBUG: msgd\n"
+        )
+        real_status, warnings = lib.get_cluster_status_text(
+            mock_runner, False, False
+        )
+
+        mock_runner.run.assert_called_once_with([
+            "/usr/sbin/crm_mon", "--one-shot", "--inactive"
+        ])
+        self.assertEqual(self.expected_stdout, real_status)
+        self.assertEqual(warnings, ["msgA", "msgC"])
+
+    def test_warnings_verbose(self):
+        mock_runner = self.get_runner(
+            stderr="msgA\nDEBUG: msgB\nmsgC\nDEBUG: msgd\n"
+        )
+        real_status, warnings = lib.get_cluster_status_text(
+            mock_runner, False, True
+        )
+
+        mock_runner.run.assert_called_once_with([
+            "/usr/sbin/crm_mon", "--one-shot", "--inactive", "--show-detail",
+            "--show-node-attributes", "--failcounts", "--fence-history=3",
+        ])
+        self.assertEqual(self.expected_stdout, real_status)
+        self.assertEqual(
+            warnings,
+            ["msgA", "DEBUG: msgB", "msgC", "DEBUG: msgd"]
+        )
+
 class GetCibXmlTest(LibraryPacemakerTest):
     def test_success(self):
         expected_stdout = "<xml />"

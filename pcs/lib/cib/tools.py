@@ -1,4 +1,5 @@
 import re
+from xml.etree.ElementTree import Element
 
 from pcs.common import report_codes
 from pcs.common.tools import Version
@@ -312,6 +313,14 @@ def get_constraints(tree):
     """
     return sections.get(tree, sections.CONSTRAINTS)
 
+def get_crm_config(tree: Element) -> Element:
+    """
+    Return 'crm_config' element from tree, raise LibraryError if missing
+
+    tree -- cib etree node
+    """
+    return sections.get(tree, sections.CRM_CONFIG)
+
 def get_fencing_topology(tree):
     """
     Return the 'fencing-topology' element from the tree
@@ -326,9 +335,10 @@ def get_nodes(tree):
     """
     return sections.get(tree, sections.NODES)
 
-def get_resources(tree):
+def get_resources(tree: Element) -> Element:
     """
     Return the 'resources' element from the tree
+
     tree -- cib etree node
     """
     return sections.get(tree, sections.RESOURCES)

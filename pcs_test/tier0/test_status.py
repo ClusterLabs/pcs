@@ -53,7 +53,7 @@ class StonithWarningTest(TestCase, AssertPcsMixin):
                     Cluster name: test99
 
                     WARNINGS:
-                    Following stonith devices have the 'action' option set, it is recommended to set 'pcmk_off_action', 'pcmk_reboot_action' instead: Sa
+                    Following stonith devices have the 'action' option set, it is recommended to set 'pcmk_off_action', 'pcmk_reboot_action' instead: 'Sa'
 
                     Cluster Summary:
                 """)
@@ -65,7 +65,7 @@ class StonithWarningTest(TestCase, AssertPcsMixin):
                     Cluster name: test99
 
                     WARNINGS:
-                    Following stonith devices have the 'action' option set, it is recommended to set 'pcmk_off_action', 'pcmk_reboot_action' instead: Sa
+                    Following stonith devices have the 'action' option set, it is recommended to set 'pcmk_off_action', 'pcmk_reboot_action' instead: 'Sa'
 
                     Stack: unknown
                     Current DC: NONE
@@ -83,7 +83,7 @@ class StonithWarningTest(TestCase, AssertPcsMixin):
                     Cluster name: test99
 
                     WARNINGS:
-                    Following stonith devices have the 'method' option set to 'cycle' which is potentially dangerous, please consider using 'onoff': Sc
+                    Following stonith devices have the 'method' option set to 'cycle' which is potentially dangerous, please consider using 'onoff': 'Sc'
 
                     Cluster Summary:
                 """)
@@ -95,7 +95,7 @@ class StonithWarningTest(TestCase, AssertPcsMixin):
                     Cluster name: test99
 
                     WARNINGS:
-                    Following stonith devices have the 'method' option set to 'cycle' which is potentially dangerous, please consider using 'onoff': Sc
+                    Following stonith devices have the 'method' option set to 'cycle' which is potentially dangerous, please consider using 'onoff': 'Sc'
 
                     Stack: unknown
                     Current DC: NONE
@@ -114,8 +114,8 @@ class StonithWarningTest(TestCase, AssertPcsMixin):
                     Cluster name: test99
 
                     WARNINGS:
-                    Following stonith devices have the 'action' option set, it is recommended to set 'pcmk_off_action', 'pcmk_reboot_action' instead: Sa
-                    Following stonith devices have the 'method' option set to 'cycle' which is potentially dangerous, please consider using 'onoff': Sc
+                    Following stonith devices have the 'action' option set, it is recommended to set 'pcmk_off_action', 'pcmk_reboot_action' instead: 'Sa'
+                    Following stonith devices have the 'method' option set to 'cycle' which is potentially dangerous, please consider using 'onoff': 'Sc'
 
                     Cluster Summary:
                 """)
@@ -127,8 +127,8 @@ class StonithWarningTest(TestCase, AssertPcsMixin):
                     Cluster name: test99
 
                     WARNINGS:
-                    Following stonith devices have the 'action' option set, it is recommended to set 'pcmk_off_action', 'pcmk_reboot_action' instead: Sa
-                    Following stonith devices have the 'method' option set to 'cycle' which is potentially dangerous, please consider using 'onoff': Sc
+                    Following stonith devices have the 'action' option set, it is recommended to set 'pcmk_off_action', 'pcmk_reboot_action' instead: 'Sa'
+                    Following stonith devices have the 'method' option set to 'cycle' which is potentially dangerous, please consider using 'onoff': 'Sc'
 
                     Stack: unknown
                     Current DC: NONE

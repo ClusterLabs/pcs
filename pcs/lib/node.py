@@ -1,11 +1,24 @@
+from typing import (
+    Iterable,
+    Optional,
+    Tuple,
+)
+from xml.etree.ElementTree import Element
+
 from pcs.lib import reports
+from pcs.lib.cib.node import PacemakerNode
 from pcs.lib.cib.resource import remote_node, guest_node
+from pcs.lib.corosync.config_facade import ConfigFacade as CorosyncConfigFacade
+from pcs.lib.corosync.node import CorosyncNode
+from pcs.lib.errors import ReportItemList
 from pcs.lib.xml_tools import get_root
 
 
 def get_existing_nodes_names(
-    corosync_conf=None, cib=None, error_on_missing_name=False
-):
+    corosync_conf: Optional[CorosyncConfigFacade] = None,
+    cib: Optional[Element] = None,
+    error_on_missing_name: bool = False
+) -> Tuple[Iterable[str], ReportItemList]:
     return __get_nodes_names(
         *__get_nodes(corosync_conf, cib),
         error_on_missing_name
@@ -24,9 +37,12 @@ def get_existing_nodes_names_addrs(
         report_list
     )
 
-def __get_nodes(corosync_conf=None, cib=None):
+def __get_nodes(
+    corosync_conf: Optional[CorosyncConfigFacade] = None,
+    cib: Optional[Element] = None
+) -> Tuple[Iterable[CorosyncNode], Iterable[PacemakerNode]]:
     corosync_nodes = corosync_conf.get_nodes() if corosync_conf else []
-    remote_and_guest_nodes = []
+    remote_and_guest_nodes: Iterable[PacemakerNode] = []
     if cib is not None:
         cib_root = get_root(cib)
         remote_and_guest_nodes = (
@@ -37,8 +53,10 @@ def __get_nodes(corosync_conf=None, cib=None):
     return corosync_nodes, remote_and_guest_nodes
 
 def __get_nodes_names(
-    corosync_nodes, remote_and_guest_nodes, error_on_missing_name=False
-):
+    corosync_nodes: Iterable[CorosyncNode],
+    remote_and_guest_nodes: Iterable[PacemakerNode],
+    error_on_missing_name: bool = False
+) -> Tuple[Iterable[str], ReportItemList]:
     report_list = []
     corosync_names = []
     name_missing_in_corosync = False

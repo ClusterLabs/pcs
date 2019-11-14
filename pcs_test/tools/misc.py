@@ -71,6 +71,10 @@ def get_test_resource(name):
     """Return full path to a test resource file specified by name"""
     return os.path.join(testdir, "resources", name)
 
+def read_test_resource(name):
+    with open(get_test_resource(name)) as a_file:
+        return a_file.read()
+
 def cmp3(a, b):
     # python3 doesn't have the cmp function, this is an official workaround
     # https://docs.python.org/3.0/whatsnew/3.0.html#ordering-comparisons

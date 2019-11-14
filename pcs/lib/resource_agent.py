@@ -34,7 +34,7 @@ DEFAULT_INTERVALS = {
     "monitor": "60s"
 }
 
-_STONITH_ACTION_REPLACED_BY = ("pcmk_off_action", "pcmk_reboot_action")
+STONITH_ACTION_REPLACED_BY = ("pcmk_off_action", "pcmk_reboot_action")
 
 
 def get_default_interval(operation_name):
@@ -1039,7 +1039,7 @@ class StonithAgent(CrmAgent):
             forcible, severity = self._validate_report_forcible_severity(force)
             return [reports.deprecated_option(
                 "action",
-                _STONITH_ACTION_REPLACED_BY,
+                STONITH_ACTION_REPLACED_BY,
                 self._agent_type_label,
                 severity=severity,
                 forceable=forcible
@@ -1073,7 +1073,7 @@ class StonithAgent(CrmAgent):
                         " current Pacemaker versions. Use {0} instead."
                 ).format(
                     ", ".join(
-                        ["'{0}'".format(x) for x in _STONITH_ACTION_REPLACED_BY]
+                        ["'{0}'".format(x) for x in STONITH_ACTION_REPLACED_BY]
                     )
                 )
                 filtered.append(new_param)

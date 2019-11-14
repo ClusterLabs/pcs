@@ -73,9 +73,11 @@ def _non_root_run(argv_cmd):
         ['pcsd', 'sync-certificates'],
         ["quorum", "device", "status", "..."],
         ["quorum", "status", "..."],
+        ["status"],
         ['status', 'corosync', '...'],
-        ['status', 'quorum', '...'],
         ['status', 'pcsd', '...'],
+        ["status", "quorum", "..."],
+        ["status", "status", "..."],
     ]
 
     for root_cmd in root_command_list:

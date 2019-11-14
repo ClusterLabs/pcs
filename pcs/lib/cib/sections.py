@@ -9,6 +9,7 @@ from pcs.lib.xml_tools import get_sub_element
 
 CONFIGURATION = "configuration"
 CONSTRAINTS = "configuration/constraints"
+CRM_CONFIG = "configuration/crm_config"
 NODES = "configuration/nodes"
 RESOURCES = "configuration/resources"
 
@@ -21,6 +22,7 @@ RSC_DEFAULTS = "rsc_defaults"
 __MANDATORY_SECTIONS = [
     CONFIGURATION,
     CONSTRAINTS,
+    CRM_CONFIG,
     NODES,
     RESOURCES,
 ]

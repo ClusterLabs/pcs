@@ -4,9 +4,9 @@ import shutil
 from unittest import mock, TestCase
 
 from pcs import stonith
-from pcs.cli.common.console_report import indent
 from pcs.cli.common.errors import CmdLineInputError
 from pcs.cli.common.parse_args import InputModifiers
+from pcs.common.tools import indent
 from pcs_test.tier0.cib_resource.common import ResourceTest
 from pcs_test.tools.assertions import AssertPcsMixin
 from pcs_test.tools.bin_mock import get_mock_settings
@@ -726,16 +726,22 @@ class StonithTest(TestCase, AssertPcsMixin):
 
     def testNoStonithWarning(self):
         # pylint: disable=unused-variable
-        corosync_conf = rc("corosync_conf")
+        corosync_conf = rc("corosync.conf")
         o,r = pcs(temp_cib, "status", corosync_conf_opt=corosync_conf)
-        assert "No stonith devices and stonith-enabled is not false" in o
+        self.assertIn(
+            "No stonith devices and stonith-enabled is not false",
+            o
+        )
 
         self.assert_pcs_success(
             "stonith create test_stonith fence_apc ip=i username=u pcmk_host_argument=node1"
         )
 
         o,r = pcs(temp_cib, "status", corosync_conf_opt=corosync_conf)
-        assert "No stonith devices and stonith-enabled is not false" not in o
+        self.assertNotIn(
+            "No stonith devices and stonith-enabled is not false",
+            o
+        )
 
         self.assert_pcs_success(
             "stonith delete test_stonith",
@@ -743,7 +749,10 @@ class StonithTest(TestCase, AssertPcsMixin):
         )
 
         o,r = pcs(temp_cib, "status", corosync_conf_opt=corosync_conf)
-        assert "No stonith devices and stonith-enabled is not false" in o
+        self.assertIn(
+            "No stonith devices and stonith-enabled is not false",
+            o
+        )
 
 
 class LevelTestsBase(TestCase, AssertPcsMixin):

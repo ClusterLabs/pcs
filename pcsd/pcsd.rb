@@ -286,17 +286,25 @@ post '/run_pcs' do
       'only_superuser' => false,
       'permissions' => Permissions::READ,
     },
-    ['status', 'corosync', '...'] => {
+    ['status'] => {
       'only_superuser' => false,
       'permissions' => Permissions::READ,
     },
-    ['status', 'quorum', '...'] => {
+    ['status', 'corosync', '...'] => {
       'only_superuser' => false,
       'permissions' => Permissions::READ,
     },
     ['status', 'pcsd', '...'] => {
       'only_superuser' => false,
       'permissions' => nil,
+    },
+    ['status', 'quorum', '...'] => {
+      'only_superuser' => false,
+      'permissions' => Permissions::READ,
+    },
+    ['status', 'status', '...'] => {
+      'only_superuser' => false,
+      'permissions' => Permissions::READ,
     },
   }
   allowed = false

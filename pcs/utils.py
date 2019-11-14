@@ -42,12 +42,12 @@ from pcs.cli.common.parse_args import InputModifiers
 from pcs.cli.common.reports import (
     build_report_message,
     process_library_reports,
-    LibraryReportProcessorToConsole as LibraryReportProcessorToConsole,
+    LibraryReportProcessorToConsole,
 )
 import pcs.cli.booth.env
 from pcs.cli.file import metadata as cli_file_metadata
 
-from pcs.lib import reports, sbd
+from pcs.lib import reports
 import pcs.lib.corosync.config_parser as corosync_conf_parser
 from pcs.lib.corosync.config_facade import ConfigFacade as corosync_conf_facade
 from pcs.lib.env import LibraryEnvironment
@@ -59,8 +59,6 @@ from pcs.lib.external import (
     enable_service,
     EnableServiceError,
     is_proxy_set,
-    is_service_enabled,
-    is_service_running,
     is_systemctl,
 )
 from pcs.lib.file.instance import FileInstance as LibFileInstance
@@ -2021,37 +2019,6 @@ def err(errorText, exit_after_error=True):
     sys.stderr.write("Error: %s\n" % errorText)
     if exit_after_error:
         sys.exit(1)
-
-
-def serviceStatus(prefix):
-    """
-    Commandline options: no options
-    """
-    print("Daemon Status:")
-    service_def = [
-        # (
-        #     service name,
-        #     display even if not enabled nor running
-        # )
-        ("corosync", True),
-        ("pacemaker", True),
-        ("pacemaker_remote", False),
-        ("pcsd", True),
-        (sbd.get_sbd_service_name(), False),
-    ]
-    for service, display_always in service_def:
-        try:
-            running = is_service_running(cmd_runner(), service)
-            enabled = is_service_enabled(cmd_runner(), service)
-            if display_always or enabled or running:
-                print("{prefix}{service}: {active}/{enabled}".format(
-                    prefix=prefix,
-                    service=service,
-                    active=("active" if running else "inactive"),
-                    enabled=("enabled" if enabled else "disabled")
-                ))
-        except LibraryError:
-            pass
 
 def enableServices():
     """

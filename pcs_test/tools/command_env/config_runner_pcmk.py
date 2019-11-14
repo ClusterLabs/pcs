@@ -11,7 +11,7 @@ from pcs_test.tools.fixture_cib import modify_cib
 from pcs_test.tools.misc import get_test_resource as rc
 from pcs_test.tools.xml import etree_to_str
 
-# pylint: disable=invalid-name, redefined-builtin, unused-argument, too-many-arguments, too-many-locals, too-many-boolean-expressions
+# pylint: disable=too-many-arguments
 
 DEFAULT_WAIT_TIMEOUT = 10
 WAIT_TIMEOUT_EXPIRED_RETURNCODE = 124
@@ -22,7 +22,7 @@ AGENT_FILENAME_MAP = {
     "ocf:pacemaker:booth-site": "resource_agent_ocf_pacemaker_booth-site.xml",
 }
 
-def fixture_state_resources_xml(
+def _fixture_state_resources_xml(
     resource_id="A", resource_agent="ocf::heartbeat:Dummy", role="Started",
     failed="false", node_name="node1"
 ):
@@ -47,11 +47,17 @@ def fixture_state_resources_xml(
         )
     )
 
-def fixture_state_node_xml(
+def _fixture_state_node_xml(
     id, name, type="member", online=True, standby=False, standby_onfail=False,
     maintenance=False, pending=False, unclean=False, shutdown=False,
     expected_up=True, is_dc=False, resources_running=0
 ):
+    # This function uses a "clever" way of defaulting an input **dict containing
+    # attributes of an xml element.
+    # pylint: disable=unused-argument
+    # pylint: disable=invalid-name
+    # pylint: disable=redefined-builtin
+    # pylint: disable=too-many-locals
     attrs = locals()
     xml_attrs = []
     for attr_name, attr_value in attrs.items():
@@ -153,6 +159,7 @@ class PcmkShortcuts():
         string stderr -- crm_mon's stderr
         int returncode -- crm_mon's returncode
         """
+        # pylint: disable=too-many-boolean-expressions
         if (
             (resources or raw_resources is not None or nodes)
             and
@@ -183,7 +190,7 @@ class PcmkShortcuts():
             state = etree.fromstring(a_file.read())
 
         if raw_resources is not None:
-            resources = fixture_state_resources_xml(**raw_resources)
+            resources = _fixture_state_resources_xml(**raw_resources)
         if resources:
             state.append(complete_state_resources(etree.fromstring(resources)))
 
@@ -191,7 +198,7 @@ class PcmkShortcuts():
             nodes_element = state.find("./nodes")
             for node in nodes:
                 nodes_element.append(
-                    etree.fromstring(fixture_state_node_xml(**node))
+                    etree.fromstring(_fixture_state_node_xml(**node))
                 )
 
         # set correct number of nodes and resources into the status
@@ -213,6 +220,63 @@ class PcmkShortcuts():
                 "crm_mon --one-shot --as-xml --inactive",
                 stdout=etree_to_str(state),
             )
+        )
+
+    def load_state_plaintext(
+        self, name="runner.pcmk.load_state_plaintext",
+        inactive=True, verbose=False, fence_history=False,
+        stdout="", stderr="", returncode=0,
+    ):
+        """
+        Create a call for loading plaintext pacemaker status
+
+        str name -- key of the call
+        bool incative -- pass --inactive flag to crm_mon
+        bool verbose -- pass flags for increased verbosity to crm_mon
+        bool fence_history -- pass the flag for getting fence history to crm_mon
+        str stdout -- crm_mon's stdout
+        str stderr -- crm_mon's stderr
+        int returncode -- crm_mon's returncode
+        """
+        flags = ["--one-shot"]
+        if inactive:
+            flags.append("--inactive")
+        if verbose:
+            flags.extend([
+                "--show-detail", "--show-node-attributes", "--failcounts"
+            ])
+            if fence_history:
+                flags.append("--fence-history=3")
+        self.__calls.place(
+            name,
+            RunnerCall(
+                "crm_mon {}".format(" ".join(flags)),
+                stdout=stdout,
+                stderr=stderr,
+                returncode=returncode,
+            ),
+        )
+
+    def load_ticket_state_plaintext(
+        self, name="runner.pcmk.load_ticket_state_plaintext",
+        stdout="", stderr="", returncode=0,
+    ):
+        """
+        Create a call for loading plaintext tickets status
+
+        str name -- key of the call
+        str stdout -- crm_ticket's stdout
+        str stderr -- crm_ticket's stderr
+        int returncode -- crm_ticket's returncode
+        """
+        self.__calls.place(
+            name,
+            RunnerCall(
+                "crm_ticket --details",
+                stdout=stdout,
+                stderr=stderr,
+                returncode=returncode,
+            ),
         )
 
     def load_agent(
@@ -420,6 +484,8 @@ class PcmkShortcuts():
         string stderr -- crm_resource's stderr
         int returncode -- crm_resource's returncode
         """
+        # arguments are used via locals()
+        # pylint: disable=unused-argument
         all_args = locals()
         del all_args["self"]
         all_args["action"] = "--move"
@@ -454,6 +520,8 @@ class PcmkShortcuts():
         string stderr -- crm_resource's stderr
         int returncode -- crm_resource's returncode
         """
+        # arguments are used via locals()
+        # pylint: disable=unused-argument
         all_args = locals()
         del all_args["self"]
         all_args["action"] = "--ban"
@@ -488,6 +556,8 @@ class PcmkShortcuts():
         string stderr -- crm_resource's stderr
         int returncode -- crm_resource's returncode
         """
+        # arguments are used via locals()
+        # pylint: disable=unused-argument
         all_args = locals()
         del all_args["self"]
         all_args["action"] = "--clear"

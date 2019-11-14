@@ -18,6 +18,7 @@ from pcs.lib.commands import (
     resource,
     resource_agent,
     sbd,
+    status,
     stonith,
     stonith_agent,
 )
@@ -363,6 +364,20 @@ def load_module(env, middleware_factory, name):
             {
                 "set_operations_defaults": cib_options.set_operations_defaults,
                 "set_resources_defaults": cib_options.set_resources_defaults,
+            }
+        )
+
+    if name == "status":
+        return bind_all(
+            env,
+            middleware.build(
+                middleware_factory.cib,
+                middleware_factory.corosync_conf_existing,
+            ),
+            {
+                "full_cluster_status_plaintext":
+                    status.full_cluster_status_plaintext
+                ,
             }
         )
 

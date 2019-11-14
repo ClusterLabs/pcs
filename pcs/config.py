@@ -38,7 +38,6 @@ from pcs import (
     alert,
 )
 from pcs.cli.common import middleware
-from pcs.cli.common.console_report import indent
 from pcs.cli.common.errors import CmdLineInputError
 from pcs.cli.common.reports import process_library_reports
 from pcs.cli.constraint import command as constraint_command
@@ -47,8 +46,10 @@ from pcs.cli.constraint_colocation import (
 )
 from pcs.cli.constraint_order import console_report as order_console_report
 from pcs.cli.constraint_ticket import console_report as ticket_console_report
-from pcs.lib.errors import LibraryError
+from pcs.common.tools import indent
 from pcs.lib.commands import quorum as lib_quorum
+from pcs.lib.errors import LibraryError
+from pcs.lib.external import is_service_running
 from pcs.lib.node import get_existing_nodes_names
 
 # pylint: disable=too-many-branches, too-many-locals, too-many-statements
@@ -379,11 +380,11 @@ def config_restore_local(infile_name, infile_obj):
     Commandline options: no options
     """
     if (
-        utils.is_service_running(utils.cmd_runner(), "corosync")
+        is_service_running(utils.cmd_runner(), "corosync")
         or
-        utils.is_service_running(utils.cmd_runner(), "pacemaker")
+        is_service_running(utils.cmd_runner(), "pacemaker")
         or
-        utils.is_service_running(utils.cmd_runner(), "pacemaker_remote")
+        is_service_running(utils.cmd_runner(), "pacemaker_remote")
     ):
         utils.err(
             "Cluster is currently running on this node. You need to stop "

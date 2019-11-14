@@ -16,7 +16,7 @@ from pcs import (
 from pcs.settings import (
     pacemaker_wait_timeout_status as PACEMAKER_WAIT_TIMEOUT_STATUS,
 )
-from pcs.cli.common.console_report import error, indent, warn
+from pcs.cli.common.console_report import error, warn
 from pcs.cli.common.errors import CmdLineInputError, raise_command_replaced
 from pcs.cli.common.parse_args import (
     prepare_options,
@@ -30,6 +30,7 @@ from pcs.cli.resource.parse_args import (
     parse_bundle_update_options,
     parse_create as parse_create_args,
 )
+from pcs.common.tools import indent
 import pcs.lib.cib.acl as lib_acl
 from pcs.lib.cib.resource import (
     bundle,

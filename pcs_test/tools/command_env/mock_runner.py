@@ -58,13 +58,18 @@ COMMAND_COMPLETIONS = {
     "crm_node": path.join(settings.pacemaker_binaries, "crm_node"),
     "crm_resource": path.join(settings.pacemaker_binaries, "crm_resource"),
     "crm_simulate": path.join(settings.pacemaker_binaries, "crm_simulate"),
+    "crm_ticket": path.join(settings.pacemaker_binaries, "crm_ticket"),
     "crm_verify": path.join(settings.pacemaker_binaries, "crm_verify"),
     "sbd": settings.sbd_binary,
 }
 
 def complete_command(command):
     for shortcut, full_path in COMMAND_COMPLETIONS.items():
-        if command.startswith("{0} ".format(shortcut)):
+        if (
+            command == shortcut
+            or
+            command.startswith(f"{shortcut} ")
+        ):
             return full_path + command[len(shortcut):]
     return command
 

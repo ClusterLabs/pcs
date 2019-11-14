@@ -1,3 +1,7 @@
+from typing import (
+    List,
+)
+
 from pcs import settings
 from pcs.lib import reports
 from pcs.lib.corosync import config_parser, constants, node
@@ -113,7 +117,7 @@ class ConfigFacade:
     def need_qdevice_reload(self):
         return self._need_qdevice_reload
 
-    def get_cluster_name(self):
+    def get_cluster_name(self) -> str:
         name = ""
         for totem in self.config.get_sections("totem"):
             name = totem.get_attribute_value("cluster_name", name)
@@ -121,7 +125,7 @@ class ConfigFacade:
 
     # To get a list of nodenames use pcs.lib.node.get_existing_nodes_names
 
-    def get_nodes(self):
+    def get_nodes(self) -> List[node.CorosyncNode]:
         """
         Get all defined nodes
         """

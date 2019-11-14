@@ -3,7 +3,6 @@
 from unittest import mock, TestCase
 
 from pcs.cli.common.console_report import(
-    indent,
     format_optional,
     format_plural,
     _is_multiple,
@@ -17,6 +16,7 @@ from pcs.common.fencing_topology import (
     TARGET_TYPE_ATTRIBUTE,
 )
 from pcs.common.file import RawFileError
+from pcs.common.tools import indent
 from pcs.lib import reports
 from pcs.lib.errors import ReportItem
 
@@ -3099,10 +3099,19 @@ class ClusterStartSuccess(NameBuildTest):
         )
 
 class ClusterStateCannotLoad(NameBuildTest):
-    def test_all(self):
+    def test_without_reason(self):
         self.assert_message_from_report(
             "error running crm_mon, is pacemaker running?",
-            reports.cluster_state_cannot_load("reason")
+            reports.cluster_state_cannot_load("")
+        )
+
+    def test_with_reason(self):
+        self.assert_message_from_report(
+            (
+                "error running crm_mon, is pacemaker running?"
+                "\n  reason\n  spans several lines"
+            ),
+            reports.cluster_state_cannot_load("reason\nspans several lines")
         )
 
 class ClusterStateInvalidFormat(NameBuildTest):

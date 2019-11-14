@@ -2,8 +2,8 @@ from pcs import (
     prop,
     utils,
 )
-from pcs.cli.common.console_report import indent
 from pcs.cli.common.errors import CmdLineInputError
+from pcs.common.tools import indent
 from pcs.lib.pacemaker.values import is_true
 
 

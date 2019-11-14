@@ -1,5 +1,8 @@
 # pylint: disable=too-many-lines
 from functools import partial
+from typing import (
+    Iterable,
+)
 
 from pcs.common import report_codes
 from pcs.lib.errors import ReportItem, ReportItemSeverity
@@ -1962,10 +1965,11 @@ def cib_push_forced_full_due_to_crm_feature_set(required_set, current_set):
         }
     )
 
-def cluster_state_cannot_load(reason):
+def cluster_state_cannot_load(reason: str):
     """
     cannot load cluster status from crm_mon, crm_mon exited with non-zero code
-    string reason error description
+
+    reason -- description of the error
     """
     return ReportItem.error(
         report_codes.CRM_MON_ERROR,
@@ -3242,12 +3246,15 @@ def live_environment_required_for_local_node():
         report_codes.LIVE_ENVIRONMENT_REQUIRED_FOR_LOCAL_NODE,
     )
 
-def live_environment_not_consistent(mocked_files, required_files):
+def live_environment_not_consistent(
+    mocked_files: Iterable[str],
+    required_files: Iterable[str],
+) -> ReportItem:
     """
     The command cannot operate with mixed live / non-live cluster configs
 
-    iterable mocked_files -- given mocked files (pcs.common.file_type_codes)
-    iterable required_files -- files that must be mocked as well
+    mocked_files -- given mocked files (pcs.common.file_type_codes)
+    required_files -- files that must be mocked as well
     """
     return ReportItem.error(
         report_codes.LIVE_ENVIRONMENT_NOT_CONSISTENT,
@@ -3433,7 +3440,7 @@ def node_addresses_unresolvable(
         }
     )
 
-def unable_to_perform_operation_on_any_node():
+def unable_to_perform_operation_on_any_node() -> ReportItem:
     """
     This report is raised whenever
     pcs.lib.communication.tools.OneByOneStrategyMixin strategy mixin is used

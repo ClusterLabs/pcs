@@ -13,7 +13,7 @@ SCORE_INFINITY = "INFINITY"
 RESOURCE_ROLES = ("Master", "Slave", "Started", "Stopped")
 
 
-def is_boolean(val):
+def is_boolean(val) -> bool:
     """
     Does pacemaker consider a value to be a boolean?
     See crm_is_true in pacemaker/lib/common/utils.c
@@ -21,7 +21,7 @@ def is_boolean(val):
     """
     return val.lower() in _BOOLEAN
 
-def is_true(val):
+def is_true(val) -> bool:
     """
     Does pacemaker consider a value to be true?
     See crm_is_true in pacemaker/lib/common/utils.c
@@ -29,7 +29,7 @@ def is_true(val):
     """
     return val.lower() in _BOOLEAN_TRUE
 
-def is_false(val):
+def is_false(val) -> bool:
     """
     Does pacemaker consider a value to be false?
     See crm_is_true in pacemaker/lib/common/utils.c

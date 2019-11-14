@@ -1,6 +1,12 @@
 from unittest import TestCase
 
 
+class CheckReachability(TestCase):
+    """
+    tested in:
+        pcs_test.tier0.lib.command.status
+    """
+
 class GetOnlineTargets(TestCase):
     """
     tested in:

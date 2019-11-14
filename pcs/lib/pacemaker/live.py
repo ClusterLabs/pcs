@@ -1,5 +1,10 @@
 import os.path
 import re
+from typing import (
+    List,
+    Tuple,
+)
+
 from lxml import etree
 
 from pcs import settings
@@ -11,6 +16,7 @@ from pcs.common.tools import (
 from pcs.lib import reports
 from pcs.lib.cib.tools import get_pacemaker_version_by_which_cib_was_validated
 from pcs.lib.errors import LibraryError
+from pcs.lib.external import CommandRunner
 from pcs.lib.pacemaker.state import ClusterState
 from pcs.lib.tools import write_tmpfile
 from pcs.lib.xml_tools import etree_to_str
@@ -38,7 +44,42 @@ def get_cluster_status_xml(runner):
         )
     return stdout
 
+def get_cluster_status_text(
+    runner: CommandRunner,
+    hide_inactive_resources: bool,
+    verbose: bool,
+) -> Tuple[str, List[str]]:
+    cmd = [__exec("crm_mon"), "--one-shot"]
+    if not hide_inactive_resources:
+        cmd.append("--inactive")
+    if verbose:
+        cmd.extend(["--show-detail", "--show-node-attributes", "--failcounts"])
+        # by default, pending and failed actions are displayed
+        # with verbose==True, we display the whole history
+        if is_fence_history_supported():
+            cmd.append("--fence-history=3")
+    stdout, stderr, retval = runner.run(cmd)
+
+    if retval != 0:
+        raise CrmMonErrorException(
+            reports.cluster_state_cannot_load(join_multilines([stderr, stdout]))
+        )
+    warnings: List[str] = []
+    if stderr.strip():
+        warnings = [
+            line
+            for line in stderr.strip().splitlines()
+            if verbose or not line.startswith("DEBUG: ")
+        ]
+
+    return stdout.strip(), warnings
+
+def get_ticket_status_text(runner: CommandRunner) -> Tuple[str, str, int]:
+    stdout, stderr, retval = runner.run([__exec("crm_ticket"), "--details"])
+    return stdout.strip(), stderr.strip(), retval
+
 ### cib
+
 def get_cib_xml_cmd_results(runner, scope=None):
     command = [__exec("cibadmin"), "--local", "--query"]
     if scope:

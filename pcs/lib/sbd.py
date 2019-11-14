@@ -186,7 +186,7 @@ def get_local_sbd_config():
         ))
 
 
-def get_sbd_service_name():
+def get_sbd_service_name() -> str:
     return "sbd" if external.is_systemctl() else "sbd_helper"
 
 

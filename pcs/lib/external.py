@@ -2,6 +2,9 @@ import re
 from shlex import quote as shell_quote
 import signal
 import subprocess
+from typing import (
+    Optional,
+)
 
 from pcs import settings
 from pcs.common.system import is_systemd as is_systemctl
@@ -10,10 +13,10 @@ from pcs.lib import reports
 from pcs.lib.errors import LibraryError
 
 
-
 _chkconfig = settings.chkconfig_binary
 _service = settings.service_binary
 _systemctl = settings.systemctl_binary
+
 
 class ManageServiceError(Exception):
     #pylint: disable=super-init-not-called
@@ -38,19 +41,117 @@ class KillServicesError(ManageServiceError):
     pass
 
 
+class CommandRunner:
+    def __init__(self, logger, reporter, env_vars=None):
+        self._logger = logger
+        self._reporter = reporter
+        # Reset environment variables by empty dict is desired here.  We need
+        # to get rid of defaults - we do not know the context and environment
+        # where the library runs.  We also get rid of PATH settings, so all
+        # executables must be specified with full path unless the PATH variable
+        # is set from outside.
+        self._env_vars = env_vars if env_vars else dict()
+
+    @property
+    def env_vars(self):
+        return self._env_vars.copy()
+
+    def run(
+        self, args, stdin_string=None, env_extend=None, binary_output=False
+    ):
+        # Allow overriding default settings. If a piece of code really wants to
+        # set own PATH or CIB_file, we must allow it. I.e. it wants to run
+        # a pacemaker tool on a CIB in a file but cannot afford the risk of
+        # changing the CIB in the file specified by the user.
+        env_vars = self._env_vars.copy()
+        env_vars.update(
+            dict(env_extend) if env_extend else dict()
+        )
+
+        log_args = " ".join([shell_quote(x) for x in args])
+        self._logger.debug(
+            "Running: {args}\nEnvironment:{env_vars}{stdin_string}".format(
+                args=log_args,
+                stdin_string=("" if not stdin_string else (
+                    "\n--Debug Input Start--\n{0}\n--Debug Input End--"
+                    .format(stdin_string)
+                )),
+                env_vars=("" if not env_vars else (
+                    "\n" + "\n".join([
+                        "  {0}={1}".format(key, val)
+                        for key, val in sorted(env_vars.items())
+                    ])
+                ))
+            )
+        )
+        self._reporter.process(
+            reports.run_external_process_started(
+                log_args, stdin_string, env_vars
+            )
+        )
+
+        try:
+            # pylint: disable=subprocess-popen-preexec-fn
+            # this is OK as pcs is only single-threaded application
+            process = subprocess.Popen(
+                args,
+                # Some commands react differently if they get anything via stdin
+                stdin=(
+                    subprocess.PIPE
+                    if stdin_string is not None
+                    else subprocess.DEVNULL
+                ),
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                preexec_fn=(
+                    lambda: signal.signal(signal.SIGPIPE, signal.SIG_DFL)
+                ),
+                close_fds=True,
+                shell=False,
+                env=env_vars,
+                # decodes newlines and in python3 also converts bytes to str
+                universal_newlines=(not binary_output)
+            )
+            out_std, out_err = process.communicate(stdin_string)
+            retval = process.returncode
+        except OSError as e:
+            raise LibraryError(
+                reports.run_external_process_error(log_args, e.strerror)
+            )
+
+        self._logger.debug(
+            (
+                "Finished running: {args}\nReturn value: {retval}"
+                + "\n--Debug Stdout Start--\n{out_std}\n--Debug Stdout End--"
+                + "\n--Debug Stderr Start--\n{out_err}\n--Debug Stderr End--"
+            ).format(
+                args=log_args,
+                retval=retval,
+                out_std=out_std,
+                out_err=out_err
+            )
+        )
+        self._reporter.process(reports.run_external_process_finished(
+            log_args, retval, out_std, out_err
+        ))
+        return out_std, out_err, retval
+
+
 def _get_service_name(service, instance=None):
     return "{0}{1}.service".format(
         service, "" if instance is None else "@{0}".format(instance)
     )
 
+
 def ensure_is_systemd():
     """
-    Ensure if current system is systemd system. Raises Library error if not.
+    Raise a LibraryError if the current system is not a systemd system
     """
     if not is_systemctl():
         raise LibraryError(
             reports.unsupported_operation_on_non_systemd_systems()
         )
+
 
 def disable_service(runner, service, instance=None):
     """
@@ -165,12 +266,17 @@ def kill_services(runner, services):
             raise KillServicesError(list(services), message)
 
 
-def is_service_enabled(runner, service, instance=None):
+def is_service_enabled(
+    runner: CommandRunner,
+    service: str,
+    instance: Optional[str] = None
+) -> bool:
     """
-    Check if specified service is enabled in local system.
+    Check if the specified service is enabled in the local system.
 
     runner -- CommandRunner
-    service -- name of service
+    service -- name of the service
+    instance -- optional name of the services's instance
     """
     if is_systemctl():
         dummy_stdout, dummy_stderr, retval = runner.run(
@@ -182,12 +288,17 @@ def is_service_enabled(runner, service, instance=None):
     return retval == 0
 
 
-def is_service_running(runner, service, instance=None):
+def is_service_running(
+    runner: CommandRunner,
+    service: str,
+    instance: Optional[str] = None
+) -> bool:
     """
-    Check if specified service is currently running on local system.
+    Check if the specified service is currently running on the local system.
 
     runner -- CommandRunner
-    service -- name of service
+    service -- name of the service
+    instance -- optional name of the services's instance
     """
     if is_systemctl():
         dummy_stdout, dummy_stderr, retval = runner.run([
@@ -273,99 +384,3 @@ def is_proxy_set(env_dict):
         if env_dict.get(var, "") != "":
             return True
     return False
-
-
-class CommandRunner:
-    def __init__(self, logger, reporter, env_vars=None):
-        self._logger = logger
-        self._reporter = reporter
-        # Reset environment variables by empty dict is desired here.  We need
-        # to get rid of defaults - we do not know the context and environment
-        # where the library runs.  We also get rid of PATH settings, so all
-        # executables must be specified with full path unless the PATH variable
-        # is set from outside.
-        self._env_vars = env_vars if env_vars else dict()
-
-    @property
-    def env_vars(self):
-        return self._env_vars.copy()
-
-    def run(
-        self, args, stdin_string=None, env_extend=None, binary_output=False
-    ):
-        # Allow overriding default settings. If a piece of code really wants to
-        # set own PATH or CIB_file, we must allow it. I.e. it wants to run
-        # a pacemaker tool on a CIB in a file but cannot afford the risk of
-        # changing the CIB in the file specified by the user.
-        env_vars = self._env_vars.copy()
-        env_vars.update(
-            dict(env_extend) if env_extend else dict()
-        )
-
-        log_args = " ".join([shell_quote(x) for x in args])
-        self._logger.debug(
-            "Running: {args}\nEnvironment:{env_vars}{stdin_string}".format(
-                args=log_args,
-                stdin_string=("" if not stdin_string else (
-                    "\n--Debug Input Start--\n{0}\n--Debug Input End--"
-                    .format(stdin_string)
-                )),
-                env_vars=("" if not env_vars else (
-                    "\n" + "\n".join([
-                        "  {0}={1}".format(key, val)
-                        for key, val in sorted(env_vars.items())
-                    ])
-                ))
-            )
-        )
-        self._reporter.process(
-            reports.run_external_process_started(
-                log_args, stdin_string, env_vars
-            )
-        )
-
-        try:
-            # pylint: disable=subprocess-popen-preexec-fn
-            # this is OK as pcs is only single-threaded application
-            process = subprocess.Popen(
-                args,
-                # Some commands react differently if they get anything via stdin
-                stdin=(
-                    subprocess.PIPE
-                    if stdin_string is not None
-                    else subprocess.DEVNULL
-                ),
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-                preexec_fn=(
-                    lambda: signal.signal(signal.SIGPIPE, signal.SIG_DFL)
-                ),
-                close_fds=True,
-                shell=False,
-                env=env_vars,
-                # decodes newlines and in python3 also converts bytes to str
-                universal_newlines=(not binary_output)
-            )
-            out_std, out_err = process.communicate(stdin_string)
-            retval = process.returncode
-        except OSError as e:
-            raise LibraryError(
-                reports.run_external_process_error(log_args, e.strerror)
-            )
-
-        self._logger.debug(
-            (
-                "Finished running: {args}\nReturn value: {retval}"
-                + "\n--Debug Stdout Start--\n{out_std}\n--Debug Stdout End--"
-                + "\n--Debug Stderr Start--\n{out_err}\n--Debug Stderr End--"
-            ).format(
-                args=log_args,
-                retval=retval,
-                out_std=out_std,
-                out_err=out_err
-            )
-        )
-        self._reporter.process(reports.run_external_process_finished(
-            log_args, retval, out_std, out_err
-        ))
-        return out_std, out_err, retval

@@ -1,3 +1,7 @@
+from typing import (
+    MutableSequence,
+)
+
 class LibraryError(Exception):
     pass
 
@@ -50,6 +54,8 @@ class ReportItem:
             info=self.info,
             forceable=self.forceable,
         )
+
+ReportItemList = MutableSequence[ReportItem]
 
 class ReportListAnalyzer:
     def __init__(self, report_list):

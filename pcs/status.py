@@ -1,21 +1,13 @@
 import sys
 import os
 
-from pcs import (
-    settings,
-    utils,
-)
-from pcs.cli.common.console_report import indent
+from pcs import utils
 from pcs.cli.common.errors import CmdLineInputError
 from pcs.cli.common.reports import process_library_reports
 from pcs.lib import reports
 from pcs.lib.node import get_existing_nodes_names
 from pcs.lib.errors import LibraryError
-from pcs.lib.pacemaker.live import is_fence_history_supported
 from pcs.lib.pacemaker.state import ClusterState
-from pcs.lib.pacemaker.values import is_false
-from pcs.lib.resource_agent import _STONITH_ACTION_REPLACED_BY
-from pcs.lib.sbd import get_sbd_service_name
 
 # pylint: disable=too-many-branches, too-many-locals, too-many-statements
 
@@ -34,159 +26,10 @@ def full_status(lib, argv, modifiers):
     )
     if argv:
         raise CmdLineInputError()
-    if (
-        modifiers.is_specified("--hide-inactive")
-        and
-        modifiers.is_specified("--full")
-    ):
-        utils.err("you cannot specify both --hide-inactive and --full")
-
-    monitor_command = [
-        os.path.join(settings.pacemaker_binaries, "crm_mon"),
-        "--one-shot"
-    ]
-    if not modifiers.get("--hide-inactive"):
-        monitor_command.append('--inactive')
-    if modifiers.get("--full"):
-        monitor_command.extend(
-            ["--show-detail", "--show-node-attributes", "--failcounts"]
-        )
-        # by default, pending and failed actions are displayed
-        # with --full, we display the whole history
-        if is_fence_history_supported():
-            monitor_command.append("--fence-history=3")
-
-    stdout, stderr, retval = utils.cmd_runner().run(monitor_command)
-
-    if retval != 0:
-        utils.err("cluster is not currently running on this node")
-
-    warnings = []
-    if stderr.strip():
-        for line in stderr.strip().splitlines():
-            if line.startswith("DEBUG: "):
-                if modifiers.get("--full"):
-                    warnings.append(line)
-            else:
-                warnings.append(line)
-    warnings.extend(status_stonith_check(modifiers))
-
-    print("Cluster name: %s" % utils.getClusterName())
-    if warnings:
-        print()
-        print("WARNINGS:")
-        print("\n".join(warnings))
-        print()
-    print(stdout)
-
-    if modifiers.get("--full"):
-        tickets, retval = utils.run(["crm_ticket", "-L"])
-        if retval != 0:
-            print("WARNING: Unable to get information about tickets")
-            print()
-        elif tickets:
-            print("Tickets:")
-            print("\n".join(indent(tickets.split("\n"))))
-
-    if not (
-        modifiers.is_specified("-f")
-        or
-        modifiers.is_specified("--corosync_conf")
-    ):
-        # do this only if in live environment
-        if modifiers.get("--full"):
-            print_pcsd_daemon_status(lib, modifiers)
-            print()
-        utils.serviceStatus("  ")
-
-def status_stonith_check(modifiers):
-    """
-    Commandline options:
-      * -f - CIB file, to get stonith devices and cluster property
-        stonith-enabled from CIB, to determine whenever we are working with
-        files or cluster
-    """
-    # pylint: disable=too-many-nested-blocks
-    # We should read the default value from pacemaker. However that may slow
-    # pcs down as we need to run 'pacemaker-schedulerd metadata' to get it.
-    warnings = []
-    stonith_enabled = True
-    stonith_devices = []
-    stonith_devices_id_action = []
-    stonith_devices_id_method_cycle = []
-    sbd_running = False
-
-    cib = utils.get_cib_dom()
-    for conf in cib.getElementsByTagName("configuration"):
-        for crm_config in conf.getElementsByTagName("crm_config"):
-            for nvpair in crm_config.getElementsByTagName("nvpair"):
-                if (
-                    nvpair.getAttribute("name") == "stonith-enabled"
-                    and
-                    is_false(nvpair.getAttribute("value"))
-                ):
-                    stonith_enabled = False
-                    break
-            if not stonith_enabled:
-                break
-        for resource_el in conf.getElementsByTagName("primitive"):
-            if resource_el.getAttribute("class") == "stonith":
-                stonith_devices.append(resource_el)
-                for attribs in resource_el.getElementsByTagName(
-                    "instance_attributes"
-                ):
-                    for nvpair in attribs.getElementsByTagName("nvpair"):
-                        if (
-                            nvpair.getAttribute("name") == "action"
-                            and
-                            nvpair.getAttribute("value")
-                        ):
-                            stonith_devices_id_action.append(
-                                resource_el.getAttribute("id")
-                            )
-                        if (
-                            nvpair.getAttribute("name") == "method"
-                            and
-                            nvpair.getAttribute("value") == "cycle"
-                        ):
-                            stonith_devices_id_method_cycle.append(
-                                resource_el.getAttribute("id")
-                            )
-
-    if not modifiers.is_specified("-f"):
-        # check if SBD daemon is running
-        try:
-            sbd_running = utils.is_service_running(
-                utils.cmd_runner(),
-                get_sbd_service_name()
-            )
-        except LibraryError:
-            pass
-
-    if stonith_enabled and not stonith_devices and not sbd_running:
-        warnings.append(
-            "No stonith devices and stonith-enabled is not false"
-        )
-
-    if stonith_devices_id_action:
-        warnings.append(
-            "Following stonith devices have the 'action' option set, "
-            "it is recommended to set {0} instead: {1}".format(
-                ", ".join(
-                    ["'{0}'".format(x) for x in _STONITH_ACTION_REPLACED_BY]
-                ),
-                ", ".join(sorted(stonith_devices_id_action))
-            )
-        )
-    if stonith_devices_id_method_cycle:
-        warnings.append(
-            "Following stonith devices have the 'method' option set "
-            "to 'cycle' which is potentially dangerous, please consider using "
-            "'onoff': {0}".format(
-                ", ".join(sorted(stonith_devices_id_method_cycle))
-            )
-        )
-    return warnings
+    print(lib.status.full_cluster_status_plaintext(
+        hide_inactive_resources=modifiers.get("--hide-inactive"),
+        verbose=modifiers.get("--full"),
+    ))
 
 # Parse crm_mon for status
 def nodes_status(lib, argv, modifiers):

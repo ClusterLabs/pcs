@@ -2,43 +2,15 @@ from unittest import mock, TestCase
 
 from pcs_test.tools import fixture
 from pcs_test.tools.command_env import get_env_tools
+from pcs_test.tools.misc import read_test_resource as rc_read
 
 from pcs import settings
 from pcs.common import report_codes
 from pcs.lib.commands import stonith
 
 
-crm_mon_rng_with_history = """\
-<?xml version="1.0" encoding="UTF-8"?>
-<grammar xmlns="http://relaxng.org/ns/structure/1.0" 
-         datatypeLibrary="http://www.w3.org/2001/XMLSchema-datatypes">
-    <start>
-        <ref name="element-crm_mon"/>
-    </start>
-    <define name="element-crm_mon">
-        <element name="crm_mon">
-            <optional>
-                <element name="fence_history">
-                </element>
-            </optional>
-        </element>
-    </define>
-</grammar>
-"""
-
-crm_mon_rng_without_history = """\
-<?xml version="1.0" encoding="UTF-8"?>
-<grammar xmlns="http://relaxng.org/ns/structure/1.0" 
-         datatypeLibrary="http://www.w3.org/2001/XMLSchema-datatypes">
-    <start>
-        <ref name="element-crm_mon"/>
-    </start>
-    <define name="element-crm_mon">
-        <element name="crm_mon">
-        </element>
-    </define>
-</grammar>
-"""
+crm_mon_rng_with_history = rc_read("crm_mon.rng.with_fence_history.xml")
+crm_mon_rng_without_history = rc_read("crm_mon.rng.without_fence_history.xml")
 
 class HistoryGetText(TestCase):
     def setUp(self):
