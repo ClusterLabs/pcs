@@ -288,7 +288,7 @@ def assert_report_item_equal(real_report_item, report_item_info):
         )
 
 def _unexpected_report_given(
-    all_expected_report_info_list,
+    remaining_expected_report_info_list,
     expected_report_info_list, real_report_item, real_report_item_list
 ):
     return AssertionError(
@@ -304,18 +304,17 @@ def _unexpected_report_given(
         )
         .format(
             _format_report_item(real_report_item),
+            len(remaining_expected_report_info_list),
+            "\n    ".join(map(
+                _expected_report_item_format,
+                remaining_expected_report_info_list,
+            )) if remaining_expected_report_info_list
+            else "No other report is expected!",
             len(expected_report_info_list),
             "\n    ".join(map(
-                _expected_report_item_format, expected_report_info_list
-                )) if expected_report_info_list
-                else "No other report is expected!"
-            ,
-            len(all_expected_report_info_list),
-            "\n    ".join(map(
-                    _expected_report_item_format, all_expected_report_info_list
-                )) if all_expected_report_info_list
-                else "No report is expected!"
-            ,
+                _expected_report_item_format,
+                expected_report_info_list,
+            )) if expected_report_info_list else "No report is expected!",
             len(real_report_item_list),
             "\n    ".join(map(_format_report_item, real_report_item_list)),
         )
@@ -324,7 +323,7 @@ def _unexpected_report_given(
 def assert_report_item_list_equal(
     real_report_item_list, expected_report_info_list, hint=""
 ):
-    all_expected_report_info_list = expected_report_info_list[:]
+    remaining_expected_report_info_list = expected_report_info_list[:]
     for real_report_item in real_report_item_list:
         found_report_info = __find_report_info(
             expected_report_info_list,
@@ -332,13 +331,13 @@ def assert_report_item_list_equal(
         )
         if found_report_info is None:
             raise _unexpected_report_given(
-                all_expected_report_info_list,
+                remaining_expected_report_info_list,
                 expected_report_info_list,
                 real_report_item,
                 real_report_item_list,
             )
-        expected_report_info_list.remove(found_report_info)
-    if expected_report_info_list:
+        remaining_expected_report_info_list.remove(found_report_info)
+    if remaining_expected_report_info_list:
         def format_items(item_type, item_list):
             caption = "{0} ReportItems({1})".format(item_type, len(item_list))
             return "{0}\n{1}\n{2}".format(
