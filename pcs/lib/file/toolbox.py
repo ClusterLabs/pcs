@@ -1,8 +1,14 @@
-from collections import namedtuple
+from typing import (
+    Any,
+    Dict,
+    NamedTuple,
+    Type,
+)
 import json
 
 from pcs.common import file_type_codes as code
 from pcs.lib import reports
+from pcs.lib.errors import ReportItemList
 from pcs.lib.booth.config_facade import ConfigFacade as BoothConfigFacade
 from pcs.lib.booth.config_parser import (
     Exporter as BoothConfigExporter,
@@ -17,27 +23,23 @@ from pcs.lib.interface.config import (
 from pcs.lib.dr.config.facade import Facade as DrConfigFacade
 
 
-FileToolbox = namedtuple(
-    "FileToolbox",
-    [
-        # File type code the toolbox belongs to
-        "file_type_code",
-        # Provides an easy access for reading and modifying data
-        "facade",
-        # Turns raw data into a structure which the facade is able to process
-        "parser",
-        # Turns a structure produced by the parser and the facade to raw data
-        "exporter",
-        # Checks that the structure is valid
-        "validator",
-        # Provides means for file syncing based on the file's version
-        "version_controller",
-    ]
-)
+class FileToolbox(NamedTuple):
+    # File type code the toolbox belongs to
+    file_type_code: code.FileTypeCode
+    # Provides an easy access for reading and modifying data
+    facade: Type[FacadeInterface]
+    # Turns raw data into a structure which the facade is able to process
+    parser: Type[ParserInterface]
+    # Turns a structure produced by the parser and the facade to raw data
+    exporter: Type[ExporterInterface]
+    # Checks that the structure is valid
+    validator: None # TBI
+    # Provides means for file syncing based on the file's version
+    version_controller: None # TBI
 
 
 class JsonParserException(ParserErrorException):
-    def __init__(self, json_exception):
+    def __init__(self, json_exception: json.JSONDecodeError):
         super().__init__()
         self.json_exception = json_exception
 
@@ -46,7 +48,7 @@ class JsonParser(ParserInterface):
     Adapts standard json parser to our interfaces
     """
     @staticmethod
-    def parse(raw_file_data):
+    def parse(raw_file_data: bytes) -> Dict[str, Any]:
         try:
             # json.loads handles bytes, it expects utf-8, 16 or 32 encoding
             return json.loads(raw_file_data)
@@ -55,8 +57,12 @@ class JsonParser(ParserInterface):
 
     @staticmethod
     def exception_to_report_list(
-        exception, file_type_code, file_path, force_code, is_forced_or_warning
-    ):
+        exception: JsonParserException,
+        file_type_code: code.FileTypeCode,
+        file_path: str,
+        force_code: str, # TODO: fix
+        is_forced_or_warning: bool
+    ) -> ReportItemList:
         report_creator = reports.get_problem_creator(
             force_code=force_code, is_forced=is_forced_or_warning
         )
@@ -81,7 +87,7 @@ class JsonExporter(ExporterInterface):
     Adapts standard json exporter to our interfaces
     """
     @staticmethod
-    def export(config_structure):
+    def export(config_structure: Dict[str, Any])-> bytes:
         return json.dumps(
             config_structure, indent=4, sort_keys=True,
         ).encode("utf-8")
@@ -89,23 +95,27 @@ class JsonExporter(ExporterInterface):
 
 class NoopParser(ParserInterface):
     @staticmethod
-    def parse(raw_file_data):
+    def parse(raw_file_data: bytes) -> bytes:
         return raw_file_data
 
     @staticmethod
     def exception_to_report_list(
-        exception, file_type_code, file_path, force_code, is_forced_or_warning
-    ):
+        exception: JsonParserException,
+        file_type_code: code.FileTypeCode,
+        file_path: str,
+        force_code: str, # TODO: fix
+        is_forced_or_warning: bool
+    ) -> ReportItemList:
         return []
 
 class NoopExporter(ExporterInterface):
     @staticmethod
-    def export(config_structure):
+    def export(config_structure: bytes) -> bytes:
         return config_structure
 
 class NoopFacade(FacadeInterface):
     @classmethod
-    def create(cls):
+    def create(cls) -> "NoopFacade":
         return cls(bytes())
 
 
@@ -136,7 +146,8 @@ _toolboxes = {
     ),
     code.PCS_KNOWN_HOSTS: FileToolbox(
         file_type_code=code.PCS_KNOWN_HOSTS,
-        facade=None, # TODO needed for 'auth' and 'deauth' commands
+        # TODO needed for 'auth' and 'deauth' commands
+        facade=None, # type: ignore
         parser=JsonParser,
         exporter=JsonExporter,
         validator=None, # TODO needed for files syncing
@@ -152,5 +163,5 @@ _toolboxes = {
     ),
 }
 
-def for_file_type(file_type_code):
+def for_file_type(file_type_code: code.FileTypeCode) -> FileToolbox:
     return _toolboxes[file_type_code]

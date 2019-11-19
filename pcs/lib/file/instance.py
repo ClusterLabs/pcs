@@ -66,7 +66,10 @@ class FileInstance():
         return cls._for_common(file_type_codes.PCS_DR_CONFIG)
 
     @classmethod
-    def _for_common(cls, file_type_code: str) -> "FileInstance":
+    def _for_common(
+        cls,
+        file_type_code: file_type_codes.FileTypeCode,
+    ) -> "FileInstance":
         return cls(
             raw_file.RealFile(metadata.for_file_type(file_type_code)),
             toolbox.for_file_type(file_type_code)

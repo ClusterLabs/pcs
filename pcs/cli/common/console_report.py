@@ -2,6 +2,7 @@
 from collections import defaultdict
 from collections.abc import Iterable
 from functools import partial
+from typing import Mapping
 import sys
 
 from pcs.common import (
@@ -53,7 +54,7 @@ _file_role_translation = {
     file_type_codes.PCS_KNOWN_HOSTS: "known-hosts",
     file_type_codes.PCS_SETTINGS_CONF: "pcs configuration",
 }
-_file_role_to_option_translation = {
+_file_role_to_option_translation: Mapping[str, str] = {
     file_type_codes.BOOTH_CONFIG: "--booth-conf",
     file_type_codes.BOOTH_KEY: "--booth-key",
     file_type_codes.CIB: "-f",
