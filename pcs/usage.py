@@ -1143,10 +1143,10 @@ Commands:
                [<SBD_OPTION>=<value>]... [--no-watchdog-validation]
         Enable SBD in cluster. Default path for watchdog device is
         /dev/watchdog. Allowed SBD options: SBD_WATCHDOG_TIMEOUT (default: 5),
-        SBD_DELAY_START (default: no) and SBD_STARTMODE (default: always). It is
-        possible to specify up to 3 devices per node. If
-        --no-watchdog-validation is specified, validation of watchdogs will be
-        skipped.
+        SBD_DELAY_START (default: no), SBD_STARTMODE (default: always) and
+        SBD_TIMEOUT_ACTION. It is possible to specify up to 3 devices per node.
+        If --no-watchdog-validation is specified, validation of watchdogs will
+        be skipped.
 
 
         WARNING: Cluster has to be restarted in order to apply these changes.
