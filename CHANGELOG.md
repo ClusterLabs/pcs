@@ -29,6 +29,8 @@
 - Empty constraint option are not allowed in `pcs constraint order` and `pcs
   constraint colocation add` commands ([rhbz#1734361])
 - More fixes for the case when PATH environment variable is not set
+- Fixed crashes and other issues when UTF-8 characters are present in the
+  corosync.conf file ([rhbz#1741586])
 
 [rhbz#1442116]: https://bugzilla.redhat.com/show_bug.cgi?id=1442116
 [rhbz#1631514]: https://bugzilla.redhat.com/show_bug.cgi?id=1631514
@@ -38,6 +40,7 @@
 [rhbz#1712347]: https://bugzilla.redhat.com/show_bug.cgi?id=1712347
 [rhbz#1728890]: https://bugzilla.redhat.com/show_bug.cgi?id=1728890
 [rhbz#1734361]: https://bugzilla.redhat.com/show_bug.cgi?id=1734361
+[rhbz#1741586]: https://bugzilla.redhat.com/show_bug.cgi?id=1741586
 [rhbz#1743735]: https://bugzilla.redhat.com/show_bug.cgi?id=1743735
 
 

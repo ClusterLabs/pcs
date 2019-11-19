@@ -684,7 +684,7 @@ def getCorosyncConf():
         settings
     """
     try:
-        out = open(settings.corosync_conf_file).read()
+        out = open(settings.corosync_conf_file, "r", encoding="utf-8").read()
     except IOError as e:
         err("Unable to read %s: %s" % (settings.corosync_conf_file, e.strerror))
     return out
@@ -745,7 +745,7 @@ def need_to_handle_qdevice_service():
     """
     try:
         cfg = corosync_conf_facade.from_string(
-            open(settings.corosync_conf_file).read()
+            open(settings.corosync_conf_file, "r", encoding="utf-8").read()
         )
         return cfg.has_quorum_device()
     except (EnvironmentError, corosync_conf_parser.CorosyncConfParserException):

@@ -11,7 +11,7 @@ def get_local_corosync_conf():
     """
     path = settings.corosync_conf_file
     try:
-        with open(path) as a_file:
+        with open(path, "r", encoding="utf-8") as a_file:
             return a_file.read()
     except EnvironmentError as e:
         raise LibraryError(reports.corosync_config_read_error(path, e.strerror))
