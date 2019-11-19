@@ -137,6 +137,8 @@ def resource_cmd(argv):
             resource_enable_cmd(lib, argv_next, modifiers)
         elif sub_cmd == "disable":
             resource_disable_cmd(lib, argv_next, modifiers)
+        elif sub_cmd == "safe-disable":
+            resource_safe_disable_cmd(lib, argv_next, modifiers)
         elif sub_cmd == "restart":
             resource_restart(argv_next)
         elif sub_cmd == "debug-start":
@@ -2034,11 +2036,53 @@ def resource_show(argv, stonith=False):
             utils.err("unable to find resource '"+arg+"'")
         resource_found = False
 
+
 def resource_disable_cmd(lib, argv, modifiers):
-    if len(argv) < 1:
-        utils.err("You must specify resource(s) to disable")
-    resources = argv
-    lib.resource.disable(resources, modifiers["wait"])
+    """
+    Options:
+      * -f - CIB file
+      * --safe - only disable if no other resource gets stopped or demoted
+      * --simulate - do not push the CIB, print its effects
+      * --no-strict - allow disable if other resource is affected
+      * --wait
+    """
+    if not argv:
+        raise CmdLineInputError("You must specify resource(s) to disable")
+
+    if modifiers["simulate"]:
+        print(lib.resource.disable_simulate(argv))
+        return
+    if modifiers["safe"] or modifiers["no-strict"]:
+        lib.resource.disable_safe(
+            argv,
+            not modifiers["no-strict"],
+            modifiers["wait"],
+        )
+        return
+    lib.resource.disable(argv, modifiers["wait"])
+
+
+def resource_safe_disable_cmd(lib, argv, modifiers):
+    """
+    Options:
+      * --force - skip checks for safe resource disable
+      * --no-strict - allow disable if other resource is affected
+      * --simulate - do not push the CIB, print its effects
+      * --wait
+    """
+    if modifiers["safe"]:
+        raise CmdLineInputError(
+            "Option '--safe' is not supported in this command"
+        )
+    if modifiers["force"]:
+        warn(
+            "option '--force' is specified therefore checks for disabling "
+            "resource safely will be skipped"
+        )
+    elif not modifiers["simulate"]:
+        modifiers["safe"] = True
+    resource_disable_cmd(lib, argv, modifiers)
+
 
 def resource_enable_cmd(lib, argv, modifiers):
     if len(argv) < 1:

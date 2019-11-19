@@ -7,8 +7,12 @@ import os
 
 from lxml import etree
 
-from pcs.test.tools.command_env.mock_runner import Call as RunnerCall
+from pcs.test.tools.command_env.mock_runner import (
+    Call as RunnerCall,
+    CheckStdinEqualXml,
+)
 from pcs.test.tools.fixture import complete_state_resources
+from pcs.test.tools.fixture_cib import modify_cib
 from pcs.test.tools.misc import get_test_resource as rc
 from pcs.test.tools.xml import etree_to_str
 
@@ -339,4 +343,53 @@ class PcmkShortcuts(object):
         self.__calls.place(
             name,
             RunnerCall("crm_node --force --remove {0}".format(node_name)),
+        )
+
+    def simulate_cib(
+        self, new_cib_filepath, transitions_filepath,
+        cib_modifiers=None, cib_load_name="runner.cib.load",
+        stdout="", stderr="", returncode=0,
+        name="runner.pcmk.simulate_cib",
+        **modifier_shortcuts
+    ):
+        """
+        Create a call for simulating effects of cib changes
+
+        string new_cib_filepath -- a temp file for storing a new cib
+        string transitions_filepath -- a temp file for storing transitions
+        list of callable modifiers -- every callable takes etree.Element and
+            returns new etree.Element with desired modification
+        string cib_load_name -- key of a call from whose stdout the cib is taken
+        string stdout -- pacemaker's stdout
+        string stderr -- pacemaker's stderr
+        int returncode -- pacemaker's returncode
+        string name -- key of the call
+        dict modifier_shortcuts -- a new modifier is generated from each
+            modifier shortcut.
+            As key there can be keys of MODIFIER_GENERATORS.
+            Value is passed into appropriate generator from MODIFIER_GENERATORS.
+            For details see pcs_test.tools.fixture_cib (mainly the variable
+            MODIFIER_GENERATORS - please refer it when you are adding params
+            here)
+        """
+        cib_xml = modify_cib(
+            self.__calls.get(cib_load_name).stdout,
+            cib_modifiers,
+            **modifier_shortcuts
+        )
+        cmd = [
+            "crm_simulate", "--simulate",
+            "--save-output", new_cib_filepath,
+            "--save-graph", transitions_filepath,
+            "--xml-pipe",
+        ]
+        self.__calls.place(
+            name,
+            RunnerCall(
+                " ".join(cmd),
+                stdout=stdout,
+                stderr=stderr,
+                returncode=returncode,
+                check_stdin=CheckStdinEqualXml(cib_xml),
+            ),
         )

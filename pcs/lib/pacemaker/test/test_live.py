@@ -16,7 +16,7 @@ from pcs.test.tools import fixture
 from pcs.test.tools.command_env import get_env_tools
 from pcs.test.tools.misc import get_test_resource as rc
 from pcs.test.tools.pcs_unittest import TestCase, mock
-from pcs.test.tools.xml import XmlManipulation
+from pcs.test.tools.xml import etree_to_str, XmlManipulation
 
 from pcs import settings
 from pcs.common import report_codes
@@ -434,6 +434,202 @@ class EnsureCibVersionTest(TestCase):
         )
         mock_upgrade.assert_called_once_with(self.mock_runner)
         mock_get_cib.assert_called_once_with(self.mock_runner)
+
+
+@mock.patch("pcs.lib.pacemaker.live.write_tmpfile")
+class SimulateCibXml(LibraryPacemakerTest):
+    def test_success(self, mock_write_tmpfile):
+        tmpfile_new_cib = mock.MagicMock()
+        tmpfile_new_cib.name = rc("new_cib.tmp")
+        tmpfile_new_cib.read.return_value = "new cib data"
+        tmpfile_transitions = mock.MagicMock()
+        tmpfile_transitions.name = rc("transitions.tmp")
+        tmpfile_transitions.read.return_value = "transitions data"
+        mock_write_tmpfile.side_effect = [tmpfile_new_cib, tmpfile_transitions]
+
+        expected_stdout = "simulate output"
+        expected_stderr = ""
+        expected_retval = 0
+        mock_runner = get_runner(
+            expected_stdout,
+            expected_stderr,
+            expected_retval
+        )
+
+        result = lib.simulate_cib_xml(mock_runner, "<cib />")
+        self.assertEqual(result[0], expected_stdout)
+        self.assertEqual(result[1], "transitions data")
+        self.assertEqual(result[2], "new cib data")
+
+        mock_runner.run.assert_called_once_with(
+            [
+                self.path("crm_simulate"),
+                "--simulate",
+                "--save-output", tmpfile_new_cib.name,
+                "--save-graph", tmpfile_transitions.name,
+                "--xml-pipe",
+            ],
+            stdin_string="<cib />"
+        )
+
+    def test_error_creating_cib(self, mock_write_tmpfile):
+        mock_write_tmpfile.side_effect = OSError(1, "some error")
+        mock_runner = get_runner()
+        assert_raise_library_error(
+            lambda: lib.simulate_cib_xml(mock_runner, "<cib />"),
+            fixture.error(
+                report_codes.CIB_SIMULATE_ERROR,
+                reason="some error",
+                cib="<cib />",
+            ),
+        )
+        mock_runner.run.assert_not_called()
+
+    def test_error_creating_transitions(self, mock_write_tmpfile):
+        tmpfile_new_cib = mock.MagicMock()
+        mock_write_tmpfile.side_effect = [
+            tmpfile_new_cib,
+            OSError(1, "some error")
+        ]
+        mock_runner = get_runner()
+        assert_raise_library_error(
+            lambda: lib.simulate_cib_xml(mock_runner, "<cib />"),
+            fixture.error(
+                report_codes.CIB_SIMULATE_ERROR,
+                reason="some error",
+                cib="<cib />",
+            ),
+        )
+        mock_runner.run.assert_not_called()
+
+    def test_error_running_simulate(self, mock_write_tmpfile):
+        tmpfile_new_cib = mock.MagicMock()
+        tmpfile_new_cib.name = rc("new_cib.tmp")
+        tmpfile_transitions = mock.MagicMock()
+        tmpfile_transitions.name = rc("transitions.tmp")
+        mock_write_tmpfile.side_effect = [tmpfile_new_cib, tmpfile_transitions]
+
+        expected_stdout = "some stdout"
+        expected_stderr = "some error"
+        expected_retval = 1
+        mock_runner = get_runner(
+            expected_stdout,
+            expected_stderr,
+            expected_retval
+        )
+
+        assert_raise_library_error(
+            lambda: lib.simulate_cib_xml(mock_runner, "<cib />"),
+            fixture.error(
+                report_codes.CIB_SIMULATE_ERROR,
+                reason="some error",
+                cib="<cib />",
+            ),
+        )
+
+    def test_error_reading_cib(self, mock_write_tmpfile):
+        tmpfile_new_cib = mock.MagicMock()
+        tmpfile_new_cib.name = rc("new_cib.tmp")
+        tmpfile_new_cib.read.side_effect = OSError(1, "some error")
+        tmpfile_transitions = mock.MagicMock()
+        tmpfile_transitions.name = rc("transitions.tmp")
+        mock_write_tmpfile.side_effect = [tmpfile_new_cib, tmpfile_transitions]
+
+        expected_stdout = "simulate output"
+        expected_stderr = ""
+        expected_retval = 0
+        mock_runner = get_runner(
+            expected_stdout,
+            expected_stderr,
+            expected_retval
+        )
+
+        assert_raise_library_error(
+            lambda: lib.simulate_cib_xml(mock_runner, "<cib />"),
+            fixture.error(
+                report_codes.CIB_SIMULATE_ERROR,
+                reason="some error",
+                cib="<cib />",
+            ),
+        )
+
+    def test_error_reading_transitions(self, mock_write_tmpfile):
+        tmpfile_new_cib = mock.MagicMock()
+        tmpfile_new_cib.name = rc("new_cib.tmp")
+        tmpfile_new_cib.read.return_value = "new cib data"
+        tmpfile_transitions = mock.MagicMock()
+        tmpfile_transitions.name = rc("transitions.tmp")
+        tmpfile_transitions.read.side_effect = OSError(1, "some error")
+        mock_write_tmpfile.side_effect = [tmpfile_new_cib, tmpfile_transitions]
+
+        expected_stdout = "simulate output"
+        expected_stderr = ""
+        expected_retval = 0
+        mock_runner = get_runner(
+            expected_stdout,
+            expected_stderr,
+            expected_retval
+        )
+
+        assert_raise_library_error(
+            lambda: lib.simulate_cib_xml(mock_runner, "<cib />"),
+            fixture.error(
+                report_codes.CIB_SIMULATE_ERROR,
+                reason="some error",
+                cib="<cib />",
+            ),
+        )
+
+
+@mock.patch("pcs.lib.pacemaker.live.simulate_cib_xml")
+class SimulateCib(TestCase):
+    def setUp(self):
+        self.runner = "mock runner"
+        self.cib_xml = "<cib/>"
+        self.cib = etree.fromstring(self.cib_xml)
+        self.simulate_output = "  some output  "
+        self.transitions = "<transitions/>"
+        self.new_cib = "<new-cib/>"
+
+    def test_success(self, mock_simulate):
+        mock_simulate.return_value = (
+            self.simulate_output, self.transitions, self.new_cib
+        )
+        result = lib.simulate_cib(self.runner, self.cib)
+        self.assertEqual(result[0], "some output")
+        self.assertEqual(etree_to_str(result[1]), self.transitions)
+        self.assertEqual(etree_to_str(result[2]), self.new_cib)
+        mock_simulate.assert_called_once_with(self.runner, self.cib_xml)
+
+    def test_invalid_cib(self, mock_simulate):
+        mock_simulate.return_value = (
+            self.simulate_output, "bad transitions", self.new_cib
+        )
+        assert_raise_library_error(
+            lambda: lib.simulate_cib(self.runner, self.cib),
+            fixture.error(
+                report_codes.CIB_SIMULATE_ERROR,
+                reason=(
+                    "Start tag expected, '<' not found, line 1, column 1"
+                ),
+                cib=self.cib_xml,
+            ),
+        )
+
+    def test_invalid_transitions(self, mock_simulate):
+        mock_simulate.return_value = (
+            self.simulate_output, self.transitions, "bad new cib"
+        )
+        assert_raise_library_error(
+            lambda: lib.simulate_cib(self.runner, self.cib),
+            fixture.error(
+                report_codes.CIB_SIMULATE_ERROR,
+                reason=(
+                    "Start tag expected, '<' not found, line 1, column 1"
+                ),
+                cib=self.cib_xml,
+            ),
+        )
 
 class GetLocalNodeStatusTest(LibraryPacemakerNodeStatusTest):
     def test_offline(self):

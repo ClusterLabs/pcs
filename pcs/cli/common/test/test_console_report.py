@@ -1934,6 +1934,15 @@ class CibDiffError(NameBuildTest):
         )
 
 
+class CibSimulateError(NameBuildTest):
+    code = codes.CIB_SIMULATE_ERROR
+    def test_success(self):
+        self.assert_message_from_report(
+            "Unable to simulate changes in CIB: error message\n<cib />",
+            reports.cib_simulate_error("error message", "<cib />")
+        )
+
+
 class TmpFileWrite(NameBuildTest):
     code = codes.TMP_FILE_WRITE
     def test_success(self):
@@ -2400,4 +2409,20 @@ class FenceHistoryNotSupported(NameBuildTest):
         self.assert_message_from_report(
             "Fence history is not supported, please upgrade pacemaker",
             reports.fence_history_not_supported()
+        )
+
+
+class ResourceDisableAffectsOtherResources(NameBuildTest):
+    code = codes.RESOURCE_DISABLE_AFFECTS_OTHER_RESOURCES
+    def test_success(self):
+        self.assert_message_from_report(
+            (
+                "Disabling specified resources would have an effect on other "
+                "resources\n\ncrm_simulate output"
+            ),
+            reports.resource_disable_affects_other_resources(
+                ["D2", "D1"],
+                ["O2", "O1"],
+                "crm_simulate output",
+            )
         )

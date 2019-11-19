@@ -12,6 +12,22 @@ from pcs.test.tools.assertions import assert_xml_equal
 
 CALL_TYPE_RUNNER = "CALL_TYPE_RUNNER"
 
+
+class CheckStdinEqualXml(object):
+    def __init__(self, expected_stdin):
+        self.expected_stdin = expected_stdin
+
+    def __call__(self, stdin, command, order_num):
+        assert_xml_equal(
+            self.expected_stdin,
+            stdin,
+            (
+                "Trying to run command no. {0}"
+                "\n\n    '{1}'\n\nwith expected xml stdin.\n"
+            ).format(order_num, command)
+        )
+
+
 def create_check_stdin_xml(expected_stdin):
     def stdin_xml_check(stdin, command, order_num):
         assert_xml_equal(
@@ -62,6 +78,7 @@ COMMAND_COMPLETIONS = {
     "crm_mon": path.join(settings.pacemaker_binaries, "crm_mon"),
     "crm_node": path.join(settings.pacemaker_binaries, "crm_node"),
     "crm_resource": path.join(settings.pacemaker_binaries, "crm_resource"),
+    "crm_simulate": path.join(settings.pacemaker_binaries, "crm_simulate"),
     "crm_verify": path.join(settings.pacemaker_binaries, "crm_verify"),
     "sbd": settings.sbd_binary,
 }
