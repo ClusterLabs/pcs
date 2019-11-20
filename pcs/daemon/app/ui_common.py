@@ -1,5 +1,6 @@
-from tornado.web import Finish, StaticFileHandler
 import hashlib
+
+from tornado.web import Finish, StaticFileHandler
 
 from pcs.daemon.app.common import EnhanceHeadersMixin
 
