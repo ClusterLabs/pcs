@@ -1,4 +1,5 @@
 from tornado.web import Finish, StaticFileHandler
+import hashlib
 
 from pcs.daemon.app.common import EnhanceHeadersMixin
 
@@ -34,3 +35,20 @@ class StaticFile(EnhanceHeadersMixin, StaticFileHandler):
         # future.
         self.set_header_nosniff_content_type()
         self.set_strict_transport_security()
+
+    @classmethod
+    def get_content_version(cls, abspath: str) -> str:
+        """
+        Returns a version string for the resource at the given path.
+
+        Overriding tornado method. Original method uses hashlib.md5 which
+        doesn't work with FIPS.
+        """
+        data = cls.get_content(abspath)
+        hasher = hashlib.sha1()
+        if isinstance(data, bytes):
+            hasher.update(data)
+        else:
+            for chunk in data:
+                hasher.update(chunk)
+        return hasher.hexdigest()
