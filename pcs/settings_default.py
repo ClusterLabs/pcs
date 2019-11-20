@@ -50,6 +50,7 @@ pcsd_users_conf_location = os.path.join(pcsd_var_location, "pcs_users.conf")
 pcsd_settings_conf_location = os.path.join(
     pcsd_var_location, "pcs_settings.conf"
 )
+pcsd_dr_config_location = os.path.join(pcsd_var_location, "disaster-recovery")
 pcsd_exec_location = "/usr/lib/pcsd/"
 pcsd_log_location = "/var/log/pcsd/pcsd.log"
 pcsd_default_port = 2224

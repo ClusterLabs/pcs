@@ -198,6 +198,20 @@ module PcsdFile
     end
   end
 
+  class PutPcsDrConf < PutFile
+    def full_file_name
+      @full_file_name ||= PCSD_DR_CONFIG_LOCATION
+    end
+
+    def binary?()
+      return false
+    end
+
+    def permissions()
+      return 0600
+    end
+  end
+
   TYPES = {
     "booth_authfile" => PutFileBoothAuthfile,
     "booth_config" => PutFileBoothConfig,
@@ -205,6 +219,7 @@ module PcsdFile
     "corosync_authkey" => PutFileCorosyncAuthkey,
     "corosync_conf" => PutFileCorosyncConf,
     "pcs_settings_conf" => PutPcsSettingsConf,
+    "pcs_disaster_recovery_conf" => PutPcsDrConf,
   }
 end
 

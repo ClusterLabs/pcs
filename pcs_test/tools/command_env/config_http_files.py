@@ -11,9 +11,11 @@ class FilesShortcuts:
 
     def put_files(
         self, node_labels=None, pcmk_authkey=None, corosync_authkey=None,
-        corosync_conf=None, pcs_settings_conf=None, communication_list=None,
+        corosync_conf=None, pcs_disaster_recovery_conf=None,
+        pcs_settings_conf=None, communication_list=None,
         name="http.files.put_files",
     ):
+        # pylint: disable=too-many-arguments
         """
         Create a call for the files distribution to the nodes.
 
@@ -21,6 +23,7 @@ class FilesShortcuts:
         pcmk_authkey bytes -- content of pacemaker authkey file
         corosync_authkey bytes -- content of corosync authkey file
         corosync_conf string -- content of corosync.conf
+        pcs_disaster_recovery_conf string -- content of pcs DR config
         pcs_settings_conf string -- content of pcs_settings.conf
         communication_list list -- create custom responses
         name string -- the key of this call
@@ -55,6 +58,15 @@ class FilesShortcuts:
             input_data[file_id] = dict(
                 data=corosync_conf,
                 type="corosync_conf",
+            )
+            output_data[file_id] = written_output_dict
+
+        if pcs_disaster_recovery_conf:
+            file_id = "disaster-recovery config"
+            input_data[file_id] = dict(
+                data=pcs_disaster_recovery_conf,
+                type="pcs_disaster_recovery_conf",
+                rewrite_existing=True,
             )
             output_data[file_id] = written_output_dict
 

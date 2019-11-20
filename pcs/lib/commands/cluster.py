@@ -777,7 +777,7 @@ def add_nodes(
         skip_wrong_config=force,
     )
 
-    # distribute corosync and pacemaker authkeys
+    # distribute corosync and pacemaker authkeys and other config files
     files_action = {}
     forceable_io_error_creator = reports.get_problem_creator(
         report_codes.SKIP_FILE_DISTRIBUTION_ERRORS, force
@@ -812,6 +812,22 @@ def add_nodes(
                 RawFileError.ACTION_READ,
                 format_environment_error(e),
                 file_path=settings.pacemaker_authkey_file,
+            ))
+
+    if os.path.isfile(settings.pcsd_dr_config_location):
+        try:
+            files_action.update(
+                node_communication_format.pcs_dr_config_file(
+                    open(settings.pcsd_dr_config_location, "r").read()
+                )
+            )
+        except EnvironmentError as e:
+            report_processor.report(forceable_io_error_creator(
+                reports.file_io_error,
+                file_type_codes.PCS_DR_CONFIG,
+                RawFileError.ACTION_READ,
+                format_environment_error(e),
+                file_path=settings.pcsd_dr_config_location,
             ))
 
     # pcs_settings.conf was previously synced using pcsdcli send_local_configs.

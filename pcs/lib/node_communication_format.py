@@ -55,6 +55,18 @@ def corosync_conf_file(corosync_conf_content):
         "corosync.conf": corosync_conf_format(corosync_conf_content)
     }
 
+def pcs_dr_config_format(dr_conf_content):
+    return {
+        "type": "pcs_disaster_recovery_conf",
+        "data": dr_conf_content,
+        "rewrite_existing": True,
+    }
+
+def pcs_dr_config_file(dr_conf_content):
+    return {
+        "disaster-recovery config": pcs_dr_config_format(dr_conf_content)
+    }
+
 def pcs_settings_conf_format(content):
     return {
         "data": content,
