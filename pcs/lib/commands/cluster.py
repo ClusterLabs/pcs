@@ -818,7 +818,7 @@ def add_nodes(
         try:
             files_action.update(
                 node_communication_format.pcs_dr_config_file(
-                    open(settings.pcsd_dr_config_location, "r").read()
+                    open(settings.pcsd_dr_config_location, "rb").read()
                 )
             )
         except EnvironmentError as e:

@@ -9,6 +9,7 @@ from pcs.lib.commands import (
     booth,
     cib_options,
     cluster,
+    dr,
     fencing_topology,
     node,
     pcsd,
@@ -180,6 +181,15 @@ def load_module(env, middleware_factory, name):
                 "setup": cluster.setup,
                 "update_link": cluster.update_link,
                 "verify": cluster.verify,
+            }
+        )
+
+    if name == "dr":
+        return bind_all(
+            env,
+            middleware.build(middleware_factory.corosync_conf_existing),
+            {
+                "set_recovery_site": dr.set_recovery_site,
             }
         )
 

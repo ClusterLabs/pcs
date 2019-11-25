@@ -19,7 +19,7 @@ max-parents=10
 min-public-methods=0
 
 [BASIC]
-good-names=e, i, op, ip, el, maxDiff, cm, ok, T
+good-names=e, i, op, ip, el, maxDiff, cm, ok, T, dr
 
 [VARIABLES]
 # A regular expression matching the name of dummy variables (i.e. expectedly

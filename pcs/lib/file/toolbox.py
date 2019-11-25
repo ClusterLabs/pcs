@@ -14,6 +14,7 @@ from pcs.lib.interface.config import (
     ParserErrorException,
     ParserInterface,
 )
+from pcs.lib.dr.config.facade import Facade as DrConfigFacade
 
 
 FileToolbox = namedtuple(
@@ -136,6 +137,14 @@ _toolboxes = {
     code.PCS_KNOWN_HOSTS: FileToolbox(
         file_type_code=code.PCS_KNOWN_HOSTS,
         facade=None, # TODO needed for 'auth' and 'deauth' commands
+        parser=JsonParser,
+        exporter=JsonExporter,
+        validator=None, # TODO needed for files syncing
+        version_controller=None, # TODO needed for files syncing
+    ),
+    code.PCS_DR_CONFIG: FileToolbox(
+        file_type_code=code.PCS_DR_CONFIG,
+        facade=DrConfigFacade,
         parser=JsonParser,
         exporter=JsonExporter,
         validator=None, # TODO needed for files syncing

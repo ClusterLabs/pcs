@@ -2284,4 +2284,10 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
             "resources\n\n{crm_simulate_plaintext_output}"
         ).format(**info)
     ,
+    codes.DR_CONFIG_ALREADY_EXIST: lambda info: (
+        "Disaster-recovery already configured"
+    ).format(**info),
+    codes.NODE_IN_LOCAL_CLUSTER: lambda info: (
+        "Node '{node}' is part of local cluster"
+    ).format(**info),
 }

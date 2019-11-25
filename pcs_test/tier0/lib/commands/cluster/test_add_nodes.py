@@ -485,7 +485,7 @@ class LocalConfig():
     def files_sync(self, node_labels):
         corosync_authkey_content = b"corosync authfile"
         pcmk_authkey_content = b"pcmk authfile"
-        pcs_disaster_recovery_content = "disaster recovery config data"
+        pcs_disaster_recovery_content = b"disaster recovery config data"
         pcs_settings_content = "pcs_settings.conf data"
         file_list = [
             "corosync authkey",
@@ -529,6 +529,7 @@ class LocalConfig():
                 return_value=(
                     mock.mock_open(read_data=pcs_disaster_recovery_content)()
                 ),
+                mode="rb",
                 name=f"{local_prefix}fs.open.pcsd_disaster_recovery_read",
             )
             .fs.isfile(
@@ -2125,7 +2126,7 @@ class FailureFilesDistribution(TestCase):
         self.expected_reports = []
         self.pcmk_authkey_content = b"pcmk authkey content"
         self.corosync_authkey_content = b"corosync authkey content"
-        self.pcsd_dr_config_content = "disaster recovery config data"
+        self.pcsd_dr_config_content = b"disaster recovery config data"
         self.pcmk_authkey_file_id = "pacemaker_remote authkey"
         self.corosync_authkey_file_id = "corosync authkey"
         self.pcsd_dr_config_file_id = "disaster-recovery config"
@@ -2250,7 +2251,7 @@ class FailureFilesDistribution(TestCase):
         )
         self.config.fs.open(
             settings.pcsd_dr_config_location,
-            mode="r",
+            mode="rb",
             side_effect=EnvironmentError(
                 1, self.err_msg, settings.pcsd_dr_config_location
             ),
@@ -2319,7 +2320,7 @@ class FailureFilesDistribution(TestCase):
             )
             .fs.open(
                 settings.pcsd_dr_config_location,
-                mode="r",
+                mode="rb",
                 side_effect=EnvironmentError(
                     1, self.err_msg, settings.pcsd_dr_config_location
                 ),
@@ -2405,7 +2406,7 @@ class FailureFilesDistribution(TestCase):
                 return_value=mock.mock_open(
                     read_data=self.pcsd_dr_config_content
                 )(),
-                mode="r",
+                mode="rb",
                 name="fs.open.pcsd_dr_config",
                 before=self.pcsd_dr_config_open_before_position,
             )
@@ -2499,7 +2500,7 @@ class FailureFilesDistribution(TestCase):
                 return_value=mock.mock_open(
                     read_data=self.pcsd_dr_config_content
                 )(),
-                mode="r",
+                mode="rb",
                 name="fs.open.pcsd_dr_config",
                 before=self.pcsd_dr_config_open_before_position,
             )
@@ -2563,7 +2564,7 @@ class FailureFilesDistribution(TestCase):
                 return_value=mock.mock_open(
                     read_data=self.pcsd_dr_config_content
                 )(),
-                mode="r",
+                mode="rb",
                 name="fs.open.pcsd_dr_config",
                 before=self.pcsd_dr_config_open_before_position,
             )
@@ -2624,7 +2625,7 @@ class FailureFilesDistribution(TestCase):
                 return_value=mock.mock_open(
                     read_data=self.pcsd_dr_config_content
                 )(),
-                mode="r",
+                mode="rb",
                 name="fs.open.pcsd_dr_config",
                 before=self.pcsd_dr_config_open_before_position,
             )

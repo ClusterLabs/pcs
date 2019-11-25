@@ -204,7 +204,7 @@ module PcsdFile
     end
 
     def binary?()
-      return false
+      return true
     end
 
     def permissions()

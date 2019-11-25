@@ -4489,3 +4489,19 @@ class ResourceDisableAffectsOtherResources(NameBuildTest):
                 "crm_simulate output",
             )
         )
+
+
+class DrConfigAlreadyExist(NameBuildTest):
+    def test_success(self):
+        self.assert_message_from_report(
+            "Disaster-recovery already configured",
+            reports.dr_config_already_exist()
+        )
+
+
+class NodeInLocalCluster(NameBuildTest):
+    def test_success(self):
+        self.assert_message_from_report(
+            "Node 'node-name' is part of local cluster",
+            reports.node_in_local_cluster("node-name")
+        )

@@ -200,3 +200,19 @@ class CorosyncShortcuts:
             action="remote/qdevice_net_client_import_certificate",
             param_list=[("certificate", base64.b64encode(cert))],
         )
+
+    def get_corosync_conf(
+        self,
+        corosync_conf="",
+        node_labels=None,
+        communication_list=None,
+        name="http.corosync.get_corosync_conf",
+    ):
+        place_multinode_call(
+            self.__calls,
+            name,
+            node_labels,
+            communication_list,
+            action="remote/get_corosync_conf",
+            output=corosync_conf,
+        )

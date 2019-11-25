@@ -444,7 +444,11 @@ def get_corosync_conf_remote(params, request, auth_user)
   if not allowed_for_local_cluster(auth_user, Permissions::READ)
     return 403, 'Permission denied'
   end
-  return get_corosync_conf()
+  begin
+    return get_corosync_conf()
+  rescue # TODO
+    return 400, 'Unable to read corosync.conf'
+  end
 end
 
 # deprecated, use /remote/put_file (note that put_file doesn't support backup

@@ -64,7 +64,9 @@ class FilesShortcuts:
         if pcs_disaster_recovery_conf:
             file_id = "disaster-recovery config"
             input_data[file_id] = dict(
-                data=pcs_disaster_recovery_conf,
+                data=base64.b64encode(
+                    pcs_disaster_recovery_conf
+                ).decode("utf-8"),
                 type="pcs_disaster_recovery_conf",
                 rewrite_existing=True,
             )

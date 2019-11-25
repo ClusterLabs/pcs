@@ -8,6 +8,7 @@ from pcs.common.tools import Version
 from pcs.lib import reports
 from pcs.lib.booth.env import BoothEnv
 from pcs.lib.cib.tools import get_cib_crm_feature_set
+from pcs.lib.dr.env import DrEnv
 from pcs.lib.node import get_existing_nodes_names
 from pcs.lib.communication import qdevice
 from pcs.lib.communication.corosync import (
@@ -89,6 +90,7 @@ class LibraryEnvironment:
             self._request_timeout
         )
         self.__loaded_booth_env = None
+        self.__loaded_dr_env = None
 
         self.__timeout_cache = {}
 
@@ -412,3 +414,8 @@ class LibraryEnvironment:
         if self.__loaded_booth_env is None:
             self.__loaded_booth_env = BoothEnv(name, self._booth_files_data)
         return self.__loaded_booth_env
+
+    def get_dr_env(self) -> DrEnv:
+        if self.__loaded_dr_env is None:
+            self.__loaded_dr_env = DrEnv()
+        return self.__loaded_dr_env

@@ -50,6 +50,14 @@ _metadata = {
         permissions=0o600,
         is_binary=False,
     ),
+    code.PCS_DR_CONFIG: lambda: FileMetadata(
+        file_type_code=code.PCS_DR_CONFIG,
+        path=settings.pcsd_dr_config_location,
+        owner_user_name="root",
+        owner_group_name="root",
+        permissions=0o600,
+        is_binary=False,
+    )
 }
 
 def for_file_type(file_type_code, *args, **kwargs):
