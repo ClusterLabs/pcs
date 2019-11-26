@@ -22,6 +22,7 @@ SUPPORTED_COMMANDS = {
     "cluster.setup",
     "cluster.add_nodes",
     "cluster.remove_nodes",
+    "status.full_cluster_status_plaintext",
 }
 
 

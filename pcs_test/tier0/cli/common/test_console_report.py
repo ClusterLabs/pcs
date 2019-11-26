@@ -4499,6 +4499,14 @@ class DrConfigAlreadyExist(NameBuildTest):
         )
 
 
+class DrConfigDoesNotExist(NameBuildTest):
+    def test_success(self):
+        self.assert_message_from_report(
+            "Disaster-recovery is not configured",
+            reports.dr_config_does_not_exist()
+        )
+
+
 class NodeInLocalCluster(NameBuildTest):
     def test_success(self):
         self.assert_message_from_report(

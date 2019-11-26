@@ -3,6 +3,7 @@ from typing import (
 )
 from xml.etree.ElementTree import Element
 
+from pcs.common import file_type_codes
 from pcs.common.node_communicator import Communicator, NodeCommunicatorFactory
 from pcs.common.tools import Version
 from pcs.lib import reports
@@ -109,6 +110,15 @@ class LibraryEnvironment:
     @property
     def user_groups(self):
         return self._user_groups
+
+    @property
+    def ghost_file_codes(self):
+        codes = set()
+        if not self.is_cib_live:
+            codes.add(file_type_codes.CIB)
+        if not self.is_corosync_conf_live:
+            codes.add(file_type_codes.COROSYNC_CONF)
+        return codes
 
     def get_cib(self, minimal_version: Optional[Version] = None) -> Element:
         if self.__loaded_cib_diff_source is not None:

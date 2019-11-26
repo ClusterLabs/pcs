@@ -94,6 +94,20 @@ class CheckLive(TestCase):
         )
         self.assert_live_required([file_type_codes.COROSYNC_CONF])
 
+    def test_mock_cib(self):
+        self.config.env.set_cib_data("<cib />")
+        self.assert_live_required([file_type_codes.CIB])
+
+    def test_mock(self):
+        self.config.env.set_corosync_conf_data(
+            corosync_conf_fixture(generate_nodes(3))
+        )
+        self.config.env.set_cib_data("<cib />")
+        self.assert_live_required([
+            file_type_codes.CIB,
+            file_type_codes.COROSYNC_CONF,
+        ])
+
 
 class SetRecoverySiteSuccess(TestCase):
     def setUp(self):

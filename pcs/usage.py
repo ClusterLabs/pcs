@@ -1520,7 +1520,7 @@ def status(args=(), pout=True):
 Usage: pcs status [commands]...
 View current cluster and resource status
 Commands:
-    [status] [--full | --hide-inactive]
+    [status] [--full] [--hide-inactive]
         View all information about the cluster and resources (--full provides
         more details, --hide-inactive hides inactive resources).
 
@@ -2028,6 +2028,10 @@ Usage: pcs dr <command>
 Manage disaster recovery configuration.
 
 Commands:
+    status [--full] [--hide-inactive]
+        Display status of the local and the remote site cluster (--full
+        provides more details, --hide-inactive hides inactive resources).
+
     set-recovery-site <recovery site node>
         TODO
 """

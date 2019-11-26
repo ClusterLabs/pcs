@@ -27,6 +27,7 @@ def remote(params, request, auth_user)
       :status => method(:node_status),
       :status_all => method(:status_all),
       :cluster_status => method(:cluster_status_remote),
+      :cluster_status_plaintext => method(:cluster_status_plaintext),
       :auth => method(:auth),
       :check_auth => method(:check_auth),
       :cluster_setup => method(:cluster_setup),
@@ -217,6 +218,18 @@ def cluster_status_remote(params, request, auth_user)
     return 403, 'Permission denied'
   end
   return JSON.generate(status)
+end
+
+# get cluster status in plaintext (over-the-network version of 'pcs status')
+def cluster_status_plaintext(params, request, auth_user)
+  if not allowed_for_local_cluster(auth_user, Permissions::READ)
+    return 403, 'Permission denied'
+  end
+  return pcs_internal_proxy(
+    auth_user,
+    params.fetch(:data_json, ""),
+    "status.full_cluster_status_plaintext"
+  )
 end
 
 def cluster_start(params, request, auth_user)

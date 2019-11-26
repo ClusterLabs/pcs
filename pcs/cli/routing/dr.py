@@ -6,6 +6,7 @@ dr_cmd = create_router(
     {
         "help": lambda lib, argv, modifiers: usage.dr(argv),
         "set-recovery-site": dr.set_recovery_site,
+        "status": dr.status
     },
     ["dr"],
     default_cmd="help",

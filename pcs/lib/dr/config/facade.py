@@ -1,13 +1,16 @@
-from enum import auto
-from typing import Iterable
+from typing import (
+    Iterable,
+    List,
+    NamedTuple,
+)
 
-from pcs.common.tools import AutoNameEnum
+from pcs.common.dr import DrRole
 from pcs.lib.interface.config import FacadeInterface
 
 
-class DrRole(AutoNameEnum):
-    PRIMARY = auto()
-    RECOVERY = auto()
+class DrSite(NamedTuple):
+    role: DrRole
+    node_name_list: List[str]
 
 
 class Facade(FacadeInterface):
@@ -22,7 +25,7 @@ class Facade(FacadeInterface):
 
     @property
     def local_role(self) -> DrRole:
-        return DrRole(self._config["local_role"])
+        return DrRole(self._config["local"]["role"])
 
     def add_site(self, role: DrRole, node_list: Iterable[str]) -> None:
         self._config["remote_sites"].append(
@@ -31,3 +34,13 @@ class Facade(FacadeInterface):
                 nodes=[dict(name=node) for node in node_list],
             )
         )
+
+    def get_remote_site_list(self) -> List[DrSite]:
+        return [
+            DrSite(
+                DrRole(conf_site["role"]),
+                [node["name"] for node in conf_site["nodes"]]
+            )
+            for conf_site in self._config.get("remote_sites", [])
+            if ("role" in conf_site and "nodes" in conf_site)
+        ]

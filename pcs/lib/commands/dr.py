@@ -1,15 +1,31 @@
-from pcs.common.reports import SimpleReportProcessor
+from typing import (
+    Any,
+    Iterable,
+    List,
+    Mapping,
+)
+
 from pcs.common import file_type_codes
+from pcs.common.dr import DrSiteStatusDto
+from pcs.common.file import RawFileError
+from pcs.common.node_communicator import RequestTarget
+from pcs.common.reports import SimpleReportProcessor
 
 from pcs.lib import node_communication_format, reports
 from pcs.lib.communication.corosync import GetCorosyncConf
 from pcs.lib.communication.nodes import DistributeFilesWithoutForces
-from pcs.lib.communication.tools import run_and_raise
+from pcs.lib.communication.status import GetFullClusterStatusPlaintext
+from pcs.lib.communication.tools import (
+    run as run_com_cmd,
+    run_and_raise,
+)
 from pcs.lib.corosync.config_facade import ConfigFacade as CorosyncConfigFacade
 from pcs.lib.dr.config.facade import DrRole
 from pcs.lib.env import LibraryEnvironment
 from pcs.lib.errors import LibraryError
+from pcs.lib.file.raw_file import raw_file_error_report
 from pcs.lib.file.toolbox import for_file_type as get_file_toolbox
+from pcs.lib.interface.config import ParserErrorException
 from pcs.lib.node import get_existing_nodes_names
 
 
@@ -20,9 +36,9 @@ def set_recovery_site(env: LibraryEnvironment, node_name: str) -> None:
     env
     node_name -- a known host from the recovery site
     """
-    if not env.is_corosync_conf_live:
+    if env.ghost_file_codes:
         raise LibraryError(
-            reports.live_environment_required([file_type_codes.COROSYNC_CONF])
+            reports.live_environment_required(env.ghost_file_codes)
         )
     report_processor = SimpleReportProcessor(env.report_processor)
     dr_env = env.get_dr_env()
@@ -99,3 +115,111 @@ def set_recovery_site(env: LibraryEnvironment, node_name: str) -> None:
     run_and_raise(env.get_node_communicator(), distribute_file_cmd)
     # Note: No token sync across multiple clusters. Most probably they are in
     # different subnetworks.
+
+
+def status_all_sites_plaintext(
+    env: LibraryEnvironment,
+    hide_inactive_resources: bool = False,
+    verbose: bool = False,
+) -> List[Mapping[str, Any]]:
+    # pylint: disable=too-many-locals
+    """
+    Return local site's and all remote sites' status as plaintext
+
+    env -- LibraryEnvironment
+    hide_inactive_resources -- if True, do not display non-running resources
+    verbose -- if True, display more info
+    """
+    # The command does not provide an option to skip offline / unreacheable /
+    # misbehaving nodes.
+    # The point of such skipping is to stop a command if it is unable to make
+    # changes on all nodes. The user can then decide to proceed anyway and
+    # make changes on the skipped nodes later manually.
+    # This command only reads from nodes so it automatically asks other nodes
+    # if one is offline / misbehaving.
+    class SiteData():
+        local: bool
+        role: DrRole
+        target_list: Iterable[RequestTarget]
+        status_loaded: bool
+        status_plaintext: str
+
+        def __init__(self, local, role, target_list):
+            self.local = local
+            self.role = role
+            self.target_list = target_list
+            self.status_loaded = False
+            self.status_plaintext = ""
+
+
+    if env.ghost_file_codes:
+        raise LibraryError(
+            reports.live_environment_required(env.ghost_file_codes)
+        )
+
+    report_processor = SimpleReportProcessor(env.report_processor)
+    dr_env_config = env.get_dr_env().config
+
+    if not dr_env_config.raw_file.exists():
+        report_processor.report(reports.dr_config_does_not_exist())
+        raise LibraryError()
+    try:
+        dr_config = dr_env_config.read_to_facade()
+    except RawFileError as e:
+        report_processor.report(raw_file_error_report(e))
+    except ParserErrorException as e:
+        report_processor.report_list(
+            dr_env_config.parser_exception_to_report_list(e)
+        )
+    if report_processor.has_errors:
+        raise LibraryError()
+
+    site_data_list = []
+    target_factory = env.get_node_target_factory()
+
+    # get local nodes
+    local_nodes, report_list = get_existing_nodes_names(env.get_corosync_conf())
+    report_processor.report_list(report_list)
+    report_list, local_targets = target_factory.get_target_list_with_reports(
+        local_nodes,
+        skip_non_existing=True,
+    )
+    report_processor.report_list(report_list)
+    site_data_list.append(SiteData(True, dr_config.local_role, local_targets))
+
+    # get remote sites' nodes
+    for conf_remote_site in dr_config.get_remote_site_list():
+        report_list, remote_targets = (
+            target_factory.get_target_list_with_reports(
+                conf_remote_site.node_name_list,
+                skip_non_existing=True,
+            )
+        )
+        report_processor.report_list(report_list)
+        site_data_list.append(
+            SiteData(False, conf_remote_site.role, remote_targets)
+        )
+    if report_processor.has_errors:
+        raise LibraryError()
+
+    # get all statuses
+    for site_data in site_data_list:
+        com_cmd = GetFullClusterStatusPlaintext(
+            report_processor,
+            hide_inactive_resources=hide_inactive_resources,
+            verbose=verbose,
+        )
+        com_cmd.set_targets(site_data.target_list)
+        site_data.status_loaded, site_data.status_plaintext = run_com_cmd(
+            env.get_node_communicator(), com_cmd
+        )
+
+    return [
+        DrSiteStatusDto(
+            site_data.local,
+            site_data.role,
+            site_data.status_plaintext,
+            site_data.status_loaded,
+        ).to_dict()
+        for site_data in site_data_list
+    ]

@@ -189,7 +189,9 @@ def load_module(env, middleware_factory, name):
             env,
             middleware.build(middleware_factory.corosync_conf_existing),
             {
+                "get_config": dr.get_config,
                 "set_recovery_site": dr.set_recovery_site,
+                "status_all_sites_plaintext": dr.status_all_sites_plaintext,
             }
         )
 
