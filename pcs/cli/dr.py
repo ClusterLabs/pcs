@@ -7,6 +7,7 @@ from typing import (
 from pcs.cli.common.console_report import error
 from pcs.cli.common.errors import CmdLineInputError
 from pcs.cli.common.parse_args import InputModifiers
+from pcs.common import report_codes
 from pcs.common.dr import (
     DrConfigDto,
     DrConfigSiteDto,
@@ -47,6 +48,7 @@ def _config_site_lines(site_dto: DrConfigSiteDto) -> List[str]:
         lines.append("Nodes:")
         lines.extend(indent(sorted([node.name for node in site_dto.node_list])))
     return lines
+
 
 def set_recovery_site(
     lib: Any,
@@ -114,3 +116,21 @@ def status(
     print("\n".join(plaintext_parts).strip())
     if has_errors:
         raise error("Unable to get status of all sites")
+
+
+def destroy(
+    lib: Any,
+    argv: Sequence[str],
+    modifiers: InputModifiers,
+) -> None:
+    """
+    Options:
+      * --skip-offline - skip unreachable nodes (including missing auth token)
+    """
+    modifiers.ensure_only_supported("--skip-offline")
+    if argv:
+        raise CmdLineInputError()
+    force_flags = []
+    if modifiers.get("--skip-offline"):
+        force_flags.append(report_codes.SKIP_OFFLINE_NODES)
+    lib.dr.destroy(force_flags=force_flags)

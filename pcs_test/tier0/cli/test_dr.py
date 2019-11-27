@@ -3,6 +3,8 @@ from unittest import mock, TestCase
 
 from pcs_test.tools.misc import dict_to_modifiers
 
+from pcs.common import report_codes
+
 from pcs.cli import dr
 from pcs.cli.common.errors import CmdLineInputError
 
@@ -262,4 +264,30 @@ class Status(TestCase):
         mock_stderr.assert_called_once_with(
             "Error: Unable to communicate with pcsd, received response:\n"
                 "['wrong response', {'x': 'y'}]\n"
+        )
+
+
+class Destroy(TestCase):
+    def setUp(self):
+        self.lib = mock.Mock(spec_set=["dr"])
+        self.dr = mock.Mock(spec_set=["destroy"])
+        self.lib.dr = self.dr
+
+    def call_cmd(self, argv, modifiers=None):
+        modifiers = modifiers or {}
+        dr.destroy(self.lib, argv, dict_to_modifiers(modifiers))
+
+    def test_some_args(self):
+        with self.assertRaises(CmdLineInputError) as cm:
+            self.call_cmd(["arg"])
+        self.assertIsNone(cm.exception.message)
+
+    def test_success(self):
+        self.call_cmd([])
+        self.dr.destroy.assert_called_once_with(force_flags=[])
+
+    def test_skip_offline(self):
+        self.call_cmd([], modifiers={"skip-offline": True})
+        self.dr.destroy.assert_called_once_with(
+            force_flags=[report_codes.SKIP_OFFLINE_NODES]
         )

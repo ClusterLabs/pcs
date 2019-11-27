@@ -92,7 +92,8 @@ class FilesShortcuts:
         )
 
     def remove_files(
-        self, node_labels=None, pcsd_settings=False, communication_list=None,
+        self, node_labels=None, pcsd_settings=False,
+        pcs_disaster_recovery_conf=False, communication_list=None,
         name="http.files.remove_files"
     ):
         """
@@ -100,6 +101,7 @@ class FilesShortcuts:
 
         node_labels list -- create success responses from these nodes
         pcsd_settings bool -- if True, remove file pcsd_settings
+        pcs_disaster_recovery_conf bool -- if True, remove pcs DR config
         communication_list list -- create custom responses
         name string -- the key of this call
         """
@@ -109,6 +111,14 @@ class FilesShortcuts:
         if pcsd_settings:
             file_id = "pcsd settings"
             input_data[file_id] = dict(type="pcsd_settings")
+            output_data[file_id] = dict(
+                code="deleted",
+                message="",
+            )
+
+        if pcs_disaster_recovery_conf:
+            file_id = "pcs disaster-recovery config"
+            input_data[file_id] = dict(type="pcs_disaster_recovery_conf")
             output_data[file_id] = dict(
                 code="deleted",
                 message="",

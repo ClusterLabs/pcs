@@ -1,12 +1,13 @@
 from typing import (
     Any,
+    Container,
     Iterable,
     List,
     Mapping,
     Tuple,
 )
 
-from pcs.common import file_type_codes
+from pcs.common import file_type_codes, report_codes
 from pcs.common.dr import (
     DrConfigDto,
     DrConfigSiteDto,
@@ -19,7 +20,10 @@ from pcs.common.reports import SimpleReportProcessor
 
 from pcs.lib import node_communication_format, reports
 from pcs.lib.communication.corosync import GetCorosyncConf
-from pcs.lib.communication.nodes import DistributeFilesWithoutForces
+from pcs.lib.communication.nodes import (
+    DistributeFilesWithoutForces,
+    RemoveFilesWithoutForces,
+)
 from pcs.lib.communication.status import GetFullClusterStatusPlaintext
 from pcs.lib.communication.tools import (
     run as run_com_cmd,
@@ -264,3 +268,59 @@ def _load_dr_config(
             config_file.parser_exception_to_report_list(e),
             DrConfigFacade.empty()
         )
+
+
+def destroy(env: LibraryEnvironment, force_flags: Container[str] = ()) -> None:
+    """
+    Destroy disaster-recovery configuration on all sites
+    """
+    if env.ghost_file_codes:
+        raise LibraryError(
+            reports.live_environment_required(env.ghost_file_codes)
+        )
+
+    report_processor = SimpleReportProcessor(env.report_processor)
+    dr_env_config = env.get_dr_env().config
+
+    skip_offline = report_codes.SKIP_OFFLINE_NODES in force_flags
+
+    if not dr_env_config.raw_file.exists():
+        report_processor.report(reports.dr_config_does_not_exist())
+        raise LibraryError()
+
+    try:
+        dr_config = dr_env_config.read_to_facade()
+    except RawFileError as e:
+        report_processor.report(raw_file_error_report(e))
+    except ParserErrorException as e:
+        report_processor.report_list(
+            dr_env_config.parser_exception_to_report_list(e)
+        )
+
+    local_nodes, report_list = get_existing_nodes_names(env.get_corosync_conf())
+    report_processor.report_list(report_list)
+
+    if report_processor.has_errors:
+        raise LibraryError()
+
+    remote_nodes: List[str] = []
+    for conf_remote_site in dr_config.get_remote_site_list():
+        remote_nodes.extend(conf_remote_site.node_name_list)
+
+    target_factory = env.get_node_target_factory()
+    report_list, targets = target_factory.get_target_list_with_reports(
+         remote_nodes + local_nodes, skip_non_existing=skip_offline,
+    )
+    report_processor.report_list(report_list)
+    if report_processor.has_errors:
+        raise LibraryError()
+
+    com_cmd = RemoveFilesWithoutForces(
+        env.report_processor, {
+            "pcs disaster-recovery config": {
+                "type": "pcs_disaster_recovery_conf",
+            },
+        },
+    )
+    com_cmd.set_targets(targets)
+    run_and_raise(env.get_node_communicator(), com_cmd)

@@ -2037,6 +2037,9 @@ Commands:
 
     set-recovery-site <recovery site node>
         TODO
+
+    destroy
+        Permanently destroy disaster-recovery configuration on all sites.
 """
     if pout:
         print(sub_usage(args, output))
