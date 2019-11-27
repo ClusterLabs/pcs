@@ -3,10 +3,16 @@ from typing import (
     Iterable,
     List,
     Mapping,
+    Tuple,
 )
 
 from pcs.common import file_type_codes
-from pcs.common.dr import DrSiteStatusDto
+from pcs.common.dr import (
+    DrConfigDto,
+    DrConfigSiteDto,
+    DrConfigNodeDto,
+    DrSiteStatusDto,
+)
 from pcs.common.file import RawFileError
 from pcs.common.node_communicator import RequestTarget
 from pcs.common.reports import SimpleReportProcessor
@@ -20,13 +26,44 @@ from pcs.lib.communication.tools import (
     run_and_raise,
 )
 from pcs.lib.corosync.config_facade import ConfigFacade as CorosyncConfigFacade
-from pcs.lib.dr.config.facade import DrRole
+from pcs.lib.dr.config.facade import (
+    DrRole,
+    Facade as DrConfigFacade,
+)
 from pcs.lib.env import LibraryEnvironment
-from pcs.lib.errors import LibraryError
+from pcs.lib.errors import LibraryError, ReportItemList
+from pcs.lib.file.instance import FileInstance
 from pcs.lib.file.raw_file import raw_file_error_report
 from pcs.lib.file.toolbox import for_file_type as get_file_toolbox
 from pcs.lib.interface.config import ParserErrorException
 from pcs.lib.node import get_existing_nodes_names
+
+
+def get_config(env: LibraryEnvironment) -> Mapping[str, Any]:
+    """
+    Return local disaster recovery config
+
+    env -- LibraryEnvironment
+    """
+    report_processor = SimpleReportProcessor(env.report_processor)
+    report_list, dr_config = _load_dr_config(env.get_dr_env().config)
+    report_processor.report_list(report_list)
+    if report_processor.has_errors:
+        raise LibraryError()
+
+    return DrConfigDto(
+        DrConfigSiteDto(
+            dr_config.local_role,
+            []
+        ),
+        [
+            DrConfigSiteDto(
+                site.role,
+                [DrConfigNodeDto(name) for name in site.node_name_list]
+            )
+            for site in dr_config.get_remote_site_list()
+        ]
+    ).to_dict()
 
 
 def set_recovery_site(env: LibraryEnvironment, node_name: str) -> None:
@@ -158,19 +195,8 @@ def status_all_sites_plaintext(
         )
 
     report_processor = SimpleReportProcessor(env.report_processor)
-    dr_env_config = env.get_dr_env().config
-
-    if not dr_env_config.raw_file.exists():
-        report_processor.report(reports.dr_config_does_not_exist())
-        raise LibraryError()
-    try:
-        dr_config = dr_env_config.read_to_facade()
-    except RawFileError as e:
-        report_processor.report(raw_file_error_report(e))
-    except ParserErrorException as e:
-        report_processor.report_list(
-            dr_env_config.parser_exception_to_report_list(e)
-        )
+    report_list, dr_config = _load_dr_config(env.get_dr_env().config)
+    report_processor.report_list(report_list)
     if report_processor.has_errors:
         raise LibraryError()
 
@@ -223,3 +249,18 @@ def status_all_sites_plaintext(
         ).to_dict()
         for site_data in site_data_list
     ]
+
+def _load_dr_config(
+    config_file: FileInstance,
+) -> Tuple[ReportItemList, DrConfigFacade]:
+    if not config_file.raw_file.exists():
+        return [reports.dr_config_does_not_exist()], DrConfigFacade.empty()
+    try:
+        return [], config_file.read_to_facade()
+    except RawFileError as e:
+        return [raw_file_error_report(e)], DrConfigFacade.empty()
+    except ParserErrorException as e:
+        return (
+            config_file.parser_exception_to_report_list(e),
+            DrConfigFacade.empty()
+        )

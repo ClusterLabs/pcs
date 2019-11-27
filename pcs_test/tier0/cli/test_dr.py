@@ -6,6 +6,76 @@ from pcs_test.tools.misc import dict_to_modifiers
 from pcs.cli import dr
 from pcs.cli.common.errors import CmdLineInputError
 
+
+@mock.patch("pcs.cli.dr.print")
+class Config(TestCase):
+    def setUp(self):
+        self.lib = mock.Mock(spec_set=["dr"])
+        self.lib.dr = mock.Mock(spec_set=["get_config"])
+
+    def _call_cmd(self, argv=None):
+        dr.config(self.lib, argv or [], dict_to_modifiers({}))
+
+    def test_argv(self, mock_print):
+        with self.assertRaises(CmdLineInputError) as cm:
+            self._call_cmd(["x"])
+        self.assertIsNone(cm.exception.message)
+        mock_print.assert_not_called()
+
+    def test_success(self, mock_print):
+        self.lib.dr.get_config.return_value = {
+            "local_site": {
+                "node_list": [],
+                "site_role": "RECOVERY",
+            },
+            "remote_site_list": [
+                {
+                    "node_list": [
+                        {"name": "nodeA2"},
+                        {"name": "nodeA1"},
+                    ],
+                    "site_role": "PRIMARY",
+                },
+                {
+                    "node_list": [
+                        {"name": "nodeB1"},
+                    ],
+                    "site_role": "RECOVERY",
+                }
+            ],
+        }
+        self._call_cmd([])
+        self.lib.dr.get_config.assert_called_once_with()
+        mock_print.assert_called_once_with(dedent("""\
+            Local site:
+              Role: Recovery
+            Remote site:
+              Role: Primary
+              Nodes:
+                nodeA1
+                nodeA2
+            Remote site:
+              Role: Recovery
+              Nodes:
+                nodeB1"""))
+
+    @mock.patch("pcs.cli.common.console_report.sys.stderr.write")
+    def test_invalid_response(self, mock_stderr, mock_print):
+        self.lib.dr.get_config.return_value = [
+            "wrong response",
+            {"x": "y"},
+        ]
+        with self.assertRaises(SystemExit) as cm:
+            self._call_cmd([])
+        self.assertEqual(cm.exception.code, 1)
+        self.lib.dr.get_config.assert_called_once_with()
+        mock_print.assert_not_called()
+        mock_stderr.assert_called_once_with(
+            "Error: Unable to communicate with pcsd, received response:\n"
+                "['wrong response', {'x': 'y'}]\n"
+        )
+
+
 class SetRecoverySite(TestCase):
     def setUp(self):
         self.lib = mock.Mock(spec_set=["dr"])

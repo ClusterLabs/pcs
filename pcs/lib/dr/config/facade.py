@@ -23,6 +23,10 @@ class Facade(FacadeInterface):
             remote_sites=[],
         ))
 
+    @classmethod
+    def empty(cls) -> "Facade":
+        return cls(dict())
+
     @property
     def local_role(self) -> DrRole:
         return DrRole(self._config["local"]["role"])

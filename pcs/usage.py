@@ -2028,6 +2028,9 @@ Usage: pcs dr <command>
 Manage disaster recovery configuration.
 
 Commands:
+    config
+        Display disaster recovery configuration from the local node.
+
     status [--full] [--hide-inactive]
         Display status of the local and the remote site cluster (--full
         provides more details, --hide-inactive hides inactive resources).

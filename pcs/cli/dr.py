@@ -1,12 +1,52 @@
 from typing import (
     Any,
+    List,
     Sequence,
 )
 
 from pcs.cli.common.console_report import error
 from pcs.cli.common.errors import CmdLineInputError
 from pcs.cli.common.parse_args import InputModifiers
-from pcs.common.dr import DrSiteStatusDto
+from pcs.common.dr import (
+    DrConfigDto,
+    DrConfigSiteDto,
+    DrSiteStatusDto,
+)
+from pcs.common.tools import indent
+
+def config(
+    lib: Any,
+    argv: Sequence[str],
+    modifiers: InputModifiers,
+) -> None:
+    """
+    Options: None
+    """
+    modifiers.ensure_only_supported()
+    if argv:
+        raise CmdLineInputError()
+    config_raw = lib.dr.get_config()
+    try:
+        config_dto = DrConfigDto.from_dict(config_raw)
+    except (KeyError, TypeError, ValueError):
+        raise error(
+            "Unable to communicate with pcsd, received response:\n"
+                f"{config_raw}"
+        )
+
+    lines = ["Local site:"]
+    lines += indent(_config_site_lines(config_dto.local_site))
+    for site_dto in config_dto.remote_site_list:
+        lines += ["Remote site:"]
+        lines += indent(_config_site_lines(site_dto))
+    print("\n".join(lines))
+
+def _config_site_lines(site_dto: DrConfigSiteDto) -> List[str]:
+    lines = [f"Role: {site_dto.site_role.capitalize()}"]
+    if site_dto.node_list:
+        lines.append("Nodes:")
+        lines.extend(indent(sorted([node.name for node in site_dto.node_list])))
+    return lines
 
 def set_recovery_site(
     lib: Any,
