@@ -1066,6 +1066,9 @@ def start_cluster(argv):
             wait_for_nodes_started(nodes, wait_timeout)
         return
 
+    if not utils.hasCorosyncConf():
+        utils.err("cluster is not currently configured on this node")
+
     start_all = (
         "--pacemaker" not in utils.pcs_options
         and
