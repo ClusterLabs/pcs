@@ -19,7 +19,11 @@ import logging
 from functools import lru_cache
 from urllib.parse import urlencode
 
-from typing import Dict, Any
+from typing import (
+    Any,
+    Dict,
+    Sequence,
+)
 
 from pcs import settings, usage
 
@@ -37,6 +41,7 @@ from pcs.cli.common import (
     middleware,
 )
 from pcs.cli.common.env_cli import Env
+from pcs.cli.common.errors import CmdLineInputError
 from pcs.cli.common.lib_wrapper import Library
 from pcs.cli.common.parse_args import InputModifiers
 from pcs.cli.common.reports import (
@@ -2670,7 +2675,11 @@ def get_library_wrapper():
     """
     return Library(get_cli_env(), get_middleware_factory())
 
-def exit_on_cmdline_input_errror(error, main_name, usage_name):
+def exit_on_cmdline_input_errror(
+    error: CmdLineInputError,
+    main_name: str,
+    usage_name: Sequence[str],
+) -> None:
     if not error or (not error.message or error.show_both_usage_and_message):
         usage.show(main_name, usage_name)
     if error and error.message:

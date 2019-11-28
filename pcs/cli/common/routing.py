@@ -1,8 +1,23 @@
+from typing import (
+    Any,
+    Callable,
+    List,
+    Mapping,
+    Optional,
+)
+
 from pcs import utils
 from pcs.cli.common.errors import CmdLineInputError
+from pcs.cli.common.parse_args import InputModifiers
 
-def create_router(cmd_map, usage_sub_cmd, default_cmd=None):
-    def _router(lib, argv, modifiers):
+CliCmdInterface = Callable[[Any, List[str], InputModifiers], None]
+
+def create_router(
+    cmd_map: Mapping[str, CliCmdInterface],
+    usage_sub_cmd: List[str],
+    default_cmd: Optional[str] = None,
+) -> CliCmdInterface:
+    def _router(lib: Any, argv: List[str], modifiers: InputModifiers) -> None:
         if argv:
             sub_cmd, *argv_next = argv
         else:
