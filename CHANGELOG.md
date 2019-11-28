@@ -1,6 +1,6 @@
 # Change Log
 
-## [Unreleased]
+## [0.10.4] - 2019-11-28
 
 ### Added
 - New section in pcs man page summarizing changes in pcs-0.10. Commands removed

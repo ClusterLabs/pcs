@@ -40,7 +40,7 @@ def get_pcs_internal_path()
   end
 end
 
-PCS_VERSION = '0.10.3'
+PCS_VERSION = '0.10.4'
 # unique instance signature, allows detection of dameon restarts
 COROSYNC = COROSYNC_BINARIES + "corosync"
 ISSYSTEMCTL = is_systemctl
