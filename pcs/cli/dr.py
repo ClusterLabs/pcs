@@ -36,10 +36,10 @@ def config(
         )
 
     lines = ["Local site:"]
-    lines += indent(_config_site_lines(config_dto.local_site))
+    lines.extend(indent(_config_site_lines(config_dto.local_site)))
     for site_dto in config_dto.remote_site_list:
-        lines += ["Remote site:"]
-        lines += indent(_config_site_lines(site_dto))
+        lines.append("Remote site:")
+        lines.extend(indent(_config_site_lines(site_dto)))
     print("\n".join(lines))
 
 def _config_site_lines(site_dto: DrConfigSiteDto) -> List[str]:
@@ -56,9 +56,10 @@ def set_recovery_site(
     modifiers: InputModifiers,
 ) -> None:
     """
-    Options: None
+    Options:
+      * --request-timeout - HTTP timeout for node authorization check
     """
-    modifiers.ensure_only_supported()
+    modifiers.ensure_only_supported("--request-timeout")
     if len(argv) != 1:
         raise CmdLineInputError()
     lib.dr.set_recovery_site(argv[0])
@@ -126,8 +127,9 @@ def destroy(
     """
     Options:
       * --skip-offline - skip unreachable nodes (including missing auth token)
+      * --request-timeout - HTTP timeout for node authorization check
     """
-    modifiers.ensure_only_supported("--skip-offline")
+    modifiers.ensure_only_supported("--skip-offline", "--request-timeout")
     if argv:
         raise CmdLineInputError()
     force_flags = []

@@ -8,19 +8,19 @@ import json
 
 from pcs.common import file_type_codes as code
 from pcs.lib import reports
-from pcs.lib.errors import ReportItemList
 from pcs.lib.booth.config_facade import ConfigFacade as BoothConfigFacade
 from pcs.lib.booth.config_parser import (
     Exporter as BoothConfigExporter,
     Parser as BoothConfigParser,
 )
+from pcs.lib.dr.config.facade import Facade as DrConfigFacade
+from pcs.lib.errors import ReportItemList
 from pcs.lib.interface.config import (
     ExporterInterface,
     FacadeInterface,
     ParserErrorException,
     ParserInterface,
 )
-from pcs.lib.dr.config.facade import Facade as DrConfigFacade
 
 
 class FileToolbox(NamedTuple):
@@ -100,7 +100,7 @@ class NoopParser(ParserInterface):
 
     @staticmethod
     def exception_to_report_list(
-        exception: JsonParserException,
+        exception: ParserErrorException,
         file_type_code: code.FileTypeCode,
         file_path: str,
         force_code: str, # TODO: fix

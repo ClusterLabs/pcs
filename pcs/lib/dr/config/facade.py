@@ -46,5 +46,4 @@ class Facade(FacadeInterface):
                 [node["name"] for node in conf_site["nodes"]]
             )
             for conf_site in self._config.get("remote_sites", [])
-            if ("role" in conf_site and "nodes" in conf_site)
         ]

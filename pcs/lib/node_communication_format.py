@@ -63,7 +63,6 @@ def pcs_dr_config_format(dr_conf_content: bytes) -> Dict[str, Any]:
     return {
         "type": "pcs_disaster_recovery_conf",
         "data": base64.b64encode(dr_conf_content).decode("utf-8"),
-        # "data": dr_conf_content.decode("utf-8"),
         "rewrite_existing": True,
     }
 

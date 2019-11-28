@@ -80,7 +80,7 @@ class GetFullClusterStatusPlaintext(
                                 report_data["report_text"]
                             )
                         )
-        except (ValueError, LookupError):
+        except (ValueError, LookupError, TypeError):
             self._report(reports.invalid_response_format(
                 node,
                 severity=ReportItemSeverity.WARNING,

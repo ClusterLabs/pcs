@@ -62,7 +62,9 @@ class FileInstance():
 
     @classmethod
     def for_dr_config(cls) -> "FileInstance":
-        # TODO: doctext
+        """
+        Factory for disaster-recovery config file
+        """
         return cls._for_common(file_type_codes.PCS_DR_CONFIG)
 
     @classmethod

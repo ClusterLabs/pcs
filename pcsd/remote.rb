@@ -459,7 +459,7 @@ def get_corosync_conf_remote(params, request, auth_user)
   end
   begin
     return get_corosync_conf()
-  rescue # TODO
+  rescue
     return 400, 'Unable to read corosync.conf'
   end
 end

@@ -1,6 +1,5 @@
 import json
 from unittest import TestCase
-# from textwrap import dedent
 
 from pcs_test.tools import fixture
 from pcs_test.tools.command_env import get_env_tools
@@ -28,7 +27,7 @@ class CheckLive(TestCase):
 
     def assert_live_required(self, forbidden_options):
         self.env_assist.assert_raise_library_error(
-            lambda: dr.set_recovery_site(self.env_assist.get_env(), "node"),
+            lambda: dr.destroy(self.env_assist.get_env()),
             [
                 fixture.error(
                     report_codes.LIVE_ENVIRONMENT_REQUIRED,
@@ -132,7 +131,7 @@ class FatalConfigIssue(FixtureMixin, TestCase):
         )
 
         self.env_assist.assert_raise_library_error(
-            lambda: dr.status_all_sites_plaintext(self.env_assist.get_env()),
+            lambda: dr.destroy(self.env_assist.get_env()),
         )
         self.env_assist.assert_reports([
             fixture.error(
@@ -152,7 +151,7 @@ class FatalConfigIssue(FixtureMixin, TestCase):
         )
 
         self.env_assist.assert_raise_library_error(
-            lambda: dr.status_all_sites_plaintext(self.env_assist.get_env()),
+            lambda: dr.destroy(self.env_assist.get_env()),
         )
         self.env_assist.assert_reports([
             fixture.error(
@@ -176,7 +175,7 @@ class FatalConfigIssue(FixtureMixin, TestCase):
         )
 
         self.env_assist.assert_raise_library_error(
-            lambda: dr.status_all_sites_plaintext(self.env_assist.get_env()),
+            lambda: dr.destroy(self.env_assist.get_env()),
         )
         self.env_assist.assert_reports([
             fixture.error(
@@ -197,7 +196,7 @@ class FatalConfigIssue(FixtureMixin, TestCase):
             "", exception_msg=REASON, instead="corosync_conf.load"
         )
         self.env_assist.assert_raise_library_error(
-            lambda: dr.status_all_sites_plaintext(self.env_assist.get_env()),
+            lambda: dr.destroy(self.env_assist.get_env()),
             [
                 fixture.error(
                     report_codes.UNABLE_TO_READ_COROSYNC_CONFIG,
@@ -214,7 +213,7 @@ class FatalConfigIssue(FixtureMixin, TestCase):
             "wrong {\n  corosync", instead="corosync_conf.load"
         )
         self.env_assist.assert_raise_library_error(
-            lambda: dr.status_all_sites_plaintext(self.env_assist.get_env()),
+            lambda: dr.destroy(self.env_assist.get_env()),
             [
                 fixture.error(
                     report_codes
@@ -255,9 +254,6 @@ class CommunicationIssue(FixtureMixin, TestCase):
             node_labels=existing_nodes,
             pcs_disaster_recovery_conf=True,
         )
-        # self.env_assist.assert_raise_library_error(
-        #     lambda: dr.destroy(self.env_assist.get_env())
-        # )
         dr.destroy(
             self.env_assist.get_env(),
             force_flags=[report_codes.SKIP_OFFLINE_NODES],

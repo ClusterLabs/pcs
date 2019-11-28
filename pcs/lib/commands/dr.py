@@ -10,8 +10,8 @@ from typing import (
 from pcs.common import file_type_codes, report_codes
 from pcs.common.dr import (
     DrConfigDto,
-    DrConfigSiteDto,
     DrConfigNodeDto,
+    DrConfigSiteDto,
     DrSiteStatusDto,
 )
 from pcs.common.file import RawFileError
@@ -163,7 +163,6 @@ def status_all_sites_plaintext(
     hide_inactive_resources: bool = False,
     verbose: bool = False,
 ) -> List[Mapping[str, Any]]:
-    # pylint: disable=too-many-locals
     """
     Return local site's and all remote sites' status as plaintext
 
@@ -280,22 +279,13 @@ def destroy(env: LibraryEnvironment, force_flags: Container[str] = ()) -> None:
         )
 
     report_processor = SimpleReportProcessor(env.report_processor)
-    dr_env_config = env.get_dr_env().config
-
     skip_offline = report_codes.SKIP_OFFLINE_NODES in force_flags
 
-    if not dr_env_config.raw_file.exists():
-        report_processor.report(reports.dr_config_does_not_exist())
-        raise LibraryError()
+    report_list, dr_config = _load_dr_config(env.get_dr_env().config)
+    report_processor.report_list(report_list)
 
-    try:
-        dr_config = dr_env_config.read_to_facade()
-    except RawFileError as e:
-        report_processor.report(raw_file_error_report(e))
-    except ParserErrorException as e:
-        report_processor.report_list(
-            dr_env_config.parser_exception_to_report_list(e)
-        )
+    if report_processor.has_errors:
+        raise LibraryError()
 
     local_nodes, report_list = get_existing_nodes_names(env.get_corosync_conf())
     report_processor.report_list(report_list)

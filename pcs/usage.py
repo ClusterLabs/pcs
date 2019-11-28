@@ -2029,14 +2029,15 @@ Manage disaster recovery configuration.
 
 Commands:
     config
-        Display disaster recovery configuration from the local node.
+        Display disaster-recovery configuration from the local node.
 
     status [--full] [--hide-inactive]
         Display status of the local and the remote site cluster (--full
         provides more details, --hide-inactive hides inactive resources).
 
     set-recovery-site <recovery site node>
-        TODO
+        Set up disaster-recovery with the local cluster being the primary site.
+        The recovery site is defined by a name of one of its nodes.
 
     destroy
         Permanently destroy disaster-recovery configuration on all sites.

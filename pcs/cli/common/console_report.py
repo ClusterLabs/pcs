@@ -47,7 +47,7 @@ _file_role_translation = {
     file_type_codes.BOOTH_CONFIG: "Booth configuration",
     file_type_codes.BOOTH_KEY: "Booth key",
     file_type_codes.COROSYNC_AUTHKEY: "Corosync authkey",
-    file_type_codes.PCS_DR_CONFIG: "disaster recovery configuration",
+    file_type_codes.PCS_DR_CONFIG: "disaster-recovery configuration",
     file_type_codes.PACEMAKER_AUTHKEY: "Pacemaker authkey",
     file_type_codes.PCSD_ENVIRONMENT_CONFIG: "pcsd configuration",
     file_type_codes.PCSD_SSL_CERT: "pcsd SSL certificate",

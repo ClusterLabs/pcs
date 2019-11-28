@@ -8,7 +8,7 @@ dr_cmd = create_router(
         "config": dr.config,
         "destroy": dr.destroy,
         "set-recovery-site": dr.set_recovery_site,
-        "status": dr.status
+        "status": dr.status,
     },
     ["dr"],
     default_cmd="help",
