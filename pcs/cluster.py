@@ -190,6 +190,9 @@ def start_cluster(argv):
             wait_for_nodes_started(nodes, wait_timeout)
         return
 
+    if not utils.hasCorosyncConf():
+        utils.err("cluster is not currently configured on this node")
+
     print("Starting Cluster...")
     service_list = ["corosync"]
     if utils.need_to_handle_qdevice_service():

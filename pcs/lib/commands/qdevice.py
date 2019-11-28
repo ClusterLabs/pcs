@@ -81,6 +81,8 @@ def qdevice_start(lib_env, model):
     start qdevice now on local host
     """
     _check_model(model)
+    if not qdevice_net.qdevice_initialized():
+        raise LibraryError(reports.qdevice_not_initialized(model))
     _service_start(lib_env, qdevice_net.qdevice_start)
 
 def qdevice_stop(lib_env, model, proceed_if_used=False):

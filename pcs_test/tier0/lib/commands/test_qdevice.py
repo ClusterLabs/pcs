@@ -689,6 +689,7 @@ class QdeviceNetDisableTest(QdeviceTestCase):
         )
 
 
+@mock.patch("pcs.lib.corosync.qdevice_net.qdevice_initialized")
 @mock.patch("pcs.lib.external.start_service")
 @mock.patch.object(
     LibraryEnvironment,
@@ -696,9 +697,11 @@ class QdeviceNetDisableTest(QdeviceTestCase):
     lambda self: "mock_runner"
 )
 class QdeviceNetStartTest(QdeviceTestCase):
-    def test_success(self, mock_net_start):
+    def test_success(self, mock_net_start, mock_qdevice_initialized):
+        mock_qdevice_initialized.return_value = True
         lib.qdevice_start(self.lib_env, "net")
         mock_net_start.assert_called_once_with("mock_runner", "corosync-qnetd")
+        mock_qdevice_initialized.assert_called_once_with()
         assert_report_item_list_equal(
             self.mock_reporter.report_item_list,
             [
@@ -719,11 +722,12 @@ class QdeviceNetStartTest(QdeviceTestCase):
             ]
         )
 
-    def test_failed(self, mock_net_start):
+    def test_failed(self, mock_net_start, mock_qdevice_initialized):
         mock_net_start.side_effect = StartServiceError(
             "test service",
             "test error"
         )
+        mock_qdevice_initialized.return_value = True
 
         assert_raise_library_error(
             lambda: lib.qdevice_start(self.lib_env, "net"),
@@ -737,6 +741,7 @@ class QdeviceNetStartTest(QdeviceTestCase):
             )
         )
         mock_net_start.assert_called_once_with("mock_runner", "corosync-qnetd")
+        mock_qdevice_initialized.assert_called_once_with()
         assert_report_item_list_equal(
             self.mock_reporter.report_item_list,
             [
@@ -749,6 +754,24 @@ class QdeviceNetStartTest(QdeviceTestCase):
                 )
             ]
         )
+
+    def test_qdevice_not_initialized(
+        self, mock_net_start, mock_qdevice_initialized
+    ):
+        mock_qdevice_initialized.return_value = False
+
+        assert_raise_library_error(
+            lambda: lib.qdevice_start(self.lib_env, "net"),
+            (
+                severity.ERROR,
+                report_codes.QDEVICE_NOT_INITIALIZED,
+                {
+                    "model": "net",
+                }
+            )
+        )
+        mock_net_start.assert_not_called()
+        mock_qdevice_initialized.assert_called_once_with()
 
 
 @mock.patch("pcs.lib.corosync.qdevice_net.qdevice_status_cluster_text")
