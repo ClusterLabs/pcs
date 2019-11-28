@@ -1,5 +1,9 @@
 import base64
 from collections import namedtuple
+from typing import (
+    Any,
+    Dict,
+)
 
 from pcs.lib import reports
 from pcs.lib.errors import LibraryError
@@ -53,6 +57,18 @@ def corosync_conf_format(corosync_conf_content):
 def corosync_conf_file(corosync_conf_content):
     return {
         "corosync.conf": corosync_conf_format(corosync_conf_content)
+    }
+
+def pcs_dr_config_format(dr_conf_content: bytes) -> Dict[str, Any]:
+    return {
+        "type": "pcs_disaster_recovery_conf",
+        "data": base64.b64encode(dr_conf_content).decode("utf-8"),
+        "rewrite_existing": True,
+    }
+
+def pcs_dr_config_file(dr_conf_content: bytes) -> Dict[str, Any]:
+    return {
+        "disaster-recovery config": pcs_dr_config_format(dr_conf_content)
     }
 
 def pcs_settings_conf_format(content):

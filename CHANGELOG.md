@@ -1,5 +1,14 @@
 # Change Log
 
+## [Unreleased]
+
+### Added
+- It is possible to configure a disaster-recovery site and display its status
+  ([rhbz#1676431])
+
+[rhbz#1676431]: https://bugzilla.redhat.com/show_bug.cgi?id=1676431
+
+
 ## [0.10.4] - 2019-11-28
 
 ### Added

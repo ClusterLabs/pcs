@@ -29,6 +29,30 @@ class CorosyncShortcuts:
             output='{"corosync":false}'
         )
 
+    def get_corosync_conf(
+        self,
+        corosync_conf="",
+        node_labels=None,
+        communication_list=None,
+        name="http.corosync.get_corosync_conf",
+    ):
+        """
+        Create a call for loading corosync.conf text from remote nodes
+
+        string corosync_conf -- corosync.conf text to be loaded
+        list node_labels -- create success responses from these nodes
+        list communication_list -- create custom responses
+        string name -- the key of this call
+        """
+        place_multinode_call(
+            self.__calls,
+            name,
+            node_labels,
+            communication_list,
+            action="remote/get_corosync_conf",
+            output=corosync_conf,
+        )
+
     def set_corosync_conf(
         self, corosync_conf, node_labels=None, communication_list=None,
         name="http.corosync.set_corosync_conf"

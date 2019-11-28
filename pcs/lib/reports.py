@@ -4221,3 +4221,34 @@ def resource_disable_affects_other_resources(
             "crm_simulate_plaintext_output": crm_simulate_plaintext_output,
         }
     )
+
+
+def dr_config_already_exist():
+    """
+    Disaster recovery config exists when the opposite was expected
+    """
+    return ReportItem.error(
+        report_codes.DR_CONFIG_ALREADY_EXIST,
+    )
+
+def dr_config_does_not_exist():
+    """
+    Disaster recovery config does not exist when the opposite was expected
+    """
+    return ReportItem.error(
+        report_codes.DR_CONFIG_DOES_NOT_EXIST,
+    )
+
+def node_in_local_cluster(node):
+    """
+    Node is part of local cluster and it cannot be used for example to set up
+    disaster-recovery site
+
+    node -- node which is part of local cluster
+    """
+    return ReportItem.error(
+        report_codes.NODE_IN_LOCAL_CLUSTER,
+        info=dict(
+            node=node,
+        ),
+    )

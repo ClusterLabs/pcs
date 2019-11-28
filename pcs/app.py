@@ -25,6 +25,7 @@ from pcs.cli.routing import (
     cluster,
     config,
     constraint,
+    dr,
     host,
     node,
     pcsd,
@@ -245,6 +246,7 @@ def main(argv=None):
         "booth": booth.booth_cmd,
         "host": host.host_cmd,
         "client": client.client_cmd,
+        "dr": dr.dr_cmd,
         "help": lambda lib, argv, modifiers: usage.main(),
     }
     try:

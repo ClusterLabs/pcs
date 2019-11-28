@@ -1209,6 +1209,7 @@ def cluster_destroy(lib, argv, modifiers):
             settings.corosync_conf_file,
             settings.corosync_authkey_file,
             settings.pacemaker_authkey_file,
+            settings.pcsd_dr_config_location,
         ])
         state_files = [
             "cib-*",

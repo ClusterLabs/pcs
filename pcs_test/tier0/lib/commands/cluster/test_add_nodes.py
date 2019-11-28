@@ -471,6 +471,11 @@ class LocalConfig():
                 name=f"{local_prefix}fs.isfile.pacemaker_authkey"
             )
             .fs.isfile(
+                settings.pcsd_dr_config_location,
+                return_value=False,
+                name=f"{local_prefix}fs.isfile.pcsd_disaster_recovery"
+            )
+            .fs.isfile(
                 settings.pcsd_settings_conf_location,
                 return_value=False,
                 name=f"{local_prefix}fs.isfile.pcsd_settings"
@@ -480,10 +485,12 @@ class LocalConfig():
     def files_sync(self, node_labels):
         corosync_authkey_content = b"corosync authfile"
         pcmk_authkey_content = b"pcmk authfile"
-        pcs_settings_content = "pcs_settigns.conf data"
+        pcs_disaster_recovery_content = b"disaster recovery config data"
+        pcs_settings_content = "pcs_settings.conf data"
         file_list = [
             "corosync authkey",
             "pacemaker authkey",
+            "disaster-recovery config",
             "pcs_settings.conf",
         ]
         local_prefix = "local.files_sync."
@@ -513,6 +520,19 @@ class LocalConfig():
                 name=f"{local_prefix}fs.open.pcmk_authkey_read",
             )
             .fs.isfile(
+                settings.pcsd_dr_config_location,
+                return_value=True,
+                name=f"{local_prefix}fs.isfile.pcsd_disaster_recovery"
+            )
+            .fs.open(
+                settings.pcsd_dr_config_location,
+                return_value=(
+                    mock.mock_open(read_data=pcs_disaster_recovery_content)()
+                ),
+                mode="rb",
+                name=f"{local_prefix}fs.open.pcsd_disaster_recovery_read",
+            )
+            .fs.isfile(
                 settings.pcsd_settings_conf_location,
                 return_value=True,
                 name=f"{local_prefix}fs.isfile.pcsd_settings"
@@ -526,6 +546,7 @@ class LocalConfig():
                 node_labels=node_labels,
                 pcmk_authkey=pcmk_authkey_content,
                 corosync_authkey=corosync_authkey_content,
+                pcs_disaster_recovery_conf=pcs_disaster_recovery_content,
                 pcs_settings_conf=pcs_settings_content,
                 name=f"{local_prefix}http.files.put_files",
             )
@@ -2105,13 +2126,16 @@ class FailureFilesDistribution(TestCase):
         self.expected_reports = []
         self.pcmk_authkey_content = b"pcmk authkey content"
         self.corosync_authkey_content = b"corosync authkey content"
+        self.pcsd_dr_config_content = b"disaster recovery config data"
         self.pcmk_authkey_file_id = "pacemaker_remote authkey"
         self.corosync_authkey_file_id = "corosync authkey"
+        self.pcsd_dr_config_file_id = "disaster-recovery config"
         self.unsuccessful_nodes = self.new_nodes[:1]
         self.successful_nodes = self.new_nodes[1:]
         self.err_msg = "an error message"
         self.corosync_key_open_before_position = "fs.isfile.pacemaker_authkey"
-        self.pacemaker_key_open_before_position = "fs.isfile.pcsd_settings"
+        self.pacemaker_key_open_before_position = "fs.isfile.pcsd_dr_config"
+        self.pcsd_dr_config_open_before_position = "fs.isfile.pcsd_settings"
         patch_getaddrinfo(self, self.new_nodes)
         self.existing_corosync_nodes = [
             node_fixture(node, node_id)
@@ -2149,8 +2173,13 @@ class FailureFilesDistribution(TestCase):
             )
             # open will be inserted here
             .fs.isfile(
-                settings.pcsd_settings_conf_location, return_value=False,
+                settings.pcsd_dr_config_location, return_value=True,
                 name=self.pacemaker_key_open_before_position
+            )
+            # open will be inserted here
+            .fs.isfile(
+                settings.pcsd_settings_conf_location, return_value=False,
+                name=self.pcsd_dr_config_open_before_position
             )
         )
         self.expected_reports.extend(
@@ -2165,7 +2194,11 @@ class FailureFilesDistribution(TestCase):
         self.distribution_started_reports = [
             fixture.info(
                 report_codes.FILES_DISTRIBUTION_STARTED,
-                file_list=["corosync authkey", "pacemaker authkey"],
+                file_list=[
+                    self.corosync_authkey_file_id,
+                    "pacemaker authkey",
+                    self.pcsd_dr_config_file_id,
+                ],
                 node_list=self.new_nodes,
             )
         ]
@@ -2180,6 +2213,12 @@ class FailureFilesDistribution(TestCase):
                 report_codes.FILE_DISTRIBUTION_SUCCESS,
                 node=node,
                 file_description="pacemaker authkey",
+            ) for node in self.successful_nodes
+        ] + [
+            fixture.info(
+                report_codes.FILE_DISTRIBUTION_SUCCESS,
+                node=node,
+                file_description=self.pcsd_dr_config_file_id,
             ) for node in self.successful_nodes
         ]
 
@@ -2210,6 +2249,15 @@ class FailureFilesDistribution(TestCase):
             name="fs.open.pacemaker_authkey",
             before=self.pacemaker_key_open_before_position,
         )
+        self.config.fs.open(
+            settings.pcsd_dr_config_location,
+            mode="rb",
+            side_effect=EnvironmentError(
+                1, self.err_msg, settings.pcsd_dr_config_location
+            ),
+            name="fs.open.pcsd_dr_config",
+            before=self.pcsd_dr_config_open_before_position,
+        )
 
         self._add_nodes_with_lib_error()
 
@@ -2236,7 +2284,17 @@ class FailureFilesDistribution(TestCase):
                         f"{self.err_msg}: '{settings.pacemaker_authkey_file}'"
                     ),
                     operation=RawFileError.ACTION_READ,
-                )
+                ),
+                fixture.error(
+                    report_codes.FILE_IO_ERROR,
+                    force_code=report_codes.SKIP_FILE_DISTRIBUTION_ERRORS,
+                    file_type_code=file_type_codes.PCS_DR_CONFIG,
+                    file_path=settings.pcsd_dr_config_location,
+                    reason=(
+                        f"{self.err_msg}: '{settings.pcsd_dr_config_location}'"
+                    ),
+                    operation=RawFileError.ACTION_READ,
+                ),
             ]
         )
 
@@ -2259,6 +2317,15 @@ class FailureFilesDistribution(TestCase):
                 ),
                 name="fs.open.pacemaker_authkey",
                 before=self.pacemaker_key_open_before_position,
+            )
+            .fs.open(
+                settings.pcsd_dr_config_location,
+                mode="rb",
+                side_effect=EnvironmentError(
+                    1, self.err_msg, settings.pcsd_dr_config_location
+                ),
+                name="fs.open.pcsd_dr_config",
+                before=self.pcsd_dr_config_open_before_position,
             )
             .local.distribute_and_reload_corosync_conf(
                 corosync_conf_fixture(
@@ -2301,7 +2368,16 @@ class FailureFilesDistribution(TestCase):
                         f"{self.err_msg}: '{settings.pacemaker_authkey_file}'"
                     ),
                     operation=RawFileError.ACTION_READ,
-                )
+                ),
+                fixture.warn(
+                    report_codes.FILE_IO_ERROR,
+                    file_type_code=file_type_codes.PCS_DR_CONFIG,
+                    file_path=settings.pcsd_dr_config_location,
+                    reason=(
+                        f"{self.err_msg}: '{settings.pcsd_dr_config_location}'"
+                    ),
+                    operation=RawFileError.ACTION_READ,
+                ),
             ]
         )
 
@@ -2325,9 +2401,19 @@ class FailureFilesDistribution(TestCase):
                 name="fs.open.pacemaker_authkey",
                 before=self.pacemaker_key_open_before_position,
             )
+            .fs.open(
+                settings.pcsd_dr_config_location,
+                return_value=mock.mock_open(
+                    read_data=self.pcsd_dr_config_content
+                )(),
+                mode="rb",
+                name="fs.open.pcsd_dr_config",
+                before=self.pcsd_dr_config_open_before_position,
+            )
             .http.files.put_files(
                 pcmk_authkey=self.pcmk_authkey_content,
                 corosync_authkey=self.corosync_authkey_content,
+                pcs_disaster_recovery_conf=self.pcsd_dr_config_content,
                 communication_list=[
                     dict(
                         label=node,
@@ -2339,7 +2425,11 @@ class FailureFilesDistribution(TestCase):
                             self.pcmk_authkey_file_id: dict(
                                 code="unexpected",
                                 message=self.err_msg
-                            )
+                            ),
+                            self.pcsd_dr_config_file_id: dict(
+                                code="unexpected",
+                                message=self.err_msg
+                            ),
                         }))
                     ) for node in self.unsuccessful_nodes
                 ] + [
@@ -2374,6 +2464,15 @@ class FailureFilesDistribution(TestCase):
                     reason=self.err_msg,
                 ) for node in self.unsuccessful_nodes
             ]
+            +
+            [
+                fixture.error(
+                    report_codes.FILE_DISTRIBUTION_ERROR,
+                    node=node,
+                    file_description=self.pcsd_dr_config_file_id,
+                    reason=self.err_msg,
+                ) for node in self.unsuccessful_nodes
+            ]
         )
 
     def test_communication_failure(self):
@@ -2396,9 +2495,19 @@ class FailureFilesDistribution(TestCase):
                 name="fs.open.pacemaker_authkey",
                 before=self.pacemaker_key_open_before_position,
             )
+            .fs.open(
+                settings.pcsd_dr_config_location,
+                return_value=mock.mock_open(
+                    read_data=self.pcsd_dr_config_content
+                )(),
+                mode="rb",
+                name="fs.open.pcsd_dr_config",
+                before=self.pcsd_dr_config_open_before_position,
+            )
             .http.files.put_files(
                 pcmk_authkey=self.pcmk_authkey_content,
                 corosync_authkey=self.corosync_authkey_content,
+                pcs_disaster_recovery_conf=self.pcsd_dr_config_content,
                 communication_list=[
                     dict(
                         label=node,
@@ -2450,9 +2559,19 @@ class FailureFilesDistribution(TestCase):
                 name="fs.open.pacemaker_authkey",
                 before=self.pacemaker_key_open_before_position,
             )
+            .fs.open(
+                settings.pcsd_dr_config_location,
+                return_value=mock.mock_open(
+                    read_data=self.pcsd_dr_config_content
+                )(),
+                mode="rb",
+                name="fs.open.pcsd_dr_config",
+                before=self.pcsd_dr_config_open_before_position,
+            )
             .http.files.put_files(
                 pcmk_authkey=self.pcmk_authkey_content,
                 corosync_authkey=self.corosync_authkey_content,
+                pcs_disaster_recovery_conf=self.pcsd_dr_config_content,
                 communication_list=[
                     dict(
                         label=node,
@@ -2501,9 +2620,19 @@ class FailureFilesDistribution(TestCase):
                 name="fs.open.pacemaker_authkey",
                 before=self.pacemaker_key_open_before_position,
             )
+            .fs.open(
+                settings.pcsd_dr_config_location,
+                return_value=mock.mock_open(
+                    read_data=self.pcsd_dr_config_content
+                )(),
+                mode="rb",
+                name="fs.open.pcsd_dr_config",
+                before=self.pcsd_dr_config_open_before_position,
+            )
             .http.files.put_files(
                 pcmk_authkey=self.pcmk_authkey_content,
                 corosync_authkey=self.corosync_authkey_content,
+                pcs_disaster_recovery_conf=self.pcsd_dr_config_content,
                 communication_list=[
                     dict(
                         label=node,

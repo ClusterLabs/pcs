@@ -1696,6 +1696,18 @@
 
 
 
+    <capability id="pcs.disaster-recovery.essentials" in-pcs="1" in-pcsd="0">
+      <description>
+        Configure disaster-recovery with the local cluster as the primary site
+        and one recovery site. Display local disaster-recovery config. Display
+        status of all sites. Remove disaster-recovery config.
+
+        pcs commands: dr config, dr destroy, dr set-recovery-site, dr status
+      </description>
+    </capability>
+
+
+
     <capability id="resource-agents.describe" in-pcs="1" in-pcsd="1">
       <description>
         Describe a resource agent - present its metadata.

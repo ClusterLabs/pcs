@@ -7,6 +7,7 @@ from pcs_test.tools.command_env.config_http_files import FilesShortcuts
 from pcs_test.tools.command_env.config_http_host import HostShortcuts
 from pcs_test.tools.command_env.config_http_pcmk import PcmkShortcuts
 from pcs_test.tools.command_env.config_http_sbd import SbdShortcuts
+from pcs_test.tools.command_env.config_http_status import StatusShortcuts
 from pcs_test.tools.command_env.mock_node_communicator import(
     place_communication,
     place_requests,
@@ -34,6 +35,7 @@ def _mutual_exclusive(param_names, **kwargs):
 
 
 class HttpConfig:
+    # pylint: disable=too-many-instance-attributes
     def __init__(self, call_collection, wrap_helper):
         self.__calls = call_collection
 
@@ -43,6 +45,7 @@ class HttpConfig:
         self.host = wrap_helper(HostShortcuts(self.__calls))
         self.pcmk = wrap_helper(PcmkShortcuts(self.__calls))
         self.sbd = wrap_helper(SbdShortcuts(self.__calls))
+        self.status = wrap_helper(StatusShortcuts(self.__calls))
 
     def add_communication(self, name, communication_list, **kwargs):
         """

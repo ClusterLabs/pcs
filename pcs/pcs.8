@@ -75,6 +75,9 @@ alert
 .TP
 client
  Manage pcsd client configuration.
+.TP
+dr
+ Manage disaster recovery configuration.
 .SS "resource"
 .TP
 [status [\fB\-\-hide\-inactive\fR]]
@@ -887,7 +890,7 @@ stop
 Stop booth arbitrator service.
 .SS "status"
 .TP
-[status] [\fB\-\-full\fR | \fB\-\-hide\-inactive\fR]
+[status] [\fB\-\-full\fR] [\fB\-\-hide\-inactive\fR]
 View all information about the cluster and resources (\fB\-\-full\fR provides more details, \fB\-\-hide\-inactive\fR hides inactive resources).
 .TP
 resources [\fB\-\-hide\-inactive\fR]
@@ -1015,6 +1018,19 @@ Remove specified recipients.
 .TP
 local-auth [<pcsd\-port>] [\-u <username>] [\-p <password>]
 Authenticate current user to local pcsd. This is required to run some pcs commands which may require permissions of root user such as 'pcs cluster start'.
+.SS "dr"
+.TP
+config
+Display disaster-recovery configuration from the local node.
+.TP
+status [\fB\-\-full\fR] [\fB\-\-hide\-inactive\fR]
+Display status of the local and the remote site cluster (\fB\-\-full\fR provides more details, \fB\-\-hide\-inactive\fR hides inactive resources).
+.TP
+set\-recovery\-site <recovery site node>
+Set up disaster\-recovery with the local cluster being the primary site. The recovery site is defined by a name of one of its nodes.
+.TP
+destroy
+Permanently destroy disaster-recovery configuration on all sites.
 .SH EXAMPLES
 .TP
 Show all resources

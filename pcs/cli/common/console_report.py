@@ -2,6 +2,7 @@
 from collections import defaultdict
 from collections.abc import Iterable
 from functools import partial
+from typing import Mapping
 import sys
 
 from pcs.common import (
@@ -46,6 +47,7 @@ _file_role_translation = {
     file_type_codes.BOOTH_CONFIG: "Booth configuration",
     file_type_codes.BOOTH_KEY: "Booth key",
     file_type_codes.COROSYNC_AUTHKEY: "Corosync authkey",
+    file_type_codes.PCS_DR_CONFIG: "disaster-recovery configuration",
     file_type_codes.PACEMAKER_AUTHKEY: "Pacemaker authkey",
     file_type_codes.PCSD_ENVIRONMENT_CONFIG: "pcsd configuration",
     file_type_codes.PCSD_SSL_CERT: "pcsd SSL certificate",
@@ -53,7 +55,7 @@ _file_role_translation = {
     file_type_codes.PCS_KNOWN_HOSTS: "known-hosts",
     file_type_codes.PCS_SETTINGS_CONF: "pcs configuration",
 }
-_file_role_to_option_translation = {
+_file_role_to_option_translation: Mapping[str, str] = {
     file_type_codes.BOOTH_CONFIG: "--booth-conf",
     file_type_codes.BOOTH_KEY: "--booth-key",
     file_type_codes.CIB: "-f",
@@ -2284,4 +2286,16 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
             "resources\n\n{crm_simulate_plaintext_output}"
         ).format(**info)
     ,
+
+    codes.DR_CONFIG_ALREADY_EXIST: lambda info: (
+        "Disaster-recovery already configured"
+    ).format(**info),
+
+    codes.DR_CONFIG_DOES_NOT_EXIST: lambda info: (
+        "Disaster-recovery is not configured"
+    ).format(**info),
+
+    codes.NODE_IN_LOCAL_CLUSTER: lambda info: (
+        "Node '{node}' is part of local cluster"
+    ).format(**info),
 }

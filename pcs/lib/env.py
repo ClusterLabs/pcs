@@ -3,11 +3,13 @@ from typing import (
 )
 from xml.etree.ElementTree import Element
 
+from pcs.common import file_type_codes
 from pcs.common.node_communicator import Communicator, NodeCommunicatorFactory
 from pcs.common.tools import Version
 from pcs.lib import reports
 from pcs.lib.booth.env import BoothEnv
 from pcs.lib.cib.tools import get_cib_crm_feature_set
+from pcs.lib.dr.env import DrEnv
 from pcs.lib.node import get_existing_nodes_names
 from pcs.lib.communication import qdevice
 from pcs.lib.communication.corosync import (
@@ -89,6 +91,7 @@ class LibraryEnvironment:
             self._request_timeout
         )
         self.__loaded_booth_env = None
+        self.__loaded_dr_env = None
 
         self.__timeout_cache = {}
 
@@ -107,6 +110,15 @@ class LibraryEnvironment:
     @property
     def user_groups(self):
         return self._user_groups
+
+    @property
+    def ghost_file_codes(self):
+        codes = set()
+        if not self.is_cib_live:
+            codes.add(file_type_codes.CIB)
+        if not self.is_corosync_conf_live:
+            codes.add(file_type_codes.COROSYNC_CONF)
+        return codes
 
     def get_cib(self, minimal_version: Optional[Version] = None) -> Element:
         if self.__loaded_cib_diff_source is not None:
@@ -412,3 +424,8 @@ class LibraryEnvironment:
         if self.__loaded_booth_env is None:
             self.__loaded_booth_env = BoothEnv(name, self._booth_files_data)
         return self.__loaded_booth_env
+
+    def get_dr_env(self) -> DrEnv:
+        if self.__loaded_dr_env is None:
+            self.__loaded_dr_env = DrEnv()
+        return self.__loaded_dr_env

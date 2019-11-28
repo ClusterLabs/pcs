@@ -9,6 +9,7 @@ KEY_FILE = PCSD_VAR_LOCATION + 'pcsd.key'
 KNOWN_HOSTS_FILE_NAME = 'known-hosts'
 PCSD_SETTINGS_CONF_LOCATION = PCSD_VAR_LOCATION + "pcs_settings.conf"
 PCSD_USERS_CONF_LOCATION = PCSD_VAR_LOCATION + "pcs_users.conf"
+PCSD_DR_CONFIG_LOCATION = PCSD_VAR_LOCATION + "disaster-recovery"
 
 CRM_MON = "/usr/sbin/crm_mon"
 CRM_NODE = "/usr/sbin/crm_node"

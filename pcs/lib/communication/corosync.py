@@ -138,3 +138,31 @@ class ReloadCorosyncConf(
     def on_complete(self):
         if not self.__was_successful and self.__has_failures:
             self._report(reports.unable_to_perform_operation_on_any_node())
+
+
+class GetCorosyncConf(
+    AllSameDataMixin, OneByOneStrategyMixin, RunRemotelyBase
+):
+    __was_successful = False
+    __has_failures = False
+    __corosync_conf = None
+
+    def _get_request_data(self):
+        return RequestData("remote/get_corosync_conf")
+
+    def _process_response(self, response):
+        report = response_to_report_item(
+            response, severity=ReportItemSeverity.WARNING
+        )
+        if report is not None:
+            self.__has_failures = True
+            self._report(report)
+            return self._get_next_list()
+        self.__corosync_conf = response.data
+        self.__was_successful = True
+        return []
+
+    def on_complete(self):
+        if not self.__was_successful and self.__has_failures:
+            self._report(reports.unable_to_perform_operation_on_any_node())
+        return self.__corosync_conf

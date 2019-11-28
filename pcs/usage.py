@@ -22,6 +22,7 @@ def full_usage():
     out += strip_extras(host([], False))
     out += strip_extras(alert([], False))
     out += strip_extras(client([], False))
+    out += strip_extras(dr([], False))
     print(out.strip())
     print("Examples:\n" + examples.replace(r" \ ", ""))
 
@@ -124,6 +125,7 @@ def generate_completion_tree_from_usage():
     tree["alert"] = generate_tree(alert([], False))
     tree["booth"] = generate_tree(booth([], False))
     tree["client"] = generate_tree(client([], False))
+    tree["dr"] = generate_tree(dr([], False))
     return tree
 
 def generate_tree(usage_txt):
@@ -194,6 +196,7 @@ Commands:
     node        Manage cluster nodes.
     alert       Manage pacemaker alerts.
     client      Manage pcsd client configuration.
+    dr          Manage disaster recovery configuration.
 """
 # Advanced usage to possibly add later
 #  --corosync_conf=<corosync file> Specify alternative corosync.conf file
@@ -1517,7 +1520,7 @@ def status(args=(), pout=True):
 Usage: pcs status [commands]...
 View current cluster and resource status
 Commands:
-    [status] [--full | --hide-inactive]
+    [status] [--full] [--hide-inactive]
         View all information about the cluster and resources (--full provides
         more details, --hide-inactive hides inactive resources).
 
@@ -2019,6 +2022,32 @@ Commands:
     return output
 
 
+def dr(args=(), pout=True):
+    output = """
+Usage: pcs dr <command>
+Manage disaster recovery configuration.
+
+Commands:
+    config
+        Display disaster-recovery configuration from the local node.
+
+    status [--full] [--hide-inactive]
+        Display status of the local and the remote site cluster (--full
+        provides more details, --hide-inactive hides inactive resources).
+
+    set-recovery-site <recovery site node>
+        Set up disaster-recovery with the local cluster being the primary site.
+        The recovery site is defined by a name of one of its nodes.
+
+    destroy
+        Permanently destroy disaster-recovery configuration on all sites.
+"""
+    if pout:
+        print(sub_usage(args, output))
+        return None
+    return output
+
+
 def show(main_usage_name, rest_usage_names):
     usage_map = {
         "acl": acl,
@@ -2028,6 +2057,7 @@ def show(main_usage_name, rest_usage_names):
         "cluster": cluster,
         "config": config,
         "constraint": constraint,
+        "dr": dr,
         "host": host,
         "node": node,
         "pcsd": pcsd,

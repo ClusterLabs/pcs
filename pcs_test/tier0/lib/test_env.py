@@ -9,7 +9,7 @@ from pcs_test.tools.misc import (
     get_test_resource as rc,
 )
 
-from pcs.common import report_codes
+from pcs.common import file_type_codes, report_codes
 from pcs.lib.env import LibraryEnvironment
 from pcs.lib.errors import ReportItemSeverity as severity
 
@@ -56,6 +56,46 @@ class LibraryEnvironmentTest(TestCase):
     def test_usergroups_not_set(self):
         env = LibraryEnvironment(self.mock_logger, self.mock_reporter)
         self.assertEqual([], env.user_groups)
+
+class GhostFileCodes(TestCase):
+    def setUp(self):
+        self.mock_logger = mock.MagicMock(logging.Logger)
+        self.mock_reporter = MockLibraryReportProcessor()
+
+    def _fixture_get_env(self, cib_data=None, corosync_conf_data=None):
+        return LibraryEnvironment(
+            self.mock_logger,
+            self.mock_reporter,
+            cib_data=cib_data,
+            corosync_conf_data=corosync_conf_data
+        )
+
+    def test_nothing(self):
+        self.assertEqual(
+            self._fixture_get_env().ghost_file_codes,
+            set()
+        )
+
+    def test_corosync(self):
+        self.assertEqual(
+            self._fixture_get_env(corosync_conf_data="x").ghost_file_codes,
+            set([file_type_codes.COROSYNC_CONF])
+        )
+
+    def test_cib(self):
+        self.assertEqual(
+            self._fixture_get_env(cib_data="x").ghost_file_codes,
+            set([file_type_codes.CIB])
+        )
+
+    def test_all(self):
+        self.assertEqual(
+            self._fixture_get_env(
+                cib_data="x",
+                corosync_conf_data="x",
+            ).ghost_file_codes,
+            set([file_type_codes.COROSYNC_CONF, file_type_codes.CIB])
+        )
 
 @patch_env("CommandRunner")
 class CmdRunner(TestCase):

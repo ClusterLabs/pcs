@@ -41,8 +41,15 @@ module PcsdRemoveFile
     end
   end
 
+  class RemovePcsDrConf < RemoveFile
+    def full_file_name
+      @full_file_name ||= PCSD_DR_CONFIG_LOCATION
+    end
+  end
+
   TYPES = {
     "pcmk_remote_authkey" => RemovePcmkRemoteAuthkey,
     "pcsd_settings" => RemovePcsdSettings,
+    "pcs_disaster_recovery_conf" => RemovePcsDrConf,
   }
 end

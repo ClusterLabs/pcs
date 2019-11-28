@@ -9,9 +9,14 @@ class CorosyncConf:
         self.__calls = call_collection
 
     def load_content(
-        self, content, name="corosync_conf.load_content", instead=None
+        self, content, name="corosync_conf.load_content", instead=None,
+        exception_msg=None
     ):
-        self.__calls.place(name, Call(content), instead=instead)
+        self.__calls.place(
+            name,
+            Call(content, exception_msg=exception_msg),
+            instead=instead
+        )
 
     def load(
         self, node_name_list=None, name="corosync_conf.load",

@@ -51,18 +51,27 @@ class FileInstance():
         """
         Factory for known-hosts file
         """
-        file_type_code = file_type_codes.PCS_KNOWN_HOSTS
-        return cls(
-            raw_file.RealFile(metadata.for_file_type(file_type_code)),
-            toolbox.for_file_type(file_type_code)
-        )
+        return cls._for_common(file_type_codes.PCS_KNOWN_HOSTS)
 
     @classmethod
     def for_pacemaker_key(cls):
         """
         Factory for pacemaker key file
         """
-        file_type_code = file_type_codes.PACEMAKER_AUTHKEY
+        return cls._for_common(file_type_codes.PACEMAKER_AUTHKEY)
+
+    @classmethod
+    def for_dr_config(cls) -> "FileInstance":
+        """
+        Factory for disaster-recovery config file
+        """
+        return cls._for_common(file_type_codes.PCS_DR_CONFIG)
+
+    @classmethod
+    def _for_common(
+        cls,
+        file_type_code: file_type_codes.FileTypeCode,
+    ) -> "FileInstance":
         return cls(
             raw_file.RealFile(metadata.for_file_type(file_type_code)),
             toolbox.for_file_type(file_type_code)
