@@ -178,13 +178,12 @@ def status_all_sites_plaintext(
     # This command only reads from nodes so it automatically asks other nodes
     # if one is offline / misbehaving.
     class SiteData():
-        local: bool
-        role: DrRole
-        target_list: Iterable[RequestTarget]
-        status_loaded: bool
-        status_plaintext: str
-
-        def __init__(self, local, role, target_list):
+        def __init__(
+            self,
+            local: bool,
+            role: DrRole,
+            target_list: Iterable[RequestTarget],
+        ) -> None:
             self.local = local
             self.role = role
             self.target_list = target_list
