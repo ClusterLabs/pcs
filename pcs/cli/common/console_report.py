@@ -1412,7 +1412,6 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
     ,
 
     codes.NODE_REMOVE_IN_PACEMAKER_FAILED: lambda info:
-        # TODO: Tests
         (
             "{_node}Unable to remove node(s) {_node_list} from pacemaker"
             "{_reason_part}"
