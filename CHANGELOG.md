@@ -8,6 +8,7 @@
 
 ### Fixed
 - Error messages in cases when cluster is not set up ([rhbz#1743731])
+- Improved documentation of configuring links in the 'pcs cluster setup' command
 
 [rhbz#1676431]: https://bugzilla.redhat.com/show_bug.cgi?id=1676431
 [rhbz#1743731]: https://bugzilla.redhat.com/show_bug.cgi?id=1743731

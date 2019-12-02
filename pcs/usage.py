@@ -659,7 +659,7 @@ Configure cluster for use with pacemaker
 Commands:
     setup <cluster name> (<node name> [addr=<node address>]...)...
             [transport knet|udp|udpu
-                [<transport options>] [link <link options>]
+                [<transport options>] [link <link options>]...
                 [compression <compression options>] [crypto <crypto options>]
             ] [totem <totem options>] [quorum <quorum options>]
             [--enable] [--start [--wait[=<n>]]] [--no-keys-sync]
@@ -680,7 +680,10 @@ Commands:
         Link options are:
             link_priority, linknumber, mcastport, ping_interval,
             ping_precision, ping_timeout, pong_count, transport (udp or sctp)
-            You can set link options for a subset of links using a linknumber.
+            Each 'link' followed by options sets options for one link in the
+            order the links are defined by nodes' addresses. You can set link
+            options for a subset of links using a linknumber. See examples
+            below.
         Compression options are:
             level, model, threshold
         Crypto options are:
@@ -724,15 +727,30 @@ Commands:
         Create a cluster with default settings:
             pcs cluster setup newcluster node1 node2
         Create a cluster using two links:
-            pcs cluster setup newcluster node1 addr=10.0.1.11 addr=10.0.2.11 \\
+            pcs cluster setup newcluster \\
+                node1 addr=10.0.1.11 addr=10.0.2.11 \\
                 node2 addr=10.0.1.12 addr=10.0.2.12
-        Set link options for the second link only (first link is link 0):
-            pcs cluster setup newcluster node1 addr=10.0.1.11 addr=10.0.2.11 \\
-                node2 addr=10.0.1.12 addr=10.0.2.12 transport knet \\
+        Set link options for all links. Link options are matched to the links
+            in order. The first link (link 0) has sctp transport, the second
+            link (link 1) has mcastport 55405:
+            pcs cluster setup newcluster \\
+                node1 addr=10.0.1.11 addr=10.0.2.11 \\
+                node2 addr=10.0.1.12 addr=10.0.2.12 \\
+                transport knet link transport=sctp link mcastport=55405
+        Set link options for the second and fourth links only. Link options are
+            matched to the links based on the linknumber option (the first link
+            is link 0):
+            pcs cluster setup newcluster \\
+                node1 \\
+                addr=10.0.1.11 addr=10.0.2.11 addr=10.0.3.11 addr=10.0.4.11 \\
+                node2 \\
+                addr=10.0.1.12 addr=10.0.2.12 addr=10.0.3.12 addr=10.0.4.12 \\
+                transport knet \\
+                link linknumber=3 mcastport=55405 \\
                 link linknumber=1 transport=sctp
         Create a cluster using udp transport with a non-default port:
-            pcs cluster setup newcluster node1 node2 transport udp link \\
-                mcastport=55405
+            pcs cluster setup newcluster node1 node2 \\
+                transport udp link mcastport=55405
 
     start [--all | <node>... ] [--wait[=<n>]] [--request-timeout=<seconds>]
         Start a cluster on specified node(s). If no nodes are specified then

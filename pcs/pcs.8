@@ -260,7 +260,7 @@ relations <resource id> [\fB\-\-full\fR]
 Display relations of a resource specified by its id with other resources in a tree structure. Supported types of resource relations are: ordering constraints, ordering set constraints, relations defined by resource hierarchy (clones, groups, bundles). If \fB\-\-full\fR is used, more verbose output will be printed.
 .SS "cluster"
 .TP
-setup <cluster name> (<node name> [addr=<node address>]...)... [transport knet|udp|udpu [<transport options>] [link <link options>] [compression <compression options>] [crypto <crypto options>]] [totem <totem options>] [quorum <quorum options>] [\fB\-\-enable\fR] [\fB\-\-start\fR [\fB\-\-wait\fR[=<n>]]] [\fB\-\-no\-keys\-sync\fR]
+setup <cluster name> (<node name> [addr=<node address>]...)... [transport knet|udp|udpu [<transport options>] [link <link options>]... [compression <compression options>] [crypto <crypto options>]] [totem <totem options>] [quorum <quorum options>] [\fB\-\-enable\fR] [\fB\-\-start\fR [\fB\-\-wait\fR[=<n>]]] [\fB\-\-no\-keys\-sync\fR]
 Create a cluster from the listed nodes and synchronize cluster configuration files to them.
 .br
 Nodes are specified by their names and optionally their addresses. If no addresses are specified for a node, pcs will configure corosync to communicate with that node using an address provided in 'pcs host auth' command. Otherwise, pcs will configure corosync to communicate with the node using the specified addresses.
@@ -273,7 +273,7 @@ Transport options are: ip_version, knet_pmtud_interval, link_mode
 .br
 Link options are: link_priority, linknumber, mcastport, ping_interval, ping_precision, ping_timeout, pong_count, transport (udp or sctp)
 .br
-You can set link options for a subset of links using a linknumber.
+Each 'link' followed by options sets options for one link in the order the links are defined by nodes' addresses. You can set link options for a subset of links using a linknumber. See examples below.
 .br
 Compression options are: level, model, threshold
 .br
@@ -307,8 +307,11 @@ Create a cluster with default settings:
 Create a cluster using two links:
     pcs cluster setup newcluster node1 addr=10.0.1.11 addr=10.0.2.11 node2 addr=10.0.1.12 addr=10.0.2.12
 .br
-Set link options for the second link only (first link is link 0):
-    pcs cluster setup newcluster node1 addr=10.0.1.11 addr=10.0.2.11 node2 addr=10.0.1.12 addr=10.0.2.12 transport knet link linknumber=1 transport=sctp
+Set link options for all links. Link options are matched to the links in order. The first link (link 0) has sctp transport, the second link (link 1) has mcastport 55405:
+    pcs cluster setup newcluster node1 addr=10.0.1.11 addr=10.0.2.11 node2 addr=10.0.1.12 addr=10.0.2.12 transport knet link transport=sctp link mcastport=55405
+.br
+Set link options for the second and fourth links only. Link options are matched to the links based on the linknumber option (the first link is link 0):
+    pcs cluster setup newcluster node1 addr=10.0.1.11 addr=10.0.2.11 addr=10.0.3.11 addr=10.0.4.11 node2 addr=10.0.1.12 addr=10.0.2.12 addr=10.0.3.12 addr=10.0.4.12 transport knet link linknumber=3 mcastport=55405 link linknumber=1 transport=sctp
 .br
 Create a cluster using udp transport with a non-default port:
     pcs cluster setup newcluster node1 node2 transport udp link mcastport=55405
