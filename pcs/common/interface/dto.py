@@ -1,6 +1,6 @@
 from typing import (
+    Iterable,
     Mapping,
-    Sequence,
     Type,
     TypeVar,
     Union,
@@ -8,13 +8,15 @@ from typing import (
 from dataclasses import asdict, is_dataclass
 import dacite
 
+from pcs.common import types
+
 
 PrimitiveType = Union[str, int, float, bool, None]
 DtoPayload = Mapping[str, "SerializableType"] # type: ignore
 SerializableType = Union[ # type: ignore
     PrimitiveType,
     DtoPayload, # type: ignore
-    Sequence["SerializableType"], # type: ignore
+    Iterable["SerializableType"], # type: ignore
 ]
 
 T = TypeVar("T")
@@ -34,7 +36,18 @@ DtoType = TypeVar("DtoType", bound=DataTransferObject)
 
 
 def from_dict(cls: Type[DtoType], data: DtoPayload) -> DtoType:
-    return dacite.from_dict(cls, data)
+    return dacite.from_dict(
+        data_class=cls,
+        data=data,
+        # NOTE: all enum types has to be listed here in key cast
+        # see: https://github.com/konradhalas/dacite#casting
+        config=dacite.Config(
+            cast=[
+                types.DrRole,
+                types.ResourceRelationType,
+            ],
+        ),
+    )
 
 
 class ImplementsToDto:

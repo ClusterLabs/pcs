@@ -2,6 +2,7 @@ from unittest import TestCase
 
 from lxml import etree
 
+from pcs.common.interface import dto
 from pcs.common.pacemaker.resource.relations import (
     RelationEntityDto,
     ResourceRelationDto,
@@ -37,7 +38,7 @@ def fixture_dummy_metadata(_id):
 class ResourceRelationNode(TestCase):
     @staticmethod
     def entity_fixture(index):
-        return RelationEntityDto.from_dict(dict(
+        return dto.from_dict(RelationEntityDto, dict(
             id=f"ent_id{index}",
             type="ent_type",
             members=[f"{index}m1", f"{index}m2", f"{index}m0"],
@@ -48,12 +49,14 @@ class ResourceRelationNode(TestCase):
             )
         ))
 
+    def assert_dto_equal(self, expected, actual):
+        self.assertEqual(dto.to_dict(expected), dto.to_dict(actual))
+
     def test_no_members(self):
         ent = self.entity_fixture("0")
         obj = lib.ResourceRelationNode(ent)
-        self.assertEqual(
-            ResourceRelationDto(ent, [], False).to_dict(),
-            obj.to_dto().to_dict(),
+        self.assert_dto_equal(
+            ResourceRelationDto(ent, [], False), obj.to_dto()
         )
 
     def test_with_members(self):
@@ -66,7 +69,7 @@ class ResourceRelationNode(TestCase):
         member = lib.ResourceRelationNode(ent2)
         member.add_member(lib.ResourceRelationNode(ent3))
         obj.add_member(member)
-        self.assertEqual(
+        self.assert_dto_equal(
             ResourceRelationDto(
                 ent0,
                 [
@@ -80,17 +83,17 @@ class ResourceRelationNode(TestCase):
                     ),
                 ],
                 False,
-            ).to_dict(),
-            obj.to_dto().to_dict(),
+            ),
+            obj.to_dto(),
         )
 
     def test_stop(self):
         ent = self.entity_fixture("0")
         obj = lib.ResourceRelationNode(ent)
         obj.stop()
-        self.assertEqual(
-            ResourceRelationDto(ent, [], True).to_dict(),
-            obj.to_dto().to_dict(),
+        self.assert_dto_equal(
+            ResourceRelationDto(ent, [], True),
+            obj.to_dto(),
         )
 
     def test_add_member(self):
@@ -98,20 +101,20 @@ class ResourceRelationNode(TestCase):
         ent1 = self.entity_fixture("1")
         obj = lib.ResourceRelationNode(ent0)
         obj.add_member(lib.ResourceRelationNode(ent1))
-        self.assertEqual(
+        self.assert_dto_equal(
             ResourceRelationDto(
                 ent0, [ResourceRelationDto(ent1, [], False)], False,
-            ).to_dict(),
-            obj.to_dto().to_dict(),
+            ),
+            obj.to_dto(),
         )
 
     def test_add_member_itself(self):
         ent = self.entity_fixture("0")
         obj = lib.ResourceRelationNode(ent)
         obj.add_member(obj)
-        self.assertEqual(
-            ResourceRelationDto(ent, [], False).to_dict(),
-            obj.to_dto().to_dict(),
+        self.assert_dto_equal(
+            ResourceRelationDto(ent, [], False),
+            obj.to_dto(),
         )
 
     def test_add_member_already_have_parent(self):
@@ -129,11 +132,11 @@ class ResourceRelationNode(TestCase):
         obj1 = lib.ResourceRelationNode(ent1)
         obj0.add_member(obj1)
         obj1.add_member(obj0)
-        self.assertEqual(
+        self.assert_dto_equal(
             ResourceRelationDto(
                 ent0, [ResourceRelationDto(ent1, [], False)], False
-            ).to_dict(),
-            obj0.to_dto().to_dict(),
+            ),
+            obj0.to_dto(),
         )
 
     def test_add_member_already_in_different_branch(self):
@@ -142,15 +145,15 @@ class ResourceRelationNode(TestCase):
         obj0 = lib.ResourceRelationNode(ent0)
         obj0.add_member(lib.ResourceRelationNode(ent1))
         obj0.add_member(lib.ResourceRelationNode(ent1))
-        self.assertEqual(
+        self.assert_dto_equal(
             ResourceRelationDto(
                 ent0, [
                     ResourceRelationDto(ent1, [], False),
                     ResourceRelationDto(ent1, [], False),
                 ],
                 False,
-            ).to_dict(),
-            obj0.to_dto().to_dict(),
+            ),
+            obj0.to_dto(),
         )
 
 
@@ -469,17 +472,17 @@ class ResourceRelationTreeBuilder(TestCase):
             ),
         }
         expected = dict(
-            relation_entity=resources["d2"].to_dict(),
+            relation_entity=dto.to_dict(resources["d2"]),
             is_leaf=False,
             members=[
                 dict(
-                    relation_entity=(
-                        relations["order-d1-d2-mandatory"].to_dict()
+                    relation_entity=dto.to_dict(
+                        relations["order-d1-d2-mandatory"]
                     ),
                     is_leaf=False,
                     members=[
                         dict(
-                            relation_entity=resources["d1"].to_dict(),
+                            relation_entity=dto.to_dict(resources["d1"]),
                             is_leaf=False,
                             members=[],
                         )
@@ -489,9 +492,9 @@ class ResourceRelationTreeBuilder(TestCase):
         )
         self.assertEqual(
             expected,
-            lib.ResourceRelationTreeBuilder(
+            dto.to_dict(lib.ResourceRelationTreeBuilder(
                 resources, relations
-            ).get_tree("d2").to_dto().to_dict()
+            ).get_tree("d2").to_dto())
         )
 
     def test_simple_order_set(self):
@@ -536,16 +539,18 @@ class ResourceRelationTreeBuilder(TestCase):
             ),
         }
         get_res = lambda _id: dict(
-            relation_entity=resources[_id].to_dict(),
+            relation_entity=dto.to_dict(resources[_id]),
             is_leaf=False,
             members=[],
         )
         expected = dict(
-            relation_entity=resources["d5"].to_dict(),
+            relation_entity=dto.to_dict(resources["d5"]),
             is_leaf=False,
             members=[
                 dict(
-                    relation_entity=relations["pcs_rsc_order_set_1"].to_dict(),
+                    relation_entity=dto.to_dict(
+                        relations["pcs_rsc_order_set_1"]
+                    ),
                     is_leaf=False,
                     members=[
                         get_res(_id) for _id in ("d1", "d2", "d3", "d4", "d6")
@@ -555,9 +560,9 @@ class ResourceRelationTreeBuilder(TestCase):
         )
         self.assertEqual(
             expected,
-            lib.ResourceRelationTreeBuilder(
+            dto.to_dict(lib.ResourceRelationTreeBuilder(
                 resources, relations
-            ).get_tree("d5").to_dto().to_dict()
+            ).get_tree("d5").to_dto())
         )
 
     def test_simple_in_group(self):
@@ -584,26 +589,26 @@ class ResourceRelationTreeBuilder(TestCase):
             ),
         }
         expected = dict(
-            relation_entity=resources["d1"].to_dict(),
+            relation_entity=dto.to_dict(resources["d1"]),
             is_leaf=False,
             members=[
                 dict(
-                    relation_entity=relations["outer:g1"].to_dict(),
+                    relation_entity=dto.to_dict(relations["outer:g1"]),
                     is_leaf=False,
                     members=[
                         dict(
-                            relation_entity=resources["g1"].to_dict(),
+                            relation_entity=dto.to_dict(resources["g1"]),
                             is_leaf=False,
                             members=[
                                 dict(
-                                    relation_entity=(
-                                        relations["inner:g1"].to_dict()
+                                    relation_entity=dto.to_dict(
+                                        relations["inner:g1"]
                                     ),
                                     is_leaf=False,
                                     members=[
                                         dict(
-                                            relation_entity=(
-                                                resources["d2"].to_dict()
+                                            relation_entity=dto.to_dict(
+                                                resources["d2"]
                                             ),
                                             is_leaf=False,
                                             members=[],
@@ -618,9 +623,9 @@ class ResourceRelationTreeBuilder(TestCase):
         )
         self.assertEqual(
             expected,
-            lib.ResourceRelationTreeBuilder(
+            dto.to_dict(lib.ResourceRelationTreeBuilder(
                 resources, relations
-            ).get_tree("d1").to_dto().to_dict()
+            ).get_tree("d1").to_dto())
         )
 
     def test_order_loop(self):
@@ -647,23 +652,23 @@ class ResourceRelationTreeBuilder(TestCase):
             "order-d2-d1-mandatory": order_fixture("d2", "d1"),
         }
         expected = dict(
-            relation_entity=resources["d1"].to_dict(),
+            relation_entity=dto.to_dict(resources["d1"]),
             is_leaf=False,
             members=[
                 dict(
-                    relation_entity=(
-                        relations["order-d1-d2-mandatory"].to_dict()
+                    relation_entity=dto.to_dict(
+                        relations["order-d1-d2-mandatory"]
                     ),
                     is_leaf=False,
                     members=[
                         dict(
-                            relation_entity=resources["d2"].to_dict(),
+                            relation_entity=dto.to_dict(resources["d2"]),
                             is_leaf=False,
                             members=[
                                 dict(
-                                    relation_entity=relations[
-                                        "order-d2-d1-mandatory"
-                                    ].to_dict(),
+                                    relation_entity=dto.to_dict(
+                                        relations["order-d2-d1-mandatory"]
+                                    ),
                                     is_leaf=True,
                                     members=[],
                                 ),
@@ -672,13 +677,13 @@ class ResourceRelationTreeBuilder(TestCase):
                     ],
                 ),
                 dict(
-                    relation_entity=(
-                        relations["order-d2-d1-mandatory"].to_dict()
+                    relation_entity=dto.to_dict(
+                        relations["order-d2-d1-mandatory"]
                     ),
                     is_leaf=False,
                     members=[
                         dict(
-                            relation_entity=resources["d2"].to_dict(),
+                            relation_entity=dto.to_dict(resources["d2"]),
                             is_leaf=True,
                             members=[],
                         ),
@@ -688,7 +693,7 @@ class ResourceRelationTreeBuilder(TestCase):
         )
         self.assertEqual(
             expected,
-            lib.ResourceRelationTreeBuilder(
+            dto.to_dict(lib.ResourceRelationTreeBuilder(
                 resources, relations
-            ).get_tree("d1").to_dto().to_dict()
+            ).get_tree("d1").to_dto())
         )

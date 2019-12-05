@@ -7,6 +7,7 @@ from typing import (
 
 from pcs.common import file_type_codes, report_codes
 from pcs.common.tools import Version
+from pcs.common.interface import dto
 from pcs.lib import reports
 from pcs.lib.cib import (
     resource,
@@ -1368,9 +1369,9 @@ def get_resource_relations_tree(
             cib
         ).get_relations(resource_id)
     )
-    return resource.relations.ResourceRelationTreeBuilder(
+    return dto.to_dict(resource.relations.ResourceRelationTreeBuilder(
         resources_dict, relations_dict
-    ).get_tree(resource_id).to_dto().to_dict()
+    ).get_tree(resource_id).to_dto())
 
 
 def _find_resources_or_raise(

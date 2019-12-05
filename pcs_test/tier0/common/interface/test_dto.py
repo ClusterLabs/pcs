@@ -26,7 +26,6 @@ def _all_subclasses(cls):
 
 class DatatransferObjectTest(TestCase):
     def test_has_all_subclasses_are_dataclasses(self):
-        print(pcs.__path__)
         _import_all(pcs.__path__)
         for cls in _all_subclasses(DataTransferObject):
             self.assertTrue(is_dataclass(cls), f"{cls} is not a dataclass")

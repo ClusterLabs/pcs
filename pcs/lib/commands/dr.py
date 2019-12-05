@@ -14,6 +14,7 @@ from pcs.common.dr import (
     DrConfigSiteDto,
     DrSiteStatusDto,
 )
+from pcs.common.interface import dto
 from pcs.common.file import RawFileError
 from pcs.common.node_communicator import RequestTarget
 from pcs.common.reports import SimpleReportProcessor
@@ -55,19 +56,21 @@ def get_config(env: LibraryEnvironment) -> Mapping[str, Any]:
     if report_processor.has_errors:
         raise LibraryError()
 
-    return DrConfigDto(
-        DrConfigSiteDto(
-            dr_config.local_role,
-            []
+    return dto.to_dict(DrConfigDto(
+        local_site=DrConfigSiteDto(
+            site_role=dr_config.local_role,
+            node_list=[],
         ),
-        [
+        remote_site_list=[
             DrConfigSiteDto(
-                site.role,
-                [DrConfigNodeDto(name) for name in site.node_name_list]
+                site_role=site.role,
+                node_list=[
+                    DrConfigNodeDto(name=name) for name in site.node_name_list
+                ]
             )
             for site in dr_config.get_remote_site_list()
         ]
-    ).to_dict()
+    ))
 
 
 def set_recovery_site(env: LibraryEnvironment, node_name: str) -> None:
@@ -243,12 +246,12 @@ def status_all_sites_plaintext(
         )
 
     return [
-        DrSiteStatusDto(
-            site_data.local,
-            site_data.role,
-            site_data.status_plaintext,
-            site_data.status_loaded,
-        ).to_dict()
+        dto.to_dict(DrSiteStatusDto(
+            local_site=site_data.local,
+            site_role=site_data.role,
+            status_plaintext=site_data.status_plaintext,
+            status_successfully_obtained=site_data.status_loaded,
+        ))
         for site_data in site_data_list
     ]
 

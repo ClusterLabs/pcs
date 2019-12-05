@@ -7,6 +7,7 @@ from typing import (
     Union,
 )
 
+from pcs.common.interface import dto
 from pcs.common.pacemaker.resource.relations import (
     RelationEntityDto,
     ResourceRelationDto,
@@ -35,8 +36,9 @@ def show_resource_relations_cmd(
     if len(argv) != 1:
         raise CmdLineInputError()
     tree = ResourcePrintableNode.from_dto(
-        ResourceRelationDto.from_dict(
-            lib.resource.get_resource_relations_tree(argv[0])
+        dto.from_dict(
+            ResourceRelationDto,
+            lib.resource.get_resource_relations_tree(argv[0]),
         )
     )
     for line in tree_to_lines(tree, verbose=modifiers.get("--full")):

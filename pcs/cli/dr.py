@@ -13,6 +13,7 @@ from pcs.common.dr import (
     DrConfigSiteDto,
     DrSiteStatusDto,
 )
+from pcs.common.interface import dto
 from pcs.common.tools import indent
 
 def config(
@@ -28,7 +29,7 @@ def config(
         raise CmdLineInputError()
     config_raw = lib.dr.get_config()
     try:
-        config_dto = DrConfigDto.from_dict(config_raw)
+        config_dto = dto.from_dict(DrConfigDto, config_raw)
     except (KeyError, TypeError, ValueError):
         raise error(
             "Unable to communicate with pcsd, received response:\n"
@@ -87,7 +88,7 @@ def status(
     )
     try:
         status_list = [
-            DrSiteStatusDto.from_dict(status_raw)
+            dto.from_dict(DrSiteStatusDto, status_raw)
             for status_raw in status_list_raw
         ]
     except (KeyError, TypeError, ValueError):

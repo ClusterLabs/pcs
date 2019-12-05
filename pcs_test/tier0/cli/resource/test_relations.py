@@ -2,6 +2,7 @@ from unittest import mock, TestCase
 
 from pcs_test.tools.misc import dict_to_modifiers
 
+from pcs.common.interface import dto
 from pcs.common.pacemaker.resource.relations import (
     RelationEntityDto,
     ResourceRelationDto,
@@ -18,7 +19,7 @@ class ShowResourceRelationsCmd(TestCase):
         self.lib = mock.Mock(spec_set=["resource"])
         self.lib.resource = mock.Mock(spec_set=["get_resource_relations_tree"])
         self.lib.resource.get_resource_relations_tree = self.lib_call
-        self.lib_call.return_value = ResourceRelationDto(
+        self.lib_call.return_value = dto.to_dict(ResourceRelationDto(
             RelationEntityDto(
                 "d1", "primitive", [], {
                     "class": "ocf",
@@ -68,7 +69,7 @@ class ShowResourceRelationsCmd(TestCase):
                 )
             ],
             False,
-        ).to_dict()
+        ))
 
     def test_no_args(self):
         with self.assertRaises(CmdLineInputError) as cm:
@@ -165,7 +166,7 @@ class ResourcePrintableNode(TestCase):
             "order_set", ResourceRelationType.ORDER_SET, [], {}
         )
 
-        dto = ResourceRelationDto(
+        dto_obj = ResourceRelationDto(
             D1_PRIMITIVE,
             [
                 _fixture_res_rel_dto(order_set_ent),
@@ -176,7 +177,7 @@ class ResourcePrintableNode(TestCase):
             ],
             False,
         )
-        obj = relations.ResourcePrintableNode.from_dto(dto)
+        obj = relations.ResourcePrintableNode.from_dto(dto_obj)
         self.assertEqual(D1_PRIMITIVE, obj.relation_entity)
         self.assertEqual(False, obj.is_leaf)
         expected_members = (
@@ -298,7 +299,7 @@ class RelationPrintableNode(TestCase):
         self.assertEqual(0, len(member.members))
 
     def test_from_dto(self):
-        dto = ResourceRelationDto(
+        dto_obj = ResourceRelationDto(
             self.order_entity,
             [
                 ResourceRelationDto(D2_PRIMITIVE, [], True),
@@ -306,7 +307,7 @@ class RelationPrintableNode(TestCase):
             ],
             False
         )
-        obj = relations.RelationPrintableNode.from_dto(dto)
+        obj = relations.RelationPrintableNode.from_dto(dto_obj)
         self.assertEqual(self.order_entity, obj.relation_entity)
         self.assertEqual(False, obj.is_leaf)
         self.assertEqual(2, len(obj.members))
