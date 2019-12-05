@@ -6,9 +6,6 @@ env:
   global:
     - SRC_PATH=/src/pcs
   matrix:
-    - DIST=fedora29
-      RUBY_BIN=/usr/bin/ruby
-      PYTHON_TEST_ARGS=""
     - DIST=fedora30
       RUBY_BIN=/usr/bin/ruby
       PYTHON_TEST_ARGS=""
