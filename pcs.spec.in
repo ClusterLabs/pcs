@@ -27,6 +27,8 @@ Summary: Pacemaker Configuration System
 
 %global pyagentx_version   0.4.pcs.2
 %global tornado_version    6.0.3
+%global dataclasses_version 0.6
+%global dacite_version 1.1.0
 %global version_rubygem_backports  3.11.4
 %global version_rubygem_ethon  0.11.0
 %global version_rubygem_ffi  1.9.25
@@ -38,6 +40,10 @@ Summary: Pacemaker Configuration System
 %global version_rubygem_rack_test  1.0.0
 %global version_rubygem_sinatra  2.0.4
 %global version_rubygem_tilt  2.0.9
+
+%if "%{python3_version}" == "3.6"
+%define dataclasses_required 1
+%endif
 
 # We do not use _libdir macro because upstream is not prepared for it.
 # Pcs does not include binaries and thus it should live in /usr/lib. Tornado
@@ -71,6 +77,10 @@ Source1: pcsd-bundle-config
 
 Source41: https://github.com/ondrejmular/pyagentx/archive/v%{pyagentx_version}/pyagentx-%{pyagentx_version}.tar.gz
 Source42: https://github.com/tornadoweb/tornado/archive/v%{tornado_version}/tornado-%{tornado_version}.tar.gz
+%if %{defined dataclasses_required}
+Source43: https://github.com/ericvsmith/dataclasses/archive/%{dataclasses_version}/dataclasses-%{dataclasses_version}.tar.gz
+%endif
+Source44: https://github.com/konradhalas/dacite/archive/v%{dacite_version}/dacite-%{dacite_version}.tar.gz
 
 Source81: https://rubygems.org/downloads/backports-%{version_rubygem_backports}.gem
 Source82: https://rubygems.org/downloads/ethon-%{version_rubygem_ethon}.gem
@@ -93,7 +103,7 @@ BuildRequires: execstack
 BuildRequires: tar
 
 # python for pcs
-%if 0%{?fedora} >= 29
+%if 0%{?fedora} >= 30
 BuildRequires: python3 >= 3.6
 BuildRequires: python3-setuptools
 %endif
@@ -125,7 +135,7 @@ BuildRequires: overpass-fonts
 BuildRequires: npm
 
 # python and libraries for pcs, setuptools for pcs entrypoint
-%if 0%{?fedora} >= 29
+%if 0%{?fedora} >= 30
 Requires: python3 >= 3.6
 Requires: python3-setuptools
 %endif
@@ -163,6 +173,10 @@ Recommends: liberation-sans-fonts
 Recommends: overpass-fonts
 
 Provides: bundled(tornado) = %{tornado_version}
+%if %{defined dataclasses_required}
+Provides: bundled(dataclasses) = %{dataclasses_version}
+%endif
+Provides: bundled(dacite) = %{dacite_version}
 Provides: bundled(backports) = %{version_rubygem_backports}
 Provides: bundled(ethon) = %{version_rubygem_ethon}
 Provides: bundled(ffi) = %{version_rubygem_ffi}
@@ -246,6 +260,20 @@ mv %{bundled_src_dir}/tornado-%{tornado_version} %{bundled_src_dir}/tornado
 cp %{bundled_src_dir}/tornado/LICENSE tornado_LICENSE
 cp %{bundled_src_dir}/tornado/README.rst tornado_README.rst
 
+%if %{defined dataclasses_required}
+# 6) sources for python dataclasses
+tar -xzf %SOURCE43 -C %{bundled_src_dir}
+mv %{bundled_src_dir}/dataclasses-%{dataclasses_version} %{bundled_src_dir}/dataclasses
+cp %{bundled_src_dir}/dataclasses/LICENSE.txt dataclasses_LICENSE.txt
+cp %{bundled_src_dir}/dataclasses/README.rst dataclasses_README.rst
+%endif
+
+# 7) sources for python dacite
+tar -xzf %SOURCE44 -C %{bundled_src_dir}
+mv %{bundled_src_dir}/dacite-%{dacite_version} %{bundled_src_dir}/dacite
+cp %{bundled_src_dir}/dacite/LICENSE dacite_LICENSE
+cp %{bundled_src_dir}/dacite/README.md dacite_README.md
+
 %build
 %define debug_package %{nil}
 
@@ -302,6 +330,10 @@ make install \
   BASH_COMPLETION_DIR=%{_datadir}/bash-completion/completions \
   BUNDLE_PYAGENTX_SRC_DIR=`readlink -f %{bundled_src_dir}/pyagentx` \
   BUNDLE_TORNADO_SRC_DIR=`readlink -f %{bundled_src_dir}/tornado` \
+  BUNDLE_DACITE_SRC_DIR=`readlink -f %{bundled_src_dir}/dacite` \
+%if %{defined dataclasses_required}
+  BUNDLE_DATACLASSES_SRC_DIR=`readlink -f %{bundled_src_dir}/dataclasses` \
+%endif
   BUILD_GEMS=false \
   SYSTEMCTL_OVERRIDE=true \
   hdrdir="%{_includedir}" \
@@ -346,7 +378,15 @@ rm -r -v ${pcsd_dir}/public/js/dev
 %doc CHANGELOG.md
 %doc README.md
 %doc tornado_README.rst
+%doc dacite_README.md
+%if %{defined dataclasses_required}
+%doc dataclasses_README.rst
+%endif
 %license tornado_LICENSE
+%license dacite_LICENSE
+%if %{defined dataclasses_required}
+%license dataclasses_LICENSE.txt
+%endif
 %license COPYING
 %{python3_sitelib}/pcs
 %{python3_sitelib}/pcs-*.egg-info
@@ -356,6 +396,10 @@ rm -r -v ${pcsd_dir}/public/js/dev
 %{pcs_libdir}/pcsd/*
 %{pcs_libdir}/pcsd/.bundle/config
 %{pcs_libdir}/pcs/bundled/packages/tornado*
+%{pcs_libdir}/pcs/bundled/packages/dacite*
+%if %{defined dataclasses_required}
+%{pcs_libdir}/pcs/bundled/packages/dataclasses*
+%endif
 %{_unitdir}/pcsd.service
 %{_datadir}/bash-completion/completions/pcs
 %{_sharedstatedir}/pcsd
