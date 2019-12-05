@@ -1314,26 +1314,18 @@ def corosync_link_does_not_exist_cannot_remove(
         }
     )
 
-def corosync_link_does_not_exist_cannot_update(
-    link_number, link_count=None, existing_link_list=None
-):
+def corosync_link_does_not_exist_cannot_update(link_number, existing_link_list):
     """
     Cannot set options for the defined link because the link does not exist
 
     integer link_number -- number of the link to be updated
-    integer link_count -- how many links exists
     iterable existing_link_list -- linknumbers of existing links
     """
-    assert link_count is None or existing_link_list is None
     return ReportItem.error(
         report_codes.COROSYNC_LINK_DOES_NOT_EXIST_CANNOT_UPDATE,
         info={
             "link_number": link_number,
-            "link_count": link_count,
-            "existing_link_list": (
-                sorted(existing_link_list) if existing_link_list
-                else existing_link_list
-            )
+            "existing_link_list": sorted(existing_link_list, key=_key_numeric),
         }
     )
 

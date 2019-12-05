@@ -582,7 +582,7 @@ def create_link_list_knet(link_list, max_allowed_link_count):
                         # update link options here, we do not create links.
                         reports.corosync_link_does_not_exist_cannot_update(
                             options["linknumber"],
-                            link_count=max_allowed_link_count
+                            [str(x) for x in range(max_allowed_link_count)]
                         )
                     )
         report_items += _add_link_options_knet(options)
@@ -893,7 +893,7 @@ def update_link(
         # misleading errors.
         return [
             reports.corosync_link_does_not_exist_cannot_update(
-                linknumber, existing_link_list=linknumbers_existing
+                linknumber, linknumbers_existing
             )
         ]
     # validate link options based on transport

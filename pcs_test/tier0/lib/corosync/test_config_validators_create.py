@@ -1403,7 +1403,7 @@ class CreateLinkListKnet(CreateLinkListCommonMixin, TestCase):
                 fixture.error(
                     report_codes.COROSYNC_LINK_DOES_NOT_EXIST_CANNOT_UPDATE,
                     link_number="3",
-                    link_count=2,
+                    existing_link_list=["0", "1"],
                 ),
             ]
         )
@@ -1419,7 +1419,7 @@ class CreateLinkListKnet(CreateLinkListCommonMixin, TestCase):
                 fixture.error(
                     report_codes.COROSYNC_LINK_DOES_NOT_EXIST_CANNOT_UPDATE,
                     link_number="2",
-                    link_count=2,
+                    existing_link_list=["0", "1"],
                 ),
             ]
         )

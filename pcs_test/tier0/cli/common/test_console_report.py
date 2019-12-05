@@ -2722,36 +2722,6 @@ class CorosyncLinkDoesNotExistCannotRemove(NameBuildTest):
         )
 
 class CorosyncLinkDoesNotExistCannotUpdate(NameBuildTest):
-    def test_no_optional_info(self):
-        self.assert_message_from_report(
-            "Cannot set options for non-existent link '3'",
-            reports.corosync_link_does_not_exist_cannot_update(3)
-        )
-
-    def test_link_count_several(self):
-        self.assert_message_from_report(
-            (
-                "Cannot set options for non-existent link '5'"
-                ", 3 links are defined starting with link 0"
-            ),
-            reports.corosync_link_does_not_exist_cannot_update(
-                5,
-                link_count=3
-            )
-        )
-
-    def test_link_count_one(self):
-        self.assert_message_from_report(
-            (
-                "Cannot set options for non-existent link '5'"
-                ", 1 link is defined starting with link 0"
-            ),
-            reports.corosync_link_does_not_exist_cannot_update(
-                5,
-                link_count=1
-            )
-        )
-
     def test_link_list_several(self):
         self.assert_message_from_report(
             (
@@ -2759,8 +2729,7 @@ class CorosyncLinkDoesNotExistCannotUpdate(NameBuildTest):
                 ", existing links: '0', '1', '2', '6', '7'"
             ),
             reports.corosync_link_does_not_exist_cannot_update(
-                3,
-                existing_link_list=[6, 7, 0, 1, 2]
+                3, ["6", "7", "0", "1", "2"]
             )
         )
 
@@ -2771,8 +2740,7 @@ class CorosyncLinkDoesNotExistCannotUpdate(NameBuildTest):
                 ", existing links: '0'"
             ),
             reports.corosync_link_does_not_exist_cannot_update(
-                3,
-                existing_link_list=[0]
+                3, ["0"]
             )
         )
 

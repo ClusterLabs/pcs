@@ -935,7 +935,6 @@ class UpdateLinkCommon(TestCase):
                 fixture.error(
                     report_codes.COROSYNC_LINK_DOES_NOT_EXIST_CANNOT_UPDATE,
                     link_number="1",
-                    link_count=None,
                     existing_link_list=["0"],
                 ),
             ]
