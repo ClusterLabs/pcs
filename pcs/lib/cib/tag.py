@@ -1,5 +1,5 @@
 from collections import Counter
-from typing import cast, Container, Iterable, Sequence
+from typing import cast, Container, Dict, Iterable, Sequence
 from xml.etree.ElementTree import Element
 
 from lxml import etree
@@ -7,9 +7,9 @@ from lxml.etree import _Element
 
 from pcs.common import reports
 from pcs.common.reports import ReportItem, ReportItemList
-from pcs.lib.cib.tools import IdProvider
+from pcs.lib.cib.resource.common import find_resources_and_report
+from pcs.lib.cib.tools import ElementSearcher, IdProvider
 from pcs.lib.pacemaker.values import validate_id
-from pcs.lib.xml_tools import get_root
 
 TAG_TAG = "tag"
 TAG_OBJREF = "obj_ref"
@@ -40,26 +40,6 @@ def _validate_tag_id_not_in_idref_list(
         return [ReportItem.error(reports.messages.TagCannotContainItself())]
     return []
 
-def _validate_reference_ids_exist(
-        idref_list: Iterable[str],
-        tags_section: Element,
-) -> ReportItemList:
-    """
-    Validate that all reference ids exist in cib.
-
-    cib_tags_section -- section of cib
-    idref_list -- reference ids which we want to tag
-    """
-    tree = get_root(tags_section)
-    report_list = []
-    for idref in idref_list:
-        element = tree.find(f'./configuration//*[@id="{idref}"]')
-        if element is None:
-            report_list.append(
-                ReportItem.error(reports.messages.IdNotFound(idref, []))
-            )
-    return report_list
-
 def _validate_duplicate_reference_ids(
     idref_list: Iterable[str],
 ) -> ReportItemList:
@@ -81,18 +61,36 @@ def _validate_duplicate_reference_ids(
         ]
     return []
 
+def _validate_reference_ids_are_resources(
+    resources_section: Element,
+    idref_list: Iterable[str],
+) -> ReportItemList:
+    """
+    Validate that ids are resources.
+
+    resources_section -- element resources
+    idref_list -- reference ids to validate
+    """
+    report_list: ReportItemList = []
+    find_resources_and_report(
+        resources_section,
+        idref_list,
+        report_list,
+    )
+    return report_list
+
 def validate_create_tag(
+        resources_section: Element,
         tag_id: str,
         idref_list: Sequence[str],
-        tags_section: Element,
         id_provider: IdProvider,
 ) -> ReportItemList:
     """
     Validation function for 'pcs tag create' command.
 
+    resources_section -- element resources
     tag_id -- identifier of new tag
     idref_list -- reference ids which we want to tag
-    tags_section -- element tags
 
     NOTE: Sequence vs. Collection issue:
             Value 'Collection' is unsubscriptable
@@ -103,10 +101,27 @@ def validate_create_tag(
         +
         _validate_tag_id_not_in_idref_list(tag_id, idref_list)
         +
-        _validate_reference_ids_exist(idref_list, tags_section)
+        _validate_reference_ids_are_resources(resources_section, idref_list)
         +
         _validate_duplicate_reference_ids(idref_list)
     )
+
+def validate_tag_ids_exist(
+    tags_section: Element,
+    tag_id_list: Iterable[str],
+) -> ReportItemList:
+    """
+    Validate that given tag ids exist in cib.
+
+    tags_section -- element tags
+    tag_id_list -- list of tag indentifiers
+    """
+    report_list: ReportItemList = []
+    for tag_id in tag_id_list:
+        searcher = ElementSearcher(TAG_TAG, tag_id, tags_section)
+        if not searcher.element_found():
+            report_list.extend(searcher.get_errors())
+    return report_list
 
 def create_tag(
     tags_section: Element,
@@ -125,3 +140,31 @@ def create_tag(
     for ref_id in idref_list:
         etree.SubElement(tag_el, TAG_OBJREF, id=ref_id)
     return cast(Element, tag_el)
+
+def get_list_of_tags(
+    tags_section: Element,
+    tag_filter: Sequence[str],
+) -> Iterable[Dict[str, Iterable[str]]]:
+    """
+    Returns list of tag structures optionally filtered.
+
+    tags_section -- element tags
+    tag_filter -- optional list of tags or empty list
+
+    [
+        {
+            "tag_id": "tag1",
+            "idref_list": ["i1", "i2"],
+        },
+        ...
+    ]
+    """
+    return [
+        {
+            # NOTE: .get("id", default="") for typing  there always be an id
+            "tag_id": tag.get("id", default=""),
+            "idref_list": [obj_ref.get("id", default="") for obj_ref in tag],
+        }
+        for tag in tags_section
+        if not tag_filter or tag.get("id", default="") in tag_filter
+    ]

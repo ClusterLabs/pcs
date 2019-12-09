@@ -1,36 +1,18 @@
 from unittest import TestCase
 
+from pcs_test.tier0.lib.commands.tag.tag_common import (
+    fixture_resources_for_ids,
+    fixture_tags_xml,
+)
 from pcs_test.tools import fixture
 from pcs_test.tools.command_env import get_env_tools
 
 from pcs.common import report_codes
 from pcs.lib.commands import tag as cmd_tag
 
-def fixture_resources_for_ids():
-    return """
-        <resources>
-            <primitive class="ocf" id="id1" provider="pacemaker" type="Dummy"/>
-            <primitive class="ocf" id="id2" provider="pacemaker" type="Dummy"/>
-        </resources>
-    """
-
-def fixture_tags_xml(tag_with_ids):
-    return (
-        '<tags>'
-        +
-        ''.join(
-            '<tag id="{tag_id}">'.format(tag_id=tag_id)
-            +
-            ''.join('<obj_ref id="{id}"/>'.format(id=id) for id in id_list)
-            +
-            '</tag>'
-            for tag_id, id_list in tag_with_ids
-        )
-        +
-        '</tags>'
-    )
 
 TAG1_ID1_ID2 = fixture_tags_xml([("tag1", ("id1", "id2"))])
+
 
 class TestTagCreate(TestCase):
     def setUp(self):
@@ -82,7 +64,7 @@ class TestTagCreate(TestCase):
             fixture.error(report_codes.EMPTY_ID, id=""),
             fixture.error(report_codes.TAG_CANNOT_CONTAIN_ITSELF),
             *[
-                fixture.report_not_found(_id, expected_types=[])
+                fixture.report_not_found(_id, context_type="resources")
                 for _id in ["", ""]
             ],
             fixture.error(

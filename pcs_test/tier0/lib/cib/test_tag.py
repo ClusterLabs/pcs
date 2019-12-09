@@ -15,6 +15,7 @@ from pcs.lib.xml_tools import (
 )
 from pcs.lib.cib import tag as lib
 from pcs.lib.cib.tools import (
+    get_resources,
     get_tags,
     IdProvider,
 )
@@ -23,6 +24,51 @@ from pcs.lib.cib.tools import (
 # pylint: disable=protected-access
 
 TagWithRefs = namedtuple("TagWithRefs", ["tag_id", "idref_list"])
+
+FIXTURE_TWO_TAGS = ("""
+    <cib>
+        <configuration>
+            <tags>
+                <tag id="first_tag">
+                    <obj_ref id="idref1"/>
+                    <obj_ref id="idref2"/>
+                </tag>
+                <tag id="second_tag">
+                    <obj_ref id="ref1"/>
+                    <obj_ref id="ref2"/>
+                    <obj_ref id="ref3"/>
+                </tag>
+            </tags>
+        </configuration>
+    </cib>
+""")
+
+def fixture_unexpected_element_reports(id_list, expected_types=None):
+    return [
+        fixture.report_unexpected_element(
+            _id,
+            ValidateCommonTestData.id_to_context_type_map[_id],
+            expected_types=[
+                'clone',
+                'master',
+                'group',
+                'primitive',
+                'bundle',
+            ] if expected_types is None else expected_types
+        )
+        for _id in id_list
+    ]
+
+
+def fixture_id_not_found_reports(id_list, expected_types=None):
+    return [
+        fixture.report_not_found(
+            _id,
+            context_type=ValidateCommonTestData.id_to_context_type_map[_id],
+            expected_types=expected_types,
+        )
+        for _id in id_list
+    ]
 
 
 class LibraryTagTest(TestCase):
@@ -63,56 +109,101 @@ class LibraryTagTest(TestCase):
     def test_create_tag_if_tags_exists(self):
         self.cib = etree.fromstring(self.fixture_one_tag)
         self.call_create_tag(self.tag_sets[1])
-        self.assert_cib_equal("""
-            <cib>
-                <configuration>
-                    <tags>
-                        <tag id="first_tag">
-                            <obj_ref id="idref1"/>
-                            <obj_ref id="idref2"/>
-                        </tag>
-                        <tag id="second_tag">
-                            <obj_ref id="ref1"/>
-                            <obj_ref id="ref2"/>
-                            <obj_ref id="ref3"/>
-                        </tag>
-                    </tags>
-                </configuration>
-            </cib>
-        """)
+        self.assert_cib_equal(FIXTURE_TWO_TAGS)
 
 
 class ValidateCommonTestData(TestCase):
-    findable_ids = ["id-01", "id-02"]
-    nonfindable_ids = ["no1", "no2"]
+    resource_ids = ["id-01", "id-02", "id-03"]
+    nonresource_ids = ["no1", "no2"]
+    nonexistent_ids = ["nonexisten1", "nonexisten2"]
+    nonexistent_tags = ["nonexistent_tag1", "nonexistent_tag2"]
+    id_to_context_type_map = {
+        "no1": "rsc_location",
+        "no2": "node_state",
+        "nonexisten1": "resources",
+        "nonexisten2": "resources",
+        "#invalid-tag-id": "resources",
+        "nonexistent_tag1": "tags",
+        "nonexistent_tag2": "tags",
+    }
     test_tree = etree.fromstring(
         """
         <cib>
           <configuration>
             <resources>
               <primitive id="{}"/>
+              <group id="G">
+                <primitive id="{}"/>
+              </group>
+              <clone id="C">
+                <primitive id="{}"/>
+              </clone>
             </resources>
             <constraints>
               <rsc_location id="{}"/>
             </constraints>
+            <tags>
+              <tag id="first_tag">
+                <obj_ref id="idref1"/>
+                <obj_ref id="idref2"/>
+              </tag>
+              <tag id="second_tag">
+                <obj_ref id="ref1"/>
+                <obj_ref id="ref2"/>
+                <obj_ref id="ref3"/>
+              </tag>
+            </tags>
           </configuration>
           <status>
             <node_state id="{}"/>
-            <node_state id="{}"/>
           </status>
         </cib>
-        """.format(*findable_ids, *nonfindable_ids)
+        """.format(*resource_ids, *nonresource_ids)
     )
     id_provider = IdProvider(get_tags(test_tree))
+
+
+class LibraryGetListOfTags(ValidateCommonTestData):
+    expected_dicts = [
+        {
+            "tag_id": "first_tag",
+            "idref_list": ["idref1", "idref2"],
+        },
+        {
+            "tag_id": "second_tag",
+            "idref_list": ["ref1", "ref2", "ref3"],
+        },
+    ]
+
+    def test_get_all_tags(self):
+        self.assertEqual(
+            lib.get_list_of_tags(get_tags(self.test_tree), []),
+            self.expected_dicts,
+        )
+
+    def test_get_specified_tag(self):
+        self.assertEqual(
+            lib.get_list_of_tags(get_tags(self.test_tree), ["second_tag"]),
+            self.expected_dicts[1:2],
+        )
+
+    def test_get_specified_tags(self):
+        self.assertEqual(
+            lib.get_list_of_tags(
+                get_tags(self.test_tree),
+                ["second_tag", "first_tag"],
+            ),
+            self.expected_dicts,
+        )
 
 
 class ValidateCreateTag(ValidateCommonTestData):
     def test_validation_success(self):
         assert_report_item_list_equal(
             lib.validate_create_tag(
+                get_resources(self.test_tree),
                 "new-tag",
-                self.findable_ids,
-                get_tags(self.test_tree),
+                self.resource_ids,
                 self.id_provider,
             ),
             [],
@@ -120,25 +211,23 @@ class ValidateCreateTag(ValidateCommonTestData):
 
     def test_validation_failure_all_kinds_reports(self):
         tag_id = "#invalid-tag-id"
-        idref_list = 2 * self.nonfindable_ids
+        idref_list = 2 * self.nonresource_ids
         idref_list.append(tag_id)
         assert_report_item_list_equal(
             lib.validate_create_tag(
+                get_resources(self.test_tree),
                 tag_id,
                 idref_list,
-                get_tags(self.test_tree),
                 self.id_provider,
             ),
             [
                 fixture.report_invalid_id(tag_id, '#'),
                 fixture.error(report_codes.TAG_CANNOT_CONTAIN_ITSELF),
-                *[
-                    fixture.report_not_found(_id, expected_types=[])
-                    for _id in idref_list
-                ],
+                *fixture_unexpected_element_reports(2 * self.nonresource_ids),
+                *fixture_id_not_found_reports([tag_id]),
                 fixture.error(
                     report_codes.TAG_IDS_DUPLICATION,
-                    duplicate_ids_list=self.nonfindable_ids,
+                    duplicate_ids_list=self.nonresource_ids,
                 ),
             ],
         )
@@ -252,48 +341,106 @@ class ValidateDuplicateReferenceIds(ValidateCommonTestData):
             )
 
 
-class ValidateReferenceIdsExist(ValidateCommonTestData):
+class ValidateReferenceAreResources(ValidateCommonTestData):
     def test_ids_exist(self):
         assert_report_item_list_equal(
-            lib._validate_reference_ids_exist(
-                self.findable_ids,
-                get_tags(self.test_tree)
+            lib._validate_reference_ids_are_resources(
+                get_resources(self.test_tree),
+                self.resource_ids,
             ),
             [],
         )
 
     def test_id_does_not_exist(self):
         assert_report_item_list_equal(
-            lib._validate_reference_ids_exist(
-                self.nonfindable_ids[0:1],
-                get_tags(self.test_tree)
+            lib._validate_reference_ids_are_resources(
+                get_resources(self.test_tree),
+                self.nonexistent_ids[0:1],
             ),
-            [fixture.report_not_found(
-                self.nonfindable_ids[0],
-                expected_types=[],
-            )],
+            fixture_id_not_found_reports(self.nonexistent_ids[0:1]),
         )
 
     def test_multiple_id_does_not_exist(self):
         assert_report_item_list_equal(
-            lib._validate_reference_ids_exist(
-                self.nonfindable_ids,
-                get_tags(self.test_tree)
+            lib._validate_reference_ids_are_resources(
+                get_resources(self.test_tree),
+                self.nonexistent_ids,
             ),
-            [
-                fixture.report_not_found(_id, expected_types=[])
-                for _id in self.nonfindable_ids
-            ],
+            fixture_id_not_found_reports(self.nonexistent_ids),
+        )
+
+    def test_id_is_not_a_resource(self):
+        assert_report_item_list_equal(
+            lib._validate_reference_ids_are_resources(
+                get_resources(self.test_tree),
+                self.nonresource_ids[0:1],
+            ),
+            fixture_unexpected_element_reports(self.nonresource_ids[0:1]),
+        )
+
+    def test_ids_are_not_resources(self):
+        assert_report_item_list_equal(
+            lib._validate_reference_ids_are_resources(
+                get_resources(self.test_tree),
+                self.nonresource_ids,
+            ),
+            fixture_unexpected_element_reports(self.nonresource_ids),
         )
 
     def test_mixed_ids(self):
         assert_report_item_list_equal(
-            lib._validate_reference_ids_exist(
-                self.findable_ids + self.nonfindable_ids,
-                get_tags(self.test_tree)
+            lib._validate_reference_ids_are_resources(
+                get_resources(self.test_tree),
+                self.resource_ids + self.nonresource_ids + self.nonexistent_ids,
             ),
-            [
-                fixture.report_not_found(_id, expected_types=[])
-                for _id in self.nonfindable_ids
-            ],
+            fixture_id_not_found_reports(self.nonexistent_ids)
+            +
+            fixture_unexpected_element_reports(self.nonresource_ids),
+        )
+
+
+class ValidateTagIdsExist(ValidateCommonTestData):
+    def test_ids_exist(self):
+        assert_report_item_list_equal(
+            lib.validate_tag_ids_exist(
+                get_tags(self.test_tree),
+                ["first_tag", "second_tag"],
+            ),
+            [],
+        )
+
+    def test_ids_does_not_exist(self):
+        assert_report_item_list_equal(
+            lib.validate_tag_ids_exist(
+                get_tags(self.test_tree),
+                self.nonexistent_tags,
+            ),
+            fixture_id_not_found_reports(
+                self.nonexistent_tags,
+                expected_types=["tag"],
+            ),
+        )
+
+    def test_mixed_ids(self):
+        assert_report_item_list_equal(
+            lib.validate_tag_ids_exist(
+                get_tags(self.test_tree),
+                ["first_tag"] + self.nonexistent_tags,
+            ),
+            fixture_id_not_found_reports(
+                self.nonexistent_tags,
+                expected_types=["tag"],
+            ),
+        )
+
+    def test_not_tag_ids(self):
+        assert_report_item_list_equal(
+            lib.validate_tag_ids_exist(
+                get_tags(self.test_tree),
+                self.nonresource_ids,
+            ),
+            fixture_unexpected_element_reports(
+                self.nonresource_ids,
+                expected_types=["tag"],
+            ),
         )

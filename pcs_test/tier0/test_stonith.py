@@ -301,6 +301,9 @@ class StonithTest(TestCase, AssertPcsMixin):
 
             Cluster Properties:
 
+            Tags:
+             No tags defined
+
             Quorum:
               Options:
             """
@@ -1291,6 +1294,9 @@ class LevelConfig(LevelTestsBase):
          No defaults set
 
         Cluster Properties:
+
+        Tags:
+         No tags defined
 
         Quorum:
           Options:
