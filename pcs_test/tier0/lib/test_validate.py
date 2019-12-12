@@ -5,7 +5,7 @@ from lxml import etree
 from pcs_test.tools import fixture
 from pcs_test.tools.assertions import assert_report_item_list_equal
 
-from pcs.common import report_codes
+from pcs.common.reports import codes as report_codes
 from pcs.lib import reports, validate
 from pcs.lib.cib.tools import IdProvider
 

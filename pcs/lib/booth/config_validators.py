@@ -1,7 +1,7 @@
 from collections import Counter
 import re
 
-from pcs.common import report_codes
+from pcs.common.reports import codes as report_codes
 from pcs.lib import validate
 from pcs.lib.booth import constants, reports
 

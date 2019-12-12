@@ -10,8 +10,8 @@ from pcs_test.tools.misc import (
     skip_unless_pacemaker_supports_bundle,
 )
 
-from pcs.common import report_codes
 from pcs.common.reports import ReportItemSeverity as severities
+from pcs.common.reports import codes as report_codes
 from pcs.lib import reports
 from pcs.lib.commands import resource
 from pcs.lib.errors import LibraryError

@@ -3,8 +3,8 @@ from unittest import TestCase
 from pcs_test.tools.assertions import assert_raise_library_error
 from pcs_test.tools.misc import create_setup_patch_mixin
 
-from pcs.common import report_codes
 from pcs.common.reports import ReportItemSeverity as severity
+from pcs.common.reports import codes as report_codes
 from pcs.lib import node_communication_format
 
 SetupPatchMixin = create_setup_patch_mixin(node_communication_format)

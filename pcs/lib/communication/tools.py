@@ -1,4 +1,4 @@
-from pcs.common import report_codes
+from pcs.common.reports import codes as report_codes
 from pcs.common.node_communicator import Request
 from pcs.common.reports import ReportItemSeverity
 from pcs.lib import reports

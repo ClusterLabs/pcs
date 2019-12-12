@@ -1,4 +1,4 @@
-from pcs.common import report_codes as codes
+from pcs.common.reports import codes
 from pcs.cli.common.console_report import (
     format_file_role,
     format_optional,

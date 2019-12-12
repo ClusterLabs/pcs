@@ -5,7 +5,7 @@ from pcs_test.tools import fixture
 from pcs_test.tools.assertions import assert_report_item_list_equal
 from pcs_test.tools.custom_mock import patch_getaddrinfo
 
-from pcs.common import report_codes
+from pcs.common.reports import codes as report_codes
 from pcs.lib.corosync import config_validators
 
 # pylint: disable=no-self-use

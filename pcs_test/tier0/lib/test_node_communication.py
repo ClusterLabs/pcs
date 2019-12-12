@@ -15,10 +15,7 @@ from pcs_test.tools.custom_mock import (
 from pcs_test.tools.misc import outdent
 
 from pcs import settings
-from pcs.common import (
-    pcs_pycurl as pycurl,
-    report_codes,
-)
+from pcs.common import pcs_pycurl as pycurl
 from pcs.common.host import (
     Destination,
     PcsKnownHost,
@@ -30,6 +27,7 @@ from pcs.common.node_communicator import (
     Response,
 )
 from pcs.common.reports import ReportItemSeverity as severity
+from pcs.common.reports import codes as report_codes
 import pcs.lib.node_communication as lib
 
 

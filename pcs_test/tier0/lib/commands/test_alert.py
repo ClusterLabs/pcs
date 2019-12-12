@@ -5,8 +5,8 @@ from unittest import mock, TestCase
 from pcs_test.tools.command_env import get_env_tools
 from pcs_test.tools.custom_mock import MockLibraryReportProcessor
 
-from pcs.common import report_codes
 from pcs.common.reports import ReportItemSeverity as Severities
+from pcs.common.reports import codes as report_codes
 from pcs.lib.env import LibraryEnvironment
 from pcs.lib.external import CommandRunner
 

@@ -1,7 +1,7 @@
 from unittest import mock, TestCase
 
 from pcs.cli.constraint_all import console_report
-from pcs.common import report_codes as codes
+from pcs.common.reports import codes
 
 class ConstraintTest(TestCase):
     @mock.patch("pcs.cli.constraint_all.console_report.constraint_plain")

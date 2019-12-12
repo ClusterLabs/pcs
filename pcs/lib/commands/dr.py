@@ -7,7 +7,7 @@ from typing import (
     Tuple,
 )
 
-from pcs.common import file_type_codes, report_codes
+from pcs.common import file_type_codes
 from pcs.common.dr import (
     DrConfigDto,
     DrConfigNodeDto,
@@ -18,6 +18,7 @@ from pcs.common.interface import dto
 from pcs.common.file import RawFileError
 from pcs.common.node_communicator import RequestTarget
 from pcs.common.reports import ReportItemList
+from pcs.common.reports import codes as report_codes
 
 from pcs.lib import node_communication_format, reports
 from pcs.lib.communication.corosync import GetCorosyncConf

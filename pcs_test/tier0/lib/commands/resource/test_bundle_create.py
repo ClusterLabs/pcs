@@ -13,8 +13,8 @@ from pcs_test.tier0.lib.commands.resource.bundle_common import(
     WaitMixin,
 )
 
-from pcs.common import report_codes
 from pcs.common.reports import ReportItemSeverity as severities
+from pcs.common.reports import codes as report_codes
 from pcs.lib.commands import resource
 
 class CreateCommandMixin:

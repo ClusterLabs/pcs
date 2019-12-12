@@ -11,7 +11,7 @@ from pcs_test.tools.integration_lib import Runner
 from pcs_test.tools.command_env.mock_runner import Call
 
 from pcs import settings
-from pcs.common import report_codes
+from pcs.common.reports import codes as report_codes
 from pcs.common.node_communicator import RequestTarget
 from pcs.common.reports import (
     ReportItem,

@@ -1,7 +1,7 @@
 import base64
 
-from pcs.common import report_codes
 from pcs.common.file import RawFileError
+from pcs.common.reports import codes as report_codes
 from pcs.lib.booth import (
     config_files,
     reports as booth_reports,

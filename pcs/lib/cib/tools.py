@@ -1,7 +1,7 @@
 import re
 from xml.etree.ElementTree import Element
 
-from pcs.common import report_codes
+from pcs.common.reports import codes as report_codes
 from pcs.common.tools import Version
 from pcs.lib import reports
 from pcs.lib.cib import sections

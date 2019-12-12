@@ -2,8 +2,8 @@ from unittest import mock, TestCase
 
 from pcs_test.tools.assertions import assert_raise_library_error
 
-from pcs.common import report_codes
 from pcs.common.reports import ReportItemSeverity as severities
+from pcs.common.reports import codes as report_codes
 from pcs.lib.cib.constraint import colocation
 
 

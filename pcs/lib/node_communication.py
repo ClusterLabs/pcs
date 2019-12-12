@@ -1,10 +1,8 @@
 import os
 
 from pcs import settings
-from pcs.common import (
-    pcs_pycurl as pycurl,
-    report_codes,
-)
+from pcs.common import pcs_pycurl as pycurl
+from pcs.common.reports import codes as report_codes
 from pcs.common.node_communicator import (
     CommunicatorLoggerInterface,
     HostNotFound,

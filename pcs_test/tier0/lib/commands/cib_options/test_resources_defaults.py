@@ -3,7 +3,7 @@ from unittest import TestCase
 from pcs_test.tools import fixture
 from pcs_test.tools.command_env import get_env_tools
 
-from pcs.common import report_codes
+from pcs.common.reports import codes as report_codes
 from pcs.lib.commands import cib_options
 
 FIXTURE_INITIAL_DEFAULTS = """

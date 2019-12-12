@@ -2,7 +2,7 @@
 from collections import Counter, defaultdict, namedtuple
 from itertools import zip_longest
 
-from pcs.common import report_codes
+from pcs.common.reports import codes as report_codes
 from pcs.lib import reports, validate
 from pcs.lib.corosync import constants
 from pcs.lib.corosync.node import(

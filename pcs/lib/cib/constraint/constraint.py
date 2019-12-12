@@ -1,10 +1,10 @@
 from lxml import etree
 
-from pcs.common import report_codes
 from pcs.common.reports import (
     ReportItemSeverity,
     ReportProcessor,
 )
+from pcs.common.reports import codes as report_codes
 from pcs.lib import reports
 from pcs.lib.cib import resource
 from pcs.lib.cib.constraint import resource_set

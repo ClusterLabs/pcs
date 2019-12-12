@@ -8,8 +8,8 @@ from pcs_test.tools.custom_mock import MockLibraryReportProcessor
 from pcs_test.tools.misc import outdent
 
 from pcs import settings
-from pcs.common import report_codes
 from pcs.common.reports import ReportItemSeverity as Severities
+from pcs.common.reports import codes as report_codes
 from pcs.lib import reports
 from pcs.lib.errors import LibraryError
 from pcs.lib.external import CommandRunner

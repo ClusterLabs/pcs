@@ -6,7 +6,7 @@ from pcs.cli.common.reports import (
     CODE_BUILDER_MAP,
     build_message_from_report,
 )
-from pcs.common import report_codes
+from pcs.common.reports import codes as report_codes
 
 ReportItemMock = namedtuple("ReportItemMock", "code info")
 

@@ -11,8 +11,8 @@ from pcs_test.tools.assertions import (
     assert_report_item_list_equal,
 )
 
-from pcs.common import report_codes
 from pcs.common.reports import ReportItemSeverity as severities
+from pcs.common.reports import codes as report_codes
 from pcs.lib.cib.constraint import constraint
 
 # pylint: disable=no-self-use, redundant-keyword-arg

@@ -5,12 +5,10 @@ from functools import partial
 from typing import Mapping
 import sys
 
-from pcs.common import (
-    file_type_codes,
-    report_codes as codes,
-)
+from pcs.common import file_type_codes
 from pcs.common.file import RawFileError
 from pcs.common.fencing_topology import TARGET_TYPE_ATTRIBUTE
+from pcs.common.reports import codes
 from pcs.common.str_tools import (
     format_list,
     indent,

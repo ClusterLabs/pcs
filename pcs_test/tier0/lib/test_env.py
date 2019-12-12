@@ -9,8 +9,9 @@ from pcs_test.tools.misc import (
     get_test_resource as rc,
 )
 
-from pcs.common import file_type_codes, report_codes
+from pcs.common import file_type_codes
 from pcs.common.reports import ReportItemSeverity as severity
+from pcs.common.reports import codes as report_codes
 from pcs.lib.env import LibraryEnvironment
 
 

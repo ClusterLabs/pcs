@@ -4,7 +4,7 @@ from typing import (
     Iterable,
 )
 
-from pcs.common import report_codes
+from pcs.common.reports import codes as report_codes
 from pcs.common.reports import ReportItem, ReportItemSeverity
 
 def forceable_error(force_code, report_creator, *args, **kwargs):

@@ -2,11 +2,11 @@ import base64
 import binascii
 from typing import List
 
-from pcs.common import report_codes
 from pcs.common.reports import (
     ReportProcessor,
     ReportItemSeverity,
 )
+from pcs.common.reports import codes as report_codes
 from pcs.lib import external, reports
 from pcs.lib.corosync import qdevice_net
 from pcs.lib.env import LibraryEnvironment

@@ -9,11 +9,9 @@ from pcs_test.tools.misc import get_test_resource as rc
 from pcs_test.tools.xml import XmlManipulation
 
 from pcs import settings
-from pcs.common import (
-    file_type_codes,
-    report_codes,
-)
+from pcs.common import file_type_codes
 from pcs.common.file import RawFileError
+from pcs.common.reports import codes as report_codes
 from pcs.lib.commands import booth as commands
 
 RANDOM_KEY = "I'm so random!".encode()

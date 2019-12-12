@@ -1,6 +1,6 @@
 from pcs import settings
-from pcs.common import report_codes
 from pcs.common.reports import ReportItemSeverity as Severities
+from pcs.common.reports import codes as report_codes
 from pcs.lib.communication.sbd import (
     CheckSbd,
     DisableSbdService,

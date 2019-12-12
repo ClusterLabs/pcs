@@ -12,9 +12,10 @@ from pcs_test.tools.command_env.mock_node_communicator import (
 from pcs_test.tools.custom_mock import patch_getaddrinfo
 
 from pcs import settings
-from pcs.common import file_type_codes, report_codes
+from pcs.common import file_type_codes
 from pcs.common.file import RawFileError
 from pcs.common.host import Destination
+from pcs.common.reports import codes as report_codes
 from pcs.common.ssl import (
     dump_cert,
     dump_key,

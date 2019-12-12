@@ -11,7 +11,7 @@ from pcs.cli.constraint_order.console_report import (
 from pcs.cli.constraint_ticket.console_report import (
     constraint_plain as ticket_plain
 )
-from pcs.common import report_codes as codes
+from pcs.common.reports import codes
 
 
 def constraint(constraint_type, constraint_info, with_id=True):

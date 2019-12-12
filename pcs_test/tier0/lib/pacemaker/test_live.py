@@ -13,8 +13,8 @@ from pcs_test.tools.misc import get_test_resource as rc
 from pcs_test.tools.xml import etree_to_str, XmlManipulation
 
 from pcs import settings
-from pcs.common import report_codes
 from pcs.common.reports import ReportItemSeverity as Severity
+from pcs.common.reports import codes as report_codes
 from pcs.common.tools import Version
 import pcs.lib.pacemaker.live as lib
 from pcs.lib.external import CommandRunner

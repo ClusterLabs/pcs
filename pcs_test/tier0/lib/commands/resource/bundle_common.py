@@ -4,8 +4,8 @@ from pcs_test.tools import fixture
 from pcs_test.tools.command_env import get_env_tools
 from pcs_test.tools.misc import skip_unless_pacemaker_supports_bundle
 
-from pcs.common import report_codes
 from pcs.common.reports import ReportItemSeverity as severities
+from pcs.common.reports import codes as report_codes
 from pcs.lib import reports
 from pcs.lib.cib.resource.bundle import (
     GENERIC_CONTAINER_OPTIONS,

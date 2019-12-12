@@ -1,7 +1,7 @@
 from pcs import settings
-from pcs.common import report_codes
 from pcs.common.file import RawFileError
 from pcs.common.reports import ReportProcessor
+from pcs.common.reports import codes as report_codes
 from pcs.lib import reports, node_communication_format
 from pcs.lib.tools import generate_binary_key
 from pcs.lib.cib.resource import guest_node, primitive, remote_node

@@ -6,7 +6,7 @@ from typing import (
 
 from lxml import etree
 
-from pcs.common import report_codes
+from pcs.common.reports import codes as report_codes
 from pcs.common.fencing_topology import (
     TARGET_TYPE_NODE,
     TARGET_TYPE_REGEXP,

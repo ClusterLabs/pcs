@@ -9,8 +9,8 @@ from pcs_test.tools.assertions import (
 )
 from pcs_test.tools.misc import get_test_resource as rc, outdent
 
-from pcs.common import report_codes
 from pcs.common.reports import ReportItemSeverity as severity
+from pcs.common.reports import codes as report_codes
 import pcs.lib.corosync.config_facade as lib
 
 

@@ -22,7 +22,7 @@ from pcs.cli.common.reports import process_library_reports
 import pcs.cli.constraint_colocation.command as colocation_command
 import pcs.cli.constraint_order.command as order_command
 from pcs.cli.constraint_ticket import command as ticket_command
-from pcs.common import report_codes
+from pcs.common.reports import codes as report_codes
 from pcs.lib import reports
 from pcs.lib.cib.constraint import resource_set
 from pcs.lib.cib.constraint.order import ATTRIB as order_attrib

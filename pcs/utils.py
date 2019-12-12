@@ -31,8 +31,8 @@ from pcs.common import (
     file as pcs_file,
     file_type_codes,
     pcs_pycurl as pycurl,
-    report_codes,
 )
+from pcs.common.reports import codes as report_codes
 from pcs.common.host import PcsKnownHost
 from pcs.common.reports import ReportProcessor
 from pcs.common.str_tools import join_multilines

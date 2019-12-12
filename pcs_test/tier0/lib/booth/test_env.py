@@ -5,10 +5,8 @@ from pcs_test.tools import fixture
 from pcs_test.tools.assertions import assert_raise_library_error
 
 from pcs import settings
-from pcs.common import (
-    file_type_codes,
-    report_codes,
-)
+from pcs.common import file_type_codes
+from pcs.common.reports import codes as report_codes
 from pcs.lib.booth import env
 from pcs.lib.file.raw_file import GhostFile
 

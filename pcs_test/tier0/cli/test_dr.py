@@ -3,7 +3,7 @@ from unittest import mock, TestCase
 
 from pcs_test.tools.misc import dict_to_modifiers
 
-from pcs.common import report_codes
+from pcs.common.reports import codes as report_codes
 
 from pcs.cli import dr
 from pcs.cli.common.errors import CmdLineInputError

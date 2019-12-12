@@ -7,8 +7,8 @@ from pcs_test.tools.assertions import(
 )
 from pcs_test.tools.custom_mock import MockLibraryReportProcessor
 
-from pcs.common import report_codes
 from pcs.common.reports import ReportItemSeverity as severities
+from pcs.common.reports import codes as report_codes
 from pcs.lib.commands.constraint import common as constraint
 
 

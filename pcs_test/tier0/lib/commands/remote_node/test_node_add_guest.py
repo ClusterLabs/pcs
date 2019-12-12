@@ -16,7 +16,7 @@ from pcs_test.tools.misc import get_test_resource as rc
 from pcs_test.tools.xml import XmlManipulation
 
 from pcs import settings
-from pcs.common import report_codes
+from pcs.common.reports import codes as report_codes
 from pcs.common.host import Destination
 from pcs.lib.commands.remote_node import node_add_guest as node_add_guest_orig
 

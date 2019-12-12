@@ -13,12 +13,13 @@ from pcs.cli.common.console_report import (
 from pcs.cli.constraint_all.console_report import (
     CODE_TO_MESSAGE_BUILDER_MAP as CONSTRAINT_CODE_TO_MESSAGE_BUILDER_MAP
 )
-from pcs.common import report_codes as codes
 from pcs.common.reports import (
+    codes,
     ReportItem,
     ReportItemSeverity,
     ReportProcessor,
 )
+from pcs.lib.errors import LibraryError
 
 
 CODE_BUILDER_MAP = {}

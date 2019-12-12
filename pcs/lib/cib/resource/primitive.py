@@ -1,7 +1,7 @@
 from lxml import etree
 
-from pcs.common import report_codes
 from pcs.common.reports import ReportProcessor
+from pcs.common.reports import codes as report_codes
 from pcs.lib import reports
 from pcs.lib.cib.nvpair import (
     append_new_instance_attributes,

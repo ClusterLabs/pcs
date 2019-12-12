@@ -3,8 +3,8 @@ from unittest import TestCase
 from pcs_test.tools import fixture
 from pcs_test.tools.command_env import get_env_tools
 
-from pcs.common import report_codes
 from pcs.common.reports import ReportItemSeverity as severities
+from pcs.common.reports import codes as report_codes
 from pcs.lib.commands import resource
 
 

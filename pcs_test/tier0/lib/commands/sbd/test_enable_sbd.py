@@ -7,7 +7,7 @@ from pcs_test.tools.command_env import get_env_tools
 from pcs_test.tools.misc import get_test_resource, outdent
 
 from pcs import settings
-from pcs.common import report_codes
+from pcs.common.reports import codes as report_codes
 from pcs.lib.commands.sbd import (
     ALLOWED_SBD_OPTION_LIST,
     TIMEOUT_ACTION_ALLOWED_VALUE_LIST,

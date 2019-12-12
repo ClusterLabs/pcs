@@ -3,15 +3,13 @@ import os.path
 from functools import partial
 
 from pcs import settings
-from pcs.common import (
-    file_type_codes,
-    report_codes,
-)
+from pcs.common import file_type_codes
 from pcs.common.file import FileAlreadyExists, RawFileError
 from pcs.common.reports import (
     ReportProcessor,
     ReportItemSeverity,
 )
+from pcs.common.reports import codes as report_codes
 from pcs.common.str_tools import join_multilines
 from pcs.lib import external, reports, tools
 from pcs.lib.cib.resource import primitive, group

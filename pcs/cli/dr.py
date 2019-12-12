@@ -7,7 +7,7 @@ from typing import (
 from pcs.cli.common.console_report import error
 from pcs.cli.common.errors import CmdLineInputError
 from pcs.cli.common.parse_args import InputModifiers
-from pcs.common import report_codes
+from pcs.common.reports import codes as report_codes
 from pcs.common.dr import (
     DrConfigDto,
     DrConfigSiteDto,

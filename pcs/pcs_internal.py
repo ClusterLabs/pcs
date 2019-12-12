@@ -6,13 +6,13 @@ from pcs import settings, utils
 from pcs.cli.common.env_cli import Env
 from pcs.cli.common.lib_wrapper import Library
 from pcs.cli.common.reports import build_report_message
-from pcs.common import report_codes
 from pcs.common.reports import (
     ReportItem,
     ReportItemList,
     ReportProcessor,
 )
 from pcs.lib.errors import LibraryError
+from pcs.common.reports import codes as report_codes
 
 
 SUPPORTED_COMMANDS = {

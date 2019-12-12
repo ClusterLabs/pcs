@@ -1,5 +1,8 @@
-from pcs.common import report_codes
-from pcs.common.reports import ReportItem, ReportItemSeverity
+from pcs.common.reports import (
+    codes as report_codes,
+    ReportItem,
+    ReportItemSeverity,
+)
 
 
 def booth_lack_of_sites(site_list):

@@ -11,7 +11,7 @@ from pcs_test.tools.misc import (
 )
 from pcs_test.tools.xml import etree_to_str
 
-from pcs.common import report_codes
+from pcs.common.reports import codes as report_codes
 from pcs.common.tools import Version
 from pcs.lib.env import LibraryEnvironment
 

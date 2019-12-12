@@ -26,13 +26,13 @@ from pcs.cli.common.reports import (
     build_report_message,
     process_library_reports,
 )
-from pcs.common import report_codes
 from pcs.common.node_communicator import (
     HostNotFound,
     Request,
     RequestData,
 )
 from pcs.common.reports import (
+    codes as report_codes,
     ReportItem,
     ReportItemSeverity,
 )

@@ -6,8 +6,9 @@ from typing import (
     Set,
 )
 
-from pcs.common import file_type_codes, report_codes
+from pcs.common import file_type_codes
 from pcs.common.interface import dto
+from pcs.common.reports import codes as report_codes
 from pcs.common.reports import ReportItemSeverity as severities
 from pcs.common.tools import Version
 from pcs.lib import reports

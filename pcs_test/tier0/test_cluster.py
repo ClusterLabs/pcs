@@ -20,7 +20,7 @@ from pcs_test.tools.pcs_runner import (
 
 from pcs import cluster
 from pcs.cli.common.errors import CmdLineInputError
-from pcs.common import report_codes
+from pcs.common.reports import codes as report_codes
 
 class UidGidTest(TestCase):
     # pylint: disable=invalid-name

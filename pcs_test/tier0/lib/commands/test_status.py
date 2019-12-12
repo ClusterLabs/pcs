@@ -1,7 +1,9 @@
 from textwrap import dedent
 from unittest import TestCase
 
-from pcs.common import file_type_codes, report_codes
+from pcs import settings
+from pcs.common import file_type_codes
+from pcs.common.reports import codes as report_codes
 from pcs.lib.commands import status
 from pcs_test.tools import fixture
 from pcs_test.tools.command_env import get_env_tools

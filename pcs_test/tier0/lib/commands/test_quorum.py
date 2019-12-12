@@ -17,8 +17,8 @@ from pcs_test.tools.misc import (
     outdent,
 )
 
-from pcs.common import report_codes
 from pcs.common.reports import ReportItemSeverity as severity
+from pcs.common.reports import codes as report_codes
 from pcs.lib.env import LibraryEnvironment
 from pcs.lib.corosync.config_facade import ConfigFacade
 

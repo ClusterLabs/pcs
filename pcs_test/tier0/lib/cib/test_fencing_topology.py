@@ -10,7 +10,7 @@ from pcs_test.tools.custom_mock import MockLibraryReportProcessor
 from pcs_test.tools.misc import create_patcher
 from pcs_test.tools.xml import etree_to_str
 
-from pcs.common import report_codes
+from pcs.common.reports import codes as report_codes
 from pcs.common.fencing_topology import (
     TARGET_TYPE_NODE,
     TARGET_TYPE_REGEXP,

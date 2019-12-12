@@ -3,7 +3,7 @@ from collections import namedtuple
 from lxml import etree
 
 from pcs import settings
-from pcs.common import report_codes
+from pcs.common.reports import codes as report_codes
 from pcs.common.reports import (
     ReportItemSeverity,
     ReportProcessor,

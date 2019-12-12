@@ -1,8 +1,8 @@
 from functools import partial
 from lxml import etree
 
-from pcs.common import report_codes
 from pcs.common.reports import (
+    codes as report_codes,
     ReportProcessor,
     ReportItemSeverity as Severities,
 )

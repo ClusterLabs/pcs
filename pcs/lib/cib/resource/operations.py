@@ -2,11 +2,11 @@ from collections import defaultdict
 
 from lxml import etree
 
-from pcs.common import report_codes
 from pcs.common.reports import (
     ReportItemList,
     ReportProcessor,
 )
+from pcs.common.reports import codes as report_codes
 from pcs.lib import reports, validate
 from pcs.lib.resource_agent import get_default_interval, complete_all_intervals
 from pcs.lib.cib.nvpair import append_new_instance_attributes

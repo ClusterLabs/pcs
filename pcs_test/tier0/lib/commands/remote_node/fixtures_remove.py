@@ -1,6 +1,6 @@
 from pcs_test.tools import fixture
 
-from pcs.common import report_codes
+from pcs.common.reports import codes as report_codes
 
 OFFLINE_ERROR_MSG = "Could not resolve host"
 

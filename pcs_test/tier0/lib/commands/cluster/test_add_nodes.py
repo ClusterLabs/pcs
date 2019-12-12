@@ -13,11 +13,9 @@ from pcs_test.tools.command_env import get_env_tools
 from pcs_test.tools.custom_mock import patch_getaddrinfo
 
 from pcs import settings
-from pcs.common import (
-    file_type_codes,
-    report_codes,
-)
+from pcs.common import file_type_codes
 from pcs.common.file import RawFileError
+from pcs.common.reports import codes as report_codes
 from pcs.lib.commands import cluster
 
 QDEVICE_HOST = "qdevice.host"

@@ -3,7 +3,7 @@ import re
 from textwrap import dedent
 from unittest import mock, TestCase
 
-from pcs.common import report_codes
+from pcs.common.reports import codes as report_codes
 from pcs.lib.corosync.config_facade import ConfigFacade as CorosyncConfigFacade
 from pcs.lib.corosync.config_parser import Section as CorosyncSection
 

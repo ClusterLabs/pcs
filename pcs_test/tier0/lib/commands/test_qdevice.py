@@ -8,8 +8,8 @@ from pcs_test.tools.assertions import (
 )
 from pcs_test.tools.custom_mock import MockLibraryReportProcessor
 
-from pcs.common import report_codes
 from pcs.common.reports import ReportItemSeverity as severity
+from pcs.common.reports import codes as report_codes
 from pcs.lib.env import LibraryEnvironment
 from pcs.lib.errors import LibraryError
 from pcs.lib.external import (

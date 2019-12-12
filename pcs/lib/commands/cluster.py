@@ -6,7 +6,6 @@ import time
 from pcs import settings
 from pcs.common import (
     file_type_codes,
-    report_codes,
     ssl,
 )
 from pcs.common.file import RawFileError
@@ -17,6 +16,7 @@ from pcs.common.reports import (
 )
 from pcs.common.tools import format_environment_error
 from pcs.common.str_tools import join_multilines
+from pcs.common.reports import codes as report_codes
 from pcs.lib import reports, node_communication_format, sbd, validate
 from pcs.lib.booth import sync as booth_sync
 from pcs.lib.cib import fencing_topology
