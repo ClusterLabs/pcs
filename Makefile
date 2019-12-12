@@ -193,6 +193,7 @@ endef
 define build_python_bundle
 	cd $(1) && \
 	PYTHONPATH=$(2)/packages/ \
+	LC_ALL=C.utf8 \
 	$(PYTHON) setup.py install --install-lib /packages/ --root $(2)
 endef
 
