@@ -51,6 +51,22 @@ def find_primitives(resource_el):
         return [resource_el]
     return []
 
+def get_all_inner_resources(resource_el):
+    """
+    Return all inner resources (both direct and indirect) of a resource
+    Example: for a clone containing a group, this function will return both
+    the group and the resources inside the group
+
+    resource_el -- resource element to get its inner resources
+    """
+    all_inner = set()
+    to_process = set([resource_el])
+    while to_process:
+        new_inner = get_inner_resources(to_process.pop())
+        to_process.update(set(new_inner) - all_inner)
+        all_inner.update(new_inner)
+    return all_inner
+
 def get_inner_resources(resource_el):
     """
     Return list of inner resources (direct descendants) of a resource
