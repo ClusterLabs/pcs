@@ -1259,8 +1259,11 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
     ,
 
     codes.CIB_SIMULATE_ERROR: lambda info:
-        "Unable to simulate changes in CIB: {reason}\n{cib}"
-        .format(**info)
+        "Unable to simulate changes in CIB{_reason}"
+        .format(
+            _reason=format_optional(info["reason"], ": {0}"),
+            **info
+        )
     ,
 
     codes.CIB_PUSH_FORCED_FULL_DUE_TO_CRM_FEATURE_SET: lambda info:

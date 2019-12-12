@@ -2238,8 +2238,14 @@ class CibDiffError(NameBuildTest):
 class CibSimulateError(NameBuildTest):
     def test_success(self):
         self.assert_message_from_report(
-            "Unable to simulate changes in CIB: error message\n<cib />",
-            reports.cib_simulate_error("error message", "<cib />")
+            "Unable to simulate changes in CIB: error message",
+            reports.cib_simulate_error("error message")
+        )
+
+    def test_empty_reason(self):
+        self.assert_message_from_report(
+            "Unable to simulate changes in CIB",
+            reports.cib_simulate_error("")
         )
 
 

@@ -1927,18 +1927,16 @@ def cib_diff_error(reason, cib_old, cib_new):
         }
     )
 
-def cib_simulate_error(reason, cib):
+def cib_simulate_error(reason):
     """
     cannot simulate effects a CIB would have on a live cluster
 
     string reason -- error description
-    string cib -- the CIB whose effects were to be simulated
     """
     return ReportItem.error(
         report_codes.CIB_SIMULATE_ERROR,
         info={
             "reason": reason,
-            "cib": cib,
         }
     )
 

@@ -1729,12 +1729,6 @@ class DisableSimulate(TestCase):
                 fixture.error(
                     report_codes.CIB_SIMULATE_ERROR,
                     reason="some stderr",
-                    # curently, there is no way to normalize xml with our lxml
-                    # version 4.2.3, so this never passes equality tests
-                    # cib=self.config.calls.get(
-                    #         "runner.pcmk.simulate_cib"
-                    #     ).check_stdin.expected_stdin
-                    # ,
                 ),
             ],
             expected_in_processor=False
@@ -1988,12 +1982,6 @@ class DisableSafeMixin():
                 fixture.error(
                     report_codes.CIB_SIMULATE_ERROR,
                     reason="some stderr",
-                    # curently, there is no way to normalize xml with our lxml
-                    # version 4.2.3, so this never passes equality tests
-                    # cib=self.config.calls.get(
-                    #         "runner.pcmk.simulate_cib"
-                    #     ).check_stdin.expected_stdin
-                    # ,
                 ),
             ],
             expected_in_processor=False

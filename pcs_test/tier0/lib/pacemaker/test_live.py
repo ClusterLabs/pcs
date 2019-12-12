@@ -686,7 +686,6 @@ class SimulateCibXml(LibraryPacemakerTest):
             fixture.error(
                 report_codes.CIB_SIMULATE_ERROR,
                 reason="some error",
-                cib="<cib />",
             ),
         )
         mock_runner.run.assert_not_called()
@@ -703,7 +702,6 @@ class SimulateCibXml(LibraryPacemakerTest):
             fixture.error(
                 report_codes.CIB_SIMULATE_ERROR,
                 reason="some error",
-                cib="<cib />",
             ),
         )
         mock_runner.run.assert_not_called()
@@ -729,7 +727,6 @@ class SimulateCibXml(LibraryPacemakerTest):
             fixture.error(
                 report_codes.CIB_SIMULATE_ERROR,
                 reason="some error",
-                cib="<cib />",
             ),
         )
 
@@ -755,7 +752,6 @@ class SimulateCibXml(LibraryPacemakerTest):
             fixture.error(
                 report_codes.CIB_SIMULATE_ERROR,
                 reason="some error",
-                cib="<cib />",
             ),
         )
 
@@ -782,7 +778,6 @@ class SimulateCibXml(LibraryPacemakerTest):
             fixture.error(
                 report_codes.CIB_SIMULATE_ERROR,
                 reason="some error",
-                cib="<cib />",
             ),
         )
 
@@ -819,7 +814,6 @@ class SimulateCib(TestCase):
                     "Start tag expected, '<' not found, line 1, column 1 "
                     "(<string>, line 1)"
                 ),
-                cib=self.cib_xml,
             ),
         )
 
@@ -835,7 +829,6 @@ class SimulateCib(TestCase):
                     "Start tag expected, '<' not found, line 1, column 1 "
                     "(<string>, line 1)"
                 ),
-                cib=self.cib_xml,
             ),
         )
 
