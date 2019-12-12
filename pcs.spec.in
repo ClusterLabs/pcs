@@ -399,6 +399,7 @@ rm -r -v ${pcsd_dir}/public/js/dev
 %{pcs_libdir}/pcs/bundled/packages/dacite*
 %if %{defined dataclasses_required}
 %{pcs_libdir}/pcs/bundled/packages/dataclasses*
+%{pcs_libdir}/pcs/bundled/packages/__pycache__/dataclasses.cpython-36.pyc
 %endif
 %{_unitdir}/pcsd.service
 %{_datadir}/bash-completion/completions/pcs
