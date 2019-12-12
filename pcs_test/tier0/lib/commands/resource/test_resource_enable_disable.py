@@ -2118,6 +2118,236 @@ class DisableSafeMixin():
             fixture.report_resource_not_running("B"),
         ])
 
+    def test_inner_resources(self, mock_write_tmpfile):
+        cib_xml = """
+            <resources>
+                <primitive id="A" />
+                <clone id="B-clone">
+                    <primitive id="B" />
+                </clone>
+                <master id="C-master">
+                    <primitive id="C" />
+                </master>
+                <group id="D">
+                    <primitive id="D1" />
+                    <primitive id="D2" />
+                </group>
+                <clone id="E-clone">
+                    <group id="E">
+                        <primitive id="E1" />
+                        <primitive id="E2" />
+                    </group>
+                </clone>
+                <master id="F-master">
+                    <group id="F">
+                        <primitive id="F1" />
+                        <primitive id="F2" />
+                    </group>
+                </master>
+                <bundle id="G-bundle" />
+                <bundle id="H-bundle">
+                    <primitive id="H" />
+                </bundle>
+            </resources>
+        """
+        status_xml = """
+            <resources>
+                <resource id="A" managed="true" />
+                <clone id="B-clone" managed="true" multi_state="false"
+                    unique="false"
+                >
+                    <resource id="B" managed="true" />
+                    <resource id="B" managed="true" />
+                </clone>
+                <clone id="C-master" managed="true" multi_state="true"
+                    unique="false"
+                >
+                    <resource id="C" managed="true" />
+                    <resource id="C" managed="true" />
+                </clone>
+                <group id="D" number_resources="2">
+                    <resource id="D1" managed="true" />
+                    <resource id="D2" managed="true" />
+                </group>
+                <clone id="E-clone" managed="true" multi_state="false"
+                    unique="false"
+                >
+                    <group id="E:0" number_resources="2">
+                        <resource id="E1" managed="true" />
+                        <resource id="E2" managed="true" />
+                    </group>
+                    <group id="E:1" number_resources="2">
+                        <resource id="E1" managed="true" />
+                        <resource id="E2" managed="true" />
+                    </group>
+                </clone>
+                <clone id="F-master" managed="true" multi_state="true"
+                    unique="false"
+                >
+                    <group id="F:0" number_resources="2">
+                        <resource id="F1" managed="true" />
+                        <resource id="F2" managed="true" />
+                    </group>
+                    <group id="F:1" number_resources="2">
+                        <resource id="F1" managed="true" />
+                        <resource id="F2" managed="true" />
+                    </group>
+                </clone>
+                <bundle id="H-bundle" type="docker" image="pcmktest:http"
+                    unique="false" managed="true" failed="false"
+                >
+                    <replica id="0">
+                        <resource id="H" />
+                    </replica>
+                    <replica id="1">
+                        <resource id="H" />
+                    </replica>
+                </bundle>
+            </resources>
+        """
+        synapses = []
+        index = 0
+        for res_name, is_clone in [
+            ("A", False),
+            ("B", True),
+            ("C", True),
+            ("D1", False),
+            ("D2", False),
+            ("E1", True),
+            ("E2", True),
+            ("F1", True),
+            ("F2", True),
+            ("H", False),
+        ]:
+            if is_clone:
+                synapses.append(f"""
+                  <synapse>
+                    <action_set>
+                      <rsc_op id="{index}" operation="stop" on_node="node1">
+                        <primitive id="{res_name}" long_id="{res_name}:0" />
+                      </rsc_op>
+                    </action_set>
+                  </synapse>
+                  <synapse>
+                    <action_set>
+                      <rsc_op id="{index + 1}" operation="stop" on_node="node2">
+                        <primitive id="{res_name}" long_id="{res_name}:1" />
+                      </rsc_op>
+                    </action_set>
+                  </synapse>
+                """)
+                index += 2
+            else:
+                synapses.append(f"""
+                  <synapse>
+                    <action_set>
+                      <rsc_op id="{index}" operation="stop" on_node="node1">
+                        <primitive id="{res_name}" />
+                      </rsc_op>
+                    </action_set>
+                  </synapse>
+                """)
+                index += 1
+        transitions_xml = (
+            "<transition_graph>" + "\n".join(synapses) + "</transition_graph>"
+        )
+
+        self.tmpfile_transitions.read.return_value = transitions_xml
+        mock_write_tmpfile.side_effect = [
+            self.tmpfile_new_cib, self.tmpfile_transitions,
+            AssertionError("No other write_tmpfile call expected")
+        ]
+        (self.config
+            .runner.cib.load(resources=cib_xml)
+            .runner.pcmk.load_state(resources=status_xml)
+        )
+        self.config.runner.pcmk.simulate_cib(
+            self.tmpfile_new_cib.name,
+            self.tmpfile_transitions.name,
+            stdout="simulate output",
+            resources="""
+                <resources>
+                    <primitive id="A" />
+                    <clone id="B-clone">
+                        <meta_attributes id="B-clone-meta_attributes">
+                            <nvpair name="target-role" value="Stopped"
+                                id="B-clone-meta_attributes-target-role"
+                            />
+                        </meta_attributes>
+                        <primitive id="B" />
+                    </clone>
+                    <master id="C-master">
+                        <meta_attributes id="C-master-meta_attributes">
+                            <nvpair name="target-role" value="Stopped"
+                                id="C-master-meta_attributes-target-role"
+                            />
+                        </meta_attributes>
+                        <primitive id="C" />
+                    </master>
+                    <group id="D">
+                        <meta_attributes id="D-meta_attributes">
+                            <nvpair name="target-role" value="Stopped"
+                                id="D-meta_attributes-target-role"
+                            />
+                        </meta_attributes>
+                        <primitive id="D1" />
+                        <primitive id="D2" />
+                    </group>
+                    <clone id="E-clone">
+                        <meta_attributes id="E-clone-meta_attributes">
+                            <nvpair name="target-role" value="Stopped"
+                                id="E-clone-meta_attributes-target-role"
+                            />
+                        </meta_attributes>
+                        <group id="E">
+                            <primitive id="E1" />
+                            <primitive id="E2" />
+                        </group>
+                    </clone>
+                    <master id="F-master">
+                        <meta_attributes id="F-master-meta_attributes">
+                            <nvpair name="target-role" value="Stopped"
+                                id="F-master-meta_attributes-target-role"
+                            />
+                        </meta_attributes>
+                        <group id="F">
+                            <primitive id="F1" />
+                            <primitive id="F2" />
+                        </group>
+                    </master>
+                    <bundle id="G-bundle" />
+                    <bundle id="H-bundle">
+                        <meta_attributes id="H-bundle-meta_attributes">
+                            <nvpair name="target-role" value="Stopped"
+                                id="H-bundle-meta_attributes-target-role"
+                            />
+                        </meta_attributes>
+                        <primitive id="H" />
+                    </bundle>
+                </resources>
+            """
+        )
+        self.env_assist.assert_raise_library_error(
+            lambda: resource.disable_safe(
+                self.env_assist.get_env(),
+                ["B-clone", "C-master", "D", "E-clone", "F-master", "H-bundle"],
+                self.strict,
+                False,
+            ),
+            [
+                fixture.error(
+                    report_codes.RESOURCE_DISABLE_AFFECTS_OTHER_RESOURCES,
+                    disabled_resource_list=[
+                        "B-clone", "C-master", "D", "E-clone", "F-master",
+                        "H-bundle"
+                    ],
+                    affected_resource_list=["A"],
+                    crm_simulate_plaintext_output="simulate output",
+                ),
+            ],
+            expected_in_processor=False
+        )
+
 @mock.patch("pcs.lib.pacemaker.live.write_tmpfile")
 class DisableSafe(DisableSafeMixin, TestCase):
     strict = False

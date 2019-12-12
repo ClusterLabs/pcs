@@ -803,7 +803,28 @@ def disable_safe(env, resource_ids, strict, wait):
     with resource_environment(
         env, wait, resource_ids, _ensure_disabled_after_wait(True)
     ) as resources_section:
-        _disable_validate_and_edit_cib(env, resources_section, resource_ids)
+        id_provider = IdProvider(resources_section)
+        resource_el_list = _find_resources_or_raise(
+            resources_section,
+            resource_ids
+        )
+        env.report_processor.process_list(
+            _resource_list_enable_disable(
+                resource_el_list,
+                resource.common.disable,
+                id_provider,
+                env.get_cluster_state()
+            )
+        )
+
+        inner_resources_names_set = set()
+        for resource_el in resource_el_list:
+            inner_resources_names_set.update({
+                inner_resource_el.get("id")
+                for inner_resource_el
+                    in resource.common.get_all_inner_resources(resource_el)
+            })
+
         plaintext_status, transitions, dummy_cib = simulate_cib(
             env.cmd_runner(),
             get_root(resources_section)
@@ -831,6 +852,10 @@ def disable_safe(env, resource_ids, strict, wait):
                     exclude=resource_ids
                 )
             )
+
+        # Stopping a clone stops all its inner resources. That should not block
+        # stopping the clone.
+        other_affected = other_affected - inner_resources_names_set
         if other_affected:
             raise LibraryError(
                 reports.resource_disable_affects_other_resources(

@@ -9,9 +9,12 @@
 ### Fixed
 - Error messages in cases when cluster is not set up ([rhbz#1743731])
 - Improved documentation of configuring links in the 'pcs cluster setup' command
+- Safe-disabling clones and groups does not fail any more due to their inner
+  resources get stopped ([rhbz#1781303])
 
 [rhbz#1676431]: https://bugzilla.redhat.com/show_bug.cgi?id=1676431
 [rhbz#1743731]: https://bugzilla.redhat.com/show_bug.cgi?id=1743731
+[rhbz#1781303]: https://bugzilla.redhat.com/show_bug.cgi?id=1781303
 
 
 ## [0.10.4] - 2019-11-28

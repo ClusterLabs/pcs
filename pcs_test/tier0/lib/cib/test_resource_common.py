@@ -200,10 +200,12 @@ class FindOneOrMoreResources(TestCase):
 
 
 class FindResourcesMixin:
+    _iterable_type = list
+
     def assert_find_resources(self, input_resource_id, output_resource_ids):
         self.assertEqual(
-            output_resource_ids,
-            [
+            self._iterable_type(output_resource_ids),
+            self._iterable_type([
                 element.get("id", "")
                 for element in
                 self._tested_fn(
@@ -211,7 +213,7 @@ class FindResourcesMixin:
                         './/*[@id="{0}"]'.format(input_resource_id)
                     )
                 )
-            ]
+            ])
         )
 
     def test_group(self):
@@ -234,6 +236,27 @@ class FindResourcesMixin:
 
     def test_bundle_with_primitive(self):
         self.assert_find_resources("H-bundle", ["H"])
+
+    def test_primitive(self):
+        raise NotImplementedError()
+
+    def test_primitive_in_clone(self):
+        raise NotImplementedError()
+
+    def test_primitive_in_master(self):
+        raise NotImplementedError()
+
+    def test_primitive_in_group(self):
+        raise NotImplementedError()
+
+    def test_primitive_in_bundle(self):
+        raise NotImplementedError()
+
+    def test_cloned_group(self):
+        raise NotImplementedError()
+
+    def test_mastered_group(self):
+        raise NotImplementedError()
 
 
 class FindPrimitives(TestCase, FindResourcesMixin):
@@ -264,6 +287,37 @@ class FindPrimitives(TestCase, FindResourcesMixin):
 
     def test_mastered_group(self):
         self.assert_find_resources("F-master", ["F1", "F2"])
+
+
+class GetAllInnerResources(TestCase, FindResourcesMixin):
+    _iterable_type = set
+    _tested_fn = staticmethod(common.get_all_inner_resources)
+
+    def test_primitive(self):
+        self.assert_find_resources("A", set())
+
+    def test_primitive_in_clone(self):
+        self.assert_find_resources("B", set())
+
+    def test_primitive_in_master(self):
+        self.assert_find_resources("C", set())
+
+    def test_primitive_in_group(self):
+        self.assert_find_resources("D1", set())
+        self.assert_find_resources("D2", set())
+        self.assert_find_resources("E1", set())
+        self.assert_find_resources("E2", set())
+        self.assert_find_resources("F1", set())
+        self.assert_find_resources("F2", set())
+
+    def test_primitive_in_bundle(self):
+        self.assert_find_resources("H", set())
+
+    def test_cloned_group(self):
+        self.assert_find_resources("E-clone", {"E", "E1", "E2"})
+
+    def test_mastered_group(self):
+        self.assert_find_resources("F-master", {"F", "F1", "F2"})
 
 
 class GetInnerResources(TestCase, FindResourcesMixin):
