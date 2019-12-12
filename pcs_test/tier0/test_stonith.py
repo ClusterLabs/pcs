@@ -6,7 +6,7 @@ from unittest import mock, TestCase
 from pcs import stonith
 from pcs.cli.common.errors import CmdLineInputError
 from pcs.cli.common.parse_args import InputModifiers
-from pcs.common.tools import indent
+from pcs.common.str_tools import indent
 from pcs_test.tier0.cib_resource.common import ResourceTest
 from pcs_test.tools.assertions import AssertPcsMixin
 from pcs_test.tools.bin_mock import get_mock_settings

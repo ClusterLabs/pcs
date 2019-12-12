@@ -1,5 +1,5 @@
 from pcs import settings
-from pcs.common.tools import join_multilines
+from pcs.common.str_tools import join_multilines
 from pcs.lib.booth import reports
 from pcs.lib.errors import LibraryError
 

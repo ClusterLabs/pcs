@@ -14,7 +14,7 @@ from pcs.common.dr import (
     DrSiteStatusDto,
 )
 from pcs.common.interface import dto
-from pcs.common.tools import indent
+from pcs.common.str_tools import indent
 
 def config(
     lib: Any,

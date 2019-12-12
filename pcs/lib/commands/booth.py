@@ -12,7 +12,7 @@ from pcs.common.reports import (
     ReportProcessor,
     ReportItemSeverity,
 )
-from pcs.common.tools import join_multilines
+from pcs.common.str_tools import join_multilines
 from pcs.lib import external, reports, tools
 from pcs.lib.cib.resource import primitive, group
 from pcs.lib.booth import (

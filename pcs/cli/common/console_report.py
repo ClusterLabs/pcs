@@ -11,7 +11,7 @@ from pcs.common import (
 )
 from pcs.common.file import RawFileError
 from pcs.common.fencing_topology import TARGET_TYPE_ATTRIBUTE
-from pcs.common.tools import (
+from pcs.common.str_tools import (
     format_list,
     indent,
 )

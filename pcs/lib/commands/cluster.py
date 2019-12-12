@@ -15,10 +15,8 @@ from pcs.common.reports import (
     ReportProcessor,
     ReportItemSeverity,
 )
-from pcs.common.tools import (
-    format_environment_error,
-    join_multilines,
-)
+from pcs.common.tools import format_environment_error
+from pcs.common.str_tools import join_multilines
 from pcs.lib import reports, node_communication_format, sbd, validate
 from pcs.lib.booth import sync as booth_sync
 from pcs.lib.cib import fencing_topology

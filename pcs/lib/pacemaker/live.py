@@ -13,9 +13,9 @@ from pcs import settings
 from pcs.common.reports import ReportProcessor
 from pcs.common.tools import (
     format_os_error,
-    join_multilines,
     xml_fromstring
 )
+from pcs.common.str_tools import join_multilines
 from pcs.lib import reports
 from pcs.lib.cib.tools import get_pacemaker_version_by_which_cib_was_validated
 from pcs.lib.errors import LibraryError

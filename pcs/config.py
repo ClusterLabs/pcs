@@ -46,7 +46,7 @@ from pcs.cli.constraint_colocation import (
 )
 from pcs.cli.constraint_order import console_report as order_console_report
 from pcs.cli.constraint_ticket import console_report as ticket_console_report
-from pcs.common.tools import indent
+from pcs.common.str_tools import indent
 from pcs.lib.commands import quorum as lib_quorum
 from pcs.lib.errors import LibraryError
 from pcs.lib.external import is_service_running

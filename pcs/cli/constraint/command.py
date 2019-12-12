@@ -1,5 +1,5 @@
 from pcs.cli.constraint import parse_args, console_report
-from pcs.common.tools import indent
+from pcs.common.str_tools import indent
 
 def create_with_set(create_with_set_library_call, argv, modifiers):
     """

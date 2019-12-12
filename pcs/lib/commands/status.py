@@ -9,7 +9,7 @@ from xml.etree.ElementTree import Element
 from pcs.common import file_type_codes
 from pcs.common.node_communicator import Communicator
 from pcs.common.reports import ReportProcessor
-from pcs.common.tools import (
+from pcs.common.str_tools import (
     format_list,
     indent,
 )

@@ -35,7 +35,7 @@ from pcs.common import (
 )
 from pcs.common.host import PcsKnownHost
 from pcs.common.reports import ReportProcessor
-from pcs.common.tools import join_multilines
+from pcs.common.str_tools import join_multilines
 
 from pcs.cli.common import (
     console_report,

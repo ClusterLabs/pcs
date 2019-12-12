@@ -33,7 +33,7 @@ from pcs.cli.resource.parse_args import (
     parse_bundle_update_options,
     parse_create as parse_create_args,
 )
-from pcs.common.tools import indent
+from pcs.common.str_tools import indent
 import pcs.lib.cib.acl as lib_acl
 from pcs.lib.cib.resource import (
     bundle,

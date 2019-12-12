@@ -5,7 +5,7 @@ import re
 import shutil
 
 from pcs import settings
-from pcs.common.tools import join_multilines
+from pcs.common.str_tools import join_multilines
 from pcs.lib import external, reports
 from pcs.lib.communication import qdevice_net as qdevice_net_com
 from pcs.lib.communication.tools import run_and_raise

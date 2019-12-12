@@ -9,7 +9,7 @@ from typing import (
 from pcs import settings
 from pcs.common.reports import ReportProcessor
 from pcs.common.system import is_systemd as is_systemctl
-from pcs.common.tools import join_multilines
+from pcs.common.str_tools import join_multilines
 from pcs.lib import reports
 from pcs.lib.errors import LibraryError
 

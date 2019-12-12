@@ -422,7 +422,17 @@ class Create(TestCase):
                 operation_list=[],
                 meta_attributes={},
                 instance_attributes={"state": "1"},
-            )
+            ),
+            [
+                fixture.error(
+                    report_codes.RESOURCE_INSTANCE_ATTR_VALUE_NOT_UNIQUE,
+                    instance_attr_name="state",
+                    instance_attr_value="1",
+                    agent_name="ocf:heartbeat:Dummy",
+                    resource_id_list=["B", "X"],
+                    force_code=report_codes.FORCE_OPTIONS,
+                )
+            ],
         )
         self.env_assist.assert_reports([
             fixture.error(
@@ -547,7 +557,7 @@ class Create(TestCase):
                     instance_attr_name="state",
                     instance_attr_value="1",
                     agent_name="ocf:heartbeat:Dummy",
-                    resource_id_list={"B", "X"},
+                    resource_id_list=["B", "X"],
                 )
             ]
         )

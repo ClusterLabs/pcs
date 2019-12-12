@@ -215,7 +215,7 @@ def validate_unique_instance_attributes(
                     attr,
                     instance_attributes[attr],
                     resource_agent.get_name(),
-                    conflicting_resources,
+                    list(conflicting_resources),
                 )
             )
     return report_list

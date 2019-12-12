@@ -2,7 +2,8 @@
 
 from unittest import mock, TestCase
 
-from pcs.cli.common.console_report import(
+# TODO: move tests for these functions to proper location
+from pcs.common.str_tools import(
     format_optional,
     format_plural,
     _is_multiple,
@@ -17,21 +18,7 @@ from pcs.common.fencing_topology import (
 )
 from pcs.common.file import RawFileError
 from pcs.common.reports import ReportItem
-from pcs.common.tools import indent
 from pcs.lib import reports
-
-class IndentTest(TestCase):
-    def test_indent_list_of_lines(self):
-        self.assertEqual(
-            indent([
-                "first",
-                "second"
-            ]),
-            [
-                "  first",
-                "  second"
-            ]
-        )
 
 class NameBuildTest(TestCase):
     """
@@ -632,8 +619,8 @@ class AddSTest(TestCase):
     def test_add_es_ch(self):
         self.assertEqual(_add_s("church"), "churches")
 
-@mock.patch("pcs.cli.common.console_report._add_s")
-@mock.patch("pcs.cli.common.console_report._is_multiple")
+@mock.patch("pcs.common.str_tools._add_s")
+@mock.patch("pcs.common.str_tools._is_multiple")
 class FormatPluralTest(TestCase):
     def test_is_sg(self, mock_is_multiple, mock_add_s):
         mock_is_multiple.return_value = False

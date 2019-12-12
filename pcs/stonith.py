@@ -15,7 +15,7 @@ from pcs.common.fencing_topology import (
     TARGET_TYPE_REGEXP,
     TARGET_TYPE_ATTRIBUTE,
 )
-from pcs.common.tools import indent
+from pcs.common.str_tools import indent
 from pcs.lib.errors import LibraryError
 import pcs.lib.resource_agent as lib_ra
 

@@ -4,7 +4,7 @@ from pcs.cli.common.console_report import (
     format_optional,
     format_plural,
 )
-from pcs.common.tools import format_list
+from pcs.common.str_tools import format_list
 
 def format_booth_default(value, template):
     return "" if value in ("booth", "", None) else template.format(value)

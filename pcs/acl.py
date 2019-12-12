@@ -3,7 +3,7 @@ from pcs import (
     utils,
 )
 from pcs.cli.common.errors import CmdLineInputError
-from pcs.common.tools import indent
+from pcs.common.str_tools import indent
 from pcs.lib.pacemaker.values import is_true
 
 
