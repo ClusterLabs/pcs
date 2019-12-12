@@ -218,7 +218,7 @@ def simulate_cib_xml(runner, cib_xml):
         transitions_file = write_tmpfile(None)
     except EnvironmentError as e:
         raise LibraryError(
-            reports.cib_simulate_error(format_environment_error(e), cib_xml)
+            reports.cib_simulate_error(format_environment_error(e))
         )
 
     cmd = [
@@ -231,7 +231,7 @@ def simulate_cib_xml(runner, cib_xml):
     stdout, stderr, retval = runner.run(cmd, stdin_string=cib_xml)
     if retval != 0:
         raise LibraryError(
-            reports.cib_simulate_error(stderr.strip(), cib_xml)
+            reports.cib_simulate_error(stderr.strip())
         )
 
     try:
@@ -244,7 +244,7 @@ def simulate_cib_xml(runner, cib_xml):
         return stdout, transitions_xml, new_cib_xml
     except EnvironmentError as e:
         raise LibraryError(
-            reports.cib_simulate_error(format_environment_error(e), cib_xml)
+            reports.cib_simulate_error(format_environment_error(e))
         )
 
 def simulate_cib(runner, cib):
@@ -266,7 +266,7 @@ def simulate_cib(runner, cib):
         )
     except (etree.XMLSyntaxError, etree.DocumentInvalid) as e:
         raise LibraryError(
-            reports.cib_simulate_error(str(e), cib_xml)
+            reports.cib_simulate_error(str(e))
         )
 
 ### wait for idle
