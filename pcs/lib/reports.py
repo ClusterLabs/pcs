@@ -2603,6 +2603,7 @@ def unable_to_get_sbd_config(node, reason, severity=ReportItemSeverity.ERROR):
     )
 
 
+# TODO: use generic service reports
 def sbd_enabling_started():
     """
     enabling SBD service started
@@ -2612,6 +2613,7 @@ def sbd_enabling_started():
     )
 
 
+# TODO: use generic service reports
 def sbd_disabling_started():
     """
     disabling SBD service started
@@ -3850,7 +3852,7 @@ def sbd_watchdog_test_multiple_devices():
     available watchdogs, watchdog device to test has to be specified.
     """
     return ReportItem.error(
-        report_codes.SBD_WATCHDOG_TEST_MULTUPLE_DEVICES,
+        report_codes.SBD_WATCHDOG_TEST_MULTIPLE_DEVICES,
     )
 
 

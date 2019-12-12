@@ -3,7 +3,7 @@ from pcs.common.fencing_topology import (
     TARGET_TYPE_NODE,
     TARGET_TYPE_REGEXP,
 )
-from pcs.common import report_codes
+from pcs.common.reports import codes as report_codes
 from pcs.common.reports import has_errors
 from pcs.common.tools import Version
 from pcs.lib.cib import fencing_topology as cib_fencing_topology

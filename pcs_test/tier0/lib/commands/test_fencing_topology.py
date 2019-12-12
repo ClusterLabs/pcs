@@ -7,7 +7,7 @@ from pcs_test.tools.command_env import get_env_tools
 from pcs_test.tools.misc import create_patcher
 from pcs_test.tools.custom_mock import MockLibraryReportProcessor
 
-from pcs.common import report_codes
+from pcs.common.reports import codes as report_codes
 from pcs.common.fencing_topology import (
     TARGET_TYPE_ATTRIBUTE,
     TARGET_TYPE_NODE,

@@ -19,7 +19,6 @@ from pcs.common.reports import (
     ReportItemSeverity,
     ReportProcessor,
 )
-from pcs.lib.errors import LibraryError
 
 
 CODE_BUILDER_MAP = {}

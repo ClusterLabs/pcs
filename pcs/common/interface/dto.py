@@ -1,4 +1,5 @@
 from typing import (
+    Any,
     Iterable,
     Mapping,
     Type,
@@ -51,11 +52,11 @@ def from_dict(cls: Type[DtoType], data: DtoPayload) -> DtoType:
 
 
 class ImplementsToDto:
-    def to_dto(self) -> DataTransferObject:
+    def to_dto(self) -> Any:
         raise NotImplementedError()
 
 
 class ImplementsFromDto:
     @classmethod
-    def from_dto(cls: Type[T], dto_obj: DataTransferObject) -> T:
+    def from_dto(cls: Type[T], dto_obj: Any) -> T:
         raise NotImplementedError()

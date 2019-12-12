@@ -11,6 +11,8 @@ from pcs.common.fencing_topology import TARGET_TYPE_ATTRIBUTE
 from pcs.common.reports import codes
 from pcs.common.str_tools import (
     format_list,
+    format_optional,
+    format_plural,
     indent,
 )
 
@@ -69,71 +71,6 @@ def format_message(message, prefix):
 def error(message):
     sys.stderr.write(format_message(message, "Error: "))
     return SystemExit(1)
-
-def format_optional(value, template, empty_case=""):
-    # Number 0 is considered False which does not suit our needs so we check
-    # for it explicitly. Beware that False == 0 is true, so we must have an
-    # additional check for that (bool is a subclass of int).
-    if (
-        value
-        or
-        (isinstance(value, int) and not isinstance(value, bool) and value == 0)
-    ):
-        return template.format(value)
-    return empty_case
-
-def _is_multiple(what):
-    """
-    Return True if 'what' does not mean one item, False otherwise
-
-    iterable/int what -- this will be counted
-    """
-    retval = False
-    if isinstance(what, int):
-        retval = abs(what) != 1
-    elif not isinstance(what, str):
-        try:
-            retval = len(what) != 1
-        except TypeError:
-            pass
-    return retval
-
-def _add_s(word):
-    """
-    add "s" or "es" to the word based on its ending
-
-    string word -- word where "s" or "es" should be added
-    """
-    if (
-        word[-1:] in ("s", "x", "o")
-        or
-        word[-2:] in ("ss", "sh", "ch")
-    ):
-        return word + "es"
-    return word + "s"
-
-def format_plural(depends_on, singular, plural=None):
-    """
-    Takes the singular word form and returns its plural form if depends_on
-    is not equal to one/contains one item
-
-    iterable/int/string depends_on -- if number (of items) isn't equal to one,
-        returns plural
-    string singular -- singular word (like: is, do, node)
-    string plural -- optional irregular plural form
-    """
-    common_plurals = {
-        "is": "are",
-        "has": "have",
-        "does": "do",
-    }
-    if not _is_multiple(depends_on):
-        return singular
-    if plural:
-        return plural
-    if singular in common_plurals:
-        return common_plurals[singular]
-    return _add_s(singular)
 
 def format_fencing_level_target(target_type, target_value):
     if target_type == TARGET_TYPE_ATTRIBUTE:
@@ -2113,7 +2050,7 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
     codes.SBD_WATCHDOG_TEST_ERROR: lambda info:
         "Unable to initialize test of the watchdog: {reason}".format(**info)
     ,
-    codes.SBD_WATCHDOG_TEST_MULTUPLE_DEVICES:
+    codes.SBD_WATCHDOG_TEST_MULTIPLE_DEVICES:
         "Multiple watchdog devices available, therefore, watchdog which should "
         "be tested has to be specified. To list available watchdog devices use "
         "command 'pcs stonith sbd watchdog list'"

@@ -344,6 +344,20 @@ class BuildRunExternalStartedTest(NameBuildTest):
             )
         )
 
+    def test_insidious_environment(self):
+        self.assert_message_from_report(
+            (
+                "Running: COMMAND\nEnvironment:\n"
+                "  test=a:{green},b:{red}\n"
+                "--Debug Input Start--\n"
+                "STDIN\n"
+                "--Debug Input End--\n"
+            ),
+            reports.run_external_process_started(
+                "COMMAND", "STDIN", {"test": "a:{green},b:{red}",}
+            )
+        )
+
 class RunExternalProcessFinished(NameBuildTest):
     def test_all(self):
         self.assert_message_from_report(
@@ -367,20 +381,6 @@ class RunExternalProcessError(NameBuildTest):
         self.assert_message_from_report(
             "unable to run command com-mand: reason",
             reports.run_external_process_error("com-mand", "reason")
-        )
-
-    def test_insidious_environment(self):
-        self.assert_message_from_report(
-            (
-                "Running: COMMAND\nEnvironment:\n"
-                "  test=a:{green},b:{red}\n"
-                "--Debug Input Start--\n"
-                "STDIN\n"
-                "--Debug Input End--\n"
-            ),
-            reports.run_external_process_started(
-                "COMMAND", "STDIN", {"test": "a:{green},b:{red}",}
-            )
         )
 
 

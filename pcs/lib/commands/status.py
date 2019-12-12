@@ -166,7 +166,7 @@ def _stonith_warnings(
                 "Following stonith devices have the 'action' option set, "
                 "it is recommended to set {0} instead: {1}"
             ).format(
-                format_list(STONITH_ACTION_REPLACED_BY),
+                format_list(list(STONITH_ACTION_REPLACED_BY)),
                 format_list([x.get("id", "") for x in stonith_with_action]),
             )
         )

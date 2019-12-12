@@ -1,8 +1,23 @@
 from collections import namedtuple
 from enum import Enum
 import threading
+from typing import (
+    MutableSet,
+    TypeVar,
+)
 
 from lxml import etree
+
+
+T = TypeVar("T", bound=type)
+
+
+def get_all_subclasses(cls: T) -> MutableSet[T]:
+    subclasses = set(cls.__subclasses__())
+    return subclasses.union(
+        {s for c in subclasses for s in get_all_subclasses(c)}
+    )
+
 
 def run_parallel(worker, data_list):
     thread_list = []
