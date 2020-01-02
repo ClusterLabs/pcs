@@ -18,34 +18,37 @@ class SessionPoolLifetime < Rack::Session::Pool
     with_lock(env) do
       now = Time.now()
       # delete the session if expired
-      if @default_options[:expire_after] and sid and @pool_timestamp[sid] and
-        @pool_timestamp[sid] < (now - @default_options[:expire_after])
+      if @default_options[:expire_after] and sid and
+        get_timestamp_with_fallback(sid) and
+        get_timestamp_with_fallback(sid) < (now - @default_options[:expire_after])
       then
-        delete_session(sid)
+        delete_session(sid.private_id)
+        delete_session(sid.public_id)
       end
       # create new session if nonexistent
-      unless sid and session = @pool[sid]
+      unless sid and session = get_session_with_fallback(sid)
         sid, session = generate_sid, {}
-        @pool.store sid, session
+        @pool.store sid.private_id, session
       end
       # bump session's access time
-      @pool_timestamp[sid] = now
+      @pool_timestamp[sid.private_id] = now
       [sid, session]
     end
   end
 
   def set_session(env, session_id, new_session, options)
     with_lock(env) do
-      @pool.store session_id, new_session
+      @pool.store session_id.private_id, new_session
       # bump session's access time
-      @pool_timestamp[session_id] = Time.now()
+      @pool_timestamp[session_id.private_id] = Time.now()
       session_id
     end
   end
 
   def destroy_session(env, session_id, options)
     with_lock(env) do
-      delete_session(session_id)
+      delete_session(session_id.private_id)
+      delete_session(session_id.public_id)
       generate_sid unless options[:drop]
     end
   end
@@ -69,6 +72,10 @@ class SessionPoolLifetime < Rack::Session::Pool
   def delete_session(sid)
     @pool.delete(sid)
     @pool_timestamp.delete(sid)
+  end
+
+  def get_timestamp_with_fallback(sid)
+    @pool_timestamp[sid.private_id] || @pool_timestamp[sid.public_id]
   end
 end
 
