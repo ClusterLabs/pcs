@@ -21,7 +21,7 @@ build_gems_without_bundler:
 	vendor/cache/json-2.1.0.gem \
 	vendor/cache/mustermann-1.0.3.gem \
 	vendor/cache/open4-1.3.4.gem \
-	vendor/cache/rack-2.0.6.gem \
+	vendor/cache/rack-2.0.8.gem \
 	vendor/cache/rack-protection-2.0.4.gem \
 	vendor/cache/rack-test-1.1.0.gem \
 	vendor/cache/sinatra-2.0.4.gem \
