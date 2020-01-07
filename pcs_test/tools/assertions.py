@@ -324,6 +324,7 @@ def assert_report_item_list_equal(
     real_report_item_list, expected_report_info_list, hint=""
 ):
     remaining_expected_report_info_list = expected_report_info_list[:]
+    duplicate_report_item_is_missing = False
     for real_report_item in real_report_item_list:
         found_report_info = __find_report_info(
             expected_report_info_list,
@@ -336,8 +337,11 @@ def assert_report_item_list_equal(
                 real_report_item,
                 real_report_item_list,
             )
-        remaining_expected_report_info_list.remove(found_report_info)
-    if remaining_expected_report_info_list:
+        if found_report_info in remaining_expected_report_info_list:
+            remaining_expected_report_info_list.remove(found_report_info)
+        else:
+            duplicate_report_item_is_missing = True
+    if remaining_expected_report_info_list or duplicate_report_item_is_missing:
         def format_items(item_type, item_list):
             caption = "{0} ReportItems({1})".format(item_type, len(item_list))
             return "{0}\n{1}\n{2}".format(
