@@ -1,5 +1,14 @@
 from collections import Counter
-from typing import cast, Container, Dict, Iterable, Sequence
+from typing import (
+    cast,
+    Container,
+    Dict,
+    Iterable,
+    List,
+    Sequence,
+    Tuple,
+    Union,
+)
 from xml.etree.ElementTree import Element
 
 from lxml import etree
@@ -71,6 +80,14 @@ def _validate_reference_ids_are_resources(
     resources_section -- element resources
     idref_list -- reference ids to validate
     """
+    # list for emptiness check (issue with some iterables like iterator)
+    idref_list = list(idref_list)
+    if not idref_list:
+        return [
+            ReportItem.error(
+                reports.messages.TagCannotCreateEmptyTagNoIdsSpecified()
+            )
+        ]
     report_list: ReportItemList = []
     find_resources_and_report(
         resources_section,
@@ -80,13 +97,13 @@ def _validate_reference_ids_are_resources(
     return report_list
 
 def validate_create_tag(
-        resources_section: Element,
-        tag_id: str,
-        idref_list: Sequence[str],
-        id_provider: IdProvider,
+    resources_section: Element,
+    tag_id: str,
+    idref_list: Sequence[str],
+    id_provider: IdProvider,
 ) -> ReportItemList:
     """
-    Validation function for 'pcs tag create' command.
+    Validation function for tag creation.
 
     resources_section -- element resources
     tag_id -- identifier of new tag
@@ -106,22 +123,111 @@ def validate_create_tag(
         _validate_duplicate_reference_ids(idref_list)
     )
 
-def validate_tag_ids_exist(
-    tags_section: Element,
-    tag_id_list: Iterable[str],
+def validate_remove_tag(
+    constraint_section: Element,
+    to_remove_tag_list: Iterable[str],
 ) -> ReportItemList:
     """
-    Validate that given tag ids exist in cib.
+    Validation function for tag removal.
+
+    constraint_section -- element constraints
+    to_remove_tag_list -- list of tag ids for removal
+    """
+    # list for emptiness check (issue with some iterables like iterator)
+    to_remove_tag_list = list(to_remove_tag_list)
+    if not to_remove_tag_list:
+        return [
+            ReportItem.error(
+                reports.messages.TagCannotRemoveTagsNoTagsSpecified()
+            )
+        ]
+    report_list = []
+    for tag_id in to_remove_tag_list:
+        constraint_list = find_constraints_referencing_tag(
+            constraint_section,
+            tag_id,
+        )
+        if constraint_list:
+            report_list.append(
+                ReportItem.error(
+                    reports.messages.TagCannotRemoveTagReferencedInConstraints(
+                        tag_id,
+                        [elem.get("id", "") for elem in constraint_list],
+                    )
+                )
+            )
+    return report_list
+
+def find_constraints_referencing_tag(
+    constraints_section: Element,
+    tag_id: str,
+) -> Iterable[Element]:
+    """
+    Find constraint elements which are referencing specified tag.
+
+    constraints_section -- element constraints
+    tag_id -- tag id
+    """
+    constraint_list = cast(_Element, constraints_section).xpath(
+        """
+        ./rsc_colocation[
+            not (descendant::resource_set)
+            and
+            (@rsc="{_id}" or @with-rsc="{_id}")
+        ]
+        |
+        ./rsc_location[
+            not (descendant::resource_set)
+            and
+            @rsc="{_id}"
+        ]
+        |
+        ./rsc_order[
+            not (descendant::resource_set)
+            and
+            (@first="{_id}" or @then="{_id}")
+        ]
+        |
+        ./rsc_ticket[
+            not (descendant::resource_set)
+            and
+            @rsc="{_id}"
+        ]
+        |
+        (./rsc_colocation|./rsc_location|./rsc_order|./rsc_ticket)[
+            ./resource_set/resource_ref[@id="{_id}"]
+        ]
+        |
+        (./rsc_colocation|./rsc_location|./rsc_order|./rsc_ticket)[
+            ./resource_set[@id-ref="{_id}"]
+        ]
+        |
+        ./rsc_location[./rule[@id-ref="{_id}"]]
+        """.format(_id=tag_id)
+    )
+    return cast(Iterable[Element], constraint_list)
+
+def find_tag_elements_by_ids(
+    tags_section: Element,
+    tag_id_list: Iterable[str],
+) -> Tuple[List[Element], ReportItemList]:
+    """
+    Try to find tag elements by ids and return them with non-empty report
+    list in case of errors.
 
     tags_section -- element tags
     tag_id_list -- list of tag indentifiers
     """
+    element_list = []
     report_list: ReportItemList = []
     for tag_id in tag_id_list:
         searcher = ElementSearcher(TAG_TAG, tag_id, tags_section)
-        if not searcher.element_found():
+        if searcher.element_found():
+            element_list.append(searcher.get_element())
+        else:
             report_list.extend(searcher.get_errors())
-    return report_list
+
+    return element_list, report_list
 
 def create_tag(
     tags_section: Element,
@@ -141,30 +247,46 @@ def create_tag(
         etree.SubElement(tag_el, TAG_OBJREF, id=ref_id)
     return cast(Element, tag_el)
 
-def get_list_of_tags(
-    tags_section: Element,
-    tag_filter: Sequence[str],
-) -> Iterable[Dict[str, Iterable[str]]]:
+def remove_tag(
+    tag_elements: Iterable[Element],
+) -> None:
     """
-    Returns list of tag structures optionally filtered.
+    Remove given tag elements from a cib.
+
+    tag_elements -- list of tag elements for the removal
+    """
+    for _element in tag_elements:
+        element = cast(_Element, _element)
+        parent = element.getparent()
+        if parent is not None:
+            parent.remove(element)
+
+def get_list_of_tag_elements(tags_section: Element) -> List[Element]:
+    """
+    Get list of tag elements from cib.
 
     tags_section -- element tags
-    tag_filter -- optional list of tags or empty list
-
-    [
-        {
-            "tag_id": "tag1",
-            "idref_list": ["i1", "i2"],
-        },
-        ...
-    ]
     """
-    return [
-        {
-            # NOTE: .get("id", default="") for typing  there always be an id
-            "tag_id": tag.get("id", default=""),
-            "idref_list": [obj_ref.get("id", default="") for obj_ref in tag],
-        }
-        for tag in tags_section
-        if not tag_filter or tag.get("id", default="") in tag_filter
-    ]
+    return tags_section.findall("tag")
+
+def tag_element_to_dict(
+    tag_element: Element,
+) -> Dict[str, Union[str, Iterable[str]]]:
+    """
+    Convert tag element to the dict structure
+
+    tag_element -- single tag element that contains obj_ref elements
+
+    {
+        "tag_id": "tag1",
+        "idref_list": ["i1", "i2"],
+    },
+    """
+    return {
+        # NOTE: .get("id", default="") for typing  there always be an id
+        "tag_id": tag_element.get("id", default=""),
+        "idref_list": [
+            obj_ref.get("id", default="")
+            for obj_ref in tag_element.findall("obj_ref")
+        ],
+    }

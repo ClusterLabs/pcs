@@ -40,3 +40,17 @@ def tag_config(
         lines.append(tag["tag_id"])
         lines.extend(indent(tag["idref_list"]))
     print("\n".join(lines))
+
+def tag_remove(
+    lib: Any,
+    argv: Sequence[str],
+    modifiers: InputModifiers,
+) -> None:
+    """
+    Options:
+      * -f - CIB file
+    """
+    modifiers.ensure_only_supported("-f")
+    if len(argv) < 1:
+        raise CmdLineInputError()
+    lib.tag.remove(argv)

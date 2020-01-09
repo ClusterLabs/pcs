@@ -4498,6 +4498,44 @@ class TagCannotContainItself(NameBuildTest):
         )
 
 
+class TagCannotCreateEmptyTagNoIdsSpecified(NameBuildTest):
+    def test_message(self):
+        self.assert_message_from_report(
+            "Cannot create empty tag, no resource ids specified",
+            reports.TagCannotCreateEmptyTagNoIdsSpecified()
+        )
+
+
+class TagCannotRemoveTagReferencedInConstraints(NameBuildTest):
+    def test_message_singular(self):
+        self.assert_message_from_report(
+            "Tag 'tag1' cannot be removed because it is referenced in "
+            "constraint 'constraint-id-1'",
+            reports.TagCannotRemoveTagReferencedInConstraints(
+                "tag1",
+                ['constraint-id-1'],
+            )
+        )
+
+    def test_message_plural(self):
+        self.assert_message_from_report(
+            "Tag 'tag2' cannot be removed because it is referenced in "
+            "constraints 'constraint-id-1', 'constraint-id-2'",
+            reports.TagCannotRemoveTagReferencedInConstraints(
+                "tag2",
+                ["constraint-id-1", "constraint-id-2"],
+            )
+        )
+
+
+class TagCannotRemoveTagsNoTagsSpecified(NameBuildTest):
+    def test_message(self):
+        self.assert_message_from_report(
+            "Cannot remove tags, no tags to remove specified",
+            reports.TagCannotRemoveTagsNoTagsSpecified()
+        )
+
+
 class TagIdsDuplication(NameBuildTest):
     def test_message(self):
         self.assert_message_from_report(

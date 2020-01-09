@@ -2133,8 +2133,17 @@ Usage: pcs tag <command>
 Manage pacemaker tags.
 
 Commands:
+    [config|list [<tag id>...]]
+        Display configured tags.
+
     create <tag id> <id> [<id>]...
         Create a tag containing the specified ids.
+
+    delete <tag id>...
+        Delete specified tags.
+
+    remove <tag id>...
+        Delete specified tags.
 """
     if pout:
         print(sub_usage(args, output))

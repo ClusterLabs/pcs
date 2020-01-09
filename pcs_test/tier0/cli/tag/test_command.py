@@ -120,3 +120,27 @@ class TagConfig(TestCase):
             self._call_cmd(["something"])
         self.tag.config.assert_called_once_with(["something"])
         mock_print.assert_not_called()
+
+
+class TagRemove(TestCase):
+    def setUp(self):
+        self.lib = mock.Mock(spec_set=["tag"])
+        self.tag = mock.Mock(spec_set=["remove"])
+        self.lib.tag = self.tag
+
+    def _call_cmd(self, argv):
+        command.tag_remove(self.lib, argv, dict_to_modifiers({}))
+
+    def test_no_args(self):
+        with self.assertRaises(CmdLineInputError) as cm:
+            self._call_cmd([])
+        self.assertIsNone(cm.exception.message)
+        self.tag.remove.assert_not_called()
+
+    def test_minimum_args(self):
+        self._call_cmd(["arg1"])
+        self.tag.remove.assert_called_once_with(["arg1"])
+
+    def test_more_args(self):
+        self._call_cmd(["arg1", "arg2"])
+        self.tag.remove.assert_called_once_with(["arg1", "arg2"])

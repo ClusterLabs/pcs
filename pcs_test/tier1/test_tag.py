@@ -283,12 +283,12 @@ class TagConfigListBase(TestTagMixin):
             f"tag {self.command} tag2 tag1",
             dedent(
                 """\
+                tag2
+                  idy-01
                 tag1
                   idx-01
                   idx-02
                   idx-03
-                tag2
-                  idy-01
                 """
             ),
         )
@@ -297,7 +297,6 @@ class TagConfigListBase(TestTagMixin):
 class TagConfig(
     TagConfigListBase,
     TestCase,
-
 ):
     command = "config"
 
@@ -305,7 +304,6 @@ class TagConfig(
 class TagList(
     TagConfigListBase,
     TestCase,
-
 ):
     command = "list"
 
@@ -391,3 +389,118 @@ class PcsConfigTagsTest(TestTagMixin, TestCase):
                 tags=self.expected_tags,
             ),
         )
+
+
+class TagRemoveDeleteBase(TestTagMixin):
+    command = None
+
+    def fixture_tags(self, number):
+        self.fixture_dummy_resource("dummy")
+        for i in range(1, number + 1):
+            self.assert_pcs_success(f"tag create tag{i} dummy")
+
+    def test_remove_not_enough_arguments(self):
+        self.fixture_tags(1)
+        self.assert_pcs_fail(
+            f"tag {self.command}",
+            stdout_start="\nUsage: pcs tag <command>",
+        )
+        self.assert_resources_xml_in_cib(
+            """
+            <tags>
+              <tag id="tag1">
+                <obj_ref id="dummy"/>
+              </tag>
+            </tags>
+            """
+        )
+
+    def test_remove_nonexistent_tags(self):
+        self.assert_pcs_fail(
+            f"tag {self.command} tag",
+            (
+                "Error: tag 'tag' does not exist\n"
+                "Error: Errors have occurred, therefore pcs is unable to "
+                "continue\n"
+            ),
+        )
+        self.fixture_tags(1)
+        self.assert_pcs_fail(
+            f"tag {self.command} ta tag",
+            (
+                "Error: tag 'ta' does not exist\n"
+                "Error: tag 'tag' does not exist\n"
+                "Error: Errors have occurred, therefore pcs is unable to "
+                "continue\n"
+            ),
+        )
+        self.assert_resources_xml_in_cib(
+            """
+            <tags>
+              <tag id="tag1">
+                <obj_ref id="dummy"/>
+              </tag>
+            </tags>
+            """
+        )
+
+    def test_remove_single_tag(self):
+        self.fixture_tags(1)
+        self.assert_effect(
+            f"tag {self.command} tag1",
+            """
+            <tags/>
+            """,
+        )
+
+    def test_remove_one_tag(self):
+        self.fixture_tags(2)
+        self.assert_effect(
+            f"tag {self.command} tag1",
+            """
+            <tags>
+              <tag id="tag2">
+                <obj_ref id="dummy"/>
+              </tag>
+            </tags>
+            """,
+        )
+
+    def test_remove_more_tags(self):
+        self.fixture_tags(4)
+        self.assert_effect(
+            f"tag {self.command} tag2 tag3",
+            """
+            <tags>
+              <tag id="tag1">
+                <obj_ref id="dummy"/>
+              </tag>
+              <tag id="tag4">
+                <obj_ref id="dummy"/>
+              </tag>
+            </tags>
+            """,
+        )
+
+    def test_remove_all_tags(self):
+        self.fixture_tags(5)
+        self.assert_effect(
+            f"tag {self.command} tag1 tag2 tag3 tag4 tag5",
+            """
+            <tags/>
+            """,
+        )
+
+
+class TagRemove(
+    TagRemoveDeleteBase,
+    TestCase,
+):
+    command = "remove"
+
+
+class TagDelete(
+    TagRemoveDeleteBase,
+    TestCase,
+):
+    command = "delete"

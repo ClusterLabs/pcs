@@ -9,6 +9,7 @@ from pcs_test.tools.command_env import get_env_tools
 
 from pcs.lib.commands import tag as cmd_tag
 
+
 class TestTagConfig(TestCase):
     tag_dicts_list = [
         {
@@ -23,13 +24,10 @@ class TestTagConfig(TestCase):
     def setUp(self):
         self.env_assist, self.config = get_env_tools(self)
         self.config.runner.cib.load(
-            filename="cib-empty.xml",
-            append={
-                ".//configuration": fixture_tags_xml([
-                    ("tag1", ("i1", "i2")),
-                    ("tag2", ("j1", "j2")),
-                 ]),
-            },
+            tags=fixture_tags_xml([
+                ("tag1", ("i1", "i2")),
+                ("tag2", ("j1", "j2")),
+             ]),
             resources=fixture_resources_for_ids(),
         )
 

@@ -457,9 +457,11 @@ def load_module(env, middleware_factory, name):
             env,
             middleware.build(middleware_factory.cib),
             {
-                "create": tag.create,
                 "config": tag.config,
+                "create": tag.create,
+                "delete": tag.remove,
                 "list": tag.config,
+                "remove": tag.remove,
             }
         )
 

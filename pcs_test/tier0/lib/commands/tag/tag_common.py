@@ -21,3 +21,16 @@ def fixture_tags_xml(tag_with_ids):
         +
         '</tags>'
     )
+
+def fixture_constraints_for_tags(tag_list):
+    return (
+        '<constraints>'
+        +
+        ''.join(
+            f"<rsc_location id='location-{tag}' rsc='{tag}' node='nodeN' "
+            "score='100'/>"
+            for tag in tag_list
+        )
+        +
+        '</constraints>'
+    )

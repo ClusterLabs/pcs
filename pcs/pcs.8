@@ -1073,8 +1073,17 @@ destroy
 Permanently destroy disaster-recovery configuration on all sites.
 .SS "tag"
 .TP
+[config|list [<tag id>...]]
+Display configured tags.
+.TP
 create <tag id> <id> [<id>]...
 Create a tag containing the specified ids.
+.TP
+delete <tag id>...
+Delete specified tags.
+.TP
+remove <tag id>...
+Delete specified tags.
 .SH EXAMPLES
 .TP
 Show all resources

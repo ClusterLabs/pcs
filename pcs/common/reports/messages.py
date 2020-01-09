@@ -6151,10 +6151,11 @@ class BoothTicketOperationFailed(ReportItemMessage):
             f" for site '{self.site_ip}', reason: {self.reason}"
         )
 
+
 @dataclass(frozen=True)
 class TagCannotContainItself(ReportItemMessage):
     """
-    List of object reference ids contains same id as specified tag_id.
+    List of object reference ids contains the same id as specified tag_id.
     """
 
     _code = codes.TAG_CANNOT_CONTAIN_ITSELF
@@ -6162,6 +6163,57 @@ class TagCannotContainItself(ReportItemMessage):
     @property
     def message(self) -> str:
         return "Tag cannot contain itself"
+
+
+@dataclass(frozen=True)
+class TagCannotCreateEmptyTagNoIdsSpecified(ReportItemMessage):
+    """
+    Cannot create empty tag, no reference ids were specified.
+    """
+
+    _code = codes.TAG_CANNOT_CREATE_EMPTY_TAG_NO_IDS_SPECIFIED
+
+    @property
+    def message(self) -> str:
+        return "Cannot create empty tag, no reference ids specified"
+
+
+@dataclass(frozen=True)
+class TagCannotRemoveTagReferencedInConstraints(ReportItemMessage):
+    """
+    Cannot remove tag which is referenced in constraints.
+
+    tag_id -- tag id
+    constraint_id_list -- list of constraint ids which are referencing tag
+    """
+
+    tag_id: str
+    constraint_id_list: List[str]
+    _code = codes.TAG_CANNOT_REMOVE_TAG_REFERENCED_IN_CONSTRAINTS
+
+    @property
+    def message(self) -> str:
+        return (
+            "Tag '{tag_id}' cannot be removed because it is referenced in "
+            "{constraints} {constraint_id_list}"
+        ).format(
+            tag_id=self.tag_id,
+            constraints=format_plural(self.constraint_id_list, "constraint"),
+            constraint_id_list=format_list(self.constraint_id_list),
+        )
+
+
+@dataclass(frozen=True)
+class TagCannotRemoveTagsNoTagsSpecified(ReportItemMessage):
+    """
+    Cannot remove tags, no tags were specified.
+    """
+
+    _code = codes.TAG_CANNOT_REMOVE_TAGS_NO_TAGS_SPECIFIED
+
+    @property
+    def message(self) -> str:
+        return "Cannot remove tags, no tags to remove specified"
 
 
 @dataclass(frozen=True)

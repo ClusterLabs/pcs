@@ -18,12 +18,11 @@ class TestTagCreate(TestCase):
     def setUp(self):
         self.env_assist, self.config = get_env_tools(self)
         self.config.runner.cib.load(
-            filename="cib-empty.xml",
             resources=fixture_resources_for_ids(),
         )
 
     def test_success_create(self):
-        self.config.env.push_cib(append={".//configuration": TAG1_ID1_ID2})
+        self.config.env.push_cib(tags=TAG1_ID1_ID2)
         cmd_tag.create(self.env_assist.get_env(), "tag1", ["id1", "id2"])
 
     def test_success_create_cib_upgrade(self):
@@ -34,7 +33,7 @@ class TestTagCreate(TestCase):
             before="runner.cib.load",
         )
         self.config.runner.cib.upgrade(before="runner.cib.load")
-        self.config.env.push_cib(append={".//configuration": TAG1_ID1_ID2})
+        self.config.env.push_cib(tags=TAG1_ID1_ID2)
         cmd_tag.create(self.env_assist.get_env(), "tag1", ["id1", "id2"])
         self.env_assist.assert_reports([
             fixture.info(report_codes.CIB_UPGRADE_SUCCESSFUL),
