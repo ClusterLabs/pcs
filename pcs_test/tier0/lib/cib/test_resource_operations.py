@@ -9,7 +9,7 @@ from pcs_test.tools.misc import create_patcher
 
 from pcs.common import report_codes
 from pcs.lib.cib.resource import operations
-from pcs.lib.errors import ReportItemSeverity as severities
+from pcs.common.reports import ReportItemSeverity as severities
 from pcs.lib.validate import ValuePair
 
 # pylint: disable=no-self-use
@@ -42,6 +42,9 @@ class Prepare(TestCase):
         ]
 
         report_processor = mock.MagicMock()
+        report_processor.report_list.return_value = report_processor
+        report_processor.has_errors = False
+
         raw_operation_list = [
             {"name": "Start"},
             {"name": "Monitor"},
@@ -80,7 +83,7 @@ class Prepare(TestCase):
             normalized_to_operations.return_value,
             default_operation_list
         )
-        report_processor.process_list.assert_called_once_with([
+        report_processor.report_list.assert_called_once_with([
             "options_report",
             "different_interval_report",
         ])

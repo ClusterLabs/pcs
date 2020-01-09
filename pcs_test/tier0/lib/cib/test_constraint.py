@@ -12,8 +12,8 @@ from pcs_test.tools.assertions import (
 )
 
 from pcs.common import report_codes
+from pcs.common.reports import ReportItemSeverity as severities
 from pcs.lib.cib.constraint import constraint
-from pcs.lib.errors import ReportItemSeverity as severities
 
 # pylint: disable=no-self-use, redundant-keyword-arg
 
@@ -251,17 +251,23 @@ class CheckIsWithoutDuplicationTest(TestCase):
                 fixture_constraint_section(["duplicate_element"]), element,
                 are_duplicate=lambda e1, e2: True,
                 export_element=constraint.export_with_set,
-            ),
-            (
-                severities.ERROR,
-                report_codes.DUPLICATE_CONSTRAINTS_EXIST,
-                {
-                    'constraint_info_list': ['exported_duplicate_element'],
-                    'constraint_type': 'constraint_type'
-                },
-                report_codes.FORCE_CONSTRAINT_DUPLICATE
-            ),
+            )
         )
+        assert_report_item_list_equal(
+            report_processor.report_item_list,
+            [
+                (
+                    severities.ERROR,
+                    report_codes.DUPLICATE_CONSTRAINTS_EXIST,
+                    {
+                        'constraint_info_list': ['exported_duplicate_element'],
+                        'constraint_type': 'constraint_type'
+                    },
+                    report_codes.FORCE_CONSTRAINT_DUPLICATE
+                )
+            ]
+        )
+
     def test_success_when_no_duplication_found(self, export_with_set):
         export_with_set.return_value = "exported_duplicate_element"
         element = mock.MagicMock()

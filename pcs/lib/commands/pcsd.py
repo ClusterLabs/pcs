@@ -1,15 +1,15 @@
 from pcs import settings
 from pcs.common import file_type_codes
 from pcs.common.file import RawFileError
-from pcs.common.reports import SimpleReportProcessor
 from pcs.common.tools import format_environment_error
 from pcs.lib import reports
 from pcs.lib.communication.nodes import SendPcsdSslCertAndKey
 from pcs.lib.communication.tools import run_and_raise
+from pcs.lib.env import LibraryEnvironment
 from pcs.lib.errors import LibraryError
 from pcs.lib.node import get_existing_nodes_names
 
-def synchronize_ssl_certificate(env, skip_offline=False):
+def synchronize_ssl_certificate(env: LibraryEnvironment, skip_offline=False):
     """
     Send the local pcsd SSL cert and key to all full nodes in the local cluster.
 
@@ -22,7 +22,7 @@ def synchronize_ssl_certificate(env, skip_offline=False):
     depends on the corosanc.conf file being present on the local node) so we
     send the cert only to corossync (== full stack) nodes.
     """
-    report_processor = SimpleReportProcessor(env.report_processor)
+    report_processor = env.report_processor
     target_factory = env.get_node_target_factory()
     cluster_nodes_names, report_list = get_existing_nodes_names(
         env.get_corosync_conf()
@@ -67,7 +67,7 @@ def synchronize_ssl_certificate(env, skip_offline=False):
     if report_processor.has_errors:
         raise LibraryError()
 
-    env.report_processor.process(
+    env.report_processor.report(
         reports.pcsd_ssl_cert_and_key_distribution_started(
             [target.label for target in target_list]
         )

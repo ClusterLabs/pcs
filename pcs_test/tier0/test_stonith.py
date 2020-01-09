@@ -23,9 +23,14 @@ from pcs_test.tools.pcs_runner import (
     PcsRunner,
 )
 
-# pylint: disable=invalid-name, line-too-long, bad-whitespace, anomalous-backslash-in-string
+# pylint: disable=invalid-name
+# pylint: disable=line-too-long
+# pylint: disable=bad-whitespace
 
 PCMK_2_0_3_PLUS = is_minimum_pacemaker_version(2, 0, 3)
+ERRORS_HAVE_OCURRED = (
+    "Error: Errors have occurred, therefore pcs is unable to continue\n"
+)
 STONITH_TMP = rc("test_stonith")
 if not os.path.exists(STONITH_TMP):
     os.makedirs(STONITH_TMP)
@@ -135,7 +140,11 @@ class StonithTest(TestCase, AssertPcsMixin):
 
         self.assert_pcs_fail(
             "stonith create test2 fence_apc",
-            "Error: required stonith options 'ip', 'username' are missing, use --force to override\n"
+            (
+                "Error: required stonith options 'ip', 'username' are missing, "
+                    "use --force to override\n"
+                + ERRORS_HAVE_OCURRED
+            )
         )
 
         self.assert_pcs_success(
@@ -151,7 +160,11 @@ class StonithTest(TestCase, AssertPcsMixin):
 
         self.assert_pcs_fail(
             "stonith create test9 fence_apc pcmk_status_action=xxx",
-            "Error: required stonith options 'ip', 'username' are missing, use --force to override\n"
+            (
+                "Error: required stonith options 'ip', 'username' are missing, "
+                    "use --force to override\n"
+                + ERRORS_HAVE_OCURRED
+            )
         )
 
         self.assert_pcs_success(
@@ -174,7 +187,11 @@ class StonithTest(TestCase, AssertPcsMixin):
 
         self.assert_pcs_fail(
             "stonith create test3 fence_ilo ip=test",
-            "Error: required stonith option 'username' is missing, use --force to override\n"
+            (
+                "Error: required stonith option 'username' is missing, use "
+                    "--force to override\n"
+                + ERRORS_HAVE_OCURRED
+            )
         )
 
         self.assert_pcs_success(
@@ -286,8 +303,11 @@ class StonithTest(TestCase, AssertPcsMixin):
         # 'ipaddr' and 'login' are obsoleted by 'ip' and 'username'
         self.assert_pcs_fail(
             "stonith create test2 fence_apc",
-            "Error: required stonith options 'ip', 'username' are missing, "
-                "use --force to override\n"
+            (
+                "Error: required stonith options 'ip', 'username' are missing, "
+                    "use --force to override\n"
+                + ERRORS_HAVE_OCURRED
+            )
         )
 
     def test_stonith_create_deprecated_and_obsoleting(self):
@@ -357,9 +377,12 @@ class StonithTest(TestCase, AssertPcsMixin):
     def test_stonith_create_action(self):
         self.assert_pcs_fail(
             "stonith create test fence_apc ip=i username=u action=a",
-            "Error: stonith option 'action' is deprecated and should not be"
-                " used, use pcmk_off_action, pcmk_reboot_action instead,"
-                " use --force to override\n"
+            (
+                "Error: stonith option 'action' is deprecated and should not be"
+                    " used, use pcmk_off_action, pcmk_reboot_action instead,"
+                    " use --force to override\n"
+                + ERRORS_HAVE_OCURRED
+            )
         )
 
         self.assert_pcs_success(
@@ -895,30 +918,53 @@ class LevelAdd(LevelTestsBase):
         self.fixture_stonith_resource("F1")
         self.assert_pcs_fail(
             "stonith level add NaN rh7-1 F1",
-            "Error: 'NaN' is not a valid level value, use a positive integer\n"
+            (
+                "Error: 'NaN' is not a valid level value, use a positive "
+                    "integer\n"
+                + ERRORS_HAVE_OCURRED
+            )
         )
         self.assert_pcs_fail(
             "stonith level add -10 rh7-1 F1",
-            "Error: '-10' is not a valid level value, use a positive integer\n"
+            (
+                "Error: '-10' is not a valid level value, use a positive "
+                    "integer\n"
+                + ERRORS_HAVE_OCURRED
+            )
         )
         self.assert_pcs_fail(
             "stonith level add 10abc rh7-1 F1",
-            "Error: '10abc' is not a valid level value, use a positive integer\n"
+            (
+                "Error: '10abc' is not a valid level value, use a positive "
+                    "integer\n"
+                + ERRORS_HAVE_OCURRED
+            )
         )
         self.assert_pcs_fail(
             "stonith level add 0 rh7-1 F1",
-            "Error: '0' is not a valid level value, use a positive integer\n"
+            (
+                "Error: '0' is not a valid level value, use a positive "
+                    "integer\n"
+                + ERRORS_HAVE_OCURRED
+            )
         )
         self.assert_pcs_fail(
             "stonith level add 000 rh7-1 F1",
-            "Error: '000' is not a valid level value, use a positive integer\n"
+            (
+                "Error: '000' is not a valid level value, use a positive "
+                "integer\n"
+                + ERRORS_HAVE_OCURRED
+            )
         )
 
     def test_add_bad_device(self):
         self.assert_pcs_fail(
             "stonith level add 1 rh7-1 dev@ce",
-            "Error: invalid device id 'dev@ce', '@' is not a valid character "
-                "for a device id\n"
+            (
+                "Error: invalid device id 'dev@ce', '@' is not a valid "
+                    "character for a device id\n"
+                + ERRORS_HAVE_OCURRED
+            )
         )
 
     def test_add_more_errors(self):
@@ -931,7 +977,7 @@ class LevelAdd(LevelTestsBase):
                 Error: invalid device id 'dev@ce', '@' is not a valid character for a device id
                 Error: Stonith resource(s) 'F0' do not exist, use --force to override
                 """
-            )
+            ) + ERRORS_HAVE_OCURRED
         )
 
         self.assert_pcs_fail(
@@ -940,6 +986,7 @@ class LevelAdd(LevelTestsBase):
                 """\
                 Error: 'x' is not a valid level value, use a positive integer
                 Error: invalid device id 'dev@ce', '@' is not a valid character for a device id
+                Error: Errors have occurred, therefore pcs is unable to continue
                 Warning: Node 'rh7-X' does not appear to exist in configuration
                 Warning: Stonith resource(s) 'F0' do not exist
                 """
@@ -974,8 +1021,11 @@ class LevelAdd(LevelTestsBase):
 
         self.assert_pcs_fail(
             "stonith level add 1 rh7-1 F1",
-            "Error: Fencing level for 'rh7-1' at level '1' with device(s) "
-                "'F1' already exists\n"
+            (
+                "Error: Fencing level for 'rh7-1' at level '1' with device(s) "
+                    "'F1' already exists\n"
+                + ERRORS_HAVE_OCURRED
+            )
         )
         self.assert_pcs_success(
             "stonith level",
@@ -1002,8 +1052,11 @@ class LevelAdd(LevelTestsBase):
 
         self.assert_pcs_fail(
             r"stonith level add 1 regexp%rh7-\d F1",
-            r"Error: Fencing level for 'rh7-\d' at level '1' with device(s) "
-                "'F1' already exists\n"
+            (
+                r"Error: Fencing level for 'rh7-\d' at level '1' with device(s) "
+                    "'F1' already exists\n"
+                + ERRORS_HAVE_OCURRED
+            )
         )
         self.assert_pcs_success(
             "stonith level",
@@ -1033,8 +1086,11 @@ class LevelAdd(LevelTestsBase):
 
         self.assert_pcs_fail(
             "stonith level add 1 attrib%fencewith=levels F1",
-            "Error: Fencing level for 'fencewith=levels' at level '1' with "
-                "device(s) 'F1' already exists\n"
+            (
+                "Error: Fencing level for 'fencewith=levels' at level '1' with "
+                    "device(s) 'F1' already exists\n"
+                + ERRORS_HAVE_OCURRED
+            )
         )
         self.assert_pcs_success(
             "stonith level",
@@ -1105,8 +1161,11 @@ class LevelAdd(LevelTestsBase):
         self.fixture_stonith_resource("F1")
         self.assert_pcs_fail(
             "stonith level add 1 rh7-X F1",
-            "Error: Node 'rh7-X' does not appear to exist in configuration"
-                ", use --force to override\n"
+            (
+                "Error: Node 'rh7-X' does not appear to exist in configuration"
+                    ", use --force to override\n"
+                + ERRORS_HAVE_OCURRED
+            )
         )
         self.assert_pcs_success(
             "stonith level add 1 rh7-X F1 --force",
@@ -1125,8 +1184,11 @@ class LevelAdd(LevelTestsBase):
     def test_nonexistant_device(self):
         self.assert_pcs_fail(
             "stonith level add 1 rh7-1 F1",
-            "Error: Stonith resource(s) 'F1' do not exist"
-                ", use --force to override\n"
+            (
+                "Error: Stonith resource(s) 'F1' do not exist"
+                    ", use --force to override\n"
+                + ERRORS_HAVE_OCURRED
+            )
         )
         self.assert_pcs_success(
             "stonith level add 1 rh7-1 F1 --force",
@@ -1146,8 +1208,11 @@ class LevelAdd(LevelTestsBase):
         self.fixture_stonith_resource("F1")
         self.assert_pcs_fail(
             "stonith level add 1 rh7-1 F1 F2 F3",
-            "Error: Stonith resource(s) 'F2', 'F3' do not exist"
-                ", use --force to override\n"
+            (
+                "Error: Stonith resource(s) 'F2', 'F3' do not exist"
+                    ", use --force to override\n"
+                + ERRORS_HAVE_OCURRED
+            )
         )
         self.assert_pcs_success(
             "stonith level add 1 rh7-1 F1 F2 F3 --force",
@@ -1346,27 +1411,38 @@ class LevelDeleteRemove(LevelTestsBase):
                 Error: Fencing level for 'rh7-1' at level '1' with device(s) 'F3' does not exist
                 Error: Fencing level at level '1' with device(s) 'F3', 'rh7-1' does not exist
                 """
-            )
+            ) + ERRORS_HAVE_OCURRED
         )
         self.assert_pcs_success("stonith level config", self.config)
 
     def _test_nonexisting_level_pattern_device(self):
         self.assert_pcs_fail(
             f"stonith level {self.command} 1 regexp%rh7-\\d F3",
-            "Error: Fencing level for 'rh7-\\d' at level '1' with device(s) 'F3' does not exist\n"
+            (
+                "Error: Fencing level for 'rh7-\\d' at level '1' with "
+                    "device(s) 'F3' does not exist\n"
+                + ERRORS_HAVE_OCURRED
+            )
         )
         self.assert_pcs_success("stonith level config", self.config)
 
         self.assert_pcs_fail(
-            f"stonith level {self.command} 3 regexp%rh7-\d F1,F2",
-            "Error: Fencing level for 'rh7-\d' at level '3' with device(s) 'F1', 'F2' does not exist\n"
+            f"stonith level {self.command} 3 regexp%rh7-\\d F1,F2",
+            (
+                "Error: Fencing level for 'rh7-\\d' at level '3' with "
+                    "device(s) 'F1', 'F2' does not exist\n"
+                + ERRORS_HAVE_OCURRED
+            )
         )
         self.assert_pcs_success("stonith level config", self.config)
 
     def _test_nonexisting_level(self):
         self.assert_pcs_fail(
             f"stonith level {self.command} 9",
-            "Error: Fencing level at level '9' does not exist\n"
+            (
+                "Error: Fencing level at level '9' does not exist\n"
+                + ERRORS_HAVE_OCURRED
+            )
         )
         self.assert_pcs_success("stonith level config", self.config)
 
@@ -1514,12 +1590,13 @@ class LevelVerify(LevelTestsBase):
 
         self.assert_pcs_fail(
             "stonith level verify",
-            outdent(
-                """\
-                Error: Stonith resource(s) 'FX', 'FY', 'FZ' do not exist
-                Error: Node 'rh7-X' does not appear to exist in configuration
-                Error: Node 'rh7-Y' does not appear to exist in configuration
-                """
+            (
+                "Error: Stonith resource(s) 'FX', 'FY', 'FZ' do not exist\n"
+                "Error: Node 'rh7-X' does not appear to exist in "
+                    "configuration\n"
+                "Error: Node 'rh7-Y' does not appear to exist in "
+                    "configuration\n"
+                + ERRORS_HAVE_OCURRED
             )
         )
 

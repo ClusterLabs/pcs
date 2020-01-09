@@ -8,8 +8,8 @@ from pcs_test.tools.assertions import (
 )
 
 from pcs.common import report_codes
+from pcs.common.reports import ReportItemSeverity as severities
 from pcs.lib.cib.constraint import ticket
-from pcs.lib.errors import ReportItemSeverity as severities
 
 
 @mock.patch("pcs.lib.cib.constraint.ticket.tools.check_new_id_applicable")

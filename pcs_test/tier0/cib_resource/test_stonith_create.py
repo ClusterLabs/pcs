@@ -3,6 +3,9 @@ from pcs_test.tier0.cib_resource.stonith_common import need_load_xvm_fence_agent
 from pcs_test.tools.misc import is_minimum_pacemaker_version
 
 PCMK_2_0_3_PLUS = is_minimum_pacemaker_version(2, 0, 3)
+ERRORS_HAVE_OCURRED = (
+    "Error: Errors have occurred, therefore pcs is unable to continue\n"
+)
 
 class PlainStonith(ResourceTest):
     @need_load_xvm_fence_agent
@@ -151,6 +154,7 @@ class PlainStonith(ResourceTest):
             "Error: stonith option 'action' is deprecated and should not be"
                 " used, use pcmk_off_action, pcmk_reboot_action instead, use"
                 " --force to override\n"
+            + ERRORS_HAVE_OCURRED
         )
 
     @need_load_xvm_fence_agent

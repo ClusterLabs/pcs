@@ -4,12 +4,13 @@ from pcs.lib import reports
 from pcs.lib.cib import sections
 from pcs.lib.cib.nvpair import arrange_first_meta_attributes
 from pcs.lib.cib.tools import IdProvider
+from pcs.lib.env import LibraryEnvironment
 
 
-def _set_any_defaults(section_name, env, options):
+def _set_any_defaults(section_name, env: LibraryEnvironment, options):
     """
     string section_name -- determine the section of defaults
-    LibraryEnvironment env -- provides access to outside environment
+    env -- provides access to outside environment
     dict options -- are desired options with its values; when value is empty the
         option have to be removed
     """
@@ -19,7 +20,7 @@ def _set_any_defaults(section_name, env, options):
     # cause the whole change to be rejected by pacemaker with a "permission
     # denied" message.
     # https://bugzilla.redhat.com/show_bug.cgi?id=1642514
-    env.report_processor.process(reports.defaults_can_be_overriden())
+    env.report_processor.report(reports.defaults_can_be_overriden())
 
     if not options:
         return

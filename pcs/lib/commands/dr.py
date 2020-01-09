@@ -17,7 +17,7 @@ from pcs.common.dr import (
 from pcs.common.interface import dto
 from pcs.common.file import RawFileError
 from pcs.common.node_communicator import RequestTarget
-from pcs.common.reports import SimpleReportProcessor
+from pcs.common.reports import ReportItemList
 
 from pcs.lib import node_communication_format, reports
 from pcs.lib.communication.corosync import GetCorosyncConf
@@ -36,7 +36,7 @@ from pcs.lib.dr.config.facade import (
     Facade as DrConfigFacade,
 )
 from pcs.lib.env import LibraryEnvironment
-from pcs.lib.errors import LibraryError, ReportItemList
+from pcs.lib.errors import LibraryError
 from pcs.lib.file.instance import FileInstance
 from pcs.lib.file.raw_file import raw_file_error_report
 from pcs.lib.file.toolbox import for_file_type as get_file_toolbox
@@ -50,7 +50,7 @@ def get_config(env: LibraryEnvironment) -> Mapping[str, Any]:
 
     env -- LibraryEnvironment
     """
-    report_processor = SimpleReportProcessor(env.report_processor)
+    report_processor = env.report_processor
     report_list, dr_config = _load_dr_config(env.get_dr_env().config)
     report_processor.report_list(report_list)
     if report_processor.has_errors:
@@ -84,7 +84,7 @@ def set_recovery_site(env: LibraryEnvironment, node_name: str) -> None:
         raise LibraryError(
             reports.live_environment_required(env.ghost_file_codes)
         )
-    report_processor = SimpleReportProcessor(env.report_processor)
+    report_processor = env.report_processor
     dr_env = env.get_dr_env()
     if dr_env.config.raw_file.exists():
         report_processor.report(reports.dr_config_already_exist())
@@ -122,14 +122,14 @@ def set_recovery_site(env: LibraryEnvironment, node_name: str) -> None:
         ),
         error_on_missing_name=True
     )
-    if report_processor.report_list(report_list):
+    if report_processor.report_list(report_list).has_errors:
         raise LibraryError()
 
     # ensure we have tokens for all nodes of remote cluster
     report_list, remote_targets = target_factory.get_target_list_with_reports(
         remote_cluster_nodes, allow_skip=False, report_none_host_found=False
     )
-    if report_processor.report_list(report_list):
+    if report_processor.report_list(report_list).has_errors:
         raise LibraryError()
     dr_config_exporter = (
         get_file_toolbox(file_type_codes.PCS_DR_CONFIG).exporter
@@ -199,7 +199,7 @@ def status_all_sites_plaintext(
             reports.live_environment_required(env.ghost_file_codes)
         )
 
-    report_processor = SimpleReportProcessor(env.report_processor)
+    report_processor = env.report_processor
     report_list, dr_config = _load_dr_config(env.get_dr_env().config)
     report_processor.report_list(report_list)
     if report_processor.has_errors:
@@ -280,7 +280,7 @@ def destroy(env: LibraryEnvironment, force_flags: Container[str] = ()) -> None:
             reports.live_environment_required(env.ghost_file_codes)
         )
 
-    report_processor = SimpleReportProcessor(env.report_processor)
+    report_processor = env.report_processor
     skip_offline = report_codes.SKIP_OFFLINE_NODES in force_flags
 
     report_list, dr_config = _load_dr_config(env.get_dr_env().config)

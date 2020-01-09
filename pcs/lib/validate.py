@@ -31,9 +31,9 @@ from collections import namedtuple
 import ipaddress
 import re
 
+from pcs.common.reports import ReportItemSeverity
 from pcs.lib import reports
 from pcs.lib.corosync import constants as corosync_constants
-from pcs.lib.errors import ReportItemSeverity
 from pcs.lib.pacemaker.values import (
     timeout_to_seconds,
     validate_id,

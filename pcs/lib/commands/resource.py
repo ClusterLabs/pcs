@@ -3,11 +3,13 @@ from functools import partial
 from typing import (
     Any,
     Mapping,
+    Set,
 )
 
 from pcs.common import file_type_codes, report_codes
-from pcs.common.tools import Version
 from pcs.common.interface import dto
+from pcs.common.reports import ReportItemSeverity as severities
+from pcs.common.tools import Version
 from pcs.lib import reports
 from pcs.lib.cib import (
     resource,
@@ -21,10 +23,7 @@ from pcs.lib.cib.tools import (
 )
 from pcs.lib.env import LibraryEnvironment
 from pcs.lib.node import get_existing_nodes_names_addrs
-from pcs.lib.errors import (
-    LibraryError,
-    ReportItemSeverity as severities,
-)
+from pcs.lib.errors import LibraryError
 from pcs.lib.pacemaker import simulate as simulate_tools
 from pcs.lib.pacemaker.live import (
     has_resource_unmove_unban_expired_support,
@@ -64,10 +63,11 @@ def resource_environment(
     env.push_cib(wait=wait)
     if wait is not False and wait_for_resource_ids:
         state = env.get_cluster_state()
-        env.report_processor.process_list([
+        if env.report_processor.report_list([
             resource_state_reporter(state, res_id)
             for res_id in wait_for_resource_ids
-        ])
+        ]).has_errors:
+            raise LibraryError()
 
 def _ensure_disabled_after_wait(disabled_after_wait):
     def inner(state, resource_id):
@@ -185,7 +185,8 @@ def _check_special_cases(
         allow_not_suitable_command,
     ))
 
-    env.report_processor.process_list(report_list)
+    if env.report_processor.report_list(report_list).has_errors:
+        raise LibraryError()
 
 _find_bundle = partial(find_element_by_tag_and_id, resource.bundle.TAG)
 
@@ -527,7 +528,7 @@ def create_into_bundle(
 
         bundle_el = _find_bundle(resources_section, bundle_id)
         if not resource.bundle.is_pcmk_remote_accessible(bundle_el):
-            env.report_processor.process(
+            if env.report_processor.report(
                 reports.get_problem_creator(
                     report_codes.FORCE_RESOURCE_IN_BUNDLE_NOT_ACCESSIBLE,
                     allow_not_accessible_resource
@@ -536,7 +537,8 @@ def create_into_bundle(
                     bundle_id,
                     resource_id
                 )
-            )
+            ).has_errors:
+                raise LibraryError()
         resource.bundle.add_resource(bundle_el, primitive_element)
 
 def bundle_create(
@@ -585,7 +587,7 @@ def bundle_create(
         # no need to run validations related to remote and guest nodes as those
         # nodes can only be created from primitive resources
         id_provider = IdProvider(resources_section)
-        env.report_processor.process_list(
+        if env.report_processor.report_list(
             resource.bundle.validate_new(
                 id_provider,
                 bundle_id,
@@ -597,7 +599,8 @@ def bundle_create(
                 # TODO meta attributes - there is no validation for now
                 force_options
             )
-        )
+        ).has_errors:
+            raise LibraryError()
         bundle_element = resource.bundle.append_new(
             resources_section,
             id_provider,
@@ -654,13 +657,14 @@ def bundle_reset(
         ),
     ) as resources_section:
         bundle_element = _find_bundle(resources_section, bundle_id)
-        env.report_processor.process_list(
+        if env.report_processor.report_list(
             resource.bundle.validate_reset_to_minimal(bundle_element)
-        )
+        ).has_errors:
+            raise LibraryError()
         resource.bundle.reset_to_minimal(bundle_element)
 
         id_provider = IdProvider(resources_section)
-        env.report_processor.process_list(
+        if env.report_processor.report_list(
             resource.bundle.validate_reset(
                 id_provider,
                 bundle_element,
@@ -671,7 +675,8 @@ def bundle_reset(
                 # TODO meta attributes - there is no validation for now
                 force_options
             )
-        )
+        ).has_errors:
+            raise LibraryError()
 
         resource.bundle.update(
             id_provider,
@@ -731,7 +736,7 @@ def bundle_update(
         # nodes can only be created from primitive resources
         id_provider = IdProvider(resources_section)
         bundle_element = _find_bundle(resources_section, bundle_id)
-        env.report_processor.process_list(
+        if env.report_processor.report_list(
             resource.bundle.validate_update(
                 id_provider,
                 bundle_element,
@@ -744,7 +749,8 @@ def bundle_update(
                 # TODO meta attributes - there is no validation for now
                 force_options
             )
-        )
+        ).has_errors:
+            raise LibraryError()
         resource.bundle.update(
             id_provider,
             bundle_element,
@@ -763,14 +769,15 @@ def _disable_validate_and_edit_cib(env, resources_section, resource_ids):
         resources_section,
         resource_ids
     )
-    env.report_processor.process_list(
+    if env.report_processor.report_list(
         _resource_list_enable_disable(
             resource_el_list,
             resource.common.disable,
             id_provider,
             env.get_cluster_state()
         )
-    )
+    ).has_errors:
+        raise LibraryError()
 
 def disable(env, resource_ids, wait):
     """
@@ -785,12 +792,12 @@ def disable(env, resource_ids, wait):
     ) as resources_section:
         _disable_validate_and_edit_cib(env, resources_section, resource_ids)
 
-def disable_safe(env, resource_ids, strict, wait):
+def disable_safe(env: LibraryEnvironment, resource_ids, strict, wait):
     """
     Disallow specified resource to be started by the cluster only if there is
     no effect on other resources
 
-    LibraryEnvironment env --
+    env
     strings resource_ids -- ids of the resources to be disabled
     bool strict -- if False, allow resources to be migrated
     mixed wait -- False: no wait, None: wait default timeout, int: wait timeout
@@ -808,14 +815,15 @@ def disable_safe(env, resource_ids, strict, wait):
             resources_section,
             resource_ids
         )
-        env.report_processor.process_list(
+        if env.report_processor.report_list(
             _resource_list_enable_disable(
                 resource_el_list,
                 resource.common.disable,
                 id_provider,
                 env.get_cluster_state()
             )
-        )
+        ).has_errors:
+            raise LibraryError()
 
         inner_resources_names_set = set()
         for resource_el in resource_el_list:
@@ -832,7 +840,7 @@ def disable_safe(env, resource_ids, strict, wait):
         simulated_operations = (
             simulate_tools.get_operations_from_transitions(transitions)
         )
-        other_affected = set()
+        other_affected: Set[str] = set()
         if strict:
             other_affected = set(
                 simulate_tools.get_resources_from_operations(
@@ -901,14 +909,15 @@ def enable(env, resource_ids, wait):
             resource_ids,
             resource.common.find_resources_to_enable
         )
-        env.report_processor.process_list(
+        if env.report_processor.report_list(
             _resource_list_enable_disable(
                 resource_el_list,
                 resource.common.enable,
                 id_provider,
                 env.get_cluster_state()
             )
-        )
+        ).has_errors:
+            raise LibraryError()
 
 def _resource_list_enable_disable(
     resource_el_list, func, id_provider, cluster_state
@@ -1007,7 +1016,8 @@ def manage(env, resource_ids, with_monitor=False):
                         )
                     )
 
-        env.report_processor.process_list(report_list)
+        if env.report_processor.report_list(report_list).has_errors:
+            raise LibraryError()
 
 def group_add(
     env, group_id, resource_id_list, adjacent_resource_id=None,
@@ -1031,10 +1041,10 @@ def group_add(
             resource_id_list,
             adjacent_resource_id=adjacent_resource_id
         )
-        # raise on error
-        env.report_processor.process_list(
+        if env.report_processor.report_list(
             validator.validate(resources_section, id_provider)
-        )
+        ).has_errors:
+            raise LibraryError()
 
         # If we get no group element from the validator and there were no
         # errors, then the element does not exist and we can create it.
@@ -1179,7 +1189,8 @@ class _MoveBanTemplate():
         )
         if resource_el is not None:
             report_list.extend(self._validate(resource_el, master))
-        env.report_processor.process_list(report_list) # raises on error
+        if env.report_processor.report_list(report_list).has_errors:
+            raise LibraryError()
 
         # get current status for wait processing
         if wait is not False:
@@ -1205,7 +1216,7 @@ class _MoveBanTemplate():
             raise LibraryError(
                 self._report_action_pcmk_error(resource_id, stdout, stderr)
             )
-        env.report_processor.process(
+        env.report_processor.report(
             self._report_action_pcmk_success(resource_id, stdout, stderr)
         )
 
@@ -1216,14 +1227,15 @@ class _MoveBanTemplate():
                 env.get_cluster_state(),
                 resource_id
             )
-            env.report_processor.process(
+            if env.report_processor.report(
                 self._report_wait_result(
                     resource_id,
                     node,
                     resource_running_on_before,
                     resource_running_on_after,
                 )
-            )
+            ).has_errors:
+                raise LibraryError()
 
 class _Move(_MoveBanTemplate):
     def _validate(self, resource_el, master):
@@ -1351,7 +1363,8 @@ def unmove_unban(
         report_list.append(
             reports.resource_unmove_unban_pcmk_expired_not_supported()
         )
-    env.report_processor.process_list(report_list) # raises on error
+    if env.report_processor.report_list(report_list).has_errors:
+        raise LibraryError()
 
     # run the action
     stdout, stderr, retval = resource_unmove_unban(
@@ -1363,16 +1376,17 @@ def unmove_unban(
                 resource_id, stdout, stderr
             )
         )
-    env.report_processor.process(
+    env.report_processor.report(
         reports.resource_unmove_unban_pcmk_success(resource_id, stdout, stderr)
     )
 
     # process wait
     if wait is not False:
         wait_for_idle(env.cmd_runner(), env.get_wait_timeout(wait))
-        env.report_processor.process(
+        if env.report_processor.report(
             info_resource_state(env.get_cluster_state(), resource_id)
-        )
+        ).has_errors:
+            raise LibraryError()
 
 
 def get_resource_relations_tree(

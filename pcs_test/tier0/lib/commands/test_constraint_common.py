@@ -8,8 +8,8 @@ from pcs_test.tools.assertions import(
 from pcs_test.tools.custom_mock import MockLibraryReportProcessor
 
 from pcs.common import report_codes
+from pcs.common.reports import ReportItemSeverity as severities
 from pcs.lib.commands.constraint import common as constraint
-from pcs.lib.errors import ReportItemSeverity as severities
 
 
 def fixture_cib_and_constraints():
@@ -73,7 +73,8 @@ class CreateWithSetTest(TestCase):
     def test_refuse_duplicate(self):
         self.create()
         self.env.push_cib.assert_called_once_with()
-        assert_raise_library_error(self.create, (
+        assert_raise_library_error(self.create)
+        self.env.report_processor.assert_reports([(
             severities.ERROR,
             report_codes.DUPLICATE_CONSTRAINTS_EXIST,
             {
@@ -93,7 +94,7 @@ class CreateWithSetTest(TestCase):
                 }]
             },
             report_codes.FORCE_CONSTRAINT_DUPLICATE
-        ))
+        )])
 
     def test_put_duplicate_constraint_when_duplication_allowed(self):
         self.create()

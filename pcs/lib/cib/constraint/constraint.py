@@ -1,6 +1,10 @@
 from lxml import etree
 
 from pcs.common import report_codes
+from pcs.common.reports import (
+    ReportItemSeverity,
+    ReportProcessor,
+)
 from pcs.lib import reports
 from pcs.lib.cib import resource
 from pcs.lib.cib.constraint import resource_set
@@ -8,7 +12,7 @@ from pcs.lib.cib.tools import (
     find_unique_id,
     find_element_by_tag_and_id,
 )
-from pcs.lib.errors import LibraryError, ReportItemSeverity
+from pcs.lib.errors import LibraryError
 from pcs.lib.xml_tools import (
     export_attributes,
     find_parent,
@@ -25,7 +29,12 @@ def _validate_attrib_names(attrib_names, options):
             reports.invalid_options(invalid_names, attrib_names, None)
         )
 
-def find_valid_resource_id(report_processor, cib, in_clone_allowed, _id):
+def find_valid_resource_id(
+    report_processor: ReportProcessor,
+    cib,
+    in_clone_allowed,
+    _id
+):
     parent_tags = resource.clone.ALL_TAGS + [resource.bundle.TAG]
     resource_element = find_element_by_tag_and_id(
         parent_tags + [resource.primitive.TAG, resource.group.TAG],
@@ -41,14 +50,15 @@ def find_valid_resource_id(report_processor, cib, in_clone_allowed, _id):
         return resource_element.attrib["id"]
 
     if in_clone_allowed:
-        report_processor.process(
+        if report_processor.report(
             reports.resource_for_constraint_is_multiinstance(
                 resource_element.attrib["id"],
                 "clone" if clone.tag == "master" else clone.tag,
                 clone.attrib["id"],
                 ReportItemSeverity.WARNING,
             )
-        )
+        ).has_errors:
+            raise LibraryError()
         return resource_element.attrib["id"]
 
     raise LibraryError(reports.resource_for_constraint_is_multiinstance(
@@ -98,8 +108,11 @@ def have_duplicate_resource_sets(element, other_element):
     return get_id_set_list(element) == get_id_set_list(other_element)
 
 def check_is_without_duplication(
-    report_processor,
-    constraint_section, element, are_duplicate, export_element,
+    report_processor: ReportProcessor,
+    constraint_section,
+    element,
+    are_duplicate,
+    export_element,
     duplication_alowed=False
 ):
     duplicate_element_list = [
@@ -114,17 +127,20 @@ def check_is_without_duplication(
     if not duplicate_element_list:
         return
 
-    report_processor.process(reports.duplicate_constraints_exist(
-        element.tag,
-        [
-            export_element(duplicate_element)
-            for duplicate_element in duplicate_element_list
-        ],
-        ReportItemSeverity.WARNING if duplication_alowed
-            else ReportItemSeverity.ERROR,
-        forceable=None if duplication_alowed
-            else report_codes.FORCE_CONSTRAINT_DUPLICATE,
-    ))
+    if report_processor.report(
+        reports.duplicate_constraints_exist(
+            element.tag,
+            [
+                export_element(duplicate_element)
+                for duplicate_element in duplicate_element_list
+            ],
+            ReportItemSeverity.WARNING if duplication_alowed
+                else ReportItemSeverity.ERROR,
+            forceable=None if duplication_alowed
+                else report_codes.FORCE_CONSTRAINT_DUPLICATE,
+        )
+    ).has_errors:
+        raise LibraryError()
 
 def create_with_set(constraint_section, tag_name, options, resource_set_list):
     if not resource_set_list:

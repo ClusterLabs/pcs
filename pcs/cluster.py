@@ -22,14 +22,20 @@ from pcs.cli.common.errors import (
     HINT_SYNTAX_CHANGE,
     msg_command_replaced,
 )
-from pcs.cli.common.reports import process_library_reports, build_report_message
+from pcs.cli.common.reports import (
+    build_report_message,
+    process_library_reports,
+)
 from pcs.common import report_codes
 from pcs.common.node_communicator import (
     HostNotFound,
     Request,
     RequestData,
 )
-from pcs.common.reports import SimpleReportProcessor
+from pcs.common.reports import (
+    ReportItem,
+    ReportItemSeverity,
+)
 from pcs.common.tools import Version
 from pcs.lib import (
     sbd as lib_sbd,
@@ -48,11 +54,7 @@ from pcs.lib.corosync import (
     qdevice_net,
 )
 from pcs.cli.common.console_report import error, warn
-from pcs.lib.errors import (
-    LibraryError,
-    ReportItem,
-    ReportItemSeverity,
-)
+from pcs.lib.errors import LibraryError
 from pcs.lib.external import disable_service
 from pcs.lib.env import MIN_FEATURE_SET_VERSION_FOR_DIFF
 from pcs.lib.node import get_existing_nodes_names
@@ -986,7 +988,7 @@ def node_add_outside_cluster(lib, argv, modifiers):
     )
 
     lib_env = utils.get_lib_env()
-    report_processor = SimpleReportProcessor(lib_env.report_processor)
+    report_processor = lib_env.report_processor
     target_factory = lib_env.get_node_target_factory()
     report_list, target_list = target_factory.get_target_list_with_reports(
         [cluster_node], skip_non_existing=False, allow_skip=False,

@@ -10,7 +10,6 @@ from pcs.cli.common.errors import CmdLineInputError
 from pcs.cli.common.reports import process_library_reports
 from pcs.cli.fencing_topology import target_type_map_cli_to_lib
 from pcs.cli.resource.parse_args import parse_create_simple as parse_create_args
-from pcs.common import report_codes
 from pcs.common.fencing_topology import (
     TARGET_TYPE_NODE,
     TARGET_TYPE_REGEXP,
@@ -240,7 +239,7 @@ def stonith_level_clear_cmd(lib, argv, modifiers):
     # code tried both. It deleted all levels having the first parameter as
     # either a node or a device list. Since it was only possible to specify
     # node as a target back then, this is enabled only in that case.
-    report_item_list = []
+    was_error = False
     try:
         lib.fencing_topology.remove_levels_by_params(
             None,
@@ -250,8 +249,8 @@ def stonith_level_clear_cmd(lib, argv, modifiers):
             # pre-lib code didn't return any error when no level was found
             ignore_if_missing=True
         )
-    except LibraryError as e:
-        report_item_list.extend(e.args)
+    except LibraryError:
+        was_error = True
     if target_type == TARGET_TYPE_NODE:
         try:
             lib.fencing_topology.remove_levels_by_params(
@@ -262,10 +261,10 @@ def stonith_level_clear_cmd(lib, argv, modifiers):
                 # pre-lib code didn't return any error when no level was found
                 ignore_if_missing=True
             )
-        except LibraryError as e:
-            report_item_list.extend(e.args)
-    if report_item_list:
-        raise LibraryError(*report_item_list)
+        except LibraryError:
+            was_error = True
+    if was_error:
+        raise LibraryError()
 
 def stonith_level_config_to_str(config):
     """
@@ -330,49 +329,14 @@ def stonith_level_remove_cmd(lib, argv, modifiers):
     if len(argv) > 2:
         devices = stonith_level_normalize_devices(argv[2:])
 
-    try:
-        lib.fencing_topology.remove_levels_by_params(
-            level,
-            target_type,
-            target_value,
-            devices
-        )
-    except LibraryError as e:
-        # backward compatibility mode
-        # Command parameters are: level, node, stonith, stonith...
-        # Both the node and the stonith list are optional. If the node is
-        # ommited and the stonith list is present, there is no way to figure it
-        # out, since there is no specification of what the parameter is. Hence
-        # the pre-lib code tried both. First it assumed the first parameter is
-        # a node. If that fence level didn't exist, it assumed the first
-        # parameter is a device. Since it was only possible to specify node as
-        # a target back then, this is enabled only in that case.
-        if target_type != TARGET_TYPE_NODE:
-            raise e
-        level_not_found = False
-        for report_item in e.args:
-            if (
-                # pylint: disable=no-member
-                report_item.code
-                ==
-                report_codes.CIB_FENCING_LEVEL_DOES_NOT_EXIST
-            ):
-                level_not_found = True
-                break
-        if not level_not_found:
-            raise e
-        target_and_devices = [target_value]
-        if devices:
-            target_and_devices.extend(devices)
-        try:
-            lib.fencing_topology.remove_levels_by_params(
-                level,
-                None,
-                None,
-                target_and_devices
-            )
-        except LibraryError as e_second:
-            raise LibraryError(*(e.args + e_second.args))
+    lib.fencing_topology.remove_levels_by_params(
+        level,
+        target_type,
+        target_value,
+        devices,
+        # backward compatibility mode, see lib command for details
+        target_may_be_a_device=True
+    )
 
 def stonith_level_verify_cmd(lib, argv, modifiers):
     """

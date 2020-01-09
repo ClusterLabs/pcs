@@ -56,7 +56,9 @@ class PushCorosyncConfLiveNoQdeviceTest(PushCorosyncConfLiveBase):
         self.env_assistant.assert_raise_library_error(
             lambda: self.env_assistant.get_env().push_corosync_conf(
                 self.corosync_conf_facade
-            ),
+            )
+        )
+        self.env_assistant.assert_reports(
             [
                 fixture.error(
                     report_codes.COROSYNC_CONFIG_MISSING_NAMES_OF_NODES,
@@ -71,7 +73,9 @@ class PushCorosyncConfLiveNoQdeviceTest(PushCorosyncConfLiveBase):
         self.env_assistant.assert_raise_library_error(
             lambda: self.env_assistant.get_env().push_corosync_conf(
                 self.corosync_conf_facade
-            ),
+            )
+        )
+        self.env_assistant.assert_reports(
             [
                 fixture.error(
                     report_codes.COROSYNC_CONFIG_MISSING_NAMES_OF_NODES,
@@ -621,14 +625,14 @@ class PushCorosyncConfLiveWithQdeviceTest(PushCorosyncConfLiveBase):
         self.env_assistant.assert_raise_library_error(
             lambda: self.env_assistant.get_env().push_corosync_conf(
                 self.corosync_conf_facade
-            ),
-            [
-                fixture.error(
-                    report_codes.COROSYNC_CONFIG_MISSING_NAMES_OF_NODES,
-                    fatal=True,
-                ),
-            ]
+            )
         )
+        self.env_assistant.assert_reports([
+            fixture.error(
+                report_codes.COROSYNC_CONFIG_MISSING_NAMES_OF_NODES,
+                fatal=True,
+            ),
+        ])
 
     def test_all_node_names_missing(self):
         self.fixture_corosync_conf(node1_name=False, node2_name=False)
@@ -637,14 +641,14 @@ class PushCorosyncConfLiveWithQdeviceTest(PushCorosyncConfLiveBase):
         self.env_assistant.assert_raise_library_error(
             lambda: self.env_assistant.get_env().push_corosync_conf(
                 self.corosync_conf_facade
-            ),
-            [
-                fixture.error(
-                    report_codes.COROSYNC_CONFIG_MISSING_NAMES_OF_NODES,
-                    fatal=True,
-                ),
-            ]
+            )
         )
+        self.env_assistant.assert_reports([
+            fixture.error(
+                report_codes.COROSYNC_CONFIG_MISSING_NAMES_OF_NODES,
+                fatal=True,
+            ),
+        ])
 
     def test_qdevice_reload(self):
         self.corosync_conf_facade.need_qdevice_reload = True

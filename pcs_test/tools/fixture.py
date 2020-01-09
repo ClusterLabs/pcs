@@ -1,7 +1,7 @@
 import json
 
 from pcs.common import report_codes
-from pcs.lib.errors import ReportItemSeverity as severities
+from pcs.common.reports import ReportItemSeverity as severities
 
 
 def state_node(

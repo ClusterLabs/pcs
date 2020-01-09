@@ -2,7 +2,6 @@ import base64
 
 from pcs.common import report_codes
 from pcs.common.file import RawFileError
-from pcs.common.reports import SimpleReportProcessor
 from pcs.lib.booth import (
     config_files,
     reports as booth_reports,
@@ -33,7 +32,6 @@ def send_all_config_to_node(
     """
     # TODO adapt to new file transfer framework once it is written
     # TODO the function is not modular enough - it raises LibraryError
-    _reporter = SimpleReportProcessor(reporter)
 
     file_list = []
     for conf_file_name in sorted(config_files.get_all_configs_file_names()):
@@ -45,7 +43,7 @@ def send_all_config_to_node(
                     config_file.raw_to_facade(booth_conf_data)
                 )
             )
-            _reporter.report_list(authfile_report_list)
+            reporter.report_list(authfile_report_list)
             file_list.append({
                 "name": conf_file_name,
                 "data": booth_conf_data.decode("utf-8"),
@@ -58,7 +56,7 @@ def send_all_config_to_node(
                     "is_authfile": True
                 })
         except RawFileError as e:
-            _reporter.report(
+            reporter.report(
                 raw_file_error_report(
                     e,
                     force_code=report_codes.SKIP_UNREADABLE_CONFIG,
@@ -66,26 +64,26 @@ def send_all_config_to_node(
                 )
             )
         except ParserErrorException as e:
-            _reporter.report_list(
+            reporter.report_list(
                 config_file.parser_exception_to_report_list(
                     e,
                     force_code=report_codes.SKIP_UNREADABLE_CONFIG,
                     is_forced_or_warning=skip_wrong_config,
                 )
             )
-    if _reporter.has_errors:
+    if reporter.has_errors:
         raise LibraryError()
 
     if not file_list:
         # no booth configs exist, nothing to be synced
         return
 
-    _reporter.report(booth_reports.booth_config_distribution_started())
+    reporter.report(booth_reports.booth_config_distribution_started())
     com_cmd = BoothSaveFiles(
-        _reporter, file_list, rewrite_existing=rewrite_existing
+        reporter, file_list, rewrite_existing=rewrite_existing
     )
     com_cmd.set_targets(target_list)
     run(communicator, com_cmd)
 
-    if _reporter.has_errors:
+    if reporter.has_errors:
         raise LibraryError()

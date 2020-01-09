@@ -1,6 +1,7 @@
 from lxml import etree
 
 from pcs.common import report_codes
+from pcs.common.reports import ReportProcessor
 from pcs.lib import reports
 from pcs.lib.cib.nvpair import (
     append_new_instance_attributes,
@@ -43,13 +44,19 @@ def find_primitives_by_agent(resources_section, resource_agent_obj):
 
 
 def create(
-    report_processor, resources_section, id_provider, resource_id,
+    report_processor: ReportProcessor,
+    resources_section,
+    id_provider,
+    resource_id,
     resource_agent,
-    raw_operation_list=None, meta_attributes=None, instance_attributes=None,
+    raw_operation_list=None,
+    meta_attributes=None,
+    instance_attributes=None,
     allow_invalid_operation=False,
     allow_invalid_instance_attributes=False,
     use_default_operations=True,
-    resource_type="resource"
+    resource_type="resource",
+    do_not_report_instance_attribute_server_exists=False # TODO remove this arg
 ):
     # pylint: disable=too-many-arguments
     """
@@ -69,6 +76,8 @@ def create(
     bool use_default_operations is flag for completion operations with default
         actions specified in resource agent
     string resource_type -- describes the resource for reports
+    bool do_not_report_instance_attribute_server_exists -- dirty fix due to
+        suboptimal architecture, TODO: fix the architecture and remove the param
     """
     if raw_operation_list is None:
         raw_operation_list = []
@@ -91,14 +100,18 @@ def create(
         allow_invalid=allow_invalid_operation,
     )
 
-    report_processor.process_list(
+    if report_processor.report_list(
         validate_resource_instance_attributes_create(
             resource_agent,
             instance_attributes,
             resources_section,
             force=allow_invalid_instance_attributes,
+            do_not_report_instance_attribute_server_exists=(
+                do_not_report_instance_attribute_server_exists
+            )
         )
-    )
+    ).has_errors:
+        raise LibraryError()
 
     return append_new(
         resources_section,
@@ -209,11 +222,15 @@ def validate_unique_instance_attributes(
 
 
 def validate_resource_instance_attributes_create(
-    resource_agent, instance_attributes, resources_section, force=False
+    resource_agent, instance_attributes, resources_section, force=False,
+    do_not_report_instance_attribute_server_exists=False
 ):
     return (
         resource_agent.validate_parameters_create(
             instance_attributes, force=force,
+            do_not_report_instance_attribute_server_exists=(
+                do_not_report_instance_attribute_server_exists
+            )
         )
         +
         validate_unique_instance_attributes(

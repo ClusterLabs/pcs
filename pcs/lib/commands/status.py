@@ -8,10 +8,7 @@ from xml.etree.ElementTree import Element
 
 from pcs.common import file_type_codes
 from pcs.common.node_communicator import Communicator
-from pcs.common.reports import (
-    SimpleReportProcessor,
-    SimpleReportProcessorInterface,
-)
+from pcs.common.reports import ReportProcessor
 from pcs.common.tools import (
     format_list,
     indent,
@@ -76,7 +73,7 @@ def full_cluster_status_plaintext(
 
     # initialization
     runner = env.cmd_runner()
-    report_processor = SimpleReportProcessor(env.report_processor)
+    report_processor = env.report_processor
     live = env.is_cib_live and env.is_corosync_conf_live
     is_sbd_running = False
 
@@ -227,7 +224,7 @@ def _format_local_services_status(
 def _get_node_reachability(
     node_target_factory: NodeTargetLibFactory,
     node_communicator: Communicator,
-    report_processor: SimpleReportProcessorInterface,
+    report_processor: ReportProcessor,
     node_name_list: Iterable[str],
 ) -> Mapping[str, str]:
     # we are not interested in reports telling the user which nodes are

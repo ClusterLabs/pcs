@@ -1,7 +1,7 @@
 from pcs import settings
 from pcs.common import report_codes
 from pcs.common.file import RawFileError
-from pcs.common.reports import SimpleReportProcessor
+from pcs.common.reports import ReportProcessor
 from pcs.lib import reports, node_communication_format
 from pcs.lib.tools import generate_binary_key
 from pcs.lib.cib.resource import guest_node, primitive, remote_node
@@ -21,10 +21,11 @@ from pcs.lib.communication.tools import (
     run as run_com,
     run_and_raise,
 )
-from pcs.lib.node import get_existing_nodes_names_addrs
+from pcs.lib.env import LibraryEnvironment
 from pcs.lib.errors import LibraryError
 from pcs.lib.file.instance import FileInstance
 from pcs.lib.file.raw_file import raw_file_error_report
+from pcs.lib.node import get_existing_nodes_names_addrs
 from pcs.lib.pacemaker import state
 from pcs.lib.pacemaker.live import remove_node
 
@@ -180,10 +181,11 @@ def _prepare_pacemaker_remote_environment(
         com_cmd.set_targets(online_new_target_list)
         run_and_raise(env.get_node_communicator(), com_cmd)
 
-def _ensure_resource_running(env, resource_id):
-    env.report_processor.process(
+def _ensure_resource_running(env: LibraryEnvironment, resource_id):
+    if env.report_processor.report(
         state.ensure_resource_running(env.get_cluster_state(), resource_id)
-    )
+    ).has_errors:
+        raise LibraryError()
 
 def node_add_remote(
     env, node_name, node_addr, operations, meta_attributes, instance_attributes,
@@ -222,7 +224,7 @@ def node_add_remote(
     """
     env.ensure_wait_satisfiable(wait)
 
-    report_processor = SimpleReportProcessor(env.report_processor)
+    report_processor = env.report_processor
     cib = env.get_cib()
     id_provider = IdProvider(cib)
     if env.is_cib_live:
@@ -277,6 +279,8 @@ def node_add_remote(
         node_addr,
         instance_attributes
     )
+    if report_processor.report_list(report_list).has_errors:
+        raise LibraryError()
     # validation + cib setup
     # TODO extract the validation to a separate function
     try:
@@ -366,7 +370,7 @@ def node_add_guest(
     """
     env.ensure_wait_satisfiable(wait)
 
-    report_processor = SimpleReportProcessor(env.report_processor)
+    report_processor = env.report_processor
     cib = env.get_cib()
     id_provider = IdProvider(cib)
     if env.is_cib_live:
@@ -459,8 +463,11 @@ def node_add_guest(
         _ensure_resource_running(env, resource_id)
 
 def _find_resources_to_remove(
-    cib, report_processor,
-    node_type, node_identifier, allow_remove_multiple_nodes,
+    cib,
+    report_processor: ReportProcessor,
+    node_type,
+    node_identifier,
+    allow_remove_multiple_nodes,
     find_resources
 ):
     resource_element_list = find_resources(get_resources(cib), node_identifier)
@@ -469,7 +476,7 @@ def _find_resources_to_remove(
         raise LibraryError(reports.node_not_found(node_identifier, node_type))
 
     if len(resource_element_list) > 1:
-        report_processor.process(
+        if report_processor.report(
             reports.get_problem_creator(
                 report_codes.FORCE_REMOVE_MULTIPLE_NODES,
                 allow_remove_multiple_nodes
@@ -479,7 +486,8 @@ def _find_resources_to_remove(
                 [resource.attrib["id"] for resource in resource_element_list],
                 node_identifier
             )
-        )
+        ).has_errors:
+            raise LibraryError()
 
     return resource_element_list
 
@@ -566,7 +574,7 @@ def node_remove_remote(
     })
 
     if not env.is_cib_live:
-        env.report_processor.process_list(
+        env.report_processor.report_list(
             _report_skip_live_parts_in_remove(node_names_list)
         )
     else:
@@ -622,7 +630,7 @@ def node_remove_guest(
     })
 
     if not env.is_cib_live:
-        env.report_processor.process_list(
+        env.report_processor.report_list(
             _report_skip_live_parts_in_remove(node_names_list)
         )
     else:

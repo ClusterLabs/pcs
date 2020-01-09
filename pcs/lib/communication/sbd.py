@@ -4,6 +4,7 @@ from pcs.common.node_communicator import (
     Request,
     RequestData,
 )
+from pcs.common.reports import ReportItemSeverity
 from pcs.lib import reports
 from pcs.lib.communication.tools import (
     AllAtOnceStrategyMixin,
@@ -13,7 +14,6 @@ from pcs.lib.communication.tools import (
     RunRemotelyBase,
     SimpleResponseProcessingMixin,
 )
-from pcs.lib.errors import ReportItemSeverity
 from pcs.lib.node_communication import response_to_report_item
 from pcs.lib.tools import environment_file_to_dict
 

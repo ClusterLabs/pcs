@@ -4,7 +4,7 @@ import re
 from lxml.doctestcompare import LXMLOutputChecker
 from lxml.etree import LXML_VERSION
 
-from pcs.lib.errors import ReportItemSeverity
+from pcs.common.reports import ReportItemSeverity
 from pcs.lib.errors import LibraryError
 
 # pylint: disable=invalid-name, no-self-use

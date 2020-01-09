@@ -4,9 +4,9 @@ from lxml import etree
 from pcs_test.tools.assertions import assert_report_item_list_equal
 
 from pcs.common import report_codes
+from pcs.common.reports import ReportItemSeverity as severities
 from pcs.lib.cib.node import PacemakerNode
 from pcs.lib.cib.resource import remote_node
-from pcs.lib.errors import ReportItemSeverity as severities
 
 
 class FindNodeList(TestCase):

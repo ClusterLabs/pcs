@@ -2,6 +2,7 @@ import json
 
 from pcs.common import report_codes
 from pcs.common.node_communicator import RequestData
+from pcs.common.reports import ReportItemSeverity
 from pcs.lib import reports, node_communication_format
 from pcs.lib.communication.tools import (
     AllAtOnceStrategyMixin,
@@ -11,7 +12,6 @@ from pcs.lib.communication.tools import (
     SimpleResponseProcessingMixin,
     SimpleResponseProcessingNoResponseOnSuccessMixin,
 )
-from pcs.lib.errors import ReportItemSeverity
 from pcs.lib.node_communication import response_to_report_item
 
 

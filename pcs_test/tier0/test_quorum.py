@@ -65,15 +65,24 @@ class QuorumUpdateTest(TestBase):
     def test_invalid_option(self):
         self.assert_pcs_fail(
             "quorum update nonsense=invalid",
-            "Error: invalid quorum option 'nonsense', allowed options are: "
-                + "'auto_tie_breaker', 'last_man_standing', "
-                + "'last_man_standing_window', 'wait_for_all'\n"
+            (
+                "Error: invalid quorum option 'nonsense', allowed options are: "
+                    "'auto_tie_breaker', 'last_man_standing', "
+                    "'last_man_standing_window', 'wait_for_all'\n"
+                "Error: Errors have occurred, therefore pcs is unable to "
+                    "continue\n"
+            )
         )
 
     def test_invalid_value(self):
         self.assert_pcs_fail(
             "quorum update wait_for_all=invalid",
-            "Error: 'invalid' is not a valid wait_for_all value, use '0', '1'\n"
+            (
+                "Error: 'invalid' is not a valid wait_for_all value, use '0', "
+                    "'1'\n"
+                "Error: Errors have occurred, therefore pcs is unable to "
+                    "continue\n"
+            )
         )
 
     def test_success(self):
@@ -537,19 +546,31 @@ class DeviceUpdateTest(TestBase):
         self.fixture_conf_qdevice()
         self.assert_pcs_fail_regardless_of_force(
             "quorum device update model host=",
-            "Error: host cannot be empty, use a qdevice host address\n"
+            (
+                "Error: host cannot be empty, use a qdevice host address\n"
+                "Error: Errors have occurred, therefore pcs is unable to "
+                    "continue\n"
+            )
         )
 
     def test_bad_options(self):
         self.fixture_conf_qdevice()
         self.assert_pcs_fail(
             "quorum device update a=b timeout=-1 model port=x c=d",
-            """\
-Error: invalid quorum device model option 'c', allowed options are: 'algorithm', 'connect_timeout', 'force_ip_version', 'host', 'port', 'tie_breaker', use --force to override
-Error: 'x' is not a valid port value, use a port number (1..65535), use --force to override
-Error: invalid quorum device option 'a', allowed options are: 'sync_timeout', 'timeout', use --force to override
-Error: '-1' is not a valid timeout value, use a positive integer, use --force to override
-"""
+            (
+                "Error: invalid quorum device model option 'c', allowed "
+                    "options are: 'algorithm', 'connect_timeout', "
+                    "'force_ip_version', 'host', 'port', 'tie_breaker', use "
+                    "--force to override\n"
+                "Error: 'x' is not a valid port value, use a port number "
+                    "(1..65535), use --force to override\n"
+                "Error: invalid quorum device option 'a', allowed options are: "
+                    "'sync_timeout', 'timeout', use --force to override\n"
+                "Error: '-1' is not a valid timeout value, use a positive "
+                    "integer, use --force to override\n"
+                "Error: Errors have occurred, therefore pcs is unable to "
+                    "continue\n"
+            )
         )
         self.assert_pcs_success(
             "quorum device update a=b timeout=-1 model port=x c=d --force",

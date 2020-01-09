@@ -6,12 +6,12 @@ from typing import (
 )
 from xml.etree.ElementTree import Element
 
+from pcs.common.reports import ReportItemList
 from pcs.lib import reports
 from pcs.lib.cib.node import PacemakerNode
 from pcs.lib.cib.resource import remote_node, guest_node
 from pcs.lib.corosync.config_facade import ConfigFacade as CorosyncConfigFacade
 from pcs.lib.corosync.node import CorosyncNode
-from pcs.lib.errors import ReportItemList
 from pcs.lib.xml_tools import get_root
 
 

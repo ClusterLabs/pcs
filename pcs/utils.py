@@ -34,6 +34,7 @@ from pcs.common import (
     report_codes,
 )
 from pcs.common.host import PcsKnownHost
+from pcs.common.reports import ReportProcessor
 from pcs.common.tools import join_multilines
 
 from pcs.cli.common import (
@@ -47,7 +48,7 @@ from pcs.cli.common.parse_args import InputModifiers
 from pcs.cli.common.reports import (
     build_report_message,
     process_library_reports,
-    LibraryReportProcessorToConsole,
+    ReportProcessorToConsole,
 )
 import pcs.cli.booth.env
 from pcs.cli.file import metadata as cli_file_metadata
@@ -2571,7 +2572,7 @@ def get_cluster_property_from_xml(etree_el):
         prop["longdesc"] = ""
     return prop
 
-def get_lib_env():
+def get_lib_env() -> LibraryEnvironment:
     """
     Commandline options:
       * -f - CIB file
@@ -2688,8 +2689,8 @@ def exit_on_cmdline_input_errror(
         sys.stderr.write("Hint: {0}\n".format(error.hint))
     sys.exit(1)
 
-def get_report_processor():
-    return LibraryReportProcessorToConsole(debug=("--debug" in pcs_options))
+def get_report_processor() -> ReportProcessor:
+    return ReportProcessorToConsole(debug=("--debug" in pcs_options))
 
 def get_set_properties(prop_name=None, defaults=None):
     """

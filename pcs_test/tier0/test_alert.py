@@ -19,6 +19,9 @@ skip_unless_alerts_supported = skip_unless_pacemaker_version(
     (1, 1, 15),
     "alerts"
 )
+ERRORS_HAVE_OCURRED = (
+    "Error: Errors have occurred, therefore pcs is unable to continue\n"
+)
 
 class PcsAlertTest(unittest.TestCase, AssertPcsMixin):
     def setUp(self):
@@ -200,7 +203,10 @@ class DeleteRemoveAlertTest(PcsAlertTest):
     def _test_not_existing_alert(self):
         self.assert_pcs_fail(
             f"alert {self.command} alert1",
-            "Error: alert 'alert1' does not exist\n"
+            (
+                "Error: alert 'alert1' does not exist\n"
+                + ERRORS_HAVE_OCURRED
+            )
         )
 
     def _test_one(self):
@@ -336,8 +342,11 @@ Alerts:
         )
         self.assert_pcs_fail(
             "alert recipient add alert value=rec_value",
-            "Error: Recipient 'rec_value' in alert 'alert' already exists, "
-            "use --force to override\n"
+            (
+                "Error: Recipient 'rec_value' in alert 'alert' already exists, "
+                    "use --force to override\n"
+                + ERRORS_HAVE_OCURRED
+            )
         )
         self.assert_pcs_success(
             "alert config",
@@ -440,8 +449,11 @@ Alerts:
         )
         self.assert_pcs_fail(
             "alert recipient update alert-recipient value=value",
-            "Error: Recipient 'value' in alert 'alert' already exists, "
-            "use --force to override\n"
+            (
+                "Error: Recipient 'value' in alert 'alert' already exists, "
+                    "use --force to override\n"
+                + ERRORS_HAVE_OCURRED
+            )
         )
         self.assert_pcs_success(
             "alert recipient update alert-recipient value=value --force",
@@ -583,10 +595,11 @@ class DeleteRemoveRecipientTest(PcsAlertTest):
             "alert recipient add alert1 value=rec_value1 id=rec1"
         )
         self.assert_pcs_fail(
-            f"alert recipient {self.command} rec1 rec2 rec3", outdent("""\
-                Error: recipient 'rec2' does not exist
-                Error: recipient 'rec3' does not exist
-                """
+            f"alert recipient {self.command} rec1 rec2 rec3",
+            (
+                "Error: recipient 'rec2' does not exist\n"
+                "Error: recipient 'rec3' does not exist\n"
+                + ERRORS_HAVE_OCURRED
             )
         )
         self.assert_pcs_success(

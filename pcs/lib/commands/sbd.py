@@ -1,5 +1,6 @@
 from pcs import settings
 from pcs.common import report_codes
+from pcs.common.reports import ReportItemSeverity as Severities
 from pcs.lib.communication.sbd import (
     CheckSbd,
     DisableSbdService,
@@ -21,10 +22,7 @@ from pcs.lib import (
     validate,
 )
 from pcs.lib.tools import environment_file_to_dict
-from pcs.lib.errors import (
-    LibraryError,
-    ReportItemSeverity as Severities
-)
+from pcs.lib.errors import LibraryError
 from pcs.lib.node import get_existing_nodes_names
 
 
@@ -164,7 +162,7 @@ def enable_sbd(
         target_list, node_device_dict, default_device_list
     )
 
-    lib_env.report_processor.process_list(
+    if lib_env.report_processor.report_list(
         get_nodes_report_list
         +
         [
@@ -183,7 +181,8 @@ def enable_sbd(
         _validate_sbd_options(
             sbd_options, allow_unknown_opts, allow_invalid_option_values
         )
-    )
+    ).has_errors:
+        raise LibraryError()
 
     com_cmd = GetOnlineTargets(
         lib_env.report_processor, ignore_offline_targets=ignore_offline_nodes,
@@ -214,7 +213,7 @@ def enable_sbd(
     # enable ATB if needed
     if not using_devices:
         if sbd.atb_has_to_be_enabled_pre_enable_check(corosync_conf):
-            lib_env.report_processor.process(
+            lib_env.report_processor.report(
                 reports.corosync_quorum_atb_will_be_enabled_due_to_sbd()
             )
             corosync_conf.set_quorum_options({"auto_tie_breaker": "1"})
@@ -246,7 +245,7 @@ def enable_sbd(
     com_cmd.set_targets(online_targets)
     run_and_raise(lib_env.get_node_communicator(), com_cmd)
 
-    lib_env.report_processor.process(
+    lib_env.report_processor.report(
         reports.cluster_restart_required_to_apply_changes()
     )
 
@@ -263,7 +262,8 @@ def disable_sbd(lib_env, ignore_offline_nodes=False):
     )
     if not node_list:
         get_nodes_report_list.append(reports.corosync_config_no_nodes_defined())
-    lib_env.report_processor.process_list(get_nodes_report_list)
+    if lib_env.report_processor.report_list(get_nodes_report_list).has_errors:
+        raise LibraryError()
 
     com_cmd = GetOnlineTargets(
         lib_env.report_processor, ignore_offline_targets=ignore_offline_nodes,
@@ -284,7 +284,7 @@ def disable_sbd(lib_env, ignore_offline_nodes=False):
     com_cmd.set_targets(online_nodes)
     run_and_raise(lib_env.get_node_communicator(), com_cmd)
 
-    lib_env.report_processor.process(
+    lib_env.report_processor.report(
         reports.cluster_restart_required_to_apply_changes()
     )
 
@@ -308,7 +308,8 @@ def get_cluster_sbd_status(lib_env):
     )
     if not node_list:
         get_nodes_report_list.append(reports.corosync_config_no_nodes_defined())
-    lib_env.report_processor.process_list(get_nodes_report_list)
+    if lib_env.report_processor.report_list(get_nodes_report_list).has_errors:
+        raise LibraryError()
 
     com_cmd = GetSbdStatus(lib_env.report_processor)
     com_cmd.set_targets(
@@ -341,7 +342,8 @@ def get_cluster_sbd_config(lib_env):
     )
     if not node_list:
         get_nodes_report_list.append(reports.corosync_config_no_nodes_defined())
-    lib_env.report_processor.process_list(get_nodes_report_list)
+    if lib_env.report_processor.report_list(get_nodes_report_list).has_errors:
+        raise LibraryError()
 
     com_cmd = GetSbdConfig(lib_env.report_processor)
     com_cmd.set_targets(
@@ -388,7 +390,8 @@ def initialize_block_devices(lib_env, device_list, option_dict):
             for key in supported_options
         ]).validate(option_dict)
 
-    lib_env.report_processor.process_list(report_item_list)
+    if lib_env.report_processor.report_list(report_item_list).has_errors:
+        raise LibraryError()
     sbd.initialize_block_devices(
         lib_env.report_processor, lib_env.cmd_runner(), device_list, option_dict
     )
@@ -433,7 +436,8 @@ def get_local_devices_info(lib_env, dump=False):
 
     for report_item in report_item_list:
         report_item.severity = Severities.WARNING
-    lib_env.report_processor.process_list(report_item_list)
+    if lib_env.report_processor.report_list(report_item_list).has_errors:
+        raise LibraryError()
     return output
 
 
@@ -461,7 +465,8 @@ def set_message(lib_env, device, node_name, message):
         report_item_list.append(
             reports.invalid_option_value("message", message, supported_messages)
         )
-    lib_env.report_processor.process_list(report_item_list)
+    if lib_env.report_processor.report_list(report_item_list).has_errors:
+        raise LibraryError()
     sbd.set_message(lib_env.cmd_runner(), device, node_name, message)
 
 

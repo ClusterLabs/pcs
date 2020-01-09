@@ -11,7 +11,7 @@ from pcs_test.tools.misc import outdent
 
 from pcs import settings
 from pcs.common import report_codes
-from pcs.lib.errors import ReportItemSeverity as severity
+from pcs.common.reports import ReportItemSeverity as severity
 
 import pcs.lib.external as lib
 

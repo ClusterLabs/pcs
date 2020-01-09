@@ -4,9 +4,11 @@ from unittest import mock
 
 from pcs_test.tools.assertions import assert_report_item_list_equal
 
+from pcs.common.reports import (
+    ReportItemSeverity,
+    ReportProcessor,
+)
 import pcs.common.pcs_pycurl as pycurl
-from pcs.cli.common.reports import LibraryReportProcessorToConsole
-from pcs.lib.errors import LibraryError, ReportItemSeverity
 
 def get_getaddrinfo_mock(resolvable_addr_list):
     def socket_getaddrinfo(host, port, family=0, type=0, proto=0, flags=0):
@@ -29,39 +31,26 @@ def patch_getaddrinfo(test_case, addr_list):
     return addr_list
 
 
-class MockLibraryReportProcessor(LibraryReportProcessorToConsole):
-    def __init__(self, debug=False, raise_on_errors=True):
-        super(MockLibraryReportProcessor, self).__init__(debug)
-        self.raise_on_errors = raise_on_errors
-        self.direct_sent_items = []
+class MockLibraryReportProcessor(ReportProcessor):
+    def __init__(self, debug=True):
+        super().__init__()
+        self.debug = debug
+        self.items = []
+
+    def _do_report(self, report_item):
+        if self.debug or report_item.severity != ReportItemSeverity.DEBUG:
+            self.items.append(report_item)
 
     @property
     def report_item_list(self):
         return self.items
 
-    def report_list(self, report_list):
-        self.direct_sent_items.extend(report_list)
-        return self._send(report_list)
-
-    def send(self):
-        errors = self._send(self.items, print_errors=False)
-        if errors and self.raise_on_errors:
-            raise LibraryError(*errors)
-
     def assert_reports(self, expected_report_info_list, hint=""):
         assert_report_item_list_equal(
-            self.report_item_list + self.direct_sent_items,
+            self.report_item_list,
             expected_report_info_list,
             hint=hint
         )
-
-    def _send(self, report_item_list, print_errors=True):
-        errors = []
-        for report_item in report_item_list:
-            if report_item.severity == ReportItemSeverity.ERROR:
-                errors.append(report_item)
-        return errors
-
 
 
 class MockCurl:

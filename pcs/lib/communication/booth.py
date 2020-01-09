@@ -3,6 +3,7 @@ import json
 
 from pcs.common import report_codes
 from pcs.common.node_communicator import RequestData
+from pcs.common.reports import ReportItemSeverity
 from pcs.lib import reports
 from pcs.lib.booth import reports as reports_booth
 from pcs.lib.communication.tools import (
@@ -12,7 +13,6 @@ from pcs.lib.communication.tools import (
     SkipOfflineMixin,
     SimpleResponseProcessingMixin,
 )
-from pcs.lib.errors import ReportItemSeverity
 
 
 class BoothSendConfig(

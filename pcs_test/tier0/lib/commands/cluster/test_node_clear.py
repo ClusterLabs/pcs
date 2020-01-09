@@ -103,15 +103,15 @@ class NodeClear(TestCase):
             .runner.cib.load(resources=resources)
         )
         self.env_assist.assert_raise_library_error(
-            lambda: node_clear(self.env_assist.get_env(), "node-R"),
-            [
-                fixture.error(
-                    report_codes.NODE_TO_CLEAR_IS_STILL_IN_CLUSTER,
-                    force_code=report_codes.FORCE_CLEAR_CLUSTER_NODE,
-                    node="node-R",
-                ),
-            ],
+            lambda: node_clear(self.env_assist.get_env(), "node-R")
         )
+        self.env_assist.assert_reports([
+            fixture.error(
+                report_codes.NODE_TO_CLEAR_IS_STILL_IN_CLUSTER,
+                force_code=report_codes.FORCE_CLEAR_CLUSTER_NODE,
+                node="node-R",
+            ),
+        ])
 
     def test_existing_node_corosync(self):
         (self.config
@@ -119,15 +119,15 @@ class NodeClear(TestCase):
             .runner.cib.load(filename="cib-empty.xml")
         )
         self.env_assist.assert_raise_library_error(
-            lambda: node_clear(self.env_assist.get_env(), "rh7-2"),
-            [
-                fixture.error(
-                    report_codes.NODE_TO_CLEAR_IS_STILL_IN_CLUSTER,
-                    force_code=report_codes.FORCE_CLEAR_CLUSTER_NODE,
-                    node="rh7-2",
-                ),
-            ]
+            lambda: node_clear(self.env_assist.get_env(), "rh7-2")
         )
+        self.env_assist.assert_reports([
+            fixture.error(
+                report_codes.NODE_TO_CLEAR_IS_STILL_IN_CLUSTER,
+                force_code=report_codes.FORCE_CLEAR_CLUSTER_NODE,
+                node="rh7-2",
+            ),
+        ])
 
     def test_exisitng_node_forced(self):
         (self.config

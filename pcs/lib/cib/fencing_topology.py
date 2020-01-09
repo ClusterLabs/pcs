@@ -1,3 +1,9 @@
+from typing import (
+    Optional,
+    Set,
+    Tuple,
+)
+
 from lxml import etree
 
 from pcs.common import report_codes
@@ -6,21 +12,35 @@ from pcs.common.fencing_topology import (
     TARGET_TYPE_REGEXP,
     TARGET_TYPE_ATTRIBUTE,
 )
+from pcs.common.reports import (
+    has_errors,
+    ReportItemList,
+    ReportItemSeverity,
+    ReportProcessor,
+)
 from pcs.lib import reports
 from pcs.lib.cib.stonith import is_stonith_resource
 from pcs.lib.cib.tools import find_unique_id
-from pcs.lib.errors import ReportItemSeverity
+from pcs.lib.errors import LibraryError
 from pcs.lib.pacemaker.values import sanitize_id, validate_id
 
 def add_level(
-    reporter, topology_el, resources_el, level, target_type, target_value,
-    devices, cluster_status_nodes, force_device=False, force_node=False
+    reporter: ReportProcessor,
+    topology_el,
+    resources_el,
+    level,
+    target_type,
+    target_value,
+    devices,
+    cluster_status_nodes,
+    force_device=False,
+    force_node=False
 ):
     # pylint: disable=too-many-arguments
     """
     Validate and add a new fencing level. Raise LibraryError if not valid.
 
-    object reporter -- report processor
+    reporter -- report processor
     etree topology_el -- etree element to add the level to
     etree resources_el -- etree element with resources definitions
     int|string level -- level (index) of the new fencing level
@@ -31,16 +51,25 @@ def add_level(
     bool force_device -- continue even if a stonith device does not exist
     bool force_node -- continue even if a node (target) does not exist
     """
-    valid_level = _validate_level(reporter, level)
-    _validate_target(
-        reporter, cluster_status_nodes, target_type, target_value, force_node
+    report_list, valid_level = _validate_level(level)
+    reporter.report_list(
+        report_list
+        +
+        _validate_target(
+            cluster_status_nodes, target_type, target_value, force_node
+        )
+        +
+        _validate_devices(resources_el, devices, force_device)
     )
-    _validate_devices(reporter, resources_el, devices, force_device)
-    reporter.send()
-    _validate_level_target_devices_does_not_exist(
-        reporter, topology_el, level, target_type, target_value, devices
+    if reporter.has_errors:
+        raise LibraryError()
+    reporter.report_list(
+        _validate_level_target_devices_does_not_exist(
+            topology_el, level, target_type, target_value, devices
+        )
     )
-    reporter.send()
+    if reporter.has_errors:
+        raise LibraryError()
     _append_level_element(
         topology_el, valid_level, target_type, target_value, devices
     )
@@ -61,19 +90,22 @@ def remove_all_levels(topology_el):
         level_el.getparent().remove(level_el)
 
 def remove_levels_by_params(
-    reporter, topology_el, level=None, target_type=None, target_value=None,
-    devices=None, ignore_if_missing=False
-):
+    topology_el,
+    level=None,
+    target_type=None,
+    target_value=None,
+    devices=None,
+    ignore_if_missing=False,
+) -> ReportItemList:
     """
-    Remove specified fencing level(s). Raise LibraryError if not found.
+    Remove specified fencing level(s)
 
-    object reporter -- report processor
     etree topology_el -- etree element to remove the levels from
     int|string level -- level (index) of the fencing level to remove
     constant target_type -- the removed fencing level target value type
     mixed target_value -- the removed fencing level target value
     Iterable devices -- list of stonith devices of the removed fencing level
-    bool ignore_if_missing -- when True, do not raise if level not found
+    bool ignore_if_missing -- when True, do not report if level not found
     """
     # Do not ever remove a fencing-topology element, even if it is empty. There
     # may be ACLs set in pacemaker which allow "write" for fencing-level
@@ -82,9 +114,11 @@ def remove_levels_by_params(
     # the whole change to be rejected by pacemaker with a "permission denied"
     # message.
     # https://bugzilla.redhat.com/show_bug.cgi?id=1642514
+    report_list: ReportItemList = []
     if target_type:
-        _validate_target_typewise(reporter, target_type)
-        reporter.send()
+        report_list.extend(_validate_target_typewise(target_type))
+        if has_errors(report_list):
+            return report_list
 
     level_el_list = _find_level_elements(
         topology_el, level, target_type, target_value, devices
@@ -92,12 +126,15 @@ def remove_levels_by_params(
 
     if not level_el_list:
         if ignore_if_missing:
-            return
-        reporter.process(reports.fencing_level_does_not_exist(
+            return report_list
+        report_list.append(reports.fencing_level_does_not_exist(
             level, target_type, target_value, devices
         ))
+    if has_errors(report_list):
+        return report_list
     for el in level_el_list:
         el.getparent().remove(el)
+    return report_list
 
 def remove_device_from_all_levels(topology_el, device_id):
     """
@@ -157,20 +194,17 @@ def export(topology_el):
             })
     return export_levels
 
-def verify(reporter, topology_el, resources_el, cluster_status_nodes):
+def verify(topology_el, resources_el, cluster_status_nodes) -> ReportItemList:
     """
     Check if all cluster nodes and stonith devices used in fencing levels exist.
 
-    All errors are stored into the passed reporter. Calling function is
-    responsible for processing the report.
-
-    object reporter -- report processor
     etree topology_el -- etree element with fencing levels to check
     etree resources_el -- etree element with resources definitions
     Iterable cluster_status_nodes -- list of status of existing cluster nodes
     """
+    report_list: ReportItemList = []
     used_nodes = set()
-    used_devices = set()
+    used_devices: Set[str] = set()
 
     for level_el in topology_el.iterfind("fencing-level"):
         used_devices.update(level_el.get("devices").split(","))
@@ -178,58 +212,63 @@ def verify(reporter, topology_el, resources_el, cluster_status_nodes):
             used_nodes.add(level_el.get("target"))
 
     if used_devices:
-        _validate_devices(
-            reporter,
+        report_list.extend(_validate_devices(
             resources_el,
             sorted(used_devices),
             allow_force=False
-        )
+        ))
 
     for node in sorted(used_nodes):
-        _validate_target_valuewise(
-            reporter,
+        report_list.extend(_validate_target_valuewise(
             cluster_status_nodes,
             TARGET_TYPE_NODE,
             node,
             allow_force=False
-        )
+        ))
+    return report_list
 
-def _validate_level(reporter, level):
-    # TODO this should not rely on the report to be sent and the execution
-    # ended in a caller
+def _validate_level(level) -> Tuple[ReportItemList, Optional[int]]:
+    report_list: ReportItemList = []
     try:
         candidate = int(level)
         if candidate > 0:
-            return candidate
+            return report_list, candidate
     except ValueError:
         pass
-    reporter.append(
+    report_list.append(
         reports.invalid_option_value("level", level, "a positive integer")
     )
-    return None
+    return report_list, None
 
 def _validate_target(
-    reporter, cluster_status_nodes, target_type, target_value,
-    force_node=False
-):
-    _validate_target_typewise(reporter, target_type)
-    _validate_target_valuewise(
-        reporter, cluster_status_nodes, target_type, target_value, force_node
+    cluster_status_nodes, target_type, target_value, force_node=False
+) -> ReportItemList:
+    return (
+        _validate_target_typewise(target_type)
+        +
+        _validate_target_valuewise(
+            cluster_status_nodes, target_type, target_value, force_node
+        )
     )
 
-def _validate_target_typewise(reporter, target_type):
+def _validate_target_typewise(target_type) -> ReportItemList:
+    report_list: ReportItemList = []
     if target_type not in [
         TARGET_TYPE_NODE, TARGET_TYPE_ATTRIBUTE, TARGET_TYPE_REGEXP
     ]:
-        reporter.append(reports.invalid_option_type(
-            "target",
-            ["node", "regular expression", "attribute_name=value"]
-        ))
+        report_list.append(
+            reports.invalid_option_type(
+                "target",
+                ["node", "regular expression", "attribute_name=value"]
+            )
+        )
+    return report_list
 
 def _validate_target_valuewise(
-    reporter, cluster_status_nodes, target_type, target_value, force_node=False,
+    cluster_status_nodes, target_type, target_value, force_node=False,
     allow_force=True
-):
+) -> ReportItemList:
+    report_list: ReportItemList = []
     if target_type == TARGET_TYPE_NODE:
         node_found = False
         for node in cluster_status_nodes:
@@ -237,7 +276,7 @@ def _validate_target_valuewise(
                 node_found = True
                 break
         if not node_found:
-            reporter.append(
+            report_list.append(
                 reports.node_not_found(
                     target_value,
                     severity=ReportItemSeverity.WARNING
@@ -248,25 +287,35 @@ def _validate_target_valuewise(
                         else report_codes.FORCE_NODE_DOES_NOT_EXIST
                 )
             )
+    return report_list
 
 def _validate_devices(
-    reporter, resources_el, devices, force_device=False, allow_force=True
-):
+    resources_el,
+    devices,
+    force_device=False,
+    allow_force=True
+) -> ReportItemList:
+    report_list: ReportItemList = []
     if not devices:
-        reporter.append(
+        report_list.append(
             reports.required_options_are_missing(["stonith devices"])
         )
     invalid_devices = []
     for dev in devices:
-        errors = reporter.errors_count
-        validate_id(dev, description="device id", reporter=reporter)
-        if reporter.errors_count > errors:
+        validate_id_report_list: ReportItemList = []
+        validate_id(
+            dev,
+            description="device id",
+            reporter=validate_id_report_list
+        )
+        report_list.extend(validate_id_report_list)
+        if has_errors(validate_id_report_list):
             continue
         # TODO use the new finding function
         if not is_stonith_resource(resources_el, dev):
             invalid_devices.append(dev)
     if invalid_devices:
-        reporter.append(
+        report_list.append(
             reports.stonith_resources_do_not_exist(
                 invalid_devices,
                 ReportItemSeverity.WARNING if force_device and allow_force
@@ -276,16 +325,19 @@ def _validate_devices(
                     else report_codes.FORCE_STONITH_RESOURCE_DOES_NOT_EXIST
             )
         )
+    return report_list
 
 def _validate_level_target_devices_does_not_exist(
-    reporter, tree, level, target_type, target_value, devices
-):
+    tree, level, target_type, target_value, devices
+) -> ReportItemList:
+    report_list: ReportItemList = []
     if _find_level_elements(tree, level, target_type, target_value, devices):
-        reporter.append(
+        report_list.append(
             reports.fencing_level_already_exists(
                 level, target_type, target_value, devices
             )
         )
+    return report_list
 
 def _append_level_element(tree, level, target_type, target_value, devices):
     level_el = etree.SubElement(

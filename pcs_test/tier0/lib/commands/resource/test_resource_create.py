@@ -422,18 +422,18 @@ class Create(TestCase):
                 operation_list=[],
                 meta_attributes={},
                 instance_attributes={"state": "1"},
-            ),
-            [
-                fixture.error(
-                    report_codes.RESOURCE_INSTANCE_ATTR_VALUE_NOT_UNIQUE,
-                    instance_attr_name="state",
-                    instance_attr_value="1",
-                    agent_name="ocf:heartbeat:Dummy",
-                    resource_id_list={"B", "X"},
-                    force_code=report_codes.FORCE_OPTIONS,
-                )
-            ],
+            )
         )
+        self.env_assist.assert_reports([
+            fixture.error(
+                report_codes.RESOURCE_INSTANCE_ATTR_VALUE_NOT_UNIQUE,
+                instance_attr_name="state",
+                instance_attr_value="1",
+                agent_name="ocf:heartbeat:Dummy",
+                resource_id_list={"B", "X"},
+                force_code=report_codes.FORCE_OPTIONS,
+            )
+        ])
 
     def test_unique_option_forced(self):
         self.config.runner.cib.load(
@@ -589,14 +589,14 @@ class CreateWait(TestCase):
         )
 
         self.env_assist.assert_raise_library_error(
-            lambda: create(self.env_assist.get_env(), wait=TIMEOUT),
-            [
-                fixture.error(
-                    report_codes.RESOURCE_DOES_NOT_RUN,
-                    resource_id="A",
-                )
-            ]
+            lambda: create(self.env_assist.get_env(), wait=TIMEOUT)
         )
+        self.env_assist.assert_reports([
+            fixture.error(
+                report_codes.RESOURCE_DOES_NOT_RUN,
+                resource_id="A",
+            )
+        ])
 
     def test_wait_ok_run_ok(self):
         self.config.runner.pcmk.load_state(raw_resources=dict())
@@ -624,15 +624,15 @@ class CreateWait(TestCase):
                 self.env_assist.get_env(),
                 wait=TIMEOUT,
                 disabled=True
-            ),
-            [
-                fixture.error(
-                    report_codes.RESOURCE_RUNNING_ON_NODES,
-                    roles_with_nodes={"Started": ["node1"]},
-                    resource_id="A",
-                ),
-            ]
+            )
         )
+        self.env_assist.assert_reports([
+            fixture.error(
+                report_codes.RESOURCE_RUNNING_ON_NODES,
+                roles_with_nodes={"Started": ["node1"]},
+                resource_id="A",
+            ),
+        ])
 
     def test_wait_ok_disable_ok(self):
         (self.config
@@ -751,14 +751,14 @@ class CreateInGroup(TestCase):
             .runner.pcmk.load_state(raw_resources=dict(failed="true"))
         )
         self.env_assist.assert_raise_library_error(
-            lambda: create_group(self.env_assist.get_env()),
-            [
-                fixture.error(
-                    report_codes.RESOURCE_DOES_NOT_RUN,
-                    resource_id="A"
-                )
-            ]
+            lambda: create_group(self.env_assist.get_env())
         )
+        self.env_assist.assert_reports([
+            fixture.error(
+                report_codes.RESOURCE_DOES_NOT_RUN,
+                resource_id="A"
+            )
+        ])
 
     def test_wait_ok_run_ok(self):
         (self.config
@@ -787,15 +787,15 @@ class CreateInGroup(TestCase):
         )
 
         self.env_assist.assert_raise_library_error(
-            lambda: create_group(self.env_assist.get_env(), disabled=True),
-            [
-                fixture.error(
-                    report_codes.RESOURCE_RUNNING_ON_NODES,
-                    roles_with_nodes={'Started': ['node1']},
-                    resource_id='A'
-                )
-            ],
+            lambda: create_group(self.env_assist.get_env(), disabled=True)
         )
+        self.env_assist.assert_reports([
+            fixture.error(
+                report_codes.RESOURCE_RUNNING_ON_NODES,
+                roles_with_nodes={'Started': ['node1']},
+                resource_id='A'
+            )
+        ])
 
     def test_wait_ok_disable_ok(self):
         (self.config
@@ -873,14 +873,14 @@ class CreateAsClone(TestCase):
             .runner.pcmk.load_state(raw_resources=dict(failed="true"))
         )
         self.env_assist.assert_raise_library_error(
-            lambda: create_clone(self.env_assist.get_env()),
-            [
-                fixture.error(
-                    report_codes.RESOURCE_DOES_NOT_RUN,
-                    resource_id="A"
-                )
-            ]
+            lambda: create_clone(self.env_assist.get_env())
         )
+        self.env_assist.assert_reports([
+            fixture.error(
+                report_codes.RESOURCE_DOES_NOT_RUN,
+                resource_id="A"
+            )
+        ])
 
     def test_wait_ok_run_ok(self):
         (self.config
@@ -909,15 +909,15 @@ class CreateAsClone(TestCase):
         )
 
         self.env_assist.assert_raise_library_error(
-            lambda: create_clone(self.env_assist.get_env(), disabled=True),
-            [
-                fixture.error(
-                    report_codes.RESOURCE_RUNNING_ON_NODES,
-                    roles_with_nodes={'Started': ['node1']},
-                    resource_id='A'
-                )
-            ],
+            lambda: create_clone(self.env_assist.get_env(), disabled=True)
         )
+        self.env_assist.assert_reports([
+            fixture.error(
+                report_codes.RESOURCE_RUNNING_ON_NODES,
+                roles_with_nodes={'Started': ['node1']},
+                resource_id='A'
+            )
+        ])
 
     def test_wait_ok_disable_ok(self):
         (self.config
@@ -1437,14 +1437,14 @@ class CreateInToBundle(TestCase):
             )
         )
         self.env_assist.assert_raise_library_error(
-            lambda: create_bundle(self.env_assist.get_env()),
-            [
-                fixture.error(
-                    report_codes.RESOURCE_DOES_NOT_RUN,
-                    resource_id="A"
-                )
-            ]
+            lambda: create_bundle(self.env_assist.get_env())
         )
+        self.env_assist.assert_reports([
+            fixture.error(
+                report_codes.RESOURCE_DOES_NOT_RUN,
+                resource_id="A"
+            )
+        ])
 
     @skip_unless_pacemaker_supports_bundle
     def test_disabled_wait_ok_not_running(self):
@@ -1480,15 +1480,15 @@ class CreateInToBundle(TestCase):
             )
         )
         self.env_assist.assert_raise_library_error(
-            lambda: create_bundle(self.env_assist.get_env(), disabled=True),
-            [
-                fixture.error(
-                    report_codes.RESOURCE_RUNNING_ON_NODES,
-                    resource_id="A",
-                    roles_with_nodes={"Started": ["node1"]},
-                )
-            ]
+            lambda: create_bundle(self.env_assist.get_env(), disabled=True)
         )
+        self.env_assist.assert_reports([
+            fixture.error(
+                report_codes.RESOURCE_RUNNING_ON_NODES,
+                resource_id="A",
+                roles_with_nodes={"Started": ["node1"]},
+            )
+        ])
 
     @skip_unless_pacemaker_supports_bundle
     def test_no_port_no_ip(self):
@@ -1502,17 +1502,17 @@ class CreateInToBundle(TestCase):
             .runner.cib.load(resources=resources_fixture)
         )
         self.env_assist.assert_raise_library_error(
-            lambda: create_bundle(self.env_assist.get_env(), wait=False),
-            [
-                fixture.error(
-                    report_codes.RESOURCE_IN_BUNDLE_NOT_ACCESSIBLE,
-                    bundle_id="B",
-                    inner_resource_id="A",
-                    force_code=
-                        report_codes.FORCE_RESOURCE_IN_BUNDLE_NOT_ACCESSIBLE
-                )
-            ]
+            lambda: create_bundle(self.env_assist.get_env(), wait=False)
         )
+        self.env_assist.assert_reports([
+            fixture.error(
+                report_codes.RESOURCE_IN_BUNDLE_NOT_ACCESSIBLE,
+                bundle_id="B",
+                inner_resource_id="A",
+                force_code=
+                    report_codes.FORCE_RESOURCE_IN_BUNDLE_NOT_ACCESSIBLE
+            )
+        ])
 
     @skip_unless_pacemaker_supports_bundle
     def test_no_port_no_ip_forced(self):

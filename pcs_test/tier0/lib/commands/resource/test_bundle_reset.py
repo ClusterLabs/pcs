@@ -15,8 +15,8 @@ from pcs_test.tier0.lib.commands.resource.bundle_common import(
 from pcs_test.tools import fixture
 
 from pcs.common import report_codes
+from pcs.common.reports import ReportItemSeverity as severities
 from pcs.lib.commands.resource import bundle_reset
-from pcs.lib.errors import  ReportItemSeverity as severities
 
 class BaseMixin(FixturesMixin):
     container_type = None
@@ -92,15 +92,15 @@ class MinimalMixin(BaseMixin, SetUpMixin):
 
     def test_no_options_set(self):
         self.env_assist.assert_raise_library_error(
-            lambda: bundle_reset(self.env_assist.get_env(), self.bundle_id),
-            [
-                fixture.error(
-                    report_codes.REQUIRED_OPTIONS_ARE_MISSING,
-                    option_names=["image"],
-                    option_type="container",
-                ),
-            ]
+            lambda: bundle_reset(self.env_assist.get_env(), self.bundle_id)
         )
+        self.env_assist.assert_reports([
+            fixture.error(
+                report_codes.REQUIRED_OPTIONS_ARE_MISSING,
+                option_names=["image"],
+                option_type="container",
+            ),
+        ])
 
 class FullMixin(SetUpMixin, BaseMixin):
     container_type = None
@@ -434,15 +434,15 @@ class ResetUnknownContainerType(BaseMixin, SetUpMixin, TestCase):
     container_type = "unknown"
     def test_error_or_unknown_container(self):
         self.env_assist.assert_raise_library_error(
-            lambda: bundle_reset(self.env_assist.get_env(), self.bundle_id),
-            [
-                fixture.error(
-                    report_codes.RESOURCE_BUNDLE_UNSUPPORTED_CONTAINER_TYPE,
-                    bundle_id="B1",
-                    supported_container_types=["docker", "podman", "rkt"],
-                ),
-            ]
+            lambda: bundle_reset(self.env_assist.get_env(), self.bundle_id)
         )
+        self.env_assist.assert_reports([
+            fixture.error(
+                report_codes.RESOURCE_BUNDLE_UNSUPPORTED_CONTAINER_TYPE,
+                bundle_id="B1",
+                supported_container_types=["docker", "podman", "rkt"],
+            ),
+        ])
 
 class NoMetaIdRegenerationMixin(BaseMixin, SetUpMixin):
     @property

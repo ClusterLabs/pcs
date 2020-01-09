@@ -18,8 +18,8 @@ from pcs_test.tools.misc import (
 )
 
 from pcs.common import report_codes
+from pcs.common.reports import ReportItemSeverity as severity
 from pcs.lib.env import LibraryEnvironment
-from pcs.lib.errors import ReportItemSeverity as severity
 from pcs.lib.corosync.config_facade import ConfigFacade
 
 from pcs.lib.commands import quorum as lib
@@ -235,20 +235,17 @@ class CheckIfAtbCanBeDisabledTest(TestCase):
     def test_atb_needed_was_enable_atb_disabled(self, mock_atb_needed):
         mock_atb_needed.return_value = True
         self.mock_corosync_conf.is_enabled_auto_tie_breaker.return_value = False
-        report_item = (
-            severity.ERROR,
+        report_item = fixture.error(
             report_codes.COROSYNC_QUORUM_ATB_CANNOT_BE_DISABLED_DUE_TO_SBD,
-            {},
-            report_codes.FORCE_OPTIONS
+            force_code=report_codes.FORCE_OPTIONS
         )
         assert_raise_library_error(
             lambda: lib._check_if_atb_can_be_disabled(
                 self.mock_runner,
                 self.mock_reporter,
                 self.mock_corosync_conf,
-                True
-            ),
-            report_item
+                was_enabled=True,
+            )
         )
         assert_report_item_list_equal(
             self.mock_reporter.report_item_list, [report_item]
@@ -395,22 +392,27 @@ class SetQuorumOptionsTest(TestCase):
 
         new_options = {"invalid": "option"}
         assert_raise_library_error(
-            lambda: lib.set_options(lib_env, new_options),
-            (
-                severity.ERROR,
-                report_codes.INVALID_OPTIONS,
-                {
-                    "option_names": ["invalid"],
-                    "option_type": "quorum",
-                    "allowed": [
-                        "auto_tie_breaker",
-                        "last_man_standing",
-                        "last_man_standing_window",
-                        "wait_for_all",
-                    ],
-                    "allowed_patterns": [],
-                }
-            )
+            lambda: lib.set_options(lib_env, new_options)
+        )
+        assert_report_item_list_equal(
+            self.mock_reporter.report_item_list,
+            [
+                (
+                    severity.ERROR,
+                    report_codes.INVALID_OPTIONS,
+                    {
+                        "option_names": ["invalid"],
+                        "option_type": "quorum",
+                        "allowed": [
+                            "auto_tie_breaker",
+                            "last_man_standing",
+                            "last_man_standing_window",
+                            "wait_for_all",
+                        ],
+                        "allowed_patterns": [],
+                    }
+                )
+            ]
         )
 
         mock_push_corosync.assert_not_called()
@@ -2815,33 +2817,38 @@ class UpdateDeviceTest(TestCase):
                 {},
                 {"bad_option": "bad_value", },
                 {"mode": "bad mode", "exec_bad.name": ""}
-            ),
-            (
-                severity.ERROR,
-                report_codes.INVALID_OPTIONS,
-                {
-                    "option_names": ["bad_option"],
-                    "option_type": "quorum device",
-                    "allowed": ["sync_timeout", "timeout"],
-                    "allowed_patterns": [],
-                },
-                report_codes.FORCE_OPTIONS
-            ),
-            fixture.error(
-                report_codes.INVALID_OPTION_VALUE,
-                force_code=report_codes.FORCE_OPTIONS,
-                option_name="mode",
-                option_value="bad mode",
-                allowed_values=("off", "on", "sync"),
-                cannot_be_empty=False,
-                forbidden_characters=None,
-            ),
-            fixture.error(
-                report_codes.INVALID_USERDEFINED_OPTIONS,
-                option_names=["exec_bad.name"],
-                option_type="heuristics",
-                allowed_characters="a-z A-Z 0-9 /_-",
-            ),
+            )
+        )
+        assert_report_item_list_equal(
+            self.mock_reporter.report_item_list,
+            [
+                (
+                    severity.ERROR,
+                    report_codes.INVALID_OPTIONS,
+                    {
+                        "option_names": ["bad_option"],
+                        "option_type": "quorum device",
+                        "allowed": ["sync_timeout", "timeout"],
+                        "allowed_patterns": [],
+                    },
+                    report_codes.FORCE_OPTIONS
+                ),
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    force_code=report_codes.FORCE_OPTIONS,
+                    option_name="mode",
+                    option_value="bad mode",
+                    allowed_values=("off", "on", "sync"),
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
+                ),
+                fixture.error(
+                    report_codes.INVALID_USERDEFINED_OPTIONS,
+                    option_names=["exec_bad.name"],
+                    option_type="heuristics",
+                    allowed_characters="a-z A-Z 0-9 /_-",
+                ),
+            ]
         )
 
         self.assertEqual(1, mock_get_corosync.call_count)

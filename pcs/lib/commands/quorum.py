@@ -1,7 +1,11 @@
 from pcs.common import report_codes
-from pcs.common.reports import SimpleReportProcessor
+from pcs.common.reports import (
+    ReportProcessor,
+    ReportItemSeverity,
+)
 from pcs.lib import reports, sbd
-from pcs.lib.errors import LibraryError, ReportItemSeverity
+from pcs.lib.env import LibraryEnvironment
+from pcs.lib.errors import LibraryError
 from pcs.lib.communication import (
     qdevice as qdevice_com,
     qdevice_net as qdevice_net_com,
@@ -40,7 +44,11 @@ def get_config(lib_env):
 
 
 def _check_if_atb_can_be_disabled(
-    runner, report_processor, corosync_conf, was_enabled, force=False
+    runner,
+    report_processor: ReportProcessor,
+    corosync_conf,
+    was_enabled,
+    force=False,
 ):
     """
     Check whenever auto_tie_breaker can be changed without affecting SBD.
@@ -59,16 +67,23 @@ def _check_if_atb_can_be_disabled(
         and
         sbd.is_auto_tie_breaker_needed(runner, corosync_conf)
     ):
-        report_processor.process(
+        report_processor.report(
             reports.corosync_quorum_atb_cannot_be_disabled_due_to_sbd(
                 ReportItemSeverity.WARNING if force
                     else ReportItemSeverity.ERROR
                 ,
                 None if force else report_codes.FORCE_OPTIONS
         ))
+        if report_processor.has_errors:
+            raise LibraryError()
 
 
-def set_options(lib_env, options, skip_offline_nodes=False, force=False):
+def set_options(
+    lib_env: LibraryEnvironment,
+    options,
+    skip_offline_nodes=False,
+    force=False,
+):
     """
     Set corosync quorum options, distribute and reload corosync.conf if live
 
@@ -78,13 +93,14 @@ def set_options(lib_env, options, skip_offline_nodes=False, force=False):
     bool force -- force changes
     """
     cfg = lib_env.get_corosync_conf()
-    lib_env.report_processor.process_list(
+    if lib_env.report_processor.report_list(
         corosync_conf_validators.update_quorum_options(
             options,
             cfg.has_quorum_device(),
             cfg.get_quorum_options()
         )
-    )
+    ).has_errors:
+        raise LibraryError()
     cfg.set_quorum_options(options)
     if lib_env.is_corosync_conf_live:
         _check_if_atb_can_be_disabled(
@@ -113,9 +129,11 @@ def status_device_text(lib_env, verbose=False):
     return qdevice_client.get_status_text(lib_env.cmd_runner(), verbose)
 
 def add_device(
-    lib_env, model, model_options, generic_options, heuristics_options,
-    force_model=False, force_options=False, skip_offline_nodes=False
+    lib_env: LibraryEnvironment, model, model_options, generic_options,
+    heuristics_options, force_model=False, force_options=False,
+    skip_offline_nodes=False,
 ):
+    # pylint: disable=too-many-locals
     """
     Add a quorum device to a cluster, distribute and reload configs if live
 
@@ -131,7 +149,7 @@ def add_device(
     if cfg.has_quorum_device():
         raise LibraryError(reports.qdevice_already_defined())
 
-    report_processor = SimpleReportProcessor(lib_env.report_processor)
+    report_processor = lib_env.report_processor
     report_processor.report_list(
         corosync_conf_validators.add_quorum_device(
             model,
@@ -164,7 +182,7 @@ def add_device(
         heuristics_options,
     )
     if cfg.is_quorum_device_heuristics_enabled_with_no_exec():
-        lib_env.report_processor.process(
+        lib_env.report_processor.report(
             reports.corosync_quorum_heuristics_enabled_with_no_exec()
         )
 
@@ -193,7 +211,7 @@ def add_device(
                 skip_offline_nodes
             )
 
-        lib_env.report_processor.process(
+        lib_env.report_processor.report(
             reports.service_enable_started("corosync-qdevice")
         )
         com_cmd = qdevice_com.Enable(
@@ -207,18 +225,22 @@ def add_device(
 
     # Now, when corosync.conf has been reloaded, we can start qdevice service.
     if lib_env.is_corosync_conf_live:
-        lib_env.report_processor.process(
+        lib_env.report_processor.report(
             reports.service_start_started("corosync-qdevice")
         )
-        com_cmd = qdevice_com.Start(
+        com_cmd_start = qdevice_com.Start(
             lib_env.report_processor, skip_offline_nodes
         )
-        com_cmd.set_targets(target_list)
-        run_and_raise(lib_env.get_node_communicator(), com_cmd)
+        com_cmd_start.set_targets(target_list)
+        run_and_raise(lib_env.get_node_communicator(), com_cmd_start)
 
 def update_device(
-    lib_env, model_options, generic_options, heuristics_options,
-    force_options=False, skip_offline_nodes=False
+    lib_env: LibraryEnvironment,
+    model_options,
+    generic_options,
+    heuristics_options,
+    force_options=False,
+    skip_offline_nodes=False,
 ):
     """
     Change quorum device settings, distribute and reload configs if live
@@ -232,7 +254,7 @@ def update_device(
     cfg = lib_env.get_corosync_conf()
     if not cfg.has_quorum_device():
         raise LibraryError(reports.qdevice_not_defined())
-    lib_env.report_processor.process_list(
+    if lib_env.report_processor.report_list(
         corosync_conf_validators.update_quorum_device(
             cfg.get_quorum_device_model(),
             model_options,
@@ -241,14 +263,15 @@ def update_device(
             [node.nodeid for node in cfg.get_nodes()],
             force_options=force_options
         )
-    )
+    ).has_errors:
+        raise LibraryError()
     cfg.update_quorum_device(
         model_options,
         generic_options,
         heuristics_options
     )
     if cfg.is_quorum_device_heuristics_enabled_with_no_exec():
-        lib_env.report_processor.process(
+        lib_env.report_processor.report(
             reports.corosync_quorum_heuristics_enabled_with_no_exec()
         )
     lib_env.push_corosync_conf(cfg, skip_offline_nodes)
@@ -265,7 +288,7 @@ def remove_device_heuristics(lib_env, skip_offline_nodes=False):
     cfg.remove_quorum_device_heuristics()
     lib_env.push_corosync_conf(cfg, skip_offline_nodes)
 
-def remove_device(lib_env, skip_offline_nodes=False):
+def remove_device(lib_env: LibraryEnvironment, skip_offline_nodes=False):
     """
     Stop using quorum device, distribute and reload configs if live
     skip_offline_nodes continue even if not all nodes are accessible
@@ -277,7 +300,7 @@ def remove_device(lib_env, skip_offline_nodes=False):
     cfg.remove_quorum_device()
 
     if lib_env.is_corosync_conf_live:
-        report_processor = SimpleReportProcessor(lib_env.report_processor)
+        report_processor = lib_env.report_processor
         # get nodes for communication
         cluster_nodes_names, report_list = get_existing_nodes_names(
             cfg,
@@ -286,47 +309,48 @@ def remove_device(lib_env, skip_offline_nodes=False):
             # Hence we error out.
             error_on_missing_name=True
         )
-        report_processor.report_list(report_list)
-        if report_processor.has_errors:
+        if report_processor.report_list(report_list).has_errors:
             raise LibraryError()
         target_list = lib_env.get_node_target_factory().get_target_list(
             cluster_nodes_names, skip_non_existing=skip_offline_nodes,
         )
         # fix quorum options for SBD to work properly
         if sbd.atb_has_to_be_enabled(lib_env.cmd_runner(), cfg):
-            lib_env.report_processor.process(
+            lib_env.report_processor.report(
                 reports.corosync_quorum_atb_will_be_enabled_due_to_sbd()
             )
             cfg.set_quorum_options({"auto_tie_breaker": "1"})
 
         # disable qdevice
-        lib_env.report_processor.process(
+        lib_env.report_processor.report(
             reports.service_disable_started("corosync-qdevice")
         )
-        com_cmd = qdevice_com.Disable(
+        com_cmd_disable = qdevice_com.Disable(
             lib_env.report_processor, skip_offline_nodes
         )
-        com_cmd.set_targets(target_list)
-        run_and_raise(lib_env.get_node_communicator(), com_cmd)
+        com_cmd_disable.set_targets(target_list)
+        run_and_raise(lib_env.get_node_communicator(), com_cmd_disable)
         # stop qdevice
-        lib_env.report_processor.process(
+        lib_env.report_processor.report(
             reports.service_stop_started("corosync-qdevice")
         )
-        com_cmd = qdevice_com.Stop(
+        com_cmd_stop = qdevice_com.Stop(
             lib_env.report_processor, skip_offline_nodes
         )
-        com_cmd.set_targets(target_list)
-        run_and_raise(lib_env.get_node_communicator(), com_cmd)
+        com_cmd_stop.set_targets(target_list)
+        run_and_raise(lib_env.get_node_communicator(), com_cmd_stop)
         # handle model specific configuration
         if model == "net":
-            lib_env.report_processor.process(
+            lib_env.report_processor.report(
                 reports.qdevice_certificate_removal_started()
             )
-            com_cmd = qdevice_net_com.ClientDestroy(
+            com_cmd_client_destroy = qdevice_net_com.ClientDestroy(
                 lib_env.report_processor, skip_offline_nodes
             )
-            com_cmd.set_targets(target_list)
-            run_and_raise(lib_env.get_node_communicator(), com_cmd)
+            com_cmd_client_destroy.set_targets(target_list)
+            run_and_raise(
+                lib_env.get_node_communicator(), com_cmd_client_destroy
+            )
 
     lib_env.push_corosync_conf(cfg, skip_offline_nodes)
 

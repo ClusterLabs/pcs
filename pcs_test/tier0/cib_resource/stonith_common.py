@@ -2,7 +2,7 @@ import logging
 import unittest
 
 from pcs.cli.common.reports import (
-    LibraryReportProcessorToConsole as ReportProcessor
+    ReportProcessorToConsole as ReportProcessor
 )
 from pcs.lib.external import CommandRunner
 from pcs.lib.resource_agent import StonithAgent

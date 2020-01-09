@@ -2124,11 +2124,7 @@ class SetupWithWait(TestCase):
                 [dict(name=node, addrs=None) for node in NODE_LIST],
                 start=True,
                 wait=1,
-            ),
-            [
-                fixture.error(report_codes.WAIT_FOR_NODE_STARTUP_TIMED_OUT),
-                fixture.error(report_codes.WAIT_FOR_NODE_STARTUP_ERROR),
-            ]
+            )
         )
         self.env_assist.assert_reports(
             reports_success_minimal_fixture()
@@ -2147,6 +2143,11 @@ class SetupWithWait(TestCase):
                     node=node,
                 ) for node in NODE_LIST[:1]
             ]
+            +
+            [
+                fixture.error(report_codes.WAIT_FOR_NODE_STARTUP_TIMED_OUT),
+                fixture.error(report_codes.WAIT_FOR_NODE_STARTUP_ERROR),
+            ]
         )
 
     @mock.patch("time.sleep", lambda secs: None)
@@ -2159,11 +2160,7 @@ class SetupWithWait(TestCase):
                 [dict(name=node, addrs=None) for node in NODE_LIST],
                 start=True,
                 wait=1,
-            ),
-            [
-                fixture.error(report_codes.WAIT_FOR_NODE_STARTUP_TIMED_OUT),
-                fixture.error(report_codes.WAIT_FOR_NODE_STARTUP_ERROR),
-            ]
+            )
         )
         self.env_assist.assert_reports(
             reports_success_minimal_fixture()
@@ -2174,6 +2171,8 @@ class SetupWithWait(TestCase):
                     report_codes.WAIT_FOR_NODE_STARTUP_STARTED,
                     node_name_list=NODE_LIST,
                 ),
+                fixture.error(report_codes.WAIT_FOR_NODE_STARTUP_TIMED_OUT),
+                fixture.error(report_codes.WAIT_FOR_NODE_STARTUP_ERROR),
             ]
         )
 
@@ -2265,17 +2264,6 @@ class SetupWithWait(TestCase):
                 name="pcmk_status_check_3"
             )
         )
-        error_reports = [
-            fixture.error(
-                report_codes.INVALID_RESPONSE_FORMAT, node=NODE_LIST[1]
-            ),
-            fixture.error(
-                report_codes.NODE_COMMUNICATION_COMMAND_UNSUCCESSFUL,
-                node=NODE_LIST[0],
-                command="remote/pacemaker_node_status",
-                reason="",
-            ),
-        ]
         self.env_assist.assert_raise_library_error(
             lambda: cluster.setup(
                 self.env_assist.get_env(),
@@ -2283,12 +2271,7 @@ class SetupWithWait(TestCase):
                 [dict(name=node, addrs=None) for node in NODE_LIST],
                 start=True,
                 wait=5,
-            ),
-            (
-                [fixture.error(report_codes.WAIT_FOR_NODE_STARTUP_ERROR)]
-                +
-                error_reports
-            ),
+            )
         )
         self.env_assist.assert_reports(
             reports_success_minimal_fixture()
@@ -2314,7 +2297,18 @@ class SetupWithWait(TestCase):
                 ) for node in NODE_LIST[2:3]
             ]
             +
-            error_reports
+            [
+                fixture.error(
+                    report_codes.INVALID_RESPONSE_FORMAT, node=NODE_LIST[1]
+                ),
+                fixture.error(
+                    report_codes.NODE_COMMUNICATION_COMMAND_UNSUCCESSFUL,
+                    node=NODE_LIST[0],
+                    command="remote/pacemaker_node_status",
+                    reason="",
+                ),
+                fixture.error(report_codes.WAIT_FOR_NODE_STARTUP_ERROR),
+            ]
         )
 
     @mock.patch("time.sleep", lambda secs: None)
@@ -2354,14 +2348,7 @@ class SetupWithWait(TestCase):
                 [dict(name=node, addrs=None) for node in NODE_LIST],
                 start=True,
                 wait=2,
-            ),
-            [
-                fixture.error(report_codes.WAIT_FOR_NODE_STARTUP_ERROR),
-                fixture.error(report_codes.WAIT_FOR_NODE_STARTUP_TIMED_OUT),
-                fixture.error(
-                    report_codes.INVALID_RESPONSE_FORMAT, node=NODE_LIST[1]
-                ),
-            ]
+            )
         )
         self.env_assist.assert_reports(
             reports_success_minimal_fixture()
@@ -2389,6 +2376,11 @@ class SetupWithWait(TestCase):
                     report_codes.CLUSTER_START_SUCCESS,
                     node=node,
                 ) for node in NODE_LIST[:1]
+            ]
+            +
+            [
+                fixture.error(report_codes.WAIT_FOR_NODE_STARTUP_TIMED_OUT),
+                fixture.error(report_codes.WAIT_FOR_NODE_STARTUP_ERROR),
             ]
         )
 

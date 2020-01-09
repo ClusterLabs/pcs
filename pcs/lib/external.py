@@ -7,6 +7,7 @@ from typing import (
 )
 
 from pcs import settings
+from pcs.common.reports import ReportProcessor
 from pcs.common.system import is_systemd as is_systemctl
 from pcs.common.tools import join_multilines
 from pcs.lib import reports
@@ -42,7 +43,7 @@ class KillServicesError(ManageServiceError):
 
 
 class CommandRunner:
-    def __init__(self, logger, reporter, env_vars=None):
+    def __init__(self, logger, reporter: ReportProcessor, env_vars=None):
         self._logger = logger
         self._reporter = reporter
         # Reset environment variables by empty dict is desired here.  We need
@@ -84,7 +85,7 @@ class CommandRunner:
                 ))
             )
         )
-        self._reporter.process(
+        self._reporter.report(
             reports.run_external_process_started(
                 log_args, stdin_string, env_vars
             )
@@ -131,7 +132,7 @@ class CommandRunner:
                 out_err=out_err
             )
         )
-        self._reporter.process(reports.run_external_process_finished(
+        self._reporter.report(reports.run_external_process_finished(
             log_args, retval, out_std, out_err
         ))
         return out_std, out_err, retval

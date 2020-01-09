@@ -29,7 +29,7 @@ from pcs.common.node_communicator import (
     RequestTarget,
     Response,
 )
-from pcs.lib.errors import ReportItemSeverity as severity
+from pcs.common.reports import ReportItemSeverity as severity
 import pcs.lib.node_communication as lib
 
 
@@ -82,8 +82,7 @@ class NodeTargetLibFactory(TestCase):
             host_list=unknown_hosts
         )
         assert_raise_library_error(
-            lambda: self.factory.get_target_list([host] + unknown_hosts),
-            report
+            lambda: self.factory.get_target_list([host] + unknown_hosts)
         )
         self.report_processor.assert_reports([report])
 
@@ -97,8 +96,7 @@ class NodeTargetLibFactory(TestCase):
         assert_raise_library_error(
             lambda: self.factory.get_target_list(
                 [host] + unknown_hosts, allow_skip=False,
-            ),
-            report
+            )
         )
         self.report_processor.assert_reports([report])
 
@@ -127,7 +125,6 @@ class NodeTargetLibFactory(TestCase):
         ]
         assert_raise_library_error(
             lambda: self.factory.get_target_list(unknown_hosts),
-            *report_list
         )
         self.report_processor.assert_reports(report_list)
 
@@ -140,8 +137,7 @@ class NodeTargetLibFactory(TestCase):
         assert_raise_library_error(
             lambda: self.factory.get_target_list(
                 unknown_hosts, skip_non_existing=True
-            ),
-            report_list[1]
+            )
         )
         self.report_processor.assert_reports(report_list)
 

@@ -725,7 +725,11 @@ class WithWait(TestCase):
             .fs.isfile(settings.crm_mon_schema, return_value=False)
         )
         self.env_assist.assert_raise_library_error(
-            lambda: node_add_remote(self.env_assist.get_env(), wait=self.wait),
+            lambda: node_add_remote(self.env_assist.get_env(), wait=self.wait)
+        )
+        self.env_assist.assert_reports(
+            REPORTS.reports
+            +
             [
                 fixture.error(
                     report_codes.RESOURCE_DOES_NOT_RUN,
@@ -733,7 +737,6 @@ class WithWait(TestCase):
                 )
             ]
         )
-        self.env_assist.assert_reports(REPORTS)
 
 
 class AddRemotePcmkRemoteService(TestCase):

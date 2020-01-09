@@ -2,6 +2,7 @@ import re
 from os import path
 
 from pcs import settings
+from pcs.common.reports import ReportProcessor
 from pcs.lib import (
     external,
     reports,
@@ -211,7 +212,10 @@ def is_sbd_installed(runner):
 
 
 def initialize_block_devices(
-    report_processor, cmd_runner, device_list, option_dict
+    report_processor: ReportProcessor,
+    cmd_runner,
+    device_list,
+    option_dict
 ):
     """
     Initialize devices with specified options in option_dict.
@@ -222,7 +226,7 @@ def initialize_block_devices(
     device_list -- list of strings
     option_dict -- dictionary of options and their values
     """
-    report_processor.process(
+    report_processor.report(
         reports.sbd_device_initialization_started(device_list)
     )
 
@@ -239,7 +243,7 @@ def initialize_block_devices(
         raise LibraryError(
             reports.sbd_device_initialization_error(device_list, std_err)
         )
-    report_processor.process(
+    report_processor.report(
         reports.sbd_device_initialization_success(device_list)
     )
 

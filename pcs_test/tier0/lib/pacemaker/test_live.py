@@ -14,9 +14,9 @@ from pcs_test.tools.xml import etree_to_str, XmlManipulation
 
 from pcs import settings
 from pcs.common import report_codes
+from pcs.common.reports import ReportItemSeverity as Severity
 from pcs.common.tools import Version
 import pcs.lib.pacemaker.live as lib
-from pcs.lib.errors import ReportItemSeverity as Severity
 from pcs.lib.external import CommandRunner
 
 # pylint: disable=no-self-use

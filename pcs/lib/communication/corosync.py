@@ -1,6 +1,7 @@
 import json
 
 from pcs.common.node_communicator import RequestData
+from pcs.common.reports import ReportItemSeverity
 from pcs.lib import reports
 from pcs.lib.communication.tools import (
     AllAtOnceStrategyMixin,
@@ -9,7 +10,6 @@ from pcs.lib.communication.tools import (
     RunRemotelyBase,
     SkipOfflineMixin,
 )
-from pcs.lib.errors import ReportItemSeverity
 from pcs.lib.node_communication import response_to_report_item
 
 

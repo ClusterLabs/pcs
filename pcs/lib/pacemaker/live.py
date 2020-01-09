@@ -8,6 +8,7 @@ from typing import (
 from lxml import etree
 
 from pcs import settings
+from pcs.common.reports import ReportProcessor
 from pcs.common.tools import (
     format_os_error,
     join_multilines,
@@ -172,20 +173,27 @@ def push_cib_diff_xml(runner, cib_diff_xml):
     if retval != 0:
         raise LibraryError(reports.cib_push_error(stderr, stdout))
 
-def diff_cibs_xml(runner, reporter, cib_old_xml, cib_new_xml):
+def diff_cibs_xml(
+    runner: CommandRunner,
+    reporter: ReportProcessor,
+    cib_old_xml,
+    cib_new_xml,
+):
     """
     Return xml diff of two CIBs
-    CommandRunner runner
+
+    runner
+    reporter
     string cib_old_xml -- original CIB
     string cib_new_xml -- modified CIB
     """
     try:
         cib_old_tmp_file = write_tmpfile(cib_old_xml)
-        reporter.process(
+        reporter.report(
             reports.tmp_file_write(cib_old_tmp_file.name, cib_old_xml)
         )
         cib_new_tmp_file = write_tmpfile(cib_new_xml)
-        reporter.process(
+        reporter.report(
             reports.tmp_file_write(cib_new_tmp_file.name, cib_new_xml)
         )
     except EnvironmentError as e:

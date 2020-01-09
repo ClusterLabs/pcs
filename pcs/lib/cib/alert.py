@@ -2,8 +2,12 @@ from functools import partial
 from lxml import etree
 
 from pcs.common import report_codes
+from pcs.common.reports import (
+    ReportProcessor,
+    ReportItemSeverity as Severities,
+)
 from pcs.lib import reports
-from pcs.lib.errors import ReportItemSeverity as Severities
+from pcs.lib.errors import LibraryError
 from pcs.lib.cib.nvpair import get_nvset
 from pcs.lib.cib.tools import (
     check_new_id_applicable,
@@ -37,7 +41,11 @@ def _update_optional_attribute(element, attribute, value):
         del element.attrib[attribute]
 
 def ensure_recipient_value_is_unique(
-    reporter, alert, recipient_value, recipient_id="", allow_duplicity=False
+    reporter: ReportProcessor,
+    alert,
+    recipient_value,
+    recipient_id="",
+    allow_duplicity=False
 ):
     """
     Ensures that recipient_value is unique in alert.
@@ -55,7 +63,7 @@ def ensure_recipient_value_is_unique(
         )
     )
     if recipient_list:
-        reporter.process(reports.cib_alert_recipient_already_exists(
+        reporter.report(reports.cib_alert_recipient_already_exists(
             alert.get("id", None),
             recipient_value,
             Severities.WARNING if allow_duplicity else Severities.ERROR,
@@ -64,6 +72,8 @@ def ensure_recipient_value_is_unique(
                 else report_codes.FORCE_ALERT_RECIPIENT_VALUE_NOT_UNIQUE
             )
         ))
+        if reporter.has_errors:
+            raise LibraryError()
 
 
 def create_alert(tree, alert_id, path, description=""):
@@ -119,7 +129,7 @@ def remove_alert(tree, alert_id):
 
 
 def add_recipient(
-    reporter,
+    reporter: ReportProcessor,
     tree,
     alert_id,
     recipient_value,
@@ -154,13 +164,13 @@ def add_recipient(
     )
 
     if description:
-        recipient.set("description", description)
+        recipient.attrib["description"] = description
 
     return recipient
 
 
 def update_recipient(
-    reporter,
+    reporter: ReportProcessor,
     tree,
     recipient_id,
     recipient_value=None,

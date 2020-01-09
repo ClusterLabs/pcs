@@ -10,7 +10,7 @@ from pcs_test.tools.custom_mock import MockLibraryReportProcessor
 
 from pcs.common import report_codes
 from pcs.lib.cib import alert
-from pcs.lib.errors import ReportItemSeverity as severities
+from pcs.common.reports import ReportItemSeverity as severities
 
 
 class UpdateOptionalAttributeTest(TestCase):
@@ -70,8 +70,7 @@ class EnsureRecipientValueIsUniqueTest(TestCase):
         assert_raise_library_error(
             lambda: alert.ensure_recipient_value_is_unique(
                 self.mock_reporter, self.alert, "value1"
-            ),
-            report_item
+            )
         )
         assert_report_item_list_equal(
             self.mock_reporter.report_item_list, [report_item]
@@ -493,8 +492,7 @@ class AddRecipientTest(TestCase):
         assert_raise_library_error(
             lambda: alert.add_recipient(
                 self.mock_reporter, self.tree, "alert", "test_val"
-            ),
-            report_item
+            )
         )
         assert_report_item_list_equal(
             self.mock_reporter.report_item_list,
@@ -716,8 +714,7 @@ class UpdateRecipientTest(TestCase):
         assert_raise_library_error(
             lambda: alert.update_recipient(
                 self.mock_reporter, self.tree, "alert-recipient", "value1"
-            ),
-            report_item
+            )
         )
         assert_report_item_list_equal(
             self.mock_reporter.report_item_list,

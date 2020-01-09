@@ -4,9 +4,14 @@ from lxml import etree
 
 from pcs import settings
 from pcs.common import report_codes
+from pcs.common.reports import (
+    ReportItemSeverity,
+    ReportProcessor,
+)
 from pcs.common.tools import xml_fromstring
 from pcs.lib import reports, validate
-from pcs.lib.errors import LibraryError, ReportItemSeverity
+from pcs.lib.errors import LibraryError
+from pcs.lib.external import CommandRunner
 from pcs.lib.pacemaker.values import is_true
 
 # TODO: fix
@@ -276,21 +281,24 @@ def guess_exactly_one_resource_agent_full_name(runner, search_agent_name):
     return agents[0]
 
 def find_valid_resource_agent_by_name(
-    report_processor, runner, name,
-    allowed_absent=False, absent_agent_supported=True
+    report_processor: ReportProcessor,
+    runner: CommandRunner,
+    name: str,
+    allowed_absent=False,
+    absent_agent_supported=True
 ):
     """
     Return instance of ResourceAgent corresponding to name
 
-    report_processor is tool for warning/info/error reporting
-    runner is tool for launching external commands
-    string name specifies a searched agent
-    bool absent_agent_supported flag decides if is possible to allow to return
+    report_processor -- tool for warning/info/error reporting
+    runner -- tool for launching external commands
+    name -- specifies a searched agent
+    absent_agent_supported -- flag decides if is possible to allow to return
         absent agent: if is produced forceable/no-forcable error
     """
     if ":" not in name:
         agent = guess_exactly_one_resource_agent_full_name(runner, name)
-        report_processor.process(
+        report_processor.report(
             reports.agent_name_guessed(name, agent.get_name())
         )
         return agent
@@ -305,8 +313,11 @@ def find_valid_resource_agent_by_name(
     )
 
 def find_valid_stonith_agent_by_name(
-    report_processor, runner, name,
-    allowed_absent=False, absent_agent_supported=True
+    report_processor: ReportProcessor,
+    runner: CommandRunner,
+    name,
+    allowed_absent=False,
+    absent_agent_supported=True,
 ):
     return _find_valid_agent_by_name(
         report_processor,
@@ -318,8 +329,12 @@ def find_valid_stonith_agent_by_name(
     )
 
 def _find_valid_agent_by_name(
-    report_processor, runner, name, PresentAgentClass, AbsentAgentClass,
-    absent_agent_supported=True
+    report_processor: ReportProcessor,
+    runner: CommandRunner,
+    name,
+    PresentAgentClass,
+    AbsentAgentClass,
+    absent_agent_supported=True,
 ):
     # pylint: disable=invalid-name
     try:
@@ -336,10 +351,12 @@ def _find_valid_agent_by_name(
                     forceable=True
             ))
 
-        report_processor.process(resource_agent_error_to_report_item(
-            e,
-            severity=ReportItemSeverity.WARNING,
-        ))
+        report_processor.report(
+            resource_agent_error_to_report_item(
+                e,
+                severity=ReportItemSeverity.WARNING,
+            )
+        )
 
         return AbsentAgentClass(runner, name)
 
@@ -530,7 +547,12 @@ class Agent():
                 chains[new_param] = deprecated_by_new
         return chains
 
-    def validate_parameters_create(self, parameters, force=False):
+    def validate_parameters_create(
+        self, parameters, force=False,
+        # TODO remove this argument, see pcs.lib.cib.commands.remote_node.create
+        # for details
+        do_not_report_instance_attribute_server_exists=False
+    ):
         # This is just a basic validation checking that required parameters are
         # set and all set parameters are known to an agent. Missing checks are:
         # 1. values checks - if a param is an integer, then "abc" is not valid
@@ -552,6 +574,15 @@ class Agent():
                 **validate.set_warning(report_codes.FORCE_OPTIONS, force)
             ).validate(parameters)
         )
+        # TODO remove this "if", see pcs.lib.cib.commands.remote_node.create
+        # for details
+        if do_not_report_instance_attribute_server_exists:
+            for report in report_items:
+                if report.code == report_codes.INVALID_OPTIONS:
+                    report.info["allowed"] = [
+                        value for value in report.info["allowed"]
+                        if value != "server"
+                    ]
 
         # report missing required parameters
         missing_parameters = self._find_missing_required_parameters(
@@ -961,7 +992,12 @@ class AbsentAgentMixin():
     def _load_metadata(self):
         return "<resource-agent/>"
 
-    def validate_parameters_create(self, parameters, force=False):
+    def validate_parameters_create(
+        self, parameters, force=False,
+        # TODO remove this argument, see pcs.lib.cib.commands.remote_node.create
+        # for details
+        do_not_report_instance_attribute_server_exists=False
+    ):
         # pylint: disable=unused-argument
         return []
 
@@ -1008,7 +1044,12 @@ class StonithAgent(CrmAgent):
             self._get_fenced_metadata().get_parameters()
         )
 
-    def validate_parameters_create(self, parameters, force=False):
+    def validate_parameters_create(
+        self, parameters, force=False,
+        # TODO remove this argument, see pcs.lib.cib.commands.remote_node.create
+        # for details
+        do_not_report_instance_attribute_server_exists=False
+    ):
         report_list = super(StonithAgent, self).validate_parameters_create(
             parameters,
             force=force

@@ -4,8 +4,8 @@ from lxml import etree
 from pcs_test.tools.assertions import assert_report_item_list_equal
 
 from pcs.common import report_codes
+from pcs.common.reports import ReportItemSeverity as severity
 from pcs.lib import resource_agent as lib_ra
-from pcs.lib.errors import ReportItemSeverity as severity
 from pcs.lib.external import CommandRunner
 
 

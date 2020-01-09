@@ -11,12 +11,10 @@ from pcs_test.tools.misc import (
 )
 
 from pcs.common import report_codes
+from pcs.common.reports import ReportItemSeverity as severities
 from pcs.lib import reports
 from pcs.lib.commands import resource
-from pcs.lib.errors import (
-    LibraryError,
-    ReportItemSeverity as severities,
-)
+from pcs.lib.errors import LibraryError
 
 
 TIMEOUT = 10
@@ -237,18 +235,18 @@ class ContainerParametrized(TestCase):
                     "options": "test",
                 },
                 force_options=True
-            ),
-            [
-                fixture.error(
-                    report_codes.INVALID_OPTION_VALUE,
-                    option_name="image",
-                    option_value="",
-                    allowed_values="image name",
-                    cannot_be_empty=True,
-                    forbidden_characters=None,
-                ),
-            ]
+            )
         )
+        self.env_assist.assert_reports([
+            fixture.error(
+                report_codes.INVALID_OPTION_VALUE,
+                option_name="image",
+                option_value="",
+                allowed_values="image name",
+                cannot_be_empty=True,
+                forbidden_characters=None,
+            ),
+        ])
 
     def _test_unknow_option(self):
         self.config.runner.cib.load(
@@ -261,20 +259,20 @@ class ContainerParametrized(TestCase):
                 container_options={
                     "extra": "option",
                 }
-            ),
-            [
-                (
-                    severities.ERROR,
-                    report_codes.INVALID_OPTIONS,
-                    {
-                        "option_names": ["extra", ],
-                        "option_type": "container",
-                        "allowed": self.allowed_options,
-                    },
-                    report_codes.FORCE_OPTIONS
-                ),
-            ]
+            )
         )
+        self.env_assist.assert_reports([
+            (
+                severities.ERROR,
+                report_codes.INVALID_OPTIONS,
+                {
+                    "option_names": ["extra", ],
+                    "option_type": "container",
+                    "allowed": self.allowed_options,
+                },
+                report_codes.FORCE_OPTIONS
+            ),
+        ])
 
     def _test_unknow_option_forced(self):
         (self.config
@@ -378,52 +376,52 @@ class ContainerParametrized(TestCase):
                     "replicas": "0",
                     "replicas-per-host": "0",
                 }
-            ),
-            [
-                fixture.error(
-                    report_codes.INVALID_OPTION_VALUE,
-                    option_name="masters",
-                    option_value="-1",
-                    allowed_values="a non-negative integer",
-                    cannot_be_empty=False,
-                    forbidden_characters=None,
-                ),
-                fixture.error(
-                    report_codes.INVALID_OPTION_VALUE,
-                    option_name="promoted-max",
-                    option_value="-2",
-                    allowed_values="a non-negative integer",
-                    cannot_be_empty=False,
-                    forbidden_characters=None,
-                ),
-                (
-                    severities.ERROR,
-                    report_codes.MUTUALLY_EXCLUSIVE_OPTIONS,
-                    {
-                        "option_names": ["masters", "promoted-max", ],
-                        "option_type": "container",
-                    },
-                    None
-                ),
-                fixture.error(
-                    report_codes.INVALID_OPTION_VALUE,
-                    option_name="replicas",
-                    option_value="0",
-                    allowed_values="a positive integer",
-                    cannot_be_empty=False,
-                    forbidden_characters=None,
-                ),
-                fixture.error(
-                    report_codes.INVALID_OPTION_VALUE,
-                    option_name="replicas-per-host",
-                    option_value="0",
-                    allowed_values="a positive integer",
-                    cannot_be_empty=False,
-                    forbidden_characters=None,
-                ),
-            ]
+            )
         )
-        self.env_assist.assert_reports([self.fixture_report_deprecated_masters])
+        self.env_assist.assert_reports([
+            self.fixture_report_deprecated_masters,
+            fixture.error(
+                report_codes.INVALID_OPTION_VALUE,
+                option_name="masters",
+                option_value="-1",
+                allowed_values="a non-negative integer",
+                cannot_be_empty=False,
+                forbidden_characters=None,
+            ),
+            fixture.error(
+                report_codes.INVALID_OPTION_VALUE,
+                option_name="promoted-max",
+                option_value="-2",
+                allowed_values="a non-negative integer",
+                cannot_be_empty=False,
+                forbidden_characters=None,
+            ),
+            (
+                severities.ERROR,
+                report_codes.MUTUALLY_EXCLUSIVE_OPTIONS,
+                {
+                    "option_names": ["masters", "promoted-max", ],
+                    "option_type": "container",
+                },
+                None
+            ),
+            fixture.error(
+                report_codes.INVALID_OPTION_VALUE,
+                option_name="replicas",
+                option_value="0",
+                allowed_values="a positive integer",
+                cannot_be_empty=False,
+                forbidden_characters=None,
+            ),
+            fixture.error(
+                report_codes.INVALID_OPTION_VALUE,
+                option_name="replicas-per-host",
+                option_value="0",
+                allowed_values="a positive integer",
+                cannot_be_empty=False,
+                forbidden_characters=None,
+            ),
+        ])
 
     def _test_deprecated_options_set(self):
         # Setting both deprecated options and their new variants is tested in
@@ -486,22 +484,22 @@ class ContainerParametrized(TestCase):
                 container_options={
                     "masters": "2",
                 }
-            ),
-            [
-                (
-                    severities.ERROR,
-                    report_codes.PREREQUISITE_OPTION_MUST_NOT_BE_SET,
-                    {
-                        "option_name": "masters",
-                        "option_type": "container",
-                        "prerequisite_name": "promoted-max",
-                        "prerequisite_type": "container",
-                    },
-                    None
-                ),
-            ]
+            )
         )
-        self.env_assist.assert_reports([self.fixture_report_deprecated_masters])
+        self.env_assist.assert_reports([
+            self.fixture_report_deprecated_masters,
+            (
+                severities.ERROR,
+                report_codes.PREREQUISITE_OPTION_MUST_NOT_BE_SET,
+                {
+                    "option_name": "masters",
+                    "option_type": "container",
+                    "prerequisite_name": "promoted-max",
+                    "prerequisite_type": "container",
+                },
+                None
+            ),
+        ])
 
     def _test_masters_set_after_promoted_max_with_remove(self):
         (self.config
@@ -529,21 +527,21 @@ class ContainerParametrized(TestCase):
                 container_options={
                     "promoted-max": "3",
                 }
-            ),
-            [
-                (
-                    severities.ERROR,
-                    report_codes.PREREQUISITE_OPTION_MUST_NOT_BE_SET,
-                    {
-                        "option_name": "promoted-max",
-                        "option_type": "container",
-                        "prerequisite_name": "masters",
-                        "prerequisite_type": "container",
-                    },
-                    None
-                ),
-            ]
+            )
         )
+        self.env_assist.assert_reports([
+            (
+                severities.ERROR,
+                report_codes.PREREQUISITE_OPTION_MUST_NOT_BE_SET,
+                {
+                    "option_name": "promoted-max",
+                    "option_type": "container",
+                    "prerequisite_name": "masters",
+                    "prerequisite_type": "container",
+                },
+                None
+            ),
+        ])
 
     def _test_promoted_max_set_after_masters_with_remove(self):
         (self.config
@@ -696,17 +694,17 @@ class ContainerUnknown(TestCase):
                 container_options={
                     "promoted-max": "1",
                 }
-            ),
-            [
-                fixture.error(
-                    report_codes.RESOURCE_BUNDLE_UNSUPPORTED_CONTAINER_TYPE,
-                    bundle_id="B1",
-                    supported_container_types=sorted(
-                        ["rkt", "docker", "podman"]
-                    ),
-                )
-            ]
+            )
         )
+        self.env_assist.assert_reports([
+            fixture.error(
+                report_codes.RESOURCE_BUNDLE_UNSUPPORTED_CONTAINER_TYPE,
+                bundle_id="B1",
+                supported_container_types=sorted(
+                    ["rkt", "docker", "podman"]
+                ),
+            )
+        ])
 
 
 class Network(TestCase):
@@ -852,20 +850,20 @@ class Network(TestCase):
                 network_options={
                     "extra": "option",
                 }
-            ),
-            [
-                (
-                    severities.ERROR,
-                    report_codes.INVALID_OPTIONS,
-                    {
-                        "option_names": ["extra", ],
-                        "option_type": "network",
-                        "allowed": self.allowed_options,
-                    },
-                    report_codes.FORCE_OPTIONS
-                ),
-            ]
+            )
         )
+        self.env_assist.assert_reports([
+            (
+                severities.ERROR,
+                report_codes.INVALID_OPTIONS,
+                {
+                    "option_names": ["extra", ],
+                    "option_type": "network",
+                    "allowed": self.allowed_options,
+                },
+                report_codes.FORCE_OPTIONS
+            ),
+        ])
 
     def test_unknow_option_forced(self):
         (self.config
@@ -1050,21 +1048,21 @@ class PortMap(TestCase):
                 port_map_remove=[
                     "B1-port-map-8080",
                 ]
-            ),
-            [
-                (
-                    severities.ERROR,
-                    report_codes.ID_NOT_FOUND,
-                    {
-                        "id": "B1-port-map-8080",
-                        "expected_types": ["port-map"],
-                        "context_type": "bundle",
-                        "context_id": "B1",
-                    },
-                    None
-                ),
-            ]
+            )
         )
+        self.env_assist.assert_reports([
+            (
+                severities.ERROR,
+                report_codes.ID_NOT_FOUND,
+                {
+                    "id": "B1-port-map-8080",
+                    "expected_types": ["port-map"],
+                    "context_type": "bundle",
+                    "context_id": "B1",
+                },
+                None
+            ),
+        ])
 
 
 class StorageMap(TestCase):
@@ -1192,21 +1190,21 @@ class StorageMap(TestCase):
                 storage_map_remove=[
                     "B1-storage-map-1",
                 ]
-            ),
-            [
-                (
-                    severities.ERROR,
-                    report_codes.ID_NOT_FOUND,
-                    {
-                        "id": "B1-storage-map-1",
-                        "expected_types": ["storage-map"],
-                        "context_type": "bundle",
-                        "context_id": "B1",
-                    },
-                    None
-                )
-            ]
+            )
         )
+        self.env_assist.assert_reports([
+            (
+                severities.ERROR,
+                report_codes.ID_NOT_FOUND,
+                {
+                    "id": "B1-storage-map-1",
+                    "expected_types": ["storage-map"],
+                    "context_type": "bundle",
+                    "context_id": "B1",
+                },
+                None
+            )
+        ])
 
 class Meta(TestCase):
     fixture_no_meta = """
@@ -1510,16 +1508,16 @@ class WithPrimitive(TestCase):
                     "ip-range-start": "",
                     "control-port": "",
                 }
-            ),
-            [
-                fixture.error(
-                    report_codes.RESOURCE_IN_BUNDLE_NOT_ACCESSIBLE,
-                    bundle_id="B1",
-                    inner_resource_id="P",
-                    force_code=report_codes.FORCE_OPTIONS,
-                )
-            ]
+            )
         )
+        self.env_assist.assert_reports([
+            fixture.error(
+                report_codes.RESOURCE_IN_BUNDLE_NOT_ACCESSIBLE,
+                bundle_id="B1",
+                inner_resource_id="P",
+                force_code=report_codes.FORCE_OPTIONS,
+            )
+        ])
 
     def test_remove_ip_remove_port_force(self):
         (self.config
@@ -1619,16 +1617,16 @@ class WithPrimitive(TestCase):
                 network_options={
                     "ip-range-start": "",
                 }
-            ),
-            [
-                fixture.error(
-                    report_codes.RESOURCE_IN_BUNDLE_NOT_ACCESSIBLE,
-                    bundle_id="B1",
-                    inner_resource_id="P",
-                    force_code=report_codes.FORCE_OPTIONS,
-                )
-            ]
+            )
         )
+        self.env_assist.assert_reports([
+            fixture.error(
+                report_codes.RESOURCE_IN_BUNDLE_NOT_ACCESSIBLE,
+                bundle_id="B1",
+                inner_resource_id="P",
+                force_code=report_codes.FORCE_OPTIONS,
+            )
+        ])
 
     def test_remove_ip_force(self):
         (self.config
@@ -1674,16 +1672,16 @@ class WithPrimitive(TestCase):
                 network_options={
                     "control-port": "",
                 }
-            ),
-            [
-                fixture.error(
-                    report_codes.RESOURCE_IN_BUNDLE_NOT_ACCESSIBLE,
-                    bundle_id="B1",
-                    inner_resource_id="P",
-                    force_code=report_codes.FORCE_OPTIONS,
-                )
-            ]
+            )
         )
+        self.env_assist.assert_reports([
+            fixture.error(
+                report_codes.RESOURCE_IN_BUNDLE_NOT_ACCESSIBLE,
+                bundle_id="B1",
+                inner_resource_id="P",
+                force_code=report_codes.FORCE_OPTIONS,
+            )
+        ])
 
     def test_remove_port_force(self):
         (self.config

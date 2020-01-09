@@ -5,6 +5,7 @@ from xml.etree.ElementTree import Element
 
 from pcs.common import file_type_codes
 from pcs.common.node_communicator import Communicator, NodeCommunicatorFactory
+from pcs.common.reports import ReportProcessor
 from pcs.common.tools import Version
 from pcs.lib import reports
 from pcs.lib.booth.env import BoothEnv
@@ -100,7 +101,7 @@ class LibraryEnvironment:
         return self._logger
 
     @property
-    def report_processor(self):
+    def report_processor(self) -> ReportProcessor:
         return self._report_processor
 
     @property
@@ -135,7 +136,7 @@ class LibraryEnvironment:
                 self.__loaded_cib_to_modify = upgraded_cib
                 self.__loaded_cib_diff_source = etree_to_str(upgraded_cib)
                 if not self._cib_upgrade_reported:
-                    self.report_processor.process(
+                    self.report_processor.report(
                         reports.cib_upgrade_successful()
                     )
                 self._cib_upgrade_reported = True
@@ -206,7 +207,7 @@ class LibraryEnvironment:
             <
             MIN_FEATURE_SET_VERSION_FOR_DIFF
         ):
-            self.report_processor.process(
+            self.report_processor.report(
                 reports.cib_push_forced_full_due_to_crm_feature_set(
                     MIN_FEATURE_SET_VERSION_FOR_DIFF,
                     self.__loaded_cib_diff_source_feature_set
@@ -298,7 +299,8 @@ class LibraryEnvironment:
                 # cluster. Hence we error out.
                 error_on_missing_name=True
             )
-            self.report_processor.process_list(report_list)
+            if self.report_processor.report_list(report_list).has_errors:
+                raise LibraryError()
 
             self._push_corosync_conf_live(
                 self.get_node_target_factory().get_target_list(
@@ -340,18 +342,18 @@ class LibraryEnvironment:
             run_and_raise(self.get_node_communicator(), com_cmd)
         # Reload qdevice if needed
         if need_qdevice_reload:
-            self.report_processor.process(
+            self.report_processor.report(
                 reports.qdevice_client_reload_started()
             )
             com_cmd = qdevice.Stop(self.report_processor, skip_offline_nodes)
             com_cmd.set_targets(target_list)
             run(self.get_node_communicator(), com_cmd)
-            report_list = com_cmd.error_list
+            has_errors = com_cmd.has_errors
             com_cmd = qdevice.Start(self.report_processor, skip_offline_nodes)
             com_cmd.set_targets(target_list)
             run(self.get_node_communicator(), com_cmd)
-            report_list += com_cmd.error_list
-            if report_list:
+            has_errors = has_errors or com_cmd.has_errors
+            if has_errors:
                 raise LibraryError()
 
     @property
@@ -375,7 +377,7 @@ class LibraryEnvironment:
                 try:
                     cib_data = self._cib_data
                     self._cib_data_tmp_file = write_tmpfile(cib_data)
-                    self.report_processor.process(
+                    self.report_processor.report(
                         reports.tmp_file_write(
                             self._cib_data_tmp_file.name,
                             cib_data

@@ -1,43 +1,90 @@
 import abc
 
-from pcs.lib.errors import ReportItem, ReportItemList
+from typing import (
+    List,
+)
+
+class ReportItemSeverity:
+    ERROR = "ERROR"
+    WARNING = "WARNING"
+    INFO = "INFO"
+    DEBUG = "DEBUG"
 
 
-class SimpleReportProcessorInterface(abc.ABC):
-    def report(self, report_item: ReportItem) -> ReportItemList:
-        return self.report_list([report_item])
+class ReportItem:
+    @classmethod
+    def error(cls, code, **kwargs):
+        return cls(code, ReportItemSeverity.ERROR, **kwargs)
 
-    @abc.abstractmethod
-    def report_list(self, report_list: ReportItemList) -> ReportItemList:
-        raise NotImplementedError()
+    @classmethod
+    def warning(cls, code, **kwargs):
+        return cls(code, ReportItemSeverity.WARNING, **kwargs)
+
+    @classmethod
+    def info(cls, code, **kwargs):
+        # pylint: disable=method-hidden
+        # this is classmethod so it is ok
+        return cls(code, ReportItemSeverity.INFO, **kwargs)
+
+    @classmethod
+    def debug(cls, code, **kwargs):
+        return cls(code, ReportItemSeverity.DEBUG, **kwargs)
+
+    @classmethod
+    def from_dict(cls, report_dict):
+        return cls(
+            report_dict["code"],
+            report_dict["severity"],
+            forceable=report_dict["forceable"],
+            info=report_dict["info"]
+        )
+
+    def __init__(
+        self, code, severity, forceable=None, info=None
+    ):
+        self.code = code
+        self.severity = severity
+        self.forceable = forceable
+        self.info = info if info else dict()
+
+    def __repr__(self):
+        return "{severity} {code}: {info} forceable: {forceable}".format(
+            severity=self.severity,
+            code=self.code,
+            info=self.info,
+            forceable=self.forceable,
+        )
 
 
-class SimpleReportProcessor(SimpleReportProcessorInterface):
-    """
-    This class is a wrapper for a report processor class and at the same time
-    implements interface of a simple report processor. This class interface for
-    easy checking if some errors have been reported.
-    """
-    def __new__(cls, report_processor: SimpleReportProcessorInterface):
-        if isinstance(report_processor, cls):
-            # There is no point in wrapping the same object multiple times
-            return report_processor
-        self = super().__new__(cls)
-        self.__init__(report_processor)
-        return self
+ReportItemList = List[ReportItem]
 
-    def __init__(self, report_processor: SimpleReportProcessorInterface):
-        self._report_processor = report_processor
-        self._error_list: ReportItemList = []
 
-    def report_list(self, report_list: ReportItemList) -> ReportItemList:
-        error_list = self._report_processor.report_list(report_list)
-        self._error_list.extend(error_list)
-        return error_list
+class ReportProcessor(abc.ABC):
+    def __init__(self):
+        self._has_errors = False
 
     @property
     def has_errors(self) -> bool:
-        return bool(self._error_list)
+        return self._has_errors
 
-    def clear_errors(self) -> None:
-        self._error_list = []
+    def report(self, report_item: ReportItem) -> "ReportProcessor":
+        if report_item.severity == ReportItemSeverity.ERROR:
+            self._has_errors = True
+        self._do_report(report_item)
+        return self
+
+    def report_list(self, report_list: ReportItemList) -> "ReportProcessor":
+        for report_item in report_list:
+            self.report(report_item)
+        return self
+
+    @abc.abstractmethod
+    def _do_report(self, report_item: ReportItem) -> None:
+        raise NotImplementedError()
+
+
+def has_errors(report_list: ReportItemList) -> bool:
+    for report_item in report_list:
+        if report_item.severity == ReportItemSeverity.ERROR:
+            return True
+    return False

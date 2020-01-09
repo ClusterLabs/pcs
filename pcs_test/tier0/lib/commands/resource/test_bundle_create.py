@@ -14,8 +14,8 @@ from pcs_test.tier0.lib.commands.resource.bundle_common import(
 )
 
 from pcs.common import report_codes
+from pcs.common.reports import ReportItemSeverity as severities
 from pcs.lib.commands import resource
-from pcs.lib.errors import ReportItemSeverity as severities
 
 class CreateCommandMixin:
     container_type = None
@@ -47,33 +47,33 @@ class MinimalCreate(CreateCommandMixin, FixturesMixin, SetUpMixin, TestCase):
     def test_errors(self):
         self.env_assist.assert_raise_library_error(
             lambda:
-            self.bundle_create(bundle_id="B#1", container_type="nonsense"),
-            [
-                (
-                    severities.ERROR,
-                    report_codes.INVALID_ID,
-                    {
-                        "invalid_character": "#",
-                        "id": "B#1",
-                        "id_description": "bundle name",
-                        "is_first_char": False,
-                    },
-                    None
-                ),
-                (
-                    severities.ERROR,
-                    report_codes.INVALID_OPTION_VALUE,
-                    {
-                        "option_name": "container type",
-                        "option_value": "nonsense",
-                        "allowed_values": {"docker", "podman", "rkt"},
-                        "cannot_be_empty": False,
-                        "forbidden_characters": None,
-                    },
-                    None
-                ),
-            ]
+            self.bundle_create(bundle_id="B#1", container_type="nonsense")
         )
+        self.env_assist.assert_reports([
+            (
+                severities.ERROR,
+                report_codes.INVALID_ID,
+                {
+                    "invalid_character": "#",
+                    "id": "B#1",
+                    "id_description": "bundle name",
+                    "is_first_char": False,
+                },
+                None
+            ),
+            (
+                severities.ERROR,
+                report_codes.INVALID_OPTION_VALUE,
+                {
+                    "option_name": "container type",
+                    "option_value": "nonsense",
+                    "allowed_values": {"docker", "podman", "rkt"},
+                    "cannot_be_empty": False,
+                    "forbidden_characters": None,
+                },
+                None
+            ),
+        ])
 
 class CreateParametrizedContainerMixin(
     CreateCommandMixin, ParametrizedContainerMixin, UpgradeMixin

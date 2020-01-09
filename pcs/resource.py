@@ -23,7 +23,10 @@ from pcs.cli.common.parse_args import (
     prepare_options_allowed,
     InputModifiers,
 )
-from pcs.cli.common.reports import process_library_reports
+from pcs.cli.common.reports import (
+    process_library_reports,
+    ReportItemSeverity,
+)
 from pcs.cli.resource.parse_args import (
     parse_bundle_create_options,
     parse_bundle_reset_options,
@@ -42,7 +45,7 @@ from pcs.lib.commands.resource import(
     _validate_guest_change,
     _get_nodes_to_validate_against,
 )
-from pcs.lib.errors import LibraryError, ReportItemSeverity
+from pcs.lib.errors import LibraryError
 import pcs.lib.pacemaker.live as lib_pacemaker
 from pcs.lib.pacemaker.state import (
     get_cluster_state_dom,
@@ -74,7 +77,7 @@ def _detect_guest_change(meta_attributes, allow_not_suitable_command):
     existing_nodes_names, existing_nodes_addrs, report_list = (
         _get_nodes_to_validate_against(env, cib)
     )
-    env.report_processor.process_list(
+    if env.report_processor.report_list(
         report_list
         +
         _validate_guest_change(
@@ -85,7 +88,8 @@ def _detect_guest_change(meta_attributes, allow_not_suitable_command):
             allow_not_suitable_command,
             detect_remove=True,
         )
-    )
+    ).has_errors:
+        raise LibraryError()
 
 
 def resource_utilization_cmd(lib, argv, modifiers):

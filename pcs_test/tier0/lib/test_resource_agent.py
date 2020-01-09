@@ -15,8 +15,9 @@ from pcs_test.tools.misc import create_patcher
 from pcs_test.tools.xml import XmlManipulation
 
 from pcs.common import report_codes
+from pcs.common.reports import ReportItemSeverity as severity
 from pcs.lib import resource_agent as lib_ra
-from pcs.lib.errors import ReportItemSeverity as severity, LibraryError
+from pcs.lib.errors import LibraryError
 from pcs.lib.external import CommandRunner
 
 # pylint: disable=protected-access
@@ -2241,7 +2242,7 @@ class FindResourceAgentByNameTest(TestCase):
         #test
         self.assertEqual(agent, self.run(name))
         mock_guess.assert_called_once_with(self.runner, name)
-        self.report_processor.process.assert_called_once_with(report)
+        self.report_processor.report.assert_called_once_with(report)
         mock_report.assert_called_once_with(name, guessed_name)
 
     @patch_agent("ResourceAgent")
@@ -2280,7 +2281,7 @@ class FindResourceAgentByNameTest(TestCase):
         error_to_report_item.assert_called_once_with(
             e, severity=severity.WARNING
         )
-        self.report_processor.process.assert_called_once_with(report)
+        self.report_processor.report.assert_called_once_with(report)
 
     @patch_agent("resource_agent_error_to_report_item")
     @patch_agent("ResourceAgent")

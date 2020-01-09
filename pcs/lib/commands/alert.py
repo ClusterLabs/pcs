@@ -1,3 +1,4 @@
+from pcs.common.reports import ReportItemList
 from pcs.common.tools import Version
 from pcs.lib import reports
 from pcs.lib.cib import alert
@@ -6,6 +7,7 @@ from pcs.lib.cib.nvpair import (
     arrange_first_meta_attributes,
 )
 from pcs.lib.cib.tools import IdProvider
+from pcs.lib.env import LibraryEnvironment
 from pcs.lib.errors import LibraryError
 
 
@@ -13,7 +15,7 @@ REQUIRED_CIB_VERSION = Version(2, 5, 0)
 
 
 def create_alert(
-    lib_env,
+    lib_env: LibraryEnvironment,
     alert_id,
     path,
     instance_attribute_dict,
@@ -48,7 +50,7 @@ def create_alert(
 
 
 def update_alert(
-    lib_env,
+    lib_env: LibraryEnvironment,
     alert_id,
     path,
     instance_attribute_dict,
@@ -80,7 +82,7 @@ def update_alert(
     lib_env.push_cib()
 
 
-def remove_alert(lib_env, alert_id_list):
+def remove_alert(lib_env: LibraryEnvironment, alert_id_list):
     """
     Remove alerts with specified ids.
 
@@ -88,19 +90,20 @@ def remove_alert(lib_env, alert_id_list):
     alert_id_list -- list of alerts ids which should be removed
     """
     cib = lib_env.get_cib(REQUIRED_CIB_VERSION)
-    report_list = []
+    report_list: ReportItemList = []
     for alert_id in alert_id_list:
         try:
             alert.remove_alert(cib, alert_id)
         except LibraryError as e:
             report_list += e.args
 
-    lib_env.report_processor.process_list(report_list)
+    if lib_env.report_processor.report_list(report_list).has_errors:
+        raise LibraryError()
     lib_env.push_cib()
 
 
 def add_recipient(
-    lib_env,
+    lib_env: LibraryEnvironment,
     alert_id,
     recipient_value,
     instance_attribute_dict,
@@ -148,7 +151,7 @@ def add_recipient(
 
 
 def update_recipient(
-    lib_env,
+    lib_env: LibraryEnvironment,
     recipient_id,
     instance_attribute_dict,
     meta_attribute_dict,
@@ -193,7 +196,7 @@ def update_recipient(
     lib_env.push_cib()
 
 
-def remove_recipient(lib_env, recipient_id_list):
+def remove_recipient(lib_env: LibraryEnvironment, recipient_id_list):
     """
     Remove specified recipients.
 
@@ -201,17 +204,18 @@ def remove_recipient(lib_env, recipient_id_list):
     recipient_id_list -- list of recipients ids to be removed
     """
     cib = lib_env.get_cib(REQUIRED_CIB_VERSION)
-    report_list = []
+    report_list: ReportItemList = []
     for recipient_id in recipient_id_list:
         try:
             alert.remove_recipient(cib, recipient_id)
         except LibraryError as e:
             report_list += e.args
-    lib_env.report_processor.process_list(report_list)
+    if lib_env.report_processor.report_list(report_list).has_errors:
+        raise LibraryError()
     lib_env.push_cib()
 
 
-def get_all_alerts(lib_env):
+def get_all_alerts(lib_env: LibraryEnvironment):
     """
     Returns list of all alerts. See docs of pcs.lib.cib.alert.get_all_alerts for
     description of data format.

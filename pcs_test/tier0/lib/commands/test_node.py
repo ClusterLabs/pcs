@@ -9,9 +9,10 @@ from pcs_test.tools.custom_mock import MockLibraryReportProcessor
 from pcs_test.tools.misc import create_patcher
 
 from pcs.common import report_codes
+from pcs.common.reports import ReportItemSeverity as severity
 from pcs.lib.cib.tools import IdProvider
 from pcs.lib.env import LibraryEnvironment
-from pcs.lib.errors import ReportItemSeverity as severity, LibraryError
+from pcs.lib.errors import LibraryError
 
 from pcs.lib.commands import node as lib
 

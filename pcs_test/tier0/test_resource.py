@@ -49,6 +49,9 @@ PCMK_2_0_3_PLUS = is_minimum_pacemaker_version(2, 0, 3)
 LOCATION_NODE_VALIDATION_SKIP_WARNING = (
     f"Warning: {LOCATION_NODE_VALIDATION_SKIP_MSG}\n"
 )
+ERRORS_HAVE_OCURRED = (
+    "Error: Errors have occurred, therefore pcs is unable to continue\n"
+)
 
 RESOURCES_TMP = rc("test_resource")
 if not os.path.exists(RESOURCES_TMP):
@@ -2187,8 +2190,11 @@ monitor interval=20 (A-monitor-interval-20)
     def testLSBResource(self):
         self.assert_pcs_fail(
             "resource create --no-default-ops D2 lsb:network foo=bar",
-            "Error: invalid resource option 'foo', there are no options"
-                " allowed, use --force to override\n"
+            (
+                "Error: invalid resource option 'foo', there are no options"
+                    " allowed, use --force to override\n"
+                + ERRORS_HAVE_OCURRED
+            )
         )
 
         self.assert_pcs_success(
@@ -4519,9 +4525,12 @@ class UpdateInstanceAttrs(
                 " test=testC test2=test2a test4=test4A op monitor interval=35"
                 " meta test7=test7a test6="
             ,
-            "Error: invalid resource options: 'test', 'test2', 'test4',"
-                " allowed options are: 'fake', 'state', 'trace_file', "
-                "'trace_ra', use --force to override\n"
+            (
+                "Error: invalid resource options: 'test', 'test2', 'test4',"
+                    " allowed options are: 'fake', 'state', 'trace_file', "
+                    "'trace_ra', use --force to override\n"
+                + ERRORS_HAVE_OCURRED
+            )
         )
 
         self.assert_pcs_success(
@@ -5254,8 +5263,12 @@ class ResourceUpdateRemoteAndGuestChecks(TestCase, AssertPcsMixin):
         )
         self.assert_pcs_fail(
             "resource update R meta remote-node=HOST",
-            "Error: this command is not sufficient for creating a guest node,"
-            " use 'pcs cluster node add-guest', use --force to override\n"
+            (
+                "Error: this command is not sufficient for creating a guest "
+                    "node, use 'pcs cluster node add-guest', use --force to "
+                    "override\n"
+                + ERRORS_HAVE_OCURRED
+            )
         )
     def test_update_warn_on_pacemaker_guest_attempt(self):
         self.assert_pcs_success(
@@ -5276,8 +5289,12 @@ class ResourceUpdateRemoteAndGuestChecks(TestCase, AssertPcsMixin):
         )
         self.assert_pcs_fail(
             "resource update R meta remote-node=",
-            "Error: this command is not sufficient for removing a guest node,"
-            " use 'pcs cluster node remove-guest', use --force to override\n"
+            (
+                "Error: this command is not sufficient for removing a guest "
+                    "node, use 'pcs cluster node remove-guest', use --force "
+                    "to override\n"
+                + ERRORS_HAVE_OCURRED
+            )
         )
 
     def test_update_warn_on_pacemaker_guest_attempt_remove(self):
@@ -5300,8 +5317,12 @@ class ResourceUpdateRemoteAndGuestChecks(TestCase, AssertPcsMixin):
         )
         self.assert_pcs_fail(
             "resource meta R remote-node=HOST",
-            "Error: this command is not sufficient for creating a guest node,"
-            " use 'pcs cluster node add-guest', use --force to override\n"
+            (
+                "Error: this command is not sufficient for creating a guest "
+                    "node, use 'pcs cluster node add-guest', use --force to "
+                    "override\n"
+                + ERRORS_HAVE_OCURRED
+            )
         )
 
     def test_meta_warn_on_pacemaker_guest_attempt(self):
@@ -5324,8 +5345,12 @@ class ResourceUpdateRemoteAndGuestChecks(TestCase, AssertPcsMixin):
         )
         self.assert_pcs_fail(
             "resource meta R remote-node=",
-            "Error: this command is not sufficient for removing a guest node,"
-            " use 'pcs cluster node remove-guest', use --force to override\n"
+            (
+                "Error: this command is not sufficient for removing a guest "
+                    "node, use 'pcs cluster node remove-guest', use --force to "
+                    "override\n"
+                + ERRORS_HAVE_OCURRED
+            )
         )
 
     def test_meta_warn_on_pacemaker_guest_attempt_remove(self):

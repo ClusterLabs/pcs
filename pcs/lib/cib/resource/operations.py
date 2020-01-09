@@ -3,6 +3,10 @@ from collections import defaultdict
 from lxml import etree
 
 from pcs.common import report_codes
+from pcs.common.reports import (
+    ReportItemList,
+    ReportProcessor,
+)
 from pcs.lib import reports, validate
 from pcs.lib.resource_agent import get_default_interval, complete_all_intervals
 from pcs.lib.cib.nvpair import append_new_instance_attributes
@@ -62,8 +66,11 @@ normalize = validate.option_value_normalization({
 })
 
 def prepare(
-    report_processor, raw_operation_list, default_operation_list,
-    allowed_operation_name_list, allow_invalid=False
+    report_processor: ReportProcessor,
+    raw_operation_list,
+    default_operation_list,
+    allowed_operation_name_list,
+    allow_invalid=False,
 ):
     """
     Return operation_list prepared from raw_operation_list and
@@ -78,7 +85,7 @@ def prepare(
     """
     operations_to_validate = operations_to_normalized(raw_operation_list)
 
-    report_list = []
+    report_list: ReportItemList = []
     report_list.extend(
         validate_operation_list(
             operations_to_validate,
@@ -91,8 +98,8 @@ def prepare(
 
     report_list.extend(validate_different_intervals(operation_list))
 
-    #can raise LibraryError
-    report_processor.process_list(report_list)
+    if report_processor.report_list(report_list).has_errors:
+        raise LibraryError()
 
     return complete_all_intervals(operation_list) + get_remaining_defaults(
         report_processor,
@@ -188,7 +195,7 @@ def get_interval_uniquer():
         return str(normalized_interval)
     return get_uniq_interval
 
-def make_unique_intervals(report_processor, operation_list):
+def make_unique_intervals(report_processor: ReportProcessor, operation_list):
     """
     Return operation list similar to operation_list where intervals for the same
         operation are unique
@@ -205,7 +212,7 @@ def make_unique_intervals(report_processor, operation_list):
                 operation["interval"]
             )
             if adapted["interval"] != operation["interval"]:
-                report_processor.process(
+                report_processor.report(
                     reports.resource_operation_interval_adapted(
                         operation["name"],
                         operation["interval"],

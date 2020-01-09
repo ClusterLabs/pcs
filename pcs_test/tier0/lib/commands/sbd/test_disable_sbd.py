@@ -82,17 +82,15 @@ class DisableSbd(TestCase):
     def test_all_node_names_missing(self):
         self.config.corosync_conf.load(filename="corosync-no-node-names.conf")
         self.env_assist.assert_raise_library_error(
-            lambda: disable_sbd(self.env_assist.get_env()),
-            [
-                fixture.error(
-                    report_codes.COROSYNC_CONFIG_NO_NODES_DEFINED,
-                ),
-            ]
+            lambda: disable_sbd(self.env_assist.get_env())
         )
         self.env_assist.assert_reports([
             fixture.warn(
                 report_codes.COROSYNC_CONFIG_MISSING_NAMES_OF_NODES,
                 fatal=False,
+            ),
+            fixture.error(
+                report_codes.COROSYNC_CONFIG_NO_NODES_DEFINED,
             ),
         ])
 

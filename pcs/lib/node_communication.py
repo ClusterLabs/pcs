@@ -10,8 +10,12 @@ from pcs.common.node_communicator import (
     HostNotFound,
     NodeTargetFactory,
 )
-from pcs.lib.errors import ReportItemSeverity
+from pcs.common.reports import (
+    ReportItemSeverity,
+    ReportProcessor,
+)
 from pcs.lib import reports
+from pcs.lib.errors import LibraryError
 
 
 def _get_port(port):
@@ -19,7 +23,7 @@ def _get_port(port):
 
 
 class LibCommunicatorLogger(CommunicatorLoggerInterface):
-    def __init__(self, logger, reporter):
+    def __init__(self, logger, reporter: ReportProcessor):
         self._logger = logger
         self._reporter = reporter
 
@@ -30,7 +34,7 @@ class LibCommunicatorLogger(CommunicatorLoggerInterface):
         self._logger.debug(
             msg.format(url=request.url, data=request.data)
         )
-        self._reporter.process(
+        self._reporter.report(
             reports.node_communication_started(request.url, request.data)
         )
 
@@ -52,7 +56,7 @@ class LibCommunicatorLogger(CommunicatorLoggerInterface):
             code=response.response_code,
             response=response.data
         ))
-        self._reporter.process(reports.node_communication_finished(
+        self._reporter.report(reports.node_communication_finished(
             url, response.response_code, response.data
         ))
 
@@ -61,14 +65,14 @@ class LibCommunicatorLogger(CommunicatorLoggerInterface):
         self._logger.debug(msg.format(
             node=response.request.host_label, reason=response.error_msg
         ))
-        self._reporter.process(
+        self._reporter.report(
             reports.node_communication_not_connected(
                 response.request.host_label, response.error_msg
             )
         )
         if is_proxy_set(os.environ):
             self._logger.warning("Proxy is set")
-            self._reporter.process(reports.node_communication_proxy_is_set(
+            self._reporter.report(reports.node_communication_proxy_is_set(
                 response.request.host_label,
                 response.request.dest.addr,
             ))
@@ -84,7 +88,7 @@ class LibCommunicatorLogger(CommunicatorLoggerInterface):
                 "--Debug Communication Info End--"
             ).format(url=url, data=debug_data)
         )
-        self._reporter.process(
+        self._reporter.report(
             reports.node_communication_debug_info(url, debug_data)
         )
 
@@ -104,7 +108,7 @@ class LibCommunicatorLogger(CommunicatorLoggerInterface):
             req=response.request.url,
         )
         self._logger.warning(msg)
-        self._reporter.process(reports.node_communication_retrying(
+        self._reporter.report(reports.node_communication_retrying(
             response.request.host_label,
             previous_dest.addr,
             old_port,
@@ -119,13 +123,13 @@ class LibCommunicatorLogger(CommunicatorLoggerInterface):
             req=response.request.url,
         )
         self._logger.warning(msg)
-        self._reporter.process(reports.node_communication_no_more_addresses(
+        self._reporter.report(reports.node_communication_no_more_addresses(
             response.request.host_label, response.request.url
         ))
 
 
 class NodeTargetLibFactory(NodeTargetFactory):
-    def __init__(self, known_hosts, report_processor):
+    def __init__(self, known_hosts, report_processor: ReportProcessor):
         super(NodeTargetLibFactory, self).__init__(known_hosts)
         self._report_processor = report_processor
 
@@ -165,7 +169,8 @@ class NodeTargetLibFactory(NodeTargetFactory):
             host_name_list, skip_non_existing, allow_skip
         )
         if report_list:
-            self._report_processor.process_list(report_list)
+            if self._report_processor.report_list(report_list).has_errors:
+                raise LibraryError()
         return target_list
 
 

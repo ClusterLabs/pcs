@@ -10,8 +10,9 @@ from lxml import etree
 
 from pcs import settings
 from pcs.common.tools import xml_fromstring
+from pcs.common.reports import ReportItemSeverity as severities
 from pcs.lib import reports
-from pcs.lib.errors import LibraryError, ReportItemSeverity as severities
+from pcs.lib.errors import LibraryError
 from pcs.lib.pacemaker.values import (
     is_false,
     is_true,

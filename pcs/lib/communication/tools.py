@@ -1,11 +1,9 @@
 from pcs.common import report_codes
 from pcs.common.node_communicator import Request
+from pcs.common.reports import ReportItemSeverity
 from pcs.lib import reports
 from pcs.lib.node_communication import response_to_report_item
-from pcs.lib.errors import (
-    LibraryError,
-    ReportItemSeverity,
-)
+from pcs.lib.errors import LibraryError
 
 
 class CommunicationCommandInterface:
@@ -40,9 +38,9 @@ class CommunicationCommandInterface:
         raise NotImplementedError()
 
     @property
-    def error_list(self):
+    def has_errors(self):
         """
-        List of errors which occured during running the requests.
+        Has an error occured during running the requests.
         """
         raise NotImplementedError()
 
@@ -75,7 +73,7 @@ def run_and_raise(communicator, cmd):
     CommunicationCommandInterface cmd
     """
     to_return = run(communicator, cmd)
-    if cmd.error_list:
+    if cmd.has_errors:
         raise LibraryError()
     return to_return
 
@@ -90,7 +88,7 @@ class RunRemotelyBase(CommunicationCommandInterface):
 
     def __init__(self, report_processor):
         self.__report_processor = report_processor
-        self._error_list = []
+        self.__has_errors = False
 
     def _get_response_report(self, response):
         """
@@ -110,9 +108,13 @@ class RunRemotelyBase(CommunicationCommandInterface):
 
         list report_list -- list of ReportItem objects
         """
-        self._error_list.extend(
-            self.__report_processor.report_list(report_list)
-        )
+        self.__report_processor.report_list(report_list)
+        if self.has_errors:
+            return
+        for report_item in report_list:
+            if report_item.severity == ReportItemSeverity.ERROR:
+                self.__has_errors = True
+                return
 
     def _report(self, report):
         """
@@ -143,8 +145,8 @@ class RunRemotelyBase(CommunicationCommandInterface):
         pass
 
     @property
-    def error_list(self):
-        return self._error_list
+    def has_errors(self):
+        return self.__has_errors
 
 
 class StrategyBase:

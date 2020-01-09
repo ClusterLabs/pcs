@@ -11,11 +11,14 @@ from pcs.common import (
 )
 from pcs.common.file import RawFileError
 from pcs.common.node_communicator import HostNotFound
+from pcs.common.reports import (
+    ReportProcessor,
+    ReportItemSeverity,
+)
 from pcs.common.tools import (
     format_environment_error,
     join_multilines,
 )
-from pcs.common.reports import SimpleReportProcessor
 from pcs.lib import reports, node_communication_format, sbd, validate
 from pcs.lib.booth import sync as booth_sync
 from pcs.lib.cib import fencing_topology
@@ -60,11 +63,9 @@ from pcs.lib.corosync import (
     constants as corosync_constants,
     qdevice_net,
 )
+from pcs.lib.env import LibraryEnvironment
 from pcs.lib.node import get_existing_nodes_names
-from pcs.lib.errors import (
-    LibraryError,
-    ReportItemSeverity,
-)
+from pcs.lib.errors import LibraryError
 from pcs.lib.external import is_service_running
 from pcs.lib.pacemaker.live import (
     get_cib,
@@ -82,7 +83,11 @@ from pcs.lib.tools import (
 )
 
 
-def node_clear(env, node_name, allow_clear_cluster_node=False):
+def node_clear(
+    env: LibraryEnvironment,
+    node_name,
+    allow_clear_cluster_node=False,
+):
     """
     Remove specified node from various cluster caches.
 
@@ -97,10 +102,11 @@ def node_clear(env, node_name, allow_clear_cluster_node=False):
         env.get_corosync_conf(),
         env.get_cib()
     )
-    env.report_processor.process_list(report_list)
+    if env.report_processor.report_list(report_list).has_errors:
+        raise LibraryError()
 
     if node_name in current_nodes:
-        env.report_processor.process(
+        if env.report_processor.report(
             reports.get_problem_creator(
                 report_codes.FORCE_CLEAR_CLUSTER_NODE,
                 allow_clear_cluster_node
@@ -108,11 +114,12 @@ def node_clear(env, node_name, allow_clear_cluster_node=False):
                 reports.node_to_clear_is_still_in_cluster,
                 node_name
             )
-        )
+        ).has_errors:
+            raise LibraryError()
 
     remove_node(env.cmd_runner(), node_name)
 
-def verify(env, verbose=False):
+def verify(env: LibraryEnvironment, verbose=False):
     runner = env.cmd_runner()
     dummy_stdout, verify_stderr, verify_returncode, can_be_more_verbose = (
         verify_cmd(runner, verbose=verbose)
@@ -123,7 +130,7 @@ def verify(env, verbose=False):
     #So env.get_cib is not best choice here (there were considerations to
     #upgrade cib at all times inside env.get_cib). Go to a lower level here.
     if verify_returncode != 0:
-        env.report_processor.append(
+        env.report_processor.report(
             reports.invalid_cib_content(verify_stderr, can_be_more_verbose)
         )
 
@@ -133,21 +140,20 @@ def verify(env, verbose=False):
         #We try extra checks when cib is possible to load.
         cib_xml, dummy_stderr, returncode = get_cib_xml_cmd_results(runner)
         if returncode != 0:
-            #can raise; raise LibraryError is better but in this case we prefer
-            #be consistent with raising below
-            env.report_processor.send()
+            raise LibraryError()
     else:
         cib_xml = get_cib_xml(runner)
 
     cib = get_cib(cib_xml)
-    fencing_topology.verify(
-        env.report_processor,
-        get_fencing_topology(cib),
-        get_resources(cib),
-        ClusterState(get_cluster_status_xml(runner)).node_section.nodes
+    env.report_processor.report_list(
+        fencing_topology.verify(
+            get_fencing_topology(cib),
+            get_resources(cib),
+            ClusterState(get_cluster_status_xml(runner)).node_section.nodes
+        )
     )
-    #can raise
-    env.report_processor.send()
+    if env.report_processor.has_errors:
+        raise LibraryError()
 
 def setup(
     env, cluster_name, nodes,
@@ -156,7 +162,10 @@ def setup(
     quorum_options=None, wait=False, start=False, enable=False,
     no_keys_sync=False, force_flags=None,
 ):
-    # pylint: disable=too-many-arguments, too-many-locals, too-many-statements
+    # pylint: disable=too-many-arguments
+    # pylint: disable=too-many-locals
+    # pylint: disable=too-many-statements
+    # pylint: disable=too-many-branches
     """
     Set up cluster on specified nodes.
     Validation of the inputs is done here. Possible existing clusters are
@@ -237,7 +246,7 @@ def setup(
     ):
         ip_version = transport_options["ip_version"]
 
-    report_processor = SimpleReportProcessor(env.report_processor)
+    report_processor = env.report_processor
     target_factory = env.get_node_target_factory()
 
     # Get targets for all nodes and report unknown (== not-authorized) nodes.
@@ -419,7 +428,8 @@ def setup(
     com_cmd.set_targets(target_list)
     run_and_raise(env.get_node_communicator(), com_cmd)
 
-    env.report_processor.process(reports.cluster_setup_success())
+    if env.report_processor.report(reports.cluster_setup_success()).has_errors:
+        raise LibraryError()
 
     # Optionally enable and start cluster services.
     if enable:
@@ -476,7 +486,7 @@ def add_nodes(
     force = report_codes.FORCE in force_flags
     skip_offline_nodes = report_codes.SKIP_OFFLINE_NODES in force_flags
 
-    report_processor = SimpleReportProcessor(env.report_processor)
+    report_processor = env.report_processor
     target_factory = env.get_node_target_factory()
     is_sbd_enabled = sbd.is_sbd_enabled(env.cmd_runner())
     corosync_conf = env.get_corosync_conf()
@@ -937,7 +947,7 @@ def add_nodes(
             wait_timeout=wait_timeout,
         )
 
-def _ensure_live_env(env):
+def _ensure_live_env(env: LibraryEnvironment):
     not_live = []
     if not env.is_cib_live:
         not_live.append("CIB")
@@ -947,7 +957,10 @@ def _ensure_live_env(env):
         raise LibraryError(reports.live_environment_required(not_live))
 
 def _start_cluster(
-    communicator_factory, report_processor, target_list, wait_timeout=False,
+    communicator_factory,
+    report_processor: ReportProcessor,
+    target_list,
+    wait_timeout=False,
 ):
     # Large clusters take longer time to start up. So we make the timeout
     # longer for each 8 nodes:
@@ -966,27 +979,32 @@ def _start_cluster(
         communicator_factory.get_communicator(request_timeout=timeout), com_cmd
     )
     if wait_timeout is not False:
-        report_processor.process_list(
+        if report_processor.report_list(
             _wait_for_pacemaker_to_start(
                 communicator_factory.get_communicator(),
                 report_processor,
                 target_list,
                 timeout=wait_timeout, # wait_timeout is either None or a timeout
             )
-        )
+        ).has_errors:
+            raise LibraryError()
 
 def _wait_for_pacemaker_to_start(
-    node_communicator, report_processor, target_list, timeout=None
+    node_communicator,
+    report_processor: ReportProcessor,
+    target_list,
+    timeout=None
 ):
     timeout = 60 * 15 if timeout is None else timeout
     interval = 2
     stop_at = time.time() + timeout
-    report_processor.process(
+    report_processor.report(
         reports.wait_for_node_startup_started(
             [target.label for target in target_list]
         )
     )
     error_report_list = []
+    has_errors = False
     while target_list:
         if time.time() > stop_at:
             error_report_list.append(reports.wait_for_node_startup_timed_out())
@@ -995,9 +1013,9 @@ def _wait_for_pacemaker_to_start(
         com_cmd = CheckPacemakerStarted(report_processor)
         com_cmd.set_targets(target_list)
         target_list = run_com(node_communicator, com_cmd)
-        error_report_list.extend(com_cmd.error_list)
+        has_errors = has_errors or com_cmd.has_errors
 
-    if error_report_list:
+    if error_report_list or has_errors:
         error_report_list.append(reports.wait_for_node_startup_error())
     return error_report_list
 
@@ -1097,9 +1115,7 @@ def _set_defaults_in_dict(input_dict, defaults):
             completed[key] = factory(input_dict)
     return completed
 
-def _get_addrs_defaulter(
-    report_processor: SimpleReportProcessor, targets_dict
-):
+def _get_addrs_defaulter(report_processor: ReportProcessor, targets_dict):
     def defaulter(node):
         if "name" not in node:
             return []
@@ -1114,9 +1130,7 @@ def _get_addrs_defaulter(
         return []
     return defaulter
 
-def _get_watchdog_defaulter(
-    report_processor: SimpleReportProcessor, targets_dict
-):
+def _get_watchdog_defaulter(report_processor: ReportProcessor, targets_dict):
     # pylint: disable=unused-argument
     def defaulter(node):
         report_processor.report(reports.using_default_watchdog(
@@ -1139,7 +1153,7 @@ def _get_validated_wait_timeout(report_processor, wait, start):
         report_processor.report_list(e.args)
     return None
 
-def _is_ssl_cert_sync_enabled(report_processor):
+def _is_ssl_cert_sync_enabled(report_processor: ReportProcessor):
     try:
         if os.path.isfile(settings.pcsd_config):
             with open(settings.pcsd_config, "r") as cfg_file:
@@ -1190,7 +1204,7 @@ def remove_nodes(env, node_list, force_flags=None):
     force_quorum_loss = report_codes.FORCE in force_flags
     skip_offline = report_codes.SKIP_OFFLINE_NODES in force_flags
 
-    report_processor = SimpleReportProcessor(env.report_processor)
+    report_processor = env.report_processor
     target_factory = env.get_node_target_factory()
     corosync_conf = env.get_corosync_conf()
 
@@ -1351,7 +1365,7 @@ def remove_nodes(env, node_list, force_flags=None):
     run_and_raise(env.get_node_communicator(), com_cmd)
 
 
-def remove_nodes_from_cib(env, node_list):
+def remove_nodes_from_cib(env: LibraryEnvironment, node_list):
     """
     Remove specified nodes from CIB. When pcmk is running 'crm_node -R <node>'
     will be used. Otherwise nodes will be removed directly from CIB file.
@@ -1391,7 +1405,12 @@ def remove_nodes_from_cib(env, node_list):
                 )
             )
 
-def add_link(env, node_addr_map, link_options=None, force_flags=None):
+def add_link(
+    env: LibraryEnvironment,
+    node_addr_map,
+    link_options=None,
+    force_flags=None,
+):
     """
     Add a corosync link to a cluster
 
@@ -1407,7 +1426,7 @@ def add_link(env, node_addr_map, link_options=None, force_flags=None):
     force = report_codes.FORCE in force_flags
     skip_offline = report_codes.SKIP_OFFLINE_NODES in force_flags
 
-    report_processor = SimpleReportProcessor(env.report_processor)
+    report_processor = env.report_processor
     corosync_conf = env.get_corosync_conf()
 
     # validations
@@ -1454,7 +1473,7 @@ def add_link(env, node_addr_map, link_options=None, force_flags=None):
     corosync_conf.add_link(node_addr_map, link_options)
     env.push_corosync_conf(corosync_conf, skip_offline)
 
-def remove_links(env, linknumber_list, force_flags=None):
+def remove_links(env: LibraryEnvironment, linknumber_list, force_flags=None):
     """
     Remove corosync links from a cluster
 
@@ -1469,7 +1488,7 @@ def remove_links(env, linknumber_list, force_flags=None):
     force_flags = force_flags or set()
     skip_offline = report_codes.SKIP_OFFLINE_NODES in force_flags
 
-    report_processor = SimpleReportProcessor(env.report_processor)
+    report_processor = env.report_processor
     corosync_conf = env.get_corosync_conf()
 
     # validations
@@ -1490,7 +1509,11 @@ def remove_links(env, linknumber_list, force_flags=None):
     env.push_corosync_conf(corosync_conf, skip_offline)
 
 def update_link(
-    env, linknumber, node_addr_map=None, link_options=None, force_flags=None
+    env: LibraryEnvironment,
+    linknumber,
+    node_addr_map=None,
+    link_options=None,
+    force_flags=None,
 ):
     """
     Change an existing corosync link
@@ -1509,7 +1532,7 @@ def update_link(
     force = report_codes.FORCE in force_flags
     skip_offline = report_codes.SKIP_OFFLINE_NODES in force_flags
 
-    report_processor = SimpleReportProcessor(env.report_processor)
+    report_processor = env.report_processor
     corosync_conf = env.get_corosync_conf()
 
     # validations

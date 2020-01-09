@@ -4,8 +4,8 @@ from pcs_test.tools import fixture
 from pcs_test.tools.command_env import get_env_tools
 
 from pcs.common import report_codes
+from pcs.common.reports import ReportItemSeverity as severities
 from pcs.lib.commands import resource
-from pcs.lib.errors import ReportItemSeverity as severities
 
 
 fixture_primitive_cib_managed = """

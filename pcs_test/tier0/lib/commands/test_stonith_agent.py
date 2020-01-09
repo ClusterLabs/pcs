@@ -9,9 +9,9 @@ from pcs_test.tools.assertions import (
 from pcs_test.tools.custom_mock import MockLibraryReportProcessor
 
 from pcs.common import report_codes
+from pcs.common.reports import ReportItemSeverity as severity
 from pcs.lib import resource_agent as lib_ra
 from pcs.lib.env import LibraryEnvironment
-from pcs.lib.errors import ReportItemSeverity as severity
 
 from pcs.lib.commands import stonith_agent as lib
 

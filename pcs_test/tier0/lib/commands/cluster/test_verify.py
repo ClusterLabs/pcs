@@ -40,7 +40,9 @@ class AssertInvalidCibMixin:
      ):
         extra_reports = extra_reports if extra_reports else []
         self.env_assist.assert_raise_library_error(
-            lambda: verify(self.env_assist.get_env(), verbose),
+            lambda: verify(self.env_assist.get_env(), verbose)
+        )
+        self.env_assist.assert_reports(
             [
                 fixture.error(
                     report_codes.INVALID_CIB_CONTENT,
@@ -69,9 +71,9 @@ class CibAsWholeValid(TestCase):
             .runner.pcmk.load_state()
         )
         self.env_assist.assert_raise_library_error(
-            lambda: verify(self.env_assist.get_env()),
-            list(BAD_FENCING_TOPOLOGY_REPORTS)
+            lambda: verify(self.env_assist.get_env())
         )
+        self.env_assist.assert_reports(BAD_FENCING_TOPOLOGY_REPORTS)
 
 
 class CibAsWholeInvalid(TestCase, AssertInvalidCibMixin):

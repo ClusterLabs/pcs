@@ -6,9 +6,13 @@ from pcs_test.tools.misc import (
     ParametrizedTestMetaClass,
 )
 
-# pylint: disable=line-too-long
+
+ERRORS_HAVE_OCURRED = (
+    "Error: Errors have occurred, therefore pcs is unable to continue\n"
+)
 
 def fixture_nolive_add_report(node_name):
+    # pylint: disable=line-too-long
     return outdent(f"""\
         Unable to check if there is a conflict with nodes set in corosync because the command does not run on a live cluster (e.g. -f was used)
         Distribution of 'pacemaker authkey' to '{node_name}' was skipped because the command does not run on a live cluster (e.g. -f was used). Please, distribute the file(s) manually.
@@ -17,6 +21,7 @@ def fixture_nolive_add_report(node_name):
     )
 
 def fixture_nolive_remove_report(host_list):
+    # pylint: disable=line-too-long
     return outdent(
         """\
         Running action(s) 'pacemaker_remote disable', 'pacemaker_remote stop' on {hosts} was skipped because the command does not run on a live cluster (e.g. -f was used). Please, run the action(s) manually.
@@ -265,7 +270,9 @@ class NodeAddGuest(RemoteTest):
     def test_fail_when_invalid_port_appear(self):
         self.create_resource()
         self.assert_pcs_fail(
-            "cluster node add-guest node-name G remote-port=70000 remote-addr=a",
+            "cluster node add-guest node-name G remote-port=70000 "
+                "remote-addr=a"
+            ,
             "Error: '70000' is not a valid remote-port value, use a port number"
                 " (1..65535)\n"
             "Error: Errors have occurred, therefore pcs is unable to continue\n"
@@ -523,6 +530,7 @@ class NodeDeleteRemoveRemote(RemoteTest):
             f"cluster node {self.command} HOST-A",
             "Error: more than one resource for 'HOST-A' found: "
                 "'HOST-A', 'NODE-NAME', use --force to override\n"
+            + ERRORS_HAVE_OCURRED
         )
 
     def _test_success_remove_multiple_nodes(self):
@@ -589,8 +597,8 @@ class NodeDeleteRemoveGuest(RemoteTest):
                     </operations>
                 </primitive>
             </resources>""",
-            "Warning: this command is not sufficient for creating a guest node, use"
-                " 'pcs cluster node add-guest'\n"
+            "Warning: this command is not sufficient for creating a guest node"
+                ", use 'pcs cluster node add-guest'\n"
         )
         self.pcs_runner.corosync_conf_opt = self.corosync_conf
 

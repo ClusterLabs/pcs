@@ -237,7 +237,9 @@ class MultipleResults(TestCase):
                 self.env_assist.get_env(),
                 node_identifier=REMOTE_HOST,
                 remove_resource=self.remove_resource
-            ),
+            )
+        )
+        self.env_assist.assert_reports(
             self.multiple_result_reports.select("multiple_result_found").reports
         )
 

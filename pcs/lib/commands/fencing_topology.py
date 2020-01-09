@@ -1,18 +1,23 @@
 from pcs.common.fencing_topology import (
-    TARGET_TYPE_REGEXP,
     TARGET_TYPE_ATTRIBUTE,
+    TARGET_TYPE_NODE,
+    TARGET_TYPE_REGEXP,
 )
+from pcs.common import report_codes
+from pcs.common.reports import has_errors
 from pcs.common.tools import Version
 from pcs.lib.cib import fencing_topology as cib_fencing_topology
 from pcs.lib.cib.tools import (
     get_fencing_topology,
     get_resources,
 )
+from pcs.lib.env import LibraryEnvironment
+from pcs.lib.errors import LibraryError
 from pcs.lib.pacemaker.live import get_cluster_status_xml
 from pcs.lib.pacemaker.state import ClusterState
 
 def add_level(
-    lib_env, level, target_type, target_value, devices,
+    lib_env: LibraryEnvironment, level, target_type, target_value, devices,
     force_device=False, force_node=False
 ):
     """
@@ -47,10 +52,11 @@ def add_level(
         force_device,
         force_node
     )
-    lib_env.report_processor.send()
+    if lib_env.report_processor.has_errors:
+        raise LibraryError()
     lib_env.push_cib()
 
-def get_config(lib_env):
+def get_config(lib_env: LibraryEnvironment):
     """
     Get fencing levels configuration.
 
@@ -62,7 +68,7 @@ def get_config(lib_env):
     cib = lib_env.get_cib()
     return cib_fencing_topology.export(get_fencing_topology(cib))
 
-def remove_all_levels(lib_env):
+def remove_all_levels(lib_env: LibraryEnvironment):
     """
     Remove all fencing levels
     LibraryEnvironment lib_env -- environment
@@ -73,11 +79,16 @@ def remove_all_levels(lib_env):
     lib_env.push_cib()
 
 def remove_levels_by_params(
-    lib_env, level=None, target_type=None, target_value=None, devices=None,
-    ignore_if_missing=False
+    lib_env: LibraryEnvironment,
+    level=None,
+    target_type=None,
+    target_value=None,
+    devices=None,
+    ignore_if_missing=False,
+    target_may_be_a_device=False,
 ):
     """
-    Remove specified fencing level(s)
+    Remove specified fencing level(s).
 
     LibraryEnvironment lib_env -- environment
     int|string level -- level (index) of the fencing level to remove
@@ -85,32 +96,88 @@ def remove_levels_by_params(
     mixed target_value -- the removed fencing level target value
     Iterable devices -- list of stonith devices of the removed fencing level
     bool ignore_if_missing -- when True, do not report if level not found
+    target_may_be_a_device -- enables backward compatibility mode for old CLI
     """
-    cib_fencing_topology.remove_levels_by_params(
-        lib_env.report_processor,
-        get_fencing_topology(lib_env.get_cib()),
+    topology_el = get_fencing_topology(lib_env.get_cib())
+    report_list = cib_fencing_topology.remove_levels_by_params(
+        topology_el,
         level,
         target_type,
         target_value,
         devices,
         ignore_if_missing
     )
-    lib_env.report_processor.send()
-    lib_env.push_cib()
 
-def verify(lib_env):
+    if not target_may_be_a_device or target_type != TARGET_TYPE_NODE:
+        if lib_env.report_processor.report_list(report_list).has_errors:
+            raise LibraryError()
+        lib_env.push_cib()
+        return
+
+    # backward compatibility mode
+    # CLI command parameters are: level, node, stonith, stonith... Both the
+    # node and the stonith list are optional. If the node is ommited and the
+    # stonith list is present, there is no way to figure it out, since there is
+    # no specification of what the parameter is. Hence the pre-lib code tried
+    # both. First it assumed the first parameter is a node. If that fence level
+    # didn't exist, it assumed the first parameter is a device. Since it was
+    # only possible to specify node as a target back then, this is enabled only
+    # in that case.
+    # CLI has no way to figure out what the first parameter is. Therefore, the
+    # lib must try both cases if asked to do so.
+    if not has_errors(report_list):
+        lib_env.report_processor.report_list(report_list)
+        lib_env.push_cib()
+        return
+
+    level_not_found = False
+    for report_item in report_list:
+        if (
+            report_item.code
+            ==
+            report_codes.CIB_FENCING_LEVEL_DOES_NOT_EXIST
+        ):
+            level_not_found = True
+            break
+    if not level_not_found:
+        lib_env.report_processor.report_list(report_list)
+        raise LibraryError()
+
+    target_and_devices = [target_value]
+    if devices:
+        target_and_devices.extend(devices)
+    report_list_second = cib_fencing_topology.remove_levels_by_params(
+        topology_el,
+        level,
+        None,
+        None,
+        target_and_devices,
+        ignore_if_missing
+    )
+    if not has_errors(report_list_second):
+        lib_env.report_processor.report_list(report_list_second)
+        lib_env.push_cib()
+        return
+
+    lib_env.report_processor.report_list(report_list)
+    lib_env.report_processor.report_list(report_list_second)
+    raise LibraryError()
+
+def verify(lib_env: LibraryEnvironment):
     """
     Check if all cluster nodes and stonith devices used in fencing levels exist
 
     LibraryEnvironment lib_env -- environment
     """
     cib = lib_env.get_cib()
-    cib_fencing_topology.verify(
-        lib_env.report_processor,
-        get_fencing_topology(cib),
-        get_resources(cib),
-        ClusterState(
-            get_cluster_status_xml(lib_env.cmd_runner())
-        ).node_section.nodes
+    lib_env.report_processor.report_list(
+        cib_fencing_topology.verify(
+            get_fencing_topology(cib),
+            get_resources(cib),
+            ClusterState(
+                get_cluster_status_xml(lib_env.cmd_runner())
+            ).node_section.nodes
+        )
     )
-    lib_env.report_processor.send()
+    if lib_env.report_processor.has_errors:
+        raise LibraryError()

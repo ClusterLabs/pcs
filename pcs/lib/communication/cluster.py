@@ -1,4 +1,5 @@
 from pcs.common.node_communicator import RequestData
+from pcs.common.reports import ReportItemSeverity
 from pcs.lib import reports
 from pcs.lib.corosync import live as corosync_live
 from pcs.lib.communication.tools import (
@@ -9,7 +10,6 @@ from pcs.lib.communication.tools import (
     SkipOfflineMixin,
     SimpleResponseProcessingMixin,
 )
-from pcs.lib.errors import ReportItemSeverity
 from pcs.lib.node_communication import response_to_report_item
 
 

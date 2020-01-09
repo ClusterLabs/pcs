@@ -10,12 +10,10 @@ from pcs_test.tools.misc import (
 )
 
 from pcs.common import report_codes
+from pcs.common.reports import ReportItemSeverity as severities
 from pcs.lib import reports
 from pcs.lib.commands import resource
-from pcs.lib.errors import (
-    LibraryError,
-    ReportItemSeverity as severities,
-)
+from pcs.lib.errors import LibraryError
 
 
 TIMEOUT = 10
@@ -519,11 +517,11 @@ class DisablePrimitive(TestCase):
         )
 
         self.env_assist.assert_raise_library_error(
-            lambda: resource.disable(self.env_assist.get_env(), ["B"], False),
-            [
-                fixture.report_not_found("B")
-            ],
+            lambda: resource.disable(self.env_assist.get_env(), ["B"], False)
         )
+        self.env_assist.assert_reports([
+            fixture.report_not_found("B"),
+        ])
 
     def test_correct_resource(self):
         (self.config
@@ -574,11 +572,11 @@ class EnablePrimitive(TestCase):
         )
 
         self.env_assist.assert_raise_library_error(
-            lambda: resource.enable(self.env_assist.get_env(), ["B"], False),
-            [
-                fixture.report_not_found("B")
-            ]
+            lambda: resource.enable(self.env_assist.get_env(), ["B"], False)
         )
+        self.env_assist.assert_reports([
+            fixture.report_not_found("B")
+        ])
 
     def test_correct_resource(self):
         (self.config
@@ -845,12 +843,12 @@ class Wait(TestCase):
         self.env_assist.assert_raise_library_error(
             lambda: resource.enable(
                 self.env_assist.get_env(), ["A", "B"], TIMEOUT
-            ),
-            [
-                fixture.report_resource_not_running("A", severities.ERROR),
-                fixture.report_resource_not_running("B", severities.ERROR),
-            ]
+            )
         )
+        self.env_assist.assert_reports([
+            fixture.report_resource_not_running("A", severities.ERROR),
+            fixture.report_resource_not_running("B", severities.ERROR),
+        ])
 
     def test_disable_resource_stopped(self):
         (self.config
@@ -910,16 +908,16 @@ class Wait(TestCase):
         self.env_assist.assert_raise_library_error(
             lambda: resource.disable(
                 self.env_assist.get_env(), ["A", "B"], TIMEOUT
-            ),
-            [
-                fixture.report_resource_running(
-                    "A", {"Started": ["node1"]}, severities.ERROR
-                ),
-                fixture.report_resource_running(
-                    "B", {"Started": ["node2"]}, severities.ERROR
-                ),
-            ]
+            )
         )
+        self.env_assist.assert_reports([
+            fixture.report_resource_running(
+                "A", {"Started": ["node1"]}, severities.ERROR
+            ),
+            fixture.report_resource_running(
+                "B", {"Started": ["node2"]}, severities.ERROR
+            ),
+        ])
 
     def test_enable_wait_timeout(self):
         (self.config

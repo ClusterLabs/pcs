@@ -649,16 +649,15 @@ class Validations(TestCase):
                     for node in (self.node_list + [unknown_node])
                 },
                 sbd_options={},
-            ),
-            [
-                fixture.error(
-                    report_codes.NODE_NOT_FOUND,
-                    node=unknown_node,
-                    searched_types=[],
-                )
-            ],
+            )
         )
-        self.env_assist.assert_reports([])
+        self.env_assist.assert_reports([
+            fixture.error(
+                report_codes.NODE_NOT_FOUND,
+                node=unknown_node,
+                searched_types=[],
+            ),
+        ])
 
     def test_non_existing_node_in_devices(self):
         unknown_node = "unknown_node"
@@ -673,16 +672,15 @@ class Validations(TestCase):
                     node: ["/device"]
                     for node in (self.node_list + [unknown_node])
                 }
-            ),
-            [
-                fixture.error(
-                    report_codes.NODE_NOT_FOUND,
-                    node=unknown_node,
-                    searched_types=[],
-                )
-            ],
+            )
         )
-        self.env_assist.assert_reports([])
+        self.env_assist.assert_reports([
+            fixture.error(
+                report_codes.NODE_NOT_FOUND,
+                node=unknown_node,
+                searched_types=[],
+            ),
+        ])
 
     def test_device_not_abs_path(self):
         self.env_assist.assert_raise_library_error(
@@ -693,7 +691,9 @@ class Validations(TestCase):
                 sbd_options={},
                 default_device_list=["device1"],
                 node_device_dict={self.node_list[0]: ["device2"]}
-            ),
+            )
+        )
+        self.env_assist.assert_reports(
             [
                 fixture.error(
                     report_codes.SBD_DEVICE_PATH_NOT_ABSOLUTE,
@@ -703,9 +703,8 @@ class Validations(TestCase):
                     (self.node_list[0], "device2"),
                     (self.node_list[1], "device1"),
                 ]
-            ],
+            ]
         )
-        self.env_assist.assert_reports([])
 
     def test_no_device_for_node(self):
         self.env_assist.assert_raise_library_error(
@@ -716,15 +715,14 @@ class Validations(TestCase):
                 sbd_options={},
                 default_device_list=[],
                 node_device_dict={self.node_list[0]: ["/dev/device1"]}
-            ),
-            [
-                fixture.error(
-                    report_codes.SBD_NO_DEVICE_FOR_NODE,
-                    node=self.node_list[1],
-                )
-            ],
+            )
         )
-        self.env_assist.assert_reports([])
+        self.env_assist.assert_reports([
+            fixture.error(
+                report_codes.SBD_NO_DEVICE_FOR_NODE,
+                node=self.node_list[1],
+            ),
+        ])
 
     def test_too_many_devices(self):
         max_dev_num = settings.sbd_max_device_num
@@ -737,17 +735,16 @@ class Validations(TestCase):
                 sbd_options={},
                 default_device_list=["/dev/dev1"],
                 node_device_dict={self.node_list[0]: dev_list}
-            ),
-            [
-                fixture.error(
-                    report_codes.SBD_TOO_MANY_DEVICES_FOR_NODE,
-                    node=self.node_list[0],
-                    device_list=dev_list,
-                    max_devices=max_dev_num,
-                )
-            ],
+            )
         )
-        self.env_assist.assert_reports([])
+        self.env_assist.assert_reports([
+            fixture.error(
+                report_codes.SBD_TOO_MANY_DEVICES_FOR_NODE,
+                node=self.node_list[0],
+                device_list=dev_list,
+                max_devices=max_dev_num,
+            ),
+        ])
 
     def test_invalid_opt_values(self):
         self.env_assist.assert_raise_library_error(
@@ -758,20 +755,19 @@ class Validations(TestCase):
                 sbd_options={
                     "SBD_TIMEOUT_ACTION": "noflush,flush",
                 },
-            ),
-            [
-                fixture.error(
-                    report_codes.INVALID_OPTION_VALUE,
-                    force_code=report_codes.FORCE_OPTIONS,
-                    option_name="SBD_TIMEOUT_ACTION",
-                    option_value="noflush,flush",
-                    allowed_values=TIMEOUT_ACTION_ALLOWED_VALUE_LIST,
-                    cannot_be_empty=False,
-                    forbidden_characters=None,
-                ),
-            ]
+            )
         )
-        self.env_assist.assert_reports([])
+        self.env_assist.assert_reports([
+            fixture.error(
+                report_codes.INVALID_OPTION_VALUE,
+                force_code=report_codes.FORCE_OPTIONS,
+                option_name="SBD_TIMEOUT_ACTION",
+                option_value="noflush,flush",
+                allowed_values=TIMEOUT_ACTION_ALLOWED_VALUE_LIST,
+                cannot_be_empty=False,
+                forbidden_characters=None,
+            ),
+        ])
 
     def test_invalid_opt_values_forced(self):
         self.env_assist.assert_raise_library_error(
@@ -784,17 +780,7 @@ class Validations(TestCase):
                     "UNKNOWN_OPT1": 1,
                 },
                 allow_invalid_option_values=True,
-            ),
-            [
-                fixture.error(
-                    report_codes.INVALID_OPTIONS,
-                    option_names=["UNKNOWN_OPT1"],
-                    option_type=None,
-                    allowed=sorted(ALLOWED_SBD_OPTION_LIST),
-                    allowed_patterns=[],
-                    force_code=report_codes.FORCE_OPTIONS,
-                ),
-            ]
+            )
         )
         self.env_assist.assert_reports([
             fixture.warn(
@@ -804,6 +790,14 @@ class Validations(TestCase):
                 allowed_values=TIMEOUT_ACTION_ALLOWED_VALUE_LIST,
                 cannot_be_empty=False,
                 forbidden_characters=None,
+            ),
+            fixture.error(
+                report_codes.INVALID_OPTIONS,
+                option_names=["UNKNOWN_OPT1"],
+                option_type=None,
+                allowed=sorted(ALLOWED_SBD_OPTION_LIST),
+                allowed_patterns=[],
+                force_code=report_codes.FORCE_OPTIONS,
             ),
         ])
 
@@ -819,26 +813,25 @@ class Validations(TestCase):
                     "UNKNOWN_OPT2": "val",
                     "SBD_WATCHDOG_DEV": "dev",
                 },
-            ),
-            [
-                fixture.error(
-                    report_codes.INVALID_OPTIONS,
-                    option_names=["UNKNOWN_OPT1", "UNKNOWN_OPT2"],
-                    option_type=None,
-                    allowed=sorted(ALLOWED_SBD_OPTION_LIST),
-                    allowed_patterns=[],
-                    force_code=report_codes.FORCE_OPTIONS,
-                ),
-                fixture.error(
-                    report_codes.INVALID_OPTIONS,
-                    option_names=["SBD_WATCHDOG_DEV"],
-                    option_type=None,
-                    allowed=sorted(ALLOWED_SBD_OPTION_LIST),
-                    allowed_patterns=[],
-                ),
-            ]
+            )
         )
-        self.env_assist.assert_reports([])
+        self.env_assist.assert_reports([
+            fixture.error(
+                report_codes.INVALID_OPTIONS,
+                option_names=["UNKNOWN_OPT1", "UNKNOWN_OPT2"],
+                option_type=None,
+                allowed=sorted(ALLOWED_SBD_OPTION_LIST),
+                allowed_patterns=[],
+                force_code=report_codes.FORCE_OPTIONS,
+            ),
+            fixture.error(
+                report_codes.INVALID_OPTIONS,
+                option_names=["SBD_WATCHDOG_DEV"],
+                option_type=None,
+                allowed=sorted(ALLOWED_SBD_OPTION_LIST),
+                allowed_patterns=[],
+            ),
+        ])
 
     def test_unknown_sbd_opts_allowed(self):
         self.env_assist.assert_raise_library_error(
@@ -853,28 +846,24 @@ class Validations(TestCase):
                     "SBD_WATCHDOG_DEV": "dev",
                 },
                 allow_unknown_opts=True,
+            )
+        )
+        self.env_assist.assert_reports([
+            fixture.warn(
+                report_codes.INVALID_OPTIONS,
+                option_names=["UNKNOWN_OPT1", "UNKNOWN_OPT2"],
+                option_type=None,
+                allowed=sorted(ALLOWED_SBD_OPTION_LIST),
+                allowed_patterns=[],
             ),
-            [
-                fixture.error(
-                    report_codes.INVALID_OPTIONS,
-                    option_names=["SBD_WATCHDOG_DEV"],
-                    option_type=None,
-                    allowed=sorted(ALLOWED_SBD_OPTION_LIST),
-                    allowed_patterns=[],
-                ),
-            ]
-        )
-        self.env_assist.assert_reports(
-            [
-                fixture.warn(
-                    report_codes.INVALID_OPTIONS,
-                    option_names=["UNKNOWN_OPT1", "UNKNOWN_OPT2"],
-                    option_type=None,
-                    allowed=sorted(ALLOWED_SBD_OPTION_LIST),
-                    allowed_patterns=[],
-                )
-            ]
-        )
+            fixture.error(
+                report_codes.INVALID_OPTIONS,
+                option_names=["SBD_WATCHDOG_DEV"],
+                option_type=None,
+                allowed=sorted(ALLOWED_SBD_OPTION_LIST),
+                allowed_patterns=[],
+            ),
+        ])
 
     def test_sbd_not_installed(self):
         watchdog = "/dev/watchdog"
@@ -1077,7 +1066,9 @@ class Validations(TestCase):
                     unknown_node_list[0]: ["/dev/device0"],
                     unknown_node_list[1]: ["/dev/device0"],
                 }
-            ),
+            )
+        )
+        self.env_assist.assert_reports(
             [
                 fixture.error(
                     report_codes.NODE_NOT_FOUND,
@@ -1121,7 +1112,6 @@ class Validations(TestCase):
                 )
             ]
         )
-        self.env_assist.assert_reports([])
 
 
 class FailureHandling(TestCase):
@@ -1640,9 +1630,7 @@ class UnknownHosts(TestCase):
                 default_watchdog=None,
                 watchdog_dict={},
                 sbd_options={},
-            ),
-            report_list,
-            expected_in_processor=False
+            )
         )
         self.env_assist.assert_reports(report_list)
 
@@ -1713,9 +1701,7 @@ class UnknownHosts(TestCase):
                 default_watchdog=None,
                 watchdog_dict={},
                 sbd_options={},
-            ),
-            report_list,
-            expected_in_processor=False
+            )
         )
         self.env_assist.assert_reports(report_list)
 
@@ -1728,9 +1714,7 @@ class UnknownHosts(TestCase):
                 watchdog_dict={},
                 sbd_options={},
                 ignore_offline_nodes=True,
-            ),
-            report_list,
-            expected_in_processor=False
+            )
         )
         self.env_assist.assert_reports(
             [
@@ -1828,13 +1812,7 @@ class MissingNodeNamesInCorosync(TestCase):
                 default_watchdog=self.watchdog,
                 watchdog_dict={},
                 sbd_options={},
-            ),
-            [
-                fixture.error(
-                    report_codes.COROSYNC_CONFIG_MISSING_NAMES_OF_NODES,
-                    fatal=True,
-                ),
-            ]
+            )
         )
 
         self.env_assist.assert_reports(
@@ -1849,6 +1827,10 @@ class MissingNodeNamesInCorosync(TestCase):
                 fixture.info(report_codes.SBD_CHECK_SUCCESS, node="rh7-2"),
                 fixture.warn(
                     report_codes.COROSYNC_QUORUM_ATB_WILL_BE_ENABLED_DUE_TO_SBD
+                ),
+                fixture.error(
+                    report_codes.COROSYNC_CONFIG_MISSING_NAMES_OF_NODES,
+                    fatal=True,
                 ),
             ]
         )
@@ -1871,19 +1853,17 @@ class MissingNodeNamesInCorosync(TestCase):
                     "rh7-1": ["/dev/dev1"],
                     "rh7-2": ["/dev/dev2"],
                 }
-            ),
-            [
-                fixture.error(
-                    report_codes.NODE_NOT_FOUND,
-                    node="rh7-1",
-                    searched_types=[],
-                )
-            ]
+            )
         )
         self.env_assist.assert_reports([
             fixture.warn(
                 report_codes.COROSYNC_CONFIG_MISSING_NAMES_OF_NODES,
                 fatal=False,
+            ),
+            fixture.error(
+                report_codes.NODE_NOT_FOUND,
+                node="rh7-1",
+                searched_types=[],
             ),
         ])
 
@@ -1898,17 +1878,15 @@ class MissingNodeNamesInCorosync(TestCase):
                 default_watchdog=self.watchdog,
                 watchdog_dict={},
                 sbd_options={},
-            ),
-            [
-                fixture.error(
-                    report_codes.COROSYNC_CONFIG_NO_NODES_DEFINED,
-                ),
-            ]
+            )
         )
 
         self.env_assist.assert_reports([
             fixture.warn(
                 report_codes.COROSYNC_CONFIG_MISSING_NAMES_OF_NODES,
                 fatal=False,
+            ),
+            fixture.error(
+                report_codes.COROSYNC_CONFIG_NO_NODES_DEFINED,
             ),
         ])

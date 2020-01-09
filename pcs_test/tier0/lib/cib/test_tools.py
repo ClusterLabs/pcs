@@ -11,8 +11,8 @@ from pcs_test.tools.misc import get_test_resource as rc
 from pcs_test.tools.xml import get_xml_manipulation_creator_from_file
 
 from pcs.common import report_codes
+from pcs.common.reports import ReportItemSeverity as severities
 from pcs.common.tools import Version
-from pcs.lib.errors import ReportItemSeverity as severities
 
 from pcs.lib.cib import tools as lib
 

@@ -257,7 +257,9 @@ class MultipleResults(TestCase):
             lambda: node_remove_guest(
                 self.env_assist.get_env(),
                 node_identifier=REMOTE_HOST
-            ),
+            )
+        )
+        self.env_assist.assert_reports(
             self.multiple_result_reports.select("multiple_result_found").reports
         )
 

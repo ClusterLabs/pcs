@@ -10,13 +10,13 @@ from pcs_test.tools.misc import get_test_resource as rc
 from pcs_test.tools.xml import get_xml_manipulation_creator_from_file
 
 from pcs.common import report_codes
+from pcs.common.reports import ReportItemSeverity as severities
 from pcs.lib.pacemaker import state
 from pcs.lib.pacemaker.state import (
     ClusterState,
     _Attrs,
     _Children,
 )
-from pcs.lib.errors import ReportItemSeverity as severities
 
 # pylint: disable=no-self-use, protected-access
 

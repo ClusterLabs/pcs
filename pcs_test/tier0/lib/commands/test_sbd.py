@@ -13,11 +13,11 @@ from pcs_test.tools.command_env.mock_runner import Call
 from pcs import settings
 from pcs.common import report_codes
 from pcs.common.node_communicator import RequestTarget
-from pcs.lib.errors import (
-    ReportItemSeverity as Severities,
-    LibraryError,
+from pcs.common.reports import (
     ReportItem,
+    ReportItemSeverity as Severities,
 )
+from pcs.lib.errors import LibraryError
 from pcs.lib.env import LibraryEnvironment
 import pcs.lib.commands.sbd as cmd_sbd
 
@@ -517,26 +517,32 @@ class InitializeBlockDevicesTest(CommonTest):
             "msgwait-timeout",
         ]
         assert_raise_library_error(
-            lambda: cmd_sbd.initialize_block_devices(self.env, [], option_dict),
-            (
-                Severities.ERROR,
-                report_codes.REQUIRED_OPTIONS_ARE_MISSING,
-                {
-                    "option_names": ["device"],
-                    "option_type": None,
-                }
-            ),
-            (
-                Severities.ERROR,
-                report_codes.INVALID_OPTIONS,
-                {
-                    "option_names": sorted(["another_one", "unknown_option"]),
-                    "option_type": None,
-                    "allowed": sorted(allowed_options),
-                    "allowed_patterns": [],
-                }
-            ),
-            *[
+            lambda: cmd_sbd.initialize_block_devices(self.env, [], option_dict)
+        )
+        assert_report_item_list_equal(
+            self.env.report_processor.report_item_list,
+            [
+                (
+                    Severities.ERROR,
+                    report_codes.REQUIRED_OPTIONS_ARE_MISSING,
+                    {
+                        "option_names": ["device"],
+                        "option_type": None,
+                    }
+                ),
+                (
+                    Severities.ERROR,
+                    report_codes.INVALID_OPTIONS,
+                    {
+                        "option_names": ["another_one", "unknown_option"],
+                        "option_type": None,
+                        "allowed": sorted(allowed_options),
+                        "allowed_patterns": [],
+                    }
+                ),
+            ]
+            +
+            [
                 self.fixture_invalid_value(opt, option_dict[opt])
                 for opt in allowed_options
             ]
@@ -707,36 +713,46 @@ class SetMessageTest(CommonTest):
 
     def test_empty_options(self):
         assert_raise_library_error(
-            lambda: cmd_sbd.set_message(self.env, "", "", ""),
-            (
-                Severities.ERROR,
-                report_codes.REQUIRED_OPTIONS_ARE_MISSING,
-                {
-                    "option_names": ["device", "node"],
-                    "option_type": None,
-                }
-            ),
-            fixture.error(
-                report_codes.INVALID_OPTION_VALUE,
-                option_name="message",
-                option_value="",
-                allowed_values=settings.sbd_message_types,
-                cannot_be_empty=False,
-                forbidden_characters=None,
-            )
+            lambda: cmd_sbd.set_message(self.env, "", "", "")
+        )
+        assert_report_item_list_equal(
+            self.env.report_processor.report_item_list,
+            [
+                (
+                    Severities.ERROR,
+                    report_codes.REQUIRED_OPTIONS_ARE_MISSING,
+                    {
+                        "option_names": ["device", "node"],
+                        "option_type": None,
+                    }
+                ),
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_name="message",
+                    option_value="",
+                    allowed_values=settings.sbd_message_types,
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
+                ),
+            ]
         )
 
     def test_invalid_message_type(self):
         assert_raise_library_error(
-            lambda: cmd_sbd.set_message(self.env, "device", "node1", "message"),
-            fixture.error(
-                report_codes.INVALID_OPTION_VALUE,
-                option_name="message",
-                option_value="message",
-                allowed_values=settings.sbd_message_types,
-                cannot_be_empty=False,
-                forbidden_characters=None,
-            )
+            lambda: cmd_sbd.set_message(self.env, "device", "node1", "message")
+        )
+        assert_report_item_list_equal(
+            self.env.report_processor.report_item_list,
+            [
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_name="message",
+                    option_value="message",
+                    allowed_values=settings.sbd_message_types,
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
+                )
+            ]
         )
 
     def test_success(self):

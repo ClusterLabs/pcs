@@ -7,7 +7,7 @@ from pcs_test.tools.misc import get_test_resource as rc
 
 from pcs import settings
 from pcs.common import report_codes
-from pcs.lib.errors import ReportItemSeverity as severity
+from pcs.common.reports import ReportItemSeverity as severity
 from pcs.lib.external import CommandRunner
 
 from pcs.lib.corosync import live as lib

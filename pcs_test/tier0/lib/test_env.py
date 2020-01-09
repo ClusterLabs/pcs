@@ -10,8 +10,8 @@ from pcs_test.tools.misc import (
 )
 
 from pcs.common import file_type_codes, report_codes
+from pcs.common.reports import ReportItemSeverity as severity
 from pcs.lib.env import LibraryEnvironment
-from pcs.lib.errors import ReportItemSeverity as severity
 
 
 patch_env = create_patcher("pcs.lib.env")

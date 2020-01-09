@@ -33,9 +33,20 @@ from pcs.constraint import (
     CRM_RULE_MISSING_MSG,
 )
 
-# pylint: disable=line-too-long, too-many-public-methods, invalid-name, no-self-use, bad-whitespace, redefined-outer-name, too-many-statements
+# pylint: disable=line-too-long
+# pylint: disable=too-many-public-methods
+# pylint: disable=invalid-name
+# pylint: disable=no-self-use
+# pylint: disable=bad-whitespace
+# pylint: disable=redefined-outer-name
+# pylint: disable=too-many-statements
 
-LOCATION_NODE_VALIDATION_SKIP_WARNING = f"Warning: {LOCATION_NODE_VALIDATION_SKIP_MSG}\n"
+LOCATION_NODE_VALIDATION_SKIP_WARNING = (
+    f"Warning: {LOCATION_NODE_VALIDATION_SKIP_MSG}\n"
+)
+ERRORS_HAVE_OCURRED = (
+    "Error: Errors have occurred, therefore pcs is unable to continue\n"
+)
 
 CONSTRAINTS_TMP = rc("test_constraints")
 if not os.path.exists(CONSTRAINTS_TMP):
@@ -2100,7 +2111,7 @@ Ticket Constraints:
         ac(output, """\
 Error: duplicate constraint already exists, use --force to override
   set D1 D2 (id:pcs_rsc_set_D1_D2) (id:pcs_rsc_order_set_D1_D2)
-""")
+""" + ERRORS_HAVE_OCURRED)
         self.assertEqual(1, returnVal)
 
         output, returnVal = pcs(temp_cib, "constraint order set D1 D2 --force")
@@ -2118,7 +2129,7 @@ Error: duplicate constraint already exists, use --force to override
         ac(output, """\
 Error: duplicate constraint already exists, use --force to override
   set D1 D2 (id:pcs_rsc_set_D1_D2-2) set D5 D6 (id:pcs_rsc_set_D5_D6) (id:pcs_rsc_order_set_D1_D2_set_D5_D6)
-""")
+""" + ERRORS_HAVE_OCURRED)
         self.assertEqual(1, returnVal)
 
         output, returnVal = pcs(temp_cib, "constraint order set D1 D2 set D5 D6 --force")
@@ -2137,7 +2148,7 @@ Error: duplicate constraint already exists, use --force to override
         ac(output, """\
 Error: duplicate constraint already exists, use --force to override
   set D1 D2 (id:pcs_rsc_set_D1_D2-4) setoptions score=INFINITY (id:pcs_rsc_colocation_set_D1_D2)
-""")
+""" + ERRORS_HAVE_OCURRED)
         self.assertEqual(1, returnVal)
 
         output, returnVal = pcs(temp_cib, "constraint colocation set D1 D2 --force")
@@ -2155,7 +2166,7 @@ Error: duplicate constraint already exists, use --force to override
         ac(output, """\
 Error: duplicate constraint already exists, use --force to override
   set D1 D2 (id:pcs_rsc_set_D1_D2-6) set D5 D6 (id:pcs_rsc_set_D5_D6-2) setoptions score=INFINITY (id:pcs_rsc_colocation_set_D1_D2_set_D5_D6)
-""")
+""" + ERRORS_HAVE_OCURRED)
         self.assertEqual(1, returnVal)
 
         output, returnVal = pcs(temp_cib,
@@ -2558,11 +2569,13 @@ class TicketAdd(ConstraintBaseTest):
             'constraint ticket add T master A loss-policy=fence'
         )
         self.assert_pcs_fail(
-            'constraint ticket add T master A loss-policy=fence',
-            [
-                'Error: duplicate constraint already exists, use --force to override',
-                '  Master A loss-policy=fence ticket=T (id:ticket-T-A-Master)'
-            ]
+            "constraint ticket add T master A loss-policy=fence",
+            (
+                "Error: duplicate constraint already exists, use --force to "
+                    "override\n"
+                "  Master A loss-policy=fence ticket=T (id:ticket-T-A-Master)\n"
+                + ERRORS_HAVE_OCURRED
+            )
         )
 
     def test_accept_duplicate_ticket_with_force(self):

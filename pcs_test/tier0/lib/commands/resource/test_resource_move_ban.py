@@ -8,8 +8,8 @@ from pcs_test.tools.command_env import get_env_tools
 from pcs_test.tools.xml import etree_to_str
 
 from pcs.common import report_codes
+from pcs.common.reports import ReportItemSeverity as severities
 from pcs.lib.commands import resource
-from pcs.lib.errors import ReportItemSeverity as severities
 
 resources_primitive = """
     <resources>
@@ -47,11 +47,11 @@ class MoveBanClearBaseMixin():
     def test_resource_not_found(self):
         self.config.runner.cib.load(resources=resources_primitive)
         self.env_assist.assert_raise_library_error(
-            lambda: self.lib_action(self.env_assist.get_env(), "B"),
-            [
-                fixture.report_not_found("B", context_type="resources"),
-            ]
+            lambda: self.lib_action(self.env_assist.get_env(), "B")
         )
+        self.env_assist.assert_reports([
+            fixture.report_not_found("B", context_type="resources"),
+        ])
 
     def test_master_of_nonpromotable_resource(self):
         # This is a basic test which checks validation is being done. It
@@ -62,15 +62,15 @@ class MoveBanClearBaseMixin():
         self.env_assist.assert_raise_library_error(
             lambda: self.lib_action(
                 self.env_assist.get_env(), "A", master=True
-            ),
-            [
-                fixture.error(
-                    self.report_code_bad_master,
-                    resource_id="A",
-                    promotable_id=None,
-                ),
-            ]
+            )
         )
+        self.env_assist.assert_reports([
+            fixture.error(
+                self.report_code_bad_master,
+                resource_id="A",
+                promotable_id=None,
+            ),
+        ])
 
     def test_pcmk_error(self):
         self.config.runner.cib.load(resources=resources_primitive)
@@ -228,14 +228,13 @@ class UnmoveUnban(UnmoveUnbanMixin, MoveBanClearBaseMixin, TestCase):
         self.env_assist.assert_raise_library_error(
             lambda: self.lib_action(
                 self.env_assist.get_env(), "A", expired=True
-            ),
-            [
-                fixture.error(
-                    report_codes
-                        .RESOURCE_UNMOVE_UNBAN_PCMK_EXPIRED_NOT_SUPPORTED
-                ),
-            ]
+            )
         )
+        self.env_assist.assert_reports([
+            fixture.error(
+                report_codes.RESOURCE_UNMOVE_UNBAN_PCMK_EXPIRED_NOT_SUPPORTED
+            ),
+        ])
 
 
 class MoveBanWaitMixin():
@@ -400,13 +399,7 @@ class MoveBanWaitMixin():
     def test_was_running_now_stopped(self):
         self.success_config(self.state_running_node1, self.state_not_running)
         self.env_assist.assert_raise_library_error(
-            lambda: self.lib_action(self.env_assist.get_env(), "A", wait="10"),
-            [
-                fixture.report_resource_not_running(
-                    "A",
-                    severity=severities.ERROR
-                ),
-            ]
+            lambda: self.lib_action(self.env_assist.get_env(), "A", wait="10")
         )
         self.env_assist.assert_reports([
             fixture.info(
@@ -414,6 +407,10 @@ class MoveBanWaitMixin():
                 resource_id="A",
                 stdout="pcmk std out",
                 stderr="pcmk std err",
+            ),
+            fixture.report_resource_not_running(
+                "A",
+                severity=severities.ERROR
             ),
         ])
 
@@ -435,14 +432,7 @@ class MoveBanWaitMixin():
     def test_running_on_same_node_no_node_specified(self):
         self.success_config(self.state_running_node1, self.state_running_node1)
         self.env_assist.assert_raise_library_error(
-            lambda: self.lib_action(self.env_assist.get_env(), "A", wait="10"),
-            [
-                fixture.report_resource_running(
-                    "A",
-                    {"Started": ["node1"]},
-                    severity=severities.ERROR
-                ),
-            ]
+            lambda: self.lib_action(self.env_assist.get_env(), "A", wait="10")
         )
         self.env_assist.assert_reports([
             fixture.info(
@@ -450,6 +440,11 @@ class MoveBanWaitMixin():
                 resource_id="A",
                 stdout="pcmk std out",
                 stderr="pcmk std err",
+            ),
+            fixture.report_resource_running(
+                "A",
+                {"Started": ["node1"]},
+                severity=severities.ERROR
             ),
         ])
 
@@ -515,14 +510,7 @@ class MoveWait(MoveMixin, MoveBanWaitMixin, TestCase):
         self.env_assist.assert_raise_library_error(
             lambda: self.lib_action(
                 self.env_assist.get_env(), "A", node="node2", wait="10"
-            ),
-            [
-                fixture.report_resource_running(
-                    "A",
-                    {"Started": ["node1"]},
-                    severity=severities.ERROR
-                ),
-            ]
+            )
         )
         self.env_assist.assert_reports([
             fixture.info(
@@ -530,6 +518,11 @@ class MoveWait(MoveMixin, MoveBanWaitMixin, TestCase):
                 resource_id="A",
                 stdout="pcmk std out",
                 stderr="pcmk std err",
+            ),
+            fixture.report_resource_running(
+                "A",
+                {"Started": ["node1"]},
+                severity=severities.ERROR
             ),
         ])
 
@@ -543,14 +536,7 @@ class BanWait(BanMixin, MoveBanWaitMixin, TestCase):
         self.env_assist.assert_raise_library_error(
             lambda: self.lib_action(
                 self.env_assist.get_env(), "A", node="node1", wait="10"
-            ),
-            [
-                fixture.report_resource_running(
-                    "A",
-                    {"Started": ["node1"]},
-                    severity=severities.ERROR
-                ),
-            ]
+            )
         )
         self.env_assist.assert_reports([
             fixture.info(
@@ -558,6 +544,11 @@ class BanWait(BanMixin, MoveBanWaitMixin, TestCase):
                 resource_id="A",
                 stdout="pcmk std out",
                 stderr="pcmk std err",
+            ),
+            fixture.report_resource_running(
+                "A",
+                {"Started": ["node1"]},
+                severity=severities.ERROR
             ),
         ])
 

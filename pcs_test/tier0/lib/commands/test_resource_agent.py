@@ -11,9 +11,9 @@ from pcs_test.tools.command_env import get_env_tools
 from pcs_test.tools.custom_mock import MockLibraryReportProcessor
 
 from pcs.common import report_codes
+from pcs.common.reports import ReportItemSeverity as severity
 from pcs.lib import resource_agent as lib_ra
 from pcs.lib.env import LibraryEnvironment
-from pcs.lib.errors import ReportItemSeverity as severity
 
 from pcs.lib.commands import resource_agent as lib
 

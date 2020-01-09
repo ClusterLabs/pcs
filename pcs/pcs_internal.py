@@ -2,20 +2,17 @@ import sys
 import json
 import logging
 
-from typing import (
-    List,
-    Any,
-)
-
 from pcs import settings, utils
 from pcs.cli.common.env_cli import Env
 from pcs.cli.common.lib_wrapper import Library
-from pcs.cli.common.reports import (
-    build_report_message,
-    LibraryReportProcessorToConsole,
-)
+from pcs.cli.common.reports import build_report_message
 from pcs.common import report_codes
-from pcs.lib.errors import LibraryError, ReportItemSeverity
+from pcs.common.reports import (
+    ReportItem,
+    ReportItemList,
+    ReportProcessor,
+)
+from pcs.lib.errors import LibraryError
 
 
 SUPPORTED_COMMANDS = {
@@ -47,24 +44,19 @@ def get_cli_env(options):
     # they will be printed to stdout. We are not printing the messages. Instead
     # we get all the messages the processor got. So the value of the parameter
     # does not matter.
-    env.report_processor = LibraryReportProcessor(True)
+    env.report_processor = LibraryReportProcessor()
     env.request_timeout = (
         options.get("request_timeout") or settings.default_request_timeout
     )
     return env
 
 
-class LibraryReportProcessor(LibraryReportProcessorToConsole):
-    # Note: not properly typed
-    processed_items: List[Any] = []
-    def _send(self, report_item_list, print_errors=True):
+class LibraryReportProcessor(ReportProcessor):
+    processed_items: ReportItemList = []
 
-        self.processed_items.extend(report_item_list)
-        return [
-            report
-            for report in report_item_list
-            if report.severity == ReportItemSeverity.ERROR
-        ]
+    def _do_report(self, report_item: ReportItem) -> None:
+        self.processed_items.append(report_item)
+
 
 def export_reports(report_list):
     return [report_item_to_dict(report) for report in report_list]

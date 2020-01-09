@@ -8,8 +8,8 @@ from pcs_test.tools.assertions import (
 from pcs_test.tools.xml import etree_to_str
 
 from pcs.common import report_codes
+from pcs.common.reports import ReportItemSeverity as severity
 from pcs.lib.cib.tools import IdProvider
-from pcs.lib.errors import ReportItemSeverity as severity
 from pcs.lib.pacemaker.state import ClusterState
 
 from pcs.lib.cib import node

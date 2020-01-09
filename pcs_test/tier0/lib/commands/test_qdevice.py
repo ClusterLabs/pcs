@@ -9,8 +9,9 @@ from pcs_test.tools.assertions import (
 from pcs_test.tools.custom_mock import MockLibraryReportProcessor
 
 from pcs.common import report_codes
+from pcs.common.reports import ReportItemSeverity as severity
 from pcs.lib.env import LibraryEnvironment
-from pcs.lib.errors import LibraryError, ReportItemSeverity as severity
+from pcs.lib.errors import LibraryError
 from pcs.lib.external import (
     DisableServiceError,
     EnableServiceError,
@@ -378,15 +379,20 @@ class QdeviceNetDestroyTest(QdeviceTestCase):
         mock_status.return_value = 'Cluster "a_cluster":\n'
 
         assert_raise_library_error(
-            lambda: lib.qdevice_destroy(self.lib_env, "net"),
-            (
-                severity.ERROR,
-                report_codes.QDEVICE_USED_BY_CLUSTERS,
-                {
-                    "clusters": ["a_cluster"],
-                },
-                report_codes.FORCE_QDEVICE_USED
-            ),
+            lambda: lib.qdevice_destroy(self.lib_env, "net")
+        )
+        assert_report_item_list_equal(
+            self.mock_reporter.report_item_list,
+            [
+                (
+                    severity.ERROR,
+                    report_codes.QDEVICE_USED_BY_CLUSTERS,
+                    {
+                        "clusters": ["a_cluster"],
+                    },
+                    report_codes.FORCE_QDEVICE_USED
+                ),
+            ]
         )
 
         mock_net_stop.assert_not_called()
@@ -849,15 +855,20 @@ class QdeviceNetStopTest(QdeviceTestCase):
                 self.lib_env,
                 "net",
                 proceed_if_used=False
-            ),
-            (
-                severity.ERROR,
-                report_codes.QDEVICE_USED_BY_CLUSTERS,
-                {
-                    "clusters": ["a_cluster"],
-                },
-                report_codes.FORCE_QDEVICE_USED
-            ),
+            )
+        )
+        assert_report_item_list_equal(
+            self.mock_reporter.report_item_list,
+            [
+                (
+                    severity.ERROR,
+                    report_codes.QDEVICE_USED_BY_CLUSTERS,
+                    {
+                        "clusters": ["a_cluster"],
+                    },
+                    report_codes.FORCE_QDEVICE_USED
+                ),
+            ]
         )
         mock_net_stop.assert_not_called()
 

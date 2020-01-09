@@ -7,8 +7,8 @@ from pcs_test.tools.assertions import(
 )
 
 from pcs.common import report_codes
+from pcs.common.reports import ReportItemSeverity as severities
 from pcs.lib.cib.constraint import resource_set
-from pcs.lib.errors import ReportItemSeverity as severities
 
 # pylint: disable=no-self-use
 

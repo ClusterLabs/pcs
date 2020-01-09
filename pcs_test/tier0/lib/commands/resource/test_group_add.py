@@ -186,7 +186,9 @@ class GroupAdd(TestCase):
                 self.env_assist.get_env(),
                 "R1-meta_attributes",
                 ["R2", "R4", "R3", "R2-meta_attributes", "RC1-clone", "RC1"]
-            ),
+            )
+        )
+        self.env_assist.assert_reports(
             [
                 fixture.error(
                     report_codes.ID_BELONGS_TO_UNEXPECTED_TYPE,
@@ -214,7 +216,7 @@ class GroupAdd(TestCase):
                     resource_id="RC1",
                     resource_type="clone",
                 ),
-            ],
+            ]
         )
 
     def test_validation_adjacent(self):
@@ -238,7 +240,9 @@ class GroupAdd(TestCase):
                 "G",
                 ["R1"],
                 adjacent_resource_id="RX1"
-            ),
+            )
+        )
+        self.env_assist.assert_reports(
             [
                 fixture.error(
                     report_codes
@@ -247,7 +251,7 @@ class GroupAdd(TestCase):
                     adjacent_resource_id="RX1",
                     group_id="G",
                 ),
-            ],
+            ]
         )
 
 

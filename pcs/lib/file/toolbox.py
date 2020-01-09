@@ -7,6 +7,7 @@ from typing import (
 import json
 
 from pcs.common import file_type_codes as code
+from pcs.common.reports import ReportItemList
 from pcs.lib import reports
 from pcs.lib.booth.config_facade import ConfigFacade as BoothConfigFacade
 from pcs.lib.booth.config_parser import (
@@ -14,7 +15,6 @@ from pcs.lib.booth.config_parser import (
     Parser as BoothConfigParser,
 )
 from pcs.lib.dr.config.facade import Facade as DrConfigFacade
-from pcs.lib.errors import ReportItemList
 from pcs.lib.interface.config import (
     ExporterInterface,
     FacadeInterface,

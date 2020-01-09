@@ -16,9 +16,9 @@ from pcs.common.fencing_topology import (
     TARGET_TYPE_ATTRIBUTE,
 )
 from pcs.common.file import RawFileError
+from pcs.common.reports import ReportItem
 from pcs.common.tools import indent
 from pcs.lib import reports
-from pcs.lib.errors import ReportItem
 
 class IndentTest(TestCase):
     def test_indent_list_of_lines(self):

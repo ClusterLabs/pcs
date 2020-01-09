@@ -1,6 +1,7 @@
 from lxml import etree
 
 from pcs.common import report_codes
+from pcs.common.reports import ReportItemSeverity
 from pcs.lib import reports, validate
 from pcs.lib.cib.nvpair import (
     append_new_meta_attributes,
@@ -9,10 +10,7 @@ from pcs.lib.cib.nvpair import (
 )
 from pcs.lib.cib.resource.primitive import TAG as TAG_PRIMITIVE
 from pcs.lib.cib.tools import ElementSearcher
-from pcs.lib.errors import (
-    LibraryError,
-    ReportItemSeverity,
-)
+from pcs.lib.errors import LibraryError
 from pcs.lib.pacemaker.values import sanitize_id
 from pcs.lib.xml_tools import (
     append_when_useful,

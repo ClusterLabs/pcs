@@ -2,13 +2,13 @@ import json
 from typing import Tuple
 
 from pcs.common.node_communicator import RequestData
+from pcs.common.reports import ReportItemSeverity
 from pcs.lib import reports
 from pcs.lib.communication.tools import (
     AllSameDataMixin,
     OneByOneStrategyMixin,
     RunRemotelyBase,
 )
-from pcs.lib.errors import ReportItemSeverity
 from pcs.lib.node_communication import response_to_report_item
 
 

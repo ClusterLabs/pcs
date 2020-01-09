@@ -6,7 +6,7 @@ from pcs_test.tools.command_env import get_env_tools
 from pcs_test.tools.custom_mock import MockLibraryReportProcessor
 
 from pcs.common import report_codes
-from pcs.lib.errors import ReportItemSeverity as Severities
+from pcs.common.reports import ReportItemSeverity as Severities
 from pcs.lib.env import LibraryEnvironment
 from pcs.lib.external import CommandRunner
 
@@ -289,7 +289,9 @@ class RemoveAlertTest(TestCase):
             lambda: cmd_alert.remove_alert(
                 self.env_assist.get_env(),
                 ["unknown1", "alert1", "unknown2", "alert2"]
-            ),
+            )
+        )
+        self.env_assist.assert_reports(
             [
                 (
                     Severities.ERROR,
@@ -313,8 +315,7 @@ class RemoveAlertTest(TestCase):
                     },
                     None
                 ),
-            ],
-            expected_in_processor=True
+            ]
         )
 
 
@@ -610,7 +611,9 @@ class RemoveRecipientTest(TestCase):
             lambda: cmd_alert.remove_recipient(
                 self.env_assist.get_env(),
                 ["recipient", "alert-recip1", "alert2-recip1"]
-            ),
+            )
+        )
+        self.env_assist.assert_reports(
             [
                 (
                     Severities.ERROR,
@@ -624,8 +627,7 @@ class RemoveRecipientTest(TestCase):
                     {"id": "alert2-recip1"},
                     None
                 )
-            ],
-            expected_in_processor=True
+            ]
         )
 
     def test_one_recipient(self):

@@ -5,7 +5,7 @@ from typing import (
 )
 
 from pcs.common import report_codes
-from pcs.lib.errors import ReportItem, ReportItemSeverity
+from pcs.common.reports import ReportItem, ReportItemSeverity
 
 def forceable_error(force_code, report_creator, *args, **kwargs):
     """

@@ -4,7 +4,7 @@ from pcs_test.tools.assertions import assert_raise_library_error
 
 from pcs import settings
 from pcs.common import report_codes
-from pcs.lib.errors import ReportItemSeverity as Severities
+from pcs.common.reports import ReportItemSeverity as Severities
 from pcs.lib.external import CommandRunner
 import pcs.lib.booth.status as lib
 

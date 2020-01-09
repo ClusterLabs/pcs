@@ -1,6 +1,5 @@
-from pcs.common import report_codes
+from pcs.common.reports import ReportProcessor
 from pcs.lib import reports
-from pcs.lib.errors import LibraryError
 from pcs.lib.cib.node import PacemakerNode
 from pcs.lib.cib.resource import primitive
 from pcs.lib.resource_agent import(
@@ -160,9 +159,15 @@ def prepare_instance_atributes(instance_attributes, host):
     return enriched_instance_attributes
 
 def create(
-    report_processor, resource_agent, resources_section, id_provider,
-    host, node_name,
-    raw_operation_list=None, meta_attributes=None, instance_attributes=None,
+    report_processor: ReportProcessor,
+    resource_agent,
+    resources_section,
+    id_provider,
+    host,
+    node_name,
+    raw_operation_list=None,
+    meta_attributes=None,
+    instance_attributes=None,
     allow_invalid_operation=False,
     allow_invalid_instance_attributes=False,
     use_default_operations=True,
@@ -186,26 +191,28 @@ def create(
     """
     all_instance_attributes = instance_attributes.copy()
     all_instance_attributes.update({"server": host})
-    try:
-        return primitive.create(
-            report_processor,
-            resources_section,
-            id_provider,
-            node_name,
-            resource_agent,
-            raw_operation_list,
-            meta_attributes,
-            all_instance_attributes,
-            allow_invalid_operation,
-            allow_invalid_instance_attributes,
-            use_default_operations,
-        )
-    except LibraryError as e:
-        for report in e.args:
-            # pylint: disable=no-member
-            if report.code == report_codes.INVALID_OPTIONS:
-                report.info["allowed"] = [
-                    value for value in report.info["allowed"]
-                    if value != "server"
-                ]
-        raise e
+    return primitive.create(
+        report_processor,
+        resources_section,
+        id_provider,
+        node_name,
+        resource_agent,
+        raw_operation_list,
+        meta_attributes,
+        all_instance_attributes,
+        allow_invalid_operation,
+        allow_invalid_instance_attributes,
+        use_default_operations,
+        # TODO remove this dirty fix
+        # This is for passing info from the top (here) through another library
+        # command (primitive.create) to instance attributes validator in
+        # resource_agent. We handle the "server" attribute ourselves in this
+        # command so we want to make sure it is not reported as an allowed
+        # option.
+        # How to fix:
+        # 1) do not call one lib command from another
+        # 2) split validation and cib modification in primitive.create
+        # 3) call the validation from here and handle the results or config
+        #    the validator before / when running it
+        do_not_report_instance_attribute_server_exists=True
+    )
