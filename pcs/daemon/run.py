@@ -101,12 +101,7 @@ def main():
 
     sync_config_lock = Lock()
     ruby_pcsd_wrapper = ruby_pcsd.Wrapper(
-        pcsd_cmdline_entry=env.PCSD_CMDLINE_ENTRY,
-        gem_home=env.GEM_HOME,
         debug=env.PCSD_DEBUG,
-        ruby_executable=settings.ruby_executable,
-        https_proxy=env.HTTPS_PROXY,
-        no_proxy=env.NO_PROXY,
     )
     make_app = configure_app(
         session.Storage(env.PCSD_SESSION_LIFETIME),
