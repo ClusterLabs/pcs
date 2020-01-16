@@ -1938,16 +1938,23 @@ Commands:
         Restart booth resources created by the "pcs booth create" command.
 
     ticket grant <ticket> [<site address>]
-        Grant the ticket for the site specified by address.  Site address which
-        has been specified with 'pcs booth create' command is used if
-        'site address' is omitted.  Specifying site address is mandatory when
-        running this command on an arbitrator.
+        Grant the ticket to the site specified by the address, hence to the
+        booth formation this site is a member of. When this specification is
+        omitted, site address that has been specified with 'pcs booth create'
+        command is used. Specifying site address is therefore mandatory when
+        running this command at a host in an arbitrator role.
+        Note that the ticket must not be already granted in given booth
+        formation; for an ad-hoc (and, in the worst case, abrupt, for a lack of
+        a direct atomicity) change of this preference baring direct
+        interventions at the sites, the ticket needs to be revoked first, only
+        then it can be granted at another site again.
 
     ticket revoke <ticket> [<site address>]
-        Revoke the ticket for the site specified by address.  Site address which
-        has been specified with 'pcs booth create' command is used if
-        'site address' is omitted.  Specifying site address is mandatory when
-        running this command on an arbitrator.
+        Revoke the ticket in the booth formation as identified with one of its
+        member sites specified by the address. When this specification is
+        omitted, site address that has been specified with a prior 'pcs booth
+        create' command is used. Specifying site address is therefore mandatory
+        when running this command at a host in an arbitrator role.
 
     status
         Print current status of booth on the local node.
