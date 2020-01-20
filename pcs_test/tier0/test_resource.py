@@ -10,6 +10,7 @@ from pcs_test.tier0.cib_resource.common import ResourceTest
 from pcs_test.tools.assertions import (
     ac,
     AssertPcsMixin,
+    assert_pcs_status,
 )
 from pcs_test.tools.bin_mock import get_mock_settings
 from pcs_test.tools.cib import get_assert_pcs_effect_mixin
@@ -956,11 +957,11 @@ monitor interval=20 (A-monitor-interval-20)
         o,r = pcs(temp_cib, "resource status")
         assert r == 0
         if PCMK_2_0_3_PLUS:
-            ac(o,"""\
+            assert_pcs_status(o,"""\
   * Resource Group: AGroup:
-    * A1\t(ocf::heartbeat:Dummy):\t Stopped
-    * A2\t(ocf::heartbeat:Dummy):\t Stopped
-    * A3\t(ocf::heartbeat:Dummy):\t Stopped
+    * A1\t(ocf::heartbeat:Dummy):\tStopped
+    * A2\t(ocf::heartbeat:Dummy):\tStopped
+    * A3\t(ocf::heartbeat:Dummy):\tStopped
 """)
         else:
             ac(o,"""\
@@ -1211,19 +1212,19 @@ monitor interval=20 (A-monitor-interval-20)
         output, returnVal = pcs(temp_cib, "resource")
         assert returnVal == 0
         if PCMK_2_0_3_PLUS:
-            ac(output, """\
-  * F\t(ocf::heartbeat:Dummy):\t Stopped
-  * G\t(ocf::heartbeat:Dummy):\t Stopped
-  * H\t(ocf::heartbeat:Dummy):\t Stopped
+            assert_pcs_status(output, """\
+  * F\t(ocf::heartbeat:Dummy):\tStopped
+  * G\t(ocf::heartbeat:Dummy):\tStopped
+  * H\t(ocf::heartbeat:Dummy):\tStopped
   * Resource Group: RGA:
-    * A\t(ocf::heartbeat:Dummy):\t Stopped
-    * B\t(ocf::heartbeat:Dummy):\t Stopped
-    * C\t(ocf::heartbeat:Dummy):\t Stopped
-    * E\t(ocf::heartbeat:Dummy):\t Stopped
-    * D\t(ocf::heartbeat:Dummy):\t Stopped
-    * K\t(ocf::heartbeat:Dummy):\t Stopped
-    * J\t(ocf::heartbeat:Dummy):\t Stopped
-    * I\t(ocf::heartbeat:Dummy):\t Stopped
+    * A\t(ocf::heartbeat:Dummy):\tStopped
+    * B\t(ocf::heartbeat:Dummy):\tStopped
+    * C\t(ocf::heartbeat:Dummy):\tStopped
+    * E\t(ocf::heartbeat:Dummy):\tStopped
+    * D\t(ocf::heartbeat:Dummy):\tStopped
+    * K\t(ocf::heartbeat:Dummy):\tStopped
+    * J\t(ocf::heartbeat:Dummy):\tStopped
+    * I\t(ocf::heartbeat:Dummy):\tStopped
 """)
         else:
             ac(output, """\
@@ -2007,9 +2008,9 @@ monitor interval=20 (A-monitor-interval-20)
 
         o,r = pcs(temp_cib, "resource")
         if PCMK_2_0_3_PLUS:
-            ac(o,"""\
+            assert_pcs_status(o,"""\
   * Resource Group: AG:
-    * D1\t(ocf::heartbeat:Dummy):\t Stopped
+    * D1\t(ocf::heartbeat:Dummy):\tStopped
   * Clone Set: D0-clone [D0]:
 """)
         else:
@@ -2354,10 +2355,10 @@ monitor interval=20 (A-monitor-interval-20)
         o,r = pcs(temp_cib, "resource status")
         assert r == 0
         if PCMK_2_0_3_PLUS:
-            ac(o,"""\
+            assert_pcs_status(o,"""\
   * Resource Group: DGroup:
-    * D1\t(ocf::heartbeat:Dummy):\t Stopped
-    * D2\t(ocf::heartbeat:Dummy):\t Stopped
+    * D1\t(ocf::heartbeat:Dummy):\tStopped
+    * D2\t(ocf::heartbeat:Dummy):\tStopped
 """)
         else:
             ac(o,"""\
@@ -3566,12 +3567,12 @@ Error: role must be: Stopped, Started, Slave or Master (use --force to override)
         assert retVal == 0
         output, retVal = pcs(temp_cib, "resource status")
         if PCMK_2_0_3_PLUS:
-            ac(output, outdent(
+            assert_pcs_status(output, outdent(
                 """\
                   * Resource Group: dummies:
-                    * dummy1\t(ocf::heartbeat:Dummy):\t Stopped
-                    * dummy2\t(ocf::heartbeat:Dummy):\t Stopped
-                    * dummy3\t(ocf::heartbeat:Dummy):\t Stopped
+                    * dummy1\t(ocf::heartbeat:Dummy):\tStopped
+                    * dummy2\t(ocf::heartbeat:Dummy):\tStopped
+                    * dummy3\t(ocf::heartbeat:Dummy):\tStopped
                 """
             ))
         else:
@@ -3658,12 +3659,12 @@ Error: role must be: Stopped, Started, Slave or Master (use --force to override)
         assert retVal == 0
         output, retVal = pcs(temp_cib, "resource status")
         if PCMK_2_0_3_PLUS:
-            ac(output, outdent(
+            assert_pcs_status(output, outdent(
                 """\
                   * Resource Group: dummies:
-                    * dummy1\t(ocf::heartbeat:Dummy):\t Stopped
-                    * dummy2\t(ocf::heartbeat:Dummy):\t Stopped
-                    * dummy3\t(ocf::heartbeat:Dummy):\t Stopped
+                    * dummy1\t(ocf::heartbeat:Dummy):\tStopped
+                    * dummy2\t(ocf::heartbeat:Dummy):\tStopped
+                    * dummy3\t(ocf::heartbeat:Dummy):\tStopped
                 """
             ))
         else:

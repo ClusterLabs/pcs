@@ -59,7 +59,8 @@ class AssertPcsMixin:
                 )
 
     def assert_pcs_success(
-        self, command, stdout_full=None, stdout_start=None, stdout_regexp=None
+        self, command, stdout_full=None, stdout_start=None, stdout_regexp=None,
+        despace=False
     ):
         full = stdout_full
         if (
@@ -75,7 +76,8 @@ class AssertPcsMixin:
             stdout_full=full,
             stdout_start=stdout_start,
             stdout_regexp=stdout_regexp,
-            returncode=0
+            returncode=0,
+            despace=despace,
         )
 
     def assert_pcs_fail(
@@ -99,7 +101,7 @@ class AssertPcsMixin:
 
     def assert_pcs_result(
         self, command, stdout_full=None, stdout_start=None, stdout_regexp=None,
-        returncode=0
+        returncode=0, despace=False
     ):
         msg = (
             "Please specify exactly one: stdout_start or stdout_full or"
@@ -162,7 +164,11 @@ class AssertPcsMixin:
                 )
         else:
             expected_full = self.__prepare_output(stdout_full)
-            if stdout != expected_full:
+            if (
+                (despace and _despace(stdout) != _despace(expected_full))
+                or
+                (not despace and stdout != expected_full)
+            ):
                 self.assertEqual(
                     stdout,
                     expected_full,
@@ -390,3 +396,13 @@ def __report_item_equal(real_report_item, report_item_info):
             )
         )
     )
+
+def assert_pcs_status(status1, status2):
+    if _despace(status1) != _despace(status2):
+        raise AssertionError(
+            "strings not equal:\n{0}".format(prepare_diff(status1, status2))
+        )
+
+def _despace(string):
+    # ignore whitespace changes between various pacemaker versions
+    return re.sub(r"[ \t]+", " ", string)

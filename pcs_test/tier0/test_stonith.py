@@ -540,13 +540,13 @@ class StonithTest(TestCase, AssertPcsMixin):
         if PCMK_2_0_3_PLUS:
             self.assert_pcs_success("stonith", outdent(
                 """\
-                  * n1-ipmi\t(stonith:fence_apc):\t Stopped
-                  * n2-ipmi\t(stonith:fence_apc):\t Stopped
-                  * n1-apc1\t(stonith:fence_apc):\t Stopped
-                  * n1-apc2\t(stonith:fence_apc):\t Stopped
-                  * n2-apc1\t(stonith:fence_apc):\t Stopped
-                  * n2-apc2\t(stonith:fence_apc):\t Stopped
-                  * n2-apc3\t(stonith:fence_apc):\t Stopped
+                  * n1-ipmi\t(stonith:fence_apc):\tStopped
+                  * n2-ipmi\t(stonith:fence_apc):\tStopped
+                  * n1-apc1\t(stonith:fence_apc):\tStopped
+                  * n1-apc2\t(stonith:fence_apc):\tStopped
+                  * n2-apc1\t(stonith:fence_apc):\tStopped
+                  * n2-apc2\t(stonith:fence_apc):\tStopped
+                  * n2-apc3\t(stonith:fence_apc):\tStopped
                  Target: rh7-1
                    Level 1 - n1-ipmi
                    Level 2 - n1-apc1,n1-apc2,n2-apc2
@@ -554,7 +554,7 @@ class StonithTest(TestCase, AssertPcsMixin):
                    Level 1 - n2-ipmi
                    Level 2 - n2-apc1,n2-apc2,n2-apc3
                 """
-            ))
+            ), despace=True)
         else:
             self.assert_pcs_success("stonith", outdent(
                 """\
@@ -582,12 +582,12 @@ class StonithTest(TestCase, AssertPcsMixin):
         if PCMK_2_0_3_PLUS:
             self.assert_pcs_success("stonith", outdent(
                 """\
-                  * n1-ipmi\t(stonith:fence_apc):\t Stopped
-                  * n2-ipmi\t(stonith:fence_apc):\t Stopped
-                  * n1-apc1\t(stonith:fence_apc):\t Stopped
-                  * n1-apc2\t(stonith:fence_apc):\t Stopped
-                  * n2-apc1\t(stonith:fence_apc):\t Stopped
-                  * n2-apc3\t(stonith:fence_apc):\t Stopped
+                  * n1-ipmi\t(stonith:fence_apc):\tStopped
+                  * n2-ipmi\t(stonith:fence_apc):\tStopped
+                  * n1-apc1\t(stonith:fence_apc):\tStopped
+                  * n1-apc2\t(stonith:fence_apc):\tStopped
+                  * n2-apc1\t(stonith:fence_apc):\tStopped
+                  * n2-apc3\t(stonith:fence_apc):\tStopped
                  Target: rh7-1
                    Level 1 - n1-ipmi
                    Level 2 - n1-apc1,n1-apc2
@@ -595,7 +595,7 @@ class StonithTest(TestCase, AssertPcsMixin):
                    Level 1 - n2-ipmi
                    Level 2 - n2-apc1,n2-apc3
                 """
-            ))
+            ), despace=True)
         else:
             self.assert_pcs_success("stonith", outdent(
                 """\
@@ -622,11 +622,11 @@ class StonithTest(TestCase, AssertPcsMixin):
         if PCMK_2_0_3_PLUS:
             self.assert_pcs_success("stonith", outdent(
                 """\
-                  * n1-ipmi\t(stonith:fence_apc):\t Stopped
-                  * n2-ipmi\t(stonith:fence_apc):\t Stopped
-                  * n1-apc1\t(stonith:fence_apc):\t Stopped
-                  * n1-apc2\t(stonith:fence_apc):\t Stopped
-                  * n2-apc3\t(stonith:fence_apc):\t Stopped
+                  * n1-ipmi\t(stonith:fence_apc):\tStopped
+                  * n2-ipmi\t(stonith:fence_apc):\tStopped
+                  * n1-apc1\t(stonith:fence_apc):\tStopped
+                  * n1-apc2\t(stonith:fence_apc):\tStopped
+                  * n2-apc3\t(stonith:fence_apc):\tStopped
                  Target: rh7-1
                    Level 1 - n1-ipmi
                    Level 2 - n1-apc1,n1-apc2
@@ -634,7 +634,7 @@ class StonithTest(TestCase, AssertPcsMixin):
                    Level 1 - n2-ipmi
                    Level 2 - n2-apc3
                 """
-            ))
+            ), despace=True)
         else:
             self.assert_pcs_success("stonith", outdent(
                 """\
@@ -660,17 +660,17 @@ class StonithTest(TestCase, AssertPcsMixin):
         if PCMK_2_0_3_PLUS:
             self.assert_pcs_success("stonith", outdent(
                 """\
-                  * n1-ipmi\t(stonith:fence_apc):\t Stopped
-                  * n2-ipmi\t(stonith:fence_apc):\t Stopped
-                  * n1-apc1\t(stonith:fence_apc):\t Stopped
-                  * n1-apc2\t(stonith:fence_apc):\t Stopped
+                  * n1-ipmi\t(stonith:fence_apc):\tStopped
+                  * n2-ipmi\t(stonith:fence_apc):\tStopped
+                  * n1-apc1\t(stonith:fence_apc):\tStopped
+                  * n1-apc2\t(stonith:fence_apc):\tStopped
                  Target: rh7-1
                    Level 1 - n1-ipmi
                    Level 2 - n1-apc1,n1-apc2
                  Target: rh7-2
                    Level 1 - n2-ipmi
                 """
-            ))
+            ), despace=True)
         else:
             self.assert_pcs_success("stonith", outdent(
                 """\
@@ -694,16 +694,16 @@ class StonithTest(TestCase, AssertPcsMixin):
         if PCMK_2_0_3_PLUS:
             self.assert_pcs_success("stonith", outdent(
                 """\
-                  * n1-ipmi\t(stonith:fence_apc):\t Stopped
-                  * n2-ipmi\t(stonith:fence_apc):\t Stopped
-                  * n1-apc2\t(stonith:fence_apc):\t Stopped
+                  * n1-ipmi\t(stonith:fence_apc):\tStopped
+                  * n2-ipmi\t(stonith:fence_apc):\tStopped
+                  * n1-apc2\t(stonith:fence_apc):\tStopped
                  Target: rh7-1
                    Level 1 - n1-ipmi
                    Level 2 - n1-apc2
                  Target: rh7-2
                    Level 1 - n2-ipmi
                 """
-            ))
+            ), despace=True)
         else:
             self.assert_pcs_success("stonith", outdent(
                 """\
@@ -727,14 +727,14 @@ class StonithTest(TestCase, AssertPcsMixin):
         if PCMK_2_0_3_PLUS:
             self.assert_pcs_success("stonith", outdent(
                 """\
-                  * n1-ipmi\t(stonith:fence_apc):\t Stopped
-                  * n2-ipmi\t(stonith:fence_apc):\t Stopped
+                  * n1-ipmi\t(stonith:fence_apc):\tStopped
+                  * n2-ipmi\t(stonith:fence_apc):\tStopped
                  Target: rh7-1
                    Level 1 - n1-ipmi
                  Target: rh7-2
                    Level 1 - n2-ipmi
                 """
-            ))
+            ), despace=True)
         else:
             self.assert_pcs_success("stonith", outdent(
                 """\
@@ -1284,9 +1284,9 @@ class LevelConfig(LevelTestsBase):
         if PCMK_2_0_3_PLUS:
             result = outdent(
                 """\
-                  * F1\t(stonith:fence_apc):\t Stopped
-                  * F2\t(stonith:fence_apc):\t Stopped
-                  * F3\t(stonith:fence_apc):\t Stopped
+                  * F1\t(stonith:fence_apc):\tStopped
+                  * F2\t(stonith:fence_apc):\tStopped
+                  * F3\t(stonith:fence_apc):\tStopped
                 """
             )
         else:
@@ -1299,7 +1299,8 @@ class LevelConfig(LevelTestsBase):
             )
         self.assert_pcs_success(
             "stonith",
-            result + "\n".join(indent(self.config_lines, 1)) + "\n"
+            result + "\n".join(indent(self.config_lines, 1)) + "\n",
+            despace=True
         )
         self.pcs_runner.mock_settings["corosync_conf_file"] = rc(
             "corosync.conf"
