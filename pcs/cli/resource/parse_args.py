@@ -1,5 +1,5 @@
 from pcs.cli.common.parse_args import group_by_keywords, prepare_options
-from pcs.cli.common.errors import CmdLineInputError, HINT_SYNTAX_CHANGE
+from pcs.cli.common.errors import CmdLineInputError, SEE_MAN_CHANGES
 
 
 def parse_create_simple(arg_list):
@@ -51,7 +51,14 @@ def parse_create(arg_list):
         # manpage.
         # To be removed in the next significant version.
         if e.message == "missing value of 'master' option":
-            raise CmdLineInputError(message=e.message, hint=HINT_SYNTAX_CHANGE)
+            raise CmdLineInputError(
+                message=e.message,
+                hint=(
+                    "Master/Slave resources have been renamed to promotable "
+                    "clones, please use the 'promotable' keyword instead of "
+                    "'master'. " + SEE_MAN_CHANGES
+                )
+            )
         raise e
 
     return parts
