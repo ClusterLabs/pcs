@@ -1,25 +1,16 @@
-from unittest import mock, TestCase
+from unittest import TestCase
 
 from pcs_test.tools import fixture
 from pcs_test.tools.command_env import get_env_tools
-from pcs_test.tools.misc import read_test_resource as rc_read
 
-from pcs import settings
 from pcs.common import report_codes
 from pcs.lib.commands import stonith
 
 
-crm_mon_rng_with_history = rc_read("crm_mon.rng.with_fence_history.xml")
-crm_mon_rng_without_history = rc_read("crm_mon.rng.without_fence_history.xml")
-
 class HistoryGetText(TestCase):
     def setUp(self):
         self.env_assist, self.config = get_env_tools(test_case=self)
-        self.config.fs.open(
-            settings.crm_mon_schema,
-            mock.mock_open(read_data=crm_mon_rng_with_history)(),
-            name="fs.open.crm_mon_rng"
-        )
+        self.config.runner.pcmk.can_fence_history_manage()
 
     def test_success_all_nodes(self):
         history = (
@@ -68,11 +59,10 @@ class HistoryGetText(TestCase):
         )
 
     def test_history_not_supported(self):
-        self.config.fs.open(
-            settings.crm_mon_schema,
-            mock.mock_open(read_data=crm_mon_rng_without_history)(),
-            name="fs.open.crm_mon_rng",
-            instead="fs.open.crm_mon_rng"
+        self.config.runner.pcmk.can_fence_history_manage(
+            stderr="not supported",
+            name="runner.pcmk.can_fence_history_manage",
+            instead="runner.pcmk.can_fence_history_manage",
         )
         self.env_assist.assert_raise_library_error(
             lambda: stonith.history_get_text(self.env_assist.get_env()),
@@ -88,11 +78,7 @@ class HistoryGetText(TestCase):
 class HistoryCleanup(TestCase):
     def setUp(self):
         self.env_assist, self.config = get_env_tools(test_case=self)
-        self.config.fs.open(
-            settings.crm_mon_schema,
-            mock.mock_open(read_data=crm_mon_rng_with_history)(),
-            name="fs.open.crm_mon_rng"
-        )
+        self.config.runner.pcmk.can_fence_history_manage()
 
     def test_success_all_nodes(self):
         msg = "cleaning up fencing-history for node *\n"
@@ -129,11 +115,10 @@ class HistoryCleanup(TestCase):
         )
 
     def test_history_not_supported(self):
-        self.config.fs.open(
-            settings.crm_mon_schema,
-            mock.mock_open(read_data=crm_mon_rng_without_history)(),
-            name="fs.open.crm_mon_rng",
-            instead="fs.open.crm_mon_rng"
+        self.config.runner.pcmk.can_fence_history_manage(
+            stderr="not supported",
+            name="runner.pcmk.can_fence_history_manage",
+            instead="runner.pcmk.can_fence_history_manage",
         )
         self.env_assist.assert_raise_library_error(
             lambda: stonith.history_cleanup(self.env_assist.get_env()),
@@ -149,11 +134,7 @@ class HistoryCleanup(TestCase):
 class HistoryUpdate(TestCase):
     def setUp(self):
         self.env_assist, self.config = get_env_tools(test_case=self)
-        self.config.fs.open(
-            settings.crm_mon_schema,
-            mock.mock_open(read_data=crm_mon_rng_with_history)(),
-            name="fs.open.crm_mon_rng"
-        )
+        self.config.runner.pcmk.can_fence_history_manage()
 
     def test_success_all_nodes(self):
         msg = "gather fencing-history from all nodes\n"
@@ -182,11 +163,10 @@ class HistoryUpdate(TestCase):
         )
 
     def test_history_not_supported(self):
-        self.config.fs.open(
-            settings.crm_mon_schema,
-            mock.mock_open(read_data=crm_mon_rng_without_history)(),
-            name="fs.open.crm_mon_rng",
-            instead="fs.open.crm_mon_rng"
+        self.config.runner.pcmk.can_fence_history_manage(
+            stderr="not supported",
+            name="runner.pcmk.can_fence_history_manage",
+            instead="runner.pcmk.can_fence_history_manage",
         )
         self.env_assist.assert_raise_library_error(
             lambda: stonith.history_update(self.env_assist.get_env()),

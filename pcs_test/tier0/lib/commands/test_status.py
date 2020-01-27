@@ -1,15 +1,12 @@
 from textwrap import dedent
-from unittest import mock, TestCase
+from unittest import TestCase
 
-from pcs import settings
 from pcs.common import file_type_codes, report_codes
 from pcs.lib.commands import status
 from pcs_test.tools import fixture
 from pcs_test.tools.command_env import get_env_tools
 from pcs_test.tools.misc import read_test_resource as rc_read
 
-crm_mon_rng_with_history = rc_read("crm_mon.rng.with_fence_history.xml")
-crm_mon_rng_without_history = rc_read("crm_mon.rng.without_fence_history.xml")
 
 class FullClusterStatusPlaintext(TestCase):
     def setUp(self):
@@ -212,11 +209,7 @@ class FullClusterStatusPlaintext(TestCase):
     def test_success_live_verbose(self):
         (self.config
             .env.set_known_nodes(self.node_name_list)
-            .fs.open(
-                settings.crm_mon_schema,
-                mock.mock_open(read_data=crm_mon_rng_without_history)(),
-                name="fs.open.crm_mon_rng"
-            )
+            .runner.pcmk.can_fence_history_status(stderr="not supported")
             .runner.pcmk.load_state_plaintext(
                 verbose=True,
                 stdout="crm_mon cluster status",
@@ -288,11 +281,7 @@ class FullClusterStatusPlaintext(TestCase):
         (self.config
             .env.set_corosync_conf_data(rc_read("corosync.conf"))
             .env.set_cib_data("<cib/>")
-            .fs.open(
-                settings.crm_mon_schema,
-                mock.mock_open(read_data=crm_mon_rng_without_history)(),
-                name="fs.open.crm_mon_rng"
-            )
+            .runner.pcmk.can_fence_history_status(stderr="not supported")
             .runner.pcmk.load_state_plaintext(
                 verbose=True, stdout="crm_mon cluster status",
             )
@@ -320,11 +309,7 @@ class FullClusterStatusPlaintext(TestCase):
     def test_success_verbose_inactive_and_fence_history(self):
         (self.config
             .env.set_known_nodes(self.node_name_list)
-            .fs.open(
-                settings.crm_mon_schema,
-                mock.mock_open(read_data=crm_mon_rng_with_history)(),
-                name="fs.open.crm_mon_rng"
-            )
+            .runner.pcmk.can_fence_history_status()
             .runner.pcmk.load_state_plaintext(
                 verbose=True,
                 inactive=False,
@@ -375,11 +360,7 @@ class FullClusterStatusPlaintext(TestCase):
     def _assert_success_with_ticket_status_failure(self, stderr="", msg=""):
         (self.config
             .env.set_known_nodes(self.node_name_list)
-            .fs.open(
-                settings.crm_mon_schema,
-                mock.mock_open(read_data=crm_mon_rng_without_history)(),
-                name="fs.open.crm_mon_rng"
-            )
+            .runner.pcmk.can_fence_history_status(stderr="not supported")
             .runner.pcmk.load_state_plaintext(
                 verbose=True,
                 stdout="crm_mon cluster status",
@@ -553,11 +534,7 @@ class FullClusterStatusPlaintext(TestCase):
 
         (self.config
             .env.set_known_nodes(self.node_name_list[1:])
-            .fs.open(
-                settings.crm_mon_schema,
-                mock.mock_open(read_data=crm_mon_rng_without_history)(),
-                name="fs.open.crm_mon_rng"
-            )
+            .runner.pcmk.can_fence_history_status(stderr="not supported")
             .runner.pcmk.load_state_plaintext(
                 verbose=True,
                 stdout="crm_mon cluster status",

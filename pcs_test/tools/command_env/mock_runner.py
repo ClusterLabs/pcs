@@ -61,6 +61,7 @@ COMMAND_COMPLETIONS = {
     "crm_ticket": path.join(settings.pacemaker_binaries, "crm_ticket"),
     "crm_verify": path.join(settings.pacemaker_binaries, "crm_verify"),
     "sbd": settings.sbd_binary,
+    "stonith_admin": path.join(settings.pacemaker_binaries, "stonith_admin"),
 }
 
 def complete_command(command):

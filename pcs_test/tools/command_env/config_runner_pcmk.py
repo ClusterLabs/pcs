@@ -70,10 +70,51 @@ def _fixture_state_node_xml(
 
 
 class PcmkShortcuts():
+    #pylint: disable=too-many-public-methods
     def __init__(self, calls):
         self.__calls = calls
         self.default_wait_timeout = DEFAULT_WAIT_TIMEOUT
         self.default_wait_error_returncode = WAIT_TIMEOUT_EXPIRED_RETURNCODE
+
+    def can_fence_history_manage(
+        self,
+        name="runner.pcmk.can_fence_history_manage",
+        stderr="--history --cleanup --broadcast",
+        instead=None,
+    ):
+        """
+        Create a call to check if fence_history is supported by stonith_admin
+
+        string name -- key of the call
+        string stderr -- stonith_admin help text
+        string instead -- key of call instead of which this new call is to be
+            placed
+        """
+        self.__calls.place(
+            name,
+            RunnerCall("stonith_admin --help-all", stderr=stderr),
+            instead=instead,
+        )
+
+    def can_fence_history_status(
+        self,
+        name="runner.pcmk.can_fence_history_status",
+        stderr="--fence-history",
+        instead=None,
+    ):
+        """
+        Create a call to check if fence_history is supported by crm_mon
+
+        string name -- key of the call
+        string stderr -- crm_mon help text
+        string instead -- key of call instead of which this new call is to be
+            placed
+        """
+        self.__calls.place(
+            name,
+            RunnerCall("crm_mon --help-all", stderr=stderr),
+            instead=instead,
+        )
 
     def fence_history_get(
         self, name="runner.pcmk.fence_history_get", node=None, stdout="",

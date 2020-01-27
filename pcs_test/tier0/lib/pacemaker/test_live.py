@@ -79,7 +79,7 @@ class GetClusterStatusXmlTest(LibraryPacemakerTest):
 class GetClusterStatusText(TestCase):
     def setUp(self):
         self.mock_fencehistory_supported = mock.patch(
-            "pcs.lib.pacemaker.live.is_fence_history_supported",
+            "pcs.lib.pacemaker.live.is_fence_history_supported_status",
             return_value=True
         )
         self.mock_fencehistory_supported.start()
@@ -125,7 +125,7 @@ class GetClusterStatusText(TestCase):
     def test_success_no_fence_history(self):
         self.mock_fencehistory_supported.stop()
         self.mock_fencehistory_supported = mock.patch(
-            "pcs.lib.pacemaker.live.is_fence_history_supported",
+            "pcs.lib.pacemaker.live.is_fence_history_supported_status",
             return_value=False
         )
         self.mock_fencehistory_supported.start()
@@ -1398,4 +1398,31 @@ class ResourcesWaitingTest(LibraryPacemakerTest):
 
         mock_runner.run.assert_called_once_with(
             [self.path("crm_resource"), "--wait"]
+        )
+
+
+class IsInPcmkToolHelp(TestCase):
+    # pylint: disable=protected-access
+    def test_all_in_stderr(self):
+        mock_runner = get_runner("", "ABCDE", 0)
+        self.assertTrue(
+            lib._is_in_pcmk_tool_help(mock_runner, "", ["A", "C", "E"])
+        )
+
+    def test_all_in_stdout(self):
+        mock_runner = get_runner("ABCDE", "", 0)
+        self.assertTrue(
+            lib._is_in_pcmk_tool_help(mock_runner, "", ["A", "C", "E"])
+        )
+
+    def test_some_in_stderr_all_in_stdout(self):
+        mock_runner = get_runner("ABCDE", "ABC", 0)
+        self.assertTrue(
+            lib._is_in_pcmk_tool_help(mock_runner, "", ["A", "C", "E"])
+        )
+
+    def test_some_in_stderr_some_in_stdout(self):
+        mock_runner = get_runner("CDE", "ABC", 0)
+        self.assertFalse(
+            lib._is_in_pcmk_tool_help(mock_runner, "", ["A", "C", "E"])
         )

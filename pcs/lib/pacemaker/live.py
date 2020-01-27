@@ -1,6 +1,7 @@
 import os.path
 import re
 from typing import (
+    Iterable,
     List,
     Tuple,
 )
@@ -57,7 +58,7 @@ def get_cluster_status_text(
         cmd.extend(["--show-detail", "--show-node-attributes", "--failcounts"])
         # by default, pending and failed actions are displayed
         # with verbose==True, we display the whole history
-        if is_fence_history_supported():
+        if is_fence_history_supported_status(runner):
             cmd.append("--fence-history=3")
     stdout, stderr, retval = runner.run(cmd)
 
@@ -531,25 +532,15 @@ def _resource_move_ban_clear(
 
 ### fence history
 
-def is_fence_history_supported():
-    try:
-        crm_mon_rng = xml_fromstring(open(settings.crm_mon_schema, "r").read())
-        # Namespaces must be provided otherwise xpath won't match anything.
-        # 'None' namespace is not supported, so we rename it.
-        namespaces_map = {
-            "ns": crm_mon_rng.nsmap.pop(None)
-        }
-        history_elements = crm_mon_rng.xpath(
-            ".//ns:element[@name='fence_history']",
-            namespaces=namespaces_map
-        )
-        if history_elements:
-            return True
-    except (EnvironmentError, etree.XMLSyntaxError):
-        # if we cannot tell for sure fence_history is supported, we will
-        # continue as if it was not supported
-        pass
-    return False
+def is_fence_history_supported_status(runner: CommandRunner) -> bool:
+    return _is_in_pcmk_tool_help(
+        runner, "crm_mon", ["--fence-history"]
+    )
+
+def is_fence_history_supported_management(runner: CommandRunner) -> bool:
+    return _is_in_pcmk_tool_help(
+        runner, "stonith_admin", ["--history", "--broadcast", "--cleanup"]
+    )
 
 def fence_history_cleanup(runner, node=None):
     return _run_fence_history_command(runner, "--cleanup", node)
@@ -591,3 +582,17 @@ def __is_in_crm_resource_help(runner, text):
     )
     # help goes to stderr but we check stdout as well if that gets changed
     return text in stderr or text in stdout
+
+def _is_in_pcmk_tool_help(
+    runner: CommandRunner, tool: str, text_list: Iterable[str]
+) -> bool:
+    stdout, stderr, dummy_retval = runner.run(
+        [__exec(tool), "--help-all"]
+    )
+    # Help goes to stderr but we check stdout as well if that gets changed. Use
+    # generators in all to return early.
+    return (
+        all(text in stderr for text in text_list)
+        or
+        all(text in stdout for text in text_list)
+    )
