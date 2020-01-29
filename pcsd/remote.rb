@@ -938,7 +938,8 @@ def status_all(params, request, auth_user, nodes=[], dont_update_config=false)
   threads = []
   forbidden_nodes = {}
   nodes.each {|node|
-    threads << Thread.new {
+    threads << Thread.new(Thread.current[:pcsd_logger_container]) { |logger|
+      Thread.current[:pcsd_logger_container] = logger
       code, response = send_request_with_token(auth_user, node, 'status')
       if 403 == code
         forbidden_nodes[node] = true
@@ -994,7 +995,8 @@ def clusters_overview(params, request, auth_user)
   threads = []
   config = PCSConfig.new(Cfgsync::PcsdSettings.from_file().text())
   config.clusters.each { |cluster|
-    threads << Thread.new {
+    threads << Thread.new(Thread.current[:pcsd_logger_container]) { |logger|
+      Thread.current[:pcsd_logger_container] = logger
       cluster_map[cluster.name] = {
         'cluster_name' => cluster.name,
         'error_list' => [

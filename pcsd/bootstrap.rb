@@ -51,8 +51,23 @@ if not defined? $cur_node_name
   $cur_node_name = `/bin/hostname`.chomp
 end
 
-def configure_logger(log_device)
-  logger = Logger.new(log_device)
+def configure_logger()
+  logger = Logger.new(StringIO.new())
+  logger.formatter = proc {|severity, datetime, progname, msg|
+    if Thread.current.key?(:pcsd_logger_container)
+      Thread.current[:pcsd_logger_container] << {
+        :level => severity,
+        :timestamp_usec => (datetime.to_f * 1000000).to_i,
+        :message => msg,
+      }
+    else
+      STDERR.puts("#{datetime} #{progname} #{severity} #{msg}")
+    end
+  }
+  return logger
+end
+
+def early_log(logger)
   if ENV['PCSD_DEBUG'] and ENV['PCSD_DEBUG'].downcase == "true" then
     logger.level = Logger::DEBUG
     logger.info "PCSD Debugging enabled"
@@ -65,7 +80,6 @@ def configure_logger(log_device)
   else
     logger.debug "Detected systemd is not in use"
   end
-  return logger
 end
 
 def get_capabilities(logger)

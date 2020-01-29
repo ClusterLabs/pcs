@@ -7,8 +7,6 @@ require 'thin'
 
 require 'settings.rb'
 
-$tornado_logs = []
-
 def tm
   t1 = Time.now
   " #{t1.min}:#{t1.sec}.#{t1.usec}"
@@ -20,6 +18,8 @@ class TornadoCommunicationMiddleware
   end
 
   def call(env)
+    tornado_logs = []
+    Thread.current[:pcsd_logger_container] = tornado_logs
     id = (0...4).map { (65 + rand(26)).chr }.join
     # raw_data = request.env["rack.input"].read
     # puts raw_data
@@ -31,9 +31,9 @@ class TornadoCommunicationMiddleware
     request = JSON.parse(tornado_request)
     if ["sinatra_gui", "sinatra_remote"].include?(request["type"])
       if request["type"] == "sinatra_gui"
-        $tornado_username = request["session"]["username"]
-        $tornado_groups = request["session"]["groups"]
-        $tornado_is_authenticated = request["session"]["is_authenticated"]
+        Thread.current[:tornado_username] = request["session"]["username"]
+        Thread.current[:tornado_groups] = request["session"]["groups"]
+        Thread.current[:tornado_is_authenticated] = request["session"]["is_authenticated"]
       end
 
       # set :logging, true
@@ -55,7 +55,7 @@ class TornadoCommunicationMiddleware
 
       puts id + tm() +" "+status.to_s
       # puts id+" "+body.join("")
-      # $tornado_logs.each{|log|
+      # tornado_logs.each{|log|
       #   puts id+" "+log[:level]+" "+log[:message].to_s
       # }
       # puts "=================================================================="
@@ -73,7 +73,7 @@ class TornadoCommunicationMiddleware
       result = {:error => "Unknown type: '#{request["type"]}'"}
     end
 
-    result[:logs] = $tornado_logs
+    result[:logs] = tornado_logs
 
     [200, {}, [result.to_json.to_str]]
   end

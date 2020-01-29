@@ -923,7 +923,8 @@ def is_auth_against_nodes(auth_user, node_names, timeout=10)
   offline_nodes = []
 
   node_names.uniq.each { |node_name|
-    threads << Thread.new {
+    threads << Thread.new(Thread.current[:pcsd_logger_container]) { |logger|
+      Thread.current[:pcsd_logger_container] = logger
       code, response = send_request_with_token(
         auth_user, node_name, 'check_auth', false, {}, true, nil, timeout
       )
@@ -963,7 +964,8 @@ def pcs_auth(auth_user, nodes)
   auth_responses = {}
   threads = []
   nodes.each { |node_name, node_data|
-    threads << Thread.new {
+    threads << Thread.new(Thread.current[:pcsd_logger_container]) { |logger|
+      Thread.current[:pcsd_logger_container] = logger
       begin
         addr = node_data.fetch('dest_list').fetch(0).fetch('addr')
         port = node_data.fetch('dest_list').fetch(0).fetch('port')
@@ -1199,7 +1201,8 @@ def cluster_status_from_nodes(auth_user, cluster_nodes, cluster_name)
 
   threads = []
   cluster_nodes.uniq.each { |node|
-    threads << Thread.new {
+    threads << Thread.new(Thread.current[:pcsd_logger_container]) { |logger|
+      Thread.current[:pcsd_logger_container] = logger
       code, response = send_request_with_token(
         auth_user,
         node,
