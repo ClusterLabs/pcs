@@ -5,6 +5,8 @@ require 'rack'
 require 'sinatra'
 require 'thin'
 
+require 'settings.rb'
+
 $tornado_logs = []
 
 def tm
@@ -82,7 +84,7 @@ use TornadoCommunicationMiddleware
 require 'pcsd'
 
 ::Rack::Handler.get('thin').run(Sinatra::Application, {
-  :Host => "./my_app.socket",
+  :Host => PCSD_RUBY_SOCKET,
 }) do |server|
   puts server.class
   server.threaded = true

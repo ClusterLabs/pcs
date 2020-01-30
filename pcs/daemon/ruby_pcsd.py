@@ -10,6 +10,7 @@ from tornado.web import HTTPError
 from tornado.httputil import split_host_and_port, HTTPServerRequest
 from tornado.httpclient import AsyncHTTPClient
 
+from pcs import settings
 from pcs.daemon import log
 
 
@@ -30,7 +31,7 @@ RUBY_LOG_LEVEL_MAP = {
 def prepare_curl_callback(curl):
     curl.setopt(
         pycurl.UNIX_SOCKET_PATH,
-        "/root/projects/pcs/pcsd/my_app.socket",
+        settings.pcsd_ruby_socket,
     )
     curl.setopt(pycurl.TIMEOUT, 70)
 
