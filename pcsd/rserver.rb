@@ -79,6 +79,7 @@ class TornadoCommunicationMiddleware
   end
 end
 
+
 use TornadoCommunicationMiddleware
 
 require 'pcsd'
@@ -88,4 +89,19 @@ require 'pcsd'
 }) do |server|
   puts server.class
   server.threaded = true
+  # notify systemd we are running
+  if ISSYSTEMCTL
+    if ENV['NOTIFY_SOCKET']
+      socket_name = ENV['NOTIFY_SOCKET'].dup
+      if socket_name.start_with?('@')
+        # abstract namespace socket
+        socket_name[0] = "\0"
+      end
+      $logger.info("Notifying systemd we are running (socket #{socket_name})")
+      sd_socket = Socket.new(Socket::AF_UNIX, Socket::SOCK_DGRAM)
+      sd_socket.connect(Socket.pack_sockaddr_un(socket_name))
+      sd_socket.send('READY=1', 0)
+      sd_socket.close()
+    end
+  end
 end

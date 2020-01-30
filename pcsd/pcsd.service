@@ -4,6 +4,8 @@ Documentation=man:pcsd(8)
 Documentation=man:pcs(8)
 Requires=network-online.target
 After=network-online.target
+Requires=pcsd-ruby.service
+After=pcsd-ruby.service
 
 [Service]
 EnvironmentFile=/etc/sysconfig/pcsd

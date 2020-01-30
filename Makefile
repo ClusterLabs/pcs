@@ -281,7 +281,12 @@ ifeq ($(IS_DEBIAN)$(IS_SYSTEMCTL),truefalse)
 else
 	install -d ${DEST_SYSTEMD_SYSTEM}
 	install -m 644 ${SYSTEMD_SERVICE_FILE} ${DEST_SYSTEMD_SYSTEM}/pcsd.service
+	install -m 644 pcsd/pcsd-ruby.service ${DEST_SYSTEMD_SYSTEM}/pcsd-ruby.service
 endif
+	# ${DEST_LIB}/pcsd/pcsd holds the selinux context
+	install -m 755 pcsd/pcsd.service-runner ${DEST_LIB}/pcsd/pcsd
+	rm ${DEST_LIB}/pcsd/pcsd.service-runner
+	
 	install -m 700 -d ${DESTDIR}/var/lib/pcsd
 	install -m 644 -D pcsd/pcsd.logrotate ${DESTDIR}/etc/logrotate.d/pcsd
 	install -m644 -D pcsd/pcsd.8 ${DEST_MAN}/pcsd.8
@@ -307,6 +312,7 @@ ifeq ($(IS_DEBIAN)$(IS_SYSTEMCTL),truefalse)
 	rm -f ${DEST_INIT}/pcsd
 else
 	rm -f ${DEST_SYSTEMD_SYSTEM}/pcsd.service
+	rm -f ${DEST_SYSTEMD_SYSTEM}/pcsd-ruby.service
 	rm -f ${DEST_SYSTEMD_SYSTEM}/pcs_snmp_agent.service
 endif
 	rm -f ${DESTDIR}/etc/pam.d/pcsd
