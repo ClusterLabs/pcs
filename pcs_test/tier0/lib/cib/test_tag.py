@@ -732,3 +732,236 @@ class FindConstraintsReferencingTag(ValidateCommonConstraintsTestData):
 
     def test_rule(self):
         self.assert_constraint_id("tag-rule")
+
+
+class FindRelatedResourceIds(TestCase):
+    all_kind_resources_tree = etree.fromstring(
+        """
+        <cib>
+          <configuration>
+            <resources>
+              <primitive id="Primitive"/>
+              <group id="Group">
+                <primitive id="GPrimitive1"/>
+                <primitive id="GPrimitive2"/>
+                <primitive id="GPrimitive3"/>
+              </group>
+              <bundle id="EmptyBundle"/>
+              <bundle id="Bundle">
+                <primitive id="BundlePrimitive"/>
+              </bundle>
+              <clone id="Clone">
+                <primitive id="ClonePrimitive"/>
+              </clone>
+              <master id="Master">
+                <primitive id="MasterPrimitive"/>
+              </master>
+              <clone id="CloneGroup">
+                <group id="ClonedGroup">
+                  <primitive id="CGPrimitive1"/>
+                  <primitive id="CGPrimitive2"/>
+                  <primitive id="CGPrimitive3"/>
+                </group>
+              </clone>
+              <master id="MasterGroup">
+                <group id="MasteredGroup">
+                  <primitive id="MGPrimitive1"/>
+                  <primitive id="MGPrimitive2"/>
+                  <primitive id="MGPrimitive3"/>
+                </group>
+              </master>
+            </resources>
+            <constraints/>
+            <tags/>
+          </configuration>
+          <status/>
+        </cib>
+        """
+    )
+
+    test_result_ids = {
+        "clone-group": [
+            "CloneGroup",
+            "ClonedGroup",
+            "CGPrimitive1",
+            "CGPrimitive2",
+            "CGPrimitive3",
+        ],
+        "master-group": [
+            "MasterGroup",
+            "MasteredGroup",
+            "MGPrimitive1",
+            "MGPrimitive2",
+            "MGPrimitive3",
+        ],
+    }
+
+    def call_find_related_resource_ids(self, resource_id):
+        resource_el = self.all_kind_resources_tree.xpath(
+            f'.//*[@id="{resource_id}"]'
+        )[0]
+        return lib.find_related_resource_ids(resource_el)
+
+    def test_simple_primitive_id(self):
+        self.assertEqual(
+            self.call_find_related_resource_ids("Primitive"),
+            ["Primitive"],
+        )
+
+    def test_simple_group(self):
+        self.assertEqual(
+            self.call_find_related_resource_ids("Group"),
+            ["Group", "GPrimitive1", "GPrimitive2", "GPrimitive3"],
+        )
+
+    def test_primitive_in_simple_group(self):
+        self.assertEqual(
+            self.call_find_related_resource_ids("GPrimitive2"),
+            ["Group", "GPrimitive1", "GPrimitive2", "GPrimitive3"],
+        )
+
+    def test_empty_bundle(self):
+        self.assertEqual(
+            self.call_find_related_resource_ids("EmptyBundle"),
+            ["EmptyBundle"],
+        )
+
+    def test_bundle_with_primitive(self):
+        self.assertEqual(
+            self.call_find_related_resource_ids("Bundle"),
+            ["Bundle", "BundlePrimitive"],
+        )
+
+    def test_primitive_in_bundle(self):
+        self.assertEqual(
+            self.call_find_related_resource_ids("BundlePrimitive"),
+            ["BundlePrimitive"],
+        )
+
+    def test_clone(self):
+        self.assertEqual(
+            self.call_find_related_resource_ids("Clone"),
+            ["Clone", "ClonePrimitive"],
+        )
+
+    def test_clone_primitive(self):
+        self.assertEqual(
+            self.call_find_related_resource_ids("ClonePrimitive"),
+            ["Clone", "ClonePrimitive"],
+        )
+
+    def test_master(self):
+        self.assertEqual(
+            self.call_find_related_resource_ids("Master"),
+            ["Master", "MasterPrimitive"],
+        )
+
+    def test_master_primitive(self):
+        self.assertEqual(
+            self.call_find_related_resource_ids("MasterPrimitive"),
+            ["Master", "MasterPrimitive"],
+        )
+
+    def test_clone_group(self):
+        self.assertEqual(
+            self.call_find_related_resource_ids("CloneGroup"),
+            self.test_result_ids["clone-group"]
+        )
+
+    def test_cloned_group(self):
+        self.assertEqual(
+            self.call_find_related_resource_ids("ClonedGroup"),
+            self.test_result_ids["clone-group"]
+        )
+
+    def test_primitive_in_cloned_group(self):
+        self.assertEqual(
+            self.call_find_related_resource_ids("CGPrimitive3"),
+            self.test_result_ids["clone-group"]
+        )
+
+    def test_master_group(self):
+        self.assertEqual(
+            self.call_find_related_resource_ids("MasterGroup"),
+            self.test_result_ids["master-group"]
+        )
+
+    def test_masterd_group(self):
+        self.assertEqual(
+            self.call_find_related_resource_ids("MasteredGroup"),
+            self.test_result_ids["master-group"]
+        )
+
+    def test_primitive_in_mastered_group(self):
+        self.assertEqual(
+            self.call_find_related_resource_ids("MGPrimitive1"),
+            self.test_result_ids["master-group"]
+        )
+
+class FindObjRefElements(TestCase):
+    test_tree = etree.fromstring(
+        """
+        <cib>
+          <configuration>
+            <tags>
+              <tag id="tag-single-ref">
+                <obj_ref id="single-ref"/>
+              </tag>
+              <tag id="tag-multi-ref1">
+                <obj_ref id="multi-ref"/>
+              </tag>
+              <tag id="tag-multi-ref2">
+                <obj_ref id="multi-ref"/>
+              </tag>
+            </tags>
+          </configuration>
+        </cib>
+        """
+    )
+
+    def call_find_obj_ref_elements(self, idref_list):
+        return lib.find_obj_ref_elements(
+           get_tags(self.test_tree),
+           idref_list,
+       )
+
+    def get_obj_ref_elements(self, id_list):
+        return [
+            element
+            for _id in id_list
+            for element in get_tags(self.test_tree).findall(".//obj_ref")
+            if element.get("id", default="") == _id
+        ]
+
+    def test_no_references_found(self):
+        self.assertEqual(
+            self.call_find_obj_ref_elements([
+                "nonexistent-ref1",
+                "nonexistent-ref2",
+            ]),
+            [],
+        )
+
+    def test_reference_in_one_tag(self):
+        self.assertEqual(
+            self.call_find_obj_ref_elements([
+                "single-ref",
+                "nonexistent-ref2",
+            ]),
+            self.get_obj_ref_elements(["single-ref"]),
+        )
+
+    def test_reference_in_multiple_tags(self):
+        self.assertEqual(
+            self.call_find_obj_ref_elements([
+                "multi-ref",
+            ]),
+            self.get_obj_ref_elements(["multi-ref"]),
+        )
+
+    def test_multiple_references_in_any_tags(self):
+        test_args = ["multi-ref", "single-ref"]
+        self.assertEqual(
+            self.call_find_obj_ref_elements(test_args),
+            self.get_obj_ref_elements(test_args),
+        )

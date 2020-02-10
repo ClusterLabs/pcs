@@ -38,8 +38,16 @@ from pcs.lib.cib.resource import (
     guest_node,
     primitive,
 )
-from pcs.lib.cib.tools import get_resources
-from pcs.lib.commands.resource import (
+from pcs.lib.cib.resource.common import find_one_resource_and_report
+from pcs.lib.cib.tag import (
+    find_obj_ref_elements,
+    find_related_resource_ids,
+)
+from pcs.lib.cib.tools import (
+    get_resources,
+    get_tags,
+)
+from pcs.lib.commands.resource import(
     _validate_guest_change,
     _get_nodes_to_validate_against,
 )
@@ -1439,6 +1447,33 @@ def resource_remove(resource_id, output=True, is_remove_remote_context=False):
       * --wait - is supported by resource_disable but waiting for resource to
         stop is handled also in this function
     """
+
+    # if the resource is referenced in tags then exit with an error message
+    xml_etree = lib_pacemaker.get_cib(utils.get_cib())
+    resource_el = find_one_resource_and_report(
+        get_resources(xml_etree),
+        resource_id,
+        [], # no need for report_list
+    )
+    if resource_el is not None:
+        tag_obj_ref_list = find_obj_ref_elements(
+            get_tags(xml_etree),
+            find_related_resource_ids(resource_el),
+        )
+        if tag_obj_ref_list:
+            tag_id_list = [
+                obj_ref.getparent().get("id", "")
+                for obj_ref in tag_obj_ref_list
+            ]
+            utils.err(
+                "Unable to remove resource '{resource}' because it is "
+                "referenced in the tag{s}: {tags}\n"
+                "Remove it manually and try again.".format(
+                    resource=resource_id,
+                    s="s" if len(tag_id_list) > 1 else "",
+                    tags="', '".join(tag_id_list),
+                )
+            )
 
     def is_bundle_running(bundle_id):
         roles_with_nodes = get_resource_state(

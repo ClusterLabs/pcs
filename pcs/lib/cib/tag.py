@@ -16,7 +16,25 @@ from lxml.etree import _Element
 
 from pcs.common import reports
 from pcs.common.reports import ReportItem, ReportItemList
-from pcs.lib.cib.resource.common import find_resources_and_report
+from pcs.lib.cib.resource.bundle import (
+    is_bundle,
+    get_inner_resource as get_bundle_inner_resource,
+)
+from pcs.lib.cib.resource.clone import (
+    get_inner_resource as get_clone_inner_resource,
+    is_any_clone,
+)
+from pcs.lib.cib.resource.common import (
+    find_resources_and_report,
+    get_parent_resource,
+)
+from pcs.lib.cib.resource.primitive import (
+    is_primitive,
+)
+from pcs.lib.cib.resource.group import (
+    is_group,
+    get_inner_resources as get_group_inner_resources,
+)
 from pcs.lib.cib.tools import ElementSearcher, IdProvider
 from pcs.lib.pacemaker.values import validate_id
 
@@ -157,6 +175,92 @@ def validate_remove_tag(
                 )
             )
     return report_list
+
+def find_related_resource_ids(resource_el: Element) -> Iterable[str]:
+    """
+    Get related resource ids.
+
+    If element is a primitive which is clone and you specify one of them you
+    will get ids for both of them. If you specify group element or primitive
+    element in a group you will get group id with all ids in group and etc.
+
+    resource_el - resource element (bundle, clone, group, primitive)
+    """
+    # pylint: disable=too-many-return-statements
+    def get_group_and_primitive_ids(group_el: Element) -> List[str]:
+        return (
+            [group_el.get("id", "")]
+            +
+            [
+                primitive.get("id", "")
+                for primitive in get_group_inner_resources(group_el)
+            ]
+        )
+
+    resource_el_id = resource_el.get("id", "")
+    if is_bundle(resource_el):
+        in_bundle = get_bundle_inner_resource(resource_el)
+        return (
+            [resource_el_id, in_bundle.get("id", "")]
+            if in_bundle is not None
+            else [resource_el_id]
+        )
+    if is_any_clone(resource_el):
+        in_clone = get_clone_inner_resource(resource_el)
+        if is_group(in_clone):
+            return (
+                [resource_el_id]
+                +
+                get_group_and_primitive_ids(in_clone)
+            )
+        return [
+            resource_el_id,
+            get_clone_inner_resource(resource_el).get("id", ""),
+        ]
+    if is_group(resource_el):
+        parent_el = get_parent_resource(resource_el)
+        if parent_el is not None and is_any_clone(parent_el):
+            return (
+                [parent_el.get("id", "")]
+                +
+                get_group_and_primitive_ids(resource_el)
+            )
+        return get_group_and_primitive_ids(resource_el)
+    if is_primitive(resource_el):
+        parent_el = get_parent_resource(resource_el)
+        if parent_el is None or is_bundle(parent_el):
+            return [resource_el_id]
+        if is_any_clone(parent_el):
+            return [parent_el.get("id", ""), resource_el_id]
+        if is_group(parent_el):
+            clone_el = get_parent_resource(parent_el)
+            if clone_el is not None:
+                return (
+                    [clone_el.get("id", "")]
+                    +
+                    get_group_and_primitive_ids(parent_el)
+                )
+            return get_group_and_primitive_ids(parent_el)
+    return []
+
+def find_obj_ref_elements(
+    tags_section: Element,
+    idref_list: Iterable[str],
+) -> List[Element]:
+    """
+    Find obj_ref elements which contain ids from specified list.
+    If no obj_ref elements are found, then empty list is returned.
+
+    idref_list -- list with id references
+    """
+    element_list: List[Element] = []
+    for idref in idref_list:
+        obj_ref_list = cast(_Element, tags_section).xpath(
+            f'.//{TAG_OBJREF}[@id="{idref}"]'
+        )
+        if obj_ref_list:
+            element_list.extend(cast(List[Element], obj_ref_list))
+    return element_list
 
 def find_constraints_referencing_tag(
     constraints_section: Element,

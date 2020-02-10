@@ -504,3 +504,57 @@ class TagDelete(
     TestCase,
 ):
     command = "delete"
+
+
+class ResourceRemoveDeleteBase(TestTagMixin):
+    command = None
+
+    @staticmethod
+    def fixture_error_message(resource, tags):
+        return (
+            "Error: Unable to remove resource '{resource}' because it is "
+            "referenced in the tag{s}: {tags}\n"
+            "Remove it manually and try again.\n".format(
+                resource=resource,
+                s="s" if len(tags) > 1 else "",
+                tags="', '".join(tags),
+            )
+        )
+
+    def test_resource_not_referenced_in_tags(self):
+        self.fixture_dummy_resource("not-in-tags")
+        self.assert_pcs_success(
+            f"resource {self.command} not-in-tags",
+            "Deleting Resource - not-in-tags\n",
+        )
+
+    def test_resource_referenced_in_a_single_tag(self):
+        self.fixture_dummy_resource("in-single-tag")
+        self.assert_pcs_success("tag create TAG in-single-tag")
+        self.assert_pcs_fail(
+            f"resource {self.command} in-single-tag",
+            self.fixture_error_message("in-single-tag", ["TAG"]),
+        )
+
+    def test_resource_referenced_in_multiple_tags(self):
+        self.fixture_dummy_resource("in-multiple-tags")
+        self.assert_pcs_success("tag create TAG1 in-multiple-tags")
+        self.assert_pcs_success("tag create TAG2 in-multiple-tags")
+        self.assert_pcs_fail(
+            f"resource {self.command} in-multiple-tags",
+            self.fixture_error_message("in-multiple-tags", ["TAG1", "TAG2"]),
+        )
+
+
+class ResourceRemove(
+    ResourceRemoveDeleteBase,
+    TestCase,
+):
+    command = "remove"
+
+
+class ResourceDelete(
+    ResourceRemoveDeleteBase,
+    TestCase,
+):
+    command = "delete"
