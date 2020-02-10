@@ -65,6 +65,8 @@ def configure_app(
                 # old web ui by default
                 [(r"/", RedirectHandler, dict(url="/manage"))]
                 +
+                [(r"/ui", RedirectHandler, dict(url="/ui/"))]
+                +
                 ui.get_routes(
                     url_prefix="/ui/",
                     app_dir=os.path.join(public_dir, "ui"),
