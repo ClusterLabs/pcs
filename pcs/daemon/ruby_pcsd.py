@@ -1,6 +1,6 @@
 import json
 import logging
-from base64 import b64decode, b64encode
+from base64 import b64decode, b64encode, binascii
 from collections import namedtuple
 from time import time as now
 
@@ -41,7 +41,7 @@ class SinatraResult(namedtuple("SinatraResult", "headers, status, body")):
         return cls(
             response["headers"],
             response["status"],
-            b64decode(response["body"])
+            response["body"]
         )
 
 def log_group_id_generator():
@@ -108,6 +108,8 @@ class Wrapper:
         request.update({"type": request_type})
         request_json = json.dumps(request)
 
+        if self.__debug:
+            log.pcsd.debug("Ruby daemon request: '%s'", request_json)
         # We do not need location for cummunication with ruby itself since we
         # communicate via unix socket. But it is required by AsyncHTTPClient so
         # "localhost" is used.
@@ -118,16 +120,28 @@ class Wrapper:
             prepare_curl_callback=prepare_curl_callback,
         )
 
-        ruby_body = ruby_response.body
-        if self.__debug:
-            log.pcsd.debug("Request for ruby daemon: '%s'", request_json)
-            log.pcsd.debug("Response body from ruby daemon: '%s'", ruby_body)
-
         try:
-            response = json.loads(ruby_body)
-            process_response_logs(response["logs"])
+            response = json.loads(ruby_response.body)
+            if "body" in response:
+                body = b64decode(response["body"])
+                del response["body"]
+                if self.__debug:
+                    log.pcsd.debug(
+                        "Ruby daemon response (without body): '%s'",
+                        json.dumps(response)
+                    )
+                    log.pcsd.debug("Ruby daemon response body: '%s'", body)
+                response["body"] = body
+
+            elif self.__debug:
+                log.pcsd.debug(
+                    "Ruby daemon response: '%s'",
+                    json.dumps(response)
+                )
             return response
-        except json.JSONDecodeError as e:
+        except (json.JSONDecodeError, binascii.Error) as e:
+            if self.__debug:
+                log.pcsd.debug("Ruby daemon response: '%s'", ruby_response.body)
             log.pcsd.error("Cannot decode json from ruby pcsd wrapper: '%s'", e)
             raise HTTPError(500)
 
