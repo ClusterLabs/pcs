@@ -4,10 +4,16 @@ from pcs.daemon.auth import check_user_groups, authorize_user
 PCSD_SESSION = "pcsd.sid"
 
 class Mixin:
-    __session = None
     """
     Mixin for tornado.web.RequestHandler
     """
+
+    __session = None
+    __cookie_options = {
+        "secure": True,
+        "httponly": True,
+    }
+
     def initialize(self, session_storage: Storage):
         self.__storage = session_storage
 
@@ -63,7 +69,7 @@ class Mixin:
         """
         Write the session id into a response cookie.
         """
-        self.set_cookie(PCSD_SESSION, self.session.sid)
+        self.set_cookie(PCSD_SESSION, self.session.sid, **self.__cookie_options)
 
     def put_request_cookies_sid_to_response_cookies_sid(self):
         """
@@ -73,7 +79,9 @@ class Mixin:
         #TODO this method should exist temporarily (for sinatra compatibility)
         #pylint: disable=invalid-name
         if self.__sid_from_client is not None:
-            self.set_cookie(PCSD_SESSION, self.__sid_from_client)
+            self.set_cookie(
+                PCSD_SESSION, self.__sid_from_client, **self.__cookie_options
+            )
 
     def was_sid_in_request_cookies(self):
         return self.__sid_from_client is not None
