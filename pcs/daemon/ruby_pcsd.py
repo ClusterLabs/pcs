@@ -10,7 +10,6 @@ from tornado.web import HTTPError
 from tornado.httputil import split_host_and_port, HTTPServerRequest
 from tornado.httpclient import AsyncHTTPClient
 
-from pcs import settings
 from pcs.daemon import log
 
 
@@ -27,13 +26,6 @@ RUBY_LOG_LEVEL_MAP = {
     "INFO": logging.INFO,
     "DEBUG": logging.DEBUG,
 }
-
-def prepare_curl_callback(curl):
-    curl.setopt(
-        pycurl.UNIX_SOCKET_PATH,
-        settings.pcsd_ruby_socket,
-    )
-    curl.setopt(pycurl.TIMEOUT, 70)
 
 class SinatraResult(namedtuple("SinatraResult", "headers, status, body")):
     @classmethod
@@ -67,10 +59,11 @@ def process_response_logs(rb_log_list):
         )
 
 class Wrapper:
-    def __init__(self, debug=False):
+    def __init__(self, pcsd_ruby_socket, debug=False):
         self.__debug = debug
         AsyncHTTPClient.configure('tornado.curl_httpclient.CurlAsyncHTTPClient')
         self.__client = AsyncHTTPClient()
+        self.__pcsd_ruby_socket = pcsd_ruby_socket
 
     @staticmethod
     def get_sinatra_request(request: HTTPServerRequest):
@@ -97,6 +90,10 @@ class Wrapper:
             "rack.input": request.body.decode("utf8"),
         }}
 
+    def prepare_curl_callback(self, curl):
+        curl.setopt(pycurl.UNIX_SOCKET_PATH, self.__pcsd_ruby_socket)
+        curl.setopt(pycurl.TIMEOUT, 70)
+
     async def run_ruby(self, request_type, request=None):
         """
         request_type: SINATRA_GUI|SINATRA_REMOTE|SYNC_CONFIGS
@@ -117,7 +114,7 @@ class Wrapper:
             "localhost",
             method="POST",
             body=f"TORNADO_REQUEST={b64encode(request_json.encode()).decode()}",
-            prepare_curl_callback=prepare_curl_callback,
+            prepare_curl_callback=self.prepare_curl_callback,
         )
 
         try:

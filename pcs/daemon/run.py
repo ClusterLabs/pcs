@@ -103,6 +103,7 @@ def main():
 
     sync_config_lock = Lock()
     ruby_pcsd_wrapper = ruby_pcsd.Wrapper(
+        settings.pcsd_ruby_socket,
         debug=env.PCSD_DEBUG,
     )
     make_app = configure_app(
