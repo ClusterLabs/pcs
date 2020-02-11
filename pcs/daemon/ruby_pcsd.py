@@ -96,6 +96,18 @@ class Wrapper:
         curl.setopt(pycurl.UNIX_SOCKET_PATH, self.__pcsd_ruby_socket)
         curl.setopt(pycurl.TIMEOUT, 70)
 
+    async def send_to_ruby(self, request_json):
+        # We do not need location for cummunication with ruby itself since we
+        # communicate via unix socket. But it is required by AsyncHTTPClient so
+        # "localhost" is used.
+        tornado_request = b64encode(request_json.encode()).decode()
+        return (await self.__client.fetch(
+            "localhost",
+            method="POST",
+            body=f"TORNADO_REQUEST={tornado_request}",
+            prepare_curl_callback=self.prepare_curl_callback,
+        )).body
+
     async def run_ruby(self, request_type, request=None):
         """
         request_type: SINATRA_GUI|SINATRA_REMOTE|SYNC_CONFIGS
@@ -109,17 +121,8 @@ class Wrapper:
 
         if self.__debug:
             log.pcsd.debug("Ruby daemon request: '%s'", request_json)
-        # We do not need location for cummunication with ruby itself since we
-        # communicate via unix socket. But it is required by AsyncHTTPClient so
-        # "localhost" is used.
-        tornado_request = b64encode(request_json.encode()).decode()
         try:
-            ruby_response = await self.__client.fetch(
-                "localhost",
-                method="POST",
-                body=f"TORNADO_REQUEST={tornado_request}",
-                prepare_curl_callback=self.prepare_curl_callback,
-            )
+            ruby_response = await self.send_to_ruby(request_json)
         except CurlError as e:
             log.pcsd.error(
                 "Cannot connect to ruby daemon (message: '%s'). Is it running?",
@@ -128,7 +131,7 @@ class Wrapper:
             raise HTTPError(500)
 
         try:
-            response = json.loads(ruby_response.body)
+            response = json.loads(ruby_response)
             logs = response.pop("logs", [])
             if "body" in response:
                 body = b64decode(response.pop("body"))
@@ -149,7 +152,7 @@ class Wrapper:
             return response
         except (json.JSONDecodeError, binascii.Error) as e:
             if self.__debug:
-                log.pcsd.debug("Ruby daemon response: '%s'", ruby_response.body)
+                log.pcsd.debug("Ruby daemon response: '%s'", ruby_response)
             log.pcsd.error("Cannot decode json from ruby pcsd wrapper: '%s'", e)
             raise HTTPError(500)
 

@@ -16,10 +16,7 @@ from pcs.daemon import ruby_pcsd
 logging.getLogger("pcs.daemon").setLevel(logging.CRITICAL)
 
 def create_wrapper():
-    return ruby_pcsd.Wrapper(
-        rc("/path/to/gem_home"),
-        rc("/path/to/pcsd/cmdline/entry"),
-    )
+    return ruby_pcsd.Wrapper(rc("/path/to/ruby_socket"))
 
 def create_http_request():
     return HTTPServerRequest(
@@ -63,9 +60,7 @@ patch_ruby_pcsd = create_patcher(ruby_pcsd)
 
 class RunRuby(AsyncTestCase):
     def setUp(self):
-        self.stdout = ""
-        self.stderr = ""
-        self.exit_status = 0
+        self.ruby_response = ""
         self.request = self.create_request()
         self.wrapper = create_wrapper()
         patcher = mock.patch.object(
@@ -79,14 +74,14 @@ class RunRuby(AsyncTestCase):
 
     async def send_to_ruby(self, request_json):
         self.assertEqual(json.loads(request_json), self.request)
-        return self.stdout, self.stderr, self.exit_status
+        return self.ruby_response
 
     @staticmethod
     def create_request(_type=ruby_pcsd.SYNC_CONFIGS):
         return {"type": _type}
 
     def set_run_result(self, run_result):
-        self.stdout = json.dumps({**run_result, "logs": []})
+        self.ruby_response = json.dumps({**run_result, "logs": []})
 
     def assert_sinatra_result(self, result, headers, status, body):
         self.assertEqual(result.headers, headers)
