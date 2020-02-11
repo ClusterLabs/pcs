@@ -9,6 +9,8 @@ from tornado.gen import convert_yielded
 from tornado.web import HTTPError
 from tornado.httputil import split_host_and_port, HTTPServerRequest
 from tornado.httpclient import AsyncHTTPClient
+from tornado.curl_httpclient import CurlError
+
 
 from pcs.daemon import log
 
@@ -110,21 +112,29 @@ class Wrapper:
         # We do not need location for cummunication with ruby itself since we
         # communicate via unix socket. But it is required by AsyncHTTPClient so
         # "localhost" is used.
-        ruby_response = await self.__client.fetch(
-            "localhost",
-            method="POST",
-            body=f"TORNADO_REQUEST={b64encode(request_json.encode()).decode()}",
-            prepare_curl_callback=self.prepare_curl_callback,
-        )
+        tornado_request = b64encode(request_json.encode()).decode()
+        try:
+            ruby_response = await self.__client.fetch(
+                "localhost",
+                method="POST",
+                body=f"TORNADO_REQUEST={tornado_request}",
+                prepare_curl_callback=self.prepare_curl_callback,
+            )
+        except CurlError as e:
+            log.pcsd.error(
+                "Cannot connect to ruby daemon (message: '%s'). Is it running?",
+                e
+            )
+            raise HTTPError(500)
 
         try:
             response = json.loads(ruby_response.body)
+            logs = response.pop("logs", [])
             if "body" in response:
-                body = b64decode(response["body"])
-                del response["body"]
+                body = b64decode(response.pop("body"))
                 if self.__debug:
                     log.pcsd.debug(
-                        "Ruby daemon response (without body): '%s'",
+                        "Ruby daemon response (without logs and body): '%s'",
                         json.dumps(response)
                     )
                     log.pcsd.debug("Ruby daemon response body: '%s'", body)
@@ -132,9 +142,10 @@ class Wrapper:
 
             elif self.__debug:
                 log.pcsd.debug(
-                    "Ruby daemon response: '%s'",
+                    "Ruby daemon response (without logs): '%s'",
                     json.dumps(response)
                 )
+            process_response_logs(logs)
             return response
         except (json.JSONDecodeError, binascii.Error) as e:
             if self.__debug:
