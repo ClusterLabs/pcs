@@ -22,6 +22,7 @@ require 'permissions.rb'
 use Rack::CommonLogger
 
 set :app_file, __FILE__
+set :logging, false
 
 def __msg_cluster_name_already_used(cluster_name)
   return "The cluster name '#{cluster_name}' has already been added. You may not add two clusters with the same name."
