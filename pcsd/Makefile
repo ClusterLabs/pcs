@@ -26,6 +26,9 @@ build_gems_without_bundler:
 	vendor/cache/rack-test-1.1.0.gem \
 	vendor/cache/sinatra-2.0.4.gem \
 	vendor/cache/tilt-2.0.9.gem \
+	vendor/cache/eventmachine-1.2.7.gem \
+	vendor/cache/daemons-1.3.1.gem \
+	vendor/cache/thin-1.7.2.gem \
 	-- '--with-ldflags="-Wl,-z,now -Wl,-z,relro"'
 
 get_gems:

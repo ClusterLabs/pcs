@@ -153,7 +153,7 @@ def get_routes(
         # The protection by session was moved from ruby code to python code
         # (tornado).
         (
-            r"/($|manage$|permissions$|managec/.+/main)",
+            r"/($|manage/?$|permissions/?$|managec/.+/main)",
             SinatraGuiProtected,
             {**sessions, **ruby_wrapper}
         ),

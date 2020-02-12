@@ -468,7 +468,8 @@ module Cfgsync
       node_response = {}
       threads = []
       @nodes.each { |node|
-        threads << Thread.new {
+        threads << Thread.new(Thread.current[:pcsd_logger_container]) { |logger|
+          Thread.current[:pcsd_logger_container] = logger
           code, out = send_request_with_token(
             @auth_user, node, 'set_configs', true, data, true, nil, 30,
             @additional_known_hosts
@@ -616,7 +617,8 @@ module Cfgsync
       node_configs = {}
       connected_to = {}
       nodes.each { |node|
-        threads << Thread.new {
+        threads << Thread.new(Thread.current[:pcsd_logger_container]) { |logger|
+          Thread.current[:pcsd_logger_container] = logger
           code, out = send_request_with_token(
             @auth_user, node, 'get_configs', false, data, true, nil, nil,
             @additional_known_hosts

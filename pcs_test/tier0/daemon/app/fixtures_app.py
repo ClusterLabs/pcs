@@ -1,4 +1,3 @@
-from base64 import b64encode
 from pprint import pformat
 from urllib.parse import urlencode
 
@@ -30,7 +29,7 @@ class RubyPcsdWrapper(ruby_pcsd.Wrapper):
         return {
             "headers": self.headers,
             "status": self.status_code,
-            "body": b64encode(self.body),
+            "body": self.body,
         }
 
 class AppTest(AsyncHTTPTestCase):

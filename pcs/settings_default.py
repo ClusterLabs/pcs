@@ -43,6 +43,7 @@ cibadmin = os.path.join(pacemaker_binaries, "cibadmin")
 crm_mon_schema = '/usr/share/pacemaker/crm_mon.rng'
 agent_metadata_schema = "/usr/share/resource-agents/ra-api-1.dtd"
 pcsd_var_location = "/var/lib/pcsd/"
+pcsd_ruby_socket = "/run/pcsd-ruby.socket"
 pcsd_cert_location = os.path.join(pcsd_var_location, "pcsd.crt")
 pcsd_key_location = os.path.join(pcsd_var_location, "pcsd.key")
 pcsd_known_hosts_location = os.path.join(pcsd_var_location, "known-hosts")

@@ -3,6 +3,7 @@ PCS_INTERNAL_EXEC = '/usr/lib/pcs/pcs_internal'
 PCSD_EXEC_LOCATION = '/usr/share/pcsd/'
 PCSD_VAR_LOCATION = '/var/lib/pcsd/'
 PCSD_DEFAULT_PORT = 2224
+PCSD_RUBY_SOCKET = '/run/pcsd-ruby.socket'
 
 CRT_FILE = PCSD_VAR_LOCATION + 'pcsd.crt'
 KEY_FILE = PCSD_VAR_LOCATION + 'pcsd.key'

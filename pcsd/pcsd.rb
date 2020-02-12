@@ -22,6 +22,7 @@ require 'permissions.rb'
 use Rack::CommonLogger
 
 set :app_file, __FILE__
+set :logging, false
 
 def __msg_cluster_name_already_used(cluster_name)
   return "The cluster name '#{cluster_name}' has already been added. You may not add two clusters with the same name."
@@ -44,17 +45,17 @@ end
 
 def getAuthUser()
   return {
-    :username => $tornado_username,
-    :usergroups => $tornado_groups,
+    :username => Thread.current[:tornado_username],
+    :usergroups => Thread.current[:tornado_groups],
   }
 end
 
 before do
   # nobody is logged in yet
   @auth_user = nil
-  @tornado_session_username = $tornado_username
-  @tornado_session_groups = $tornado_groups
-  @tornado_is_authenticated = $tornado_is_authenticated
+  @tornado_session_username = Thread.current[:tornado_username]
+  @tornado_session_groups = Thread.current[:tornado_groups]
+  @tornado_is_authenticated = Thread.current[:tornado_is_authenticated]
 
   if(request.path.start_with?('/remote/') and request.path != "/remote/auth") or request.path == '/run_pcs'
     # Sets @auth_user to a hash containing info about logged in user or halts
@@ -71,18 +72,8 @@ end
 configure do
   PCS = get_pcs_path()
   PCS_INTERNAL = get_pcs_internal_path()
-  $logger = configure_logger(StringIO.new())
-  $logger.formatter = proc {|severity, datetime, progname, msg|
-    # rushing a raw logging info into the global
-    $tornado_logs << {
-      :level => severity,
-      :timestamp_usec => (datetime.to_f * 1000000).to_i,
-      :message => msg,
-    }
-    # don't need any log to the stream
-    ""
-  }
-
+  $logger = configure_logger()
+  early_log($logger)
   capabilities, capabilities_pcsd = get_capabilities($logger)
   CAPABILITIES = capabilities.freeze
   CAPABILITIES_PCSD = capabilities_pcsd.freeze
@@ -599,7 +590,8 @@ get '/manage/get_nodes_sw_versions' do
     nodes = params[:node_list]
   end
   nodes.each {|node|
-    threads << Thread.new {
+    threads << Thread.new(Thread.current[:pcsd_logger_container]) { |logger|
+      Thread.current[:pcsd_logger_container] = logger
       code, response = send_request_with_token(
         auth_user, node, 'get_sw_versions'
       )
@@ -625,7 +617,8 @@ post '/manage/auth_gui_against_nodes' do
 
   data = JSON.parse(params.fetch('data_json'))
   data.fetch('nodes').each { |node_name, node_data|
-    threads << Thread.new {
+    threads << Thread.new(Thread.current[:pcsd_logger_container]) { |logger|
+      Thread.current[:pcsd_logger_container] = logger
       dest_list = node_data.fetch('dest_list')
       addr = dest_list.fetch(0).fetch('addr')
       port = dest_list.fetch(0).fetch('port')

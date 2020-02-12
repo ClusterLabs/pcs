@@ -29,7 +29,8 @@ end
 auth_user = {}
 PCS = get_pcs_path()
 $logger_device = StringIO.new
-$logger = configure_logger($logger_device)
+$logger = Logger.new($logger_device)
+early_log($logger)
 
 capabilities, capabilities_pcsd = get_capabilities($logger)
 CAPABILITIES = capabilities.freeze

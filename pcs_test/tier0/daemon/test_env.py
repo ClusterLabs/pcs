@@ -41,11 +41,7 @@ class Prepare(TestCase, create_setup_patch_mixin(env)):
             env.PCSD_DEBUG: False,
             env.PCSD_DISABLE_GUI: False,
             env.PCSD_SESSION_LIFETIME: settings.gui_session_lifetime_seconds,
-            env.GEM_HOME: pcsd_dir(settings.pcsd_gem_path),
-            env.PCSD_CMDLINE_ENTRY: pcsd_dir(env.PCSD_CMDLINE_ENTRY_RB_SCRIPT),
             env.PCSD_STATIC_FILES_DIR: pcsd_dir(env.PCSD_STATIC_FILES_DIR_NAME),
-            env.HTTPS_PROXY: None,
-            env.NO_PROXY: None,
             env.PCSD_DEV: False,
             "has_errors": False,
         }
@@ -77,8 +73,6 @@ class Prepare(TestCase, create_setup_patch_mixin(env)):
             env.PCSD_DISABLE_GUI: "true",
             env.PCSD_SESSION_LIFETIME: str(session_lifetime),
             env.PCSD_DEV: "true",
-            env.HTTPS_PROXY: "proxy1",
-            env.NO_PROXY: "host",
             env.PCSD_DEV: "true",
         }
         self.assert_environ_produces_modified_pcsd_env(
@@ -92,15 +86,9 @@ class Prepare(TestCase, create_setup_patch_mixin(env)):
                 env.PCSD_DEBUG: True,
                 env.PCSD_DISABLE_GUI: True,
                 env.PCSD_SESSION_LIFETIME: session_lifetime,
-                env.GEM_HOME: pcsd_dir(settings.pcsd_gem_path),
-                env.PCSD_CMDLINE_ENTRY: pcsd_dir(
-                    env.PCSD_CMDLINE_ENTRY_RB_SCRIPT
-                ),
                 env.PCSD_STATIC_FILES_DIR: pcsd_dir(
                     env.PCSD_STATIC_FILES_DIR_NAME
                 ),
-                env.HTTPS_PROXY: environ[env.HTTPS_PROXY],
-                env.NO_PROXY: environ[env.NO_PROXY],
                 env.PCSD_DEV: True,
             },
         )
@@ -167,13 +155,6 @@ class Prepare(TestCase, create_setup_patch_mixin(env)):
         self.assert_environ_produces_modified_pcsd_env(
             specific_env_values={"has_errors": True},
             errors=[
-                f"Ruby gem location '{pcsd_dir(settings.pcsd_gem_path)}'"
-                    " does not exist"
-                ,
-                "Ruby handlers entrypoint"
-                    f" '{pcsd_dir(env.PCSD_CMDLINE_ENTRY_RB_SCRIPT)}'"
-                    " does not exist"
-                ,
                 "Directory with web UI assets"
                     f" '{pcsd_dir(env.PCSD_STATIC_FILES_DIR_NAME)}'"
                     " does not exist"
@@ -181,54 +162,13 @@ class Prepare(TestCase, create_setup_patch_mixin(env)):
             ]
         )
 
-    def test_errors_on_missing_paths_disabled_gui(self):
+    def test_no_errors_on_missing_paths_disabled_gui(self):
         self.path_exists.return_value = False
-        pcsd_dir = partial(join_path, settings.pcsd_exec_location)
         self.assert_environ_produces_modified_pcsd_env(
             environ={env.PCSD_DISABLE_GUI: "true"},
             specific_env_values={
                 env.PCSD_DISABLE_GUI: True,
-                "has_errors": True,
+                "has_errors": False,
             },
-            errors=[
-                f"Ruby gem location '{pcsd_dir(settings.pcsd_gem_path)}'"
-                    " does not exist"
-                ,
-                "Ruby handlers entrypoint"
-                    f" '{pcsd_dir(env.PCSD_CMDLINE_ENTRY_RB_SCRIPT)}'"
-                    " does not exist"
-                ,
-            ]
+            errors=[]
         )
-
-    def test_lower_case_no_proxy_has_precedence(self):
-        def it_selects(proxy_value):
-            self.assert_environ_produces_modified_pcsd_env(
-                environ=environ,
-                specific_env_values={env.NO_PROXY: proxy_value}
-            )
-
-        environ = {"NO_PROXY": "no_proxy_1"}
-        it_selects("no_proxy_1")
-
-        environ["no_proxy"] = "no_proxy_2"
-        it_selects("no_proxy_2")
-
-    def test_http_proxy_is_setup_by_precedence(self):
-        def it_selects(proxy_value):
-            self.assert_environ_produces_modified_pcsd_env(
-                environ=environ,
-                specific_env_values={env.HTTPS_PROXY: proxy_value}
-            )
-
-        environ = {"ALL_PROXY": "all_proxy_1"}
-        it_selects("all_proxy_1")
-
-        environ["all_proxy"] = "all_proxy_2"
-        it_selects("all_proxy_2")
-
-        environ["HTTPS_PROXY"] = "https_proxy_1"
-        it_selects("https_proxy_1")
-
-        environ["https_proxy"] = "https_proxy_2"
-        it_selects("https_proxy_2")

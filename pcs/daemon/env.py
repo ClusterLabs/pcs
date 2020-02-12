@@ -15,7 +15,6 @@ from pcs.lib.validate import is_port_number
 # Relative location instead of system location is used for development purposes.
 PCSD_LOCAL_DIR = realpath(dirname(abspath(__file__)) + "/../../pcsd")
 
-PCSD_CMDLINE_ENTRY_RB_SCRIPT = "sinatra_cmdline_wrapper.rb"
 PCSD_STATIC_FILES_DIR_NAME = "public"
 
 PCSD_PORT = "PCSD_PORT"
@@ -26,12 +25,8 @@ NOTIFY_SOCKET = "NOTIFY_SOCKET"
 PCSD_DEBUG = "PCSD_DEBUG"
 PCSD_DISABLE_GUI = "PCSD_DISABLE_GUI"
 PCSD_SESSION_LIFETIME = "PCSD_SESSION_LIFETIME"
-GEM_HOME = "GEM_HOME"
 PCSD_DEV = "PCSD_DEV"
-PCSD_CMDLINE_ENTRY = "PCSD_CMDLINE_ENTRY"
 PCSD_STATIC_FILES_DIR = "PCSD_STATIC_FILES_DIR"
-HTTPS_PROXY = "HTTPS_PROXY"
-NO_PROXY = "NO_PROXY"
 
 Env = namedtuple("Env", [
     PCSD_PORT,
@@ -42,11 +37,7 @@ Env = namedtuple("Env", [
     PCSD_DEBUG,
     PCSD_DISABLE_GUI,
     PCSD_SESSION_LIFETIME,
-    GEM_HOME,
-    PCSD_CMDLINE_ENTRY,
     PCSD_STATIC_FILES_DIR,
-    HTTPS_PROXY,
-    NO_PROXY,
     PCSD_DEV,
     "has_errors",
 ])
@@ -62,11 +53,7 @@ def prepare_env(environ, logger=None):
         loader.pcsd_debug(),
         loader.pcsd_disable_gui(),
         loader.session_lifetime(),
-        loader.gem_home(),
-        loader.pcsd_cmdline_entry(),
         loader.pcsd_static_files_dir(),
-        loader.https_proxy(),
-        loader.no_proxy(),
         loader.pcsd_dev(),
         loader.has_errors(),
     )
@@ -173,35 +160,12 @@ class EnvLoader:
     def pcsd_debug(self):
         return self.__has_true_in_environ(PCSD_DEBUG)
 
-    def gem_home(self):
-        if settings.pcsd_gem_path is None:
-            return None
-        return self.__in_pcsd_path(
-            settings.pcsd_gem_path,
-            "Ruby gem location"
-        )
-
-    def pcsd_cmdline_entry(self):
-        return self.__in_pcsd_path(
-            PCSD_CMDLINE_ENTRY_RB_SCRIPT,
-            "Ruby handlers entrypoint"
-        )
-
     def pcsd_static_files_dir(self):
         return self.__in_pcsd_path(
             PCSD_STATIC_FILES_DIR_NAME,
             "Directory with web UI assets",
             existence_required=not self.pcsd_disable_gui()
         )
-
-    def https_proxy(self):
-        for key in ["https_proxy", HTTPS_PROXY, "all_proxy", "ALL_PROXY"]:
-            if key in self.environ:
-                return self.environ[key]
-        return None
-
-    def no_proxy(self):
-        return self.environ.get("no_proxy", self.environ.get(NO_PROXY, None))
 
     @lru_cache()
     def pcsd_dev(self):

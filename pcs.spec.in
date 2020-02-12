@@ -30,7 +30,9 @@ Summary: Pacemaker Configuration System
 %global dataclasses_version 0.6
 %global dacite_version 1.1.0
 %global version_rubygem_backports  3.11.4
+%global version_rubygem_daemons  1.3.1
 %global version_rubygem_ethon  0.11.0
+%global version_rubygem_eventmachine  1.2.7
 %global version_rubygem_ffi  1.9.25
 %global version_rubygem_json  2.1.0
 %global version_rubygem_mustermann  1.0.3
@@ -39,6 +41,7 @@ Summary: Pacemaker Configuration System
 %global version_rubygem_rack_protection  2.0.4
 %global version_rubygem_rack_test  1.0.0
 %global version_rubygem_sinatra  2.0.4
+%global version_rubygem_thin  1.7.2
 %global version_rubygem_tilt  2.0.9
 
 %if "%{python3_version}" == "3.6"
@@ -93,6 +96,9 @@ Source89: https://rubygems.org/downloads/rack-protection-%{version_rubygem_rack_
 Source90: https://rubygems.org/downloads/rack-test-%{version_rubygem_rack_test}.gem
 Source91: https://rubygems.org/downloads/sinatra-%{version_rubygem_sinatra}.gem
 Source92: https://rubygems.org/downloads/tilt-%{version_rubygem_tilt}.gem
+Source93: https://rubygems.org/downloads/eventmachine-%{version_rubygem_eventmachine}.gem
+Source94: https://rubygems.org/downloads/daemons-%{version_rubygem_daemons}.gem
+Source95: https://rubygems.org/downloads/thin-%{version_rubygem_thin}.gem
 
 Source100: https://github.com/idevat/pcs-web-ui/archive/%{ui_commit}/%{ui_src_name}.tar.gz
 Source101: https://github.com/idevat/pcs-web-ui/releases/download/%{ui_commit}/pcs-web-ui-node-modules-%{ui_commit}.tar.xz
@@ -178,7 +184,9 @@ Provides: bundled(dataclasses) = %{dataclasses_version}
 %endif
 Provides: bundled(dacite) = %{dacite_version}
 Provides: bundled(backports) = %{version_rubygem_backports}
+Provides: bundled(daemons) = %{version_rubygem_daemons}
 Provides: bundled(ethon) = %{version_rubygem_ethon}
+Provides: bundled(eventmachine) = %{version_rubygem_eventmachine}
 Provides: bundled(ffi) = %{version_rubygem_ffi}
 Provides: bundled(json) = %{version_rubygem_json}
 Provides: bundled(mustermann) = %{version_rubygem_mustermann}
@@ -187,6 +195,7 @@ Provides: bundled(rack) = %{version_rubygem_rack}
 Provides: bundled(rack) = %{version_rubygem_rack_protection}
 Provides: bundled(rack) = %{version_rubygem_rack_test}
 Provides: bundled(sinatra) = %{version_rubygem_sinatra}
+Provides: bundled(thin) = %{version_rubygem_thin}
 Provides: bundled(tilt) = %{version_rubygem_tilt}
 
 %description
@@ -242,6 +251,9 @@ cp -f %SOURCE89 pcsd/vendor/cache
 cp -f %SOURCE90 pcsd/vendor/cache
 cp -f %SOURCE91 pcsd/vendor/cache
 cp -f %SOURCE92 pcsd/vendor/cache
+cp -f %SOURCE93 pcsd/vendor/cache
+cp -f %SOURCE94 pcsd/vendor/cache
+cp -f %SOURCE95 pcsd/vendor/cache
 
 
 # 3) dir for python bundles
@@ -290,15 +302,18 @@ gem install \
   --force --verbose -l --no-user-install %{gem_install_params} \
   -i %{rubygem_bundle_dir} \
   %{rubygem_cache_dir}/backports-%{version_rubygem_backports}.gem \
+  %{rubygem_cache_dir}/daemons-%{version_rubygem_daemons}.gem \
   %{rubygem_cache_dir}/ethon-%{version_rubygem_ethon}.gem \
+  %{rubygem_cache_dir}/eventmachine-%{version_rubygem_eventmachine}.gem \
   %{rubygem_cache_dir}/ffi-%{version_rubygem_ffi}.gem \
   %{rubygem_cache_dir}/json-%{version_rubygem_json}.gem \
   %{rubygem_cache_dir}/mustermann-%{version_rubygem_mustermann}.gem \
   %{rubygem_cache_dir}/open4-%{version_rubygem_open4}.gem \
-  %{rubygem_cache_dir}/rack-%{version_rubygem_rack}.gem \
   %{rubygem_cache_dir}/rack-protection-%{version_rubygem_rack_protection}.gem \
   %{rubygem_cache_dir}/rack-test-%{version_rubygem_rack_test}.gem \
+  %{rubygem_cache_dir}/rack-%{version_rubygem_rack}.gem \
   %{rubygem_cache_dir}/sinatra-%{version_rubygem_sinatra}.gem \
+  %{rubygem_cache_dir}/thin-%{version_rubygem_thin}.gem \
   %{rubygem_cache_dir}/tilt-%{version_rubygem_tilt}.gem \
   -- '--with-ldflags=-Wl,-z,relro -Wl,-z,ibt -Wl,-z,now -Wl,--gc-sections' \
      '--with-cflags=-O2 -ffunction-sections'
@@ -356,20 +371,31 @@ rm -r -v ${pcsd_dir}/test
 # remove javascript testing files
 rm -r -v ${pcsd_dir}/public/js/dev
 
+%posttrans
+# Make sure the new version of the daemon is runnning.
+# Also, make sure to start pcsd-ruby if it hasn't been started or even
+# installed before. This is done by restarting pcsd.service.
+%{_bindir}/systemctl daemon-reload
+%{_bindir}/systemctl try-restart pcsd.service
+
+
 %post
 %systemd_post pcsd.service
+%systemd_post pcsd-ruby.service
 
 %post -n %{pcs_snmp_pkg_name}
 %systemd_post pcs_snmp_agent.service
 
 %preun
 %systemd_preun pcsd.service
+%systemd_preun pcsd-ruby.service
 
 %preun -n %{pcs_snmp_pkg_name}
 %systemd_preun pcs_snmp_agent.service
 
 %postun
 %systemd_postun_with_restart pcsd.service
+%systemd_postun_with_restart pcsd-ruby.service
 
 %postun -n %{pcs_snmp_pkg_name}
 %systemd_postun_with_restart pcs_snmp_agent.service
@@ -402,6 +428,7 @@ rm -r -v ${pcsd_dir}/public/js/dev
 %{pcs_libdir}/pcs/bundled/packages/__pycache__/dataclasses.cpython-36.pyc
 %endif
 %{_unitdir}/pcsd.service
+%{_unitdir}/pcsd-ruby.service
 %{_datadir}/bash-completion/completions/pcs
 %{_sharedstatedir}/pcsd
 %{_sysconfdir}/pam.d/pcsd
@@ -419,6 +446,7 @@ rm -r -v ${pcsd_dir}/public/js/dev
 %{_mandir}/man8/pcsd.*
 %exclude %{pcs_libdir}/pcsd/*.debian
 %exclude %{pcs_libdir}/pcsd/pcsd.service
+%exclude %{pcs_libdir}/pcsd/pcsd-ruby.service
 %exclude %{pcs_libdir}/pcsd/pcsd.conf
 %exclude %{pcs_libdir}/pcsd/pcsd.8
 %exclude %{pcs_libdir}/pcsd/public/js/dev/*

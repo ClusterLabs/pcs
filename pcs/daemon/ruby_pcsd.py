@@ -1,14 +1,16 @@
 import json
 import logging
-import os.path
-from base64 import b64decode
+from base64 import b64decode, b64encode, binascii
 from collections import namedtuple
 from time import time as now
 
-from tornado.gen import multi, convert_yielded
+import pycurl
+from tornado.gen import convert_yielded
 from tornado.web import HTTPError
 from tornado.httputil import split_host_and_port, HTTPServerRequest
-from tornado.process import Subprocess
+from tornado.httpclient import AsyncHTTPClient
+from tornado.curl_httpclient import CurlError
+
 
 from pcs.daemon import log
 
@@ -33,7 +35,7 @@ class SinatraResult(namedtuple("SinatraResult", "headers, status, body")):
         return cls(
             response["headers"],
             response["status"],
-            b64decode(response["body"])
+            response["body"]
         )
 
 def log_group_id_generator():
@@ -58,24 +60,12 @@ def process_response_logs(rb_log_list):
             group_id=group_id
         )
 
-def log_communication(request_json, stdout, stderr):
-    log.pcsd.debug("Request for ruby pcsd wrapper: '%s'", request_json)
-    log.pcsd.debug("Response stdout from ruby pcsd wrapper: '%s'", stdout)
-    log.pcsd.debug("Response stderr from ruby pcsd wrapper: '%s'", stderr)
-
 class Wrapper:
-    # pylint: disable=too-many-instance-attributes
-    def __init__(
-        self, pcsd_cmdline_entry, gem_home=None, debug=False,
-        ruby_executable="ruby", https_proxy=None, no_proxy=None
-    ):
-        self.__gem_home = gem_home
-        self.__pcsd_cmdline_entry = pcsd_cmdline_entry
-        self.__pcsd_dir = os.path.dirname(pcsd_cmdline_entry)
-        self.__ruby_executable = ruby_executable
+    def __init__(self, pcsd_ruby_socket, debug=False):
         self.__debug = debug
-        self.__https_proxy = https_proxy
-        self.__no_proxy = no_proxy
+        AsyncHTTPClient.configure('tornado.curl_httpclient.CurlAsyncHTTPClient')
+        self.__client = AsyncHTTPClient()
+        self.__pcsd_ruby_socket = pcsd_ruby_socket
 
     @staticmethod
     def get_sinatra_request(request: HTTPServerRequest):
@@ -102,55 +92,76 @@ class Wrapper:
             "rack.input": request.body.decode("utf8"),
         }}
 
+    def prepare_curl_callback(self, curl):
+        curl.setopt(pycurl.UNIX_SOCKET_PATH, self.__pcsd_ruby_socket)
+        curl.setopt(pycurl.TIMEOUT, 70)
+
     async def send_to_ruby(self, request_json):
-        env = {
-            "PCSD_DEBUG": "true" if self.__debug else "false"
-        }
-        if self.__gem_home is not None:
-            env["GEM_HOME"] = self.__gem_home
-
-        if self.__no_proxy is not None:
-            env["NO_PROXY"] = self.__no_proxy
-        if self.__https_proxy is not None:
-            env["HTTPS_PROXY"] = self.__https_proxy
-
-        pcsd_ruby = Subprocess(
-            [
-                self.__ruby_executable, "-I",
-                self.__pcsd_dir,
-                self.__pcsd_cmdline_entry
-            ],
-            stdin=Subprocess.STREAM,
-            stdout=Subprocess.STREAM,
-            stderr=Subprocess.STREAM,
-            env=env
-        )
-        await pcsd_ruby.stdin.write(str.encode(request_json))
-        pcsd_ruby.stdin.close()
-        return await multi([
-            pcsd_ruby.stdout.read_until_close(),
-            pcsd_ruby.stderr.read_until_close(),
-            pcsd_ruby.wait_for_exit(raise_error=False),
-        ])
+        # We do not need location for communication with ruby itself since we
+        # communicate via unix socket. But it is required by AsyncHTTPClient so
+        # "localhost" is used.
+        tornado_request = b64encode(request_json.encode()).decode()
+        return (await self.__client.fetch(
+            "localhost",
+            method="POST",
+            body=f"TORNADO_REQUEST={tornado_request}",
+            prepare_curl_callback=self.prepare_curl_callback,
+        )).body
 
     async def run_ruby(self, request_type, request=None):
+        """
+        request_type: SINATRA_GUI|SINATRA_REMOTE|SYNC_CONFIGS
+        request: result of get_sinatra_request|None
+            i.e. it has structure returned by get_sinatra_request if the request
+            is not None - so we can get SERVER_NAME and  SERVER_PORT
+        """
         request = request or {}
         request.update({"type": request_type})
         request_json = json.dumps(request)
-        stdout, stderr, dummy_status = await self.send_to_ruby(request_json)
+
+        if self.__debug:
+            log.pcsd.debug("Ruby daemon request: '%s'", request_json)
         try:
-            response = json.loads(stdout)
-        except json.JSONDecodeError as e:
-            self.__log_bad_response(
-                f"Cannot decode json from ruby pcsd wrapper: '{e}'",
-                request_json, stdout, stderr
+            ruby_response = await self.send_to_ruby(request_json)
+        except CurlError as e:
+            log.pcsd.error(
+                "Cannot connect to ruby daemon (message: '%s'). Is it running?",
+                e
             )
             raise HTTPError(500)
-        else:
-            if self.__debug:
-                log_communication(request_json, stdout, stderr)
-            process_response_logs(response["logs"])
+
+        try:
+            response = json.loads(ruby_response)
+            if "error" in response:
+                log.pcsd.error(
+                    "Ruby daemon response contains an error: '%s'",
+                    json.dumps(response)
+                )
+                raise HTTPError(500)
+
+            logs = response.pop("logs", [])
+            if "body" in response:
+                body = b64decode(response.pop("body"))
+                if self.__debug:
+                    log.pcsd.debug(
+                        "Ruby daemon response (without logs and body): '%s'",
+                        json.dumps(response)
+                    )
+                    log.pcsd.debug("Ruby daemon response body: '%s'", body)
+                response["body"] = body
+
+            elif self.__debug:
+                log.pcsd.debug(
+                    "Ruby daemon response (without logs): '%s'",
+                    json.dumps(response)
+                )
+            process_response_logs(logs)
             return response
+        except (json.JSONDecodeError, binascii.Error) as e:
+            if self.__debug:
+                log.pcsd.debug("Ruby daemon response: '%s'", ruby_response)
+            log.pcsd.error("Cannot decode json from ruby pcsd wrapper: '%s'", e)
+            raise HTTPError(500)
 
     async def request_gui(
         self, request: HTTPServerRequest, user, groups, is_authenticated
@@ -186,8 +197,3 @@ class Wrapper:
         except HTTPError:
             log.pcsd.error("Config synchronization failed")
             return int(now()) + DEFAULT_SYNC_CONFIG_DELAY
-
-    def __log_bad_response(self, error_message, request_json, stdout, stderr):
-        log.pcsd.error(error_message)
-        if self.__debug:
-            log_communication(request_json, stdout, stderr)
