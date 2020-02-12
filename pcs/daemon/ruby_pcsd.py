@@ -132,6 +132,13 @@ class Wrapper:
 
         try:
             response = json.loads(ruby_response)
+            if "error" in response:
+                log.pcsd.error(
+                    "Ruby daemon response contains an error: '%s'",
+                    json.dumps(response)
+                )
+                raise HTTPError(500)
+
             logs = response.pop("logs", [])
             if "body" in response:
                 body = b64decode(response.pop("body"))
