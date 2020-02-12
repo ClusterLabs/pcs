@@ -118,7 +118,7 @@ python_smoke_tests:
       "
     - export GEM_HOME=/usr/lib/pcsd/vendor/bundle/ruby
     - /usr/lib/pcsd/pcsd & # start pcsd (ruby - thin)
-    - sleep 2 # wait for pcsd (ruby - thin) to start up properly
+    - sleep 10 # wait for pcsd (ruby - thin) to start up properly
     - /usr/sbin/pcsd & # start pcsd (python - tornado)
     - sleep 10 # wait for pcsd (python - tornado) to start up properly
     - pcs_test/smoke.sh

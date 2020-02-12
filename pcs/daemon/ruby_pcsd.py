@@ -97,7 +97,7 @@ class Wrapper:
         curl.setopt(pycurl.TIMEOUT, 70)
 
     async def send_to_ruby(self, request_json):
-        # We do not need location for cummunication with ruby itself since we
+        # We do not need location for communication with ruby itself since we
         # communicate via unix socket. But it is required by AsyncHTTPClient so
         # "localhost" is used.
         tornado_request = b64encode(request_json.encode()).decode()

@@ -251,6 +251,9 @@ cp -f %SOURCE89 pcsd/vendor/cache
 cp -f %SOURCE90 pcsd/vendor/cache
 cp -f %SOURCE91 pcsd/vendor/cache
 cp -f %SOURCE92 pcsd/vendor/cache
+cp -f %SOURCE93 pcsd/vendor/cache
+cp -f %SOURCE94 pcsd/vendor/cache
+cp -f %SOURCE95 pcsd/vendor/cache
 
 
 # 3) dir for python bundles
@@ -367,6 +370,14 @@ rm -r -v ${pcsd_dir}/test
 
 # remove javascript testing files
 rm -r -v ${pcsd_dir}/public/js/dev
+
+%posttrans
+# Make sure the new version of the daemon is runnning.
+# Also, make sure to start pcsd-ruby if it hasn't been started or even
+# installed before. This is done by restarting pcsd.service.
+%{_bindir}/systemctl daemon-reload
+%{_bindir}/systemctl try-restart pcsd.service
+
 
 %post
 %systemd_post pcsd.service
