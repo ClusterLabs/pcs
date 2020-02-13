@@ -40,7 +40,7 @@ RUN yum install -y \
         fence-virt \
         booth-site
 
-RUN pip install mock
+RUN pip install "mock<4"
 
 COPY . $src_path
 
