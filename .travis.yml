@@ -12,6 +12,10 @@ env:
     - DIST=fedora31
       RUBY_BIN=/usr/bin/ruby
       PYTHON_TEST_ARGS=""
+    - DIST=centos8
+      RUBY_BIN=/usr/bin/ruby
+      PYTHON_TEST_ARGS=""
+      GEM_HOME=$SRC_PATH/pcsd/vendor/bundle/ruby
 
 services:
   - docker
@@ -31,7 +35,9 @@ script:
   # python linter
   - docker run $DIST make -C $SRC_PATH pylint
   # ruby test suite
-  - docker run $DIST $RUBY_BIN
+  - docker run
+     -e "GEM_HOME=$GEM_HOME"
+     $DIST $RUBY_BIN
      -I $SRC_PATH/pcsd
      -I $SRC_PATH/pcsd/test
      $SRC_PATH/pcsd/test/test_all_suite.rb
