@@ -355,7 +355,7 @@ SPEC = pcs.spec
 GIT_COMMIT_HASH := $(shell git rev-parse HEAD)
 
 ifndef GIT_TAG
-  ifeq ($(shell git describe --tag --exact-match > /dev/null; echo $$?),0)
+  ifeq ($(shell git describe --tag --exact-match 2>&1 > /dev/null; echo $$?),0)
     GIT_TAG := $(shell git describe --tag --exact-match)
   endif
 endif
