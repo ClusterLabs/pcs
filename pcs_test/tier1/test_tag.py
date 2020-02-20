@@ -41,6 +41,15 @@ class TestTagMixin(
             )
         )
 
+    def fixture_dummy_clone_resource(self, _id):
+        self.assert_pcs_success(
+            (
+                "resource create {} ocf:pacemaker:Dummy clone --no-default-ops"
+            ).format(
+                _id,
+            )
+        )
+
     def fixture_location_constraint_with_id(
         self,
         constraint_id,
@@ -513,8 +522,7 @@ class ResourceRemoveDeleteBase(TestTagMixin):
     def fixture_error_message(resource, tags):
         return (
             "Error: Unable to remove resource '{resource}' because it is "
-            "referenced in the tag{s}: {tags}\n"
-            "Remove it manually and try again.\n".format(
+            "referenced in the tag{s}: {tags}\n".format(
                 resource=resource,
                 s="s" if len(tags) > 1 else "",
                 tags="', '".join(tags),
@@ -545,6 +553,15 @@ class ResourceRemoveDeleteBase(TestTagMixin):
             self.fixture_error_message("in-multiple-tags", ["TAG1", "TAG2"]),
         )
 
+    def test_duplicate_tag(self):
+        self.fixture_dummy_clone_resource("duplicate-tag")
+        self.assert_pcs_success(
+            "tag create TAG3 duplicate-tag duplicate-tag-clone",
+        )
+        self.assert_pcs_fail(
+            f"resource {self.command} duplicate-tag",
+            self.fixture_error_message("duplicate-tag", ["TAG3"]),
+        )
 
 class ResourceRemove(
     ResourceRemoveDeleteBase,

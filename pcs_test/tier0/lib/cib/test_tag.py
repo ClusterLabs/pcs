@@ -511,11 +511,6 @@ class ValidateCommonConstraintsTestData(TestCase):
         "tag-location-set",
         "tag-order-set",
         "tag-ticket-set",
-        "tag-colocation-idref",
-        "tag-location-idref",
-        "tag-order-idref",
-        "tag-ticket-idref",
-        "tag-rule",
     ]
     tag2constraint_id = {
         "tag-colocation": "colocation",
@@ -528,11 +523,6 @@ class ValidateCommonConstraintsTestData(TestCase):
         "tag-location-set": "location-set",
         "tag-order-set": "order-set",
         "tag-ticket-set": "ticket-set",
-        "tag-colocation-idref": "colocation-set-idref",
-        "tag-location-idref": "location-set-idref",
-        "tag-order-idref": "order-set-idref",
-        "tag-ticket-idref": "ticket-set-idref",
-        "tag-rule": "location-rule",
     }
     constraint_template = (
         """
@@ -571,25 +561,8 @@ class ValidateCommonConstraintsTestData(TestCase):
                   <resource_ref id="{tags[9]}"/>
                   <resource_ref id="dummy"/>
                 </resource_set>
+
               </rsc_ticket>
-
-              <rsc_colocation id="colocation-set-idref">
-                <resource_set id-ref="{tags[10]}"/>
-              </rsc_colocation>
-              <rsc_location id="location-set-idref">
-                <resource_set id-ref="{tags[11]}"/>
-              </rsc_location>
-              <rsc_order id="order-set-idref">
-                <resource_set id-ref="{tags[12]}"/>
-              </rsc_order>
-              <rsc_ticket id="ticket-set-idref">
-                <resource_set id-ref="{tags[13]}"/>
-              </rsc_ticket>
-
-              <rsc_location id="location-rule">
-                <rule id-ref="{tags[14]}"/>
-              </rsc_location>
-
             </constraints>
           </configuration>
           <status/>
@@ -667,11 +640,13 @@ class FindConstraintsReferencingTag(ValidateCommonConstraintsTestData):
         )
 
     def assert_constraint_id(self, tag_id):
+        one_constraint_list = self.call_find_constraints_referencing_tag(
+            self.tree_each_tag_has_one_constraint,
+            tag_id,
+        )
+        self.assertEqual(len(one_constraint_list), 1)
         self.assertEqual(
-            self.call_find_constraints_referencing_tag(
-                self.tree_each_tag_has_one_constraint,
-                tag_id,
-            )[0].get("id"),
+            one_constraint_list[0].get("id"),
             self.tag2constraint_id[tag_id],
         )
 
@@ -718,185 +693,6 @@ class FindConstraintsReferencingTag(ValidateCommonConstraintsTestData):
     def test_ticket_set(self):
         self.assert_constraint_id("tag-ticket-set")
 
-    def test_colocation_idref(self):
-        self.assert_constraint_id("tag-colocation-idref")
-
-    def test_location_idref(self):
-        self.assert_constraint_id("tag-location-idref")
-
-    def test_order_idref(self):
-        self.assert_constraint_id("tag-order-idref")
-
-    def test_ticket_idref(self):
-        self.assert_constraint_id("tag-ticket-idref")
-
-    def test_rule(self):
-        self.assert_constraint_id("tag-rule")
-
-
-class FindRelatedResourceIds(TestCase):
-    all_kind_resources_tree = etree.fromstring(
-        """
-        <cib>
-          <configuration>
-            <resources>
-              <primitive id="Primitive"/>
-              <group id="Group">
-                <primitive id="GPrimitive1"/>
-                <primitive id="GPrimitive2"/>
-                <primitive id="GPrimitive3"/>
-              </group>
-              <bundle id="EmptyBundle"/>
-              <bundle id="Bundle">
-                <primitive id="BundlePrimitive"/>
-              </bundle>
-              <clone id="Clone">
-                <primitive id="ClonePrimitive"/>
-              </clone>
-              <master id="Master">
-                <primitive id="MasterPrimitive"/>
-              </master>
-              <clone id="CloneGroup">
-                <group id="ClonedGroup">
-                  <primitive id="CGPrimitive1"/>
-                  <primitive id="CGPrimitive2"/>
-                  <primitive id="CGPrimitive3"/>
-                </group>
-              </clone>
-              <master id="MasterGroup">
-                <group id="MasteredGroup">
-                  <primitive id="MGPrimitive1"/>
-                  <primitive id="MGPrimitive2"/>
-                  <primitive id="MGPrimitive3"/>
-                </group>
-              </master>
-            </resources>
-            <constraints/>
-            <tags/>
-          </configuration>
-          <status/>
-        </cib>
-        """
-    )
-
-    test_result_ids = {
-        "clone-group": [
-            "CloneGroup",
-            "ClonedGroup",
-            "CGPrimitive1",
-            "CGPrimitive2",
-            "CGPrimitive3",
-        ],
-        "master-group": [
-            "MasterGroup",
-            "MasteredGroup",
-            "MGPrimitive1",
-            "MGPrimitive2",
-            "MGPrimitive3",
-        ],
-    }
-
-    def call_find_related_resource_ids(self, resource_id):
-        resource_el = self.all_kind_resources_tree.xpath(
-            f'.//*[@id="{resource_id}"]'
-        )[0]
-        return lib.find_related_resource_ids(resource_el)
-
-    def test_simple_primitive_id(self):
-        self.assertEqual(
-            self.call_find_related_resource_ids("Primitive"),
-            ["Primitive"],
-        )
-
-    def test_simple_group(self):
-        self.assertEqual(
-            self.call_find_related_resource_ids("Group"),
-            ["Group", "GPrimitive1", "GPrimitive2", "GPrimitive3"],
-        )
-
-    def test_primitive_in_simple_group(self):
-        self.assertEqual(
-            self.call_find_related_resource_ids("GPrimitive2"),
-            ["Group", "GPrimitive1", "GPrimitive2", "GPrimitive3"],
-        )
-
-    def test_empty_bundle(self):
-        self.assertEqual(
-            self.call_find_related_resource_ids("EmptyBundle"),
-            ["EmptyBundle"],
-        )
-
-    def test_bundle_with_primitive(self):
-        self.assertEqual(
-            self.call_find_related_resource_ids("Bundle"),
-            ["Bundle", "BundlePrimitive"],
-        )
-
-    def test_primitive_in_bundle(self):
-        self.assertEqual(
-            self.call_find_related_resource_ids("BundlePrimitive"),
-            ["BundlePrimitive"],
-        )
-
-    def test_clone(self):
-        self.assertEqual(
-            self.call_find_related_resource_ids("Clone"),
-            ["Clone", "ClonePrimitive"],
-        )
-
-    def test_clone_primitive(self):
-        self.assertEqual(
-            self.call_find_related_resource_ids("ClonePrimitive"),
-            ["Clone", "ClonePrimitive"],
-        )
-
-    def test_master(self):
-        self.assertEqual(
-            self.call_find_related_resource_ids("Master"),
-            ["Master", "MasterPrimitive"],
-        )
-
-    def test_master_primitive(self):
-        self.assertEqual(
-            self.call_find_related_resource_ids("MasterPrimitive"),
-            ["Master", "MasterPrimitive"],
-        )
-
-    def test_clone_group(self):
-        self.assertEqual(
-            self.call_find_related_resource_ids("CloneGroup"),
-            self.test_result_ids["clone-group"]
-        )
-
-    def test_cloned_group(self):
-        self.assertEqual(
-            self.call_find_related_resource_ids("ClonedGroup"),
-            self.test_result_ids["clone-group"]
-        )
-
-    def test_primitive_in_cloned_group(self):
-        self.assertEqual(
-            self.call_find_related_resource_ids("CGPrimitive3"),
-            self.test_result_ids["clone-group"]
-        )
-
-    def test_master_group(self):
-        self.assertEqual(
-            self.call_find_related_resource_ids("MasterGroup"),
-            self.test_result_ids["master-group"]
-        )
-
-    def test_masterd_group(self):
-        self.assertEqual(
-            self.call_find_related_resource_ids("MasteredGroup"),
-            self.test_result_ids["master-group"]
-        )
-
-    def test_primitive_in_mastered_group(self):
-        self.assertEqual(
-            self.call_find_related_resource_ids("MGPrimitive1"),
-            self.test_result_ids["master-group"]
-        )
 
 class FindObjRefElements(TestCase):
     test_tree = etree.fromstring(
@@ -926,12 +722,14 @@ class FindObjRefElements(TestCase):
        )
 
     def get_obj_ref_elements(self, id_list):
-        return [
-            element
-            for _id in id_list
-            for element in get_tags(self.test_tree).findall(".//obj_ref")
-            if element.get("id", default="") == _id
-        ]
+        element_list = []
+        for _id in id_list:
+            found_elements_list = self.test_tree.findall(
+                f'.//*[@id="{_id}"]',
+            )
+            if found_elements_list:
+                element_list.extend(found_elements_list)
+        return element_list
 
     def test_no_references_found(self):
         self.assertEqual(

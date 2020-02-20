@@ -38,10 +38,12 @@ from pcs.lib.cib.resource import (
     guest_node,
     primitive,
 )
-from pcs.lib.cib.resource.common import find_one_resource_and_report
+from pcs.lib.cib.resource.common import (
+    find_one_resource_and_report,
+    find_resources_to_delete,
+)
 from pcs.lib.cib.tag import (
-    find_obj_ref_elements,
-    find_related_resource_ids,
+    find_obj_ref_elements as find_resource_ref_elements_in_tags,
 )
 from pcs.lib.cib.tools import (
     get_resources,
@@ -1448,43 +1450,46 @@ def resource_remove(resource_id, output=True, is_remove_remote_context=False):
         stop is handled also in this function
     """
 
+    def is_bundle_running(bundle_id):
+        roles_with_nodes = get_resource_state(
+            get_cluster_state_dom(
+                lib_pacemaker.get_cluster_status_xml(utils.cmd_runner())
+            ),
+            bundle_id
+        )
+        return bool(roles_with_nodes)
+
     # if the resource is referenced in tags then exit with an error message
-    xml_etree = lib_pacemaker.get_cib(utils.get_cib())
+    cib_xml = utils.get_cib()
+    xml_etree = lib_pacemaker.get_cib(cib_xml)
     resource_el = find_one_resource_and_report(
         get_resources(xml_etree),
         resource_id,
         [], # no need for report_list
     )
     if resource_el is not None:
-        tag_obj_ref_list = find_obj_ref_elements(
+        tag_obj_ref_list = find_resource_ref_elements_in_tags(
             get_tags(xml_etree),
-            find_related_resource_ids(resource_el),
+            [
+                element.get("id", "")
+                for element in find_resources_to_delete(resource_el)
+            ],
         )
         if tag_obj_ref_list:
-            tag_id_list = [
+            tag_id_list = sorted({
                 obj_ref.getparent().get("id", "")
                 for obj_ref in tag_obj_ref_list
-            ]
+            })
             utils.err(
                 "Unable to remove resource '{resource}' because it is "
-                "referenced in the tag{s}: {tags}\n"
-                "Remove it manually and try again.".format(
+                "referenced in the tag{s}: {tags}".format(
                     resource=resource_id,
                     s="s" if len(tag_id_list) > 1 else "",
                     tags="', '".join(tag_id_list),
                 )
             )
 
-    def is_bundle_running(bundle_id):
-        roles_with_nodes = get_resource_state(
-            get_cluster_state_dom(
-                lib_pacemaker.get_cluster_status_xml(utils.cmd_runner())
-            ),
-            bundle_id,
-        )
-        return bool(roles_with_nodes)
-
-    dom = utils.get_cib_dom()
+    dom = utils.get_cib_dom(cib_xml)
     # if resource is a clone or a master, work with its child instead
     cloned_resource = utils.dom_get_clone_ms_resource(dom, resource_id)
     if cloned_resource:
