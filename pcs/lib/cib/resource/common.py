@@ -9,6 +9,8 @@ from xml.etree.ElementTree import Element
 
 from lxml.etree import _Element
 
+from pcs.common import reports as report
+from pcs.common.reports.item import ReportItem
 from pcs.lib import reports
 from pcs.lib.cib import nvpair
 from pcs.lib.cib.resource.bundle import (
@@ -426,12 +428,13 @@ def validate_unmove_unban(resource_element, master):
     analysis = _validate_move_ban_clear_analyzer(resource_element)
 
     if master and not analysis.is_promotable_clone:
-        report_list.append(
-            reports.cannot_unmove_unban_resource_master_resource_not_promotable(
+        # pylint: disable=line-too-long
+        report_list.append(ReportItem.error(
+            report.messages.CannotUnmoveUnbanResourceMasterResourceNotPromotable(
                 resource_element.get("id"),
                 promotable_id=analysis.promotable_clone_id
             )
-        )
+        ))
 
     return report_list
 

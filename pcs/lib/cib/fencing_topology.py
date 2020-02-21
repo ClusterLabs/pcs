@@ -6,18 +6,20 @@ from typing import (
 
 from lxml import etree
 
-from pcs.common.reports import codes as report_codes
+from pcs.common import reports as report
 from pcs.common.fencing_topology import (
     TARGET_TYPE_NODE,
     TARGET_TYPE_REGEXP,
     TARGET_TYPE_ATTRIBUTE,
 )
 from pcs.common.reports import (
+    codes as report_codes,
     has_errors,
     ReportItemList,
     ReportItemSeverity,
     ReportProcessor,
 )
+from pcs.common.reports.item import ReportItem
 from pcs.lib import reports
 from pcs.lib.cib.stonith import is_stonith_resource
 from pcs.lib.cib.tools import find_unique_id
@@ -236,7 +238,11 @@ def _validate_level(level) -> Tuple[ReportItemList, Optional[int]]:
     except ValueError:
         pass
     report_list.append(
-        reports.invalid_option_value("level", level, "a positive integer")
+        ReportItem.error(
+            report.messages.InvalidOptionValue(
+                "level", level, "a positive integer"
+            )
+        )
     )
     return report_list, None
 
@@ -257,9 +263,11 @@ def _validate_target_typewise(target_type) -> ReportItemList:
         TARGET_TYPE_NODE, TARGET_TYPE_ATTRIBUTE, TARGET_TYPE_REGEXP
     ]:
         report_list.append(
-            reports.invalid_option_type(
-                "target",
-                ["node", "regular expression", "attribute_name=value"]
+            ReportItem.error(
+                report.messages.InvalidOptionType(
+                    "target",
+                    ["node", "regular expression", "attribute_name=value"]
+                )
             )
         )
     return report_list
@@ -298,7 +306,9 @@ def _validate_devices(
     report_list: ReportItemList = []
     if not devices:
         report_list.append(
-            reports.required_options_are_missing(["stonith devices"])
+            ReportItem.error(
+                report.messages.RequiredOptionsAreMissing(["stonith devices"])
+            )
         )
     invalid_devices = []
     for dev in devices:

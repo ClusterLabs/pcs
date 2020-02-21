@@ -2,11 +2,13 @@ import base64
 import binascii
 from typing import List
 
+from pcs.common import reports as report
 from pcs.common.reports import (
+    codes as report_codes,
     ReportProcessor,
     ReportItemSeverity,
 )
-from pcs.common.reports import codes as report_codes
+from pcs.common.reports.item import ReportItem
 from pcs.lib import external, reports
 from pcs.lib.corosync import qdevice_net
 from pcs.lib.env import LibraryEnvironment
@@ -131,11 +133,15 @@ def qdevice_net_sign_certificate_request(
     try:
         certificate_request_data = base64.b64decode(certificate_request)
     except (TypeError, binascii.Error):
-        raise LibraryError(reports.invalid_option_value(
-            "qnetd certificate request",
-            certificate_request,
-            ["base64 encoded certificate"]
-        ))
+        raise LibraryError(
+            ReportItem.error(
+                report.messages.InvalidOptionValue(
+                    "qnetd certificate request",
+                    certificate_request,
+                    ["base64 encoded certificate"]
+                )
+            )
+        )
     return base64.b64encode(
         qdevice_net.qdevice_sign_certificate_request(
             lib_env.cmd_runner(),
@@ -152,11 +158,15 @@ def client_net_setup(lib_env: LibraryEnvironment, ca_certificate):
     try:
         ca_certificate_data = base64.b64decode(ca_certificate)
     except (TypeError, binascii.Error):
-        raise LibraryError(reports.invalid_option_value(
-            "qnetd CA certificate",
-            ca_certificate,
-            ["base64 encoded certificate"]
-        ))
+        raise LibraryError(
+            ReportItem.error(
+                report.messages.InvalidOptionValue(
+                "qnetd CA certificate",
+                ca_certificate,
+                ["base64 encoded certificate"]
+                )
+            )
+        )
     qdevice_net.client_setup(lib_env.cmd_runner(), ca_certificate_data)
 
 def client_net_import_certificate(lib_env: LibraryEnvironment, certificate):
@@ -167,11 +177,15 @@ def client_net_import_certificate(lib_env: LibraryEnvironment, certificate):
     try:
         certificate_data = base64.b64decode(certificate)
     except (TypeError, binascii.Error):
-        raise LibraryError(reports.invalid_option_value(
-            "qnetd client certificate",
-            certificate,
-            ["base64 encoded certificate"]
-        ))
+        raise LibraryError(
+            ReportItem.error(
+                report.messages.InvalidOptionValue(
+                    "qnetd client certificate",
+                    certificate,
+                    ["base64 encoded certificate"]
+                )
+            )
+        )
     qdevice_net.client_import_certificate_and_key(
         lib_env.cmd_runner(),
         certificate_data
@@ -187,7 +201,9 @@ def client_net_destroy(lib_env: LibraryEnvironment):
 def _check_model(model):
     if model != "net":
         raise LibraryError(
-            reports.invalid_option_value("model", model, ["net"])
+            ReportItem.error(
+                report.messages.InvalidOptionValue("model", model, ["net"])
+            )
         )
 
 def _check_qdevice_not_used(

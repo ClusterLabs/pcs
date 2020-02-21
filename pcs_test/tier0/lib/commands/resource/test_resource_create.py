@@ -370,7 +370,9 @@ class Create(TestCase):
                 option_name="operation name",
                 option_value="moni*tor",
                 allowed_values=["start", "stop", "monitor", "reload",
-                    "migrate_to", "migrate_from", "meta-data", "validate-all"]
+                    "migrate_to", "migrate_from", "meta-data", "validate-all"],
+                cannot_be_empty=False,
+                forbidden_characters=None,
             ),
         ])
 

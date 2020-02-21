@@ -22,6 +22,7 @@ from pcs.common.fencing_topology import TARGET_TYPE_ATTRIBUTE
 from pcs.common.file import RawFileError
 from pcs.common.str_tools import (
     format_list,
+    format_list_custom_last_separator,
     format_optional,
     format_plural,
     indent,
@@ -53,7 +54,7 @@ def resource_move_ban_clear_master_resource_not_promotable(
     promotable_id: str,
 ) -> str:
     return (
-        "when specifying --master you must use the promotable clone id{_id}"
+        "when specifying master you must use the promotable clone id{_id}"
     ).format(_id=format_optional(promotable_id, " ({})"),)
 
 
@@ -306,10 +307,6 @@ class RequiredOptionsAreMissing(ReportItemMessage):
         )
 
 
-# TODO: merge with:
-#  PrerequisiteOptionMustBeEnabledAsWell
-#  PrerequisiteOptionMustBeDisabled
-#  PrerequisiteOptionMustNotBeSet
 @dataclass(frozen=True)
 class PrerequisiteOptionIsMissing(ReportItemMessage):
     """
@@ -457,25 +454,25 @@ class InvalidOptions(ReportItemMessage):
     Specified option names are not valid, usualy an error or a warning
 
     option_names -- specified invalid option names
-    allowed_options -- possible allowed option names
+    allowed -- possible allowed option names
     option_type -- describes the option
-    allowed_option_patterns -- allowed user defind options patterns
+    allowed_patterns -- allowed user defind options patterns
     """
 
     option_names: List[str]
-    allowed_options: List[str]
+    allowed: List[str]
     option_type: str
-    allowed_option_patterns: List[str] = field(default_factory=list)
+    allowed_patterns: List[str] = field(default_factory=list)
     _code = codes.INVALID_OPTIONS
 
     @property
     def message(self) -> str:
         template = "invalid {desc}option{plural_options} {option_names_list},"
-        if not self.allowed_options and not self.allowed_option_patterns:
+        if not self.allowed and not self.allowed_patterns:
             template += " there are no options allowed"
-        elif not self.allowed_option_patterns:
+        elif not self.allowed_patterns:
             template += " allowed option{plural_allowed} {allowed_values}"
-        elif not self.allowed_options:
+        elif not self.allowed:
             template += (
                 " allowed are options matching patterns: "
                 "{allowed_patterns_values}"
@@ -488,11 +485,11 @@ class InvalidOptions(ReportItemMessage):
             )
         return template.format(
             desc=format_optional(self.option_type),
-            allowed_values=format_list(self.allowed_options),
-            allowed_patterns_values=format_list(self.allowed_option_patterns),
+            allowed_values=format_list(self.allowed),
+            allowed_patterns_values=format_list(self.allowed_patterns),
             option_names_list=format_list(self.option_names),
             plural_options=format_plural(self.option_names, "", "s:"),
-            plural_allowed=format_plural(self.allowed_options, " is", "s are:"),
+            plural_allowed=format_plural(self.allowed, " is", "s are:"),
         )
 
 
@@ -604,12 +601,12 @@ class DeprecatedOption(ReportItemMessage):
     Specified option name is deprecated and has been replaced by other option(s)
 
     option_name -- the deprecated option
-    replaced_by_options -- new option(s) to be used instead
+    replaced_by -- new option(s) to be used instead
     option_type -- option description
     """
 
     option_name: str
-    replaced_by_options: List[str]
+    replaced_by: List[str]
     option_type: str
     _code = codes.DEPRECATED_OPTION
 
@@ -621,7 +618,7 @@ class DeprecatedOption(ReportItemMessage):
         ).format(
             option_name=self.option_name,
             desc=format_optional(self.option_type),
-            hint=format_list(self.replaced_by_options),
+            hint=format_list(self.replaced_by),
         )
 
 
@@ -642,7 +639,9 @@ class MutuallyExclusiveOptions(ReportItemMessage):
     def message(self) -> str:
         return "Only one of {desc}options {option_names} can be used".format(
             desc=format_optional(self.option_type),
-            option_names=format_list(self.option_names, last_separator=" and "),
+            option_names=format_list_custom_last_separator(
+                self.option_names, " and "
+            ),
         )
 
 
@@ -5599,7 +5598,6 @@ class ResourceBanPcmkSuccess(ReportItemMessage):
         return resource_move_ban_pcmk_success(self.stdout, self.stderr)
 
 
-# TODO: cli specific
 @dataclass(frozen=True)
 class CannotUnmoveUnbanResourceMasterResourceNotPromotable(ReportItemMessage):
     """
@@ -5620,7 +5618,6 @@ class CannotUnmoveUnbanResourceMasterResourceNotPromotable(ReportItemMessage):
         )
 
 
-# TODO: cli specific
 @dataclass(frozen=True)
 class ResourceUnmoveUnbanPcmkExpiredNotSupported(ReportItemMessage):
     """
@@ -5631,7 +5628,7 @@ class ResourceUnmoveUnbanPcmkExpiredNotSupported(ReportItemMessage):
 
     @property
     def message(self) -> str:
-        return "--expired is not supported, please upgrade pacemaker"
+        return "expired is not supported, please upgrade pacemaker"
 
 
 @dataclass(frozen=True)

@@ -11,12 +11,13 @@ from xml.etree.ElementTree import Element
 
 from pcs.common import file_type_codes
 from pcs.common.interface import dto
+from pcs.common import reports as report
 from pcs.common.reports import (
     codes as report_codes,
-    item as report_item,
-    messages,
+    ReportItemSeverity as severities,
+    ReportItemList,
 )
-from pcs.common.reports import ReportItemSeverity as severities
+from pcs.common.reports.item import ReportItem
 from pcs.common.tools import Version
 from pcs.lib import reports
 from pcs.lib.cib import (
@@ -874,10 +875,12 @@ def disable_safe(env: LibraryEnvironment, resource_ids, strict, wait):
         other_affected = other_affected - inner_resources_names_set
         if other_affected:
             raise LibraryError(
-                reports.resource_disable_affects_other_resources(
-                    resource_ids,
-                    other_affected,
-                    plaintext_status,
+                ReportItem.error(
+                    report.messages.ResourceDisableAffectsOtherResources(
+                        sorted(resource_ids),
+                        sorted(other_affected),
+                        plaintext_status,
+                    )
                 )
             )
 
@@ -995,7 +998,7 @@ def manage(
     """
     with resource_environment(env) as resources_section:
         id_provider = IdProvider(resources_section)
-        report_list = []
+        report_list: ReportItemList = []
         resource_el_list = _find_resources_or_raise(
             resources_section,
             resource_ids,
@@ -1029,8 +1032,8 @@ def manage(
                 if op_list and not monitor_enabled:
                     # do not advise enabling monitors if there are none defined
                     report_list.append(
-                        report_item.ReportItem.warning(
-                            messages.ResourceManagedNoMonitorEnabled(
+                        ReportItem.warning(
+                            report.messages.ResourceManagedNoMonitorEnabled(
                                 resource_el.get("id", "")
                             )
                         )
@@ -1097,7 +1100,11 @@ def get_failcounts(
     report_items = []
     if interval is not None and operation is None:
         report_items.append(
-            reports.prerequisite_option_is_missing("interval", "operation")
+            ReportItem.error(
+                report.messages.PrerequisiteOptionIsMissing(
+                    "interval", "operation"
+                )
+            )
         )
     if interval is not None:
         report_items.extend(
@@ -1381,7 +1388,9 @@ def unmove_unban(
         not has_resource_unmove_unban_expired_support(env.cmd_runner())
     ):
         report_list.append(
-            reports.resource_unmove_unban_pcmk_expired_not_supported()
+            ReportItem.error(
+                report.messages.ResourceUnmoveUnbanPcmkExpiredNotSupported()
+            )
         )
     if env.report_processor.report_list(report_list).has_errors:
         raise LibraryError()
@@ -1392,12 +1401,18 @@ def unmove_unban(
     )
     if retval != 0:
         raise LibraryError(
-            reports.resource_unmove_unban_pcmk_error(
-                resource_id, stdout, stderr
+            ReportItem.error(
+                report.messages.ResourceUnmoveUnbanPcmkError(
+                    resource_id, stdout, stderr
+                )
             )
         )
     env.report_processor.report(
-        reports.resource_unmove_unban_pcmk_success(resource_id, stdout, stderr)
+        ReportItem.info(
+            report.messages.ResourceUnmoveUnbanPcmkSuccess(
+                resource_id, stdout, stderr
+            )
+        )
     )
 
     # process wait

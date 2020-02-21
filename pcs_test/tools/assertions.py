@@ -275,11 +275,18 @@ def _expected_report_item_format(report_item_expectation):
     )
 
 def _format_report_item(report_item):
-    return _expected_report_item_format((
-        report_item.severity,
-        report_item.code,
-        report_item.info,
-        report_item.forceable
+    if isinstance(report_item, reports_item_old.ReportItem):
+        return _expected_report_item_format((
+            report_item.severity,
+            report_item.code,
+            report_item.info,
+            report_item.forceable
+        ))
+    return  _expected_report_item_format((
+        report_item.severity.level,
+        report_item.message.code,
+        report_item.message.to_dto().payload,
+        report_item.severity.force_code,
     ))
 
 def assert_report_item_equal(real_report_item, report_item_info):

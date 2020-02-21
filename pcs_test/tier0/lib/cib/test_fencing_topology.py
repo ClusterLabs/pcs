@@ -10,6 +10,7 @@ from pcs_test.tools.custom_mock import MockLibraryReportProcessor
 from pcs_test.tools.misc import create_patcher
 from pcs_test.tools.xml import etree_to_str
 
+from pcs.common import reports as common_report
 from pcs.common.reports import codes as report_codes
 from pcs.common.fencing_topology import (
     TARGET_TYPE_NODE,
@@ -194,8 +195,10 @@ class AddLevel(TestCase):
     ):
         mock_val_level.return_value = (
             [
-                reports.invalid_option_value(
-                    "level", self.level, "a positive integer"
+                common_report.item.ReportItem.error(
+                    common_report.messages.InvalidOptionValue(
+                        "level", self.level, "a positive integer"
+                    )
                 )
             ],
             None

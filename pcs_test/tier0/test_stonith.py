@@ -379,7 +379,7 @@ class StonithTest(TestCase, AssertPcsMixin):
             "stonith create test fence_apc ip=i username=u action=a",
             (
                 "Error: stonith option 'action' is deprecated and should not be"
-                    " used, use pcmk_off_action, pcmk_reboot_action instead,"
+                    " used, use 'pcmk_off_action', 'pcmk_reboot_action' instead,"
                     " use --force to override\n"
                 + ERRORS_HAVE_OCURRED
             )
@@ -388,7 +388,7 @@ class StonithTest(TestCase, AssertPcsMixin):
         self.assert_pcs_success(
             "stonith create test fence_apc ip=i username=u action=a --force",
             "Warning: stonith option 'action' is deprecated and should not be"
-                " used, use pcmk_off_action, pcmk_reboot_action instead\n"
+                " used, use 'pcmk_off_action', 'pcmk_reboot_action' instead\n"
         )
 
         self.assert_pcs_success(
@@ -438,14 +438,14 @@ class StonithTest(TestCase, AssertPcsMixin):
         self.assert_pcs_fail(
             "stonith update test action=a",
             "Error: stonith option 'action' is deprecated and should not be"
-                " used, use pcmk_off_action, pcmk_reboot_action instead,"
+                " used, use 'pcmk_off_action', 'pcmk_reboot_action' instead,"
                 " use --force to override\n"
         )
 
         self.assert_pcs_success(
             "stonith update test action=a --force",
             "Warning: stonith option 'action' is deprecated and should not be"
-                " used, use pcmk_off_action, pcmk_reboot_action instead\n"
+                " used, use 'pcmk_off_action', 'pcmk_reboot_action' instead\n"
         )
 
         self.assert_pcs_success(

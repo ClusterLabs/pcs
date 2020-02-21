@@ -1,8 +1,8 @@
 from dataclasses import dataclass
 from typing import (
     Any,
-    List,
     Dict,
+    List,
     Optional,
 )
 
@@ -37,16 +37,34 @@ class ReportItemSeverity(ImplementsToDto, ImplementsFromDto):
 
     def to_dto(self) -> ReportItemSeverityDto:
         return ReportItemSeverityDto(
-            level=self.level,
-            force_code=self.force_code,
+            level=self.level, force_code=self.force_code,
         )
 
     @classmethod
     def from_dto(cls, dto_obj: ReportItemSeverityDto) -> "ReportItemSeverity":
-        return cls(
-            level=dto_obj.level,
-            force_code=dto_obj.force_code,
-        )
+        return cls(level=dto_obj.level, force_code=dto_obj.force_code,)
+
+    @classmethod
+    def error(
+        cls, force_code: Optional[ForceCode] = None
+    ) -> "ReportItemSeverity":
+        return cls(level=cls.ERROR, force_code=force_code)
+
+    @classmethod
+    def warning(cls) -> "ReportItemSeverity":
+        return cls(level=cls.WARNING)
+
+    @classmethod
+    def info(cls) -> "ReportItemSeverity":
+        return cls(level=cls.INFO)
+
+
+def get_severity(
+    force_code: Optional[ForceCode], is_forced: bool
+) -> ReportItemSeverity:
+    if is_forced:
+        return ReportItemSeverity(ReportItemSeverity.WARNING)
+    return ReportItemSeverity(ReportItemSeverity.ERROR, force_code)
 
 
 @dataclass(frozen=True, init=False)
@@ -61,26 +79,36 @@ class ReportItemMessage(ImplementsToDto):
     def code(self) -> MessageCode:
         return self._code
 
+    # TODO: tests
     def to_dto(self) -> ReportItemMessageDto:
-        try:
-            annotations = self.__class__.__annotations__
-        except AttributeError:
-            raise AssertionError() # TODO: msg
-
         payload: Dict[str, Any] = {}
-        for attr_name, attr_type in annotations.items():
-            if attr_name.startswith("_") or attr_name in ("code", "to_message"):
-                continue
-            if issubclass(attr_type, ReportItemMessage):
-                # TODO: add support for Union
-                payload[attr_name] = getattr(self, attr_name).to_dto()
-            else:
-                payload[attr_name] = getattr(self, attr_name)
+        if hasattr(self.__class__, "__annotations__"):
+            try:
+                annotations = self.__class__.__annotations__
+            except AttributeError:
+                raise AssertionError()
+            for attr_name, attr_type in annotations.items():
+                if attr_name.startswith("_") or attr_name in ("message",):
+                    continue
+                try:
+                    if (
+                        not hasattr(attr_type, "__origin__")
+                        and getattr(attr_type, "__supertype__", None) is not str
+                        and issubclass(attr_type, ReportItemMessage)
+                    ):
+                        payload[attr_name] = getattr(self, attr_name).to_dto()
+                    else:
+                        payload[attr_name] = getattr(self, attr_name)
+                except:
+                    # for debugging, TODO: remove when properly tested
+                    print(self.__class__)
+                    print(attr_type)
+                    print(dir(attr_type))
+                    print(attr_type.__supertype__)
+                    raise
 
         return ReportItemMessageDto(
-            code=self.code,
-            message=self.message,
-            payload=payload,
+            code=self.code, message=self.message, payload=payload,
         )
 
 
@@ -103,26 +131,38 @@ class ReportItem(ImplementsToDto):
     context: Optional[ReportItemContext] = None
 
     @classmethod
-    def error(cls,
+    def error(
+        cls,
         message: ReportItemMessage,
         force_code: Optional[ForceCode] = None,
         context: Optional[ReportItemContext] = None,
     ) -> "ReportItem":
         return cls(
-            severity=ReportItemSeverity(
-                ReportItemSeverity.ERROR, force_code=force_code,
-            ),
+            severity=ReportItemSeverity.error(force_code),
             message=message,
             context=context,
         )
 
     @classmethod
-    def warning(cls,
+    def warning(
+        cls,
         message: ReportItemMessage,
         context: Optional[ReportItemContext] = None,
     ) -> "ReportItem":
         return cls(
-            severity=ReportItemSeverity(ReportItemSeverity.WARNING),
+            severity=ReportItemSeverity.warning(),
+            message=message,
+            context=context,
+        )
+
+    @classmethod
+    def info(
+        cls,
+        message: ReportItemMessage,
+        context: Optional[ReportItemContext] = None,
+    ) -> "ReportItem":
+        return cls(
+            severity=ReportItemSeverity.info(),
             message=message,
             context=context,
         )

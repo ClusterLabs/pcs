@@ -444,6 +444,7 @@ class AddQuorumDevice(TestCase):
                 fixture.error(
                     report_codes.REQUIRED_OPTIONS_ARE_MISSING,
                     option_names=["algorithm", "host"],
+                    option_type="quorum device model",
                 ),
             ]
         )
@@ -463,6 +464,7 @@ class AddQuorumDevice(TestCase):
                 fixture.error(
                     report_codes.REQUIRED_OPTIONS_ARE_MISSING,
                     option_names=["algorithm", "host"],
+                    option_type="quorum device model",
                 ),
             ]
         )

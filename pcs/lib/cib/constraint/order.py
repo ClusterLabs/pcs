@@ -1,6 +1,7 @@
 from functools import partial
 
-from pcs.lib import reports
+from pcs.common import reports
+from pcs.common.reports.item import ReportItem
 from pcs.lib.cib.constraint import constraint
 from pcs.lib.cib.tools import check_new_id_applicable
 from pcs.lib.errors import LibraryError
@@ -27,17 +28,27 @@ def prepare_options_with_set(cib, options, resource_set_list):
     if "kind" in options:
         kind = options["kind"].lower().capitalize()
         if kind not in ATTRIB["kind"]:
-            report_items.append(reports.invalid_option_value(
-                "kind", options["kind"], ATTRIB["kind"]
-            ))
+            report_items.append(
+                ReportItem.error(
+                    reports.messages.InvalidOptionValue(
+                        "kind", options["kind"], ATTRIB["kind"]
+                    )
+                )
+            )
         options["kind"] = kind
 
     if "symmetrical" in options:
         symmetrical = options["symmetrical"].lower()
         if symmetrical not in ATTRIB["symmetrical"]:
-            report_items.append(reports.invalid_option_value(
-                "symmetrical", options["symmetrical"], ATTRIB["symmetrical"]
-            ))
+            report_items.append(
+                ReportItem.error(
+                    reports.messages.InvalidOptionValue(
+                        "symmetrical",
+                        options["symmetrical"],
+                        ATTRIB["symmetrical"],
+                    )
+                )
+            )
         options["symmetrical"] = symmetrical
 
     if report_items:

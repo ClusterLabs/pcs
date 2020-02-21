@@ -1,10 +1,11 @@
 from lxml import etree
 
+from pcs.common import reports as report
 from pcs.common.reports import (
     ReportItemSeverity,
     ReportProcessor,
 )
-from pcs.common.reports import codes as report_codes
+from pcs.common.reports.item import ReportItem
 from pcs.lib import reports
 from pcs.lib.cib import resource
 from pcs.lib.cib.constraint import resource_set
@@ -26,7 +27,11 @@ def _validate_attrib_names(attrib_names, options):
     ]
     if invalid_names:
         raise LibraryError(
-            reports.invalid_options(invalid_names, attrib_names, None)
+            ReportItem.error(
+                report.messages.InvalidOptions(
+                    sorted(invalid_names), sorted(attrib_names), None
+                )
+            )
         )
 
 def find_valid_resource_id(
@@ -49,27 +54,24 @@ def find_valid_resource_id(
     if clone is None:
         return resource_element.attrib["id"]
 
-    if in_clone_allowed:
-        if report_processor.report(
-            reports.resource_for_constraint_is_multiinstance(
-                resource_element.attrib["id"],
-                "clone" if clone.tag == "master" else clone.tag,
-                clone.attrib["id"],
-                ReportItemSeverity.WARNING,
-            )
-        ).has_errors:
-            raise LibraryError()
-        return resource_element.attrib["id"]
-
-    raise LibraryError(reports.resource_for_constraint_is_multiinstance(
+    report_msg = report.messages.ResourceForConstraintIsMultiinstance(
         resource_element.attrib["id"],
         "clone" if clone.tag == "master" else clone.tag,
         clone.attrib["id"],
-        ReportItemSeverity.ERROR,
-        #repair to clone is workaround for web ui, so we put only information
-        #about one forceable possibility
-        forceable=report_codes.FORCE_CONSTRAINT_MULTIINSTANCE_RESOURCE
-    ))
+    )
+    if in_clone_allowed:
+        if report_processor.report(ReportItem.warning(report_msg)).has_errors:
+            raise LibraryError()
+        return resource_element.attrib["id"]
+
+    raise LibraryError(
+        ReportItem.error(
+            report_msg,
+            # repair to clone is workaround for web ui, so we put only
+            # information about one forceable possibility
+            force_code=report.codes.FORCE_CONSTRAINT_MULTIINSTANCE_RESOURCE,
+        )
+    )
 
 def prepare_options(attrib_names, options, create_id_fn, validate_id):
     _validate_attrib_names(attrib_names+("id",), options)
@@ -137,14 +139,16 @@ def check_is_without_duplication(
             ReportItemSeverity.WARNING if duplication_alowed
                 else ReportItemSeverity.ERROR,
             forceable=None if duplication_alowed
-                else report_codes.FORCE_CONSTRAINT_DUPLICATE,
+                else report.codes.FORCE_CONSTRAINT_DUPLICATE,
         )
     ).has_errors:
         raise LibraryError()
 
 def create_with_set(constraint_section, tag_name, options, resource_set_list):
     if not resource_set_list:
-        raise LibraryError(reports.empty_resource_set_list())
+        raise LibraryError(
+            ReportItem.error(report.messages.EmptyResourceSetList())
+        )
     element = etree.SubElement(constraint_section, tag_name)
     element.attrib.update(options)
     for resource_set_item in resource_set_list:

@@ -2,6 +2,7 @@ from pcs import settings
 from pcs.common.file import RawFileError
 from pcs.common.reports import ReportProcessor
 from pcs.common.reports import codes as report_codes
+from pcs.common.reports.item import ReportItem
 from pcs.lib import reports, node_communication_format
 from pcs.lib.tools import generate_binary_key
 from pcs.lib.cib.resource import guest_node, primitive, remote_node
@@ -197,7 +198,10 @@ def node_add_remote(
     use_default_operations=True,
     wait=False,
 ):
-    # pylint: disable=too-many-arguments, too-many-branches, too-many-locals
+    # pylint: disable=too-many-arguments
+    # pylint: disable=too-many-branches
+    # pylint: disable=too-many-locals
+    # pylint: disable=too-many-statements
     """
     create an ocf:pacemaker:remote resource and use it as a remote node
 
@@ -305,18 +309,37 @@ def node_add_remote(
         already_exists = []
         unified_report_list = []
         for report in report_list + list(e.args):
-            if report.code not in (
-                report_codes.ID_ALREADY_EXISTS,
-                report_codes.RESOURCE_INSTANCE_ATTR_VALUE_NOT_UNIQUE,
-            ):
-                unified_report_list.append(report)
-            elif (
-                "id" in report.info
-                and
-                report.info["id"] not in already_exists
-            ):
-                unified_report_list.append(report)
-                already_exists.append(report.info["id"])
+            # TODO: remove
+            # pylint: disable=no-member
+            if not isinstance(report, ReportItem):
+                # pylint: disable=unsupported-membership-test
+                # pylint: disable=unsubscriptable-object
+                if report.code not in (
+                    report_codes.ID_ALREADY_EXISTS,
+                    report_codes.RESOURCE_INSTANCE_ATTR_VALUE_NOT_UNIQUE,
+                ):
+                    unified_report_list.append(report)
+                elif (
+                    "id" in report.info
+                    and
+                    report.info["id"] not in already_exists
+                ):
+                    unified_report_list.append(report)
+                    already_exists.append(report.info["id"])
+            else:
+                dto_obj = report.message.to_dto()
+                if dto_obj.code not in (
+                    report_codes.ID_ALREADY_EXISTS,
+                    report_codes.RESOURCE_INSTANCE_ATTR_VALUE_NOT_UNIQUE,
+                ):
+                    unified_report_list.append(report)
+                elif (
+                    "id" in dto_obj.payload
+                    and
+                    dto_obj.payload["id"] not in already_exists
+                ):
+                    unified_report_list.append(report)
+                    already_exists.append(dto_obj.payload["id"])
         report_list = unified_report_list
 
     report_processor.report_list(report_list)

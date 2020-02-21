@@ -181,7 +181,7 @@ class InvalidOptions(NameBuildTest):
                 "matching patterns: 'exec_<name>'"
             ),
             reports.InvalidOptions(
-                ["NAME"], ["FIRST"], "", allowed_option_patterns=["exec_<name>"]
+                ["NAME"], ["FIRST"], "", allowed_patterns=["exec_<name>"]
             ),
         )
 
@@ -3891,13 +3891,13 @@ class CannotMoveResourcePromotableNotMaster(NameBuildTest):
 class CannotMoveResourceMasterResourceNotPromotable(NameBuildTest):
     def test_without_promotable(self):
         self.assert_message_from_report(
-            "when specifying --master you must use the promotable clone id",
+            "when specifying master you must use the promotable clone id",
             reports.CannotMoveResourceMasterResourceNotPromotable("R"),
         )
 
     def test_with_promotable(self):
         self.assert_message_from_report(
-            "when specifying --master you must use the promotable clone id (P)",
+            "when specifying master you must use the promotable clone id (P)",
             reports.CannotMoveResourceMasterResourceNotPromotable(
                 "R", promotable_id="P"
             ),
@@ -3962,13 +3962,13 @@ class ResourceMovePcmkSuccess(NameBuildTest):
 class CannotBanResourceMasterResourceNotPromotable(NameBuildTest):
     def test_without_promotable(self):
         self.assert_message_from_report(
-            "when specifying --master you must use the promotable clone id",
+            "when specifying master you must use the promotable clone id",
             reports.CannotBanResourceMasterResourceNotPromotable("R"),
         )
 
     def test_with_promotable(self):
         self.assert_message_from_report(
-            "when specifying --master you must use the promotable clone id (P)",
+            "when specifying master you must use the promotable clone id (P)",
             reports.CannotBanResourceMasterResourceNotPromotable(
                 "R", promotable_id="P"
             ),
@@ -4006,13 +4006,13 @@ class ResourceBanPcmkSuccess(NameBuildTest):
 class CannotUnmoveUnbanResourceMasterResourceNotPromotable(NameBuildTest):
     def test_without_promotable(self):
         self.assert_message_from_report(
-            "when specifying --master you must use the promotable clone id",
+            "when specifying master you must use the promotable clone id",
             reports.CannotUnmoveUnbanResourceMasterResourceNotPromotable("R"),
         )
 
     def test_with_promotable(self):
         self.assert_message_from_report(
-            "when specifying --master you must use the promotable clone id (P)",
+            "when specifying master you must use the promotable clone id (P)",
             reports.CannotUnmoveUnbanResourceMasterResourceNotPromotable(
                 "R", promotable_id="P"
             ),
@@ -4022,12 +4022,12 @@ class CannotUnmoveUnbanResourceMasterResourceNotPromotable(NameBuildTest):
 class ResourceUnmoveUnbanPcmkExpiredNotSupported(NameBuildTest):
     def test_success(self):
         self.assert_message_from_report(
-            "--expired is not supported, please upgrade pacemaker",
+            "expired is not supported, please upgrade pacemaker",
             reports.ResourceUnmoveUnbanPcmkExpiredNotSupported(),
         )
 
 
-class ResourceUnmoveUnbanPcmkEerror(NameBuildTest):
+class ResourceUnmoveUnbanPcmkError(NameBuildTest):
     def test_success(self):
         self.assert_message_from_report(
             "cannot clear resource 'R'\nstdout1\n  stdout2\nstderr1\n  stderr2",

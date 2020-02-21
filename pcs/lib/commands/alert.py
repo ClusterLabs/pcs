@@ -1,4 +1,6 @@
+from pcs.common import reports as report
 from pcs.common.reports import ReportItemList
+from pcs.common.reports.item import ReportItem
 from pcs.common.tools import Version
 from pcs.lib import reports
 from pcs.lib.cib import alert
@@ -34,7 +36,11 @@ def create_alert(
     description -- alert description description
     """
     if not path:
-        raise LibraryError(reports.required_options_are_missing(["path"]))
+        raise LibraryError(
+            ReportItem.error(
+                report.messages.RequiredOptionsAreMissing(["path"])
+            )
+        )
 
     cib = lib_env.get_cib(REQUIRED_CIB_VERSION)
     id_provider = IdProvider(cib)
@@ -126,7 +132,9 @@ def add_recipient(
     """
     if not recipient_value:
         raise LibraryError(
-            reports.required_options_are_missing(["value"])
+            ReportItem.error(
+                report.messages.RequiredOptionsAreMissing(["value"])
+            )
         )
 
     cib = lib_env.get_cib(REQUIRED_CIB_VERSION)

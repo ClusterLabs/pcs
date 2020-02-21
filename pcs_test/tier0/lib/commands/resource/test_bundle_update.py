@@ -269,6 +269,7 @@ class ContainerParametrized(TestCase):
                     "option_names": ["extra", ],
                     "option_type": "container",
                     "allowed": self.allowed_options,
+                    "allowed_patterns": [],
                 },
                 report_codes.FORCE_OPTIONS
             ),
@@ -298,6 +299,7 @@ class ContainerParametrized(TestCase):
                     "option_names": ["extra", ],
                     "option_type": "container",
                     "allowed": self.allowed_options,
+                    "allowed_patterns": [],
                 },
                 None
             ),
@@ -860,6 +862,7 @@ class Network(TestCase):
                     "option_names": ["extra", ],
                     "option_type": "network",
                     "allowed": self.allowed_options,
+                    "allowed_patterns": [],
                 },
                 report_codes.FORCE_OPTIONS
             ),
@@ -887,6 +890,7 @@ class Network(TestCase):
                         "option_names": ["extra", ],
                         "option_type": "network",
                         "allowed": self.allowed_options,
+                    "allowed_patterns": [],
                     },
                     None
                 ),

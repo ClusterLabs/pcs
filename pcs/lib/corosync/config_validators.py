@@ -2,7 +2,9 @@
 from collections import Counter, defaultdict, namedtuple
 from itertools import zip_longest
 
+from pcs.common import reports as report
 from pcs.common.reports import codes as report_codes
+from pcs.common.reports.item import ReportItem
 from pcs.lib import reports, validate
 from pcs.lib.corosync import constants
 from pcs.lib.corosync.node import(
@@ -513,11 +515,13 @@ def _update_link_options_udp(new_options, current_options):
     )
     if target_broadcast == "1" and target_mcastaddr is not None:
         report_items.append(
-            reports.prerequisite_option_must_be_disabled(
-                "mcastaddr",
-                "broadcast",
-                option_type="link",
-                prerequisite_type="link"
+            ReportItem.error(
+                report.messages.PrerequisiteOptionMustBeDisabled(
+                    "mcastaddr",
+                    "broadcast",
+                    option_type="link",
+                    prerequisite_type="link",
+                )
             )
         )
 
@@ -542,11 +546,13 @@ def create_link_list_udp(link_list, max_allowed_link_count):
     # default values taken from `man corosync.conf`
     if options.get("broadcast", "0") == "1" and "mcastaddr" in options:
         report_items.append(
-            reports.prerequisite_option_must_be_disabled(
-                "mcastaddr",
-                "broadcast",
-                option_type="link",
-                prerequisite_type="link"
+            ReportItem.error(
+                report.messages.PrerequisiteOptionMustBeDisabled(
+                    "mcastaddr",
+                    "broadcast",
+                    option_type="link",
+                    prerequisite_type="link",
+                )
             )
         )
     report_items.extend(
@@ -1111,11 +1117,13 @@ def create_transport_knet(generic_options, compression_options, crypto_options):
         crypto_options.get("hash", "none") == "none"
     ):
         report_items.append(
-            reports.prerequisite_option_must_be_enabled_as_well(
-                "cipher",
-                "hash",
-                option_type="crypto",
-                prerequisite_type="crypto"
+            ReportItem.error(
+                report.messages.PrerequisiteOptionMustBeEnabledAsWell(
+                    "cipher",
+                    "hash",
+                    option_type="crypto",
+                    prerequisite_type="crypto",
+                )
             )
         )
 
@@ -1197,11 +1205,13 @@ def create_quorum_options(options, has_qdevice):
         options.get("last_man_standing", "0") == "0"
     ):
         report_items.append(
-            reports.prerequisite_option_must_be_enabled_as_well(
-                "last_man_standing_window",
-                "last_man_standing",
-                option_type="quorum",
-                prerequisite_type="quorum"
+            ReportItem.error(
+                report.messages.PrerequisiteOptionMustBeEnabledAsWell(
+                    "last_man_standing_window",
+                    "last_man_standing",
+                    option_type="quorum",
+                    prerequisite_type="quorum"
+                )
             )
         )
     return report_items
@@ -1235,11 +1245,13 @@ def update_quorum_options(options, has_qdevice, current_options):
         effective_lms == "0"
     ):
         report_items.append(
-            reports.prerequisite_option_must_be_enabled_as_well(
-                "last_man_standing_window",
-                "last_man_standing",
-                option_type="quorum",
-                prerequisite_type="quorum"
+            ReportItem.error(
+                report.messages.PrerequisiteOptionMustBeEnabledAsWell(
+                    "last_man_standing_window",
+                    "last_man_standing",
+                    option_type="quorum",
+                    prerequisite_type="quorum",
+                )
             )
         )
     return report_items

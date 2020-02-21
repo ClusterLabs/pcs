@@ -2,6 +2,8 @@ from functools import partial
 
 from lxml import etree
 
+from pcs.common import reports as report
+from pcs.common.reports.item import ReportItem
 from pcs.lib import reports
 from pcs.lib.errors import LibraryError
 from pcs.lib.cib.tools import (
@@ -32,18 +34,26 @@ def validate_permissions(tree, permission_info_list):
     allowed_scopes = ["xpath", "id"]
     for permission, scope_type, scope in permission_info_list:
         if not permission in allowed_permissions:
-            report_items.append(reports.invalid_option_value(
-                "permission",
-                permission,
-                allowed_permissions
-            ))
+            report_items.append(
+                ReportItem.error(
+                    report.messages.InvalidOptionValue(
+                        "permission",
+                        permission,
+                        allowed_permissions
+                    )
+                )
+            )
 
         if not scope_type in allowed_scopes:
-            report_items.append(reports.invalid_option_value(
-                "scope type",
-                scope_type,
-                allowed_scopes
-            ))
+            report_items.append(
+                ReportItem.error(
+                    report.messages.InvalidOptionValue(
+                        "scope type",
+                        scope_type,
+                        allowed_scopes
+                    )
+                )
+            )
 
         if scope_type == 'id' and not does_id_exist(tree, scope):
             report_items.append(reports.id_not_found(scope, ["id"]))

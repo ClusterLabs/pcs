@@ -283,6 +283,8 @@ class CreateMixin():
                     "on", "off", "reboot", "status", "list", "list-status",
                     "monitor", "metadata", "validate-all",
                 ],
+                cannot_be_empty=False,
+                forbidden_characters=None,
             ),
             fixture.warn(
                 report_codes.INVALID_OPTIONS,

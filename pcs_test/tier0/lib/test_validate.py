@@ -5,8 +5,9 @@ from lxml import etree
 from pcs_test.tools import fixture
 from pcs_test.tools.assertions import assert_report_item_list_equal
 
+from pcs.common import reports
 from pcs.common.reports import codes as report_codes
-from pcs.lib import reports, validate
+from pcs.lib import validate
 from pcs.lib.cib.tools import IdProvider
 
 # pylint: disable=no-self-use
@@ -139,19 +140,21 @@ class ValidatorAll(TestCase):
 class ValidatorFirstError(TestCase):
     class Validator(validate.ValueValidator):
         def _validate_value(self, value):
-            creator = None
+            severity = None
             if value.normalized == "a":
-                creator = reports.error
+                severity = reports.ReportItemSeverity.error()
             if value.normalized == "b":
-                creator = reports.warning
-            if creator is None:
+                severity = reports.ReportItemSeverity.warning()
+            if severity is None:
                 return []
             return [
-                creator(
-                    reports.invalid_option_value,
-                    self._option_name,
-                    value.original,
-                    "test report",
+                reports.item.ReportItem(
+                    severity,
+                    reports.messages.InvalidOptionValue(
+                        self._option_name,
+                        value.original,
+                        "test report",
+                    )
                 )
             ]
 
@@ -593,7 +596,7 @@ class NamesIn(TestCase):
                 .validate({"x": "X", "y": "Y"})
             ,
             [
-                fixture.error(
+                fixture.warn(
                     report_codes.INVALID_OPTIONS,
                     option_names=["x", "y"],
                     allowed=["a", "b", "c"],
@@ -652,10 +655,12 @@ class NamesIn(TestCase):
 class ValueValidatorImplementation(validate.ValueValidator):
     def _validate_value(self, value):
         return [
-            reports.invalid_option_value(
-                self._option_name,
-                value.original,
-                "test report",
+            reports.item.ReportItem.error(
+                reports.messages.InvalidOptionValue(
+                    self._option_name,
+                    value.original,
+                    "test report",
+                )
             )
         ]
 

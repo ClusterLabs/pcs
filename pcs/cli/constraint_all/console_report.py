@@ -48,13 +48,4 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
             for constraint_info in info["constraint_info_list"]
         ])
     ,
-
-    codes.RESOURCE_FOR_CONSTRAINT_IS_MULTIINSTANCE: lambda info:
-        (
-            "{resource_id} is a {parent_type} resource, you should use the"
-            " {parent_type} id: {parent_id} when adding constraints"
-        ).format(
-            **info
-        )
-    ,
 }

@@ -41,170 +41,6 @@ class NameBuildTest(TestCase):
             )
 
 
-class BuildInvalidOptionsMessageTest(NameBuildTest):
-    def test_build_message_with_type(self):
-        self.assert_message_from_report(
-            "invalid TYPE option 'NAME', allowed options are: 'FIRST', "
-                "'SECOND'"
-            ,
-            reports.invalid_options(["NAME"], ["SECOND", "FIRST"], "TYPE")
-        )
-
-    def test_build_message_without_type(self):
-        self.assert_message_from_report(
-            "invalid option 'NAME', allowed options are: 'FIRST', 'SECOND'",
-            reports.invalid_options(["NAME"], ["FIRST", "SECOND"], "")
-        )
-
-    def test_build_message_with_multiple_names(self):
-        self.assert_message_from_report(
-            "invalid options: 'ANOTHER', 'NAME', allowed option is 'FIRST'",
-            reports.invalid_options(["NAME", "ANOTHER"], ["FIRST"], "")
-        )
-
-    def test_pattern(self):
-        self.assert_message_from_report(
-            (
-                "invalid option 'NAME', allowed are options matching patterns: "
-                "'exec_<name>'"
-            ),
-            reports.invalid_options(["NAME"], [], "", ["exec_<name>"])
-        )
-
-    def test_allowed_and_patterns(self):
-        self.assert_message_from_report(
-            (
-                "invalid option 'NAME', allowed option is 'FIRST' and options "
-                "matching patterns: 'exec_<name>'"
-            ),
-            reports.invalid_options(
-                ["NAME"], ["FIRST"], "",
-                allowed_option_patterns=["exec_<name>"])
-        )
-
-    def test_no_allowed_options(self):
-        self.assert_message_from_report(
-            "invalid options: 'ANOTHER', 'NAME', there are no options allowed",
-            reports.invalid_options(["NAME", "ANOTHER"], [], "")
-        )
-
-
-class InvalidUserdefinedOptions(NameBuildTest):
-    def test_without_type(self):
-        self.assert_message_from_report(
-            (
-                "invalid option 'exec_NAME', options may contain "
-                "a-z A-Z 0-9 /_- characters only"
-            ),
-            reports.invalid_userdefined_options(
-                ["exec_NAME"], "", "a-z A-Z 0-9 /_-"
-            )
-        )
-
-    def test_with_type(self):
-        self.assert_message_from_report(
-            (
-                "invalid heuristics option 'exec_NAME', heuristics options may "
-                "contain a-z A-Z 0-9 /_- characters only"
-            ),
-            reports.invalid_userdefined_options(
-                ["exec_NAME"], "heuristics", "a-z A-Z 0-9 /_-"
-            )
-        )
-
-    def test_more_options(self):
-        self.assert_message_from_report(
-            (
-                "invalid TYPE options: 'ANOTHER', 'NAME', TYPE options may "
-                "contain a-z A-Z 0-9 /_- characters only"
-            ),
-            reports.invalid_userdefined_options(
-                ["NAME", "ANOTHER"], "TYPE", "a-z A-Z 0-9 /_-"
-            )
-        )
-
-
-class RequiredOptionsAreMissing(NameBuildTest):
-    def test_build_message_with_type(self):
-        self.assert_message_from_report(
-            "required TYPE option 'NAME' is missing",
-            reports.required_options_are_missing(
-                ["NAME"],
-                option_type="TYPE"
-            )
-        )
-
-    def test_build_message_without_type(self):
-        self.assert_message_from_report(
-            "required option 'NAME' is missing",
-            reports.required_options_are_missing(["NAME"])
-        )
-
-    def test_build_message_with_multiple_names(self):
-        self.assert_message_from_report(
-            "required options 'ANOTHER', 'NAME' are missing",
-            reports.required_options_are_missing(["NAME", "ANOTHER"])
-        )
-
-class BuildInvalidOptionValueMessageTest(NameBuildTest):
-    def test_multiple_allowed_values(self):
-        self.assert_message_from_report(
-            "'VALUE' is not a valid NAME value, use 'FIRST', 'SECOND'",
-            reports.invalid_option_value("NAME", "VALUE", ["SECOND", "FIRST"])
-        )
-
-    def test_textual_hint(self):
-        self.assert_message_from_report(
-            "'VALUE' is not a valid NAME value, use some hint",
-            reports.invalid_option_value("NAME", "VALUE", "some hint")
-        )
-
-    def test_cannot_be_empty(self):
-        self.assert_message_from_report(
-            "NAME cannot be empty",
-            reports.invalid_option_value(
-                "NAME", "VALUE",
-                allowed_values=None,
-                cannot_be_empty=True
-            )
-        )
-
-    def test_cannot_be_empty_with_hint(self):
-        self.assert_message_from_report(
-            "NAME cannot be empty, use 'FIRST', 'SECOND'",
-            reports.invalid_option_value(
-                "NAME", "VALUE", ["SECOND", "FIRST"],
-                cannot_be_empty=True
-            )
-        )
-
-    def test_forbidden_characters(self):
-        self.assert_message_from_report(
-            r"NAME cannot contain }{\r\n characters",
-            reports.invalid_option_value(
-                "NAME", "VALUE",
-                allowed_values=None,
-                forbidden_characters="}{\\r\\n"
-            )
-        )
-
-    def test_forbidden_characters_with_hint(self):
-        self.assert_message_from_report(
-            r"NAME cannot contain }{\r\n characters, use 'FIRST', 'SECOND'",
-            reports.invalid_option_value(
-                "NAME", "VALUE", ["SECOND", "FIRST"],
-                forbidden_characters="}{\\r\\n"
-            )
-        )
-
-    def test_cannot_be_empty_and_forbidden_characters(self):
-        self.assert_message_from_report(
-            "NAME cannot be empty, use 'FIRST', 'SECOND'",
-            reports.invalid_option_value(
-                "NAME", "VALUE", ["SECOND", "FIRST"], True
-            )
-        )
-
 class InvalidCibContent(NameBuildTest):
     def test_message_can_be_more_verbose(self):
         report = "no verbose\noutput\n"
@@ -762,40 +598,6 @@ class InvalidiStonithAgentNameTest(NameBuildTest):
             reports.invalid_stonith_agent_name("fence:name")
         )
 
-class InvalidOptionType(NameBuildTest):
-    def test_allowed_string(self):
-        self.assert_message_from_report(
-            "specified option name is not valid, use allowed types",
-            reports.invalid_option_type("option name", "allowed types")
-        )
-
-    def test_allowed_list(self):
-        self.assert_message_from_report(
-            "specified option name is not valid, use 'allowed', 'types'",
-            reports.invalid_option_type("option name", ["types", "allowed"])
-        )
-
-
-class DeprecatedOption(NameBuildTest):
-
-    def test_no_desc_hint_array(self):
-        self.assert_message_from_report(
-            "option 'option name' is deprecated and should not be used,"
-                " use new_a, new_b instead"
-            ,
-            reports.deprecated_option("option name", ["new_b", "new_a"], "")
-        )
-
-    def test_desc_hint_string(self):
-        self.assert_message_from_report(
-            "option type option 'option name' is deprecated and should not be"
-                " used, use new option instead"
-            ,
-            reports.deprecated_option(
-                "option name", ["new option"], "option type"
-            )
-        )
-
 
 class StonithResourcesDoNotExist(NameBuildTest):
     def test_success(self):
@@ -1243,100 +1045,6 @@ class UnableToGetSbdStatus(NameBuildTest):
             "Unable to get status of SBD from node 'node2': reason",
             reports.unable_to_get_sbd_status("node2", "reason")
         )
-
-class RequiredOptionOfAlternativesIsMissing(NameBuildTest):
-    def test_without_type(self):
-        self.assert_message_from_report(
-            "option 'aAa' or 'bBb' or 'cCc' has to be specified",
-            reports.required_option_of_alternatives_is_missing(
-                ["aAa", "cCc", "bBb"]
-            )
-        )
-
-    def test_with_type(self):
-        self.assert_message_from_report(
-            "test option 'aAa' has to be specified",
-            reports.required_option_of_alternatives_is_missing(
-                ["aAa"], "test"
-            )
-        )
-
-
-class PrerequisiteOptionMustNotBeSet(NameBuildTest):
-    def test_without_type(self):
-        self.assert_message_from_report(
-            "Cannot set option 'a' because option 'b' is already set",
-            reports.prerequisite_option_must_not_be_set(
-                "a", "b",
-            )
-        )
-
-    def test_with_type(self):
-        self.assert_message_from_report(
-            "Cannot set some option 'a' because other option 'b' is "
-                "already set"
-            ,
-            reports.prerequisite_option_must_not_be_set(
-                "a", "b",
-                option_type="some",
-                prerequisite_type="other",
-            )
-        )
-
-
-class PrerequisiteOptionMustBeDisabled(NameBuildTest):
-    def test_without_type(self):
-        self.assert_message_from_report(
-            "If option 'a' is enabled, option 'b' must be disabled",
-            reports.prerequisite_option_must_be_disabled(
-                "a", "b"
-            )
-        )
-
-    def test_with_type(self):
-        self.assert_message_from_report(
-            "If some option 'a' is enabled, other option 'b' must be disabled",
-            reports.prerequisite_option_must_be_disabled(
-                "a", "b", "some", "other"
-            )
-        )
-
-
-class PrerequisiteOptionMustBeEnabledAsWell(NameBuildTest):
-    def test_without_type(self):
-        self.assert_message_from_report(
-            "If option 'a' is enabled, option 'b' must be enabled as well",
-            reports.prerequisite_option_must_be_enabled_as_well("a", "b")
-        )
-
-    def test_with_type(self):
-        self.assert_message_from_report(
-            "If some option 'a' is enabled, "
-                "other option 'b' must be enabled as well"
-            ,
-            reports.prerequisite_option_must_be_enabled_as_well(
-                "a", "b", "some", "other"
-            )
-        )
-
-
-class PrerequisiteOptionIsMissing(NameBuildTest):
-    def test_without_type(self):
-        self.assert_message_from_report(
-            "If option 'a' is specified, option 'b' must be specified as well",
-            reports.prerequisite_option_is_missing("a", "b")
-        )
-
-    def test_with_type(self):
-        self.assert_message_from_report(
-            "If some option 'a' is specified, "
-                "other option 'b' must be specified as well"
-            ,
-            reports.prerequisite_option_is_missing(
-                "a", "b", "some", "other"
-            )
-        )
-
 
 class FileDistributionStarted(NameBuildTest):
     def test_build_messages(self):
@@ -3793,18 +3501,6 @@ class DuplicateConstraintsExist(NameBuildTest):
             force_text=" force text"
         )
 
-class ResourceForConstraintIsMultiinstance(NameBuildTest):
-    def test_success(self):
-        self.assert_message_from_report(
-            (
-                "resource1 is a bundle resource, you should use the "
-                "bundle id: parent1 when adding constraints"
-            ),
-            reports.resource_for_constraint_is_multiinstance(
-                "resource1", "bundle", "parent1"
-            )
-        )
-
 class ResourceInstanceAttrValueNotUnique(NameBuildTest):
     def test_one_resource(self):
         self.assert_message_from_report(
@@ -3951,13 +3647,6 @@ class CannotMoveResourceStoppedNoNodeSpecified(NameBuildTest):
             reports.cannot_move_resource_stopped_no_node_specified("R")
         )
 
-class EmptyResourceSetList(NameBuildTest):
-    def test_success(self):
-        self.assert_message_from_report(
-            "Resource set list is empty",
-            reports.empty_resource_set_list()
-        )
-
 class ResourceMovePcmkEerror(NameBuildTest):
     def test_success(self):
         self.assert_message_from_report(
@@ -4077,53 +3766,6 @@ class ResourceBanPcmkSuccess(NameBuildTest):
                         "in the cluster\n"
                 )
             )
-        )
-
-class CannotUnmoveUnbanResourceMasterResourceNotPromotable(NameBuildTest):
-    def test_without_promotable(self):
-        self.assert_message_from_report(
-            "when specifying --master you must use the promotable clone id",
-            reports.cannot_unmove_unban_resource_master_resource_not_promotable(
-                "R"
-            )
-        )
-
-    def test_with_promotable(self):
-        self.assert_message_from_report(
-            "when specifying --master you must use the promotable clone id (P)",
-            reports.cannot_unmove_unban_resource_master_resource_not_promotable(
-                "R",
-                promotable_id="P"
-            )
-        )
-
-class ResourceUnmoveUnbanPcmkEerror(NameBuildTest):
-    def test_success(self):
-        self.assert_message_from_report(
-            "cannot clear resource 'R'\nstdout1\n  stdout2\nstderr1\n  stderr2",
-            reports.resource_unmove_unban_pcmk_error(
-                "R",
-                "stdout1\n\n  stdout2\n",
-                "stderr1\n\n  stderr2\n"
-            )
-        )
-
-class ResourceUnmoveUnbanPcmkSuccess(NameBuildTest):
-    def test_success(self):
-        self.assert_message_from_report(
-            "stdout1\n  stdout2\nstderr1\n  stderr2",
-            reports.resource_unmove_unban_pcmk_success(
-                "R",
-                "stdout1\n\n  stdout2\n",
-                "stderr1\n\n  stderr2\n"
-            )
-        )
-
-class ResourceUnmoveUnbanPcmkExpiredNotSupported(NameBuildTest):
-    def test_success(self):
-        self.assert_message_from_report(
-            "--expired is not supported, please upgrade pacemaker",
-            reports.resource_unmove_unban_pcmk_expired_not_supported()
         )
 
 class CorosyncConfigCannotSaveInvalidNamesValues(NameBuildTest):
@@ -4409,59 +4051,4 @@ class SystemWillReset(NameBuildTest):
         self.assert_message_from_report(
             "System will reset shortly",
             reports.system_will_reset()
-        )
-
-class ParseErrorJsonFile(NameBuildTest):
-    def test_success(self):
-        self.assert_message_from_report(
-            "Unable to parse known-hosts file '/tmp/known-hosts': "
-                "some reason: line 15 column 5 (char 100)"
-            ,
-            reports.parse_error_json_file(
-                file_type_codes.PCS_KNOWN_HOSTS,
-                15,
-                5,
-                100,
-                "some reason",
-                "some reason: line 15 column 5 (char 100)",
-                file_path="/tmp/known-hosts",
-            )
-        )
-
-class ResourceDisableAffectsOtherResources(NameBuildTest):
-    def test_success(self):
-        self.assert_message_from_report(
-            (
-                "Disabling specified resources would have an effect on other "
-                "resources\n\ncrm_simulate output"
-            ),
-            reports.resource_disable_affects_other_resources(
-                ["D2", "D1"],
-                ["O2", "O1"],
-                "crm_simulate output",
-            )
-        )
-
-
-class DrConfigAlreadyExist(NameBuildTest):
-    def test_success(self):
-        self.assert_message_from_report(
-            "Disaster-recovery already configured",
-            reports.dr_config_already_exist()
-        )
-
-
-class DrConfigDoesNotExist(NameBuildTest):
-    def test_success(self):
-        self.assert_message_from_report(
-            "Disaster-recovery is not configured",
-            reports.dr_config_does_not_exist()
-        )
-
-
-class NodeInLocalCluster(NameBuildTest):
-    def test_success(self):
-        self.assert_message_from_report(
-            "Node 'node-name' is part of local cluster",
-            reports.node_in_local_cluster("node-name")
         )

@@ -1,8 +1,10 @@
+from pcs.common import reports as report
 from pcs.common.reports import (
+    codes as report_codes,
     ReportProcessor,
     ReportItemSeverity,
 )
-from pcs.common.reports import codes as report_codes
+from pcs.common.reports.item import ReportItem
 from pcs.lib import reports, sbd
 from pcs.lib.env import LibraryEnvironment
 from pcs.lib.errors import LibraryError
@@ -364,10 +366,14 @@ def set_expected_votes_live(lib_env, expected_votes):
         if votes_int < 1:
             raise ValueError()
     except ValueError:
-        raise LibraryError(reports.invalid_option_value(
-            "expected votes",
-            expected_votes,
-            "positive integer"
-        ))
+        raise LibraryError(
+            ReportItem.error(
+                report.messages.InvalidOptionValue(
+                    "expected votes",
+                    expected_votes,
+                    "positive integer"
+                )
+            )
+        )
 
     corosync_live.set_expected_votes(lib_env.cmd_runner(), votes_int)

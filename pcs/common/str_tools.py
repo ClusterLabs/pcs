@@ -21,11 +21,11 @@ def indent(line_list: List[str], indent_step: int = 2) -> List[str]:
 
 # TODO: consider removing param optional_transformation
 def format_list(
-    item_list: List[str], # Intetionaly not Sequence so string is prohibited
+    item_list: List[str],  # Intetionaly not Sequence so string is prohibited
     optional_transformations: Optional[Mapping[str, str]] = None,
     separator: str = ", ",
-    last_separator: Optional[str] = None,
 ) -> str:
+    item_list = sorted(item_list)
     if not optional_transformations:
         optional_transformations = {}
 
@@ -36,23 +36,27 @@ def format_list(
     if len(item_list) == 1:
         return to_value(item_list[0])
 
-    if last_separator:
-        item_list = sorted(item_list)
-        return "{}{}{}".format(
-            format_list(
-                item_list[:-1],
-                optional_transformations=optional_transformations,
-                separator=separator,
-            ),
-            last_separator,
-            format_list(
-                item_list[-1:],
-                optional_transformations=optional_transformations,
-                separator=separator,
-            ),
-        )
-
     return separator.join(sorted([to_value(item) for item in item_list]))
+
+
+# TODO: tests
+def format_list_custom_last_separator(
+    item_list: List[str], # Intetionaly not Sequence so string is prohibited
+    last_separator: str,
+    separator: str = ", ",
+) -> str:
+    item_list = sorted(item_list)
+    return "{}{}{}".format(
+        format_list(
+            item_list[:-1],
+            separator=separator,
+        ),
+        last_separator,
+        format_list(
+            item_list[-1:],
+            separator=separator,
+        ),
+    )
 
 
 def join_multilines(strings):
@@ -60,20 +64,17 @@ def join_multilines(strings):
 
 
 def format_optional(
-    value: Any,
-    template: str = "{} ",
-    empty_case: str = "",
+    value: Any, template: str = "{} ", empty_case: str = "",
 ) -> str:
     # Number 0 is considered False which does not suit our needs so we check
     # for it explicitly. Beware that False == 0 is true, so we must have an
     # additional check for that (bool is a subclass of int).
-    if (
-        value
-        or
-        (isinstance(value, int) and not isinstance(value, bool) and value == 0)
+    if value or (
+        isinstance(value, int) and not isinstance(value, bool) and value == 0
     ):
         return template.format(value)
     return empty_case
+
 
 def _is_multiple(what):
     """
@@ -91,19 +92,17 @@ def _is_multiple(what):
             pass
     return retval
 
+
 def _add_s(word):
     """
     add "s" or "es" to the word based on its ending
 
     string word -- word where "s" or "es" should be added
     """
-    if (
-        word[-1:] in ("s", "x", "o")
-        or
-        word[-2:] in ("ss", "sh", "ch")
-    ):
+    if word[-1:] in ("s", "x", "o") or word[-2:] in ("ss", "sh", "ch"):
         return word + "es"
     return word + "s"
+
 
 def format_plural(depends_on, singular, plural=None):
     """

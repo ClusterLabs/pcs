@@ -1,6 +1,10 @@
 from pcs import settings
-from pcs.common.reports import ReportItemSeverity as Severities
-from pcs.common.reports import codes as report_codes
+from pcs.common import reports as report
+from pcs.common.reports import (
+    codes as report_codes,
+    ReportItemSeverity as Severities,
+)
+from pcs.common.reports.item import ReportItem
 from pcs.lib.communication.sbd import (
     CheckSbd,
     DisableSbdService,
@@ -376,7 +380,9 @@ def initialize_block_devices(lib_env, device_list, option_dict):
     report_item_list = []
     if not device_list:
         report_item_list.append(
-            reports.required_options_are_missing(["device"])
+            ReportItem.error(
+                report.messages.RequiredOptionsAreMissing(["device"])
+            )
         )
 
     supported_options = sbd.DEVICE_INITIALIZATION_OPTIONS_MAPPING.keys()
@@ -458,12 +464,18 @@ def set_message(lib_env, device, node_name, message):
         missing_options.append("node")
     if missing_options:
         report_item_list.append(
-            reports.required_options_are_missing(missing_options)
+            ReportItem.error(
+                report.messages.RequiredOptionsAreMissing(missing_options)
+            )
         )
     supported_messages = settings.sbd_message_types
     if message not in supported_messages:
         report_item_list.append(
-            reports.invalid_option_value("message", message, supported_messages)
+            ReportItem.error(
+                report.messages.InvalidOptionValue(
+                    "message", message, supported_messages
+                )
+            )
         )
     if lib_env.report_processor.report_list(report_item_list).has_errors:
         raise LibraryError()

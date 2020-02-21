@@ -97,7 +97,8 @@ class PrepareOptionsPlainTest(TestCase):
                 severities.ERROR,
                 report_codes.REQUIRED_OPTIONS_ARE_MISSING,
                 {
-                    "option_names": ["ticket"]
+                    "option_names": ["ticket"],
+                    "option_type": None,
                 }
             ),
         )
@@ -112,6 +113,7 @@ class PrepareOptionsPlainTest(TestCase):
                 report_codes.REQUIRED_OPTIONS_ARE_MISSING,
                 {
                     "option_names": ["rsc"],
+                    "option_type": None,
                 }
             ),
         )
@@ -225,7 +227,7 @@ class PrepareOptionsWithSetTest(TestCase):
             (
                 severities.ERROR,
                 report_codes.REQUIRED_OPTIONS_ARE_MISSING,
-                {"option_names": ["ticket"]}
+                {"option_names": ["ticket"], "option_type": None}
             )
         )
 
@@ -239,7 +241,7 @@ class PrepareOptionsWithSetTest(TestCase):
             (
                 severities.ERROR,
                 report_codes.REQUIRED_OPTIONS_ARE_MISSING,
-                {"option_names": ["ticket"]}
+                {"option_names": ["ticket"], "option_type": None}
             )
         )
 

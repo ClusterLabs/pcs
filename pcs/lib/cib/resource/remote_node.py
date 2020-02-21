@@ -1,4 +1,6 @@
+from pcs.common import reports as report
 from pcs.common.reports import ReportProcessor
+from pcs.common.reports.item import ReportItem
 from pcs.lib import reports
 from pcs.lib.cib.node import PacemakerNode
 from pcs.lib.cib.resource import primitive
@@ -107,14 +109,18 @@ def get_node_name_from_resource(resource_element):
 
 def _validate_server_not_used(agent, option_dict):
     if "server" in option_dict:
-        return [reports.invalid_options(
-            ["server"],
-            sorted([
-                attr["name"] for attr in agent.get_parameters()
-                if attr["name"] != "server"
-            ]),
-            "resource",
-        )]
+        return [
+            ReportItem.error(
+                report.messages.InvalidOptions(
+                    ["server"],
+                    sorted([
+                        attr["name"] for attr in agent.get_parameters()
+                        if attr["name"] != "server"
+                    ]),
+                    "resource",
+                ),
+            )
+        ]
     return []
 
 

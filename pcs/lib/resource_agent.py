@@ -1,13 +1,16 @@
 import re
 from collections import namedtuple
+from typing import cast
 from lxml import etree
 
 from pcs import settings
-from pcs.common.reports import codes as report_codes
+from pcs.common import reports as report
 from pcs.common.reports import (
+    codes as report_codes,
     ReportItemSeverity,
     ReportProcessor,
 )
+from pcs.common.reports.item import ReportItem
 from pcs.common.tools import xml_fromstring
 from pcs.lib import reports, validate
 from pcs.lib.errors import LibraryError
@@ -577,25 +580,41 @@ class Agent():
         # TODO remove this "if", see pcs.lib.cib.commands.remote_node.create
         # for details
         if do_not_report_instance_attribute_server_exists:
-            for report in report_items:
-                if report.code == report_codes.INVALID_OPTIONS:
-                    report.info["allowed"] = [
-                        value for value in report.info["allowed"]
-                        if value != "server"
-                    ]
+            for report_item in report_items:
+                if (
+                    isinstance(report_item, ReportItem)
+                    and
+                    isinstance(
+                        report_item.message, report.messages.InvalidOptions
+                    )
+                ):
+                    report_msg = cast(
+                        report.messages.InvalidOptions, report_item.message
+                    )
+                    report_item.message = report.messages.InvalidOptions(
+                        report_msg.option_names,
+                        sorted([
+                            value for value in report_msg.allowed
+                            if value != "server"
+                        ]),
+                        report_msg.option_type,
+                        report_msg.allowed_patterns,
+                    )
 
         # report missing required parameters
         missing_parameters = self._find_missing_required_parameters(
             parameters
         )
         if missing_parameters:
-            forcible, severity = self._validate_report_forcible_severity(force)
-            report_items.append(reports.required_options_are_missing(
-                sorted(missing_parameters),
-                self._agent_type_label,
-                severity=severity,
-                forceable=forcible,
-            ))
+            report_items.append(
+                ReportItem(
+                    severity=self._validate_report_severity(force),
+                    message=report.messages.RequiredOptionsAreMissing(
+                        sorted(missing_parameters),
+                        self._agent_type_label,
+                    ),
+                )
+            )
 
         return report_items
 
@@ -648,23 +667,40 @@ class Agent():
             final_parameters
         )
         if missing_parameters:
-            forcible, severity = self._validate_report_forcible_severity(force)
-            report_items.append(reports.required_options_are_missing(
-                sorted(missing_parameters),
-                self._agent_type_label,
-                severity=severity,
-                forceable=forcible,
-            ))
+            report_items.append(
+                ReportItem(
+                    severity=self._validate_report_severity(force),
+                    message=report.messages.RequiredOptionsAreMissing(
+                        sorted(missing_parameters),
+                        self._agent_type_label,
+                    ),
+                )
+            )
 
         return report_items
 
-    def _validate_report_forcible_severity(self, force):
+    # TODO: remove
+    @staticmethod
+    def _validate_report_forcible_severity(force):
         forcible = report_codes.FORCE_OPTIONS if not force else None
         severity = (
             ReportItemSeverity.ERROR if not force
             else ReportItemSeverity.WARNING
         )
         return forcible, severity
+
+    @staticmethod
+    def _validate_report_severity(
+        force: bool
+    ) -> report.item.ReportItemSeverity:
+        return report.item.ReportItemSeverity(
+            level=(
+                ReportItemSeverity.WARNING if force
+                else ReportItemSeverity.ERROR
+            ),
+            force_code=report.codes.FORCE_OPTIONS if not force else None,
+        )
+
 
     def _find_missing_required_parameters(self, parameters):
         missing_parameters = set()
@@ -1077,14 +1113,16 @@ class StonithAgent(CrmAgent):
 
     def _validate_action_is_deprecated(self, parameters, force=False):
         if parameters.get("action", ""):
-            forcible, severity = self._validate_report_forcible_severity(force)
-            return [reports.deprecated_option(
-                "action",
-                STONITH_ACTION_REPLACED_BY,
-                self._agent_type_label,
-                severity=severity,
-                forceable=forcible
-            )]
+            return [
+                ReportItem(
+                    self._validate_report_severity(force),
+                    report.messages.DeprecatedOption(
+                        "action",
+                        sorted(STONITH_ACTION_REPLACED_BY),
+                        self._agent_type_label,
+                    )
+                )
+            ]
         return []
 
     def _filter_parameters(self, parameters):

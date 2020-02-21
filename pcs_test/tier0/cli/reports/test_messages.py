@@ -28,6 +28,35 @@ class ResourceManagedNoMonitorEnabled(CliReportMessageTestBase):
         )
 
 
+class ResourceUnmoveUnbanPcmkExpiredNotSupported(CliReportMessageTestBase):
+    def test_message(self):
+        self.assert_message(
+            messages.ResourceUnmoveUnbanPcmkExpiredNotSupported(),
+            "--expired not supported, please upgrade pacemaker",
+        )
+
+
+class CannotUnmoveUnbanResourceMasterResourceNotPromotable(
+    CliReportMessageTestBase
+):
+    def test_with_promotable_id(self):
+        self.assert_message(
+            messages.CannotUnmoveUnbanResourceMasterResourceNotPromotable(
+                "R", "P"
+            ),
+            (
+                "when specifying --master you must use the promotable clone id "
+                "(P)"
+            ),
+        )
+
+    def test_without_promotable_id(self):
+        self.assert_message(
+            messages.CannotUnmoveUnbanResourceMasterResourceNotPromotable("R"),
+            "when specifying --master you must use the promotable clone id",
+        )
+
+
 # TODO: create test/check that all subclasses of
 # pcs.cli.reports.messages.CliReportMessageCustom have their test class with
 # the same name in this file

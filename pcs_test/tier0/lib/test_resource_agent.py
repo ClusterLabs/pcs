@@ -1348,6 +1348,7 @@ class AgentMetadataValidateParamsCreate(TestCase):
                         "req2_old",
                     ],
                     option_type="agent",
+                    allowed_patterns=[],
                 ),
             ]
         )
@@ -1380,6 +1381,7 @@ class AgentMetadataValidateParamsCreate(TestCase):
                         "req2_old",
                     ],
                     option_type="agent",
+                    allowed_patterns=[],
                 ),
             ]
         )
@@ -1456,6 +1458,7 @@ class AgentMetadataValidateParamsUpdate(TestCase):
                         "req2_old",
                     ],
                     option_type="agent",
+                    allowed_patterns=[],
                 ),
             ]
         )
@@ -1490,6 +1493,7 @@ class AgentMetadataValidateParamsUpdate(TestCase):
                         "req2_old",
                     ],
                     option_type="agent",
+                    allowed_patterns=[],
                 ),
             ]
         )

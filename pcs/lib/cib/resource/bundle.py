@@ -1,7 +1,10 @@
 from lxml import etree
 
-from pcs.common.reports import ReportItemSeverity
-from pcs.common.reports import codes as report_codes
+from pcs.common import reports as report
+from pcs.common.reports import (
+    codes as report_codes,
+)
+from pcs.common.reports.item import ReportItem
 from pcs.lib import reports, validate
 from pcs.lib.cib.nvpair import (
     append_new_meta_attributes,
@@ -362,10 +365,12 @@ def _is_supported_container(container_el):
 def _validate_container(container_type, container_options, force_options=False):
     if container_type not in GENERIC_CONTAINER_TYPES:
         return [
-            reports.invalid_option_value(
-                "container type",
-                container_type,
-                GENERIC_CONTAINER_TYPES,
+            ReportItem.error(
+                report.messages.InvalidOptionValue(
+                    "container type",
+                    container_type,
+                    GENERIC_CONTAINER_TYPES,
+                )
             )
         ]
     return _validate_generic_container_options(container_options, force_options)
@@ -393,9 +398,10 @@ def _validate_generic_container_options(container_options, force_options=False):
     deprecation_reports = []
     if "masters" in container_options:
         deprecation_reports.append(
-            reports.deprecated_option(
-                "masters", ["promoted-max"], "container",
-                severity=ReportItemSeverity.WARNING
+            ReportItem.warning(
+                report.messages.DeprecatedOption(
+                    "masters", ["promoted-max"], "container",
+                )
             )
         )
 
@@ -472,9 +478,10 @@ def _validate_generic_container_options_update(
         # deprecated. They may be removing it because they just found out it is
         # deprecated.
         deprecation_reports.append(
-            reports.deprecated_option(
-                "masters", ["promoted-max"], "container",
-                severity=ReportItemSeverity.WARNING
+            ReportItem.warning(
+                report.messages.DeprecatedOption(
+                    "masters", ["promoted-max"], "container",
+                )
             )
         )
     # Do not allow to set masters if promoted-max is set unless promoted-max is
@@ -486,8 +493,10 @@ def _validate_generic_container_options_update(
         container_el.get("promoted-max") and options.get("promoted-max") != ""
     ):
         deprecation_reports.append(
-            reports.prerequisite_option_must_not_be_set(
-                "masters", "promoted-max", "container", "container"
+            ReportItem.error(
+                report.messages.PrerequisiteOptionMustNotBeSet(
+                    "masters", "promoted-max", "container", "container"
+                )
             )
         )
     if (
@@ -496,8 +505,10 @@ def _validate_generic_container_options_update(
         container_el.get("masters") and options.get("masters") != ""
     ):
         deprecation_reports.append(
-            reports.prerequisite_option_must_not_be_set(
-                "promoted-max", "masters", "container", "container"
+            ReportItem.error(
+                report.messages.PrerequisiteOptionMustNotBeSet(
+                    "promoted-max", "masters", "container", "container"
+                )
             )
         )
 
