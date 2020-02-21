@@ -99,7 +99,7 @@ def find_resources_and_report(
             report_list.extend(searcher.get_errors())
     return resource_el_list
 
-def find_primitives(resource_el):
+def find_primitives(resource_el: Element) -> List[Element]:
     """
     Get list of primitives contained in a given resource
     etree resource_el -- resource element

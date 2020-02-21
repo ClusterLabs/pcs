@@ -1318,14 +1318,6 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
         .format(**info)
     ,
 
-    codes.RESOURCE_MANAGED_NO_MONITOR_ENABLED: lambda info:
-        (
-            "Resource '{resource_id}' has no enabled monitor operations."
-            " Re-run with '--monitor' to enable them."
-        )
-        .format(**info)
-    ,
-
     codes.NODE_ADDRESSES_UNRESOLVABLE: lambda info:
         "Unable to resolve addresses: {_addrs}".format(
             _addrs=format_list(info["address_list"])

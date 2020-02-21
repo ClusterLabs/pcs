@@ -1811,19 +1811,6 @@ def resource_is_unmanaged(resource_id):
         }
     )
 
-def resource_managed_no_monitor_enabled(resource_id):
-    """
-    The resource which was set to managed mode has no monitor operations enabled
-
-    string resource_id -- id of the resource
-    """
-    return ReportItem.warning(
-        report_codes.RESOURCE_MANAGED_NO_MONITOR_ENABLED,
-        info={
-            "resource_id": resource_id,
-        }
-    )
-
 def cib_load_error(reason):
     """
     cannot load cib from cibadmin, cibadmin exited with non-zero code

@@ -1770,8 +1770,7 @@ class ResourceIsUnmanaged(NameBuildTest):
 class ResourceManagedNoMonitorEnabled(NameBuildTest):
     def test_build_message(self):
         self.assert_message_from_report(
-            "Resource 'R' has no enabled monitor operations."
-            " Re-run with '--monitor' to enable them.",
+            "Resource 'R' has no enabled monitor operations",
             reports.ResourceManagedNoMonitorEnabled("R"),
         )
 

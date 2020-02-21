@@ -2,13 +2,20 @@ from contextlib import contextmanager
 from functools import partial
 from typing import (
     Any,
+    Iterable,
+    List,
     Mapping,
     Set,
 )
+from xml.etree.ElementTree import Element
 
 from pcs.common import file_type_codes
 from pcs.common.interface import dto
-from pcs.common.reports import codes as report_codes
+from pcs.common.reports import (
+    codes as report_codes,
+    item as report_item,
+    messages,
+)
 from pcs.common.reports import ReportItemSeverity as severities
 from pcs.common.tools import Version
 from pcs.lib import reports
@@ -939,12 +946,17 @@ def _resource_list_enable_disable(
             )
     return report_list
 
-def unmanage(env, resource_ids, with_monitor=False):
+def unmanage(
+    env: LibraryEnvironment,
+    resource_ids: Iterable[str],
+    with_monitor: bool = False,
+) -> None:
     """
     Set specified resources not to be managed by the cluster
-    LibraryEnvironment env --
-    strings resource_ids -- ids of the resources to become unmanaged
-    bool with_monitor -- disable resources' monitor operations
+
+    env -- environment
+    resource_ids -- ids of the resources to become unmanaged
+    with_monitor -- disable resources' monitor operations
     """
     with resource_environment(env) as resources_section:
         id_provider = IdProvider(resources_section)
@@ -969,12 +981,17 @@ def unmanage(env, resource_ids, with_monitor=False):
             ):
                 resource.operations.disable(op)
 
-def manage(env, resource_ids, with_monitor=False):
+def manage(
+    env: LibraryEnvironment,
+    resource_ids: Iterable[str],
+    with_monitor: bool = False,
+) -> None:
     """
     Set specified resource to be managed by the cluster
-    LibraryEnvironment env --
-    strings resource_ids -- ids of the resources to become managed
-    bool with_monitor -- enable resources' monitor operations
+
+    env -- environment
+    resource_ids -- ids of the resources to become managed
+    with_monitor -- enable resources' monitor operations
     """
     with resource_environment(env) as resources_section:
         id_provider = IdProvider(resources_section)
@@ -984,7 +1001,7 @@ def manage(env, resource_ids, with_monitor=False):
             resource_ids,
             resource.common.find_resources_to_manage
         )
-        primitives = []
+        primitives: List[Element] = []
 
         for resource_el in resource_el_list:
             resource.common.manage(resource_el, id_provider)
@@ -1012,8 +1029,10 @@ def manage(env, resource_ids, with_monitor=False):
                 if op_list and not monitor_enabled:
                     # do not advise enabling monitors if there are none defined
                     report_list.append(
-                        reports.resource_managed_no_monitor_enabled(
-                            resource_el.get("id", "")
+                        report_item.ReportItem.warning(
+                            messages.ResourceManagedNoMonitorEnabled(
+                                resource_el.get("id", "")
+                            )
                         )
                     )
 

@@ -2708,7 +2708,6 @@ class ResourceIsUnmanaged(ReportItemMessage):
         return f"'{self.resource_id}' is unmanaged"
 
 
-# TODO: cli specific
 @dataclass(frozen=True)
 class ResourceManagedNoMonitorEnabled(ReportItemMessage):
     """
@@ -2723,8 +2722,7 @@ class ResourceManagedNoMonitorEnabled(ReportItemMessage):
     @property
     def message(self) -> str:
         return (
-            f"Resource '{self.resource_id}' has no enabled monitor operations."
-            " Re-run with '--monitor' to enable them."
+            f"Resource '{self.resource_id}' has no enabled monitor operations"
         )
 
 

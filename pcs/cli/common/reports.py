@@ -1,4 +1,5 @@
 from functools import partial
+from typing import Union
 import inspect
 import sys
 
@@ -13,12 +14,19 @@ from pcs.cli.common.console_report import (
 from pcs.cli.constraint_all.console_report import (
     CODE_TO_MESSAGE_BUILDER_MAP as CONSTRAINT_CODE_TO_MESSAGE_BUILDER_MAP
 )
+from pcs.cli.reports.messages import report_item_msg_from_dto
 from pcs.common.reports import (
     codes,
-    ReportItem,
-    ReportItemSeverity,
+    # types as reports_types,
+    item as reports_item,
+    item_old as reports_item_old,
     ReportProcessor,
+    ReportItemSeverity,
 )
+ReportItem = Union[reports_item.ReportItem, reports_item_old.ReportItem]
+ReportItemList = Union[
+    reports_item.ReportItemList, reports_item_old.ReportItemList
+]
 
 
 CODE_BUILDER_MAP = {}
@@ -71,30 +79,53 @@ class ReportProcessorToConsole(ReportProcessor):
         self.debug = debug
 
     def _do_report(self, report_item: ReportItem) -> None:
-        if report_item.severity == ReportItemSeverity.ERROR:
-            error(build_report_message(
-                report_item,
-                _prepare_force_text(report_item)
-            ))
-        elif report_item.severity == ReportItemSeverity.WARNING:
-            warn(build_report_message(report_item))
-        elif self.debug or report_item.severity != ReportItemSeverity.DEBUG:
-            msg = build_report_message(report_item)
-            if msg:
+        if isinstance(report_item, reports_item_old.ReportItem):
+            severity = report_item.severity
+            if severity == ReportItemSeverity.ERROR:
+                error(build_report_message(
+                    report_item,
+                    _prepare_force_text(report_item)
+                ))
+            elif severity == ReportItemSeverity.WARNING:
+                warn(build_report_message(report_item))
+            elif self.debug or (
+                severity != ReportItemSeverity.DEBUG
+            ):
+                msg = build_report_message(report_item)
+                if msg:
+                    print(msg)
+        else:
+            report_dto = report_item.to_dto()
+            msg = report_item_msg_from_dto(report_dto.message).message
+            severity = report_dto.severity.level
+            if severity == ReportItemSeverity.ERROR:
+                error(
+                    "{msg}{force}".format(
+                        msg=msg,
+                        force=_prepare_force_text(report_item),
+                    )
+                )
+            elif severity == ReportItemSeverity.WARNING:
+                warn(msg)
+            elif msg and (self.debug or severity == ReportItemSeverity.DEBUG):
                 print(msg)
 
 
-def _prepare_force_text(report_item):
+def _prepare_force_text(report_item: ReportItem) -> str:
     force_text_map = {
         codes.SKIP_OFFLINE_NODES: ", use --skip-offline to override",
     }
-    if report_item.forceable:
-        return force_text_map.get(
-            report_item.forceable, ", use --force to override"
-        )
+    force_code = None
+    if isinstance(report_item, reports_item_old.ReportItem):
+        force_code = report_item.forceable
+    elif isinstance(report_item, reports_item.ReportItem):
+        force_code = report_item.severity.force_code
+    if force_code:
+        return force_text_map.get(force_code, ", use --force to override")
     return ""
 
-def process_library_reports(report_item_list):
+
+def process_library_reports(report_item_list: ReportItemList) -> None:
     """
     report_item_list list of ReportItem
     """
@@ -103,19 +134,41 @@ def process_library_reports(report_item_list):
 
     critical_error = False
     for report_item in report_item_list:
-        if report_item.severity == ReportItemSeverity.WARNING:
-            warn(build_report_message(report_item))
-            continue
+        if isinstance(report_item, reports_item_old.ReportItem):
+            severity = report_item.severity
+            if severity == ReportItemSeverity.WARNING:
+                warn(build_report_message(report_item))
+                continue
 
-        if report_item.severity != ReportItemSeverity.ERROR:
-            print(build_report_message(report_item))
-            continue
+            if severity != ReportItemSeverity.ERROR:
+                print(build_report_message(report_item))
+                continue
 
-        error(build_report_message(
-            report_item,
-            _prepare_force_text(report_item)
-        ))
-        critical_error = True
+            error(build_report_message(
+                report_item,
+                _prepare_force_text(report_item)
+            ))
+            critical_error = True
+        else:
+            report_dto = report_item.to_dto()
+            msg = report_item_msg_from_dto(report_dto.message).message
+            severity = report_dto.severity.level
+
+            if severity == ReportItemSeverity.WARNING:
+                warn(msg)
+                continue
+
+            if severity != ReportItemSeverity.ERROR:
+                print(msg)
+                continue
+
+            error(
+                "{msg}{force}".format(
+                    msg=msg,
+                    force=_prepare_force_text(report_item),
+                )
+            )
+            critical_error = True
 
     if critical_error:
         sys.exit(1)

@@ -23,10 +23,7 @@ from pcs.cli.common.parse_args import (
     prepare_options_allowed,
     InputModifiers,
 )
-from pcs.cli.common.reports import (
-    process_library_reports,
-    ReportItemSeverity,
-)
+from pcs.cli.common.reports import process_library_reports
 from pcs.cli.resource.parse_args import (
     parse_bundle_create_options,
     parse_bundle_reset_options,
@@ -34,6 +31,7 @@ from pcs.cli.resource.parse_args import (
     parse_create as parse_create_args,
 )
 from pcs.common.str_tools import indent
+from pcs.common.reports.item_old import ReportItemSeverity
 import pcs.lib.cib.acl as lib_acl
 from pcs.lib.cib.resource import (
     bundle,

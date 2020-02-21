@@ -1004,15 +1004,6 @@ class ResourceIsUnmanaged(NameBuildTest):
             reports.resource_is_unmanaged("R")
         )
 
-class ResourceManagedNoMonitorEnabled(NameBuildTest):
-    def test_build_message(self):
-        self.assert_message_from_report(
-            "Resource 'R' has no enabled monitor operations."
-                " Re-run with '--monitor' to enable them."
-            ,
-            reports.resource_managed_no_monitor_enabled("R")
-        )
-
 
 class SbdDeviceInitializationStarted(NameBuildTest):
     def test_more_devices(self):

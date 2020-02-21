@@ -2,12 +2,14 @@ from typing import (
     List,
 )
 
+from .item import ReportItemSeverity as Severity
+
 
 class ReportItemSeverity:
-    ERROR = "ERROR"
-    WARNING = "WARNING"
-    INFO = "INFO"
-    DEBUG = "DEBUG"
+    ERROR = Severity.ERROR
+    WARNING = Severity.WARNING
+    INFO = Severity.INFO
+    DEBUG = Severity.DEBUG
 
 
 class ReportItem:
