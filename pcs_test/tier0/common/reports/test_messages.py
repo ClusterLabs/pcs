@@ -327,19 +327,11 @@ class MutuallyExclusiveOptions(NameBuildTest):
         )
 
 
-# TODO: different in cli
 class InvalidCibContent(NameBuildTest):
-    # def test_message_can_be_more_verbose(self):
-    #     report = "no verbose\noutput\n"
-    #     self.assert_message_from_report(
-    #         "invalid cib:\n{0}\n\nUse --full for more details.".format(report)
-    #         reports.InvalidCibContent(report, True)
-    #     )
-    #
     def test_message_can_be_more_verbose(self):
         report = "no verbose\noutput\n"
         self.assert_message_from_report(
-            "invalid cib:\n{0}".format(report),
+            "invalid cib:\n{0}\n\nUse --full for more details.".format(report),
             reports.InvalidCibContent(report, True),
         )
 

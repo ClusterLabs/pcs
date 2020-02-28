@@ -6,6 +6,7 @@ import time
 from pcs import settings
 from pcs.common import (
     file_type_codes,
+    reports as report,
     ssl,
 )
 from pcs.common.file import RawFileError
@@ -17,6 +18,7 @@ from pcs.common.reports import (
 from pcs.common.tools import format_environment_error
 from pcs.common.str_tools import join_multilines
 from pcs.common.reports import codes as report_codes
+from pcs.common.reports.item import ReportItem
 from pcs.lib import reports, node_communication_format, sbd, validate
 from pcs.lib.booth import sync as booth_sync
 from pcs.lib.cib import fencing_topology
@@ -129,7 +131,12 @@ def verify(env: LibraryEnvironment, verbose=False):
     #upgrade cib at all times inside env.get_cib). Go to a lower level here.
     if verify_returncode != 0:
         env.report_processor.report(
-            reports.invalid_cib_content(verify_stderr, can_be_more_verbose)
+            ReportItem.error(
+                report.messages.InvalidCibContent(
+                    verify_stderr,
+                    can_be_more_verbose,
+                )
+            )
         )
 
         #Cib is sometimes loadable even if `crm_verify` fails (e.g. when

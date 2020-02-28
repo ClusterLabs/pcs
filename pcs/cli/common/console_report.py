@@ -375,17 +375,6 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
         .format(**info)
     ,
 
-    codes.INVALID_CIB_CONTENT: lambda info:
-        "invalid cib:\n{report}{_more_verbose}"
-        .format(
-            _more_verbose=format_optional(
-                info["can_be_more_verbose"],
-                "\n\nUse --full for more details."
-            ),
-            **info
-        )
-    ,
-
     codes.INVALID_ID: lambda info:
         (
             "invalid {id_description} '{id}', '{invalid_character}' "

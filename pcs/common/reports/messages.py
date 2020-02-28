@@ -661,16 +661,13 @@ class InvalidCibContent(ReportItemMessage):
 
     @property
     def message(self) -> str:
-        # TODO: different in cli
-        # return "invalid cib:\n{report}{more_verbose}".format(
-        #     report=self.report,
-        #     more_verbose=format_optional(
-        #         self.can_be_more_verbose,
-        #         "\n\nUse --full for more details."
-        #     ),
-        #
-        # )
-        return "invalid cib:\n{report}".format(report=self.report)
+        return "invalid cib:\n{report}{more_verbose}".format(
+            report=self.report,
+            more_verbose=format_optional(
+                self.can_be_more_verbose,
+                "\n\nUse --full for more details.",
+            )
+        )
 
 
 @dataclass(frozen=True)
