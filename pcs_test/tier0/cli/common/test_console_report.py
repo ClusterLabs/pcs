@@ -792,12 +792,6 @@ class ResourceDoesNotRun(NameBuildTest):
             reports.resource_does_not_run("R")
         )
 
-class MutuallyExclusiveOptions(NameBuildTest):
-    def test_build_message(self):
-        self.assert_message_from_report(
-            "Only one of some options 'a' and 'b' can be used",
-            reports.mutually_exclusive_options(["b", "a"], "some")
-        )
 
 class ResourceIsUnmanaged(NameBuildTest):
     def test_build_message(self):

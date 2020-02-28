@@ -108,20 +108,6 @@ def duplicate_constraints_exist(
         forceable=forceable
     )
 
-def mutually_exclusive_options(option_names, option_type):
-    """
-    entered options can not coexist
-    set option_names contain entered mutually exclusive options
-    string option_type describes the option
-    """
-    return ReportItem.error(
-        report_codes.MUTUALLY_EXCLUSIVE_OPTIONS,
-        info={
-            "option_names": sorted(option_names),
-            "option_type": option_type,
-        },
-    )
-
 def invalid_cib_content(report, can_be_more_verbose):
     """
     Given cib content is not valid

@@ -34,7 +34,6 @@ import re
 from pcs.common import reports as report
 from pcs.common.reports import ReportItemSeverity
 from pcs.common.reports.item import ReportItem
-from pcs.lib import reports
 from pcs.lib.corosync import constants as corosync_constants
 from pcs.lib.pacemaker.values import (
     timeout_to_seconds,
@@ -274,10 +273,14 @@ class MutuallyExclusive(KeyValidator):
     def validate(self, option_dict):
         found = set(self._option_name_list) & set(option_dict.keys())
         if len(found) > 1:
-            return [reports.mutually_exclusive_options(
-                found,
-                self._option_type,
-            )]
+            return [
+                ReportItem.error(
+                    report.messages.MutuallyExclusiveOptions(
+                        sorted(found),
+                        self._option_type,
+                    )
+                )
+            ]
         return []
 
 class NamesIn(KeyValidator):

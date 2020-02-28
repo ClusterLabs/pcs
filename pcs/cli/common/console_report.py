@@ -370,18 +370,6 @@ def build_node_description(node_types):
 #If it is necessary to put the force text inside the string then the callable
 #must take the force_text parameter.
 CODE_TO_MESSAGE_BUILDER_MAP = {
-    codes.MUTUALLY_EXCLUSIVE_OPTIONS: lambda info:
-        # "{desc}options {option_names} are muttually exclusive".format(
-        "Only one of {desc}options {option_names} can be used".format(
-            desc=format_optional(info["option_type"], "{0} "),
-            option_names=(
-                format_list(sorted(info["option_names"])[:-1])
-                +
-                " and '{0}'".format(sorted(info["option_names"])[-1])
-            )
-        )
-    ,
-
     codes.EMPTY_ID: lambda info:
         "{id_description} cannot be empty"
         .format(**info)
