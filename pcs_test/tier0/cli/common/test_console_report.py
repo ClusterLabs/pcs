@@ -62,36 +62,6 @@ class IdAlreadyExists(NameBuildTest):
             reports.id_already_exists("id")
         )
 
-class BuildInvalidIdTest(NameBuildTest):
-    def test_build_message_with_first_char_invalid(self):
-        self.assert_message_from_report(
-            (
-                "invalid ID_DESCRIPTION 'ID', 'INVALID_CHARACTER' is not a"
-                " valid first character for a ID_DESCRIPTION"
-            ),
-            reports.invalid_id_bad_char(
-                "ID", "ID_DESCRIPTION", "INVALID_CHARACTER",
-                is_first_char=True
-            )
-        )
-    def test_build_message_with_non_first_char_invalid(self):
-        self.assert_message_from_report(
-            (
-                "invalid ID_DESCRIPTION 'ID', 'INVALID_CHARACTER' is not a"
-                " valid character for a ID_DESCRIPTION"
-            ),
-            reports.invalid_id_bad_char(
-                "ID", "ID_DESCRIPTION", "INVALID_CHARACTER",
-                is_first_char=False
-            )
-        )
-
-class InvalidIdIsEmpty(NameBuildTest):
-    def test_all(self):
-        self.assert_message_from_report(
-            "description cannot be empty",
-            reports.invalid_id_is_empty("ID", "description")
-        )
 
 class InvalidScore(NameBuildTest):
     def test_all(self):

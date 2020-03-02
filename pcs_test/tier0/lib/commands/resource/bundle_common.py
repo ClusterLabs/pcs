@@ -555,7 +555,7 @@ class PortMapMixin(SetUpMixin):
             # second
             (
                 severities.ERROR,
-                report_codes.INVALID_ID,
+                report_codes.INVALID_ID_BAD_CHAR,
                 {
                     "invalid_character": "#",
                     "id": "not#valid",
@@ -830,7 +830,7 @@ class StorageMapMixin(SetUpMixin):
             # second
             (
                 severities.ERROR,
-                report_codes.INVALID_ID,
+                report_codes.INVALID_ID_BAD_CHAR,
                 {
                     "invalid_character": "#",
                     "id": "not#valid",

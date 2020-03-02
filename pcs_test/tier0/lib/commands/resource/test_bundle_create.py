@@ -52,7 +52,7 @@ class MinimalCreate(CreateCommandMixin, FixturesMixin, SetUpMixin, TestCase):
         self.env_assist.assert_reports([
             (
                 severities.ERROR,
-                report_codes.INVALID_ID,
+                report_codes.INVALID_ID_BAD_CHAR,
                 {
                     "invalid_character": "#",
                     "id": "B#1",

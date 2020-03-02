@@ -692,14 +692,14 @@ class InvalidIdBadChar(ReportItemMessage):
     specified id is not valid as it contains a forbidden character
     id string specified id
     id_description string decribe id's role
-    invalid_char forbidden character
+    invalid_character forbidden character
     is_first_char is it the first character which is forbidden?
     """
 
     # pylint: disable=invalid-name, redefined-builtin
     id: str
     id_description: str
-    invalid_char: str
+    invalid_character: str
     is_first_char: bool
     _code = codes.INVALID_ID_BAD_CHAR
 
@@ -708,7 +708,7 @@ class InvalidIdBadChar(ReportItemMessage):
         desc = "first " if self.is_first_char else ""
         return (
             f"invalid {self.id_description} '{self.id}', "
-            f"'{self.invalid_char}' is not a valid {desc}character for a "
+            f"'{self.invalid_character}' is not a valid {desc}character for a "
             f"{self.id_description}"
         )
 

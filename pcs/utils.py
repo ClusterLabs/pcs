@@ -46,7 +46,6 @@ from pcs.cli.common.errors import CmdLineInputError
 from pcs.cli.common.lib_wrapper import Library
 from pcs.cli.common.parse_args import InputModifiers
 from pcs.cli.common.reports import (
-    build_report_message,
     process_library_reports,
     ReportProcessorToConsole,
 )
@@ -1978,7 +1977,8 @@ def validate_xml_id(var, description="id"):
     try:
         validate_id(var, description)
     except LibraryError as e:
-        return False, build_report_message(e.args[0])
+        # pylint: disable=no-member
+        return False, e.args[0].message.message
     return True, ""
 
 def is_iso8601_date(var):

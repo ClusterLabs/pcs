@@ -839,7 +839,7 @@ class ElementSearcher(TestCase):
             searcher.get_errors(),
             [
                 fixture.error(
-                    report_codes.INVALID_ID,
+                    report_codes.INVALID_ID_BAD_CHAR,
                     id="1a",
                     id_description="group name",
                     is_first_char=True,

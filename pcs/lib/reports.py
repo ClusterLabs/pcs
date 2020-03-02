@@ -108,42 +108,6 @@ def duplicate_constraints_exist(
         forceable=forceable
     )
 
-def invalid_id_is_empty(id, id_description):
-    # pylint says 'id' is wrong
-    # pylint: disable=invalid-name, redefined-builtin
-    """
-    empty string was specified as an id, which is not valid
-    id string specified id
-    id_description string decribe id's role
-    """
-    return ReportItem.error(
-        report_codes.EMPTY_ID,
-        info={
-            "id": id,
-            "id_description": id_description,
-        }
-    )
-
-def invalid_id_bad_char(id, id_description, bad_char, is_first_char):
-    # pylint says 'id' is wrong
-    # pylint: disable=invalid-name, redefined-builtin
-    """
-    specified id is not valid as it contains a forbidden character
-    id string specified id
-    id_description string decribe id's role
-    bad_char forbidden character
-    is_first_char is it the first character which is forbidden?
-    """
-    return ReportItem.error(
-        report_codes.INVALID_ID,
-        info={
-            "id": id,
-            "id_description": id_description,
-            "is_first_char": is_first_char,
-            "invalid_character": bad_char,
-        }
-    )
-
 def invalid_timeout(timeout):
     """
     specified timeout is not valid (number or other format e.g. 2min)

@@ -923,8 +923,7 @@ class ValueId(TestCase):
             validate.ValueId("id").validate({"id": ""}),
             [
                 fixture.error(
-                    report_codes.EMPTY_ID,
-                    id="",
+                    report_codes.INVALID_ID_IS_EMPTY,
                     id_description=None,
                 ),
             ]
@@ -937,7 +936,7 @@ class ValueId(TestCase):
             ,
             [
                 fixture.error(
-                    report_codes.INVALID_ID,
+                    report_codes.INVALID_ID_BAD_CHAR,
                     id="0-test",
                     id_description="test id",
                     invalid_character="0",
@@ -951,7 +950,7 @@ class ValueId(TestCase):
             validate.ValueId("id").validate({"id": "te#st"}),
             [
                 fixture.error(
-                    report_codes.INVALID_ID,
+                    report_codes.INVALID_ID_BAD_CHAR,
                     id="te#st",
                     id_description=None,
                     invalid_character="#",
@@ -981,10 +980,10 @@ class ValueId(TestCase):
             ,
             [
                 fixture.error(
-                    report_codes.EMPTY_ID,
-                    # TODO: This should be "@&#". However an old validator
-                    # is used and it doesn't work with pairs.
-                    id="",
+                    report_codes.INVALID_ID_IS_EMPTY,
+                    # TODO: This should be INVALID_ID_BAD_CHAR with value
+                    # "@&#". However an old validator is used and it doesn't
+                    # work with pairs and therefore the empty string is used.
                     id_description=None,
                 ),
             ]

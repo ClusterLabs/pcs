@@ -184,8 +184,13 @@ class CreateRoleTest(LibraryAclTest):
             lambda: lib.create_role(self.cib.tree, '#invalid'),
             (
                 severities.ERROR,
-                report_codes.INVALID_ID,
-                {'id': '#invalid'},
+                report_codes.INVALID_ID_BAD_CHAR,
+                {
+                    'id': '#invalid',
+                    'id_description': 'ACL role',
+                    'invalid_character': '#',
+                    'is_first_char': True,
+                },
             ),
         )
 

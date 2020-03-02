@@ -1,5 +1,7 @@
 import re
 
+from pcs.common import reports as report
+from pcs.common.reports.item import ReportItem
 from pcs.lib import reports
 from pcs.lib.errors import LibraryError
 
@@ -95,29 +97,41 @@ def validate_id(id_candidate, description="id", reporter=None):
     # http://www.w3.org/TR/REC-xml-names/#NT-NCName
     # http://www.w3.org/TR/REC-xml/#NT-Name
     if not id_candidate:
-        report = reports.invalid_id_is_empty(id_candidate, description)
+        report_item = ReportItem.error(
+            report.messages.InvalidIdIsEmpty(description)
+        )
         if reporter is None:
             # we check for None so it works with an empty list as well
-            raise LibraryError(report)
-        reporter.append(report)
+            raise LibraryError(report_item)
+        reporter.append(report_item)
         return
     if _ID_FIRST_CHAR_NOT_RE.match(id_candidate[0]):
-        report = reports.invalid_id_bad_char(
-            id_candidate, description, id_candidate[0], True
+        report_item = ReportItem.error(
+            report.messages.InvalidIdBadChar(
+                id_candidate,
+                description,
+                id_candidate[0],
+                True,
+            )
         )
         if reporter is not None:
-            reporter.append(report)
+            reporter.append(report_item)
         else:
-            raise LibraryError(report)
+            raise LibraryError(report_item)
     for char in id_candidate[1:]:
         if _ID_REST_CHARS_NOT_RE.match(char):
-            report = reports.invalid_id_bad_char(
-                id_candidate, description, char, False
+            report_item = ReportItem.error(
+                report.messages.InvalidIdBadChar(
+                    id_candidate,
+                    description,
+                    char,
+                    False,
+                )
             )
             if reporter is not None:
-                reporter.append(report)
+                reporter.append(report_item)
             else:
-                raise LibraryError(report)
+                raise LibraryError(report_item)
 
 def sanitize_id(id_candidate, replacement=""):
     if not id_candidate:

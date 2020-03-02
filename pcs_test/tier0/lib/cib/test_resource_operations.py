@@ -319,7 +319,7 @@ class ValidateOperation(TestCase):
                     forbidden_characters=None,
                 ),
                 fixture.error(
-                    report_codes.INVALID_ID,
+                    report_codes.INVALID_ID_BAD_CHAR,
                     id="0",
                     id_description="operation id",
                     is_first_char=True,
@@ -396,7 +396,7 @@ class ValidateOperation(TestCase):
             [
                 (
                     severities.ERROR,
-                    report_codes.INVALID_ID,
+                    report_codes.INVALID_ID_BAD_CHAR,
                     {
                         "id": "a#b",
                         "id_description": "operation id",

@@ -370,21 +370,6 @@ def build_node_description(node_types):
 #If it is necessary to put the force text inside the string then the callable
 #must take the force_text parameter.
 CODE_TO_MESSAGE_BUILDER_MAP = {
-    codes.EMPTY_ID: lambda info:
-        "{id_description} cannot be empty"
-        .format(**info)
-    ,
-
-    codes.INVALID_ID: lambda info:
-        (
-            "invalid {id_description} '{id}', '{invalid_character}' "
-            "is not a valid {desc}character for a {id_description}"
-        ).format(
-            desc="first " if info["is_first_char"] else "",
-            **info
-        )
-    ,
-
     codes.INVALID_TIMEOUT_VALUE: lambda info:
         "'{timeout}' is not a valid number of seconds to wait"
         .format(**info)

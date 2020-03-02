@@ -192,7 +192,7 @@ class CreateAlertTest(TestCase):
             lambda: alert.create_alert(self.tree, "1alert", "/path"),
             (
                 severities.ERROR,
-                report_codes.INVALID_ID,
+                report_codes.INVALID_ID_BAD_CHAR,
                 {
                     "id": "1alert",
                     "id_description": "alert-id",

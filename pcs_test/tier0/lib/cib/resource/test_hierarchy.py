@@ -232,14 +232,14 @@ class ValidateMoveResourcesToGroupByIds(
             self._validate("1Gr:oup", ["R1"]),
             [
                 fixture.error(
-                    report_codes.INVALID_ID,
+                    report_codes.INVALID_ID_BAD_CHAR,
                     id="1Gr:oup",
                     id_description="group name",
                     is_first_char=True,
                     invalid_character="1",
                 ),
                 fixture.error(
-                    report_codes.INVALID_ID,
+                    report_codes.INVALID_ID_BAD_CHAR,
                     id="1Gr:oup",
                     id_description="group name",
                     is_first_char=False,

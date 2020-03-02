@@ -453,7 +453,7 @@ class CreateInGroup(CreateMixin, TestCase):
             ),
             [
                 fixture.error(
-                    report_codes.INVALID_ID,
+                    report_codes.INVALID_ID_BAD_CHAR,
                     id="0-group",
                     id_description="group name",
                     is_first_char=True,

@@ -128,9 +128,8 @@ class ValidateIdTest(TestCase):
             lambda: lib.validate_id("", "test id"),
             (
                 severity.ERROR,
-                report_codes.EMPTY_ID,
+                report_codes.INVALID_ID_IS_EMPTY,
                 {
-                    "id": "",
                     "id_description": "test id",
                 }
             )
@@ -144,7 +143,7 @@ class ValidateIdTest(TestCase):
             "invalid_character": "",
             "is_first_char": True,
         }
-        report = (severity.ERROR, report_codes.INVALID_ID, info)
+        report = (severity.ERROR, report_codes.INVALID_ID_BAD_CHAR, info)
 
         info["id"] = "0"
         info["invalid_character"] = "0"
@@ -210,7 +209,7 @@ class ValidateIdTest(TestCase):
             "invalid_character": "",
             "is_first_char": False,
         }
-        report = (severity.ERROR, report_codes.INVALID_ID, info)
+        report = (severity.ERROR, report_codes.INVALID_ID_BAD_CHAR, info)
 
         info["id"] = "dum:my"
         info["invalid_character"] = ":"
