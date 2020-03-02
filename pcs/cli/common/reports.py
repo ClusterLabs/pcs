@@ -107,7 +107,7 @@ class ReportProcessorToConsole(ReportProcessor):
                 )
             elif severity == ReportItemSeverity.WARNING:
                 warn(msg)
-            elif msg and (self.debug or severity == ReportItemSeverity.DEBUG):
+            elif msg and (self.debug or severity != ReportItemSeverity.DEBUG):
                 print(msg)
 
 

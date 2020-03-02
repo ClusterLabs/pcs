@@ -58,6 +58,10 @@ class ReportItemSeverity(ImplementsToDto, ImplementsFromDto):
     def info(cls) -> "ReportItemSeverity":
         return cls(level=cls.INFO)
 
+    @classmethod
+    def debug(cls) -> "ReportItemSeverity":
+        return cls(level=cls.DEBUG)
+
 
 def get_severity(
     force_code: Optional[ForceCode], is_forced: bool
@@ -163,6 +167,18 @@ class ReportItem(ImplementsToDto):
     ) -> "ReportItem":
         return cls(
             severity=ReportItemSeverity.info(),
+            message=message,
+            context=context,
+        )
+
+    @classmethod
+    def debug(
+        cls,
+        message: ReportItemMessage,
+        context: Optional[ReportItemContext] = None,
+    ) -> "ReportItem":
+        return cls(
+            severity=ReportItemSeverity.debug(),
             message=message,
             context=context,
         )

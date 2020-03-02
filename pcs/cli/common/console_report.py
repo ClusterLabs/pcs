@@ -370,22 +370,6 @@ def build_node_description(node_types):
 #If it is necessary to put the force text inside the string then the callable
 #must take the force_text parameter.
 CODE_TO_MESSAGE_BUILDER_MAP = {
-    codes.RUN_EXTERNAL_PROCESS_STARTED: lambda info:
-        "Running: {command}\nEnvironment:{env_part}\n{stdin_part}".format(
-            stdin_part=format_optional(
-                info["stdin"],
-                "--Debug Input Start--\n{0}\n--Debug Input End--\n"
-            ),
-            env_part=(
-                "" if not info["environment"] else "\n" + "\n".join([
-                    "  {0}={1}".format(key, val)
-                    for key, val in sorted(info["environment"].items())
-                ])
-            ),
-            **info
-        )
-    ,
-
     codes.RUN_EXTERNAL_PROCESS_FINISHED: lambda info:
         (
             "Finished running: {command}\n"

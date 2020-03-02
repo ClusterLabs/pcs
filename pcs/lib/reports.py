@@ -108,21 +108,6 @@ def duplicate_constraints_exist(
         forceable=forceable
     )
 
-def run_external_process_started(command, stdin, environment):
-    """
-    information about running an external process
-    command string the external process command
-    stdin string passed to the external process via its stdin
-    """
-    return ReportItem.debug(
-        report_codes.RUN_EXTERNAL_PROCESS_STARTED,
-        info={
-            "command": command,
-            "stdin": stdin,
-            "environment": environment,
-        }
-    )
-
 def run_external_process_finished(command, retval, stdout, stderr):
     """
     information about result of running an external process

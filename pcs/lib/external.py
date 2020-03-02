@@ -7,7 +7,9 @@ from typing import (
 )
 
 from pcs import settings
+from pcs.common import reports as report
 from pcs.common.reports import ReportProcessor
+from pcs.common.reports.item import ReportItem
 from pcs.common.system import is_systemd as is_systemctl
 from pcs.common.str_tools import join_multilines
 from pcs.lib import reports
@@ -86,8 +88,12 @@ class CommandRunner:
             )
         )
         self._reporter.report(
-            reports.run_external_process_started(
-                log_args, stdin_string, env_vars
+            ReportItem.debug(
+                report.messages.RunExternalProcessStarted(
+                    log_args,
+                    stdin_string,
+                    env_vars,
+                )
             )
         )
 

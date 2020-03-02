@@ -763,7 +763,7 @@ class RunExternalProcessStarted(ReportItemMessage):
 
     command -- the external process command
     stdin -- passed to the external process via its stdin
-    evironment -- TODO
+    environment -- environment variables for the command
     """
 
     command: str
