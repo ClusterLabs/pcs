@@ -108,16 +108,6 @@ def duplicate_constraints_exist(
         forceable=forceable
     )
 
-def invalid_timeout(timeout):
-    """
-    specified timeout is not valid (number or other format e.g. 2min)
-    timeout string specified invalid timeout
-    """
-    return ReportItem.error(
-        report_codes.INVALID_TIMEOUT_VALUE,
-        info={"timeout": timeout}
-    )
-
 def invalid_score(score):
     """
     specified score value is not valid

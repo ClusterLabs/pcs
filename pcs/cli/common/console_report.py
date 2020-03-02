@@ -370,12 +370,6 @@ def build_node_description(node_types):
 #If it is necessary to put the force text inside the string then the callable
 #must take the force_text parameter.
 CODE_TO_MESSAGE_BUILDER_MAP = {
-    codes.INVALID_TIMEOUT_VALUE: lambda info:
-        "'{timeout}' is not a valid number of seconds to wait"
-        .format(**info)
-    ,
-
-
     codes.INVALID_SCORE: lambda info:
         "invalid score '{score}', use integer or INFINITY or -INFINITY"
         .format(**info)

@@ -77,13 +77,6 @@ class MultipleScoreOptions(NameBuildTest):
             reports.multiple_score_options()
         )
 
-class InvalidTimeout(NameBuildTest):
-    def test_all(self):
-        self.assert_message_from_report(
-            "'24h' is not a valid number of seconds to wait",
-            reports.invalid_timeout("24h")
-        )
-
 
 class BuildRunExternalStartedTest(NameBuildTest):
 

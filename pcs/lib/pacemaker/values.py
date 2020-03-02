@@ -1,8 +1,7 @@
 import re
 
-from pcs.common import reports as report
+from pcs.common import reports
 from pcs.common.reports.item import ReportItem
-from pcs.lib import reports
 from pcs.lib.errors import LibraryError
 
 
@@ -83,7 +82,11 @@ def get_valid_timeout_seconds(timeout_candidate):
         return None
     wait_timeout = timeout_to_seconds(timeout_candidate)
     if wait_timeout is None:
-        raise LibraryError(reports.invalid_timeout(timeout_candidate))
+        raise LibraryError(
+            ReportItem.error(
+                reports.messages.InvalidTimeoutValue(timeout_candidate)
+            )
+        )
     return wait_timeout
 
 def validate_id(id_candidate, description="id", reporter=None):
@@ -98,7 +101,7 @@ def validate_id(id_candidate, description="id", reporter=None):
     # http://www.w3.org/TR/REC-xml/#NT-Name
     if not id_candidate:
         report_item = ReportItem.error(
-            report.messages.InvalidIdIsEmpty(description)
+            reports.messages.InvalidIdIsEmpty(description)
         )
         if reporter is None:
             # we check for None so it works with an empty list as well
@@ -107,7 +110,7 @@ def validate_id(id_candidate, description="id", reporter=None):
         return
     if _ID_FIRST_CHAR_NOT_RE.match(id_candidate[0]):
         report_item = ReportItem.error(
-            report.messages.InvalidIdBadChar(
+            reports.messages.InvalidIdBadChar(
                 id_candidate,
                 description,
                 id_candidate[0],
@@ -121,7 +124,7 @@ def validate_id(id_candidate, description="id", reporter=None):
     for char in id_candidate[1:]:
         if _ID_REST_CHARS_NOT_RE.match(char):
             report_item = ReportItem.error(
-                report.messages.InvalidIdBadChar(
+                reports.messages.InvalidIdBadChar(
                     id_candidate,
                     description,
                     char,
