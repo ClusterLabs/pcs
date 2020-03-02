@@ -57,6 +57,21 @@ class CannotUnmoveUnbanResourceMasterResourceNotPromotable(
         )
 
 
+class InvalidCibContent(CliReportMessageTestBase):
+    def test_message_can_be_more_verbose(self):
+        report = "no verbose\noutput\n"
+        self.assert_message(
+            messages.InvalidCibContent(report, True),
+            "invalid cib:\n{0}\n\nUse --full for more details.".format(report),
+        )
+
+    def test_message_cannot_be_more_verbose(self):
+        report = "some verbose\noutput"
+        self.assert_message(
+            messages.InvalidCibContent(report, False),
+            "invalid cib:\n{0}".format(report),
+        )
+
 # TODO: create test/check that all subclasses of
 # pcs.cli.reports.messages.CliReportMessageCustom have their test class with
 # the same name in this file

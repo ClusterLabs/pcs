@@ -84,6 +84,20 @@ class CannotUnmoveUnbanResourceMasterResourceNotPromotable(
         )
 
 
+class InvalidCibContent(CliReportMessageCustom):
+    _obj: messages.InvalidCibContent
+
+    @property
+    def message(self) -> str:
+        return "invalid cib:\n{report}{more_verbose}".format(
+            report=self._obj.report,
+            more_verbose=format_optional(
+                self._obj.can_be_more_verbose,
+                "\n\nUse --full for more details.",
+            )
+        )
+
+
 def _create_report_msg_map() -> Dict[str, type]:
     result: Dict[str, type] = {}
     for report_msg_cls in get_all_subclasses(CliReportMessageCustom):
