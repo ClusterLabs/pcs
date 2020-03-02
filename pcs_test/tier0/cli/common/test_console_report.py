@@ -63,21 +63,6 @@ class IdAlreadyExists(NameBuildTest):
         )
 
 
-class InvalidScore(NameBuildTest):
-    def test_all(self):
-        self.assert_message_from_report(
-            "invalid score '1M', use integer or INFINITY or -INFINITY",
-            reports.invalid_score("1M")
-        )
-
-class MultipleScoreOptions(NameBuildTest):
-    def test_all(self):
-        self.assert_message_from_report(
-            "multiple score options cannot be specified",
-            reports.multiple_score_options()
-        )
-
-
 class BuildRunExternalStartedTest(NameBuildTest):
 
     def test_build_message_minimal(self):

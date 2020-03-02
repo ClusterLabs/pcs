@@ -108,27 +108,6 @@ def duplicate_constraints_exist(
         forceable=forceable
     )
 
-def invalid_score(score):
-    """
-    specified score value is not valid
-    score specified score value
-    """
-    return ReportItem.error(
-        report_codes.INVALID_SCORE,
-        info={
-            "score": score,
-        }
-    )
-
-def multiple_score_options():
-    """
-    more than one of mutually exclusive score options has been set
-    (score, score-attribute, score-attribute-mangle in rules or colocation sets)
-    """
-    return ReportItem.error(
-        report_codes.MULTIPLE_SCORE_OPTIONS,
-    )
-
 def run_external_process_started(command, stdin, environment):
     """
     information about running an external process

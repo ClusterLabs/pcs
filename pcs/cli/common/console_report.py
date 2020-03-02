@@ -370,15 +370,6 @@ def build_node_description(node_types):
 #If it is necessary to put the force text inside the string then the callable
 #must take the force_text parameter.
 CODE_TO_MESSAGE_BUILDER_MAP = {
-    codes.INVALID_SCORE: lambda info:
-        "invalid score '{score}', use integer or INFINITY or -INFINITY"
-        .format(**info)
-    ,
-
-
-    codes.MULTIPLE_SCORE_OPTIONS: "multiple score options cannot be specified",
-
-
     codes.RUN_EXTERNAL_PROCESS_STARTED: lambda info:
         "Running: {command}\nEnvironment:{env_part}\n{stdin_part}".format(
             stdin_part=format_optional(
