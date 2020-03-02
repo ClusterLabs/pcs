@@ -31,7 +31,7 @@ from collections import namedtuple
 import ipaddress
 import re
 
-from pcs.common import reports as report
+from pcs.common import reports
 from pcs.common.reports import ReportItemSeverity
 from pcs.common.reports.item import ReportItem
 from pcs.lib.corosync import constants as corosync_constants
@@ -187,7 +187,7 @@ class CorosyncOption(KeyValidator):
             # setting arbitrary corosync.conf settings.
             return [
                 ReportItem.error(
-                    report.messages.InvalidUserdefinedOptions(
+                    reports.messages.InvalidUserdefinedOptions(
                         sorted(not_valid_options),
                         self._option_type,
                         "a-z A-Z 0-9 /_-",
@@ -216,7 +216,7 @@ class DependsOnOption(KeyValidator):
     def validate(self, option_dict):
         return [
             ReportItem.error(
-                report.messages.PrerequisiteOptionIsMissing(
+                reports.messages.PrerequisiteOptionIsMissing(
                     option_name,
                     self._prerequisite_name,
                     self._option_type,
@@ -240,7 +240,7 @@ class IsRequiredAll(KeyValidator):
         missing = set(self._option_name_list) - set(option_dict.keys())
         if missing:
             return [ReportItem.error(
-                report.messages.RequiredOptionsAreMissing(
+                reports.messages.RequiredOptionsAreMissing(
                     sorted(missing),
                     self._option_type,
                 )
@@ -257,7 +257,7 @@ class IsRequiredSome(KeyValidator):
         if not found:
             return [
                 ReportItem.error(
-                    report.messages.RequiredOptionOfAlternativesIsMissing(
+                    reports.messages.RequiredOptionOfAlternativesIsMissing(
                         self._option_name_list,
                         self._option_type,
                     )
@@ -275,7 +275,7 @@ class MutuallyExclusive(KeyValidator):
         if len(found) > 1:
             return [
                 ReportItem.error(
-                    report.messages.MutuallyExclusiveOptions(
+                    reports.messages.MutuallyExclusiveOptions(
                         sorted(found),
                         self._option_type,
                     )
@@ -315,11 +315,11 @@ class NamesIn(KeyValidator):
         if invalid_names:
             report_list.append(
                 ReportItem(
-                    severity=report.item.get_severity(
+                    severity=reports.item.get_severity(
                         self._code_for_warning,
                         self._produce_warning,
                     ),
-                    message=report.messages.InvalidOptions(
+                    message=reports.messages.InvalidOptions(
                         sorted(invalid_names),
                         sorted(self._option_name_list),
                         self._option_type,
@@ -330,7 +330,7 @@ class NamesIn(KeyValidator):
         if banned_names:
             report_list.append(
                 ReportItem.error(
-                    report.messages.InvalidOptions(
+                    reports.messages.InvalidOptions(
                         sorted(banned_names),
                         sorted(self._option_name_list),
                         self._option_type,
@@ -394,11 +394,11 @@ class ValuePredicateBase(ValueValidator):
         if not self._is_valid(value.normalized):
             return [
                 ReportItem(
-                    severity=report.item.get_severity(
+                    severity=reports.item.get_severity(
                         self._code_for_warning,
                         self._produce_warning,
                     ),
-                    message=report.messages.InvalidOptionValue(
+                    message=reports.messages.InvalidOptionValue(
                         self._get_option_name_for_report(),
                         value.original,
                         self._get_allowed_values(),
@@ -437,7 +437,7 @@ class ValueCorosyncValue(ValueValidator):
             # setting arbitrary corosync.conf settings.
             return [
                 ReportItem.error(
-                    report.messages.InvalidOptionValue(
+                    reports.messages.InvalidOptionValue(
                         self._get_option_name_for_report(),
                         value.original,
                         None,
