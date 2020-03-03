@@ -63,32 +63,6 @@ class IdAlreadyExists(NameBuildTest):
         )
 
 
-class RunExternalProcessFinished(NameBuildTest):
-    def test_all(self):
-        self.assert_message_from_report(
-            (
-                "Finished running: com-mand\n"
-                "Return value: 0\n"
-                "--Debug Stdout Start--\n"
-                "STDOUT\n"
-                "--Debug Stdout End--\n"
-                "--Debug Stderr Start--\n"
-                "STDERR\n"
-                "--Debug Stderr End--\n"
-            ),
-            reports.run_external_process_finished(
-                "com-mand", 0, "STDOUT", "STDERR"
-            )
-        )
-
-class RunExternalProcessError(NameBuildTest):
-    def test_all(self):
-        self.assert_message_from_report(
-            "unable to run command com-mand: reason",
-            reports.run_external_process_error("com-mand", "reason")
-        )
-
-
 class BuildNodeCommunicationStartedTest(NameBuildTest):
 
     def test_build_message_with_data(self):

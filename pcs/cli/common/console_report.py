@@ -370,24 +370,6 @@ def build_node_description(node_types):
 #If it is necessary to put the force text inside the string then the callable
 #must take the force_text parameter.
 CODE_TO_MESSAGE_BUILDER_MAP = {
-    codes.RUN_EXTERNAL_PROCESS_FINISHED: lambda info:
-        (
-            "Finished running: {command}\n"
-            "Return value: {return_value}\n"
-            "--Debug Stdout Start--\n"
-            "{stdout}\n"
-            "--Debug Stdout End--\n"
-            "--Debug Stderr Start--\n"
-            "{stderr}\n"
-            "--Debug Stderr End--\n"
-        ).format(**info)
-    ,
-
-    codes.RUN_EXTERNAL_PROCESS_ERROR: lambda info:
-        "unable to run command {command}: {reason}"
-        .format(**info)
-    ,
-
     codes.NODE_COMMUNICATION_RETRYING: lambda info:
         (
             "Unable to connect to '{node}' via address '{failed_address}' and "

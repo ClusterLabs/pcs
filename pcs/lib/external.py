@@ -123,7 +123,12 @@ class CommandRunner:
             retval = process.returncode
         except OSError as e:
             raise LibraryError(
-                reports.run_external_process_error(log_args, e.strerror)
+                ReportItem.error(
+                    report.messages.RunExternalProcessError(
+                        log_args,
+                        e.strerror,
+                    )
+                )
             )
 
         self._logger.debug(
@@ -138,9 +143,16 @@ class CommandRunner:
                 out_err=out_err
             )
         )
-        self._reporter.report(reports.run_external_process_finished(
-            log_args, retval, out_std, out_err
-        ))
+        self._reporter.report(
+            ReportItem.debug(
+                report.messages.RunExternalProcessFinished(
+                    log_args,
+                    retval,
+                    out_std,
+                    out_err,
+                )
+            )
+        )
         return out_std, out_err, retval
 
 

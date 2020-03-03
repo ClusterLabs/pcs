@@ -108,38 +108,6 @@ def duplicate_constraints_exist(
         forceable=forceable
     )
 
-def run_external_process_finished(command, retval, stdout, stderr):
-    """
-    information about result of running an external process
-    command string the external process command
-    retval external process's return (exit) code
-    stdout string external process's stdout
-    stderr string external process's stderr
-    """
-    return ReportItem.debug(
-        report_codes.RUN_EXTERNAL_PROCESS_FINISHED,
-        info={
-            "command": command,
-            "return_value": retval,
-            "stdout": stdout,
-            "stderr": stderr,
-        }
-    )
-
-def run_external_process_error(command, reason):
-    """
-    attempt to run an external process failed
-    command string the external process command
-    reason string error description
-    """
-    return ReportItem.error(
-        report_codes.RUN_EXTERNAL_PROCESS_ERROR,
-        info={
-            "command": command,
-            "reason": reason
-        }
-    )
-
 def node_communication_started(target, data):
     """
     request is about to be sent to a remote node, debug info
