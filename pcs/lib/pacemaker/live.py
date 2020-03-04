@@ -375,7 +375,8 @@ def remove_node(runner, node_name):
 ### resources
 
 def resource_cleanup(
-    runner, resource=None, node=None, operation=None, interval=None
+    runner, resource=None, node=None, operation=None, interval=None,
+    strict=False
 ):
     cmd = [__exec("crm_resource"), "--cleanup"]
     if resource:
@@ -386,6 +387,8 @@ def resource_cleanup(
         cmd.extend(["--operation", operation])
     if interval:
         cmd.extend(["--interval", interval])
+    if strict:
+        cmd.extend(["--force"])
 
     stdout, stderr, retval = runner.run(cmd)
 
@@ -400,7 +403,9 @@ def resource_cleanup(
     # usefull output (what has been done) goes to stderr
     return join_multilines([stdout, stderr])
 
-def resource_refresh(runner, resource=None, node=None, full=False, force=None):
+def resource_refresh(
+    runner, resource=None, node=None, strict=False, force=None
+):
     if not force and not node and not resource:
         summary = ClusterState(get_cluster_status_xml(runner)).summary
         operations = summary.nodes.attrs.count * summary.resources.attrs.count
@@ -416,7 +421,7 @@ def resource_refresh(runner, resource=None, node=None, full=False, force=None):
         cmd.extend(["--resource", resource])
     if node:
         cmd.extend(["--node", node])
-    if full:
+    if strict:
         cmd.extend(["--force"])
 
     stdout, stderr, retval = runner.run(cmd)

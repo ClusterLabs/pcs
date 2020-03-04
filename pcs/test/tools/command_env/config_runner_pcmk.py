@@ -240,6 +240,7 @@ class PcmkShortcuts(object):
         before=None,
         resource=None,
         node=None,
+        strict=False,
         stdout="",
         stderr="",
         returncode=0
@@ -254,6 +255,7 @@ class PcmkShortcuts(object):
             placed
         string resource -- the id of a resource to be cleaned
         string node -- the name of the node where resources should be cleaned
+        bool strict -- strict mode of 'crm_resource cleanup' enabled?
         string stdout -- crm_resource's stdout
         string stderr -- crm_resource's stderr
         int returncode -- crm_resource's returncode
@@ -263,6 +265,8 @@ class PcmkShortcuts(object):
             cmd.extend(["--resource", resource])
         if node:
             cmd.extend(["--node", node])
+        if strict:
+            cmd.extend(["--force"])
         self.__calls.place(
             name,
             RunnerCall(

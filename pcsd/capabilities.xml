@@ -1232,6 +1232,16 @@
         daemon urls: resource_cleanup
       </description>
     </capability>
+    <capability id="pcmk.resource.cleanup.strict" in-pcs="1" in-pcsd="1">
+      <description>
+        Deleting failed operations from history of a specified resource can be
+        limited to inner resources only in case of bundled/cloned/grouped
+        resources.
+
+        pcs commands: resource cleanup --strict
+        daemon urls: resource_cleanup (param: strict=1)
+      </description>
+    </capability>
     <capability id="pcmk.resource.refresh" in-pcs="1" in-pcsd="0">
       <description>
         Forget history of resources and redetect their current state. Optionally
@@ -1247,6 +1257,15 @@
 
         pcs commands: resource refresh
         daemon urls: resource_refresh
+      </description>
+    </capability>
+    <capability id="pcmk.resource.refresh.strict" in-pcs="1" in-pcsd="1">
+      <description>
+        Deleting history of a specified resource can be limited to inner
+        resources only in case of bundled/cloned/grouped resources.
+
+        pcs commands: resource refresh --strict
+        daemon urls: resource_refresh (param: strict=1)
       </description>
     </capability>
     <capability id="pcmk.resource.failcount" in-pcs="1" in-pcsd="0">
@@ -1370,12 +1389,29 @@
         pcs commands: stonith cleanup
       </description>
     </capability>
+    <capability id="pcmk.stonith.cleanup.strict" in-pcs="1" in-pcsd="0">
+      <description>
+        Deleting failed operations from history of stonith resources can be
+        limited to inner resources only in case of bundled/cloned/grouped
+        resources.
+
+        pcs commands: stonith cleanup --strict
+      </description>
+    </capability>
     <capability id="pcmk.stonith.refresh" in-pcs="1" in-pcsd="0">
       <description>
         Forget history of stonith resources and redetect their current state.
         Optionally specify a resource and/or a node.
 
         pcs commands: stonith refresh
+      </description>
+    </capability>
+    <capability id="pcmk.stonith.refresh.strict" in-pcs="1" in-pcsd="0">
+      <description>
+        Deleting history of stonith resources can be limited to inner resources
+        only in case of bundled/cloned/grouped resources.
+
+        pcs commands: stonith refresh --strict
       </description>
     </capability>
     <capability id="pcmk.stonith.history.cleanup" in-pcs="1" in-pcsd="0">

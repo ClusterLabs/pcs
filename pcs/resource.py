@@ -2618,6 +2618,7 @@ def _parse_cleanup_refresh(argv):
         "node": node,
         "resource": resource,
         "force": "--force" in utils.pcs_options,
+        "strict": "--strict" in utils.pcs_options,
     }
 
 def resource_cleanup(argv):
@@ -2626,7 +2627,8 @@ def resource_cleanup(argv):
     print(lib_pacemaker.resource_cleanup(
         utils.cmd_runner(),
         resource=options["resource"],
-        node=options["node"]
+        node=options["node"],
+        strict=options["strict"],
     ))
 
 def resource_refresh(argv):
@@ -2635,7 +2637,7 @@ def resource_refresh(argv):
         utils.cmd_runner(),
         resource=options["resource"],
         node=options["node"],
-        full="--full" in utils.pcs_options,
+        strict=options["strict"],
         force=options["force"]
     ))
 

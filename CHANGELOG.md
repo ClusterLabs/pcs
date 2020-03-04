@@ -20,6 +20,8 @@
 - More fixes for the case when PATH environment variable is not set
   ([rhbz#1671174])
 - Error messages in cases when cluster is not set up ([rhbz#1448569])
+- Fix documentation and flags regarding bundled/cloned/grouped resources for
+  `pcs (resource | stonith) (cleanup | refresh)` ([rhbz#1759269])
 
 ### Changed
 - Pcsd no longer sends Server HTTP header ([rhbz#1765606])
@@ -27,6 +29,7 @@
 [rhbz#1448569]: https://bugzilla.redhat.com/show_bug.cgi?id=1448569
 [rhbz#1500012]: https://bugzilla.redhat.com/show_bug.cgi?id=1500012
 [rhbz#1671174]: https://bugzilla.redhat.com/show_bug.cgi?id=1671174
+[rhbz#1759269]: https://bugzilla.redhat.com/show_bug.cgi?id=1759269
 [rhbz#1760434]: https://bugzilla.redhat.com/show_bug.cgi?id=1760434
 [rhbz#1765606]: https://bugzilla.redhat.com/show_bug.cgi?id=1765606
 [rhbz#1770973]: https://bugzilla.redhat.com/show_bug.cgi?id=1770973
