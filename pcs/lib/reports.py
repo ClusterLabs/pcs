@@ -108,14 +108,6 @@ def duplicate_constraints_exist(
         forceable=forceable
     )
 
-def corosync_config_distribution_started():
-    """
-    corosync configuration is about to be sent to nodes
-    """
-    return ReportItem.info(
-        report_codes.COROSYNC_CONFIG_DISTRIBUTION_STARTED,
-    )
-
 def corosync_config_accepted_by_node(node):
     """
     corosync configuration has been accepted by a node
@@ -124,44 +116,6 @@ def corosync_config_accepted_by_node(node):
     return ReportItem.info(
         report_codes.COROSYNC_CONFIG_ACCEPTED_BY_NODE,
         info={"node": node}
-    )
-
-def corosync_config_distribution_node_error(
-    node,
-    severity=ReportItemSeverity.ERROR, forceable=None
-):
-    """
-    communication error occured when saving corosync configuration to a node
-    node string faulty node address / name
-    """
-    return ReportItem(
-        report_codes.COROSYNC_CONFIG_DISTRIBUTION_NODE_ERROR,
-        severity,
-        info={"node": node},
-        forceable=forceable
-    )
-
-def corosync_not_running_check_started():
-    """
-    we are about to make sure corosync is not running on nodes
-    """
-    return ReportItem.info(
-        report_codes.COROSYNC_NOT_RUNNING_CHECK_STARTED,
-    )
-
-def corosync_not_running_check_node_error(
-    node,
-    severity=ReportItemSeverity.ERROR, forceable=None
-):
-    """
-    communication error occured when checking corosync is not running on a node
-    node string faulty node address / name
-    """
-    return ReportItem(
-        report_codes.COROSYNC_NOT_RUNNING_CHECK_NODE_ERROR,
-        severity,
-        info={"node": node},
-        forceable=forceable
     )
 
 def corosync_not_running_on_node_ok(node):

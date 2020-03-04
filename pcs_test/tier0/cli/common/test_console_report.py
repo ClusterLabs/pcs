@@ -1896,20 +1896,6 @@ class NodeNamesDuplication(NameBuildTest):
         )
 
 
-class CorosyncNotRunningCheckStarted(NameBuildTest):
-    def test_all(self):
-        self.assert_message_from_report(
-            "Checking corosync is not running on nodes...",
-            reports.corosync_not_running_check_started()
-        )
-
-class CorosyncNotRunningCheckNodeError(NameBuildTest):
-    def test_all(self):
-        self.assert_message_from_report(
-            "node1: Unable to check if corosync is not running",
-            reports.corosync_not_running_check_node_error("node1")
-        )
-
 class CorosyncNotRunningOnNodeOk(NameBuildTest):
     def test_all(self):
         self.assert_message_from_report(
@@ -2752,25 +2738,11 @@ class CorosyncQuorumAtbWillBeEnabledDueToSbd(NameBuildTest):
         )
 
 
-class CorosyncConfigDistributionStarted(NameBuildTest):
-    def test_all(self):
-        self.assert_message_from_report(
-            "Sending updated corosync.conf to nodes...",
-            reports.corosync_config_distribution_started()
-        )
-
 class CorosyncConfigAcceptedByNode(NameBuildTest):
     def test_all(self):
         self.assert_message_from_report(
             "node1: Succeeded",
             reports.corosync_config_accepted_by_node("node1")
-        )
-
-class CorosyncConfigDistributionNodeError(NameBuildTest):
-    def test_all(self):
-        self.assert_message_from_report(
-            "node1: Unable to set corosync config",
-            reports.corosync_config_distribution_node_error("node1")
         )
 
 class CorosyncConfigReloaded(NameBuildTest):
