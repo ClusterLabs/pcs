@@ -2690,15 +2690,21 @@ def resource_refresh(lib, argv, modifiers):
     """
     del lib
     # TODO deprecated
-    # remove --full, it never had any effect, see rhbz#1759269
+    # remove --full, see rhbz#1759269
+    # --full previously did what --strict was supposed to do (set --force
+    # flag for crm_resource). It was misnamed '--full' because we thought it
+    # was meant to be doing something else than what the --force in
+    # crm_resource actualy did.
     modifiers.ensure_only_supported("--force", "--full", "--strict")
+    if modifiers.is_specified("--full"):
+        sys.stderr.write("Warning: '--full' has been deprecated\n")
     resource = argv.pop(0) if argv and "=" not in argv[0] else None
     parsed_options = prepare_options_allowed(argv, {"node"})
     print(lib_pacemaker.resource_refresh(
         utils.cmd_runner(),
         resource=resource,
         node=parsed_options.get("node"),
-        strict=modifiers.get("--strict"),
+        strict=(modifiers.get("--strict") or modifiers.get("--full")),
         force=modifiers.get("--force"),
     ))
 
