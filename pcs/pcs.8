@@ -232,11 +232,23 @@ Set resources listed to unmanaged mode. When a resource is in unmanaged mode, th
 defaults [options]
 Set default values for resources, if no options are passed, lists currently configured defaults. Defaults do not apply to resources which override them with their own defined values.
 .TP
-cleanup [<resource id>] [node=<node>] [operation=<operation> [interval=<interval>]]
-Make the cluster forget failed operations from history of the resource and re\-detect its current state. This can be useful to purge knowledge of past failures that have since been resolved. If a resource id is not specified then all resources / stonith devices will be cleaned up. If a node is not specified then resources / stonith devices on all nodes will be cleaned up.
+cleanup [<resource id>] [node=<node>] [operation=<operation> [interval=<interval>]] [\fB\-\-strict\fR]
+Make the cluster forget failed operations from history of the resource and re\-detect its current state. This can be useful to purge knowledge of past failures that have since been resolved.
+.br
+If the named resource is part of a group, or one numbered instance of a clone or bundled resource, the clean\-up applies to the whole collective resource unless \fB\-\-strict\fR is given.
+.br
+If a resource id is not specified then all resources / stonith devices will be cleaned up.
+.br
+If a node is not specified then resources / stonith devices on all nodes will be cleaned up.
 .TP
-refresh [<resource id>] [node=<node>] [\fB\-\-full\fR]
-Make the cluster forget the complete operation history (including failures) of the resource and re\-detect its current state. If you are interested in forgetting failed operations only, use the 'pcs resource cleanup' command. If a resource id is not specified then all resources / stonith devices will be refreshed. If a node is not specified then resources / stonith devices on all nodes will be refreshed. Use \fB\-\-full\fR to refresh a resource on all nodes, otherwise only nodes where the resource's state is known will be considered.
+refresh [<resource id>] [node=<node>] [\fB\-\-strict\fR]
+Make the cluster forget the complete operation history (including failures) of the resource and re\-detect its current state. If you are interested in forgetting failed operations only, use the 'pcs resource cleanup' command.
+.br
+If the named resource is part of a group, or one numbered instance of a clone or bundled resource, the clean\-up applies to the whole collective resource unless \fB\-\-strict\fR is given.
+.br
+If a resource id is not specified then all resources / stonith devices will be refreshed.
+.br
+If a node is not specified then resources / stonith devices on all nodes will be refreshed.
 .TP
 failcount show [<resource id>] [node=<node>] [operation=<operation> [interval=<interval>]] [\fB\-\-full\fR]
 Show current failcount for resources, optionally filtered by a resource, node, operation and its interval. If \fB\-\-full\fR is specified do not sum failcounts per resource and node. Use 'pcs resource cleanup' or 'pcs resource refresh' to reset failcounts.
@@ -490,11 +502,23 @@ Allow the cluster to use the stonith devices. If \fB\-\-wait\fR is specified, pc
 disable <stonith id>... [\fB\-\-wait[=n]\fR]
 Attempt to stop the stonith devices if they are running and disallow the cluster to use them. If \fB\-\-wait\fR is specified, pcs will wait up to 'n' seconds for the stonith devices to stop and then return 0 if the stonith devices are stopped or 1 if the stonith devices have not stopped. If 'n' is not specified it defaults to 60 minutes.
 .TP
-cleanup [<stonith id>] [\fB\-\-node\fR <node>]
-Make the cluster forget failed operations from history of the stonith device and re\-detect its current state. This can be useful to purge knowledge of past failures that have since been resolved. If a stonith id is not specified then all resources / stonith devices will be cleaned up. If a node is not specified then resources / stonith devices on all nodes will be cleaned up.
+cleanup [<stonith id>] [\fB\-\-node\fR <node>] [\fB\-\-strict\fR]
+Make the cluster forget failed operations from history of the stonith device and re\-detect its current state. This can be useful to purge knowledge of past failures that have since been resolved.
+.br
+If the named stonith device is part of a group, or one numbered instance of a clone or bundled resource, the clean\-up applies to the whole collective resource unless \fB\-\-strict\fR is given.
+.br
+If a stonith id is not specified then all resources / stonith devices will be cleaned up.
+.br
+If a node is not specified then resources / stonith devices on all nodes will be cleaned up.
 .TP
-refresh [<stonith id>] [\fB\-\-node\fR <node>] [\fB\-\-full\fR]
-Make the cluster forget the complete operation history (including failures) of the stonith device and re\-detect its current state. If you are interested in forgetting failed operations only, use the 'pcs stonith cleanup' command. If a stonith id is not specified then all resources / stonith devices will be refreshed. If a node is not specified then resources / stonith devices on all nodes will be refreshed. Use \fB\-\-full\fR to refresh a stonith device on all nodes, otherwise only nodes where the stonith device's state is known will be considered.
+refresh [<stonith id>] [\fB\-\-node\fR <node>] [\fB\-\-strict\fR]
+Make the cluster forget the complete operation history (including failures) of the stonith device and re\-detect its current state. If you are interested in forgetting failed operations only, use the 'pcs stonith cleanup' command.
+.br
+If the named stonith device is part of a group, or one numbered instance of a clone or bundled resource, the clean\-up applies to the whole collective resource unless \fB\-\-strict\fR is given.
+.br
+If a stonith id is not specified then all resources / stonith devices will be refreshed.
+.br
+If a node is not specified then resources / stonith devices on all nodes will be refreshed.
 .TP
 level [config]
 Lists all of the fencing levels currently configured.

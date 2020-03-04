@@ -13,12 +13,15 @@
   resources get stopped ([rhbz#1781303])
 - Booth documentation clarified ([ghissue#231])
 - Detection of fence history support ([rhbz#1793574])
+- Fix documentation and flags regarding bundled/cloned/grouped resources for
+  `pcs (resource | stonith) (cleanup | refresh)` ([rhbz#1805082])
 
 [ghissue#231]: https://github.com/ClusterLabs/pcs/issues/231
 [rhbz#1676431]: https://bugzilla.redhat.com/show_bug.cgi?id=1676431
 [rhbz#1743731]: https://bugzilla.redhat.com/show_bug.cgi?id=1743731
 [rhbz#1781303]: https://bugzilla.redhat.com/show_bug.cgi?id=1781303
 [rhbz#1793574]: https://bugzilla.redhat.com/show_bug.cgi?id=1793574
+[rhbz#1805082]: https://bugzilla.redhat.com/show_bug.cgi?id=1805082
 
 
 ## [0.10.4] - 2019-11-28

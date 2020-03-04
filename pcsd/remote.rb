@@ -1208,26 +1208,20 @@ def resource_stop(params, request, auth_user)
 end
 
 def resource_cleanup(params, request, auth_user)
-  if not allowed_for_local_cluster(auth_user, Permissions::WRITE)
-    return 403, 'Permission denied'
-  end
-  stdout, stderr, retval = run_cmd(
-    auth_user, PCS, "resource", "cleanup", params[:resource]
-  )
-  if retval == 0
-    return JSON.generate({"success" => "true"})
-  else
-    return JSON.generate({"error" => "true", "stdout" => stdout, "stderror" => stderr})
-  end
+  return _resource_cleanup_refresh("cleanup", params, request, auth_user)
 end
 
 def resource_refresh(params, request, auth_user)
+  return _resource_cleanup_refresh("refresh", params, request, auth_user)
+end
+
+def _resource_cleanup_refresh(action, params, request, auth_user)
   if not allowed_for_local_cluster(auth_user, Permissions::WRITE)
     return 403, 'Permission denied'
   end
-  cmd = [PCS, "resource", "refresh", params[:resource]]
-  if params[:full] == '1'
-    cmd << "--full"
+  cmd = [PCS, "resource", action, params[:resource]]
+  if params[:strict] == '1'
+    cmd << "--force"
   end
   stdout, stderr, retval = run_cmd(auth_user, *cmd)
   if retval == 0

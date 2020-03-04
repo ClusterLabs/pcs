@@ -16,7 +16,10 @@ PCS_LONG_OPTIONS = [
     "force", "skip-offline", "interactive", "autodelete", "simulate",
     "all", "full", "local", "wait", "config",
     "start", "enable", "disabled", "off", "request-timeout=",
+    # resource (safe-)disable
     "safe", "no-strict",
+    # resource cleanup | refresh
+    "strict",
     "pacemaker", "corosync",
     "no-default-ops", "defaults", "nodesc",
     "master", "name=", "group=", "node=",
@@ -384,6 +387,7 @@ class InputModifiers():
             "--simulate": "--simulate" in options,
             "--skip-offline": "--skip-offline" in options,
             "--start": "--start" in options,
+            "--strict": "--strict" in options,
             # string values
             "--after": options.get("--after", None),
             "--before": options.get("--before", None),

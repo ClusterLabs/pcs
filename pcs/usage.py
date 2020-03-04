@@ -552,23 +552,30 @@ Commands:
         override them with their own defined values.
 
     cleanup [<resource id>] [node=<node>] [operation=<operation>
-            [interval=<interval>]]
+            [interval=<interval>]] [--strict]
         Make the cluster forget failed operations from history of the resource
         and re-detect its current state. This can be useful to purge knowledge
-        of past failures that have since been resolved. If a resource id is not
-        specified then all resources / stonith devices will be cleaned up. If a
-        node is not specified then resources / stonith devices on all nodes will
-        be cleaned up.
+        of past failures that have since been resolved.
+        If the named resource is part of a group, or one numbered instance of a
+        clone or bundled resource, the clean-up applies to the whole collective
+        resource unless --strict is given.
+        If a resource id is not specified then all resources / stonith devices
+        will be cleaned up.
+        If a node is not specified then resources / stonith devices on all
+        nodes will be cleaned up.
 
-    refresh [<resource id>] [node=<node>] [--full]
+    refresh [<resource id>] [node=<node>] [--strict]
         Make the cluster forget the complete operation history (including
         failures) of the resource and re-detect its current state. If you are
         interested in forgetting failed operations only, use the 'pcs resource
-        cleanup' command. If a resource id is not specified then all resources
-        / stonith devices will be refreshed. If a node is not specified then
-        resources / stonith devices on all nodes will be refreshed. Use --full
-        to refresh a resource on all nodes, otherwise only nodes where the
-        resource's state is known will be considered.
+        cleanup' command.
+        If the named resource is part of a group, or one numbered instance of a
+        clone or bundled resource, the clean-up applies to the whole collective
+        resource unless --strict is given.
+        If a resource id is not specified then all resources / stonith devices
+        will be refreshed.
+        If a node is not specified then resources / stonith devices on all
+        nodes will be refreshed.
 
     failcount show [<resource id>] [node=<node>] [operation=<operation>
             [interval=<interval>]] [--full]
@@ -1070,24 +1077,30 @@ Commands:
         stonith devices are stopped or 1 if the stonith devices have not
         stopped. If 'n' is not specified it defaults to 60 minutes.
 
-    cleanup [<stonith id>] [--node <node>]
+    cleanup [<stonith id>] [--node <node>] [--strict]
         Make the cluster forget failed operations from history of the stonith
         device and re-detect its current state. This can be useful to purge
-        knowledge of past failures that have since been resolved. If a stonith
-        id is not specified then all resources / stonith devices will be cleaned
-        up. If a node is not specified then resources / stonith devices on all
+        knowledge of past failures that have since been resolved.
+        If the named stonith device is part of a group, or one numbered
+        instance of a clone or bundled resource, the clean-up applies to the
+        whole collective resource unless --strict is given.
+        If a stonith id is not specified then all resources / stonith devices
+        will be cleaned up.
+        If a node is not specified then resources / stonith devices on all
         nodes will be cleaned up.
 
-    refresh [<stonith id>] [--node <node>] [--full]
+    refresh [<stonith id>] [--node <node>] [--strict]
         Make the cluster forget the complete operation history (including
         failures) of the stonith device and re-detect its current state. If you
         are interested in forgetting failed operations only, use the 'pcs
-        stonith cleanup' command. If a stonith id is not specified then all
-        resources / stonith devices will be refreshed. If a node is not
-        specified then resources / stonith devices on all nodes will be
-        refreshed. Use --full to refresh a stonith device on all nodes,
-        otherwise only nodes where the stonith device's state is known will be
-        considered.
+        stonith cleanup' command.
+        If the named stonith device is part of a group, or one numbered
+        instance of a clone or bundled resource, the clean-up applies to the
+        whole collective resource unless --strict is given.
+        If a stonith id is not specified then all resources / stonith devices
+        will be refreshed.
+        If a node is not specified then resources / stonith devices on all
+        nodes will be refreshed.
 
     level [config]
         Lists all of the fencing levels currently configured.

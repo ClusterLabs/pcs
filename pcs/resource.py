@@ -2668,7 +2668,7 @@ def resource_cleanup(lib, argv, modifiers):
     Options: no options
     """
     del lib
-    modifiers.ensure_only_supported()
+    modifiers.ensure_only_supported("--strict")
     resource = argv.pop(0) if argv and "=" not in argv[0] else None
     parsed_options = prepare_options_allowed(
         argv, {"node", "operation", "interval"}
@@ -2679,6 +2679,7 @@ def resource_cleanup(lib, argv, modifiers):
         node=parsed_options.get("node"),
         operation=parsed_options.get("operation"),
         interval=parsed_options.get("interval"),
+        strict=modifiers.get("--strict"),
     ))
 
 def resource_refresh(lib, argv, modifiers):
@@ -2688,14 +2689,16 @@ def resource_refresh(lib, argv, modifiers):
       * --force - do refresh even though it may be time consuming
     """
     del lib
-    modifiers.ensure_only_supported("--force", "--full")
+    # TODO deprecated
+    # remove --full, it never had any effect, see rhbz#1759269
+    modifiers.ensure_only_supported("--force", "--full", "--strict")
     resource = argv.pop(0) if argv and "=" not in argv[0] else None
     parsed_options = prepare_options_allowed(argv, {"node"})
     print(lib_pacemaker.resource_refresh(
         utils.cmd_runner(),
         resource=resource,
         node=parsed_options.get("node"),
-        full=modifiers.get("--full"),
+        strict=modifiers.get("--strict"),
         force=modifiers.get("--force"),
     ))
 
