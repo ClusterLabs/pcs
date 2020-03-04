@@ -63,101 +63,6 @@ class IdAlreadyExists(NameBuildTest):
         )
 
 
-class BuildNodeCommunicationStartedTest(NameBuildTest):
-
-    def test_build_message_with_data(self):
-        self.assert_message_from_report(
-            (
-                "Sending HTTP Request to: TARGET\n"
-                "--Debug Input Start--\n"
-                "DATA\n"
-                "--Debug Input End--\n"
-            ),
-            reports.node_communication_started(
-                "TARGET", "DATA"
-            )
-        )
-
-    def test_build_message_without_data(self):
-        self.assert_message_from_report(
-            "Sending HTTP Request to: TARGET\n",
-            reports.node_communication_started(
-                "TARGET", ""
-            )
-        )
-
-class NodeCommunicationdDebugInfo(NameBuildTest):
-    def test_all(self):
-        self.assert_message_from_report(
-            (
-                "Communication debug info for calling: node1\n"
-                "--Debug Communication Info Start--\n"
-                "DATA\n"
-                "--Debug Communication Info End--\n"
-            ),
-            reports.node_communication_debug_info("node1", "DATA")
-        )
-
-class NodeCommunicationErrorTimedOut(NameBuildTest):
-    def test_success(self):
-        self.assert_message_from_report(
-            (
-                "node-1: Connection timeout, try setting higher timeout in "
-                "--request-timeout option (Connection timed out after 60049 "
-                "milliseconds)"
-            ),
-            reports.node_communication_error_timed_out(
-                "node-1",
-                "/remote/command",
-                "Connection timed out after 60049 milliseconds"
-            )
-        )
-
-class NodeCommunicationErrorPermissionDenied(NameBuildTest):
-    def test_all(self):
-        self.assert_message_from_report(
-            "node3: Permission denied (reason)",
-            reports.node_communication_error_permission_denied(
-                "node3", "com-mand", "reason"
-            )
-        )
-
-class NodeCommunicationErrorUnsupportedCommand(NameBuildTest):
-    def test_all(self):
-        self.assert_message_from_report(
-            "node1: Unsupported command (reason), try upgrading pcsd",
-            reports.node_communication_error_unsupported_command(
-                "node1", "com-mand", "reason"
-            )
-        )
-
-class NodeCommunicationErrorUnableToConnect(NameBuildTest):
-    def test_all(self):
-        self.assert_message_from_report(
-            "Unable to connect to node1 (reason)",
-            reports.node_communication_error_unable_to_connect(
-                "node1", "com-mand", "reason"
-            )
-        )
-
-class NodeCommunicationErrorOtherError(NameBuildTest):
-    def test_all(self):
-        self.assert_message_from_report(
-            "Error connecting to node1 (reason)",
-            reports.node_communication_error_other_error(
-                "node1", "com-mand", "reason"
-            )
-        )
-
-class NodeCommunicationCommandUnsuccessful(NameBuildTest):
-    def test_all(self):
-        self.assert_message_from_report(
-            "node1: reason",
-            reports.node_communication_command_unsuccessful(
-                "node1", "com-mand", "reason"
-            )
-        )
-
 class InvalidResponseFormat(NameBuildTest):
     def test_all(self):
         self.assert_message_from_report(
@@ -165,52 +70,6 @@ class InvalidResponseFormat(NameBuildTest):
             reports.invalid_response_format("node1")
         )
 
-class NodeCommunicationFinished(NameBuildTest):
-    def test_all(self):
-        self.assert_message_from_report(
-            (
-                "Finished calling: node1\n"
-                "Response Code: 0\n"
-                "--Debug Response Start--\n"
-                "DATA\n"
-                "--Debug Response End--\n"
-            ),
-            reports.node_communication_finished("node1", 0, "DATA")
-        )
-
-class NodeCommunicationNotConnected(NameBuildTest):
-    def test_all(self):
-        self.assert_message_from_report(
-            "Unable to connect to node2 (this is reason)",
-            reports.node_communication_not_connected("node2", "this is reason")
-        )
-
-class NodeCommunicationProxyIsSet(NameBuildTest):
-    def test_minimal(self):
-        self.assert_message_from_report(
-            "Proxy is set in environment variables, try disabling it",
-            reports.node_communication_proxy_is_set()
-        )
-
-    def test_with_node(self):
-        self.assert_message_from_report(
-            "Proxy is set in environment variables, try disabling it",
-            reports.node_communication_proxy_is_set(node="node1")
-        )
-
-    def test_with_address(self):
-        self.assert_message_from_report(
-            "Proxy is set in environment variables, try disabling it",
-            reports.node_communication_proxy_is_set(address="aaa")
-        )
-
-    def test_all(self):
-        self.assert_message_from_report(
-            "Proxy is set in environment variables, try disabling it",
-            reports.node_communication_proxy_is_set(
-                node="node1", address="aaa"
-            )
-        )
 
 class FormatOptionalTest(TestCase):
     def test_info_key_is_falsy(self):
@@ -2453,29 +2312,6 @@ class UnableToUpgradeCibToRequiredVersion(NameBuildTest):
             reports.unable_to_upgrade_cib_to_required_version("0.8", "1.1")
         )
 
-class NodeCommunicationRetrying(NameBuildTest):
-    def test_success(self):
-        self.assert_message_from_report(
-            (
-                "Unable to connect to 'node_name' via address 'failed.address' "
-                "and port '2224'. Retrying request 'my/request' via address "
-                "'next.address' and port '2225'"
-            ),
-            reports.node_communication_retrying(
-                "node_name", "failed.address", "2224", "next.address", "2225",
-                "my/request",
-            )
-        )
-
-class NodeCommunicationNoMoreAddresses(NameBuildTest):
-    def test_success(self):
-        self.assert_message_from_report(
-            "Unable to connect to 'node_name' via any of its addresses",
-            reports.node_communication_no_more_addresses(
-                "node_name",
-                "my/request",
-            )
-        )
 
 class HostNotFound(NameBuildTest):
     def test_single_host(self):
@@ -2511,17 +2347,6 @@ class HostAlreadyAuthorized(NameBuildTest):
             reports.host_already_authorized("host")
         )
 
-class NodeCommunicationErrorNotAuthorized(NameBuildTest):
-    def test_success(self):
-        self.assert_message_from_report(
-            (
-                "Unable to authenticate to node1 (some error), try running "
-                "'pcs host auth node1'"
-            ),
-            reports.node_communication_error_not_authorized(
-                "node1", "some-command", "some error"
-            )
-        )
 
 class ClusterWillBeDestroyed(NameBuildTest):
     def test_all(self):
@@ -2759,16 +2584,6 @@ class WaitForNodeStartupWithoutStart(NameBuildTest):
         self.assert_message_from_report(
             "Cannot specify '--wait' without specifying '--start'",
             reports.wait_for_node_startup_without_start()
-        )
-
-class PcsdVersionTooOld(NameBuildTest):
-    def test_success(self):
-        self.assert_message_from_report(
-            (
-                "node1: Old version of pcsd is running on the node, therefore "
-                "it is unable to perform the action"
-            ),
-            reports.pcsd_version_too_old("node1")
         )
 
 class PcsdSslCertAndKeyDistributionStarted(NameBuildTest):

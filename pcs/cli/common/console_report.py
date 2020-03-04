@@ -370,96 +370,6 @@ def build_node_description(node_types):
 #If it is necessary to put the force text inside the string then the callable
 #must take the force_text parameter.
 CODE_TO_MESSAGE_BUILDER_MAP = {
-    codes.NODE_COMMUNICATION_RETRYING: lambda info:
-        (
-            "Unable to connect to '{node}' via address '{failed_address}' and "
-            "port '{failed_port}'. Retrying request '{request}' via address "
-            "'{next_address}' and port '{next_port}'"
-        ).format(**info)
-    ,
-
-    codes.NODE_COMMUNICATION_NO_MORE_ADDRESSES: lambda info:
-        "Unable to connect to '{node}' via any of its addresses".format(**info)
-    ,
-
-    codes.NODE_COMMUNICATION_DEBUG_INFO: lambda info:
-        (
-            "Communication debug info for calling: {target}\n"
-            "--Debug Communication Info Start--\n"
-            "{data}\n"
-            "--Debug Communication Info End--\n"
-        ).format(**info)
-    ,
-
-    codes.NODE_COMMUNICATION_STARTED: lambda info:
-        "Sending HTTP Request to: {target}\n{data_part}".format(
-            data_part=format_optional(
-                info["data"],
-                "--Debug Input Start--\n{0}\n--Debug Input End--\n"
-            ),
-            **info
-        )
-    ,
-
-    codes.NODE_COMMUNICATION_FINISHED: lambda info:
-        (
-            "Finished calling: {target}\n"
-            "Response Code: {response_code}\n"
-            "--Debug Response Start--\n"
-            "{response_data}\n"
-            "--Debug Response End--\n"
-        ).format(**info)
-    ,
-
-    codes.NODE_COMMUNICATION_NOT_CONNECTED: lambda info:
-        "Unable to connect to {node} ({reason})"
-        .format(**info)
-    ,
-
-    codes.NODE_COMMUNICATION_ERROR_NOT_AUTHORIZED: lambda info:
-        (
-            "Unable to authenticate to {node} ({reason}),"
-            " try running 'pcs host auth {node}'"
-        )
-        .format(**info)
-    ,
-
-    codes.NODE_COMMUNICATION_ERROR_PERMISSION_DENIED: lambda info:
-        "{node}: Permission denied ({reason})"
-        .format(**info)
-    ,
-
-    codes.NODE_COMMUNICATION_ERROR_UNSUPPORTED_COMMAND: lambda info:
-        "{node}: Unsupported command ({reason}), try upgrading pcsd"
-        .format(**info)
-    ,
-
-    codes.NODE_COMMUNICATION_COMMAND_UNSUCCESSFUL: lambda info:
-        "{node}: {reason}"
-        .format(**info)
-    ,
-
-    codes.NODE_COMMUNICATION_ERROR: lambda info:
-        "Error connecting to {node} ({reason})"
-        .format(**info)
-    ,
-
-    codes.NODE_COMMUNICATION_ERROR_UNABLE_TO_CONNECT: lambda info:
-        "Unable to connect to {node} ({reason})"
-        .format(**info)
-    ,
-
-    codes.NODE_COMMUNICATION_ERROR_TIMED_OUT: lambda info:
-        (
-            "{node}: Connection timeout, try setting higher timeout in "
-            "--request-timeout option ({reason})"
-        ).format(**info)
-    ,
-
-    codes.NODE_COMMUNICATION_PROXY_IS_SET:
-        "Proxy is set in environment variables, try disabling it"
-    ,
-
     codes.DEFAULTS_CAN_BE_OVERRIDEN:
         "Defaults do not apply to resources which override them with their "
         "own defined values"
@@ -1690,12 +1600,6 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
     codes.WAIT_FOR_NODE_STARTUP_TIMED_OUT: "Node(s) startup timed out",
     codes.WAIT_FOR_NODE_STARTUP_ERROR:
         "Unable to verify all nodes have started"
-    ,
-    codes.PCSD_VERSION_TOO_OLD: lambda info:
-        (
-            "{node}: Old version of pcsd is running on the node, therefore it "
-            "is unable to perform the action"
-        ).format(**info)
     ,
     codes.PCSD_SSL_CERT_AND_KEY_DISTRIBUTION_STARTED: lambda info:
         "Synchronizing pcsd SSL certificates on node(s) {_nodes}...".format(

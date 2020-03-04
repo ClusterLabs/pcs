@@ -548,12 +548,7 @@ class NodeCommunicationNoMoreAddresses(NameBuildTest):
 
 class NodeCommunicationErrorNotAuthorized(NameBuildTest):
     def test_success(self):
-        # TODO: different in cli
         self.assert_message_from_report(
-            # (
-            #     "Unable to authenticate to node1 (some error), try running "
-            #     "'pcs host auth node1'"
-            # ),
             "Unable to authenticate to node1 (some error)",
             reports.NodeCommunicationErrorNotAuthorized(
                 "node1", "some-command", "some error"
@@ -611,13 +606,7 @@ class NodeCommunicationErrorUnableToConnect(NameBuildTest):
 
 class NodeCommunicationErrorTimedOut(NameBuildTest):
     def test_success(self):
-        # TODO: different in cli
         self.assert_message_from_report(
-            # (
-            #     "node-1: Connection timeout, try setting higher timeout in "
-            #     "--request-timeout option (Connection timed out after 60049 "
-            #     "milliseconds)"
-            # ),
             (
                 "node-1: Connection timeout (Connection timed out after 60049 "
                 "milliseconds)"

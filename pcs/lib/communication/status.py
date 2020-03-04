@@ -1,8 +1,10 @@
 import json
 from typing import Tuple
 
+from pcs.common import reports as report
 from pcs.common.node_communicator import RequestData
 from pcs.common.reports import ReportItemSeverity
+from pcs.common.reports.item import ReportItem
 from pcs.lib import reports
 from pcs.lib.communication.tools import (
     AllSameDataMixin,
@@ -39,11 +41,11 @@ class GetFullClusterStatusPlaintext(
         )
 
     def _process_response(self, response):
-        report = response_to_report_item(
+        report_item = response_to_report_item(
             response, severity=ReportItemSeverity.WARNING
         )
-        if report is not None:
-            self._report(report)
+        if report_item is not None:
+            self._report(report_item)
             return self._get_next_list()
 
         node = response.request.target.label
@@ -55,10 +57,12 @@ class GetFullClusterStatusPlaintext(
                 return []
             if output["status_msg"]:
                 self._report(
-                    reports.node_communication_command_unsuccessful(
-                        node,
-                        response.request.action,
-                        output["status_msg"]
+                    ReportItem.error(
+                        report.messages.NodeCommunicationCommandUnsuccessful(
+                            node,
+                            response.request.action,
+                            output["status_msg"],
+                        )
                     )
                 )
             # TODO Node name should be added to each received report item and
@@ -74,10 +78,13 @@ class GetFullClusterStatusPlaintext(
                         report_data["report_text"]
                     ):
                         self._report(
-                            reports.node_communication_command_unsuccessful(
-                                node,
-                                response.request.action,
-                                report_data["report_text"]
+                            ReportItem.error(
+                                report.messages
+                                .NodeCommunicationCommandUnsuccessful(
+                                    node,
+                                    response.request.action,
+                                    report_data["report_text"],
+                                )
                             )
                         )
         except (ValueError, LookupError, TypeError):

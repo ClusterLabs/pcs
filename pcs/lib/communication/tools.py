@@ -1,4 +1,5 @@
 from pcs.common.reports import codes as report_codes
+from pcs.common.reports import item_old
 from pcs.common.node_communicator import Request
 from pcs.common.reports import ReportItemSeverity
 from pcs.lib import reports
@@ -108,11 +109,16 @@ class RunRemotelyBase(CommunicationCommandInterface):
 
         list report_list -- list of ReportItem objects
         """
+        def _is_error(report_item):
+            if isinstance(report_item, item_old.ReportItem):
+                return report_item.severity == ReportItemSeverity.ERROR
+            return report_item.severity.level == ReportItemSeverity.ERROR
+
         self.__report_processor.report_list(report_list)
         if self.has_errors:
             return
         for report_item in report_list:
-            if report_item.severity == ReportItemSeverity.ERROR:
+            if _is_error(report_item):
                 self.__has_errors = True
                 return
 

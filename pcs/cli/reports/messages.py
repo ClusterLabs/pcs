@@ -98,6 +98,28 @@ class InvalidCibContent(CliReportMessageCustom):
         )
 
 
+class NodeCommunicationErrorNotAuthorized(CliReportMessageCustom):
+    _obj: messages.NodeCommunicationErrorNotAuthorized
+
+    @property
+    def message(self) -> str:
+        return (
+            f"Unable to authenticate to {self._obj.node} ({self._obj.reason})"
+            f", try running 'pcs host auth {self._obj.node}'"
+        )
+
+
+class NodeCommunicationErrorTimedOut(CliReportMessageCustom):
+    _obj: messages.NodeCommunicationErrorTimedOut
+
+    @property
+    def message(self) -> str:
+        return (
+            f"{self._obj.node}: Connection timeout, try setting higher timeout "
+            f"in --request-timeout option ({self._obj.reason})"
+        )
+
+
 def _create_report_msg_map() -> Dict[str, type]:
     result: Dict[str, type] = {}
     for report_msg_cls in get_all_subclasses(CliReportMessageCustom):

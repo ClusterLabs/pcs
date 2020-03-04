@@ -72,6 +72,36 @@ class InvalidCibContent(CliReportMessageTestBase):
             "invalid cib:\n{0}".format(report),
         )
 
+
+class NodeCommunicationErrorNotAuthorized(CliReportMessageTestBase):
+    def test_success(self):
+        self.assert_message(
+            messages.NodeCommunicationErrorNotAuthorized(
+                "node1", "some-command", "some error"
+            ),
+            (
+                "Unable to authenticate to node1 (some error), try running "
+                "'pcs host auth node1'"
+            ),
+        )
+
+
+class NodeCommunicationErrorTimedOut(CliReportMessageTestBase):
+    def test_success(self):
+        self.assert_message(
+            messages.NodeCommunicationErrorTimedOut(
+                "node-1",
+                "/remote/command",
+                "Connection timed out after 60049 milliseconds",
+            ),
+            (
+                "node-1: Connection timeout, try setting higher timeout in "
+                "--request-timeout option (Connection timed out after 60049 "
+                "milliseconds)"
+            ),
+        )
+
+
 # TODO: create test/check that all subclasses of
 # pcs.cli.reports.messages.CliReportMessageCustom have their test class with
 # the same name in this file

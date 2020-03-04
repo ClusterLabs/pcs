@@ -1090,11 +1090,6 @@ class NodeCommunicationErrorTimedOut(ReportItemMessage):
 
     @property
     def message(self) -> str:
-        # TODO: different in cli
-        # return (
-        #     f"{self.node}: Connection timeout ({self.reason}), try setting "
-        #     "higher timeout in --request-timeout option"
-        # )
         return f"{self.node}: Connection timeout ({self.reason})"
 
 

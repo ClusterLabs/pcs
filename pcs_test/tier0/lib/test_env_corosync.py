@@ -540,6 +540,8 @@ class PushCorosyncConfLiveNoQdeviceTest(PushCorosyncConfLiveBase):
                 report_codes.NODE_COMMUNICATION_ERROR_NOT_AUTHORIZED,
                 force_code=report_codes.SKIP_OFFLINE_NODES,
                 node="node-2",
+                command="remote/status",
+                reason="HTTP error: 401",
             ),
             fixture.error(
                 report_codes.COROSYNC_NOT_RUNNING_CHECK_NODE_ERROR,
