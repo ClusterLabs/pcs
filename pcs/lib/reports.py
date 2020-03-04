@@ -108,12 +108,6 @@ def duplicate_constraints_exist(
         forceable=forceable
     )
 
-def defaults_can_be_overriden():
-    """
-    Warning when settings defaults (op_defaults, rsc_defaults...)
-    """
-    return ReportItem.warning(report_codes.DEFAULTS_CAN_BE_OVERRIDEN)
-
 def corosync_config_distribution_started():
     """
     corosync configuration is about to be sent to nodes

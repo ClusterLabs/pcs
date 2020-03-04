@@ -370,11 +370,6 @@ def build_node_description(node_types):
 #If it is necessary to put the force text inside the string then the callable
 #must take the force_text parameter.
 CODE_TO_MESSAGE_BUILDER_MAP = {
-    codes.DEFAULTS_CAN_BE_OVERRIDEN:
-        "Defaults do not apply to resources which override them with their "
-        "own defined values"
-    ,
-
     codes.COROSYNC_CONFIG_DISTRIBUTION_STARTED:
         "Sending updated corosync.conf to nodes..."
     ,

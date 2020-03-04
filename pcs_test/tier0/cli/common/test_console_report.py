@@ -1646,17 +1646,6 @@ class TmpFileWrite(NameBuildTest):
         )
 
 
-class DefaultsCanBeOverriden(NameBuildTest):
-    def test_message(self):
-        self.assert_message_from_report(
-            (
-                "Defaults do not apply to resources which override them with "
-                "their own defined values"
-            ),
-            reports.defaults_can_be_overriden()
-        )
-
-
 class CibLoadError(NameBuildTest):
     def test_all(self):
         self.assert_message_from_report(
