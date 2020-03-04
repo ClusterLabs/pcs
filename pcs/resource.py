@@ -2637,7 +2637,11 @@ def resource_refresh(argv):
         utils.cmd_runner(),
         resource=options["resource"],
         node=options["node"],
-        strict=options["strict"],
+        # --full previously did what --strict was supposed to do (set --force
+        # flag for crm_resource). It was misnamed '--full' because we thought it
+        # was meant to be doing something else than what the --force in
+        # crm_resource actualy did.
+        strict=(options["strict"] or "--full" in utils.pcs_options),
         force=options["force"]
     ))
 
