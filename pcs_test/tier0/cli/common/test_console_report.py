@@ -2900,20 +2900,6 @@ class ResourceBundleUnsupportedContainerType(NameBuildTest):
             ),
         )
 
-class FenceHistoryCommandError(NameBuildTest):
-    def test_success(self):
-        self.assert_message_from_report(
-            "Unable to show fence history: reason",
-            reports.fence_history_command_error("reason", "show")
-        )
-
-class FenceHistoryNotSupported(NameBuildTest):
-    def test_success(self):
-        self.assert_message_from_report(
-            "Fence history is not supported, please upgrade pacemaker",
-            reports.fence_history_not_supported()
-        )
-
 class DuplicateConstraintsExist(NameBuildTest):
     def test_single_constraint_empty_force(self):
         self.assert_message_from_report(
@@ -2976,31 +2962,6 @@ class DuplicateConstraintsExist(NameBuildTest):
                 ]
             ),
             force_text=" force text"
-        )
-
-class ResourceInstanceAttrValueNotUnique(NameBuildTest):
-    def test_one_resource(self):
-        self.assert_message_from_report(
-            (
-                "Value 'val' of option 'attr' is not unique across 'agent' "
-                "resources. Following resources are configured with the same "
-                "value of the instance attribute: 'A'"
-            ),
-            reports.resource_instance_attr_value_not_unique(
-                "attr", "val", "agent", ["A"]
-            )
-        )
-
-    def test_multiple_resources(self):
-        self.assert_message_from_report(
-            (
-                "Value 'val' of option 'attr' is not unique across 'agent' "
-                "resources. Following resources are configured with the same "
-                "value of the instance attribute: 'A', 'B', 'C'"
-            ),
-            reports.resource_instance_attr_value_not_unique(
-                "attr", "val", "agent", ["B", "C", "A"]
-            )
         )
 
 class CannotGroupResourceAdjacentResourceForNewGroup(NameBuildTest):
@@ -3075,64 +3036,6 @@ class CannotGroupResourceWrongType(NameBuildTest):
                 "a group"
             ),
             reports.cannot_group_resource_wrong_type("R", "master")
-        )
-
-class CannotMoveResourceBundle(NameBuildTest):
-    def test_success(self):
-        self.assert_message_from_report(
-            "cannot move bundle resources",
-            reports.cannot_move_resource_bundle("R")
-        )
-
-class CannotMoveResourceClone(NameBuildTest):
-    def test_success(self):
-        self.assert_message_from_report(
-            "cannot move cloned resources",
-            reports.cannot_move_resource_clone("R")
-        )
-
-class CannotMoveResourceMasterResourceNotPromotable(NameBuildTest):
-    def test_without_promotable(self):
-        self.assert_message_from_report(
-            "when specifying --master you must use the promotable clone id",
-            reports.cannot_move_resource_master_resource_not_promotable("R")
-        )
-
-    def test_with_promotable(self):
-        self.assert_message_from_report(
-            "when specifying --master you must use the promotable clone id (P)",
-            reports.cannot_move_resource_master_resource_not_promotable(
-                "R",
-                promotable_id="P"
-            )
-        )
-
-class CannotMoveResourcePromotableNotMaster(NameBuildTest):
-    def test_success(self):
-        self.assert_message_from_report(
-            (
-                "to move promotable clone resources you must use --master and "
-                "the promotable clone id (P)"
-            ),
-            reports.cannot_move_resource_promotable_not_master("R", "P")
-        )
-
-class CannotMoveResourceStoppedNoNodeSpecified(NameBuildTest):
-    def test_success(self):
-        self.assert_message_from_report(
-            "You must specify a node when moving/banning a stopped resource",
-            reports.cannot_move_resource_stopped_no_node_specified("R")
-        )
-
-class ResourceMovePcmkEerror(NameBuildTest):
-    def test_success(self):
-        self.assert_message_from_report(
-            "cannot move resource 'R'\nstdout1\n  stdout2\nstderr1\n  stderr2",
-            reports.resource_move_pcmk_error(
-                "R",
-                "stdout1\n\n  stdout2\n",
-                "stderr1\n\n  stderr2\n"
-            )
         )
 
 class CorosyncConfigCannotSaveInvalidNamesValues(NameBuildTest):

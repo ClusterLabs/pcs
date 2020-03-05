@@ -1,7 +1,11 @@
 from lxml import etree
 
-from pcs.common.reports import ReportProcessor
-from pcs.common.reports import codes as report_codes
+from pcs.common import reports as report
+from pcs.common.reports import (
+    codes as report_codes,
+    ReportProcessor,
+)
+from pcs.common.reports.item import ReportItem
 from pcs.lib import reports
 from pcs.lib.cib.nvpair import (
     append_new_instance_attributes,
@@ -183,9 +187,6 @@ def validate_unique_instance_attributes(
     resource_id=None, force=False
 ):
     report_list = []
-    report_creator = reports.get_problem_creator(
-        report_codes.FORCE_OPTIONS, force
-    )
     ra_unique_attributes = [
         param["name"]
         for param in resource_agent.get_parameters()
@@ -210,12 +211,17 @@ def validate_unique_instance_attributes(
         }
         if conflicting_resources:
             report_list.append(
-                report_creator(
-                    reports.resource_instance_attr_value_not_unique,
-                    attr,
-                    instance_attributes[attr],
-                    resource_agent.get_name(),
-                    sorted(conflicting_resources),
+                ReportItem(
+                    severity=report.item.get_severity(
+                        report_codes.FORCE_OPTIONS,
+                        force,
+                    ),
+                    message=report.messages.ResourceInstanceAttrValueNotUnique(
+                        attr,
+                        instance_attributes[attr],
+                        resource_agent.get_name(),
+                        sorted(conflicting_resources),
+                    )
                 )
             )
     return report_list

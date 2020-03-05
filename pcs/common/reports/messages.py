@@ -5360,7 +5360,6 @@ class ResourceInstanceAttrValueNotUnique(ReportItemMessage):
         )
 
 
-# TODO: consider merging with CannotMoveResourceClone
 @dataclass(frozen=True)
 class CannotMoveResourceBundle(ReportItemMessage):
     """
@@ -5393,7 +5392,6 @@ class CannotMoveResourceClone(ReportItemMessage):
         return "cannot move cloned resources"
 
 
-# TODO: cli specific
 @dataclass(frozen=True)
 class CannotMoveResourcePromotableNotMaster(ReportItemMessage):
     """
@@ -5410,12 +5408,11 @@ class CannotMoveResourcePromotableNotMaster(ReportItemMessage):
     @property
     def message(self) -> str:
         return (
-            "to move promotable clone resources you must use --master and the "
+            "to move promotable clone resources you must use master and the "
             f"promotable clone id ({self.promotable_id})"
         )
 
 
-# TODO: cli specific
 @dataclass(frozen=True)
 class CannotMoveResourceMasterResourceNotPromotable(ReportItemMessage):
     """

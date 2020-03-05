@@ -130,6 +130,27 @@ class CannotBanResourceMasterResourceNotPromotable(CliReportMessageCustom):
         )
 
 
+class CannotMoveResourceMasterResourceNotPromotable(CliReportMessageCustom):
+    _obj: messages.CannotMoveResourceMasterResourceNotPromotable
+
+    @property
+    def message(self) -> str:
+        return resource_move_ban_clear_master_resource_not_promotable(
+            self._obj.promotable_id
+        )
+
+
+class CannotMoveResourcePromotableNotMaster(CliReportMessageCustom):
+    _obj: messages.CannotMoveResourcePromotableNotMaster
+
+    @property
+    def message(self) -> str:
+        return (
+            "to move promotable clone resources you must use --master and the "
+            f"promotable clone id ({self._obj.promotable_id})"
+        )
+
+
 def _create_report_msg_map() -> Dict[str, type]:
     result: Dict[str, type] = {}
     for report_msg_cls in get_all_subclasses(CliReportMessageCustom):

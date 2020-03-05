@@ -1274,12 +1274,16 @@ class _Move(_MoveBanTemplate):
         )
 
     def _report_action_stopped_resource(self, resource_id):
-        return reports.cannot_move_resource_stopped_no_node_specified(
-            resource_id
+        return ReportItem.error(
+            report.messages.CannotMoveResourceStoppedNoNodeSpecified(
+                resource_id
+            )
         )
 
     def _report_action_pcmk_error(self, resource_id, stdout, stderr):
-        return reports.resource_move_pcmk_error(resource_id, stdout, stderr)
+        return ReportItem.error(
+            report.messages.ResourceMovePcmkError(resource_id, stdout, stderr)
+        )
 
     def _report_action_pcmk_success(self, resource_id, stdout, stderr):
         return ReportItem.info(

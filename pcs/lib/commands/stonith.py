@@ -2,7 +2,8 @@ from typing import (
     Optional,
 )
 
-from pcs.lib import reports
+from pcs.common import reports
+from pcs.common.reports.item import ReportItem
 from pcs.lib.cib import resource
 from pcs.lib.cib.resource.common import are_meta_disabled
 from pcs.lib.cib.tools import IdProvider
@@ -176,13 +177,17 @@ def history_get_text(env: LibraryEnvironment, node: Optional[str] = None):
     """
     runner = env.cmd_runner()
     if not is_fence_history_supported_management(runner):
-        raise LibraryError(reports.fence_history_not_supported())
+        raise LibraryError(
+            ReportItem.error(reports.messages.FenceHistoryNotSupported())
+        )
 
     try:
         return fence_history_text(runner, node)
     except FenceHistoryCommandErrorException as e:
         raise LibraryError(
-            reports.fence_history_command_error(str(e), "show")
+            ReportItem.error(
+                reports.messages.FenceHistoryCommandError(str(e), "show")
+            )
         )
 
 def history_cleanup(env: LibraryEnvironment, node: Optional[str] = None):
@@ -194,13 +199,17 @@ def history_cleanup(env: LibraryEnvironment, node: Optional[str] = None):
     """
     runner = env.cmd_runner()
     if not is_fence_history_supported_management(runner):
-        raise LibraryError(reports.fence_history_not_supported())
+        raise LibraryError(
+            ReportItem.error(reports.messages.FenceHistoryNotSupported())
+        )
 
     try:
         return fence_history_cleanup(runner, node)
     except FenceHistoryCommandErrorException as e:
         raise LibraryError(
-            reports.fence_history_command_error(str(e), "cleanup")
+            ReportItem.error(
+                reports.messages.FenceHistoryCommandError(str(e), "cleanup")
+            )
         )
 
 def history_update(env: LibraryEnvironment):
@@ -211,11 +220,15 @@ def history_update(env: LibraryEnvironment):
     """
     runner = env.cmd_runner()
     if not is_fence_history_supported_management(runner):
-        raise LibraryError(reports.fence_history_not_supported())
+        raise LibraryError(
+            ReportItem.error(reports.messages.FenceHistoryNotSupported())
+        )
 
     try:
         return fence_history_update(runner)
     except FenceHistoryCommandErrorException as e:
         raise LibraryError(
-            reports.fence_history_command_error(str(e), "update")
+            ReportItem.error(
+                reports.messages.FenceHistoryCommandError(str(e), "update")
+            )
         )

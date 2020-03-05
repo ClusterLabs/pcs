@@ -163,13 +163,6 @@ def skip_reason_to_string(reason):
     }
     return translate.get(reason, reason)
 
-def stdout_stderr_to_string(stdout, stderr, prefix=""):
-    new_lines = [prefix] if prefix else []
-    for line in stdout.splitlines() + stderr.splitlines():
-        if line.strip():
-            new_lines.append(line)
-    return "\n".join(new_lines)
-
 def id_belongs_to_unexpected_type(info):
     return "'{id}' is not {expected_type}".format(
         id=info["id"],
@@ -325,14 +318,6 @@ def service_version_mismatch(info):
             version=version
         ))
     return "; ".join(parts)
-
-def resource_move_ban_clear_master_resource_not_promotable(info):
-    return (
-        "when specifying --master you must use the promotable clone id{_id}"
-        .format(
-            _id=format_optional(info["promotable_id"], " ({0})"),
-        )
-    )
 
 def build_node_description(node_types):
     if not node_types:
@@ -1596,24 +1581,6 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
             **info,
         )
     ,
-    codes.FENCE_HISTORY_COMMAND_ERROR: lambda info:
-        "Unable to {command_label} fence history: {reason}".format(**info)
-    ,
-    codes.FENCE_HISTORY_NOT_SUPPORTED:
-        "Fence history is not supported, please upgrade pacemaker"
-    ,
-    codes.RESOURCE_INSTANCE_ATTR_VALUE_NOT_UNIQUE: lambda info:
-        (
-            "Value '{_val}' of option '{_attr}' is not unique across "
-            "'{_agent}' resources. Following resources are configured "
-            "with the same value of the instance attribute: {_res_id_list}"
-        ).format(
-            _val=info["instance_attr_value"],
-            _attr=info["instance_attr_name"],
-            _agent=info["agent_name"],
-            _res_id_list=format_list(info["resource_id_list"]),
-        )
-    ,
     codes.CANNOT_GROUP_RESOURCE_ADJACENT_RESOURCE_FOR_NEW_GROUP: lambda info:
         (
             "Group '{group_id}' does not exist and therefore does not contain "
@@ -1656,33 +1623,6 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
             _type_article=type_to_string(info["resource_type"], article=True),
             _type=type_to_string(info["resource_type"], article=False),
             **info
-        )
-    ,
-
-    codes.CANNOT_MOVE_RESOURCE_BUNDLE: "cannot move bundle resources",
-    codes.CANNOT_MOVE_RESOURCE_CLONE: "cannot move cloned resources",
-    codes.CANNOT_MOVE_RESOURCE_MASTER_RESOURCE_NOT_PROMOTABLE:
-        resource_move_ban_clear_master_resource_not_promotable
-    ,
-    codes.CANNOT_MOVE_RESOURCE_PROMOTABLE_NOT_MASTER: lambda info:
-        (
-            "to move promotable clone resources you must use --master and the "
-            "promotable clone id ({promotable_id})"
-        ).format(**info)
-    ,
-    codes.CANNOT_MOVE_RESOURCE_STOPPED_NO_NODE_SPECIFIED:
-        # Use both "moving" and "banning" to let user know using "ban" instead
-        # of "move" will not help
-        "You must specify a node when moving/banning a stopped resource"
-    ,
-    codes.RESOURCE_MOVE_PCMK_ERROR: lambda info:
-        # Pacemaker no longer prints crm_resource specific options since commit
-        # 8008a5f0c0aa728fbce25f60069d622d0bcbbc9f. There is no need to
-        # translate them or anything else anymore.
-        stdout_stderr_to_string(
-            info["stdout"],
-            info["stderr"],
-            prefix="cannot move resource '{resource_id}'".format(**info)
         )
     ,
 }

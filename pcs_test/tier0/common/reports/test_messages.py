@@ -3862,7 +3862,7 @@ class CannotMoveResourcePromotableNotMaster(NameBuildTest):
     def test_success(self):
         self.assert_message_from_report(
             (
-                "to move promotable clone resources you must use --master and "
+                "to move promotable clone resources you must use master and "
                 "the promotable clone id (P)"
             ),
             reports.CannotMoveResourcePromotableNotMaster("R", "P"),
@@ -3893,7 +3893,7 @@ class CannotMoveResourceStoppedNoNodeSpecified(NameBuildTest):
         )
 
 
-class ResourceMovePcmkEerror(NameBuildTest):
+class ResourceMovePcmkError(NameBuildTest):
     def test_success(self):
         self.assert_message_from_report(
             "cannot move resource 'R'\nstdout1\n  stdout2\nstderr1\n  stderr2",
