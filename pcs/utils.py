@@ -23,6 +23,7 @@ from typing import (
     Any,
     Dict,
     Sequence,
+    Tuple,
 )
 
 from pcs import settings, usage
@@ -35,6 +36,7 @@ from pcs.common import (
 from pcs.common.reports import codes as report_codes
 from pcs.common.host import PcsKnownHost
 from pcs.common.reports import ReportProcessor
+from pcs.common.reports.item import ReportItemList
 from pcs.common.str_tools import join_multilines
 
 from pcs.cli.common import (
@@ -1970,15 +1972,14 @@ def is_score(var):
     """
     return is_score_value(var)
 
-def validate_xml_id(var, description="id"):
+def validate_xml_id(var: str, description: str = "id") -> Tuple[bool, str]:
     """
     Commandline options: no options
     """
-    try:
-        validate_id(var, description)
-    except LibraryError as e:
-        # pylint: disable=no-member
-        return False, e.args[0].message.message
+    report_list: ReportItemList = []
+    validate_id(var, description, report_list)
+    if report_list:
+        return False, report_list[0].message.message
     return True, ""
 
 def is_iso8601_date(var):
