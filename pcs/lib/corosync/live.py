@@ -2,6 +2,8 @@ import os.path
 import re
 
 from pcs import settings
+from pcs.common import reports as report
+from pcs.common.reports.item import ReportItem
 from pcs.lib import reports
 from pcs.lib.errors import LibraryError
 
@@ -41,7 +43,9 @@ def set_expected_votes(runner, votes):
     ])
     if retval != 0:
         raise LibraryError(
-            reports.corosync_quorum_set_expected_votes_error(stderr)
+            ReportItem.error(
+                report.messages.CorosyncQuorumSetExpectedVotesError(stderr)
+            )
         )
     return stdout
 

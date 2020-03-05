@@ -358,23 +358,6 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
         .format(**info)
     ,
 
-    codes.COROSYNC_QUORUM_SET_EXPECTED_VOTES_ERROR: lambda info:
-        "Unable to set expected votes: {reason}"
-        .format(**info)
-    ,
-
-    codes.COROSYNC_QUORUM_HEURISTICS_ENABLED_WITH_NO_EXEC:
-        "No exec_NAME options are specified, so heuristics are effectively "
-            "disabled"
-    ,
-
-    codes.COROSYNC_CONFIG_RELOADED: lambda info:
-        "{_node}Corosync configuration reloaded".format(
-            _node=format_optional(info["node"], "{}: "),
-            **info
-        )
-    ,
-
     codes.COROSYNC_CONFIG_RELOAD_ERROR: lambda info:
         "{_node}Unable to reload corosync configuration: {reason}"
         .format(

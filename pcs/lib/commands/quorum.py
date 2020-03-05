@@ -189,7 +189,9 @@ def add_device(
     )
     if cfg.is_quorum_device_heuristics_enabled_with_no_exec():
         lib_env.report_processor.report(
-            reports.corosync_quorum_heuristics_enabled_with_no_exec()
+            ReportItem.warning(
+                report.messages.CorosyncQuorumHeuristicsEnabledWithNoExec()
+            )
         )
 
     # First setup certificates for qdevice, then send corosync.conf to nodes.
@@ -278,7 +280,9 @@ def update_device(
     )
     if cfg.is_quorum_device_heuristics_enabled_with_no_exec():
         lib_env.report_processor.report(
-            reports.corosync_quorum_heuristics_enabled_with_no_exec()
+            ReportItem.warning(
+                report.messages.CorosyncQuorumHeuristicsEnabledWithNoExec()
+            )
         )
     lib_env.push_corosync_conf(cfg, skip_offline_nodes)
 

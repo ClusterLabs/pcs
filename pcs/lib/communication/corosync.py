@@ -142,7 +142,11 @@ class ReloadCorosyncConf(
             output = json.loads(response.data)
             if output["code"] == "reloaded":
                 self.__was_successful = True
-                self._report(reports.corosync_config_reloaded(node))
+                self._report(
+                    ReportItem.info(
+                        report.messages.CorosyncConfigReloaded(node)
+                    )
+                )
                 return []
 
             if output["code"] == "not_running":

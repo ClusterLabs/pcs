@@ -118,39 +118,6 @@ def corosync_config_accepted_by_node(node):
         info={"node": node}
     )
 
-def corosync_quorum_heuristics_enabled_with_no_exec():
-    """
-    no exec_ is specified, therefore heuristics are effectively disabled
-    """
-    return ReportItem.warning(
-        report_codes.COROSYNC_QUORUM_HEURISTICS_ENABLED_WITH_NO_EXEC
-    )
-
-def corosync_quorum_set_expected_votes_error(reason):
-    """
-    unable to set expcted votes in a live cluster
-    string reason an error message
-    """
-    return ReportItem.error(
-        report_codes.COROSYNC_QUORUM_SET_EXPECTED_VOTES_ERROR,
-        info={
-            "reason": reason,
-        }
-    )
-
-def corosync_config_reloaded(node=None):
-    """
-    corosync configuration has been reloaded
-
-    node string -- node label on which operation has been executed
-    """
-    return ReportItem.info(
-        report_codes.COROSYNC_CONFIG_RELOADED,
-        info=dict(
-            node=node,
-        )
-    )
-
 def corosync_config_reload_error(
     reason, node=None, severity=ReportItemSeverity.ERROR
 ):

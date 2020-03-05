@@ -1904,22 +1904,6 @@ class CorosyncNodesMissing(NameBuildTest):
         )
 
 
-class CorosyncQuorumHeuristicsEnabledWithNoExec(NameBuildTest):
-    def test_message(self):
-        self.assert_message_from_report(
-            "No exec_NAME options are specified, so heuristics are effectively "
-                "disabled",
-            reports.corosync_quorum_heuristics_enabled_with_no_exec()
-        )
-
-
-class CorosyncQuorumSetExpectedVotesError(NameBuildTest):
-    def test_all(self):
-        self.assert_message_from_report(
-            "Unable to set expected votes: reason",
-            reports.corosync_quorum_set_expected_votes_error("reason")
-        )
-
 class CorosyncQuorumWillBeLost(NameBuildTest):
     def test_all(self):
         self.assert_message_from_report(
@@ -2729,19 +2713,6 @@ class CorosyncConfigAcceptedByNode(NameBuildTest):
         self.assert_message_from_report(
             "node1: Succeeded",
             reports.corosync_config_accepted_by_node("node1")
-        )
-
-class CorosyncConfigReloaded(NameBuildTest):
-    def test_with_node(self):
-        self.assert_message_from_report(
-            "node1: Corosync configuration reloaded",
-            reports.corosync_config_reloaded("node1"),
-        )
-
-    def test_without_node(self):
-        self.assert_message_from_report(
-            "Corosync configuration reloaded",
-            reports.corosync_config_reloaded(),
         )
 
 
