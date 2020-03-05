@@ -150,14 +150,21 @@ class ReloadCorosyncConf(
                 return []
 
             if output["code"] == "not_running":
-                self._report(reports.corosync_config_reload_not_possible(node))
+                self._report(
+                    ReportItem.warning(
+                        report.messages.CorosyncConfigReloadNotPossible(node)
+                    )
+                )
             else:
                 self.__has_failures = True
-                self._report(reports.corosync_config_reload_error(
-                    output["message"],
-                    node=node,
-                    severity=ReportItemSeverity.WARNING,
-                ))
+                self._report(
+                    ReportItem.warning(
+                        report.messages.CorosyncConfigReloadError(
+                            output["message"],
+                            node=node,
+                        )
+                    )
+                )
         except (ValueError, LookupError):
             self.__has_failures = True
             self._report(reports.invalid_response_format(

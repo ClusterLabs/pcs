@@ -3,6 +3,8 @@ from typing import (
 )
 
 from pcs import settings
+from pcs.common import reports as report
+from pcs.common.reports.item import ReportItem
 from pcs.lib import reports
 from pcs.lib.corosync import config_parser, constants, node
 from pcs.lib.errors import LibraryError
@@ -22,35 +24,48 @@ class ConfigFacade:
             return cls(config_parser.parse_string(config_string))
         except config_parser.MissingClosingBraceException:
             raise LibraryError(
-                reports.corosync_config_parser_missing_closing_brace()
+                ReportItem.error(
+                    report.messages.ParseErrorCorosyncConfMissingClosingBrace()
+                )
             )
         except config_parser.UnexpectedClosingBraceException:
+            # pylint: disable=line-too-long
             raise LibraryError(
-                reports.corosync_config_parser_unexpected_closing_brace()
+                ReportItem.error(
+                    report.messages.ParseErrorCorosyncConfUnexpectedClosingBrace()
+                )
             )
         except config_parser.MissingSectionNameBeforeOpeningBraceException:
             # pylint: disable=line-too-long
             raise LibraryError(
-                reports.corosync_config_parser_missing_section_name_before_opening_brace()
+                ReportItem.error(
+                    report.messages.ParseErrorCorosyncConfMissingSectionNameBeforeOpeningBrace()
+                )
             )
         except config_parser.ExtraCharactersAfterOpeningBraceException:
             # pylint: disable=line-too-long
             raise LibraryError(
-                reports.corosync_config_parser_extra_characters_after_opening_brace()
+                ReportItem.error(
+                    report.messages.ParseErrorCorosyncConfExtraCharactersAfterOpeningBrace()
+                )
             )
         except config_parser.ExtraCharactersBeforeOrAfterClosingBraceException:
             # pylint: disable=line-too-long
             raise LibraryError(
-                reports.corosync_config_parser_extra_characters_before_or_after_closing_brace()
+                ReportItem.error(
+                    report.messages.ParseErrorCorosyncConfExtraCharactersBeforeOrAfterClosingBrace()
+                )
             )
         except config_parser.LineIsNotSectionNorKeyValueException:
             # pylint: disable=line-too-long
             raise LibraryError(
-                reports.corosync_config_parser_line_is_not_section_nor_key_value()
+                ReportItem.error(
+                    report.messages.ParseErrorCorosyncConfLineIsNotSectionNorKeyValue()
+                )
             )
         except config_parser.CorosyncConfParserException:
             raise LibraryError(
-                reports.corosync_config_parser_other_error()
+                ReportItem.error(report.messages.ParseErrorCorosyncConf())
             )
 
     @classmethod

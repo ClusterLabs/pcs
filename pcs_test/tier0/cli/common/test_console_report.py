@@ -2716,30 +2716,6 @@ class CorosyncConfigAcceptedByNode(NameBuildTest):
         )
 
 
-class CorosyncConfigReloadNotPossible(NameBuildTest):
-    def test_success(self):
-        self.assert_message_from_report(
-            (
-                "node1: Corosync is not running, therefore reload of the "
-                "corosync configuration is not possible"
-            ),
-            reports.corosync_config_reload_not_possible("node1")
-        )
-
-
-class CorosyncConfigReloadError(NameBuildTest):
-    def test_with_node(self):
-        self.assert_message_from_report(
-            "node1: Unable to reload corosync configuration: a reason",
-            reports.corosync_config_reload_error("a reason", "node1"),
-        )
-
-    def test_without_node(self):
-        self.assert_message_from_report(
-            "Unable to reload corosync configuration: different reason",
-            reports.corosync_config_reload_error("different reason"),
-        )
-
 class CorosyncConfigMissingNamesOfNodes(NameBuildTest):
     def test_non_fatal(self):
         self.assert_message_from_report(
@@ -2769,62 +2745,6 @@ class CorosyncConfigReadError(NameBuildTest):
         self.assert_message_from_report(
             "Unable to read /dev/path: this is reason",
             reports.corosync_config_read_error("/dev/path", "this is reason")
-        )
-
-class CorosyncConfigParserMissingClosingBrace(NameBuildTest):
-    def test_all(self):
-        self.assert_message_from_report(
-            "Unable to parse corosync config: missing closing brace",
-            reports.corosync_config_parser_missing_closing_brace()
-        )
-
-class CorosyncConfigParserUnexpectedClosingBrace(NameBuildTest):
-    def test_all(self):
-        self.assert_message_from_report(
-            "Unable to parse corosync config: unexpected closing brace",
-            reports.corosync_config_parser_unexpected_closing_brace()
-        )
-
-class CorosyncConfigParserMissingSectionNameBeforeOpeningBrace(NameBuildTest):
-    def test_all(self):
-        # pylint: disable=line-too-long
-        self.assert_message_from_report(
-            "Unable to parse corosync config: missing a section name before {",
-            reports.corosync_config_parser_missing_section_name_before_opening_brace()
-        )
-
-class CorosyncConfigParserExtraCharactersAfterOpeningBrace(NameBuildTest):
-    def test_all(self):
-        # pylint: disable=line-too-long
-        self.assert_message_from_report(
-            "Unable to parse corosync config: extra characters after {",
-            reports.corosync_config_parser_extra_characters_after_opening_brace()
-        )
-
-class CorosyncConfigParserExtraCharsBeforeOrAfterClosingBrace(NameBuildTest):
-    def test_all(self):
-        self.assert_message_from_report(
-            # pylint: disable=line-too-long
-            (
-                "Unable to parse corosync config: extra characters before "
-                "or after }"
-            ),
-            reports.corosync_config_parser_extra_characters_before_or_after_closing_brace()
-        )
-
-class CorosyncConfigParserLineIsNotSectionNorKeyValue(NameBuildTest):
-    def test_all(self):
-        self.assert_message_from_report(
-            "Unable to parse corosync config: a line is not opening or closing "
-            "a section or key: value",
-            reports.corosync_config_parser_line_is_not_section_nor_key_value()
-        )
-
-class CorosyncConfigParserOtherError(NameBuildTest):
-    def test_all(self):
-        self.assert_message_from_report(
-            "Unable to parse corosync config",
-            reports.corosync_config_parser_other_error()
         )
 
 class CannotRemoveAllClusterNodes(NameBuildTest):

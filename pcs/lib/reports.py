@@ -118,39 +118,6 @@ def corosync_config_accepted_by_node(node):
         info={"node": node}
     )
 
-def corosync_config_reload_error(
-    reason, node=None, severity=ReportItemSeverity.ERROR
-):
-    """
-    an error occured when reloading corosync configuration
-
-    reason string -- an error message
-    node string -- node label
-    severity ReportItemSeverity -- severity of the report
-    """
-    return ReportItem(
-        report_codes.COROSYNC_CONFIG_RELOAD_ERROR,
-        severity,
-        info={
-            "reason": reason,
-            "node": node,
-        }
-    )
-
-def corosync_config_reload_not_possible(node):
-    """
-    corosync configuration cannot be reloaded because corosync is not running
-    on the specified node
-
-    node string -- node label on which confi
-    """
-    return ReportItem.warning(
-        report_codes.COROSYNC_CONFIG_RELOAD_NOT_POSSIBLE,
-        info=dict(
-            node=node,
-        )
-    )
-
 def corosync_config_read_error(path, reason):
     """
     an error occured when reading corosync configuration file from disk
@@ -162,66 +129,6 @@ def corosync_config_read_error(path, reason):
             "path": path,
             "reason": reason,
         }
-    )
-
-def corosync_config_parser_missing_closing_brace():
-    """
-    corosync config cannot be parsed due to missing closing brace
-    """
-    return ReportItem.error(
-        report_codes.PARSE_ERROR_COROSYNC_CONF_MISSING_CLOSING_BRACE,
-    )
-
-def corosync_config_parser_unexpected_closing_brace():
-    """
-    corosync config cannot be parsed due to unexpected closing brace
-    """
-    return ReportItem.error(
-        report_codes.PARSE_ERROR_COROSYNC_CONF_UNEXPECTED_CLOSING_BRACE,
-    )
-
-def corosync_config_parser_missing_section_name_before_opening_brace():
-    """
-    corosync config cannot be parsed due to a section name missing before {
-    """
-    # pylint: disable=line-too-long
-    return ReportItem.error(
-        report_codes.PARSE_ERROR_COROSYNC_CONF_MISSING_SECTION_NAME_BEFORE_OPENING_BRACE,
-    )
-
-def corosync_config_parser_extra_characters_after_opening_brace():
-    """
-    corosync config cannot be parsed due to extra characters after {
-    """
-    # pylint: disable=line-too-long
-    return ReportItem.error(
-        report_codes.PARSE_ERROR_COROSYNC_CONF_EXTRA_CHARACTERS_AFTER_OPENING_BRACE,
-    )
-
-def corosync_config_parser_extra_characters_before_or_after_closing_brace():
-    """
-    corosync config cannot be parsed due to extra characters before or after }
-    """
-    # pylint: disable=line-too-long
-    return ReportItem.error(
-        report_codes.PARSE_ERROR_COROSYNC_CONF_EXTRA_CHARACTERS_BEFORE_OR_AFTER_CLOSING_BRACE,
-    )
-
-def corosync_config_parser_line_is_not_section_nor_key_value():
-    """
-    corosync config cannot be parsed due to a line is not a section nor key:val
-    """
-    return ReportItem.error(
-        report_codes.PARSE_ERROR_COROSYNC_CONF_LINE_IS_NOT_SECTION_NOR_KEY_VALUE
-    )
-
-def corosync_config_parser_other_error():
-    """
-    corosync config cannot be parsed, the cause is not specified
-    It is better to use more specific error if possible.
-    """
-    return ReportItem.error(
-        report_codes.PARSE_ERROR_COROSYNC_CONF,
     )
 
 def corosync_config_cannot_save_invalid_names_values(sections, names, values):
