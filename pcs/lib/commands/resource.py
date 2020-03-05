@@ -1282,7 +1282,9 @@ class _Move(_MoveBanTemplate):
         return reports.resource_move_pcmk_error(resource_id, stdout, stderr)
 
     def _report_action_pcmk_success(self, resource_id, stdout, stderr):
-        return reports.resource_move_pcmk_success(resource_id, stdout, stderr)
+        return ReportItem.info(
+            report.messages.ResourceMovePcmkSuccess(resource_id, stdout, stderr)
+        )
 
     def _report_wait_result(
         self, resource_id, node, resource_running_on_before,
@@ -1321,15 +1323,21 @@ class _Ban(_MoveBanTemplate):
         )
 
     def _report_action_stopped_resource(self, resource_id):
-        return reports.cannot_ban_resource_stopped_no_node_specified(
-            resource_id
+        return ReportItem.error(
+            report.messages.CannotBanResourceStoppedNoNodeSpecified(resource_id)
         )
 
     def _report_action_pcmk_error(self, resource_id, stdout, stderr):
-        return reports.resource_ban_pcmk_error(resource_id, stdout, stderr)
+        return ReportItem.error(
+            report.messages.ResourceBanPcmkError(resource_id, stdout, stderr)
+        )
 
-    def _report_action_pcmk_success(self, resource_id, stdout, stderr):
-        return reports.resource_ban_pcmk_success(resource_id, stdout, stderr)
+    def _report_action_pcmk_success(
+        self, resource_id: str, stdout: str, stderr: str,
+    ) -> ReportItem:
+        return ReportItem.info(
+            report.messages.ResourceBanPcmkSuccess(resource_id, stdout, stderr)
+        )
 
     def _report_wait_result(
         self, resource_id, node, resource_running_on_before,

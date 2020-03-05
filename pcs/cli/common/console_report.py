@@ -334,23 +334,6 @@ def resource_move_ban_clear_master_resource_not_promotable(info):
         )
     )
 
-def resource_move_ban_pcmk_success(info):
-    new_lines = []
-    for line in info["stdout"].splitlines() + info["stderr"].splitlines():
-        if not line.strip():
-            continue
-        line = line.replace(
-            "WARNING: Creating rsc_location constraint",
-            "Warning: Creating location constraint"
-        )
-        line = line.replace(
-            " using the clear option or by editing the CIB with an "
-                "appropriate tool",
-            ""
-        )
-        new_lines.append(line)
-    return "\n".join(new_lines)
-
 def build_node_description(node_types):
     if not node_types:
         return  "Node"
@@ -1764,25 +1747,4 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
             prefix="cannot move resource '{resource_id}'".format(**info)
         )
     ,
-    codes.RESOURCE_MOVE_PCMK_SUCCESS: resource_move_ban_pcmk_success,
-
-    codes.CANNOT_BAN_RESOURCE_MASTER_RESOURCE_NOT_PROMOTABLE:
-        resource_move_ban_clear_master_resource_not_promotable
-    ,
-    codes.CANNOT_BAN_RESOURCE_STOPPED_NO_NODE_SPECIFIED:
-        # Use both "moving" and "banning" to let user know using "move" instead
-        # of "ban" will not help
-        "You must specify a node when moving/banning a stopped resource"
-    ,
-    codes.RESOURCE_BAN_PCMK_ERROR: lambda info:
-        # Pacemaker no longer prints crm_resource specific options since commit
-        # 8008a5f0c0aa728fbce25f60069d622d0bcbbc9f. There is no need to
-        # translate them or anything else anymore.
-        stdout_stderr_to_string(
-            info["stdout"],
-            info["stderr"],
-            prefix="cannot ban resource '{resource_id}'".format(**info)
-        )
-    ,
-    codes.RESOURCE_BAN_PCMK_SUCCESS: resource_move_ban_pcmk_success,
 }

@@ -94,7 +94,7 @@ class InvalidCibContent(CliReportMessageCustom):
             more_verbose=format_optional(
                 self._obj.can_be_more_verbose,
                 "\n\nUse --full for more details.",
-            )
+            ),
         )
 
 
@@ -117,6 +117,16 @@ class NodeCommunicationErrorTimedOut(CliReportMessageCustom):
         return (
             f"{self._obj.node}: Connection timeout, try setting higher timeout "
             f"in --request-timeout option ({self._obj.reason})"
+        )
+
+
+class CannotBanResourceMasterResourceNotPromotable(CliReportMessageCustom):
+    _obj: messages.CannotBanResourceMasterResourceNotPromotable
+
+    @property
+    def message(self) -> str:
+        return resource_move_ban_clear_master_resource_not_promotable(
+            self._obj.promotable_id
         )
 
 

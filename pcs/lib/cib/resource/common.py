@@ -409,9 +409,11 @@ def validate_ban(resource_element, master):
 
     if master and not analysis.is_promotable_clone:
         report_list.append(
-            reports.cannot_ban_resource_master_resource_not_promotable(
-                resource_element.get("id"),
-                promotable_id=analysis.promotable_clone_id
+            ReportItem.error(
+                report.messages.CannotBanResourceMasterResourceNotPromotable(
+                    resource_element.get("id"),
+                    promotable_id=analysis.promotable_clone_id,
+                )
             )
         )
 

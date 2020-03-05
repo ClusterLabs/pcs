@@ -57,6 +57,23 @@ class CannotUnmoveUnbanResourceMasterResourceNotPromotable(
         )
 
 
+class CannotBanResourceMasterResourceNotPromotable(CliReportMessageTestBase):
+    def test_with_promotable_id(self):
+        self.assert_message(
+            messages.CannotBanResourceMasterResourceNotPromotable("R", "P"),
+            (
+                "when specifying --master you must use the promotable clone id "
+                "(P)"
+            ),
+        )
+
+    def test_without_promotable_id(self):
+        self.assert_message(
+            messages.CannotBanResourceMasterResourceNotPromotable("R"),
+            "when specifying --master you must use the promotable clone id",
+        )
+
+
 class InvalidCibContent(CliReportMessageTestBase):
     def test_message_can_be_more_verbose(self):
         report = "no verbose\noutput\n"

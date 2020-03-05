@@ -3983,6 +3983,33 @@ class ResourceBanPcmkSuccess(NameBuildTest):
             ),
         )
 
+    def test_translate(self):
+        self.assert_message_from_report(
+            (
+                "Warning: Creating location constraint "
+                "'cli-ban-dummy-on-node1' with a score of -INFINITY "
+                "for resource dummy on node1.\n"
+                "	This will prevent dummy from running on node1 until the "
+                "constraint is removed\n"
+                "	This will be the case even if node1 is the last node in "
+                "the cluster"
+            ),
+            reports.ResourceBanPcmkSuccess(
+                "dummy",
+                "",
+                (
+                    "WARNING: Creating rsc_location constraint "
+                    "'cli-ban-dummy-on-node1' with a score of -INFINITY "
+                    "for resource dummy on node1.\n"
+                    "	This will prevent dummy from running on node1 until "
+                    "the constraint is removed using the clear option or "
+                    "by editing the CIB with an appropriate tool\n"
+                    "	This will be the case even if node1 is the last node "
+                    "in the cluster\n"
+                ),
+            ),
+        )
+
 
 class CannotUnmoveUnbanResourceMasterResourceNotPromotable(NameBuildTest):
     def test_without_promotable(self):

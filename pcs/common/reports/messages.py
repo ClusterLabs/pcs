@@ -5498,7 +5498,6 @@ class ResourceMovePcmkSuccess(ReportItemMessage):
         return resource_move_ban_pcmk_success(self.stdout, self.stderr)
 
 
-# TODO: cli specific
 @dataclass(frozen=True)
 class CannotBanResourceMasterResourceNotPromotable(ReportItemMessage):
     """
