@@ -223,51 +223,6 @@ def resource_running_on_nodes(info):
         ]))
     )
 
-def corosync_bad_node_addresses_count(info):
-    if info["min_count"] == info["max_count"]:
-        template = (
-            "{max_count} address{_s_allowed} must be specified for a node, "
-            "{actual_count} address{_s_specified} specified{_node_desc}"
-        )
-    else:
-        template = (
-            "At least {min_count} and at most {max_count} address{_s_allowed} "
-            "must be specified for a node, {actual_count} "
-            "address{_s_specified} specified{_node_desc}"
-        )
-    node_template = " for node '{}'"
-    return template.format(
-        _node_desc=(
-            format_optional(info["node_name"], node_template)
-            or
-            format_optional(info["node_index"], node_template)
-        ),
-        _s_allowed=("es" if info["max_count"] > 1 else ""),
-        _s_specified=("es" if info["actual_count"] > 1 else ""),
-        **info
-    )
-
-def corosync_node_address_count_mismatch(info):
-    count_node = defaultdict(list)
-    for node_name, count in info["node_addr_count"].items():
-        count_node[count].append(node_name)
-    parts = ["All nodes must have the same number of addresses"]
-    # List most common number of addresses first.
-    for count, nodes in sorted(
-        count_node.items(),
-        key=lambda pair: len(pair[1]),
-        reverse=True
-    ):
-        parts.append(
-            "node{s} {nodes} {have} {count} address{es}".format(
-            s=("s" if len(nodes) > 1 else ""),
-            nodes=format_list(nodes),
-            have=("have" if len(nodes) > 1 else "has"),
-            count=count,
-            es=("es" if count > 1 else "")
-        ))
-    return "; ".join(parts)
-
 def service_version_mismatch(info):
     version_host = defaultdict(list)
     for host_name, version in info["hosts_version"].items():
@@ -319,49 +274,6 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
         .format(**info)
     ,
 
-    codes.COROSYNC_CONFIG_MISSING_NAMES_OF_NODES: lambda info:
-        "Some nodes are missing names in corosync.conf, "
-        +
-        ("unable to continue" if info["fatal"] else "those nodes were omitted")
-    ,
-
-    codes.COROSYNC_CONFIG_NO_NODES_DEFINED: "No nodes found in corosync.conf",
-
-    codes.COROSYNC_ADDRESS_IP_VERSION_WRONG_FOR_LINK: lambda info:
-        (
-            "Address '{address}' cannot be used in {_link} "
-            "because the link uses {expected_address_type} addresses"
-        ).format(
-            _link=format_optional(info["link_number"], "link '{}'", "the link"),
-            **info
-        )
-    ,
-
-    codes.COROSYNC_BAD_NODE_ADDRESSES_COUNT:
-        corosync_bad_node_addresses_count
-    ,
-
-    codes.COROSYNC_IP_VERSION_MISMATCH_IN_LINKS: lambda info:
-        (
-            "Using both IPv4 and IPv6 on one link is not allowed; please, use "
-            "either IPv4 or IPv6{_links}"
-        ).format(
-            _links=format_optional(
-                (
-                    format_list(info["link_numbers"]) if info["link_numbers"]
-                    else ""
-                ),
-                " on link(s): {}"
-            )
-        )
-    ,
-
-    codes.COROSYNC_LINK_NUMBER_DUPLICATION: lambda info:
-        "Link numbers must be unique, duplicate link numbers: {_nums}".format(
-            _nums=format_list(info["link_number_list"])
-        )
-    ,
-
     codes.NODE_ADDRESSES_ALREADY_EXIST: lambda info:
         (
             "Node address{_es} {_addrs} {_are} already used by existing nodes; "
@@ -389,10 +301,6 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
         )
     ,
 
-    codes.COROSYNC_NODE_ADDRESS_COUNT_MISMATCH:
-        corosync_node_address_count_mismatch
-    ,
-
     codes.NODE_NAMES_ALREADY_EXIST: lambda info:
         (
             "Node name{_s} {_names} {_are} already used by existing nodes; "
@@ -412,11 +320,6 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
 
     codes.COROSYNC_NODES_MISSING:
         "No nodes have been specified"
-    ,
-
-    codes.COROSYNC_OPTIONS_INCOMPATIBLE_WITH_QDEVICE: lambda info:
-        "These options cannot be set when the cluster uses a quorum device: {0}"
-        .format(", ".join(sorted(info["options_names"])))
     ,
 
     codes.COROSYNC_TOO_MANY_LINKS_OPTIONS: lambda info:

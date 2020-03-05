@@ -6,8 +6,10 @@ from typing import (
 )
 from xml.etree.ElementTree import Element
 
+from pcs.common import reports
 from pcs.common.reports import ReportItemList
-from pcs.lib import reports
+from pcs.common.reports import ReportItemSeverity
+from pcs.common.reports.item import ReportItem
 from pcs.lib.cib.node import PacemakerNode
 from pcs.lib.cib.resource import remote_node, guest_node
 from pcs.lib.corosync.config_facade import ConfigFacade as CorosyncConfigFacade
@@ -58,7 +60,7 @@ def __get_nodes_names(
     remote_and_guest_nodes: Iterable[PacemakerNode],
     error_on_missing_name: bool = False
 ) -> Tuple[List[str], ReportItemList]:
-    report_list = []
+    report_list: ReportItemList = []
     corosync_names = []
     name_missing_in_corosync = False
 
@@ -72,8 +74,15 @@ def __get_nodes_names(
     # about each node missing a name later if needed.
     if name_missing_in_corosync:
         report_list.append(
-            reports.corosync_config_missing_names_of_nodes(
-                fatal=error_on_missing_name
+            ReportItem(
+                severity=(
+                    ReportItemSeverity.error()
+                    if error_on_missing_name
+                    else ReportItemSeverity.warning()
+                ),
+                message=reports.messages.CorosyncConfigMissingNamesOfNodes(
+                    fatal=error_on_missing_name,
+                ),
             )
         )
 

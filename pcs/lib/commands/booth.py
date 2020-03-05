@@ -4,12 +4,14 @@ from functools import partial
 
 from pcs import settings
 from pcs.common import file_type_codes
+from pcs.common import reports as report
 from pcs.common.file import FileAlreadyExists, RawFileError
 from pcs.common.reports import (
     ReportProcessor,
     ReportItemSeverity,
 )
 from pcs.common.reports import codes as report_codes
+from pcs.common.reports.item import ReportItem
 from pcs.common.str_tools import join_multilines
 from pcs.lib import external, reports, tools
 from pcs.lib.cib.resource import primitive, group
@@ -555,7 +557,9 @@ def config_sync(
         env.get_corosync_conf()
     )
     if not cluster_nodes_names:
-        report_list.append(reports.corosync_config_no_nodes_defined())
+        report_list.append(
+            ReportItem.error(report.messages.CorosyncConfigNoNodesDefined())
+        )
     report_processor.report_list(report_list)
 
     try:

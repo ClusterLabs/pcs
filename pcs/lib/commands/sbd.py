@@ -154,7 +154,9 @@ def enable_sbd(
 
     node_list, get_nodes_report_list = get_existing_nodes_names(corosync_conf)
     if not node_list:
-        get_nodes_report_list.append(reports.corosync_config_no_nodes_defined())
+        get_nodes_report_list.append(
+            ReportItem.error(report.messages.CorosyncConfigNoNodesDefined())
+        )
     target_list = lib_env.get_node_target_factory().get_target_list(
         node_list, skip_non_existing=ignore_offline_nodes,
     )
@@ -265,7 +267,9 @@ def disable_sbd(lib_env, ignore_offline_nodes=False):
         lib_env.get_corosync_conf()
     )
     if not node_list:
-        get_nodes_report_list.append(reports.corosync_config_no_nodes_defined())
+        get_nodes_report_list.append(
+            ReportItem.error(report.messages.CorosyncConfigNoNodesDefined())
+        )
     if lib_env.report_processor.report_list(get_nodes_report_list).has_errors:
         raise LibraryError()
 
@@ -311,7 +315,9 @@ def get_cluster_sbd_status(lib_env):
         lib_env.get_corosync_conf()
     )
     if not node_list:
-        get_nodes_report_list.append(reports.corosync_config_no_nodes_defined())
+        get_nodes_report_list.append(
+            ReportItem.error(report.messages.CorosyncConfigNoNodesDefined())
+        )
     if lib_env.report_processor.report_list(get_nodes_report_list).has_errors:
         raise LibraryError()
 
@@ -345,7 +351,9 @@ def get_cluster_sbd_config(lib_env):
         lib_env.get_corosync_conf()
     )
     if not node_list:
-        get_nodes_report_list.append(reports.corosync_config_no_nodes_defined())
+        get_nodes_report_list.append(
+            ReportItem.error(report.messages.CorosyncConfigNoNodesDefined())
+        )
     if lib_env.report_processor.report_list(get_nodes_report_list).has_errors:
         raise LibraryError()
 

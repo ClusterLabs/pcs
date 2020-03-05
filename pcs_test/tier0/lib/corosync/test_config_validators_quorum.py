@@ -142,7 +142,7 @@ class BaseQuorumOptions():
             [
                 fixture.error(
                     report_codes.COROSYNC_OPTIONS_INCOMPATIBLE_WITH_QDEVICE,
-                    options_names=[
+                    options=[
                         "auto_tie_breaker",
                         "last_man_standing",
                         "last_man_standing_window",

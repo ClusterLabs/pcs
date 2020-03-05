@@ -1449,7 +1449,7 @@ class CreateLinkListKnet(CreateLinkListCommonMixin, TestCase):
             [
                 fixture.error(
                     report_codes.COROSYNC_LINK_NUMBER_DUPLICATION,
-                    link_number_list=["0", "2"]
+                    link_number_list=["2", "0"]
                 )
             ]
         )

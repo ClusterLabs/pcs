@@ -1,7 +1,9 @@
 from pcs import settings
 from pcs.common import file_type_codes
+from pcs.common import reports as report
 from pcs.common.file import RawFileError
 from pcs.common.tools import format_environment_error
+from pcs.common.reports.item import ReportItem
 from pcs.lib import reports
 from pcs.lib.communication.nodes import SendPcsdSslCertAndKey
 from pcs.lib.communication.tools import run_and_raise
@@ -28,7 +30,9 @@ def synchronize_ssl_certificate(env: LibraryEnvironment, skip_offline=False):
         env.get_corosync_conf()
     )
     if not cluster_nodes_names:
-        report_list.append(reports.corosync_config_no_nodes_defined())
+        report_list.append(
+            ReportItem.error(report.messages.CorosyncConfigNoNodesDefined())
+        )
     report_processor.report_list(report_list)
 
     try:

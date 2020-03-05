@@ -96,12 +96,14 @@ def create(
                 addr_count > max_addr_count
             ):
                 report_items.append(
-                    reports.corosync_bad_node_addresses_count(
-                        addr_count,
-                        min_addr_count,
-                        max_addr_count,
-                        node_name=node.get("name"),
-                        node_index=i
+                    ReportItem.error(
+                        report.messages.CorosyncBadNodeAddressesCount(
+                            actual_count=addr_count,
+                            min_count=min_addr_count,
+                            max_count=max_addr_count,
+                            node_name=node.get("name"),
+                            node_index=i,
+                        )
                     )
                 )
         addr_types = []
@@ -171,7 +173,11 @@ def create(
             len(Counter(node_addr_count.values()).keys()) > 1
         ):
             report_items.append(
-                reports.corosync_node_address_count_mismatch(node_addr_count)
+                ReportItem.error(
+                    report.messages.CorosyncNodeAddressCountMismatch(
+                        node_addr_count,
+                    )
+                )
             )
     # Check mixing IPv4 and IPv6 in one link, node names are not relevant
     links_ip_mismatch = []
@@ -180,7 +186,11 @@ def create(
             links_ip_mismatch.append(link)
     if links_ip_mismatch:
         report_items.append(
-            reports.corosync_ip_version_mismatch_in_links(links_ip_mismatch)
+            ReportItem.error(
+                report.messages.CorosyncIpVersionMismatchInLinks(
+                    links_ip_mismatch,
+                )
+            )
         )
 
     return report_items
@@ -240,8 +250,12 @@ def _validate_addr_type(
         ip_version == constants.IP_VERSION_6
     ):
         report_items.append(
-            reports.corosync_address_ip_version_wrong_for_link(
-                addr, ADDR_IPV6, link_number=link_index
+            ReportItem.error(
+                report.messages.CorosyncAddressIpVersionWrongForLink(
+                    addr,
+                    ADDR_IPV6,
+                    link_number=link_index,
+                )
             )
         )
     elif (
@@ -250,8 +264,12 @@ def _validate_addr_type(
         ip_version == constants.IP_VERSION_4
     ):
         report_items.append(
-            reports.corosync_address_ip_version_wrong_for_link(
-                addr, ADDR_IPV4, link_number=link_index
+            ReportItem.error(
+                report.messages.CorosyncAddressIpVersionWrongForLink(
+                    addr,
+                    ADDR_IPV4,
+                    link_number=link_index,
+                )
             )
         )
     report_items += validate.ValueCorosyncValue(
@@ -324,12 +342,14 @@ def add_nodes(
         addr_count = len(node.get("addrs") or [])
         if addr_count != number_of_existing_links:
             report_items.append(
-                reports.corosync_bad_node_addresses_count(
-                    addr_count,
-                    number_of_existing_links,
-                    number_of_existing_links,
-                    node_name=node.get("name"),
-                    node_index=i
+                ReportItem.error(
+                    report.messages.CorosyncBadNodeAddressesCount(
+                        actual_count=addr_count,
+                        min_count=number_of_existing_links,
+                        max_count=number_of_existing_links,
+                        node_name=node.get("name"),
+                        node_index=i,
+                    )
                 )
             )
         addr_types = []
@@ -362,10 +382,12 @@ def add_nodes(
                     existing_addr_types[link_index].link
                 )
                 report_items.append(
-                    reports.corosync_address_ip_version_wrong_for_link(
-                        addr,
-                        existing_addr_types[link_index].addr_type,
-                        existing_addr_types[link_index].link,
+                    ReportItem.error(
+                        report.messages.CorosyncAddressIpVersionWrongForLink(
+                            addr,
+                            existing_addr_types[link_index].addr_type,
+                            existing_addr_types[link_index].link,
+                        )
                     )
                 )
             report_items += validate.ValueCorosyncValue(
@@ -426,7 +448,11 @@ def add_nodes(
             links_ip_mismatch.append(existing_links[link_index])
     if links_ip_mismatch:
         report_items.append(
-            reports.corosync_ip_version_mismatch_in_links(links_ip_mismatch)
+            ReportItem.error(
+                report.messages.CorosyncIpVersionMismatchInLinks(
+                    links_ip_mismatch,
+                )
+            )
         )
     return report_items
 
@@ -597,7 +623,11 @@ def create_link_list_knet(link_list, max_allowed_link_count):
     ]
     if non_unique_linknumbers:
         report_items.append(
-            reports.corosync_link_number_duplication(non_unique_linknumbers)
+            ReportItem.error(
+                report.messages.CorosyncLinkNumberDuplication(
+                    non_unique_linknumbers,
+                )
+            )
         )
     report_items.extend(
         _check_link_options_count(len(link_list), max_allowed_link_count)
@@ -749,11 +779,13 @@ def add_link(
         )
     )
     report_items += [
-        reports.corosync_bad_node_addresses_count(
-            actual_count=0,
-            min_count=number_of_links_to_add,
-            max_count=number_of_links_to_add,
-            node_name=node
+        ReportItem.error(
+            report.messages.CorosyncBadNodeAddressesCount(
+                actual_count=0,
+                min_count=number_of_links_to_add,
+                max_count=number_of_links_to_add,
+                node_name=node
+            )
         )
         for node in sorted(existing_names - set(node_addr_map.keys()))
     ]
@@ -785,7 +817,11 @@ def add_link(
 
     # Check mixing IPv4 and IPv6 in the link
     if ADDR_IPV4 in addr_types and ADDR_IPV6 in addr_types:
-        report_items.append(reports.corosync_ip_version_mismatch_in_links())
+        report_items.append(
+            ReportItem.error(
+                report.messages.CorosyncIpVersionMismatchInLinks(),
+            )
+        )
 
     # Check addresses are unique
     report_items += _report_non_unique_addresses(
@@ -832,7 +868,11 @@ def remove_links(linknumbers_to_remove, linknumbers_existing, transport):
     }
     if to_remove_duplicates:
         report_items.append(
-            reports.corosync_link_number_duplication(to_remove_duplicates)
+            ReportItem.error(
+                report.messages.CorosyncLinkNumberDuplication(
+                    sorted(to_remove_duplicates),
+                )
+            )
         )
 
     to_remove = frozenset(linknumbers_to_remove)
@@ -956,7 +996,11 @@ def update_link(
     )
     # Check mixing IPv4 and IPv6 in the link - get addresses after update
     if ADDR_IPV4 in link_addr_types and ADDR_IPV6 in link_addr_types:
-        report_items.append(reports.corosync_ip_version_mismatch_in_links())
+        report_items.append(
+            ReportItem.error(
+                report.messages.CorosyncIpVersionMismatchInLinks(),
+            )
+        )
     # Check address are unique. If new addresses are unique and no new address
     # already exists in the set of addresses not changed by the update, then
     # the new addresses are unique.
@@ -1270,8 +1314,10 @@ def _validate_quorum_options(options, has_qdevice, allow_empty_values):
         ]
         if qdevice_incompatible_options:
             report_items.append(
-                reports.corosync_options_incompatible_with_qdevice(
-                    qdevice_incompatible_options
+                ReportItem.error(
+                    report.messages.CorosyncOptionsIncompatibleWithQdevice(
+                        qdevice_incompatible_options,
+                    )
                 )
             )
 

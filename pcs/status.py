@@ -2,9 +2,10 @@ import sys
 import os
 
 from pcs import utils
+from pcs.common import reports
+from pcs.common.reports.item import ReportItem
 from pcs.cli.common.errors import CmdLineInputError
 from pcs.cli.common.reports import process_library_reports
-from pcs.lib import reports
 from pcs.lib.node import get_existing_nodes_names
 from pcs.lib.errors import LibraryError
 from pcs.lib.pacemaker.state import ClusterState
@@ -288,7 +289,11 @@ def cluster_pcsd_status(lib, argv, modifiers, dont_exit=False):
             utils.get_corosync_conf_facade()
         )
         if not nodes and not dont_exit:
-            report_list.append(reports.corosync_config_no_nodes_defined())
+            report_list.append(
+                ReportItem.error(
+                    reports.messages.CorosyncConfigNoNodesDefined()
+                )
+            )
         if report_list:
             process_library_reports(report_list)
         bad_nodes = check_nodes(nodes, "  ")
