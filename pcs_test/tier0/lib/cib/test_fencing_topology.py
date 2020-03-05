@@ -260,8 +260,13 @@ class AddLevel(TestCase):
         mock_append
     ):
         mock_val_dupl.return_value = [
-            reports.fencing_level_already_exists(
-                self.level, self.target_type, self.target_value, self.devices
+            common_report.item.ReportItem.error(
+                common_report.messages.CibFencingLevelAlreadyExists(
+                    self.level,
+                    self.target_type,
+                    self.target_value,
+                    self.devices,
+                )
             )
         ]
         report_list = [

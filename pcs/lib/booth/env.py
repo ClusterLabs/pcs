@@ -1,5 +1,8 @@
-from pcs.common import file_type_codes
-from pcs.lib import reports as common_reports
+from pcs.common import (
+    file_type_codes,
+    reports,
+)
+from pcs.common.reports.item import ReportItem
 from pcs.lib.booth import (
     config_validators,
     constants,
@@ -23,9 +26,11 @@ class BoothEnv():
             "key_data" not in booth_files_data
         ):
             raise LibraryError(
-                common_reports.live_environment_not_consistent(
-                    [file_type_codes.BOOTH_CONFIG],
-                    [file_type_codes.BOOTH_KEY],
+                ReportItem.error(
+                    reports.messages.LiveEnvironmentNotConsistent(
+                        [file_type_codes.BOOTH_CONFIG],
+                        [file_type_codes.BOOTH_KEY],
+                    )
                 )
             )
         if (
@@ -34,9 +39,11 @@ class BoothEnv():
             "key_data" in booth_files_data
         ):
             raise LibraryError(
-                common_reports.live_environment_not_consistent(
-                    [file_type_codes.BOOTH_KEY],
-                    [file_type_codes.BOOTH_CONFIG],
+                ReportItem.error(
+                    reports.messages.LiveEnvironmentNotConsistent(
+                        [file_type_codes.BOOTH_KEY],
+                        [file_type_codes.BOOTH_CONFIG],
+                    )
                 )
             )
 

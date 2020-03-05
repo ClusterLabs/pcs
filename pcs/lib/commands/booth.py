@@ -71,10 +71,6 @@ def config_setup(
     booth_conf = booth_env.create_facade(site_list, arbitrator_list)
     booth_conf.set_authfile(booth_env.key_path)
 
-    report_creator = reports.get_problem_creator(
-        force_code=report_codes.FORCE_FILE_OVERWRITE,
-        is_forced=overwrite_existing
-    )
     try:
         booth_env.key.write_raw(
             tools.generate_binary_key(
@@ -88,10 +84,15 @@ def config_setup(
         )
     except FileAlreadyExists as e:
         report_processor.report(
-            report_creator(
-                reports.file_already_exists,
-                e.metadata.file_type_code,
-                e.metadata.path,
+            ReportItem(
+                severity=report.item.get_severity(
+                    report.codes.FORCE_FILE_OVERWRITE,
+                    overwrite_existing,
+                ),
+                message=report.messages.FileAlreadyExists(
+                    e.metadata.file_type_code,
+                    e.metadata.path,
+                )
             )
         )
     except RawFileError as e:
@@ -236,7 +237,11 @@ def config_text(env: LibraryEnvironment, instance_name=None, node_name=None):
         # which send and receive configs as bytes instead of strings
         return remote_data["config"]["data"].encode("utf-8")
     except KeyError:
-        raise LibraryError(reports.invalid_response_format(node_name))
+        raise LibraryError(
+            ReportItem.error(
+                report.messages.InvalidResponseFormat(node_name)
+            )
+        )
 
 
 def config_ticket_add(
@@ -548,8 +553,8 @@ def config_sync(
     booth_env = env.get_booth_env(instance_name)
     if not env.is_cib_live:
         raise LibraryError(
-            reports.live_environment_required(
-                [file_type_codes.CIB],
+            ReportItem.error(
+                report.messages.LiveEnvironmentRequired([file_type_codes.CIB])
             )
         )
 
@@ -753,7 +758,11 @@ def pull_config(env: LibraryEnvironment, node_name, instance_name=None):
     except RawFileError as e:
         report_processor.report(raw_file_error_report(e))
     except KeyError:
-        raise LibraryError(reports.invalid_response_format(node_name))
+        raise LibraryError(
+            ReportItem.error(
+                report.messages.InvalidResponseFormat(node_name)
+            )
+        )
     if report_processor.has_errors:
         raise LibraryError()
 
@@ -808,7 +817,11 @@ def _find_resource_elements_for_operation(
 def _ensure_live_booth_env(booth_env):
     if booth_env.ghost_file_codes:
         raise LibraryError(
-            reports.live_environment_required(booth_env.ghost_file_codes)
+            ReportItem.error(
+                report.messages.LiveEnvironmentRequired(
+                    booth_env.ghost_file_codes
+                )
+            )
         )
 
 def _ensure_live_env(env: LibraryEnvironment, booth_env):
@@ -820,4 +833,6 @@ def _ensure_live_env(env: LibraryEnvironment, booth_env):
         ([file_type_codes.CIB] if not env.is_cib_live else [])
     )
     if not_live:
-        raise LibraryError(reports.live_environment_required(not_live))
+        raise LibraryError(
+            ReportItem.error(report.messages.LiveEnvironmentRequired(not_live))
+        )

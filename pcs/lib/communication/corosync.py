@@ -167,16 +167,21 @@ class ReloadCorosyncConf(
                 )
         except (ValueError, LookupError):
             self.__has_failures = True
-            self._report(reports.invalid_response_format(
-                node,
-                severity=ReportItemSeverity.WARNING,
-            ))
+            self._report(
+                ReportItem.warning(
+                    report.messages.InvalidResponseFormat(node)
+                )
+            )
 
         return self._get_next_list()
 
     def on_complete(self):
         if not self.__was_successful and self.__has_failures:
-            self._report(reports.unable_to_perform_operation_on_any_node())
+            self._report(
+                ReportItem.error(
+                    report.messages.UnableToPerformOperationOnAnyNode()
+                )
+            )
 
 
 class GetCorosyncConf(
@@ -203,5 +208,9 @@ class GetCorosyncConf(
 
     def on_complete(self):
         if not self.__was_successful and self.__has_failures:
-            self._report(reports.unable_to_perform_operation_on_any_node())
+            self._report(
+                ReportItem.error(
+                    report.messages.UnableToPerformOperationOnAnyNode()
+                )
+            )
         return self.__corosync_conf

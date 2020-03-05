@@ -2,8 +2,7 @@ import os
 
 from pcs import settings
 from pcs.common import pcs_pycurl as pycurl
-from pcs.common import reports as report
-from pcs.common.reports import codes as report_codes
+from pcs.common import reports
 from pcs.common.reports.item import ReportItem
 from pcs.common.node_communicator import (
     CommunicatorLoggerInterface,
@@ -14,7 +13,6 @@ from pcs.common.reports import (
     ReportItemSeverity,
     ReportProcessor,
 )
-from pcs.lib import reports
 from pcs.lib.errors import LibraryError
 
 
@@ -36,7 +34,7 @@ class LibCommunicatorLogger(CommunicatorLoggerInterface):
         )
         self._reporter.report(
             ReportItem.debug(
-                report.messages.NodeCommunicationStarted(
+                reports.messages.NodeCommunicationStarted(
                     request.url,
                     request.data,
                 )
@@ -63,7 +61,7 @@ class LibCommunicatorLogger(CommunicatorLoggerInterface):
         ))
         self._reporter.report(
             ReportItem.debug(
-                report.messages.NodeCommunicationFinished(
+                reports.messages.NodeCommunicationFinished(
                     url,
                     response.response_code,
                     response.data,
@@ -78,7 +76,7 @@ class LibCommunicatorLogger(CommunicatorLoggerInterface):
         ))
         self._reporter.report(
             ReportItem.debug(
-                report.messages.NodeCommunicationNotConnected(
+                reports.messages.NodeCommunicationNotConnected(
                     response.request.host_label,
                     response.error_msg,
                 )
@@ -88,7 +86,7 @@ class LibCommunicatorLogger(CommunicatorLoggerInterface):
             self._logger.warning("Proxy is set")
             self._reporter.report(
                 ReportItem.warning(
-                    report.messages.NodeCommunicationProxyIsSet(
+                    reports.messages.NodeCommunicationProxyIsSet(
                         response.request.host_label,
                         response.request.dest.addr,
                     )
@@ -108,7 +106,7 @@ class LibCommunicatorLogger(CommunicatorLoggerInterface):
         )
         self._reporter.report(
             ReportItem.debug(
-                report.messages.NodeCommunicationDebugInfo(url, debug_data)
+                reports.messages.NodeCommunicationDebugInfo(url, debug_data)
             )
         )
 
@@ -130,7 +128,7 @@ class LibCommunicatorLogger(CommunicatorLoggerInterface):
         self._logger.warning(msg)
         self._reporter.report(
             ReportItem.warning(
-                report.messages.NodeCommunicationRetrying(
+                reports.messages.NodeCommunicationRetrying(
                     response.request.host_label,
                     previous_dest.addr,
                     old_port,
@@ -149,7 +147,7 @@ class LibCommunicatorLogger(CommunicatorLoggerInterface):
         self._logger.warning(msg)
         self._reporter.report(
             ReportItem.warning(
-                report.messages.NodeCommunicationNoMoreAddresses(
+                reports.messages.NodeCommunicationNoMoreAddresses(
                     response.request.host_label,
                     response.request.url,
                 )
@@ -176,19 +174,27 @@ class NodeTargetLibFactory(NodeTargetFactory):
 
         report_list = []
         if unknown_host_list:
-            report_kwargs = {}
-            if skip_non_existing:
-                report_kwargs["severity"] = ReportItemSeverity.WARNING
-            elif allow_skip:
-                report_kwargs["forceable"] = report_codes.SKIP_OFFLINE_NODES
-            report_list.append(reports.host_not_found(
-                unknown_host_list, **report_kwargs
-            ))
+            report_list.append(
+                ReportItem(
+                    severity=reports.item.get_severity(
+                        (
+                            reports.codes.SKIP_OFFLINE_NODES if allow_skip
+                            else None
+                        ),
+                        skip_non_existing,
+                    ),
+                    message=reports.messages.HostNotFound(
+                        sorted(unknown_host_list),
+                    ),
+                )
+            )
 
         if not target_list and host_name_list and report_none_host_found:
             # we want to create this report only if there was at least one
             # required address specified
-            report_list.append(reports.none_host_found())
+            report_list.append(
+                ReportItem.error(reports.messages.NoneHostFound())
+            )
         return report_list, target_list
 
     def get_target_list(
@@ -227,37 +233,39 @@ def response_to_report_item(
         response_code == 404
     ):
         return ReportItem.error(
-            report.messages.PcsdVersionTooOld(response.request.host_label)
+            reports.messages.PcsdVersionTooOld(response.request.host_label)
         )
     if response.was_connected:
         if response_code == 400:
             # old pcsd protocol: error messages are commonly passed in plain
             # text in response body with HTTP code 400
             # we need to be backward compatible with that
-            report_item = report.messages.NodeCommunicationCommandUnsuccessful
+            report_item = reports.messages.NodeCommunicationCommandUnsuccessful
             reason = response.data.rstrip()
         elif response_code == 401:
-            report_item = report.messages.NodeCommunicationErrorNotAuthorized
+            report_item = reports.messages.NodeCommunicationErrorNotAuthorized
             reason = "HTTP error: {0}".format(response_code)
         elif response_code == 403:
-            report_item = report.messages.NodeCommunicationErrorPermissionDenied
+            report_item = (
+                reports.messages.NodeCommunicationErrorPermissionDenied
+            )
             reason = "HTTP error: {0}".format(response_code)
         elif response_code == 404:
             report_item = (
-                report.messages.NodeCommunicationErrorUnsupportedCommand
+                reports.messages.NodeCommunicationErrorUnsupportedCommand
             )
             reason = "HTTP error: {0}".format(response_code)
         elif response_code >= 400:
-            report_item = report.messages.NodeCommunicationError
+            report_item = reports.messages.NodeCommunicationError
             reason = "HTTP error: {0}".format(response_code)
     else:
         if response.errno in [
             pycurl.E_OPERATION_TIMEDOUT, pycurl.E_OPERATION_TIMEOUTED
         ]:
-            report_item = report.messages.NodeCommunicationErrorTimedOut
+            report_item = reports.messages.NodeCommunicationErrorTimedOut
             reason = response.error_msg
         else:
-            report_item = report.messages.NodeCommunicationErrorUnableToConnect
+            report_item = reports.messages.NodeCommunicationErrorUnableToConnect
             reason = response.error_msg
     if not report_item:
         return None

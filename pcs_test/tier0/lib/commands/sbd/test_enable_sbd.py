@@ -721,6 +721,7 @@ class Validations(TestCase):
             fixture.error(
                 report_codes.SBD_NO_DEVICE_FOR_NODE,
                 node=self.node_list[1],
+                sbd_enabled_in_cluster=False,
             ),
         ])
 
@@ -1082,7 +1083,9 @@ class Validations(TestCase):
                     report_codes.WATCHDOG_INVALID, watchdog=""
                 ),
                 fixture.error(
-                    report_codes.SBD_NO_DEVICE_FOR_NODE, node=self.node_list[1],
+                    report_codes.SBD_NO_DEVICE_FOR_NODE,
+                    node=self.node_list[1],
+                    sbd_enabled_in_cluster=False,
                 ),
                 fixture.error(
                     report_codes.SBD_TOO_MANY_DEVICES_FOR_NODE,

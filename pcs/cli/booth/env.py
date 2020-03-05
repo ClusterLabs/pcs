@@ -1,10 +1,11 @@
 from pcs.common import (
     file as pcs_file,
     file_type_codes,
+    reports,
 )
+from pcs.common.reports.item import ReportItem
 from pcs.cli.common import console_report
 from pcs.cli.file import metadata
-from pcs.lib import reports
 from pcs.lib.errors import LibraryError
 
 
@@ -41,11 +42,13 @@ def middleware_config(config_path, key_path):
         # and LibraryError
         except pcs_file.RawFileError as e:
             raise LibraryError(
-                reports.file_io_error(
-                    e.metadata.file_type_code,
-                    e.action,
-                    e.reason,
-                    file_path=e.metadata.path,
+                ReportItem.error(
+                    reports.messages.FileIoError(
+                        e.metadata.file_type_code,
+                        e.action,
+                        e.reason,
+                        file_path=e.metadata.path,
+                    )
                 )
             )
         return {
@@ -75,11 +78,13 @@ def middleware_config(config_path, key_path):
         # and LibraryError
         except pcs_file.RawFileError as e:
             raise LibraryError(
-                reports.file_io_error(
-                    e.metadata.file_type_code,
-                    e.action,
-                    e.reason,
-                    file_path=e.metadata.path,
+                ReportItem.error(
+                    reports.messages.FileIoError(
+                        e.metadata.file_type_code,
+                        e.action,
+                        e.reason,
+                        file_path=e.metadata.path,
+                    )
                 )
             )
 

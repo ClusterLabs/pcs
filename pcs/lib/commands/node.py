@@ -1,5 +1,7 @@
 from contextlib import contextmanager
 
+from pcs.common import reports as report
+from pcs.common.reports.item import ReportItem
 from pcs.lib import reports
 from pcs.lib.cib.node import update_node_instance_attrs
 from pcs.lib.cib.tools import IdProvider
@@ -130,7 +132,11 @@ def _set_instance_attrs_local_node(lib_env, attrs, wait):
     if not lib_env.is_cib_live:
         # If we are not working with a live cluster we cannot get the local node
         # name.
-        raise LibraryError(reports.live_environment_required_for_local_node())
+        raise LibraryError(
+            ReportItem.error(
+                report.messages.LiveEnvironmentRequiredForLocalNode()
+            )
+        )
 
     with cib_runner_nodes(lib_env, wait) as (cib, runner, state_nodes):
         update_node_instance_attrs(
@@ -144,12 +150,12 @@ def _set_instance_attrs_local_node(lib_env, attrs, wait):
 def _set_instance_attrs_node_list(lib_env, attrs, node_names, wait):
     with cib_runner_nodes(lib_env, wait) as (cib, dummy_runner, state_nodes):
         known_nodes = [node.attrs.name for node in state_nodes]
-        report = []
+        report_list = []
         for node in node_names:
             if node not in known_nodes:
-                report.append(reports.node_not_found(node))
-        if report:
-            raise LibraryError(*report)
+                report_list.append(reports.node_not_found(node))
+        if report_list:
+            raise LibraryError(*report_list)
 
         for node in node_names:
             update_node_instance_attrs(

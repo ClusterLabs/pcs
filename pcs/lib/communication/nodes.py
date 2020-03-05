@@ -1,8 +1,12 @@
 import json
 
-from pcs.common.reports import codes as report_codes
+from pcs.common import reports as new_report
+from pcs.common.reports import (
+    codes as report_codes,
+    ReportItemSeverity,
+)
+from pcs.common.reports.item import ReportItem
 from pcs.common.node_communicator import RequestData
-from pcs.common.reports import ReportItemSeverity
 from pcs.lib import reports, node_communication_format
 from pcs.lib.communication.tools import (
     AllAtOnceStrategyMixin,
@@ -92,7 +96,9 @@ class CheckAuth(AllSameDataMixin, AllAtOnceStrategyMixin, RunRemotelyBase):
         )
         host_name = response.request.target.label
         if report is None:
-            report = reports.host_already_authorized(host_name)
+            report = ReportItem.info(
+                new_report.messages.HostAlreadyAuthorized(host_name)
+            )
         else:
             # If we cannot connect it may be because a node's address and / or
             # port is not correct. Since these are part of authentication info
@@ -120,7 +126,11 @@ class GetHostInfo(AllSameDataMixin, AllAtOnceStrategyMixin, RunRemotelyBase):
         try:
             self._responses[host_name] = json.loads(response.data)
         except json.JSONDecodeError:
-            self._report(reports.invalid_response_format(host_name))
+            self._report(
+                ReportItem.error(
+                    new_report.messages.InvalidResponseFormat(host_name)
+                )
+            )
 
     def before(self):
         self._responses = {}
@@ -186,7 +196,11 @@ class RunActionBase(
         try:
             results = json.loads(response.data)
         except ValueError:
-            self._report(reports.invalid_response_format(target.label))
+            self._report(
+                ReportItem.error(
+                    new_report.messages.InvalidResponseFormat(target.label)
+                )
+            )
             return
         results = node_communication_format.response_to_result(
             results,
@@ -341,7 +355,13 @@ class StartCluster(
         return RequestData("remote/cluster_start")
 
     def before(self):
-        self._report(reports.cluster_start_started(self._target_label_list))
+        self._report(
+            ReportItem.info(
+                new_report.messages.ClusterStartStarted(
+                    sorted(self._target_label_list)
+                )
+            )
+        )
 
 
 class EnableCluster(
@@ -352,10 +372,18 @@ class EnableCluster(
         return RequestData("remote/cluster_enable")
 
     def _get_success_report(self, node_label):
-        return reports.cluster_enable_success(node_label)
+        return ReportItem.info(
+            new_report.messages.ClusterEnableSuccess(node_label)
+        )
 
     def before(self):
-        self._report(reports.cluster_enable_started(self._target_label_list))
+        self._report(
+            ReportItem.info(
+                new_report.messages.ClusterEnableStarted(
+                    sorted(self._target_label_list)
+                )
+            )
+        )
 
 
 class CheckPacemakerStarted(
@@ -382,9 +410,14 @@ class CheckPacemakerStarted(
                 ):
                     self._not_yet_started_target_list.append(target)
                     return
-                report = reports.cluster_start_success(target.label)
+                report = ReportItem.info(
+                    new_report.messages.ClusterStartSuccess(target.label)
+                )
             except (json.JSONDecodeError, KeyError):
-                report = reports.invalid_response_format(target.label)
+                report = ReportItem.error(
+                    new_report.messages.InvalidResponseFormat(target.label)
+                )
+
         else:
             if not response.was_connected:
                 self._not_yet_started_target_list.append(target)
@@ -455,7 +488,11 @@ class RemoveNodesFromCib(
                     )
                 )
         except (KeyError, json.JSONDecodeError):
-            self._report(reports.invalid_response_format(node_label))
+            self._report(
+                ReportItem.error(
+                    new_report.messages.InvalidResponseFormat(node_label)
+                )
+            )
 
 
 class SendPcsdSslCertAndKey(
@@ -474,7 +511,9 @@ class SendPcsdSslCertAndKey(
         )
 
     def _get_success_report(self, node_label):
-        return reports.pcsd_ssl_cert_and_key_set_success(node_label)
+        return ReportItem.info(
+            new_report.messages.PcsdSslCertAndKeySetSuccess(node_label)
+        )
 
 
 def _force(force_code, is_forced):

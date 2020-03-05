@@ -10,7 +10,9 @@ from typing import (
 from lxml import etree
 
 from pcs import settings
+from pcs.common import reports as report
 from pcs.common.reports import ReportProcessor
+from pcs.common.reports.item import ReportItem
 from pcs.common.tools import (
     format_os_error,
     xml_fromstring
@@ -192,11 +194,19 @@ def diff_cibs_xml(
     try:
         cib_old_tmp_file = write_tmpfile(cib_old_xml)
         reporter.report(
-            reports.tmp_file_write(cib_old_tmp_file.name, cib_old_xml)
+            ReportItem.debug(
+                report.messages.TmpFileWrite(
+                    cib_old_tmp_file.name, cib_old_xml
+                )
+            )
         )
         cib_new_tmp_file = write_tmpfile(cib_new_xml)
         reporter.report(
-            reports.tmp_file_write(cib_new_tmp_file.name, cib_new_xml)
+            ReportItem.debug(
+                report.messages.TmpFileWrite(
+                    cib_new_tmp_file.name, cib_new_xml
+                )
+            )
         )
     except EnvironmentError as e:
         raise LibraryError(reports.cib_save_tmp_error(str(e)))
@@ -243,15 +253,23 @@ def ensure_cib_version(runner, cib, version):
     try:
         new_cib = parse_cib_xml(new_cib_xml)
     except (etree.XMLSyntaxError, etree.DocumentInvalid) as e:
-        raise LibraryError(reports.cib_upgrade_failed(str(e)))
+        raise LibraryError(
+            ReportItem.error(
+                report.messages.CibUpgradeFailed(str(e))
+            )
+        )
 
     current_version = get_pacemaker_version_by_which_cib_was_validated(new_cib)
     if current_version >= version:
         return new_cib
 
-    raise LibraryError(reports.unable_to_upgrade_cib_to_required_version(
-        current_version, version
-    ))
+    raise LibraryError(
+        ReportItem.error(
+            report.messages.CibUpgradeFailedToMinimalRequiredVersion(
+                str(current_version), str(version)
+            )
+        )
+    )
 
 def _upgrade_cib(runner):
     """
@@ -266,7 +284,11 @@ def _upgrade_cib(runner):
     # caller knows that and is responsible for dealing with it.
     if retval != 0:
         raise LibraryError(
-            reports.cib_upgrade_failed(join_multilines([stderr, stdout]))
+            ReportItem.error(
+                report.messages.CibUpgradeFailed(
+                    join_multilines([stderr, stdout])
+                )
+            )
         )
 
 def simulate_cib_xml(runner, cib_xml):

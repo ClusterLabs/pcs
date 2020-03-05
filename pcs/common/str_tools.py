@@ -3,6 +3,7 @@ from typing import (
     List,
     Mapping,
     Optional,
+    TypeVar,
 )
 
 
@@ -41,21 +42,15 @@ def format_list(
 
 # TODO: tests
 def format_list_custom_last_separator(
-    item_list: List[str], # Intetionaly not Sequence so string is prohibited
+    item_list: List[str],  # Intetionaly not Sequence so string is prohibited
     last_separator: str,
     separator: str = ", ",
 ) -> str:
     item_list = sorted(item_list)
     return "{}{}{}".format(
-        format_list(
-            item_list[:-1],
-            separator=separator,
-        ),
+        format_list(item_list[:-1], separator=separator,),
         last_separator,
-        format_list(
-            item_list[-1:],
-            separator=separator,
-        ),
+        format_list(item_list[-1:], separator=separator,),
     )
 
 
@@ -126,3 +121,11 @@ def format_plural(depends_on, singular, plural=None):
     if singular in common_plurals:
         return common_plurals[singular]
     return _add_s(singular)
+
+
+T = TypeVar("T")
+
+
+# TODO: tests
+def transform(items: List[T], mapping: Mapping[T, str]) -> List[str]:
+    return list(map(lambda item: mapping.get(item, str(item)), items))

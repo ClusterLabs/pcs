@@ -190,9 +190,11 @@ def reset_to_minimal(bundle_element):
             reset_element(child, keep_attrs=["image"])
 
 def _get_report_unsupported_container(bundle_el):
-    return reports.resource_bundle_unsupported_container_type(
-        bundle_el.get("id"),
-        GENERIC_CONTAINER_TYPES,
+    return ReportItem.error(
+        report.messages.ResourceBundleUnsupportedContainerType(
+            bundle_el.get("id"),
+            sorted(GENERIC_CONTAINER_TYPES),
+        )
     )
 
 def validate_update(
@@ -567,12 +569,15 @@ def _validate_network_options_update(
         not _is_pcmk_remote_acccessible_after_update(network_el, options)
     ):
         report_list.append(
-            reports.get_problem_creator(
-                report_codes.FORCE_OPTIONS, force_options
-            )(
-                reports.resource_in_bundle_not_accessible,
-                bundle_el.get("id"),
-                inner_primitive.get("id")
+            ReportItem(
+                severity=report.item.get_severity(
+                    report_codes.FORCE_OPTIONS,
+                    force_options,
+                ),
+                message=report.messages.ResourceInBundleNotAccessible(
+                    bundle_el.get("id"),
+                    inner_primitive.get("id"),
+                ),
             )
         )
 

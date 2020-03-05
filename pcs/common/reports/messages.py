@@ -13,7 +13,6 @@ from typing import (
     Optional,
     Tuple,
     Union,
-    TypeVar,
     NewType,
 )
 
@@ -86,20 +85,6 @@ def _key_numeric(item):
     return (int(item), item) if item.isdigit() else (-1, item)
 
 
-T = TypeVar("T")
-
-
-def _transform(items: List[T], mapping: Mapping[T, str]) -> List[str]:
-    return list(map(lambda item: mapping.get(item, str(item)), items))
-
-
-_file_role_to_option_translation: Mapping[file_type_codes.FileTypeCode, str] = {
-    file_type_codes.BOOTH_CONFIG: "--booth-conf",
-    file_type_codes.BOOTH_KEY: "--booth-key",
-    file_type_codes.CIB: "-f",
-    file_type_codes.COROSYNC_CONF: "--corosync_conf",
-}
-
 _file_role_translation = {
     file_type_codes.BOOTH_CONFIG: "Booth configuration",
     file_type_codes.BOOTH_KEY: "Booth key",
@@ -170,13 +155,17 @@ def _service_action_str(action: ServiceAction, suffix: str = "") -> str:
     return "{}{}".format(base, suffix)
 
 
-def skip_reason_to_string(reason: str) -> str:
-    translate = {
-        "not_live_cib": "the command does not run on a live cluster (e.g. -f "
-        "was used)",
-        "unreachable": "pcs is unable to connect to the node(s)",
-    }
-    return translate.get(reason, reason)
+ReasonType = NewType("ReasonType", str)
+
+UNREACHABLE = ReasonType("unreachable")
+NOT_LIVE_CIB = ReasonType("not_live_cib")
+
+
+def skip_reason_to_string(reason: ReasonType) -> str:
+    return {
+        NOT_LIVE_CIB: "the command does not run on a live cluster",
+        UNREACHABLE: "pcs is unable to connect to the node(s)",
+    }.get(reason, reason)
 
 
 def typelist_to_string(type_list, article=False):
@@ -3683,7 +3672,7 @@ class FilesDistributionStarted(ReportItemMessage):
         )
 
 
-# TODO: reason type schould be a enum-like
+# TODO: cli specific
 @dataclass(frozen=True)
 class FilesDistributionSkipped(ReportItemMessage):
     """
@@ -3694,7 +3683,7 @@ class FilesDistributionSkipped(ReportItemMessage):
     node_list -- where the files should have been sent to
     """
 
-    reason_type: str
+    reason_type: ReasonType
     file_list: List[str]
     node_list: List[str]
     _code = codes.FILES_DISTRIBUTION_SKIPPED
@@ -3776,6 +3765,7 @@ class FilesRemoveFromNodesStarted(ReportItemMessage):
         )
 
 
+# TODO: cli specific
 @dataclass(frozen=True)
 class FilesRemoveFromNodesSkipped(ReportItemMessage):
     """
@@ -3786,7 +3776,7 @@ class FilesRemoveFromNodesSkipped(ReportItemMessage):
     node_list -- node names the files are being removed from
     """
 
-    reason_type: str
+    reason_type: ReasonType
     file_list: List[str]
     node_list: List[str]
     _code = codes.FILES_REMOVE_FROM_NODES_SKIPPED
@@ -3865,6 +3855,7 @@ class ServiceCommandsOnNodesStarted(ReportItemMessage):
         )
 
 
+# TODO: cli specific
 @dataclass(frozen=True)
 class ServiceCommandsOnNodesSkipped(ReportItemMessage):
     """
@@ -3875,7 +3866,7 @@ class ServiceCommandsOnNodesSkipped(ReportItemMessage):
     node_list -- destinations where the action should have been executed
     """
 
-    reason_type: str
+    reason_type: ReasonType
     action_list: List[str]
     node_list: List[str]
     _code = codes.SERVICE_COMMANDS_ON_NODES_SKIPPED
@@ -4046,14 +4037,13 @@ class SbdDevicePathNotAbsolute(ReportItemMessage):
     """
 
     device: str
-    node: str = ""
+    node: str
     _code = codes.SBD_DEVICE_PATH_NOT_ABSOLUTE
 
     @property
     def message(self) -> str:
-        return "Device path '{device}'{on_node} is not absolute".format(
-            on_node=format_optional(self.node, " on node '{}'"),
-            device=self.device,
+        return (
+            f"Device path '{self.device}' on node '{self.node}' is not absolute"
         )
 
 
@@ -4183,14 +4173,14 @@ class CibAlertRecipientAlreadyExists(ReportItemMessage):
     recipient_value -- value of recipient
     """
 
-    alert_id: str
-    recipient_value: str
+    alert: str
+    recipient: str
     _code = codes.CIB_ALERT_RECIPIENT_ALREADY_EXISTS
 
     @property
     def message(self) -> str:
         return (
-            f"Recipient '{self.recipient_value}' in alert '{self.alert_id}' "
+            f"Recipient '{self.recipient}' in alert '{self.alert}' "
             "already exists"
         )
 
@@ -4305,6 +4295,7 @@ class FileIoError(ReportItemMessage):
         )
 
 
+# TODO: not used? should be removed?
 @dataclass(frozen=True)
 class UnableToDetermineUserUid(ReportItemMessage):
     user: str
@@ -4315,6 +4306,7 @@ class UnableToDetermineUserUid(ReportItemMessage):
         return f"Unable to determine uid of user '{self.user}'"
 
 
+# TODO: not used? should be removed?
 @dataclass(frozen=True)
 class UnableToDetermineGroupGid(ReportItemMessage):
     group: str
@@ -4334,7 +4326,6 @@ class UnsupportedOperationOnNonSystemdSystems(ReportItemMessage):
         return "unsupported operation on non systemd systems"
 
 
-# TODO: cli specific report
 @dataclass(frozen=True)
 class LiveEnvironmentRequired(ReportItemMessage):
     """
@@ -4350,14 +4341,11 @@ class LiveEnvironmentRequired(ReportItemMessage):
     def message(self) -> str:
         return "This command does not support {forbidden_options}".format(
             forbidden_options=format_list(
-                _transform(
-                    self.forbidden_options, _file_role_to_option_translation
-                )
+                [str(item) for item in self.forbidden_options]
             ),
         )
 
 
-# TODO: cli specific report
 @dataclass(frozen=True)
 class LiveEnvironmentRequiredForLocalNode(ReportItemMessage):
     """
@@ -4369,7 +4357,7 @@ class LiveEnvironmentRequiredForLocalNode(ReportItemMessage):
 
     @property
     def message(self) -> str:
-        return "Node(s) must be specified if -f is used"
+        return "Node(s) must be specified if mocked CIB is used"
 
 
 @dataclass(frozen=True)
@@ -4390,15 +4378,9 @@ class LiveEnvironmentNotConsistent(ReportItemMessage):
         return (
             "When {given} {_is} specified, {missing} must be specified as well"
         ).format(
-            given=format_list(
-                _transform(self.mocked_files, _file_role_to_option_translation)
-            ),
+            given=format_list([str(item) for item in self.mocked_files]),
             _is=format_plural(self.mocked_files, "is"),
-            missing=format_list(
-                _transform(
-                    self.required_files, _file_role_to_option_translation
-                )
-            ),
+            missing=format_list([str(item) for item in self.required_files]),
         )
 
 
@@ -4410,7 +4392,7 @@ class CorosyncNodeConflictCheckSkipped(ReportItemMessage):
     reason_type -- why was the action skipped (unreachable, not_live_cib)
     """
 
-    reason_type: str
+    reason_type: ReasonType
     _code = codes.COROSYNC_NODE_CONFLICT_CHECK_SKIPPED
 
     @property
@@ -4488,7 +4470,6 @@ class CibAclRoleIsNotAssignedToTarget(ReportItemMessage):
         return f"Role '{self.role_id}' is not assigned to '{self.target_id}'"
 
 
-# TODO: consider generalization
 @dataclass(frozen=True)
 class CibAclTargetAlreadyExists(ReportItemMessage):
     """
@@ -4512,7 +4493,6 @@ class CibFencingLevelAlreadyExists(ReportItemMessage):
     level: str
     target_type: str
     target_value: Optional[Tuple[str, str]]
-    # target_value: str
     devices: List[str]
     _code = codes.CIB_FENCING_LEVEL_ALREADY_EXISTS
 
@@ -4564,7 +4544,6 @@ class CibFencingLevelDoesNotExist(ReportItemMessage):
         )
 
 
-# TODO: cli specific
 @dataclass(frozen=True)
 class UseCommandNodeAddRemote(ReportItemMessage):
     """
@@ -4575,13 +4554,9 @@ class UseCommandNodeAddRemote(ReportItemMessage):
 
     @property
     def message(self) -> str:
-        return (
-            "this command is not sufficient for creating a remote connection,"
-            " use 'pcs cluster node add-remote'"
-        )
+        return "this command is not sufficient for creating a remote connection"
 
 
-# TODO: cli specific
 @dataclass(frozen=True)
 class UseCommandNodeAddGuest(ReportItemMessage):
     """
@@ -4592,13 +4567,9 @@ class UseCommandNodeAddGuest(ReportItemMessage):
 
     @property
     def message(self) -> str:
-        return (
-            "this command is not sufficient for creating a guest node, use"
-            " 'pcs cluster node add-guest'"
-        )
+        return "this command is not sufficient for creating a guest node"
 
 
-# TODO: cli specific
 @dataclass(frozen=True)
 class UseCommandNodeRemoveGuest(ReportItemMessage):
     """
@@ -4609,10 +4580,7 @@ class UseCommandNodeRemoveGuest(ReportItemMessage):
 
     @property
     def message(self) -> str:
-        return (
-            "this command is not sufficient for removing a guest node, use"
-            " 'pcs cluster node remove-guest'"
-        )
+        return "this command is not sufficient for removing a guest node"
 
 
 @dataclass(frozen=True)
@@ -4672,7 +4640,6 @@ class UnableToPerformOperationOnAnyNode(ReportItemMessage):
         )
 
 
-# TODO: cli specific
 @dataclass(frozen=True)
 class HostNotFound(ReportItemMessage):
     """
@@ -4686,20 +4653,11 @@ class HostNotFound(ReportItemMessage):
     @property
     def message(self) -> str:
         pluralize = lambda word: format_plural(self.host_list, word)
-        return (
-            (
-                "{host} {hosts_comma} {_is} not known to pcs, try to "
-                "authenticate the {host} using 'pcs host auth {hosts_space}' "
-                "command"
-            )
-            .format(
-                host=pluralize("host"),
-                hosts_comma=format_list(self.host_list),
-                _is=pluralize("is"),
-                hosts_space=" ".join(sorted(self.host_list)),
-            )
-            .capitalize()
-        )
+        return "{host} {hosts_comma} {_is} not known to pcs".format(
+            host=pluralize("host"),
+            hosts_comma=format_list(self.host_list),
+            _is=pluralize("is"),
+        ).capitalize()
 
 
 @dataclass(frozen=True)
@@ -4721,7 +4679,6 @@ class HostAlreadyAuthorized(ReportItemMessage):
         return f"{self.host_name}: Already authorized"
 
 
-# TODO: consider merging with enalbig, ...
 @dataclass(frozen=True)
 class ClusterDestroyStarted(ReportItemMessage):
     host_name_list: List[str]
@@ -4843,13 +4800,13 @@ class HostAlreadyInClusterServices(ReportItemMessage):
 @dataclass(frozen=True)
 class ServiceVersionMismatch(ReportItemMessage):
     service: str
-    host_version: Mapping[str, str]
+    hosts_version: Mapping[str, str]
     _code = codes.SERVICE_VERSION_MISMATCH
 
     @property
     def message(self) -> str:
         version_host: Dict[str, List[str]] = defaultdict(list)
-        for host_name, version in self.host_version.items():
+        for host_name, version in self.hosts_version.items():
             version_host[version].append(host_name)
         parts = [
             "Hosts do not have the same version of '{}'".format(self.service)
@@ -4900,7 +4857,6 @@ class WaitForNodeStartupError(ReportItemMessage):
         return "Unable to verify all nodes have started"
 
 
-# TODO: cli specific
 @dataclass(frozen=True)
 class WaitForNodeStartupWithoutStart(ReportItemMessage):
     """
@@ -4912,7 +4868,7 @@ class WaitForNodeStartupWithoutStart(ReportItemMessage):
 
     @property
     def message(self) -> str:
-        return "Cannot specify '--wait' without specifying '--start'"
+        return "Cannot specify 'wait' without specifying 'start'"
 
 
 @dataclass(frozen=True)
@@ -4945,7 +4901,6 @@ class PcsdSslCertAndKeyDistributionStarted(ReportItemMessage):
         return f"Synchronizing pcsd SSL certificates on node(s) {nodes}..."
 
 
-# TODO: generalize
 @dataclass(frozen=True)
 class PcsdSslCertAndKeySetSuccess(ReportItemMessage):
     """
@@ -5041,7 +4996,6 @@ class UsingDefaultWatchdog(ReportItemMessage):
         )
 
 
-# TODO: clis specific
 @dataclass(frozen=True)
 class CannotRemoveAllClusterNodes(ReportItemMessage):
     """
@@ -5053,10 +5007,7 @@ class CannotRemoveAllClusterNodes(ReportItemMessage):
 
     @property
     def message(self) -> str:
-        return (
-            "No nodes would be left in the cluster, if you intend to destroy "
-            "the whole cluster, run 'pcs cluster destroy --all' instead"
-        )
+        return "No nodes would be left in the cluster"
 
 
 @dataclass(frozen=True)
@@ -5068,7 +5019,6 @@ class UnableToConnectToAnyRemainingNode(ReportItemMessage):
         return "Unable to connect to any remaining cluster node"
 
 
-# TODO: cli specific
 @dataclass(frozen=True)
 class UnableToConnectToAllRemainingNode(ReportItemMessage):
     """
@@ -5084,19 +5034,12 @@ class UnableToConnectToAllRemainingNode(ReportItemMessage):
 
     @property
     def message(self) -> str:
-        pluralize = lambda word: format_plural(self.node_list, word)
-        return (
-            "Remaining cluster {node} {nodes} could not be reached, run "
-            "'pcs cluster sync' on any currently online node once the "
-            "unreachable {one} become available"
-        ).format(
-            node=pluralize("node"),
+        return ("Remaining cluster {node} {nodes} could not be reached").format(
+            node=format_plural(self.node_list, "node"),
             nodes=format_list(self.node_list),
-            one=pluralize("one"),
         )
 
 
-# TODO: cli specific
 @dataclass(frozen=True)
 class NodesToRemoveUnreachable(ReportItemMessage):
     """
@@ -5114,15 +5057,13 @@ class NodesToRemoveUnreachable(ReportItemMessage):
     def message(self) -> str:
         return (
             "Removed {node} {nodes} could not be reached and subsequently "
-            "deconfigured. Run 'pcs cluster destroy' on the unreachable "
-            "{node}."
+            "deconfigured"
         ).format(
             node=format_plural(self.node_list, "node"),
             nodes=format_list(self.node_list),
         )
 
 
-# TODO: cli specific
 @dataclass(frozen=True)
 class NodeUsedAsTieBreaker(ReportItemMessage):
     """
@@ -5141,8 +5082,7 @@ class NodeUsedAsTieBreaker(ReportItemMessage):
     def message(self) -> str:
         return (
             f"Node '{self.node}' with id '{self.node_id}' is used as a tie "
-            "breaker for a qdevice, run 'pcs quorum device update model "
-            "tie_breaker=<node id>' to change it"
+            "breaker for a qdevice"
         )
 
 
@@ -5239,7 +5179,6 @@ class SbdWatchdogTestError(ReportItemMessage):
         return f"Unable to initialize test of the watchdog: {self.reason}"
 
 
-# TODO: cli specific
 @dataclass(frozen=True)
 class SbdWatchdogTestMultipleDevices(ReportItemMessage):
     """
@@ -5253,8 +5192,7 @@ class SbdWatchdogTestMultipleDevices(ReportItemMessage):
     def message(self) -> str:
         return (
             "Multiple watchdog devices available, therefore, watchdog which "
-            "should be tested has to be specified. To list available watchdog "
-            "devices use command 'pcs stonith sbd watchdog list'"
+            "should be tested has to be specified."
         )
 
 

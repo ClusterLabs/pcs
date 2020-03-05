@@ -121,7 +121,7 @@ class LibraryEnvironment:
             codes.add(file_type_codes.CIB)
         if not self.is_corosync_conf_live:
             codes.add(file_type_codes.COROSYNC_CONF)
-        return codes
+        return sorted(codes)
 
     def get_cib(self, minimal_version: Optional[Version] = None) -> Element:
         if self.__loaded_cib_diff_source is not None:
@@ -139,7 +139,9 @@ class LibraryEnvironment:
                 self.__loaded_cib_diff_source = etree_to_str(upgraded_cib)
                 if not self._cib_upgrade_reported:
                     self.report_processor.report(
-                        reports.cib_upgrade_successful()
+                        ReportItem.info(
+                            report.messages.CibUpgradeSuccessful()
+                        )
                     )
                 self._cib_upgrade_reported = True
         self.__loaded_cib_diff_source_feature_set = (
@@ -384,9 +386,11 @@ class LibraryEnvironment:
                     cib_data = self._cib_data
                     self._cib_data_tmp_file = write_tmpfile(cib_data)
                     self.report_processor.report(
-                        reports.tmp_file_write(
-                            self._cib_data_tmp_file.name,
-                            cib_data
+                        ReportItem.debug(
+                            report.messages.TmpFileWrite(
+                                self._cib_data_tmp_file.name,
+                                cib_data
+                            )
                         )
                     )
                 except EnvironmentError as e:

@@ -1,10 +1,9 @@
 import base64
 import json
 
-from pcs.common.reports import codes as report_codes
+from pcs.common import reports
+from pcs.common.reports.item import ReportItem
 from pcs.common.node_communicator import RequestData
-from pcs.common.reports import ReportItemSeverity
-from pcs.lib import reports
 from pcs.lib.booth import reports as reports_booth
 from pcs.lib.communication.tools import (
     AllAtOnceStrategyMixin,
@@ -74,7 +73,11 @@ class ProcessJsonDataMixin:
         try:
             self._data.append((target, json.loads(response.data)))
         except ValueError:
-            self._report(reports.invalid_response_format(target.label))
+            self._report(
+                ReportItem.error(
+                    reports.messages.InvalidResponseFormat(target.label)
+                )
+            )
 
     def on_complete(self):
         return self._data
@@ -124,23 +127,28 @@ class BoothSaveFiles(
                 )
             )
             for filename in list(parsed_data["existing"]):
-                self._report(reports.file_already_exists(
-                    "", # TODO specify file type; this will be overhauled to
-                        # a generic file transport framework anyway
-                    filename,
-                    severity=(
-                        ReportItemSeverity.WARNING if self._rewrite_existing
-                        else ReportItemSeverity.ERROR
-                    ),
-                    forceable=(
-                        None if self._rewrite_existing
-                        else report_codes.FORCE_FILE_OVERWRITE
-                    ),
-                    node=target.label,
-                ))
+                self._report(
+                    ReportItem(
+                        severity=reports.item.get_severity(
+                            reports.codes.FORCE_FILE_OVERWRITE,
+                            self._rewrite_existing,
+                        ),
+                        message=reports.messages.FileAlreadyExists(
+                            # TODO specify file type; this will be overhauled
+                            # to a generic file transport framework anyway
+                            "",
+                            filename,
+                            node=target.label,
+                        )
+                    )
+                )
             for file, reason in dict(parsed_data["failed"]).items():
                 self._report(reports_booth.booth_config_distribution_node_error(
                     target.label, reason, file
                 ))
         except (KeyError, TypeError, ValueError):
-            self._report(reports.invalid_response_format(target.label))
+            self._report(
+                ReportItem.error(
+                    reports.messages.InvalidResponseFormat(target.label)
+                )
+            )

@@ -2,7 +2,9 @@ import re
 from os import path
 
 from pcs import settings
+from pcs.common import reports as report
 from pcs.common.reports import ReportProcessor
+from pcs.common.reports.item import ReportItem
 from pcs.lib import (
     external,
     reports,
@@ -110,8 +112,9 @@ def validate_new_nodes_devices(nodes_devices):
             adding_nodes_to_sbd_enabled_cluster=True
         )
     return [
-        reports.sbd_with_devices_not_used_cannot_set_device(node)
-        for node, devices in nodes_devices.items() if devices
+        ReportItem.error(
+            report.messages.SbdWithDevicesNotUsedCannotSetDevice(node)
+        ) for node, devices in nodes_devices.items() if devices
     ]
 
 
@@ -131,19 +134,31 @@ def validate_nodes_devices(
     for node_label, device_list in node_device_dict.items():
         if not device_list:
             report_item_list.append(
-                reports.sbd_no_device_for_node(
-                    node_label,
-                    sbd_enabled_in_cluster=adding_nodes_to_sbd_enabled_cluster
+                ReportItem.error(
+                    report.messages.SbdNoDeviceForNode(
+                        node_label,
+                        sbd_enabled_in_cluster=(
+                            adding_nodes_to_sbd_enabled_cluster
+                        ),
+                    )
                 )
             )
         elif len(device_list) > settings.sbd_max_device_num:
-            report_item_list.append(reports.sbd_too_many_devices_for_node(
-                node_label, device_list, settings.sbd_max_device_num
-            ))
+            report_item_list.append(
+                ReportItem.error(
+                    report.messages.SbdTooManyDevicesForNode(
+                        node_label, device_list, settings.sbd_max_device_num
+                    )
+                )
+            )
         for device in device_list:
             if not device or not path.isabs(device):
                 report_item_list.append(
-                    reports.sbd_device_path_not_absolute(device, node_label)
+                    ReportItem.error(
+                        report.messages.SbdDevicePathNotAbsolute(
+                            device, node_label
+                        )
+                    )
                 )
     return report_item_list
 
@@ -336,7 +351,9 @@ def get_available_watchdogs(cmd_runner):
         [settings.sbd_binary, "query-watchdog"]
     )
     if ret_val != 0:
-        raise LibraryError(reports.sbd_list_watchdog_error(std_err))
+        raise LibraryError(
+            ReportItem.error(report.messages.SbdListWatchdogError(std_err))
+        )
     return {
         match.group("watchdog"): {
             key: match.group(key) for key in ["identity", "driver", "caution"]
@@ -351,6 +368,16 @@ def test_watchdog(cmd_runner, watchdog=None):
     std_out, dummy_std_err, ret_val = cmd_runner.run(cmd)
     if ret_val:
         if "Multiple watchdog devices discovered" in std_out:
-            raise LibraryError(reports.sbd_watchdog_test_multiple_devices())
-        raise LibraryError(reports.sbd_watchdog_test_error(std_out))
-    raise LibraryError(reports.sbd_watchdog_test_failed())
+            raise LibraryError(
+                ReportItem.error(
+                    report.messages.SbdWatchdogTestMultipleDevices()
+                )
+            )
+        raise LibraryError(
+            ReportItem.error(
+                report.messages.SbdWatchdogTestError(std_out)
+            )
+        )
+    raise LibraryError(
+        ReportItem.error(report.messages.SbdWatchdogTestFailed())
+    )

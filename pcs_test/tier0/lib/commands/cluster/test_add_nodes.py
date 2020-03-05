@@ -810,7 +810,12 @@ class AddNodesSuccessMinimal(TestCase):
         self.env_assist.assert_reports(
             self.expected_reports
             +
-            [fixture.info(report_codes.CLUSTER_ENABLE_STARTED)]
+            [
+                fixture.info(
+                    report_codes.CLUSTER_ENABLE_STARTED,
+                    host_name_list=sorted(self.new_nodes),
+                )
+            ]
             +
             [
                 fixture.info(report_codes.CLUSTER_ENABLE_SUCCESS, node=node)
@@ -858,7 +863,12 @@ class AddNodesSuccessMinimal(TestCase):
         self.env_assist.assert_reports(
             self.expected_reports
             +
-            [fixture.info(report_codes.CLUSTER_START_STARTED)]
+            [
+                fixture.info(
+                    report_codes.CLUSTER_START_STARTED,
+                    host_name_list=self.new_nodes,
+                )
+            ]
         )
 
     def test_start_1_existing_1_new(self):
@@ -908,7 +918,10 @@ class AddNodesSuccessMinimal(TestCase):
             self.expected_reports
             +
             [
-                fixture.info(report_codes.CLUSTER_START_STARTED),
+                fixture.info(
+                    report_codes.CLUSTER_START_STARTED,
+                    host_name_list=sorted(self.new_nodes),
+                ),
                 fixture.info(
                     report_codes.WAIT_FOR_NODE_STARTUP_STARTED,
                     node_name_list=self.new_nodes,
@@ -967,14 +980,24 @@ class AddNodesSuccessMinimal(TestCase):
         self.env_assist.assert_reports(
             self.expected_reports
             +
-            [fixture.info(report_codes.CLUSTER_ENABLE_STARTED)]
+            [
+                fixture.info(
+                    report_codes.CLUSTER_ENABLE_STARTED,
+                    host_name_list=sorted(self.new_nodes),
+                )
+            ]
             +
             [
                 fixture.info(report_codes.CLUSTER_ENABLE_SUCCESS, node=node)
                 for node in self.new_nodes
             ]
             +
-            [fixture.info(report_codes.CLUSTER_START_STARTED)]
+            [
+                fixture.info(
+                    report_codes.CLUSTER_START_STARTED,
+                    host_name_list=sorted(self.new_nodes),
+                )
+            ]
         )
 
     def test_enable_start_1_existing_1_new(self):
@@ -1023,7 +1046,12 @@ class AddNodesSuccessMinimal(TestCase):
         self.env_assist.assert_reports(
             self.expected_reports
             +
-            [fixture.info(report_codes.CLUSTER_ENABLE_STARTED)]
+            [
+                fixture.info(
+                    report_codes.CLUSTER_ENABLE_STARTED,
+                    host_name_list=sorted(self.new_nodes),
+                )
+            ]
             +
             [
                 fixture.info(report_codes.CLUSTER_ENABLE_SUCCESS, node=node)
@@ -1031,7 +1059,10 @@ class AddNodesSuccessMinimal(TestCase):
             ]
             +
             [
-                fixture.info(report_codes.CLUSTER_START_STARTED),
+                fixture.info(
+                    report_codes.CLUSTER_START_STARTED,
+                    host_name_list=self.new_nodes,
+                ),
                 fixture.info(
                     report_codes.WAIT_FOR_NODE_STARTUP_STARTED,
                     node_name_list=self.new_nodes,

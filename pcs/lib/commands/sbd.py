@@ -91,7 +91,7 @@ def _validate_watchdog_dict(watchdog_dict):
     watchdog_dict -- dictionary with node names as keys and value as watchdog
     """
     return [
-        reports.invalid_watchdog_path(watchdog)
+        ReportItem.error(report.messages.WatchdogInvalid(watchdog))
         for watchdog in watchdog_dict.values()
         if not watchdog
     ]
@@ -199,7 +199,9 @@ def enable_sbd(
     # check if SBD can be enabled
     if no_watchdog_validation:
         lib_env.report_processor.report(
-            reports.sbd_watchdog_validation_inactive()
+            ReportItem.warning(
+                report.messages.SbdWatchdogValidationInactive()
+            )
         )
     com_cmd = CheckSbd(lib_env.report_processor)
     for target in online_targets:
@@ -220,7 +222,9 @@ def enable_sbd(
     if not using_devices:
         if sbd.atb_has_to_be_enabled_pre_enable_check(corosync_conf):
             lib_env.report_processor.report(
-                reports.corosync_quorum_atb_will_be_enabled_due_to_sbd()
+                ReportItem.warning(
+                    report.messages.CorosyncQuorumAtbWillBeEnabledDueToSbd()
+                )
             )
             corosync_conf.set_quorum_options({"auto_tie_breaker": "1"})
             lib_env.push_corosync_conf(corosync_conf, ignore_offline_nodes)
@@ -252,7 +256,9 @@ def enable_sbd(
     run_and_raise(lib_env.get_node_communicator(), com_cmd)
 
     lib_env.report_processor.report(
-        reports.cluster_restart_required_to_apply_changes()
+        ReportItem.warning(
+            report.messages.ClusterRestartRequiredToApplyChanges()
+        )
     )
 
 
@@ -293,7 +299,9 @@ def disable_sbd(lib_env, ignore_offline_nodes=False):
     run_and_raise(lib_env.get_node_communicator(), com_cmd)
 
     lib_env.report_processor.report(
-        reports.cluster_restart_required_to_apply_changes()
+        ReportItem.warning(
+            report.messages.ClusterRestartRequiredToApplyChanges()
+        )
     )
 
 
@@ -508,5 +516,9 @@ def test_local_watchdog(lib_env, watchdog=None):
     lib_env LibraryEnvironment
     watchdog string -- watchdog to trigger
     """
-    lib_env.report_processor.report(reports.system_will_reset())
+    lib_env.report_processor.report(
+        ReportItem.info(
+            report.messages.SystemWillReset()
+        )
+    )
     sbd.test_watchdog(lib_env.cmd_runner(), watchdog)

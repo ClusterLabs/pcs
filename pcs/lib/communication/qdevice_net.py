@@ -1,10 +1,12 @@
 import base64
 import binascii
 
+from pcs.common import reports as common_report
 from pcs.common.node_communicator import (
     Request,
     RequestData,
 )
+from pcs.common.reports.item import ReportItem
 from pcs.lib import reports
 from pcs.lib.communication.tools import (
     AllAtOnceStrategyMixin,
@@ -36,7 +38,11 @@ class GetCaCert(
         try:
             self._data.append((target, base64.b64decode(response.data)))
         except (TypeError, binascii.Error):
-            self._report(reports.invalid_response_format(target.label))
+            self._report(
+                ReportItem.error(
+                    common_report.messages.InvalidResponseFormat(target.label)
+                )
+            )
 
     def on_complete(self):
         return self._data
@@ -94,7 +100,11 @@ class SignCertificate(AllAtOnceStrategyMixin, RunRemotelyBase):
         try:
             self._output_data.append((target, base64.b64decode(response.data)))
         except (TypeError, binascii.Error):
-            self._report(reports.invalid_response_format(target.label))
+            self._report(
+                ReportItem.error(
+                    common_report.messages.InvalidResponseFormat(target.label)
+                )
+            )
 
     def on_complete(self):
         return self._output_data

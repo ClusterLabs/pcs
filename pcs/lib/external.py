@@ -7,12 +7,11 @@ from typing import (
 )
 
 from pcs import settings
-from pcs.common import reports as report
+from pcs.common import reports
 from pcs.common.reports import ReportProcessor
 from pcs.common.reports.item import ReportItem
 from pcs.common.system import is_systemd as is_systemctl
 from pcs.common.str_tools import join_multilines
-from pcs.lib import reports
 from pcs.lib.errors import LibraryError
 
 
@@ -89,7 +88,7 @@ class CommandRunner:
         )
         self._reporter.report(
             ReportItem.debug(
-                report.messages.RunExternalProcessStarted(
+                reports.messages.RunExternalProcessStarted(
                     log_args,
                     stdin_string,
                     env_vars,
@@ -124,7 +123,7 @@ class CommandRunner:
         except OSError as e:
             raise LibraryError(
                 ReportItem.error(
-                    report.messages.RunExternalProcessError(
+                    reports.messages.RunExternalProcessError(
                         log_args,
                         e.strerror,
                     )
@@ -145,7 +144,7 @@ class CommandRunner:
         )
         self._reporter.report(
             ReportItem.debug(
-                report.messages.RunExternalProcessFinished(
+                reports.messages.RunExternalProcessFinished(
                     log_args,
                     retval,
                     out_std,
@@ -168,7 +167,9 @@ def ensure_is_systemd():
     """
     if not is_systemctl():
         raise LibraryError(
-            reports.unsupported_operation_on_non_systemd_systems()
+            ReportItem.error(
+                reports.messages.UnsupportedOperationOnNonSystemdSystems()
+            )
         )
 
 

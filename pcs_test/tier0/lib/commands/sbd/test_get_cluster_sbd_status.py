@@ -68,7 +68,13 @@ class GetClusterSbdStatus(TestCase):
                     ),
                     dict(
                         label="node-5",
-                        output="invalid json",
+                        output=json.dumps({
+                            "watchdog":{
+                                "path":"",
+                                "exist":False
+                            },
+                            "device_list":[]
+                        }),
                         response_code=200,
                     ),
                 ],
@@ -129,11 +135,7 @@ class GetClusterSbdStatus(TestCase):
             ),
             warn_unable_to_get_sbd_status(node="node-2", reason=""),
             warn_unable_to_get_sbd_status(node="node-4", reason="'sbd'"),
-            warn_unable_to_get_sbd_status(
-                node="node-5",
-                #the reason differs in python3
-                #reason="No JSON object could be decoded",
-            ),
+            warn_unable_to_get_sbd_status(node="node-5", reason="'sbd'"),
         ])
 
     def test_some_node_names_missing(self):

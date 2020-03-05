@@ -554,6 +554,7 @@ class ValidateDeviceDictTest(TestCase):
                     report_codes.SBD_NO_DEVICE_FOR_NODE,
                     {
                         "node": "node1",
+                        "sbd_enabled_in_cluster": False,
                     }
                 ),
                 (

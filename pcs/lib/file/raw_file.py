@@ -1,35 +1,44 @@
 import errno
 import os
+from typing import Optional
 
 # the import makes it look like RealFile is implemented here so we don't
 # have to import RawFile from common and Ghost file from here in other
 # places
 # pylint: disable=unused-import
+from pcs.common import reports as report
 from pcs.common.file import(
     RawFile as RealFile,
     RawFileError,
     RawFileInterface,
 )
+from pcs.common.reports.item import ReportItem
 from pcs.lib import reports
 
 # TODO add logging (logger / debug reports ?)
 
-def raw_file_error_report(error, force_code=None, is_forced_or_warning=False):
+def raw_file_error_report(
+    error: RawFileError,
+    force_code: Optional[report.types.ForceCode] = None,
+    is_forced_or_warning: bool = False
+) -> ReportItem:
     """
     Translate a RawFileError instance to a report
 
-    RawFileError error -- an exception to be translated
-    string force_code -- is it a forcible error? by which code?
-    bool is_forced_or_warning -- translate to a warning if True, error otherwise
+    error -- an exception to be translated
+    force_code -- is it a forcible error? by which code?
+    is_forced_or_warning -- translate to a warning if True, error otherwise
     """
-    return reports.get_problem_creator(force_code, is_forced_or_warning)(
-        reports.file_io_error,
-        error.metadata.file_type_code,
-        error.action,
-        error.reason,
-        # do not report real file path if we were working with a ghost file
-        file_path=(
-            "" if isinstance(error, GhostFileError) else error.metadata.path
+    return ReportItem(
+        severity=report.item.get_severity(force_code, is_forced_or_warning),
+        message=report.messages.FileIoError(
+            error.metadata.file_type_code,
+            error.action,
+            error.reason,
+            # do not report real file path if we were working with a ghost file
+            file_path=(
+                "" if isinstance(error, GhostFileError) else error.metadata.path
+            ),
         ),
     )
 

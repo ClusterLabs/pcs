@@ -147,9 +147,13 @@ def _assign_role(acl_section, role_id, target_el):
         "./role[@id='{0}']".format(role_el.get("id"))
     )
     if assigned_role is not None:
-        return [reports.acl_role_is_already_assigned_to_target(
-            role_el.get("id"), target_el.get("id")
-        )]
+        return [
+            ReportItem.error(
+                report.messages.CibAclRoleIsAlreadyAssignedToTarget(
+                    role_el.get("id"), target_el.get("id")
+                )
+            )
+        ]
     etree.SubElement(target_el, "role", {"id": role_el.get("id")})
     return []
 
@@ -195,9 +199,13 @@ def unassign_role(target_el, role_id, autodelete_target=False):
     """
     assigned_role = target_el.find("./role[@id='{0}']".format(role_id))
     if assigned_role is None:
-        raise LibraryError(reports.acl_role_is_not_assigned_to_target(
-            role_id, target_el.get("id")
-        ))
+        raise LibraryError(
+            ReportItem.error(
+                report.messages.CibAclRoleIsNotAssignedToTarget(
+                    role_id, target_el.get("id")
+                )
+            )
+        )
     target_el.remove(assigned_role)
     if autodelete_target and target_el.find("./role") is None:
         target_el.getparent().remove(target_el)
@@ -226,7 +234,11 @@ def create_target(acl_section, target_id):
         acl_section.find("./{0}[@id='{1}']".format(TAG_TARGET, target_id))
         is not None
     ):
-        raise LibraryError(reports.acl_target_already_exists(target_id))
+        raise LibraryError(
+            ReportItem.error(
+                report.messages.CibAclTargetAlreadyExists(target_id)
+            )
+        )
     return etree.SubElement(acl_section, TAG_TARGET, id=target_id)
 
 

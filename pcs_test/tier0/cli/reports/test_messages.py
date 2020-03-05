@@ -1,5 +1,6 @@
 from unittest import TestCase
 
+from pcs.common import file_type_codes
 from pcs.common.reports import (
     item,
     messages,
@@ -144,6 +145,214 @@ class NodeCommunicationErrorTimedOut(CliReportMessageTestBase):
                 "--request-timeout option (Connection timed out after 60049 "
                 "milliseconds)"
             ),
+        )
+
+
+class SbdWatchdogTestMultipleDevices(CliReportMessageTestBase):
+    def test_success(self):
+        self.assert_message(
+            messages.SbdWatchdogTestMultipleDevices(),
+            (
+                "Multiple watchdog devices available, therefore, watchdog "
+                "which should be tested has to be specified. To list available "
+                "watchdog devices use command 'pcs stonith sbd watchdog list'"
+            ),
+        )
+
+
+class NodeUsedAsTieBreaker(CliReportMessageTestBase):
+    def test_success(self):
+        self.assert_message(
+            messages.NodeUsedAsTieBreaker("node-1", "0"),
+            (
+                "Node 'node-1' with id '0' is used as a tie breaker for a "
+                "qdevice, run 'pcs quorum device update model "
+                "tie_breaker=<node id>' to change it"
+            ),
+        )
+
+
+class NodesToRemoveUnreachable(CliReportMessageTestBase):
+    def test_one_node(self):
+        self.assert_message(
+            messages.NodesToRemoveUnreachable(["node1"]),
+            (
+                "Removed node 'node1' could not be reached and subsequently "
+                "deconfigured. Run 'pcs cluster destroy' on the unreachable "
+                "node."
+            ),
+        )
+
+    def test_multiple_nodes(self):
+        self.assert_message(
+            messages.NodesToRemoveUnreachable(["node2", "node1"]),
+            (
+                "Removed nodes 'node1', 'node2' could not be reached and "
+                "subsequently deconfigured. Run 'pcs cluster destroy' on the "
+                "unreachable nodes."
+            ),
+        )
+
+
+class UnableToConnectToAllRemainingNode(CliReportMessageTestBase):
+    def test_one_node(self):
+        self.assert_message(
+            messages.UnableToConnectToAllRemainingNode(["node1"]),
+            (
+                "Remaining cluster node 'node1' could not be reached, run "
+                "'pcs cluster sync' on any currently online node once the "
+                "unreachable one become available"
+            ),
+        )
+
+    def test_multiple_nodes(self):
+        self.assert_message(
+            messages.UnableToConnectToAllRemainingNode(["node2", "node1"]),
+            (
+                "Remaining cluster nodes 'node1', 'node2' could not be "
+                "reached, run 'pcs cluster sync' on any currently online node "
+                "once the unreachable ones become available"
+            ),
+        )
+
+
+class CannotRemoveAllClusterNodes(CliReportMessageTestBase):
+    def test_success(self):
+        self.assert_message(
+            messages.CannotRemoveAllClusterNodes(),
+            (
+                "No nodes would be left in the cluster, if you intend to "
+                "destroy the whole cluster, run 'pcs cluster destroy --all' "
+                "instead"
+            ),
+        )
+
+
+class WaitForNodeStartupWithoutStart(CliReportMessageTestBase):
+    def test_success(self):
+        self.assert_message(
+            messages.WaitForNodeStartupWithoutStart(),
+            "Cannot specify '--wait' without specifying '--start'",
+        )
+
+
+class HostNotFound(CliReportMessageTestBase):
+    def test_one_node(self):
+        self.assert_message(
+            messages.HostNotFound(["node1"]),
+            (
+                "Host 'node1' is not known to pcs, try to "
+                "authenticate the host using 'pcs host auth node1' "
+                "command"
+            ),
+        )
+
+    def test_multiple_nodes(self):
+        self.assert_message(
+            messages.HostNotFound(["node2", "node1"]),
+            (
+                "Hosts 'node1', 'node2' are not known to pcs, try to "
+                "authenticate the hosts using 'pcs host auth node1 node2' "
+                "command"
+            ),
+        )
+
+
+class UseCommandNodeRemoveGuest(CliReportMessageTestBase):
+    def test_success(self):
+        self.assert_message(
+            messages.UseCommandNodeRemoveGuest(),
+            (
+                "this command is not sufficient for removing a guest node, use"
+                " 'pcs cluster node remove-guest'"
+            ),
+        )
+
+
+class UseCommandNodeAddGuest(CliReportMessageTestBase):
+    def test_success(self):
+        self.assert_message(
+            messages.UseCommandNodeAddGuest(),
+            (
+                "this command is not sufficient for creating a guest node, use"
+                " 'pcs cluster node add-guest'"
+            ),
+        )
+
+
+class UseCommandNodeAddRemote(CliReportMessageTestBase):
+    def test_success(self):
+        self.assert_message(
+            messages.UseCommandNodeAddRemote(),
+            (
+                "this command is not sufficient for creating a remote "
+                "connection, use 'pcs cluster node add-remote'"
+            ),
+        )
+
+
+class CorosyncNodeConflictCheckSkipped(CliReportMessageTestBase):
+    def test_not_live_cib(self):
+        self.assert_message(
+            messages.CorosyncNodeConflictCheckSkipped(messages.NOT_LIVE_CIB),
+            (
+                "Unable to check if there is a conflict with nodes set in "
+                "corosync because the command does not run on a live cluster "
+                "(e.g. -f "
+                "was used)"
+            ),
+        )
+
+    def test_unreachable(self):
+        self.assert_message(
+            messages.CorosyncNodeConflictCheckSkipped(messages.UNREACHABLE),
+            (
+                "Unable to check if there is a conflict with nodes set in "
+                "corosync because pcs is unable to connect to the node(s)"
+            ),
+        )
+
+
+class LiveEnvironmentNotConsistent(CliReportMessageTestBase):
+    def test_one_one(self):
+        self.assert_message(
+            messages.LiveEnvironmentNotConsistent(
+                [file_type_codes.BOOTH_CONFIG], [file_type_codes.BOOTH_KEY],
+            ),
+            (
+                "When '--booth-conf' is specified, "
+                "'--booth-key' must be specified as well"
+            ),
+        )
+
+    def test_many_many(self):
+        self.assert_message(
+            messages.LiveEnvironmentNotConsistent(
+                [file_type_codes.CIB, file_type_codes.BOOTH_CONFIG],
+                [file_type_codes.COROSYNC_CONF, file_type_codes.BOOTH_KEY],
+            ),
+            (
+                "When '--booth-conf', '-f' are specified, "
+                "'--booth-key', '--corosync_conf' must be specified as well"
+            ),
+        )
+
+
+class LiveEnvironmentRequired(CliReportMessageTestBase):
+    def test_build_messages_transformable_codes(self):
+        self.assert_message(
+            messages.LiveEnvironmentRequired(
+                [file_type_codes.COROSYNC_CONF, file_type_codes.CIB]
+            ),
+            "This command does not support '--corosync_conf', '-f'",
+        )
+
+
+class LiveEnvironmentRequiredForLocalNode(CliReportMessageTestBase):
+    def test_success(self):
+        self.assert_message(
+            messages.LiveEnvironmentRequiredForLocalNode(),
+            "Node(s) must be specified if -f is used",
         )
 
 

@@ -282,12 +282,14 @@ def _report_unresolvable_addresses_if_any(
     if not unresolvable_addresses:
         return []
     return [
-        reports.get_problem_creator(
-            force_code=report_codes.FORCE_NODE_ADDRESSES_UNRESOLVABLE,
-            is_forced=force_unresolvable,
-        )(
-            reports.node_addresses_unresolvable,
-            unresolvable_addresses,
+        ReportItem(
+            severity=report.item.get_severity(
+                report.codes.FORCE_NODE_ADDRESSES_UNRESOLVABLE,
+                force_unresolvable,
+            ),
+            message=report.messages.NodeAddressesUnresolvable(
+                sorted(unresolvable_addresses),
+            )
         )
     ]
 
@@ -470,7 +472,11 @@ def remove_nodes(nodes_names_to_remove, existing_nodes, quorum_device_settings):
         report_items.append(reports.node_not_found(node))
 
     if not set(existing_node_names) - set(nodes_names_to_remove):
-        report_items.append(reports.cannot_remove_all_cluster_nodes())
+        report_items.append(
+            ReportItem.error(
+                report.messages.CannotRemoveAllClusterNodes()
+            )
+        )
 
     qdevice_model, qdevice_model_options, _, _ = quorum_device_settings
     if qdevice_model == "net":
@@ -484,7 +490,11 @@ def remove_nodes(nodes_names_to_remove, existing_nodes, quorum_device_settings):
                     str(node.nodeid) == str(tie_breaker_nodeid)
                 ):
                     report_items.append(
-                        reports.node_used_as_tie_breaker(node.name, node.nodeid)
+                        ReportItem.error(
+                            report.messages.NodeUsedAsTieBreaker(
+                                node.name, node.nodeid
+                            )
+                        )
                     )
 
     return report_items

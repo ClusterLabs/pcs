@@ -431,6 +431,7 @@ class AddRemote(TestCase):
                     file_type_code=file_type_codes.PACEMAKER_AUTHKEY,
                     file_path=LocalConfig.PCMK_AUTHKEY_PATH,
                     operation=RawFileError.ACTION_READ,
+                    reason="open failed",
                 )
             ],
         )

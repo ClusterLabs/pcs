@@ -96,10 +96,13 @@ def _validate_remote_connection(
 
     report_list = []
     report_list.append(
-        reports.get_problem_creator(
-            report_codes.FORCE_NOT_SUITABLE_COMMAND,
-            allow_not_suitable_command
-        )(reports.use_command_node_add_remote)
+        ReportItem(
+            severity=report.item.get_severity(
+                report.codes.FORCE_NOT_SUITABLE_COMMAND,
+                allow_not_suitable_command
+            ),
+            message=report.messages.UseCommandNodeAddRemote(),
+        )
     )
 
     report_list.extend(
@@ -121,19 +124,23 @@ def _validate_guest_change(
     node_name = resource.guest_node.get_node_name_from_options(meta_attributes)
 
     report_list = []
-    create_report = reports.use_command_node_add_guest
     if (
         detect_remove
         and
         not resource.guest_node.get_guest_option_value(meta_attributes)
     ):
-        create_report = reports.use_command_node_remove_guest
+        report_msg = report.messages.UseCommandNodeRemoveGuest()
+    else:
+        report_msg = report.messages.UseCommandNodeAddGuest()
 
     report_list.append(
-        reports.get_problem_creator(
-            report_codes.FORCE_NOT_SUITABLE_COMMAND,
-            allow_not_suitable_command
-        )(create_report)
+        ReportItem(
+            severity=report.item.get_severity(
+                report.codes.FORCE_NOT_SUITABLE_COMMAND,
+                allow_not_suitable_command,
+            ),
+            message=report_msg,
+        )
     )
 
     report_list.extend(
@@ -151,7 +158,11 @@ def _validate_guest_change(
 def _get_nodes_to_validate_against(env, tree):
     if not env.is_corosync_conf_live and env.is_cib_live:
         raise LibraryError(
-            reports.live_environment_required(["COROSYNC_CONF"])
+            ReportItem.error(
+                report.messages.LiveEnvironmentRequired(
+                    [file_type_codes.COROSYNC_CONF]
+                )
+            )
         )
 
     if not env.is_cib_live and env.is_corosync_conf_live:
@@ -538,13 +549,15 @@ def create_into_bundle(
         bundle_el = _find_bundle(resources_section, bundle_id)
         if not resource.bundle.is_pcmk_remote_accessible(bundle_el):
             if env.report_processor.report(
-                reports.get_problem_creator(
-                    report_codes.FORCE_RESOURCE_IN_BUNDLE_NOT_ACCESSIBLE,
-                    allow_not_accessible_resource
-                )(
-                    reports.resource_in_bundle_not_accessible,
-                    bundle_id,
-                    resource_id
+                ReportItem(
+                    severity=report.item.get_severity(
+                        report_codes.FORCE_RESOURCE_IN_BUNDLE_NOT_ACCESSIBLE,
+                        allow_not_accessible_resource,
+                    ),
+                    message=report.messages.ResourceInBundleNotAccessible(
+                        bundle_id,
+                        resource_id,
+                    )
                 )
             ).has_errors:
                 raise LibraryError()
@@ -813,7 +826,9 @@ def disable_safe(env: LibraryEnvironment, resource_ids, strict, wait):
     """
     if not env.is_cib_live:
         raise LibraryError(
-            reports.live_environment_required([file_type_codes.CIB])
+            ReportItem.error(
+                report.messages.LiveEnvironmentRequired([file_type_codes.CIB])
+            )
         )
 
     with resource_environment(
@@ -893,7 +908,9 @@ def disable_simulate(env, resource_ids):
     """
     if not env.is_cib_live:
         raise LibraryError(
-            reports.live_environment_required([file_type_codes.CIB])
+            ReportItem.error(
+                report.messages.LiveEnvironmentRequired([file_type_codes.CIB])
+            )
         )
 
     resources_section = get_resources(env.get_cib())

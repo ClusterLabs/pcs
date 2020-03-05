@@ -273,7 +273,7 @@ class ConfigSetup(TestCase, FixtureMixin):
                 force_code=report_codes.FORCE_FILE_OVERWRITE,
                 file_type_code=file_type_codes.BOOTH_CONFIG,
                 file_path=self.fixture_cfg_path(),
-                node=None,
+                node="",
             ),
         ])
 
@@ -301,7 +301,7 @@ class ConfigSetup(TestCase, FixtureMixin):
                 force_code=report_codes.FORCE_FILE_OVERWRITE,
                 file_type_code=file_type_codes.BOOTH_KEY,
                 file_path=self.fixture_key_path(),
-                node=None,
+                node="",
             ),
         ])
 

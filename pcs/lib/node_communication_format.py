@@ -5,7 +5,8 @@ from typing import (
     Dict,
 )
 
-from pcs.lib import reports
+from pcs.common import reports
+from pcs.common.reports.item import ReportItem
 from pcs.lib.errors import LibraryError
 
 def create_pcmk_remote_actions(action_list):
@@ -120,7 +121,11 @@ def unpack_items_from_response(main_response, main_key, node_label):
     )
 
     if not is_in_expected_format:
-        raise LibraryError(reports.invalid_response_format(node_label))
+        raise LibraryError(
+            ReportItem.error(
+                reports.messages.InvalidResponseFormat(node_label)
+            )
+        )
 
     return main_response[main_key]
 
@@ -137,7 +142,11 @@ def response_items_to_result(response_items, expected_keys, node_label):
     string node_label is a node label for reporting an invalid format
     """
     if set(expected_keys) != set(response_items.keys()):
-        raise LibraryError(reports.invalid_response_format(node_label))
+        raise LibraryError(
+            ReportItem.error(
+                reports.messages.InvalidResponseFormat(node_label)
+            )
+        )
 
     for result in response_items.values():
         if(
@@ -147,7 +156,11 @@ def response_items_to_result(response_items, expected_keys, node_label):
             or
             "message" not in result
         ):
-            raise LibraryError(reports.invalid_response_format(node_label))
+            raise LibraryError(
+                ReportItem.error(
+                    reports.messages.InvalidResponseFormat(node_label)
+                )
+            )
 
     return {
         file_key: Result(raw_result["code"], raw_result["message"])

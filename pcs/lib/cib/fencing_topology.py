@@ -129,9 +129,13 @@ def remove_levels_by_params(
     if not level_el_list:
         if ignore_if_missing:
             return report_list
-        report_list.append(reports.fencing_level_does_not_exist(
-            level, target_type, target_value, devices
-        ))
+        report_list.append(
+            ReportItem.error(
+                report.messages.CibFencingLevelDoesNotExist(
+                    level, target_type, target_value, devices or []
+                )
+            )
+        )
     if has_errors(report_list):
         return report_list
     for el in level_el_list:
@@ -343,8 +347,10 @@ def _validate_level_target_devices_does_not_exist(
     report_list: ReportItemList = []
     if _find_level_elements(tree, level, target_type, target_value, devices):
         report_list.append(
-            reports.fencing_level_already_exists(
-                level, target_type, target_value, devices
+            ReportItem.error(
+                report.messages.CibFencingLevelAlreadyExists(
+                    level, target_type, target_value, devices
+                )
             )
         )
     return report_list

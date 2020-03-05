@@ -31,18 +31,14 @@ from pcs.common.node_communicator import (
     Request,
     RequestData,
 )
-from pcs.common import reports as report
+from pcs.common import reports
 from pcs.common.reports import (
     codes as report_codes,
     item_old,
-    ReportItemSeverity,
 )
 from pcs.common.reports.item import ReportItem
 from pcs.common.tools import Version
-from pcs.lib import (
-    sbd as lib_sbd,
-    reports,
-)
+from pcs.lib import sbd as lib_sbd
 from pcs.lib.cib.tools import VERSION_FORMAT
 from pcs.lib.commands.remote_node import _destroy_pcmk_remote_env
 from pcs.lib.communication.nodes import CheckAuth
@@ -167,7 +163,7 @@ def sync_nodes(lib, argv, modifiers):
     )
     if not nodes:
         report_list.append(
-            ReportItem.error(report.messages.CorosyncConfigNoNodesDefined())
+            ReportItem.error(reports.messages.CorosyncConfigNoNodesDefined())
         )
     if report_list:
         process_library_reports(report_list)
@@ -229,7 +225,7 @@ def start_cluster_all():
     )
     if not all_nodes:
         report_list.append(
-            ReportItem.error(report.messages.CorosyncConfigNoNodesDefined())
+            ReportItem.error(reports.messages.CorosyncConfigNoNodesDefined())
         )
     if report_list:
         process_library_reports(report_list)
@@ -350,7 +346,7 @@ def stop_cluster_all():
     )
     if not all_nodes:
         report_list.append(
-            ReportItem.error(report.messages.CorosyncConfigNoNodesDefined())
+            ReportItem.error(reports.messages.CorosyncConfigNoNodesDefined())
         )
     if report_list:
         process_library_reports(report_list)
@@ -483,7 +479,7 @@ def enable_cluster_all():
     )
     if not all_nodes:
         report_list.append(
-            ReportItem.error(report.messages.CorosyncConfigNoNodesDefined())
+            ReportItem.error(reports.messages.CorosyncConfigNoNodesDefined())
         )
     if report_list:
         process_library_reports(report_list)
@@ -500,7 +496,7 @@ def disable_cluster_all():
     )
     if not all_nodes:
         report_list.append(
-            ReportItem.error(report.messages.CorosyncConfigNoNodesDefined())
+            ReportItem.error(reports.messages.CorosyncConfigNoNodesDefined())
         )
     if report_list:
         process_library_reports(report_list)
@@ -947,8 +943,8 @@ class RemoteAddNodes(RunRemotelyBase):
 
         except (KeyError, json.JSONDecodeError):
             self._report(
-                reports.invalid_response_format(
-                    node_label, severity=ReportItemSeverity.WARNING
+                ReportItem.warning(
+                    reports.messages.InvalidResponseFormat(node_label)
                 )
             )
 
@@ -1177,7 +1173,9 @@ def cluster_destroy(lib, argv, modifiers):
         )
         if not corosync_nodes:
             report_list.append(
-                ReportItem.error(report.messages.CorosyncConfigNoNodesDefined())
+                ReportItem.error(
+                    reports.messages.CorosyncConfigNoNodesDefined()
+                )
             )
         if report_list:
             process_library_reports(report_list)

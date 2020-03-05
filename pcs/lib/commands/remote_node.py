@@ -1,7 +1,10 @@
 from pcs import settings
+from pcs.common import reports as report
 from pcs.common.file import RawFileError
-from pcs.common.reports import ReportProcessor
-from pcs.common.reports import codes as report_codes
+from pcs.common.reports import (
+    codes as report_codes,
+    ReportProcessor,
+)
 from pcs.common.reports.item import ReportItem
 from pcs.lib import reports, node_communication_format
 from pcs.lib.tools import generate_binary_key
@@ -86,26 +89,38 @@ def _host_check_remote_node(host_info_dict):
                 if not services[service]["installed"]
             ]
             if missing_service_list:
-                report_list.append(reports.service_not_installed(
-                    host_name, missing_service_list
-                ))
+                report_list.append(
+                    ReportItem.error(
+                        report.messages.ServiceNotInstalled(
+                            host_name, sorted(missing_service_list)
+                        )
+                    )
+                )
             cannot_be_running_service_list = [
                 service for service in required_as_stopped_service_list
                 if service in services and services[service]["running"]
             ]
             if cannot_be_running_service_list:
                 report_list.append(
-                    reports.host_already_in_cluster_services(
-                        host_name,
-                        cannot_be_running_service_list,
+                    ReportItem.error(
+                        report.messages.HostAlreadyInClusterServices(
+                            host_name,
+                            sorted(cannot_be_running_service_list),
+                        )
                     )
                 )
             if host_info["cluster_configuration_exists"]:
                 report_list.append(
-                    reports.host_already_in_cluster_config(host_name)
+                    ReportItem.error(
+                        report.messages.HostAlreadyInClusterConfig(host_name)
+                    )
                 )
         except (KeyError, TypeError):
-            report_list.append(reports.invalid_response_format(host_name))
+            report_list.append(
+                ReportItem.error(
+                    report.messages.InvalidResponseFormat(host_name)
+                )
+            )
     return report_list
 
 def _prepare_pacemaker_remote_environment(
@@ -236,7 +251,11 @@ def node_add_remote(
     else:
         corosync_conf = None
         report_processor.report(
-            reports.corosync_node_conflict_check_skipped("not_live_cib")
+            ReportItem.info(
+                report.messages.CorosyncNodeConflictCheckSkipped(
+                    report.messages.NOT_LIVE_CIB,
+                )
+            )
         )
     existing_nodes_names, existing_nodes_addrs, report_list = (
         get_existing_nodes_names_addrs(corosync_conf, cib)
@@ -263,7 +282,11 @@ def node_add_remote(
         if node_addr is None:
             node_addr = new_target.first_addr if new_target else node_name
             report_processor.report(
-                reports.using_known_host_address_for_host(node_name, node_addr)
+                ReportItem.info(
+                    report.messages.UsingKnownHostAddressForHost(
+                        node_name, node_addr
+                    )
+                )
             )
     else:
         # default node_addr to an address from known-hosts
@@ -271,7 +294,11 @@ def node_add_remote(
             known_hosts = env.get_known_hosts([node_name])
             node_addr = known_hosts[0].dest.addr if known_hosts else node_name
             report_processor.report(
-                reports.using_known_host_address_for_host(node_name, node_addr)
+                ReportItem.info(
+                    report.messages.UsingKnownHostAddressForHost(
+                        node_name, node_addr
+                    )
+                )
             )
 
     # validate inputs
@@ -308,37 +335,37 @@ def node_add_remote(
         #validation.
         already_exists = []
         unified_report_list = []
-        for report in report_list + list(e.args):
+        for report_item in report_list + list(e.args):
             # TODO: remove
             # pylint: disable=no-member
-            if not isinstance(report, ReportItem):
+            if not isinstance(report_item, ReportItem):
                 # pylint: disable=unsupported-membership-test
                 # pylint: disable=unsubscriptable-object
-                if report.code not in (
+                if report_item.code not in (
                     report_codes.ID_ALREADY_EXISTS,
                     report_codes.RESOURCE_INSTANCE_ATTR_VALUE_NOT_UNIQUE,
                 ):
-                    unified_report_list.append(report)
+                    unified_report_list.append(report_item)
                 elif (
-                    "id" in report.info
+                    "id" in report_item.info
                     and
-                    report.info["id"] not in already_exists
+                    report_item.info["id"] not in already_exists
                 ):
-                    unified_report_list.append(report)
-                    already_exists.append(report.info["id"])
+                    unified_report_list.append(report_item)
+                    already_exists.append(report_item.info["id"])
             else:
-                dto_obj = report.message.to_dto()
+                dto_obj = report_item.message.to_dto()
                 if dto_obj.code not in (
                     report_codes.ID_ALREADY_EXISTS,
                     report_codes.RESOURCE_INSTANCE_ATTR_VALUE_NOT_UNIQUE,
                 ):
-                    unified_report_list.append(report)
+                    unified_report_list.append(report_item)
                 elif (
                     "id" in dto_obj.payload
                     and
                     dto_obj.payload["id"] not in already_exists
                 ):
-                    unified_report_list.append(report)
+                    unified_report_list.append(report_item)
                     already_exists.append(dto_obj.payload["id"])
         report_list = unified_report_list
 
@@ -401,7 +428,11 @@ def node_add_guest(
     else:
         corosync_conf = None
         report_processor.report(
-            reports.corosync_node_conflict_check_skipped("not_live_cib")
+            ReportItem.info(
+                report.messages.CorosyncNodeConflictCheckSkipped(
+                    report.messages.NOT_LIVE_CIB,
+                )
+            )
         )
     existing_nodes_names, existing_nodes_addrs, report_list = (
         get_existing_nodes_names_addrs(corosync_conf, cib)
@@ -424,7 +455,11 @@ def node_add_guest(
             new_addr = new_target.first_addr if new_target else node_name
             options["remote-addr"] = new_addr
             report_processor.report(
-                reports.using_known_host_address_for_host(node_name, new_addr)
+                ReportItem.info(
+                    report.messages.UsingKnownHostAddressForHost(
+                        node_name, new_addr
+                    )
+                )
             )
     else:
         # default remote-addr to an address from known-hosts
@@ -433,7 +468,11 @@ def node_add_guest(
             new_addr = known_hosts[0].dest.addr if known_hosts else node_name
             options["remote-addr"] = new_addr
             report_processor.report(
-                reports.using_known_host_address_for_host(node_name, new_addr)
+                ReportItem.info(
+                    report.messages.UsingKnownHostAddressForHost(
+                        node_name, new_addr
+                    )
+                )
             )
 
     # validate inputs

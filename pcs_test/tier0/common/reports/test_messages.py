@@ -2611,10 +2611,10 @@ class FilesDistributionSkipped(NameBuildTest):
     def test_not_live(self):
         self.assert_message_from_report(
             "Distribution of 'file1' to 'nodeA', 'nodeB' was skipped because "
-            "the command does not run on a live cluster (e.g. -f was used)."
-            " Please, distribute the file(s) manually.",
+            "the command does not run on a live cluster. "
+            "Please, distribute the file(s) manually.",
             reports.FilesDistributionSkipped(
-                "not_live_cib", ["file1"], ["nodeA", "nodeB"]
+                reports.NOT_LIVE_CIB, ["file1"], ["nodeA", "nodeB"]
             ),
         )
 
@@ -2624,7 +2624,7 @@ class FilesDistributionSkipped(NameBuildTest):
             "pcs is unable to connect to the node(s). Please, distribute "
             "the file(s) manually.",
             reports.FilesDistributionSkipped(
-                "unreachable", ["file1", "file2"], ["nodeA"]
+                reports.UNREACHABLE, ["file1", "file2"], ["nodeA"]
             ),
         )
 
@@ -2683,10 +2683,10 @@ class FilesRemoveFromNodesSkipped(NameBuildTest):
     def test_not_live(self):
         self.assert_message_from_report(
             "Removing 'file1' from 'nodeA', 'nodeB' was skipped because the "
-            "command does not run on a live cluster (e.g. -f was used). "
+            "command does not run on a live cluster. "
             "Please, remove the file(s) manually.",
             reports.FilesRemoveFromNodesSkipped(
-                "not_live_cib", ["file1"], ["nodeA", "nodeB"]
+                reports.NOT_LIVE_CIB, ["file1"], ["nodeA", "nodeB"]
             ),
         )
 
@@ -2696,7 +2696,7 @@ class FilesRemoveFromNodesSkipped(NameBuildTest):
             "unable to connect to the node(s). Please, remove the file(s) "
             "manually.",
             reports.FilesRemoveFromNodesSkipped(
-                "unreachable", ["file1", "file2"], ["nodeA"]
+                reports.UNREACHABLE, ["file1", "file2"], ["nodeA"]
             ),
         )
 
@@ -2756,10 +2756,10 @@ class ServiceCommandsOnNodesSkipped(NameBuildTest):
         self.assert_message_from_report(
             "Running action(s) 'pacemaker_remote enable', 'pacemaker_remote "
             "start' on 'nodeA', 'nodeB' was skipped because the command "
-            "does not run on a live cluster (e.g. -f was used). Please, "
+            "does not run on a live cluster. Please, "
             "run the action(s) manually.",
             reports.ServiceCommandsOnNodesSkipped(
-                "not_live_cib",
+                reports.NOT_LIVE_CIB,
                 ["pacemaker_remote enable", "pacemaker_remote start"],
                 ["nodeA", "nodeB"],
             ),
@@ -2771,7 +2771,7 @@ class ServiceCommandsOnNodesSkipped(NameBuildTest):
             "start' on 'nodeA', 'nodeB' was skipped because pcs is unable "
             "to connect to the node(s). Please, run the action(s) manually.",
             reports.ServiceCommandsOnNodesSkipped(
-                "unreachable",
+                reports.UNREACHABLE,
                 ["pacemaker_remote enable", "pacemaker_remote start"],
                 ["nodeA", "nodeB"],
             ),
@@ -2874,12 +2874,6 @@ class SbdDevicePathNotAbsolute(NameBuildTest):
         self.assert_message_from_report(
             "Device path '/dev' on node 'node1' is not absolute",
             reports.SbdDevicePathNotAbsolute("/dev", "node1"),
-        )
-
-    def test_build_message_without_node(self):
-        self.assert_message_from_report(
-            "Device path '/dev' is not absolute",
-            reports.SbdDevicePathNotAbsolute("/dev"),
         )
 
 
@@ -3101,15 +3095,19 @@ class UnsupportedOperationOnNonSystemdSystems(NameBuildTest):
 class LiveEnvironmentRequired(NameBuildTest):
     def test_build_messages_transformable_codes(self):
         self.assert_message_from_report(
-            "This command does not support '--corosync_conf', '-f'",
-            reports.LiveEnvironmentRequired(["COROSYNC_CONF", "CIB"]),
+            "This command does not support '{}', '{}'".format(
+                str(file_type_codes.CIB), str(file_type_codes.COROSYNC_CONF),
+            ),
+            reports.LiveEnvironmentRequired(
+                [file_type_codes.COROSYNC_CONF, file_type_codes.CIB]
+            ),
         )
 
 
 class LiveEnvironmentRequiredForLocalNode(NameBuildTest):
     def test_all(self):
         self.assert_message_from_report(
-            "Node(s) must be specified if -f is used",
+            "Node(s) must be specified if mocked CIB is used",
             reports.LiveEnvironmentRequiredForLocalNode(),
         )
 
@@ -3117,9 +3115,9 @@ class LiveEnvironmentRequiredForLocalNode(NameBuildTest):
 class LiveEnvironmentNotConsistent(NameBuildTest):
     def test_one_one(self):
         self.assert_message_from_report(
-            (
-                "When '--booth-conf' is specified, "
-                "'--booth-key' must be specified as well"
+            "When '{}' is specified, '{}' must be specified as well".format(
+                str(file_type_codes.BOOTH_CONFIG),
+                str(file_type_codes.BOOTH_KEY),
             ),
             reports.LiveEnvironmentNotConsistent(
                 [file_type_codes.BOOTH_CONFIG], [file_type_codes.BOOTH_KEY],
@@ -3129,8 +3127,13 @@ class LiveEnvironmentNotConsistent(NameBuildTest):
     def test_many_many(self):
         self.assert_message_from_report(
             (
-                "When '--booth-conf', '-f' are specified, "
-                "'--booth-key', '--corosync_conf' must be specified as well"
+                "When '{}', '{}' are specified, '{}', '{}' must be specified "
+                "as well"
+            ).format(
+                str(file_type_codes.BOOTH_CONFIG),
+                str(file_type_codes.CIB),
+                str(file_type_codes.BOOTH_KEY),
+                str(file_type_codes.COROSYNC_CONF),
             ),
             reports.LiveEnvironmentNotConsistent(
                 [file_type_codes.CIB, file_type_codes.BOOTH_CONFIG],
@@ -3143,9 +3146,8 @@ class CorosyncNodeConflictCheckSkipped(NameBuildTest):
     def test_success(self):
         self.assert_message_from_report(
             "Unable to check if there is a conflict with nodes set in corosync "
-            "because the command does not run on a live cluster (e.g. -f "
-            "was used)",
-            reports.CorosyncNodeConflictCheckSkipped("not_live_cib"),
+            "because the command does not run on a live cluster",
+            reports.CorosyncNodeConflictCheckSkipped(reports.NOT_LIVE_CIB),
         )
 
 
@@ -3266,8 +3268,7 @@ class CibFencingLevelDoesNotExist(NameBuildTest):
 class UseCommandNodeAddRemote(NameBuildTest):
     def test_build_messages(self):
         self.assert_message_from_report(
-            "this command is not sufficient for creating a remote connection,"
-            " use 'pcs cluster node add-remote'",
+            "this command is not sufficient for creating a remote connection",
             reports.UseCommandNodeAddRemote(),
         )
 
@@ -3275,8 +3276,7 @@ class UseCommandNodeAddRemote(NameBuildTest):
 class UseCommandNodeAddGuest(NameBuildTest):
     def test_build_messages(self):
         self.assert_message_from_report(
-            "this command is not sufficient for creating a guest node, use "
-            "'pcs cluster node add-guest'",
+            "this command is not sufficient for creating a guest node",
             reports.UseCommandNodeAddGuest(),
         )
 
@@ -3284,8 +3284,7 @@ class UseCommandNodeAddGuest(NameBuildTest):
 class UseCommandNodeRemoveGuest(NameBuildTest):
     def test_build_messages(self):
         self.assert_message_from_report(
-            "this command is not sufficient for removing a guest node, use "
-            "'pcs cluster node remove-guest'",
+            "this command is not sufficient for removing a guest node",
             reports.UseCommandNodeRemoveGuest(),
         )
 
@@ -3331,20 +3330,13 @@ class UnableToPerformOperationOnAnyNode(NameBuildTest):
 class HostNotFound(NameBuildTest):
     def test_single_host(self):
         self.assert_message_from_report(
-            (
-                "Host 'unknown_host' is not known to pcs, try to authenticate "
-                "the host using 'pcs host auth unknown_host' command"
-            ),
+            "Host 'unknown_host' is not known to pcs",
             reports.HostNotFound(["unknown_host"]),
         )
 
     def test_multiple_hosts(self):
         self.assert_message_from_report(
-            (
-                "Hosts 'another_one', 'unknown_host' are not known to pcs, try "
-                "to authenticate the hosts using 'pcs host auth another_one "
-                "unknown_host' command"
-            ),
+            "Hosts 'another_one', 'unknown_host' are not known to pcs",
             reports.HostNotFound(["unknown_host", "another_one"]),
         )
 
@@ -3526,7 +3518,7 @@ class WaitForNodeStartupError(NameBuildTest):
 class WaitForNodeStartupWithoutStart(NameBuildTest):
     def test_all(self):
         self.assert_message_from_report(
-            "Cannot specify '--wait' without specifying '--start'",
+            "Cannot specify 'wait' without specifying 'start'",
             reports.WaitForNodeStartupWithoutStart(),
         )
 
@@ -3621,11 +3613,7 @@ class UsingDefaultWatchdog(NameBuildTest):
 class CannotRemoveAllClusterNodes(NameBuildTest):
     def test_success(self):
         self.assert_message_from_report(
-            (
-                "No nodes would be left in the cluster, if you intend to "
-                "destroy the whole cluster, run 'pcs cluster destroy --all' "
-                "instead"
-            ),
+            "No nodes would be left in the cluster",
             reports.CannotRemoveAllClusterNodes(),
         )
 
@@ -3641,11 +3629,7 @@ class UnableToConnectToAnyRemainingNode(NameBuildTest):
 class UnableToConnectToAllRemainingNodes(NameBuildTest):
     def test_single_node(self):
         self.assert_message_from_report(
-            (
-                "Remaining cluster node 'node1' could not be reached, run "
-                "'pcs cluster sync' on any currently online node "
-                "once the unreachable one become available"
-            ),
+            ("Remaining cluster node 'node1' could not be reached"),
             reports.UnableToConnectToAllRemainingNode(["node1"]),
         )
 
@@ -3653,8 +3637,7 @@ class UnableToConnectToAllRemainingNodes(NameBuildTest):
         self.assert_message_from_report(
             (
                 "Remaining cluster nodes 'node0', 'node1', 'node2' could not "
-                "be reached, run 'pcs cluster sync' on any currently online "
-                "node once the unreachable ones become available"
+                "be reached"
             ),
             reports.UnableToConnectToAllRemainingNode(
                 ["node1", "node0", "node2"]
@@ -3667,8 +3650,7 @@ class NodesToRemoveUnreachable(NameBuildTest):
         self.assert_message_from_report(
             (
                 "Removed node 'node0' could not be reached and subsequently "
-                "deconfigured. Run 'pcs cluster destroy' on the unreachable "
-                "node."
+                "deconfigured"
             ),
             reports.NodesToRemoveUnreachable(["node0"]),
         )
@@ -3677,8 +3659,7 @@ class NodesToRemoveUnreachable(NameBuildTest):
         self.assert_message_from_report(
             (
                 "Removed nodes 'node0', 'node1', 'node2' could not be reached "
-                "and subsequently deconfigured. Run 'pcs cluster destroy' "
-                "on the unreachable nodes."
+                "and subsequently deconfigured"
             ),
             reports.NodesToRemoveUnreachable(["node1", "node0", "node2"]),
         )
@@ -3689,8 +3670,7 @@ class NodeUsedAsTieBreaker(NameBuildTest):
         self.assert_message_from_report(
             (
                 "Node 'node2' with id '2' is used as a tie breaker for a "
-                "qdevice, run 'pcs quorum device update model "
-                "tie_breaker=<node id>' to change it"
+                "qdevice"
             ),
             reports.NodeUsedAsTieBreaker("node2", 2),
         )
@@ -3755,8 +3735,7 @@ class SbdWatchdogTestMultipleDevices(NameBuildTest):
         self.assert_message_from_report(
             (
                 "Multiple watchdog devices available, therefore, watchdog "
-                "which should be tested has to be specified. To list available "
-                "watchdog devices use command 'pcs stonith sbd watchdog list'"
+                "which should be tested has to be specified."
             ),
             reports.SbdWatchdogTestMultipleDevices(),
         )
