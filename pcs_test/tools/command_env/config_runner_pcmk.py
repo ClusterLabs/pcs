@@ -11,6 +11,8 @@ from pcs_test.tools.fixture_cib import modify_cib
 from pcs_test.tools.misc import get_test_resource as rc
 from pcs_test.tools.xml import etree_to_str
 
+from pcs import settings
+
 # pylint: disable=too-many-arguments
 
 DEFAULT_WAIT_TIMEOUT = 10
@@ -132,7 +134,7 @@ class PcmkShortcuts():
         self.__calls.place(
             name,
             RunnerCall(
-                "/usr/sbin/stonith_admin --history {0} --verbose".format(node),
+                "stonith_admin --history {0} --verbose".format(node),
                 stdout=stdout,
                 stderr=stderr,
                 returncode=returncode,
@@ -155,7 +157,7 @@ class PcmkShortcuts():
         self.__calls.place(
             name,
             RunnerCall(
-                "/usr/sbin/stonith_admin --history {0} --cleanup".format(node),
+                "stonith_admin --history {0} --cleanup".format(node),
                 stdout=stdout,
                 stderr=stderr,
                 returncode=returncode,
@@ -177,7 +179,7 @@ class PcmkShortcuts():
         self.__calls.place(
             name,
             RunnerCall(
-                "/usr/sbin/stonith_admin --history * --broadcast",
+                "stonith_admin --history * --broadcast",
                 stdout=stdout,
                 stderr=stderr,
                 returncode=returncode,
@@ -410,7 +412,7 @@ class PcmkShortcuts():
         self.__calls.place(
             name,
             RunnerCall(
-                "/usr/libexec/pacemaker/pacemaker-fenced metadata",
+                f"{settings.pacemaker_fenced} metadata",
                 stdout=stdout,
                 stderr=stderr,
                 returncode=returncode

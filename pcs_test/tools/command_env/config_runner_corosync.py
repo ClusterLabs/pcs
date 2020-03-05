@@ -125,11 +125,7 @@ class CorosyncShortcuts:
         self.__calls.place(
             name,
             RunnerCall(
-                "{binary} -p".format(
-                    binary=os.path.join(
-                        settings.corosync_binaries, "corosync-quorumtool"
-                    ),
-                ),
+                "corosync-quorumtool -p",
                 stdout=stdout,
                 stderr=stderr,
                 returncode=returncode
