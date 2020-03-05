@@ -3038,6 +3038,7 @@ class CannotGroupResourceWrongType(NameBuildTest):
             reports.cannot_group_resource_wrong_type("R", "master")
         )
 
+<<<<<<< HEAD
 class CorosyncConfigCannotSaveInvalidNamesValues(NameBuildTest):
     def test_empty(self):
         self.assert_message_from_report(
@@ -3123,6 +3124,210 @@ class CorosyncConfigCannotSaveInvalidNamesValues(NameBuildTest):
             )
         )
 
+||||||| merged common ancestors
+class CannotMoveResourceBundle(NameBuildTest):
+    def test_success(self):
+        self.assert_message_from_report(
+            "cannot move bundle resources",
+            reports.cannot_move_resource_bundle("R")
+        )
+
+class CannotMoveResourceClone(NameBuildTest):
+    def test_success(self):
+        self.assert_message_from_report(
+            "cannot move cloned resources",
+            reports.cannot_move_resource_clone("R")
+        )
+
+class CannotMoveResourceMasterResourceNotPromotable(NameBuildTest):
+    def test_without_promotable(self):
+        self.assert_message_from_report(
+            "when specifying --master you must use the promotable clone id",
+            reports.cannot_move_resource_master_resource_not_promotable("R")
+        )
+
+    def test_with_promotable(self):
+        self.assert_message_from_report(
+            "when specifying --master you must use the promotable clone id (P)",
+            reports.cannot_move_resource_master_resource_not_promotable(
+                "R",
+                promotable_id="P"
+            )
+        )
+
+class CannotMoveResourcePromotableNotMaster(NameBuildTest):
+    def test_success(self):
+        self.assert_message_from_report(
+            (
+                "to move promotable clone resources you must use --master and "
+                "the promotable clone id (P)"
+            ),
+            reports.cannot_move_resource_promotable_not_master("R", "P")
+        )
+
+class CannotMoveResourceStoppedNoNodeSpecified(NameBuildTest):
+    def test_success(self):
+        self.assert_message_from_report(
+            "You must specify a node when moving/banning a stopped resource",
+            reports.cannot_move_resource_stopped_no_node_specified("R")
+        )
+
+class ResourceMovePcmkEerror(NameBuildTest):
+    def test_success(self):
+        self.assert_message_from_report(
+            "cannot move resource 'R'\nstdout1\n  stdout2\nstderr1\n  stderr2",
+            reports.resource_move_pcmk_error(
+                "R",
+                "stdout1\n\n  stdout2\n",
+                "stderr1\n\n  stderr2\n"
+            )
+        )
+
+class CorosyncConfigCannotSaveInvalidNamesValues(NameBuildTest):
+    def test_empty(self):
+        self.assert_message_from_report(
+            "Cannot save corosync.conf containing invalid section names, "
+                "option names or option values"
+            ,
+            reports.corosync_config_cannot_save_invalid_names_values([], [], [])
+        )
+
+    def test_one_section(self):
+        self.assert_message_from_report(
+            "Cannot save corosync.conf containing "
+                "invalid section name(s): 'SECTION'"
+            ,
+            reports.corosync_config_cannot_save_invalid_names_values(
+                ["SECTION"], [], []
+            )
+        )
+
+    def test_more_sections(self):
+        self.assert_message_from_report(
+            "Cannot save corosync.conf containing "
+                "invalid section name(s): 'SECTION1', 'SECTION2'"
+            ,
+            reports.corosync_config_cannot_save_invalid_names_values(
+                ["SECTION1", "SECTION2"], [], []
+            )
+        )
+
+    def test_one_attr_name(self):
+        self.assert_message_from_report(
+            "Cannot save corosync.conf containing "
+                "invalid option name(s): 'ATTR'"
+            ,
+            reports.corosync_config_cannot_save_invalid_names_values(
+                [], ["ATTR"], []
+            )
+        )
+
+    def test_more_attr_names(self):
+        self.assert_message_from_report(
+            "Cannot save corosync.conf containing "
+                "invalid option name(s): 'ATTR1', 'ATTR2'"
+            ,
+            reports.corosync_config_cannot_save_invalid_names_values(
+                [], ["ATTR1", "ATTR2"], []
+            )
+        )
+
+    def test_one_attr_value(self):
+        self.assert_message_from_report(
+            "Cannot save corosync.conf containing "
+                "invalid option value(s): 'VALUE' (option 'ATTR')"
+            ,
+            reports.corosync_config_cannot_save_invalid_names_values(
+                [], [], [("ATTR", "VALUE")]
+            )
+        )
+
+    def test_more_attr_values(self):
+        self.assert_message_from_report(
+            "Cannot save corosync.conf containing "
+                "invalid option value(s): 'VALUE1' (option 'ATTR1'), "
+                "'VALUE2' (option 'ATTR2')"
+            ,
+            reports.corosync_config_cannot_save_invalid_names_values(
+                [], [], [("ATTR1", "VALUE1"), ("ATTR2", "VALUE2")]
+            )
+        )
+
+    def test_all(self):
+        self.assert_message_from_report(
+            "Cannot save corosync.conf containing "
+                "invalid section name(s): 'SECTION1', 'SECTION2'; "
+                "invalid option name(s): 'ATTR1', 'ATTR2'; "
+                "invalid option value(s): 'VALUE3' (option 'ATTR3'), "
+                "'VALUE4' (option 'ATTR4')"
+            ,
+            reports.corosync_config_cannot_save_invalid_names_values(
+                ["SECTION1", "SECTION2"],
+                ["ATTR1", "ATTR2"],
+                [("ATTR3", "VALUE3"), ("ATTR4", "VALUE4")]
+            )
+        )
+
+=======
+class CannotMoveResourceBundle(NameBuildTest):
+    def test_success(self):
+        self.assert_message_from_report(
+            "cannot move bundle resources",
+            reports.cannot_move_resource_bundle("R")
+        )
+
+class CannotMoveResourceClone(NameBuildTest):
+    def test_success(self):
+        self.assert_message_from_report(
+            "cannot move cloned resources",
+            reports.cannot_move_resource_clone("R")
+        )
+
+class CannotMoveResourceMasterResourceNotPromotable(NameBuildTest):
+    def test_without_promotable(self):
+        self.assert_message_from_report(
+            "when specifying --master you must use the promotable clone id",
+            reports.cannot_move_resource_master_resource_not_promotable("R")
+        )
+
+    def test_with_promotable(self):
+        self.assert_message_from_report(
+            "when specifying --master you must use the promotable clone id (P)",
+            reports.cannot_move_resource_master_resource_not_promotable(
+                "R",
+                promotable_id="P"
+            )
+        )
+
+class CannotMoveResourcePromotableNotMaster(NameBuildTest):
+    def test_success(self):
+        self.assert_message_from_report(
+            (
+                "to move promotable clone resources you must use --master and "
+                "the promotable clone id (P)"
+            ),
+            reports.cannot_move_resource_promotable_not_master("R", "P")
+        )
+
+class CannotMoveResourceStoppedNoNodeSpecified(NameBuildTest):
+    def test_success(self):
+        self.assert_message_from_report(
+            "You must specify a node when moving/banning a stopped resource",
+            reports.cannot_move_resource_stopped_no_node_specified("R")
+        )
+
+class ResourceMovePcmkEerror(NameBuildTest):
+    def test_success(self):
+        self.assert_message_from_report(
+            "cannot move resource 'R'\nstdout1\n  stdout2\nstderr1\n  stderr2",
+            reports.resource_move_pcmk_error(
+                "R",
+                "stdout1\n\n  stdout2\n",
+                "stderr1\n\n  stderr2\n"
+            )
+        )
+
+>>>>>>> COROSYNC_CONFIG_CANNOT_SAVE_INVALID_NAMES_VALUES
 class QdeviceAlreadyDefined(NameBuildTest):
     def test_all(self):
         self.assert_message_from_report(

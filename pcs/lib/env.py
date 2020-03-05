@@ -4,8 +4,10 @@ from typing import (
 from xml.etree.ElementTree import Element
 
 from pcs.common import file_type_codes
+from pcs.common import reports as report
 from pcs.common.node_communicator import Communicator, NodeCommunicatorFactory
 from pcs.common.reports import ReportProcessor
+from pcs.common.reports.item import ReportItem
 from pcs.common.tools import Version
 from pcs.lib import reports
 from pcs.lib.booth.env import BoothEnv
@@ -286,8 +288,12 @@ class LibraryEnvironment:
         )
         if bad_sections or bad_attr_names or bad_attr_values:
             raise LibraryError(
-                reports.corosync_config_cannot_save_invalid_names_values(
-                    bad_sections, bad_attr_names, bad_attr_values
+                ReportItem.error(
+                    report.messages.CorosyncConfigCannotSaveInvalidNamesValues(
+                        bad_sections,
+                        bad_attr_names,
+                        bad_attr_values,
+                    )
                 )
             )
         corosync_conf_data = corosync_conf_facade.config.export()

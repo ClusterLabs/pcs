@@ -1188,8 +1188,12 @@ def _verify_corosync_conf(corosync_conf_facade):
     )
     if bad_sections or bad_attr_names or bad_attr_values:
         raise LibraryError(
-            reports.corosync_config_cannot_save_invalid_names_values(
-                bad_sections, bad_attr_names, bad_attr_values
+            ReportItem.error(
+                report.messages.CorosyncConfigCannotSaveInvalidNamesValues(
+                    bad_sections,
+                    bad_attr_names,
+                    bad_attr_values,
+                )
             )
         )
 
