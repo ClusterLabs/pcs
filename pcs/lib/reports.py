@@ -118,25 +118,6 @@ def corosync_config_accepted_by_node(node):
         info={"node": node}
     )
 
-def corosync_quorum_get_status_error(
-    reason, node=None, severity=ReportItemSeverity.ERROR,
-):
-    """
-    unable to get runtime status of quorum
-
-    string reason -- an error message
-    string node -- a node where the error occurred, local node if not specified
-    string severity -- report item severity
-    """
-    return ReportItem(
-        report_codes.COROSYNC_QUORUM_GET_STATUS_ERROR,
-        severity,
-        info={
-            "reason": reason,
-            "node": node,
-        }
-    )
-
 def corosync_quorum_heuristics_enabled_with_no_exec():
     """
     no exec_ is specified, therefore heuristics are effectively disabled

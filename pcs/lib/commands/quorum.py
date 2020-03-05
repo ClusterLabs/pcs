@@ -121,7 +121,11 @@ def status_text(lib_env):
     try:
         return corosync_live.get_quorum_status_text(lib_env.cmd_runner())
     except corosync_live.QuorumStatusReadException as e:
-        raise LibraryError(reports.corosync_quorum_get_status_error(e.reason))
+        raise LibraryError(
+            ReportItem.error(
+                report.messages.CorosyncQuorumGetStatusError(e.reason)
+            )
+        )
 
 def status_device_text(lib_env, verbose=False):
     """

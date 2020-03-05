@@ -43,6 +43,7 @@ class GetStatusTextTest(TestCase):
                 report_codes.COROSYNC_QUORUM_GET_STATUS_ERROR,
                 {
                     "reason": "status error\nsome info",
+                    "node": "",
                 }
             )
         )
