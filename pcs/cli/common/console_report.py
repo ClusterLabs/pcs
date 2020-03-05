@@ -375,16 +375,6 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
         .format(**info)
     ,
 
-    codes.COROSYNC_NOT_RUNNING_ON_NODE: lambda info:
-        "{node}: corosync is not running"
-        .format(**info)
-    ,
-
-    codes.COROSYNC_RUNNING_ON_NODE: lambda info:
-        "{node}: corosync is running"
-        .format(**info)
-    ,
-
     codes.COROSYNC_QUORUM_GET_STATUS_ERROR: lambda info:
         "{_node}Unable to get quorum status: {reason}"
         .format(

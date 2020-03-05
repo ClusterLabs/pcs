@@ -118,26 +118,6 @@ def corosync_config_accepted_by_node(node):
         info={"node": node}
     )
 
-def corosync_not_running_on_node_ok(node):
-    """
-    corosync is not running on a node, which is ok
-    node string node address / name
-    """
-    return ReportItem.info(
-        report_codes.COROSYNC_NOT_RUNNING_ON_NODE,
-        info={"node": node}
-    )
-
-def corosync_running_on_node_fail(node):
-    """
-    corosync is running on a node, which is not ok
-    node string node address / name
-    """
-    return ReportItem.error(
-        report_codes.COROSYNC_RUNNING_ON_NODE,
-        info={"node": node}
-    )
-
 def corosync_quorum_get_status_error(
     reason, node=None, severity=ReportItemSeverity.ERROR,
 ):

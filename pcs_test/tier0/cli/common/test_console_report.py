@@ -1896,20 +1896,6 @@ class NodeNamesDuplication(NameBuildTest):
         )
 
 
-class CorosyncNotRunningOnNodeOk(NameBuildTest):
-    def test_all(self):
-        self.assert_message_from_report(
-            "node2: corosync is not running",
-            reports.corosync_not_running_on_node_ok("node2")
-        )
-
-class CorosyncRunningOnNodeFail(NameBuildTest):
-    def test_all(self):
-        self.assert_message_from_report(
-            "node3: corosync is running",
-            reports.corosync_running_on_node_fail("node3")
-        )
-
 class CorosyncNodesMissing(NameBuildTest):
     def test_message(self):
         self.assert_message_from_report(

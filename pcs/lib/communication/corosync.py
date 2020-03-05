@@ -49,11 +49,13 @@ class CheckCorosyncOffline(
         try:
             status = response.data
             if not json.loads(status)["corosync"]:
-                report_item = reports.corosync_not_running_on_node_ok(
-                    node_label
+                report_item = ReportItem.info(
+                    report.messages.CorosyncNotRunningOnNode(node_label),
                 )
             else:
-                report_item = reports.corosync_running_on_node_fail(node_label)
+                report_item = ReportItem.error(
+                    report.messages.CorosyncRunningOnNode(node_label),
+                )
         except (KeyError, json.JSONDecodeError):
             report_item = ReportItem(
                 severity=ReportItemSeverity(
