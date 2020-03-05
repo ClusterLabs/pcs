@@ -46,7 +46,13 @@ class AppTest(AsyncHTTPTestCase):
         # pylint: disable=arguments-differ
         if "follow_redirects" not in kwargs:
             kwargs["follow_redirects"] = False
-        return super().fetch(path, raise_error=raise_error, **kwargs)
+        response = super().fetch(path, raise_error=raise_error, **kwargs)
+        # "Strict-Transport-Security" header is expected in every response
+        self.assertTrue(
+            "Strict-Transport-Security" in response.headers,
+            f"No 'Strict-Transport-Security' header in response for '{path}'"
+        )
+        return response
 
     def post(self, path, body, **kwargs):
         kwargs.update({

@@ -16,6 +16,7 @@
 - Fix documentation and flags regarding bundled/cloned/grouped resources for
   `pcs (resource | stonith) (cleanup | refresh)` ([rhbz#1805082])
 - Improved ACL documentation ([rhbz#1722970])
+- Added missing Strict-Transport-Security headers to redirects ([rhbz#1810017])
 
 [ghissue#231]: https://github.com/ClusterLabs/pcs/issues/231
 [rhbz#1676431]: https://bugzilla.redhat.com/show_bug.cgi?id=1676431
@@ -24,6 +25,7 @@
 [rhbz#1781303]: https://bugzilla.redhat.com/show_bug.cgi?id=1781303
 [rhbz#1793574]: https://bugzilla.redhat.com/show_bug.cgi?id=1793574
 [rhbz#1805082]: https://bugzilla.redhat.com/show_bug.cgi?id=1805082
+[rhbz#1810017]: https://bugzilla.redhat.com/show_bug.cgi?id=1810017
 
 
 ## [0.10.4] - 2019-11-28

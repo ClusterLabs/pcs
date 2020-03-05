@@ -5,12 +5,13 @@ from pathlib import Path
 
 from tornado.ioloop import IOLoop
 from tornado.locks import Lock
-from tornado.web import Application, RedirectHandler
+from tornado.web import Application
 
 from pcs import settings
 from pcs.common.system import is_systemd
 from pcs.daemon import log, ruby_pcsd, session, ssl, systemd
 from pcs.daemon.app import sinatra_ui, sinatra_remote, ui
+from pcs.daemon.app.common import RedirectHandler
 from pcs.daemon.env import prepare_env
 from pcs.daemon.http_server import HttpsServerManage
 

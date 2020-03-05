@@ -1,4 +1,7 @@
-from tornado.web import RequestHandler
+from tornado.web import (
+    RequestHandler,
+    RedirectHandler as TornadoRedirectHandler,
+)
 
 class EnhanceHeadersMixin:
     """
@@ -52,3 +55,13 @@ class BaseHandler(EnhanceHeadersMixin, RequestHandler):
         # BUT we currently do not plan to use it SO:
         #pylint: disable=abstract-method
         pass
+
+class RedirectHandler(EnhanceHeadersMixin, TornadoRedirectHandler):
+    """
+    RedirectHandler with Strict-Transport-Security headers.
+    """
+    # abstract method `data_received` is not used in redirect:
+    # pylint: disable=abstract-method
+    def initialize(self, url, permanent=True):
+        super().initialize(url, permanent)
+        self.set_strict_transport_security()
