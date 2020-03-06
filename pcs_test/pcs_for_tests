@@ -16,6 +16,9 @@ if not TEST_INSTALLED:
     # Add pcs package.
     sys.path.insert(0, PACKAGE_DIR)
 
+if "BUNDLED_LIB_LOCATION" in os.environ:
+    sys.path.insert(0, os.environ["BUNDLED_LIB_LOCATION"])
+
 # pylint: disable=wrong-import-position
 from pcs import settings
 
