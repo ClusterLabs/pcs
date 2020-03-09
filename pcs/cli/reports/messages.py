@@ -351,6 +351,36 @@ class LiveEnvironmentRequiredForLocalNode(CliReportMessageCustom):
         return "Node(s) must be specified if -f is used"
 
 
+class ServiceCommandsOnNodesSkipped(CliReportMessageCustom):
+    _obj: messages.ServiceCommandsOnNodesSkipped
+
+    @property
+    def message(self) -> str:
+        return (
+            "Running action(s) {actions} on {nodes} was skipped because "
+            "{reason}. Please, run the action(s) manually."
+        ).format(
+            actions=format_list(self._obj.action_list),
+            nodes=format_list(self._obj.node_list),
+            reason=skip_reason_to_string(self._obj.reason_type),
+        )
+
+
+class FilesRemoveFromNodesSkipped(CliReportMessageCustom):
+    _obj: messages.FilesRemoveFromNodesSkipped
+
+    @property
+    def message(self) -> str:
+        return (
+            "Removing {files} from {nodes} was skipped because {reason}. "
+            "Please, remove the file(s) manually."
+        ).format(
+            files=format_list(self._obj.file_list),
+            nodes=format_list(self._obj.node_list),
+            reason=skip_reason_to_string(self._obj.reason_type),
+        )
+
+
 def _create_report_msg_map() -> Dict[str, type]:
     result: Dict[str, type] = {}
     for report_msg_cls in get_all_subclasses(CliReportMessageCustom):

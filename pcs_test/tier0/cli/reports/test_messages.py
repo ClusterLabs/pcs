@@ -356,6 +356,75 @@ class LiveEnvironmentRequiredForLocalNode(CliReportMessageTestBase):
         )
 
 
+class ServiceCommandsOnNodesSkipped(CliReportMessageTestBase):
+    def test_not_live(self):
+        self.assert_message(
+            messages.ServiceCommandsOnNodesSkipped(
+                messages.NOT_LIVE_CIB,
+                ["pacemaker_remote enable", "pacemaker_remote start"],
+                ["nodeA", "nodeB"],
+            ),
+            "Running action(s) 'pacemaker_remote enable', 'pacemaker_remote "
+            "start' on 'nodeA', 'nodeB' was skipped because the command "
+            "does not run on a live cluster (e.g. -f was used). Please, "
+            "run the action(s) manually.",
+        )
+
+    def test_unreachable(self):
+        self.assert_message(
+            messages.ServiceCommandsOnNodesSkipped(
+                messages.UNREACHABLE,
+                ["pacemaker_remote enable", "pacemaker_remote start"],
+                ["nodeA", "nodeB"],
+            ),
+            "Running action(s) 'pacemaker_remote enable', 'pacemaker_remote "
+            "start' on 'nodeA', 'nodeB' was skipped because pcs is unable "
+            "to connect to the node(s). Please, run the action(s) manually.",
+        )
+
+    def test_unknown_reason(self):
+        self.assert_message(
+            messages.ServiceCommandsOnNodesSkipped(
+                "some undefined reason",
+                ["pacemaker_remote enable", "pacemaker_remote start"],
+                ["nodeA", "nodeB"],
+            ),
+            "Running action(s) 'pacemaker_remote enable', 'pacemaker_remote "
+            "start' on 'nodeA', 'nodeB' was skipped because some undefined "
+            "reason. Please, run the action(s) manually.",
+        )
+
+
+class FilesRemoveFromNodesSkipped(CliReportMessageTestBase):
+    def test_not_live(self):
+        self.assert_message(
+            messages.FilesRemoveFromNodesSkipped(
+                messages.NOT_LIVE_CIB, ["file1"], ["nodeA", "nodeB"]
+            ),
+            "Removing 'file1' from 'nodeA', 'nodeB' was skipped because the "
+            "command does not run on a live cluster (e.g. -f was used). "
+            "Please, remove the file(s) manually.",
+        )
+
+    def test_unreachable(self):
+        self.assert_message(
+            messages.FilesRemoveFromNodesSkipped(
+                messages.UNREACHABLE, ["file1", "file2"], ["nodeA"]
+            ),
+            "Removing 'file1', 'file2' from 'nodeA' was skipped because pcs is "
+            "unable to connect to the node(s). Please, remove the file(s) "
+            "manually.",
+        )
+
+    def test_unknown_reason(self):
+        self.assert_message(
+            messages.FilesRemoveFromNodesSkipped(
+                "some undefined reason", ["file1", "file2"], ["nodeA", "nodeB"]
+            ),
+            "Removing 'file1', 'file2' from 'nodeA', 'nodeB' was skipped "
+            "because some undefined reason. Please, remove the file(s) "
+            "manually.",
+        )
 # TODO: create test/check that all subclasses of
 # pcs.cli.reports.messages.CliReportMessageCustom have their test class with
 # the same name in this file

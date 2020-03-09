@@ -250,16 +250,27 @@ class ServiceAction(RunActionBase):
     def _failure_report(
         self, target_label, action, reason, severity, forceable
     ):
-        return reports.service_command_on_node_error(
-            target_label, action, reason, severity, forceable
+        return ReportItem(
+            severity=new_report.item.ReportItemSeverity(
+                severity, forceable
+            ),
+            message=new_report.messages.ServiceCommandOnNodeError(
+                target_label, action, reason
+            )
         )
 
     def _success_report(self, target_label, action):
-        return reports.service_command_on_node_success(target_label, action)
+        return ReportItem.info(
+            new_report.messages.ServiceCommandOnNodeSuccess(
+                target_label, action
+            )
+        )
 
     def _start_report(self, action_list, target_label_list):
-        return reports.service_commands_on_nodes_started(
-            action_list, target_label_list
+        return ReportItem.info(
+            new_report.messages.ServiceCommandsOnNodesStarted(
+                action_list, target_label_list
+            )
         )
 
     def _is_success(self, action_response):
@@ -283,12 +294,19 @@ class DistributeFiles(FileActionBase):
     def _failure_report(
         self, target_label, action, reason, severity, forceable
     ):
-        return reports.file_distribution_error(
-            target_label, action, reason, severity, forceable
+        return ReportItem(
+            severity=new_report.item.ReportItemSeverity(
+                severity, forceable
+            ),
+            message=new_report.messages.FileDistributionError(
+                target_label, action, reason
+            )
         )
 
     def _success_report(self, target_label, action):
-        return reports.file_distribution_success(target_label, action)
+        return ReportItem.info(
+            new_report.messages.FileDistributionSuccess(target_label, action)
+        )
 
     def _start_report(self, action_list, target_label_list):
         return reports.files_distribution_started(
@@ -320,16 +338,25 @@ class RemoveFiles(FileActionBase):
     def _failure_report(
         self, target_label, action, reason, severity, forceable
     ):
-        return reports.file_remove_from_node_error(
-            target_label, action, reason, severity, forceable
+        return ReportItem(
+            severity=new_report.item.ReportItemSeverity(
+                severity, forceable
+            ),
+            message=new_report.messages.FileRemoveFromNodeError(
+                target_label, action, reason
+            )
         )
 
     def _success_report(self, target_label, action):
-        return reports.file_remove_from_node_success(target_label, action)
+        return ReportItem.info(
+            new_report.messages.FileRemoveFromNodeSuccess(target_label, action)
+        )
 
     def _start_report(self, action_list, target_label_list):
-        return reports.files_remove_from_nodes_started(
-            action_list, target_label_list
+        return ReportItem.info(
+            new_report.messages.FilesRemoveFromNodesStarted(
+                action_list, target_label_list
+            )
         )
 
     def _is_success(self, action_response):

@@ -41,10 +41,12 @@ def _reports_skip_new_node(new_node_name, reason_type):
             ["pacemaker authkey"],
             [new_node_name]
         ),
-        reports.service_commands_on_nodes_skipped(
-            reason_type,
-            ["pacemaker_remote start", "pacemaker_remote enable"],
-            [new_node_name]
+        ReportItem.info(
+            report.messages.ServiceCommandsOnNodesSkipped(
+                reason_type,
+                ["pacemaker_remote start", "pacemaker_remote enable"],
+                [new_node_name]
+            )
         ),
     ]
 
@@ -592,15 +594,19 @@ def _destroy_pcmk_remote_env(
 
 def _report_skip_live_parts_in_remove(node_names_list):
     return [
-        reports.service_commands_on_nodes_skipped(
-            "not_live_cib",
-            ["pacemaker_remote stop", "pacemaker_remote disable"],
-            node_names_list
+        ReportItem.info(
+            report.messages.ServiceCommandsOnNodesSkipped(
+                report.messages.NOT_LIVE_CIB,
+                ["pacemaker_remote stop", "pacemaker_remote disable"],
+                node_names_list
+            )
         ),
-        reports.files_remove_from_nodes_skipped(
-            "not_live_cib",
-            ["pacemaker authkey"],
-            node_names_list
+        ReportItem.info(
+            report.messages.FilesRemoveFromNodesSkipped(
+                report.messages.NOT_LIVE_CIB,
+                ["pacemaker authkey"],
+                node_names_list
+            )
         )
     ]
 

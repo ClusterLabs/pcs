@@ -3765,7 +3765,6 @@ class FilesRemoveFromNodesStarted(ReportItemMessage):
         )
 
 
-# TODO: cli specific
 @dataclass(frozen=True)
 class FilesRemoveFromNodesSkipped(ReportItemMessage):
     """
@@ -3855,7 +3854,7 @@ class ServiceCommandsOnNodesStarted(ReportItemMessage):
         )
 
 
-# TODO: cli specific
+# TODO:possibly should be Removed in favor ... TBF + context
 @dataclass(frozen=True)
 class ServiceCommandsOnNodesSkipped(ReportItemMessage):
     """
@@ -3883,6 +3882,7 @@ class ServiceCommandsOnNodesSkipped(ReportItemMessage):
         )
 
 
+# TODO:possibly should be Removed in favor ... TBF + context
 @dataclass(frozen=True)
 class ServiceCommandOnNodeSuccess(ReportItemMessage):
     """
@@ -3903,6 +3903,7 @@ class ServiceCommandOnNodeSuccess(ReportItemMessage):
         )
 
 
+# TODO:possibly should be Removed in favor ... TBF + context
 @dataclass(frozen=True)
 class ServiceCommandOnNodeError(ReportItemMessage):
     """
