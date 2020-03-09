@@ -108,7 +108,7 @@ setup(
             'pcs = pcs.run:cli',
             'pcsd = pcs.run:daemon',
             'pcs_snmp_agent = pcs.run:pcs_snmp_agent',
-            'pcs_internal = pcs.pcs_internal:main',
+            'pcs_internal = pcs.run:pcs_internal',
         ],
     },
     cmdclass={

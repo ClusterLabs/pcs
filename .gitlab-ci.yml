@@ -114,6 +114,7 @@ python_smoke_tests:
         cracklib-dicts
         passwd
         procps-ng
+        curl
         rpms/pcs-ci-*.rpm
       "
     - export GEM_HOME=/usr/lib/pcsd/vendor/bundle/ruby
