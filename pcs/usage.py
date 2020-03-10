@@ -1291,17 +1291,19 @@ Commands:
         is specified also show expired constraints. If --full is specified
         also list the constraint ids.
 
-    location <resource> prefers <node>[=<score>] [<node>[=<score>]]...
-        Create a location constraint on a resource to prefer the specified node
-        with score (default score: INFINITY). Resource may be either a resource
-        id <resource_id> or %<resource_id> or resource%<resource_id>, or a
-        resource name regular expression regexp%<resource_pattern>.
+    location <resource> [<role>] prefers <node>[=<score>] [<node>[=<score>]]...
+        Create a location constraint on a resource with role (can be master or
+        slave) to prefer the specified node with score (default: INFINITY).
+        Resource may be either a resource id <resource_id> or %<resource_id> or
+        resource%<resource_id>, or a resource name regular expression
+        regexp%<resource_pattern>.
 
-    location <resource> avoids <node>[=<score>] [<node>[=<score>]]...
-        Create a location constraint on a resource to avoid the specified node
-        with score (default score: INFINITY). Resource may be either a resource
-        id <resource_id> or %<resource_id> or resource%<resource_id>, or a
-        resource name regular expression regexp%<resource_pattern>.
+    location <resource> [<role>] avoids <node>[=<score>] [<node>[=<score>]]...
+        Create a location constraint on a resource with role (can be master or
+        slave) to avoid the specified node with score (default: INFINITY).
+        Resource may be either a resource id <resource_id> or %<resource_id> or
+        resource%<resource_id>, or a resource name regular expression
+        regexp%<resource_pattern>.
 
     location <resource> rule [id=<rule id>] [resource-discovery=<option>]
              [role=master|slave] [constraint-id=<id>]
@@ -1336,7 +1338,8 @@ Commands:
         is specified show the internal constraint id's. If --all is
         specified show the expired constraints.
 
-    location add <id> <resource> <node> <score> [resource-discovery=<option>]
+    location add <id> <resource> <node> <score> [role=master|slave]
+            [resource-discovery=<option>]
         Add a location constraint with the appropriate id for the specified
         resource, node name and score. Resource may be either a resource id
         <resource_id> or %<resource_id> or resource%<resource_id>, or a

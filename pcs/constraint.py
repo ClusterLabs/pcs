@@ -853,6 +853,15 @@ def _verify_score(score):
             % score
         )
 
+def _verify_and_prepare_role(role):
+    role_cleaned = role.lower().capitalize()
+    if role_cleaned not in ["Master", "Slave"]:
+        utils.err(
+            "invalid role '%s', use 'master' or 'slave'"
+            % role
+        )
+    return role_cleaned
+
 def _get_rule_status(rule_id, cib):
     _, _, retval = utils.cmd_runner().run(
         [settings.crm_rule, "--check", "--rule=" + rule_id, "-X-"],
@@ -873,14 +882,24 @@ def location_prefer(lib, argv, modifiers):
     """
     modifiers.ensure_only_supported("--force", "-f")
     rsc = argv.pop(0)
-    prefer_option = argv.pop(0)
-
     dummy_rsc_type, rsc_value = parse_args.parse_typed_arg(
         rsc,
         [RESOURCE_TYPE_RESOURCE, RESOURCE_TYPE_REGEXP],
         RESOURCE_TYPE_RESOURCE
     )
 
+    role = None
+    if (
+        argv[0].lower() in ["master", "slave"]
+        or
+        argv[1].lower() in ["prefers", "avoids"]
+    ):
+        role = argv.pop(0)
+        if len(argv) < 2:
+            raise CmdLineInputError()
+        role = _verify_and_prepare_role(role)
+
+    prefer_option = argv.pop(0)
     if prefer_option == "prefers":
         prefer = True
     elif prefer_option == "avoids":
@@ -922,12 +941,21 @@ def location_prefer(lib, argv, modifiers):
                 else:
                     score = "-" + score
 
-        parameters_list.append([
-            sanitize_id(f"location-{rsc_value}-{node}-{score}"),
-            rsc,
-            node,
-            score
-        ])
+        if role is None:
+            parameters_list.append([
+                sanitize_id(f"location-{rsc_value}-{node}-{score}"),
+                rsc,
+                node,
+                score
+            ])
+        else:
+            parameters_list.append([
+                sanitize_id(f"location-{rsc_value}-{node}-{score}-{role}"),
+                rsc,
+                node,
+                score,
+                "role=" + role
+            ])
 
     if report_list:
         process_library_reports(report_list)
@@ -958,14 +986,17 @@ def location_add(lib, argv, modifiers, skip_score_and_node_check=False):
     node = argv.pop(0)
     score = argv.pop(0)
     options = []
-    # For now we only allow setting resource-discovery
+    role = ""
+    # For now we allow setting role=<role> and resource-discovery=<option>
     if argv:
         for arg in argv:
             if '=' in arg:
                 options.append(arg.split('=', 1))
             else:
                 raise CmdLineInputError(f"bad option '{arg}'")
-            if (
+            if options[-1][0] == "role":
+                role = _verify_and_prepare_role(options.pop(-1)[1])
+            elif (
                 options[-1][0] != "resource-discovery"
                 and
                 not modifiers.get("--force")
@@ -1015,7 +1046,7 @@ def location_add(lib, argv, modifiers, skip_score_and_node_check=False):
     # If it does we replace it with the new constraint
     dummy_dom, constraintsElement = getCurrentConstraints(dom)
     elementsToRemove = []
-    # If the id matches, or the rsc & node match, then we replace/remove
+    # If the id matches, or the rsc & node & role match, then we replace/remove
     for rsc_loc in constraintsElement.getElementsByTagName('rsc_location'):
         # pylint: disable=too-many-boolean-expressions
         if (
@@ -1037,6 +1068,8 @@ def location_add(lib, argv, modifiers, skip_score_and_node_check=False):
                         rsc_loc.getAttribute("rsc-pattern") == rsc_value
                     )
                 )
+                and
+                rsc_loc.getAttribute("role") == role
             )
         ):
             elementsToRemove.append(rsc_loc)
@@ -1051,6 +1084,8 @@ def location_add(lib, argv, modifiers, skip_score_and_node_check=False):
         element.setAttribute("rsc-pattern", rsc_value)
     element.setAttribute("node", node)
     element.setAttribute("score", score)
+    if role != "":
+        element.setAttribute("role", role)
     for option in options:
         element.setAttribute(option[0], option[1])
     constraintsElement.appendChild(element)
