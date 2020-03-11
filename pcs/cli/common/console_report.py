@@ -251,50 +251,6 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
         .format(**info)
     ,
 
-    codes.NODE_ADDRESSES_ALREADY_EXIST: lambda info:
-        (
-            "Node address{_es} {_addrs} {_are} already used by existing nodes; "
-            "please, use other address{_es}"
-        ).format(
-            _addrs=format_list(info["address_list"]),
-            _es=("es" if len(info["address_list"]) > 1 else ""),
-            _are=("are" if len(info["address_list"]) > 1 else "is"),
-        )
-    ,
-
-    codes.NODE_ADDRESSES_CANNOT_BE_EMPTY: lambda info:
-        (
-            "Empty address set for node{_s} {_nodes}, "
-            "an address cannot be empty"
-        ).format(
-            _s=("s" if len(info["node_name_list"]) > 1 else ""),
-            _nodes=format_list(info["node_name_list"])
-        )
-    ,
-
-    codes.NODE_ADDRESSES_DUPLICATION: lambda info:
-        "Node addresses must be unique, duplicate addresses: {_addrs}".format(
-            _addrs=format_list(info["address_list"])
-        )
-    ,
-
-    codes.NODE_NAMES_ALREADY_EXIST: lambda info:
-        (
-            "Node name{_s} {_names} {_are} already used by existing nodes; "
-            "please, use other name{_s}"
-        ).format(
-            _names=format_list(info["name_list"]),
-            _s=("s" if len(info["name_list"]) > 1 else ""),
-            _are=("are" if len(info["name_list"]) > 1 else "is"),
-        )
-    ,
-
-    codes.NODE_NAMES_DUPLICATION: lambda info:
-        "Node names must be unique, duplicate names: {_names}".format(
-            _names=format_list(info["name_list"])
-        )
-    ,
-
     codes.COROSYNC_NODES_MISSING:
         "No nodes have been specified"
     ,
@@ -640,34 +596,6 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
 
     codes.RESOURCE_IS_GUEST_NODE_ALREADY: lambda info:
         "the resource '{resource_id}' is already a guest node"
-        .format(**info)
-    ,
-
-    codes.NODE_NOT_FOUND: lambda info:
-        "{desc} '{node}' does not appear to exist in configuration".format(
-            desc=build_node_description(info["searched_types"]),
-            node=info["node"]
-        )
-    ,
-
-    codes.NODE_REMOVE_IN_PACEMAKER_FAILED: lambda info:
-        (
-            "{_node}Unable to remove node(s) {_node_list} from pacemaker"
-            "{_reason_part}"
-        ).format(
-            _node=format_optional(info["node"], "{}: "),
-            _reason_part=format_optional(info["reason"], ": {0}"),
-            _node_list=format_list(info["node_list_to_remove"]),
-            **info
-        )
-    ,
-
-    codes.NODE_TO_CLEAR_IS_STILL_IN_CLUSTER: lambda info:
-        (
-            "node '{node}' seems to be still in the cluster"
-            "; this command should be used only with nodes that have been"
-            " removed from the cluster"
-        )
         .format(**info)
     ,
 

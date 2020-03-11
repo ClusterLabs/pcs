@@ -245,7 +245,7 @@ class EnsureNodeExists(TestCase):
             (
                 severity.ERROR,
                 report_codes.NODE_NOT_FOUND,
-                {"node": "name-missing"},
+                {"node": "name-missing", "searched_types": []},
                 None
             ),
         )
@@ -258,7 +258,7 @@ class EnsureNodeExists(TestCase):
             (
                 severity.ERROR,
                 report_codes.NODE_NOT_FOUND,
-                {"node": "name-missing"},
+                {"node": "name-missing", "searched_types": []},
                 None
             ),
         )

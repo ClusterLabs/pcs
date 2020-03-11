@@ -106,12 +106,12 @@ def node_clear(
 
     if node_name in current_nodes:
         if env.report_processor.report(
-            reports.get_problem_creator(
-                report_codes.FORCE_CLEAR_CLUSTER_NODE,
-                allow_clear_cluster_node
-            )(
-                reports.node_to_clear_is_still_in_cluster,
-                node_name
+            ReportItem(
+                severity=report.item.get_severity(
+                    report_codes.FORCE_CLEAR_CLUSTER_NODE,
+                    allow_clear_cluster_node,
+                ),
+                message=report.messages.NodeToClearIsStillInCluster(node_name),
             )
         ).has_errors:
             raise LibraryError()
@@ -1503,9 +1503,11 @@ def remove_nodes_from_cib(env: LibraryEnvironment, node_list):
         )
         if retval != 0:
             raise LibraryError(
-                reports.node_remove_in_pacemaker_failed(
-                    [node],
-                    reason=join_multilines([stderr, stdout])
+                ReportItem.error(
+                    report.messages.NodeRemoveInPacemakerFailed(
+                        node_list_to_remove=[node],
+                        reason=join_multilines([stderr, stdout]),
+                    )
                 )
             )
 

@@ -126,7 +126,11 @@ def create(
     # Report all empty and unresolvable addresses at once instead on each own.
     if nodes_with_empty_addr:
         report_items.append(
-            reports.node_addresses_cannot_be_empty(nodes_with_empty_addr)
+            ReportItem.error(
+                report.messages.NodeAddressesCannotBeEmpty(
+                    sorted(nodes_with_empty_addr),
+                )
+            )
         )
     report_items += _report_unresolvable_addresses_if_any(
         unresolvable_addresses, force_unresolvable
@@ -142,7 +146,9 @@ def create(
     if non_unique_names:
         all_names_usable = False
         report_items.append(
-            reports.node_names_duplication(non_unique_names)
+            ReportItem.error(
+                report.messages.NodeNamesDuplication(sorted(non_unique_names))
+            )
         )
     non_unique_addrs = {
         addr
@@ -153,7 +159,11 @@ def create(
     }
     if non_unique_addrs:
         report_items.append(
-            reports.node_addresses_duplication(non_unique_addrs)
+            ReportItem.error(
+                report.messages.NodeAddressesDuplication(
+                    sorted(non_unique_addrs),
+                )
+            )
         )
     if all_names_usable:
         # Check for errors using node names in their reports. If node names are
@@ -400,7 +410,11 @@ def add_nodes(
     # Report all empty and unresolvable addresses at once instead on each own.
     if nodes_with_empty_addr:
         report_items.append(
-            reports.node_addresses_cannot_be_empty(nodes_with_empty_addr)
+            ReportItem.error(
+                report.messages.NodeAddressesCannotBeEmpty(
+                    sorted(nodes_with_empty_addr),
+                )
+            )
         )
     report_items += _report_unresolvable_addresses_if_any(
         unresolvable_addresses, force_unresolvable
@@ -414,26 +428,40 @@ def add_nodes(
     already_existing_names = existing_names.intersection(new_names_count.keys())
     if already_existing_names:
         report_items.append(
-            reports.node_names_already_exist(already_existing_names)
+            ReportItem.error(
+                report.messages.NodeNamesAlreadyExist(
+                    sorted(already_existing_names),
+                )
+            )
         )
     already_existing_addrs = existing_addrs.intersection(new_addrs_count.keys())
     if already_existing_addrs:
         report_items.append(
-            reports.node_addresses_already_exist(already_existing_addrs)
+            ReportItem.error(
+                report.messages.NodeAddressesAlreadyExist(
+                    sorted(already_existing_addrs),
+                )
+            )
         )
     non_unique_names = {
         name for name, count in new_names_count.items() if count > 1
     }
     if non_unique_names:
         report_items.append(
-            reports.node_names_duplication(non_unique_names)
+            ReportItem.error(
+                report.messages.NodeNamesDuplication(sorted(non_unique_names))
+            )
         )
     non_unique_addrs = {
         addr for addr, count in new_addrs_count.items() if count > 1
     }
     if non_unique_addrs:
         report_items.append(
-            reports.node_addresses_duplication(non_unique_addrs)
+            ReportItem.error(
+                report.messages.NodeAddressesDuplication(
+                    sorted(non_unique_addrs),
+                )
+            )
         )
     # Check mixing IPv4 and IPv6 in one link, node names are not relevant,
     # skip links already reported due to new nodes have wrong IP version
@@ -469,7 +497,11 @@ def remove_nodes(nodes_names_to_remove, existing_nodes, quorum_device_settings):
     existing_node_names = [node.name for node in existing_nodes]
     report_items = []
     for node in set(nodes_names_to_remove) - set(existing_node_names):
-        report_items.append(reports.node_not_found(node))
+        report_items.append(
+            ReportItem.error(
+                report.messages.NodeNotFound(node)
+            )
+        )
 
     if not set(existing_node_names) - set(nodes_names_to_remove):
         report_items.append(
@@ -800,7 +832,7 @@ def add_link(
         for node in sorted(existing_names - set(node_addr_map.keys()))
     ]
     report_items += [
-        reports.node_not_found(node)
+        ReportItem.error(report.messages.NodeNotFound(node))
         for node in sorted(set(node_addr_map.keys()) - existing_names)
     ]
 
@@ -819,7 +851,11 @@ def add_link(
             )
     if nodes_with_empty_addr:
         report_items.append(
-            reports.node_addresses_cannot_be_empty(nodes_with_empty_addr)
+            ReportItem.error(
+                report.messages.NodeAddressesCannotBeEmpty(
+                    sorted(nodes_with_empty_addr),
+                )
+            )
         )
     report_items += _report_unresolvable_addresses_if_any(
         unresolvable_addresses, force_unresolvable
@@ -981,7 +1017,7 @@ def update_link(
         unchanged_addrs.add(node.addr)
     # report unknown nodes
     report_items += [
-        reports.node_not_found(node)
+        ReportItem.error(report.messages.NodeNotFound(node))
         for node in sorted(set(node_addr_map.keys()) - existing_names)
     ]
     # validate new addresses
@@ -999,7 +1035,11 @@ def update_link(
             )
     if nodes_with_empty_addr:
         report_items.append(
-            reports.node_addresses_cannot_be_empty(nodes_with_empty_addr)
+            ReportItem.error(
+                report.messages.NodeAddressesCannotBeEmpty(
+                    sorted(nodes_with_empty_addr),
+                )
+            )
         )
     report_items += _report_unresolvable_addresses_if_any(
         unresolvable_addresses, force_unresolvable
@@ -1027,7 +1067,11 @@ def _report_non_unique_addresses(existing_addrs, new_addrs):
     already_existing_addrs = existing_addrs.intersection(new_addrs)
     if already_existing_addrs:
         report_items.append(
-            reports.node_addresses_already_exist(already_existing_addrs)
+            ReportItem.error(
+                report.messages.NodeAddressesAlreadyExist(
+                    sorted(already_existing_addrs),
+                )
+            )
         )
 
     non_unique_addrs = {
@@ -1039,7 +1083,11 @@ def _report_non_unique_addresses(existing_addrs, new_addrs):
     }
     if non_unique_addrs:
         report_items.append(
-            reports.node_addresses_duplication(non_unique_addrs)
+            ReportItem.error(
+                report.messages.NodeAddressesDuplication(
+                    sorted(non_unique_addrs),
+                )
+            )
         )
 
     return report_items

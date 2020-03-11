@@ -1,8 +1,7 @@
 from contextlib import contextmanager
 
-from pcs.common import reports as report
+from pcs.common import reports
 from pcs.common.reports.item import ReportItem
-from pcs.lib import reports
 from pcs.lib.cib.node import update_node_instance_attrs
 from pcs.lib.cib.tools import IdProvider
 from pcs.lib.errors import LibraryError
@@ -134,7 +133,7 @@ def _set_instance_attrs_local_node(lib_env, attrs, wait):
         # name.
         raise LibraryError(
             ReportItem.error(
-                report.messages.LiveEnvironmentRequiredForLocalNode()
+                reports.messages.LiveEnvironmentRequiredForLocalNode()
             )
         )
 
@@ -153,7 +152,9 @@ def _set_instance_attrs_node_list(lib_env, attrs, node_names, wait):
         report_list = []
         for node in node_names:
             if node not in known_nodes:
-                report_list.append(reports.node_not_found(node))
+                report_list.append(
+                    ReportItem.error(reports.messages.NodeNotFound(node))
+                )
         if report_list:
             raise LibraryError(*report_list)
 

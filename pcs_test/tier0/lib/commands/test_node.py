@@ -263,6 +263,7 @@ class SetInstaceAttrsList(SetInstaceAttrsBase):
                 report_codes.NODE_NOT_FOUND,
                 {
                     "node": "node-9",
+                    "searched_types": [],
                 }
             )
         )

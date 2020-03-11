@@ -184,7 +184,7 @@ class RemoveGuestOthers(TestCase):
                 fixture.error(
                     report_codes.NODE_NOT_FOUND,
                     node="NOEXISTENT",
-                    searched_types="guest",
+                    searched_types=["guest"],
                 )
             ],
             expected_in_processor=False

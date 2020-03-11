@@ -128,71 +128,6 @@ def corosync_config_read_error(path, reason):
         }
     )
 
-def node_addresses_already_exist(address_list):
-    """
-    Trying add node(s) with addresses already used by other nodes
-
-    iterable address_list -- list of specified already existing addresses
-    """
-    return ReportItem.error(
-        report_codes.NODE_ADDRESSES_ALREADY_EXIST,
-        info={
-            "address_list": sorted(address_list),
-        }
-    )
-
-def node_addresses_cannot_be_empty(node_name_list):
-    """
-    Trying to set an empty node address or remove a node address in an update
-
-    iterable node_name_list -- list of node names with empty addresses
-    """
-    return ReportItem.error(
-        report_codes.NODE_ADDRESSES_CANNOT_BE_EMPTY,
-        info={
-            "node_name_list": sorted(node_name_list),
-        }
-    )
-
-def node_addresses_duplication(address_list):
-    """
-    Trying to set one address for more nodes or links, addresses must be unique
-
-    iterable address_list -- list of nonunique addresses
-    """
-    return ReportItem.error(
-        report_codes.NODE_ADDRESSES_DUPLICATION,
-        info={
-            "address_list": sorted(address_list),
-        }
-    )
-
-def node_names_already_exist(name_list):
-    """
-    Trying add node(s) with name(s) already used by other nodes
-
-    iterable name_list -- list of specified already used node names
-    """
-    return ReportItem.error(
-        report_codes.NODE_NAMES_ALREADY_EXIST,
-        info={
-            "name_list": sorted(name_list),
-        }
-    )
-
-def node_names_duplication(name_list):
-    """
-    Trying to set one node name for more nodes, node names must be unique
-
-    iterable name_list -- list of nonunique node names
-    """
-    return ReportItem.error(
-        report_codes.NODE_NAMES_DUPLICATION,
-        info={
-            "name_list": sorted(name_list),
-        }
-    )
-
 def corosync_nodes_missing():
     """
     No nodes have been specified
@@ -1065,61 +1000,6 @@ def resource_operation_interval_adapted(
             "operation_name": operation_name,
             "original_interval": original_interval,
             "adapted_interval": adapted_interval,
-        }
-    )
-
-def node_not_found(
-    node, searched_types=None, severity=ReportItemSeverity.ERROR, forceable=None
-):
-    """
-    specified node does not exist
-    node string specified node
-    searched_types list|string
-    """
-    return ReportItem(
-        report_codes.NODE_NOT_FOUND,
-        severity,
-        info={
-            "node": node,
-            "searched_types": searched_types if searched_types else []
-        },
-        forceable=forceable
-    )
-
-def node_to_clear_is_still_in_cluster(
-    node, severity=ReportItemSeverity.ERROR, forceable=None
-):
-    """
-    specified node is still in cluster and `crm_node --remove` should be not
-    used
-
-    node string specified node
-    """
-    return ReportItem(
-        report_codes.NODE_TO_CLEAR_IS_STILL_IN_CLUSTER,
-        severity,
-        info={
-            "node": node,
-        },
-        forceable=forceable
-    )
-
-def node_remove_in_pacemaker_failed(
-    node_list_to_remove, node=None, reason=None
-):
-    """
-    Removing nodes from pacemaker failed.
-
-    iterable node_list_to_remove -- nodes which should be removed
-    string node -- node on which operation was performed
-    string reason -- reason of failure
-    """
-    return ReportItem.error(
-        report_codes.NODE_REMOVE_IN_PACEMAKER_FAILED,
-        info={
-            "node": node,
-            "node_list_to_remove": node_list_to_remove,
-            "reason": reason,
         }
     )
 

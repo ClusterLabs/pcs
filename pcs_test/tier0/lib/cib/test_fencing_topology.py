@@ -18,6 +18,7 @@ from pcs.common.fencing_topology import (
     TARGET_TYPE_ATTRIBUTE,
 )
 from pcs.common.reports import ReportItemSeverity as severity
+from pcs.common.reports.item import ReportItem
 from pcs.lib import reports
 from pcs.lib.errors import LibraryError
 from pcs.lib.pacemaker.state import ClusterState
@@ -223,7 +224,9 @@ class AddLevel(TestCase):
         mock_append
     ):
         mock_val_target.return_value = [
-            reports.node_not_found(self.target_value)
+            ReportItem.error(
+                common_report.messages.NodeNotFound(self.target_value)
+            )
         ]
         report_list = [
             fixture.error(
@@ -625,6 +628,7 @@ class Verify(TestCase, CibMixin, StatusNodesMixin):
                 report_codes.NODE_NOT_FOUND,
                 {
                     "node": "nodeA",
+                    "searched_types": [],
                 },
                 None
             ),
@@ -633,6 +637,7 @@ class Verify(TestCase, CibMixin, StatusNodesMixin):
                 report_codes.NODE_NOT_FOUND,
                 {
                     "node": "nodeB",
+                    "searched_types": [],
                 },
                 None
             ),
@@ -751,6 +756,7 @@ class ValidateTargetValuewise(TestCase, StatusNodesMixin):
             report_codes.NODE_NOT_FOUND,
             {
                 "node": "",
+                "searched_types": [],
             },
             report_codes.FORCE_NODE_DOES_NOT_EXIST
         )]
@@ -765,6 +771,7 @@ class ValidateTargetValuewise(TestCase, StatusNodesMixin):
             report_codes.NODE_NOT_FOUND,
             {
                 "node": "rh7-x",
+                "searched_types": [],
             },
             report_codes.FORCE_NODE_DOES_NOT_EXIST
         )]
@@ -779,6 +786,7 @@ class ValidateTargetValuewise(TestCase, StatusNodesMixin):
             report_codes.NODE_NOT_FOUND,
             {
                 "node": "rh7-x",
+                "searched_types": [],
             },
             None
         )]
@@ -793,6 +801,7 @@ class ValidateTargetValuewise(TestCase, StatusNodesMixin):
             report_codes.NODE_NOT_FOUND,
             {
                 "node": "rh7-x",
+                "searched_types": [],
             },
             None
         )]

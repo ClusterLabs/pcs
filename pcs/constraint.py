@@ -22,8 +22,9 @@ from pcs.cli.common.reports import process_library_reports
 import pcs.cli.constraint_colocation.command as colocation_command
 import pcs.cli.constraint_order.command as order_command
 from pcs.cli.constraint_ticket import command as ticket_command
+from pcs.common import reports
 from pcs.common.reports import codes as report_codes
-from pcs.lib import reports
+from pcs.common.reports.item import ReportItem
 from pcs.lib.cib.constraint import resource_set
 from pcs.lib.cib.constraint.order import ATTRIB as order_attrib
 from pcs.lib.node import get_existing_nodes_names
@@ -840,10 +841,12 @@ def _show_location_rules(
 def _verify_node_name(node, existing_nodes):
     report_list = []
     if node not in existing_nodes:
-        report_list.append(reports.node_not_found(
-            node,
-            forceable=report_codes.FORCE_NODE_DOES_NOT_EXIST
-        ))
+        report_list.append(
+            ReportItem.error(
+                reports.messages.NodeNotFound(node),
+                force_code=report_codes.FORCE_NODE_DOES_NOT_EXIST,
+            )
+        )
     return report_list
 
 def _verify_score(score):

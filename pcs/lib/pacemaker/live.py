@@ -420,7 +420,9 @@ def get_local_node_status(runner):
             ):
                 result[attr] = getattr(node_status.attrs, attr)
             return result
-    raise LibraryError(reports.node_not_found(node_name))
+    raise LibraryError(
+        ReportItem.error(report.messages.NodeNotFound(node_name))
+    )
 
 def remove_node(runner, node_name):
     stdout, stderr, retval = runner.run([
@@ -431,9 +433,11 @@ def remove_node(runner, node_name):
     ])
     if retval != 0:
         raise LibraryError(
-            reports.node_remove_in_pacemaker_failed(
-                [node_name],
-                reason=join_multilines([stderr, stdout])
+            ReportItem.error(
+                report.messages.NodeRemoveInPacemakerFailed(
+                    node_list_to_remove=[node_name],
+                    reason=join_multilines([stderr, stdout]),
+                )
             )
         )
 

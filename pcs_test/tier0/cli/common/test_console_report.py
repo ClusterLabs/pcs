@@ -808,33 +808,6 @@ class ServiceCommandsOnNodesSkipped(NameBuildTest):
         )
 
 
-class NodeNotFound(NameBuildTest):
-    def test_build_messages(self):
-        self.assert_message_from_report(
-            "Node 'SOME_NODE' does not appear to exist in configuration",
-            reports.node_not_found("SOME_NODE")
-        )
-
-    def test_build_messages_with_one_search_types(self):
-        self.assert_message_from_report(
-            "remote node 'SOME_NODE' does not appear to exist in configuration",
-            reports.node_not_found("SOME_NODE", ["remote"])
-        )
-
-    def test_build_messages_with_string_search_types(self):
-        self.assert_message_from_report(
-            "remote node 'SOME_NODE' does not appear to exist in configuration",
-            reports.node_not_found("SOME_NODE", "remote")
-        )
-
-    def test_build_messages_with_multiple_search_types(self):
-        self.assert_message_from_report(
-            "nor remote node or guest node 'SOME_NODE' does not appear to exist"
-                " in configuration"
-            ,
-            reports.node_not_found("SOME_NODE", ["remote", "guest"])
-        )
-
 class OmittingNode(NameBuildTest):
     def test_all(self):
         self.assert_message_from_report(
@@ -862,50 +835,6 @@ class PaceMakerLocalNodeNotFound(NameBuildTest):
         self.assert_message_from_report(
             "unable to get local node name from pacemaker: reason",
             reports.pacemaker_local_node_name_not_found("reason")
-        )
-
-class NodeRemoveInPacemakerFailed(NameBuildTest):
-    def test_minimal(self):
-        self.assert_message_from_report(
-            (
-                "Unable to remove node(s) 'NODE1', 'NODE2' from "
-                "pacemaker"
-            ),
-            reports.node_remove_in_pacemaker_failed(
-                ["NODE2", "NODE1"]
-            )
-        )
-
-    def test_without_node(self):
-        self.assert_message_from_report(
-            "Unable to remove node(s) 'NODE' from pacemaker: reason",
-            reports.node_remove_in_pacemaker_failed(
-                ["NODE"],
-                reason="reason"
-            )
-        )
-
-    def test_with_node(self):
-        self.assert_message_from_report(
-            (
-                "node-a: Unable to remove node(s) 'NODE1', 'NODE2' from "
-                "pacemaker: reason"
-            ),
-            reports.node_remove_in_pacemaker_failed(
-                ["NODE1", "NODE2"],
-                node="node-a",
-                reason="reason"
-            )
-        )
-
-class NodeToClearIsStillInCluster(NameBuildTest):
-    def test_build_messages(self):
-        self.assert_message_from_report(
-            "node 'node1' seems to be still in the cluster"
-                "; this command should be used only with nodes that have been"
-                " removed from the cluster"
-            ,
-            reports.node_to_clear_is_still_in_cluster("node1")
         )
 
 
@@ -1347,72 +1276,6 @@ class CibLoadErrorScopeMissing(NameBuildTest):
         self.assert_message_from_report(
             "unable to get cib, scope 'scope-name' not present in cib",
             reports.cib_load_error_scope_missing("scope-name", "reason")
-        )
-
-
-class NodeAddressesAlreadyExist(NameBuildTest):
-    def test_one_address(self):
-        self.assert_message_from_report(
-            "Node address 'node1' is already used by existing nodes; please, "
-            "use other address",
-            reports.node_addresses_already_exist(["node1"])
-        )
-
-    def test_more_addresses(self):
-        self.assert_message_from_report(
-            "Node addresses 'node1', 'node3' are already used by existing "
-            "nodes; please, use other addresses",
-            reports.node_addresses_already_exist(["node1", "node3"])
-        )
-
-class NodeAddressesCannotBeEmpty(NameBuildTest):
-    def test_one_node(self):
-        self.assert_message_from_report(
-            (
-                "Empty address set for node 'node2', "
-                "an address cannot be empty"
-            ),
-            reports.node_addresses_cannot_be_empty(["node2"])
-        )
-
-    def test_more_nodes(self):
-        self.assert_message_from_report(
-            (
-                "Empty address set for nodes 'node1', 'node2', "
-                "an address cannot be empty"
-            ),
-            reports.node_addresses_cannot_be_empty(["node2", "node1"])
-        )
-
-class NodeAddressesDuplication(NameBuildTest):
-    def test_message(self):
-        self.assert_message_from_report(
-            "Node addresses must be unique, duplicate addresses: "
-                "'node1', 'node3'"
-            ,
-            reports.node_addresses_duplication(["node1", "node3"])
-        )
-
-class NodeNamesAlreadyExist(NameBuildTest):
-    def test_one_address(self):
-        self.assert_message_from_report(
-            "Node name 'node1' is already used by existing nodes; please, "
-            "use other name",
-            reports.node_names_already_exist(["node1"])
-        )
-
-    def test_more_addresses(self):
-        self.assert_message_from_report(
-            "Node names 'node1', 'node3' are already used by existing "
-            "nodes; please, use other names",
-            reports.node_names_already_exist(["node1", "node3"])
-        )
-
-class NodeNamesDuplication(NameBuildTest):
-    def test_message(self):
-        self.assert_message_from_report(
-            "Node names must be unique, duplicate names: 'node1', 'node3'",
-            reports.node_names_duplication(["node1", "node3"])
         )
 
 

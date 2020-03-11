@@ -481,10 +481,12 @@ class RemoveNodesFromCib(
             output = json.loads(response.data)
             if output["code"] != "success":
                 self._report(
-                    reports.node_remove_in_pacemaker_failed(
-                        self._nodes_to_remove,
-                        node=node_label,
-                        reason=output["message"],
+                    ReportItem.error(
+                        new_report.messages.NodeRemoveInPacemakerFailed(
+                            node_list_to_remove=self._nodes_to_remove,
+                            node=node_label,
+                            reason=output["message"],
+                        )
                     )
                 )
         except (KeyError, json.JSONDecodeError):

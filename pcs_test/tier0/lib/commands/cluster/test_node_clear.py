@@ -81,8 +81,8 @@ class NodeClear(TestCase):
             [
                 fixture.error(
                     report_codes.NODE_REMOVE_IN_PACEMAKER_FAILED,
-                    node=None,
                     node_list_to_remove=["nodeX"],
+                    node="",
                     reason="some error"
                 ),
             ],

@@ -172,7 +172,7 @@ class RemoveRemoteOthers(TestCase):
                 fixture.error(
                     report_codes.NODE_NOT_FOUND,
                     node="NOEXISTENT",
-                    searched_types="remote",
+                    searched_types=["remote"],
                 )
             ],
             expected_in_processor=False

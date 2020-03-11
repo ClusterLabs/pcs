@@ -535,7 +535,11 @@ def _find_resources_to_remove(
     resource_element_list = find_resources(get_resources(cib), node_identifier)
 
     if not resource_element_list:
-        raise LibraryError(reports.node_not_found(node_identifier, node_type))
+        raise LibraryError(
+            ReportItem.error(
+                report.messages.NodeNotFound(node_identifier, [node_type])
+            )
+        )
 
     if len(resource_element_list) > 1:
         if report_processor.report(

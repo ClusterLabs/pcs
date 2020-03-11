@@ -289,14 +289,20 @@ def _validate_target_valuewise(
                 break
         if not node_found:
             report_list.append(
-                reports.node_not_found(
-                    target_value,
-                    severity=ReportItemSeverity.WARNING
-                        if force_node and allow_force
-                        else ReportItemSeverity.ERROR
-                    ,
-                    forceable=None if force_node or not allow_force
-                        else report_codes.FORCE_NODE_DOES_NOT_EXIST
+                ReportItem(
+                    severity=ReportItemSeverity(
+                        level=(
+                            ReportItemSeverity.WARNING
+                            if force_node and allow_force
+                            else ReportItemSeverity.ERROR
+                        ),
+                        force_code=(
+                            None
+                            if force_node or not allow_force
+                            else report_codes.FORCE_NODE_DOES_NOT_EXIST
+                        )
+                    ),
+                    message=report.messages.NodeNotFound(target_value),
                 )
             )
     return report_list

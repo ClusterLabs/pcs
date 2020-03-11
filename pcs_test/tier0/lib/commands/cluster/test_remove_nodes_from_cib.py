@@ -59,6 +59,7 @@ class SuccessMinimal(TestCase):
                 fixture.error(
                     report_codes.NODE_REMOVE_IN_PACEMAKER_FAILED,
                     node_list_to_remove=[self.nodes[1]],
+                    node="",
                     reason=err_msg,
                 )
             ],
@@ -105,6 +106,7 @@ class SuccessMinimal(TestCase):
                 fixture.error(
                     report_codes.NODE_REMOVE_IN_PACEMAKER_FAILED,
                     node_list_to_remove=[self.nodes[1]],
+                    node="",
                     reason=err_msg,
                 )
             ],
