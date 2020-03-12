@@ -1692,13 +1692,13 @@ class CreateTransportUdp(TestCase):
                     report_codes.COROSYNC_TRANSPORT_UNSUPPORTED_OPTIONS,
                     option_type="compression",
                     actual_transport="udp/udpu",
-                    required_transport_list=("knet", )
+                    required_transports=["knet"],
                 ),
                 fixture.error(
                     report_codes.COROSYNC_TRANSPORT_UNSUPPORTED_OPTIONS,
                     option_type="crypto",
                     actual_transport="udp/udpu",
-                    required_transport_list=("knet", )
+                    required_transports=["knet"],
                 ),
             ]
         )

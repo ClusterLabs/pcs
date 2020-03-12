@@ -92,7 +92,7 @@ class AddLink(TestCase):
                     report_codes.COROSYNC_CANNOT_ADD_REMOVE_LINKS_BAD_TRANSPORT,
                     add_or_not_remove=True,
                     actual_transport=transport,
-                    required_transport_list=["knet"]
+                    required_transports=["knet"]
                 )
             ]
         )
@@ -787,7 +787,7 @@ class RemoveLinks(TestCase):
                     report_codes.COROSYNC_CANNOT_ADD_REMOVE_LINKS_BAD_TRANSPORT,
                     add_or_not_remove=False,
                     actual_transport=transport,
-                    required_transport_list=["knet"]
+                    required_transports=["knet"]
                 )
             ]
         )
@@ -811,8 +811,8 @@ class RemoveLinks(TestCase):
             [
                 fixture.error(
                     report_codes.COROSYNC_LINK_DOES_NOT_EXIST_CANNOT_REMOVE,
-                    link_list=["abc", "4", "15"],
-                    existing_link_list=["0", "1", "3", "10", "11"],
+                    link_list=sorted(["abc", "4", "15"]),
+                    existing_link_list=sorted(["0", "1", "3", "10", "11"]),
                 )
             ]
         )
@@ -861,7 +861,7 @@ class RemoveLinks(TestCase):
                 fixture.error(
                     report_codes.COROSYNC_LINK_DOES_NOT_EXIST_CANNOT_REMOVE,
                     link_list=["2"],
-                    existing_link_list=["0", "1", "3", "10", "11"],
+                    existing_link_list=sorted(["0", "1", "3", "10", "11"]),
                 )
             ]
         )
@@ -881,7 +881,7 @@ class RemoveLinks(TestCase):
                 fixture.error(
                     report_codes.COROSYNC_LINK_DOES_NOT_EXIST_CANNOT_REMOVE,
                     link_list=["abc"],
-                    existing_link_list=["0", "1", "3", "10", "11"],
+                    existing_link_list=sorted(["0", "1", "3", "10", "11"]),
                 )
             ]
         )
