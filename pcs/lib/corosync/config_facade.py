@@ -617,7 +617,9 @@ class ConfigFacade:
         dict heuristics_options -- heuristics options
         """
         if self.has_quorum_device():
-            raise LibraryError(reports.qdevice_already_defined())
+            raise LibraryError(
+                ReportItem.error(report.messages.QdeviceAlreadyDefined())
+            )
 
         # configuration cleanup
         remove_need_stopped_cluster = {
@@ -676,7 +678,9 @@ class ConfigFacade:
         dict heuristics_options -- heuristics options
         """
         if not self.has_quorum_device():
-            raise LibraryError(reports.qdevice_not_defined())
+            raise LibraryError(
+                ReportItem.error(report.messages.QdeviceNotDefined())
+            )
         model = self.get_quorum_device_model()
 
         # set new configuration
@@ -714,7 +718,9 @@ class ConfigFacade:
         Remove quorum device heuristics configuration
         """
         if not self.has_quorum_device():
-            raise LibraryError(reports.qdevice_not_defined())
+            raise LibraryError(
+                ReportItem.error(report.messages.QdeviceNotDefined())
+            )
         for quorum in self.config.get_sections("quorum"):
             for device in quorum.get_sections("device"):
                 for heuristics in device.get_sections("heuristics"):
@@ -727,7 +733,9 @@ class ConfigFacade:
         Remove all quorum device configuration
         """
         if not self.has_quorum_device():
-            raise LibraryError(reports.qdevice_not_defined())
+            raise LibraryError(
+                ReportItem.error(report.messages.QdeviceNotDefined())
+            )
         for quorum in self.config.get_sections("quorum"):
             for device in quorum.get_sections("device"):
                 quorum.del_section(device)

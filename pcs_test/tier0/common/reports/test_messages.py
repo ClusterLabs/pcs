@@ -1380,17 +1380,6 @@ class QdeviceNotDefined(NameBuildTest):
         )
 
 
-class QdeviceRemoveOrClusterStopNeeded(NameBuildTest):
-    def test_all(self):
-        self.assert_message_from_report(
-            (
-                "You need to stop the cluster or remove qdevice from "
-                "the cluster to continue"
-            ),
-            reports.QdeviceRemoveOrClusterStopNeeded(),
-        )
-
-
 class QdeviceClientReloadStarted(NameBuildTest):
     def test_all(self):
         self.assert_message_from_report(

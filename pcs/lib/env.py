@@ -351,7 +351,7 @@ class LibraryEnvironment:
         # Reload qdevice if needed
         if need_qdevice_reload:
             self.report_processor.report(
-                reports.qdevice_client_reload_started()
+                ReportItem.info(report.messages.QdeviceClientReloadStarted())
             )
             com_cmd = qdevice.Stop(self.report_processor, skip_offline_nodes)
             com_cmd.set_targets(target_list)

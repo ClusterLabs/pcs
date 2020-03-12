@@ -25,7 +25,7 @@ def qdevice_setup(lib_env: LibraryEnvironment, model, enable, start):
     _check_model(model)
     qdevice_net.qdevice_setup(lib_env.cmd_runner())
     lib_env.report_processor.report(
-        reports.qdevice_initialization_success(model)
+        ReportItem.info(report.messages.QdeviceInitializationSuccess(model))
     )
     if enable:
         _service_enable(lib_env, qdevice_net.qdevice_enable)
@@ -95,7 +95,11 @@ def qdevice_start(lib_env: LibraryEnvironment, model):
     """
     _check_model(model)
     if not qdevice_net.qdevice_initialized():
-        raise LibraryError(reports.qdevice_not_initialized(model))
+        raise LibraryError(
+            ReportItem.error(
+                report.messages.QdeviceNotInitialized(model)
+            )
+        )
     _service_start(lib_env, qdevice_net.qdevice_start)
 
 def qdevice_stop(lib_env: LibraryEnvironment, model, proceed_if_used=False):

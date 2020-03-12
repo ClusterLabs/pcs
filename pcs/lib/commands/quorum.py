@@ -153,7 +153,9 @@ def add_device(
     """
     cfg = lib_env.get_corosync_conf()
     if cfg.has_quorum_device():
-        raise LibraryError(reports.qdevice_already_defined())
+        raise LibraryError(
+            ReportItem.error(report.messages.QdeviceAlreadyDefined())
+        )
 
     report_processor = lib_env.report_processor
     report_processor.report_list(
@@ -261,7 +263,9 @@ def update_device(
     """
     cfg = lib_env.get_corosync_conf()
     if not cfg.has_quorum_device():
-        raise LibraryError(reports.qdevice_not_defined())
+        raise LibraryError(
+            ReportItem.error(report.messages.QdeviceNotDefined())
+        )
     if lib_env.report_processor.report_list(
         corosync_conf_validators.update_quorum_device(
             cfg.get_quorum_device_model(),
@@ -294,7 +298,9 @@ def remove_device_heuristics(lib_env, skip_offline_nodes=False):
     """
     cfg = lib_env.get_corosync_conf()
     if not cfg.has_quorum_device():
-        raise LibraryError(reports.qdevice_not_defined())
+        raise LibraryError(
+            ReportItem.error(report.messages.QdeviceNotDefined())
+        )
     cfg.remove_quorum_device_heuristics()
     lib_env.push_corosync_conf(cfg, skip_offline_nodes)
 
@@ -305,7 +311,9 @@ def remove_device(lib_env: LibraryEnvironment, skip_offline_nodes=False):
     """
     cfg = lib_env.get_corosync_conf()
     if not cfg.has_quorum_device():
-        raise LibraryError(reports.qdevice_not_defined())
+        raise LibraryError(
+            ReportItem.error(report.messages.QdeviceNotDefined())
+        )
     model = cfg.get_quorum_device_model()
     cfg.remove_quorum_device()
 

@@ -2049,22 +2049,6 @@ class QdeviceNotDefined(ReportItemMessage):
 
 
 @dataclass(frozen=True)
-class QdeviceRemoveOrClusterStopNeeded(ReportItemMessage):
-    """
-    Operation cannot be executed, qdevice removal or cluster stop is needed
-    """
-
-    _code = codes.QDEVICE_REMOVE_OR_CLUSTER_STOP_NEEDED
-
-    @property
-    def message(self) -> str:
-        return (
-            "You need to stop the cluster or remove qdevice from the cluster to"
-            " continue"
-        )
-
-
-@dataclass(frozen=True)
 class QdeviceClientReloadStarted(ReportItemMessage):
     """
     Qdevice client configuration is about to be reloaded on nodes

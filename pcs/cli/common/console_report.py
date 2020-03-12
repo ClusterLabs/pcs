@@ -241,49 +241,8 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
         .format(**info)
     ,
 
-    codes.QDEVICE_ALREADY_DEFINED:
-        "quorum device is already defined"
-    ,
-
-    codes.QDEVICE_NOT_DEFINED:
-        "no quorum device is defined in this cluster"
-    ,
-
-    codes.QDEVICE_REMOVE_OR_CLUSTER_STOP_NEEDED: (
-        "You need to stop the cluster or remove qdevice from the cluster to"
-        " continue"
-    ),
-
-    codes.QDEVICE_CLIENT_RELOAD_STARTED:
-        "Reloading qdevice configuration on nodes..."
-    ,
-
-    codes.QDEVICE_ALREADY_INITIALIZED: lambda info:
-        "Quorum device '{model}' has been already initialized"
-        .format(**info)
-    ,
-
-    codes.QDEVICE_NOT_INITIALIZED: lambda info:
-        "Quorum device '{model}' has not been initialized yet"
-        .format(**info)
-    ,
-
-    codes.QDEVICE_INITIALIZATION_SUCCESS: lambda info:
-        "Quorum device '{model}' initialized"
-        .format(**info)
-    ,
-
     codes.QDEVICE_INITIALIZATION_ERROR: lambda info:
         "Unable to initialize quorum device '{model}': {reason}"
-        .format(**info)
-    ,
-
-    codes.QDEVICE_CERTIFICATE_DISTRIBUTION_STARTED:
-        "Setting up qdevice certificates on nodes..."
-    ,
-
-    codes.QDEVICE_CERTIFICATE_ACCEPTED_BY_NODE: lambda info:
-        "{node}: Succeeded"
         .format(**info)
     ,
 

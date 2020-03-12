@@ -845,57 +845,6 @@ class DuplicateConstraintsExist(NameBuildTest):
             force_text=" force text"
         )
 
-class QdeviceAlreadyDefined(NameBuildTest):
-    def test_all(self):
-        self.assert_message_from_report(
-            "quorum device is already defined",
-            reports.qdevice_already_defined()
-        )
-
-class QdeviceNotDefined(NameBuildTest):
-    def test_all(self):
-        self.assert_message_from_report(
-            "no quorum device is defined in this cluster",
-            reports.qdevice_not_defined()
-        )
-
-class QdeviceRemoveOrClusterStopNeeded(NameBuildTest):
-    def test_all(self):
-        self.assert_message_from_report(
-            (
-                "You need to stop the cluster or remove qdevice from "
-                "the cluster to continue"
-            ),
-            reports.qdevice_remove_or_cluster_stop_needed()
-        )
-
-class QdeviceClientReloadStarted(NameBuildTest):
-    def test_all(self):
-        self.assert_message_from_report(
-            "Reloading qdevice configuration on nodes...",
-            reports.qdevice_client_reload_started()
-        )
-
-class QdeviceAlreadyInitialized(NameBuildTest):
-    def test_all(self):
-        self.assert_message_from_report(
-            "Quorum device 'model' has been already initialized",
-            reports.qdevice_already_initialized("model")
-        )
-
-class QdeviceNotInitialized(NameBuildTest):
-    def test_all(self):
-        self.assert_message_from_report(
-            "Quorum device 'model' has not been initialized yet",
-            reports.qdevice_not_initialized("model")
-        )
-
-class QdeviceInitializationSuccess(NameBuildTest):
-    def test_all(self):
-        self.assert_message_from_report(
-            "Quorum device 'model' initialized",
-            reports.qdevice_initialization_success("model")
-        )
 
 class QdeviceInitializationError(NameBuildTest):
     def test_all(self):
@@ -904,19 +853,6 @@ class QdeviceInitializationError(NameBuildTest):
             reports.qdevice_initialization_error("model", "reason")
         )
 
-class QdeviceCertificateDistributionStarted(NameBuildTest):
-    def test_all(self):
-        self.assert_message_from_report(
-            "Setting up qdevice certificates on nodes...",
-            reports.qdevice_certificate_distribution_started()
-        )
-
-class QdeviceCertificateAcceptedByNode(NameBuildTest):
-    def test_all(self):
-        self.assert_message_from_report(
-            "node1: Succeeded",
-            reports.qdevice_certificate_accepted_by_node("node1")
-        )
 
 class QdeviceCertificateRemovalStarted(NameBuildTest):
     def test_all(self):

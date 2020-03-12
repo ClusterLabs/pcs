@@ -130,7 +130,9 @@ class ClientImportCertificateAndKey(
         )
 
     def _get_success_report(self, node_label):
-        return reports.qdevice_certificate_accepted_by_node(node_label)
+        return ReportItem.info(
+            common_report.messages.QdeviceCertificateAcceptedByNode(node_label)
+        )
 
 
 class ClientDestroy(SimpleResponseProcessingMixin, QdeviceBase):

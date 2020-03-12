@@ -128,74 +128,6 @@ def corosync_config_read_error(path, reason):
         }
     )
 
-def qdevice_already_defined():
-    """
-    qdevice is already set up in a cluster, when it was expected not to be
-    """
-    return ReportItem.error(
-        report_codes.QDEVICE_ALREADY_DEFINED,
-    )
-
-def qdevice_not_defined():
-    """
-    qdevice is not set up in a cluster, when it was expected to be
-    """
-    return ReportItem.error(
-        report_codes.QDEVICE_NOT_DEFINED,
-    )
-
-def qdevice_remove_or_cluster_stop_needed():
-    """
-    operation cannot be executed, qdevice removal or cluster stop is needed
-    """
-    return ReportItem.error(
-        report_codes.QDEVICE_REMOVE_OR_CLUSTER_STOP_NEEDED,
-    )
-
-def qdevice_client_reload_started():
-    """
-    qdevice client configuration is about to be reloaded on nodes
-    """
-    return ReportItem.info(
-        report_codes.QDEVICE_CLIENT_RELOAD_STARTED,
-    )
-
-def qdevice_already_initialized(model):
-    """
-    cannot create qdevice on local host, it has been already created
-    string model qdevice model
-    """
-    return ReportItem.error(
-        report_codes.QDEVICE_ALREADY_INITIALIZED,
-        info={
-            "model": model,
-        }
-    )
-
-def qdevice_not_initialized(model):
-    """
-    cannot work with qdevice on local host, it has not been created yet
-    string model qdevice model
-    """
-    return ReportItem.error(
-        report_codes.QDEVICE_NOT_INITIALIZED,
-        info={
-            "model": model,
-        }
-    )
-
-def qdevice_initialization_success(model):
-    """
-    qdevice was successfully initialized on local host
-    string model qdevice model
-    """
-    return ReportItem.info(
-        report_codes.QDEVICE_INITIALIZATION_SUCCESS,
-        info={
-            "model": model,
-        }
-    )
-
 def qdevice_initialization_error(model, reason):
     """
     an error occured when creating qdevice on local host
@@ -208,24 +140,6 @@ def qdevice_initialization_error(model, reason):
             "model": model,
             "reason": reason,
         }
-    )
-
-def qdevice_certificate_distribution_started():
-    """
-    Qdevice certificates are about to be set up on nodes
-    """
-    return ReportItem.info(
-        report_codes.QDEVICE_CERTIFICATE_DISTRIBUTION_STARTED,
-    )
-
-def qdevice_certificate_accepted_by_node(node):
-    """
-    Qdevice certificates have been saved to a node
-    string node node on which certificates have been saved
-    """
-    return ReportItem.info(
-        report_codes.QDEVICE_CERTIFICATE_ACCEPTED_BY_NODE,
-        info={"node": node}
     )
 
 def qdevice_certificate_removal_started():
