@@ -2,7 +2,6 @@ from pcs import settings
 from pcs.common import reports
 from pcs.common.reports import (
     codes as report_codes,
-    ReportItemSeverity as Severities,
 )
 from pcs.common.reports.item import ReportItem
 from pcs.lib.communication.sbd import (
@@ -456,7 +455,7 @@ def get_local_devices_info(lib_env, dump=False):
         output.append(obj)
 
     for report_item in report_item_list:
-        report_item.severity = Severities.WARNING
+        report_item.severity = reports.item.ReportItemSeverity.warning()
     if lib_env.report_processor.report_list(report_item_list).has_errors:
         raise LibraryError()
     return output

@@ -425,6 +425,40 @@ class FilesRemoveFromNodesSkipped(CliReportMessageTestBase):
             "because some undefined reason. Please, remove the file(s) "
             "manually.",
         )
+
+
+class FilesDistributionSkipped(CliReportMessageTestBase):
+    def test_not_live(self):
+        self.assert_message(
+            messages.FilesDistributionSkipped(
+                messages.NOT_LIVE_CIB, ["file1"], ["nodeA", "nodeB"]
+            ),
+            "Distribution of 'file1' to 'nodeA', 'nodeB' was skipped because "
+            "the command does not run on a live cluster (e.g. -f was used). "
+            "Please, distribute the file(s) manually.",
+        )
+
+    def test_unreachable(self):
+        self.assert_message(
+            messages.FilesDistributionSkipped(
+                messages.UNREACHABLE, ["file1", "file2"], ["nodeA"]
+            ),
+            "Distribution of 'file1', 'file2' to 'nodeA' was skipped because "
+            "pcs is unable to connect to the node(s). Please, distribute "
+            "the file(s) manually.",
+        )
+
+    def test_unknown_reason(self):
+        self.assert_message(
+            messages.FilesDistributionSkipped(
+                "some undefined reason", ["file1", "file2"], ["nodeA", "nodeB"]
+            ),
+            "Distribution of 'file1', 'file2' to 'nodeA', 'nodeB' was skipped "
+            "because some undefined reason. Please, distribute the file(s) "
+            "manually.",
+        )
+
+
 # TODO: create test/check that all subclasses of
 # pcs.cli.reports.messages.CliReportMessageCustom have their test class with
 # the same name in this file

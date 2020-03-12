@@ -772,7 +772,7 @@ class SetMessageTest(CommonTest):
                 {
                     "device": "device",
                     "node": "node",
-                    "message": "test",
+                    "sbd_message": "test",
                     "reason": "error",
                 }
             )

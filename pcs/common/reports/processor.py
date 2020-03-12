@@ -42,7 +42,7 @@ def has_errors(report_list: ReportItemList) -> bool:
     return False
 
 
-def _is_error(report_item: ReportItem,) -> bool:
+def _is_error(report_item: ReportItem) -> bool:
     if isinstance(report_item, item_old.ReportItem):
         return report_item.severity == item.ReportItemSeverity.ERROR
     return report_item.severity.level == item.ReportItemSeverity.ERROR

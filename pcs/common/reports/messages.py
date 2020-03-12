@@ -3672,7 +3672,6 @@ class FilesDistributionStarted(ReportItemMessage):
         )
 
 
-# TODO: cli specific
 @dataclass(frozen=True)
 class FilesDistributionSkipped(ReportItemMessage):
     """

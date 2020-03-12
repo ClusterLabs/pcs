@@ -381,6 +381,21 @@ class FilesRemoveFromNodesSkipped(CliReportMessageCustom):
         )
 
 
+class FilesDistributionSkipped(CliReportMessageCustom):
+    _obj: messages.FilesDistributionSkipped
+
+    @property
+    def message(self) -> str:
+        return (
+            "Distribution of {files} to {nodes} was skipped because "
+            "{reason}. Please, distribute the file(s) manually."
+        ).format(
+            files=format_list(self._obj.file_list),
+            nodes=format_list(self._obj.node_list),
+            reason=skip_reason_to_string(self._obj.reason_type),
+        )
+
+
 def _create_report_msg_map() -> Dict[str, type]:
     result: Dict[str, type] = {}
     for report_msg_cls in get_all_subclasses(CliReportMessageCustom):

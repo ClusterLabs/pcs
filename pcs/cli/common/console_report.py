@@ -11,7 +11,6 @@ from pcs.common.reports import codes
 from pcs.common.str_tools import (
     format_list,
     format_optional,
-    format_plural,
     indent,
 )
 
@@ -152,15 +151,6 @@ def typelist_to_string(type_list, article=False):
         article=_type_articles.get(new_list[0], "a"),
         types=types
     )
-
-def skip_reason_to_string(reason):
-    translate = {
-        "not_live_cib": "the command does not run on a live cluster (e.g. -f "
-            "was used)"
-        ,
-        "unreachable": "pcs is unable to connect to the node(s)",
-    }
-    return translate.get(reason, reason)
 
 def id_belongs_to_unexpected_type(info):
     return "'{id}' is not {expected_type}".format(
@@ -536,19 +526,13 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
     ,
 
     codes.SERVICE_START_STARTED: partial(service_operation_started, "Starting"),
-    codes.SERVICE_START_ERROR: partial(service_operation_error, "start"),
-    codes.SERVICE_START_SUCCESS: partial(service_operation_success, "started"),
     codes.SERVICE_START_SKIPPED: partial(service_operation_skipped, "starting"),
 
     codes.SERVICE_STOP_STARTED: partial(service_operation_started, "Stopping"),
-    codes.SERVICE_STOP_ERROR: partial(service_operation_error, "stop"),
-    codes.SERVICE_STOP_SUCCESS: partial(service_operation_success, "stopped"),
 
     codes.SERVICE_ENABLE_STARTED: partial(
         service_operation_started, "Enabling"
     ),
-    codes.SERVICE_ENABLE_ERROR: partial(service_operation_error, "enable"),
-    codes.SERVICE_ENABLE_SUCCESS: partial(service_operation_success, "enabled"),
     codes.SERVICE_ENABLE_SKIPPED: partial(
         service_operation_skipped, "enabling"
     ),
@@ -556,11 +540,6 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
     codes.SERVICE_DISABLE_STARTED:
         partial(service_operation_started, "Disabling")
      ,
-    codes.SERVICE_DISABLE_ERROR: partial(service_operation_error, "disable"),
-    codes.SERVICE_DISABLE_SUCCESS: partial(
-        service_operation_success, "disabled"
-    ),
-
     codes.SERVICE_KILL_ERROR: lambda info:
         "Unable to kill {_service_list}: {reason}"
         .format(
@@ -574,147 +553,6 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
         .format(
             _service_list=", ".join(info["services"]),
             **info
-        )
-    ,
-
-    codes.UNABLE_TO_GET_AGENT_METADATA: lambda info:
-        (
-            "Agent '{agent}' is not installed or does not provide valid"
-            " metadata: {reason}"
-        ).format(**info)
-    ,
-
-    codes.INVALID_RESOURCE_AGENT_NAME: lambda info:
-        (
-            "Invalid resource agent name '{name}'."
-            " Use standard:provider:type when standard is 'ocf' or"
-            " standard:type otherwise."
-            " List of standards and providers can be obtained by using commands"
-            " 'pcs resource standards' and 'pcs resource providers'"
-        )
-        .format(**info)
-    ,
-
-    codes.INVALID_STONITH_AGENT_NAME: lambda info:
-        (
-            "Invalid stonith agent name '{name}'."
-            " List of agents can be obtained by using command"
-            " 'pcs stonith list'. Do not use the 'stonith:' prefix. Agent name"
-            " cannot contain the ':' character."
-        )
-        .format(**info)
-    ,
-
-    codes.AGENT_NAME_GUESS_FOUND_MORE_THAN_ONE: lambda info:
-        (
-            "Multiple agents match '{agent}'"
-            ", please specify full name: {possible_agents_str}"
-        ).format(**info)
-    ,
-
-    codes.AGENT_NAME_GUESS_FOUND_NONE: lambda info:
-        "Unable to find agent '{agent}', try specifying its full name"
-        .format(**info)
-    ,
-
-    codes.AGENT_NAME_GUESSED: lambda info:
-        "Assumed agent name '{guessed_name}' (deduced from '{entered_name}')"
-        .format(**info)
-    ,
-
-    codes.OMITTING_NODE: lambda info:
-        "Omitting node '{node}'"
-        .format(**info)
-    ,
-
-    codes.SBD_CHECK_STARTED: "Running SBD pre-enabling checks...",
-
-    codes.SBD_CHECK_SUCCESS: lambda info:
-        "{node}: SBD pre-enabling checks done"
-        .format(**info)
-    ,
-
-    codes.SBD_CONFIG_DISTRIBUTION_STARTED: "Distributing SBD config...",
-
-    codes.SBD_CONFIG_ACCEPTED_BY_NODE: lambda info:
-        "{node}: SBD config saved"
-        .format(**info)
-    ,
-
-    codes.UNABLE_TO_GET_SBD_CONFIG: lambda info:
-        "Unable to get SBD configuration from node '{node}'{reason_suffix}"
-        .format(
-            reason_suffix=format_optional(info["reason"], ": {0}"),
-            **info
-        )
-    ,
-
-    codes.SBD_ENABLING_STARTED: lambda info:
-        "Enabling SBD service..."
-        .format(**info)
-    ,
-
-    codes.SBD_DISABLING_STARTED: "Disabling SBD service...",
-
-    codes.SBD_DEVICE_INITIALIZATION_STARTED: lambda info:
-        "Initializing device{_s} {_device_list}..."
-        .format(
-            _s=("s" if len(info["device_list"]) > 1 else ""),
-            _device_list=format_list(info["device_list"])
-        )
-    ,
-
-    codes.SBD_DEVICE_INITIALIZATION_SUCCESS: lambda info:
-        "{_device_pl} initialized successfully"
-        .format(
-            _device_pl=format_plural(info["device_list"], "Device")
-        )
-    ,
-
-    codes.SBD_DEVICE_INITIALIZATION_ERROR: lambda info:
-        (
-            "Initialization of device{_s} {_device_list} failed: {reason}"
-        ).format(
-            _s=("s" if len(info["device_list"]) > 1 else ""),
-            _device_list=format_list(info["device_list"]),
-            **info
-        )
-    ,
-
-    codes.SBD_DEVICE_LIST_ERROR: lambda info:
-        "Unable to get list of messages from device '{device}': {reason}"
-        .format(**info)
-    ,
-
-    codes.SBD_DEVICE_MESSAGE_ERROR: lambda info:
-        "Unable to set message '{message}' for node '{node}' on device "
-        "'{device}': {reason}"
-        .format(**info)
-    ,
-
-    codes.SBD_DEVICE_DUMP_ERROR: lambda info:
-        "Unable to get SBD headers from device '{device}': {reason}"
-        .format(**info)
-    ,
-
-    codes.FILES_DISTRIBUTION_STARTED: lambda info:
-        "Sending {_description}{_where}".format(
-            _where=(
-                "" if not info["node_list"]
-                else " to " + format_list(info["node_list"])
-            ),
-            _description=format_list(info["file_list"])
-        )
-    ,
-
-    codes.FILES_DISTRIBUTION_SKIPPED: lambda info:
-        (
-            "Distribution of {_files} to {_nodes} was skipped because "
-            "{_reason}. Please, distribute the file(s) manually."
-        ).format(
-            _files=format_list(info["file_list"]),
-            _nodes=format_list(info["node_list"]),
-            _reason=skip_reason_to_string(info["reason_type"])
         )
     ,
 }

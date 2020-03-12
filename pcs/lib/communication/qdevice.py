@@ -1,4 +1,6 @@
+from pcs.common import reports as new_report
 from pcs.common.node_communicator import RequestData
+from pcs.common.reports.item import ReportItem
 from pcs.lib import reports
 from pcs.lib.communication.tools import (
     AllAtOnceStrategyMixin,
@@ -24,7 +26,11 @@ class Stop(SimpleResponseProcessingMixin, QdeviceBase):
         return RequestData("remote/qdevice_client_stop")
 
     def _get_success_report(self, node_label):
-        return reports.service_stop_success("corosync-qdevice", node_label)
+        return ReportItem.info(
+            new_report.messages.ServiceActionSucceeded(
+                new_report.messages.SERVICE_STOP, "corosync-qdevice", node_label
+            )
+        )
 
 
 class Start(QdeviceBase):
@@ -42,8 +48,12 @@ class Start(QdeviceBase):
                     node_label
                 )
             else:
-                report = reports.service_start_success(
-                    "corosync-qdevice", node_label
+                report = ReportItem.info(
+                    new_report.messages.ServiceActionSucceeded(
+                        new_report.messages.SERVICE_START,
+                        "corosync-qdevice",
+                        node_label,
+                    )
                 )
         self._report(report)
 
@@ -63,8 +73,12 @@ class Enable(QdeviceBase):
                     node_label
                 )
             else:
-                report = reports.service_enable_success(
-                    "corosync-qdevice", node_label
+                report = ReportItem.info(
+                    new_report.messages.ServiceActionSucceeded(
+                        new_report.messages.SERVICE_ENABLE,
+                        "corosync-qdevice",
+                        node_label,
+                    )
                 )
         self._report(report)
 
@@ -74,4 +88,10 @@ class Disable(SimpleResponseProcessingMixin, QdeviceBase):
         return RequestData("remote/qdevice_client_disable")
 
     def _get_success_report(self, node_label):
-        return reports.service_disable_success("corosync-qdevice", node_label)
+        return ReportItem.info(
+            new_report.messages.ServiceActionSucceeded(
+                new_report.messages.SERVICE_DISABLE,
+                "corosync-qdevice",
+                node_label,
+            )
+        )

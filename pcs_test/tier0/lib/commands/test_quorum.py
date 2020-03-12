@@ -17,6 +17,7 @@ from pcs_test.tools.misc import (
     outdent,
 )
 
+from pcs.common import reports
 from pcs.common.reports import ReportItemSeverity as severity
 from pcs.common.reports import codes as report_codes
 from pcs.lib.env import LibraryEnvironment
@@ -608,10 +609,11 @@ class AddDeviceNetTest(TestCase):
             ),
         ] + [
             fixture.info(
-                report_codes.SERVICE_ENABLE_SUCCESS,
-                node=node,
+                reports.codes.SERVICE_ACTION_SUCCEEDED,
+                action=reports.messages.SERVICE_ENABLE,
                 service="corosync-qdevice",
-                instance=None
+                node=node,
+                instance="",
             )
             for node in self.cluster_nodes
         ] + [
@@ -621,10 +623,11 @@ class AddDeviceNetTest(TestCase):
             ),
         ] + [
             fixture.info(
-                report_codes.SERVICE_START_SUCCESS,
-                node=node,
+                reports.codes.SERVICE_ACTION_SUCCEEDED,
+                action=reports.messages.SERVICE_START,
                 service="corosync-qdevice",
-                instance=None
+                node=node,
+                instance="",
             )
             for node in self.cluster_nodes
         ]
@@ -1208,30 +1211,38 @@ class AddDeviceNetTest(TestCase):
                 service="corosync-qdevice"
             ),
             fixture.info(
-                report_codes.SERVICE_ENABLE_SUCCESS,
+                reports.codes.SERVICE_ACTION_SUCCEEDED,
+                action=reports.messages.SERVICE_ENABLE,
+                service="corosync-qdevice",
                 node=self.cluster_nodes[0],
-                service="corosync-qdevice"
+                instance="",
             ),
             node_2_offline_warning("remote/qdevice_client_enable"),
             fixture.info(
-                report_codes.SERVICE_ENABLE_SUCCESS,
+                reports.codes.SERVICE_ACTION_SUCCEEDED,
+                action=reports.messages.SERVICE_ENABLE,
+                service="corosync-qdevice",
                 node=self.cluster_nodes[2],
-                service="corosync-qdevice"
+                instance="",
             ),
             fixture.info(
                 report_codes.SERVICE_START_STARTED,
                 service="corosync-qdevice"
             ),
             fixture.info(
-                report_codes.SERVICE_START_SUCCESS,
+                reports.codes.SERVICE_ACTION_SUCCEEDED,
+                action=reports.messages.SERVICE_START,
+                service="corosync-qdevice",
                 node=self.cluster_nodes[0],
-                service="corosync-qdevice"
+                instance="",
             ),
             node_2_offline_warning("remote/qdevice_client_start"),
             fixture.info(
-                report_codes.SERVICE_START_SUCCESS,
+                reports.codes.SERVICE_ACTION_SUCCEEDED,
+                action=reports.messages.SERVICE_START,
+                service="corosync-qdevice",
                 node=self.cluster_nodes[2],
-                service="corosync-qdevice"
+                instance="",
             ),
         ])
 
@@ -1495,9 +1506,11 @@ class AddDeviceNetTest(TestCase):
             ),
         ] + [
             fixture.info(
-                report_codes.SERVICE_ENABLE_SUCCESS,
+                reports.codes.SERVICE_ACTION_SUCCEEDED,
+                action=reports.messages.SERVICE_ENABLE,
+                service="corosync-qdevice",
                 node=node,
-                service="corosync-qdevice"
+                instance="",
             )
             for node in self.cluster_nodes
         ] + [
@@ -1507,9 +1520,11 @@ class AddDeviceNetTest(TestCase):
             ),
         ] + [
             fixture.info(
-                report_codes.SERVICE_START_SUCCESS,
+                reports.codes.SERVICE_ACTION_SUCCEEDED,
+                action=reports.messages.SERVICE_START,
+                service="corosync-qdevice",
                 node=node,
-                service="corosync-qdevice"
+                instance="",
             )
             for node in self.cluster_nodes
         ])
@@ -1593,9 +1608,11 @@ class AddDeviceNetTest(TestCase):
             ),
         ] + [
             fixture.info(
-                report_codes.SERVICE_ENABLE_SUCCESS,
+                reports.codes.SERVICE_ACTION_SUCCEEDED,
+                action=reports.messages.SERVICE_ENABLE,
+                service="corosync-qdevice",
                 node=node,
-                service="corosync-qdevice"
+                instance="",
             )
             for node in self.cluster_nodes
         ] + [
@@ -1605,9 +1622,11 @@ class AddDeviceNetTest(TestCase):
             ),
         ] + [
             fixture.info(
-                report_codes.SERVICE_START_SUCCESS,
+                reports.codes.SERVICE_ACTION_SUCCEEDED,
+                action=reports.messages.SERVICE_START,
+                service="corosync-qdevice",
                 node=node,
-                service="corosync-qdevice"
+                instance="",
             )
             for node in self.cluster_nodes
         ])
@@ -2093,23 +2112,25 @@ class RemoveDeviceNetTest(TestCase):
 
     @staticmethod
     def fixture_reports_success(cluster_nodes, atb_enabled=False):
-        reports = []
+        report_list = []
         if atb_enabled:
-            reports.append(
+            report_list.append(
                 fixture.warn(
                     report_codes.COROSYNC_QUORUM_ATB_WILL_BE_ENABLED_DUE_TO_SBD
                 )
             )
-        reports += [
+        report_list += [
             fixture.info(
                 report_codes.SERVICE_DISABLE_STARTED,
                 service="corosync-qdevice",
             ),
         ] + [
             fixture.info(
-                report_codes.SERVICE_DISABLE_SUCCESS,
-                node=node,
+                reports.codes.SERVICE_ACTION_SUCCEEDED,
+                action=reports.messages.SERVICE_DISABLE,
                 service="corosync-qdevice",
+                node=node,
+                instance=""
             )
             for node in cluster_nodes
         ] + [
@@ -2119,9 +2140,11 @@ class RemoveDeviceNetTest(TestCase):
             ),
         ] + [
             fixture.info(
-                report_codes.SERVICE_STOP_SUCCESS,
-                node=node,
+                reports.codes.SERVICE_ACTION_SUCCEEDED,
+                action=reports.messages.SERVICE_STOP,
                 service="corosync-qdevice",
+                node=node,
+                instance="",
             )
             for node in cluster_nodes
         ] + [
@@ -2133,7 +2156,7 @@ class RemoveDeviceNetTest(TestCase):
             )
             for node in cluster_nodes
         ]
-        return reports
+        return report_list
 
     @mock.patch("pcs.lib.sbd.get_local_sbd_device_list", lambda: [])
     def test_not_live_success(self):
@@ -2315,30 +2338,38 @@ class RemoveDeviceNetTest(TestCase):
                 service="corosync-qdevice",
             ),
             fixture.info(
-                report_codes.SERVICE_DISABLE_SUCCESS,
-                node=cluster_nodes[0],
+                reports.codes.SERVICE_ACTION_SUCCEEDED,
+                action=reports.messages.SERVICE_DISABLE,
                 service="corosync-qdevice",
+                node=cluster_nodes[0],
+                instance=""
             ),
             node_2_offline_warning("remote/qdevice_client_disable"),
             fixture.info(
-                report_codes.SERVICE_DISABLE_SUCCESS,
-                node=cluster_nodes[2],
+                reports.codes.SERVICE_ACTION_SUCCEEDED,
+                action=reports.messages.SERVICE_DISABLE,
                 service="corosync-qdevice",
+                node=cluster_nodes[2],
+                instance=""
             ),
             fixture.info(
                 report_codes.SERVICE_STOP_STARTED,
                 service="corosync-qdevice",
             ),
             fixture.info(
-                report_codes.SERVICE_STOP_SUCCESS,
-                node=cluster_nodes[0],
+                reports.codes.SERVICE_ACTION_SUCCEEDED,
+                action=reports.messages.SERVICE_STOP,
                 service="corosync-qdevice",
+                node=cluster_nodes[0],
+                instance="",
             ),
             node_2_offline_warning("remote/qdevice_client_stop"),
             fixture.info(
-                report_codes.SERVICE_STOP_SUCCESS,
-                node=cluster_nodes[2],
+                reports.codes.SERVICE_ACTION_SUCCEEDED,
+                action=reports.messages.SERVICE_STOP,
                 service="corosync-qdevice",
+                node=cluster_nodes[2],
+                instance="",
             ),
             fixture.info(report_codes.QDEVICE_CERTIFICATE_REMOVAL_STARTED),
             fixture.info(
@@ -2424,9 +2455,11 @@ class RemoveDeviceNetTest(TestCase):
                 service="corosync-qdevice",
             ),
             fixture.info(
-                report_codes.SERVICE_DISABLE_SUCCESS,
-                node=cluster_nodes[0],
+                reports.codes.SERVICE_ACTION_SUCCEEDED,
+                action=reports.messages.SERVICE_DISABLE,
                 service="corosync-qdevice",
+                node=cluster_nodes[0],
+                instance=""
             ),
             fixture.error(
                 report_codes.NODE_COMMUNICATION_COMMAND_UNSUCCESSFUL,
@@ -2436,9 +2469,11 @@ class RemoveDeviceNetTest(TestCase):
                 reason="some error occurred",
             ),
             fixture.info(
-                report_codes.SERVICE_DISABLE_SUCCESS,
-                node=cluster_nodes[2],
+                reports.codes.SERVICE_ACTION_SUCCEEDED,
+                action=reports.messages.SERVICE_DISABLE,
                 service="corosync-qdevice",
+                node=cluster_nodes[2],
+                instance=""
             ),
         ])
 
@@ -2478,9 +2513,11 @@ class RemoveDeviceNetTest(TestCase):
             ),
         ] + [
             fixture.info(
-                report_codes.SERVICE_DISABLE_SUCCESS,
-                node=node,
+                reports.codes.SERVICE_ACTION_SUCCEEDED,
+                action=reports.messages.SERVICE_DISABLE,
                 service="corosync-qdevice",
+                node=node,
+                instance=""
             )
             for node in cluster_nodes
         ] + [
@@ -2489,9 +2526,11 @@ class RemoveDeviceNetTest(TestCase):
                 service="corosync-qdevice",
             ),
             fixture.info(
-                report_codes.SERVICE_STOP_SUCCESS,
-                node=cluster_nodes[0],
+                reports.codes.SERVICE_ACTION_SUCCEEDED,
+                action=reports.messages.SERVICE_STOP,
                 service="corosync-qdevice",
+                node=cluster_nodes[0],
+                instance="",
             ),
             fixture.error(
                 report_codes.NODE_COMMUNICATION_COMMAND_UNSUCCESSFUL,
@@ -2501,9 +2540,11 @@ class RemoveDeviceNetTest(TestCase):
                 reason="some error occurred",
             ),
             fixture.info(
-                report_codes.SERVICE_STOP_SUCCESS,
-                node=cluster_nodes[2],
+                reports.codes.SERVICE_ACTION_SUCCEEDED,
+                action=reports.messages.SERVICE_STOP,
                 service="corosync-qdevice",
+                node=cluster_nodes[2],
+                instance="",
             ),
         ])
 
@@ -2545,9 +2586,11 @@ class RemoveDeviceNetTest(TestCase):
             ),
         ] + [
             fixture.info(
-                report_codes.SERVICE_DISABLE_SUCCESS,
-                node=node,
+                reports.codes.SERVICE_ACTION_SUCCEEDED,
+                action=reports.messages.SERVICE_DISABLE,
                 service="corosync-qdevice",
+                node=node,
+                instance=""
             )
             for node in cluster_nodes
         ] + [
@@ -2557,9 +2600,11 @@ class RemoveDeviceNetTest(TestCase):
             ),
         ] + [
             fixture.info(
-                report_codes.SERVICE_STOP_SUCCESS,
-                node=node,
+                reports.codes.SERVICE_ACTION_SUCCEEDED,
+                action=reports.messages.SERVICE_STOP,
                 service="corosync-qdevice",
+                node=node,
+                instance="",
             )
             for node in cluster_nodes
         ] + [

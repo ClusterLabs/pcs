@@ -36,10 +36,12 @@ from pcs.lib.pacemaker.live import remove_node
 def _reports_skip_new_node(new_node_name, reason_type):
     assert reason_type in {"unreachable", "not_live_cib"}
     return [
-        reports.files_distribution_skipped(
-            reason_type,
-            ["pacemaker authkey"],
-            [new_node_name]
+        ReportItem.info(
+            report.messages.FilesDistributionSkipped(
+                reason_type,
+                ["pacemaker authkey"],
+                [new_node_name]
+            )
         ),
         ReportItem.info(
             report.messages.ServiceCommandsOnNodesSkipped(

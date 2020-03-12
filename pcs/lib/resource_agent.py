@@ -4,7 +4,7 @@ from typing import cast
 from lxml import etree
 
 from pcs import settings
-from pcs.common import reports as report
+from pcs.common import reports
 from pcs.common.reports import (
     codes as report_codes,
     ReportItemSeverity,
@@ -12,7 +12,7 @@ from pcs.common.reports import (
 )
 from pcs.common.reports.item import ReportItem
 from pcs.common.tools import xml_fromstring
-from pcs.lib import reports, validate
+from pcs.lib import validate
 from pcs.lib.errors import LibraryError
 from pcs.lib.external import CommandRunner
 from pcs.lib.pacemaker.values import is_true
@@ -272,13 +272,17 @@ def guess_exactly_one_resource_agent_full_name(runner, search_agent_name):
     agents = guess_resource_agent_full_name(runner, search_agent_name)
     if not agents:
         raise LibraryError(
-            reports.agent_name_guess_found_none(search_agent_name)
+            ReportItem.error(
+                reports.messages.AgentNameGuessFoundNone(search_agent_name)
+            )
         )
     if len(agents) > 1:
         raise LibraryError(
-            reports.agent_name_guess_found_more_than_one(
-                search_agent_name,
-                [agent.get_name() for agent in agents]
+            ReportItem.error(
+                reports.messages.AgentNameGuessFoundMoreThanOne(
+                    search_agent_name,
+                    [agent.get_name() for agent in agents]
+                )
             )
         )
     return agents[0]
@@ -302,7 +306,9 @@ def find_valid_resource_agent_by_name(
     if ":" not in name:
         agent = guess_exactly_one_resource_agent_full_name(runner, name)
         report_processor.report(
-            reports.agent_name_guessed(name, agent.get_name())
+            ReportItem.info(
+                reports.messages.AgentNameGuessed(name, agent.get_name())
+            )
         )
         return agent
 
@@ -585,13 +591,13 @@ class Agent():
                     isinstance(report_item, ReportItem)
                     and
                     isinstance(
-                        report_item.message, report.messages.InvalidOptions
+                        report_item.message, reports.messages.InvalidOptions
                     )
                 ):
                     report_msg = cast(
-                        report.messages.InvalidOptions, report_item.message
+                        reports.messages.InvalidOptions, report_item.message
                     )
-                    report_item.message = report.messages.InvalidOptions(
+                    report_item.message = reports.messages.InvalidOptions(
                         report_msg.option_names,
                         sorted([
                             value for value in report_msg.allowed
@@ -609,7 +615,7 @@ class Agent():
             report_items.append(
                 ReportItem(
                     severity=self._validate_report_severity(force),
-                    message=report.messages.RequiredOptionsAreMissing(
+                    message=reports.messages.RequiredOptionsAreMissing(
                         sorted(missing_parameters),
                         self._agent_type_label,
                     ),
@@ -670,7 +676,7 @@ class Agent():
             report_items.append(
                 ReportItem(
                     severity=self._validate_report_severity(force),
-                    message=report.messages.RequiredOptionsAreMissing(
+                    message=reports.messages.RequiredOptionsAreMissing(
                         sorted(missing_parameters),
                         self._agent_type_label,
                     ),
@@ -692,13 +698,13 @@ class Agent():
     @staticmethod
     def _validate_report_severity(
         force: bool
-    ) -> report.item.ReportItemSeverity:
-        return report.item.ReportItemSeverity(
+    ) -> reports.item.ReportItemSeverity:
+        return reports.item.ReportItemSeverity(
             level=(
                 ReportItemSeverity.WARNING if force
                 else ReportItemSeverity.ERROR
             ),
-            force_code=report.codes.FORCE_OPTIONS if not force else None,
+            force_code=reports.codes.FORCE_OPTIONS if not force else None,
         )
 
 
@@ -1116,7 +1122,7 @@ class StonithAgent(CrmAgent):
             return [
                 ReportItem(
                     self._validate_report_severity(force),
-                    report.messages.DeprecatedOption(
+                    reports.messages.DeprecatedOption(
                         "action",
                         sorted(STONITH_ACTION_REPLACED_BY),
                         self._agent_type_label,
@@ -1219,11 +1225,18 @@ def resource_agent_error_to_report_item(
     if e.__class__ == UnableToGetAgentMetadata:
         if severity == ReportItemSeverity.ERROR and forceable:
             force = report_codes.FORCE_METADATA_ISSUE
-        return reports.unable_to_get_agent_metadata(
-            e.agent, e.message, severity, force
+        return ReportItem(
+            severity=reports.item.ReportItemSeverity(severity, force),
+            message=reports.messages.UnableToGetAgentMetadata(
+                e.agent, e.message
+            ),
         )
     if e.__class__ == InvalidResourceAgentName:
-        return reports.invalid_resource_agent_name(e.agent)
+        return ReportItem.error(
+            reports.messages.InvalidResourceAgentName(e.agent)
+        )
     if e.__class__ == InvalidStonithAgentName:
-        return reports.invalid_stonith_agent_name(e.agent)
+        return ReportItem.error(
+            reports.messages.InvalidStonithAgentName(e.agent)
+        )
     raise e

@@ -32,6 +32,7 @@ from pcs.common import (
     file as pcs_file,
     file_type_codes,
     pcs_pycurl as pycurl,
+    reports,
 )
 from pcs.common.reports import codes as report_codes
 from pcs.common.host import PcsKnownHost
@@ -54,7 +55,6 @@ from pcs.cli.common.reports import (
 import pcs.cli.booth.env
 from pcs.cli.file import metadata as cli_file_metadata
 
-from pcs.lib import reports
 import pcs.lib.corosync.config_parser as corosync_conf_parser
 from pcs.lib.corosync.config_facade import ConfigFacade as corosync_conf_facade
 from pcs.lib.env import LibraryEnvironment
@@ -2042,7 +2042,13 @@ def enableServices():
             enable_service(cmd_runner(), service)
         except EnableServiceError as e:
             report_item_list.append(
-                reports.service_enable_error(e.service, e.message)
+                reports.item.ReportItem.error(
+                    reports.messages.ServiceActionFailed(
+                        reports.messages.SERVICE_ENABLE,
+                        e.service,
+                        e.message,
+                    )
+                )
             )
     if report_item_list:
         raise LibraryError(*report_item_list)
@@ -2062,7 +2068,13 @@ def disableServices():
             disable_service(cmd_runner(), service)
         except DisableServiceError as e:
             report_item_list.append(
-                reports.service_disable_error(e.service, e.message)
+                reports.item.ReportItem.error(
+                    reports.messages.ServiceActionFailed(
+                        reports.messages.SERVICE_DISABLE,
+                        e.service,
+                        e.message,
+                    )
+                )
             )
     if report_item_list:
         raise LibraryError(*report_item_list)

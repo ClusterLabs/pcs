@@ -234,10 +234,18 @@ def _service_start(lib_env: LibraryEnvironment, func):
         func(lib_env.cmd_runner())
     except external.StartServiceError as e:
         raise LibraryError(
-            reports.service_start_error(e.service, e.message)
+            ReportItem.error(
+                report.messages.ServiceActionFailed(
+                    report.messages.SERVICE_START, e.service, e.message
+                )
+            )
         )
     lib_env.report_processor.report(
-        reports.service_start_success("quorum device")
+        ReportItem.info(
+            report.messages.ServiceActionSucceeded(
+                report.messages.SERVICE_START, "quorum device",
+            )
+        )
     )
 
 def _service_stop(lib_env: LibraryEnvironment, func):
@@ -248,10 +256,18 @@ def _service_stop(lib_env: LibraryEnvironment, func):
         func(lib_env.cmd_runner())
     except external.StopServiceError as e:
         raise LibraryError(
-            reports.service_stop_error(e.service, e.message)
+            ReportItem.error(
+                report.messages.ServiceActionFailed(
+                    report.messages.SERVICE_STOP, e.service, e.message
+                )
+            )
         )
     lib_env.report_processor.report(
-        reports.service_stop_success("quorum device")
+        ReportItem.info(
+            report.messages.ServiceActionSucceeded(
+                report.messages.SERVICE_STOP, "quorum device"
+            )
+        )
     )
 
 def _service_kill(lib_env: LibraryEnvironment, func):
@@ -270,10 +286,20 @@ def _service_enable(lib_env: LibraryEnvironment, func):
         func(lib_env.cmd_runner())
     except external.EnableServiceError as e:
         raise LibraryError(
-            reports.service_enable_error(e.service, e.message)
+            ReportItem.error(
+                report.messages.ServiceActionFailed(
+                    report.messages.SERVICE_ENABLE,
+                    e.service,
+                    e.message,
+                )
+            )
         )
     lib_env.report_processor.report(
-        reports.service_enable_success("quorum device")
+        ReportItem.info(
+            report.messages.ServiceActionSucceeded(
+                report.messages.SERVICE_ENABLE, "quorum device"
+            )
+        )
     )
 
 def _service_disable(lib_env: LibraryEnvironment, func):
@@ -281,8 +307,18 @@ def _service_disable(lib_env: LibraryEnvironment, func):
         func(lib_env.cmd_runner())
     except external.DisableServiceError as e:
         raise LibraryError(
-            reports.service_disable_error(e.service, e.message)
+            ReportItem.error(
+                report.messages.ServiceActionFailed(
+                    report.messages.SERVICE_DISABLE,
+                    e.service,
+                    e.message,
+                )
+            )
         )
     lib_env.report_processor.report(
-        reports.service_disable_success("quorum device")
+        ReportItem.info(
+            report.messages.ServiceActionSucceeded(
+                report.messages.SERVICE_DISABLE, "quorum device"
+            )
+        )
     )

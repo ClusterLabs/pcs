@@ -1,13 +1,13 @@
 import json
 
-from pcs.common import reports as new_report
+from pcs.common import reports
 from pcs.common.reports import (
     codes as report_codes,
     ReportItemSeverity,
 )
 from pcs.common.reports.item import ReportItem
 from pcs.common.node_communicator import RequestData
-from pcs.lib import reports, node_communication_format
+from pcs.lib import node_communication_format
 from pcs.lib.communication.tools import (
     AllAtOnceStrategyMixin,
     AllSameDataMixin,
@@ -37,8 +37,9 @@ class GetOnlineTargets(
             return
         if not response.was_connected:
             report = (
-                reports.omitting_node(response.request.target.label)
-                if self._ignore_offline_targets
+                ReportItem.warning(reports.messages.OmittingNode(
+                    response.request.target.label
+                )) if self._ignore_offline_targets
                 else response_to_report_item(
                     response, forceable=report_codes.SKIP_OFFLINE_NODES
                 )
@@ -97,7 +98,7 @@ class CheckAuth(AllSameDataMixin, AllAtOnceStrategyMixin, RunRemotelyBase):
         host_name = response.request.target.label
         if report is None:
             report = ReportItem.info(
-                new_report.messages.HostAlreadyAuthorized(host_name)
+                reports.messages.HostAlreadyAuthorized(host_name)
             )
         else:
             # If we cannot connect it may be because a node's address and / or
@@ -128,7 +129,7 @@ class GetHostInfo(AllSameDataMixin, AllAtOnceStrategyMixin, RunRemotelyBase):
         except json.JSONDecodeError:
             self._report(
                 ReportItem.error(
-                    new_report.messages.InvalidResponseFormat(host_name)
+                    reports.messages.InvalidResponseFormat(host_name)
                 )
             )
 
@@ -198,7 +199,7 @@ class RunActionBase(
         except ValueError:
             self._report(
                 ReportItem.error(
-                    new_report.messages.InvalidResponseFormat(target.label)
+                    reports.messages.InvalidResponseFormat(target.label)
                 )
             )
             return
@@ -251,24 +252,24 @@ class ServiceAction(RunActionBase):
         self, target_label, action, reason, severity, forceable
     ):
         return ReportItem(
-            severity=new_report.item.ReportItemSeverity(
+            severity=reports.item.ReportItemSeverity(
                 severity, forceable
             ),
-            message=new_report.messages.ServiceCommandOnNodeError(
+            message=reports.messages.ServiceCommandOnNodeError(
                 target_label, action, reason
             )
         )
 
     def _success_report(self, target_label, action):
         return ReportItem.info(
-            new_report.messages.ServiceCommandOnNodeSuccess(
+            reports.messages.ServiceCommandOnNodeSuccess(
                 target_label, action
             )
         )
 
     def _start_report(self, action_list, target_label_list):
         return ReportItem.info(
-            new_report.messages.ServiceCommandsOnNodesStarted(
+            reports.messages.ServiceCommandsOnNodesStarted(
                 action_list, target_label_list
             )
         )
@@ -295,22 +296,24 @@ class DistributeFiles(FileActionBase):
         self, target_label, action, reason, severity, forceable
     ):
         return ReportItem(
-            severity=new_report.item.ReportItemSeverity(
+            severity=reports.item.ReportItemSeverity(
                 severity, forceable
             ),
-            message=new_report.messages.FileDistributionError(
+            message=reports.messages.FileDistributionError(
                 target_label, action, reason
             )
         )
 
     def _success_report(self, target_label, action):
         return ReportItem.info(
-            new_report.messages.FileDistributionSuccess(target_label, action)
+            reports.messages.FileDistributionSuccess(target_label, action)
         )
 
     def _start_report(self, action_list, target_label_list):
-        return reports.files_distribution_started(
-            action_list, target_label_list
+        return ReportItem.info(
+            reports.messages.FilesDistributionStarted(
+                action_list, target_label_list
+            )
         )
 
     def _is_success(self, action_response):
@@ -339,22 +342,22 @@ class RemoveFiles(FileActionBase):
         self, target_label, action, reason, severity, forceable
     ):
         return ReportItem(
-            severity=new_report.item.ReportItemSeverity(
+            severity=reports.item.ReportItemSeverity(
                 severity, forceable
             ),
-            message=new_report.messages.FileRemoveFromNodeError(
+            message=reports.messages.FileRemoveFromNodeError(
                 target_label, action, reason
             )
         )
 
     def _success_report(self, target_label, action):
         return ReportItem.info(
-            new_report.messages.FileRemoveFromNodeSuccess(target_label, action)
+            reports.messages.FileRemoveFromNodeSuccess(target_label, action)
         )
 
     def _start_report(self, action_list, target_label_list):
         return ReportItem.info(
-            new_report.messages.FilesRemoveFromNodesStarted(
+            reports.messages.FilesRemoveFromNodesStarted(
                 action_list, target_label_list
             )
         )
@@ -384,7 +387,7 @@ class StartCluster(
     def before(self):
         self._report(
             ReportItem.info(
-                new_report.messages.ClusterStartStarted(
+                reports.messages.ClusterStartStarted(
                     sorted(self._target_label_list)
                 )
             )
@@ -400,13 +403,13 @@ class EnableCluster(
 
     def _get_success_report(self, node_label):
         return ReportItem.info(
-            new_report.messages.ClusterEnableSuccess(node_label)
+            reports.messages.ClusterEnableSuccess(node_label)
         )
 
     def before(self):
         self._report(
             ReportItem.info(
-                new_report.messages.ClusterEnableStarted(
+                reports.messages.ClusterEnableStarted(
                     sorted(self._target_label_list)
                 )
             )
@@ -438,11 +441,11 @@ class CheckPacemakerStarted(
                     self._not_yet_started_target_list.append(target)
                     return
                 report = ReportItem.info(
-                    new_report.messages.ClusterStartSuccess(target.label)
+                    reports.messages.ClusterStartSuccess(target.label)
                 )
             except (json.JSONDecodeError, KeyError):
                 report = ReportItem.error(
-                    new_report.messages.InvalidResponseFormat(target.label)
+                    reports.messages.InvalidResponseFormat(target.label)
                 )
 
         else:
@@ -509,7 +512,7 @@ class RemoveNodesFromCib(
             if output["code"] != "success":
                 self._report(
                     ReportItem.error(
-                        new_report.messages.NodeRemoveInPacemakerFailed(
+                        reports.messages.NodeRemoveInPacemakerFailed(
                             node_list_to_remove=self._nodes_to_remove,
                             node=node_label,
                             reason=output["message"],
@@ -519,7 +522,7 @@ class RemoveNodesFromCib(
         except (KeyError, json.JSONDecodeError):
             self._report(
                 ReportItem.error(
-                    new_report.messages.InvalidResponseFormat(node_label)
+                    reports.messages.InvalidResponseFormat(node_label)
                 )
             )
 
@@ -541,7 +544,7 @@ class SendPcsdSslCertAndKey(
 
     def _get_success_report(self, node_label):
         return ReportItem.info(
-            new_report.messages.PcsdSslCertAndKeySetSuccess(node_label)
+            reports.messages.PcsdSslCertAndKeySetSuccess(node_label)
         )
 
 

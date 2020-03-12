@@ -2585,7 +2585,7 @@ class SbdDeviceDumpError(NameBuildTest):
         )
 
 
-class FileDistributionStarted(NameBuildTest):
+class FilesDistributionStarted(NameBuildTest):
     def test_build_messages(self):
         self.assert_message_from_report(
             "Sending 'first', 'second'",

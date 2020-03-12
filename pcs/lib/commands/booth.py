@@ -4,7 +4,7 @@ from functools import partial
 
 from pcs import settings
 from pcs.common import file_type_codes
-from pcs.common import reports as report
+from pcs.common import reports
 from pcs.common.file import FileAlreadyExists, RawFileError
 from pcs.common.reports import (
     ReportProcessor,
@@ -13,7 +13,7 @@ from pcs.common.reports import (
 from pcs.common.reports import codes as report_codes
 from pcs.common.reports.item import ReportItem
 from pcs.common.str_tools import join_multilines
-from pcs.lib import external, reports, tools
+from pcs.lib import external, tools
 from pcs.lib.cib.resource import primitive, group
 from pcs.lib.booth import (
     config_files,
@@ -85,11 +85,11 @@ def config_setup(
     except FileAlreadyExists as e:
         report_processor.report(
             ReportItem(
-                severity=report.item.get_severity(
-                    report.codes.FORCE_FILE_OVERWRITE,
+                severity=reports.item.get_severity(
+                    reports.codes.FORCE_FILE_OVERWRITE,
                     overwrite_existing,
                 ),
-                message=report.messages.FileAlreadyExists(
+                message=reports.messages.FileAlreadyExists(
                     e.metadata.file_type_code,
                     e.metadata.path,
                 )
@@ -239,7 +239,7 @@ def config_text(env: LibraryEnvironment, instance_name=None, node_name=None):
     except KeyError:
         raise LibraryError(
             ReportItem.error(
-                report.messages.InvalidResponseFormat(node_name)
+                reports.messages.InvalidResponseFormat(node_name)
             )
         )
 
@@ -554,7 +554,7 @@ def config_sync(
     if not env.is_cib_live:
         raise LibraryError(
             ReportItem.error(
-                report.messages.LiveEnvironmentRequired([file_type_codes.CIB])
+                reports.messages.LiveEnvironmentRequired([file_type_codes.CIB])
             )
         )
 
@@ -563,7 +563,7 @@ def config_sync(
     )
     if not cluster_nodes_names:
         report_list.append(
-            ReportItem.error(report.messages.CorosyncConfigNoNodesDefined())
+            ReportItem.error(reports.messages.CorosyncConfigNoNodesDefined())
         )
     report_processor.report_list(report_list)
 
@@ -622,11 +622,20 @@ def enable_booth(env: LibraryEnvironment, instance_name=None):
     try:
         external.enable_service(env.cmd_runner(), "booth", instance_name)
     except external.EnableServiceError as e:
-        raise LibraryError(reports.service_enable_error(
-            "booth", e.message, instance=instance_name
-        ))
-    env.report_processor.report(reports.service_enable_success(
-        "booth", instance=instance_name
+        raise LibraryError(
+            ReportItem.error(
+                reports.messages.ServiceActionFailed(
+                    reports.messages.SERVICE_ENABLE,
+                    "booth",
+                    e.message,
+                    instance=instance_name,
+                )
+            )
+        )
+    env.report_processor.report(ReportItem.info(
+        reports.messages.ServiceActionSucceeded(
+            reports.messages.SERVICE_ENABLE, "booth", instance=instance_name
+        )
     ))
 
 
@@ -645,12 +654,25 @@ def disable_booth(env: LibraryEnvironment, instance_name=None):
     try:
         external.disable_service(env.cmd_runner(), "booth", instance_name)
     except external.DisableServiceError as e:
-        raise LibraryError(reports.service_disable_error(
-            "booth", e.message, instance=instance_name
-        ))
-    env.report_processor.report(reports.service_disable_success(
-        "booth", instance=instance_name
-    ))
+        raise LibraryError(
+            ReportItem.error(
+                reports.messages.ServiceActionFailed(
+                    reports.messages.SERVICE_DISABLE,
+                    "booth",
+                    e.message,
+                    instance=instance_name,
+                )
+            )
+        )
+    env.report_processor.report(
+        ReportItem.info(
+            reports.messages.ServiceActionSucceeded(
+                reports.messages.SERVICE_DISABLE,
+                "booth",
+                instance=instance_name,
+            )
+        )
+    )
 
 
 def start_booth(env: LibraryEnvironment, instance_name=None):
@@ -670,12 +692,23 @@ def start_booth(env: LibraryEnvironment, instance_name=None):
     try:
         external.start_service(env.cmd_runner(), "booth", instance_name)
     except external.StartServiceError as e:
-        raise LibraryError(reports.service_start_error(
-            "booth", e.message, instance=instance_name
-        ))
-    env.report_processor.report(reports.service_start_success(
-        "booth", instance=instance_name
-    ))
+        raise LibraryError(
+            ReportItem.error(
+                reports.messages.ServiceActionFailed(
+                    reports.messages.SERVICE_START,
+                    "booth",
+                    e.message,
+                    instance=instance_name,
+                )
+            )
+        )
+    env.report_processor.report(
+        ReportItem.info(
+            reports.messages.ServiceActionSucceeded(
+                reports.messages.SERVICE_START, "booth", instance=instance_name
+            )
+        )
+    )
 
 
 def stop_booth(env: LibraryEnvironment, instance_name=None):
@@ -693,12 +726,23 @@ def stop_booth(env: LibraryEnvironment, instance_name=None):
     try:
         external.stop_service(env.cmd_runner(), "booth", instance_name)
     except external.StopServiceError as e:
-        raise LibraryError(reports.service_stop_error(
-            "booth", e.message, instance=instance_name
-        ))
-    env.report_processor.report(reports.service_stop_success(
-        "booth", instance=instance_name
-    ))
+        raise LibraryError(
+            ReportItem.error(
+                reports.messages.ServiceActionFailed(
+                    reports.messages.SERVICE_STOP,
+                    "booth",
+                    e.message,
+                    instance=instance_name
+                )
+            )
+        )
+    env.report_processor.report(
+        ReportItem.info(
+            reports.messages.ServiceActionSucceeded(
+                reports.messages.SERVICE_STOP, "booth", instance=instance_name
+            )
+        )
+    )
 
 
 def pull_config(env: LibraryEnvironment, node_name, instance_name=None):
@@ -760,7 +804,7 @@ def pull_config(env: LibraryEnvironment, node_name, instance_name=None):
     except KeyError:
         raise LibraryError(
             ReportItem.error(
-                report.messages.InvalidResponseFormat(node_name)
+                reports.messages.InvalidResponseFormat(node_name)
             )
         )
     if report_processor.has_errors:
@@ -818,7 +862,7 @@ def _ensure_live_booth_env(booth_env):
     if booth_env.ghost_file_codes:
         raise LibraryError(
             ReportItem.error(
-                report.messages.LiveEnvironmentRequired(
+                reports.messages.LiveEnvironmentRequired(
                     booth_env.ghost_file_codes
                 )
             )
@@ -834,5 +878,5 @@ def _ensure_live_env(env: LibraryEnvironment, booth_env):
     )
     if not_live:
         raise LibraryError(
-            ReportItem.error(report.messages.LiveEnvironmentRequired(not_live))
+            ReportItem.error(reports.messages.LiveEnvironmentRequired(not_live))
         )

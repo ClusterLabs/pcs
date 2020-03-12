@@ -9,12 +9,16 @@ from pcs_test.tools.misc import get_test_resource as rc
 from pcs_test.tools.xml import XmlManipulation
 
 from pcs import settings
-from pcs.common import file_type_codes
+from pcs.common import (
+    file_type_codes,
+    reports,
+)
 from pcs.common.file import RawFileError
 from pcs.common.reports import codes as report_codes
 from pcs.lib.commands import booth as commands
 
 RANDOM_KEY = "I'm so random!".encode()
+REASON = "This is a reason"
 
 def fixture_report_invalid_name(name):
     return fixture.error(
@@ -1848,6 +1852,7 @@ class CreateInCluster(TestCase, FixtureMixin):
                 agent_name="ocf:heartbeat:IPaddr2",
                 agent_is_missing=True,
                 name="runner.pcmk.load_agent.ipaddr2",
+                stderr=REASON,
             )
         )
         self.env_assist.assert_raise_library_error(
@@ -1860,6 +1865,7 @@ class CreateInCluster(TestCase, FixtureMixin):
                     report_codes.UNABLE_TO_GET_AGENT_METADATA,
                     force_code=report_codes.FORCE_METADATA_ISSUE,
                     agent="ocf:heartbeat:IPaddr2",
+                    reason=REASON,
                 ),
             ],
             expected_in_processor=False
@@ -1881,6 +1887,7 @@ class CreateInCluster(TestCase, FixtureMixin):
                 agent_name="ocf:pacemaker:booth-site",
                 agent_is_missing=True,
                 name="runner.pcmk.load_agent.booth-site",
+                stderr=REASON,
             )
         )
         self.env_assist.assert_raise_library_error(
@@ -1893,6 +1900,7 @@ class CreateInCluster(TestCase, FixtureMixin):
                     report_codes.UNABLE_TO_GET_AGENT_METADATA,
                     force_code=report_codes.FORCE_METADATA_ISSUE,
                     agent="ocf:pacemaker:booth-site",
+                    reason=REASON,
                 ),
             ],
             expected_in_processor=False
@@ -1910,11 +1918,13 @@ class CreateInCluster(TestCase, FixtureMixin):
                 agent_name="ocf:heartbeat:IPaddr2",
                 agent_is_missing=True,
                 name="runner.pcmk.load_agent.ipaddr2",
+                stderr=REASON,
             )
             .runner.pcmk.load_agent(
                 agent_name="ocf:pacemaker:booth-site",
                 agent_is_missing=True,
                 name="runner.pcmk.load_agent.booth-site",
+                stderr=REASON,
             )
             .env.push_cib(
                 resources=self.fixture_cib_booth_group(default_operations=True)
@@ -1929,10 +1939,12 @@ class CreateInCluster(TestCase, FixtureMixin):
             fixture.warn(
                 report_codes.UNABLE_TO_GET_AGENT_METADATA,
                 agent="ocf:heartbeat:IPaddr2",
+                reason=REASON,
             ),
             fixture.warn(
                 report_codes.UNABLE_TO_GET_AGENT_METADATA,
                 agent="ocf:pacemaker:booth-site",
+                reason=REASON,
             ),
         ])
 
@@ -2982,10 +2994,11 @@ class EnableDisableStartStopMixin(FixtureMixin):
         )
         self.env_assist.assert_reports([
             fixture.info(
-                self.report_code_success,
+                reports.codes.SERVICE_ACTION_SUCCEEDED,
+                action=self.report_service_action,
                 service="booth",
+                node="",
                 instance="booth",
-                node=None,
             ),
         ])
 
@@ -2999,10 +3012,11 @@ class EnableDisableStartStopMixin(FixtureMixin):
         )
         self.env_assist.assert_reports([
             fixture.info(
-                self.report_code_success,
+                reports.codes.SERVICE_ACTION_SUCCEEDED,
+                action=self.report_service_action,
                 service="booth",
+                node="",
                 instance="my_booth",
-                node=None,
             ),
         ])
 
@@ -3018,11 +3032,12 @@ class EnableDisableStartStopMixin(FixtureMixin):
             ),
             [
                 fixture.error(
-                    self.report_code_error,
+                    reports.codes.SERVICE_ACTION_FAILED,
+                    action=self.report_service_action,
                     service="booth",
-                    instance="booth",
-                    node=None,
                     reason="some stderr\nsome stdout",
+                    node="",
+                    instance="booth",
                 ),
             ],
             expected_in_processor=False
@@ -3031,16 +3046,14 @@ class EnableDisableStartStopMixin(FixtureMixin):
 class Enable(EnableDisableStartStopMixin, TestCase):
     # without 'staticmethod' the command would bVecome a method of this class
     command = staticmethod(commands.enable_booth)
-    report_code_success = report_codes.SERVICE_ENABLE_SUCCESS
-    report_code_error = report_codes.SERVICE_ENABLE_ERROR
+    report_service_action = reports.messages.SERVICE_ENABLE
     def get_external_call(self):
         return self.config.runner.systemctl.enable
 
 class Disable(EnableDisableStartStopMixin, TestCase):
     # without 'staticmethod' the command would bVecome a method of this class
     command = staticmethod(commands.disable_booth)
-    report_code_success = report_codes.SERVICE_DISABLE_SUCCESS
-    report_code_error = report_codes.SERVICE_DISABLE_ERROR
+    report_service_action = reports.messages.SERVICE_DISABLE
     def get_external_call(self):
         return self.config.runner.systemctl.disable
 
@@ -3050,16 +3063,14 @@ class Disable(EnableDisableStartStopMixin, TestCase):
 class Start(EnableDisableStartStopMixin, TestCase):
     # without 'staticmethod' the command would bVecome a method of this class
     command = staticmethod(commands.start_booth)
-    report_code_success = report_codes.SERVICE_START_SUCCESS
-    report_code_error = report_codes.SERVICE_START_ERROR
+    report_service_action = reports.messages.SERVICE_START
     def get_external_call(self):
         return self.config.runner.systemctl.start
 
 class Stop(EnableDisableStartStopMixin, TestCase):
     # without 'staticmethod' the command would bVecome a method of this class
     command = staticmethod(commands.stop_booth)
-    report_code_success = report_codes.SERVICE_STOP_SUCCESS
-    report_code_error = report_codes.SERVICE_STOP_ERROR
+    report_service_action = reports.messages.SERVICE_STOP
     def get_external_call(self):
         return self.config.runner.systemctl.stop
 

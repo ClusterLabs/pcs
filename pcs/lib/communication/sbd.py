@@ -1,13 +1,12 @@
 import json
 
-from pcs.common import reports as report
+from pcs.common import reports
 from pcs.common.node_communicator import (
     Request,
     RequestData,
 )
 from pcs.common.reports import ReportItemSeverity
 from pcs.common.reports.item import ReportItem
-from pcs.lib import reports
 from pcs.lib.communication.tools import (
     AllAtOnceStrategyMixin,
     AllSameDataMixin,
@@ -45,10 +44,18 @@ class EnableSbdService(ServiceAction):
         return "remote/sbd_enable"
 
     def _get_before_report(self):
-        return reports.sbd_enabling_started()
+        return ReportItem.info(
+            reports.messages.ServiceActionStarted(
+                reports.messages.SERVICE_ENABLE, "sbd"
+            )
+        )
 
     def _get_success_report(self, node_label):
-        return reports.service_enable_success("sbd", node_label)
+        return ReportItem.info(
+            reports.messages.ServiceActionSucceeded(
+                reports.messages.SERVICE_ENABLE, "sbd", node_label
+            )
+        )
 
 
 class DisableSbdService(ServiceAction):
@@ -56,10 +63,18 @@ class DisableSbdService(ServiceAction):
         return "remote/sbd_disable"
 
     def _get_before_report(self):
-        return reports.sbd_disabling_started()
+        return ReportItem.info(
+            reports.messages.ServiceActionStarted(
+                reports.messages.SERVICE_DISABLE, "sbd",
+            )
+        )
 
     def _get_success_report(self, node_label):
-        return reports.service_disable_success("sbd", node_label)
+        return ReportItem.info(
+            reports.messages.ServiceActionSucceeded(
+                reports.messages.SERVICE_DISABLE, "sbd", node_label
+            )
+        )
 
 
 class StonithWatchdogTimeoutAction(
@@ -109,13 +124,17 @@ class SetSbdConfig(
         ]
 
     def _get_success_report(self, node_label):
-        return reports.sbd_config_accepted_by_node(node_label)
+        return ReportItem.info(
+            reports.messages.SbdConfigAcceptedByNode(node_label)
+        )
 
     def add_request(self, target, config):
         self._request_data_list.append((target, config))
 
     def before(self):
-        self._report(reports.sbd_config_distribution_started())
+        self._report(
+            ReportItem.info(reports.messages.SbdConfigDistributionStarted())
+        )
 
 
 class GetSbdConfig(AllSameDataMixin, AllAtOnceStrategyMixin, RunRemotelyBase):
@@ -136,8 +155,8 @@ class GetSbdConfig(AllSameDataMixin, AllAtOnceStrategyMixin, RunRemotelyBase):
             if not response.was_connected:
                 self._report(report_item)
             self._report(
-                reports.unable_to_get_sbd_config(
-                    node_label, "", ReportItemSeverity.WARNING
+                ReportItem.warning(
+                    reports.messages.UnableToGetSbdConfig(node_label, "")
                 )
             )
             return
@@ -183,7 +202,7 @@ class GetSbdStatus(AllSameDataMixin, AllAtOnceStrategyMixin, RunRemotelyBase):
                 report_item,
                 #reason is in previous report item, warning is there implicit
                 ReportItem.warning(
-                    report.messages.UnableToGetSbdStatus(node_label, "")
+                    reports.messages.UnableToGetSbdStatus(node_label, "")
                 )
             ])
             return
@@ -196,7 +215,7 @@ class GetSbdStatus(AllSameDataMixin, AllAtOnceStrategyMixin, RunRemotelyBase):
         except (ValueError, KeyError) as e:
             self._report(
                 ReportItem.warning(
-                    report.messages.UnableToGetSbdStatus(node_label, str(e))
+                    reports.messages.UnableToGetSbdStatus(node_label, str(e))
                 )
             )
 
@@ -245,7 +264,7 @@ class CheckSbd(AllAtOnceStrategyMixin, RunRemotelyBase):
             if not data["sbd"]["installed"]:
                 report_list.append(
                     ReportItem.error(
-                        report.messages.SbdNotInstalled(node_label)
+                        reports.messages.SbdNotInstalled(node_label)
                     )
                 )
             if "watchdog" in data:
@@ -253,7 +272,7 @@ class CheckSbd(AllAtOnceStrategyMixin, RunRemotelyBase):
                     if not data["watchdog"].get("is_supported", True):
                         report_list.append(
                             ReportItem.error(
-                                report.messages.SbdWatchdogNotSupported(
+                                reports.messages.SbdWatchdogNotSupported(
                                     node_label, data["watchdog"]["path"]
                                 )
                             )
@@ -261,7 +280,7 @@ class CheckSbd(AllAtOnceStrategyMixin, RunRemotelyBase):
                 else:
                     report_list.append(
                         ReportItem.error(
-                            report.messages.WatchdogNotFound(
+                            reports.messages.WatchdogNotFound(
                                 node_label, data["watchdog"]["path"]
                             )
                         )
@@ -271,7 +290,7 @@ class CheckSbd(AllAtOnceStrategyMixin, RunRemotelyBase):
                 if not device["exist"]:
                     report_list.append(
                         ReportItem.error(
-                            report.messages.SbdDeviceDoesNotExist(
+                            reports.messages.SbdDeviceDoesNotExist(
                                 device["path"], node_label
                             )
                         )
@@ -279,7 +298,7 @@ class CheckSbd(AllAtOnceStrategyMixin, RunRemotelyBase):
                 elif not device["block_device"]:
                     report_list.append(
                         ReportItem.error(
-                            report.messages.SbdDeviceIsNotBlockDevice(
+                            reports.messages.SbdDeviceIsNotBlockDevice(
                                 device["path"], node_label
                             )
                         )
@@ -289,18 +308,22 @@ class CheckSbd(AllAtOnceStrategyMixin, RunRemotelyBase):
         except (ValueError, KeyError, TypeError):
             report_list.append(
                 ReportItem.error(
-                    report.messages.InvalidResponseFormat(node_label)
+                    reports.messages.InvalidResponseFormat(node_label)
                 )
             )
         if report_list:
             self._report_list(report_list)
         else:
             self._report(
-                reports.sbd_check_success(response.request.target.label)
+                ReportItem.info(
+                    reports.messages.SbdCheckSuccess(
+                        response.request.target.label
+                    )
+                )
             )
 
     def add_request(self, target, watchdog, device_list):
         self._request_data_list.append((target, watchdog, device_list))
 
     def before(self):
-        self._report(reports.sbd_check_started())
+        self._report(ReportItem.info(reports.messages.SbdCheckStarted()))
