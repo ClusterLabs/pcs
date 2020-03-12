@@ -17,12 +17,14 @@
   `pcs (resource | stonith) (cleanup | refresh)` ([rhbz#1805082])
 - Improved ACL documentation ([rhbz#1722970])
 - Added missing Strict-Transport-Security headers to redirects ([rhbz#1810017])
+- Improved pcsd daemon performance ([rhbz#1783106])
 
 [ghissue#231]: https://github.com/ClusterLabs/pcs/issues/231
 [rhbz#1676431]: https://bugzilla.redhat.com/show_bug.cgi?id=1676431
 [rhbz#1722970]: https://bugzilla.redhat.com/show_bug.cgi?id=1722970
 [rhbz#1743731]: https://bugzilla.redhat.com/show_bug.cgi?id=1743731
 [rhbz#1781303]: https://bugzilla.redhat.com/show_bug.cgi?id=1781303
+[rhbz#1783106]: https://bugzilla.redhat.com/show_bug.cgi?id=1783106
 [rhbz#1793574]: https://bugzilla.redhat.com/show_bug.cgi?id=1793574
 [rhbz#1805082]: https://bugzilla.redhat.com/show_bug.cgi?id=1805082
 [rhbz#1810017]: https://bugzilla.redhat.com/show_bug.cgi?id=1810017

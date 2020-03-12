@@ -11,42 +11,25 @@ def pack_response(response)
   return [200, {}, [response.to_json.to_str]]
 end
 
-def unpack_request(transport_env)
-  return JSON.parse(Base64.strict_decode64(
-    transport_env["rack.request.form_hash"]["TORNADO_REQUEST"]
-  ))
-end
-
 class TornadoCommunicationMiddleware
   def initialize(app)
     @app = app
   end
 
-  def call(transport_env)
+  def call(env)
     Thread.current[:pcsd_logger_container] = []
     begin
-      request = unpack_request(transport_env)
+      type = env["HTTP_X_PCSD_TYPE"]
 
-      if ["sinatra_gui", "sinatra_remote"].include?(request["type"])
-        if request["type"] == "sinatra_gui"
-          session = request["session"]
+      if ["sinatra_gui", "sinatra_remote"].include?(type)
+        if type == "sinatra_gui"
+          session = JSON.parse(Base64.strict_decode64(env["HTTP_X_PCSD_PAYLOAD"]))
           Thread.current[:tornado_username] = session["username"]
           Thread.current[:tornado_groups] = session["groups"]
           Thread.current[:tornado_is_authenticated] = session["is_authenticated"]
         end
 
-        # Keys rack.input and rack.errors are required. We make sure they are
-        # there.
-        request_env = request["env"]
-        request_env["rack.input"] = StringIO.new(request_env["rack.input"])
-        request_env["rack.errors"] = StringIO.new()
-
-        status, headers, body = @app.call(request_env)
-
-        rack_errors = request_env['rack.errors'].string()
-        if not rack_errors.empty?()
-          $logger.error(rack_errors)
-        end
+        status, headers, body = @app.call(env)
 
         return pack_response({
           :status => status,
@@ -56,16 +39,20 @@ class TornadoCommunicationMiddleware
         })
       end
 
-      if request["type"] == "sync_configs"
+      if type == "sync_configs"
         return pack_response({
           :next => Time.now.to_i + run_cfgsync(),
           :logs => Thread.current[:pcsd_logger_container],
         })
       end
 
-      raise "Unexpected value for key 'type': '#{request['type']}'"
+      return pack_response({
+        :error => "Unexpected value for key 'type': '#{type}'"
+      })
     rescue => e
-      return pack_response({:error => "Processing request error: '#{e}'"})
+      return pack_response({
+        :error => "Processing request error: '#{e}' '#{e.backtrace}'"
+      })
     end
   end
 end

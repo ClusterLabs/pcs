@@ -20,7 +20,12 @@ class RubyPcsdWrapper(ruby_pcsd.Wrapper):
         self.headers = {"Some": "value"}
         self.body = b"Success action"
 
-    async def run_ruby(self, request_type, request=None):
+    async def run_ruby(
+        self,
+        request_type,
+        http_request=None,
+        payload=None,
+    ):
         if request_type != self.request_type:
             raise AssertionError(
                 f"Wrong request type: expected '{self.request_type}'"

@@ -4,7 +4,7 @@ from base64 import b64encode
 from unittest import TestCase, mock
 from urllib.parse import urlencode
 
-from tornado.httputil import HTTPServerRequest
+from tornado.httputil import HTTPServerRequest, HTTPHeaders
 from tornado.testing import AsyncTestCase, gen_test
 from tornado.web import HTTPError
 
@@ -22,46 +22,17 @@ def create_http_request():
     return HTTPServerRequest(
         method="POST",
         uri="/pcsd/uri",
-        headers={"Cookie": "cookie1=first;cookie2=second"},
+        headers=HTTPHeaders({"Cookie": "cookie1=first;cookie2=second"}),
         body=str.encode(urlencode({"post-key": "post-value"})),
         host="pcsd-host:2224"
     )
-
-class GetSinatraRequest(TestCase):
-    def test_translate_request(self):
-        # pylint: disable=invalid-name
-        self.maxDiff = None
-        self.assertEqual(
-            create_wrapper().get_sinatra_request(create_http_request()),
-            {
-                'env': {
-                    'HTTPS': 'off',
-                    'HTTP_ACCEPT': '*/*',
-                    'HTTP_COOKIE': 'cookie1=first;cookie2=second',
-                    'HTTP_HOST': 'pcsd-host:2224',
-                    'HTTP_VERSION': 'HTTP/1.0',
-                    'PATH_INFO': '/pcsd/uri',
-                    'QUERY_STRING': '',
-                    'REMOTE_ADDR': None, # It requires complicated request args
-                    'REMOTE_HOST': 'pcsd-host:2224',
-                    'REQUEST_METHOD': 'POST',
-                    'REQUEST_PATH': '/pcsd/uri',
-                    'REQUEST_URI': 'http://pcsd-host:2224/pcsd/uri',
-                    'SCRIPT_NAME': '',
-                    'SERVER_NAME': 'pcsd-host',
-                    'SERVER_PORT': 2224,
-                    'SERVER_PROTOCOL': 'HTTP/1.0',
-                    'rack.input': 'post-key=post-value'
-                }
-            }
-        )
 
 patch_ruby_pcsd = create_patcher(ruby_pcsd)
 
 class RunRuby(AsyncTestCase):
     def setUp(self):
         self.ruby_response = ""
-        self.request = self.create_request()
+        self.request = ruby_pcsd.RubyDaemonRequest(ruby_pcsd.SYNC_CONFIGS)
         self.wrapper = create_wrapper()
         patcher = mock.patch.object(
             self.wrapper,
@@ -72,13 +43,9 @@ class RunRuby(AsyncTestCase):
         patcher.start()
         super().setUp()
 
-    async def send_to_ruby(self, request_json):
-        self.assertEqual(json.loads(request_json), self.request)
+    async def send_to_ruby(self, ruby_request):
+        self.assertEqual(ruby_request, self.request)
         return self.ruby_response
-
-    @staticmethod
-    def create_request(_type=ruby_pcsd.SYNC_CONFIGS):
-        return {"type": _type}
 
     def set_run_result(self, run_result):
         self.ruby_response = json.dumps({**run_result, "logs": []})
@@ -125,10 +92,10 @@ class RunRuby(AsyncTestCase):
             "body": b64encode(str.encode(body)).decode(),
         })
         http_request = create_http_request()
-        self.request = {
-            **self.create_request(ruby_pcsd.SINATRA_REMOTE),
-            **self.wrapper.get_sinatra_request(http_request),
-        }
+        self.request = ruby_pcsd.RubyDaemonRequest(
+            ruby_pcsd.SINATRA_REMOTE,
+            http_request,
+        )
         result = yield self.wrapper.request_remote(http_request)
         self.assert_sinatra_result(result, headers, status, body)
 
@@ -148,15 +115,15 @@ class RunRuby(AsyncTestCase):
             "body": b64encode(str.encode(body)).decode(),
         })
         http_request = create_http_request()
-        self.request = {
-            **self.create_request(ruby_pcsd.SINATRA_GUI),
-            **self.wrapper.get_sinatra_request(http_request),
-            "session": {
+        self.request = ruby_pcsd.RubyDaemonRequest(
+            ruby_pcsd.SINATRA_GUI,
+            http_request,
+            {
                 "username": user,
                 "groups": groups,
                 "is_authenticated": is_authenticated,
             }
-        }
+        )
         result = yield self.wrapper.request_gui(
             http_request,
             user=user,

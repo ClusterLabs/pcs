@@ -7,8 +7,8 @@ from time import time as now
 import pycurl
 from tornado.gen import convert_yielded
 from tornado.web import HTTPError
-from tornado.httputil import split_host_and_port, HTTPServerRequest
-from tornado.httpclient import AsyncHTTPClient
+from tornado.httputil import HTTPServerRequest, HTTPHeaders
+from tornado.httpclient import AsyncHTTPClient, HTTPClientError
 from tornado.curl_httpclient import CurlError
 
 
@@ -28,6 +28,11 @@ RUBY_LOG_LEVEL_MAP = {
     "INFO": logging.INFO,
     "DEBUG": logging.DEBUG,
 }
+
+__id_dict = {"id": 0}
+def get_request_id():
+    __id_dict["id"] += 1
+    return __id_dict["id"]
 
 class SinatraResult(namedtuple("SinatraResult", "headers, status, body")):
     @classmethod
@@ -60,6 +65,59 @@ def process_response_logs(rb_log_list):
             group_id=group_id
         )
 
+class RubyDaemonRequest(namedtuple(
+    "RubyDaemonRequest",
+    "request_type, path, query, headers, method, body"
+)):
+    def __new__(
+        cls,
+        request_type,
+        http_request: HTTPServerRequest = None,
+        payload=None,
+    ):
+        headers = http_request.headers if http_request else HTTPHeaders()
+        headers.add("X-Pcsd-Type", request_type)
+        if payload:
+            headers.add(
+                "X-Pcsd-Payload",
+                b64encode(json.dumps(payload).encode()).decode()
+            )
+        return super(RubyDaemonRequest, cls).__new__(
+            cls,
+            request_type,
+            http_request.path if http_request else "",
+            http_request.query if http_request else "",
+            headers,
+            http_request.method if http_request else "GET",
+            http_request.body if http_request else None,
+        )
+
+    @property
+    def url(self):
+        # We do not need location for communication with ruby itself since we
+        # communicate via unix socket. But it is required by AsyncHTTPClient so
+        # "localhost" is used.
+        query = f"?{self.query}" if self.query else ""
+        return f"localhost/{self.path}{query}"
+
+    @property
+    def is_get(self):
+        return self.method.upper() == "GET"
+
+    @property
+    def has_http_request_detail(self):
+        return self.path or self.query or self.method != "GET" or self.body
+
+def log_ruby_daemon_request(label, request: RubyDaemonRequest):
+    log.pcsd.debug("%s type: '%s'", label, request.request_type)
+    if request.has_http_request_detail:
+        log.pcsd.debug("%s path: '%s'", label, request.path)
+        if request.query:
+            log.pcsd.debug("%s query: '%s'", label, request.query)
+        log.pcsd.debug("%s method: '%s'", label, request.method)
+        if request.body:
+            log.pcsd.debug("%s body: '%s'", label, request.body)
+
 class Wrapper:
     def __init__(self, pcsd_ruby_socket, debug=False):
         self.__debug = debug
@@ -67,74 +125,87 @@ class Wrapper:
         self.__client = AsyncHTTPClient()
         self.__pcsd_ruby_socket = pcsd_ruby_socket
 
-    @staticmethod
-    def get_sinatra_request(request: HTTPServerRequest):
-        host, port = split_host_and_port(request.host)
-        return {"env": {
-            "PATH_INFO": request.path,
-            "QUERY_STRING": request.query,
-            "REMOTE_ADDR": request.remote_ip,
-            "REMOTE_HOST": request.host,
-            "REQUEST_METHOD": request.method,
-            "REQUEST_URI": f"{request.protocol}://{request.host}{request.uri}",
-            "SCRIPT_NAME": "",
-            "SERVER_NAME": host,
-            "SERVER_PORT": port,
-            "SERVER_PROTOCOL": request.version,
-            "HTTP_HOST": request.host,
-            "HTTP_ACCEPT": "*/*",
-            "HTTP_COOKIE": ";".join([
-                v.OutputString() for v in request.cookies.values()
-            ]),
-            "HTTPS": "on" if request.protocol == "https" else "off",
-            "HTTP_VERSION": request.version,
-            "REQUEST_PATH": request.path,
-            "rack.input": request.body.decode("utf8"),
-        }}
-
     def prepare_curl_callback(self, curl):
         curl.setopt(pycurl.UNIX_SOCKET_PATH, self.__pcsd_ruby_socket)
         curl.setopt(pycurl.TIMEOUT, 70)
 
-    async def send_to_ruby(self, request_json):
-        # We do not need location for communication with ruby itself since we
-        # communicate via unix socket. But it is required by AsyncHTTPClient so
-        # "localhost" is used.
-        tornado_request = b64encode(request_json.encode()).decode()
-        return (await self.__client.fetch(
-            "localhost",
-            method="POST",
-            body=f"TORNADO_REQUEST={tornado_request}",
-            prepare_curl_callback=self.prepare_curl_callback,
-        )).body
-
-    async def run_ruby(self, request_type, request=None):
-        """
-        request_type: SINATRA_GUI|SINATRA_REMOTE|SYNC_CONFIGS
-        request: result of get_sinatra_request|None
-            i.e. it has structure returned by get_sinatra_request if the request
-            is not None - so we can get SERVER_NAME and  SERVER_PORT
-        """
-        request = request or {}
-        request.update({"type": request_type})
-        request_json = json.dumps(request)
-
-        if self.__debug:
-            log.pcsd.debug("Ruby daemon request: '%s'", request_json)
+    async def send_to_ruby(self, request: RubyDaemonRequest):
         try:
-            ruby_response = await self.send_to_ruby(request_json)
+            return (await self.__client.fetch(
+                request.url,
+                headers=request.headers,
+                method=request.method,
+                # Tornado enforces body=None for GET method:
+                # Even with `allow_nonstandard_methods` we disallow GET with a
+                # body (because libcurl doesn't allow it unless we use
+                # CUSTOMREQUEST).  While the spec doesn't forbid clients from
+                # sending a body, it arguably disallows the server from doing
+                # anything with them.
+                body=(request.body if not request.is_get else None),
+                prepare_curl_callback=self.prepare_curl_callback,
+            )).body
         except CurlError as e:
+            # This error we can get e.g. when ruby daemon is down.
             log.pcsd.error(
                 "Cannot connect to ruby daemon (message: '%s'). Is it running?",
                 e
             )
             raise HTTPError(500)
+        except HTTPClientError as e:
+            # This error we can get e.g. when rack protection raises exception.
+            log.pcsd.error(
+                (
+                    "Got error from ruby daemon (message: '%s')."
+                    " Try checking system logs (e.g. journal, systemctl status"
+                    " pcsd.service) for more information.."
+                ),
+                e
+            )
+            raise HTTPError(500)
 
+    async def run_ruby(
+        self,
+        request_type,
+        http_request: HTTPServerRequest = None,
+        payload=None,
+    ):
+        request = RubyDaemonRequest(request_type, http_request, payload)
+        request_id = get_request_id()
+
+        def log_request():
+            log_ruby_daemon_request(
+                f"Ruby daemon request (id: {request_id})",
+                request,
+            )
+
+        if self.__debug:
+            log_request()
+
+        return self.process_ruby_response(
+            f"Ruby daemon response (id: {request_id})",
+            log_request,
+            await self.send_to_ruby(request),
+        )
+
+    def process_ruby_response(self, label, log_request, ruby_response):
+        """
+        Return relevant part of unpacked ruby response. As a side effect
+        relevant logs are writen.
+
+        string label -- is used as a log prefix
+        callable log_request -- is used to log request when some errors happen;
+            we want to log request before error even if there is not debug mode
+        string ruby_response -- body of response from ruby; it should contain
+            json with dictionary with response specific keys
+        """
         try:
             response = json.loads(ruby_response)
             if "error" in response:
+                if not self.__debug:
+                    log_request()
                 log.pcsd.error(
-                    "Ruby daemon response contains an error: '%s'",
+                    "%s contains an error: '%s'",
+                    label,
                     json.dumps(response)
                 )
                 raise HTTPError(500)
@@ -144,56 +215,52 @@ class Wrapper:
                 body = b64decode(response.pop("body"))
                 if self.__debug:
                     log.pcsd.debug(
-                        "Ruby daemon response (without logs and body): '%s'",
+                        "%s (without logs and body): '%s'",
+                        label,
                         json.dumps(response)
                     )
-                    log.pcsd.debug("Ruby daemon response body: '%s'", body)
+                    log.pcsd.debug("%s body: '%s'", label, body)
                 response["body"] = body
 
             elif self.__debug:
                 log.pcsd.debug(
-                    "Ruby daemon response (without logs): '%s'",
+                    "%s (without logs): '%s'",
+                    label,
                     json.dumps(response)
                 )
             process_response_logs(logs)
             return response
         except (json.JSONDecodeError, binascii.Error) as e:
             if self.__debug:
-                log.pcsd.debug("Ruby daemon response: '%s'", ruby_response)
+                log.pcsd.debug("%s: '%s'", label, ruby_response)
+            else:
+                log_request()
+
             log.pcsd.error("Cannot decode json from ruby pcsd wrapper: '%s'", e)
             raise HTTPError(500)
 
     async def request_gui(
         self, request: HTTPServerRequest, user, groups, is_authenticated
     ) -> SinatraResult:
-        sinatra_request = self.get_sinatra_request(request)
         # Sessions handling was removed from ruby. However, some session
         # information is needed for ruby code (e.g. rendering some parts of
         # templates). So this information must be sent to ruby by another way.
-        sinatra_request.update({
-            "session": {
+        return SinatraResult.from_response(
+            await convert_yielded(self.run_ruby(SINATRA_GUI, request, {
                 "username": user,
                 "groups": groups,
                 "is_authenticated": is_authenticated,
-            }
-        })
-        response = await convert_yielded(self.run_ruby(
-            SINATRA_GUI,
-            sinatra_request
-        ))
-        return SinatraResult.from_response(response)
+            }))
+        )
 
     async def request_remote(self, request: HTTPServerRequest) -> SinatraResult:
-        response = await convert_yielded(self.run_ruby(
-            SINATRA_REMOTE,
-            self.get_sinatra_request(request)
-        ))
-        return SinatraResult.from_response(response)
+        return SinatraResult.from_response(
+            await convert_yielded(self.run_ruby(SINATRA_REMOTE, request))
+        )
 
     async def sync_configs(self):
         try:
-            response = await convert_yielded(self.run_ruby(SYNC_CONFIGS))
-            return response["next"]
+            return (await convert_yielded(self.run_ruby(SYNC_CONFIGS)))["next"]
         except HTTPError:
             log.pcsd.error("Config synchronization failed")
             return int(now()) + DEFAULT_SYNC_CONFIG_DELAY
