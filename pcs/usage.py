@@ -1481,12 +1481,33 @@ Commands:
     disable
         Disable access control lists.
 
-    role create <role id> [description=<description>] [((read | write | deny)
-                                                (xpath <query> | id <id>))...]
-        Create a role with the id and (optional) description specified.
-        Each role can also have an unlimited number of permissions
-        (read/write/deny) applied to either an xpath query or the id
-        of a specific element in the cib.
+    role create <role id> [description=<description>]
+            [((read | write | deny) (xpath <query> | id <id>))...]
+        Create a role with the id and (optional) description specified. Each
+        role can also have an unlimited number of permissions (read/write/deny)
+        applied to either an xpath query or the id of a specific element in the
+        CIB.
+
+        Permissions are applied to the selected XML element's entire XML
+        subtree (all elements enclosed within it). Write permission grants the
+        ability to create, modify, or remove the element and its subtree, and
+        also the ability to create any "scaffolding" elements (enclosing
+        elements that do not have attributes other than an ID). Permissions for
+        more specific matches (more deeply nested elements) take precedence
+        over more general ones. If multiple permissions are configured for the
+        same match (for example, in different roles applied to the same user),
+        any deny permission takes precedence, then write, then lastly read.
+
+        An xpath may include an attribute expression to select only elements
+        that match the expression, but the permission still applies to the
+        entire element (and its subtree), not to the attribute alone. For
+        example, using the xpath "//*[@name]" to give write permission would
+        allow changes to the entirety of all elements that have a "name"
+        attribute and everything enclosed by those elements. There is no way
+        currently to give permissions for just one attribute of an element.
+        That is to say, you can not define an ACL that allows someone to read
+        just the dc-uuid attribute of the cib tag - that would select the cib
+        element and give read access to the entire CIB.
 
     role delete <role id>
         Delete the role specified and remove it from any users/groups it was
@@ -1530,9 +1551,32 @@ Commands:
         Remove the group specified (and roles assigned will be unassigned for
         the specified group).
 
-    permission add <role id> ((read | write | deny) (xpath <query> |
-                                                                id <id>))...
-        Add the listed permissions to the role specified.
+    permission add <role id>
+            ((read | write | deny) (xpath <query> | id <id>))...
+        Add the listed permissions to the role specified. Permissions are
+        applied to either an xpath query or the id of a specific element in the
+        CIB.
+
+        Permissions are applied to the selected XML element's entire XML
+        subtree (all elements enclosed within it). Write permission grants the
+        ability to create, modify, or remove the element and its subtree, and
+        also the ability to create any "scaffolding" elements (enclosing
+        elements that do not have attributes other than an ID). Permissions for
+        more specific matches (more deeply nested elements) take precedence
+        over more general ones. If multiple permissions are configured for the
+        same match (for example, in different roles applied to the same user),
+        any deny permission takes precedence, then write, then lastly read.
+
+        An xpath may include an attribute expression to select only elements
+        that match the expression, but the permission still applies to the
+        entire element (and its subtree), not to the attribute alone. For
+        example, using the xpath "//*[@name]" to give write permission would
+        allow changes to the entirety of all elements that have a "name"
+        attribute and everything enclosed by those elements. There is no way
+        currently to give permissions for just one attribute of an element.
+        That is to say, you can not define an ACL that allows someone to read
+        just the dc-uuid attribute of the cib tag - that would select the cib
+        element and give read access to the entire CIB.
 
     permission delete <permission id>
         Remove the permission id specified (permission id's are listed in

@@ -15,9 +15,11 @@
 - Detection of fence history support ([rhbz#1793574])
 - Fix documentation and flags regarding bundled/cloned/grouped resources for
   `pcs (resource | stonith) (cleanup | refresh)` ([rhbz#1805082])
+- Improved ACL documentation ([rhbz#1722970])
 
 [ghissue#231]: https://github.com/ClusterLabs/pcs/issues/231
 [rhbz#1676431]: https://bugzilla.redhat.com/show_bug.cgi?id=1676431
+[rhbz#1722970]: https://bugzilla.redhat.com/show_bug.cgi?id=1722970
 [rhbz#1743731]: https://bugzilla.redhat.com/show_bug.cgi?id=1743731
 [rhbz#1781303]: https://bugzilla.redhat.com/show_bug.cgi?id=1781303
 [rhbz#1793574]: https://bugzilla.redhat.com/show_bug.cgi?id=1793574
