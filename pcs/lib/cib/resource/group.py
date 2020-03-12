@@ -1,6 +1,7 @@
 from lxml import etree
 
-from pcs.lib import reports
+from pcs.common.reports.item import ReportItem
+from pcs.common import reports
 from pcs.lib.cib.tools import find_element_by_tag_and_id
 from pcs.lib.errors import LibraryError
 
@@ -53,9 +54,13 @@ def place_resource(
         Note that it make sense only if adjacent_resource_id is specified
     """
     if primitive_element.attrib["id"] == adjacent_resource_id:
-        raise LibraryError(reports.cannot_group_resource_next_to_itself(
-            adjacent_resource_id
-        ))
+        raise LibraryError(
+            ReportItem.error(
+                reports.messages.CannotGroupResourceNextToItself(
+                    adjacent_resource_id
+                )
+            )
+        )
 
     if not adjacent_resource_id:
         group_element.append(primitive_element)

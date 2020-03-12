@@ -1,5 +1,7 @@
 from collections import defaultdict
 
+from pcs.common.reports.item import ReportItem
+from pcs.common import reports as report
 from pcs.lib import reports
 from pcs.lib.cib.resource import (
     clone,
@@ -58,7 +60,11 @@ class ValidateMoveResourcesToGroup():
         # been specified but they are not valid resource ids, then some
         # resources were specified, even though not valid ones.
         if not bad_resources_specified and not self._resource_element_list:
-            report_list.append(reports.cannot_group_resource_no_resources())
+            report_list.append(
+                ReportItem.error(
+                    report.messages.CannotGroupResourceNoResources()
+                )
+            )
 
         resources_already_in_the_group = set()
         resources_count = defaultdict(int)
@@ -66,9 +72,11 @@ class ValidateMoveResourcesToGroup():
             resource_id = resource.attrib.get("id")
             if not primitive.is_primitive(resource):
                 report_list.append(
-                    reports.cannot_group_resource_wrong_type(
-                        resource_id,
-                        resource.tag
+                    ReportItem.error(
+                        report.messages.CannotGroupResourceWrongType(
+                            resource_id,
+                            resource.tag
+                        )
                     )
                 )
                 continue
@@ -98,16 +106,20 @@ class ValidateMoveResourcesToGroup():
                     # it is either in a clone, master, bundle or similar tag
                     # and cannot be put into a group.
                     report_list.append(
-                        reports.cannot_group_resource_wrong_type(
-                            resource_id,
-                            parent.tag
+                        ReportItem.error(
+                            report.messages.CannotGroupResourceWrongType(
+                                resource_id,
+                                parent.tag
+                            )
                         )
                     )
         if resources_already_in_the_group:
             report_list.append(
-                reports.cannot_group_resource_already_in_the_group(
-                    resources_already_in_the_group,
-                    self._group_element.attrib.get("id")
+                ReportItem.error(
+                    report.messages.CannotGroupResourceAlreadyInTheGroup(
+                        sorted(resources_already_in_the_group),
+                        self._group_element.attrib.get("id")
+                    )
                 )
             )
         more_than_once_resources = [
@@ -116,8 +128,10 @@ class ValidateMoveResourcesToGroup():
         ]
         if more_than_once_resources:
             report_list.append(
-                reports.cannot_group_resource_more_than_once(
-                    more_than_once_resources
+                ReportItem.error(
+                    report.messages.CannotGroupResourceMoreThanOnce(
+                        sorted(more_than_once_resources)
+                    )
                 )
             )
         return report_list
@@ -139,10 +153,13 @@ class ValidateMoveResourcesToGroup():
                     )
                 ):
                     report_list.append(
-                        reports
-                        .cannot_group_resource_adjacent_resource_not_in_group(
-                            self._adjacent_resource_element.attrib.get("id"),
-                            self._group_element.attrib.get("id")
+                        ReportItem.error(
+                            report.messages
+                            .CannotGroupResourceAdjacentResourceNotInGroup(
+                                self._adjacent_resource_element
+                                    .attrib.get("id"),
+                                self._group_element.attrib.get("id")
+                            )
                         )
                     )
             for resource in self._resource_element_list:
@@ -152,8 +169,10 @@ class ValidateMoveResourcesToGroup():
                     resource.attrib.get("id")
                 ):
                     report_list.append(
-                        reports.cannot_group_resource_next_to_itself(
-                            self._adjacent_resource_element.attrib.get("id")
+                        ReportItem.error(
+                            report.messages.CannotGroupResourceNextToItself(
+                                self._adjacent_resource_element.attrib.get("id")
+                            )
                         )
                     )
                     break
@@ -248,19 +267,23 @@ class ValidateMoveResourcesToGroupByIds(ValidateMoveResourcesToGroup):
                     )
                 else:
                     report_list.append(
-                        reports
-                        .cannot_group_resource_adjacent_resource_not_in_group(
-                            self._adjacent_resource_id,
-                            self._group_id,
+                        ReportItem.error(
+                            report.messages
+                            .CannotGroupResourceAdjacentResourceNotInGroup(
+                                self._adjacent_resource_id,
+                                self._group_id,
+                            )
                         )
                     )
             # The group will be created so there is no adjacent resource in it.
             elif group_missing_id_valid:
                 report_list.append(
-                    reports
-                    .cannot_group_resource_adjacent_resource_for_new_group(
-                        self._adjacent_resource_id,
-                        self._group_id,
+                    ReportItem.error(
+                        report.messages
+                        .CannotGroupResourceAdjacentResourceForNewGroup(
+                            self._adjacent_resource_id,
+                            self._group_id,
+                        )
                     )
                 )
             # else: The group_id belongs to a non-group element, checking the
