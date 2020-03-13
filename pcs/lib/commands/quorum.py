@@ -1,7 +1,7 @@
-from pcs.common import reports as report
+from pcs.common import reports
 from pcs.common.reports import ReportProcessor
 from pcs.common.reports.item import ReportItem
-from pcs.lib import reports, sbd
+from pcs.lib import sbd
 from pcs.lib.env import LibraryEnvironment
 from pcs.lib.errors import LibraryError
 from pcs.lib.communication import (
@@ -67,12 +67,12 @@ def _check_if_atb_can_be_disabled(
     ):
         report_processor.report(
             ReportItem(
-                severity=report.item.get_severity(
-                    report.codes.FORCE_OPTIONS,
+                severity=reports.item.get_severity(
+                    reports.codes.FORCE_OPTIONS,
                     force,
                 ),
                 message=(
-                    report.messages.CorosyncQuorumAtbCannotBeDisabledDueToSbd()
+                    reports.messages.CorosyncQuorumAtbCannotBeDisabledDueToSbd()
                 ),
             )
         )
@@ -123,7 +123,7 @@ def status_text(lib_env):
     except corosync_live.QuorumStatusReadException as e:
         raise LibraryError(
             ReportItem.error(
-                report.messages.CorosyncQuorumGetStatusError(e.reason)
+                reports.messages.CorosyncQuorumGetStatusError(e.reason)
             )
         )
 
@@ -154,7 +154,7 @@ def add_device(
     cfg = lib_env.get_corosync_conf()
     if cfg.has_quorum_device():
         raise LibraryError(
-            ReportItem.error(report.messages.QdeviceAlreadyDefined())
+            ReportItem.error(reports.messages.QdeviceAlreadyDefined())
         )
 
     report_processor = lib_env.report_processor
@@ -192,7 +192,7 @@ def add_device(
     if cfg.is_quorum_device_heuristics_enabled_with_no_exec():
         lib_env.report_processor.report(
             ReportItem.warning(
-                report.messages.CorosyncQuorumHeuristicsEnabledWithNoExec()
+                reports.messages.CorosyncQuorumHeuristicsEnabledWithNoExec()
             )
         )
 
@@ -223,8 +223,8 @@ def add_device(
 
         lib_env.report_processor.report(
             ReportItem.info(
-                report.messages.ServiceActionStarted(
-                    report.messages.SERVICE_ENABLE, "corosync-qdevice"
+                reports.messages.ServiceActionStarted(
+                    reports.messages.SERVICE_ENABLE, "corosync-qdevice"
                 )
             )
         )
@@ -241,8 +241,8 @@ def add_device(
     if lib_env.is_corosync_conf_live:
         lib_env.report_processor.report(
             ReportItem.info(
-                report.messages.ServiceActionStarted(
-                    report.messages.SERVICE_START, "corosync-qdevice"
+                reports.messages.ServiceActionStarted(
+                    reports.messages.SERVICE_START, "corosync-qdevice"
                 )
             )
         )
@@ -272,7 +272,7 @@ def update_device(
     cfg = lib_env.get_corosync_conf()
     if not cfg.has_quorum_device():
         raise LibraryError(
-            ReportItem.error(report.messages.QdeviceNotDefined())
+            ReportItem.error(reports.messages.QdeviceNotDefined())
         )
     if lib_env.report_processor.report_list(
         corosync_conf_validators.update_quorum_device(
@@ -293,7 +293,7 @@ def update_device(
     if cfg.is_quorum_device_heuristics_enabled_with_no_exec():
         lib_env.report_processor.report(
             ReportItem.warning(
-                report.messages.CorosyncQuorumHeuristicsEnabledWithNoExec()
+                reports.messages.CorosyncQuorumHeuristicsEnabledWithNoExec()
             )
         )
     lib_env.push_corosync_conf(cfg, skip_offline_nodes)
@@ -307,7 +307,7 @@ def remove_device_heuristics(lib_env, skip_offline_nodes=False):
     cfg = lib_env.get_corosync_conf()
     if not cfg.has_quorum_device():
         raise LibraryError(
-            ReportItem.error(report.messages.QdeviceNotDefined())
+            ReportItem.error(reports.messages.QdeviceNotDefined())
         )
     cfg.remove_quorum_device_heuristics()
     lib_env.push_corosync_conf(cfg, skip_offline_nodes)
@@ -320,7 +320,7 @@ def remove_device(lib_env: LibraryEnvironment, skip_offline_nodes=False):
     cfg = lib_env.get_corosync_conf()
     if not cfg.has_quorum_device():
         raise LibraryError(
-            ReportItem.error(report.messages.QdeviceNotDefined())
+            ReportItem.error(reports.messages.QdeviceNotDefined())
         )
     model = cfg.get_quorum_device_model()
     cfg.remove_quorum_device()
@@ -344,7 +344,7 @@ def remove_device(lib_env: LibraryEnvironment, skip_offline_nodes=False):
         if sbd.atb_has_to_be_enabled(lib_env.cmd_runner(), cfg):
             lib_env.report_processor.report(
                 ReportItem.warning(
-                    report.messages.CorosyncQuorumAtbWillBeEnabledDueToSbd()
+                    reports.messages.CorosyncQuorumAtbWillBeEnabledDueToSbd()
                 )
             )
             cfg.set_quorum_options({"auto_tie_breaker": "1"})
@@ -352,8 +352,8 @@ def remove_device(lib_env: LibraryEnvironment, skip_offline_nodes=False):
         # disable qdevice
         lib_env.report_processor.report(
             ReportItem.info(
-                report.messages.ServiceActionStarted(
-                    report.messages.SERVICE_DISABLE, "corosync-qdevice"
+                reports.messages.ServiceActionStarted(
+                    reports.messages.SERVICE_DISABLE, "corosync-qdevice"
                 )
             )
         )
@@ -365,8 +365,8 @@ def remove_device(lib_env: LibraryEnvironment, skip_offline_nodes=False):
         # stop qdevice
         lib_env.report_processor.report(
             ReportItem.info(
-                report.messages.ServiceActionStarted(
-                    report.messages.SERVICE_STOP, "corosync-qdevice"
+                reports.messages.ServiceActionStarted(
+                    reports.messages.SERVICE_STOP, "corosync-qdevice"
                 )
             )
         )
@@ -379,7 +379,7 @@ def remove_device(lib_env: LibraryEnvironment, skip_offline_nodes=False):
         if model == "net":
             lib_env.report_processor.report(
                 ReportItem.info(
-                    report.messages.QdeviceCertificateRemovalStarted()
+                    reports.messages.QdeviceCertificateRemovalStarted()
                 )
             )
             com_cmd_client_destroy = qdevice_net_com.ClientDestroy(
@@ -404,7 +404,7 @@ def set_expected_votes_live(lib_env, expected_votes):
     except ValueError:
         raise LibraryError(
             ReportItem.error(
-                report.messages.InvalidOptionValue(
+                reports.messages.InvalidOptionValue(
                     "expected votes",
                     expected_votes,
                     "positive integer"

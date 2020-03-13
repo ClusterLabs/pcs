@@ -2,7 +2,7 @@ import base64
 import binascii
 from typing import List
 
-from pcs.common import reports as report
+from pcs.common import reports
 from pcs.common.reports import (
     codes as report_codes,
     ReportProcessor,
@@ -11,7 +11,7 @@ from pcs.common.reports.item import (
     get_severity,
     ReportItem,
 )
-from pcs.lib import external, reports
+from pcs.lib import external
 from pcs.lib.corosync import qdevice_net
 from pcs.lib.env import LibraryEnvironment
 from pcs.lib.errors import LibraryError
@@ -27,7 +27,7 @@ def qdevice_setup(lib_env: LibraryEnvironment, model, enable, start):
     _check_model(model)
     qdevice_net.qdevice_setup(lib_env.cmd_runner())
     lib_env.report_processor.report(
-        ReportItem.info(report.messages.QdeviceInitializationSuccess(model))
+        ReportItem.info(reports.messages.QdeviceInitializationSuccess(model))
     )
     if enable:
         _service_enable(lib_env, qdevice_net.qdevice_enable)
@@ -51,7 +51,7 @@ def qdevice_destroy(lib_env: LibraryEnvironment, model, proceed_if_used=False):
     _service_disable(lib_env, qdevice_net.qdevice_disable)
     qdevice_net.qdevice_destroy()
     lib_env.report_processor.report(
-        ReportItem.info(report.messages.QdeviceDestroySuccess(model))
+        ReportItem.info(reports.messages.QdeviceDestroySuccess(model))
     )
 
 def qdevice_status_text(
@@ -76,7 +76,7 @@ def qdevice_status_text(
         )
     except qdevice_net.QnetdNotRunningException:
         raise LibraryError(
-            ReportItem.error(report.messages.QdeviceNotRunning(model))
+            ReportItem.error(reports.messages.QdeviceNotRunning(model))
         )
 
 def qdevice_enable(lib_env: LibraryEnvironment, model):
@@ -101,7 +101,7 @@ def qdevice_start(lib_env: LibraryEnvironment, model):
     if not qdevice_net.qdevice_initialized():
         raise LibraryError(
             ReportItem.error(
-                report.messages.QdeviceNotInitialized(model)
+                reports.messages.QdeviceNotInitialized(model)
             )
         )
     _service_start(lib_env, qdevice_net.qdevice_start)
@@ -143,7 +143,7 @@ def qdevice_net_sign_certificate_request(
     except (TypeError, binascii.Error):
         raise LibraryError(
             ReportItem.error(
-                report.messages.InvalidOptionValue(
+                reports.messages.InvalidOptionValue(
                     "qnetd certificate request",
                     certificate_request,
                     ["base64 encoded certificate"]
@@ -168,7 +168,7 @@ def client_net_setup(lib_env: LibraryEnvironment, ca_certificate):
     except (TypeError, binascii.Error):
         raise LibraryError(
             ReportItem.error(
-                report.messages.InvalidOptionValue(
+                reports.messages.InvalidOptionValue(
                 "qnetd CA certificate",
                 ca_certificate,
                 ["base64 encoded certificate"]
@@ -187,7 +187,7 @@ def client_net_import_certificate(lib_env: LibraryEnvironment, certificate):
     except (TypeError, binascii.Error):
         raise LibraryError(
             ReportItem.error(
-                report.messages.InvalidOptionValue(
+                reports.messages.InvalidOptionValue(
                     "qnetd client certificate",
                     certificate,
                     ["base64 encoded certificate"]
@@ -210,7 +210,7 @@ def _check_model(model):
     if model != "net":
         raise LibraryError(
             ReportItem.error(
-                report.messages.InvalidOptionValue("model", model, ["net"])
+                reports.messages.InvalidOptionValue("model", model, ["net"])
             )
         )
 
@@ -229,7 +229,7 @@ def _check_qdevice_not_used(
         reporter.report(
             ReportItem(
                 severity=get_severity(report_codes.FORCE_QDEVICE_USED, force),
-                message=report.messages.QdeviceUsedByClusters(
+                message=reports.messages.QdeviceUsedByClusters(
                     connected_clusters,
                 )
             )
@@ -240,8 +240,8 @@ def _check_qdevice_not_used(
 def _service_start(lib_env: LibraryEnvironment, func):
     lib_env.report_processor.report(
         ReportItem.info(
-            report.messages.ServiceActionStarted(
-                report.messages.SERVICE_START, "quorum device"
+            reports.messages.ServiceActionStarted(
+                reports.messages.SERVICE_START, "quorum device"
             )
         )
     )
@@ -250,15 +250,15 @@ def _service_start(lib_env: LibraryEnvironment, func):
     except external.StartServiceError as e:
         raise LibraryError(
             ReportItem.error(
-                report.messages.ServiceActionFailed(
-                    report.messages.SERVICE_START, e.service, e.message
+                reports.messages.ServiceActionFailed(
+                    reports.messages.SERVICE_START, e.service, e.message
                 )
             )
         )
     lib_env.report_processor.report(
         ReportItem.info(
-            report.messages.ServiceActionSucceeded(
-                report.messages.SERVICE_START, "quorum device",
+            reports.messages.ServiceActionSucceeded(
+                reports.messages.SERVICE_START, "quorum device",
             )
         )
     )
@@ -266,8 +266,8 @@ def _service_start(lib_env: LibraryEnvironment, func):
 def _service_stop(lib_env: LibraryEnvironment, func):
     lib_env.report_processor.report(
         ReportItem.info(
-            report.messages.ServiceActionStarted(
-                report.messages.SERVICE_STOP, "quorum device"
+            reports.messages.ServiceActionStarted(
+                reports.messages.SERVICE_STOP, "quorum device"
             )
         )
     )
@@ -276,15 +276,15 @@ def _service_stop(lib_env: LibraryEnvironment, func):
     except external.StopServiceError as e:
         raise LibraryError(
             ReportItem.error(
-                report.messages.ServiceActionFailed(
-                    report.messages.SERVICE_STOP, e.service, e.message
+                reports.messages.ServiceActionFailed(
+                    reports.messages.SERVICE_STOP, e.service, e.message
                 )
             )
         )
     lib_env.report_processor.report(
         ReportItem.info(
-            report.messages.ServiceActionSucceeded(
-                report.messages.SERVICE_STOP, "quorum device"
+            reports.messages.ServiceActionSucceeded(
+                reports.messages.SERVICE_STOP, "quorum device"
             )
         )
     )
@@ -296,8 +296,8 @@ def _service_kill(lib_env: LibraryEnvironment, func):
         raise LibraryError(
             *[
                 ReportItem.error(
-                    report.messages.ServiceActionFailed(
-                        report.messages.SERVICE_KILL, service, e.message
+                    reports.messages.ServiceActionFailed(
+                        reports.messages.SERVICE_KILL, service, e.message
                     )
                 )
                 for service in e.service
@@ -305,8 +305,8 @@ def _service_kill(lib_env: LibraryEnvironment, func):
         )
     lib_env.report_processor.report(
         ReportItem.info(
-            report.messages.ServiceActionSucceeded(
-                report.messages.SERVICE_KILL, "quorum device"
+            reports.messages.ServiceActionSucceeded(
+                reports.messages.SERVICE_KILL, "quorum device"
             )
         )
     )
@@ -317,8 +317,8 @@ def _service_enable(lib_env: LibraryEnvironment, func):
     except external.EnableServiceError as e:
         raise LibraryError(
             ReportItem.error(
-                report.messages.ServiceActionFailed(
-                    report.messages.SERVICE_ENABLE,
+                reports.messages.ServiceActionFailed(
+                    reports.messages.SERVICE_ENABLE,
                     e.service,
                     e.message,
                 )
@@ -326,8 +326,8 @@ def _service_enable(lib_env: LibraryEnvironment, func):
         )
     lib_env.report_processor.report(
         ReportItem.info(
-            report.messages.ServiceActionSucceeded(
-                report.messages.SERVICE_ENABLE, "quorum device"
+            reports.messages.ServiceActionSucceeded(
+                reports.messages.SERVICE_ENABLE, "quorum device"
             )
         )
     )
@@ -338,8 +338,8 @@ def _service_disable(lib_env: LibraryEnvironment, func):
     except external.DisableServiceError as e:
         raise LibraryError(
             ReportItem.error(
-                report.messages.ServiceActionFailed(
-                    report.messages.SERVICE_DISABLE,
+                reports.messages.ServiceActionFailed(
+                    reports.messages.SERVICE_DISABLE,
                     e.service,
                     e.message,
                 )
@@ -347,8 +347,8 @@ def _service_disable(lib_env: LibraryEnvironment, func):
         )
     lib_env.report_processor.report(
         ReportItem.info(
-            report.messages.ServiceActionSucceeded(
-                report.messages.SERVICE_DISABLE, "quorum device"
+            reports.messages.ServiceActionSucceeded(
+                reports.messages.SERVICE_DISABLE, "quorum device"
             )
         )
     )

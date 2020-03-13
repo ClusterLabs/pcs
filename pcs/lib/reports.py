@@ -105,29 +105,6 @@ def duplicate_constraints_exist(
         forceable=forceable
     )
 
-def corosync_config_accepted_by_node(node):
-    """
-    corosync configuration has been accepted by a node
-    node string node address / name
-    """
-    return ReportItem.info(
-        report_codes.COROSYNC_CONFIG_ACCEPTED_BY_NODE,
-        info={"node": node}
-    )
-
-def corosync_config_read_error(path, reason):
-    """
-    an error occured when reading corosync configuration file from disk
-    reason string an error message
-    """
-    return ReportItem.error(
-        report_codes.UNABLE_TO_READ_COROSYNC_CONFIG,
-        info={
-            "path": path,
-            "reason": reason,
-        }
-    )
-
 def id_already_exists(id):
     # pylint says 'id' is wrong
     # pylint: disable=invalid-name, redefined-builtin

@@ -398,20 +398,6 @@ class CibPushForcedFullDueToCrmFeatureSet(NameBuildTest):
                 "3.0.9", "3.0.6")
         )
 
-class CorosyncConfigAcceptedByNode(NameBuildTest):
-    def test_all(self):
-        self.assert_message_from_report(
-            "node1: Succeeded",
-            reports.corosync_config_accepted_by_node("node1")
-        )
-
-
-class CorosyncConfigReadError(NameBuildTest):
-    def test_all(self):
-        self.assert_message_from_report(
-            "Unable to read /dev/path: this is reason",
-            reports.corosync_config_read_error("/dev/path", "this is reason")
-        )
 
 class DuplicateConstraintsExist(NameBuildTest):
     def test_single_constraint_empty_force(self):
