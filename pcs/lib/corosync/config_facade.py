@@ -3,9 +3,8 @@ from typing import (
 )
 
 from pcs import settings
-from pcs.common import reports as report
+from pcs.common import reports
 from pcs.common.reports.item import ReportItem
-from pcs.lib import reports
 from pcs.lib.corosync import config_parser, constants, node
 from pcs.lib.errors import LibraryError
 
@@ -25,47 +24,47 @@ class ConfigFacade:
         except config_parser.MissingClosingBraceException:
             raise LibraryError(
                 ReportItem.error(
-                    report.messages.ParseErrorCorosyncConfMissingClosingBrace()
+                    reports.messages.ParseErrorCorosyncConfMissingClosingBrace()
                 )
             )
         except config_parser.UnexpectedClosingBraceException:
             # pylint: disable=line-too-long
             raise LibraryError(
                 ReportItem.error(
-                    report.messages.ParseErrorCorosyncConfUnexpectedClosingBrace()
+                    reports.messages.ParseErrorCorosyncConfUnexpectedClosingBrace()
                 )
             )
         except config_parser.MissingSectionNameBeforeOpeningBraceException:
             # pylint: disable=line-too-long
             raise LibraryError(
                 ReportItem.error(
-                    report.messages.ParseErrorCorosyncConfMissingSectionNameBeforeOpeningBrace()
+                    reports.messages.ParseErrorCorosyncConfMissingSectionNameBeforeOpeningBrace()
                 )
             )
         except config_parser.ExtraCharactersAfterOpeningBraceException:
             # pylint: disable=line-too-long
             raise LibraryError(
                 ReportItem.error(
-                    report.messages.ParseErrorCorosyncConfExtraCharactersAfterOpeningBrace()
+                    reports.messages.ParseErrorCorosyncConfExtraCharactersAfterOpeningBrace()
                 )
             )
         except config_parser.ExtraCharactersBeforeOrAfterClosingBraceException:
             # pylint: disable=line-too-long
             raise LibraryError(
                 ReportItem.error(
-                    report.messages.ParseErrorCorosyncConfExtraCharactersBeforeOrAfterClosingBrace()
+                    reports.messages.ParseErrorCorosyncConfExtraCharactersBeforeOrAfterClosingBrace()
                 )
             )
         except config_parser.LineIsNotSectionNorKeyValueException:
             # pylint: disable=line-too-long
             raise LibraryError(
                 ReportItem.error(
-                    report.messages.ParseErrorCorosyncConfLineIsNotSectionNorKeyValue()
+                    reports.messages.ParseErrorCorosyncConfLineIsNotSectionNorKeyValue()
                 )
             )
         except config_parser.CorosyncConfParserException:
             raise LibraryError(
-                ReportItem.error(report.messages.ParseErrorCorosyncConf())
+                ReportItem.error(reports.messages.ParseErrorCorosyncConf())
             )
 
     @classmethod
@@ -618,7 +617,7 @@ class ConfigFacade:
         """
         if self.has_quorum_device():
             raise LibraryError(
-                ReportItem.error(report.messages.QdeviceAlreadyDefined())
+                ReportItem.error(reports.messages.QdeviceAlreadyDefined())
             )
 
         # configuration cleanup
@@ -679,7 +678,7 @@ class ConfigFacade:
         """
         if not self.has_quorum_device():
             raise LibraryError(
-                ReportItem.error(report.messages.QdeviceNotDefined())
+                ReportItem.error(reports.messages.QdeviceNotDefined())
             )
         model = self.get_quorum_device_model()
 
@@ -719,7 +718,7 @@ class ConfigFacade:
         """
         if not self.has_quorum_device():
             raise LibraryError(
-                ReportItem.error(report.messages.QdeviceNotDefined())
+                ReportItem.error(reports.messages.QdeviceNotDefined())
             )
         for quorum in self.config.get_sections("quorum"):
             for device in quorum.get_sections("device"):
@@ -734,7 +733,7 @@ class ConfigFacade:
         """
         if not self.has_quorum_device():
             raise LibraryError(
-                ReportItem.error(report.messages.QdeviceNotDefined())
+                ReportItem.error(reports.messages.QdeviceNotDefined())
             )
         for quorum in self.config.get_sections("quorum"):
             for device in quorum.get_sections("device"):
