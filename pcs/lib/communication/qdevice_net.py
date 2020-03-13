@@ -1,13 +1,12 @@
 import base64
 import binascii
 
-from pcs.common import reports as common_report
+from pcs.common import reports
 from pcs.common.node_communicator import (
     Request,
     RequestData,
 )
 from pcs.common.reports.item import ReportItem
-from pcs.lib import reports
 from pcs.lib.communication.tools import (
     AllAtOnceStrategyMixin,
     AllSameDataMixin,
@@ -40,7 +39,7 @@ class GetCaCert(
         except (TypeError, binascii.Error):
             self._report(
                 ReportItem.error(
-                    common_report.messages.InvalidResponseFormat(target.label)
+                    reports.messages.InvalidResponseFormat(target.label)
                 )
             )
 
@@ -102,7 +101,7 @@ class SignCertificate(AllAtOnceStrategyMixin, RunRemotelyBase):
         except (TypeError, binascii.Error):
             self._report(
                 ReportItem.error(
-                    common_report.messages.InvalidResponseFormat(target.label)
+                    reports.messages.InvalidResponseFormat(target.label)
                 )
             )
 
@@ -131,7 +130,7 @@ class ClientImportCertificateAndKey(
 
     def _get_success_report(self, node_label):
         return ReportItem.info(
-            common_report.messages.QdeviceCertificateAcceptedByNode(node_label)
+            reports.messages.QdeviceCertificateAcceptedByNode(node_label)
         )
 
 
@@ -140,4 +139,6 @@ class ClientDestroy(SimpleResponseProcessingMixin, QdeviceBase):
         return RequestData("remote/qdevice_net_client_destroy")
 
     def _get_success_report(self, node_label):
-        return reports.qdevice_certificate_removed_from_node(node_label)
+        return ReportItem.info(
+            reports.messages.QdeviceCertificateRemovedFromNode(node_label)
+        )

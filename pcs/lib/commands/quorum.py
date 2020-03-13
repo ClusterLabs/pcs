@@ -378,7 +378,9 @@ def remove_device(lib_env: LibraryEnvironment, skip_offline_nodes=False):
         # handle model specific configuration
         if model == "net":
             lib_env.report_processor.report(
-                reports.qdevice_certificate_removal_started()
+                ReportItem.info(
+                    report.messages.QdeviceCertificateRemovalStarted()
+                )
             )
             com_cmd_client_destroy = qdevice_net_com.ClientDestroy(
                 lib_env.report_processor, skip_offline_nodes

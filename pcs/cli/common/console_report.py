@@ -179,55 +179,6 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
         .format(**info)
     ,
 
-    codes.QDEVICE_INITIALIZATION_ERROR: lambda info:
-        "Unable to initialize quorum device '{model}': {reason}"
-        .format(**info)
-    ,
-
-    codes.QDEVICE_CERTIFICATE_REMOVAL_STARTED:
-        "Removing qdevice certificates from nodes..."
-    ,
-
-    codes.QDEVICE_CERTIFICATE_REMOVED_FROM_NODE: lambda info:
-        "{node}: Succeeded"
-        .format(**info)
-    ,
-
-    codes.QDEVICE_CERTIFICATE_IMPORT_ERROR: lambda info:
-        "Unable to import quorum device certificate: {reason}"
-        .format(**info)
-    ,
-
-    codes.QDEVICE_CERTIFICATE_SIGN_ERROR: lambda info:
-        "Unable to sign quorum device certificate: {reason}"
-        .format(**info)
-    ,
-
-    codes.QDEVICE_DESTROY_SUCCESS: lambda info:
-        "Quorum device '{model}' configuration files removed"
-        .format(**info)
-    ,
-
-    codes.QDEVICE_DESTROY_ERROR: lambda info:
-        "Unable to destroy quorum device '{model}': {reason}"
-        .format(**info)
-    ,
-
-    codes.QDEVICE_NOT_RUNNING: lambda info:
-        "Quorum device '{model}' is not running"
-        .format(**info)
-    ,
-
-    codes.QDEVICE_GET_STATUS_ERROR: lambda info:
-        "Unable to get status of quorum device '{model}': {reason}"
-        .format(**info)
-    ,
-
-    codes.QDEVICE_USED_BY_CLUSTERS: lambda info:
-        "Quorum device is currently being used by cluster(s): {cluster_list}"
-        .format(cluster_list=", ".join(info["clusters"]))
-    ,
-
     codes.ID_ALREADY_EXISTS: lambda info:
         "'{id}' already exists"
         .format(**info)

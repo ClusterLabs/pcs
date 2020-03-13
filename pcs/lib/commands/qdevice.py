@@ -6,9 +6,11 @@ from pcs.common import reports as report
 from pcs.common.reports import (
     codes as report_codes,
     ReportProcessor,
-    ReportItemSeverity,
 )
-from pcs.common.reports.item import ReportItem
+from pcs.common.reports.item import (
+    get_severity,
+    ReportItem,
+)
 from pcs.lib import external, reports
 from pcs.lib.corosync import qdevice_net
 from pcs.lib.env import LibraryEnvironment
@@ -48,7 +50,9 @@ def qdevice_destroy(lib_env: LibraryEnvironment, model, proceed_if_used=False):
     _service_stop(lib_env, qdevice_net.qdevice_stop)
     _service_disable(lib_env, qdevice_net.qdevice_disable)
     qdevice_net.qdevice_destroy()
-    lib_env.report_processor.report(reports.qdevice_destroy_success(model))
+    lib_env.report_processor.report(
+        ReportItem.info(report.messages.QdeviceDestroySuccess(model))
+    )
 
 def qdevice_status_text(
     lib_env: LibraryEnvironment,
@@ -72,7 +76,7 @@ def qdevice_status_text(
         )
     except qdevice_net.QnetdNotRunningException:
         raise LibraryError(
-            reports.qdevice_not_running(model)
+            ReportItem.error(report.messages.QdeviceNotRunning(model))
         )
 
 def qdevice_enable(lib_env: LibraryEnvironment, model):
@@ -222,11 +226,14 @@ def _check_qdevice_not_used(
         except qdevice_net.QnetdNotRunningException:
             pass
     if connected_clusters:
-        reporter.report(reports.qdevice_used_by_clusters(
-            connected_clusters,
-            ReportItemSeverity.WARNING if force else ReportItemSeverity.ERROR,
-            None if force else report_codes.FORCE_QDEVICE_USED
-        ))
+        reporter.report(
+            ReportItem(
+                severity=get_severity(report_codes.FORCE_QDEVICE_USED, force),
+                message=report.messages.QdeviceUsedByClusters(
+                    connected_clusters,
+                )
+            )
+        )
         if reporter.has_errors:
             raise LibraryError()
 
