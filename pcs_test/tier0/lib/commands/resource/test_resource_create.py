@@ -8,8 +8,8 @@ from pcs_test.tools.misc import (
     skip_unless_pacemaker_supports_bundle,
 )
 
+from pcs.common import reports
 from pcs.common.reports import codes as report_codes
-from pcs.lib import reports
 from pcs.lib.commands import resource
 from pcs.lib.errors import LibraryError
 
@@ -573,7 +573,9 @@ class CreateWait(TestCase):
             resources=fixture_cib_resources_xml_primitive_simplest,
             wait=TIMEOUT,
             exception=LibraryError(
-                reports.wait_for_idle_timed_out(wait_error_message)
+                reports.item.ReportItem.error(
+                    reports.messages.WaitForIdleTimedOut(wait_error_message)
+                )
             ),
             instead="env.push_cib"
         )
@@ -732,7 +734,9 @@ class CreateInGroup(TestCase):
             resources=fixture_cib_resources_xml_group_simplest,
             wait=TIMEOUT,
             exception=LibraryError(
-                reports.wait_for_idle_timed_out(wait_error_message)
+                reports.item.ReportItem.error(
+                    reports.messages.WaitForIdleTimedOut(wait_error_message)
+                )
             )
         )
 
@@ -855,7 +859,9 @@ class CreateAsClone(TestCase):
             resources=fixture_cib_resources_xml_clone_simplest,
             wait=TIMEOUT,
             exception=LibraryError(
-                reports.wait_for_idle_timed_out(wait_error_message)
+                reports.item.ReportItem.error(
+                    reports.messages.WaitForIdleTimedOut(wait_error_message)
+                )
             )
         )
         self.env_assist.assert_raise_library_error(
@@ -1393,7 +1399,9 @@ class CreateInToBundle(TestCase):
                 resources=self.fixture_resources_post_simple,
                 wait=TIMEOUT,
                 exception=LibraryError(
-                    reports.wait_for_idle_timed_out(wait_error_message)
+                    reports.item.ReportItem.error(
+                        reports.messages.WaitForIdleTimedOut(wait_error_message)
+                    )
                 )
             )
         )

@@ -1,6 +1,5 @@
 # pylint: disable=too-many-lines
 from collections.abc import Iterable
-from functools import partial
 from typing import Mapping
 import sys
 
@@ -9,9 +8,7 @@ from pcs.common.file import RawFileError
 from pcs.common.fencing_topology import TARGET_TYPE_ATTRIBUTE
 from pcs.common.reports import codes
 from pcs.common.str_tools import (
-    format_list,
     format_optional,
-    indent,
 )
 
 INSTANCE_SUFFIX = "@{0}"
@@ -84,42 +81,6 @@ def format_file_role(role):
 def is_iterable_not_str(value):
     return isinstance(value, Iterable) and not isinstance(value, str)
 
-def service_operation_started(operation, info):
-    return "{operation} {service}{instance_suffix}...".format(
-        operation=operation,
-        instance_suffix=format_optional(info["instance"], INSTANCE_SUFFIX),
-        **info
-    )
-
-def service_operation_error(operation, info):
-    return (
-        "{node_prefix}Unable to {operation} {service}{instance_suffix}:"
-        " {reason}"
-    ).format(
-        operation=operation,
-        instance_suffix=format_optional(info["instance"], INSTANCE_SUFFIX),
-        node_prefix=format_optional(info["node"], NODE_PREFIX),
-        **info
-    )
-
-def service_operation_success(operation, info):
-    return "{node_prefix}{service}{instance_suffix} {operation}".format(
-        operation=operation,
-        instance_suffix=format_optional(info["instance"], INSTANCE_SUFFIX),
-        node_prefix=format_optional(info["node"], NODE_PREFIX),
-        **info
-    )
-
-def service_operation_skipped(operation, info):
-    return (
-        "{node_prefix}not {operation} {service}{instance_suffix}: {reason}"
-    ).format(
-        operation=operation,
-        instance_suffix=format_optional(info["instance"], INSTANCE_SUFFIX),
-        node_prefix=format_optional(info["node"], NODE_PREFIX),
-        **info
-    )
-
 def type_to_string(type_name, article=False):
     if not type_name:
         return ""
@@ -187,29 +148,6 @@ def id_not_found(info):
             context_type=info["context_type"],
             context_id=info["context_id"],
         )
-    )
-
-def resource_running_on_nodes(info):
-    role_label_map = {
-        "Started": "running",
-    }
-    state_info = {}
-    for state, node_list in info["roles_with_nodes"].items():
-        state_info.setdefault(
-            role_label_map.get(state, state.lower()),
-            []
-        ).extend(node_list)
-
-    return "resource '{resource_id}' is {detail_list}".format(
-        resource_id=info["resource_id"],
-        detail_list="; ".join(sorted([
-            "{run_type} on node{s} {node_list}".format(
-                run_type=run_type,
-                s="s" if len(node_list) > 1 else "",
-                node_list=format_list(node_list)
-            )
-            for run_type, node_list in state_info.items()
-        ]))
     )
 
 def build_node_description(node_types):
@@ -365,153 +303,10 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
         .format(**info)
     ,
 
-    codes.CRM_MON_ERROR: lambda info:
-        "error running crm_mon, is pacemaker running?{_reason}"
-        .format(
-            _reason=(
-                ("\n" + "\n".join(indent(info["reason"].strip().splitlines())))
-                if info["reason"].strip()
-                else ""
-            ),
-            **info
-        )
-    ,
-
-    codes.BAD_CLUSTER_STATE_FORMAT:
-        "cannot load cluster status, xml does not conform to the schema"
-    ,
-
-    codes.WAIT_FOR_IDLE_NOT_SUPPORTED:
-        "crm_resource does not support --wait, please upgrade pacemaker"
-    ,
-
-    codes.WAIT_FOR_IDLE_NOT_LIVE_CLUSTER:
-        "Cannot use '-f' together with '--wait'"
-    ,
-
-    codes.WAIT_FOR_IDLE_TIMED_OUT: lambda info:
-        "waiting timeout\n\n{reason}"
-        .format(**info)
-    ,
-
-    codes.WAIT_FOR_IDLE_ERROR: lambda info:
-        "{reason}"
-        .format(**info)
-    ,
-
     codes.RESOURCE_BUNDLE_ALREADY_CONTAINS_A_RESOURCE: lambda info:
         (
             "bundle '{bundle_id}' already contains resource '{resource_id}'"
             ", a bundle may contain at most one resource"
         ).format(**info)
-    ,
-
-    codes.RESOURCE_CLEANUP_ERROR: lambda info:
-        (
-             (
-                "Unable to forget failed operations of resource: {resource}"
-                "\n{reason}"
-             )
-             if info["resource"] else
-             "Unable to forget failed operations of resources\n{reason}"
-        ).format(**info)
-    ,
-
-    codes.RESOURCE_REFRESH_ERROR: lambda info:
-        (
-             "Unable to delete history of resource: {resource}\n{reason}"
-             if info["resource"] else
-             "Unable to delete history of resources\n{reason}"
-        ).format(**info)
-    ,
-
-    codes.RESOURCE_REFRESH_TOO_TIME_CONSUMING: lambda info:
-        (
-             "Deleting history of all resources on all nodes will execute more "
-             "than {threshold} operations in the cluster, which may "
-             "negatively impact the responsiveness of the cluster. "
-             "Consider specifying resource and/or node"
-       ).format(**info)
-    ,
-
-    codes.RESOURCE_OPERATION_INTERVAL_DUPLICATION: lambda info: (
-        "multiple specification of the same operation with the same interval:\n"
-        +"\n".join([
-            "{0} with intervals {1}".format(name, ", ".join(intervals))
-            for name, intervals_list in info["duplications"].items()
-            for intervals in intervals_list
-        ])
-    ),
-
-    codes.RESOURCE_OPERATION_INTERVAL_ADAPTED: lambda info:
-        (
-            "changing a {operation_name} operation interval"
-                " from {original_interval}"
-                " to {adapted_interval} to make the operation unique"
-        ).format(**info)
-    ,
-
-    codes.RESOURCE_RUNNING_ON_NODES:  resource_running_on_nodes,
-
-    codes.RESOURCE_DOES_NOT_RUN: lambda info:
-        "resource '{resource_id}' is not running on any node"
-        .format(**info)
-    ,
-
-    codes.RESOURCE_IS_UNMANAGED: lambda info:
-        "'{resource_id}' is unmanaged"
-        .format(**info)
-    ,
-
-    codes.RESOURCE_IS_GUEST_NODE_ALREADY: lambda info:
-        "the resource '{resource_id}' is already a guest node"
-        .format(**info)
-    ,
-
-    codes.MULTIPLE_RESULTS_FOUND: lambda info:
-        "more than one {result_type}{search_description} found: {what_found}"
-        .format(
-            what_found=format_list(info["result_identifier_list"]),
-            search_description="" if not info["search_description"]
-                else " for '{0}'".format(info["search_description"])
-            ,
-            result_type=info["result_type"]
-        )
-    ,
-
-    codes.PACEMAKER_LOCAL_NODE_NAME_NOT_FOUND: lambda info:
-        "unable to get local node name from pacemaker: {reason}"
-        .format(**info)
-    ,
-
-    codes.SERVICE_START_STARTED: partial(service_operation_started, "Starting"),
-    codes.SERVICE_START_SKIPPED: partial(service_operation_skipped, "starting"),
-
-    codes.SERVICE_STOP_STARTED: partial(service_operation_started, "Stopping"),
-
-    codes.SERVICE_ENABLE_STARTED: partial(
-        service_operation_started, "Enabling"
-    ),
-    codes.SERVICE_ENABLE_SKIPPED: partial(
-        service_operation_skipped, "enabling"
-    ),
-
-    codes.SERVICE_DISABLE_STARTED:
-        partial(service_operation_started, "Disabling")
-     ,
-    codes.SERVICE_KILL_ERROR: lambda info:
-        "Unable to kill {_service_list}: {reason}"
-        .format(
-            _service_list=", ".join(info["services"]),
-            **info
-        )
-    ,
-
-    codes.SERVICE_KILL_SUCCESS: lambda info:
-        "{_service_list} killed"
-        .format(
-            _service_list=", ".join(info["services"]),
-            **info
-        )
     ,
 }

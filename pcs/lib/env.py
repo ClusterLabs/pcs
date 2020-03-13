@@ -169,7 +169,11 @@ class LibraryEnvironment:
 
         if wait not in self.__timeout_cache:
             if not self.is_cib_live:
-                raise LibraryError(reports.wait_for_idle_not_live_cluster())
+                raise LibraryError(
+                    ReportItem.error(
+                        report.messages.WaitForIdleNotLiveCluster()
+                    )
+                )
             ensure_wait_for_idle_support(self.cmd_runner())
             self.__timeout_cache[wait] = get_valid_timeout_seconds(wait)
         return self.__timeout_cache[wait]

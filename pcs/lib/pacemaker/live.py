@@ -45,7 +45,9 @@ def get_cluster_status_xml(runner):
     )
     if retval != 0:
         raise CrmMonErrorException(
-            reports.cluster_state_cannot_load(join_multilines([stderr, stdout]))
+            ReportItem.error(
+                report.messages.CrmMonError(join_multilines([stderr, stdout]))
+            )
         )
     return stdout
 
@@ -67,7 +69,9 @@ def get_cluster_status_text(
 
     if retval != 0:
         raise CrmMonErrorException(
-            reports.cluster_state_cannot_load(join_multilines([stderr, stdout]))
+            ReportItem.error(
+                report.messages.CrmMonError(join_multilines([stderr, stdout]))
+            )
         )
     warnings: List[str] = []
     if stderr.strip():
@@ -361,7 +365,9 @@ def has_wait_for_idle_support(runner):
 
 def ensure_wait_for_idle_support(runner):
     if not has_wait_for_idle_support(runner):
-        raise LibraryError(reports.wait_for_idle_not_supported())
+        raise LibraryError(
+            ReportItem.error(report.messages.WaitForIdleNotSupported())
+        )
 
 def wait_for_idle(runner, timeout=None):
     """
@@ -380,13 +386,17 @@ def wait_for_idle(runner, timeout=None):
         # We use stdout just to be sure if that's get changed.
         if retval == __EXITCODE_WAIT_TIMEOUT:
             raise LibraryError(
-                reports.wait_for_idle_timed_out(
-                    join_multilines([stderr, stdout])
+                ReportItem.error(
+                    report.messages.WaitForIdleTimedOut(
+                        join_multilines([stderr, stdout])
+                    )
                 )
             )
         raise LibraryError(
-            reports.wait_for_idle_error(
-                join_multilines([stderr, stdout])
+            ReportItem.error(
+                report.messages.WaitForIdleError(
+                    join_multilines([stderr, stdout])
+                )
             )
         )
 
@@ -396,8 +406,10 @@ def get_local_node_name(runner):
     stdout, stderr, retval = runner.run([__exec("crm_node"), "--name"])
     if retval != 0:
         raise LibraryError(
-            reports.pacemaker_local_node_name_not_found(
-                join_multilines([stderr, stdout])
+            ReportItem.error(
+                report.messages.PacemakerLocalNodeNameNotFound(
+                    join_multilines([stderr, stdout])
+                )
             )
         )
     return stdout.strip()
@@ -467,10 +479,10 @@ def resource_cleanup(
 
     if retval != 0:
         raise LibraryError(
-            reports.resource_cleanup_error(
-                join_multilines([stderr, stdout]),
-                resource,
-                node
+            ReportItem.error(
+                report.messages.ResourceCleanupError(
+                    join_multilines([stderr, stdout]), resource, node
+                )
             )
         )
     # usefull output (what has been done) goes to stderr
@@ -488,8 +500,13 @@ def resource_refresh(
         operations = summary.nodes.attrs.count * summary.resources.attrs.count
         if operations > __RESOURCE_REFRESH_OPERATION_COUNT_THRESHOLD:
             raise LibraryError(
-                reports.resource_refresh_too_time_consuming(
-                    __RESOURCE_REFRESH_OPERATION_COUNT_THRESHOLD
+                ReportItem(
+                    report.item.ReportItemSeverity.error(
+                        report.codes.FORCE_LOAD_THRESHOLD
+                    ),
+                    report.messages.ResourceRefreshTooTimeConsuming(
+                        __RESOURCE_REFRESH_OPERATION_COUNT_THRESHOLD
+                    )
                 )
             )
 
@@ -505,10 +522,10 @@ def resource_refresh(
 
     if retval != 0:
         raise LibraryError(
-            reports.resource_refresh_error(
-                join_multilines([stderr, stdout]),
-                resource,
-                node
+            ReportItem.error(
+                report.messages.ResourceRefreshError(
+                    join_multilines([stderr, stdout]), resource, node
+                )
             )
         )
     # usefull output (what has been done) goes to stderr

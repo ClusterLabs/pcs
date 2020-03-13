@@ -222,7 +222,11 @@ def add_device(
             )
 
         lib_env.report_processor.report(
-            reports.service_enable_started("corosync-qdevice")
+            ReportItem.info(
+                report.messages.ServiceActionStarted(
+                    report.messages.SERVICE_ENABLE, "corosync-qdevice"
+                )
+            )
         )
         com_cmd = qdevice_com.Enable(
             lib_env.report_processor, skip_offline_nodes
@@ -236,7 +240,11 @@ def add_device(
     # Now, when corosync.conf has been reloaded, we can start qdevice service.
     if lib_env.is_corosync_conf_live:
         lib_env.report_processor.report(
-            reports.service_start_started("corosync-qdevice")
+            ReportItem.info(
+                report.messages.ServiceActionStarted(
+                    report.messages.SERVICE_START, "corosync-qdevice"
+                )
+            )
         )
         com_cmd_start = qdevice_com.Start(
             lib_env.report_processor, skip_offline_nodes
@@ -343,7 +351,11 @@ def remove_device(lib_env: LibraryEnvironment, skip_offline_nodes=False):
 
         # disable qdevice
         lib_env.report_processor.report(
-            reports.service_disable_started("corosync-qdevice")
+            ReportItem.info(
+                report.messages.ServiceActionStarted(
+                    report.messages.SERVICE_DISABLE, "corosync-qdevice"
+                )
+            )
         )
         com_cmd_disable = qdevice_com.Disable(
             lib_env.report_processor, skip_offline_nodes
@@ -352,7 +364,11 @@ def remove_device(lib_env: LibraryEnvironment, skip_offline_nodes=False):
         run_and_raise(lib_env.get_node_communicator(), com_cmd_disable)
         # stop qdevice
         lib_env.report_processor.report(
-            reports.service_stop_started("corosync-qdevice")
+            ReportItem.info(
+                report.messages.ServiceActionStarted(
+                    report.messages.SERVICE_STOP, "corosync-qdevice"
+                )
+            )
         )
         com_cmd_stop = qdevice_com.Stop(
             lib_env.report_processor, skip_offline_nodes

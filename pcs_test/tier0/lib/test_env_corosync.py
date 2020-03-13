@@ -792,18 +792,20 @@ class PushCorosyncConfLiveWithQdeviceTest(PushCorosyncConfLiveBase):
                 instance="",
             ),
             fixture.info(
-                report_codes.SERVICE_START_SKIPPED,
-                node="node-1",
+                reports.codes.SERVICE_ACTION_SKIPPED,
+                action=reports.messages.SERVICE_START,
                 service="corosync-qdevice",
-                instance=None,
                 reason="corosync is not running",
+                node="node-1",
+                instance="",
             ),
             fixture.info(
-                report_codes.SERVICE_START_SKIPPED,
-                node="node-2",
+                reports.codes.SERVICE_ACTION_SKIPPED,
+                action=reports.messages.SERVICE_START,
                 service="corosync-qdevice",
-                instance=None,
                 reason="corosync is not running",
+                node="node-2",
+                instance="",
             ),
         ])
 

@@ -396,6 +396,14 @@ class FilesDistributionSkipped(CliReportMessageCustom):
         )
 
 
+class WaitForIdleNotLiveCluster(CliReportMessageCustom):
+    _obj: messages.WaitForIdleNotLiveCluster
+
+    @property
+    def message(self) -> str:
+        return "Cannot use '-f' together with '--wait'"
+
+
 def _create_report_msg_map() -> Dict[str, type]:
     result: Dict[str, type] = {}
     for report_msg_cls in get_all_subclasses(CliReportMessageCustom):

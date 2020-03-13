@@ -1,3 +1,5 @@
+from pcs.common import reports as report
+from pcs.common.reports.item import ReportItem
 from pcs.lib import reports, validate
 from pcs.lib.cib.tools import does_id_exist
 from pcs.lib.cib.node import PacemakerNode
@@ -84,8 +86,10 @@ def validate_is_not_guest(resource_element):
         return []
 
     return [
-        reports.resource_is_guest_node_already(
-            resource_element.attrib["id"]
+        ReportItem.error(
+            report.messages.ResourceIsGuestNodeAlready(
+                resource_element.attrib["id"]
+            )
         )
     ]
 

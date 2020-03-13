@@ -1,3 +1,4 @@
+# pylint: disable=too-many-lines
 from contextlib import contextmanager
 from functools import partial
 from typing import (
@@ -12,11 +13,7 @@ from xml.etree.ElementTree import Element
 from pcs.common import file_type_codes
 from pcs.common.interface import dto
 from pcs.common import reports as report
-from pcs.common.reports import (
-    codes as report_codes,
-    ReportItemSeverity as severities,
-    ReportItemList,
-)
+from pcs.common.reports import ReportItemList
 from pcs.common.reports.item import ReportItem
 from pcs.common.tools import Version
 from pcs.lib import reports
@@ -551,7 +548,7 @@ def create_into_bundle(
             if env.report_processor.report(
                 ReportItem(
                     severity=report.item.get_severity(
-                        report_codes.FORCE_RESOURCE_IN_BUNDLE_NOT_ACCESSIBLE,
+                        report.codes.FORCE_RESOURCE_IN_BUNDLE_NOT_ACCESSIBLE,
                         allow_not_accessible_resource,
                     ),
                     message=report.messages.ResourceInBundleNotAccessible(
@@ -955,7 +952,11 @@ def _resource_list_enable_disable(
         res_id = resource_el.attrib["id"]
         try:
             if not is_resource_managed(cluster_state, res_id):
-                report_list.append(reports.resource_is_unmanaged(res_id))
+                report_list.append(
+                    ReportItem.warning(
+                        report.messages.ResourceIsUnmanaged(res_id)
+                    )
+                )
             func(resource_el, id_provider)
         except ResourceNotFound:
             report_list.append(
@@ -1314,7 +1315,7 @@ class _Move(_MoveBanTemplate):
         allowed_nodes = frozenset([node] if node else [])
         running_on_nodes = self._running_on_nodes(resource_running_on_after)
 
-        severity = severities.INFO
+        severity = report.item.ReportItemSeverity.info()
         if (
             resource_running_on_before # running resource moved
             and (
@@ -1325,13 +1326,18 @@ class _Move(_MoveBanTemplate):
                 (resource_running_on_before == resource_running_on_after)
            )
         ):
-            severity = severities.ERROR
+            severity = report.item.ReportItemSeverity.error()
         if not resource_running_on_after:
-            return reports.resource_does_not_run(resource_id, severity=severity)
-        return reports.resource_running_on_nodes(
-            resource_id,
-            resource_running_on_after,
-            severity=severity
+            return ReportItem(
+                severity,
+                report.messages.ResourceDoesNotRun(resource_id),
+            )
+        return ReportItem(
+            severity,
+            report.messages.ResourceRunningOnNodes(
+                resource_id,
+                resource_running_on_after,
+            )
         )
 
 class _Ban(_MoveBanTemplate):
@@ -1370,19 +1376,24 @@ class _Ban(_MoveBanTemplate):
         else:
             banned_nodes = self._running_on_nodes(resource_running_on_before)
 
-        severity = severities.INFO
+        severity = report.item.ReportItemSeverity.info()
         if (
             not banned_nodes.isdisjoint(running_on_nodes)
             or
             (resource_running_on_before and not running_on_nodes)
         ):
-            severity = severities.ERROR
+            severity = report.item.ReportItemSeverity.error()
         if not resource_running_on_after:
-            return reports.resource_does_not_run(resource_id, severity=severity)
-        return reports.resource_running_on_nodes(
-            resource_id,
-            resource_running_on_after,
-            severity=severity
+            return ReportItem(
+                severity,
+                report.messages.ResourceDoesNotRun(resource_id),
+            )
+        return ReportItem(
+            severity,
+            report.messages.ResourceRunningOnNodes(
+                resource_id,
+                resource_running_on_after,
+            )
         )
 
 def unmove_unban(

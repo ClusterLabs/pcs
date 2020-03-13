@@ -232,7 +232,11 @@ def _check_qdevice_not_used(
 
 def _service_start(lib_env: LibraryEnvironment, func):
     lib_env.report_processor.report(
-        reports.service_start_started("quorum device")
+        ReportItem.info(
+            report.messages.ServiceActionStarted(
+                report.messages.SERVICE_START, "quorum device"
+            )
+        )
     )
     try:
         func(lib_env.cmd_runner())
@@ -254,7 +258,11 @@ def _service_start(lib_env: LibraryEnvironment, func):
 
 def _service_stop(lib_env: LibraryEnvironment, func):
     lib_env.report_processor.report(
-        reports.service_stop_started("quorum device")
+        ReportItem.info(
+            report.messages.ServiceActionStarted(
+                report.messages.SERVICE_STOP, "quorum device"
+            )
+        )
     )
     try:
         func(lib_env.cmd_runner())
@@ -279,10 +287,21 @@ def _service_kill(lib_env: LibraryEnvironment, func):
         func(lib_env.cmd_runner())
     except external.KillServicesError as e:
         raise LibraryError(
-            reports.service_kill_error(e.service, e.message)
+            *[
+                ReportItem.error(
+                    report.messages.ServiceActionFailed(
+                        report.messages.SERVICE_KILL, service, e.message
+                    )
+                )
+                for service in e.service
+            ]
         )
     lib_env.report_processor.report(
-        reports.service_kill_success(["quorum device"])
+        ReportItem.info(
+            report.messages.ServiceActionSucceeded(
+                report.messages.SERVICE_KILL, "quorum device"
+            )
+        )
     )
 
 def _service_enable(lib_env: LibraryEnvironment, func):

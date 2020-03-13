@@ -2,11 +2,13 @@ from collections import defaultdict
 
 from lxml import etree
 
+from pcs.common import reports as report
 from pcs.common.reports import (
     ReportItemList,
     ReportProcessor,
+    codes as report_codes,
 )
-from pcs.common.reports import codes as report_codes
+from pcs.common.reports.item import ReportItem
 from pcs.lib import reports, validate
 from pcs.lib.resource_agent import get_default_interval, complete_all_intervals
 from pcs.lib.cib.nvpair import append_new_instance_attributes
@@ -213,10 +215,12 @@ def make_unique_intervals(report_processor: ReportProcessor, operation_list):
             )
             if adapted["interval"] != operation["interval"]:
                 report_processor.report(
-                    reports.resource_operation_interval_adapted(
-                        operation["name"],
-                        operation["interval"],
-                        adapted["interval"],
+                    ReportItem.warning(
+                        report.messages.ResourceOperationIntervalAdapted(
+                            operation["name"],
+                            operation["interval"],
+                            adapted["interval"],
+                        )
                     )
                 )
         adapted_operation_list.append(adapted)
@@ -244,9 +248,13 @@ def validate_different_intervals(operation_list):
                 duplications[name].append(timeout)
 
     if duplications:
-        return [reports.resource_operation_interval_duplication(
-            dict(duplications)
-        )]
+        return [
+            ReportItem.error(
+                report.messages.ResourceOperationIntervalDuplication(
+                    dict(duplications)
+                )
+            )
+        ]
     return []
 
 def create_id(context_element, id_provider, name, interval):

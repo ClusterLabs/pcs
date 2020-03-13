@@ -1874,7 +1874,7 @@ class WaitForIdleError(NameBuildTest):
 class WaitForIdleNotLiveCluster(NameBuildTest):
     def test_all(self):
         self.assert_message_from_report(
-            "Cannot use '-f' together with '--wait'",
+            "Cannot use 'mocked CIB' together with 'wait'",
             reports.WaitForIdleNotLiveCluster(),
         )
 

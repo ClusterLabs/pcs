@@ -2942,7 +2942,6 @@ class WaitForIdleError(ReportItemMessage):
         return self.reason
 
 
-# TODO: cli specific
 @dataclass(frozen=True)
 class WaitForIdleNotLiveCluster(ReportItemMessage):
     """
@@ -2953,7 +2952,7 @@ class WaitForIdleNotLiveCluster(ReportItemMessage):
 
     @property
     def message(self) -> str:
-        return "Cannot use '-f' together with '--wait'"
+        return "Cannot use 'mocked CIB' together with 'wait'"
 
 
 @dataclass(frozen=True)
@@ -3286,7 +3285,7 @@ class ServiceActionSkipped(ReportItemMessage):
     reason: str
     node: str = ""
     instance: str = ""
-    _code = codes.SERVICE_START_SKIPPED
+    _code = codes.SERVICE_ACTION_SKIPPED
 
     @property
     def message(self) -> str:

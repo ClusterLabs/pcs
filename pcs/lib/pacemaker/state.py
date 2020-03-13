@@ -9,9 +9,9 @@ from typing import Dict, Any
 from lxml import etree
 
 from pcs import settings
+from pcs.common import reports
 from pcs.common.tools import xml_fromstring
-from pcs.common.reports import ReportItemSeverity as severities
-from pcs.lib import reports
+from pcs.common.reports.item import ReportItem
 from pcs.lib.errors import LibraryError
 from pcs.lib.pacemaker.values import (
     is_false,
@@ -145,7 +145,9 @@ def get_cluster_state_dom(xml):
             etree.RelaxNG(file=settings.crm_mon_schema).assertValid(dom)
         return dom
     except (etree.XMLSyntaxError, etree.DocumentInvalid):
-        raise LibraryError(reports.cluster_state_invalid_format())
+        raise LibraryError(
+            ReportItem.error(reports.messages.BadClusterStateFormat())
+        )
 
 class ClusterState(_Element):
     sections = {
@@ -206,14 +208,11 @@ def get_resource_state(cluster_state, resource_id):
 def info_resource_state(cluster_state, resource_id):
     roles_with_nodes = get_resource_state(cluster_state, resource_id)
     if not roles_with_nodes:
-        return reports.resource_does_not_run(
-            resource_id,
-            severities.INFO
+        return ReportItem.info(
+            reports.messages.ResourceDoesNotRun(resource_id)
         )
-    return reports.resource_running_on_nodes(
-        resource_id,
-        roles_with_nodes,
-        severities.INFO
+    return ReportItem.info(
+        reports.messages.ResourceRunningOnNodes(resource_id, roles_with_nodes)
     )
 
 def ensure_resource_state(expected_running, cluster_state, resource_id):
@@ -225,14 +224,21 @@ def ensure_resource_state(expected_running, cluster_state, resource_id):
         )
     )
     if not roles_with_nodes:
-        return reports.resource_does_not_run(
-            resource_id,
-            severities.INFO if not expected_running else severities.ERROR
+        return ReportItem(
+            reports.item.ReportItemSeverity(
+                reports.ReportItemSeverity.INFO
+                if not expected_running
+                else reports.ReportItemSeverity.ERROR
+            ),
+            reports.messages.ResourceDoesNotRun(resource_id),
         )
-    return reports.resource_running_on_nodes(
-        resource_id,
-        roles_with_nodes,
-        severities.INFO if expected_running else severities.ERROR
+    return ReportItem(
+            reports.item.ReportItemSeverity(
+                reports.ReportItemSeverity.INFO
+                if expected_running
+                else reports.ReportItemSeverity.ERROR
+            ),
+        reports.messages.ResourceRunningOnNodes(resource_id, roles_with_nodes)
     )
 
 def ensure_resource_running(cluster_state, resource_id):

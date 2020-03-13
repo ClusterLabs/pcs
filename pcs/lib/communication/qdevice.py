@@ -1,7 +1,6 @@
-from pcs.common import reports as new_report
+from pcs.common import reports
 from pcs.common.node_communicator import RequestData
 from pcs.common.reports.item import ReportItem
-from pcs.lib import reports
 from pcs.lib.communication.tools import (
     AllAtOnceStrategyMixin,
     AllSameDataMixin,
@@ -27,8 +26,8 @@ class Stop(SimpleResponseProcessingMixin, QdeviceBase):
 
     def _get_success_report(self, node_label):
         return ReportItem.info(
-            new_report.messages.ServiceActionSucceeded(
-                new_report.messages.SERVICE_STOP, "corosync-qdevice", node_label
+            reports.messages.ServiceActionSucceeded(
+                reports.messages.SERVICE_STOP, "corosync-qdevice", node_label
             )
         )
 
@@ -42,15 +41,18 @@ class Start(QdeviceBase):
         node_label = response.request.target.label
         if report is None:
             if response.data == "corosync is not running, skipping":
-                report = reports.service_start_skipped(
-                    "corosync-qdevice",
-                    "corosync is not running",
-                    node_label
+                report = ReportItem.info(
+                    reports.messages.ServiceActionSkipped(
+                        reports.messages.SERVICE_START,
+                        "corosync-qdevice",
+                        "corosync is not running",
+                        node_label,
+                    )
                 )
             else:
                 report = ReportItem.info(
-                    new_report.messages.ServiceActionSucceeded(
-                        new_report.messages.SERVICE_START,
+                    reports.messages.ServiceActionSucceeded(
+                        reports.messages.SERVICE_START,
                         "corosync-qdevice",
                         node_label,
                     )
@@ -67,15 +69,18 @@ class Enable(QdeviceBase):
         node_label = response.request.target.label
         if report is None:
             if response.data == "corosync is not enabled, skipping":
-                report = reports.service_enable_skipped(
-                    "corosync-qdevice",
-                    "corosync is not enabled",
-                    node_label
+                report = ReportItem.info(
+                    reports.messages.ServiceActionSkipped(
+                        reports.messages.SERVICE_ENABLE,
+                        "corosync-qdevice",
+                        "corosync is not enabled",
+                        node_label,
+                    )
                 )
             else:
                 report = ReportItem.info(
-                    new_report.messages.ServiceActionSucceeded(
-                        new_report.messages.SERVICE_ENABLE,
+                    reports.messages.ServiceActionSucceeded(
+                        reports.messages.SERVICE_ENABLE,
                         "corosync-qdevice",
                         node_label,
                     )
@@ -89,8 +94,8 @@ class Disable(SimpleResponseProcessingMixin, QdeviceBase):
 
     def _get_success_report(self, node_label):
         return ReportItem.info(
-            new_report.messages.ServiceActionSucceeded(
-                new_report.messages.SERVICE_DISABLE,
+            reports.messages.ServiceActionSucceeded(
+                reports.messages.SERVICE_DISABLE,
                 "corosync-qdevice",
                 node_label,
             )

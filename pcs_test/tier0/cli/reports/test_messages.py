@@ -459,6 +459,14 @@ class FilesDistributionSkipped(CliReportMessageTestBase):
         )
 
 
+class WaitForIdleNotLiveCluster(CliReportMessageTestBase):
+    def test_success(self):
+        self.assert_message(
+            messages.WaitForIdleNotLiveCluster(),
+            "Cannot use '-f' together with '--wait'",
+        )
+
+
 # TODO: create test/check that all subclasses of
 # pcs.cli.reports.messages.CliReportMessageCustom have their test class with
 # the same name in this file

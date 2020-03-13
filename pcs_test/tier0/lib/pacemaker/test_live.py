@@ -1050,8 +1050,9 @@ class ResourceCleanupTest(TestCase):
             [
                 fixture.error(
                     report_codes.RESOURCE_CLEANUP_ERROR,
-                    force_code=None,
-                    reason=(self.stderr + "\n" + self.stdout)
+                    reason=(self.stderr + "\n" + self.stdout),
+                    resource=None,
+                    node=None,
                 )
             ],
             expected_in_processor=False
@@ -1247,6 +1248,8 @@ class ResourceRefreshTest(LibraryPacemakerTest):
                 report_codes.RESOURCE_REFRESH_ERROR,
                 {
                     "reason": expected_stderr + "\n" + expected_stdout,
+                    "resource": None,
+                    "node": None,
                 }
             )
         )
