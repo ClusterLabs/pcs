@@ -34,10 +34,10 @@ from pcs.common import (
     pcs_pycurl as pycurl,
     reports,
 )
-from pcs.common.reports import codes as report_codes
 from pcs.common.host import PcsKnownHost
 from pcs.common.reports import ReportProcessor
 from pcs.common.reports.item import ReportItemList
+from pcs.common.reports.messages import CibUpgradeFailedToMinimalRequiredVersion
 from pcs.common.str_tools import join_multilines
 
 from pcs.cli.common import (
@@ -154,14 +154,10 @@ def cluster_upgrade_to_version(required_version):
     current_version = getValidateWithVersion(dom)
     if current_version < required_version:
         err(
-            console_report.CODE_TO_MESSAGE_BUILDER_MAP[
-                report_codes.CIB_UPGRADE_FAILED_TO_MINIMAL_REQUIRED_VERSION
-            ]({
-                "required_version": ".".join(
-                    [str(x) for x in required_version]
-                ),
-                "current_version": ".".join([str(x) for x in current_version]),
-            })
+            CibUpgradeFailedToMinimalRequiredVersion(
+                ".".join([str(x) for x in current_version]),
+                ".".join([str(x) for x in required_version]),
+            ).message
         )
     return dom
 

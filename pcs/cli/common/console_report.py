@@ -6,10 +6,6 @@ import sys
 from pcs.common import file_type_codes
 from pcs.common.file import RawFileError
 from pcs.common.fencing_topology import TARGET_TYPE_ATTRIBUTE
-from pcs.common.reports import codes
-from pcs.common.str_tools import (
-    format_optional,
-)
 
 INSTANCE_SUFFIX = "@{0}"
 NODE_PREFIX = "{0}: "
@@ -126,63 +122,3 @@ def build_node_description(node_types):
         return label(node_types[0])
 
     return "nor " + " or ".join([label(ntype) for ntype in node_types])
-
-#Each value (a callable taking report_item.info) returns a message.
-#Force text will be appended if necessary.
-#If it is necessary to put the force text inside the string then the callable
-#must take the force_text parameter.
-CODE_TO_MESSAGE_BUILDER_MAP = {
-    codes.CIB_LOAD_ERROR: "unable to get cib",
-
-    codes.CIB_LOAD_ERROR_SCOPE_MISSING: lambda info:
-        "unable to get cib, scope '{scope}' not present in cib"
-        .format(**info)
-    ,
-
-    codes.CIB_LOAD_ERROR_BAD_FORMAT: lambda info:
-       "unable to get cib, {reason}"
-       .format(**info)
-    ,
-
-    codes.CIB_LOAD_ERROR_GET_NODES_FOR_VALIDATION:
-        "Unable to load CIB to get guest and remote nodes from it, "
-        "those nodes cannot be considered in configuration validation"
-    ,
-
-    codes.CIB_CANNOT_FIND_MANDATORY_SECTION: lambda info:
-        "Unable to get {section} section of cib"
-        .format(**info)
-    ,
-
-    codes.CIB_PUSH_ERROR: lambda info:
-        "Unable to update cib\n{reason}\n{pushed_cib}"
-        .format(**info)
-    ,
-
-    codes.CIB_DIFF_ERROR: lambda info:
-        "Unable to diff CIB: {reason}\n{cib_new}"
-        .format(**info)
-    ,
-
-    codes.CIB_SIMULATE_ERROR: lambda info:
-        "Unable to simulate changes in CIB{_reason}"
-        .format(
-            _reason=format_optional(info["reason"], ": {0}"),
-            **info
-        )
-    ,
-
-    codes.CIB_PUSH_FORCED_FULL_DUE_TO_CRM_FEATURE_SET: lambda info:
-        (
-            "Replacing the whole CIB instead of applying a diff, a race "
-            "condition may happen if the CIB is pushed more than once "
-            "simultaneously. To fix this, upgrade pacemaker to get "
-            "crm_feature_set at least {required_set}, current is {current_set}."
-        ).format(**info)
-    ,
-
-    codes.CIB_SAVE_TMP_ERROR: lambda info:
-        "Unable to save CIB to a temporary file: {reason}"
-        .format(**info)
-    ,
-}

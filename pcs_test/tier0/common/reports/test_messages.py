@@ -1782,7 +1782,7 @@ class CibLoadErrorBadFormat(NameBuildTest):
 class CibCannotFindMandatorySection(NameBuildTest):
     def test_all(self):
         self.assert_message_from_report(
-            "Unable to get section-name section of cib",
+            "Unable to get 'section-name' section of cib",
             reports.CibCannotFindMandatorySection("section-name"),
         )
 
@@ -1794,6 +1794,12 @@ class CibPushError(NameBuildTest):
             reports.CibPushError("reason", "pushed-cib"),
         )
 
+class CibSaveTmpError(NameBuildTest):
+    def test_all(self):
+        self.assert_message_from_report(
+            "Unable to save CIB to a temporary file: reason",
+            reports.CibSaveTmpError("reason")
+        )
 
 class CibDiffError(NameBuildTest):
     def test_success(self):
@@ -1806,8 +1812,14 @@ class CibDiffError(NameBuildTest):
 class CibSimulateError(NameBuildTest):
     def test_success(self):
         self.assert_message_from_report(
-            "Unable to simulate changes in CIB: error message\n<cib />",
-            reports.CibSimulateError("error message", "<cib />"),
+            "Unable to simulate changes in CIB: error message",
+            reports.CibSimulateError("error message"),
+        )
+
+    def test_empty_reason(self):
+        self.assert_message_from_report(
+            "Unable to simulate changes in CIB",
+            reports.CibSimulateError(""),
         )
 
 

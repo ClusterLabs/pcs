@@ -34,20 +34,6 @@ class NameBuildTest(TestCase):
             )
 
 
-class CibMissingMandatorySection(NameBuildTest):
-    def test_all(self):
-        self.assert_message_from_report(
-            "Unable to get section-name section of cib",
-            reports.cib_missing_mandatory_section("section-name")
-        )
-
-class CibSaveTmpError(NameBuildTest):
-    def test_all(self):
-        self.assert_message_from_report(
-            "Unable to save CIB to a temporary file: reason",
-            reports.cib_save_tmp_error("reason")
-        )
-
 
 class FormatOptionalTest(TestCase):
     def test_info_key_is_falsy(self):
@@ -219,82 +205,6 @@ class FormatPluralTest(TestCase):
         mock_add_s.assert_called_once_with("greeting")
         mock_is_multiple.assert_called_once_with(10)
 
-
-class CibDiffError(NameBuildTest):
-    def test_success(self):
-        self.assert_message_from_report(
-            "Unable to diff CIB: error message\n<cib-new />",
-            reports.cib_diff_error(
-                "error message", "<cib-old />", "<cib-new />"
-            )
-        )
-
-
-class CibSimulateError(NameBuildTest):
-    def test_success(self):
-        self.assert_message_from_report(
-            "Unable to simulate changes in CIB: error message",
-            reports.cib_simulate_error("error message")
-        )
-
-    def test_empty_reason(self):
-        self.assert_message_from_report(
-            "Unable to simulate changes in CIB",
-            reports.cib_simulate_error("")
-        )
-
-
-class CibLoadError(NameBuildTest):
-    def test_all(self):
-        self.assert_message_from_report(
-            "unable to get cib",
-            reports.cib_load_error("reason")
-        )
-
-class CibLoadErrorBadFormat(NameBuildTest):
-    def test_message(self):
-        self.assert_message_from_report(
-            "unable to get cib, something wrong",
-            reports.cib_load_error_invalid_format("something wrong")
-        )
-
-class CibLoadErrorGetNodesForValidation(NameBuildTest):
-    def test_all(self):
-        self.assert_message_from_report(
-            (
-                "Unable to load CIB to get guest and remote nodes from it, "
-                "those nodes cannot be considered in configuration validation"
-            ),
-            reports.cib_load_error_get_nodes_for_validation()
-        )
-
-class CibLoadErrorScopeMissing(NameBuildTest):
-    def test_all(self):
-        self.assert_message_from_report(
-            "unable to get cib, scope 'scope-name' not present in cib",
-            reports.cib_load_error_scope_missing("scope-name", "reason")
-        )
-
-
-class CibPushError(NameBuildTest):
-    def test_all(self):
-        self.assert_message_from_report(
-            "Unable to update cib\nreason\npushed-cib",
-            reports.cib_push_error("reason", "pushed-cib")
-        )
-
-class CibPushForcedFullDueToCrmFeatureSet(NameBuildTest):
-    def test_success(self):
-        self.assert_message_from_report(
-            (
-                "Replacing the whole CIB instead of applying a diff, a race "
-                "condition may happen if the CIB is pushed more than once "
-                "simultaneously. To fix this, upgrade pacemaker to get "
-                "crm_feature_set at least 3.0.9, current is 3.0.6."
-            ),
-            reports.cib_push_forced_full_due_to_crm_feature_set(
-                "3.0.9", "3.0.6")
-        )
 
 
 class DuplicateConstraintsExist(NameBuildTest):

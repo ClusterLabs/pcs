@@ -2,7 +2,8 @@
 This module defines madatory and optional cib sections. It provides function for
 getting existing section from the cib (lxml) tree.
 """
-from pcs.lib import reports
+from pcs.common import reports
+from pcs.common.reports.item import ReportItem
 from pcs.lib.errors import LibraryError
 from pcs.lib.xml_tools import get_sub_element
 
@@ -52,7 +53,11 @@ def get(tree, section_name):
         section = tree.find(".//{0}".format(section_name))
         if section is not None:
             return section
-        raise LibraryError(reports.cib_missing_mandatory_section(section_name))
+        raise LibraryError(
+            ReportItem.error(
+                reports.messages.CibCannotFindMandatorySection(section_name)
+            )
+        )
 
     if section_name in __OPTIONAL_SECTIONS:
         return get_sub_element(get(tree, CONFIGURATION), section_name)

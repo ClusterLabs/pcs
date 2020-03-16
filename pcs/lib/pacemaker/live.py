@@ -10,7 +10,7 @@ from typing import (
 from lxml import etree
 
 from pcs import settings
-from pcs.common import reports as report
+from pcs.common import reports
 from pcs.common.reports import ReportProcessor
 from pcs.common.reports.item import ReportItem
 from pcs.common.tools import (
@@ -18,7 +18,6 @@ from pcs.common.tools import (
     xml_fromstring
 )
 from pcs.common.str_tools import join_multilines
-from pcs.lib import reports
 from pcs.lib.cib.tools import get_pacemaker_version_by_which_cib_was_validated
 from pcs.lib.errors import LibraryError
 from pcs.lib.external import CommandRunner
@@ -46,7 +45,7 @@ def get_cluster_status_xml(runner):
     if retval != 0:
         raise CrmMonErrorException(
             ReportItem.error(
-                report.messages.CrmMonError(join_multilines([stderr, stdout]))
+                reports.messages.CrmMonError(join_multilines([stderr, stdout]))
             )
         )
     return stdout
@@ -70,7 +69,7 @@ def get_cluster_status_text(
     if retval != 0:
         raise CrmMonErrorException(
             ReportItem.error(
-                report.messages.CrmMonError(join_multilines([stderr, stdout]))
+                reports.messages.CrmMonError(join_multilines([stderr, stdout]))
             )
         )
     warnings: List[str] = []
@@ -101,13 +100,17 @@ def get_cib_xml(runner, scope=None):
     if retval != 0:
         if retval == __EXITCODE_CIB_SCOPE_VALID_BUT_NOT_PRESENT and scope:
             raise LibraryError(
-                reports.cib_load_error_scope_missing(
-                    scope,
-                    join_multilines([stderr, stdout])
+                ReportItem.error(
+                    reports.messages.CibLoadErrorScopeMissing(
+                        scope,
+                        join_multilines([stderr, stdout])
+                    )
                 )
             )
         raise LibraryError(
-            reports.cib_load_error(join_multilines([stderr, stdout]))
+            ReportItem.error(
+                reports.messages.CibLoadError(join_multilines([stderr, stdout]))
+            )
         )
     return stdout
 
@@ -118,7 +121,11 @@ def get_cib(xml):
     try:
         return parse_cib_xml(xml)
     except (etree.XMLSyntaxError, etree.DocumentInvalid) as e:
-        raise LibraryError(reports.cib_load_error_invalid_format(str(e)))
+        raise LibraryError(
+            ReportItem.error(
+                reports.messages.CibLoadErrorBadFormat(str(e))
+            )
+        )
 
 def verify(runner, verbose=False):
     crm_verify_cmd = [__exec("crm_verify")]
@@ -165,7 +172,11 @@ def replace_cib_configuration_xml(runner, xml):
     ]
     stdout, stderr, retval = runner.run(cmd, stdin_string=xml)
     if retval != 0:
-        raise LibraryError(reports.cib_push_error(stderr, stdout))
+        raise LibraryError(
+            ReportItem.error(
+                reports.messages.CibPushError(stderr, stdout)
+            )
+        )
 
 def replace_cib_configuration(runner, tree):
     return replace_cib_configuration_xml(runner, etree_to_str(tree))
@@ -179,7 +190,11 @@ def push_cib_diff_xml(runner, cib_diff_xml):
     ]
     stdout, stderr, retval = runner.run(cmd, stdin_string=cib_diff_xml)
     if retval != 0:
-        raise LibraryError(reports.cib_push_error(stderr, stdout))
+        raise LibraryError(
+            ReportItem.error(
+                reports.messages.CibPushError(stderr, stdout)
+            )
+        )
 
 def diff_cibs_xml(
     runner: CommandRunner,
@@ -199,7 +214,7 @@ def diff_cibs_xml(
         cib_old_tmp_file = write_tmpfile(cib_old_xml)
         reporter.report(
             ReportItem.debug(
-                report.messages.TmpFileWrite(
+                reports.messages.TmpFileWrite(
                     cib_old_tmp_file.name, cib_old_xml
                 )
             )
@@ -207,13 +222,17 @@ def diff_cibs_xml(
         cib_new_tmp_file = write_tmpfile(cib_new_xml)
         reporter.report(
             ReportItem.debug(
-                report.messages.TmpFileWrite(
+                reports.messages.TmpFileWrite(
                     cib_new_tmp_file.name, cib_new_xml
                 )
             )
         )
     except EnvironmentError as e:
-        raise LibraryError(reports.cib_save_tmp_error(str(e)))
+        raise LibraryError(
+            ReportItem.error(
+                reports.messages.CibSaveTmpError(str(e))
+            )
+        )
     command = [
         __exec("crm_diff"),
         "--original",
@@ -231,7 +250,11 @@ def diff_cibs_xml(
         return ""
     if retval > 1:
         raise LibraryError(
-            reports.cib_diff_error(stderr.strip(), cib_old_xml, cib_new_xml)
+            ReportItem.error(
+                reports.messages.CibDiffError(
+                    stderr.strip(), cib_old_xml, cib_new_xml
+                )
+            )
         )
     return stdout.strip()
 
@@ -259,7 +282,7 @@ def ensure_cib_version(runner, cib, version):
     except (etree.XMLSyntaxError, etree.DocumentInvalid) as e:
         raise LibraryError(
             ReportItem.error(
-                report.messages.CibUpgradeFailed(str(e))
+                reports.messages.CibUpgradeFailed(str(e))
             )
         )
 
@@ -269,7 +292,7 @@ def ensure_cib_version(runner, cib, version):
 
     raise LibraryError(
         ReportItem.error(
-            report.messages.CibUpgradeFailedToMinimalRequiredVersion(
+            reports.messages.CibUpgradeFailedToMinimalRequiredVersion(
                 str(current_version), str(version)
             )
         )
@@ -289,7 +312,7 @@ def _upgrade_cib(runner):
     if retval != 0:
         raise LibraryError(
             ReportItem.error(
-                report.messages.CibUpgradeFailed(
+                reports.messages.CibUpgradeFailed(
                     join_multilines([stderr, stdout])
                 )
             )
@@ -307,7 +330,9 @@ def simulate_cib_xml(runner, cib_xml):
         transitions_file = write_tmpfile(None)
     except OSError as e:
         raise LibraryError(
-            reports.cib_simulate_error(format_os_error(e))
+            ReportItem.error(
+                reports.messages.CibSimulateError(format_os_error(e))
+            )
         )
 
     cmd = [
@@ -320,7 +345,9 @@ def simulate_cib_xml(runner, cib_xml):
     stdout, stderr, retval = runner.run(cmd, stdin_string=cib_xml)
     if retval != 0:
         raise LibraryError(
-            reports.cib_simulate_error(stderr.strip())
+            ReportItem.error(
+                reports.messages.CibSimulateError(stderr.strip())
+            )
         )
 
     try:
@@ -333,7 +360,9 @@ def simulate_cib_xml(runner, cib_xml):
         return stdout, transitions_xml, new_cib_xml
     except OSError as e:
         raise LibraryError(
-            reports.cib_simulate_error(format_os_error(e))
+            ReportItem.error(
+                reports.messages.CibSimulateError(format_os_error(e))
+            )
         )
 
 def simulate_cib(runner, cib):
@@ -355,7 +384,9 @@ def simulate_cib(runner, cib):
         )
     except (etree.XMLSyntaxError, etree.DocumentInvalid) as e:
         raise LibraryError(
-            reports.cib_simulate_error(str(e))
+            ReportItem.error(
+                reports.messages.CibSimulateError(str(e))
+            )
         )
 
 ### wait for idle
@@ -366,7 +397,7 @@ def has_wait_for_idle_support(runner):
 def ensure_wait_for_idle_support(runner):
     if not has_wait_for_idle_support(runner):
         raise LibraryError(
-            ReportItem.error(report.messages.WaitForIdleNotSupported())
+            ReportItem.error(reports.messages.WaitForIdleNotSupported())
         )
 
 def wait_for_idle(runner, timeout=None):
@@ -387,14 +418,14 @@ def wait_for_idle(runner, timeout=None):
         if retval == __EXITCODE_WAIT_TIMEOUT:
             raise LibraryError(
                 ReportItem.error(
-                    report.messages.WaitForIdleTimedOut(
+                    reports.messages.WaitForIdleTimedOut(
                         join_multilines([stderr, stdout])
                     )
                 )
             )
         raise LibraryError(
             ReportItem.error(
-                report.messages.WaitForIdleError(
+                reports.messages.WaitForIdleError(
                     join_multilines([stderr, stdout])
                 )
             )
@@ -407,7 +438,7 @@ def get_local_node_name(runner):
     if retval != 0:
         raise LibraryError(
             ReportItem.error(
-                report.messages.PacemakerLocalNodeNameNotFound(
+                reports.messages.PacemakerLocalNodeNameNotFound(
                     join_multilines([stderr, stdout])
                 )
             )
@@ -433,7 +464,7 @@ def get_local_node_status(runner):
                 result[attr] = getattr(node_status.attrs, attr)
             return result
     raise LibraryError(
-        ReportItem.error(report.messages.NodeNotFound(node_name))
+        ReportItem.error(reports.messages.NodeNotFound(node_name))
     )
 
 def remove_node(runner, node_name):
@@ -446,7 +477,7 @@ def remove_node(runner, node_name):
     if retval != 0:
         raise LibraryError(
             ReportItem.error(
-                report.messages.NodeRemoveInPacemakerFailed(
+                reports.messages.NodeRemoveInPacemakerFailed(
                     node_list_to_remove=[node_name],
                     reason=join_multilines([stderr, stdout]),
                 )
@@ -480,7 +511,7 @@ def resource_cleanup(
     if retval != 0:
         raise LibraryError(
             ReportItem.error(
-                report.messages.ResourceCleanupError(
+                reports.messages.ResourceCleanupError(
                     join_multilines([stderr, stdout]), resource, node
                 )
             )
@@ -501,10 +532,10 @@ def resource_refresh(
         if operations > __RESOURCE_REFRESH_OPERATION_COUNT_THRESHOLD:
             raise LibraryError(
                 ReportItem(
-                    report.item.ReportItemSeverity.error(
-                        report.codes.FORCE_LOAD_THRESHOLD
+                    reports.item.ReportItemSeverity.error(
+                        reports.codes.FORCE_LOAD_THRESHOLD
                     ),
-                    report.messages.ResourceRefreshTooTimeConsuming(
+                    reports.messages.ResourceRefreshTooTimeConsuming(
                         __RESOURCE_REFRESH_OPERATION_COUNT_THRESHOLD
                     )
                 )
@@ -523,7 +554,7 @@ def resource_refresh(
     if retval != 0:
         raise LibraryError(
             ReportItem.error(
-                report.messages.ResourceRefreshError(
+                reports.messages.ResourceRefreshError(
                     join_multilines([stderr, stdout]), resource, node
                 )
             )

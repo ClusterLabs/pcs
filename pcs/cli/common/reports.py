@@ -1,13 +1,17 @@
 from functools import partial
-from typing import Union
+from typing import (
+    Any,
+    Dict,
+    Union,
+)
 import inspect
 import sys
+
 
 from pcs.cli.booth.console_report import (
     CODE_TO_MESSAGE_BUILDER_MAP as BOOTH_CODE_TO_MESSAGE_BUILDER_MAP
 )
 from pcs.cli.common.console_report import (
-    CODE_TO_MESSAGE_BUILDER_MAP,
     error,
     warn,
 )
@@ -23,14 +27,14 @@ from pcs.common.reports import (
     ReportProcessor,
     ReportItemSeverity,
 )
+from pcs.common.reports.types import MessageCode
 ReportItem = Union[reports_item.ReportItem, reports_item_old.ReportItem]
 ReportItemList = Union[
     reports_item.ReportItemList, reports_item_old.ReportItemList
 ]
 
 
-CODE_BUILDER_MAP = {}
-CODE_BUILDER_MAP.update(CODE_TO_MESSAGE_BUILDER_MAP)
+CODE_BUILDER_MAP: Dict[MessageCode, Any] = {}
 CODE_BUILDER_MAP.update(CONSTRAINT_CODE_TO_MESSAGE_BUILDER_MAP)
 CODE_BUILDER_MAP.update(BOOTH_CODE_TO_MESSAGE_BUILDER_MAP)
 

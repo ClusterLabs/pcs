@@ -1,11 +1,10 @@
 import re
 from xml.etree.ElementTree import Element
 
-from pcs.common import reports as report
+from pcs.common import reports
 from pcs.common.reports import codes as report_codes
 from pcs.common.reports.item import ReportItem
 from pcs.common.tools import Version
-from pcs.lib import reports
 from pcs.lib.cib import sections
 from pcs.lib.errors import LibraryError
 from pcs.lib.pacemaker.values import (
@@ -48,7 +47,7 @@ class IdProvider:
                 continue
             if _id in self._booked_ids or does_id_exist(self._cib, _id):
                 report_list.append(
-                    ReportItem.error(report.messages.IdAlreadyExists(_id))
+                    ReportItem.error(reports.messages.IdAlreadyExists(_id))
                 )
                 reported_ids.add(_id)
                 continue
@@ -141,7 +140,7 @@ class ElementSearcher():
             if element.tag in self._tag_list:
                 return [
                     ReportItem.error(
-                        report.messages.ObjectWithIdInUnexpectedContext(
+                        reports.messages.ObjectWithIdInUnexpectedContext(
                             element.tag,
                             self._element_id,
                             self._context_element.tag,
@@ -151,7 +150,7 @@ class ElementSearcher():
                 ]
             return [
                 ReportItem.error(
-                    report.messages.IdBelongsToUnexpectedType(
+                    reports.messages.IdBelongsToUnexpectedType(
                         self._element_id,
                         expected_types=self._expected_types,
                         current_type=element.tag,
@@ -161,7 +160,7 @@ class ElementSearcher():
         if self._book_errors is None:
             return [
                 ReportItem.error(
-                    report.messages.IdNotFound(
+                    reports.messages.IdNotFound(
                         self._element_id,
                         sorted(self._expected_types),
                         self._context_element.tag,
@@ -232,7 +231,7 @@ def validate_id_does_not_exist(tree, _id):
     """
     if does_id_exist(tree, _id):
         raise LibraryError(
-            ReportItem.error(report.messages.IdAlreadyExists(_id))
+            ReportItem.error(reports.messages.IdAlreadyExists(_id))
         )
 
 # DEPRECATED, use IdProvider instead
@@ -367,19 +366,24 @@ def _get_cib_version(cib, attribute, regexp, none_if_missing=False):
     if version is None:
         if none_if_missing:
             return None
-        raise LibraryError(reports.cib_load_error_invalid_format(
-            "the attribute '{0}' of the element 'cib' is missing".format(
-                attribute
+        raise LibraryError(
+            ReportItem.error(
+                reports.messages.CibLoadErrorBadFormat(
+                    f"the attribute '{attribute}' of the element 'cib' "
+                    "is missing"
+                )
             )
-        ))
+        )
     match = regexp.match(version)
     if not match:
-        raise LibraryError(reports.cib_load_error_invalid_format(
-            (
-                "the attribute '{0}' of the element 'cib' has an invalid"
-                " value: '{1}'"
-            ).format(attribute, version)
-        ))
+        raise LibraryError(
+            ReportItem.error(
+                reports.messages.CibLoadErrorBadFormat(
+                    f"the attribute '{attribute}' of the element 'cib' has "
+                    f"an invalid value: '{version}'"
+                )
+            )
+        )
     return Version(
         int(match.group("major")),
         int(match.group("minor")),

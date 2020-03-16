@@ -321,11 +321,12 @@ class GetCibTest(LibraryPacemakerTest):
         xml = "<invalid><xml />"
         assert_raise_library_error(
             lambda: lib.get_cib(xml),
-            (
-                Severity.ERROR,
+            fixture.error(
                 report_codes.CIB_LOAD_ERROR_BAD_FORMAT,
-                {
-                }
+                reason=(
+                    "Premature end of data in tag invalid line 1, line 1, "
+                    "column 17 (<string>, line 1)"
+                )
             )
         )
 

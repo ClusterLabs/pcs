@@ -318,6 +318,8 @@ class PushLoadedCib(TestCase, ManageCibAssertionMixin):
                 returncode=65
             )
         )
+        with open(rc(self.cib_can_diff)) as a_file:
+            cib_data = a_file.read()
         env = self.env_assist.get_env()
         env.get_cib()
         self.env_assist.assert_raise_library_error(
@@ -326,6 +328,8 @@ class PushLoadedCib(TestCase, ManageCibAssertionMixin):
                 fixture.error(
                     report_codes.CIB_DIFF_ERROR,
                     reason="invalid cib",
+                    cib_old=cib_data,
+                    cib_new=cib_data.strip(),
                 )
             ],
             expected_in_processor=False
@@ -346,6 +350,7 @@ class PushLoadedCib(TestCase, ManageCibAssertionMixin):
                 fixture.error(
                     report_codes.CIB_PUSH_ERROR,
                     reason="invalid cib",
+                    pushed_cib="",
                 )
             ],
             expected_in_processor=False
@@ -365,6 +370,7 @@ class PushLoadedCib(TestCase, ManageCibAssertionMixin):
                 fixture.error(
                     report_codes.CIB_PUSH_ERROR,
                     reason="invalid cib",
+                    pushed_cib="",
                 )
             ],
             expected_in_processor=False

@@ -2761,7 +2761,7 @@ class CibCannotFindMandatorySection(ReportItemMessage):
 
     @property
     def message(self) -> str:
-        return f"Unable to get {self.section} section of cib"
+        return f"Unable to get '{self.section}' section of cib"
 
 
 @dataclass(frozen=True)
@@ -2798,7 +2798,6 @@ class CibSaveTmpError(ReportItemMessage):
         return f"Unable to save CIB to a temporary file: {self.reason}"
 
 
-# TODO: do not print new cib?
 @dataclass(frozen=True)
 class CibDiffError(ReportItemMessage):
     """
@@ -2825,16 +2824,16 @@ class CibSimulateError(ReportItemMessage):
     Cannot simulate effects a CIB would have on a live cluster
 
     reason -- error description
-    cib -- the CIB whose effects were to be simulated
     """
 
     reason: str
-    cib: str
     _code = codes.CIB_SIMULATE_ERROR
 
     @property
     def message(self) -> str:
-        return f"Unable to simulate changes in CIB: {self.reason}\n{self.cib}"
+        return "Unable to simulate changes in CIB{_reason}".format(
+            _reason=format_optional(self.reason, ": {0}"),
+        )
 
 
 @dataclass(frozen=True)
