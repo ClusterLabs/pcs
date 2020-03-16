@@ -4087,3 +4087,87 @@ class NodeInLocalCluster(NameBuildTest):
             "Node 'node-name' is part of local cluster",
             reports.NodeInLocalCluster("node-name"),
         )
+
+
+class BoothLackOfSites(NameBuildTest):
+    def test_no_site(self):
+        self.assert_message_from_report(
+            (
+                "lack of sites for booth configuration (need 2 at least): "
+                "sites missing"
+            ),
+            reports.BoothLackOfSites([]),
+        )
+
+    def test_single_site(self):
+        self.assert_message_from_report(
+            (
+                "lack of sites for booth configuration (need 2 at least): "
+                "sites 'site1'"
+            ),
+            reports.BoothLackOfSites(["site1"]),
+        )
+
+    def test_multiple_sites(self):
+        self.assert_message_from_report(
+            (
+                "lack of sites for booth configuration (need 2 at least): "
+                "sites 'site1', 'site2'"
+            ),
+            reports.BoothLackOfSites(["site1", "site2"])
+        )
+
+
+class BoothEvenPeersNumber(NameBuildTest):
+    def test_success(self):
+        self.assert_message_from_report(
+            "odd number of peers is required (entered 4 peers)",
+            reports.BoothEvenPeersNumber(4),
+        )
+
+
+class BoothAddressDuplication(NameBuildTest):
+    def test_single_address(self):
+        self.assert_message_from_report(
+            "duplicate address for booth configuration: 'addr1'",
+            reports.BoothAddressDuplication(["addr1"]),
+        )
+
+    def test_multiple_addresses(self):
+        self.assert_message_from_report(
+            (
+                "duplicate address for booth configuration: 'addr1', 'addr2', "
+                "'addr3'"
+            ),
+            reports.BoothAddressDuplication(
+                sorted(["addr2", "addr1", "addr3"])
+            ),
+        )
+
+
+class BoothConfigUnexpectedLines(NameBuildTest):
+    def test_single_line(self):
+        self.assert_message_from_report(
+            "unexpected line in booth config:\nline",
+            reports.BoothConfigUnexpectedLines(["line"]),
+        )
+
+    def test_multiple_lines(self):
+        self.assert_message_from_report(
+            "unexpected lines in booth config:\nline\nline2",
+            reports.BoothConfigUnexpectedLines(["line", "line2"]),
+        )
+
+    def test_file_path(self):
+        self.assert_message_from_report(
+            "unexpected line in booth config 'PATH':\nline",
+            reports.BoothConfigUnexpectedLines(["line"], file_path="PATH"),
+        )
+
+
+class BoothInvalidName(NameBuildTest):
+    def test_success(self):
+        self.assert_message_from_report(
+            "booth name '/name' is not valid (invalid characters)",
+            reports.BoothInvalidName("/name", "invalid characters")
+        )

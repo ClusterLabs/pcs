@@ -5679,6 +5679,99 @@ class NodeInLocalCluster(ReportItemMessage):
         return f"Node '{self.node}' is part of local cluster"
 
 
+@dataclass(frozen=True)
+class BoothLackOfSites(ReportItemMessage):
+    """
+    Less than 2 booth sites entered. But it does not make sense.
+
+    sites -- contains currently entered sites
+    """
+
+    sites: List[str]
+    _code = codes.BOOTH_LACK_OF_SITES
+
+    @property
+    def message(self) -> str:
+        sites = format_list(self.sites) if self.sites else "missing"
+        return (
+            "lack of sites for booth configuration (need 2 at least): sites "
+            f"{sites}"
+        )
+
+
+@dataclass(frozen=True)
+class BoothEvenPeersNumber(ReportItemMessage):
+    """
+    Booth requires odd number of peers. But even number of peers was entered.
+
+    number -- determines how many peers was entered
+    """
+
+    number: int
+    _code = codes.BOOTH_EVEN_PEERS_NUM
+
+    @property
+    def message(self) -> str:
+        return f"odd number of peers is required (entered {self.number} peers)"
+
+
+@dataclass(frozen=True)
+class BoothAddressDuplication(ReportItemMessage):
+    """
+    Address of each peer must be unique. But address duplication appeared.
+
+    duplicate_addresses -- contains addreses entered multiple times
+    """
+
+    duplicate_addresses: List[str]
+    _code = codes.BOOTH_ADDRESS_DUPLICATION
+
+    @property
+    def message(self) -> str:
+        addresses = format_list(self.duplicate_addresses)
+        return f"duplicate address for booth configuration: {addresses}"
+
+
+@dataclass(frozen=True)
+class BoothConfigUnexpectedLines(ReportItemMessage):
+    """
+    Lines not conforming to expected config structure found in a booth config
+
+    line_list -- not valid lines
+    file_path -- path to the conf file if available
+    """
+
+    line_list: List[str]
+    file_path: str = ""
+    _code = codes.BOOTH_CONFIG_UNEXPECTED_LINES
+
+    @property
+    def message(self) -> str:
+        return "unexpected {line_pl} in booth config{path}:\n{lines}".format(
+            line_pl=format_plural(self.line_list, "line"),
+            path=format_optional(self.file_path, " '{}'"),
+            lines="\n".join(self.line_list),
+        )
+
+
+@dataclass(frozen=True)
+class BoothInvalidName(ReportItemMessage):
+    """
+    Booth instance name have rules. For example it cannot contain illegal
+    characters like '/'. But some of rules was violated.
+
+    name -- entered booth instance name
+    reason -- decription of the error
+    """
+    name: str
+    reason: str
+    _code = codes.BOOTH_INVALID_NAME
+
+    @property
+    def message(self) -> str:
+        return f"booth name '{self.name}' is not valid ({self.reason})"
+
+
 # @dataclass(frozen=True)
 # class (ReportItemMessage):
 #     _code = codes.

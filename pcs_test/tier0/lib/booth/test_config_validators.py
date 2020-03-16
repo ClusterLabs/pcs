@@ -81,7 +81,7 @@ class Create(TestCase):
             [
                 fixture.error(
                     report_codes.BOOTH_ADDRESS_DUPLICATION,
-                    addresses=["1.1.1.1"],
+                    duplicate_addresses=["1.1.1.1"],
                 ),
             ]
         )
@@ -103,7 +103,7 @@ class Create(TestCase):
                 ),
                 fixture.error(
                     report_codes.BOOTH_ADDRESS_DUPLICATION,
-                    addresses=["1.1.1.1"],
+                    duplicate_addresses=["1.1.1.1"],
                 ),
             ]
         )

@@ -3,7 +3,6 @@ from pcs.cli.common.console_report import format_file_role
 from pcs.common.str_tools import (
     format_list,
     format_optional,
-    format_plural,
 )
 
 def format_booth_default(value, template):
@@ -26,36 +25,6 @@ def booth_config_accepted_by_node(info):
 #If it is necessary to put the force text inside the string then the callable
 #must take the force_text parameter.
 CODE_TO_MESSAGE_BUILDER_MAP = {
-    codes.BOOTH_LACK_OF_SITES: lambda info:
-        "lack of sites for booth configuration (need 2 at least): sites {0}"
-        .format(", ".join(info["sites"]) if info["sites"] else "missing")
-    ,
-
-    codes.BOOTH_EVEN_PEERS_NUM: lambda info:
-        "odd number of peers is required (entered {number} peers)"
-        .format(**info)
-    ,
-
-    codes.BOOTH_ADDRESS_DUPLICATION: lambda info:
-        "duplicate address for booth configuration: {0}"
-        .format(", ".join(info["addresses"]))
-    ,
-
-    codes.BOOTH_CONFIG_UNEXPECTED_LINES: lambda info:
-        "unexpected {_line_pl} in booth config{_file_path}:\n{_line_list}"
-        .format(
-            _file_path=format_optional(info["file_path"], " '{0}'"),
-            _line_pl=format_plural(info["line_list"], "line"),
-            _line_list="\n".join(info["line_list"]),
-            **info
-        )
-    ,
-
-    codes.BOOTH_INVALID_NAME: lambda info:
-        "booth name '{name}' is not valid ({reason})"
-        .format(**info)
-    ,
-
     codes.BOOTH_TICKET_NAME_INVALID: lambda info:
         "booth ticket name '{0}' is not valid, use alphanumeric chars or dash"
         .format(info["ticket_name"])

@@ -1,7 +1,9 @@
 from collections import Counter
 import re
 
+from pcs.common import reports as report
 from pcs.common.reports import codes as report_codes
+from pcs.common.reports.item import ReportItem
 from pcs.lib import validate
 from pcs.lib.booth import constants, reports
 
@@ -18,7 +20,12 @@ def check_instance_name(name):
     if "/" in name:
         # TODO drop plaintext from the report
         report_list.append(
-            reports.booth_invalid_name(name, "contains illegal character '/'")
+            ReportItem.error(
+                report.messages.BoothInvalidName(
+                    name,
+                    "contains illegal character '/'",
+                )
+            )
         )
     return report_list
 
@@ -33,17 +40,29 @@ def create(site_list, arbitrator_list):
     peer_list = site_list + arbitrator_list
 
     if len(site_list) < 2:
-        report_list.append(reports.booth_lack_of_sites(site_list))
+        report_list.append(
+            ReportItem.error(
+                report.messages.BoothLackOfSites(sorted(site_list))
+            )
+        )
 
     if len(peer_list) % 2 == 0:
-        report_list.append(reports.booth_even_peers_num(len(peer_list)))
+        report_list.append(
+            ReportItem.error(
+                report.messages.BoothEvenPeersNumber(len(peer_list))
+            )
+        )
 
     duplicate_addresses = {
         address for address, count in Counter(peer_list).items() if count > 1
     }
     if duplicate_addresses:
         report_list.append(
-            reports.booth_address_duplication(duplicate_addresses)
+            ReportItem.error(
+                report.messages.BoothAddressDuplication(
+                    sorted(duplicate_addresses)
+                )
+            )
         )
 
     return report_list

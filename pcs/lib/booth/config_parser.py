@@ -1,11 +1,10 @@
 from collections import namedtuple
 import re
 
+from pcs.common import reports as report
+from pcs.common.reports.item import get_severity, ReportItem
 from pcs.lib import reports
-from pcs.lib.booth import (
-    constants,
-    reports as booth_reports,
-)
+from pcs.lib.booth import constants
 from pcs.lib.interface.config import (
     ExporterInterface,
     ParserErrorException,
@@ -36,10 +35,12 @@ class Parser(ParserInterface):
         )
         if isinstance(exception, InvalidLines):
             return [
-                report_creator(
-                    booth_reports.booth_config_unexpected_lines,
-                    exception.args[0],
-                    file_path=file_path,
+                ReportItem(
+                    severity=get_severity(force_code, is_forced_or_warning),
+                    message=report.messages.BoothConfigUnexpectedLines(
+                        exception.args[0],
+                        file_path,
+                    ),
                 )
             ]
         raise exception
