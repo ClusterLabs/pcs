@@ -618,13 +618,23 @@ class RemoveRecipientTest(TestCase):
                 (
                     Severities.ERROR,
                     report_codes.ID_NOT_FOUND,
-                    {"id": "recipient"},
+                    {
+                        "id": "recipient",
+                        "expected_types": ["recipient"],
+                        "context_type": "alerts",
+                        "context_id": "",
+                    },
                     None
                 ),
                 (
                     Severities.ERROR,
                     report_codes.ID_NOT_FOUND,
-                    {"id": "alert2-recip1"},
+                    {
+                        "id": "alert2-recip1",
+                        "expected_types": ["recipient"],
+                        "context_type": "alerts",
+                        "context_id": "",
+                    },
                     None
                 )
             ]

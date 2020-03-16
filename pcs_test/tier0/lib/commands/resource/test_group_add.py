@@ -202,7 +202,7 @@ class GroupAdd(TestCase):
                     report_codes.ID_BELONGS_TO_UNEXPECTED_TYPE,
                     id="R2-meta_attributes",
                     expected_types=[
-                        "clone", "master", "group", "primitive", "bundle"
+                        "bundle", "clone", "group", "master", "primitive",
                     ],
                     current_type="meta_attributes",
                 ),

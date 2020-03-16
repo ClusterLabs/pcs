@@ -89,7 +89,9 @@ def find_resources_and_report(
     if not additional_search:
         additional_search = lambda x: [x]
     if resource_tags is None:
-        resource_tags = TAG_CLONE_ALL + [TAG_GROUP, TAG_PRIMITIVE, TAG_BUNDLE]
+        resource_tags = sorted(
+            TAG_CLONE_ALL + [TAG_GROUP, TAG_PRIMITIVE, TAG_BUNDLE]
+        )
 
     resource_el_list = []
     for res_id in resource_ids:

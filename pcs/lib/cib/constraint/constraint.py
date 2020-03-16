@@ -42,7 +42,7 @@ def find_valid_resource_id(
 ):
     parent_tags = resource.clone.ALL_TAGS + [resource.bundle.TAG]
     resource_element = find_element_by_tag_and_id(
-        parent_tags + [resource.primitive.TAG, resource.group.TAG],
+        sorted(parent_tags + [resource.primitive.TAG, resource.group.TAG]),
         cib,
         _id,
     )

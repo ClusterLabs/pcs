@@ -1,8 +1,7 @@
 from collections import defaultdict
 
+from pcs.common import reports
 from pcs.common.reports.item import ReportItem
-from pcs.common import reports as report
-from pcs.lib import reports
 from pcs.lib.cib.resource import (
     clone,
     common,
@@ -49,10 +48,12 @@ class ValidateMoveResourcesToGroup():
         ):
             bad_or_missing_group_specified = True
             report_list.append(
-                reports.id_belongs_to_unexpected_type(
-                    self._group_element.attrib.get("id"),
-                    expected_types=[group.TAG],
-                    current_type=self._group_element.tag
+                ReportItem.error(
+                    reports.messages.IdBelongsToUnexpectedType(
+                        self._group_element.attrib.get("id"),
+                        expected_types=[group.TAG],
+                        current_type=self._group_element.tag,
+                    )
                 )
             )
 
@@ -62,7 +63,7 @@ class ValidateMoveResourcesToGroup():
         if not bad_resources_specified and not self._resource_element_list:
             report_list.append(
                 ReportItem.error(
-                    report.messages.CannotGroupResourceNoResources()
+                    reports.messages.CannotGroupResourceNoResources()
                 )
             )
 
@@ -73,7 +74,7 @@ class ValidateMoveResourcesToGroup():
             if not primitive.is_primitive(resource):
                 report_list.append(
                     ReportItem.error(
-                        report.messages.CannotGroupResourceWrongType(
+                        reports.messages.CannotGroupResourceWrongType(
                             resource_id,
                             resource.tag
                         )
@@ -107,7 +108,7 @@ class ValidateMoveResourcesToGroup():
                     # and cannot be put into a group.
                     report_list.append(
                         ReportItem.error(
-                            report.messages.CannotGroupResourceWrongType(
+                            reports.messages.CannotGroupResourceWrongType(
                                 resource_id,
                                 parent.tag
                             )
@@ -116,7 +117,7 @@ class ValidateMoveResourcesToGroup():
         if resources_already_in_the_group:
             report_list.append(
                 ReportItem.error(
-                    report.messages.CannotGroupResourceAlreadyInTheGroup(
+                    reports.messages.CannotGroupResourceAlreadyInTheGroup(
                         sorted(resources_already_in_the_group),
                         self._group_element.attrib.get("id")
                     )
@@ -129,7 +130,7 @@ class ValidateMoveResourcesToGroup():
         if more_than_once_resources:
             report_list.append(
                 ReportItem.error(
-                    report.messages.CannotGroupResourceMoreThanOnce(
+                    reports.messages.CannotGroupResourceMoreThanOnce(
                         sorted(more_than_once_resources)
                     )
                 )
@@ -154,7 +155,7 @@ class ValidateMoveResourcesToGroup():
                 ):
                     report_list.append(
                         ReportItem.error(
-                            report.messages
+                            reports.messages
                             .CannotGroupResourceAdjacentResourceNotInGroup(
                                 self._adjacent_resource_element
                                     .attrib.get("id"),
@@ -170,7 +171,7 @@ class ValidateMoveResourcesToGroup():
                 ):
                     report_list.append(
                         ReportItem.error(
-                            report.messages.CannotGroupResourceNextToItself(
+                            reports.messages.CannotGroupResourceNextToItself(
                                 self._adjacent_resource_element.attrib.get("id")
                             )
                         )
@@ -268,7 +269,7 @@ class ValidateMoveResourcesToGroupByIds(ValidateMoveResourcesToGroup):
                 else:
                     report_list.append(
                         ReportItem.error(
-                            report.messages
+                            reports.messages
                             .CannotGroupResourceAdjacentResourceNotInGroup(
                                 self._adjacent_resource_id,
                                 self._group_id,
@@ -279,7 +280,7 @@ class ValidateMoveResourcesToGroupByIds(ValidateMoveResourcesToGroup):
             elif group_missing_id_valid:
                 report_list.append(
                     ReportItem.error(
-                        report.messages
+                        reports.messages
                         .CannotGroupResourceAdjacentResourceForNewGroup(
                             self._adjacent_resource_id,
                             self._group_id,

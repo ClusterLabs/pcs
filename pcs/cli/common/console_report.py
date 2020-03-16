@@ -113,43 +113,6 @@ def typelist_to_string(type_list, article=False):
         types=types
     )
 
-def id_belongs_to_unexpected_type(info):
-    return "'{id}' is not {expected_type}".format(
-        id=info["id"],
-        expected_type=typelist_to_string(info["expected_types"], article=True)
-    )
-
-def object_with_id_in_unexpected_context(info):
-    context_type = type_to_string(info["expected_context_type"])
-    if info.get("expected_context_id", ""):
-        context = "{_expected_context_type} '{expected_context_id}'".format(
-            _expected_context_type=context_type,
-            **info
-        )
-    else:
-        context = "'{_expected_context_type}'".format(
-            _expected_context_type=context_type,
-        )
-    return "{_type} '{id}' exists but does not belong to {_context}".format(
-        _context=context,
-        _type=type_to_string(info["type"]),
-        **info
-    )
-
-def id_not_found(info):
-    desc = format_optional(typelist_to_string(info["expected_types"]), "{0} ")
-    if not info["context_type"] or not info["context_id"]:
-        return "{desc}'{id}' does not exist".format(desc=desc, id=info["id"])
-
-    return (
-        "there is no {desc}'{id}' in the {context_type} '{context_id}'".format(
-            desc=desc,
-            id=info["id"],
-            context_type=info["context_type"],
-            context_id=info["context_id"],
-        )
-    )
-
 def build_node_description(node_types):
     if not node_types:
         return  "Node"
@@ -169,27 +132,6 @@ def build_node_description(node_types):
 #If it is necessary to put the force text inside the string then the callable
 #must take the force_text parameter.
 CODE_TO_MESSAGE_BUILDER_MAP = {
-    codes.ID_ALREADY_EXISTS: lambda info:
-        "'{id}' already exists"
-        .format(**info)
-    ,
-
-    codes.ID_BELONGS_TO_UNEXPECTED_TYPE: id_belongs_to_unexpected_type,
-
-    codes.OBJECT_WITH_ID_IN_UNEXPECTED_CONTEXT:
-        object_with_id_in_unexpected_context
-    ,
-
-    codes.ID_NOT_FOUND: id_not_found,
-
-    codes.STONITH_RESOURCES_DO_NOT_EXIST: lambda info:
-        "Stonith resource(s) '{stonith_id_list}' do not exist"
-        .format(
-            stonith_id_list="', '".join(info["stonith_ids"]),
-            **info
-        )
-    ,
-
     codes.CIB_LOAD_ERROR: "unable to get cib",
 
     codes.CIB_LOAD_ERROR_SCOPE_MISSING: lambda info:

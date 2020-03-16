@@ -1,6 +1,6 @@
-from pcs.common import reports as report
+from pcs.common import reports
 from pcs.common.reports.item import ReportItem
-from pcs.lib import reports, validate
+from pcs.lib import validate
 from pcs.lib.cib.tools import does_id_exist
 from pcs.lib.cib.node import PacemakerNode
 from pcs.lib.cib.nvpair import(
@@ -32,14 +32,20 @@ def validate_conflicts(
             node_name in existing_nodes_addrs
         )
     ):
-        report_list.append(reports.id_already_exists(node_name))
+        report_list.append(
+            ReportItem.error(reports.messages.IdAlreadyExists(node_name))
+        )
 
     if(
         "remote-addr" in options
         and
         options["remote-addr"] in existing_nodes_addrs
     ):
-        report_list.append(reports.id_already_exists(options["remote-addr"]))
+        report_list.append(
+            ReportItem.error(
+                reports.messages.IdAlreadyExists(options["remote-addr"])
+            )
+        )
     return report_list
 
 def is_node_name_in_options(options):
@@ -87,7 +93,7 @@ def validate_is_not_guest(resource_element):
 
     return [
         ReportItem.error(
-            report.messages.ResourceIsGuestNodeAlready(
+            reports.messages.ResourceIsGuestNodeAlready(
                 resource_element.attrib["id"]
             )
         )

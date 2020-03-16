@@ -10,7 +10,7 @@ from pcs_test.tools.custom_mock import MockLibraryReportProcessor
 from pcs_test.tools.misc import create_patcher
 from pcs_test.tools.xml import etree_to_str
 
-from pcs.common import reports as common_report
+from pcs.common import reports
 from pcs.common.reports import codes as report_codes
 from pcs.common.fencing_topology import (
     TARGET_TYPE_NODE,
@@ -19,7 +19,6 @@ from pcs.common.fencing_topology import (
 )
 from pcs.common.reports import ReportItemSeverity as severity
 from pcs.common.reports.item import ReportItem
-from pcs.lib import reports
 from pcs.lib.errors import LibraryError
 from pcs.lib.pacemaker.state import ClusterState
 
@@ -196,8 +195,8 @@ class AddLevel(TestCase):
     ):
         mock_val_level.return_value = (
             [
-                common_report.item.ReportItem.error(
-                    common_report.messages.InvalidOptionValue(
+                reports.item.ReportItem.error(
+                    reports.messages.InvalidOptionValue(
                         "level", self.level, "a positive integer"
                     )
                 )
@@ -225,7 +224,7 @@ class AddLevel(TestCase):
     ):
         mock_val_target.return_value = [
             ReportItem.error(
-                common_report.messages.NodeNotFound(self.target_value)
+                reports.messages.NodeNotFound(self.target_value)
             )
         ]
         report_list = [
@@ -245,7 +244,9 @@ class AddLevel(TestCase):
         mock_append
     ):
         mock_val_devices.return_value = [
-            reports.stonith_resources_do_not_exist(self.devices)
+            ReportItem.error(
+                reports.messages.StonithResourcesDoNotExist(self.devices)
+            )
         ]
         report_list = [
             fixture.error(
@@ -263,8 +264,8 @@ class AddLevel(TestCase):
         mock_append
     ):
         mock_val_dupl.return_value = [
-            common_report.item.ReportItem.error(
-                common_report.messages.CibFencingLevelAlreadyExists(
+            reports.item.ReportItem.error(
+                reports.messages.CibFencingLevelAlreadyExists(
                     self.level,
                     self.target_type,
                     self.target_value,

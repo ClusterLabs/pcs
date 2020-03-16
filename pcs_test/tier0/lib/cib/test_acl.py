@@ -269,6 +269,7 @@ class RemoveRoleTest(LibraryAclTest, ExtendedAssertionsMixin):
                 {
                     "context_type": "acls",
                     "context_id": "",
+                    "expected_types": ['acl_role'],
                     "id": "id-of-role",
                 },
             ),

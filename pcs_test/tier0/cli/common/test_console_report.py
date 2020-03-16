@@ -48,13 +48,6 @@ class CibSaveTmpError(NameBuildTest):
             reports.cib_save_tmp_error("reason")
         )
 
-class IdAlreadyExists(NameBuildTest):
-    def test_all(self):
-        self.assert_message_from_report(
-            "'id' already exists",
-            reports.id_already_exists("id")
-        )
-
 
 class FormatOptionalTest(TestCase):
     def test_info_key_is_falsy(self):
@@ -226,12 +219,6 @@ class FormatPluralTest(TestCase):
         mock_add_s.assert_called_once_with("greeting")
         mock_is_multiple.assert_called_once_with(10)
 
-class StonithResourcesDoNotExist(NameBuildTest):
-    def test_success(self):
-        self.assert_message_from_report(
-            "Stonith resource(s) 'device1', 'device2' do not exist",
-            reports.stonith_resources_do_not_exist(["device2", "device1"])
-        )
 
 class ResourceBundleAlreadyContainsAResource(NameBuildTest):
     def test_build_message_with_data(self):
@@ -245,48 +232,6 @@ class ResourceBundleAlreadyContainsAResource(NameBuildTest):
             )
         )
 
-
-class IdBelongsToUnexpectedType(NameBuildTest):
-    def test_build_message_with_single_type(self):
-        self.assert_message_from_report(
-            "'ID' is not an ACL permission",
-            reports.id_belongs_to_unexpected_type(
-                "ID", ["acl_permission"], "op"
-            )
-        )
-
-    def test_build_message_with_data(self):
-        self.assert_message_from_report(
-            "'ID' is not a clone/resource",
-            reports.id_belongs_to_unexpected_type(
-                "ID", ["primitive", "clone"], "op"
-            )
-        )
-
-    def test_build_message_with_transformation_and_article(self):
-        self.assert_message_from_report(
-            "'ID' is not an ACL group/ACL user",
-            reports.id_belongs_to_unexpected_type(
-                "ID", ["acl_target", "acl_group"], "op",
-            )
-        )
-
-class ObjectWithIdInUnexpectedContext(NameBuildTest):
-    def test_with_context_id(self):
-        self.assert_message_from_report(
-            "resource 'R' exists but does not belong to group 'G'",
-            reports.object_with_id_in_unexpected_context(
-                "primitive", "R", "group", "G"
-            )
-        )
-
-    def test_without_context_id(self):
-        self.assert_message_from_report(
-            "group 'G' exists but does not belong to 'resource'",
-            reports.object_with_id_in_unexpected_context(
-                "group", "G", "primitive", ""
-            )
-        )
 
 class CibDiffError(NameBuildTest):
     def test_success(self):
@@ -341,40 +286,6 @@ class CibLoadErrorScopeMissing(NameBuildTest):
         self.assert_message_from_report(
             "unable to get cib, scope 'scope-name' not present in cib",
             reports.cib_load_error_scope_missing("scope-name", "reason")
-        )
-
-
-class IdNotFound(NameBuildTest):
-    def test_id(self):
-        self.assert_message_from_report(
-            "'ID' does not exist",
-            reports.id_not_found("ID", [])
-        )
-
-    def test_id_and_type(self):
-        self.assert_message_from_report(
-            "clone/resource 'ID' does not exist",
-            reports.id_not_found("ID", ["primitive", "clone"])
-        )
-
-    def test_context(self):
-        self.assert_message_from_report(
-            "there is no 'ID' in the C_TYPE 'C_ID'",
-            reports.id_not_found(
-                "ID", [],
-                context_type="C_TYPE",
-                context_id="C_ID"
-            )
-        )
-
-    def test_type_and_context(self):
-        self.assert_message_from_report(
-            "there is no ACL user 'ID' in the C_TYPE 'C_ID'",
-            reports.id_not_found(
-                "ID", ["acl_target"],
-                context_type="C_TYPE",
-                context_id="C_ID"
-            )
         )
 
 

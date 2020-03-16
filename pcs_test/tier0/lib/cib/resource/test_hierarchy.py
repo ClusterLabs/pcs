@@ -265,7 +265,7 @@ class ValidateMoveResourcesToGroupByIds(
                     report_codes.ID_BELONGS_TO_UNEXPECTED_TYPE,
                     id="RB1-meta_attributes",
                     expected_types=[
-                        "clone", "master", "group", "primitive", "bundle"
+                        "bundle", "clone", "group", "master", "primitive",
                     ],
                     current_type="meta_attributes",
                 ),

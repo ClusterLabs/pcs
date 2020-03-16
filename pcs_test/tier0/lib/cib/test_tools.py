@@ -618,8 +618,8 @@ class FindTagWithId(TestCase):
                 severities.ERROR,
                 report_codes.OBJECT_WITH_ID_IN_UNEXPECTED_CONTEXT,
                 {
-                    "type": "primitive",
-                    "id": "a",
+                    "object_type": "primitive",
+                    "object_id": "a",
                     "expected_context_type": "group",
                     "expected_context_id": "g2",
                 },
@@ -743,8 +743,8 @@ class ElementSearcher(TestCase):
             [
                 fixture.error(
                     report_codes.OBJECT_WITH_ID_IN_UNEXPECTED_CONTEXT,
-                    id="a",
-                    type="primitive",
+                    object_id="a",
+                    object_type="primitive",
                     expected_context_type="group",
                     expected_context_id="g2",
                 ),

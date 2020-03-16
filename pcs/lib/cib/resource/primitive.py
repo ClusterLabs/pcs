@@ -1,12 +1,11 @@
 from lxml import etree
 
-from pcs.common import reports as report
+from pcs.common import reports
 from pcs.common.reports import (
     codes as report_codes,
     ReportProcessor,
 )
 from pcs.common.reports.item import ReportItem
-from pcs.lib import reports
 from pcs.lib.cib.nvpair import (
     append_new_instance_attributes,
     append_new_meta_attributes,
@@ -91,7 +90,9 @@ def create(
         instance_attributes = {}
 
     if does_id_exist(resources_section, resource_id):
-        raise LibraryError(reports.id_already_exists(resource_id))
+        raise LibraryError(
+            ReportItem.error(reports.messages.IdAlreadyExists(resource_id))
+        )
     validate_id(resource_id, "{0} name".format(resource_type))
 
     operation_list = prepare_operations(
@@ -212,11 +213,11 @@ def validate_unique_instance_attributes(
         if conflicting_resources:
             report_list.append(
                 ReportItem(
-                    severity=report.item.get_severity(
+                    severity=reports.item.get_severity(
                         report_codes.FORCE_OPTIONS,
                         force,
                     ),
-                    message=report.messages.ResourceInstanceAttrValueNotUnique(
+                    message=reports.messages.ResourceInstanceAttrValueNotUnique(
                         attr,
                         instance_attributes[attr],
                         resource_agent.get_name(),

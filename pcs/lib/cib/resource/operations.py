@@ -2,14 +2,14 @@ from collections import defaultdict
 
 from lxml import etree
 
-from pcs.common import reports as report
+from pcs.common import reports
 from pcs.common.reports import (
     ReportItemList,
     ReportProcessor,
     codes as report_codes,
 )
 from pcs.common.reports.item import ReportItem
-from pcs.lib import reports, validate
+from pcs.lib import validate
 from pcs.lib.resource_agent import get_default_interval, complete_all_intervals
 from pcs.lib.cib.nvpair import append_new_instance_attributes
 from pcs.lib.cib.tools import (
@@ -216,7 +216,7 @@ def make_unique_intervals(report_processor: ReportProcessor, operation_list):
             if adapted["interval"] != operation["interval"]:
                 report_processor.report(
                     ReportItem.warning(
-                        report.messages.ResourceOperationIntervalAdapted(
+                        reports.messages.ResourceOperationIntervalAdapted(
                             operation["name"],
                             operation["interval"],
                             adapted["interval"],
@@ -250,7 +250,7 @@ def validate_different_intervals(operation_list):
     if duplications:
         return [
             ReportItem.error(
-                report.messages.ResourceOperationIntervalDuplication(
+                reports.messages.ResourceOperationIntervalDuplication(
                     dict(duplications)
                 )
             )
@@ -296,7 +296,11 @@ def append_new_operation(operations_element, id_provider, options):
     )
     if "id" in attribute_map:
         if does_id_exist(operations_element, attribute_map["id"]):
-            raise LibraryError(reports.id_already_exists(attribute_map["id"]))
+            raise LibraryError(
+                ReportItem.error(
+                    reports.messages.IdAlreadyExists(attribute_map["id"])
+                )
+            )
     else:
         attribute_map.update({
             "id": create_id(

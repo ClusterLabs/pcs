@@ -105,74 +105,6 @@ def duplicate_constraints_exist(
         forceable=forceable
     )
 
-def id_already_exists(id):
-    # pylint says 'id' is wrong
-    # pylint: disable=invalid-name, redefined-builtin
-    """
-    specified id already exists in CIB and cannot be used for a new CIB object
-    id string existing id
-    """
-    return ReportItem.error(
-        report_codes.ID_ALREADY_EXISTS,
-        info={"id": id}
-    )
-
-def id_belongs_to_unexpected_type(id, expected_types, current_type):
-    # pylint says 'id' is wrong
-    # pylint: disable=invalid-name, redefined-builtin
-    """
-    Specified id exists but for another element than expected.
-    For example user wants to create resource in group that is specifies by id.
-    But id does not belong to group.
-    """
-    return ReportItem.error(
-        report_codes.ID_BELONGS_TO_UNEXPECTED_TYPE,
-        info={
-            "id": id,
-            "expected_types": expected_types,
-            "current_type": current_type,
-        }
-    )
-
-def object_with_id_in_unexpected_context(
-    object_type, object_id, expected_context_type, expected_context_id
-):
-    """
-    Object specified by object_type (tag) and object_id exists but not inside
-    given context (expected_context_type, expected_context_id).
-    """
-    return ReportItem.error(
-        report_codes.OBJECT_WITH_ID_IN_UNEXPECTED_CONTEXT,
-        info={
-            "type": object_type,
-            "id": object_id,
-            "expected_context_type": expected_context_type,
-            "expected_context_id": expected_context_id,
-        }
-    )
-
-
-def id_not_found(id, expected_types, context_type="", context_id=""):
-    # pylint says 'id' is wrong
-    # pylint: disable=invalid-name, redefined-builtin
-    """
-    specified id does not exist in CIB, user referenced a nonexisting id
-
-    string id -- specified id
-    list expected_types -- list of id's roles - expected types with the id
-    string context_type -- context_id's role / type
-    string context_id -- specifies the search area
-    """
-    return ReportItem.error(
-        report_codes.ID_NOT_FOUND,
-        info={
-            "id": id,
-            "expected_types": sorted(expected_types),
-            "context_type": context_type,
-            "context_id": context_id,
-        }
-    )
-
 def resource_bundle_already_contains_a_resource(bundle_id, resource_id):
     """
     The bundle already contains a resource, another one caanot be added
@@ -186,22 +118,6 @@ def resource_bundle_already_contains_a_resource(bundle_id, resource_id):
             "bundle_id": bundle_id,
             "resource_id": resource_id,
         }
-    )
-
-def stonith_resources_do_not_exist(
-    stonith_ids, severity=ReportItemSeverity.ERROR, forceable=None
-):
-    """
-    specified stonith resource doesn't exist (e.g. when creating in constraints)
-    iterable stoniths -- list of specified stonith id
-    """
-    return ReportItem(
-        report_codes.STONITH_RESOURCES_DO_NOT_EXIST,
-        severity,
-        info={
-            "stonith_ids": sorted(stonith_ids),
-        },
-        forceable=forceable
     )
 
 def cib_load_error(reason):
