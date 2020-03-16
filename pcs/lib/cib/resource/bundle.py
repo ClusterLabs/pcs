@@ -1,11 +1,11 @@
 from lxml import etree
 
-from pcs.common import reports as report
+from pcs.common import reports
 from pcs.common.reports import (
     codes as report_codes,
 )
 from pcs.common.reports.item import ReportItem
-from pcs.lib import reports, validate
+from pcs.lib import validate
 from pcs.lib.cib.nvpair import (
     append_new_meta_attributes,
     arrange_first_meta_attributes,
@@ -191,7 +191,7 @@ def reset_to_minimal(bundle_element):
 
 def _get_report_unsupported_container(bundle_el):
     return ReportItem.error(
-        report.messages.ResourceBundleUnsupportedContainerType(
+        reports.messages.ResourceBundleUnsupportedContainerType(
             bundle_el.get("id"),
             sorted(GENERIC_CONTAINER_TYPES),
         )
@@ -346,9 +346,14 @@ def add_resource(bundle_element, primitive_element):
     # a bundle may currently contain at most one primitive resource
     inner_primitive = bundle_element.find(TAG_PRIMITIVE)
     if inner_primitive is not None:
-        raise LibraryError(reports.resource_bundle_already_contains_a_resource(
-            bundle_element.get("id"), inner_primitive.get("id")
-        ))
+        raise LibraryError(
+            ReportItem.error(
+                reports.messages.ResourceBundleAlreadyContainsAResource(
+                    bundle_element.get("id"),
+                    inner_primitive.get("id"),
+                )
+            )
+        )
     bundle_element.append(primitive_element)
 
 def get_inner_resource(bundle_el):
@@ -368,7 +373,7 @@ def _validate_container(container_type, container_options, force_options=False):
     if container_type not in GENERIC_CONTAINER_TYPES:
         return [
             ReportItem.error(
-                report.messages.InvalidOptionValue(
+                reports.messages.InvalidOptionValue(
                     "container type",
                     container_type,
                     GENERIC_CONTAINER_TYPES,
@@ -401,7 +406,7 @@ def _validate_generic_container_options(container_options, force_options=False):
     if "masters" in container_options:
         deprecation_reports.append(
             ReportItem.warning(
-                report.messages.DeprecatedOption(
+                reports.messages.DeprecatedOption(
                     "masters", ["promoted-max"], "container",
                 )
             )
@@ -481,7 +486,7 @@ def _validate_generic_container_options_update(
         # deprecated.
         deprecation_reports.append(
             ReportItem.warning(
-                report.messages.DeprecatedOption(
+                reports.messages.DeprecatedOption(
                     "masters", ["promoted-max"], "container",
                 )
             )
@@ -496,7 +501,7 @@ def _validate_generic_container_options_update(
     ):
         deprecation_reports.append(
             ReportItem.error(
-                report.messages.PrerequisiteOptionMustNotBeSet(
+                reports.messages.PrerequisiteOptionMustNotBeSet(
                     "masters", "promoted-max", "container", "container"
                 )
             )
@@ -508,7 +513,7 @@ def _validate_generic_container_options_update(
     ):
         deprecation_reports.append(
             ReportItem.error(
-                report.messages.PrerequisiteOptionMustNotBeSet(
+                reports.messages.PrerequisiteOptionMustNotBeSet(
                     "promoted-max", "masters", "container", "container"
                 )
             )
@@ -570,11 +575,11 @@ def _validate_network_options_update(
     ):
         report_list.append(
             ReportItem(
-                severity=report.item.get_severity(
+                severity=reports.item.get_severity(
                     report_codes.FORCE_OPTIONS,
                     force_options,
                 ),
-                message=report.messages.ResourceInBundleNotAccessible(
+                message=reports.messages.ResourceInBundleNotAccessible(
                     bundle_el.get("id"),
                     inner_primitive.get("id"),
                 ),

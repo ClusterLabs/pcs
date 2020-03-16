@@ -220,19 +220,6 @@ class FormatPluralTest(TestCase):
         mock_is_multiple.assert_called_once_with(10)
 
 
-class ResourceBundleAlreadyContainsAResource(NameBuildTest):
-    def test_build_message_with_data(self):
-        self.assert_message_from_report(
-            (
-                "bundle 'test_bundle' already contains resource "
-                "'test_resource', a bundle may contain at most one resource"
-            ),
-            reports.resource_bundle_already_contains_a_resource(
-                "test_bundle", "test_resource"
-            )
-        )
-
-
 class CibDiffError(NameBuildTest):
     def test_success(self):
         self.assert_message_from_report(

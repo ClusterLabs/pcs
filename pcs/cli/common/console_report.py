@@ -185,11 +185,4 @@ CODE_TO_MESSAGE_BUILDER_MAP = {
         "Unable to save CIB to a temporary file: {reason}"
         .format(**info)
     ,
-
-    codes.RESOURCE_BUNDLE_ALREADY_CONTAINS_A_RESOURCE: lambda info:
-        (
-            "bundle '{bundle_id}' already contains resource '{resource_id}'"
-            ", a bundle may contain at most one resource"
-        ).format(**info)
-    ,
 }

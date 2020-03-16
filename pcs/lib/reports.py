@@ -105,21 +105,6 @@ def duplicate_constraints_exist(
         forceable=forceable
     )
 
-def resource_bundle_already_contains_a_resource(bundle_id, resource_id):
-    """
-    The bundle already contains a resource, another one caanot be added
-
-    string bundle_id -- id of the bundle
-    string resource_id -- id of the resource already contained in the bundle
-    """
-    return ReportItem.error(
-        report_codes.RESOURCE_BUNDLE_ALREADY_CONTAINS_A_RESOURCE,
-        info={
-            "bundle_id": bundle_id,
-            "resource_id": resource_id,
-        }
-    )
-
 def cib_load_error(reason):
     """
     cannot load cib from cibadmin, cibadmin exited with non-zero code
