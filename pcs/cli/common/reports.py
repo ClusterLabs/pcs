@@ -8,9 +8,6 @@ import inspect
 import sys
 
 
-from pcs.cli.booth.console_report import (
-    CODE_TO_MESSAGE_BUILDER_MAP as BOOTH_CODE_TO_MESSAGE_BUILDER_MAP
-)
 from pcs.cli.common.console_report import (
     error,
     warn,
@@ -36,7 +33,6 @@ ReportItemList = Union[
 
 CODE_BUILDER_MAP: Dict[MessageCode, Any] = {}
 CODE_BUILDER_MAP.update(CONSTRAINT_CODE_TO_MESSAGE_BUILDER_MAP)
-CODE_BUILDER_MAP.update(BOOTH_CODE_TO_MESSAGE_BUILDER_MAP)
 
 
 def build_default_message_from_report(report_item, force_text):

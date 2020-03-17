@@ -19,7 +19,6 @@ from pcs.lib.booth import (
     config_files,
     config_validators,
     constants,
-    reports as booth_reports,
     resource,
     status,
 )
@@ -554,11 +553,13 @@ def _ticket_operation(
 
     if return_code != 0:
         raise LibraryError(
-            booth_reports.booth_ticket_operation_failed(
-                operation,
-                join_multilines([stderr, stdout]),
-                site_ip,
-                ticket_name
+            ReportItem.error(
+                reports.messages.BoothTicketOperationFailed(
+                    operation,
+                    join_multilines([stderr, stdout]),
+                    site_ip,
+                    ticket_name,
+                )
             )
         )
 

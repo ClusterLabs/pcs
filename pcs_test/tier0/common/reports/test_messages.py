@@ -4406,3 +4406,16 @@ class BoothCannotDetermineLocalSiteIpTest(NameBuildTest):
             "cannot determine local site ip, please specify site parameter",
             reports.BoothCannotDetermineLocalSiteIp(),
         )
+
+
+class BoothTicketOperationFailedTest(NameBuildTest):
+    def test_success(self):
+        self.assert_message_from_report(
+            (
+                "unable to operation booth ticket 'ticket_name'"
+                " for site 'site_ip', reason: reason"
+            ),
+            reports.BoothTicketOperationFailed(
+                "operation", "reason", "site_ip", "ticket_name"
+            ),
+        )

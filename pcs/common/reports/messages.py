@@ -6083,6 +6083,31 @@ class BoothCannotDetermineLocalSiteIp(ReportItemMessage):
         return "cannot determine local site ip, please specify site parameter"
 
 
+@dataclass(frozen=True)
+class BoothTicketOperationFailed(ReportItemMessage):
+    """
+    Pcs uses external booth tools for some ticket_name operations. For example
+    grand and revoke. But the external command failed.
+
+    operation  -- determine what was intended perform with ticket_name
+    reason -- error description from external booth command
+    site_ip -- specifiy what site had to run the command
+    ticket_name -- specify with which ticket had to run the command
+    """
+
+    operation: str
+    reason: str
+    site_ip: str
+    ticket_name: str
+    _code = codes.BOOTH_TICKET_OPERATION_FAILED
+
+
+    @property
+    def message(self) -> str:
+        return (
+            f"unable to {self.operation} booth ticket '{self.ticket_name}'"
+            f" for site '{self.site_ip}', reason: {self.reason}"
+        )
 
 
 # @dataclass(frozen=True)
