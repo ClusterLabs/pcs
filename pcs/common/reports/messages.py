@@ -81,6 +81,10 @@ def format_fencing_level_target(target_type, target_value):
     return target_value
 
 
+def format_booth_default(value, template):
+    return "" if value in ("booth", "", None) else template.format(value)
+
+
 def _key_numeric(item):
     return (int(item), item) if item.isdigit() else (-1, item)
 
@@ -5763,6 +5767,7 @@ class BoothInvalidName(ReportItemMessage):
     name -- entered booth instance name
     reason -- decription of the error
     """
+
     name: str
     reason: str
     _code = codes.BOOTH_INVALID_NAME
@@ -5770,6 +5775,314 @@ class BoothInvalidName(ReportItemMessage):
     @property
     def message(self) -> str:
         return f"booth name '{self.name}' is not valid ({self.reason})"
+
+
+@dataclass(frozen=True)
+class BoothTicketNameInvalid(ReportItemMessage):
+    """
+    Name of booth ticket may consists of alphanumeric characters or dash.
+    Entered ticket name is violating this rule.
+
+    ticket_name -- entered booth ticket name
+    """
+
+    ticket_name: str
+    _code = codes.BOOTH_TICKET_NAME_INVALID
+
+    @property
+    def message(self) -> str:
+        return (
+            f"booth ticket name '{self.ticket_name}' is not valid, use "
+            "alphanumeric chars or dash"
+        )
+
+
+@dataclass(frozen=True)
+class BoothTicketDuplicate(ReportItemMessage):
+    """
+    Each booth ticket name must be uniqe. But duplicate booth ticket name was
+    entered.
+
+    ticket_name -- entered booth ticket name
+    """
+
+    ticket_name: str
+    _code = codes.BOOTH_TICKET_DUPLICATE
+
+    @property
+    def message(self) -> str:
+        return (
+            f"booth ticket name '{self.ticket_name}' already exists in "
+            "configuration"
+        )
+
+
+@dataclass(frozen=True)
+class BoothTicketDoesNotExist(ReportItemMessage):
+    """
+    Some operations (like ticket remove) expect the ticket name in booth
+    configuration. But the ticket name was not found in booth configuration.
+
+    ticket_name -- entered booth ticket name
+    """
+
+    ticket_name: str
+    _code = codes.BOOTH_TICKET_DOES_NOT_EXIST
+
+    @property
+    def message(self) -> str:
+        return f"booth ticket name '{self.ticket_name}' does not exist"
+
+
+@dataclass(frozen=True)
+class BoothAlreadyInCib(ReportItemMessage):
+    """
+    Each booth instance should be in a cib once maximally. Existence of booth
+    instance in cib detected during creating new one.
+
+    name -- booth instance name
+    """
+
+    name: str
+    _code = codes.BOOTH_ALREADY_IN_CIB
+
+    @property
+    def message(self) -> str:
+        return (
+            f"booth instance '{self.name}' is already created as cluster "
+            "resource"
+        )
+
+
+@dataclass(frozen=True)
+class BoothNotExistsInCib(ReportItemMessage):
+    """
+    Remove booth instance from cib required. But no such instance found in cib.
+
+    name -- booth instance name
+    """
+
+    name: str
+    _code = codes.BOOTH_NOT_EXISTS_IN_CIB
+
+    @property
+    def message(self) -> str:
+        return f"booth instance '{self.name}' not found in cib"
+
+
+@dataclass(frozen=True)
+class BoothConfigIsUsed(ReportItemMessage):
+    """
+    Booth config use detected during destroy request.
+
+    name -- booth instance name
+    detail -- provide more details (for example booth instance is used as
+        cluster resource or is started/enabled under systemd)
+    """
+
+    name: str
+    detail: str = ""
+    _code = codes.BOOTH_CONFIG_IS_USED
+
+    @property
+    def message(self) -> str:
+        return "booth instance '{name}' is used{detail}".format(
+            name=self.name,
+            detail=format_optional(self.detail, " {}"),
+        )
+
+
+@dataclass(frozen=True)
+class BoothMultipleTimesInCib(ReportItemMessage):
+    """
+    Each booth instance should be in a cib once maximally. But multiple
+    occurences detected. For example during remove booth instance from cib.
+    Notify user about this fact is required. When operation is forced user
+    should be notified about multiple occurences.
+
+    name -- booth instance name
+    """
+
+    name: str
+    _code = codes.BOOTH_MULTIPLE_TIMES_IN_CIB
+
+    @property
+    def message(self) -> str:
+        return f"found more than one booth instance '{self.name}' in cib"
+
+
+@dataclass(frozen=True)
+class BoothConfigDistributionStarted(ReportItemMessage):
+    """
+    Booth configuration is about to be sent to nodes
+    """
+
+    _code = codes.BOOTH_CONFIG_DISTRIBUTION_STARTED
+
+    @property
+    def message(self) -> str:
+        return "Sending booth configuration to cluster nodes..."
+
+
+@dataclass(frozen=True)
+class BoothConfigAcceptedByNode(ReportItemMessage):
+    """
+    Booth config has been saved on specified node.
+
+    node -- name of node
+    name_list -- list of names of booth instance
+    """
+
+    node: str = ""
+    name_list: List[str] = field(default_factory=list)
+    _code = codes.BOOTH_CONFIG_ACCEPTED_BY_NODE
+
+    @property
+    def message(self) -> str:
+        desc = ""
+        if self.name_list and self.name_list not in [["booth"]]:
+            desc = "{_s} {_list}".format(
+                _s="s" if len(self.name_list) > 1 else "",
+                _list=format_list(self.name_list),
+            )
+        return "{node}Booth config{desc} saved".format(
+            node=format_optional(self.node, "{}: "),
+            desc=desc,
+        )
+
+
+@dataclass(frozen=True)
+class BoothConfigDistributionNodeError(ReportItemMessage):
+    """
+    Saving booth config failed on specified node.
+
+    node -- node name
+    reason -- reason of failure
+    name -- name of booth instance
+    """
+
+    node: str
+    reason: str
+    name: str = ""
+    _code = codes.BOOTH_CONFIG_DISTRIBUTION_NODE_ERROR
+
+    @property
+    def message(self) -> str:
+        desc = format_booth_default(self.name, " '{}'")
+        return (
+            f"Unable to save booth config{desc} on node '{self.node}': "
+            f"{self.reason}"
+        )
+
+
+@dataclass(frozen=True)
+class BoothFetchingConfigFromNode(ReportItemMessage):
+    """
+    Fetching of booth config from specified node started.
+
+    node -- node from which config is fetching
+    config -- config name
+    """
+
+    node: str
+    config: str = ""
+    _code = codes.BOOTH_FETCHING_CONFIG_FROM_NODE
+
+    @property
+    def message(self) -> str:
+        desc = format_booth_default(self.config, " '{}'")
+        return f"Fetching booth config{desc} from node '{self.node}'..."
+
+
+@dataclass(frozen=True)
+class BoothUnsupportedFileLocation(ReportItemMessage):
+    """
+    A booth file (config, authfile) is not in the expected dir, skipping it.
+
+    file_path -- the actual path of the file
+    expected_dir -- where the file is supposed to be
+    file_type_code -- item from pcs.common.file_type_codes
+    """
+
+    file_path: str
+    expected_dir: str
+    file_type_code: str
+    _code = codes.BOOTH_UNSUPPORTED_FILE_LOCATION
+
+    @property
+    def message(self) -> str:
+        file_role = format_file_role(self.file_type_code)
+        return (
+            f"{file_role} '{self.file_path}' is outside of supported booth "
+            f"config directory '{self.expected_dir}', ignoring the file"
+        )
+
+
+@dataclass(frozen=True)
+class BoothDaemonStatusError(ReportItemMessage):
+    """
+    Unable to get status of booth daemon because of error.
+
+    reason -- reason
+    """
+
+    reason: str
+    _code = codes.BOOTH_DAEMON_STATUS_ERROR
+
+    @property
+    def message(self) -> str:
+        return f"unable to get status of booth daemon: {self.reason}"
+
+
+@dataclass(frozen=True)
+class BoothTicketStatusError(ReportItemMessage):
+    """
+    Unable to get status of booth tickets because of error.
+
+    reason -- reason
+    """
+
+    reason: str = ""
+    _code = codes.BOOTH_TICKET_STATUS_ERROR
+
+    @property
+    def message(self) -> str:
+        reason = format_optional(self.reason, ": {}")
+        return f"unable to get status of booth tickets{reason}"
+
+
+@dataclass(frozen=True)
+class BoothPeersStatusError(ReportItemMessage):
+    """
+    Unable to get status of booth peers because of error.
+
+    reason -- reason
+    """
+
+    reason: str = ""
+    _code = codes.BOOTH_PEERS_STATUS_ERROR
+
+    @property
+    def message(self) -> str:
+        reason = format_optional(self.reason, ": {}")
+        return f"unable to get status of booth peers{reason}"
+
+
+@dataclass(frozen=True)
+class BoothCannotDetermineLocalSiteIp(ReportItemMessage):
+    """
+    Some booth operations are performed on specific site and requires to
+    specify site ip. When site specification omitted pcs can try determine
+    local ip. But determine local site ip failed.
+    """
+
+    _code = codes.BOOTH_CANNOT_DETERMINE_LOCAL_SITE_IP
+
+    @property
+    def message(self) -> str:
+        return "cannot determine local site ip, please specify site parameter"
+
+
 
 
 # @dataclass(frozen=True)

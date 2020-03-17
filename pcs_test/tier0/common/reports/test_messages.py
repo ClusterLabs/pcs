@@ -4169,5 +4169,240 @@ class BoothInvalidName(NameBuildTest):
     def test_success(self):
         self.assert_message_from_report(
             "booth name '/name' is not valid (invalid characters)",
-            reports.BoothInvalidName("/name", "invalid characters")
+            reports.BoothInvalidName("/name", "invalid characters"),
+        )
+
+
+class BoothTicketNameInvalid(NameBuildTest):
+    def test_success(self):
+        self.assert_message_from_report(
+            (
+                "booth ticket name 'ticket&' is not valid, use alphanumeric "
+                "chars or dash"
+            ),
+            reports.BoothTicketNameInvalid("ticket&"),
+        )
+
+
+class BoothTicketDuplicate(NameBuildTest):
+    def test_success(self):
+        self.assert_message_from_report(
+            "booth ticket name 'ticket_name' already exists in configuration",
+            reports.BoothTicketDuplicate("ticket_name"),
+        )
+
+
+class BoothTicketDoesNotExist(NameBuildTest):
+    def test_success(self):
+        self.assert_message_from_report(
+            "booth ticket name 'ticket_name' does not exist",
+            reports.BoothTicketDoesNotExist("ticket_name"),
+        )
+
+
+class BoothAlreadyInCib(NameBuildTest):
+    def test_success(self):
+        self.assert_message_from_report(
+            "booth instance 'name' is already created as cluster resource",
+            reports.BoothAlreadyInCib("name"),
+        )
+
+
+class BoothNotExistsInCib(NameBuildTest):
+    def test_success(self):
+        self.assert_message_from_report(
+            "booth instance 'name' not found in cib",
+            reports.BoothNotExistsInCib("name"),
+        )
+
+
+class BoothConfigIsUsed(NameBuildTest):
+    def test_minimal(self):
+        self.assert_message_from_report(
+            "booth instance 'name' is used",
+            reports.BoothConfigIsUsed("name"),
+        )
+
+    def test_all(self):
+        self.assert_message_from_report(
+            "booth instance 'name' is used some details",
+            reports.BoothConfigIsUsed("name", detail="some details"),
+        )
+
+
+class BoothMultipleTimesInCib(NameBuildTest):
+    def test_success(self):
+        self.assert_message_from_report(
+            "found more than one booth instance 'name' in cib",
+            reports.BoothMultipleTimesInCib("name"),
+        )
+
+
+class BoothConfigDistributionStarted(NameBuildTest):
+    def test_success(self):
+        self.assert_message_from_report(
+            "Sending booth configuration to cluster nodes...",
+            reports.BoothConfigDistributionStarted(),
+        )
+
+
+class BoothConfigAcceptedByNode(NameBuildTest):
+    def test_defaults(self):
+        self.assert_message_from_report(
+            "Booth config saved",
+            reports.BoothConfigAcceptedByNode(),
+        )
+
+    def test_empty_name_list(self):
+        self.assert_message_from_report(
+            "Booth config saved",
+            reports.BoothConfigAcceptedByNode(name_list=[]),
+        )
+
+    def test_node_and_empty_name_list(self):
+        self.assert_message_from_report(
+            "node1: Booth config saved",
+            reports.BoothConfigAcceptedByNode(node="node1", name_list=[]),
+        )
+
+    def test_name_booth_only(self):
+        self.assert_message_from_report(
+            "Booth config saved",
+            reports.BoothConfigAcceptedByNode(name_list=["booth"]),
+        )
+
+    def test_name_booth_and_node(self):
+        self.assert_message_from_report(
+            "node1: Booth config saved",
+            reports.BoothConfigAcceptedByNode(
+                node="node1",
+                name_list=["booth"],
+            ),
+        )
+
+    def test_single_name(self):
+        self.assert_message_from_report(
+            "Booth config 'some' saved",
+            reports.BoothConfigAcceptedByNode(name_list=["some"]),
+        )
+
+    def test_multiple_names(self):
+        self.assert_message_from_report(
+            "Booth configs 'another', 'some' saved",
+            reports.BoothConfigAcceptedByNode(name_list=["another", "some"]),
+        )
+
+    def test_node(self):
+        self.assert_message_from_report(
+            "node1: Booth configs 'another', 'some' saved",
+            reports.BoothConfigAcceptedByNode(
+                node="node1",
+                name_list=["some", "another"],
+            ),
+        )
+
+
+class BoothConfigDistributionNodeError(NameBuildTest):
+    def test_empty_name(self):
+        self.assert_message_from_report(
+            "Unable to save booth config on node 'node1': reason1",
+            reports.BoothConfigDistributionNodeError("node1", "reason1"),
+        )
+
+    def test_booth_name(self):
+        self.assert_message_from_report(
+            "Unable to save booth config on node 'node1': reason1",
+            reports.BoothConfigDistributionNodeError(
+                "node1",
+                "reason1",
+                name="booth",
+            )
+        )
+
+    def test_another_name(self):
+        self.assert_message_from_report(
+            "Unable to save booth config 'another' on node 'node1': reason1",
+            reports.BoothConfigDistributionNodeError(
+                "node1",
+                "reason1",
+                name="another",
+            )
+        )
+
+
+class BoothFetchingConfigFromNodeTest(NameBuildTest):
+    def test_empty_name(self):
+        self.assert_message_from_report(
+            "Fetching booth config from node 'node1'...",
+            reports.BoothFetchingConfigFromNode("node1"),
+        )
+
+    def test_booth_name(self):
+        self.assert_message_from_report(
+            "Fetching booth config from node 'node1'...",
+            reports.BoothFetchingConfigFromNode("node1", config="booth"),
+        )
+
+    def test_another_name(self):
+        self.assert_message_from_report(
+            "Fetching booth config 'another' from node 'node1'...",
+            reports.BoothFetchingConfigFromNode("node1", config="another"),
+        )
+
+
+class BoothUnsupportedFileLocation(NameBuildTest):
+    def test_success(self):
+        self.assert_message_from_report(
+            (
+                "Booth configuration '/some/file' is outside of supported "
+                "booth config directory '/etc/booth/', ignoring the file"
+            ),
+            reports.BoothUnsupportedFileLocation(
+                "/some/file",
+                "/etc/booth/",
+                file_type_codes.BOOTH_CONFIG,
+            ),
+        )
+
+class BoothDaemonStatusError(NameBuildTest):
+    def test_success(self):
+        self.assert_message_from_report(
+            "unable to get status of booth daemon: some reason",
+            reports.BoothDaemonStatusError("some reason"),
+        )
+
+
+class BoothTicketStatusError(NameBuildTest):
+    def test_minimal(self):
+        self.assert_message_from_report(
+            "unable to get status of booth tickets",
+            reports.BoothTicketStatusError(),
+        )
+
+    def test_all(self):
+        self.assert_message_from_report(
+            "unable to get status of booth tickets: some reason",
+            reports.BoothTicketStatusError(reason="some reason"),
+        )
+
+
+class BoothPeersStatusErrorTest(NameBuildTest):
+    def test_minimal(self):
+        self.assert_message_from_report(
+            "unable to get status of booth peers",
+            reports.BoothPeersStatusError(),
+        )
+
+    def test_all(self):
+        self.assert_message_from_report(
+            "unable to get status of booth peers: some reason",
+            reports.BoothPeersStatusError(reason="some reason"),
+        )
+
+
+class BoothCannotDetermineLocalSiteIpTest(NameBuildTest):
+    def test_success(self):
+        self.assert_message_from_report(
+            "cannot determine local site ip, please specify site parameter",
+            reports.BoothCannotDetermineLocalSiteIp(),
         )

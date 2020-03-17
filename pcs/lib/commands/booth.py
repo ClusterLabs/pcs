@@ -6,12 +6,12 @@ from pcs import settings
 from pcs.common import file_type_codes
 from pcs.common import reports
 from pcs.common.file import FileAlreadyExists, RawFileError
-from pcs.common.reports import (
-    ReportProcessor,
-    ReportItemSeverity,
-)
+from pcs.common.reports import ReportProcessor
 from pcs.common.reports import codes as report_codes
-from pcs.common.reports.item import ReportItem
+from pcs.common.reports.item import (
+    get_severity,
+    ReportItem,
+)
 from pcs.common.str_tools import join_multilines
 from pcs.lib import external, tools
 from pcs.lib.cib.resource import primitive, group
@@ -121,24 +121,44 @@ def config_destroy(
     _ensure_live_env(env, booth_env)
 
     # TODO use constants in reports
-    config_is_used = partial(booth_reports.booth_config_is_used, instance_name)
     if resource.find_for_config(
         get_resources(env.get_cib()),
         booth_env.config_path,
     ):
-        report_processor.report(config_is_used("in cluster resource"))
+        report_processor.report(
+            ReportItem.error(
+                reports.messages.BoothConfigIsUsed(
+                    instance_name,
+                   "in cluster resource",
+                )
+            )
+        )
     # Only systemd is currently supported. Initd does not supports multiple
     # instances (here specified by name)
     if external.is_systemctl():
         if external.is_service_running(
             env.cmd_runner(), "booth", instance_name
         ):
-            report_processor.report(config_is_used("(running in systemd)"))
+            report_processor.report(
+                ReportItem.error(
+                    reports.messages.BoothConfigIsUsed(
+                        instance_name,
+                       "(running in systemd)",
+                    )
+                )
+            )
 
         if external.is_service_enabled(
             env.cmd_runner(), "booth", instance_name
         ):
-            report_processor.report(config_is_used("(enabled in systemd)"))
+            report_processor.report(
+                ReportItem.error(
+                    reports.messages.BoothConfigIsUsed(
+                        instance_name,
+                       "(enabled in systemd)",
+                    )
+                )
+            )
     if report_processor.has_errors:
         raise LibraryError()
 
@@ -181,10 +201,12 @@ def config_destroy(
                 )
         else:
             report_processor.report(
-                booth_reports.booth_unsupported_file_location(
-                    authfile_path,
-                    settings.booth_config_dir,
-                    file_type_codes.BOOTH_KEY,
+                ReportItem.warning(
+                    reports.messages.BoothUnsupportedFileLocation(
+                        authfile_path,
+                        settings.booth_config_dir,
+                        file_type_codes.BOOTH_KEY,
+                    )
                 )
             )
     if report_processor.has_errors:
@@ -349,7 +371,9 @@ def create_in_cluster(
     # validate
     if resource.find_for_config(resources_section, booth_env.config_path):
         report_processor.report(
-            booth_reports.booth_already_in_cib(instance_name)
+            ReportItem.error(
+                reports.messages.BoothAlreadyInCib(instance_name)
+            )
         )
     # verify the config exists and is readable
     try:
@@ -518,7 +542,9 @@ def _ticket_operation(
         )
         if len(site_ip_list) != 1:
             raise LibraryError(
-                booth_reports.booth_cannot_determine_local_site_ip()
+                ReportItem.error(
+                    reports.messages.BoothCannotDetermineLocalSiteIp()
+                )
             )
         site_ip = site_ip_list[0]
 
@@ -760,8 +786,11 @@ def pull_config(env: LibraryEnvironment, node_name, instance_name=None):
     _ensure_live_env(env, booth_env)
 
     env.report_processor.report(
-        booth_reports.booth_fetching_config_from_node_started(
-            node_name, instance_name
+        ReportItem.info(
+            reports.messages.BoothFetchingConfigFromNode(
+                node_name,
+                config=instance_name,
+            )
         )
     )
     com_cmd = BoothGetConfig(env.report_processor, instance_name)
@@ -795,8 +824,10 @@ def pull_config(env: LibraryEnvironment, node_name, instance_name=None):
             can_overwrite=True
         )
         env.report_processor.report(
-            booth_reports.booth_config_accepted_by_node(
-                name_list=[instance_name]
+            ReportItem.info(
+                reports.messages.BoothConfigAcceptedByNode(
+                    name_list=[instance_name]
+                )
             )
         )
     except RawFileError as e:
@@ -841,16 +872,20 @@ def _find_resource_elements_for_operation(
 
     if not booth_element_list:
         report_processor.report(
-            booth_reports.booth_not_exists_in_cib(booth_env.instance_name)
+            ReportItem.error(
+                reports.messages.BoothNotExistsInCib(booth_env.instance_name)
+            )
         )
     elif len(booth_element_list) > 1:
         report_processor.report(
-            booth_reports.booth_multiple_times_in_cib(
-                booth_env.instance_name,
-                severity=(
-                    ReportItemSeverity.WARNING if allow_multiple
-                    else ReportItemSeverity.ERROR
-                )
+            ReportItem(
+                severity=get_severity(
+                    report_codes.FORCE_BOOTH_REMOVE_FROM_CIB,
+                    allow_multiple,
+                ),
+                message=reports.messages.BoothMultipleTimesInCib(
+                    booth_env.instance_name,
+                ),
             )
         )
     if report_processor.has_errors:

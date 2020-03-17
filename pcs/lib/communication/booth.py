@@ -4,7 +4,6 @@ import json
 from pcs.common import reports
 from pcs.common.reports.item import ReportItem
 from pcs.common.node_communicator import RequestData
-from pcs.lib.booth import reports as reports_booth
 from pcs.lib.communication.tools import (
     AllAtOnceStrategyMixin,
     AllSameDataMixin,
@@ -47,12 +46,17 @@ class BoothSendConfig(
         )
 
     def _get_success_report(self, node_label):
-        return reports_booth.booth_config_accepted_by_node(
-            node_label, [self._booth_name]
+        return ReportItem.info(
+            reports.messages.BoothConfigAcceptedByNode(
+                node=node_label,
+                name_list=[self._booth_name],
+            )
         )
 
     def before(self):
-        self._report(reports_booth.booth_config_distribution_started())
+        self._report(
+            ReportItem.info(reports.messages.BoothConfigDistributionStarted())
+        )
 
 
 class ProcessJsonDataMixin:
@@ -122,8 +126,11 @@ class BoothSaveFiles(
         try:
             parsed_data = json.loads(response.data)
             self._report(
-                reports_booth.booth_config_accepted_by_node(
-                    target.label, list(parsed_data["saved"])
+                ReportItem.info(
+                    reports.messages.BoothConfigAcceptedByNode(
+                        node=target.label,
+                        name_list=sorted(parsed_data["saved"])
+                    )
                 )
             )
             for filename in list(parsed_data["existing"]):
@@ -143,9 +150,15 @@ class BoothSaveFiles(
                     )
                 )
             for file, reason in dict(parsed_data["failed"]).items():
-                self._report(reports_booth.booth_config_distribution_node_error(
-                    target.label, reason, file
-                ))
+                self._report(
+                    ReportItem.error(
+                        reports.messages.BoothConfigDistributionNodeError(
+                            target.label,
+                            reason,
+                            file,
+                        )
+                    )
+                )
         except (KeyError, TypeError, ValueError):
             self._report(
                 ReportItem.error(

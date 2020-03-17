@@ -2,7 +2,8 @@ import os
 
 from pcs import settings
 from pcs.common import file_type_codes
-from pcs.lib.booth import reports as booth_reports
+from pcs.common import reports
+from pcs.common.reports.item import ReportItem
 from pcs.lib.file.instance import FileInstance
 
 
@@ -41,10 +42,12 @@ def get_authfile_name_and_data(booth_conf_facade):
         else:
             authfile_name = None
             report_list.append(
-                booth_reports.booth_unsupported_file_location(
-                    authfile_path,
-                    settings.booth_config_dir,
-                    file_type_codes.BOOTH_KEY,
+                ReportItem.warning(
+                    reports.messages.BoothUnsupportedFileLocation(
+                        authfile_path,
+                        settings.booth_config_dir,
+                        file_type_codes.BOOTH_KEY,
+                    )
                 )
             )
 

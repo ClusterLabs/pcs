@@ -3090,7 +3090,7 @@ class PullConfigBase(TestCase, FixtureMixin):
             ),
             fixture.info(
                 report_codes.BOOTH_CONFIG_ACCEPTED_BY_NODE,
-                node=None,
+                node="",
                 name_list=[self.name],
             )
         ]
@@ -3163,7 +3163,7 @@ class PullConfigSuccessCustomInstance(TestCase, FixtureMixin):
             ),
             fixture.info(
                 report_codes.BOOTH_CONFIG_ACCEPTED_BY_NODE,
-                node=None,
+                node="",
                 name_list=[self.name],
             )
         ])
