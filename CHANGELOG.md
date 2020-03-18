@@ -1,6 +1,6 @@
 # Change Log
 
-## [Unreleased]
+## [0.10.5] - 2020-03-18
 
 ### Added
 - It is possible to configure a disaster-recovery site and display its status
