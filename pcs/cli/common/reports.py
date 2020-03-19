@@ -12,9 +12,6 @@ from pcs.cli.common.console_report import (
     error,
     warn,
 )
-from pcs.cli.constraint_all.console_report import (
-    CODE_TO_MESSAGE_BUILDER_MAP as CONSTRAINT_CODE_TO_MESSAGE_BUILDER_MAP
-)
 from pcs.cli.reports.messages import report_item_msg_from_dto
 from pcs.common.reports import (
     codes,
@@ -32,7 +29,6 @@ ReportItemList = Union[
 
 
 CODE_BUILDER_MAP: Dict[MessageCode, Any] = {}
-CODE_BUILDER_MAP.update(CONSTRAINT_CODE_TO_MESSAGE_BUILDER_MAP)
 
 
 def build_default_message_from_report(report_item, force_text):

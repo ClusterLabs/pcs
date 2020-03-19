@@ -1,12 +1,8 @@
 from lxml import etree
 
-from pcs.common import reports as report
-from pcs.common.reports import (
-    ReportItemSeverity,
-    ReportProcessor,
-)
+from pcs.common import reports
+from pcs.common.reports import ReportProcessor
 from pcs.common.reports.item import ReportItem
-from pcs.lib import reports
 from pcs.lib.cib import resource
 from pcs.lib.cib.constraint import resource_set
 from pcs.lib.cib.tools import (
@@ -28,7 +24,7 @@ def _validate_attrib_names(attrib_names, options):
     if invalid_names:
         raise LibraryError(
             ReportItem.error(
-                report.messages.InvalidOptions(
+                reports.messages.InvalidOptions(
                     sorted(invalid_names), sorted(attrib_names), None
                 )
             )
@@ -54,7 +50,7 @@ def find_valid_resource_id(
     if clone is None:
         return resource_element.attrib["id"]
 
-    report_msg = report.messages.ResourceForConstraintIsMultiinstance(
+    report_msg = reports.messages.ResourceForConstraintIsMultiinstance(
         resource_element.attrib["id"],
         "clone" if clone.tag == "master" else clone.tag,
         clone.attrib["id"],
@@ -69,7 +65,7 @@ def find_valid_resource_id(
             report_msg,
             # repair to clone is workaround for web ui, so we put only
             # information about one forceable possibility
-            force_code=report.codes.FORCE_CONSTRAINT_MULTIINSTANCE_RESOURCE,
+            force_code=reports.codes.FORCE_CONSTRAINT_MULTIINSTANCE_RESOURCE,
         )
     )
 
@@ -129,25 +125,31 @@ def check_is_without_duplication(
     if not duplicate_element_list:
         return
 
-    if report_processor.report(
-        reports.duplicate_constraints_exist(
-            element.tag,
-            [
-                export_element(duplicate_element)
-                for duplicate_element in duplicate_element_list
-            ],
-            ReportItemSeverity.WARNING if duplication_alowed
-                else ReportItemSeverity.ERROR,
-            forceable=None if duplication_alowed
-                else report.codes.FORCE_CONSTRAINT_DUPLICATE,
-        )
-    ).has_errors:
+    if report_processor.report_list([
+        ReportItem.info(
+            reports.messages.DuplicateConstraintsList(
+                element.tag,
+                [
+                    export_element(duplicate_element)
+                    for duplicate_element in duplicate_element_list
+                ],
+            )
+        ),
+        ReportItem(
+            severity=reports.item.get_severity(
+                reports.codes.FORCE_CONSTRAINT_DUPLICATE, duplication_alowed,
+            ),
+            message=reports.messages.DuplicateConstraintsExist(
+                [duplicate.get("id") for duplicate in duplicate_element_list]
+            )
+        ),
+    ]).has_errors:
         raise LibraryError()
 
 def create_with_set(constraint_section, tag_name, options, resource_set_list):
     if not resource_set_list:
         raise LibraryError(
-            ReportItem.error(report.messages.EmptyResourceSetList())
+            ReportItem.error(reports.messages.EmptyResourceSetList())
         )
     element = etree.SubElement(constraint_section, tag_name)
     element.attrib.update(options)

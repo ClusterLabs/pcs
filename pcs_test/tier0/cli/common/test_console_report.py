@@ -11,7 +11,6 @@ from pcs.common.str_tools import(
 )
 from pcs.cli.common.reports import CODE_BUILDER_MAP
 from pcs.common.reports import ReportItem
-from pcs.lib import reports
 
 class NameBuildTest(TestCase):
     """
@@ -204,69 +203,3 @@ class FormatPluralTest(TestCase):
         )
         mock_add_s.assert_called_once_with("greeting")
         mock_is_multiple.assert_called_once_with(10)
-
-
-
-class DuplicateConstraintsExist(NameBuildTest):
-    def test_single_constraint_empty_force(self):
-        self.assert_message_from_report(
-            "duplicate constraint already exists\n"
-            "  resourceA with resourceD (score:score) (id:id123)",
-            reports.duplicate_constraints_exist(
-                "rsc_colocation",
-                [
-                    {
-                        "options":
-                            {
-                                "id": "id123",
-                                "rsc": "resourceA",
-                                "with-rsc": "resourceD",
-                                "score": "score"
-                            }
-                    }
-                ]
-            ),
-            force_text=""
-        )
-
-    def test_single_constraint_force(self):
-        self.assert_message_from_report(
-            "duplicate constraint already exists force text\n"
-            "  resourceA with resourceD (score:score) (id:id123)",
-            reports.duplicate_constraints_exist(
-                "rsc_colocation",
-                [
-                    {
-                        "options":
-                            {
-                                "id": "id123",
-                                "rsc": "resourceA",
-                                "with-rsc": "resourceD",
-                                "score": "score"
-                            }
-                    }
-                ]
-            ),
-            force_text=" force text"
-        )
-
-    def test_multiple_constraints_force(self):
-        self.assert_message_from_report(
-            (
-                "duplicate constraint already exists force text\n"
-                "  rsc_another rsc=resourceA (id:id123)\n"
-                "  rsc_another rsc=resourceB (id:id321)"
-            ),
-            reports.duplicate_constraints_exist(
-                "rsc_another",
-                [
-                    {
-                        "options": {"id": "id123", "rsc": "resourceA"}
-                    },
-                    {
-                        "options": {"id": "id321", "rsc": "resourceB"}
-                    }
-                ]
-            ),
-            force_text=" force text"
-        )

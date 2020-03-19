@@ -34,9 +34,49 @@ class ResourceForConstraintIsMultiinstance(NameBuildTest):
         )
 
 
-# TODO
+class DuplicateConstraintsList(NameBuildTest):
+    def test_single_constraint(self):
+        self.assert_message_from_report(
+            "Duplicate constraints:\n"
+            "  resourceA with resourceD (score:score) (id:id123)",
+            reports.DuplicateConstraintsList(
+                "rsc_colocation",
+                [
+                    {
+                        "options": {
+                            "id": "id123",
+                            "rsc": "resourceA",
+                            "with-rsc": "resourceD",
+                            "score": "score",
+                        }
+                    }
+                ],
+            ),
+        )
+
+    def test_multiple_constraints(self):
+        self.assert_message_from_report(
+            (
+                "Duplicate constraints:\n"
+                "  rsc_another rsc=resourceA (id:id123)\n"
+                "  rsc_another rsc=resourceB (id:id321)"
+            ),
+            reports.DuplicateConstraintsList(
+                "rsc_another",
+                [
+                    {"options": {"id": "id123", "rsc": "resourceA"}},
+                    {"options": {"id": "id321", "rsc": "resourceB"}},
+                ],
+            ),
+        )
+
+
 class DuplicateConstraintsExist(NameBuildTest):
-    pass
+    def test_build_message(self):
+        self.assert_message_from_report(
+            "duplicate constraint already exists",
+            reports.DuplicateConstraintsExist(["c1", "c3", "c0"]),
+        )
 
 
 class EmptyResourceSetList(NameBuildTest):
@@ -1794,12 +1834,14 @@ class CibPushError(NameBuildTest):
             reports.CibPushError("reason", "pushed-cib"),
         )
 
+
 class CibSaveTmpError(NameBuildTest):
     def test_all(self):
         self.assert_message_from_report(
             "Unable to save CIB to a temporary file: reason",
-            reports.CibSaveTmpError("reason")
+            reports.CibSaveTmpError("reason"),
         )
+
 
 class CibDiffError(NameBuildTest):
     def test_success(self):
@@ -1818,8 +1860,7 @@ class CibSimulateError(NameBuildTest):
 
     def test_empty_reason(self):
         self.assert_message_from_report(
-            "Unable to simulate changes in CIB",
-            reports.CibSimulateError(""),
+            "Unable to simulate changes in CIB", reports.CibSimulateError(""),
         )
 
 
@@ -4114,7 +4155,7 @@ class BoothLackOfSites(NameBuildTest):
                 "lack of sites for booth configuration (need 2 at least): "
                 "sites 'site1', 'site2'"
             ),
-            reports.BoothLackOfSites(["site1", "site2"])
+            reports.BoothLackOfSites(["site1", "site2"]),
         )
 
 
@@ -4219,8 +4260,7 @@ class BoothNotExistsInCib(NameBuildTest):
 class BoothConfigIsUsed(NameBuildTest):
     def test_minimal(self):
         self.assert_message_from_report(
-            "booth instance 'name' is used",
-            reports.BoothConfigIsUsed("name"),
+            "booth instance 'name' is used", reports.BoothConfigIsUsed("name"),
         )
 
     def test_all(self):
@@ -4249,8 +4289,7 @@ class BoothConfigDistributionStarted(NameBuildTest):
 class BoothConfigAcceptedByNode(NameBuildTest):
     def test_defaults(self):
         self.assert_message_from_report(
-            "Booth config saved",
-            reports.BoothConfigAcceptedByNode(),
+            "Booth config saved", reports.BoothConfigAcceptedByNode(),
         )
 
     def test_empty_name_list(self):
@@ -4275,8 +4314,7 @@ class BoothConfigAcceptedByNode(NameBuildTest):
         self.assert_message_from_report(
             "node1: Booth config saved",
             reports.BoothConfigAcceptedByNode(
-                node="node1",
-                name_list=["booth"],
+                node="node1", name_list=["booth"],
             ),
         )
 
@@ -4296,8 +4334,7 @@ class BoothConfigAcceptedByNode(NameBuildTest):
         self.assert_message_from_report(
             "node1: Booth configs 'another', 'some' saved",
             reports.BoothConfigAcceptedByNode(
-                node="node1",
-                name_list=["some", "another"],
+                node="node1", name_list=["some", "another"],
             ),
         )
 
@@ -4313,20 +4350,16 @@ class BoothConfigDistributionNodeError(NameBuildTest):
         self.assert_message_from_report(
             "Unable to save booth config on node 'node1': reason1",
             reports.BoothConfigDistributionNodeError(
-                "node1",
-                "reason1",
-                name="booth",
-            )
+                "node1", "reason1", name="booth",
+            ),
         )
 
     def test_another_name(self):
         self.assert_message_from_report(
             "Unable to save booth config 'another' on node 'node1': reason1",
             reports.BoothConfigDistributionNodeError(
-                "node1",
-                "reason1",
-                name="another",
-            )
+                "node1", "reason1", name="another",
+            ),
         )
 
 
@@ -4358,11 +4391,10 @@ class BoothUnsupportedFileLocation(NameBuildTest):
                 "booth config directory '/etc/booth/', ignoring the file"
             ),
             reports.BoothUnsupportedFileLocation(
-                "/some/file",
-                "/etc/booth/",
-                file_type_codes.BOOTH_CONFIG,
+                "/some/file", "/etc/booth/", file_type_codes.BOOTH_CONFIG,
             ),
         )
+
 
 class BoothDaemonStatusError(NameBuildTest):
     def test_success(self):

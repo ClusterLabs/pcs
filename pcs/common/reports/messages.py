@@ -30,6 +30,7 @@ from pcs.common.str_tools import (
 
 from . import codes
 from .item import ReportItemMessage
+from .constraints import constraint_to_str
 
 # pylint: disable=too-many-lines
 
@@ -242,24 +243,44 @@ class ResourceForConstraintIsMultiinstance(ReportItemMessage):
         )
 
 
-# TODO
 @dataclass(frozen=True)
-class DuplicateConstraintsExist(ReportItemMessage):
+class DuplicateConstraintsList(ReportItemMessage):
     """
-    When creating a constraint it was detected the constraint already exists
+    List duplicate constraints
+    NOTE: This is a temporary solution
 
     constraint_type -- "rsc_colocation", "rsc_order", "rsc_ticket"
     constraint_info_list -- structured constraint data according to type
     """
 
-    constraint_type: str  # TODO: proper typing
-    constraint_info_list: Mapping[str, Any]
+    constraint_type: str
+    constraint_info_list: List[Mapping[str, Any]]
+    _code = codes.DUPLICATE_CONSTRAINTS_LIST
+
+    @property
+    def message(self) -> str:
+        return "Duplicate constraints:\n" + "\n".join(
+            [
+                "  " + constraint_to_str(self.constraint_type, constraint_info)
+                for constraint_info in self.constraint_info_list
+            ]
+        )
+
+
+@dataclass(frozen=True)
+class DuplicateConstraintsExist(ReportItemMessage):
+    """
+    When creating a constraint pcs detected a similar constraint already exists
+
+    constraint_ids -- ids of similar constraints
+    """
+
+    constraint_ids: List[str]
     _code = codes.DUPLICATE_CONSTRAINTS_EXIST
 
     @property
     def message(self) -> str:
-        # TODO
-        return "duplicate constraint already exists\n"
+        return "duplicate constraint already exists"
 
 
 @dataclass(frozen=True)
@@ -5887,8 +5908,7 @@ class BoothConfigIsUsed(ReportItemMessage):
     @property
     def message(self) -> str:
         return "booth instance '{name}' is used{detail}".format(
-            name=self.name,
-            detail=format_optional(self.detail, " {}"),
+            name=self.name, detail=format_optional(self.detail, " {}"),
         )
 
 
@@ -5946,8 +5966,7 @@ class BoothConfigAcceptedByNode(ReportItemMessage):
                 _list=format_list(self.name_list),
             )
         return "{node}Booth config{desc} saved".format(
-            node=format_optional(self.node, "{}: "),
-            desc=desc,
+            node=format_optional(self.node, "{}: "), desc=desc,
         )
 
 
@@ -6100,7 +6119,6 @@ class BoothTicketOperationFailed(ReportItemMessage):
     site_ip: str
     ticket_name: str
     _code = codes.BOOTH_TICKET_OPERATION_FAILED
-
 
     @property
     def message(self) -> str:

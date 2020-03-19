@@ -1,6 +1,6 @@
 from pcs.cli.common.errors import CmdLineInputError
 from pcs.cli.constraint import command
-from pcs.cli.constraint_order import console_report
+from pcs.common.reports import constraints
 
 
 def create_with_set(lib, argv, modifiers):
@@ -40,6 +40,6 @@ def show(lib, argv, modifiers):
     print("\n".join(command.show(
         "Ordering Constraints:",
         lib.constraint_order.show,
-        console_report.constraint_plain,
+        constraints.order_plain,
         modifiers,
     )))

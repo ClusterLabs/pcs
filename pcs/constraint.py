@@ -11,10 +11,6 @@ from pcs import (
     usage,
     utils,
 )
-from pcs.cli import (
-    constraint_colocation,
-    constraint_order,
-)
 from pcs.cli.common import parse_args
 from pcs.cli.common.console_report import warn
 from pcs.cli.common.errors import CmdLineInputError
@@ -24,6 +20,10 @@ import pcs.cli.constraint_order.command as order_command
 from pcs.cli.constraint_ticket import command as ticket_command
 from pcs.common import reports
 from pcs.common.reports import codes as report_codes
+from pcs.common.reports.constraints import (
+    colocation as colocation_format,
+    order as order_format,
+)
 from pcs.common.reports.item import ReportItem
 from pcs.lib.cib.constraint import resource_set
 from pcs.lib.cib.constraint.order import ATTRIB as order_attrib
@@ -304,7 +304,7 @@ def colocation_add(lib, argv, modifiers):
                 + "\n".join([
                     "  "
                     +
-                    constraint_colocation.console_report.constraint_plain(
+                    colocation_format.constraint_plain(
                         {"options": dict(dup.attributes.items())},
                         True
                     )
@@ -515,7 +515,7 @@ def _order_add(resource1, resource2, options_list, modifiers):
             utils.err(
                 "duplicate constraint already exists, use --force to override\n"
                 + "\n".join([
-                    "  " + constraint_order.console_report.constraint_plain(
+                    "  " + order_format.constraint_plain(
                             {"options": dict(dup.attributes.items())},
                             True
                         ) for dup in duplicates

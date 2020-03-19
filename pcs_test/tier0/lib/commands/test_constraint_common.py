@@ -74,27 +74,40 @@ class CreateWithSetTest(TestCase):
         self.create()
         self.env.push_cib.assert_called_once_with()
         assert_raise_library_error(self.create)
-        self.env.report_processor.assert_reports([(
-            severities.ERROR,
-            report_codes.DUPLICATE_CONSTRAINTS_EXIST,
-            {
-                'constraint_type': 'rsc_some',
-                'constraint_info_list': [{
-                    'options': {'symmetrical': 'true', 'id': 'some_id'},
-                    'resource_sets': [
-                        {
-                            'ids': ['A', 'B'],
-                            'options':{'role':'Master', 'id':'pcs_rsc_set_A_B'}
-                        },
-                        {
-                            'ids': ['E', 'F'],
-                            'options':{'action':'start', 'id':'pcs_rsc_set_E_F'}
-                        }
-                    ],
-                }]
-            },
-            report_codes.FORCE_CONSTRAINT_DUPLICATE
-        )])
+        self.env.report_processor.assert_reports([
+            (
+                severities.ERROR,
+                report_codes.DUPLICATE_CONSTRAINTS_EXIST,
+                {
+                    'constraint_ids': ["some_id"],
+                },
+                report_codes.FORCE_CONSTRAINT_DUPLICATE
+            ),
+            (
+                severities.INFO,
+                report_codes.DUPLICATE_CONSTRAINTS_LIST,
+                {
+                    'constraint_type': 'rsc_some',
+                    'constraint_info_list': [{
+                        'options': {'symmetrical': 'true', 'id': 'some_id'},
+                        'resource_sets': [
+                            {
+                                'ids': ['A', 'B'],
+                                'options':{
+                                    'role':'Master', 'id':'pcs_rsc_set_A_B'
+                                }
+                            },
+                            {
+                                'ids': ['E', 'F'],
+                                'options':{
+                                    'action':'start', 'id':'pcs_rsc_set_E_F'
+                                }
+                            }
+                        ],
+                    }]
+                },
+            ),
+        ])
 
     def test_put_duplicate_constraint_when_duplication_allowed(self):
         self.create()

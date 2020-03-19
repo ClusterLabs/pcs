@@ -41,11 +41,7 @@ from pcs.cli.common import middleware
 from pcs.cli.common.errors import CmdLineInputError
 from pcs.cli.common.reports import process_library_reports
 from pcs.cli.constraint import command as constraint_command
-from pcs.cli.constraint_colocation import (
-    console_report as colocation_console_report,
-)
-from pcs.cli.constraint_order import console_report as order_console_report
-from pcs.cli.constraint_ticket import console_report as ticket_console_report
+from pcs.common.reports import constraints as constraints_reports
 from pcs.common.str_tools import indent
 from pcs.lib.commands import quorum as lib_quorum
 from pcs.lib.errors import LibraryError
@@ -145,19 +141,19 @@ def _config_show_cib_lines(lib):
     all_lines.extend(constraint_command.show(
         "Ordering Constraints:",
         lib.constraint_order.show,
-        order_console_report.constraint_plain,
+        constraints_reports.order_plain,
         modifiers.get_subset("-f", "--full"),
     ))
     all_lines.extend(constraint_command.show(
          "Colocation Constraints:",
         lib.constraint_colocation.show,
-        colocation_console_report.constraint_plain,
+        constraints_reports.colocation_plain,
         modifiers.get_subset("-f", "--full"),
     ))
     all_lines.extend(constraint_command.show(
         "Ticket Constraints:",
         lib.constraint_ticket.show,
-        ticket_console_report.constraint_plain,
+        constraints_reports.ticket_plain,
         modifiers.get_subset("-f", "--full"),
     ))
 

@@ -1,8 +1,7 @@
 # pylint: disable=too-many-lines
 from functools import partial
 
-from pcs.common.reports import codes as report_codes
-from pcs.common.reports import ReportItem, ReportItemSeverity
+from pcs.common.reports import ReportItemSeverity
 
 def forceable_error(force_code, report_creator, *args, **kwargs):
     """
@@ -82,25 +81,3 @@ def get_problem_creator(force_code=None, is_forced=False):
 
 def _key_numeric(item):
     return (int(item), item) if item.isdigit() else (-1, item)
-
-
-def duplicate_constraints_exist(
-    constraint_type, constraint_info_list,
-    severity=ReportItemSeverity.ERROR, forceable=None
-):
-    """
-    when creating a constraint it was detected the constraint already exists
-    constraint_type string "rsc_colocation", "rsc_order", "rsc_ticket"
-    constraint_info_list list of structured constraint data according to type
-    severity report item severity
-    forceable is this report item forceable? by what category?
-    """
-    return ReportItem(
-        report_codes.DUPLICATE_CONSTRAINTS_EXIST,
-        severity,
-        info={
-            "constraint_type": constraint_type,
-            "constraint_info_list": constraint_info_list,
-        },
-        forceable=forceable
-    )
