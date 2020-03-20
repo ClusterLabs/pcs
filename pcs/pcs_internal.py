@@ -5,14 +5,9 @@ import logging
 from pcs import settings, utils
 from pcs.cli.common.env_cli import Env
 from pcs.cli.common.lib_wrapper import Library
-from pcs.cli.common.reports import build_report_message
 from pcs.common.reports import (
-    codes as report_codes,
-    item_old,
-    dto,
-)
-from pcs.common.reports.processor import (
     ReportItem,
+    ReportItemDto,
     ReportItemList,
     ReportProcessor,
 )
@@ -66,17 +61,7 @@ def export_reports(report_list):
     return [report_item_to_dict(report) for report in report_list]
 
 def report_item_to_dict(report_item: ReportItem):
-    if isinstance(report_item, item_old.ReportItem):
-        return dict(
-            severity=report_item.severity,
-            code=report_item.code,
-            info=report_item.info,
-            forceable=(
-                None if report_item.forceable is None else report_codes.FORCE
-            ),
-            report_text=build_report_message(report_item),
-        )
-    dto_obj: dto.ReportItemDto = report_item.to_dto()
+    dto_obj: ReportItemDto = report_item.to_dto()
     return dict(
         severity=dto_obj.severity.level,
         code=dto_obj.message.code,

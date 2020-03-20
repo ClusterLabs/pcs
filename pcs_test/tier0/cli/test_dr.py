@@ -61,7 +61,7 @@ class Config(TestCase):
               Nodes:
                 nodeB1"""))
 
-    @mock.patch("pcs.cli.common.console_report.sys.stderr.write")
+    @mock.patch("pcs.cli.reports.output.sys.stderr.write")
     def test_invalid_response(self, mock_stderr, mock_print):
         self.lib.dr.get_config.return_value = [
             "wrong response",
@@ -185,7 +185,7 @@ class Status(TestCase):
         )
         mock_print.assert_called_once_with(self._fixture_print())
 
-    @mock.patch("pcs.cli.common.console_report.sys.stderr.write")
+    @mock.patch("pcs.cli.reports.output.sys.stderr.write")
     def test_error_local(self, mock_stderr, mock_print):
         self._fixture_response(local_success=False)
         with self.assertRaises(SystemExit) as cm:
@@ -206,7 +206,7 @@ class Status(TestCase):
             "Error: Unable to get status of all sites\n"
         )
 
-    @mock.patch("pcs.cli.common.console_report.sys.stderr.write")
+    @mock.patch("pcs.cli.reports.output.sys.stderr.write")
     def test_error_remote(self, mock_stderr, mock_print):
         self._fixture_response(remote_success=False)
         with self.assertRaises(SystemExit) as cm:
@@ -228,7 +228,7 @@ class Status(TestCase):
             "Error: Unable to get status of all sites\n"
         )
 
-    @mock.patch("pcs.cli.common.console_report.sys.stderr.write")
+    @mock.patch("pcs.cli.reports.output.sys.stderr.write")
     def test_error_both(self, mock_stderr, mock_print):
         self._fixture_response(local_success=False, remote_success=False)
         with self.assertRaises(SystemExit) as cm:
@@ -248,7 +248,7 @@ class Status(TestCase):
             "Error: Unable to get status of all sites\n"
         )
 
-    @mock.patch("pcs.cli.common.console_report.sys.stderr.write")
+    @mock.patch("pcs.cli.reports.output.sys.stderr.write")
     def test_invalid_response(self, mock_stderr, mock_print):
         self.lib.dr.status_all_sites_plaintext.return_value = [
             "wrong response",

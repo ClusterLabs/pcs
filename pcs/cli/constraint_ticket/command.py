@@ -1,7 +1,7 @@
 from pcs.cli.common.errors import CmdLineInputError
 from pcs.cli.constraint import command
 from pcs.cli.constraint_ticket import parse_args
-from pcs.cli.common.console_report import error
+from pcs.cli.reports.output import error
 from pcs.common.reports import constraints
 
 def create_with_set(lib, argv, modifiers):

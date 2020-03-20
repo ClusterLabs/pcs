@@ -1,9 +1,11 @@
 from collections import namedtuple
 import re
 
-from pcs.common import reports as report
-from pcs.common.reports.item import get_severity, ReportItem
-from pcs.lib import reports
+from pcs.common import reports
+from pcs.common.reports import (
+    get_severity,
+    ReportItem,
+)
 from pcs.lib.booth import constants
 from pcs.lib.interface.config import (
     ExporterInterface,
@@ -30,14 +32,11 @@ class Parser(ParserInterface):
         exception, file_type_code, file_path, force_code, is_forced_or_warning
     ):
         del file_type_code # this is defined by the report code
-        report_creator = reports.get_problem_creator(
-            force_code=force_code, is_forced=is_forced_or_warning
-        )
         if isinstance(exception, InvalidLines):
             return [
                 ReportItem(
                     severity=get_severity(force_code, is_forced_or_warning),
-                    message=report.messages.BoothConfigUnexpectedLines(
+                    message=reports.messages.BoothConfigUnexpectedLines(
                         exception.args[0],
                         file_path,
                     ),

@@ -4,19 +4,19 @@ from pcs.common import (
     reports,
 )
 from pcs.common.reports.item import ReportItem
-from pcs.cli.common import console_report
+from pcs.cli.reports import output
 from pcs.cli.file import metadata
 from pcs.lib.errors import LibraryError
 
 
 def middleware_config(config_path, key_path):
     if config_path and not key_path:
-        raise console_report.error(
+        raise output.error(
             "When --booth-conf is specified, "
             "--booth-key must be specified as well"
         )
     if key_path and not config_path:
-        raise console_report.error(
+        raise output.error(
             "When --booth-key is specified, "
             "--booth-conf must be specified as well"
         )
@@ -64,7 +64,7 @@ def middleware_config(config_path, key_path):
             #TODO now this would not happen
             #for more information see comment in
             #pcs.cli.common.lib_wrapper.lib_env_to_cli_env
-            raise console_report.error("Error during library communication")
+            raise output.error("Error during library communication")
         try:
             key_file.write(
                 modified_env["key_file"]["content"],

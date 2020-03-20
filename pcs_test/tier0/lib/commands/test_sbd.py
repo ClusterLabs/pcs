@@ -11,7 +11,7 @@ from pcs_test.tools.integration_lib import Runner
 from pcs_test.tools.command_env.mock_runner import Call
 
 from pcs import settings
-from pcs.common.reports import codes as report_codes
+from pcs.common import reports
 from pcs.common.node_communicator import RequestTarget
 from pcs.common.reports import (
     ReportItem,
@@ -66,8 +66,8 @@ class ValidateSbdOptionsTest(TestCase):
             cmd_sbd._validate_sbd_options(config),
             [
                 fixture.error(
-                    report_codes.INVALID_OPTION_VALUE,
-                    force_code=report_codes.FORCE_OPTIONS,
+                    reports.codes.INVALID_OPTION_VALUE,
+                    force_code=reports.codes.FORCE_OPTIONS,
                     option_name="SBD_TIMEOUT_ACTION",
                     option_value="flush,noflush",
                     allowed_values=self.timeout_action_allowed_values,
@@ -87,7 +87,7 @@ class ValidateSbdOptionsTest(TestCase):
             ),
             [
                 fixture.warn(
-                    report_codes.INVALID_OPTION_VALUE,
+                    reports.codes.INVALID_OPTION_VALUE,
                     option_name="SBD_TIMEOUT_ACTION",
                     option_value="flush,noflush",
                     allowed_values=self.timeout_action_allowed_values,
@@ -109,14 +109,14 @@ class ValidateSbdOptionsTest(TestCase):
             cmd_sbd._validate_sbd_options(config),
             [
                 fixture.error(
-                    report_codes.INVALID_OPTIONS,
+                    reports.codes.INVALID_OPTIONS,
                     option_names=sorted(
                         ["SBD_UNKNOWN", "another_unknown_option"]
                     ),
                     option_type=None,
                     allowed=self.allowed_sbd_options,
                     allowed_patterns=[],
-                    force_code=report_codes.FORCE_OPTIONS
+                    force_code=reports.codes.FORCE_OPTIONS
                 ),
             ]
         )
@@ -134,7 +134,7 @@ class ValidateSbdOptionsTest(TestCase):
             cmd_sbd._validate_sbd_options(config, allow_unknown_opts=True),
             [
                 fixture.warn(
-                    report_codes.INVALID_OPTIONS,
+                    reports.codes.INVALID_OPTIONS,
                     option_names=sorted(
                         ["SBD_UNKNOWN", "another_unknown_option"]
                     ),
@@ -160,7 +160,7 @@ class ValidateSbdOptionsTest(TestCase):
             cmd_sbd._validate_sbd_options(config),
             [
                 fixture.error(
-                    report_codes.INVALID_OPTIONS,
+                    reports.codes.INVALID_OPTIONS,
                     option_names=sorted(
                         ["SBD_WATCHDOG_DEV", "SBD_OPTS", "SBD_DEVICE"]
                     ),
@@ -185,19 +185,19 @@ class ValidateSbdOptionsTest(TestCase):
             cmd_sbd._validate_sbd_options(config),
             [
                 fixture.error(
-                    report_codes.INVALID_OPTIONS,
+                    reports.codes.INVALID_OPTIONS,
                     option_names=sorted(["SBD_WATCHDOG_DEV", "SBD_OPTS"]),
                     option_type=None,
                     allowed=self.allowed_sbd_options,
                     allowed_patterns=[],
                 ),
                 fixture.error(
-                    report_codes.INVALID_OPTIONS,
+                    reports.codes.INVALID_OPTIONS,
                     option_names=["SBD_UNKNOWN"],
                     option_type=None,
                     allowed=self.allowed_sbd_options,
                     allowed_patterns=[],
-                    force_code=report_codes.FORCE_OPTIONS,
+                    force_code=reports.codes.FORCE_OPTIONS,
                 ),
             ]
         )
@@ -217,7 +217,7 @@ class ValidateSbdOptionsTest(TestCase):
             cmd_sbd._validate_sbd_options(config, allow_unknown_opts=True),
             [
                 fixture.error(
-                    report_codes.INVALID_OPTIONS,
+                    reports.codes.INVALID_OPTIONS,
                     option_names=sorted(
                         ["SBD_WATCHDOG_DEV", "SBD_OPTS", "SBD_PACEMAKER"]
                     ),
@@ -226,7 +226,7 @@ class ValidateSbdOptionsTest(TestCase):
                     allowed_patterns=[],
                 ),
                 fixture.warn(
-                    report_codes.INVALID_OPTIONS,
+                    reports.codes.INVALID_OPTIONS,
                     option_names=["SBD_UNKNOWN"],
                     option_type=None,
                     allowed=self.allowed_sbd_options,
@@ -252,7 +252,7 @@ class ValidateSbdOptionsTest(TestCase):
             cmd_sbd._validate_sbd_options(config),
             [
                 fixture.error(
-                    report_codes.INVALID_OPTION_VALUE,
+                    reports.codes.INVALID_OPTION_VALUE,
                     option_name="SBD_WATCHDOG_TIMEOUT",
                     option_value="-1",
                     allowed_values="a non-negative integer",
@@ -272,7 +272,7 @@ class ValidateSbdOptionsTest(TestCase):
             cmd_sbd._validate_sbd_options(config),
             [
                 fixture.error(
-                    report_codes.INVALID_OPTION_VALUE,
+                    reports.codes.INVALID_OPTION_VALUE,
                     option_name="SBD_WATCHDOG_TIMEOUT",
                     option_value="not int",
                     allowed_values="a non-negative integer",
@@ -292,7 +292,7 @@ class ValidateSbdOptionsTest(TestCase):
             cmd_sbd._validate_sbd_options(config),
             [
                 fixture.error(
-                    report_codes.INVALID_OPTION_VALUE,
+                    reports.codes.INVALID_OPTION_VALUE,
                     option_name="SBD_WATCHDOG_TIMEOUT",
                     option_value=None,
                     allowed_values="a non-negative integer",
@@ -323,7 +323,7 @@ class ValidateWatchdogDictTest(TestCase):
             [
                 (
                     Severities.ERROR,
-                    report_codes.WATCHDOG_INVALID,
+                    reports.codes.WATCHDOG_INVALID,
                     {"watchdog": watchdog}
                 ) for watchdog in ["", None]
             ]
@@ -392,15 +392,22 @@ SBD_WATCHDOG_TIMEOUT=0
         self.assertEqual(1, mock_config.call_count)
 
     def test_file_error(self, mock_config):
-        mock_config.side_effect = LibraryError(ReportItem.error(
-            report_codes.UNABLE_TO_GET_SBD_CONFIG,
-        ))
+        node = "node"
+        reason = "reason"
+        mock_config.side_effect = LibraryError(
+            ReportItem.error(
+                reports.messages.UnableToGetSbdConfig(node, reason)
+            )
+        )
         assert_raise_library_error(
             lambda: cmd_sbd.get_local_sbd_config(self.mock_env),
             (
                 Severities.ERROR,
-                report_codes.UNABLE_TO_GET_SBD_CONFIG,
-                {}
+                reports.codes.UNABLE_TO_GET_SBD_CONFIG,
+                {
+                    "node": node,
+                    "reason": reason,
+                }
             )
         )
 
@@ -444,7 +451,7 @@ class InitializeBlockDevicesTest(CommonTest):
     @staticmethod
     def fixture_invalid_value(option, value):
         return fixture.error(
-            report_codes.INVALID_OPTION_VALUE,
+            reports.codes.INVALID_OPTION_VALUE,
             option_name=option,
             option_value=value,
             allowed_values="a non-negative integer",
@@ -475,12 +482,12 @@ class InitializeBlockDevicesTest(CommonTest):
         self.env.report_processor.assert_reports([
             (
                 Severities.INFO,
-                report_codes.SBD_DEVICE_INITIALIZATION_STARTED,
+                reports.codes.SBD_DEVICE_INITIALIZATION_STARTED,
                 {"device_list": device_list}
             ),
             (
                 Severities.INFO,
-                report_codes.SBD_DEVICE_INITIALIZATION_SUCCESS,
+                reports.codes.SBD_DEVICE_INITIALIZATION_SUCCESS,
                 {"device_list": device_list}
             ),
         ])
@@ -493,12 +500,12 @@ class InitializeBlockDevicesTest(CommonTest):
         self.env.report_processor.assert_reports([
             (
                 Severities.INFO,
-                report_codes.SBD_DEVICE_INITIALIZATION_STARTED,
+                reports.codes.SBD_DEVICE_INITIALIZATION_STARTED,
                 {"device_list": device_list}
             ),
             (
                 Severities.INFO,
-                report_codes.SBD_DEVICE_INITIALIZATION_SUCCESS,
+                reports.codes.SBD_DEVICE_INITIALIZATION_SUCCESS,
                 {"device_list": device_list}
             ),
         ])
@@ -524,7 +531,7 @@ class InitializeBlockDevicesTest(CommonTest):
             [
                 (
                     Severities.ERROR,
-                    report_codes.REQUIRED_OPTIONS_ARE_MISSING,
+                    reports.codes.REQUIRED_OPTIONS_ARE_MISSING,
                     {
                         "option_names": ["device"],
                         "option_type": None,
@@ -532,7 +539,7 @@ class InitializeBlockDevicesTest(CommonTest):
                 ),
                 (
                     Severities.ERROR,
-                    report_codes.INVALID_OPTIONS,
+                    reports.codes.INVALID_OPTIONS,
                     {
                         "option_names": ["another_one", "unknown_option"],
                         "option_type": None,
@@ -680,7 +687,7 @@ SBD_DEVICE="/dev1;/dev2;/dev3"
         self.env.report_processor.assert_reports([
             (
                 Severities.WARNING,
-                report_codes.SBD_DEVICE_LIST_ERROR,
+                reports.codes.SBD_DEVICE_LIST_ERROR,
                 {
                     "device": "/dev1",
                     "reason": "1"
@@ -688,7 +695,7 @@ SBD_DEVICE="/dev1;/dev2;/dev3"
             ),
             (
                 Severities.WARNING,
-                report_codes.SBD_DEVICE_DUMP_ERROR,
+                reports.codes.SBD_DEVICE_DUMP_ERROR,
                 {
                     "device": "/dev2",
                     "reason": "4"
@@ -720,14 +727,14 @@ class SetMessageTest(CommonTest):
             [
                 (
                     Severities.ERROR,
-                    report_codes.REQUIRED_OPTIONS_ARE_MISSING,
+                    reports.codes.REQUIRED_OPTIONS_ARE_MISSING,
                     {
                         "option_names": ["device", "node"],
                         "option_type": None,
                     }
                 ),
                 fixture.error(
-                    report_codes.INVALID_OPTION_VALUE,
+                    reports.codes.INVALID_OPTION_VALUE,
                     option_name="message",
                     option_value="",
                     allowed_values=settings.sbd_message_types,
@@ -745,7 +752,7 @@ class SetMessageTest(CommonTest):
             self.env.report_processor.report_item_list,
             [
                 fixture.error(
-                    report_codes.INVALID_OPTION_VALUE,
+                    reports.codes.INVALID_OPTION_VALUE,
                     option_name="message",
                     option_value="message",
                     allowed_values=settings.sbd_message_types,
@@ -768,7 +775,7 @@ class SetMessageTest(CommonTest):
             lambda: cmd_sbd.set_message(self.env, "device", "node", "test"),
             (
                 Severities.ERROR,
-                report_codes.SBD_DEVICE_MESSAGE_ERROR,
+                reports.codes.SBD_DEVICE_MESSAGE_ERROR,
                 {
                     "device": "device",
                     "node": "node",

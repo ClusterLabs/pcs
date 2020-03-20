@@ -40,15 +40,13 @@ from pcs.common.reports.item import ReportItemList
 from pcs.common.reports.messages import CibUpgradeFailedToMinimalRequiredVersion
 from pcs.common.str_tools import join_multilines
 
-from pcs.cli.common import (
-    console_report,
-    middleware,
-)
+from pcs.cli.common import middleware
 from pcs.cli.common.env_cli import Env
 from pcs.cli.common.errors import CmdLineInputError
 from pcs.cli.common.lib_wrapper import Library
 from pcs.cli.common.parse_args import InputModifiers
-from pcs.cli.common.reports import (
+from pcs.cli.reports import (
+    output as reports_output,
     process_library_reports,
     ReportProcessorToConsole,
 )
@@ -323,13 +321,13 @@ def read_known_hosts_file():
             known_hosts_instance.parser_exception_to_report_list(e)
         )
     except pcs_file.RawFileError as e:
-        console_report.warn(
+        reports_output.warn(
             "Unable to read the known-hosts file: " + e.reason
         )
     except json.JSONDecodeError as e:
-        console_report.warn(f"Unable to parse the known-hosts file: {e}")
+        reports_output.warn(f"Unable to parse the known-hosts file: {e}")
     except (TypeError, KeyError):
-        console_report.warn(
+        reports_output.warn(
             "Warning: Unable to parse the known-hosts file."
         )
     return data

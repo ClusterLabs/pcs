@@ -9,6 +9,7 @@ import sys
 import tempfile
 import time
 import xml.dom.minidom
+from typing import cast
 
 from pcs import (
     settings,
@@ -22,10 +23,8 @@ from pcs.cli.common.errors import (
     HINT_SYNTAX_CHANGE,
     msg_command_replaced,
 )
-from pcs.cli.common.reports import (
-    build_report_message,
-    process_library_reports,
-)
+from pcs.cli.reports import process_library_reports
+from pcs.cli.reports.messages import report_item_msg_from_dto
 from pcs.common.node_communicator import (
     HostNotFound,
     Request,
@@ -34,9 +33,8 @@ from pcs.common.node_communicator import (
 from pcs.common import reports
 from pcs.common.reports import (
     codes as report_codes,
-    item_old,
+    ReportItem,
 )
-from pcs.common.reports.item import ReportItem
 from pcs.common.tools import Version
 from pcs.lib import sbd as lib_sbd
 from pcs.lib.cib.tools import VERSION_FORMAT
@@ -51,7 +49,7 @@ from pcs.lib.corosync import (
     live as corosync_live,
     qdevice_net,
 )
-from pcs.cli.common.console_report import error, warn
+from pcs.cli.reports.output import error, warn
 from pcs.lib.errors import LibraryError
 from pcs.lib.external import disable_service
 from pcs.lib.env import MIN_FEATURE_SET_VERSION_FOR_DIFF
@@ -285,7 +283,12 @@ def wait_for_local_node_started(stop_at, interval):
                 return 1, "Waiting timeout"
     except LibraryError as e:
         return 1, "Unable to get node status: {0}".format(
-            "\n".join([build_report_message(item) for item in e.args])
+            # pylint: disable=no-member
+            "\n".join(
+                report_item_msg_from_dto(
+                    cast(reports.ReportItemDto, item).message
+                ).message for item in e.args
+            )
         )
 
 def wait_for_remote_node_started(node, stop_at, interval):
@@ -935,7 +938,19 @@ class RemoteAddNodes(RunRemotelyBase):
         try:
             output = json.loads(response.data)
             for report_dict in output["report_list"]:
-                self._report(item_old.ReportItem.from_dict(report_dict))
+                self._report(
+                    ReportItem(
+                        severity=reports.ReportItemSeverity(
+                            report_dict["severity"],
+                            report_dict["forceable"],
+                        ),
+                        message=reports.messages.LegacyCommonMessage(
+                            report_dict["code"],
+                            report_dict["info"],
+                            report_dict["report_text"],
+                        )
+                    )
+                )
             if output["status"] == "success":
                 self._success = True
             elif output["status"] != "error":

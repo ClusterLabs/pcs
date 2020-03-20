@@ -1,7 +1,7 @@
 import logging
 import unittest
 
-from pcs.cli.common.reports import (
+from pcs.cli.reports import (
     ReportProcessorToConsole as ReportProcessor
 )
 from pcs.lib.external import CommandRunner

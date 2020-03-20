@@ -1,3 +1,4 @@
+# pylint: disable=too-many-lines
 from collections import defaultdict
 from collections.abc import Iterable
 from dataclasses import (
@@ -27,12 +28,18 @@ from pcs.common.str_tools import (
     indent,
 )
 
-
-from . import codes
+from . import (
+    codes,
+    types,
+)
+from .dto import ReportItemMessageDto
 from .item import ReportItemMessage
 from .constraints import constraint_to_str
 
-# pylint: disable=too-many-lines
+
+# TODO: prefix all internal functions with _
+# TODO: file cleanup
+
 
 INSTANCE_SUFFIX = "@{0}"
 NODE_PREFIX = "{0}: "
@@ -139,6 +146,7 @@ _file_operation_translation = {
     RawFileError.ACTION_WRITE: "write",
 }
 
+# TODO: maybe should be moved to .types or a new module (e.g. consts)
 ServiceAction = NewType("ServiceAction", str)
 
 SERVICE_START = ServiceAction("START")
@@ -187,11 +195,11 @@ def typelist_to_string(type_list, article=False):
             for type_name in type_list
         }
     )
-    types = "/".join(new_list)
+    res_types = "/".join(new_list)
     if not article:
-        return types
+        return res_types
     return "{article} {types}".format(
-        article=_type_articles.get(new_list[0], "a"), types=types
+        article=_type_articles.get(new_list[0], "a"), types=res_types
     )
 
 
@@ -217,6 +225,30 @@ def build_node_description(node_types: List[str]) -> str:
         return label(node_types[0])
 
     return "nor " + " or ".join([label(ntype) for ntype in node_types])
+
+
+@dataclass(frozen=True, init=False)
+class LegacyCommonMessage(ReportItemMessage):
+    """
+    This class is used for legacy report transport protocol from
+    'pcs_internal.py' and is used in 'pcs.cluster.RemoteAddNodes'. This method
+    should be replaced with transporting DTOs of reports in the future.
+    """
+    def __init__(
+        self, code: types.MessageCode, info: Mapping[str, Any], message: str
+    ) -> None:
+        self._code = code
+        self.info = info
+        self._message = message
+
+    @property
+    def message(self) -> str:
+        return self._message
+
+    def to_dto(self) -> ReportItemMessageDto:
+        return ReportItemMessageDto(
+            code=self.code, message=self.message, payload=dict(self.info),
+        )
 
 
 @dataclass(frozen=True)

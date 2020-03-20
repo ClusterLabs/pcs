@@ -4,7 +4,7 @@ from pcs.cli.booth import env
 from pcs.common import file_type_codes
 
 class BoothConfTest(TestCase):
-    @mock.patch("pcs.cli.common.console_report.sys.stderr.write")
+    @mock.patch("pcs.cli.reports.output.sys.stderr.write")
     def test_mocked_key_not_config(self, mock_stderr):
         with self.assertRaises(SystemExit):
             env.middleware_config(None, "/local/file/path.key")
@@ -13,7 +13,7 @@ class BoothConfTest(TestCase):
                 "specified as well\n"
         )
 
-    @mock.patch("pcs.cli.common.console_report.sys.stderr.write")
+    @mock.patch("pcs.cli.reports.output.sys.stderr.write")
     def test_mocked_config_not_key(self, mock_stderr):
         with self.assertRaises(SystemExit):
             env.middleware_config("/local/file/path.conf", None)

@@ -16,7 +16,7 @@ from pcs.cli.common import (
     parse_args,
     routing,
 )
-from pcs.cli.common.reports import process_library_reports
+from pcs.cli.reports import process_library_reports
 from pcs.cli.routing import (
     acl,
     alert,

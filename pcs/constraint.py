@@ -12,19 +12,18 @@ from pcs import (
     utils,
 )
 from pcs.cli.common import parse_args
-from pcs.cli.common.console_report import warn
 from pcs.cli.common.errors import CmdLineInputError
-from pcs.cli.common.reports import process_library_reports
 import pcs.cli.constraint_colocation.command as colocation_command
 import pcs.cli.constraint_order.command as order_command
 from pcs.cli.constraint_ticket import command as ticket_command
+from pcs.cli.reports import process_library_reports
+from pcs.cli.reports.output import warn
 from pcs.common import reports
-from pcs.common.reports import codes as report_codes
+from pcs.common.reports import ReportItem
 from pcs.common.reports.constraints import (
     colocation as colocation_format,
     order as order_format,
 )
-from pcs.common.reports.item import ReportItem
 from pcs.lib.cib.constraint import resource_set
 from pcs.lib.cib.constraint.order import ATTRIB as order_attrib
 from pcs.lib.node import get_existing_nodes_names
@@ -844,7 +843,7 @@ def _verify_node_name(node, existing_nodes):
         report_list.append(
             ReportItem.error(
                 reports.messages.NodeNotFound(node),
-                force_code=report_codes.FORCE_NODE_DOES_NOT_EXIST,
+                force_code=reports.codes.FORCE_NODE_DOES_NOT_EXIST,
             )
         )
     return report_list

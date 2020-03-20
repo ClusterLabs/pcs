@@ -32,8 +32,11 @@ import ipaddress
 import re
 
 from pcs.common import reports
-from pcs.common.reports import ReportItemSeverity
-from pcs.common.reports.item import ReportItem
+from pcs.common.reports import (
+    ReportItem,
+    ReportItemList,
+    ReportItemSeverity,
+)
 from pcs.lib.corosync import constants as corosync_constants
 from pcs.lib.pacemaker.values import (
     timeout_to_seconds,
@@ -138,15 +141,11 @@ class ValidatorFirstError(CompoundValidator):
     def validate(self, option_dict):
         report_list = []
         for validator in self._validator_list:
-            new_report_list = validator.validate(option_dict)
+            new_report_list: ReportItemList = validator.validate(option_dict)
             report_list.extend(new_report_list)
             error_reported = False
             for report_item in new_report_list:
-                # TODO: remove support for old ReportItem
-                severity = report_item.severity
-                if isinstance(report_item, ReportItem):
-                    severity = severity.level
-                if severity == ReportItemSeverity.ERROR:
+                if report_item.severity.level == ReportItemSeverity.ERROR:
                     error_reported = True
                     break
             if error_reported:

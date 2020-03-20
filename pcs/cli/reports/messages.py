@@ -27,6 +27,9 @@ _file_role_to_option_translation: Mapping[file_type_codes.FileTypeCode, str] = {
 }
 
 
+# TODO: prefix all internal functions with _
+# TODO: file cleanup
+
 class CliReportMessage:
     def __init__(self, dto_obj: dto.ReportItemMessageDto) -> None:
         self._dto_obj = dto_obj

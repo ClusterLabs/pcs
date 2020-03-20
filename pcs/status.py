@@ -5,7 +5,7 @@ from pcs import utils
 from pcs.common import reports
 from pcs.common.reports.item import ReportItem
 from pcs.cli.common.errors import CmdLineInputError
-from pcs.cli.common.reports import process_library_reports
+from pcs.cli.reports import process_library_reports
 from pcs.lib.node import get_existing_nodes_names
 from pcs.lib.errors import LibraryError
 from pcs.lib.pacemaker.state import ClusterState

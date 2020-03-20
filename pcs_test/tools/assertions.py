@@ -4,11 +4,7 @@ import re
 from lxml.doctestcompare import LXMLOutputChecker
 from lxml.etree import LXML_VERSION
 
-from pcs.common.reports import (
-    item_old as reports_item_old,
-    dto,
-    ReportItemSeverity,
-)
+from pcs.common import reports
 from pcs.lib.errors import LibraryError
 
 # pylint: disable=invalid-name, no-self-use
@@ -253,10 +249,10 @@ def assert_xml_equal(expected_xml, got_xml, context_explanation=""):
         )
 
 SEVERITY_SHORTCUTS = {
-    ReportItemSeverity.INFO: "I",
-    ReportItemSeverity.WARNING: "W",
-    ReportItemSeverity.ERROR: "E",
-    ReportItemSeverity.DEBUG: "D",
+    reports.ReportItemSeverity.INFO: "I",
+    reports.ReportItemSeverity.WARNING: "W",
+    reports.ReportItemSeverity.ERROR: "E",
+    reports.ReportItemSeverity.DEBUG: "D",
 }
 
 def _format_report_item_info(info):
@@ -275,13 +271,6 @@ def _expected_report_item_format(report_item_expectation):
     )
 
 def _format_report_item(report_item):
-    if isinstance(report_item, reports_item_old.ReportItem):
-        return _expected_report_item_format((
-            report_item.severity,
-            report_item.code,
-            report_item.info,
-            report_item.forceable
-        ))
     return  _expected_report_item_format((
         report_item.severity.level,
         report_item.message.code,
@@ -389,26 +378,7 @@ def __find_report_info(expected_report_info_list, real_report_item):
     return None
 
 def __report_item_equal(real_report_item, report_item_info):
-    if isinstance(real_report_item, reports_item_old.ReportItem):
-        return (
-            real_report_item.severity == report_item_info[0]
-            and
-            real_report_item.code == report_item_info[1]
-            and
-            #checks only presence and match of expected in info,
-            #extra info is ignored
-            all(
-                (k in real_report_item.info and real_report_item.info[k] == v)
-                for k, v in report_item_info[2].items()
-            )
-            and
-            (
-                real_report_item.forceable == (
-                    None if len(report_item_info) < 4 else report_item_info[3]
-                )
-            )
-        )
-    report_dto: dto.ReportItemDto = real_report_item.to_dto()
+    report_dto: reports.ReportItemDto = real_report_item.to_dto()
     return (
         report_dto.severity.level == report_item_info[0]
         and

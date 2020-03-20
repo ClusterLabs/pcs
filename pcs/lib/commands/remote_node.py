@@ -2,10 +2,9 @@ from pcs import settings
 from pcs.common import reports
 from pcs.common.file import RawFileError
 from pcs.common.reports import (
-    codes as report_codes,
+    ReportItem,
     ReportProcessor,
 )
-from pcs.common.reports.item import ReportItem
 from pcs.lib import node_communication_format
 from pcs.lib.tools import generate_binary_key
 from pcs.lib.cib.resource import guest_node, primitive, remote_node
@@ -340,37 +339,20 @@ def node_add_remote(
         already_exists = []
         unified_report_list = []
         for report_item in report_list + list(e.args):
-            # TODO: remove
             # pylint: disable=no-member
-            if not isinstance(report_item, ReportItem):
-                # pylint: disable=unsupported-membership-test
-                # pylint: disable=unsubscriptable-object
-                if report_item.code not in (
-                    report_codes.ID_ALREADY_EXISTS,
-                    report_codes.RESOURCE_INSTANCE_ATTR_VALUE_NOT_UNIQUE,
-                ):
-                    unified_report_list.append(report_item)
-                elif (
-                    "id" in report_item.info
-                    and
-                    report_item.info["id"] not in already_exists
-                ):
-                    unified_report_list.append(report_item)
-                    already_exists.append(report_item.info["id"])
-            else:
-                dto_obj = report_item.message.to_dto()
-                if dto_obj.code not in (
-                    report_codes.ID_ALREADY_EXISTS,
-                    report_codes.RESOURCE_INSTANCE_ATTR_VALUE_NOT_UNIQUE,
-                ):
-                    unified_report_list.append(report_item)
-                elif (
-                    "id" in dto_obj.payload
-                    and
-                    dto_obj.payload["id"] not in already_exists
-                ):
-                    unified_report_list.append(report_item)
-                    already_exists.append(dto_obj.payload["id"])
+            dto_obj = report_item.message.to_dto()
+            if dto_obj.code not in (
+                reports.codes.ID_ALREADY_EXISTS,
+                reports.codes.RESOURCE_INSTANCE_ATTR_VALUE_NOT_UNIQUE,
+            ):
+                unified_report_list.append(report_item)
+            elif (
+                "id" in dto_obj.payload
+                and
+                dto_obj.payload["id"] not in already_exists
+            ):
+                unified_report_list.append(report_item)
+                already_exists.append(dto_obj.payload["id"])
         report_list = unified_report_list
 
     report_processor.report_list(report_list)
@@ -549,7 +531,7 @@ def _find_resources_to_remove(
         if report_processor.report(
             ReportItem(
                 severity=reports.item.get_severity(
-                    report_codes.FORCE_REMOVE_MULTIPLE_NODES,
+                    reports.codes.FORCE_REMOVE_MULTIPLE_NODES,
                     allow_remove_multiple_nodes
                 ),
                 message=reports.messages.MultipleResultsFound(

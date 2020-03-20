@@ -39,8 +39,8 @@ from pcs import (
 )
 from pcs.cli.common import middleware
 from pcs.cli.common.errors import CmdLineInputError
-from pcs.cli.common.reports import process_library_reports
 from pcs.cli.constraint import command as constraint_command
+from pcs.cli.reports import process_library_reports
 from pcs.common.reports import constraints as constraints_reports
 from pcs.common.str_tools import indent
 from pcs.lib.commands import quorum as lib_quorum

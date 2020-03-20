@@ -6,20 +6,19 @@ from typing import Optional
 # have to import RawFile from common and Ghost file from here in other
 # places
 # pylint: disable=unused-import
-from pcs.common import reports as report
+from pcs.common import reports
 from pcs.common.file import(
     RawFile as RealFile,
     RawFileError,
     RawFileInterface,
 )
-from pcs.common.reports.item import ReportItem
-from pcs.lib import reports
+from pcs.common.reports import ReportItem
 
 # TODO add logging (logger / debug reports ?)
 
 def raw_file_error_report(
     error: RawFileError,
-    force_code: Optional[report.types.ForceCode] = None,
+    force_code: Optional[reports.types.ForceCode] = None,
     is_forced_or_warning: bool = False
 ) -> ReportItem:
     """
@@ -30,8 +29,8 @@ def raw_file_error_report(
     is_forced_or_warning -- translate to a warning if True, error otherwise
     """
     return ReportItem(
-        severity=report.item.get_severity(force_code, is_forced_or_warning),
-        message=report.messages.FileIoError(
+        severity=reports.get_severity(force_code, is_forced_or_warning),
+        message=reports.messages.FileIoError(
             error.metadata.file_type_code,
             error.action,
             error.reason,

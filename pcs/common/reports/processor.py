@@ -1,14 +1,6 @@
 import abc
-from typing import (
-    List,
-    Union,
-)
 
-from . import item, item_old
-
-
-ReportItem = Union[item.ReportItem, item_old.ReportItem]
-ReportItemList = List[ReportItem]
+from .item import ReportItem, ReportItemList, ReportItemSeverity
 
 
 class ReportProcessor(abc.ABC):
@@ -43,6 +35,4 @@ def has_errors(report_list: ReportItemList) -> bool:
 
 
 def _is_error(report_item: ReportItem) -> bool:
-    if isinstance(report_item, item_old.ReportItem):
-        return report_item.severity == item.ReportItemSeverity.ERROR
-    return report_item.severity.level == item.ReportItemSeverity.ERROR
+    return report_item.severity.level == ReportItemSeverity.ERROR

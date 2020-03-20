@@ -133,12 +133,6 @@ def remove_levels_by_params(
     for report_item in report_list:
         # TODO: remove later
         if (
-            isinstance(report_item, report.ReportItem)
-            and
-            report_item.code == report.codes.CIB_FENCING_LEVEL_DOES_NOT_EXIST
-        ) or (
-            isinstance(report_item, report.item.ReportItem)
-            and
             report_item.message.code
             ==
             report.codes.CIB_FENCING_LEVEL_DOES_NOT_EXIST

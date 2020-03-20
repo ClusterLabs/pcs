@@ -48,9 +48,9 @@ def format_list_custom_last_separator(
 ) -> str:
     item_list = sorted(item_list)
     return "{}{}{}".format(
-        format_list(item_list[:-1], separator=separator,),
+        format_list(item_list[:-1], separator=separator),
         last_separator,
-        format_list(item_list[-1:], separator=separator,),
+        format_list(item_list[-1:], separator=separator),
     )
 
 

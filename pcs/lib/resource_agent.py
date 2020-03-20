@@ -6,11 +6,10 @@ from lxml import etree
 from pcs import settings
 from pcs.common import reports
 from pcs.common.reports import (
-    codes as report_codes,
+    ReportItem,
     ReportItemSeverity,
     ReportProcessor,
 )
-from pcs.common.reports.item import ReportItem
 from pcs.common.tools import xml_fromstring
 from pcs.lib import validate
 from pcs.lib.errors import LibraryError
@@ -580,7 +579,7 @@ class Agent():
             validate.NamesIn(
                 {param["name"] for param in self.get_parameters()},
                 option_type=self._agent_type_label,
-                **validate.set_warning(report_codes.FORCE_OPTIONS, force)
+                **validate.set_warning(reports.codes.FORCE_OPTIONS, force)
             ).validate(parameters)
         )
         # TODO remove this "if", see pcs.lib.cib.commands.remote_node.create
@@ -657,7 +656,7 @@ class Agent():
             validate.NamesIn(
                 {param["name"] for param in self.get_parameters()},
                 option_type=self._agent_type_label,
-                **validate.set_warning(report_codes.FORCE_OPTIONS, force)
+                **validate.set_warning(reports.codes.FORCE_OPTIONS, force)
             ).validate(
                 # Do not report unknown parameters already set in the CIB. They
                 # have been reported already when the were added to the CIB.
@@ -688,7 +687,7 @@ class Agent():
     # TODO: remove
     @staticmethod
     def _validate_report_forcible_severity(force):
-        forcible = report_codes.FORCE_OPTIONS if not force else None
+        forcible = reports.codes.FORCE_OPTIONS if not force else None
         severity = (
             ReportItemSeverity.ERROR if not force
             else ReportItemSeverity.WARNING
@@ -1224,7 +1223,7 @@ def resource_agent_error_to_report_item(
     force = None
     if e.__class__ == UnableToGetAgentMetadata:
         if severity == ReportItemSeverity.ERROR and forceable:
-            force = report_codes.FORCE_METADATA_ISSUE
+            force = reports.codes.FORCE_METADATA_ISSUE
         return ReportItem(
             severity=reports.item.ReportItemSeverity(severity, force),
             message=reports.messages.UnableToGetAgentMetadata(

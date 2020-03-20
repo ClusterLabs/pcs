@@ -3,6 +3,14 @@ from . import (
     item,
     messages,
 )
-from .item import ReportItemSeverity
-from .item_old import ReportItem
-from .processor import ReportProcessor, has_errors, ReportItemList
+from .item import (
+    get_severity,
+    ReportItem,
+    ReportItemList,
+    ReportItemSeverity,
+)
+from .dto import ReportItemDto
+from .processor import (
+    has_errors,
+    ReportProcessor,
+)

@@ -108,17 +108,12 @@ class RunRemotelyBase(CommunicationCommandInterface):
 
         list report_list -- list of ReportItem objects
         """
-        def _is_error(report_item):
-            error = reports.item.ReportItemSeverity.ERROR
-            if isinstance(report_item, ReportItem):
-                return report_item.severity.level == error
-            return report_item.severity == error
 
         self.__report_processor.report_list(report_list)
         if self.has_errors:
             return
         for report_item in report_list:
-            if _is_error(report_item):
+            if report_item.severity.level == reports.ReportItemSeverity.ERROR:
                 self.__has_errors = True
                 return
 
