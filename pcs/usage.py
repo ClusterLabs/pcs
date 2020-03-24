@@ -820,7 +820,8 @@ Commands:
         the saved CIB using pcs (pcs -f <command>).
 
     cib-push <filename> [--wait[=<n>]]
-            [diff-against=<filename_original> | scope=<scope> | --config]
+            [diff-against=<filename_original> | scope=<scope> | --config |
+            --force]
         Push the raw xml from <filename> to the CIB (Cluster Information Base).
         You can obtain the CIB by running the 'pcs cluster cib' command, which
         is recommended first step when you want to perform desired
@@ -832,7 +833,8 @@ Commands:
         crm_config, rsc_defaults, op_defaults.  --config is the same as
         scope=configuration.  Use of --config is recommended.  Do not specify
         a scope if you need to push the whole CIB or be warned in the case
-        of outdated CIB.
+        of outdated CIB.  If --force is specified, increase the admin_epoch and
+        then push.
         If --wait is specified wait up to 'n' seconds for changes to be applied.
         WARNING: the selected scope of the CIB will be overwritten by the
         current content of the specified file.

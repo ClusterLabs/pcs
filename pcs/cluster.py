@@ -656,10 +656,11 @@ def cluster_push(lib, argv, modifiers):
       * --wait
       * --config - push only configuration section of CIB
       * -f - CIB file
+      * -force - increase admin_epoch and then push
     """
     # pylint: disable=too-many-locals,
     del lib
-    modifiers.ensure_only_supported("--wait", "--config", "-f")
+    modifiers.ensure_only_supported("--wait", "--config", "-f", "--force")
     if len(argv) > 2:
         raise CmdLineInputError()
 
@@ -690,6 +691,11 @@ def cluster_push(lib, argv, modifiers):
         scope = "configuration"
     if diff_against and scope:
         utils.err("Cannot use both scope and diff-against")
+    if modifiers.get("--force"):
+        if diff_against:
+            utils.err("Cannot use both diff_against and --force")
+        if scope:
+            utils.err("Cannot use both scope and --force")
     if not filename:
         raise CmdLineInputError()
 
@@ -776,7 +782,32 @@ def cluster_push(lib, argv, modifiers):
             utils.err("unable to push cib\n" + stderr + output)
 
     else:
-        command = ["cibadmin", "--replace", "--xml-file", filename]
+        if modifiers.get("--force"):
+            dom = utils.get_cib_dom()
+            cib = dom.getElementsByTagName("cib")
+            if len(cib) != 1:
+                utils.err("Bad cib")
+            admin_epoch = cib[0].getAttribute("admin_epoch")
+            if admin_epoch:
+                admin_epoch = str(int(admin_epoch) + 1)
+            else:
+                admin_epoch = "1"
+
+            try:
+                dom = xml.dom.minidom.parse(filename)
+                cib = dom.getElementsByTagName("cib")
+                if len(cib) != 1:
+                    utils.err("there is not exactly one 'cib' element")
+                cib[0].setAttribute("admin_epoch", admin_epoch)
+            except (EnvironmentError, xml.parsers.expat.ExpatError) as e:
+                utils.err("unable to parse new cib: %s" % e)
+
+            tempcib = tempfile.NamedTemporaryFile(mode="w+", suffix=".pcs")
+            tempcib.write(dom.toxml())
+            tempcib.flush()
+            command = ["cibadmin", "--replace", "--xml-file", tempcib.name]
+        else:
+            command = ["cibadmin", "--replace", "--xml-file", filename]
         if scope:
             command.append("--scope=%s" % scope)
         output, retval = utils.run(command)
@@ -849,7 +880,7 @@ def cluster_edit(lib, argv, modifiers):
             cluster_push(
                 lib,
                 [arg for arg in [tempcib.name, scope_arg] if arg],
-                modifiers.get_subset("--wait", "--config", "-f"),
+                modifiers.get_subset("--wait", "--config", "-f", "--force"),
             )
 
     else:
