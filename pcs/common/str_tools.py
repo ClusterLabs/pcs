@@ -3,7 +3,6 @@ from typing import (
     Any,
     List,
     Mapping,
-    Optional,
     TypeVar,
 )
 
@@ -21,19 +20,13 @@ def indent(line_list: List[str], indent_step: int = 2) -> List[str]:
     ]
 
 
-# TODO: consider removing param optional_transformation
 def format_list(
     item_list: List[str],  # Intetionaly not Sequence so string is prohibited
-    optional_transformations: Optional[Mapping[str, str]] = None,
     separator: str = ", ",
 ) -> str:
     item_list = sorted(item_list)
-    if not optional_transformations:
-        optional_transformations = {}
 
-    to_value = lambda item: "'{}'".format(
-        optional_transformations.get(item, item)
-    )
+    to_value = lambda item: f"'{item}'"
 
     if len(item_list) == 1:
         return to_value(item_list[0])
@@ -41,13 +34,14 @@ def format_list(
     return separator.join(sorted([to_value(item) for item in item_list]))
 
 
-# TODO: tests
 def format_list_custom_last_separator(
     item_list: List[str],  # Intetionaly not Sequence so string is prohibited
     last_separator: str,
     separator: str = ", ",
 ) -> str:
     item_list = sorted(item_list)
+    if len(item_list) < 2:
+        return format_list(item_list, separator=separator)
     return "{}{}{}".format(
         format_list(item_list[:-1], separator=separator),
         last_separator,
@@ -127,7 +121,6 @@ def format_plural(depends_on, singular, plural=None):
 T = TypeVar("T")
 
 
-# TODO: tests
 def transform(items: List[T], mapping: Mapping[T, str]) -> List[str]:
     return list(map(lambda item: mapping.get(item, str(item)), items))
 

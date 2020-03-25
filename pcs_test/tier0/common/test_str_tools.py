@@ -191,3 +191,69 @@ class FormatPluralTest(TestCase):
         self.assertEqual("greetings", tools.format_plural(10, "greeting"))
         mock_add_s.assert_called_once_with("greeting")
         mock_is_multiple.assert_called_once_with(10)
+
+
+class FormatList(TestCase):
+    def test_empty_list(self):
+        self.assertEqual(tools.format_list([]), "")
+
+    def test_one_item(self):
+        self.assertEqual(tools.format_list(["item"]), "'item'")
+
+    def test_multiple_items(self):
+        self.assertEqual(
+            tools.format_list(["item2", "item0", "item1"]),
+            "'item0', 'item1', 'item2'",
+        )
+
+    def test_custom_separator(self):
+        self.assertEqual(
+            tools.format_list(["item2", "item0", "item1"], separator=" and "),
+            "'item0' and 'item1' and 'item2'",
+        )
+
+
+class FormatListCustomLastSeparatort(TestCase):
+    def test_empty_list(self):
+        self.assertEqual(
+            tools.format_list_custom_last_separator([], " and "), ""
+        )
+
+    def test_one_item(self):
+        self.assertEqual(
+            tools.format_list_custom_last_separator(["item"], " and "), "'item'"
+        )
+
+    def test_two_items(self):
+        self.assertEqual(
+            tools.format_list_custom_last_separator(
+                ["item1", "item2"], " and "
+            ),
+            "'item1' and 'item2'",
+        )
+
+    def test_multiple_items(self):
+        self.assertEqual(
+            tools.format_list_custom_last_separator(
+                ["item2", "item0", "item1", "item3"], " and "
+            ),
+            "'item0', 'item1', 'item2' and 'item3'",
+        )
+
+    def test_custom_separator(self):
+        self.assertEqual(
+            tools.format_list_custom_last_separator(
+                ["item2", "item0", "item1", "item3"], " or ", separator=" and "
+            ),
+            "'item0' and 'item1' and 'item2' or 'item3'",
+        )
+
+
+class Transform(TestCase):
+    def test_transform(self):
+        self.assertEqual(
+            tools.transform(
+                ["A", "0", "C", "x", "A", "B", "a"], {"A": "a", "C": "1"}
+            ),
+            ["a", "0", "1", "x", "a", "B", "a"],
+        )
