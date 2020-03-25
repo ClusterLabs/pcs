@@ -3046,14 +3046,14 @@ class EnableDisableStartStopMixin(FixtureMixin):
 class Enable(EnableDisableStartStopMixin, TestCase):
     # without 'staticmethod' the command would bVecome a method of this class
     command = staticmethod(commands.enable_booth)
-    report_service_action = reports.messages.SERVICE_ENABLE
+    report_service_action = reports.const.SERVICE_ACTION_ENABLE
     def get_external_call(self):
         return self.config.runner.systemctl.enable
 
 class Disable(EnableDisableStartStopMixin, TestCase):
     # without 'staticmethod' the command would bVecome a method of this class
     command = staticmethod(commands.disable_booth)
-    report_service_action = reports.messages.SERVICE_DISABLE
+    report_service_action = reports.const.SERVICE_ACTION_DISABLE
     def get_external_call(self):
         return self.config.runner.systemctl.disable
 
@@ -3063,14 +3063,14 @@ class Disable(EnableDisableStartStopMixin, TestCase):
 class Start(EnableDisableStartStopMixin, TestCase):
     # without 'staticmethod' the command would bVecome a method of this class
     command = staticmethod(commands.start_booth)
-    report_service_action = reports.messages.SERVICE_START
+    report_service_action = reports.const.SERVICE_ACTION_START
     def get_external_call(self):
         return self.config.runner.systemctl.start
 
 class Stop(EnableDisableStartStopMixin, TestCase):
     # without 'staticmethod' the command would bVecome a method of this class
     command = staticmethod(commands.stop_booth)
-    report_service_action = reports.messages.SERVICE_STOP
+    report_service_action = reports.const.SERVICE_ACTION_STOP
     def get_external_call(self):
         return self.config.runner.systemctl.stop
 

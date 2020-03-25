@@ -256,7 +256,7 @@ def node_add_remote(
         report_processor.report(
             ReportItem.info(
                 reports.messages.CorosyncNodeConflictCheckSkipped(
-                    reports.messages.NOT_LIVE_CIB,
+                    reports.const.REASON_NOT_LIVE_CIB,
                 )
             )
         )
@@ -416,7 +416,7 @@ def node_add_guest(
         report_processor.report(
             ReportItem.info(
                 reports.messages.CorosyncNodeConflictCheckSkipped(
-                    reports.messages.NOT_LIVE_CIB,
+                    reports.const.REASON_NOT_LIVE_CIB,
                 )
             )
         )
@@ -585,14 +585,14 @@ def _report_skip_live_parts_in_remove(node_names_list):
     return [
         ReportItem.info(
             reports.messages.ServiceCommandsOnNodesSkipped(
-                reports.messages.NOT_LIVE_CIB,
+                reports.const.REASON_NOT_LIVE_CIB,
                 ["pacemaker_remote stop", "pacemaker_remote disable"],
                 node_names_list
             )
         ),
         ReportItem.info(
             reports.messages.FilesRemoveFromNodesSkipped(
-                reports.messages.NOT_LIVE_CIB,
+                reports.const.REASON_NOT_LIVE_CIB,
                 ["pacemaker authkey"],
                 node_names_list
             )

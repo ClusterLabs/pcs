@@ -684,16 +684,6 @@ class Agent():
 
         return report_items
 
-    # TODO: remove
-    @staticmethod
-    def _validate_report_forcible_severity(force):
-        forcible = reports.codes.FORCE_OPTIONS if not force else None
-        severity = (
-            ReportItemSeverity.ERROR if not force
-            else ReportItemSeverity.WARNING
-        )
-        return forcible, severity
-
     @staticmethod
     def _validate_report_severity(
         force: bool

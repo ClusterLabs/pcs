@@ -2,7 +2,10 @@ from unittest import TestCase
 
 from pcs.common import file_type_codes
 from pcs.common.file import RawFileError
-from pcs.common.reports import messages as reports
+from pcs.common.reports import (
+    const,
+    messages as reports,
+)
 from pcs.common.fencing_topology import (
     TARGET_TYPE_NODE,
     TARGET_TYPE_REGEXP,
@@ -2103,70 +2106,80 @@ class ServiceActionStarted(NameBuildTest):
     def test_start(self):
         self.assert_message_from_report(
             "Starting a_service...",
-            reports.ServiceActionStarted(reports.SERVICE_START, "a_service"),
+            reports.ServiceActionStarted(
+                const.SERVICE_ACTION_START, "a_service"
+            ),
         )
 
     def test_start_instance(self):
         self.assert_message_from_report(
             "Starting a_service@an_instance...",
             reports.ServiceActionStarted(
-                reports.SERVICE_START, "a_service", "an_instance"
+                const.SERVICE_ACTION_START, "a_service", "an_instance"
             ),
         )
 
     def test_stop(self):
         self.assert_message_from_report(
             "Stopping a_service...",
-            reports.ServiceActionStarted(reports.SERVICE_STOP, "a_service"),
+            reports.ServiceActionStarted(
+                const.SERVICE_ACTION_STOP, "a_service"
+            ),
         )
 
     def test_stop_instance(self):
         self.assert_message_from_report(
             "Stopping a_service@an_instance...",
             reports.ServiceActionStarted(
-                reports.SERVICE_STOP, "a_service", "an_instance"
+                const.SERVICE_ACTION_STOP, "a_service", "an_instance"
             ),
         )
 
     def test_enable(self):
         self.assert_message_from_report(
             "Enabling a_service...",
-            reports.ServiceActionStarted(reports.SERVICE_ENABLE, "a_service"),
+            reports.ServiceActionStarted(
+                const.SERVICE_ACTION_ENABLE, "a_service"
+            ),
         )
 
     def test_enable_instance(self):
         self.assert_message_from_report(
             "Enabling a_service@an_instance...",
             reports.ServiceActionStarted(
-                reports.SERVICE_ENABLE, "a_service", "an_instance"
+                const.SERVICE_ACTION_ENABLE, "a_service", "an_instance"
             ),
         )
 
     def test_disable(self):
         self.assert_message_from_report(
             "Disabling a_service...",
-            reports.ServiceActionStarted(reports.SERVICE_DISABLE, "a_service"),
+            reports.ServiceActionStarted(
+                const.SERVICE_ACTION_DISABLE, "a_service"
+            ),
         )
 
     def test_disable_instance(self):
         self.assert_message_from_report(
             "Disabling a_service@an_instance...",
             reports.ServiceActionStarted(
-                reports.SERVICE_DISABLE, "a_service", "an_instance"
+                const.SERVICE_ACTION_DISABLE, "a_service", "an_instance"
             ),
         )
 
     def test_kill(self):
         self.assert_message_from_report(
             "Killing a_service...",
-            reports.ServiceActionStarted(reports.SERVICE_KILL, "a_service"),
+            reports.ServiceActionStarted(
+                const.SERVICE_ACTION_KILL, "a_service"
+            ),
         )
 
     def test_kill_instance(self):
         self.assert_message_from_report(
             "Killing a_service@an_instance...",
             reports.ServiceActionStarted(
-                reports.SERVICE_KILL, "a_service", "an_instance"
+                const.SERVICE_ACTION_KILL, "a_service", "an_instance"
             ),
         )
 
@@ -2177,7 +2190,7 @@ class ServiceActionFailed(NameBuildTest):
         self.assert_message_from_report(
             "Unable to start a_service: a_reason",
             reports.ServiceActionFailed(
-                reports.SERVICE_START, "a_service", "a_reason"
+                const.SERVICE_ACTION_START, "a_service", "a_reason"
             ),
         )
 
@@ -2185,7 +2198,7 @@ class ServiceActionFailed(NameBuildTest):
         self.assert_message_from_report(
             "Unable to start a_service@an_instance: a_reason",
             reports.ServiceActionFailed(
-                reports.SERVICE_START,
+                const.SERVICE_ACTION_START,
                 "a_service",
                 "a_reason",
                 instance="an_instance",
@@ -2196,7 +2209,7 @@ class ServiceActionFailed(NameBuildTest):
         self.assert_message_from_report(
             "Unable to stop a_service: a_reason",
             reports.ServiceActionFailed(
-                reports.SERVICE_STOP, "a_service", "a_reason"
+                const.SERVICE_ACTION_STOP, "a_service", "a_reason"
             ),
         )
 
@@ -2204,7 +2217,7 @@ class ServiceActionFailed(NameBuildTest):
         self.assert_message_from_report(
             "Unable to stop a_service@an_instance: a_reason",
             reports.ServiceActionFailed(
-                reports.SERVICE_STOP,
+                const.SERVICE_ACTION_STOP,
                 "a_service",
                 "a_reason",
                 instance="an_instance",
@@ -2215,7 +2228,7 @@ class ServiceActionFailed(NameBuildTest):
         self.assert_message_from_report(
             "Unable to enable a_service: a_reason",
             reports.ServiceActionFailed(
-                reports.SERVICE_ENABLE, "a_service", "a_reason"
+                const.SERVICE_ACTION_ENABLE, "a_service", "a_reason"
             ),
         )
 
@@ -2223,7 +2236,7 @@ class ServiceActionFailed(NameBuildTest):
         self.assert_message_from_report(
             "Unable to enable a_service@an_instance: a_reason",
             reports.ServiceActionFailed(
-                reports.SERVICE_ENABLE,
+                const.SERVICE_ACTION_ENABLE,
                 "a_service",
                 "a_reason",
                 instance="an_instance",
@@ -2234,7 +2247,7 @@ class ServiceActionFailed(NameBuildTest):
         self.assert_message_from_report(
             "Unable to disable a_service: a_reason",
             reports.ServiceActionFailed(
-                reports.SERVICE_DISABLE, "a_service", "a_reason"
+                const.SERVICE_ACTION_DISABLE, "a_service", "a_reason"
             ),
         )
 
@@ -2242,7 +2255,7 @@ class ServiceActionFailed(NameBuildTest):
         self.assert_message_from_report(
             "Unable to disable a_service@an_instance: a_reason",
             reports.ServiceActionFailed(
-                reports.SERVICE_DISABLE,
+                const.SERVICE_ACTION_DISABLE,
                 "a_service",
                 "a_reason",
                 instance="an_instance",
@@ -2253,7 +2266,7 @@ class ServiceActionFailed(NameBuildTest):
         self.assert_message_from_report(
             "Unable to kill a_service: a_reason",
             reports.ServiceActionFailed(
-                reports.SERVICE_KILL, "a_service", "a_reason"
+                const.SERVICE_ACTION_KILL, "a_service", "a_reason"
             ),
         )
 
@@ -2261,7 +2274,7 @@ class ServiceActionFailed(NameBuildTest):
         self.assert_message_from_report(
             "Unable to kill a_service@an_instance: a_reason",
             reports.ServiceActionFailed(
-                reports.SERVICE_KILL,
+                const.SERVICE_ACTION_KILL,
                 "a_service",
                 "a_reason",
                 instance="an_instance",
@@ -2274,42 +2287,48 @@ class ServiceActionSucceeded(NameBuildTest):
     def test_start(self):
         self.assert_message_from_report(
             "a_service started",
-            reports.ServiceActionSucceeded(reports.SERVICE_START, "a_service"),
+            reports.ServiceActionSucceeded(
+                const.SERVICE_ACTION_START, "a_service"
+            ),
         )
 
     def test_start_instance(self):
         self.assert_message_from_report(
             "a_service@an_instance started",
             reports.ServiceActionSucceeded(
-                reports.SERVICE_START, "a_service", instance="an_instance"
+                const.SERVICE_ACTION_START, "a_service", instance="an_instance"
             ),
         )
 
     def test_stop(self):
         self.assert_message_from_report(
             "a_service stopped",
-            reports.ServiceActionSucceeded(reports.SERVICE_STOP, "a_service"),
+            reports.ServiceActionSucceeded(
+                const.SERVICE_ACTION_STOP, "a_service"
+            ),
         )
 
     def test_stop_instance(self):
         self.assert_message_from_report(
             "a_service@an_instance stopped",
             reports.ServiceActionSucceeded(
-                reports.SERVICE_STOP, "a_service", instance="an_instance"
+                const.SERVICE_ACTION_STOP, "a_service", instance="an_instance"
             ),
         )
 
     def test_enable(self):
         self.assert_message_from_report(
             "a_service enabled",
-            reports.ServiceActionSucceeded(reports.SERVICE_ENABLE, "a_service"),
+            reports.ServiceActionSucceeded(
+                const.SERVICE_ACTION_ENABLE, "a_service"
+            ),
         )
 
     def test_enable_instance(self):
         self.assert_message_from_report(
             "a_service@an_instance enabled",
             reports.ServiceActionSucceeded(
-                reports.SERVICE_ENABLE, "a_service", instance="an_instance"
+                const.SERVICE_ACTION_ENABLE, "a_service", instance="an_instance"
             ),
         )
 
@@ -2317,7 +2336,7 @@ class ServiceActionSucceeded(NameBuildTest):
         self.assert_message_from_report(
             "a_service disabled",
             reports.ServiceActionSucceeded(
-                reports.SERVICE_DISABLE, "a_service"
+                const.SERVICE_ACTION_DISABLE, "a_service"
             ),
         )
 
@@ -2325,21 +2344,25 @@ class ServiceActionSucceeded(NameBuildTest):
         self.assert_message_from_report(
             "a_service@an_instance disabled",
             reports.ServiceActionSucceeded(
-                reports.SERVICE_DISABLE, "a_service", instance="an_instance"
+                const.SERVICE_ACTION_DISABLE,
+                "a_service",
+                instance="an_instance",
             ),
         )
 
     def test_kill(self):
         self.assert_message_from_report(
             "a_service killed",
-            reports.ServiceActionSucceeded(reports.SERVICE_KILL, "a_service"),
+            reports.ServiceActionSucceeded(
+                const.SERVICE_ACTION_KILL, "a_service"
+            ),
         )
 
     def test_kill_instance(self):
         self.assert_message_from_report(
             "a_service@an_instance killed",
             reports.ServiceActionSucceeded(
-                reports.SERVICE_KILL, "a_service", instance="an_instance"
+                const.SERVICE_ACTION_KILL, "a_service", instance="an_instance"
             ),
         )
 
@@ -2349,7 +2372,7 @@ class ServiceActionSkipped(NameBuildTest):
         self.assert_message_from_report(
             "not starting a_service: a_reason",
             reports.ServiceActionSkipped(
-                reports.SERVICE_START, "a_service", "a_reason"
+                const.SERVICE_ACTION_START, "a_service", "a_reason"
             ),
         )
 
@@ -2357,7 +2380,7 @@ class ServiceActionSkipped(NameBuildTest):
         self.assert_message_from_report(
             "not starting a_service@an_instance: a_reason",
             reports.ServiceActionSkipped(
-                reports.SERVICE_START,
+                const.SERVICE_ACTION_START,
                 "a_service",
                 "a_reason",
                 instance="an_instance",
@@ -2368,7 +2391,7 @@ class ServiceActionSkipped(NameBuildTest):
         self.assert_message_from_report(
             "not stopping a_service: a_reason",
             reports.ServiceActionSkipped(
-                reports.SERVICE_STOP, "a_service", "a_reason"
+                const.SERVICE_ACTION_STOP, "a_service", "a_reason"
             ),
         )
 
@@ -2376,7 +2399,7 @@ class ServiceActionSkipped(NameBuildTest):
         self.assert_message_from_report(
             "not stopping a_service@an_instance: a_reason",
             reports.ServiceActionSkipped(
-                reports.SERVICE_STOP,
+                const.SERVICE_ACTION_STOP,
                 "a_service",
                 "a_reason",
                 instance="an_instance",
@@ -2387,7 +2410,7 @@ class ServiceActionSkipped(NameBuildTest):
         self.assert_message_from_report(
             "not enabling a_service: a_reason",
             reports.ServiceActionSkipped(
-                reports.SERVICE_ENABLE, "a_service", "a_reason"
+                const.SERVICE_ACTION_ENABLE, "a_service", "a_reason"
             ),
         )
 
@@ -2395,7 +2418,7 @@ class ServiceActionSkipped(NameBuildTest):
         self.assert_message_from_report(
             "not enabling a_service@an_instance: a_reason",
             reports.ServiceActionSkipped(
-                reports.SERVICE_ENABLE,
+                const.SERVICE_ACTION_ENABLE,
                 "a_service",
                 "a_reason",
                 instance="an_instance",
@@ -2406,7 +2429,7 @@ class ServiceActionSkipped(NameBuildTest):
         self.assert_message_from_report(
             "not disabling a_service: a_reason",
             reports.ServiceActionSkipped(
-                reports.SERVICE_DISABLE, "a_service", "a_reason"
+                const.SERVICE_ACTION_DISABLE, "a_service", "a_reason"
             ),
         )
 
@@ -2414,7 +2437,7 @@ class ServiceActionSkipped(NameBuildTest):
         self.assert_message_from_report(
             "not disabling a_service@an_instance: a_reason",
             reports.ServiceActionSkipped(
-                reports.SERVICE_DISABLE,
+                const.SERVICE_ACTION_DISABLE,
                 "a_service",
                 "a_reason",
                 instance="an_instance",
@@ -2425,7 +2448,7 @@ class ServiceActionSkipped(NameBuildTest):
         self.assert_message_from_report(
             "not killing a_service: a_reason",
             reports.ServiceActionSkipped(
-                reports.SERVICE_KILL, "a_service", "a_reason"
+                const.SERVICE_ACTION_KILL, "a_service", "a_reason"
             ),
         )
 
@@ -2433,7 +2456,7 @@ class ServiceActionSkipped(NameBuildTest):
         self.assert_message_from_report(
             "not killing a_service@an_instance: a_reason",
             reports.ServiceActionSkipped(
-                reports.SERVICE_KILL,
+                const.SERVICE_ACTION_KILL,
                 "a_service",
                 "a_reason",
                 instance="an_instance",
@@ -2656,7 +2679,7 @@ class FilesDistributionSkipped(NameBuildTest):
             "the command does not run on a live cluster. "
             "Please, distribute the file(s) manually.",
             reports.FilesDistributionSkipped(
-                reports.NOT_LIVE_CIB, ["file1"], ["nodeA", "nodeB"]
+                const.REASON_NOT_LIVE_CIB, ["file1"], ["nodeA", "nodeB"]
             ),
         )
 
@@ -2666,7 +2689,7 @@ class FilesDistributionSkipped(NameBuildTest):
             "pcs is unable to connect to the node(s). Please, distribute "
             "the file(s) manually.",
             reports.FilesDistributionSkipped(
-                reports.UNREACHABLE, ["file1", "file2"], ["nodeA"]
+                const.REASON_UNREACHABLE, ["file1", "file2"], ["nodeA"]
             ),
         )
 
@@ -2728,7 +2751,7 @@ class FilesRemoveFromNodesSkipped(NameBuildTest):
             "command does not run on a live cluster. "
             "Please, remove the file(s) manually.",
             reports.FilesRemoveFromNodesSkipped(
-                reports.NOT_LIVE_CIB, ["file1"], ["nodeA", "nodeB"]
+                const.REASON_NOT_LIVE_CIB, ["file1"], ["nodeA", "nodeB"]
             ),
         )
 
@@ -2738,7 +2761,7 @@ class FilesRemoveFromNodesSkipped(NameBuildTest):
             "unable to connect to the node(s). Please, remove the file(s) "
             "manually.",
             reports.FilesRemoveFromNodesSkipped(
-                reports.UNREACHABLE, ["file1", "file2"], ["nodeA"]
+                const.REASON_UNREACHABLE, ["file1", "file2"], ["nodeA"]
             ),
         )
 
@@ -2801,7 +2824,7 @@ class ServiceCommandsOnNodesSkipped(NameBuildTest):
             "does not run on a live cluster. Please, "
             "run the action(s) manually.",
             reports.ServiceCommandsOnNodesSkipped(
-                reports.NOT_LIVE_CIB,
+                const.REASON_NOT_LIVE_CIB,
                 ["pacemaker_remote enable", "pacemaker_remote start"],
                 ["nodeA", "nodeB"],
             ),
@@ -2813,7 +2836,7 @@ class ServiceCommandsOnNodesSkipped(NameBuildTest):
             "start' on 'nodeA', 'nodeB' was skipped because pcs is unable "
             "to connect to the node(s). Please, run the action(s) manually.",
             reports.ServiceCommandsOnNodesSkipped(
-                reports.UNREACHABLE,
+                const.REASON_UNREACHABLE,
                 ["pacemaker_remote enable", "pacemaker_remote start"],
                 ["nodeA", "nodeB"],
             ),
@@ -3189,7 +3212,7 @@ class CorosyncNodeConflictCheckSkipped(NameBuildTest):
         self.assert_message_from_report(
             "Unable to check if there is a conflict with nodes set in corosync "
             "because the command does not run on a live cluster",
-            reports.CorosyncNodeConflictCheckSkipped(reports.NOT_LIVE_CIB),
+            reports.CorosyncNodeConflictCheckSkipped(const.REASON_NOT_LIVE_CIB),
         )
 
 

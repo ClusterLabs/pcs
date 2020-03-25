@@ -1,6 +1,5 @@
 # pylint: disable=too-many-lines
 from collections import defaultdict
-from collections.abc import Iterable
 from dataclasses import (
     dataclass,
     field,
@@ -14,7 +13,6 @@ from typing import (
     Optional,
     Tuple,
     Union,
-    NewType,
 )
 
 from pcs.common import file_type_codes
@@ -26,10 +24,12 @@ from pcs.common.str_tools import (
     format_optional,
     format_plural,
     indent,
+    is_iterable_not_str,
 )
 
 from . import (
     codes,
+    const,
     types,
 )
 from .dto import ReportItemMessageDto
@@ -37,19 +37,11 @@ from .item import ReportItemMessage
 from .constraints import constraint_to_str
 
 
-# TODO: prefix all internal functions with _
-# TODO: file cleanup
-
-
 INSTANCE_SUFFIX = "@{0}"
 NODE_PREFIX = "{0}: "
 
 
-def is_iterable_not_str(value):
-    return isinstance(value, Iterable) and not isinstance(value, str)
-
-
-def stdout_stderr_to_string(stdout, stderr, prefix=""):
+def _stdout_stderr_to_string(stdout, stderr, prefix=""):
     new_lines = [prefix] if prefix else []
     for line in stdout.splitlines() + stderr.splitlines():
         if line.strip():
@@ -57,7 +49,7 @@ def stdout_stderr_to_string(stdout, stderr, prefix=""):
     return "\n".join(new_lines)
 
 
-def resource_move_ban_clear_master_resource_not_promotable(
+def _resource_move_ban_clear_master_resource_not_promotable(
     promotable_id: str,
 ) -> str:
     return (
@@ -65,7 +57,7 @@ def resource_move_ban_clear_master_resource_not_promotable(
     ).format(_id=format_optional(promotable_id, " ({})"),)
 
 
-def resource_move_ban_pcmk_success(stdout, stderr):
+def _resource_move_ban_pcmk_success(stdout, stderr):
     new_lines = []
     for line in stdout.splitlines() + stderr.splitlines():
         if not line.strip():
@@ -83,13 +75,13 @@ def resource_move_ban_pcmk_success(stdout, stderr):
     return "\n".join(new_lines)
 
 
-def format_fencing_level_target(target_type, target_value):
+def _format_fencing_level_target(target_type, target_value):
     if target_type == TARGET_TYPE_ATTRIBUTE:
         return "{0}={1}".format(target_value[0], target_value[1])
     return target_value
 
 
-def format_booth_default(value, template):
+def _format_booth_default(value, template):
     return "" if value in ("booth", "", None) else template.format(value)
 
 
@@ -129,15 +121,14 @@ _type_articles = {
 }
 
 
-def format_file_role(role):
+def _format_file_role(role):
     return _file_role_translation.get(role, role)
 
 
-def format_file_action(action):
+def _format_file_action(action):
     return _file_operation_translation.get(action, action)
 
 
-# TODO: type properly
 _file_operation_translation = {
     RawFileError.ACTION_CHMOD: "change permissions of",
     RawFileError.ACTION_CHOWN: "change ownership of",
@@ -146,42 +137,27 @@ _file_operation_translation = {
     RawFileError.ACTION_WRITE: "write",
 }
 
-# TODO: maybe should be moved to .types or a new module (e.g. consts)
-ServiceAction = NewType("ServiceAction", str)
 
-SERVICE_START = ServiceAction("START")
-SERVICE_STOP = ServiceAction("STOP")
-SERVICE_ENABLE = ServiceAction("ENABLE")
-SERVICE_DISABLE = ServiceAction("DISABLE")
-SERVICE_KILL = ServiceAction("KILL")
-
-
-def _service_action_str(action: ServiceAction, suffix: str = "") -> str:
+def _service_action_str(action: types.ServiceAction, suffix: str = "") -> str:
     base = action.lower()
     if not suffix:
         return base
     base = {
-        SERVICE_STOP: "stopp",
-        SERVICE_ENABLE: "enabl",
-        SERVICE_DISABLE: "disabl",
+        const.SERVICE_ACTION_STOP: "stopp",
+        const.SERVICE_ACTION_ENABLE: "enabl",
+        const.SERVICE_ACTION_DISABLE: "disabl",
     }.get(action, base)
     return "{}{}".format(base, suffix)
 
 
-ReasonType = NewType("ReasonType", str)
-
-UNREACHABLE = ReasonType("unreachable")
-NOT_LIVE_CIB = ReasonType("not_live_cib")
-
-
-def skip_reason_to_string(reason: ReasonType) -> str:
+def _skip_reason_to_string(reason: types.ReasonType) -> str:
     return {
-        NOT_LIVE_CIB: "the command does not run on a live cluster",
-        UNREACHABLE: "pcs is unable to connect to the node(s)",
+        const.REASON_NOT_LIVE_CIB: "the command does not run on a live cluster",
+        const.REASON_UNREACHABLE: "pcs is unable to connect to the node(s)",
     }.get(reason, reason)
 
 
-def typelist_to_string(type_list, article=False):
+def _typelist_to_string(type_list, article=False):
     if not type_list:
         return ""
     # use set to drop duplicate items:
@@ -203,7 +179,7 @@ def typelist_to_string(type_list, article=False):
     )
 
 
-def type_to_string(type_name, article=False):
+def _type_to_string(type_name, article=False):
     if not type_name:
         return ""
     # get a translation or make a type_name a string
@@ -215,7 +191,7 @@ def type_to_string(type_name, article=False):
     )
 
 
-def build_node_description(node_types: List[str]) -> str:
+def _build_node_description(node_types: List[str]) -> str:
     if not node_types:
         return "Node"
 
@@ -234,6 +210,7 @@ class LegacyCommonMessage(ReportItemMessage):
     'pcs_internal.py' and is used in 'pcs.cluster.RemoteAddNodes'. This method
     should be replaced with transporting DTOs of reports in the future.
     """
+
     def __init__(
         self, code: types.MessageCode, info: Mapping[str, Any], message: str
     ) -> None:
@@ -1009,11 +986,7 @@ class NodeCommunicationErrorNotAuthorized(ReportItemMessage):
 
     @property
     def message(self) -> str:
-        # TODO: different in cli
-        return (
-            f"Unable to authenticate to {self.node} ({self.reason})"
-            # ", try running 'pcs host auth {self.node}'"
-        )
+        return f"Unable to authenticate to {self.node} ({self.reason})"
 
 
 @dataclass(frozen=True)
@@ -2199,7 +2172,6 @@ class QdeviceCertificateDistributionStarted(ReportItemMessage):
         return "Setting up qdevice certificates on nodes..."
 
 
-# TODO: merge
 @dataclass(frozen=True)
 class QdeviceCertificateAcceptedByNode(ReportItemMessage):
     """
@@ -2229,7 +2201,6 @@ class QdeviceCertificateRemovalStarted(ReportItemMessage):
         return "Removing qdevice certificates from nodes..."
 
 
-# TODO: merge
 @dataclass(frozen=True)
 class QdeviceCertificateRemovedFromNode(ReportItemMessage):
     """
@@ -2400,7 +2371,7 @@ class IdBelongsToUnexpectedType(ReportItemMessage):
 
     @property
     def message(self) -> str:
-        expected_type = typelist_to_string(self.expected_types, article=True)
+        expected_type = _typelist_to_string(self.expected_types, article=True)
         return f"'{self.id}' is not {expected_type}"
 
 
@@ -2419,12 +2390,12 @@ class ObjectWithIdInUnexpectedContext(ReportItemMessage):
 
     @property
     def message(self) -> str:
-        context_type = type_to_string(self.expected_context_type)
+        context_type = _type_to_string(self.expected_context_type)
         if self.expected_context_id:
             context = f"{context_type} '{self.expected_context_id}'"
         else:
             context = f"'{context_type}'"
-        object_type = type_to_string(self.object_type)
+        object_type = _type_to_string(self.object_type)
         return (
             f"{object_type} '{self.object_id}' exists but does not belong to "
             f"{context}"
@@ -2451,7 +2422,7 @@ class IdNotFound(ReportItemMessage):
 
     @property
     def message(self) -> str:
-        desc = format_optional(typelist_to_string(self.expected_types))
+        desc = format_optional(_typelist_to_string(self.expected_types))
         if not self.context_type or not self.context_id:
             return f"{desc}'{self.id}' does not exist"
 
@@ -2613,8 +2584,8 @@ class CannotGroupResourceWrongType(ReportItemMessage):
             "cannot be put into a group"
         ).format(
             resource_id=self.resource_id,
-            _type_article=type_to_string(self.resource_type, article=True),
-            _type=type_to_string(self.resource_type, article=False),
+            _type_article=_type_to_string(self.resource_type, article=True),
+            _type=_type_to_string(self.resource_type, article=False),
         )
 
 
@@ -2981,7 +2952,6 @@ class WaitForIdleTimedOut(ReportItemMessage):
         return f"waiting timeout\n\n{self.reason}"
 
 
-# TODO: is this really needed?
 @dataclass(frozen=True)
 class WaitForIdleError(ReportItemMessage):
     """
@@ -3022,8 +2992,8 @@ class ResourceCleanupError(ReportItemMessage):
     """
 
     reason: str
-    resource: str = ""
-    node: str = ""
+    resource: Optional[str] = None
+    node: Optional[str] = None
     _code = codes.RESOURCE_CLEANUP_ERROR
 
     @property
@@ -3047,8 +3017,8 @@ class ResourceRefreshError(ReportItemMessage):
     """
 
     reason: str
-    resource: str = ""
-    node: str = ""
+    resource: Optional[str] = None
+    node: Optional[str] = None
     _code = codes.RESOURCE_REFRESH_ERROR
 
     @property
@@ -3133,7 +3103,6 @@ class ResourceOperationIntervalAdapted(ReportItemMessage):
         )
 
 
-# TODO: removed option for searched_types to be str
 @dataclass(frozen=True)
 class NodeNotFound(ReportItemMessage):
     """
@@ -3149,7 +3118,7 @@ class NodeNotFound(ReportItemMessage):
 
     @property
     def message(self) -> str:
-        desc = build_node_description(self.searched_types)
+        desc = _build_node_description(self.searched_types)
         return f"{desc} '{self.node}' does not appear to exist in configuration"
 
 
@@ -3252,7 +3221,7 @@ class ServiceActionStarted(ReportItemMessage):
     instance -- instance of service
     """
 
-    action: ServiceAction
+    action: types.ServiceAction
     service: str
     instance: str = ""
     _code = codes.SERVICE_ACTION_STARTED
@@ -3276,7 +3245,7 @@ class ServiceActionFailed(ReportItemMessage):
     instance -- instance of service
     """
 
-    action: ServiceAction
+    action: types.ServiceAction
     service: str
     reason: str
     node: str = ""
@@ -3308,7 +3277,7 @@ class ServiceActionSucceeded(ReportItemMessage):
     instance -- instance of service
     """
 
-    action: ServiceAction
+    action: types.ServiceAction
     service: str
     node: str = ""
     instance: str = ""
@@ -3336,7 +3305,7 @@ class ServiceActionSkipped(ReportItemMessage):
     instance instance of service
     """
 
-    action: ServiceAction
+    action: types.ServiceAction
     service: str
     reason: str
     node: str = ""
@@ -3721,7 +3690,7 @@ class FilesDistributionSkipped(ReportItemMessage):
     node_list -- where the files should have been sent to
     """
 
-    reason_type: ReasonType
+    reason_type: types.ReasonType
     file_list: List[str]
     node_list: List[str]
     _code = codes.FILES_DISTRIBUTION_SKIPPED
@@ -3734,7 +3703,7 @@ class FilesDistributionSkipped(ReportItemMessage):
         ).format(
             files=format_list(self.file_list),
             nodes=format_list(self.node_list),
-            reason=skip_reason_to_string(self.reason_type),
+            reason=_skip_reason_to_string(self.reason_type),
         )
 
 
@@ -3813,7 +3782,7 @@ class FilesRemoveFromNodesSkipped(ReportItemMessage):
     node_list -- node names the files are being removed from
     """
 
-    reason_type: ReasonType
+    reason_type: types.ReasonType
     file_list: List[str]
     node_list: List[str]
     _code = codes.FILES_REMOVE_FROM_NODES_SKIPPED
@@ -3826,7 +3795,7 @@ class FilesRemoveFromNodesSkipped(ReportItemMessage):
         ).format(
             files=format_list(self.file_list),
             nodes=format_list(self.node_list),
-            reason=skip_reason_to_string(self.reason_type),
+            reason=_skip_reason_to_string(self.reason_type),
         )
 
 
@@ -3892,7 +3861,6 @@ class ServiceCommandsOnNodesStarted(ReportItemMessage):
         )
 
 
-# TODO:possibly should be Removed in favor ... TBF + context
 @dataclass(frozen=True)
 class ServiceCommandsOnNodesSkipped(ReportItemMessage):
     """
@@ -3903,7 +3871,7 @@ class ServiceCommandsOnNodesSkipped(ReportItemMessage):
     node_list -- destinations where the action should have been executed
     """
 
-    reason_type: ReasonType
+    reason_type: types.ReasonType
     action_list: List[str]
     node_list: List[str]
     _code = codes.SERVICE_COMMANDS_ON_NODES_SKIPPED
@@ -3916,11 +3884,10 @@ class ServiceCommandsOnNodesSkipped(ReportItemMessage):
         ).format(
             actions=format_list(self.action_list),
             nodes=format_list(self.node_list),
-            reason=skip_reason_to_string(self.reason_type),
+            reason=_skip_reason_to_string(self.reason_type),
         )
 
 
-# TODO:possibly should be Removed in favor ... TBF + context
 @dataclass(frozen=True)
 class ServiceCommandOnNodeSuccess(ReportItemMessage):
     """
@@ -3941,7 +3908,6 @@ class ServiceCommandOnNodeSuccess(ReportItemMessage):
         )
 
 
-# TODO:possibly should be Removed in favor ... TBF + context
 @dataclass(frozen=True)
 class ServiceCommandOnNodeError(ReportItemMessage):
     """
@@ -4303,7 +4269,7 @@ class FileAlreadyExists(ReportItemMessage):
         return "{node}{file_role} file '{file_path}' already exists".format(
             file_path=self.file_path,
             node=format_optional(self.node, NODE_PREFIX),
-            file_role=format_file_role(self.file_type_code),
+            file_role=_format_file_role(self.file_type_code),
         )
 
 
@@ -4328,9 +4294,9 @@ class FileIoError(ReportItemMessage):
     def message(self) -> str:
         return "Unable to {action} {file_role}{file_path}: {reason}".format(
             reason=self.reason,
-            action=format_file_action(self.operation),
+            action=_format_file_action(self.operation),
             file_path=format_optional(self.file_path, " '{0}'"),
-            file_role=format_file_role(self.file_type_code),
+            file_role=_format_file_role(self.file_type_code),
         )
 
 
@@ -4431,7 +4397,7 @@ class CorosyncNodeConflictCheckSkipped(ReportItemMessage):
     reason_type -- why was the action skipped (unreachable, not_live_cib)
     """
 
-    reason_type: ReasonType
+    reason_type: types.ReasonType
     _code = codes.COROSYNC_NODE_CONFLICT_CHECK_SKIPPED
 
     @property
@@ -4439,7 +4405,7 @@ class CorosyncNodeConflictCheckSkipped(ReportItemMessage):
         return (
             "Unable to check if there is a conflict with nodes set in corosync "
             "because {reason}"
-        ).format(reason=skip_reason_to_string(self.reason_type))
+        ).format(reason=_skip_reason_to_string(self.reason_type))
 
 
 @dataclass(frozen=True)
@@ -4543,7 +4509,7 @@ class CibFencingLevelAlreadyExists(ReportItemMessage):
         ).format(
             level=self.level,
             device_list=format_list(self.devices),
-            target=format_fencing_level_target(
+            target=_format_fencing_level_target(
                 self.target_type, self.target_value
             ),
         )
@@ -4569,7 +4535,7 @@ class CibFencingLevelDoesNotExist(ReportItemMessage):
         ).format(
             part_target=(
                 "for '{0}' ".format(
-                    format_fencing_level_target(
+                    _format_fencing_level_target(
                         self.target_type, self.target_value
                     )
                 )
@@ -5405,7 +5371,7 @@ class CannotMoveResourceMasterResourceNotPromotable(ReportItemMessage):
 
     @property
     def message(self) -> str:
-        return resource_move_ban_clear_master_resource_not_promotable(
+        return _resource_move_ban_clear_master_resource_not_promotable(
             self.promotable_id
         )
 
@@ -5445,7 +5411,7 @@ class ResourceMovePcmkError(ReportItemMessage):
 
     @property
     def message(self) -> str:
-        return stdout_stderr_to_string(
+        return _stdout_stderr_to_string(
             self.stdout,
             self.stderr,
             prefix=f"cannot move resource '{self.resource_id}'",
@@ -5469,7 +5435,7 @@ class ResourceMovePcmkSuccess(ReportItemMessage):
 
     @property
     def message(self) -> str:
-        return resource_move_ban_pcmk_success(self.stdout, self.stderr)
+        return _resource_move_ban_pcmk_success(self.stdout, self.stderr)
 
 
 @dataclass(frozen=True)
@@ -5487,7 +5453,7 @@ class CannotBanResourceMasterResourceNotPromotable(ReportItemMessage):
 
     @property
     def message(self) -> str:
-        return resource_move_ban_clear_master_resource_not_promotable(
+        return _resource_move_ban_clear_master_resource_not_promotable(
             self.promotable_id
         )
 
@@ -5530,7 +5496,7 @@ class ResourceBanPcmkError(ReportItemMessage):
         # Pacemaker no longer prints crm_resource specific options since commit
         # 8008a5f0c0aa728fbce25f60069d622d0bcbbc9f. There is no need to
         # translate them or anything else anymore.
-        return stdout_stderr_to_string(
+        return _stdout_stderr_to_string(
             self.stdout,
             self.stderr,
             prefix=f"cannot ban resource '{self.resource_id}'",
@@ -5554,7 +5520,7 @@ class ResourceBanPcmkSuccess(ReportItemMessage):
 
     @property
     def message(self) -> str:
-        return resource_move_ban_pcmk_success(self.stdout, self.stderr)
+        return _resource_move_ban_pcmk_success(self.stdout, self.stderr)
 
 
 @dataclass(frozen=True)
@@ -5572,7 +5538,7 @@ class CannotUnmoveUnbanResourceMasterResourceNotPromotable(ReportItemMessage):
 
     @property
     def message(self) -> str:
-        return resource_move_ban_clear_master_resource_not_promotable(
+        return _resource_move_ban_clear_master_resource_not_promotable(
             self.promotable_id
         )
 
@@ -5607,7 +5573,7 @@ class ResourceUnmoveUnbanPcmkError(ReportItemMessage):
 
     @property
     def message(self) -> str:
-        return stdout_stderr_to_string(
+        return _stdout_stderr_to_string(
             self.stdout,
             self.stderr,
             prefix=f"cannot clear resource '{self.resource_id}'",
@@ -5631,7 +5597,7 @@ class ResourceUnmoveUnbanPcmkSuccess(ReportItemMessage):
 
     @property
     def message(self) -> str:
-        return stdout_stderr_to_string(self.stdout, self.stderr)
+        return _stdout_stderr_to_string(self.stdout, self.stderr)
 
 
 @dataclass(frozen=True)
@@ -5664,7 +5630,7 @@ class ParseErrorJsonFile(ReportItemMessage):
             "Unable to parse {_file_type} file{_file_path}: {full_msg}"
         ).format(
             _file_path=format_optional(self.file_path, " '{}'"),
-            _file_type=format_file_role(self.file_type_code),
+            _file_type=_format_file_role(self.file_type_code),
             full_msg=self.full_msg,
         )
 
@@ -6019,7 +5985,7 @@ class BoothConfigDistributionNodeError(ReportItemMessage):
 
     @property
     def message(self) -> str:
-        desc = format_booth_default(self.name, " '{}'")
+        desc = _format_booth_default(self.name, " '{}'")
         return (
             f"Unable to save booth config{desc} on node '{self.node}': "
             f"{self.reason}"
@@ -6041,7 +6007,7 @@ class BoothFetchingConfigFromNode(ReportItemMessage):
 
     @property
     def message(self) -> str:
-        desc = format_booth_default(self.config, " '{}'")
+        desc = _format_booth_default(self.config, " '{}'")
         return f"Fetching booth config{desc} from node '{self.node}'..."
 
 
@@ -6062,7 +6028,7 @@ class BoothUnsupportedFileLocation(ReportItemMessage):
 
     @property
     def message(self) -> str:
-        file_role = format_file_role(self.file_type_code)
+        file_role = _format_file_role(self.file_type_code)
         return (
             f"{file_role} '{self.file_path}' is outside of supported booth "
             f"config directory '{self.expected_dir}', ignoring the file"
@@ -6158,13 +6124,3 @@ class BoothTicketOperationFailed(ReportItemMessage):
             f"unable to {self.operation} booth ticket '{self.ticket_name}'"
             f" for site '{self.site_ip}', reason: {self.reason}"
         )
-
-
-# @dataclass(frozen=True)
-# class (ReportItemMessage):
-#     _code = codes.
-#
-#     @property
-#     def message(self) -> str:
-#         return (
-#         )

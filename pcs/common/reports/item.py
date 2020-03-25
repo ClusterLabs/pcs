@@ -83,7 +83,6 @@ class ReportItemMessage(ImplementsToDto):
     def code(self) -> MessageCode:
         return self._code
 
-    # TODO: tests
     def to_dto(self) -> ReportItemMessageDto:
         payload: Dict[str, Any] = {}
         if hasattr(self.__class__, "__annotations__"):
@@ -91,25 +90,14 @@ class ReportItemMessage(ImplementsToDto):
                 annotations = self.__class__.__annotations__
             except AttributeError:
                 raise AssertionError()
-            for attr_name, attr_type in annotations.items():
+            for attr_name in annotations.keys():
                 if attr_name.startswith("_") or attr_name in ("message",):
                     continue
-                try:
-                    if (
-                        not hasattr(attr_type, "__origin__")
-                        and getattr(attr_type, "__supertype__", None) is not str
-                        and issubclass(attr_type, ReportItemMessage)
-                    ):
-                        payload[attr_name] = getattr(self, attr_name).to_dto()
-                    else:
-                        payload[attr_name] = getattr(self, attr_name)
-                except:
-                    # for debugging, TODO: remove when properly tested
-                    print(self.__class__)
-                    print(attr_type)
-                    print(dir(attr_type))
-                    print(attr_type.__supertype__)
-                    raise
+                attr_val = getattr(self, attr_name)
+                if hasattr(attr_val, "to_dto"):
+                    payload[attr_name] = attr_val.to_dto()
+                else:
+                    payload[attr_name] = attr_val
 
         return ReportItemMessageDto(
             code=self.code, message=self.message, payload=payload,

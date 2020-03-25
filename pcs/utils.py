@@ -2038,7 +2038,7 @@ def enableServices():
             report_item_list.append(
                 reports.item.ReportItem.error(
                     reports.messages.ServiceActionFailed(
-                        reports.messages.SERVICE_ENABLE,
+                        reports.const.SERVICE_ACTION_ENABLE,
                         e.service,
                         e.message,
                     )
@@ -2064,7 +2064,7 @@ def disableServices():
             report_item_list.append(
                 reports.item.ReportItem.error(
                     reports.messages.ServiceActionFailed(
-                        reports.messages.SERVICE_DISABLE,
+                        reports.const.SERVICE_ACTION_DISABLE,
                         e.service,
                         e.message,
                     )

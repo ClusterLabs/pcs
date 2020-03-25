@@ -61,7 +61,7 @@ def _sbd_enable_successful_report_list_fixture(
         [
             fixture.info(
                 reports.codes.SERVICE_ACTION_STARTED,
-                action=reports.messages.SERVICE_ENABLE,
+                action=reports.const.SERVICE_ACTION_ENABLE,
                 service="sbd",
                 instance="",
             )
@@ -70,7 +70,7 @@ def _sbd_enable_successful_report_list_fixture(
         [
             fixture.info(
                 reports.codes.SERVICE_ACTION_SUCCEEDED,
-                action=reports.messages.SERVICE_ENABLE,
+                action=reports.const.SERVICE_ACTION_ENABLE,
                 service="sbd",
                 node=node,
                 instance="",
@@ -1212,7 +1212,7 @@ class FailureHandling(TestCase):
             [
                 fixture.info(
                     reports.codes.SERVICE_ACTION_SUCCEEDED,
-                    action=reports.messages.SERVICE_ENABLE,
+                    action=reports.const.SERVICE_ACTION_ENABLE,
                     service="sbd",
                     node=self.node_list[1],
                     instance="",
@@ -1248,7 +1248,7 @@ class FailureHandling(TestCase):
             [
                 fixture.info(
                     reports.codes.SERVICE_ACTION_SUCCEEDED,
-                    action=reports.messages.SERVICE_ENABLE,
+                    action=reports.const.SERVICE_ACTION_ENABLE,
                     service="sbd",
                     node=self.node_list[1],
                     instance="",

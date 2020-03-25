@@ -4,6 +4,7 @@ from pcs.common import file_type_codes
 from pcs.common.reports import (
     item,
     messages,
+    const,
 )
 from pcs.cli.reports import messages as cli_messages
 
@@ -294,7 +295,9 @@ class UseCommandNodeAddRemote(CliReportMessageTestBase):
 class CorosyncNodeConflictCheckSkipped(CliReportMessageTestBase):
     def test_not_live_cib(self):
         self.assert_message(
-            messages.CorosyncNodeConflictCheckSkipped(messages.NOT_LIVE_CIB),
+            messages.CorosyncNodeConflictCheckSkipped(
+                const.REASON_NOT_LIVE_CIB
+            ),
             (
                 "Unable to check if there is a conflict with nodes set in "
                 "corosync because the command does not run on a live cluster "
@@ -305,7 +308,7 @@ class CorosyncNodeConflictCheckSkipped(CliReportMessageTestBase):
 
     def test_unreachable(self):
         self.assert_message(
-            messages.CorosyncNodeConflictCheckSkipped(messages.UNREACHABLE),
+            messages.CorosyncNodeConflictCheckSkipped(const.REASON_UNREACHABLE),
             (
                 "Unable to check if there is a conflict with nodes set in "
                 "corosync because pcs is unable to connect to the node(s)"
@@ -360,7 +363,7 @@ class ServiceCommandsOnNodesSkipped(CliReportMessageTestBase):
     def test_not_live(self):
         self.assert_message(
             messages.ServiceCommandsOnNodesSkipped(
-                messages.NOT_LIVE_CIB,
+                const.REASON_NOT_LIVE_CIB,
                 ["pacemaker_remote enable", "pacemaker_remote start"],
                 ["nodeA", "nodeB"],
             ),
@@ -373,7 +376,7 @@ class ServiceCommandsOnNodesSkipped(CliReportMessageTestBase):
     def test_unreachable(self):
         self.assert_message(
             messages.ServiceCommandsOnNodesSkipped(
-                messages.UNREACHABLE,
+                const.REASON_UNREACHABLE,
                 ["pacemaker_remote enable", "pacemaker_remote start"],
                 ["nodeA", "nodeB"],
             ),
@@ -399,7 +402,7 @@ class FilesRemoveFromNodesSkipped(CliReportMessageTestBase):
     def test_not_live(self):
         self.assert_message(
             messages.FilesRemoveFromNodesSkipped(
-                messages.NOT_LIVE_CIB, ["file1"], ["nodeA", "nodeB"]
+                const.REASON_NOT_LIVE_CIB, ["file1"], ["nodeA", "nodeB"]
             ),
             "Removing 'file1' from 'nodeA', 'nodeB' was skipped because the "
             "command does not run on a live cluster (e.g. -f was used). "
@@ -409,7 +412,7 @@ class FilesRemoveFromNodesSkipped(CliReportMessageTestBase):
     def test_unreachable(self):
         self.assert_message(
             messages.FilesRemoveFromNodesSkipped(
-                messages.UNREACHABLE, ["file1", "file2"], ["nodeA"]
+                const.REASON_UNREACHABLE, ["file1", "file2"], ["nodeA"]
             ),
             "Removing 'file1', 'file2' from 'nodeA' was skipped because pcs is "
             "unable to connect to the node(s). Please, remove the file(s) "
@@ -431,7 +434,7 @@ class FilesDistributionSkipped(CliReportMessageTestBase):
     def test_not_live(self):
         self.assert_message(
             messages.FilesDistributionSkipped(
-                messages.NOT_LIVE_CIB, ["file1"], ["nodeA", "nodeB"]
+                const.REASON_NOT_LIVE_CIB, ["file1"], ["nodeA", "nodeB"]
             ),
             "Distribution of 'file1' to 'nodeA', 'nodeB' was skipped because "
             "the command does not run on a live cluster (e.g. -f was used). "
@@ -441,7 +444,7 @@ class FilesDistributionSkipped(CliReportMessageTestBase):
     def test_unreachable(self):
         self.assert_message(
             messages.FilesDistributionSkipped(
-                messages.UNREACHABLE, ["file1", "file2"], ["nodeA"]
+                const.REASON_UNREACHABLE, ["file1", "file2"], ["nodeA"]
             ),
             "Distribution of 'file1', 'file2' to 'nodeA' was skipped because "
             "pcs is unable to connect to the node(s). Please, distribute "

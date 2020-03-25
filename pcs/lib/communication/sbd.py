@@ -46,14 +46,14 @@ class EnableSbdService(ServiceAction):
     def _get_before_report(self):
         return ReportItem.info(
             reports.messages.ServiceActionStarted(
-                reports.messages.SERVICE_ENABLE, "sbd"
+                reports.const.SERVICE_ACTION_ENABLE, "sbd"
             )
         )
 
     def _get_success_report(self, node_label):
         return ReportItem.info(
             reports.messages.ServiceActionSucceeded(
-                reports.messages.SERVICE_ENABLE, "sbd", node_label
+                reports.const.SERVICE_ACTION_ENABLE, "sbd", node_label
             )
         )
 
@@ -65,14 +65,14 @@ class DisableSbdService(ServiceAction):
     def _get_before_report(self):
         return ReportItem.info(
             reports.messages.ServiceActionStarted(
-                reports.messages.SERVICE_DISABLE, "sbd",
+                reports.const.SERVICE_ACTION_DISABLE, "sbd",
             )
         )
 
     def _get_success_report(self, node_label):
         return ReportItem.info(
             reports.messages.ServiceActionSucceeded(
-                reports.messages.SERVICE_DISABLE, "sbd", node_label
+                reports.const.SERVICE_ACTION_DISABLE, "sbd", node_label
             )
         )
 

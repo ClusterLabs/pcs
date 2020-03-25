@@ -27,7 +27,7 @@ class DisableSbd(TestCase):
             [
                 fixture.info(
                     reports.codes.SERVICE_ACTION_STARTED,
-                    action=reports.messages.SERVICE_DISABLE,
+                    action=reports.const.SERVICE_ACTION_DISABLE,
                     service="sbd",
                     instance="",
                 )
@@ -36,7 +36,7 @@ class DisableSbd(TestCase):
             [
                 fixture.info(
                     reports.codes.SERVICE_ACTION_SUCCEEDED,
-                    action=reports.messages.SERVICE_DISABLE,
+                    action=reports.const.SERVICE_ACTION_DISABLE,
                     service="sbd",
                     node=node,
                     instance="",
@@ -71,7 +71,7 @@ class DisableSbd(TestCase):
                 ),
                 fixture.info(
                     reports.codes.SERVICE_ACTION_STARTED,
-                    action=reports.messages.SERVICE_DISABLE,
+                    action=reports.const.SERVICE_ACTION_DISABLE,
                     service="sbd",
                     instance="",
                 )
@@ -80,7 +80,7 @@ class DisableSbd(TestCase):
             [
                 fixture.info(
                     reports.codes.SERVICE_ACTION_SUCCEEDED,
-                    action=reports.messages.SERVICE_DISABLE,
+                    action=reports.const.SERVICE_ACTION_DISABLE,
                     service="sbd",
                     node=node,
                     instance="",
@@ -166,7 +166,7 @@ class DisableSbd(TestCase):
             [
                 fixture.info(
                     reports.codes.SERVICE_ACTION_STARTED,
-                    action=reports.messages.SERVICE_DISABLE,
+                    action=reports.const.SERVICE_ACTION_DISABLE,
                     service="sbd",
                     instance="",
                 )
@@ -175,7 +175,7 @@ class DisableSbd(TestCase):
             [
                 fixture.info(
                     reports.codes.SERVICE_ACTION_SUCCEEDED,
-                    action=reports.messages.SERVICE_DISABLE,
+                    action=reports.const.SERVICE_ACTION_DISABLE,
                     service="sbd",
                     node=node,
                     instance="",
@@ -230,7 +230,7 @@ class DisableSbd(TestCase):
             [
                 fixture.info(
                     reports.codes.SERVICE_ACTION_STARTED,
-                    action=reports.messages.SERVICE_DISABLE,
+                    action=reports.const.SERVICE_ACTION_DISABLE,
                     service="sbd",
                     instance="",
                 )
@@ -239,7 +239,7 @@ class DisableSbd(TestCase):
             [
                 fixture.info(
                     reports.codes.SERVICE_ACTION_SUCCEEDED,
-                    action=reports.messages.SERVICE_DISABLE,
+                    action=reports.const.SERVICE_ACTION_DISABLE,
                     service="sbd",
                     node=node,
                     instance="",
@@ -310,7 +310,7 @@ class DisableSbd(TestCase):
             [
                 fixture.info(
                     reports.codes.SERVICE_ACTION_STARTED,
-                    action=reports.messages.SERVICE_DISABLE,
+                    action=reports.const.SERVICE_ACTION_DISABLE,
                     service="sbd",
                     instance="",
                 )
@@ -319,7 +319,7 @@ class DisableSbd(TestCase):
             [
                 fixture.info(
                     reports.codes.SERVICE_ACTION_SUCCEEDED,
-                    action=reports.messages.SERVICE_DISABLE,
+                    action=reports.const.SERVICE_ACTION_DISABLE,
                     service="sbd",
                     node=node,
                     instance="",

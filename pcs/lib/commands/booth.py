@@ -652,7 +652,7 @@ def enable_booth(env: LibraryEnvironment, instance_name=None):
         raise LibraryError(
             ReportItem.error(
                 reports.messages.ServiceActionFailed(
-                    reports.messages.SERVICE_ENABLE,
+                    reports.const.SERVICE_ACTION_ENABLE,
                     "booth",
                     e.message,
                     instance=instance_name,
@@ -661,7 +661,7 @@ def enable_booth(env: LibraryEnvironment, instance_name=None):
         )
     env.report_processor.report(ReportItem.info(
         reports.messages.ServiceActionSucceeded(
-            reports.messages.SERVICE_ENABLE, "booth", instance=instance_name
+            reports.const.SERVICE_ACTION_ENABLE, "booth", instance=instance_name
         )
     ))
 
@@ -684,7 +684,7 @@ def disable_booth(env: LibraryEnvironment, instance_name=None):
         raise LibraryError(
             ReportItem.error(
                 reports.messages.ServiceActionFailed(
-                    reports.messages.SERVICE_DISABLE,
+                    reports.const.SERVICE_ACTION_DISABLE,
                     "booth",
                     e.message,
                     instance=instance_name,
@@ -694,7 +694,7 @@ def disable_booth(env: LibraryEnvironment, instance_name=None):
     env.report_processor.report(
         ReportItem.info(
             reports.messages.ServiceActionSucceeded(
-                reports.messages.SERVICE_DISABLE,
+                reports.const.SERVICE_ACTION_DISABLE,
                 "booth",
                 instance=instance_name,
             )
@@ -722,7 +722,7 @@ def start_booth(env: LibraryEnvironment, instance_name=None):
         raise LibraryError(
             ReportItem.error(
                 reports.messages.ServiceActionFailed(
-                    reports.messages.SERVICE_START,
+                    reports.const.SERVICE_ACTION_START,
                     "booth",
                     e.message,
                     instance=instance_name,
@@ -732,7 +732,9 @@ def start_booth(env: LibraryEnvironment, instance_name=None):
     env.report_processor.report(
         ReportItem.info(
             reports.messages.ServiceActionSucceeded(
-                reports.messages.SERVICE_START, "booth", instance=instance_name
+                reports.const.SERVICE_ACTION_START,
+                "booth",
+                instance=instance_name,
             )
         )
     )
@@ -756,7 +758,7 @@ def stop_booth(env: LibraryEnvironment, instance_name=None):
         raise LibraryError(
             ReportItem.error(
                 reports.messages.ServiceActionFailed(
-                    reports.messages.SERVICE_STOP,
+                    reports.const.SERVICE_ACTION_STOP,
                     "booth",
                     e.message,
                     instance=instance_name
@@ -766,7 +768,9 @@ def stop_booth(env: LibraryEnvironment, instance_name=None):
     env.report_processor.report(
         ReportItem.info(
             reports.messages.ServiceActionSucceeded(
-                reports.messages.SERVICE_STOP, "booth", instance=instance_name
+                reports.const.SERVICE_ACTION_STOP,
+                "booth",
+                instance=instance_name,
             )
         )
     )

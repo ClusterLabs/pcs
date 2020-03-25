@@ -333,7 +333,7 @@ class LocalConfig():
             [
                 fixture.info(
                     reports.codes.SERVICE_ACTION_STARTED,
-                    action=reports.messages.SERVICE_DISABLE,
+                    action=reports.const.SERVICE_ACTION_DISABLE,
                     service="sbd",
                     instance="",
                 )
@@ -342,7 +342,7 @@ class LocalConfig():
             [
                 fixture.info(
                     reports.codes.SERVICE_ACTION_SUCCEEDED,
-                    action=reports.messages.SERVICE_DISABLE,
+                    action=reports.const.SERVICE_ACTION_DISABLE,
                     service="sbd",
                     node=node,
                     instance="",
@@ -378,7 +378,7 @@ class LocalConfig():
             [
                 fixture.info(
                     reports.codes.SERVICE_ACTION_STARTED,
-                    action=reports.messages.SERVICE_ENABLE,
+                    action=reports.const.SERVICE_ACTION_ENABLE,
                     service="sbd",
                     instance="",
                 )
@@ -387,7 +387,7 @@ class LocalConfig():
             [
                 fixture.info(
                     reports.codes.SERVICE_ACTION_SUCCEEDED,
-                    action=reports.messages.SERVICE_ENABLE,
+                    action=reports.const.SERVICE_ACTION_ENABLE,
                     service="sbd",
                     node=node,
                     instance="",
@@ -3442,7 +3442,7 @@ class FailureDisableSbd(TestCase):
             [
                 fixture.info(
                     reports.codes.SERVICE_ACTION_STARTED,
-                    action=reports.messages.SERVICE_DISABLE,
+                    action=reports.const.SERVICE_ACTION_DISABLE,
                     service="sbd",
                     instance="",
                 )
@@ -3451,7 +3451,7 @@ class FailureDisableSbd(TestCase):
             [
                 fixture.info(
                     reports.codes.SERVICE_ACTION_SUCCEEDED,
-                    action=reports.messages.SERVICE_DISABLE,
+                    action=reports.const.SERVICE_ACTION_DISABLE,
                     service="sbd",
                     node=node,
                     instance="",
@@ -3625,7 +3625,7 @@ class FailureEnableSbd(TestCase):
             [
                 fixture.info(
                     reports.codes.SERVICE_ACTION_STARTED,
-                    action=reports.messages.SERVICE_ENABLE,
+                    action=reports.const.SERVICE_ACTION_ENABLE,
                     service="sbd",
                     instance="",
                 )
@@ -3634,7 +3634,7 @@ class FailureEnableSbd(TestCase):
             [
                 fixture.info(
                     reports.codes.SERVICE_ACTION_SUCCEEDED,
-                    action=reports.messages.SERVICE_ENABLE,
+                    action=reports.const.SERVICE_ACTION_ENABLE,
                     service="sbd",
                     node=node,
                     instance="",

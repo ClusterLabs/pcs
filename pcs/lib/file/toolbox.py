@@ -106,7 +106,7 @@ class NoopParser(ParserInterface):
         exception: ParserErrorException,
         file_type_code: code.FileTypeCode,
         file_path: str,
-        force_code: str, # TODO: fix
+        force_code: reports.types.ForceCode,
         is_forced_or_warning: bool
     ) -> reports.ReportItemList:
         return []

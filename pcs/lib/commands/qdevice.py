@@ -241,7 +241,7 @@ def _service_start(lib_env: LibraryEnvironment, func):
     lib_env.report_processor.report(
         ReportItem.info(
             reports.messages.ServiceActionStarted(
-                reports.messages.SERVICE_START, "quorum device"
+                reports.const.SERVICE_ACTION_START, "quorum device"
             )
         )
     )
@@ -251,14 +251,14 @@ def _service_start(lib_env: LibraryEnvironment, func):
         raise LibraryError(
             ReportItem.error(
                 reports.messages.ServiceActionFailed(
-                    reports.messages.SERVICE_START, e.service, e.message
+                    reports.const.SERVICE_ACTION_START, e.service, e.message
                 )
             )
         )
     lib_env.report_processor.report(
         ReportItem.info(
             reports.messages.ServiceActionSucceeded(
-                reports.messages.SERVICE_START, "quorum device",
+                reports.const.SERVICE_ACTION_START, "quorum device",
             )
         )
     )
@@ -267,7 +267,7 @@ def _service_stop(lib_env: LibraryEnvironment, func):
     lib_env.report_processor.report(
         ReportItem.info(
             reports.messages.ServiceActionStarted(
-                reports.messages.SERVICE_STOP, "quorum device"
+                reports.const.SERVICE_ACTION_STOP, "quorum device"
             )
         )
     )
@@ -277,14 +277,14 @@ def _service_stop(lib_env: LibraryEnvironment, func):
         raise LibraryError(
             ReportItem.error(
                 reports.messages.ServiceActionFailed(
-                    reports.messages.SERVICE_STOP, e.service, e.message
+                    reports.const.SERVICE_ACTION_STOP, e.service, e.message
                 )
             )
         )
     lib_env.report_processor.report(
         ReportItem.info(
             reports.messages.ServiceActionSucceeded(
-                reports.messages.SERVICE_STOP, "quorum device"
+                reports.const.SERVICE_ACTION_STOP, "quorum device"
             )
         )
     )
@@ -297,7 +297,7 @@ def _service_kill(lib_env: LibraryEnvironment, func):
             *[
                 ReportItem.error(
                     reports.messages.ServiceActionFailed(
-                        reports.messages.SERVICE_KILL, service, e.message
+                        reports.const.SERVICE_ACTION_KILL, service, e.message
                     )
                 )
                 for service in e.service
@@ -306,7 +306,7 @@ def _service_kill(lib_env: LibraryEnvironment, func):
     lib_env.report_processor.report(
         ReportItem.info(
             reports.messages.ServiceActionSucceeded(
-                reports.messages.SERVICE_KILL, "quorum device"
+                reports.const.SERVICE_ACTION_KILL, "quorum device"
             )
         )
     )
@@ -318,7 +318,7 @@ def _service_enable(lib_env: LibraryEnvironment, func):
         raise LibraryError(
             ReportItem.error(
                 reports.messages.ServiceActionFailed(
-                    reports.messages.SERVICE_ENABLE,
+                    reports.const.SERVICE_ACTION_ENABLE,
                     e.service,
                     e.message,
                 )
@@ -327,7 +327,7 @@ def _service_enable(lib_env: LibraryEnvironment, func):
     lib_env.report_processor.report(
         ReportItem.info(
             reports.messages.ServiceActionSucceeded(
-                reports.messages.SERVICE_ENABLE, "quorum device"
+                reports.const.SERVICE_ACTION_ENABLE, "quorum device"
             )
         )
     )
@@ -339,7 +339,7 @@ def _service_disable(lib_env: LibraryEnvironment, func):
         raise LibraryError(
             ReportItem.error(
                 reports.messages.ServiceActionFailed(
-                    reports.messages.SERVICE_DISABLE,
+                    reports.const.SERVICE_ACTION_DISABLE,
                     e.service,
                     e.message,
                 )
@@ -348,7 +348,7 @@ def _service_disable(lib_env: LibraryEnvironment, func):
     lib_env.report_processor.report(
         ReportItem.info(
             reports.messages.ServiceActionSucceeded(
-                reports.messages.SERVICE_DISABLE, "quorum device"
+                reports.const.SERVICE_ACTION_DISABLE, "quorum device"
             )
         )
     )

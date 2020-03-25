@@ -317,18 +317,19 @@ class GetCibTest(LibraryPacemakerTest):
         xml = "<xml />"
         assert_xml_equal(xml, str(XmlManipulation((lib.get_cib(xml)))))
 
-    def test_invalid_xml(self):
+    @mock.patch("pcs.lib.pacemaker.live.xml_fromstring")
+    def test_invalid_xml(self, xml_fromstring_mock):
+        reason = "custom reason"
+        xml_fromstring_mock.side_effect = etree.XMLSyntaxError(reason, 1, 1, 1)
         xml = "<invalid><xml />"
         assert_raise_library_error(
             lambda: lib.get_cib(xml),
             fixture.error(
                 report_codes.CIB_LOAD_ERROR_BAD_FORMAT,
-                reason=(
-                    "Premature end of data in tag invalid line 1, line 1, "
-                    "column 17 (<string>, line 1)"
-                )
+                reason=f"{reason} (line 1)",
             )
         )
+        xml_fromstring_mock.assert_called_once_with(xml)
 
 class Verify(LibraryPacemakerTest):
     def test_run_on_live_cib(self):

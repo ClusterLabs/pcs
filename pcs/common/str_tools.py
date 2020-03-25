@@ -1,3 +1,4 @@
+from collections.abc import Iterable
 from typing import (
     Any,
     List,
@@ -129,3 +130,7 @@ T = TypeVar("T")
 # TODO: tests
 def transform(items: List[T], mapping: Mapping[T, str]) -> List[str]:
     return list(map(lambda item: mapping.get(item, str(item)), items))
+
+
+def is_iterable_not_str(value):
+    return isinstance(value, Iterable) and not isinstance(value, str)

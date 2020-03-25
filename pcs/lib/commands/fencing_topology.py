@@ -131,7 +131,6 @@ def remove_levels_by_params(
 
     level_not_found = False
     for report_item in report_list:
-        # TODO: remove later
         if (
             report_item.message.code
             ==

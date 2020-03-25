@@ -12,23 +12,14 @@ from pcs.common.str_tools import (
     transform,
 )
 from pcs.common.reports import (
+    const,
     dto,
     item,
     messages,
+    types,
 )
 from pcs.common.tools import get_all_subclasses
 
-
-_file_role_to_option_translation: Mapping[file_type_codes.FileTypeCode, str] = {
-    file_type_codes.BOOTH_CONFIG: "--booth-conf",
-    file_type_codes.BOOTH_KEY: "--booth-key",
-    file_type_codes.CIB: "-f",
-    file_type_codes.COROSYNC_CONF: "--corosync_conf",
-}
-
-
-# TODO: prefix all internal functions with _
-# TODO: file cleanup
 
 class CliReportMessage:
     def __init__(self, dto_obj: dto.ReportItemMessageDto) -> None:
@@ -62,14 +53,6 @@ class CliReportMessageCustom(CliReportMessage):
         raise NotImplementedError()
 
 
-# class CorosyncLinkDoesNotExistCannotUpdate(CliReportMessageCustom):
-#     _obj: messages.CorosyncLinkDoesNotExistCannotUpdate
-#
-#     @property
-#     def message(self) -> str:
-#         return f"{self._dto_obj.message}{self._obj.existing_link_list}"
-
-
 class ResourceManagedNoMonitorEnabled(CliReportMessageCustom):
     _obj: messages.ResourceManagedNoMonitorEnabled
 
@@ -96,7 +79,7 @@ class CannotUnmoveUnbanResourceMasterResourceNotPromotable(
 
     @property
     def message(self) -> str:
-        return resource_move_ban_clear_master_resource_not_promotable(
+        return _resource_move_ban_clear_master_resource_not_promotable(
             self._obj.promotable_id
         )
 
@@ -142,7 +125,7 @@ class CannotBanResourceMasterResourceNotPromotable(CliReportMessageCustom):
 
     @property
     def message(self) -> str:
-        return resource_move_ban_clear_master_resource_not_promotable(
+        return _resource_move_ban_clear_master_resource_not_promotable(
             self._obj.promotable_id
         )
 
@@ -152,7 +135,7 @@ class CannotMoveResourceMasterResourceNotPromotable(CliReportMessageCustom):
 
     @property
     def message(self) -> str:
-        return resource_move_ban_clear_master_resource_not_promotable(
+        return _resource_move_ban_clear_master_resource_not_promotable(
             self._obj.promotable_id
         )
 
@@ -306,7 +289,7 @@ class CorosyncNodeConflictCheckSkipped(CliReportMessageCustom):
         return (
             "Unable to check if there is a conflict with nodes set in corosync "
             "because {reason}"
-        ).format(reason=skip_reason_to_string(self._obj.reason_type))
+        ).format(reason=_skip_reason_to_string(self._obj.reason_type))
 
 
 class LiveEnvironmentNotConsistent(CliReportMessageCustom):
@@ -365,7 +348,7 @@ class ServiceCommandsOnNodesSkipped(CliReportMessageCustom):
         ).format(
             actions=format_list(self._obj.action_list),
             nodes=format_list(self._obj.node_list),
-            reason=skip_reason_to_string(self._obj.reason_type),
+            reason=_skip_reason_to_string(self._obj.reason_type),
         )
 
 
@@ -380,7 +363,7 @@ class FilesRemoveFromNodesSkipped(CliReportMessageCustom):
         ).format(
             files=format_list(self._obj.file_list),
             nodes=format_list(self._obj.node_list),
-            reason=skip_reason_to_string(self._obj.reason_type),
+            reason=_skip_reason_to_string(self._obj.reason_type),
         )
 
 
@@ -395,7 +378,7 @@ class FilesDistributionSkipped(CliReportMessageCustom):
         ).format(
             files=format_list(self._obj.file_list),
             nodes=format_list(self._obj.node_list),
-            reason=skip_reason_to_string(self._obj.reason_type),
+            reason=_skip_reason_to_string(self._obj.reason_type),
         )
 
 
@@ -428,7 +411,15 @@ def report_item_msg_from_dto(obj: dto.ReportItemMessageDto) -> CliReportMessage:
     return REPORT_MSG_MAP.get(obj.code, CliReportMessage)(obj)
 
 
-def resource_move_ban_clear_master_resource_not_promotable(
+_file_role_to_option_translation: Mapping[file_type_codes.FileTypeCode, str] = {
+    file_type_codes.BOOTH_CONFIG: "--booth-conf",
+    file_type_codes.BOOTH_KEY: "--booth-key",
+    file_type_codes.CIB: "-f",
+    file_type_codes.COROSYNC_CONF: "--corosync_conf",
+}
+
+
+def _resource_move_ban_clear_master_resource_not_promotable(
     promotable_id: str,
 ) -> str:
     return (
@@ -436,10 +427,10 @@ def resource_move_ban_clear_master_resource_not_promotable(
     ).format(_id=format_optional(promotable_id, " ({})"),)
 
 
-def skip_reason_to_string(reason: messages.ReasonType) -> str:
+def _skip_reason_to_string(reason: types.ReasonType) -> str:
     return {
-        messages.NOT_LIVE_CIB: (
+        const.REASON_NOT_LIVE_CIB: (
             "the command does not run on a live cluster (e.g. -f " "was used)"
         ),
-        messages.UNREACHABLE: "pcs is unable to connect to the node(s)",
+        const.REASON_UNREACHABLE: "pcs is unable to connect to the node(s)",
     }.get(reason, reason)

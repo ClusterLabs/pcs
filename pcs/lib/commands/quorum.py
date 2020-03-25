@@ -224,7 +224,7 @@ def add_device(
         lib_env.report_processor.report(
             ReportItem.info(
                 reports.messages.ServiceActionStarted(
-                    reports.messages.SERVICE_ENABLE, "corosync-qdevice"
+                    reports.const.SERVICE_ACTION_ENABLE, "corosync-qdevice"
                 )
             )
         )
@@ -242,7 +242,7 @@ def add_device(
         lib_env.report_processor.report(
             ReportItem.info(
                 reports.messages.ServiceActionStarted(
-                    reports.messages.SERVICE_START, "corosync-qdevice"
+                    reports.const.SERVICE_ACTION_START, "corosync-qdevice"
                 )
             )
         )
@@ -353,7 +353,7 @@ def remove_device(lib_env: LibraryEnvironment, skip_offline_nodes=False):
         lib_env.report_processor.report(
             ReportItem.info(
                 reports.messages.ServiceActionStarted(
-                    reports.messages.SERVICE_DISABLE, "corosync-qdevice"
+                    reports.const.SERVICE_ACTION_DISABLE, "corosync-qdevice"
                 )
             )
         )
@@ -366,7 +366,7 @@ def remove_device(lib_env: LibraryEnvironment, skip_offline_nodes=False):
         lib_env.report_processor.report(
             ReportItem.info(
                 reports.messages.ServiceActionStarted(
-                    reports.messages.SERVICE_STOP, "corosync-qdevice"
+                    reports.const.SERVICE_ACTION_STOP, "corosync-qdevice"
                 )
             )
         )

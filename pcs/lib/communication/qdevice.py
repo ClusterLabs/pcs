@@ -27,7 +27,9 @@ class Stop(SimpleResponseProcessingMixin, QdeviceBase):
     def _get_success_report(self, node_label):
         return ReportItem.info(
             reports.messages.ServiceActionSucceeded(
-                reports.messages.SERVICE_STOP, "corosync-qdevice", node_label
+                reports.const.SERVICE_ACTION_STOP,
+                "corosync-qdevice",
+                node_label,
             )
         )
 
@@ -43,7 +45,7 @@ class Start(QdeviceBase):
             if response.data == "corosync is not running, skipping":
                 report = ReportItem.info(
                     reports.messages.ServiceActionSkipped(
-                        reports.messages.SERVICE_START,
+                        reports.const.SERVICE_ACTION_START,
                         "corosync-qdevice",
                         "corosync is not running",
                         node_label,
@@ -52,7 +54,7 @@ class Start(QdeviceBase):
             else:
                 report = ReportItem.info(
                     reports.messages.ServiceActionSucceeded(
-                        reports.messages.SERVICE_START,
+                        reports.const.SERVICE_ACTION_START,
                         "corosync-qdevice",
                         node_label,
                     )
@@ -71,7 +73,7 @@ class Enable(QdeviceBase):
             if response.data == "corosync is not enabled, skipping":
                 report = ReportItem.info(
                     reports.messages.ServiceActionSkipped(
-                        reports.messages.SERVICE_ENABLE,
+                        reports.const.SERVICE_ACTION_ENABLE,
                         "corosync-qdevice",
                         "corosync is not enabled",
                         node_label,
@@ -80,7 +82,7 @@ class Enable(QdeviceBase):
             else:
                 report = ReportItem.info(
                     reports.messages.ServiceActionSucceeded(
-                        reports.messages.SERVICE_ENABLE,
+                        reports.const.SERVICE_ACTION_ENABLE,
                         "corosync-qdevice",
                         node_label,
                     )
@@ -95,7 +97,7 @@ class Disable(SimpleResponseProcessingMixin, QdeviceBase):
     def _get_success_report(self, node_label):
         return ReportItem.info(
             reports.messages.ServiceActionSucceeded(
-                reports.messages.SERVICE_DISABLE,
+                reports.const.SERVICE_ACTION_DISABLE,
                 "corosync-qdevice",
                 node_label,
             )

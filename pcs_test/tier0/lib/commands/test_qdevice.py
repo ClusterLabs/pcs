@@ -140,7 +140,7 @@ class QdeviceNetSetupTest(QdeviceTestCase):
                     severity.INFO,
                     reports.codes.SERVICE_ACTION_SUCCEEDED,
                     {
-                        "action": reports.messages.SERVICE_ENABLE,
+                        "action": reports.const.SERVICE_ACTION_ENABLE,
                         "service": "quorum device",
                         "node": "",
                         "instance": "",
@@ -150,7 +150,7 @@ class QdeviceNetSetupTest(QdeviceTestCase):
                     severity.INFO,
                     reports.codes.SERVICE_ACTION_STARTED,
                     {
-                        "action": reports.messages.SERVICE_START,
+                        "action": reports.const.SERVICE_ACTION_START,
                         "service": "quorum device",
                         "instance": "",
                     }
@@ -159,7 +159,7 @@ class QdeviceNetSetupTest(QdeviceTestCase):
                     severity.INFO,
                     reports.codes.SERVICE_ACTION_SUCCEEDED,
                     {
-                        "action": reports.messages.SERVICE_START,
+                        "action": reports.const.SERVICE_ACTION_START,
                         "service": "quorum device",
                         "node": "",
                         "instance": "",
@@ -198,7 +198,7 @@ class QdeviceNetSetupTest(QdeviceTestCase):
                 severity.ERROR,
                 reports.codes.SERVICE_ACTION_FAILED,
                 {
-                    "action": reports.messages.SERVICE_ENABLE,
+                    "action": reports.const.SERVICE_ACTION_ENABLE,
                     "service": "test service",
                     "reason": "test error",
                     "node": "",
@@ -237,7 +237,7 @@ class QdeviceNetSetupTest(QdeviceTestCase):
                 severity.ERROR,
                 reports.codes.SERVICE_ACTION_FAILED,
                 {
-                    "action": reports.messages.SERVICE_START,
+                    "action": reports.const.SERVICE_ACTION_START,
                     "service": "test service",
                     "reason": "test error",
                     "node": "",
@@ -263,7 +263,7 @@ class QdeviceNetSetupTest(QdeviceTestCase):
                     severity.INFO,
                     reports.codes.SERVICE_ACTION_SUCCEEDED,
                     {
-                        "action": reports.messages.SERVICE_ENABLE,
+                        "action": reports.const.SERVICE_ACTION_ENABLE,
                         "service": "quorum device",
                         "node": "",
                         "instance": "",
@@ -273,7 +273,7 @@ class QdeviceNetSetupTest(QdeviceTestCase):
                     severity.INFO,
                     reports.codes.SERVICE_ACTION_STARTED,
                     {
-                        "action": reports.messages.SERVICE_START,
+                        "action": reports.const.SERVICE_ACTION_START,
                         "service": "quorum device",
                         "instance": "",
                     }
@@ -312,7 +312,7 @@ class QdeviceNetDestroyTest(QdeviceTestCase):
                     severity.INFO,
                     reports.codes.SERVICE_ACTION_STARTED,
                     {
-                        "action": reports.messages.SERVICE_STOP,
+                        "action": reports.const.SERVICE_ACTION_STOP,
                         "service": "quorum device",
                         "instance": "",
                     }
@@ -321,7 +321,7 @@ class QdeviceNetDestroyTest(QdeviceTestCase):
                     severity.INFO,
                     reports.codes.SERVICE_ACTION_SUCCEEDED,
                     {
-                        "action": reports.messages.SERVICE_STOP,
+                        "action": reports.const.SERVICE_ACTION_STOP,
                         "service": "quorum device",
                         "node": "",
                         "instance": "",
@@ -331,7 +331,7 @@ class QdeviceNetDestroyTest(QdeviceTestCase):
                     severity.INFO,
                     reports.codes.SERVICE_ACTION_SUCCEEDED,
                     {
-                        "action": reports.messages.SERVICE_DISABLE,
+                        "action": reports.const.SERVICE_ACTION_DISABLE,
                         "service": "quorum device",
                         "node": "",
                         "instance": "",
@@ -374,7 +374,7 @@ class QdeviceNetDestroyTest(QdeviceTestCase):
                     severity.INFO,
                     reports.codes.SERVICE_ACTION_STARTED,
                     {
-                        "action": reports.messages.SERVICE_STOP,
+                        "action": reports.const.SERVICE_ACTION_STOP,
                         "service": "quorum device",
                         "instance": "",
                     }
@@ -383,7 +383,7 @@ class QdeviceNetDestroyTest(QdeviceTestCase):
                     severity.INFO,
                     reports.codes.SERVICE_ACTION_SUCCEEDED,
                     {
-                        "action": reports.messages.SERVICE_STOP,
+                        "action": reports.const.SERVICE_ACTION_STOP,
                         "service": "quorum device",
                         "node": "",
                         "instance": "",
@@ -393,7 +393,7 @@ class QdeviceNetDestroyTest(QdeviceTestCase):
                     severity.INFO,
                     reports.codes.SERVICE_ACTION_SUCCEEDED,
                     {
-                        "action": reports.messages.SERVICE_DISABLE,
+                        "action": reports.const.SERVICE_ACTION_DISABLE,
                         "service": "quorum device",
                         "node": "",
                         "instance": "",
@@ -450,7 +450,7 @@ class QdeviceNetDestroyTest(QdeviceTestCase):
                 severity.ERROR,
                 reports.codes.SERVICE_ACTION_FAILED,
                 {
-                    "action": reports.messages.SERVICE_STOP,
+                    "action": reports.const.SERVICE_ACTION_STOP,
                     "service": "test service",
                     "reason": "test error",
                     "node": "",
@@ -469,7 +469,7 @@ class QdeviceNetDestroyTest(QdeviceTestCase):
                     severity.INFO,
                     reports.codes.SERVICE_ACTION_STARTED,
                     {
-                        "action": reports.messages.SERVICE_STOP,
+                        "action": reports.const.SERVICE_ACTION_STOP,
                         "service": "quorum device",
                         "instance": "",
                     }
@@ -492,7 +492,7 @@ class QdeviceNetDestroyTest(QdeviceTestCase):
                 severity.ERROR,
                 reports.codes.SERVICE_ACTION_FAILED,
                 {
-                    "action": reports.messages.SERVICE_DISABLE,
+                    "action": reports.const.SERVICE_ACTION_DISABLE,
                     "service": "test service",
                     "reason": "test error",
                     "node": "",
@@ -514,7 +514,7 @@ class QdeviceNetDestroyTest(QdeviceTestCase):
                     severity.INFO,
                     reports.codes.SERVICE_ACTION_STARTED,
                     {
-                        "action": reports.messages.SERVICE_STOP,
+                        "action": reports.const.SERVICE_ACTION_STOP,
                         "service": "quorum device",
                         "instance": "",
                     }
@@ -523,7 +523,7 @@ class QdeviceNetDestroyTest(QdeviceTestCase):
                     severity.INFO,
                     reports.codes.SERVICE_ACTION_SUCCEEDED,
                     {
-                        "action": reports.messages.SERVICE_STOP,
+                        "action": reports.const.SERVICE_ACTION_STOP,
                         "service": "quorum device",
                         "node": "",
                         "instance": "",
@@ -556,7 +556,7 @@ class QdeviceNetDestroyTest(QdeviceTestCase):
                     severity.INFO,
                     reports.codes.SERVICE_ACTION_STARTED,
                     {
-                        "action": reports.messages.SERVICE_STOP,
+                        "action": reports.const.SERVICE_ACTION_STOP,
                         "service": "quorum device",
                         "instance": "",
                     }
@@ -565,7 +565,7 @@ class QdeviceNetDestroyTest(QdeviceTestCase):
                     severity.INFO,
                     reports.codes.SERVICE_ACTION_SUCCEEDED,
                     {
-                        "action": reports.messages.SERVICE_STOP,
+                        "action": reports.const.SERVICE_ACTION_STOP,
                         "service": "quorum device",
                         "node": "",
                         "instance": "",
@@ -575,7 +575,7 @@ class QdeviceNetDestroyTest(QdeviceTestCase):
                     severity.INFO,
                     reports.codes.SERVICE_ACTION_SUCCEEDED,
                     {
-                        "action": reports.messages.SERVICE_DISABLE,
+                        "action": reports.const.SERVICE_ACTION_DISABLE,
                         "service": "quorum device",
                         "node": "",
                         "instance": "",
@@ -677,7 +677,7 @@ class QdeviceNetEnableTest(QdeviceTestCase):
                     severity.INFO,
                     reports.codes.SERVICE_ACTION_SUCCEEDED,
                     {
-                        "action": reports.messages.SERVICE_ENABLE,
+                        "action": reports.const.SERVICE_ACTION_ENABLE,
                         "service": "quorum device",
                         "node": "",
                         "instance": "",
@@ -698,7 +698,7 @@ class QdeviceNetEnableTest(QdeviceTestCase):
                 severity.ERROR,
                 reports.codes.SERVICE_ACTION_FAILED,
                 {
-                    "action": reports.messages.SERVICE_ENABLE,
+                    "action": reports.const.SERVICE_ACTION_ENABLE,
                     "service": "test service",
                     "reason": "test error",
                     "node": "",
@@ -729,7 +729,7 @@ class QdeviceNetDisableTest(QdeviceTestCase):
                     severity.INFO,
                     reports.codes.SERVICE_ACTION_SUCCEEDED,
                     {
-                        "action": reports.messages.SERVICE_DISABLE,
+                        "action": reports.const.SERVICE_ACTION_DISABLE,
                         "service": "quorum device",
                         "node": "",
                         "instance": "",
@@ -750,7 +750,7 @@ class QdeviceNetDisableTest(QdeviceTestCase):
                 severity.ERROR,
                 reports.codes.SERVICE_ACTION_FAILED,
                 {
-                    "action": reports.messages.SERVICE_DISABLE,
+                    "action": reports.const.SERVICE_ACTION_DISABLE,
                     "service": "test service",
                     "reason": "test error",
                     "node": "",
@@ -784,7 +784,7 @@ class QdeviceNetStartTest(QdeviceTestCase):
                     severity.INFO,
                     reports.codes.SERVICE_ACTION_STARTED,
                     {
-                        "action": reports.messages.SERVICE_START,
+                        "action": reports.const.SERVICE_ACTION_START,
                         "service": "quorum device",
                         "instance": "",
                     }
@@ -793,7 +793,7 @@ class QdeviceNetStartTest(QdeviceTestCase):
                     severity.INFO,
                     reports.codes.SERVICE_ACTION_SUCCEEDED,
                     {
-                        "action": reports.messages.SERVICE_START,
+                        "action": reports.const.SERVICE_ACTION_START,
                         "service": "quorum device",
                         "node": "",
                         "instance": "",
@@ -815,7 +815,7 @@ class QdeviceNetStartTest(QdeviceTestCase):
                 severity.ERROR,
                 reports.codes.SERVICE_ACTION_FAILED,
                 {
-                    "action": reports.messages.SERVICE_START,
+                    "action": reports.const.SERVICE_ACTION_START,
                     "service": "test service",
                     "reason": "test error",
                     "node": "",
@@ -832,7 +832,7 @@ class QdeviceNetStartTest(QdeviceTestCase):
                     severity.INFO,
                     reports.codes.SERVICE_ACTION_STARTED,
                     {
-                        "action": reports.messages.SERVICE_START,
+                        "action": reports.const.SERVICE_ACTION_START,
                         "service": "quorum device",
                         "instance": "",
                     }
@@ -880,7 +880,7 @@ class QdeviceNetStopTest(QdeviceTestCase):
                     severity.INFO,
                     reports.codes.SERVICE_ACTION_STARTED,
                     {
-                        "action": reports.messages.SERVICE_STOP,
+                        "action": reports.const.SERVICE_ACTION_STOP,
                         "service": "quorum device",
                         "instance": "",
                     }
@@ -889,7 +889,7 @@ class QdeviceNetStopTest(QdeviceTestCase):
                     severity.INFO,
                     reports.codes.SERVICE_ACTION_SUCCEEDED,
                     {
-                        "action": reports.messages.SERVICE_STOP,
+                        "action": reports.const.SERVICE_ACTION_STOP,
                         "service": "quorum device",
                         "node": "",
                         "instance": "",
@@ -918,7 +918,7 @@ class QdeviceNetStopTest(QdeviceTestCase):
                     severity.INFO,
                     reports.codes.SERVICE_ACTION_STARTED,
                     {
-                        "action": reports.messages.SERVICE_STOP,
+                        "action": reports.const.SERVICE_ACTION_STOP,
                         "service": "quorum device",
                         "instance": "",
                     }
@@ -927,7 +927,7 @@ class QdeviceNetStopTest(QdeviceTestCase):
                     severity.INFO,
                     reports.codes.SERVICE_ACTION_SUCCEEDED,
                     {
-                        "action": reports.messages.SERVICE_STOP,
+                        "action": reports.const.SERVICE_ACTION_STOP,
                         "service": "quorum device",
                         "node": "",
                         "instance": "",
@@ -974,7 +974,7 @@ class QdeviceNetStopTest(QdeviceTestCase):
                 severity.ERROR,
                 reports.codes.SERVICE_ACTION_FAILED,
                 {
-                    "action": reports.messages.SERVICE_STOP,
+                    "action": reports.const.SERVICE_ACTION_STOP,
                     "service": "test service",
                     "reason": "test error",
                     "node": "",
@@ -990,7 +990,7 @@ class QdeviceNetStopTest(QdeviceTestCase):
                     severity.INFO,
                     reports.codes.SERVICE_ACTION_STARTED,
                     {
-                        "action": reports.messages.SERVICE_STOP,
+                        "action": reports.const.SERVICE_ACTION_STOP,
                         "service": "quorum device",
                         "instance": "",
                     }
@@ -1019,7 +1019,7 @@ class QdeviceNetKillTest(QdeviceTestCase):
                     severity.INFO,
                     reports.codes.SERVICE_ACTION_SUCCEEDED,
                     {
-                        "action": reports.messages.SERVICE_KILL,
+                        "action": reports.const.SERVICE_ACTION_KILL,
                         "service": "quorum device",
                         "node": "",
                         "instance": "",
@@ -1040,7 +1040,7 @@ class QdeviceNetKillTest(QdeviceTestCase):
                 severity.ERROR,
                 reports.codes.SERVICE_ACTION_FAILED,
                 {
-                    "action": reports.messages.SERVICE_KILL,
+                    "action": reports.const.SERVICE_ACTION_KILL,
                     "service": "test service",
                     "reason": "test error",
                     "node": "",
