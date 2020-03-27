@@ -4,7 +4,7 @@ import sys
 from time import sleep
 from unittest import mock, TestCase
 import xml.dom.minidom
-import xml.etree.cElementTree as ET
+import xml.etree.ElementTree as ET
 
 from pcs_test.tools.xml import dom_get_child_elements
 from pcs_test.tools.misc import get_test_resource as rc
