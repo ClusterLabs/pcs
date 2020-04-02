@@ -13,7 +13,7 @@ from .messages import report_item_msg_from_dto
 
 
 class ReportProcessorToConsole(ReportProcessor):
-    def __init__(self, debug=False):
+    def __init__(self, debug: bool = False) -> None:
         super().__init__()
         self.debug = debug
 

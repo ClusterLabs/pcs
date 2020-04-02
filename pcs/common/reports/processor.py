@@ -4,7 +4,7 @@ from .item import ReportItem, ReportItemList, ReportItemSeverity
 
 
 class ReportProcessor(abc.ABC):
-    def __init__(self):
+    def __init__(self) -> None:
         self._has_errors = False
 
     @property

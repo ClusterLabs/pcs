@@ -11,6 +11,7 @@ from typing import (
     List,
     Mapping,
     Optional,
+    Sequence,
     Tuple,
     Union,
 )
@@ -41,7 +42,7 @@ INSTANCE_SUFFIX = "@{0}"
 NODE_PREFIX = "{0}: "
 
 
-def _stdout_stderr_to_string(stdout, stderr, prefix=""):
+def _stdout_stderr_to_string(stdout: str, stderr: str, prefix: str = "") -> str:
     new_lines = [prefix] if prefix else []
     for line in stdout.splitlines() + stderr.splitlines():
         if line.strip():
@@ -57,7 +58,7 @@ def _resource_move_ban_clear_master_resource_not_promotable(
     ).format(_id=format_optional(promotable_id, " ({})"),)
 
 
-def _resource_move_ban_pcmk_success(stdout, stderr):
+def _resource_move_ban_pcmk_success(stdout: str, stderr: str) -> str:
     new_lines = []
     for line in stdout.splitlines() + stderr.splitlines():
         if not line.strip():
@@ -75,17 +76,17 @@ def _resource_move_ban_pcmk_success(stdout, stderr):
     return "\n".join(new_lines)
 
 
-def _format_fencing_level_target(target_type, target_value):
+def _format_fencing_level_target(target_type: str, target_value: Any) -> str:
     if target_type == TARGET_TYPE_ATTRIBUTE:
         return "{0}={1}".format(target_value[0], target_value[1])
     return target_value
 
 
-def _format_booth_default(value, template):
+def _format_booth_default(value: Optional[str], template: str) -> str:
     return "" if value in ("booth", "", None) else template.format(value)
 
 
-def _key_numeric(item):
+def _key_numeric(item: str) -> Tuple[int, str]:
     return (int(item), item) if item.isdigit() else (-1, item)
 
 
@@ -121,11 +122,11 @@ _type_articles = {
 }
 
 
-def _format_file_role(role):
+def _format_file_role(role: file_type_codes.FileTypeCode) -> str:
     return _file_role_translation.get(role, role)
 
 
-def _format_file_action(action):
+def _format_file_action(action: str) -> str:
     return _file_operation_translation.get(action, action)
 
 
@@ -157,7 +158,7 @@ def _skip_reason_to_string(reason: types.ReasonType) -> str:
     }.get(reason, reason)
 
 
-def _typelist_to_string(type_list, article=False):
+def _typelist_to_string(type_list: Sequence[str], article: bool = False) -> str:
     if not type_list:
         return ""
     # use set to drop duplicate items:
@@ -179,7 +180,7 @@ def _typelist_to_string(type_list, article=False):
     )
 
 
-def _type_to_string(type_name, article=False):
+def _type_to_string(type_name: str, article: bool = False) -> str:
     if not type_name:
         return ""
     # get a translation or make a type_name a string
@@ -6023,7 +6024,7 @@ class BoothUnsupportedFileLocation(ReportItemMessage):
 
     file_path: str
     expected_dir: str
-    file_type_code: str
+    file_type_code: file_type_codes.FileTypeCode
     _code = codes.BOOTH_UNSUPPORTED_FILE_LOCATION
 
     @property
