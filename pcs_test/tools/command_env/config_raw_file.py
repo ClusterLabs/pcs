@@ -5,13 +5,19 @@ from pcs_test.tools.command_env.mock_raw_file import (
     RawFileWriteCall,
 )
 
-class RawFileConfig():
+
+class RawFileConfig:
     def __init__(self, call_collection):
         self.__calls = call_collection
 
     def exists(
-        self, file_type_code, path, exists=True,
-        name="raw_file.exists", before=None, instead=None
+        self,
+        file_type_code,
+        path,
+        exists=True,
+        name="raw_file.exists",
+        before=None,
+        instead=None,
     ):
         """
         Create a call for checking a file existence
@@ -29,9 +35,14 @@ class RawFileConfig():
         self.__calls.place(name, call, before, instead)
 
     def read(
-        self, file_type_code, path,
-        content=None, exception_msg=None,
-        name="raw_file.read", before=None, instead=None
+        self,
+        file_type_code,
+        path,
+        content=None,
+        exception_msg=None,
+        name="raw_file.read",
+        before=None,
+        instead=None,
     ):
         """
         Create a call for reading a file content
@@ -52,10 +63,17 @@ class RawFileConfig():
         self.__calls.place(name, call, before, instead)
 
     def write(
-        self, file_type_code, path,
-        file_data, can_overwrite=False,
-        already_exists=False, exception_msg=None, exception_action=None,
-        name="raw_file.write", before=None, instead=None
+        self,
+        file_type_code,
+        path,
+        file_data,
+        can_overwrite=False,
+        already_exists=False,
+        exception_msg=None,
+        exception_action=None,
+        name="raw_file.write",
+        before=None,
+        instead=None,
     ):
         """
         Create a call for writing to a file
@@ -85,9 +103,15 @@ class RawFileConfig():
         self.__calls.place(name, call, before, instead)
 
     def remove(
-        self, file_type_code, path, fail_if_file_not_found=True,
-        exception_msg=None, file_not_found_exception=False,
-        name="raw_file.remove", before=None, instead=None
+        self,
+        file_type_code,
+        path,
+        fail_if_file_not_found=True,
+        exception_msg=None,
+        file_not_found_exception=False,
+        name="raw_file.remove",
+        before=None,
+        instead=None,
     ):
         """
         Create a call for removing a file

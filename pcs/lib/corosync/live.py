@@ -6,6 +6,7 @@ from pcs.common import reports
 from pcs.common.reports.item import ReportItem
 from pcs.lib.errors import LibraryError
 
+
 def get_local_corosync_conf():
     """
     Read corosync.conf file from local machine
@@ -21,29 +22,33 @@ def get_local_corosync_conf():
             )
         )
 
+
 def get_quorum_status_text(runner):
     """
     Get runtime quorum status from the local node
     """
-    stdout, stderr, retval = runner.run([
-        os.path.join(settings.corosync_binaries, "corosync-quorumtool"),
-        "-p"
-    ])
+    stdout, stderr, retval = runner.run(
+        [os.path.join(settings.corosync_binaries, "corosync-quorumtool"), "-p"]
+    )
     # retval is 0 on success if the node is not in a partition with quorum
     # retval is 1 on error OR on success if the node has quorum
     if retval not in [0, 1] or stderr.strip():
         raise QuorumStatusReadException(stderr)
     return stdout
 
+
 def set_expected_votes(runner, votes):
     """
     set expected votes in live cluster to specified value
     """
-    stdout, stderr, retval = runner.run([
-        os.path.join(settings.corosync_binaries, "corosync-quorumtool"),
-        # format votes to handle the case where they are int
-        "-e", "{0}".format(votes)
-    ])
+    stdout, stderr, retval = runner.run(
+        [
+            os.path.join(settings.corosync_binaries, "corosync-quorumtool"),
+            # format votes to handle the case where they are int
+            "-e",
+            "{0}".format(votes),
+        ]
+    )
     if retval != 0:
         raise LibraryError(
             ReportItem.error(
@@ -67,10 +72,11 @@ class QuorumStatusParsingException(QuorumStatusException):
     pass
 
 
-class QuorumStatus():
+class QuorumStatus:
     """
     Parse corosync quourm status and provide access to parsed info
     """
+
     def __init__(self, data):
         self._data = data
 
@@ -96,18 +102,23 @@ class QuorumStatus():
                     parts = line.split()
                     if parts[0] == "0":
                         # this line has nodeid == 0, this is a qdevice line
-                        parsed["qdevice_list"].append({
-                            "name": parts[2],
-                            "votes": int(parts[1]),
-                            "local": False,
-                        })
+                        parsed["qdevice_list"].append(
+                            {
+                                "name": parts[2],
+                                "votes": int(parts[1]),
+                                "local": False,
+                            }
+                        )
                     else:
                         # this line has non-zero nodeid, this is a node line
-                        parsed["node_list"].append({
-                            "name": parts[3],
-                            "votes": int(parts[1]),
-                            "local": len(parts) > 4 and parts[4] == "(local)",
-                        })
+                        parsed["node_list"].append(
+                            {
+                                "name": parts[3],
+                                "votes": int(parts[1]),
+                                "local": len(parts) > 4
+                                and parts[4] == "(local)",
+                            }
+                        )
                 else:
                     if line == "Membership information":
                         in_node_list = True
@@ -201,8 +212,7 @@ class QuorumStatus():
             return False
         return (
             self._get_votes_excluding_nodes(node_names)
-            <
-            self.votes_needed_for_quorum
+            < self.votes_needed_for_quorum
         )
 
     def stopping_local_node_cause_quorum_loss(self):
@@ -213,6 +223,5 @@ class QuorumStatus():
             return False
         return (
             self._get_votes_excluding_local_node()
-            <
-            self.votes_needed_for_quorum
+            < self.votes_needed_for_quorum
         )

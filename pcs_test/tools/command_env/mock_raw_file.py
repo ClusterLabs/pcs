@@ -9,17 +9,17 @@ CALL_TYPE_RAW_FILE_READ = "CALL_TYPE_RAW_FILE_READ"
 CALL_TYPE_RAW_FILE_REMOVE = "CALL_TYPE_RAW_FILE_REMOVE"
 CALL_TYPE_RAW_FILE_WRITE = "CALL_TYPE_RAW_FILE_WRITE"
 
-class RawFileCall():
+
+class RawFileCall:
     def __init__(self, file_type_code, path):
         self.file_type_code = file_type_code
         self.path = path
 
     def _repr(self, method):
         return "<RawFile.{_method}> file_type_code={ftc} path={path}".format(
-            _method=method,
-            ftc=self.file_type_code,
-            path=self.path
+            _method=method, ftc=self.file_type_code, path=self.path
         )
+
 
 class RawFileExistsCall(RawFileCall):
     type = CALL_TYPE_RAW_FILE_EXISTS
@@ -30,6 +30,7 @@ class RawFileExistsCall(RawFileCall):
 
     def __repr__(self):
         return super()._repr("exists")
+
 
 class RawFileReadCall(RawFileCall):
     type = CALL_TYPE_RAW_FILE_READ
@@ -50,12 +51,19 @@ class RawFileReadCall(RawFileCall):
     def __repr__(self):
         return super()._repr("read")
 
+
 class RawFileWriteCall(RawFileCall):
     type = CALL_TYPE_RAW_FILE_WRITE
 
     def __init__(
-        self, file_type_code, path, file_data, can_overwrite=False,
-        already_exists=False, exception_msg=None, exception_action=None
+        self,
+        file_type_code,
+        path,
+        file_data,
+        can_overwrite=False,
+        already_exists=False,
+        exception_msg=None,
+        exception_action=None,
     ):
         super().__init__(file_type_code, path)
         self.file_data = file_data
@@ -67,12 +75,17 @@ class RawFileWriteCall(RawFileCall):
     def __repr__(self):
         return super()._repr("write")
 
+
 class RawFileRemoveCall(RawFileCall):
     type = CALL_TYPE_RAW_FILE_REMOVE
 
     def __init__(
-        self, file_type_code, path, fail_if_file_not_found=True,
-        exception_msg=None, file_not_found_exception=False
+        self,
+        file_type_code,
+        path,
+        fail_if_file_not_found=True,
+        exception_msg=None,
+        file_not_found_exception=False,
     ):
         super().__init__(file_type_code, path)
         self.fail_if_file_not_found = fail_if_file_not_found
@@ -81,6 +94,7 @@ class RawFileRemoveCall(RawFileCall):
 
     def __repr__(self):
         return super()._repr("remove")
+
 
 def _check_file_type_code_and_path(
     method, real_metadata, call_index, expected_call
@@ -113,6 +127,7 @@ def _check_file_type_code_and_path(
                 real_path=real_metadata.path,
             )
         )
+
 
 def get_raw_file_mock(call_queue):
     class RawFileMock(RawFileInterface):
@@ -170,7 +185,7 @@ def get_raw_file_mock(call_queue):
                         expected_can=expected_call.can_overwrite,
                         index=call_index,
                         real_ftc=self.metadata.file_type_code,
-                        real_can=can_overwrite
+                        real_can=can_overwrite,
                     )
                 )
 
@@ -213,15 +228,12 @@ def get_raw_file_mock(call_queue):
             exception_msg = expected_call.exception_msg
             if (
                 expected_call.file_not_found_exception
-                and
-                fail_if_file_not_found
+                and fail_if_file_not_found
             ):
                 exception_msg = "No such file or directory"
             if exception_msg:
                 raise RawFileError(
-                    self.metadata,
-                    RawFileError.ACTION_REMOVE,
-                    exception_msg,
+                    self.metadata, RawFileError.ACTION_REMOVE, exception_msg,
                 )
 
         def backup(self):

@@ -21,7 +21,7 @@ def create_alert(
     path,
     instance_attribute_dict,
     meta_attribute_dict,
-    description=None
+    description=None,
 ):
     """
     Create new alert.
@@ -47,9 +47,7 @@ def create_alert(
     arrange_first_instance_attributes(
         alert_el, instance_attribute_dict, id_provider
     )
-    arrange_first_meta_attributes(
-        alert_el, meta_attribute_dict, id_provider
-    )
+    arrange_first_meta_attributes(alert_el, meta_attribute_dict, id_provider)
 
     lib_env.push_cib()
 
@@ -60,7 +58,7 @@ def update_alert(
     path,
     instance_attribute_dict,
     meta_attribute_dict,
-    description=None
+    description=None,
 ):
     """
     Update existing alert with specified id.
@@ -80,9 +78,7 @@ def update_alert(
     arrange_first_instance_attributes(
         alert_el, instance_attribute_dict, id_provider
     )
-    arrange_first_meta_attributes(
-        alert_el, meta_attribute_dict, id_provider
-    )
+    arrange_first_meta_attributes(alert_el, meta_attribute_dict, id_provider)
 
     lib_env.push_cib()
 
@@ -115,7 +111,7 @@ def add_recipient(
     meta_attribute_dict,
     recipient_id=None,
     description=None,
-    allow_same_value=False
+    allow_same_value=False,
 ):
     """
     Add new recipient to alert witch id alert_id.
@@ -145,14 +141,12 @@ def add_recipient(
         recipient_value,
         recipient_id=recipient_id,
         description=description,
-        allow_same_value=allow_same_value
+        allow_same_value=allow_same_value,
     )
     arrange_first_instance_attributes(
         recipient, instance_attribute_dict, id_provider
     )
-    arrange_first_meta_attributes(
-        recipient, meta_attribute_dict, id_provider
-    )
+    arrange_first_meta_attributes(recipient, meta_attribute_dict, id_provider)
 
     lib_env.push_cib()
 
@@ -164,7 +158,7 @@ def update_recipient(
     meta_attribute_dict,
     recipient_value=None,
     description=None,
-    allow_same_value=False
+    allow_same_value=False,
 ):
     """
     Update existing recipient.
@@ -193,14 +187,12 @@ def update_recipient(
         recipient_id,
         recipient_value=recipient_value,
         description=description,
-        allow_same_value=allow_same_value
+        allow_same_value=allow_same_value,
     )
     arrange_first_instance_attributes(
         recipient, instance_attribute_dict, id_provider
     )
-    arrange_first_meta_attributes(
-        recipient, meta_attribute_dict, id_provider
-    )
+    arrange_first_meta_attributes(recipient, meta_attribute_dict, id_provider)
 
     lib_env.push_cib()
 

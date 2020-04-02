@@ -5,12 +5,23 @@ from pcs.common.reports import codes as report_codes
 
 
 def state_node(
-    id, name, type="member", online=True, standby=False,
-    standby_onfail=False, maintenance=False, pending=False, unclean=False,
-    shutdown=False, expected_up=True, is_dc=False, resources_running=0
+    id,
+    name,
+    type="member",
+    online=True,
+    standby=False,
+    standby_onfail=False,
+    maintenance=False,
+    pending=False,
+    unclean=False,
+    shutdown=False,
+    expected_up=True,
+    is_dc=False,
+    resources_running=0,
 ):
     # pylint: disable=invalid-name, too-many-arguments, redefined-builtin, unused-argument
     return locals()
+
 
 def complete_state_resources(resource_status):
     for resource in resource_status.xpath(".//resource"):
@@ -25,15 +36,11 @@ def complete_state_resources(resource_status):
                 "orphaned": "false",
                 "resource_agent": "ocf::heartbeat:Dummy",
                 "role": "Started",
-            }
+            },
         )
     for clone in resource_status.xpath(".//clone"):
         _default_element_attributes(
-            clone,
-            {
-                "failed": "false",
-                "failure_ignored": "false",
-            }
+            clone, {"failed": "false", "failure_ignored": "false",}
         )
     for bundle in resource_status.xpath(".//bundle"):
         _default_element_attributes(
@@ -43,7 +50,7 @@ def complete_state_resources(resource_status):
                 "image": "image:name",
                 "unique": "false",
                 "failed": "false",
-            }
+            },
         )
     return resource_status
 
@@ -53,22 +60,28 @@ def _default_element_attributes(element, default_attributes):
         if name not in element.attrib:
             element.attrib[name] = value
 
+
 def report_variation(report, **_info):
     updated_info = report[2].copy()
     updated_info.update(_info)
     return report[0], report[1], updated_info, report[3]
 
+
 def debug(code, **kwargs):
     return severities.DEBUG, code, kwargs, None
+
 
 def warn(code, **kwargs):
     return severities.WARNING, code, kwargs, None
 
+
 def error(code, force_code=None, **kwargs):
     return severities.ERROR, code, kwargs, force_code
 
+
 def info(code, **kwargs):
     return severities.INFO, code, kwargs, None
+
 
 class ReportStore:
     def __init__(self, names=None, reports=None):
@@ -95,19 +108,26 @@ class ReportStore:
 
     def adapt(self, name, **_info):
         index = self.__names.index(name)
-        return ReportStore(self.__names, [
-            report if i != index else report_variation(report, **_info)
-            for i, report in enumerate(self.__reports)
-        ])
+        return ReportStore(
+            self.__names,
+            [
+                report if i != index else report_variation(report, **_info)
+                for i, report in enumerate(self.__reports)
+            ],
+        )
 
     def adapt_multi(self, name_list, **_info):
-        names, reports = zip(*[
-            (
-                name,
-                report_variation(self[name], **_info) if name in name_list
-                    else self[name]
-            ) for name in self.__names
-        ])
+        names, reports = zip(
+            *[
+                (
+                    name,
+                    report_variation(self[name], **_info)
+                    if name in name_list
+                    else self[name],
+                )
+                for name in self.__names
+            ]
+        )
         return ReportStore(list(names), list(reports))
 
     def info(self, name, code, **kwargs):
@@ -127,10 +147,13 @@ class ReportStore:
         return self.__append(as_name, report_variation(self[name], **_info))
 
     def remove(self, *name_list):
-        names, reports = zip(*[
-            (name, self[name]) for name in self.__names
-            if name not in name_list
-        ])
+        names, reports = zip(
+            *[
+                (name, self[name])
+                for name in self.__names
+                if name not in name_list
+            ]
+        )
         return ReportStore(list(names), list(reports))
 
     def select(self, *name_list):
@@ -160,6 +183,7 @@ class ReportStore:
     def __append(self, name, report):
         return ReportStore(self.__names + [name], self.__reports + [report])
 
+
 def report_not_found(res_id, context_type=""):
     return (
         severities.ERROR,
@@ -169,32 +193,34 @@ def report_not_found(res_id, context_type=""):
             "context_id": "",
             "id": res_id,
             "expected_types": [
-                "bundle", "clone", "group", "master", "primitive"
+                "bundle",
+                "clone",
+                "group",
+                "master",
+                "primitive",
             ],
         },
-        None
+        None,
     )
+
 
 def report_resource_not_running(resource, severity=severities.INFO):
     return (
         severity,
         report_codes.RESOURCE_DOES_NOT_RUN,
-        {
-            "resource_id": resource,
-        },
-        None
+        {"resource_id": resource,},
+        None,
     )
+
 
 def report_resource_running(resource, roles, severity=severities.INFO):
     return (
         severity,
         report_codes.RESOURCE_RUNNING_ON_NODES,
-        {
-            "resource_id": resource,
-            "roles_with_nodes": roles,
-        },
-        None
+        {"resource_id": resource, "roles_with_nodes": roles,},
+        None,
     )
+
 
 def report_unexpected_element(element_id, elemet_type, expected_types):
     return (
@@ -205,46 +231,44 @@ def report_unexpected_element(element_id, elemet_type, expected_types):
             "expected_types": expected_types,
             "current_type": elemet_type,
         },
-        None
+        None,
     )
+
 
 def report_not_for_bundles(element_id):
     return report_unexpected_element(
-        element_id,
-        "bundle",
-        ["clone", "master", "group", "primitive"]
+        element_id, "bundle", ["clone", "master", "group", "primitive"]
     )
+
 
 def report_wait_for_idle_timed_out(reason):
     return (
         severities.ERROR,
         report_codes.WAIT_FOR_IDLE_TIMED_OUT,
-        {
-            "reason": reason.strip(),
-        },
-        None
+        {"reason": reason.strip(),},
+        None,
     )
 
 
 def check_sbd_comm_success_fixture(node, watchdog, device_list):
     return dict(
         label=node,
-        output=json.dumps({
-            "sbd": {
-                "installed": True,
-            },
-            "watchdog": {
-                "exist": True,
-                "path": watchdog,
-                "is_supported": True,
-            },
-            "device_list": [
-                dict(path=dev, exist=True, block_device=True)
-                for dev in device_list
-            ],
-        }),
+        output=json.dumps(
+            {
+                "sbd": {"installed": True,},
+                "watchdog": {
+                    "exist": True,
+                    "path": watchdog,
+                    "is_supported": True,
+                },
+                "device_list": [
+                    dict(path=dev, exist=True, block_device=True)
+                    for dev in device_list
+                ],
+            }
+        ),
         param_list=[
             ("watchdog", watchdog),
             ("device_list", json.dumps(device_list)),
-        ]
+        ],
     )

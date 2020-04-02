@@ -8,6 +8,7 @@ from pcs_test.tools.misc import create_setup_patch_mixin
 from pcs import settings
 from pcs.daemon import env
 
+
 class Logger:
     def __init__(self):
         self.errors = []
@@ -33,8 +34,7 @@ class Prepare(TestCase, create_setup_patch_mixin(env)):
             env.PCSD_PORT: settings.pcsd_default_port,
             env.PCSD_SSL_CIPHERS: settings.default_ssl_ciphers,
             env.PCSD_SSL_OPTIONS: env.str_to_ssl_options(
-                settings.default_ssl_options,
-                []
+                settings.default_ssl_options, []
             ),
             env.PCSD_BIND_ADDR: {None},
             env.NOTIFY_SOCKET: None,
@@ -51,8 +51,7 @@ class Prepare(TestCase, create_setup_patch_mixin(env)):
         # compare as dict because of clearer error report
         self.assertEqual(
             dict(env.prepare_env(environ or {}, self.logger)._asdict()),
-            {**default_env_values, **specific_env_values}
-
+            {**default_env_values, **specific_env_values},
         )
         self.assertEqual(self.logger.errors, errors or [])
         self.assertEqual(self.logger.warnings, warnings or [])
@@ -101,30 +100,29 @@ class Prepare(TestCase, create_setup_patch_mixin(env)):
             errors=[
                 "Invalid PCSD_SESSION_LIFETIME value 'invalid'"
                 " (it must be an integer)"
-            ]
+            ],
         )
-
 
     def test_report_invalid_ssl_ciphers(self):
         environ = {env.PCSD_SSL_CIPHERS: "invalid ;@{}+ ciphers"}
         self.assert_environ_produces_modified_pcsd_env(
             environ,
             specific_env_values={**environ, "has_errors": True},
-            errors=["Invalid ciphers: '('No cipher can be selected.',)'"]
+            errors=["Invalid ciphers: '('No cipher can be selected.',)'"],
         )
 
     def test_report_invalid_ssl_options(self):
         self.assert_environ_produces_modified_pcsd_env(
             environ={env.PCSD_SSL_OPTIONS: "invalid"},
             specific_env_values={env.PCSD_SSL_OPTIONS: 0, "has_errors": True},
-            errors=["Ignoring unknown SSL option 'invalid'"]
+            errors=["Ignoring unknown SSL option 'invalid'"],
         )
 
     def test_report_invalid_ssl_options_warning(self):
         env.settings.default_ssl_options = "invalid"
         self.assert_environ_produces_modified_pcsd_env(
             specific_env_values={env.PCSD_SSL_OPTIONS: 0},
-            warnings=["Ignoring unknown SSL option 'invalid'"]
+            warnings=["Ignoring unknown SSL option 'invalid'"],
         )
 
     def test_empty_bind_addresses(self):
@@ -141,7 +139,7 @@ class Prepare(TestCase, create_setup_patch_mixin(env)):
     def test_debug_explicitly(self):
         self.assert_environ_produces_modified_pcsd_env(
             environ={env.PCSD_DEBUG: "true"},
-            specific_env_values={env.PCSD_DEBUG: True}
+            specific_env_values={env.PCSD_DEBUG: True},
         )
 
     def test_no_debug_explicitly(self):
@@ -156,10 +154,9 @@ class Prepare(TestCase, create_setup_patch_mixin(env)):
             specific_env_values={"has_errors": True},
             errors=[
                 "Directory with web UI assets"
-                    f" '{pcsd_dir(env.PCSD_STATIC_FILES_DIR_NAME)}'"
-                    " does not exist"
-                ,
-            ]
+                f" '{pcsd_dir(env.PCSD_STATIC_FILES_DIR_NAME)}'"
+                " does not exist",
+            ],
         )
 
     def test_no_errors_on_missing_paths_disabled_gui(self):
@@ -170,5 +167,5 @@ class Prepare(TestCase, create_setup_patch_mixin(env)):
                 env.PCSD_DISABLE_GUI: True,
                 "has_errors": False,
             },
-            errors=[]
+            errors=[],
         )

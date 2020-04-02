@@ -1,14 +1,15 @@
 from pcs_test.tools.assertions import AssertPcsMixin, assert_xml_equal
 
+
 def xml_format(xml_string):
     line_list = xml_string.splitlines()
     reindented_lines = [line_list[0]]
     for line in line_list[1:]:
         leading_spaces = len(line) - len(line.lstrip()) - 4
-        #current indent is 2 spaces desired is 4 spaces
+        # current indent is 2 spaces desired is 4 spaces
         indent = " " * 2 * leading_spaces
         new_line = indent + line.strip()
-        max_line_len = 80 - 12 #12 is indent in this file ;)
+        max_line_len = 80 - 12  # 12 is indent in this file ;)
         if new_line.endswith(">") and len(new_line) > max_line_len:
             last_space = new_line[:max_line_len].rfind(" ")
             if last_space:
@@ -16,14 +17,15 @@ def xml_format(xml_string):
                 splited_line = [
                     new_line[:last_space],
                     indent + "   " + new_line[last_space : -1 * len(closing)],
-                    indent + closing
+                    indent + closing,
                 ]
                 reindented_lines.extend(splited_line)
                 continue
-        #append not splited line
+        # append not splited line
         reindented_lines.append(new_line)
 
     return "\n".join(reindented_lines)
+
 
 def get_assert_pcs_effect_mixin(get_cib_part):
     class AssertPcsEffectMixin(AssertPcsMixin):
@@ -34,14 +36,17 @@ def get_assert_pcs_effect_mixin(get_cib_part):
             except AssertionError as e:
                 raise AssertionError(
                     "{0}\n\nCopy format ;)\n{1}".format(
-                        e.args[0],
-                        xml_format(xml.decode())
+                        e.args[0], xml_format(xml.decode())
                     )
                 )
 
         def assert_effect_single(
-            self, command, expected_xml, output=None, output_start=None,
-            output_regexp=None
+            self,
+            command,
+            expected_xml,
+            output=None,
+            output_start=None,
+            output_regexp=None,
         ):
             self.assert_pcs_success(
                 command, output, output_start, output_regexp
@@ -49,11 +54,16 @@ def get_assert_pcs_effect_mixin(get_cib_part):
             self.assert_resources_xml_in_cib(expected_xml)
 
         def assert_effect(
-            self, alternative_cmds, expected_xml, output=None,
-            output_start=None, output_regexp=None
+            self,
+            alternative_cmds,
+            expected_xml,
+            output=None,
+            output_start=None,
+            output_regexp=None,
         ):
             alternative_list = (
-                alternative_cmds if isinstance(alternative_cmds, list)
+                alternative_cmds
+                if isinstance(alternative_cmds, list)
                 else [alternative_cmds]
             )
             cib_content = ""
@@ -61,14 +71,21 @@ def get_assert_pcs_effect_mixin(get_cib_part):
                 cib_content = cib_file.read()
             for alternative in alternative_list[:-1]:
                 self.assert_effect_single(
-                    alternative, expected_xml,
-                    output, output_start, output_regexp
+                    alternative,
+                    expected_xml,
+                    output,
+                    output_start,
+                    output_regexp,
                 )
                 with open(self.temp_cib, "w") as cib_file:
                     cib_file.write(cib_content)
 
             self.assert_effect_single(
-                alternative_list[-1], expected_xml,
-                output, output_start, output_regexp
+                alternative_list[-1],
+                expected_xml,
+                output,
+                output_start,
+                output_regexp,
             )
+
     return AssertPcsEffectMixin

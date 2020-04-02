@@ -13,7 +13,7 @@ from pcs.lib.communication.tools import (
 class QdeviceBase(
     SkipOfflineMixin, AllSameDataMixin, AllAtOnceStrategyMixin, RunRemotelyBase
 ):
-    #pylint: disable=abstract-method
+    # pylint: disable=abstract-method
     def __init__(self, report_processor, skip_offline_targets=False):
         super(QdeviceBase, self).__init__(report_processor)
         self._set_skip_offline(skip_offline_targets)

@@ -1,7 +1,7 @@
 from unittest import TestCase
 from lxml import etree
 
-from pcs_test.tools.assertions import(
+from pcs_test.tools.assertions import (
     assert_xml_equal,
     assert_report_item_list_equal,
 )
@@ -18,10 +18,12 @@ from pcs.lib.cib.tools import IdProvider
 
 SetupPatchMixin = create_setup_patch_mixin(guest_node)
 
+
 class ValidateHostConflicts(TestCase):
     @staticmethod
     def validate(node_name, options):
-        tree = etree.fromstring("""
+        tree = etree.fromstring(
+            """
             <cib>
                 <configuration>
                     <resources>
@@ -51,11 +53,15 @@ class ValidateHostConflicts(TestCase):
                     </resources>
                 </configuration>
             </cib>
-        """)
+        """
+        )
         existing_nodes_names = ["R1", "B", "GUEST_CONFLICT", "some"]
         existing_nodes_addrs = [
-            "RING0", "RING1", "REMOTE_CONFLICT", "GUEST_CONFLICT",
-            "GUEST_ADDR_CONFLICT"
+            "RING0",
+            "RING1",
+            "REMOTE_CONFLICT",
+            "GUEST_CONFLICT",
+            "GUEST_ADDR_CONFLICT",
         ]
         return guest_node.validate_conflicts(
             tree, existing_nodes_names, existing_nodes_addrs, node_name, options
@@ -70,14 +76,11 @@ class ValidateHostConflicts(TestCase):
                 (
                     severities.ERROR,
                     report_codes.ID_ALREADY_EXISTS,
-                    {
-                        "id": conflict_name,
-                    },
-                    None
+                    {"id": conflict_name,},
+                    None,
                 ),
-            ]
+            ],
         )
-
 
     def test_report_conflict_with_id(self):
         self.assert_already_exists_error("CONFLICT", "CONFLICT")
@@ -87,50 +90,47 @@ class ValidateHostConflicts(TestCase):
 
     def test_report_conflict_guest_addr(self):
         self.assert_already_exists_error(
-            "GUEST_ADDR_CONFLICT",
-            "GUEST_ADDR_CONFLICT",
+            "GUEST_ADDR_CONFLICT", "GUEST_ADDR_CONFLICT",
         )
 
     def test_report_conflict_guest_addr_by_addr(self):
         self.assert_already_exists_error(
-            "GUEST_ADDR_CONFLICT",
-            "GUEST_ADDR_CONFLICT",
+            "GUEST_ADDR_CONFLICT", "GUEST_ADDR_CONFLICT",
         )
 
     def test_no_conflict_guest_node_whe_addr_is_different(self):
-        self.assertEqual([], self.validate("GUEST_ADDR_CONFLICT", {
-            "remote-addr": "different",
-        }))
+        self.assertEqual(
+            [],
+            self.validate("GUEST_ADDR_CONFLICT", {"remote-addr": "different",}),
+        )
 
     def test_report_conflict_remote_node(self):
         self.assert_already_exists_error("REMOTE_CONFLICT", "REMOTE_CONFLICT")
 
     def test_no_conflict_remote_node_whe_addr_is_different(self):
-        self.assertEqual([], self.validate("REMOTE_CONFLICT", {
-            "remote-addr": "different",
-        }))
+        self.assertEqual(
+            [], self.validate("REMOTE_CONFLICT", {"remote-addr": "different",})
+        )
 
     def test_report_conflict_remote_node_by_addr(self):
-        self.assert_already_exists_error("REMOTE_CONFLICT", "different", {
-            "remote-addr": "REMOTE_CONFLICT",
-        })
+        self.assert_already_exists_error(
+            "REMOTE_CONFLICT", "different", {"remote-addr": "REMOTE_CONFLICT",}
+        )
+
 
 class ValidateOptions(TestCase):
     @staticmethod
     def validate(options, name="some_name"):
         return guest_node.validate_set_as_guest(
-            etree.fromstring('<cib/>'),
+            etree.fromstring("<cib/>"),
             ["EXISTING-HOST-NAME"],
             ["EXISTING-HOST-RING0", "EXISTING-HOST-RING0"],
             name,
-            options
+            options,
         )
 
     def test_no_report_on_valid(self):
-        self.assertEqual(
-            [],
-            self.validate({}, "node1")
-        )
+        self.assertEqual([], self.validate({}, "node1"))
 
     def test_report_invalid_option(self):
         assert_report_item_list_equal(
@@ -145,9 +145,9 @@ class ValidateOptions(TestCase):
                         "allowed": sorted(guest_node.GUEST_OPTIONS),
                         "allowed_patterns": [],
                     },
-                    None
+                    None,
                 ),
-            ]
+            ],
         )
 
     def test_report_invalid_interval(self):
@@ -166,9 +166,9 @@ class ValidateOptions(TestCase):
                         "cannot_be_empty": False,
                         "forbidden_characters": None,
                     },
-                    None
+                    None,
                 ),
-            ]
+            ],
         )
 
     def test_report_invalid_node_name(self):
@@ -178,43 +178,44 @@ class ValidateOptions(TestCase):
                 (
                     severities.ERROR,
                     report_codes.ID_ALREADY_EXISTS,
-                    {
-                        "id": "EXISTING-HOST-NAME",
-                    },
-                    None
+                    {"id": "EXISTING-HOST-NAME",},
+                    None,
                 ),
-            ]
+            ],
         )
 
 
 class ValidateIsNotGuest(TestCase):
-    #guest_node.is_guest_node is tested here as well
+    # guest_node.is_guest_node is tested here as well
     def test_no_report_on_non_guest(self):
         self.assertEqual(
             [],
-            guest_node.validate_is_not_guest(etree.fromstring("<primitive/>"))
+            guest_node.validate_is_not_guest(etree.fromstring("<primitive/>")),
         )
 
     def test_report_when_is_guest(self):
         assert_report_item_list_equal(
-            guest_node.validate_is_not_guest(etree.fromstring("""
+            guest_node.validate_is_not_guest(
+                etree.fromstring(
+                    """
                 <primitive id="resource_id">
                     <meta_attributes>
                         <nvpair name="remote-node" value="node1" />
                     </meta_attributes>
                 </primitive>
-            """)),
+            """
+                )
+            ),
             [
                 (
                     severities.ERROR,
                     report_codes.RESOURCE_IS_GUEST_NODE_ALREADY,
-                    {
-                        "resource_id": "resource_id",
-                    },
-                    None
+                    {"resource_id": "resource_id",},
+                    None,
                 ),
-            ]
+            ],
         )
+
 
 class SetAsGuest(TestCase):
     def test_set_guest_meta_correctly(self):
@@ -223,7 +224,7 @@ class SetAsGuest(TestCase):
             resource_element,
             IdProvider(resource_element),
             "node1",
-            connect_timeout="10"
+            connect_timeout="10",
         )
         assert_xml_equal(
             etree.tostring(resource_element).decode(),
@@ -238,12 +239,14 @@ class SetAsGuest(TestCase):
                         />
                     </meta_attributes>
                 </primitive>
-            """
+            """,
         )
+
 
 class UnsetGuest(TestCase):
     def test_unset_all_guest_attributes(self):
-        resource_element = etree.fromstring("""
+        resource_element = etree.fromstring(
+            """
             <primitive id="A">
                 <meta_attributes id="B">
                     <nvpair id="C" name="remote-node" value="node1"/>
@@ -253,7 +256,8 @@ class UnsetGuest(TestCase):
                     <nvpair id="G" name="a" value="b"/>
                 </meta_attributes>
             </primitive>
-        """)
+        """
+        )
         guest_node.unset_guest(resource_element)
         assert_xml_equal(
             etree.tostring(resource_element).decode(),
@@ -263,11 +267,12 @@ class UnsetGuest(TestCase):
                         <nvpair id="G" name="a" value="b"/>
                     </meta_attributes>
                 </primitive>
-            """
+            """,
         )
 
     def test_unset_all_guest_attributes_and_empty_meta_tag(self):
-        resource_element = etree.fromstring("""
+        resource_element = etree.fromstring(
+            """
             <primitive id="A">
                 <meta_attributes id="B">
                     <nvpair id="C" name="remote-node" value="node1"/>
@@ -276,7 +281,8 @@ class UnsetGuest(TestCase):
                     <nvpair id="F" name="remote-connect-timeout" value="10"/>
                 </meta_attributes>
             </primitive>
-        """)
+        """
+        )
         guest_node.unset_guest(resource_element)
         assert_xml_equal(
             etree.tostring(resource_element).decode(),
@@ -284,15 +290,14 @@ class UnsetGuest(TestCase):
             <primitive id="A">
                 <meta_attributes id="B" />
             </primitive>
-            """
+            """,
         )
 
 
 class FindNodeList(TestCase, SetupPatchMixin):
     def assert_nodes_equals(self, xml, expected_nodes):
         self.assertEqual(
-            expected_nodes,
-            guest_node.find_node_list(etree.fromstring(xml))
+            expected_nodes, guest_node.find_node_list(etree.fromstring(xml))
         )
 
     def test_get_no_nodes_when_no_primitives(self):
@@ -309,8 +314,7 @@ class FindNodeList(TestCase, SetupPatchMixin):
                 </primitive>
             </resources>
             """,
-            [
-            ]
+            [],
         )
 
     def test_get_multiple_nodes(self):
@@ -330,46 +334,53 @@ class FindNodeList(TestCase, SetupPatchMixin):
                 </primitive>
             </resources>
             """,
-            [
-                PacemakerNode("G1", "G1addr"),
-                PacemakerNode("G2", "G2"),
-            ]
+            [PacemakerNode("G1", "G1addr"), PacemakerNode("G2", "G2"),],
         )
+
 
 class GetNodeNameFromResource(TestCase):
     def assert_find_name(self, name, xml):
         self.assertEqual(
-            name,
-            guest_node.get_node_name_from_resource(etree.fromstring(xml))
+            name, guest_node.get_node_name_from_resource(etree.fromstring(xml))
         )
 
     def test_return_name_ignore_remote_addr(self):
-        self.assert_find_name("NODE", """
+        self.assert_find_name(
+            "NODE",
+            """
             <primitive>
                 <meta_attributes>
                     <nvpair name="remote-node" value="NODE" />
                     <nvpair name="remote-addr" value="HOST" />
                 </meta_attributes>
             </primitive>
-        """)
+        """,
+        )
 
     def test_return_name_from_remote_node(self):
-        self.assert_find_name("HOST", """
+        self.assert_find_name(
+            "HOST",
+            """
             <primitive>
                 <meta_attributes>
                     <nvpair name="remote-node" value="HOST" />
                 </meta_attributes>
             </primitive>
-        """)
+        """,
+        )
 
     def test_return_none(self):
-        self.assert_find_name(None, """
+        self.assert_find_name(
+            None,
+            """
             <primitive>
                 <meta_attributes>
                     <nvpair name="any" value="HOST" />
                 </meta_attributes>
             </primitive>
-        """)
+        """,
+        )
+
 
 class FindNodeResources(TestCase):
     def assert_return_resources(
@@ -409,7 +420,7 @@ class FindNodeResources(TestCase):
         self.assert_return_resources(
             "RESOURCE_ID",
             '<resources><primitive id="RESOURCE_ID"/></resources>',
-            found=False
+            found=False,
         )
 
     def test_remote_node_meta_is_enough_1(self):
@@ -423,7 +434,7 @@ class FindNodeResources(TestCase):
                         </meta_attributes>
                     </primitive>
                 </resources>
-            """
+            """,
         )
 
     def test_remote_node_meta_is_enough_2(self):
@@ -437,7 +448,7 @@ class FindNodeResources(TestCase):
                         </meta_attributes>
                     </primitive>
                 </resources>
-            """
+            """,
         )
 
     def test_remote_addr_is_not_enough_1(self):
@@ -452,7 +463,7 @@ class FindNodeResources(TestCase):
                     </primitive>
                 </resources>
             """,
-            found=False
+            found=False,
         )
 
     def test_remote_addr_is_not_enough_2(self):
@@ -467,5 +478,5 @@ class FindNodeResources(TestCase):
                     </primitive>
                 </resources>
             """,
-            found=False
+            found=False,
         )

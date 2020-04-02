@@ -30,7 +30,7 @@ stonith_cmd = create_router(
                 "verify": stonith.stonith_level_verify_cmd,
             },
             ["stonith", "level"],
-            default_cmd="config"
+            default_cmd="config",
         ),
         "fence": stonith.stonith_fence,
         "cleanup": resource.resource_cleanup,
@@ -47,7 +47,7 @@ stonith_cmd = create_router(
                         "setup": stonith.sbd_setup_block_device,
                         "message": stonith.sbd_message,
                     },
-                    ["stonith", "sbd", "device"]
+                    ["stonith", "sbd", "device"],
                 ),
                 "watchdog": create_router(
                     {
@@ -56,12 +56,12 @@ stonith_cmd = create_router(
                         # internal use only
                         "list_json": stonith.sbd_watchdog_list_json,
                     },
-                    ["stonith", "sbd", "watchdog"]
+                    ["stonith", "sbd", "watchdog"],
                 ),
                 # internal use only
                 "local_config_in_json": stonith.local_sbd_config,
             },
-            ["stonith", "sbd"]
+            ["stonith", "sbd"],
         ),
         "enable": resource.resource_enable_cmd,
         "disable": resource.resource_disable_cmd,
@@ -72,11 +72,11 @@ stonith_cmd = create_router(
                 "update": stonith.stonith_history_update_cmd,
             },
             ["stonith", "history"],
-            default_cmd="show"
+            default_cmd="show",
         ),
         # internal use only
         "get_fence_agent_info": stonith.get_fence_agent_info,
     },
     ["stonith"],
-    default_cmd="status"
+    default_cmd="status",
 )

@@ -18,8 +18,10 @@ class CheckCorosyncOffline(
     SkipOfflineMixin, AllSameDataMixin, AllAtOnceStrategyMixin, RunRemotelyBase
 ):
     def __init__(
-        self, report_processor,
-        skip_offline_targets=False, allow_skip_offline=True,
+        self,
+        report_processor,
+        skip_offline_targets=False,
+        allow_skip_offline=True,
     ):
         super(CheckCorosyncOffline, self).__init__(report_processor)
         if allow_skip_offline:
@@ -32,18 +34,21 @@ class CheckCorosyncOffline(
         report_item = self._get_response_report(response)
         node_label = response.request.target.label
         if report_item is not None:
-            self._report_list([
-                report_item,
-                ReportItem(
-                    severity=ReportItemSeverity(
-                        self._failure_severity,
-                        self._failure_forceable,
+            self._report_list(
+                [
+                    report_item,
+                    ReportItem(
+                        severity=ReportItemSeverity(
+                            self._failure_severity, self._failure_forceable,
+                        ),
+                        message=(
+                            reports.messages.CorosyncNotRunningCheckNodeError(
+                                node_label,
+                            )
+                        ),
                     ),
-                    message=reports.messages.CorosyncNotRunningCheckNodeError(
-                        node_label,
-                    )
-                )
-            ])
+                ]
+            )
             return
         try:
             status = response.data
@@ -58,20 +63,17 @@ class CheckCorosyncOffline(
         except (KeyError, json.JSONDecodeError):
             report_item = ReportItem(
                 severity=ReportItemSeverity(
-                    self._failure_severity,
-                    self._failure_forceable,
+                    self._failure_severity, self._failure_forceable,
                 ),
                 message=reports.messages.CorosyncNotRunningCheckNodeError(
                     node_label,
-                )
+                ),
             )
         self._report(report_item)
 
     def before(self):
         self._report(
-            ReportItem.info(
-                reports.messages.CorosyncNotRunningCheckStarted()
-            )
+            ReportItem.info(reports.messages.CorosyncNotRunningCheckStarted())
         )
 
 
@@ -79,7 +81,10 @@ class DistributeCorosyncConf(
     SkipOfflineMixin, AllSameDataMixin, AllAtOnceStrategyMixin, RunRemotelyBase
 ):
     def __init__(
-        self, report_processor, config_text, skip_offline_targets=False,
+        self,
+        report_processor,
+        config_text,
+        skip_offline_targets=False,
         allow_skip_offline=True,
     ):
         super(DistributeCorosyncConf, self).__init__(report_processor)
@@ -102,19 +107,20 @@ class DistributeCorosyncConf(
                 )
             )
         else:
-            self._report_list([
-                report_item,
-                ReportItem(
-                    severity=ReportItemSeverity(
-                        self._failure_severity,
-                        self._failure_forceable,
+            self._report_list(
+                [
+                    report_item,
+                    ReportItem(
+                        severity=ReportItemSeverity(
+                            self._failure_severity, self._failure_forceable,
+                        ),
+                        # pylint: disable=line-too-long
+                        message=reports.messages.CorosyncConfigDistributionNodeError(
+                            node_label,
+                        ),
                     ),
-                    # pylint: disable=line-too-long
-                    message=reports.messages.CorosyncConfigDistributionNodeError(
-                        node_label,
-                    ),
-                )
-            ])
+                ]
+            )
 
     def before(self):
         self._report(
@@ -164,17 +170,14 @@ class ReloadCorosyncConf(
                 self._report(
                     ReportItem.warning(
                         reports.messages.CorosyncConfigReloadError(
-                            output["message"],
-                            node=node,
+                            output["message"], node=node,
                         )
                     )
                 )
         except (ValueError, LookupError):
             self.__has_failures = True
             self._report(
-                ReportItem.warning(
-                    reports.messages.InvalidResponseFormat(node)
-                )
+                ReportItem.warning(reports.messages.InvalidResponseFormat(node))
             )
 
         return self._get_next_list()
@@ -188,9 +191,7 @@ class ReloadCorosyncConf(
             )
 
 
-class GetCorosyncConf(
-    AllSameDataMixin, OneByOneStrategyMixin, RunRemotelyBase
-):
+class GetCorosyncConf(AllSameDataMixin, OneByOneStrategyMixin, RunRemotelyBase):
     __was_successful = False
     __has_failures = False
     __corosync_conf = None

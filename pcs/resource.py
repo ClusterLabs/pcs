@@ -39,7 +39,7 @@ from pcs.lib.cib.resource import (
     primitive,
 )
 from pcs.lib.cib.tools import get_resources
-from pcs.lib.commands.resource import(
+from pcs.lib.commands.resource import (
     _validate_guest_change,
     _get_nodes_to_validate_against,
 )
@@ -49,9 +49,7 @@ from pcs.lib.pacemaker.state import (
     get_cluster_state_dom,
     get_resource_state,
 )
-from pcs.lib.pacemaker.values import (
-    timeout_to_seconds,
-)
+from pcs.lib.pacemaker.values import timeout_to_seconds
 import pcs.lib.resource_agent as lib_ra
 
 # pylint: disable=invalid-name
@@ -61,6 +59,7 @@ import pcs.lib.resource_agent as lib_ra
 # pylint: disable=too-many-statements
 
 RESOURCE_RELOCATE_CONSTRAINT_PREFIX = "pcs-relocate-"
+
 
 def _detect_guest_change(meta_attributes, allow_not_suitable_command):
     """
@@ -72,13 +71,14 @@ def _detect_guest_change(meta_attributes, allow_not_suitable_command):
 
     env = utils.get_lib_env()
     cib = env.get_cib()
-    existing_nodes_names, existing_nodes_addrs, report_list = (
-        _get_nodes_to_validate_against(env, cib)
-    )
+    (
+        existing_nodes_names,
+        existing_nodes_addrs,
+        report_list,
+    ) = _get_nodes_to_validate_against(env, cib)
     if env.report_processor.report_list(
         report_list
-        +
-        _validate_guest_change(
+        + _validate_guest_change(
             cib,
             existing_nodes_names,
             existing_nodes_addrs,
@@ -114,9 +114,7 @@ def resource_defaults_cmd(lib, argv, modifiers):
     if not argv:
         print("\n".join(show_defaults(utils.get_cib_dom(), "rsc_defaults")))
     else:
-        lib.cib_options.set_resources_defaults(
-            prepare_options(argv)
-        )
+        lib.cib_options.set_resources_defaults(prepare_options(argv))
 
 
 def resource_op_defaults_cmd(lib, argv, modifiers):
@@ -128,9 +126,8 @@ def resource_op_defaults_cmd(lib, argv, modifiers):
     if not argv:
         print("\n".join(show_defaults(utils.get_cib_dom(), "op_defaults")))
     else:
-        lib.cib_options.set_operations_defaults(
-            prepare_options(argv)
-        )
+        lib.cib_options.set_operations_defaults(prepare_options(argv))
+
 
 def resource_op_add_cmd(lib, argv, modifiers):
     """
@@ -144,10 +141,9 @@ def resource_op_add_cmd(lib, argv, modifiers):
         raise CmdLineInputError()
     res_id = argv.pop(0)
     utils.replace_cib_configuration(
-        resource_operation_add(
-            utils.get_cib_dom(), res_id, argv
-        )
+        resource_operation_add(utils.get_cib_dom(), res_id, argv)
     )
+
 
 def resource_op_delete_cmd(lib, argv, modifiers):
     """
@@ -160,6 +156,7 @@ def resource_op_delete_cmd(lib, argv, modifiers):
         raise CmdLineInputError()
     res_id = argv.pop(0)
     resource_operation_remove(res_id, argv)
+
 
 def parse_resource_options(argv):
     """
@@ -221,10 +218,14 @@ def resource_list_available(lib, argv, modifiers):
         name = agent_info["name"]
         shortdesc = agent_info["shortdesc"]
         if shortdesc:
-            print("{0} - {1}".format(
-                name,
-                _format_desc(len(name + " - "), shortdesc.replace("\n", " "))
-            ))
+            print(
+                "{0} - {1}".format(
+                    name,
+                    _format_desc(
+                        len(name + " - "), shortdesc.replace("\n", " ")
+                    ),
+                )
+            )
         else:
             print(name)
 
@@ -239,10 +240,12 @@ def resource_list_options(lib, argv, modifiers):
         raise CmdLineInputError()
     agent_name = argv[0]
 
-    print(_format_agent_description(
-        lib.resource_agent.describe_agent(agent_name),
-        show_all=modifiers.get("--full")
-    ))
+    print(
+        _format_agent_description(
+            lib.resource_agent.describe_agent(agent_name),
+            show_all=modifiers.get("--full"),
+        )
+    )
 
 
 def _format_agent_description(description, stonith=False, show_all=False):
@@ -252,13 +255,14 @@ def _format_agent_description(description, stonith=False, show_all=False):
     output = []
 
     if description.get("name") and description.get("shortdesc"):
-        output.append("{0} - {1}".format(
-            description["name"],
-            _format_desc(
-                len(description["name"] + " - "),
-                description["shortdesc"]
+        output.append(
+            "{0} - {1}".format(
+                description["name"],
+                _format_desc(
+                    len(description["name"] + " - "), description["shortdesc"]
+                ),
             )
-        ))
+        )
     elif description.get("name"):
         output.append(description["name"])
     elif description.get("shortdesc"):
@@ -281,24 +285,30 @@ def _format_agent_description(description, stonith=False, show_all=False):
             param_obsoletes = param.get("obsoletes", None)
             param_deprecated = param.get("deprecated", False)
             param_deprecated_by = param.get("deprecated_by", [])
-            param_title = " ".join(filter(None, [
-                param.get("name"),
-                # only show deprecated if not showing deprecated by
-                "(deprecated)"
-                    if show_all and param_deprecated and not param_deprecated_by
-                    else None
-                ,
-                "(deprecated by {0})".format(", ".join(param_deprecated_by))
-                    if show_all and param_deprecated_by
-                    else None
-                ,
-                "(obsoletes {0})".format(param_obsoletes)
-                    if show_all and param_obsoletes
-                    else None
-                ,
-                "(required)" if param.get("required", False) else None,
-                "(unique)" if param.get("unique", False) else None,
-            ]))
+            param_title = " ".join(
+                filter(
+                    None,
+                    [
+                        param.get("name"),
+                        # only show deprecated if not showing deprecated by
+                        "(deprecated)"
+                        if show_all
+                        and param_deprecated
+                        and not param_deprecated_by
+                        else None,
+                        "(deprecated by {0})".format(
+                            ", ".join(param_deprecated_by)
+                        )
+                        if show_all and param_deprecated_by
+                        else None,
+                        "(obsoletes {0})".format(param_obsoletes)
+                        if show_all and param_obsoletes
+                        else None,
+                        "(required)" if param.get("required", False) else None,
+                        "(unique)" if param.get("unique", False) else None,
+                    ],
+                )
+            )
             param_desc = param.get("longdesc", "").replace("\n", " ")
             if not param_desc:
                 param_desc = param.get("shortdesc", "").replace("\n", " ")
@@ -306,10 +316,11 @@ def _format_agent_description(description, stonith=False, show_all=False):
                     param_desc = "No description available"
             if param.get("pcs_deprecated_warning"):
                 param_desc += " WARNING: " + param["pcs_deprecated_warning"]
-            output_params.append("  {0}: {1}".format(
-                param_title,
-                _format_desc(len(param_title) + 4, param_desc)
-            ))
+            output_params.append(
+                "  {0}: {1}".format(
+                    param_title, _format_desc(len(param_title) + 4, param_desc)
+                )
+            )
         if output_params:
             output.append("")
             if stonith:
@@ -322,11 +333,13 @@ def _format_agent_description(description, stonith=False, show_all=False):
         output_actions = []
         for action in description["default_actions"]:
             parts = ["  {0}:".format(action.get("name", ""))]
-            parts.extend([
-                u"{0}={1}".format(name, value)
-                for name, value in sorted(action.items())
-                if name != "name"
-            ])
+            parts.extend(
+                [
+                    "{0}={1}".format(name, value)
+                    for name, value in sorted(action.items())
+                    if name != "name"
+                ]
+            )
             output_actions.append(" ".join(parts))
         if output_actions:
             output.append("")
@@ -361,6 +374,7 @@ def _format_desc(indentation, desc):
 
     return output.rstrip()
 
+
 def resource_create(lib, argv, modifiers):
     """
     Options:
@@ -377,8 +391,14 @@ def resource_create(lib, argv, modifiers):
       * -f - CIB file
     """
     modifiers.ensure_only_supported(
-        "--before", "--after", "--group", "--force", "--disabled",
-        "--no-default-ops", "--wait", "-f",
+        "--before",
+        "--after",
+        "--group",
+        "--force",
+        "--disabled",
+        "--no-default-ops",
+        "--wait",
+        "-f",
     )
     if len(argv) < 2:
         raise CmdLineInputError()
@@ -392,9 +412,10 @@ def resource_create(lib, argv, modifiers):
     defined_options = [opt for opt in parts_sections if opt in parts]
     if modifiers.is_specified("--group"):
         defined_options.append("group")
-    if len(
-        set(defined_options).intersection(set(parts_sections + ["group"]))
-    ) > 1:
+    if (
+        len(set(defined_options).intersection(set(parts_sections + ["group"])))
+        > 1
+    ):
         raise error(
             "you can specify only one of {0} or --group".format(
                 ", ".join(parts_sections)
@@ -405,10 +426,13 @@ def resource_create(lib, argv, modifiers):
         raise error("you have to specify exactly one bundle")
 
     if modifiers.is_specified("--before") and modifiers.is_specified("--after"):
-        raise error("you cannot specify both --before and --after{0}".format(
-            "" if modifiers.is_specified("--group")
-            else " and you have to specify --group"
-        ))
+        raise error(
+            "you cannot specify both --before and --after{0}".format(
+                ""
+                if modifiers.is_specified("--group")
+                else " and you have to specify --group"
+            )
+        )
 
     if not modifiers.is_specified("--group"):
         if modifiers.is_specified("--before"):
@@ -433,36 +457,44 @@ def resource_create(lib, argv, modifiers):
 
     if "clone" in parts:
         lib.resource.create_as_clone(
-            ra_id, ra_type, parts["op"],
+            ra_id,
+            ra_type,
+            parts["op"],
             parts["meta"],
             parts["options"],
             parts["clone"],
-            **settings
+            **settings,
         )
     elif "promotable" in parts:
         lib.resource.create_as_clone(
-            ra_id, ra_type, parts["op"],
+            ra_id,
+            ra_type,
+            parts["op"],
             parts["meta"],
             parts["options"],
             dict(**parts["promotable"], promotable="true"),
-            **settings
+            **settings,
         )
     elif "bundle" in parts:
         settings["allow_not_accessible_resource"] = modifiers.get("--force")
         lib.resource.create_into_bundle(
-            ra_id, ra_type, parts["op"],
+            ra_id,
+            ra_type,
+            parts["op"],
             parts["meta"],
             parts["options"],
             parts["bundle"][0],
-            **settings
+            **settings,
         )
 
     elif not modifiers.is_specified("--group"):
         lib.resource.create(
-            ra_id, ra_type, parts["op"],
+            ra_id,
+            ra_type,
+            parts["op"],
             parts["meta"],
             parts["options"],
-            **settings
+            **settings,
         )
     else:
         adjacent_resource_id = None
@@ -475,13 +507,17 @@ def resource_create(lib, argv, modifiers):
             put_after_adjacent = False
 
         lib.resource.create_in_group(
-            ra_id, ra_type, modifiers.get("--group"), parts["op"],
+            ra_id,
+            ra_type,
+            modifiers.get("--group"),
+            parts["op"],
             parts["meta"],
             parts["options"],
             adjacent_resource_id=adjacent_resource_id,
             put_after_adjacent=put_after_adjacent,
-            **settings
+            **settings,
         )
+
 
 def _parse_resource_move_ban(argv):
     resource_id = argv.pop(0)
@@ -500,6 +536,7 @@ def _parse_resource_move_ban(argv):
         else:
             raise CmdLineInputError()
     return resource_id, node, lifetime
+
 
 def resource_move(lib, argv, modifiers):
     """
@@ -524,6 +561,7 @@ def resource_move(lib, argv, modifiers):
         wait=modifiers.get("--wait"),
     )
 
+
 def resource_ban(lib, argv, modifiers):
     """
     Options:
@@ -546,6 +584,7 @@ def resource_ban(lib, argv, modifiers):
         lifetime=lifetime,
         wait=modifiers.get("--wait"),
     )
+
 
 def resource_unmove_unban(lib, argv, modifiers):
     """
@@ -619,9 +658,12 @@ def resource_agents(lib, argv, modifiers):
     if agents:
         print("\n".join(agents))
     else:
-        utils.err("No agents found{0}".format(
-            " for {0}".format(argv[0]) if argv else ""
-        ))
+        utils.err(
+            "No agents found{0}".format(
+                " for {0}".format(argv[0]) if argv else ""
+            )
+        )
+
 
 # Update a resource, removing any args that are empty and adding/updating
 # args that are not empty
@@ -678,7 +720,7 @@ def resource_update(lib, args, modifiers, deal_with_guest_change=True):
                 utils.cmd_runner(),
                 lib_ra.ResourceAgentName(
                     resClass, resProvider, resType
-                ).full_name
+                ).full_name,
             )
         report_list = primitive.validate_resource_instance_attributes_update(
             metadata,
@@ -691,7 +733,8 @@ def resource_update(lib, args, modifiers, deal_with_guest_change=True):
             process_library_reports(report_list)
     except lib_ra.ResourceAgentError as e:
         severity = (
-            ReportItemSeverity.WARNING if modifiers.get("--force")
+            ReportItemSeverity.WARNING
+            if modifiers.get("--force")
             else ReportItemSeverity.ERROR
         )
         process_library_reports(
@@ -704,10 +747,8 @@ def resource_update(lib, args, modifiers, deal_with_guest_change=True):
 
     remote_node_name = utils.dom_get_resource_remote_node_name(resource)
 
-    if (
-        remote_node_name
-        ==
-        guest_node.get_guest_option_value(prepare_options(meta_values))
+    if remote_node_name == guest_node.get_guest_option_value(
+        prepare_options(meta_values)
     ):
         deal_with_guest_change = False
 
@@ -724,13 +765,11 @@ def resource_update(lib, args, modifiers, deal_with_guest_change=True):
     # "res_id" is an id of the primitive.
     if deal_with_guest_change:
         _detect_guest_change(
-            prepare_options(meta_values),
-            modifiers.get("--force"),
+            prepare_options(meta_values), modifiers.get("--force"),
         )
 
     utils.dom_update_meta_attr(
-        resource,
-        utils.convert_args_to_tuples(meta_values)
+        resource, utils.convert_args_to_tuples(meta_values)
     )
 
     operations = resource.getElementsByTagName("operations")
@@ -745,7 +784,7 @@ def resource_update(lib, args, modifiers, deal_with_guest_change=True):
             continue
 
         op_name = element[0]
-        if op_name.find('=') != -1:
+        if op_name.find("=") != -1:
             utils.err(
                 "%s does not appear to be a valid operation action" % op_name
             )
@@ -776,22 +815,25 @@ def resource_update(lib, args, modifiers, deal_with_guest_change=True):
         if updating_op:
             updating_op.parentNode.removeChild(updating_op)
         dom = resource_operation_add(
-            dom, res_id, element, validate_strict=False,
-            before_op=updating_op_before
+            dom,
+            res_id,
+            element,
+            validate_strict=False,
+            before_op=updating_op_before,
         )
 
     utils.replace_cib_configuration(dom)
 
     if (
         remote_node_name
-        and
-        remote_node_name != utils.dom_get_resource_remote_node_name(resource)
+        and remote_node_name
+        != utils.dom_get_resource_remote_node_name(resource)
     ):
         # if the resource was a remote node and it is not anymore, (or its name
         # changed) we need to tell pacemaker about it
-        output, retval = utils.run([
-            "crm_node", "--force", "--remove", remote_node_name
-        ])
+        output, retval = utils.run(
+            ["crm_node", "--force", "--remove", remote_node_name]
+        )
 
     if modifiers.is_specified("--wait"):
         args = ["crm_resource", "--wait"]
@@ -811,9 +853,8 @@ def resource_update(lib, args, modifiers, deal_with_guest_change=True):
             utils.err("\n".join(msg).strip())
     return None
 
-def resource_update_clone(
-    dom, clone, res_id, args, wait, wait_timeout
-):
+
+def resource_update_clone(dom, clone, res_id, args, wait, wait_timeout):
     """
     Commandline options:
       * -f - CIB file
@@ -843,6 +884,7 @@ def resource_update_clone(
 
     return dom
 
+
 def transform_master_to_clone(master_element):
     # create a new clone element with the same id
     dom = master_element.ownerDocument
@@ -858,6 +900,7 @@ def transform_master_to_clone(master_element):
     # set meta to make the clone promotable
     utils.dom_update_meta_attr(clone_element, [("promotable", "true")])
     return clone_element
+
 
 def resource_operation_add(
     dom, res_id, argv, validate_strict=True, before_op=None
@@ -878,13 +921,22 @@ def resource_operation_add(
     op_properties = utils.convert_args_to_tuples(argv)
 
     if "=" in op_name:
-        utils.err(
-            "%s does not appear to be a valid operation action" % op_name
-        )
+        utils.err("%s does not appear to be a valid operation action" % op_name)
     if "--force" not in utils.pcs_options:
-        valid_attrs = ["id", "name", "interval", "description", "start-delay",
-            "interval-origin", "timeout", "enabled", "record-pending", "role",
-            "on-fail", "OCF_CHECK_LEVEL"]
+        valid_attrs = [
+            "id",
+            "name",
+            "interval",
+            "description",
+            "start-delay",
+            "interval-origin",
+            "timeout",
+            "enabled",
+            "record-pending",
+            "role",
+            "on-fail",
+            "OCF_CHECK_LEVEL",
+        ]
         valid_roles = ["Stopped", "Started", "Slave", "Master"]
         for key, value in op_properties:
             if key not in valid_attrs:
@@ -916,7 +968,7 @@ def resource_operation_add(
         if name == "id":
             op_id = value
             generate_id = False
-            id_valid, id_error = utils.validate_xml_id(value, 'operation id')
+            id_valid, id_error = utils.validate_xml_id(value, "operation id")
             if not id_valid:
                 utils.err(id_error)
             if utils.does_id_exist(dom, value):
@@ -959,13 +1011,11 @@ def resource_operation_add(
                 "operation %s with interval %ss already specified for %s:\n%s"
                 % (
                     op_el.getAttribute("name"),
-                    timeout_to_seconds(
-                        op_el.getAttribute("interval"), True
-                    ),
+                    timeout_to_seconds(op_el.getAttribute("interval"), True),
                     res_id,
-                    "\n".join([
-                        operation_to_string(op) for op in duplicate_op_list
-                    ])
+                    "\n".join(
+                        [operation_to_string(op) for op in duplicate_op_list]
+                    ),
                 )
             )
         if validate_strict and "--force" not in utils.pcs_options:
@@ -973,18 +1023,26 @@ def resource_operation_add(
                 operations, op_el
             )
             if duplicate_op_list:
-                msg = ("operation {action} already specified for {res}"
-                    + ", use --force to override:\n{op}")
-                utils.err(msg.format(
-                    action=op_el.getAttribute("name"),
-                    res=res_id,
-                    op="\n".join([
-                        operation_to_string(op) for op in duplicate_op_list
-                    ])
-                ))
+                msg = (
+                    "operation {action} already specified for {res}"
+                    + ", use --force to override:\n{op}"
+                )
+                utils.err(
+                    msg.format(
+                        action=op_el.getAttribute("name"),
+                        res=res_id,
+                        op="\n".join(
+                            [
+                                operation_to_string(op)
+                                for op in duplicate_op_list
+                            ]
+                        ),
+                    )
+                )
 
     operations.insertBefore(op_el, before_op)
     return dom
+
 
 def resource_operation_remove(res_id, argv):
     """
@@ -1028,17 +1086,16 @@ def resource_operation_remove(res_id, argv):
         remove_all = True
 
     op_properties = utils.convert_args_to_tuples(argv)
-    op_properties.append(('name', op_name))
+    op_properties.append(("name", op_name))
     found_match = False
     for op in resource_el.getElementsByTagName("op"):
         temp_properties = []
         for attrName in op.attributes.keys():
             if attrName == "id":
                 continue
-            temp_properties.append(tuple([
-                attrName,
-                op.attributes.get(attrName).nodeValue
-            ]))
+            temp_properties.append(
+                tuple([attrName, op.attributes.get(attrName).nodeValue])
+            )
 
         if remove_all and op.attributes["name"].value == op_name:
             found_match = True
@@ -1055,6 +1112,7 @@ def resource_operation_remove(res_id, argv):
 
     utils.replace_cib_configuration(dom)
 
+
 def resource_meta(lib, argv, modifiers):
     """
     Options:
@@ -1068,8 +1126,7 @@ def resource_meta(lib, argv, modifiers):
         raise CmdLineInputError()
     res_id = argv.pop(0)
     _detect_guest_change(
-        prepare_options(argv),
-        modifiers.get("--force"),
+        prepare_options(argv), modifiers.get("--force"),
     )
 
     dom = utils.get_cib_dom()
@@ -1092,14 +1149,14 @@ def resource_meta(lib, argv, modifiers):
 
     if (
         remote_node_name
-        and
-        remote_node_name != utils.dom_get_resource_remote_node_name(resource_el)
+        and remote_node_name
+        != utils.dom_get_resource_remote_node_name(resource_el)
     ):
         # if the resource was a remote node and it is not anymore, (or its name
         # changed) we need to tell pacemaker about it
-        output, retval = utils.run([
-            "crm_node", "--force", "--remove", remote_node_name
-        ])
+        output, retval = utils.run(
+            ["crm_node", "--force", "--remove", remote_node_name]
+        )
 
     if modifiers.is_specified("--wait"):
         args = ["crm_resource", "--wait"]
@@ -1132,9 +1189,7 @@ def resource_group_rm_cmd(lib, argv, modifiers):
     group_name = argv.pop(0)
     resource_ids = argv
 
-    cib_dom = resource_group_rm(
-        utils.get_cib_dom(), group_name, resource_ids
-    )
+    cib_dom = resource_group_rm(utils.get_cib_dom(), group_name, resource_ids)
 
     if modifiers.is_specified("--wait"):
         wait_timeout = utils.validate_wait_get_timeout()
@@ -1153,6 +1208,7 @@ def resource_group_rm_cmd(lib, argv, modifiers):
             if output:
                 msg.append("\n" + output)
             utils.err("\n".join(msg).strip())
+
 
 def resource_group_add_cmd(lib, argv, modifiers):
     """
@@ -1186,8 +1242,9 @@ def resource_group_add_cmd(lib, argv, modifiers):
         resource_names,
         adjacent_resource_id=adjacent_name,
         put_after_adjacent=after_adjacent,
-        wait=modifiers.get("--wait")
+        wait=modifiers.get("--wait"),
     )
+
 
 def resource_clone(lib, argv, modifiers, promotable=False):
     """
@@ -1229,6 +1286,7 @@ def resource_clone(lib, argv, modifiers, promotable=False):
                 msg.append("\n" + output)
             utils.err("\n".join(msg).strip())
 
+
 def resource_clone_create(
     cib_dom, argv, update_existing=False, promotable=False
 ):
@@ -1238,10 +1296,8 @@ def resource_clone_create(
     name = argv.pop(0)
 
     resources_el = cib_dom.getElementsByTagName("resources")[0]
-    element = (
-        utils.dom_get_resource(resources_el, name)
-        or
-        utils.dom_get_group(resources_el, name)
+    element = utils.dom_get_resource(resources_el, name) or utils.dom_get_group(
+        resources_el, name
     )
     if not element:
         utils.err("unable to find group or resource: %s" % name)
@@ -1250,26 +1306,21 @@ def resource_clone_create(
         utils.err("cannot clone bundle resource")
 
     if not update_existing:
-        if (
-            utils.dom_get_resource_clone(cib_dom, name)
-            or
-            utils.dom_get_resource_masterslave(cib_dom, name)
-        ):
+        if utils.dom_get_resource_clone(
+            cib_dom, name
+        ) or utils.dom_get_resource_masterslave(cib_dom, name):
             utils.err("%s is already a clone resource" % name)
 
-        if (
-            utils.dom_get_group_clone(cib_dom, name)
-            or
-            utils.dom_get_group_masterslave(cib_dom, name)
-        ):
+        if utils.dom_get_group_clone(
+            cib_dom, name
+        ) or utils.dom_get_group_masterslave(cib_dom, name):
             utils.err("cannot clone a group that has already been cloned")
 
     # If element is currently in a group and it's the last member, we get rid
     # of the group
     if (
         element.parentNode.tagName == "group"
-        and
-        element.parentNode.getElementsByTagName("primitive").length <= 1
+        and element.parentNode.getElementsByTagName("primitive").length <= 1
     ):
         element.parentNode.parentNode.removeChild(element.parentNode)
 
@@ -1299,6 +1350,7 @@ def resource_clone_create(
 
     return cib_dom, clone.getAttribute("id")
 
+
 def resource_clone_master_remove(lib, argv, modifiers):
     """
     Options:
@@ -1317,10 +1369,8 @@ def resource_clone_master_remove(lib, argv, modifiers):
     # get the resource no matter if user entered a clone or a cloned resource
     resource = (
         utils.dom_get_resource(resources_el, name)
-        or
-        utils.dom_get_group(resources_el, name)
-        or
-        utils.dom_get_clone_ms_resource(resources_el, name)
+        or utils.dom_get_group(resources_el, name)
+        or utils.dom_get_clone_ms_resource(resources_el, name)
     )
     if not resource:
         utils.err("could not find resource: %s" % name)
@@ -1336,15 +1386,12 @@ def resource_clone_master_remove(lib, argv, modifiers):
     # remove the resource from the group and leave the clone itself alone
     # unless the resource is the last one in the group
     clone_child = utils.dom_get_clone_ms_resource(
-        resources_el,
-        clone.getAttribute("id")
+        resources_el, clone.getAttribute("id")
     )
     if (
         clone_child.tagName == "group"
-        and
-        resource.tagName != "group"
-        and
-        len(clone_child.getElementsByTagName("primitive")) > 1
+        and resource.tagName != "group"
+        and len(clone_child.getElementsByTagName("primitive")) > 1
     ):
         resource_group_rm(dom, clone_child.getAttribute("id"), [resource_id])
     else:
@@ -1370,6 +1417,7 @@ def resource_clone_master_remove(lib, argv, modifiers):
                 msg.append("\n" + output)
             utils.err("\n".join(msg).strip())
 
+
 def resource_remove_cmd(lib, argv, modifiers):
     """
     Options:
@@ -1382,6 +1430,7 @@ def resource_remove_cmd(lib, argv, modifiers):
         raise CmdLineInputError()
     resource_remove(argv[0])
 
+
 def resource_remove(resource_id, output=True, is_remove_remote_context=False):
     """
     Commandline options:
@@ -1390,12 +1439,13 @@ def resource_remove(resource_id, output=True, is_remove_remote_context=False):
       * --wait - is supported by resource_disable but waiting for resource to
         stop is handled also in this function
     """
+
     def is_bundle_running(bundle_id):
         roles_with_nodes = get_resource_state(
             get_cluster_state_dom(
                 lib_pacemaker.get_cluster_status_xml(utils.cmd_runner())
             ),
-            bundle_id
+            bundle_id,
         )
         return bool(roles_with_nodes)
 
@@ -1413,17 +1463,14 @@ def resource_remove(resource_id, output=True, is_remove_remote_context=False):
         else:
             print(
                 "Deleting bundle '{0}' and its inner resource '{1}'".format(
-                    resource_id,
-                    primitive_el.getAttribute("id")
+                    resource_id, primitive_el.getAttribute("id")
                 )
             )
 
         if (
             "--force" not in utils.pcs_options
-            and
-            not utils.usefile
-            and
-            is_bundle_running(resource_id)
+            and not utils.usefile
+            and is_bundle_running(resource_id)
         ):
             sys.stdout.write("Stopping bundle '{0}'... ".format(resource_id))
             sys.stdout.flush()
@@ -1434,8 +1481,7 @@ def resource_remove(resource_id, output=True, is_remove_remote_context=False):
             if is_bundle_running(resource_id):
                 msg = [
                     "Unable to stop: %s before deleting "
-                    "(re-run with --force to force deletion)"
-                    % resource_id
+                    "(re-run with --force to force deletion)" % resource_id
                 ]
                 if retval != 0 and output:
                     msg.append("\n" + output)
@@ -1448,19 +1494,21 @@ def resource_remove(resource_id, output=True, is_remove_remote_context=False):
             remove_resource_references(utils.get_cib_dom(), resource_id, output)
         )
         args = [
-            "cibadmin", "-o", "resources", "-D", "--xpath",
-            "//bundle[@id='{0}']".format(resource_id)
+            "cibadmin",
+            "-o",
+            "resources",
+            "-D",
+            "--xpath",
+            "//bundle[@id='{0}']".format(resource_id),
         ]
         dummy_cmdoutput, retVal = utils.run(args)
         if retVal != 0:
             utils.err("Unable to remove resource '{0}'".format(resource_id))
         return True
 
-    if utils.does_exist('//group[@id="'+resource_id+'"]'):
-        print(
-            f"Removing group: {resource_id} (and all resources within group)"
-        )
-        group = utils.get_cib_xpath('//group[@id="'+resource_id+'"]')
+    if utils.does_exist('//group[@id="' + resource_id + '"]'):
+        print(f"Removing group: {resource_id} (and all resources within group)")
+        group = utils.get_cib_xpath('//group[@id="' + resource_id + '"]')
         group_dom = parseString(group)
         print("Stopping all resources in group: %s..." % resource_id)
         resource_disable([resource_id])
@@ -1493,8 +1541,7 @@ def resource_remove(resource_id, output=True, is_remove_remote_context=False):
             if not stopped:
                 msg = [
                     "Unable to stop group: %s before deleting "
-                    "(re-run with --force to force deletion)"
-                    % resource_id
+                    "(re-run with --force to force deletion)" % resource_id
                 ]
                 if retval != 0 and output:
                     msg.append("\n" + output)
@@ -1510,7 +1557,7 @@ def resource_remove(resource_id, output=True, is_remove_remote_context=False):
     ):
         utils.err("Resource '{0}' does not exist.".format(resource_id))
 
-    group_xpath = '//group/primitive[@id="'+resource_id+'"]/..'
+    group_xpath = '//group/primitive[@id="' + resource_id + '"]/..'
     group = utils.get_cib_xpath(group_xpath)
     num_resources_in_group = 0
 
@@ -1521,12 +1568,10 @@ def resource_remove(resource_id, output=True, is_remove_remote_context=False):
 
     if (
         "--force" not in utils.pcs_options
-        and
-        not utils.usefile
-        and
-        utils.resource_running_on(resource_id)["is_running"]
+        and not utils.usefile
+        and utils.resource_running_on(resource_id)["is_running"]
     ):
-        sys.stdout.write("Attempting to stop: "+ resource_id + "... ")
+        sys.stdout.write("Attempting to stop: " + resource_id + "... ")
         sys.stdout.flush()
         lib = utils.get_library_wrapper()
         # we are not using wait from disable command, because if wait is not
@@ -1544,8 +1589,7 @@ def resource_remove(resource_id, output=True, is_remove_remote_context=False):
         if utils.resource_running_on(resource_id)["is_running"]:
             msg = [
                 "Unable to stop: %s before deleting "
-                "(re-run with --force to force deletion)"
-                % resource_id
+                "(re-run with --force to force deletion)" % resource_id
             ]
             if retval != 0 and output:
                 msg.append("\n" + output)
@@ -1567,19 +1611,28 @@ def resource_remove(resource_id, output=True, is_remove_remote_context=False):
             utils.replace_cib_configuration(dom)
             dom = utils.get_cib_dom()
 
-    if (group == "" or num_resources_in_group > 1):
+    if group == "" or num_resources_in_group > 1:
         master_xpath = f'//master/primitive[@id="{resource_id}"]/..'
         clone_xpath = f'//clone/primitive[@id="{resource_id}"]/..'
         if utils.get_cib_xpath(clone_xpath) != "":
             args = ["cibadmin", "-o", "resources", "-D", "--xpath", clone_xpath]
         elif utils.get_cib_xpath(master_xpath) != "":
             args = [
-                "cibadmin", "-o", "resources", "-D", "--xpath", master_xpath
+                "cibadmin",
+                "-o",
+                "resources",
+                "-D",
+                "--xpath",
+                master_xpath,
             ]
         else:
             args = [
-                "cibadmin", "-o", "resources", "-D", "--xpath",
-                f"//primitive[@id='{resource_id}']"
+                "cibadmin",
+                "-o",
+                "resources",
+                "-D",
+                "--xpath",
+                f"//primitive[@id='{resource_id}']",
             ]
         if output is True:
             print("Deleting Resource - " + resource_id)
@@ -1599,16 +1652,16 @@ def resource_remove(resource_id, output=True, is_remove_remote_context=False):
         if top_master != "":
             to_remove_xpath = top_master_xpath
             msg = "and group and M/S"
-            to_remove_dom = (
-                parseString(top_master).getElementsByTagName("master")
+            to_remove_dom = parseString(top_master).getElementsByTagName(
+                "master"
             )
             to_remove_id = to_remove_dom[0].getAttribute("id")
             utils.replace_cib_configuration(
                 remove_resource_references(
                     utils.get_cib_dom(),
-                    to_remove_dom[0].getElementsByTagName(
-                        "group"
-                    )[0].getAttribute("id")
+                    to_remove_dom[0]
+                    .getElementsByTagName("group")[0]
+                    .getAttribute("id"),
                 )
             )
         elif top_clone != "":
@@ -1619,9 +1672,9 @@ def resource_remove(resource_id, output=True, is_remove_remote_context=False):
             utils.replace_cib_configuration(
                 remove_resource_references(
                     utils.get_cib_dom(),
-                    to_remove_dom[0].getElementsByTagName(
-                        "group"
-                    )[0].getAttribute("id")
+                    to_remove_dom[0]
+                    .getElementsByTagName("group")[0]
+                    .getAttribute("id"),
                 )
             )
         else:
@@ -1638,7 +1691,7 @@ def resource_remove(resource_id, output=True, is_remove_remote_context=False):
 
         args = ["cibadmin", "-o", "resources", "-D", "--xpath", to_remove_xpath]
         if output is True:
-            print("Deleting Resource ("+msg+") - " + resource_id)
+            print("Deleting Resource (" + msg + ") - " + resource_id)
         dummy_cmdoutput, retVal = utils.run(args)
         if retVal != 0:
             if output is True:
@@ -1655,10 +1708,11 @@ def resource_remove(resource_id, output=True, is_remove_remote_context=False):
                 "stop and disable pacemaker_remote on the node(s) manually."
             )
         output, retval = utils.run(["crm_resource", "--wait"])
-        output, retval = utils.run([
-            "crm_node", "--force", "--remove", remote_node_name
-        ])
+        output, retval = utils.run(
+            ["crm_node", "--force", "--remove", remote_node_name]
+        )
     return True
+
 
 # moved to pcs.lib.cib.fencing_topology.remove_device_from_all_levels
 def stonith_level_rm_device(cib_dom, stn_id):
@@ -1696,6 +1750,7 @@ def remove_resource_references(
     lib_acl.dom_remove_permissions_referencing(dom, resource_id)
     return dom
 
+
 # This removes a resource from a group, but keeps it in the config
 def resource_group_rm(cib_dom, group_name, resource_ids):
     """
@@ -1708,7 +1763,6 @@ def resource_group_rm(cib_dom, group_name, resource_ids):
     group_match = utils.dom_get_group(dom, group_name)
     if not group_match:
         utils.err("Group '%s' does not exist" % group_name)
-
 
     resources_to_move = []
     if all_resources:
@@ -1741,10 +1795,8 @@ def resource_group_rm(cib_dom, group_name, resource_ids):
     res_in_group = len(group_match.getElementsByTagName("primitive"))
     if (
         is_cloned_group
-        and
-        res_in_group > 1
-        and
-        len(resources_to_move) == res_in_group
+        and res_in_group > 1
+        and len(resources_to_move) == res_in_group
     ):
         utils.err("Cannot remove all resources from a cloned group")
 
@@ -1760,6 +1812,7 @@ def resource_group_rm(cib_dom, group_name, resource_ids):
         remove_resource_references(dom, group_name, output=True)
 
     return cib_dom
+
 
 def resource_group_list(lib, argv, modifiers):
     """
@@ -1790,6 +1843,7 @@ def resource_group_list(lib, argv, modifiers):
         for resource in e.getElementsByTagName("primitive"):
             line_parts.append(resource.getAttribute("id"))
         print(" ".join(line_parts))
+
 
 def resource_show(lib, argv, modifiers, stonith=False):
     # TODO remove, deprecated command
@@ -1830,12 +1884,7 @@ def resource_show(lib, argv, modifiers, stonith=False):
                 "stonith" if stonith else "resource"
             )
         )
-        resource_config(
-            lib,
-            argv,
-            modifiers.get_subset("-f"),
-            stonith=stonith
-        )
+        resource_config(lib, argv, modifiers.get_subset("-f"), stonith=stonith)
         return
 
     warn(
@@ -1848,8 +1897,9 @@ def resource_show(lib, argv, modifiers, stonith=False):
         lib,
         argv,
         modifiers.get_subset("-f", "--hide-inactive"),
-        stonith=stonith
+        stonith=stonith,
     )
+
 
 def resource_status(lib, argv, modifiers, stonith=False):
     """
@@ -1864,34 +1914,37 @@ def resource_status(lib, argv, modifiers, stonith=False):
 
     monitor_command = ["crm_mon", "--one-shot"]
     if not modifiers.get("--hide-inactive"):
-        monitor_command.append('--inactive')
+        monitor_command.append("--inactive")
     output, retval = utils.run(monitor_command)
     if retval != 0:
-        utils.err("unable to get cluster status from crm_mon\n"+output.rstrip())
-    preg = re.compile(r'.*(stonith:.*)')
+        utils.err(
+            "unable to get cluster status from crm_mon\n" + output.rstrip()
+        )
+    preg = re.compile(r".*(stonith:.*)")
     resources_header = False
     in_resources = False
     has_resources = False
     no_resources_line = (
-        "NO stonith devices configured" if stonith
+        "NO stonith devices configured"
+        if stonith
         else "NO resources configured"
     )
-    for line in output.split('\n'):
-        if line == "No active resources": # some old pacemaker
+    for line in output.split("\n"):
+        if line == "No active resources":  # some old pacemaker
             print(line)
             return
         if line in (
-            "  * No resources", # pacemaker >= 2.0.3
-            "No resources", # pacemaker < 2.0.3
+            "  * No resources",  # pacemaker >= 2.0.3
+            "No resources",  # pacemaker < 2.0.3
         ):
             print(no_resources_line)
             return
-        if line == "Full List of Resources:": # pacemaker >= 2.0.3
+        if line == "Full List of Resources:":  # pacemaker >= 2.0.3
             in_resources = True
             continue
         if line in (
-            "Full list of resources:", # pacemaker < 2.0.3
-            "Active resources:", # some old pacemaker
+            "Full list of resources:",  # pacemaker < 2.0.3
+            "Active resources:",  # some old pacemaker
         ):
             resources_header = True
             continue
@@ -1916,8 +1969,7 @@ def resource_status(lib, argv, modifiers, stonith=False):
 def _resource_stonith_lines(resource_el, only_stonith):
     is_stonith = (
         "class" in resource_el.attrib
-        and
-        resource_el.attrib["class"] == "stonith"
+        and resource_el.attrib["class"] == "stonith"
     )
     if (only_stonith and is_stonith) or (not only_stonith and not is_stonith):
         return resource_node_lines(resource_el)
@@ -1945,9 +1997,7 @@ def resource_config(lib, argv, modifiers, stonith=False):
         resource_found = False
         for resource in resources.findall(str(".//*")):
             if "id" in resource.attrib and resource.attrib["id"] == resource_id:
-                lines = _resource_stonith_lines(
-                    resource, only_stonith=stonith
-                )
+                lines = _resource_stonith_lines(resource, only_stonith=stonith)
                 if lines:
                     print("\n".join(indent(lines, indent_step=1)))
                     resource_found = True
@@ -1968,12 +2018,9 @@ def resource_disable_cmd(lib, argv, modifiers):
     modifiers.ensure_only_supported(
         "-f", "--safe", "--simulate", "--no-strict", "--wait"
     )
-    modifiers.ensure_not_mutually_exclusive(
-        "-f", "--simulate", "--wait"
-    )
+    modifiers.ensure_not_mutually_exclusive("-f", "--simulate", "--wait")
     modifiers.ensure_not_incompatible(
-        "--simulate",
-        {"-f", "--safe", "--no-strict", "--wait"}
+        "--simulate", {"-f", "--safe", "--no-strict", "--wait"}
     )
     modifiers.ensure_not_incompatible("--safe", {"-f", "--simulate"})
     modifiers.ensure_not_incompatible("--no-strict", {"-f", "--simulate"})
@@ -1986,9 +2033,7 @@ def resource_disable_cmd(lib, argv, modifiers):
         return
     if modifiers.get("--safe") or modifiers.get("--no-strict"):
         lib.resource.disable_safe(
-            argv,
-            not modifiers.get("--no-strict"),
-            modifiers.get("--wait"),
+            argv, not modifiers.get("--no-strict"), modifiers.get("--wait"),
         )
         return
     lib.resource.disable(argv, modifiers.get("--wait"))
@@ -2023,7 +2068,7 @@ def resource_safe_disable_cmd(
         argv,
         modifiers.get_subset(
             "--wait", "--no-strict", "--simulate", **custom_options
-        )
+        ),
     )
 
 
@@ -2039,7 +2084,8 @@ def resource_enable_cmd(lib, argv, modifiers):
     resources = argv
     lib.resource.enable(resources, modifiers.get("--wait"))
 
-#DEPRECATED, moved to pcs.lib.commands.resource
+
+# DEPRECATED, moved to pcs.lib.commands.resource
 def resource_disable(argv):
     """
     Commandline options:
@@ -2058,7 +2104,13 @@ def resource_disable(argv):
 
     args = [
         "crm_resource",
-        "-r", argv[0], "-m", "-p", "target-role", "-v", "Stopped"
+        "-r",
+        argv[0],
+        "-m",
+        "-p",
+        "target-role",
+        "-v",
+        "Stopped",
     ]
     output, retval = utils.run(args)
     if retval != 0:
@@ -2079,14 +2131,14 @@ def resource_disable(argv):
         else:
             msg.append(
                 "unable to stop: '%s', please check logs for failure "
-                "information"
-                % resource
+                "information" % resource
             )
         msg.append(running_on["message"])
         if retval != 0 and output:
             msg.append("\n" + output)
         utils.err("\n".join(msg).strip())
     return None
+
 
 def resource_restart(lib, argv, modifiers):
     """
@@ -2102,11 +2154,9 @@ def resource_restart(lib, argv, modifiers):
     node = None
     resource = argv.pop(0)
 
-    real_res = (
-        utils.dom_get_resource_clone_ms_parent(dom, resource)
-        or
-        utils.dom_get_resource_bundle_parent(dom, resource)
-    )
+    real_res = utils.dom_get_resource_clone_ms_parent(
+        dom, resource
+    ) or utils.dom_get_resource_bundle_parent(dom, resource)
     if real_res:
         print(
             (
@@ -2122,10 +2172,8 @@ def resource_restart(lib, argv, modifiers):
         node = argv.pop(0)
         if not (
             utils.dom_get_clone(dom, resource)
-            or
-            utils.dom_get_master(dom, resource)
-            or
-            utils.dom_get_bundle(dom, resource)
+            or utils.dom_get_master(dom, resource)
+            or utils.dom_get_bundle(dom, resource)
         ):
             utils.err(
                 "can only restart on a specific node for a clone or bundle "
@@ -2144,6 +2192,7 @@ def resource_restart(lib, argv, modifiers):
         utils.err(output)
 
     print("%s successfully restarted" % resource)
+
 
 def resource_force_action(lib, argv, modifiers, action=None):
     """
@@ -2176,13 +2225,10 @@ def resource_force_action(lib, argv, modifiers, action=None):
 
     if not (
         utils.dom_get_any_resource(dom, resource)
-        or
-        utils.dom_get_bundle(dom, resource)
+        or utils.dom_get_bundle(dom, resource)
     ):
         utils.err(
-            "unable to find a resource/clone/group/bundle: {0}".format(
-                resource
-            )
+            "unable to find a resource/clone/group/bundle: {0}".format(resource)
         )
     bundle_el = utils.dom_get_bundle(dom, resource)
     if bundle_el:
@@ -2198,13 +2244,13 @@ def resource_force_action(lib, argv, modifiers, action=None):
     if utils.dom_get_group(dom, resource):
         group_resources = utils.get_group_children(resource)
         utils.err(
-            "unable to {0} a group, try one of the group's resource(s) ({1})"
-            .format(action, ",".join(group_resources))
+            (
+                "unable to {0} a group, try one of the group's resource(s) "
+                "({1})"
+            ).format(action, ",".join(group_resources))
         )
-    if (
-        utils.dom_get_clone(dom, resource)
-        or
-        utils.dom_get_master(dom, resource)
+    if utils.dom_get_clone(dom, resource) or utils.dom_get_master(
+        dom, resource
     ):
         clone_resource = utils.dom_get_clone_ms_resource(dom, resource)
         utils.err(
@@ -2231,6 +2277,7 @@ def resource_force_action(lib, argv, modifiers, action=None):
     print(output.rstrip())
     sys.exit(retval)
 
+
 def resource_manage_cmd(lib, argv, modifiers):
     """
     Options:
@@ -2243,6 +2290,7 @@ def resource_manage_cmd(lib, argv, modifiers):
     resources = argv
     lib.resource.manage(resources, with_monitor=modifiers.get("--monitor"))
 
+
 def resource_unmanage_cmd(lib, argv, modifiers):
     """
     Options:
@@ -2254,6 +2302,7 @@ def resource_unmanage_cmd(lib, argv, modifiers):
         utils.err("You must specify resource(s) to unmanage")
     resources = argv
     lib.resource.unmanage(resources, with_monitor=modifiers.get("--monitor"))
+
 
 # moved to pcs.lib.pacemaker.state
 def is_managed(resource_id):
@@ -2283,7 +2332,8 @@ def is_managed(resource_id):
                     return False
             return True
     utils.err("unable to find a resource/clone/group: %s" % resource_id)
-    return False # pylint does not know utils.err raises
+    return False  # pylint does not know utils.err raises
+
 
 def resource_failcount(lib, argv, modifiers):
     """
@@ -2311,12 +2361,20 @@ def resource_failcount(lib, argv, modifiers):
     interval = parsed_options.get("interval")
 
     if command == "show":
-        print(resource_failcount_show(
-            lib, resource, node, operation, interval, modifiers.get("--full")
-        ))
+        print(
+            resource_failcount_show(
+                lib,
+                resource,
+                node,
+                operation,
+                interval,
+                modifiers.get("--full"),
+            )
+        )
         return
 
     raise CmdLineInputError()
+
 
 def __agregate_failures(failure_list):
     """
@@ -2333,6 +2391,7 @@ def __agregate_failures(failure_list):
                 fail_count += failure["fail_count"]
         last_failure = max(last_failure, failure["last_failure"])
     return fail_count, last_failure
+
 
 def __headline_resource_failures(empty, resource, node, operation, interval):
     """
@@ -2353,9 +2412,9 @@ def __headline_resource_failures(empty, resource, node, operation, interval):
     if node:
         headline_parts.append("on node '{node}'")
     return " ".join(headline_parts).format(
-        node=node, resource=resource, operation=operation,
-        interval=interval
+        node=node, resource=resource, operation=operation, interval=interval
     )
+
 
 def resource_failcount_show(lib, resource, node, operation, interval, full):
     """
@@ -2364,51 +2423,56 @@ def resource_failcount_show(lib, resource, node, operation, interval, full):
     """
     result_lines = []
     failures_data = lib.resource.get_failcounts(
-        resource=resource,
-        node=node,
-        operation=operation,
-        interval=interval
+        resource=resource, node=node, operation=operation, interval=interval
     )
 
     if not failures_data:
-        result_lines.append(__headline_resource_failures(
-            True, resource, node, operation, interval
-        ))
+        result_lines.append(
+            __headline_resource_failures(
+                True, resource, node, operation, interval
+            )
+        )
         return "\n".join(result_lines)
 
     resource_list = sorted({fail["resource"] for fail in failures_data})
     for current_resource in resource_list:
-        result_lines.append(__headline_resource_failures(
-            False, current_resource, node, operation, interval
-        ))
+        result_lines.append(
+            __headline_resource_failures(
+                False, current_resource, node, operation, interval
+            )
+        )
         resource_failures = [
-            fail for fail in failures_data
+            fail
+            for fail in failures_data
             if fail["resource"] == current_resource
         ]
         node_list = sorted({fail["node"] for fail in resource_failures})
         for current_node in node_list:
             node_failures = [
-                fail for fail in resource_failures
+                fail
+                for fail in resource_failures
                 if fail["node"] == current_node
             ]
             if full:
                 result_lines.append(f"  {current_node}:")
-                operation_list = sorted({
-                    fail["operation"] for fail in node_failures
-                })
+                operation_list = sorted(
+                    {fail["operation"] for fail in node_failures}
+                )
                 for current_operation in operation_list:
                     operation_failures = [
-                        fail for fail in node_failures
+                        fail
+                        for fail in node_failures
                         if fail["operation"] == current_operation
                     ]
                     interval_list = sorted(
                         {fail["interval"] for fail in operation_failures},
                         # pacemaker's definition of infinity
-                        key=lambda x: 1000000 if x == "INFINITY" else x
+                        key=lambda x: 1000000 if x == "INFINITY" else x,
                     )
                     for current_interval in interval_list:
                         interval_failures = [
-                            fail for fail in operation_failures
+                            fail
+                            for fail in operation_failures
                             if fail["interval"] == current_interval
                         ]
                         failcount, dummy_last_failure = __agregate_failures(
@@ -2424,6 +2488,7 @@ def resource_failcount_show(lib, resource, node, operation, interval, full):
                 )
                 result_lines.append(f"  {current_node}: {failcount}")
     return "\n".join(result_lines)
+
 
 def show_defaults(cib_dom, def_type):
     """
@@ -2448,6 +2513,7 @@ def show_defaults(cib_dom, def_type):
         strings.append(f"{name}={value}")
     return strings
 
+
 def resource_node_lines(node):
     """
     Commandline options: no options
@@ -2461,18 +2527,14 @@ def resource_node_lines(node):
     if node.tag in simple_types.keys():
         lines.append(
             f"{simple_types[node.tag]}: {node.attrib['id']}"
-            +
-            _get_attrs(node, " (", ")")
+            + _get_attrs(node, " (", ")")
         )
         lines.extend(
             indent(
                 _instance_vars_lines(node)
-                +
-                _meta_vars_lines(node)
-                +
-                _operations_lines(node)
-                ,
-                indent_step=1
+                + _meta_vars_lines(node)
+                + _operations_lines(node),
+                indent_step=1,
             )
         )
         for child in node:
@@ -2485,12 +2547,9 @@ def resource_node_lines(node):
         lines.extend(
             indent(
                 _instance_vars_lines(node)
-                +
-                _meta_vars_lines(node, extra_vars_dict={"promotable": "true"})
-                +
-                _operations_lines(node)
-                ,
-                indent_step=1
+                + _meta_vars_lines(node, extra_vars_dict={"promotable": "true"})
+                + _operations_lines(node),
+                indent_step=1,
             )
         )
         for child in node:
@@ -2503,28 +2562,22 @@ def resource_node_lines(node):
         lines.extend(
             indent(
                 _bundle_container_strings(node)
-                +
-                _bundle_network_strings(node)
-                +
-                _bundle_mapping_strings(
-                    "Port Mapping:",
-                    node.findall("network/port-mapping"),
+                + _bundle_network_strings(node)
+                + _bundle_mapping_strings(
+                    "Port Mapping:", node.findall("network/port-mapping"),
                 )
-                +
-                _bundle_mapping_strings(
-                    "Storage Mapping:",
-                    node.findall("storage/storage-mapping"),
+                + _bundle_mapping_strings(
+                    "Storage Mapping:", node.findall("storage/storage-mapping"),
                 )
-                +
-                _meta_vars_lines(node)
-                ,
-                indent_step=1
+                + _meta_vars_lines(node),
+                indent_step=1,
             )
         )
         for child in node:
             lines.extend(indent(resource_node_lines(child), indent_step=1))
         return lines
     return lines
+
 
 def _bundle_container_strings(bundle_el):
     """
@@ -2536,10 +2589,10 @@ def _bundle_container_strings(bundle_el):
         for container_el in container_list:
             lines.append(
                 container_el.tag.capitalize()
-                +
-                _get_attrs(container_el, ": ", "")
+                + _get_attrs(container_el, ": ", "")
             )
     return lines
+
 
 def _bundle_network_strings(bundle_el):
     """
@@ -2553,6 +2606,7 @@ def _bundle_network_strings(bundle_el):
             lines.append("Network: " + attrs_string)
     return lines
 
+
 def _bundle_mapping_strings(first_line, map_items):
     """
     Commandline options: no options
@@ -2564,6 +2618,7 @@ def _bundle_mapping_strings(first_line, map_items):
     if map_lines:
         return [first_line] + indent(map_lines, indent_step=1)
     return []
+
 
 def _nvpairs_strings(node, parent_tag, extra_vars_dict=None):
     """
@@ -2582,15 +2637,14 @@ def _nvpairs_strings(node, parent_tag, extra_vars_dict=None):
         strings.append(f"{name}={value}")
     return strings
 
+
 def _instance_vars_lines(node):
     """
     Commandline options: no options
     """
     nvpairs = _nvpairs_strings(node, "instance_attributes")
-    return (
-        ["Attributes: " + " ".join(nvpairs)] if nvpairs
-        else []
-    )
+    return ["Attributes: " + " ".join(nvpairs)] if nvpairs else []
+
 
 def _meta_vars_lines(node, extra_vars_dict=None):
     """
@@ -2599,10 +2653,8 @@ def _meta_vars_lines(node, extra_vars_dict=None):
     nvpairs = _nvpairs_strings(
         node, "meta_attributes", extra_vars_dict=extra_vars_dict
     )
-    return (
-        ["Meta Attrs: " + " ".join(nvpairs)] if nvpairs
-        else []
-    )
+    return ["Meta Attrs: " + " ".join(nvpairs)] if nvpairs else []
+
 
 def _operations_lines(node):
     """
@@ -2612,22 +2664,21 @@ def _operations_lines(node):
     for op in node.findall("operations/op"):
         parts = []
         parts.append(op.attrib["name"])
-        parts.extend([
-            f'{name}={value}'
-            for name, value in sorted(op.attrib.items())
-            if name not in {"id", "name"}
-        ])
+        parts.extend(
+            [
+                f"{name}={value}"
+                for name, value in sorted(op.attrib.items())
+                if name not in {"id", "name"}
+            ]
+        )
         parts.extend(_nvpairs_strings(op, "./"))
         parts.append(f"({op.attrib['id']})")
         op_lines.append(" ".join(parts))
     if not op_lines:
         return op_lines
     label = "Operations: "
-    return (
-        [label + op_lines[0]]
-        +
-        indent(op_lines[1:], indent_step=len(label))
-    )
+    return [label + op_lines[0]] + indent(op_lines[1:], indent_step=len(label))
+
 
 def operation_to_string(op_el):
     """
@@ -2646,6 +2697,7 @@ def operation_to_string(op_el):
     parts.append("(" + op_el.getAttribute("id") + ")")
     return " ".join(parts)
 
+
 def _get_attrs(node, prepend_string="", append_string=""):
     """
     Commandline options: no options
@@ -2661,6 +2713,7 @@ def _get_attrs(node, prepend_string="", append_string=""):
         return prepend_string + output.rstrip() + append_string
     return output.rstrip()
 
+
 def resource_cleanup(lib, argv, modifiers):
     """
     Options: no options
@@ -2671,14 +2724,17 @@ def resource_cleanup(lib, argv, modifiers):
     parsed_options = prepare_options_allowed(
         argv, {"node", "operation", "interval"}
     )
-    print(lib_pacemaker.resource_cleanup(
-        utils.cmd_runner(),
-        resource=resource,
-        node=parsed_options.get("node"),
-        operation=parsed_options.get("operation"),
-        interval=parsed_options.get("interval"),
-        strict=modifiers.get("--strict"),
-    ))
+    print(
+        lib_pacemaker.resource_cleanup(
+            utils.cmd_runner(),
+            resource=resource,
+            node=parsed_options.get("node"),
+            operation=parsed_options.get("operation"),
+            interval=parsed_options.get("interval"),
+            strict=modifiers.get("--strict"),
+        )
+    )
+
 
 def resource_refresh(lib, argv, modifiers):
     """
@@ -2698,13 +2754,16 @@ def resource_refresh(lib, argv, modifiers):
         sys.stderr.write("Warning: '--full' has been deprecated\n")
     resource = argv.pop(0) if argv and "=" not in argv[0] else None
     parsed_options = prepare_options_allowed(argv, {"node"})
-    print(lib_pacemaker.resource_refresh(
-        utils.cmd_runner(),
-        resource=resource,
-        node=parsed_options.get("node"),
-        strict=(modifiers.get("--strict") or modifiers.get("--full")),
-        force=modifiers.get("--force"),
-    ))
+    print(
+        lib_pacemaker.resource_refresh(
+            utils.cmd_runner(),
+            resource=resource,
+            node=parsed_options.get("node"),
+            strict=(modifiers.get("--strict") or modifiers.get("--full")),
+            force=modifiers.get("--force"),
+        )
+    )
+
 
 def resource_relocate_show_cmd(lib, argv, modifiers):
     """
@@ -2716,6 +2775,7 @@ def resource_relocate_show_cmd(lib, argv, modifiers):
         raise CmdLineInputError()
     resource_relocate_show(utils.get_cib_dom())
 
+
 def resource_relocate_dry_run_cmd(lib, argv, modifiers):
     """
     Options:
@@ -2725,6 +2785,7 @@ def resource_relocate_dry_run_cmd(lib, argv, modifiers):
     modifiers.ensure_only_supported("-f")
     resource_relocate_run(utils.get_cib_dom(), argv, dry=True)
 
+
 def resource_relocate_run_cmd(lib, argv, modifiers):
     """
     Options: no options
@@ -2732,6 +2793,7 @@ def resource_relocate_run_cmd(lib, argv, modifiers):
     del lib
     modifiers.ensure_only_supported()
     resource_relocate_run(utils.get_cib_dom(), argv, dry=False)
+
 
 def resource_relocate_clear_cmd(lib, argv, modifiers):
     """
@@ -2746,12 +2808,13 @@ def resource_relocate_clear_cmd(lib, argv, modifiers):
         resource_relocate_clear(utils.get_cib_dom())
     )
 
+
 def resource_relocate_set_stickiness(cib_dom, resources=None):
     """
     Commandline options: no options
     """
     resources = [] if resources is None else resources
-    cib_dom = cib_dom.cloneNode(True) # do not change the original cib
+    cib_dom = cib_dom.cloneNode(True)  # do not change the original cib
     resources_found = set()
     updated_resources = set()
     # set stickiness=0
@@ -2762,10 +2825,8 @@ def resource_relocate_set_stickiness(cib_dom, resources=None):
             resources_found.add(res_el.getAttribute("id"))
             res_and_children = (
                 [res_el]
-                +
-                res_el.getElementsByTagName("group")
-                +
-                res_el.getElementsByTagName("primitive")
+                + res_el.getElementsByTagName("group")
+                + res_el.getElementsByTagName("primitive")
             )
             updated_resources.update(
                 [el.getAttribute("id") for el in res_and_children]
@@ -2774,13 +2835,13 @@ def resource_relocate_set_stickiness(cib_dom, resources=None):
                 meta_attributes = utils.dom_prepare_child_element(
                     res_or_child,
                     "meta_attributes",
-                    res_or_child.getAttribute("id") + "-meta_attributes"
+                    res_or_child.getAttribute("id") + "-meta_attributes",
                 )
                 utils.dom_update_nv_pair(
                     meta_attributes,
                     "resource-stickiness",
                     "0",
-                    meta_attributes.getAttribute("id") + "-"
+                    meta_attributes.getAttribute("id") + "-",
                 )
     # resources don't exist
     if resources:
@@ -2788,13 +2849,12 @@ def resource_relocate_set_stickiness(cib_dom, resources=None):
         if resources_not_found:
             for res_id in resources_not_found:
                 utils.err(
-                    "unable to find a resource/clone/group: {0}".format(
-                        res_id
-                    ),
-                    False
+                    "unable to find a resource/clone/group: {0}".format(res_id),
+                    False,
                 )
             sys.exit(1)
     return cib_dom, updated_resources
+
 
 def resource_relocate_get_locations(cib_dom, resources=None):
     """
@@ -2815,10 +2875,12 @@ def resource_relocate_get_locations(cib_dom, resources=None):
     if not resources:
         return list(locations.values())
     return [
-        val for val in locations.values()
+        val
+        for val in locations.values()
         if val["id"] in updated_resources
-            or val["id_for_constraint"] in updated_resources
+        or val["id_for_constraint"] in updated_resources
     ]
+
 
 def resource_relocate_show(cib_dom):
     """
@@ -2853,6 +2915,7 @@ def resource_relocate_show(cib_dom):
         if in_status or in_status_resources or in_transitions:
             print(line)
 
+
 def resource_relocate_location_to_str(location):
     """
     Commandline options: no options
@@ -2862,15 +2925,18 @@ def resource_relocate_location_to_str(location):
     )
     if "start_on_node" in location:
         return message.format(
-            res=location["id_for_constraint"], node=location["start_on_node"],
-            role=""
+            res=location["id_for_constraint"],
+            node=location["start_on_node"],
+            role="",
         )
     if "promote_on_node" in location:
         return message.format(
-            res=location["id_for_constraint"], node=location["promote_on_node"],
-            role=" role=Master"
+            res=location["id_for_constraint"],
+            node=location["promote_on_node"],
+            role=" role=Master",
         )
     return ""
+
 
 def resource_relocate_run(cib_dom, resources=None, dry=True):
     """
@@ -2890,13 +2956,13 @@ def resource_relocate_run(cib_dom, resources=None, dry=True):
     # create constraints
     cib_dom, constraint_el = constraint.getCurrentConstraints(cib_dom)
     for location in resource_relocate_get_locations(cib_dom, resources):
-        if not("start_on_node" in location or "promote_on_node" in location):
+        if not ("start_on_node" in location or "promote_on_node" in location):
             continue
         anything_changed = True
         print(resource_relocate_location_to_str(location))
         constraint_id = utils.find_unique_id(
             cib_dom,
-            RESOURCE_RELOCATE_CONSTRAINT_PREFIX + location["id_for_constraint"]
+            RESOURCE_RELOCATE_CONSTRAINT_PREFIX + location["id_for_constraint"],
         )
         new_constraint = cib_dom.createElement("rsc_location")
         new_constraint.setAttribute("id", constraint_id)
@@ -2934,6 +3000,7 @@ def resource_relocate_run(cib_dom, resources=None, dry=True):
     if was_error:
         sys.exit(1)
 
+
 def resource_relocate_clear(cib_dom):
     """
     Commandline options: no options
@@ -2946,6 +3013,7 @@ def resource_relocate_clear(cib_dom):
                 location_el.parentNode.removeChild(location_el)
     return cib_dom
 
+
 def set_resource_utilization(resource_id, argv):
     """
     Commandline options:
@@ -2957,6 +3025,7 @@ def set_resource_utilization(resource_id, argv):
         utils.err("Unable to find a resource: {0}".format(resource_id))
     utils.dom_update_utilization(resource_el, prepare_options(argv))
     utils.replace_cib_configuration(cib)
+
 
 def print_resource_utilization(resource_id):
     """
@@ -2971,6 +3040,7 @@ def print_resource_utilization(resource_id):
 
     print("Resource Utilization:")
     print(" {0}: {1}".format(resource_id, utilization))
+
 
 def print_resources_utilization():
     """
@@ -3007,9 +3077,8 @@ def get_resource_agent_info(lib, argv, modifiers):
         metadata = lib_ra.ResourceAgent(runner, agent)
         print(json.dumps(metadata.get_full_info()))
     except lib_ra.ResourceAgentError as e:
-        process_library_reports(
-            [lib_ra.resource_agent_error_to_report_item(e)]
-        )
+        process_library_reports([lib_ra.resource_agent_error_to_report_item(e)])
+
 
 def resource_bundle_create_cmd(lib, argv, modifiers):
     """
@@ -3038,6 +3107,7 @@ def resource_bundle_create_cmd(lib, argv, modifiers):
         wait=modifiers.get("--wait"),
     )
 
+
 def resource_bundle_reset_cmd(lib, argv, modifiers):
     """
     Options:
@@ -3063,6 +3133,7 @@ def resource_bundle_reset_cmd(lib, argv, modifiers):
         ensure_disabled=modifiers.get("--disabled"),
         wait=modifiers.get("--wait"),
     )
+
 
 def resource_bundle_update_cmd(lib, argv, modifiers):
     """

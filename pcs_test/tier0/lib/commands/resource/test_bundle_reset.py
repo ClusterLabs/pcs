@@ -1,6 +1,6 @@
 from unittest import TestCase
 
-from pcs_test.tier0.lib.commands.resource.bundle_common import(
+from pcs_test.tier0.lib.commands.resource.bundle_common import (
     FixturesMixin,
     SetUpMixin,
     UpgradeMixin,
@@ -18,6 +18,7 @@ from pcs.common.reports import ReportItemSeverity as severities
 from pcs.common.reports import codes as report_codes
 from pcs.lib.commands.resource import bundle_reset
 
+
 class BaseMixin(FixturesMixin):
     container_type = None
     bundle_id = "B1"
@@ -34,11 +35,12 @@ class BaseMixin(FixturesMixin):
         bundle_reset(
             self.env_assist.get_env(),
             bundle_id=bundle_id or self.bundle_id,
-            **params
+            **params,
         )
 
     def run_bundle_cmd(self, *args, **kwargs):
         self.bundle_reset(*args, **kwargs)
+
 
 class MinimalMixin(BaseMixin, SetUpMixin):
     container_type = None
@@ -53,23 +55,20 @@ class MinimalMixin(BaseMixin, SetUpMixin):
     def test_success_change(self):
         new_image = "{0}:new".format(self.image)
 
-        self.config.env.push_cib(replace={
-            ".//resources/bundle":
-                """
+        self.config.env.push_cib(
+            replace={
+                ".//resources/bundle": """
                     <bundle id="{bundle_id}">
                         <{container_type} image="{image}" />
                     </bundle>
-                """
-                .format(
+                """.format(
                     bundle_id=self.bundle_id,
                     container_type=self.container_type,
                     image=new_image,
-                )
-            ,
-        })
-        self.bundle_reset(
-            container_options={"image": new_image},
+                ),
+            }
         )
+        self.bundle_reset(container_options={"image": new_image},)
 
     def test_noexistent_id(self):
         self.env_assist.assert_raise_library_error(
@@ -84,7 +83,7 @@ class MinimalMixin(BaseMixin, SetUpMixin):
                         "context_type": "resources",
                         "context_id": "",
                     },
-                    None
+                    None,
                 ),
             ],
             expected_in_processor=False,
@@ -94,13 +93,16 @@ class MinimalMixin(BaseMixin, SetUpMixin):
         self.env_assist.assert_raise_library_error(
             lambda: bundle_reset(self.env_assist.get_env(), self.bundle_id)
         )
-        self.env_assist.assert_reports([
-            fixture.error(
-                report_codes.REQUIRED_OPTIONS_ARE_MISSING,
-                option_names=["image"],
-                option_type="container",
-            ),
-        ])
+        self.env_assist.assert_reports(
+            [
+                fixture.error(
+                    report_codes.REQUIRED_OPTIONS_ARE_MISSING,
+                    option_names=["image"],
+                    option_type="container",
+                ),
+            ]
+        )
+
 
 class FullMixin(SetUpMixin, BaseMixin):
     container_type = None
@@ -165,9 +167,9 @@ class FullMixin(SetUpMixin, BaseMixin):
 
         # Garbage (empty tags network, storage and meta_attributes) are kept.
         # See https://bugzilla.redhat.com/show_bug.cgi?id=1642514
-        self.config.env.push_cib(replace={
-            ".//resources/bundle":
-                """
+        self.config.env.push_cib(
+            replace={
+                ".//resources/bundle": """
                     <bundle id="{bundle_id}">
                         <{container_type} image="{image}" />
                         <network/>
@@ -175,26 +177,23 @@ class FullMixin(SetUpMixin, BaseMixin):
                         <meta_attributes id="{bundle_id}-meta_attributes"/>
                         {fixture_primitive}
                     </bundle>
-                """
-                .format(
+                """.format(
                     container_type=self.container_type,
                     bundle_id=self.bundle_id,
                     fixture_primitive=self.fixture_primitive,
                     image=new_image,
-                )
-            ,
-        })
-
-        self.bundle_reset(
-            container_options={"image": new_image},
+                ),
+            }
         )
+
+        self.bundle_reset(container_options={"image": new_image},)
 
     def test_success_full(self):
         new_image = "{0}:new".format(self.image)
 
-        self.config.env.push_cib(replace={
-            ".//resources/bundle":
-                """
+        self.config.env.push_cib(
+            replace={
+                ".//resources/bundle": """
                     <bundle id="{bundle_id}">
                         <{container_type}
                             image="{image}"
@@ -235,15 +234,14 @@ class FullMixin(SetUpMixin, BaseMixin):
                         </meta_attributes>
                         {fixture_primitive}
                     </bundle>
-                """
-                .format(
+                """.format(
                     container_type=self.container_type,
                     bundle_id=self.bundle_id,
                     fixture_primitive=self.fixture_primitive,
                     image=new_image,
-                )
-            ,
-        })
+                ),
+            }
+        )
         self.bundle_reset(
             container_options={
                 "image": new_image,
@@ -268,15 +266,13 @@ class FullMixin(SetUpMixin, BaseMixin):
                     "target-dir": f"/tmp/{self.container_type}2bb",
                 },
             ],
-            meta_attributes={
-                "target-role": "Started",
-            }
+            meta_attributes={"target-role": "Started",},
         )
 
     def test_success_keep_map_ids(self):
-        self.config.env.push_cib(replace={
-            ".//resources/bundle/network":
-                f"""
+        self.config.env.push_cib(
+            replace={
+                ".//resources/bundle/network": f"""
                     <network
                         control-port="12345"
                         host-interface="eth0"
@@ -293,10 +289,8 @@ class FullMixin(SetUpMixin, BaseMixin):
                             range="4000-4400"
                         />
                     </network>
-                """
-            ,
-            ".//resources/bundle/storage":
-                f"""
+                """,
+                ".//resources/bundle/storage": f"""
                     <storage>
                         <storage-mapping
                             id="{self.bundle_id}-storage-map"
@@ -305,9 +299,9 @@ class FullMixin(SetUpMixin, BaseMixin):
                             target-dir="/tmp/{self.container_type}2bb"
                         />
                     </storage>
-                """
-            ,
-        })
+                """,
+            }
+        )
 
         # Every value is kept as before except port_map and storage_map.
         self.bundle_reset(
@@ -342,57 +336,70 @@ class FullMixin(SetUpMixin, BaseMixin):
                     "target-dir": f"/tmp/{self.container_type}2bb",
                 },
             ],
-            meta_attributes={
-                "target-role": "Stopped",
-            }
+            meta_attributes={"target-role": "Stopped",},
         )
+
 
 class ResetParametrizedContainerMixin(
     BaseMixin, ParametrizedContainerMixin, UpgradeMixin
 ):
     pass
 
+
 class MinimalRkt(MinimalMixin, TestCase):
     container_type = "rkt"
+
 
 class MinimalPodman(MinimalMixin, TestCase):
     container_type = "podman"
 
+
 class MinimalDocker(MinimalMixin, TestCase):
     container_type = "docker"
+
 
 class FullRkt(FullMixin, TestCase):
     container_type = "rkt"
 
+
 class FullPodman(FullMixin, TestCase):
     container_type = "podman"
 
+
 class FullDocker(FullMixin, TestCase):
     container_type = "docker"
+
 
 class ResetParametrizedPodman(ResetParametrizedContainerMixin, TestCase):
     container_type = "podman"
     old_version_cib_filename = "cib-empty-2.6.xml"
 
+
 class ResetParametrizedDocker(ResetParametrizedContainerMixin, TestCase):
     container_type = "docker"
     old_version_cib_filename = "cib-empty-2.0.xml"
+
 
 class ResetParametrizedRkt(ResetParametrizedContainerMixin, TestCase):
     container_type = "rkt"
     old_version_cib_filename = "cib-empty-2.6.xml"
 
+
 class ResetWithNetwork(BaseMixin, NetworkMixin, TestCase):
     container_type = "docker"
+
 
 class ResetWithPortMap(BaseMixin, PortMapMixin, TestCase):
     container_type = "docker"
 
+
 class ResetWithStorageMap(BaseMixin, StorageMapMixin, TestCase):
     container_type = "docker"
 
+
 class ResetWithMetaMap(BaseMixin, MetaMixin, TestCase):
     container_type = "docker"
+
     def test_success(self):
         # When there is no meta attributes the new one are put on the first
         # possition (since reset now uses update internally). This is the reason
@@ -410,39 +417,42 @@ class ResetWithMetaMap(BaseMixin, MetaMixin, TestCase):
                         <{container_type} image="{image}" />
                     </bundle>
                 </resources>
-            """
-            .format(
+            """.format(
                 container_type=self.container_type,
                 bundle_id=self.bundle_id,
                 image=self.image,
             )
         )
         self.run_bundle_cmd(
-            meta_attributes={
-                "target-role": "Stopped",
-                "is-managed": "false",
-            }
+            meta_attributes={"target-role": "Stopped", "is-managed": "false",}
         )
+
 
 class ResetWithAllOptions(BaseMixin, AllOptionsMixin, TestCase):
     container_type = "docker"
 
+
 class ResetWithWait(BaseMixin, WaitMixin, TestCase):
     container_type = "docker"
 
+
 class ResetUnknownContainerType(BaseMixin, SetUpMixin, TestCase):
     container_type = "unknown"
+
     def test_error_or_unknown_container(self):
         self.env_assist.assert_raise_library_error(
             lambda: bundle_reset(self.env_assist.get_env(), self.bundle_id)
         )
-        self.env_assist.assert_reports([
-            fixture.error(
-                report_codes.RESOURCE_BUNDLE_UNSUPPORTED_CONTAINER_TYPE,
-                bundle_id="B1",
-                supported_container_types=["docker", "podman", "rkt"],
-            ),
-        ])
+        self.env_assist.assert_reports(
+            [
+                fixture.error(
+                    report_codes.RESOURCE_BUNDLE_UNSUPPORTED_CONTAINER_TYPE,
+                    bundle_id="B1",
+                    supported_container_types=["docker", "podman", "rkt"],
+                ),
+            ]
+        )
+
 
 class NoMetaIdRegenerationMixin(BaseMixin, SetUpMixin):
     @property
@@ -470,10 +480,11 @@ class NoMetaIdRegenerationMixin(BaseMixin, SetUpMixin):
             bundle_id=self.bundle_id,
             image=self.image,
         )
+
     def test_dont_regenerate_meta_attributes_id(self):
-        self.config.env.push_cib(replace={
-            ".//resources/bundle/meta_attributes":
-                f"""
+        self.config.env.push_cib(
+            replace={
+                ".//resources/bundle/meta_attributes": f"""
                     <meta_attributes id="CUSTOM_ID">
                         <nvpair
                             id="CUSTOM_ID-target-role"
@@ -481,9 +492,9 @@ class NoMetaIdRegenerationMixin(BaseMixin, SetUpMixin):
                             value="Stopped"
                         />
                     </meta_attributes>
-                """
-            ,
-        })
+                """,
+            }
+        )
         self.bundle_reset(
             container_options={
                 "image": self.image,
@@ -491,16 +502,17 @@ class NoMetaIdRegenerationMixin(BaseMixin, SetUpMixin):
                 "replicas": "1",
                 "replicas-per-host": "1",
             },
-            meta_attributes={
-                "target-role": "Stopped",
-            }
+            meta_attributes={"target-role": "Stopped",},
         )
+
 
 class NoMetaIdRegenerationDocker(NoMetaIdRegenerationMixin, TestCase):
     container_type = "docker"
 
+
 class NoMetaIdRegenerationPodman(NoMetaIdRegenerationMixin, TestCase):
     container_type = "podman"
+
 
 class NoMetaIdRegenerationRkt(NoMetaIdRegenerationMixin, TestCase):
     container_type = "rkt"

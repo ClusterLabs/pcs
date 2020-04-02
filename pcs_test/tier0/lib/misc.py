@@ -10,5 +10,5 @@ def get_mocked_env(**kwargs):
     return Env(
         logger=mock.MagicMock(logging.Logger),
         report_processor=MockLibraryReportProcessor(),
-        **kwargs
+        **kwargs,
     )

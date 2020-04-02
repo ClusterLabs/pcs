@@ -20,8 +20,10 @@ from pcs.lib.tools import environment_file_to_dict
 
 
 class ServiceAction(
-    SimpleResponseProcessingMixin, AllSameDataMixin, AllAtOnceStrategyMixin,
-    RunRemotelyBase
+    SimpleResponseProcessingMixin,
+    AllSameDataMixin,
+    AllAtOnceStrategyMixin,
+    RunRemotelyBase,
 ):
     def _get_request_action(self):
         raise NotImplementedError()
@@ -78,7 +80,9 @@ class DisableSbdService(ServiceAction):
 
 
 class StonithWatchdogTimeoutAction(
-    AllSameDataMixin, MarkSuccessfulMixin, OneByOneStrategyMixin,
+    AllSameDataMixin,
+    MarkSuccessfulMixin,
+    OneByOneStrategyMixin,
     RunRemotelyBase,
 ):
     def _get_request_action(self):
@@ -119,8 +123,9 @@ class SetSbdConfig(
         return [
             Request(
                 target,
-                RequestData("remote/set_sbd_config", [("config", config)])
-            ) for target, config in self._request_data_list
+                RequestData("remote/set_sbd_config", [("config", config)]),
+            )
+            for target, config in self._request_data_list
         ]
 
     def _get_success_report(self, node_label):
@@ -160,19 +165,18 @@ class GetSbdConfig(AllSameDataMixin, AllAtOnceStrategyMixin, RunRemotelyBase):
                 )
             )
             return
-        self._config_list.append({
-            "node": node_label,
-            "config": environment_file_to_dict(response.data)
-        })
+        self._config_list.append(
+            {
+                "node": node_label,
+                "config": environment_file_to_dict(response.data),
+            }
+        )
         self._successful_target_list.append(node_label)
 
     def on_complete(self):
         for node in self._target_list:
             if node.label not in self._successful_target_list:
-                self._config_list.append({
-                    "node": node.label,
-                    "config": None
-                })
+                self._config_list.append({"node": node.label, "config": None})
         return self._config_list
 
 
@@ -183,13 +187,11 @@ class GetSbdStatus(AllSameDataMixin, AllAtOnceStrategyMixin, RunRemotelyBase):
         self._successful_target_list = []
 
     def _get_request_data(self):
-        return RequestData("remote/check_sbd",
+        return RequestData(
+            "remote/check_sbd",
             # here we just need info about sbd service, therefore watchdog and
             # device list is empty
-            [
-                ("watchdog", ""),
-                ("device_list", "[]"),
-            ]
+            [("watchdog", ""), ("device_list", "[]"),],
         )
 
     def _process_response(self, response):
@@ -198,19 +200,21 @@ class GetSbdStatus(AllSameDataMixin, AllAtOnceStrategyMixin, RunRemotelyBase):
         )
         node_label = response.request.target.label
         if report_item is not None:
-            self._report_list([
-                report_item,
-                #reason is in previous report item, warning is there implicit
-                ReportItem.warning(
-                    reports.messages.UnableToGetSbdStatus(node_label, "")
-                )
-            ])
+            self._report_list(
+                [
+                    report_item,
+                    # reason is in previous report item, warning is there
+                    # implicit
+                    ReportItem.warning(
+                        reports.messages.UnableToGetSbdStatus(node_label, "")
+                    ),
+                ]
+            )
             return
         try:
-            self._status_list.append({
-                "node": node_label,
-                "status": json.loads(response.data)["sbd"]
-            })
+            self._status_list.append(
+                {"node": node_label, "status": json.loads(response.data)["sbd"]}
+            )
             self._successful_target_list.append(node_label)
         except (ValueError, KeyError) as e:
             self._report(
@@ -222,14 +226,16 @@ class GetSbdStatus(AllSameDataMixin, AllAtOnceStrategyMixin, RunRemotelyBase):
     def on_complete(self):
         for node in self._target_list:
             if node.label not in self._successful_target_list:
-                self._status_list.append({
-                    "node": node.label,
-                    "status": {
-                        "installed": None,
-                        "enabled": None,
-                        "running": None
+                self._status_list.append(
+                    {
+                        "node": node.label,
+                        "status": {
+                            "installed": None,
+                            "enabled": None,
+                            "running": None,
+                        },
                     }
-                })
+                )
         return self._status_list
 
 
@@ -246,10 +252,11 @@ class CheckSbd(AllAtOnceStrategyMixin, RunRemotelyBase):
                     "remote/check_sbd",
                     [
                         ("watchdog", watchdog),
-                        ("device_list", json.dumps(device_list))
-                    ]
-                )
-            ) for target, watchdog, device_list in self._request_data_list
+                        ("device_list", json.dumps(device_list)),
+                    ],
+                ),
+            )
+            for target, watchdog, device_list in self._request_data_list
         ]
 
     def _process_response(self, response):

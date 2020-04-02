@@ -28,7 +28,9 @@ class AssertMixin:
         self.assertEqual(_session.username, username)
         self.assertFalse(_session.is_authenticated)
 
+
 PatchSessionMixin = create_setup_patch_mixin(session)
+
 
 class SessionTest(TestCase, AssertMixin, PatchSessionMixin):
     def setUp(self):
@@ -62,6 +64,7 @@ class SessionTest(TestCase, AssertMixin, PatchSessionMixin):
             session1.sid
         with self.refresh_test() as session1:
             session1.ajax_id
+
 
 class StorageTest(TestCase, AssertMixin, PatchSessionMixin):
     def setUp(self):
@@ -120,8 +123,7 @@ class StorageTest(TestCase, AssertMixin, PatchSessionMixin):
 
     def test_can_sign_failed_login_attempt_new_session(self):
         self.assert_login_failed_session(
-            self.storage.rejected_user(sid=None, username=USER),
-            USER
+            self.storage.rejected_user(sid=None, username=USER), USER
         )
 
     def test_can_sign_failed_login_attempt_existing_session(self):

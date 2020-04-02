@@ -9,16 +9,15 @@ from pcs.lib.cib.node import PacemakerNode as PNode
 from pcs.lib.corosync import config_validators
 from pcs.lib.corosync.node import (
     CorosyncNode as CNode,
-    CorosyncNodeAddress as CAddr
+    CorosyncNodeAddress as CAddr,
 )
 
 # pylint: disable=no-self-use
 
 forbidden_characters_kwargs = dict(
-    allowed_values=None,
-    cannot_be_empty=False,
-    forbidden_characters=r"{}\n\r",
+    allowed_values=None, cannot_be_empty=False, forbidden_characters=r"{}\n\r",
 )
+
 
 class AddNodes(TestCase):
     # pylint: disable=too-many-public-methods
@@ -36,22 +35,18 @@ class AddNodes(TestCase):
         self.known_addrs = patch_getaddrinfo(
             self,
             [f"addr{i:02d}" for i in range(1, 20)]
-            +
-            [f"10.0.0.{i}" for i in range(1, 20)]
-            +
-            [f"::ffff:10:0:0:{i}" for i in range(1, 20)]
+            + [f"10.0.0.{i}" for i in range(1, 20)]
+            + [f"::ffff:10:0:0:{i}" for i in range(1, 20)],
         )
 
     def test_all_valid_one_node_one_link(self):
         assert_report_item_list_equal(
             config_validators.add_nodes(
-                [
-                    {"name": "node3", "addrs": ["addr03"]},
-                ],
+                [{"name": "node3", "addrs": ["addr03"]},],
                 self.fixture_coronodes_1_link,
-                []
+                [],
             ),
-            []
+            [],
         )
 
     def test_all_more_nodes_more_links(self):
@@ -62,26 +57,15 @@ class AddNodes(TestCase):
                     {"name": "node4", "addrs": ["addr04", "addr14"]},
                 ],
                 self.fixture_coronodes_2_links,
-                [
-                    PNode("node-remote", "addr19")
-                ]
+                [PNode("node-remote", "addr19")],
             ),
-            []
+            [],
         )
 
     def test_nodelist_empty(self):
         assert_report_item_list_equal(
-            config_validators.add_nodes(
-                [
-                ],
-                self.fixture_coronodes_1_link,
-                []
-            ),
-            [
-                fixture.error(
-                    report_codes.COROSYNC_NODES_MISSING
-                )
-            ]
+            config_validators.add_nodes([], self.fixture_coronodes_1_link, []),
+            [fixture.error(report_codes.COROSYNC_NODES_MISSING)],
         )
 
     def test_empty_node(self):
@@ -93,13 +77,13 @@ class AddNodes(TestCase):
                     {"name": "node4", "addrs": ["addr04"]},
                 ],
                 self.fixture_coronodes_1_link,
-                []
+                [],
             ),
             [
                 fixture.error(
                     report_codes.REQUIRED_OPTIONS_ARE_MISSING,
                     option_names=["name"],
-                    option_type="node 2"
+                    option_type="node 2",
                 ),
                 fixture.error(
                     report_codes.COROSYNC_BAD_NODE_ADDRESSES_COUNT,
@@ -107,19 +91,17 @@ class AddNodes(TestCase):
                     min_count=1,
                     max_count=1,
                     node_name=None,
-                    node_index=2
+                    node_index=2,
                 ),
-            ]
+            ],
         )
 
     def test_node_options_invalid(self):
         assert_report_item_list_equal(
             config_validators.add_nodes(
-                [
-                    {"name": "node3", "addrs": ["addr03"], "nonsense": "abc"},
-                ],
+                [{"name": "node3", "addrs": ["addr03"], "nonsense": "abc"},],
                 self.fixture_coronodes_1_link,
-                []
+                [],
             ),
             [
                 fixture.error(
@@ -129,18 +111,15 @@ class AddNodes(TestCase):
                     allowed=["addrs", "name"],
                     allowed_patterns=[],
                 ),
-            ]
+            ],
         )
 
     def test_nodename_invalid(self):
         assert_report_item_list_equal(
             config_validators.add_nodes(
-                [
-                    {"name": "", "addrs": ["addr03"]},
-                    {"addrs": ["addr04"]},
-                ],
+                [{"name": "", "addrs": ["addr03"]}, {"addrs": ["addr04"]},],
                 self.fixture_coronodes_1_link,
-                []
+                [],
             ),
             [
                 fixture.error(
@@ -154,9 +133,9 @@ class AddNodes(TestCase):
                 fixture.error(
                     report_codes.REQUIRED_OPTIONS_ARE_MISSING,
                     option_names=["name"],
-                    option_type="node 2"
+                    option_type="node 2",
                 ),
-            ]
+            ],
         )
 
     def test_nodename_not_unique(self):
@@ -170,8 +149,7 @@ class AddNodes(TestCase):
                     {"name": "", "addrs": ["addr06"]},
                 ],
                 self.fixture_coronodes_1_link,
-                [
-                ]
+                [],
             ),
             [
                 fixture.error(
@@ -191,10 +169,9 @@ class AddNodes(TestCase):
                     forbidden_characters=None,
                 ),
                 fixture.error(
-                    report_codes.NODE_NAMES_DUPLICATION,
-                    name_list=["node3"]
-                )
-            ]
+                    report_codes.NODE_NAMES_DUPLICATION, name_list=["node3"]
+                ),
+            ],
         )
 
     def test_nodename_already_used(self):
@@ -209,16 +186,14 @@ class AddNodes(TestCase):
                     CNode("node1", [CAddr("addr01", 1)], 1),
                     CNode("node2", [CAddr("addr02", 1)], 2),
                 ],
-                [
-                    PNode("node-remote", "addr19")
-                ]
+                [PNode("node-remote", "addr19")],
             ),
             [
                 fixture.error(
                     report_codes.NODE_NAMES_ALREADY_EXIST,
-                    name_list=["node-remote", "node2"]
+                    name_list=["node-remote", "node2"],
                 )
-            ]
+            ],
         )
 
     def test_node_addrs_missing(self):
@@ -230,7 +205,7 @@ class AddNodes(TestCase):
                     {"name": "node5", "addrs": None},
                 ],
                 self.fixture_coronodes_1_link,
-                []
+                [],
             ),
             [
                 fixture.error(
@@ -239,10 +214,10 @@ class AddNodes(TestCase):
                     min_count=1,
                     max_count=1,
                     node_name=name,
-                    node_index=id
+                    node_index=id,
                 )
                 for id, name in enumerate(["node3", "node4", "node5"], 1)
-            ]
+            ],
         )
 
     def test_node_addrs_count_mismatch(self):
@@ -254,7 +229,7 @@ class AddNodes(TestCase):
                     {"name": "node5", "addrs": ["addr05", "addr15", "addr16"]},
                 ],
                 self.fixture_coronodes_2_links,
-                []
+                [],
             ),
             [
                 fixture.error(
@@ -263,7 +238,7 @@ class AddNodes(TestCase):
                     min_count=2,
                     max_count=2,
                     node_name="node3",
-                    node_index=1
+                    node_index=1,
                 ),
                 fixture.error(
                     report_codes.COROSYNC_BAD_NODE_ADDRESSES_COUNT,
@@ -271,9 +246,9 @@ class AddNodes(TestCase):
                     min_count=2,
                     max_count=2,
                     node_name="node5",
-                    node_index=3
+                    node_index=3,
                 ),
-            ]
+            ],
         )
 
     def test_node_addr_empty(self):
@@ -287,14 +262,14 @@ class AddNodes(TestCase):
                     {"name": None, "addrs": ["", ""]},
                 ],
                 self.fixture_coronodes_2_links,
-                []
+                [],
             ),
             [
                 fixture.error(
                     report_codes.NODE_ADDRESSES_CANNOT_BE_EMPTY,
                     node_name_list=["node3", "node5", "node6"],
                 ),
-            ]
+            ],
         )
 
     def test_node_addrs_unresolvable(self):
@@ -310,7 +285,7 @@ class AddNodes(TestCase):
                     {"name": "node5", "addrs": ["addr05", "addrX1", "addrX3"]},
                 ],
                 self.fixture_coronodes_2_links,
-                []
+                [],
             ),
             [
                 fixture.error(
@@ -319,18 +294,18 @@ class AddNodes(TestCase):
                     min_count=2,
                     max_count=2,
                     node_name="node5",
-                    node_index=3
+                    node_index=3,
                 ),
                 fixture.error(
                     report_codes.NODE_ADDRESSES_UNRESOLVABLE,
                     force_code=report_codes.FORCE_NODE_ADDRESSES_UNRESOLVABLE,
-                    address_list=["addrX1", "addrX2", "addrX3"]
+                    address_list=["addrX1", "addrX2", "addrX3"],
                 ),
                 fixture.error(
                     report_codes.NODE_ADDRESSES_DUPLICATION,
-                    address_list=["addrX2"]
+                    address_list=["addrX2"],
                 ),
-            ]
+            ],
         )
 
     def test_node_addrs_unresolvable_forced(self):
@@ -347,7 +322,7 @@ class AddNodes(TestCase):
                 ],
                 self.fixture_coronodes_2_links,
                 [],
-                force_unresolvable=True
+                force_unresolvable=True,
             ),
             [
                 fixture.error(
@@ -356,17 +331,17 @@ class AddNodes(TestCase):
                     min_count=2,
                     max_count=2,
                     node_name="node5",
-                    node_index=3
+                    node_index=3,
                 ),
                 fixture.warn(
                     report_codes.NODE_ADDRESSES_UNRESOLVABLE,
-                    address_list=["addrX1", "addrX2", "addrX3"]
+                    address_list=["addrX1", "addrX2", "addrX3"],
                 ),
                 fixture.error(
                     report_codes.NODE_ADDRESSES_DUPLICATION,
-                    address_list=["addrX2"]
+                    address_list=["addrX2"],
                 ),
-            ]
+            ],
         )
 
     def test_node_addrs_not_unique(self):
@@ -375,19 +350,19 @@ class AddNodes(TestCase):
                 [
                     {
                         "name": "node3",
-                        "addrs": ["addr03", "10.0.0.3", "::ffff:10:0:0:3"]
+                        "addrs": ["addr03", "10.0.0.3", "::ffff:10:0:0:3"],
                     },
                     {
                         "name": "node4",
-                        "addrs": ["addr04", "10.0.0.4", "::ffff:10:0:0:4"]
+                        "addrs": ["addr04", "10.0.0.4", "::ffff:10:0:0:4"],
                     },
                     {
                         "name": "node5",
-                        "addrs": ["addr04", "10.0.0.3", "::ffff:10:0:0:6"]
+                        "addrs": ["addr04", "10.0.0.3", "::ffff:10:0:0:6"],
                     },
                     {
                         "name": "node6",
-                        "addrs": ["addr06", "10.0.0.3", "::ffff:10:0:0:6"]
+                        "addrs": ["addr06", "10.0.0.3", "::ffff:10:0:0:6"],
                     },
                 ],
                 [
@@ -398,7 +373,7 @@ class AddNodes(TestCase):
                             CAddr("10.0.0.1", 2),
                             CAddr("::ffff:10:0:0:1", 3),
                         ],
-                        1
+                        1,
                     ),
                     CNode(
                         "node2",
@@ -407,17 +382,17 @@ class AddNodes(TestCase):
                             CAddr("10.0.0.2", 2),
                             CAddr("::ffff:10:0:0:2", 3),
                         ],
-                        2
+                        2,
                     ),
                 ],
-                []
+                [],
             ),
             [
                 fixture.error(
                     report_codes.NODE_ADDRESSES_DUPLICATION,
-                    address_list=["10.0.0.3", "::ffff:10:0:0:6", "addr04"]
+                    address_list=["10.0.0.3", "::ffff:10:0:0:6", "addr04"],
                 )
-            ]
+            ],
         )
 
     def test_node_addrs_already_used(self):
@@ -432,16 +407,14 @@ class AddNodes(TestCase):
                     CNode("node1", [CAddr("addr01", 1)], 1),
                     CNode("node2", [CAddr("addr02", 1)], 2),
                 ],
-                [
-                    PNode("node-remote", "addr19")
-                ]
+                [PNode("node-remote", "addr19")],
             ),
             [
                 fixture.error(
                     report_codes.NODE_ADDRESSES_ALREADY_EXIST,
-                    address_list=["addr02", "addr19"]
+                    address_list=["addr02", "addr19"],
                 )
-            ]
+            ],
         )
 
     def test_node_addrs_ip_version_ok(self):
@@ -455,7 +428,7 @@ class AddNodes(TestCase):
                             "::ffff:10:0:0:3",
                             "10.0.0.3",
                             "addr13",
-                        ]
+                        ],
                     },
                     {
                         "name": "node4",
@@ -464,7 +437,7 @@ class AddNodes(TestCase):
                             "addr04",
                             "addr14",
                             "::ffff:10:0:0:4",
-                        ]
+                        ],
                     },
                 ],
                 [
@@ -476,7 +449,7 @@ class AddNodes(TestCase):
                             CAddr("10.0.0.1", 5),
                             CAddr("::ffff:10:0:0:1", 6),
                         ],
-                        1
+                        1,
                     ),
                     CNode(
                         "node2",
@@ -486,12 +459,12 @@ class AddNodes(TestCase):
                             CAddr("10.0.0.2", 5),
                             CAddr("::ffff:10:0:0:2", 6),
                         ],
-                        2
+                        2,
                     ),
                 ],
-                []
+                [],
             ),
-            []
+            [],
         )
 
     def test_node_addrs_ip_version_mismatch(self):
@@ -505,14 +478,14 @@ class AddNodes(TestCase):
                     CNode("node1", [CAddr("addr01", 1)], 1),
                     CNode("node2", [CAddr("addr02", 1)], 2),
                 ],
-                []
+                [],
             ),
             [
                 fixture.error(
                     report_codes.COROSYNC_IP_VERSION_MISMATCH_IN_LINKS,
-                    link_numbers=[1]
+                    link_numbers=[1],
                 )
-            ]
+            ],
         )
 
     def test_node_addrs_mismatch_existing_links(self):
@@ -524,32 +497,30 @@ class AddNodes(TestCase):
                 ],
                 [
                     CNode(
-                        "node1",
-                        [CAddr("10.0.0.1", 1), CAddr("addr11", 2)],
-                        1
+                        "node1", [CAddr("10.0.0.1", 1), CAddr("addr11", 2)], 1
                     ),
                     CNode(
                         "node2",
                         [CAddr("addr02", 1), CAddr("::ffff:10:0:0:2", 2)],
-                        2
+                        2,
                     ),
                 ],
-                []
+                [],
             ),
             [
                 fixture.error(
                     report_codes.COROSYNC_ADDRESS_IP_VERSION_WRONG_FOR_LINK,
                     address="::ffff:10:0:0:3",
                     expected_address_type="IPv4",
-                    link_number=1
+                    link_number=1,
                 ),
                 fixture.error(
                     report_codes.COROSYNC_ADDRESS_IP_VERSION_WRONG_FOR_LINK,
                     address="10.0.0.14",
                     expected_address_type="IPv6",
-                    link_number=2
+                    link_number=2,
                 ),
-            ]
+            ],
         )
 
     def test_node_addrs_ip_version_mismatch_complex(self):
@@ -574,7 +545,7 @@ class AddNodes(TestCase):
                             "::ffff:10:0:0:3",
                             "10.0.0.3",
                             "10.0.0.13",
-                        ]
+                        ],
                     },
                     {
                         "name": "node4",
@@ -583,7 +554,7 @@ class AddNodes(TestCase):
                             "10.0.0.4",
                             "addr14",
                             "::ffff:10:0:0:4",
-                        ]
+                        ],
                     },
                 ],
                 [
@@ -595,7 +566,7 @@ class AddNodes(TestCase):
                             CAddr("addr19", 5),
                             CAddr("addr18", 7),
                         ],
-                        1
+                        1,
                     ),
                     CNode(
                         "node2",
@@ -605,10 +576,10 @@ class AddNodes(TestCase):
                             CAddr("10.0.0.2", 5),
                             CAddr("::ffff:10:0:0:2", 7),
                         ],
-                        2
+                        2,
                     ),
                 ],
-                []
+                [],
             ),
             [
                 fixture.error(
@@ -617,61 +588,60 @@ class AddNodes(TestCase):
                     min_count=4,
                     max_count=4,
                     node_name="node3",
-                    node_index=1
+                    node_index=1,
                 ),
                 fixture.error(
                     report_codes.COROSYNC_ADDRESS_IP_VERSION_WRONG_FOR_LINK,
                     address="::ffff:10:0:0:3",
                     expected_address_type="IPv4",
-                    link_number=5
+                    link_number=5,
                 ),
                 fixture.error(
                     report_codes.COROSYNC_ADDRESS_IP_VERSION_WRONG_FOR_LINK,
                     address="10.0.0.3",
                     expected_address_type="IPv6",
-                    link_number=7
+                    link_number=7,
                 ),
                 fixture.error(
                     report_codes.NODE_ADDRESSES_UNRESOLVABLE,
                     force_code=report_codes.FORCE_NODE_ADDRESSES_UNRESOLVABLE,
-                    address_list=["addrX1"]
+                    address_list=["addrX1"],
                 ),
                 fixture.error(
                     report_codes.COROSYNC_IP_VERSION_MISMATCH_IN_LINKS,
-                    link_numbers=[3]
-                )
-            ]
+                    link_numbers=[3],
+                ),
+            ],
         )
 
     def test_forbidden_characters(self):
         assert_report_item_list_equal(
             config_validators.add_nodes(
-                [
-                    {"name": "node{3}", "addrs": ["\raddr03\n"]},
-                ],
+                [{"name": "node{3}", "addrs": ["\raddr03\n"]},],
                 self.fixture_coronodes_1_link,
-                []
+                [],
             ),
             [
                 fixture.error(
                     report_codes.INVALID_OPTION_VALUE,
                     option_value="node{3}",
                     option_name="node 1 name",
-                    **forbidden_characters_kwargs
+                    **forbidden_characters_kwargs,
                 ),
                 fixture.error(
                     report_codes.INVALID_OPTION_VALUE,
                     option_value="\raddr03\n",
                     option_name="node address",
-                    **forbidden_characters_kwargs
+                    **forbidden_characters_kwargs,
                 ),
                 fixture.error(
                     report_codes.NODE_ADDRESSES_UNRESOLVABLE,
                     force_code=report_codes.FORCE_NODE_ADDRESSES_UNRESOLVABLE,
                     address_list=["\raddr03\n"],
                 ),
-            ]
+            ],
         )
+
 
 class RemoveNodes(TestCase):
     fixture_nodes = [
@@ -686,16 +656,14 @@ class RemoveNodes(TestCase):
             config_validators.remove_nodes(
                 ["node3", "nodeX", "nodeY", "node4"],
                 self.fixture_nodes,
-                (None, None, None, None)
+                (None, None, None, None),
             ),
             [
                 fixture.error(
-                    report_codes.NODE_NOT_FOUND,
-                    node=node,
-                    searched_types=[]
+                    report_codes.NODE_NOT_FOUND, node=node, searched_types=[]
                 )
                 for node in ["nodeX", "nodeY"]
-            ]
+            ],
         )
 
     def test_all_nodes(self):
@@ -703,22 +671,17 @@ class RemoveNodes(TestCase):
             config_validators.remove_nodes(
                 ["node3", "node1", "node2", "node4"],
                 self.fixture_nodes,
-                (None, None, None, None)
+                (None, None, None, None),
             ),
-            [
-                fixture.error(report_codes.CANNOT_REMOVE_ALL_CLUSTER_NODES)
-            ]
+            [fixture.error(report_codes.CANNOT_REMOVE_ALL_CLUSTER_NODES)],
         )
 
     def test_qdevice_tie_breaker_none(self):
         assert_report_item_list_equal(
             config_validators.remove_nodes(
-                ["node4"],
-                self.fixture_nodes,
-                ("net", {}, None, None)
+                ["node4"], self.fixture_nodes, ("net", {}, None, None)
             ),
-            [
-            ]
+            [],
         )
 
     def test_qdevice_tie_breaker_generic(self):
@@ -726,10 +689,9 @@ class RemoveNodes(TestCase):
             config_validators.remove_nodes(
                 ["node4"],
                 self.fixture_nodes,
-                ("net", {"tie_breaker": "highest"}, None, None)
+                ("net", {"tie_breaker": "highest"}, None, None),
             ),
-            [
-            ]
+            [],
         )
 
     def test_qdevice_tie_breaker_kept(self):
@@ -737,10 +699,9 @@ class RemoveNodes(TestCase):
             config_validators.remove_nodes(
                 ["node4"],
                 self.fixture_nodes,
-                ("net", {"tie_breaker": "3"}, None, None)
+                ("net", {"tie_breaker": "3"}, None, None),
             ),
-            [
-            ]
+            [],
         )
 
     def test_qdevice_tie_breaker_removed(self):
@@ -748,15 +709,15 @@ class RemoveNodes(TestCase):
             config_validators.remove_nodes(
                 ["node4"],
                 self.fixture_nodes,
-                ("net", {"tie_breaker": "4"}, None, None)
+                ("net", {"tie_breaker": "4"}, None, None),
             ),
             [
                 fixture.error(
                     report_codes.NODE_USED_AS_TIE_BREAKER,
                     node="node4",
-                    node_id=4
+                    node_id=4,
                 ),
-            ]
+            ],
         )
 
     def test_more_errors(self):
@@ -764,19 +725,17 @@ class RemoveNodes(TestCase):
             config_validators.remove_nodes(
                 ["node3", "node1", "node2", "node4", "nodeX"],
                 self.fixture_nodes,
-                ("net", {"tie_breaker": "4"}, None, None)
+                ("net", {"tie_breaker": "4"}, None, None),
             ),
             [
                 fixture.error(
-                    report_codes.NODE_NOT_FOUND,
-                    node="nodeX",
-                    searched_types=[]
+                    report_codes.NODE_NOT_FOUND, node="nodeX", searched_types=[]
                 ),
                 fixture.error(report_codes.CANNOT_REMOVE_ALL_CLUSTER_NODES),
                 fixture.error(
                     report_codes.NODE_USED_AS_TIE_BREAKER,
                     node="node4",
-                    node_id=4
+                    node_id=4,
                 ),
-            ]
+            ],
         )

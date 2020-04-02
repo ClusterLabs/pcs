@@ -1,7 +1,7 @@
 from pcs.lib.corosync import constants
 
-class Section:
 
+class Section:
     def __init__(self, name):
         self._parent = None
         self._attr_list = []
@@ -72,8 +72,9 @@ class Section:
 
     def del_attributes_by_name(self, name, value=None):
         self._attr_list = [
-            attr for attr in self._attr_list
-                if not(attr[0] == name and (value is None or attr[1] == value))
+            attr
+            for attr in self._attr_list
+            if not (attr[0] == name and (value is None or attr[1] == value))
         ]
         return self
 
@@ -95,8 +96,9 @@ class Section:
 
     def get_sections(self, name=None):
         return [
-            section for section in self._section_list
-                if name is None or section.name == name
+            section
+            for section in self._section_list
+            if name is None or section.name == name
         ]
 
     def add_section(self, section):
@@ -130,6 +132,7 @@ def parse_string(conf_text):
     root = Section("")
     _parse_section(conf_text.split("\n"), root)
     return root
+
 
 def _parse_section(lines, section):
     # parser should work the same way as the original parser in corosync
@@ -191,14 +194,17 @@ def verify_section(section, path_prefix=""):
     return (
         bad_section_name_list,
         bad_attribute_name_list,
-        bad_attribute_value_list
+        bad_attribute_value_list,
     )
+
 
 def _prefix_path(prefix, path):
     return f"{prefix}.{path}" if prefix and path else path
 
+
 def _is_valid_name(name):
     return constants.OPTION_NAME_RE.fullmatch(name) is not None
+
 
 def _is_valid_value(value):
     # pylint: disable=superfluous-parens
@@ -208,26 +214,34 @@ def _is_valid_value(value):
 class CorosyncConfParserException(Exception):
     pass
 
+
 class CircularParentshipException(CorosyncConfParserException):
     pass
+
 
 class ParseErrorException(CorosyncConfParserException):
     pass
 
+
 class MissingClosingBraceException(ParseErrorException):
     pass
+
 
 class UnexpectedClosingBraceException(ParseErrorException):
     pass
 
+
 class MissingSectionNameBeforeOpeningBraceException(ParseErrorException):
     pass
+
 
 class ExtraCharactersAfterOpeningBraceException(ParseErrorException):
     pass
 
+
 class ExtraCharactersBeforeOrAfterClosingBraceException(ParseErrorException):
     pass
+
 
 class LineIsNotSectionNorKeyValueException(ParseErrorException):
     pass

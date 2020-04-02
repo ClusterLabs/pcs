@@ -7,9 +7,10 @@ from pcs.lib.cib.tools import check_new_id_applicable
 from pcs.lib.errors import LibraryError
 from pcs.lib.pacemaker.values import is_score, SCORE_INFINITY
 
-TAG_NAME = 'rsc_colocation'
+TAG_NAME = "rsc_colocation"
 DESCRIPTION = "constraint id"
 SCORE_NAMES = ("score", "score-attribute", "score-attribute-mangle")
+
 
 def prepare_options_with_set(cib, options, resource_set_list):
     options = constraint.prepare_options(
@@ -24,9 +25,9 @@ def prepare_options_with_set(cib, options, resource_set_list):
             ReportItem.error(reports.messages.InvalidScore(options["score"]))
         )
 
-    score_attrs_count = len([
-        name for name in options.keys() if name in SCORE_NAMES
-    ])
+    score_attrs_count = len(
+        [name for name in options.keys() if name in SCORE_NAMES]
+    )
     if score_attrs_count > 1:
         raise LibraryError(
             ReportItem.error(reports.messages.MultipleScoreOptions())

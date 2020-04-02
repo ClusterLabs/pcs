@@ -21,9 +21,15 @@ class RunnerConfig:
         self.systemctl = wrap_helper(SystemctlShortcuts(self.__calls))
 
     def place(
-        self, command,
-        name="", stdout="", stderr="", returncode=0, check_stdin=None,
-        before=None, instead=None
+        self,
+        command,
+        name="",
+        stdout="",
+        stderr="",
+        returncode=0,
+        check_stdin=None,
+        before=None,
+        instead=None,
     ):
         # pylint: disable=too-many-arguments
         """

@@ -53,6 +53,7 @@ def acl_enable(lib, argv, modifiers):
         raise CmdLineInputError()
     prop.set_property(lib, ["enable-acl=true"], modifiers.get_subset("-f"))
 
+
 def acl_disable(lib, argv, modifiers):
     """
     Options:
@@ -118,21 +119,22 @@ def argv_to_permission_info_list(argv):
     if len(argv) % 3 != 0:
         raise CmdLineInputError()
 
-    #wrapping by list,
-    #because in python3 zip() returns an iterator instead of a list
-    #and the loop below makes iteration over it
-    permission_info_list = list(zip(
-        [permission.lower() for permission in argv[::3]],
-        [scope_type.lower() for scope_type in argv[1::3]],
-        argv[2::3]
-    ))
+    # wrapping by list,
+    # because in python3 zip() returns an iterator instead of a list
+    # and the loop below makes iteration over it
+    permission_info_list = list(
+        zip(
+            [permission.lower() for permission in argv[::3]],
+            [scope_type.lower() for scope_type in argv[1::3]],
+            argv[2::3],
+        )
+    )
 
     for permission, scope_type, dummy_scope in permission_info_list:
-        if(
-            permission not in ['read', 'write', 'deny']
-            or
-            scope_type not in ['xpath', 'id']
-        ):
+        if permission not in ["read", "write", "deny"] or scope_type not in [
+            "xpath",
+            "id",
+        ]:
             raise CmdLineInputError()
 
     return permission_info_list
@@ -149,9 +151,9 @@ def role_create(lib, argv, modifiers):
 
     role_id = argv.pop(0)
     description = ""
-    desc_key = 'description='
+    desc_key = "description="
     if argv and argv[0].startswith(desc_key) and len(argv[0]) > len(desc_key):
-        description = argv.pop(0)[len(desc_key):]
+        description = argv.pop(0)[len(desc_key) :]
     permission_info_list = argv_to_permission_info_list(argv)
 
     lib.acl.create_role(role_id, permission_info_list, description)
@@ -168,8 +170,7 @@ def role_delete(lib, argv, modifiers):
         raise CmdLineInputError()
 
     lib.acl.remove_role(
-        argv[0],
-        autodelete_users_groups=modifiers.get("--autodelete")
+        argv[0], autodelete_users_groups=modifiers.get("--autodelete")
     )
 
 
@@ -214,7 +215,7 @@ def role_assign(lib, argv, modifiers):
         "to",
         lib.acl.assign_role_not_specific,
         lib.acl.assign_role_to_target,
-        lib.acl.assign_role_to_group
+        lib.acl.assign_role_to_group,
     )
 
 
@@ -236,7 +237,7 @@ def role_unassign(lib, argv, modifiers):
         ),
         lambda role_id, ug_id: lib.acl.unassign_role_from_group(
             role_id, ug_id, modifiers.get("--autodelete")
-        )
+        ),
     )
 
 
@@ -267,6 +268,7 @@ def _target_group_to_str(type_name, obj):
     return ["{0}: {1}".format(type_name.title(), obj.get("id"))] + indent(
         [" ".join(["Roles:"] + obj.get("role_list", []))]
     )
+
 
 def target_to_str(target):
     return _target_group_to_str("user", target)

@@ -3,12 +3,12 @@ from tornado.testing import AsyncHTTPTestCase
 from tornado.web import Application, RequestHandler
 
 from pcs_test.tier0.daemon.test_session import AssertMixin
-from pcs_test.tier0.daemon.app.fixtures_app import(
+from pcs_test.tier0.daemon.app.fixtures_app import (
     USER,
     GROUPS,
     PASSWORD,
     UserAuthInfo,
-    UserAuthMixin
+    UserAuthMixin,
 )
 from pcs_test.tools.misc import create_setup_patch_mixin
 
@@ -19,21 +19,22 @@ from pcs.daemon.app import session as app_session
 
 SID = "abc"
 
+
 def headers_with_sid(cookie_sid):
-    return {
-        "headers": {
-            "Cookie": f"{app_session.PCSD_SESSION}={cookie_sid}"
-        }
-    }
+    return {"headers": {"Cookie": f"{app_session.PCSD_SESSION}={cookie_sid}"}}
+
 
 class Handler(app_session.Mixin, RequestHandler):
     # pylint: disable=abstract-method,arguments-differ
     test = None
+
     @property
     def response_cookies(self):
-        return {} if not hasattr(self, "_new_cookie") else {
-            key: morsel.value for key, morsel in self._new_cookie.items()
-        }
+        return (
+            {}
+            if not hasattr(self, "_new_cookie")
+            else {key: morsel.value for key, morsel in self._new_cookie.items()}
+        )
 
     async def get(self, *args, **kwargs):
         del args, kwargs
@@ -41,15 +42,19 @@ class Handler(app_session.Mixin, RequestHandler):
             await self.init_session()
         await self.test.on_handle(self)
 
+
 VANILLA_SESSION = "VANILLA_SESSION"
 AUTHENTICATED_SESSION = "AUTHENTICATED_SESSION"
 RESPONSE_WITH_SID = "RESPONSE_WITH_SID"
 RESPONSE_WITHOUT_SID = "RESPONSE_WITHOUT_SID"
 RESPONSE_SID_IN_STORAGE = "RESPONSE_SID_IN_STORAGE"
 
+
 class MixinTest(
-    AsyncHTTPTestCase, AssertMixin, create_setup_patch_mixin(app_session),
-    UserAuthMixin
+    AsyncHTTPTestCase,
+    AssertMixin,
+    create_setup_patch_mixin(app_session),
+    UserAuthMixin,
 ):
     init_session = None
     auto_init_session = True
@@ -59,6 +64,7 @@ class MixinTest(
     The app_session.Mixin is tested via Handler(RequestHandler) that mix it. The
     particular tests acts inside the handler.
     """
+
     def setUp(self):
         Handler.test = self
         self.storage = session.Storage(lifetime_seconds=10)
@@ -97,9 +103,7 @@ class MixinTest(
             self.fetch_args = headers_with_sid(self.sid)
         elif self.init_session == AUTHENTICATED_SESSION:
             self.sid = self.storage.login(
-                sid=None,
-                username=USER,
-                groups=[]
+                sid=None, username=USER, groups=[]
             ).sid
             self.fetch_args = headers_with_sid(self.sid)
 
@@ -112,36 +116,45 @@ class MixinTest(
             self.assertNotIn("Set-Cookie", response.headers)
         self.extra_checks(response)
 
+
 class SidNotInRequestCookiesByDefault(MixinTest):
     response_sid_expectation = RESPONSE_WITHOUT_SID
+
     async def on_handle(self, handler):
         self.assertFalse(handler.was_sid_in_request_cookies())
+
 
 class SidInRequestCookiesButNotInResponseCookies(MixinTest):
     init_session = VANILLA_SESSION
     response_sid_expectation = RESPONSE_WITHOUT_SID
+
     async def on_handle(self, handler):
         self.assertTrue(handler.was_sid_in_request_cookies())
         self.assertEqual(self.sid, handler.session.sid)
         self.assertFalse(app_session.PCSD_SESSION in handler.response_cookies)
 
+
 class SidInResponseCookies(MixinTest):
     init_session = VANILLA_SESSION
     response_sid_expectation = RESPONSE_WITH_SID
+
     async def on_handle(self, handler):
         self.assertTrue(handler.was_sid_in_request_cookies())
         handler.put_request_cookies_sid_to_response_cookies_sid()
         self.assertTrue(app_session.PCSD_SESSION in handler.response_cookies)
 
+
 class GetNewSession(MixinTest):
     auto_init_session = False
     response_sid_expectation = RESPONSE_WITH_SID
+
     async def on_handle(self, handler):
         self.assertEqual(len(self.session_dict), 0)
         await handler.init_session()
         self.assertEqual(len(self.session_dict), 1)
         self.sid = handler.session.sid
         handler.sid_to_cookies()
+
 
 class SessionInMixinSurviveDestroyInStorage(MixinTest):
     async def on_handle(self, handler):
@@ -152,48 +165,56 @@ class SessionInMixinSurviveDestroyInStorage(MixinTest):
         self.storage.destroy(session1.sid)
         self.assertIs(session1, handler.session)
 
+
 class SessionIsPropagatedToResponseCookie(MixinTest):
     async def on_handle(self, handler):
         handler.sid_to_cookies()
         self.assertEqual(
             handler.response_cookies[app_session.PCSD_SESSION],
-            handler.session.sid
+            handler.session.sid,
         )
 
     def extra_checks(self, response):
         self.assertIn(self.sid_from_body(response), self.session_dict)
 
+
 class CanLoginAndLogout(MixinTest):
     user_auth_info = UserAuthInfo(valid=True)
     auto_init_session = False
+
     async def on_handle(self, handler):
         await handler.session_auth_user(USER, PASSWORD)
         self.assert_authenticated_session(handler.session, USER, GROUPS)
         handler.session_logout()
         self.assert_vanila_session(handler.session)
 
+
 class FailedLoginAttempt(MixinTest):
     auto_init_session = False
+
     async def on_handle(self, handler):
         await handler.session_auth_user(USER, PASSWORD)
         self.assert_login_failed_session(handler.session, USER)
 
+
 class FailedLoginAttemptWithoutSessionSign(MixinTest):
     auto_init_session = False
+
     async def on_handle(self, handler):
         await handler.session_auth_user(
-            USER,
-            PASSWORD,
-            sign_rejection=False,
+            USER, PASSWORD, sign_rejection=False,
         )
         self.assert_vanila_session(handler.session)
+
 
 class CanLogoutWithoutSessionAccess(MixinTest):
     init_session = VANILLA_SESSION
     auto_init_session = False
+
     async def on_handle(self, handler):
         handler.session_logout()
         self.assertNotEqual(self.sid, handler.session.sid)
+
 
 class AuthUpdatedByGroupCheck(MixinTest):
     init_session = AUTHENTICATED_SESSION
@@ -203,7 +224,9 @@ class AuthUpdatedByGroupCheck(MixinTest):
         self.assertTrue(handler.was_sid_in_request_cookies())
         self.assertTrue(handler.session.is_authenticated)
 
+
 class AuthRefusedByGroupCheck(MixinTest):
     init_session = AUTHENTICATED_SESSION
+
     async def on_handle(self, handler):
         self.assertFalse(handler.session.is_authenticated)

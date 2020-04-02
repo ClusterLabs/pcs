@@ -1,5 +1,6 @@
 from unittest import TestCase
 
+
 class Destroy(TestCase):
     """
     tested in:
@@ -11,6 +12,7 @@ class Destroy(TestCase):
             .test_cluster_destroy_failure
     """
 
+
 class DestroyWarnOnFailure(TestCase):
     """
     tested in:
@@ -18,6 +20,7 @@ class DestroyWarnOnFailure(TestCase):
         pcs_test.tier0.lib.commands.cluster.test_remove_nodes
             .FailureClusterDestroy
     """
+
 
 class GetQuorumStatus(TestCase):
     """

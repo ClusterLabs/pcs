@@ -3,14 +3,11 @@ from unittest import TestCase
 
 from pcs_test.tier0.cib_resource.common import get_cib_resources
 from pcs_test.tools.cib import get_assert_pcs_effect_mixin
-from pcs_test.tools.misc import  get_test_resource as rc
+from pcs_test.tools.misc import get_test_resource as rc
 from pcs_test.tools.pcs_runner import PcsRunner
 
 
-class OperationAdd(
-    TestCase,
-    get_assert_pcs_effect_mixin(get_cib_resources)
-):
+class OperationAdd(TestCase, get_assert_pcs_effect_mixin(get_cib_resources)):
     temp_cib = rc("temp-cib.xml")
     empty_cib = rc("cib-empty.xml")
 
@@ -33,7 +30,7 @@ class OperationAdd(
         self.assert_pcs_success(
             "resource create --no-default-ops R ocf:heartbeat:Dummy"
         )
-        #add to cib:
+        # add to cib:
         # <primitive class="ocf" id="R" provider="heartbeat" type="Dummy">
         #   <operations>
         #     <op id="R-monitor-interval-60s" interval="60s"
@@ -44,7 +41,7 @@ class OperationAdd(
         with open(self.temp_cib) as cib_file:
             cib_content = cib_file.read()
 
-        #clean
+        # clean
         self.pcs_runner = None
         shutil.copy(self.empty_cib, self.temp_cib)
 
@@ -64,15 +61,14 @@ class OperationAdd(
                         />
                     </operations>
                 </primitive>
-            </resources>"""
+            </resources>""",
         )
 
     def test_add_with_OCF_CHECK_LEVEL(self):
         # pylint: disable=invalid-name
         self.assert_effect(
             "resource op add R start interval=20s OCF_CHECK_LEVEL=1"
-                " description=test-description"
-            ,
+            " description=test-description",
             """<resources>
                 <primitive class="ocf" id="R" provider="heartbeat" type="Dummy">
                     <operations>
@@ -93,7 +89,7 @@ class OperationAdd(
                         </op>
                     </operations>
                 </primitive>
-            </resources>"""
+            </resources>""",
         )
 
     def test_can_multiple_operation_add(self):
@@ -110,7 +106,7 @@ class OperationAdd(
                         />
                     </operations>
                 </primitive>
-            </resources>"""
+            </resources>""",
         )
         self.assert_effect(
             "resource op add R stop interval=30s",
@@ -128,7 +124,7 @@ class OperationAdd(
                         />
                     </operations>
                 </primitive>
-            </resources>"""
+            </resources>""",
         )
 
     def test_id_specified(self):
@@ -143,20 +139,20 @@ class OperationAdd(
                         <op id="abcd" interval="0s" name="start" timeout="30" />
                     </operations>
                 </primitive>
-            </resources>"""
+            </resources>""",
         )
 
     def test_invalid_id(self):
         self.assert_pcs_fail_regardless_of_force(
             "resource op add R start timeout=30 id=ab#cd",
             "Error: invalid operation id 'ab#cd', '#' is not a valid"
-                " character for a operation id\n"
+            " character for a operation id\n",
         )
 
     def test_duplicate_id(self):
         self.assert_pcs_fail_regardless_of_force(
             "resource op add R start timeout=30 id=R",
-            "Error: id 'R' is already in use, please specify another one\n"
+            "Error: id 'R' is already in use, please specify another one\n",
         )
 
     def test_unknown_option(self):
@@ -165,5 +161,5 @@ class OperationAdd(
             (
                 "Error: requires is not a valid op option (use --force to "
                 "override)\n"
-            )
+            ),
         )

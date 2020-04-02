@@ -14,27 +14,25 @@ _FUNC_ARGS = {
     "os.listdir": ["path"],
 }
 
+
 def _ensure_consistent_args(func_name, call_args, call_kwargs):
     if len(call_args) > len(_FUNC_ARGS[func_name]):
         raise AssertionError(
             "{0}() too many positional arguments ({1} > {2})".format(
-                func_name,
-                len(call_args),
-                len(_FUNC_ARGS[func_name]),
+                func_name, len(call_args), len(_FUNC_ARGS[func_name]),
             )
         )
 
-    param_intersection = (
-        set(_FUNC_ARGS[func_name][:len(call_args)])
-        .intersection(call_kwargs.keys())
-    )
+    param_intersection = set(
+        _FUNC_ARGS[func_name][: len(call_args)]
+    ).intersection(call_kwargs.keys())
     if param_intersection:
         raise TypeError(
             "{0}() got multiple values for keyword argument(s) '{1}'".format(
-                func_name,
-                "', '".join(param_intersection)
+                func_name, "', '".join(param_intersection)
             )
         )
+
 
 def _get_all_args_as_kwargs(func_name, call_args, call_kwargs):
     _ensure_consistent_args(func_name, call_args, call_kwargs)
@@ -42,6 +40,7 @@ def _get_all_args_as_kwargs(func_name, call_args, call_kwargs):
     for i, arg in enumerate(call_args):
         kwargs[_FUNC_ARGS[func_name][i]] = arg
     return kwargs
+
 
 class Call:
     type = CALL_TYPE_FS
@@ -55,7 +54,7 @@ class Call:
         """
         call_kwargs = call_kwargs if call_kwargs else {}
 
-        #TODO side effect with return_value - mutually exclusive
+        # TODO side effect with return_value - mutually exclusive
 
         self.type = CALL_TYPE_FS
         self.func_name = func_name
@@ -66,7 +65,7 @@ class Call:
     def finish(self):
         if self.side_effect:
             if isinstance(self.side_effect, Exception):
-                #pylint: disable=raising-bad-type
+                # pylint: disable=raising-bad-type
                 raise self.side_effect
             raise AssertionError(
                 "side_effect other than instance of exception not supported yet"
@@ -76,22 +75,24 @@ class Call:
 
     def __repr__(self):
         return str("<Fs '{0}' kwargs={1}>").format(
-            self.func_name,
-            self.call_kwargs,
+            self.func_name, self.call_kwargs,
         )
 
     def __ne__(self, other):
         return (
             self.func_name != other.func_name
-            or
-            self.call_kwargs != other.call_kwargs
+            or self.call_kwargs != other.call_kwargs
         )
+
 
 def get_fs_mock(call_queue):
     package_dir_list = site.getsitepackages()
-    package_dir_list.append(os.path.realpath(
-        os.path.dirname(os.path.abspath(__file__))+"/../../.."
-    ))
+    package_dir_list.append(
+        os.path.realpath(
+            os.path.dirname(os.path.abspath(__file__)) + "/../../.."
+        )
+    )
+
     def get_fs_call(func_name, original_call):
         def call_fs(*args, **kwargs):
             # Standard python unittest tries to open some python code (e.g. the
@@ -109,24 +110,25 @@ def get_fs_mock(call_queue):
 
             real_call = Call(
                 func_name,
-                call_kwargs=_get_all_args_as_kwargs(func_name, args, kwargs)
+                call_kwargs=_get_all_args_as_kwargs(func_name, args, kwargs),
             )
             dummy_i, expected_call = call_queue.take(
-                CALL_TYPE_FS,
-                repr(real_call)
+                CALL_TYPE_FS, repr(real_call)
             )
 
             if expected_call != real_call:
                 raise call_queue.error_with_context(
                     "\n  expected: '{0}'\n  but was:  '{1}'".format(
-                        expected_call,
-                        real_call
+                        expected_call, real_call
                     )
                 )
 
             return expected_call.finish()
+
         return call_fs
+
     return get_fs_call
+
 
 def is_fs_call_in(call_queue):
     return call_queue.has_type(CALL_TYPE_FS)

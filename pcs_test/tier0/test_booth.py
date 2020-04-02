@@ -28,21 +28,21 @@ BOOTH_RESOURCE_AGENT_INSTALLED = os.path.exists(
 need_booth_resource_agent = skipUnless(
     BOOTH_RESOURCE_AGENT_INSTALLED,
     "test requires resource agent ocf:pacemaker:booth-site"
-    " which is not installed"
+    " which is not installed",
 )
 
 
 def fake_file(command):
     return "{0} --booth-conf={1} --booth-key={2}".format(
-        command,
-        BOOTH_CONFIG_FILE,
-        BOOTH_KEY_FILE,
+        command, BOOTH_CONFIG_FILE, BOOTH_KEY_FILE,
     )
+
 
 def ensure_booth_config_exists():
     if not os.path.exists(BOOTH_CONFIG_FILE):
         with open(BOOTH_CONFIG_FILE, "w") as config_file:
             config_file.write("")
+
 
 def ensure_booth_config_not_exists():
     if os.path.exists(BOOTH_CONFIG_FILE):
@@ -50,12 +50,14 @@ def ensure_booth_config_not_exists():
     if os.path.exists(BOOTH_KEY_FILE):
         os.remove(BOOTH_KEY_FILE)
 
+
 class BoothLibCallMixin(AssertPcsMixin):
     # plyint cannot possibly know this is being mixed into TestCase classes
     # pylint: disable=invalid-name
     def setUp(self):
         self.pcs_runner = PcsRunner(None)
         self.lib = mock.Mock(spec_set=["booth"])
+
 
 class BoothMixin(AssertPcsMixin):
     # pylint: disable=invalid-name, arguments-differ
@@ -77,6 +79,7 @@ class BoothMixin(AssertPcsMixin):
     def assert_pcs_fail_original(self, *args, **kwargs):
         return super(BoothMixin, self).assert_pcs_fail(*args, **kwargs)
 
+
 class SetupTest(BoothMixin, TestCase):
     def setUp(self):
         super().setUp()
@@ -90,14 +93,17 @@ class SetupTest(BoothMixin, TestCase):
         )
         with open(BOOTH_CONFIG_FILE, "r") as config_file:
             self.assertEqual(
-                dedent("""\
+                dedent(
+                    """\
                     authfile = {0}
                     site = 1.1.1.1
                     site = 2.2.2.2
                     arbitrator = 3.3.3.3
-                    """.format(BOOTH_KEY_FILE)
+                    """.format(
+                        BOOTH_KEY_FILE
+                    )
                 ),
-                config_file.read()
+                config_file.read(),
             )
         with open(BOOTH_KEY_FILE, "rb") as key_file:
             self.assertEqual(64, len(key_file.read()))
@@ -114,49 +120,47 @@ class SetupTest(BoothMixin, TestCase):
             "booth setup sites 1.1.1.1 arbitrators 1.1.1.1 2.2.2.2 3.3.3.3",
             (
                 "Error: lack of sites for booth configuration (need 2 at least)"
-                    ": sites '1.1.1.1'\n"
+                ": sites '1.1.1.1'\n"
                 "Error: odd number of peers is required (entered 4 peers)\n"
                 "Error: duplicate address for booth configuration: '1.1.1.1'\n"
                 "Error: Errors have occurred, therefore pcs is unable to "
-                    "continue\n"
-            )
+                "continue\n"
+            ),
         )
 
     def test_refuse_partialy_mocked_environment(self):
         self.assert_pcs_fail_original(
             "booth setup sites 1.1.1.1 2.2.2.2 arbitrators 3.3.3.3"
-                " --booth-conf=/some/file" #no --booth-key!
-            ,
+            " --booth-conf=/some/file",  # no --booth-key!
             (
                 "Error: When --booth-conf is specified, --booth-key must be "
                 "specified as well\n"
-            )
+            ),
         )
         self.assert_pcs_fail_original(
             "booth setup sites 1.1.1.1 2.2.2.2 arbitrators 3.3.3.3"
-                " --booth-key=/some/file" #no --booth-conf!
-            ,
+            " --booth-key=/some/file",  # no --booth-conf!
             (
                 "Error: When --booth-key is specified, --booth-conf must be "
                 "specified as well\n"
-            )
+            ),
         )
 
     def test_show_usage_when_no_site_specified(self):
         self.assert_pcs_fail(
             "booth setup arbitrators 3.3.3.3",
-            stdout_start="\nUsage: pcs booth <command>\n    setup"
+            stdout_start="\nUsage: pcs booth <command>\n    setup",
         )
         self.assert_pcs_fail(
             "booth setup",
-            stdout_start="\nUsage: pcs booth <command>\n    setup"
+            stdout_start="\nUsage: pcs booth <command>\n    setup",
         )
 
     def test_lib_call_minimal(self):
         booth_cmd.config_setup(
             self.lib,
             ["sites", "1.1.1.1", "2.2.2.2", "3.3.3.3"],
-            dict_to_modifiers(dict())
+            dict_to_modifiers(dict()),
         )
         self.lib.booth.config_setup.assert_called_once_with(
             ["1.1.1.1", "2.2.2.2", "3.3.3.3"],
@@ -169,7 +173,7 @@ class SetupTest(BoothMixin, TestCase):
         booth_cmd.config_setup(
             self.lib,
             ["sites", "1.1.1.1", "2.2.2.2", "arbitrators", "3.3.3.3"],
-            dict_to_modifiers(dict(name="my_booth", force=True))
+            dict_to_modifiers(dict(name="my_booth", force=True)),
         )
         self.lib.booth.config_setup.assert_called_once_with(
             ["1.1.1.1", "2.2.2.2"],
@@ -191,39 +195,29 @@ class DestroyTest(BoothMixin, TestCase):
             (
                 "Error: Specified options '--booth-conf', '--booth-key' are "
                 "not supported in this command\n"
-            )
+            ),
         )
 
     def test_too_many_args(self):
         with self.assertRaises(CmdLineInputError) as cm:
             booth_cmd.config_destroy(
-                self.lib,
-                ["aaa"],
-                dict_to_modifiers(dict())
+                self.lib, ["aaa"], dict_to_modifiers(dict())
             )
         self.assertIsNone(cm.exception.message)
         self.lib.booth.config_destroy.assert_not_called()
 
     def test_lib_call_minimal(self):
-        booth_cmd.config_destroy(
-            self.lib,
-            [],
-            dict_to_modifiers(dict())
-        )
+        booth_cmd.config_destroy(self.lib, [], dict_to_modifiers(dict()))
         self.lib.booth.config_destroy.assert_called_once_with(
-            ignore_config_load_problems=False,
-            instance_name=None,
+            ignore_config_load_problems=False, instance_name=None,
         )
 
     def test_lib_call_full(self):
         booth_cmd.config_destroy(
-            self.lib,
-            [],
-            dict_to_modifiers(dict(name="my_booth", force=True))
+            self.lib, [], dict_to_modifiers(dict(name="my_booth", force=True))
         )
         self.lib.booth.config_destroy.assert_called_once_with(
-            ignore_config_load_problems=True,
-            instance_name="my_booth",
+            ignore_config_load_problems=True, instance_name="my_booth",
         )
 
 
@@ -248,16 +242,19 @@ class AddTicketTest(BoothTest):
         self.assert_pcs_success("booth ticket add TicketA expire=10")
         with open(BOOTH_CONFIG_FILE, "r") as config_file:
             self.assertEqual(
-                dedent("""\
+                dedent(
+                    """\
                     authfile = {0}
                     site = 1.1.1.1
                     site = 2.2.2.2
                     arbitrator = 3.3.3.3
                     ticket = "TicketA"
                       expire = 10
-                    """.format(BOOTH_KEY_FILE)
+                    """.format(
+                        BOOTH_KEY_FILE
+                    )
                 ),
-                config_file.read()
+                config_file.read(),
             )
 
     def test_fail_on_bad_ticket_name(self):
@@ -265,10 +262,10 @@ class AddTicketTest(BoothTest):
             "booth ticket add @TicketA",
             (
                 "Error: booth ticket name '@TicketA' is not valid, use "
-                    "alphanumeric chars or dash\n"
+                "alphanumeric chars or dash\n"
                 "Error: Errors have occurred, therefore pcs is unable to "
-                    "continue\n"
-            )
+                "continue\n"
+            ),
         )
 
     def test_fail_on_duplicit_ticket_name(self):
@@ -277,10 +274,10 @@ class AddTicketTest(BoothTest):
             "booth ticket add TicketA",
             (
                 "Error: booth ticket name 'TicketA' already exists in "
-                    "configuration\n"
+                "configuration\n"
                 "Error: Errors have occurred, therefore pcs is unable to "
-                    "continue\n"
-            )
+                "continue\n"
+            ),
         )
 
     def test_fail_on_invalid_options(self):
@@ -288,13 +285,13 @@ class AddTicketTest(BoothTest):
             "booth ticket add TicketA site=a timeout=",
             (
                 "Error: invalid booth ticket option 'site', allowed options"
-                    " are: 'acquire-after', 'attr-prereq', "
-                    "'before-acquire-handler', 'expire', 'renewal-freq', "
-                    "'retries', 'timeout', 'weights'\n"
+                " are: 'acquire-after', 'attr-prereq', "
+                "'before-acquire-handler', 'expire', 'renewal-freq', "
+                "'retries', 'timeout', 'weights'\n"
                 "Error: timeout cannot be empty\n"
                 "Error: Errors have occurred, therefore pcs is unable to "
-                    "continue\n"
-            )
+                "continue\n"
+            ),
         )
 
     def test_forceable_fail_on_unknown_options(self):
@@ -308,8 +305,8 @@ class AddTicketTest(BoothTest):
             (
                 "Error: {0}, use --force to override\n"
                 "Error: Errors have occurred, therefore pcs is unable to "
-                    "continue\n"
-            ).format(msg)
+                "continue\n"
+            ).format(msg),
         )
         self.assert_pcs_success(
             "booth ticket add TicketA unknown=a --force",
@@ -319,32 +316,29 @@ class AddTicketTest(BoothTest):
     def test_not_enough_args(self):
         self.assert_pcs_fail(
             "booth ticket add",
-            stdout_start="\nUsage: pcs booth <command>\n    ticket add"
+            stdout_start="\nUsage: pcs booth <command>\n    ticket add",
         )
 
     def test_lib_call_minimal(self):
         booth_cmd.config_ticket_add(
-            self.lib,
-            ["ticketA"],
-            dict_to_modifiers(dict())
+            self.lib, ["ticketA"], dict_to_modifiers(dict())
         )
         self.lib.booth.config_ticket_add.assert_called_once_with(
-            "ticketA",
-            {},
-            instance_name=None,
-            allow_unknown_options=False,
+            "ticketA", {}, instance_name=None, allow_unknown_options=False,
         )
 
     def test_lib_call_full(self):
         booth_cmd.config_ticket_add(
             self.lib,
             ["ticketA", "a=A", "b=B"],
-            dict_to_modifiers({
-                "name": "my_booth",
-                "force": True,
-                "booth-conf": "C",
-                "booth-key": "K",
-            })
+            dict_to_modifiers(
+                {
+                    "name": "my_booth",
+                    "force": True,
+                    "booth-conf": "C",
+                    "booth-key": "K",
+                }
+            ),
         )
         self.lib.booth.config_ticket_add.assert_called_once_with(
             "ticketA",
@@ -354,7 +348,7 @@ class AddTicketTest(BoothTest):
         )
 
 
-class DeleteRemoveTicketMixin():
+class DeleteRemoveTicketMixin:
     command = None
 
     # plyint cannot possibly know this is being mixed into TestCase classes
@@ -367,44 +361,54 @@ class DeleteRemoveTicketMixin():
     def test_not_enough_args(self):
         self.assert_pcs_fail(
             f"booth ticket {self.command}",
-            stdout_start=outdent(f"""
+            stdout_start=outdent(
+                f"""
                 Usage: pcs booth <command>
-                    ticket {self.command} <""")
+                    ticket {self.command} <"""
+            ),
         )
 
     def test_too_many_args(self):
         self.assert_pcs_fail(
             f"booth ticket {self.command} aaa bbb",
-            stdout_start=outdent(f"""
+            stdout_start=outdent(
+                f"""
                 Usage: pcs booth <command>
-                    ticket {self.command} <""")
+                    ticket {self.command} <"""
+            ),
         )
 
     def test_success_remove_ticket(self):
         self.assert_pcs_success("booth ticket add TicketA")
         with open(BOOTH_CONFIG_FILE, "r") as config_file:
             self.assertEqual(
-                dedent("""\
+                dedent(
+                    """\
                     authfile = {0}
                     site = 1.1.1.1
                     site = 2.2.2.2
                     arbitrator = 3.3.3.3
                     ticket = "TicketA"
-                    """.format(BOOTH_KEY_FILE)
+                    """.format(
+                        BOOTH_KEY_FILE
+                    )
                 ),
-                config_file.read()
+                config_file.read(),
             )
         self.assert_pcs_success(f"booth ticket {self.command} TicketA")
         with open(BOOTH_CONFIG_FILE, "r") as config_file:
             self.assertEqual(
-                dedent("""\
+                dedent(
+                    """\
                     authfile = {0}
                     site = 1.1.1.1
                     site = 2.2.2.2
                     arbitrator = 3.3.3.3
-                    """.format(BOOTH_KEY_FILE)
+                    """.format(
+                        BOOTH_KEY_FILE
+                    )
                 ),
-                config_file.read()
+                config_file.read(),
             )
 
     def test_fail_when_ticket_does_not_exist(self):
@@ -413,38 +417,34 @@ class DeleteRemoveTicketMixin():
             (
                 "Error: booth ticket name 'TicketA' does not exist\n"
                 "Error: Errors have occurred, therefore pcs is unable to "
-                    "continue\n"
-            )
+                "continue\n"
+            ),
         )
 
     def test_lib_call_minimal(self):
         booth_cmd.config_ticket_remove(
-            self.lib,
-            ["ticketA"],
-            dict_to_modifiers(dict())
+            self.lib, ["ticketA"], dict_to_modifiers(dict())
         )
         self.lib.booth.config_ticket_remove.assert_called_once_with(
-            "ticketA",
-            instance_name=None,
+            "ticketA", instance_name=None,
         )
 
     def test_lib_call_full(self):
         booth_cmd.config_ticket_remove(
             self.lib,
             ["ticketA"],
-            dict_to_modifiers({
-                "name": "my_booth",
-                "booth-conf": "C",
-                "booth-key": "K",
-            })
+            dict_to_modifiers(
+                {"name": "my_booth", "booth-conf": "C", "booth-key": "K",}
+            ),
         )
         self.lib.booth.config_ticket_remove.assert_called_once_with(
-            "ticketA",
-            instance_name="my_booth",
+            "ticketA", instance_name="my_booth",
         )
+
 
 class DeleteTicketTest(DeleteRemoveTicketMixin, BoothTest):
     command = "delete"
+
 
 class RemoveTicketTest(DeleteRemoveTicketMixin, BoothTest):
     command = "remove"
@@ -466,42 +466,44 @@ class CreateTest(AssertPcsMixin, TestCase):
     def test_not_enough_args(self):
         self.assert_pcs_fail(
             "booth create",
-            stdout_start=outdent("""
+            stdout_start=outdent(
+                """
                 Usage: pcs booth <command>
-                    create ip <""")
+                    create ip <"""
+            ),
         )
         self.assert_pcs_fail(
             "booth create ip",
-            stdout_start=outdent("""
+            stdout_start=outdent(
+                """
                 Usage: pcs booth <command>
-                    create ip <""")
+                    create ip <"""
+            ),
         )
 
     def test_too_many_args(self):
         self.assert_pcs_fail(
             "booth create ip aaa bbb",
-            stdout_start=outdent("""
+            stdout_start=outdent(
+                """
                 Usage: pcs booth <command>
-                    create ip <""")
+                    create ip <"""
+            ),
         )
 
     def test_lib_call_minimal(self):
         booth_cmd.create_in_cluster(
-            self.lib,
-            ["ip", "1.2.3.4"],
-            dict_to_modifiers(dict())
+            self.lib, ["ip", "1.2.3.4"], dict_to_modifiers(dict())
         )
         self.lib.booth.create_in_cluster.assert_called_once_with(
-            "1.2.3.4",
-            instance_name=None,
-            allow_absent_resource_agent=False,
+            "1.2.3.4", instance_name=None, allow_absent_resource_agent=False,
         )
 
     def test_lib_call_full(self):
         booth_cmd.create_in_cluster(
             self.lib,
             ["ip", "1.2.3.4"],
-            dict_to_modifiers(dict(name="my_booth", force=True))
+            dict_to_modifiers(dict(name="my_booth", force=True)),
         )
         self.lib.booth.create_in_cluster.assert_called_once_with(
             "1.2.3.4",
@@ -529,38 +531,37 @@ class DeleteRemoveTestMixin(AssertPcsMixin):
     def test_usage(self):
         self.assert_pcs_fail(
             f"booth {self.command} a b",
-            stdout_start=outdent(f"""
+            stdout_start=outdent(
+                f"""
                 Usage: pcs booth <command>
                     {self.command}
-                """)
+                """
+            ),
         )
 
     def test_failed_when_no_booth_configuration_created(self):
         self.assert_pcs_success("resource status", "NO resources configured\n")
-        self.assert_pcs_fail(f"booth {self.command}", [
-            "Error: booth instance 'booth' not found in cib",
-            "Error: Errors have occurred, therefore pcs is unable to continue",
-        ])
+        self.assert_pcs_fail(
+            f"booth {self.command}",
+            [
+                "Error: booth instance 'booth' not found in cib",
+                "Error: Errors have occurred, therefore pcs is unable to continue",
+            ],
+        )
 
     def test_lib_call_minimal(self):
         resource_remove = lambda x: x
         booth_cmd.get_remove_from_cluster(resource_remove)(
-            self.lib,
-            [],
-            dict_to_modifiers(dict())
+            self.lib, [], dict_to_modifiers(dict())
         )
         self.lib.booth.remove_from_cluster.assert_called_once_with(
-            resource_remove,
-            instance_name=None,
-            allow_remove_multiple=False,
+            resource_remove, instance_name=None, allow_remove_multiple=False,
         )
 
     def test_lib_call_full(self):
         resource_remove = lambda x: x
         booth_cmd.get_remove_from_cluster(resource_remove)(
-            self.lib,
-            [],
-            dict_to_modifiers(dict(name="my_booth", force=True))
+            self.lib, [], dict_to_modifiers(dict(name="my_booth", force=True))
         )
         self.lib.booth.remove_from_cluster.assert_called_once_with(
             resource_remove,
@@ -572,6 +573,7 @@ class DeleteRemoveTestMixin(AssertPcsMixin):
 @need_booth_resource_agent
 class DeleteTest(DeleteRemoveTestMixin, TestCase):
     command = "delete"
+
 
 @need_booth_resource_agent
 class RemoveTest(DeleteRemoveTestMixin, TestCase):
@@ -588,41 +590,37 @@ class TicketGrantTest(BoothLibCallMixin, TestCase):
     def test_not_enough_args(self):
         self.assert_pcs_fail(
             "booth ticket grant",
-            stdout_start=outdent("""
+            stdout_start=outdent(
+                """
                 Usage: pcs booth <command>
-                    ticket grant <""")
+                    ticket grant <"""
+            ),
         )
 
     def test_too_many_args(self):
         self.assert_pcs_fail(
             "booth ticket grant aaa bbb ccc",
-            stdout_start=outdent("""
+            stdout_start=outdent(
+                """
                 Usage: pcs booth <command>
-                    ticket grant <""")
+                    ticket grant <"""
+            ),
         )
 
     def test_lib_call_minimal(self):
-        booth_cmd.ticket_grant(
-            self.lib,
-            ["ticketA"],
-            dict_to_modifiers(dict())
-        )
+        booth_cmd.ticket_grant(self.lib, ["ticketA"], dict_to_modifiers(dict()))
         self.lib.booth.ticket_grant.assert_called_once_with(
-            "ticketA",
-            instance_name=None,
-            site_ip=None,
+            "ticketA", instance_name=None, site_ip=None,
         )
 
     def test_lib_call_full(self):
         booth_cmd.ticket_grant(
             self.lib,
             ["ticketA", "1.2.3.4"],
-            dict_to_modifiers(dict(name="my_booth"))
+            dict_to_modifiers(dict(name="my_booth")),
         )
         self.lib.booth.ticket_grant.assert_called_once_with(
-            "ticketA",
-            instance_name="my_booth",
-            site_ip="1.2.3.4",
+            "ticketA", instance_name="my_booth", site_ip="1.2.3.4",
         )
 
 
@@ -636,41 +634,39 @@ class TicketRevokeTest(BoothLibCallMixin, TestCase):
     def test_not_enough_args(self):
         self.assert_pcs_fail(
             "booth ticket revoke",
-            stdout_start=outdent("""
+            stdout_start=outdent(
+                """
                 Usage: pcs booth <command>
-                    ticket revoke <""")
+                    ticket revoke <"""
+            ),
         )
 
     def test_too_many_args(self):
         self.assert_pcs_fail(
             "booth ticket revoke aaa bbb ccc",
-            stdout_start=outdent("""
+            stdout_start=outdent(
+                """
                 Usage: pcs booth <command>
-                    ticket revoke <""")
+                    ticket revoke <"""
+            ),
         )
 
     def test_lib_call_minimal(self):
         booth_cmd.ticket_revoke(
-            self.lib,
-            ["ticketA"],
-            dict_to_modifiers(dict())
+            self.lib, ["ticketA"], dict_to_modifiers(dict())
         )
         self.lib.booth.ticket_revoke.assert_called_once_with(
-            "ticketA",
-            instance_name=None,
-            site_ip=None,
+            "ticketA", instance_name=None, site_ip=None,
         )
 
     def test_lib_call_full(self):
         booth_cmd.ticket_revoke(
             self.lib,
             ["ticketA", "1.2.3.4"],
-            dict_to_modifiers(dict(name="my_booth"))
+            dict_to_modifiers(dict(name="my_booth")),
         )
         self.lib.booth.ticket_revoke.assert_called_once_with(
-            "ticketA",
-            instance_name="my_booth",
-            site_ip="1.2.3.4",
+            "ticketA", instance_name="my_booth", site_ip="1.2.3.4",
         )
 
 
@@ -684,33 +680,25 @@ class ConfigTest(BoothMixin, TestCase):
     def test_too_many_args(self):
         with self.assertRaises(CmdLineInputError) as cm:
             booth_cmd.config_show(
-                self.lib,
-                ["aaa", "bbb"],
-                dict_to_modifiers(dict())
+                self.lib, ["aaa", "bbb"], dict_to_modifiers(dict())
             )
         self.assertIsNone(cm.exception.message)
         self.lib.booth.config_text.assert_not_called()
 
     def test_lib_call_minimal(self):
-        booth_cmd.config_show(
-            self.lib,
-            [],
-            dict_to_modifiers(dict())
-        )
+        booth_cmd.config_show(self.lib, [], dict_to_modifiers(dict()))
         self.lib.booth.config_text.assert_called_once_with(
-            instance_name=None,
-            node_name=None,
+            instance_name=None, node_name=None,
         )
 
     def test_lib_call_full(self):
         booth_cmd.config_show(
             self.lib,
             ["node1"],
-            dict_to_modifiers({"name": "my_booth", "request-timeout": "10",})
+            dict_to_modifiers({"name": "my_booth", "request-timeout": "10",}),
         )
         self.lib.booth.config_text.assert_called_once_with(
-            instance_name="my_booth",
-            node_name="node1",
+            instance_name="my_booth", node_name="node1",
         )
 
 
@@ -724,17 +712,17 @@ class Restart(BoothLibCallMixin, TestCase):
     def test_too_many_args(self):
         self.assert_pcs_fail(
             "booth restart aaa",
-            stdout_start=outdent("""
+            stdout_start=outdent(
+                """
                 Usage: pcs booth <command>
-                    restart""")
+                    restart"""
+            ),
         )
 
     def test_lib_call_minimal(self):
         resource_restart = lambda x: x
         booth_cmd.get_restart(resource_restart)(
-            self.lib,
-            [],
-            dict_to_modifiers(dict())
+            self.lib, [], dict_to_modifiers(dict())
         )
         # The first arg going to the lib call is a lambda which we cannot get
         # in here. So we must check all the other parameters in a bit more
@@ -742,16 +730,13 @@ class Restart(BoothLibCallMixin, TestCase):
         self.assertEqual(self.lib.booth.restart.call_count, 1)
         call = self.lib.booth.restart.call_args
         self.assertEqual(
-            call[1],
-            dict(instance_name=None, allow_multiple=False)
+            call[1], dict(instance_name=None, allow_multiple=False)
         )
 
     def test_lib_call_full(self):
         resource_restart = lambda x: x
         booth_cmd.get_restart(resource_restart)(
-            self.lib,
-            [],
-            dict_to_modifiers(dict(name="my_booth", force=True))
+            self.lib, [], dict_to_modifiers(dict(name="my_booth", force=True))
         )
         # The first arg going to the lib call is a lambda which we cannot get
         # in here. So we must check all the other parameters in a bit more
@@ -759,8 +744,7 @@ class Restart(BoothLibCallMixin, TestCase):
         self.assertEqual(self.lib.booth.restart.call_count, 1)
         call = self.lib.booth.restart.call_args
         self.assertEqual(
-            call[1],
-            dict(instance_name="my_booth", allow_multiple=True)
+            call[1], dict(instance_name="my_booth", allow_multiple=True)
         )
 
 
@@ -774,37 +758,35 @@ class Sync(BoothLibCallMixin, TestCase):
     def test_too_many_args(self):
         self.assert_pcs_fail(
             "booth sync aaa",
-            stdout_start=outdent("""
+            stdout_start=outdent(
+                """
                 Usage: pcs booth <command>
-                    sync""")
+                    sync"""
+            ),
         )
 
     def test_lib_call_minimal(self):
-        booth_cmd.sync(
-            self.lib,
-            [],
-            dict_to_modifiers(dict())
-        )
+        booth_cmd.sync(self.lib, [], dict_to_modifiers(dict()))
         self.lib.booth.config_sync.assert_called_once_with(
-            instance_name=None,
-            skip_offline_nodes=False,
+            instance_name=None, skip_offline_nodes=False,
         )
 
     def test_lib_call_full(self):
         booth_cmd.sync(
             self.lib,
             [],
-            dict_to_modifiers({
-                "name": "my_booth",
-                "request-timeout": "10",
-                "skip-offline": True,
-                "booth-conf": "C",
-                "booth-key": "K",
-            })
+            dict_to_modifiers(
+                {
+                    "name": "my_booth",
+                    "request-timeout": "10",
+                    "skip-offline": True,
+                    "booth-conf": "C",
+                    "booth-key": "K",
+                }
+            ),
         )
         self.lib.booth.config_sync.assert_called_once_with(
-            instance_name="my_booth",
-            skip_offline_nodes=True,
+            instance_name="my_booth", skip_offline_nodes=True,
         )
 
 
@@ -812,30 +794,21 @@ class BoothServiceTestMixin(BoothLibCallMixin):
     def test_too_many_args(self):
         self.assert_pcs_fail(
             f"booth {self.cmd_label} aaa",
-            stdout_start=outdent(f"""
+            stdout_start=outdent(
+                f"""
                 Usage: pcs booth <command>
-                    {self.cmd_label}""")
+                    {self.cmd_label}"""
+            ),
         )
 
     def test_lib_call_minimal(self):
-        self.cli_cmd(
-            self.lib,
-            [],
-            dict_to_modifiers(dict())
-        )
-        self.lib_cmd.assert_called_once_with(
-            instance_name=None,
-        )
+        self.cli_cmd(self.lib, [], dict_to_modifiers(dict()))
+        self.lib_cmd.assert_called_once_with(instance_name=None,)
 
     def test_lib_call_full(self):
-        self.cli_cmd(
-            self.lib,
-            [],
-            dict_to_modifiers(dict(name="my_booth"))
-        )
-        self.lib_cmd.assert_called_once_with(
-            instance_name="my_booth",
-        )
+        self.cli_cmd(self.lib, [], dict_to_modifiers(dict(name="my_booth")))
+        self.lib_cmd.assert_called_once_with(instance_name="my_booth",)
+
 
 class Enable(BoothServiceTestMixin, TestCase):
     def setUp(self):
@@ -845,6 +818,7 @@ class Enable(BoothServiceTestMixin, TestCase):
         self.lib_cmd = self.lib.booth.enable_booth
         self.cli_cmd = booth_cmd.enable
 
+
 class Disable(BoothServiceTestMixin, TestCase):
     def setUp(self):
         super().setUp()
@@ -853,6 +827,7 @@ class Disable(BoothServiceTestMixin, TestCase):
         self.lib_cmd = self.lib.booth.disable_booth
         self.cli_cmd = booth_cmd.disable
 
+
 class Start(BoothServiceTestMixin, TestCase):
     def setUp(self):
         super().setUp()
@@ -860,6 +835,7 @@ class Start(BoothServiceTestMixin, TestCase):
         self.cmd_label = "start"
         self.lib_cmd = self.lib.booth.start_booth
         self.cli_cmd = booth_cmd.start
+
 
 class Stop(BoothServiceTestMixin, TestCase):
     def setUp(self):
@@ -878,39 +854,37 @@ class Pull(BoothLibCallMixin, TestCase):
     def test_not_enough_args(self):
         self.assert_pcs_fail(
             "booth pull",
-            stdout_start=outdent("""
+            stdout_start=outdent(
+                """
                 Usage: pcs booth <command>
-                    pull""")
+                    pull"""
+            ),
         )
 
     def test_too_many_args(self):
         self.assert_pcs_fail(
             "booth pull aaa bbb",
-            stdout_start=outdent("""
+            stdout_start=outdent(
+                """
                 Usage: pcs booth <command>
-                    pull""")
+                    pull"""
+            ),
         )
 
     def test_lib_call_minimal(self):
-        booth_cmd.pull(
-            self.lib,
-            ["node1"],
-            dict_to_modifiers(dict())
-        )
+        booth_cmd.pull(self.lib, ["node1"], dict_to_modifiers(dict()))
         self.lib.booth.pull_config.assert_called_once_with(
-            "node1",
-            instance_name=None,
+            "node1", instance_name=None,
         )
 
     def test_lib_call_full(self):
         booth_cmd.pull(
             self.lib,
             ["node1"],
-            dict_to_modifiers({"name": "my_booth", "request-timeout": "10",})
+            dict_to_modifiers({"name": "my_booth", "request-timeout": "10",}),
         )
         self.lib.booth.pull_config.assert_called_once_with(
-            "node1",
-            instance_name="my_booth",
+            "node1", instance_name="my_booth",
         )
 
 
@@ -929,27 +903,19 @@ class Status(BoothLibCallMixin, TestCase):
     def test_too_many_args(self):
         self.assert_pcs_fail(
             "booth status aaa",
-            stdout_start=outdent("""
+            stdout_start=outdent(
+                """
                 Usage: pcs booth <command>
-                    status""")
+                    status"""
+            ),
         )
 
     def test_lib_call_minimal(self):
-        booth_cmd.status(
-            self.lib,
-            [],
-            dict_to_modifiers(dict())
-        )
-        self.lib.booth.get_status.assert_called_once_with(
-            instance_name=None,
-        )
+        booth_cmd.status(self.lib, [], dict_to_modifiers(dict()))
+        self.lib.booth.get_status.assert_called_once_with(instance_name=None,)
 
     def test_lib_call_full(self):
-        booth_cmd.status(
-            self.lib,
-            [],
-            dict_to_modifiers(dict(name="my_booth"))
-        )
+        booth_cmd.status(self.lib, [], dict_to_modifiers(dict(name="my_booth")))
         self.lib.booth.get_status.assert_called_once_with(
             instance_name="my_booth",
         )

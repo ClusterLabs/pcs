@@ -12,8 +12,7 @@ from pcs.lib.cib.resource import remote_node
 class FindNodeList(TestCase):
     def assert_nodes_equals(self, xml, expected_nodes):
         self.assertEqual(
-            expected_nodes,
-            remote_node.find_node_list(etree.fromstring(xml))
+            expected_nodes, remote_node.find_node_list(etree.fromstring(xml))
         )
 
     def test_find_multiple_nodes(self):
@@ -36,10 +35,7 @@ class FindNodeList(TestCase):
                 </primitive>
             </resources>
             """,
-            [
-                PacemakerNode("R1", "H1"),
-                PacemakerNode("R2", "H2"),
-            ]
+            [PacemakerNode("R1", "H1"), PacemakerNode("R2", "H2"),],
         )
 
     def test_find_no_nodes(self):
@@ -53,7 +49,7 @@ class FindNodeList(TestCase):
                 </primitive>
             </resources>
             """,
-            []
+            [],
         )
 
     def test_find_nodes_without_server(self):
@@ -66,14 +62,12 @@ class FindNodeList(TestCase):
                 </primitive>
             </resources>
             """,
-            [
-                PacemakerNode("R1", "R1"),
-            ]
+            [PacemakerNode("R1", "R1"),],
         )
 
     def test_find_nodes_with_empty_server(self):
-        #it does not work, but the node "R1" is visible as remote node in the
-        #status
+        # it does not work, but the node "R1" is visible as remote node in the
+        # status
         self.assert_nodes_equals(
             """
             <resources>
@@ -86,9 +80,7 @@ class FindNodeList(TestCase):
                 </primitive>
             </resources>
             """,
-            [
-                PacemakerNode("R1", "R1"),
-            ]
+            [PacemakerNode("R1", "R1"),],
         )
 
 
@@ -99,10 +91,9 @@ class FindNodeResources(TestCase):
             [
                 resource_element.attrib["id"]
                 for resource_element in remote_node.find_node_resources(
-                    etree.fromstring(xml),
-                    node_identifier
+                    etree.fromstring(xml), node_identifier
                 )
-            ]
+            ],
         )
 
     def test_find_all_resources(self):
@@ -124,7 +115,7 @@ class FindNodeResources(TestCase):
                     </instance_attributes>
                 </primitive>
             </resources>""",
-            ["R1", "R2"]
+            ["R1", "R2"],
         )
 
     def test_find_by_resource_id(self):
@@ -135,7 +126,7 @@ class FindNodeResources(TestCase):
                     provider="pacemaker" type="remote"
                 />
             </resources>""",
-            ["HOST"]
+            ["HOST"],
         )
 
     def test_ignore_non_remote_primitives(self):
@@ -146,7 +137,7 @@ class FindNodeResources(TestCase):
                     provider="heartbeat" type="Dummy"
                 />
             </resources>""",
-            []
+            [],
         )
 
 
@@ -154,23 +145,31 @@ class GetNodeNameFromResource(TestCase):
     def test_return_name(self):
         self.assertEqual(
             "R",
-            remote_node.get_node_name_from_resource(etree.fromstring("""
+            remote_node.get_node_name_from_resource(
+                etree.fromstring(
+                    """
                 <primitive class="ocf" id="R" provider="pacemaker" type="remote"
                 />
-            """))
+            """
+                )
+            ),
         )
 
     def test_return_name_ignore_host(self):
         self.assertEqual(
             "R",
-            remote_node.get_node_name_from_resource(etree.fromstring("""
+            remote_node.get_node_name_from_resource(
+                etree.fromstring(
+                    """
                 <primitive class="ocf" id="R" provider="pacemaker" type="remote"
                 >
                     <instance_attributes>
                         <nvpair name="server" value="HOST"/>
                     </instance_attributes>
                 </primitive>
-            """))
+            """
+                )
+            ),
         )
 
     def test_return_none_when_primitive_is_without_agent(self):
@@ -182,15 +181,19 @@ class GetNodeNameFromResource(TestCase):
         for case in case_list:
             self.assertIsNone(
                 remote_node.get_node_name_from_resource(etree.fromstring(case)),
-                "for '{0}' is not returned None".format(case)
+                "for '{0}' is not returned None".format(case),
             )
 
     def test_return_none_when_primitive_is_not_pacemaker_remote(self):
         self.assertIsNone(
-            remote_node.get_node_name_from_resource(etree.fromstring("""
+            remote_node.get_node_name_from_resource(
+                etree.fromstring(
+                    """
                 <primitive class="ocf" id="R" provider="heartbeat" type="dummy"
                 />
-            """))
+            """
+                )
+            )
         )
 
 
@@ -213,72 +216,57 @@ class Validate(TestCase):
 
     def test_report_conflict_node_name(self):
         assert_report_item_list_equal(
-            self.validate(
-                node_name="R",
-                host="host",
-            ),
+            self.validate(node_name="R", host="host",),
             [
                 (
                     severities.ERROR,
                     report_codes.ID_ALREADY_EXISTS,
-                    {
-                        "id": "R",
-                    },
-                    None
+                    {"id": "R",},
+                    None,
                 )
-            ]
+            ],
         )
 
     def test_report_conflict_node_host(self):
         assert_report_item_list_equal(
-            self.validate(
-                host="RING0",
-            ),
+            self.validate(host="RING0",),
             [
                 (
                     severities.ERROR,
                     report_codes.ID_ALREADY_EXISTS,
-                    {
-                        "id": "RING0",
-                    },
-                    None
+                    {"id": "RING0",},
+                    None,
                 )
-            ]
+            ],
         )
 
     def test_report_conflict_node_host_ring1(self):
         assert_report_item_list_equal(
-            self.validate(
-                host="RING1",
-            ),
+            self.validate(host="RING1",),
             [
                 (
                     severities.ERROR,
                     report_codes.ID_ALREADY_EXISTS,
-                    {
-                        "id": "RING1",
-                    },
-                    None
+                    {"id": "RING1",},
+                    None,
                 )
-            ]
+            ],
         )
 
     def test_report_used_disallowed_server(self):
         assert_report_item_list_equal(
-            self.validate(
-                instance_attributes={"server": "A"}
-            ),
+            self.validate(instance_attributes={"server": "A"}),
             [
                 (
                     severities.ERROR,
                     report_codes.INVALID_OPTIONS,
                     {
-                        'option_type': 'resource',
-                        'option_names': ['server'],
-                        'allowed': [],
+                        "option_type": "resource",
+                        "option_names": ["server"],
+                        "allowed": [],
                         "allowed_patterns": [],
                     },
-                    None
+                    None,
                 )
-            ]
+            ],
         )

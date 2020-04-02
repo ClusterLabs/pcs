@@ -5,6 +5,7 @@ from pcs.lib.errors import LibraryError
 
 CALL_TYPE_GET_LOCAL_COROSYNC_CONF = "CALL_TYPE_GET_LOCAL_COROSYNC_CONF"
 
+
 class Call:
     type = CALL_TYPE_GET_LOCAL_COROSYNC_CONF
 
@@ -29,4 +30,5 @@ def get_get_local_corosync_conf(call_queue):
                 )
             )
         return expected_call.content
+
     return get_local_corosync_conf

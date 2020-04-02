@@ -1,5 +1,6 @@
 from unittest import TestCase
 
+
 class GetFullClusterStatusPlaintext(TestCase):
     """
     tested in:

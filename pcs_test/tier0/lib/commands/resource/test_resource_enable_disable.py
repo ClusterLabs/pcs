@@ -1,4 +1,4 @@
-# pylint: disable=too-many-lines
+# pylint: disable=too-many-lines,line-too-long
 from unittest import mock, TestCase
 
 from pcs_test.tools import fixture
@@ -53,43 +53,55 @@ fixture_primitive_status_unmanaged = fixture_primitive_status_template.format(
     managed="false"
 )
 
+
 def get_fixture_two_primitives_cib(
-    primitive1_disabled=False, primitive1_meta=False,
-    primitive2_disabled=False, primitive2_meta=False
+    primitive1_disabled=False,
+    primitive1_meta=False,
+    primitive2_disabled=False,
+    primitive2_meta=False,
 ):
-    parts = ["""
+    parts = [
+        """
         <resources>
         <primitive class="ocf" id="A" provider="heartbeat" type="Dummy">
-    """]
+    """
+    ]
     if primitive1_disabled:
-        parts.append("""
+        parts.append(
+            """
             <meta_attributes id="A-meta_attributes">
                 <nvpair id="A-meta_attributes-target-role"
                     name="target-role" value="Stopped" />
             </meta_attributes>
-        """)
+        """
+        )
     elif primitive1_meta:
         parts.append("""<meta_attributes id="A-meta_attributes" />""")
-    parts.append("""
+    parts.append(
+        """
         </primitive>
         <primitive class="ocf" id="B" provider="heartbeat" type="Dummy">
-    """)
+    """
+    )
     if primitive2_disabled:
-        parts.append("""
+        parts.append(
+            """
             <meta_attributes id="B-meta_attributes">
                 <nvpair id="B-meta_attributes-target-role"
                     name="target-role" value="Stopped" />
             </meta_attributes>
-        """)
+        """
+        )
     elif primitive2_meta:
         parts.append("""<meta_attributes id="B-meta_attributes" />""")
     parts.append("""</primitive></resources>""")
     return "".join(parts)
+
+
 fixture_two_primitives_cib_enabled = get_fixture_two_primitives_cib()
-fixture_two_primitives_cib_enabled_with_meta_both = \
-    get_fixture_two_primitives_cib(
-        primitive1_meta=True, primitive2_meta=True
-    )
+fixture_two_primitives_cib_enabled_with_meta_both = get_fixture_two_primitives_cib(
+    primitive1_meta=True, primitive2_meta=True
+)
 fixture_two_primitives_cib_disabled = get_fixture_two_primitives_cib(
     primitive1_disabled=True
 )
@@ -106,48 +118,64 @@ fixture_two_primitives_status_managed = """
     </resources>
 """
 
+
 def get_fixture_group_cib(
-    group_disabled=False, group_meta=False,
-    primitive1_disabled=False, primitive1_meta=False,
-    primitive2_disabled=False, primitive2_meta=False
+    group_disabled=False,
+    group_meta=False,
+    primitive1_disabled=False,
+    primitive1_meta=False,
+    primitive2_disabled=False,
+    primitive2_meta=False,
 ):
     parts = ["""<resources><group id="A">"""]
     if group_disabled:
-        parts.append("""
+        parts.append(
+            """
             <meta_attributes id="A-meta_attributes">
                 <nvpair id="A-meta_attributes-target-role"
                     name="target-role" value="Stopped" />
             </meta_attributes>
-        """)
+        """
+        )
     elif group_meta:
         parts.append("""<meta_attributes id="A-meta_attributes" />""")
-    parts.append("""
+    parts.append(
+        """
         <primitive id="A1" class="ocf" provider="heartbeat" type="Dummy">
-    """)
+    """
+    )
     if primitive1_disabled:
-        parts.append("""
+        parts.append(
+            """
             <meta_attributes id="A1-meta_attributes">
                 <nvpair id="A1-meta_attributes-target-role"
                     name="target-role" value="Stopped" />
             </meta_attributes>
-        """)
+        """
+        )
     elif primitive1_meta:
         parts.append("""<meta_attributes id="A1-meta_attributes" />""")
-    parts.append("""
+    parts.append(
+        """
         </primitive>
         <primitive id="A2" class="ocf" provider="heartbeat" type="Dummy">
-    """)
+    """
+    )
     if primitive2_disabled:
-        parts.append("""
+        parts.append(
+            """
             <meta_attributes id="A2-meta_attributes">
                 <nvpair id="A2-meta_attributes-target-role"
                     name="target-role" value="Stopped" />
             </meta_attributes>
-        """)
+        """
+        )
     elif primitive2_meta:
         parts.append("""<meta_attributes id="A2-meta_attributes" />""")
     parts.append("""</primitive></group></resources>""")
     return "".join(parts)
+
+
 fixture_group_cib_enabled = get_fixture_group_cib()
 fixture_group_cib_enabled_with_meta_group = get_fixture_group_cib(
     group_meta=True
@@ -156,8 +184,9 @@ fixture_group_cib_enabled_with_meta_primitive = get_fixture_group_cib(
     primitive1_meta=True
 )
 fixture_group_cib_disabled_group = get_fixture_group_cib(group_disabled=True)
-fixture_group_cib_disabled_group_with_meta_primitive = \
-    get_fixture_group_cib(group_disabled=True, primitive1_meta=True)
+fixture_group_cib_disabled_group_with_meta_primitive = get_fixture_group_cib(
+    group_disabled=True, primitive1_meta=True
+)
 fixture_group_cib_disabled_primitive = get_fixture_group_cib(
     primitive1_disabled=True
 )
@@ -182,34 +211,43 @@ fixture_group_status_unmanaged = fixture_group_status_template.format(
     managed="false"
 )
 
+
 def get_fixture_clone_cib(
-    clone_disabled=False, clone_meta=False,
-    primitive_disabled=False, primitive_meta=False
+    clone_disabled=False,
+    clone_meta=False,
+    primitive_disabled=False,
+    primitive_meta=False,
 ):
     parts = ["""<resources><clone id="A-clone">"""]
     if clone_disabled:
-        parts.append("""
+        parts.append(
+            """
             <meta_attributes id="A-clone-meta_attributes">
                 <nvpair id="A-clone-meta_attributes-target-role"
                     name="target-role" value="Stopped" />
             </meta_attributes>
-        """)
+        """
+        )
     elif clone_meta:
         parts.append("""<meta_attributes id="A-clone-meta_attributes" />""")
     parts.append(
         """<primitive id="A" class="ocf" provider="heartbeat" type="Dummy">"""
     )
     if primitive_disabled:
-        parts.append("""
+        parts.append(
+            """
             <meta_attributes id="A-meta_attributes">
                 <nvpair id="A-meta_attributes-target-role"
                     name="target-role" value="Stopped" />
             </meta_attributes>
-        """)
+        """
+        )
     elif primitive_meta:
         parts.append("""<meta_attributes id="A-meta_attributes" />""")
     parts.append("""</primitive></clone></resources>""")
     return "".join(parts)
+
+
 fixture_clone_cib_enabled = get_fixture_clone_cib()
 fixture_clone_cib_enabled_with_meta_both = get_fixture_clone_cib(
     clone_meta=True, primitive_meta=True
@@ -244,34 +282,43 @@ fixture_clone_status_unmanaged = fixture_clone_status_template.format(
     managed="false"
 )
 
+
 def get_fixture_master_cib(
-    master_disabled=False, master_meta=False,
-    primitive_disabled=False, primitive_meta=False
+    master_disabled=False,
+    master_meta=False,
+    primitive_disabled=False,
+    primitive_meta=False,
 ):
     parts = ["""<resources><master id="A-master">"""]
     if master_disabled:
-        parts.append("""
+        parts.append(
+            """
             <meta_attributes id="A-master-meta_attributes">
                 <nvpair id="A-master-meta_attributes-target-role"
                     name="target-role" value="Stopped" />
             </meta_attributes>
-        """)
+        """
+        )
     elif master_meta:
         parts.append("""<meta_attributes id="A-master-meta_attributes" />""")
     parts.append(
         """<primitive id="A" class="ocf" provider="heartbeat" type="Dummy">"""
     )
     if primitive_disabled:
-        parts.append("""
+        parts.append(
+            """
             <meta_attributes id="A-meta_attributes">
                 <nvpair id="A-meta_attributes-target-role"
                     name="target-role" value="Stopped" />
             </meta_attributes>
-        """)
+        """
+        )
     elif primitive_meta:
         parts.append("""<meta_attributes id="A-meta_attributes" />""")
     parts.append("""</primitive></master></resources>""")
-    return"".join(parts)
+    return "".join(parts)
+
+
 fixture_master_cib_enabled = get_fixture_master_cib()
 fixture_master_cib_enabled_with_meta_both = get_fixture_master_cib(
     master_meta=True, primitive_meta=True
@@ -308,61 +355,78 @@ fixture_master_status_unmanaged = fixture_master_status_template.format(
     managed="false"
 )
 
+
 def get_fixture_clone_group_cib(
-    clone_disabled=False, clone_meta=False,
-    group_disabled=False, group_meta=False,
-    primitive1_disabled=False, primitive1_meta=False,
-    primitive2_disabled=False, primitive2_meta=False,
-    all_meta=False
+    clone_disabled=False,
+    clone_meta=False,
+    group_disabled=False,
+    group_meta=False,
+    primitive1_disabled=False,
+    primitive1_meta=False,
+    primitive2_disabled=False,
+    primitive2_meta=False,
+    all_meta=False,
 ):
     # pylint: disable=too-many-arguments
     parts = ["""<resources><clone id="A-clone">"""]
     if clone_disabled:
-        parts.append("""
+        parts.append(
+            """
             <meta_attributes id="A-clone-meta_attributes">
                 <nvpair id="A-clone-meta_attributes-target-role"
                     name="target-role" value="Stopped" />
             </meta_attributes>
-        """)
+        """
+        )
     elif clone_meta or all_meta:
         parts.append("""<meta_attributes id="A-clone-meta_attributes" />""")
     parts.append("""<group id="A">""")
     if group_disabled:
-        parts.append("""
+        parts.append(
+            """
             <meta_attributes id="A-meta_attributes">
                 <nvpair id="A-meta_attributes-target-role"
                     name="target-role" value="Stopped" />
             </meta_attributes>
-        """)
+        """
+        )
     elif group_meta or all_meta:
         parts.append("""<meta_attributes id="A-meta_attributes" />""")
     parts.append(
         """<primitive id="A1" class="ocf" provider="heartbeat" type="Dummy">"""
     )
     if primitive1_disabled:
-        parts.append("""
+        parts.append(
+            """
             <meta_attributes id="A1-meta_attributes">
                 <nvpair id="A1-meta_attributes-target-role"
                     name="target-role" value="Stopped" />
             </meta_attributes>
-        """)
+        """
+        )
     elif primitive1_meta or all_meta:
         parts.append("""<meta_attributes id="A1-meta_attributes" />""")
-    parts.append("""
+    parts.append(
+        """
         </primitive>
         <primitive id="A2" class="ocf" provider="heartbeat" type="Dummy">
-    """)
+    """
+    )
     if primitive2_disabled:
-        parts.append("""
+        parts.append(
+            """
             <meta_attributes id="A2-meta_attributes">
                 <nvpair id="A2-meta_attributes-target-role"
                     name="target-role" value="Stopped" />
             </meta_attributes>
-        """)
+        """
+        )
     elif primitive2_meta or all_meta:
         parts.append("""<meta_attributes id="A2-meta_attributes" />""")
     parts.append("""</primitive></group></clone></resources>""")
     return "".join(parts)
+
+
 fixture_clone_group_cib_enabled = get_fixture_clone_group_cib()
 fixture_clone_group_cib_enabled_with_meta_clone = get_fixture_clone_group_cib(
     clone_meta=True
@@ -370,8 +434,9 @@ fixture_clone_group_cib_enabled_with_meta_clone = get_fixture_clone_group_cib(
 fixture_clone_group_cib_enabled_with_meta_group = get_fixture_clone_group_cib(
     group_meta=True
 )
-fixture_clone_group_cib_enabled_with_meta_primitive = \
-    get_fixture_clone_group_cib(primitive1_meta=True)
+fixture_clone_group_cib_enabled_with_meta_primitive = get_fixture_clone_group_cib(
+    primitive1_meta=True
+)
 fixture_clone_group_cib_disabled_clone = get_fixture_clone_group_cib(
     clone_disabled=True
 )
@@ -381,14 +446,12 @@ fixture_clone_group_cib_disabled_group = get_fixture_clone_group_cib(
 fixture_clone_group_cib_disabled_primitive = get_fixture_clone_group_cib(
     primitive1_disabled=True
 )
-fixture_clone_group_cib_disabled_primitive_with_meta_clone_group = \
-    get_fixture_clone_group_cib(
-        clone_meta=True, group_meta=True, primitive1_disabled=True
-    )
-fixture_clone_group_cib_disabled_clone_group_with_meta_primitive = \
-    get_fixture_clone_group_cib(
-        clone_disabled=True, group_disabled=True, primitive1_meta=True
-    )
+fixture_clone_group_cib_disabled_primitive_with_meta_clone_group = get_fixture_clone_group_cib(
+    clone_meta=True, group_meta=True, primitive1_disabled=True
+)
+fixture_clone_group_cib_disabled_clone_group_with_meta_primitive = get_fixture_clone_group_cib(
+    clone_disabled=True, group_disabled=True, primitive1_meta=True
+)
 fixture_clone_group_cib_disabled_all = get_fixture_clone_group_cib(
     clone_disabled=True, group_disabled=True, primitive1_disabled=True
 )
@@ -411,38 +474,50 @@ fixture_clone_group_status_template = """
 fixture_clone_group_status_managed = fixture_clone_group_status_template.format(
     managed="true"
 )
-fixture_clone_group_status_unmanaged = \
-    fixture_clone_group_status_template.format(managed="false")
+fixture_clone_group_status_unmanaged = fixture_clone_group_status_template.format(
+    managed="false"
+)
+
 
 def get_fixture_bundle_cib(
-    bundle_disabled=False, bundle_meta=False,
-    primitive_disabled=False, primitive_meta=False
+    bundle_disabled=False,
+    bundle_meta=False,
+    primitive_disabled=False,
+    primitive_meta=False,
 ):
     parts = ["""<resources><bundle id="A-bundle">"""]
     if bundle_disabled:
-        parts.append("""
+        parts.append(
+            """
             <meta_attributes id="A-bundle-meta_attributes">
                 <nvpair id="A-bundle-meta_attributes-target-role"
                     name="target-role" value="Stopped" />
             </meta_attributes>
-        """)
+        """
+        )
     elif bundle_meta:
         parts.append("""<meta_attributes id="A-bundle-meta_attributes" />""")
-    parts.append("""
+    parts.append(
+        """
         <docker image="pcs:test" />
         <primitive id="A" class="ocf" provider="heartbeat" type="Dummy">
-    """)
+    """
+    )
     if primitive_disabled:
-        parts.append("""
+        parts.append(
+            """
             <meta_attributes id="A-meta_attributes">
                 <nvpair id="A-meta_attributes-target-role"
                     name="target-role" value="Stopped" />
             </meta_attributes>
-        """)
+        """
+        )
     elif primitive_meta:
         parts.append("""<meta_attributes id="A-meta_attributes" />""")
     parts.append("""</primitive></bundle></resources>""")
     return "".join(parts)
+
+
 fixture_bundle_cib_enabled = get_fixture_bundle_cib()
 fixture_bundle_cib_enabled_with_meta_both = get_fixture_bundle_cib(
     bundle_meta=True, primitive_meta=True
@@ -483,49 +558,48 @@ fixture_bundle_status_unmanaged = fixture_bundle_status_template.format(
     managed="false"
 )
 
+
 def fixture_report_unmanaged(resource_id):
     return (
         severities.WARNING,
         report_codes.RESOURCE_IS_UNMANAGED,
-        {
-            "resource_id": resource_id,
-        },
-        None
+        {"resource_id": resource_id,},
+        None,
     )
+
 
 class DisablePrimitive(TestCase):
     def setUp(self):
         self.env_assist, self.config = get_env_tools(test_case=self)
 
     def test_nonexistent_resource(self):
-        (self.config
-            .runner.cib.load(resources=fixture_primitive_cib_enabled)
-        )
+        (self.config.runner.cib.load(resources=fixture_primitive_cib_enabled))
 
         self.env_assist.assert_raise_library_error(
             lambda: resource.disable(self.env_assist.get_env(), ["B"], False),
-            [
-                fixture.report_not_found("B", "resources")
-            ],
-            expected_in_processor=False
+            [fixture.report_not_found("B", "resources")],
+            expected_in_processor=False,
         )
 
     def test_nonexistent_resource_in_status(self):
-        (self.config
-            .runner.cib.load(resources=fixture_two_primitives_cib_enabled)
-            .runner.pcmk.load_state(resources=fixture_primitive_status_managed)
+        (
+            self.config.runner.cib.load(
+                resources=fixture_two_primitives_cib_enabled
+            ).runner.pcmk.load_state(resources=fixture_primitive_status_managed)
         )
 
         self.env_assist.assert_raise_library_error(
             lambda: resource.disable(self.env_assist.get_env(), ["B"], False)
         )
-        self.env_assist.assert_reports([
-            fixture.report_not_found("B"),
-        ])
+        self.env_assist.assert_reports(
+            [fixture.report_not_found("B"),]
+        )
 
     def test_correct_resource(self):
-        (self.config
-            .runner.cib.load(resources=fixture_two_primitives_cib_enabled)
+        (
+            self.config.runner.cib.load(
+                resources=fixture_two_primitives_cib_enabled
+            )
             .runner.pcmk.load_state(
                 resources=fixture_two_primitives_status_managed
             )
@@ -537,8 +611,8 @@ class DisablePrimitive(TestCase):
         # The code doesn't care what causes the resource to be unmanaged
         # (cluster property, resource's meta-attribute or whatever). It only
         # checks the cluster state (crm_mon).
-        (self.config
-            .runner.cib.load(resources=fixture_primitive_cib_enabled)
+        (
+            self.config.runner.cib.load(resources=fixture_primitive_cib_enabled)
             .runner.pcmk.load_state(
                 resources=fixture_primitive_status_unmanaged
             )
@@ -553,34 +627,31 @@ class EnablePrimitive(TestCase):
         self.env_assist, self.config = get_env_tools(test_case=self)
 
     def test_nonexistent_resource(self):
-        (self.config
-            .runner.cib.load(resources=fixture_primitive_cib_disabled)
-        )
+        (self.config.runner.cib.load(resources=fixture_primitive_cib_disabled))
 
         self.env_assist.assert_raise_library_error(
             lambda: resource.enable(self.env_assist.get_env(), ["B"], False),
-            [
-                fixture.report_not_found("B", "resources")
-            ],
-            expected_in_processor=False
+            [fixture.report_not_found("B", "resources")],
+            expected_in_processor=False,
         )
 
     def test_nonexistent_resource_in_status(self):
-        (self.config
-            .runner.cib.load(resources=fixture_two_primitives_cib_disabled)
-            .runner.pcmk.load_state(resources=fixture_primitive_status_managed)
+        (
+            self.config.runner.cib.load(
+                resources=fixture_two_primitives_cib_disabled
+            ).runner.pcmk.load_state(resources=fixture_primitive_status_managed)
         )
 
         self.env_assist.assert_raise_library_error(
             lambda: resource.enable(self.env_assist.get_env(), ["B"], False)
         )
-        self.env_assist.assert_reports([
-            fixture.report_not_found("B")
-        ])
+        self.env_assist.assert_reports([fixture.report_not_found("B")])
 
     def test_correct_resource(self):
-        (self.config
-            .runner.cib.load(resources=fixture_two_primitives_cib_disabled_both)
+        (
+            self.config.runner.cib.load(
+                resources=fixture_two_primitives_cib_disabled_both
+            )
             .runner.pcmk.load_state(
                 resources=fixture_two_primitives_status_managed
             )
@@ -594,8 +665,10 @@ class EnablePrimitive(TestCase):
         # The code doesn't care what causes the resource to be unmanaged
         # (cluster property, resource's meta-attribute or whatever). It only
         # checks the cluster state (crm_mon).
-        (self.config
-            .runner.cib.load(resources=fixture_primitive_cib_disabled)
+        (
+            self.config.runner.cib.load(
+                resources=fixture_primitive_cib_disabled
+            )
             .runner.pcmk.load_state(
                 resources=fixture_primitive_status_unmanaged
             )
@@ -678,16 +751,15 @@ class MoreResources(TestCase):
                 </primitive>
             </resources>
         """
-        (self.config
-            .runner.cib.load(resources=self.fixture_cib_disabled)
+        (
+            self.config.runner.cib.load(resources=self.fixture_cib_disabled)
             .runner.pcmk.load_state(resources=self.fixture_status)
             .env.push_cib(resources=fixture_enabled)
         )
         resource.enable(self.env_assist.get_env(), ["A", "B", "D"], False)
-        self.env_assist.assert_reports([
-            fixture_report_unmanaged("B"),
-            fixture_report_unmanaged("D"),
-        ])
+        self.env_assist.assert_reports(
+            [fixture_report_unmanaged("B"), fixture_report_unmanaged("D"),]
+        )
 
     def test_success_disable(self):
         fixture_disabled = """
@@ -714,52 +786,44 @@ class MoreResources(TestCase):
                 </primitive>
             </resources>
         """
-        (self.config
-            .runner.cib.load(resources=self.fixture_cib_enabled)
+        (
+            self.config.runner.cib.load(resources=self.fixture_cib_enabled)
             .runner.pcmk.load_state(resources=self.fixture_status)
             .env.push_cib(resources=fixture_disabled)
         )
         resource.disable(self.env_assist.get_env(), ["A", "B", "D"], False)
-        self.env_assist.assert_reports([
-            fixture_report_unmanaged("B"),
-            fixture_report_unmanaged("D"),
-        ])
+        self.env_assist.assert_reports(
+            [fixture_report_unmanaged("B"), fixture_report_unmanaged("D"),]
+        )
 
     def test_bad_resource_enable(self):
-        (self.config
-            .runner.cib.load(resources=self.fixture_cib_disabled)
-        )
+        (self.config.runner.cib.load(resources=self.fixture_cib_disabled))
 
         self.env_assist.assert_raise_library_error(
             lambda: resource.enable(
-                self.env_assist.get_env(),
-                ["B", "X", "Y", "A"],
-                wait=False
+                self.env_assist.get_env(), ["B", "X", "Y", "A"], wait=False
             ),
             [
                 fixture.report_not_found("X", "resources"),
                 fixture.report_not_found("Y", "resources"),
             ],
-            expected_in_processor=False
+            expected_in_processor=False,
         )
 
     def test_bad_resource_disable(self):
-        (self.config
-            .runner.cib.load(resources=self.fixture_cib_enabled)
-        )
+        (self.config.runner.cib.load(resources=self.fixture_cib_enabled))
 
         self.env_assist.assert_raise_library_error(
             lambda: resource.disable(
-                self.env_assist.get_env(),
-                ["B", "X", "Y", "A"],
-                wait=False
+                self.env_assist.get_env(), ["B", "X", "Y", "A"], wait=False
             ),
             [
                 fixture.report_not_found("X", "resources"),
                 fixture.report_not_found("Y", "resources"),
             ],
-            expected_in_processor=False
+            expected_in_processor=False,
         )
+
 
 class Wait(TestCase):
     def setUp(self):
@@ -801,42 +865,35 @@ class Wait(TestCase):
     ).strip()
 
     def test_enable_dont_wait_on_error(self):
-        (self.config
-            .runner.cib.load(resources=fixture_primitive_cib_disabled)
-        )
+        (self.config.runner.cib.load(resources=fixture_primitive_cib_disabled))
 
         self.env_assist.assert_raise_library_error(
             lambda: resource.enable(self.env_assist.get_env(), ["B"], TIMEOUT),
-            [
-                fixture.report_not_found("B", "resources"),
-            ],
-            expected_in_processor=False
+            [fixture.report_not_found("B", "resources"),],
+            expected_in_processor=False,
         )
 
     def test_disable_dont_wait_on_error(self):
-        (self.config
-            .runner.cib.load(resources=fixture_primitive_cib_enabled)
-        )
+        (self.config.runner.cib.load(resources=fixture_primitive_cib_enabled))
 
         self.env_assist.assert_raise_library_error(
             lambda: resource.disable(self.env_assist.get_env(), ["B"], TIMEOUT),
-            [
-                fixture.report_not_found("B", "resources"),
-            ],
-            expected_in_processor=False
+            [fixture.report_not_found("B", "resources"),],
+            expected_in_processor=False,
         )
 
     def test_enable_resource_stopped(self):
-        (self.config
-            .runner.cib.load(resources=fixture_two_primitives_cib_disabled_both)
+        (
+            self.config.runner.cib.load(
+                resources=fixture_two_primitives_cib_disabled_both
+            )
             .runner.pcmk.load_state(resources=self.fixture_status_stopped)
             .env.push_cib(
                 resources=fixture_two_primitives_cib_enabled_with_meta_both,
-                wait=TIMEOUT
+                wait=TIMEOUT,
             )
             .runner.pcmk.load_state(
-                name="",
-                resources=self.fixture_status_stopped,
+                name="", resources=self.fixture_status_stopped,
             )
         )
 
@@ -845,63 +902,70 @@ class Wait(TestCase):
                 self.env_assist.get_env(), ["A", "B"], TIMEOUT
             )
         )
-        self.env_assist.assert_reports([
-            fixture.report_resource_not_running("A", severities.ERROR),
-            fixture.report_resource_not_running("B", severities.ERROR),
-        ])
+        self.env_assist.assert_reports(
+            [
+                fixture.report_resource_not_running("A", severities.ERROR),
+                fixture.report_resource_not_running("B", severities.ERROR),
+            ]
+        )
 
     def test_disable_resource_stopped(self):
-        (self.config
-            .runner.cib.load(resources=fixture_two_primitives_cib_enabled)
+        (
+            self.config.runner.cib.load(
+                resources=fixture_two_primitives_cib_enabled
+            )
             .runner.pcmk.load_state(resources=self.fixture_status_running)
             .env.push_cib(
-                resources=fixture_two_primitives_cib_disabled_both,
-                wait=TIMEOUT
+                resources=fixture_two_primitives_cib_disabled_both, wait=TIMEOUT
             )
             .runner.pcmk.load_state(
-                name="",
-                resources=self.fixture_status_stopped,
+                name="", resources=self.fixture_status_stopped,
             )
         )
 
         resource.disable(self.env_assist.get_env(), ["A", "B"], TIMEOUT)
-        self.env_assist.assert_reports([
-            fixture.report_resource_not_running("A"),
-            fixture.report_resource_not_running("B"),
-        ])
+        self.env_assist.assert_reports(
+            [
+                fixture.report_resource_not_running("A"),
+                fixture.report_resource_not_running("B"),
+            ]
+        )
 
     def test_enable_resource_running(self):
-        (self.config
-            .runner.cib.load(resources=fixture_two_primitives_cib_disabled_both)
+        (
+            self.config.runner.cib.load(
+                resources=fixture_two_primitives_cib_disabled_both
+            )
             .runner.pcmk.load_state(resources=self.fixture_status_stopped)
             .env.push_cib(
                 resources=fixture_two_primitives_cib_enabled_with_meta_both,
-                wait=TIMEOUT
+                wait=TIMEOUT,
             )
             .runner.pcmk.load_state(
-                name="",
-                resources=self.fixture_status_running,
+                name="", resources=self.fixture_status_running,
             )
         )
 
         resource.enable(self.env_assist.get_env(), ["A", "B"], TIMEOUT)
 
-        self.env_assist.assert_reports([
-            fixture.report_resource_running("A", {"Started": ["node1"]}),
-            fixture.report_resource_running("B", {"Started": ["node2"]}),
-        ])
+        self.env_assist.assert_reports(
+            [
+                fixture.report_resource_running("A", {"Started": ["node1"]}),
+                fixture.report_resource_running("B", {"Started": ["node2"]}),
+            ]
+        )
 
     def test_disable_resource_running(self):
-        (self.config
-            .runner.cib.load(resources=fixture_two_primitives_cib_enabled)
+        (
+            self.config.runner.cib.load(
+                resources=fixture_two_primitives_cib_enabled
+            )
             .runner.pcmk.load_state(resources=self.fixture_status_running)
             .env.push_cib(
-                resources=fixture_two_primitives_cib_disabled_both,
-                wait=TIMEOUT
+                resources=fixture_two_primitives_cib_disabled_both, wait=TIMEOUT
             )
             .runner.pcmk.load_state(
-                name="",
-                resources=self.fixture_status_running,
+                name="", resources=self.fixture_status_running,
             )
         )
 
@@ -910,18 +974,22 @@ class Wait(TestCase):
                 self.env_assist.get_env(), ["A", "B"], TIMEOUT
             )
         )
-        self.env_assist.assert_reports([
-            fixture.report_resource_running(
-                "A", {"Started": ["node1"]}, severities.ERROR
-            ),
-            fixture.report_resource_running(
-                "B", {"Started": ["node2"]}, severities.ERROR
-            ),
-        ])
+        self.env_assist.assert_reports(
+            [
+                fixture.report_resource_running(
+                    "A", {"Started": ["node1"]}, severities.ERROR
+                ),
+                fixture.report_resource_running(
+                    "B", {"Started": ["node2"]}, severities.ERROR
+                ),
+            ]
+        )
 
     def test_enable_wait_timeout(self):
-        (self.config
-            .runner.cib.load(resources=fixture_primitive_cib_disabled)
+        (
+            self.config.runner.cib.load(
+                resources=fixture_primitive_cib_disabled
+            )
             .runner.pcmk.load_state(resources=self.fixture_status_stopped)
             .env.push_cib(
                 resources=fixture_primitive_cib_enabled_with_meta,
@@ -932,7 +1000,7 @@ class Wait(TestCase):
                             self.fixture_wait_timeout_error
                         )
                     )
-                )
+                ),
             )
         )
 
@@ -943,12 +1011,12 @@ class Wait(TestCase):
                     self.fixture_wait_timeout_error
                 )
             ],
-            expected_in_processor=False
+            expected_in_processor=False,
         )
 
     def test_disable_wait_timeout(self):
-        (self.config
-            .runner.cib.load(resources=fixture_primitive_cib_enabled)
+        (
+            self.config.runner.cib.load(resources=fixture_primitive_cib_enabled)
             .runner.pcmk.load_state(resources=self.fixture_status_running)
             .env.push_cib(
                 resources=fixture_primitive_cib_disabled,
@@ -959,7 +1027,7 @@ class Wait(TestCase):
                             self.fixture_wait_timeout_error
                         )
                     )
-                )
+                ),
             )
         )
 
@@ -970,7 +1038,7 @@ class Wait(TestCase):
                     self.fixture_wait_timeout_error
                 )
             ],
-            expected_in_processor=False
+            expected_in_processor=False,
         )
 
 
@@ -1003,57 +1071,59 @@ class WaitClone(TestCase):
         self.config.runner.pcmk.can_wait()
 
     def test_disable_clone(self):
-        (self.config
-            .runner.cib.load(resources=fixture_clone_cib_enabled)
+        (
+            self.config.runner.cib.load(resources=fixture_clone_cib_enabled)
             .runner.pcmk.load_state(resources=self.fixture_status_running)
             .env.push_cib(
-                resources=fixture_clone_cib_disabled_clone,
-                wait=TIMEOUT
+                resources=fixture_clone_cib_disabled_clone, wait=TIMEOUT
             )
             .runner.pcmk.load_state(
-                name="",
-                resources=self.fixture_status_stopped,
+                name="", resources=self.fixture_status_stopped,
             )
         )
 
         resource.disable(self.env_assist.get_env(), ["A-clone"], TIMEOUT)
-        self.env_assist.assert_reports([
-            (
-                severities.INFO,
-                report_codes.RESOURCE_DOES_NOT_RUN,
-                {
-                    "resource_id": "A-clone",
-                },
-                None
-            )
-        ])
+        self.env_assist.assert_reports(
+            [
+                (
+                    severities.INFO,
+                    report_codes.RESOURCE_DOES_NOT_RUN,
+                    {"resource_id": "A-clone",},
+                    None,
+                )
+            ]
+        )
 
     def test_enable_clone(self):
-        (self.config
-            .runner.cib.load(resources=fixture_clone_cib_disabled_clone)
+        (
+            self.config.runner.cib.load(
+                resources=fixture_clone_cib_disabled_clone
+            )
             .runner.pcmk.load_state(resources=self.fixture_status_stopped)
             .env.push_cib(
                 resources=fixture_clone_cib_enabled_with_meta_clone,
-                wait=TIMEOUT
+                wait=TIMEOUT,
             )
             .runner.pcmk.load_state(
-                name="",
-                resources=self.fixture_status_running,
+                name="", resources=self.fixture_status_running,
             )
         )
 
         resource.enable(self.env_assist.get_env(), ["A-clone"], TIMEOUT)
-        self.env_assist.assert_reports([
-            (
-                severities.INFO,
-                report_codes.RESOURCE_RUNNING_ON_NODES,
-                {
-                    "resource_id": "A-clone",
-                    "roles_with_nodes": {"Started": ["node1", "node2"]},
-                },
-                None
-            )
-        ])
+        self.env_assist.assert_reports(
+            [
+                (
+                    severities.INFO,
+                    report_codes.RESOURCE_RUNNING_ON_NODES,
+                    {
+                        "resource_id": "A-clone",
+                        "roles_with_nodes": {"Started": ["node1", "node2"]},
+                    },
+                    None,
+                )
+            ]
+        )
+
 
 class DisableGroup(TestCase):
     def setUp(self):
@@ -1061,46 +1131,53 @@ class DisableGroup(TestCase):
         self.config.runner.cib.load(resources=fixture_group_cib_enabled)
 
     def test_primitive(self):
-        (self.config
-            .runner.pcmk.load_state(resources=fixture_group_status_managed)
-            .env.push_cib(resources=fixture_group_cib_disabled_primitive)
+        (
+            self.config.runner.pcmk.load_state(
+                resources=fixture_group_status_managed
+            ).env.push_cib(resources=fixture_group_cib_disabled_primitive)
         )
         resource.disable(self.env_assist.get_env(), ["A1"], wait=False)
 
     def test_group(self):
-        (self.config
-            .runner.pcmk.load_state(resources=fixture_group_status_managed)
-            .env.push_cib(resources=fixture_group_cib_disabled_group)
+        (
+            self.config.runner.pcmk.load_state(
+                resources=fixture_group_status_managed
+            ).env.push_cib(resources=fixture_group_cib_disabled_group)
         )
         resource.disable(self.env_assist.get_env(), ["A"], wait=False)
 
     def test_primitive_unmanaged(self):
-        (self.config
-            .runner.pcmk.load_state(resources=fixture_group_status_unmanaged)
-            .env.push_cib(resources=fixture_group_cib_disabled_primitive)
+        (
+            self.config.runner.pcmk.load_state(
+                resources=fixture_group_status_unmanaged
+            ).env.push_cib(resources=fixture_group_cib_disabled_primitive)
         )
         resource.disable(self.env_assist.get_env(), ["A1"], wait=False)
-        self.env_assist.assert_reports([
-            fixture_report_unmanaged("A1"),
-        ])
+        self.env_assist.assert_reports(
+            [fixture_report_unmanaged("A1"),]
+        )
 
     def test_group_unmanaged(self):
-        (self.config
-            .runner.pcmk.load_state(resources=fixture_group_status_unmanaged)
-            .env.push_cib(resources=fixture_group_cib_disabled_group)
+        (
+            self.config.runner.pcmk.load_state(
+                resources=fixture_group_status_unmanaged
+            ).env.push_cib(resources=fixture_group_cib_disabled_group)
         )
         resource.disable(self.env_assist.get_env(), ["A"], wait=False)
-        self.env_assist.assert_reports([
-            fixture_report_unmanaged("A"),
-        ])
+        self.env_assist.assert_reports(
+            [fixture_report_unmanaged("A"),]
+        )
+
 
 class EnableGroup(TestCase):
     def setUp(self):
         self.env_assist, self.config = get_env_tools(test_case=self)
 
     def test_primitive(self):
-        (self.config
-            .runner.cib.load(resources=fixture_group_cib_disabled_primitive)
+        (
+            self.config.runner.cib.load(
+                resources=fixture_group_cib_disabled_primitive
+            )
             .runner.pcmk.load_state(resources=fixture_group_status_managed)
             .env.push_cib(
                 resources=fixture_group_cib_enabled_with_meta_primitive
@@ -1109,8 +1186,10 @@ class EnableGroup(TestCase):
         resource.enable(self.env_assist.get_env(), ["A1"], wait=False)
 
     def test_primitive_disabled_both(self):
-        (self.config
-            .runner.cib.load(resources=fixture_group_cib_disabled_both)
+        (
+            self.config.runner.cib.load(
+                resources=fixture_group_cib_disabled_both
+            )
             .runner.pcmk.load_state(resources=fixture_group_status_managed)
             .env.push_cib(
                 resources=fixture_group_cib_disabled_group_with_meta_primitive
@@ -1119,16 +1198,20 @@ class EnableGroup(TestCase):
         resource.enable(self.env_assist.get_env(), ["A1"], wait=False)
 
     def test_group(self):
-        (self.config
-            .runner.cib.load(resources=fixture_group_cib_disabled_group)
+        (
+            self.config.runner.cib.load(
+                resources=fixture_group_cib_disabled_group
+            )
             .runner.pcmk.load_state(resources=fixture_group_status_managed)
             .env.push_cib(resources=fixture_group_cib_enabled_with_meta_group)
         )
         resource.enable(self.env_assist.get_env(), ["A"], wait=False)
 
     def test_group_both_disabled(self):
-        (self.config
-            .runner.cib.load(resources=fixture_group_cib_disabled_both)
+        (
+            self.config.runner.cib.load(
+                resources=fixture_group_cib_disabled_both
+            )
             .runner.pcmk.load_state(resources=fixture_group_status_managed)
             .env.push_cib(
                 resources=fixture_group_cib_disabled_primitive_with_meta_group
@@ -1137,28 +1220,32 @@ class EnableGroup(TestCase):
         resource.enable(self.env_assist.get_env(), ["A"], wait=False)
 
     def test_primitive_unmanaged(self):
-        (self.config
-            .runner.cib.load(resources=fixture_group_cib_disabled_primitive)
+        (
+            self.config.runner.cib.load(
+                resources=fixture_group_cib_disabled_primitive
+            )
             .runner.pcmk.load_state(resources=fixture_group_status_unmanaged)
             .env.push_cib(
                 resources=fixture_group_cib_enabled_with_meta_primitive
             )
         )
         resource.enable(self.env_assist.get_env(), ["A1"], wait=False)
-        self.env_assist.assert_reports([
-            fixture_report_unmanaged("A1"),
-        ])
+        self.env_assist.assert_reports(
+            [fixture_report_unmanaged("A1"),]
+        )
 
     def test_group_unmanaged(self):
-        (self.config
-            .runner.cib.load(resources=fixture_group_cib_disabled_group)
+        (
+            self.config.runner.cib.load(
+                resources=fixture_group_cib_disabled_group
+            )
             .runner.pcmk.load_state(resources=fixture_group_status_unmanaged)
             .env.push_cib(resources=fixture_group_cib_enabled_with_meta_group)
         )
         resource.enable(self.env_assist.get_env(), ["A"], wait=False)
-        self.env_assist.assert_reports([
-            fixture_report_unmanaged("A"),
-        ])
+        self.env_assist.assert_reports(
+            [fixture_report_unmanaged("A"),]
+        )
 
 
 class DisableClone(TestCase):
@@ -1167,46 +1254,53 @@ class DisableClone(TestCase):
         self.config.runner.cib.load(resources=fixture_clone_cib_enabled)
 
     def test_primitive(self):
-        (self.config
-            .runner.pcmk.load_state(resources=fixture_clone_status_managed)
-            .env.push_cib(resources=fixture_clone_cib_disabled_primitive)
+        (
+            self.config.runner.pcmk.load_state(
+                resources=fixture_clone_status_managed
+            ).env.push_cib(resources=fixture_clone_cib_disabled_primitive)
         )
         resource.disable(self.env_assist.get_env(), ["A"], wait=False)
 
     def test_clone(self):
-        (self.config
-            .runner.pcmk.load_state(resources=fixture_clone_status_managed)
-            .env.push_cib(resources=fixture_clone_cib_disabled_clone)
+        (
+            self.config.runner.pcmk.load_state(
+                resources=fixture_clone_status_managed
+            ).env.push_cib(resources=fixture_clone_cib_disabled_clone)
         )
         resource.disable(self.env_assist.get_env(), ["A-clone"], wait=False)
 
     def test_primitive_unmanaged(self):
-        (self.config
-            .runner.pcmk.load_state(resources=fixture_clone_status_unmanaged)
-            .env.push_cib(resources=fixture_clone_cib_disabled_primitive)
+        (
+            self.config.runner.pcmk.load_state(
+                resources=fixture_clone_status_unmanaged
+            ).env.push_cib(resources=fixture_clone_cib_disabled_primitive)
         )
         resource.disable(self.env_assist.get_env(), ["A"], wait=False)
-        self.env_assist.assert_reports([
-            fixture_report_unmanaged("A"),
-        ])
+        self.env_assist.assert_reports(
+            [fixture_report_unmanaged("A"),]
+        )
 
     def test_clone_unmanaged(self):
-        (self.config
-            .runner.pcmk.load_state(resources=fixture_clone_status_unmanaged)
-            .env.push_cib(resources=fixture_clone_cib_disabled_clone)
+        (
+            self.config.runner.pcmk.load_state(
+                resources=fixture_clone_status_unmanaged
+            ).env.push_cib(resources=fixture_clone_cib_disabled_clone)
         )
         resource.disable(self.env_assist.get_env(), ["A-clone"], wait=False)
-        self.env_assist.assert_reports([
-            fixture_report_unmanaged("A-clone"),
-        ])
+        self.env_assist.assert_reports(
+            [fixture_report_unmanaged("A-clone"),]
+        )
+
 
 class EnableClone(TestCase):
     def setUp(self):
         self.env_assist, self.config = get_env_tools(test_case=self)
 
     def test_primitive(self):
-        (self.config
-            .runner.cib.load(resources=fixture_clone_cib_disabled_primitive)
+        (
+            self.config.runner.cib.load(
+                resources=fixture_clone_cib_disabled_primitive
+            )
             .runner.pcmk.load_state(resources=fixture_clone_status_managed)
             .env.push_cib(
                 resources=fixture_clone_cib_enabled_with_meta_primitive
@@ -1215,62 +1309,78 @@ class EnableClone(TestCase):
         resource.enable(self.env_assist.get_env(), ["A"], wait=False)
 
     def test_primitive_disabled_both(self):
-        (self.config
-            .runner.cib.load(resources=fixture_clone_cib_disabled_both)
+        (
+            self.config.runner.cib.load(
+                resources=fixture_clone_cib_disabled_both
+            )
             .runner.pcmk.load_state(resources=fixture_clone_status_managed)
             .env.push_cib(resources=fixture_clone_cib_enabled_with_meta_both)
         )
         resource.enable(self.env_assist.get_env(), ["A"], wait=False)
 
     def test_clone(self):
-        (self.config
-            .runner.cib.load(resources=fixture_clone_cib_disabled_clone)
+        (
+            self.config.runner.cib.load(
+                resources=fixture_clone_cib_disabled_clone
+            )
             .runner.pcmk.load_state(resources=fixture_clone_status_managed)
             .env.push_cib(resources=fixture_clone_cib_enabled_with_meta_clone)
         )
         resource.enable(self.env_assist.get_env(), ["A-clone"], wait=False)
 
     def test_clone_disabled_both(self):
-        (self.config
-            .runner.cib.load(resources=fixture_clone_cib_disabled_both)
+        (
+            self.config.runner.cib.load(
+                resources=fixture_clone_cib_disabled_both
+            )
             .runner.pcmk.load_state(resources=fixture_clone_status_managed)
             .env.push_cib(resources=fixture_clone_cib_enabled_with_meta_both)
         )
         resource.enable(self.env_assist.get_env(), ["A-clone"], wait=False)
 
     def test_primitive_unmanaged(self):
-        (self.config
-            .runner.cib.load(resources=fixture_clone_cib_disabled_primitive)
+        (
+            self.config.runner.cib.load(
+                resources=fixture_clone_cib_disabled_primitive
+            )
             .runner.pcmk.load_state(resources=fixture_clone_status_unmanaged)
             .env.push_cib(
                 resources=fixture_clone_cib_enabled_with_meta_primitive
             )
         )
         resource.enable(self.env_assist.get_env(), ["A"], wait=False)
-        self.env_assist.assert_reports([
-            fixture_report_unmanaged("A-clone"),
-            fixture_report_unmanaged("A"),
-        ])
+        self.env_assist.assert_reports(
+            [
+                fixture_report_unmanaged("A-clone"),
+                fixture_report_unmanaged("A"),
+            ]
+        )
 
     def test_clone_unmanaged(self):
-        (self.config
-            .runner.cib.load(resources=fixture_clone_cib_disabled_clone)
+        (
+            self.config.runner.cib.load(
+                resources=fixture_clone_cib_disabled_clone
+            )
             .runner.pcmk.load_state(resources=fixture_clone_status_unmanaged)
             .env.push_cib(resources=fixture_clone_cib_enabled_with_meta_clone)
         )
         resource.enable(self.env_assist.get_env(), ["A-clone"], wait=False)
-        self.env_assist.assert_reports([
-            fixture_report_unmanaged("A-clone"),
-            fixture_report_unmanaged("A"),
-        ])
+        self.env_assist.assert_reports(
+            [
+                fixture_report_unmanaged("A-clone"),
+                fixture_report_unmanaged("A"),
+            ]
+        )
+
 
 class DisableMaster(TestCase):
     # same as clone, minimum tests in here
     def setUp(self):
         self.env_assist, self.config = get_env_tools(test_case=self)
-        (self.config
-            .runner.cib.load(resources=fixture_master_cib_enabled)
-            .runner.pcmk.load_state(resources=fixture_master_status_managed)
+        (
+            self.config.runner.cib.load(
+                resources=fixture_master_cib_enabled
+            ).runner.pcmk.load_state(resources=fixture_master_status_managed)
         )
 
     def test_primitive(self):
@@ -1280,10 +1390,9 @@ class DisableMaster(TestCase):
         resource.disable(self.env_assist.get_env(), ["A"], False)
 
     def test_master(self):
-        self.config.env.push_cib(
-            resources=fixture_master_cib_disabled_master
-        )
+        self.config.env.push_cib(resources=fixture_master_cib_disabled_master)
         resource.disable(self.env_assist.get_env(), ["A-master"], False)
+
 
 class EnableMaster(TestCase):
     # same as clone, minimum tests in here
@@ -1291,8 +1400,10 @@ class EnableMaster(TestCase):
         self.env_assist, self.config = get_env_tools(test_case=self)
 
     def test_primitive(self):
-        (self.config
-            .runner.cib.load(resources=fixture_master_cib_disabled_primitive)
+        (
+            self.config.runner.cib.load(
+                resources=fixture_master_cib_disabled_primitive
+            )
             .runner.pcmk.load_state(resources=fixture_master_status_managed)
             .env.push_cib(
                 resources=fixture_master_cib_enabled_with_meta_primitive
@@ -1301,36 +1412,45 @@ class EnableMaster(TestCase):
         resource.enable(self.env_assist.get_env(), ["A"], False)
 
     def test_primitive_disabled_both(self):
-        (self.config
-            .runner.cib.load(resources=fixture_master_cib_disabled_both)
+        (
+            self.config.runner.cib.load(
+                resources=fixture_master_cib_disabled_both
+            )
             .runner.pcmk.load_state(resources=fixture_master_status_managed)
             .env.push_cib(resources=fixture_master_cib_enabled_with_meta_both)
         )
         resource.enable(self.env_assist.get_env(), ["A"], False)
 
     def test_master(self):
-        (self.config
-            .runner.cib.load(resources=fixture_master_cib_disabled_master)
+        (
+            self.config.runner.cib.load(
+                resources=fixture_master_cib_disabled_master
+            )
             .runner.pcmk.load_state(resources=fixture_master_status_managed)
             .env.push_cib(resources=fixture_master_cib_enabled_with_meta_master)
         )
         resource.enable(self.env_assist.get_env(), ["A-master"], False)
 
     def test_master_disabled_both(self):
-        (self.config
-            .runner.cib.load(resources=fixture_master_cib_disabled_both)
+        (
+            self.config.runner.cib.load(
+                resources=fixture_master_cib_disabled_both
+            )
             .runner.pcmk.load_state(resources=fixture_master_status_managed)
             .env.push_cib(resources=fixture_master_cib_enabled_with_meta_both)
         )
         resource.enable(self.env_assist.get_env(), ["A-master"], False)
+
 
 class DisableClonedGroup(TestCase):
     def setUp(self):
         self.env_assist, self.config = get_env_tools(test_case=self)
 
     def test_clone(self):
-        (self.config
-            .runner.cib.load(resources=fixture_clone_group_cib_enabled)
+        (
+            self.config.runner.cib.load(
+                resources=fixture_clone_group_cib_enabled
+            )
             .runner.pcmk.load_state(
                 resources=fixture_clone_group_status_managed
             )
@@ -1339,8 +1459,10 @@ class DisableClonedGroup(TestCase):
         resource.disable(self.env_assist.get_env(), ["A-clone"], False)
 
     def test_group(self):
-        (self.config
-            .runner.cib.load(resources=fixture_clone_group_cib_enabled)
+        (
+            self.config.runner.cib.load(
+                resources=fixture_clone_group_cib_enabled
+            )
             .runner.pcmk.load_state(
                 resources=fixture_clone_group_status_managed
             )
@@ -1349,57 +1471,61 @@ class DisableClonedGroup(TestCase):
         resource.disable(self.env_assist.get_env(), ["A"], False)
 
     def test_primitive(self):
-        (self.config
-            .runner.cib.load(resources=fixture_clone_group_cib_enabled)
+        (
+            self.config.runner.cib.load(
+                resources=fixture_clone_group_cib_enabled
+            )
             .runner.pcmk.load_state(
                 resources=fixture_clone_group_status_managed
             )
-            .env.push_cib(
-                resources=fixture_clone_group_cib_disabled_primitive
-            )
+            .env.push_cib(resources=fixture_clone_group_cib_disabled_primitive)
         )
         resource.disable(self.env_assist.get_env(), ["A1"], False)
 
     def test_clone_unmanaged(self):
-        (self.config
-            .runner.cib.load(resources=fixture_clone_group_cib_enabled)
+        (
+            self.config.runner.cib.load(
+                resources=fixture_clone_group_cib_enabled
+            )
             .runner.pcmk.load_state(
                 resources=fixture_clone_group_status_unmanaged
             )
             .env.push_cib(resources=fixture_clone_group_cib_disabled_clone)
         )
         resource.disable(self.env_assist.get_env(), ["A-clone"], False)
-        self.env_assist.assert_reports([
-            fixture_report_unmanaged("A-clone"),
-        ])
+        self.env_assist.assert_reports(
+            [fixture_report_unmanaged("A-clone"),]
+        )
 
     def test_group_unmanaged(self):
-        (self.config
-            .runner.cib.load(resources=fixture_clone_group_cib_enabled)
+        (
+            self.config.runner.cib.load(
+                resources=fixture_clone_group_cib_enabled
+            )
             .runner.pcmk.load_state(
                 resources=fixture_clone_group_status_unmanaged
             )
             .env.push_cib(resources=fixture_clone_group_cib_disabled_group)
         )
         resource.disable(self.env_assist.get_env(), ["A"], False)
-        self.env_assist.assert_reports([
-            fixture_report_unmanaged("A"),
-        ])
+        self.env_assist.assert_reports(
+            [fixture_report_unmanaged("A"),]
+        )
 
     def test_primitive_unmanaged(self):
-        (self.config
-            .runner.cib.load(resources=fixture_clone_group_cib_enabled)
+        (
+            self.config.runner.cib.load(
+                resources=fixture_clone_group_cib_enabled
+            )
             .runner.pcmk.load_state(
                 resources=fixture_clone_group_status_unmanaged
             )
-            .env.push_cib(
-                resources=fixture_clone_group_cib_disabled_primitive
-            )
+            .env.push_cib(resources=fixture_clone_group_cib_disabled_primitive)
         )
         resource.disable(self.env_assist.get_env(), ["A1"], False)
-        self.env_assist.assert_reports([
-            fixture_report_unmanaged("A1"),
-        ])
+        self.env_assist.assert_reports(
+            [fixture_report_unmanaged("A1"),]
+        )
 
 
 class EnableClonedGroup(TestCase):
@@ -1407,8 +1533,10 @@ class EnableClonedGroup(TestCase):
         self.env_assist, self.config = get_env_tools(test_case=self)
 
     def test_clone(self):
-        (self.config
-            .runner.cib.load(resources=fixture_clone_group_cib_disabled_clone)
+        (
+            self.config.runner.cib.load(
+                resources=fixture_clone_group_cib_disabled_clone
+            )
             .runner.pcmk.load_state(
                 resources=fixture_clone_group_status_managed
             )
@@ -1419,22 +1547,24 @@ class EnableClonedGroup(TestCase):
         resource.enable(self.env_assist.get_env(), ["A-clone"], False)
 
     def test_clone_disabled_all(self):
-        (self.config
-            .runner.cib.load(resources=fixture_clone_group_cib_disabled_all)
+        (
+            self.config.runner.cib.load(
+                resources=fixture_clone_group_cib_disabled_all
+            )
             .runner.pcmk.load_state(
                 resources=fixture_clone_group_status_managed
             )
             .env.push_cib(
-                resources
-                =
-                fixture_clone_group_cib_disabled_primitive_with_meta_clone_group
+                resources=fixture_clone_group_cib_disabled_primitive_with_meta_clone_group
             )
         )
         resource.enable(self.env_assist.get_env(), ["A-clone"], False)
 
     def test_group(self):
-        (self.config
-            .runner.cib.load(resources=fixture_clone_group_cib_disabled_group)
+        (
+            self.config.runner.cib.load(
+                resources=fixture_clone_group_cib_disabled_group
+            )
             .runner.pcmk.load_state(
                 resources=fixture_clone_group_status_managed
             )
@@ -1445,22 +1575,22 @@ class EnableClonedGroup(TestCase):
         resource.enable(self.env_assist.get_env(), ["A"], False)
 
     def test_group_disabled_all(self):
-        (self.config
-            .runner.cib.load(resources=fixture_clone_group_cib_disabled_all)
+        (
+            self.config.runner.cib.load(
+                resources=fixture_clone_group_cib_disabled_all
+            )
             .runner.pcmk.load_state(
                 resources=fixture_clone_group_status_managed
             )
             .env.push_cib(
-                resources
-                =
-                fixture_clone_group_cib_disabled_primitive_with_meta_clone_group
+                resources=fixture_clone_group_cib_disabled_primitive_with_meta_clone_group
             )
         )
         resource.enable(self.env_assist.get_env(), ["A"], False)
 
     def test_primitive(self):
-        (self.config
-            .runner.cib.load(
+        (
+            self.config.runner.cib.load(
                 resources=fixture_clone_group_cib_disabled_primitive
             )
             .runner.pcmk.load_state(
@@ -1473,22 +1603,24 @@ class EnableClonedGroup(TestCase):
         resource.enable(self.env_assist.get_env(), ["A1"], False)
 
     def test_primitive_disabled_all(self):
-        (self.config
-            .runner.cib.load(resources=fixture_clone_group_cib_disabled_all)
+        (
+            self.config.runner.cib.load(
+                resources=fixture_clone_group_cib_disabled_all
+            )
             .runner.pcmk.load_state(
                 resources=fixture_clone_group_status_managed
             )
             .env.push_cib(
-                resources
-                =
-                fixture_clone_group_cib_disabled_clone_group_with_meta_primitive
+                resources=fixture_clone_group_cib_disabled_clone_group_with_meta_primitive
             )
         )
         resource.enable(self.env_assist.get_env(), ["A1"], False)
 
     def test_clone_unmanaged(self):
-        (self.config
-            .runner.cib.load(resources=fixture_clone_group_cib_disabled_clone)
+        (
+            self.config.runner.cib.load(
+                resources=fixture_clone_group_cib_disabled_clone
+            )
             .runner.pcmk.load_state(
                 resources=fixture_clone_group_status_unmanaged
             )
@@ -1497,14 +1629,18 @@ class EnableClonedGroup(TestCase):
             )
         )
         resource.enable(self.env_assist.get_env(), ["A-clone"], False)
-        self.env_assist.assert_reports([
-            fixture_report_unmanaged("A-clone"),
-            fixture_report_unmanaged("A"),
-        ])
+        self.env_assist.assert_reports(
+            [
+                fixture_report_unmanaged("A-clone"),
+                fixture_report_unmanaged("A"),
+            ]
+        )
 
     def test_group_unmanaged(self):
-        (self.config
-            .runner.cib.load(resources=fixture_clone_group_cib_disabled_group)
+        (
+            self.config.runner.cib.load(
+                resources=fixture_clone_group_cib_disabled_group
+            )
             .runner.pcmk.load_state(
                 resources=fixture_clone_group_status_unmanaged
             )
@@ -1513,14 +1649,16 @@ class EnableClonedGroup(TestCase):
             )
         )
         resource.enable(self.env_assist.get_env(), ["A"], False)
-        self.env_assist.assert_reports([
-            fixture_report_unmanaged("A"),
-            fixture_report_unmanaged("A-clone"),
-        ])
+        self.env_assist.assert_reports(
+            [
+                fixture_report_unmanaged("A"),
+                fixture_report_unmanaged("A-clone"),
+            ]
+        )
 
     def test_primitive_unmanaged(self):
-        (self.config
-            .runner.cib.load(
+        (
+            self.config.runner.cib.load(
                 resources=fixture_clone_group_cib_disabled_primitive
             )
             .runner.pcmk.load_state(
@@ -1531,9 +1669,9 @@ class EnableClonedGroup(TestCase):
             )
         )
         resource.enable(self.env_assist.get_env(), ["A1"], False)
-        self.env_assist.assert_reports([
-            fixture_report_unmanaged("A1"),
-        ])
+        self.env_assist.assert_reports(
+            [fixture_report_unmanaged("A1"),]
+        )
 
 
 @skip_unless_pacemaker_supports_bundle
@@ -1542,42 +1680,42 @@ class DisableBundle(TestCase):
         self.env_assist, self.config = get_env_tools(test_case=self)
 
     def test_primitive(self):
-        (self.config
-            .runner.cib.load(resources=fixture_bundle_cib_enabled)
+        (
+            self.config.runner.cib.load(resources=fixture_bundle_cib_enabled)
             .runner.pcmk.load_state(resources=fixture_bundle_status_managed)
             .env.push_cib(resources=fixture_bundle_cib_disabled_primitive)
         )
         resource.disable(self.env_assist.get_env(), ["A"], False)
 
     def test_bundle(self):
-        (self.config
-            .runner.cib.load(resources=fixture_bundle_cib_enabled)
+        (
+            self.config.runner.cib.load(resources=fixture_bundle_cib_enabled)
             .runner.pcmk.load_state(resources=fixture_bundle_status_managed)
             .env.push_cib(resources=fixture_bundle_cib_disabled_bundle)
         )
         resource.disable(self.env_assist.get_env(), ["A-bundle"], False)
 
     def test_primitive_unmanaged(self):
-        (self.config
-            .runner.cib.load(resources=fixture_bundle_cib_enabled)
+        (
+            self.config.runner.cib.load(resources=fixture_bundle_cib_enabled)
             .runner.pcmk.load_state(resources=fixture_bundle_status_unmanaged)
             .env.push_cib(resources=fixture_bundle_cib_disabled_primitive)
         )
         resource.disable(self.env_assist.get_env(), ["A"], False)
-        self.env_assist.assert_reports([
-            fixture_report_unmanaged("A"),
-        ])
+        self.env_assist.assert_reports(
+            [fixture_report_unmanaged("A"),]
+        )
 
     def test_bundle_unmanaged(self):
-        (self.config
-            .runner.cib.load(resources=fixture_bundle_cib_enabled)
+        (
+            self.config.runner.cib.load(resources=fixture_bundle_cib_enabled)
             .runner.pcmk.load_state(resources=fixture_bundle_status_unmanaged)
             .env.push_cib(resources=fixture_bundle_cib_disabled_bundle)
         )
         resource.disable(self.env_assist.get_env(), ["A-bundle"], False)
-        self.env_assist.assert_reports([
-            fixture_report_unmanaged("A-bundle"),
-        ])
+        self.env_assist.assert_reports(
+            [fixture_report_unmanaged("A-bundle"),]
+        )
 
 
 @skip_unless_pacemaker_supports_bundle
@@ -1586,8 +1724,10 @@ class EnableBundle(TestCase):
         self.env_assist, self.config = get_env_tools(test_case=self)
 
     def test_primitive(self):
-        (self.config
-            .runner.cib.load(resources=fixture_bundle_cib_disabled_primitive)
+        (
+            self.config.runner.cib.load(
+                resources=fixture_bundle_cib_disabled_primitive
+            )
             .runner.pcmk.load_state(resources=fixture_bundle_status_managed)
             .env.push_cib(
                 resources=fixture_bundle_cib_enabled_with_meta_primitive
@@ -1596,56 +1736,70 @@ class EnableBundle(TestCase):
         resource.enable(self.env_assist.get_env(), ["A"], False)
 
     def test_primitive_disabled_both(self):
-        (self.config
-            .runner.cib.load(resources=fixture_bundle_cib_disabled_both)
+        (
+            self.config.runner.cib.load(
+                resources=fixture_bundle_cib_disabled_both
+            )
             .runner.pcmk.load_state(resources=fixture_bundle_status_managed)
             .env.push_cib(resources=fixture_bundle_cib_enabled_with_meta_both)
         )
         resource.enable(self.env_assist.get_env(), ["A"], False)
 
     def test_bundle(self):
-        (self.config
-            .runner.cib.load(resources=fixture_bundle_cib_disabled_bundle)
+        (
+            self.config.runner.cib.load(
+                resources=fixture_bundle_cib_disabled_bundle
+            )
             .runner.pcmk.load_state(resources=fixture_bundle_status_managed)
             .env.push_cib(resources=fixture_bundle_cib_enabled_with_meta_bundle)
         )
         resource.enable(self.env_assist.get_env(), ["A-bundle"], False)
 
     def test_bundle_disabled_both(self):
-        (self.config
-            .runner.cib.load(resources=fixture_bundle_cib_disabled_both)
+        (
+            self.config.runner.cib.load(
+                resources=fixture_bundle_cib_disabled_both
+            )
             .runner.pcmk.load_state(resources=fixture_bundle_status_managed)
             .env.push_cib(resources=fixture_bundle_cib_enabled_with_meta_both)
         )
         resource.enable(self.env_assist.get_env(), ["A-bundle"], False)
 
     def test_primitive_unmanaged(self):
-        (self.config
-            .runner.cib.load(resources=fixture_bundle_cib_disabled_primitive)
+        (
+            self.config.runner.cib.load(
+                resources=fixture_bundle_cib_disabled_primitive
+            )
             .runner.pcmk.load_state(resources=fixture_bundle_status_unmanaged)
             .env.push_cib(
                 resources=fixture_bundle_cib_enabled_with_meta_primitive
             )
         )
         resource.enable(self.env_assist.get_env(), ["A"], False)
-        self.env_assist.assert_reports([
-            fixture_report_unmanaged("A"),
-            fixture_report_unmanaged("A-bundle"),
-        ])
+        self.env_assist.assert_reports(
+            [
+                fixture_report_unmanaged("A"),
+                fixture_report_unmanaged("A-bundle"),
+            ]
+        )
 
     def test_bundle_unmanaged(self):
-        (self.config
-            .runner.cib.load(resources=fixture_bundle_cib_disabled_primitive)
+        (
+            self.config.runner.cib.load(
+                resources=fixture_bundle_cib_disabled_primitive
+            )
             .runner.pcmk.load_state(resources=fixture_bundle_status_unmanaged)
             .env.push_cib(
                 resources=fixture_bundle_cib_enabled_with_meta_primitive
             )
         )
         resource.enable(self.env_assist.get_env(), ["A-bundle"], False)
-        self.env_assist.assert_reports([
-            fixture_report_unmanaged("A-bundle"),
-            fixture_report_unmanaged("A"),
-        ])
+        self.env_assist.assert_reports(
+            [
+                fixture_report_unmanaged("A-bundle"),
+                fixture_report_unmanaged("A"),
+            ]
+        )
 
 
 @mock.patch("pcs.lib.pacemaker.live.write_tmpfile")
@@ -1669,10 +1823,10 @@ class DisableSimulate(TestCase):
             [
                 fixture.error(
                     report_codes.LIVE_ENVIRONMENT_REQUIRED,
-                    forbidden_options=["CIB"]
+                    forbidden_options=["CIB"],
                 ),
             ],
-            expected_in_processor=False
+            expected_in_processor=False,
         )
 
     def test_nonexistent_resource(self, mock_write_tmpfile):
@@ -1682,19 +1836,18 @@ class DisableSimulate(TestCase):
         self.config.runner.cib.load()
         self.env_assist.assert_raise_library_error(
             lambda: resource.disable_simulate(self.env_assist.get_env(), ["A"]),
-            [
-                fixture.report_not_found("A", "resources"),
-            ],
-            expected_in_processor=False
+            [fixture.report_not_found("A", "resources"),],
+            expected_in_processor=False,
         )
 
     def test_success(self, mock_write_tmpfile):
         mock_write_tmpfile.side_effect = [
-            self.tmpfile_new_cib, self.tmpfile_transitions,
-            AssertionError("No other write_tmpfile call expected")
+            self.tmpfile_new_cib,
+            self.tmpfile_transitions,
+            AssertionError("No other write_tmpfile call expected"),
         ]
-        (self.config
-            .runner.cib.load(resources=fixture_primitive_cib_enabled)
+        (
+            self.config.runner.cib.load(resources=fixture_primitive_cib_enabled)
             .runner.pcmk.load_state(resources=fixture_primitive_status_managed)
             .runner.pcmk.simulate_cib(
                 self.tmpfile_new_cib.name,
@@ -1709,11 +1862,12 @@ class DisableSimulate(TestCase):
 
     def test_simulate_error(self, mock_write_tmpfile):
         mock_write_tmpfile.side_effect = [
-            self.tmpfile_new_cib, self.tmpfile_transitions,
-            AssertionError("No other write_tmpfile call expected")
+            self.tmpfile_new_cib,
+            self.tmpfile_transitions,
+            AssertionError("No other write_tmpfile call expected"),
         ]
-        (self.config
-            .runner.cib.load(resources=fixture_primitive_cib_enabled)
+        (
+            self.config.runner.cib.load(resources=fixture_primitive_cib_enabled)
             .runner.pcmk.load_state(resources=fixture_primitive_status_managed)
             .runner.pcmk.simulate_cib(
                 self.tmpfile_new_cib.name,
@@ -1729,15 +1883,14 @@ class DisableSimulate(TestCase):
             lambda: resource.disable_simulate(self.env_assist.get_env(), ["A"]),
             [
                 fixture.error(
-                    report_codes.CIB_SIMULATE_ERROR,
-                    reason="some stderr",
+                    report_codes.CIB_SIMULATE_ERROR, reason="some stderr",
                 ),
             ],
-            expected_in_processor=False
+            expected_in_processor=False,
         )
 
 
-class DisableSafeMixin():
+class DisableSafeMixin:
     fixture_transitions_both_stopped = """
         <transition_graph>
           <synapse>
@@ -1899,12 +2052,14 @@ class DisableSafeMixin():
             self.fixture_transitions_both_stopped
         )
         mock_write_tmpfile.side_effect = [
-            self.tmpfile_new_cib, self.tmpfile_transitions,
-            AssertionError("No other write_tmpfile call expected")
+            self.tmpfile_new_cib,
+            self.tmpfile_transitions,
+            AssertionError("No other write_tmpfile call expected"),
         ]
-        (self.config
-            .runner.cib.load(resources=fixture_two_primitives_cib_enabled)
-            .runner.pcmk.load_state(
+        (
+            self.config.runner.cib.load(
+                resources=fixture_two_primitives_cib_enabled
+            ).runner.pcmk.load_state(
                 resources=fixture_two_primitives_status_managed
             )
         )
@@ -1914,12 +2069,14 @@ class DisableSafeMixin():
             self.fixture_transitions_one_migrated
         )
         mock_write_tmpfile.side_effect = [
-            self.tmpfile_new_cib, self.tmpfile_transitions,
-            AssertionError("No other write_tmpfile call expected")
+            self.tmpfile_new_cib,
+            self.tmpfile_transitions,
+            AssertionError("No other write_tmpfile call expected"),
         ]
-        (self.config
-            .runner.cib.load(resources=fixture_two_primitives_cib_enabled)
-            .runner.pcmk.load_state(
+        (
+            self.config.runner.cib.load(
+                resources=fixture_two_primitives_cib_enabled
+            ).runner.pcmk.load_state(
                 resources=fixture_two_primitives_status_managed
             )
         )
@@ -1931,18 +2088,15 @@ class DisableSafeMixin():
         self.config.env.set_cib_data("<cib />")
         self.env_assist.assert_raise_library_error(
             lambda: resource.disable_safe(
-                self.env_assist.get_env(),
-                ["A"],
-                self.strict,
-                False
+                self.env_assist.get_env(), ["A"], self.strict, False
             ),
             [
                 fixture.error(
                     report_codes.LIVE_ENVIRONMENT_REQUIRED,
-                    forbidden_options=["CIB"]
+                    forbidden_options=["CIB"],
                 ),
             ],
-            expected_in_processor=False
+            expected_in_processor=False,
         )
 
     def test_nonexistent_resource(self, mock_write_tmpfile):
@@ -1952,15 +2106,10 @@ class DisableSafeMixin():
         self.config.runner.cib.load()
         self.env_assist.assert_raise_library_error(
             lambda: resource.disable_safe(
-                self.env_assist.get_env(),
-                ["A"],
-                self.strict,
-                False
+                self.env_assist.get_env(), ["A"], self.strict, False
             ),
-            [
-                fixture.report_not_found("A", "resources"),
-            ],
-            expected_in_processor=False
+            [fixture.report_not_found("A", "resources"),],
+            expected_in_processor=False,
         )
 
     def test_simulate_error(self, mock_write_tmpfile):
@@ -1975,18 +2124,14 @@ class DisableSafeMixin():
         )
         self.env_assist.assert_raise_library_error(
             lambda: resource.disable_safe(
-                self.env_assist.get_env(),
-                ["A", "B"],
-                self.strict,
-                False,
+                self.env_assist.get_env(), ["A", "B"], self.strict, False,
             ),
             [
                 fixture.error(
-                    report_codes.CIB_SIMULATE_ERROR,
-                    reason="some stderr",
+                    report_codes.CIB_SIMULATE_ERROR, reason="some stderr",
                 ),
             ],
-            expected_in_processor=False
+            expected_in_processor=False,
         )
 
     def test_only_specified_resources_stopped(self, mock_write_tmpfile):
@@ -2001,10 +2146,7 @@ class DisableSafeMixin():
             resources=fixture_two_primitives_cib_disabled_both
         )
         resource.disable_safe(
-            self.env_assist.get_env(),
-            ["A", "B"],
-            self.strict,
-            False,
+            self.env_assist.get_env(), ["A", "B"], self.strict, False,
         )
 
     def test_other_resources_stopped(self, mock_write_tmpfile):
@@ -2017,10 +2159,7 @@ class DisableSafeMixin():
         )
         self.env_assist.assert_raise_library_error(
             lambda: resource.disable_safe(
-                self.env_assist.get_env(),
-                ["A"],
-                self.strict,
-                False,
+                self.env_assist.get_env(), ["A"], self.strict, False,
             ),
             [
                 fixture.error(
@@ -2030,7 +2169,7 @@ class DisableSafeMixin():
                     crm_simulate_plaintext_output="simulate output",
                 ),
             ],
-            expected_in_processor=False
+            expected_in_processor=False,
         )
 
     def test_master_demoted(self, mock_write_tmpfile):
@@ -2038,11 +2177,12 @@ class DisableSafeMixin():
             self.fixture_transitions_master_demoted
         )
         mock_write_tmpfile.side_effect = [
-            self.tmpfile_new_cib, self.tmpfile_transitions,
-            AssertionError("No other write_tmpfile call expected")
+            self.tmpfile_new_cib,
+            self.tmpfile_transitions,
+            AssertionError("No other write_tmpfile call expected"),
         ]
-        (self.config
-            .runner.cib.load(resources=self.fixture_cib_with_master)
+        (
+            self.config.runner.cib.load(resources=self.fixture_cib_with_master)
             .runner.pcmk.load_state(
                 resources=self.fixture_status_with_master_managed
             )
@@ -2055,10 +2195,7 @@ class DisableSafeMixin():
         )
         self.env_assist.assert_raise_library_error(
             lambda: resource.disable_safe(
-                self.env_assist.get_env(),
-                ["A"],
-                self.strict,
-                False,
+                self.env_assist.get_env(), ["A"], self.strict, False,
             ),
             [
                 fixture.error(
@@ -2068,22 +2205,21 @@ class DisableSafeMixin():
                     crm_simulate_plaintext_output="simulate output",
                 ),
             ],
-            expected_in_processor=False
+            expected_in_processor=False,
         )
 
     def test_wait_success(self, mock_write_tmpfile):
         self.config.runner.pcmk.can_wait()
         self.fixture_disable_both_resources(mock_write_tmpfile)
-        (self.config
-            .runner.pcmk.simulate_cib(
+        (
+            self.config.runner.pcmk.simulate_cib(
                 self.tmpfile_new_cib.name,
                 self.tmpfile_transitions.name,
                 stdout="simulate output",
                 resources=fixture_two_primitives_cib_disabled_both,
             )
             .env.push_cib(
-                resources=fixture_two_primitives_cib_disabled_both,
-                wait=TIMEOUT
+                resources=fixture_two_primitives_cib_disabled_both, wait=TIMEOUT
             )
             .runner.pcmk.load_state(
                 name="runner.pcmk.load_state_2",
@@ -2094,19 +2230,18 @@ class DisableSafeMixin():
                         <resource id="B" managed="true" role="Stopped">
                         </resource>
                     </resources>
-                """
+                """,
             )
         )
         resource.disable_safe(
-            self.env_assist.get_env(),
-            ["A", "B"],
-            self.strict,
-            TIMEOUT
+            self.env_assist.get_env(), ["A", "B"], self.strict, TIMEOUT
         )
-        self.env_assist.assert_reports([
-            fixture.report_resource_not_running("A"),
-            fixture.report_resource_not_running("B"),
-        ])
+        self.env_assist.assert_reports(
+            [
+                fixture.report_resource_not_running("A"),
+                fixture.report_resource_not_running("B"),
+            ]
+        )
 
     def test_inner_resources(self, mock_write_tmpfile):
         cib_xml = """
@@ -2210,7 +2345,8 @@ class DisableSafeMixin():
             ("H", False),
         ]:
             if is_clone:
-                synapses.append(f"""
+                synapses.append(
+                    f"""
                   <synapse>
                     <action_set>
                       <rsc_op id="{index}" operation="stop" on_node="node1">
@@ -2225,10 +2361,12 @@ class DisableSafeMixin():
                       </rsc_op>
                     </action_set>
                   </synapse>
-                """)
+                """
+                )
                 index += 2
             else:
-                synapses.append(f"""
+                synapses.append(
+                    f"""
                   <synapse>
                     <action_set>
                       <rsc_op id="{index}" operation="stop" on_node="node1">
@@ -2236,7 +2374,8 @@ class DisableSafeMixin():
                       </rsc_op>
                     </action_set>
                   </synapse>
-                """)
+                """
+                )
                 index += 1
         transitions_xml = (
             "<transition_graph>" + "\n".join(synapses) + "</transition_graph>"
@@ -2244,12 +2383,14 @@ class DisableSafeMixin():
 
         self.tmpfile_transitions.read.return_value = transitions_xml
         mock_write_tmpfile.side_effect = [
-            self.tmpfile_new_cib, self.tmpfile_transitions,
-            AssertionError("No other write_tmpfile call expected")
+            self.tmpfile_new_cib,
+            self.tmpfile_transitions,
+            AssertionError("No other write_tmpfile call expected"),
         ]
-        (self.config
-            .runner.cib.load(resources=cib_xml)
-            .runner.pcmk.load_state(resources=status_xml)
+        (
+            self.config.runner.cib.load(
+                resources=cib_xml
+            ).runner.pcmk.load_state(resources=status_xml)
         )
         self.config.runner.pcmk.simulate_cib(
             self.tmpfile_new_cib.name,
@@ -2315,7 +2456,7 @@ class DisableSafeMixin():
                         <primitive id="H" />
                     </bundle>
                 </resources>
-            """
+            """,
         )
         self.env_assist.assert_raise_library_error(
             lambda: resource.disable_safe(
@@ -2328,15 +2469,20 @@ class DisableSafeMixin():
                 fixture.error(
                     report_codes.RESOURCE_DISABLE_AFFECTS_OTHER_RESOURCES,
                     disabled_resource_list=[
-                        "B-clone", "C-master", "D", "E-clone", "F-master",
-                        "H-bundle"
+                        "B-clone",
+                        "C-master",
+                        "D",
+                        "E-clone",
+                        "F-master",
+                        "H-bundle",
                     ],
                     affected_resource_list=["A"],
                     crm_simulate_plaintext_output="simulate output",
                 ),
             ],
-            expected_in_processor=False
+            expected_in_processor=False,
         )
+
 
 @mock.patch("pcs.lib.pacemaker.live.write_tmpfile")
 class DisableSafe(DisableSafeMixin, TestCase):
@@ -2352,10 +2498,7 @@ class DisableSafe(DisableSafeMixin, TestCase):
         )
         self.config.env.push_cib(resources=fixture_two_primitives_cib_disabled)
         resource.disable_safe(
-            self.env_assist.get_env(),
-            ["A"],
-            self.strict,
-            False,
+            self.env_assist.get_env(), ["A"], self.strict, False,
         )
 
     def test_master_migrated(self, mock_write_tmpfile):
@@ -2363,11 +2506,12 @@ class DisableSafe(DisableSafeMixin, TestCase):
             self.fixture_transitions_master_migrated
         )
         mock_write_tmpfile.side_effect = [
-            self.tmpfile_new_cib, self.tmpfile_transitions,
-            AssertionError("No other write_tmpfile call expected")
+            self.tmpfile_new_cib,
+            self.tmpfile_transitions,
+            AssertionError("No other write_tmpfile call expected"),
         ]
-        (self.config
-            .runner.cib.load(resources=self.fixture_cib_with_master)
+        (
+            self.config.runner.cib.load(resources=self.fixture_cib_with_master)
             .runner.pcmk.load_state(
                 resources=self.fixture_status_with_master_managed
             )
@@ -2382,11 +2526,9 @@ class DisableSafe(DisableSafeMixin, TestCase):
             )
         )
         resource.disable_safe(
-            self.env_assist.get_env(),
-            ["A"],
-            self.strict,
-            False,
+            self.env_assist.get_env(), ["A"], self.strict, False,
         )
+
 
 @mock.patch("pcs.lib.pacemaker.live.write_tmpfile")
 class DisableSafeStrict(DisableSafeMixin, TestCase):
@@ -2402,10 +2544,7 @@ class DisableSafeStrict(DisableSafeMixin, TestCase):
         )
         self.env_assist.assert_raise_library_error(
             lambda: resource.disable_safe(
-                self.env_assist.get_env(),
-                ["A"],
-                self.strict,
-                False,
+                self.env_assist.get_env(), ["A"], self.strict, False,
             ),
             [
                 fixture.error(
@@ -2415,7 +2554,7 @@ class DisableSafeStrict(DisableSafeMixin, TestCase):
                     crm_simulate_plaintext_output="simulate output",
                 ),
             ],
-            expected_in_processor=False
+            expected_in_processor=False,
         )
 
     def test_master_migrated(self, mock_write_tmpfile):
@@ -2423,11 +2562,12 @@ class DisableSafeStrict(DisableSafeMixin, TestCase):
             self.fixture_transitions_master_migrated
         )
         mock_write_tmpfile.side_effect = [
-            self.tmpfile_new_cib, self.tmpfile_transitions,
-            AssertionError("No other write_tmpfile call expected")
+            self.tmpfile_new_cib,
+            self.tmpfile_transitions,
+            AssertionError("No other write_tmpfile call expected"),
         ]
-        (self.config
-            .runner.cib.load(resources=self.fixture_cib_with_master)
+        (
+            self.config.runner.cib.load(resources=self.fixture_cib_with_master)
             .runner.pcmk.load_state(
                 resources=self.fixture_status_with_master_managed
             )
@@ -2440,10 +2580,7 @@ class DisableSafeStrict(DisableSafeMixin, TestCase):
         )
         self.env_assist.assert_raise_library_error(
             lambda: resource.disable_safe(
-                self.env_assist.get_env(),
-                ["A"],
-                self.strict,
-                False,
+                self.env_assist.get_env(), ["A"], self.strict, False,
             ),
             [
                 fixture.error(
@@ -2453,5 +2590,5 @@ class DisableSafeStrict(DisableSafeMixin, TestCase):
                     crm_simulate_plaintext_output="simulate output",
                 ),
             ],
-            expected_in_processor=False
+            expected_in_processor=False,
         )

@@ -22,22 +22,26 @@ class GetLocalAvailableWatchdogs(TestCase):
         self.env_assist, self.config = get_env_tools(self)
 
     def test_one_device(self):
-        self.config.runner.sbd.list_watchdogs(outdent("""
+        self.config.runner.sbd.list_watchdogs(
+            outdent(
+                """
         Discovered 1 watchdog devices:
 
         [1] /dev/watchdog
         Identity: i6300ESB timer
         Driver: <unknown>
-        """))
+        """
+            )
+        )
         self.assertEqual(
-            {
-                "/dev/watchdog": _watchdog_fixture("i6300ESB timer", None)
-            },
-            get_local_available_watchdogs(self.env_assist.get_env())
+            {"/dev/watchdog": _watchdog_fixture("i6300ESB timer", None)},
+            get_local_available_watchdogs(self.env_assist.get_env()),
         )
 
     def test_multiple_devices(self):
-        self.config.runner.sbd.list_watchdogs(outdent("""
+        self.config.runner.sbd.list_watchdogs(
+            outdent(
+                """
         Discovered 3 watchdog devices:
 
         [1] /dev/watchdog
@@ -51,18 +55,22 @@ class GetLocalAvailableWatchdogs(TestCase):
         [3] /dev/watchdog3
         Identity: iTCO_wdt
         Driver: iTCO_wdt
-        """))
+        """
+            )
+        )
         self.assertEqual(
             {
                 "/dev/watchdog": _watchdog_fixture("i6300ESB timer", None),
                 "/dev/watchdog2": _watchdog_fixture("iTCO_wdt", "iTCO_wdt"),
                 "/dev/watchdog3": _watchdog_fixture("iTCO_wdt", "iTCO_wdt"),
             },
-            get_local_available_watchdogs(self.env_assist.get_env())
+            get_local_available_watchdogs(self.env_assist.get_env()),
         )
 
     def test_with_caution(self):
-        self.config.runner.sbd.list_watchdogs(outdent("""
+        self.config.runner.sbd.list_watchdogs(
+            outdent(
+                """
         Discovered 4 watchdog devices:
 
         [1] /dev/watchdog
@@ -82,23 +90,25 @@ class GetLocalAvailableWatchdogs(TestCase):
         Identity: Software Watchdog
         Driver: softdog
         CAUTION: Not recommended for use with sbd.
-        """))
+        """
+            )
+        )
         self.assertEqual(
             {
                 "/dev/watchdog": _watchdog_fixture("i6300ESB timer", None),
                 "/dev/watchdog0": _watchdog_fixture(
                     "Software Watchdog",
                     "softdog",
-                    "Not recommended for use with sbd."
+                    "Not recommended for use with sbd.",
                 ),
                 "/dev/watchdog1": _watchdog_fixture("iTCO_wdt", "iTCO_wdt"),
                 "/dev/watchdog2": _watchdog_fixture(
                     "Software Watchdog",
                     "softdog",
-                    "Not recommended for use with sbd."
+                    "Not recommended for use with sbd.",
                 ),
             },
-            get_local_available_watchdogs(self.env_assist.get_env())
+            get_local_available_watchdogs(self.env_assist.get_env()),
         )
 
     def test_failure(self):
@@ -108,9 +118,8 @@ class GetLocalAvailableWatchdogs(TestCase):
             lambda: get_local_available_watchdogs(self.env_assist.get_env()),
             [
                 fixture.error(
-                    report_codes.SBD_LIST_WATCHDOG_ERROR,
-                    reason=reason,
+                    report_codes.SBD_LIST_WATCHDOG_ERROR, reason=reason,
                 )
             ],
-            expected_in_processor=False
+            expected_in_processor=False,
         )

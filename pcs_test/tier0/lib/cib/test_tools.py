@@ -18,6 +18,7 @@ from pcs.lib.cib import tools as lib
 
 # pylint: disable=no-self-use, line-too-long
 
+
 class CibToolsTest(TestCase):
     def setUp(self):
         self.create_cib = get_xml_manipulation_creator_from_file(
@@ -28,8 +29,9 @@ class CibToolsTest(TestCase):
     def fixture_add_primitive_with_id(self, element_id):
         self.cib.append_to_first_tag_name(
             "resources",
-            '<primitive id="{0}" class="ocf" provider="heartbeat" type="Dummy"/>'
-                .format(element_id)
+            '<primitive id="{0}" class="ocf" provider="heartbeat" type="Dummy"/>'.format(
+                element_id
+            ),
         )
 
 
@@ -43,52 +45,34 @@ class IdProviderTest(CibToolsTest):
         return (
             severities.ERROR,
             report_codes.ID_ALREADY_EXISTS,
-            {
-                "id": _id,
-            },
-            None
+            {"id": _id,},
+            None,
         )
 
 
 class IdProviderBook(IdProviderTest):
     def test_nonexisting_id(self):
-        assert_report_item_list_equal(
-            self.provider.book_ids("myId"),
-            []
-        )
+        assert_report_item_list_equal(self.provider.book_ids("myId"), [])
 
     def test_existing_id(self):
         self.fixture_add_primitive_with_id("myId")
         assert_report_item_list_equal(
-            self.provider.book_ids("myId"),
-            [
-                self.fixture_report("myId"),
-            ]
+            self.provider.book_ids("myId"), [self.fixture_report("myId"),]
         )
 
     def test_double_book(self):
+        assert_report_item_list_equal(self.provider.book_ids("myId"), [])
         assert_report_item_list_equal(
-            self.provider.book_ids("myId"),
-            []
-        )
-        assert_report_item_list_equal(
-            self.provider.book_ids("myId"),
-            [
-                self.fixture_report("myId"),
-            ]
+            self.provider.book_ids("myId"), [self.fixture_report("myId"),]
         )
 
     def test_more_ids(self):
         assert_report_item_list_equal(
-            self.provider.book_ids("myId1", "myId2"),
-            []
+            self.provider.book_ids("myId1", "myId2"), []
         )
         assert_report_item_list_equal(
             self.provider.book_ids("myId1", "myId2"),
-            [
-                self.fixture_report("myId1"),
-                self.fixture_report("myId2"),
-            ]
+            [self.fixture_report("myId1"), self.fixture_report("myId2"),],
         )
 
     def test_complex(self):
@@ -104,7 +88,7 @@ class IdProviderBook(IdProviderTest):
                 self.fixture_report("myId1"),
                 self.fixture_report("myId2"),
                 self.fixture_report("myId3"),
-            ]
+            ],
         )
 
 
@@ -122,10 +106,7 @@ class IdProviderAllocate(IdProviderTest):
 
     def test_booked_ids(self):
         self.fixture_add_primitive_with_id("myId")
-        assert_report_item_list_equal(
-            self.provider.book_ids("myId-1"),
-            []
-        )
+        assert_report_item_list_equal(self.provider.book_ids("myId-1"), [])
         self.assertEqual("myId-2", self.provider.allocate_id("myId"))
 
 
@@ -143,7 +124,9 @@ class DoesIdExistTest(CibToolsTest):
         self.assertFalse(lib.does_id_exist(self.cib.tree, "my Id"))
 
     def test_ignore_status_section(self):
-        self.cib.append_to_first_tag_name("status", """
+        self.cib.append_to_first_tag_name(
+            "status",
+            """
             <elem1 id="status-1">
                 <elem1a id="status-1a">
                     <elem1aa id="status-1aa"/>
@@ -154,7 +137,8 @@ class DoesIdExistTest(CibToolsTest):
                     <elem1bb id="status-1bb"/>
                 </elem1b>
             </elem1>
-        """)
+        """,
+        )
         self.assertFalse(lib.does_id_exist(self.cib.tree, "status-1"))
         self.assertFalse(lib.does_id_exist(self.cib.tree, "status-1a"))
         self.assertFalse(lib.does_id_exist(self.cib.tree, "status-1aa"))
@@ -170,7 +154,7 @@ class DoesIdExistTest(CibToolsTest):
             <acls>
                 <acl_target id="target1"/>
             </acls>
-            """
+            """,
         )
         self.assertFalse(lib.does_id_exist(self.cib.tree, "target1"))
 
@@ -184,24 +168,25 @@ class DoesIdExistTest(CibToolsTest):
                     <role id="role2"/>
                 </acl_target>
             </acls>
-            """
+            """,
         )
         self.assertFalse(lib.does_id_exist(self.cib.tree, "role1"))
         self.assertFalse(lib.does_id_exist(self.cib.tree, "role2"))
 
     def test_ignore_sections_directly_under_cib(self):
-        #this is side effect of current implementation but is not problem since
-        #id attribute is not allowed for elements directly under cib
+        # this is side effect of current implementation but is not problem since
+        # id attribute is not allowed for elements directly under cib
         tree = etree.fromstring('<cib><direct id="a"/></cib>')
         self.assertFalse(lib.does_id_exist(tree, "a"))
 
     def test_find_id_when_cib_is_not_root_element(self):
-        #for example we have only part of xml
+        # for example we have only part of xml
         tree = etree.fromstring('<root><direct id="a"/></root>')
         self.assertTrue(lib.does_id_exist(tree, "a"))
 
     def test_find_remote_node_pacemaker_internal_id(self):
-        tree = etree.fromstring("""
+        tree = etree.fromstring(
+            """
             <cib>
                 <configuration>
                     <resources>
@@ -213,8 +198,10 @@ class DoesIdExistTest(CibToolsTest):
                     </resources>
                 </configuration>
             </cib>
-        """)
+        """
+        )
         self.assertTrue(lib.does_id_exist(tree, "a"))
+
 
 class FindUniqueIdTest(CibToolsTest):
     def test_already_unique(self):
@@ -242,8 +229,9 @@ class FindUniqueIdTest(CibToolsTest):
         self.fixture_add_primitive_with_id("myId-1")
         self.assertEqual(
             "myId-3",
-            lib.find_unique_id(self.cib.tree, "myId", ["myId", "myId-2"])
+            lib.find_unique_id(self.cib.tree, "myId", ["myId", "myId-2"]),
         )
+
 
 class CreateNvsetIdTest(TestCase):
     def test_create_plain_id_when_no_confilicting_id_there(self):
@@ -252,25 +240,23 @@ class CreateNvsetIdTest(TestCase):
             "b-name",
             lib.create_subelement_id(
                 context.find(".//a"), "name", lib.IdProvider(context)
-            )
+            ),
         )
 
     def test_create_decorated_id_when_conflicting_id_there(self):
-        context = etree.fromstring(
-            '<cib><a id="b"><c id="b-name"/></a></cib>'
-        )
+        context = etree.fromstring('<cib><a id="b"><c id="b-name"/></a></cib>')
         self.assertEqual(
             "b-name-1",
             lib.create_subelement_id(
                 context.find(".//a"), "name", lib.IdProvider(context)
-            )
+            ),
         )
+
 
 class GetConfigurationTest(CibToolsTest):
     def test_success_if_exists(self):
         self.assertEqual(
-            "configuration",
-            lib.get_configuration(self.cib.tree).tag
+            "configuration", lib.get_configuration(self.cib.tree).tag
         )
 
     def test_raise_if_missing(self):
@@ -281,18 +267,14 @@ class GetConfigurationTest(CibToolsTest):
             (
                 severities.ERROR,
                 report_codes.CIB_CANNOT_FIND_MANDATORY_SECTION,
-                {
-                    "section": "configuration",
-                }
+                {"section": "configuration",},
             ),
         )
 
+
 class GetConstraintsTest(CibToolsTest):
     def test_success_if_exists(self):
-        self.assertEqual(
-            "constraints",
-            lib.get_constraints(self.cib.tree).tag
-        )
+        self.assertEqual("constraints", lib.get_constraints(self.cib.tree).tag)
 
     def test_raise_if_missing(self):
         for section in self.cib.tree.findall(".//configuration/constraints"):
@@ -302,18 +284,14 @@ class GetConstraintsTest(CibToolsTest):
             (
                 severities.ERROR,
                 report_codes.CIB_CANNOT_FIND_MANDATORY_SECTION,
-                {
-                    "section": "configuration/constraints",
-                }
+                {"section": "configuration/constraints",},
             ),
         )
 
+
 class GetCrmConfig(CibToolsTest):
     def test_success_if_exists(self):
-        self.assertEqual(
-            "crm_config",
-            lib.get_crm_config(self.cib.tree).tag
-        )
+        self.assertEqual("crm_config", lib.get_crm_config(self.cib.tree).tag)
 
     def test_raise_if_missing(self):
         for section in self.cib.tree.findall(".//configuration/crm_config"):
@@ -326,12 +304,10 @@ class GetCrmConfig(CibToolsTest):
             ),
         )
 
+
 class GetResourcesTest(CibToolsTest):
     def test_success_if_exists(self):
-        self.assertEqual(
-            "resources",
-            lib.get_resources(self.cib.tree).tag
-        )
+        self.assertEqual("resources", lib.get_resources(self.cib.tree).tag)
 
     def test_raise_if_missing(self):
         for section in self.cib.tree.findall(".//configuration/resources"):
@@ -341,18 +317,14 @@ class GetResourcesTest(CibToolsTest):
             (
                 severities.ERROR,
                 report_codes.CIB_CANNOT_FIND_MANDATORY_SECTION,
-                {
-                    "section": "configuration/resources",
-                }
+                {"section": "configuration/resources",},
             ),
         )
 
+
 class GetNodes(CibToolsTest):
     def test_success_if_exists(self):
-        self.assertEqual(
-            "nodes",
-            lib.get_nodes(self.cib.tree).tag
-        )
+        self.assertEqual("nodes", lib.get_nodes(self.cib.tree).tag)
 
     def test_raise_if_missing(self):
         for section in self.cib.tree.findall(".//configuration/nodes"):
@@ -362,38 +334,32 @@ class GetNodes(CibToolsTest):
             (
                 severities.ERROR,
                 report_codes.CIB_CANNOT_FIND_MANDATORY_SECTION,
-                {
-                    "section": "configuration/nodes",
-                },
-                None
+                {"section": "configuration/nodes",},
+                None,
             ),
         )
+
 
 class GetAclsTest(CibToolsTest):
     def test_success_if_exists(self):
         self.cib.append_to_first_tag_name(
-            "configuration",
-            '<acls><acl_role id="test_role" /></acls>'
+            "configuration", '<acls><acl_role id="test_role" /></acls>'
         )
-        self.assertEqual(
-            "test_role",
-            lib.get_acls(self.cib.tree)[0].get("id")
-        )
+        self.assertEqual("test_role", lib.get_acls(self.cib.tree)[0].get("id"))
 
     def test_success_if_missing(self):
         acls = lib.get_acls(self.cib.tree)
         self.assertEqual("acls", acls.tag)
         self.assertEqual("configuration", acls.getparent().tag)
 
+
 class GetFencingTopology(CibToolsTest):
     def test_success_if_exists(self):
         self.cib.append_to_first_tag_name(
-            "configuration",
-            "<fencing-topology />"
+            "configuration", "<fencing-topology />"
         )
         self.assertEqual(
-            "fencing-topology",
-            lib.get_fencing_topology(self.cib.tree).tag
+            "fencing-topology", lib.get_fencing_topology(self.cib.tree).tag
         )
 
     def test_success_if_missing(self):
@@ -402,7 +368,7 @@ class GetFencingTopology(CibToolsTest):
         self.assertEqual("configuration", ft_el.getparent().tag)
 
 
-@mock.patch('pcs.lib.cib.tools.does_id_exist')
+@mock.patch("pcs.lib.cib.tools.does_id_exist")
 class ValidateIdDoesNotExistsTest(TestCase):
     def test_success_when_id_does_not_exists(self, does_id_exists):
         does_id_exists.return_value = False
@@ -433,9 +399,9 @@ class GetPacemakerVersionByWhichCibWasValidatedTest(TestCase):
                 report_codes.CIB_LOAD_ERROR_BAD_FORMAT,
                 {
                     "reason": "the attribute 'validate-with' of the element"
-                        " 'cib' is missing"
-                }
-            )
+                    " 'cib' is missing"
+                },
+            ),
         )
 
     def test_invalid_version(self):
@@ -448,9 +414,9 @@ class GetPacemakerVersionByWhichCibWasValidatedTest(TestCase):
                 report_codes.CIB_LOAD_ERROR_BAD_FORMAT,
                 {
                     "reason": "the attribute 'validate-with' of the element"
-                        " 'cib' has an invalid value: 'something-1.2.3'"
-                }
-            )
+                    " 'cib' has an invalid value: 'something-1.2.3'"
+                },
+            ),
         )
 
     def test_invalid_version_at_end(self):
@@ -463,9 +429,9 @@ class GetPacemakerVersionByWhichCibWasValidatedTest(TestCase):
                 report_codes.CIB_LOAD_ERROR_BAD_FORMAT,
                 {
                     "reason": "the attribute 'validate-with' of the element"
-                        " 'cib' has an invalid value: 'pacemaker-1.2.3x'"
-                }
-            )
+                    " 'cib' has an invalid value: 'pacemaker-1.2.3x'"
+                },
+            ),
         )
 
     def test_no_revision(self):
@@ -473,7 +439,7 @@ class GetPacemakerVersionByWhichCibWasValidatedTest(TestCase):
             Version(1, 2),
             lib.get_pacemaker_version_by_which_cib_was_validated(
                 etree.XML('<cib validate-with="pacemaker-1.2"/>')
-            )
+            ),
         )
 
     def test_with_revision(self):
@@ -481,7 +447,7 @@ class GetPacemakerVersionByWhichCibWasValidatedTest(TestCase):
             Version(1, 2, 3),
             lib.get_pacemaker_version_by_which_cib_was_validated(
                 etree.XML('<cib validate-with="pacemaker-1.2.3"/>')
-            )
+            ),
         )
 
 
@@ -491,7 +457,7 @@ class GetCibCrmFeatureSet(TestCase):
             Version(3, 0, 9),
             lib.get_cib_crm_feature_set(
                 etree.XML('<cib crm_feature_set="3.0.9" />')
-            )
+            ),
         )
 
     def test_success_no_revision(self):
@@ -499,30 +465,27 @@ class GetCibCrmFeatureSet(TestCase):
             Version(3, 1),
             lib.get_cib_crm_feature_set(
                 etree.XML('<cib crm_feature_set="3.1" />')
-            )
+            ),
         )
 
     def test_missing_attribute(self):
         assert_raise_library_error(
-            lambda: lib.get_cib_crm_feature_set(
-                etree.XML("<cib />")
-            ),
+            lambda: lib.get_cib_crm_feature_set(etree.XML("<cib />")),
             fixture.error(
                 report_codes.CIB_LOAD_ERROR_BAD_FORMAT,
                 reason=(
                     "the attribute 'crm_feature_set' of the element 'cib' is "
                     "missing"
-                )
-            )
+                ),
+            ),
         )
 
     def test_missing_attribute_none(self):
         self.assertEqual(
             None,
             lib.get_cib_crm_feature_set(
-                etree.XML('<cib />'),
-                none_if_missing=True
-            )
+                etree.XML("<cib />"), none_if_missing=True
+            ),
         )
 
     def test_invalid_version(self):
@@ -535,8 +498,8 @@ class GetCibCrmFeatureSet(TestCase):
                 reason=(
                     "the attribute 'crm_feature_set' of the element 'cib' has "
                     "an invalid value: '3'"
-                )
-            )
+                ),
+            ),
         )
 
     def test_invalid_version_at_end(self):
@@ -549,12 +512,14 @@ class GetCibCrmFeatureSet(TestCase):
                 reason=(
                     "the attribute 'crm_feature_set' of the element 'cib' has "
                     "an invalid value: '3.0.9x'"
-                )
-            )
+                ),
+            ),
         )
 
 
 find_group = partial(lib.find_element_by_tag_and_id, "group")
+
+
 class FindTagWithId(TestCase):
     def test_returns_element_when_exists(self):
         tree = etree.fromstring(
@@ -565,18 +530,18 @@ class FindTagWithId(TestCase):
         self.assertEqual("a", element.attrib["id"])
 
     def test_returns_element_when_exists_one_of_tags(self):
-        tree = etree.fromstring("""
+        tree = etree.fromstring(
+            """
             <cib>
                 <resources>
                     <group id="a"/>
                     <primitive id="b"/>
                 </resources>
             </cib>
-        """)
+        """
+        )
         element = lib.find_element_by_tag_and_id(
-            ["group", "primitive"],
-            tree.find(".//resources"),
-            "a"
+            ["group", "primitive"], tree.find(".//resources"), "a"
         )
         self.assertEqual("group", element.tag)
         self.assertEqual("a", element.attrib["id"])
@@ -600,19 +565,19 @@ class FindTagWithId(TestCase):
         )
 
     def test_raises_when_is_under_another_context(self):
-        tree = etree.fromstring("""
+        tree = etree.fromstring(
+            """
             <cib>
                 <resources>
                     <group id="g1"><primitive id="a"/></group>
                     <group id="g2"><primitive id="b"/></group>
                 </resources>
             </cib>
-        """)
+        """
+        )
         assert_raise_library_error(
             lambda: lib.find_element_by_tag_and_id(
-                "primitive",
-                tree.find('.//resources/group[@id="g2"]'),
-                "a"
+                "primitive", tree.find('.//resources/group[@id="g2"]'), "a"
             ),
             (
                 severities.ERROR,
@@ -627,9 +592,9 @@ class FindTagWithId(TestCase):
         )
 
     def test_raises_when_id_does_not_exists(self):
-        tree = etree.fromstring('<cib><resources/></cib>')
+        tree = etree.fromstring("<cib><resources/></cib>")
         assert_raise_library_error(
-            lambda: find_group(tree.find('.//resources'), "a"),
+            lambda: find_group(tree.find(".//resources"), "a"),
             (
                 severities.ERROR,
                 report_codes.ID_NOT_FOUND,
@@ -639,14 +604,12 @@ class FindTagWithId(TestCase):
                     "context_type": "resources",
                     "context_id": "",
                 },
-                None
+                None,
             ),
         )
         assert_raise_library_error(
             lambda: find_group(
-                tree.find('.//resources'),
-                "a",
-                id_types=["resource group"]
+                tree.find(".//resources"), "a", id_types=["resource group"]
             ),
             (
                 severities.ERROR,
@@ -657,17 +620,16 @@ class FindTagWithId(TestCase):
                     "context_type": "resources",
                     "context_id": "",
                 },
-                None
+                None,
             ),
         )
 
     def test_returns_none_if_id_do_not_exists(self):
-        tree = etree.fromstring('<cib><resources/></cib>')
-        self.assertIsNone(find_group(
-            tree.find('.//resources'),
-            "a",
-            none_if_id_unused=True
-        ))
+        tree = etree.fromstring("<cib><resources/></cib>")
+        self.assertIsNone(
+            find_group(tree.find(".//resources"), "a", none_if_id_unused=True)
+        )
+
 
 class ElementSearcher(TestCase):
     def assert_get_errors_raises(self, searcher):
@@ -675,7 +637,7 @@ class ElementSearcher(TestCase):
             searcher.get_errors()
         self.assertEqual(
             str(cm.exception),
-            "Improper usage: cannot report errors when there are none"
+            "Improper usage: cannot report errors when there are none",
         )
 
     def test_element_exists(self):
@@ -688,14 +650,16 @@ class ElementSearcher(TestCase):
         self.assert_get_errors_raises(searcher)
 
     def test_element_exists_multiple_tags(self):
-        tree = etree.fromstring("""
+        tree = etree.fromstring(
+            """
             <cib>
                 <resources>
                     <group id="a"/>
                     <primitive id="b"/>
                 </resources>
             </cib>
-        """)
+        """
+        )
         searcher = lib.ElementSearcher(
             ["primitive", "group"], "a", tree.find(".//resources")
         )
@@ -719,22 +683,22 @@ class ElementSearcher(TestCase):
                     expected_types=["group"],
                     current_type="primitive",
                 ),
-            ]
+            ],
         )
 
     def test_element_exists_in_another_context(self):
-        tree = etree.fromstring("""
+        tree = etree.fromstring(
+            """
             <cib>
                 <resources>
                     <group id="g1"><primitive id="a"/></group>
                     <group id="g2"><primitive id="b"/></group>
                 </resources>
             </cib>
-        """)
+        """
+        )
         searcher = lib.ElementSearcher(
-            "primitive",
-            "a",
-            tree.find('.//resources/group[@id="g2"]'),
+            "primitive", "a", tree.find('.//resources/group[@id="g2"]'),
         )
         self.assertFalse(searcher.element_found())
         self.assertIsNone(searcher.get_element())
@@ -748,11 +712,11 @@ class ElementSearcher(TestCase):
                     expected_context_type="group",
                     expected_context_id="g2",
                 ),
-            ]
+            ],
         )
 
     def assert_id_does_not_exists(self, element_type_desc, expected_types):
-        tree = etree.fromstring('<cib><resources/></cib>')
+        tree = etree.fromstring("<cib><resources/></cib>")
         searcher = lib.ElementSearcher(
             "group",
             "a",
@@ -771,7 +735,7 @@ class ElementSearcher(TestCase):
                     context_type="resources",
                     context_id="",
                 ),
-            ]
+            ],
         )
 
     def test_id_does_not_exists(self):
@@ -782,8 +746,7 @@ class ElementSearcher(TestCase):
 
     def test_id_does_not_exists_custom_description_list(self):
         self.assert_id_does_not_exists(
-            ["resource", "group"],
-            ["group", "resource"]
+            ["resource", "group"], ["group", "resource"]
         )
 
     def test_book_available_valid_id(self):
@@ -819,12 +782,7 @@ class ElementSearcher(TestCase):
         self.assertFalse(searcher.validate_book_id(id_provider))
         assert_report_item_list_equal(
             searcher.get_errors(),
-            [
-                fixture.error(
-                    report_codes.ID_ALREADY_EXISTS,
-                    id="a",
-                ),
-            ]
+            [fixture.error(report_codes.ID_ALREADY_EXISTS, id="a",),],
         )
 
     def test_book_not_valid_id(self):
@@ -845,5 +803,5 @@ class ElementSearcher(TestCase):
                     is_first_char=True,
                     invalid_character="1",
                 ),
-            ]
+            ],
         )

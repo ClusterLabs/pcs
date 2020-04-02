@@ -21,6 +21,7 @@ try:
     import clufter.format_manager
     import clufter.filter_manager
     import clufter.command_manager
+
     no_clufter = False
 except ImportError:
     no_clufter = True
@@ -50,6 +51,7 @@ from pcs.lib.node import get_existing_nodes_names
 
 # pylint: disable=too-many-branches, too-many-locals, too-many-statements
 
+
 def config_show(lib, argv, modifiers):
     """
     Options:
@@ -66,19 +68,13 @@ def config_show(lib, argv, modifiers):
     print("\n".join(_config_show_cib_lines(lib)))
     if (
         utils.hasCorosyncConf()
-        and
-        not modifiers.is_specified("-f")
-        and
-        not modifiers.is_specified("--corosync_conf")
+        and not modifiers.is_specified("-f")
+        and not modifiers.is_specified("--corosync_conf")
     ):
         cluster.cluster_uidgid(
             lib, [], modifiers.get_subset(), silent_list=True
         )
-    if (
-        modifiers.is_specified("--corosync_conf")
-        or
-        utils.hasCorosyncConf()
-    ):
+    if modifiers.is_specified("--corosync_conf") or utils.hasCorosyncConf():
         print()
         print("Quorum:")
         try:
@@ -86,6 +82,7 @@ def config_show(lib, argv, modifiers):
             print("\n".join(indent(quorum.quorum_config_to_str(config))))
         except LibraryError as e:
             process_library_reports(e.args)
+
 
 def _config_show_cib_lines(lib):
     """
@@ -105,8 +102,7 @@ def _config_show_cib_lines(lib):
     for resource_el in cib_etree.find(".//resources"):
         is_stonith = (
             "class" in resource_el.attrib
-            and
-            resource_el.attrib["class"] == "stonith"
+            and resource_el.attrib["class"] == "stonith"
         )
         resource_el_lines = resource.resource_node_lines(resource_el)
         if is_stonith:
@@ -129,60 +125,67 @@ def _config_show_cib_lines(lib):
         all_lines.extend(indent(levels_lines, indent_step=2))
 
     all_lines.append("")
-    constraints_element = cib_dom.getElementsByTagName('constraints')[0]
+    constraints_element = cib_dom.getElementsByTagName("constraints")[0]
     all_lines.extend(
         constraint.location_lines(
             constraints_element,
             showDetail=True,
             show_expired=True,
-            verify_expiration=False
+            verify_expiration=False,
         )
     )
-    all_lines.extend(constraint_command.show(
-        "Ordering Constraints:",
-        lib.constraint_order.show,
-        constraints_reports.order_plain,
-        modifiers.get_subset("-f", "--full"),
-    ))
-    all_lines.extend(constraint_command.show(
-         "Colocation Constraints:",
-        lib.constraint_colocation.show,
-        constraints_reports.colocation_plain,
-        modifiers.get_subset("-f", "--full"),
-    ))
-    all_lines.extend(constraint_command.show(
-        "Ticket Constraints:",
-        lib.constraint_ticket.show,
-        constraints_reports.ticket_plain,
-        modifiers.get_subset("-f", "--full"),
-    ))
+    all_lines.extend(
+        constraint_command.show(
+            "Ordering Constraints:",
+            lib.constraint_order.show,
+            constraints_reports.order_plain,
+            modifiers.get_subset("-f", "--full"),
+        )
+    )
+    all_lines.extend(
+        constraint_command.show(
+            "Colocation Constraints:",
+            lib.constraint_colocation.show,
+            constraints_reports.colocation_plain,
+            modifiers.get_subset("-f", "--full"),
+        )
+    )
+    all_lines.extend(
+        constraint_command.show(
+            "Ticket Constraints:",
+            lib.constraint_ticket.show,
+            constraints_reports.ticket_plain,
+            modifiers.get_subset("-f", "--full"),
+        )
+    )
 
     all_lines.append("")
     all_lines.extend(alert.alert_config_lines(lib))
 
     all_lines.append("")
     all_lines.append("Resources Defaults:")
-    all_lines.extend(indent(
-        resource.show_defaults(cib_dom, "rsc_defaults"),
-        indent_step=1
-    ))
+    all_lines.extend(
+        indent(resource.show_defaults(cib_dom, "rsc_defaults"), indent_step=1)
+    )
     all_lines.append("Operations Defaults:")
-    all_lines.extend(indent(
-        resource.show_defaults(cib_dom, "op_defaults"),
-        indent_step=1
-    ))
+    all_lines.extend(
+        indent(resource.show_defaults(cib_dom, "op_defaults"), indent_step=1)
+    )
 
     all_lines.append("")
     all_lines.append("Cluster Properties:")
     properties = utils.get_set_properties()
-    all_lines.extend(indent(
-        [
-            "{0}: {1}".format(prop, val)
-            for prop, val in sorted(properties.items())
-        ],
-        indent_step=1
-    ))
+    all_lines.extend(
+        indent(
+            [
+                "{0}: {1}".format(prop, val)
+                for prop, val in sorted(properties.items())
+            ],
+            indent_step=1,
+        )
+    )
     return all_lines
+
 
 def config_backup(lib, argv, modifiers):
     """
@@ -212,6 +215,7 @@ def config_backup(lib, argv, modifiers):
         # in python3 stdout accepts str so we need to use buffer
         sys.stdout.buffer.write(tar_data)
 
+
 def config_backup_local():
     """
     Commandline options: no options
@@ -225,8 +229,7 @@ def config_backup_local():
         for tar_path, path_info in file_list.items():
             if (
                 not os.path.exists(path_info["path"])
-                and
-                not path_info["required"]
+                and not path_info["required"]
             ):
                 continue
             tarball.add(path_info["path"], tar_path)
@@ -237,6 +240,7 @@ def config_backup_local():
     tar = tar_data.getvalue()
     tar_data.close()
     return tar
+
 
 def config_restore(lib, argv, modifiers):
     """
@@ -264,10 +268,10 @@ def config_restore(lib, argv, modifiers):
         else:
             config_restore_remote(infile_name, infile_obj)
     else:
-        new_argv = ['config', 'restore']
+        new_argv = ["config", "restore"]
         new_stdin = None
         if modifiers.get("--local"):
-            new_argv.append('--local')
+            new_argv.append("--local")
         if infile_name:
             new_argv.append(os.path.abspath(infile_name))
         else:
@@ -282,6 +286,7 @@ def config_restore(lib, argv, modifiers):
         print(std_out)
         sys.stderr.write(std_err)
         sys.exit(exitcode)
+
 
 def config_restore_remote(infile_name, infile_obj):
     """
@@ -329,16 +334,14 @@ def config_restore_remote(infile_name, infile_obj):
             _status = json.loads(output)
             if (
                 _status["corosync"]
-                or
-                _status["pacemaker"]
+                or _status["pacemaker"]
                 or
                 # not supported by older pcsd, do not fail if not present
                 _status.get("pacemaker_remote", False)
             ):
                 err_msgs.append(
                     "Cluster is currently running on node %s. You need to stop "
-                        "the cluster in order to restore the configuration."
-                    % node
+                    "the cluster in order to restore the configuration." % node
                 )
                 continue
         except (ValueError, NameError, LookupError):
@@ -371,20 +374,19 @@ def config_restore_remote(infile_name, infile_obj):
     if error_list:
         utils.err("unable to restore all nodes\n" + "\n".join(error_list))
 
+
 def config_restore_local(infile_name, infile_obj):
     """
     Commandline options: no options
     """
     if (
         is_service_running(utils.cmd_runner(), "corosync")
-        or
-        is_service_running(utils.cmd_runner(), "pacemaker")
-        or
-        is_service_running(utils.cmd_runner(), "pacemaker_remote")
+        or is_service_running(utils.cmd_runner(), "pacemaker")
+        or is_service_running(utils.cmd_runner(), "pacemaker_remote")
     ):
         utils.err(
             "Cluster is currently running on this node. You need to stop "
-                "the cluster in order to restore the configuration."
+            "the cluster in order to restore the configuration."
         )
 
     file_list = config_backup_path_list(with_uid_gid=True)
@@ -409,7 +411,7 @@ def config_restore_local(infile_name, infile_obj):
         required_file_list = [
             tar_path
             for tar_path, path_info in file_list.items()
-                if path_info["required"]
+            if path_info["required"]
         ]
         missing = set(required_file_list) - set(tarball_file_list)
         if missing:
@@ -438,7 +440,7 @@ def config_restore_local(infile_name, infile_obj):
             if not extract_info:
                 continue
             path_full = None
-            if hasattr(extract_info.get("pre_store_call"), '__call__'):
+            if hasattr(extract_info.get("pre_store_call"), "__call__"):
                 extract_info["pre_store_call"]()
             if "rename" in extract_info and extract_info["rename"]:
                 if tmp_dir is None:
@@ -446,8 +448,7 @@ def config_restore_local(infile_name, infile_obj):
                 tarball.extractall(tmp_dir, [tar_member_info])
                 path_full = extract_info["path"]
                 shutil.move(
-                    os.path.join(tmp_dir, tar_member_info.name),
-                    path_full
+                    os.path.join(tmp_dir, tar_member_info.name), path_full
                 )
             else:
                 dir_path = os.path.dirname(extract_info["path"])
@@ -469,6 +470,7 @@ def config_restore_local(infile_name, infile_obj):
             os.remove(sig_path)
     except EnvironmentError as e:
         utils.err("unable to remove %s: %s" % (sig_path, e))
+
 
 def config_backup_path_list(with_uid_gid=False):
     """
@@ -539,7 +541,7 @@ def config_backup_path_list(with_uid_gid=False):
                 "uid": 0,
                 "gid": 0,
             },
-        }
+        },
     }
     return file_list
 
@@ -561,9 +563,7 @@ def _get_gid(group_name):
     try:
         return grp.getgrnam(group_name).gr_gid
     except KeyError:
-        utils.err(
-            "Unable to determine gid of group '{0}'".format(group_name)
-        )
+        utils.err("Unable to determine gid of group '{0}'".format(group_name))
 
 
 def _ensure_etc_pacemaker_exists():
@@ -577,7 +577,7 @@ def _ensure_etc_pacemaker_exists():
         os.chown(
             dir_name,
             _get_uid(settings.pacemaker_uname),
-            _get_gid(settings.pacemaker_gname)
+            _get_gid(settings.pacemaker_gname),
         )
 
 
@@ -591,17 +591,18 @@ def config_backup_check_version(version):
         if version_number > supported_version:
             utils.err(
                 "Unsupported version of the backup, "
-                    "supported version is %d, backup version is %d"
+                "supported version is %d, backup version is %d"
                 % (supported_version, version_number)
             )
         if version_number < supported_version:
             print(
                 "Warning: restoring from the backup version %d, "
-                    "current supported version is %s"
+                "current supported version is %s"
                 % (version_number, supported_version)
             )
     except TypeError:
         utils.err("Cannot determine version of the backup")
+
 
 def config_backup_add_version_to_tarball(tarball, version=None):
     """
@@ -610,11 +611,13 @@ def config_backup_add_version_to_tarball(tarball, version=None):
     ver = version if version is not None else str(config_backup_version())
     return utils.tar_add_file_data(tarball, ver.encode("utf-8"), "version.txt")
 
+
 def config_backup_version():
     """
     Commandline options: no options
     """
     return 1
+
 
 def config_checkpoint_list(lib, argv, modifiers):
     """
@@ -652,6 +655,7 @@ def config_checkpoint_list(lib, argv, modifiers):
             % (cib_info[1], datetime.datetime.fromtimestamp(round(cib_info[0])))
         )
 
+
 def _checkpoint_to_lines(lib, checkpoint_number):
     # backup current settings
     orig_usefile = utils.usefile
@@ -660,8 +664,7 @@ def _checkpoint_to_lines(lib, checkpoint_number):
     # configure old code to read the CIB from a file
     utils.usefile = True
     utils.filename = os.path.join(
-        settings.cib_dir,
-        "cib-%s.raw" % checkpoint_number
+        settings.cib_dir, "cib-%s.raw" % checkpoint_number
     )
     # configure new code to read the CIB from a file
     lib.middleware_factory = orig_middleware._replace(
@@ -677,6 +680,7 @@ def _checkpoint_to_lines(lib, checkpoint_number):
     lib.middleware_factory = orig_middleware
     return result
 
+
 def config_checkpoint_view(lib, argv, modifiers):
     """
     Options: no options
@@ -690,6 +694,7 @@ def config_checkpoint_view(lib, argv, modifiers):
     if not loaded:
         utils.err("unable to read the checkpoint")
     print("\n".join(lines))
+
 
 def config_checkpoint_diff(lib, argv, modifiers):
     """
@@ -725,16 +730,27 @@ def config_checkpoint_diff(lib, argv, modifiers):
     if errors:
         utils.err("\n".join(errors))
 
-    print("Differences between {0} (-) and {1} (+):".format(*[
-        "live configuration" if label == "live" else f"checkpoint {label}"
-        for label in argv
-    ]))
-    print("\n".join([
-        line.rstrip() for line in difflib.Differ().compare(
-            checkpoints_lines[0],
-            checkpoints_lines[1]
-        )]
-    ))
+    print(
+        "Differences between {0} (-) and {1} (+):".format(
+            *[
+                "live configuration"
+                if label == "live"
+                else f"checkpoint {label}"
+                for label in argv
+            ]
+        )
+    )
+    print(
+        "\n".join(
+            [
+                line.rstrip()
+                for line in difflib.Differ().compare(
+                    checkpoints_lines[0], checkpoints_lines[1]
+                )
+            ]
+        )
+    )
+
 
 def config_checkpoint_restore(lib, argv, modifiers):
     """
@@ -754,6 +770,7 @@ def config_checkpoint_restore(lib, argv, modifiers):
     except Exception as e:
         utils.err("unable to read the checkpoint: %s" % e)
     utils.replace_cib_configuration(snapshot_dom)
+
 
 def config_import_cman(lib, argv, modifiers):
     """
@@ -790,7 +807,8 @@ def config_import_cman(lib, argv, modifiers):
             elif name == "output-format":
                 if value in (
                     "corosync.conf",
-                    "pcs-commands", "pcs-commands-verbose",
+                    "pcs-commands",
+                    "pcs-commands-verbose",
                 ):
                     output_format = value
                 else:
@@ -801,10 +819,8 @@ def config_import_cman(lib, argv, modifiers):
                 invalid_args = True
         else:
             invalid_args = True
-    if (
-        output_format not in ("pcs-commands", "pcs-commands-verbose")
-        and
-        (dry_run_output and not dry_run_output.endswith(".tar.bz2"))
+    if output_format not in ("pcs-commands", "pcs-commands-verbose") and (
+        dry_run_output and not dry_run_output.endswith(".tar.bz2")
     ):
         dry_run_output += ".tar.bz2"
     if invalid_args or not dry_run_output:
@@ -862,10 +878,8 @@ def config_import_cman(lib, argv, modifiers):
             cmd_name = "ccs2pcscmd-flatiron"
         elif clufter.facts.cluster_pcs_needle("linux", dist.split(",")):
             cmd_name = "ccs2pcscmd-needle"
-        elif (
-            clufter_supports_corosync3
-            and
-            clufter.facts.cluster_pcs_camelback("linux", dist.split(","))
+        elif clufter_supports_corosync3 and clufter.facts.cluster_pcs_camelback(
+            "linux", dist.split(",")
         ):
             cmd_name = "ccs2pcscmd-camelback"
         else:
@@ -873,19 +887,21 @@ def config_import_cman(lib, argv, modifiers):
                 "unrecognized dist, try something recognized"
                 + " (e. g. rhel,6.8 or redhat,7.3 or debian,7 or ubuntu,trusty)"
             )
-    clufter_args_obj = type(str("ClufterOptions"), (object, ), clufter_args)
+    clufter_args_obj = type(str("ClufterOptions"), (object,), clufter_args)
 
     # run convertor
     run_clufter(
-        cmd_name, clufter_args_obj, debug, force,
-            "Error: unable to import cluster configuration"
+        cmd_name,
+        clufter_args_obj,
+        debug,
+        force,
+        "Error: unable to import cluster configuration",
     )
 
     # save commands
     if output_format in ("pcs-commands", "pcs-commands-verbose"):
         ok, message = utils.write_file(
-            dry_run_output,
-            clufter_args_obj.output["passout"].decode()
+            dry_run_output, clufter_args_obj.output["passout"].decode()
         )
         if not ok:
             utils.err(message)
@@ -907,12 +923,12 @@ def config_import_cman(lib, argv, modifiers):
             tarball,
             clufter_args_obj.cib["passout"],
             "cib.xml",
-            **file_list["cib.xml"]["attrs"]
+            **file_list["cib.xml"]["attrs"],
         )
         # put uidgid into separate files
         fmt_simpleconfig = clufter.format_manager.FormatManager.init_lookup(
-            'simpleconfig'
-        ).plugins['simpleconfig']
+            "simpleconfig"
+        ).plugins["simpleconfig"]
         corosync_struct = []
         uidgid_list = []
         for section in clufter_args_obj.coro["passout"][2]:
@@ -927,7 +943,7 @@ def config_import_cman(lib, argv, modifiers):
             tarball,
             corosync_conf_data,
             "corosync.conf",
-            **file_list["corosync.conf"]["attrs"]
+            **file_list["corosync.conf"]["attrs"],
         )
         for uidgid in uidgid_list:
             uid = ""
@@ -945,14 +961,14 @@ def config_import_cman(lib, argv, modifiers):
                 tarball,
                 uidgid_data,
                 "uidgid.d/" + filename,
-                **file_list["uidgid.d"]["attrs"]
+                **file_list["uidgid.d"]["attrs"],
             )
         tarball.close()
     except (tarfile.TarError, EnvironmentError) as e:
         utils.err("unable to create tarball: %s" % e)
     tar_data.seek(0)
 
-    #save tarball / remote restore
+    # save tarball / remote restore
     if dry_run_output:
         ok, message = utils.write_file(
             dry_run_output, tar_data.read(), permissions=0o600, binary=True
@@ -963,9 +979,11 @@ def config_import_cman(lib, argv, modifiers):
         config_restore_remote(None, tar_data)
     tar_data.close()
 
+
 def _get_linux_dist():
     # pylint: disable=deprecated-method
     return ",".join(platform.linux_distribution(full_distribution_name=0))
+
 
 def config_export_pcs_commands(lib, argv, modifiers, verbose=False):
     """
@@ -1043,24 +1061,27 @@ def config_export_pcs_commands(lib, argv, modifiers, verbose=False):
         clufter_args["text_width"] = "-1"
         clufter_args["silent"] = False
         clufter_args["noguidance"] = False
-    clufter_args_obj = type(str("ClufterOptions"), (object, ), clufter_args)
+    clufter_args_obj = type(str("ClufterOptions"), (object,), clufter_args)
     cmd_name = "pcs2pcscmd-camelback"
 
     # run convertor
     run_clufter(
-        cmd_name, clufter_args_obj, debug, force,
-        "Error: unable to export cluster configuration"
+        cmd_name,
+        clufter_args_obj,
+        debug,
+        force,
+        "Error: unable to export cluster configuration",
     )
 
     # save commands if not printed to stdout by clufter
     if output_file:
         # pylint: disable=no-member
         ok, message = utils.write_file(
-            output_file,
-            clufter_args_obj.output["passout"].decode()
+            output_file, clufter_args_obj.output["passout"].decode()
         )
         if not ok:
             utils.err(message)
+
 
 def run_clufter(cmd_name, cmd_args, debug, force, err_prefix):
     """

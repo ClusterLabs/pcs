@@ -3,23 +3,25 @@ from pcs.common.reports import ReportProcessor
 from pcs.common.reports.item import ReportItem
 from pcs.lib.cib.node import PacemakerNode
 from pcs.lib.cib.resource import primitive
-from pcs.lib.resource_agent import(
+from pcs.lib.resource_agent import (
     find_valid_resource_agent_by_name,
     ResourceAgentName,
 )
 
 AGENT_NAME = ResourceAgentName("ocf", "pacemaker", "remote")
 
+
 def get_agent(report_processor, cmd_runner):
     return find_valid_resource_agent_by_name(
-        report_processor,
-        cmd_runner,
-        AGENT_NAME.full_name,
+        report_processor, cmd_runner, AGENT_NAME.full_name,
     )
+
 
 _IS_REMOTE_AGENT_XPATH_SNIPPET = """
     @class="{0}" and @provider="{1}" and @type="{2}"
-""".format(AGENT_NAME.standard, AGENT_NAME.provider, AGENT_NAME.type)
+""".format(
+    AGENT_NAME.standard, AGENT_NAME.provider, AGENT_NAME.type
+)
 
 _HAS_SERVER_XPATH_SNIPPET = """
     instance_attributes/nvpair[
@@ -29,6 +31,7 @@ _HAS_SERVER_XPATH_SNIPPET = """
     ]
 """
 
+
 def find_node_list(tree):
     """
     Return list of remote nodes from the specified element tree
@@ -37,30 +40,30 @@ def find_node_list(tree):
     """
     node_list = [
         PacemakerNode(
-            nvpair.getparent().getparent().attrib["id"],
-            nvpair.attrib["value"]
+            nvpair.getparent().getparent().attrib["id"], nvpair.attrib["value"]
         )
         for nvpair in tree.xpath(
-            ".//primitive[{is_remote}]/{has_server}"
-            .format(
+            ".//primitive[{is_remote}]/{has_server}".format(
                 is_remote=_IS_REMOTE_AGENT_XPATH_SNIPPET,
                 has_server=_HAS_SERVER_XPATH_SNIPPET,
             )
         )
     ]
 
-    node_list.extend([
-        PacemakerNode(primitive.attrib["id"], primitive.attrib["id"])
-        for primitive in tree.xpath(
-            ".//primitive[{is_remote} and not({has_server})]"
-            .format(
-                is_remote=_IS_REMOTE_AGENT_XPATH_SNIPPET,
-                has_server=_HAS_SERVER_XPATH_SNIPPET,
+    node_list.extend(
+        [
+            PacemakerNode(primitive.attrib["id"], primitive.attrib["id"])
+            for primitive in tree.xpath(
+                ".//primitive[{is_remote} and not({has_server})]".format(
+                    is_remote=_IS_REMOTE_AGENT_XPATH_SNIPPET,
+                    has_server=_HAS_SERVER_XPATH_SNIPPET,
+                )
             )
-        )
-    ])
+        ]
+    )
 
     return node_list
+
 
 def find_node_resources(resources_section, node_identifier):
     """
@@ -83,12 +86,11 @@ def find_node_resources(resources_section, node_identifier):
                     ]
                 )
             ]
-        """
-        .format(
-            is_remote=_IS_REMOTE_AGENT_XPATH_SNIPPET,
-            identifier=node_identifier
+        """.format(
+            is_remote=_IS_REMOTE_AGENT_XPATH_SNIPPET, identifier=node_identifier
         )
     )
+
 
 def get_node_name_from_resource(resource_element):
     """
@@ -98,13 +100,12 @@ def get_node_name_from_resource(resource_element):
     """
     if not (
         resource_element.attrib.get("class", "") == AGENT_NAME.standard
-        and
-        resource_element.attrib.get("provider", "") == AGENT_NAME.provider
-        and
-        resource_element.attrib.get("type", "") == AGENT_NAME.type
+        and resource_element.attrib.get("provider", "") == AGENT_NAME.provider
+        and resource_element.attrib.get("type", "") == AGENT_NAME.type
     ):
         return None
     return resource_element.attrib["id"]
+
 
 def _validate_server_not_used(agent, option_dict):
     if "server" in option_dict:
@@ -112,10 +113,13 @@ def _validate_server_not_used(agent, option_dict):
             ReportItem.error(
                 reports.messages.InvalidOptions(
                     ["server"],
-                    sorted([
-                        attr["name"] for attr in agent.get_parameters()
-                        if attr["name"] != "server"
-                    ]),
+                    sorted(
+                        [
+                            attr["name"]
+                            for attr in agent.get_parameters()
+                            if attr["name"] != "server"
+                        ]
+                    ),
                     "resource",
                 ),
             )
@@ -131,9 +135,14 @@ def validate_host_not_conflicts(
         return [ReportItem.error(reports.messages.IdAlreadyExists(host))]
     return []
 
+
 def validate_create(
-    existing_nodes_names, existing_nodes_addrs, resource_agent, new_node_name,
-    new_node_addr, instance_attributes
+    existing_nodes_names,
+    existing_nodes_addrs,
+    resource_agent,
+    new_node_name,
+    new_node_addr,
+    instance_attributes,
 ):
     """
     validate inputs for create
@@ -164,10 +173,12 @@ def validate_create(
 
     return report_list
 
+
 def prepare_instance_atributes(instance_attributes, host):
     enriched_instance_attributes = instance_attributes.copy()
     enriched_instance_attributes["server"] = host
     return enriched_instance_attributes
+
 
 def create(
     report_processor: ReportProcessor,
@@ -225,5 +236,5 @@ def create(
         # 2) split validation and cib modification in primitive.create
         # 3) call the validation from here and handle the results or config
         #    the validator before / when running it
-        do_not_report_instance_attribute_server_exists=True
+        do_not_report_instance_attribute_server_exists=True,
     )

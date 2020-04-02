@@ -11,5 +11,5 @@ host_cmd = create_router(
         "auth": host.auth_cmd,
         "deauth": host.deauth_cmd,
     },
-    ["host"]
+    ["host"],
 )

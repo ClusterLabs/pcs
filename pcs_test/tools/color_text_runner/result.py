@@ -20,24 +20,20 @@ def get_text_test_result_class(
     traceback_highlight=False,
     fast_info=False,
 ):
-    #TextTestResult is neede here. Direct inheriting from TestResult does not
-    #work in python 2.6
+    # TextTestResult is neede here. Direct inheriting from TestResult does not
+    # work in python 2.6
     TextTestResult = unittest.TextTestResult
+
     class ColorTextTestResult(TextTestResult):
         # pylint: disable=bad-super-call, invalid-name
         def __init__(self, stream, descriptions, verbosity):
             super(ColorTextTestResult, self).__init__(
-                stream,
-                descriptions,
-                verbosity
+                stream, descriptions, verbosity
             )
             self.verbosity = 2 if traditional_verbose else verbosity
 
             self.reportWriter = self.__chooseWriter()(
-                self.stream,
-                self.descriptions,
-                traceback_highlight,
-                fast_info,
+                self.stream, self.descriptions, traceback_highlight, fast_info,
             )
             self.skip_map = {}
 
@@ -51,18 +47,12 @@ def get_text_test_result_class(
 
         def addError(self, test, err):
             super(TextTestResult, self).addError(test, err)
-            self.reportWriter.addError(
-                test,
-                err,
-                traceback=self.errors[-1][1]
-            )
+            self.reportWriter.addError(test, err, traceback=self.errors[-1][1])
 
         def addFailure(self, test, err):
             super(TextTestResult, self).addFailure(test, err)
             self.reportWriter.addFailure(
-                test,
-                err,
-                traceback=self.failures[-1][1]
+                test, err, traceback=self.failures[-1][1]
             )
 
         def addSkip(self, test, reason):
@@ -79,31 +69,22 @@ def get_text_test_result_class(
             self.reportWriter.addUnexpectedSuccess(test)
 
         def printErrors(self):
-            line_list = (
-                format_error_list(
-                    'ERROR',
-                    self.errors,
-                    self.descriptions,
-                    traceback_highlight,
-                )
-                +
-                format_error_list(
-                    'FAIL',
-                    self.failures,
-                    self.descriptions,
-                    traceback_highlight,
-                )
+            line_list = format_error_list(
+                "ERROR", self.errors, self.descriptions, traceback_highlight,
+            ) + format_error_list(
+                "FAIL", self.failures, self.descriptions, traceback_highlight,
             )
 
             if (self.errors + self.failures) or self.skip_map:
                 line_list.extend([separator1, ""])
 
             if self.errors + self.failures:
-                line_list.extend([""] + format_error_overview(
-                    self.errors,
-                    self.failures,
-                    slash_last_fail_in_overview
-                ))
+                line_list.extend(
+                    [""]
+                    + format_error_overview(
+                        self.errors, self.failures, slash_last_fail_in_overview
+                    )
+                )
 
             if self.skip_map:
                 line_list.extend([""] + format_skips(self.skip_map))

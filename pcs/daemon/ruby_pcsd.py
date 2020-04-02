@@ -30,18 +30,18 @@ RUBY_LOG_LEVEL_MAP = {
 }
 
 __id_dict = {"id": 0}
+
+
 def get_request_id():
     __id_dict["id"] += 1
     return __id_dict["id"]
 
+
 class SinatraResult(namedtuple("SinatraResult", "headers, status, body")):
     @classmethod
     def from_response(cls, response):
-        return cls(
-            response["headers"],
-            response["status"],
-            response["body"]
-        )
+        return cls(response["headers"], response["status"], response["body"])
+
 
 def log_group_id_generator():
     group_id = 0
@@ -49,7 +49,9 @@ def log_group_id_generator():
         group_id = group_id + 1 if group_id < 99999 else 0
         yield group_id
 
+
 LOG_GROUP_ID = log_group_id_generator()
+
 
 def process_response_logs(rb_log_list):
     if not rb_log_list:
@@ -62,25 +64,24 @@ def process_response_logs(rb_log_list):
             created=rb_log["timestamp_usec"] / 1000000,
             usecs=int(str(rb_log["timestamp_usec"])[-6:]),
             message=rb_log["message"],
-            group_id=group_id
+            group_id=group_id,
         )
 
-class RubyDaemonRequest(namedtuple(
-    "RubyDaemonRequest",
-    "request_type, path, query, headers, method, body"
-)):
+
+class RubyDaemonRequest(
+    namedtuple(
+        "RubyDaemonRequest", "request_type, path, query, headers, method, body"
+    )
+):
     def __new__(
-        cls,
-        request_type,
-        http_request: HTTPServerRequest = None,
-        payload=None,
+        cls, request_type, http_request: HTTPServerRequest = None, payload=None,
     ):
         headers = http_request.headers if http_request else HTTPHeaders()
         headers.add("X-Pcsd-Type", request_type)
         if payload:
             headers.add(
                 "X-Pcsd-Payload",
-                b64encode(json.dumps(payload).encode()).decode()
+                b64encode(json.dumps(payload).encode()).decode(),
             )
         return super(RubyDaemonRequest, cls).__new__(
             cls,
@@ -108,6 +109,7 @@ class RubyDaemonRequest(namedtuple(
     def has_http_request_detail(self):
         return self.path or self.query or self.method != "GET" or self.body
 
+
 def log_ruby_daemon_request(label, request: RubyDaemonRequest):
     log.pcsd.debug("%s type: '%s'", label, request.request_type)
     if request.has_http_request_detail:
@@ -118,10 +120,11 @@ def log_ruby_daemon_request(label, request: RubyDaemonRequest):
         if request.body:
             log.pcsd.debug("%s body: '%s'", label, request.body)
 
+
 class Wrapper:
     def __init__(self, pcsd_ruby_socket, debug=False):
         self.__debug = debug
-        AsyncHTTPClient.configure('tornado.curl_httpclient.CurlAsyncHTTPClient')
+        AsyncHTTPClient.configure("tornado.curl_httpclient.CurlAsyncHTTPClient")
         self.__client = AsyncHTTPClient()
         self.__pcsd_ruby_socket = pcsd_ruby_socket
 
@@ -131,24 +134,26 @@ class Wrapper:
 
     async def send_to_ruby(self, request: RubyDaemonRequest):
         try:
-            return (await self.__client.fetch(
-                request.url,
-                headers=request.headers,
-                method=request.method,
-                # Tornado enforces body=None for GET method:
-                # Even with `allow_nonstandard_methods` we disallow GET with a
-                # body (because libcurl doesn't allow it unless we use
-                # CUSTOMREQUEST).  While the spec doesn't forbid clients from
-                # sending a body, it arguably disallows the server from doing
-                # anything with them.
-                body=(request.body if not request.is_get else None),
-                prepare_curl_callback=self.prepare_curl_callback,
-            )).body
+            return (
+                await self.__client.fetch(
+                    request.url,
+                    headers=request.headers,
+                    method=request.method,
+                    # Tornado enforces body=None for GET method:
+                    # Even with `allow_nonstandard_methods` we disallow GET
+                    # with a body (because libcurl doesn't allow it unless we
+                    # use CUSTOMREQUEST).  While the spec doesn't forbid
+                    # clients from sending a body, it arguably disallows the
+                    # server from doing anything with them.
+                    body=(request.body if not request.is_get else None),
+                    prepare_curl_callback=self.prepare_curl_callback,
+                )
+            ).body
         except CurlError as e:
             # This error we can get e.g. when ruby daemon is down.
             log.pcsd.error(
                 "Cannot connect to ruby daemon (message: '%s'). Is it running?",
-                e
+                e,
             )
             raise HTTPError(500)
         except HTTPClientError as e:
@@ -159,7 +164,7 @@ class Wrapper:
                     " Try checking system logs (e.g. journal, systemctl status"
                     " pcsd.service) for more information.."
                 ),
-                e
+                e,
             )
             raise HTTPError(500)
 
@@ -174,8 +179,7 @@ class Wrapper:
 
         def log_request():
             log_ruby_daemon_request(
-                f"Ruby daemon request (id: {request_id})",
-                request,
+                f"Ruby daemon request (id: {request_id})", request,
             )
 
         if self.__debug:
@@ -204,9 +208,7 @@ class Wrapper:
                 if not self.__debug:
                     log_request()
                 log.pcsd.error(
-                    "%s contains an error: '%s'",
-                    label,
-                    json.dumps(response)
+                    "%s contains an error: '%s'", label, json.dumps(response)
                 )
                 raise HTTPError(500)
 
@@ -217,16 +219,14 @@ class Wrapper:
                     log.pcsd.debug(
                         "%s (without logs and body): '%s'",
                         label,
-                        json.dumps(response)
+                        json.dumps(response),
                     )
                     log.pcsd.debug("%s body: '%s'", label, body)
                 response["body"] = body
 
             elif self.__debug:
                 log.pcsd.debug(
-                    "%s (without logs): '%s'",
-                    label,
-                    json.dumps(response)
+                    "%s (without logs): '%s'", label, json.dumps(response)
                 )
             process_response_logs(logs)
             return response
@@ -246,11 +246,17 @@ class Wrapper:
         # information is needed for ruby code (e.g. rendering some parts of
         # templates). So this information must be sent to ruby by another way.
         return SinatraResult.from_response(
-            await convert_yielded(self.run_ruby(SINATRA_GUI, request, {
-                "username": user,
-                "groups": groups,
-                "is_authenticated": is_authenticated,
-            }))
+            await convert_yielded(
+                self.run_ruby(
+                    SINATRA_GUI,
+                    request,
+                    {
+                        "username": user,
+                        "groups": groups,
+                        "is_authenticated": is_authenticated,
+                    },
+                )
+            )
         )
 
     async def request_remote(self, request: HTTPServerRequest) -> SinatraResult:

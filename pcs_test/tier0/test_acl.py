@@ -20,8 +20,10 @@ old_cib = rc("cib-empty-1.2.xml")
 empty_cib = rc("cib-empty.xml")
 temp_cib = rc("temp-cib.xml")
 
+
 class ACLTest(unittest.TestCase, AssertPcsMixin):
     pcs_runner = None
+
     def setUp(self):
         shutil.copy(empty_cib, temp_cib)
         self.pcs_runner = PcsRunner(temp_cib)
@@ -31,9 +33,9 @@ class ACLTest(unittest.TestCase, AssertPcsMixin):
         shutil.copy(old_cib, temp_cib)
 
         self.assert_pcs_success(
-            'acl show',
+            "acl show",
             "ACLs are disabled, run 'pcs acl enable' to enable"
-            "\n\nCIB has been upgraded to the latest schema version.\n"
+            "\n\nCIB has been upgraded to the latest schema version.\n",
         )
 
         with open(temp_cib) as myfile:
@@ -70,21 +72,21 @@ class ACLTest(unittest.TestCase, AssertPcsMixin):
     def testUserGroupCreateDeleteWithRoles(self):
         o, r = pcs(
             temp_cib,
-            "acl role create role1 read xpath /xpath1/ write xpath /xpath2/"
+            "acl role create role1 read xpath /xpath1/ write xpath /xpath2/",
         )
         assert r == 0
         ac(o, "")
 
         o, r = pcs(
             temp_cib,
-            "acl role create role2 deny xpath /xpath3/ deny xpath /xpath4/"
+            "acl role create role2 deny xpath /xpath3/ deny xpath /xpath4/",
         )
         assert r == 0
         ac(o, "")
 
         o, r = pcs(
             temp_cib,
-            "acl role create role3 read xpath /xpath5/ read xpath /xpath6/"
+            "acl role create role3 read xpath /xpath5/ read xpath /xpath6/",
         )
         assert r == 0
         ac(o, "")
@@ -106,7 +108,9 @@ class ACLTest(unittest.TestCase, AssertPcsMixin):
         self.assertEqual(1, r)
 
         o, r = pcs(temp_cib, "acl")
-        ac(o, """\
+        ac(
+            o,
+            """\
 ACLs are disabled, run 'pcs acl enable' to enable
 
 Role: role1
@@ -118,7 +122,8 @@ Role: role2
 Role: role3
   Permission: read xpath /xpath5/ (role3-read)
   Permission: read xpath /xpath6/ (role3-read-1)
-""")
+""",
+        )
         self.assertEqual(0, r)
 
         o, r = pcs(temp_cib, "acl user create user1 role1 role2")
@@ -149,7 +154,7 @@ Role: role2
 Role: role3
   Permission: read xpath /xpath5/ (role3-read)
   Permission: read xpath /xpath6/ (role3-read-1)
-"""
+""",
         )
 
         o, r = pcs(temp_cib, "acl role create group1")
@@ -186,7 +191,9 @@ Role: role3
 
         o, r = pcs(temp_cib, "acl")
         assert r == 0
-        ac(o, """\
+        ac(
+            o,
+            """\
 ACLs are disabled, run 'pcs acl enable' to enable
 
 User: user1
@@ -202,7 +209,8 @@ Role: role2
 Role: role3
   Permission: read xpath /xpath5/ (role3-read)
   Permission: read xpath /xpath6/ (role3-read-1)
-""")
+""",
+        )
 
         o, r = pcs(temp_cib, "acl role unassign noexist from user1")
         assert r == 1
@@ -218,7 +226,9 @@ Role: role3
 
         o, r = pcs(temp_cib, "acl")
         assert r == 0
-        ac(o, """\
+        ac(
+            o,
+            """\
 ACLs are disabled, run 'pcs acl enable' to enable
 
 User: user1
@@ -234,7 +244,8 @@ Role: role2
 Role: role3
   Permission: read xpath /xpath5/ (role3-read)
   Permission: read xpath /xpath6/ (role3-read-1)
-""")
+""",
+        )
 
         o, r = pcs(temp_cib, "acl role unassign role2 from user1")
         assert r == 0
@@ -245,7 +256,9 @@ Role: role3
         ac(o, "")
 
         o, r = pcs(temp_cib, "acl")
-        ac(o, """\
+        ac(
+            o,
+            """\
 ACLs are disabled, run 'pcs acl enable' to enable
 
 User: user1
@@ -261,7 +274,8 @@ Role: role2
 Role: role3
   Permission: read xpath /xpath5/ (role3-read)
   Permission: read xpath /xpath6/ (role3-read-1)
-""")
+""",
+        )
         assert r == 0
 
         o, r = pcs(temp_cib, "acl role delete role3")
@@ -269,7 +283,9 @@ Role: role3
         ac(o, "")
 
         o, r = pcs(temp_cib, "acl")
-        ac(o, """\
+        ac(
+            o,
+            """\
 ACLs are disabled, run 'pcs acl enable' to enable
 
 User: user1
@@ -282,7 +298,8 @@ Role: role1
 Role: role2
   Permission: deny xpath /xpath3/ (role2-deny)
   Permission: deny xpath /xpath4/ (role2-deny-1)
-""")
+""",
+        )
         assert r == 0
 
         o, r = pcs(temp_cib, "acl role assign role2 to user1")
@@ -291,7 +308,9 @@ Role: role2
 
         o, r = pcs(temp_cib, "acl")
         assert r == 0
-        ac(o, """\
+        ac(
+            o,
+            """\
 ACLs are disabled, run 'pcs acl enable' to enable
 
 User: user1
@@ -304,14 +323,17 @@ Role: role1
 Role: role2
   Permission: deny xpath /xpath3/ (role2-deny)
   Permission: deny xpath /xpath4/ (role2-deny-1)
-""")
+""",
+        )
 
         o, r = pcs(temp_cib, "acl role assign role1 user1")
         ac(o, "")
         assert r == 0
 
         o, r = pcs(temp_cib, "acl")
-        ac(o, """\
+        ac(
+            o,
+            """\
 ACLs are disabled, run 'pcs acl enable' to enable
 
 User: user1
@@ -324,7 +346,8 @@ Role: role1
 Role: role2
   Permission: deny xpath /xpath3/ (role2-deny)
   Permission: deny xpath /xpath4/ (role2-deny-1)
-""")
+""",
+        )
         assert r == 0
 
         o, r = pcs(temp_cib, "acl role unassign role2 from user1 --autodelete")
@@ -332,7 +355,9 @@ Role: role2
         assert r == 0
 
         o, r = pcs(temp_cib, "acl")
-        ac(o, """\
+        ac(
+            o,
+            """\
 ACLs are disabled, run 'pcs acl enable' to enable
 
 User: user1
@@ -345,7 +370,8 @@ Role: role1
 Role: role2
   Permission: deny xpath /xpath3/ (role2-deny)
   Permission: deny xpath /xpath4/ (role2-deny-1)
-""")
+""",
+        )
         assert r == 0
 
         o, r = pcs(temp_cib, "acl role unassign role1 from user1 --autodelete")
@@ -353,7 +379,9 @@ Role: role2
         assert r == 0
 
         o, r = pcs(temp_cib, "acl")
-        ac(o, """\
+        ac(
+            o,
+            """\
 ACLs are disabled, run 'pcs acl enable' to enable
 
 Group: group1
@@ -364,7 +392,8 @@ Role: role1
 Role: role2
   Permission: deny xpath /xpath3/ (role2-deny)
   Permission: deny xpath /xpath4/ (role2-deny-1)
-""")
+""",
+        )
         assert r == 0
 
         o, r = pcs(temp_cib, "acl user create user1 role1 role2")
@@ -372,7 +401,9 @@ Role: role2
         assert r == 0
 
         o, r = pcs(temp_cib, "acl")
-        ac(o, """\
+        ac(
+            o,
+            """\
 ACLs are disabled, run 'pcs acl enable' to enable
 
 User: user1
@@ -385,7 +416,8 @@ Role: role1
 Role: role2
   Permission: deny xpath /xpath3/ (role2-deny)
   Permission: deny xpath /xpath4/ (role2-deny-1)
-""")
+""",
+        )
         assert r == 0
 
         o, r = pcs(temp_cib, "acl role delete role1 --autodelete")
@@ -393,7 +425,9 @@ Role: role2
         assert r == 0
 
         o, r = pcs(temp_cib, "acl")
-        ac(o, """\
+        ac(
+            o,
+            """\
 ACLs are disabled, run 'pcs acl enable' to enable
 
 User: user1
@@ -401,7 +435,8 @@ User: user1
 Role: role2
   Permission: deny xpath /xpath3/ (role2-deny)
   Permission: deny xpath /xpath4/ (role2-deny-1)
-""")
+""",
+        )
         assert r == 0
 
         o, r = pcs(temp_cib, "acl role delete role2")
@@ -409,12 +444,15 @@ Role: role2
         assert r == 0
 
         o, r = pcs(temp_cib, "acl")
-        ac(o, """\
+        ac(
+            o,
+            """\
 ACLs are disabled, run 'pcs acl enable' to enable
 
 User: user1
   Roles:
-""")
+""",
+        )
         assert r == 0
 
     def testUserGroupCreateDelete(self):
@@ -447,7 +485,9 @@ User: user1
         ac(o, "Error: 'group1' already exists\n")
 
         o, r = pcs(temp_cib, "acl")
-        ac(o, """\
+        ac(
+            o,
+            """\
 ACLs are disabled, run 'pcs acl enable' to enable
 
 User: user1
@@ -458,7 +498,8 @@ Group: group1
   Roles:
 Group: group2
   Roles:
-""")
+""",
+        )
         assert r == 0
 
         o, r = pcs(temp_cib, "acl group delete user1")
@@ -466,7 +507,9 @@ Group: group2
         ac(o, "Error: 'user1' is not an ACL group\n")
 
         o, r = pcs(temp_cib, "acl")
-        ac(o, """\
+        ac(
+            o,
+            """\
 ACLs are disabled, run 'pcs acl enable' to enable
 
 User: user1
@@ -477,7 +520,8 @@ Group: group1
   Roles:
 Group: group2
   Roles:
-""")
+""",
+        )
         assert r == 0
 
         o, r = pcs(temp_cib, "acl group delete group2")
@@ -485,7 +529,9 @@ Group: group2
         assert r == 0
 
         o, r = pcs(temp_cib, "acl")
-        ac(o, """\
+        ac(
+            o,
+            """\
 ACLs are disabled, run 'pcs acl enable' to enable
 
 User: user1
@@ -494,7 +540,8 @@ User: user2
   Roles:
 Group: group1
   Roles:
-""")
+""",
+        )
         assert r == 0
 
         o, r = pcs(temp_cib, "acl group remove group1")
@@ -502,14 +549,17 @@ Group: group1
         assert r == 0
 
         o, r = pcs(temp_cib, "acl")
-        ac(o, """\
+        ac(
+            o,
+            """\
 ACLs are disabled, run 'pcs acl enable' to enable
 
 User: user1
   Roles:
 User: user2
   Roles:
-""")
+""",
+        )
         assert r == 0
 
         o, r = pcs(temp_cib, "acl user delete user1")
@@ -517,12 +567,15 @@ User: user2
         assert r == 0
 
         o, r = pcs(temp_cib, "acl")
-        ac(o, """\
+        ac(
+            o,
+            """\
 ACLs are disabled, run 'pcs acl enable' to enable
 
 User: user2
   Roles:
-""")
+""",
+        )
         assert r == 0
 
         o, r = pcs(temp_cib, "acl user remove user2")
@@ -563,15 +616,13 @@ User: user2
         self.assertEqual(1, r)
 
         o, r = pcs(
-            temp_cib,
-            "acl role create role0 description=test read //resources"
+            temp_cib, "acl role create role0 description=test read //resources"
         )
         self.assertTrue(o.startswith("\nUsage: pcs acl role create..."))
         self.assertEqual(1, r)
 
         o, r = pcs(
-            temp_cib,
-            "acl role create role0 description=test read xpath"
+            temp_cib, "acl role create role0 description=test read xpath"
         )
         self.assertTrue(o.startswith("\nUsage: pcs acl role create..."))
         self.assertEqual(1, r)
@@ -580,14 +631,16 @@ User: user2
         self.assertTrue(o.startswith("\nUsage: pcs acl role create..."))
         self.assertEqual(1, r)
 
-        o, r = pcs(temp_cib,
-            "acl role create role0 description=test readX xpath //resources"
+        o, r = pcs(
+            temp_cib,
+            "acl role create role0 description=test readX xpath //resources",
         )
         self.assertTrue(o.startswith("\nUsage: pcs acl role create..."))
         self.assertEqual(1, r)
 
-        o, r = pcs(temp_cib,
-            "acl role create role0 description=test read xpathX //resources"
+        o, r = pcs(
+            temp_cib,
+            "acl role create role0 description=test read xpathX //resources",
         )
         self.assertTrue(o.startswith("\nUsage: pcs acl role create..."))
         self.assertEqual(1, r)
@@ -609,15 +662,13 @@ User: user2
         self.assertEqual(1, r)
 
         o, r = pcs(
-            temp_cib,
-            "acl role create role0 desc=test readX xpath //resources"
+            temp_cib, "acl role create role0 desc=test readX xpath //resources"
         )
         self.assertTrue(o.startswith("\nUsage: pcs acl role create..."))
         self.assertEqual(1, r)
 
         o, r = pcs(
-            temp_cib,
-            "acl role create role0 desc=test read xpathX //resources"
+            temp_cib, "acl role create role0 desc=test read xpathX //resources"
         )
         self.assertTrue(o.startswith("\nUsage: pcs acl role create..."))
         self.assertEqual(1, r)
@@ -645,7 +696,7 @@ User: user2
         o, r = pcs(
             temp_cib,
             "acl role create role2 description='with description' "
-                "READ XPATH /xpath/"
+            "READ XPATH /xpath/",
         )
         assert r == 0
         ac(o, "")
@@ -653,13 +704,15 @@ User: user2
         o, r = pcs(
             temp_cib,
             "acl role create role3 Read XPath /xpath_query/ wRiTe xpATH "
-                "/xpath_query2/ deny xpath /xpath_query3/"
+            "/xpath_query2/ deny xpath /xpath_query3/",
         )
         assert r == 0
         ac(o, "")
 
         o, r = pcs(temp_cib, "acl")
-        ac(o, """\
+        ac(
+            o,
+            """\
 ACLs are disabled, run 'pcs acl enable' to enable
 
 Role: role0
@@ -674,7 +727,8 @@ Role: role3
   Permission: read xpath /xpath_query/ (role3-read)
   Permission: write xpath /xpath_query2/ (role3-write)
   Permission: deny xpath /xpath_query3/ (role3-deny)
-""")
+""",
+        )
         assert r == 0
 
         o, r = pcs(temp_cib, "acl role delete role2")
@@ -682,7 +736,9 @@ Role: role3
         ac(o, "")
 
         o, r = pcs(temp_cib, "acl")
-        ac(o, """\
+        ac(
+            o,
+            """\
 ACLs are disabled, run 'pcs acl enable' to enable
 
 Role: role0
@@ -694,7 +750,8 @@ Role: role3
   Permission: read xpath /xpath_query/ (role3-read)
   Permission: write xpath /xpath_query2/ (role3-write)
   Permission: deny xpath /xpath_query3/ (role3-deny)
-""")
+""",
+        )
         assert r == 0
 
         o, r = pcs(temp_cib, "acl role delete role2")
@@ -724,28 +781,30 @@ Role: role3
     def testPermissionAddDelete(self):
         o, r = pcs(
             temp_cib,
-            "acl role create role1 read xpath /xpath1/ write xpath /xpath2/"
+            "acl role create role1 read xpath /xpath1/ write xpath /xpath2/",
         )
         ac(o, "")
         assert r == 0
 
         o, r = pcs(
             temp_cib,
-            "acl role create role2 read xpath /xpath3/ write xpath /xpath4/"
+            "acl role create role2 read xpath /xpath3/ write xpath /xpath4/",
         )
         ac(o, "")
         assert r == 0
 
         o, r = pcs(
             temp_cib,
-            "acl role create role3 read xpath /xpath5/ write xpath /xpath6/"
+            "acl role create role3 read xpath /xpath5/ write xpath /xpath6/",
         )
         ac(o, "")
         assert r == 0
 
         o, r = pcs(temp_cib, "acl show")
         assert r == 0
-        ac(o, """\
+        ac(
+            o,
+            """\
 ACLs are disabled, run 'pcs acl enable' to enable
 
 Role: role1
@@ -757,7 +816,8 @@ Role: role2
 Role: role3
   Permission: read xpath /xpath5/ (role3-read)
   Permission: write xpath /xpath6/ (role3-write)
-""")
+""",
+        )
 
         o, r = pcs(temp_cib, "acl permission add role1 deny xpath /myxpath1/")
         ac(o, "")
@@ -769,7 +829,9 @@ Role: role3
 
         o, r = pcs(temp_cib, "acl show")
         assert r == 0
-        ac(o, """\
+        ac(
+            o,
+            """\
 ACLs are disabled, run 'pcs acl enable' to enable
 
 Role: role1
@@ -784,7 +846,8 @@ Role: role3
   Permission: write xpath /xpath6/ (role3-write)
 Role: role4
   Permission: deny xpath /myxpath2/ (role4-deny)
-""")
+""",
+        )
 
         o, r = pcs(temp_cib, "acl permission delete role4-deny")
         ac(o, "")
@@ -800,7 +863,9 @@ Role: role4
 
         o, r = pcs(temp_cib, "acl show")
         assert r == 0
-        ac(o, """\
+        ac(
+            o,
+            """\
 ACLs are disabled, run 'pcs acl enable' to enable
 
 Role: role1
@@ -814,7 +879,8 @@ Role: role3
   Permission: read xpath /xpath5/ (role3-read)
   Permission: write xpath /xpath6/ (role3-write)
 Role: role4
-""")
+""",
+        )
 
         o, r = pcs(temp_cib, "acl permission delete role3-read")
         ac(o, "")
@@ -825,7 +891,9 @@ Role: role4
         assert r == 0
 
         o, r = pcs(temp_cib, "acl")
-        ac(o, """\
+        ac(
+            o,
+            """\
 ACLs are disabled, run 'pcs acl enable' to enable
 
 Role: role1
@@ -837,7 +905,8 @@ Role: role2
   Permission: write xpath /xpath4/ (role2-write)
 Role: role3
 Role: role4
-""")
+""",
+        )
         assert r == 0
 
         o, r = pcs(temp_cib, "acl permission remove role1-read")
@@ -861,14 +930,17 @@ Role: role4
         self.assertEqual(0, r)
 
         o, r = pcs(temp_cib, "acl")
-        ac(o, """\
+        ac(
+            o,
+            """\
 ACLs are disabled, run 'pcs acl enable' to enable
 
 Role: role1
 Role: role2
 Role: role3
 Role: role4
-""")
+""",
+        )
         self.assertEqual(0, r)
 
         o, r = pcs(temp_cib, "acl permission add role1 read")
@@ -900,15 +972,13 @@ Role: role4
         self.assertEqual(1, r)
 
         o, r = pcs(
-            temp_cib,
-            "acl permission add role1 read id dummy read //resources"
+            temp_cib, "acl permission add role1 read id dummy read //resources"
         )
         self.assertTrue(o.startswith("\nUsage: pcs acl permission add..."))
         self.assertEqual(1, r)
 
         o, r = pcs(
-            temp_cib,
-            "acl permission add role1 read id dummy read xpath"
+            temp_cib, "acl permission add role1 read id dummy read xpath"
         )
         self.assertTrue(o.startswith("\nUsage: pcs acl permission add..."))
         self.assertEqual(1, r)
@@ -918,79 +988,82 @@ Role: role4
         self.assertEqual(1, r)
 
         self.assert_pcs_fail(
-          "acl permission add role1 read id dummy readX xpath //resources",
-          stdout_start='\nUsage: pcs acl permission add...'
+            "acl permission add role1 read id dummy readX xpath //resources",
+            stdout_start="\nUsage: pcs acl permission add...",
         )
 
         self.assert_pcs_fail(
-          "acl permission add role1 read id dummy read xpathX //resources",
-          stdout_start='\nUsage: pcs acl permission add...'
+            "acl permission add role1 read id dummy read xpathX //resources",
+            stdout_start="\nUsage: pcs acl permission add...",
         )
 
         o, r = pcs(temp_cib, "acl")
-        ac(o, """\
+        ac(
+            o,
+            """\
 ACLs are disabled, run 'pcs acl enable' to enable
 
 Role: role1
 Role: role2
 Role: role3
 Role: role4
-""")
+""",
+        )
         self.assertEqual(0, r)
 
     def test_can_add_permission_for_existing_id(self):
-        self.assert_pcs_success('acl role create role1')
-        self.assert_pcs_success('acl role create role2')
+        self.assert_pcs_success("acl role create role1")
+        self.assert_pcs_success("acl role create role2")
         self.assert_pcs_success("acl permission add role1 read id role2")
 
     def test_can_add_permission_for_existing_xpath(self):
-        self.assert_pcs_success('acl role create role1')
+        self.assert_pcs_success("acl role create role1")
         self.assert_pcs_success("acl permission add role1 read xpath //nodes")
 
     def test_can_not_add_permission_for_nonexisting_id(self):
-        self.assert_pcs_success('acl role create role1')
+        self.assert_pcs_success("acl role create role1")
         self.assert_pcs_fail(
             "acl permission add role1 read id non-existent-id",
-            "Error: id 'non-existent-id' does not exist\n"
+            "Error: id 'non-existent-id' does not exist\n",
         )
 
     def test_can_not_add_permission_for_nonexisting_id_in_later_part(self):
-        self.assert_pcs_success('acl role create role1')
-        self.assert_pcs_success('acl role create role2')
+        self.assert_pcs_success("acl role create role1")
+        self.assert_pcs_success("acl role create role2")
         self.assert_pcs_fail(
             "acl permission add role1 read id role2 read id non-existent-id",
-            "Error: id 'non-existent-id' does not exist\n"
+            "Error: id 'non-existent-id' does not exist\n",
         )
 
     def test_can_not_add_permission_for_nonexisting_role_with_bad_id(self):
-        self.assert_pcs_success('acl role create role1')
+        self.assert_pcs_success("acl role create role1")
         self.assert_pcs_fail(
-            'acl permission add #bad-name read id role1',
+            "acl permission add #bad-name read id role1",
             "Error: invalid ACL role '#bad-name'"
-            +", '#' is not a valid first character for a ACL role\n"
+            + ", '#' is not a valid first character for a ACL role\n",
         )
 
     def test_can_create_role_with_permission_for_existing_id(self):
-        self.assert_pcs_success('acl role create role2')
-        self.assert_pcs_success('acl role create role1 read id role2')
+        self.assert_pcs_success("acl role create role2")
+        self.assert_pcs_success("acl role create role1 read id role2")
 
     def test_can_not_crate_role_with_permission_for_nonexisting_id(self):
         self.assert_pcs_fail(
             "acl role create role1 read id non-existent-id",
-            "Error: id 'non-existent-id' does not exist\n"
+            "Error: id 'non-existent-id' does not exist\n",
         )
 
     def test_can_not_create_role_with_bad_name(self):
         self.assert_pcs_fail(
-            'acl role create #bad-name',
+            "acl role create #bad-name",
             "Error: invalid ACL role '#bad-name'"
-            +", '#' is not a valid first character for a ACL role\n"
+            + ", '#' is not a valid first character for a ACL role\n",
         )
 
     def test_fail_on_unknown_role_method(self):
         self.assert_pcs_fail(
-            'acl role unknown whatever',
-            stdout_start="\nUsage: pcs acl role ..."
+            "acl role unknown whatever",
+            stdout_start="\nUsage: pcs acl role ...",
         )
 
     def test_assign_unassign_role_to_user(self):
@@ -999,12 +1072,12 @@ Role: role4
         self.assert_pcs_success("acl role assign role1 user user1")
         self.assert_pcs_fail(
             "acl role assign role1 user user1",
-            "Error: Role 'role1' is already assigned to 'user1'\n"
+            "Error: Role 'role1' is already assigned to 'user1'\n",
         )
         self.assert_pcs_success("acl role unassign role1 user user1")
         self.assert_pcs_fail(
             "acl role unassign role1 user user1",
-            "Error: Role 'role1' is not assigned to 'user1'\n"
+            "Error: Role 'role1' is not assigned to 'user1'\n",
         )
 
     def test_assign_unassign_role_to_user_not_existing_user(self):
@@ -1012,7 +1085,7 @@ Role: role4
         self.assert_pcs_success("acl group create group1")
         self.assert_pcs_fail(
             "acl role assign role1 to user group1",
-            "Error: 'group1' is not an ACL user\n"
+            "Error: 'group1' is not an ACL user\n",
         )
 
     def test_assign_unassign_role_to_user_with_to(self):
@@ -1021,12 +1094,12 @@ Role: role4
         self.assert_pcs_success("acl role assign role1 to user user1")
         self.assert_pcs_fail(
             "acl role assign role1 to user user1",
-            "Error: Role 'role1' is already assigned to 'user1'\n"
+            "Error: Role 'role1' is already assigned to 'user1'\n",
         )
         self.assert_pcs_success("acl role unassign role1 from user user1")
         self.assert_pcs_fail(
             "acl role unassign role1 from user user1",
-            "Error: Role 'role1' is not assigned to 'user1'\n"
+            "Error: Role 'role1' is not assigned to 'user1'\n",
         )
 
     def test_assign_unassign_role_to_group(self):
@@ -1035,12 +1108,12 @@ Role: role4
         self.assert_pcs_success("acl role assign role1 group group1")
         self.assert_pcs_fail(
             "acl role assign role1 group group1",
-            "Error: Role 'role1' is already assigned to 'group1'\n"
+            "Error: Role 'role1' is already assigned to 'group1'\n",
         )
         self.assert_pcs_success("acl role unassign role1 group group1")
         self.assert_pcs_fail(
             "acl role unassign role1 group group1",
-            "Error: Role 'role1' is not assigned to 'group1'\n"
+            "Error: Role 'role1' is not assigned to 'group1'\n",
         )
 
     def test_assign_unassign_role_to_group_not_existing_group(self):
@@ -1048,7 +1121,7 @@ Role: role4
         self.assert_pcs_success("acl user create user1")
         self.assert_pcs_fail(
             "acl role assign role1 to group user1",
-            "Error: 'user1' is not an ACL group\n"
+            "Error: 'user1' is not an ACL group\n",
         )
 
     def test_assign_unassign_role_to_group_with_to(self):
@@ -1057,10 +1130,10 @@ Role: role4
         self.assert_pcs_success("acl role assign role1 to group group1")
         self.assert_pcs_fail(
             "acl role assign role1 to group group1",
-            "Error: Role 'role1' is already assigned to 'group1'\n"
+            "Error: Role 'role1' is already assigned to 'group1'\n",
         )
         self.assert_pcs_success("acl role unassign role1 from group group1")
         self.assert_pcs_fail(
             "acl role unassign role1 from group group1",
-            "Error: Role 'role1' is not assigned to 'group1'\n"
+            "Error: Role 'role1' is not assigned to 'group1'\n",
         )

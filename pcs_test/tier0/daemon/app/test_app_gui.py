@@ -1,7 +1,7 @@
 import logging
 import os
 
-from pcs_test.tools.misc import(
+from pcs_test.tools.misc import (
     create_setup_patch_mixin,
     get_test_resource as rc,
 )
@@ -23,6 +23,7 @@ if not os.path.exists(CSS_DIR):
 # Don't write errors to test output.
 logging.getLogger("tornado.access").setLevel(logging.CRITICAL)
 
+
 class AppTest(
     fixtures_app.AppUiTestMixin,
     create_setup_patch_mixin(sinatra_ui.app_session),
@@ -33,14 +34,13 @@ class AppTest(
 
     def get_routes(self):
         return sinatra_ui.get_routes(
-            self.session_storage,
-            self.wrapper,
-            PUBLIC_DIR,
+            self.session_storage, self.wrapper, PUBLIC_DIR,
         )
 
     def assert_is_redirect(self, response, location, status_code=302):
         self.assert_headers_contains(response.headers, {"Location": location})
         self.assertEqual(response.code, status_code)
+
 
 class Login(AppTest):
     # pylint: disable=too-many-ancestors
@@ -54,7 +54,7 @@ class Login(AppTest):
         return auth.UserAuthInfo(
             username,
             self.user_auth_info.groups,
-            is_authorized=self.user_auth_info.valid
+            is_authorized=self.user_auth_info.valid,
         )
 
     def test_get_uses_wrapper(self):
@@ -62,44 +62,46 @@ class Login(AppTest):
 
     def test_login_attempt_failed(self):
         self.user_auth_info.valid = False
-        response = self.post('/login', LOGIN_BODY)
+        response = self.post("/login", LOGIN_BODY)
         self.assert_is_redirect(response, "/login", 303)
         self.assert_is_redirect(
-            self.get('/', sid=self.extract_sid(response)), # not logged
-            "/login"
+            self.get("/", sid=self.extract_sid(response)),  # not logged
+            "/login",
         )
 
     def test_login_attempt_failed_ajax(self):
         self.user_auth_info.valid = False
-        self.assert_unauth_ajax(self.post('/login', LOGIN_BODY, is_ajax=True))
+        self.assert_unauth_ajax(self.post("/login", LOGIN_BODY, is_ajax=True))
 
     def test_login_attempt_succeeded(self):
-        self.assert_is_redirect(self.get('/'), "/login")
+        self.assert_is_redirect(self.get("/"), "/login")
         self.user_auth_info.valid = True
-        response = self.post('/login', LOGIN_BODY)
+        response = self.post("/login", LOGIN_BODY)
         self.assert_is_redirect(response, "/manage", status_code=303)
-        #it is logged now
+        # it is logged now
         self.assert_wrappers_response(
-            self.get('/', sid=self.extract_sid(response))
+            self.get("/", sid=self.extract_sid(response))
         )
 
     def test_login_attempt_succeeded_ajax(self):
         self.user_auth_info.valid = True
-        response = self.post('/login', LOGIN_BODY, is_ajax=True)
+        response = self.post("/login", LOGIN_BODY, is_ajax=True)
         self.assert_success_response(
             response,
-            self.session_storage.provide(self.extract_sid(response)).ajax_id
+            self.session_storage.provide(self.extract_sid(response)).ajax_id,
         )
+
 
 class SinatraGuiProtected(AppTest):
     # pylint: disable=too-many-ancestors
     def test_no_logged_redirects_to_login(self):
-        self.assert_is_redirect(self.get('/'), "/login")
+        self.assert_is_redirect(self.get("/"), "/login")
 
     def test_take_result_from_ruby(self):
         self.assert_wrappers_response(
             self.get("/", sid=self.create_login_session().sid)
         )
+
 
 class SinatraAjaxProtected(AppTest):
     # pylint: disable=too-many-ancestors
@@ -118,6 +120,7 @@ class SinatraAjaxProtected(AppTest):
         self.assert_wrappers_response(response)
         self.assert_session_in_response(response, session1.sid)
 
+
 class Logout(AppTest):
     # pylint: disable=too-many-ancestors
     def test_no_ajax(self):
@@ -135,6 +138,7 @@ class Logout(AppTest):
         self.assertFalse(
             self.session_storage.provide(session1.sid).is_authenticated
         )
+
 
 class Static(AppTest):
     # pylint: disable=too-many-ancestors

@@ -2,14 +2,12 @@ from functools import partial
 from unittest import mock, TestCase
 from lxml import etree
 
-from pcs_test.tools.assertions import(
+from pcs_test.tools.assertions import (
     assert_raise_library_error,
     assert_xml_equal,
 )
 from pcs_test.tools.custom_mock import MockLibraryReportProcessor
-from pcs_test.tools.assertions import (
-    assert_report_item_list_equal,
-)
+from pcs_test.tools.assertions import assert_report_item_list_equal
 
 from pcs.common.reports import ReportItemSeverity as severities
 from pcs.common.reports import codes as report_codes
@@ -23,6 +21,7 @@ def fixture_element(tag, _id):
     element.tag = tag
     element.attrib = {"id": _id}
     return element
+
 
 @mock.patch("pcs.lib.cib.constraint.constraint.find_parent")
 @mock.patch("pcs.lib.cib.constraint.constraint.find_element_by_tag_and_id")
@@ -47,7 +46,7 @@ class FindValidResourceId(TestCase):
                 "parent_type": parent_type,
                 "parent_id": parent_id,
             },
-            report_codes.FORCE_CONSTRAINT_MULTIINSTANCE_RESOURCE
+            report_codes.FORCE_CONSTRAINT_MULTIINSTANCE_RESOURCE,
         )
 
     @staticmethod
@@ -60,7 +59,7 @@ class FindValidResourceId(TestCase):
                 "parent_type": parent_type,
                 "parent_id": parent_id,
             },
-            None
+            None,
         )
 
     def test_return_same_id_when_resource_is_clone(self, mock_find_by_id, _):
@@ -76,14 +75,14 @@ class FindValidResourceId(TestCase):
         self.assertEqual("resourceA", self.find(_id="resourceA"))
 
     def test_return_same_id_when_resource_is_standalone_primitive(
-         self, mock_find_by_id, mock_find_parent
+        self, mock_find_by_id, mock_find_parent
     ):
         mock_find_by_id.return_value = fixture_element("primitive", "resourceA")
         mock_find_parent.return_value = None
         self.assertEqual("resourceA", self.find(_id="resourceA"))
 
     def test_refuse_when_resource_is_in_clone(
-         self, mock_find_by_id, mock_find_parent
+        self, mock_find_by_id, mock_find_parent
     ):
         mock_find_by_id.return_value = fixture_element("primitive", "resourceA")
         mock_find_parent.return_value = fixture_element("clone", "clone_id")
@@ -93,7 +92,7 @@ class FindValidResourceId(TestCase):
         )
 
     def test_refuse_when_resource_is_in_master(
-         self, mock_find_by_id, mock_find_parent
+        self, mock_find_by_id, mock_find_parent
     ):
         mock_find_by_id.return_value = fixture_element("primitive", "resourceA")
         mock_find_parent.return_value = fixture_element("master", "master_id")
@@ -103,7 +102,7 @@ class FindValidResourceId(TestCase):
         )
 
     def test_refuse_when_resource_is_in_bundle(
-         self, mock_find_by_id, mock_find_parent
+        self, mock_find_by_id, mock_find_parent
     ):
         mock_find_by_id.return_value = fixture_element("primitive", "resourceA")
         mock_find_parent.return_value = fixture_element("bundle", "bundle_id")
@@ -113,61 +112,53 @@ class FindValidResourceId(TestCase):
         )
 
     def test_return_resource_id_when_in_clone_allowed(
-         self, mock_find_by_id, mock_find_parent
+        self, mock_find_by_id, mock_find_parent
     ):
         mock_find_by_id.return_value = fixture_element("primitive", "resourceA")
         mock_find_parent.return_value = fixture_element("clone", "clone_id")
 
         self.assertEqual(
-            "resourceA",
-            self.find(in_clone_allowed=True, _id="resourceA")
+            "resourceA", self.find(in_clone_allowed=True, _id="resourceA")
         )
         assert_report_item_list_equal(
             self.report_processor.report_item_list,
-            [
-                self.fixture_warning_multiinstance("clone", "clone_id"),
-            ]
+            [self.fixture_warning_multiinstance("clone", "clone_id"),],
         )
 
     def test_return_resource_id_when_in_master_allowed(
-         self, mock_find_by_id, mock_find_parent
+        self, mock_find_by_id, mock_find_parent
     ):
         mock_find_by_id.return_value = fixture_element("primitive", "resourceA")
         mock_find_parent.return_value = fixture_element("master", "master_id")
 
         self.assertEqual(
-            "resourceA",
-            self.find(in_clone_allowed=True, _id="resourceA")
+            "resourceA", self.find(in_clone_allowed=True, _id="resourceA")
         )
         assert_report_item_list_equal(
             self.report_processor.report_item_list,
-            [
-                self.fixture_warning_multiinstance("clone", "master_id"),
-            ]
+            [self.fixture_warning_multiinstance("clone", "master_id"),],
         )
 
     def test_return_resource_id_when_in_bundle_allowed(
-         self, mock_find_by_id, mock_find_parent
+        self, mock_find_by_id, mock_find_parent
     ):
         mock_find_by_id.return_value = fixture_element("primitive", "resourceA")
         mock_find_parent.return_value = fixture_element("bundle", "bundle_id")
 
         self.assertEqual(
-            "resourceA",
-            self.find(in_clone_allowed=True, _id="resourceA")
+            "resourceA", self.find(in_clone_allowed=True, _id="resourceA")
         )
         assert_report_item_list_equal(
             self.report_processor.report_item_list,
-            [
-                self.fixture_warning_multiinstance("bundle", "bundle_id"),
-            ]
+            [self.fixture_warning_multiinstance("bundle", "bundle_id"),],
         )
+
 
 class PrepareOptionsTest(TestCase):
     def test_refuse_unknown_option(self):
         assert_raise_library_error(
             lambda: constraint.prepare_options(
-                ("a", ), {"b": "c"}, mock.MagicMock(), mock.MagicMock()
+                ("a",), {"b": "c"}, mock.MagicMock(), mock.MagicMock()
             ),
             (
                 severities.ERROR,
@@ -177,16 +168,19 @@ class PrepareOptionsTest(TestCase):
                     "option_type": None,
                     "allowed": ["a", "id"],
                     "allowed_patterns": [],
-                }
+                },
             ),
         )
 
     def test_complete_id(self):
         mock_create_id = mock.MagicMock()
         mock_create_id.return_value = "new-id"
-        self.assertEqual({"id": "new-id"}, constraint.prepare_options(
-            ("a",), {}, mock_create_id, mock.MagicMock()
-        ))
+        self.assertEqual(
+            {"id": "new-id"},
+            constraint.prepare_options(
+                ("a",), {}, mock_create_id, mock.MagicMock()
+            ),
+        )
 
     def test_has_no_side_efect_on_input_options(self):
         mock_create_id = mock.MagicMock()
@@ -195,26 +189,25 @@ class PrepareOptionsTest(TestCase):
         self.assertEqual(
             {"id": "new-id", "a": "b"},
             constraint.prepare_options(
-                ("a",),
-                options,
-                mock_create_id, mock.MagicMock()
-            )
+                ("a",), options, mock_create_id, mock.MagicMock()
+            ),
         )
         self.assertEqual({"a": "b"}, options)
-
 
     def test_refuse_invalid_id(self):
         class SomeException(Exception):
             pass
+
         mock_validate_id = mock.MagicMock()
         mock_validate_id.side_effect = SomeException()
         self.assertRaises(
             SomeException,
             lambda: constraint.prepare_options(
-                ("a", ), {"id": "invalid"}, mock.MagicMock(), mock_validate_id
+                ("a",), {"id": "invalid"}, mock.MagicMock(), mock_validate_id
             ),
         )
         mock_validate_id.assert_called_once_with("invalid")
+
 
 class CreateIdTest(TestCase):
     @mock.patch(
@@ -226,16 +219,18 @@ class CreateIdTest(TestCase):
         mock_find_id.return_value = "some_id"
         self.assertEqual(
             "some_id",
-            constraint.create_id("cib", "PREFIX", "resource_set_list")
+            constraint.create_id("cib", "PREFIX", "resource_set_list"),
         )
         mock_extract.assert_called_once_with("resource_set_list")
         mock_find_id.assert_called_once_with("cib", "pcs_PREFIX_set_A_B_set_C")
+
 
 def fixture_constraint_section(return_value):
     constraint_section = mock.MagicMock()
     constraint_section.findall = mock.MagicMock()
     constraint_section.findall.return_value = return_value
     return constraint_section
+
 
 class CheckIsWithoutDuplicationTest(TestCase):
     def test_raises_when_duplicate_element_found(self):
@@ -246,9 +241,9 @@ class CheckIsWithoutDuplicationTest(TestCase):
         assert_raise_library_error(
             lambda: constraint.check_is_without_duplication(
                 report_processor,
-                fixture_constraint_section([
-                    etree.Element("tag", {"id": "duplicate_element"})
-                ]),
+                fixture_constraint_section(
+                    [etree.Element("tag", {"id": "duplicate_element"})]
+                ),
                 element,
                 are_duplicate=lambda e1, e2: True,
                 export_element=constraint.export_with_set,
@@ -261,22 +256,22 @@ class CheckIsWithoutDuplicationTest(TestCase):
                     severities.INFO,
                     report_codes.DUPLICATE_CONSTRAINTS_LIST,
                     {
-                        'constraint_info_list': [{
-                            'resource_sets': [],
-                            'options': {'id': 'duplicate_element'},
-                        }],
-                        'constraint_type': 'constraint_type'
+                        "constraint_info_list": [
+                            {
+                                "resource_sets": [],
+                                "options": {"id": "duplicate_element"},
+                            }
+                        ],
+                        "constraint_type": "constraint_type",
                     },
                 ),
                 (
                     severities.ERROR,
                     report_codes.DUPLICATE_CONSTRAINTS_EXIST,
-                    {
-                        'constraint_ids': ['duplicate_element'],
-                    },
-                    report_codes.FORCE_CONSTRAINT_DUPLICATE
-                )
-            ]
+                    {"constraint_ids": ["duplicate_element"],},
+                    report_codes.FORCE_CONSTRAINT_DUPLICATE,
+                ),
+            ],
         )
 
     @mock.patch("pcs.lib.cib.constraint.constraint.export_with_set")
@@ -284,10 +279,12 @@ class CheckIsWithoutDuplicationTest(TestCase):
         export_with_set.return_value = "exported_duplicate_element"
         element = mock.MagicMock()
         element.tag = "constraint_type"
-        #no exception raised
+        # no exception raised
         report_processor = MockLibraryReportProcessor()
         constraint.check_is_without_duplication(
-            report_processor, fixture_constraint_section([]), element,
+            report_processor,
+            fixture_constraint_section([]),
+            element,
             are_duplicate=lambda e1, e2: True,
             export_element=constraint.export_with_set,
         )
@@ -299,9 +296,9 @@ class CheckIsWithoutDuplicationTest(TestCase):
         report_processor = MockLibraryReportProcessor()
         constraint.check_is_without_duplication(
             report_processor,
-            fixture_constraint_section([
-                etree.Element("tag", {"id": "duplicate_element"})
-            ]),
+            fixture_constraint_section(
+                [etree.Element("tag", {"id": "duplicate_element"})]
+            ),
             element,
             are_duplicate=lambda e1, e2: True,
             export_element=constraint.export_with_set,
@@ -314,21 +311,21 @@ class CheckIsWithoutDuplicationTest(TestCase):
                     severities.INFO,
                     report_codes.DUPLICATE_CONSTRAINTS_LIST,
                     {
-                        'constraint_info_list': [{
-                            'resource_sets': [],
-                            'options': {'id': 'duplicate_element'},
-                        }],
-                        'constraint_type': 'constraint_type'
+                        "constraint_info_list": [
+                            {
+                                "resource_sets": [],
+                                "options": {"id": "duplicate_element"},
+                            }
+                        ],
+                        "constraint_type": "constraint_type",
                     },
                 ),
                 (
                     severities.WARNING,
                     report_codes.DUPLICATE_CONSTRAINTS_EXIST,
-                    {
-                        'constraint_ids': ['duplicate_element'],
-                    },
-                )
-            ]
+                    {"constraint_ids": ["duplicate_element"],},
+                ),
+            ],
         )
 
 
@@ -339,9 +336,11 @@ class CreateWithSetTest(TestCase):
             constraint_section,
             "ticket",
             {"a": "b"},
-            [{"ids": ["A", "B"], "options": {"c": "d"}}]
+            [{"ids": ["A", "B"], "options": {"c": "d"}}],
         )
-        assert_xml_equal(etree.tostring(constraint_section).decode(), """
+        assert_xml_equal(
+            etree.tostring(constraint_section).decode(),
+            """
             <constraints>
                 <ticket a="b">
                     <resource_set c="d" id="pcs_rsc_set_A_B">
@@ -350,16 +349,14 @@ class CreateWithSetTest(TestCase):
                     </resource_set>
                 </ticket>
             </constraints>
-        """)
+        """,
+        )
 
     def test_refuse_empty_resource_set_list(self):
         constraint_section = etree.Element("constraints")
         assert_raise_library_error(
             lambda: constraint.create_with_set(
-                constraint_section,
-                "ticket",
-                {"a": "b"},
-                []
+                constraint_section, "ticket", {"a": "b"}, []
             ),
-            (severities.ERROR, report_codes.EMPTY_RESOURCE_SET_LIST, {})
+            (severities.ERROR, report_codes.EMPTY_RESOURCE_SET_LIST, {}),
         )

@@ -16,9 +16,7 @@ def config_setup(lib, arg_list, modifiers):
         "--force", "--booth-conf", "--booth-key", "--name",
     )
     peers = group_by_keywords(
-        arg_list,
-        set(["sites", "arbitrators"]),
-        keyword_repeat_allowed=False
+        arg_list, set(["sites", "arbitrators"]), keyword_repeat_allowed=False
     )
     if "sites" not in peers or not peers["sites"]:
         raise CmdLineInputError()
@@ -29,6 +27,7 @@ def config_setup(lib, arg_list, modifiers):
         instance_name=modifiers.get("--name"),
         overwrite_existing=modifiers.get("--force"),
     )
+
 
 def config_destroy(lib, arg_list, modifiers):
     """
@@ -43,7 +42,7 @@ def config_destroy(lib, arg_list, modifiers):
         raise CmdLineInputError()
     lib.booth.config_destroy(
         instance_name=modifiers.get("--name"),
-        ignore_config_load_problems=modifiers.get("--force")
+        ignore_config_load_problems=modifiers.get("--force"),
     )
 
 
@@ -62,9 +61,10 @@ def config_show(lib, arg_list, modifiers):
 
     print(
         lib.booth.config_text(
-            instance_name=modifiers.get("--name"),
-            node_name=node
-        ).decode("utf-8").rstrip()
+            instance_name=modifiers.get("--name"), node_name=node
+        )
+        .decode("utf-8")
+        .rstrip()
     )
 
 
@@ -87,8 +87,9 @@ def config_ticket_add(lib, arg_list, modifiers):
         arg_list[0],
         prepare_options(arg_list[1:]),
         instance_name=modifiers.get("--name"),
-        allow_unknown_options=modifiers.get("--force")
+        allow_unknown_options=modifiers.get("--force"),
     )
+
 
 def config_ticket_remove(lib, arg_list, modifiers):
     """
@@ -103,9 +104,9 @@ def config_ticket_remove(lib, arg_list, modifiers):
     if len(arg_list) != 1:
         raise CmdLineInputError
     lib.booth.config_ticket_remove(
-        arg_list[0],
-        instance_name=modifiers.get("--name"),
+        arg_list[0], instance_name=modifiers.get("--name"),
     )
+
 
 def _ticket_operation(lib_call, arg_list, booth_name):
     """
@@ -121,6 +122,7 @@ def _ticket_operation(lib_call, arg_list, booth_name):
     ticket = arg_list[0]
     lib_call(ticket, site_ip=site_ip, instance_name=booth_name)
 
+
 def ticket_revoke(lib, arg_list, modifiers):
     """
     Options:
@@ -131,15 +133,15 @@ def ticket_revoke(lib, arg_list, modifiers):
         lib.booth.ticket_revoke, arg_list, modifiers.get("--name")
     )
 
+
 def ticket_grant(lib, arg_list, modifiers):
     """
     Options:
       * --name - name of a booth instance
     """
     modifiers.ensure_only_supported("--name")
-    _ticket_operation(
-        lib.booth.ticket_grant, arg_list, modifiers.get("--name")
-    )
+    _ticket_operation(lib.booth.ticket_grant, arg_list, modifiers.get("--name"))
+
 
 def create_in_cluster(lib, arg_list, modifiers):
     """
@@ -155,12 +157,13 @@ def create_in_cluster(lib, arg_list, modifiers):
     lib.booth.create_in_cluster(
         arg_list[1],
         instance_name=modifiers.get("--name"),
-        allow_absent_resource_agent=modifiers.get("--force")
+        allow_absent_resource_agent=modifiers.get("--force"),
     )
 
+
 def get_remove_from_cluster(resource_remove):
-    #TODO resource_remove is provisional hack until resources are not moved to
-    #lib
+    # TODO resource_remove is provisional hack until resources are not moved to
+    # lib
     def remove_from_cluster(lib, arg_list, modifiers):
         """
         Options:
@@ -180,9 +183,10 @@ def get_remove_from_cluster(resource_remove):
 
     return remove_from_cluster
 
+
 def get_restart(resource_restart):
-    #TODO resource_restart is provisional hack until resources are not moved to
-    #lib
+    # TODO resource_restart is provisional hack until resources are not moved to
+    # lib
     def restart(lib, arg_list, modifiers):
         """
         Options:
@@ -203,6 +207,7 @@ def get_restart(resource_restart):
 
     return restart
 
+
 def sync(lib, arg_list, modifiers):
     """
     Options:
@@ -213,14 +218,17 @@ def sync(lib, arg_list, modifiers):
       * --request-timeout - HTTP timeout for file ditribution
     """
     modifiers.ensure_only_supported(
-        "--skip-offline", "--name", "--booth-conf", "--booth-key",
+        "--skip-offline",
+        "--name",
+        "--booth-conf",
+        "--booth-key",
         "--request-timeout",
     )
     if arg_list:
         raise CmdLineInputError()
     lib.booth.config_sync(
         instance_name=modifiers.get("--name"),
-        skip_offline_nodes=modifiers.get("--skip-offline")
+        skip_offline_nodes=modifiers.get("--skip-offline"),
     )
 
 
@@ -278,8 +286,7 @@ def pull(lib, arg_list, modifiers):
     if len(arg_list) != 1:
         raise CmdLineInputError()
     lib.booth.pull_config(
-        arg_list[0],
-        instance_name=modifiers.get("--name"),
+        arg_list[0], instance_name=modifiers.get("--name"),
     )
 
 

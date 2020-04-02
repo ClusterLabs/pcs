@@ -10,6 +10,7 @@ class CommunicationCommandInterface:
     """
     Interface for all communication commands.
     """
+
     def get_initial_request_list(self):
         """
         Returns an initial list of Request object.
@@ -83,6 +84,7 @@ class RunRemotelyBase(CommunicationCommandInterface):
     Abstract class for communication commands. This class provides methods for
     reporting.
     """
+
     # pylint: disable=abstract-method
     _report_pcsd_too_old_on_404 = False
 
@@ -155,6 +157,7 @@ class StrategyBase:
     Abstract base class of the communication strategies. Always use at most one
     strategy mixin in the communication commands classes.
     """
+
     def _prepare_initial_requests(self):
         """
         Returns list of all Request objects which should be run. Full
@@ -176,7 +179,8 @@ class OneByOneStrategyMixin(StrategyBase):
     one request from _prepare_initial_requests is chosen as initial request
     list. Other requests are then available by calling method _get_next_list.
     """
-    #pylint: disable=abstract-method
+
+    # pylint: disable=abstract-method
     __iter = None
     __successful = False
 
@@ -204,7 +208,8 @@ class AllAtOnceStrategyMixin(StrategyBase):
     Communication strategy in which all requests are executed at once in
     parallel.
     """
-    #pylint: disable=abstract-method
+
+    # pylint: disable=abstract-method
     def get_initial_request_list(self):
         return self._prepare_initial_requests()
 
@@ -229,6 +234,7 @@ class AllSameDataMixin:
     Communication command mixin which adds common methods for commands where
     requests to all targets have the same data.
     """
+
     __targets = None
 
     def _get_request_data(self):
@@ -277,13 +283,13 @@ class AllSameDataMixin:
         return [target.label for target in self.__target_list]
 
 
-
 class SimpleResponseProcessingMixin:
     """
     Communication command mixin which adds common response processing. When
     request fails error/warning will be reported. Otherwise _get_success_report
     will be reported.
     """
+
     def _get_success_report(self, node_label):
         """
         Returns ReportItem which should be reported when request was
@@ -305,6 +311,7 @@ class SimpleResponseProcessingNoResponseOnSuccessMixin:
     Communication command mixin which adds common response processing. When
     request fails error/warning will be reported.
     """
+
     def _process_response(self, response):
         report = self._get_response_report(response)
         if report is not None:
@@ -319,14 +326,13 @@ class SkipOfflineMixin:
     returned from _get_response_report is set accordingly to value of
     skip_offline_targets.
     """
+
     _failure_severity = ReportItemSeverity.ERROR
     _failure_forceable = None
     _report_pcsd_too_old_on_404: bool
 
     def _set_skip_offline(
-        self,
-        skip_offline_targets,
-        force_code=reports.codes.SKIP_OFFLINE_NODES,
+        self, skip_offline_targets, force_code=reports.codes.SKIP_OFFLINE_NODES,
     ):
         """
         Set value of skip_offline_targets flag.

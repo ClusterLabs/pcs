@@ -1,26 +1,31 @@
 from pcs_test.tools.command_env.mock_node_communicator import (
-    place_multinode_call
+    place_multinode_call,
 )
+
 
 class SbdShortcuts:
     def __init__(self, calls):
         self.__calls = calls
 
     def enable_sbd(
-        self, node_labels=None, communication_list=None,
-        name="http.sbd.enable_sbd"
+        self,
+        node_labels=None,
+        communication_list=None,
+        name="http.sbd.enable_sbd",
     ):
         place_multinode_call(
             self.__calls,
             name,
             node_labels,
             communication_list,
-            action="remote/sbd_enable"
+            action="remote/sbd_enable",
         )
 
     def disable_sbd(
-        self, node_labels=None, communication_list=None,
-        name="http.sbd.disable_sbd"
+        self,
+        node_labels=None,
+        communication_list=None,
+        name="http.sbd.disable_sbd",
     ):
         """
         Create a call for disabling sbd on nodes
@@ -34,12 +39,10 @@ class SbdShortcuts:
             name,
             node_labels,
             communication_list,
-            action="remote/sbd_disable"
+            action="remote/sbd_disable",
         )
 
-    def check_sbd(
-        self, communication_list=None, name="http.sbd.check_sbd"
-    ):
+    def check_sbd(self, communication_list=None, name="http.sbd.check_sbd"):
         place_multinode_call(
             self.__calls,
             name,
@@ -48,8 +51,11 @@ class SbdShortcuts:
         )
 
     def set_sbd_config(
-        self, config_generator=None, node_labels=None, communication_list=None,
-        name="http.sbd.set_sbd_config"
+        self,
+        config_generator=None,
+        node_labels=None,
+        communication_list=None,
+        name="http.sbd.set_sbd_config",
     ):
         if bool(config_generator) == bool(communication_list):
             raise AssertionError(
@@ -63,9 +69,9 @@ class SbdShortcuts:
         if communication_list is None:
             communication_list = [
                 dict(
-                    param_list=[("config", config_generator(node))],
-                    label=node,
-                ) for node in node_labels
+                    param_list=[("config", config_generator(node))], label=node,
+                )
+                for node in node_labels
             ]
         place_multinode_call(
             self.__calls,

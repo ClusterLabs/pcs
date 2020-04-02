@@ -28,6 +28,7 @@ class AclCommandsTest(TestCase, ExtendedAssertionsMixin):
     def assert_cib_not_pushed(self):
         self.assertEqual(0, self.mock_env.push_cib.call_count)
 
+
 @mock.patch("pcs.lib.commands.acl.get_acls", mock.Mock(side_effect=lambda x: x))
 class CibAclSection(TestCase):
     def test_push_cib_on_success(self):
@@ -41,12 +42,15 @@ class CibAclSection(TestCase):
 
     def test_does_not_push_cib_on_exception(self):
         env = mock.MagicMock()
+
         def run():
             with cmd_acl.cib_acl_section(env):
                 raise AssertionError()
+
         self.assertRaises(AssertionError, run)
         env.get_cib.assert_called_once_with(cmd_acl.REQUIRED_CIB_VERSION)
         env.push_cib.assert_not_called()
+
 
 @mock.patch("pcs.lib.commands.acl.get_acls", mock.Mock(side_effect=lambda x: x))
 @mock.patch("pcs.lib.cib.acl.validate_permissions")
@@ -109,6 +113,7 @@ class AssignRoleToTargetTest(AclCommandsTest):
         mock_assign.assert_called_once_with(self.cib, "role_id", "target_el")
         self.assert_same_cib_pushed()
 
+
 @mock.patch("pcs.lib.commands.acl.get_acls", mock.Mock(side_effect=lambda x: x))
 @mock.patch("pcs.lib.cib.acl.find_group")
 @mock.patch("pcs.lib.cib.acl.assign_role")
@@ -119,6 +124,7 @@ class AssignRoleToGroupTest(AclCommandsTest):
         self.assert_get_cib_called()
         mock_assign.assert_called_once_with(self.cib, "role_id", "group_el")
         self.assert_same_cib_pushed()
+
 
 @mock.patch("pcs.lib.commands.acl.get_acls", mock.Mock(side_effect=lambda x: x))
 @mock.patch("pcs.lib.cib.acl.unassign_role")
@@ -255,5 +261,5 @@ class GetConfigTest(AclCommandsTest):
                 "group_list": "group",
                 "role_list": "role",
             },
-            cmd_acl.get_config(self.mock_env)
+            cmd_acl.get_config(self.mock_env),
         )

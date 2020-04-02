@@ -13,10 +13,7 @@ from pcs import settings
 from pcs.common import reports
 from pcs.common.reports import ReportProcessor
 from pcs.common.reports.item import ReportItem
-from pcs.common.tools import (
-    format_os_error,
-    xml_fromstring
-)
+from pcs.common.tools import format_os_error, xml_fromstring
 from pcs.common.str_tools import join_multilines
 from pcs.lib.cib.tools import get_pacemaker_version_by_which_cib_was_validated
 from pcs.lib.errors import LibraryError
@@ -30,13 +27,17 @@ __EXITCODE_WAIT_TIMEOUT = 124
 __EXITCODE_CIB_SCOPE_VALID_BUT_NOT_PRESENT = 105
 __RESOURCE_REFRESH_OPERATION_COUNT_THRESHOLD = 100
 
+
 class CrmMonErrorException(LibraryError):
     pass
+
 
 class FenceHistoryCommandErrorException(Exception):
     pass
 
+
 ### status
+
 
 def get_cluster_status_xml(runner):
     stdout, stderr, retval = runner.run(
@@ -50,10 +51,9 @@ def get_cluster_status_xml(runner):
         )
     return stdout
 
+
 def get_cluster_status_text(
-    runner: CommandRunner,
-    hide_inactive_resources: bool,
-    verbose: bool,
+    runner: CommandRunner, hide_inactive_resources: bool, verbose: bool,
 ) -> Tuple[str, List[str]]:
     cmd = [__exec("crm_mon"), "--one-shot"]
     if not hide_inactive_resources:
@@ -82,11 +82,14 @@ def get_cluster_status_text(
 
     return stdout.strip(), warnings
 
+
 def get_ticket_status_text(runner: CommandRunner) -> Tuple[str, str, int]:
     stdout, stderr, retval = runner.run([__exec("crm_ticket"), "--details"])
     return stdout.strip(), stderr.strip(), retval
 
+
 ### cib
+
 
 def get_cib_xml_cmd_results(runner, scope=None):
     command = [__exec("cibadmin"), "--local", "--query"]
@@ -95,6 +98,7 @@ def get_cib_xml_cmd_results(runner, scope=None):
     stdout, stderr, returncode = runner.run(command)
     return stdout, stderr, returncode
 
+
 def get_cib_xml(runner, scope=None):
     stdout, stderr, retval = get_cib_xml_cmd_results(runner, scope)
     if retval != 0:
@@ -102,8 +106,7 @@ def get_cib_xml(runner, scope=None):
             raise LibraryError(
                 ReportItem.error(
                     reports.messages.CibLoadErrorScopeMissing(
-                        scope,
-                        join_multilines([stderr, stdout])
+                        scope, join_multilines([stderr, stdout])
                     )
                 )
             )
@@ -114,18 +117,19 @@ def get_cib_xml(runner, scope=None):
         )
     return stdout
 
+
 def parse_cib_xml(xml):
     return xml_fromstring(xml)
+
 
 def get_cib(xml):
     try:
         return parse_cib_xml(xml)
     except (etree.XMLSyntaxError, etree.DocumentInvalid) as e:
         raise LibraryError(
-            ReportItem.error(
-                reports.messages.CibLoadErrorBadFormat(str(e))
-            )
+            ReportItem.error(reports.messages.CibLoadErrorBadFormat(str(e)))
         )
+
 
 def verify(runner, verbose=False):
     crm_verify_cmd = [__exec("crm_verify")]
@@ -133,11 +137,11 @@ def verify(runner, verbose=False):
     # more than two. We stick with two -V options if verbose mode was enabled.
     if verbose:
         crm_verify_cmd.extend(["-V", "-V"])
-    #With the `crm_verify` command it is not possible simply use the environment
-    #variable CIB_file because `crm_verify` simply tries to connect to cib file
-    #via tool that can fail because: Update does not conform to the configured
-    #schema
-    #So we use the explicit flag `--xml-file`.
+    # With the `crm_verify` command it is not possible simply use the
+    # environment variable CIB_file because `crm_verify` simply tries to
+    # connect to cib file via tool that can fail because: Update does not
+    # conform to the configured schema
+    # So we use the explicit flag `--xml-file`.
     cib_tmp_file = runner.env_vars.get("CIB_file", None)
     if cib_tmp_file is None:
         crm_verify_cmd.append("--live-check")
@@ -162,24 +166,26 @@ def verify(runner, verbose=False):
         stderr = "".join(new_lines)
     return stdout, stderr, returncode, can_be_more_verbose
 
+
 def replace_cib_configuration_xml(runner, xml):
     cmd = [
         __exec("cibadmin"),
         "--replace",
         "--verbose",
         "--xml-pipe",
-        "--scope", "configuration",
+        "--scope",
+        "configuration",
     ]
     stdout, stderr, retval = runner.run(cmd, stdin_string=xml)
     if retval != 0:
         raise LibraryError(
-            ReportItem.error(
-                reports.messages.CibPushError(stderr, stdout)
-            )
+            ReportItem.error(reports.messages.CibPushError(stderr, stdout))
         )
+
 
 def replace_cib_configuration(runner, tree):
     return replace_cib_configuration_xml(runner, etree_to_str(tree))
+
 
 def push_cib_diff_xml(runner, cib_diff_xml):
     cmd = [
@@ -191,16 +197,12 @@ def push_cib_diff_xml(runner, cib_diff_xml):
     stdout, stderr, retval = runner.run(cmd, stdin_string=cib_diff_xml)
     if retval != 0:
         raise LibraryError(
-            ReportItem.error(
-                reports.messages.CibPushError(stderr, stdout)
-            )
+            ReportItem.error(reports.messages.CibPushError(stderr, stdout))
         )
 
+
 def diff_cibs_xml(
-    runner: CommandRunner,
-    reporter: ReportProcessor,
-    cib_old_xml,
-    cib_new_xml,
+    runner: CommandRunner, reporter: ReportProcessor, cib_old_xml, cib_new_xml,
 ):
     """
     Return xml diff of two CIBs
@@ -229,9 +231,7 @@ def diff_cibs_xml(
         )
     except EnvironmentError as e:
         raise LibraryError(
-            ReportItem.error(
-                reports.messages.CibSaveTmpError(str(e))
-            )
+            ReportItem.error(reports.messages.CibSaveTmpError(str(e)))
         )
     command = [
         __exec("crm_diff"),
@@ -258,6 +258,7 @@ def diff_cibs_xml(
         )
     return stdout.strip()
 
+
 def ensure_cib_version(runner, cib, version):
     """
     This method ensures that specified cib is verified by pacemaker with
@@ -281,9 +282,7 @@ def ensure_cib_version(runner, cib, version):
         new_cib = parse_cib_xml(new_cib_xml)
     except (etree.XMLSyntaxError, etree.DocumentInvalid) as e:
         raise LibraryError(
-            ReportItem.error(
-                reports.messages.CibUpgradeFailed(str(e))
-            )
+            ReportItem.error(reports.messages.CibUpgradeFailed(str(e)))
         )
 
     current_version = get_pacemaker_version_by_which_cib_was_validated(new_cib)
@@ -297,6 +296,7 @@ def ensure_cib_version(runner, cib, version):
             )
         )
     )
+
 
 def _upgrade_cib(runner):
     """
@@ -318,6 +318,7 @@ def _upgrade_cib(runner):
             )
         )
 
+
 def simulate_cib_xml(runner, cib_xml):
     """
     Run crm_simulate to get effects the cib would have on the live cluster
@@ -338,16 +339,16 @@ def simulate_cib_xml(runner, cib_xml):
     cmd = [
         __exec("crm_simulate"),
         "--simulate",
-        "--save-output", new_cib_file.name,
-        "--save-graph", transitions_file.name,
+        "--save-output",
+        new_cib_file.name,
+        "--save-graph",
+        transitions_file.name,
         "--xml-pipe",
     ]
     stdout, stderr, retval = runner.run(cmd, stdin_string=cib_xml)
     if retval != 0:
         raise LibraryError(
-            ReportItem.error(
-                reports.messages.CibSimulateError(stderr.strip())
-            )
+            ReportItem.error(reports.messages.CibSimulateError(stderr.strip()))
         )
 
     try:
@@ -365,6 +366,7 @@ def simulate_cib_xml(runner, cib_xml):
             )
         )
 
+
 def simulate_cib(runner, cib):
     """
     Run crm_simulate to get effects the cib would have on the live cluster
@@ -380,25 +382,27 @@ def simulate_cib(runner, cib):
         return (
             plaintext_result.strip(),
             xml_fromstring(transitions_xml),
-            xml_fromstring(new_cib_xml)
+            xml_fromstring(new_cib_xml),
         )
     except (etree.XMLSyntaxError, etree.DocumentInvalid) as e:
         raise LibraryError(
-            ReportItem.error(
-                reports.messages.CibSimulateError(str(e))
-            )
+            ReportItem.error(reports.messages.CibSimulateError(str(e)))
         )
+
 
 ### wait for idle
 
+
 def has_wait_for_idle_support(runner):
     return __is_in_crm_resource_help(runner, "--wait")
+
 
 def ensure_wait_for_idle_support(runner):
     if not has_wait_for_idle_support(runner):
         raise LibraryError(
             ReportItem.error(reports.messages.WaitForIdleNotSupported())
         )
+
 
 def wait_for_idle(runner, timeout=None):
     """
@@ -431,7 +435,9 @@ def wait_for_idle(runner, timeout=None):
             )
         )
 
+
 ### nodes
+
 
 def get_local_node_name(runner):
     stdout, stderr, retval = runner.run([__exec("crm_node"), "--name"])
@@ -445,6 +451,7 @@ def get_local_node_name(runner):
         )
     return stdout.strip()
 
+
 def get_local_node_status(runner):
     try:
         cluster_status = ClusterState(get_cluster_status_xml(runner))
@@ -457,9 +464,19 @@ def get_local_node_status(runner):
                 "offline": False,
             }
             for attr in (
-                'id', 'name', 'type', 'online', 'standby', 'standby_onfail',
-                'maintenance', 'pending', 'unclean', 'shutdown', 'expected_up',
-                'is_dc', 'resources_running',
+                "id",
+                "name",
+                "type",
+                "online",
+                "standby",
+                "standby_onfail",
+                "maintenance",
+                "pending",
+                "unclean",
+                "shutdown",
+                "expected_up",
+                "is_dc",
+                "resources_running",
             ):
                 result[attr] = getattr(node_status.attrs, attr)
             return result
@@ -467,13 +484,11 @@ def get_local_node_status(runner):
         ReportItem.error(reports.messages.NodeNotFound(node_name))
     )
 
+
 def remove_node(runner, node_name):
-    stdout, stderr, retval = runner.run([
-        __exec("crm_node"),
-        "--force",
-        "--remove",
-        node_name,
-    ])
+    stdout, stderr, retval = runner.run(
+        [__exec("crm_node"), "--force", "--remove", node_name,]
+    )
     if retval != 0:
         raise LibraryError(
             ReportItem.error(
@@ -484,7 +499,9 @@ def remove_node(runner, node_name):
             )
         )
 
+
 ### resources
+
 
 def resource_cleanup(
     runner: CommandRunner,
@@ -519,6 +536,7 @@ def resource_cleanup(
     # usefull output (what has been done) goes to stderr
     return join_multilines([stdout, stderr])
 
+
 def resource_refresh(
     runner: CommandRunner,
     resource: Optional[str] = None,
@@ -537,7 +555,7 @@ def resource_refresh(
                     ),
                     reports.messages.ResourceRefreshTooTimeConsuming(
                         __RESOURCE_REFRESH_OPERATION_COUNT_THRESHOLD
-                    )
+                    ),
                 )
             )
 
@@ -562,6 +580,7 @@ def resource_refresh(
     # usefull output (what has been done) goes to stderr
     return join_multilines([stdout, stderr])
 
+
 def resource_move(runner, resource_id, node=None, master=False, lifetime=None):
     return _resource_move_ban_clear(
         runner,
@@ -572,6 +591,7 @@ def resource_move(runner, resource_id, node=None, master=False, lifetime=None):
         lifetime=lifetime,
     )
 
+
 def resource_ban(runner, resource_id, node=None, master=False, lifetime=None):
     return _resource_move_ban_clear(
         runner,
@@ -581,6 +601,7 @@ def resource_ban(runner, resource_id, node=None, master=False, lifetime=None):
         master=master,
         lifetime=lifetime,
     )
+
 
 def resource_unmove_unban(
     runner, resource_id, node=None, master=False, expired=False
@@ -594,12 +615,19 @@ def resource_unmove_unban(
         expired=expired,
     )
 
+
 def has_resource_unmove_unban_expired_support(runner):
     return __is_in_crm_resource_help(runner, "--expired")
 
+
 def _resource_move_ban_clear(
-    runner, action, resource_id, node=None, master=False, lifetime=None,
-    expired=False
+    runner,
+    action,
+    resource_id,
+    node=None,
+    master=False,
+    lifetime=None,
+    expired=False,
 ):
     command = [
         __exec("crm_resource"),
@@ -618,23 +646,27 @@ def _resource_move_ban_clear(
     stdout, stderr, retval = runner.run(command)
     return stdout, stderr, retval
 
+
 ### fence history
 
+
 def is_fence_history_supported_status(runner: CommandRunner) -> bool:
-    return _is_in_pcmk_tool_help(
-        runner, "crm_mon", ["--fence-history"]
-    )
+    return _is_in_pcmk_tool_help(runner, "crm_mon", ["--fence-history"])
+
 
 def is_fence_history_supported_management(runner: CommandRunner) -> bool:
     return _is_in_pcmk_tool_help(
         runner, "stonith_admin", ["--history", "--broadcast", "--cleanup"]
     )
 
+
 def fence_history_cleanup(runner, node=None):
     return _run_fence_history_command(runner, "--cleanup", node)
 
+
 def fence_history_text(runner, node=None):
     return _run_fence_history_command(runner, "--verbose", node)
+
 
 def fence_history_update(runner):
     # Pacemaker always prints "gather fencing-history from all nodes" even if a
@@ -642,14 +674,10 @@ def fence_history_update(runner):
     # it. Otherwise "--broadcast" would be considered a value of "--history".
     return _run_fence_history_command(runner, "--broadcast", node=None)
 
+
 def _run_fence_history_command(runner, command, node=None):
     stdout, stderr, retval = runner.run(
-        [
-            __exec("stonith_admin"),
-            "--history",
-            node if node else "*",
-            command
-        ]
+        [__exec("stonith_admin"), "--history", node if node else "*", command]
     )
     if retval != 0:
         raise FenceHistoryCommandErrorException(
@@ -657,30 +685,27 @@ def _run_fence_history_command(runner, command, node=None):
         )
     return stdout.strip()
 
+
 ### tools
 
 # shortcut for getting a full path to a pacemaker executable
 def __exec(name):
     return os.path.join(settings.pacemaker_binaries, name)
 
+
 def __is_in_crm_resource_help(runner, text):
     # returns 1 on success so we don't care about retval
-    stdout, stderr, dummy_retval = runner.run(
-        [__exec("crm_resource"), "-?"]
-    )
+    stdout, stderr, dummy_retval = runner.run([__exec("crm_resource"), "-?"])
     # help goes to stderr but we check stdout as well if that gets changed
     return text in stderr or text in stdout
+
 
 def _is_in_pcmk_tool_help(
     runner: CommandRunner, tool: str, text_list: Iterable[str]
 ) -> bool:
-    stdout, stderr, dummy_retval = runner.run(
-        [__exec(tool), "--help-all"]
-    )
+    stdout, stderr, dummy_retval = runner.run([__exec(tool), "--help-all"])
     # Help goes to stderr but we check stdout as well if that gets changed. Use
     # generators in all to return early.
-    return (
-        all(text in stderr for text in text_list)
-        or
-        all(text in stdout for text in text_list)
+    return all(text in stderr for text in text_list) or all(
+        text in stdout for text in text_list
     )

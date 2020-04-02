@@ -32,8 +32,8 @@ def _even_number_of_nodes_and_no_qdevice(
     """
     return (
         not corosync_conf_facade.has_quorum_device()
-        and
-        (len(corosync_conf_facade.get_nodes()) + node_number_modifier) % 2 == 0
+        and (len(corosync_conf_facade.get_nodes()) + node_number_modifier) % 2
+        == 0
     )
 
 
@@ -54,12 +54,9 @@ def is_auto_tie_breaker_needed(
         _even_number_of_nodes_and_no_qdevice(
             corosync_conf_facade, node_number_modifier
         )
-        and
-        is_sbd_installed(runner)
-        and
-        is_sbd_enabled(runner)
-        and
-        not is_device_set_local()
+        and is_sbd_installed(runner)
+        and is_sbd_enabled(runner)
+        and not is_device_set_local()
     )
 
 
@@ -68,12 +65,14 @@ def atb_has_to_be_enabled_pre_enable_check(corosync_conf_facade):
     Returns True whenever quorum option auto_tie_breaker is needed to be enabled
     for proper working of SBD fencing. False if it is not needed. This function
     doesn't check if sbd is installed nor enabled.
-     """
+    """
+    # fmt: off
     return (
         not corosync_conf_facade.is_enabled_auto_tie_breaker()
         and
         _even_number_of_nodes_and_no_qdevice(corosync_conf_facade)
     )
+    # fmt: on
 
 
 def atb_has_to_be_enabled(runner, corosync_conf_facade, node_number_modifier=0):
@@ -88,6 +87,7 @@ def atb_has_to_be_enabled(runner, corosync_conf_facade, node_number_modifier=0):
         This can be useful to test whenever is ATB needed when adding/removeing
         node.
     """
+    # fmt: off
     return (
         not corosync_conf_facade.is_enabled_auto_tie_breaker()
         and
@@ -95,6 +95,7 @@ def atb_has_to_be_enabled(runner, corosync_conf_facade, node_number_modifier=0):
             runner, corosync_conf_facade, node_number_modifier
         )
     )
+    # fmt: on
 
 
 def validate_new_nodes_devices(nodes_devices):
@@ -105,13 +106,14 @@ def validate_new_nodes_devices(nodes_devices):
     """
     if is_device_set_local():
         return validate_nodes_devices(
-            nodes_devices,
-            adding_nodes_to_sbd_enabled_cluster=True
+            nodes_devices, adding_nodes_to_sbd_enabled_cluster=True
         )
     return [
         ReportItem.error(
             reports.messages.SbdWithDevicesNotUsedCannotSetDevice(node)
-        ) for node, devices in nodes_devices.items() if devices
+        )
+        for node, devices in nodes_devices.items()
+        if devices
     ]
 
 
@@ -180,7 +182,7 @@ def get_default_sbd_config():
         "SBD_PACEMAKER": "yes",
         "SBD_STARTMODE": "always",
         "SBD_WATCHDOG_DEV": settings.sbd_watchdog_default,
-        "SBD_WATCHDOG_TIMEOUT": "5"
+        "SBD_WATCHDOG_TIMEOUT": "5",
     }
 
 
@@ -226,10 +228,7 @@ def is_sbd_installed(runner):
 
 
 def initialize_block_devices(
-    report_processor: ReportProcessor,
-    cmd_runner,
-    device_list,
-    option_dict
+    report_processor: ReportProcessor, cmd_runner, device_list, option_dict
 ):
     """
     Initialize devices with specified options in option_dict.
@@ -283,10 +282,7 @@ def get_local_sbd_device_list():
     devices = cfg["SBD_DEVICE"]
     if devices.startswith('"') and devices.endswith('"'):
         devices = devices[1:-1]
-    return [
-        device.strip()
-        for device in devices.split(";") if device.strip()
-    ]
+    return [device.strip() for device in devices.split(";") if device.strip()]
 
 
 def is_device_set_local():
@@ -376,7 +372,8 @@ def get_available_watchdogs(cmd_runner):
     return {
         match.group("watchdog"): {
             key: match.group(key) for key in ["identity", "driver", "caution"]
-        } for match in re.finditer(regex, std_out, re.MULTILINE)
+        }
+        for match in re.finditer(regex, std_out, re.MULTILINE)
     }
 
 
@@ -393,9 +390,7 @@ def test_watchdog(cmd_runner, watchdog=None):
                 )
             )
         raise LibraryError(
-            ReportItem.error(
-                reports.messages.SbdWatchdogTestError(std_out)
-            )
+            ReportItem.error(reports.messages.SbdWatchdogTestError(std_out))
         )
     raise LibraryError(
         ReportItem.error(reports.messages.SbdWatchdogTestFailed())

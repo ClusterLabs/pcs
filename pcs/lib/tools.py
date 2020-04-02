@@ -5,6 +5,7 @@ import tempfile
 def generate_binary_key(random_bytes_count):
     return os.urandom(random_bytes_count)
 
+
 def environment_file_to_dict(config):
     """
     Parse systemd Environment file. This parser is simplified version of
@@ -31,6 +32,7 @@ def environment_file_to_dict(config):
         data[key.strip()] = value
     return data
 
+
 def dict_to_environment_file(config_dict):
     """
     Convert data in dictionary to Environment file format.
@@ -45,6 +47,7 @@ def dict_to_environment_file(config_dict):
     for key, val in sorted(config_dict.items()):
         lines.append("{key}={val}\n".format(key=key, val=val))
     return "".join(lines)
+
 
 def write_tmpfile(data, binary=False):
     """

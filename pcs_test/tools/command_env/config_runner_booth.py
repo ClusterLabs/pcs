@@ -2,13 +2,20 @@ from pcs_test.tools.command_env.mock_runner import Call as RunnerCall
 
 from pcs import settings
 
+
 class BoothShortcuts:
     def __init__(self, calls):
         self.__calls = calls
 
     def status_daemon(
-        self, instance_name=None, stdout="", stderr="", returncode=0,
-        name="runner.booth.status_daemon", instead=None, before=None
+        self,
+        instance_name=None,
+        stdout="",
+        stderr="",
+        returncode=0,
+        name="runner.booth.status_daemon",
+        instead=None,
+        before=None,
     ):
         """
         Create a call for getting the booth daemon status
@@ -29,18 +36,21 @@ class BoothShortcuts:
         self.__calls.place(
             name,
             RunnerCall(
-                cmd,
-                stdout=stdout,
-                stderr=stderr,
-                returncode=returncode,
+                cmd, stdout=stdout, stderr=stderr, returncode=returncode,
             ),
             before=before,
-            instead=instead
+            instead=instead,
         )
 
     def status_peers(
-        self, instance_name=None, stdout="", stderr="", returncode=0,
-        name="runner.booth.status_peers", instead=None, before=None
+        self,
+        instance_name=None,
+        stdout="",
+        stderr="",
+        returncode=0,
+        name="runner.booth.status_peers",
+        instead=None,
+        before=None,
     ):
         """
         Create a call for getting the booth peers status
@@ -61,18 +71,21 @@ class BoothShortcuts:
         self.__calls.place(
             name,
             RunnerCall(
-                cmd,
-                stdout=stdout,
-                stderr=stderr,
-                returncode=returncode,
+                cmd, stdout=stdout, stderr=stderr, returncode=returncode,
             ),
             before=before,
-            instead=instead
+            instead=instead,
         )
 
     def status_tickets(
-        self, instance_name=None, stdout="", stderr="", returncode=0,
-        name="runner.booth.status_tickets", instead=None, before=None
+        self,
+        instance_name=None,
+        stdout="",
+        stderr="",
+        returncode=0,
+        name="runner.booth.status_tickets",
+        instead=None,
+        before=None,
     ):
         """
         Create a call for getting the booth tickets status
@@ -93,18 +106,22 @@ class BoothShortcuts:
         self.__calls.place(
             name,
             RunnerCall(
-                cmd,
-                stdout=stdout,
-                stderr=stderr,
-                returncode=returncode,
+                cmd, stdout=stdout, stderr=stderr, returncode=returncode,
             ),
             before=before,
-            instead=instead
+            instead=instead,
         )
 
     def ticket_grant(
-        self, ticket_name, site_ip, stdout="", stderr="", returncode=0,
-        name="runner.booth.ticket_grant", instead=None, before=None
+        self,
+        ticket_name,
+        site_ip,
+        stdout="",
+        stderr="",
+        returncode=0,
+        name="runner.booth.ticket_grant",
+        instead=None,
+        before=None,
     ):
         # pylint: disable=too-many-arguments
         """
@@ -130,12 +147,19 @@ class BoothShortcuts:
                 returncode=returncode,
             ),
             before=before,
-            instead=instead
+            instead=instead,
         )
 
     def ticket_revoke(
-        self, ticket_name, site_ip, stdout="", stderr="", returncode=0,
-        name="runner.booth.ticket_revoke", instead=None, before=None
+        self,
+        ticket_name,
+        site_ip,
+        stdout="",
+        stderr="",
+        returncode=0,
+        name="runner.booth.ticket_revoke",
+        instead=None,
+        before=None,
     ):
         # pylint: disable=too-many-arguments
         """
@@ -161,5 +185,5 @@ class BoothShortcuts:
                 returncode=returncode,
             ),
             before=before,
-            instead=instead
+            instead=instead,
         )

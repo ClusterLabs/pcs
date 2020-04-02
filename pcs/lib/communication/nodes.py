@@ -37,9 +37,10 @@ class GetOnlineTargets(
             return
         if not response.was_connected:
             report = (
-                ReportItem.warning(reports.messages.OmittingNode(
-                    response.request.target.label
-                )) if self._ignore_offline_targets
+                ReportItem.warning(
+                    reports.messages.OmittingNode(response.request.target.label)
+                )
+                if self._ignore_offline_targets
                 else response_to_report_item(
                     response, forceable=report_codes.SKIP_OFFLINE_NODES
                 )
@@ -149,8 +150,11 @@ class RunActionBase(
     _code_message_map = None
 
     def __init__(
-        self, report_processor, action_definition,
-        skip_offline_targets=False, allow_fails=False,
+        self,
+        report_processor,
+        action_definition,
+        skip_offline_targets=False,
+        allow_fails=False,
     ):
         super(RunActionBase, self).__init__(report_processor)
         self._set_skip_offline(skip_offline_targets)
@@ -207,14 +211,13 @@ class RunActionBase(
             results,
             self._response_key,
             list(self._action_definition.keys()),
-            target.label
+            target.label,
         )
         for key, item_response in sorted(results.items()):
             if self._is_success(item_response):
-                #only success process individually
+                # only success process individually
                 report = self._success_report(
-                    target.label,
-                    self._action_key_to_report(key),
+                    target.label, self._action_key_to_report(key),
                 )
             else:
                 report = self._failure_report(
@@ -223,18 +226,20 @@ class RunActionBase(
                     node_communication_format.get_format_result(
                         self._code_message_map
                     )(item_response),
-                    **self._action_error_force
+                    **self._action_error_force,
                 )
             self._report(report)
 
     def before(self):
-        self._report(self._start_report(
-            [
-                self._action_key_to_report(key)
-                for key in self._action_definition.keys()
-            ],
-            [target.label for target in self._target_list],
-        ))
+        self._report(
+            self._start_report(
+                [
+                    self._action_key_to_report(key)
+                    for key in self._action_definition.keys()
+                ],
+                [target.label for target in self._target_list],
+            )
+        )
 
     def _action_key_to_report(self, key):
         return self._key_to_report.get(key, key)
@@ -252,19 +257,15 @@ class ServiceAction(RunActionBase):
         self, target_label, action, reason, severity, forceable
     ):
         return ReportItem(
-            severity=reports.item.ReportItemSeverity(
-                severity, forceable
-            ),
+            severity=reports.item.ReportItemSeverity(severity, forceable),
             message=reports.messages.ServiceCommandOnNodeError(
                 target_label, action, reason
-            )
+            ),
         )
 
     def _success_report(self, target_label, action):
         return ReportItem.info(
-            reports.messages.ServiceCommandOnNodeSuccess(
-                target_label, action
-            )
+            reports.messages.ServiceCommandOnNodeSuccess(target_label, action)
         )
 
     def _start_report(self, action_list, target_label_list):
@@ -279,7 +280,7 @@ class ServiceAction(RunActionBase):
 
 
 class FileActionBase(RunActionBase):
-    #pylint: disable=abstract-method, too-many-ancestors
+    # pylint: disable=abstract-method, too-many-ancestors
     def _init_properties(self):
         self._response_key = "files"
         self._force_code = report_codes.SKIP_FILE_DISTRIBUTION_ERRORS
@@ -296,12 +297,10 @@ class DistributeFiles(FileActionBase):
         self, target_label, action, reason, severity, forceable
     ):
         return ReportItem(
-            severity=reports.item.ReportItemSeverity(
-                severity, forceable
-            ),
+            severity=reports.item.ReportItemSeverity(severity, forceable),
             message=reports.messages.FileDistributionError(
                 target_label, action, reason
-            )
+            ),
         )
 
     def _success_report(self, target_label, action):
@@ -342,12 +341,10 @@ class RemoveFiles(FileActionBase):
         self, target_label, action, reason, severity, forceable
     ):
         return ReportItem(
-            severity=reports.item.ReportItemSeverity(
-                severity, forceable
-            ),
+            severity=reports.item.ReportItemSeverity(severity, forceable),
             message=reports.messages.FileRemoveFromNodeError(
                 target_label, action, reason
-            )
+            ),
         )
 
     def _success_report(self, target_label, action):
@@ -378,8 +375,10 @@ class RemoveFilesWithoutForces(RemoveFiles):
 
 
 class StartCluster(
-    SimpleResponseProcessingNoResponseOnSuccessMixin, AllSameDataMixin,
-    AllAtOnceStrategyMixin, RunRemotelyBase,
+    SimpleResponseProcessingNoResponseOnSuccessMixin,
+    AllSameDataMixin,
+    AllAtOnceStrategyMixin,
+    RunRemotelyBase,
 ):
     def _get_request_data(self):
         return RequestData("remote/cluster_start")
@@ -395,7 +394,9 @@ class StartCluster(
 
 
 class EnableCluster(
-    SimpleResponseProcessingMixin, AllSameDataMixin, AllAtOnceStrategyMixin,
+    SimpleResponseProcessingMixin,
+    AllSameDataMixin,
+    AllAtOnceStrategyMixin,
     RunRemotelyBase,
 ):
     def _get_request_data(self):
@@ -433,11 +434,9 @@ class CheckPacemakerStarted(
                 # If the node is offline, we only get the "offline" key. Asking
                 # for any other in that case results in KeyError which is not
                 # what we want.
-                if (
-                    parsed_response.get("pending", True)
-                    or
-                    not parsed_response.get("online", False)
-                ):
+                if parsed_response.get(
+                    "pending", True
+                ) or not parsed_response.get("online", False):
                     self._not_yet_started_target_list.append(target)
                     return
                 report = ReportItem.info(
@@ -464,8 +463,10 @@ class CheckPacemakerStarted(
 
 
 class UpdateKnownHosts(
-    SimpleResponseProcessingNoResponseOnSuccessMixin, AllSameDataMixin,
-    AllAtOnceStrategyMixin, RunRemotelyBase,
+    SimpleResponseProcessingNoResponseOnSuccessMixin,
+    AllSameDataMixin,
+    AllAtOnceStrategyMixin,
+    RunRemotelyBase,
 ):
     def __init__(
         self, report_processor, known_hosts_to_add, known_hosts_to_remove
@@ -528,8 +529,10 @@ class RemoveNodesFromCib(
 
 
 class SendPcsdSslCertAndKey(
-    SimpleResponseProcessingMixin, AllSameDataMixin, AllAtOnceStrategyMixin,
-    RunRemotelyBase
+    SimpleResponseProcessingMixin,
+    AllSameDataMixin,
+    AllAtOnceStrategyMixin,
+    RunRemotelyBase,
 ):
     def __init__(self, report_processor, ssl_cert, ssl_key):
         super().__init__(report_processor)
@@ -539,7 +542,7 @@ class SendPcsdSslCertAndKey(
     def _get_request_data(self):
         return RequestData(
             "remote/set_certs",
-            [("ssl_cert", self._ssl_cert), ("ssl_key", self._ssl_key)]
+            [("ssl_cert", self._ssl_cert), ("ssl_key", self._ssl_key)],
         )
 
     def _get_success_report(self, node_label):
@@ -550,11 +553,5 @@ class SendPcsdSslCertAndKey(
 
 def _force(force_code, is_forced):
     if is_forced:
-        return dict(
-            severity=ReportItemSeverity.WARNING,
-            forceable=None,
-        )
-    return dict(
-        severity=ReportItemSeverity.ERROR,
-        forceable=force_code,
-    )
+        return dict(severity=ReportItemSeverity.WARNING, forceable=None,)
+    return dict(severity=ReportItemSeverity.ERROR, forceable=force_code,)

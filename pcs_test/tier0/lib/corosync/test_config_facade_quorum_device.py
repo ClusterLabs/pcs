@@ -35,32 +35,37 @@ class HasQuorumDeviceTest(TestCase):
         self.assertFalse(facade.need_qdevice_reload)
 
     def test_empty_device(self):
-        config = dedent("""\
+        config = dedent(
+            """\
             quorum {
                 device {
                 }
             }
-        """)
+        """
+        )
         facade = lib.ConfigFacade.from_string(config)
         self.assertFalse(facade.has_quorum_device())
         self.assertFalse(facade.need_stopped_cluster)
         self.assertFalse(facade.need_qdevice_reload)
 
     def test_device_set(self):
-        config = dedent("""\
+        config = dedent(
+            """\
             quorum {
                 device {
                     model: net
                 }
             }
-        """)
+        """
+        )
         facade = lib.ConfigFacade.from_string(config)
         self.assertTrue(facade.has_quorum_device())
         self.assertFalse(facade.need_stopped_cluster)
         self.assertFalse(facade.need_qdevice_reload)
 
     def test_no_model(self):
-        config = dedent("""\
+        config = dedent(
+            """\
             quorum {
                 device {
                     option: value
@@ -69,7 +74,8 @@ class HasQuorumDeviceTest(TestCase):
                     }
                 }
             }
-        """)
+        """
+        )
         facade = lib.ConfigFacade.from_string(config)
         self.assertFalse(facade.has_quorum_device())
         self.assertFalse(facade.need_stopped_cluster)
@@ -79,10 +85,7 @@ class HasQuorumDeviceTest(TestCase):
 class GetQuorumDeviceModel(TestCase):
     def assert_model(self, config, expected_model):
         facade = lib.ConfigFacade.from_string(config)
-        self.assertEqual(
-            expected_model,
-            facade.get_quorum_device_model()
-        )
+        self.assertEqual(expected_model, facade.get_quorum_device_model())
         self.assertFalse(facade.need_stopped_cluster)
         self.assertFalse(facade.need_qdevice_reload)
 
@@ -95,16 +98,19 @@ class GetQuorumDeviceModel(TestCase):
         self.assert_model(config, None)
 
     def test_empty_device(self):
-        config = dedent("""\
+        config = dedent(
+            """\
             quorum {
                 device {
                 }
             }
-        """)
+        """
+        )
         self.assert_model(config, None)
 
     def test_no_model(self):
-        config = dedent("""\
+        config = dedent(
+            """\
             quorum {
                 device {
                     option: value
@@ -113,11 +119,13 @@ class GetQuorumDeviceModel(TestCase):
                     }
                 }
             }
-        """)
+        """
+        )
         self.assert_model(config, None)
 
     def test_configured_properly(self):
-        config = dedent("""\
+        config = dedent(
+            """\
             quorum {
                 device {
                     option: value
@@ -127,11 +135,13 @@ class GetQuorumDeviceModel(TestCase):
                     }
                 }
             }
-        """)
+        """
+        )
         self.assert_model(config, "net")
 
     def test_more_devices_one_quorum(self):
-        config = dedent("""\
+        config = dedent(
+            """\
             quorum {
                 device {
                     option0: valueX
@@ -160,11 +170,13 @@ class GetQuorumDeviceModel(TestCase):
                     }
                 }
             }
-        """)
+        """
+        )
         self.assert_model(config, "net")
 
     def test_more_devices_more_quorum(self):
-        config = dedent("""\
+        config = dedent(
+            """\
             quorum {
                 device {
                     option0: valueX
@@ -195,7 +207,8 @@ class GetQuorumDeviceModel(TestCase):
                     }
                 }
             }
-        """)
+        """
+        )
         self.assert_model(config, "net")
 
 
@@ -204,8 +217,7 @@ class GetQuorumDeviceSettingsTest(TestCase):
         config = ""
         facade = lib.ConfigFacade.from_string(config)
         self.assertEqual(
-            (None, {}, {}, {}),
-            facade.get_quorum_device_settings()
+            (None, {}, {}, {}), facade.get_quorum_device_settings()
         )
         self.assertFalse(facade.need_stopped_cluster)
         self.assertFalse(facade.need_qdevice_reload)
@@ -214,29 +226,30 @@ class GetQuorumDeviceSettingsTest(TestCase):
         config = _read_file("corosync.conf")
         facade = lib.ConfigFacade.from_string(config)
         self.assertEqual(
-            (None, {}, {}, {}),
-            facade.get_quorum_device_settings()
+            (None, {}, {}, {}), facade.get_quorum_device_settings()
         )
         self.assertFalse(facade.need_stopped_cluster)
         self.assertFalse(facade.need_qdevice_reload)
 
     def test_empty_device(self):
-        config = dedent("""\
+        config = dedent(
+            """\
             quorum {
                 device {
                 }
             }
-        """)
+        """
+        )
         facade = lib.ConfigFacade.from_string(config)
         self.assertEqual(
-            (None, {}, {}, {}),
-            facade.get_quorum_device_settings()
+            (None, {}, {}, {}), facade.get_quorum_device_settings()
         )
         self.assertFalse(facade.need_stopped_cluster)
         self.assertFalse(facade.need_qdevice_reload)
 
     def test_no_model(self):
-        config = dedent("""\
+        config = dedent(
+            """\
             quorum {
                 device {
                     option: value
@@ -245,17 +258,19 @@ class GetQuorumDeviceSettingsTest(TestCase):
                     }
                 }
             }
-        """)
+        """
+        )
         facade = lib.ConfigFacade.from_string(config)
         self.assertEqual(
             (None, {}, {"option": "value"}, {}),
-            facade.get_quorum_device_settings()
+            facade.get_quorum_device_settings(),
         )
         self.assertFalse(facade.need_stopped_cluster)
         self.assertFalse(facade.need_qdevice_reload)
 
     def test_configured_properly(self):
-        config = dedent("""\
+        config = dedent(
+            """\
             quorum {
                 device {
                     option: value
@@ -265,17 +280,19 @@ class GetQuorumDeviceSettingsTest(TestCase):
                     }
                 }
             }
-        """)
+        """
+        )
         facade = lib.ConfigFacade.from_string(config)
         self.assertEqual(
             ("net", {"host": "127.0.0.1"}, {"option": "value"}, {}),
-            facade.get_quorum_device_settings()
+            facade.get_quorum_device_settings(),
         )
         self.assertFalse(facade.need_stopped_cluster)
         self.assertFalse(facade.need_qdevice_reload)
 
     def test_configured_properly_heuristics(self):
-        config = dedent("""\
+        config = dedent(
+            """\
             quorum {
                 device {
                     option: value
@@ -289,22 +306,24 @@ class GetQuorumDeviceSettingsTest(TestCase):
                     }
                 }
             }
-        """)
+        """
+        )
         facade = lib.ConfigFacade.from_string(config)
         self.assertEqual(
             (
                 "net",
                 {"host": "127.0.0.1"},
                 {"option": "value"},
-                {"exec_ls": "test -f /tmp/test", "mode": "on"}
+                {"exec_ls": "test -f /tmp/test", "mode": "on"},
             ),
-            facade.get_quorum_device_settings()
+            facade.get_quorum_device_settings(),
         )
         self.assertFalse(facade.need_stopped_cluster)
         self.assertFalse(facade.need_qdevice_reload)
 
     def test_more_devices_one_quorum(self):
-        config = dedent("""\
+        config = dedent(
+            """\
             quorum {
                 device {
                     option0: valueX
@@ -333,22 +352,24 @@ class GetQuorumDeviceSettingsTest(TestCase):
                     }
                 }
             }
-        """)
+        """
+        )
         facade = lib.ConfigFacade.from_string(config)
         self.assertEqual(
             (
                 "net",
                 {"host": "127.0.0.1"},
                 {"option0": "valueY", "option1": "value1", "option2": "value2"},
-                {"exec_ls": "test -f /tmp/test", "mode": "on", "timeout": "5"}
+                {"exec_ls": "test -f /tmp/test", "mode": "on", "timeout": "5"},
             ),
-            facade.get_quorum_device_settings()
+            facade.get_quorum_device_settings(),
         )
         self.assertFalse(facade.need_stopped_cluster)
         self.assertFalse(facade.need_qdevice_reload)
 
     def test_more_devices_more_quorum(self):
-        config = dedent("""\
+        config = dedent(
+            """\
             quorum {
                 device {
                     option0: valueX
@@ -379,16 +400,17 @@ class GetQuorumDeviceSettingsTest(TestCase):
                     }
                 }
             }
-        """)
+        """
+        )
         facade = lib.ConfigFacade.from_string(config)
         self.assertEqual(
             (
                 "net",
                 {"host": "127.0.0.1"},
                 {"option0": "valueY", "option1": "value1", "option2": "value2"},
-                {"exec_ls": "test -f /tmp/test", "mode": "on", "timeout": "5"}
+                {"exec_ls": "test -f /tmp/test", "mode": "on", "timeout": "5"},
             ),
-            facade.get_quorum_device_settings()
+            facade.get_quorum_device_settings(),
         )
         self.assertFalse(facade.need_stopped_cluster)
         self.assertFalse(facade.need_qdevice_reload)
@@ -399,7 +421,7 @@ class IsQuorumDeviceHeuristicsEnabledWithNoExec(TestCase):
         facade = lib.ConfigFacade.from_string(config)
         self.assertEqual(
             expected_result,
-            facade.is_quorum_device_heuristics_enabled_with_no_exec()
+            facade.is_quorum_device_heuristics_enabled_with_no_exec(),
         )
         self.assertFalse(facade.need_stopped_cluster)
         self.assertFalse(facade.need_qdevice_reload)
@@ -413,18 +435,21 @@ class IsQuorumDeviceHeuristicsEnabledWithNoExec(TestCase):
         self.assert_result(config, False)
 
     def test_empty_heuristics(self):
-        config = dedent("""\
+        config = dedent(
+            """\
             quorum {
                 device {
                     heuristics {
                     }
                 }
             }
-        """)
+        """
+        )
         self.assert_result(config, False)
 
     def test_heuristics_off(self):
-        config = dedent("""\
+        config = dedent(
+            """\
             quorum {
                 device {
                     heuristics {
@@ -432,11 +457,13 @@ class IsQuorumDeviceHeuristicsEnabledWithNoExec(TestCase):
                     }
                 }
             }
-        """)
+        """
+        )
         self.assert_result(config, False)
 
     def test_heuristics_on_no_exec(self):
-        config = dedent("""\
+        config = dedent(
+            """\
             quorum {
                 device {
                     heuristics {
@@ -444,11 +471,13 @@ class IsQuorumDeviceHeuristicsEnabledWithNoExec(TestCase):
                     }
                 }
             }
-        """)
+        """
+        )
         self.assert_result(config, True)
 
     def test_heuristics_sync_no_exec(self):
-        config = dedent("""\
+        config = dedent(
+            """\
             quorum {
                 device {
                     heuristics {
@@ -457,11 +486,13 @@ class IsQuorumDeviceHeuristicsEnabledWithNoExec(TestCase):
                     }
                 }
             }
-        """)
+        """
+        )
         self.assert_result(config, True)
 
     def test_heuristics_on_with_exec(self):
-        config = dedent("""\
+        config = dedent(
+            """\
             quorum {
                 device {
                     heuristics {
@@ -470,11 +501,13 @@ class IsQuorumDeviceHeuristicsEnabledWithNoExec(TestCase):
                     }
                 }
             }
-        """)
+        """
+        )
         self.assert_result(config, False)
 
     def test_heuristics_sync_with_exec(self):
-        config = dedent("""\
+        config = dedent(
+            """\
             quorum {
                 device {
                     heuristics {
@@ -483,11 +516,13 @@ class IsQuorumDeviceHeuristicsEnabledWithNoExec(TestCase):
                     }
                 }
             }
-        """)
+        """
+        )
         self.assert_result(config, False)
 
     def test_heuristics_unknown_no_exec(self):
-        config = dedent("""\
+        config = dedent(
+            """\
             quorum {
                 device {
                     heuristics {
@@ -495,11 +530,13 @@ class IsQuorumDeviceHeuristicsEnabledWithNoExec(TestCase):
                     }
                 }
             }
-        """)
+        """
+        )
         self.assert_result(config, False)
 
     def test_heuristics_unknown_with_exec(self):
-        config = dedent("""\
+        config = dedent(
+            """\
             quorum {
                 device {
                     heuristics {
@@ -507,7 +544,8 @@ class IsQuorumDeviceHeuristicsEnabledWithNoExec(TestCase):
                     }
                 }
             }
-        """)
+        """
+        )
         self.assert_result(config, False)
 
 
@@ -516,15 +554,13 @@ class AddQuorumDeviceTest(TestCase):
         config = _read_file("corosync-3nodes.conf")
         facade = lib.ConfigFacade.from_string(config)
         facade.add_quorum_device(
-            "net",
-            {"host": "127.0.0.1", "algorithm": "ffsplit"},
-            {},
-            {}
+            "net", {"host": "127.0.0.1", "algorithm": "ffsplit"}, {}, {}
         )
         ac(
             config.replace(
                 "    provider: corosync_votequorum\n",
-                outdent("""\
+                outdent(
+                    """\
                     provider: corosync_votequorum
 
                     device {
@@ -536,9 +572,10 @@ class AddQuorumDeviceTest(TestCase):
                             host: 127.0.0.1
                         }
                     }
-                """)
+                """
+                ),
             ),
-            facade.config.export()
+            facade.config.export(),
         )
         self.assertFalse(facade.need_stopped_cluster)
         self.assertFalse(facade.need_qdevice_reload)
@@ -547,15 +584,13 @@ class AddQuorumDeviceTest(TestCase):
         config = _read_file("corosync-3nodes.conf")
         facade = lib.ConfigFacade.from_string(config)
         facade.add_quorum_device(
-            "net",
-            {"host": "127.0.0.1", "algorithm": "lms"},
-            {},
-            {}
+            "net", {"host": "127.0.0.1", "algorithm": "lms"}, {}, {}
         )
         ac(
             config.replace(
                 "    provider: corosync_votequorum\n",
-                outdent("""\
+                outdent(
+                    """\
                     provider: corosync_votequorum
 
                     device {
@@ -566,9 +601,10 @@ class AddQuorumDeviceTest(TestCase):
                             host: 127.0.0.1
                         }
                     }
-                """)
+                """
+                ),
             ),
-            facade.config.export()
+            facade.config.export(),
         )
         self.assertFalse(facade.need_stopped_cluster)
         self.assertFalse(facade.need_qdevice_reload)
@@ -578,15 +614,13 @@ class AddQuorumDeviceTest(TestCase):
         config_votes = config.replace("node {", "node {\nquorum_votes: 2")
         facade = lib.ConfigFacade.from_string(config_votes)
         facade.add_quorum_device(
-            "net",
-            {"host": "127.0.0.1", "algorithm": "lms"},
-            {},
-            {}
+            "net", {"host": "127.0.0.1", "algorithm": "lms"}, {}, {}
         )
         ac(
             config.replace(
                 "    provider: corosync_votequorum\n",
-                outdent("""\
+                outdent(
+                    """\
                     provider: corosync_votequorum
 
                     device {
@@ -597,9 +631,10 @@ class AddQuorumDeviceTest(TestCase):
                             host: 127.0.0.1
                         }
                     }
-                """)
+                """
+                ),
             ),
-            facade.config.export()
+            facade.config.export(),
         )
         self.assertFalse(facade.need_stopped_cluster)
         self.assertFalse(facade.need_qdevice_reload)
@@ -617,10 +652,7 @@ class AddQuorumDeviceTest(TestCase):
                 "force_ip_version": "4",
                 "tie_breaker": "lowest",
             },
-            {
-                "timeout": "23456",
-                "sync_timeout": "34567"
-            },
+            {"timeout": "23456", "sync_timeout": "34567"},
             {
                 "mode": "on",
                 "timeout": "5",
@@ -628,12 +660,13 @@ class AddQuorumDeviceTest(TestCase):
                 "interval": "30",
                 "exec_ping": 'ping -q -c 1 "127.0.0.1"',
                 "exec_ls": "test -f /tmp/test",
-            }
+            },
         )
         ac(
             config.replace(
                 "    provider: corosync_votequorum\n",
-                outdent("""\
+                outdent(
+                    """\
                     provider: corosync_votequorum
 
                     device {
@@ -660,9 +693,10 @@ class AddQuorumDeviceTest(TestCase):
                             timeout: 5
                         }
                     }
-                """)
+                """
+                ),
             ),
-            facade.config.export()
+            facade.config.export(),
         )
         self.assertFalse(facade.need_stopped_cluster)
         self.assertFalse(facade.need_qdevice_reload)
@@ -671,26 +705,26 @@ class AddQuorumDeviceTest(TestCase):
         config = _read_file("corosync.conf")
         config = config.replace(
             "    two_node: 1\n",
-            "\n".join([
-                "    two_node: 1",
-                "    auto_tie_breaker: 1",
-                "    last_man_standing: 1",
-                "    last_man_standing_window: 987",
-                "    allow_downscale: 1",
-                ""
-            ])
+            "\n".join(
+                [
+                    "    two_node: 1",
+                    "    auto_tie_breaker: 1",
+                    "    last_man_standing: 1",
+                    "    last_man_standing_window: 987",
+                    "    allow_downscale: 1",
+                    "",
+                ]
+            ),
         )
         facade = lib.ConfigFacade.from_string(config)
         facade.add_quorum_device(
-            "net",
-            {"host": "127.0.0.1", "algorithm": "ffsplit"},
-            {},
-            {}
+            "net", {"host": "127.0.0.1", "algorithm": "ffsplit"}, {}, {}
         )
         ac(
             re.sub(
                 re.compile(r"quorum {[^}]*}\n", re.MULTILINE | re.DOTALL),
-                dedent("""\
+                dedent(
+                    """\
                     quorum {
                         provider: corosync_votequorum
 
@@ -704,16 +738,18 @@ class AddQuorumDeviceTest(TestCase):
                             }
                         }
                     }
-                """),
-                config
+                """
+                ),
+                config,
             ),
-            facade.config.export()
+            facade.config.export(),
         )
         self.assertTrue(facade.need_stopped_cluster)
         self.assertFalse(facade.need_qdevice_reload)
 
     def test_remove_old_configuration(self):
-        config = dedent("""\
+        config = dedent(
+            """\
             quorum {
                 provider: corosync_votequorum
                 device {
@@ -732,16 +768,15 @@ class AddQuorumDeviceTest(TestCase):
                     }
                 }
             }
-        """)
+        """
+        )
         facade = lib.ConfigFacade.from_string(config)
         facade.add_quorum_device(
-            "net",
-            {"host": "127.0.0.1", "algorithm": "ffsplit"},
-            {},
-            {}
+            "net", {"host": "127.0.0.1", "algorithm": "ffsplit"}, {}, {}
         )
         ac(
-            dedent("""\
+            dedent(
+                """\
                 quorum {
                     provider: corosync_votequorum
                 }
@@ -759,9 +794,9 @@ class AddQuorumDeviceTest(TestCase):
                         }
                     }
                 }
-            """)
-            ,
-            facade.config.export()
+            """
+            ),
+            facade.config.export(),
         )
         self.assertFalse(facade.need_stopped_cluster)
         self.assertFalse(facade.need_qdevice_reload)
@@ -772,7 +807,8 @@ class UpdateQuorumDeviceTest(TestCase):
     def fixture_add_device(config, votes=None):
         with_device = re.sub(
             re.compile(r"quorum {[^}]*}", re.MULTILINE | re.DOTALL),
-            dedent("""\
+            dedent(
+                """\
                 quorum {
                     provider: corosync_votequorum
 
@@ -787,12 +823,11 @@ class UpdateQuorumDeviceTest(TestCase):
                     }
                 }"""
             ),
-            config
+            config,
         )
         if votes:
             with_device = with_device.replace(
-                "model: net",
-                "model: net\n        votes: {0}".format(votes)
+                "model: net", "model: net\n        votes: {0}".format(votes)
             )
         return with_device
 
@@ -800,7 +835,8 @@ class UpdateQuorumDeviceTest(TestCase):
     def fixture_add_device_with_heuristics(config, votes=None):
         with_device = re.sub(
             re.compile(r"quorum {[^}]*}", re.MULTILINE | re.DOTALL),
-            dedent("""\
+            dedent(
+                """\
                 quorum {
                     provider: corosync_votequorum
 
@@ -821,12 +857,11 @@ class UpdateQuorumDeviceTest(TestCase):
                     }
                 }"""
             ),
-            config
+            config,
         )
         if votes:
             with_device = with_device.replace(
-                "model: net",
-                "model: net\n        votes: {0}".format(votes)
+                "model: net", "model: net\n        votes: {0}".format(votes)
             )
         return with_device
 
@@ -834,16 +869,8 @@ class UpdateQuorumDeviceTest(TestCase):
         config = _read_file("corosync.conf")
         facade = lib.ConfigFacade.from_string(config)
         assert_raise_library_error(
-            lambda: facade.update_quorum_device(
-                {"host": "127.0.0.1"},
-                {},
-                {}
-            ),
-            (
-                severity.ERROR,
-                report_codes.QDEVICE_NOT_DEFINED,
-                {}
-            )
+            lambda: facade.update_quorum_device({"host": "127.0.0.1"}, {}, {}),
+            (severity.ERROR, report_codes.QDEVICE_NOT_DEFINED, {}),
         )
         self.assertFalse(facade.need_stopped_cluster)
         self.assertFalse(facade.need_qdevice_reload)
@@ -853,12 +880,8 @@ class UpdateQuorumDeviceTest(TestCase):
         config = _read_file("corosync.conf")
         facade = lib.ConfigFacade.from_string(config)
         assert_raise_library_error(
-            lambda: facade.update_quorum_device(
-                {},
-                {},
-                {"mode": "on"}
-            ),
-            fixture.error(report_codes.QDEVICE_NOT_DEFINED)
+            lambda: facade.update_quorum_device({}, {}, {"mode": "on"}),
+            fixture.error(report_codes.QDEVICE_NOT_DEFINED),
         )
         self.assertFalse(facade.need_stopped_cluster)
         self.assertFalse(facade.need_qdevice_reload)
@@ -866,34 +889,27 @@ class UpdateQuorumDeviceTest(TestCase):
 
     def test_success_model_options_net(self):
         config = self.fixture_add_device(
-            _read_file("corosync-3nodes.conf"),
-            votes="1"
+            _read_file("corosync-3nodes.conf"), votes="1"
         )
         facade = lib.ConfigFacade.from_string(config)
         facade.update_quorum_device(
-            {"host": "127.0.0.2", "port": "", "algorithm": "ffsplit"},
-            {},
-            {}
+            {"host": "127.0.0.2", "port": "", "algorithm": "ffsplit"}, {}, {}
         )
         self.assertFalse(facade.need_stopped_cluster)
         self.assertTrue(facade.need_qdevice_reload)
         ac(
             config.replace(
                 "host: 127.0.0.1\n            port: 4433",
-                "host: 127.0.0.2\n            algorithm: ffsplit"
+                "host: 127.0.0.2\n            algorithm: ffsplit",
             ),
-            facade.config.export()
+            facade.config.export(),
         )
 
     def test_success_generic_options(self):
-        config = self.fixture_add_device(
-            _read_file("corosync-3nodes.conf")
-        )
+        config = self.fixture_add_device(_read_file("corosync-3nodes.conf"))
         facade = lib.ConfigFacade.from_string(config)
         facade.update_quorum_device(
-            {},
-            {"timeout": "", "sync_timeout": "23456"},
-            {}
+            {}, {"timeout": "", "sync_timeout": "23456"}, {}
         )
         self.assertFalse(facade.need_stopped_cluster)
         self.assertTrue(facade.need_qdevice_reload)
@@ -902,7 +918,7 @@ class UpdateQuorumDeviceTest(TestCase):
                 "timeout: 12345\n        model: net",
                 "model: net\n        sync_timeout: 23456",
             ),
-            facade.config.export()
+            facade.config.export(),
         )
 
     def test_success_all_options(self):
@@ -911,30 +927,24 @@ class UpdateQuorumDeviceTest(TestCase):
         )
         facade = lib.ConfigFacade.from_string(config)
         facade.update_quorum_device(
-            {"port": "4444"},
-            {"timeout": "23456"},
-            {"interval": "35"}
+            {"port": "4444"}, {"timeout": "23456"}, {"interval": "35"}
         )
         self.assertFalse(facade.need_stopped_cluster)
         self.assertTrue(facade.need_qdevice_reload)
         ac(
-            config
-                .replace("port: 4433", "port: 4444")
-                .replace("timeout: 12345", "timeout: 23456")
-                .replace("interval: 30", "interval: 35")
-            ,
-            facade.config.export()
+            config.replace("port: 4433", "port: 4444")
+            .replace("timeout: 12345", "timeout: 23456")
+            .replace("interval: 30", "interval: 35"),
+            facade.config.export(),
         )
 
     def test_success_add_heuristics(self):
-        config = self.fixture_add_device(
-            _read_file("corosync-3nodes.conf")
-        )
+        config = self.fixture_add_device(_read_file("corosync-3nodes.conf"))
         facade = lib.ConfigFacade.from_string(config)
         facade.update_quorum_device(
             {},
             {},
-            {"mode": "on", "exec_ls": "test -f /tmp/test", "interval": "30"}
+            {"mode": "on", "exec_ls": "test -f /tmp/test", "interval": "30"},
         )
         self.assertFalse(facade.need_stopped_cluster)
         self.assertTrue(facade.need_qdevice_reload)
@@ -942,7 +952,7 @@ class UpdateQuorumDeviceTest(TestCase):
             self.fixture_add_device_with_heuristics(
                 _read_file("corosync-3nodes.conf")
             ),
-            facade.config.export()
+            facade.config.export(),
         )
 
     def test_success_remove_heuristics(self):
@@ -951,17 +961,13 @@ class UpdateQuorumDeviceTest(TestCase):
         )
         facade = lib.ConfigFacade.from_string(config)
         facade.update_quorum_device(
-            {},
-            {},
-            {"mode": "", "exec_ls": "", "interval": ""}
+            {}, {}, {"mode": "", "exec_ls": "", "interval": ""}
         )
         self.assertFalse(facade.need_stopped_cluster)
         self.assertTrue(facade.need_qdevice_reload)
         ac(
-            self.fixture_add_device(
-                _read_file("corosync-3nodes.conf")
-            ),
-            facade.config.export()
+            self.fixture_add_device(_read_file("corosync-3nodes.conf")),
+            facade.config.export(),
         )
 
     def test_success_change_heuristics(self):
@@ -970,9 +976,7 @@ class UpdateQuorumDeviceTest(TestCase):
         )
         facade = lib.ConfigFacade.from_string(config)
         facade.update_quorum_device(
-            {},
-            {},
-            {"mode": "sync", "interval": "", "timeout": "20"}
+            {}, {}, {"mode": "sync", "interval": "", "timeout": "20"}
         )
         self.assertFalse(facade.need_stopped_cluster)
         self.assertTrue(facade.need_qdevice_reload)
@@ -981,7 +985,7 @@ class UpdateQuorumDeviceTest(TestCase):
                 "interval: 30\n            mode: on",
                 "mode: sync\n            timeout: 20",
             ),
-            facade.config.export()
+            facade.config.export(),
         )
 
 
@@ -991,11 +995,7 @@ class RemoveQuorumDeviceTest(TestCase):
         facade = lib.ConfigFacade.from_string(config)
         assert_raise_library_error(
             facade.remove_quorum_device,
-            (
-                severity.ERROR,
-                report_codes.QDEVICE_NOT_DEFINED,
-                {}
-            )
+            (severity.ERROR, report_codes.QDEVICE_NOT_DEFINED, {}),
         )
         self.assertFalse(facade.need_stopped_cluster)
         self.assertFalse(facade.need_qdevice_reload)
@@ -1005,11 +1005,7 @@ class RemoveQuorumDeviceTest(TestCase):
         facade = lib.ConfigFacade.from_string(config)
         assert_raise_library_error(
             facade.remove_quorum_device,
-            (
-                severity.ERROR,
-                report_codes.QDEVICE_NOT_DEFINED,
-                {}
-            )
+            (severity.ERROR, report_codes.QDEVICE_NOT_DEFINED, {}),
         )
         self.assertFalse(facade.need_stopped_cluster)
         self.assertFalse(facade.need_qdevice_reload)
@@ -1018,7 +1014,8 @@ class RemoveQuorumDeviceTest(TestCase):
         config_no_devices = _read_file("corosync-3nodes.conf")
         config = re.sub(
             re.compile(r"quorum {[^}]*}", re.MULTILINE | re.DOTALL),
-            dedent("""\
+            dedent(
+                """\
                 quorum {
                     provider: corosync_votequorum
 
@@ -1048,23 +1045,22 @@ class RemoveQuorumDeviceTest(TestCase):
                         }
                     }
                 }
-            """),
-            config_no_devices
+            """
+            ),
+            config_no_devices,
         )
         facade = lib.ConfigFacade.from_string(config)
         facade.remove_quorum_device()
         self.assertFalse(facade.need_stopped_cluster)
         self.assertFalse(facade.need_qdevice_reload)
-        ac(
-            config_no_devices,
-            facade.config.export()
-        )
+        ac(config_no_devices, facade.config.export())
 
     def test_restore_two_node(self):
         config_no_devices = _read_file("corosync.conf")
         config = re.sub(
             re.compile(r"quorum {[^}]*}", re.MULTILINE | re.DOTALL),
-            dedent("""\
+            dedent(
+                """\
                 quorum {
                     provider: corosync_votequorum
 
@@ -1078,17 +1074,15 @@ class RemoveQuorumDeviceTest(TestCase):
                         }
                     }
                 }
-            """),
-            config_no_devices
+            """
+            ),
+            config_no_devices,
         )
         facade = lib.ConfigFacade.from_string(config)
         facade.remove_quorum_device()
         self.assertFalse(facade.need_stopped_cluster)
         self.assertFalse(facade.need_qdevice_reload)
-        ac(
-            config_no_devices,
-            facade.config.export()
-        )
+        ac(config_no_devices, facade.config.export())
 
 
 class RemoveQuorumDeviceHeuristics(TestCase):
@@ -1097,7 +1091,7 @@ class RemoveQuorumDeviceHeuristics(TestCase):
         facade = lib.ConfigFacade.from_string(config)
         assert_raise_library_error(
             facade.remove_quorum_device_heuristics,
-            fixture.error(report_codes.QDEVICE_NOT_DEFINED)
+            fixture.error(report_codes.QDEVICE_NOT_DEFINED),
         )
         self.assertFalse(facade.need_stopped_cluster)
         self.assertFalse(facade.need_qdevice_reload)
@@ -1107,7 +1101,7 @@ class RemoveQuorumDeviceHeuristics(TestCase):
         facade = lib.ConfigFacade.from_string(config)
         assert_raise_library_error(
             facade.remove_quorum_device_heuristics,
-            fixture.error(report_codes.QDEVICE_NOT_DEFINED)
+            fixture.error(report_codes.QDEVICE_NOT_DEFINED),
         )
         self.assertFalse(facade.need_stopped_cluster)
         self.assertFalse(facade.need_qdevice_reload)
@@ -1124,7 +1118,8 @@ class RemoveQuorumDeviceHeuristics(TestCase):
         config_no_devices = _read_file("corosync-3nodes.conf")
         config_no_heuristics = re.sub(
             re.compile(r"quorum {[^}]*}", re.MULTILINE | re.DOTALL),
-            dedent("""\
+            dedent(
+                """\
                 quorum {
                     provider: corosync_votequorum
 
@@ -1151,11 +1146,12 @@ class RemoveQuorumDeviceHeuristics(TestCase):
                     }
                 }"""
             ),
-            config_no_devices
+            config_no_devices,
         )
         config_heuristics = re.sub(
             re.compile(r"quorum {[^}]*}", re.MULTILINE | re.DOTALL),
-            dedent("""\
+            dedent(
+                """\
                 quorum {
                     provider: corosync_votequorum
 
@@ -1194,7 +1190,7 @@ class RemoveQuorumDeviceHeuristics(TestCase):
                     }
                 }"""
             ),
-            config_no_devices
+            config_no_devices,
         )
 
         facade = lib.ConfigFacade.from_string(config_heuristics)

@@ -41,8 +41,8 @@ class GetDaemonStatusTest(TestCase):
             (
                 Severities.ERROR,
                 report_codes.BOOTH_DAEMON_STATUS_ERROR,
-                {"reason": "error\nout"}
-            )
+                {"reason": "error\nout"},
+            ),
         )
         self.mock_run.run.assert_called_once_with(
             [settings.booth_binary, "status"]
@@ -76,10 +76,8 @@ class GetTicketsStatusTest(TestCase):
             (
                 Severities.ERROR,
                 report_codes.BOOTH_TICKET_STATUS_ERROR,
-                {
-                    "reason": "error\nout"
-                }
-            )
+                {"reason": "error\nout"},
+            ),
         )
         self.mock_run.run.assert_called_once_with(
             [settings.booth_binary, "list"]
@@ -111,10 +109,8 @@ class GetPeersStatusTest(TestCase):
             (
                 Severities.ERROR,
                 report_codes.BOOTH_PEERS_STATUS_ERROR,
-                {
-                    "reason": "error\nout"
-                }
-            )
+                {"reason": "error\nout"},
+            ),
         )
         self.mock_run.run.assert_called_once_with(
             [settings.booth_binary, "peers"]

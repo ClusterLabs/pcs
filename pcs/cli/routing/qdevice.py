@@ -21,12 +21,13 @@ qdevice_cmd = create_router(
         "net-client": create_router(
             {
                 "setup": qdevice.qdevice_net_client_setup_cmd,
-                "import-certificate":
-                    qdevice.qdevice_net_client_import_certificate_cmd,
+                "import-certificate": (
+                    qdevice.qdevice_net_client_import_certificate_cmd
+                ),
                 "destroy": qdevice.qdevice_net_client_destroy,
             },
-            ["qdevice", "net-client"]
+            ["qdevice", "net-client"],
         ),
     },
-    ["qdevice"]
+    ["qdevice"],
 )

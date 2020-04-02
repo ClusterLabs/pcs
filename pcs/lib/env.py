@@ -1,6 +1,4 @@
-from typing import (
-    Optional,
-)
+from typing import Optional
 from xml.etree.ElementTree import Element
 
 from pcs.common import file_type_codes
@@ -25,7 +23,7 @@ from pcs.lib.communication.tools import (
 )
 from pcs.lib.corosync.config_facade import ConfigFacade as CorosyncConfigFacade
 from pcs.lib.corosync.config_parser import (
-    verify_section as verify_corosync_section
+    verify_section as verify_corosync_section,
 )
 from pcs.lib.corosync.live import get_local_corosync_conf
 from pcs.lib.external import CommandRunner
@@ -51,6 +49,7 @@ from pcs.lib.tools import write_tmpfile
 from pcs.lib.xml_tools import etree_to_str
 
 MIN_FEATURE_SET_VERSION_FOR_DIFF = Version(3, 0, 9)
+
 
 class LibraryEnvironment:
     # pylint: disable=too-many-instance-attributes, too-many-public-methods
@@ -90,7 +89,7 @@ class LibraryEnvironment:
             LibCommunicatorLogger(self.logger, self.report_processor),
             self.user_login,
             self.user_groups,
-            self._request_timeout
+            self._request_timeout,
         )
         self.__loaded_booth_env = None
         self.__loaded_dr_env = None
@@ -129,28 +128,19 @@ class LibraryEnvironment:
         self.__loaded_cib_to_modify = get_cib(self.__loaded_cib_diff_source)
         if minimal_version is not None:
             upgraded_cib = ensure_cib_version(
-                self.cmd_runner(),
-                self.__loaded_cib_to_modify,
-                minimal_version
+                self.cmd_runner(), self.__loaded_cib_to_modify, minimal_version
             )
             if upgraded_cib is not None:
                 self.__loaded_cib_to_modify = upgraded_cib
                 self.__loaded_cib_diff_source = etree_to_str(upgraded_cib)
                 if not self._cib_upgrade_reported:
                     self.report_processor.report(
-                        ReportItem.info(
-                            reports.messages.CibUpgradeSuccessful()
-                        )
+                        ReportItem.info(reports.messages.CibUpgradeSuccessful())
                     )
                 self._cib_upgrade_reported = True
-        self.__loaded_cib_diff_source_feature_set = (
-            get_cib_crm_feature_set(
-                self.__loaded_cib_to_modify,
-                none_if_missing=True
-            )
-            or
-            Version(0, 0, 0)
-        )
+        self.__loaded_cib_diff_source_feature_set = get_cib_crm_feature_set(
+            self.__loaded_cib_to_modify, none_if_missing=True
+        ) or Version(0, 0, 0)
         return self.__loaded_cib_to_modify
 
     @property
@@ -176,7 +166,6 @@ class LibraryEnvironment:
             ensure_wait_for_idle_support(self.cmd_runner())
             self.__timeout_cache[wait] = get_valid_timeout_seconds(wait)
         return self.__timeout_cache[wait]
-
 
     def ensure_wait_satisfiable(self, wait):
         """
@@ -209,19 +198,18 @@ class LibraryEnvironment:
         # only check the version if a CIB has been loaded, otherwise the push
         # fails anyway. By my testing it seems that only the source CIB's
         # version matters.
-        if(
+        if (
             self.__loaded_cib_diff_source_feature_set
-            <
-            MIN_FEATURE_SET_VERSION_FOR_DIFF
+            < MIN_FEATURE_SET_VERSION_FOR_DIFF
         ):
+            current_set = str(
+                self.__loaded_cib_diff_source_feature_set.normalize()
+            )
             self.report_processor.report(
                 ReportItem.warning(
                     reports.messages.CibPushForcedFullDueToCrmFeatureSet(
                         str(MIN_FEATURE_SET_VERSION_FOR_DIFF.normalize()),
-                        str(
-                            self.__loaded_cib_diff_source_feature_set
-                            .normalize()
-                        )
+                        current_set,
                     )
                 )
             )
@@ -233,15 +221,13 @@ class LibraryEnvironment:
         self.__do_push_cib(
             cmd_runner,
             lambda: replace_cib_configuration(cmd_runner, cib_to_push),
-            wait
+            wait,
         )
 
     def __push_cib_diff(self, wait=False):
         cmd_runner = self.cmd_runner()
         self.__do_push_cib(
-            cmd_runner,
-            lambda: self.__main_push_cib_diff(cmd_runner),
-            wait
+            cmd_runner, lambda: self.__main_push_cib_diff(cmd_runner), wait
         )
 
     def __main_push_cib_diff(self, cmd_runner):
@@ -249,7 +235,7 @@ class LibraryEnvironment:
             cmd_runner,
             self.report_processor,
             self.__loaded_cib_diff_source,
-            etree_to_str(self.__loaded_cib_to_modify)
+            etree_to_str(self.__loaded_cib_to_modify),
         )
         if cib_diff_xml:
             push_cib_diff_xml(cmd_runner, cib_diff_xml)
@@ -281,7 +267,6 @@ class LibraryEnvironment:
 
         return self._cib_data
 
-
     def get_corosync_conf_data(self):
         if self._corosync_conf_data is None:
             return get_local_corosync_conf()
@@ -300,9 +285,7 @@ class LibraryEnvironment:
             raise LibraryError(
                 ReportItem.error(
                     reports.messages.CorosyncConfigCannotSaveInvalidNamesValues(
-                        bad_sections,
-                        bad_attr_names,
-                        bad_attr_values,
+                        bad_sections, bad_attr_names, bad_attr_values,
                     )
                 )
             )
@@ -313,15 +296,14 @@ class LibraryEnvironment:
                 # Pcs is unable to communicate with nodes missing names. It
                 # cannot send new corosync.conf to them. That might break the
                 # cluster. Hence we error out.
-                error_on_missing_name=True
+                error_on_missing_name=True,
             )
             if self.report_processor.report_list(report_list).has_errors:
                 raise LibraryError()
 
             self._push_corosync_conf_live(
                 self.get_node_target_factory().get_target_list(
-                    node_name_list,
-                    skip_non_existing=skip_offline_nodes,
+                    node_name_list, skip_non_existing=skip_offline_nodes,
                 ),
                 corosync_conf_data,
                 corosync_conf_facade.need_stopped_cluster,
@@ -332,8 +314,12 @@ class LibraryEnvironment:
             self._corosync_conf_data = corosync_conf_data
 
     def _push_corosync_conf_live(
-        self, target_list, corosync_conf_data, need_stopped_cluster,
-        need_qdevice_reload, skip_offline_nodes
+        self,
+        target_list,
+        corosync_conf_data,
+        need_stopped_cluster,
+        need_qdevice_reload,
+        skip_offline_nodes,
     ):
         # Check if the cluster is stopped when needed
         if need_stopped_cluster:
@@ -396,8 +382,7 @@ class LibraryEnvironment:
                     self.report_processor.report(
                         ReportItem.debug(
                             reports.messages.TmpFileWrite(
-                                self._cib_data_tmp_file.name,
-                                cib_data
+                                self._cib_data_tmp_file.name, cib_data
                             )
                         )
                     )
@@ -416,8 +401,7 @@ class LibraryEnvironment:
         return self._communicator_factory
 
     def get_node_communicator(
-        self,
-        request_timeout: Optional[int] = None,
+        self, request_timeout: Optional[int] = None,
     ) -> Communicator:
         return self.communicator_factory.get_communicator(
             request_timeout=request_timeout

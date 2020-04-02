@@ -27,6 +27,7 @@ resources_promotable = """
     </resources>
 """
 
+
 def _action_kwargs(kwargs):
     defaulted = dict(
         resource="A",
@@ -38,7 +39,7 @@ def _action_kwargs(kwargs):
     return defaulted
 
 
-class MoveBanClearBaseMixin():
+class MoveBanClearBaseMixin:
     # pylint does not and can not know setUp is a method of TestCase
     # pylint: disable=invalid-name
     def setUp(self):
@@ -49,9 +50,9 @@ class MoveBanClearBaseMixin():
         self.env_assist.assert_raise_library_error(
             lambda: self.lib_action(self.env_assist.get_env(), "B")
         )
-        self.env_assist.assert_reports([
-            fixture.report_not_found("B", context_type="resources"),
-        ])
+        self.env_assist.assert_reports(
+            [fixture.report_not_found("B", context_type="resources"),]
+        )
 
     def test_master_of_nonpromotable_resource(self):
         # This is a basic test which checks validation is being done. It
@@ -60,17 +61,17 @@ class MoveBanClearBaseMixin():
         # pcs_test.tier0.lib.cib.test_resource_common
         self.config.runner.cib.load(resources=resources_primitive)
         self.env_assist.assert_raise_library_error(
-            lambda: self.lib_action(
-                self.env_assist.get_env(), "A", master=True
-            )
+            lambda: self.lib_action(self.env_assist.get_env(), "A", master=True)
         )
-        self.env_assist.assert_reports([
-            fixture.error(
-                self.report_code_bad_master,
-                resource_id="A",
-                promotable_id=None,
-            ),
-        ])
+        self.env_assist.assert_reports(
+            [
+                fixture.error(
+                    self.report_code_bad_master,
+                    resource_id="A",
+                    promotable_id=None,
+                ),
+            ]
+        )
 
     def test_pcmk_error(self):
         self.config.runner.cib.load(resources=resources_primitive)
@@ -85,21 +86,23 @@ class MoveBanClearBaseMixin():
                     stderr="pcmk std err",
                 ),
             ],
-            expected_in_processor=False
+            expected_in_processor=False,
         )
 
     def test_success(self):
         self.config.runner.cib.load(resources=resources_primitive)
         self.config_pcmk_action()
         self.lib_action(self.env_assist.get_env(), "A")
-        self.env_assist.assert_reports([
-            fixture.info(
-                self.report_code_pcmk_success,
-                resource_id="A",
-                stdout="pcmk std out",
-                stderr="pcmk std err",
-            ),
-        ])
+        self.env_assist.assert_reports(
+            [
+                fixture.info(
+                    self.report_code_pcmk_success,
+                    resource_id="A",
+                    stdout="pcmk std out",
+                    stderr="pcmk std err",
+                ),
+            ]
+        )
 
 
 class MoveBanBaseMixin(MoveBanClearBaseMixin):
@@ -117,39 +120,37 @@ class MoveBanBaseMixin(MoveBanClearBaseMixin):
             lambda: self.lib_action(self.env_assist.get_env(), "A"),
             [
                 fixture.error(
-                    self.report_code_resource_stopped,
-                    resource_id="A",
+                    self.report_code_resource_stopped, resource_id="A",
                 ),
             ],
-            expected_in_processor=False
+            expected_in_processor=False,
         )
 
     def test_all_options(self):
         self.config.runner.cib.load(resources=resources_promotable)
         self.config_pcmk_action(
-            resource="A-clone",
-            master=True,
-            node="node",
-            lifetime="1h",
+            resource="A-clone", master=True, node="node", lifetime="1h",
         )
         self.lib_action(
             self.env_assist.get_env(),
             "A-clone",
             master=True,
             node="node",
-            lifetime="1h"
+            lifetime="1h",
         )
-        self.env_assist.assert_reports([
-            fixture.info(
-                self.report_code_pcmk_success,
-                resource_id="A-clone",
-                stdout="pcmk std out",
-                stderr="pcmk std err",
-            ),
-        ])
+        self.env_assist.assert_reports(
+            [
+                fixture.info(
+                    self.report_code_pcmk_success,
+                    resource_id="A-clone",
+                    stdout="pcmk std out",
+                    stderr="pcmk std err",
+                ),
+            ]
+        )
 
 
-class MoveMixin():
+class MoveMixin:
     lib_action = staticmethod(resource.move)
     report_code_bad_master = (
         report_codes.CANNOT_MOVE_RESOURCE_MASTER_RESOURCE_NOT_PROMOTABLE
@@ -168,7 +169,7 @@ class Move(MoveMixin, MoveBanBaseMixin, TestCase):
     pass
 
 
-class BanMixin():
+class BanMixin:
     lib_action = staticmethod(resource.ban)
     report_code_bad_master = (
         report_codes.CANNOT_BAN_RESOURCE_MASTER_RESOURCE_NOT_PROMOTABLE
@@ -187,7 +188,7 @@ class Ban(BanMixin, MoveBanBaseMixin, TestCase):
     pass
 
 
-class UnmoveUnbanMixin():
+class UnmoveUnbanMixin:
     lib_action = staticmethod(resource.unmove_unban)
     report_code_bad_master = (
         report_codes.CANNOT_UNMOVE_UNBAN_RESOURCE_MASTER_RESOURCE_NOT_PROMOTABLE
@@ -213,14 +214,16 @@ class UnmoveUnban(UnmoveUnbanMixin, MoveBanClearBaseMixin, TestCase):
             node="node",
             expired=True,
         )
-        self.env_assist.assert_reports([
-            fixture.info(
-                self.report_code_pcmk_success,
-                resource_id="A-clone",
-                stdout="pcmk std out",
-                stderr="pcmk std err",
-            ),
-        ])
+        self.env_assist.assert_reports(
+            [
+                fixture.info(
+                    self.report_code_pcmk_success,
+                    resource_id="A-clone",
+                    stdout="pcmk std out",
+                    stderr="pcmk std err",
+                ),
+            ]
+        )
 
     def test_expired_not_supported(self):
         self.config.runner.cib.load(resources=resources_promotable)
@@ -230,14 +233,17 @@ class UnmoveUnban(UnmoveUnbanMixin, MoveBanClearBaseMixin, TestCase):
                 self.env_assist.get_env(), "A", expired=True
             )
         )
-        self.env_assist.assert_reports([
-            fixture.error(
-                report_codes.RESOURCE_UNMOVE_UNBAN_PCMK_EXPIRED_NOT_SUPPORTED
-            ),
-        ])
+        self.env_assist.assert_reports(
+            [
+                fixture.error(
+                    # pylint: disable=line-too-long
+                    report_codes.RESOURCE_UNMOVE_UNBAN_PCMK_EXPIRED_NOT_SUPPORTED
+                ),
+            ]
+        )
 
 
-class MoveBanWaitMixin():
+class MoveBanWaitMixin:
     state_running_node1 = """
         <resources>
             <resource id="A" role="Started" nodes_running_on="1">
@@ -270,30 +276,22 @@ class MoveBanWaitMixin():
             stdout="state stdout", stderr="state stderr", returncode=1
         )
         self.env_assist.assert_raise_library_error(
-            lambda: self.lib_action(
-                self.env_assist.get_env(), "A", wait="10"
-            ),
+            lambda: self.lib_action(self.env_assist.get_env(), "A", wait="10"),
             [
                 fixture.error(
                     report_codes.CRM_MON_ERROR,
                     reason="state stderr\nstate stdout",
                 ),
             ],
-            expected_in_processor=False
+            expected_in_processor=False,
         )
 
     def test_state_before_action_not_xml(self):
         self.config.runner.pcmk.load_state(stdout="state stdout")
         self.env_assist.assert_raise_library_error(
-            lambda: self.lib_action(
-                self.env_assist.get_env(), "A", wait="10"
-            ),
-            [
-                fixture.error(
-                    report_codes.BAD_CLUSTER_STATE_FORMAT,
-                ),
-            ],
-            expected_in_processor=False
+            lambda: self.lib_action(self.env_assist.get_env(), "A", wait="10"),
+            [fixture.error(report_codes.BAD_CLUSTER_STATE_FORMAT,),],
+            expected_in_processor=False,
         )
 
     def test_pcmk_fail(self):
@@ -309,7 +307,7 @@ class MoveBanWaitMixin():
                     stderr="pcmk std err",
                 ),
             ],
-            expected_in_processor=False
+            expected_in_processor=False,
         )
 
     def test_wait_fail(self):
@@ -320,25 +318,24 @@ class MoveBanWaitMixin():
         )
 
         self.env_assist.assert_raise_library_error(
-            lambda: self.lib_action(
-                self.env_assist.get_env(), "A", wait="10"
-            ),
+            lambda: self.lib_action(self.env_assist.get_env(), "A", wait="10"),
             [
                 fixture.error(
-                    report_codes.WAIT_FOR_IDLE_ERROR,
-                    reason="wait error",
+                    report_codes.WAIT_FOR_IDLE_ERROR, reason="wait error",
                 ),
             ],
-            expected_in_processor=False
+            expected_in_processor=False,
         )
-        self.env_assist.assert_reports([
-            fixture.info(
-                self.report_code_pcmk_success,
-                resource_id="A",
-                stdout="pcmk std out",
-                stderr="pcmk std err",
-            ),
-        ])
+        self.env_assist.assert_reports(
+            [
+                fixture.info(
+                    self.report_code_pcmk_success,
+                    resource_id="A",
+                    stdout="pcmk std out",
+                    stderr="pcmk std err",
+                ),
+            ]
+        )
 
     def test_state_after_action_fail(self):
         self.config.runner.pcmk.load_state()
@@ -346,28 +343,30 @@ class MoveBanWaitMixin():
         self.config.runner.pcmk.wait(timeout=10)
         self.config.runner.pcmk.load_state(
             name="runner.pcmk.load_state.after",
-            stdout="state stdout", stderr="state stderr", returncode=1
+            stdout="state stdout",
+            stderr="state stderr",
+            returncode=1,
         )
         self.env_assist.assert_raise_library_error(
-            lambda: self.lib_action(
-                self.env_assist.get_env(), "A", wait="10"
-            ),
+            lambda: self.lib_action(self.env_assist.get_env(), "A", wait="10"),
             [
                 fixture.error(
                     report_codes.CRM_MON_ERROR,
                     reason="state stderr\nstate stdout",
                 ),
             ],
-            expected_in_processor=False
+            expected_in_processor=False,
         )
-        self.env_assist.assert_reports([
-            fixture.info(
-                self.report_code_pcmk_success,
-                resource_id="A",
-                stdout="pcmk std out",
-                stderr="pcmk std err",
-            ),
-        ])
+        self.env_assist.assert_reports(
+            [
+                fixture.info(
+                    self.report_code_pcmk_success,
+                    resource_id="A",
+                    stdout="pcmk std out",
+                    stderr="pcmk std err",
+                ),
+            ]
+        )
 
     def test_state_after_action_not_xml(self):
         self.config.runner.pcmk.load_state()
@@ -377,92 +376,88 @@ class MoveBanWaitMixin():
             name="runner.pcmk.load_state.after", stdout="state stdout"
         )
         self.env_assist.assert_raise_library_error(
-            lambda: self.lib_action(
-                self.env_assist.get_env(), "A", wait="10"
-            ),
-            [
-                fixture.error(
-                    report_codes.BAD_CLUSTER_STATE_FORMAT,
-                ),
-            ],
-            expected_in_processor=False
+            lambda: self.lib_action(self.env_assist.get_env(), "A", wait="10"),
+            [fixture.error(report_codes.BAD_CLUSTER_STATE_FORMAT,),],
+            expected_in_processor=False,
         )
-        self.env_assist.assert_reports([
-            fixture.info(
-                self.report_code_pcmk_success,
-                resource_id="A",
-                stdout="pcmk std out",
-                stderr="pcmk std err",
-            ),
-        ])
+        self.env_assist.assert_reports(
+            [
+                fixture.info(
+                    self.report_code_pcmk_success,
+                    resource_id="A",
+                    stdout="pcmk std out",
+                    stderr="pcmk std err",
+                ),
+            ]
+        )
 
     def test_was_running_now_stopped(self):
         self.success_config(self.state_running_node1, self.state_not_running)
         self.env_assist.assert_raise_library_error(
             lambda: self.lib_action(self.env_assist.get_env(), "A", wait="10")
         )
-        self.env_assist.assert_reports([
-            fixture.info(
-                self.report_code_pcmk_success,
-                resource_id="A",
-                stdout="pcmk std out",
-                stderr="pcmk std err",
-            ),
-            fixture.report_resource_not_running(
-                "A",
-                severity=severities.ERROR
-            ),
-        ])
+        self.env_assist.assert_reports(
+            [
+                fixture.info(
+                    self.report_code_pcmk_success,
+                    resource_id="A",
+                    stdout="pcmk std out",
+                    stderr="pcmk std err",
+                ),
+                fixture.report_resource_not_running(
+                    "A", severity=severities.ERROR
+                ),
+            ]
+        )
 
     def test_was_stopped_now_stopped(self):
         self.success_config(self.state_not_running, self.state_not_running)
         self.lib_action(self.env_assist.get_env(), "A", wait="10")
-        self.env_assist.assert_reports([
-            fixture.info(
-                self.report_code_pcmk_success,
-                resource_id="A",
-                stdout="pcmk std out",
-                stderr="pcmk std err",
-            ),
-            fixture.report_resource_not_running(
-                "A",
-            ),
-        ])
+        self.env_assist.assert_reports(
+            [
+                fixture.info(
+                    self.report_code_pcmk_success,
+                    resource_id="A",
+                    stdout="pcmk std out",
+                    stderr="pcmk std err",
+                ),
+                fixture.report_resource_not_running("A",),
+            ]
+        )
 
     def test_running_on_same_node_no_node_specified(self):
         self.success_config(self.state_running_node1, self.state_running_node1)
         self.env_assist.assert_raise_library_error(
             lambda: self.lib_action(self.env_assist.get_env(), "A", wait="10")
         )
-        self.env_assist.assert_reports([
-            fixture.info(
-                self.report_code_pcmk_success,
-                resource_id="A",
-                stdout="pcmk std out",
-                stderr="pcmk std err",
-            ),
-            fixture.report_resource_running(
-                "A",
-                {"Started": ["node1"]},
-                severity=severities.ERROR
-            ),
-        ])
+        self.env_assist.assert_reports(
+            [
+                fixture.info(
+                    self.report_code_pcmk_success,
+                    resource_id="A",
+                    stdout="pcmk std out",
+                    stderr="pcmk std err",
+                ),
+                fixture.report_resource_running(
+                    "A", {"Started": ["node1"]}, severity=severities.ERROR
+                ),
+            ]
+        )
 
     def test_running_on_onther_node_no_node_specified(self):
         self.success_config(self.state_running_node1, self.state_running_node2)
         self.lib_action(self.env_assist.get_env(), "A", wait="10")
-        self.env_assist.assert_reports([
-            fixture.info(
-                self.report_code_pcmk_success,
-                resource_id="A",
-                stdout="pcmk std out",
-                stderr="pcmk std err",
-            ),
-            fixture.report_resource_running(
-                "A",
-                {"Started": ["node2"]},
-            ),
-        ])
+        self.env_assist.assert_reports(
+            [
+                fixture.info(
+                    self.report_code_pcmk_success,
+                    resource_id="A",
+                    stdout="pcmk std out",
+                    stderr="pcmk std err",
+                ),
+                fixture.report_resource_running("A", {"Started": ["node2"]},),
+            ]
+        )
 
     @staticmethod
     def _prepare_state(state):
@@ -478,98 +473,100 @@ class MoveBanWaitMixin():
         self.config.runner.pcmk.wait(timeout=10)
         self.config.runner.pcmk.load_state(
             name="runner.pcmk.load_state.after",
-            resources=self._prepare_state(state_after)
+            resources=self._prepare_state(state_after),
         )
 
 
 class MoveWait(MoveMixin, MoveBanWaitMixin, TestCase):
     def test_running_on_specified_node(self):
         self.success_config(
-            self.state_running_node1, self.state_running_node2,
-            action_node="node2"
+            self.state_running_node1,
+            self.state_running_node2,
+            action_node="node2",
         )
         self.lib_action(self.env_assist.get_env(), "A", node="node2", wait="10")
-        self.env_assist.assert_reports([
-            fixture.info(
-                self.report_code_pcmk_success,
-                resource_id="A",
-                stdout="pcmk std out",
-                stderr="pcmk std err",
-            ),
-            fixture.report_resource_running(
-                "A",
-                {"Started": ["node2"]},
-            ),
-        ])
+        self.env_assist.assert_reports(
+            [
+                fixture.info(
+                    self.report_code_pcmk_success,
+                    resource_id="A",
+                    stdout="pcmk std out",
+                    stderr="pcmk std err",
+                ),
+                fixture.report_resource_running("A", {"Started": ["node2"]},),
+            ]
+        )
 
     def test_running_on_not_specified_node(self):
         self.success_config(
-            self.state_running_node1, self.state_running_node1,
-            action_node="node2"
+            self.state_running_node1,
+            self.state_running_node1,
+            action_node="node2",
         )
         self.env_assist.assert_raise_library_error(
             lambda: self.lib_action(
                 self.env_assist.get_env(), "A", node="node2", wait="10"
             )
         )
-        self.env_assist.assert_reports([
-            fixture.info(
-                self.report_code_pcmk_success,
-                resource_id="A",
-                stdout="pcmk std out",
-                stderr="pcmk std err",
-            ),
-            fixture.report_resource_running(
-                "A",
-                {"Started": ["node1"]},
-                severity=severities.ERROR
-            ),
-        ])
+        self.env_assist.assert_reports(
+            [
+                fixture.info(
+                    self.report_code_pcmk_success,
+                    resource_id="A",
+                    stdout="pcmk std out",
+                    stderr="pcmk std err",
+                ),
+                fixture.report_resource_running(
+                    "A", {"Started": ["node1"]}, severity=severities.ERROR
+                ),
+            ]
+        )
 
 
 class BanWait(BanMixin, MoveBanWaitMixin, TestCase):
     def test_running_on_specified_node(self):
         self.success_config(
-            self.state_running_node1, self.state_running_node1,
-            action_node="node1"
+            self.state_running_node1,
+            self.state_running_node1,
+            action_node="node1",
         )
         self.env_assist.assert_raise_library_error(
             lambda: self.lib_action(
                 self.env_assist.get_env(), "A", node="node1", wait="10"
             )
         )
-        self.env_assist.assert_reports([
-            fixture.info(
-                self.report_code_pcmk_success,
-                resource_id="A",
-                stdout="pcmk std out",
-                stderr="pcmk std err",
-            ),
-            fixture.report_resource_running(
-                "A",
-                {"Started": ["node1"]},
-                severity=severities.ERROR
-            ),
-        ])
+        self.env_assist.assert_reports(
+            [
+                fixture.info(
+                    self.report_code_pcmk_success,
+                    resource_id="A",
+                    stdout="pcmk std out",
+                    stderr="pcmk std err",
+                ),
+                fixture.report_resource_running(
+                    "A", {"Started": ["node1"]}, severity=severities.ERROR
+                ),
+            ]
+        )
 
     def test_running_on_not_specified_node(self):
         self.success_config(
-            self.state_running_node1, self.state_running_node2,
-            action_node="node1"
+            self.state_running_node1,
+            self.state_running_node2,
+            action_node="node1",
         )
         self.lib_action(self.env_assist.get_env(), "A", node="node1", wait="10")
-        self.env_assist.assert_reports([
-            fixture.info(
-                self.report_code_pcmk_success,
-                resource_id="A",
-                stdout="pcmk std out",
-                stderr="pcmk std err",
-            ),
-            fixture.report_resource_running(
-                "A",
-                {"Started": ["node2"]},
-            ),
-        ])
+        self.env_assist.assert_reports(
+            [
+                fixture.info(
+                    self.report_code_pcmk_success,
+                    resource_id="A",
+                    stdout="pcmk std out",
+                    stderr="pcmk std err",
+                ),
+                fixture.report_resource_running("A", {"Started": ["node2"]},),
+            ]
+        )
 
 
 class UnmoveUnbanWait(UnmoveUnbanMixin, TestCase):
@@ -581,31 +578,34 @@ class UnmoveUnbanWait(UnmoveUnbanMixin, TestCase):
         self.config_pcmk_action()
 
     def test_success(self):
-        resources_state = etree_to_str(fixture.complete_state_resources(
-            etree.fromstring("""
+        resources_state = etree_to_str(
+            fixture.complete_state_resources(
+                etree.fromstring(
+                    """
                 <resources>
                     <resource id="A" role="Started" nodes_running_on="1">
                          <node name="node1" id="1" cached="false" />
                      </resource>
                 </resources>
-            """)
-        ))
+            """
+                )
+            )
+        )
         self.config.runner.pcmk.wait(timeout=10)
         self.config.runner.pcmk.load_state(resources=resources_state)
 
         self.lib_action(self.env_assist.get_env(), "A", wait="10")
-        self.env_assist.assert_reports([
-            fixture.info(
-                self.report_code_pcmk_success,
-                resource_id="A",
-                stdout="pcmk std out",
-                stderr="pcmk std err",
-            ),
-            fixture.report_resource_running(
-                "A",
-                {"Started": ["node1"]}
-            ),
-        ])
+        self.env_assist.assert_reports(
+            [
+                fixture.info(
+                    self.report_code_pcmk_success,
+                    resource_id="A",
+                    stdout="pcmk std out",
+                    stderr="pcmk std err",
+                ),
+                fixture.report_resource_running("A", {"Started": ["node1"]}),
+            ]
+        )
 
     def test_get_state_fail(self):
         self.config.runner.pcmk.wait(timeout=10)
@@ -613,48 +613,44 @@ class UnmoveUnbanWait(UnmoveUnbanMixin, TestCase):
             stdout="state stdout", stderr="state stderr", returncode=1
         )
         self.env_assist.assert_raise_library_error(
-            lambda: self.lib_action(
-                self.env_assist.get_env(), "A", wait="10"
-            ),
+            lambda: self.lib_action(self.env_assist.get_env(), "A", wait="10"),
             [
                 fixture.error(
                     report_codes.CRM_MON_ERROR,
                     reason="state stderr\nstate stdout",
                 ),
             ],
-            expected_in_processor=False
+            expected_in_processor=False,
         )
-        self.env_assist.assert_reports([
-            fixture.info(
-                self.report_code_pcmk_success,
-                resource_id="A",
-                stdout="pcmk std out",
-                stderr="pcmk std err",
-            ),
-        ])
+        self.env_assist.assert_reports(
+            [
+                fixture.info(
+                    self.report_code_pcmk_success,
+                    resource_id="A",
+                    stdout="pcmk std out",
+                    stderr="pcmk std err",
+                ),
+            ]
+        )
 
     def test_get_state_not_xml(self):
         self.config.runner.pcmk.wait(timeout=10)
         self.config.runner.pcmk.load_state(stdout="state stdout")
         self.env_assist.assert_raise_library_error(
-            lambda: self.lib_action(
-                self.env_assist.get_env(), "A", wait="10"
-            ),
-            [
-                fixture.error(
-                    report_codes.BAD_CLUSTER_STATE_FORMAT,
-                ),
-            ],
-            expected_in_processor=False
+            lambda: self.lib_action(self.env_assist.get_env(), "A", wait="10"),
+            [fixture.error(report_codes.BAD_CLUSTER_STATE_FORMAT,),],
+            expected_in_processor=False,
         )
-        self.env_assist.assert_reports([
-            fixture.info(
-                self.report_code_pcmk_success,
-                resource_id="A",
-                stdout="pcmk std out",
-                stderr="pcmk std err",
-            ),
-        ])
+        self.env_assist.assert_reports(
+            [
+                fixture.info(
+                    self.report_code_pcmk_success,
+                    resource_id="A",
+                    stdout="pcmk std out",
+                    stderr="pcmk std err",
+                ),
+            ]
+        )
 
     def test_wait_fail(self):
         self.config.runner.pcmk.wait(
@@ -662,22 +658,21 @@ class UnmoveUnbanWait(UnmoveUnbanMixin, TestCase):
         )
 
         self.env_assist.assert_raise_library_error(
-            lambda: self.lib_action(
-                self.env_assist.get_env(), "A", wait="10"
-            ),
+            lambda: self.lib_action(self.env_assist.get_env(), "A", wait="10"),
             [
                 fixture.error(
-                    report_codes.WAIT_FOR_IDLE_ERROR,
-                    reason="wait error",
+                    report_codes.WAIT_FOR_IDLE_ERROR, reason="wait error",
                 ),
             ],
-            expected_in_processor=False
+            expected_in_processor=False,
         )
-        self.env_assist.assert_reports([
-            fixture.info(
-                self.report_code_pcmk_success,
-                resource_id="A",
-                stdout="pcmk std out",
-                stderr="pcmk std err",
-            ),
-        ])
+        self.env_assist.assert_reports(
+            [
+                fixture.info(
+                    self.report_code_pcmk_success,
+                    resource_id="A",
+                    stdout="pcmk std out",
+                    stderr="pcmk std err",
+                ),
+            ]
+        )

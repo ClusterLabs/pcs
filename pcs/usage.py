@@ -3,6 +3,8 @@ import re
 # pylint: disable=too-many-lines, too-many-branches, global-statement
 
 examples = ""
+
+
 def full_usage():
     out = ""
     out += main(False)
@@ -25,6 +27,7 @@ def full_usage():
     out += strip_extras(dr([], False))
     print(out.strip())
     print("Examples:\n" + examples.replace(r" \ ", ""))
+
 
 def strip_extras(text):
     global examples
@@ -67,9 +70,11 @@ def strip_extras(text):
             minicmd = ""
     return ret
 
+
 # Print only output for items that match the args
 # For now we only look at the first arg
 # If no args, then we return the full output
+
 
 def sub_usage(args, output):
     if not args:
@@ -77,16 +82,14 @@ def sub_usage(args, output):
     args_str = " ".join(args)
 
     ret = ""
-    lines = output.split('\n')
+    lines = output.split("\n")
     begin_printing = False
     usage = re.sub(r"\[commands\]", args_str, lines[1])
     for line in lines:
         if (
             begin_printing
-            and
-            re.match("^    [^ ]", line)
-            and
-            not re.match("^    " + args_str, line)
+            and re.match("^    [^ ]", line)
+            and not re.match("^    " + args_str, line)
         ):
             begin_printing = False
         if not re.match("^ ", line) and not re.match("^$", line):
@@ -101,11 +104,13 @@ def sub_usage(args, output):
         return "\n" + usage + "\n" + ret.rstrip() + "\n"
     return sub_usage([" ".join(args_str.split()[:-1])], output)
 
+
 def dict_depth(d, depth=0):
     # pylint: disable=invalid-name
     if not isinstance(d, dict) or not d:
         return depth
-    return max(dict_depth(v, depth+1) for k, v in d.items())
+    return max(dict_depth(v, depth + 1) for k, v in d.items())
+
 
 def generate_completion_tree_from_usage():
     tree = {}
@@ -128,10 +133,11 @@ def generate_completion_tree_from_usage():
     tree["dr"] = generate_tree(dr([], False))
     return tree
 
+
 def generate_tree(usage_txt):
     ignore = True
     ret_hash = {}
-    for line in usage_txt.split('\n'):
+    for line in usage_txt.split("\n"):
         if line.startswith("Commands:"):
             ignore = False
             continue
@@ -149,12 +155,13 @@ def generate_tree(usage_txt):
                 ret_hash[arg] = {}
             cur_hash = ret_hash[arg]
             for arg in args:
-                if arg.startswith('[') or arg.startswith('<'):
+                if arg.startswith("[") or arg.startswith("<"):
                     break
                 if not arg in cur_hash:
                     cur_hash[arg] = {}
                 cur_hash = cur_hash[arg]
     return ret_hash
+
 
 def main(pout=True):
     output = """
@@ -198,8 +205,8 @@ Commands:
     client      Manage pcsd client configuration.
     dr          Manage disaster recovery configuration.
 """
-# Advanced usage to possibly add later
-#  --corosync_conf=<corosync file> Specify alternative corosync.conf file
+    # Advanced usage to possibly add later
+    #  --corosync_conf=<corosync file> Specify alternative corosync.conf file
     if pout:
         print(output)
         return None
@@ -658,6 +665,7 @@ Notes:
         return None
     return output
 
+
 def cluster(args=(), pout=True):
     output = """
 Usage: pcs cluster [commands]...
@@ -1011,6 +1019,7 @@ Commands:
         return None
     return output
 
+
 def stonith(args=(), pout=True):
     output = """
 Usage: pcs stonith [commands]...
@@ -1244,6 +1253,7 @@ Commands:
         return None
     return output
 
+
 def property(args=(), pout=True):
     # pylint: disable=redefined-builtin
     output = """
@@ -1279,6 +1289,7 @@ Examples:
         print(sub_usage(args, output))
         return None
     return output
+
 
 def constraint(args=(), pout=True):
     output = """
@@ -1466,6 +1477,7 @@ Commands:
         return None
     return output
 
+
 def acl(args=(), pout=True):
     output = """
 Usage: pcs acl [commands]...
@@ -1591,6 +1603,7 @@ Commands:
         return None
     return output
 
+
 def status(args=(), pout=True):
     output = """
 Usage: pcs status [commands]...
@@ -1639,6 +1652,7 @@ Commands:
         print(sub_usage(args, output))
         return None
     return output
+
 
 def config(args=(), pout=True):
     output = """
@@ -1707,6 +1721,7 @@ Commands:
         return None
     return output
 
+
 def pcsd(args=(), pout=True):
     output = """
 Usage: pcs pcsd [commands]...
@@ -1729,6 +1744,7 @@ Commands:
         print(sub_usage(args, output))
         return None
     return output
+
 
 def host(args=(), pout=True):
     output = """
@@ -1755,6 +1771,7 @@ Commands:
         print(sub_usage(args, output))
         return None
     return output
+
 
 def node(args=(), pout=True):
     output = """
@@ -1822,6 +1839,7 @@ Commands:
         return None
     return output
 
+
 def qdevice(args=(), pout=True):
     output = """
 Usage: pcs qdevice <command>
@@ -1867,6 +1885,7 @@ Commands:
         print(sub_usage(args, output))
         return None
     return output
+
 
 def quorum(args=(), pout=True):
     output = """
@@ -1951,6 +1970,7 @@ Commands:
         print(sub_usage(args, output))
         return None
     return output
+
 
 def booth(args=(), pout=True):
     output = """
@@ -2153,7 +2173,8 @@ def show(main_usage_name, rest_usage_names):
     }
     if main_usage_name not in usage_map:
         raise Exception(
-            "Bad usage name '{0}' there can be '{1}'"
-            .format(main_usage_name, list(usage_map.keys()))
+            "Bad usage name '{0}' there can be '{1}'".format(
+                main_usage_name, list(usage_map.keys())
+            )
         )
     usage_map[main_usage_name](rest_usage_names)

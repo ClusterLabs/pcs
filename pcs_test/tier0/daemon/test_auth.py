@@ -11,6 +11,7 @@ PASSWORD = "password"
 # Don't write errors to test output.
 logging.getLogger("pcsd.daemon").setLevel(logging.CRITICAL)
 
+
 class AuthorizeUserSync(TestCase, create_setup_patch_mixin(auth)):
     def setUp(self):
         self.authenticate_by_pam = self.setup_patch("authenticate_by_pam")

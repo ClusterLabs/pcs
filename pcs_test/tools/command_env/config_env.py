@@ -21,7 +21,6 @@ class EnvConfig:
         self.__cib_data = cib_data
         self.__cib_tempfile = cib_tempfile
 
-
     @property
     def cib_data(self):
         return self.__cib_data
@@ -53,7 +52,7 @@ class EnvConfig:
             name: PcsKnownHost(
                 name,
                 token=None,
-                dest_list=[Destination(name, settings.pcsd_default_port)]
+                dest_list=[Destination(name, settings.pcsd_default_port)],
             )
             for name in host_name_list
         }
@@ -79,9 +78,14 @@ class EnvConfig:
         return self.__known_hosts_getter
 
     def push_cib(
-        self, modifiers=None, name="env.push_cib",
-        load_key="runner.cib.load", wait=False, exception=None, instead=None,
-        **modifier_shortcuts
+        self,
+        modifiers=None,
+        name="env.push_cib",
+        load_key="runner.cib.load",
+        wait=False,
+        exception=None,
+        instead=None,
+        **modifier_shortcuts,
     ):
         """
         Create call for pushing cib.
@@ -103,39 +107,44 @@ class EnvConfig:
             here)
         """
         cib_xml = modify_cib(
-            self.__calls.get(load_key).stdout,
-            modifiers,
-            **modifier_shortcuts
+            self.__calls.get(load_key).stdout, modifiers, **modifier_shortcuts
         )
         self.__calls.place(
             name,
             PushCibCall(cib_xml, wait=wait, exception=exception),
-            instead=instead
+            instead=instead,
         )
 
     def push_cib_custom(
-        self, name="env.push_cib_custom", custom_cib=None, wait=False,
-        exception=None, instead=None
+        self,
+        name="env.push_cib_custom",
+        custom_cib=None,
+        wait=False,
+        exception=None,
+        instead=None,
     ):
         self.__calls.place(
             name,
             PushCibCall(
                 custom_cib, custom_cib=True, wait=wait, exception=exception
             ),
-            instead=instead
+            instead=instead,
         )
 
     def push_corosync_conf(
-        self, name="env.push_corosync_conf", corosync_conf_text="",
-        skip_offline_targets=False, raises=False, before=None, instead=None
+        self,
+        name="env.push_corosync_conf",
+        corosync_conf_text="",
+        skip_offline_targets=False,
+        raises=False,
+        before=None,
+        instead=None,
     ):
         self.__calls.place(
             name,
             PushCorosyncConfCall(
-                corosync_conf_text,
-                skip_offline_targets,
-                raises=raises
+                corosync_conf_text, skip_offline_targets, raises=raises
             ),
             instead=instead,
-            before=before
+            before=before,
         )

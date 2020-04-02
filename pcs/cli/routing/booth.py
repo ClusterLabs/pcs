@@ -19,7 +19,7 @@ booth_cmd = create_router(
                 "grant": command.ticket_grant,
                 "revoke": command.ticket_revoke,
             },
-            ["booth", "ticket"]
+            ["booth", "ticket"],
         ),
         "create": command.create_in_cluster,
         "delete": command.get_remove_from_cluster(resource_remove),
@@ -33,5 +33,5 @@ booth_cmd = create_router(
         "stop": command.stop,
         "status": command.status,
     },
-    ["booth"]
+    ["booth"],
 )

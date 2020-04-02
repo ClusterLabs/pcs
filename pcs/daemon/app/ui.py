@@ -5,11 +5,13 @@ from pcs.daemon.app import session as app_session
 from pcs.daemon.app.common import BaseHandler
 from pcs.daemon.app.ui_common import AjaxMixin, StaticFile
 
+
 class SPAHandler(BaseHandler):
     __index = None
     __fallback = None
+
     def initialize(self, index, fallback):
-        #pylint: disable=arguments-differ
+        # pylint: disable=arguments-differ
         self.__index = index
         self.__fallback = fallback
 
@@ -22,9 +24,10 @@ class SPAHandler(BaseHandler):
             else self.__fallback
         )
 
+
 class Login(SPAHandler, app_session.Mixin, AjaxMixin):
     def initialize(self, session_storage, index, fallback):
-        #pylint: disable=arguments-differ
+        # pylint: disable=arguments-differ
         app_session.Mixin.initialize(self, session_storage)
         SPAHandler.initialize(self, index, fallback)
 
@@ -37,7 +40,7 @@ class Login(SPAHandler, app_session.Mixin, AjaxMixin):
         await self.session_auth_user(
             self.get_body_argument("username"),
             self.get_body_argument("password"),
-            sign_rejection=False
+            sign_rejection=False,
         )
 
         if not self.session.is_authenticated:
@@ -45,11 +48,13 @@ class Login(SPAHandler, app_session.Mixin, AjaxMixin):
 
         self.write(self.session.ajax_id)
 
+
 class Logout(app_session.Mixin, AjaxMixin, BaseHandler):
     """
     Logout handles url for logout. It is used for both ajax and non-ajax
     requests.
     """
+
     async def get(self, *args, **kwargs):
         del args, kwargs
         await self.init_session()
@@ -58,27 +63,25 @@ class Logout(app_session.Mixin, AjaxMixin, BaseHandler):
         self.enhance_headers()
         self.write("OK")
 
+
 class StaticFileMayBe(StaticFile):
-    #pylint: disable=abstract-method
+    # pylint: disable=abstract-method
     def get(self, *args, **kwargs):
-        #pylint: disable=arguments-differ
+        # pylint: disable=arguments-differ
         if not os.path.isdir(str(self.root)):
             # spa is probably not installed
             self.set_status(404, "Not Found")
             return None
         return super().get(*args, **kwargs)
 
+
 def get_routes(
-    url_prefix,
-    app_dir,
-    fallback_page_path,
-    session_storage: session.Storage,
+    url_prefix, app_dir, fallback_page_path, session_storage: session.Storage,
 ):
     sessions = dict(session_storage=session_storage)
     static_path = lambda dir="": dict(path=os.path.join(app_dir, dir))
     pages = dict(
-        index=os.path.join(app_dir, "index.html"),
-        fallback=fallback_page_path,
+        index=os.path.join(app_dir, "index.html"), fallback=fallback_page_path,
     )
 
     # One possibility is to check if SPA index exists and if does not exists

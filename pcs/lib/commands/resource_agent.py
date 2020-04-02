@@ -34,7 +34,7 @@ def list_agents_for_standard_and_provider(lib_env, standard_provider=None):
     return sorted(
         agents,
         # works with both str and unicode in both python 2 and 3
-        key=lambda x: x.lower()
+        key=lambda x: x.lower(),
     )
 
 
@@ -61,17 +61,11 @@ def list_agents(lib_env, describe=True, search=None):
         key=lambda x: x.lower()
     )
     return _complete_agent_list(
-        runner,
-        agent_names,
-        describe,
-        search,
-        resource_agent.ResourceAgent
+        runner, agent_names, describe, search, resource_agent.ResourceAgent
     )
 
 
-def _complete_agent_list(
-    runner, agent_names, describe, search, metadata_class
-):
+def _complete_agent_list(runner, agent_names, describe, search, metadata_class):
     # filter agents by name if requested
     if search:
         search_lower = search.lower()
@@ -89,19 +83,19 @@ def _complete_agent_list(
             else:
                 agent_list.append(agent_metadata.get_name_info())
         except resource_agent.ResourceAgentError:
-            #we don't return it in the list:
+            # we don't return it in the list:
             #
-            #UnableToGetAgentMetadata - if we cannot get valid metadata, it's
-            #not a resource agent
+            # UnableToGetAgentMetadata - if we cannot get valid metadata, it's
+            # not a resource agent
             #
-            #InvalidResourceAgentName - invalid name cannot be used with a new
-            #resource. The list of names is gained from "crm_resource" whilst
-            #pcs is doing the validation. So there can be a name that pcs does
-            #not recognize as valid.
+            # InvalidResourceAgentName - invalid name cannot be used with a new
+            # resource. The list of names is gained from "crm_resource" whilst
+            # pcs is doing the validation. So there can be a name that pcs does
+            # not recognize as valid.
             #
-            #Providing a warning is not the way (currently). Other components
-            #read this list and do not expect warnings there. Using the stderr
-            #(to separate warnings) is currently difficult.
+            # Providing a warning is not the way (currently). Other components
+            # read this list and do not expect warnings there. Using the stderr
+            # (to separate warnings) is currently difficult.
             pass
     return agent_list
 
@@ -115,6 +109,6 @@ def describe_agent(lib_env, agent_name):
         lib_env.report_processor,
         lib_env.cmd_runner(),
         agent_name,
-        absent_agent_supported=False
+        absent_agent_supported=False,
     )
     return agent.get_full_info()

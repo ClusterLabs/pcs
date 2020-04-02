@@ -19,6 +19,7 @@ TAG_ROLE = "acl_role"
 TAG_TARGET = "acl_target"
 TAG_PERMISSION = "acl_permission"
 
+
 def validate_permissions(tree, permission_info_list):
     """
     Validate given permission list.
@@ -36,9 +37,7 @@ def validate_permissions(tree, permission_info_list):
             report_items.append(
                 ReportItem.error(
                     reports.messages.InvalidOptionValue(
-                        "permission",
-                        permission,
-                        allowed_permissions
+                        "permission", permission, allowed_permissions
                     )
                 )
             )
@@ -47,14 +46,12 @@ def validate_permissions(tree, permission_info_list):
             report_items.append(
                 ReportItem.error(
                     reports.messages.InvalidOptionValue(
-                        "scope type",
-                        scope_type,
-                        allowed_scopes
+                        "scope type", scope_type, allowed_scopes
                     )
                 )
             )
 
-        if scope_type == 'id' and not does_id_exist(tree, scope):
+        if scope_type == "id" and not does_id_exist(tree, scope):
             report_items.append(
                 ReportItem.error(reports.messages.IdNotFound(scope, ["id"]))
             )
@@ -63,9 +60,7 @@ def validate_permissions(tree, permission_info_list):
         raise LibraryError(*report_items)
 
 
-def _find(
-    tag, acl_section, element_id, none_if_id_unused=False, id_types=None
-):
+def _find(tag, acl_section, element_id, none_if_id_unused=False, id_types=None):
     return find_element_by_tag_and_id(
         tag,
         acl_section,
@@ -74,9 +69,11 @@ def _find(
         none_if_id_unused=none_if_id_unused,
     )
 
+
 find_group = partial(_find, TAG_GROUP)
 find_role = partial(_find, TAG_ROLE)
 find_target = partial(_find, TAG_TARGET)
+
 
 def find_target_or_group(acl_section, target_or_group_id):
     """
@@ -94,19 +91,16 @@ def find_target_or_group(acl_section, target_or_group_id):
     target_or_group_id -- id of target/group element which should be returned
     """
     target = find_target(
-        acl_section,
-        target_or_group_id,
-        none_if_id_unused=True
+        acl_section, target_or_group_id, none_if_id_unused=True
     )
 
     if target is not None:
         return target
 
     return find_group(
-        acl_section,
-        target_or_group_id,
-        id_types=[TAG_GROUP, TAG_TARGET]
+        acl_section, target_or_group_id, id_types=[TAG_GROUP, TAG_TARGET]
     )
+
 
 def create_role(acl_section, role_id, description=None):
     """
@@ -138,6 +132,7 @@ def remove_role(acl_section, role_id, autodelete_users_groups=False):
         role_parent.remove(role_el)
         if autodelete_users_groups and role_parent.find(".//role") is None:
             role_parent.getparent().remove(role_parent)
+
 
 def _assign_role(acl_section, role_id, target_el):
     try:
@@ -171,6 +166,7 @@ def assign_role(acl_section, role_id, target_el):
     if report_list:
         raise LibraryError(*report_list)
 
+
 def assign_all_roles(acl_section, role_id_list, element):
     """
     Assign roles from role_id_list to element.
@@ -185,7 +181,6 @@ def assign_all_roles(acl_section, role_id_list, element):
         report_list.extend(_assign_role(acl_section, role_id, element))
     if report_list:
         raise LibraryError(*report_list)
-
 
 
 def unassign_role(target_el, role_id, autodelete_target=False):
@@ -231,7 +226,7 @@ def create_target(acl_section, target_id):
     """
     # id of element acl_target is not type ID in CIB ACL schema so we don't need
     # to check if it is unique ID in whole CIB
-    if(
+    if (
         acl_section.find("./{0}[@id='{1}']".format(TAG_TARGET, target_id))
         is not None
     ):
@@ -288,17 +283,16 @@ def add_permissions_to_role(role_el, permission_info_list):
         each contains (permission, scope_type, scope)
     """
     area_type_attribute_map = {
-        'xpath': 'xpath',
-        'id': 'reference',
+        "xpath": "xpath",
+        "id": "reference",
     }
     for permission, scope_type, scope in permission_info_list:
         perm = etree.SubElement(role_el, "acl_permission")
         perm.set(
             "id",
             find_unique_id(
-                role_el,
-                "{0}-{1}".format(role_el.get("id", "role"), permission)
-            )
+                role_el, "{0}-{1}".format(role_el.get("id", "role"), permission)
+            ),
         )
         perm.set("kind", permission)
         perm.set(area_type_attribute_map[scope_type], scope)
@@ -329,9 +323,7 @@ def get_role_list(acl_section):
     """
     output_list = []
     for role_el in acl_section.findall("./{0}".format(TAG_ROLE)):
-        role = etree_element_attibutes_to_dict(
-            role_el, ["id", "description"]
-        )
+        role = etree_element_attibutes_to_dict(role_el, ["id", "description"])
         role["permission_list"] = _get_permission_list(role_el)
         output_list.append(role)
     return output_list
@@ -356,13 +348,20 @@ def _get_permission_list(role_el):
     """
     output_list = []
     for permission in role_el.findall("./acl_permission"):
-        output_list.append(etree_element_attibutes_to_dict(
-            permission,
-            [
-                "id", "description", "kind", "xpath", "reference",
-                "object-type", "attribute"
-            ]
-        ))
+        output_list.append(
+            etree_element_attibutes_to_dict(
+                permission,
+                [
+                    "id",
+                    "description",
+                    "kind",
+                    "xpath",
+                    "reference",
+                    "object-type",
+                    "attribute",
+                ],
+            )
+        )
     return output_list
 
 
@@ -395,10 +394,12 @@ def get_group_list(acl_section):
 def get_target_like_list(acl_section, tag):
     output_list = []
     for target_el in acl_section.findall("./{0}".format(tag)):
-        output_list.append({
-            "id": target_el.get("id"),
-            "role_list": _get_role_list_of_target(target_el),
-        })
+        output_list.append(
+            {
+                "id": target_el.get("id"),
+                "role_list": _get_role_list_of_target(target_el),
+            }
+        )
     return output_list
 
 

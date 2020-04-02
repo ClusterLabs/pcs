@@ -2,17 +2,23 @@ import base64
 import json
 
 from pcs_test.tools.command_env.mock_node_communicator import (
-    place_multinode_call
+    place_multinode_call,
 )
+
 
 class FilesShortcuts:
     def __init__(self, calls):
         self.__calls = calls
 
     def put_files(
-        self, node_labels=None, pcmk_authkey=None, corosync_authkey=None,
-        corosync_conf=None, pcs_disaster_recovery_conf=None,
-        pcs_settings_conf=None, communication_list=None,
+        self,
+        node_labels=None,
+        pcmk_authkey=None,
+        corosync_authkey=None,
+        corosync_conf=None,
+        pcs_disaster_recovery_conf=None,
+        pcs_settings_conf=None,
+        communication_list=None,
         name="http.files.put_files",
     ):
         # pylint: disable=too-many-arguments
@@ -30,10 +36,7 @@ class FilesShortcuts:
         """
         input_data = {}
         output_data = {}
-        written_output_dict = dict(
-            code="written",
-            message="",
-        )
+        written_output_dict = dict(code="written", message="",)
 
         if pcmk_authkey:
             file_id = "pacemaker_remote authkey"
@@ -56,17 +59,16 @@ class FilesShortcuts:
         if corosync_conf:
             file_id = "corosync.conf"
             input_data[file_id] = dict(
-                data=corosync_conf,
-                type="corosync_conf",
+                data=corosync_conf, type="corosync_conf",
             )
             output_data[file_id] = written_output_dict
 
         if pcs_disaster_recovery_conf:
             file_id = "disaster-recovery config"
             input_data[file_id] = dict(
-                data=base64.b64encode(
-                    pcs_disaster_recovery_conf
-                ).decode("utf-8"),
+                data=base64.b64encode(pcs_disaster_recovery_conf).decode(
+                    "utf-8"
+                ),
                 type="pcs_disaster_recovery_conf",
                 rewrite_existing=True,
             )
@@ -88,13 +90,16 @@ class FilesShortcuts:
             communication_list,
             action="remote/put_file",
             param_list=[("data_json", json.dumps(input_data))],
-            output=json.dumps(dict(files=output_data))
+            output=json.dumps(dict(files=output_data)),
         )
 
     def remove_files(
-        self, node_labels=None, pcsd_settings=False,
-        pcs_disaster_recovery_conf=False, communication_list=None,
-        name="http.files.remove_files"
+        self,
+        node_labels=None,
+        pcsd_settings=False,
+        pcs_disaster_recovery_conf=False,
+        communication_list=None,
+        name="http.files.remove_files",
     ):
         """
         Create a call for removing the files on the nodes.
@@ -111,18 +116,12 @@ class FilesShortcuts:
         if pcsd_settings:
             file_id = "pcsd settings"
             input_data[file_id] = dict(type="pcsd_settings")
-            output_data[file_id] = dict(
-                code="deleted",
-                message="",
-            )
+            output_data[file_id] = dict(code="deleted", message="",)
 
         if pcs_disaster_recovery_conf:
             file_id = "pcs disaster-recovery config"
             input_data[file_id] = dict(type="pcs_disaster_recovery_conf")
-            output_data[file_id] = dict(
-                code="deleted",
-                message="",
-            )
+            output_data[file_id] = dict(code="deleted", message="",)
 
         place_multinode_call(
             self.__calls,
@@ -131,5 +130,5 @@ class FilesShortcuts:
             communication_list,
             action="remote/remove_file",
             param_list=[("data_json", json.dumps(input_data))],
-            output=json.dumps(dict(files=output_data))
+            output=json.dumps(dict(files=output_data)),
         )

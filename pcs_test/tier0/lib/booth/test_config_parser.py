@@ -12,26 +12,28 @@ from pcs.lib.booth.config_parser import ConfigItem
 class BuildTest(TestCase):
     def test_build_file_content_from_parsed_structure(self):
         self.assertEqual(
-            "\n".join([
-                "authfile = /path/to/auth.file",
-                "site = 1.1.1.1",
-                "site = 2.2.2.2",
-                "arbitrator = 3.3.3.3",
-                'ticket = "TA"',
-                'ticket = "TB"',
-                "  timeout = 10",
-                "", #newline at the end
-            ]).encode("utf-8"),
-            config_parser.Exporter.export([
-                ConfigItem("authfile", "/path/to/auth.file"),
-                ConfigItem("site", "1.1.1.1"),
-                ConfigItem("site", "2.2.2.2"),
-                ConfigItem("arbitrator", "3.3.3.3"),
-                ConfigItem("ticket", "TA"),
-                ConfigItem("ticket", "TB", [
-                    ConfigItem("timeout", "10")
-                ]),
-            ])
+            "\n".join(
+                [
+                    "authfile = /path/to/auth.file",
+                    "site = 1.1.1.1",
+                    "site = 2.2.2.2",
+                    "arbitrator = 3.3.3.3",
+                    'ticket = "TA"',
+                    'ticket = "TB"',
+                    "  timeout = 10",
+                    "",  # newline at the end
+                ]
+            ).encode("utf-8"),
+            config_parser.Exporter.export(
+                [
+                    ConfigItem("authfile", "/path/to/auth.file"),
+                    ConfigItem("site", "1.1.1.1"),
+                    ConfigItem("site", "2.2.2.2"),
+                    ConfigItem("arbitrator", "3.3.3.3"),
+                    ConfigItem("ticket", "TA"),
+                    ConfigItem("ticket", "TB", [ConfigItem("timeout", "10")]),
+                ]
+            ),
         )
 
 
@@ -40,18 +42,20 @@ class OrganizeLinesTest(TestCase):
         self.assertEqual(
             [
                 ConfigItem("site", "1.1.1.1"),
-                ConfigItem('site', '2.2.2.2'),
-                ConfigItem('arbitrator', '3.3.3.3'),
+                ConfigItem("site", "2.2.2.2"),
+                ConfigItem("arbitrator", "3.3.3.3"),
                 ConfigItem("ticket", "TA"),
             ],
             # testing a function which should not be used outside of the module
             # pylint: disable=protected-access
-            config_parser._organize_lines([
-                ("site", "1.1.1.1"),
-                ("ticket", "TA"),
-                ('site', '2.2.2.2'),
-                ('arbitrator', '3.3.3.3'),
-            ])
+            config_parser._organize_lines(
+                [
+                    ("site", "1.1.1.1"),
+                    ("ticket", "TA"),
+                    ("site", "2.2.2.2"),
+                    ("arbitrator", "3.3.3.3"),
+                ]
+            ),
         )
 
     def test_use_ticket_key_as_ticket_detail(self):
@@ -60,34 +64,47 @@ class OrganizeLinesTest(TestCase):
         self.assertEqual(
             [
                 ConfigItem("site", "1.1.1.1"),
-                ConfigItem('expire', '300'),
-                ConfigItem('site', '2.2.2.2'),
-                ConfigItem('arbitrator', '3.3.3.3'),
-                ConfigItem("ticket", "TA", [
-                    ConfigItem("timeout", "10"),
-                    ConfigItem('--nonexistent', 'value'),
-                    ConfigItem("expire", "300"),
-                ]),
-                ConfigItem("ticket", "TB", [
-                    ConfigItem("timeout", "20"),
-                    ConfigItem("renewal-freq", "40"),
-                ]),
+                ConfigItem("expire", "300"),
+                ConfigItem("site", "2.2.2.2"),
+                ConfigItem("arbitrator", "3.3.3.3"),
+                ConfigItem(
+                    "ticket",
+                    "TA",
+                    [
+                        ConfigItem("timeout", "10"),
+                        ConfigItem("--nonexistent", "value"),
+                        ConfigItem("expire", "300"),
+                    ],
+                ),
+                ConfigItem(
+                    "ticket",
+                    "TB",
+                    [
+                        ConfigItem("timeout", "20"),
+                        ConfigItem("renewal-freq", "40"),
+                    ],
+                ),
             ],
             # testing a function which should not be used outside of the module
             # pylint: disable=protected-access
-            config_parser._organize_lines([
-                ("site", "1.1.1.1"),
-                ("expire", "300"), # out of ticket content is kept global
-                ("ticket", "TA"),
-                ("site", "2.2.2.2"), # move to global
-                ("timeout", "10"),
-                ("--nonexistent", "value"), # no global is kept under ticket
-                ("expire", "300"),
-                ("ticket", "TB"),
-                ('arbitrator', '3.3.3.3'),
-                ("timeout", "20"),
-                ("renewal-freq", "40"),
-            ])
+            config_parser._organize_lines(
+                [
+                    ("site", "1.1.1.1"),
+                    ("expire", "300"),  # out of ticket content is kept global
+                    ("ticket", "TA"),
+                    ("site", "2.2.2.2"),  # move to global
+                    ("timeout", "10"),
+                    (
+                        "--nonexistent",
+                        "value",
+                    ),  # no global is kept under ticket
+                    ("expire", "300"),
+                    ("ticket", "TB"),
+                    ("arbitrator", "3.3.3.3"),
+                    ("timeout", "20"),
+                    ("renewal-freq", "40"),
+                ]
+            ),
         )
 
 
@@ -96,21 +113,25 @@ class ParseRawLinesTest(TestCase):
         self.assertEqual(
             [
                 ("site", "1.1.1.1"),
-                ('site', '2.2.2.2'),
-                ('arbitrator', '3.3.3.3'),
-                ('syntactically_correct', 'nonsense'),
-                ('line-with', 'hash#literal'),
+                ("site", "2.2.2.2"),
+                ("arbitrator", "3.3.3.3"),
+                ("syntactically_correct", "nonsense"),
+                ("line-with", "hash#literal"),
             ],
             # testing a function which should not be used outside of the module
             # pylint: disable=protected-access
-            config_parser._parse_to_raw_lines("\n".join([
-                "site = 1.1.1.1",
-                " site  =  2.2.2.2 ",
-                "arbitrator=3.3.3.3",
-                "syntactically_correct = nonsense",
-                "line-with = hash#literal",
-                "",
-            ]))
+            config_parser._parse_to_raw_lines(
+                "\n".join(
+                    [
+                        "site = 1.1.1.1",
+                        " site  =  2.2.2.2 ",
+                        "arbitrator=3.3.3.3",
+                        "syntactically_correct = nonsense",
+                        "line-with = hash#literal",
+                        "",
+                    ]
+                )
+            ),
         )
 
     def test_parse_lines_with_whole_line_comment(self):
@@ -118,22 +139,20 @@ class ParseRawLinesTest(TestCase):
             [("site", "1.1.1.1")],
             # testing a function which should not be used outside of the module
             # pylint: disable=protected-access
-            config_parser._parse_to_raw_lines("\n".join([
-                " # some comment",
-                "site = 1.1.1.1",
-            ]))
-       )
+            config_parser._parse_to_raw_lines(
+                "\n".join([" # some comment", "site = 1.1.1.1",])
+            ),
+        )
 
     def test_skip_empty_lines(self):
         self.assertEqual(
             [("site", "1.1.1.1")],
             # testing a function which should not be used outside of the module
             # pylint: disable=protected-access
-            config_parser._parse_to_raw_lines("\n".join([
-                " ",
-                "site = 1.1.1.1",
-            ]))
-       )
+            config_parser._parse_to_raw_lines(
+                "\n".join([" ", "site = 1.1.1.1",])
+            ),
+        )
 
     def test_raises_when_unexpected_lines_appear(self):
         invalid_line_list = [
@@ -153,16 +172,17 @@ class ParseRawLinesTest(TestCase):
             [("site", "1.1.1.1")],
             # testing a function which should not be used outside of the module
             # pylint: disable=protected-access
-            config_parser._parse_to_raw_lines("\n".join([
-                "site = '1.1.1.1' #comment",
-            ]))
-       )
+            config_parser._parse_to_raw_lines(
+                "\n".join(["site = '1.1.1.1' #comment",])
+            ),
+        )
+
 
 class ParseTest(TestCase):
     def test_raises_when_invalid_lines_appear(self):
         invalid_line_list = [
             "first invalid line",
-            "second = 'invalid line' something else #comment"
+            "second = 'invalid line' something else #comment",
         ]
         line_list = ["site = 1.1.1.1"] + invalid_line_list
 
@@ -171,8 +191,7 @@ class ParseTest(TestCase):
 
         assert_report_item_list_equal(
             config_parser.Parser.exception_to_report_list(
-                cm.exception, "does not matter", "path",
-                None, False
+                cm.exception, "does not matter", "path", None, False
             ),
             [
                 fixture.error(
@@ -180,12 +199,15 @@ class ParseTest(TestCase):
                     line_list=invalid_line_list,
                     file_path="path",
                 ),
-            ]
+            ],
         )
         assert_report_item_list_equal(
             config_parser.Parser.exception_to_report_list(
-                cm.exception, "does not matter", "path",
-                report_codes.FORCE_BOOTH_DESTROY, False
+                cm.exception,
+                "does not matter",
+                "path",
+                report_codes.FORCE_BOOTH_DESTROY,
+                False,
             ),
             [
                 fixture.error(
@@ -194,12 +216,15 @@ class ParseTest(TestCase):
                     line_list=invalid_line_list,
                     file_path="path",
                 ),
-            ]
+            ],
         )
         assert_report_item_list_equal(
             config_parser.Parser.exception_to_report_list(
-                cm.exception, "does not matter", "path",
-                report_codes.FORCE_BOOTH_DESTROY, True
+                cm.exception,
+                "does not matter",
+                "path",
+                report_codes.FORCE_BOOTH_DESTROY,
+                True,
             ),
             [
                 fixture.warn(
@@ -207,7 +232,7 @@ class ParseTest(TestCase):
                     line_list=invalid_line_list,
                     file_path="path",
                 ),
-            ]
+            ],
         )
 
     def test_do_not_raises_when_no_invalid_liens_there(self):

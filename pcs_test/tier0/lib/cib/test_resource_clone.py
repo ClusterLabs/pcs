@@ -6,29 +6,31 @@ from pcs_test.tools.assertions import assert_xml_equal
 from pcs.lib.cib.resource import clone
 from pcs.lib.cib.tools import IdProvider
 
+
 class AppendNewCommon(TestCase):
     def setUp(self):
-        self.cib = etree.fromstring("""
+        self.cib = etree.fromstring(
+            """
             <cib>
                 <resources>
                     <primitive id="R"/>
                 </resources>
             </cib>
-        """)
+        """
+        )
         self.resources = self.cib.find(".//resources")
         self.primitive = self.cib.find(".//primitive")
 
     def assert_clone_effect(self, options, xml):
         clone.append_new(
-            self.resources,
-            IdProvider(self.resources),
-            self.primitive,
-            options
+            self.resources, IdProvider(self.resources), self.primitive, options
         )
         assert_xml_equal(etree.tostring(self.cib).decode(), xml)
 
     def test_add_without_options(self):
-        self.assert_clone_effect({}, """
+        self.assert_clone_effect(
+            {},
+            """
             <cib>
                 <resources>
                     <clone id="R-clone">
@@ -36,10 +38,13 @@ class AppendNewCommon(TestCase):
                     </clone>
                 </resources>
             </cib>
-        """)
+        """,
+        )
 
     def test_add_with_options(self):
-        self.assert_clone_effect({"a": "b"}, """
+        self.assert_clone_effect(
+            {"a": "b"},
+            """
             <cib>
                 <resources>
                     <clone id="R-clone">
@@ -52,7 +57,8 @@ class AppendNewCommon(TestCase):
                     </clone>
                 </resources>
             </cib>
-        """)
+        """,
+        )
 
 
 class IsAnyClone(TestCase):
@@ -75,8 +81,7 @@ class IsAnyClone(TestCase):
 class IsPromotableClone(TestCase):
     def my_assert(self, result, xml):
         self.assertEqual(
-            result,
-            clone.is_promotable_clone(etree.fromstring(xml))
+            result, clone.is_promotable_clone(etree.fromstring(xml))
         )
 
     def test_master(self):
@@ -91,7 +96,7 @@ class IsPromotableClone(TestCase):
                         <nvpair name="promotable" value="true" />
                     </meta_attributes>
                 </master>
-            """
+            """,
         )
 
     def test_clone(self):
@@ -106,7 +111,7 @@ class IsPromotableClone(TestCase):
                         <nvpair name="promotable" value="true" />
                     </meta_attributes>
                 </clone>
-            """
+            """,
         )
 
     def test_clone_with_promotable_false(self):
@@ -118,7 +123,7 @@ class IsPromotableClone(TestCase):
                         <nvpair name="promotable" value="false" />
                     </meta_attributes>
                 </clone>
-            """
+            """,
         )
 
     def test_clone_with_promotable_in_resource(self):
@@ -132,12 +137,13 @@ class IsPromotableClone(TestCase):
                         </meta_attributes>
                     </primitive>
                 </clone>
-            """
+            """,
         )
 
 
 class GetParentAnyClone(TestCase):
-    cib = etree.fromstring("""
+    cib = etree.fromstring(
+        """
         <cib>
             <resources>
                 <primitive id="A" />
@@ -169,7 +175,8 @@ class GetParentAnyClone(TestCase):
                 </bundle>
             </resources>
         </cib>
-    """)
+    """
+    )
 
     def my_assert(self, id_in, id_out):
         element_in = self.cib.find(f'.//*[@id="{id_in}"]')
@@ -229,7 +236,7 @@ class GetInnerResource(TestCase):
     def assert_inner_resource(self, resource_id, xml):
         self.assertEqual(
             resource_id,
-            clone.get_inner_resource(etree.fromstring(xml)).get("id", "")
+            clone.get_inner_resource(etree.fromstring(xml)).get("id", ""),
         )
 
     def test_primitive(self):
@@ -241,7 +248,7 @@ class GetInnerResource(TestCase):
                     <primitive id="A" />
                     <meta_attributes />
                 </clone>
-            """
+            """,
         )
 
     def test_group(self):
@@ -253,5 +260,5 @@ class GetInnerResource(TestCase):
                     <group id="A" />
                     <meta_attributes />
                 </clone>
-            """
+            """,
         )

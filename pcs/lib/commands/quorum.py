@@ -13,7 +13,7 @@ from pcs.lib.corosync import (
     config_validators as corosync_conf_validators,
     live as corosync_live,
     qdevice_net,
-    qdevice_client
+    qdevice_client,
 )
 from pcs.lib.node import get_existing_nodes_names
 
@@ -26,9 +26,12 @@ def get_config(lib_env):
     cfg = lib_env.get_corosync_conf()
     device = None
     if cfg.has_quorum_device():
-        model, model_options, generic_options, heuristics_options = (
-            cfg.get_quorum_device_settings()
-        )
+        (
+            model,
+            model_options,
+            generic_options,
+            heuristics_options,
+        ) = cfg.get_quorum_device_settings()
         device = {
             "model": model,
             "model_options": model_options,
@@ -60,16 +63,13 @@ def _check_if_atb_can_be_disabled(
     """
     if (
         was_enabled
-        and
-        not corosync_conf.is_enabled_auto_tie_breaker()
-        and
-        sbd.is_auto_tie_breaker_needed(runner, corosync_conf)
+        and not corosync_conf.is_enabled_auto_tie_breaker()
+        and sbd.is_auto_tie_breaker_needed(runner, corosync_conf)
     ):
         report_processor.report(
             ReportItem(
                 severity=reports.item.get_severity(
-                    reports.codes.FORCE_OPTIONS,
-                    force,
+                    reports.codes.FORCE_OPTIONS, force,
                 ),
                 message=(
                     reports.messages.CorosyncQuorumAtbCannotBeDisabledDueToSbd()
@@ -81,10 +81,7 @@ def _check_if_atb_can_be_disabled(
 
 
 def set_options(
-    lib_env: LibraryEnvironment,
-    options,
-    skip_offline_nodes=False,
-    force=False,
+    lib_env: LibraryEnvironment, options, skip_offline_nodes=False, force=False,
 ):
     """
     Set corosync quorum options, distribute and reload corosync.conf if live
@@ -97,9 +94,7 @@ def set_options(
     cfg = lib_env.get_corosync_conf()
     if lib_env.report_processor.report_list(
         corosync_conf_validators.update_quorum_options(
-            options,
-            cfg.has_quorum_device(),
-            cfg.get_quorum_options()
+            options, cfg.has_quorum_device(), cfg.get_quorum_options()
         )
     ).has_errors:
         raise LibraryError()
@@ -110,9 +105,10 @@ def set_options(
             lib_env.report_processor,
             cfg,
             cfg.is_enabled_auto_tie_breaker(),
-            force
+            force,
         )
     lib_env.push_corosync_conf(cfg, skip_offline_nodes)
+
 
 def status_text(lib_env):
     """
@@ -127,6 +123,7 @@ def status_text(lib_env):
             )
         )
 
+
 def status_device_text(lib_env, verbose=False):
     """
     Get quorum device client runtime status in plain text
@@ -134,9 +131,15 @@ def status_device_text(lib_env, verbose=False):
     """
     return qdevice_client.get_status_text(lib_env.cmd_runner(), verbose)
 
+
 def add_device(
-    lib_env: LibraryEnvironment, model, model_options, generic_options,
-    heuristics_options, force_model=False, force_options=False,
+    lib_env: LibraryEnvironment,
+    model,
+    model_options,
+    generic_options,
+    heuristics_options,
+    force_model=False,
+    force_options=False,
     skip_offline_nodes=False,
 ):
     # pylint: disable=too-many-locals
@@ -166,7 +169,7 @@ def add_device(
             heuristics_options,
             [node.nodeid for node in cfg.get_nodes()],
             force_model=force_model,
-            force_options=force_options
+            force_options=force_options,
         )
     )
 
@@ -176,7 +179,7 @@ def add_device(
             # Pcs is unable to communicate with nodes missing names. It cannot
             # send new corosync.conf to them. That might break the cluster.
             # Hence we error out.
-            error_on_missing_name=True
+            error_on_missing_name=True,
         )
         report_processor.report_list(report_list)
 
@@ -184,10 +187,7 @@ def add_device(
         raise LibraryError()
 
     cfg.add_quorum_device(
-        model,
-        model_options,
-        generic_options,
-        heuristics_options,
+        model, model_options, generic_options, heuristics_options,
     )
     if cfg.is_quorum_device_heuristics_enabled_with_no_exec():
         lib_env.report_processor.report(
@@ -218,7 +218,7 @@ def add_device(
                 target_factory.get_target_from_hostname(model_options["host"]),
                 cfg.get_cluster_name(),
                 target_list,
-                skip_offline_nodes
+                skip_offline_nodes,
             )
 
         lib_env.report_processor.report(
@@ -252,6 +252,7 @@ def add_device(
         com_cmd_start.set_targets(target_list)
         run_and_raise(lib_env.get_node_communicator(), com_cmd_start)
 
+
 def update_device(
     lib_env: LibraryEnvironment,
     model_options,
@@ -281,15 +282,11 @@ def update_device(
             generic_options,
             heuristics_options,
             [node.nodeid for node in cfg.get_nodes()],
-            force_options=force_options
+            force_options=force_options,
         )
     ).has_errors:
         raise LibraryError()
-    cfg.update_quorum_device(
-        model_options,
-        generic_options,
-        heuristics_options
-    )
+    cfg.update_quorum_device(model_options, generic_options, heuristics_options)
     if cfg.is_quorum_device_heuristics_enabled_with_no_exec():
         lib_env.report_processor.report(
             ReportItem.warning(
@@ -297,6 +294,7 @@ def update_device(
             )
         )
     lib_env.push_corosync_conf(cfg, skip_offline_nodes)
+
 
 def remove_device_heuristics(lib_env, skip_offline_nodes=False):
     """
@@ -311,6 +309,7 @@ def remove_device_heuristics(lib_env, skip_offline_nodes=False):
         )
     cfg.remove_quorum_device_heuristics()
     lib_env.push_corosync_conf(cfg, skip_offline_nodes)
+
 
 def remove_device(lib_env: LibraryEnvironment, skip_offline_nodes=False):
     """
@@ -333,7 +332,7 @@ def remove_device(lib_env: LibraryEnvironment, skip_offline_nodes=False):
             # Pcs is unable to communicate with nodes missing names. It cannot
             # send new corosync.conf to them. That might break the cluster.
             # Hence we error out.
-            error_on_missing_name=True
+            error_on_missing_name=True,
         )
         if report_processor.report_list(report_list).has_errors:
             raise LibraryError()
@@ -392,6 +391,7 @@ def remove_device(lib_env: LibraryEnvironment, skip_offline_nodes=False):
 
     lib_env.push_corosync_conf(cfg, skip_offline_nodes)
 
+
 def set_expected_votes_live(lib_env, expected_votes):
     """
     set expected votes in live cluster to specified value
@@ -405,9 +405,7 @@ def set_expected_votes_live(lib_env, expected_votes):
         raise LibraryError(
             ReportItem.error(
                 reports.messages.InvalidOptionValue(
-                    "expected votes",
-                    expected_votes,
-                    "positive integer"
+                    "expected votes", expected_votes, "positive integer"
                 )
             )
         )

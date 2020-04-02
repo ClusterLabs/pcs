@@ -5,10 +5,12 @@ from pcs.lib.file import (
     toolbox,
 )
 
-class FileInstance():
+
+class FileInstance:
     """
     Provides a high-level easy access to config files
     """
+
     @classmethod
     def for_booth_config(cls, name, ghost_file=False, ghost_data=None):
         """
@@ -41,9 +43,9 @@ class FileInstance():
             _get_raw_file(
                 metadata.for_file_type(file_type_code, name),
                 ghost_file,
-                ghost_data
+                ghost_data,
             ),
-            toolbox.for_file_type(file_type_code)
+            toolbox.for_file_type(file_type_code),
         )
 
     @classmethod
@@ -69,12 +71,11 @@ class FileInstance():
 
     @classmethod
     def _for_common(
-        cls,
-        file_type_code: file_type_codes.FileTypeCode,
+        cls, file_type_code: file_type_codes.FileTypeCode,
     ) -> "FileInstance":
         return cls(
             raw_file.RealFile(metadata.for_file_type(file_type_code)),
-            toolbox.for_file_type(file_type_code)
+            toolbox.for_file_type(file_type_code),
         )
 
     def __init__(self, raw_file_interface, file_toolbox):
@@ -115,11 +116,12 @@ class FileInstance():
             exception,
             self._raw_file.metadata.file_type_code,
             (
-                None if isinstance(self._raw_file, raw_file.GhostFile)
+                None
+                if isinstance(self._raw_file, raw_file.GhostFile)
                 else self._raw_file.metadata.path
             ),
             force_code,
-            is_forced_or_warning
+            is_forced_or_warning,
         )
 
     def read_to_facade(self):
@@ -153,7 +155,7 @@ class FileInstance():
     def write_structure(self, structure, can_overwrite=False):
         self.write_raw(
             self._toolbox.exporter.export(structure),
-            can_overwrite=can_overwrite
+            can_overwrite=can_overwrite,
         )
 
     def write_raw(self, raw_file_data, can_overwrite=False):

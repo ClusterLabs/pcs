@@ -2,9 +2,7 @@ import re
 from shlex import quote as shell_quote
 import signal
 import subprocess
-from typing import (
-    Optional,
-)
+from typing import Optional
 
 from pcs import settings
 from pcs.common import reports
@@ -21,23 +19,28 @@ _systemctl = settings.systemctl_binary
 
 
 class ManageServiceError(Exception):
-    #pylint: disable=super-init-not-called
+    # pylint: disable=super-init-not-called
     def __init__(self, service, message=None, instance=None):
         self.service = service
         self.message = message
         self.instance = instance
 
+
 class DisableServiceError(ManageServiceError):
     pass
+
 
 class EnableServiceError(ManageServiceError):
     pass
 
+
 class StartServiceError(ManageServiceError):
     pass
 
+
 class StopServiceError(ManageServiceError):
     pass
+
 
 class KillServicesError(ManageServiceError):
     pass
@@ -66,32 +69,38 @@ class CommandRunner:
         # a pacemaker tool on a CIB in a file but cannot afford the risk of
         # changing the CIB in the file specified by the user.
         env_vars = self._env_vars.copy()
-        env_vars.update(
-            dict(env_extend) if env_extend else dict()
-        )
+        env_vars.update(dict(env_extend) if env_extend else dict())
 
         log_args = " ".join([shell_quote(x) for x in args])
         self._logger.debug(
             "Running: {args}\nEnvironment:{env_vars}{stdin_string}".format(
                 args=log_args,
-                stdin_string=("" if not stdin_string else (
-                    "\n--Debug Input Start--\n{0}\n--Debug Input End--"
-                    .format(stdin_string)
-                )),
-                env_vars=("" if not env_vars else (
-                    "\n" + "\n".join([
-                        "  {0}={1}".format(key, val)
-                        for key, val in sorted(env_vars.items())
-                    ])
-                ))
+                stdin_string=(
+                    ""
+                    if not stdin_string
+                    else (
+                        "\n--Debug Input Start--\n{0}\n--Debug Input End--"
+                    ).format(stdin_string)
+                ),
+                env_vars=(
+                    ""
+                    if not env_vars
+                    else (
+                        "\n"
+                        + "\n".join(
+                            [
+                                "  {0}={1}".format(key, val)
+                                for key, val in sorted(env_vars.items())
+                            ]
+                        )
+                    )
+                ),
             )
         )
         self._reporter.report(
             ReportItem.debug(
                 reports.messages.RunExternalProcessStarted(
-                    log_args,
-                    stdin_string,
-                    env_vars,
+                    log_args, stdin_string, env_vars,
                 )
             )
         )
@@ -116,7 +125,7 @@ class CommandRunner:
                 shell=False,
                 env=env_vars,
                 # decodes newlines and in python3 also converts bytes to str
-                universal_newlines=(not binary_output)
+                universal_newlines=(not binary_output),
             )
             out_std, out_err = process.communicate(stdin_string)
             retval = process.returncode
@@ -124,8 +133,7 @@ class CommandRunner:
             raise LibraryError(
                 ReportItem.error(
                     reports.messages.RunExternalProcessError(
-                        log_args,
-                        e.strerror,
+                        log_args, e.strerror,
                     )
                 )
             )
@@ -136,19 +144,13 @@ class CommandRunner:
                 + "\n--Debug Stdout Start--\n{out_std}\n--Debug Stdout End--"
                 + "\n--Debug Stderr Start--\n{out_err}\n--Debug Stderr End--"
             ).format(
-                args=log_args,
-                retval=retval,
-                out_std=out_std,
-                out_err=out_err
+                args=log_args, retval=retval, out_std=out_std, out_err=out_err
             )
         )
         self._reporter.report(
             ReportItem.debug(
                 reports.messages.RunExternalProcessFinished(
-                    log_args,
-                    retval,
-                    out_std,
-                    out_err,
+                    log_args, retval, out_std, out_err,
                 )
             )
         )
@@ -186,16 +188,14 @@ def disable_service(runner, service, instance=None):
     if not is_service_installed(runner, service, instance):
         return
     if is_systemctl():
-        stdout, stderr, retval = runner.run([
-            _systemctl, "disable", _get_service_name(service, instance)
-        ])
+        stdout, stderr, retval = runner.run(
+            [_systemctl, "disable", _get_service_name(service, instance)]
+        )
     else:
         stdout, stderr, retval = runner.run([_chkconfig, service, "off"])
     if retval != 0:
         raise DisableServiceError(
-            service,
-            join_multilines([stderr, stdout]),
-            instance
+            service, join_multilines([stderr, stdout]), instance
         )
 
 
@@ -210,16 +210,14 @@ def enable_service(runner, service, instance=None):
         If None no instance name will be used.
     """
     if is_systemctl():
-        stdout, stderr, retval = runner.run([
-            _systemctl, "enable", _get_service_name(service, instance)
-        ])
+        stdout, stderr, retval = runner.run(
+            [_systemctl, "enable", _get_service_name(service, instance)]
+        )
     else:
         stdout, stderr, retval = runner.run([_chkconfig, service, "on"])
     if retval != 0:
         raise EnableServiceError(
-            service,
-            join_multilines([stderr, stdout]),
-            instance
+            service, join_multilines([stderr, stdout]), instance
         )
 
 
@@ -232,16 +230,14 @@ def start_service(runner, service, instance=None):
         If None no instance name will be used.
     """
     if is_systemctl():
-        stdout, stderr, retval = runner.run([
-            _systemctl, "start", _get_service_name(service, instance)
-        ])
+        stdout, stderr, retval = runner.run(
+            [_systemctl, "start", _get_service_name(service, instance)]
+        )
     else:
         stdout, stderr, retval = runner.run([_service, service, "start"])
     if retval != 0:
         raise StartServiceError(
-            service,
-            join_multilines([stderr, stdout]),
-            instance
+            service, join_multilines([stderr, stdout]), instance
         )
 
 
@@ -254,16 +250,14 @@ def stop_service(runner, service, instance=None):
         If None no instance name will be used.
     """
     if is_systemctl():
-        stdout, stderr, retval = runner.run([
-            _systemctl, "stop", _get_service_name(service, instance)
-        ])
+        stdout, stderr, retval = runner.run(
+            [_systemctl, "stop", _get_service_name(service, instance)]
+        )
     else:
         stdout, stderr, retval = runner.run([_service, service, "stop"])
     if retval != 0:
         raise StopServiceError(
-            service,
-            join_multilines([stderr, stdout]),
-            instance
+            service, join_multilines([stderr, stdout]), instance
         )
 
 
@@ -287,9 +281,7 @@ def kill_services(runner, services):
 
 
 def is_service_enabled(
-    runner: CommandRunner,
-    service: str,
-    instance: Optional[str] = None
+    runner: CommandRunner, service: str, instance: Optional[str] = None
 ) -> bool:
     """
     Check if the specified service is enabled in the local system.
@@ -309,9 +301,7 @@ def is_service_enabled(
 
 
 def is_service_running(
-    runner: CommandRunner,
-    service: str,
-    instance: Optional[str] = None
+    runner: CommandRunner, service: str, instance: Optional[str] = None
 ) -> bool:
     """
     Check if the specified service is currently running on the local system.
@@ -321,11 +311,9 @@ def is_service_running(
     instance -- optional name of the services's instance
     """
     if is_systemctl():
-        dummy_stdout, dummy_stderr, retval = runner.run([
-            _systemctl,
-            "is-active",
-            _get_service_name(service, instance)
-        ])
+        dummy_stdout, dummy_stderr, retval = runner.run(
+            [_systemctl, "is-active", _get_service_name(service, instance)]
+        )
     else:
         dummy_stdout, dummy_stderr, retval = runner.run(
             [_service, service, "status"]
@@ -378,15 +366,15 @@ def get_systemd_services(runner):
     if not is_systemctl():
         return []
 
-    stdout, dummy_stderr, return_code = runner.run([
-        _systemctl, "list-unit-files", "--full"
-    ])
+    stdout, dummy_stderr, return_code = runner.run(
+        [_systemctl, "list-unit-files", "--full"]
+    )
     if return_code != 0:
         return []
 
     service_list = []
     for service in stdout.splitlines():
-        match = re.search(r'^([\S]*)\.service', service)
+        match = re.search(r"^([\S]*)\.service", service)
         if match:
             service_list.append(match.group(1))
     return service_list

@@ -12,7 +12,6 @@ pcsd_cmd = create_router(
         "deauth": pcsd.pcsd_deauth,
         "certkey": pcsd.pcsd_certkey,
         "sync-certificates": pcsd.pcsd_sync_certs,
-
         # removed commands
         # These print error messages which point users to the changes section in
         # pcs manpage.
@@ -21,5 +20,5 @@ pcsd_cmd = create_router(
             "pcs host deauth", "pcs pcsd deauth"
         ),
     },
-    ["pcsd"]
+    ["pcsd"],
 )

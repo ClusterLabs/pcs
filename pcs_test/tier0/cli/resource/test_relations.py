@@ -19,57 +19,67 @@ class ShowResourceRelationsCmd(TestCase):
         self.lib = mock.Mock(spec_set=["resource"])
         self.lib.resource = mock.Mock(spec_set=["get_resource_relations_tree"])
         self.lib.resource.get_resource_relations_tree = self.lib_call
-        self.lib_call.return_value = dto.to_dict(ResourceRelationDto(
-            RelationEntityDto(
-                "d1", "primitive", [], {
-                    "class": "ocf",
-                    "provider": "pacemaker",
-                    "type": "Dummy",
-                }
-            ),
-            [
-                ResourceRelationDto(
-                    RelationEntityDto(
-                        "order1", ResourceRelationType.ORDER, [], {
-                            "first-action": "start",
-                            "first": "d1",
-                            "then-action": "start",
-                            "then": "d2",
-                            "kind": "Mandatory",
-                            "symmetrical": "true",
-                        }
-                    ),
-                    [
-                        ResourceRelationDto(
-                            RelationEntityDto(
-                                "d2", "primitive", [], {
-                                    "class": "ocf",
-                                    "provider": "heartbeat",
-                                    "type": "Dummy",
-                                }
-                            ),
-                            [],
-                            False
-                        ),
-                    ],
-                    False
+        self.lib_call.return_value = dto.to_dict(
+            ResourceRelationDto(
+                RelationEntityDto(
+                    "d1",
+                    "primitive",
+                    [],
+                    {"class": "ocf", "provider": "pacemaker", "type": "Dummy",},
                 ),
-                ResourceRelationDto(
-                    RelationEntityDto(
-                        "inner:g1", ResourceRelationType.INNER_RESOURCES, [], {}
-                    ),
-                    [
-                        ResourceRelationDto(
-                            RelationEntityDto("g1", "group", [], {}),
+                [
+                    ResourceRelationDto(
+                        RelationEntityDto(
+                            "order1",
+                            ResourceRelationType.ORDER,
                             [],
-                            True,
+                            {
+                                "first-action": "start",
+                                "first": "d1",
+                                "then-action": "start",
+                                "then": "d2",
+                                "kind": "Mandatory",
+                                "symmetrical": "true",
+                            },
                         ),
-                    ],
-                    False
-                )
-            ],
-            False,
-        ))
+                        [
+                            ResourceRelationDto(
+                                RelationEntityDto(
+                                    "d2",
+                                    "primitive",
+                                    [],
+                                    {
+                                        "class": "ocf",
+                                        "provider": "heartbeat",
+                                        "type": "Dummy",
+                                    },
+                                ),
+                                [],
+                                False,
+                            ),
+                        ],
+                        False,
+                    ),
+                    ResourceRelationDto(
+                        RelationEntityDto(
+                            "inner:g1",
+                            ResourceRelationType.INNER_RESOURCES,
+                            [],
+                            {},
+                        ),
+                        [
+                            ResourceRelationDto(
+                                RelationEntityDto("g1", "group", [], {}),
+                                [],
+                                True,
+                            ),
+                        ],
+                        False,
+                    ),
+                ],
+                False,
+            )
+        )
 
     def test_no_args(self):
         with self.assertRaises(CmdLineInputError) as cm:
@@ -101,7 +111,7 @@ class ShowResourceRelationsCmd(TestCase):
                 mock.call("   |  kind=Mandatory symmetrical=true"),
                 mock.call("   `- d2"),
             ],
-            mock_print.call_args_list
+            mock_print.call_args_list,
         )
 
     @mock.patch("pcs.cli.resource.relations.print")
@@ -120,18 +130,17 @@ class ShowResourceRelationsCmd(TestCase):
                 mock.call("   |  kind=Mandatory symmetrical=true"),
                 mock.call("   `- d2 (resource: ocf:heartbeat:Dummy)"),
             ],
-            mock_print.call_args_list
+            mock_print.call_args_list,
         )
 
 
 def _fixture_dummy(_id):
     return RelationEntityDto(
-    _id, "primitive", [], {
-        "class": "ocf",
-        "provider": "pacemaker",
-        "type": "Dummy",
-    }
-)
+        _id,
+        "primitive",
+        [],
+        {"class": "ocf", "provider": "pacemaker", "type": "Dummy",},
+    )
 
 
 D1_PRIMITIVE = _fixture_dummy("d1")
@@ -181,7 +190,11 @@ class ResourcePrintableNode(TestCase):
         self.assertEqual(D1_PRIMITIVE, obj.relation_entity)
         self.assertEqual(False, obj.is_leaf)
         expected_members = (
-            inner_ent, outer_ent, order_ent1, order_ent2, order_set_ent
+            inner_ent,
+            outer_ent,
+            order_ent1,
+            order_ent2,
+            order_set_ent,
         )
         self.assertEqual(len(expected_members), len(obj.members))
         for i, member in enumerate(obj.members):
@@ -201,11 +214,7 @@ class ResourcePrintableNode(TestCase):
 
     def test_primitive_without_provider_class(self):
         obj = relations.ResourcePrintableNode(
-            RelationEntityDto(
-                "d1", "primitive", [], {
-                    "type": "Dummy",
-                }
-            ),
+            RelationEntityDto("d1", "primitive", [], {"type": "Dummy",}),
             [],
             False,
         )
@@ -215,10 +224,7 @@ class ResourcePrintableNode(TestCase):
     def test_primitive_without_provider(self):
         obj = relations.ResourcePrintableNode(
             RelationEntityDto(
-                "d1", "primitive", [], {
-                    "class": "ocf",
-                    "type": "Dummy",
-                }
+                "d1", "primitive", [], {"class": "ocf", "type": "Dummy",}
             ),
             [],
             False,
@@ -231,10 +237,10 @@ class ResourcePrintableNode(TestCase):
     def test_primitive_without_class(self):
         obj = relations.ResourcePrintableNode(
             RelationEntityDto(
-                "d1", "primitive", [], {
-                    "provider": "pacemaker",
-                    "type": "Dummy",
-                }
+                "d1",
+                "primitive",
+                [],
+                {"provider": "pacemaker", "type": "Dummy",},
             ),
             [],
             False,
@@ -264,22 +270,25 @@ class ResourcePrintableNode(TestCase):
 class RelationPrintableNode(TestCase):
     def setUp(self):
         self.order_entity = RelationEntityDto(
-            "order1", ResourceRelationType.ORDER, [], {
+            "order1",
+            ResourceRelationType.ORDER,
+            [],
+            {
                 "id": "order1",
                 "first-action": "start",
                 "first": "d1",
                 "then-action": "start",
                 "then": "d2",
-            }
+            },
         )
         self.order_set_entity = RelationEntityDto(
-            "order_set_id", ResourceRelationType.ORDER_SET, [], {
+            "order_set_id",
+            ResourceRelationType.ORDER_SET,
+            [],
+            {
                 "id": "order_set_id",
                 "sets": [
-                    {
-                        "members": ["d1", "d2", "d3"],
-                        "metadata": {},
-                    },
+                    {"members": ["d1", "d2", "d3"], "metadata": {},},
                     {
                         "members": ["d4", "d5", "d0"],
                         "metadata": {
@@ -289,7 +298,7 @@ class RelationPrintableNode(TestCase):
                         },
                     },
                 ],
-            }
+            },
         )
 
     def assert_member(self, member, ent):
@@ -305,7 +314,7 @@ class RelationPrintableNode(TestCase):
                 ResourceRelationDto(D2_PRIMITIVE, [], True),
                 ResourceRelationDto(D1_PRIMITIVE, [], True),
             ],
-            False
+            False,
         )
         obj = relations.RelationPrintableNode.from_dto(dto_obj)
         self.assertEqual(self.order_entity, obj.relation_entity)
@@ -325,18 +334,20 @@ class RelationPrintableNode(TestCase):
         self.assertEqual(["start d1 then start d2"], obj.detail)
 
     def test_order_full(self):
-        self.order_entity.metadata.update({
-            "kind": "Optional",
-            "symmetrical": "true",
-            "unsupported": "value",
-            "score": "1000",
-        })
+        self.order_entity.metadata.update(
+            {
+                "kind": "Optional",
+                "symmetrical": "true",
+                "unsupported": "value",
+                "score": "1000",
+            }
+        )
         obj = relations.RelationPrintableNode(self.order_entity, [], False)
         self.assertEqual("order (order1)", obj.get_title(verbose=True))
         self.assertEqual(
             [
                 "start d1 then start d2",
-                "kind=Optional score=1000 symmetrical=true"
+                "kind=Optional score=1000 symmetrical=true",
             ],
             obj.detail,
         )
@@ -366,26 +377,30 @@ class RelationPrintableNode(TestCase):
         )
 
     def test_order_set_full(self):
-        self.order_set_entity.metadata.update({
-            "symmetrical": "true",
-            "kind": "Optional",
-            "require-all": "true",
-            "score": "100",
-            "unsupported": "value",
-        })
-        self.order_set_entity.metadata["sets"].append({
-            "members": ["d9", "d8", "d6", "d7"],
-            "metadata": {
-                "sequential": "true",
-                "require-all": "false",
-                "score": "10",
-                "ordering": "value",
-                "action": "start",
-                "role": "promoted",
+        self.order_set_entity.metadata.update(
+            {
+                "symmetrical": "true",
                 "kind": "Optional",
+                "require-all": "true",
+                "score": "100",
                 "unsupported": "value",
-            },
-        })
+            }
+        )
+        self.order_set_entity.metadata["sets"].append(
+            {
+                "members": ["d9", "d8", "d6", "d7"],
+                "metadata": {
+                    "sequential": "true",
+                    "require-all": "false",
+                    "score": "10",
+                    "ordering": "value",
+                    "action": "start",
+                    "role": "promoted",
+                    "kind": "Optional",
+                    "unsupported": "value",
+                },
+            }
+        )
         obj = relations.RelationPrintableNode(self.order_set_entity, [], False)
         self.assertEqual(
             "order set (order_set_id)", obj.get_title(verbose=True)
@@ -407,7 +422,7 @@ class RelationPrintableNode(TestCase):
                 "inner:g1",
                 ResourceRelationType.INNER_RESOURCES,
                 ["m1", "m2", "m0"],
-                {"id": "g1"}
+                {"id": "g1"},
             ),
             [],
             False,
@@ -418,9 +433,10 @@ class RelationPrintableNode(TestCase):
     def test_inner_resources_not_verbose(self):
         obj = relations.RelationPrintableNode(
             RelationEntityDto(
-                "inner:g1", ResourceRelationType.INNER_RESOURCES, ["m0"], {
-                    "id": "g1",
-                }
+                "inner:g1",
+                ResourceRelationType.INNER_RESOURCES,
+                ["m0"],
+                {"id": "g1",},
             ),
             [],
             False,
@@ -431,9 +447,10 @@ class RelationPrintableNode(TestCase):
     def test_inner_resources(self):
         obj = relations.RelationPrintableNode(
             RelationEntityDto(
-                "inner:g1", ResourceRelationType.INNER_RESOURCES, ["m0"], {
-                    "id": "g1",
-                }
+                "inner:g1",
+                ResourceRelationType.INNER_RESOURCES,
+                ["m0"],
+                {"id": "g1",},
             ),
             [],
             False,
@@ -444,9 +461,10 @@ class RelationPrintableNode(TestCase):
     def test_outer_resourcenot_verbose(self):
         obj = relations.RelationPrintableNode(
             RelationEntityDto(
-                "outer:g1", ResourceRelationType.OUTER_RESOURCE, [], {
-                    "id": "g1",
-                }
+                "outer:g1",
+                ResourceRelationType.OUTER_RESOURCE,
+                [],
+                {"id": "g1",},
             ),
             [],
             False,
@@ -457,9 +475,10 @@ class RelationPrintableNode(TestCase):
     def test_outer_resource(self):
         obj = relations.RelationPrintableNode(
             RelationEntityDto(
-                "outer:g1", ResourceRelationType.OUTER_RESOURCE, [], {
-                    "id": "g1",
-                }
+                "outer:g1",
+                ResourceRelationType.OUTER_RESOURCE,
+                [],
+                {"id": "g1",},
             ),
             [],
             False,
@@ -470,9 +489,7 @@ class RelationPrintableNode(TestCase):
     def test_unknown_not_verbose(self):
         obj = relations.RelationPrintableNode(
             RelationEntityDto(
-                "random", "undifined type", [], {
-                    "id": "random_id",
-                }
+                "random", "undifined type", [], {"id": "random_id",}
             ),
             [],
             False,
@@ -483,9 +500,7 @@ class RelationPrintableNode(TestCase):
     def test_unknown(self):
         obj = relations.RelationPrintableNode(
             RelationEntityDto(
-                "random", "undifined type", [], {
-                    "id": "random_id",
-                }
+                "random", "undifined type", [], {"id": "random_id",}
             ),
             [],
             False,

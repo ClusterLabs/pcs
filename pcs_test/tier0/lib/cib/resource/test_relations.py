@@ -12,7 +12,8 @@ from pcs.lib.cib.resource import relations as lib
 
 
 def fixture_cib(resources, constraints):
-    return etree.fromstring(f"""
+    return etree.fromstring(
+        f"""
         <cib>
           <configuration>
             <resources>
@@ -23,7 +24,8 @@ def fixture_cib(resources, constraints):
             </constraints>
           </configuration>
         </cib>
-    """)
+    """
+    )
 
 
 def fixture_dummy_metadata(_id):
@@ -38,16 +40,15 @@ def fixture_dummy_metadata(_id):
 class ResourceRelationNode(TestCase):
     @staticmethod
     def entity_fixture(index):
-        return dto.from_dict(RelationEntityDto, dict(
-            id=f"ent_id{index}",
-            type="ent_type",
-            members=[f"{index}m1", f"{index}m2", f"{index}m0"],
-            metadata=dict(
+        return dto.from_dict(
+            RelationEntityDto,
+            dict(
                 id=f"ent_id{index}",
-                k0="val0",
-                k1="val1",
-            )
-        ))
+                type="ent_type",
+                members=[f"{index}m1", f"{index}m2", f"{index}m0"],
+                metadata=dict(id=f"ent_id{index}", k0="val0", k1="val1",),
+            ),
+        )
 
     def assert_dto_equal(self, expected, actual):
         self.assertEqual(dto.to_dict(expected), dto.to_dict(actual))
@@ -55,9 +56,7 @@ class ResourceRelationNode(TestCase):
     def test_no_members(self):
         ent = self.entity_fixture("0")
         obj = lib.ResourceRelationNode(ent)
-        self.assert_dto_equal(
-            ResourceRelationDto(ent, [], False), obj.to_dto()
-        )
+        self.assert_dto_equal(ResourceRelationDto(ent, [], False), obj.to_dto())
 
     def test_with_members(self):
         ent0 = self.entity_fixture("0")
@@ -75,11 +74,7 @@ class ResourceRelationNode(TestCase):
                 [
                     ResourceRelationDto(ent1, [], False),
                     ResourceRelationDto(
-                        ent2,
-                        [
-                            ResourceRelationDto(ent3, [], False),
-                        ],
-                        False,
+                        ent2, [ResourceRelationDto(ent3, [], False),], False,
                     ),
                 ],
                 False,
@@ -92,8 +87,7 @@ class ResourceRelationNode(TestCase):
         obj = lib.ResourceRelationNode(ent)
         obj.stop()
         self.assert_dto_equal(
-            ResourceRelationDto(ent, [], True),
-            obj.to_dto(),
+            ResourceRelationDto(ent, [], True), obj.to_dto(),
         )
 
     def test_add_member(self):
@@ -113,8 +107,7 @@ class ResourceRelationNode(TestCase):
         obj = lib.ResourceRelationNode(ent)
         obj.add_member(obj)
         self.assert_dto_equal(
-            ResourceRelationDto(ent, [], False),
-            obj.to_dto(),
+            ResourceRelationDto(ent, [], False), obj.to_dto(),
         )
 
     def test_add_member_already_have_parent(self):
@@ -147,7 +140,8 @@ class ResourceRelationNode(TestCase):
         obj0.add_member(lib.ResourceRelationNode(ent1))
         self.assert_dto_equal(
             ResourceRelationDto(
-                ent0, [
+                ent0,
+                [
                     ResourceRelationDto(ent1, [], False),
                     ResourceRelationDto(ent1, [], False),
                 ],
@@ -159,17 +153,19 @@ class ResourceRelationNode(TestCase):
 
 class ResourceRelationsFetcher(TestCase):
     def test_ordering_constraint(self):
-        obj = lib.ResourceRelationsFetcher(fixture_cib(
-            """
+        obj = lib.ResourceRelationsFetcher(
+            fixture_cib(
+                """
             <primitive id="d1" class="c" provider="pcmk" type="Dummy"/>
             <primitive id="d2" class="c" provider="pcmk" type="Dummy"/>
             """,
-            """
+                """
             <rsc_order first="d1" first-action="start"
                 id="order-d1-d2-mandatory" then="d2" then-action="start"
                 kind="Mandatory"/>
-            """
-        ))
+            """,
+            )
+        )
         expected = (
             {
                 "d1": RelationEntityDto(
@@ -206,8 +202,9 @@ class ResourceRelationsFetcher(TestCase):
                 self.assertEqual(expected, obj.get_relations(res))
 
     def test_ordering_set_constraint(self):
-        obj = lib.ResourceRelationsFetcher(fixture_cib(
-            """
+        obj = lib.ResourceRelationsFetcher(
+            fixture_cib(
+                """
             <primitive id="d1" class="c" provider="pcmk" type="Dummy"/>
             <primitive id="d2" class="c" provider="pcmk" type="Dummy"/>
             <primitive id="d3" class="c" provider="pcmk" type="Dummy"/>
@@ -215,7 +212,7 @@ class ResourceRelationsFetcher(TestCase):
             <primitive id="d5" class="c" provider="pcmk" type="Dummy"/>
             <primitive id="d6" class="c" provider="pcmk" type="Dummy"/>
             """,
-            """
+                """
             <rsc_order kind="Serialize" symmetrical="true"
                 id="pcs_rsc_order_set_1">
               <resource_set sequential="true" require-all="true" action="start"
@@ -231,8 +228,9 @@ class ResourceRelationsFetcher(TestCase):
                 <resource_ref id="d4"/>
               </resource_set>
             </rsc_order>
-            """
-        ))
+            """,
+            )
+        )
         rsc_entity = lambda _id: RelationEntityDto(
             _id,
             "primitive",
@@ -282,15 +280,17 @@ class ResourceRelationsFetcher(TestCase):
                 self.assertEqual(expected, obj.get_relations(res))
 
     def test_group(self):
-        obj = lib.ResourceRelationsFetcher(fixture_cib(
-            """
+        obj = lib.ResourceRelationsFetcher(
+            fixture_cib(
+                """
             <group id="g1">
               <primitive id="d1" class="c" provider="pcmk" type="Dummy"/>
               <primitive id="d2" class="c" provider="pcmk" type="Dummy"/>
             </group>
             """,
-            ""
-        ))
+                "",
+            )
+        )
         expected = (
             {
                 "d1": RelationEntityDto(
@@ -329,14 +329,16 @@ class ResourceRelationsFetcher(TestCase):
                 self.assertEqual(expected, obj.get_relations(res))
 
     def _test_wrapper(self, wrapper_tag):
-        obj = lib.ResourceRelationsFetcher(fixture_cib(
-            f"""
+        obj = lib.ResourceRelationsFetcher(
+            fixture_cib(
+                f"""
             <{wrapper_tag} id="w1">
               <primitive id="d1" class="c" provider="pcmk" type="Dummy"/>
             </{wrapper_tag}>
             """,
-            ""
-        ))
+                "",
+            )
+        )
         expected = (
             {
                 "d1": RelationEntityDto(
@@ -375,8 +377,9 @@ class ResourceRelationsFetcher(TestCase):
         self._test_wrapper("bundle")
 
     def test_cloned_group(self):
-        obj = lib.ResourceRelationsFetcher(fixture_cib(
-            """
+        obj = lib.ResourceRelationsFetcher(
+            fixture_cib(
+                """
             <clone id="c1">
                 <group id="g1">
                   <primitive id="d1" class="c" provider="pcmk" type="Dummy"/>
@@ -384,8 +387,9 @@ class ResourceRelationsFetcher(TestCase):
                 </group>
             </clone>
             """,
-            ""
-        ))
+                "",
+            )
+        )
         expected = (
             {
                 "d1": RelationEntityDto(
@@ -405,7 +409,7 @@ class ResourceRelationsFetcher(TestCase):
                 ),
                 "c1": RelationEntityDto(
                     "c1", "clone", ["inner:c1"], {"id": "c1"}
-                )
+                ),
             },
             {
                 "inner:g1": RelationEntityDto(
@@ -424,13 +428,13 @@ class ResourceRelationsFetcher(TestCase):
                     "inner:c1",
                     ResourceRelationType.INNER_RESOURCES,
                     ["g1"],
-                    {"id": "c1"}
+                    {"id": "c1"},
                 ),
                 "outer:c1": RelationEntityDto(
                     "outer:c1",
                     ResourceRelationType.OUTER_RESOURCE,
                     ["c1"],
-                    {"id": "c1"}
+                    {"id": "c1"},
                 ),
             },
         )
@@ -486,15 +490,17 @@ class ResourceRelationTreeBuilder(TestCase):
                             is_leaf=False,
                             members=[],
                         )
-                    ]
+                    ],
                 )
             ],
         )
         self.assertEqual(
             expected,
-            dto.to_dict(lib.ResourceRelationTreeBuilder(
-                resources, relations
-            ).get_tree("d2").to_dto())
+            dto.to_dict(
+                lib.ResourceRelationTreeBuilder(resources, relations)
+                .get_tree("d2")
+                .to_dto()
+            ),
         )
 
     def test_simple_order_set(self):
@@ -554,15 +560,17 @@ class ResourceRelationTreeBuilder(TestCase):
                     is_leaf=False,
                     members=[
                         get_res(_id) for _id in ("d1", "d2", "d3", "d4", "d6")
-                    ]
+                    ],
                 )
             ],
         )
         self.assertEqual(
             expected,
-            dto.to_dict(lib.ResourceRelationTreeBuilder(
-                resources, relations
-            ).get_tree("d5").to_dto())
+            dto.to_dict(
+                lib.ResourceRelationTreeBuilder(resources, relations)
+                .get_tree("d5")
+                .to_dto()
+            ),
         )
 
     def test_simple_in_group(self):
@@ -570,9 +578,7 @@ class ResourceRelationTreeBuilder(TestCase):
         resources = {
             "d1": self.primitive_fixture("d1", resources_members),
             "d2": self.primitive_fixture("d2", resources_members),
-            "g1": RelationEntityDto(
-                "g1", "group", ["inner:g1"], {"id": "g1"}
-            ),
+            "g1": RelationEntityDto("g1", "group", ["inner:g1"], {"id": "g1"}),
         }
         relations = {
             "inner:g1": RelationEntityDto(
@@ -623,9 +629,11 @@ class ResourceRelationTreeBuilder(TestCase):
         )
         self.assertEqual(
             expected,
-            dto.to_dict(lib.ResourceRelationTreeBuilder(
-                resources, relations
-            ).get_tree("d1").to_dto())
+            dto.to_dict(
+                lib.ResourceRelationTreeBuilder(resources, relations)
+                .get_tree("d1")
+                .to_dto()
+            ),
         )
 
     def test_order_loop(self):
@@ -693,7 +701,9 @@ class ResourceRelationTreeBuilder(TestCase):
         )
         self.assertEqual(
             expected,
-            dto.to_dict(lib.ResourceRelationTreeBuilder(
-                resources, relations
-            ).get_tree("d1").to_dto())
+            dto.to_dict(
+                lib.ResourceRelationTreeBuilder(resources, relations)
+                .get_tree("d1")
+                .to_dto()
+            ),
         )

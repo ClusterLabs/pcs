@@ -24,8 +24,8 @@ from pcs.lib.pacemaker.values import is_true
 # http://clusterlabs.org/doc/en-US/Pacemaker/1.1-pcs/html-single/Pacemaker_Explained/index.html#_resource_operations
 NECESSARY_CIB_ACTION_NAMES = ["monitor"]
 
-#These are all standards valid in cib. To get a list of standards supported by
-#pacemaker in local environment use result of "pcs resource standards".
+# These are all standards valid in cib. To get a list of standards supported by
+# pacemaker in local environment use result of "pcs resource standards".
 STANDARD_LIST = [
     "ocf",
     "lsb",
@@ -37,9 +37,7 @@ STANDARD_LIST = [
     "nagios",
 ]
 
-DEFAULT_INTERVALS = {
-    "monitor": "60s"
-}
+DEFAULT_INTERVALS = {"monitor": "60s"}
 
 STONITH_ACTION_REPLACED_BY = ("pcmk_off_action", "pcmk_reboot_action")
 
@@ -50,6 +48,7 @@ def get_default_interval(operation_name):
     string operation_name
     """
     return DEFAULT_INTERVALS.get(operation_name, "0s")
+
 
 def complete_all_intervals(raw_operation_list):
     """
@@ -66,6 +65,7 @@ def complete_all_intervals(raw_operation_list):
         operation_list.append(operation)
     return operation_list
 
+
 class ResourceAgentError(Exception):
     # pylint: disable=super-init-not-called
     def __init__(self, agent, message=""):
@@ -76,41 +76,38 @@ class ResourceAgentError(Exception):
 class UnableToGetAgentMetadata(ResourceAgentError):
     pass
 
+
 class InvalidResourceAgentName(ResourceAgentError):
     pass
 
+
 class InvalidStonithAgentName(ResourceAgentError):
     pass
+
 
 class ResourceAgentName(
     namedtuple("ResourceAgentName", "standard provider type")
 ):
     @property
     def full_name(self):
-        return ":".join(
-            filter(
-                None,
-                [self.standard, self.provider, self.type]
-            )
-        )
+        return ":".join(filter(None, [self.standard, self.provider, self.type]))
+
 
 def get_resource_agent_name_from_string(full_agent_name):
-    #full_agent_name could be for example systemd:lvm2-pvscan@252:2
-    #note that the second colon is not separator of provider and type
+    # full_agent_name could be for example systemd:lvm2-pvscan@252:2
+    # note that the second colon is not separator of provider and type
     match = re.match(
         "^(?P<standard>systemd|service):(?P<agent_type>[^:@]+@.*)$",
-        full_agent_name
+        full_agent_name,
     )
     if match:
         return ResourceAgentName(
-            match.group("standard"),
-            None,
-            match.group("agent_type")
+            match.group("standard"), None, match.group("agent_type")
         )
 
     match = re.match(
         "^(?P<standard>[^:]+)(:(?P<provider>[^:]+))?:(?P<type>[^:]+)$",
-        full_agent_name
+        full_agent_name,
     )
     if not match:
         raise InvalidResourceAgentName(full_agent_name)
@@ -130,19 +127,22 @@ def get_resource_agent_name_from_string(full_agent_name):
 
     return ResourceAgentName(standard, provider, agent_type)
 
+
 def list_resource_agents_standards(runner):
     """
     Return list of resource agents standards (ocf, lsb, ... ) on the local host
     CommandRunner runner
     """
     # retval is number of standards found
-    stdout, dummy_stderr, dummy_retval = runner.run([
-        settings.crm_resource_binary, "--list-standards"
-    ])
-    ignored_standards = frozenset([
-        # we are only interested in RESOURCE agents
-        "stonith",
-    ])
+    stdout, dummy_stderr, dummy_retval = runner.run(
+        [settings.crm_resource_binary, "--list-standards"]
+    )
+    ignored_standards = frozenset(
+        [
+            # we are only interested in RESOURCE agents
+            "stonith",
+        ]
+    )
     return _prepare_agent_list(stdout, ignored_standards)
 
 
@@ -152,9 +152,9 @@ def list_resource_agents_ocf_providers(runner):
     CommandRunner runner
     """
     # retval is number of providers found
-    stdout, dummy_stderr, dummy_retval = runner.run([
-        settings.crm_resource_binary, "--list-ocf-providers"
-    ])
+    stdout, dummy_stderr, dummy_retval = runner.run(
+        [settings.crm_resource_binary, "--list-ocf-providers"]
+    )
     return _prepare_agent_list(stdout)
 
 
@@ -163,14 +163,10 @@ def list_resource_agents_standards_and_providers(runner):
     Return list of all standard[:provider] on the local host
     CommandRunner runner
     """
-    standards = (
-        list_resource_agents_standards(runner)
-        +
-        [
-            "ocf:{0}".format(provider)
-            for provider in list_resource_agents_ocf_providers(runner)
-        ]
-    )
+    standards = list_resource_agents_standards(runner) + [
+        "ocf:{0}".format(provider)
+        for provider in list_resource_agents_ocf_providers(runner)
+    ]
     # do not list ocf resources twice
     try:
         standards.remove("ocf")
@@ -179,7 +175,7 @@ def list_resource_agents_standards_and_providers(runner):
     return sorted(
         standards,
         # works with both str and unicode in both python 2 and 3
-        key=lambda x: x.lower()
+        key=lambda x: x.lower(),
     )
 
 
@@ -190,9 +186,9 @@ def list_resource_agents(runner, standard_provider):
     string standard_provider standard[:provider], e.g. lsb, ocf, ocf:pacemaker
     """
     # retval is 0 on success, anything else when no agents found
-    stdout, dummy_stderr, retval = runner.run([
-        settings.crm_resource_binary, "--list-agents", standard_provider
-    ])
+    stdout, dummy_stderr, retval = runner.run(
+        [settings.crm_resource_binary, "--list-agents", standard_provider]
+    )
     if retval != 0:
         return []
     return _prepare_agent_list(stdout)
@@ -204,25 +200,27 @@ def list_stonith_agents(runner):
     CommandRunner runner
     """
     # retval is 0 on success, anything else when no agents found
-    stdout, dummy_stderr, retval = runner.run([
-        settings.crm_resource_binary, "--list-agents", "stonith"
-    ])
+    stdout, dummy_stderr, retval = runner.run(
+        [settings.crm_resource_binary, "--list-agents", "stonith"]
+    )
     if retval != 0:
         return []
-    ignored_agents = frozenset([
-        "fence_ack_manual",
-        "fence_check",
-        "fence_kdump_send",
-        "fence_legacy",
-        "fence_na",
-        "fence_node",
-        "fence_nss_wrapper",
-        "fence_pcmk",
-        "fence_sanlockd",
-        "fence_tool",
-        "fence_virtd",
-        "fence_vmware_helper",
-    ])
+    ignored_agents = frozenset(
+        [
+            "fence_ack_manual",
+            "fence_check",
+            "fence_kdump_send",
+            "fence_legacy",
+            "fence_na",
+            "fence_node",
+            "fence_nss_wrapper",
+            "fence_pcmk",
+            "fence_sanlockd",
+            "fence_tool",
+            "fence_virtd",
+            "fence_vmware_helper",
+        ]
+    )
     return _prepare_agent_list(stdout, ignored_agents)
 
 
@@ -236,7 +234,7 @@ def _prepare_agent_list(agents_string, filter_list=None):
     return sorted(
         result,
         # works with both str and unicode in both python 2 and 3
-        key=lambda x: x.lower()
+        key=lambda x: x.lower(),
     )
 
 
@@ -257,9 +255,7 @@ def guess_resource_agent_full_name(runner, search_agent_name):
         ResourceAgent(runner, agent) for agent in possible_names
     ]
     # check if the agent is valid
-    return [
-        agent for agent in agent_candidates if agent.is_valid_metadata()
-    ]
+    return [agent for agent in agent_candidates if agent.is_valid_metadata()]
 
 
 def guess_exactly_one_resource_agent_full_name(runner, search_agent_name):
@@ -279,19 +275,19 @@ def guess_exactly_one_resource_agent_full_name(runner, search_agent_name):
         raise LibraryError(
             ReportItem.error(
                 reports.messages.AgentNameGuessFoundMoreThanOne(
-                    search_agent_name,
-                    [agent.get_name() for agent in agents]
+                    search_agent_name, [agent.get_name() for agent in agents]
                 )
             )
         )
     return agents[0]
+
 
 def find_valid_resource_agent_by_name(
     report_processor: ReportProcessor,
     runner: CommandRunner,
     name: str,
     allowed_absent=False,
-    absent_agent_supported=True
+    absent_agent_supported=True,
 ):
     """
     Return instance of ResourceAgent corresponding to name
@@ -320,6 +316,7 @@ def find_valid_resource_agent_by_name(
         absent_agent_supported=absent_agent_supported,
     )
 
+
 def find_valid_stonith_agent_by_name(
     report_processor: ReportProcessor,
     runner: CommandRunner,
@@ -335,6 +332,7 @@ def find_valid_stonith_agent_by_name(
         AbsentStonithAgent if allowed_absent else None,
         absent_agent_supported=absent_agent_supported,
     )
+
 
 def _find_valid_agent_by_name(
     report_processor: ReportProcessor,
@@ -354,24 +352,24 @@ def _find_valid_agent_by_name(
             raise LibraryError(resource_agent_error_to_report_item(e))
 
         if not AbsentAgentClass:
-            raise LibraryError(resource_agent_error_to_report_item(
-                    e,
-                    forceable=True
-            ))
+            raise LibraryError(
+                resource_agent_error_to_report_item(e, forceable=True)
+            )
 
         report_processor.report(
             resource_agent_error_to_report_item(
-                e,
-                severity=ReportItemSeverity.WARNING,
+                e, severity=ReportItemSeverity.WARNING,
             )
         )
 
         return AbsentAgentClass(runner, name)
 
-class Agent():
+
+class Agent:
     """
     Base class for providing convinient access to an agent's metadata
     """
+
     _agent_type_label = "agent"
 
     def __init__(self, runner):
@@ -382,10 +380,8 @@ class Agent():
         self._runner = runner
         self._metadata = None
 
-
     def get_name(self):
         raise NotImplementedError()
-
 
     def get_name_info(self):
         """
@@ -393,12 +389,11 @@ class Agent():
         """
         return {
             "name": self.get_name(),
-            "shortdesc":"",
+            "shortdesc": "",
             "longdesc": "",
             "parameters": [],
             "actions": [],
         }
-
 
     def get_description_info(self):
         """
@@ -408,7 +403,6 @@ class Agent():
         agent_info["shortdesc"] = self.get_shortdesc()
         agent_info["longdesc"] = self.get_longdesc()
         return agent_info
-
 
     def get_full_info(self):
         """
@@ -420,19 +414,13 @@ class Agent():
         agent_info["default_actions"] = self.get_cib_default_actions()
         return agent_info
 
-
     def get_shortdesc(self):
         """
         Get a short description of agent's purpose
         """
-        return (
-            self._get_text_from_dom_element(
-                self._get_metadata().find("shortdesc")
-            )
-            or
-            self._get_metadata().get("shortdesc", "")
-        )
-
+        return self._get_text_from_dom_element(
+            self._get_metadata().find("shortdesc")
+        ) or self._get_metadata().get("shortdesc", "")
 
     def get_longdesc(self):
         """
@@ -441,7 +429,6 @@ class Agent():
         return self._get_text_from_dom_element(
             self._get_metadata().find("longdesc")
         )
-
 
     def get_parameters(self):
         """
@@ -485,7 +472,6 @@ class Agent():
 
         return param_list
 
-
     def _get_parameter(self, parameter_element):
         value_type = "string"
         default_value = None
@@ -494,21 +480,23 @@ class Agent():
             value_type = content_element.get("type", value_type)
             default_value = content_element.get("default", default_value)
 
-        return self._create_parameter({
-            "name": parameter_element.get("name", ""),
-            "longdesc": self._get_text_from_dom_element(
-                parameter_element.find("longdesc")
-            ),
-            "shortdesc": self._get_text_from_dom_element(
-                parameter_element.find("shortdesc")
-            ),
-            "type": value_type,
-            "default": default_value,
-            "required": is_true(parameter_element.get("required", "0")),
-            "deprecated": is_true(parameter_element.get("deprecated", "0")),
-            "obsoletes": parameter_element.get("obsoletes", None),
-            "unique": is_true(parameter_element.get("unique", "0")),
-        })
+        return self._create_parameter(
+            {
+                "name": parameter_element.get("name", ""),
+                "longdesc": self._get_text_from_dom_element(
+                    parameter_element.find("longdesc")
+                ),
+                "shortdesc": self._get_text_from_dom_element(
+                    parameter_element.find("shortdesc")
+                ),
+                "type": value_type,
+                "default": default_value,
+                "required": is_true(parameter_element.get("required", "0")),
+                "deprecated": is_true(parameter_element.get("deprecated", "0")),
+                "obsoletes": parameter_element.get("obsoletes", None),
+                "unique": is_true(parameter_element.get("unique", "0")),
+            }
+        )
 
     def _get_parameter_obsoleting_chains(self):
         """
@@ -556,10 +544,12 @@ class Agent():
         return chains
 
     def validate_parameters_create(
-        self, parameters, force=False,
+        self,
+        parameters,
+        force=False,
         # TODO remove this argument, see pcs.lib.cib.commands.remote_node.create
         # for details
-        do_not_report_instance_attribute_server_exists=False
+        do_not_report_instance_attribute_server_exists=False,
     ):
         # This is just a basic validation checking that required parameters are
         # set and all set parameters are known to an agent. Missing checks are:
@@ -579,44 +569,40 @@ class Agent():
             validate.NamesIn(
                 {param["name"] for param in self.get_parameters()},
                 option_type=self._agent_type_label,
-                **validate.set_warning(reports.codes.FORCE_OPTIONS, force)
+                **validate.set_warning(reports.codes.FORCE_OPTIONS, force),
             ).validate(parameters)
         )
         # TODO remove this "if", see pcs.lib.cib.commands.remote_node.create
         # for details
         if do_not_report_instance_attribute_server_exists:
             for report_item in report_items:
-                if (
-                    isinstance(report_item, ReportItem)
-                    and
-                    isinstance(
-                        report_item.message, reports.messages.InvalidOptions
-                    )
+                if isinstance(report_item, ReportItem) and isinstance(
+                    report_item.message, reports.messages.InvalidOptions
                 ):
                     report_msg = cast(
                         reports.messages.InvalidOptions, report_item.message
                     )
                     report_item.message = reports.messages.InvalidOptions(
                         report_msg.option_names,
-                        sorted([
-                            value for value in report_msg.allowed
-                            if value != "server"
-                        ]),
+                        sorted(
+                            [
+                                value
+                                for value in report_msg.allowed
+                                if value != "server"
+                            ]
+                        ),
                         report_msg.option_type,
                         report_msg.allowed_patterns,
                     )
 
         # report missing required parameters
-        missing_parameters = self._find_missing_required_parameters(
-            parameters
-        )
+        missing_parameters = self._find_missing_required_parameters(parameters)
         if missing_parameters:
             report_items.append(
                 ReportItem(
                     severity=self._validate_report_severity(force),
                     message=reports.messages.RequiredOptionsAreMissing(
-                        sorted(missing_parameters),
-                        self._agent_type_label,
+                        sorted(missing_parameters), self._agent_type_label,
                     ),
                 )
             )
@@ -624,10 +610,7 @@ class Agent():
         return report_items
 
     def validate_parameters_update(
-        self,
-        current_parameters,
-        new_parameters,
-        force=False
+        self, current_parameters, new_parameters, force=False
     ):
         # This is just a basic validation checking that required parameters are
         # set and all set parameters are known to an agent. Missing checks are:
@@ -656,12 +639,13 @@ class Agent():
             validate.NamesIn(
                 {param["name"] for param in self.get_parameters()},
                 option_type=self._agent_type_label,
-                **validate.set_warning(reports.codes.FORCE_OPTIONS, force)
+                **validate.set_warning(reports.codes.FORCE_OPTIONS, force),
             ).validate(
                 # Do not report unknown parameters already set in the CIB. They
                 # have been reported already when the were added to the CIB.
                 {
-                    name: value for name, value in new_parameters.items()
+                    name: value
+                    for name, value in new_parameters.items()
                     if name not in current_parameters
                 }
             )
@@ -676,8 +660,7 @@ class Agent():
                 ReportItem(
                     severity=self._validate_report_severity(force),
                     message=reports.messages.RequiredOptionsAreMissing(
-                        sorted(missing_parameters),
-                        self._agent_type_label,
+                        sorted(missing_parameters), self._agent_type_label,
                     ),
                 )
             )
@@ -686,16 +669,16 @@ class Agent():
 
     @staticmethod
     def _validate_report_severity(
-        force: bool
+        force: bool,
     ) -> reports.item.ReportItemSeverity:
         return reports.item.ReportItemSeverity(
             level=(
-                ReportItemSeverity.WARNING if force
+                ReportItemSeverity.WARNING
+                if force
                 else ReportItemSeverity.ERROR
             ),
             force_code=reports.codes.FORCE_OPTIONS if not force else None,
         )
-
 
     def _find_missing_required_parameters(self, parameters):
         missing_parameters = set()
@@ -728,8 +711,7 @@ class Agent():
         # But we do not know what are those, because the metadata xml schema is
         # outdated and doesn't describe current agents' metadata xml.
         return [
-            dict(action.items())
-            for action in actions_element.iter("action")
+            dict(action.items()) for action in actions_element.iter("action")
         ]
 
     def get_actions(self):
@@ -759,18 +741,13 @@ class Agent():
         """
 
         action_list = [
-            action for action in self.get_actions()
+            action
+            for action in self.get_actions()
             if (
-                    necessary_only
-                    and
-                    action.get("name") in NECESSARY_CIB_ACTION_NAMES
-                )
-                or
-                (
-                    not necessary_only
-                    and
-                    self._is_cib_default_action(action)
-                )
+                necessary_only
+                and action.get("name") in NECESSARY_CIB_ACTION_NAMES
+            )
+            or (not necessary_only and self._is_cib_default_action(action))
         ]
 
         for action_name in NECESSARY_CIB_ACTION_NAMES:
@@ -789,10 +766,8 @@ class Agent():
             self._metadata = self._parse_metadata(self._load_metadata())
         return self._metadata
 
-
     def _load_metadata(self):
         raise NotImplementedError()
-
 
     def _parse_metadata(self, metadata):
         try:
@@ -801,12 +776,11 @@ class Agent():
             # the validation for now. We want to enable it once the schema
             # and/or agents are fixed.
             # When enabling this check for overrides in child classes.
-            #if os.path.isfile(settings.agent_metadata_schema):
+            # if os.path.isfile(settings.agent_metadata_schema):
             #    etree.DTD(file=settings.agent_metadata_schema).assertValid(dom)
             return dom
         except (etree.XMLSyntaxError, etree.DocumentInvalid) as e:
             raise UnableToGetAgentMetadata(self.get_name(), str(e))
-
 
     def _get_text_from_dom_element(self, element):
         if element is None or element.text is None:
@@ -833,14 +807,13 @@ class Agent():
 
 
 class FakeAgentMetadata(Agent):
-    #pylint:disable=abstract-method
+    # pylint:disable=abstract-method
     pass
 
 
 class FencedMetadata(FakeAgentMetadata):
     def get_name(self):
         return "pacemaker-fenced"
-
 
     def _get_parameter(self, parameter_element):
         parameter = super(FencedMetadata, self)._get_parameter(
@@ -849,14 +822,12 @@ class FencedMetadata(FakeAgentMetadata):
         # Metadata are written in such a way that a longdesc text is a
         # continuation of a shortdesc text.
         parameter["longdesc"] = "{0}\n{1}".format(
-            parameter["shortdesc"],
-            parameter["longdesc"]
+            parameter["shortdesc"], parameter["longdesc"]
         ).strip()
         parameter["advanced"] = parameter["shortdesc"].startswith(
             "Advanced use only"
         )
         return parameter
-
 
     def _load_metadata(self):
         stdout, stderr, dummy_retval = self._runner.run(
@@ -869,7 +840,7 @@ class FencedMetadata(FakeAgentMetadata):
 
 
 class CrmAgent(Agent):
-    #pylint:disable=abstract-method
+    # pylint:disable=abstract-method
     def __init__(self, runner, name):
         """
         init
@@ -912,24 +883,24 @@ class CrmAgent(Agent):
         return self
 
     def _load_metadata(self):
-        env_path = ":".join([
-            # otherwise pacemaker cannot run RHEL fence agents to get their
-            # metadata
-            settings.fence_agent_binaries,
-            # otherwise heartbeat and cluster-glue agents don't work
-            "/bin/",
-            # otherwise heartbeat and cluster-glue agents don't work
-            "/usr/bin/",
-        ])
+        env_path = ":".join(
+            [
+                # otherwise pacemaker cannot run RHEL fence agents to get their
+                # metadata
+                settings.fence_agent_binaries,
+                # otherwise heartbeat and cluster-glue agents don't work
+                "/bin/",
+                # otherwise heartbeat and cluster-glue agents don't work
+                "/usr/bin/",
+            ]
+        )
         stdout, stderr, retval = self._runner.run(
             [
                 settings.crm_resource_binary,
                 "--show-metadata",
                 self._get_full_name(),
             ],
-            env_extend={
-                "PATH": env_path,
-            }
+            env_extend={"PATH": env_path,},
         )
         if retval != 0:
             raise UnableToGetAgentMetadata(self.get_name(), stderr.strip())
@@ -940,6 +911,7 @@ class ResourceAgent(CrmAgent):
     """
     Provides convinient access to a resource agent's metadata
     """
+
     _agent_type_label = "resource"
 
     def _prepare_name_parts(self, name):
@@ -950,10 +922,8 @@ class ResourceAgent(CrmAgent):
 
     def get_parameters(self):
         parameters = super(ResourceAgent, self).get_parameters()
-        if (
-            self.get_standard() == "ocf"
-            and
-            (self.get_provider() in ("heartbeat", "pacemaker"))
+        if self.get_standard() == "ocf" and (
+            self.get_provider() in ("heartbeat", "pacemaker")
         ):
             trace_ra_found = False
             trace_file_found = False
@@ -971,36 +941,41 @@ class ResourceAgent(CrmAgent):
                     "Set to 1 to turn on resource agent tracing"
                     " (expect large output)"
                 )
-                parameters.append(self._create_parameter({
-                    "name": "trace_ra",
-                    "longdesc": (
-                        shortdesc
-                        +
-                        " The trace output will be saved to trace_file, if set,"
-                        " or by default to"
-                        " $HA_VARRUN/ra_trace/<type>/<id>.<action>.<timestamp>"
-                        " e.g. $HA_VARRUN/ra_trace/oracle/"
-                        "db.start.2012-11-27.08:37:08"
-                    ),
-                    "shortdesc": shortdesc,
-                    "type": "integer",
-                    "default": 0,
-                    "required": False,
-                    "advanced": True,
-                }))
-            if not trace_file_found:
-                shortdesc = (
-                    "Path to a file to store resource agent tracing log"
+                parameters.append(
+                    self._create_parameter(
+                        {
+                            "name": "trace_ra",
+                            "longdesc": (
+                                shortdesc
+                                + " The trace output will be saved to "
+                                "trace_file, if set, or by default to"
+                                " $HA_VARRUN/ra_trace/<type>/<id>.<action>."
+                                "<timestamp> e.g. $HA_VARRUN/ra_trace/oracle/"
+                                "db.start.2012-11-27.08:37:08"
+                            ),
+                            "shortdesc": shortdesc,
+                            "type": "integer",
+                            "default": 0,
+                            "required": False,
+                            "advanced": True,
+                        }
+                    )
                 )
-                parameters.append(self._create_parameter({
-                    "name": "trace_file",
-                    "longdesc": shortdesc,
-                    "shortdesc": shortdesc,
-                    "type": "string",
-                    "default": "",
-                    "required": False,
-                    "advanced": True,
-                }))
+            if not trace_file_found:
+                shortdesc = "Path to a file to store resource agent tracing log"
+                parameters.append(
+                    self._create_parameter(
+                        {
+                            "name": "trace_file",
+                            "longdesc": shortdesc,
+                            "shortdesc": shortdesc,
+                            "type": "string",
+                            "default": "",
+                            "required": False,
+                            "advanced": True,
+                        }
+                    )
+                )
 
         return parameters
 
@@ -1019,15 +994,17 @@ class ResourceAgent(CrmAgent):
         ]
 
 
-class AbsentAgentMixin():
+class AbsentAgentMixin:
     def _load_metadata(self):
         return "<resource-agent/>"
 
     def validate_parameters_create(
-        self, parameters, force=False,
+        self,
+        parameters,
+        force=False,
         # TODO remove this argument, see pcs.lib.cib.commands.remote_node.create
         # for details
-        do_not_report_instance_attribute_server_exists=False
+        do_not_report_instance_attribute_server_exists=False,
     ):
         # pylint: disable=unused-argument
         return []
@@ -1037,7 +1014,7 @@ class AbsentAgentMixin():
         self,
         current_parameters,
         new_parameters,
-        force=False
+        force=False,
     ):
         return []
 
@@ -1050,6 +1027,7 @@ class StonithAgent(CrmAgent):
     """
     Provides convinient access to a stonith agent's metadata
     """
+
     _fenced_metadata = None
     _agent_type_label = "stonith"
 
@@ -1068,22 +1046,20 @@ class StonithAgent(CrmAgent):
 
     def get_parameters(self):
         return (
-            self._filter_parameters(
-                super(StonithAgent, self).get_parameters()
-            )
-            +
-            self._get_fenced_metadata().get_parameters()
+            self._filter_parameters(super(StonithAgent, self).get_parameters())
+            + self._get_fenced_metadata().get_parameters()
         )
 
     def validate_parameters_create(
-        self, parameters, force=False,
+        self,
+        parameters,
+        force=False,
         # TODO remove this argument, see pcs.lib.cib.commands.remote_node.create
         # for details
-        do_not_report_instance_attribute_server_exists=False
+        do_not_report_instance_attribute_server_exists=False,
     ):
         report_list = super(StonithAgent, self).validate_parameters_create(
-            parameters,
-            force=force
+            parameters, force=force
         )
         report_list.extend(
             self._validate_action_is_deprecated(parameters, force=force)
@@ -1091,15 +1067,10 @@ class StonithAgent(CrmAgent):
         return report_list
 
     def validate_parameters_update(
-        self,
-        current_parameters,
-        new_parameters,
-        force=False
+        self, current_parameters, new_parameters, force=False
     ):
         report_list = super(StonithAgent, self).validate_parameters_update(
-            current_parameters,
-            new_parameters,
-            force=force
+            current_parameters, new_parameters, force=force
         )
         report_list.extend(
             self._validate_action_is_deprecated(new_parameters, force=force)
@@ -1115,7 +1086,7 @@ class StonithAgent(CrmAgent):
                         "action",
                         sorted(STONITH_ACTION_REPLACED_BY),
                         self._agent_type_label,
-                    )
+                    ),
                 )
             ]
         return []
@@ -1126,10 +1097,7 @@ class StonithAgent(CrmAgent):
         """
         # We don't allow the user to change these options which are only
         # intended to be used interactively on command line.
-        remove_parameters = frozenset([
-            "help",
-            "version",
-        ])
+        remove_parameters = frozenset(["help", "version",])
         filtered = []
         for param in parameters:
             if param["name"] in remove_parameters:
@@ -1144,7 +1112,7 @@ class StonithAgent(CrmAgent):
                 new_param["advanced"] = True
                 new_param["pcs_deprecated_warning"] = (
                     "Specifying 'action' is deprecated and not necessary with"
-                        " current Pacemaker versions. Use {0} instead."
+                    " current Pacemaker versions. Use {0} instead."
                 ).format(
                     ", ".join(
                         ["'{0}'".format(x) for x in STONITH_ACTION_REPLACED_BY]
@@ -1187,10 +1155,8 @@ class StonithAgent(CrmAgent):
         for action in self._get_raw_actions():
             if (
                 action.get("name", "") == "on"
-                and
-                action.get("on_target", "0") == "1"
-                and
-                action.get("automatic", "0") == "1"
+                and action.get("on_target", "0") == "1"
+                and action.get("automatic", "0") == "1"
             ):
                 return True
         return False

@@ -17,7 +17,7 @@ class AgentxUpdaterBase(Updater):
         return self._oid_tree
 
     def _set_val(self, data_type, oid, value):
-        self._data[oid] = {'name': oid, 'type': data_type, 'value': value}
+        self._data[oid] = {"name": oid, "type": data_type, "value": value}
 
     def _set_value_list(self, data_type, oid, value):
         if not isinstance(value, list):
@@ -92,4 +92,4 @@ def _str_oid_to_oid(sub_tree, str_oid):
 def _str_to_oid(data):
     length = len(data)
     oid_int = [str(ord(i)) for i in data]
-    return str(length) + '.' + '.'.join(oid_int)
+    return str(length) + "." + ".".join(oid_int)

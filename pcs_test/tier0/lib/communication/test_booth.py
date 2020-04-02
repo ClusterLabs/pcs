@@ -7,6 +7,7 @@ class BoothSendConfig(TestCase):
         pcs_test.tier0.lib.commands.test_booth.ConfigSyncTest
     """
 
+
 class BoothGetConfig(TestCase):
     """
     tested in:

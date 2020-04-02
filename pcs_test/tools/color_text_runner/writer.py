@@ -45,9 +45,11 @@ class Writer:
         if self.fast_info:
             self.stream.writeln()
             self.stream.writeln(
-                format_traceback(traceback) if self.traceback_highlight
-                    else traceback
+                format_traceback(traceback)
+                if self.traceback_highlight
+                else traceback
             )
+
 
 class DotWriter(Writer):
     def addSuccess(self, test):
@@ -55,26 +57,27 @@ class DotWriter(Writer):
         self.stream.flush()
 
     def addError(self, test, err, traceback):
-        self.stream.write(red('E'))
+        self.stream.write(red("E"))
         self.stream.flush()
         self.show_fast_info(traceback)
 
     def addFailure(self, test, err, traceback):
-        self.stream.write(red('F'))
+        self.stream.write(red("F"))
         self.stream.flush()
         self.show_fast_info(traceback)
 
     def addSkip(self, test, reason):
-        self.stream.write(blue('s'))
+        self.stream.write(blue("s"))
         self.stream.flush()
 
     def addExpectedFailure(self, test, err):
-        self.stream.write(blue('x'))
+        self.stream.write(blue("x"))
         self.stream.flush()
 
     def addUnexpectedSuccess(self, test):
-        self.stream.write(red('u'))
+        self.stream.write(red("u"))
         self.stream.flush()
+
 
 class StandardVerboseWriter(Writer):
     def addSuccess(self, test):
@@ -89,9 +92,7 @@ class StandardVerboseWriter(Writer):
         self.show_fast_info(traceback)
 
     def addSkip(self, test, reason):
-        self.stream.writeln(
-            blue("skipped {0!r}".format(reason))
-        )
+        self.stream.writeln(blue("skipped {0!r}".format(reason)))
 
     def startTest(self, test):
         self.stream.write(get_description(test, self.descriptions))
@@ -104,30 +105,26 @@ class StandardVerboseWriter(Writer):
     def addUnexpectedSuccess(self, test):
         self.stream.writeln(red("unexpected success"))
 
+
 class ImprovedVerboseWriter(StandardVerboseWriter):
     def __init__(
         self, stream, descriptions, traceback_highlight=False, fast_info=False,
     ):
         super(ImprovedVerboseWriter, self).__init__(
-            stream,
-            descriptions,
-            traceback_highlight,
-            fast_info
+            stream, descriptions, traceback_highlight, fast_info
         )
         self.last_test = None
 
     def __is_new_module(self, test):
         return (
             not self.last_test
-            or
-            test.__class__.__module__ != self.last_test.__class__.__module__
+            or test.__class__.__module__ != self.last_test.__class__.__module__
         )
 
     def __is_new_class(self, test):
         return (
             self.__is_new_module(test)
-            or
-            test.__class__.__name__ != self.last_test.__class__.__name__
+            or test.__class__.__name__ != self.last_test.__class__.__name__
         )
 
     def __format_module(self, test):
@@ -142,9 +139,12 @@ class ImprovedVerboseWriter(StandardVerboseWriter):
 
     def startTest(self, test):
         self.stream.write(
-            self.__format_module(test) + lightgrey(".")
-            + self.__format_class(test) + lightgrey(".")
-            + format_test_method_name(test) + lightgrey(" : ")
+            self.__format_module(test)
+            + lightgrey(".")
+            + self.__format_class(test)
+            + lightgrey(".")
+            + format_test_method_name(test)
+            + lightgrey(" : ")
         )
         self.stream.flush()
         self.last_test = test

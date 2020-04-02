@@ -16,53 +16,69 @@ from pcs.lib.errors import LibraryError
 
 TIMEOUT = 10
 
+
 def create(
-    env, wait=False, disabled=False, meta_attributes=None, operation_list=None,
-    allow_invalid_operation=False
+    env,
+    wait=False,
+    disabled=False,
+    meta_attributes=None,
+    operation_list=None,
+    allow_invalid_operation=False,
 ):
     return resource.create(
         env,
-        "A", "ocf:heartbeat:Dummy",
+        "A",
+        "ocf:heartbeat:Dummy",
         operation_list=operation_list if operation_list else [],
         meta_attributes=meta_attributes if meta_attributes else {},
         instance_attributes={},
         wait=wait,
         ensure_disabled=disabled,
-        allow_invalid_operation=allow_invalid_operation
+        allow_invalid_operation=allow_invalid_operation,
     )
+
 
 def create_group(env, wait=TIMEOUT, disabled=False, meta_attributes=None):
     return resource.create_in_group(
         env,
-        "A", "ocf:heartbeat:Dummy", "G",
+        "A",
+        "ocf:heartbeat:Dummy",
+        "G",
         operation_list=[],
         meta_attributes=meta_attributes if meta_attributes else {},
         instance_attributes={},
         wait=wait,
-        ensure_disabled=disabled
+        ensure_disabled=disabled,
     )
+
 
 def create_clone(
     env, wait=TIMEOUT, disabled=False, meta_attributes=None, clone_options=None
 ):
     return resource.create_as_clone(
         env,
-        "A", "ocf:heartbeat:Dummy",
+        "A",
+        "ocf:heartbeat:Dummy",
         operation_list=[],
         meta_attributes=meta_attributes if meta_attributes else {},
         instance_attributes={},
         clone_meta_options=clone_options if clone_options else {},
         wait=wait,
-        ensure_disabled=disabled
+        ensure_disabled=disabled,
     )
 
+
 def create_bundle(
-    env, wait=TIMEOUT, disabled=False, meta_attributes=None,
+    env,
+    wait=TIMEOUT,
+    disabled=False,
+    meta_attributes=None,
     allow_not_accessible_resource=False,
 ):
     return resource.create_into_bundle(
         env,
-        "A", "ocf:heartbeat:Dummy",
+        "A",
+        "ocf:heartbeat:Dummy",
         operation_list=[],
         meta_attributes=meta_attributes if meta_attributes else {},
         instance_attributes={},
@@ -71,6 +87,7 @@ def create_bundle(
         ensure_disabled=disabled,
         allow_not_accessible_resource=allow_not_accessible_resource,
     )
+
 
 wait_error_message = outdent(
     """\
@@ -256,6 +273,7 @@ fixture_cib_resources_xml_clone_simplest_disabled = """<resources>
     </clone>
 </resources>"""
 
+
 class Create(TestCase):
     fixture_sanitized_operation = """
         <resources>
@@ -291,10 +309,7 @@ class Create(TestCase):
 
     def setUp(self):
         self.env_assist, self.config = get_env_tools(test_case=self)
-        (self.config
-            .runner.pcmk.load_agent()
-            .runner.cib.load()
-        )
+        (self.config.runner.pcmk.load_agent().runner.cib.load())
 
     def test_simplest_resource(self):
         self.config.env.push_cib(
@@ -338,7 +353,7 @@ class Create(TestCase):
             self.env_assist.get_env(),
             operation_list=[
                 {"name": "monitor", "timeout": "10s", "interval": "10"}
-            ]
+            ],
         )
 
     def test_sanitize_operation_id_from_agent(self):
@@ -348,33 +363,39 @@ class Create(TestCase):
                 "resource_agent_ocf_heartbeat_dummy_insane_action.xml"
             ),
         )
-        self.config.env.push_cib(
-            resources=self.fixture_sanitized_operation
-        )
+        self.config.env.push_cib(resources=self.fixture_sanitized_operation)
         return create(self.env_assist.get_env())
 
     def test_sanitize_operation_id_from_user(self):
-        self.config.env.push_cib(
-            resources=self.fixture_sanitized_operation
-        )
+        self.config.env.push_cib(resources=self.fixture_sanitized_operation)
         create(
             self.env_assist.get_env(),
             operation_list=[
                 {"name": "moni*tor", "timeout": "20", "interval": "20"}
             ],
-            allow_invalid_operation=True
+            allow_invalid_operation=True,
         )
-        self.env_assist.assert_reports([
-            fixture.warn(
-                report_codes.INVALID_OPTION_VALUE,
-                option_name="operation name",
-                option_value="moni*tor",
-                allowed_values=["start", "stop", "monitor", "reload",
-                    "migrate_to", "migrate_from", "meta-data", "validate-all"],
-                cannot_be_empty=False,
-                forbidden_characters=None,
-            ),
-        ])
+        self.env_assist.assert_reports(
+            [
+                fixture.warn(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_name="operation name",
+                    option_value="moni*tor",
+                    allowed_values=[
+                        "start",
+                        "stop",
+                        "monitor",
+                        "reload",
+                        "migrate_to",
+                        "migrate_from",
+                        "meta-data",
+                        "validate-all",
+                    ],
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
+                ),
+            ]
+        )
 
     def test_unique_option(self):
         self.config.runner.cib.load(
@@ -415,27 +436,30 @@ class Create(TestCase):
                         </instance_attributes>
                     </primitive>
                 </resources>
-            """
+            """,
         )
         self.env_assist.assert_raise_library_error(
             lambda: resource.create(
                 self.env_assist.get_env(),
-                "C", "ocf:heartbeat:Dummy",
+                "C",
+                "ocf:heartbeat:Dummy",
                 operation_list=[],
                 meta_attributes={},
                 instance_attributes={"state": "1"},
             ),
         )
-        self.env_assist.assert_reports([
-            fixture.error(
-                report_codes.RESOURCE_INSTANCE_ATTR_VALUE_NOT_UNIQUE,
-                instance_attr_name="state",
-                instance_attr_value="1",
-                agent_name="ocf:heartbeat:Dummy",
-                resource_id_list=["B", "X"],
-                force_code=report_codes.FORCE_OPTIONS,
-            )
-        ])
+        self.env_assist.assert_reports(
+            [
+                fixture.error(
+                    report_codes.RESOURCE_INSTANCE_ATTR_VALUE_NOT_UNIQUE,
+                    instance_attr_name="state",
+                    instance_attr_value="1",
+                    agent_name="ocf:heartbeat:Dummy",
+                    resource_id_list=["B", "X"],
+                    force_code=report_codes.FORCE_OPTIONS,
+                )
+            ]
+        )
 
     def test_unique_option_forced(self):
         self.config.runner.cib.load(
@@ -476,7 +500,7 @@ class Create(TestCase):
                         </instance_attributes>
                     </primitive>
                 </resources>
-            """
+            """,
         )
         self.config.env.push_cib(
             resources="""
@@ -535,7 +559,8 @@ class Create(TestCase):
         )
         resource.create(
             self.env_assist.get_env(),
-            "C", "ocf:heartbeat:Dummy",
+            "C",
+            "ocf:heartbeat:Dummy",
             operation_list=[],
             meta_attributes={},
             instance_attributes={"state": "1"},
@@ -558,13 +583,13 @@ class Create(TestCase):
 class CreateWait(TestCase):
     def setUp(self):
         self.env_assist, self.config = get_env_tools(test_case=self)
-        (self.config
-            .runner.pcmk.load_agent()
+        (
+            self.config.runner.pcmk.load_agent()
             .runner.pcmk.can_wait()
             .runner.cib.load()
             .env.push_cib(
                 resources=fixture_cib_resources_xml_primitive_simplest,
-                wait=TIMEOUT
+                wait=TIMEOUT,
             )
         )
 
@@ -577,121 +602,116 @@ class CreateWait(TestCase):
                     reports.messages.WaitForIdleTimedOut(wait_error_message)
                 )
             ),
-            instead="env.push_cib"
+            instead="env.push_cib",
         )
         self.env_assist.assert_raise_library_error(
             lambda: create(self.env_assist.get_env(), wait=TIMEOUT),
-            [
-                fixture.report_wait_for_idle_timed_out(wait_error_message)
-            ],
-            expected_in_processor=False
+            [fixture.report_wait_for_idle_timed_out(wait_error_message)],
+            expected_in_processor=False,
         )
 
     def test_wait_ok_run_fail(self):
-        (self.config
-            .runner.pcmk.load_state(raw_resources=dict(failed="true"))
-        )
+        (self.config.runner.pcmk.load_state(raw_resources=dict(failed="true")))
 
         self.env_assist.assert_raise_library_error(
             lambda: create(self.env_assist.get_env(), wait=TIMEOUT)
         )
-        self.env_assist.assert_reports([
-            fixture.error(
-                report_codes.RESOURCE_DOES_NOT_RUN,
-                resource_id="A",
-            )
-        ])
+        self.env_assist.assert_reports(
+            [
+                fixture.error(
+                    report_codes.RESOURCE_DOES_NOT_RUN, resource_id="A",
+                )
+            ]
+        )
 
     def test_wait_ok_run_ok(self):
         self.config.runner.pcmk.load_state(raw_resources=dict())
         create(self.env_assist.get_env(), wait=TIMEOUT)
-        self.env_assist.assert_reports([
-            fixture.info(
-                report_codes.RESOURCE_RUNNING_ON_NODES,
-                roles_with_nodes={"Started": ["node1"]},
-                resource_id="A",
-            ),
-        ])
+        self.env_assist.assert_reports(
+            [
+                fixture.info(
+                    report_codes.RESOURCE_RUNNING_ON_NODES,
+                    roles_with_nodes={"Started": ["node1"]},
+                    resource_id="A",
+                ),
+            ]
+        )
 
     def test_wait_ok_disable_fail(self):
-        (self.config
-            .runner.pcmk.load_state(raw_resources=dict())
-            .env.push_cib(
+        (
+            self.config.runner.pcmk.load_state(
+                raw_resources=dict()
+            ).env.push_cib(
                 resources=fixture_cib_resources_xml_simplest_disabled,
                 wait=TIMEOUT,
-                instead="env.push_cib"
+                instead="env.push_cib",
             )
         )
 
         self.env_assist.assert_raise_library_error(
             lambda: create(
-                self.env_assist.get_env(),
-                wait=TIMEOUT,
-                disabled=True
+                self.env_assist.get_env(), wait=TIMEOUT, disabled=True
             )
         )
-        self.env_assist.assert_reports([
-            fixture.error(
-                report_codes.RESOURCE_RUNNING_ON_NODES,
-                roles_with_nodes={"Started": ["node1"]},
-                resource_id="A",
-            ),
-        ])
+        self.env_assist.assert_reports(
+            [
+                fixture.error(
+                    report_codes.RESOURCE_RUNNING_ON_NODES,
+                    roles_with_nodes={"Started": ["node1"]},
+                    resource_id="A",
+                ),
+            ]
+        )
 
     def test_wait_ok_disable_ok(self):
-        (self.config
-            .runner.pcmk.load_state(raw_resources=dict(role="Stopped"))
-            .env.push_cib(
+        (
+            self.config.runner.pcmk.load_state(
+                raw_resources=dict(role="Stopped")
+            ).env.push_cib(
                 resources=fixture_cib_resources_xml_simplest_disabled,
                 wait=TIMEOUT,
-                instead="env.push_cib"
+                instead="env.push_cib",
             )
         )
 
         create(self.env_assist.get_env(), wait=TIMEOUT, disabled=True)
-        self.env_assist.assert_reports([
-            fixture.info(
-                report_codes.RESOURCE_DOES_NOT_RUN,
-                resource_id="A",
-            )
-        ])
+        self.env_assist.assert_reports(
+            [fixture.info(report_codes.RESOURCE_DOES_NOT_RUN, resource_id="A",)]
+        )
 
     def test_wait_ok_disable_ok_by_target_role(self):
-        (self.config
-            .runner.pcmk.load_state(raw_resources=dict(role="Stopped"))
-            .env.push_cib(
+        (
+            self.config.runner.pcmk.load_state(
+                raw_resources=dict(role="Stopped")
+            ).env.push_cib(
                 resources=fixture_cib_resources_xml_simplest_disabled,
                 wait=TIMEOUT,
-                instead="env.push_cib"
+                instead="env.push_cib",
             )
         )
         create(
             self.env_assist.get_env(),
             wait=TIMEOUT,
-            meta_attributes={"target-role": "Stopped"}
+            meta_attributes={"target-role": "Stopped"},
         )
 
-        self.env_assist.assert_reports([
-            fixture.info(
-                report_codes.RESOURCE_DOES_NOT_RUN,
-                resource_id="A",
-            )
-        ])
+        self.env_assist.assert_reports(
+            [fixture.info(report_codes.RESOURCE_DOES_NOT_RUN, resource_id="A",)]
+        )
 
 
 class CreateInGroup(TestCase):
     def setUp(self):
         self.env_assist, self.config = get_env_tools(test_case=self)
-        (self.config
-            .runner.pcmk.load_agent()
+        (
+            self.config.runner.pcmk.load_agent()
             .runner.pcmk.can_wait()
             .runner.cib.load()
         )
 
     def test_simplest_resource(self):
-        (self.config
-            .remove(name="runner.pcmk.can_wait")
-            .env.push_cib(
+        (
+            self.config.remove(name="runner.pcmk.can_wait").env.push_cib(
                 resources="""
                     <resources>
                         <group id="G">
@@ -737,120 +757,108 @@ class CreateInGroup(TestCase):
                 reports.item.ReportItem.error(
                     reports.messages.WaitForIdleTimedOut(wait_error_message)
                 )
-            )
+            ),
         )
 
         self.env_assist.assert_raise_library_error(
             lambda: create_group(self.env_assist.get_env()),
-            [
-                fixture.report_wait_for_idle_timed_out(wait_error_message)
-            ],
-            expected_in_processor=False
+            [fixture.report_wait_for_idle_timed_out(wait_error_message)],
+            expected_in_processor=False,
         )
 
     def test_wait_ok_run_fail(self):
-        (self.config
-            .env.push_cib(
-                resources=fixture_cib_resources_xml_group_simplest,
-                wait=TIMEOUT
-            )
-            .runner.pcmk.load_state(raw_resources=dict(failed="true"))
+        (
+            self.config.env.push_cib(
+                resources=fixture_cib_resources_xml_group_simplest, wait=TIMEOUT
+            ).runner.pcmk.load_state(raw_resources=dict(failed="true"))
         )
         self.env_assist.assert_raise_library_error(
             lambda: create_group(self.env_assist.get_env())
         )
-        self.env_assist.assert_reports([
-            fixture.error(
-                report_codes.RESOURCE_DOES_NOT_RUN,
-                resource_id="A"
-            )
-        ])
+        self.env_assist.assert_reports(
+            [fixture.error(report_codes.RESOURCE_DOES_NOT_RUN, resource_id="A")]
+        )
 
     def test_wait_ok_run_ok(self):
-        (self.config
-            .env.push_cib(
-                resources=fixture_cib_resources_xml_group_simplest,
-                wait=TIMEOUT
-            )
-            .runner.pcmk.load_state(raw_resources=dict())
+        (
+            self.config.env.push_cib(
+                resources=fixture_cib_resources_xml_group_simplest, wait=TIMEOUT
+            ).runner.pcmk.load_state(raw_resources=dict())
         )
         create_group(self.env_assist.get_env())
-        self.env_assist.assert_reports([
-            fixture.info(
-                report_codes.RESOURCE_RUNNING_ON_NODES,
-                roles_with_nodes={"Started": ["node1"]},
-                resource_id="A",
-            )
-        ])
+        self.env_assist.assert_reports(
+            [
+                fixture.info(
+                    report_codes.RESOURCE_RUNNING_ON_NODES,
+                    roles_with_nodes={"Started": ["node1"]},
+                    resource_id="A",
+                )
+            ]
+        )
 
     def test_wait_ok_disable_fail(self):
-        (self.config
-            .env.push_cib(
+        (
+            self.config.env.push_cib(
                 resources=fixture_cib_resources_xml_group_simplest_disabled,
-                wait=TIMEOUT
-            )
-            .runner.pcmk.load_state(raw_resources=dict())
+                wait=TIMEOUT,
+            ).runner.pcmk.load_state(raw_resources=dict())
         )
 
         self.env_assist.assert_raise_library_error(
             lambda: create_group(self.env_assist.get_env(), disabled=True)
         )
-        self.env_assist.assert_reports([
-            fixture.error(
-                report_codes.RESOURCE_RUNNING_ON_NODES,
-                roles_with_nodes={'Started': ['node1']},
-                resource_id='A'
-            )
-        ])
+        self.env_assist.assert_reports(
+            [
+                fixture.error(
+                    report_codes.RESOURCE_RUNNING_ON_NODES,
+                    roles_with_nodes={"Started": ["node1"]},
+                    resource_id="A",
+                )
+            ]
+        )
 
     def test_wait_ok_disable_ok(self):
-        (self.config
-            .env.push_cib(
+        (
+            self.config.env.push_cib(
                 resources=fixture_cib_resources_xml_group_simplest_disabled,
-                wait=TIMEOUT
-            )
-            .runner.pcmk.load_state(raw_resources=dict(role="Stopped"))
+                wait=TIMEOUT,
+            ).runner.pcmk.load_state(raw_resources=dict(role="Stopped"))
         )
         create_group(self.env_assist.get_env(), disabled=True)
-        self.env_assist.assert_reports([
-            fixture.info(
-                report_codes.RESOURCE_DOES_NOT_RUN,
-                resource_id="A",
-            )
-        ])
+        self.env_assist.assert_reports(
+            [fixture.info(report_codes.RESOURCE_DOES_NOT_RUN, resource_id="A",)]
+        )
 
     def test_wait_ok_disable_ok_by_target_role(self):
-        (self.config
-            .env.push_cib(
+        (
+            self.config.env.push_cib(
                 resources=fixture_cib_resources_xml_group_simplest_disabled,
-                wait=TIMEOUT
-            )
-            .runner.pcmk.load_state(raw_resources=dict(role="Stopped"))
+                wait=TIMEOUT,
+            ).runner.pcmk.load_state(raw_resources=dict(role="Stopped"))
         )
         create_group(
             self.env_assist.get_env(),
-            meta_attributes={"target-role": "Stopped"}
+            meta_attributes={"target-role": "Stopped"},
         )
-        self.env_assist.assert_reports([
-            fixture.info(
-                report_codes.RESOURCE_DOES_NOT_RUN,
-                resource_id="A",
-            )
-        ])
+        self.env_assist.assert_reports(
+            [fixture.info(report_codes.RESOURCE_DOES_NOT_RUN, resource_id="A",)]
+        )
+
 
 class CreateAsClone(TestCase):
     def setUp(self):
         self.env_assist, self.config = get_env_tools(test_case=self)
-        (self.config
-            .runner.pcmk.load_agent()
+        (
+            self.config.runner.pcmk.load_agent()
             .runner.pcmk.can_wait()
             .runner.cib.load()
         )
 
     def test_simplest_resource(self):
-        (self.config
-            .remove(name="runner.pcmk.can_wait")
-            .env.push_cib(resources=fixture_cib_resources_xml_clone_simplest)
+        (
+            self.config.remove(name="runner.pcmk.can_wait").env.push_cib(
+                resources=fixture_cib_resources_xml_clone_simplest
+            )
         )
         create_clone(self.env_assist.get_env(), wait=False)
 
@@ -862,90 +870,80 @@ class CreateAsClone(TestCase):
                 reports.item.ReportItem.error(
                     reports.messages.WaitForIdleTimedOut(wait_error_message)
                 )
-            )
+            ),
         )
         self.env_assist.assert_raise_library_error(
             lambda: create_clone(self.env_assist.get_env()),
-            [
-                fixture.report_wait_for_idle_timed_out(wait_error_message)
-            ],
-            expected_in_processor=False
+            [fixture.report_wait_for_idle_timed_out(wait_error_message)],
+            expected_in_processor=False,
         )
 
     def test_wait_ok_run_fail(self):
-        (self.config
-            .env.push_cib(
-                resources=fixture_cib_resources_xml_clone_simplest,
-                wait=TIMEOUT
-            )
-            .runner.pcmk.load_state(raw_resources=dict(failed="true"))
+        (
+            self.config.env.push_cib(
+                resources=fixture_cib_resources_xml_clone_simplest, wait=TIMEOUT
+            ).runner.pcmk.load_state(raw_resources=dict(failed="true"))
         )
         self.env_assist.assert_raise_library_error(
             lambda: create_clone(self.env_assist.get_env())
         )
-        self.env_assist.assert_reports([
-            fixture.error(
-                report_codes.RESOURCE_DOES_NOT_RUN,
-                resource_id="A"
-            )
-        ])
+        self.env_assist.assert_reports(
+            [fixture.error(report_codes.RESOURCE_DOES_NOT_RUN, resource_id="A")]
+        )
 
     def test_wait_ok_run_ok(self):
-        (self.config
-            .env.push_cib(
-                resources=fixture_cib_resources_xml_clone_simplest,
-                wait=TIMEOUT
-            )
-            .runner.pcmk.load_state(raw_resources=dict())
+        (
+            self.config.env.push_cib(
+                resources=fixture_cib_resources_xml_clone_simplest, wait=TIMEOUT
+            ).runner.pcmk.load_state(raw_resources=dict())
         )
         create_clone(self.env_assist.get_env())
-        self.env_assist.assert_reports([
-            fixture.info(
-                report_codes.RESOURCE_RUNNING_ON_NODES,
-                roles_with_nodes={"Started": ["node1"]},
-                resource_id="A",
-            )
-        ])
+        self.env_assist.assert_reports(
+            [
+                fixture.info(
+                    report_codes.RESOURCE_RUNNING_ON_NODES,
+                    roles_with_nodes={"Started": ["node1"]},
+                    resource_id="A",
+                )
+            ]
+        )
 
     def test_wait_ok_disable_fail(self):
-        (self.config
-            .env.push_cib(
+        (
+            self.config.env.push_cib(
                 resources=fixture_cib_resources_xml_clone_simplest_disabled,
-                wait=TIMEOUT
-            )
-            .runner.pcmk.load_state(raw_resources=dict())
+                wait=TIMEOUT,
+            ).runner.pcmk.load_state(raw_resources=dict())
         )
 
         self.env_assist.assert_raise_library_error(
             lambda: create_clone(self.env_assist.get_env(), disabled=True)
         )
-        self.env_assist.assert_reports([
-            fixture.error(
-                report_codes.RESOURCE_RUNNING_ON_NODES,
-                roles_with_nodes={'Started': ['node1']},
-                resource_id='A'
-            )
-        ])
+        self.env_assist.assert_reports(
+            [
+                fixture.error(
+                    report_codes.RESOURCE_RUNNING_ON_NODES,
+                    roles_with_nodes={"Started": ["node1"]},
+                    resource_id="A",
+                )
+            ]
+        )
 
     def test_wait_ok_disable_ok(self):
-        (self.config
-            .env.push_cib(
+        (
+            self.config.env.push_cib(
                 resources=fixture_cib_resources_xml_clone_simplest_disabled,
-                wait=TIMEOUT
-            )
-            .runner.pcmk.load_state(raw_resources=dict(role="Stopped"))
+                wait=TIMEOUT,
+            ).runner.pcmk.load_state(raw_resources=dict(role="Stopped"))
         )
         create_clone(self.env_assist.get_env(), disabled=True)
-        self.env_assist.assert_reports([
-            fixture.info(
-                report_codes.RESOURCE_DOES_NOT_RUN,
-                resource_id="A",
-            )
-        ])
+        self.env_assist.assert_reports(
+            [fixture.info(report_codes.RESOURCE_DOES_NOT_RUN, resource_id="A",)]
+        )
 
     def test_wait_ok_disable_ok_by_target_role(self):
-        (self.config
-            .env.push_cib(
+        (
+            self.config.env.push_cib(
                 resources="""
                     <resources>
                         <clone id="A-clone">
@@ -984,24 +982,20 @@ class CreateAsClone(TestCase):
                         </clone>
                     </resources>
                 """,
-                wait=TIMEOUT
-            )
-            .runner.pcmk.load_state(raw_resources=dict(role="Stopped"))
+                wait=TIMEOUT,
+            ).runner.pcmk.load_state(raw_resources=dict(role="Stopped"))
         )
         create_clone(
             self.env_assist.get_env(),
-            meta_attributes={"target-role": "Stopped"}
+            meta_attributes={"target-role": "Stopped"},
         )
-        self.env_assist.assert_reports([
-            fixture.info(
-                report_codes.RESOURCE_DOES_NOT_RUN,
-                resource_id="A",
-            )
-        ])
+        self.env_assist.assert_reports(
+            [fixture.info(report_codes.RESOURCE_DOES_NOT_RUN, resource_id="A",)]
+        )
 
     def test_wait_ok_disable_ok_by_target_role_in_clone(self):
-        (self.config
-            .env.push_cib(
+        (
+            self.config.env.push_cib(
                 resources="""
                     <resources>
                         <clone id="A-clone">
@@ -1039,24 +1033,19 @@ class CreateAsClone(TestCase):
                         </clone>
                     </resources>
                 """,
-                wait=TIMEOUT
-            )
-            .runner.pcmk.load_state(raw_resources=dict(role="Stopped"))
+                wait=TIMEOUT,
+            ).runner.pcmk.load_state(raw_resources=dict(role="Stopped"))
         )
         create_clone(
-            self.env_assist.get_env(),
-            clone_options={"target-role": "Stopped"}
+            self.env_assist.get_env(), clone_options={"target-role": "Stopped"}
         )
-        self.env_assist.assert_reports([
-            fixture.info(
-                report_codes.RESOURCE_DOES_NOT_RUN,
-                resource_id="A",
-            )
-        ])
+        self.env_assist.assert_reports(
+            [fixture.info(report_codes.RESOURCE_DOES_NOT_RUN, resource_id="A",)]
+        )
 
     def test_wait_ok_disable_ok_by_clone_max(self):
-        (self.config
-            .env.push_cib(
+        (
+            self.config.env.push_cib(
                 resources="""
                     <resources>
                         <clone id="A-clone">
@@ -1094,24 +1083,19 @@ class CreateAsClone(TestCase):
                         </clone>
                     </resources>
                 """,
-                wait=TIMEOUT
-            )
-            .runner.pcmk.load_state(raw_resources=dict(role="Stopped"))
+                wait=TIMEOUT,
+            ).runner.pcmk.load_state(raw_resources=dict(role="Stopped"))
         )
         create_clone(
-            self.env_assist.get_env(),
-            clone_options={"clone-max": "0"}
+            self.env_assist.get_env(), clone_options={"clone-max": "0"}
         )
-        self.env_assist.assert_reports([
-            fixture.info(
-                report_codes.RESOURCE_DOES_NOT_RUN,
-                resource_id="A",
-            )
-        ])
+        self.env_assist.assert_reports(
+            [fixture.info(report_codes.RESOURCE_DOES_NOT_RUN, resource_id="A",)]
+        )
 
     def test_wait_ok_disable_ok_by_clone_node_max(self):
-        (self.config
-            .env.push_cib(
+        (
+            self.config.env.push_cib(
                 resources="""
                     <resources>
                         <clone id="A-clone">
@@ -1150,20 +1134,16 @@ class CreateAsClone(TestCase):
                         </clone>
                     </resources>
                 """,
-                wait=TIMEOUT
-            )
-            .runner.pcmk.load_state(raw_resources=dict(role="Stopped"))
+                wait=TIMEOUT,
+            ).runner.pcmk.load_state(raw_resources=dict(role="Stopped"))
         )
         create_clone(
-            self.env_assist.get_env(),
-            clone_options={"clone-node-max": "0"}
+            self.env_assist.get_env(), clone_options={"clone-node-max": "0"}
         )
-        self.env_assist.assert_reports([
-            fixture.info(
-                report_codes.RESOURCE_DOES_NOT_RUN,
-                resource_id="A",
-            )
-        ])
+        self.env_assist.assert_reports(
+            [fixture.info(report_codes.RESOURCE_DOES_NOT_RUN, resource_id="A",)]
+        )
+
 
 class CreateInToBundle(TestCase):
     fixture_empty_resources = "<resources />"
@@ -1208,12 +1188,15 @@ class CreateInToBundle(TestCase):
         </resources>
     """
 
-    fixture_resources_post_simple = \
+    # fmt: off
+    fixture_resources_post_simple = (
         fixture_resource_post_simple_without_network.format(
             network="""
                 <network control-port="12345" ip-range-start="192.168.100.200"/>
             """
         )
+    )
+    # fmt: on
 
     fixture_resources_post_disabled = """
         <resources>
@@ -1292,38 +1275,37 @@ class CreateInToBundle(TestCase):
 
     def setUp(self):
         self.env_assist, self.config = get_env_tools(
-            test_case=self,
-            base_cib_filename="cib-empty-2.8.xml",
+            test_case=self, base_cib_filename="cib-empty-2.8.xml",
         )
 
     def test_upgrade_cib(self):
-        (self.config
-            .runner.pcmk.load_agent()
+        (
+            self.config.runner.pcmk.load_agent()
             .runner.cib.load(
-                filename="cib-empty-2.0.xml",
-                name="load_cib_old_version"
+                filename="cib-empty-2.0.xml", name="load_cib_old_version"
             )
             .runner.cib.upgrade()
             .runner.cib.load(resources=self.fixture_resources_pre)
             .env.push_cib(resources=self.fixture_resources_post_simple)
         )
         create_bundle(self.env_assist.get_env(), wait=False)
-        self.env_assist.assert_reports([
-            fixture.info(report_codes.CIB_UPGRADE_SUCCESSFUL)
-        ])
+        self.env_assist.assert_reports(
+            [fixture.info(report_codes.CIB_UPGRADE_SUCCESSFUL)]
+        )
 
     def test_simplest_resource(self):
-        (self.config
-            .runner.pcmk.load_agent()
+        (
+            self.config.runner.pcmk.load_agent()
             .runner.cib.load(resources=self.fixture_resources_pre)
             .env.push_cib(resources=self.fixture_resources_post_simple)
         )
         create_bundle(self.env_assist.get_env(), wait=False)
 
     def test_bundle_doesnt_exist(self):
-        (self.config
-            .runner.pcmk.load_agent()
-            .runner.cib.load(resources=self.fixture_empty_resources)
+        (
+            self.config.runner.pcmk.load_agent().runner.cib.load(
+                resources=self.fixture_empty_resources
+            )
         )
         self.env_assist.assert_raise_library_error(
             lambda: create_bundle(self.env_assist.get_env(), wait=False),
@@ -1336,13 +1318,12 @@ class CreateInToBundle(TestCase):
                     context_id="",
                 )
             ],
-            expected_in_processor=False
+            expected_in_processor=False,
         )
 
     def test_id_not_bundle(self):
-        (self.config
-            .runner.pcmk.load_agent()
-            .runner.cib.load(
+        (
+            self.config.runner.pcmk.load_agent().runner.cib.load(
                 resources="""
                     <resources>
                         <primitive id="B"/>
@@ -1361,13 +1342,12 @@ class CreateInToBundle(TestCase):
                     current_type="primitive",
                 )
             ],
-            expected_in_processor=False
+            expected_in_processor=False,
         )
 
     def test_bundle_not_empty(self):
-        (self.config
-            .runner.pcmk.load_agent()
-            .runner.cib.load(
+        (
+            self.config.runner.pcmk.load_agent().runner.cib.load(
                 resources="""
                     <resources>
                         <bundle id="B">
@@ -1387,12 +1367,12 @@ class CreateInToBundle(TestCase):
                     resource_id="P",
                 )
             ],
-            expected_in_processor=False
+            expected_in_processor=False,
         )
 
     def test_wait_fail(self):
-        (self.config
-            .runner.pcmk.load_agent()
+        (
+            self.config.runner.pcmk.load_agent()
             .runner.pcmk.can_wait()
             .runner.cib.load(resources=self.fixture_resources_pre)
             .env.push_cib(
@@ -1402,45 +1382,41 @@ class CreateInToBundle(TestCase):
                     reports.item.ReportItem.error(
                         reports.messages.WaitForIdleTimedOut(wait_error_message)
                     )
-                )
+                ),
             )
         )
         self.env_assist.assert_raise_library_error(
             lambda: create_bundle(self.env_assist.get_env()),
-            [
-                fixture.report_wait_for_idle_timed_out(wait_error_message),
-            ],
-            expected_in_processor=False
+            [fixture.report_wait_for_idle_timed_out(wait_error_message),],
+            expected_in_processor=False,
         )
 
     @skip_unless_pacemaker_supports_bundle
     def test_wait_ok_run_ok(self):
-        (self.config
-            .runner.pcmk.load_agent()
+        (
+            self.config.runner.pcmk.load_agent()
             .runner.pcmk.can_wait()
             .runner.cib.load(resources=self.fixture_resources_pre)
             .env.push_cib(
-                resources=self.fixture_resources_post_simple,
-                wait=TIMEOUT
+                resources=self.fixture_resources_post_simple, wait=TIMEOUT
             )
             .runner.pcmk.load_state(
                 resources=self.fixture_status_running_with_primitive
             )
         )
         create_bundle(self.env_assist.get_env())
-        self.env_assist.assert_reports([
-            fixture.report_resource_running("A", {"Started": ["node1"]}),
-        ])
+        self.env_assist.assert_reports(
+            [fixture.report_resource_running("A", {"Started": ["node1"]}),]
+        )
 
     @skip_unless_pacemaker_supports_bundle
     def test_wait_ok_run_fail(self):
-        (self.config
-            .runner.pcmk.load_agent()
+        (
+            self.config.runner.pcmk.load_agent()
             .runner.pcmk.can_wait()
             .runner.cib.load(resources=self.fixture_resources_pre)
             .env.push_cib(
-                resources=self.fixture_resources_post_simple,
-                wait=TIMEOUT
+                resources=self.fixture_resources_post_simple, wait=TIMEOUT
             )
             .runner.pcmk.load_state(
                 resources=self.fixture_status_primitive_not_running
@@ -1449,41 +1425,36 @@ class CreateInToBundle(TestCase):
         self.env_assist.assert_raise_library_error(
             lambda: create_bundle(self.env_assist.get_env())
         )
-        self.env_assist.assert_reports([
-            fixture.error(
-                report_codes.RESOURCE_DOES_NOT_RUN,
-                resource_id="A"
-            )
-        ])
+        self.env_assist.assert_reports(
+            [fixture.error(report_codes.RESOURCE_DOES_NOT_RUN, resource_id="A")]
+        )
 
     @skip_unless_pacemaker_supports_bundle
     def test_disabled_wait_ok_not_running(self):
-        (self.config
-            .runner.pcmk.load_agent()
+        (
+            self.config.runner.pcmk.load_agent()
             .runner.pcmk.can_wait()
             .runner.cib.load(resources=self.fixture_resources_pre)
             .env.push_cib(
-                resources=self.fixture_resources_post_disabled,
-                wait=TIMEOUT
+                resources=self.fixture_resources_post_disabled, wait=TIMEOUT
             )
             .runner.pcmk.load_state(
                 resources=self.fixture_status_primitive_not_running
             )
         )
         create_bundle(self.env_assist.get_env(), disabled=True)
-        self.env_assist.assert_reports([
-            fixture.report_resource_not_running("A")
-        ])
+        self.env_assist.assert_reports(
+            [fixture.report_resource_not_running("A")]
+        )
 
     @skip_unless_pacemaker_supports_bundle
     def test_disabled_wait_ok_running(self):
-        (self.config
-            .runner.pcmk.load_agent()
+        (
+            self.config.runner.pcmk.load_agent()
             .runner.pcmk.can_wait()
             .runner.cib.load(resources=self.fixture_resources_pre)
             .env.push_cib(
-                resources=self.fixture_resources_post_disabled,
-                wait=TIMEOUT
+                resources=self.fixture_resources_post_disabled, wait=TIMEOUT
             )
             .runner.pcmk.load_state(
                 resources=self.fixture_status_running_with_primitive
@@ -1492,13 +1463,15 @@ class CreateInToBundle(TestCase):
         self.env_assist.assert_raise_library_error(
             lambda: create_bundle(self.env_assist.get_env(), disabled=True)
         )
-        self.env_assist.assert_reports([
-            fixture.error(
-                report_codes.RESOURCE_RUNNING_ON_NODES,
-                resource_id="A",
-                roles_with_nodes={"Started": ["node1"]},
-            )
-        ])
+        self.env_assist.assert_reports(
+            [
+                fixture.error(
+                    report_codes.RESOURCE_RUNNING_ON_NODES,
+                    resource_id="A",
+                    roles_with_nodes={"Started": ["node1"]},
+                )
+            ]
+        )
 
     @skip_unless_pacemaker_supports_bundle
     def test_no_port_no_ip(self):
@@ -1507,22 +1480,25 @@ class CreateInToBundle(TestCase):
                 <bundle id="B"/>
             </resources>
         """
-        (self.config
-            .runner.pcmk.load_agent()
-            .runner.cib.load(resources=resources_fixture)
+        (
+            self.config.runner.pcmk.load_agent().runner.cib.load(
+                resources=resources_fixture
+            )
         )
         self.env_assist.assert_raise_library_error(
             lambda: create_bundle(self.env_assist.get_env(), wait=False)
         )
-        self.env_assist.assert_reports([
-            fixture.error(
-                report_codes.RESOURCE_IN_BUNDLE_NOT_ACCESSIBLE,
-                bundle_id="B",
-                inner_resource_id="A",
-                force_code=
-                    report_codes.FORCE_RESOURCE_IN_BUNDLE_NOT_ACCESSIBLE
-            )
-        ])
+        self.env_assist.assert_reports(
+            [
+                fixture.error(
+                    # pylint: disable=line-too-long
+                    report_codes.RESOURCE_IN_BUNDLE_NOT_ACCESSIBLE,
+                    bundle_id="B",
+                    inner_resource_id="A",
+                    force_code=report_codes.FORCE_RESOURCE_IN_BUNDLE_NOT_ACCESSIBLE,
+                )
+            ]
+        )
 
     @skip_unless_pacemaker_supports_bundle
     def test_no_port_no_ip_forced(self):
@@ -1531,14 +1507,15 @@ class CreateInToBundle(TestCase):
                 <bundle id="B"/>
             </resources>
         """
-        (self.config
-            .runner.pcmk.load_agent()
+        (
+            self.config.runner.pcmk.load_agent()
             .runner.cib.load(resources=resources_fixture)
             .env.push_cib(
-                resources=
+                resources=(
                     self.fixture_resource_post_simple_without_network.format(
                         network=""
                     )
+                )
             )
         )
         create_bundle(
@@ -1546,13 +1523,15 @@ class CreateInToBundle(TestCase):
             wait=False,
             allow_not_accessible_resource=True,
         )
-        self.env_assist.assert_reports([
-            fixture.warn(
-                report_codes.RESOURCE_IN_BUNDLE_NOT_ACCESSIBLE,
-                bundle_id="B",
-                inner_resource_id="A",
-            )
-        ])
+        self.env_assist.assert_reports(
+            [
+                fixture.warn(
+                    report_codes.RESOURCE_IN_BUNDLE_NOT_ACCESSIBLE,
+                    bundle_id="B",
+                    inner_resource_id="A",
+                )
+            ]
+        )
 
     def _test_with_network_defined(self, network):
         resources_fixture = """
@@ -1561,15 +1540,18 @@ class CreateInToBundle(TestCase):
                     {network}
                 </bundle>
             </resources>
-        """.format(network=network)
-        (self.config
-            .runner.pcmk.load_agent()
+        """.format(
+            network=network
+        )
+        (
+            self.config.runner.pcmk.load_agent()
             .runner.cib.load(resources=resources_fixture)
             .env.push_cib(
-                resources=
+                resources=(
                     self.fixture_resource_post_simple_without_network.format(
                         network=network
                     )
+                )
             )
         )
         create_bundle(self.env_assist.get_env(), wait=False)

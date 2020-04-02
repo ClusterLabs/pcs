@@ -40,11 +40,10 @@ def stonith_config_cmd(lib, argv, modifiers):
 
 
 def print_stonith_levels(lib):
-    levels = stonith_level_config_to_str(
-        lib.fencing_topology.get_config()
-    )
+    levels = stonith_level_config_to_str(lib.fencing_topology.get_config())
     if levels:
         print("\n".join(indent(levels, 1)))
+
 
 def stonith_list_available(lib, argv, modifiers):
     """
@@ -57,8 +56,7 @@ def stonith_list_available(lib, argv, modifiers):
 
     search = argv[0] if argv else None
     agent_list = lib.stonith_agent.list_agents(
-        describe=not modifiers.get("--nodesc"),
-        search=search,
+        describe=not modifiers.get("--nodesc"), search=search,
     )
 
     if not agent_list:
@@ -73,12 +71,14 @@ def stonith_list_available(lib, argv, modifiers):
         name = agent_info["name"]
         shortdesc = agent_info["shortdesc"]
         if shortdesc:
-            print("{0} - {1}".format(
-                name,
-                resource._format_desc(
-                    len(name + " - "), shortdesc.replace("\n", " ")
+            print(
+                "{0} - {1}".format(
+                    name,
+                    resource._format_desc(
+                        len(name + " - "), shortdesc.replace("\n", " ")
+                    ),
                 )
-            ))
+            )
         else:
             print(name)
 
@@ -93,11 +93,14 @@ def stonith_list_options(lib, argv, modifiers):
         raise CmdLineInputError()
     agent_name = argv[0]
 
-    print(resource._format_agent_description(
-        lib.stonith_agent.describe_agent(agent_name),
-        stonith=True,
-        show_all=modifiers.get("--full"),
-    ))
+    print(
+        resource._format_agent_description(
+            lib.stonith_agent.describe_agent(agent_name),
+            stonith=True,
+            show_all=modifiers.get("--full"),
+        )
+    )
+
 
 def stonith_create(lib, argv, modifiers):
     """
@@ -115,14 +118,23 @@ def stonith_create(lib, argv, modifiers):
       * -f - CIB file
     """
     modifiers.ensure_only_supported(
-        "--before", "--after", "--group", "--force", "--disabled",
-        "--no-default-ops", "--wait", "-f",
+        "--before",
+        "--after",
+        "--group",
+        "--force",
+        "--disabled",
+        "--no-default-ops",
+        "--wait",
+        "-f",
     )
     if modifiers.is_specified("--before") and modifiers.is_specified("--after"):
-        raise error("you cannot specify both --before and --after{0}".format(
-            "" if modifiers.is_specified("--group")
-            else " and you have to specify --group"
-        ))
+        raise error(
+            "you cannot specify both --before and --after{0}".format(
+                ""
+                if modifiers.is_specified("--group")
+                else " and you have to specify --group"
+            )
+        )
 
     if not modifiers.is_specified("--group"):
         if modifiers.is_specified("--before"):
@@ -149,10 +161,12 @@ def stonith_create(lib, argv, modifiers):
 
     if not modifiers.get("--group"):
         lib.stonith.create(
-            stonith_id, stonith_type, parts["op"],
+            stonith_id,
+            stonith_type,
+            parts["op"],
             parts["meta"],
             parts["options"],
-            **settings
+            **settings,
         )
     else:
         adjacent_resource_id = None
@@ -165,22 +179,24 @@ def stonith_create(lib, argv, modifiers):
             put_after_adjacent = False
 
         lib.stonith.create_in_group(
-            stonith_id, stonith_type, modifiers.get("--group"), parts["op"],
+            stonith_id,
+            stonith_type,
+            modifiers.get("--group"),
+            parts["op"],
             parts["meta"],
             parts["options"],
             adjacent_resource_id=adjacent_resource_id,
             put_after_adjacent=put_after_adjacent,
-            **settings
+            **settings,
         )
+
 
 def stonith_level_parse_node(arg):
     """
     Commandline options: no options
     """
     target_type_candidate, target_value_candidate = parse_args.parse_typed_arg(
-        arg,
-        target_type_map_cli_to_lib.keys(),
-        "node"
+        arg, target_type_map_cli_to_lib.keys(), "node"
     )
     target_type = target_type_map_cli_to_lib[target_type_candidate]
     if target_type == TARGET_TYPE_ATTRIBUTE:
@@ -189,6 +205,7 @@ def stonith_level_parse_node(arg):
         target_value = target_value_candidate
     return target_type, target_value
 
+
 def stonith_level_normalize_devices(argv):
     """
     Commandline options: no options
@@ -196,6 +213,7 @@ def stonith_level_normalize_devices(argv):
     # normalize devices - previously it was possible to delimit devices by both
     # a comma and a space
     return ",".join(argv).split(",")
+
 
 def stonith_level_add_cmd(lib, argv, modifiers):
     """
@@ -216,6 +234,7 @@ def stonith_level_add_cmd(lib, argv, modifiers):
         force_device=modifiers.get("--force"),
         force_node=modifiers.get("--force"),
     )
+
 
 def stonith_level_clear_cmd(lib, argv, modifiers):
     """
@@ -247,7 +266,7 @@ def stonith_level_clear_cmd(lib, argv, modifiers):
             target_value,
             None,
             # pre-lib code didn't return any error when no level was found
-            ignore_if_missing=True
+            ignore_if_missing=True,
         )
     except LibraryError:
         was_error = True
@@ -259,12 +278,13 @@ def stonith_level_clear_cmd(lib, argv, modifiers):
                 None,
                 argv[0].split(","),
                 # pre-lib code didn't return any error when no level was found
-                ignore_if_missing=True
+                ignore_if_missing=True,
             )
         except LibraryError:
             was_error = True
     if was_error:
         raise LibraryError()
+
 
 def stonith_level_config_to_str(config):
     """
@@ -280,26 +300,34 @@ def stonith_level_config_to_str(config):
 
     lines = []
     for target_type in [
-        TARGET_TYPE_NODE, TARGET_TYPE_REGEXP, TARGET_TYPE_ATTRIBUTE
+        TARGET_TYPE_NODE,
+        TARGET_TYPE_REGEXP,
+        TARGET_TYPE_ATTRIBUTE,
     ]:
         if not target_type in config_data:
             continue
         for target_value in sorted(config_data[target_type].keys()):
-            lines.append("Target: {0}".format(
-                "=".join(target_value) if target_type == TARGET_TYPE_ATTRIBUTE
-                else target_value
-            ))
+            lines.append(
+                "Target: {0}".format(
+                    "=".join(target_value)
+                    if target_type == TARGET_TYPE_ATTRIBUTE
+                    else target_value
+                )
+            )
             level_lines = []
             for target_level in sorted(
                 config_data[target_type][target_value],
-                key=lambda level: level["level"]
+                key=lambda level: level["level"],
             ):
-                level_lines.append("Level {level} - {devices}".format(
-                    level=target_level["level"],
-                    devices=",".join(target_level["devices"])
-                ))
+                level_lines.append(
+                    "Level {level} - {devices}".format(
+                        level=target_level["level"],
+                        devices=",".join(target_level["devices"]),
+                    )
+                )
             lines.extend(indent(level_lines))
     return lines
+
 
 def stonith_level_config_cmd(lib, argv, modifiers):
     """
@@ -313,6 +341,7 @@ def stonith_level_config_cmd(lib, argv, modifiers):
     # do not print \n when lines are empty
     if lines:
         print("\n".join(lines))
+
 
 def stonith_level_remove_cmd(lib, argv, modifiers):
     """
@@ -335,8 +364,9 @@ def stonith_level_remove_cmd(lib, argv, modifiers):
         target_value,
         devices,
         # backward compatibility mode, see lib command for details
-        target_may_be_a_device=True
+        target_may_be_a_device=True,
     )
+
 
 def stonith_level_verify_cmd(lib, argv, modifiers):
     """
@@ -348,6 +378,7 @@ def stonith_level_verify_cmd(lib, argv, modifiers):
         raise CmdLineInputError()
     # raises LibraryError in case of problems, else we don't want to do anything
     lib.fencing_topology.verify()
+
 
 def stonith_fence(lib, argv, modifiers):
     """
@@ -370,6 +401,7 @@ def stonith_fence(lib, argv, modifiers):
         utils.err("unable to fence '%s'\n" % node + output)
     else:
         print("Node: %s fenced" % node)
+
 
 def stonith_confirm(lib, argv, modifiers):
     """
@@ -420,14 +452,12 @@ def get_fence_agent_info(lib, argv, modifiers):
     runner = utils.cmd_runner()
 
     try:
-        metadata = lib_ra.StonithAgent(runner, agent[len("stonith:"):])
+        metadata = lib_ra.StonithAgent(runner, agent[len("stonith:") :])
         info = metadata.get_full_info()
         info["name"] = "stonith:{0}".format(info["name"])
         print(json.dumps(info))
     except lib_ra.ResourceAgentError as e:
-        process_library_reports(
-            [lib_ra.resource_agent_error_to_report_item(e)]
-        )
+        process_library_reports([lib_ra.resource_agent_error_to_report_item(e)])
     except LibraryError as e:
         process_library_reports(e.args)
 
@@ -448,6 +478,7 @@ def sbd_watchdog_list(lib, argv, modifiers):
             print("  {}".format(watchdog))
     else:
         print("No available watchdog")
+
 
 def sbd_watchdog_list_json(lib, argv, modifiers):
     """
@@ -487,12 +518,13 @@ def sbd_enable(lib, argv, modifiers):
       * --no-watchdog-validation - do not validate watchdog
     """
     modifiers.ensure_only_supported(
-        "--request-timeout", "--force", "--skip-offline",
+        "--request-timeout",
+        "--force",
+        "--skip-offline",
         "--no-watchdog-validation",
     )
     options = parse_args.prepare_options(
-        argv,
-        allowed_repeatable_options=("device", "watchdog")
+        argv, allowed_repeatable_options=("device", "watchdog")
     )
     default_watchdog, watchdog_dict = _sbd_parse_watchdogs(
         options.get("watchdog", [])
@@ -505,7 +537,8 @@ def sbd_enable(lib, argv, modifiers):
         default_watchdog,
         watchdog_dict,
         {
-            name: value for name, value in options.items()
+            name: value
+            for name, value in options.items()
             if name not in ("device", "watchdog")
         },
         default_device_list=(
@@ -516,6 +549,7 @@ def sbd_enable(lib, argv, modifiers):
         ignore_offline_nodes=modifiers.get("--skip-offline"),
         no_watchdog_validation=modifiers.get("--no-watchdog-validation"),
     )
+
 
 def _sbd_parse_node_specific_options(arg_list):
     """
@@ -541,8 +575,10 @@ def _sbd_parse_watchdogs(watchdog_list):
     """
     Commandline options: no options
     """
-    default_watchdog_list, node_specific_watchdog_dict =\
-        _sbd_parse_node_specific_options(watchdog_list)
+    (
+        default_watchdog_list,
+        node_specific_watchdog_dict,
+    ) = _sbd_parse_node_specific_options(watchdog_list)
     if not default_watchdog_list:
         default_watchdog = None
     elif len(default_watchdog_list) == 1:
@@ -583,6 +619,7 @@ def sbd_status(lib, argv, modifiers):
       * --full - display SBD device header
     """
     modifiers.ensure_only_supported("--request-timeout", "--full")
+
     def _bool_to_str(val):
         if val is None:
             return "N/A"
@@ -599,12 +636,14 @@ def sbd_status(lib, argv, modifiers):
     print("<node name>: <installed> | <enabled> | <running>")
     for node_status in status_list:
         status = node_status["status"]
-        print("{node}: {installed} | {enabled} | {running}".format(
-            node=node_status["node"],
-            installed=_bool_to_str(status.get("installed")),
-            enabled=_bool_to_str(status.get("enabled")),
-            running=_bool_to_str(status.get("running"))
-        ))
+        print(
+            "{node}: {installed} | {enabled} | {running}".format(
+                node=node_status["node"],
+                installed=_bool_to_str(status.get("installed")),
+                enabled=_bool_to_str(status.get("enabled")),
+                running=_bool_to_str(status.get("running")),
+            )
+        )
     device_list = lib.sbd.get_local_devices_info(modifiers.get("--full"))
     for device in device_list:
         print()
@@ -614,6 +653,7 @@ def sbd_status(lib, argv, modifiers):
             print()
             print("SBD header on device '{0}':".format(device["device"]))
             print("<unknown>" if device["dump"] is None else device["dump"])
+
 
 def _print_per_node_option(config_list, config_option):
     """
@@ -644,7 +684,10 @@ def sbd_config(lib, argv, modifiers):
     config = config_list[0]["config"]
 
     filtered_options = [
-        "SBD_WATCHDOG_DEV", "SBD_OPTS", "SBD_PACEMAKER", "SBD_DEVICE"
+        "SBD_WATCHDOG_DEV",
+        "SBD_OPTS",
+        "SBD_PACEMAKER",
+        "SBD_DEVICE",
     ]
     with_device = False
     for key, val in config.items():
@@ -681,8 +724,7 @@ def sbd_setup_block_device(lib, argv, modifiers):
     """
     modifiers.ensure_only_supported("--force")
     options = parse_args.prepare_options(
-        argv,
-        allowed_repeatable_options=("device",)
+        argv, allowed_repeatable_options=("device",)
     )
     device_list = options.get("device", [])
     if not device_list:
@@ -701,10 +743,7 @@ def sbd_setup_block_device(lib, argv, modifiers):
 
     lib.sbd.initialize_block_devices(
         device_list,
-        {
-            name: value for name, value in options.items()
-            if name != "device"
-        }
+        {name: value for name, value in options.items() if name != "device"},
     )
 
 

@@ -12,7 +12,7 @@ from pcs.common.interface.dto import DataTransferObject
 
 @dataclass(frozen=True)
 class RelationEntityDto(DataTransferObject):
-    id: str # pylint: disable=invalid-name
+    id: str  # pylint: disable=invalid-name
     type: Union[ResourceRelationType, str]
     members: Sequence[str]
     metadata: Mapping[str, Any]

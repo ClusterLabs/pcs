@@ -5,14 +5,14 @@ from pcs.lib.cib.tools import get_constraints
 import pcs.lib.commands.constraint.common
 
 
-#configure common constraint command
+# configure common constraint command
 show = partial(
     pcs.lib.commands.constraint.common.show,
     ticket.TAG_NAME,
-    lambda element: element.attrib.has_key('rsc')
+    lambda element: element.attrib.has_key("rsc"),
 )
 
-#configure common constraint command
+# configure common constraint command
 create_with_set = partial(
     pcs.lib.commands.constraint.common.create_with_set,
     ticket.TAG_NAME,
@@ -20,8 +20,12 @@ create_with_set = partial(
     duplicate_check=ticket.are_duplicate_with_resource_set,
 )
 
+
 def create(
-    env, ticket_key, resource_id, options,
+    env,
+    ticket_key,
+    resource_id,
+    options,
     resource_in_clone_alowed=False,
     duplication_alowed=False,
 ):
@@ -60,6 +64,7 @@ def create(
 
     env.push_cib()
 
+
 def remove(env, ticket_key, resource_id):
     """
     remove all ticket constraint from resource
@@ -69,14 +74,10 @@ def remove(env, ticket_key, resource_id):
     """
     constraint_section = get_constraints(env.get_cib())
     any_plain_removed = ticket.remove_plain(
-        constraint_section,
-        ticket_key,
-        resource_id
+        constraint_section, ticket_key, resource_id
     )
     any_with_resource_set_removed = ticket.remove_with_resource_set(
-        constraint_section,
-        ticket_key,
-        resource_id
+        constraint_section, ticket_key, resource_id
     )
 
     env.push_cib()

@@ -57,44 +57,39 @@ def _non_root_run(argv_cmd):
     # specific commands need to be run under root account, pass them to pcsd
     # don't forget to allow each command in pcsd.rb in "post /run_pcs do"
     root_command_list = [
-        ['cluster', 'auth', '...'],
-        ['cluster', 'corosync', '...'],
-        ['cluster', 'destroy', '...'],
-        ['cluster', 'disable', '...'],
-        ['cluster', 'enable', '...'],
-        ['cluster', 'node', '...'],
-        ['cluster', 'pcsd-status', '...'],
-        ['cluster', 'start', '...'],
-        ['cluster', 'stop', '...'],
-        ['cluster', 'sync', '...'],
+        ["cluster", "auth", "..."],
+        ["cluster", "corosync", "..."],
+        ["cluster", "destroy", "..."],
+        ["cluster", "disable", "..."],
+        ["cluster", "enable", "..."],
+        ["cluster", "node", "..."],
+        ["cluster", "pcsd-status", "..."],
+        ["cluster", "start", "..."],
+        ["cluster", "stop", "..."],
+        ["cluster", "sync", "..."],
         # ['config', 'restore', '...'], # handled in config.config_restore
-        ['host', 'auth', '...'],
-        ['host', 'deauth', '...'],
-        ['pcsd', 'deauth', '...'],
-        ['pcsd', 'sync-certificates'],
+        ["host", "auth", "..."],
+        ["host", "deauth", "..."],
+        ["pcsd", "deauth", "..."],
+        ["pcsd", "sync-certificates"],
         ["quorum", "device", "status", "..."],
         ["quorum", "status", "..."],
         ["status"],
-        ['status', 'corosync', '...'],
-        ['status', 'pcsd', '...'],
+        ["status", "corosync", "..."],
+        ["status", "pcsd", "..."],
         ["status", "quorum", "..."],
         ["status", "status", "..."],
     ]
 
     for root_cmd in root_command_list:
-        if (
-            (argv_and_options == root_cmd)
-            or
-            (
-                root_cmd[-1] == "..."
-                and
-                argv_and_options[:len(root_cmd)-1] == root_cmd[:-1]
-            )
+        if (argv_and_options == root_cmd) or (
+            root_cmd[-1] == "..."
+            and argv_and_options[: len(root_cmd) - 1] == root_cmd[:-1]
         ):
             # handle interactivity of 'pcs cluster auth'
             if argv_and_options[0:2] in [["cluster", "auth"], ["host", "auth"]]:
                 if "-u" not in utils.pcs_options:
-                    username = utils.get_terminal_input('Username: ')
+                    username = utils.get_terminal_input("Username: ")
                     argv_and_options.extend(["-u", username])
                 if "-p" not in utils.pcs_options:
                     password = utils.get_terminal_password()
@@ -114,19 +109,23 @@ def _non_root_run(argv_cmd):
                 sys.stderr.write(std_err)
             sys.exit(exitcode)
 
+
 logging.basicConfig()
 usefile = False
 filename = ""
+
+
 def main(argv=None):
     # pylint: disable=global-statement
     # pylint: disable=too-many-branches
     # pylint: disable=too-many-locals
     # pylint: disable=too-many-statements
     if completion.has_applicable_environment(os.environ):
-        print(completion.make_suggestions(
-            os.environ,
-            usage.generate_completion_tree_from_usage()
-        ))
+        print(
+            completion.make_suggestions(
+                os.environ, usage.generate_completion_tree_from_usage()
+            )
+        )
         sys.exit()
 
     argv = argv if argv else sys.argv[1:]
@@ -179,7 +178,7 @@ def main(argv=None):
             utils.err("%s can only be used once" % opt)
 
         if opt in ("-h", "--help"):
-            if  not argv:
+            if not argv:
                 usage.main()
                 sys.exit()
             else:
@@ -194,12 +193,16 @@ def main(argv=None):
         elif opt == "--version":
             print(settings.pcs_version)
             if full:
-                print(" ".join(
-                    sorted([
-                        feat["id"]
-                        for feat in capabilities.get_pcs_capabilities()
-                    ])
-                ))
+                print(
+                    " ".join(
+                        sorted(
+                            [
+                                feat["id"]
+                                for feat in capabilities.get_pcs_capabilities()
+                            ]
+                        )
+                    )
+                )
             sys.exit()
         elif opt == "--fullhelp":
             usage.full_usage()

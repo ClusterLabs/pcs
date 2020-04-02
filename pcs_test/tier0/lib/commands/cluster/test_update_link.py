@@ -8,13 +8,15 @@ from pcs_test.tools.custom_mock import patch_getaddrinfo
 from pcs.common.reports import codes as report_codes
 from pcs.lib.commands import cluster
 
+
 class UpdateLink(TestCase):
     def setUp(self):
         self.env_assist, self.config = get_env_tools(self)
         self.config.env.set_known_nodes(["node1", "node2"])
         self.link_options = {"mcastport": "12345"}
         self.node_addr_map = {"node2": "node2-addr2a"}
-        self.before = dedent("""\
+        self.before = dedent(
+            """\
             totem {
                 transport: knet
 
@@ -41,7 +43,8 @@ class UpdateLink(TestCase):
             }
             """
         )
-        self.after = dedent("""\
+        self.after = dedent(
+            """\
             totem {
                 transport: knet
 
@@ -70,47 +73,36 @@ class UpdateLink(TestCase):
         )
 
     def test_not_live(self):
-        (self.config
-            .env.set_corosync_conf_data("")
-        )
+        (self.config.env.set_corosync_conf_data(""))
         self.env_assist.assert_raise_library_error(
-            lambda: cluster.update_link(
-                self.env_assist.get_env(),
-                "0",
-                {},
-                {}
-            ),
+            lambda: cluster.update_link(self.env_assist.get_env(), "0", {}, {}),
             [
                 fixture.error(
                     report_codes.LIVE_ENVIRONMENT_REQUIRED,
-                    forbidden_options=["COROSYNC_CONF"]
+                    forbidden_options=["COROSYNC_CONF"],
                 ),
             ],
-            expected_in_processor=False
+            expected_in_processor=False,
         )
 
     def test_missing_input_data(self):
-        (self.config
-            .corosync_conf.load_content(self.before)
-            .env.push_corosync_conf(corosync_conf_text=self.before)
+        (
+            self.config.corosync_conf.load_content(
+                self.before
+            ).env.push_corosync_conf(corosync_conf_text=self.before)
         )
-        cluster.update_link(
-            self.env_assist.get_env(),
-            "0",
-            {},
-            {}
-        )
+        cluster.update_link(self.env_assist.get_env(), "0", {}, {})
         # Reports from pushing corosync.conf are produced in env. That code is
         # hidden in self.config.env.push_corosync_conf.
         self.env_assist.assert_reports([])
 
     def test_offline_nodes(self):
         patch_getaddrinfo(self, self.node_addr_map.values())
-        (self.config
-            .corosync_conf.load_content(self.before)
-            .env.push_corosync_conf(
-                corosync_conf_text=self.after,
-                skip_offline_targets=True,
+        (
+            self.config.corosync_conf.load_content(
+                self.before
+            ).env.push_corosync_conf(
+                corosync_conf_text=self.after, skip_offline_targets=True,
             )
         )
         cluster.update_link(
@@ -118,21 +110,19 @@ class UpdateLink(TestCase):
             "2",
             self.node_addr_map,
             self.link_options,
-            force_flags=[report_codes.SKIP_OFFLINE_NODES]
+            force_flags=[report_codes.SKIP_OFFLINE_NODES],
         )
 
     def test_unresolvable_addresses(self):
-        (self.config
-            .corosync_conf.load_content(self.before)
-        )
+        (self.config.corosync_conf.load_content(self.before))
         self.env_assist.assert_raise_library_error(
             lambda: cluster.update_link(
                 self.env_assist.get_env(),
                 "2",
                 self.node_addr_map,
-                self.link_options
+                self.link_options,
             ),
-            []
+            [],
         )
         self.env_assist.assert_reports(
             [
@@ -145,16 +135,17 @@ class UpdateLink(TestCase):
         )
 
     def test_unresolvable_addresses_forced(self):
-        (self.config
-            .corosync_conf.load_content(self.before)
-            .env.push_corosync_conf(corosync_conf_text=self.after)
+        (
+            self.config.corosync_conf.load_content(
+                self.before
+            ).env.push_corosync_conf(corosync_conf_text=self.after)
         )
         cluster.update_link(
             self.env_assist.get_env(),
             "2",
             self.node_addr_map,
             self.link_options,
-            force_flags=[report_codes.FORCE]
+            force_flags=[report_codes.FORCE],
         )
         self.env_assist.assert_reports(
             [
@@ -165,11 +156,13 @@ class UpdateLink(TestCase):
             ]
         )
 
+
 class UpdateLinkKnet(TestCase):
     def setUp(self):
         self.env_assist, self.config = get_env_tools(self)
         self.config.env.set_known_nodes(["node1", "node2"])
-        self.before = dedent("""\
+        self.before = dedent(
+            """\
             totem {
                 transport: knet
 
@@ -199,7 +192,8 @@ class UpdateLinkKnet(TestCase):
         )
 
     def test_success(self):
-        after = dedent("""\
+        after = dedent(
+            """\
             totem {
                 transport: knet
 
@@ -228,15 +222,16 @@ class UpdateLinkKnet(TestCase):
             """
         )
         patch_getaddrinfo(self, ["node2-addr2a"])
-        (self.config
-            .corosync_conf.load_content(self.before)
-            .env.push_corosync_conf(corosync_conf_text=after)
+        (
+            self.config.corosync_conf.load_content(
+                self.before
+            ).env.push_corosync_conf(corosync_conf_text=after)
         )
         cluster.update_link(
             self.env_assist.get_env(),
             "2",
             {"node2": "node2-addr2a"},
-            {"mcastport": "", "transport": "udp", "link_priority": "10"}
+            {"mcastport": "", "transport": "udp", "link_priority": "10"},
         )
         # Reports from pushing corosync.conf are produced in env. That code is
         # hidden in self.config.env.push_corosync_conf.
@@ -244,25 +239,19 @@ class UpdateLinkKnet(TestCase):
 
     def test_validation(self):
         patch_getaddrinfo(self, ["node2-addr0"])
-        (self.config
-            .corosync_conf.load_content(self.before)
-        )
+        (self.config.corosync_conf.load_content(self.before))
         self.env_assist.assert_raise_library_error(
             lambda: cluster.update_link(
                 self.env_assist.get_env(),
                 "2",
-                {
-                    "nodeX": "addr-new",
-                    "node2": "",
-                    "node1": "node2-addr0",
-                },
+                {"nodeX": "addr-new", "node2": "", "node1": "node2-addr0",},
                 {
                     "wrong": "option",
                     "transport": "unknown",
                     "link_priority": 10,
-                }
+                },
             ),
-            []
+            [],
         )
         self.env_assist.assert_reports(
             [
@@ -279,8 +268,12 @@ class UpdateLinkKnet(TestCase):
                     option_names=["wrong"],
                     option_type="link",
                     allowed=[
-                        "link_priority", "mcastport", "ping_interval",
-                        "ping_precision", "ping_timeout", "pong_count",
+                        "link_priority",
+                        "mcastport",
+                        "ping_interval",
+                        "ping_precision",
+                        "ping_timeout",
+                        "pong_count",
                         "transport",
                     ],
                     allowed_patterns=[],
@@ -306,11 +299,13 @@ class UpdateLinkKnet(TestCase):
             ]
         )
 
+
 class UpdateLinkUdp(TestCase):
     def setUp(self):
         self.env_assist, self.config = get_env_tools(self)
         self.config.env.set_known_nodes(["node1", "node2", "node3"])
-        self.before = dedent("""\
+        self.before = dedent(
+            """\
             totem {
                 transport: udp
 
@@ -344,7 +339,8 @@ class UpdateLinkUdp(TestCase):
         )
 
     def test_success(self):
-        after = dedent("""\
+        after = dedent(
+            """\
             totem {
                 transport: udp
 
@@ -376,15 +372,16 @@ class UpdateLinkUdp(TestCase):
             """
         )
         patch_getaddrinfo(self, ["node2-addrA"])
-        (self.config
-            .corosync_conf.load_content(self.before)
-            .env.push_corosync_conf(corosync_conf_text=after)
+        (
+            self.config.corosync_conf.load_content(
+                self.before
+            ).env.push_corosync_conf(corosync_conf_text=after)
         )
         cluster.update_link(
             self.env_assist.get_env(),
             "0",
             {"node2": "node2-addrA"},
-            {"mcastport": "", "broadcast": "0", "mcastaddr": "225.0.0.1"}
+            {"mcastport": "", "broadcast": "0", "mcastaddr": "225.0.0.1"},
         )
         # Reports from pushing corosync.conf are produced in env. That code is
         # hidden in self.config.env.push_corosync_conf.
@@ -392,25 +389,15 @@ class UpdateLinkUdp(TestCase):
 
     def test_validation(self):
         patch_getaddrinfo(self, ["node3-addr0"])
-        (self.config
-            .corosync_conf.load_content(self.before)
-        )
+        (self.config.corosync_conf.load_content(self.before))
         self.env_assist.assert_raise_library_error(
             lambda: cluster.update_link(
                 self.env_assist.get_env(),
                 "0",
-                {
-                    "nodeX": "addr-new",
-                    "node2": "",
-                    "node1": "node3-addr0",
-                },
-                {
-                    "wrong": "option",
-                    "broadcast": "1",
-                    "mcastaddr": "address",
-                }
+                {"nodeX": "addr-new", "node2": "", "node1": "node3-addr0",},
+                {"wrong": "option", "broadcast": "1", "mcastaddr": "address",},
             ),
-            []
+            [],
         )
         self.env_assist.assert_reports(
             [
@@ -427,7 +414,10 @@ class UpdateLinkUdp(TestCase):
                     option_names=["wrong"],
                     option_type="link",
                     allowed=[
-                        "bindnetaddr", "broadcast", "mcastaddr", "mcastport",
+                        "bindnetaddr",
+                        "broadcast",
+                        "mcastaddr",
+                        "mcastport",
                         "ttl",
                     ],
                     allowed_patterns=[],

@@ -6,6 +6,7 @@ from pcs_test.tools.command_env import get_env_tools
 from pcs.common.reports import codes as report_codes
 from pcs.lib.commands import resource
 
+
 class GetFailcounts(TestCase):
     def setUp(self):
         self.env_assist, self.config = get_env_tools(test_case=self)
@@ -50,10 +51,10 @@ class GetFailcounts(TestCase):
                     option_name="interval",
                     option_type="",
                     prerequisite_name="operation",
-                    prerequisite_type=""
+                    prerequisite_type="",
                 ),
             ],
-            expected_in_processor=False
+            expected_in_processor=False,
         )
 
     def test_bad_interval(self):
@@ -71,7 +72,7 @@ class GetFailcounts(TestCase):
                     forbidden_characters=None,
                 ),
             ],
-            expected_in_processor=False
+            expected_in_processor=False,
         )
 
     def test_all_validation_errors(self):
@@ -85,7 +86,7 @@ class GetFailcounts(TestCase):
                     option_name="interval",
                     option_type="",
                     prerequisite_name="operation",
-                    prerequisite_type=""
+                    prerequisite_type="",
                 ),
                 fixture.error(
                     report_codes.INVALID_OPTION_VALUE,
@@ -96,7 +97,7 @@ class GetFailcounts(TestCase):
                     forbidden_characters=None,
                 ),
             ],
-            expected_in_processor=False
+            expected_in_processor=False,
         )
 
     def test_get_all(self):
@@ -122,15 +123,13 @@ class GetFailcounts(TestCase):
                     "fail_count": 10,
                     "last_failure": 1528871946,
                 },
-            ]
+            ],
         )
 
     def test_filter_node(self):
         self.config.runner.cib.load_content(self.fixture_cib())
         self.assertEqual(
-            resource.get_failcounts(
-                self.env_assist.get_env(), node="node2"
-            ),
+            resource.get_failcounts(self.env_assist.get_env(), node="node2"),
             [
                 {
                     "node": "node2",
@@ -141,7 +140,7 @@ class GetFailcounts(TestCase):
                     "fail_count": 10,
                     "last_failure": 1528871946,
                 },
-            ]
+            ],
         )
 
     def test_filter_interval(self):
@@ -160,5 +159,5 @@ class GetFailcounts(TestCase):
                     "fail_count": 10,
                     "last_failure": 1528871946,
                 },
-            ]
+            ],
         )

@@ -41,19 +41,27 @@ from pcs.lib.xml_tools import find_parent
 def are_meta_disabled(meta_attributes):
     return meta_attributes.get("target-role", "Started").lower() == "stopped"
 
+
 def _can_be_evaluated_as_positive_num(value):
     string_wo_leading_zeros = str(value).lstrip("0")
     return string_wo_leading_zeros and string_wo_leading_zeros[0].isdigit()
 
+
 def is_clone_deactivated_by_meta(meta_attributes):
-    return are_meta_disabled(meta_attributes) or any([
-        not _can_be_evaluated_as_positive_num(meta_attributes.get(key, "1"))
-        for key in ["clone-max", "clone-node-max"]
-    ])
+    return are_meta_disabled(meta_attributes) or any(
+        [
+            not _can_be_evaluated_as_positive_num(meta_attributes.get(key, "1"))
+            for key in ["clone-max", "clone-node-max"]
+        ]
+    )
+
 
 def find_one_resource_and_report(
-    context_element, resource_id, report_list, additional_search=None,
-    resource_tags=None
+    context_element,
+    resource_id,
+    report_list,
+    additional_search=None,
+    resource_tags=None,
 ):
     """
     Find a single resource or return None if not found, report errors
@@ -73,9 +81,13 @@ def find_one_resource_and_report(
     )
     return resource_el_list[0] if resource_el_list else None
 
+
 def find_resources_and_report(
-    context_element, resource_ids, report_list, additional_search=None,
-    resource_tags=None
+    context_element,
+    resource_ids,
+    report_list,
+    additional_search=None,
+    resource_tags=None,
 ):
     """
     Find a list of resource, report errors
@@ -102,6 +114,7 @@ def find_resources_and_report(
             report_list.extend(searcher.get_errors())
     return resource_el_list
 
+
 def find_primitives(resource_el: Element) -> List[Element]:
     """
     Get list of primitives contained in a given resource
@@ -118,6 +131,7 @@ def find_primitives(resource_el: Element) -> List[Element]:
         return [resource_el]
     return []
 
+
 def get_all_inner_resources(resource_el: Element) -> Set[Element]:
     """
     Return all inner resources (both direct and indirect) of a resource
@@ -133,6 +147,7 @@ def get_all_inner_resources(resource_el: Element) -> Set[Element]:
         to_process.update(set(new_inner) - all_inner)
         all_inner.update(new_inner)
     return all_inner
+
 
 def get_inner_resources(resource_el: Element) -> List[Element]:
     """
@@ -152,6 +167,7 @@ def get_inner_resources(resource_el: Element) -> List[Element]:
         return get_group_inner_resources(resource_el)
     return []
 
+
 def is_wrapper_resource(resource_el: Element) -> bool:
     """
     Return True for resource_el of types that can contain other resource(s)
@@ -161,11 +177,10 @@ def is_wrapper_resource(resource_el: Element) -> bool:
     """
     return (
         is_group(resource_el)
-        or
-        is_bundle(resource_el)
-        or
-        is_any_clone(resource_el)
+        or is_bundle(resource_el)
+        or is_any_clone(resource_el)
     )
+
 
 def get_parent_resource(resource_el: Element) -> Optional[Element]:
     """
@@ -180,6 +195,7 @@ def get_parent_resource(resource_el: Element) -> Optional[Element]:
     if parent_el is not None and is_wrapper_resource(parent_el):
         return parent_el
     return None
+
 
 def find_resources_to_enable(resource_el):
     """
@@ -202,18 +218,16 @@ def find_resources_to_enable(resource_el):
         to_enable.append(parent)
     return to_enable
 
+
 def enable(resource_el, id_provider):
     """
     Enable specified resource
     etree resource_el -- resource element
     """
     nvpair.arrange_first_meta_attributes(
-        resource_el,
-        {
-            "target-role": "",
-        },
-        id_provider
+        resource_el, {"target-role": "",}, id_provider
     )
+
 
 def disable(resource_el, id_provider):
     """
@@ -221,12 +235,9 @@ def disable(resource_el, id_provider):
     etree resource_el -- resource element
     """
     nvpair.arrange_first_meta_attributes(
-        resource_el,
-        {
-            "target-role": "Stopped",
-        },
-        id_provider
+        resource_el, {"target-role": "Stopped",}, id_provider
     )
+
 
 def find_resources_to_manage(resource_el):
     """
@@ -242,7 +253,7 @@ def find_resources_to_manage(resource_el):
     # and vice versa.
     res_id = resource_el.attrib["id"]
     return (
-        [resource_el] # the resource itself
+        [resource_el]  # the resource itself
         +
         # its parents
         find_parent(resource_el, "resources").xpath(
@@ -259,13 +270,15 @@ def find_resources_to_manage(resource_el):
                 //group[primitive[@id='{r}']]
                 |
                 ./bundle[primitive[@id='{r}']]
-            """
-            .format(r=res_id)
+            """.format(
+                r=res_id
+            )
         )
         +
         # its children
         resource_el.xpath("(./group|./primitive|./group/primitive)")
     )
+
 
 def find_resources_to_unmanage(resource_el):
     """
@@ -321,18 +334,16 @@ def find_resources_to_unmanage(resource_el):
         return [resource_el]
     return []
 
+
 def manage(resource_el, id_provider):
     """
     Set the resource to be managed by the cluster
     etree resource_el -- resource element
     """
     nvpair.arrange_first_meta_attributes(
-        resource_el,
-        {
-            "is-managed": "",
-        },
-        id_provider
+        resource_el, {"is-managed": "",}, id_provider
     )
+
 
 def unmanage(resource_el, id_provider):
     """
@@ -340,12 +351,9 @@ def unmanage(resource_el, id_provider):
     etree resource_el -- resource element
     """
     nvpair.arrange_first_meta_attributes(
-        resource_el,
-        {
-            "is-managed": "false",
-        },
-        id_provider
+        resource_el, {"is-managed": "false",}, id_provider
     )
+
 
 def validate_move(resource_element, master):
     """
@@ -367,10 +375,8 @@ def validate_move(resource_element, master):
         )
         return report_list
 
-    if (
-        (analysis.is_clone or analysis.is_in_clone)
-        and not
-        (analysis.is_promotable_clone or analysis.is_in_promotable_clone)
+    if (analysis.is_clone or analysis.is_in_clone) and not (
+        analysis.is_promotable_clone or analysis.is_in_promotable_clone
     ):
         report_list.append(
             ReportItem.error(
@@ -381,10 +387,8 @@ def validate_move(resource_element, master):
         )
         return report_list
 
-    if (
-        not master
-        and
-        (analysis.is_promotable_clone or analysis.is_in_promotable_clone)
+    if not master and (
+        analysis.is_promotable_clone or analysis.is_in_promotable_clone
     ):
         # We assume users want to move master role. Still we require them to
         # actually specify that. 1) To be consistent with command for bannig
@@ -409,6 +413,7 @@ def validate_move(resource_element, master):
 
     return report_list
 
+
 def validate_ban(resource_element, master):
     """
     Validate banning a resource on a node
@@ -431,6 +436,7 @@ def validate_ban(resource_element, master):
 
     return report_list
 
+
 def validate_unmove_unban(resource_element, master):
     """
     Validate unmoving/unbanning a resource to/on nodes
@@ -443,14 +449,17 @@ def validate_unmove_unban(resource_element, master):
 
     if master and not analysis.is_promotable_clone:
         # pylint: disable=line-too-long
-        report_list.append(ReportItem.error(
-            reports.messages.CannotUnmoveUnbanResourceMasterResourceNotPromotable(
-                resource_element.get("id"),
-                promotable_id=analysis.promotable_clone_id
+        report_list.append(
+            ReportItem.error(
+                reports.messages.CannotUnmoveUnbanResourceMasterResourceNotPromotable(
+                    resource_element.get("id"),
+                    promotable_id=analysis.promotable_clone_id,
+                )
             )
-        ))
+        )
 
     return report_list
+
 
 class _MoveBanClearAnalysis(
     namedtuple(
@@ -462,10 +471,11 @@ class _MoveBanClearAnalysis(
             "is_promotable_clone",
             "is_in_promotable_clone",
             "promotable_clone_id",
-        ]
+        ],
     )
 ):
     pass
+
 
 def _validate_move_ban_clear_analyzer(resource_element):
     resource_is_bundle = False
@@ -498,5 +508,5 @@ def _validate_move_ban_clear_analyzer(resource_element):
             promotable_clone_element.get("id")
             if promotable_clone_element is not None
             else None
-        )
+        ),
     )

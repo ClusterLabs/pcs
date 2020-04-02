@@ -12,6 +12,7 @@ from pcs.cli.common.parse_args import InputModifiers
 
 CliCmdInterface = Callable[[Any, List[str], InputModifiers], None]
 
+
 def create_router(
     cmd_map: Mapping[str, CliCmdInterface],
     usage_sub_cmd: List[str],
@@ -34,9 +35,7 @@ def create_router(
             if not usage_sub_cmd:
                 raise
             utils.exit_on_cmdline_input_errror(
-                e,
-                usage_sub_cmd[0],
-                (usage_sub_cmd[1:] + [sub_cmd])
+                e, usage_sub_cmd[0], (usage_sub_cmd[1:] + [sub_cmd])
             )
 
     return _router

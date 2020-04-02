@@ -22,6 +22,7 @@ from pcs import cluster
 from pcs.cli.common.errors import CmdLineInputError
 from pcs.common.reports import codes as report_codes
 
+
 class UidGidTest(TestCase):
     # pylint: disable=invalid-name
     def setUp(self):
@@ -35,9 +36,7 @@ class UidGidTest(TestCase):
     def testUIDGID(self):
         # pylint: disable=too-many-statements
         _pcs = partial(
-            pcs,
-            None,
-            mock_settings={"corosync_uidgid_dir": self.uid_gid_dir}
+            pcs, None, mock_settings={"corosync_uidgid_dir": self.uid_gid_dir}
         )
         o, r = _pcs("cluster uidgid")
         ac(o, "No uidgids configured\n")
@@ -66,7 +65,7 @@ class UidGidTest(TestCase):
         ac(
             o,
             "Error: uidgid file with uid=testuid and gid=testgid already "
-                "exists\n"
+            "exists\n",
         )
         assert r == 1
 
@@ -74,14 +73,14 @@ class UidGidTest(TestCase):
         assert r == 1
         ac(
             o,
-            "Error: no uidgid files with uid=testuid2 and gid=testgid2 found\n"
+            "Error: no uidgid files with uid=testuid2 and gid=testgid2 found\n",
         )
 
         o, r = _pcs("cluster uidgid remove uid=testuid gid=testgid2")
         assert r == 1
         ac(
             o,
-            "Error: no uidgid files with uid=testuid and gid=testgid2 found\n"
+            "Error: no uidgid files with uid=testuid and gid=testgid2 found\n",
         )
 
         o, r = _pcs("cluster uidgid rm uid=testuid2 gid=testgid")
@@ -89,8 +88,8 @@ class UidGidTest(TestCase):
         ac(
             o,
             "'pcs cluster uidgid rm' has been deprecated, use 'pcs cluster "
-                "uidgid delete' or 'pcs cluster uidgid remove' instead\n"
-            "Error: no uidgid files with uid=testuid2 and gid=testgid found\n"
+            "uidgid delete' or 'pcs cluster uidgid remove' instead\n"
+            "Error: no uidgid files with uid=testuid2 and gid=testgid found\n",
         )
 
         o, r = _pcs("cluster uidgid")
@@ -125,7 +124,7 @@ class UidGidTest(TestCase):
         ac(
             o,
             "'pcs cluster uidgid rm' has been deprecated, use 'pcs cluster "
-                "uidgid delete' or 'pcs cluster uidgid remove' instead\n"
+            "uidgid delete' or 'pcs cluster uidgid remove' instead\n",
         )
         assert r == 0
 
@@ -172,11 +171,11 @@ class ClusterStartStop(TestCase, AssertPcsMixin):
     def test_all_and_nodelist(self):
         self.assert_pcs_fail(
             "cluster stop rh7-1 rh7-2 --all",
-            "Error: Cannot specify both --all and a list of nodes.\n"
+            "Error: Cannot specify both --all and a list of nodes.\n",
         )
         self.assert_pcs_fail(
             "cluster start rh7-1 rh7-2 --all",
-            "Error: Cannot specify both --all and a list of nodes.\n"
+            "Error: Cannot specify both --all and a list of nodes.\n",
         )
 
 
@@ -188,18 +187,22 @@ class ClusterEnableDisable(TestCase, AssertPcsMixin):
     def test_all_and_nodelist(self):
         self.assert_pcs_fail(
             "cluster enable rh7-1 rh7-2 --all",
-            "Error: Cannot specify both --all and a list of nodes.\n"
+            "Error: Cannot specify both --all and a list of nodes.\n",
         )
         self.assert_pcs_fail(
             "cluster disable rh7-1 rh7-2 --all",
-            "Error: Cannot specify both --all and a list of nodes.\n"
+            "Error: Cannot specify both --all and a list of nodes.\n",
         )
+
 
 def _node(name, **kwargs):
     """ node dictionary fixture """
     return dict(name=name, **kwargs)
 
+
 DEFAULT_TRANSPORT_TYPE = "knet"
+
+
 class ClusterSetup(TestCase):
     # pylint: disable=too-many-public-methods
     def setUp(self):
@@ -235,8 +238,7 @@ class ClusterSetup(TestCase):
 
     def call_cmd(self, argv, modifiers=None):
         self.call_cmd_without_cluster_name(
-            [self.cluster_name] + argv,
-            modifiers
+            [self.cluster_name] + argv, modifiers
         )
 
     def test_no_cluster_name(self):
@@ -275,7 +277,7 @@ class ClusterSetup(TestCase):
     def test_one_node_empty_addrs(self):
         node_name = "node"
         self.call_cmd([node_name, "addr="])
-        self.assert_setup_called_with([_node(node_name, addrs=[''])])
+        self.assert_setup_called_with([_node(node_name, addrs=[""])])
 
     def test_one_node_with_single_address(self):
         node_name = "node"
@@ -315,9 +317,7 @@ class ClusterSetup(TestCase):
     def test_multiple_nodes_without_addrs(self):
         node_list = ["node{}".format(i) for i in range(4)]
         self.call_cmd(node_list)
-        self.assert_setup_called_with(
-            [_node(node) for node in node_list]
-        )
+        self.assert_setup_called_with([_node(node) for node in node_list])
 
     def test_transport_type_missing(self):
         with self.assertRaises(CmdLineInputError) as cm:
@@ -326,25 +326,21 @@ class ClusterSetup(TestCase):
 
     def test_transport_type_unknown(self):
         node = "node"
-        self.call_cmd([
-            node, "transport", "unknown", "a=1", "link", "b=2", "c=3",
-        ])
+        self.call_cmd(
+            [node, "transport", "unknown", "a=1", "link", "b=2", "c=3",]
+        )
         self.assert_setup_called_with(
             [_node(node)],
             transport_type="unknown",
             transport_options=dict(a="1"),
-            link_list=[
-                dict(b="2", c="3"),
-            ]
+            link_list=[dict(b="2", c="3"),],
         )
 
     def test_transport_with_unknown_keywords(self):
         node = "node"
         self.call_cmd(["node", "transport", "udp", "crypto", "a=1"])
         self.assert_setup_called_with(
-            [_node(node)],
-            transport_type="udp",
-            crypto_options=dict(a="1"),
+            [_node(node)], transport_type="udp", crypto_options=dict(a="1"),
         )
 
     def test_transport_independent_options(self):
@@ -353,36 +349,43 @@ class ClusterSetup(TestCase):
         self.assert_setup_called_with(
             [_node(node)],
             quorum_options=dict(a="1", b="2"),
-            totem_options=dict(c="3", a="2")
+            totem_options=dict(c="3", a="2"),
         )
 
     def test_knet_links(self):
         node = "node"
-        self.call_cmd([
-            node, "transport", "knet", "link", "c=3", "a=2", "link", "a=1",
-        ])
+        self.call_cmd(
+            [node, "transport", "knet", "link", "c=3", "a=2", "link", "a=1",]
+        )
         self.assert_setup_called_with(
             [_node(node)],
             transport_type="knet",
-            link_list=[
-                dict(c="3", a="2"),
-                dict(a="1"),
-            ]
+            link_list=[dict(c="3", a="2"), dict(a="1"),],
         )
 
     def test_knet_links_repetable_correctly(self):
         node = "node"
-        self.call_cmd([
-            node, "transport", "knet", "link", "c=3", "a=2", "compression",
-            "d=1", "e=1", "link", "a=1", "compression", "f=1"
-        ])
+        self.call_cmd(
+            [
+                node,
+                "transport",
+                "knet",
+                "link",
+                "c=3",
+                "a=2",
+                "compression",
+                "d=1",
+                "e=1",
+                "link",
+                "a=1",
+                "compression",
+                "f=1",
+            ]
+        )
         self.assert_setup_called_with(
             [_node(node)],
             transport_type="knet",
-            link_list=[
-                dict(c="3", a="2"),
-                dict(a="1"),
-            ],
+            link_list=[dict(c="3", a="2"), dict(a="1"),],
             compression_options=dict(d="1", e="1", f="1"),
         )
 
@@ -410,13 +413,42 @@ class ClusterSetup(TestCase):
         )
 
     def test_full_knet(self):
-        self.call_cmd([
-            "node0", "node2", "addr=addr0", "node1", "addr=addr1", "addr=addr2",
-            "totem", "a=1", "b=1", "quorum", "c=1", "d=1", "transport", "knet",
-            "a=a", "b=b", "compression", "a=1", "b=2", "c=3", "crypto", "d=4",
-            "e=5", "link", "aa=1", "link", "ba=1", "bb=2", "link", "ca=1",
-            "cb=2", "cc=3"
-        ])
+        self.call_cmd(
+            [
+                "node0",
+                "node2",
+                "addr=addr0",
+                "node1",
+                "addr=addr1",
+                "addr=addr2",
+                "totem",
+                "a=1",
+                "b=1",
+                "quorum",
+                "c=1",
+                "d=1",
+                "transport",
+                "knet",
+                "a=a",
+                "b=b",
+                "compression",
+                "a=1",
+                "b=2",
+                "c=3",
+                "crypto",
+                "d=4",
+                "e=5",
+                "link",
+                "aa=1",
+                "link",
+                "ba=1",
+                "bb=2",
+                "link",
+                "ca=1",
+                "cb=2",
+                "cc=3",
+            ]
+        )
         self.assert_setup_called_with(
             [
                 _node("node0"),
@@ -437,12 +469,31 @@ class ClusterSetup(TestCase):
         )
 
     def assert_with_all_options(self, transport_type):
-        self.call_cmd([
-            "node0", "node2", "addr=addr0", "node1", "addr=addr1", "addr=addr2",
-            "totem", "a=1", "b=1", "quorum", "c=1", "d=1", "transport",
-            transport_type, "a=a", "b=b", "link", "aa=1", "link", "ba=1",
-            "bb=2",
-        ])
+        self.call_cmd(
+            [
+                "node0",
+                "node2",
+                "addr=addr0",
+                "node1",
+                "addr=addr1",
+                "addr=addr2",
+                "totem",
+                "a=1",
+                "b=1",
+                "quorum",
+                "c=1",
+                "d=1",
+                "transport",
+                transport_type,
+                "a=a",
+                "b=b",
+                "link",
+                "aa=1",
+                "link",
+                "ba=1",
+                "bb=2",
+            ]
+        )
         self.assert_setup_called_with(
             [
                 _node("node0"),
@@ -453,10 +504,7 @@ class ClusterSetup(TestCase):
             quorum_options=dict(c="1", d="1"),
             transport_type=transport_type,
             transport_options=dict(a="a", b="b"),
-            link_list=[
-                dict(aa="1"),
-                dict(ba="1", bb="2"),
-            ],
+            link_list=[dict(aa="1"), dict(ba="1", bb="2"),],
         )
 
     def test_full_udp(self):
@@ -468,60 +516,40 @@ class ClusterSetup(TestCase):
     def test_enable(self):
         node_name = "node"
         self.call_cmd([node_name], {"enable": True})
-        self.assert_setup_called_with(
-            [_node(node_name)],
-            enable=True
-        )
+        self.assert_setup_called_with([_node(node_name)], enable=True)
 
     def test_start(self):
         node_name = "node"
         self.call_cmd([node_name], {"start": True})
-        self.assert_setup_called_with(
-            [_node(node_name)],
-            start=True
-        )
+        self.assert_setup_called_with([_node(node_name)], start=True)
 
     def test_enable_start(self):
         node_name = "node"
         self.call_cmd([node_name], {"enable": True, "start": True})
         self.assert_setup_called_with(
-            [_node(node_name)],
-            enable=True,
-            start=True
+            [_node(node_name)], enable=True, start=True
         )
 
     def test_wait(self):
         node_name = "node"
         self.call_cmd([node_name], {"wait": "10"})
-        self.assert_setup_called_with(
-            [_node(node_name)],
-            wait="10"
-        )
+        self.assert_setup_called_with([_node(node_name)], wait="10")
 
     def test_start_wait(self):
         node_name = "node"
         self.call_cmd([node_name], {"start": True, "wait": None})
-        self.assert_setup_called_with(
-            [_node(node_name)],
-            start=True,
-            wait=None
-        )
+        self.assert_setup_called_with([_node(node_name)], start=True, wait=None)
 
     def test_start_wait_timeout(self):
         node_name = "node"
         self.call_cmd([node_name], {"start": True, "wait": "10"})
-        self.assert_setup_called_with(
-            [_node(node_name)],
-            start=True,
-            wait="10"
-        )
+        self.assert_setup_called_with([_node(node_name)], start=True, wait="10")
 
     def test_force(self):
         node_name = "node"
         self.call_cmd([node_name], {"force": True})
         self.assert_setup_called_with(
-            [_node(node_name)],
-            force_flags=[report_codes.FORCE],
+            [_node(node_name)], force_flags=[report_codes.FORCE],
         )
 
     def test_all_modifiers(self):
@@ -534,7 +562,7 @@ class ClusterSetup(TestCase):
                 "start": True,
                 "wait": "15",
                 "no-keys-sync": True,
-            }
+            },
         )
         self.assert_setup_called_with(
             [_node(node_name)],
@@ -605,15 +633,15 @@ class NodeAdd(TestCase):
 
     def test_with_multiple_watchdogs(self):
         with self.assertRaises(CmdLineInputError) as cm:
-            self.call_cmd([
-                self.hostname, "watchdog=watchdog1", "watchdog=watchdog2"
-            ])
+            self.call_cmd(
+                [self.hostname, "watchdog=watchdog1", "watchdog=watchdog2"]
+            )
         self.assertEqual(
             (
                 "duplicate option 'watchdog' with different values 'watchdog1' "
                 "and 'watchdog2'"
             ),
-            cm.exception.message
+            cm.exception.message,
         )
 
     def test_with_device(self):
@@ -633,29 +661,45 @@ class NodeAdd(TestCase):
         self.assert_called_with([_node(self.hostname, devices=device_list)])
 
     def test_with_all_options(self):
-        self.call_cmd([
-            self.hostname, "device=d1", "watchdog=w", "device=d2", "addr=a1",
-            "addr=a3", "device=d0", "addr=a2", "addr=a0",
-        ])
-        self.assert_called_with([
-            _node(
+        self.call_cmd(
+            [
                 self.hostname,
-                addrs=["a1", "a3", "a2", "a0"],
-                watchdog="w",
-                devices=["d1", "d2", "d0"],
-            )
-        ])
+                "device=d1",
+                "watchdog=w",
+                "device=d2",
+                "addr=a1",
+                "addr=a3",
+                "device=d0",
+                "addr=a2",
+                "addr=a0",
+            ]
+        )
+        self.assert_called_with(
+            [
+                _node(
+                    self.hostname,
+                    addrs=["a1", "a3", "a2", "a0"],
+                    watchdog="w",
+                    devices=["d1", "d2", "d0"],
+                )
+            ]
+        )
 
     def test_with_unknown_options(self):
         with self.assertRaises(CmdLineInputError) as cm:
-            self.call_cmd([
-                self.hostname, "unknown=opt", "watchdog=w", "not_supported=opt"
-            ])
+            self.call_cmd(
+                [
+                    self.hostname,
+                    "unknown=opt",
+                    "watchdog=w",
+                    "not_supported=opt",
+                ]
+            )
         self.assertEqual(
             "Unknown options 'not_supported', 'unknown' for node '{}'".format(
                 self.hostname
             ),
-            cm.exception.message
+            cm.exception.message,
         )
 
     def assert_modifiers(self, modifiers, cmd_params=None):
@@ -715,9 +759,9 @@ class NodeAdd(TestCase):
                 no_watchdog_validation=True,
                 force_flags=[
                     report_codes.FORCE,
-                    report_codes.SKIP_OFFLINE_NODES
+                    report_codes.SKIP_OFFLINE_NODES,
                 ],
-            )
+            ),
         )
 
 
@@ -727,9 +771,7 @@ class AddLink(TestCase):
         self.lib = mock.Mock(spec_set=["cluster"])
         self.cluster = mock.Mock(spec_set=["add_link"])
         self.lib.cluster = self.cluster
-        self._default_kwargs = dict(
-            force_flags=[],
-        )
+        self._default_kwargs = dict(force_flags=[],)
 
     def assert_called_with(self, link_list, options, **kwargs):
         default_kwargs = dict(self._default_kwargs)
@@ -747,69 +789,47 @@ class AddLink(TestCase):
         self.assertIsNone(cm.exception.message)
 
     def test_addrs(self):
-        self.call_cmd(
-            ["node1=addr1", "node2=addr2"],
-        )
+        self.call_cmd(["node1=addr1", "node2=addr2"],)
         self.assert_called_with(
-            {"node1": "addr1", "node2": "addr2"},
-            {},
+            {"node1": "addr1", "node2": "addr2"}, {},
         )
 
     def test_options(self):
-        self.call_cmd(
-            ["options", "a=b", "c=d"],
-        )
+        self.call_cmd(["options", "a=b", "c=d"],)
         self.assert_called_with(
-            {},
-            {"a": "b", "c": "d"},
+            {}, {"a": "b", "c": "d"},
         )
 
     def test_addrs_and_options(self):
-        self.call_cmd(
-            ["node1=addr1", "node2=addr2", "options", "a=b", "c=d"],
-        )
+        self.call_cmd(["node1=addr1", "node2=addr2", "options", "a=b", "c=d"],)
         self.assert_called_with(
-            {"node1": "addr1", "node2": "addr2"},
-            {"a": "b", "c": "d"},
+            {"node1": "addr1", "node2": "addr2"}, {"a": "b", "c": "d"},
         )
 
     def test_missing_node_name(self):
         with self.assertRaises(CmdLineInputError) as cm:
-            self.call_cmd(
-                ["=addr1", "node2=addr2"],
-            )
-        self.assertEqual(
-            "missing key in '=addr1' option",
-            cm.exception.message
-        )
+            self.call_cmd(["=addr1", "node2=addr2"],)
+        self.assertEqual("missing key in '=addr1' option", cm.exception.message)
 
     def test_missing_node_addr1(self):
         with self.assertRaises(CmdLineInputError) as cm:
-            self.call_cmd(
-                ["node1=addr1", "node2"],
-            )
+            self.call_cmd(["node1=addr1", "node2"],)
         self.assertEqual(
-            "missing value of 'node2' option",
-            cm.exception.message
+            "missing value of 'node2' option", cm.exception.message
         )
 
     def test_missing_node_addr2(self):
-        self.call_cmd(
-            ["node1=addr1", "node2="],
-        )
+        self.call_cmd(["node1=addr1", "node2="],)
         self.assert_called_with(
-            {"node1": "addr1", "node2": ""},
-            {},
+            {"node1": "addr1", "node2": ""}, {},
         )
 
     def test_duplicate_node_name(self):
         with self.assertRaises(CmdLineInputError) as cm:
-            self.call_cmd(
-                ["node1=a1", "node1=a2"],
-            )
+            self.call_cmd(["node1=a1", "node1=a2"],)
         self.assertEqual(
             "duplicate option 'node1' with different values 'a1' and 'a2'",
-            cm.exception.message
+            cm.exception.message,
         )
 
     def test_missing_option_name(self):
@@ -817,28 +837,19 @@ class AddLink(TestCase):
             self.call_cmd(
                 ["node1=addr1", "node2=addr2", "options", "=b", "c=d"],
             )
-        self.assertEqual(
-            "missing key in '=b' option",
-            cm.exception.message
-        )
+        self.assertEqual("missing key in '=b' option", cm.exception.message)
 
     def test_missing_option_value1(self):
         with self.assertRaises(CmdLineInputError) as cm:
             self.call_cmd(
                 ["node1=addr1", "node2=addr2", "options", "a=b", "c"],
             )
-        self.assertEqual(
-            "missing value of 'c' option",
-            cm.exception.message
-        )
+        self.assertEqual("missing value of 'c' option", cm.exception.message)
 
     def test_missing_option_value2(self):
-        self.call_cmd(
-            ["node1=addr1", "node2=addr2", "options", "a=b", "c="],
-        )
+        self.call_cmd(["node1=addr1", "node2=addr2", "options", "a=b", "c="],)
         self.assert_called_with(
-            {"node1": "addr1", "node2": "addr2"},
-            {"a": "b", "c": ""},
+            {"node1": "addr1", "node2": "addr2"}, {"a": "b", "c": ""},
         )
 
     def test_duplicate_options(self):
@@ -848,90 +859,69 @@ class AddLink(TestCase):
             )
         self.assertEqual(
             "duplicate option 'a' with different values 'b' and 'd'",
-            cm.exception.message
+            cm.exception.message,
         )
 
     def test_keyword_twice(self):
         with self.assertRaises(CmdLineInputError) as cm:
-            self.call_cmd(
-                ["node1=addr1", "options", "a=b", "options", "c=d"],
-            )
+            self.call_cmd(["node1=addr1", "options", "a=b", "options", "c=d"],)
         self.assertEqual(
-            "'options' cannot be used more than once",
-            cm.exception.message
+            "'options' cannot be used more than once", cm.exception.message
         )
 
     def test_force(self):
-        self.call_cmd(
-            ["node1=addr1", "node2=addr2"],
-            {"force": True}
-        )
+        self.call_cmd(["node1=addr1", "node2=addr2"], {"force": True})
         self.assert_called_with(
             {"node1": "addr1", "node2": "addr2"},
             {},
-            force_flags=[report_codes.FORCE]
+            force_flags=[report_codes.FORCE],
         )
 
     def test_skip_offline(self):
-        self.call_cmd(
-            ["node1=addr1", "node2=addr2"],
-            {"skip-offline": True}
-        )
+        self.call_cmd(["node1=addr1", "node2=addr2"], {"skip-offline": True})
         self.assert_called_with(
             {"node1": "addr1", "node2": "addr2"},
             {},
-            force_flags=[report_codes.SKIP_OFFLINE_NODES]
+            force_flags=[report_codes.SKIP_OFFLINE_NODES],
         )
 
     def test_request_timeout(self):
-        self.call_cmd(
-            ["node1=addr1", "node2=addr2"],
-            {"request-timeout": "10"}
-        )
+        self.call_cmd(["node1=addr1", "node2=addr2"], {"request-timeout": "10"})
         self.assert_called_with(
-            {"node1": "addr1", "node2": "addr2"},
-            {},
-            force_flags=[]
+            {"node1": "addr1", "node2": "addr2"}, {}, force_flags=[]
         )
 
     def test_corosync_conf(self):
         with self.assertRaises(CmdLineInputError) as cm:
             self.call_cmd(
                 ["node1=addr1", "node2=addr2"],
-                {"corosync_conf": "/tmp/corosync.conf"}
+                {"corosync_conf": "/tmp/corosync.conf"},
             )
         self.assertEqual(
             (
                 "Specified option '--corosync_conf' is not supported "
                 "in this command"
             ),
-            cm.exception.message
+            cm.exception.message,
         )
 
     def test_all_modifiers(self):
         self.call_cmd(
             ["node1=addr1", "node2=addr2"],
-            {
-                "force": True,
-                "request-timeout": "10",
-                "skip-offline": True,
-            }
+            {"force": True, "request-timeout": "10", "skip-offline": True,},
         )
         self.assert_called_with(
             {"node1": "addr1", "node2": "addr2"},
             {},
-            force_flags=[report_codes.FORCE, report_codes.SKIP_OFFLINE_NODES]
+            force_flags=[report_codes.FORCE, report_codes.SKIP_OFFLINE_NODES],
         )
 
     def test_unsupported_modifier(self):
         with self.assertRaises(CmdLineInputError) as cm:
-            self.call_cmd(
-                ["node1=addr1", "node2=addr2"],
-                {"start": True}
-            )
+            self.call_cmd(["node1=addr1", "node2=addr2"], {"start": True})
         self.assertEqual(
             "Specified option '--start' is not supported in this command",
-            cm.exception.message
+            cm.exception.message,
         )
 
 
@@ -940,9 +930,7 @@ class RemoveLink(TestCase):
         self.lib = mock.Mock(spec_set=["cluster"])
         self.cluster = mock.Mock(spec_set=["remove_links"])
         self.lib.cluster = self.cluster
-        self._default_kwargs = dict(
-            force_flags=[],
-        )
+        self._default_kwargs = dict(force_flags=[],)
 
     def assert_called_with(self, link_list, **kwargs):
         default_kwargs = dict(self._default_kwargs)
@@ -970,16 +958,12 @@ class RemoveLink(TestCase):
     def test_skip_offline(self):
         self.call_cmd(["1"], {"skip-offline": True})
         self.assert_called_with(
-            ["1"],
-            force_flags=[report_codes.SKIP_OFFLINE_NODES]
+            ["1"], force_flags=[report_codes.SKIP_OFFLINE_NODES]
         )
 
     def test_request_timeout(self):
         self.call_cmd(["1"], {"request-timeout": "10"})
-        self.assert_called_with(
-            ["1"],
-            force_flags=[]
-        )
+        self.assert_called_with(["1"], force_flags=[])
 
     def test_corosync_conf(self):
         with self.assertRaises(CmdLineInputError) as cm:
@@ -989,20 +973,13 @@ class RemoveLink(TestCase):
                 "Specified option '--corosync_conf' is not supported "
                 "in this command"
             ),
-            cm.exception.message
+            cm.exception.message,
         )
 
     def test_all_modifiers(self):
-        self.call_cmd(
-            ["1"],
-            {
-                "skip-offline": True,
-                "request-timeout": "10",
-            }
-        )
+        self.call_cmd(["1"], {"skip-offline": True, "request-timeout": "10",})
         self.assert_called_with(
-            ["1"],
-            force_flags=[report_codes.SKIP_OFFLINE_NODES]
+            ["1"], force_flags=[report_codes.SKIP_OFFLINE_NODES]
         )
 
     def test_unsupported_modifier(self):
@@ -1010,7 +987,7 @@ class RemoveLink(TestCase):
             self.call_cmd(["1"], {"start": True})
         self.assertEqual(
             "Specified option '--start' is not supported in this command",
-            cm.exception.message
+            cm.exception.message,
         )
 
 
@@ -1020,9 +997,7 @@ class UpdateLink(TestCase):
         self.lib = mock.Mock(spec_set=["cluster"])
         self.cluster = mock.Mock(spec_set=["update_link"])
         self.lib.cluster = self.cluster
-        self._default_kwargs = dict(
-            force_flags=[],
-        )
+        self._default_kwargs = dict(force_flags=[],)
 
     def assert_called_with(self, linknumber, addrs, options, **kwargs):
         default_kwargs = dict(self._default_kwargs)
@@ -1045,23 +1020,15 @@ class UpdateLink(TestCase):
         self.assertIsNone(cm.exception.message)
 
     def test_addrs(self):
-        self.call_cmd(
-            ["0", "node1=addr1", "node2=addr2"],
-        )
+        self.call_cmd(["0", "node1=addr1", "node2=addr2"],)
         self.assert_called_with(
-            "0",
-            {"node1": "addr1", "node2": "addr2"},
-            {},
+            "0", {"node1": "addr1", "node2": "addr2"}, {},
         )
 
     def test_options(self):
-        self.call_cmd(
-            ["0", "options", "a=b", "c=d"],
-        )
+        self.call_cmd(["0", "options", "a=b", "c=d"],)
         self.assert_called_with(
-            "0",
-            {},
-            {"a": "b", "c": "d"},
+            "0", {}, {"a": "b", "c": "d"},
         )
 
     def test_addrs_and_options(self):
@@ -1069,49 +1036,33 @@ class UpdateLink(TestCase):
             ["1", "node1=addr1", "node2=addr2", "options", "a=b", "c=d"],
         )
         self.assert_called_with(
-            "1",
-            {"node1": "addr1", "node2": "addr2"},
-            {"a": "b", "c": "d"},
+            "1", {"node1": "addr1", "node2": "addr2"}, {"a": "b", "c": "d"},
         )
 
     def test_missing_node_name(self):
         with self.assertRaises(CmdLineInputError) as cm:
-            self.call_cmd(
-                ["0", "=addr1", "node2=addr2"],
-            )
-        self.assertEqual(
-            "missing key in '=addr1' option",
-            cm.exception.message
-        )
+            self.call_cmd(["0", "=addr1", "node2=addr2"],)
+        self.assertEqual("missing key in '=addr1' option", cm.exception.message)
 
     def test_missing_node_addr1(self):
         with self.assertRaises(CmdLineInputError) as cm:
-            self.call_cmd(
-                ["0", "node1=addr1", "node2"],
-            )
+            self.call_cmd(["0", "node1=addr1", "node2"],)
         self.assertEqual(
-            "missing value of 'node2' option",
-            cm.exception.message
+            "missing value of 'node2' option", cm.exception.message
         )
 
     def test_missing_node_addr2(self):
-        self.call_cmd(
-            ["0", "node1=addr1", "node2="],
-        )
+        self.call_cmd(["0", "node1=addr1", "node2="],)
         self.assert_called_with(
-            "0",
-            {"node1": "addr1", "node2": ""},
-            {},
+            "0", {"node1": "addr1", "node2": ""}, {},
         )
 
     def test_duplicate_node_name(self):
         with self.assertRaises(CmdLineInputError) as cm:
-            self.call_cmd(
-                ["0", "node1=a1", "node1=a2"],
-            )
+            self.call_cmd(["0", "node1=a1", "node1=a2"],)
         self.assertEqual(
             "duplicate option 'node1' with different values 'a1' and 'a2'",
-            cm.exception.message
+            cm.exception.message,
         )
 
     def test_missing_option_name(self):
@@ -1119,29 +1070,21 @@ class UpdateLink(TestCase):
             self.call_cmd(
                 ["0", "node1=addr1", "node2=addr2", "options", "=b", "c=d"],
             )
-        self.assertEqual(
-            "missing key in '=b' option",
-            cm.exception.message
-        )
+        self.assertEqual("missing key in '=b' option", cm.exception.message)
 
     def test_missing_option_value1(self):
         with self.assertRaises(CmdLineInputError) as cm:
             self.call_cmd(
                 ["0", "node1=addr1", "node2=addr2", "options", "a=b", "c"],
             )
-        self.assertEqual(
-            "missing value of 'c' option",
-            cm.exception.message
-        )
+        self.assertEqual("missing value of 'c' option", cm.exception.message)
 
     def test_missing_option_value2(self):
         self.call_cmd(
             ["0", "node1=addr1", "node2=addr2", "options", "a=b", "c="],
         )
         self.assert_called_with(
-            "0",
-            {"node1": "addr1", "node2": "addr2"},
-            {"a": "b", "c": ""},
+            "0", {"node1": "addr1", "node2": "addr2"}, {"a": "b", "c": ""},
         )
 
     def test_duplicate_options(self):
@@ -1151,7 +1094,7 @@ class UpdateLink(TestCase):
             )
         self.assertEqual(
             "duplicate option 'a' with different values 'b' and 'd'",
-            cm.exception.message
+            cm.exception.message,
         )
 
     def test_keyword_twice(self):
@@ -1160,83 +1103,67 @@ class UpdateLink(TestCase):
                 ["0", "node1=addr1", "options", "a=b", "options", "c=d"],
             )
         self.assertEqual(
-            "'options' cannot be used more than once",
-            cm.exception.message
+            "'options' cannot be used more than once", cm.exception.message
         )
 
     def test_force(self):
-        self.call_cmd(
-            ["1", "node1=addr1", "node2=addr2"],
-            {"force": True}
-        )
+        self.call_cmd(["1", "node1=addr1", "node2=addr2"], {"force": True})
         self.assert_called_with(
             "1",
             {"node1": "addr1", "node2": "addr2"},
             {},
-            force_flags=[report_codes.FORCE]
+            force_flags=[report_codes.FORCE],
         )
 
     def test_skip_offline(self):
         self.call_cmd(
-            ["1", "node1=addr1", "node2=addr2"],
-            {"skip-offline": True}
+            ["1", "node1=addr1", "node2=addr2"], {"skip-offline": True}
         )
         self.assert_called_with(
             "1",
             {"node1": "addr1", "node2": "addr2"},
             {},
-            force_flags=[report_codes.SKIP_OFFLINE_NODES]
+            force_flags=[report_codes.SKIP_OFFLINE_NODES],
         )
 
     def test_request_timeout(self):
         self.call_cmd(
-            ["2", "node1=addr1", "node2=addr2"],
-            {"request-timeout": "10"}
+            ["2", "node1=addr1", "node2=addr2"], {"request-timeout": "10"}
         )
         self.assert_called_with(
-            "2",
-            {"node1": "addr1", "node2": "addr2"},
-            {},
-            force_flags=[]
+            "2", {"node1": "addr1", "node2": "addr2"}, {}, force_flags=[]
         )
 
     def test_corosync_conf(self):
         with self.assertRaises(CmdLineInputError) as cm:
             self.call_cmd(
                 ["1", "node1=addr1", "node2=addr2"],
-                {"corosync_conf": "/tmp/corosync.conf"}
+                {"corosync_conf": "/tmp/corosync.conf"},
             )
         self.assertEqual(
             (
                 "Specified option '--corosync_conf' is not supported "
                 "in this command"
             ),
-            cm.exception.message
+            cm.exception.message,
         )
 
     def test_all_modifiers(self):
         self.call_cmd(
             ["0", "node1=addr1", "node2=addr2"],
-            {
-                "force": True,
-                "request-timeout": "10",
-                "skip-offline": True,
-            }
+            {"force": True, "request-timeout": "10", "skip-offline": True,},
         )
         self.assert_called_with(
             "0",
             {"node1": "addr1", "node2": "addr2"},
             {},
-            force_flags=[report_codes.FORCE, report_codes.SKIP_OFFLINE_NODES]
+            force_flags=[report_codes.FORCE, report_codes.SKIP_OFFLINE_NODES],
         )
 
     def test_unsupported_modifier(self):
         with self.assertRaises(CmdLineInputError) as cm:
-            self.call_cmd(
-                ["0", "node1=addr1", "node2=addr2"],
-                {"start": True}
-            )
+            self.call_cmd(["0", "node1=addr1", "node2=addr2"], {"start": True})
         self.assertEqual(
             "Specified option '--start' is not supported in this command",
-            cm.exception.message
+            cm.exception.message,
         )

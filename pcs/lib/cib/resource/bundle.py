@@ -1,9 +1,7 @@
 from lxml import etree
 
 from pcs.common import reports
-from pcs.common.reports import (
-    codes as report_codes,
-)
+from pcs.common.reports import codes as report_codes
 from pcs.common.reports.item import ReportItem
 from pcs.lib import validate
 from pcs.lib.cib.nvpair import (
@@ -26,45 +24,43 @@ TAG = "bundle"
 
 GENERIC_CONTAINER_TYPES = {"docker", "podman", "rkt"}
 
-GENERIC_CONTAINER_OPTIONS = frozenset((
-    "image",
-    "masters",
-    "network",
-    "options",
-    "promoted-max",
-    "run-command",
-    "replicas",
-    "replicas-per-host",
-))
+GENERIC_CONTAINER_OPTIONS = frozenset(
+    (
+        "image",
+        "masters",
+        "network",
+        "options",
+        "promoted-max",
+        "run-command",
+        "replicas",
+        "replicas-per-host",
+    )
+)
 
-NETWORK_OPTIONS = frozenset((
-    "control-port",
-    "host-interface",
-    "host-netmask",
-    "ip-range-start",
-))
+NETWORK_OPTIONS = frozenset(
+    ("control-port", "host-interface", "host-netmask", "ip-range-start",)
+)
 
-PORT_MAP_OPTIONS = frozenset((
-    "id",
-    "port",
-    "internal-port",
-    "range",
-))
+PORT_MAP_OPTIONS = frozenset(("id", "port", "internal-port", "range",))
 
-STORAGE_MAP_OPTIONS = frozenset((
-    "id",
-    "options",
-    "source-dir",
-    "source-dir-root",
-    "target-dir",
-))
+STORAGE_MAP_OPTIONS = frozenset(
+    ("id", "options", "source-dir", "source-dir-root", "target-dir",)
+)
+
 
 def is_bundle(resource_el):
     return resource_el.tag == TAG
 
+
 def validate_new(
-    id_provider, bundle_id, container_type, container_options, network_options,
-    port_map, storage_map, force_options=False
+    id_provider,
+    bundle_id,
+    container_type,
+    container_options,
+    network_options,
+    port_map,
+    storage_map,
+    force_options=False,
 ):
     """
     Validate new bundle parameters, return list of report items
@@ -83,21 +79,25 @@ def validate_new(
             "id",
             option_name_for_report="bundle name",
             # with id_provider it validates that the id is available as well
-            id_provider=id_provider
+            id_provider=id_provider,
         ).validate({"id": bundle_id})
-        +
-        _validate_container(container_type, container_options, force_options)
-        +
-        _validate_network_options_new(network_options, force_options)
-        +
-        _validate_port_map_list(port_map, id_provider, force_options)
-        +
-        _validate_storage_map_list(storage_map, id_provider, force_options)
+        + _validate_container(container_type, container_options, force_options)
+        + _validate_network_options_new(network_options, force_options)
+        + _validate_port_map_list(port_map, id_provider, force_options)
+        + _validate_storage_map_list(storage_map, id_provider, force_options)
     )
 
+
 def append_new(
-    parent_element, id_provider, bundle_id, container_type, container_options,
-    network_options, port_map, storage_map, meta_attributes
+    parent_element,
+    id_provider,
+    bundle_id,
+    container_type,
+    container_options,
+    network_options,
+    port_map,
+    storage_map,
+    meta_attributes,
 ):
     # pylint: disable=too-many-arguments
     """
@@ -117,11 +117,7 @@ def append_new(
     _append_container(bundle_element, container_type, container_options)
     if network_options or port_map:
         _append_network(
-            bundle_element,
-            id_provider,
-            bundle_id,
-            network_options,
-            port_map,
+            bundle_element, id_provider, bundle_id, network_options, port_map,
         )
     if storage_map:
         _append_storage(bundle_element, id_provider, bundle_id, storage_map)
@@ -129,9 +125,15 @@ def append_new(
         append_new_meta_attributes(bundle_element, meta_attributes, id_provider)
     return bundle_element
 
+
 def validate_reset(
-    id_provider, bundle_el, container_options, network_options, port_map,
-    storage_map, force_options=False
+    id_provider,
+    bundle_el,
+    container_options,
+    network_options,
+    port_map,
+    storage_map,
+    force_options=False,
 ):
     """
     Validate bundle parameters, return list of report items
@@ -146,13 +148,11 @@ def validate_reset(
     """
     return (
         _validate_container_reset(bundle_el, container_options, force_options)
-        +
-        _validate_network_options_new(network_options, force_options)
-        +
-        _validate_port_map_list(port_map, id_provider, force_options)
-        +
-        _validate_storage_map_list(storage_map, id_provider, force_options)
+        + _validate_network_options_new(network_options, force_options)
+        + _validate_port_map_list(port_map, id_provider, force_options)
+        + _validate_storage_map_list(storage_map, id_provider, force_options)
     )
+
 
 def validate_reset_to_minimal(bundle_element):
     """
@@ -163,6 +163,7 @@ def validate_reset_to_minimal(bundle_element):
     if not _is_supported_container(_get_container_element(bundle_element)):
         return [_get_report_unsupported_container(bundle_element)]
     return []
+
 
 def reset_to_minimal(bundle_element):
     """
@@ -189,18 +190,25 @@ def reset_to_minimal(bundle_element):
             # be set.
             reset_element(child, keep_attrs=["image"])
 
+
 def _get_report_unsupported_container(bundle_el):
     return ReportItem.error(
         reports.messages.ResourceBundleUnsupportedContainerType(
-            bundle_el.get("id"),
-            sorted(GENERIC_CONTAINER_TYPES),
+            bundle_el.get("id"), sorted(GENERIC_CONTAINER_TYPES),
         )
     )
 
+
 def validate_update(
-    id_provider, bundle_el, container_options, network_options,
-    port_map_add, port_map_remove, storage_map_add, storage_map_remove,
-    force_options=False
+    id_provider,
+    bundle_el,
+    container_options,
+    network_options,
+    port_map_add,
+    port_map_remove,
+    storage_map_add,
+    storage_map_remove,
+    force_options=False,
 ):
     # pylint: disable=too-many-arguments
     """
@@ -221,26 +229,30 @@ def validate_update(
     # not sooner.
     return (
         _validate_container_update(bundle_el, container_options, force_options)
-        +
-        _validate_network_update(bundle_el, network_options, force_options)
-        +
-        _validate_port_map_list(port_map_add, id_provider, force_options)
-        +
-        _validate_storage_map_list(storage_map_add, id_provider, force_options)
-        +
-        _validate_map_ids_exist(
+        + _validate_network_update(bundle_el, network_options, force_options)
+        + _validate_port_map_list(port_map_add, id_provider, force_options)
+        + _validate_storage_map_list(
+            storage_map_add, id_provider, force_options
+        )
+        + _validate_map_ids_exist(
             bundle_el, "port-mapping", "port-map", port_map_remove
         )
-        +
-        _validate_map_ids_exist(
+        + _validate_map_ids_exist(
             bundle_el, "storage-mapping", "storage-map", storage_map_remove
         )
     )
 
+
 def update(
-    id_provider, bundle_el, container_options, network_options,
-    port_map_add, port_map_remove, storage_map_add, storage_map_remove,
-    meta_attributes
+    id_provider,
+    bundle_el,
+    container_options,
+    network_options,
+    port_map_add,
+    port_map_remove,
+    storage_map_add,
+    storage_map_remove,
+    meta_attributes,
 ):
     # pylint: disable=too-many-arguments, too-many-locals
     """
@@ -265,14 +277,11 @@ def update(
 
     bundle_id = bundle_el.get("id")
     update_attributes_remove_empty(
-        _get_container_element(bundle_el),
-        container_options
+        _get_container_element(bundle_el), container_options
     )
 
     network_element = get_sub_element(
-        bundle_el,
-        "network",
-        append_if_missing=False
+        bundle_el, "network", append_if_missing=False
     )
     if network_options:
         update_attributes_remove_empty(network_element, network_options)
@@ -283,8 +292,7 @@ def update(
     # possibly the old mapping would be removed)
     if port_map_remove:
         _remove_map_elements(
-            network_element.findall("port-mapping"),
-            port_map_remove
+            network_element.findall("port-mapping"), port_map_remove
         )
     if port_map_add:
         for port_map_options in port_map_add:
@@ -294,15 +302,12 @@ def update(
     append_when_useful(bundle_el, network_element)
 
     storage_element = get_sub_element(
-        bundle_el,
-        "storage",
-        append_if_missing=False
+        bundle_el, "storage", append_if_missing=False
     )
     # See the comment above about removing port maps prior to adding new ones.
     if storage_map_remove:
         _remove_map_elements(
-            storage_element.findall("storage-mapping"),
-            storage_map_remove
+            storage_element.findall("storage-mapping"), storage_map_remove
         )
     if storage_map_add:
         for storage_map_options in storage_map_add:
@@ -312,11 +317,8 @@ def update(
     append_when_useful(bundle_el, storage_element)
 
     if meta_attributes:
-        arrange_first_meta_attributes(
-            bundle_el,
-            meta_attributes,
-            id_provider
-        )
+        arrange_first_meta_attributes(bundle_el, meta_attributes, id_provider)
+
 
 def is_pcmk_remote_accessible(bundle_element):
     """
@@ -335,6 +337,7 @@ def is_pcmk_remote_accessible(bundle_element):
             return True
     return False
 
+
 def add_resource(bundle_element, primitive_element):
     """
     Add an existing resource to an existing bundle
@@ -349,12 +352,12 @@ def add_resource(bundle_element, primitive_element):
         raise LibraryError(
             ReportItem.error(
                 reports.messages.ResourceBundleAlreadyContainsAResource(
-                    bundle_element.get("id"),
-                    inner_primitive.get("id"),
+                    bundle_element.get("id"), inner_primitive.get("id"),
                 )
             )
         )
     bundle_element.append(primitive_element)
+
 
 def get_inner_resource(bundle_el):
     resources = bundle_el.xpath("./primitive")
@@ -362,21 +365,19 @@ def get_inner_resource(bundle_el):
         return resources[0]
     return None
 
+
 def _is_supported_container(container_el):
     return (
-        container_el is not None
-        and
-        container_el.tag in GENERIC_CONTAINER_TYPES
+        container_el is not None and container_el.tag in GENERIC_CONTAINER_TYPES
     )
+
 
 def _validate_container(container_type, container_options, force_options=False):
     if container_type not in GENERIC_CONTAINER_TYPES:
         return [
             ReportItem.error(
                 reports.messages.InvalidOptionValue(
-                    "container type",
-                    container_type,
-                    GENERIC_CONTAINER_TYPES,
+                    "container type", container_type, GENERIC_CONTAINER_TYPES,
                 )
             )
         ]
@@ -388,15 +389,14 @@ def _validate_generic_container_options(container_options, force_options=False):
         validate.NamesIn(
             GENERIC_CONTAINER_OPTIONS,
             option_type="container",
-            **validate.set_warning(report_codes.FORCE_OPTIONS, force_options)
+            **validate.set_warning(report_codes.FORCE_OPTIONS, force_options),
         ),
         validate.IsRequiredAll(["image"], option_type="container"),
         validate.ValueNotEmpty("image", "image name"),
         validate.ValueNonnegativeInteger("masters"),
         validate.ValueNonnegativeInteger("promoted-max"),
         validate.MutuallyExclusive(
-            ["masters", "promoted-max"],
-            option_type="container",
+            ["masters", "promoted-max"], option_type="container",
         ),
         validate.ValuePositiveInteger("replicas"),
         validate.ValuePositiveInteger("replicas-per-host"),
@@ -414,20 +414,19 @@ def _validate_generic_container_options(container_options, force_options=False):
 
     return (
         validate.ValidatorAll(validators).validate(container_options)
-        +
-        deprecation_reports
+        + deprecation_reports
     )
+
 
 def _validate_container_reset(bundle_el, container_options, force_options):
     # Unlike in the case of update, in reset empty options are not necessary
     # valid - user MUST set everything (including required options e.g. image).
-    if (
-        container_options
-        and
-        not _is_supported_container(_get_container_element(bundle_el))
+    if container_options and not _is_supported_container(
+        _get_container_element(bundle_el)
     ):
         return [_get_report_unsupported_container(bundle_el)]
     return _validate_generic_container_options(container_options, force_options)
+
 
 def _validate_container_update(bundle_el, options, force_options):
     # Validate container options only if they are being updated. Empty options
@@ -441,6 +440,7 @@ def _validate_container_update(bundle_el, options, force_options):
     return _validate_generic_container_options_update(
         container_el, options, force_options
     )
+
 
 def _validate_generic_container_options_update(
     container_el, options, force_options
@@ -458,10 +458,10 @@ def _validate_generic_container_options_update(
             # allow to remove options even if they are not allowed
             GENERIC_CONTAINER_OPTIONS | _options_to_remove(options),
             option_type="container",
-            **validate.set_warning(report_codes.FORCE_OPTIONS, force_options)
+            **validate.set_warning(report_codes.FORCE_OPTIONS, force_options),
         ),
         # image is a mandatory attribute and cannot be removed
-        validate.ValueNotEmpty("image", "image name")
+        validate.ValueNotEmpty("image", "image name"),
     ] + validators_optional_options
 
     # CIB does not allow both to be set. Deleting both is not a problem,
@@ -469,13 +469,11 @@ def _validate_generic_container_options_update(
     # checked bellow.
     if not (
         options.get("masters", "") == ""
-        or
-        options.get("promoted-max", "") == ""
+        or options.get("promoted-max", "") == ""
     ):
         validators.append(
             validate.MutuallyExclusive(
-                ["masters", "promoted-max"],
-                option_type="container",
+                ["masters", "promoted-max"], option_type="container",
             )
         )
 
@@ -496,8 +494,8 @@ def _validate_generic_container_options_update(
     # only allows one of them to be set.
     if (
         options.get("masters")
-        and
-        container_el.get("promoted-max") and options.get("promoted-max") != ""
+        and container_el.get("promoted-max")
+        and options.get("promoted-max") != ""
     ):
         deprecation_reports.append(
             ReportItem.error(
@@ -508,8 +506,8 @@ def _validate_generic_container_options_update(
         )
     if (
         options.get("promoted-max")
-        and
-        container_el.get("masters") and options.get("masters") != ""
+        and container_el.get("masters")
+        and options.get("masters") != ""
     ):
         deprecation_reports.append(
             ReportItem.error(
@@ -521,9 +519,9 @@ def _validate_generic_container_options_update(
 
     return (
         validate.ValidatorAll(validators).validate(options)
-        +
-        deprecation_reports
+        + deprecation_reports
     )
+
 
 def _validate_network_options_new(options, force_options):
     kwargs = validate.set_warning(report_codes.FORCE_OPTIONS, force_options)
@@ -536,6 +534,7 @@ def _validate_network_options_new(options, force_options):
         ValueHostNetmask("host-netmask", **kwargs),
     ]
     return validate.ValidatorAll(validators).validate(options)
+
 
 def _is_pcmk_remote_acccessible_after_update(network_el, options):
     port_name = "control-port"
@@ -555,6 +554,7 @@ def _is_pcmk_remote_acccessible_after_update(network_el, options):
 
     return not (case1 or case2 or case3)
 
+
 def _validate_network_update(bundle_el, options, force_options):
     network_el = bundle_el.find("network")
     if network_el is None:
@@ -563,6 +563,7 @@ def _validate_network_update(bundle_el, options, force_options):
         bundle_el, network_el, options, force_options
     )
 
+
 def _validate_network_options_update(
     bundle_el, network_el, options, force_options
 ):
@@ -570,18 +571,15 @@ def _validate_network_options_update(
     inner_primitive = get_inner_resource(bundle_el)
     if (
         inner_primitive is not None
-        and
-        not _is_pcmk_remote_acccessible_after_update(network_el, options)
+        and not _is_pcmk_remote_acccessible_after_update(network_el, options)
     ):
         report_list.append(
             ReportItem(
                 severity=reports.item.get_severity(
-                    report_codes.FORCE_OPTIONS,
-                    force_options,
+                    report_codes.FORCE_OPTIONS, force_options,
                 ),
                 message=reports.messages.ResourceInBundleNotAccessible(
-                    bundle_el.get("id"),
-                    inner_primitive.get("id"),
+                    bundle_el.get("id"), inner_primitive.get("id"),
                 ),
             )
         )
@@ -601,15 +599,12 @@ def _validate_network_options_update(
             # allow to remove options even if they are not allowed
             NETWORK_OPTIONS | _options_to_remove(options),
             option_type="network",
-            **kwargs
+            **kwargs,
         )
     ] + validators_optional_options
 
-    return (
-        report_list
-        +
-        validate.ValidatorAll(validators).validate(options)
-    )
+    return report_list + validate.ValidatorAll(validators).validate(options)
+
 
 def _validate_port_map_list(options_list, id_provider, force_options):
     kwargs = validate.set_warning(report_codes.FORCE_OPTIONS, force_options)
@@ -620,8 +615,10 @@ def _validate_port_map_list(options_list, id_provider, force_options):
             "id", option_name_for_report="port-map id", id_provider=id_provider
         ),
         validate.DependsOnOption(
-            ["internal-port"], "port",
-            option_type=option_type, prerequisite_type=option_type,
+            ["internal-port"],
+            "port",
+            option_type=option_type,
+            prerequisite_type=option_type,
         ),
         validate.IsRequiredSome(["port", "range"], option_type=option_type),
         validate.MutuallyExclusive(["port", "range"], option_type=option_type),
@@ -636,6 +633,7 @@ def _validate_port_map_list(options_list, id_provider, force_options):
         report_list.extend(validator_all.validate(options))
     return report_list
 
+
 def _validate_storage_map_list(options_list, id_provider, force_options):
     kwargs = validate.set_warning(report_codes.FORCE_OPTIONS, force_options)
     option_type = "storage-map"
@@ -646,15 +644,13 @@ def _validate_storage_map_list(options_list, id_provider, force_options):
         validate.ValueId(
             "id",
             option_name_for_report="storage-map id",
-            id_provider=id_provider
+            id_provider=id_provider,
         ),
         validate.IsRequiredSome(
-            ["source-dir", "source-dir-root"],
-            option_type=option_type,
+            ["source-dir", "source-dir-root"], option_type=option_type,
         ),
         validate.MutuallyExclusive(
-            ["source-dir", "source-dir-root"],
-            option_type=option_type,
+            ["source-dir", "source-dir-root"], option_type=option_type,
         ),
         validate.IsRequiredAll(["target-dir"], option_type=option_type),
     ]
@@ -664,6 +660,7 @@ def _validate_storage_map_list(options_list, id_provider, force_options):
     for options in options_list:
         report_list.extend(validator_all.validate(options))
     return report_list
+
 
 def _validate_map_ids_exist(bundle_el, map_type, map_label, id_list):
     report_list = []
@@ -675,6 +672,7 @@ def _validate_map_ids_exist(bundle_el, map_type, map_label, id_list):
             report_list.extend(searcher.get_errors())
     return report_list
 
+
 class ValueHostNetmask(validate.ValuePredicateBase):
     def _is_valid(self, value):
         return validate.is_integer(value, 1, 32)
@@ -682,13 +680,14 @@ class ValueHostNetmask(validate.ValuePredicateBase):
     def _get_allowed_values(self):
         return "a number of bits of the mask (1..32)"
 
+
 def _append_container(bundle_element, container_type, container_options):
     # Do not add options with empty values. When updating, an empty value means
     # remove the option.
     update_attributes_remove_empty(
-        etree.SubElement(bundle_element, container_type),
-        container_options,
+        etree.SubElement(bundle_element, container_type), container_options,
     )
+
 
 def _append_network(
     bundle_element, id_provider, id_base, network_options, port_map
@@ -701,6 +700,7 @@ def _append_network(
         _append_port_map(
             network_element, id_provider, id_base, port_map_options
         )
+
 
 def _append_port_map(parent_element, id_provider, id_base, port_map_options):
     if "id" not in port_map_options:
@@ -719,15 +719,14 @@ def _append_port_map(parent_element, id_provider, id_base, port_map_options):
     update_attributes_remove_empty(port_map_element, port_map_options)
     return port_map_element
 
+
 def _append_storage(bundle_element, id_provider, id_base, storage_map):
     storage_element = etree.SubElement(bundle_element, "storage")
     for storage_map_options in storage_map:
         _append_storage_map(
-            storage_element,
-            id_provider,
-            id_base,
-            storage_map_options,
+            storage_element, id_provider, id_base, storage_map_options,
         )
+
 
 def _append_storage_map(
     parent_element, id_provider, id_base, storage_map_options
@@ -743,6 +742,7 @@ def _append_storage_map(
     update_attributes_remove_empty(storage_map_element, storage_map_options)
     return storage_map_element
 
+
 def _get_container_element(bundle_el):
     container_el = None
     for container_type in GENERIC_CONTAINER_TYPES:
@@ -751,13 +751,16 @@ def _get_container_element(bundle_el):
             return container_el
     return None
 
+
 def _remove_map_elements(element_list, id_to_remove_list):
     for el in element_list:
         if el.get("id", "") in id_to_remove_list:
             el.getparent().remove(el)
 
+
 def _options_to_remove(options):
     return {
-        name for name, value in options.items()
+        name
+        for name, value in options.items()
         if validate.is_empty_string(value)
     }

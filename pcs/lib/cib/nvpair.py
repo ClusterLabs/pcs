@@ -2,13 +2,11 @@ from functools import partial
 from lxml import etree
 
 from pcs.lib.cib.tools import create_subelement_id
-from pcs.lib.xml_tools import (
-    get_sub_element,
-    append_when_useful
-)
+from pcs.lib.xml_tools import get_sub_element, append_when_useful
 
 META_ATTRIBUTES_TAG = "meta_attributes"
 INSTANCE_ATTRIBUTES_TAG = "instance_attributes"
+
 
 def _append_new_nvpair(nvset_element, name, value, id_provider):
     """
@@ -24,8 +22,9 @@ def _append_new_nvpair(nvset_element, name, value, id_provider):
         "nvpair",
         id=create_subelement_id(nvset_element, name, id_provider),
         name=name,
-        value=value
+        value=value,
     )
+
 
 def set_nvpair_in_nvset(nvset_element, name, value, id_provider):
     """
@@ -46,6 +45,7 @@ def set_nvpair_in_nvset(nvset_element, name, value, id_provider):
             nvpair.set("value", value)
         else:
             nvset_element.remove(nvpair)
+
 
 def arrange_first_nvset(
     tag_name, context_element, nvpair_dict, id_provider, new_id=None
@@ -71,18 +71,20 @@ def arrange_first_nvset(
     nvset_element = get_sub_element(
         context_element,
         tag_name,
-        new_id=(new_id if new_id else create_subelement_id(
-            context_element, tag_name, id_provider
-        )),
-        append_if_missing=False
+        new_id=(
+            new_id
+            if new_id
+            else create_subelement_id(context_element, tag_name, id_provider)
+        ),
+        append_if_missing=False,
     )
     update_nvset(nvset_element, nvpair_dict, id_provider)
     append_when_useful(context_element, nvset_element, index=0)
 
+
 def append_new_nvset(
-        tag_name, context_element, nvpair_dict, id_provider,
-        enforce_append=False
-    ):
+    tag_name, context_element, nvpair_dict, id_provider, enforce_append=False
+):
     """
     Append new nvset_element comprising nvpairs children (corresponding
     nvpair_dict) to the context_element
@@ -95,9 +97,7 @@ def append_new_nvset(
     """
     nvset_element = etree.Element(
         tag_name,
-        {
-            "id": create_subelement_id(context_element, tag_name, id_provider)
-        }
+        {"id": create_subelement_id(context_element, tag_name, id_provider)},
     )
     for name, value in sorted(nvpair_dict.items()):
         _append_new_nvpair(nvset_element, name, value, id_provider)
@@ -106,15 +106,13 @@ def append_new_nvset(
     else:
         append_when_useful(context_element, nvset_element)
 
+
 append_new_instance_attributes = partial(
-    append_new_nvset,
-    INSTANCE_ATTRIBUTES_TAG,
+    append_new_nvset, INSTANCE_ATTRIBUTES_TAG,
 )
 
-append_new_meta_attributes = partial(
-    append_new_nvset,
-    META_ATTRIBUTES_TAG,
-)
+append_new_meta_attributes = partial(append_new_nvset, META_ATTRIBUTES_TAG,)
+
 
 def update_nvset(nvset_element, nvpair_dict, id_provider):
     """
@@ -133,6 +131,7 @@ def update_nvset(nvset_element, nvpair_dict, id_provider):
     for name, value in sorted(nvpair_dict.items()):
         set_nvpair_in_nvset(nvset_element, name, value, id_provider)
 
+
 def get_nvset(nvset):
     """
     Returns nvset element as list of nvpairs with format:
@@ -149,12 +148,15 @@ def get_nvset(nvset):
     """
     nvpair_list = []
     for nvpair in nvset.findall("./nvpair"):
-        nvpair_list.append({
-            "id": nvpair.get("id"),
-            "name": nvpair.get("name"),
-            "value": nvpair.get("value", "")
-        })
+        nvpair_list.append(
+            {
+                "id": nvpair.get("id"),
+                "name": nvpair.get("name"),
+                "value": nvpair.get("value", ""),
+            }
+        )
     return nvpair_list
+
 
 def get_value(tag_name, context_element, name, default=None):
     """
@@ -167,7 +169,8 @@ def get_value(tag_name, context_element, name, default=None):
     etree.Element context_element is searched element
     string name specify nvpair name
     """
-    value_list = context_element.xpath("""
+    value_list = context_element.xpath(
+        """
         ./{0}
         /nvpair[
             @name="{1}"
@@ -175,8 +178,12 @@ def get_value(tag_name, context_element, name, default=None):
             string-length(@value) > 0
         ]
         /@value
-    """.format(tag_name, name))
+    """.format(
+            tag_name, name
+        )
+    )
     return value_list[0] if value_list else default
+
 
 def get_nvset_as_dict(tag_name, context_element):
     """
@@ -193,6 +200,7 @@ def get_nvset_as_dict(tag_name, context_element):
         )
     }
 
+
 def has_meta_attribute(resource_el, name):
     """
     Return if the element contains meta attribute 'name'
@@ -200,18 +208,22 @@ def has_meta_attribute(resource_el, name):
     etree.Element resource_el is researched element
     string name specifies attribute
     """
-    return len(resource_el.xpath(
-        './{0}/nvpair[@name="{1}"]'.format(META_ATTRIBUTES_TAG, name)
-    )) > 0
+    return (
+        len(
+            resource_el.xpath(
+                './{0}/nvpair[@name="{1}"]'.format(META_ATTRIBUTES_TAG, name)
+            )
+        )
+        > 0
+    )
+
 
 arrange_first_meta_attributes = partial(
-    arrange_first_nvset,
-    META_ATTRIBUTES_TAG,
+    arrange_first_nvset, META_ATTRIBUTES_TAG,
 )
 
 arrange_first_instance_attributes = partial(
-    arrange_first_nvset,
-    INSTANCE_ATTRIBUTES_TAG,
+    arrange_first_nvset, INSTANCE_ATTRIBUTES_TAG,
 )
 
 get_meta_attribute_value = partial(get_value, META_ATTRIBUTES_TAG)

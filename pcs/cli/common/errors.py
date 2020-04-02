@@ -1,6 +1,4 @@
-from typing import (
-    Optional,
-)
+from typing import Optional
 
 ERR_NODE_LIST_AND_ALL_MUTUALLY_EXCLUSIVE = (
     "Cannot specify both --all and a list of nodes."
@@ -10,19 +8,21 @@ HINT_SYNTAX_CHANGE = (
     "Syntax has changed from previous version. " + SEE_MAN_CHANGES
 )
 
+
 def msg_command_replaced(*new_commands):
     new = "', '".join(new_commands)
-    return (
-        f"This command has been replaced with '{new}'. {SEE_MAN_CHANGES}"
-    )
+    return f"This command has been replaced with '{new}'. {SEE_MAN_CHANGES}"
+
 
 def raise_command_replaced(*new_commands):
     raise CmdLineInputError(message=msg_command_replaced(*new_commands))
+
 
 class CmdLineInputError(Exception):
     """
     Exception express that user entered incorrect commad in command line.
     """
+
     def __init__(
         self,
         message: Optional[str] = None,

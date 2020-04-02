@@ -19,19 +19,20 @@ config_cmd = create_router(
                 "diff": config.config_checkpoint_diff,
             },
             ["config", "checkpoint"],
-            default_cmd="list"
+            default_cmd="list",
         ),
         "import-cman": config.config_import_cman,
         "export": create_router(
             {
                 "pcs-commands": config.config_export_pcs_commands,
-                "pcs-commands-verbose": lambda lib, argv, modifiers:
+                "pcs-commands-verbose": lambda lib, argv, modifiers: (
                     config.config_export_pcs_commands(
                         lib, argv, modifiers, verbose=True
                     )
+                ),
             },
-            ["config", "export"]
-        )
+            ["config", "export"],
+        ),
     },
     ["config"],
     default_cmd="show",

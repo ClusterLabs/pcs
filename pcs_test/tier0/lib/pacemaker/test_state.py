@@ -20,26 +20,28 @@ from pcs.lib.pacemaker.state import (
 
 # pylint: disable=no-self-use, protected-access
 
+
 class AttrsTest(TestCase):
     def test_get_declared_attr(self):
-        attrs = _Attrs('test', {'node-name': 'node1'}, {'name': 'node-name'})
-        self.assertEqual('node1', attrs.name)
+        attrs = _Attrs("test", {"node-name": "node1"}, {"name": "node-name"})
+        self.assertEqual("node1", attrs.name)
 
     def test_raises_on_undeclared_attribute(self):
-        attrs = _Attrs('test', {'node-name': 'node1'}, {})
+        attrs = _Attrs("test", {"node-name": "node1"}, {})
         self.assertRaises(AttributeError, lambda: attrs.name)
 
     def test_raises_on_missing_required_attribute(self):
-        attrs = _Attrs('test', {}, {'name': 'node-name'})
+        attrs = _Attrs("test", {}, {"name": "node-name"})
         self.assertRaises(AttributeError, lambda: attrs.name)
 
     def test_attr_transformation_success(self):
-        attrs = _Attrs('test', {'number': '7'}, {'count': ('number', int)})
+        attrs = _Attrs("test", {"number": "7"}, {"count": ("number", int)})
         self.assertEqual(7, attrs.count)
 
     def test_attr_transformation_fail(self):
-        attrs = _Attrs('test', {'number': 'abc'}, {'count': ('number', int)})
+        attrs = _Attrs("test", {"number": "abc"}, {"count": ("number", int)})
         self.assertRaises(ValueError, lambda: attrs.count)
+
 
 class ChildrenTest(TestCase):
     def setUp(self):
@@ -48,29 +50,30 @@ class ChildrenTest(TestCase):
         )
 
     def wrap(self, element):
-        return '{0}.{1}'.format(element.tag, element.attrib['name'])
+        return "{0}.{1}".format(element.tag, element.attrib["name"])
 
     def test_get_declared_section(self):
         children = _Children(
-            'test', self.dom, {}, {'some_section': ('some', self.wrap)}
+            "test", self.dom, {}, {"some_section": ("some", self.wrap)}
         )
-        self.assertEqual('some.0', children.some_section)
+        self.assertEqual("some.0", children.some_section)
 
     def test_get_declared_children(self):
-        children = _Children('test', self.dom, {'anys': ('any', self.wrap)}, {})
-        self.assertEqual(['any.1', 'any.2'], children.anys)
+        children = _Children("test", self.dom, {"anys": ("any", self.wrap)}, {})
+        self.assertEqual(["any.1", "any.2"], children.anys)
 
     def test_raises_on_undeclared_children(self):
-        children = _Children('test', self.dom, {}, {})
+        children = _Children("test", self.dom, {}, {})
         self.assertRaises(AttributeError, lambda: children.some_section)
 
 
 class TestBase(TestCase):
     def setUp(self):
         self.create_covered_status = get_xml_manipulation_creator_from_file(
-            rc('crm_mon.minimal.xml')
+            rc("crm_mon.minimal.xml")
         )
         self.covered_status = self.create_covered_status()
+
 
 class ClusterStatusTest(TestBase):
     def test_minimal_crm_mon_is_valid(self):
@@ -78,27 +81,26 @@ class ClusterStatusTest(TestBase):
 
     def test_refuse_invalid_xml(self):
         assert_raise_library_error(
-            lambda: ClusterState('invalid xml'),
-            (severities.ERROR, report_codes.BAD_CLUSTER_STATE_FORMAT, {})
+            lambda: ClusterState("invalid xml"),
+            (severities.ERROR, report_codes.BAD_CLUSTER_STATE_FORMAT, {}),
         )
 
     def test_refuse_invalid_document(self):
         self.covered_status.append_to_first_tag_name(
-            'nodes',
-            '<node without="required attributes" />'
+            "nodes", '<node without="required attributes" />'
         )
 
         assert_raise_library_error(
             lambda: ClusterState(str(self.covered_status)),
-            (severities.ERROR, report_codes.BAD_CLUSTER_STATE_FORMAT, {})
+            (severities.ERROR, report_codes.BAD_CLUSTER_STATE_FORMAT, {}),
         )
 
 
 class WorkWithClusterStatusNodesTest(TestBase):
     def fixture_node_string(self, **kwargs):
-        attrs = dict(name='name', id='id', type='member')
+        attrs = dict(name="name", id="id", type="member")
         attrs.update(kwargs)
-        return '''<node
+        return """<node
             name="{name}"
             id="{id}"
             online="true"
@@ -112,34 +114,36 @@ class WorkWithClusterStatusNodesTest(TestBase):
             is_dc="false"
             resources_running="0"
             type="{type}"
-        />'''.format(**attrs)
+        />""".format(
+            **attrs
+        )
 
     def test_can_get_node_names(self):
         self.covered_status.append_to_first_tag_name(
-            'nodes',
-            self.fixture_node_string(name='node1', id='1'),
-            self.fixture_node_string(name='node2', id='2'),
+            "nodes",
+            self.fixture_node_string(name="node1", id="1"),
+            self.fixture_node_string(name="node2", id="2"),
         )
         xml = str(self.covered_status)
         self.assertEqual(
-            ['node1', 'node2'],
-            [node.attrs.name for node in ClusterState(xml).node_section.nodes]
+            ["node1", "node2"],
+            [node.attrs.name for node in ClusterState(xml).node_section.nodes],
         )
 
     def test_can_filter_out_remote_nodes(self):
         self.covered_status.append_to_first_tag_name(
-            'nodes',
-            self.fixture_node_string(name='node1', id='1'),
-            self.fixture_node_string(name='node2', type='remote', id='2'),
+            "nodes",
+            self.fixture_node_string(name="node1", id="1"),
+            self.fixture_node_string(name="node2", type="remote", id="2"),
         )
         xml = str(self.covered_status)
         self.assertEqual(
-            ['node1'],
+            ["node1"],
             [
                 node.attrs.name
                 for node in ClusterState(xml).node_section.nodes
-                if node.attrs.type != 'remote'
-            ]
+                if node.attrs.type != "remote"
+            ],
         )
 
 
@@ -186,30 +190,25 @@ class GetPrimitiveRolesWithNodes(TestCase):
                 </resource>
             """,
         ]
-        primitives = [
-            etree.fromstring(xml) for xml in primitives_xml
-        ]
+        primitives = [etree.fromstring(xml) for xml in primitives_xml]
 
         self.assertEqual(
             state._get_primitive_roles_with_nodes(primitives),
             {
                 "Started": ["node1", "node5"],
                 "Master": ["node2"],
-                "Slave": ["node3", "node4"]
-            }
+                "Slave": ["node3", "node4"],
+            },
         )
 
     def test_empty(self):
-        self.assertEqual(
-            state._get_primitive_roles_with_nodes([]),
-            {
-            }
-        )
+        self.assertEqual(state._get_primitive_roles_with_nodes([]), {})
 
 
 class GetPrimitivesForStateCheck(TestCase):
     # pylint: disable=too-many-public-methods
-    status_xml = etree.fromstring("""
+    status_xml = etree.fromstring(
+        """
         <resources>
             <resource id="R01" failed="false" />
             <resource id="R02" failed="true" />
@@ -327,22 +326,25 @@ class GetPrimitivesForStateCheck(TestCase):
                 </replica>
             </bundle>
         </resources>
-    """)
+    """
+    )
 
     def setUp(self):
         self.status = etree.parse(rc("crm_mon.minimal.xml")).getroot()
         self.status.append(self.status_xml)
         for resource in self.status.xpath(".//resource"):
-            resource.attrib.update({
-                "resource_agent": "ocf::pacemaker:Stateful",
-                "role": "Started",
-                "active": "true",
-                "orphaned": "false",
-                "blocked": "false",
-                "managed": "true",
-                "failure_ignored": "false",
-                "nodes_running_on": "1",
-            })
+            resource.attrib.update(
+                {
+                    "resource_agent": "ocf::pacemaker:Stateful",
+                    "role": "Started",
+                    "active": "true",
+                    "orphaned": "false",
+                    "blocked": "false",
+                    "managed": "true",
+                    "failure_ignored": "false",
+                    "nodes_running_on": "1",
+                }
+            )
 
     def assert_primitives(self, resource_id, primitive_ids, expected_running):
         self.assertEqual(
@@ -352,7 +354,7 @@ class GetPrimitivesForStateCheck(TestCase):
                     self.status, resource_id, expected_running
                 )
             ],
-            primitive_ids
+            primitive_ids,
         )
 
     def test_missing(self):
@@ -490,6 +492,7 @@ class GetPrimitivesForStateCheck(TestCase):
 
 class CommonResourceState(TestCase):
     resource_id = "R"
+
     def setUp(self):
         self.cluster_state = "state"
 
@@ -513,15 +516,21 @@ class CommonResourceState(TestCase):
         }
 
     def fixture_running_report(self, severity):
-        return (severity, report_codes.RESOURCE_RUNNING_ON_NODES, {
-            "resource_id": self.resource_id,
-            "roles_with_nodes": self.fixture_running_state_info(),
-        })
+        return (
+            severity,
+            report_codes.RESOURCE_RUNNING_ON_NODES,
+            {
+                "resource_id": self.resource_id,
+                "roles_with_nodes": self.fixture_running_state_info(),
+            },
+        )
 
     def fixture_not_running_report(self, severity):
-        return (severity, report_codes.RESOURCE_DOES_NOT_RUN, {
-            "resource_id": self.resource_id
-        })
+        return (
+            severity,
+            report_codes.RESOURCE_DOES_NOT_RUN,
+            {"resource_id": self.resource_id},
+        )
 
 
 class EnsureResourceState(CommonResourceState):
@@ -530,16 +539,12 @@ class EnsureResourceState(CommonResourceState):
         self.get_primitive_roles_with_nodes.return_value = run_info
         assert_report_item_equal(
             state.ensure_resource_state(
-                expected_running,
-                self.cluster_state,
-                self.resource_id
+                expected_running, self.cluster_state, self.resource_id
             ),
-            report
+            report,
         )
         self.get_primitives_for_state_check.assert_called_once_with(
-            self.cluster_state,
-            self.resource_id,
-            expected_running
+            self.cluster_state, self.resource_id, expected_running
         )
         self.get_primitive_roles_with_nodes.assert_called_once_with(
             ["elem1", "elem2"]
@@ -580,12 +585,10 @@ class InfoResourceState(CommonResourceState):
         self.get_primitive_roles_with_nodes.return_value = run_info
         assert_report_item_equal(
             state.info_resource_state(self.cluster_state, self.resource_id),
-            report
+            report,
         )
         self.get_primitives_for_state_check.assert_called_once_with(
-            self.cluster_state,
-            self.resource_id,
-            expected_running=True
+            self.cluster_state, self.resource_id, expected_running=True
         )
         self.get_primitive_roles_with_nodes.assert_called_once_with(
             ["elem1", "elem2"]
@@ -594,17 +597,18 @@ class InfoResourceState(CommonResourceState):
     def test_report_info_running(self):
         self.assert_running_info_transform(
             self.fixture_running_state_info(),
-            self.fixture_running_report(severities.INFO)
+            self.fixture_running_report(severities.INFO),
         )
+
     def test_report_info_not_running(self):
         self.assert_running_info_transform(
-            [],
-            self.fixture_not_running_report(severities.INFO)
+            [], self.fixture_not_running_report(severities.INFO)
         )
 
 
 class IsResourceManaged(TestCase):
-    status_xml = etree.fromstring("""
+    status_xml = etree.fromstring(
+        """
         <resources>
             <resource id="R01" managed="true" />
             <resource id="R02" managed="false" />
@@ -816,33 +820,34 @@ class IsResourceManaged(TestCase):
                 </replica>
             </bundle>
         </resources>
-    """)
+    """
+    )
 
     def setUp(self):
         self.status = etree.parse(rc("crm_mon.minimal.xml")).getroot()
         self.status.append(self.status_xml)
         for resource in self.status.xpath(".//resource"):
-            resource.attrib.update({
-                "resource_agent": "ocf::pacemaker:Stateful",
-                "role": "Started",
-                "active": "true",
-                "orphaned": "false",
-                "blocked": "false",
-                "failed": "false",
-                "failure_ignored": "false",
-                "nodes_running_on": "1",
-            })
+            resource.attrib.update(
+                {
+                    "resource_agent": "ocf::pacemaker:Stateful",
+                    "role": "Started",
+                    "active": "true",
+                    "orphaned": "false",
+                    "blocked": "false",
+                    "failed": "false",
+                    "failure_ignored": "false",
+                    "nodes_running_on": "1",
+                }
+            )
 
     def assert_managed(self, resource, managed):
         self.assertEqual(
-            managed,
-            state.is_resource_managed(self.status, resource)
+            managed, state.is_resource_managed(self.status, resource)
         )
 
     def test_missing(self):
         self.assertRaises(
-            state.ResourceNotFound,
-            self.assert_managed, "Rxx", True
+            state.ResourceNotFound, self.assert_managed, "Rxx", True
         )
 
     def test_primitive(self):

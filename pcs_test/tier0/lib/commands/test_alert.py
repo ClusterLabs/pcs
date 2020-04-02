@@ -19,6 +19,7 @@ get_env_tools = partial(
     exception_reports_in_processor_by_default=False,
 )
 
+
 class CreateAlertTest(TestCase):
     fixture_final_alerts = """
         <alerts>
@@ -59,33 +60,30 @@ class CreateAlertTest(TestCase):
                     Severities.ERROR,
                     report_codes.REQUIRED_OPTIONS_ARE_MISSING,
                     {"option_names": ["path"], "option_type": None},
-                    None
+                    None,
                 ),
             ],
         )
 
     def test_create_no_upgrade(self):
-        (self.config
-            .runner.cib.load()
-            .env.push_cib(optional_in_conf=self.fixture_final_alerts)
+        (
+            self.config.runner.cib.load().env.push_cib(
+                optional_in_conf=self.fixture_final_alerts
+            )
         )
         cmd_alert.create_alert(
             self.env_assist.get_env(),
             "my-alert",
             "/my/path",
-            {
-                "instance": "value",
-                "another": "val"
-            },
+            {"instance": "value", "another": "val"},
             {"meta1": "val1"},
-            "my description"
+            "my description",
         )
 
     def test_create_upgrade(self):
-        (self.config
-            .runner.cib.load(
-                filename="cib-empty-2.0.xml",
-                name="load_cib_old_version"
+        (
+            self.config.runner.cib.load(
+                filename="cib-empty-2.0.xml", name="load_cib_old_version"
             )
             .runner.cib.upgrade()
             .runner.cib.load()
@@ -95,21 +93,13 @@ class CreateAlertTest(TestCase):
             self.env_assist.get_env(),
             "my-alert",
             "/my/path",
-            {
-                "instance": "value",
-                "another": "val"
-            },
+            {"instance": "value", "another": "val"},
             {"meta1": "val1"},
-            "my description"
+            "my description",
         )
-        self.env_assist.assert_reports([
-            (
-                Severities.INFO,
-                report_codes.CIB_UPGRADE_SUCCESSFUL,
-                {},
-                None
-            ),
-        ])
+        self.env_assist.assert_reports(
+            [(Severities.INFO, report_codes.CIB_UPGRADE_SUCCESSFUL, {}, None),]
+        )
 
 
 class UpdateAlertTest(TestCase):
@@ -138,6 +128,7 @@ class UpdateAlertTest(TestCase):
             </alert>
         </alerts>
     """
+
     def setUp(self):
         self.env_assist, self.config = get_env_tools(test_case=self)
 
@@ -167,9 +158,10 @@ class UpdateAlertTest(TestCase):
             </alert>
         </alerts>
         """
-        (self.config
-            .runner.cib.load(optional_in_conf=self.fixture_initial_alerts)
-            .env.push_cib(
+        (
+            self.config.runner.cib.load(
+                optional_in_conf=self.fixture_initial_alerts
+            ).env.push_cib(
                 replace={"./configuration/alerts": fixture_final_alerts}
             )
         )
@@ -177,22 +169,19 @@ class UpdateAlertTest(TestCase):
             self.env_assist.get_env(),
             "my-alert",
             "/another/one",
-            {
-                "instance": "",
-                "my-attr": "its_val"
-            },
+            {"instance": "", "my-attr": "its_val"},
             {"meta1": "val2"},
-            ""
+            "",
         )
 
     def test_update_instance_attribute(self):
-        (self.config
-            .runner.cib.load(optional_in_conf=self.fixture_initial_alerts)
-            .env.push_cib(
+        (
+            self.config.runner.cib.load(
+                optional_in_conf=self.fixture_initial_alerts
+            ).env.push_cib(
                 replace={
                     './configuration/alerts/alert[@id="my-alert"]/'
-                        'instance_attributes/nvpair[@name="instance"]'
-                    : """
+                    'instance_attributes/nvpair[@name="instance"]': """
                         <nvpair
                             id="my-alert-instance_attributes-instance"
                             name="instance"
@@ -208,12 +197,12 @@ class UpdateAlertTest(TestCase):
             None,
             {"instance": "new_val"},
             {},
-            None
+            None,
         )
 
     def test_alert_doesnt_exist(self):
-        (self.config
-            .runner.cib.load(
+        (
+            self.config.runner.cib.load(
                 optional_in_conf="""
                     <alerts>
                         <alert id="alert" path="path"/>
@@ -235,7 +224,7 @@ class UpdateAlertTest(TestCase):
                         "id": "unknown",
                         "expected_types": ["alert"],
                     },
-                    None
+                    None,
                 ),
             ],
         )
@@ -259,10 +248,7 @@ class RemoveAlertTest(TestCase):
         self.config.env.push_cib(
             remove="./configuration/alerts/alert[@id='alert2']"
         )
-        cmd_alert.remove_alert(
-            self.env_assist.get_env(),
-            ["alert2"]
-        )
+        cmd_alert.remove_alert(self.env_assist.get_env(), ["alert2"])
 
     def test_multiple_alerts(self):
         self.config.env.push_cib(
@@ -273,22 +259,18 @@ class RemoveAlertTest(TestCase):
             ]
         )
         cmd_alert.remove_alert(
-            self.env_assist.get_env(),
-            ["alert1", "alert3", "alert4"]
+            self.env_assist.get_env(), ["alert1", "alert3", "alert4"]
         )
 
     def test_no_alert(self):
         self.config.env.push_cib()
-        cmd_alert.remove_alert(
-            self.env_assist.get_env(),
-            []
-        )
+        cmd_alert.remove_alert(self.env_assist.get_env(), [])
 
     def test_alerts_dont_exist(self):
         self.env_assist.assert_raise_library_error(
             lambda: cmd_alert.remove_alert(
                 self.env_assist.get_env(),
-                ["unknown1", "alert1", "unknown2", "alert2"]
+                ["unknown1", "alert1", "unknown2", "alert2"],
             )
         )
         self.env_assist.assert_reports(
@@ -302,7 +284,7 @@ class RemoveAlertTest(TestCase):
                         "id": "unknown1",
                         "expected_types": ["alert"],
                     },
-                    None
+                    None,
                 ),
                 (
                     Severities.ERROR,
@@ -313,7 +295,7 @@ class RemoveAlertTest(TestCase):
                         "id": "unknown2",
                         "expected_types": ["alert"],
                     },
-                    None
+                    None,
                 ),
             ]
         )
@@ -350,14 +332,18 @@ class AddRecipientTest(TestCase):
     def test_recipient_already_exists(self):
         self.env_assist.assert_raise_library_error(
             lambda: cmd_alert.add_recipient(
-                self.env_assist.get_env(), "alert", "value1", {}, {},
-                recipient_id="alert-recipient"
+                self.env_assist.get_env(),
+                "alert",
+                "value1",
+                {},
+                {},
+                recipient_id="alert-recipient",
             ),
             [
                 (
                     Severities.ERROR,
                     report_codes.ID_ALREADY_EXISTS,
-                    {"id": "alert-recipient"}
+                    {"id": "alert-recipient"},
                 )
             ],
         )
@@ -365,8 +351,7 @@ class AddRecipientTest(TestCase):
     def test_without_id(self):
         self.config.env.push_cib(
             replace={
-                './/alert[@id="alert"]' :
-                """
+                './/alert[@id="alert"]': """
                 <alert id="alert" path="path">
                     <recipient id="alert-recipient" value="value1"/>
                     <recipient id="alert-recipient-1" value="value">
@@ -403,17 +388,13 @@ class AddRecipientTest(TestCase):
             "alert",
             "value",
             {"attr1": "val1"},
-            {
-                "attr2": "val2",
-                "attr1": "val1"
-            }
+            {"attr2": "val2", "attr1": "val1"},
         )
 
     def test_with_id(self):
         self.config.env.push_cib(
             replace={
-                './/alert[@id="alert"]':
-                """
+                './/alert[@id="alert"]': """
                 <alert id="alert" path="path">
                     <recipient id="alert-recipient" value="value1"/>
                     <recipient id="my-recipient" value="value">
@@ -450,12 +431,10 @@ class AddRecipientTest(TestCase):
             "alert",
             "value",
             {"attr1": "val1"},
-            {
-                "attr2": "val2",
-                "attr1": "val1"
-            },
-            recipient_id="my-recipient"
+            {"attr2": "val2", "attr1": "val1"},
+            recipient_id="my-recipient",
         )
+
 
 class UpdateRecipientTest(TestCase):
     def setUp(self):
@@ -502,13 +481,16 @@ class UpdateRecipientTest(TestCase):
         self.env_assist.assert_raise_library_error(
             lambda: cmd_alert.update_recipient(
                 self.env_assist.get_env(),
-                "alert-recipient-1", {}, {}, recipient_value=""
+                "alert-recipient-1",
+                {},
+                {},
+                recipient_value="",
             ),
             [
                 (
                     Severities.ERROR,
                     report_codes.CIB_ALERT_RECIPIENT_VALUE_INVALID,
-                    {"recipient": ""}
+                    {"recipient": ""},
                 )
             ],
         )
@@ -528,7 +510,7 @@ class UpdateRecipientTest(TestCase):
                         "context_id": "",
                         "context_type": "alerts",
                     },
-                    None
+                    None,
                 )
             ],
         )
@@ -536,8 +518,7 @@ class UpdateRecipientTest(TestCase):
     def test_update_all(self):
         self.config.env.push_cib(
             replace={
-                './/alert[@id="alert"]':
-                """
+                './/alert[@id="alert"]': """
                 <alert id="alert" path="path">
                     <recipient id="alert-recipient" value="value1"/>
                     <recipient
@@ -577,12 +558,9 @@ class UpdateRecipientTest(TestCase):
             self.env_assist.get_env(),
             "alert-recipient-1",
             {"attr1": "value"},
-            {
-                "attr1": "",
-                "attr3": "new_val"
-            },
+            {"attr1": "", "attr3": "new_val"},
             recipient_value="new_val",
-            description="desc"
+            description="desc",
         )
 
 
@@ -610,7 +588,7 @@ class RemoveRecipientTest(TestCase):
         self.env_assist.assert_raise_library_error(
             lambda: cmd_alert.remove_recipient(
                 self.env_assist.get_env(),
-                ["recipient", "alert-recip1", "alert2-recip1"]
+                ["recipient", "alert-recip1", "alert2-recip1"],
             )
         )
         self.env_assist.assert_reports(
@@ -624,7 +602,7 @@ class RemoveRecipientTest(TestCase):
                         "context_type": "alerts",
                         "context_id": "",
                     },
-                    None
+                    None,
                 ),
                 (
                     Severities.ERROR,
@@ -635,8 +613,8 @@ class RemoveRecipientTest(TestCase):
                         "context_type": "alerts",
                         "context_id": "",
                     },
-                    None
-                )
+                    None,
+                ),
             ]
         )
 
@@ -644,10 +622,7 @@ class RemoveRecipientTest(TestCase):
         self.config.env.push_cib(
             remove="./configuration/alerts/alert/recipient[@id='alert-recip1']"
         )
-        cmd_alert.remove_recipient(
-            self.env_assist.get_env(),
-            ["alert-recip1"]
-        )
+        cmd_alert.remove_recipient(self.env_assist.get_env(), ["alert-recip1"])
 
     def test_multiple_recipients(self):
         self.config.env.push_cib(
@@ -659,15 +634,12 @@ class RemoveRecipientTest(TestCase):
         )
         cmd_alert.remove_recipient(
             self.env_assist.get_env(),
-            ["alert-recip1", "alert-recip2", "alert2-recip4"]
+            ["alert-recip1", "alert-recip2", "alert2-recip4"],
         )
 
     def test_no_recipient(self):
         self.config.env.push_cib()
-        cmd_alert.remove_recipient(
-            self.env_assist.get_env(),
-            []
-        )
+        cmd_alert.remove_recipient(self.env_assist.get_env(), [])
 
 
 @mock.patch("pcs.lib.cib.alert.get_all_alerts")
@@ -677,13 +649,12 @@ class GetAllAlertsTest(TestCase):
         self.mock_run = mock.MagicMock(spec_set=CommandRunner)
         self.mock_rep = MockLibraryReportProcessor()
         self.mock_env = LibraryEnvironment(
-            self.mock_log, self.mock_rep, cib_data='<cib/>'
+            self.mock_log, self.mock_rep, cib_data="<cib/>"
         )
 
     def test_success(self, mock_alerts):
         mock_alerts.return_value = [{"id": "alert"}]
         self.assertEqual(
-            [{"id": "alert"}],
-            cmd_alert.get_all_alerts(self.mock_env)
+            [{"id": "alert"}], cmd_alert.get_all_alerts(self.mock_env)
         )
         self.assertEqual(1, mock_alerts.call_count)

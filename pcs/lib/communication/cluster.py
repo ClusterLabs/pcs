@@ -14,8 +14,11 @@ from pcs.lib.node_communication import response_to_report_item
 
 
 class Destroy(
-    AllSameDataMixin, AllAtOnceStrategyMixin, SkipOfflineMixin,
-    SimpleResponseProcessingMixin, RunRemotelyBase
+    AllSameDataMixin,
+    AllAtOnceStrategyMixin,
+    SkipOfflineMixin,
+    SimpleResponseProcessingMixin,
+    RunRemotelyBase,
 ):
     def _get_request_data(self):
         return RequestData("remote/cluster_destroy")
@@ -111,8 +114,7 @@ class GetQuorumStatus(AllSameDataMixin, OneByOneStrategyMixin, RunRemotelyBase):
             self._report(
                 ReportItem.warning(
                     reports.messages.CorosyncQuorumGetStatusError(
-                        e.reason,
-                        node=node,
+                        e.reason, node=node,
                     )
                 )
             )

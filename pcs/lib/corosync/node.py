@@ -11,10 +11,10 @@ ADDR_IPV6 = "IPv6"
 ADDR_FQDN = "FQDN"
 ADDR_UNRESOLVABLE = "unresolvable"
 
-class CorosyncNodeAddress(
-    namedtuple("CorosyncNodeAddress", "addr link")
-):
+
+class CorosyncNodeAddress(namedtuple("CorosyncNodeAddress", "addr link")):
     """An address of a node loaded from corosync.conf"""
+
     _type = None
 
     @property
@@ -27,10 +27,9 @@ class CorosyncNodeAddress(
         return get_address_type(self.addr, resolve=False)
 
 
-class CorosyncNode(
-    namedtuple("CorosyncNode", "name addrs nodeid")
-):
+class CorosyncNode(namedtuple("CorosyncNode", "name addrs nodeid")):
     """A node loaded from corosync.conf"""
+
     _addrs_plain = None
 
     def __new__(cls, name, addrs, nodeid):

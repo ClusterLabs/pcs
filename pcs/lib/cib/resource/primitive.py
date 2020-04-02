@@ -12,7 +12,7 @@ from pcs.lib.cib.nvpair import (
     get_value,
     get_nvset_as_dict,
 )
-from pcs.lib.cib.resource.operations import(
+from pcs.lib.cib.resource.operations import (
     prepare as prepare_operations,
     create_operations,
 )
@@ -22,6 +22,7 @@ from pcs.lib.pacemaker.values import validate_id
 
 
 TAG = "primitive"
+
 
 def is_primitive(resource_el):
     return resource_el.tag == TAG
@@ -59,7 +60,8 @@ def create(
     allow_invalid_instance_attributes=False,
     use_default_operations=True,
     resource_type="resource",
-    do_not_report_instance_attribute_server_exists=False # TODO remove this arg
+    # TODO remove this arg
+    do_not_report_instance_attribute_server_exists=False,
 ):
     # pylint: disable=too-many-arguments
     """
@@ -113,7 +115,7 @@ def create(
             force=allow_invalid_instance_attributes,
             do_not_report_instance_attribute_server_exists=(
                 do_not_report_instance_attribute_server_exists
-            )
+            ),
         )
     ).has_errors:
         raise LibraryError()
@@ -127,14 +129,20 @@ def create(
         resource_agent.get_type(),
         instance_attributes=instance_attributes,
         meta_attributes=meta_attributes,
-        operation_list=operation_list
+        operation_list=operation_list,
     )
 
+
 def append_new(
-    resources_section, id_provider, resource_id, standard, provider, agent_type,
+    resources_section,
+    id_provider,
+    resource_id,
+    standard,
+    provider,
+    agent_type,
     instance_attributes=None,
     meta_attributes=None,
-    operation_list=None
+    operation_list=None,
 ):
     # pylint:disable=too-many-arguments
     """
@@ -162,30 +170,27 @@ def append_new(
 
     if instance_attributes:
         append_new_instance_attributes(
-            primitive_element,
-            instance_attributes,
-            id_provider
+            primitive_element, instance_attributes, id_provider
         )
 
     if meta_attributes:
         append_new_meta_attributes(
-            primitive_element,
-            meta_attributes,
-            id_provider
+            primitive_element, meta_attributes, id_provider
         )
 
     create_operations(
-        primitive_element,
-        id_provider,
-        operation_list if operation_list else []
+        primitive_element, id_provider, operation_list if operation_list else []
     )
 
     return primitive_element
 
 
 def validate_unique_instance_attributes(
-    resource_agent, instance_attributes, resources_section,
-    resource_id=None, force=False
+    resource_agent,
+    instance_attributes,
+    resources_section,
+    resource_id=None,
+    force=False,
 ):
     report_list = []
     ra_unique_attributes = [
@@ -204,66 +209,65 @@ def validate_unique_instance_attributes(
             for primitive in same_agent_resources
             if (
                 primitive.get("id") != resource_id
-                and
-                instance_attributes[attr] == get_value(
-                    "instance_attributes", primitive, attr
-                )
+                and instance_attributes[attr]
+                == get_value("instance_attributes", primitive, attr)
             )
         }
         if conflicting_resources:
             report_list.append(
                 ReportItem(
                     severity=reports.item.get_severity(
-                        report_codes.FORCE_OPTIONS,
-                        force,
+                        report_codes.FORCE_OPTIONS, force,
                     ),
                     message=reports.messages.ResourceInstanceAttrValueNotUnique(
                         attr,
                         instance_attributes[attr],
                         resource_agent.get_name(),
                         sorted(conflicting_resources),
-                    )
+                    ),
                 )
             )
     return report_list
 
 
 def validate_resource_instance_attributes_create(
-    resource_agent, instance_attributes, resources_section, force=False,
-    do_not_report_instance_attribute_server_exists=False
+    resource_agent,
+    instance_attributes,
+    resources_section,
+    force=False,
+    do_not_report_instance_attribute_server_exists=False,
 ):
-    return (
-        resource_agent.validate_parameters_create(
-            instance_attributes, force=force,
-            do_not_report_instance_attribute_server_exists=(
-                do_not_report_instance_attribute_server_exists
-            )
-        )
-        +
-        validate_unique_instance_attributes(
-            resource_agent, instance_attributes, resources_section, force=force
-        )
+    return resource_agent.validate_parameters_create(
+        instance_attributes,
+        force=force,
+        do_not_report_instance_attribute_server_exists=(
+            do_not_report_instance_attribute_server_exists
+        ),
+    ) + validate_unique_instance_attributes(
+        resource_agent, instance_attributes, resources_section, force=force
     )
 
 
 def validate_resource_instance_attributes_update(
-    resource_agent, instance_attributes, resource_id, resources_section,
-    force=False
+    resource_agent,
+    instance_attributes,
+    resource_id,
+    resources_section,
+    force=False,
 ):
-    return (
-        resource_agent.validate_parameters_update(
-            get_nvset_as_dict(
-                "instance_attributes",
-                find_element_by_tag_and_id(
-                    "primitive", resources_section, resource_id
-                )
+    return resource_agent.validate_parameters_update(
+        get_nvset_as_dict(
+            "instance_attributes",
+            find_element_by_tag_and_id(
+                "primitive", resources_section, resource_id
             ),
-            instance_attributes,
-            force=force,
-        )
-        +
-        validate_unique_instance_attributes(
-            resource_agent, instance_attributes, resources_section,
-            resource_id=resource_id, force=force,
-        )
+        ),
+        instance_attributes,
+        force=force,
+    ) + validate_unique_instance_attributes(
+        resource_agent,
+        instance_attributes,
+        resources_section,
+        resource_id=resource_id,
+        force=force,
     )

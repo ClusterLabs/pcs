@@ -7,10 +7,12 @@ from pcs.lib.cib.tools import get_acls
 
 REQUIRED_CIB_VERSION = Version(2, 0, 0)
 
+
 @contextmanager
 def cib_acl_section(env):
     yield get_acls(env.get_cib(REQUIRED_CIB_VERSION))
     env.push_cib()
+
 
 def create_role(lib_env, role_id, permission_info_list, description):
     """
@@ -30,6 +32,7 @@ def create_role(lib_env, role_id, permission_info_list, description):
         if permission_info_list:
             acl.add_permissions_to_role(role_el, permission_info_list)
 
+
 def remove_role(lib_env, role_id, autodelete_users_groups=False):
     """
     Remove role with specified id from CIB.
@@ -42,6 +45,7 @@ def remove_role(lib_env, role_id, autodelete_users_groups=False):
     """
     with cib_acl_section(lib_env) as acl_section:
         acl.remove_role(acl_section, role_id, autodelete_users_groups)
+
 
 def assign_role_not_specific(lib_env, role_id, target_or_group_id):
     """
@@ -61,6 +65,7 @@ def assign_role_not_specific(lib_env, role_id, target_or_group_id):
             acl.find_target_or_group(acl_section, target_or_group_id),
         )
 
+
 def assign_role_to_target(lib_env, role_id, target_id):
     """
     Assign role with id role_id to target with id target_id.
@@ -72,10 +77,9 @@ def assign_role_to_target(lib_env, role_id, target_id):
     """
     with cib_acl_section(lib_env) as acl_section:
         acl.assign_role(
-            acl_section,
-            role_id,
-            acl.find_target(acl_section, target_id),
+            acl_section, role_id, acl.find_target(acl_section, target_id),
         )
+
 
 def assign_role_to_group(lib_env, role_id, group_id):
     """
@@ -88,10 +92,9 @@ def assign_role_to_group(lib_env, role_id, group_id):
     """
     with cib_acl_section(lib_env) as acl_section:
         acl.assign_role(
-            acl_section,
-            role_id,
-            acl.find_group(acl_section, group_id),
+            acl_section, role_id, acl.find_group(acl_section, group_id),
         )
+
 
 def unassign_role_not_specific(
     lib_env, role_id, target_or_group_id, autodelete_target_group=False
@@ -112,8 +115,9 @@ def unassign_role_not_specific(
         acl.unassign_role(
             acl.find_target_or_group(acl_section, target_or_group_id),
             role_id,
-            autodelete_target_group
+            autodelete_target_group,
         )
+
 
 def unassign_role_from_target(
     lib_env, role_id, target_id, autodelete_target=False
@@ -130,10 +134,9 @@ def unassign_role_from_target(
     """
     with cib_acl_section(lib_env) as acl_section:
         acl.unassign_role(
-            acl.find_target(acl_section, target_id),
-            role_id,
-            autodelete_target
+            acl.find_target(acl_section, target_id), role_id, autodelete_target
         )
+
 
 def unassign_role_from_group(
     lib_env, role_id, group_id, autodelete_group=False
@@ -150,10 +153,9 @@ def unassign_role_from_group(
     """
     with cib_acl_section(lib_env) as acl_section:
         acl.unassign_role(
-            acl.find_group(acl_section, group_id),
-            role_id,
-            autodelete_group
+            acl.find_group(acl_section, group_id), role_id, autodelete_group
         )
+
 
 def create_target(lib_env, target_id, role_list):
     """
@@ -166,10 +168,9 @@ def create_target(lib_env, target_id, role_list):
     """
     with cib_acl_section(lib_env) as acl_section:
         acl.assign_all_roles(
-            acl_section,
-            role_list,
-            acl.create_target(acl_section, target_id)
+            acl_section, role_list, acl.create_target(acl_section, target_id)
         )
+
 
 def create_group(lib_env, group_id, role_list):
     """
@@ -182,10 +183,9 @@ def create_group(lib_env, group_id, role_list):
     """
     with cib_acl_section(lib_env) as acl_section:
         acl.assign_all_roles(
-            acl_section,
-            role_list,
-            acl.create_group(acl_section, group_id)
+            acl_section, role_list, acl.create_group(acl_section, group_id)
         )
+
 
 def remove_target(lib_env, target_id):
     """
@@ -198,6 +198,7 @@ def remove_target(lib_env, target_id):
     with cib_acl_section(lib_env) as acl_section:
         acl.remove_target(acl_section, target_id)
 
+
 def remove_group(lib_env, group_id):
     """
     Remove acl_group element with id group_id.
@@ -208,6 +209,7 @@ def remove_group(lib_env, group_id):
     """
     with cib_acl_section(lib_env) as acl_section:
         acl.remove_group(acl_section, group_id)
+
 
 def add_permission(lib_env, role_id, permission_info_list):
     """
@@ -223,9 +225,9 @@ def add_permission(lib_env, role_id, permission_info_list):
     with cib_acl_section(lib_env) as acl_section:
         acl.validate_permissions(acl_section, permission_info_list)
         acl.add_permissions_to_role(
-            acl.provide_role(acl_section, role_id),
-            permission_info_list
+            acl.provide_role(acl_section, role_id), permission_info_list
         )
+
 
 def remove_permission(lib_env, permission_id):
     """
@@ -237,6 +239,7 @@ def remove_permission(lib_env, permission_id):
     """
     with cib_acl_section(lib_env) as acl_section:
         acl.remove_permission(acl_section, permission_id)
+
 
 def get_config(lib_env):
     """

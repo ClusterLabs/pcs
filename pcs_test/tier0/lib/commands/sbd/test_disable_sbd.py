@@ -32,18 +32,17 @@ class DisableSbd(TestCase):
                     instance="",
                 )
             ]
-            +
-            [
+            + [
                 fixture.info(
                     reports.codes.SERVICE_ACTION_SUCCEEDED,
                     action=reports.const.SERVICE_ACTION_DISABLE,
                     service="sbd",
                     node=node,
                     instance="",
-                ) for node in self.node_list
+                )
+                for node in self.node_list
             ]
-            +
-            [
+            + [
                 fixture.warn(
                     report_codes.CLUSTER_RESTART_REQUIRED_TO_APPLY_CHANGES
                 )
@@ -74,20 +73,19 @@ class DisableSbd(TestCase):
                     action=reports.const.SERVICE_ACTION_DISABLE,
                     service="sbd",
                     instance="",
-                )
+                ),
             ]
-            +
-            [
+            + [
                 fixture.info(
                     reports.codes.SERVICE_ACTION_SUCCEEDED,
                     action=reports.const.SERVICE_ACTION_DISABLE,
                     service="sbd",
                     node=node,
                     instance="",
-                ) for node in self.node_list
+                )
+                for node in self.node_list
             ]
-            +
-            [
+            + [
                 fixture.warn(
                     report_codes.CLUSTER_RESTART_REQUIRED_TO_APPLY_CHANGES
                 )
@@ -99,15 +97,15 @@ class DisableSbd(TestCase):
         self.env_assist.assert_raise_library_error(
             lambda: disable_sbd(self.env_assist.get_env())
         )
-        self.env_assist.assert_reports([
-            fixture.warn(
-                report_codes.COROSYNC_CONFIG_MISSING_NAMES_OF_NODES,
-                fatal=False,
-            ),
-            fixture.error(
-                report_codes.COROSYNC_CONFIG_NO_NODES_DEFINED,
-            ),
-        ])
+        self.env_assist.assert_reports(
+            [
+                fixture.warn(
+                    report_codes.COROSYNC_CONFIG_MISSING_NAMES_OF_NODES,
+                    fatal=False,
+                ),
+                fixture.error(report_codes.COROSYNC_CONFIG_NO_NODES_DEFINED,),
+            ]
+        )
 
     def test_node_offline(self):
         err_msg = "Failed connect to rh7-3:2224; No route to host"
@@ -121,23 +119,25 @@ class DisableSbd(TestCase):
                     "was_connected": False,
                     "errno": 7,
                     "error_msg": err_msg,
-                }
+                },
             ]
         )
         self.env_assist.assert_raise_library_error(
             lambda: disable_sbd(self.env_assist.get_env()),
             [],
-            expected_in_processor=False
+            expected_in_processor=False,
         )
-        self.env_assist.assert_reports([
-            fixture.error(
-                report_codes.NODE_COMMUNICATION_ERROR_UNABLE_TO_CONNECT,
-                force_code=report_codes.SKIP_OFFLINE_NODES,
-                node="rh7-3",
-                reason=err_msg,
-                command="remote/check_auth"
-            )
-        ])
+        self.env_assist.assert_reports(
+            [
+                fixture.error(
+                    report_codes.NODE_COMMUNICATION_ERROR_UNABLE_TO_CONNECT,
+                    force_code=report_codes.SKIP_OFFLINE_NODES,
+                    node="rh7-3",
+                    reason=err_msg,
+                    command="remote/check_auth",
+                )
+            ]
+        )
 
     def test_success_node_offline_skip_offline(self):
         err_msg = "Failed connect to rh7-3:2224; No route to host"
@@ -152,7 +152,7 @@ class DisableSbd(TestCase):
                     "error_msg": err_msg,
                 },
                 {"label": "rh7-2"},
-                {"label": "rh7-3"}
+                {"label": "rh7-3"},
             ]
         )
         self.config.http.pcmk.set_stonith_watchdog_timeout_to_zero(
@@ -162,8 +162,7 @@ class DisableSbd(TestCase):
         disable_sbd(self.env_assist.get_env(), ignore_offline_nodes=True)
         self.env_assist.assert_reports(
             [fixture.warn(report_codes.OMITTING_NODE, node="rh7-1")]
-            +
-            [
+            + [
                 fixture.info(
                     reports.codes.SERVICE_ACTION_STARTED,
                     action=reports.const.SERVICE_ACTION_DISABLE,
@@ -171,18 +170,17 @@ class DisableSbd(TestCase):
                     instance="",
                 )
             ]
-            +
-            [
+            + [
                 fixture.info(
                     reports.codes.SERVICE_ACTION_SUCCEEDED,
                     action=reports.const.SERVICE_ACTION_DISABLE,
                     service="sbd",
                     node=node,
                     instance="",
-                ) for node in online_nodes_list
+                )
+                for node in online_nodes_list
             ]
-            +
-            [
+            + [
                 fixture.warn(
                     report_codes.CLUSTER_RESTART_REQUIRED_TO_APPLY_CHANGES
                 )
@@ -195,18 +193,16 @@ class DisableSbd(TestCase):
         self.config.http.host.check_auth(node_labels=self.node_list)
         self.config.http.pcmk.set_stonith_watchdog_timeout_to_zero(
             communication_list=[
-                [{
-                    "label": "rh7-1",
-                    "was_connected": False,
-                    "errno": 7,
-                    "error_msg": err_msg,
-                }],
-                [{
-                    "label": "rh7-2",
-                    "response_code": 400,
-                    "output": "FAILED",
-                }],
-                [{"label": "rh7-3"}]
+                [
+                    {
+                        "label": "rh7-1",
+                        "was_connected": False,
+                        "errno": 7,
+                        "error_msg": err_msg,
+                    }
+                ],
+                [{"label": "rh7-2", "response_code": 400, "output": "FAILED",}],
+                [{"label": "rh7-3"}],
             ]
         )
         self.config.http.sbd.disable_sbd(node_labels=self.node_list)
@@ -217,17 +213,16 @@ class DisableSbd(TestCase):
                     report_codes.NODE_COMMUNICATION_ERROR_UNABLE_TO_CONNECT,
                     node="rh7-1",
                     reason=err_msg,
-                    command="remote/set_stonith_watchdog_timeout_to_zero"
+                    command="remote/set_stonith_watchdog_timeout_to_zero",
                 ),
                 fixture.warn(
                     report_codes.NODE_COMMUNICATION_COMMAND_UNSUCCESSFUL,
                     node="rh7-2",
                     reason="FAILED",
-                    command="remote/set_stonith_watchdog_timeout_to_zero"
-                )
+                    command="remote/set_stonith_watchdog_timeout_to_zero",
+                ),
             ]
-            +
-            [
+            + [
                 fixture.info(
                     reports.codes.SERVICE_ACTION_STARTED,
                     action=reports.const.SERVICE_ACTION_DISABLE,
@@ -235,18 +230,17 @@ class DisableSbd(TestCase):
                     instance="",
                 )
             ]
-            +
-            [
+            + [
                 fixture.info(
                     reports.codes.SERVICE_ACTION_SUCCEEDED,
                     action=reports.const.SERVICE_ACTION_DISABLE,
                     service="sbd",
                     node=node,
                     instance="",
-                ) for node in self.node_list
+                )
+                for node in self.node_list
             ]
-            +
-            [
+            + [
                 fixture.warn(
                     report_codes.CLUSTER_RESTART_REQUIRED_TO_APPLY_CHANGES
                 )
@@ -264,8 +258,7 @@ class DisableSbd(TestCase):
             ]
         )
         self.env_assist.assert_raise_library_error(
-            lambda: disable_sbd(self.env_assist.get_env()),
-            [],
+            lambda: disable_sbd(self.env_assist.get_env()), [],
         )
         self.env_assist.assert_reports(
             [
@@ -273,11 +266,11 @@ class DisableSbd(TestCase):
                     report_codes.NODE_COMMUNICATION_COMMAND_UNSUCCESSFUL,
                     node=node,
                     reason=err_msg,
-                    command="remote/set_stonith_watchdog_timeout_to_zero"
-                ) for node in self.node_list
+                    command="remote/set_stonith_watchdog_timeout_to_zero",
+                )
+                for node in self.node_list
             ]
-            +
-            [
+            + [
                 fixture.error(
                     report_codes.UNABLE_TO_PERFORM_OPERATION_ON_ANY_NODE,
                 )
@@ -295,16 +288,11 @@ class DisableSbd(TestCase):
             communication_list=[
                 {"label": "rh7-1"},
                 {"label": "rh7-2"},
-                {
-                    "label": "rh7-3",
-                    "response_code": 400,
-                    "output": err_msg
-                }
+                {"label": "rh7-3", "response_code": 400, "output": err_msg},
             ]
         )
         self.env_assist.assert_raise_library_error(
-            lambda: disable_sbd(self.env_assist.get_env()),
-            [],
+            lambda: disable_sbd(self.env_assist.get_env()), [],
         )
         self.env_assist.assert_reports(
             [
@@ -315,23 +303,22 @@ class DisableSbd(TestCase):
                     instance="",
                 )
             ]
-            +
-            [
+            + [
                 fixture.info(
                     reports.codes.SERVICE_ACTION_SUCCEEDED,
                     action=reports.const.SERVICE_ACTION_DISABLE,
                     service="sbd",
                     node=node,
                     instance="",
-                ) for node in self.node_list[:2]
+                )
+                for node in self.node_list[:2]
             ]
-            +
-            [
+            + [
                 fixture.error(
                     report_codes.NODE_COMMUNICATION_COMMAND_UNSUCCESSFUL,
                     node="rh7-3",
                     reason=err_msg,
-                    command="remote/sbd_disable"
+                    command="remote/sbd_disable",
                 )
             ]
         )

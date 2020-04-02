@@ -18,8 +18,7 @@ from pcs.lib.xml_tools import (
 
 def _validate_attrib_names(attrib_names, options):
     invalid_names = [
-        name for name in options.keys()
-        if name not in attrib_names
+        name for name in options.keys() if name not in attrib_names
     ]
     if invalid_names:
         raise LibraryError(
@@ -30,11 +29,9 @@ def _validate_attrib_names(attrib_names, options):
             )
         )
 
+
 def find_valid_resource_id(
-    report_processor: ReportProcessor,
-    cib,
-    in_clone_allowed,
-    _id
+    report_processor: ReportProcessor, cib, in_clone_allowed, _id
 ):
     parent_tags = resource.clone.ALL_TAGS + [resource.bundle.TAG]
     resource_element = find_element_by_tag_and_id(
@@ -69,8 +66,9 @@ def find_valid_resource_id(
         )
     )
 
+
 def prepare_options(attrib_names, options, create_id_fn, validate_id):
-    _validate_attrib_names(attrib_names+("id",), options)
+    _validate_attrib_names(attrib_names + ("id",), options)
     options = options.copy()
 
     if "id" not in options:
@@ -78,6 +76,7 @@ def prepare_options(attrib_names, options, create_id_fn, validate_id):
     else:
         validate_id(options["id"])
     return options
+
 
 def export_with_set(element):
     return {
@@ -88,15 +87,26 @@ def export_with_set(element):
         "options": export_attributes(element),
     }
 
+
 def export_plain(element):
     return {"options": export_attributes(element)}
 
+
 def create_id(cib, type_prefix, resource_set_list):
-    _id = "pcs_" +type_prefix +"".join([
-        "_set_"+"_".join(id_set)
-        for id_set in resource_set.extract_id_set_list(resource_set_list)
-    ])
+    _id = (
+        "pcs_"
+        + type_prefix
+        + "".join(
+            [
+                "_set_" + "_".join(id_set)
+                for id_set in resource_set.extract_id_set_list(
+                    resource_set_list
+                )
+            ]
+        )
+    )
     return find_unique_id(cib, _id)
+
 
 def have_duplicate_resource_sets(element, other_element):
     get_id_set_list = lambda element: [
@@ -105,46 +115,53 @@ def have_duplicate_resource_sets(element, other_element):
     ]
     return get_id_set_list(element) == get_id_set_list(other_element)
 
+
 def check_is_without_duplication(
     report_processor: ReportProcessor,
     constraint_section,
     element,
     are_duplicate,
     export_element,
-    duplication_alowed=False
+    duplication_alowed=False,
 ):
     duplicate_element_list = [
         duplicate_element
-        for duplicate_element in constraint_section.findall(".//"+element.tag)
-        if(
+        for duplicate_element in constraint_section.findall(".//" + element.tag)
+        if (
             element is not duplicate_element
-            and
-            are_duplicate(element, duplicate_element)
+            and are_duplicate(element, duplicate_element)
         )
     ]
     if not duplicate_element_list:
         return
 
-    if report_processor.report_list([
-        ReportItem.info(
-            reports.messages.DuplicateConstraintsList(
-                element.tag,
-                [
-                    export_element(duplicate_element)
-                    for duplicate_element in duplicate_element_list
-                ],
-            )
-        ),
-        ReportItem(
-            severity=reports.item.get_severity(
-                reports.codes.FORCE_CONSTRAINT_DUPLICATE, duplication_alowed,
+    if report_processor.report_list(
+        [
+            ReportItem.info(
+                reports.messages.DuplicateConstraintsList(
+                    element.tag,
+                    [
+                        export_element(duplicate_element)
+                        for duplicate_element in duplicate_element_list
+                    ],
+                )
             ),
-            message=reports.messages.DuplicateConstraintsExist(
-                [duplicate.get("id") for duplicate in duplicate_element_list]
-            )
-        ),
-    ]).has_errors:
+            ReportItem(
+                severity=reports.item.get_severity(
+                    reports.codes.FORCE_CONSTRAINT_DUPLICATE,
+                    duplication_alowed,
+                ),
+                message=reports.messages.DuplicateConstraintsExist(
+                    [
+                        duplicate.get("id")
+                        for duplicate in duplicate_element_list
+                    ]
+                ),
+            ),
+        ]
+    ).has_errors:
         raise LibraryError()
+
 
 def create_with_set(constraint_section, tag_name, options, resource_set_list):
     if not resource_set_list:

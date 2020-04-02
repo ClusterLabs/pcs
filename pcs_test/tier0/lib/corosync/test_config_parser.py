@@ -1,3 +1,4 @@
+# pylint: disable=too-many-lines
 from unittest import TestCase
 
 from pcs_test.tools.misc import outdent
@@ -6,7 +7,6 @@ from pcs.lib.corosync import config_parser
 
 
 class SectionTest(TestCase):
-
     def test_empty_section(self):
         section = config_parser.Section("mySection")
         self.assertEqual(section.parent, None)
@@ -38,30 +38,18 @@ class SectionTest(TestCase):
         section = config_parser.Section("mySection")
 
         section.add_attribute("name1", "value1")
+        self.assertEqual(section.get_attributes(), [["name1", "value1"],])
+
+        section.add_attribute("name2", "value2")
         self.assertEqual(
             section.get_attributes(),
-            [
-                ["name1", "value1"],
-            ]
+            [["name1", "value1"], ["name2", "value2"],],
         )
 
         section.add_attribute("name2", "value2")
         self.assertEqual(
             section.get_attributes(),
-            [
-                ["name1", "value1"],
-                ["name2", "value2"],
-            ]
-        )
-
-        section.add_attribute("name2", "value2")
-        self.assertEqual(
-            section.get_attributes(),
-            [
-                ["name1", "value1"],
-                ["name2", "value2"],
-                ["name2", "value2"],
-            ]
+            [["name1", "value1"], ["name2", "value2"], ["name2", "value2"],],
         )
 
     def test_attribute_get(self):
@@ -78,25 +66,16 @@ class SectionTest(TestCase):
                 ["name2", "value2"],
                 ["name3", "value3"],
                 ["name2", "value2a"],
-            ]
+            ],
         )
         self.assertEqual(
-            section.get_attributes("name1"),
-            [
-                ["name1", "value1"],
-            ]
+            section.get_attributes("name1"), [["name1", "value1"],]
         )
         self.assertEqual(
             section.get_attributes("name2"),
-            [
-                ["name2", "value2"],
-                ["name2", "value2a"],
-            ]
+            [["name2", "value2"], ["name2", "value2a"],],
         )
-        self.assertEqual(
-            section.get_attributes("nameX"),
-            []
-        )
+        self.assertEqual(section.get_attributes("nameX"), [])
 
     def test_attribute_get_dict(self):
         section = config_parser.Section("mySection")
@@ -108,7 +87,7 @@ class SectionTest(TestCase):
         section.add_attribute("name3", "value3")
         self.assertEqual(
             section.get_attributes_dict(),
-            {"name1": "value1", "name2": "value2", "name3": "value3", }
+            {"name1": "value1", "name2": "value2", "name3": "value3",},
         )
 
         section = config_parser.Section("mySection")
@@ -120,7 +99,7 @@ class SectionTest(TestCase):
         section.add_attribute("name1", "")
         self.assertEqual(
             section.get_attributes_dict(),
-            {"name1": "", "name2": "value2", "name3": "value3A", }
+            {"name1": "", "name2": "value2", "name3": "value3A",},
         )
 
     def test_attribute_value(self):
@@ -143,45 +122,24 @@ class SectionTest(TestCase):
         section = config_parser.Section("mySection")
 
         section.set_attribute("name1", "value1")
-        self.assertEqual(
-            section.get_attributes(),
-            [
-                ["name1", "value1"],
-            ]
-        )
+        self.assertEqual(section.get_attributes(), [["name1", "value1"],])
 
         section.set_attribute("name1", "value1")
-        self.assertEqual(
-            section.get_attributes(),
-            [
-                ["name1", "value1"],
-            ]
-        )
+        self.assertEqual(section.get_attributes(), [["name1", "value1"],])
 
         section.set_attribute("name1", "value1a")
-        self.assertEqual(
-            section.get_attributes(),
-            [
-                ["name1", "value1a"],
-            ]
-        )
+        self.assertEqual(section.get_attributes(), [["name1", "value1a"],])
 
         section.set_attribute("name2", "value2")
         self.assertEqual(
             section.get_attributes(),
-            [
-                ["name1", "value1a"],
-                ["name2", "value2"],
-            ]
+            [["name1", "value1a"], ["name2", "value2"],],
         )
 
         section.set_attribute("name1", "value1")
         self.assertEqual(
             section.get_attributes(),
-            [
-                ["name1", "value1"],
-                ["name2", "value2"],
-            ]
+            [["name1", "value1"], ["name2", "value2"],],
         )
 
         section.add_attribute("name3", "value3")
@@ -193,16 +151,12 @@ class SectionTest(TestCase):
                 ["name2", "value2"],
                 ["name3", "value3"],
                 ["name2", "value2"],
-            ]
+            ],
         )
         section.set_attribute("name2", "value2a")
         self.assertEqual(
             section.get_attributes(),
-            [
-                ["name1", "value1"],
-                ["name2", "value2a"],
-                ["name3", "value3"],
-            ]
+            [["name1", "value1"], ["name2", "value2a"], ["name3", "value3"],],
         )
 
         section.add_attribute("name1", "value1")
@@ -210,11 +164,7 @@ class SectionTest(TestCase):
         section.set_attribute("name1", "value1")
         self.assertEqual(
             section.get_attributes(),
-            [
-                ["name1", "value1"],
-                ["name2", "value2a"],
-                ["name3", "value3"],
-            ]
+            [["name1", "value1"], ["name2", "value2a"], ["name3", "value3"],],
         )
 
     def test_attribute_change(self):
@@ -234,7 +184,7 @@ class SectionTest(TestCase):
                 ["name2a", "value2a"],
                 ["name3", "value3"],
                 ["name2", "value2"],
-            ]
+            ],
         )
 
     def test_attribute_del(self):
@@ -247,27 +197,14 @@ class SectionTest(TestCase):
         section.del_attribute(section.get_attributes()[1])
         self.assertEqual(
             section.get_attributes(),
-            [
-                ["name1", "value1"],
-                ["name3", "value3"],
-            ]
+            [["name1", "value1"], ["name3", "value3"],],
         )
 
         section.del_attribute(["name3", "value3"])
-        self.assertEqual(
-            section.get_attributes(),
-            [
-                ["name1", "value1"],
-            ]
-        )
+        self.assertEqual(section.get_attributes(), [["name1", "value1"],])
 
         section.del_attribute(["name3", "value3"])
-        self.assertEqual(
-            section.get_attributes(),
-            [
-                ["name1", "value1"],
-            ]
-        )
+        self.assertEqual(section.get_attributes(), [["name1", "value1"],])
 
     def test_attribute_del_by_name(self):
         section = config_parser.Section("mySection")
@@ -284,16 +221,13 @@ class SectionTest(TestCase):
                 ["name2", "value2"],
                 ["name3", "value3"],
                 ["name2", "value2"],
-            ]
+            ],
         )
 
         section.del_attributes_by_name("name2", "value2")
         self.assertEqual(
             section.get_attributes(),
-            [
-                ["name1", "value1"],
-                ["name3", "value3"],
-            ]
+            [["name1", "value1"], ["name3", "value3"],],
         )
 
         section.add_attribute("name2", "value2")
@@ -305,16 +239,12 @@ class SectionTest(TestCase):
                 ["name3", "value3"],
                 ["name2", "value2"],
                 ["name2", "value2a"],
-            ]
+            ],
         )
         section.del_attributes_by_name("name2", "value2")
         self.assertEqual(
             section.get_attributes(),
-            [
-                ["name1", "value1"],
-                ["name3", "value3"],
-                ["name2", "value2a"],
-            ]
+            [["name1", "value1"], ["name3", "value3"], ["name2", "value2a"],],
         )
 
         section.add_attribute("name3", "value3a")
@@ -325,15 +255,12 @@ class SectionTest(TestCase):
                 ["name3", "value3"],
                 ["name2", "value2a"],
                 ["name3", "value3a"],
-            ]
+            ],
         )
         section.del_attributes_by_name("name3")
         self.assertEqual(
             section.get_attributes(),
-            [
-                ["name1", "value1"],
-                ["name2", "value2a"],
-            ]
+            [["name1", "value1"], ["name2", "value2a"],],
         )
 
     def test_section_add(self):
@@ -349,7 +276,10 @@ class SectionTest(TestCase):
         self.assertEqual(child1.parent.name, "root")
         self.assertEqual(child1a.parent.name, "child1")
         self.assertEqual(child2.parent.name, "root")
-        self.assertEqual(str(root), outdent("""\
+        self.assertEqual(
+            str(root),
+            outdent(
+                """\
             child1 {
                 child1a {
                 }
@@ -358,11 +288,15 @@ class SectionTest(TestCase):
             child2 {
             }
             """
-        ))
+            ),
+        )
 
         child2.add_section(child1a)
         self.assertEqual(child1a.parent.name, "child2")
-        self.assertEqual(str(root), outdent("""\
+        self.assertEqual(
+            str(root),
+            outdent(
+                """\
             child1 {
             }
 
@@ -371,19 +305,21 @@ class SectionTest(TestCase):
                 }
             }
             """
-        ))
+            ),
+        )
 
         self.assertRaises(
             config_parser.CircularParentshipException,
-            child1a.add_section, child1a
+            child1a.add_section,
+            child1a,
         )
         self.assertRaises(
             config_parser.CircularParentshipException,
-            child1a.add_section, child2
+            child1a.add_section,
+            child2,
         )
         self.assertRaises(
-            config_parser.CircularParentshipException,
-            child1a.add_section, root
+            config_parser.CircularParentshipException, child1a.add_section, root
         )
 
     def test_section_get(self):
@@ -410,7 +346,10 @@ class SectionTest(TestCase):
         child2.add_section(childa3)
         child2.add_section(childb2)
         child2.add_section(childa4)
-        self.assertEqual(str(root), outdent("""\
+        self.assertEqual(
+            str(root),
+            outdent(
+                """\
             child1 {
                 childA {
                     id: 1
@@ -439,11 +378,13 @@ class SectionTest(TestCase):
                 }
             }
             """
-        ))
+            ),
+        )
 
         self.assertEqual(
             "---\n".join([str(x) for x in root.get_sections()]),
-            outdent("""\
+            outdent(
+                """\
                 child1 {
                     childA {
                         id: 1
@@ -472,12 +413,13 @@ class SectionTest(TestCase):
                     }
                 }
                 """
-            )
+            ),
         )
 
         self.assertEqual(
             "---\n".join([str(x) for x in root.get_sections("child1")]),
-            outdent("""\
+            outdent(
+                """\
                 child1 {
                     childA {
                         id: 1
@@ -492,12 +434,13 @@ class SectionTest(TestCase):
                     }
                 }
                 """
-            )
+            ),
         )
 
         self.assertEqual(
             "---\n".join([str(x) for x in child1.get_sections("childA")]),
-            outdent("""\
+            outdent(
+                """\
                 childA {
                     id: 1
                 }
@@ -506,12 +449,11 @@ class SectionTest(TestCase):
                     id: 2
                 }
                 """
-            )
+            ),
         )
 
         self.assertEqual(
-            "---\n".join([str(x) for x in child1.get_sections("child2")]),
-            ""
+            "---\n".join([str(x) for x in child1.get_sections("child2")]), ""
         )
 
     def test_section_del(self):
@@ -538,7 +480,10 @@ class SectionTest(TestCase):
         child2.add_section(childa3)
         child2.add_section(childb2)
         child2.add_section(childa4)
-        self.assertEqual(str(root), outdent("""\
+        self.assertEqual(
+            str(root),
+            outdent(
+                """\
             child1 {
                 childA {
                     id: 1
@@ -567,11 +512,15 @@ class SectionTest(TestCase):
                 }
             }
             """
-        ))
+            ),
+        )
 
         child2.del_section(childb2)
         self.assertEqual(childb2.parent, None)
-        self.assertEqual(str(root), outdent("""\
+        self.assertEqual(
+            str(root),
+            outdent(
+                """\
             child1 {
                 childA {
                     id: 1
@@ -596,11 +545,15 @@ class SectionTest(TestCase):
                 }
             }
             """
-        ))
+            ),
+        )
 
         root.del_section(child2)
         self.assertEqual(child2.parent, None)
-        self.assertEqual(str(root), outdent("""\
+        self.assertEqual(
+            str(root),
+            outdent(
+                """\
             child1 {
                 childA {
                     id: 1
@@ -615,7 +568,8 @@ class SectionTest(TestCase):
                 }
             }
             """
-        ))
+            ),
+        )
 
         self.assertRaises(ValueError, root.del_section, child2)
 
@@ -625,7 +579,10 @@ class SectionTest(TestCase):
 
         child1.del_section(childb1)
         self.assertEqual(childb1.parent, None)
-        self.assertEqual(str(root), outdent("""\
+        self.assertEqual(
+            str(root),
+            outdent(
+                """\
             child1 {
                 childA {
                     id: 1
@@ -636,17 +593,22 @@ class SectionTest(TestCase):
                 }
             }
             """
-        ))
+            ),
+        )
 
         child1.del_section(childa1)
         self.assertEqual(childa1.parent, None)
         child1.del_section(childa2)
         self.assertEqual(childa2.parent, None)
-        self.assertEqual(str(root), outdent("""\
+        self.assertEqual(
+            str(root),
+            outdent(
+                """\
             child1 {
             }
             """
-        ))
+            ),
+        )
 
         root.del_section(child1)
         self.assertEqual(child1.parent, None)
@@ -673,17 +635,24 @@ class SectionTest(TestCase):
         root.add_attribute("name2", "value2")
         root.add_attribute("name2", "value2a")
         root.add_attribute("name3", "value3")
-        self.assertEqual(str(root), outdent("""\
+        self.assertEqual(
+            str(root),
+            outdent(
+                """\
             name1: value1
             name2: value2
             name2: value2a
             name3: value3
             """
-        ))
+            ),
+        )
 
         child1 = config_parser.Section("child1")
         root.add_section(child1)
-        self.assertEqual(str(root), outdent("""\
+        self.assertEqual(
+            str(root),
+            outdent(
+                """\
             name1: value1
             name2: value2
             name2: value2a
@@ -692,11 +661,15 @@ class SectionTest(TestCase):
             child1 {
             }
             """
-        ))
+            ),
+        )
 
         child1.add_attribute("name1.1", "value1.1")
         child1.add_attribute("name1.2", "value1.2")
-        self.assertEqual(str(root), outdent("""\
+        self.assertEqual(
+            str(root),
+            outdent(
+                """\
             name1: value1
             name2: value2
             name2: value2a
@@ -707,12 +680,16 @@ class SectionTest(TestCase):
                 name1.2: value1.2
             }
             """
-        ))
+            ),
+        )
 
         child2 = config_parser.Section("child2")
         child2.add_attribute("name2.1", "value2.1")
         root.add_section(child2)
-        self.assertEqual(str(root), outdent("""\
+        self.assertEqual(
+            str(root),
+            outdent(
+                """\
             name1: value1
             name2: value2
             name2: value2a
@@ -727,12 +704,16 @@ class SectionTest(TestCase):
                 name2.1: value2.1
             }
             """
-        ))
+            ),
+        )
 
         child2a = config_parser.Section("child2a")
         child2a.add_attribute("name2.a.1", "value2.a.1")
         child2.add_section(child2a)
-        self.assertEqual(str(root), outdent("""\
+        self.assertEqual(
+            str(root),
+            outdent(
+                """\
             name1: value1
             name2: value2
             name2: value2a
@@ -751,13 +732,17 @@ class SectionTest(TestCase):
                 }
             }
             """
-        ))
+            ),
+        )
 
         child3 = config_parser.Section("child3")
         root.add_section(child3)
         child3.add_section(config_parser.Section("child3a"))
         child3.add_section(config_parser.Section("child3b"))
-        self.assertEqual(str(root), outdent("""\
+        self.assertEqual(
+            str(root),
+            outdent(
+                """\
             name1: value1
             name2: value2
             name2: value2a
@@ -784,7 +769,8 @@ class SectionTest(TestCase):
                 }
             }
             """
-        ))
+            ),
+        )
 
 
 class ParserTest(TestCase):
@@ -793,23 +779,27 @@ class ParserTest(TestCase):
         self.assertEqual(str(config_parser.parse_string("")), "")
 
     def test_attributes_one_attribute(self):
-        string = outdent("""\
+        string = outdent(
+            """\
             name:value\
             """
         )
-        parsed = outdent("""\
+        parsed = outdent(
+            """\
             name: value
             """
         )
         self.assertEqual(str(config_parser.parse_string(string)), parsed)
 
     def test_attributes_two_attributes_same_name(self):
-        string = outdent("""\
+        string = outdent(
+            """\
             name:value
             name:value
             """
         )
-        parsed = outdent("""\
+        parsed = outdent(
+            """\
             name: value
             name: value
             """
@@ -817,14 +807,17 @@ class ParserTest(TestCase):
         self.assertEqual(str(config_parser.parse_string(string)), parsed)
 
     def test_attributes_more_attributes_whitespace(self):
-        string = outdent("""\
+        # pylint: disable=trailing-whitespace
+        string = outdent(
+            """\
               name1:value1  
             name2  :value2
             name3:  value3
               name4  :  value4  
             """
         )
-        parsed = outdent("""\
+        parsed = outdent(
+            """\
             name1: value1
             name2: value2
             name3: value3
@@ -834,11 +827,13 @@ class ParserTest(TestCase):
         self.assertEqual(str(config_parser.parse_string(string)), parsed)
 
     def test_attributes_colon_in_value(self):
-        string = outdent("""\
+        string = outdent(
+            """\
             name:foo:value
             """
         )
-        parsed = outdent("""\
+        parsed = outdent(
+            """\
             name: foo:value
             """
         )
@@ -847,11 +842,14 @@ class ParserTest(TestCase):
         self.assertEqual(str(root), parsed)
 
     def test_attributes_empty_value(self):
-        string = outdent("""\
+        # pylint: disable=trailing-whitespace
+        string = outdent(
+            """\
             name :  
             """
         )
-        parsed = outdent("""\
+        parsed = outdent(
+            """\
             name: 
             """
         )
@@ -860,12 +858,14 @@ class ParserTest(TestCase):
         self.assertEqual(str(root), parsed)
 
     def test_sections_empty_section(self):
-        string = outdent("""\
+        string = outdent(
+            """\
             section1 {
             }\
             """
         )
-        parsed = outdent("""\
+        parsed = outdent(
+            """\
             section1 {
             }
             """
@@ -873,7 +873,9 @@ class ParserTest(TestCase):
         self.assertEqual(str(config_parser.parse_string(string)), parsed)
 
     def test_sections_empty_section_in_section_whitespace(self):
-        string = outdent("""\
+        # pylint: disable=trailing-whitespace
+        string = outdent(
+            """\
             section1 {
                 section1a   {
               }
@@ -882,7 +884,8 @@ class ParserTest(TestCase):
             }
             """
         )
-        parsed = outdent("""\
+        parsed = outdent(
+            """\
             section1 {
                 section1a {
                 }
@@ -895,7 +898,8 @@ class ParserTest(TestCase):
         self.assertEqual(str(config_parser.parse_string(string)), parsed)
 
     def test_sections_no_name_before_opening(self):
-        string = outdent("""\
+        string = outdent(
+            """\
             section1 {
                 {
                 }
@@ -910,11 +914,13 @@ class ParserTest(TestCase):
         )
         self.assertRaises(
             config_parser.MissingSectionNameBeforeOpeningBraceException,
-            config_parser.parse_string, string
+            config_parser.parse_string,
+            string,
         )
 
     def test_sections_junk_after_opening(self):
-        string = outdent("""\
+        string = outdent(
+            """\
             section1 {
                 section1a {junk
                 }
@@ -929,11 +935,13 @@ class ParserTest(TestCase):
         )
         self.assertRaises(
             config_parser.ExtraCharactersAfterOpeningBraceException,
-            config_parser.parse_string, string
+            config_parser.parse_string,
+            string,
         )
 
     def test_sections_comment_junk_after_opening(self):
-        string = outdent("""\
+        string = outdent(
+            """\
             section1 {
                 section1a { #junk
                 }
@@ -948,11 +956,13 @@ class ParserTest(TestCase):
         )
         self.assertRaises(
             config_parser.ExtraCharactersAfterOpeningBraceException,
-            config_parser.parse_string, string
+            config_parser.parse_string,
+            string,
         )
 
     def test_sections_junk_before_closing(self):
-        string = outdent("""\
+        string = outdent(
+            """\
             section1 {
                 section1a {
                 junk}
@@ -967,11 +977,13 @@ class ParserTest(TestCase):
         )
         self.assertRaises(
             config_parser.ExtraCharactersBeforeOrAfterClosingBraceException,
-            config_parser.parse_string, string
+            config_parser.parse_string,
+            string,
         )
 
     def test_sections_junk_after_closing(self):
-        string = outdent("""\
+        string = outdent(
+            """\
             section1 {
                 section1a {
                 }junk
@@ -986,11 +998,13 @@ class ParserTest(TestCase):
         )
         self.assertRaises(
             config_parser.ExtraCharactersBeforeOrAfterClosingBraceException,
-            config_parser.parse_string, string
+            config_parser.parse_string,
+            string,
         )
 
     def test_sections_comment_junk_after_closing(self):
-        string = outdent("""\
+        string = outdent(
+            """\
             section1 {
                 section1a {
                 } #junk
@@ -1005,21 +1019,25 @@ class ParserTest(TestCase):
         )
         self.assertRaises(
             config_parser.ExtraCharactersBeforeOrAfterClosingBraceException,
-            config_parser.parse_string, string
+            config_parser.parse_string,
+            string,
         )
 
     def test_sections_unexpected_closing_brace(self):
-        string = outdent("""\
+        string = outdent(
+            """\
             }
             """
         )
         self.assertRaises(
             config_parser.UnexpectedClosingBraceException,
-            config_parser.parse_string, string
+            config_parser.parse_string,
+            string,
         )
 
     def test_sections_unexpected_closing_brace_inner_section(self):
-        string = outdent("""\
+        string = outdent(
+            """\
             section1 {
                 section1a {
                 }
@@ -1032,21 +1050,25 @@ class ParserTest(TestCase):
         )
         self.assertRaises(
             config_parser.UnexpectedClosingBraceException,
-            config_parser.parse_string, string
+            config_parser.parse_string,
+            string,
         )
 
     def test_sections_missing_closing_brace(self):
-        string = outdent("""\
+        string = outdent(
+            """\
             section1 {
             """
         )
         self.assertRaises(
             config_parser.MissingClosingBraceException,
-            config_parser.parse_string, string
+            config_parser.parse_string,
+            string,
         )
 
     def test_sections_missing_closing_brace_inner_section(self):
-        string = outdent("""\
+        string = outdent(
+            """\
             section1 {
                 section1a {
 
@@ -1057,11 +1079,13 @@ class ParserTest(TestCase):
         )
         self.assertRaises(
             config_parser.MissingClosingBraceException,
-            config_parser.parse_string, string
+            config_parser.parse_string,
+            string,
         )
 
     def test_junk_line(self):
-        string = outdent("""\
+        string = outdent(
+            """\
             name1: value1
             section1 {
                 section1a {
@@ -1075,11 +1099,13 @@ class ParserTest(TestCase):
         )
         self.assertRaises(
             config_parser.LineIsNotSectionNorKeyValueException,
-            config_parser.parse_string, string
+            config_parser.parse_string,
+            string,
         )
 
     def test_comments_attributes(self):
-        string = outdent("""\
+        string = outdent(
+            """\
             # junk1
             name1: value1
               #junk2
@@ -1090,7 +1116,8 @@ class ParserTest(TestCase):
             #junk7
             """
         )
-        parsed = outdent("""\
+        parsed = outdent(
+            """\
             name1: value1
             name2: value2#junk3
             name3: value3 #junk4
@@ -1100,29 +1127,35 @@ class ParserTest(TestCase):
         self.assertEqual(str(config_parser.parse_string(string)), parsed)
 
     def test_comments_sections_closing_brace(self):
-        string = outdent("""\
+        string = outdent(
+            """\
             section {
             #}
             """
         )
         self.assertRaises(
             config_parser.MissingClosingBraceException,
-            config_parser.parse_string, string
+            config_parser.parse_string,
+            string,
         )
 
     def test_comments_sections_opening_brace(self):
-        string = outdent("""\
+        string = outdent(
+            """\
             #section {
             }
             """
         )
         self.assertRaises(
             config_parser.UnexpectedClosingBraceException,
-            config_parser.parse_string, string
+            config_parser.parse_string,
+            string,
         )
 
     def test_full_1(self):
-        string = outdent("""\
+        # pylint: disable=line-too-long
+        string = outdent(
+            """\
             # Please read the corosync.conf.5 manual page
             totem {
             	version: 2
@@ -1206,7 +1239,8 @@ class ParserTest(TestCase):
             }
             """
         )
-        parsed = outdent("""\
+        parsed = outdent(
+            """\
             totem {
                 version: 2
                 crypto_cipher: none
@@ -1243,7 +1277,8 @@ class ParserTest(TestCase):
         self.assertEqual(str(config_parser.parse_string(string)), parsed)
 
     def test_full_2(self):
-        string = outdent("""\
+        string = outdent(
+            """\
             # Please read the corosync.conf.5 manual page
             totem {
             	version: 2
@@ -1304,7 +1339,8 @@ class ParserTest(TestCase):
             }
             """
         )
-        parsed = outdent("""\
+        parsed = outdent(
+            """\
             totem {
                 version: 2
                 crypto_cipher: none
@@ -1367,13 +1403,11 @@ class ParserTest(TestCase):
 class VerifySection(TestCase):
     def test_empty_section(self):
         section = config_parser.Section("mySection")
-        self.assertEqual(
-            config_parser.verify_section(section),
-            ([], [], [])
-        )
+        self.assertEqual(config_parser.verify_section(section), ([], [], []))
 
     def test_all_valid(self):
-        text = outdent("""\
+        text = outdent(
+            """\
             name1: value1
             name2: value2
 
@@ -1398,16 +1432,12 @@ class VerifySection(TestCase):
             """
         )
         section = config_parser.parse_string(text)
-        self.assertEqual(
-            config_parser.verify_section(section),
-            ([], [], [])
-        )
+        self.assertEqual(config_parser.verify_section(section), ([], [], []))
 
     def test_bad_section(self):
         section = config_parser.Section("my#section")
         self.assertEqual(
-            config_parser.verify_section(section),
-            (["my#section"], [], [])
+            config_parser.verify_section(section), (["my#section"], [], [])
         )
 
     def test_bad_attr_name(self):
@@ -1416,7 +1446,7 @@ class VerifySection(TestCase):
         section.add_attribute("good_name", "value2")
         self.assertEqual(
             config_parser.verify_section(section),
-            ([], ["mySection.bad#name"], [])
+            ([], ["mySection.bad#name"], []),
         )
 
     def test_bad_attr_value(self):
@@ -1425,11 +1455,12 @@ class VerifySection(TestCase):
         section.add_attribute("good_value", "value2")
         self.assertEqual(
             config_parser.verify_section(section),
-            ([], [], [("mySection.bad_value", "va{l}ue1")])
+            ([], [], [("mySection.bad_value", "va{l}ue1")]),
         )
 
     def test_complex(self):
-        text = outdent("""\
+        text = outdent(
+            """\
             name1: value1
             name#2: value2
 
@@ -1467,5 +1498,5 @@ class VerifySection(TestCase):
                     "child2.child2#.na#me",
                 ],
                 [("name1_3", "va{l}ue")],
-            )
+            ),
         )

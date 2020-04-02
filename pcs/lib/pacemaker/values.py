@@ -22,6 +22,7 @@ def is_boolean(val) -> bool:
     """
     return val.lower() in _BOOLEAN
 
+
 def is_true(val) -> bool:
     """
     Does pacemaker consider a value to be true?
@@ -29,6 +30,7 @@ def is_true(val) -> bool:
     var checked value
     """
     return val.lower() in _BOOLEAN_TRUE
+
 
 def is_false(val) -> bool:
     """
@@ -38,11 +40,13 @@ def is_false(val) -> bool:
     """
     return val.lower() in _BOOLEAN_FALSE
 
+
 def is_score(value):
     if not value:
         return False
     unsigned_value = value[1:] if value[0] in ("+", "-") else value
     return unsigned_value == SCORE_INFINITY or unsigned_value.isdigit()
+
 
 def timeout_to_seconds(timeout, return_unknown=False):
     """
@@ -68,9 +72,10 @@ def timeout_to_seconds(timeout, return_unknown=False):
         "hr": 3600,
     }
     for suffix, multiplier in suffix_multiplier.items():
-        if timeout.endswith(suffix) and timeout[:-len(suffix)].isdigit():
-            return int(timeout[:-len(suffix)]) * multiplier
+        if timeout.endswith(suffix) and timeout[: -len(suffix)].isdigit():
+            return int(timeout[: -len(suffix)]) * multiplier
     return timeout if return_unknown else None
+
 
 def get_valid_timeout_seconds(timeout_candidate):
     """
@@ -88,6 +93,7 @@ def get_valid_timeout_seconds(timeout_candidate):
             )
         )
     return wait_timeout
+
 
 def validate_id(id_candidate, description="id", reporter=None):
     """
@@ -111,10 +117,7 @@ def validate_id(id_candidate, description="id", reporter=None):
     if _ID_FIRST_CHAR_NOT_RE.match(id_candidate[0]):
         report_item = ReportItem.error(
             reports.messages.InvalidIdBadChar(
-                id_candidate,
-                description,
-                id_candidate[0],
-                True,
+                id_candidate, description, id_candidate[0], True,
             )
         )
         if reporter is not None:
@@ -125,10 +128,7 @@ def validate_id(id_candidate, description="id", reporter=None):
         if _ID_REST_CHARS_NOT_RE.match(char):
             report_item = ReportItem.error(
                 reports.messages.InvalidIdBadChar(
-                    id_candidate,
-                    description,
-                    char,
-                    False,
+                    id_candidate, description, char, False,
                 )
             )
             if reporter is not None:
@@ -136,10 +136,15 @@ def validate_id(id_candidate, description="id", reporter=None):
             else:
                 raise LibraryError(report_item)
 
+
 def sanitize_id(id_candidate, replacement=""):
     if not id_candidate:
         return id_candidate
-    return "".join([
-        "" if _ID_FIRST_CHAR_NOT_RE.match(id_candidate[0]) else id_candidate[0],
-        _ID_REST_CHARS_NOT_RE.sub(replacement, id_candidate[1:])
-    ])
+    return "".join(
+        [
+            ""
+            if _ID_FIRST_CHAR_NOT_RE.match(id_candidate[0])
+            else id_candidate[0],
+            _ID_REST_CHARS_NOT_RE.sub(replacement, id_candidate[1:]),
+        ]
+    )

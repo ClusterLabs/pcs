@@ -13,6 +13,7 @@ from pcs.lib.commands.constraint import ticket as ticket_command
 
 patch_commands = create_patcher("pcs.lib.commands.constraint.ticket")
 
+
 class CreateTest(TestCase):
     def setUp(self):
         self.create_cib = get_xml_manipulation_creator_from_file(
@@ -21,15 +22,14 @@ class CreateTest(TestCase):
 
     def test_sucess_create(self):
         env_assist, config = get_env_tools(test_case=self)
-        (config
-            .runner.cib.load(
+        (
+            config.runner.cib.load(
                 resources="""
                     <resources>
                         <primitive id="resourceA" class="service" type="exim"/>
                     </resources>
                 """
-            )
-            .env.push_cib(
+            ).env.push_cib(
                 optional_in_conf="""
                     <constraints>
                         <rsc_ticket
@@ -42,16 +42,13 @@ class CreateTest(TestCase):
                     </constraints>
                 """
             )
-         )
+        )
 
         ticket_command.create(
             env_assist.get_env(),
             "ticketA",
             "resourceA",
-            {
-                "loss-policy": "fence",
-                "rsc-role": "master"
-            }
+            {"loss-policy": "fence", "rsc-role": "master"},
         )
 
     def test_refuse_for_nonexisting_resource(self):
@@ -68,12 +65,17 @@ class CreateTest(TestCase):
                     "context_id": "",
                     "id": "resourceA",
                     "expected_types": [
-                        "bundle", "clone", "group", "master", "primitive"
+                        "bundle",
+                        "clone",
+                        "group",
+                        "master",
+                        "primitive",
                     ],
                 },
-                None
+                None,
             ),
         )
+
 
 @patch_commands("get_constraints", mock.Mock)
 class RemoveTest(TestCase):

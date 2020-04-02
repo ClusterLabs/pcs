@@ -27,7 +27,7 @@ acl_cmd = create_router(
                 "delete": acl.user_delete,
                 "remove": acl.user_delete,
             },
-            ["acl", "user"]
+            ["acl", "user"],
         ),
         "group": create_router(
             {
@@ -35,7 +35,7 @@ acl_cmd = create_router(
                 "delete": acl.group_delete,
                 "remove": acl.group_delete,
             },
-            ["acl", "group"]
+            ["acl", "group"],
         ),
         "permission": create_router(
             {
@@ -43,9 +43,9 @@ acl_cmd = create_router(
                 "delete": acl.run_permission_delete,
                 "remove": acl.run_permission_delete,
             },
-            ["acl", "permission"]
+            ["acl", "permission"],
         ),
     },
     ["acl"],
-    default_cmd="show"
+    default_cmd="show",
 )

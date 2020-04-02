@@ -70,6 +70,7 @@ def cluster_cib_upgrade_cmd(lib, argv, modifiers):
         raise CmdLineInputError()
     utils.cluster_upgrade()
 
+
 def cluster_disable_cmd(lib, argv, modifiers):
     """
     Options:
@@ -85,6 +86,7 @@ def cluster_disable_cmd(lib, argv, modifiers):
         disable_cluster_all()
     else:
         disable_cluster(argv)
+
 
 def cluster_enable_cmd(lib, argv, modifiers):
     """
@@ -102,6 +104,7 @@ def cluster_enable_cmd(lib, argv, modifiers):
     else:
         enable_cluster(argv)
 
+
 def cluster_stop_cmd(lib, argv, modifiers):
     """
     Options:
@@ -116,7 +119,11 @@ def cluster_stop_cmd(lib, argv, modifiers):
     """
     del lib
     modifiers.ensure_only_supported(
-        "--wait", "--request-timeout", "--pacemaker", "--corosync", "--all",
+        "--wait",
+        "--request-timeout",
+        "--pacemaker",
+        "--corosync",
+        "--all",
         "--force",
     )
     if modifiers.get("--all"):
@@ -125,6 +132,7 @@ def cluster_stop_cmd(lib, argv, modifiers):
         stop_cluster_all()
     else:
         stop_cluster(argv)
+
 
 def cluster_start_cmd(lib, argv, modifiers):
     """
@@ -144,6 +152,7 @@ def cluster_start_cmd(lib, argv, modifiers):
         start_cluster_all()
     else:
         start_cluster(argv)
+
 
 def sync_nodes(lib, argv, modifiers):
     """
@@ -184,7 +193,7 @@ def start_cluster(argv):
         wait = True
 
     if argv:
-        nodes = set(argv) # unique
+        nodes = set(argv)  # unique
         start_cluster_nodes(nodes)
         if wait:
             wait_for_nodes_started(nodes, wait_timeout)
@@ -205,6 +214,7 @@ def start_cluster(argv):
             utils.err("unable to start {0}".format(service))
     if wait:
         wait_for_nodes_started([], wait_timeout)
+
 
 def start_cluster_all():
     """
@@ -232,6 +242,7 @@ def start_cluster_all():
     if wait:
         wait_for_nodes_started(all_nodes, wait_timeout)
 
+
 def start_cluster_nodes(nodes):
     """
     Commandline options:
@@ -248,7 +259,7 @@ def start_cluster_nodes(nodes):
     timeout = int(
         settings.default_request_timeout * math.ceil(len(nodes) / 8.0)
     )
-    utils.read_known_hosts_file() # cache known hosts
+    utils.read_known_hosts_file()  # cache known hosts
     node_errors = parallel_for_nodes(
         utils.startCluster, nodes, quiet=True, timeout=timeout
     )
@@ -257,15 +268,18 @@ def start_cluster_nodes(nodes):
             "unable to start all nodes\n" + "\n".join(node_errors.values())
         )
 
+
 def is_node_fully_started(node_status):
     """
     Commandline options: no options
     """
     return (
-        "online" in node_status and "pending" in node_status
-        and
-        node_status["online"] and not node_status["pending"]
+        "online" in node_status
+        and "pending" in node_status
+        and node_status["online"]
+        and not node_status["pending"]
     )
+
 
 def wait_for_local_node_started(stop_at, interval):
     """
@@ -282,14 +296,19 @@ def wait_for_local_node_started(stop_at, interval):
             if datetime.datetime.now() > stop_at:
                 return 1, "Waiting timeout"
     except LibraryError as e:
-        return 1, "Unable to get node status: {0}".format(
-            # pylint: disable=no-member
-            "\n".join(
-                report_item_msg_from_dto(
-                    cast(reports.ReportItemDto, item).message
-                ).message for item in e.args
-            )
+        return (
+            1,
+            "Unable to get node status: {0}".format(
+                # pylint: disable=no-member
+                "\n".join(
+                    report_item_msg_from_dto(
+                        cast(reports.ReportItemDto, item).message
+                    ).message
+                    for item in e.args
+                )
+            ),
         )
+
 
 def wait_for_remote_node_started(node, stop_at, interval):
     """
@@ -314,6 +333,7 @@ def wait_for_remote_node_started(node, stop_at, interval):
         if datetime.datetime.now() > stop_at:
             return 1, "Waiting timeout"
 
+
 def wait_for_nodes_started(node_list, timeout=None):
     """
     Commandline options:
@@ -331,12 +351,13 @@ def wait_for_nodes_started(node_list, timeout=None):
         else:
             print(output)
     else:
-        utils.read_known_hosts_file() # cache known hosts
+        utils.read_known_hosts_file()  # cache known hosts
         node_errors = parallel_for_nodes(
             wait_for_remote_node_started, node_list, stop_at, interval
         )
         if node_errors:
             utils.err("unable to verify all nodes have started")
+
 
 def stop_cluster_all():
     """
@@ -356,6 +377,7 @@ def stop_cluster_all():
 
     stop_cluster_nodes(all_nodes)
 
+
 def stop_cluster_nodes(nodes):
     """
     Commandline options:
@@ -374,7 +396,7 @@ def stop_cluster_nodes(nodes):
             % "', '".join(sorted(unknown_nodes))
         )
 
-    utils.read_known_hosts_file() # cache known hosts
+    utils.read_known_hosts_file()  # cache known hosts
     stopping_all = set(nodes) >= set(all_nodes)
     if "--force" not in utils.pcs_options and not stopping_all:
         error_list = []
@@ -413,9 +435,7 @@ def stop_cluster_nodes(nodes):
 
     was_error = False
     node_errors = parallel_for_nodes(
-        utils.repeat_if_timeout(utils.stopPacemaker),
-        nodes,
-        quiet=True
+        utils.repeat_if_timeout(utils.stopPacemaker), nodes, quiet=True
     )
     accessible_nodes = [
         node for node in nodes if node not in node_errors.keys()
@@ -423,7 +443,7 @@ def stop_cluster_nodes(nodes):
     if node_errors:
         utils.err(
             "unable to stop all nodes\n" + "\n".join(node_errors.values()),
-            exit_after_error=not accessible_nodes
+            exit_after_error=not accessible_nodes,
         )
         was_error = True
 
@@ -431,9 +451,7 @@ def stop_cluster_nodes(nodes):
         print("{0}: Not stopping cluster - node is unreachable".format(node))
 
     node_errors = parallel_for_nodes(
-        utils.stopCorosync,
-        accessible_nodes,
-        quiet=True
+        utils.stopCorosync, accessible_nodes, quiet=True
     )
     if node_errors:
         utils.err(
@@ -441,6 +459,7 @@ def stop_cluster_nodes(nodes):
         )
     if was_error:
         utils.err("unable to stop all nodes")
+
 
 def enable_cluster(argv):
     """
@@ -457,6 +476,7 @@ def enable_cluster(argv):
     except LibraryError as e:
         process_library_reports(e.args)
 
+
 def disable_cluster(argv):
     """
     Commandline options:
@@ -471,6 +491,7 @@ def disable_cluster(argv):
         utils.disableServices()
     except LibraryError as e:
         process_library_reports(e.args)
+
 
 def enable_cluster_all():
     """
@@ -489,6 +510,7 @@ def enable_cluster_all():
 
     enable_cluster_nodes(all_nodes)
 
+
 def disable_cluster_all():
     """
     Commandline options:
@@ -506,6 +528,7 @@ def disable_cluster_all():
 
     disable_cluster_nodes(all_nodes)
 
+
 def enable_cluster_nodes(nodes):
     """
     Commandline options:
@@ -514,6 +537,7 @@ def enable_cluster_nodes(nodes):
     error_list = utils.map_for_error_list(utils.enableCluster, nodes)
     if error_list:
         utils.err("unable to enable all nodes\n" + "\n".join(error_list))
+
 
 def disable_cluster_nodes(nodes):
     """
@@ -524,32 +548,29 @@ def disable_cluster_nodes(nodes):
     if error_list:
         utils.err("unable to disable all nodes\n" + "\n".join(error_list))
 
+
 def destroy_cluster(argv):
     """
     Commandline options:
       * --request-timeout - timeout for HTTP requests
     """
     if argv:
-        utils.read_known_hosts_file() # cache known hosts
+        utils.read_known_hosts_file()  # cache known hosts
         # stop pacemaker and resources while cluster is still quorate
         nodes = argv
         node_errors = parallel_for_nodes(
-            utils.repeat_if_timeout(utils.stopPacemaker),
-            nodes,
-            quiet=True
+            utils.repeat_if_timeout(utils.stopPacemaker), nodes, quiet=True
         )
         # proceed with destroy regardless of errors
         # destroy will stop any remaining cluster daemons
         node_errors = parallel_for_nodes(
-            utils.destroyCluster,
-            nodes,
-            quiet=True
+            utils.destroyCluster, nodes, quiet=True
         )
         if node_errors:
             utils.err(
-                "unable to destroy cluster\n"
-                + "\n".join(node_errors.values())
+                "unable to destroy cluster\n" + "\n".join(node_errors.values())
             )
+
 
 def stop_cluster(argv):
     """
@@ -574,10 +595,9 @@ def stop_cluster(argv):
         # - retval is 2 on success if a node is not in a partition with quorum
         output, dummy_retval = utils.run(["corosync-quorumtool", "-p", "-s"])
         try:
-            if (
-                corosync_live.QuorumStatus.from_string(output)
-                    .stopping_local_node_cause_quorum_loss()
-            ):
+            if corosync_live.QuorumStatus.from_string(
+                output
+            ).stopping_local_node_cause_quorum_loss():
                 utils.err(
                     "Stopping the node will cause a loss of the quorum"
                     + ", use --force to override"
@@ -592,13 +612,13 @@ def stop_cluster(argv):
 
     stop_all = (
         "--pacemaker" not in utils.pcs_options
-        and
-        "--corosync" not in utils.pcs_options
+        and "--corosync" not in utils.pcs_options
     )
     if stop_all or "--pacemaker" in utils.pcs_options:
         stop_cluster_pacemaker()
     if stop_all or "--corosync" in utils.pcs_options:
         stop_cluster_corosync()
+
 
 def stop_cluster_pacemaker():
     """
@@ -609,6 +629,7 @@ def stop_cluster_pacemaker():
     if retval != 0:
         print(output)
         utils.err("unable to stop pacemaker")
+
 
 def stop_cluster_corosync():
     """
@@ -625,6 +646,7 @@ def stop_cluster_corosync():
             print(output)
             utils.err("unable to stop {0}".format(service))
 
+
 def kill_cluster(lib, argv, modifiers):
     """
     Options: no options
@@ -634,10 +656,13 @@ def kill_cluster(lib, argv, modifiers):
         raise CmdLineInputError()
     modifiers.ensure_only_supported()
     dummy_output, dummy_retval = kill_local_cluster_services()
+
+
 #    if dummy_retval != 0:
 #        print "Error: unable to execute killall -9"
 #        print output
 #        sys.exit(1)
+
 
 def kill_local_cluster_services():
     """
@@ -660,6 +685,7 @@ def kill_local_cluster_services():
         "corosync",
     ]
     return utils.run(["/usr/bin/killall", "-9"] + all_cluster_daemons)
+
 
 def cluster_push(lib, argv, modifiers):
     """
@@ -708,8 +734,7 @@ def cluster_push(lib, argv, modifiers):
         new_cib_dom = xml.dom.minidom.parse(filename)
         if scope and not new_cib_dom.getElementsByTagName(scope):
             utils.err(
-                "unable to push cib, scope '%s' not present in new cib"
-                % scope
+                "unable to push cib, scope '%s' not present in new cib" % scope
             )
     except (EnvironmentError, xml.parsers.expat.ExpatError) as e:
         utils.err("unable to parse new cib: %s" % e)
@@ -722,8 +747,9 @@ def cluster_push(lib, argv, modifiers):
 
         def unable_to_diff(reason):
             return error(
-                "unable to diff against original cib '{0}': {1}"
-                .format(diff_against, reason)
+                "unable to diff against original cib '{0}': {1}".format(
+                    diff_against, reason
+                )
             )
 
         cib_element_list = original_cib.getElementsByTagName("cib")
@@ -746,7 +772,7 @@ def cluster_push(lib, argv, modifiers):
         crm_feature_set_version = Version(
             int(match.group("major")),
             int(match.group("minor")),
-            int(match.group("rev")) if match.group("rev") else None
+            int(match.group("rev")) if match.group("rev") else None,
         )
 
         if crm_feature_set_version < MIN_FEATURE_SET_VERSION_FOR_DIFF:
@@ -755,15 +781,18 @@ def cluster_push(lib, argv, modifiers):
                     "the 'crm_feature_set' version is '{0}'"
                     " but at least version '{1}' is required"
                 ).format(
-                    crm_feature_set_version,
-                    MIN_FEATURE_SET_VERSION_FOR_DIFF,
+                    crm_feature_set_version, MIN_FEATURE_SET_VERSION_FOR_DIFF,
                 )
             )
 
         runner = utils.cmd_runner()
         command = [
             os.path.join(settings.pacemaker_binaries, "crm_diff"),
-            "--original", diff_against, "--new", filename, "--no-version"
+            "--original",
+            diff_against,
+            "--new",
+            filename,
+            "--no-version",
         ]
         patch, stderr, retval = runner.run(command)
         #  0 (CRM_EX_OK) - success with no difference
@@ -780,7 +809,8 @@ def cluster_push(lib, argv, modifiers):
 
         command = [
             os.path.join(settings.pacemaker_binaries, "cibadmin"),
-            "--patch", "--xml-pipe"
+            "--patch",
+            "--xml-pipe",
         ]
         output, stderr, retval = runner.run(command, patch)
         if retval != 0:
@@ -810,6 +840,7 @@ def cluster_push(lib, argv, modifiers):
             msg.append("\n" + output)
         utils.err("\n".join(msg).strip())
 
+
 def cluster_edit(lib, argv, modifiers):
     """
     Options:
@@ -818,7 +849,7 @@ def cluster_edit(lib, argv, modifiers):
       * --wait
     """
     modifiers.ensure_only_supported("--config", "--wait", "-f")
-    if 'EDITOR' in os.environ:
+    if "EDITOR" in os.environ:
         if len(argv) > 1:
             raise CmdLineInputError()
 
@@ -842,7 +873,7 @@ def cluster_edit(lib, argv, modifiers):
             # option from utils.pcs_options
             scope_arg = ""
 
-        editor = os.environ['EDITOR']
+        editor = os.environ["EDITOR"]
         tempcib = tempfile.NamedTemporaryFile(mode="w+", suffix=".pcs")
         cib = utils.get_cib(scope)
         tempcib.write(cib)
@@ -865,6 +896,7 @@ def cluster_edit(lib, argv, modifiers):
 
     else:
         utils.err("$EDITOR environment variable is not set")
+
 
 def get_cib(lib, argv, modifiers):
     """
@@ -898,7 +930,7 @@ def get_cib(lib, argv, modifiers):
         print(utils.get_cib(scope).rstrip())
     else:
         try:
-            cib_file = open(filename, 'w')
+            cib_file = open(filename, "w")
             output = utils.get_cib(scope)
             if output != "":
                 cib_file.write(output)
@@ -924,7 +956,7 @@ class RemoteAddNodes(RunRemotelyBase):
                 RequestData(
                     "remote/cluster_add_nodes",
                     [("data_json", json.dumps(self._data))],
-                )
+                ),
             )
         ]
 
@@ -941,14 +973,13 @@ class RemoteAddNodes(RunRemotelyBase):
                 self._report(
                     ReportItem(
                         severity=reports.ReportItemSeverity(
-                            report_dict["severity"],
-                            report_dict["forceable"],
+                            report_dict["severity"], report_dict["forceable"],
                         ),
                         message=reports.messages.LegacyCommonMessage(
                             report_dict["code"],
                             report_dict["info"],
                             report_dict["report_text"],
-                        )
+                        ),
                     )
                 )
             if output["status"] == "success":
@@ -982,8 +1013,13 @@ def node_add_outside_cluster(lib, argv, modifiers):
     """
     del lib
     modifiers.ensure_only_supported(
-        "--wait", "--start", "--enable", "--force", "--skip-offline",
-        "--no-watchdog-validation", "--request-timeout",
+        "--wait",
+        "--start",
+        "--enable",
+        "--force",
+        "--skip-offline",
+        "--no-watchdog-validation",
+        "--request-timeout",
     )
     if len(argv) < 2:
         raise CmdLineInputError(
@@ -1026,6 +1062,7 @@ def node_add_outside_cluster(lib, argv, modifiers):
     if not was_successfull:
         raise LibraryError()
 
+
 def node_remove(lib, argv, modifiers):
     """
     Options:
@@ -1046,6 +1083,7 @@ def node_remove(lib, argv, modifiers):
         force_flags.append(report_codes.SKIP_OFFLINE_NODES)
 
     lib.cluster.remove_nodes(argv, force_flags=force_flags)
+
 
 def cluster_uidgid(lib, argv, modifiers, silent_list=False):
     """
@@ -1079,14 +1117,16 @@ def cluster_uidgid(lib, argv, modifiers, silent_list=False):
 
     if command in {"add", "delete", "remove", "rm"} and argv:
         for arg in argv:
-            if arg.find('=') == -1:
+            if arg.find("=") == -1:
                 utils.err(
                     "uidgid options must be of the form uid=<uid> gid=<gid>"
                 )
 
-            (key, value) = arg.split('=', 1)
+            (key, value) = arg.split("=", 1)
             if key not in {"uid", "gid"}:
-                utils.err("%s is not a valid key, you must use uid or gid" %key)
+                utils.err(
+                    "%s is not a valid key, you must use uid or gid" % key
+                )
 
             if key == "uid":
                 uid = value
@@ -1114,14 +1154,16 @@ def cluster_uidgid(lib, argv, modifiers, silent_list=False):
         # The hint is defined to print error messages which point users to the
         # changes section in pcs manpage.
         # To be removed in the next significant version.
-        raise CmdLineInputError(hint=(
-            msg_command_replaced(
-                "pcs cluster uidgid delete",
-                "pcs cluster uidgid remove",
+        raise CmdLineInputError(
+            hint=(
+                msg_command_replaced(
+                    "pcs cluster uidgid delete", "pcs cluster uidgid remove",
+                )
+                if command == "rm"
+                else None
             )
-            if command == "rm"
-            else None
-        ))
+        )
+
 
 def cluster_get_corosync_conf(lib, argv, modifiers):
     """
@@ -1145,6 +1187,7 @@ def cluster_get_corosync_conf(lib, argv, modifiers):
     else:
         print(output.rstrip())
 
+
 def cluster_reload(lib, argv, modifiers):
     """
     Options: no options
@@ -1158,6 +1201,7 @@ def cluster_reload(lib, argv, modifiers):
     if retval != 0 or "invalid option" in output:
         utils.err(output.rstrip())
     print("Corosync reloaded")
+
 
 # Completely tear down the cluster & remove config files
 # Code taken from cluster-clean script in pacemaker
@@ -1208,7 +1252,7 @@ def cluster_destroy(lib, argv, modifiers):
                         lib_env,
                         all_remote_nodes,
                         skip_offline_nodes=True,
-                        allow_fails=True
+                        allow_fails=True,
                     )
             except LibraryError as e:
                 process_library_reports(e.args)
@@ -1236,13 +1280,16 @@ def cluster_destroy(lib, argv, modifiers):
             pass
 
         print("Removing all cluster configuration files...")
-        dummy_output, dummy_retval = utils.run([
-            "/bin/rm", "-f",
-            settings.corosync_conf_file,
-            settings.corosync_authkey_file,
-            settings.pacemaker_authkey_file,
-            settings.pcsd_dr_config_location,
-        ])
+        dummy_output, dummy_retval = utils.run(
+            [
+                "/bin/rm",
+                "-f",
+                settings.corosync_conf_file,
+                settings.corosync_authkey_file,
+                settings.pacemaker_authkey_file,
+                settings.pcsd_dr_config_location,
+            ]
+        )
         state_files = [
             "cib-*",
             "cib.*",
@@ -1253,16 +1300,26 @@ def cluster_destroy(lib, argv, modifiers):
             "pe*.bz2",
         ]
         for name in state_files:
-            dummy_output, dummy_retval = utils.run([
-                "/usr/bin/find", "/var/lib/pacemaker", "-name", name,
-                "-exec", "/bin/rm", "-f", "{}", ";"
-            ])
+            dummy_output, dummy_retval = utils.run(
+                [
+                    "/usr/bin/find",
+                    "/var/lib/pacemaker",
+                    "-name",
+                    name,
+                    "-exec",
+                    "/bin/rm",
+                    "-f",
+                    "{}",
+                    ";",
+                ]
+            )
         try:
             qdevice_net.client_destroy()
         except:
             # errors from deleting other files are suppressed as well
             # we do not want to fail if qdevice was not set up
             pass
+
 
 def cluster_verify(lib, argv, modifiers):
     """
@@ -1275,6 +1332,7 @@ def cluster_verify(lib, argv, modifiers):
         raise CmdLineInputError()
 
     lib.cluster.verify(verbose=modifiers.get("--full"))
+
 
 def cluster_report(lib, argv, modifiers):
     """
@@ -1316,24 +1374,17 @@ def cluster_report(lib, argv, modifiers):
 
     crm_report_opts.append(outfile)
     output, retval = utils.run([settings.crm_report] + crm_report_opts)
-    if (
-        retval != 0
-        and
-        (
-            "ERROR: Cannot determine nodes; specify --nodes or --single-node"
-            in
-            output
-        )
+    if retval != 0 and (
+        "ERROR: Cannot determine nodes; specify --nodes or --single-node"
+        in output
     ):
         utils.err("cluster is not configured on this node")
     newoutput = ""
     for line in output.split("\n"):
         if (
             line.startswith("cat:")
-            or
-            line.startswith("grep")
-            or
-            line.startswith("tail")
+            or line.startswith("grep")
+            or line.startswith("tail")
         ):
             continue
         if "We will attempt to remove" in line:
@@ -1433,13 +1484,15 @@ def cluster_auth_cmd(lib, argv, modifiers):
             not_authorized_node_name_list.append(node_name)
     com_cmd = CheckAuth(lib_env.report_processor)
     com_cmd.set_targets(target_list)
-    not_authorized_node_name_list.extend(run_and_raise(
-        lib_env.get_node_communicator(), com_cmd
-    ))
+    not_authorized_node_name_list.extend(
+        run_and_raise(lib_env.get_node_communicator(), com_cmd)
+    )
     if not_authorized_node_name_list:
-        print("Nodes to authorize: {}".format(
-            ", ".join(not_authorized_node_name_list)
-        ))
+        print(
+            "Nodes to authorize: {}".format(
+                ", ".join(not_authorized_node_name_list)
+            )
+        )
         username, password = utils.get_user_and_pass()
         not_auth_node_list = []
         for node_name in not_authorized_node_name_list:
@@ -1457,11 +1510,14 @@ def cluster_auth_cmd(lib, argv, modifiers):
             node.name: dict(
                 username=username,
                 password=password,
-                dest_list=[dict(
-                    addr=node.addrs_plain()[0],
-                    port=settings.pcsd_default_port,
-                )],
-            ) for node in not_auth_node_list
+                dest_list=[
+                    dict(
+                        addr=node.addrs_plain()[0],
+                        port=settings.pcsd_default_port,
+                    )
+                ],
+            )
+            for node in not_auth_node_list
         }
         utils.auth_hosts(nodes_to_auth_data)
     else:
@@ -1499,6 +1555,8 @@ def _parse_node_options(
 TRANSPORT_KEYWORD = "transport"
 TRANSPORT_DEFAULT_SECTION = "__default__"
 LINK_KEYWORD = "link"
+
+
 def _parse_transport(transport_args):
     """
     Commandline options: no options
@@ -1541,11 +1599,15 @@ def cluster_setup(lib, argv, modifiers):
         corosync and pacemaker authkeys
     """
     modifiers.ensure_only_supported(
-        "--wait", "--start", "--enable", "--force", "--no-keys-sync",
+        "--wait",
+        "--start",
+        "--enable",
+        "--force",
+        "--no-keys-sync",
         # The hint is defined to print error messages which point users to the
         # changes section in pcs manpage.
         # To be removed in the next significant version.
-        hint_syntax_changed=modifiers.is_specified("--name")
+        hint_syntax_changed=modifiers.is_specified("--name"),
     )
     # pylint: disable=invalid-name
     if len(argv) < 2:
@@ -1562,8 +1624,7 @@ def cluster_setup(lib, argv, modifiers):
     nodes = [
         _parse_node_options(node, options)
         for node, options in parse_args.split_list_by_any_keywords(
-            parsed_args["nodes"],
-            "node name",
+            parsed_args["nodes"], "node name",
         ).items()
     ]
 
@@ -1598,6 +1659,7 @@ def cluster_setup(lib, argv, modifiers):
         force_flags=force_flags,
     )
 
+
 def _parse_add_node(argv):
     # pylint: disable=invalid-name
     DEVICE_KEYWORD = "device"
@@ -1607,12 +1669,13 @@ def _parse_add_node(argv):
         hostname,
         argv,
         additional_options={DEVICE_KEYWORD, WATCHDOG_KEYWORD},
-        additional_repeatable_options={DEVICE_KEYWORD}
+        additional_repeatable_options={DEVICE_KEYWORD},
     )
     if DEVICE_KEYWORD in node_dict:
         node_dict[f"{DEVICE_KEYWORD}s"] = node_dict[DEVICE_KEYWORD]
         del node_dict[DEVICE_KEYWORD]
     return node_dict
+
 
 def node_add(lib, argv, modifiers):
     """
@@ -1628,8 +1691,13 @@ def node_add(lib, argv, modifiers):
       * --request-timeout - HTTP request timeout
     """
     modifiers.ensure_only_supported(
-        "--wait", "--start", "--enable", "--force", "--skip-offline",
-        "--no-watchdog-validation", "--request-timeout",
+        "--wait",
+        "--start",
+        "--enable",
+        "--force",
+        "--skip-offline",
+        "--no-watchdog-validation",
+        "--request-timeout",
     )
     if not argv:
         raise CmdLineInputError()
@@ -1651,6 +1719,7 @@ def node_add(lib, argv, modifiers):
         force_flags=force_flags,
     )
 
+
 def remove_nodes_from_cib(lib, argv, modifiers):
     """
     Options: no options
@@ -1659,6 +1728,7 @@ def remove_nodes_from_cib(lib, argv, modifiers):
     if not argv:
         raise CmdLineInputError("No nodes specified")
     lib.cluster.remove_nodes_from_cib(argv)
+
 
 def link_add(lib, argv, modifiers):
     """
@@ -1684,7 +1754,7 @@ def link_add(lib, argv, modifiers):
         argv,
         {"options"},
         implicit_first_group_key="nodes",
-        keyword_repeat_allowed=False
+        keyword_repeat_allowed=False,
     )
 
     lib.cluster.add_link(
@@ -1692,6 +1762,7 @@ def link_add(lib, argv, modifiers):
         parse_args.prepare_options(parsed["options"]),
         force_flags=force_flags,
     )
+
 
 def link_remove(lib, argv, modifiers):
     """
@@ -1708,6 +1779,7 @@ def link_remove(lib, argv, modifiers):
         force_flags.append(report_codes.SKIP_OFFLINE_NODES)
 
     lib.cluster.remove_links(argv, force_flags=force_flags)
+
 
 def link_update(lib, argv, modifiers):
     """
@@ -1734,7 +1806,7 @@ def link_update(lib, argv, modifiers):
         argv[1:],
         {"options"},
         implicit_first_group_key="nodes",
-        keyword_repeat_allowed=False
+        keyword_repeat_allowed=False,
     )
 
     lib.cluster.update_link(

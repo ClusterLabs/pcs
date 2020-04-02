@@ -20,7 +20,7 @@ def local_auth_cmd(lib, argv, modifiers):
             "localhost": {
                 "username": username,
                 "password": password,
-                "dest_list": [{"addr": "localhost", "port": port}]
+                "dest_list": [{"addr": "localhost", "port": port}],
             }
         }
     )

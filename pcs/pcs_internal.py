@@ -30,7 +30,7 @@ def _exit(status, status_msg=None, report_list=None, data=None):
             report_list=report_list or [],
             data=data,
         ),
-        sys.stdout
+        sys.stdout,
     )
     sys.exit(0)
 
@@ -60,6 +60,7 @@ class LibraryReportProcessor(ReportProcessor):
 def export_reports(report_list):
     return [report_item_to_dict(report) for report in report_list]
 
+
 def report_item_to_dict(report_item: ReportItem):
     dto_obj: ReportItemDto = report_item.to_dto()
     return dict(
@@ -69,6 +70,7 @@ def report_item_to_dict(report_item: ReportItem):
         forceable=dto_obj.severity.force_code,
         report_text=dto_obj.message.message,
     )
+
 
 def main():
     # pylint: disable=broad-except

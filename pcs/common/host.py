@@ -6,9 +6,7 @@ from pcs import settings
 Destination = namedtuple("Destination", ["addr", "port"])
 
 
-class PcsKnownHost(
-    namedtuple("KnownHost", ["name", "token", "dest_list"])
-):
+class PcsKnownHost(namedtuple("KnownHost", ["name", "token", "dest_list"])):
     @classmethod
     def from_known_host_file_dict(cls, name, known_host_dict):
         dest_list = [
@@ -25,12 +23,10 @@ class PcsKnownHost(
             dict(
                 token=self.token,
                 dest_list=[
-                    dict(
-                        addr=dest.addr,
-                        port=dest.port,
-                    ) for dest in self.dest_list
-                ]
-            )
+                    dict(addr=dest.addr, port=dest.port,)
+                    for dest in self.dest_list
+                ],
+            ),
         )
 
     @property

@@ -1,3 +1,5 @@
+# pylint: disable=line-too-long
+
 import shutil
 from unittest import TestCase
 
@@ -11,6 +13,7 @@ from pcs_test.tools.pcs_runner import PcsRunner
 
 temp_cib = rc("temp-cib.xml")
 
+
 class OldCibPushTest(TestCase, AssertPcsMixin):
     def setUp(self):
         shutil.copy(rc("cib-empty-1.2.xml"), temp_cib)
@@ -21,14 +24,18 @@ class OldCibPushTest(TestCase, AssertPcsMixin):
         self.assert_pcs_success(
             "resource create dummy ocf:pacemaker:Dummy --no-default-ops",
             "Warning: Replacing the whole CIB instead of applying a diff, "
-                "a race condition may happen if the CIB is pushed more than "
-                "once simultaneously. To fix this, upgrade pacemaker to get "
-                "crm_feature_set at least 3.0.9, current is 3.0.8.\n"
+            "a race condition may happen if the CIB is pushed more than "
+            "once simultaneously. To fix this, upgrade pacemaker to get "
+            "crm_feature_set at least 3.0.9, current is 3.0.8.\n",
         )
         self.assert_pcs_success(
             "resource config",
-            outdent("""\
+            # fmt: off
+            outdent(
+            """\
              Resource: dummy (class=ocf provider=pacemaker type=Dummy)
               Operations: monitor interval=10s timeout=20s (dummy-monitor-interval-10s)
-            """)
+            """
+            ),
+            # fmt: on
         )

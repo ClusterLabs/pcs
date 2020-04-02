@@ -6,6 +6,7 @@ from pcs_test.tools.assertions import ac
 
 import pcs.lib.corosync.config_facade as lib
 
+
 class GetLinkOptions(TestCase):
     def _assert_options(self, config, options):
         facade = lib.ConfigFacade.from_string(config)
@@ -17,27 +18,32 @@ class GetLinkOptions(TestCase):
         self._assert_options("", {})
 
         self._assert_options(
-            dedent("""\
+            dedent(
+                """\
                 totem {
                 }
-            """),
-            {}
+            """
+            ),
+            {},
         )
 
     def test_no_linknumber(self):
         self._assert_options(
-            dedent("""\
+            dedent(
+                """\
                 totem {
                     interface {
                     }
                 }
-            """),
-            {"0": {"linknumber": "0"}}
+            """
+            ),
+            {"0": {"linknumber": "0"}},
         )
 
     def test_no_linknumber_more_sections(self):
         self._assert_options(
-            dedent("""\
+            dedent(
+                """\
                 totem {
                     transport: knet
                     interface {
@@ -51,16 +57,18 @@ class GetLinkOptions(TestCase):
                         mcastport: 3456
                     }
                 }
-            """),
+            """
+            ),
             {
                 "0": {"linknumber": "0", "mcastport": "3456"},
                 "1": {"linknumber": "1", "mcastport": "2345"},
-            }
+            },
         )
 
     def test_all_options_knet(self):
         self._assert_options(
-            dedent("""\
+            dedent(
+                """\
                 totem {
                     transport: knet
                     interface {
@@ -75,7 +83,8 @@ class GetLinkOptions(TestCase):
                         unknown: option
                     }
                 }
-            """),
+            """
+            ),
             {
                 "1": {
                     "linknumber": "1",
@@ -87,12 +96,13 @@ class GetLinkOptions(TestCase):
                     "pong_count": "6",
                     "transport": "sctp",
                 },
-            }
+            },
         )
 
     def test_all_options_udp(self):
         self._assert_options(
-            dedent("""\
+            dedent(
+                """\
                 totem {
                     transport: udp
                     interface {
@@ -103,21 +113,23 @@ class GetLinkOptions(TestCase):
                         ttl: 123
                     }
                 }
-            """),
+            """
+            ),
             {
                 "0": {
-                   "bindnetaddr": "10.0.0.1",
-                   "broadcast": "1",
-                   "mcastaddr": "10.0.0.2",
-                   "mcastport": "1234",
-                   "ttl": "123",
+                    "bindnetaddr": "10.0.0.1",
+                    "broadcast": "1",
+                    "mcastaddr": "10.0.0.2",
+                    "mcastport": "1234",
+                    "ttl": "123",
                 },
-            }
+            },
         )
 
     def test_translate_conflict(self):
         self._assert_options(
-            dedent("""\
+            dedent(
+                """\
                 totem {
                     transport: knet
                     interface {
@@ -131,18 +143,15 @@ class GetLinkOptions(TestCase):
                         link_priority: 4
                     }
                 }
-            """),
-            {
-                "1": {
-                    "linknumber": "1",
-                    "link_priority": "2",
-                },
-            }
+            """
+            ),
+            {"1": {"linknumber": "1", "link_priority": "2",},},
         )
 
     def test_more_sections_and_conflicting_options(self):
         self._assert_options(
-            dedent("""\
+            dedent(
+                """\
                 totem {
                     transport: knet
                     interface {
@@ -166,7 +175,8 @@ class GetLinkOptions(TestCase):
                         knet_transport: udp
                     }
                 }
-            """),
+            """
+            ),
             {
                 "0": {
                     "linknumber": "0",
@@ -174,15 +184,14 @@ class GetLinkOptions(TestCase):
                     "ping_interval": "2",
                     "transport": "udp",
                 },
-                "1": {
-                    "linknumber": "1",
-                    "transport": "udp",
-                },
-            }
+                "1": {"linknumber": "1", "transport": "udp",},
+            },
         )
 
+
 class AddLink(TestCase):
-    before = dedent("""\
+    before = dedent(
+        """\
         totem {
             transport: knet
 
@@ -207,7 +216,8 @@ class AddLink(TestCase):
                 nodeid: 2
             }
         }
-    """)
+    """
+    )
 
     @staticmethod
     def _assert_add(node_addr_map, options, before, after):
@@ -220,7 +230,8 @@ class AddLink(TestCase):
             {"node1": "node1-addr2", "node2": "node2-addr2"},
             {},
             self.before,
-            dedent("""\
+            dedent(
+                """\
                 totem {
                     transport: knet
 
@@ -247,7 +258,8 @@ class AddLink(TestCase):
                         ring2_addr: node2-addr2
                     }
                 }
-            """)
+            """
+            ),
         )
 
     def test_options_no_linknumber(self):
@@ -263,7 +275,8 @@ class AddLink(TestCase):
                 "transport": "sctp",
             },
             self.before,
-            dedent("""\
+            dedent(
+                """\
                 totem {
                     transport: knet
 
@@ -301,7 +314,8 @@ class AddLink(TestCase):
                         ring2_addr: node2-addr2
                     }
                 }
-            """)
+            """
+            ),
         )
 
     def test_custom_link_number_no_options(self):
@@ -309,7 +323,8 @@ class AddLink(TestCase):
             {"node1": "node1-addr2", "node2": "node2-addr2"},
             {"linknumber": "4"},
             self.before,
-            dedent("""\
+            dedent(
+                """\
                 totem {
                     transport: knet
 
@@ -336,7 +351,8 @@ class AddLink(TestCase):
                         ring4_addr: node2-addr2
                     }
                 }
-            """)
+            """
+            ),
         )
 
     def test_custom_link_number_options(self):
@@ -344,7 +360,8 @@ class AddLink(TestCase):
             {"node1": "node1-addr2", "node2": "node2-addr2"},
             {"linknumber": "4", "transport": "sctp"},
             self.before,
-            dedent("""\
+            dedent(
+                """\
                 totem {
                     transport: knet
 
@@ -376,11 +393,13 @@ class AddLink(TestCase):
                         ring4_addr: node2-addr2
                     }
                 }
-            """)
+            """
+            ),
         )
 
     def test_set_as_link_0_if_available(self):
-        before = dedent("""\
+        before = dedent(
+            """\
             totem {
                 transport: knet
 
@@ -405,8 +424,10 @@ class AddLink(TestCase):
                     nodeid: 2
                 }
             }
-        """)
-        after = dedent("""\
+        """
+        )
+        after = dedent(
+            """\
             totem {
                 transport: knet
 
@@ -438,16 +459,18 @@ class AddLink(TestCase):
                     ring0_addr: node2-addr0
                 }
             }
-        """)
+        """
+        )
         self._assert_add(
             {"node1": "node1-addr0", "node2": "node2-addr0"},
             {"transport": "sctp"},
             before,
-            after
+            after,
         )
 
     def test_set_as_first_available_link(self):
-        before = dedent("""\
+        before = dedent(
+            """\
             totem {
                 transport: knet
 
@@ -472,8 +495,10 @@ class AddLink(TestCase):
                     nodeid: 2
                 }
             }
-        """)
-        after = dedent("""\
+        """
+        )
+        after = dedent(
+            """\
             totem {
                 transport: knet
 
@@ -500,16 +525,15 @@ class AddLink(TestCase):
                     ring1_addr: node2-addr1
                 }
             }
-        """)
+        """
+        )
         self._assert_add(
-            {"node1": "node1-addr1", "node2": "node2-addr1"},
-            {},
-            before,
-            after
+            {"node1": "node1-addr1", "node2": "node2-addr1"}, {}, before, after
         )
 
     def test_no_linknumber_available(self):
-        before = dedent("""\
+        before = dedent(
+            """\
             totem {
                 transport: knet
             }
@@ -541,18 +565,20 @@ class AddLink(TestCase):
                     nodeid: 2
                 }
             }
-        """)
+        """
+        )
         with self.assertRaises(AssertionError) as cm:
             self._assert_add(
                 {"node1": "node1-addr-new", "node2": "node2-addr-new"},
                 {},
                 before,
-                "does not matter"
+                "does not matter",
             )
         self.assertEqual(str(cm.exception), "No link number available")
 
     def test_more_sections(self):
-        before = dedent("""\
+        before = dedent(
+            """\
             totem {
                 interface {
                     linknumber: 1
@@ -581,12 +607,14 @@ class AddLink(TestCase):
                     nodeid: 2
                 }
             }
-        """)
+        """
+        )
         self._assert_add(
             {"node1": "node1-addr4", "node2": "node2-addr4"},
             {"linknumber": "4", "transport": "sctp"},
             before,
-            dedent("""\
+            dedent(
+                """\
                 totem {
                     interface {
                         linknumber: 1
@@ -622,7 +650,8 @@ class AddLink(TestCase):
                         ring4_addr: node2-addr4
                     }
                 }
-            """)
+            """
+            ),
         )
 
 
@@ -634,7 +663,8 @@ class RemoveLinks(TestCase):
         ac(after, facade.config.export())
 
     def test_nonexistent_links(self):
-        config = dedent("""\
+        config = dedent(
+            """\
             totem {
                 interface {
                     linknumber: 0
@@ -662,11 +692,13 @@ class RemoveLinks(TestCase):
                     nodeid: 2
                 }
             }
-        """)
+        """
+        )
         self.assert_remove(["1"], config, config)
 
     def test_link_without_options(self):
-        before = dedent("""\
+        before = dedent(
+            """\
             totem {
                 interface {
                     linknumber: 0
@@ -689,8 +721,10 @@ class RemoveLinks(TestCase):
                     nodeid: 2
                 }
             }
-        """)
-        after = dedent("""\
+        """
+        )
+        after = dedent(
+            """\
             totem {
                 interface {
                     linknumber: 0
@@ -711,11 +745,13 @@ class RemoveLinks(TestCase):
                     nodeid: 2
                 }
             }
-        """)
+        """
+        )
         self.assert_remove(["1"], before, after)
 
     def test_link_with_options(self):
-        before = dedent("""\
+        before = dedent(
+            """\
             totem {
                 interface {
                     linknumber: 0
@@ -738,8 +774,10 @@ class RemoveLinks(TestCase):
                     nodeid: 2
                 }
             }
-        """)
-        after = dedent("""\
+        """
+        )
+        after = dedent(
+            """\
             nodelist {
                 node {
                     ring1_addr: node1-addr1
@@ -753,11 +791,13 @@ class RemoveLinks(TestCase):
                     nodeid: 2
                 }
             }
-        """)
+        """
+        )
         self.assert_remove(["0"], before, after)
 
     def test_link_without_addrs(self):
-        before = dedent("""\
+        before = dedent(
+            """\
             totem {
                 interface {
                     linknumber: 0
@@ -778,8 +818,10 @@ class RemoveLinks(TestCase):
                     nodeid: 2
                 }
             }
-        """)
-        after = dedent("""\
+        """
+        )
+        after = dedent(
+            """\
             nodelist {
                 node {
                     ring1_addr: node1-addr1
@@ -793,11 +835,13 @@ class RemoveLinks(TestCase):
                     nodeid: 2
                 }
             }
-        """)
+        """
+        )
         self.assert_remove(["0"], before, after)
 
     def test_more_links(self):
-        before = dedent("""\
+        before = dedent(
+            """\
             totem {
                 interface {
                     linknumber: 0
@@ -822,8 +866,10 @@ class RemoveLinks(TestCase):
                     nodeid: 2
                 }
             }
-        """)
-        after = dedent("""\
+        """
+        )
+        after = dedent(
+            """\
             nodelist {
                 node {
                     ring1_addr: node1-addr1
@@ -837,11 +883,13 @@ class RemoveLinks(TestCase):
                     nodeid: 2
                 }
             }
-        """)
+        """
+        )
         self.assert_remove(["0", "2"], before, after)
 
     def test_more_occurences(self):
-        before = dedent("""\
+        before = dedent(
+            """\
             totem {
                 interface {
                     linknumber: 1
@@ -897,8 +945,10 @@ class RemoveLinks(TestCase):
                     nodeid: 2
                 }
             }
-        """)
-        after = dedent("""\
+        """
+        )
+        after = dedent(
+            """\
             totem {
                 interface {
                     linknumber: 2
@@ -935,11 +985,13 @@ class RemoveLinks(TestCase):
                     nodeid: 2
                 }
             }
-        """)
+        """
+        )
         self.assert_remove(["1"], before, after)
 
     def test_link_with_options_nonumbered(self):
-        before = dedent("""\
+        before = dedent(
+            """\
             totem {
                 interface {
                     knet_transport: udp
@@ -966,8 +1018,10 @@ class RemoveLinks(TestCase):
                     nodeid: 2
                 }
             }
-        """)
-        after = dedent("""\
+        """
+        )
+        after = dedent(
+            """\
             totem {
                 interface {
                     linknumber: 1
@@ -988,11 +1042,13 @@ class RemoveLinks(TestCase):
                     nodeid: 2
                 }
             }
-        """)
+        """
+        )
         self.assert_remove(["0"], before, after)
 
     def test_more_linknumbers(self):
-        before = dedent("""\
+        before = dedent(
+            """\
             totem {
                 interface {
                     linknumber: 0
@@ -1016,8 +1072,10 @@ class RemoveLinks(TestCase):
                     nodeid: 2
                 }
             }
-        """)
-        after = dedent("""\
+        """
+        )
+        after = dedent(
+            """\
             totem {
                 interface {
                     linknumber: 0
@@ -1039,8 +1097,10 @@ class RemoveLinks(TestCase):
                     nodeid: 2
                 }
             }
-        """)
+        """
+        )
         self.assert_remove(["0"], before, after)
+
 
 class UpdateLink(TestCase):
     def _assert_update(self, before, after, linknumber, options, node_addr_map):
@@ -1051,7 +1111,8 @@ class UpdateLink(TestCase):
         self.assertFalse(facade.need_qdevice_reload)
 
     def test_no_changes(self):
-        config = dedent("""\
+        config = dedent(
+            """\
             totem {
                 transport: knet
 
@@ -1076,11 +1137,13 @@ class UpdateLink(TestCase):
                     nodeid: 2
                 }
             }
-        """)
+        """
+        )
         self._assert_update(config, config, "1", {}, {})
 
     def test_wrong_linknumber(self):
-        before = dedent("""\
+        before = dedent(
+            """\
             totem {
                 transport: knet
 
@@ -1105,8 +1168,10 @@ class UpdateLink(TestCase):
                     nodeid: 2
                 }
             }
-        """)
-        after = dedent("""\
+        """
+        )
+        after = dedent(
+            """\
             totem {
                 transport: knet
 
@@ -1137,17 +1202,15 @@ class UpdateLink(TestCase):
                     nodeid: 2
                 }
             }
-        """)
+        """
+        )
         self._assert_update(
-            before,
-            after,
-            "2",
-            {"transport": "sctp"},
-            {"node1": "new-addr"}
+            before, after, "2", {"transport": "sctp"}, {"node1": "new-addr"}
         )
 
     def test_do_not_allow_linknumber_change(self):
-        before = dedent("""\
+        before = dedent(
+            """\
             totem {
                 transport: knet
 
@@ -1172,8 +1235,10 @@ class UpdateLink(TestCase):
                     nodeid: 2
                 }
             }
-        """)
-        after = dedent("""\
+        """
+        )
+        after = dedent(
+            """\
             totem {
                 transport: knet
 
@@ -1198,17 +1263,19 @@ class UpdateLink(TestCase):
                     nodeid: 2
                 }
             }
-        """)
+        """
+        )
         self._assert_update(
             before,
             after,
             "1",
             {"linknumber": "2", "transport": "sctp"},
-            {"node1": "new-addr"}
+            {"node1": "new-addr"},
         )
 
     def test_addresses(self):
-        before = dedent("""\
+        before = dedent(
+            """\
             totem {
                 transport: knet
             }
@@ -1228,8 +1295,10 @@ class UpdateLink(TestCase):
                     nodeid: 2
                 }
             }
-        """)
-        after = dedent("""\
+        """
+        )
+        after = dedent(
+            """\
             totem {
                 transport: knet
             }
@@ -1249,17 +1318,15 @@ class UpdateLink(TestCase):
                     nodeid: 2
                 }
             }
-        """)
+        """
+        )
         self._assert_update(
-            before,
-            after,
-            "1",
-            {},
-            {"node1": "new-addr", "nodeX": "addrX"}
+            before, after, "1", {}, {"node1": "new-addr", "nodeX": "addrX"}
         )
 
     def test_addresses_more_sections(self):
-        before = dedent("""\
+        before = dedent(
+            """\
             totem {
                 transport: knet
             }
@@ -1288,8 +1355,10 @@ class UpdateLink(TestCase):
                     nodeid: 1
                 }
             }
-        """)
-        after = dedent("""\
+        """
+        )
+        after = dedent(
+            """\
             totem {
                 transport: knet
             }
@@ -1317,17 +1386,13 @@ class UpdateLink(TestCase):
                     nodeid: 1
                 }
             }
-        """)
-        self._assert_update(
-            before,
-            after,
-            "0",
-            {},
-            {"node1": "new-addr"}
+        """
         )
+        self._assert_update(before, after, "0", {}, {"node1": "new-addr"})
 
     def test_options(self):
-        before = dedent("""\
+        before = dedent(
+            """\
             totem {
                 transport: knet
 
@@ -1342,8 +1407,10 @@ class UpdateLink(TestCase):
                     mcastport: 1234
                 }
             }
-        """)
-        after = dedent("""\
+        """
+        )
+        after = dedent(
+            """\
             totem {
                 transport: knet
 
@@ -1358,17 +1425,19 @@ class UpdateLink(TestCase):
                     knet_pong_count: 10
                 }
             }
-        """)
+        """
+        )
         self._assert_update(
             before,
             after,
             "1",
             {"transport": "sctp", "mcastport": "", "pong_count": "10"},
-            {}
+            {},
         )
 
     def test_options_more_interface_sections(self):
-        before = dedent("""\
+        before = dedent(
+            """\
             totem {
                 transport: knet
 
@@ -1395,8 +1464,10 @@ class UpdateLink(TestCase):
                     mcastport: 3456
                 }
             }
-        """)
-        after = dedent("""\
+        """
+        )
+        after = dedent(
+            """\
             totem {
                 transport: knet
 
@@ -1417,17 +1488,13 @@ class UpdateLink(TestCase):
                     mcastport: 9876
                 }
             }
-        """)
-        self._assert_update(
-            before,
-            after,
-            "1",
-            {"mcastport": "9876"},
-            {}
+        """
         )
+        self._assert_update(before, after, "1", {"mcastport": "9876"}, {})
 
     def test_remove_all_options_removes_linknumber_and_section(self):
-        before = dedent("""\
+        before = dedent(
+            """\
             totem {
                 transport: knet
 
@@ -1441,8 +1508,10 @@ class UpdateLink(TestCase):
                     knet_transport: udp
                 }
             }
-        """)
-        after = dedent("""\
+        """
+        )
+        after = dedent(
+            """\
             totem {
                 transport: knet
 
@@ -1451,17 +1520,13 @@ class UpdateLink(TestCase):
                     knet_transport: udp
                 }
             }
-        """)
-        self._assert_update(
-            before,
-            after,
-            "0",
-            {"transport": ""},
-            {}
+        """
         )
+        self._assert_update(before, after, "0", {"transport": ""}, {})
 
     def test_create_interface_section(self):
-        before = dedent("""\
+        before = dedent(
+            """\
             totem {
                 transport: knet
 
@@ -1470,8 +1535,10 @@ class UpdateLink(TestCase):
                     knet_transport: udp
                 }
             }
-        """)
-        after = dedent("""\
+        """
+        )
+        after = dedent(
+            """\
             totem {
                 transport: knet
 
@@ -1485,17 +1552,13 @@ class UpdateLink(TestCase):
                     knet_transport: sctp
                 }
             }
-        """)
-        self._assert_update(
-            before,
-            after,
-            "1",
-            {"transport": "sctp"},
-            {}
+        """
         )
+        self._assert_update(before, after, "1", {"transport": "sctp"}, {})
 
     def test_enable_broadcast(self):
-        before = dedent("""\
+        before = dedent(
+            """\
             totem {
                 transport: udp
 
@@ -1503,8 +1566,10 @@ class UpdateLink(TestCase):
                     mcastport: 1234
                 }
             }
-        """)
-        after = dedent("""\
+        """
+        )
+        after = dedent(
+            """\
             totem {
                 transport: udp
 
@@ -1513,17 +1578,13 @@ class UpdateLink(TestCase):
                     broadcast: yes
                 }
             }
-        """)
-        self._assert_update(
-            before,
-            after,
-            "0",
-            {"broadcast": "1"},
-            {}
+        """
         )
+        self._assert_update(before, after, "0", {"broadcast": "1"}, {})
 
     def test_disable_broadcast(self):
-        before = dedent("""\
+        before = dedent(
+            """\
             totem {
                 transport: udp
 
@@ -1532,8 +1593,10 @@ class UpdateLink(TestCase):
                     broadcast: yes
                 }
             }
-        """)
-        after = dedent("""\
+        """
+        )
+        after = dedent(
+            """\
             totem {
                 transport: udp
 
@@ -1541,17 +1604,13 @@ class UpdateLink(TestCase):
                     mcastport: 1234
                 }
             }
-        """)
-        self._assert_update(
-            before,
-            after,
-            "0",
-            {"broadcast": "0"},
-            {}
+        """
         )
+        self._assert_update(before, after, "0", {"broadcast": "0"}, {})
 
     def test_default_broadcast(self):
-        before = dedent("""\
+        before = dedent(
+            """\
             totem {
                 transport: udp
 
@@ -1560,8 +1619,10 @@ class UpdateLink(TestCase):
                     broadcast: yes
                 }
             }
-        """)
-        after = dedent("""\
+        """
+        )
+        after = dedent(
+            """\
             totem {
                 transport: udp
 
@@ -1569,11 +1630,6 @@ class UpdateLink(TestCase):
                     mcastport: 1234
                 }
             }
-        """)
-        self._assert_update(
-            before,
-            after,
-            "0",
-            {"broadcast": ""},
-            {}
+        """
         )
+        self._assert_update(before, after, "0", {"broadcast": ""}, {})

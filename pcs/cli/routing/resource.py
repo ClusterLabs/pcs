@@ -73,7 +73,7 @@ resource_cmd = create_router(
                 "remove": resource.resource_op_delete_cmd,
                 "delete": resource.resource_op_delete_cmd,
             },
-            ["resource", "op"]
+            ["resource", "op"],
         ),
         "defaults": resource.resource_defaults_cmd,
         "cleanup": resource.resource_cleanup,
@@ -85,7 +85,7 @@ resource_cmd = create_router(
                 "run": resource.resource_relocate_run_cmd,
                 "clear": resource.resource_relocate_clear_cmd,
             },
-            ["resource", "relocate"]
+            ["resource", "relocate"],
         ),
         "utilization": resource.resource_utilization_cmd,
         "bundle": create_router(
@@ -94,11 +94,10 @@ resource_cmd = create_router(
                 "reset": resource.resource_bundle_reset_cmd,
                 "update": resource.resource_bundle_update_cmd,
             },
-            ["resource", "bundle"]
+            ["resource", "bundle"],
         ),
         # internal use only
         "get_resource_agent_info": resource.get_resource_agent_info,
-
         # removed commands
         # These print error messages which point users to the changes section in
         # pcs manpage.
@@ -109,5 +108,5 @@ resource_cmd = create_router(
         "relations": show_resource_relations_cmd,
     },
     ["resource"],
-    default_cmd="status"
+    default_cmd="status",
 )

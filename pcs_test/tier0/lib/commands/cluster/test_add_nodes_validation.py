@@ -22,6 +22,7 @@ from pcs.lib.commands import cluster
 
 get_env_tools = partial(get_env_tools, local_extensions={"local": LocalConfig})
 
+
 class GetTargets(TestCase):
     def setUp(self):
         self.env_assist, self.config = get_env_tools(self)
@@ -35,8 +36,8 @@ class GetTargets(TestCase):
             node_fixture(node, i)
             for i, node in enumerate(self.existing_nodes, 1)
         ]
-        (self.config
-            .local.set_expected_reports_list(self.expected_reports)
+        (
+            self.config.local.set_expected_reports_list(self.expected_reports)
             .runner.systemctl.is_enabled("sbd", is_enabled=False)
             .corosync_conf.load_content(
                 corosync_conf_fixture(self.existing_corosync_nodes)
@@ -56,16 +57,16 @@ class GetTargets(TestCase):
 
     def _add_nodes_with_lib_error(self, skip_offline=False):
         self.env_assist.assert_raise_library_error(
-            lambda: self._add_nodes(
-                skip_offline=skip_offline
-            )
+            lambda: self._add_nodes(skip_offline=skip_offline)
         )
 
     def test_some_existing_nodes_unknown(self):
-        (self.config
-            .env.set_known_nodes(self.existing_nodes[1:] + self.new_nodes)
+        (
+            self.config.env.set_known_nodes(
+                self.existing_nodes[1:] + self.new_nodes
+            )
             .http.host.check_auth(node_labels=self.existing_nodes[1:])
-            .runner.systemctl.list_unit_files({}) # SBD not installed
+            .runner.systemctl.list_unit_files({})  # SBD not installed
             .local.get_host_info(self.new_nodes)
             .local.pcsd_ssl_cert_sync_disabled()
         )
@@ -74,21 +75,22 @@ class GetTargets(TestCase):
 
         self.env_assist.assert_reports(
             self.expected_reports
-            +
-            [
+            + [
                 fixture.error(
                     report_codes.HOST_NOT_FOUND,
                     force_code=report_codes.SKIP_OFFLINE_NODES,
-                    host_list=self.existing_nodes[:1]
+                    host_list=self.existing_nodes[:1],
                 )
             ]
         )
 
     def test_some_existing_nodes_unknown_skipped(self):
-        (self.config
-            .env.set_known_nodes(self.existing_nodes[1:] + self.new_nodes)
+        (
+            self.config.env.set_known_nodes(
+                self.existing_nodes[1:] + self.new_nodes
+            )
             .http.host.check_auth(node_labels=self.existing_nodes[1:])
-            .runner.systemctl.list_unit_files({}) # SBD not installed
+            .runner.systemctl.list_unit_files({})  # SBD not installed
             .local.get_host_info(self.new_nodes)
             .local.pcsd_ssl_cert_sync_disabled()
             .http.host.update_known_hosts(
@@ -100,7 +102,8 @@ class GetTargets(TestCase):
             .local.no_file_sync()
             .local.distribute_and_reload_corosync_conf(
                 corosync_conf_fixture(
-                    self.existing_corosync_nodes + [
+                    self.existing_corosync_nodes
+                    + [
                         node_fixture(node, i)
                         for i, node in enumerate(
                             self.new_nodes, self.existing_nodes_num + 1
@@ -116,19 +119,18 @@ class GetTargets(TestCase):
 
         self.env_assist.assert_reports(
             self.expected_reports
-            +
-            [
+            + [
                 fixture.warn(
                     report_codes.HOST_NOT_FOUND,
-                    host_list=self.existing_nodes[:1]
+                    host_list=self.existing_nodes[:1],
                 )
             ]
         )
 
     def test_all_existing_nodes_unknown(self):
-        (self.config
-            .env.set_known_nodes(self.new_nodes)
-            .runner.systemctl.list_unit_files({}) # SBD not installed
+        (
+            self.config.env.set_known_nodes(self.new_nodes)
+            .runner.systemctl.list_unit_files({})  # SBD not installed
             .local.get_host_info(self.new_nodes)
             .local.pcsd_ssl_cert_sync_disabled()
         )
@@ -137,23 +139,20 @@ class GetTargets(TestCase):
 
         self.env_assist.assert_reports(
             self.expected_reports
-            +
-            [
+            + [
                 fixture.error(
                     report_codes.HOST_NOT_FOUND,
                     force_code=report_codes.SKIP_OFFLINE_NODES,
-                    host_list=self.existing_nodes
+                    host_list=self.existing_nodes,
                 ),
-                fixture.error(
-                    report_codes.NONE_HOST_FOUND
-                )
+                fixture.error(report_codes.NONE_HOST_FOUND),
             ]
         )
 
     def test_all_existing_nodes_unknown_skipped(self):
-        (self.config
-            .env.set_known_nodes(self.new_nodes)
-            .runner.systemctl.list_unit_files({}) # SBD not installed
+        (
+            self.config.env.set_known_nodes(self.new_nodes)
+            .runner.systemctl.list_unit_files({})  # SBD not installed
             .local.get_host_info(self.new_nodes)
             .local.pcsd_ssl_cert_sync_disabled()
         )
@@ -162,27 +161,24 @@ class GetTargets(TestCase):
 
         self.env_assist.assert_reports(
             self.expected_reports
-            +
-            [
+            + [
                 fixture.warn(
-                    report_codes.HOST_NOT_FOUND,
-                    host_list=self.existing_nodes
+                    report_codes.HOST_NOT_FOUND, host_list=self.existing_nodes
                 ),
-                fixture.error(
-                    report_codes.NONE_HOST_FOUND
-                )
+                fixture.error(report_codes.NONE_HOST_FOUND),
             ]
         )
 
     def _assert_qnetd_unknown(self, skip_offline):
-        (self.config
-            .env.set_known_nodes(self.existing_nodes + self.new_nodes)
+        (
+            self.config.env.set_known_nodes(
+                self.existing_nodes + self.new_nodes
+            )
             .corosync_conf.load_content(
                 corosync_conf_fixture(
-                    self.existing_corosync_nodes,
-                    qdevice_net=True
+                    self.existing_corosync_nodes, qdevice_net=True
                 ),
-                instead="corosync_conf.load_content"
+                instead="corosync_conf.load_content",
             )
             .http.host.check_auth(node_labels=self.existing_nodes)
             .local.get_host_info(self.new_nodes)
@@ -193,11 +189,9 @@ class GetTargets(TestCase):
 
         self.env_assist.assert_reports(
             self.expected_reports
-            +
-            [
+            + [
                 fixture.error(
-                    report_codes.HOST_NOT_FOUND,
-                    host_list=[QDEVICE_HOST]
+                    report_codes.HOST_NOT_FOUND, host_list=[QDEVICE_HOST]
                 ),
             ]
         )
@@ -209,10 +203,12 @@ class GetTargets(TestCase):
         self._assert_qnetd_unknown(True)
 
     def _assert_new_nodes_unknown(self, skip_offline):
-        (self.config
-            .env.set_known_nodes(self.existing_nodes + self.new_nodes[1:])
+        (
+            self.config.env.set_known_nodes(
+                self.existing_nodes + self.new_nodes[1:]
+            )
             .http.host.check_auth(node_labels=self.existing_nodes)
-            .runner.systemctl.list_unit_files({}) # SBD not installed
+            .runner.systemctl.list_unit_files({})  # SBD not installed
             .local.get_host_info(self.new_nodes[1:])
             .local.pcsd_ssl_cert_sync_disabled()
         )
@@ -221,11 +217,9 @@ class GetTargets(TestCase):
 
         self.env_assist.assert_reports(
             self.expected_reports
-            +
-            [
+            + [
                 fixture.error(
-                    report_codes.HOST_NOT_FOUND,
-                    host_list=self.new_nodes[:1]
+                    report_codes.HOST_NOT_FOUND, host_list=self.new_nodes[:1]
                 )
             ]
         )
@@ -253,8 +247,10 @@ class NoneNamesMissing(TestCase):
         self.existing_nodes_with_name = self.existing_nodes
 
     def _add_nodes_with_lib_error(self, corosync_conf):
-        (self.config
-            .env.set_known_nodes(self.existing_nodes + self.new_nodes)
+        (
+            self.config.env.set_known_nodes(
+                self.existing_nodes + self.new_nodes
+            )
             .runner.systemctl.is_enabled("sbd", is_enabled=False)
             .corosync_conf.load_content(corosync_conf)
             .runner.cib.load()
@@ -263,8 +259,10 @@ class NoneNamesMissing(TestCase):
             self.config.http.host.check_auth(
                 node_labels=self.existing_nodes_with_name
             )
-        (self.config
-            .runner.systemctl.list_unit_files({}) # SBD not installed
+        (
+            self.config.runner.systemctl.list_unit_files(
+                {}
+            )  # SBD not installed
             .local.get_host_info(self.new_nodes)
             .local.pcsd_ssl_cert_sync_disabled()
         )
@@ -272,16 +270,18 @@ class NoneNamesMissing(TestCase):
         self.env_assist.assert_raise_library_error(
             lambda: cluster.add_nodes(
                 self.env_assist.get_env(),
-                [{"name": node, "addrs": [node]} for node in self.new_nodes]
+                [{"name": node, "addrs": [node]} for node in self.new_nodes],
             )
         )
 
-        self.env_assist.assert_reports([
-            fixture.error(
-                report_codes.COROSYNC_CONFIG_MISSING_NAMES_OF_NODES,
-                fatal=True,
-            ),
-        ])
+        self.env_assist.assert_reports(
+            [
+                fixture.error(
+                    report_codes.COROSYNC_CONFIG_MISSING_NAMES_OF_NODES,
+                    fatal=True,
+                ),
+            ]
+        )
 
     def test_some_node_names_missing(self):
         corosync_conf = re.sub(r"\s+name: node1\n", "\n", self.corosync_conf)
@@ -305,15 +305,23 @@ class Inputs(TestCase):
     def test_conflict_existing_nodes(self):
         existing_nodes = ["node1", "node2", "node3"]
         new_nodes = ["new1", "remote-name", "node3", "guest-name"]
-        (self.config
-            .env.set_known_nodes(existing_nodes + new_nodes)
+        (
+            self.config.env.set_known_nodes(existing_nodes + new_nodes)
             .runner.systemctl.is_enabled("sbd", is_enabled=False)
             .corosync_conf.load_content(
-                corosync_conf_fixture([
-                    corosync_node_fixture(1, "node1", ["addr1-1", "addr1-2"]),
-                    corosync_node_fixture(2, "node2", ["addr2-1", "addr2-2"]),
-                    corosync_node_fixture(3, "node3", ["addr3-1", "addr3-2"]),
-                ])
+                corosync_conf_fixture(
+                    [
+                        corosync_node_fixture(
+                            1, "node1", ["addr1-1", "addr1-2"]
+                        ),
+                        corosync_node_fixture(
+                            2, "node2", ["addr2-1", "addr2-2"]
+                        ),
+                        corosync_node_fixture(
+                            3, "node3", ["addr3-1", "addr3-2"]
+                        ),
+                    ]
+                )
             )
             .runner.cib.load(
                 resources="""
@@ -352,9 +360,15 @@ class Inputs(TestCase):
                 self.env_assist.get_env(),
                 [
                     # no change, addrs defined
-                    {"name": "new1", "addrs": [
-                        "new-addr1", "addr1-2", "guest-host", "remote-host"
-                    ]},
+                    {
+                        "name": "new1",
+                        "addrs": [
+                            "new-addr1",
+                            "addr1-2",
+                            "guest-host",
+                            "remote-host",
+                        ],
+                    },
                     # no change, addrs defined even though empty
                     {"name": "remote-name", "addrs": []},
                     # use a default address
@@ -370,12 +384,12 @@ class Inputs(TestCase):
                 fixture.info(
                     report_codes.USING_KNOWN_HOST_ADDRESS_FOR_HOST,
                     host_name="node3",
-                    address="node3"
+                    address="node3",
                 ),
                 fixture.info(
                     report_codes.USING_KNOWN_HOST_ADDRESS_FOR_HOST,
                     host_name="guest-name",
-                    address="guest-name"
+                    address="guest-name",
                 ),
                 fixture.error(
                     report_codes.COROSYNC_BAD_NODE_ADDRESSES_COUNT,
@@ -413,17 +427,21 @@ class Inputs(TestCase):
                     report_codes.NODE_ADDRESSES_UNRESOLVABLE,
                     force_code=report_codes.FORCE_NODE_ADDRESSES_UNRESOLVABLE,
                     address_list=[
-                        "addr1-2", "guest-host", "guest-name", "new-addr1",
-                        "node3", "remote-host",
-                    ]
+                        "addr1-2",
+                        "guest-host",
+                        "guest-name",
+                        "new-addr1",
+                        "node3",
+                        "remote-host",
+                    ],
                 ),
                 fixture.error(
                     report_codes.NODE_NAMES_ALREADY_EXIST,
-                    name_list=["guest-name", "node3", "remote-name"]
+                    name_list=["guest-name", "node3", "remote-name"],
                 ),
                 fixture.error(
                     report_codes.NODE_ADDRESSES_ALREADY_EXIST,
-                    address_list=["addr1-2", "guest-host", "remote-host"]
+                    address_list=["addr1-2", "guest-host", "remote-host"],
                 ),
             ]
         )
@@ -431,16 +449,18 @@ class Inputs(TestCase):
     def conflict_existing_nodes_cib_load_error(self):
         existing_nodes = ["node1", "node2", "node3", "node4"]
         new_nodes = ["new1"]
-        (self.config
-            .env.set_known_nodes(existing_nodes + new_nodes)
+        (
+            self.config.env.set_known_nodes(existing_nodes + new_nodes)
             .runner.systemctl.is_enabled("sbd", is_enabled=False)
             .corosync_conf.load_content(
-                corosync_conf_fixture([
-                    corosync_node_fixture(1, "node1", ["addr1-1"]),
-                    corosync_node_fixture(2, "node2", ["addr2-1"]),
-                    corosync_node_fixture(3, "node3", ["addr3-1"]),
-                    corosync_node_fixture(4, "node4", ["addr4-1"]),
-                ])
+                corosync_conf_fixture(
+                    [
+                        corosync_node_fixture(1, "node1", ["addr1-1"]),
+                        corosync_node_fixture(2, "node2", ["addr2-1"]),
+                        corosync_node_fixture(3, "node3", ["addr3-1"]),
+                        corosync_node_fixture(4, "node4", ["addr4-1"]),
+                    ]
+                )
             )
             .runner.cib.load(returncode=1, stderr="an error")
             .http.host.check_auth(node_labels=existing_nodes)
@@ -452,8 +472,7 @@ class Inputs(TestCase):
         self.conflict_existing_nodes_cib_load_error()
         self.env_assist.assert_raise_library_error(
             lambda: cluster.add_nodes(
-                self.env_assist.get_env(),
-                [{"name": "new1"}],
+                self.env_assist.get_env(), [{"name": "new1"}],
             )
         )
         self.env_assist.assert_reports(
@@ -461,16 +480,16 @@ class Inputs(TestCase):
                 fixture.info(
                     report_codes.USING_KNOWN_HOST_ADDRESS_FOR_HOST,
                     host_name="new1",
-                    address="new1"
+                    address="new1",
                 ),
                 fixture.error(
                     report_codes.CIB_LOAD_ERROR_GET_NODES_FOR_VALIDATION,
-                    force_code=report_codes.FORCE_LOAD_NODES_FROM_CIB
+                    force_code=report_codes.FORCE_LOAD_NODES_FROM_CIB,
                 ),
                 fixture.error(
                     report_codes.NODE_ADDRESSES_UNRESOLVABLE,
                     force_code=report_codes.FORCE_NODE_ADDRESSES_UNRESOLVABLE,
-                    address_list=["new1"]
+                    address_list=["new1"],
                 ),
             ]
         )
@@ -492,26 +511,28 @@ class Inputs(TestCase):
                 fixture.warn(
                     report_codes.NODE_ADDRESSES_UNRESOLVABLE,
                     # force_code=report_codes.FORCE_NODE_ADDRESSES_UNRESOLVABLE,
-                    address_list=["addr1-1"]
+                    address_list=["addr1-1"],
                 ),
                 fixture.error(
                     report_codes.NODE_ADDRESSES_ALREADY_EXIST,
-                    address_list=["addr1-1"]
-                )
+                    address_list=["addr1-1"],
+                ),
             ]
         )
 
     def test_force_unresolvable(self):
         existing_nodes = ["node1", "node2"]
         new_nodes = ["new1"]
-        (self.config
-            .env.set_known_nodes(existing_nodes + new_nodes)
+        (
+            self.config.env.set_known_nodes(existing_nodes + new_nodes)
             .runner.systemctl.is_enabled("sbd", is_enabled=False)
             .corosync_conf.load_content(
-                corosync_conf_fixture([
-                    node_fixture(node, i)
-                    for i, node in enumerate(existing_nodes, 1)
-                ])
+                corosync_conf_fixture(
+                    [
+                        node_fixture(node, i)
+                        for i, node in enumerate(existing_nodes, 1)
+                    ]
+                )
             )
             .runner.cib.load()
             .http.host.check_auth(node_labels=existing_nodes)
@@ -536,11 +557,11 @@ class Inputs(TestCase):
             [
                 fixture.warn(
                     report_codes.NODE_ADDRESSES_UNRESOLVABLE,
-                    address_list=["node1"]
+                    address_list=["node1"],
                 ),
                 fixture.error(
                     report_codes.NODE_ADDRESSES_ALREADY_EXIST,
-                    address_list=["node1"]
+                    address_list=["node1"],
                 ),
             ]
         )
@@ -549,18 +570,20 @@ class Inputs(TestCase):
         existing_nodes = ["node1", "node2"]
         new_nodes = ["new1", "new2", "new3", "new4"]
         patch_getaddrinfo(self, new_nodes)
-        (self.config
-            .env.set_known_nodes(existing_nodes + new_nodes)
+        (
+            self.config.env.set_known_nodes(existing_nodes + new_nodes)
             .runner.systemctl.is_enabled("sbd", is_enabled=False)
             .corosync_conf.load_content(
-                corosync_conf_fixture([
-                    node_fixture(node, i)
-                    for i, node in enumerate(existing_nodes, 1)
-                ])
+                corosync_conf_fixture(
+                    [
+                        node_fixture(node, i)
+                        for i, node in enumerate(existing_nodes, 1)
+                    ]
+                )
             )
             .runner.cib.load()
             .http.host.check_auth(node_labels=existing_nodes)
-            .runner.systemctl.list_unit_files({}) # SBD not installed
+            .runner.systemctl.list_unit_files({})  # SBD not installed
             .local.get_host_info(new_nodes)
             .local.pcsd_ssl_cert_sync_disabled()
         )
@@ -572,7 +595,7 @@ class Inputs(TestCase):
                     {
                         "name": "new1",
                         "watchdog": "/dev/wd",
-                        "devices": ["/dev/sxa", "/dev/sxb"]
+                        "devices": ["/dev/sxa", "/dev/sxb"],
                     },
                     {"name": "new2", "devices": ["/dev/sxc"]},
                     {"name": "new3", "watchdog": "/dev/wd"},
@@ -587,31 +610,31 @@ class Inputs(TestCase):
                     report_codes.USING_KNOWN_HOST_ADDRESS_FOR_HOST,
                     host_name=node,
                     address=node,
-                ) for node in new_nodes
+                )
+                for node in new_nodes
             ]
-            +
-            [
+            + [
                 fixture.error(
                     report_codes.INVALID_OPTIONS,
                     option_names=["nonsense"],
                     option_type="node",
                     allowed=["addrs", "devices", "name", "watchdog"],
-                    allowed_patterns=[]
+                    allowed_patterns=[],
                 ),
                 fixture.error(
                     report_codes.SBD_NOT_USED_CANNOT_SET_SBD_OPTIONS,
                     node="new1",
-                    options=["devices", "watchdog"]
+                    options=["devices", "watchdog"],
                 ),
                 fixture.error(
                     report_codes.SBD_NOT_USED_CANNOT_SET_SBD_OPTIONS,
                     node="new2",
-                    options=["devices"]
+                    options=["devices"],
                 ),
                 fixture.error(
                     report_codes.SBD_NOT_USED_CANNOT_SET_SBD_OPTIONS,
                     node="new3",
-                    options=["watchdog"]
+                    options=["watchdog"],
                 ),
             ]
         )
@@ -620,14 +643,16 @@ class Inputs(TestCase):
         existing_nodes = ["node1", "node2"]
         new_nodes = ["new1", "new2", "new3"]
         patch_getaddrinfo(self, new_nodes)
-        (self.config
-            .env.set_known_nodes(existing_nodes + new_nodes)
+        (
+            self.config.env.set_known_nodes(existing_nodes + new_nodes)
             .runner.systemctl.is_enabled("sbd", is_enabled=True)
             .corosync_conf.load_content(
-                corosync_conf_fixture([
-                    node_fixture(node, i)
-                    for i, node in enumerate(existing_nodes, 1)
-                ])
+                corosync_conf_fixture(
+                    [
+                        node_fixture(node, i)
+                        for i, node in enumerate(existing_nodes, 1)
+                    ]
+                )
             )
             .runner.cib.load()
             .local.read_sbd_config()
@@ -661,7 +686,7 @@ class Inputs(TestCase):
                         "name": "new1",
                         "watchdog": "/dev/wd",
                         "devices": ["/dev/sxa", "/dev/sxb"],
-                        "nonsense": "option"
+                        "nonsense": "option",
                     },
                     {"name": "new2", "devices": ["/dev/sxc"]},
                     {"name": "new3", "watchdog": "/dev/wdog"},
@@ -675,10 +700,10 @@ class Inputs(TestCase):
                     report_codes.USING_KNOWN_HOST_ADDRESS_FOR_HOST,
                     host_name=node,
                     address=node,
-                ) for node in new_nodes
+                )
+                for node in new_nodes
             ]
-            +
-            [
+            + [
                 fixture.info(
                     report_codes.USING_DEFAULT_WATCHDOG,
                     node="new2",
@@ -689,22 +714,18 @@ class Inputs(TestCase):
                     option_names=["nonsense"],
                     option_type="node",
                     allowed=["addrs", "devices", "name", "watchdog"],
-                    allowed_patterns=[]
+                    allowed_patterns=[],
                 ),
             ]
-            +
-            [
+            + [
                 fixture.error(
                     report_codes.SBD_WITH_DEVICES_NOT_USED_CANNOT_SET_DEVICE,
-                    node=node
-                ) for node in ["new1", "new2"]
+                    node=node,
+                )
+                for node in ["new1", "new2"]
             ]
-            +
-            [
-                fixture.info(report_codes.SBD_CHECK_STARTED)
-            ]
-            +
-            [
+            + [fixture.info(report_codes.SBD_CHECK_STARTED)]
+            + [
                 fixture.info(report_codes.SBD_CHECK_SUCCESS, node=node)
                 for node in new_nodes
             ]
@@ -716,14 +737,16 @@ class Inputs(TestCase):
         patch_getaddrinfo(self, new_nodes)
         devices1 = ["/dev/sxa", "/dev/sxb", "/dev/sxc", "/dev/sxd"]
         devices2 = ["/dev/sxe", "dev/sxf"]
-        (self.config
-            .env.set_known_nodes(existing_nodes + new_nodes)
+        (
+            self.config.env.set_known_nodes(existing_nodes + new_nodes)
             .runner.systemctl.is_enabled("sbd", is_enabled=True)
             .corosync_conf.load_content(
-                corosync_conf_fixture([
-                    node_fixture(node, i)
-                    for i, node in enumerate(existing_nodes, 1)
-                ])
+                corosync_conf_fixture(
+                    [
+                        node_fixture(node, i)
+                        for i, node in enumerate(existing_nodes, 1)
+                    ]
+                )
             )
             .runner.cib.load()
             .local.read_sbd_config("SBD_DEVICE=/device\n")
@@ -757,7 +780,7 @@ class Inputs(TestCase):
                         "name": "new1",
                         "watchdog": "/dev/wd",
                         "devices": devices1,
-                        "nonsense": "option"
+                        "nonsense": "option",
                     },
                     {"name": "new2", "devices": devices2},
                     {"name": "new3", "watchdog": "/dev/wdog"},
@@ -771,10 +794,10 @@ class Inputs(TestCase):
                     report_codes.USING_KNOWN_HOST_ADDRESS_FOR_HOST,
                     host_name=node,
                     address=node,
-                ) for node in new_nodes
+                )
+                for node in new_nodes
             ]
-            +
-            [
+            + [
                 fixture.info(
                     report_codes.USING_DEFAULT_WATCHDOG,
                     node="new2",
@@ -785,28 +808,27 @@ class Inputs(TestCase):
                     option_names=["nonsense"],
                     option_type="node",
                     allowed=["addrs", "devices", "name", "watchdog"],
-                    allowed_patterns=[]
+                    allowed_patterns=[],
                 ),
                 fixture.error(
                     report_codes.SBD_TOO_MANY_DEVICES_FOR_NODE,
                     node="new1",
                     device_list=devices1,
-                    max_devices=3
+                    max_devices=3,
                 ),
                 fixture.error(
                     report_codes.SBD_DEVICE_PATH_NOT_ABSOLUTE,
                     node="new2",
-                    device="dev/sxf"
+                    device="dev/sxf",
                 ),
                 fixture.error(
                     report_codes.SBD_NO_DEVICE_FOR_NODE,
                     node="new3",
-                    sbd_enabled_in_cluster=True
+                    sbd_enabled_in_cluster=True,
                 ),
                 fixture.info(report_codes.SBD_CHECK_STARTED),
             ]
-            +
-            [
+            + [
                 fixture.info(report_codes.SBD_CHECK_SUCCESS, node=node)
                 for node in new_nodes
             ]
@@ -816,14 +838,16 @@ class Inputs(TestCase):
         existing_nodes = ["node1", "node2"]
         new_nodes = ["new1"]
         patch_getaddrinfo(self, new_nodes)
-        (self.config
-            .env.set_known_nodes(existing_nodes + new_nodes)
+        (
+            self.config.env.set_known_nodes(existing_nodes + new_nodes)
             .runner.systemctl.is_enabled("sbd", is_enabled=False)
             .corosync_conf.load_content(
-                corosync_conf_fixture([
-                    node_fixture(node, i)
-                    for i, node in enumerate(existing_nodes, 1)
-                ])
+                corosync_conf_fixture(
+                    [
+                        node_fixture(node, i)
+                        for i, node in enumerate(existing_nodes, 1)
+                    ]
+                )
             )
             .runner.cib.load()
             .http.host.check_auth(node_labels=existing_nodes)
@@ -833,9 +857,7 @@ class Inputs(TestCase):
 
         self.env_assist.assert_raise_library_error(
             lambda: cluster.add_nodes(
-                self.env_assist.get_env(),
-                [{"name": "new1"}],
-                wait=10
+                self.env_assist.get_env(), [{"name": "new1"}], wait=10
             )
         )
 
@@ -845,26 +867,26 @@ class Inputs(TestCase):
                     report_codes.USING_KNOWN_HOST_ADDRESS_FOR_HOST,
                     host_name=node,
                     address=node,
-                ) for node in new_nodes
+                )
+                for node in new_nodes
             ]
-            +
-            [
-                fixture.error(report_codes.WAIT_FOR_NODE_STARTUP_WITHOUT_START)
-            ]
+            + [fixture.error(report_codes.WAIT_FOR_NODE_STARTUP_WITHOUT_START)]
         )
 
     def test_wait(self):
         existing_nodes = ["node1", "node2"]
         new_nodes = ["new1"]
         patch_getaddrinfo(self, new_nodes)
-        (self.config
-            .env.set_known_nodes(existing_nodes + new_nodes)
+        (
+            self.config.env.set_known_nodes(existing_nodes + new_nodes)
             .runner.systemctl.is_enabled("sbd", is_enabled=False)
             .corosync_conf.load_content(
-                corosync_conf_fixture([
-                    node_fixture(node, i)
-                    for i, node in enumerate(existing_nodes, 1)
-                ])
+                corosync_conf_fixture(
+                    [
+                        node_fixture(node, i)
+                        for i, node in enumerate(existing_nodes, 1)
+                    ]
+                )
             )
             .runner.cib.load()
             .http.host.check_auth(node_labels=existing_nodes)
@@ -877,7 +899,7 @@ class Inputs(TestCase):
                 self.env_assist.get_env(),
                 [{"name": "new1"}],
                 start=True,
-                wait="nonsense"
+                wait="nonsense",
             )
         )
 
@@ -887,13 +909,12 @@ class Inputs(TestCase):
                     report_codes.USING_KNOWN_HOST_ADDRESS_FOR_HOST,
                     host_name=node,
                     address=node,
-                ) for node in new_nodes
+                )
+                for node in new_nodes
             ]
-            +
-            [
+            + [
                 fixture.error(
-                    report_codes.INVALID_TIMEOUT_VALUE,
-                    timeout="nonsense"
+                    report_codes.INVALID_TIMEOUT_VALUE, timeout="nonsense"
                 )
             ]
         )
@@ -904,18 +925,23 @@ class ClusterStatus(TestCase):
         self.env_assist, self.config = get_env_tools(self)
 
     def setup_config(
-        self, existing_nodes, new_nodes, check_auth_communication_list=None,
-        with_get_host_info=True
+        self,
+        existing_nodes,
+        new_nodes,
+        check_auth_communication_list=None,
+        with_get_host_info=True,
     ):
         patch_getaddrinfo(self, new_nodes)
-        (self.config
-            .env.set_known_nodes(existing_nodes + new_nodes)
+        (
+            self.config.env.set_known_nodes(existing_nodes + new_nodes)
             .runner.systemctl.is_enabled("sbd", is_enabled=False)
             .corosync_conf.load_content(
-                corosync_conf_fixture([
-                    node_fixture(node, i)
-                    for i, node in enumerate(existing_nodes, 1)
-                ])
+                corosync_conf_fixture(
+                    [
+                        node_fixture(node, i)
+                        for i, node in enumerate(existing_nodes, 1)
+                    ]
+                )
             )
             .runner.cib.load()
         )
@@ -924,9 +950,7 @@ class ClusterStatus(TestCase):
                 communication_list=check_auth_communication_list
             )
         else:
-            self.config.http.host.check_auth(
-                node_labels=existing_nodes
-            )
+            self.config.http.host.check_auth(node_labels=existing_nodes)
         if with_get_host_info:
             self.config.local.get_host_info(new_nodes)
             self.config.local.pcsd_ssl_cert_sync_disabled()
@@ -949,7 +973,7 @@ class ClusterStatus(TestCase):
                     "response_code": 400,
                     "output": "not authorized",
                 },
-            ]
+            ],
         )
 
         self.env_assist.assert_raise_library_error(
@@ -966,14 +990,11 @@ class ClusterStatus(TestCase):
                     report_codes.USING_KNOWN_HOST_ADDRESS_FOR_HOST,
                     host_name=node,
                     address=node,
-                ) for node in new_nodes
+                )
+                for node in new_nodes
             ]
-            +
-            [
-                fixture.warn(
-                    report_codes.OMITTING_NODE,
-                    node="node1",
-                ),
+            + [
+                fixture.warn(report_codes.OMITTING_NODE, node="node1",),
                 fixture.error(
                     report_codes.NODE_COMMUNICATION_COMMAND_UNSUCCESSFUL,
                     node="node2",
@@ -1004,13 +1025,12 @@ class ClusterStatus(TestCase):
                     "response_code": 200,
                     "output": '{"success":true}',
                 },
-            ]
+            ],
         )
 
         self.env_assist.assert_raise_library_error(
             lambda: cluster.add_nodes(
-                self.env_assist.get_env(),
-                [{"name": "new1"}],
+                self.env_assist.get_env(), [{"name": "new1"}],
             )
         )
 
@@ -1020,10 +1040,10 @@ class ClusterStatus(TestCase):
                     report_codes.USING_KNOWN_HOST_ADDRESS_FOR_HOST,
                     host_name=node,
                     address=node,
-                ) for node in new_nodes
+                )
+                for node in new_nodes
             ]
-            +
-            [
+            + [
                 fixture.error(
                     report_codes.NODE_COMMUNICATION_ERROR_UNABLE_TO_CONNECT,
                     force_code=report_codes.SKIP_OFFLINE_NODES,
@@ -1052,7 +1072,7 @@ class ClusterStatus(TestCase):
                     "response_code": 200,
                     "output": '{"success":true}',
                 },
-            ]
+            ],
         )
 
         self.env_assist.assert_raise_library_error(
@@ -1062,7 +1082,7 @@ class ClusterStatus(TestCase):
                 # Use 'wait' without 'start' so the command stops after the
                 # validation and the test does not have to cover the whole
                 # node add process.
-                wait=10
+                wait=10,
             )
         )
 
@@ -1072,10 +1092,10 @@ class ClusterStatus(TestCase):
                     report_codes.USING_KNOWN_HOST_ADDRESS_FOR_HOST,
                     host_name=node,
                     address=node,
-                ) for node in new_nodes
+                )
+                for node in new_nodes
             ]
-            +
-            [
+            + [
                 fixture.error(report_codes.WAIT_FOR_NODE_STARTUP_WITHOUT_START),
                 fixture.error(
                     report_codes.NODE_COMMUNICATION_ERROR_UNABLE_TO_CONNECT,
@@ -1091,16 +1111,18 @@ class ClusterStatus(TestCase):
         existing_nodes = ["node1", "node2", "node3", "node4", "node5"]
         new_nodes = ["new1"]
         patch_getaddrinfo(self, new_nodes)
-        (self.config
-            .env.set_known_nodes(existing_nodes + new_nodes)
+        (
+            self.config.env.set_known_nodes(existing_nodes + new_nodes)
             .runner.systemctl.is_enabled(
                 "sbd", is_enabled=True, name="is_enabled_sbd_1"
             )
             .corosync_conf.load_content(
-                corosync_conf_fixture([
-                    node_fixture(node, i)
-                    for i, node in enumerate(existing_nodes, 1)
-                ])
+                corosync_conf_fixture(
+                    [
+                        node_fixture(node, i)
+                        for i, node in enumerate(existing_nodes, 1)
+                    ]
+                )
             )
             .runner.cib.load()
             .local.read_sbd_config(name_sufix="_1")
@@ -1112,28 +1134,16 @@ class ClusterStatus(TestCase):
             .local.read_sbd_config(name_sufix="_2")
             .http.corosync.check_corosync_offline(
                 communication_list=[
-                    {
-                        "label": "node1",
-                        "output": '{"corosync":true}'
-                    },
-                    {
-                        "label": "node2",
-                        "output": "an error"
-                    },
+                    {"label": "node1", "output": '{"corosync":true}'},
+                    {"label": "node2", "output": "an error"},
                     {
                         "label": "node3",
                         "was_connected": False,
                         "errno": 7,
                         "error_msg": "an error",
                     },
-                    {
-                        "label": "node4",
-                        "output": '{"corosync":true}'
-                    },
-                    {
-                        "label": "node5",
-                        "output": '{"corosync":false}'
-                    },
+                    {"label": "node4", "output": '{"corosync":true}'},
+                    {"label": "node5", "output": '{"corosync":false}'},
                 ]
             )
             .local.get_host_info(new_nodes)
@@ -1152,8 +1162,7 @@ class ClusterStatus(TestCase):
 
         self.env_assist.assert_raise_library_error(
             lambda: cluster.add_nodes(
-                self.env_assist.get_env(),
-                [{"name": "new1"}],
+                self.env_assist.get_env(), [{"name": "new1"}],
             )
         )
 
@@ -1163,10 +1172,10 @@ class ClusterStatus(TestCase):
                     report_codes.USING_KNOWN_HOST_ADDRESS_FOR_HOST,
                     host_name=node,
                     address=node,
-                ) for node in new_nodes
+                )
+                for node in new_nodes
             ]
-            +
-            [
+            + [
                 fixture.info(
                     report_codes.USING_DEFAULT_WATCHDOG,
                     node="new1",
@@ -1177,12 +1186,11 @@ class ClusterStatus(TestCase):
                 ),
                 fixture.info(report_codes.COROSYNC_NOT_RUNNING_CHECK_STARTED),
                 fixture.error(
-                    report_codes.COROSYNC_RUNNING_ON_NODE,
-                    node="node1"
+                    report_codes.COROSYNC_RUNNING_ON_NODE, node="node1"
                 ),
                 fixture.error(
                     report_codes.COROSYNC_NOT_RUNNING_CHECK_NODE_ERROR,
-                    node="node2"
+                    node="node2",
                 ),
                 fixture.error(
                     report_codes.NODE_COMMUNICATION_ERROR_UNABLE_TO_CONNECT,
@@ -1192,18 +1200,16 @@ class ClusterStatus(TestCase):
                 ),
                 fixture.error(
                     report_codes.COROSYNC_NOT_RUNNING_CHECK_NODE_ERROR,
-                    node="node3"
+                    node="node3",
                 ),
                 fixture.error(
-                    report_codes.COROSYNC_RUNNING_ON_NODE,
-                    node="node4"
+                    report_codes.COROSYNC_RUNNING_ON_NODE, node="node4"
                 ),
                 fixture.info(
-                    report_codes.COROSYNC_NOT_RUNNING_ON_NODE,
-                    node="node5"
+                    report_codes.COROSYNC_NOT_RUNNING_ON_NODE, node="node5"
                 ),
                 fixture.info(report_codes.SBD_CHECK_STARTED),
-                fixture.info(report_codes.SBD_CHECK_SUCCESS, node="new1")
+                fixture.info(report_codes.SBD_CHECK_SUCCESS, node="new1"),
             ]
         )
 
@@ -1212,80 +1218,72 @@ class ClusterStatus(TestCase):
         return [
             dict(
                 label="new1",
-                output=json.dumps(dict(
-                    services=dict(
-                        corosync=dict(
-                            installed=True, enabled=True, running=True
+                output=json.dumps(
+                    dict(
+                        services=dict(
+                            corosync=dict(
+                                installed=True, enabled=True, running=True
+                            ),
+                            pacemaker=dict(
+                                installed=True, enabled=True, running=True
+                            ),
+                            pcsd=dict(
+                                installed=True, enabled=True, running=True
+                            ),
                         ),
-                        pacemaker=dict(
-                            installed=True, enabled=True, running=True
-                        ),
-                        pcsd=dict(
-                            installed=True, enabled=True, running=True
-                        ),
-                    ),
-                    cluster_configuration_exists=False,
-                ))
+                        cluster_configuration_exists=False,
+                    )
+                ),
             ),
             dict(
                 label="new2",
-                output=json.dumps(dict(
-                    services=dict(
-                        corosync=dict(
-                            installed=False, enabled=False, running=False
+                output=json.dumps(
+                    dict(
+                        services=dict(
+                            corosync=dict(
+                                installed=False, enabled=False, running=False
+                            ),
+                            pacemaker=dict(
+                                installed=False, enabled=False, running=False
+                            ),
+                            pcsd=dict(
+                                installed=True, enabled=True, running=True
+                            ),
                         ),
-                        pacemaker=dict(
-                            installed=False, enabled=False, running=False
-                        ),
-                        pcsd=dict(
-                            installed=True, enabled=True, running=True
-                        ),
-                    ),
-                    cluster_configuration_exists=False,
-                ))
+                        cluster_configuration_exists=False,
+                    )
+                ),
             ),
             dict(
                 label="new3",
-                output=json.dumps(dict(
-                    services=dict(
-                        corosync=dict(
-                            installed=True, enabled=True, running=False
+                output=json.dumps(
+                    dict(
+                        services=dict(
+                            corosync=dict(
+                                installed=True, enabled=True, running=False
+                            ),
+                            pacemaker=dict(
+                                installed=True, enabled=True, running=False
+                            ),
+                            pcsd=dict(
+                                installed=True, enabled=True, running=True
+                            ),
                         ),
-                        pacemaker=dict(
-                            installed=True, enabled=True, running=False
-                        ),
-                        pcsd=dict(
-                            installed=True, enabled=True, running=True
-                        ),
-                    ),
-                    cluster_configuration_exists=True,
-                ))
+                        cluster_configuration_exists=True,
+                    )
+                ),
             ),
+            dict(label="new4", output=json.dumps(dict())),
             dict(
-                label="new4",
-                output=json.dumps(dict())
+                label="new5", was_connected=False, errno=7, error_msg="an error"
             ),
-            dict(
-                label="new5",
-                was_connected=False,
-                errno=7,
-                error_msg="an error"
-            ),
-            dict(
-                label="new6",
-                response_code=400,
-                output="an error"
-            ),
+            dict(label="new6", response_code=400, output="an error"),
         ]
 
     def test_new_nodes_not_ready(self):
         existing_nodes = ["node1", "node2", "node3"]
         new_nodes = ["new1", "new2", "new3", "new4", "new5", "new6"]
-        self.setup_config(
-            existing_nodes,
-            new_nodes,
-            with_get_host_info=False
-        )
+        self.setup_config(existing_nodes, new_nodes, with_get_host_info=False)
         self.config.http.host.get_host_info(
             communication_list=self.fixture_get_host_info_communication()
         )
@@ -1294,7 +1292,7 @@ class ClusterStatus(TestCase):
         self.env_assist.assert_raise_library_error(
             lambda: cluster.add_nodes(
                 self.env_assist.get_env(),
-                [{"name": name} for name in new_nodes]
+                [{"name": name} for name in new_nodes],
             )
         )
 
@@ -1304,10 +1302,10 @@ class ClusterStatus(TestCase):
                     report_codes.USING_KNOWN_HOST_ADDRESS_FOR_HOST,
                     host_name=node,
                     address=node,
-                ) for node in new_nodes
+                )
+                for node in new_nodes
             ]
-            +
-            [
+            + [
                 fixture.error(
                     report_codes.NODE_COMMUNICATION_ERROR_UNABLE_TO_CONNECT,
                     node="new5",
@@ -1324,25 +1322,24 @@ class ClusterStatus(TestCase):
                     report_codes.HOST_ALREADY_IN_CLUSTER_SERVICES,
                     host_name="new1",
                     service_list=["corosync", "pacemaker"],
-                    force_code=report_codes.FORCE_ALREADY_IN_CLUSTER
+                    force_code=report_codes.FORCE_ALREADY_IN_CLUSTER,
                 ),
                 fixture.error(
                     report_codes.SERVICE_NOT_INSTALLED,
                     node="new2",
-                    service_list=["corosync", "pacemaker"]
+                    service_list=["corosync", "pacemaker"],
                 ),
                 fixture.error(
                     report_codes.HOST_ALREADY_IN_CLUSTER_CONFIG,
                     host_name="new3",
-                    force_code=report_codes.FORCE_ALREADY_IN_CLUSTER
+                    force_code=report_codes.FORCE_ALREADY_IN_CLUSTER,
                 ),
                 fixture.error(
-                    report_codes.INVALID_RESPONSE_FORMAT,
-                    node="new4",
+                    report_codes.INVALID_RESPONSE_FORMAT, node="new4",
                 ),
                 fixture.error(
                     report_codes.CLUSTER_WILL_BE_DESTROYED,
-                    force_code=report_codes.FORCE_ALREADY_IN_CLUSTER
+                    force_code=report_codes.FORCE_ALREADY_IN_CLUSTER,
                 ),
             ]
         )
@@ -1350,11 +1347,7 @@ class ClusterStatus(TestCase):
     def test_new_nodes_not_ready_forced(self):
         existing_nodes = ["node1", "node2", "node3"]
         new_nodes = ["new1", "new2", "new3", "new4", "new5", "new6"]
-        self.setup_config(
-            existing_nodes,
-            new_nodes,
-            with_get_host_info=False
-        )
+        self.setup_config(existing_nodes, new_nodes, with_get_host_info=False)
         self.config.http.host.get_host_info(
             communication_list=self.fixture_get_host_info_communication()
         )
@@ -1374,10 +1367,10 @@ class ClusterStatus(TestCase):
                     report_codes.USING_KNOWN_HOST_ADDRESS_FOR_HOST,
                     host_name=node,
                     address=node,
-                ) for node in new_nodes
+                )
+                for node in new_nodes
             ]
-            +
-            [
+            + [
                 fixture.error(
                     report_codes.NODE_COMMUNICATION_ERROR_UNABLE_TO_CONNECT,
                     node="new5",
@@ -1393,20 +1386,19 @@ class ClusterStatus(TestCase):
                 fixture.warn(
                     report_codes.HOST_ALREADY_IN_CLUSTER_SERVICES,
                     host_name="new1",
-                    service_list=["corosync", "pacemaker"]
+                    service_list=["corosync", "pacemaker"],
                 ),
                 fixture.error(
                     report_codes.SERVICE_NOT_INSTALLED,
                     node="new2",
-                    service_list=["corosync", "pacemaker"]
+                    service_list=["corosync", "pacemaker"],
                 ),
                 fixture.warn(
                     report_codes.HOST_ALREADY_IN_CLUSTER_CONFIG,
                     host_name="new3",
                 ),
                 fixture.error(
-                    report_codes.INVALID_RESPONSE_FORMAT,
-                    node="new4",
+                    report_codes.INVALID_RESPONSE_FORMAT, node="new4",
                 ),
             ]
         )
@@ -1420,13 +1412,16 @@ class ClusterStatus(TestCase):
 
     @staticmethod
     def fixture_sbd_check_output(
-        suffix, sbd_installed=True, wd_exists=True, wd_is_supported=True,
-        device_exists=True, device_block=True, has_wd=True,
+        suffix,
+        sbd_installed=True,
+        wd_exists=True,
+        wd_is_supported=True,
+        device_exists=True,
+        device_block=True,
+        has_wd=True,
     ):
         result = {
-            "sbd": {
-                "installed": sbd_installed,
-            },
+            "sbd": {"installed": sbd_installed,},
             "watchdog": {
                 "exist": wd_exists,
                 "path": f"/dev/watchdog{suffix}",
@@ -1452,14 +1447,16 @@ class ClusterStatus(TestCase):
         existing_nodes = ["node1", "node2", "node3", "node4"]
         new_nodes = [f"new{i}" for i in range(1, 10)]
         patch_getaddrinfo(self, new_nodes)
-        (self.config
-            .env.set_known_nodes(existing_nodes + new_nodes)
+        (
+            self.config.env.set_known_nodes(existing_nodes + new_nodes)
             .runner.systemctl.is_enabled("sbd", is_enabled=True)
             .corosync_conf.load_content(
-                corosync_conf_fixture([
-                    node_fixture(node, i)
-                    for i, node in enumerate(existing_nodes, 1)
-                ])
+                corosync_conf_fixture(
+                    [
+                        node_fixture(node, i)
+                        for i, node in enumerate(existing_nodes, 1)
+                    ]
+                )
             )
             .runner.cib.load()
             .local.read_sbd_config("SBD_DEVICE=/device\n")
@@ -1538,7 +1535,8 @@ class ClusterStatus(TestCase):
                         "name": f"new{i}",
                         "watchdog": f"/dev/watchdog{i}",
                         "devices": [f"/dev/sda{i}"],
-                    } for i in range(1, 10)
+                    }
+                    for i in range(1, 10)
                 ],
             )
         )
@@ -1549,10 +1547,10 @@ class ClusterStatus(TestCase):
                     report_codes.USING_KNOWN_HOST_ADDRESS_FOR_HOST,
                     host_name=node,
                     address=node,
-                ) for node in new_nodes
+                )
+                for node in new_nodes
             ]
-            +
-            [
+            + [
                 fixture.info(report_codes.SBD_CHECK_STARTED),
                 fixture.error(report_codes.SBD_NOT_INSTALLED, node="new1"),
                 fixture.error(
@@ -1563,16 +1561,15 @@ class ClusterStatus(TestCase):
                 fixture.error(
                     report_codes.SBD_DEVICE_DOES_NOT_EXIST,
                     node="new3",
-                    device="/dev/sda3"
+                    device="/dev/sda3",
                 ),
                 fixture.error(
                     report_codes.SBD_DEVICE_IS_NOT_BLOCK_DEVICE,
                     node="new4",
-                    device="/dev/sda4"
+                    device="/dev/sda4",
                 ),
                 fixture.error(
-                    report_codes.INVALID_RESPONSE_FORMAT,
-                    node="new5",
+                    report_codes.INVALID_RESPONSE_FORMAT, node="new5",
                 ),
                 fixture.error(
                     report_codes.NODE_COMMUNICATION_COMMAND_UNSUCCESSFUL,
@@ -1599,14 +1596,16 @@ class ClusterStatus(TestCase):
         existing_nodes = ["node1", "node2", "node3", "node4"]
         new_nodes = [f"new{i}" for i in range(1, 4)]
         patch_getaddrinfo(self, new_nodes)
-        (self.config
-            .env.set_known_nodes(existing_nodes + new_nodes)
+        (
+            self.config.env.set_known_nodes(existing_nodes + new_nodes)
             .runner.systemctl.is_enabled("sbd", is_enabled=True)
             .corosync_conf.load_content(
-                corosync_conf_fixture([
-                    node_fixture(node, i)
-                    for i, node in enumerate(existing_nodes, 1)
-                ])
+                corosync_conf_fixture(
+                    [
+                        node_fixture(node, i)
+                        for i, node in enumerate(existing_nodes, 1)
+                    ]
+                )
             )
             .runner.cib.load()
             .local.read_sbd_config("SBD_DEVICE=/device\n")
@@ -1654,7 +1653,8 @@ class ClusterStatus(TestCase):
                         "name": f"new{i}",
                         "watchdog": f"/dev/watchdog{i}",
                         "devices": [f"/dev/sda{i}"],
-                    } for i in range(1, 4)
+                    }
+                    for i in range(1, 4)
                 ],
                 no_watchdog_validation=True,
             )
@@ -1666,10 +1666,10 @@ class ClusterStatus(TestCase):
                     report_codes.USING_KNOWN_HOST_ADDRESS_FOR_HOST,
                     host_name=node,
                     address=node,
-                ) for node in new_nodes
+                )
+                for node in new_nodes
             ]
-            +
-            [
+            + [
                 fixture.info(report_codes.SBD_CHECK_STARTED),
                 fixture.error(report_codes.SBD_NOT_INSTALLED, node="new1"),
                 fixture.info(report_codes.SBD_CHECK_SUCCESS, node="new2"),

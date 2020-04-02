@@ -4,15 +4,21 @@ from pcs_test.tools.command_env.mock_node_communicator import (
     place_multinode_call,
 )
 
+
 class StatusShortcuts:
     def __init__(self, calls):
         self.__calls = calls
 
     def get_full_cluster_status_plaintext(
-        self, node_labels=None, communication_list=None,
+        self,
+        node_labels=None,
+        communication_list=None,
         name="http.status.get_full_cluster_status_plaintext",
-        hide_inactive_resources=False, verbose=False,
-        cmd_status="success", cmd_status_msg="", report_list=None,
+        hide_inactive_resources=False,
+        verbose=False,
+        cmd_status="success",
+        cmd_status_msg="",
+        report_list=None,
         cluster_status_plaintext="",
     ):
         # pylint: disable=too-many-arguments
@@ -36,17 +42,23 @@ class StatusShortcuts:
             node_labels,
             communication_list,
             action="remote/cluster_status_plaintext",
-            param_list=[(
-                "data_json",
-                json.dumps(dict(
-                    hide_inactive_resources=hide_inactive_resources,
-                    verbose=verbose,
-                ))
-            )],
-            output=json.dumps(dict(
-                status=cmd_status,
-                status_msg=cmd_status_msg,
-                data=cluster_status_plaintext,
-                report_list=report_list,
-            )),
+            param_list=[
+                (
+                    "data_json",
+                    json.dumps(
+                        dict(
+                            hide_inactive_resources=hide_inactive_resources,
+                            verbose=verbose,
+                        )
+                    ),
+                )
+            ],
+            output=json.dumps(
+                dict(
+                    status=cmd_status,
+                    status_msg=cmd_status_msg,
+                    data=cluster_status_plaintext,
+                    report_list=report_list,
+                )
+            ),
         )

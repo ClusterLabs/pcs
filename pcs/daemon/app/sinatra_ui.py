@@ -6,16 +6,18 @@ from pcs.daemon.app.common import BaseHandler
 from pcs.daemon.app.sinatra_common import Sinatra
 from pcs.daemon.app.ui_common import AjaxMixin, StaticFile
 
+
 class SinatraGui(app_session.Mixin, Sinatra):
     """
     SinatraGui is base class for handlers which calls the Sinatra GUI functions.
     It adds work with session.
     It adds default GET and POST handlers with hook before Sinatra is called.
     """
+
     can_use_sinatra = True
 
     def initialize(self, session_storage, ruby_pcsd_wrapper):
-        #pylint: disable=arguments-differ
+        # pylint: disable=arguments-differ
         app_session.Mixin.initialize(self, session_storage)
         Sinatra.initialize(self, ruby_pcsd_wrapper)
 
@@ -42,11 +44,13 @@ class SinatraGui(app_session.Mixin, Sinatra):
         del args, kwargs
         await self.handle_sinatra_request()
 
+
 class SinatraGuiProtected(SinatraGui):
     """
     SinatraGuiProtected handles urls that calls the non-ajax Sinatra GUI
     functions. These urls provides real pages.
     """
+
     def before_sinatra_use(self):
         # sinatra must not have a session at this moment. So the response from
         # sinatra does not contain propriate cookie. Now it is new daemons' job
@@ -55,8 +59,9 @@ class SinatraGuiProtected(SinatraGui):
 
         if not self.session.is_authenticated:
             self.enhance_headers()
-            self.redirect("/login", status=302) #redirect temporary (302)
+            self.redirect("/login", status=302)  # redirect temporary (302)
             self.can_use_sinatra = False
+
 
 class SinatraAjaxProtected(SinatraGui, AjaxMixin):
     # pylint: disable=too-many-ancestors
@@ -64,18 +69,20 @@ class SinatraAjaxProtected(SinatraGui, AjaxMixin):
     SinatraAjaxProtected handles urls that calls the ajax Sinatra GUI functions.
     It allows to use this urls only for ajax calls.
     """
+
     @property
     def is_authorized(self):
         # User is authorized only to perform ajax calls to prevent CSRF attack.
         return self.is_ajax and self.session.is_authenticated
 
     def before_sinatra_use(self):
-        #TODO this is for sinatra compatibility, review it.
+        # TODO this is for sinatra compatibility, review it.
         if self.was_sid_in_request_cookies():
             self.put_request_cookies_sid_to_response_cookies_sid()
         if not self.is_authorized:
             self.enhance_headers()
             raise self.unauthorized()
+
 
 class Login(SinatraGui, AjaxMixin):
     # pylint: disable=too-many-ancestors
@@ -85,8 +92,9 @@ class Login(SinatraGui, AjaxMixin):
     form, call an authentication mechanism and uses session for expressing
     a result of the authentication mechanism.
     """
+
     def before_sinatra_use(self):
-        #TODO this is for sinatra compatibility, review it.
+        # TODO this is for sinatra compatibility, review it.
         if self.was_sid_in_request_cookies():
             self.put_request_cookies_sid_to_response_cookies_sid()
 
@@ -98,7 +106,7 @@ class Login(SinatraGui, AjaxMixin):
         await self.session_auth_user(
             self.get_body_argument("username"),
             self.get_body_argument("password"),
-            sign_rejection=not self.is_ajax
+            sign_rejection=not self.is_ajax,
         )
 
         if self.session.is_authenticated:
@@ -110,19 +118,21 @@ class Login(SinatraGui, AjaxMixin):
         if self.is_ajax:
             self.write(self.session.ajax_id)
         else:
-            self.redirect("/manage", status=303) #post -> get resource (303)
+            self.redirect("/manage", status=303)  # post -> get resource (303)
 
     def __failed_response(self):
         if self.is_ajax:
             raise self.unauthorized()
 
-        self.redirect("/login", status=303) #post -> get resource (303)
+        self.redirect("/login", status=303)  # post -> get resource (303)
+
 
 class Logout(app_session.Mixin, AjaxMixin, BaseHandler):
     """
     Logout handles url for logout. It is used for both ajax and non-ajax
     requests.
     """
+
     async def get(self, *args, **kwargs):
         del args, kwargs
         await self.init_session()
@@ -132,7 +142,8 @@ class Logout(app_session.Mixin, AjaxMixin, BaseHandler):
         if self.is_ajax:
             self.write("OK")
         else:
-            self.redirect("/login", status=302) #redirect temporary (302)
+            self.redirect("/login", status=302)  # redirect temporary (302)
+
 
 def get_routes(
     session_storage: session.Storage,
@@ -146,17 +157,14 @@ def get_routes(
         (r"/css/(.*)", StaticFile, static_path("css")),
         (r"/js/(.*)", StaticFile, static_path("js")),
         (r"/images/(.*)", StaticFile, static_path("images")),
-
         (r"/login", Login, {**sessions, **ruby_wrapper}),
         (r"/logout", Logout, sessions),
-
         # The protection by session was moved from ruby code to python code
         # (tornado).
         (
             r"/($|manage/?$|permissions/?$|managec/.+/main)",
             SinatraGuiProtected,
-            {**sessions, **ruby_wrapper}
+            {**sessions, **ruby_wrapper},
         ),
-
         (r"/.*", SinatraAjaxProtected, {**sessions, **ruby_wrapper}),
     ]

@@ -19,6 +19,7 @@ ERRORS_HAVE_OCURRED = (
     "Error: Errors have occurred, therefore pcs is unable to continue\n"
 )
 
+
 class BundleCreateCommon(
     TestCase,
     get_assert_pcs_effect_mixin(
@@ -26,7 +27,7 @@ class BundleCreateCommon(
             # pylint:disable=undefined-variable
             etree.parse(cib).findall(".//resources")[0]
         )
-    )
+    ),
 ):
     temp_cib = rc("temp-cib.xml")
     empty_cib = None
@@ -53,15 +54,14 @@ class BundleCreateUpgradeCib(BundleCreateCommon):
                     </bundle>
                 </resources>
             """,
-            "CIB has been upgraded to the latest schema version.\n"
+            "CIB has been upgraded to the latest schema version.\n",
         )
 
     def test_upgrade_for_promoted_max(self):
         shutil.copy(rc("cib-empty-2.8.xml"), self.temp_cib)
         self.assert_effect(
             "resource bundle create B1 container docker image=pcs:test "
-                "promoted-max=2"
-            ,
+            "promoted-max=2",
             """
                 <resources>
                     <bundle id="B1">
@@ -69,13 +69,14 @@ class BundleCreateUpgradeCib(BundleCreateCommon):
                     </bundle>
                 </resources>
             """,
-            "CIB has been upgraded to the latest schema version.\n"
+            "CIB has been upgraded to the latest schema version.\n",
         )
 
 
 @skip_unless_pacemaker_supports_bundle
 class BundleReset(BundleCreateCommon):
     empty_cib = rc("cib-empty.xml")
+
     def test_minimal(self):
         self.assert_pcs_success(
             "resource bundle create B1 container docker image=pcs:test"
@@ -94,8 +95,9 @@ class BundleReset(BundleCreateCommon):
                         <docker image="pcs:test" />
                     </bundle>
                 </resources>
-            """
+            """,
         )
+
 
 @skip_unless_pacemaker_supports_bundle
 class BundleCreate(BundleCreateCommon):
@@ -110,7 +112,7 @@ class BundleCreate(BundleCreateCommon):
                         <docker image="pcs:test" />
                     </bundle>
                 </resources>
-            """
+            """,
         )
 
     def test_all_options(self):
@@ -201,7 +203,7 @@ class BundleCreate(BundleCreateCommon):
                         </meta_attributes>
                     </bundle>
                 </resources>
-            """
+            """,
         )
 
     def test_deprecated_masters(self):
@@ -218,7 +220,7 @@ class BundleCreate(BundleCreateCommon):
                 </resources>
             """,
             "Warning: container option 'masters' is deprecated and should not "
-                "be used, use 'promoted-max' instead\n"
+            "be used, use 'promoted-max' instead\n",
         )
 
     def test_deprecated_masters_and_promoted_max(self):
@@ -228,37 +230,35 @@ class BundleCreate(BundleCreateCommon):
                 container docker image=pcs:test masters=0 promoted-max=0
             """,
             "Error: Only one of container options 'masters' and 'promoted-max' "
-                "can be used\n"
-                + ERRORS_HAVE_OCURRED +
-                "Warning: container option 'masters' is deprecated and should "
-                "not be used, use 'promoted-max' instead\n"
+            "can be used\n"
+            + ERRORS_HAVE_OCURRED
+            + "Warning: container option 'masters' is deprecated and should "
+            "not be used, use 'promoted-max' instead\n",
         )
 
     def test_fail_when_missing_args_1(self):
         self.assert_pcs_fail_regardless_of_force(
-            "resource bundle",
-            stdout_start="\nUsage: pcs resource bundle...\n"
+            "resource bundle", stdout_start="\nUsage: pcs resource bundle...\n"
         )
 
     def test_fail_when_missing_args_2(self):
         self.assert_pcs_fail_regardless_of_force(
             "resource bundle create",
-            stdout_start="\nUsage: pcs resource bundle create...\n"
+            stdout_start="\nUsage: pcs resource bundle create...\n",
         )
 
     def test_fail_when_missing_container_type(self):
         self.assert_pcs_fail_regardless_of_force(
             "resource bundle create B1",
             "Error: '' is not a valid container type value, use 'docker', "
-                "'podman', 'rkt'\n"
-                + ERRORS_HAVE_OCURRED
+            "'podman', 'rkt'\n" + ERRORS_HAVE_OCURRED,
         )
 
     def test_fail_when_missing_required(self):
         self.assert_pcs_fail_regardless_of_force(
             "resource bundle create B1 container docker",
             "Error: required container option 'image' is missing\n"
-                + ERRORS_HAVE_OCURRED
+            + ERRORS_HAVE_OCURRED,
         )
 
     def test_fail_on_unknown_option(self):
@@ -268,10 +268,9 @@ class BundleCreate(BundleCreateCommon):
                 extra=option
             """,
             "Error: invalid container option 'extra', allowed options are: "
-                "'image', 'masters', 'network', 'options', 'promoted-max', "
-                "'replicas', 'replicas-per-host', 'run-command', use --force "
-                "to override\n"
-                + ERRORS_HAVE_OCURRED
+            "'image', 'masters', 'network', 'options', 'promoted-max', "
+            "'replicas', 'replicas-per-host', 'run-command', use --force "
+            "to override\n" + ERRORS_HAVE_OCURRED,
         )
 
     def test_unknown_option_forced(self):
@@ -283,9 +282,8 @@ class BundleCreate(BundleCreateCommon):
             """
                 resource bundle create B1 container docker image=pcs:test
                 extra=option --force
-            """
-            ,
-            stdout_start="Error: Unable to update cib\n"
+            """,
+            stdout_start="Error: Unable to update cib\n",
         )
 
     def test_more_errors(self):
@@ -297,7 +295,8 @@ class BundleCreate(BundleCreateCommon):
                 Error: required container option 'image' is missing
                 Error: 'x' is not a valid replicas value, use a positive integer
                 """
-            ) + ERRORS_HAVE_OCURRED
+            )
+            + ERRORS_HAVE_OCURRED,
         )
 
     def assert_no_options(self, keyword):
@@ -334,8 +333,9 @@ class BundleUpdateUpgradeCib(BundleCreateCommon):
         )
         self.assert_pcs_success(
             "resource bundle update B container promoted-max=3",
-            "CIB has been upgraded to the latest schema version.\n"
+            "CIB has been upgraded to the latest schema version.\n",
         )
+
 
 @skip_unless_pacemaker_supports_bundle
 class BundleUpdate(BundleCreateCommon):
@@ -410,7 +410,8 @@ class BundleUpdate(BundleCreateCommon):
 
     def fixture_bundle_complex(self, name):
         self.assert_pcs_success(
-            ("""
+            (
+                """
                 resource bundle create {0}
                 container docker image=pcs:test replicas=4 promoted-max=2
                 network control-port=12345 host-interface=eth0 host-netmask=24
@@ -421,20 +422,21 @@ class BundleUpdate(BundleCreateCommon):
                 storage-map source-dir=/tmp/docker2a target-dir=/tmp/docker2b
                 storage-map source-dir=/tmp/docker3a target-dir=/tmp/docker3b
                 meta priority=15 resource-stickiness=100 is-managed=false
-            """).format(name)
+            """
+            ).format(name)
         )
 
     def test_fail_when_missing_args_1(self):
         self.assert_pcs_fail_regardless_of_force(
             "resource bundle update",
-            stdout_start="\nUsage: pcs resource bundle update...\n"
+            stdout_start="\nUsage: pcs resource bundle update...\n",
         )
 
     def test_fail_when_missing_args_2(self):
         self.fixture_bundle("B")
         self.assert_pcs_fail_regardless_of_force(
             "resource bundle update B port-map",
-            "Error: No port-map options specified\n"
+            "Error: No port-map options specified\n",
         )
 
     def test_fail_when_missing_args_3(self):
@@ -442,7 +444,7 @@ class BundleUpdate(BundleCreateCommon):
         self.assert_pcs_fail_regardless_of_force(
             "resource bundle update B storage-map remove",
             "Error: When using 'storage-map' you must specify either 'add' and "
-                "options or either of 'delete' or 'remove' and id(s)\n"
+            "options or either of 'delete' or 'remove' and id(s)\n",
         )
 
     def test_fail_when_missing_args_4(self):
@@ -450,28 +452,28 @@ class BundleUpdate(BundleCreateCommon):
         self.assert_pcs_fail_regardless_of_force(
             "resource bundle update B storage-map delete",
             "Error: When using 'storage-map' you must specify either 'add' and "
-                "options or either of 'delete' or 'remove' and id(s)\n"
+            "options or either of 'delete' or 'remove' and id(s)\n",
         )
 
     def test_bad_id(self):
         self.fixture_bundle("B")
         self.assert_pcs_fail_regardless_of_force(
             "resource bundle update B1 container image=test",
-            "Error: bundle 'B1' does not exist\n"
+            "Error: bundle 'B1' does not exist\n",
         )
 
     def test_success_delete(self):
         self.fixture_bundle_complex("B")
         self.assert_effect(
             self.success_command.format(remove_command="delete"),
-            self.success_xml
+            self.success_xml,
         )
 
     def test_success_remove(self):
         self.fixture_bundle_complex("B")
         self.assert_effect(
             self.success_command.format(remove_command="remove"),
-            self.success_xml
+            self.success_xml,
         )
 
     def test_deprecated_masters_set(self):
@@ -489,7 +491,7 @@ class BundleUpdate(BundleCreateCommon):
                 </resources>
             """,
             "Warning: container option 'masters' is deprecated and should not "
-                "be used, use 'promoted-max' instead\n"
+            "be used, use 'promoted-max' instead\n",
         )
 
     def test_delete_masters(self):
@@ -497,7 +499,7 @@ class BundleUpdate(BundleCreateCommon):
         self.assert_pcs_success(
             "resource bundle update B container masters=2",
             "Warning: container option 'masters' is deprecated and should not "
-                "be used, use 'promoted-max' instead\n"
+            "be used, use 'promoted-max' instead\n",
         )
         self.assert_effect(
             "resource bundle update B container masters=",
@@ -524,10 +526,10 @@ class BundleUpdate(BundleCreateCommon):
         self.assert_pcs_fail(
             "resource bundle update B container masters=2",
             "Error: Cannot set container option 'masters' because container "
-                "option 'promoted-max' is already set\n"
-                + ERRORS_HAVE_OCURRED +
-                "Warning: container option 'masters' is deprecated and should "
-                "not be used, use 'promoted-max' instead\n"
+            "option 'promoted-max' is already set\n"
+            + ERRORS_HAVE_OCURRED
+            + "Warning: container option 'masters' is deprecated and should "
+            "not be used, use 'promoted-max' instead\n",
         )
 
     def test_masters_set_after_promoted_max_with_remove(self):
@@ -545,7 +547,7 @@ class BundleUpdate(BundleCreateCommon):
                 </resources>
             """,
             "Warning: container option 'masters' is deprecated and should not "
-                "be used, use 'promoted-max' instead\n"
+            "be used, use 'promoted-max' instead\n",
         )
 
     def test_promoted_max_set_after_masters(self):
@@ -553,13 +555,12 @@ class BundleUpdate(BundleCreateCommon):
         self.assert_pcs_success(
             "resource bundle update B container masters=2",
             "Warning: container option 'masters' is deprecated and should not "
-                "be used, use 'promoted-max' instead\n"
+            "be used, use 'promoted-max' instead\n",
         )
         self.assert_pcs_fail(
             "resource bundle update B container promoted-max=3",
             "Error: Cannot set container option 'promoted-max' because "
-                "container option 'masters' is already set\n"
-                + ERRORS_HAVE_OCURRED
+            "container option 'masters' is already set\n" + ERRORS_HAVE_OCURRED,
         )
 
     def test_promoted_max_set_after_masters_with_remove(self):
@@ -567,7 +568,7 @@ class BundleUpdate(BundleCreateCommon):
         self.assert_pcs_success(
             "resource bundle update B container masters=2",
             "Warning: container option 'masters' is deprecated and should not "
-                "be used, use 'promoted-max' instead\n"
+            "be used, use 'promoted-max' instead\n",
         )
         self.assert_effect(
             "resource bundle update B container masters= promoted-max=3",
@@ -586,10 +587,9 @@ class BundleUpdate(BundleCreateCommon):
         self.assert_pcs_fail(
             "resource bundle update B container extra=option",
             "Error: invalid container option 'extra', allowed options are: "
-                "'image', 'masters', 'network', 'options', 'promoted-max', "
-                "'replicas', 'replicas-per-host', 'run-command', use --force "
-                "to override\n"
-                + ERRORS_HAVE_OCURRED
+            "'image', 'masters', 'network', 'options', 'promoted-max', "
+            "'replicas', 'replicas-per-host', 'run-command', use --force "
+            "to override\n" + ERRORS_HAVE_OCURRED,
         )
         # Test that pcs allows to specify options it does not know about. This
         # ensures some kind of forward compatibility, so the user will be able
@@ -597,7 +597,7 @@ class BundleUpdate(BundleCreateCommon):
         # supported by pacemaker and so the command fails.
         self.assert_pcs_fail(
             "resource bundle update B container extra=option --force",
-            stdout_start="Error: Unable to update cib\n"
+            stdout_start="Error: Unable to update cib\n",
         )
 
         # no force needed when removing an unknown option
@@ -609,7 +609,7 @@ class BundleUpdate(BundleCreateCommon):
                         <docker image="pcs:test" />
                     </bundle>
                 </resources>
-            """
+            """,
         )
 
     def assert_no_options(self, keyword):
@@ -649,12 +649,15 @@ class BundleShow(TestCase, AssertPcsMixin):
         self.assert_pcs_success(
             "resource bundle create B1 container docker image=pcs:test"
         )
-        self.assert_pcs_success("resource config B1", outdent(
-            """\
+        self.assert_pcs_success(
+            "resource config B1",
+            outdent(
+                """\
              Bundle: B1
               Docker: image=pcs:test
             """
-        ))
+            ),
+        )
 
     def test_container(self):
         self.assert_pcs_success(
@@ -664,12 +667,15 @@ class BundleShow(TestCase, AssertPcsMixin):
                     options='a b c'
             """
         )
-        self.assert_pcs_success("resource config B1", outdent(
-            """\
+        self.assert_pcs_success(
+            "resource config B1",
+            outdent(
+                """\
              Bundle: B1
               Docker: image=pcs:test options="a b c" promoted-max=2 replicas=4
             """
-        ))
+            ),
+        )
 
     def test_network(self):
         self.assert_pcs_success(
@@ -679,13 +685,16 @@ class BundleShow(TestCase, AssertPcsMixin):
                 network host-interface=eth0 host-netmask=24 control-port=12345
             """
         )
-        self.assert_pcs_success("resource config B1", outdent(
-            """\
+        self.assert_pcs_success(
+            "resource config B1",
+            outdent(
+                """\
              Bundle: B1
               Docker: image=pcs:test
               Network: control-port=12345 host-interface=eth0 host-netmask=24
             """
-        ))
+            ),
+        )
 
     def test_port_map(self):
         self.assert_pcs_success(
@@ -696,15 +705,18 @@ class BundleShow(TestCase, AssertPcsMixin):
                 port-map range=3000-3300
             """
         )
-        self.assert_pcs_success("resource config B1", outdent(
-            """\
+        self.assert_pcs_success(
+            "resource config B1",
+            outdent(
+                """\
              Bundle: B1
               Docker: image=pcs:test
               Port Mapping:
                internal-port=2002 port=2000 (B1-port-map-1001)
                range=3000-3300 (B1-port-map-3000-3300)
             """
-        ))
+            ),
+        )
 
     def test_storage_map(self):
         self.assert_pcs_success(
@@ -716,28 +728,36 @@ class BundleShow(TestCase, AssertPcsMixin):
                     target-dir=/tmp/docker2b
             """
         )
-        self.assert_pcs_success("resource config B1", outdent(
-            """\
+        self.assert_pcs_success(
+            "resource config B1",
+            outdent(
+                """\
              Bundle: B1
               Docker: image=pcs:test
               Storage Mapping:
                source-dir=/tmp/docker1a target-dir=/tmp/docker1b (B1-storage-map)
                source-dir=/tmp/docker2a target-dir=/tmp/docker2b (my-storage-map)
             """
-        ))
+            ),
+        )
 
     def test_meta(self):
-        self.assert_pcs_success("""
+        self.assert_pcs_success(
+            """
             resource bundle create B1 container docker image=pcs:test
             --disabled
-        """)
-        self.assert_pcs_success("resource config B1", outdent(
-            """\
+        """
+        )
+        self.assert_pcs_success(
+            "resource config B1",
+            outdent(
+                """\
              Bundle: B1
               Docker: image=pcs:test
               Meta Attrs: target-role=Stopped
             """
-        ))
+            ),
+        )
 
     def test_resource(self):
         self.assert_pcs_success(
@@ -747,15 +767,18 @@ class BundleShow(TestCase, AssertPcsMixin):
         self.assert_pcs_success(
             "resource create A ocf:pacemaker:Dummy bundle B1 --no-default-ops"
         )
-        self.assert_pcs_success("resource config B1", outdent(
-            """\
+        self.assert_pcs_success(
+            "resource config B1",
+            outdent(
+                """\
              Bundle: B1
               Docker: image=pcs:test
               Network: control-port=1234
               Resource: A (class=ocf provider=pacemaker type=Dummy)
                Operations: monitor interval=10s timeout=20s (A-monitor-interval-10s)
             """
-        ))
+            ),
+        )
 
     def test_all(self):
         self.assert_pcs_success(
@@ -775,8 +798,10 @@ class BundleShow(TestCase, AssertPcsMixin):
         self.assert_pcs_success(
             "resource create A ocf:pacemaker:Dummy bundle B1 --no-default-ops"
         )
-        self.assert_pcs_success("resource config B1", outdent(
-            """\
+        self.assert_pcs_success(
+            "resource config B1",
+            outdent(
+                """\
              Bundle: B1
               Docker: image=pcs:test options="a b c" promoted-max=2 replicas=4
               Network: control-port=12345 host-interface=eth0 host-netmask=24
@@ -790,4 +815,5 @@ class BundleShow(TestCase, AssertPcsMixin):
               Resource: A (class=ocf provider=pacemaker type=Dummy)
                Operations: monitor interval=10s timeout=20s (A-monitor-interval-10s)
             """
-        ))
+            ),
+        )

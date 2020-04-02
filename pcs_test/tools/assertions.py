@@ -12,6 +12,7 @@ from pcs.lib.errors import LibraryError
 # cover python2 vs. python3 differences
 _re_object_type = type(re.compile(""))
 
+
 def prepare_diff(first, second):
     """
     Return a string containing a diff of first and second
@@ -19,6 +20,7 @@ def prepare_diff(first, second):
     return "".join(
         difflib.Differ().compare(first.splitlines(1), second.splitlines(1))
     )
+
 
 def ac(a, b):
     """
@@ -28,6 +30,7 @@ def ac(a, b):
         raise AssertionError(
             "strings not equal:\n{0}".format(prepare_diff(b, a))
         )
+
 
 def start_tag_error_text():
     """lxml 3.7+ gives a longer 'start tag expected' error message,
@@ -39,9 +42,11 @@ def start_tag_error_text():
         msg += " (<string>, line 1)"
     return msg
 
+
 def console_report(*lines):
-    #after lines append last new line
+    # after lines append last new line
     return "\n".join(lines + ("",))
+
 
 class AssertPcsMixin:
     """Run pcs command and assert its result"""
@@ -59,16 +64,18 @@ class AssertPcsMixin:
                 )
 
     def assert_pcs_success(
-        self, command, stdout_full=None, stdout_start=None, stdout_regexp=None,
-        despace=False
+        self,
+        command,
+        stdout_full=None,
+        stdout_start=None,
+        stdout_regexp=None,
+        despace=False,
     ):
         full = stdout_full
         if (
             stdout_start is None
-            and
-            stdout_full is None
-            and
-            stdout_regexp is None
+            and stdout_full is None
+            and stdout_regexp is None
         ):
             full = ""
         self.assert_pcs_result(
@@ -88,7 +95,7 @@ class AssertPcsMixin:
             stdout_full=stdout_full,
             stdout_start=stdout_start,
             stdout_regexp=stdout_regexp,
-            returncode=1
+            returncode=1,
         )
 
     def assert_pcs_fail_regardless_of_force(
@@ -100,8 +107,13 @@ class AssertPcsMixin:
         )
 
     def assert_pcs_result(
-        self, command, stdout_full=None, stdout_start=None, stdout_regexp=None,
-        returncode=0, despace=False
+        self,
+        command,
+        stdout_full=None,
+        stdout_start=None,
+        stdout_regexp=None,
+        returncode=0,
+        despace=False,
     ):
         msg = (
             "Please specify exactly one: stdout_start or stdout_full or"
@@ -123,13 +135,12 @@ class AssertPcsMixin:
             pcs_returncode,
             (
                 'Expected return code "{0}", but was "{1}"'
-                + '\ncommand: {2}\nstdout:\n{3}'
-            ).format(returncode, pcs_returncode, command, stdout)
+                + "\ncommand: {2}\nstdout:\n{3}"
+            ).format(returncode, pcs_returncode, command, stdout),
         )
         message_template = (
             "{reason}\ncommand: {cmd}\ndiff is (expected is 2nd):\n{diff}"
-            +
-            "\nFull stdout:\n{stdout}"
+            + "\nFull stdout:\n{stdout}"
         )
         if stdout_start:
             expected_start = self.__prepare_output(stdout_start)
@@ -139,9 +150,9 @@ class AssertPcsMixin:
                         reason="Stdout does not start as expected",
                         cmd=command,
                         diff=prepare_diff(
-                            stdout[:len(expected_start)], expected_start
+                            stdout[: len(expected_start)], expected_start
                         ),
-                        stdout=stdout
+                        stdout=stdout,
                     )
                 )
         elif stdout_regexp:
@@ -164,10 +175,8 @@ class AssertPcsMixin:
                 )
         else:
             expected_full = self.__prepare_output(stdout_full)
-            if (
-                (despace and _despace(stdout) != _despace(expected_full))
-                or
-                (not despace and stdout != expected_full)
+            if (despace and _despace(stdout) != _despace(expected_full)) or (
+                not despace and stdout != expected_full
             ):
                 self.assertEqual(
                     stdout,
@@ -176,8 +185,8 @@ class AssertPcsMixin:
                         reason="Stdout is not as expected",
                         cmd=command,
                         diff=prepare_diff(stdout, expected_full),
-                        stdout=stdout
-                    )
+                        stdout=stdout,
+                    ),
                 )
 
     def __prepare_output(self, output):
@@ -198,7 +207,8 @@ class AssertPcsMixin:
             "VERBOSE",
         ]
         used_flags = [
-            f for f in possible_flags
+            f
+            for f in possible_flags
             if hasattr(re, f) and (flags & getattr(re, f))
         ]
         return sorted(used_flags)
@@ -225,8 +235,7 @@ class ExtendedAssertionsMixin:
                     raise AssertionError(
                         "Property {property} doesn't exist in exception"
                         " {exception}".format(
-                            property=prop,
-                            exception=e.__class__.__name__
+                            property=prop, exception=e.__class__.__name__
                         )
                     )
 
@@ -237,16 +246,16 @@ def assert_xml_equal(expected_xml, got_xml, context_explanation=""):
         raise AssertionError(
             "{context_explanation}{xml_diff}".format(
                 context_explanation=(
-                    "" if not context_explanation
+                    ""
+                    if not context_explanation
                     else "\n{0}\n".format(context_explanation)
                 ),
                 xml_diff=checker.output_difference(
-                    doctest.Example("", expected_xml),
-                    got_xml,
-                    0
-                )
+                    doctest.Example("", expected_xml), got_xml, 0
+                ),
             )
         )
+
 
 SEVERITY_SHORTCUTS = {
     reports.ReportItemSeverity.INFO: "I",
@@ -255,10 +264,12 @@ SEVERITY_SHORTCUTS = {
     reports.ReportItemSeverity.DEBUG: "D",
 }
 
+
 def _format_report_item_info(info):
-    return ", ".join([
-        "{0}:{1}".format(key, repr(value)) for key, value in info.items()
-    ])
+    return ", ".join(
+        ["{0}:{1}".format(key, repr(value)) for key, value in info.items()]
+    )
+
 
 def _expected_report_item_format(report_item_expectation):
     return "{0} {1} {{{2}}} ! {3}".format(
@@ -267,35 +278,47 @@ def _expected_report_item_format(report_item_expectation):
         ),
         report_item_expectation[1],
         _format_report_item_info(report_item_expectation[2]),
-        report_item_expectation[3] if len(report_item_expectation) > 3 else None
+        report_item_expectation[3]
+        if len(report_item_expectation) > 3
+        else None,
     )
 
+
 def _format_report_item(report_item):
-    return  _expected_report_item_format((
-        report_item.severity.level,
-        report_item.message.code,
-        report_item.message.to_dto().payload,
-        report_item.severity.force_code,
-    ))
+    return _expected_report_item_format(
+        (
+            report_item.severity.level,
+            report_item.message.code,
+            report_item.message.to_dto().payload,
+            report_item.severity.force_code,
+        )
+    )
+
 
 def assert_report_item_equal(real_report_item, report_item_info):
     if not __report_item_equal(real_report_item, report_item_info):
         raise AssertionError(
-            "ReportItem not equal\nexpected: {0}\nactual:   {1}"
-            .format(
-                repr((
-                    report_item_info[0],
-                    report_item_info[1],
-                    report_item_info[2],
-                    None if len(report_item_info) < 4 else report_item_info[3]
-                )),
-                _format_report_item(real_report_item)
+            "ReportItem not equal\nexpected: {0}\nactual:   {1}".format(
+                repr(
+                    (
+                        report_item_info[0],
+                        report_item_info[1],
+                        report_item_info[2],
+                        None
+                        if len(report_item_info) < 4
+                        else report_item_info[3],
+                    )
+                ),
+                _format_report_item(real_report_item),
             )
         )
 
+
 def _unexpected_report_given(
     remaining_expected_report_info_list,
-    expected_report_info_list, real_report_item, real_report_item_list
+    expected_report_info_list,
+    real_report_item,
+    real_report_item_list,
 ):
     return AssertionError(
         (
@@ -307,24 +330,28 @@ def _unexpected_report_given(
             "\n  ------------------------------\n    {4}\n"
             "\n  all real reports ({5}):"
             "\n  ---------------------\n    {6}"
-        )
-        .format(
+        ).format(
             _format_report_item(real_report_item),
             len(remaining_expected_report_info_list),
-            "\n    ".join(map(
-                _expected_report_item_format,
-                remaining_expected_report_info_list,
-            )) if remaining_expected_report_info_list
+            "\n    ".join(
+                map(
+                    _expected_report_item_format,
+                    remaining_expected_report_info_list,
+                )
+            )
+            if remaining_expected_report_info_list
             else "No other report is expected!",
             len(expected_report_info_list),
-            "\n    ".join(map(
-                _expected_report_item_format,
-                expected_report_info_list,
-            )) if expected_report_info_list else "No report is expected!",
+            "\n    ".join(
+                map(_expected_report_item_format, expected_report_info_list,)
+            )
+            if expected_report_info_list
+            else "No report is expected!",
             len(real_report_item_list),
             "\n    ".join(map(_format_report_item, real_report_item_list)),
         )
     )
+
 
 def assert_report_item_list_equal(
     real_report_item_list, expected_report_info_list, hint=""
@@ -333,8 +360,7 @@ def assert_report_item_list_equal(
     duplicate_report_item_is_missing = False
     for real_report_item in real_report_item_list:
         found_report_info = __find_report_info(
-            expected_report_info_list,
-            real_report_item
+            expected_report_info_list, real_report_item
         )
         if found_report_info is None:
             raise _unexpected_report_given(
@@ -348,12 +374,11 @@ def assert_report_item_list_equal(
         else:
             duplicate_report_item_is_missing = True
     if remaining_expected_report_info_list or duplicate_report_item_is_missing:
+
         def format_items(item_type, item_list):
             caption = "{0} ReportItems({1})".format(item_type, len(item_list))
             return "{0}\n{1}\n{2}".format(
-                caption,
-                "-"*len(caption),
-                "\n".join(map(repr, item_list))
+                caption, "-" * len(caption), "\n".join(map(repr, item_list))
             )
 
         raise AssertionError(
@@ -364,6 +389,7 @@ def assert_report_item_list_equal(
             )
         )
 
+
 def assert_raise_library_error(callableObj, *report_info_list):
     try:
         callableObj()
@@ -371,36 +397,36 @@ def assert_raise_library_error(callableObj, *report_info_list):
     except LibraryError as e:
         assert_report_item_list_equal(e.args, list(report_info_list))
 
+
 def __find_report_info(expected_report_info_list, real_report_item):
     for report_info in expected_report_info_list:
         if __report_item_equal(real_report_item, report_info):
             return report_info
     return None
 
+
 def __report_item_equal(real_report_item, report_item_info):
     report_dto: reports.ReportItemDto = real_report_item.to_dto()
     return (
         report_dto.severity.level == report_item_info[0]
-        and
-        report_dto.message.code == report_item_info[1]
-        and
-        report_dto.message.payload == report_item_info[2]
-        and
-        (
-            report_dto.severity.force_code == (
-                None if len(report_item_info) < 4 else report_item_info[3]
-            )
+        and report_dto.message.code == report_item_info[1]
+        and report_dto.message.payload == report_item_info[2]
+        and (
+            report_dto.severity.force_code
+            == (None if len(report_item_info) < 4 else report_item_info[3])
         )
         and
         # TODO: add proper check for context once it will be used
         report_dto.context is None
     )
 
+
 def assert_pcs_status(status1, status2):
     if _despace(status1) != _despace(status2):
         raise AssertionError(
             "strings not equal:\n{0}".format(prepare_diff(status1, status2))
         )
+
 
 def _despace(string):
     # ignore whitespace changes between various pacemaker versions

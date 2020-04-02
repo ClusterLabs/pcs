@@ -5,6 +5,7 @@ from pcs_test.tools.command_env.mock_runner import Call as RunnerCall
 
 from pcs import settings
 
+
 class CorosyncShortcuts:
     def __init__(self, calls):
         self.__calls = calls
@@ -14,7 +15,7 @@ class CorosyncShortcuts:
         name="runner.corosync.version",
         version="2.4.0",
         instead=None,
-        before=None
+        before=None,
     ):
         self.__calls.place(
             name,
@@ -24,16 +25,23 @@ class CorosyncShortcuts:
                     """\
                     Corosync Cluster Engine, version '{0}'
                     Copyright...
-                    """.format(version)
-                )
+                    """.format(
+                        version
+                    )
+                ),
             ),
             before=before,
-            instead=instead
+            instead=instead,
         )
 
     def qdevice_generate_cert(
-        self, cluster_name, cert_req_path="cert_path", stdout=None, stderr="",
-        returncode=0, name="runner.corosync.qdevice_generate_cert"
+        self,
+        cluster_name,
+        cert_req_path="cert_path",
+        stdout=None,
+        stderr="",
+        returncode=0,
+        name="runner.corosync.qdevice_generate_cert",
     ):
         if stdout is not None and cert_req_path is not None:
             raise AssertionError(
@@ -45,22 +53,28 @@ class CorosyncShortcuts:
                 "{binary} -r -n {cluster_name}".format(
                     binary=os.path.join(
                         settings.corosync_binaries,
-                        "corosync-qdevice-net-certutil"
+                        "corosync-qdevice-net-certutil",
                     ),
                     cluster_name=cluster_name,
                 ),
                 stdout=(
-                    stdout if stdout is not None
+                    stdout
+                    if stdout is not None
                     else f"Certificate request stored in {cert_req_path}\n"
                 ),
                 stderr=stderr,
-                returncode=returncode
+                returncode=returncode,
             ),
         )
 
     def qdevice_get_pk12(
-        self, cert_path="cert path", output_path="output_path", stdout=None,
-        stderr="", returncode=0, name="runner.corosync.qdevice_get_pk12"
+        self,
+        cert_path="cert path",
+        output_path="output_path",
+        stdout=None,
+        stderr="",
+        returncode=0,
+        name="runner.corosync.qdevice_get_pk12",
     ):
         if stdout is not None and output_path is not None:
             raise AssertionError(
@@ -72,21 +86,26 @@ class CorosyncShortcuts:
                 "{binary} -M -c {cert_path}".format(
                     binary=os.path.join(
                         settings.corosync_binaries,
-                        "corosync-qdevice-net-certutil"
+                        "corosync-qdevice-net-certutil",
                     ),
                     cert_path=cert_path,
                 ),
                 stdout=(
-                    stdout if stdout is not None
+                    stdout
+                    if stdout is not None
                     else f"Certificate stored in {output_path}\n"
                 ),
                 stderr=stderr,
-                returncode=returncode
+                returncode=returncode,
             ),
         )
 
     def quorum_status(
-        self, node_list=None, stdout=None, stderr="", returncode=0,
+        self,
+        node_list=None,
+        stdout=None,
+        stderr="",
+        returncode=0,
         name="runner.corosync.quorum_status",
     ):
         if bool(node_list) == bool(stdout):
@@ -94,7 +113,8 @@ class CorosyncShortcuts:
                 "Exactly one of 'node_list', 'stdout' must be specified"
             )
         if node_list:
-            stdout = outdent("""\
+            stdout = outdent(
+                """\
             Quorum information
             ------------------
             Date:             Fri Jan 16 13:03:28 2015
@@ -114,13 +134,16 @@ class CorosyncShortcuts:
             ----------------------
                 Nodeid      Votes    Qdevice Name
             {nodes}\
-            """).format(
+            """
+            ).format(
                 nodes_num=len(node_list),
-                quorum_num=(len(node_list)//2)+1,
-                nodes="".join([
-                    _quorum_status_node_fixture(node_id, node)
-                    for node_id, node in enumerate(node_list, 1)
-                ])
+                quorum_num=(len(node_list) // 2) + 1,
+                nodes="".join(
+                    [
+                        _quorum_status_node_fixture(node_id, node)
+                        for node_id, node in enumerate(node_list, 1)
+                    ]
+                ),
             )
         self.__calls.place(
             name,
@@ -128,9 +151,10 @@ class CorosyncShortcuts:
                 "corosync-quorumtool -p",
                 stdout=stdout,
                 stderr=stderr,
-                returncode=returncode
+                returncode=returncode,
             ),
         )
+
 
 def _quorum_status_node_fixture(node_id, node_name, votes=1, is_local=False):
     _local = " (local)" if is_local else ""

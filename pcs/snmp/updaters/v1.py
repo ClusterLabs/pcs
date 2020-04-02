@@ -12,7 +12,9 @@ logger = logging.getLogger("pcs.snmp.updaters.v1")
 logger.addHandler(logging.NullHandler())
 
 _cluster_v1_oid_tree = Oid(
-    1, "pcmkPcsV1Cluster", member_list=[
+    1,
+    "pcmkPcsV1Cluster",
+    member_list=[
         Oid(1, "pcmkPcsV1ClusterName", StringType),
         Oid(2, "pcmkPcsV1ClusterQuorate", IntegerType),
         Oid(3, "pcmkPcsV1ClusterNodesNum", IntegerType),
@@ -35,12 +37,13 @@ _cluster_v1_oid_tree = Oid(
         Oid(20, "pcmkPcsV1ClusterStoppedResourcesIds", StringType),
         Oid(21, "pcmkPcsV1ClusterFailedResourcesNum", IntegerType),
         Oid(22, "pcmkPcsV1ClusterFailedResourcesIds", StringType),
-    ]
+    ],
 )
 
 
 class ClusterPcsV1Updater(AgentxUpdaterBase):
     _oid_tree = Oid(0, "pcs_v1", member_list=[_cluster_v1_oid_tree])
+
     def update(self):
         # pylint: disable=too-many-locals
         output, ret_val = run_pcsdcli("node_status")
@@ -49,78 +52,76 @@ class ClusterPcsV1Updater(AgentxUpdaterBase):
                 "Unable to obtain cluster status.\nPCSD return code: %s\n"
                 "PCSD output: %s\n",
                 ret_val,
-                output
+                output,
             )
             return
         data = output["data"]
         self.set_value(
             "pcmkPcsV1Cluster.pcmkPcsV1ClusterName",
-            data.get("cluster_name", "")
+            data.get("cluster_name", ""),
         )
         self.set_value(
             "pcmkPcsV1Cluster.pcmkPcsV1ClusterQuorate",
-            _bool_to_int(data.get("node", {}).get("quorum"))
+            _bool_to_int(data.get("node", {}).get("quorum")),
         )
 
         # nodes
         known_nodes = data.get("known_nodes", [])
         self.set_value(
-            "pcmkPcsV1Cluster.pcmkPcsV1ClusterNodesNum",
-            len(known_nodes)
+            "pcmkPcsV1Cluster.pcmkPcsV1ClusterNodesNum", len(known_nodes)
         )
         self.set_value(
-            "pcmkPcsV1Cluster.pcmkPcsV1ClusterNodesNames",
-            known_nodes
+            "pcmkPcsV1Cluster.pcmkPcsV1ClusterNodesNames", known_nodes
         )
 
         corosync_nodes_online = data.get("corosync_online")
         self.set_value(
             "pcmkPcsV1Cluster.pcmkPcsV1ClusterCorosyncNodesOnlineNum",
-            len(corosync_nodes_online)
+            len(corosync_nodes_online),
         )
         self.set_value(
             "pcmkPcsV1Cluster.pcmkPcsV1ClusterCorosyncNodesOnlineNames",
-            corosync_nodes_online
+            corosync_nodes_online,
         )
 
         corosync_nodes_offline = data.get("corosync_offline")
         self.set_value(
             "pcmkPcsV1Cluster.pcmkPcsV1ClusterCorosyncNodesOfflineNum",
-            len(corosync_nodes_offline)
+            len(corosync_nodes_offline),
         )
         self.set_value(
             "pcmkPcsV1Cluster.pcmkPcsV1ClusterCorosyncNodesOfflineNames",
-            corosync_nodes_offline
+            corosync_nodes_offline,
         )
 
         pcmk_nodes_online = data.get("pacemaker_online")
         self.set_value(
             "pcmkPcsV1Cluster.pcmkPcsV1ClusterPcmkNodesOnlineNum",
-            len(pcmk_nodes_online)
+            len(pcmk_nodes_online),
         )
         self.set_value(
             "pcmkPcsV1Cluster.pcmkPcsV1ClusterPcmkNodesOnlineNames",
-            pcmk_nodes_online
+            pcmk_nodes_online,
         )
 
         pcmk_nodes_standby = data.get("pacemaker_standby")
         self.set_value(
             "pcmkPcsV1Cluster.pcmkPcsV1ClusterPcmkNodesStandbyNum",
-            len(pcmk_nodes_standby)
+            len(pcmk_nodes_standby),
         )
         self.set_value(
             "pcmkPcsV1Cluster.pcmkPcsV1ClusterPcmkNodesStandbyNames",
-            pcmk_nodes_standby
+            pcmk_nodes_standby,
         )
 
         pcmk_nodes_offline = data.get("pacemaker_offline")
         self.set_value(
             "pcmkPcsV1Cluster.pcmkPcsV1ClusterPcmkNodesOfflineNum",
-            len(pcmk_nodes_offline)
+            len(pcmk_nodes_offline),
         )
         self.set_value(
             "pcmkPcsV1Cluster.pcmkPcsV1ClusterPcmkNodesOfflineNames",
-            pcmk_nodes_offline
+            pcmk_nodes_offline,
         )
 
         # resources
@@ -131,11 +132,11 @@ class ClusterPcsV1Updater(AgentxUpdaterBase):
         primitive_id_list = _get_resource_id_list(primitive_list)
         self.set_value(
             "pcmkPcsV1Cluster.pcmkPcsV1ClusterAllResourcesNum",
-            len(primitive_id_list)
+            len(primitive_id_list),
         )
         self.set_value(
             "pcmkPcsV1Cluster.pcmkPcsV1ClusterAllResourcesIds",
-            primitive_id_list
+            primitive_id_list,
         )
         running_primitive_id_list = _get_resource_id_list(
             primitive_list, _res_in_status(["running"])
@@ -143,11 +144,11 @@ class ClusterPcsV1Updater(AgentxUpdaterBase):
 
         self.set_value(
             "pcmkPcsV1Cluster.pcmkPcsV1ClusterRunningResourcesNum",
-            len(running_primitive_id_list)
+            len(running_primitive_id_list),
         )
         self.set_value(
             "pcmkPcsV1Cluster.pcmkPcsV1ClusterRunningResourcesIds",
-            running_primitive_id_list
+            running_primitive_id_list,
         )
 
         disabled_primitive_id_list = _get_resource_id_list(
@@ -155,24 +156,24 @@ class ClusterPcsV1Updater(AgentxUpdaterBase):
         )
         self.set_value(
             "pcmkPcsV1Cluster.pcmkPcsV1ClusterStoppedResourcesNum",
-            len(disabled_primitive_id_list)
+            len(disabled_primitive_id_list),
         )
         self.set_value(
             "pcmkPcsV1Cluster.pcmkPcsV1ClusterStoppedResourcesIds",
-            disabled_primitive_id_list
+            disabled_primitive_id_list,
         )
 
         failed_primitive_id_list = _get_resource_id_list(
             primitive_list,
-            lambda res: not _res_in_status(["running", "disabled"])(res)
+            lambda res: not _res_in_status(["running", "disabled"])(res),
         )
         self.set_value(
             "pcmkPcsV1Cluster.pcmkPcsV1ClusterFailedResourcesNum",
-            len(failed_primitive_id_list)
+            len(failed_primitive_id_list),
         )
         self.set_value(
             "pcmkPcsV1Cluster.pcmkPcsV1ClusterFailedResourcesIds",
-            failed_primitive_id_list
+            failed_primitive_id_list,
         )
 
 

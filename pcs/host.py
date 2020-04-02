@@ -60,8 +60,7 @@ def auth_cmd(lib, argv, modifiers):
     host_dict = {
         host: _parse_host_options(host, opts)
         for host, opts in parse_args.split_list_by_any_keywords(
-            argv,
-            "host name"
+            argv, "host name"
         ).items()
     }
     username, password = utils.get_user_and_pass()
@@ -83,35 +82,36 @@ def deauth_cmd(lib, argv, modifiers):
     else:
         remove_hosts = argv
     output, retval = utils.run_pcsdcli(
-        'remove_known_hosts',
-        {'host_names': remove_hosts}
+        "remove_known_hosts", {"host_names": remove_hosts}
     )
-    if retval == 0 and output['status'] == 'access_denied':
-        utils.err('Access denied')
-    if retval == 0 and output['status'] == 'ok' and output['data']:
+    if retval == 0 and output["status"] == "access_denied":
+        utils.err("Access denied")
+    if retval == 0 and output["status"] == "ok" and output["data"]:
         try:
             if output["data"]["hosts_not_found"]:
-                utils.err("Following hosts were not found: '{hosts}'".format(
-                    hosts="', '".join(output["data"]["hosts_not_found"])
-                ))
-            if not output['data']['sync_successful']:
+                utils.err(
+                    "Following hosts were not found: '{hosts}'".format(
+                        hosts="', '".join(output["data"]["hosts_not_found"])
+                    )
+                )
+            if not output["data"]["sync_successful"]:
                 utils.err(
                     "Some nodes had a newer known-hosts than the local node. "
-                        + "Local node's known-hosts were updated. "
-                        + "Please repeat the action if needed."
+                    + "Local node's known-hosts were updated. "
+                    + "Please repeat the action if needed."
                 )
-            if output['data']['sync_nodes_err']:
+            if output["data"]["sync_nodes_err"]:
                 utils.err(
                     (
                         "Unable to synchronize and save known-hosts on nodes: "
                         + "{0}. Run 'pcs host auth {1}' to make sure the nodes "
                         + "are authorized."
                     ).format(
-                        ", ".join(output['data']['sync_nodes_err']),
-                        " ".join(output['data']['sync_nodes_err'])
+                        ", ".join(output["data"]["sync_nodes_err"]),
+                        " ".join(output["data"]["sync_nodes_err"]),
                     )
                 )
         except (ValueError, KeyError):
-            utils.err('Unable to communicate with pcsd')
+            utils.err("Unable to communicate with pcsd")
         return
-    utils.err('Unable to communicate with pcsd')
+    utils.err("Unable to communicate with pcsd")

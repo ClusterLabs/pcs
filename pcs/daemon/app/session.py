@@ -3,6 +3,7 @@ from pcs.daemon.auth import check_user_groups, authorize_user
 
 PCSD_SESSION = "pcsd.sid"
 
+
 class Mixin:
     """
     Mixin for tornado.web.RequestHandler
@@ -22,7 +23,7 @@ class Mixin:
         if self.__session.is_authenticated:
             self.__refresh_auth(
                 await check_user_groups(self.__session.username),
-                ajax_id=self.__session.ajax_id
+                ajax_id=self.__session.ajax_id,
             )
 
     async def session_auth_user(self, username, password, sign_rejection=True):
@@ -39,7 +40,7 @@ class Mixin:
         self.__session = self.__storage.provide(self.__sid_from_client)
         self.__refresh_auth(
             await authorize_user(username, password),
-            sign_rejection=sign_rejection
+            sign_rejection=sign_rejection,
         )
 
     @property
@@ -76,8 +77,8 @@ class Mixin:
         If sid came in the request cookies put it into response cookies. But do
         not start new one.
         """
-        #TODO this method should exist temporarily (for sinatra compatibility)
-        #pylint: disable=invalid-name
+        # TODO this method should exist temporarily (for sinatra compatibility)
+        # pylint: disable=invalid-name
         if self.__sid_from_client is not None:
             self.set_cookie(
                 PCSD_SESSION, self.__sid_from_client, **self.__cookie_options
@@ -101,7 +102,6 @@ class Mixin:
             self.sid_to_cookies()
         elif sign_rejection:
             self.__session = self.__storage.rejected_user(
-                self.__session.sid,
-                user_auth_info.name,
+                self.__session.sid, user_auth_info.name,
             )
             self.sid_to_cookies()

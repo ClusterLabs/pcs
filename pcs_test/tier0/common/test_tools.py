@@ -91,19 +91,17 @@ class VersionTest(TestCase):
         self.assertEqual(str(ver.normalize()), "2.3.4")
 
     def test_compare(self):
-        self.assert_eq_tuple((2, ), (2, ))
-        self.assert_lt_tuple((2, ), (3, ))
-
+        self.assert_eq_tuple((2,), (2,))
+        self.assert_lt_tuple((2,), (3,))
 
         self.assert_eq_tuple((2, 0), (2, 0))
         self.assert_lt_tuple((2, 0), (2, 5))
         self.assert_lt_tuple((2, 0), (3, 5))
 
-        self.assert_eq_tuple((2, 0), (2,  ))
-        self.assert_lt_tuple((2, 0), (3,  ))
-        self.assert_lt_tuple((2, 5), (3,  ))
-        self.assert_lt_tuple((3,  ), (3, 5))
-
+        self.assert_eq_tuple((2, 0), (2,))
+        self.assert_lt_tuple((2, 0), (3,))
+        self.assert_lt_tuple((2, 5), (3,))
+        self.assert_lt_tuple((3,), (3, 5))
 
         self.assert_eq_tuple((2, 0, 0), (2, 0, 0))
         self.assert_lt_tuple((2, 0, 0), (2, 0, 1))
@@ -115,24 +113,24 @@ class VersionTest(TestCase):
         self.assert_lt_tuple((2, 0, 0), (3, 5, 1))
 
         self.assert_eq_tuple((2, 0, 0), (2, 0))
-        self.assert_eq_tuple((2, 0, 0), (2,  ))
+        self.assert_eq_tuple((2, 0, 0), (2,))
         self.assert_lt_tuple((2, 0, 0), (2, 5))
-        self.assert_lt_tuple((2, 0, 0), (3,  ))
+        self.assert_lt_tuple((2, 0, 0), (3,))
 
-        self.assert_lt_tuple((2, 5, 0), (3,  ))
-        self.assert_lt_tuple((2,  ), (2, 5, 0))
+        self.assert_lt_tuple((2, 5, 0), (3,))
+        self.assert_lt_tuple((2,), (2, 5, 0))
         self.assert_eq_tuple((2, 5, 0), (2, 5))
         self.assert_lt_tuple((2, 5, 0), (3, 5))
 
         self.assert_lt_tuple((2, 0), (2, 5, 1))
         self.assert_lt_tuple((2, 5), (2, 5, 1))
         self.assert_lt_tuple((2, 5, 1), (3, 5))
-        self.assert_lt_tuple((2, 5, 1), (3,  ))
-        self.assert_lt_tuple((2,  ), (2, 5, 1))
-        self.assert_lt_tuple((2, 5, 1), (3,  ))
+        self.assert_lt_tuple((2, 5, 1), (3,))
+        self.assert_lt_tuple((2,), (2, 5, 1))
+        self.assert_lt_tuple((2, 5, 1), (3,))
 
-        self.assert_lt_tuple((2,  ), (3, 5, 1))
-        self.assert_lt_tuple((3,  ), (3, 5, 1))
+        self.assert_lt_tuple((2,), (3, 5, 1))
+        self.assert_lt_tuple((3,), (3, 5, 1))
         self.assert_lt_tuple((2, 0), (3, 5, 1))
         self.assert_lt_tuple((2, 5), (3, 5, 1))
         self.assert_lt_tuple((3, 5), (3, 5, 1))

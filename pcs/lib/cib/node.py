@@ -9,10 +9,7 @@ from pcs.lib.errors import LibraryError
 from pcs.lib.xml_tools import append_when_useful
 
 
-
-class PacemakerNode(
-    namedtuple("PacemakerNode", "name addr")
-):
+class PacemakerNode(namedtuple("PacemakerNode", "name addr")):
     """
     A class for transporting a node name and address for purposes of network
     communication and checking if node name / address is in use.
@@ -60,6 +57,7 @@ def update_node_instance_attrs(
     append_when_useful(node_el, attrs_el)
     append_when_useful(cib_nodes, node_el)
 
+
 def _ensure_node_exists(tree, node_name, state_nodes=None):
     """
     Make sure node with specified name exists
@@ -79,7 +77,7 @@ def _ensure_node_exists(tree, node_name, state_nodes=None):
                 node_el = _create_node(
                     node_state.attrs.id,
                     node_state.attrs.name,
-                    node_state.attrs.type
+                    node_state.attrs.type,
                 )
                 break
     if node_el is None:
@@ -87,6 +85,7 @@ def _ensure_node_exists(tree, node_name, state_nodes=None):
             ReportItem.error(reports.messages.NodeNotFound(node_name))
         )
     return node_el
+
 
 def _get_node_by_uname(tree, uname):
     """
@@ -96,6 +95,7 @@ def _get_node_by_uname(tree, uname):
     string uname -- node name
     """
     return tree.find("./node[@uname='{0}']".format(uname))
+
 
 def _create_node(node_id, uname, node_type=None):
     """

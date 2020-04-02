@@ -1,4 +1,5 @@
 import sys
+
 # pylint: disable=wildcard-import, unused-wildcard-import
 from pycurl import *
 

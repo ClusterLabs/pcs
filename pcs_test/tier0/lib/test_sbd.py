@@ -32,51 +32,67 @@ class EvenNumberOfNodesAndNoQdevice(TestCase):
 
     def test_even_num_no_qdevice(self):
         self._set_ret_vals([1, 2], False)
-        self.assertTrue(lib_sbd._even_number_of_nodes_and_no_qdevice(
-            self.mock_corosync_conf
-        ))
+        self.assertTrue(
+            lib_sbd._even_number_of_nodes_and_no_qdevice(
+                self.mock_corosync_conf
+            )
+        )
 
     def test_even_num_qdevice(self):
         self._set_ret_vals([1, 2], True)
-        self.assertFalse(lib_sbd._even_number_of_nodes_and_no_qdevice(
-            self.mock_corosync_conf
-        ))
+        self.assertFalse(
+            lib_sbd._even_number_of_nodes_and_no_qdevice(
+                self.mock_corosync_conf
+            )
+        )
 
     def test_odd_num_no_qdevice(self):
         self._set_ret_vals([1, 2, 3], False)
-        self.assertFalse(lib_sbd._even_number_of_nodes_and_no_qdevice(
-            self.mock_corosync_conf
-        ))
+        self.assertFalse(
+            lib_sbd._even_number_of_nodes_and_no_qdevice(
+                self.mock_corosync_conf
+            )
+        )
 
     def test_odd_num_qdevice(self):
         self._set_ret_vals([1, 2, 3], True)
-        self.assertFalse(lib_sbd._even_number_of_nodes_and_no_qdevice(
-            self.mock_corosync_conf
-        ))
+        self.assertFalse(
+            lib_sbd._even_number_of_nodes_and_no_qdevice(
+                self.mock_corosync_conf
+            )
+        )
 
     def test_even_num_no_qdevice_plus_one(self):
         self._set_ret_vals([1, 2], False)
-        self.assertFalse(lib_sbd._even_number_of_nodes_and_no_qdevice(
-            self.mock_corosync_conf, 1
-        ))
+        self.assertFalse(
+            lib_sbd._even_number_of_nodes_and_no_qdevice(
+                self.mock_corosync_conf, 1
+            )
+        )
 
     def test_even_num_qdevice_plus_one(self):
         self._set_ret_vals([1, 2], True)
-        self.assertFalse(lib_sbd._even_number_of_nodes_and_no_qdevice(
-            self.mock_corosync_conf, 1
-        ))
+        self.assertFalse(
+            lib_sbd._even_number_of_nodes_and_no_qdevice(
+                self.mock_corosync_conf, 1
+            )
+        )
 
     def test_odd_num_no_qdevice_plus_one(self):
         self._set_ret_vals([1, 2, 3], False)
-        self.assertTrue(lib_sbd._even_number_of_nodes_and_no_qdevice(
-            self.mock_corosync_conf, 1
-        ))
+        self.assertTrue(
+            lib_sbd._even_number_of_nodes_and_no_qdevice(
+                self.mock_corosync_conf, 1
+            )
+        )
 
     def test_odd_num_qdevice_plus_one(self):
         self._set_ret_vals([1, 2, 3], True)
-        self.assertFalse(lib_sbd._even_number_of_nodes_and_no_qdevice(
-            self.mock_corosync_conf, 1
-        ))
+        self.assertFalse(
+            lib_sbd._even_number_of_nodes_and_no_qdevice(
+                self.mock_corosync_conf, 1
+            )
+        )
 
 
 @mock.patch("pcs.lib.sbd.is_device_set_local")
@@ -94,8 +110,11 @@ class IsAutoTieBreakerNeededTest(TestCase):
         self.mock_device_set = None
 
     def set_mocks(
-        self, mock_nodes_and_qdevice, mock_sbd_installed, mock_sbd_enabled,
-        mock_device_set
+        self,
+        mock_nodes_and_qdevice,
+        mock_sbd_installed,
+        mock_sbd_enabled,
+        mock_device_set,
     ):
         self.mock_nodes_and_qdevice = mock_nodes_and_qdevice
         self.mock_sbd_installed = mock_sbd_installed
@@ -113,49 +132,69 @@ class IsAutoTieBreakerNeededTest(TestCase):
             lib_sbd.is_auto_tie_breaker_needed(
                 self.runner, self.corosync_conf_facade, self.node_num_modifier
             ),
-            result
+            result,
         )
         self.mock_nodes_and_qdevice.assert_called_once_with(
             self.corosync_conf_facade, self.node_num_modifier
         )
 
     def test_device_set(
-        self, mock_nodes_and_qdevice, mock_sbd_installed, mock_sbd_enabled,
-        mock_device_set
+        self,
+        mock_nodes_and_qdevice,
+        mock_sbd_installed,
+        mock_sbd_enabled,
+        mock_device_set,
     ):
         self.set_mocks(
-            mock_nodes_and_qdevice, mock_sbd_installed, mock_sbd_enabled,
-            mock_device_set
+            mock_nodes_and_qdevice,
+            mock_sbd_installed,
+            mock_sbd_enabled,
+            mock_device_set,
         )
         self.common_test(True, True, True, True, False)
 
     def test_no_device(
-        self, mock_nodes_and_qdevice, mock_sbd_installed, mock_sbd_enabled,
-        mock_device_set
+        self,
+        mock_nodes_and_qdevice,
+        mock_sbd_installed,
+        mock_sbd_enabled,
+        mock_device_set,
     ):
         self.set_mocks(
-            mock_nodes_and_qdevice, mock_sbd_installed, mock_sbd_enabled,
-            mock_device_set
+            mock_nodes_and_qdevice,
+            mock_sbd_installed,
+            mock_sbd_enabled,
+            mock_device_set,
         )
         self.common_test(True, True, True, False, True)
 
     def test_no_device_with_qdevice(
-        self, mock_nodes_and_qdevice, mock_sbd_installed, mock_sbd_enabled,
-        mock_device_set
+        self,
+        mock_nodes_and_qdevice,
+        mock_sbd_installed,
+        mock_sbd_enabled,
+        mock_device_set,
     ):
         self.set_mocks(
-            mock_nodes_and_qdevice, mock_sbd_installed, mock_sbd_enabled,
-            mock_device_set
+            mock_nodes_and_qdevice,
+            mock_sbd_installed,
+            mock_sbd_enabled,
+            mock_device_set,
         )
         self.common_test(False, True, True, False, False)
 
     def test_sbd_disabled(
-        self, mock_nodes_and_qdevice, mock_sbd_installed, mock_sbd_enabled,
-        mock_device_set
+        self,
+        mock_nodes_and_qdevice,
+        mock_sbd_installed,
+        mock_sbd_enabled,
+        mock_device_set,
     ):
         self.set_mocks(
-            mock_nodes_and_qdevice, mock_sbd_installed, mock_sbd_enabled,
-            mock_device_set
+            mock_nodes_and_qdevice,
+            mock_sbd_installed,
+            mock_sbd_enabled,
+            mock_device_set,
         )
         self.common_test(True, True, False, False, False)
 
@@ -169,18 +208,18 @@ class AtbHasToBeEnabledTest(TestCase):
     def test_atb_needed_is_enabled(self, mock_is_needed):
         mock_is_needed.return_value = True
         self.mock_conf.is_enabled_auto_tie_breaker.return_value = True
-        self.assertFalse(lib_sbd.atb_has_to_be_enabled(
-            self.mock_runner, self.mock_conf, 1
-        ))
+        self.assertFalse(
+            lib_sbd.atb_has_to_be_enabled(self.mock_runner, self.mock_conf, 1)
+        )
         self.mock_conf.is_enabled_auto_tie_breaker.assert_called_once_with()
         mock_is_needed.assert_not_called()
 
     def test_atb_needed_is_disabled(self, mock_is_needed):
         mock_is_needed.return_value = True
         self.mock_conf.is_enabled_auto_tie_breaker.return_value = False
-        self.assertTrue(lib_sbd.atb_has_to_be_enabled(
-            self.mock_runner, self.mock_conf, -1
-        ))
+        self.assertTrue(
+            lib_sbd.atb_has_to_be_enabled(self.mock_runner, self.mock_conf, -1)
+        )
         self.mock_conf.is_enabled_auto_tie_breaker.assert_called_once_with()
         mock_is_needed.assert_called_once_with(
             self.mock_runner, self.mock_conf, -1
@@ -189,18 +228,18 @@ class AtbHasToBeEnabledTest(TestCase):
     def test_atb_not_needed_is_enabled(self, mock_is_needed):
         mock_is_needed.return_value = False
         self.mock_conf.is_enabled_auto_tie_breaker.return_value = True
-        self.assertFalse(lib_sbd.atb_has_to_be_enabled(
-            self.mock_runner, self.mock_conf, 2
-        ))
+        self.assertFalse(
+            lib_sbd.atb_has_to_be_enabled(self.mock_runner, self.mock_conf, 2)
+        )
         self.mock_conf.is_enabled_auto_tie_breaker.assert_called_once_with()
         mock_is_needed.assert_not_called()
 
     def test_atb_not_needed_is_disabled(self, mock_is_needed):
         mock_is_needed.return_value = False
         self.mock_conf.is_enabled_auto_tie_breaker.return_value = False
-        self.assertFalse(lib_sbd.atb_has_to_be_enabled(
-            self.mock_runner, self.mock_conf, -2
-        ))
+        self.assertFalse(
+            lib_sbd.atb_has_to_be_enabled(self.mock_runner, self.mock_conf, -2)
+        )
         self.mock_conf.is_enabled_auto_tie_breaker.assert_called_once_with()
         mock_is_needed.assert_called_once_with(
             self.mock_runner, self.mock_conf, -2
@@ -260,16 +299,24 @@ class InitializeBlockDeviceTest(TestCase):
     def test_success(self):
         device_list = ["/dev/sdb", "/dev/vda"]
         option_dict = {
-            "watchdog-timeout": "10", # -1
-            "loop-timeout": "1", # -3
+            "watchdog-timeout": "10",  # -1
+            "loop-timeout": "1",  # -3
         }
         self.mock_runner.run.return_value = "", "", 0
         lib_sbd.initialize_block_devices(
             self.mock_rep, self.mock_runner, device_list, option_dict
         )
         cmd = [
-            settings.sbd_binary, "-d", "/dev/sdb", "-d", "/dev/vda", "-3", "1",
-            "-1", "10", "create"
+            settings.sbd_binary,
+            "-d",
+            "/dev/sdb",
+            "-d",
+            "/dev/vda",
+            "-3",
+            "1",
+            "-1",
+            "10",
+            "create",
         ]
         self.mock_runner.run.assert_called_once_with(cmd)
         assert_report_item_list_equal(
@@ -278,21 +325,21 @@ class InitializeBlockDeviceTest(TestCase):
                 (
                     Severities.INFO,
                     report_codes.SBD_DEVICE_INITIALIZATION_STARTED,
-                    {"device_list": device_list}
+                    {"device_list": device_list},
                 ),
                 (
                     Severities.INFO,
                     report_codes.SBD_DEVICE_INITIALIZATION_SUCCESS,
-                    {"device_list": device_list}
+                    {"device_list": device_list},
                 ),
-            ]
+            ],
         )
 
     def test_failed(self):
         device_list = ["/dev/sdb", "/dev/vda"]
         option_dict = {
-            "watchdog-timeout": "10", # -1
-            "loop-timeout": "1", # -3
+            "watchdog-timeout": "10",  # -1
+            "loop-timeout": "1",  # -3
         }
         error_msg = "error"
         self.mock_runner.run.return_value = "", error_msg, 1
@@ -303,24 +350,31 @@ class InitializeBlockDeviceTest(TestCase):
             (
                 Severities.ERROR,
                 report_codes.SBD_DEVICE_INITIALIZATION_ERROR,
-                {
-                    "device_list": device_list,
-                    "reason": error_msg,
-                }
-            )
+                {"device_list": device_list, "reason": error_msg,},
+            ),
         )
         cmd = [
-            settings.sbd_binary, "-d", "/dev/sdb", "-d", "/dev/vda", "-3", "1",
-            "-1", "10", "create"
+            settings.sbd_binary,
+            "-d",
+            "/dev/sdb",
+            "-d",
+            "/dev/vda",
+            "-3",
+            "1",
+            "-1",
+            "10",
+            "create",
         ]
         self.mock_runner.run.assert_called_once_with(cmd)
         assert_report_item_list_equal(
             self.mock_rep.report_item_list,
-            [(
-                Severities.INFO,
-                report_codes.SBD_DEVICE_INITIALIZATION_STARTED,
-                {"device_list": device_list}
-            )]
+            [
+                (
+                    Severities.INFO,
+                    report_codes.SBD_DEVICE_INITIALIZATION_STARTED,
+                    {"device_list": device_list},
+                )
+            ],
         )
 
 
@@ -329,45 +383,51 @@ class InitializeBlockDeviceTest(TestCase):
 class GetLocalSbdDeviceListTest(TestCase):
     def test_device_not_defined(self, mock_sbd_config, mock_config_exists):
         mock_config_exists.return_value = True
-        mock_sbd_config.return_value = outdent("""
+        mock_sbd_config.return_value = outdent(
+            """
             SBD_WATCHDOG=/dev/watchdog
             SBD_WATCHDOG_TIMEOUT=10
-        """)
+        """
+        )
         self.assertEqual([], lib_sbd.get_local_sbd_device_list())
         mock_config_exists.assert_called_once_with(settings.sbd_config)
         mock_sbd_config.assert_called_once_with()
 
     def test_no_device(self, mock_sbd_config, mock_config_exists):
         mock_config_exists.return_value = True
-        mock_sbd_config.return_value = outdent("""
+        mock_sbd_config.return_value = outdent(
+            """
             SBD_WATCHDOG=/dev/watchdog
             SBD_WATCHDOG_TIMEOUT=10
             SBD_DEVICE=""
-        """)
+        """
+        )
         self.assertEqual([], lib_sbd.get_local_sbd_device_list())
         mock_config_exists.assert_called_once_with(settings.sbd_config)
         mock_sbd_config.assert_called_once_with()
 
     def test_one_device(self, mock_sbd_config, mock_config_exists):
         mock_config_exists.return_value = True
-        mock_sbd_config.return_value = outdent("""
+        mock_sbd_config.return_value = outdent(
+            """
             SBD_WATCHDOG=/dev/watchdog
             SBD_WATCHDOG_TIMEOUT=10
             SBD_DEVICE="/dev/vda"
-        """)
-        self.assertEqual(
-            ["/dev/vda"], lib_sbd.get_local_sbd_device_list()
+        """
         )
+        self.assertEqual(["/dev/vda"], lib_sbd.get_local_sbd_device_list())
         mock_config_exists.assert_called_once_with(settings.sbd_config)
         mock_sbd_config.assert_called_once_with()
 
     def test_multiple_devices(self, mock_sbd_config, mock_config_exists):
         mock_config_exists.return_value = True
-        mock_sbd_config.return_value = outdent("""
+        mock_sbd_config.return_value = outdent(
+            """
             SBD_WATCHDOG=/dev/watchdog
             SBD_WATCHDOG_TIMEOUT=10
             SBD_DEVICE="/dev/vda;/dev/sda"
-        """)
+        """
+        )
         self.assertEqual(
             ["/dev/vda", "/dev/sda"], lib_sbd.get_local_sbd_device_list()
         )
@@ -395,11 +455,8 @@ class GetLocalSbdDeviceListTest(TestCase):
             (
                 Severities.ERROR,
                 report_codes.UNABLE_TO_GET_SBD_CONFIG,
-                {
-                    "node": node,
-                    "reason": error,
-                }
-            )
+                {"node": node, "reason": error,},
+            ),
         )
         mock_config_exists.assert_called_once_with(settings.sbd_config)
         mock_sbd_config.assert_called_once_with()
@@ -447,11 +504,8 @@ class GetDeviceMessagesInfoTest(TestCase):
             (
                 Severities.ERROR,
                 report_codes.SBD_DEVICE_LIST_ERROR,
-                {
-                    "device": device,
-                    "reason": output,
-                }
-            )
+                {"device": device, "reason": output,},
+            ),
         )
         self.mock_runner.run.assert_called_once_with(
             [settings.sbd_binary, "-d", device, "list"]
@@ -484,11 +538,8 @@ class GetDeviceSbdHeaderDumpTest(TestCase):
             (
                 Severities.ERROR,
                 report_codes.SBD_DEVICE_DUMP_ERROR,
-                {
-                    "device": device,
-                    "reason": output,
-                }
-            )
+                {"device": device, "reason": output,},
+            ),
         )
         self.mock_runner.run.assert_called_once_with(
             [settings.sbd_binary, "-d", device, "dump"]
@@ -502,9 +553,9 @@ class SetMessageTest(TestCase):
     def test_success(self):
         self.mock_runner.run.return_value = "", "", 0
         lib_sbd.set_message(self.mock_runner, "device", "node", "test")
-        self.mock_runner.run.assert_called_once_with([
-            settings.sbd_binary, "-d", "device", "message", "node", "test"
-        ])
+        self.mock_runner.run.assert_called_once_with(
+            [settings.sbd_binary, "-d", "device", "message", "node", "test"]
+        )
 
     def test_failure(self):
         error = "error"
@@ -521,12 +572,12 @@ class SetMessageTest(TestCase):
                     "node": "node",
                     "sbd_message": "test",
                     "reason": error,
-                }
-            )
+                },
+            ),
         )
-        self.mock_runner.run.assert_called_once_with([
-            settings.sbd_binary, "-d", "device", "message", "node", "test"
-        ])
+        self.mock_runner.run.assert_called_once_with(
+            [settings.sbd_binary, "-d", "device", "message", "node", "test"]
+        )
 
 
 class ValidateDeviceDictTest(TestCase):
@@ -554,10 +605,7 @@ class ValidateDeviceDictTest(TestCase):
                 (
                     Severities.ERROR,
                     report_codes.SBD_NO_DEVICE_FOR_NODE,
-                    {
-                        "node": "node1",
-                        "sbd_enabled_in_cluster": False,
-                    }
+                    {"node": "node1", "sbd_enabled_in_cluster": False,},
                 ),
                 (
                     Severities.ERROR,
@@ -566,26 +614,21 @@ class ValidateDeviceDictTest(TestCase):
                         "node": "node2",
                         "device_list": too_many_devices,
                         "max_devices": settings.sbd_max_device_num,
-                    }
+                    },
                 ),
                 (
                     Severities.ERROR,
                     report_codes.SBD_DEVICE_PATH_NOT_ABSOLUTE,
-                    {
-                        "node": "node2",
-                        "device": "dev/sda2",
-                    }
+                    {"node": "node2", "device": "dev/sda2",},
                 ),
                 (
                     Severities.ERROR,
                     report_codes.SBD_DEVICE_PATH_NOT_ABSOLUTE,
-                    {
-                        "node": "node4",
-                        "device": "../dev/sda2",
-                    }
+                    {"node": "node4", "device": "../dev/sda2",},
                 ),
-            ]
+            ],
         )
+
 
 class GetAvailableWatchdogs(TestCase):
     """

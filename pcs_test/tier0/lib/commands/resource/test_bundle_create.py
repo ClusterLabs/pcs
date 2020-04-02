@@ -1,6 +1,6 @@
 from unittest import TestCase
 
-from pcs_test.tier0.lib.commands.resource.bundle_common import(
+from pcs_test.tier0.lib.commands.resource.bundle_common import (
     FixturesMixin,
     SetUpMixin,
     UpgradeMixin,
@@ -17,6 +17,7 @@ from pcs.common.reports import ReportItemSeverity as severities
 from pcs.common.reports import codes as report_codes
 from pcs.lib.commands import resource
 
+
 class CreateCommandMixin:
     container_type = None
     bundle_id = "B1"
@@ -30,7 +31,7 @@ class CreateCommandMixin:
             self.env_assist.get_env(),
             bundle_id=bundle_id or self.bundle_id,
             container_type=container_type or self.container_type,
-            **params
+            **params,
         )
 
     def run_bundle_cmd(self, *args, **kwargs):
@@ -46,43 +47,49 @@ class MinimalCreate(CreateCommandMixin, FixturesMixin, SetUpMixin, TestCase):
 
     def test_errors(self):
         self.env_assist.assert_raise_library_error(
-            lambda:
-            self.bundle_create(bundle_id="B#1", container_type="nonsense")
+            lambda: self.bundle_create(
+                bundle_id="B#1", container_type="nonsense"
+            )
         )
-        self.env_assist.assert_reports([
-            (
-                severities.ERROR,
-                report_codes.INVALID_ID_BAD_CHAR,
-                {
-                    "invalid_character": "#",
-                    "id": "B#1",
-                    "id_description": "bundle name",
-                    "is_first_char": False,
-                },
-                None
-            ),
-            (
-                severities.ERROR,
-                report_codes.INVALID_OPTION_VALUE,
-                {
-                    "option_name": "container type",
-                    "option_value": "nonsense",
-                    "allowed_values": {"docker", "podman", "rkt"},
-                    "cannot_be_empty": False,
-                    "forbidden_characters": None,
-                },
-                None
-            ),
-        ])
+        self.env_assist.assert_reports(
+            [
+                (
+                    severities.ERROR,
+                    report_codes.INVALID_ID_BAD_CHAR,
+                    {
+                        "invalid_character": "#",
+                        "id": "B#1",
+                        "id_description": "bundle name",
+                        "is_first_char": False,
+                    },
+                    None,
+                ),
+                (
+                    severities.ERROR,
+                    report_codes.INVALID_OPTION_VALUE,
+                    {
+                        "option_name": "container type",
+                        "option_value": "nonsense",
+                        "allowed_values": {"docker", "podman", "rkt"},
+                        "cannot_be_empty": False,
+                        "forbidden_characters": None,
+                    },
+                    None,
+                ),
+            ]
+        )
+
 
 class CreateParametrizedContainerMixin(
     CreateCommandMixin, ParametrizedContainerMixin, UpgradeMixin
 ):
     pass
 
+
 class CreateDocker(CreateParametrizedContainerMixin, TestCase):
     container_type = "docker"
     old_version_cib_filename = "cib-empty-2.0.xml"
+
 
 class CreatePodman(CreateParametrizedContainerMixin, TestCase):
     container_type = "podman"
@@ -93,20 +100,26 @@ class CreateRkt(CreateParametrizedContainerMixin, TestCase):
     container_type = "rkt"
     old_version_cib_filename = "cib-empty-2.9.xml"
 
+
 class CreateWithNetwork(CreateCommandMixin, NetworkMixin, TestCase):
     container_type = "docker"
+
 
 class CreateWithPortMap(CreateCommandMixin, PortMapMixin, TestCase):
     container_type = "docker"
 
+
 class CreateWithStorageMap(CreateCommandMixin, StorageMapMixin, TestCase):
     container_type = "docker"
+
 
 class CreateWithMeta(CreateCommandMixin, MetaMixin, TestCase):
     container_type = "docker"
 
+
 class CreateWithAllOptions(CreateCommandMixin, AllOptionsMixin, TestCase):
     container_type = "docker"
+
 
 class Wait(CreateCommandMixin, WaitMixin, TestCase):
     container_type = "docker"

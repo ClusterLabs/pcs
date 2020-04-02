@@ -12,6 +12,7 @@ from pcs_test.tools import fixture
 from pcs_test.tools.assertions import assert_raise_library_error
 from pcs_test.tools.command_env import get_env_tools
 
+
 class PushCorosyncConfLiveBase(TestCase):
     def setUp(self):
         self.env_assistant, self.config = get_env_tools(self)
@@ -23,7 +24,8 @@ class PushCorosyncConfLiveBase(TestCase):
 
     def fixture_corosync_conf(self, node1_name=True, node2_name=True):
         # nodelist is enough, nothing else matters for the tests
-        config = dedent("""\
+        config = dedent(
+            """\
             nodelist {
                 node {
                     ring0_addr: node-1-addr
@@ -86,145 +88,135 @@ class PushCorosyncConfLiveNoQdeviceTest(PushCorosyncConfLiveBase):
         )
 
     def test_dont_need_stopped_cluster(self):
-        (self.config
-            .http.corosync.set_corosync_conf(
-                self.corosync_conf_text,
-                node_labels=self.node_labels
-            )
-            .http.corosync.reload_corosync_conf(
+        (
+            self.config.http.corosync.set_corosync_conf(
+                self.corosync_conf_text, node_labels=self.node_labels
+            ).http.corosync.reload_corosync_conf(
                 node_labels=self.node_labels[:1]
             )
         )
         self.env_assistant.get_env().push_corosync_conf(
             self.corosync_conf_facade
         )
-        self.env_assistant.assert_reports([
-            fixture.info(report_codes.COROSYNC_CONFIG_DISTRIBUTION_STARTED),
-            fixture.info(
-                report_codes.COROSYNC_CONFIG_ACCEPTED_BY_NODE,
-                node="node-1",
-            ),
-            fixture.info(
-                report_codes.COROSYNC_CONFIG_ACCEPTED_BY_NODE,
-                node="node-2",
-            ),
-            fixture.info(
-                report_codes.COROSYNC_CONFIG_RELOADED,
-                node="node-1"
-            ),
-        ])
+        self.env_assistant.assert_reports(
+            [
+                fixture.info(report_codes.COROSYNC_CONFIG_DISTRIBUTION_STARTED),
+                fixture.info(
+                    report_codes.COROSYNC_CONFIG_ACCEPTED_BY_NODE,
+                    node="node-1",
+                ),
+                fixture.info(
+                    report_codes.COROSYNC_CONFIG_ACCEPTED_BY_NODE,
+                    node="node-2",
+                ),
+                fixture.info(
+                    report_codes.COROSYNC_CONFIG_RELOADED, node="node-1"
+                ),
+            ]
+        )
 
     def test_dont_need_stopped_cluster_error(self):
-        (self.config
-            .http.corosync.set_corosync_conf(
+        (
+            self.config.http.corosync.set_corosync_conf(
                 self.corosync_conf_text,
                 communication_list=[
-                    {
-                        "label": "node-1",
-                    },
+                    {"label": "node-1",},
                     {
                         "label": "node-2",
                         "response_code": 400,
-                        "output": "Failed"
+                        "output": "Failed",
                     },
-                ]
+                ],
             )
         )
         env = self.env_assistant.get_env()
         self.env_assistant.assert_raise_library_error(
-            lambda: env.push_corosync_conf(self.corosync_conf_facade),
-            []
+            lambda: env.push_corosync_conf(self.corosync_conf_facade), []
         )
-        self.env_assistant.assert_reports([
-            fixture.info(report_codes.COROSYNC_CONFIG_DISTRIBUTION_STARTED),
-            fixture.info(
-                report_codes.COROSYNC_CONFIG_ACCEPTED_BY_NODE,
-                node="node-1",
-            ),
-            fixture.error(
-                report_codes.NODE_COMMUNICATION_COMMAND_UNSUCCESSFUL,
-                force_code=report_codes.SKIP_OFFLINE_NODES,
-                node="node-2",
-                command="remote/set_corosync_conf",
-                reason="Failed",
-            ),
-            fixture.error(
-                report_codes.COROSYNC_CONFIG_DISTRIBUTION_NODE_ERROR,
-                force_code=report_codes.SKIP_OFFLINE_NODES,
-                node="node-2",
-            ),
-        ])
+        self.env_assistant.assert_reports(
+            [
+                fixture.info(report_codes.COROSYNC_CONFIG_DISTRIBUTION_STARTED),
+                fixture.info(
+                    report_codes.COROSYNC_CONFIG_ACCEPTED_BY_NODE,
+                    node="node-1",
+                ),
+                fixture.error(
+                    report_codes.NODE_COMMUNICATION_COMMAND_UNSUCCESSFUL,
+                    force_code=report_codes.SKIP_OFFLINE_NODES,
+                    node="node-2",
+                    command="remote/set_corosync_conf",
+                    reason="Failed",
+                ),
+                fixture.error(
+                    report_codes.COROSYNC_CONFIG_DISTRIBUTION_NODE_ERROR,
+                    force_code=report_codes.SKIP_OFFLINE_NODES,
+                    node="node-2",
+                ),
+            ]
+        )
 
     def test_dont_need_stopped_cluster_error_skip_offline(self):
-        (self.config
-            .http.corosync.set_corosync_conf(
+        (
+            self.config.http.corosync.set_corosync_conf(
                 self.corosync_conf_text,
                 communication_list=[
                     {
                         "label": "node-1",
                         "response_code": 400,
-                        "output": "Failed"
+                        "output": "Failed",
                     },
-                    {
-                        "label": "node-2",
-                    },
-                ]
-            )
-            .http.corosync.reload_corosync_conf(
+                    {"label": "node-2",},
+                ],
+            ).http.corosync.reload_corosync_conf(
                 communication_list=[
                     [
                         {
                             "label": self.node_labels[0],
                             "response_code": 400,
-                            "output": "Failed"
+                            "output": "Failed",
                         },
                     ],
-                    [
-                        {
-                            "label": self.node_labels[1],
-                        },
-                    ],
+                    [{"label": self.node_labels[1],},],
                 ]
             )
         )
         self.env_assistant.get_env().push_corosync_conf(
             self.corosync_conf_facade, skip_offline_nodes=True
         )
-        self.env_assistant.assert_reports([
-            fixture.info(report_codes.COROSYNC_CONFIG_DISTRIBUTION_STARTED),
-            fixture.warn(
-                report_codes.NODE_COMMUNICATION_COMMAND_UNSUCCESSFUL,
-                node="node-1",
-                command="remote/set_corosync_conf",
-                reason="Failed",
-            ),
-            fixture.warn(
-                report_codes.COROSYNC_CONFIG_DISTRIBUTION_NODE_ERROR,
-                node="node-1",
-            ),
-            fixture.info(
-                report_codes.COROSYNC_CONFIG_ACCEPTED_BY_NODE,
-                node="node-2",
-            ),
-            fixture.warn(
-                report_codes.NODE_COMMUNICATION_COMMAND_UNSUCCESSFUL,
-                node="node-1",
-                command="remote/reload_corosync_conf",
-                reason="Failed",
-            ),
-            fixture.info(
-                report_codes.COROSYNC_CONFIG_RELOADED,
-                node="node-2"
-            ),
-        ])
+        self.env_assistant.assert_reports(
+            [
+                fixture.info(report_codes.COROSYNC_CONFIG_DISTRIBUTION_STARTED),
+                fixture.warn(
+                    report_codes.NODE_COMMUNICATION_COMMAND_UNSUCCESSFUL,
+                    node="node-1",
+                    command="remote/set_corosync_conf",
+                    reason="Failed",
+                ),
+                fixture.warn(
+                    report_codes.COROSYNC_CONFIG_DISTRIBUTION_NODE_ERROR,
+                    node="node-1",
+                ),
+                fixture.info(
+                    report_codes.COROSYNC_CONFIG_ACCEPTED_BY_NODE,
+                    node="node-2",
+                ),
+                fixture.warn(
+                    report_codes.NODE_COMMUNICATION_COMMAND_UNSUCCESSFUL,
+                    node="node-1",
+                    command="remote/reload_corosync_conf",
+                    reason="Failed",
+                ),
+                fixture.info(
+                    report_codes.COROSYNC_CONFIG_RELOADED, node="node-2"
+                ),
+            ]
+        )
 
     def test_reload_on_another_node(self):
-        (self.config
-            .http.corosync.set_corosync_conf(
-                self.corosync_conf_text,
-                node_labels=self.node_labels
-            )
-            .http.corosync.reload_corosync_conf(
+        (
+            self.config.http.corosync.set_corosync_conf(
+                self.corosync_conf_text, node_labels=self.node_labels
+            ).http.corosync.reload_corosync_conf(
                 communication_list=[
                     [
                         {
@@ -235,44 +227,39 @@ class PushCorosyncConfLiveNoQdeviceTest(PushCorosyncConfLiveBase):
                             ),
                         },
                     ],
-                    [
-                        {
-                            "label": self.node_labels[1],
-                        },
-                    ],
+                    [{"label": self.node_labels[1],},],
                 ]
             )
         )
         self.env_assistant.get_env().push_corosync_conf(
             self.corosync_conf_facade
         )
-        self.env_assistant.assert_reports([
-            fixture.info(report_codes.COROSYNC_CONFIG_DISTRIBUTION_STARTED),
-            fixture.info(
-                report_codes.COROSYNC_CONFIG_ACCEPTED_BY_NODE,
-                node="node-1",
-            ),
-            fixture.info(
-                report_codes.COROSYNC_CONFIG_ACCEPTED_BY_NODE,
-                node="node-2",
-            ),
-            fixture.warn(
-                report_codes.COROSYNC_CONFIG_RELOAD_NOT_POSSIBLE,
-                node="node-1"
-            ),
-            fixture.info(
-                report_codes.COROSYNC_CONFIG_RELOADED,
-                node="node-2"
-            ),
-        ])
+        self.env_assistant.assert_reports(
+            [
+                fixture.info(report_codes.COROSYNC_CONFIG_DISTRIBUTION_STARTED),
+                fixture.info(
+                    report_codes.COROSYNC_CONFIG_ACCEPTED_BY_NODE,
+                    node="node-1",
+                ),
+                fixture.info(
+                    report_codes.COROSYNC_CONFIG_ACCEPTED_BY_NODE,
+                    node="node-2",
+                ),
+                fixture.warn(
+                    report_codes.COROSYNC_CONFIG_RELOAD_NOT_POSSIBLE,
+                    node="node-1",
+                ),
+                fixture.info(
+                    report_codes.COROSYNC_CONFIG_RELOADED, node="node-2"
+                ),
+            ]
+        )
 
     def test_reload_not_successful(self):
-        (self.config
-            .http.corosync.set_corosync_conf(
-                self.corosync_conf_text,
-                node_labels=self.node_labels
-            )
-            .http.corosync.reload_corosync_conf(
+        (
+            self.config.http.corosync.set_corosync_conf(
+                self.corosync_conf_text, node_labels=self.node_labels
+            ).http.corosync.reload_corosync_conf(
                 communication_list=[
                     [
                         {
@@ -297,38 +284,37 @@ class PushCorosyncConfLiveNoQdeviceTest(PushCorosyncConfLiveBase):
             lambda: self.env_assistant.get_env().push_corosync_conf(
                 self.corosync_conf_facade
             ),
-            []
+            [],
         )
-        self.env_assistant.assert_reports([
-            fixture.info(report_codes.COROSYNC_CONFIG_DISTRIBUTION_STARTED),
-            fixture.info(
-                report_codes.COROSYNC_CONFIG_ACCEPTED_BY_NODE,
-                node="node-1",
-            ),
-            fixture.info(
-                report_codes.COROSYNC_CONFIG_ACCEPTED_BY_NODE,
-                node="node-2",
-            ),
-            fixture.warn(
-                report_codes.COROSYNC_CONFIG_RELOAD_NOT_POSSIBLE,
-                node="node-1"
-            ),
-            fixture.warn(
-                report_codes.INVALID_RESPONSE_FORMAT,
-                node="node-2"
-            ),
-            fixture.error(
-                report_codes.UNABLE_TO_PERFORM_OPERATION_ON_ANY_NODE
-            ),
-        ])
+        self.env_assistant.assert_reports(
+            [
+                fixture.info(report_codes.COROSYNC_CONFIG_DISTRIBUTION_STARTED),
+                fixture.info(
+                    report_codes.COROSYNC_CONFIG_ACCEPTED_BY_NODE,
+                    node="node-1",
+                ),
+                fixture.info(
+                    report_codes.COROSYNC_CONFIG_ACCEPTED_BY_NODE,
+                    node="node-2",
+                ),
+                fixture.warn(
+                    report_codes.COROSYNC_CONFIG_RELOAD_NOT_POSSIBLE,
+                    node="node-1",
+                ),
+                fixture.warn(
+                    report_codes.INVALID_RESPONSE_FORMAT, node="node-2"
+                ),
+                fixture.error(
+                    report_codes.UNABLE_TO_PERFORM_OPERATION_ON_ANY_NODE
+                ),
+            ]
+        )
 
     def test_reload_corosync_not_running_anywhere(self):
-        (self.config
-            .http.corosync.set_corosync_conf(
-                self.corosync_conf_text,
-                node_labels=self.node_labels
-            )
-            .http.corosync.reload_corosync_conf(
+        (
+            self.config.http.corosync.set_corosync_conf(
+                self.corosync_conf_text, node_labels=self.node_labels
+            ).http.corosync.reload_corosync_conf(
                 communication_list=[
                     [
                         {
@@ -338,118 +324,107 @@ class PushCorosyncConfLiveNoQdeviceTest(PushCorosyncConfLiveBase):
                                 dict(code="not_running", message="not running")
                             ),
                         },
-                    ] for node in self.node_labels
+                    ]
+                    for node in self.node_labels
                 ]
             )
         )
         self.env_assistant.get_env().push_corosync_conf(
             self.corosync_conf_facade
         )
-        self.env_assistant.assert_reports([
-            fixture.info(report_codes.COROSYNC_CONFIG_DISTRIBUTION_STARTED),
-            fixture.info(
-                report_codes.COROSYNC_CONFIG_ACCEPTED_BY_NODE,
-                node="node-1",
-            ),
-            fixture.info(
-                report_codes.COROSYNC_CONFIG_ACCEPTED_BY_NODE,
-                node="node-2",
-            ),
-            fixture.warn(
-                report_codes.COROSYNC_CONFIG_RELOAD_NOT_POSSIBLE,
-                node="node-1"
-            ),
-            fixture.warn(
-                report_codes.COROSYNC_CONFIG_RELOAD_NOT_POSSIBLE,
-                node="node-2"
-            ),
-        ])
+        self.env_assistant.assert_reports(
+            [
+                fixture.info(report_codes.COROSYNC_CONFIG_DISTRIBUTION_STARTED),
+                fixture.info(
+                    report_codes.COROSYNC_CONFIG_ACCEPTED_BY_NODE,
+                    node="node-1",
+                ),
+                fixture.info(
+                    report_codes.COROSYNC_CONFIG_ACCEPTED_BY_NODE,
+                    node="node-2",
+                ),
+                fixture.warn(
+                    report_codes.COROSYNC_CONFIG_RELOAD_NOT_POSSIBLE,
+                    node="node-1",
+                ),
+                fixture.warn(
+                    report_codes.COROSYNC_CONFIG_RELOAD_NOT_POSSIBLE,
+                    node="node-2",
+                ),
+            ]
+        )
 
     def test_need_stopped_cluster(self):
         self.corosync_conf_facade.need_stopped_cluster = True
-        (self.config
-            .http.corosync.check_corosync_offline(
+        (
+            self.config.http.corosync.check_corosync_offline(
                 node_labels=self.node_labels
-            )
-            .http.corosync.set_corosync_conf(
-                self.corosync_conf_text,
-                node_labels=self.node_labels
+            ).http.corosync.set_corosync_conf(
+                self.corosync_conf_text, node_labels=self.node_labels
             )
         )
         self.env_assistant.get_env().push_corosync_conf(
             self.corosync_conf_facade
         )
-        self.env_assistant.assert_reports([
-            fixture.info(report_codes.COROSYNC_NOT_RUNNING_CHECK_STARTED),
-            fixture.info(
-                report_codes.COROSYNC_NOT_RUNNING_ON_NODE,
-                node="node-1",
-            ),
-            fixture.info(
-                report_codes.COROSYNC_NOT_RUNNING_ON_NODE,
-                node="node-2",
-            ),
-            fixture.info(report_codes.COROSYNC_CONFIG_DISTRIBUTION_STARTED),
-            fixture.info(
-                report_codes.COROSYNC_CONFIG_ACCEPTED_BY_NODE,
-                node="node-1",
-            ),
-            fixture.info(
-                report_codes.COROSYNC_CONFIG_ACCEPTED_BY_NODE,
-                node="node-2",
-            ),
-        ])
+        self.env_assistant.assert_reports(
+            [
+                fixture.info(report_codes.COROSYNC_NOT_RUNNING_CHECK_STARTED),
+                fixture.info(
+                    report_codes.COROSYNC_NOT_RUNNING_ON_NODE, node="node-1",
+                ),
+                fixture.info(
+                    report_codes.COROSYNC_NOT_RUNNING_ON_NODE, node="node-2",
+                ),
+                fixture.info(report_codes.COROSYNC_CONFIG_DISTRIBUTION_STARTED),
+                fixture.info(
+                    report_codes.COROSYNC_CONFIG_ACCEPTED_BY_NODE,
+                    node="node-1",
+                ),
+                fixture.info(
+                    report_codes.COROSYNC_CONFIG_ACCEPTED_BY_NODE,
+                    node="node-2",
+                ),
+            ]
+        )
 
     def test_need_stopped_cluster_not_stopped(self):
         self.corosync_conf_facade.need_stopped_cluster = True
-        (self.config
-            .http.corosync.check_corosync_offline(
+        (
+            self.config.http.corosync.check_corosync_offline(
                 communication_list=[
                     {
                         "label": self.node_labels[0],
-                        "output": '{"corosync":true}'
+                        "output": '{"corosync":true}',
                     }
                 ]
-                +
-                [
-                    {
-                        "label": node,
-                    }
-                    for node in self.node_labels[1:]
-                ]
+                + [{"label": node,} for node in self.node_labels[1:]]
             )
         )
         env = self.env_assistant.get_env()
         self.env_assistant.assert_raise_library_error(
-            lambda: env.push_corosync_conf(self.corosync_conf_facade),
-            []
+            lambda: env.push_corosync_conf(self.corosync_conf_facade), []
         )
-        self.env_assistant.assert_reports([
-            fixture.info(report_codes.COROSYNC_NOT_RUNNING_CHECK_STARTED),
-            fixture.error(
-                report_codes.COROSYNC_RUNNING_ON_NODE,
-                node="node-1",
-            ),
-            fixture.info(
-                report_codes.COROSYNC_NOT_RUNNING_ON_NODE,
-                node="node-2",
-            ),
-        ])
+        self.env_assistant.assert_reports(
+            [
+                fixture.info(report_codes.COROSYNC_NOT_RUNNING_CHECK_STARTED),
+                fixture.error(
+                    report_codes.COROSYNC_RUNNING_ON_NODE, node="node-1",
+                ),
+                fixture.info(
+                    report_codes.COROSYNC_NOT_RUNNING_ON_NODE, node="node-2",
+                ),
+            ]
+        )
 
     def test_need_stopped_cluster_not_stopped_skip_offline(self):
         # If we know for sure that corosync is running, skip_offline doesn't
         # matter.
         self.corosync_conf_facade.need_stopped_cluster = True
-        (self.config
-            .http.corosync.check_corosync_offline(
+        (
+            self.config.http.corosync.check_corosync_offline(
                 communication_list=[
-                    dict(
-                        label="node-1",
-                        output='{"corosync":true}',
-                    ),
-                    dict(
-                        label="node-2",
-                    ),
+                    dict(label="node-1", output='{"corosync":true}',),
+                    dict(label="node-2",),
                 ]
             )
         )
@@ -458,117 +433,109 @@ class PushCorosyncConfLiveNoQdeviceTest(PushCorosyncConfLiveBase):
             lambda: env.push_corosync_conf(
                 self.corosync_conf_facade, skip_offline_nodes=True
             ),
-            []
+            [],
         )
-        self.env_assistant.assert_reports([
-            fixture.info(report_codes.COROSYNC_NOT_RUNNING_CHECK_STARTED),
-            fixture.error(
-                report_codes.COROSYNC_RUNNING_ON_NODE,
-                node="node-1",
-            ),
-            fixture.info(
-                report_codes.COROSYNC_NOT_RUNNING_ON_NODE,
-                node="node-2",
-            )
-        ])
+        self.env_assistant.assert_reports(
+            [
+                fixture.info(report_codes.COROSYNC_NOT_RUNNING_CHECK_STARTED),
+                fixture.error(
+                    report_codes.COROSYNC_RUNNING_ON_NODE, node="node-1",
+                ),
+                fixture.info(
+                    report_codes.COROSYNC_NOT_RUNNING_ON_NODE, node="node-2",
+                ),
+            ]
+        )
 
     def test_need_stopped_cluster_json_error(self):
         self.corosync_conf_facade.need_stopped_cluster = True
-        (self.config
-            .http.corosync.check_corosync_offline(
+        (
+            self.config.http.corosync.check_corosync_offline(
                 communication_list=[
-                    dict(
-                        label="node-1",
-                        output="{" # not valid json
-                    ),
+                    dict(label="node-1", output="{"),  # not valid json
                     dict(
                         label="node-2",
                         # The expected key (/corosync) is missing, we don't
                         # care about version 2 status key
                         # (/services/corosync/running)
-                        output='{"services":{"corosync":{"running":true}}}'
+                        output='{"services":{"corosync":{"running":true}}}',
                     ),
                 ]
             )
         )
         env = self.env_assistant.get_env()
         self.env_assistant.assert_raise_library_error(
-            lambda: env.push_corosync_conf(self.corosync_conf_facade),
-            []
+            lambda: env.push_corosync_conf(self.corosync_conf_facade), []
         )
-        self.env_assistant.assert_reports([
-            fixture.info(report_codes.COROSYNC_NOT_RUNNING_CHECK_STARTED),
-            fixture.error(
-                report_codes.COROSYNC_NOT_RUNNING_CHECK_NODE_ERROR,
-                force_code=report_codes.SKIP_OFFLINE_NODES,
-                node="node-1",
-            ),
-            fixture.error(
-                report_codes.COROSYNC_NOT_RUNNING_CHECK_NODE_ERROR,
-                force_code=report_codes.SKIP_OFFLINE_NODES,
-                node="node-2",
-            ),
-        ])
+        self.env_assistant.assert_reports(
+            [
+                fixture.info(report_codes.COROSYNC_NOT_RUNNING_CHECK_STARTED),
+                fixture.error(
+                    report_codes.COROSYNC_NOT_RUNNING_CHECK_NODE_ERROR,
+                    force_code=report_codes.SKIP_OFFLINE_NODES,
+                    node="node-1",
+                ),
+                fixture.error(
+                    report_codes.COROSYNC_NOT_RUNNING_CHECK_NODE_ERROR,
+                    force_code=report_codes.SKIP_OFFLINE_NODES,
+                    node="node-2",
+                ),
+            ]
+        )
 
     def test_need_stopped_cluster_comunnication_failure(self):
         self.corosync_conf_facade.need_stopped_cluster = True
-        (self.config
-            .http.corosync.check_corosync_offline(
+        (
+            self.config.http.corosync.check_corosync_offline(
                 communication_list=[
-                    dict(
-                        label="node-1",
-                    ),
+                    dict(label="node-1",),
                     dict(
                         label="node-2",
                         response_code=401,
-                        output="""{"notauthorized":"true"}"""
+                        output="""{"notauthorized":"true"}""",
                     ),
                 ]
             )
         )
         env = self.env_assistant.get_env()
         self.env_assistant.assert_raise_library_error(
-            lambda: env.push_corosync_conf(self.corosync_conf_facade),
-            []
+            lambda: env.push_corosync_conf(self.corosync_conf_facade), []
         )
-        self.env_assistant.assert_reports([
-            fixture.info(report_codes.COROSYNC_NOT_RUNNING_CHECK_STARTED),
-            fixture.info(
-                report_codes.COROSYNC_NOT_RUNNING_ON_NODE,
-                node="node-1",
-            ),
-            fixture.error(
-                report_codes.NODE_COMMUNICATION_ERROR_NOT_AUTHORIZED,
-                force_code=report_codes.SKIP_OFFLINE_NODES,
-                node="node-2",
-                command="remote/status",
-                reason="HTTP error: 401",
-            ),
-            fixture.error(
-                report_codes.COROSYNC_NOT_RUNNING_CHECK_NODE_ERROR,
-                force_code=report_codes.SKIP_OFFLINE_NODES,
-                node="node-2",
-            ),
-        ])
+        self.env_assistant.assert_reports(
+            [
+                fixture.info(report_codes.COROSYNC_NOT_RUNNING_CHECK_STARTED),
+                fixture.info(
+                    report_codes.COROSYNC_NOT_RUNNING_ON_NODE, node="node-1",
+                ),
+                fixture.error(
+                    report_codes.NODE_COMMUNICATION_ERROR_NOT_AUTHORIZED,
+                    force_code=report_codes.SKIP_OFFLINE_NODES,
+                    node="node-2",
+                    command="remote/status",
+                    reason="HTTP error: 401",
+                ),
+                fixture.error(
+                    report_codes.COROSYNC_NOT_RUNNING_CHECK_NODE_ERROR,
+                    force_code=report_codes.SKIP_OFFLINE_NODES,
+                    node="node-2",
+                ),
+            ]
+        )
 
     def test_need_stopped_cluster_comunnication_failures_skip_offline(self):
         # If we don't know if corosync is running, skip_offline matters.
         self.corosync_conf_facade.need_stopped_cluster = True
-        (self.config
-            .http.corosync.check_corosync_offline(
+        (
+            self.config.http.corosync.check_corosync_offline(
                 communication_list=[
                     dict(
                         label="node-1",
                         response_code=401,
-                        output="""{"notauthorized":"true"}"""
+                        output="""{"notauthorized":"true"}""",
                     ),
-                    dict(
-                        label="node-2",
-                        output="{" # not valid json
-                    ),
+                    dict(label="node-2", output="{"),  # not valid json
                 ]
-            )
-            .http.corosync.set_corosync_conf(
+            ).http.corosync.set_corosync_conf(
                 self.corosync_conf_text,
                 communication_list=[
                     dict(
@@ -576,47 +543,47 @@ class PushCorosyncConfLiveNoQdeviceTest(PushCorosyncConfLiveBase):
                         response_code=401,
                         output="""{"notauthorized":"true"}""",
                     ),
-                    dict(
-                        label="node-2",
-                    )
-                ]
+                    dict(label="node-2",),
+                ],
             )
         )
         self.env_assistant.get_env().push_corosync_conf(
             self.corosync_conf_facade, skip_offline_nodes=True
         )
-        self.env_assistant.assert_reports([
-            fixture.info(report_codes.COROSYNC_NOT_RUNNING_CHECK_STARTED),
-            fixture.warn(
-                report_codes.NODE_COMMUNICATION_ERROR_NOT_AUTHORIZED,
-                node="node-1",
-                reason="HTTP error: 401",
-                command="remote/status",
-            ),
-            fixture.warn(
-                report_codes.COROSYNC_NOT_RUNNING_CHECK_NODE_ERROR,
-                node="node-1",
-            ),
-            fixture.warn(
-                report_codes.COROSYNC_NOT_RUNNING_CHECK_NODE_ERROR,
-                node="node-2",
-            ),
-            fixture.info(report_codes.COROSYNC_CONFIG_DISTRIBUTION_STARTED),
-            fixture.warn(
-                report_codes.NODE_COMMUNICATION_ERROR_NOT_AUTHORIZED,
-                node="node-1",
-                reason="HTTP error: 401",
-                command="remote/set_corosync_conf",
-            ),
-            fixture.warn(
-                report_codes.COROSYNC_CONFIG_DISTRIBUTION_NODE_ERROR,
-                node="node-1",
-            ),
-            fixture.info(
-                report_codes.COROSYNC_CONFIG_ACCEPTED_BY_NODE,
-                node="node-2",
-            ),
-        ])
+        self.env_assistant.assert_reports(
+            [
+                fixture.info(report_codes.COROSYNC_NOT_RUNNING_CHECK_STARTED),
+                fixture.warn(
+                    report_codes.NODE_COMMUNICATION_ERROR_NOT_AUTHORIZED,
+                    node="node-1",
+                    reason="HTTP error: 401",
+                    command="remote/status",
+                ),
+                fixture.warn(
+                    report_codes.COROSYNC_NOT_RUNNING_CHECK_NODE_ERROR,
+                    node="node-1",
+                ),
+                fixture.warn(
+                    report_codes.COROSYNC_NOT_RUNNING_CHECK_NODE_ERROR,
+                    node="node-2",
+                ),
+                fixture.info(report_codes.COROSYNC_CONFIG_DISTRIBUTION_STARTED),
+                fixture.warn(
+                    report_codes.NODE_COMMUNICATION_ERROR_NOT_AUTHORIZED,
+                    node="node-1",
+                    reason="HTTP error: 401",
+                    command="remote/set_corosync_conf",
+                ),
+                fixture.warn(
+                    report_codes.COROSYNC_CONFIG_DISTRIBUTION_NODE_ERROR,
+                    node="node-1",
+                ),
+                fixture.info(
+                    report_codes.COROSYNC_CONFIG_ACCEPTED_BY_NODE,
+                    node="node-2",
+                ),
+            ]
+        )
 
 
 @mock.patch("pcs.lib.external.is_systemctl", lambda: True)
@@ -630,12 +597,14 @@ class PushCorosyncConfLiveWithQdeviceTest(PushCorosyncConfLiveBase):
                 self.corosync_conf_facade
             )
         )
-        self.env_assistant.assert_reports([
-            fixture.error(
-                report_codes.COROSYNC_CONFIG_MISSING_NAMES_OF_NODES,
-                fatal=True,
-            ),
-        ])
+        self.env_assistant.assert_reports(
+            [
+                fixture.error(
+                    report_codes.COROSYNC_CONFIG_MISSING_NAMES_OF_NODES,
+                    fatal=True,
+                ),
+            ]
+        )
 
     def test_all_node_names_missing(self):
         self.fixture_corosync_conf(node1_name=False, node2_name=False)
@@ -646,86 +615,83 @@ class PushCorosyncConfLiveWithQdeviceTest(PushCorosyncConfLiveBase):
                 self.corosync_conf_facade
             )
         )
-        self.env_assistant.assert_reports([
-            fixture.error(
-                report_codes.COROSYNC_CONFIG_MISSING_NAMES_OF_NODES,
-                fatal=True,
-            ),
-        ])
+        self.env_assistant.assert_reports(
+            [
+                fixture.error(
+                    report_codes.COROSYNC_CONFIG_MISSING_NAMES_OF_NODES,
+                    fatal=True,
+                ),
+            ]
+        )
 
     def test_qdevice_reload(self):
         self.corosync_conf_facade.need_qdevice_reload = True
-        (self.config
-            .http.corosync.set_corosync_conf(
-                self.corosync_conf_text,
-                node_labels=self.node_labels
+        (
+            self.config.http.corosync.set_corosync_conf(
+                self.corosync_conf_text, node_labels=self.node_labels
             )
             .http.corosync.reload_corosync_conf(
                 node_labels=self.node_labels[:1]
             )
-            .http.corosync.qdevice_client_stop(
-                node_labels=self.node_labels
-            )
-            .http.corosync.qdevice_client_start(
-                node_labels=self.node_labels
-            )
+            .http.corosync.qdevice_client_stop(node_labels=self.node_labels)
+            .http.corosync.qdevice_client_start(node_labels=self.node_labels)
         )
 
         self.env_assistant.get_env().push_corosync_conf(
             self.corosync_conf_facade
         )
 
-        self.env_assistant.assert_reports([
-            fixture.info(report_codes.COROSYNC_CONFIG_DISTRIBUTION_STARTED),
-            fixture.info(
-                report_codes.COROSYNC_CONFIG_ACCEPTED_BY_NODE,
-                node="node-1",
-            ),
-            fixture.info(
-                report_codes.COROSYNC_CONFIG_ACCEPTED_BY_NODE,
-                node="node-2",
-            ),
-            fixture.info(
-                report_codes.COROSYNC_CONFIG_RELOADED,
-                node="node-1"
-            ),
-            fixture.info(report_codes.QDEVICE_CLIENT_RELOAD_STARTED),
-            fixture.info(
-                reports.codes.SERVICE_ACTION_SUCCEEDED,
-                action=reports.const.SERVICE_ACTION_STOP,
-                service="corosync-qdevice",
-                node="node-1",
-                instance="",
-            ),
-            fixture.info(
-                reports.codes.SERVICE_ACTION_SUCCEEDED,
-                action=reports.const.SERVICE_ACTION_STOP,
-                service="corosync-qdevice",
-                node="node-2",
-                instance="",
-            ),
-            fixture.info(
-                reports.codes.SERVICE_ACTION_SUCCEEDED,
-                action=reports.const.SERVICE_ACTION_START,
-                service="corosync-qdevice",
-                node="node-1",
-                instance="",
-            ),
-            fixture.info(
-                reports.codes.SERVICE_ACTION_SUCCEEDED,
-                action=reports.const.SERVICE_ACTION_START,
-                service="corosync-qdevice",
-                node="node-2",
-                instance="",
-            ),
-        ])
+        self.env_assistant.assert_reports(
+            [
+                fixture.info(report_codes.COROSYNC_CONFIG_DISTRIBUTION_STARTED),
+                fixture.info(
+                    report_codes.COROSYNC_CONFIG_ACCEPTED_BY_NODE,
+                    node="node-1",
+                ),
+                fixture.info(
+                    report_codes.COROSYNC_CONFIG_ACCEPTED_BY_NODE,
+                    node="node-2",
+                ),
+                fixture.info(
+                    report_codes.COROSYNC_CONFIG_RELOADED, node="node-1"
+                ),
+                fixture.info(report_codes.QDEVICE_CLIENT_RELOAD_STARTED),
+                fixture.info(
+                    reports.codes.SERVICE_ACTION_SUCCEEDED,
+                    action=reports.const.SERVICE_ACTION_STOP,
+                    service="corosync-qdevice",
+                    node="node-1",
+                    instance="",
+                ),
+                fixture.info(
+                    reports.codes.SERVICE_ACTION_SUCCEEDED,
+                    action=reports.const.SERVICE_ACTION_STOP,
+                    service="corosync-qdevice",
+                    node="node-2",
+                    instance="",
+                ),
+                fixture.info(
+                    reports.codes.SERVICE_ACTION_SUCCEEDED,
+                    action=reports.const.SERVICE_ACTION_START,
+                    service="corosync-qdevice",
+                    node="node-1",
+                    instance="",
+                ),
+                fixture.info(
+                    reports.codes.SERVICE_ACTION_SUCCEEDED,
+                    action=reports.const.SERVICE_ACTION_START,
+                    service="corosync-qdevice",
+                    node="node-2",
+                    instance="",
+                ),
+            ]
+        )
 
     def test_qdevice_reload_corosync_stopped(self):
         self.corosync_conf_facade.need_qdevice_reload = True
-        (self.config
-            .http.corosync.set_corosync_conf(
-                self.corosync_conf_text,
-                node_labels=self.node_labels
+        (
+            self.config.http.corosync.set_corosync_conf(
+                self.corosync_conf_text, node_labels=self.node_labels
             )
             .http.corosync.reload_corosync_conf(
                 communication_list=[
@@ -737,12 +703,11 @@ class PushCorosyncConfLiveWithQdeviceTest(PushCorosyncConfLiveBase):
                                 dict(code="not_running", message="")
                             ),
                         },
-                    ] for label in self.node_labels
+                    ]
+                    for label in self.node_labels
                 ]
             )
-            .http.corosync.qdevice_client_stop(
-                node_labels=self.node_labels
-            )
+            .http.corosync.qdevice_client_stop(node_labels=self.node_labels)
             .http.corosync.qdevice_client_start(
                 communication_list=[
                     {
@@ -758,79 +723,74 @@ class PushCorosyncConfLiveWithQdeviceTest(PushCorosyncConfLiveBase):
             self.corosync_conf_facade
         )
 
-        self.env_assistant.assert_reports([
-            fixture.info(report_codes.COROSYNC_CONFIG_DISTRIBUTION_STARTED),
-            fixture.info(
-                report_codes.COROSYNC_CONFIG_ACCEPTED_BY_NODE,
-                node="node-1",
-            ),
-            fixture.info(
-                report_codes.COROSYNC_CONFIG_ACCEPTED_BY_NODE,
-                node="node-2",
-            ),
-            fixture.warn(
-                report_codes.COROSYNC_CONFIG_RELOAD_NOT_POSSIBLE,
-                node="node-1",
-            ),
-            fixture.warn(
-                report_codes.COROSYNC_CONFIG_RELOAD_NOT_POSSIBLE,
-                node="node-2",
-            ),
-            fixture.info(report_codes.QDEVICE_CLIENT_RELOAD_STARTED),
-            fixture.info(
-                reports.codes.SERVICE_ACTION_SUCCEEDED,
-                action=reports.const.SERVICE_ACTION_STOP,
-                service="corosync-qdevice",
-                node="node-1",
-                instance="",
-            ),
-            fixture.info(
-                reports.codes.SERVICE_ACTION_SUCCEEDED,
-                action=reports.const.SERVICE_ACTION_STOP,
-                service="corosync-qdevice",
-                node="node-2",
-                instance="",
-            ),
-            fixture.info(
-                reports.codes.SERVICE_ACTION_SKIPPED,
-                action=reports.const.SERVICE_ACTION_START,
-                service="corosync-qdevice",
-                reason="corosync is not running",
-                node="node-1",
-                instance="",
-            ),
-            fixture.info(
-                reports.codes.SERVICE_ACTION_SKIPPED,
-                action=reports.const.SERVICE_ACTION_START,
-                service="corosync-qdevice",
-                reason="corosync is not running",
-                node="node-2",
-                instance="",
-            ),
-        ])
+        self.env_assistant.assert_reports(
+            [
+                fixture.info(report_codes.COROSYNC_CONFIG_DISTRIBUTION_STARTED),
+                fixture.info(
+                    report_codes.COROSYNC_CONFIG_ACCEPTED_BY_NODE,
+                    node="node-1",
+                ),
+                fixture.info(
+                    report_codes.COROSYNC_CONFIG_ACCEPTED_BY_NODE,
+                    node="node-2",
+                ),
+                fixture.warn(
+                    report_codes.COROSYNC_CONFIG_RELOAD_NOT_POSSIBLE,
+                    node="node-1",
+                ),
+                fixture.warn(
+                    report_codes.COROSYNC_CONFIG_RELOAD_NOT_POSSIBLE,
+                    node="node-2",
+                ),
+                fixture.info(report_codes.QDEVICE_CLIENT_RELOAD_STARTED),
+                fixture.info(
+                    reports.codes.SERVICE_ACTION_SUCCEEDED,
+                    action=reports.const.SERVICE_ACTION_STOP,
+                    service="corosync-qdevice",
+                    node="node-1",
+                    instance="",
+                ),
+                fixture.info(
+                    reports.codes.SERVICE_ACTION_SUCCEEDED,
+                    action=reports.const.SERVICE_ACTION_STOP,
+                    service="corosync-qdevice",
+                    node="node-2",
+                    instance="",
+                ),
+                fixture.info(
+                    reports.codes.SERVICE_ACTION_SKIPPED,
+                    action=reports.const.SERVICE_ACTION_START,
+                    service="corosync-qdevice",
+                    reason="corosync is not running",
+                    node="node-1",
+                    instance="",
+                ),
+                fixture.info(
+                    reports.codes.SERVICE_ACTION_SKIPPED,
+                    action=reports.const.SERVICE_ACTION_START,
+                    service="corosync-qdevice",
+                    reason="corosync is not running",
+                    node="node-2",
+                    instance="",
+                ),
+            ]
+        )
 
     def test_qdevice_reload_failures(self):
         # This also tests that failing to stop qdevice on a node doesn't prevent
         # starting qdevice on the same node.
         self.corosync_conf_facade.need_qdevice_reload = True
-        (self.config
-            .http.corosync.set_corosync_conf(
-                self.corosync_conf_text,
-                node_labels=self.node_labels
+        (
+            self.config.http.corosync.set_corosync_conf(
+                self.corosync_conf_text, node_labels=self.node_labels
             )
             .http.corosync.reload_corosync_conf(
                 node_labels=self.node_labels[:1]
             )
             .http.corosync.qdevice_client_stop(
                 communication_list=[
-                    dict(
-                        label="node-1",
-                    ),
-                    dict(
-                        label="node-2",
-                        response_code=400,
-                        output="error",
-                    ),
+                    dict(label="node-1",),
+                    dict(label="node-2", response_code=400, output="error",),
                 ]
             )
             .http.corosync.qdevice_client_start(
@@ -841,80 +801,76 @@ class PushCorosyncConfLiveWithQdeviceTest(PushCorosyncConfLiveBase):
                         error_msg="failure",
                         was_connected=False,
                     ),
-                    dict(
-                        label="node-2",
-                    ),
+                    dict(label="node-2",),
                 ]
             )
         )
 
         env = self.env_assistant.get_env()
         self.env_assistant.assert_raise_library_error(
-            lambda: env.push_corosync_conf(self.corosync_conf_facade),
-            []
+            lambda: env.push_corosync_conf(self.corosync_conf_facade), []
         )
 
-        self.env_assistant.assert_reports([
-            fixture.info(report_codes.COROSYNC_CONFIG_DISTRIBUTION_STARTED),
-            fixture.info(
-                report_codes.COROSYNC_CONFIG_ACCEPTED_BY_NODE,
-                node="node-1",
-            ),
-            fixture.info(
-                report_codes.COROSYNC_CONFIG_ACCEPTED_BY_NODE,
-                node="node-2",
-            ),
-            fixture.info(
-                report_codes.COROSYNC_CONFIG_RELOADED,
-                node="node-1"
-            ),
-            fixture.info(report_codes.QDEVICE_CLIENT_RELOAD_STARTED),
-            fixture.info(
-                reports.codes.SERVICE_ACTION_SUCCEEDED,
-                action=reports.const.SERVICE_ACTION_STOP,
-                service="corosync-qdevice",
-                node="node-1",
-                instance="",
-            ),
-            fixture.error(
-                report_codes.NODE_COMMUNICATION_COMMAND_UNSUCCESSFUL,
-                force_code=report_codes.SKIP_OFFLINE_NODES,
-                node="node-2",
-                reason="error",
-                command="remote/qdevice_client_stop",
-            ),
-            fixture.error(
-                report_codes.NODE_COMMUNICATION_ERROR_UNABLE_TO_CONNECT,
-                force_code=report_codes.SKIP_OFFLINE_NODES,
-                node="node-1",
-                reason="failure",
-                command="remote/qdevice_client_start",
-            ),
-            fixture.info(
-                reports.codes.SERVICE_ACTION_SUCCEEDED,
-                action=reports.const.SERVICE_ACTION_START,
-                service="corosync-qdevice",
-                node="node-2",
-                instance="",
-            ),
-        ])
+        self.env_assistant.assert_reports(
+            [
+                fixture.info(report_codes.COROSYNC_CONFIG_DISTRIBUTION_STARTED),
+                fixture.info(
+                    report_codes.COROSYNC_CONFIG_ACCEPTED_BY_NODE,
+                    node="node-1",
+                ),
+                fixture.info(
+                    report_codes.COROSYNC_CONFIG_ACCEPTED_BY_NODE,
+                    node="node-2",
+                ),
+                fixture.info(
+                    report_codes.COROSYNC_CONFIG_RELOADED, node="node-1"
+                ),
+                fixture.info(report_codes.QDEVICE_CLIENT_RELOAD_STARTED),
+                fixture.info(
+                    reports.codes.SERVICE_ACTION_SUCCEEDED,
+                    action=reports.const.SERVICE_ACTION_STOP,
+                    service="corosync-qdevice",
+                    node="node-1",
+                    instance="",
+                ),
+                fixture.error(
+                    report_codes.NODE_COMMUNICATION_COMMAND_UNSUCCESSFUL,
+                    force_code=report_codes.SKIP_OFFLINE_NODES,
+                    node="node-2",
+                    reason="error",
+                    command="remote/qdevice_client_stop",
+                ),
+                fixture.error(
+                    report_codes.NODE_COMMUNICATION_ERROR_UNABLE_TO_CONNECT,
+                    force_code=report_codes.SKIP_OFFLINE_NODES,
+                    node="node-1",
+                    reason="failure",
+                    command="remote/qdevice_client_start",
+                ),
+                fixture.info(
+                    reports.codes.SERVICE_ACTION_SUCCEEDED,
+                    action=reports.const.SERVICE_ACTION_START,
+                    service="corosync-qdevice",
+                    node="node-2",
+                    instance="",
+                ),
+            ]
+        )
 
     def test_qdevice_reload_failures_skip_offline(self):
         self.corosync_conf_facade.need_qdevice_reload = True
-        (self.config
-            .http.corosync.set_corosync_conf(
+        (
+            self.config.http.corosync.set_corosync_conf(
                 self.corosync_conf_text,
                 communication_list=[
-                    dict(
-                        label="node-1",
-                    ),
+                    dict(label="node-1",),
                     dict(
                         label="node-2",
                         errno=8,
                         error_msg="failure",
                         was_connected=False,
                     ),
-                ]
+                ],
             )
             .http.corosync.reload_corosync_conf(
                 communication_list=[
@@ -922,26 +878,16 @@ class PushCorosyncConfLiveWithQdeviceTest(PushCorosyncConfLiveBase):
                         {
                             "label": self.node_labels[0],
                             "response_code": 400,
-                            "output": "Failed"
+                            "output": "Failed",
                         },
                     ],
-                    [
-                        {
-                            "label": self.node_labels[1],
-                        },
-                    ],
+                    [{"label": self.node_labels[1],},],
                 ]
             )
             .http.corosync.qdevice_client_stop(
                 communication_list=[
-                    dict(
-                        label="node-1",
-                    ),
-                    dict(
-                        label="node-2",
-                        response_code=400,
-                        output="error",
-                    ),
+                    dict(label="node-1",),
+                    dict(label="node-2", response_code=400, output="error",),
                 ]
             )
             .http.corosync.qdevice_client_start(
@@ -952,9 +898,7 @@ class PushCorosyncConfLiveWithQdeviceTest(PushCorosyncConfLiveBase):
                         error_msg="failure",
                         was_connected=False,
                     ),
-                    dict(
-                        label="node-2",
-                    ),
+                    dict(label="node-2",),
                 ]
             )
         )
@@ -964,69 +908,68 @@ class PushCorosyncConfLiveWithQdeviceTest(PushCorosyncConfLiveBase):
             self.corosync_conf_facade, skip_offline_nodes=True
         )
 
-        self.env_assistant.assert_reports([
-            fixture.info(report_codes.COROSYNC_CONFIG_DISTRIBUTION_STARTED),
-            fixture.info(
-                report_codes.COROSYNC_CONFIG_ACCEPTED_BY_NODE,
-                node="node-1",
-            ),
-            fixture.warn(
-                report_codes.NODE_COMMUNICATION_ERROR_UNABLE_TO_CONNECT,
-                node="node-2",
-                reason="failure",
-                command="remote/set_corosync_conf",
-            ),
-            fixture.warn(
-                report_codes.COROSYNC_CONFIG_DISTRIBUTION_NODE_ERROR,
-                node="node-2",
-            ),
-            fixture.warn(
-                report_codes.NODE_COMMUNICATION_COMMAND_UNSUCCESSFUL,
-                node="node-1",
-                command="remote/reload_corosync_conf",
-                reason="Failed",
-            ),
-            fixture.info(
-                report_codes.COROSYNC_CONFIG_RELOADED,
-                node="node-2"
-            ),
-            fixture.info(report_codes.QDEVICE_CLIENT_RELOAD_STARTED),
-            fixture.info(
-                reports.codes.SERVICE_ACTION_SUCCEEDED,
-                action=reports.const.SERVICE_ACTION_STOP,
-                service="corosync-qdevice",
-                node="node-1",
-                instance="",
-            ),
-            fixture.warn(
-                report_codes.NODE_COMMUNICATION_COMMAND_UNSUCCESSFUL,
-                node="node-2",
-                reason="error",
-                command="remote/qdevice_client_stop",
-            ),
-            fixture.warn(
-                report_codes.NODE_COMMUNICATION_ERROR_UNABLE_TO_CONNECT,
-                node="node-1",
-                reason="failure",
-                command="remote/qdevice_client_start",
-            ),
-            fixture.info(
-                reports.codes.SERVICE_ACTION_SUCCEEDED,
-                action=reports.const.SERVICE_ACTION_START,
-                service="corosync-qdevice",
-                node="node-2",
-                instance="",
-            ),
-        ])
+        self.env_assistant.assert_reports(
+            [
+                fixture.info(report_codes.COROSYNC_CONFIG_DISTRIBUTION_STARTED),
+                fixture.info(
+                    report_codes.COROSYNC_CONFIG_ACCEPTED_BY_NODE,
+                    node="node-1",
+                ),
+                fixture.warn(
+                    report_codes.NODE_COMMUNICATION_ERROR_UNABLE_TO_CONNECT,
+                    node="node-2",
+                    reason="failure",
+                    command="remote/set_corosync_conf",
+                ),
+                fixture.warn(
+                    report_codes.COROSYNC_CONFIG_DISTRIBUTION_NODE_ERROR,
+                    node="node-2",
+                ),
+                fixture.warn(
+                    report_codes.NODE_COMMUNICATION_COMMAND_UNSUCCESSFUL,
+                    node="node-1",
+                    command="remote/reload_corosync_conf",
+                    reason="Failed",
+                ),
+                fixture.info(
+                    report_codes.COROSYNC_CONFIG_RELOADED, node="node-2"
+                ),
+                fixture.info(report_codes.QDEVICE_CLIENT_RELOAD_STARTED),
+                fixture.info(
+                    reports.codes.SERVICE_ACTION_SUCCEEDED,
+                    action=reports.const.SERVICE_ACTION_STOP,
+                    service="corosync-qdevice",
+                    node="node-1",
+                    instance="",
+                ),
+                fixture.warn(
+                    report_codes.NODE_COMMUNICATION_COMMAND_UNSUCCESSFUL,
+                    node="node-2",
+                    reason="error",
+                    command="remote/qdevice_client_stop",
+                ),
+                fixture.warn(
+                    report_codes.NODE_COMMUNICATION_ERROR_UNABLE_TO_CONNECT,
+                    node="node-1",
+                    reason="failure",
+                    command="remote/qdevice_client_start",
+                ),
+                fixture.info(
+                    reports.codes.SERVICE_ACTION_SUCCEEDED,
+                    action=reports.const.SERVICE_ACTION_START,
+                    service="corosync-qdevice",
+                    node="node-2",
+                    instance="",
+                ),
+            ]
+        )
 
     def test_reload_not_successful(self):
         self.corosync_conf_facade.need_qdevice_reload = True
-        (self.config
-            .http.corosync.set_corosync_conf(
-                self.corosync_conf_text,
-                node_labels=self.node_labels
-            )
-            .http.corosync.reload_corosync_conf(
+        (
+            self.config.http.corosync.set_corosync_conf(
+                self.corosync_conf_text, node_labels=self.node_labels
+            ).http.corosync.reload_corosync_conf(
                 communication_list=[
                     [
                         {
@@ -1051,30 +994,31 @@ class PushCorosyncConfLiveWithQdeviceTest(PushCorosyncConfLiveBase):
             lambda: self.env_assistant.get_env().push_corosync_conf(
                 self.corosync_conf_facade
             ),
-            []
+            [],
         )
-        self.env_assistant.assert_reports([
-            fixture.info(report_codes.COROSYNC_CONFIG_DISTRIBUTION_STARTED),
-            fixture.info(
-                report_codes.COROSYNC_CONFIG_ACCEPTED_BY_NODE,
-                node="node-1",
-            ),
-            fixture.info(
-                report_codes.COROSYNC_CONFIG_ACCEPTED_BY_NODE,
-                node="node-2",
-            ),
-            fixture.warn(
-                report_codes.COROSYNC_CONFIG_RELOAD_NOT_POSSIBLE,
-                node="node-1"
-            ),
-            fixture.warn(
-                report_codes.INVALID_RESPONSE_FORMAT,
-                node="node-2"
-            ),
-            fixture.error(
-                report_codes.UNABLE_TO_PERFORM_OPERATION_ON_ANY_NODE
-            ),
-        ])
+        self.env_assistant.assert_reports(
+            [
+                fixture.info(report_codes.COROSYNC_CONFIG_DISTRIBUTION_STARTED),
+                fixture.info(
+                    report_codes.COROSYNC_CONFIG_ACCEPTED_BY_NODE,
+                    node="node-1",
+                ),
+                fixture.info(
+                    report_codes.COROSYNC_CONFIG_ACCEPTED_BY_NODE,
+                    node="node-2",
+                ),
+                fixture.warn(
+                    report_codes.COROSYNC_CONFIG_RELOAD_NOT_POSSIBLE,
+                    node="node-1",
+                ),
+                fixture.warn(
+                    report_codes.INVALID_RESPONSE_FORMAT, node="node-2"
+                ),
+                fixture.error(
+                    report_codes.UNABLE_TO_PERFORM_OPERATION_ON_ANY_NODE
+                ),
+            ]
+        )
 
 
 class PushCorosyncConfFile(TestCase):
@@ -1093,7 +1037,7 @@ class PushCorosyncConfFile(TestCase):
         )
 
 
-class PushCorosyncConfBadCharsMixin():
+class PushCorosyncConfBadCharsMixin:
     def test_bad_section(self):
         section = CorosyncSection("sec#tion")
         section.add_attribute("name", "value")
@@ -1107,7 +1051,7 @@ class PushCorosyncConfBadCharsMixin():
                 section_name_list=["sec#tion"],
                 attribute_name_list=[],
                 attribute_value_pairs=[],
-            )
+            ),
         )
 
     def test_bad_attr(self):
@@ -1123,7 +1067,7 @@ class PushCorosyncConfBadCharsMixin():
                 section_name_list=[],
                 attribute_name_list=["section.na#me"],
                 attribute_value_pairs=[],
-            )
+            ),
         )
 
     def test_bad_value(self):
@@ -1139,7 +1083,7 @@ class PushCorosyncConfBadCharsMixin():
                 section_name_list=[],
                 attribute_name_list=[],
                 attribute_value_pairs=[("section.name", "va}l{ue")],
-            )
+            ),
         )
 
     def test_bad_all(self):
@@ -1155,7 +1099,7 @@ class PushCorosyncConfBadCharsMixin():
                 section_name_list=["sec#tion"],
                 attribute_name_list=["sec#tion.na#me"],
                 attribute_value_pairs=[("sec#tion.na#me", "va}l{ue")],
-            )
+            ),
         )
 
 

@@ -1,6 +1,7 @@
 from pcs.lib.booth.config_parser import ConfigItem
 from pcs.lib.interface.config import FacadeInterface
 
+
 class ConfigFacade(FacadeInterface):
     @classmethod
     def create(cls, site_list, arbitrator_list):
@@ -12,8 +13,7 @@ class ConfigFacade(FacadeInterface):
         """
         return cls(
             [ConfigItem("site", site) for site in site_list]
-            +
-            [ConfigItem("arbitrator", arbit) for arbit in arbitrator_list]
+            + [ConfigItem("arbitrator", arbit) for arbit in arbitrator_list]
         )
 
     ### peers
@@ -40,7 +40,7 @@ class ConfigFacade(FacadeInterface):
                 [
                     ConfigItem(key, value)
                     for key, value in sorted(ticket_options.items())
-                ]
+                ],
             )
         )
 
@@ -62,7 +62,8 @@ class ConfigFacade(FacadeInterface):
         string ticket_name -- the name of the ticket
         """
         self._config = [
-            config_item for config_item in self._config
+            config_item
+            for config_item in self._config
             if config_item.key != "ticket" or config_item.value != ticket_name
         ]
 
@@ -74,11 +75,9 @@ class ConfigFacade(FacadeInterface):
 
         string auth_file -- the path to a booth authfile
         """
-        self._config = (
-            [ConfigItem("authfile", auth_file)]
-            +
-            self.__filter_out_by_key("authfile")
-        )
+        self._config = [
+            ConfigItem("authfile", auth_file)
+        ] + self.__filter_out_by_key("authfile")
 
     def get_authfile(self):
         """

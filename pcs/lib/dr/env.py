@@ -11,6 +11,7 @@ from .config.facade import (
     Facade,
 )
 
+
 class DrEnv:
     def __init__(self) -> None:
         self._config_file = FileInstance.for_dr_config()

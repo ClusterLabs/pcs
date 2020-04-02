@@ -1,15 +1,16 @@
 from urllib.parse import parse_qs
 
-from pcs.lib.corosync.live import(
-    get_local_corosync_conf as original_get_local_corosync_conf
+from pcs.lib.corosync.live import (
+    get_local_corosync_conf as original_get_local_corosync_conf,
 )
 
+
 def print_caption(caption, indent=2, underline="-"):
-    print("\n{0}{1}\n{0}{2}".format(
-        " "*indent,
-        caption,
-        underline*len(caption)
-    ))
+    print(
+        "\n{0}{1}\n{0}{2}".format(
+            " " * indent, caption, underline * len(caption)
+        )
+    )
 
 
 def print_initialize(spy):
@@ -19,11 +20,14 @@ def print_initialize(spy):
         underline="=",
     )
 
+
 def print_call(spy, name):
     print_caption("{0}: {1}".format(spy.__class__.__name__, name))
 
+
 def print_line(content):
     print("    {0}".format(content))
+
 
 def print_long_text(name, potentially_long_text):
     if "\n" not in potentially_long_text:
@@ -71,10 +75,7 @@ class Runner:
         if binary_output:
             print_line("binary_output: {0}".format(binary_output))
         stdout, stderr, returncode = self.__runner.run(
-            args,
-            stdin_string,
-            env_extend,
-            binary_output,
+            args, stdin_string, env_extend, binary_output,
         )
         print_long_text("stdout", stdout)
         print_long_text("stderr", stderr)

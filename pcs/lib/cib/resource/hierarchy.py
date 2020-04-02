@@ -10,7 +10,8 @@ from pcs.lib.cib.resource import (
 )
 from pcs.lib.cib.tools import ElementSearcher
 
-class ValidateMoveResourcesToGroup():
+
+class ValidateMoveResourcesToGroup:
     # Base class for validating moving resources to a group. It holds common
     # code and hides flags which should not be exposed to users of validating
     # classes.
@@ -20,8 +21,10 @@ class ValidateMoveResourcesToGroup():
         self._adjacent_resource_element = None
 
     def _validate_elements(
-        self, bad_or_missing_group_specified=False,
-        bad_resources_specified=False, bad_adjacent_specified=False
+        self,
+        bad_or_missing_group_specified=False,
+        bad_resources_specified=False,
+        bad_adjacent_specified=False,
     ):
         return (
             self._validate_resource_elements(
@@ -29,22 +32,21 @@ class ValidateMoveResourcesToGroup():
                 bad_resources_specified,
                 bad_adjacent_specified,
             )
-            +
-            self._validate_adjacent_resource_element()
+            + self._validate_adjacent_resource_element()
         )
 
     def _validate_resource_elements(
-        self, bad_or_missing_group_specified, bad_resources_specified,
-        bad_adjacent_specified
+        self,
+        bad_or_missing_group_specified,
+        bad_resources_specified,
+        bad_adjacent_specified,
     ):
         report_list = []
 
         # Check if the group element is really a group unless it has been
         # checked before.
-        if (
-            not bad_or_missing_group_specified
-            and
-            not group.is_group(self._group_element)
+        if not bad_or_missing_group_specified and not group.is_group(
+            self._group_element
         ):
             bad_or_missing_group_specified = True
             report_list.append(
@@ -75,8 +77,7 @@ class ValidateMoveResourcesToGroup():
                 report_list.append(
                     ReportItem.error(
                         reports.messages.CannotGroupResourceWrongType(
-                            resource_id,
-                            resource.tag
+                            resource_id, resource.tag
                         )
                     )
                 )
@@ -90,15 +91,11 @@ class ValidateMoveResourcesToGroup():
                     # group, if the group already exists.
                     if (
                         not bad_or_missing_group_specified
-                        and
-                        not bad_adjacent_specified
-                        and
-                        self._adjacent_resource_element is None
-                        and
-                        (
+                        and not bad_adjacent_specified
+                        and self._adjacent_resource_element is None
+                        and (
                             parent.attrib.get("id")
-                            ==
-                            self._group_element.attrib.get("id")
+                            == self._group_element.attrib.get("id")
                         )
                     ):
                         resources_already_in_the_group.add(resource_id)
@@ -109,8 +106,7 @@ class ValidateMoveResourcesToGroup():
                     report_list.append(
                         ReportItem.error(
                             reports.messages.CannotGroupResourceWrongType(
-                                resource_id,
-                                parent.tag
+                                resource_id, parent.tag
                             )
                         )
                     )
@@ -119,13 +115,12 @@ class ValidateMoveResourcesToGroup():
                 ReportItem.error(
                     reports.messages.CannotGroupResourceAlreadyInTheGroup(
                         sorted(resources_already_in_the_group),
-                        self._group_element.attrib.get("id")
+                        self._group_element.attrib.get("id"),
                     )
                 )
             )
         more_than_once_resources = [
-            resource for resource, count in resources_count.items()
-            if count > 1
+            resource for resource, count in resources_count.items() if count > 1
         ]
         if more_than_once_resources:
             report_list.append(
@@ -144,31 +139,27 @@ class ValidateMoveResourcesToGroup():
                 adjacent_parent = self._adjacent_resource_element.getparent()
                 if not (
                     adjacent_parent is not None
-                    and
-                    group.is_group(adjacent_parent)
-                    and
-                    (
+                    and group.is_group(adjacent_parent)
+                    and (
                         adjacent_parent.attrib.get("id")
-                        ==
-                        self._group_element.attrib.get("id")
+                        == self._group_element.attrib.get("id")
                     )
                 ):
+                    # pylint: disable=line-too-long
                     report_list.append(
                         ReportItem.error(
-                            reports.messages
-                            .CannotGroupResourceAdjacentResourceNotInGroup(
-                                self._adjacent_resource_element
-                                    .attrib.get("id"),
-                                self._group_element.attrib.get("id")
+                            reports.messages.CannotGroupResourceAdjacentResourceNotInGroup(
+                                self._adjacent_resource_element.attrib.get(
+                                    "id"
+                                ),
+                                self._group_element.attrib.get("id"),
                             )
                         )
                     )
             for resource in self._resource_element_list:
-                if (
-                    self._adjacent_resource_element.attrib.get("id")
-                    ==
-                    resource.attrib.get("id")
-                ):
+                if self._adjacent_resource_element.attrib.get(
+                    "id"
+                ) == resource.attrib.get("id"):
                     report_list.append(
                         ReportItem.error(
                             reports.messages.CannotGroupResourceNextToItself(
@@ -179,13 +170,17 @@ class ValidateMoveResourcesToGroup():
                     break
         return report_list
 
+
 class ValidateMoveResourcesToGroupByElements(ValidateMoveResourcesToGroup):
     """
     Validate putting resources into a group or moving them within their group
     """
+
     def __init__(
-        self, group_element, resource_element_list,
-        adjacent_resource_element=None
+        self,
+        group_element,
+        resource_element_list,
+        adjacent_resource_element=None,
     ):
         """
         etree.Element group_element -- the group to put resources into
@@ -203,13 +198,13 @@ class ValidateMoveResourcesToGroupByElements(ValidateMoveResourcesToGroup):
         """
         return self._validate_elements()
 
+
 class ValidateMoveResourcesToGroupByIds(ValidateMoveResourcesToGroup):
     """
     Validate putting resources into a group or moving them within their group
     """
-    def __init__(
-        self, group_id, resource_id_list, adjacent_resource_id=None
-    ):
+
+    def __init__(self, group_id, resource_id_list, adjacent_resource_id=None):
         """
         string group_id -- id of the group to put resources into
         iterable resource_id_list -- ids of resources to put into the group
@@ -267,23 +262,21 @@ class ValidateMoveResourcesToGroupByIds(ValidateMoveResourcesToGroup):
                         adjacent_searcher.get_element()
                     )
                 else:
+                    # pylint: disable=line-too-long
                     report_list.append(
                         ReportItem.error(
-                            reports.messages
-                            .CannotGroupResourceAdjacentResourceNotInGroup(
-                                self._adjacent_resource_id,
-                                self._group_id,
+                            reports.messages.CannotGroupResourceAdjacentResourceNotInGroup(
+                                self._adjacent_resource_id, self._group_id,
                             )
                         )
                     )
             # The group will be created so there is no adjacent resource in it.
             elif group_missing_id_valid:
+                # pylint: disable=line-too-long
                 report_list.append(
                     ReportItem.error(
-                        reports.messages
-                        .CannotGroupResourceAdjacentResourceForNewGroup(
-                            self._adjacent_resource_id,
-                            self._group_id,
+                        reports.messages.CannotGroupResourceAdjacentResourceForNewGroup(
+                            self._adjacent_resource_id, self._group_id,
                         )
                     )
                 )
@@ -292,19 +285,14 @@ class ValidateMoveResourcesToGroupByIds(ValidateMoveResourcesToGroup):
 
         report_list.extend(
             self._validate_elements(
-                bad_or_missing_group_specified=(
-                    self._group_element is None
-                ),
+                bad_or_missing_group_specified=(self._group_element is None),
                 bad_resources_specified=(
-                    self._resource_id_list
-                    and
-                    not self._resource_element_list
+                    self._resource_id_list and not self._resource_element_list
                 ),
                 bad_adjacent_specified=(
                     self._adjacent_resource_id
-                    and
-                    self._adjacent_resource_element is None
-                )
+                    and self._adjacent_resource_element is None
+                ),
             )
         )
 
@@ -321,8 +309,10 @@ class ValidateMoveResourcesToGroupByIds(ValidateMoveResourcesToGroup):
 
 
 def move_resources_to_group(
-    group_element, primitives_to_place, adjacent_resource=None,
-    put_after_adjacent=True
+    group_element,
+    primitives_to_place,
+    adjacent_resource=None,
+    put_after_adjacent=True,
 ):
     """
     Put resources into a group or move them within their group
@@ -338,18 +328,12 @@ def move_resources_to_group(
         # Move a resource to the group.
         if (
             adjacent_resource is not None
-            and
-            adjacent_resource.getnext() is not None
-            and
-            put_after_adjacent
+            and adjacent_resource.getnext() is not None
+            and put_after_adjacent
         ):
             adjacent_resource.getnext().addprevious(resource)
             adjacent_resource = resource
-        elif (
-            adjacent_resource is not None
-            and
-            not put_after_adjacent
-        ):
+        elif adjacent_resource is not None and not put_after_adjacent:
             adjacent_resource.addprevious(resource)
         else:
             group_element.append(resource)
@@ -360,18 +344,14 @@ def move_resources_to_group(
         # delete that as well.
         if (
             old_parent is not None
-            and
-            group.is_group(old_parent)
-            and
-            not group.get_inner_resources(old_parent)
-            and
-            old_parent.getparent() is not None
+            and group.is_group(old_parent)
+            and not group.get_inner_resources(old_parent)
+            and old_parent.getparent() is not None
         ):
             old_grandparent = old_parent.getparent()
             if (
                 clone.is_any_clone(old_grandparent)
-                and
-                old_grandparent.getparent() is not None
+                and old_grandparent.getparent() is not None
             ):
                 old_grandparent.getparent().remove(old_grandparent)
             else:

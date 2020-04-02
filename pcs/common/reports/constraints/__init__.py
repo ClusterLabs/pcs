@@ -16,6 +16,7 @@ def constraint_to_str(constraint_type, constraint_info, with_id=True):
         return constraint_with_sets(constraint_info, with_id)
     return constraint_plain(constraint_type, constraint_info, with_id)
 
+
 def constraint_plain(constraint_type, options_dict, with_id=False):
     """return console shape for any constraint_type of plain constraint"""
     type_report_map = {

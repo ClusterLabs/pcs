@@ -23,17 +23,17 @@ class PrepareOptionsPlainTest(TestCase):
         mock_create_id.return_value = "generated_id"
         self.assertEqual(
             {
-                'id': 'generated_id',
-                'loss-policy': 'fence',
-                'rsc': 'resourceA',
-                'rsc-role': 'Master',
-                'ticket': 'ticket_key'
+                "id": "generated_id",
+                "loss-policy": "fence",
+                "rsc": "resourceA",
+                "rsc-role": "Master",
+                "ticket": "ticket_key",
             },
             self.prepare(
                 {"loss-policy": "fence", "rsc-role": "master"},
                 "ticket_key",
                 "resourceA",
-            )
+            ),
         )
 
     @mock.patch("pcs.lib.cib.constraint.ticket._create_id")
@@ -41,16 +41,16 @@ class PrepareOptionsPlainTest(TestCase):
         mock_create_id.return_value = "generated_id"
         self.assertEqual(
             {
-                'id': 'generated_id',
-                'loss-policy': 'fence',
-                'rsc': 'resourceA',
-                'ticket': 'ticket_key'
+                "id": "generated_id",
+                "loss-policy": "fence",
+                "rsc": "resourceA",
+                "ticket": "ticket_key",
             },
             self.prepare(
                 {"loss-policy": "fence", "rsc-role": ""},
                 "ticket_key",
                 "resourceA",
-            )
+            ),
         )
 
     def test_refuse_unknown_attributes(self, _):
@@ -67,10 +67,14 @@ class PrepareOptionsPlainTest(TestCase):
                     "option_names": ["unknown"],
                     "option_type": None,
                     "allowed": [
-                        "id", "loss-policy", "rsc", "rsc-role", "ticket",
+                        "id",
+                        "loss-policy",
+                        "rsc",
+                        "rsc-role",
+                        "ticket",
                     ],
                     "allowed_patterns": [],
-                }
+                },
             ),
         )
 
@@ -79,13 +83,17 @@ class PrepareOptionsPlainTest(TestCase):
             lambda: self.prepare(
                 {"id": "id", "rsc-role": "bad_role"}, "ticket_key", "resourceA"
             ),
-            (severities.ERROR, report_codes.INVALID_OPTION_VALUE, {
-                'allowed_values': ('Master', 'Slave', 'Started', 'Stopped'),
-                'option_value': 'bad_role',
-                'option_name': 'rsc-role',
-                'cannot_be_empty': False,
-                'forbidden_characters': None,
-            }),
+            (
+                severities.ERROR,
+                report_codes.INVALID_OPTION_VALUE,
+                {
+                    "allowed_values": ("Master", "Slave", "Started", "Stopped"),
+                    "option_value": "bad_role",
+                    "option_name": "rsc-role",
+                    "cannot_be_empty": False,
+                    "forbidden_characters": None,
+                },
+            ),
         )
 
     def test_refuse_missing_ticket(self, _):
@@ -96,10 +104,7 @@ class PrepareOptionsPlainTest(TestCase):
             (
                 severities.ERROR,
                 report_codes.REQUIRED_OPTIONS_ARE_MISSING,
-                {
-                    "option_names": ["ticket"],
-                    "option_type": None,
-                }
+                {"option_names": ["ticket"], "option_type": None,},
             ),
         )
 
@@ -111,13 +116,9 @@ class PrepareOptionsPlainTest(TestCase):
             (
                 severities.ERROR,
                 report_codes.REQUIRED_OPTIONS_ARE_MISSING,
-                {
-                    "option_names": ["rsc"],
-                    "option_type": None,
-                }
+                {"option_names": ["rsc"], "option_type": None,},
             ),
         )
-
 
     def test_refuse_unknown_lost_policy(self, mock_check_new_id_applicable):
         # pylint: disable=unused-argument
@@ -127,13 +128,17 @@ class PrepareOptionsPlainTest(TestCase):
                 "ticket_key",
                 "resourceA",
             ),
-            (severities.ERROR, report_codes.INVALID_OPTION_VALUE, {
-                'allowed_values': ('fence', 'stop', 'freeze', 'demote'),
-                'option_value': 'unknown',
-                'option_name': 'loss-policy',
-                'cannot_be_empty': False,
-                'forbidden_characters': None,
-            }),
+            (
+                severities.ERROR,
+                report_codes.INVALID_OPTION_VALUE,
+                {
+                    "allowed_values": ("fence", "stop", "freeze", "demote"),
+                    "option_value": "unknown",
+                    "option_name": "loss-policy",
+                    "cannot_be_empty": False,
+                    "forbidden_characters": None,
+                },
+            ),
         )
 
     @mock.patch("pcs.lib.cib.constraint.ticket._create_id")
@@ -143,37 +148,32 @@ class PrepareOptionsPlainTest(TestCase):
         ticket_key = "ticket_key"
         resource_id = "resourceA"
         expected_options = options.copy()
-        expected_options.update({
-            "id": "generated_id",
-            "rsc": resource_id,
-            "rsc-role": "Master",
-            "ticket": ticket_key,
-        })
-        self.assertEqual(expected_options, self.prepare(
-            options,
-            ticket_key,
-            resource_id,
-        ))
+        expected_options.update(
+            {
+                "id": "generated_id",
+                "rsc": resource_id,
+                "rsc-role": "Master",
+                "ticket": ticket_key,
+            }
+        )
+        self.assertEqual(
+            expected_options, self.prepare(options, ticket_key, resource_id,)
+        )
         mock_create_id.assert_called_once_with(
-            self.cib,
-            ticket_key,
-            resource_id,
-            "Master",
+            self.cib, ticket_key, resource_id, "Master",
         )
 
 
-#Patch check_new_id_applicable is always desired when working with
-#prepare_options_with_set. Patched function raises when id not applicable
-#and do nothing when applicable - in this case tests do no actions with it
+# Patch check_new_id_applicable is always desired when working with
+# prepare_options_with_set. Patched function raises when id not applicable
+# and do nothing when applicable - in this case tests do no actions with it
 @mock.patch("pcs.lib.cib.constraint.ticket.tools.check_new_id_applicable")
 class PrepareOptionsWithSetTest(TestCase):
     def setUp(self):
         self.cib = "cib"
         self.resource_set_list = "resource_set_list"
         self.prepare = lambda options: ticket.prepare_options_with_set(
-            self.cib,
-            options,
-            self.resource_set_list,
+            self.cib, options, self.resource_set_list,
         )
 
     @mock.patch("pcs.lib.cib.constraint.ticket.constraint.create_id")
@@ -184,41 +184,41 @@ class PrepareOptionsWithSetTest(TestCase):
         expected_options.update({"id": "generated_id"})
         self.assertEqual(expected_options, self.prepare(options))
         mock_create_id.assert_called_once_with(
-            self.cib,
-            ticket.TAG_NAME,
-            self.resource_set_list
+            self.cib, ticket.TAG_NAME, self.resource_set_list
         )
 
     def test_refuse_invalid_id(self, mock_check_new_id_applicable):
         class SomeException(Exception):
             pass
+
         mock_check_new_id_applicable.side_effect = SomeException()
         invalid_id = "invalid_id"
-        self.assertRaises(SomeException, lambda: self.prepare({
-            "loss-policy": "freeze",
-            "ticket": "T",
-            "id": invalid_id,
-        }))
+        self.assertRaises(
+            SomeException,
+            lambda: self.prepare(
+                {"loss-policy": "freeze", "ticket": "T", "id": invalid_id,}
+            ),
+        )
         mock_check_new_id_applicable.assert_called_once_with(
-            self.cib,
-            ticket.DESCRIPTION,
-            invalid_id
+            self.cib, ticket.DESCRIPTION, invalid_id
         )
 
     def test_refuse_unknown_lost_policy(self, _):
         assert_raise_library_error(
-            lambda: self.prepare({
-                "loss-policy": "unknown",
-                "ticket": "T",
-                "id": "id",
-            }),
-            (severities.ERROR, report_codes.INVALID_OPTION_VALUE, {
-                'allowed_values': ('fence', 'stop', 'freeze', 'demote'),
-                'option_value': 'unknown',
-                'option_name': 'loss-policy',
-                'cannot_be_empty': False,
-                'forbidden_characters': None,
-            }),
+            lambda: self.prepare(
+                {"loss-policy": "unknown", "ticket": "T", "id": "id",}
+            ),
+            (
+                severities.ERROR,
+                report_codes.INVALID_OPTION_VALUE,
+                {
+                    "allowed_values": ("fence", "stop", "freeze", "demote"),
+                    "option_value": "unknown",
+                    "option_name": "loss-policy",
+                    "cannot_be_empty": False,
+                    "forbidden_characters": None,
+                },
+            ),
         )
 
     def test_refuse_missing_ticket(self, _):
@@ -227,23 +227,22 @@ class PrepareOptionsWithSetTest(TestCase):
             (
                 severities.ERROR,
                 report_codes.REQUIRED_OPTIONS_ARE_MISSING,
-                {"option_names": ["ticket"], "option_type": None}
-            )
+                {"option_names": ["ticket"], "option_type": None},
+            ),
         )
 
     def test_refuse_empty_ticket(self, _):
         assert_raise_library_error(
-            lambda: self.prepare({
-                "loss-policy": "stop",
-                "id": "id",
-                "ticket": " "
-            }),
+            lambda: self.prepare(
+                {"loss-policy": "stop", "id": "id", "ticket": " "}
+            ),
             (
                 severities.ERROR,
                 report_codes.REQUIRED_OPTIONS_ARE_MISSING,
-                {"option_names": ["ticket"], "option_type": None}
-            )
+                {"option_names": ["ticket"], "option_type": None},
+            ),
         )
+
 
 class Element:
     # pylint: disable=too-few-public-methods
@@ -257,45 +256,41 @@ class Element:
 
 class AreDuplicatePlain(TestCase):
     def setUp(self):
-        self.first = Element({
-            "ticket": "ticket_key",
-            "rsc": "resourceA",
-            "rsc-role": "Master"
-        })
-        self.second = Element({
-            "ticket": "ticket_key",
-            "rsc": "resourceA",
-            "rsc-role": "Master"
-        })
+        self.first = Element(
+            {"ticket": "ticket_key", "rsc": "resourceA", "rsc-role": "Master"}
+        )
+        self.second = Element(
+            {"ticket": "ticket_key", "rsc": "resourceA", "rsc-role": "Master"}
+        )
 
     def test_returns_true_for_duplicate_elements(self):
         self.assertTrue(ticket.are_duplicate_plain(self.first, self.second))
 
     def test_returns_false_for_different_ticket(self):
-        self.assertFalse(ticket.are_duplicate_plain(
-            self.first,
-            self.second.update({"ticket": "X"})
-        ))
+        self.assertFalse(
+            ticket.are_duplicate_plain(
+                self.first, self.second.update({"ticket": "X"})
+            )
+        )
 
     def test_returns_false_for_different_resource(self):
-        self.assertFalse(ticket.are_duplicate_plain(
-            self.first,
-            self.second.update({"rsc": "Y"})
-        ))
+        self.assertFalse(
+            ticket.are_duplicate_plain(
+                self.first, self.second.update({"rsc": "Y"})
+            )
+        )
 
     def test_returns_false_for_different_role(self):
-        self.assertFalse(ticket.are_duplicate_plain(
-            self.first,
-            self.second.update({"rsc-role": "Z"})
-        ))
+        self.assertFalse(
+            ticket.are_duplicate_plain(
+                self.first, self.second.update({"rsc-role": "Z"})
+            )
+        )
 
     def test_returns_false_for_different_elements(self):
-        self.second.update({
-            "ticket": "X",
-            "rsc": "Y",
-            "rsc-role": "Z"
-        })
+        self.second.update({"ticket": "X", "rsc": "Y", "rsc-role": "Z"})
         self.assertFalse(ticket.are_duplicate_plain(self.first, self.second))
+
 
 @mock.patch(
     "pcs.lib.cib.constraint.ticket.constraint.have_duplicate_resource_sets"
@@ -305,23 +300,28 @@ class AreDuplicateWithResourceSet(TestCase):
         self, mock_have_duplicate_resource_sets
     ):
         mock_have_duplicate_resource_sets.return_value = True
-        self.assertTrue(ticket.are_duplicate_with_resource_set(
-            Element({"ticket": "ticket_key"}),
-            Element({"ticket": "ticket_key"}),
-        ))
+        self.assertTrue(
+            ticket.are_duplicate_with_resource_set(
+                Element({"ticket": "ticket_key"}),
+                Element({"ticket": "ticket_key"}),
+            )
+        )
 
     def test_returns_false_for_different_elements(
         self, mock_have_duplicate_resource_sets
     ):
         mock_have_duplicate_resource_sets.return_value = True
-        self.assertFalse(ticket.are_duplicate_with_resource_set(
-            Element({"ticket": "ticket_key"}),
-            Element({"ticket": "X"}),
-        ))
+        self.assertFalse(
+            ticket.are_duplicate_with_resource_set(
+                Element({"ticket": "ticket_key"}), Element({"ticket": "X"}),
+            )
+        )
+
 
 class RemovePlainTest(TestCase):
     def test_remove_tickets_constraints_for_resource(self):
-        constraint_section = etree.fromstring("""
+        constraint_section = etree.fromstring(
+            """
             <constraints>
                 <rsc_ticket id="t1" ticket="tA" rsc="rA"/>
                 <rsc_ticket id="t2" ticket="tA" rsc="rB"/>
@@ -329,48 +329,59 @@ class RemovePlainTest(TestCase):
                 <rsc_ticket id="t4" ticket="tB" rsc="rA"/>
                 <rsc_ticket id="t5" ticket="tB" rsc="rB"/>
             </constraints>
-        """)
+        """
+        )
 
-        self.assertTrue(ticket.remove_plain(
-            constraint_section,
-            ticket_key="tA",
-            resource_id="rA",
-        ))
+        self.assertTrue(
+            ticket.remove_plain(
+                constraint_section, ticket_key="tA", resource_id="rA",
+            )
+        )
 
-        assert_xml_equal(etree.tostring(constraint_section).decode(), """
+        assert_xml_equal(
+            etree.tostring(constraint_section).decode(),
+            """
             <constraints>
                 <rsc_ticket id="t2" ticket="tA" rsc="rB"/>
                 <rsc_ticket id="t4" ticket="tB" rsc="rA"/>
                 <rsc_ticket id="t5" ticket="tB" rsc="rB"/>
             </constraints>
-        """)
+        """,
+        )
 
     def test_remove_nothing_when_no_matching_found(self):
-        constraint_section = etree.fromstring("""
+        constraint_section = etree.fromstring(
+            """
             <constraints>
                 <rsc_ticket id="t2" ticket="tA" rsc="rB"/>
                 <rsc_ticket id="t4" ticket="tB" rsc="rA"/>
                 <rsc_ticket id="t5" ticket="tB" rsc="rB"/>
             </constraints>
-        """)
+        """
+        )
 
-        self.assertFalse(ticket.remove_plain(
-            constraint_section,
-            ticket_key="tA",
-            resource_id="rA",
-        ))
+        self.assertFalse(
+            ticket.remove_plain(
+                constraint_section, ticket_key="tA", resource_id="rA",
+            )
+        )
 
-        assert_xml_equal(etree.tostring(constraint_section).decode(), """
+        assert_xml_equal(
+            etree.tostring(constraint_section).decode(),
+            """
             <constraints>
                 <rsc_ticket id="t2" ticket="tA" rsc="rB"/>
                 <rsc_ticket id="t4" ticket="tB" rsc="rA"/>
                 <rsc_ticket id="t5" ticket="tB" rsc="rB"/>
             </constraints>
-        """)
+        """,
+        )
+
 
 class RemoveWithSetTest(TestCase):
     def test_remove_resource_references_and_empty_remaining_parents(self):
-        constraint_section = etree.fromstring("""
+        constraint_section = etree.fromstring(
+            """
             <constraints>
                 <rsc_ticket id="t1" ticket="tA">
                     <resource_set id="rs1">
@@ -397,13 +408,14 @@ class RemoveWithSetTest(TestCase):
                     </resource_set>
                 </rsc_ticket>
             </constraints>
-        """)
+        """
+        )
 
-        self.assertTrue(ticket.remove_with_resource_set(
-            constraint_section,
-            ticket_key="tA",
-            resource_id="rA"
-        ))
+        self.assertTrue(
+            ticket.remove_with_resource_set(
+                constraint_section, ticket_key="tA", resource_id="rA"
+            )
+        )
 
         assert_xml_equal(
             """
@@ -421,11 +433,12 @@ class RemoveWithSetTest(TestCase):
                     </rsc_ticket>
                 </constraints>
             """,
-            etree.tostring(constraint_section).decode()
+            etree.tostring(constraint_section).decode(),
         )
 
     def test_remove_nothing_when_no_matching_found(self):
-        constraint_section = etree.fromstring("""
+        constraint_section = etree.fromstring(
+            """
                 <constraints>
                     <rsc_ticket id="t2" ticket="tA">
                         <resource_set id="rs3">
@@ -439,9 +452,10 @@ class RemoveWithSetTest(TestCase):
                         </resource_set>
                     </rsc_ticket>
                 </constraints>
-        """)
-        self.assertFalse(ticket.remove_with_resource_set(
-            constraint_section,
-            ticket_key="tA",
-            resource_id="rA"
-        ))
+        """
+        )
+        self.assertFalse(
+            ticket.remove_with_resource_set(
+                constraint_section, ticket_key="tA", resource_id="rA"
+            )
+        )

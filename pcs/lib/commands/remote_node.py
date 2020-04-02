@@ -32,63 +32,70 @@ from pcs.lib.node import get_existing_nodes_names_addrs
 from pcs.lib.pacemaker import state
 from pcs.lib.pacemaker.live import remove_node
 
+
 def _reports_skip_new_node(new_node_name, reason_type):
     assert reason_type in {"unreachable", "not_live_cib"}
     return [
         ReportItem.info(
             reports.messages.FilesDistributionSkipped(
-                reason_type,
-                ["pacemaker authkey"],
-                [new_node_name]
+                reason_type, ["pacemaker authkey"], [new_node_name]
             )
         ),
         ReportItem.info(
             reports.messages.ServiceCommandsOnNodesSkipped(
                 reason_type,
                 ["pacemaker_remote start", "pacemaker_remote enable"],
-                [new_node_name]
+                [new_node_name],
             )
         ),
     ]
 
+
 def _get_targets_for_add(
-    target_factory, report_processor, existing_nodes_names, new_nodes_names,
-    skip_offline_nodes
+    target_factory,
+    report_processor,
+    existing_nodes_names,
+    new_nodes_names,
+    skip_offline_nodes,
 ):
     # Get targets for all existing nodes and report unknown (not-authorized)
     # nodes.
-    target_report_list, existing_target_list = (
-        target_factory.get_target_list_with_reports(
-            existing_nodes_names,
-            skip_non_existing=skip_offline_nodes
-        )
+    (
+        target_report_list,
+        existing_target_list,
+    ) = target_factory.get_target_list_with_reports(
+        existing_nodes_names, skip_non_existing=skip_offline_nodes
     )
     report_processor.report_list(target_report_list)
     # Get a target for the new node.
-    target_report_list, new_target_list = (
-        target_factory.get_target_list_with_reports(
-            new_nodes_names,
-            skip_non_existing=skip_offline_nodes,
-            # continue even if the new node is unknown when skip is True
-            report_none_host_found=False
-        )
+    (
+        target_report_list,
+        new_target_list,
+    ) = target_factory.get_target_list_with_reports(
+        new_nodes_names,
+        skip_non_existing=skip_offline_nodes,
+        # continue even if the new node is unknown when skip is True
+        report_none_host_found=False,
     )
     report_processor.report_list(target_report_list)
     return existing_target_list, new_target_list
+
 
 def _host_check_remote_node(host_info_dict):
     # Version of services may not be the same across the existing cluster
     # nodes, so it's not easy to make this check properly.
     report_list = []
     required_service_list = ["pacemaker_remote"]
-    required_as_stopped_service_list = (
-        required_service_list + ["pacemaker", "corosync"]
-    )
+    required_as_stopped_service_list = required_service_list + [
+        "pacemaker",
+        "corosync",
+    ]
     for host_name, host_info in host_info_dict.items():
         try:
             services = host_info["services"]
             missing_service_list = [
-                service for service in required_service_list
+                service
+                for service in required_service_list
                 if not services[service]["installed"]
             ]
             if missing_service_list:
@@ -100,15 +107,15 @@ def _host_check_remote_node(host_info_dict):
                     )
                 )
             cannot_be_running_service_list = [
-                service for service in required_as_stopped_service_list
+                service
+                for service in required_as_stopped_service_list
                 if service in services and services[service]["running"]
             ]
             if cannot_be_running_service_list:
                 report_list.append(
                     ReportItem.error(
                         reports.messages.HostAlreadyInClusterServices(
-                            host_name,
-                            sorted(cannot_be_running_service_list),
+                            host_name, sorted(cannot_be_running_service_list),
                         )
                     )
                 )
@@ -126,15 +133,20 @@ def _host_check_remote_node(host_info_dict):
             )
     return report_list
 
+
 def _prepare_pacemaker_remote_environment(
-    env, report_processor, existing_nodes_target_list, new_node_target,
-    new_node_name, skip_offline_nodes, allow_incomplete_distribution,
-    allow_fails
+    env,
+    report_processor,
+    existing_nodes_target_list,
+    new_node_target,
+    new_node_name,
+    skip_offline_nodes,
+    allow_incomplete_distribution,
+    allow_fails,
 ):
     if new_node_target:
         com_cmd = GetOnlineTargets(
-            report_processor,
-            ignore_offline_targets=skip_offline_nodes,
+            report_processor, ignore_offline_targets=skip_offline_nodes,
         )
         com_cmd.set_targets([new_node_target])
         online_new_target_list = run_com(env.get_node_communicator(), com_cmd)
@@ -191,14 +203,14 @@ def _prepare_pacemaker_remote_environment(
     if online_new_target_list:
         com_cmd = ServiceAction(
             report_processor,
-            node_communication_format.create_pcmk_remote_actions([
-                "start",
-                "enable",
-            ]),
+            node_communication_format.create_pcmk_remote_actions(
+                ["start", "enable",]
+            ),
             allow_fails=allow_fails,
         )
         com_cmd.set_targets(online_new_target_list)
         run_and_raise(env.get_node_communicator(), com_cmd)
+
 
 def _ensure_resource_running(env: LibraryEnvironment, resource_id):
     if env.report_processor.report(
@@ -206,8 +218,14 @@ def _ensure_resource_running(env: LibraryEnvironment, resource_id):
     ).has_errors:
         raise LibraryError()
 
+
 def node_add_remote(
-    env, node_name, node_addr, operations, meta_attributes, instance_attributes,
+    env,
+    node_name,
+    node_addr,
+    operations,
+    meta_attributes,
+    instance_attributes,
     skip_offline_nodes=False,
     allow_incomplete_distribution=False,
     allow_pacemaker_remote_service_fail=False,
@@ -260,25 +278,29 @@ def node_add_remote(
                 )
             )
         )
-    existing_nodes_names, existing_nodes_addrs, report_list = (
-        get_existing_nodes_names_addrs(corosync_conf, cib)
-    )
+    (
+        existing_nodes_names,
+        existing_nodes_addrs,
+        report_list,
+    ) = get_existing_nodes_names_addrs(corosync_conf, cib)
     if env.is_cib_live:
         # We just reported corosync checks are going to be skipped so we
         # shouldn't complain about errors related to corosync nodes
         report_processor.report_list(report_list)
 
     resource_agent = remote_node.get_agent(
-        env.report_processor,
-        env.cmd_runner()
+        env.report_processor, env.cmd_runner()
     )
 
     existing_target_list = []
     if env.is_cib_live:
         target_factory = env.get_node_target_factory()
         existing_target_list, new_target_list = _get_targets_for_add(
-            target_factory, report_processor, existing_nodes_names, [node_name],
-            skip_offline_nodes
+            target_factory,
+            report_processor,
+            existing_nodes_names,
+            [node_name],
+            skip_offline_nodes,
         )
         new_target = new_target_list[0] if new_target_list else None
         # default node_addr to an address from known-hosts
@@ -311,7 +333,7 @@ def node_add_remote(
         resource_agent,
         node_name,
         node_addr,
-        instance_attributes
+        instance_attributes,
     )
     if report_processor.report_list(report_list).has_errors:
         raise LibraryError()
@@ -333,9 +355,9 @@ def node_add_remote(
             use_default_operations,
         )
     except LibraryError as e:
-        #Check unique id conflict with check against nodes. Until validation
-        #resource create is not separated, we need to make unique post
-        #validation.
+        # Check unique id conflict with check against nodes. Until validation
+        # resource create is not separated, we need to make unique post
+        # validation.
         already_exists = []
         unified_report_list = []
         for report_item in report_list + list(e.args):
@@ -348,8 +370,7 @@ def node_add_remote(
                 unified_report_list.append(report_item)
             elif (
                 "id" in dto_obj.payload
-                and
-                dto_obj.payload["id"] not in already_exists
+                and dto_obj.payload["id"] not in already_exists
             ):
                 unified_report_list.append(report_item)
                 already_exists.append(dto_obj.payload["id"])
@@ -380,8 +401,12 @@ def node_add_remote(
     if wait:
         _ensure_resource_running(env, remote_resource_element.attrib["id"])
 
+
 def node_add_guest(
-    env, node_name, resource_id, options,
+    env,
+    node_name,
+    resource_id,
+    options,
     skip_offline_nodes=False,
     allow_incomplete_distribution=False,
     allow_pacemaker_remote_service_fail=False,
@@ -420,9 +445,11 @@ def node_add_guest(
                 )
             )
         )
-    existing_nodes_names, existing_nodes_addrs, report_list = (
-        get_existing_nodes_names_addrs(corosync_conf, cib)
-    )
+    (
+        existing_nodes_names,
+        existing_nodes_addrs,
+        report_list,
+    ) = get_existing_nodes_names_addrs(corosync_conf, cib)
     if env.is_cib_live:
         # We just reported corosync checks are going to be skipped so we
         # shouldn't complain about errors related to corosync nodes
@@ -432,8 +459,11 @@ def node_add_guest(
     if env.is_cib_live:
         target_factory = env.get_node_target_factory()
         existing_target_list, new_target_list = _get_targets_for_add(
-            target_factory, report_processor, existing_nodes_names, [node_name],
-            skip_offline_nodes
+            target_factory,
+            report_processor,
+            existing_nodes_names,
+            [node_name],
+            skip_offline_nodes,
         )
         new_target = new_target_list[0] if new_target_list else None
         # default remote-addr to an address from known-hosts
@@ -463,11 +493,7 @@ def node_add_guest(
 
     # validate inputs
     report_list = guest_node.validate_set_as_guest(
-        cib,
-        existing_nodes_names,
-        existing_nodes_addrs,
-        node_name,
-        options
+        cib, existing_nodes_names, existing_nodes_addrs, node_name, options
     )
     searcher = ElementSearcher(primitive.TAG, resource_id, get_resources(cib))
     if searcher.element_found():
@@ -510,13 +536,14 @@ def node_add_guest(
     if wait:
         _ensure_resource_running(env, resource_id)
 
+
 def _find_resources_to_remove(
     cib,
     report_processor: ReportProcessor,
     node_type,
     node_identifier,
     allow_remove_multiple_nodes,
-    find_resources
+    find_resources,
 ):
     resource_element_list = find_resources(get_resources(cib), node_identifier)
 
@@ -532,7 +559,7 @@ def _find_resources_to_remove(
             ReportItem(
                 severity=reports.item.get_severity(
                     reports.codes.FORCE_REMOVE_MULTIPLE_NODES,
-                    allow_remove_multiple_nodes
+                    allow_remove_multiple_nodes,
                 ),
                 message=reports.messages.MultipleResultsFound(
                     "resource",
@@ -541,26 +568,25 @@ def _find_resources_to_remove(
                         for resource in resource_element_list
                     ],
                     node_identifier,
-                )
+                ),
             )
         ).has_errors:
             raise LibraryError()
 
     return resource_element_list
 
+
 def _destroy_pcmk_remote_env(
     env, node_names_list, skip_offline_nodes, allow_fails
 ):
-    actions = node_communication_format.create_pcmk_remote_actions([
-        "stop",
-        "disable",
-    ])
+    actions = node_communication_format.create_pcmk_remote_actions(
+        ["stop", "disable",]
+    )
     files = {
         "pacemaker_remote authkey": {"type": "pcmk_remote_authkey"},
     }
     target_list = env.get_node_target_factory().get_target_list(
-        node_names_list,
-        skip_non_existing=skip_offline_nodes,
+        node_names_list, skip_non_existing=skip_offline_nodes,
     )
 
     com_cmd = ServiceAction(
@@ -581,29 +607,33 @@ def _destroy_pcmk_remote_env(
     com_cmd.set_targets(target_list)
     run_and_raise(env.get_node_communicator(), com_cmd)
 
+
 def _report_skip_live_parts_in_remove(node_names_list):
     return [
         ReportItem.info(
             reports.messages.ServiceCommandsOnNodesSkipped(
                 reports.const.REASON_NOT_LIVE_CIB,
                 ["pacemaker_remote stop", "pacemaker_remote disable"],
-                node_names_list
+                node_names_list,
             )
         ),
         ReportItem.info(
             reports.messages.FilesRemoveFromNodesSkipped(
                 reports.const.REASON_NOT_LIVE_CIB,
                 ["pacemaker authkey"],
-                node_names_list
+                node_names_list,
             )
-        )
+        ),
     ]
 
+
 def node_remove_remote(
-    env, node_identifier, remove_resource,
+    env,
+    node_identifier,
+    remove_resource,
     skip_offline_nodes=False,
     allow_remove_multiple_nodes=False,
-    allow_pacemaker_remote_service_fail=False
+    allow_pacemaker_remote_service_fail=False,
 ):
     """
     remove a resource representing remote node and destroy remote node
@@ -629,10 +659,12 @@ def node_remove_remote(
         remote_node.find_node_resources,
     )
 
-    node_names_list = sorted({
-        remote_node.get_node_name_from_resource(node_element)
-        for node_element in resource_element_list
-    })
+    node_names_list = sorted(
+        {
+            remote_node.get_node_name_from_resource(node_element)
+            for node_element in resource_element_list
+        }
+    )
 
     if not env.is_cib_live:
         env.report_processor.report_list(
@@ -643,19 +675,20 @@ def node_remove_remote(
             env,
             node_names_list,
             skip_offline_nodes,
-            allow_pacemaker_remote_service_fail
+            allow_pacemaker_remote_service_fail,
         )
 
-    #remove node from pcmk caches is currently integrated in remove_resource
-    #function
+    # remove node from pcmk caches is currently integrated in remove_resource
+    # function
     for resource_element in resource_element_list:
         remove_resource(
-            resource_element.attrib["id"],
-            is_remove_remote_context=True,
+            resource_element.attrib["id"], is_remove_remote_context=True,
         )
 
+
 def node_remove_guest(
-    env, node_identifier,
+    env,
+    node_identifier,
     skip_offline_nodes=False,
     allow_remove_multiple_nodes=False,
     allow_pacemaker_remote_service_fail=False,
@@ -685,10 +718,12 @@ def node_remove_guest(
         guest_node.find_node_resources,
     )
 
-    node_names_list = sorted({
-        guest_node.get_node_name_from_resource(node_element)
-        for node_element in resource_element_list
-    })
+    node_names_list = sorted(
+        {
+            guest_node.get_node_name_from_resource(node_element)
+            for node_element in resource_element_list
+        }
+    )
 
     if not env.is_cib_live:
         env.report_processor.report_list(
@@ -699,7 +734,7 @@ def node_remove_guest(
             env,
             node_names_list,
             skip_offline_nodes,
-            allow_pacemaker_remote_service_fail
+            allow_pacemaker_remote_service_fail,
         )
 
     for resource_element in resource_element_list:
@@ -707,7 +742,7 @@ def node_remove_guest(
 
     env.push_cib(wait=wait)
 
-    #remove node from pcmk caches
+    # remove node from pcmk caches
     if env.is_cib_live:
         for node_name in node_names_list:
             remove_node(env.cmd_runner(), node_name)

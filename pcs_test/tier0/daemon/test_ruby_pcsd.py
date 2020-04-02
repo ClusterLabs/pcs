@@ -15,8 +15,10 @@ from pcs.daemon import ruby_pcsd
 # Don't write errors to test output.
 logging.getLogger("pcs.daemon").setLevel(logging.CRITICAL)
 
+
 def create_wrapper():
     return ruby_pcsd.Wrapper(rc("/path/to/ruby_socket"))
+
 
 def create_http_request():
     return HTTPServerRequest(
@@ -24,10 +26,12 @@ def create_http_request():
         uri="/pcsd/uri",
         headers=HTTPHeaders({"Cookie": "cookie1=first;cookie2=second"}),
         body=str.encode(urlencode({"post-key": "post-value"})),
-        host="pcsd-host:2224"
+        host="pcsd-host:2224",
     )
 
+
 patch_ruby_pcsd = create_patcher(ruby_pcsd)
+
 
 class RunRuby(AsyncTestCase):
     def setUp(self):
@@ -35,9 +39,7 @@ class RunRuby(AsyncTestCase):
         self.request = ruby_pcsd.RubyDaemonRequest(ruby_pcsd.SYNC_CONFIGS)
         self.wrapper = create_wrapper()
         patcher = mock.patch.object(
-            self.wrapper,
-            "send_to_ruby",
-            self.send_to_ruby
+            self.wrapper, "send_to_ruby", self.send_to_ruby
         )
         self.addCleanup(patcher.stop)
         patcher.start()
@@ -86,15 +88,16 @@ class RunRuby(AsyncTestCase):
         headers = {"some": "header"}
         status = 200
         body = "content"
-        self.set_run_result({
-            "headers": headers,
-            "status": status,
-            "body": b64encode(str.encode(body)).decode(),
-        })
+        self.set_run_result(
+            {
+                "headers": headers,
+                "status": status,
+                "body": b64encode(str.encode(body)).decode(),
+            }
+        )
         http_request = create_http_request()
         self.request = ruby_pcsd.RubyDaemonRequest(
-            ruby_pcsd.SINATRA_REMOTE,
-            http_request,
+            ruby_pcsd.SINATRA_REMOTE, http_request,
         )
         result = yield self.wrapper.request_remote(http_request)
         self.assert_sinatra_result(result, headers, status, body)
@@ -109,11 +112,13 @@ class RunRuby(AsyncTestCase):
         groups = ["hacluster"]
         is_authenticated = True
 
-        self.set_run_result({
-            "headers": headers,
-            "status": status,
-            "body": b64encode(str.encode(body)).decode(),
-        })
+        self.set_run_result(
+            {
+                "headers": headers,
+                "status": status,
+                "body": b64encode(str.encode(body)).decode(),
+            }
+        )
         http_request = create_http_request()
         self.request = ruby_pcsd.RubyDaemonRequest(
             ruby_pcsd.SINATRA_GUI,
@@ -122,7 +127,7 @@ class RunRuby(AsyncTestCase):
                 "username": user,
                 "groups": groups,
                 "is_authenticated": is_authenticated,
-            }
+            },
         )
         result = yield self.wrapper.request_gui(
             http_request,
@@ -132,16 +137,21 @@ class RunRuby(AsyncTestCase):
         )
         self.assert_sinatra_result(result, headers, status, body)
 
+
 class ProcessResponseLog(TestCase):
     @patch_ruby_pcsd("log.from_external_source")
     @patch_ruby_pcsd("next", mock.Mock(return_value=1))
     def test_put_correct_values_to_log(self, from_external_source):
         # pylint: disable=no-self-use
-        ruby_pcsd.process_response_logs([{
-            "level": "FATAL",
-            "timestamp_usec": 1234567890,
-            "message": "ruby_message",
-        }])
+        ruby_pcsd.process_response_logs(
+            [
+                {
+                    "level": "FATAL",
+                    "timestamp_usec": 1234567890,
+                    "message": "ruby_message",
+                }
+            ]
+        )
         from_external_source.assert_called_once_with(
             level=logging.CRITICAL,
             created=1234.56789,

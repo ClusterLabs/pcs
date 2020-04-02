@@ -18,10 +18,9 @@ def create_with_set(lib, argv, modifiers):
     """
     modifiers.ensure_only_supported("-f", "--force")
     command.create_with_set(
-        lib.constraint_colocation.set,
-        argv,
-        modifiers,
+        lib.constraint_colocation.set, argv, modifiers,
     )
+
 
 def show(lib, argv, modifiers):
     """
@@ -37,9 +36,13 @@ def show(lib, argv, modifiers):
     modifiers.ensure_only_supported("-f", "--full")
     if argv:
         raise CmdLineInputError()
-    print("\n".join(command.show(
-         "Colocation Constraints:",
-        lib.constraint_colocation.show,
-        constraints.colocation_plain,
-        modifiers,
-    )))
+    print(
+        "\n".join(
+            command.show(
+                "Colocation Constraints:",
+                lib.constraint_colocation.show,
+                constraints.colocation_plain,
+                modifiers,
+            )
+        )
+    )

@@ -14,6 +14,7 @@ ATTRIB = {
     "kind": ("Optional", "Mandatory", "Serialize"),
 }
 
+
 def prepare_options_with_set(cib, options, resource_set_list):
     options = constraint.prepare_options(
         tuple(ATTRIB.keys()),

@@ -12,19 +12,17 @@ USER = "user"
 GROUPS = ["group1", "group2"]
 PASSWORD = "password"
 
+
 class RubyPcsdWrapper(ruby_pcsd.Wrapper):
     def __init__(self, request_type):
-        #pylint: disable=super-init-not-called
+        # pylint: disable=super-init-not-called
         self.request_type = request_type
         self.status_code = 200
         self.headers = {"Some": "value"}
         self.body = b"Success action"
 
     async def run_ruby(
-        self,
-        request_type,
-        http_request=None,
-        payload=None,
+        self, request_type, http_request=None, payload=None,
     ):
         if request_type != self.request_type:
             raise AssertionError(
@@ -36,6 +34,7 @@ class RubyPcsdWrapper(ruby_pcsd.Wrapper):
             "status": self.status_code,
             "body": self.body,
         }
+
 
 class AppTest(AsyncHTTPTestCase):
     wrapper = None
@@ -55,15 +54,14 @@ class AppTest(AsyncHTTPTestCase):
         # "Strict-Transport-Security" header is expected in every response
         self.assertTrue(
             "Strict-Transport-Security" in response.headers,
-            f"No 'Strict-Transport-Security' header in response for '{path}'"
+            f"No 'Strict-Transport-Security' header in response for '{path}'",
         )
         return response
 
     def post(self, path, body, **kwargs):
-        kwargs.update({
-            "method": "POST",
-            "body": urlencode(body),
-        })
+        kwargs.update(
+            {"method": "POST", "body": urlencode(body),}
+        )
         return self.fetch(path, **kwargs)
 
     def get(self, path, **kwargs):
@@ -76,7 +74,7 @@ class AppTest(AsyncHTTPTestCase):
             "\n  Expected headers:"
             f"\n    {pformat(contained, indent=6)}"
             "\n  All headers:"
-            f"\n    {pformat(dict(headers.get_all()), indent=6)}"
+            f"\n    {pformat(dict(headers.get_all()), indent=6)}",
         )
 
     def assert_wrappers_response(self, response):
@@ -98,7 +96,7 @@ class AppUiTestMixin(AppTest):
         return auth.UserAuthInfo(
             username,
             self.user_auth_info.groups,
-            is_authorized=self.groups_valid
+            is_authorized=self.groups_valid,
         )
 
     def extract_sid(self, response):
@@ -125,7 +123,6 @@ class AppUiTestMixin(AppTest):
             kwargs["headers"]["X-Requested-With"] = "XMLHttpRequest"
             del kwargs["is_ajax"]
 
-
         if "follow_redirects" not in kwargs:
             kwargs["follow_redirects"] = False
 
@@ -133,9 +130,7 @@ class AppUiTestMixin(AppTest):
 
     def create_login_session(self):
         return self.session_storage.login(
-            sid=None,
-            username=USER,
-            groups=GROUPS
+            sid=None, username=USER, groups=GROUPS
         )
 
     def assert_success_response(self, response, expected_body):
@@ -146,6 +141,7 @@ class AppUiTestMixin(AppTest):
         self.assertEqual(response.code, 401)
         self.assertEqual(response.body, b'{"notauthorized":"true"}')
 
+
 class UserAuthInfo:
     # pylint: disable=too-few-public-methods
     def __init__(self, valid=False, groups=None):
@@ -153,6 +149,7 @@ class UserAuthInfo:
             groups = GROUPS
         self.valid = valid
         self.groups = groups
+
 
 class UserAuthMixin:
     user_auth_info = UserAuthInfo()
@@ -162,7 +159,7 @@ class UserAuthMixin:
         return auth.UserAuthInfo(
             username,
             self.user_auth_info.groups,
-            is_authorized=self.groups_valid
+            is_authorized=self.groups_valid,
         )
 
     async def authorize_user(self, username, password):
@@ -171,5 +168,5 @@ class UserAuthMixin:
         return auth.UserAuthInfo(
             username,
             self.user_auth_info.groups,
-            is_authorized=self.user_auth_info.valid
+            is_authorized=self.user_auth_info.valid,
         )

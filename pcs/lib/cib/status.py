@@ -29,7 +29,7 @@ def get_resources_failcounts(cib_status):
             name = nvpair.get("name")
             for part in ("fail-count-", "last-failure-"):
                 if name.startswith(part):
-                    failure_name = name[len(part):]
+                    failure_name = name[len(part) :]
                     if failure_name not in failures_info:
                         failures_info[failure_name] = {}
                     failures_info[failure_name][part[:-1]] = nvpair.get("value")
@@ -53,16 +53,19 @@ def get_resources_failcounts(cib_status):
                 last_failure = int(failure_data.get("last-failure", "0"))
             except ValueError:
                 last_failure = 0
-            failcounts.append({
-                "node": node_name,
-                "resource": resource,
-                "clone_id": clone_id,
-                "operation": operation,
-                "interval": interval,
-                "fail_count": fail_count,
-                "last_failure": last_failure,
-            })
+            failcounts.append(
+                {
+                    "node": node_name,
+                    "resource": resource,
+                    "clone_id": clone_id,
+                    "operation": operation,
+                    "interval": interval,
+                    "fail_count": fail_count,
+                    "last_failure": last_failure,
+                }
+            )
     return failcounts
+
 
 def _parse_failure_name(name):
     # failure_name looks like this:
@@ -76,17 +79,17 @@ def _parse_failure_name(name):
     operation, interval = operation_interval.rsplit("_", 1)
     return resource, clone, operation, interval
 
+
 def filter_resources_failcounts(
     failcounts, resource=None, node=None, operation=None, interval=None
 ):
     return [
-        failure for failure in failcounts
+        failure
+        for failure in failcounts
         if (
             (node is None or failure["node"] == node)
-            and
-            (resource is None or failure["resource"] == resource)
-            and
-            (operation is None or failure["operation"] == operation)
+            and (resource is None or failure["resource"] == resource)
+            and (operation is None or failure["operation"] == operation)
             and
             # 5 != "5", failure["interval"] is a string already
             (interval is None or failure["interval"] == str(interval))

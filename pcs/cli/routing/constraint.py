@@ -21,7 +21,7 @@ constraint_cmd = create_router(
                 "show": ticket_command.show,
             },
             ["constraint", "ticket"],
-            default_cmd="show"
+            default_cmd="show",
         ),
         "colocation": create_router(
             {
@@ -32,7 +32,7 @@ constraint_cmd = create_router(
                 "show": colocation_command.show,
             },
             ["constraint", "colocation"],
-            default_cmd="show"
+            default_cmd="show",
         ),
         "remove": constraint.constraint_rm,
         "delete": constraint.constraint_rm,
@@ -42,5 +42,5 @@ constraint_cmd = create_router(
         "rule": constraint.constraint_rule,
     },
     ["constraint"],
-    default_cmd="list"
+    default_cmd="list",
 )

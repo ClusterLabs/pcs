@@ -47,13 +47,16 @@ _INTEGER_RE = re.compile(r"^[+-]?[0-9]+$")
 
 ### normalization
 
+
 class ValuePair(namedtuple("ValuePair", "original normalized")):
     """
     Storage for the original value and its normalized form
     """
+
     @staticmethod
     def get(val):
         return val if isinstance(val, ValuePair) else ValuePair(val, val)
+
 
 def values_to_pairs(option_dict, normalize):
     """
@@ -69,12 +72,10 @@ def values_to_pairs(option_dict, normalize):
     option_dict_with_pairs = {}
     for key, value in option_dict.items():
         if not isinstance(value, ValuePair):
-            value = ValuePair(
-                original=value,
-                normalized=normalize(key, value),
-            )
+            value = ValuePair(original=value, normalized=normalize(key, value),)
         option_dict_with_pairs[key] = value
     return option_dict_with_pairs
+
 
 def pairs_to_values(option_dict):
     """
@@ -91,6 +92,7 @@ def pairs_to_values(option_dict):
         raw_option_dict[key] = value
     return raw_option_dict
 
+
 def option_value_normalization(normalization_map):
     """
     Return function that takes key and value and return the normalized form.
@@ -98,46 +100,58 @@ def option_value_normalization(normalization_map):
     dict normalization_map has on each key function that takes value and return
         its normalized form.
     """
+
     def normalize(key, value):
-        return(
-            value if key not in normalization_map
+        return (
+            value
+            if key not in normalization_map
             else normalization_map[key](value)
         )
+
     return normalize
+
 
 ### generic validators
 
-class ValidatorInterface():
+
+class ValidatorInterface:
     """
     Base interface of all validators
     """
+
     def validate(self, option_dict):
         raise NotImplementedError()
+
 
 class CompoundValidator(ValidatorInterface):
     """
     Base abstract class for compound validators
     """
+
     def __init__(self, validator_list):
         self._validator_list = validator_list
 
     def validate(self, option_dict):
         raise NotImplementedError()
 
+
 class ValidatorAll(CompoundValidator):
     """
     Run all validators and return all their reports
     """
+
     def validate(self, option_dict):
         report_list = []
         for validator in self._validator_list:
             report_list.extend(validator.validate(option_dict))
         return report_list
 
+
 class ValidatorFirstError(CompoundValidator):
     """
     Run validators in sequence, return reports once one reports an error
     """
+
     def validate(self, option_dict):
         report_list = []
         for validator in self._validator_list:
@@ -152,7 +166,9 @@ class ValidatorFirstError(CompoundValidator):
                 break
         return report_list
 
+
 ### keys validators
+
 
 class KeyValidator(ValidatorInterface):
     def __init__(self, option_name_list, option_type=None):
@@ -166,11 +182,13 @@ class KeyValidator(ValidatorInterface):
     def validate(self, option_dict):
         raise NotImplementedError()
 
+
 class CorosyncOption(KeyValidator):
     """
     Report INVALID_USERDEFINED_OPTIONS when the option_dict contains names not
     suitable for corosync.conf
     """
+
     def __init__(self, option_type=None):
         super().__init__(None, option_type=option_type)
 
@@ -195,14 +213,19 @@ class CorosyncOption(KeyValidator):
             ]
         return []
 
+
 class DependsOnOption(KeyValidator):
     """
     Report REQUIRED_OPTION_IS_MISSING when the option_dict contains
     option_name_list options and does not contain the prerequisite_option
     """
+
     def __init__(
-        self, option_name_list, prerequisite_name, option_type=None,
-        prerequisite_type=None
+        self,
+        option_name_list,
+        prerequisite_name,
+        option_type=None,
+        prerequisite_type=None,
     ):
         """
         string prerequisite_name -- name of the prerequisite options
@@ -225,71 +248,81 @@ class DependsOnOption(KeyValidator):
             for option_name in self._option_name_list
             if (
                 option_name in option_dict
-                and
-                self._prerequisite_name not in option_dict
+                and self._prerequisite_name not in option_dict
             )
         ]
+
 
 class IsRequiredAll(KeyValidator):
     """
     Report REQUIRED_OPTIONS_ARE_MISSING with all option_name_list options
     missing in option_dict
     """
+
     def validate(self, option_dict):
         missing = set(self._option_name_list) - set(option_dict.keys())
         if missing:
-            return [ReportItem.error(
-                reports.messages.RequiredOptionsAreMissing(
-                    sorted(missing),
-                    self._option_type,
+            return [
+                ReportItem.error(
+                    reports.messages.RequiredOptionsAreMissing(
+                        sorted(missing), self._option_type,
+                    )
                 )
-            )]
+            ]
         return []
+
 
 class IsRequiredSome(KeyValidator):
     """
     Report REQUIRED_OPTIONS_ARE_MISSING when the option_dict does not contain
     at least one item from the option_name_list
     """
+
     def validate(self, option_dict):
         found = set(self._option_name_list) & set(option_dict.keys())
         if not found:
             return [
                 ReportItem.error(
                     reports.messages.RequiredOptionOfAlternativesIsMissing(
-                        self._option_name_list,
-                        self._option_type,
+                        self._option_name_list, self._option_type,
                     )
                 )
             ]
         return []
+
 
 class MutuallyExclusive(KeyValidator):
     """
     Report MUTUALLY_EXCLUSIVE_OPTIONS when there is more than one of
     mutually_exclusive_names in option_dict.
     """
+
     def validate(self, option_dict):
         found = set(self._option_name_list) & set(option_dict.keys())
         if len(found) > 1:
             return [
                 ReportItem.error(
                     reports.messages.MutuallyExclusiveOptions(
-                        sorted(found),
-                        self._option_type,
+                        sorted(found), self._option_type,
                     )
                 )
             ]
         return []
 
+
 class NamesIn(KeyValidator):
     """
     Report INVALID_OPTIONS for option_dict keys not in option_name_list
     """
+
     def __init__(
-        self, option_name_list, option_type=None,
-        allowed_option_patterns=None, banned_name_list=None,
-        code_for_warning=None, produce_warning=False,
+        self,
+        option_name_list,
+        option_type=None,
+        allowed_option_patterns=None,
+        banned_name_list=None,
+        code_for_warning=None,
+        produce_warning=False,
     ):
         """
         mixed allowed_option_patterns -- option patterns to be added to a report
@@ -315,15 +348,14 @@ class NamesIn(KeyValidator):
             report_list.append(
                 ReportItem(
                     severity=reports.item.get_severity(
-                        self._code_for_warning,
-                        self._produce_warning,
+                        self._code_for_warning, self._produce_warning,
                     ),
                     message=reports.messages.InvalidOptions(
                         sorted(invalid_names),
                         sorted(self._option_name_list),
                         self._option_type,
                         allowed_patterns=sorted(self._allowed_option_patterns),
-                    )
+                    ),
                 )
             )
         if banned_names:
@@ -338,7 +370,9 @@ class NamesIn(KeyValidator):
             )
         return report_list
 
+
 ### values validators
+
 
 class ValueValidator(ValidatorInterface):
     def __init__(self, option_name, option_name_for_report=None):
@@ -361,28 +395,32 @@ class ValueValidator(ValidatorInterface):
     def _get_option_name_for_report(self):
         return (
             self._option_name_for_report
-                if self._option_name_for_report is not None
-                else self._option_name
+            if self._option_name_for_report is not None
+            else self._option_name
         )
 
     def _validate_value(self, value):
         raise NotImplementedError()
 
+
 class ValuePredicateBase(ValueValidator):
     """
     Base class for simple predicate validators
     """
+
     def __init__(
-        self, option_name, option_name_for_report=None,
-        code_for_warning=None, produce_warning=False,
+        self,
+        option_name,
+        option_name_for_report=None,
+        code_for_warning=None,
+        produce_warning=False,
     ):
         """
         string code_for_warning -- which code makes this produce warnings
         bool produce_warning -- False produces an error, True a warning
         """
         super().__init__(
-            option_name,
-            option_name_for_report=option_name_for_report
+            option_name, option_name_for_report=option_name_for_report
         )
         self._code_for_warning = code_for_warning
         self._produce_warning = produce_warning
@@ -394,8 +432,7 @@ class ValuePredicateBase(ValueValidator):
             return [
                 ReportItem(
                     severity=reports.item.get_severity(
-                        self._code_for_warning,
-                        self._produce_warning,
+                        self._code_for_warning, self._produce_warning,
                     ),
                     message=reports.messages.InvalidOptionValue(
                         self._get_option_name_for_report(),
@@ -403,7 +440,7 @@ class ValuePredicateBase(ValueValidator):
                         self._get_allowed_values(),
                         cannot_be_empty=self._value_cannot_be_empty,
                         forbidden_characters=self._forbidden_characters,
-                    )
+                    ),
                 )
             ]
 
@@ -414,6 +451,7 @@ class ValuePredicateBase(ValueValidator):
 
     def _get_allowed_values(self):
         raise NotImplementedError()
+
 
 class ValueCorosyncValue(ValueValidator):
     """
@@ -426,6 +464,7 @@ class ValueCorosyncValue(ValueValidator):
     (ValueIn, ValueIntegerInRange...) and empty / not empty. Their errors may be
     made forcible.
     """
+
     def _validate_value(self, value):
         if not isinstance(value.normalized, str):
             return []
@@ -446,16 +485,18 @@ class ValueCorosyncValue(ValueValidator):
                         # forbidden characters right away. Do not let them try
                         # them one by one by only reporting those actually used
                         # in the value.
-                        forbidden_characters="{}\\n\\r"
+                        forbidden_characters="{}\\n\\r",
                     )
                 )
             ]
         return []
 
+
 class ValueId(ValueValidator):
     """
     Report ID errors and optionally book IDs along the way
     """
+
     def __init__(
         self, option_name, option_name_for_report=None, id_provider=None
     ):
@@ -463,8 +504,7 @@ class ValueId(ValueValidator):
         IdProvider id_provider -- checks id uniqueness and books ids if set
         """
         super().__init__(
-            option_name,
-            option_name_for_report=option_name_for_report
+            option_name, option_name_for_report=option_name_for_report
         )
         self._id_provider = id_provider
 
@@ -472,18 +512,22 @@ class ValueId(ValueValidator):
         report_list = []
         validate_id(value.normalized, self._option_name_for_report, report_list)
         if self._id_provider is not None and not report_list:
-            report_list.extend(
-                self._id_provider.book_ids(value.normalized)
-            )
+            report_list.extend(self._id_provider.book_ids(value.normalized))
         return report_list
+
 
 class ValueIn(ValuePredicateBase):
     """
     Report INVALID_OPTION_VALUE when a value is not in a set of allowed values
     """
+
     def __init__(
-        self, option_name, allowed_value_list, option_name_for_report=None,
-        code_for_warning=None, produce_warning=False,
+        self,
+        option_name,
+        allowed_value_list,
+        option_name_for_report=None,
+        code_for_warning=None,
+        produce_warning=False,
     ):
         """
         list of string allowed_value_list -- list of possible values
@@ -502,14 +546,21 @@ class ValueIn(ValuePredicateBase):
     def _get_allowed_values(self):
         return self._allowed_value_list
 
+
 class ValueIntegerInRange(ValuePredicateBase):
     """
     Report INVALID_OPTION_VALUE when the value is not an integer such that
     at_least <= value <= at_most
     """
+
     def __init__(
-        self, option_name, at_least, at_most, option_name_for_report=None,
-        code_for_warning=None, produce_warning=False,
+        self,
+        option_name,
+        at_least,
+        at_most,
+        option_name_for_report=None,
+        code_for_warning=None,
+        produce_warning=False,
     ):
         """
         int at_least -- minimal allowed value
@@ -530,33 +581,43 @@ class ValueIntegerInRange(ValuePredicateBase):
     def _get_allowed_values(self):
         return f"{self._at_least}..{self._at_most}"
 
+
 class ValueIpAddress(ValuePredicateBase):
     """
     Report INVALID_OPTION_VALUE when the value is not an IP address
     """
+
     def _is_valid(self, value):
         return is_ipv4_address(value) or is_ipv6_address(value)
 
     def _get_allowed_values(self):
         return "an IP address"
 
+
 class ValueNonnegativeInteger(ValuePredicateBase):
     """
     Report INVALID_OPTION_VALUE when the value is not an integer greater than -1
     """
+
     def _is_valid(self, value):
         return is_integer(value, 0)
 
     def _get_allowed_values(self):
         return "a non-negative integer"
 
+
 class ValueNotEmpty(ValuePredicateBase):
     """
     Report INVALID_OPTION_VALUE when a value is empty
     """
+
     def __init__(
-        self, option_name, value_desc_or_enum, option_name_for_report=None,
-        code_for_warning=None, produce_warning=False,
+        self,
+        option_name,
+        value_desc_or_enum,
+        option_name_for_report=None,
+        code_for_warning=None,
+        produce_warning=False,
     ):
         """
         mexed value_desc_or_enum -- a list or a description of possible values
@@ -576,51 +637,59 @@ class ValueNotEmpty(ValuePredicateBase):
     def _get_allowed_values(self):
         return self._value_desc_or_enum
 
+
 class ValuePortNumber(ValuePredicateBase):
     """
     Report INVALID_OPTION_VALUE when the value is not a TCP or UDP port number
     """
+
     def _is_valid(self, value):
         return is_port_number(value)
 
     def _get_allowed_values(self):
         return "a port number (1..65535)"
 
+
 class ValuePortRange(ValuePredicateBase):
     """
     Report INVALID_OPTION_VALUE when the value is not a TCP or UDP port range
     """
+
     def _is_valid(self, value):
-        return (
-            matches_regexp(value, "^[0-9]+-[0-9]+$")
-            and
-            all([is_port_number(part) for part in value.split("-", 1)])
+        return matches_regexp(value, "^[0-9]+-[0-9]+$") and all(
+            [is_port_number(part) for part in value.split("-", 1)]
         )
 
     def _get_allowed_values(self):
         return "port-port"
 
+
 class ValuePositiveInteger(ValuePredicateBase):
     """
     Report INVALID_OPTION_VALUE when the value is not an integer greater than 0
     """
+
     def _is_valid(self, value):
         return is_integer(value, 1)
 
     def _get_allowed_values(self):
         return "a positive integer"
 
+
 class ValueTimeInterval(ValuePredicateBase):
     """
     Report INVALID_OPTION_VALUE when the value is not a time interval
     """
+
     def _is_valid(self, value):
         return timeout_to_seconds(value) is not None
 
     def _get_allowed_values(self):
         return "time interval (e.g. 1, 2s, 3m, 4h, ...)"
 
+
 ### predicates
+
 
 def is_empty_string(value):
     """
@@ -629,6 +698,7 @@ def is_empty_string(value):
     mixed value -- value to check
     """
     return isinstance(value, str) and not value
+
 
 def is_integer(value, at_least=None, at_most=None):
     """
@@ -650,6 +720,7 @@ def is_integer(value, at_least=None, at_most=None):
         return False
     return True
 
+
 def is_ipv4_address(value):
     """
     Check if the specified value is an IPv4 address
@@ -666,6 +737,7 @@ def is_ipv4_address(value):
     except (TypeError, ValueError):
         # not an IP address
         return False
+
 
 def is_ipv6_address(value):
     """
@@ -684,6 +756,7 @@ def is_ipv6_address(value):
         # not an IP address
         return False
 
+
 def is_port_number(value):
     """
     Check if the specified value is a TCP or UDP port number
@@ -691,6 +764,7 @@ def is_port_number(value):
     mixed value -- string, int or float, value to check
     """
     return is_integer(value, 1, 65535)
+
 
 def matches_regexp(value, regexp):
     """
@@ -703,7 +777,9 @@ def matches_regexp(value, regexp):
         regexp = re.compile(regexp)
     return regexp.match(value) is not None
 
+
 ### tools
+
 
 def set_warning(code_for_warning, produce_warning):
     """

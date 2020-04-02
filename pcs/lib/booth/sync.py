@@ -12,12 +12,13 @@ from pcs.lib.file.instance import FileInstance
 from pcs.lib.file.raw_file import raw_file_error_report
 from pcs.lib.interface.config import ParserErrorException
 
+
 def send_all_config_to_node(
     communicator,
     reporter,
     target_list,
     rewrite_existing=False,
-    skip_wrong_config=False
+    skip_wrong_config=False,
 ):
     """
     Send all booth configs from default booth config directory and theri
@@ -37,23 +38,29 @@ def send_all_config_to_node(
         config_file = FileInstance.for_booth_config(conf_file_name)
         try:
             booth_conf_data = config_file.raw_file.read()
-            authfile_name, authfile_data, authfile_report_list = (
-                config_files.get_authfile_name_and_data(
-                    config_file.raw_to_facade(booth_conf_data)
-                )
+            (
+                authfile_name,
+                authfile_data,
+                authfile_report_list,
+            ) = config_files.get_authfile_name_and_data(
+                config_file.raw_to_facade(booth_conf_data)
             )
             reporter.report_list(authfile_report_list)
-            file_list.append({
-                "name": conf_file_name,
-                "data": booth_conf_data.decode("utf-8"),
-                "is_authfile": False
-            })
+            file_list.append(
+                {
+                    "name": conf_file_name,
+                    "data": booth_conf_data.decode("utf-8"),
+                    "is_authfile": False,
+                }
+            )
             if authfile_name and authfile_data:
-                file_list.append({
-                    "name": authfile_name,
-                    "data": base64.b64encode(authfile_data).decode("utf-8"),
-                    "is_authfile": True
-                })
+                file_list.append(
+                    {
+                        "name": authfile_name,
+                        "data": base64.b64encode(authfile_data).decode("utf-8"),
+                        "is_authfile": True,
+                    }
+                )
         except RawFileError as e:
             reporter.report(
                 raw_file_error_report(

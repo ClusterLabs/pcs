@@ -14,7 +14,7 @@ def get_status_text(runner, verbose=False):
     """
     cmd = [
         os.path.join(settings.corosync_binaries, "corosync-qdevice-tool"),
-        "-s"
+        "-s",
     ]
     if verbose:
         cmd.append("-v")

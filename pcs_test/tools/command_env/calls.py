@@ -3,11 +3,14 @@ def format_call(call):
         return call.format()
     return call
 
+
 def show_calls(name_list, call_list):
-    return "\n".join([
-        "  {0}. '{1}': {2}".format(i, x[0], format_call(x[1]))
-        for i, x in enumerate(zip(name_list, call_list))
-    ])
+    return "\n".join(
+        [
+            "  {0}. '{1}': {2}".format(i, x[0], format_call(x[1]))
+            for i, x in enumerate(zip(name_list, call_list))
+        ]
+    )
 
 
 class Queue:
@@ -37,11 +40,11 @@ class Queue:
 
     @property
     def remaining(self):
-        return self.__call_list[self.__index:]
+        return self.__call_list[self.__index :]
 
     @property
     def taken(self):
-        return self.__call_list[:self.__index]
+        return self.__call_list[: self.__index]
 
     def error_with_context(self, message):
         return AssertionError(
@@ -64,17 +67,19 @@ class Queue:
                 call.type,
                 real_type,
                 call,
-                "\n  real call: {0}".format(real_call_info) if real_call_info
-                    else ""
-                ,
+                "\n  real call: {0}".format(real_call_info)
+                if real_call_info
+                else "",
             )
         )
 
     def __extra_call(self, type_of_call, real_call_info):
         return self.error_with_context(
-            "No next call expected, but was ({0}):\n    '{1}'"
-            .format(type_of_call, real_call_info)
+            "No next call expected, but was ({0}):\n    '{1}'".format(
+                type_of_call, real_call_info
+            )
         )
+
 
 class CallListBuilder:
     def __init__(self):
@@ -88,7 +93,6 @@ class CallListBuilder:
     @property
     def names(self):
         return list(self.__name_list)
-
 
     def __set(self, instead_name, name, call):
         """
@@ -105,7 +109,7 @@ class CallListBuilder:
         for i, current_name in enumerate(self.__name_list):
             if current_name == instead_name:
                 self.__call_list[i] = call
-                #yes we change the name as well
+                # yes we change the name as well
                 self.__name_list[i] = name
                 return
 
@@ -172,10 +176,7 @@ class CallListBuilder:
 
         if before and instead:
             raise self.__cannot_use_before_and_instead(
-                name,
-                call,
-                before,
-                instead,
+                name, call, before, instead,
             )
 
         if not hasattr(call, "type") or not call.type:
@@ -191,16 +192,17 @@ class CallListBuilder:
     def __error_with_context(self, message):
         return AssertionError(
             "{0}\nIn the confituration call collection are calls:\n{1}".format(
-                message,
-                show_calls(self.__name_list, self.__call_list),
+                message, show_calls(self.__name_list, self.__call_list),
             )
         )
 
     @staticmethod
     def __type_of_call_is_not_specified(call):
         return AssertionError(
-            "Class {0}.{1} must have the attribute 'type' with no-falsy value."
-            .format(call.__module__, call.__class__.__name__)
+            (
+                "Class {0}.{1} must have the attribute 'type' with no-falsy "
+                "value."
+            ).format(call.__module__, call.__class__.__name__)
         )
 
     def __name_not_exists(self, name):
@@ -227,9 +229,6 @@ class CallListBuilder:
                 "Cannot put call named '{0}' ({1}) {2} '{3}'"
                 " because '{3}' does not exist."
             ).format(
-                name,
-                call,
-                where_type,
-                where_name,
+                name, call, where_type, where_name,
             )
         )

@@ -3,43 +3,38 @@ from pcs.common.reports.item import ReportItem
 from pcs.lib import validate
 from pcs.lib.cib.tools import does_id_exist
 from pcs.lib.cib.node import PacemakerNode
-from pcs.lib.cib.nvpair import(
+from pcs.lib.cib.nvpair import (
     has_meta_attribute,
     arrange_first_meta_attributes,
     get_meta_attribute_value,
 )
 
 
-#TODO pcs currently does not care about multiple meta_attributes and here
-#we don't care as well
+# TODO pcs currently does not care about multiple meta_attributes and here
+# we don't care as well
 GUEST_OPTIONS = [
-    'remote-port',
-    'remote-addr',
-    'remote-connect-timeout',
+    "remote-port",
+    "remote-addr",
+    "remote-connect-timeout",
 ]
+
 
 def validate_conflicts(
     tree, existing_nodes_names, existing_nodes_addrs, node_name, options
 ):
     report_list = []
-    if(
+    if (
         does_id_exist(tree, node_name)
-        or
-        node_name in existing_nodes_names
-        or (
-            "remote-addr" not in options
-            and
-            node_name in existing_nodes_addrs
-        )
+        or node_name in existing_nodes_names
+        or ("remote-addr" not in options and node_name in existing_nodes_addrs)
     ):
         report_list.append(
             ReportItem.error(reports.messages.IdAlreadyExists(node_name))
         )
 
-    if(
+    if (
         "remote-addr" in options
-        and
-        options["remote-addr"] in existing_nodes_addrs
+        and options["remote-addr"] in existing_nodes_addrs
     ):
         report_list.append(
             ReportItem.error(
@@ -48,14 +43,17 @@ def validate_conflicts(
         )
     return report_list
 
+
 def is_node_name_in_options(options):
     return "remote-node" in options
+
 
 def get_guest_option_value(options, default=None):
     """
     Commandline options: no options
     """
     return options.get("remote-node", default)
+
 
 def validate_set_as_guest(
     tree, existing_nodes_names, existing_nodes_addrs, node_name, options
@@ -67,14 +65,14 @@ def validate_set_as_guest(
     ]
     return (
         validate.ValidatorAll(validator_list).validate(options)
-        +
-        validate.ValueNotEmpty("node name", None)
-            .validate({"node name": node_name.strip()})
-        +
-        validate_conflicts(
+        + validate.ValueNotEmpty("node name", None).validate(
+            {"node name": node_name.strip()}
+        )
+        + validate_conflicts(
             tree, existing_nodes_names, existing_nodes_addrs, node_name, options
         )
     )
+
 
 def is_guest_node(resource_element):
     """
@@ -83,6 +81,7 @@ def is_guest_node(resource_element):
     etree.Element resource_element is a search element
     """
     return has_meta_attribute(resource_element, "remote-node")
+
 
 def validate_is_not_guest(resource_element):
     """
@@ -99,9 +98,14 @@ def validate_is_not_guest(resource_element):
         )
     ]
 
+
 def set_as_guest(
-    resource_element, id_provider, node, addr=None, port=None,
-    connect_timeout=None
+    resource_element,
+    id_provider,
+    node,
+    addr=None,
+    port=None,
+    connect_timeout=None,
 ):
     """
     Set resource as guest node.
@@ -119,6 +123,7 @@ def set_as_guest(
 
     arrange_first_meta_attributes(resource_element, meta_options, id_provider)
 
+
 def unset_guest(resource_element):
     """
     Unset resource as guest node.
@@ -133,15 +138,18 @@ def unset_guest(resource_element):
     # https://bugzilla.redhat.com/show_bug.cgi?id=1642514
     guest_nvpair_list = resource_element.xpath(
         "./meta_attributes/nvpair[{0}]".format(
-            " or ".join([
-                '@name="{0}"'.format(option)
-                for option in (GUEST_OPTIONS + ["remote-node"])
-            ])
+            " or ".join(
+                [
+                    '@name="{0}"'.format(option)
+                    for option in (GUEST_OPTIONS + ["remote-node"])
+                ]
+            )
         )
     )
     for nvpair in guest_nvpair_list:
         meta_attributes = nvpair.getparent()
         meta_attributes.remove(nvpair)
+
 
 def get_node_name_from_options(meta_options, default=None):
     """
@@ -149,6 +157,7 @@ def get_node_name_from_options(meta_options, default=None):
     dict meta_options
     """
     return meta_options.get("remote-node", default)
+
 
 def get_node_name_from_resource(resource_element):
     """
@@ -158,6 +167,7 @@ def get_node_name_from_resource(resource_element):
     """
     return get_meta_attribute_value(resource_element, "remote-node")
 
+
 def find_node_list(tree):
     """
     Return list of guest nodes from the specified element tree
@@ -165,7 +175,8 @@ def find_node_list(tree):
     etree.Element tree -- an element to search guest nodes in
     """
     node_list = []
-    for meta_attrs in tree.xpath("""
+    for meta_attrs in tree.xpath(
+        """
             .//primitive
                 /meta_attributes[
                     nvpair[
@@ -174,7 +185,8 @@ def find_node_list(tree):
                         string-length(@value) > 0
                     ]
                 ]
-        """):
+        """
+    ):
         host = None
         name = None
         for nvpair in meta_attrs:
@@ -191,6 +203,7 @@ def find_node_list(tree):
             node_list.append(PacemakerNode(name, host))
     return node_list
 
+
 def find_node_resources(resources_section, node_identifier):
     """
     Return list of etree.Eleent primitives that are guest nodes.
@@ -198,7 +211,8 @@ def find_node_resources(resources_section, node_identifier):
     etree.Element resources_section is a researched element
     string node_identifier could be id of resource, node name or node address
     """
-    resources = resources_section.xpath("""
+    resources = resources_section.xpath(
+        """
         .//primitive[
             (
                 @id="{0}"
@@ -230,5 +244,8 @@ def find_node_resources(resources_section, node_identifier):
                 ]
             ]
         ]
-    """.format(node_identifier))
+    """.format(
+            node_identifier
+        )
+    )
     return resources

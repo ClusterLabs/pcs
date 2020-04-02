@@ -14,6 +14,7 @@ from pcs.daemon.app import sinatra_remote
 # Don't write errors to test output.
 logging.getLogger("tornado.access").setLevel(logging.CRITICAL)
 
+
 class AppTest(fixtures_app.AppTest):
     def setUp(self):
         self.wrapper = fixtures_app.RubyPcsdWrapper(ruby_pcsd.SINATRA_REMOTE)
@@ -25,10 +26,9 @@ class AppTest(fixtures_app.AppTest):
 
     def get_routes(self):
         return sinatra_remote.get_routes(
-            self.wrapper,
-            self.lock,
-            self.https_server_manage,
+            self.wrapper, self.lock, self.https_server_manage,
         )
+
 
 class SetCerts(AppTest):
     def test_it_asks_for_cert_reload_if_ruby_succeeds(self):
@@ -45,10 +45,11 @@ class SetCerts(AppTest):
         self.assert_wrappers_response(self.post("/remote/set_certs", body={}))
         self.https_server_manage.reload_certs.assert_not_called()
 
+
 class Auth(
     AppTest,
     create_setup_patch_mixin(sinatra_remote),
-    fixtures_app.UserAuthMixin
+    fixtures_app.UserAuthMixin,
 ):
     # pylint: disable=too-many-ancestors
     def setUp(self):
@@ -57,10 +58,13 @@ class Auth(
 
     def make_auth_request(self, valid=True):
         self.user_auth_info = fixtures_app.UserAuthInfo(valid=valid)
-        return self.post("/remote/auth", body={
-            "username": fixtures_app.USER,
-            "password": fixtures_app.PASSWORD,
-        })
+        return self.post(
+            "/remote/auth",
+            body={
+                "username": fixtures_app.USER,
+                "password": fixtures_app.PASSWORD,
+            },
+        )
 
     def test_refuse_unknown_user(self):
         self.assertEqual(b"", self.make_auth_request(valid=False).body)
@@ -73,6 +77,7 @@ class SinatraRemote(AppTest):
     def test_take_result_from_ruby(self):
         self.assert_wrappers_response(self.get("/remote/"))
 
+
 class SyncConfigMutualExclusive(AppTest):
     """
     This class contains tests that the request handler of url
@@ -84,9 +89,11 @@ class SyncConfigMutualExclusive(AppTest):
     response. If there is a lock handler waits and the request fails because of
     timeout and test detects an expected timeout error.
     """
+
     def fetch_set_sync_options(self, method):
         kwargs = (
-            dict(method=method, body=urlencode({})) if method == "POST"
+            dict(method=method, body=urlencode({}))
+            if method == "POST"
             else dict(method=method)
         )
 
@@ -95,8 +102,7 @@ class SyncConfigMutualExclusive(AppTest):
         # noticing differences between test with and test without lock.  The
         # timeout is so short to prevent unnecessary slowdown.
         fetch_sync_options = lambda: self.http_client.fetch(
-            self.get_url("/remote/set_sync_options"),
-            **kwargs
+            self.get_url("/remote/set_sync_options"), **kwargs
         )
         return self.io_loop.run_sync(fetch_sync_options, timeout=0.05)
 

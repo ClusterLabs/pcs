@@ -18,28 +18,18 @@ from pcs.lib.commands import stonith_agent as lib
 
 @mock.patch(
     "pcs.lib.resource_agent.list_stonith_agents",
-    lambda runner: [
-        "fence_apc",
-        "fence_dummy",
-        "fence_xvm",
-    ]
+    lambda runner: ["fence_apc", "fence_dummy", "fence_xvm",],
 )
-@mock.patch.object(
-    LibraryEnvironment,
-    "cmd_runner",
-    lambda self: "mock_runner"
-)
+@mock.patch.object(LibraryEnvironment, "cmd_runner", lambda self: "mock_runner")
 class TestListAgents(TestCase):
     def setUp(self):
         self.mock_logger = mock.MagicMock(logging.Logger)
         self.mock_reporter = MockLibraryReportProcessor()
         self.lib_env = LibraryEnvironment(self.mock_logger, self.mock_reporter)
 
-
     def tearDown(self):
         # pylint: disable=protected-access
         lib_ra.StonithAgent._fenced_metadata = None
-
 
     def test_list_all(self):
         self.assertEqual(
@@ -66,9 +56,8 @@ class TestListAgents(TestCase):
                     "parameters": [],
                     "actions": [],
                 },
-            ]
+            ],
         )
-
 
     def test_search(self):
         self.assertEqual(
@@ -88,20 +77,20 @@ class TestListAgents(TestCase):
                     "parameters": [],
                     "actions": [],
                 },
-            ]
+            ],
         )
-
 
     @mock.patch.object(lib_ra.Agent, "_get_metadata", autospec=True)
     def test_describe(self, mock_metadata):
         self.maxDiff = None
+
         def mock_metadata_func(self):
             if self.get_name() == "ocf:test:Stateful":
                 raise lib_ra.UnableToGetAgentMetadata(
-                    self.get_name(),
-                    "test exception"
+                    self.get_name(), "test exception"
                 )
-            return etree.XML("""
+            return etree.XML(
+                """
                 <resource-agent>
                     <shortdesc>short {name}</shortdesc>
                     <longdesc>long {name}</longdesc>
@@ -110,7 +99,11 @@ class TestListAgents(TestCase):
                     <actions>
                     </actions>
                 </resource-agent>
-            """.format(name=self.get_name()))
+            """.format(
+                    name=self.get_name()
+                )
+            )
+
         mock_metadata.side_effect = mock_metadata_func
 
         # Stateful is missing as it does not provide valid metadata - see above
@@ -138,7 +131,7 @@ class TestListAgents(TestCase):
                     "parameters": [],
                     "actions": [],
                 },
-            ]
+            ],
         )
 
 
@@ -169,22 +162,18 @@ class TestDescribeAgent(TestCase):
             "default_actions": [{"name": "monitor", "interval": "60s"}],
         }
 
-
     def tearDown(self):
         # pylint: disable=protected-access
         lib_ra.StonithAgent._fenced_metadata = None
-
 
     def test_success(self, mock_metadata):
         mock_metadata.return_value = self.metadata
 
         self.assertEqual(
-            lib.describe_agent(self.lib_env, "fence_dummy"),
-            self.description
+            lib.describe_agent(self.lib_env, "fence_dummy"), self.description
         )
 
         self.assertEqual(len(mock_metadata.mock_calls), 1)
-
 
     def test_fail(self, mock_metadata):
         mock_metadata.return_value = "invalid xml"
@@ -194,11 +183,8 @@ class TestDescribeAgent(TestCase):
             (
                 severity.ERROR,
                 report_codes.UNABLE_TO_GET_AGENT_METADATA,
-                {
-                    "agent": "fence_dummy",
-                    "reason": start_tag_error_text(),
-                }
-            )
+                {"agent": "fence_dummy", "reason": start_tag_error_text(),},
+            ),
         )
 
         self.assertEqual(len(mock_metadata.mock_calls), 1)

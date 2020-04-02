@@ -49,11 +49,12 @@ from pcs.lib.pacemaker.values import (
     timeout_to_seconds,
     validate_id,
 )
-from pcs.lib.resource_agent import(
-    find_valid_resource_agent_by_name as get_agent
+from pcs.lib.resource_agent import (
+    find_valid_resource_agent_by_name as get_agent,
 )
 from pcs.lib.validate import ValueTimeInterval
 from pcs.lib.xml_tools import get_root
+
 
 @contextmanager
 def resource_environment(
@@ -61,31 +62,37 @@ def resource_environment(
     wait=False,
     wait_for_resource_ids=None,
     resource_state_reporter=info_resource_state,
-    required_cib_version=None
+    required_cib_version=None,
 ):
     env.ensure_wait_satisfiable(wait)
     yield get_resources(env.get_cib(required_cib_version))
     env.push_cib(wait=wait)
     if wait is not False and wait_for_resource_ids:
         state = env.get_cluster_state()
-        if env.report_processor.report_list([
-            resource_state_reporter(state, res_id)
-            for res_id in wait_for_resource_ids
-        ]).has_errors:
+        if env.report_processor.report_list(
+            [
+                resource_state_reporter(state, res_id)
+                for res_id in wait_for_resource_ids
+            ]
+        ).has_errors:
             raise LibraryError()
+
 
 def _ensure_disabled_after_wait(disabled_after_wait):
     def inner(state, resource_id):
         return ensure_resource_state(
-            not disabled_after_wait,
-            state,
-            resource_id
+            not disabled_after_wait, state, resource_id
         )
+
     return inner
 
+
 def _validate_remote_connection(
-    resource_agent, existing_nodes_addrs, resource_id, instance_attributes,
-    allow_not_suitable_command
+    resource_agent,
+    existing_nodes_addrs,
+    resource_id,
+    instance_attributes,
+    allow_not_suitable_command,
 ):
     if resource_agent.get_name() != resource.remote_node.AGENT_NAME.full_name:
         return []
@@ -95,7 +102,7 @@ def _validate_remote_connection(
         ReportItem(
             severity=reports.item.get_severity(
                 reports.codes.FORCE_NOT_SUITABLE_COMMAND,
-                allow_not_suitable_command
+                allow_not_suitable_command,
             ),
             message=reports.messages.UseCommandNodeAddRemote(),
         )
@@ -103,16 +110,19 @@ def _validate_remote_connection(
 
     report_list.extend(
         resource.remote_node.validate_host_not_conflicts(
-            existing_nodes_addrs,
-            resource_id,
-            instance_attributes
+            existing_nodes_addrs, resource_id, instance_attributes
         )
     )
     return report_list
 
+
 def _validate_guest_change(
-    tree, existing_nodes_names, existing_nodes_addrs, meta_attributes,
-    allow_not_suitable_command, detect_remove=False
+    tree,
+    existing_nodes_names,
+    existing_nodes_addrs,
+    meta_attributes,
+    allow_not_suitable_command,
+    detect_remove=False,
 ):
     if not resource.guest_node.is_node_name_in_options(meta_attributes):
         return []
@@ -120,10 +130,8 @@ def _validate_guest_change(
     node_name = resource.guest_node.get_node_name_from_options(meta_attributes)
 
     report_list = []
-    if (
-        detect_remove
-        and
-        not resource.guest_node.get_guest_option_value(meta_attributes)
+    if detect_remove and not resource.guest_node.get_guest_option_value(
+        meta_attributes
     ):
         report_msg = reports.messages.UseCommandNodeRemoveGuest()
     else:
@@ -145,11 +153,12 @@ def _validate_guest_change(
             existing_nodes_names,
             existing_nodes_addrs,
             node_name,
-            meta_attributes
+            meta_attributes,
         )
     )
 
     return report_list
+
 
 def _get_nodes_to_validate_against(env, tree):
     if not env.is_corosync_conf_live and env.is_cib_live:
@@ -162,49 +171,64 @@ def _get_nodes_to_validate_against(env, tree):
         )
 
     if not env.is_cib_live and env.is_corosync_conf_live:
-        #we do not try to get corosync.conf from live cluster when cib is not
-        #taken from live cluster
+        # we do not try to get corosync.conf from live cluster when cib is not
+        # taken from live cluster
         return get_existing_nodes_names_addrs(cib=tree)
 
     return get_existing_nodes_names_addrs(env.get_corosync_conf(), cib=tree)
 
 
 def _check_special_cases(
-    env, resource_agent, resources_section, resource_id, meta_attributes,
-    instance_attributes, allow_not_suitable_command
+    env,
+    resource_agent,
+    resources_section,
+    resource_id,
+    meta_attributes,
+    instance_attributes,
+    allow_not_suitable_command,
 ):
-    if(
+    # fmt: off
+    if (
         resource_agent.get_name() != resource.remote_node.AGENT_NAME.full_name
         and
         not resource.guest_node.is_node_name_in_options(meta_attributes)
     ):
-        #if no special case happens we won't take care about corosync.conf that
-        #is needed for getting nodes to validate against
+        # if no special case happens we won't take care about corosync.conf that
+        # is needed for getting nodes to validate against
         return
+    # fmt: on
 
-    existing_nodes_names, existing_nodes_addrs, report_list = (
-        _get_nodes_to_validate_against(env, resources_section)
-    )
-
-    report_list.extend(_validate_remote_connection(
-        resource_agent,
-        existing_nodes_addrs,
-        resource_id,
-        instance_attributes,
-        allow_not_suitable_command,
-    ))
-    report_list.extend(_validate_guest_change(
-        resources_section,
+    (
         existing_nodes_names,
         existing_nodes_addrs,
-        meta_attributes,
-        allow_not_suitable_command,
-    ))
+        report_list,
+    ) = _get_nodes_to_validate_against(env, resources_section)
+
+    report_list.extend(
+        _validate_remote_connection(
+            resource_agent,
+            existing_nodes_addrs,
+            resource_id,
+            instance_attributes,
+            allow_not_suitable_command,
+        )
+    )
+    report_list.extend(
+        _validate_guest_change(
+            resources_section,
+            existing_nodes_names,
+            existing_nodes_addrs,
+            meta_attributes,
+            allow_not_suitable_command,
+        )
+    )
 
     if env.report_processor.report_list(report_list).has_errors:
         raise LibraryError()
 
+
 _find_bundle = partial(find_element_by_tag_and_id, resource.bundle.TAG)
+
 
 def _get_required_cib_version_for_container(
     container_options, container_type=None
@@ -220,9 +244,14 @@ def _get_required_cib_version_for_container(
 
     return Version(2, 8, 0)
 
+
 def create(
-    env, resource_id, resource_agent_name,
-    operation_list, meta_attributes, instance_attributes,
+    env,
+    resource_id,
+    resource_agent_name,
+    operation_list,
+    meta_attributes,
+    instance_attributes,
     allow_absent_agent=False,
     allow_invalid_operation=False,
     allow_invalid_instance_attributes=False,
@@ -268,9 +297,8 @@ def create(
         [resource_id],
         _ensure_disabled_after_wait(
             ensure_disabled
-            or
-            resource.common.are_meta_disabled(meta_attributes)
-        )
+            or resource.common.are_meta_disabled(meta_attributes)
+        ),
     ) as resources_section:
         id_provider = IdProvider(resources_section)
         _check_special_cases(
@@ -280,13 +308,18 @@ def create(
             resource_id,
             meta_attributes,
             instance_attributes,
-            allow_not_suitable_command
+            allow_not_suitable_command,
         )
 
         primitive_element = resource.primitive.create(
-            env.report_processor, resources_section, id_provider,
-            resource_id, resource_agent,
-            operation_list, meta_attributes, instance_attributes,
+            env.report_processor,
+            resources_section,
+            id_provider,
+            resource_id,
+            resource_agent,
+            operation_list,
+            meta_attributes,
+            instance_attributes,
             allow_invalid_operation,
             allow_invalid_instance_attributes,
             use_default_operations,
@@ -294,9 +327,15 @@ def create(
         if ensure_disabled:
             resource.common.disable(primitive_element, id_provider)
 
+
 def create_as_clone(
-    env, resource_id, resource_agent_name,
-    operation_list, meta_attributes, instance_attributes, clone_meta_options,
+    env,
+    resource_id,
+    resource_agent_name,
+    operation_list,
+    meta_attributes,
+    instance_attributes,
+    clone_meta_options,
     allow_absent_agent=False,
     allow_invalid_operation=False,
     allow_invalid_instance_attributes=False,
@@ -343,11 +382,9 @@ def create_as_clone(
         [resource_id],
         _ensure_disabled_after_wait(
             ensure_disabled
-            or
-            resource.common.are_meta_disabled(meta_attributes)
-            or
-            resource.common.is_clone_deactivated_by_meta(clone_meta_options)
-        )
+            or resource.common.are_meta_disabled(meta_attributes)
+            or resource.common.is_clone_deactivated_by_meta(clone_meta_options)
+        ),
     ) as resources_section:
         id_provider = IdProvider(resources_section)
         _check_special_cases(
@@ -357,13 +394,18 @@ def create_as_clone(
             resource_id,
             meta_attributes,
             instance_attributes,
-            allow_not_suitable_command
+            allow_not_suitable_command,
         )
 
         primitive_element = resource.primitive.create(
-            env.report_processor, resources_section, id_provider,
-            resource_id, resource_agent,
-            operation_list, meta_attributes, instance_attributes,
+            env.report_processor,
+            resources_section,
+            id_provider,
+            resource_id,
+            resource_agent,
+            operation_list,
+            meta_attributes,
+            instance_attributes,
             allow_invalid_operation,
             allow_invalid_instance_attributes,
             use_default_operations,
@@ -377,9 +419,15 @@ def create_as_clone(
         if ensure_disabled:
             resource.common.disable(clone_element, id_provider)
 
+
 def create_in_group(
-    env, resource_id, resource_agent_name, group_id,
-    operation_list, meta_attributes, instance_attributes,
+    env,
+    resource_id,
+    resource_agent_name,
+    group_id,
+    operation_list,
+    meta_attributes,
+    instance_attributes,
     allow_absent_agent=False,
     allow_invalid_operation=False,
     allow_invalid_instance_attributes=False,
@@ -429,9 +477,8 @@ def create_in_group(
         [resource_id],
         _ensure_disabled_after_wait(
             ensure_disabled
-            or
-            resource.common.are_meta_disabled(meta_attributes)
-        )
+            or resource.common.are_meta_disabled(meta_attributes)
+        ),
     ) as resources_section:
         id_provider = IdProvider(resources_section)
         _check_special_cases(
@@ -441,13 +488,18 @@ def create_in_group(
             resource_id,
             meta_attributes,
             instance_attributes,
-            allow_not_suitable_command
+            allow_not_suitable_command,
         )
 
         primitive_element = resource.primitive.create(
-            env.report_processor, resources_section, id_provider,
-            resource_id, resource_agent,
-            operation_list, meta_attributes, instance_attributes,
+            env.report_processor,
+            resources_section,
+            id_provider,
+            resource_id,
+            resource_agent,
+            operation_list,
+            meta_attributes,
+            instance_attributes,
             allow_invalid_operation,
             allow_invalid_instance_attributes,
             use_default_operations,
@@ -462,9 +514,14 @@ def create_in_group(
             put_after_adjacent,
         )
 
+
 def create_into_bundle(
-    env, resource_id, resource_agent_name,
-    operation_list, meta_attributes, instance_attributes,
+    env,
+    resource_id,
+    resource_agent_name,
+    operation_list,
+    meta_attributes,
+    instance_attributes,
     bundle_id,
     allow_absent_agent=False,
     allow_invalid_operation=False,
@@ -515,10 +572,9 @@ def create_into_bundle(
         [resource_id],
         _ensure_disabled_after_wait(
             ensure_disabled
-            or
-            resource.common.are_meta_disabled(meta_attributes)
+            or resource.common.are_meta_disabled(meta_attributes)
         ),
-        required_cib_version=Version(2, 8, 0)
+        required_cib_version=Version(2, 8, 0),
     ) as resources_section:
         id_provider = IdProvider(resources_section)
         _check_special_cases(
@@ -528,13 +584,18 @@ def create_into_bundle(
             resource_id,
             meta_attributes,
             instance_attributes,
-            allow_not_suitable_command
+            allow_not_suitable_command,
         )
 
         primitive_element = resource.primitive.create(
-            env.report_processor, resources_section, id_provider,
-            resource_id, resource_agent,
-            operation_list, meta_attributes, instance_attributes,
+            env.report_processor,
+            resources_section,
+            id_provider,
+            resource_id,
+            resource_agent,
+            operation_list,
+            meta_attributes,
+            instance_attributes,
             allow_invalid_operation,
             allow_invalid_instance_attributes,
             use_default_operations,
@@ -551,17 +612,23 @@ def create_into_bundle(
                         allow_not_accessible_resource,
                     ),
                     message=reports.messages.ResourceInBundleNotAccessible(
-                        bundle_id,
-                        resource_id,
-                    )
+                        bundle_id, resource_id,
+                    ),
                 )
             ).has_errors:
                 raise LibraryError()
         resource.bundle.add_resource(bundle_el, primitive_element)
 
+
 def bundle_create(
-    env, bundle_id, container_type, container_options=None,
-    network_options=None, port_map=None, storage_map=None, meta_attributes=None,
+    env,
+    bundle_id,
+    container_type,
+    container_options=None,
+    network_options=None,
+    port_map=None,
+    storage_map=None,
+    meta_attributes=None,
     force_options=False,
     ensure_disabled=False,
     wait=False,
@@ -594,12 +661,10 @@ def bundle_create(
         [bundle_id],
         _ensure_disabled_after_wait(
             ensure_disabled
-            or
-            resource.common.are_meta_disabled(meta_attributes)
+            or resource.common.are_meta_disabled(meta_attributes)
         ),
         required_cib_version=_get_required_cib_version_for_container(
-            container_options,
-            container_type,
+            container_options, container_type,
         ),
     ) as resources_section:
         # no need to run validations related to remote and guest nodes as those
@@ -615,7 +680,7 @@ def bundle_create(
                 port_map,
                 storage_map,
                 # TODO meta attributes - there is no validation for now
-                force_options
+                force_options,
             )
         ).has_errors:
             raise LibraryError()
@@ -628,14 +693,20 @@ def bundle_create(
             network_options,
             port_map,
             storage_map,
-            meta_attributes
+            meta_attributes,
         )
         if ensure_disabled:
             resource.common.disable(bundle_element, id_provider)
 
+
 def bundle_reset(
-    env, bundle_id, container_options=None,
-    network_options=None, port_map=None, storage_map=None, meta_attributes=None,
+    env,
+    bundle_id,
+    container_options=None,
+    network_options=None,
+    port_map=None,
+    storage_map=None,
+    meta_attributes=None,
     force_options=False,
     ensure_disabled=False,
     wait=False,
@@ -667,8 +738,7 @@ def bundle_reset(
         [bundle_id],
         _ensure_disabled_after_wait(
             ensure_disabled
-            or
-            resource.common.are_meta_disabled(meta_attributes)
+            or resource.common.are_meta_disabled(meta_attributes)
         ),
         required_cib_version=_get_required_cib_version_for_container(
             container_options
@@ -691,7 +761,7 @@ def bundle_reset(
                 port_map,
                 storage_map,
                 # TODO meta attributes - there is no validation for now
-                force_options
+                force_options,
             )
         ).has_errors:
             raise LibraryError()
@@ -711,10 +781,17 @@ def bundle_reset(
         if ensure_disabled:
             resource.common.disable(bundle_element, id_provider)
 
+
 def bundle_update(
-    env, bundle_id, container_options=None, network_options=None,
-    port_map_add=None, port_map_remove=None, storage_map_add=None,
-    storage_map_remove=None, meta_attributes=None,
+    env,
+    bundle_id,
+    container_options=None,
+    network_options=None,
+    port_map_add=None,
+    port_map_remove=None,
+    storage_map_add=None,
+    storage_map_remove=None,
+    meta_attributes=None,
     force_options=False,
     wait=False,
 ):
@@ -765,7 +842,7 @@ def bundle_update(
                 storage_map_add,
                 storage_map_remove,
                 # TODO meta attributes - there is no validation for now
-                force_options
+                force_options,
             )
         ).has_errors:
             raise LibraryError()
@@ -778,24 +855,23 @@ def bundle_update(
             port_map_remove,
             storage_map_add,
             storage_map_remove,
-            meta_attributes
+            meta_attributes,
         )
+
 
 def _disable_validate_and_edit_cib(env, resources_section, resource_ids):
     id_provider = IdProvider(resources_section)
-    resource_el_list = _find_resources_or_raise(
-        resources_section,
-        resource_ids
-    )
+    resource_el_list = _find_resources_or_raise(resources_section, resource_ids)
     if env.report_processor.report_list(
         _resource_list_enable_disable(
             resource_el_list,
             resource.common.disable,
             id_provider,
-            env.get_cluster_state()
+            env.get_cluster_state(),
         )
     ).has_errors:
         raise LibraryError()
+
 
 def disable(env, resource_ids, wait):
     """
@@ -809,6 +885,7 @@ def disable(env, resource_ids, wait):
         env, wait, resource_ids, _ensure_disabled_after_wait(True)
     ) as resources_section:
         _disable_validate_and_edit_cib(env, resources_section, resource_ids)
+
 
 def disable_safe(env: LibraryEnvironment, resource_ids, strict, wait):
     """
@@ -832,52 +909,50 @@ def disable_safe(env: LibraryEnvironment, resource_ids, strict, wait):
     ) as resources_section:
         id_provider = IdProvider(resources_section)
         resource_el_list = _find_resources_or_raise(
-            resources_section,
-            resource_ids
+            resources_section, resource_ids
         )
         if env.report_processor.report_list(
             _resource_list_enable_disable(
                 resource_el_list,
                 resource.common.disable,
                 id_provider,
-                env.get_cluster_state()
+                env.get_cluster_state(),
             )
         ).has_errors:
             raise LibraryError()
 
         inner_resources_names_set = set()
         for resource_el in resource_el_list:
-            inner_resources_names_set.update({
-                inner_resource_el.get("id")
-                for inner_resource_el
-                    in resource.common.get_all_inner_resources(resource_el)
-            })
+            # pylint: disable=line-too-long
+            inner_resources_names_set.update(
+                {
+                    inner_resource_el.get("id")
+                    for inner_resource_el in resource.common.get_all_inner_resources(
+                        resource_el
+                    )
+                }
+            )
 
         plaintext_status, transitions, dummy_cib = simulate_cib(
-            env.cmd_runner(),
-            get_root(resources_section)
+            env.cmd_runner(), get_root(resources_section)
         )
-        simulated_operations = (
-            simulate_tools.get_operations_from_transitions(transitions)
+        simulated_operations = simulate_tools.get_operations_from_transitions(
+            transitions
         )
         other_affected: Set[str] = set()
         if strict:
             other_affected = set(
                 simulate_tools.get_resources_from_operations(
-                    simulated_operations,
-                    exclude=resource_ids
+                    simulated_operations, exclude=resource_ids
                 )
             )
         else:
             other_affected = set(
                 simulate_tools.get_resources_left_stopped(
-                    simulated_operations,
-                    exclude=resource_ids
+                    simulated_operations, exclude=resource_ids
                 )
-                +
-                simulate_tools.get_resources_left_demoted(
-                    simulated_operations,
-                    exclude=resource_ids
+                + simulate_tools.get_resources_left_demoted(
+                    simulated_operations, exclude=resource_ids
                 )
             )
 
@@ -894,6 +969,7 @@ def disable_safe(env: LibraryEnvironment, resource_ids, strict, wait):
                     )
                 )
             )
+
 
 def disable_simulate(env, resource_ids):
     """
@@ -912,10 +988,10 @@ def disable_simulate(env, resource_ids):
     resources_section = get_resources(env.get_cib())
     _disable_validate_and_edit_cib(env, resources_section, resource_ids)
     plaintext_status, dummy_transitions, dummy_cib = simulate_cib(
-        env.cmd_runner(),
-        get_root(resources_section)
+        env.cmd_runner(), get_root(resources_section)
     )
     return plaintext_status
+
 
 def enable(env, resource_ids, wait):
     """
@@ -931,17 +1007,18 @@ def enable(env, resource_ids, wait):
         resource_el_list = _find_resources_or_raise(
             resources_section,
             resource_ids,
-            resource.common.find_resources_to_enable
+            resource.common.find_resources_to_enable,
         )
         if env.report_processor.report_list(
             _resource_list_enable_disable(
                 resource_el_list,
                 resource.common.enable,
                 id_provider,
-                env.get_cluster_state()
+                env.get_cluster_state(),
             )
         ).has_errors:
             raise LibraryError()
+
 
 def _resource_list_enable_disable(
     resource_el_list, func, id_provider, cluster_state
@@ -968,6 +1045,7 @@ def _resource_list_enable_disable(
             )
     return report_list
 
+
 def unmanage(
     env: LibraryEnvironment,
     resource_ids: Iterable[str],
@@ -985,23 +1063,21 @@ def unmanage(
         resource_el_list = _find_resources_or_raise(
             resources_section,
             resource_ids,
-            resource.common.find_resources_to_unmanage
+            resource.common.find_resources_to_unmanage,
         )
         primitives = []
 
         for resource_el in resource_el_list:
             resource.common.unmanage(resource_el, id_provider)
             if with_monitor:
-                primitives.extend(
-                    resource.common.find_primitives(resource_el)
-                )
+                primitives.extend(resource.common.find_primitives(resource_el))
 
         for resource_el in set(primitives):
             for op in resource.operations.get_resource_operations(
-                resource_el,
-                ["monitor"]
+                resource_el, ["monitor"]
             ):
                 resource.operations.disable(op)
+
 
 def manage(
     env: LibraryEnvironment,
@@ -1021,23 +1097,19 @@ def manage(
         resource_el_list = _find_resources_or_raise(
             resources_section,
             resource_ids,
-            resource.common.find_resources_to_manage
+            resource.common.find_resources_to_manage,
         )
         primitives: List[Element] = []
 
         for resource_el in resource_el_list:
             resource.common.manage(resource_el, id_provider)
-            primitives.extend(
-                resource.common.find_primitives(resource_el)
-            )
+            primitives.extend(resource.common.find_primitives(resource_el))
 
         for resource_el in sorted(
-            set(primitives),
-            key=lambda element: element.get("id", "")
+            set(primitives), key=lambda element: element.get("id", "")
         ):
             op_list = resource.operations.get_resource_operations(
-                resource_el,
-                ["monitor"]
+                resource_el, ["monitor"]
             )
             if with_monitor:
                 for op in op_list:
@@ -1061,9 +1133,14 @@ def manage(
         if env.report_processor.report_list(report_list).has_errors:
             raise LibraryError()
 
+
 def group_add(
-    env, group_id, resource_id_list, adjacent_resource_id=None,
-    put_after_adjacent=True, wait=False
+    env,
+    group_id,
+    resource_id_list,
+    adjacent_resource_id=None,
+    put_after_adjacent=True,
+    wait=False,
 ):
     """
     Move specified resources into an existing or new group
@@ -1081,7 +1158,7 @@ def group_add(
         validator = resource.hierarchy.ValidateMoveResourcesToGroupByIds(
             group_id,
             resource_id_list,
-            adjacent_resource_id=adjacent_resource_id
+            adjacent_resource_id=adjacent_resource_id,
         )
         if env.report_processor.report_list(
             validator.validate(resources_section, id_provider)
@@ -1102,6 +1179,7 @@ def group_add(
             adjacent_resource=validator.adjacent_resource_element(),
             put_after_adjacent=put_after_adjacent,
         )
+
 
 def get_failcounts(
     env, resource=None, node=None, operation=None, interval=None
@@ -1133,8 +1211,7 @@ def get_failcounts(
         raise LibraryError(*report_items)
 
     interval_ms = (
-        None if interval is None
-        else timeout_to_seconds(interval) * 1000
+        None if interval is None else timeout_to_seconds(interval) * 1000
     )
 
     all_failcounts = cib_status.get_resources_failcounts(
@@ -1145,8 +1222,9 @@ def get_failcounts(
         resource=resource,
         node=node,
         operation=operation,
-        interval=interval_ms
+        interval=interval_ms,
     )
+
 
 def move(env, resource_id, node=None, master=False, lifetime=None, wait=False):
     """
@@ -1160,13 +1238,9 @@ def move(env, resource_id, node=None, master=False, lifetime=None, wait=False):
     mixed wait -- flag for controlling waiting for pacemaker idle mechanism
     """
     return _Move().run(
-        env,
-        resource_id,
-        node=node,
-        master=master,
-        lifetime=lifetime,
-        wait=wait
+        env, resource_id, node=node, master=master, lifetime=lifetime, wait=wait
     )
+
 
 def ban(env, resource_id, node=None, master=False, lifetime=None, wait=False):
     """
@@ -1180,15 +1254,11 @@ def ban(env, resource_id, node=None, master=False, lifetime=None, wait=False):
     mixed wait -- flag for controlling waiting for pacemaker idle mechanism
     """
     return _Ban().run(
-        env,
-        resource_id,
-        node=node,
-        master=master,
-        lifetime=lifetime,
-        wait=wait
+        env, resource_id, node=node, master=master, lifetime=lifetime, wait=wait
     )
 
-class _MoveBanTemplate():
+
+class _MoveBanTemplate:
     def _validate(self, resource_el, master):
         raise NotImplementedError()
 
@@ -1205,7 +1275,10 @@ class _MoveBanTemplate():
         raise NotImplementedError()
 
     def _report_wait_result(
-        self, resource_id, node, resource_running_on_before,
+        self,
+        resource_id,
+        node,
+        resource_running_on_before,
         resource_running_on_after,
     ):
         raise NotImplementedError()
@@ -1215,23 +1288,25 @@ class _MoveBanTemplate():
         if resource_state:
             return frozenset(
                 resource_state.get("Master", [])
-                +
-                resource_state.get("Started", [])
+                + resource_state.get("Started", [])
             )
         return frozenset()
 
     def run(
         self,
-        env, resource_id, node=None, master=False, lifetime=None, wait=False
+        env,
+        resource_id,
+        node=None,
+        master=False,
+        lifetime=None,
+        wait=False,
     ):
         # validate
-        env.ensure_wait_satisfiable(wait) # raises on error
+        env.ensure_wait_satisfiable(wait)  # raises on error
 
         report_list = []
         resource_el = resource.common.find_one_resource_and_report(
-            get_resources(env.get_cib()),
-            resource_id,
-            report_list,
+            get_resources(env.get_cib()), resource_id, report_list,
         )
         if resource_el is not None:
             report_list.extend(self._validate(resource_el, master))
@@ -1241,20 +1316,21 @@ class _MoveBanTemplate():
         # get current status for wait processing
         if wait is not False:
             resource_running_on_before = get_resource_state(
-                env.get_cluster_state(),
-                resource_id
+                env.get_cluster_state(), resource_id
             )
 
         # run the action
         stdout, stderr, retval = self._run_action(
-            env.cmd_runner(), resource_id, node=node, master=master,
-            lifetime=lifetime
+            env.cmd_runner(),
+            resource_id,
+            node=node,
+            master=master,
+            lifetime=lifetime,
         )
         if retval != 0:
             if (
                 f"Resource '{resource_id}' not moved: active in 0 locations"
-                in
-                stderr
+                in stderr
             ):
                 raise LibraryError(
                     self._report_action_stopped_resource(resource_id)
@@ -1270,8 +1346,7 @@ class _MoveBanTemplate():
         if wait is not False:
             wait_for_idle(env.cmd_runner(), env.get_wait_timeout(wait))
             resource_running_on_after = get_resource_state(
-                env.get_cluster_state(),
-                resource_id
+                env.get_cluster_state(), resource_id
             )
             if env.report_processor.report(
                 self._report_wait_result(
@@ -1282,6 +1357,7 @@ class _MoveBanTemplate():
                 )
             ).has_errors:
                 raise LibraryError()
+
 
 class _Move(_MoveBanTemplate):
     def _validate(self, resource_el, master):
@@ -1307,43 +1383,38 @@ class _Move(_MoveBanTemplate):
     def _report_action_pcmk_success(self, resource_id, stdout, stderr):
         return ReportItem.info(
             reports.messages.ResourceMovePcmkSuccess(
-                resource_id,
-                stdout,
-                stderr,
+                resource_id, stdout, stderr,
             )
         )
 
     def _report_wait_result(
-        self, resource_id, node, resource_running_on_before,
-        resource_running_on_after
+        self,
+        resource_id,
+        node,
+        resource_running_on_before,
+        resource_running_on_after,
     ):
         allowed_nodes = frozenset([node] if node else [])
         running_on_nodes = self._running_on_nodes(resource_running_on_after)
 
         severity = reports.item.ReportItemSeverity.info()
-        if (
-            resource_running_on_before # running resource moved
-            and (
-                not running_on_nodes
-                or
-                (allowed_nodes and allowed_nodes.isdisjoint(running_on_nodes))
-                or
-                (resource_running_on_before == resource_running_on_after)
-           )
+        if resource_running_on_before and (  # running resource moved
+            not running_on_nodes
+            or (allowed_nodes and allowed_nodes.isdisjoint(running_on_nodes))
+            or (resource_running_on_before == resource_running_on_after)
         ):
             severity = reports.item.ReportItemSeverity.error()
         if not resource_running_on_after:
             return ReportItem(
-                severity,
-                reports.messages.ResourceDoesNotRun(resource_id),
+                severity, reports.messages.ResourceDoesNotRun(resource_id),
             )
         return ReportItem(
             severity,
             reports.messages.ResourceRunningOnNodes(
-                resource_id,
-                resource_running_on_after,
-            )
+                resource_id, resource_running_on_after,
+            ),
         )
+
 
 class _Ban(_MoveBanTemplate):
     def _validate(self, resource_el, master):
@@ -1374,8 +1445,11 @@ class _Ban(_MoveBanTemplate):
         )
 
     def _report_wait_result(
-        self, resource_id, node, resource_running_on_before,
-        resource_running_on_after
+        self,
+        resource_id,
+        node,
+        resource_running_on_before,
+        resource_running_on_after,
     ):
         running_on_nodes = self._running_on_nodes(resource_running_on_after)
         if node:
@@ -1384,24 +1458,21 @@ class _Ban(_MoveBanTemplate):
             banned_nodes = self._running_on_nodes(resource_running_on_before)
 
         severity = reports.item.ReportItemSeverity.info()
-        if (
-            not banned_nodes.isdisjoint(running_on_nodes)
-            or
-            (resource_running_on_before and not running_on_nodes)
+        if not banned_nodes.isdisjoint(running_on_nodes) or (
+            resource_running_on_before and not running_on_nodes
         ):
             severity = reports.item.ReportItemSeverity.error()
         if not resource_running_on_after:
             return ReportItem(
-                severity,
-                reports.messages.ResourceDoesNotRun(resource_id),
+                severity, reports.messages.ResourceDoesNotRun(resource_id),
             )
         return ReportItem(
             severity,
             reports.messages.ResourceRunningOnNodes(
-                resource_id,
-                resource_running_on_after,
-            )
+                resource_id, resource_running_on_after,
+            ),
         )
+
 
 def unmove_unban(
     env, resource_id, node=None, master=False, expired=False, wait=False
@@ -1417,22 +1488,18 @@ def unmove_unban(
     mixed wait -- flag for controlling waiting for pacemaker idle mechanism
     """
     # validate
-    env.ensure_wait_satisfiable(wait) # raises on error
+    env.ensure_wait_satisfiable(wait)  # raises on error
 
     report_list = []
     resource_el = resource.common.find_one_resource_and_report(
-        get_resources(env.get_cib()),
-        resource_id,
-        report_list,
+        get_resources(env.get_cib()), resource_id, report_list,
     )
     if resource_el is not None:
         report_list.extend(
             resource.common.validate_unmove_unban(resource_el, master)
         )
-    if (
-        expired
-        and
-        not has_resource_unmove_unban_expired_support(env.cmd_runner())
+    if expired and not has_resource_unmove_unban_expired_support(
+        env.cmd_runner()
     ):
         report_list.append(
             ReportItem.error(
@@ -1472,8 +1539,7 @@ def unmove_unban(
 
 
 def get_resource_relations_tree(
-    env: LibraryEnvironment,
-    resource_id: str,
+    env: LibraryEnvironment, resource_id: str,
 ) -> Mapping[str, Any]:
     """
     Return a dict representing tree-like structure of resources and their
@@ -1485,14 +1551,19 @@ def get_resource_relations_tree(
     """
     cib = env.get_cib()
     _find_resources_or_raise(get_resources(cib), [resource_id])
-    resources_dict, relations_dict = (
-        resource.relations.ResourceRelationsFetcher(
-            cib
-        ).get_relations(resource_id)
+    (
+        resources_dict,
+        relations_dict,
+    ) = resource.relations.ResourceRelationsFetcher(cib).get_relations(
+        resource_id
     )
-    return dto.to_dict(resource.relations.ResourceRelationTreeBuilder(
-        resources_dict, relations_dict
-    ).get_tree(resource_id).to_dto())
+    return dto.to_dict(
+        resource.relations.ResourceRelationTreeBuilder(
+            resources_dict, relations_dict
+        )
+        .get_tree(resource_id)
+        .to_dto()
+    )
 
 
 def _find_resources_or_raise(

@@ -8,6 +8,7 @@ from pcs_test.tools.custom_mock import patch_getaddrinfo
 from pcs.common.reports import codes as report_codes
 from pcs.lib.commands import cluster
 
+
 class AddLink(TestCase):
     def setUp(self):
         self.env_assist, self.config = get_env_tools(self)
@@ -21,7 +22,8 @@ class AddLink(TestCase):
             "linknumber": "1",
             "transport": "udp",
         }
-        self.before = dedent("""\
+        self.before = dedent(
+            """\
             totem {
                 transport: knet
 
@@ -48,7 +50,8 @@ class AddLink(TestCase):
             }
             """
         )
-        self.after = dedent("""\
+        self.after = dedent(
+            """\
             totem {
                 transport: knet
 
@@ -84,24 +87,20 @@ class AddLink(TestCase):
         )
 
     def test_success(self):
-        (self.config
-            .corosync_conf.load_content(self.before)
+        (
+            self.config.corosync_conf.load_content(self.before)
             .runner.cib.load()
             .env.push_corosync_conf(corosync_conf_text=self.after)
         )
         cluster.add_link(
-            self.env_assist.get_env(),
-            self.node_addr_map,
-            self.link_options,
+            self.env_assist.get_env(), self.node_addr_map, self.link_options,
         )
         # Reports from pushing corosync.conf are produced in env. That code is
         # hidden in self.config.env.push_corosync_conf.
         self.env_assist.assert_reports([])
 
     def test_not_live(self):
-        (self.config
-            .env.set_corosync_conf_data(self.before)
-        )
+        (self.config.env.set_corosync_conf_data(self.before))
         self.env_assist.assert_raise_library_error(
             lambda: cluster.add_link(
                 self.env_assist.get_env(),
@@ -111,31 +110,22 @@ class AddLink(TestCase):
             [
                 fixture.error(
                     report_codes.LIVE_ENVIRONMENT_REQUIRED,
-                    forbidden_options=["COROSYNC_CONF"]
+                    forbidden_options=["COROSYNC_CONF"],
                 ),
             ],
-            expected_in_processor=False
+            expected_in_processor=False,
         )
 
     def test_validation(self):
         patch_getaddrinfo(self, ["node2-addr0"])
-        (self.config
-            .corosync_conf.load_content(self.before)
-            .runner.cib.load()
-        )
+        (self.config.corosync_conf.load_content(self.before).runner.cib.load())
         self.env_assist.assert_raise_library_error(
             lambda: cluster.add_link(
                 self.env_assist.get_env(),
-                {
-                    "node2": "node2-addr0",
-                    "node3": "node2-addr0",
-                },
-                {
-                    "wrong": "option",
-                    "linknumber": "2",
-                }
+                {"node2": "node2-addr0", "node3": "node2-addr0",},
+                {"wrong": "option", "linknumber": "2",},
             ),
-            []
+            [],
         )
         self.env_assist.assert_reports(
             [
@@ -165,9 +155,14 @@ class AddLink(TestCase):
                     option_names=["wrong"],
                     option_type="link",
                     allowed=[
-                        "link_priority", "linknumber", "mcastport",
-                        "ping_interval", "ping_precision", "ping_timeout",
-                        "pong_count", "transport",
+                        "link_priority",
+                        "linknumber",
+                        "mcastport",
+                        "ping_interval",
+                        "ping_precision",
+                        "ping_timeout",
+                        "pong_count",
+                        "transport",
                     ],
                     allowed_patterns=[],
                 ),
@@ -179,17 +174,9 @@ class AddLink(TestCase):
         )
 
     def test_missing_input_data(self):
-        (self.config
-            .corosync_conf.load_content(self.before)
-            .runner.cib.load()
-        )
+        (self.config.corosync_conf.load_content(self.before).runner.cib.load())
         self.env_assist.assert_raise_library_error(
-            lambda: cluster.add_link(
-                self.env_assist.get_env(),
-                {},
-                {}
-            ),
-            []
+            lambda: cluster.add_link(self.env_assist.get_env(), {}, {}), []
         )
         self.env_assist.assert_reports(
             [
@@ -206,7 +193,8 @@ class AddLink(TestCase):
         )
 
     def test_missing_node_names(self):
-        before = dedent("""\
+        before = dedent(
+            """\
             totem {
                 transport: knet
             }
@@ -227,10 +215,7 @@ class AddLink(TestCase):
             }
             """
         )
-        (self.config
-            .corosync_conf.load_content(before)
-            .runner.cib.load()
-        )
+        (self.config.corosync_conf.load_content(before).runner.cib.load())
         self.env_assist.assert_raise_library_error(
             lambda: cluster.add_link(
                 self.env_assist.get_env(),
@@ -274,9 +259,10 @@ class AddLink(TestCase):
                 </primitive>
             </resources>
         """
-        (self.config
-            .corosync_conf.load_content(self.before)
-            .runner.cib.load(resources=resources)
+        (
+            self.config.corosync_conf.load_content(self.before).runner.cib.load(
+                resources=resources
+            )
         )
         self.env_assist.assert_raise_library_error(
             lambda: cluster.add_link(
@@ -284,7 +270,7 @@ class AddLink(TestCase):
                 self.node_addr_map,
                 self.link_options,
             ),
-            []
+            [],
         )
         self.env_assist.assert_reports(
             [
@@ -309,9 +295,10 @@ class AddLink(TestCase):
                 </primitive>
             </resources>
         """
-        (self.config
-            .corosync_conf.load_content(self.before)
-            .runner.cib.load(resources=resources)
+        (
+            self.config.corosync_conf.load_content(self.before).runner.cib.load(
+                resources=resources
+            )
         )
         self.env_assist.assert_raise_library_error(
             lambda: cluster.add_link(
@@ -319,7 +306,7 @@ class AddLink(TestCase):
                 self.node_addr_map,
                 self.link_options,
             ),
-            []
+            [],
         )
         self.env_assist.assert_reports(
             [
@@ -331,9 +318,10 @@ class AddLink(TestCase):
         )
 
     def test_cib_not_available(self):
-        (self.config
-            .corosync_conf.load_content(self.before)
-            .runner.cib.load(stderr="an error", returncode=1)
+        (
+            self.config.corosync_conf.load_content(self.before).runner.cib.load(
+                stderr="an error", returncode=1
+            )
         )
         self.env_assist.assert_raise_library_error(
             lambda: cluster.add_link(
@@ -341,7 +329,7 @@ class AddLink(TestCase):
                 self.node_addr_map,
                 self.link_options,
             ),
-            []
+            [],
         )
         self.env_assist.assert_reports(
             [
@@ -353,8 +341,8 @@ class AddLink(TestCase):
         )
 
     def test_cib_not_available_forced(self):
-        (self.config
-            .corosync_conf.load_content(self.before)
+        (
+            self.config.corosync_conf.load_content(self.before)
             .runner.cib.load(stderr="an error", returncode=1)
             .env.push_corosync_conf(corosync_conf_text=self.after)
         )
@@ -362,7 +350,7 @@ class AddLink(TestCase):
             self.env_assist.get_env(),
             self.node_addr_map,
             self.link_options,
-            force_flags=[report_codes.FORCE]
+            force_flags=[report_codes.FORCE],
         )
         self.env_assist.assert_reports(
             [
@@ -373,34 +361,30 @@ class AddLink(TestCase):
         )
 
     def test_offline_nodes(self):
-        (self.config
-            .corosync_conf.load_content(self.before)
+        (
+            self.config.corosync_conf.load_content(self.before)
             .runner.cib.load()
             .env.push_corosync_conf(
-                corosync_conf_text=self.after,
-                skip_offline_targets=True,
+                corosync_conf_text=self.after, skip_offline_targets=True,
             )
         )
         cluster.add_link(
             self.env_assist.get_env(),
             self.node_addr_map,
             self.link_options,
-            force_flags=[report_codes.SKIP_OFFLINE_NODES]
+            force_flags=[report_codes.SKIP_OFFLINE_NODES],
         )
 
     def test_unresolvable_addresses(self):
         patch_getaddrinfo(self, [])
-        (self.config
-            .corosync_conf.load_content(self.before)
-            .runner.cib.load()
-        )
+        (self.config.corosync_conf.load_content(self.before).runner.cib.load())
         self.env_assist.assert_raise_library_error(
             lambda: cluster.add_link(
                 self.env_assist.get_env(),
                 self.node_addr_map,
                 self.link_options,
             ),
-            []
+            [],
         )
         self.env_assist.assert_reports(
             [
@@ -414,8 +398,8 @@ class AddLink(TestCase):
 
     def test_unresolvable_addresses_forced(self):
         patch_getaddrinfo(self, [])
-        (self.config
-            .corosync_conf.load_content(self.before)
+        (
+            self.config.corosync_conf.load_content(self.before)
             .runner.cib.load()
             .env.push_corosync_conf(corosync_conf_text=self.after)
         )
@@ -423,7 +407,7 @@ class AddLink(TestCase):
             self.env_assist.get_env(),
             self.node_addr_map,
             self.link_options,
-            force_flags=[report_codes.FORCE]
+            force_flags=[report_codes.FORCE],
         )
         self.env_assist.assert_reports(
             [

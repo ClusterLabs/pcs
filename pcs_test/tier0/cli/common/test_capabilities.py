@@ -27,8 +27,9 @@ class Capabilities(TestCase):
                     "id": "test.both",
                     "in-pcs": "1",
                     "in-pcsd": "1",
-                    "description":
-                        "This capability is available in both pcs and pcsd.",
+                    "description": (
+                        "This capability is available in both pcs and pcsd."
+                    ),
                 },
                 {
                     "id": "test.empty-description",
@@ -42,7 +43,7 @@ class Capabilities(TestCase):
                     "in-pcsd": "1",
                     "description": "",
                 },
-            ]
+            ],
         )
 
     def test_get_pcs(self):
@@ -55,16 +56,11 @@ class Capabilities(TestCase):
                 },
                 {
                     "id": "test.both",
-                    "description":
-                        "This capability is available in both pcs and pcsd.",
+                    "description": (
+                        "This capability is available in both pcs and pcsd."
+                    ),
                 },
-                {
-                    "id": "test.empty-description",
-                    "description": "",
-                },
-                {
-                    "id": "test.no-description",
-                    "description": "",
-                },
-            ]
+                {"id": "test.empty-description", "description": "",},
+                {"id": "test.no-description", "description": "",},
+            ],
         )

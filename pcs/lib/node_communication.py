@@ -29,14 +29,11 @@ class LibCommunicatorLogger(CommunicatorLoggerInterface):
         msg = "Sending HTTP Request to: {url}"
         if request.data:
             msg += "\n--Debug Input Start--\n{data}\n--Debug Input End--"
-        self._logger.debug(
-            msg.format(url=request.url, data=request.data)
-        )
+        self._logger.debug(msg.format(url=request.url, data=request.data))
         self._reporter.report(
             ReportItem.debug(
                 reports.messages.NodeCommunicationStarted(
-                    request.url,
-                    request.data,
+                    request.url, request.data,
                 )
             )
         )
@@ -54,31 +51,30 @@ class LibCommunicatorLogger(CommunicatorLoggerInterface):
             "Finished calling: {url}\nResponse Code: {code}"
             + "\n--Debug Response Start--\n{response}\n--Debug Response End--"
         )
-        self._logger.debug(msg.format(
-            url=url,
-            code=response.response_code,
-            response=response.data
-        ))
+        self._logger.debug(
+            msg.format(
+                url=url, code=response.response_code, response=response.data
+            )
+        )
         self._reporter.report(
             ReportItem.debug(
                 reports.messages.NodeCommunicationFinished(
-                    url,
-                    response.response_code,
-                    response.data,
+                    url, response.response_code, response.data,
                 )
             )
         )
 
     def _log_response_failure(self, response):
         msg = "Unable to connect to {node} ({reason})"
-        self._logger.debug(msg.format(
-            node=response.request.host_label, reason=response.error_msg
-        ))
+        self._logger.debug(
+            msg.format(
+                node=response.request.host_label, reason=response.error_msg
+            )
+        )
         self._reporter.report(
             ReportItem.debug(
                 reports.messages.NodeCommunicationNotConnected(
-                    response.request.host_label,
-                    response.error_msg,
+                    response.request.host_label, response.error_msg,
                 )
             )
         )
@@ -87,8 +83,7 @@ class LibCommunicatorLogger(CommunicatorLoggerInterface):
             self._reporter.report(
                 ReportItem.warning(
                     reports.messages.NodeCommunicationProxyIsSet(
-                        response.request.host_label,
-                        response.request.dest.addr,
+                        response.request.host_label, response.request.dest.addr,
                     )
                 )
             )
@@ -141,15 +136,13 @@ class LibCommunicatorLogger(CommunicatorLoggerInterface):
 
     def log_no_more_addresses(self, response):
         msg = "No more addresses for node {label} to run '{req}'".format(
-            label=response.request.host_label,
-            req=response.request.url,
+            label=response.request.host_label, req=response.request.url,
         )
         self._logger.warning(msg)
         self._reporter.report(
             ReportItem.warning(
                 reports.messages.NodeCommunicationNoMoreAddresses(
-                    response.request.host_label,
-                    response.request.url,
+                    response.request.host_label, response.request.url,
                 )
             )
         )
@@ -161,8 +154,11 @@ class NodeTargetLibFactory(NodeTargetFactory):
         self._report_processor = report_processor
 
     def get_target_list_with_reports(
-        self, host_name_list, skip_non_existing=False, allow_skip=True,
-        report_none_host_found=True
+        self,
+        host_name_list,
+        skip_non_existing=False,
+        allow_skip=True,
+        report_none_host_found=True,
     ):
         target_list = []
         unknown_host_list = []
@@ -178,7 +174,8 @@ class NodeTargetLibFactory(NodeTargetFactory):
                 ReportItem(
                     severity=reports.item.get_severity(
                         (
-                            reports.codes.SKIP_OFFLINE_NODES if allow_skip
+                            reports.codes.SKIP_OFFLINE_NODES
+                            if allow_skip
                             else None
                         ),
                         skip_non_existing,
@@ -210,7 +207,9 @@ class NodeTargetLibFactory(NodeTargetFactory):
 
 
 def response_to_report_item(
-    response, severity=ReportItemSeverity.ERROR, forceable=None,
+    response,
+    severity=ReportItemSeverity.ERROR,
+    forceable=None,
     report_pcsd_too_old_on_404=False,
 ):
     """
@@ -227,10 +226,8 @@ def response_to_report_item(
     reason = None
     if (
         report_pcsd_too_old_on_404
-        and
-        response.was_connected
-        and
-        response_code == 404
+        and response.was_connected
+        and response_code == 404
     ):
         return ReportItem.error(
             reports.messages.PcsdVersionTooOld(response.request.host_label)
@@ -260,7 +257,8 @@ def response_to_report_item(
             reason = "HTTP error: {0}".format(response_code)
     else:
         if response.errno in [
-            pycurl.E_OPERATION_TIMEDOUT, pycurl.E_OPERATION_TIMEOUTED
+            pycurl.E_OPERATION_TIMEDOUT,
+            pycurl.E_OPERATION_TIMEOUTED,
         ]:
             report_item = reports.messages.NodeCommunicationErrorTimedOut
             reason = response.error_msg
@@ -272,10 +270,8 @@ def response_to_report_item(
     return ReportItem(
         severity=ReportItemSeverity(severity, forceable),
         message=report_item(
-            response.request.host_label,
-            response.request.action,
-            reason,
-        )
+            response.request.host_label, response.request.action, reason,
+        ),
     )
 
 

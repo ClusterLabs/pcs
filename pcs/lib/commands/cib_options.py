@@ -49,5 +49,6 @@ def _set_any_defaults(section_name, env: LibraryEnvironment, options):
 
     env.push_cib()
 
+
 set_operations_defaults = partial(_set_any_defaults, sections.OP_DEFAULTS)
 set_resources_defaults = partial(_set_any_defaults, sections.RSC_DEFAULTS)

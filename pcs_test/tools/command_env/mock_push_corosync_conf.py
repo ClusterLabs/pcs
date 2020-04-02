@@ -5,6 +5,7 @@ from pcs.lib.errors import LibraryError
 
 CALL_TYPE_PUSH_COROSYNC_CONF = "CALL_TYPE_PUSH_COROSYNC_CONF"
 
+
 class Call:
     type = CALL_TYPE_PUSH_COROSYNC_CONF
 
@@ -17,6 +18,7 @@ class Call:
         return str("<CorosyncConfPush skip-offline='{0}'>").format(
             self.skip_offline_targets
         )
+
 
 def get_push_corosync_conf(call_queue):
     def push_corosync_conf(
@@ -43,17 +45,19 @@ def get_push_corosync_conf(call_queue):
             )
         if skip_offline_nodes != expected_call.skip_offline_targets:
             raise AssertionError(
-                "Trying to call env.push_corosync_conf but the skip_offline "
-                "flag is not as expected:\nexpected '{0}' != actual '{1}'"
-                .format(
-                    expected_call.skip_offline_targets,
-                    skip_offline_nodes,
+                (
+                    "Trying to call env.push_corosync_conf but the "
+                    "skip_offline flag is not as expected:\nexpected '{0}' != "
+                    "actual '{1}'"
+                ).format(
+                    expected_call.skip_offline_targets, skip_offline_nodes,
                 )
             )
         if expected_call.raises:
             raise LibraryError()
 
     return push_corosync_conf
+
 
 def is_push_corosync_conf_call_in(call_queue):
     return call_queue.has_type(CALL_TYPE_PUSH_COROSYNC_CONF)

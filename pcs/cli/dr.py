@@ -16,11 +16,8 @@ from pcs.common.dr import (
 from pcs.common.interface import dto
 from pcs.common.str_tools import indent
 
-def config(
-    lib: Any,
-    argv: Sequence[str],
-    modifiers: InputModifiers,
-) -> None:
+
+def config(lib: Any, argv: Sequence[str], modifiers: InputModifiers,) -> None:
     """
     Options: None
     """
@@ -33,7 +30,7 @@ def config(
     except (KeyError, TypeError, ValueError):
         raise error(
             "Unable to communicate with pcsd, received response:\n"
-                f"{config_raw}"
+            f"{config_raw}"
         )
 
     lines = ["Local site:"]
@@ -42,6 +39,7 @@ def config(
         lines.append("Remote site:")
         lines.extend(indent(_config_site_lines(site_dto)))
     print("\n".join(lines))
+
 
 def _config_site_lines(site_dto: DrConfigSiteDto) -> List[str]:
     lines = [f"Role: {site_dto.site_role.capitalize()}"]
@@ -52,9 +50,7 @@ def _config_site_lines(site_dto: DrConfigSiteDto) -> List[str]:
 
 
 def set_recovery_site(
-    lib: Any,
-    argv: Sequence[str],
-    modifiers: InputModifiers,
+    lib: Any, argv: Sequence[str], modifiers: InputModifiers,
 ) -> None:
     """
     Options:
@@ -65,11 +61,8 @@ def set_recovery_site(
         raise CmdLineInputError()
     lib.dr.set_recovery_site(argv[0])
 
-def status(
-    lib: Any,
-    argv: Sequence[str],
-    modifiers: InputModifiers,
-) -> None:
+
+def status(lib: Any, argv: Sequence[str], modifiers: InputModifiers,) -> None:
     """
     Options:
       * --full - show full details, node attributes and failcount
@@ -94,7 +87,7 @@ def status(
     except (KeyError, TypeError, ValueError):
         raise error(
             "Unable to communicate with pcsd, received response:\n"
-                f"{status_list_raw}"
+            f"{status_list_raw}"
         )
 
     has_errors = False
@@ -103,7 +96,7 @@ def status(
         plaintext_parts.append(
             "--- {local_remote} cluster - {role} site ---".format(
                 local_remote=("Local" if site_status.local_site else "Remote"),
-                role=site_status.site_role.capitalize()
+                role=site_status.site_role.capitalize(),
             )
         )
         if site_status.status_successfully_obtained:
@@ -111,20 +104,15 @@ def status(
             plaintext_parts.extend(["", ""])
         else:
             has_errors = True
-            plaintext_parts.extend([
-                "Error: Unable to get status of the cluster from any node",
-                ""
-            ])
+            plaintext_parts.extend(
+                ["Error: Unable to get status of the cluster from any node", ""]
+            )
     print("\n".join(plaintext_parts).strip())
     if has_errors:
         raise error("Unable to get status of all sites")
 
 
-def destroy(
-    lib: Any,
-    argv: Sequence[str],
-    modifiers: InputModifiers,
-) -> None:
+def destroy(lib: Any, argv: Sequence[str], modifiers: InputModifiers,) -> None:
     """
     Options:
       * --skip-offline - skip unreachable nodes (including missing auth token)

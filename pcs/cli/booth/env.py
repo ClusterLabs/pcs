@@ -24,14 +24,10 @@ def middleware_config(config_path, key_path):
 
     if is_mocked_environment:
         config_file = pcs_file.RawFile(
-            metadata.for_file_type(
-                file_type_codes.BOOTH_CONFIG, config_path
-            )
+            metadata.for_file_type(file_type_codes.BOOTH_CONFIG, config_path)
         )
         key_file = pcs_file.RawFile(
-            metadata.for_file_type(
-                file_type_codes.BOOTH_KEY, key_path
-            )
+            metadata.for_file_type(file_type_codes.BOOTH_KEY, key_path)
         )
 
     def create_booth_env():
@@ -61,18 +57,16 @@ def middleware_config(config_path, key_path):
         if not is_mocked_environment:
             return
         if not modified_env:
-            #TODO now this would not happen
-            #for more information see comment in
-            #pcs.cli.common.lib_wrapper.lib_env_to_cli_env
+            # TODO now this would not happen
+            # for more information see comment in
+            # pcs.cli.common.lib_wrapper.lib_env_to_cli_env
             raise output.error("Error during library communication")
         try:
             key_file.write(
-                modified_env["key_file"]["content"],
-                can_overwrite=True
+                modified_env["key_file"]["content"], can_overwrite=True
             )
             config_file.write(
-                modified_env["config_file"]["content"],
-                can_overwrite=True
+                modified_env["config_file"]["content"], can_overwrite=True
             )
         # TODO write custom error handling, do not use pcs.lib specific code
         # and LibraryError

@@ -57,8 +57,9 @@ _metadata = {
         owner_group_name="root",
         permissions=0o600,
         is_binary=False,
-    )
+    ),
 }
+
 
 def for_file_type(file_type_code, *args, **kwargs):
     return _metadata[file_type_code](*args, **kwargs)

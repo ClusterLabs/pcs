@@ -10,8 +10,10 @@ from pcs.common.ssl import (
     generate_key,
 )
 
+
 def check_cert_key(cert_path, key_path):
     errors = []
+
     def load(load_ssl_file, label, path):
         try:
             with open(path) as ssl_file:
@@ -46,8 +48,10 @@ def check_cert_key(cert_path, key_path):
 
     return errors
 
+
 def open_ssl_file_to_rewrite(path):
-    return os.fdopen(os.open(path, os.O_CREAT|os.O_WRONLY, 0o600), "wb")
+    return os.fdopen(os.open(path, os.O_CREAT | os.O_WRONLY, 0o600), "wb")
+
 
 def regenerate_cert_key(server_name, cert_path, key_path, key_length=None):
     key = generate_key(key_length) if key_length else generate_key()
@@ -55,6 +59,7 @@ def regenerate_cert_key(server_name, cert_path, key_path, key_length=None):
         cert_file.write(dump_cert(generate_cert(key, server_name)))
     with open_ssl_file_to_rewrite(key_path) as key_file:
         key_file.write(dump_key(key))
+
 
 class CertKeyPair:
     def __init__(self, cert_location, key_location):
@@ -70,10 +75,8 @@ class CertKeyPair:
         return self.__key_location
 
     def exists(self):
-        return (
-            os.path.isfile(self.cert_location)
-            and
-            os.path.isfile(self.key_location)
+        return os.path.isfile(self.cert_location) and os.path.isfile(
+            self.key_location
         )
 
     def check(self):
@@ -81,14 +84,13 @@ class CertKeyPair:
 
     def regenerate(self, server_name, key_length=None):
         regenerate_cert_key(
-            server_name,
-            self.cert_location,
-            self.key_location,
-            key_length
+            server_name, self.cert_location, self.key_location, key_length
         )
+
 
 class SSLCertKeyException(Exception):
     pass
+
 
 class PcsdSSL:
     def __init__(
@@ -105,8 +107,7 @@ class PcsdSSL:
         ssl_context.set_ciphers(self.__ssl_ciphers)
         ssl_context.options = self.__ssl_options
         ssl_context.load_cert_chain(
-            self.__ck_pair.cert_location,
-            self.__ck_pair.key_location
+            self.__ck_pair.cert_location, self.__ck_pair.key_location
         )
         return ssl_context
 
