@@ -156,3 +156,92 @@ class TagRemove(TestCase):
     def test_more_args(self):
         self._call_cmd(["arg1", "arg2"])
         self.tag.remove.assert_called_once_with(["arg1", "arg2"])
+
+
+class TagUpdate(TestCase):
+    def setUp(self):
+        self.lib = mock.Mock(spec_set=["tag"])
+        self.tag = mock.Mock(spec_set=["update"])
+        self.lib.tag = self.tag
+
+    def _call_cmd(self, argv, options=None):
+        if options is None:
+            options = {}
+        command.tag_update(self.lib, argv, dict_to_modifiers(options))
+
+    def assert_exception_hint(self, argv):
+        with self.assertRaises(CmdLineInputError) as cm:
+            self._call_cmd(argv)
+        self.assertEqual(
+            cm.exception.hint,
+            "Specify at least one id for 'add' or 'remove' arguments.",
+        )
+        self.tag.update.assert_not_called()
+
+    def test_no_args(self):
+        with self.assertRaises(CmdLineInputError) as cm:
+            self._call_cmd([])
+        self.assertIsNone(cm.exception.message)
+        self.tag.update.assert_not_called()
+
+    def test_no_add_remove_keywords(self):
+        self.assert_exception_hint(["tag_id"])
+
+    def test_add_without_ids(self):
+        self.assert_exception_hint(["tag_id", "add"])
+
+    def test_remove_without_ids(self):
+        self.assert_exception_hint(["tag_id", "remove"])
+
+    def test_add_remove_without_ids(self):
+        self.assert_exception_hint(["tag_id", "add", "remove"])
+
+    def test_add_and_empty_remove(self):
+        self.assert_exception_hint(["tag_id", "add", "id1", "remove"])
+
+    def test_remove_and_empty_add(self):
+        self.assert_exception_hint(["tag_id", "add", "remove", "id1"])
+
+    def test_both_after_and_before(self):
+        with self.assertRaises(CmdLineInputError) as cm:
+            self._call_cmd(
+                ["tag_id", "add", "id1"], dict(after="A", before="B"),
+            )
+        self.assertEqual(
+            cm.exception.message, "you cannot specify both --before and --after"
+        )
+        self.tag.update.assert_not_called()
+
+    def test_add_success(self):
+        self._call_cmd(["tag_id", "add", "id1"])
+        self.tag.update.assert_called_once_with(
+            "tag_id", ["id1"], [], adjacent_idref=None, put_after_adjacent=True,
+        )
+
+    def test_remove_success(self):
+        self._call_cmd(["tag_id", "remove", "id1"])
+        self.tag.update.assert_called_once_with(
+            "tag_id", [], ["id1"], adjacent_idref=None, put_after_adjacent=True,
+        )
+
+    def test_add_remove_success(self):
+        self._call_cmd(["tag_id", "remove", "i", "j", "add", "k", "l"])
+        self.tag.update.assert_called_once_with(
+            "tag_id",
+            ["k", "l"],
+            ["i", "j"],
+            adjacent_idref=None,
+            put_after_adjacent=True,
+        )
+
+    def test_add_after_success(self):
+        self._call_cmd(["tag_id", "add", "id1"], dict(after="A"))
+        self.tag.update.assert_called_once_with(
+            "tag_id", ["id1"], [], adjacent_idref="A", put_after_adjacent=True,
+        )
+
+    def test_add_before_success(self):
+        self._call_cmd(["tag_id", "add", "id1"], dict(before="B"))
+        self.tag.update.assert_called_once_with(
+            "tag_id", ["id1"], [], adjacent_idref="B", put_after_adjacent=False,
+        )

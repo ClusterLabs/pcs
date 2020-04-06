@@ -1,4 +1,8 @@
+from typing import cast, Iterable
+from xml.etree.ElementTree import Element
+
 from lxml import etree
+from lxml.etree import _Element
 
 
 def get_root(tree):
@@ -117,7 +121,7 @@ def is_element_useful(element, attribs_important=True):
     Some of these elements can be meaningful standalone when they contain
     attributes (e.g. "network" or "storage" in "bundle"). Some of these
     elements are not meaningful without sub-elements even if they have
-    attributes (e.g. rsc_ticket - after last sub-element 'resource_set' removal
+   attributes (e.g. rsc_ticket - after last sub-element 'resource_set' removal
     there can be attributes but the element is pointless - more details at the
     approrpriate place of use). By default, an element is meaningful when it
     contains attributes (except id) even if it has no sub-elements. This can be
@@ -153,7 +157,9 @@ def append_when_useful(parent, element, attribs_important=True, index=None):
     return element
 
 
-def remove_when_pointless(element, attribs_important=True):
+def remove_when_pointless(
+    element: Element, attribs_important: bool = True,
+) -> None:
     """
     Remove an element when it is not worth keeping (see is_element_useful for
         details).
@@ -163,7 +169,7 @@ def remove_when_pointless(element, attribs_important=True):
         attributes
     """
     if not is_element_useful(element, attribs_important):
-        element.getparent().remove(element)
+        remove_one_element(element)
 
 
 def reset_element(element, keep_attrs=None):
@@ -180,3 +186,53 @@ def reset_element(element, keep_attrs=None):
     for key in element.attrib.keys():
         if key not in keep_attrs:
             del element.attrib[key]
+
+
+def append_elements(parent: Element, element_list: Iterable[Element],) -> None:
+    """
+    Append elements to the specified parent.
+    """
+    for el in element_list:
+        parent.append(el)
+
+
+def move_elements(
+    adjacent_el: Element,
+    to_move_list: Iterable[Element],
+    put_after_adjacent: bool = False,
+) -> None:
+    """
+    Move elements inside an element or move elements to an element after or
+    before specified element from the element.
+
+    adjacent_el -- adjacent element where we want to put the other elements
+    to_move_list -- list of element we want to move
+    put_after_adjacent -- flag where to put elements
+    """
+    for el in to_move_list:
+        if put_after_adjacent:
+            cast(_Element, adjacent_el).addnext(cast(_Element, el))
+            adjacent_el = el
+        else:
+            cast(_Element, adjacent_el).addprevious(cast(_Element, el))
+
+
+def remove_one_element(element: Element) -> None:
+    """
+    Remove single specified element.
+
+    element -- element to remove
+    """
+    parent = cast(_Element, element).getparent()
+    if parent is not None:
+        parent.remove(cast(_Element, element))
+
+
+def remove_elements(element_list: Iterable[Element]) -> None:
+    """
+    Remove specified elements.
+
+    element_list -- list of elements to remove
+    """
+    for element in element_list:
+        remove_one_element(element)

@@ -2169,6 +2169,10 @@ Commands:
 
     remove <tag id>...
         Delete specified tags.
+
+    update <tag id> [add <id> [<id>]... [--before <id> | --after <id>]]
+            [remove <id> [<id>]...]
+        Update a tag using the specified ids.
 """
     if pout:
         print(sub_usage(args, output))

@@ -3,6 +3,7 @@ from typing import (
     Dict,
     Iterable,
     Iterator,
+    Optional,
     Sequence,
 )
 from xml.etree.ElementTree import Element
@@ -96,3 +97,63 @@ def remove(env: LibraryEnvironment, tag_list: Iterable[str]) -> None:
         if env.report_processor.report_list(report_list).has_errors:
             raise LibraryError()
         tag.remove_tag(tag_elements)
+
+
+def update(
+    env: LibraryEnvironment,
+    tag_id: str,
+    idref_add: Sequence[str],
+    idref_remove: Sequence[str],
+    adjacent_idref: Optional[str] = None,
+    put_after_adjacent: bool = False,
+) -> None:
+    """
+    Update specified tag by given id references.
+
+    env -- provides all for communication with externals
+    tag_id -- identifier of new tag
+    idref_add -- reference ids to add
+    idref_remove -- reference ids to remove
+    adjacent_idref -- id of the existing reference in tag
+    put_after_adjacent -- flag where to put references
+    """
+    with cib_tags_section(env) as tags_section:
+        tag_list, report_list = tag.find_tag_elements_by_ids(
+            tags_section, [tag_id],
+        )
+        report_list += tag.validate_add_remove_ids(
+            get_resources(get_root(tags_section)),
+            tag_id,
+            idref_add,
+            idref_remove,
+            adjacent_idref,
+        )
+        if env.report_processor.report_list(report_list).has_errors:
+            raise LibraryError()
+
+        adjacent_element, report_list = tag.find_adjacent_obj_ref(
+            tag_list[0], adjacent_idref,
+        )
+        env.report_processor.report_list(report_list)
+        obj_ref_list, _ = tag.find_obj_ref_elements_in_tag(
+            tag_list[0], idref_add,
+        )
+        env.report_processor.report_list(
+            tag.validate_add_obj_ref(obj_ref_list, adjacent_element, tag_id)
+        )
+
+        remove_el_list, report_list = tag.find_obj_ref_elements_in_tag(
+            tag_list[0], idref_remove,
+        )
+        # avoid removing all references from tag that would leave tag empty
+        if not idref_add:
+            report_list += tag.validate_remove_obj_ref(remove_el_list)
+        if env.report_processor.report_list(report_list).has_errors:
+            raise LibraryError()
+        tag.add_obj_ref(
+            tag_list[0],
+            tag.create_obj_ref_elements(idref_add, obj_ref_list),
+            adjacent_element,
+            put_after_adjacent,
+        )
+        tag.remove_obj_ref(remove_el_list)

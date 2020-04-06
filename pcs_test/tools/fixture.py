@@ -184,13 +184,15 @@ class ReportStore:
         return ReportStore(self.__names + [name], self.__reports + [report])
 
 
-def report_not_found(res_id, context_type="", expected_types=None):
+def report_not_found(
+    res_id, context_type="", expected_types=None, context_id=""
+):
     return (
         severities.ERROR,
         report_codes.ID_NOT_FOUND,
         {
             "context_type": context_type,
-            "context_id": "",
+            "context_id": context_id,
             "id": res_id,
             "expected_types": [
                 "bundle",
