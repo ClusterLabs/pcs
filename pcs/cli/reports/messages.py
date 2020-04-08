@@ -430,7 +430,7 @@ def _resource_move_ban_clear_master_resource_not_promotable(
 def _skip_reason_to_string(reason: types.ReasonType) -> str:
     return {
         const.REASON_NOT_LIVE_CIB: (
-            "the command does not run on a live cluster (e.g. -f " "was used)"
+            "the command does not run on a live cluster (e.g. -f was used)"
         ),
         const.REASON_UNREACHABLE: "pcs is unable to connect to the node(s)",
     }.get(reason, reason)
