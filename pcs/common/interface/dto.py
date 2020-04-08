@@ -1,7 +1,7 @@
 from typing import (
     Any,
     Iterable,
-    Mapping,
+    Dict,
     Type,
     TypeVar,
     Union,
@@ -13,7 +13,7 @@ from pcs.common import types
 
 
 PrimitiveType = Union[str, int, float, bool, None]
-DtoPayload = Mapping[str, "SerializableType"] # type: ignore
+DtoPayload = Dict[str, "SerializableType"] # type: ignore
 SerializableType = Union[ # type: ignore
     PrimitiveType,
     DtoPayload, # type: ignore

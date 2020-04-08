@@ -1,6 +1,6 @@
 # astroid is dependency of pylint and it has impact on pylint checker capabilities
 astroid>=2.3.0
-pylint==2.4.1
+pylint==2.4.4
 tornado>=6.0.3
-mypy==0.750
-dacite<1.3.0
+mypy==0.770
+dacite
