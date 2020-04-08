@@ -154,7 +154,9 @@ def validate_remove_tag(
                 ReportItem.error(
                     reports.messages.TagCannotRemoveTagReferencedInConstraints(
                         tag_id,
-                        [elem.get("id", "") for elem in constraint_list],
+                        sorted(
+                            [elem.get("id", "") for elem in constraint_list]
+                        ),
                     )
                 )
             )

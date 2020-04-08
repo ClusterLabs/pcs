@@ -4,7 +4,7 @@ from typing import (
 )
 from pcs.cli.common.errors import CmdLineInputError
 from pcs.cli.common.parse_args import InputModifiers
-from pcs.common.tools import indent
+from pcs.common.str_tools import indent
 
 def tag_create(
     lib: Any,

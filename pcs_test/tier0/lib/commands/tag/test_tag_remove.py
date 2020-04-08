@@ -1,6 +1,6 @@
 from unittest import TestCase
 
-from pcs.common import report_codes
+from pcs.common import reports
 from pcs.lib.commands import tag as cmd_tag
 from pcs_test.tier0.lib.commands.tag.tag_common import (
     fixture_constraints_for_tags,
@@ -117,7 +117,7 @@ class TestTagRemove(TestCase):
         )
         self.env_assist.assert_reports([
             fixture.error(
-                report_codes.TAG_CANNOT_REMOVE_TAG_REFERENCED_IN_CONSTRAINTS,
+                reports.codes.TAG_CANNOT_REMOVE_TAG_REFERENCED_IN_CONSTRAINTS,
                     tag_id="tag1",
                     constraint_id_list=["location-tag1"],
             ),
@@ -139,12 +139,12 @@ class TestTagRemove(TestCase):
         )
         self.env_assist.assert_reports([
             fixture.error(
-                report_codes.TAG_CANNOT_REMOVE_TAG_REFERENCED_IN_CONSTRAINTS,
+                reports.codes.TAG_CANNOT_REMOVE_TAG_REFERENCED_IN_CONSTRAINTS,
                     tag_id="tag1",
                     constraint_id_list=["location-tag1"],
             ),
             fixture.error(
-                report_codes.TAG_CANNOT_REMOVE_TAG_REFERENCED_IN_CONSTRAINTS,
+                reports.codes.TAG_CANNOT_REMOVE_TAG_REFERENCED_IN_CONSTRAINTS,
                     tag_id="tag2",
                     constraint_id_list=["location-tag2"],
             ),

@@ -7,7 +7,7 @@ from pcs_test.tier0.lib.commands.tag.tag_common import (
 from pcs_test.tools import fixture
 from pcs_test.tools.command_env import get_env_tools
 
-from pcs.common import report_codes
+from pcs.common import reports
 from pcs.lib.commands import tag as cmd_tag
 
 
@@ -36,7 +36,7 @@ class TestTagCreate(TestCase):
         self.config.env.push_cib(tags=TAG1_ID1_ID2)
         cmd_tag.create(self.env_assist.get_env(), "tag1", ["id1", "id2"])
         self.env_assist.assert_reports([
-            fixture.info(report_codes.CIB_UPGRADE_SUCCESSFUL),
+            fixture.info(reports.codes.CIB_UPGRADE_SUCCESSFUL),
         ])
 
     def test_invalid_tag_id(self):
@@ -60,14 +60,17 @@ class TestTagCreate(TestCase):
             )
         )
         self.env_assist.assert_reports([
-            fixture.error(report_codes.EMPTY_ID, id=""),
-            fixture.error(report_codes.TAG_CANNOT_CONTAIN_ITSELF),
+            fixture.error(
+                reports.codes.INVALID_ID_IS_EMPTY,
+                id_description="id",
+            ),
+            fixture.error(reports.codes.TAG_CANNOT_CONTAIN_ITSELF),
             *[
                 fixture.report_not_found(_id, context_type="resources")
                 for _id in ["", ""]
             ],
             fixture.error(
-                report_codes.TAG_IDS_DUPLICATION,
+                reports.codes.TAG_IDS_DUPLICATION,
                 duplicate_ids_list=[""],
             ),
         ])

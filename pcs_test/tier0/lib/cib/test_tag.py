@@ -9,7 +9,7 @@ from pcs_test.tools.assertions import (
     assert_xml_equal,
 )
 
-from pcs.common import report_codes
+from pcs.common import reports
 from pcs.lib.xml_tools import (
     etree_to_str,
 )
@@ -62,11 +62,11 @@ def fixture_unexpected_element_reports(id_list, expected_types=None):
             _id,
             ValidateCommonTestData.id_to_context_type_map[_id],
             expected_types=[
-                'clone',
-                'master',
-                'group',
-                'primitive',
                 'bundle',
+                'clone',
+                'group',
+                'master',
+                'primitive',
             ] if expected_types is None else expected_types
         )
         for _id in id_list
@@ -223,12 +223,12 @@ class ValidateCreateTag(ValidateCommonTestData):
                 self.id_provider,
             ),
             [
-                fixture.report_invalid_id(tag_id, '#'),
-                fixture.error(report_codes.TAG_CANNOT_CONTAIN_ITSELF),
+                fixture.report_invalid_id(tag_id, '#', id_description="id"),
+                fixture.error(reports.codes.TAG_CANNOT_CONTAIN_ITSELF),
                 *fixture_unexpected_element_reports(2 * self.nonresource_ids),
                 *fixture_id_not_found_reports([tag_id]),
                 fixture.error(
-                    report_codes.TAG_IDS_DUPLICATION,
+                    reports.codes.TAG_IDS_DUPLICATION,
                     duplicate_ids_list=self.nonresource_ids,
                 ),
             ],
@@ -244,7 +244,12 @@ class ValidateTagIdTest(ValidateCommonTestData):
     def test_tag_id_is_empty(self):
         assert_report_item_list_equal(
             lib._validate_tag_id("", self.id_provider),
-            [fixture.error(report_codes.EMPTY_ID, id="")],
+            [
+                fixture.error(
+                    reports.codes.INVALID_ID_IS_EMPTY,
+                    id_description="id",
+                )
+            ],
         )
 
     def test_tag_id_invalid_first_character(self):
@@ -280,7 +285,7 @@ class ValidateTagIdTest(ValidateCommonTestData):
             assert_report_item_list_equal(
                 lib._validate_tag_id(tag_id, self.id_provider),
                 [
-                    fixture.error(report_codes.ID_ALREADY_EXISTS, id=tag_id)
+                    fixture.error(reports.codes.ID_ALREADY_EXISTS, id=tag_id)
                 ],
             )
 
@@ -295,7 +300,7 @@ class ValidateTagIdNotInIdrefList(TestCase):
                 self.idref_list[0],
                 self.idref_list,
             ),
-            [fixture.error(report_codes.TAG_CANNOT_CONTAIN_ITSELF)],
+            [fixture.error(reports.codes.TAG_CANNOT_CONTAIN_ITSELF)],
         )
 
     def test_tag_does_not_contain_itself(self):
@@ -337,7 +342,7 @@ class ValidateDuplicateReferenceIds(ValidateCommonTestData):
             assert_report_item_list_equal(
                 lib._validate_duplicate_reference_ids(input_ids),
                 [fixture.error(
-                    report_codes.TAG_IDS_DUPLICATION,
+                    reports.codes.TAG_IDS_DUPLICATION,
                     duplicate_ids_list=output_ids,
                 )],
             )
@@ -360,7 +365,7 @@ class ValidateReferenceAreResources(ValidateCommonTestData):
                 [],
             ),
             [fixture.error(
-                report_codes.TAG_CANNOT_CREATE_EMPTY_TAG_NO_IDS_SPECIFIED,
+                reports.codes.TAG_CANNOT_CREATE_EMPTY_TAG_NO_IDS_SPECIFIED,
             )],
         )
 
@@ -596,7 +601,7 @@ class ValidateRemoveTag(ValidateCommonConstraintsTestData):
                 [],
             ),
             [fixture.error(
-                report_codes.TAG_CANNOT_REMOVE_TAGS_NO_TAGS_SPECIFIED
+                reports.codes.TAG_CANNOT_REMOVE_TAGS_NO_TAGS_SPECIFIED
             )],
         )
 
@@ -608,7 +613,7 @@ class ValidateRemoveTag(ValidateCommonConstraintsTestData):
                 ["tag-location"],
             ),
             [fixture.error(
-                report_codes.TAG_CANNOT_REMOVE_TAG_REFERENCED_IN_CONSTRAINTS,
+                reports.codes.TAG_CANNOT_REMOVE_TAG_REFERENCED_IN_CONSTRAINTS,
                 tag_id="tag-location",
                 constraint_id_list=["location"],
             )],
@@ -622,7 +627,7 @@ class ValidateRemoveTag(ValidateCommonConstraintsTestData):
                 ["multitag"],
             ),
             [fixture.error(
-                report_codes.TAG_CANNOT_REMOVE_TAG_REFERENCED_IN_CONSTRAINTS,
+                reports.codes.TAG_CANNOT_REMOVE_TAG_REFERENCED_IN_CONSTRAINTS,
                 tag_id="multitag",
                 constraint_id_list=sorted(
                     set(self.tag2constraint_id.values()),

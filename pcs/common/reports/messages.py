@@ -6175,7 +6175,7 @@ class TagCannotCreateEmptyTagNoIdsSpecified(ReportItemMessage):
 
     @property
     def message(self) -> str:
-        return "Cannot create empty tag, no reference ids specified"
+        return "Cannot create empty tag, no resource ids specified"
 
 
 @dataclass(frozen=True)
