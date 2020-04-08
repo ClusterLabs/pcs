@@ -19,8 +19,9 @@ def get_capabilities_definition():
             capabilities_xml = xml_fromstring(file_.read())
     except (EnvironmentError, etree.XMLSyntaxError, etree.DocumentInvalid) as e:
         raise error(
-            "Cannot read capabilities definition file '{0}': '{1}'"
-            .format(filename, str(e))
+            "Cannot read capabilities definition file '{0}': '{1}'".format(
+                filename, str(e)
+            )
         )
     capabilities = []
     for feat_xml in capabilities_xml.findall(".//capability"):
@@ -31,15 +32,13 @@ def get_capabilities_definition():
         capabilities.append(feat)
     return capabilities
 
+
 def get_pcs_capabilities():
     """
     Get pcs capabilities form the capabilities file
     """
     return [
-        {
-            "id": feat["id"],
-            "description": feat["description"],
-        }
+        {"id": feat["id"], "description": feat["description"],}
         for feat in get_capabilities_definition()
         if feat["in-pcs"] == "1"
     ]

@@ -20,12 +20,12 @@ from pcs.lib.xml_tools import get_root
 def get_existing_nodes_names(
     corosync_conf: Optional[CorosyncConfigFacade] = None,
     cib: Optional[Element] = None,
-    error_on_missing_name: bool = False
+    error_on_missing_name: bool = False,
 ) -> Tuple[List[str], ReportItemList]:
     return __get_nodes_names(
-        *__get_nodes(corosync_conf, cib),
-        error_on_missing_name
+        *__get_nodes(corosync_conf, cib), error_on_missing_name
     )
+
 
 def get_existing_nodes_names_addrs(
     corosync_conf=None, cib=None, error_on_missing_name=False
@@ -37,28 +37,28 @@ def get_existing_nodes_names_addrs(
     return (
         names,
         __get_nodes_addrs(corosync_nodes, remote_and_guest_nodes),
-        report_list
+        report_list,
     )
+
 
 def __get_nodes(
     corosync_conf: Optional[CorosyncConfigFacade] = None,
-    cib: Optional[Element] = None
+    cib: Optional[Element] = None,
 ) -> Tuple[Iterable[CorosyncNode], Iterable[PacemakerNode]]:
     corosync_nodes = corosync_conf.get_nodes() if corosync_conf else []
     remote_and_guest_nodes: Iterable[PacemakerNode] = []
     if cib is not None:
         cib_root = get_root(cib)
-        remote_and_guest_nodes = (
-            remote_node.find_node_list(cib_root)
-            +
-            guest_node.find_node_list(cib_root)
-        )
+        remote_and_guest_nodes = remote_node.find_node_list(
+            cib_root
+        ) + guest_node.find_node_list(cib_root)
     return corosync_nodes, remote_and_guest_nodes
+
 
 def __get_nodes_names(
     corosync_nodes: Iterable[CorosyncNode],
     remote_and_guest_nodes: Iterable[PacemakerNode],
-    error_on_missing_name: bool = False
+    error_on_missing_name: bool = False,
 ) -> Tuple[List[str], ReportItemList]:
     report_list: ReportItemList = []
     corosync_names = []
@@ -88,8 +88,9 @@ def __get_nodes_names(
 
     return (
         corosync_names + [node.name for node in remote_and_guest_nodes],
-        report_list
+        report_list,
     )
+
 
 def __get_nodes_addrs(corosync_nodes, remote_and_guest_nodes):
     nodes_addrs = [node.addr for node in remote_and_guest_nodes]

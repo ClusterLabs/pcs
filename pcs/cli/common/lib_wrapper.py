@@ -26,7 +26,7 @@ from pcs.lib.commands import (
 from pcs.lib.commands.constraint import (
     colocation as constraint_colocation,
     order as constraint_order,
-    ticket as constraint_ticket
+    ticket as constraint_ticket,
 )
 from pcs.lib.env import LibraryEnvironment
 
@@ -34,8 +34,10 @@ from pcs.lib.env import LibraryEnvironment
 # Note: not properly typed
 _CACHE: Dict[Any, Any] = {}
 
+
 def wrapper(dictionary):
-    return namedtuple('wrapper', dictionary.keys())(**dictionary)
+    return namedtuple("wrapper", dictionary.keys())(**dictionary)
+
 
 def cli_env_to_lib_env(cli_env):
     return LibraryEnvironment(
@@ -50,6 +52,7 @@ def cli_env_to_lib_env(cli_env):
         request_timeout=cli_env.request_timeout,
     )
 
+
 def lib_env_to_cli_env(lib_env, cli_env):
     if not lib_env.is_cib_live:
         cli_env.cib_data = lib_env.final_mocked_cib_content
@@ -61,14 +64,15 @@ def lib_env_to_cli_env(lib_env, cli_env):
     # set up in lib_env as well. The code works like that now. Once we start
     # communicate over the network, we must do extra checks in here to make
     # sure what the status really is.
-    #this applies generally, not only for booth
-    #corosync_conf and cib suffers with this problem as well but in this cases
-    #it is dangerously hidden: when inconsistency between cli and lib
-    #environment occurs, original content is put to file (which is wrong)
+    # this applies generally, not only for booth
+    # corosync_conf and cib suffers with this problem as well but in this cases
+    # it is dangerously hidden: when inconsistency between cli and lib
+    # environment occurs, original content is put to file (which is wrong)
     if cli_env.booth:
         cli_env.booth["modified_env"] = lib_env.get_booth_env(name="").export()
 
     return cli_env
+
 
 def bind(cli_env, run_with_middleware, run_library_command):
     def run(cli_env, *args, **kwargs):
@@ -76,8 +80,8 @@ def bind(cli_env, run_with_middleware, run_library_command):
 
         lib_call_result = run_library_command(lib_env, *args, **kwargs)
 
-        #midlewares needs finish its work and they see only cli_env
-        #so we need reflect some changes to cli_env
+        # midlewares needs finish its work and they see only cli_env
+        # so we need reflect some changes to cli_env
         lib_env_to_cli_env(lib_env, cli_env)
 
         return lib_call_result
@@ -87,11 +91,15 @@ def bind(cli_env, run_with_middleware, run_library_command):
 
     return decorated_run
 
+
 def bind_all(env, run_with_middleware, dictionary):
-    return wrapper(dict(
-        (exposed_fn, bind(env, run_with_middleware, library_fn))
-        for exposed_fn, library_fn in dictionary.items()
-    ))
+    return wrapper(
+        dict(
+            (exposed_fn, bind(env, run_with_middleware, library_fn))
+            for exposed_fn, library_fn in dictionary.items()
+        )
+    )
+
 
 def get_module(env, middleware_factory, name):
     if name not in _CACHE:
@@ -121,7 +129,7 @@ def load_module(env, middleware_factory, name):
                 "add_permission": acl.add_permission,
                 "remove_permission": acl.remove_permission,
                 "get_config": acl.get_config,
-            }
+            },
         )
 
     if name == "alert":
@@ -136,15 +144,14 @@ def load_module(env, middleware_factory, name):
                 "update_recipient": alert.update_recipient,
                 "remove_recipient": alert.remove_recipient,
                 "get_all_alerts": alert.get_all_alerts,
-            }
+            },
         )
 
     if name == "booth":
         return bind_all(
             env,
             middleware.build(
-                middleware_factory.booth_conf,
-                middleware_factory.cib
+                middleware_factory.booth_conf, middleware_factory.cib
             ),
             {
                 "config_setup": booth.config_setup,
@@ -164,7 +171,7 @@ def load_module(env, middleware_factory, name):
                 "get_status": booth.get_status,
                 "ticket_grant": booth.ticket_grant,
                 "ticket_revoke": booth.ticket_revoke,
-            }
+            },
         )
 
     if name == "cluster":
@@ -181,7 +188,7 @@ def load_module(env, middleware_factory, name):
                 "setup": cluster.setup,
                 "update_link": cluster.update_link,
                 "verify": cluster.verify,
-            }
+            },
         )
 
     if name == "dr":
@@ -193,7 +200,7 @@ def load_module(env, middleware_factory, name):
                 "destroy": dr.destroy,
                 "set_recovery_site": dr.set_recovery_site,
                 "status_all_sites_plaintext": dr.status_all_sites_plaintext,
-            }
+            },
         )
 
     if name == "remote_node":
@@ -208,39 +215,39 @@ def load_module(env, middleware_factory, name):
                 "node_add_guest": remote_node.node_add_guest,
                 "node_remove_remote": remote_node.node_remove_remote,
                 "node_remove_guest": remote_node.node_remove_guest,
-            }
+            },
         )
 
-    if name == 'constraint_colocation':
+    if name == "constraint_colocation":
         return bind_all(
             env,
             middleware.build(middleware_factory.cib),
             {
-                'set': constraint_colocation.create_with_set,
-                'show': constraint_colocation.show,
-            }
+                "set": constraint_colocation.create_with_set,
+                "show": constraint_colocation.show,
+            },
         )
 
-    if name == 'constraint_order':
+    if name == "constraint_order":
         return bind_all(
             env,
             middleware.build(middleware_factory.cib),
             {
-                'set': constraint_order.create_with_set,
-                'show': constraint_order.show,
-            }
+                "set": constraint_order.create_with_set,
+                "show": constraint_order.show,
+            },
         )
 
-    if name == 'constraint_ticket':
+    if name == "constraint_ticket":
         return bind_all(
             env,
             middleware.build(middleware_factory.cib),
             {
-                'set': constraint_ticket.create_with_set,
-                'show': constraint_ticket.show,
-                'add': constraint_ticket.create,
-                'remove': constraint_ticket.remove,
-            }
+                "set": constraint_ticket.create_with_set,
+                "show": constraint_ticket.show,
+                "add": constraint_ticket.create,
+                "remove": constraint_ticket.remove,
+            },
         )
 
     if name == "fencing_topology":
@@ -251,10 +258,11 @@ def load_module(env, middleware_factory, name):
                 "add_level": fencing_topology.add_level,
                 "get_config": fencing_topology.get_config,
                 "remove_all_levels": fencing_topology.remove_all_levels,
-                "remove_levels_by_params":
-                    fencing_topology.remove_levels_by_params,
+                "remove_levels_by_params": (
+                    fencing_topology.remove_levels_by_params
+                ),
                 "verify": fencing_topology.verify,
-            }
+            },
         )
 
     if name == "node":
@@ -262,25 +270,26 @@ def load_module(env, middleware_factory, name):
             env,
             middleware.build(middleware_factory.cib),
             {
-                "maintenance_unmaintenance_all":
-                    node.maintenance_unmaintenance_all,
-                "maintenance_unmaintenance_list":
-                    node.maintenance_unmaintenance_list,
-                "maintenance_unmaintenance_local":
-                    node.maintenance_unmaintenance_local,
+                "maintenance_unmaintenance_all": (
+                    node.maintenance_unmaintenance_all
+                ),
+                "maintenance_unmaintenance_list": (
+                    node.maintenance_unmaintenance_list
+                ),
+                "maintenance_unmaintenance_local": (
+                    node.maintenance_unmaintenance_local
+                ),
                 "standby_unstandby_all": node.standby_unstandby_all,
                 "standby_unstandby_list": node.standby_unstandby_list,
                 "standby_unstandby_local": node.standby_unstandby_local,
-            }
+            },
         )
 
     if name == "pcsd":
         return bind_all(
             env,
             middleware.build(),
-            {
-                "synchronize_ssl_certificate": pcsd.synchronize_ssl_certificate,
-            }
+            {"synchronize_ssl_certificate": pcsd.synchronize_ssl_certificate},
         )
 
     if name == "qdevice":
@@ -298,12 +307,14 @@ def load_module(env, middleware_factory, name):
                 "disable": qdevice.qdevice_disable,
                 # following commands are internal use only, called from pcsd
                 "client_net_setup": qdevice.client_net_setup,
-                "client_net_import_certificate":
-                    qdevice.client_net_import_certificate,
+                "client_net_import_certificate": (
+                    qdevice.client_net_import_certificate
+                ),
                 "client_net_destroy": qdevice.client_net_destroy,
-                "sign_net_cert_request":
-                    qdevice.qdevice_net_sign_certificate_request,
-            }
+                "sign_net_cert_request": (
+                    qdevice.qdevice_net_sign_certificate_request
+                ),
+            },
         )
 
     if name == "quorum":
@@ -320,7 +331,7 @@ def load_module(env, middleware_factory, name):
                 "status": quorum.status_text,
                 "status_device": quorum.status_device_text,
                 "update_device": quorum.update_device,
-            }
+            },
         )
 
     if name == "resource_agent":
@@ -330,11 +341,12 @@ def load_module(env, middleware_factory, name):
             {
                 "describe_agent": resource_agent.describe_agent,
                 "list_agents": resource_agent.list_agents,
-                "list_agents_for_standard_and_provider":
-                    resource_agent.list_agents_for_standard_and_provider,
+                "list_agents_for_standard_and_provider": (
+                    resource_agent.list_agents_for_standard_and_provider
+                ),
                 "list_ocf_providers": resource_agent.list_ocf_providers,
                 "list_standards": resource_agent.list_standards,
-            }
+            },
         )
 
     if name == "resource":
@@ -361,23 +373,22 @@ def load_module(env, middleware_factory, name):
                 "group_add": resource.group_add,
                 "manage": resource.manage,
                 "move": resource.move,
-                "get_resource_relations_tree":
-                    resource.get_resource_relations_tree,
+                "get_resource_relations_tree": (
+                    resource.get_resource_relations_tree
+                ),
                 "unmanage": resource.unmanage,
                 "unmove_unban": resource.unmove_unban,
-            }
+            },
         )
 
     if name == "cib_options":
         return bind_all(
             env,
-            middleware.build(
-                middleware_factory.cib,
-            ),
+            middleware.build(middleware_factory.cib,),
             {
                 "set_operations_defaults": cib_options.set_operations_defaults,
                 "set_resources_defaults": cib_options.set_resources_defaults,
-            }
+            },
         )
 
     if name == "status":
@@ -388,10 +399,10 @@ def load_module(env, middleware_factory, name):
                 middleware_factory.corosync_conf_existing,
             ),
             {
-                "full_cluster_status_plaintext":
+                "full_cluster_status_plaintext": (
                     status.full_cluster_status_plaintext
-                ,
-            }
+                ),
+            },
         )
 
     if name == "stonith":
@@ -407,9 +418,8 @@ def load_module(env, middleware_factory, name):
                 "history_get_text": stonith.history_get_text,
                 "history_cleanup": stonith.history_cleanup,
                 "history_update": stonith.history_update,
-            }
+            },
         )
-
 
     if name == "sbd":
         return bind_all(
@@ -424,10 +434,11 @@ def load_module(env, middleware_factory, name):
                 "initialize_block_devices": sbd.initialize_block_devices,
                 "get_local_devices_info": sbd.get_local_devices_info,
                 "set_message": sbd.set_message,
-                "get_local_available_watchdogs":
-                    sbd.get_local_available_watchdogs,
+                "get_local_available_watchdogs": (
+                    sbd.get_local_available_watchdogs
+                ),
                 "test_local_watchdog": sbd.test_local_watchdog,
-            }
+            },
         )
 
     if name == "stonith_agent":
@@ -437,12 +448,13 @@ def load_module(env, middleware_factory, name):
             {
                 "describe_agent": stonith_agent.describe_agent,
                 "list_agents": stonith_agent.list_agents,
-            }
+            },
         )
 
     raise Exception("No library part '{0}'".format(name))
 
-class Library():
+
+class Library:
     # pylint: disable=too-few-public-methods
     def __init__(self, env, middleware_factory):
         self.env = env

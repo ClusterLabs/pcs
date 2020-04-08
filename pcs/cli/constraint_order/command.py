@@ -17,11 +17,8 @@ def create_with_set(lib, argv, modifiers):
       * -f - CIB file
     """
     modifiers.ensure_only_supported("--force", "-f")
-    command.create_with_set(
-        lib.constraint_order.set,
-        argv,
-        modifiers
-    )
+    command.create_with_set(lib.constraint_order.set, argv, modifiers)
+
 
 def show(lib, argv, modifiers):
     """
@@ -37,9 +34,13 @@ def show(lib, argv, modifiers):
     modifiers.ensure_only_supported("-f", "--full")
     if argv:
         raise CmdLineInputError()
-    print("\n".join(command.show(
-        "Ordering Constraints:",
-        lib.constraint_order.show,
-        constraints.order_plain,
-        modifiers,
-    )))
+    print(
+        "\n".join(
+            command.show(
+                "Ordering Constraints:",
+                lib.constraint_order.show,
+                constraints.order_plain,
+                modifiers,
+            )
+        )
+    )

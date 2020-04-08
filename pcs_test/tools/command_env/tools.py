@@ -13,7 +13,7 @@ def get_env_tools(
     default_wait_error_returncode=WAIT_TIMEOUT_EXPIRED_RETURNCODE,
     exception_reports_in_processor_by_default=True,
     local_extensions=None,
-    booth_env=None
+    booth_env=None,
 ):
     # pylint: disable=unused-argument
     """
@@ -29,9 +29,9 @@ def get_env_tools(
 
     env_assistant = EnvAssistant(
         test_case=test_case,
-        exception_reports_in_processor_by_default
-            =exception_reports_in_processor_by_default
-        ,
+        exception_reports_in_processor_by_default=(
+            exception_reports_in_processor_by_default
+        ),
     )
 
     runner = env_assistant.config.runner
@@ -43,8 +43,7 @@ def get_env_tools(
         # pylint: disable=invalid-name
         for name, ExtensionClass in local_extensions.items():
             env_assistant.config.add_extension(
-                name,
-                ExtensionClass,
+                name, ExtensionClass,
             )
 
     return env_assistant, env_assistant.config

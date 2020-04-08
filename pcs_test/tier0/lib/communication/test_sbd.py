@@ -7,11 +7,13 @@ class EnableSbdService(TestCase):
         pcs_test.tier0.lib.commands.sbd.test_enable_sbd
     """
 
+
 class DisableSbdService(TestCase):
     """
     tested in:
         pcs_test.tier0.lib.commands.sbd.test_disable_sbd.DisableSbd
     """
+
 
 class RemoveStonithWatchdogTimeout(TestCase):
     """
@@ -19,17 +21,20 @@ class RemoveStonithWatchdogTimeout(TestCase):
         pcs_test.tier0.lib.commands.sbd.test_enable_sbd
     """
 
+
 class SetStonithWatchdogTimeoutToZero(TestCase):
     """
     tested in:
         pcs_test.tier0.lib.commands.sbd.test_disable_sbd.DisableSbd
     """
 
+
 class SetSbdConfig(TestCase):
     """
     tested in:
         pcs_test.tier0.lib.commands.sbd.test_enable_sbd
     """
+
 
 class GetSbdConfig(TestCase):
     """
@@ -38,12 +43,14 @@ class GetSbdConfig(TestCase):
             .GetClusterSbdConfig
     """
 
+
 class GetSbdStatus(TestCase):
     """
     tested in:
         pcs_test.tier0.lib.commands.sbd.test_get_cluster_sbd_status
             .GetClusterSbdStatus
     """
+
 
 class CheckSbd(TestCase):
     """

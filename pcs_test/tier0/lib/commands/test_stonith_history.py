@@ -41,10 +41,7 @@ class HistoryGetText(TestCase):
         stdout = "some output\n"
         stderr = "some error\n"
         self.config.runner.pcmk.fence_history_get(
-            stdout=stdout,
-            stderr=stderr,
-            returncode=1,
-            node="*"
+            stdout=stdout, stderr=stderr, returncode=1, node="*"
         )
         self.env_assist.assert_raise_library_error(
             lambda: stonith.history_get_text(self.env_assist.get_env()),
@@ -55,7 +52,7 @@ class HistoryGetText(TestCase):
                     reason=(stderr + stdout).strip(),
                 )
             ],
-            expected_in_processor=False
+            expected_in_processor=False,
         )
 
     def test_history_not_supported(self):
@@ -66,12 +63,8 @@ class HistoryGetText(TestCase):
         )
         self.env_assist.assert_raise_library_error(
             lambda: stonith.history_get_text(self.env_assist.get_env()),
-            [
-                fixture.error(
-                    report_codes.FENCE_HISTORY_NOT_SUPPORTED,
-                )
-            ],
-            expected_in_processor=False
+            [fixture.error(report_codes.FENCE_HISTORY_NOT_SUPPORTED,)],
+            expected_in_processor=False,
         )
 
 
@@ -97,10 +90,7 @@ class HistoryCleanup(TestCase):
         stdout = "some output\n"
         stderr = "some error\n"
         self.config.runner.pcmk.fence_history_cleanup(
-            stdout=stdout,
-            stderr=stderr,
-            returncode=1,
-            node="*"
+            stdout=stdout, stderr=stderr, returncode=1, node="*"
         )
         self.env_assist.assert_raise_library_error(
             lambda: stonith.history_cleanup(self.env_assist.get_env()),
@@ -111,7 +101,7 @@ class HistoryCleanup(TestCase):
                     reason=(stderr + stdout).strip(),
                 )
             ],
-            expected_in_processor=False
+            expected_in_processor=False,
         )
 
     def test_history_not_supported(self):
@@ -122,12 +112,8 @@ class HistoryCleanup(TestCase):
         )
         self.env_assist.assert_raise_library_error(
             lambda: stonith.history_cleanup(self.env_assist.get_env()),
-            [
-                fixture.error(
-                    report_codes.FENCE_HISTORY_NOT_SUPPORTED,
-                )
-            ],
-            expected_in_processor=False
+            [fixture.error(report_codes.FENCE_HISTORY_NOT_SUPPORTED,)],
+            expected_in_processor=False,
         )
 
 
@@ -146,9 +132,7 @@ class HistoryUpdate(TestCase):
         stdout = "some output\n"
         stderr = "some error\n"
         self.config.runner.pcmk.fence_history_update(
-            stdout=stdout,
-            stderr=stderr,
-            returncode=1,
+            stdout=stdout, stderr=stderr, returncode=1,
         )
         self.env_assist.assert_raise_library_error(
             lambda: stonith.history_update(self.env_assist.get_env()),
@@ -159,7 +143,7 @@ class HistoryUpdate(TestCase):
                     reason=(stderr + stdout).strip(),
                 )
             ],
-            expected_in_processor=False
+            expected_in_processor=False,
         )
 
     def test_history_not_supported(self):
@@ -170,10 +154,6 @@ class HistoryUpdate(TestCase):
         )
         self.env_assist.assert_raise_library_error(
             lambda: stonith.history_update(self.env_assist.get_env()),
-            [
-                fixture.error(
-                    report_codes.FENCE_HISTORY_NOT_SUPPORTED,
-                )
-            ],
-            expected_in_processor=False
+            [fixture.error(report_codes.FENCE_HISTORY_NOT_SUPPORTED,)],
+            expected_in_processor=False,
         )

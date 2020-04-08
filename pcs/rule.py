@@ -9,16 +9,12 @@ from pcs import utils
 
 # main functions
 
+
 def parse_argv(argv, extra_options=None):
     """
     Commandline options: no options
     """
-    options = {
-        "id": None,
-        "role": None,
-        "score": None,
-        "score-attribute": None
-    }
+    options = {"id": None, "role": None, "score": None, "score-attribute": None}
     if extra_options:
         options.update(dict(extra_options))
 
@@ -35,6 +31,7 @@ def parse_argv(argv, extra_options=None):
             argv.insert(0, option)
             break
     return options, argv
+
 
 def dom_rule_add(dom_element, options, rule_argv):
     # pylint: disable=too-many-branches
@@ -57,7 +54,7 @@ def dom_rule_add(dom_element, options, rule_argv):
             "invalid role '%s', use 'master' or 'slave'" % options["role"]
         )
     if options.get("id"):
-        id_valid, id_error = utils.validate_xml_id(options["id"], 'rule id')
+        id_valid, id_error = utils.validate_xml_id(options["id"], "rule id")
         if not id_valid:
             utils.err(id_error)
         if utils.does_id_exist(dom_element.ownerDocument, options["id"]):
@@ -73,12 +70,11 @@ def dom_rule_add(dom_element, options, rule_argv):
         dom_rule = CibBuilder().build(
             dom_element,
             RuleParser().parse(TokenPreprocessor().run(rule_argv)),
-            options.get("id")
+            options.get("id"),
         )
     except SyntaxError as e:
         utils.err(
-            "'%s' is not a valid rule expression: %s"
-            % (" ".join(rule_argv), e)
+            "'%s' is not a valid rule expression: %s" % (" ".join(rule_argv), e)
         )
     except UnexpectedEndOfInput as e:
         utils.err(
@@ -106,23 +102,22 @@ def dom_rule_add(dom_element, options, rule_argv):
 
 
 class ExportDetailed:
-
     def __init__(self):
         self.show_detail = False
         self.rule_expired = False
 
-    def get_string(
-            self, rule, rule_expired, show_detail, indent=""
-    ):
+    def get_string(self, rule, rule_expired, show_detail, indent=""):
         self.show_detail = show_detail
         self.rule_expired = rule_expired
         return indent + ("\n" + indent).join(self.list_rule(rule))
 
     def list_rule(self, rule):
-        rule_parts = ["Rule{0}: {1}".format(
-            " (expired)" if self.rule_expired else "",
-            " ".join(self._list_attributes(rule))
-        )]
+        rule_parts = [
+            "Rule{0}: {1}".format(
+                " (expired)" if self.rule_expired else "",
+                " ".join(self._list_attributes(rule)),
+            )
+        ]
         for child in rule.childNodes:
             if child.nodeType == xml.dom.minidom.Node.TEXT_NODE:
                 continue
@@ -138,7 +133,7 @@ class ExportDetailed:
         if "value" in expression.attributes.keys():
             exp_parts = [
                 expression.getAttribute("attribute"),
-                expression.getAttribute("operation")
+                expression.getAttribute("operation"),
             ]
             if expression.hasAttribute("type"):
                 exp_parts.append(expression.getAttribute("type"))
@@ -146,7 +141,7 @@ class ExportDetailed:
         else:
             exp_parts = [
                 expression.getAttribute("operation"),
-                expression.getAttribute("attribute")
+                expression.getAttribute("attribute"),
             ]
         if self.show_detail:
             exp_parts.append("(id:%s)" % expression.getAttribute("id"))
@@ -163,7 +158,7 @@ class ExportDetailed:
                 exp_parts.append("(id:%s)" % expression.getAttribute("id"))
             return self.indent_append(
                 [" ".join(exp_parts)],
-                ["Date Spec: %s" % " ".join(date_spec_parts)]
+                ["Date Spec: %s" % " ".join(date_spec_parts)],
             )
         if operation == "in_range":
             exp_parts = ["date", "in_range"]
@@ -180,8 +175,7 @@ class ExportDetailed:
             result = ["Expression: %s" % " ".join(exp_parts)]
             if durations:
                 self.indent_append(
-                    result,
-                    ["Duration: %s" % " ".join(duration_parts)]
+                    result, ["Duration: %s" % " ".join(duration_parts)]
                 )
             return result
         exp_parts = ["date", expression.getAttribute("operation")]
@@ -205,8 +199,8 @@ class ExportDetailed:
             target.append(indent + part)
         return target
 
-class ExportAsExpression:
 
+class ExportAsExpression:
     def __init__(self):
         self.normalize = False
 
@@ -234,7 +228,7 @@ class ExportAsExpression:
         if "value" in expression.attributes.keys():
             exp_parts = [
                 expression.getAttribute("attribute"),
-                expression.getAttribute("operation")
+                expression.getAttribute("operation"),
             ]
             if expression.hasAttribute("type"):
                 exp_parts.append(expression.getAttribute("type"))
@@ -247,7 +241,7 @@ class ExportAsExpression:
         else:
             exp_parts = [
                 expression.getAttribute("operation"),
-                expression.getAttribute("attribute")
+                expression.getAttribute("attribute"),
             ]
         return " ".join(exp_parts)
 
@@ -287,6 +281,7 @@ class ExportAsExpression:
 
 # generic parser
 
+
 class SymbolBase:
 
     END = "{end}"
@@ -317,7 +312,6 @@ class SymbolBase:
 
 
 class SymbolLiteral(SymbolBase):
-
     def __init__(self, value):
         self.value = value
 
@@ -355,22 +349,18 @@ class SymbolOperator(SymbolBase):
     def is_allowed_child(self, child_symbol, child_position):
         return (
             not self.allowed_child_ids
-            or
-            not self.allowed_child_ids[child_position]
-            or
-            child_symbol.symbol_id in self.allowed_child_ids[child_position]
+            or not self.allowed_child_ids[child_position]
+            or child_symbol.symbol_id in self.allowed_child_ids[child_position]
         )
 
     def __str__(self):
-        string = " ".join([
-            str(part)
-            for part in [self.symbol_id] + self.children
-        ])
+        string = " ".join(
+            [str(part) for part in [self.symbol_id] + self.children]
+        )
         return "(" + string + ")"
 
 
 class SymbolPrefix(SymbolOperator):
-
     def null_denotation(self):
         self.children.append(self.expression_func(self.left_binding_power))
         if not self.is_allowed_child(self.children[0], 0):
@@ -396,7 +386,6 @@ class SymbolType(SymbolPrefix):
 
 
 class SymbolInfix(SymbolOperator):
-
     def left_denotation(self, left):
         self.children.append(left)
         if not self.is_allowed_child(self.children[0], 0):
@@ -437,14 +426,13 @@ class SymbolTernary(SymbolOperator):
                 % (
                     self.children[2].label(),
                     self.symbol_id,
-                    self.symbol_second_id
-                  )
+                    self.symbol_second_id,
+                )
             )
         return self
 
 
 class SymbolTable:
-
     def __init__(self):
         self.table = dict()
 
@@ -455,12 +443,18 @@ class SymbolTable:
         return self.table[symbol_id]
 
     def new_symbol(
-        self, symbol_id, superclass, binding_power=0, expression_func=None,
-        advance_func=None
+        self,
+        symbol_id,
+        superclass,
+        binding_power=0,
+        expression_func=None,
+        advance_func=None,
     ):
         if not self.has_symbol(symbol_id):
+
             class SymbolClass(superclass):
                 pass
+
             # enforce str to be both python2 and python3 compatible
             SymbolClass.__name__ = str("symbol_" + symbol_id)
             SymbolClass.symbol_id = symbol_id
@@ -475,7 +469,6 @@ class SymbolTable:
 
 
 class Parser:
-
     def __init__(self):
         self.current_symbol = None
         self.current_symbol_index = -1
@@ -505,8 +498,11 @@ class Parser:
     def new_symbol_ternary(self, symbol_id, second_id, binding_power):
         self.symbol_table.new_symbol(second_id, SymbolBase)
         symbol_class = self.symbol_table.new_symbol(
-            symbol_id, SymbolTernary, binding_power, self.expression,
-            self.advance
+            symbol_id,
+            SymbolTernary,
+            binding_power,
+            self.expression,
+            self.advance,
         )
         symbol_class.symbol_second_id = second_id
         return symbol_class
@@ -523,14 +519,9 @@ class Parser:
         symbolized_program = list()
         literal_class = self.symbol_table.get_symbol(SymbolBase.LITERAL)
         for token in program:
-            if (
-                self.symbol_table.has_symbol(token)
-                and
-                (
-                    not symbolized_program
-                    or
-                    not isinstance(symbolized_program[-1], SymbolType)
-                )
+            if self.symbol_table.has_symbol(token) and (
+                not symbolized_program
+                or not isinstance(symbolized_program[-1], SymbolType)
             ):
                 symbolized = self.symbol_table.get_symbol(token)()
             else:
@@ -544,8 +535,7 @@ class Parser:
     def advance(self, expected_symbol_id=None):
         if (
             expected_symbol_id
-            and
-            self.current_symbol.symbol_id != expected_symbol_id
+            and self.current_symbol.symbol_id != expected_symbol_id
         ):
             if self.current_symbol.is_end():
                 raise SyntaxError("missing '%s'" % expected_symbol_id)
@@ -596,11 +586,19 @@ class SyntaxError(ParserException):
 
 # rule parser specific code
 
+
 class DateCommonValue:
 
     allowed_items = [
-        "hours", "monthdays", "weekdays", "yeardays", "months", "weeks",
-        "years", "weekyears", "moon",
+        "hours",
+        "monthdays",
+        "weekdays",
+        "yeardays",
+        "months",
+        "weeks",
+        "years",
+        "weekyears",
+        "moon",
     ]
     KEYWORD: Optional[str] = None
 
@@ -608,9 +606,7 @@ class DateCommonValue:
         self.parts = dict()
         for part in parts_string.split():
             if not self.accepts_part(part):
-                raise SyntaxError(
-                    "unexpected '%s' in %s" % (part, keyword)
-                )
+                raise SyntaxError("unexpected '%s' in %s" % (part, keyword))
             if "=" not in part:
                 raise SyntaxError(
                     "missing =value after '%s' in %s" % (part, keyword)
@@ -654,14 +650,14 @@ class DateSpecValue(DateCommonValue):
     KEYWORD = "date-spec"
     part_re = re.compile(r"^(?P<since>\d+)(-(?P<until>\d+))?$")
     part_limits = {
-        "hours" : (0, 23),
-        "monthdays" : (0, 31),
-        "weekdays" : (1, 7),
-        "yeardays" : (1, 366),
-        "months" : (1, 12),
-        "weeks" : (1, 53),
-        "weekyears" : (1, 53),
-        "moon" : (0, 7),
+        "hours": (0, 23),
+        "monthdays": (0, 31),
+        "weekdays": (1, 7),
+        "yeardays": (1, 366),
+        "months": (1, 12),
+        "weeks": (1, 53),
+        "weekyears": (1, 53),
+        "moon": (0, 7),
     }
 
     def __init__(self, parts_string):
@@ -731,18 +727,14 @@ class SymbolTernaryInRange(SymbolTernary):
     allowed_child_ids = [
         [SymbolBase.LITERAL],
         [SymbolBase.LITERAL],
-        [SymbolBase.LITERAL, DateDurationValue.KEYWORD]
+        [SymbolBase.LITERAL, DateDurationValue.KEYWORD],
     ]
     symbol_second_id = "to"
 
     def is_allowed_child(self, child_symbol, child_position):
-        return (
-            super(SymbolTernaryInRange, self).is_allowed_child(
-                child_symbol, child_position
-            )
-            and
-            (child_position != 0 or child_symbol.value == "date")
-        )
+        return super(SymbolTernaryInRange, self).is_allowed_child(
+            child_symbol, child_position
+        ) and (child_position != 0 or child_symbol.value == "date")
 
     def left_denotation(self, left):
         super(SymbolTernaryInRange, self).left_denotation(left)
@@ -773,7 +765,7 @@ class RuleParser(Parser):
             symbol_class = self.new_symbol_infix(operator, 50)
             symbol_class.allowed_child_ids = [
                 [SymbolBase.LITERAL],
-                [SymbolBase.LITERAL] + RuleParser.simple_type_list
+                [SymbolBase.LITERAL] + RuleParser.simple_type_list,
             ]
 
         self.symbol_table.new_symbol(
@@ -811,23 +803,18 @@ class RuleParser(Parser):
 
     def parse(self, program):
         syntactic_tree = super(RuleParser, self).parse(program)
-        if (
-            syntactic_tree.is_literal()
-            or
-            (
-                isinstance(syntactic_tree, SymbolType)
-                and not
-                (
-                    isinstance(syntactic_tree, SymbolTypeDateCommon)
-                    and
-                    syntactic_tree.date_value_class == DateSpecValue
-                )
+        if syntactic_tree.is_literal() or (
+            isinstance(syntactic_tree, SymbolType)
+            and not (
+                isinstance(syntactic_tree, SymbolTypeDateCommon)
+                and syntactic_tree.date_value_class == DateSpecValue
             )
         ):
             raise SyntaxError(
                 "missing one of '%s'"
                 % "', '".join(
-                    RuleParser.comparison_list + RuleParser.prefix_list
+                    RuleParser.comparison_list
+                    + RuleParser.prefix_list
                     + [DateSpecValue.KEYWORD]
                 )
             )
@@ -835,8 +822,10 @@ class RuleParser(Parser):
 
     def new_symbol_type_date(self, date_value_class, binding_power):
         symbol_class = self.symbol_table.new_symbol(
-            date_value_class.KEYWORD, SymbolTypeDateCommon, binding_power,
-            self.expression
+            date_value_class.KEYWORD,
+            SymbolTypeDateCommon,
+            binding_power,
+            self.expression,
         )
         symbol_class.date_value_class = date_value_class
         return symbol_class
@@ -844,13 +833,13 @@ class RuleParser(Parser):
 
 # cib builder
 
-class CibBuilder:
 
+class CibBuilder:
     def build(self, dom_element, syntactic_tree, rule_id=None):
         dom_rule = self.add_element(
             dom_element,
             "rule",
-            rule_id if rule_id else dom_element.getAttribute("id") + "-rule"
+            rule_id if rule_id else dom_element.getAttribute("id") + "-rule",
         )
         self.build_rule(dom_rule, syntactic_tree)
         return dom_rule
@@ -861,16 +850,13 @@ class CibBuilder:
                 self.build_boolean(dom_rule, syntactic_tree)
             elif (
                 syntactic_tree.symbol_id in RuleParser.date_comparison_list
-                and
-                syntactic_tree.children[0].value == 'date'
-                and
-                syntactic_tree.children[1].is_literal()
+                and syntactic_tree.children[0].value == "date"
+                and syntactic_tree.children[1].is_literal()
             ):
                 self.build_date_expression(dom_rule, syntactic_tree)
             elif (
                 isinstance(syntactic_tree, SymbolTypeDateCommon)
-                and
-                syntactic_tree.date_value_class == DateSpecValue
+                and syntactic_tree.date_value_class == DateSpecValue
             ):
                 self.build_datespec(dom_rule, syntactic_tree)
             else:
@@ -882,22 +868,20 @@ class CibBuilder:
         dom_expression = self.add_element(
             dom_element,
             "date_expression",
-            dom_element.getAttribute("id") + "-expr"
+            dom_element.getAttribute("id") + "-expr",
         )
         dom_expression.setAttribute("operation", "date_spec")
         dom_datespec = self.add_element(
             dom_expression,
             "date_spec",
-            dom_expression.getAttribute("id") + "-datespec"
+            dom_expression.getAttribute("id") + "-datespec",
         )
         for key, value in syntactic_tree.children[0].value.parts.items():
             dom_datespec.setAttribute(key, value)
 
     def build_expression(self, dom_element, syntactic_tree):
         dom_expression = self.add_element(
-            dom_element,
-            "expression",
-            dom_element.getAttribute("id") + "-expr"
+            dom_element, "expression", dom_element.getAttribute("id") + "-expr"
         )
         dom_expression.setAttribute("operation", syntactic_tree.symbol_id)
         dom_expression.setAttribute(
@@ -912,7 +896,7 @@ class CibBuilder:
                         "number"
                         if child.symbol_id == "integer"
                         else child.symbol_id
-                    )
+                    ),
                 )
                 child = child.children[0]
             dom_expression.setAttribute("value", child.value)
@@ -921,30 +905,28 @@ class CibBuilder:
         dom_expression = self.add_element(
             dom_element,
             "date_expression",
-            dom_element.getAttribute("id") + "-expr"
+            dom_element.getAttribute("id") + "-expr",
         )
         dom_expression.setAttribute("operation", syntactic_tree.symbol_id)
-        if syntactic_tree.symbol_id == 'gt':
+        if syntactic_tree.symbol_id == "gt":
             dom_expression.setAttribute(
                 "start", syntactic_tree.children[1].value
             )
-        elif syntactic_tree.symbol_id == 'lt':
-            dom_expression.setAttribute(
-                "end", syntactic_tree.children[1].value
-            )
-        elif syntactic_tree.symbol_id == 'in_range':
+        elif syntactic_tree.symbol_id == "lt":
+            dom_expression.setAttribute("end", syntactic_tree.children[1].value)
+        elif syntactic_tree.symbol_id == "in_range":
             dom_expression.setAttribute(
                 "start", syntactic_tree.children[1].value
             )
             if (
                 isinstance(syntactic_tree.children[2], SymbolTypeDateCommon)
-                and
-                syntactic_tree.children[2].date_value_class == DateDurationValue
+                and syntactic_tree.children[2].date_value_class
+                == DateDurationValue
             ):
                 dom_duration = self.add_element(
                     dom_expression,
                     "duration",
-                    dom_expression.getAttribute("id") + "-duration"
+                    dom_expression.getAttribute("id") + "-duration",
                 )
                 duration = syntactic_tree.children[2].children[0].value
                 for key, value in duration.parts.items():
@@ -959,13 +941,12 @@ class CibBuilder:
         for subtree in syntactic_tree.children:
             if (
                 subtree.symbol_id in RuleParser.boolean_list
-                and
-                subtree.symbol_id != syntactic_tree.symbol_id
+                and subtree.symbol_id != syntactic_tree.symbol_id
             ):
                 self.build(
                     dom_element,
                     subtree,
-                    dom_element.getAttribute("id") + "-rule"
+                    dom_element.getAttribute("id") + "-rule",
                 )
             else:
                 self.build_rule(dom_element, subtree)
@@ -988,13 +969,11 @@ class InvalidSyntacticTree(CibBuilderException):
 
 # token preprocessing
 
-class TokenPreprocessor:
 
+class TokenPreprocessor:
     def run(self, token_list):
         return self.convert_legacy_date(
-            self.join_date_common(
-                self.separate_parenthesis(token_list)
-            )
+            self.join_date_common(self.separate_parenthesis(token_list))
         )
 
     @staticmethod
@@ -1003,8 +982,7 @@ class TokenPreprocessor:
         for token in input_list:
             if not (
                 RuleParser.parenthesis_open in token
-                or
-                RuleParser.parenthesis_close in token
+                or RuleParser.parenthesis_close in token
             ):
                 output_list.append(token)
             else:
@@ -1012,7 +990,7 @@ class TokenPreprocessor:
                 for char in token:
                     if char in [
                         RuleParser.parenthesis_open,
-                        RuleParser.parenthesis_close
+                        RuleParser.parenthesis_close,
                     ]:
                         if part:
                             output_list.append("".join(part))
@@ -1035,10 +1013,9 @@ class TokenPreprocessor:
                     token_parts.append(token)
                 elif (
                     token == "operation=date_spec"
-                    and
-                    token_parts[0] == DateSpecValue.KEYWORD
+                    and token_parts[0] == DateSpecValue.KEYWORD
                 ):
-                    pass # gracefully ignoring for backwards compatibility
+                    pass  # gracefully ignoring for backwards compatibility
                 else:
                     in_datecommon = False
                     output_list.append(token_parts[0])
@@ -1068,9 +1045,9 @@ class TokenPreprocessor:
             if in_date:
                 token_parts.append(token)
                 if token.startswith("start="):
-                    date_start = token[len("start="):]
+                    date_start = token[len("start=") :]
                 elif token.startswith("end="):
-                    date_end = token[len("end="):]
+                    date_end = token[len("end=") :]
                 else:
                     if token == "gt" and date_start and not date_end:
                         output_list.extend(["date", "gt", date_start])
@@ -1085,8 +1062,8 @@ class TokenPreprocessor:
                     token_parts = []
                     date_start = date_end = ""
                     in_date = False
-            elif token == 'date':
-                token_parts = ['date']
+            elif token == "date":
+                token_parts = ["date"]
                 in_date = True
             else:
                 output_list.append(token)

@@ -8,6 +8,7 @@ from urllib.parse import urlencode
 # for more info.
 try:
     import signal
+
     signal.signal(signal.SIGPIPE, signal.SIG_IGN)
 except ImportError:
     pass
@@ -30,7 +31,7 @@ class HostNotFound(Exception):
         self.name = name
 
 
-class NodeTargetFactory():
+class NodeTargetFactory:
     def __init__(self, known_hosts):
         self._known_hosts = known_hosts
 
@@ -66,19 +67,16 @@ class RequestData(
         )
 
 
-
-class RequestTarget(namedtuple(
-    "RequestTarget", ["label", "token", "dest_list"]
-)):
+class RequestTarget(
+    namedtuple("RequestTarget", ["label", "token", "dest_list"])
+):
     """
     This class represents target (host) for request to be performed on
     """
 
     def __new__(cls, label, token=None, dest_list=()):
         if not dest_list:
-            dest_list = [
-                Destination(label, settings.pcsd_default_port)
-            ]
+            dest_list = [Destination(label, settings.pcsd_default_port)]
         return super(RequestTarget, cls).__new__(
             cls, label, token=token, dest_list=list(dest_list),
         )
@@ -97,7 +95,7 @@ class RequestTarget(namedtuple(
         return self.dest_list[0].addr
 
 
-class Request():
+class Request:
     """
     This class represents request. With usage of RequestTarget it provides
     interface for getting next available host to make request on.
@@ -131,7 +129,7 @@ class Request():
         return "https://{host}:{port}/{request}".format(
             host="[{0}]".format(addr) if ":" in addr else addr,
             port=(port if port else settings.pcsd_default_port),
-            request=self._data.action
+            request=self._data.action,
         )
 
     @property
@@ -165,7 +163,7 @@ class Request():
         return str("Request({0}, {1})").format(self._target, self._data)
 
 
-class Response():
+class Response:
     """
     This class represents response for request which is available as instance
     property.
@@ -250,7 +248,8 @@ class Response():
             self.response_code,
         )
 
-class NodeCommunicatorFactory():
+
+class NodeCommunicatorFactory:
     def __init__(self, communicator_logger, user, groups, request_timeout):
         self._logger = communicator_logger
         self._user = user
@@ -270,17 +269,17 @@ class NodeCommunicatorFactory():
         timeout = request_timeout if request_timeout else self._request_timeout
         return MultiaddressCommunicator(
             self._logger, self._user, self._groups, request_timeout=timeout
-
         )
 
 
-class Communicator():
+class Communicator:
     """
     This class provides simple interface for making parallel requests.
     The instances of this class are not thread-safe! It is intended to use it
     only in a single thread. Use an unique instance for each thread.
     """
-    curl_multi_select_timeout_default = 0.8 # in seconds
+
+    curl_multi_select_timeout_default = 0.8  # in seconds
 
     def __init__(self, communicator_logger, user, groups, request_timeout=None):
         self._logger = communicator_logger
@@ -370,8 +369,8 @@ class Communicator():
         while repeat:
             num_queued, ok_list, err_list = self._multi_handle.info_read()
             response_list.extend(
-                [Response.connection_successful(handle) for handle in ok_list] +
-                [
+                [Response.connection_successful(handle) for handle in ok_list]
+                + [
                     Response.connection_failure(handle, errno, error_msg)
                     for handle, errno, error_msg in err_list
                 ]
@@ -404,7 +403,7 @@ class Communicator():
             )
             # when value returned from select is -1, it timed out, so we can
             # wait
-            need_to_wait = (self._multi_handle.select(timeout) == -1)
+            need_to_wait = self._multi_handle.select(timeout) == -1
 
 
 class MultiaddressCommunicator(Communicator):
@@ -414,6 +413,7 @@ class MultiaddressCommunicator(Communicator):
     possible to connect to target using first hostname, it will use next one
     until connection will be successful or there is no host left.
     """
+
     def start_loop(self):
         for response in super(MultiaddressCommunicator, self).start_loop():
             if response.was_connected:
@@ -429,7 +429,7 @@ class MultiaddressCommunicator(Communicator):
                 yield response
 
 
-class CommunicatorLoggerInterface():
+class CommunicatorLoggerInterface:
     def log_request_start(self, request):
         raise NotImplementedError()
 
@@ -503,16 +503,12 @@ def _create_request_handle(request, cookies, timeout):
     handle.setopt(pycurl.DEBUGFUNCTION, __debug_callback)
     handle.setopt(pycurl.SSL_VERIFYHOST, 0)
     handle.setopt(pycurl.SSL_VERIFYPEER, 0)
-    handle.setopt(pycurl.NOSIGNAL, 1) # required for multi-threading
+    handle.setopt(pycurl.NOSIGNAL, 1)  # required for multi-threading
     handle.setopt(pycurl.HTTPHEADER, ["Expect: "])
     if cookies:
-        handle.setopt(
-            pycurl.COOKIE, _dict_to_cookies(cookies).encode("utf-8")
-        )
+        handle.setopt(pycurl.COOKIE, _dict_to_cookies(cookies).encode("utf-8"))
     if request.data:
-        handle.setopt(
-            pycurl.COPYPOSTFIELDS, request.data.encode("utf-8")
-        )
+        handle.setopt(pycurl.COPYPOSTFIELDS, request.data.encode("utf-8"))
     # add reference for request object and output bufers to handle, so later
     # we don't need to match these objects when they are returned from
     # pycurl after they've been processed
@@ -525,7 +521,9 @@ def _create_request_handle(request, cookies, timeout):
 
 
 def _dict_to_cookies(cookies_dict):
-    return ";".join([
-        "{0}={1}".format(key, value)
-        for key, value in sorted(cookies_dict.items())
-    ])
+    return ";".join(
+        [
+            "{0}={1}".format(key, value)
+            for key, value in sorted(cookies_dict.items())
+        ]
+    )

@@ -36,6 +36,7 @@ __OPTIONAL_SECTIONS = [
     RSC_DEFAULTS,
 ]
 
+
 def get(tree, section_name):
     """
     Return the element which represents section 'section_name' in the tree.
@@ -63,6 +64,7 @@ def get(tree, section_name):
         return get_sub_element(get(tree, CONFIGURATION), section_name)
 
     raise AssertionError("Unknown cib section '{0}'".format(section_name))
+
 
 def exists(tree, section_name):
     if section_name not in __MANDATORY_SECTIONS + __OPTIONAL_SECTIONS:

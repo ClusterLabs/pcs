@@ -30,13 +30,16 @@ def run_parallel(worker, data_list):
     for thread in thread_list:
         thread.join()
 
+
 def format_environment_error(e):
     return format_os_error(e)
+
 
 def format_os_error(e):
     if e.filename:
         return "{0}: '{1}'".format(e.strerror, e.filename)
     return e.strerror
+
 
 def xml_fromstring(xml):
     # If the xml contains encoding declaration such as:
@@ -47,16 +50,18 @@ def xml_fromstring(xml):
     # So we encode the string to bytes.
     return etree.fromstring(
         xml.encode("utf-8"),
-        #it raises on a huge xml without the flag huge_tree=True
-        #see https://bugzilla.redhat.com/show_bug.cgi?id=1506864
-        etree.XMLParser(huge_tree=True)
+        # it raises on a huge xml without the flag huge_tree=True
+        # see https://bugzilla.redhat.com/show_bug.cgi?id=1506864
+        etree.XMLParser(huge_tree=True),
     )
+
 
 class AutoNameEnum(str, Enum):
     def _generate_next_value_(name, start, count, last_values):
         # pylint: disable=no-self-argument
         del start, count, last_values
         return name
+
 
 class Version(namedtuple("Version", ["major", "minor", "revision"])):
     def __new__(cls, major, minor=None, revision=None):

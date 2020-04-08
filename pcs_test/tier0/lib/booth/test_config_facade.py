@@ -5,6 +5,7 @@ from pcs.lib.booth.config_parser import ConfigItem
 
 ### peers
 
+
 class GetSitesArbitrators(TestCase):
     def test_no_addrs(self):
         sites = []
@@ -34,7 +35,9 @@ class GetSitesArbitrators(TestCase):
         self.assertEqual(sites, conf.get_sites())
         self.assertEqual(arbitrators, conf.get_arbitrators())
 
+
 ### tickets
+
 
 class AddTicket(TestCase):
     def setUp(self):
@@ -50,23 +53,21 @@ class AddTicket(TestCase):
         self.conf.add_ticket("ticketB", {})
         self.assertEqual(
             self.conf.config,
-            self.conf_struct + [
-                ConfigItem("ticket", "ticketB", []),
-            ]
+            self.conf_struct + [ConfigItem("ticket", "ticketB", []),],
         )
 
     def test_add_with_options(self):
         self.conf.add_ticket("ticketB", {"timeout": "10"})
         self.assertEqual(
             self.conf.config,
-            self.conf_struct + [
+            self.conf_struct
+            + [
                 ConfigItem(
-                    "ticket",
-                    "ticketB",
-                    [ConfigItem("timeout", "10", [])]
+                    "ticket", "ticketB", [ConfigItem("timeout", "10", [])]
                 ),
-            ]
+            ],
         )
+
 
 class HasTicket(TestCase):
     def setUp(self):
@@ -75,11 +76,7 @@ class HasTicket(TestCase):
             ConfigItem("site", "site2", []),
             ConfigItem("arbitrator", "arbitrator1", []),
             ConfigItem("ticket", "ticketA", []),
-            ConfigItem(
-                "ticket",
-                "ticketB",
-                [ConfigItem("timeout", "10", [])]
-            ),
+            ConfigItem("ticket", "ticketB", [ConfigItem("timeout", "10", [])]),
         ]
         self.conf = ConfigFacade(self.conf_struct[:])
 
@@ -94,6 +91,7 @@ class HasTicket(TestCase):
         self.assertFalse(self.conf.has_ticket("site1"))
         self.assertFalse(self.conf.has_ticket("arbitrator1"))
         self.assertFalse(self.conf.has_ticket("timeout"))
+
 
 class RemoveTicket(TestCase):
     def setUp(self):
@@ -110,18 +108,15 @@ class RemoveTicket(TestCase):
         ]
         self.conf_struct = (
             self.conf_struct_base
-            +
-            self.conf_struct_ticket_a
-            +
-            self.conf_struct_ticket_b
+            + self.conf_struct_ticket_a
+            + self.conf_struct_ticket_b
         )
         self.conf = ConfigFacade(self.conf_struct[:])
 
     def test_existing_ticket(self):
         self.conf.remove_ticket("ticketA")
         self.assertEqual(
-            self.conf.config,
-            self.conf_struct_base + self.conf_struct_ticket_b
+            self.conf.config, self.conf_struct_base + self.conf_struct_ticket_b
         )
 
     def test_missing_ticket(self):
@@ -132,7 +127,9 @@ class RemoveTicket(TestCase):
         self.conf.remove_ticket("site1")
         self.assertEqual(self.conf.config, self.conf_struct)
 
+
 ### authfile
+
 
 class SetAuthfile(TestCase):
     def setUp(self):
@@ -147,42 +144,32 @@ class SetAuthfile(TestCase):
         ]
 
     def test_add_authfile(self):
-        conf = ConfigFacade(
-            self.conf_struct_base
-            +
-            self.conf_struct_tickets
-        )
+        conf = ConfigFacade(self.conf_struct_base + self.conf_struct_tickets)
         conf.set_authfile("/path/to/auth.file")
         self.assertEqual(
             conf.config,
             (
                 [ConfigItem("authfile", "/path/to/auth.file", [])]
-                +
-                self.conf_struct_base
-                +
-                self.conf_struct_tickets
-            )
+                + self.conf_struct_base
+                + self.conf_struct_tickets
+            ),
         )
 
     def test_change_authfile(self):
         conf = ConfigFacade(
             self.conf_struct_base
-            +
-            [
+            + [
                 ConfigItem("authfile", "/old/path/to/auth1.file", []),
                 ConfigItem("authfile", "/old/path/to/auth2.file", []),
             ]
-            +
-            self.conf_struct_tickets
+            + self.conf_struct_tickets
         )
         conf.set_authfile("/path/to/auth.file")
         self.assertEqual(
             conf.config,
             (
                 [ConfigItem("authfile", "/path/to/auth.file", [])]
-                +
-                self.conf_struct_base
-                +
-                self.conf_struct_tickets
-            )
+                + self.conf_struct_base
+                + self.conf_struct_tickets
+            ),
         )

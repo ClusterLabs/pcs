@@ -2,7 +2,7 @@
 from functools import partial
 from unittest import mock, TestCase
 
-from pcs_test.tier0.lib.commands.remote_node.fixtures_add import(
+from pcs_test.tier0.lib.commands.remote_node.fixtures_add import (
     EnvConfigMixin,
     REPORTS as FIXTURE_REPORTS,
     EXTRA_REPORTS as FIXTURE_EXTRA_REPORTS,
@@ -35,9 +35,16 @@ KNOWN_HOSTS_DESTS = {
     NODE_2: NODE_2_DEST_LIST,
 }
 
+
 def node_add_remote(
-    env, node_name=None, node_addr=None, operations=None, meta_attributes=None,
-    instance_attributes=None, no_node_addr=False, **kwargs
+    env,
+    node_name=None,
+    node_addr=None,
+    operations=None,
+    meta_attributes=None,
+    instance_attributes=None,
+    no_node_addr=False,
+    **kwargs,
 ):
     operations = operations or []
     meta_attributes = meta_attributes or {}
@@ -46,28 +53,35 @@ def node_add_remote(
     node_addr = node_addr or (None if no_node_addr else "remote-host")
 
     node_add_remote_orig(
-        env, node_name, node_addr, operations, meta_attributes,
-        instance_attributes, **kwargs
+        env,
+        node_name,
+        node_addr,
+        operations,
+        meta_attributes,
+        instance_attributes,
+        **kwargs,
     )
+
 
 class LocalConfig(EnvConfigMixin):
     def load_cluster_configs(self, cluster_node_list):
-        (self.config
-            .runner.cib.load()
+        (
+            self.config.runner.cib.load()
             .corosync_conf.load(node_name_list=cluster_node_list)
             .runner.pcmk.load_agent(agent_name="ocf:pacemaker:remote")
         )
 
+
 get_env_tools = partial(get_env_tools, local_extensions={"local": LocalConfig})
 
-REPORTS = (FIXTURE_REPORTS
-    .adapt("authkey_distribution_started", node_list=[NODE_NAME])
+REPORTS = (
+    FIXTURE_REPORTS.adapt("authkey_distribution_started", node_list=[NODE_NAME])
     .adapt("authkey_distribution_success", node=NODE_NAME)
     .adapt("pcmk_remote_start_enable_started", node_list=[NODE_NAME])
     .adapt("pcmk_remote_enable_success", node=NODE_NAME)
     .adapt("pcmk_remote_start_success", node=NODE_NAME)
 )
-EXTRA_REPORTS = (FIXTURE_EXTRA_REPORTS.adapt_multi(
+EXTRA_REPORTS = FIXTURE_EXTRA_REPORTS.adapt_multi(
     [
         "manage_services_connection_failed",
         "manage_services_connection_failed_warn",
@@ -82,8 +96,8 @@ EXTRA_REPORTS = (FIXTURE_EXTRA_REPORTS.adapt_multi(
         "authkey_distribution_failed",
         "authkey_distribution_failed_warn",
     ],
-    node=NODE_NAME
-))
+    node=NODE_NAME,
+)
 
 
 FIXTURE_RESOURCES_TEMPLATE = """
@@ -122,14 +136,17 @@ FIXTURE_RESOURCES_TEMPLATE = """
 """
 FIXTURE_RESOURCES = FIXTURE_RESOURCES_TEMPLATE.format(server="remote-host")
 
+
 class AddRemote(TestCase):
     def setUp(self):
         self.env_assist, self.config = get_env_tools(self)
         self.config.env.set_known_hosts_dests(KNOWN_HOSTS_DESTS)
 
     def _config_success_base(self):
-        (self.config
-            .local.load_cluster_configs(cluster_node_list=[NODE_1, NODE_2])
+        (
+            self.config.local.load_cluster_configs(
+                cluster_node_list=[NODE_1, NODE_2]
+            )
             .http.host.check_auth(
                 communication_list=[
                     dict(label=NODE_NAME, dest_list=NODE_DEST_LIST)
@@ -147,9 +164,12 @@ class AddRemote(TestCase):
         self.env_assist.assert_reports(REPORTS)
 
     def test_success_base_addr_same_as_name(self):
-        #validation and creation of resource is covered in resource create tests
-        (self.config
-            .local.load_cluster_configs(cluster_node_list=[NODE_1, NODE_2])
+        # validation and creation of resource is covered in resource create
+        # tests
+        (
+            self.config.local.load_cluster_configs(
+                cluster_node_list=[NODE_1, NODE_2]
+            )
             .http.host.check_auth(
                 communication_list=[
                     dict(label=NODE_NAME, dest_list=NODE_DEST_LIST)
@@ -159,17 +179,15 @@ class AddRemote(TestCase):
             .local.push_existing_authkey_to_remote(NODE_NAME, NODE_DEST_LIST)
             .local.run_pacemaker_remote(NODE_NAME, NODE_DEST_LIST)
             .env.push_cib(
-                resources=FIXTURE_RESOURCES_TEMPLATE.format(
-                    server=NODE_NAME
-                )
+                resources=FIXTURE_RESOURCES_TEMPLATE.format(server=NODE_NAME)
             )
         )
         node_add_remote(self.env_assist.get_env(), node_addr=NODE_NAME)
         self.env_assist.assert_reports(REPORTS)
 
     def test_node_name_conflict_report_is_unique(self):
-        (self.config
-            .runner.cib.load(
+        (
+            self.config.runner.cib.load(
                 resources="""
                     <resources>
                         <primitive class="ocf" id="node-name"
@@ -183,23 +201,19 @@ class AddRemote(TestCase):
         )
 
         self.env_assist.assert_raise_library_error(
-            lambda: node_add_remote(self.env_assist.get_env()),
-            []
+            lambda: node_add_remote(self.env_assist.get_env()), []
         )
         self.env_assist.assert_reports(
-            [
-                fixture.error(
-                    report_codes.ID_ALREADY_EXISTS,
-                    id=NODE_NAME,
-                )
-            ]
+            [fixture.error(report_codes.ID_ALREADY_EXISTS, id=NODE_NAME,)]
         )
 
     @mock.patch("pcs.lib.commands.remote_node.generate_binary_key")
     def test_success_generated_authkey(self, generate_binary_key):
         generate_binary_key.return_value = b"password"
-        (self.config
-            .local.load_cluster_configs(cluster_node_list=[NODE_1, NODE_2])
+        (
+            self.config.local.load_cluster_configs(
+                cluster_node_list=[NODE_1, NODE_2]
+            )
             .http.host.check_auth(
                 communication_list=[
                     dict(label=NODE_NAME, dest_list=NODE_DEST_LIST)
@@ -221,60 +235,63 @@ class AddRemote(TestCase):
         node_add_remote(self.env_assist.get_env())
         generate_binary_key.assert_called_once_with(random_bytes_count=256)
         self.env_assist.assert_reports(
-            REPORTS
-                .adapt(
-                    "authkey_distribution_started",
-                    node_list=[NODE_1, NODE_2, NODE_NAME]
-                )
-                .copy(
-                    "authkey_distribution_success",
-                    "authkey_distribution_success_node1",
-                    node=NODE_1,
-                )
-                .copy(
-                    "authkey_distribution_success",
-                    "authkey_distribution_success_node2",
-                    node=NODE_2,
-                )
+            REPORTS.adapt(
+                "authkey_distribution_started",
+                node_list=[NODE_1, NODE_2, NODE_NAME],
+            )
+            .copy(
+                "authkey_distribution_success",
+                "authkey_distribution_success_node1",
+                node=NODE_1,
+            )
+            .copy(
+                "authkey_distribution_success",
+                "authkey_distribution_success_node2",
+                node=NODE_2,
+            )
         )
 
     def test_new_offline(self):
-        (self.config
-            .local.load_cluster_configs(cluster_node_list=[NODE_1, NODE_2])
-            .http.host.check_auth(
+        (
+            self.config.local.load_cluster_configs(
+                cluster_node_list=[NODE_1, NODE_2]
+            ).http.host.check_auth(
                 communication_list=[
                     dict(
                         label=NODE_NAME,
                         dest_list=NODE_DEST_LIST,
-                        **FAIL_HTTP_KWARGS
+                        **FAIL_HTTP_KWARGS,
                     )
                 ],
             )
         )
         self.env_assist.assert_raise_library_error(
-            lambda: node_add_remote(self.env_assist.get_env()),
-            []
+            lambda: node_add_remote(self.env_assist.get_env()), []
         )
-        self.env_assist.assert_reports([
-            fixture.error(
-                report_codes.NODE_COMMUNICATION_ERROR_UNABLE_TO_CONNECT,
-                force_code=report_codes.SKIP_OFFLINE_NODES,
-                node=NODE_NAME,
-                command="remote/check_auth",
-                reason="Could not resolve host",
-            )
-        ])
+        self.env_assist.assert_reports(
+            [
+                fixture.error(
+                    report_codes.NODE_COMMUNICATION_ERROR_UNABLE_TO_CONNECT,
+                    force_code=report_codes.SKIP_OFFLINE_NODES,
+                    node=NODE_NAME,
+                    command="remote/check_auth",
+                    reason="Could not resolve host",
+                )
+            ]
+        )
 
     def test_can_skip_new_offline(self):
         pcmk_authkey_content = b"password"
-        (self.config
-            .local.load_cluster_configs(cluster_node_list=[NODE_1, NODE_2])
+        (
+            self.config.local.load_cluster_configs(
+                cluster_node_list=[NODE_1, NODE_2]
+            )
             .http.host.check_auth(
                 communication_list=[
                     dict(
                         label=NODE_NAME,
                         dest_list=NODE_DEST_LIST,
-                        **FAIL_HTTP_KWARGS
+                        **FAIL_HTTP_KWARGS,
                     )
                 ],
             )
@@ -290,14 +307,16 @@ class AddRemote(TestCase):
     @mock.patch("pcs.lib.commands.remote_node.generate_binary_key")
     def test_can_skip_all_offline(self, generate_binary_key):
         generate_binary_key.return_value = b"password"
-        (self.config
-            .local.load_cluster_configs(cluster_node_list=[NODE_1, NODE_2])
+        (
+            self.config.local.load_cluster_configs(
+                cluster_node_list=[NODE_1, NODE_2]
+            )
             .http.host.check_auth(
                 communication_list=[
                     dict(
                         label=NODE_NAME,
                         dest_list=NODE_DEST_LIST,
-                        **FAIL_HTTP_KWARGS
+                        **FAIL_HTTP_KWARGS,
                     )
                 ],
             )
@@ -308,7 +327,7 @@ class AddRemote(TestCase):
                     dict(label=NODE_2, dest_list=NODE_2_DEST_LIST),
                 ],
                 pcmk_authkey_content=generate_binary_key.return_value,
-                **FAIL_HTTP_KWARGS
+                **FAIL_HTTP_KWARGS,
             )
             .env.push_cib(resources=FIXTURE_RESOURCES)
         )
@@ -316,28 +335,31 @@ class AddRemote(TestCase):
         self.env_assist.assert_reports(
             fixture_reports_new_node_unreachable(NODE_NAME, omitting=True)
             + [
-            fixture.info(
-                report_codes.FILES_DISTRIBUTION_STARTED,
-                file_list=["pacemaker authkey"],
-                node_list=[NODE_1, NODE_2],
-            ),
-            fixture.warn(
-                report_codes.NODE_COMMUNICATION_ERROR_UNABLE_TO_CONNECT,
-                node=NODE_1,
-                command="remote/put_file",
-                reason="Could not resolve host",
-            ),
-            fixture.warn(
-                report_codes.NODE_COMMUNICATION_ERROR_UNABLE_TO_CONNECT,
-                node=NODE_2,
-                command="remote/put_file",
-                reason="Could not resolve host",
-            ),
-        ])
+                fixture.info(
+                    report_codes.FILES_DISTRIBUTION_STARTED,
+                    file_list=["pacemaker authkey"],
+                    node_list=[NODE_1, NODE_2],
+                ),
+                fixture.warn(
+                    report_codes.NODE_COMMUNICATION_ERROR_UNABLE_TO_CONNECT,
+                    node=NODE_1,
+                    command="remote/put_file",
+                    reason="Could not resolve host",
+                ),
+                fixture.warn(
+                    report_codes.NODE_COMMUNICATION_ERROR_UNABLE_TO_CONNECT,
+                    node=NODE_2,
+                    command="remote/put_file",
+                    reason="Could not resolve host",
+                ),
+            ]
+        )
 
     def test_fails_when_remote_node_is_not_prepared(self):
-        (self.config
-            .local.load_cluster_configs(cluster_node_list=[NODE_1, NODE_2])
+        (
+            self.config.local.load_cluster_configs(
+                cluster_node_list=[NODE_1, NODE_2]
+            )
             .http.host.check_auth(
                 communication_list=[
                     dict(label=NODE_NAME, dest_list=NODE_DEST_LIST)
@@ -359,33 +381,36 @@ class AddRemote(TestCase):
                         ),
                     ),
                     cluster_configuration_exists=True,
-                )
+                ),
             )
         )
         self.env_assist.assert_raise_library_error(
-            lambda: node_add_remote(self.env_assist.get_env()),
-            []
+            lambda: node_add_remote(self.env_assist.get_env()), []
         )
-        self.env_assist.assert_reports([
-            fixture.error(
-                report_codes.SERVICE_NOT_INSTALLED,
-                node=NODE_NAME,
-                service_list=["pacemaker_remote"],
-            ),
-            fixture.error(
-                report_codes.HOST_ALREADY_IN_CLUSTER_SERVICES,
-                host_name=NODE_NAME,
-                service_list=["corosync", "pacemaker"],
-            ),
-            fixture.error(
-                report_codes.HOST_ALREADY_IN_CLUSTER_CONFIG,
-                host_name=NODE_NAME,
-            ),
-        ])
+        self.env_assist.assert_reports(
+            [
+                fixture.error(
+                    report_codes.SERVICE_NOT_INSTALLED,
+                    node=NODE_NAME,
+                    service_list=["pacemaker_remote"],
+                ),
+                fixture.error(
+                    report_codes.HOST_ALREADY_IN_CLUSTER_SERVICES,
+                    host_name=NODE_NAME,
+                    service_list=["corosync", "pacemaker"],
+                ),
+                fixture.error(
+                    report_codes.HOST_ALREADY_IN_CLUSTER_CONFIG,
+                    host_name=NODE_NAME,
+                ),
+            ]
+        )
 
     def test_fails_when_remote_node_returns_invalid_output(self):
-        (self.config
-            .local.load_cluster_configs(cluster_node_list=[NODE_1, NODE_2])
+        (
+            self.config.local.load_cluster_configs(
+                cluster_node_list=[NODE_1, NODE_2]
+            )
             .http.host.check_auth(
                 communication_list=[
                     dict(label=NODE_NAME, dest_list=NODE_DEST_LIST)
@@ -396,19 +421,21 @@ class AddRemote(TestCase):
             )
         )
         self.env_assist.assert_raise_library_error(
-            lambda: node_add_remote(self.env_assist.get_env()),
-            []
+            lambda: node_add_remote(self.env_assist.get_env()), []
         )
-        self.env_assist.assert_reports([
-            fixture.error(
-                report_codes.INVALID_RESPONSE_FORMAT,
-                node=NODE_NAME,
-            )
-        ])
+        self.env_assist.assert_reports(
+            [
+                fixture.error(
+                    report_codes.INVALID_RESPONSE_FORMAT, node=NODE_NAME,
+                )
+            ]
+        )
 
     def test_open_failed(self):
-        (self.config
-            .local.load_cluster_configs(cluster_node_list=[NODE_1, NODE_2])
+        (
+            self.config.local.load_cluster_configs(
+                cluster_node_list=[NODE_1, NODE_2]
+            )
             .http.host.check_auth(
                 communication_list=[
                     dict(label=NODE_NAME, dest_list=NODE_DEST_LIST)
@@ -420,9 +447,7 @@ class AddRemote(TestCase):
         )
 
         self.env_assist.assert_raise_library_error(
-            lambda: node_add_remote(
-                self.env_assist.get_env(),
-            )
+            lambda: node_add_remote(self.env_assist.get_env(),)
         )
         self.env_assist.assert_reports(
             [
@@ -437,54 +462,53 @@ class AddRemote(TestCase):
         )
 
     def test_validate_addr_already_exists(self):
-        (self.config
-            .local.load_cluster_configs(cluster_node_list=[NODE_1, NODE_2])
+        (
+            self.config.local.load_cluster_configs(
+                cluster_node_list=[NODE_1, NODE_2]
+            )
         )
-        #more validation tests in pcs/lib/cib/test/test_resource_remote_node.py
+        # more validation tests in pcs/lib/cib/test/test_resource_remote_node.py
         self.env_assist.assert_raise_library_error(
             lambda: node_add_remote(
-                self.env_assist.get_env(),
-                node_addr=NODE_1,
+                self.env_assist.get_env(), node_addr=NODE_1,
             ),
-            []
+            [],
+        )
+        self.env_assist.assert_reports(
+            [fixture.error(report_codes.ID_ALREADY_EXISTS, id=NODE_1)]
+        )
+
+    def test_unknown_host(self):
+        self.config.env.set_known_hosts_dests(
+            {NODE_1: NODE_1_DEST_LIST, NODE_2: NODE_2_DEST_LIST,}
+        )
+        (
+            self.config.local.load_cluster_configs(
+                cluster_node_list=[NODE_1, NODE_2]
+            )
+        )
+        self.env_assist.assert_raise_library_error(
+            lambda: node_add_remote(self.env_assist.get_env()), []
         )
         self.env_assist.assert_reports(
             [
                 fixture.error(
-                    report_codes.ID_ALREADY_EXISTS,
-                    id=NODE_1
+                    report_codes.HOST_NOT_FOUND,
+                    force_code=report_codes.SKIP_OFFLINE_NODES,
+                    host_list=[NODE_NAME],
                 )
             ]
         )
 
-    def test_unknown_host(self):
-        self.config.env.set_known_hosts_dests({
-            NODE_1: NODE_1_DEST_LIST,
-            NODE_2: NODE_2_DEST_LIST,
-        })
-        (self.config
-            .local.load_cluster_configs(cluster_node_list=[NODE_1, NODE_2])
-        )
-        self.env_assist.assert_raise_library_error(
-            lambda: node_add_remote(self.env_assist.get_env()),
-            []
-        )
-        self.env_assist.assert_reports([
-            fixture.error(
-                report_codes.HOST_NOT_FOUND,
-                force_code=report_codes.SKIP_OFFLINE_NODES,
-                host_list=[NODE_NAME],
-            )
-        ])
-
     def test_unknown_host_skip_offline(self):
         pcmk_authkey_content = b"password"
-        self.config.env.set_known_hosts_dests({
-            NODE_1: NODE_1_DEST_LIST,
-            NODE_2: NODE_2_DEST_LIST,
-        })
-        (self.config
-            .local.load_cluster_configs(cluster_node_list=[NODE_1, NODE_2])
+        self.config.env.set_known_hosts_dests(
+            {NODE_1: NODE_1_DEST_LIST, NODE_2: NODE_2_DEST_LIST,}
+        )
+        (
+            self.config.local.load_cluster_configs(
+                cluster_node_list=[NODE_1, NODE_2]
+            )
             .local.authkey_exists(return_value=True)
             .local.open_authkey(pcmk_authkey_content)
             .env.push_cib(resources=FIXTURE_RESOURCES)
@@ -499,12 +523,13 @@ class AddRemote(TestCase):
         self, generate_binary_key
     ):
         generate_binary_key.return_value = b"password"
-        self.config.env.set_known_hosts_dests({
-            NODE_1: NODE_1_DEST_LIST,
-            NODE_2: NODE_2_DEST_LIST,
-        })
-        (self.config
-            .local.load_cluster_configs(cluster_node_list=[NODE_1, NODE_2])
+        self.config.env.set_known_hosts_dests(
+            {NODE_1: NODE_1_DEST_LIST, NODE_2: NODE_2_DEST_LIST,}
+        )
+        (
+            self.config.local.load_cluster_configs(
+                cluster_node_list=[NODE_1, NODE_2]
+            )
             .local.authkey_exists(return_value=False)
             .local.distribute_authkey(
                 communication_list=[
@@ -520,34 +545,36 @@ class AddRemote(TestCase):
         self.env_assist.assert_reports(
             fixture_reports_new_node_unreachable(NODE_NAME)
             + [
-            fixture.info(
-                report_codes.FILES_DISTRIBUTION_STARTED,
-                file_list=["pacemaker authkey"],
-                node_list=[NODE_1, NODE_2],
-            ),
-            fixture.info(
-                report_codes.FILE_DISTRIBUTION_SUCCESS,
-                file_description="pacemaker authkey",
-                node=NODE_1,
-            ),
-            fixture.info(
-                report_codes.FILE_DISTRIBUTION_SUCCESS,
-                file_description="pacemaker authkey",
-                node=NODE_2,
-            ),
-        ])
+                fixture.info(
+                    report_codes.FILES_DISTRIBUTION_STARTED,
+                    file_list=["pacemaker authkey"],
+                    node_list=[NODE_1, NODE_2],
+                ),
+                fixture.info(
+                    report_codes.FILE_DISTRIBUTION_SUCCESS,
+                    file_description="pacemaker authkey",
+                    node=NODE_1,
+                ),
+                fixture.info(
+                    report_codes.FILE_DISTRIBUTION_SUCCESS,
+                    file_description="pacemaker authkey",
+                    node=NODE_2,
+                ),
+            ]
+        )
 
     def test_some_node_names_missing(self):
         self._config_success_base()
-        (self.config
-            .env.set_known_hosts_dests({
-                "rh7-1": [Destination("rh7-1", 2224)],
-                "rh7-2": [Destination("rh7-2", 2224)],
-                NODE_NAME: NODE_DEST_LIST,
-            })
-            .corosync_conf.load(
+        (
+            self.config.env.set_known_hosts_dests(
+                {
+                    "rh7-1": [Destination("rh7-1", 2224)],
+                    "rh7-2": [Destination("rh7-2", 2224)],
+                    NODE_NAME: NODE_DEST_LIST,
+                }
+            ).corosync_conf.load(
                 filename="corosync-some-node-names.conf",
-                instead="corosync_conf.load"
+                instead="corosync_conf.load",
             )
         )
 
@@ -556,22 +583,21 @@ class AddRemote(TestCase):
             REPORTS.warn(
                 "missing_node_names_in_corosync",
                 report_codes.COROSYNC_CONFIG_MISSING_NAMES_OF_NODES,
-                fatal=False
+                fatal=False,
             )
         )
 
     def test_all_node_names_missing(self):
         self._config_success_base()
         self.config.corosync_conf.load(
-            filename="corosync-no-node-names.conf",
-            instead="corosync_conf.load"
+            filename="corosync-no-node-names.conf", instead="corosync_conf.load"
         )
         node_add_remote(self.env_assist.get_env())
         self.env_assist.assert_reports(
             REPORTS.warn(
                 "missing_node_names_in_corosync",
                 report_codes.COROSYNC_CONFIG_MISSING_NAMES_OF_NODES,
-                fatal=False
+                fatal=False,
             )
         )
 
@@ -584,8 +610,8 @@ class NotLive(TestCase):
             self.config.env.set_cib_data(cib_file.read())
 
     def test_addr_specified(self):
-        (self.config
-            .runner.cib.load()
+        (
+            self.config.runner.cib.load()
             .runner.pcmk.load_agent(agent_name="ocf:pacemaker:remote")
             .env.push_cib(resources=FIXTURE_RESOURCES)
         )
@@ -593,8 +619,8 @@ class NotLive(TestCase):
         self.env_assist.assert_reports(fixture_reports_not_live_cib(NODE_NAME))
 
     def test_addr_not_specified(self):
-        (self.config
-            .runner.cib.load()
+        (
+            self.config.runner.cib.load()
             .runner.pcmk.load_agent(agent_name="ocf:pacemaker:remote")
             .env.push_cib(
                 resources=FIXTURE_RESOURCES_TEMPLATE.format(
@@ -611,19 +637,16 @@ class NotLive(TestCase):
                     address=NODE_ADDR_PCSD,
                 ),
             ]
-            +
-            fixture_reports_not_live_cib(NODE_NAME)
+            + fixture_reports_not_live_cib(NODE_NAME)
         )
 
     def test_unknown_host_addr_not_specified(self):
         self.config.env.set_known_hosts_dests(dict())
-        (self.config
-            .runner.cib.load()
+        (
+            self.config.runner.cib.load()
             .runner.pcmk.load_agent(agent_name="ocf:pacemaker:remote")
             .env.push_cib(
-                resources=FIXTURE_RESOURCES_TEMPLATE.format(
-                    server=NODE_NAME
-                )
+                resources=FIXTURE_RESOURCES_TEMPLATE.format(server=NODE_NAME)
             )
         )
         node_add_remote(self.env_assist.get_env(), no_node_addr=True)
@@ -635,19 +658,16 @@ class NotLive(TestCase):
                     address=NODE_NAME,
                 ),
             ]
-            +
-            fixture_reports_not_live_cib(NODE_NAME)
+            + fixture_reports_not_live_cib(NODE_NAME)
         )
 
     def test_unknown_host_addr_specified(self):
         self.config.env.set_known_hosts_dests(dict())
-        (self.config
-            .runner.cib.load()
+        (
+            self.config.runner.cib.load()
             .runner.pcmk.load_agent(agent_name="ocf:pacemaker:remote")
             .env.push_cib(
-                resources=FIXTURE_RESOURCES_TEMPLATE.format(
-                    server="addr"
-                )
+                resources=FIXTURE_RESOURCES_TEMPLATE.format(server="addr")
             )
         )
         node_add_remote(self.env_assist.get_env(), node_addr="addr")
@@ -656,21 +676,17 @@ class NotLive(TestCase):
     def test_wait(self):
         self.env_assist.assert_raise_library_error(
             lambda: node_add_remote(self.env_assist.get_env(), wait=1),
-            [
-                fixture.error(
-                    report_codes.WAIT_FOR_IDLE_NOT_LIVE_CLUSTER,
-                ),
-            ],
-            expected_in_processor=False
+            [fixture.error(report_codes.WAIT_FOR_IDLE_NOT_LIVE_CLUSTER,),],
+            expected_in_processor=False,
         )
 
 
 class WithWait(TestCase):
     def setUp(self):
-        self. wait = 1
+        self.wait = 1
         self.env_assist, self.config = get_env_tools(self)
-        (self.config
-            .env.set_known_hosts_dests(KNOWN_HOSTS_DESTS)
+        (
+            self.config.env.set_known_hosts_dests(KNOWN_HOSTS_DESTS)
             .runner.pcmk.can_wait()
             .local.load_cluster_configs(cluster_node_list=[NODE_1, NODE_2])
             .http.host.check_auth(
@@ -682,15 +698,17 @@ class WithWait(TestCase):
             .local.push_existing_authkey_to_remote(NODE_NAME, NODE_DEST_LIST)
             .local.run_pacemaker_remote(NODE_NAME, NODE_DEST_LIST)
             .env.push_cib(resources=FIXTURE_RESOURCES, wait=self.wait)
-         )
+        )
 
     def test_success_when_resource_started(self):
-        (self.config
-            .runner.pcmk.load_state(raw_resources=dict(
-                resource_id=NODE_NAME,
-                resource_agent="ocf::pacemaker:remote",
-                node_name=NODE_1,
-            ))
+        (
+            self.config.runner.pcmk.load_state(
+                raw_resources=dict(
+                    resource_id=NODE_NAME,
+                    resource_agent="ocf::pacemaker:remote",
+                    node_name=NODE_1,
+                )
+            )
             # self.config.fs is used to mock authkey file existence. Therefore,
             # filesystem mocking is active and we need to cover it. We tell the
             # file doesn't exist, because we aren't currently mocking the
@@ -701,23 +719,24 @@ class WithWait(TestCase):
         )
         node_add_remote(self.env_assist.get_env(), wait=self.wait)
         self.env_assist.assert_reports(
-            REPORTS
-                .info(
-                    "resource_running",
-                    report_codes.RESOURCE_RUNNING_ON_NODES,
-                    roles_with_nodes={"Started": [NODE_1]},
-                    resource_id=NODE_NAME
-                )
+            REPORTS.info(
+                "resource_running",
+                report_codes.RESOURCE_RUNNING_ON_NODES,
+                roles_with_nodes={"Started": [NODE_1]},
+                resource_id=NODE_NAME,
+            )
         )
 
     def test_fail_when_resource_not_started(self):
-        (self.config
-            .runner.pcmk.load_state(raw_resources=dict(
-                resource_id=NODE_NAME,
-                resource_agent="ocf::pacemaker:remote",
-                node_name=NODE_1,
-                failed="true",
-            ))
+        (
+            self.config.runner.pcmk.load_state(
+                raw_resources=dict(
+                    resource_id=NODE_NAME,
+                    resource_agent="ocf::pacemaker:remote",
+                    node_name=NODE_1,
+                    failed="true",
+                )
+            )
             # self.config.fs is used to mock authkey file existence. Therefore,
             # filesystem mocking is active and we need to cover it. We tell the
             # file doesn't exist, because we aren't currently mocking the
@@ -731,11 +750,9 @@ class WithWait(TestCase):
         )
         self.env_assist.assert_reports(
             REPORTS.reports
-            +
-            [
+            + [
                 fixture.error(
-                    report_codes.RESOURCE_DOES_NOT_RUN,
-                    resource_id=NODE_NAME,
+                    report_codes.RESOURCE_DOES_NOT_RUN, resource_id=NODE_NAME,
                 )
             ]
         )
@@ -744,8 +761,8 @@ class WithWait(TestCase):
 class AddRemotePcmkRemoteService(TestCase):
     def setUp(self):
         self.env_assist, self.config = get_env_tools(self)
-        (self.config
-            .env.set_known_hosts_dests(KNOWN_HOSTS_DESTS)
+        (
+            self.config.env.set_known_hosts_dests(KNOWN_HOSTS_DESTS)
             .local.load_cluster_configs(cluster_node_list=[NODE_1, NODE_2])
             .http.host.check_auth(
                 communication_list=[
@@ -757,8 +774,8 @@ class AddRemotePcmkRemoteService(TestCase):
         )
 
     def test_fails_when_offline(self):
-        (self.config
-            .local.run_pacemaker_remote(
+        (
+            self.config.local.run_pacemaker_remote(
                 NODE_NAME, NODE_DEST_LIST, **FAIL_HTTP_KWARGS
             )
         )
@@ -768,42 +785,42 @@ class AddRemotePcmkRemoteService(TestCase):
 
         self.env_assist.assert_reports(
             REPORTS[:"pcmk_remote_enable_success"]
-            +
-            EXTRA_REPORTS.select("manage_services_connection_failed")
+            + EXTRA_REPORTS.select("manage_services_connection_failed")
         )
 
     def test_fail_when_remotely_fail(self):
-        (self.config
-            .local.run_pacemaker_remote(NODE_NAME, NODE_DEST_LIST, result={
-                "code": "fail",
-                "message": "Action failed",
-            })
+        (
+            self.config.local.run_pacemaker_remote(
+                NODE_NAME,
+                NODE_DEST_LIST,
+                result={"code": "fail", "message": "Action failed",},
+            )
         )
         self.env_assist.assert_raise_library_error(
             lambda: node_add_remote(self.env_assist.get_env())
         )
         self.env_assist.assert_reports(
-            REPORTS[:"pcmk_remote_enable_success"] + EXTRA_REPORTS.select(
-                "pcmk_remote_enable_failed",
-                "pcmk_remote_start_failed",
+            REPORTS[:"pcmk_remote_enable_success"]
+            + EXTRA_REPORTS.select(
+                "pcmk_remote_enable_failed", "pcmk_remote_start_failed",
             )
         )
 
     def test_forceable_when_remotely_fail(self):
-        (self.config
-            .local.run_pacemaker_remote(NODE_NAME, NODE_DEST_LIST, result={
-                "code": "fail",
-                "message": "Action failed",
-            })
-            .env.push_cib(resources=FIXTURE_RESOURCES)
+        (
+            self.config.local.run_pacemaker_remote(
+                NODE_NAME,
+                NODE_DEST_LIST,
+                result={"code": "fail", "message": "Action failed",},
+            ).env.push_cib(resources=FIXTURE_RESOURCES)
         )
         node_add_remote(
-            self.env_assist.get_env(),
-            allow_pacemaker_remote_service_fail=True
+            self.env_assist.get_env(), allow_pacemaker_remote_service_fail=True
         )
 
         self.env_assist.assert_reports(
-            REPORTS[:"pcmk_remote_enable_success"] + EXTRA_REPORTS.select(
+            REPORTS[:"pcmk_remote_enable_success"]
+            + EXTRA_REPORTS.select(
                 "pcmk_remote_enable_failed_warn",
                 "pcmk_remote_start_failed_warn",
             )
@@ -813,8 +830,8 @@ class AddRemotePcmkRemoteService(TestCase):
 class AddRemoteAuthkeyDistribution(TestCase):
     def setUp(self):
         self.env_assist, self.config = get_env_tools(self)
-        (self.config
-            .env.set_known_hosts_dests(KNOWN_HOSTS_DESTS)
+        (
+            self.config.env.set_known_hosts_dests(KNOWN_HOSTS_DESTS)
             .local.load_cluster_configs(cluster_node_list=[NODE_1, NODE_2])
             .http.host.check_auth(
                 communication_list=[
@@ -826,15 +843,15 @@ class AddRemoteAuthkeyDistribution(TestCase):
 
     def test_fails_when_offline(self):
         pcmk_authkey_content = b"password"
-        (self.config
-            .local.authkey_exists(return_value=True)
+        (
+            self.config.local.authkey_exists(return_value=True)
             .local.open_authkey(pcmk_authkey_content)
             .local.distribute_authkey(
                 communication_list=[
                     dict(label=NODE_NAME, dest_list=NODE_DEST_LIST)
                 ],
                 pcmk_authkey_content=pcmk_authkey_content,
-                **FAIL_HTTP_KWARGS
+                **FAIL_HTTP_KWARGS,
             )
         )
         self.env_assist.assert_raise_library_error(
@@ -842,22 +859,17 @@ class AddRemoteAuthkeyDistribution(TestCase):
         )
         self.env_assist.assert_reports(
             REPORTS[:"authkey_distribution_success"]
-            +
-            EXTRA_REPORTS.only(
-                "manage_services_connection_failed",
-                command="remote/put_file",
+            + EXTRA_REPORTS.only(
+                "manage_services_connection_failed", command="remote/put_file",
             )
         )
 
     def test_fail_when_remotely_fail(self):
-        (self.config
-            .local.push_existing_authkey_to_remote(
+        (
+            self.config.local.push_existing_authkey_to_remote(
                 NODE_NAME,
                 NODE_DEST_LIST,
-                distribution_result={
-                    "code": "conflict",
-                    "message": "",
-                }
+                distribution_result={"code": "conflict", "message": "",},
             )
         )
 
@@ -867,31 +879,25 @@ class AddRemoteAuthkeyDistribution(TestCase):
 
         self.env_assist.assert_reports(
             REPORTS[:"authkey_distribution_success"]
-            +
-            EXTRA_REPORTS.select("authkey_distribution_failed")
+            + EXTRA_REPORTS.select("authkey_distribution_failed")
         )
 
     def test_forceable_when_remotely_fail(self):
-        (self.config
-            .local.push_existing_authkey_to_remote(
+        (
+            self.config.local.push_existing_authkey_to_remote(
                 NODE_NAME,
                 NODE_DEST_LIST,
-                distribution_result={
-                    "code": "conflict",
-                    "message": "",
-                }
+                distribution_result={"code": "conflict", "message": "",},
             )
             .local.run_pacemaker_remote(NODE_NAME, NODE_DEST_LIST)
             .env.push_cib(resources=FIXTURE_RESOURCES)
         )
 
         node_add_remote(
-            self.env_assist.get_env(),
-            allow_incomplete_distribution=True,
+            self.env_assist.get_env(), allow_incomplete_distribution=True,
         )
 
         self.env_assist.assert_reports(
             REPORTS.remove("authkey_distribution_success")
-            +
-            EXTRA_REPORTS.select("authkey_distribution_failed_warn")
+            + EXTRA_REPORTS.select("authkey_distribution_failed_warn")
         )

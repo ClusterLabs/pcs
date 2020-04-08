@@ -12,6 +12,7 @@ from pcs.lib.env import LibraryEnvironment
 from pcs.lib.errors import LibraryError
 from pcs.lib.node import get_existing_nodes_names
 
+
 def synchronize_ssl_certificate(env: LibraryEnvironment, skip_offline=False):
     """
     Send the local pcsd SSL cert and key to all full nodes in the local cluster.
@@ -65,11 +66,11 @@ def synchronize_ssl_certificate(env: LibraryEnvironment, skip_offline=False):
             )
         )
 
-    target_report_list, target_list = (
-        target_factory.get_target_list_with_reports(
-            cluster_nodes_names,
-            skip_non_existing=skip_offline
-        )
+    (
+        target_report_list,
+        target_list,
+    ) = target_factory.get_target_list_with_reports(
+        cluster_nodes_names, skip_non_existing=skip_offline
     )
     report_processor.report_list(target_report_list)
 

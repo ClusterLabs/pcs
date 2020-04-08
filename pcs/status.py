@@ -12,6 +12,7 @@ from pcs.lib.pacemaker.state import ClusterState
 
 # pylint: disable=too-many-branches, too-many-locals, too-many-statements
 
+
 def full_status(lib, argv, modifiers):
     """
     Options:
@@ -22,15 +23,21 @@ def full_status(lib, argv, modifiers):
       * --request-timeout - HTTP timeout for node authorization check
     """
     modifiers.ensure_only_supported(
-        "--hide-inactive", "--full", "-f", "--corosync_conf",
+        "--hide-inactive",
+        "--full",
+        "-f",
+        "--corosync_conf",
         "--request-timeout",
     )
     if argv:
         raise CmdLineInputError()
-    print(lib.status.full_cluster_status_plaintext(
-        hide_inactive_resources=modifiers.get("--hide-inactive"),
-        verbose=modifiers.get("--full"),
-    ))
+    print(
+        lib.status.full_cluster_status_plaintext(
+            hide_inactive_resources=modifiers.get("--hide-inactive"),
+            verbose=modifiers.get("--full"),
+        )
+    )
+
 
 # Parse crm_mon for status
 def nodes_status(lib, argv, modifiers):
@@ -53,11 +60,15 @@ def nodes_status(lib, argv, modifiers):
         else:
             corosync_nodes = []
         try:
-            pacemaker_nodes = sorted([
-                node.attrs.name for node
-                in ClusterState(utils.getClusterStateXml()).node_section.nodes
-                if node.attrs.type != 'remote'
-            ])
+            pacemaker_nodes = sorted(
+                [
+                    node.attrs.name
+                    for node in ClusterState(
+                        utils.getClusterStateXml()
+                    ).node_section.nodes
+                    if node.attrs.type != "remote"
+                ]
+            )
         except LibraryError as e:
             process_library_reports(e.args)
         print("Corosync Nodes:")
@@ -144,22 +155,26 @@ def nodes_status(lib, argv, modifiers):
     print("Pacemaker Nodes:")
     print(" ".join([" Online:"] + onlinenodes))
     print(" ".join([" Standby:"] + standbynodes))
-    print(" ".join(
-        [" Standby with resource(s) running:"] + standbynodes_with_resources
-    ))
+    print(
+        " ".join(
+            [" Standby with resource(s) running:"] + standbynodes_with_resources
+        )
+    )
     print(" ".join([" Maintenance:"] + maintenancenodes))
     print(" ".join([" Offline:"] + offlinenodes))
 
     print("Pacemaker Remote Nodes:")
     print(" ".join([" Online:"] + remote_onlinenodes))
     print(" ".join([" Standby:"] + remote_standbynodes))
-    print(" ".join(
-        [" Standby with resource(s) running:"]
-        +
-        remote_standbynodes_with_resources
-    ))
+    print(
+        " ".join(
+            [" Standby with resource(s) running:"]
+            + remote_standbynodes_with_resources
+        )
+    )
     print(" ".join([" Maintenance:"] + remote_maintenancenodes))
     print(" ".join([" Offline:"] + remote_offlinenodes))
+
 
 def cluster_status(lib, argv, modifiers):
     """
@@ -190,6 +205,7 @@ def cluster_status(lib, argv, modifiers):
         print()
         print_pcsd_daemon_status(lib, modifiers)
 
+
 def corosync_status(lib, argv, modifiers):
     """
     Options: no options
@@ -204,6 +220,7 @@ def corosync_status(lib, argv, modifiers):
     else:
         print(output.rstrip())
 
+
 def xml_status(lib, argv, modifiers):
     """
     Options:
@@ -214,13 +231,13 @@ def xml_status(lib, argv, modifiers):
     if argv:
         raise CmdLineInputError()
     (output, retval) = utils.run(
-        ["crm_mon", "-1", "-r", "-X"],
-        ignore_stderr=True
+        ["crm_mon", "-1", "-r", "-X"], ignore_stderr=True
     )
 
     if retval != 0:
         utils.err("running crm_mon, is pacemaker running?")
     print(output.rstrip())
+
 
 def print_pcsd_daemon_status(lib, modifiers):
     """
@@ -235,7 +252,7 @@ def print_pcsd_daemon_status(lib, modifiers):
         )
     else:
         err_msgs, exitcode, std_out, dummy_std_err = utils.call_local_pcsd(
-            ['status', 'pcsd']
+            ["status", "pcsd"]
         )
         if err_msgs:
             for msg in err_msgs:
@@ -245,6 +262,7 @@ def print_pcsd_daemon_status(lib, modifiers):
         else:
             print("Unable to get PCSD status")
 
+
 def check_nodes(node_list, prefix=""):
     """
     Print pcsd status on node_list, return if there is any pcsd not online
@@ -253,26 +271,25 @@ def check_nodes(node_list, prefix=""):
       * --request-timeout - HTTP timeout for node authorization check
     """
     online_code = 0
-    status_desc_map = {
-        online_code: 'Online',
-        3: 'Unable to authenticate'
-    }
+    status_desc_map = {online_code: "Online", 3: "Unable to authenticate"}
     status_list = []
+
     def report(node, returncode, output):
         del output
-        print("{0}{1}: {2}".format(
-            prefix,
-            node,
-            status_desc_map.get(returncode, 'Offline')
-        ))
+        print(
+            "{0}{1}: {2}".format(
+                prefix, node, status_desc_map.get(returncode, "Offline")
+            )
+        )
         status_list.append(returncode)
 
-    utils.read_known_hosts_file() # cache known hosts
+    utils.read_known_hosts_file()  # cache known hosts
     utils.run_parallel(
         utils.create_task_list(report, utils.checkAuthorization, node_list)
     )
 
     return any([status != online_code for status in status_list])
+
 
 # If no arguments get current cluster node status, otherwise get listed
 # nodes status

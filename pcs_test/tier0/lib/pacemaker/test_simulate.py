@@ -49,7 +49,7 @@ class GetOperationsFromTransitions(TestCase):
                     "on_node": "rh7-2",
                 },
             ],
-            simulate.get_operations_from_transitions(transitions)
+            simulate.get_operations_from_transitions(transitions),
         )
 
     def test_transitions2(self):
@@ -85,54 +85,46 @@ class GetOperationsFromTransitions(TestCase):
                     "primitive_long_id": "dummy8",
                     "operation": "start",
                     "on_node": "virt-142",
-                }
+                },
             ],
-            simulate.get_operations_from_transitions(transitions)
+            simulate.get_operations_from_transitions(transitions),
         )
+
 
 class GetResourcesFromOperations(TestCase):
     operations = [
-            {
-                "primitive_id": "dummy2",
-                "primitive_long_id": "dummy2:1",
-                "operation": "stop",
-                "on_node": "node1",
-            },
-            {
-                "primitive_id": "dummy1",
-                "primitive_long_id": "dummy1",
-                "operation": "stop",
-                "on_node": "node3",
-            },
-            {
-                "primitive_id": "dummy1",
-                "primitive_long_id": "dummy1",
-                "operation": "start",
-                "on_node": "node2",
-            },
+        {
+            "primitive_id": "dummy2",
+            "primitive_long_id": "dummy2:1",
+            "operation": "stop",
+            "on_node": "node1",
+        },
+        {
+            "primitive_id": "dummy1",
+            "primitive_long_id": "dummy1",
+            "operation": "stop",
+            "on_node": "node3",
+        },
+        {
+            "primitive_id": "dummy1",
+            "primitive_long_id": "dummy1",
+            "operation": "start",
+            "on_node": "node2",
+        },
     ]
+
     def test_no_operations(self):
-        self.assertEqual(
-            [],
-            simulate.get_resources_from_operations(
-                []
-            )
-        )
+        self.assertEqual([], simulate.get_resources_from_operations([]))
 
     def test_no_operations_exclude(self):
         self.assertEqual(
-            [],
-            simulate.get_resources_from_operations(
-                [], exclude={"dummy1"}
-            )
+            [], simulate.get_resources_from_operations([], exclude={"dummy1"})
         )
 
     def test_some_operations(self):
         self.assertEqual(
             ["dummy1", "dummy2"],
-            simulate.get_resources_from_operations(
-                self.operations
-            )
+            simulate.get_resources_from_operations(self.operations),
         )
 
     def test_some_operations_exclude(self):
@@ -140,106 +132,117 @@ class GetResourcesFromOperations(TestCase):
             ["dummy2"],
             simulate.get_resources_from_operations(
                 self.operations, exclude={"dummy1", "dummy2:1", "dummyX"}
-            )
+            ),
         )
 
-class GetResourcesLeftStoppedDemotedMixin():
+
+class GetResourcesLeftStoppedDemotedMixin:
     def test_no_operations(self):
         self.assertEqual([], self.call([]))
 
     def test_down(self):
         self.assertEqual(
             ["dummy"],
-            self.call([
-                {
-                    "primitive_id": "dummy",
-                    "primitive_long_id": "dummy",
-                    "operation": self.action_down,
-                    "on_node": "node3",
-                },
-            ])
+            self.call(
+                [
+                    {
+                        "primitive_id": "dummy",
+                        "primitive_long_id": "dummy",
+                        "operation": self.action_down,
+                        "on_node": "node3",
+                    },
+                ]
+            ),
         )
 
     def test_up(self):
         self.assertEqual(
             [],
-            self.call([
-                {
-                    "primitive_id": "dummy",
-                    "primitive_long_id": "dummy",
-                    "operation": self.action_up,
-                    "on_node": "node3",
-                },
-            ])
+            self.call(
+                [
+                    {
+                        "primitive_id": "dummy",
+                        "primitive_long_id": "dummy",
+                        "operation": self.action_up,
+                        "on_node": "node3",
+                    },
+                ]
+            ),
         )
 
     def test_down_up(self):
         self.assertEqual(
             [],
-            self.call([
-                {
-                    "primitive_id": "dummy",
-                    "primitive_long_id": "dummy",
-                    "operation": self.action_down,
-                    "on_node": "node2",
-                },
-                {
-                    "primitive_id": "dummy",
-                    "primitive_long_id": "dummy",
-                    "operation": self.action_up,
-                    "on_node": "node3",
-                },
-            ])
+            self.call(
+                [
+                    {
+                        "primitive_id": "dummy",
+                        "primitive_long_id": "dummy",
+                        "operation": self.action_down,
+                        "on_node": "node2",
+                    },
+                    {
+                        "primitive_id": "dummy",
+                        "primitive_long_id": "dummy",
+                        "operation": self.action_up,
+                        "on_node": "node3",
+                    },
+                ]
+            ),
         )
 
     def test_up_down(self):
         self.assertEqual(
             [],
-            self.call([
-                {
-                    "primitive_id": "dummy",
-                    "primitive_long_id": "dummy",
-                    "operation": self.action_up,
-                    "on_node": "node2",
-                },
-                {
-                    "primitive_id": "dummy",
-                    "primitive_long_id": "dummy",
-                    "operation": self.action_down,
-                    "on_node": "node3",
-                },
-            ])
+            self.call(
+                [
+                    {
+                        "primitive_id": "dummy",
+                        "primitive_long_id": "dummy",
+                        "operation": self.action_up,
+                        "on_node": "node2",
+                    },
+                    {
+                        "primitive_id": "dummy",
+                        "primitive_long_id": "dummy",
+                        "operation": self.action_down,
+                        "on_node": "node3",
+                    },
+                ]
+            ),
         )
 
     def test_mixed(self):
         self.assertEqual(
             ["dummy1", "dummy2"],
-            self.call([
-                {
-                    "primitive_id": "dummy1",
-                    "primitive_long_id": "dummy1",
-                    "operation": self.action_down,
-                    "on_node": "node3",
-                },
-                {
-                    "primitive_id": "dummy2",
-                    "primitive_long_id": "dummy2",
-                    "operation": self.action_down,
-                    "on_node": "node3",
-                },
-                {
-                    "primitive_id": "dummy3",
-                    "primitive_long_id": "dummy3",
-                    "operation": self.action_down,
-                    "on_node": "node3",
-                },
-                {
-                    "primitive_id": "dummy3",
-                    "primitive_long_id": "dummy3",
-                    "operation": self.action_up,
-                    "on_node": "node2",
-                },
-            ])
+            self.call(
+                [
+                    {
+                        "primitive_id": "dummy1",
+                        "primitive_long_id": "dummy1",
+                        "operation": self.action_down,
+                        "on_node": "node3",
+                    },
+                    {
+                        "primitive_id": "dummy2",
+                        "primitive_long_id": "dummy2",
+                        "operation": self.action_down,
+                        "on_node": "node3",
+                    },
+                    {
+                        "primitive_id": "dummy3",
+                        "primitive_long_id": "dummy3",
+                        "operation": self.action_down,
+                        "on_node": "node3",
+                    },
+                    {
+                        "primitive_id": "dummy3",
+                        "primitive_long_id": "dummy3",
+                        "operation": self.action_up,
+                        "on_node": "node2",
+                    },
+                ]
+            ),
         )
 
     def test_exclude(self):
@@ -260,9 +263,10 @@ class GetResourcesLeftStoppedDemotedMixin():
                         "on_node": "node3",
                     },
                 ],
-                exclude={"dummy1", "dummyX"}
-            )
+                exclude={"dummy1", "dummyX"},
+            ),
         )
+
 
 class GetResourcesLeftStopped(GetResourcesLeftStoppedDemotedMixin, TestCase):
     action_up = "start"
@@ -272,58 +276,63 @@ class GetResourcesLeftStopped(GetResourcesLeftStoppedDemotedMixin, TestCase):
     def test_clone_move(self):
         self.assertEqual(
             [],
-            self.call([
-                {
-                    "primitive_id": "dummy1",
-                    "primitive_long_id": "dummy1:0",
-                    "operation": self.action_down,
-                    "on_node": "node3",
-                },
-                {
-                    "primitive_id": "dummy1",
-                    "primitive_long_id": "dummy1:1",
-                    "operation": self.action_down,
-                    "on_node": "node1",
-                },
-                {
-                    "primitive_id": "dummy1",
-                    "primitive_long_id": "dummy1:0",
-                    "operation": self.action_up,
-                    "on_node": "node2",
-                },
-                {
-                    "primitive_id": "dummy1",
-                    "primitive_long_id": "dummy1:1",
-                    "operation": self.action_up,
-                    "on_node": "node4",
-                },
-            ])
+            self.call(
+                [
+                    {
+                        "primitive_id": "dummy1",
+                        "primitive_long_id": "dummy1:0",
+                        "operation": self.action_down,
+                        "on_node": "node3",
+                    },
+                    {
+                        "primitive_id": "dummy1",
+                        "primitive_long_id": "dummy1:1",
+                        "operation": self.action_down,
+                        "on_node": "node1",
+                    },
+                    {
+                        "primitive_id": "dummy1",
+                        "primitive_long_id": "dummy1:0",
+                        "operation": self.action_up,
+                        "on_node": "node2",
+                    },
+                    {
+                        "primitive_id": "dummy1",
+                        "primitive_long_id": "dummy1:1",
+                        "operation": self.action_up,
+                        "on_node": "node4",
+                    },
+                ]
+            ),
         )
 
     def test_clone_stop(self):
         self.assertEqual(
             ["dummy1"],
-            self.call([
-                {
-                    "primitive_id": "dummy1",
-                    "primitive_long_id": "dummy1:0",
-                    "operation": self.action_down,
-                    "on_node": "node3",
-                },
-                {
-                    "primitive_id": "dummy1",
-                    "primitive_long_id": "dummy1:1",
-                    "operation": self.action_down,
-                    "on_node": "node1",
-                },
-                {
-                    "primitive_id": "dummy1",
-                    "primitive_long_id": "dummy1:1",
-                    "operation": self.action_up,
-                    "on_node": "node4",
-                },
-            ])
+            self.call(
+                [
+                    {
+                        "primitive_id": "dummy1",
+                        "primitive_long_id": "dummy1:0",
+                        "operation": self.action_down,
+                        "on_node": "node3",
+                    },
+                    {
+                        "primitive_id": "dummy1",
+                        "primitive_long_id": "dummy1:1",
+                        "operation": self.action_down,
+                        "on_node": "node1",
+                    },
+                    {
+                        "primitive_id": "dummy1",
+                        "primitive_long_id": "dummy1:1",
+                        "operation": self.action_up,
+                        "on_node": "node4",
+                    },
+                ]
+            ),
         )
+
 
 class GetResourcesLeftDemoted(GetResourcesLeftStoppedDemotedMixin, TestCase):
     action_up = "promote"
@@ -333,43 +342,47 @@ class GetResourcesLeftDemoted(GetResourcesLeftStoppedDemotedMixin, TestCase):
     def test_master_move(self):
         self.assertEqual(
             [],
-            self.call([
-                {
-                    "primitive_id": "dummy1",
-                    "primitive_long_id": "dummy1:0",
-                    "operation": self.action_down,
-                    "on_node": "node3",
-                },
-                {
-                    "primitive_id": "dummy1",
-                    "primitive_long_id": "dummy1:1",
-                    "operation": self.action_up,
-                    "on_node": "node4",
-                },
-            ])
+            self.call(
+                [
+                    {
+                        "primitive_id": "dummy1",
+                        "primitive_long_id": "dummy1:0",
+                        "operation": self.action_down,
+                        "on_node": "node3",
+                    },
+                    {
+                        "primitive_id": "dummy1",
+                        "primitive_long_id": "dummy1:1",
+                        "operation": self.action_up,
+                        "on_node": "node4",
+                    },
+                ]
+            ),
         )
 
     def test_master_stop(self):
         self.assertEqual(
             ["dummy1"],
-            self.call([
-                {
-                    "primitive_id": "dummy1",
-                    "primitive_long_id": "dummy1:0",
-                    "operation": self.action_down,
-                    "on_node": "node3",
-                },
-                {
-                    "primitive_id": "dummy1",
-                    "primitive_long_id": "dummy1:1",
-                    "operation": self.action_up,
-                    "on_node": "node4",
-                },
-                {
-                    "primitive_id": "dummy1",
-                    "primitive_long_id": "dummy1:2",
-                    "operation": self.action_down,
-                    "on_node": "node1",
-                },
-            ])
+            self.call(
+                [
+                    {
+                        "primitive_id": "dummy1",
+                        "primitive_long_id": "dummy1:0",
+                        "operation": self.action_down,
+                        "on_node": "node3",
+                    },
+                    {
+                        "primitive_id": "dummy1",
+                        "primitive_long_id": "dummy1:1",
+                        "operation": self.action_up,
+                        "on_node": "node4",
+                    },
+                    {
+                        "primitive_id": "dummy1",
+                        "primitive_long_id": "dummy1:2",
+                        "operation": self.action_down,
+                        "on_node": "node1",
+                    },
+                ]
+            ),
         )

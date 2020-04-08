@@ -5,14 +5,17 @@ def has_applicable_environment(environment):
     return bool(
         all(
             key in environment
-            for key in
-            ["COMP_WORDS", "COMP_LENGTHS", "COMP_CWORD", "PCS_AUTO_COMPLETE"]
+            for key in [
+                "COMP_WORDS",
+                "COMP_LENGTHS",
+                "COMP_CWORD",
+                "PCS_AUTO_COMPLETE",
+            ]
         )
-        and
-        environment['PCS_AUTO_COMPLETE'].strip() not in ('0', '')
-        and
-        environment['COMP_CWORD'].isdigit()
+        and environment["PCS_AUTO_COMPLETE"].strip() not in ("0", "")
+        and environment["COMP_CWORD"].isdigit()
     )
+
 
 def make_suggestions(environment, suggestion_tree):
     """
@@ -24,17 +27,17 @@ def make_suggestions(environment, suggestion_tree):
 
     try:
         typed_word_list = _split_words(
-            environment["COMP_WORDS"],
-            environment["COMP_LENGTHS"].split(" "),
+            environment["COMP_WORDS"], environment["COMP_LENGTHS"].split(" "),
         )
     except EnvironmentError:
         return ""
 
-    return "\n".join(_find_suggestions(
-        suggestion_tree,
-        typed_word_list,
-        int(environment['COMP_CWORD'])
-    ))
+    return "\n".join(
+        _find_suggestions(
+            suggestion_tree, typed_word_list, int(environment["COMP_CWORD"])
+        )
+    )
+
 
 def _split_words(joined_words, word_lengths):
     cursor_position = 0
@@ -50,10 +53,9 @@ def _split_words(joined_words, word_lengths):
             raise EnvironmentError(
                 "Expected lengths are bigger than word lengths"
             )
-        if(
+        if (
             next_position != words_string_len
-            and
-            not joined_words[next_position].isspace()
+            and not joined_words[next_position].isspace()
         ):
             raise EnvironmentError("Words separator is not expected space")
 
@@ -65,25 +67,27 @@ def _split_words(joined_words, word_lengths):
 
     return word_list
 
+
 def _find_suggestions(suggestion_tree, typed_word_list, word_under_cursor_idx):
-    if not  1 <= word_under_cursor_idx <= len(typed_word_list):
+    if not 1 <= word_under_cursor_idx <= len(typed_word_list):
         return []
 
     if len(typed_word_list) == word_under_cursor_idx:
-        #not started type the last word yet
-        word_under_cursor = ''
+        # not started type the last word yet
+        word_under_cursor = ""
     else:
         word_under_cursor = typed_word_list[word_under_cursor_idx]
 
     words_for_current_cursor_position = _get_subcommands(
-        suggestion_tree,
-        typed_word_list[1:word_under_cursor_idx]
+        suggestion_tree, typed_word_list[1:word_under_cursor_idx]
     )
 
     return [
-        word for word in words_for_current_cursor_position
+        word
+        for word in words_for_current_cursor_position
         if word.startswith(word_under_cursor)
     ]
+
 
 def _get_subcommands(suggestion_tree, previous_subcommand_list):
     subcommand_tree = suggestion_tree

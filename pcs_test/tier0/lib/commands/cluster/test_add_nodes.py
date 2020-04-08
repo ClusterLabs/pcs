@@ -24,6 +24,7 @@ from pcs.lib.commands import cluster
 QDEVICE_HOST = "qdevice.host"
 CLUSTER_NAME = "myCluster"
 
+
 def _corosync_options_fixture(option_list, indent_level=2):
     indent = indent_level * 4 * " "
     return "".join(
@@ -38,26 +39,28 @@ def _get_two_node(nodes_num):
 
 
 def generate_nodes(existing_nodes_num, new_nodes_num):
-    return [
-        f"node{i}" for i in range(1, existing_nodes_num + 1)
-    ], [
-        f"node{i}" for i in range(
-            existing_nodes_num + 1, existing_nodes_num + new_nodes_num + 1
-        )
-    ]
+    return (
+        [f"node{i}" for i in range(1, existing_nodes_num + 1)],
+        [
+            f"node{i}"
+            for i in range(
+                existing_nodes_num + 1, existing_nodes_num + new_nodes_num + 1
+            )
+        ],
+    )
 
 
 def corosync_conf_fixture(node_list=(), quorum_options=(), qdevice_net=False):
     nodes = []
     for node in node_list:
-        nodes.append(dedent(
-            """\
+        nodes.append(
+            dedent(
+                """\
                 node {{
             {options}    }}
             """
-        ).format(
-            options=_corosync_options_fixture(node)
-        ))
+            ).format(options=_corosync_options_fixture(node))
+        )
     device = ""
     if qdevice_net:
         device = outdent(
@@ -104,7 +107,7 @@ def node_fixture(node, node_id, addr_sufix=""):
     return corosync_node_fixture(node_id, node, [f"{node}{addr_sufix}"])
 
 
-class LocalConfig():
+class LocalConfig:
     def __init__(self, call_collection, wrap_helper, config):
         # pylint: disable=unused-argument
         self.__calls = call_collection
@@ -124,26 +127,23 @@ class LocalConfig():
         mock_write_tmpfile.return_value = tempfile_mock
 
         local_prefix = "local.setup_qdevice."
-        (self.config
-            .http.corosync.qdevice_net_get_ca_cert(
+        (
+            self.config.http.corosync.qdevice_net_get_ca_cert(
                 ca_cert=ca_cert,
                 node_labels=[QDEVICE_HOST],
                 name=f"{local_prefix}http.corosync.qdevice_ca_cert",
             )
-
             .http.corosync.qdevice_net_client_setup(
                 ca_cert=ca_cert,
                 node_labels=new_nodes,
                 name=f"{local_prefix}http.corosync.qdevice_client_setup",
             )
-
             .fs.exists(
                 os.path.join(
-                    settings.corosync_qdevice_net_client_certs_dir,
-                    "cert8.db"
+                    settings.corosync_qdevice_net_client_certs_dir, "cert8.db"
                 ),
                 return_value=True,
-                name=f"{local_prefix}fs.exists.corosync_certs_db"
+                name=f"{local_prefix}fs.exists.corosync_certs_db",
             )
             .runner.corosync.qdevice_generate_cert(
                 CLUSTER_NAME,
@@ -175,19 +175,17 @@ class LocalConfig():
         mock_write_tmpfile.return_value = tempfile_mock
 
         local_prefix = "local.setup_qdevice."
-        (self.config
-            .http.corosync.qdevice_net_sign_certificate(
+        (
+            self.config.http.corosync.qdevice_net_sign_certificate(
                 CLUSTER_NAME,
                 cert=cert,
                 signed_cert=b"signed cert",
                 node_labels=[QDEVICE_HOST],
                 name=f"{local_prefix}http.corosync.qdevice_sign_sertificate",
             )
-
             .fs.exists(
                 os.path.join(
-                    settings.corosync_qdevice_net_client_certs_dir,
-                    "cert8.db"
+                    settings.corosync_qdevice_net_client_certs_dir, "cert8.db"
                 ),
                 return_value=True,
                 name=f"{local_prefix}fs.exists.corosync_certs_db2",
@@ -203,7 +201,6 @@ class LocalConfig():
                 mode="rb",
                 name=f"{local_prefix}fs.open.pk12_cert_read",
             )
-
             .http.corosync.qdevice_net_client_import_cert_and_key(
                 cert=pk12_cert,
                 node_labels=new_nodes,
@@ -218,7 +215,8 @@ class LocalConfig():
                 fixture.info(
                     report_codes.QDEVICE_CERTIFICATE_ACCEPTED_BY_NODE,
                     node=node,
-                ) for node in new_nodes
+                )
+                for node in new_nodes
             ]
         )
 
@@ -230,46 +228,41 @@ class LocalConfig():
         self, corosync_conf_content, existing_nodes, new_nodes
     ):
         local_prefix = "local.distribute_and_reload_corosync_conf."
-        (self.config
-            .http.corosync.set_corosync_conf(
+        (
+            self.config.http.corosync.set_corosync_conf(
                 corosync_conf_content,
                 node_labels=existing_nodes + new_nodes,
                 name=f"{local_prefix}http.corosync.set_corosync_conf",
-            )
-            .http.corosync.reload_corosync_conf(
+            ).http.corosync.reload_corosync_conf(
                 node_labels=existing_nodes[:1],
                 name=f"{local_prefix}http.corosync.reload_corosync_conf",
             )
         )
         self.expected_reports.extend(
             [fixture.info(report_codes.COROSYNC_CONFIG_DISTRIBUTION_STARTED)]
-            +
-            [
+            + [
                 fixture.info(
-                    report_codes.COROSYNC_CONFIG_ACCEPTED_BY_NODE,
-                    node=node,
-                ) for node in existing_nodes + new_nodes
+                    report_codes.COROSYNC_CONFIG_ACCEPTED_BY_NODE, node=node,
+                )
+                for node in existing_nodes + new_nodes
             ]
-            +
-            [
+            + [
                 fixture.info(
                     report_codes.COROSYNC_CONFIG_RELOADED,
                     node=existing_nodes[0],
                 )
             ]
-
         )
 
     def atb_needed(self, node_labels):
         local_prefix = "local.atb_needed."
-        (self.config
-            .runner.systemctl.list_unit_files(
+        (
+            self.config.runner.systemctl.list_unit_files(
                 {"sbd": "enabled"},
                 name=f"{local_prefix}runner.systemctl.list_unit_files.sbd",
             )
             .runner.systemctl.is_enabled(
-                "sbd",
-                name=f"{local_prefix}runner.systemctl.is_enabled.sbd",
+                "sbd", name=f"{local_prefix}runner.systemctl.is_enabled.sbd",
             )
             .local.read_sbd_config(name_sufix="-atb_needed")
             .http.corosync.check_corosync_offline(
@@ -284,23 +277,22 @@ class LocalConfig():
                 ),
                 fixture.info(report_codes.COROSYNC_NOT_RUNNING_CHECK_STARTED),
             ]
-            +
-            [
+            + [
                 fixture.info(
                     report_codes.COROSYNC_NOT_RUNNING_ON_NODE, node=node
-                ) for node in node_labels
+                )
+                for node in node_labels
             ]
         )
 
     def read_sbd_config(self, config_content="", name_sufix=""):
         local_prefix = "local.read_sbd_config."
-        (self.config
-            .fs.exists(
+        (
+            self.config.fs.exists(
                 settings.sbd_config,
                 return_value=True,
                 name=f"{local_prefix}fs.exists.sbd_config{name_sufix}",
-            )
-            .fs.open(
+            ).fs.open(
                 settings.sbd_config,
                 return_value=mock.mock_open(read_data=config_content)(),
                 name=f"{local_prefix}fs.open.sbd_config_read{name_sufix}",
@@ -310,15 +302,13 @@ class LocalConfig():
     def check_sbd(self, node_labels, with_devices=True):
         self.config.http.sbd.check_sbd(
             communication_list=_get_check_sbd_communication_list(
-                node_labels,
-                with_devices=with_devices,
+                node_labels, with_devices=with_devices,
             ),
             name="local.check_sbd.http.sbd_check_sbd",
         )
         self.expected_reports.extend(
             [fixture.info(report_codes.SBD_CHECK_STARTED)]
-            +
-            [
+            + [
                 fixture.info(report_codes.SBD_CHECK_SUCCESS, node=node)
                 for node in node_labels
             ]
@@ -338,22 +328,22 @@ class LocalConfig():
                     instance="",
                 )
             ]
-            +
-            [
+            + [
                 fixture.info(
                     reports.codes.SERVICE_ACTION_SUCCEEDED,
                     action=reports.const.SERVICE_ACTION_DISABLE,
                     service="sbd",
                     node=node,
                     instance="",
-                ) for node in node_labels
+                )
+                for node in node_labels
             ]
         )
 
     def setup_sbd(self, local_config, config_generator, node_labels):
         local_prefix = "local.setup_sbd."
-        (self.config
-            .fs.open(
+        (
+            self.config.fs.open(
                 settings.sbd_config,
                 return_value=mock.mock_open(read_data=local_config)(),
                 name=f"{local_prefix}fs.open.sbd_config",
@@ -367,15 +357,13 @@ class LocalConfig():
         )
         self.expected_reports.extend(
             [fixture.info(report_codes.SBD_CONFIG_DISTRIBUTION_STARTED)]
-            +
-            [
+            + [
                 fixture.info(
-                    report_codes.SBD_CONFIG_ACCEPTED_BY_NODE,
-                    node=node,
-                ) for node in node_labels
+                    report_codes.SBD_CONFIG_ACCEPTED_BY_NODE, node=node,
+                )
+                for node in node_labels
             ]
-            +
-            [
+            + [
                 fixture.info(
                     reports.codes.SERVICE_ACTION_STARTED,
                     action=reports.const.SERVICE_ACTION_ENABLE,
@@ -383,15 +371,15 @@ class LocalConfig():
                     instance="",
                 )
             ]
-            +
-            [
+            + [
                 fixture.info(
                     reports.codes.SERVICE_ACTION_SUCCEEDED,
                     action=reports.const.SERVICE_ACTION_ENABLE,
                     service="sbd",
                     node=node,
                     instance="",
-                ) for node in node_labels
+                )
+                for node in node_labels
             ]
         )
 
@@ -404,19 +392,18 @@ class LocalConfig():
         config_content = "authfile = {}\n".format(authfile_path)
         authfile_content = b"booth authfile"
         local_prefix = "local.setup_booth."
-        (self.config
-            .fs.isdir(
+        (
+            self.config.fs.isdir(
                 settings.booth_config_dir,
                 name=f"{local_prefix}fs.isdir.booth_config_dir",
             )
             .fs.listdir(
                 settings.booth_config_dir,
                 [config_file, "something", authfile],
-                name=f"{local_prefix}fs.listdir.booth_config_dir"
+                name=f"{local_prefix}fs.listdir.booth_config_dir",
             )
             .fs.isfile(
-                config_path,
-                name=f"{local_prefix}fs.isfile.booth_config_file",
+                config_path, name=f"{local_prefix}fs.isfile.booth_config_file",
             )
             .raw_file.read(
                 file_type_codes.BOOTH_CONFIG,
@@ -450,13 +437,13 @@ class LocalConfig():
         )
         self.expected_reports.extend(
             [fixture.info(report_codes.BOOTH_CONFIG_DISTRIBUTION_STARTED)]
-            +
-            [
+            + [
                 fixture.info(
                     report_codes.BOOTH_CONFIG_ACCEPTED_BY_NODE,
                     node=node,
                     name_list=[authfile, config_file],
-                ) for node in node_labels
+                )
+                for node in node_labels
             ]
         )
 
@@ -465,9 +452,8 @@ class LocalConfig():
             node_labels=node_labels,
             output_data=dict(
                 services={
-                    service: dict(
-                        installed=True, enabled=False, running=False
-                    ) for service in ("corosync", "pacemaker", "pcsd")
+                    service: dict(installed=True, enabled=False, running=False)
+                    for service in ("corosync", "pacemaker", "pcsd")
                 },
                 cluster_configuration_exists=False,
             ),
@@ -476,26 +462,26 @@ class LocalConfig():
 
     def no_file_sync(self):
         local_prefix = "local.no_file_sync."
-        (self.config
-            .fs.isfile(
+        (
+            self.config.fs.isfile(
                 settings.corosync_authkey_file,
                 return_value=False,
-                name=f"{local_prefix}fs.isfile.corosync_authkey"
+                name=f"{local_prefix}fs.isfile.corosync_authkey",
             )
             .fs.isfile(
                 settings.pacemaker_authkey_file,
                 return_value=False,
-                name=f"{local_prefix}fs.isfile.pacemaker_authkey"
+                name=f"{local_prefix}fs.isfile.pacemaker_authkey",
             )
             .fs.isfile(
                 settings.pcsd_dr_config_location,
                 return_value=False,
-                name=f"{local_prefix}fs.isfile.pcsd_disaster_recovery"
+                name=f"{local_prefix}fs.isfile.pcsd_disaster_recovery",
             )
             .fs.isfile(
                 settings.pcsd_settings_conf_location,
                 return_value=False,
-                name=f"{local_prefix}fs.isfile.pcsd_settings"
+                name=f"{local_prefix}fs.isfile.pcsd_settings",
             )
         )
 
@@ -511,11 +497,11 @@ class LocalConfig():
             "pcs_settings.conf",
         ]
         local_prefix = "local.files_sync."
-        (self.config
-            .fs.isfile(
+        (
+            self.config.fs.isfile(
                 settings.corosync_authkey_file,
                 return_value=True,
-                name=f"{local_prefix}fs.isfile.corosync_authkey"
+                name=f"{local_prefix}fs.isfile.corosync_authkey",
             )
             .fs.open(
                 settings.corosync_authkey_file,
@@ -528,7 +514,7 @@ class LocalConfig():
             .fs.isfile(
                 settings.pacemaker_authkey_file,
                 return_value=True,
-                name=f"{local_prefix}fs.isfile.pacemaker_authkey"
+                name=f"{local_prefix}fs.isfile.pacemaker_authkey",
             )
             .fs.open(
                 settings.pacemaker_authkey_file,
@@ -539,7 +525,7 @@ class LocalConfig():
             .fs.isfile(
                 settings.pcsd_dr_config_location,
                 return_value=True,
-                name=f"{local_prefix}fs.isfile.pcsd_disaster_recovery"
+                name=f"{local_prefix}fs.isfile.pcsd_disaster_recovery",
             )
             .fs.open(
                 settings.pcsd_dr_config_location,
@@ -552,7 +538,7 @@ class LocalConfig():
             .fs.isfile(
                 settings.pcsd_settings_conf_location,
                 return_value=True,
-                name=f"{local_prefix}fs.isfile.pcsd_settings"
+                name=f"{local_prefix}fs.isfile.pcsd_settings",
             )
             .fs.open(
                 settings.pcsd_settings_conf_location,
@@ -576,47 +562,44 @@ class LocalConfig():
                     node_list=node_labels,
                 )
             ]
-            +
-            [
+            + [
                 fixture.info(
                     report_codes.FILE_DISTRIBUTION_SUCCESS,
                     node=node,
                     file_description=file,
-                ) for node in node_labels for file in file_list
+                )
+                for node in node_labels
+                for file in file_list
             ]
         )
 
     def pcsd_ssl_cert_sync_disabled(self):
         local_prefix = "local.pcsd_ssl_cert_sync_disabled."
-        (self.config
-            .fs.isfile(
+        (
+            self.config.fs.isfile(
                 settings.pcsd_config,
-                name=f"{local_prefix}fs.isfile.pcsd_config"
-            )
-            .fs.open(
+                name=f"{local_prefix}fs.isfile.pcsd_config",
+            ).fs.open(
                 settings.pcsd_config,
                 # Tests for other cases are in SslCertSync class.
                 mock.mock_open(
                     read_data="PCSD_SSL_CERT_SYNC_ENABLED=false\n"
                 )(),
-                name=f"{local_prefix}fs.open.pcsd_config"
+                name=f"{local_prefix}fs.open.pcsd_config",
             )
         )
 
     def pcsd_ssl_cert_sync_enabled(self):
         local_prefix = "local.pcsd_ssl_cert_sync_enabled."
-        (self.config
-            .fs.isfile(
+        (
+            self.config.fs.isfile(
                 settings.pcsd_config,
-                name=f"{local_prefix}fs.isfile.pcsd_config"
-            )
-            .fs.open(
+                name=f"{local_prefix}fs.isfile.pcsd_config",
+            ).fs.open(
                 settings.pcsd_config,
                 # Tests for other cases are in SslCertSync class.
-                mock.mock_open(
-                    read_data="PCSD_SSL_CERT_SYNC_ENABLED=true\n"
-                )(),
-                name=f"{local_prefix}fs.open.pcsd_config"
+                mock.mock_open(read_data="PCSD_SSL_CERT_SYNC_ENABLED=true\n")(),
+                name=f"{local_prefix}fs.open.pcsd_config",
             )
         )
 
@@ -624,36 +607,33 @@ class LocalConfig():
         local_prefix = "local.pcsd_ssl_cert_sync."
         pcsd_ssl_cert = "pcsd ssl cert"
         pcsd_ssl_key = "pcsd ssl key"
-        (self.config
-            .fs.open(
+        (
+            self.config.fs.open(
                 settings.pcsd_cert_location,
                 mock.mock_open(read_data=pcsd_ssl_cert)(),
-                name=f"{local_prefix}fs.open.pcsd_ssl_cert"
+                name=f"{local_prefix}fs.open.pcsd_ssl_cert",
             )
             .fs.open(
                 settings.pcsd_key_location,
                 mock.mock_open(read_data=pcsd_ssl_key)(),
-                name=f"{local_prefix}fs.open.pcsd_ssl_key"
+                name=f"{local_prefix}fs.open.pcsd_ssl_key",
             )
             .http.host.send_pcsd_cert(
-                cert=pcsd_ssl_cert,
-                key=pcsd_ssl_key,
-                node_labels=node_labels
+                cert=pcsd_ssl_cert, key=pcsd_ssl_key, node_labels=node_labels
             )
         )
         self.expected_reports.extend(
             [
                 fixture.info(
                     report_codes.PCSD_SSL_CERT_AND_KEY_DISTRIBUTION_STARTED,
-                    node_name_list=node_labels
+                    node_name_list=node_labels,
                 )
             ]
-            +
-            [
+            + [
                 fixture.info(
-                    report_codes.PCSD_SSL_CERT_AND_KEY_SET_SUCCESS,
-                    node=node,
-                ) for node in node_labels
+                    report_codes.PCSD_SSL_CERT_AND_KEY_SET_SUCCESS, node=node,
+                )
+                for node in node_labels
             ]
         )
 
@@ -679,17 +659,17 @@ class CheckLive(TestCase):
             [
                 fixture.error(
                     report_codes.LIVE_ENVIRONMENT_REQUIRED,
-                    forbidden_options=forbidden_options
+                    forbidden_options=forbidden_options,
                 )
             ],
-            expected_in_processor=False
+            expected_in_processor=False,
         )
 
     def test_mock_corosync(self):
         self.config.env.set_corosync_conf_data(
             corosync_conf_fixture(
                 self.existing_corosync_nodes,
-                _get_two_node(len(self.existing_corosync_nodes))
+                _get_two_node(len(self.existing_corosync_nodes)),
             )
         )
         self.assert_live_required(["COROSYNC_CONF"])
@@ -702,7 +682,7 @@ class CheckLive(TestCase):
         self.config.env.set_corosync_conf_data(
             corosync_conf_fixture(
                 self.existing_corosync_nodes,
-                _get_two_node(len(self.existing_corosync_nodes))
+                _get_two_node(len(self.existing_corosync_nodes)),
             )
         )
         self.config.env.set_cib_data("<cib />")
@@ -729,8 +709,8 @@ class AddNodesSuccessMinimal(TestCase):
         self.config.env.set_known_nodes(self.new_nodes + self.existing_nodes)
         self.config.local.set_expected_reports_list(self.expected_reports)
         get_unit_files_name = "_runner.systemctl.list_unit_files"
-        (self.config
-            .runner.systemctl.is_enabled("sbd", is_enabled=False)
+        (
+            self.config.runner.systemctl.is_enabled("sbd", is_enabled=False)
             .corosync_conf.load_content(
                 corosync_conf_fixture(
                     existing_corosync_nodes, _get_two_node(existing_nodes_num)
@@ -751,13 +731,14 @@ class AddNodesSuccessMinimal(TestCase):
             .local.no_file_sync()
             .local.distribute_and_reload_corosync_conf(
                 corosync_conf_fixture(
-                    existing_corosync_nodes + [
+                    existing_corosync_nodes
+                    + [
                         node_fixture(node, i)
                         for i, node in enumerate(
                             self.new_nodes, existing_nodes_num + 1
                         )
                     ],
-                    _get_two_node(existing_nodes_num + new_nodes_num)
+                    _get_two_node(existing_nodes_num + new_nodes_num),
                 ),
                 self.existing_nodes,
                 self.new_nodes,
@@ -773,16 +754,16 @@ class AddNodesSuccessMinimal(TestCase):
                     report_codes.USING_KNOWN_HOST_ADDRESS_FOR_HOST,
                     host_name=node,
                     address=node,
-                ) for node in self.new_nodes
+                )
+                for node in self.new_nodes
             ]
         )
-
 
     def _test_minimal(self, existing, new):
         self.set_up(existing, new)
         cluster.add_nodes(
             self.env_assist.get_env(),
-            [{"name": node} for node in self.new_nodes]
+            [{"name": node} for node in self.new_nodes],
         )
 
         self.env_assist.assert_reports(self.expected_reports)
@@ -816,9 +797,7 @@ class AddNodesSuccessMinimal(TestCase):
 
     def _test_enable(self, existing, new):
         self.set_up(existing, new)
-        self.config.http.host.enable_cluster(
-            node_labels=self.new_nodes,
-        )
+        self.config.http.host.enable_cluster(node_labels=self.new_nodes,)
 
         cluster.add_nodes(
             self.env_assist.get_env(),
@@ -828,15 +807,13 @@ class AddNodesSuccessMinimal(TestCase):
 
         self.env_assist.assert_reports(
             self.expected_reports
-            +
-            [
+            + [
                 fixture.info(
                     report_codes.CLUSTER_ENABLE_STARTED,
                     host_name_list=sorted(self.new_nodes),
                 )
             ]
-            +
-            [
+            + [
                 fixture.info(report_codes.CLUSTER_ENABLE_SUCCESS, node=node)
                 for node in self.new_nodes
             ]
@@ -881,8 +858,7 @@ class AddNodesSuccessMinimal(TestCase):
 
         self.env_assist.assert_reports(
             self.expected_reports
-            +
-            [
+            + [
                 fixture.info(
                     report_codes.CLUSTER_START_STARTED,
                     host_name_list=self.new_nodes,
@@ -919,9 +895,10 @@ class AddNodesSuccessMinimal(TestCase):
 
     def _test_start_wait(self, existing, new):
         self.set_up(existing, new)
-        (self.config
-            .http.host.start_cluster(node_labels=self.new_nodes)
-            .http.host.check_pacemaker_started(self.new_nodes)
+        (
+            self.config.http.host.start_cluster(
+                node_labels=self.new_nodes
+            ).http.host.check_pacemaker_started(self.new_nodes)
         )
 
         with mock.patch("time.sleep", lambda secs: None):
@@ -935,8 +912,7 @@ class AddNodesSuccessMinimal(TestCase):
 
         self.env_assist.assert_reports(
             self.expected_reports
-            +
-            [
+            + [
                 fixture.info(
                     report_codes.CLUSTER_START_STARTED,
                     host_name_list=sorted(self.new_nodes),
@@ -946,12 +922,9 @@ class AddNodesSuccessMinimal(TestCase):
                     node_name_list=self.new_nodes,
                 ),
             ]
-            +
-            [
-                fixture.info(
-                    report_codes.CLUSTER_START_SUCCESS,
-                    node=node,
-                ) for node in self.new_nodes
+            + [
+                fixture.info(report_codes.CLUSTER_START_SUCCESS, node=node,)
+                for node in self.new_nodes
             ]
         )
 
@@ -984,9 +957,10 @@ class AddNodesSuccessMinimal(TestCase):
 
     def _test_enable_start(self, existing, new):
         self.set_up(existing, new)
-        (self.config
-            .http.host.enable_cluster(node_labels=self.new_nodes)
-            .http.host.start_cluster(node_labels=self.new_nodes)
+        (
+            self.config.http.host.enable_cluster(
+                node_labels=self.new_nodes
+            ).http.host.start_cluster(node_labels=self.new_nodes)
         )
 
         cluster.add_nodes(
@@ -998,20 +972,17 @@ class AddNodesSuccessMinimal(TestCase):
 
         self.env_assist.assert_reports(
             self.expected_reports
-            +
-            [
+            + [
                 fixture.info(
                     report_codes.CLUSTER_ENABLE_STARTED,
                     host_name_list=sorted(self.new_nodes),
                 )
             ]
-            +
-            [
+            + [
                 fixture.info(report_codes.CLUSTER_ENABLE_SUCCESS, node=node)
                 for node in self.new_nodes
             ]
-            +
-            [
+            + [
                 fixture.info(
                     report_codes.CLUSTER_START_STARTED,
                     host_name_list=sorted(self.new_nodes),
@@ -1048,8 +1019,8 @@ class AddNodesSuccessMinimal(TestCase):
 
     def _test_enable_start_wait(self, existing, new):
         self.set_up(existing, new)
-        (self.config
-            .http.host.enable_cluster(node_labels=self.new_nodes)
+        (
+            self.config.http.host.enable_cluster(node_labels=self.new_nodes)
             .http.host.start_cluster(node_labels=self.new_nodes)
             .http.host.check_pacemaker_started(self.new_nodes)
         )
@@ -1064,20 +1035,17 @@ class AddNodesSuccessMinimal(TestCase):
 
         self.env_assist.assert_reports(
             self.expected_reports
-            +
-            [
+            + [
                 fixture.info(
                     report_codes.CLUSTER_ENABLE_STARTED,
                     host_name_list=sorted(self.new_nodes),
                 )
             ]
-            +
-            [
+            + [
                 fixture.info(report_codes.CLUSTER_ENABLE_SUCCESS, node=node)
                 for node in self.new_nodes
             ]
-            +
-            [
+            + [
                 fixture.info(
                     report_codes.CLUSTER_START_STARTED,
                     host_name_list=self.new_nodes,
@@ -1087,12 +1055,9 @@ class AddNodesSuccessMinimal(TestCase):
                     node_name_list=self.new_nodes,
                 ),
             ]
-            +
-            [
-                fixture.info(
-                    report_codes.CLUSTER_START_SUCCESS,
-                    node=node,
-                ) for node in self.new_nodes
+            + [
+                fixture.info(report_codes.CLUSTER_START_SUCCESS, node=node,)
+                for node in self.new_nodes
             ]
         )
 
@@ -1141,9 +1106,7 @@ def _flat_list(list_of_lists):
 
 
 def corosync_node_fixture(node_id, node, addrs):
-    return [
-        (f"ring{i}_addr", addr) for i, addr in enumerate(addrs)
-    ] + [
+    return [(f"ring{i}_addr", addr) for i, addr in enumerate(addrs)] + [
         ("name", node),
         ("nodeid", str(node_id)),
     ]
@@ -1155,7 +1118,8 @@ def _get_check_sbd_communication_list(node_list, with_devices=True):
             node,
             _get_watchdog(node),
             _get_devices(node) if with_devices else [],
-        ) for node in node_list
+        )
+        for node in node_list
     ]
 
 
@@ -1165,14 +1129,13 @@ def sbd_config_generator(node, with_devices=True):
         devices = 'SBD_DEVICE="{}"\n'.format(
             ";".join([f"/dev/block-{node}-{i}" for i in range(3)])
         )
-    return dedent("""\
+    return dedent(
+        """\
     # This file has been generated by pcs.
     {devices}SBD_OPTS="-n {node_name}"
     SBD_WATCHDOG_DEV=/dev/watchdog-{node_name}
-    """).format(
-        devices=devices,
-        node_name=node,
-    )
+    """
+    ).format(devices=devices, node_name=node,)
 
 
 class SslCertSync(TestCase):
@@ -1186,8 +1149,8 @@ class SslCertSync(TestCase):
         ]
 
         patch_getaddrinfo(self, self.new_nodes)
-        (self.config
-            .local.set_expected_reports_list(self.expected_reports)
+        (
+            self.config.local.set_expected_reports_list(self.expected_reports)
             .env.set_known_nodes(
                 self.existing_nodes + self.new_nodes + [QDEVICE_HOST]
             )
@@ -1208,13 +1171,14 @@ class SslCertSync(TestCase):
                     report_codes.USING_KNOWN_HOST_ADDRESS_FOR_HOST,
                     host_name=node,
                     address=node,
-                ) for node in self.new_nodes
+                )
+                for node in self.new_nodes
             ]
         )
 
     def _assert_certs_not_synced(self):
-        (self.config
-            .http.host.update_known_hosts(
+        (
+            self.config.http.host.update_known_hosts(
                 node_labels=self.new_nodes,
                 to_add_hosts=self.existing_nodes + self.new_nodes,
             )
@@ -1224,8 +1188,7 @@ class SslCertSync(TestCase):
             .local.distribute_and_reload_corosync_conf(
                 corosync_conf_fixture(
                     self.existing_corosync_nodes
-                    +
-                    [
+                    + [
                         node_fixture(node, node_id)
                         for node_id, node in enumerate(
                             self.new_nodes, len(self.existing_nodes) + 1
@@ -1239,7 +1202,7 @@ class SslCertSync(TestCase):
 
         cluster.add_nodes(
             self.env_assist.get_env(),
-            [{"name": node} for node in self.new_nodes]
+            [{"name": node} for node in self.new_nodes],
         )
 
         self.env_assist.assert_reports(self.expected_reports)
@@ -1253,31 +1216,27 @@ class SslCertSync(TestCase):
         self._assert_certs_not_synced()
 
     def test_certs_not_synced_if_pcsd_config_empty(self):
-        (self.config
-            .fs.isfile(
-                settings.pcsd_config,
-                name="fs.isfile.pcsd_config"
-            )
-            .fs.open(
+        (
+            self.config.fs.isfile(
+                settings.pcsd_config, name="fs.isfile.pcsd_config"
+            ).fs.open(
                 settings.pcsd_config,
                 mock.mock_open(read_data="")(),
-                name="fs.open.pcsd_config"
+                name="fs.open.pcsd_config",
             )
         )
         self._assert_certs_not_synced()
 
     def test_certs_not_synced_if_pcsd_config_commented(self):
-        (self.config
-            .fs.isfile(
-                settings.pcsd_config,
-                name="fs.isfile.pcsd_config"
-            )
-            .fs.open(
+        (
+            self.config.fs.isfile(
+                settings.pcsd_config, name="fs.isfile.pcsd_config"
+            ).fs.open(
                 settings.pcsd_config,
                 mock.mock_open(
                     read_data="#PCSD_SSL_CERT_SYNC_ENABLED=true\n"
                 )(),
-                name="fs.open.pcsd_config"
+                name="fs.open.pcsd_config",
             )
         )
         self._assert_certs_not_synced()
@@ -1296,8 +1255,8 @@ class AddNodeFull(TestCase):
         patch_getaddrinfo(
             self, _flat_list([_get_addrs(node) for node in self.new_nodes])
         )
-        (self.config
-            .local.set_expected_reports_list(self.expected_reports)
+        (
+            self.config.local.set_expected_reports_list(self.expected_reports)
             .env.set_known_nodes(
                 self.existing_nodes + self.new_nodes + [QDEVICE_HOST]
             )
@@ -1307,11 +1266,10 @@ class AddNodeFull(TestCase):
     @mock.patch("pcs.lib.corosync.qdevice_net._store_to_tmpfile")
     def test_with_qdevice(self, mock_write_tmpfile):
         sbd_config = "SBD_DEVICE=/device\n"
-        (self.config
-            .corosync_conf.load_content(
+        (
+            self.config.corosync_conf.load_content(
                 corosync_conf_fixture(
-                    self.existing_corosync_nodes,
-                    qdevice_net=True,
+                    self.existing_corosync_nodes, qdevice_net=True,
                 )
             )
             .runner.cib.load()
@@ -1332,8 +1290,7 @@ class AddNodeFull(TestCase):
             .local.distribute_and_reload_corosync_conf(
                 corosync_conf_fixture(
                     self.existing_corosync_nodes
-                    +
-                    [
+                    + [
                         corosync_node_fixture(node_id, node, _get_addrs(node))
                         for node_id, node in enumerate(
                             self.new_nodes, len(self.existing_nodes) + 1
@@ -1354,7 +1311,8 @@ class AddNodeFull(TestCase):
                     addrs=_get_addrs(node),
                     watchdog=_get_watchdog(node),
                     devices=_get_devices(node),
-                ) for node in self.new_nodes
+                )
+                for node in self.new_nodes
             ],
         )
 
@@ -1362,8 +1320,8 @@ class AddNodeFull(TestCase):
 
     def test_watchdog_not_supported(self):
         sbd_config = "SBD_DEVICE=/device\n"
-        (self.config
-            .corosync_conf.load_content(
+        (
+            self.config.corosync_conf.load_content(
                 corosync_conf_fixture(self.existing_corosync_nodes)
             )
             .runner.cib.load()
@@ -1375,28 +1333,28 @@ class AddNodeFull(TestCase):
                 communication_list=[
                     dict(
                         label=node,
-                        output=json.dumps({
-                            "sbd": {
-                                "installed": True,
-                            },
-                            "watchdog": {
-                                "exist": True,
-                                "path": _get_watchdog(node),
-                                "is_supported": False,
-                            },
-                            "device_list": [
-                                dict(
-                                    path=dev,
-                                    exist=True,
-                                    block_device=True
-                                ) for dev in _get_devices(node)
-                            ],
-                        }),
+                        output=json.dumps(
+                            {
+                                "sbd": {"installed": True,},
+                                "watchdog": {
+                                    "exist": True,
+                                    "path": _get_watchdog(node),
+                                    "is_supported": False,
+                                },
+                                "device_list": [
+                                    dict(
+                                        path=dev, exist=True, block_device=True
+                                    )
+                                    for dev in _get_devices(node)
+                                ],
+                            }
+                        ),
                         param_list=[
                             ("watchdog", _get_watchdog(node)),
                             ("device_list", json.dumps(_get_devices(node))),
-                        ]
-                    ) for node in self.new_nodes
+                        ],
+                    )
+                    for node in self.new_nodes
                 ],
             )
             .local.pcsd_ssl_cert_sync_enabled()
@@ -1411,29 +1369,29 @@ class AddNodeFull(TestCase):
                         addrs=_get_addrs(node),
                         watchdog=_get_watchdog(node),
                         devices=_get_devices(node),
-                    ) for node in self.new_nodes
+                    )
+                    for node in self.new_nodes
                 ],
             )
         )
 
         self.env_assist.assert_reports(
             self.expected_reports
-            +
-            [fixture.info(report_codes.SBD_CHECK_STARTED)]
-            +
-            [
+            + [fixture.info(report_codes.SBD_CHECK_STARTED)]
+            + [
                 fixture.error(
                     report_codes.SBD_WATCHDOG_NOT_SUPPORTED,
                     node=node,
                     watchdog=_get_watchdog(node),
-                ) for node in self.new_nodes
+                )
+                for node in self.new_nodes
             ]
         )
 
     def test_no_watchdog_validation(self):
         sbd_config = "SBD_DEVICE=/device\n"
-        (self.config
-            .corosync_conf.load_content(
+        (
+            self.config.corosync_conf.load_content(
                 corosync_conf_fixture(self.existing_corosync_nodes)
             )
             .runner.cib.load()
@@ -1445,23 +1403,23 @@ class AddNodeFull(TestCase):
                 communication_list=[
                     dict(
                         label=node,
-                        output=json.dumps({
-                            "sbd": {
-                                "installed": True,
-                            },
-                            "device_list": [
-                                dict(
-                                    path=dev,
-                                    exist=True,
-                                    block_device=True
-                                ) for dev in _get_devices(node)
-                            ],
-                        }),
+                        output=json.dumps(
+                            {
+                                "sbd": {"installed": True,},
+                                "device_list": [
+                                    dict(
+                                        path=dev, exist=True, block_device=True
+                                    )
+                                    for dev in _get_devices(node)
+                                ],
+                            }
+                        ),
                         param_list=[
                             ("watchdog", ""),
                             ("device_list", json.dumps(_get_devices(node))),
-                        ]
-                    ) for node in self.new_nodes
+                        ],
+                    )
+                    for node in self.new_nodes
                 ],
             )
             .local.pcsd_ssl_cert_sync_enabled()
@@ -1476,8 +1434,7 @@ class AddNodeFull(TestCase):
             .local.distribute_and_reload_corosync_conf(
                 corosync_conf_fixture(
                     self.existing_corosync_nodes
-                    +
-                    [
+                    + [
                         corosync_node_fixture(node_id, node, _get_addrs(node))
                         for node_id, node in enumerate(
                             self.new_nodes, len(self.existing_nodes) + 1
@@ -1498,20 +1455,19 @@ class AddNodeFull(TestCase):
                     addrs=_get_addrs(node),
                     watchdog=_get_watchdog(node),
                     devices=_get_devices(node),
-                ) for node in self.new_nodes
+                )
+                for node in self.new_nodes
             ],
             no_watchdog_validation=True,
         )
 
         self.env_assist.assert_reports(
             self.expected_reports
-            +
-            [
+            + [
                 fixture.info(report_codes.SBD_CHECK_STARTED),
                 fixture.warn(report_codes.SBD_WATCHDOG_VALIDATION_INACTIVE),
             ]
-            +
-            [
+            + [
                 fixture.info(report_codes.SBD_CHECK_SUCCESS, node=node)
                 for node in self.new_nodes
             ]
@@ -1519,8 +1475,8 @@ class AddNodeFull(TestCase):
 
     def test_atb_needed(self):
         sbd_config = ""
-        (self.config
-            .corosync_conf.load_content(
+        (
+            self.config.corosync_conf.load_content(
                 corosync_conf_fixture(self.existing_corosync_nodes)
             )
             .runner.cib.load()
@@ -1545,8 +1501,7 @@ class AddNodeFull(TestCase):
             .local.distribute_and_reload_corosync_conf(
                 corosync_conf_fixture(
                     self.existing_corosync_nodes
-                    +
-                    [
+                    + [
                         corosync_node_fixture(node_id, node, _get_addrs(node))
                         for node_id, node in enumerate(
                             self.new_nodes, len(self.existing_nodes) + 1
@@ -1566,7 +1521,8 @@ class AddNodeFull(TestCase):
                     name=node,
                     addrs=_get_addrs(node),
                     watchdog=_get_watchdog(node),
-                ) for node in self.new_nodes
+                )
+                for node in self.new_nodes
             ],
         )
 
@@ -1585,15 +1541,13 @@ class FailureReloadCorosyncConf(TestCase):
         ]
         self.config.env.set_known_nodes(self.existing_nodes + self.new_nodes)
         self.config.local.set_expected_reports_list(self.expected_reports)
-        (self.config
-            .runner.systemctl.is_enabled("sbd", is_enabled=False)
+        (
+            self.config.runner.systemctl.is_enabled("sbd", is_enabled=False)
             .corosync_conf.load_content(
                 corosync_conf_fixture(existing_corosync_nodes)
             )
             .runner.cib.load()
-            .http.host.check_auth(
-                node_labels=self.existing_nodes,
-            )
+            .http.host.check_auth(node_labels=self.existing_nodes,)
             # SBD not installed
             .runner.systemctl.list_unit_files({})
             .local.get_host_info(self.new_nodes)
@@ -1607,7 +1561,8 @@ class FailureReloadCorosyncConf(TestCase):
             .local.no_file_sync()
             .http.corosync.set_corosync_conf(
                 corosync_conf_fixture(
-                    existing_corosync_nodes + [
+                    existing_corosync_nodes
+                    + [
                         node_fixture(node, node_id)
                         for node_id, node in enumerate(
                             self.new_nodes, len(self.existing_nodes) + 1
@@ -1623,16 +1578,15 @@ class FailureReloadCorosyncConf(TestCase):
                     report_codes.USING_KNOWN_HOST_ADDRESS_FOR_HOST,
                     host_name=node,
                     address=node,
-                ) for node in self.new_nodes
+                )
+                for node in self.new_nodes
             ]
-            +
-            [fixture.info(report_codes.COROSYNC_CONFIG_DISTRIBUTION_STARTED)]
-            +
-            [
+            + [fixture.info(report_codes.COROSYNC_CONFIG_DISTRIBUTION_STARTED)]
+            + [
                 fixture.info(
-                    report_codes.COROSYNC_CONFIG_ACCEPTED_BY_NODE,
-                    node=node
-                ) for node in self.existing_nodes + self.new_nodes
+                    report_codes.COROSYNC_CONFIG_ACCEPTED_BY_NODE, node=node
+                )
+                for node in self.existing_nodes + self.new_nodes
             ]
         )
         self.cmd_url = "remote/reload_corosync_conf"
@@ -1641,21 +1595,23 @@ class FailureReloadCorosyncConf(TestCase):
     def test_few_failed(self):
         self.config.http.corosync.reload_corosync_conf(
             communication_list=[
-                [dict(
-                    label="node1",
-                    was_connected=False,
-                    errno=7,
-                    error_msg=self.err_msg,
-                )],
-                [dict(
-                    label="node2",
-                    output=json.dumps(
-                        dict(code="failed", message=self.err_msg)
-                    ),
-                )],
-                [dict(
-                    label="node3",
-                )],
+                [
+                    dict(
+                        label="node1",
+                        was_connected=False,
+                        errno=7,
+                        error_msg=self.err_msg,
+                    )
+                ],
+                [
+                    dict(
+                        label="node2",
+                        output=json.dumps(
+                            dict(code="failed", message=self.err_msg)
+                        ),
+                    )
+                ],
+                [dict(label="node3",)],
             ]
         )
 
@@ -1666,8 +1622,7 @@ class FailureReloadCorosyncConf(TestCase):
 
         self.env_assist.assert_reports(
             self.expected_reports
-            +
-            [
+            + [
                 fixture.warn(
                     report_codes.NODE_COMMUNICATION_ERROR_UNABLE_TO_CONNECT,
                     node="node1",
@@ -1680,29 +1635,30 @@ class FailureReloadCorosyncConf(TestCase):
                     reason=self.err_msg,
                 ),
                 fixture.info(
-                    report_codes.COROSYNC_CONFIG_RELOADED,
-                    node="node3",
-                )
+                    report_codes.COROSYNC_CONFIG_RELOADED, node="node3",
+                ),
             ]
         )
 
     def test_failed_and_corosync_not_running(self):
         self.config.http.corosync.reload_corosync_conf(
             communication_list=[
-                [dict(
-                    label="node1",
-                    # corosync not running
-                    output=json.dumps(dict(code="not_running", message=""))
-                )],
-                [dict(
-                    label="node2",
-                    output=json.dumps(
-                        dict(code="failed", message=self.err_msg)
-                    ),
-                )],
-                [dict(
-                    label="node3",
-                )],
+                [
+                    dict(
+                        label="node1",
+                        # corosync not running
+                        output=json.dumps(dict(code="not_running", message="")),
+                    )
+                ],
+                [
+                    dict(
+                        label="node2",
+                        output=json.dumps(
+                            dict(code="failed", message=self.err_msg)
+                        ),
+                    )
+                ],
+                [dict(label="node3",)],
             ]
         )
 
@@ -1713,8 +1669,7 @@ class FailureReloadCorosyncConf(TestCase):
 
         self.env_assist.assert_reports(
             self.expected_reports
-            +
-            [
+            + [
                 fixture.warn(
                     report_codes.COROSYNC_CONFIG_RELOAD_NOT_POSSIBLE,
                     node="node1",
@@ -1722,23 +1677,25 @@ class FailureReloadCorosyncConf(TestCase):
                 fixture.warn(
                     report_codes.COROSYNC_CONFIG_RELOAD_ERROR,
                     node="node2",
-                    reason=self.err_msg
+                    reason=self.err_msg,
                 ),
                 fixture.info(
-                    report_codes.COROSYNC_CONFIG_RELOADED,
-                    node="node3",
-                )
+                    report_codes.COROSYNC_CONFIG_RELOADED, node="node3",
+                ),
             ]
         )
 
     def test_all_corosync_not_running(self):
         self.config.http.corosync.reload_corosync_conf(
             communication_list=[
-                [dict(
-                    label=node,
-                    # corosync not running
-                    output=json.dumps(dict(code="not_running", message=""))
-                )] for node in self.existing_nodes
+                [
+                    dict(
+                        label=node,
+                        # corosync not running
+                        output=json.dumps(dict(code="not_running", message="")),
+                    )
+                ]
+                for node in self.existing_nodes
             ]
         )
 
@@ -1749,39 +1706,35 @@ class FailureReloadCorosyncConf(TestCase):
 
         self.env_assist.assert_reports(
             self.expected_reports
-            +
-            [
+            + [
                 fixture.warn(
-                    report_codes.COROSYNC_CONFIG_RELOAD_NOT_POSSIBLE,
-                    node=node,
-                ) for node in self.existing_nodes
+                    report_codes.COROSYNC_CONFIG_RELOAD_NOT_POSSIBLE, node=node,
+                )
+                for node in self.existing_nodes
             ]
         )
 
     def test_all_failed(self):
         self.config.http.corosync.reload_corosync_conf(
             communication_list=[
-                [dict(
-                    label="node1",
-                    was_connected=False,
-                    errno=7,
-                    error_msg=self.err_msg,
-                )],
-                [dict(
-                    label="node2",
-                    output=json.dumps(
-                        dict(code="failed", message=self.err_msg)
-                    ),
-                )],
-                [dict(
-                    label="node3",
-                    output="not a json",
-                )],
-                [dict(
-                    label="node4",
-                    response_code=400,
-                    output=self.err_msg,
-                )],
+                [
+                    dict(
+                        label="node1",
+                        was_connected=False,
+                        errno=7,
+                        error_msg=self.err_msg,
+                    )
+                ],
+                [
+                    dict(
+                        label="node2",
+                        output=json.dumps(
+                            dict(code="failed", message=self.err_msg)
+                        ),
+                    )
+                ],
+                [dict(label="node3", output="not a json",)],
+                [dict(label="node4", response_code=400, output=self.err_msg,)],
             ]
         )
 
@@ -1794,8 +1747,7 @@ class FailureReloadCorosyncConf(TestCase):
 
         self.env_assist.assert_reports(
             self.expected_reports
-            +
-            [
+            + [
                 fixture.warn(
                     report_codes.NODE_COMMUNICATION_ERROR_UNABLE_TO_CONNECT,
                     node="node1",
@@ -1808,18 +1760,16 @@ class FailureReloadCorosyncConf(TestCase):
                     reason=self.err_msg,
                 ),
                 fixture.warn(
-                    report_codes.INVALID_RESPONSE_FORMAT,
-                    node="node3",
+                    report_codes.INVALID_RESPONSE_FORMAT, node="node3",
                 ),
                 fixture.warn(
                     report_codes.NODE_COMMUNICATION_COMMAND_UNSUCCESSFUL,
                     node="node4",
                     command=self.cmd_url,
                     reason=self.err_msg,
-                )
+                ),
             ]
-            +
-            [
+            + [
                 fixture.error(
                     report_codes.UNABLE_TO_PERFORM_OPERATION_ON_ANY_NODE,
                 )
@@ -1839,15 +1789,13 @@ class FailureCorosyncConfDistribution(TestCase):
         ]
         self.config.env.set_known_nodes(self.existing_nodes + self.new_nodes)
         self.config.local.set_expected_reports_list(self.expected_reports)
-        (self.config
-            .runner.systemctl.is_enabled("sbd", is_enabled=False)
+        (
+            self.config.runner.systemctl.is_enabled("sbd", is_enabled=False)
             .corosync_conf.load_content(
                 corosync_conf_fixture(existing_corosync_nodes)
             )
             .runner.cib.load()
-            .http.host.check_auth(
-                node_labels=self.existing_nodes,
-            )
+            .http.host.check_auth(node_labels=self.existing_nodes,)
             # SBD not installed
             .runner.systemctl.list_unit_files({})
             .local.get_host_info(self.new_nodes)
@@ -1866,16 +1814,17 @@ class FailureCorosyncConfDistribution(TestCase):
                     report_codes.USING_KNOWN_HOST_ADDRESS_FOR_HOST,
                     host_name=node,
                     address=node,
-                ) for node in self.new_nodes
+                )
+                for node in self.new_nodes
             ]
-            +
-            [fixture.info(report_codes.COROSYNC_CONFIG_DISTRIBUTION_STARTED)]
+            + [fixture.info(report_codes.COROSYNC_CONFIG_DISTRIBUTION_STARTED)]
         )
         self.updated_corosync_conf_text = corosync_conf_fixture(
-            existing_corosync_nodes + [
+            existing_corosync_nodes
+            + [
                 node_fixture(node, node_id)
                 for node_id, node in enumerate(
-                        self.new_nodes, len(self.existing_nodes) + 1
+                    self.new_nodes, len(self.existing_nodes) + 1
                 )
             ]
         )
@@ -1884,16 +1833,16 @@ class FailureCorosyncConfDistribution(TestCase):
         err_output = "an error"
         self.config.http.corosync.set_corosync_conf(
             self.updated_corosync_conf_text,
-            communication_list=[
-                {"label": node} for node in self.existing_nodes
-            ] + [
+            communication_list=[{"label": node} for node in self.existing_nodes]
+            + [
                 {
                     "label": node,
                     "was_connected": False,
                     "errno": 1,
                     "error_msg": err_output,
-                } for node in self.new_nodes
-            ]
+                }
+                for node in self.new_nodes
+            ],
         )
 
         self.env_assist.assert_raise_library_error(
@@ -1905,28 +1854,27 @@ class FailureCorosyncConfDistribution(TestCase):
 
         self.env_assist.assert_reports(
             self.expected_reports
-            +
-            [
+            + [
                 fixture.info(
-                    report_codes.COROSYNC_CONFIG_ACCEPTED_BY_NODE,
-                    node=node
-                ) for node in self.existing_nodes
+                    report_codes.COROSYNC_CONFIG_ACCEPTED_BY_NODE, node=node
+                )
+                for node in self.existing_nodes
             ]
-            +
-            [
+            + [
                 fixture.error(
                     report_codes.NODE_COMMUNICATION_ERROR_UNABLE_TO_CONNECT,
                     node=node,
                     command="remote/set_corosync_conf",
                     reason=err_output,
-                ) for node in self.new_nodes
+                )
+                for node in self.new_nodes
             ]
-            +
-            [
+            + [
                 fixture.error(
                     report_codes.COROSYNC_CONFIG_DISTRIBUTION_NODE_ERROR,
                     node=node,
-                ) for node in self.new_nodes
+                )
+                for node in self.new_nodes
             ]
         )
 
@@ -1944,9 +1892,8 @@ class FailureCorosyncConfDistribution(TestCase):
                 },
                 {"label": "node3"},
                 {"label": "node4"},
-            ] + [
-                {"label": node} for node in self.new_nodes
             ]
+            + [{"label": node} for node in self.new_nodes],
         )
 
         self.env_assist.assert_raise_library_error(
@@ -1958,15 +1905,13 @@ class FailureCorosyncConfDistribution(TestCase):
 
         self.env_assist.assert_reports(
             self.expected_reports
-            +
-            [
+            + [
                 fixture.info(
-                    report_codes.COROSYNC_CONFIG_ACCEPTED_BY_NODE,
-                    node=node
-                ) for node in ["node1", "node3", "node4"] + self.new_nodes
+                    report_codes.COROSYNC_CONFIG_ACCEPTED_BY_NODE, node=node
+                )
+                for node in ["node1", "node3", "node4"] + self.new_nodes
             ]
-            +
-            [
+            + [
                 fixture.error(
                     report_codes.NODE_COMMUNICATION_ERROR_UNABLE_TO_CONNECT,
                     node="node2",
@@ -1976,7 +1921,7 @@ class FailureCorosyncConfDistribution(TestCase):
                 fixture.error(
                     report_codes.COROSYNC_CONFIG_DISTRIBUTION_NODE_ERROR,
                     node="node2",
-                )
+                ),
             ]
         )
 
@@ -1991,8 +1936,9 @@ class FailureCorosyncConfDistribution(TestCase):
                     "was_connected": False,
                     "errno": 1,
                     "error_msg": err_output,
-                } for node in node_list
-            ]
+                }
+                for node in node_list
+            ],
         )
 
         self.env_assist.assert_raise_library_error(
@@ -2004,21 +1950,21 @@ class FailureCorosyncConfDistribution(TestCase):
 
         self.env_assist.assert_reports(
             self.expected_reports
-            +
-            [
+            + [
                 fixture.error(
                     report_codes.NODE_COMMUNICATION_ERROR_UNABLE_TO_CONNECT,
                     node=node,
                     command="remote/set_corosync_conf",
                     reason=err_output,
-                ) for node in node_list
+                )
+                for node in node_list
             ]
-            +
-            [
+            + [
                 fixture.error(
                     report_codes.COROSYNC_CONFIG_DISTRIBUTION_NODE_ERROR,
                     node=node,
-                ) for node in node_list
+                )
+                for node in node_list
             ]
         )
 
@@ -2041,15 +1987,13 @@ class FailurePcsdSslCertSync(TestCase):
         ]
         self.config.env.set_known_nodes(self.existing_nodes + self.new_nodes)
         self.config.local.set_expected_reports_list(self.expected_reports)
-        (self.config
-            .runner.systemctl.is_enabled("sbd", is_enabled=False)
+        (
+            self.config.runner.systemctl.is_enabled("sbd", is_enabled=False)
             .corosync_conf.load_content(
                 corosync_conf_fixture(existing_corosync_nodes)
             )
             .runner.cib.load()
-            .http.host.check_auth(
-                node_labels=self.existing_nodes,
-            )
+            .http.host.check_auth(node_labels=self.existing_nodes,)
             # SBD not installed
             .runner.systemctl.list_unit_files({})
             .local.get_host_info(self.new_nodes)
@@ -2066,7 +2010,7 @@ class FailurePcsdSslCertSync(TestCase):
             [
                 fixture.info(
                     report_codes.PCSD_SSL_CERT_AND_KEY_DISTRIBUTION_STARTED,
-                    node_name_list=self.new_nodes
+                    node_name_list=self.new_nodes,
                 )
             ]
         )
@@ -2080,16 +2024,15 @@ class FailurePcsdSslCertSync(TestCase):
         )
 
     def test_read_failure(self):
-        (self.config
-            .fs.open(
+        (
+            self.config.fs.open(
                 settings.pcsd_cert_location,
                 name="fs.open.pcsd_ssl_cert",
-                side_effect=EnvironmentError(1, "error cert")
-            )
-            .fs.open(
+                side_effect=EnvironmentError(1, "error cert"),
+            ).fs.open(
                 settings.pcsd_key_location,
                 name="fs.open.pcsd_ssl_key",
-                side_effect=EnvironmentError(1, "error key")
+                side_effect=EnvironmentError(1, "error key"),
             )
         )
 
@@ -2097,8 +2040,7 @@ class FailurePcsdSslCertSync(TestCase):
 
         self.env_assist.assert_reports(
             self.expected_reports
-            +
-            [
+            + [
                 fixture.error(
                     report_codes.FILE_IO_ERROR,
                     file_type_code=file_type_codes.PCSD_SSL_CERT,
@@ -2117,29 +2059,25 @@ class FailurePcsdSslCertSync(TestCase):
         )
 
     def test_communication_failure(self):
-        (self.config
-            .fs.open(
+        (
+            self.config.fs.open(
                 settings.pcsd_cert_location,
                 mock.mock_open(read_data=self.pcsd_ssl_cert)(),
-                name="fs.open.pcsd_ssl_cert"
+                name="fs.open.pcsd_ssl_cert",
             )
             .fs.open(
                 settings.pcsd_key_location,
                 mock.mock_open(read_data=self.pcsd_ssl_key)(),
-                name="fs.open.pcsd_ssl_key"
+                name="fs.open.pcsd_ssl_key",
             )
             .http.host.send_pcsd_cert(
                 cert=self.pcsd_ssl_cert,
                 key=self.pcsd_ssl_key,
                 communication_list=[
-                    {
-                        "label": node,
-                        "response_code": 400,
-                        "output": self.error,
-                    } for node in self.unsuccessful_nodes
-                ] + [
-                    dict(label=node) for node in self.successful_nodes
+                    {"label": node, "response_code": 400, "output": self.error,}
+                    for node in self.unsuccessful_nodes
                 ]
+                + [dict(label=node) for node in self.successful_nodes],
             )
         )
 
@@ -2147,21 +2085,20 @@ class FailurePcsdSslCertSync(TestCase):
 
         self.env_assist.assert_reports(
             self.expected_reports
-            +
-            [
+            + [
                 fixture.info(
-                    report_codes.PCSD_SSL_CERT_AND_KEY_SET_SUCCESS,
-                    node=node,
-                ) for node in self.successful_nodes
+                    report_codes.PCSD_SSL_CERT_AND_KEY_SET_SUCCESS, node=node,
+                )
+                for node in self.successful_nodes
             ]
-            +
-            [
+            + [
                 fixture.error(
                     report_codes.NODE_COMMUNICATION_COMMAND_UNSUCCESSFUL,
                     node=node,
                     command="remote/set_certs",
-                    reason=self.error
-                ) for node in self.unsuccessful_nodes
+                    reason=self.error,
+                )
+                for node in self.unsuccessful_nodes
             ]
         )
 
@@ -2191,15 +2128,13 @@ class FailureFilesDistribution(TestCase):
         ]
         self.config.env.set_known_nodes(self.existing_nodes + self.new_nodes)
         self.config.local.set_expected_reports_list(self.expected_reports)
-        (self.config
-            .runner.systemctl.is_enabled("sbd", is_enabled=False)
+        (
+            self.config.runner.systemctl.is_enabled("sbd", is_enabled=False)
             .corosync_conf.load_content(
                 corosync_conf_fixture(self.existing_corosync_nodes)
             )
             .runner.cib.load()
-            .http.host.check_auth(
-                node_labels=self.existing_nodes,
-            )
+            .http.host.check_auth(node_labels=self.existing_nodes,)
             # SBD not installed
             .runner.systemctl.list_unit_files({})
             .local.get_host_info(self.new_nodes)
@@ -2211,23 +2146,27 @@ class FailureFilesDistribution(TestCase):
             .local.disable_sbd(self.new_nodes)
             .fs.isdir(settings.booth_config_dir, return_value=False)
             .fs.isfile(
-                settings.corosync_authkey_file, return_value=True,
-                name="fs.isfile.corosync_authkey"
+                settings.corosync_authkey_file,
+                return_value=True,
+                name="fs.isfile.corosync_authkey",
             )
             # open will be inserted here
             .fs.isfile(
-                settings.pacemaker_authkey_file, return_value=True,
-                name=self.corosync_key_open_before_position
+                settings.pacemaker_authkey_file,
+                return_value=True,
+                name=self.corosync_key_open_before_position,
             )
             # open will be inserted here
             .fs.isfile(
-                settings.pcsd_dr_config_location, return_value=True,
-                name=self.pacemaker_key_open_before_position
+                settings.pcsd_dr_config_location,
+                return_value=True,
+                name=self.pacemaker_key_open_before_position,
             )
             # open will be inserted here
             .fs.isfile(
-                settings.pcsd_settings_conf_location, return_value=False,
-                name=self.pcsd_dr_config_open_before_position
+                settings.pcsd_settings_conf_location,
+                return_value=False,
+                name=self.pcsd_dr_config_open_before_position,
             )
         )
         self.expected_reports.extend(
@@ -2236,7 +2175,8 @@ class FailureFilesDistribution(TestCase):
                     report_codes.USING_KNOWN_HOST_ADDRESS_FOR_HOST,
                     host_name=node,
                     address=node,
-                ) for node in self.new_nodes
+                )
+                for node in self.new_nodes
             ]
         )
         self.distribution_started_reports = [
@@ -2250,25 +2190,32 @@ class FailureFilesDistribution(TestCase):
                 node_list=self.new_nodes,
             )
         ]
-        self.successful_reports = [
-            fixture.info(
-                report_codes.FILE_DISTRIBUTION_SUCCESS,
-                node=node,
-                file_description=self.corosync_authkey_file_id,
-            ) for node in self.successful_nodes
-        ] + [
-            fixture.info(
-                report_codes.FILE_DISTRIBUTION_SUCCESS,
-                node=node,
-                file_description="pacemaker authkey",
-            ) for node in self.successful_nodes
-        ] + [
-            fixture.info(
-                report_codes.FILE_DISTRIBUTION_SUCCESS,
-                node=node,
-                file_description=self.pcsd_dr_config_file_id,
-            ) for node in self.successful_nodes
-        ]
+        self.successful_reports = (
+            [
+                fixture.info(
+                    report_codes.FILE_DISTRIBUTION_SUCCESS,
+                    node=node,
+                    file_description=self.corosync_authkey_file_id,
+                )
+                for node in self.successful_nodes
+            ]
+            + [
+                fixture.info(
+                    report_codes.FILE_DISTRIBUTION_SUCCESS,
+                    node=node,
+                    file_description="pacemaker authkey",
+                )
+                for node in self.successful_nodes
+            ]
+            + [
+                fixture.info(
+                    report_codes.FILE_DISTRIBUTION_SUCCESS,
+                    node=node,
+                    file_description=self.pcsd_dr_config_file_id,
+                )
+                for node in self.successful_nodes
+            ]
+        )
 
     def _add_nodes_with_lib_error(self):
         self.env_assist.assert_raise_library_error(
@@ -2286,7 +2233,7 @@ class FailureFilesDistribution(TestCase):
                 1, self.err_msg, settings.corosync_authkey_file
             ),
             name="fs.open.corosync_authkey",
-            before=self.corosync_key_open_before_position
+            before=self.corosync_key_open_before_position,
         )
         self.config.fs.open(
             settings.pacemaker_authkey_file,
@@ -2311,8 +2258,7 @@ class FailureFilesDistribution(TestCase):
 
         self.env_assist.assert_reports(
             self.expected_reports
-            +
-            [
+            + [
                 fixture.error(
                     report_codes.FILE_IO_ERROR,
                     force_code=report_codes.SKIP_FILE_DISTRIBUTION_ERRORS,
@@ -2347,15 +2293,15 @@ class FailureFilesDistribution(TestCase):
         )
 
     def test_read_failure_forced(self):
-        (self.config
-            .fs.open(
+        (
+            self.config.fs.open(
                 settings.corosync_authkey_file,
                 mode="rb",
                 side_effect=EnvironmentError(
                     1, self.err_msg, settings.corosync_authkey_file
                 ),
                 name="fs.open.corosync_authkey",
-                before=self.corosync_key_open_before_position
+                before=self.corosync_key_open_before_position,
             )
             .fs.open(
                 settings.pacemaker_authkey_file,
@@ -2377,7 +2323,8 @@ class FailureFilesDistribution(TestCase):
             )
             .local.distribute_and_reload_corosync_conf(
                 corosync_conf_fixture(
-                    self.existing_corosync_nodes + [
+                    self.existing_corosync_nodes
+                    + [
                         node_fixture(node, i)
                         for i, node in enumerate(
                             self.new_nodes, len(self.existing_nodes) + 1
@@ -2397,8 +2344,7 @@ class FailureFilesDistribution(TestCase):
 
         self.env_assist.assert_reports(
             self.expected_reports
-            +
-            [
+            + [
                 fixture.warn(
                     report_codes.FILE_IO_ERROR,
                     file_type_code=file_type_codes.COROSYNC_AUTHKEY,
@@ -2430,15 +2376,15 @@ class FailureFilesDistribution(TestCase):
         )
 
     def test_write_failure(self):
-        (self.config
-            .fs.open(
+        (
+            self.config.fs.open(
                 settings.corosync_authkey_file,
                 return_value=mock.mock_open(
                     read_data=self.corosync_authkey_content
                 )(),
                 mode="rb",
                 name="fs.open.corosync_authkey",
-                before=self.corosync_key_open_before_position
+                before=self.corosync_key_open_before_position,
             )
             .fs.open(
                 settings.pacemaker_authkey_file,
@@ -2465,24 +2411,25 @@ class FailureFilesDistribution(TestCase):
                 communication_list=[
                     dict(
                         label=node,
-                        output=json.dumps(dict(files={
-                            self.corosync_authkey_file_id: dict(
-                                code="unexpected",
-                                message=self.err_msg
-                            ),
-                            self.pcmk_authkey_file_id: dict(
-                                code="unexpected",
-                                message=self.err_msg
-                            ),
-                            self.pcsd_dr_config_file_id: dict(
-                                code="unexpected",
-                                message=self.err_msg
-                            ),
-                        }))
-                    ) for node in self.unsuccessful_nodes
-                ] + [
-                    dict(label=node) for node in self.successful_nodes
+                        output=json.dumps(
+                            dict(
+                                files={
+                                    self.corosync_authkey_file_id: dict(
+                                        code="unexpected", message=self.err_msg
+                                    ),
+                                    self.pcmk_authkey_file_id: dict(
+                                        code="unexpected", message=self.err_msg
+                                    ),
+                                    self.pcsd_dr_config_file_id: dict(
+                                        code="unexpected", message=self.err_msg
+                                    ),
+                                }
+                            )
+                        ),
+                    )
+                    for node in self.unsuccessful_nodes
                 ]
+                + [dict(label=node) for node in self.successful_nodes],
             )
         )
 
@@ -2490,49 +2437,47 @@ class FailureFilesDistribution(TestCase):
 
         self.env_assist.assert_reports(
             self.expected_reports
-            +
-            self.distribution_started_reports
-            +
-            self.successful_reports
-            +
-            [
+            + self.distribution_started_reports
+            + self.successful_reports
+            + [
                 fixture.error(
                     report_codes.FILE_DISTRIBUTION_ERROR,
                     node=node,
                     file_description=self.corosync_authkey_file_id,
                     reason=self.err_msg,
-                ) for node in self.unsuccessful_nodes
+                )
+                for node in self.unsuccessful_nodes
             ]
-            +
-            [
+            + [
                 fixture.error(
                     report_codes.FILE_DISTRIBUTION_ERROR,
                     node=node,
                     file_description="pacemaker authkey",
                     reason=self.err_msg,
-                ) for node in self.unsuccessful_nodes
+                )
+                for node in self.unsuccessful_nodes
             ]
-            +
-            [
+            + [
                 fixture.error(
                     report_codes.FILE_DISTRIBUTION_ERROR,
                     node=node,
                     file_description=self.pcsd_dr_config_file_id,
                     reason=self.err_msg,
-                ) for node in self.unsuccessful_nodes
+                )
+                for node in self.unsuccessful_nodes
             ]
         )
 
     def test_communication_failure(self):
-        (self.config
-            .fs.open(
+        (
+            self.config.fs.open(
                 settings.corosync_authkey_file,
                 return_value=mock.mock_open(
                     read_data=self.corosync_authkey_content
                 )(),
                 mode="rb",
                 name="fs.open.corosync_authkey",
-                before=self.corosync_key_open_before_position
+                before=self.corosync_key_open_before_position,
             )
             .fs.open(
                 settings.pacemaker_authkey_file,
@@ -2557,14 +2502,10 @@ class FailureFilesDistribution(TestCase):
                 corosync_authkey=self.corosync_authkey_content,
                 pcs_disaster_recovery_conf=self.pcsd_dr_config_content,
                 communication_list=[
-                    dict(
-                        label=node,
-                        output=self.err_msg,
-                        response_code=400,
-                    ) for node in self.unsuccessful_nodes
-                ] + [
-                    dict(label=node) for node in self.successful_nodes
+                    dict(label=node, output=self.err_msg, response_code=400,)
+                    for node in self.unsuccessful_nodes
                 ]
+                + [dict(label=node) for node in self.successful_nodes],
             )
         )
 
@@ -2572,31 +2513,29 @@ class FailureFilesDistribution(TestCase):
 
         self.env_assist.assert_reports(
             self.expected_reports
-            +
-            self.distribution_started_reports
-            +
-            self.successful_reports
-            +
-            [
+            + self.distribution_started_reports
+            + self.successful_reports
+            + [
                 fixture.error(
                     report_codes.NODE_COMMUNICATION_COMMAND_UNSUCCESSFUL,
                     node=node,
                     command="remote/put_file",
                     reason=self.err_msg,
-                ) for node in self.unsuccessful_nodes
+                )
+                for node in self.unsuccessful_nodes
             ]
         )
 
     def test_invalid_response_format(self):
-        (self.config
-            .fs.open(
+        (
+            self.config.fs.open(
                 settings.corosync_authkey_file,
                 return_value=mock.mock_open(
                     read_data=self.corosync_authkey_content
                 )(),
                 mode="rb",
                 name="fs.open.corosync_authkey",
-                before=self.corosync_key_open_before_position
+                before=self.corosync_key_open_before_position,
             )
             .fs.open(
                 settings.pacemaker_authkey_file,
@@ -2621,13 +2560,10 @@ class FailureFilesDistribution(TestCase):
                 corosync_authkey=self.corosync_authkey_content,
                 pcs_disaster_recovery_conf=self.pcsd_dr_config_content,
                 communication_list=[
-                    dict(
-                        label=node,
-                        output="not json",
-                    ) for node in self.unsuccessful_nodes
-                ] + [
-                    dict(label=node) for node in self.successful_nodes
+                    dict(label=node, output="not json",)
+                    for node in self.unsuccessful_nodes
                 ]
+                + [dict(label=node) for node in self.successful_nodes],
             )
         )
 
@@ -2635,29 +2571,24 @@ class FailureFilesDistribution(TestCase):
 
         self.env_assist.assert_reports(
             self.expected_reports
-            +
-            self.distribution_started_reports
-            +
-            self.successful_reports
-            +
-            [
-                fixture.error(
-                    report_codes.INVALID_RESPONSE_FORMAT,
-                    node=node,
-                ) for node in self.unsuccessful_nodes
+            + self.distribution_started_reports
+            + self.successful_reports
+            + [
+                fixture.error(report_codes.INVALID_RESPONSE_FORMAT, node=node,)
+                for node in self.unsuccessful_nodes
             ]
         )
 
     def test_node_not_responding(self):
-        (self.config
-            .fs.open(
+        (
+            self.config.fs.open(
                 settings.corosync_authkey_file,
                 return_value=mock.mock_open(
                     read_data=self.corosync_authkey_content
                 )(),
                 mode="rb",
                 name="fs.open.corosync_authkey",
-                before=self.corosync_key_open_before_position
+                before=self.corosync_key_open_before_position,
             )
             .fs.open(
                 settings.pacemaker_authkey_file,
@@ -2687,10 +2618,10 @@ class FailureFilesDistribution(TestCase):
                         errno=1,
                         error_msg=self.err_msg,
                         was_connected=False,
-                    ) for node in self.unsuccessful_nodes
-                ] + [
-                    dict(label=node) for node in self.successful_nodes
+                    )
+                    for node in self.unsuccessful_nodes
                 ]
+                + [dict(label=node) for node in self.successful_nodes],
             )
         )
 
@@ -2698,18 +2629,16 @@ class FailureFilesDistribution(TestCase):
 
         self.env_assist.assert_reports(
             self.expected_reports
-            +
-            self.distribution_started_reports
-            +
-            self.successful_reports
-            +
-            [
+            + self.distribution_started_reports
+            + self.successful_reports
+            + [
                 fixture.error(
                     report_codes.NODE_COMMUNICATION_ERROR_UNABLE_TO_CONNECT,
                     node=node,
                     command="remote/put_file",
                     reason=self.err_msg,
-                ) for node in self.unsuccessful_nodes
+                )
+                for node in self.unsuccessful_nodes
             ]
         )
 
@@ -2747,15 +2676,13 @@ class FailureBoothConfigsDistribution(TestCase):
 
         self.config.env.set_known_nodes(self.existing_nodes + self.new_nodes)
         self.config.local.set_expected_reports_list(self.expected_reports)
-        (self.config
-            .runner.systemctl.is_enabled("sbd", is_enabled=False)
+        (
+            self.config.runner.systemctl.is_enabled("sbd", is_enabled=False)
             .corosync_conf.load_content(
                 corosync_conf_fixture(self.existing_corosync_nodes)
             )
             .runner.cib.load()
-            .http.host.check_auth(
-                node_labels=self.existing_nodes,
-            )
+            .http.host.check_auth(node_labels=self.existing_nodes,)
             # SBD not installed
             .runner.systemctl.list_unit_files({})
             .local.get_host_info(self.new_nodes)
@@ -2778,7 +2705,8 @@ class FailureBoothConfigsDistribution(TestCase):
                     report_codes.USING_KNOWN_HOST_ADDRESS_FOR_HOST,
                     host_name=node,
                     address=node,
-                ) for node in self.new_nodes
+                )
+                for node in self.new_nodes
             ]
         )
         self.distribution_started_reports = [
@@ -2789,12 +2717,13 @@ class FailureBoothConfigsDistribution(TestCase):
                 report_codes.BOOTH_CONFIG_ACCEPTED_BY_NODE,
                 node=node,
                 name_list=[self.authfile, self.config_file],
-            ) for node in self.successful_nodes
+            )
+            for node in self.successful_nodes
         ]
 
     def _set_up_multibooth(self):
-        (self.config
-            .fs.listdir(
+        (
+            self.config.fs.listdir(
                 settings.booth_config_dir,
                 [
                     self.config_file,
@@ -2803,16 +2732,16 @@ class FailureBoothConfigsDistribution(TestCase):
                     self.authfile2,
                     self.config_file2,
                 ],
-                instead="fs.listdir"
-            )
-            .fs.isfile(self.config_path2, name="fs.isfile.booth_config_file2")
+                instead="fs.listdir",
+            ).fs.isfile(self.config_path2, name="fs.isfile.booth_config_file2")
         )
         self.successful_reports = [
             fixture.info(
                 report_codes.BOOTH_CONFIG_ACCEPTED_BY_NODE,
                 node=node,
                 name_list=[self.authfile2, self.config_file2],
-            ) for node in self.new_nodes
+            )
+            for node in self.new_nodes
         ]
 
     def _add_nodes_with_lib_error(self, report_list=None):
@@ -2843,8 +2772,7 @@ class FailureBoothConfigsDistribution(TestCase):
 
         self.env_assist.assert_reports(
             self.expected_reports
-            +
-            [
+            + [
                 fixture.error(
                     report_codes.FILE_IO_ERROR,
                     force_code=report_codes.SKIP_UNREADABLE_CONFIG,
@@ -2857,8 +2785,8 @@ class FailureBoothConfigsDistribution(TestCase):
         )
 
     def test_config_read_failure_forced(self):
-        (self.config
-            .raw_file.read(
+        (
+            self.config.raw_file.read(
                 file_type_codes.BOOTH_CONFIG,
                 self.config_path,
                 exception_msg=self.err_msg,
@@ -2867,7 +2795,8 @@ class FailureBoothConfigsDistribution(TestCase):
             .local.no_file_sync()
             .local.distribute_and_reload_corosync_conf(
                 corosync_conf_fixture(
-                    self.existing_corosync_nodes + [
+                    self.existing_corosync_nodes
+                    + [
                         node_fixture(node, i)
                         for i, node in enumerate(
                             self.new_nodes, len(self.existing_nodes) + 1
@@ -2887,8 +2816,7 @@ class FailureBoothConfigsDistribution(TestCase):
 
         self.env_assist.assert_reports(
             self.expected_reports
-            +
-            [
+            + [
                 fixture.warn(
                     report_codes.FILE_IO_ERROR,
                     file_type_code=file_type_codes.BOOTH_CONFIG,
@@ -2901,8 +2829,8 @@ class FailureBoothConfigsDistribution(TestCase):
 
     def test_config_read_failure_forced_sends_other_configs(self):
         self._set_up_multibooth()
-        (self.config
-            .raw_file.read(
+        (
+            self.config.raw_file.read(
                 file_type_codes.BOOTH_CONFIG,
                 self.config_path,
                 exception_msg=self.err_msg,
@@ -2929,9 +2857,9 @@ class FailureBoothConfigsDistribution(TestCase):
                     ),
                     dict(
                         name=self.authfile2,
-                        data=base64.b64encode(
-                            self.authfile_content2
-                        ).decode("utf-8"),
+                        data=base64.b64encode(self.authfile_content2).decode(
+                            "utf-8"
+                        ),
                         is_authfile=True,
                     ),
                 ],
@@ -2942,7 +2870,8 @@ class FailureBoothConfigsDistribution(TestCase):
             .local.no_file_sync()
             .local.distribute_and_reload_corosync_conf(
                 corosync_conf_fixture(
-                    self.existing_corosync_nodes + [
+                    self.existing_corosync_nodes
+                    + [
                         node_fixture(node, i)
                         for i, node in enumerate(
                             self.new_nodes, len(self.existing_nodes) + 1
@@ -2962,8 +2891,7 @@ class FailureBoothConfigsDistribution(TestCase):
 
         self.env_assist.assert_reports(
             self.expected_reports
-            +
-            [
+            + [
                 fixture.warn(
                     report_codes.FILE_IO_ERROR,
                     file_type_code=file_type_codes.BOOTH_CONFIG,
@@ -2972,21 +2900,18 @@ class FailureBoothConfigsDistribution(TestCase):
                     operation=RawFileError.ACTION_READ,
                 ),
             ]
-            +
-            self.distribution_started_reports
-            +
-            self.successful_reports
+            + self.distribution_started_reports
+            + self.successful_reports
         )
 
     def test_authfile_read_failure(self):
-        (self.config
-            .raw_file.read(
+        (
+            self.config.raw_file.read(
                 file_type_codes.BOOTH_CONFIG,
                 self.config_path,
                 content=self.config_content.encode("utf-8"),
                 name="raw_file.read.booth_config_read",
-            )
-            .raw_file.read(
+            ).raw_file.read(
                 file_type_codes.BOOTH_KEY,
                 self.authfile_path,
                 exception_msg=self.err_msg,
@@ -2998,8 +2923,7 @@ class FailureBoothConfigsDistribution(TestCase):
 
         self.env_assist.assert_reports(
             self.expected_reports
-            +
-            [
+            + [
                 fixture.error(
                     report_codes.FILE_IO_ERROR,
                     force_code=report_codes.SKIP_UNREADABLE_CONFIG,
@@ -3012,8 +2936,8 @@ class FailureBoothConfigsDistribution(TestCase):
         )
 
     def test_authfile_read_failure_forced(self):
-        (self.config
-            .raw_file.read(
+        (
+            self.config.raw_file.read(
                 file_type_codes.BOOTH_CONFIG,
                 self.config_path,
                 content=self.config_content.encode("utf-8"),
@@ -3028,7 +2952,8 @@ class FailureBoothConfigsDistribution(TestCase):
             .local.no_file_sync()
             .local.distribute_and_reload_corosync_conf(
                 corosync_conf_fixture(
-                    self.existing_corosync_nodes + [
+                    self.existing_corosync_nodes
+                    + [
                         node_fixture(node, i)
                         for i, node in enumerate(
                             self.new_nodes, len(self.existing_nodes) + 1
@@ -3036,7 +2961,7 @@ class FailureBoothConfigsDistribution(TestCase):
                     ],
                     _get_two_node(
                         len(self.existing_nodes) + len(self.new_nodes)
-                    )
+                    ),
                 ),
                 self.existing_nodes,
                 self.new_nodes,
@@ -3051,8 +2976,7 @@ class FailureBoothConfigsDistribution(TestCase):
 
         self.env_assist.assert_reports(
             self.expected_reports
-            +
-            [
+            + [
                 fixture.warn(
                     report_codes.FILE_IO_ERROR,
                     file_type_code=file_type_codes.BOOTH_KEY,
@@ -3065,8 +2989,8 @@ class FailureBoothConfigsDistribution(TestCase):
 
     def test_authfile_read_failure_forced_sends_other_configs(self):
         self._set_up_multibooth()
-        (self.config
-            .raw_file.read(
+        (
+            self.config.raw_file.read(
                 file_type_codes.BOOTH_CONFIG,
                 self.config_path,
                 content=self.config_content.encode("utf-8"),
@@ -3099,9 +3023,9 @@ class FailureBoothConfigsDistribution(TestCase):
                     ),
                     dict(
                         name=self.authfile2,
-                        data=base64.b64encode(
-                            self.authfile_content2
-                        ).decode("utf-8"),
+                        data=base64.b64encode(self.authfile_content2).decode(
+                            "utf-8"
+                        ),
                         is_authfile=True,
                     ),
                 ],
@@ -3112,7 +3036,8 @@ class FailureBoothConfigsDistribution(TestCase):
             .local.no_file_sync()
             .local.distribute_and_reload_corosync_conf(
                 corosync_conf_fixture(
-                    self.existing_corosync_nodes + [
+                    self.existing_corosync_nodes
+                    + [
                         node_fixture(node, i)
                         for i, node in enumerate(
                             self.new_nodes, len(self.existing_nodes) + 1
@@ -3132,8 +3057,7 @@ class FailureBoothConfigsDistribution(TestCase):
 
         self.env_assist.assert_reports(
             self.expected_reports
-            +
-            [
+            + [
                 fixture.warn(
                     report_codes.FILE_IO_ERROR,
                     file_type_code=file_type_codes.BOOTH_KEY,
@@ -3142,15 +3066,13 @@ class FailureBoothConfigsDistribution(TestCase):
                     operation=RawFileError.ACTION_READ,
                 ),
             ]
-            +
-            self.distribution_started_reports
-            +
-            self.successful_reports
+            + self.distribution_started_reports
+            + self.successful_reports
         )
 
     def test_write_failure(self):
-        (self.config
-            .raw_file.read(
+        (
+            self.config.raw_file.read(
                 file_type_codes.BOOTH_CONFIG,
                 self.config_path,
                 content=self.config_content.encode("utf-8"),
@@ -3171,9 +3093,9 @@ class FailureBoothConfigsDistribution(TestCase):
                     ),
                     dict(
                         name=self.authfile,
-                        data=base64.b64encode(
-                            self.authfile_content
-                        ).decode("utf-8"),
+                        data=base64.b64encode(self.authfile_content).decode(
+                            "utf-8"
+                        ),
                         is_authfile=True,
                     ),
                 ],
@@ -3181,15 +3103,17 @@ class FailureBoothConfigsDistribution(TestCase):
                 communication_list=[
                     dict(
                         label=node,
-                        output=json.dumps(dict(
-                            saved=[self.authfile],
-                            existing=[],
-                            failed={
-                                self.config_file: self.err_msg,
-                            }
-                        )),
-                    ) for node in self.unsuccessful_nodes
-                ] + [dict(label=node) for node in self.successful_nodes]
+                        output=json.dumps(
+                            dict(
+                                saved=[self.authfile],
+                                existing=[],
+                                failed={self.config_file: self.err_msg,},
+                            )
+                        ),
+                    )
+                    for node in self.unsuccessful_nodes
+                ]
+                + [dict(label=node) for node in self.successful_nodes],
             )
         )
 
@@ -3197,32 +3121,30 @@ class FailureBoothConfigsDistribution(TestCase):
 
         self.env_assist.assert_reports(
             self.expected_reports
-            +
-            self.distribution_started_reports
-            +
-            self.successful_reports
-            +
-            [
+            + self.distribution_started_reports
+            + self.successful_reports
+            + [
                 fixture.info(
                     report_codes.BOOTH_CONFIG_ACCEPTED_BY_NODE,
                     node=node,
                     name_list=[self.authfile],
-                ) for node in self.unsuccessful_nodes
+                )
+                for node in self.unsuccessful_nodes
             ]
-            +
-            [
+            + [
                 fixture.error(
                     report_codes.BOOTH_CONFIG_DISTRIBUTION_NODE_ERROR,
                     node=node,
                     name=self.config_file,
                     reason=self.err_msg,
-                ) for node in self.unsuccessful_nodes
+                )
+                for node in self.unsuccessful_nodes
             ]
         )
 
     def test_communication_failure(self):
-        (self.config
-            .raw_file.read(
+        (
+            self.config.raw_file.read(
                 file_type_codes.BOOTH_CONFIG,
                 self.config_path,
                 content=self.config_content.encode("utf-8"),
@@ -3243,20 +3165,18 @@ class FailureBoothConfigsDistribution(TestCase):
                     ),
                     dict(
                         name=self.authfile,
-                        data=base64.b64encode(
-                            self.authfile_content
-                        ).decode("utf-8"),
+                        data=base64.b64encode(self.authfile_content).decode(
+                            "utf-8"
+                        ),
                         is_authfile=True,
                     ),
                 ],
                 saved=[self.config_file, self.authfile],
                 communication_list=[
-                    dict(
-                        label=node,
-                        output=self.err_msg,
-                        response_code=400,
-                    ) for node in self.unsuccessful_nodes
-                ] + [dict(label=node) for node in self.successful_nodes]
+                    dict(label=node, output=self.err_msg, response_code=400,)
+                    for node in self.unsuccessful_nodes
+                ]
+                + [dict(label=node) for node in self.successful_nodes],
             )
         )
 
@@ -3264,24 +3184,22 @@ class FailureBoothConfigsDistribution(TestCase):
 
         self.env_assist.assert_reports(
             self.expected_reports
-            +
-            self.distribution_started_reports
-            +
-            self.successful_reports
-            +
-            [
+            + self.distribution_started_reports
+            + self.successful_reports
+            + [
                 fixture.error(
                     report_codes.NODE_COMMUNICATION_COMMAND_UNSUCCESSFUL,
                     node=node,
                     command="remote/booth_save_files",
                     reason=self.err_msg,
-                ) for node in self.unsuccessful_nodes
+                )
+                for node in self.unsuccessful_nodes
             ]
         )
 
     def test_invalid_response_format(self):
-        (self.config
-            .raw_file.read(
+        (
+            self.config.raw_file.read(
                 file_type_codes.BOOTH_CONFIG,
                 self.config_path,
                 content=self.config_content.encode("utf-8"),
@@ -3302,19 +3220,18 @@ class FailureBoothConfigsDistribution(TestCase):
                     ),
                     dict(
                         name=self.authfile,
-                        data=base64.b64encode(
-                            self.authfile_content
-                        ).decode("utf-8"),
+                        data=base64.b64encode(self.authfile_content).decode(
+                            "utf-8"
+                        ),
                         is_authfile=True,
                     ),
                 ],
                 saved=[self.config_file, self.authfile],
                 communication_list=[
-                    dict(
-                        label=node,
-                        output="not json",
-                    ) for node in self.unsuccessful_nodes
-                ] + [dict(label=node) for node in self.successful_nodes]
+                    dict(label=node, output="not json",)
+                    for node in self.unsuccessful_nodes
+                ]
+                + [dict(label=node) for node in self.successful_nodes],
             )
         )
 
@@ -3322,22 +3239,17 @@ class FailureBoothConfigsDistribution(TestCase):
 
         self.env_assist.assert_reports(
             self.expected_reports
-            +
-            self.distribution_started_reports
-            +
-            self.successful_reports
-            +
-            [
-                fixture.error(
-                    report_codes.INVALID_RESPONSE_FORMAT,
-                    node=node,
-                ) for node in self.unsuccessful_nodes
+            + self.distribution_started_reports
+            + self.successful_reports
+            + [
+                fixture.error(report_codes.INVALID_RESPONSE_FORMAT, node=node,)
+                for node in self.unsuccessful_nodes
             ]
         )
 
     def test_not_connected(self):
-        (self.config
-            .raw_file.read(
+        (
+            self.config.raw_file.read(
                 file_type_codes.BOOTH_CONFIG,
                 self.config_path,
                 content=self.config_content.encode("utf-8"),
@@ -3358,9 +3270,9 @@ class FailureBoothConfigsDistribution(TestCase):
                     ),
                     dict(
                         name=self.authfile,
-                        data=base64.b64encode(
-                            self.authfile_content
-                        ).decode("utf-8"),
+                        data=base64.b64encode(self.authfile_content).decode(
+                            "utf-8"
+                        ),
                         is_authfile=True,
                     ),
                 ],
@@ -3371,8 +3283,10 @@ class FailureBoothConfigsDistribution(TestCase):
                         errno=1,
                         error_msg=self.err_msg,
                         was_connected=False,
-                    ) for node in self.unsuccessful_nodes
-                ] + [dict(label=node) for node in self.successful_nodes]
+                    )
+                    for node in self.unsuccessful_nodes
+                ]
+                + [dict(label=node) for node in self.successful_nodes],
             )
         )
 
@@ -3380,18 +3294,16 @@ class FailureBoothConfigsDistribution(TestCase):
 
         self.env_assist.assert_reports(
             self.expected_reports
-            +
-            self.distribution_started_reports
-            +
-            self.successful_reports
-            +
-            [
+            + self.distribution_started_reports
+            + self.successful_reports
+            + [
                 fixture.error(
                     report_codes.NODE_COMMUNICATION_ERROR_UNABLE_TO_CONNECT,
                     node=node,
                     command="remote/booth_save_files",
                     reason=self.err_msg,
-                ) for node in self.unsuccessful_nodes
+                )
+                for node in self.unsuccessful_nodes
             ]
         )
 
@@ -3414,8 +3326,8 @@ class FailureDisableSbd(TestCase):
 
         self.config.env.set_known_nodes(self.existing_nodes + self.new_nodes)
         self.config.local.set_expected_reports_list(self.expected_reports)
-        (self.config
-            .runner.systemctl.is_enabled("sbd", is_enabled=False)
+        (
+            self.config.runner.systemctl.is_enabled("sbd", is_enabled=False)
             .corosync_conf.load_content(
                 corosync_conf_fixture(self.existing_corosync_nodes)
             )
@@ -3436,10 +3348,10 @@ class FailureDisableSbd(TestCase):
                     report_codes.USING_KNOWN_HOST_ADDRESS_FOR_HOST,
                     host_name=node,
                     address=node,
-                ) for node in self.new_nodes
+                )
+                for node in self.new_nodes
             ]
-            +
-            [
+            + [
                 fixture.info(
                     reports.codes.SERVICE_ACTION_STARTED,
                     action=reports.const.SERVICE_ACTION_DISABLE,
@@ -3447,15 +3359,15 @@ class FailureDisableSbd(TestCase):
                     instance="",
                 )
             ]
-            +
-            [
+            + [
                 fixture.info(
                     reports.codes.SERVICE_ACTION_SUCCEEDED,
                     action=reports.const.SERVICE_ACTION_DISABLE,
                     service="sbd",
                     node=node,
                     instance="",
-                ) for node in self.successful_nodes
+                )
+                for node in self.successful_nodes
             ]
         )
 
@@ -3474,26 +3386,24 @@ class FailureDisableSbd(TestCase):
     def test_communication_failure(self):
         self.config.http.sbd.disable_sbd(
             communication_list=[
-                dict(
-                    label=node,
-                    output=self.err_msg,
-                    response_code=400,
-                ) for node in self.unsuccessful_nodes
-            ] + [dict(label=node) for node in self.successful_nodes]
+                dict(label=node, output=self.err_msg, response_code=400,)
+                for node in self.unsuccessful_nodes
+            ]
+            + [dict(label=node) for node in self.successful_nodes]
         )
 
         self._add_nodes_with_lib_error()
 
         self.env_assist.assert_reports(
             self.expected_reports
-            +
-            [
+            + [
                 fixture.error(
                     report_codes.NODE_COMMUNICATION_COMMAND_UNSUCCESSFUL,
                     node=node,
                     command="remote/sbd_disable",
                     reason=self.err_msg,
-                ) for node in self.unsuccessful_nodes
+                )
+                for node in self.unsuccessful_nodes
             ]
         )
 
@@ -3505,22 +3415,24 @@ class FailureDisableSbd(TestCase):
                     errno=1,
                     error_msg=self.err_msg,
                     was_connected=False,
-                ) for node in self.unsuccessful_nodes
-            ] + [dict(label=node) for node in self.successful_nodes]
+                )
+                for node in self.unsuccessful_nodes
+            ]
+            + [dict(label=node) for node in self.successful_nodes]
         )
 
         self._add_nodes_with_lib_error()
 
         self.env_assist.assert_reports(
             self.expected_reports
-            +
-            [
+            + [
                 fixture.error(
                     report_codes.NODE_COMMUNICATION_ERROR_UNABLE_TO_CONNECT,
                     node=node,
                     command="remote/sbd_disable",
                     reason=self.err_msg,
-                ) for node in self.unsuccessful_nodes
+                )
+                for node in self.unsuccessful_nodes
             ]
         )
 
@@ -3543,8 +3455,8 @@ class FailureEnableSbd(TestCase):
         self.sbd_config = ""
         self.config.env.set_known_nodes(self.existing_nodes + self.new_nodes)
         self.config.local.set_expected_reports_list(self.expected_reports)
-        (self.config
-            .runner.systemctl.is_enabled("sbd", is_enabled=True)
+        (
+            self.config.runner.systemctl.is_enabled("sbd", is_enabled=True)
             .corosync_conf.load_content(
                 corosync_conf_fixture(self.existing_corosync_nodes)
             )
@@ -3565,7 +3477,8 @@ class FailureEnableSbd(TestCase):
                     report_codes.USING_KNOWN_HOST_ADDRESS_FOR_HOST,
                     host_name=node,
                     address=node,
-                ) for node in self.new_nodes
+                )
+                for node in self.new_nodes
             ]
         )
 
@@ -3585,8 +3498,8 @@ class FailureEnableSbd(TestCase):
         )
 
     def test_enable_communication_failure(self):
-        (self.config
-            .fs.open(
+        (
+            self.config.fs.open(
                 settings.sbd_config,
                 return_value=mock.mock_open(read_data=self.sbd_config)(),
                 name="fs.open.sbd_config",
@@ -3599,12 +3512,10 @@ class FailureEnableSbd(TestCase):
             )
             .http.sbd.enable_sbd(
                 communication_list=[
-                    dict(
-                        label=node,
-                        output=self.err_msg,
-                        response_code=400,
-                    ) for node in self.unsuccessful_nodes
-                ] + [dict(label=node) for node in self.successful_nodes]
+                    dict(label=node, output=self.err_msg, response_code=400,)
+                    for node in self.unsuccessful_nodes
+                ]
+                + [dict(label=node) for node in self.successful_nodes]
             )
         )
 
@@ -3612,17 +3523,14 @@ class FailureEnableSbd(TestCase):
 
         self.env_assist.assert_reports(
             self.expected_reports
-            +
-            [fixture.info(report_codes.SBD_CONFIG_DISTRIBUTION_STARTED)]
-            +
-            [
+            + [fixture.info(report_codes.SBD_CONFIG_DISTRIBUTION_STARTED)]
+            + [
                 fixture.info(
-                    report_codes.SBD_CONFIG_ACCEPTED_BY_NODE,
-                    node=node,
-                ) for node in self.new_nodes
+                    report_codes.SBD_CONFIG_ACCEPTED_BY_NODE, node=node,
+                )
+                for node in self.new_nodes
             ]
-            +
-            [
+            + [
                 fixture.info(
                     reports.codes.SERVICE_ACTION_STARTED,
                     action=reports.const.SERVICE_ACTION_ENABLE,
@@ -3630,53 +3538,59 @@ class FailureEnableSbd(TestCase):
                     instance="",
                 )
             ]
-            +
-            [
+            + [
                 fixture.info(
                     reports.codes.SERVICE_ACTION_SUCCEEDED,
                     action=reports.const.SERVICE_ACTION_ENABLE,
                     service="sbd",
                     node=node,
                     instance="",
-                ) for node in self.successful_nodes
+                )
+                for node in self.successful_nodes
             ]
-            +
-            [
+            + [
                 fixture.error(
                     report_codes.NODE_COMMUNICATION_COMMAND_UNSUCCESSFUL,
                     node=node,
                     command="remote/sbd_enable",
                     reason=self.err_msg,
-                ) for node in self.unsuccessful_nodes
+                )
+                for node in self.unsuccessful_nodes
             ]
         )
 
     def test_send_config_communication_failure(self):
-        (self.config
-            .fs.open(
+        (
+            self.config.fs.open(
                 settings.sbd_config,
                 return_value=mock.mock_open(read_data=self.sbd_config)(),
                 name="fs.open.sbd_config",
-            )
-            .http.sbd.set_sbd_config(
+            ).http.sbd.set_sbd_config(
                 communication_list=[
                     dict(
                         label=node,
-                        param_list=[(
-                            "config",
-                            sbd_config_generator(node, with_devices=False)
-                        )],
+                        param_list=[
+                            (
+                                "config",
+                                sbd_config_generator(node, with_devices=False),
+                            )
+                        ],
                         output=self.err_msg,
                         response_code=400,
-                    ) for node in self.unsuccessful_nodes
-                ] + [
+                    )
+                    for node in self.unsuccessful_nodes
+                ]
+                + [
                     dict(
                         label=node,
-                        param_list=[(
-                            "config",
-                            sbd_config_generator(node, with_devices=False)
-                        )],
-                    ) for node in self.successful_nodes
+                        param_list=[
+                            (
+                                "config",
+                                sbd_config_generator(node, with_devices=False),
+                            )
+                        ],
+                    )
+                    for node in self.successful_nodes
                 ]
             )
         )
@@ -3685,29 +3599,27 @@ class FailureEnableSbd(TestCase):
 
         self.env_assist.assert_reports(
             self.expected_reports
-            +
-            [fixture.info(report_codes.SBD_CONFIG_DISTRIBUTION_STARTED)]
-            +
-            [
+            + [fixture.info(report_codes.SBD_CONFIG_DISTRIBUTION_STARTED)]
+            + [
                 fixture.info(
-                    report_codes.SBD_CONFIG_ACCEPTED_BY_NODE,
-                    node=node,
-                ) for node in self.successful_nodes
+                    report_codes.SBD_CONFIG_ACCEPTED_BY_NODE, node=node,
+                )
+                for node in self.successful_nodes
             ]
-            +
-            [
+            + [
                 fixture.error(
                     report_codes.NODE_COMMUNICATION_COMMAND_UNSUCCESSFUL,
                     node=node,
                     command="remote/set_sbd_config",
                     reason=self.err_msg,
-                ) for node in self.unsuccessful_nodes
+                )
+                for node in self.unsuccessful_nodes
             ]
         )
 
     def test_read_config_failure(self):
-        (self.config
-            .fs.open(
+        (
+            self.config.fs.open(
                 settings.sbd_config,
                 side_effect=EnvironmentError(
                     1, self.err_msg, settings.sbd_config
@@ -3748,12 +3660,11 @@ class FailureQdevice(TestCase):
             self.existing_nodes + self.new_nodes + [QDEVICE_HOST]
         )
         self.config.local.set_expected_reports_list(self.expected_reports)
-        (self.config
-            .runner.systemctl.is_enabled("sbd", is_enabled=False)
+        (
+            self.config.runner.systemctl.is_enabled("sbd", is_enabled=False)
             .corosync_conf.load_content(
                 corosync_conf_fixture(
-                    self.existing_corosync_nodes,
-                    qdevice_net=True,
+                    self.existing_corosync_nodes, qdevice_net=True,
                 )
             )
             .runner.cib.load()
@@ -3771,7 +3682,8 @@ class FailureQdevice(TestCase):
                     report_codes.USING_KNOWN_HOST_ADDRESS_FOR_HOST,
                     host_name=node,
                     address=node,
-                ) for node in self.new_nodes
+                )
+                for node in self.new_nodes
             ]
         )
 
@@ -3781,9 +3693,7 @@ class FailureQdevice(TestCase):
         self.env_assist.assert_raise_library_error(
             lambda: cluster.add_nodes(
                 self.env_assist.get_env(),
-                [
-                    {"name": node} for node in self.new_nodes
-                ],
+                [{"name": node} for node in self.new_nodes],
             ),
             report_list,
             expected_in_processor=False,
@@ -3795,8 +3705,10 @@ class FailureQdevice(TestCase):
         tmp_file_path = "tmp_file_path"
         pk12_cert_path = "pk12_cert_path"
         pk12_cert = b"pk12_cert"
-        (self.config
-            .local.setup_qdevice_part1(mock_write_tmpfile, self.new_nodes)
+        (
+            self.config.local.setup_qdevice_part1(
+                mock_write_tmpfile, self.new_nodes
+            )
             .http.corosync.qdevice_net_sign_certificate(
                 CLUSTER_NAME,
                 cert=cert,
@@ -3805,15 +3717,13 @@ class FailureQdevice(TestCase):
             )
             .fs.exists(
                 os.path.join(
-                    settings.corosync_qdevice_net_client_certs_dir,
-                    "cert8.db"
+                    settings.corosync_qdevice_net_client_certs_dir, "cert8.db"
                 ),
                 return_value=True,
                 name="fs.exists.corosync_certs_db2",
             )
             .runner.corosync.qdevice_get_pk12(
-                cert_path=tmp_file_path,
-                output_path=pk12_cert_path,
+                cert_path=tmp_file_path, output_path=pk12_cert_path,
             )
             .fs.open(
                 pk12_cert_path,
@@ -3824,16 +3734,10 @@ class FailureQdevice(TestCase):
             .http.corosync.qdevice_net_client_import_cert_and_key(
                 cert=pk12_cert,
                 communication_list=[
-                    dict(
-                        label=node,
-                        output=self.err_msg,
-                        response_code=400,
-                    ) for node in self.unsuccessful_nodes
-                ] + [
-                    dict(
-                        label=node,
-                    ) for node in self.successful_nodes
+                    dict(label=node, output=self.err_msg, response_code=400,)
+                    for node in self.unsuccessful_nodes
                 ]
+                + [dict(label=node,) for node in self.successful_nodes],
             )
         )
 
@@ -3841,21 +3745,21 @@ class FailureQdevice(TestCase):
 
         self.env_assist.assert_reports(
             self.expected_reports
-            +
-            [
+            + [
                 fixture.info(
                     report_codes.QDEVICE_CERTIFICATE_ACCEPTED_BY_NODE,
                     node=node,
-                ) for node in self.successful_nodes
+                )
+                for node in self.successful_nodes
             ]
-            +
-            [
+            + [
                 fixture.error(
                     report_codes.NODE_COMMUNICATION_COMMAND_UNSUCCESSFUL,
                     node=node,
                     command="remote/qdevice_net_client_import_certificate",
                     reason=self.err_msg,
-                ) for node in self.unsuccessful_nodes
+                )
+                for node in self.unsuccessful_nodes
             ]
         )
 
@@ -3864,8 +3768,10 @@ class FailureQdevice(TestCase):
         cert = b"cert"
         tmp_file_path = "tmp_file_path"
         pk12_cert_path = "pk12_cert_path"
-        (self.config
-            .local.setup_qdevice_part1(mock_write_tmpfile, self.new_nodes)
+        (
+            self.config.local.setup_qdevice_part1(
+                mock_write_tmpfile, self.new_nodes
+            )
             .http.corosync.qdevice_net_sign_certificate(
                 CLUSTER_NAME,
                 cert=cert,
@@ -3874,32 +3780,30 @@ class FailureQdevice(TestCase):
             )
             .fs.exists(
                 os.path.join(
-                    settings.corosync_qdevice_net_client_certs_dir,
-                    "cert8.db"
+                    settings.corosync_qdevice_net_client_certs_dir, "cert8.db"
                 ),
                 return_value=True,
                 name="fs.exists.corosync_certs_db2",
             )
             .runner.corosync.qdevice_get_pk12(
-                cert_path=tmp_file_path,
-                output_path=pk12_cert_path,
+                cert_path=tmp_file_path, output_path=pk12_cert_path,
             )
             .fs.open(
                 pk12_cert_path,
-                side_effect=EnvironmentError(
-                    1, self.err_msg, pk12_cert_path,
-                ),
+                side_effect=EnvironmentError(1, self.err_msg, pk12_cert_path,),
                 mode="rb",
                 name="fs.open.pk12_cert_read",
             )
         )
 
-        self._add_nodes_with_lib_error([
-            fixture.error(
-                report_codes.QDEVICE_CERTIFICATE_IMPORT_ERROR,
-                reason=f"{pk12_cert_path}: {self.err_msg}"
-            ),
-        ])
+        self._add_nodes_with_lib_error(
+            [
+                fixture.error(
+                    report_codes.QDEVICE_CERTIFICATE_IMPORT_ERROR,
+                    reason=f"{pk12_cert_path}: {self.err_msg}",
+                ),
+            ]
+        )
 
         self.env_assist.assert_reports(self.expected_reports)
 
@@ -3907,8 +3811,10 @@ class FailureQdevice(TestCase):
     def test_transform_to_pk12_failure(self, mock_write_tmpfile):
         cert = b"cert"
         tmp_file_path = "tmp_file_path"
-        (self.config
-            .local.setup_qdevice_part1(mock_write_tmpfile, self.new_nodes)
+        (
+            self.config.local.setup_qdevice_part1(
+                mock_write_tmpfile, self.new_nodes
+            )
             .http.corosync.qdevice_net_sign_certificate(
                 CLUSTER_NAME,
                 cert=cert,
@@ -3917,8 +3823,7 @@ class FailureQdevice(TestCase):
             )
             .fs.exists(
                 os.path.join(
-                    settings.corosync_qdevice_net_client_certs_dir,
-                    "cert8.db"
+                    settings.corosync_qdevice_net_client_certs_dir, "cert8.db"
                 ),
                 return_value=True,
                 name="fs.exists.corosync_certs_db2",
@@ -3928,25 +3833,28 @@ class FailureQdevice(TestCase):
                 output_path=None,
                 stdout="",
                 stderr=self.err_msg,
-                returncode=1
+                returncode=1,
             )
         )
 
-        self._add_nodes_with_lib_error([
-            fixture.error(
-                report_codes.QDEVICE_CERTIFICATE_IMPORT_ERROR,
-                reason=self.err_msg
-            ),
-        ])
+        self._add_nodes_with_lib_error(
+            [
+                fixture.error(
+                    report_codes.QDEVICE_CERTIFICATE_IMPORT_ERROR,
+                    reason=self.err_msg,
+                ),
+            ]
+        )
 
         self.env_assist.assert_reports(self.expected_reports)
 
     @mock.patch("pcs.lib.corosync.qdevice_net._store_to_tmpfile")
     def test_sign_certificate_failure(self, mock_write_tmpfile):
         cert = b"cert"
-        (self.config
-            .local.setup_qdevice_part1(mock_write_tmpfile, self.new_nodes)
-            .http.corosync.qdevice_net_sign_certificate(
+        (
+            self.config.local.setup_qdevice_part1(
+                mock_write_tmpfile, self.new_nodes
+            ).http.corosync.qdevice_net_sign_certificate(
                 CLUSTER_NAME,
                 cert=cert,
                 communication_list=[
@@ -3954,7 +3862,7 @@ class FailureQdevice(TestCase):
                         "label": QDEVICE_HOST,
                         "output": "invalid base64 encoded certificate data",
                     },
-                ]
+                ],
             )
         )
 
@@ -3962,11 +3870,9 @@ class FailureQdevice(TestCase):
 
         self.env_assist.assert_reports(
             self.expected_reports
-            +
-            [
+            + [
                 fixture.error(
-                    report_codes.INVALID_RESPONSE_FORMAT,
-                    node=QDEVICE_HOST,
+                    report_codes.INVALID_RESPONSE_FORMAT, node=QDEVICE_HOST,
                 )
             ]
         )
@@ -3974,49 +3880,44 @@ class FailureQdevice(TestCase):
     def test_read_certificate_request_failure(self):
         ca_cert = b"ca_cert"
         cert_req_path = "cert_req_path"
-        (self.config
-            .http.corosync.qdevice_net_get_ca_cert(
-                ca_cert=ca_cert,
-                node_labels=[QDEVICE_HOST],
+        (
+            self.config.http.corosync.qdevice_net_get_ca_cert(
+                ca_cert=ca_cert, node_labels=[QDEVICE_HOST],
             )
             .http.corosync.qdevice_net_client_setup(
-                ca_cert=ca_cert,
-                node_labels=self.new_nodes,
+                ca_cert=ca_cert, node_labels=self.new_nodes,
             )
             .fs.exists(
                 os.path.join(
-                    settings.corosync_qdevice_net_client_certs_dir,
-                    "cert8.db"
+                    settings.corosync_qdevice_net_client_certs_dir, "cert8.db"
                 ),
                 return_value=True,
-                name="fs.exists.corosync_certs_db"
+                name="fs.exists.corosync_certs_db",
             )
             .runner.corosync.qdevice_generate_cert(
-                CLUSTER_NAME,
-                cert_req_path=cert_req_path,
+                CLUSTER_NAME, cert_req_path=cert_req_path,
             )
             .fs.open(
                 cert_req_path,
-                side_effect=EnvironmentError(
-                    1, self.err_msg, cert_req_path
-                ),
+                side_effect=EnvironmentError(1, self.err_msg, cert_req_path),
                 mode="rb",
                 name="fs.open.cert_req_read",
             )
         )
 
-        self._add_nodes_with_lib_error([
-            fixture.error(
-                report_codes.QDEVICE_INITIALIZATION_ERROR,
-                model="net",
-                reason=f"{cert_req_path}: {self.err_msg}"
-            ),
-        ])
+        self._add_nodes_with_lib_error(
+            [
+                fixture.error(
+                    report_codes.QDEVICE_INITIALIZATION_ERROR,
+                    model="net",
+                    reason=f"{cert_req_path}: {self.err_msg}",
+                ),
+            ]
+        )
 
         self.env_assist.assert_reports(
             self.expected_reports
-            +
-            [
+            + [
                 fixture.info(
                     report_codes.QDEVICE_CERTIFICATE_DISTRIBUTION_STARTED
                 )
@@ -4025,44 +3926,42 @@ class FailureQdevice(TestCase):
 
     def test_generate_certificate_request_failure(self):
         ca_cert = b"ca_cert"
-        (self.config
-            .http.corosync.qdevice_net_get_ca_cert(
-                ca_cert=ca_cert,
-                node_labels=[QDEVICE_HOST],
+        (
+            self.config.http.corosync.qdevice_net_get_ca_cert(
+                ca_cert=ca_cert, node_labels=[QDEVICE_HOST],
             )
             .http.corosync.qdevice_net_client_setup(
-                ca_cert=ca_cert,
-                node_labels=self.new_nodes,
+                ca_cert=ca_cert, node_labels=self.new_nodes,
             )
             .fs.exists(
                 os.path.join(
-                    settings.corosync_qdevice_net_client_certs_dir,
-                    "cert8.db"
+                    settings.corosync_qdevice_net_client_certs_dir, "cert8.db"
                 ),
                 return_value=True,
-                name="fs.exists.corosync_certs_db"
+                name="fs.exists.corosync_certs_db",
             )
             .runner.corosync.qdevice_generate_cert(
                 CLUSTER_NAME,
                 cert_req_path=None,
                 stdout="",
                 stderr=self.err_msg,
-                returncode=1
+                returncode=1,
             )
         )
 
-        self._add_nodes_with_lib_error([
-            fixture.error(
-                report_codes.QDEVICE_INITIALIZATION_ERROR,
-                model="net",
-                reason=self.err_msg
-            ),
-        ])
+        self._add_nodes_with_lib_error(
+            [
+                fixture.error(
+                    report_codes.QDEVICE_INITIALIZATION_ERROR,
+                    model="net",
+                    reason=self.err_msg,
+                ),
+            ]
+        )
 
         self.env_assist.assert_reports(
             self.expected_reports
-            +
-            [
+            + [
                 fixture.info(
                     report_codes.QDEVICE_CERTIFICATE_DISTRIBUTION_STARTED
                 )
@@ -4071,24 +3970,16 @@ class FailureQdevice(TestCase):
 
     def test_initialize_new_nodes_failure(self):
         ca_cert = b"ca_cert"
-        (self.config
-            .http.corosync.qdevice_net_get_ca_cert(
-                ca_cert=ca_cert,
-                node_labels=[QDEVICE_HOST],
-            )
-            .http.corosync.qdevice_net_client_setup(
+        (
+            self.config.http.corosync.qdevice_net_get_ca_cert(
+                ca_cert=ca_cert, node_labels=[QDEVICE_HOST],
+            ).http.corosync.qdevice_net_client_setup(
                 ca_cert=ca_cert,
                 communication_list=[
-                    dict(
-                        label=node,
-                        output=self.err_msg,
-                        response_code=400,
-                    ) for node in self.unsuccessful_nodes
-                ] + [
-                    dict(
-                        label=node,
-                    ) for node in self.successful_nodes
+                    dict(label=node, output=self.err_msg, response_code=400,)
+                    for node in self.unsuccessful_nodes
                 ]
+                + [dict(label=node,) for node in self.successful_nodes],
             )
         )
 
@@ -4096,14 +3987,12 @@ class FailureQdevice(TestCase):
 
         self.env_assist.assert_reports(
             self.expected_reports
-            +
-            [
+            + [
                 fixture.info(
                     report_codes.QDEVICE_CERTIFICATE_DISTRIBUTION_STARTED
                 )
             ]
-            +
-            [
+            + [
                 fixture.error(
                     report_codes.NODE_COMMUNICATION_COMMAND_UNSUCCESSFUL,
                     node=node,
@@ -4111,13 +4000,14 @@ class FailureQdevice(TestCase):
                         "remote/qdevice_net_client_init_certificate_storage"
                     ),
                     reason=self.err_msg,
-                ) for node in self.unsuccessful_nodes
+                )
+                for node in self.unsuccessful_nodes
             ]
         )
 
     def test_get_ca_cert_failure(self):
-        (self.config
-            .http.corosync.qdevice_net_get_ca_cert(
+        (
+            self.config.http.corosync.qdevice_net_get_ca_cert(
                 communication_list=[
                     {
                         "label": QDEVICE_HOST,
@@ -4131,17 +4021,16 @@ class FailureQdevice(TestCase):
 
         self.env_assist.assert_reports(
             self.expected_reports
-            +
-            [
+            + [
                 fixture.info(
                     report_codes.QDEVICE_CERTIFICATE_DISTRIBUTION_STARTED
                 ),
                 fixture.error(
-                    report_codes.INVALID_RESPONSE_FORMAT,
-                    node=QDEVICE_HOST,
-                )
+                    report_codes.INVALID_RESPONSE_FORMAT, node=QDEVICE_HOST,
+                ),
             ]
         )
+
 
 class FailureKnownHostsUpdate(TestCase):
     # pylint: disable=too-many-instance-attributes
@@ -4159,8 +4048,8 @@ class FailureKnownHostsUpdate(TestCase):
         ]
         self.config.env.set_known_nodes(self.existing_nodes + self.new_nodes)
         self.config.local.set_expected_reports_list(self.expected_reports)
-        (self.config
-            .runner.systemctl.is_enabled("sbd", is_enabled=False)
+        (
+            self.config.runner.systemctl.is_enabled("sbd", is_enabled=False)
             .corosync_conf.load_content(
                 corosync_conf_fixture(self.existing_corosync_nodes)
             )
@@ -4177,7 +4066,8 @@ class FailureKnownHostsUpdate(TestCase):
                     report_codes.USING_KNOWN_HOST_ADDRESS_FOR_HOST,
                     host_name=node,
                     address=node,
-                ) for node in self.new_nodes
+                )
+                for node in self.new_nodes
             ]
         )
 
@@ -4197,26 +4087,24 @@ class FailureKnownHostsUpdate(TestCase):
         self.config.http.host.update_known_hosts(
             to_add_hosts=self.existing_nodes + self.new_nodes,
             communication_list=[
-                dict(
-                    label=node,
-                    output=self.err_msg,
-                    response_code=400,
-                ) for node in self.unsuccessful_nodes
-            ] + [dict(label=node) for node in self.successful_nodes]
+                dict(label=node, output=self.err_msg, response_code=400,)
+                for node in self.unsuccessful_nodes
+            ]
+            + [dict(label=node) for node in self.successful_nodes],
         )
 
         self._add_nodes_with_lib_error()
 
         self.env_assist.assert_reports(
             self.expected_reports
-            +
-            [
+            + [
                 fixture.error(
                     report_codes.NODE_COMMUNICATION_COMMAND_UNSUCCESSFUL,
                     node=node,
                     command="remote/known_hosts_change",
                     reason=self.err_msg,
-                ) for node in self.unsuccessful_nodes
+                )
+                for node in self.unsuccessful_nodes
             ]
         )
 
@@ -4229,21 +4117,23 @@ class FailureKnownHostsUpdate(TestCase):
                     errno=1,
                     error_msg=self.err_msg,
                     was_connected=False,
-                ) for node in self.unsuccessful_nodes
-            ] + [dict(label=node) for node in self.successful_nodes]
+                )
+                for node in self.unsuccessful_nodes
+            ]
+            + [dict(label=node) for node in self.successful_nodes],
         )
 
         self._add_nodes_with_lib_error()
 
         self.env_assist.assert_reports(
             self.expected_reports
-            +
-            [
+            + [
                 fixture.error(
                     report_codes.NODE_COMMUNICATION_ERROR_UNABLE_TO_CONNECT,
                     node=node,
                     command="remote/known_hosts_change",
                     reason=self.err_msg,
-                ) for node in self.unsuccessful_nodes
+                )
+                for node in self.unsuccessful_nodes
             ]
         )

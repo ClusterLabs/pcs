@@ -19,5 +19,5 @@ node_cmd = create_router(
         # pcs-to-pcsd use only
         "pacemaker-status": node.node_pacemaker_status,
     },
-    ["node"]
+    ["node"],
 )

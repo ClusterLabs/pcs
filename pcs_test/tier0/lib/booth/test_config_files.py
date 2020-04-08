@@ -35,8 +35,11 @@ class GetAllConfigsFileNamesTest(TestCase):
             if file_name in [
                 os.path.join(settings.booth_config_dir, name)
                 for name in (
-                    "name1", "name2.conf", "name.conf.conf", ".conf",
-                    "name3.conf"
+                    "name1",
+                    "name2.conf",
+                    "name.conf.conf",
+                    ".conf",
+                    "name3.conf",
                 )
             ]:
                 return True
@@ -46,12 +49,17 @@ class GetAllConfigsFileNamesTest(TestCase):
         mock_isdir.return_value = True
         mock_is_file.side_effect = mock_is_file_fn
         mock_listdir.return_value = [
-            "name1", "name2.conf", "name.conf.conf", ".conf", "name3.conf",
-            "dir.cong", "dir"
+            "name1",
+            "name2.conf",
+            "name.conf.conf",
+            ".conf",
+            "name3.conf",
+            "dir.cong",
+            "dir",
         ]
         self.assertEqual(
             ["name2.conf", "name.conf.conf", "name3.conf"],
-            config_files.get_all_configs_file_names()
+            config_files.get_all_configs_file_names(),
         )
         mock_listdir.assert_called_once_with(settings.booth_config_dir)
 
@@ -60,8 +68,7 @@ class GetAuthfileNameAndData(TestCase):
     def test_no_auth_file(self):
         conf = ConfigFacade.create([], [])
         self.assertEqual(
-            (None, None, []),
-            config_files.get_authfile_name_and_data(conf)
+            (None, None, []), config_files.get_authfile_name_and_data(conf)
         )
 
     def assert_path_check(self, path):
@@ -79,7 +86,7 @@ class GetAuthfileNameAndData(TestCase):
                     file_path=path,
                     expected_dir=settings.booth_config_dir,
                 ),
-            ]
+            ],
         )
 
     def test_invalid_path(self):
@@ -98,16 +105,14 @@ class GetAuthfileNameAndData(TestCase):
         conf.set_authfile(path)
         self.assertEqual(
             (key_name, key_data, []),
-            config_files.get_authfile_name_and_data(conf)
+            config_files.get_authfile_name_and_data(conf),
         )
 
     @mock.patch("pcs.common.file.RawFile.read")
     def test_read_failure(self, mock_read):
         key_name = "my_booth.key"
         mock_read.side_effect = RawFileError(
-            "mock file type",
-            RawFileError.ACTION_READ,
-            "some error"
+            "mock file type", RawFileError.ACTION_READ, "some error"
         )
         path = os.path.join(settings.booth_config_dir, key_name)
         conf = ConfigFacade.create([], [])

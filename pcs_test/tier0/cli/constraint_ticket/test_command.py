@@ -4,18 +4,23 @@ from pcs.cli.common.errors import CmdLineInputError
 from pcs.cli.common.parse_args import InputModifiers
 from pcs.cli.constraint_ticket import command
 
+
 def _modifiers(force=True):
     options = {}
     if force:
         options["--force"] = ""
     return InputModifiers(options)
 
+
 class AddTest(TestCase):
     # pylint: disable=no-self-use
     @mock.patch("pcs.cli.constraint_ticket.command.parse_args.parse_add")
     def test_call_library_with_correct_attrs(self, mock_parse_add):
         mock_parse_add.return_value = (
-            "ticket", "resource_id", "", {"loss-policy": "fence"}
+            "ticket",
+            "resource_id",
+            "",
+            {"loss-policy": "fence"},
         )
         lib = mock.MagicMock()
         lib.constraint_ticket = mock.MagicMock()
@@ -25,7 +30,9 @@ class AddTest(TestCase):
 
         mock_parse_add.assert_called_once_with(["argv"])
         lib.constraint_ticket.add.assert_called_once_with(
-            "ticket", "resource_id", {"loss-policy": "fence"},
+            "ticket",
+            "resource_id",
+            {"loss-policy": "fence"},
             resource_in_clone_alowed=True,
             duplication_alowed=True,
         )
@@ -33,18 +40,23 @@ class AddTest(TestCase):
     @mock.patch("pcs.cli.constraint_ticket.command.parse_args.parse_add")
     def test_refuse_resource_role_in_options(self, mock_parse_add):
         mock_parse_add.return_value = (
-            "ticket", "resource_id", "resource_role", {"rsc-role": "master"}
+            "ticket",
+            "resource_id",
+            "resource_role",
+            {"rsc-role": "master"},
         )
         lib = None
         self.assertRaises(
-            CmdLineInputError,
-            lambda: command.add(lib, ["argv"], _modifiers())
+            CmdLineInputError, lambda: command.add(lib, ["argv"], _modifiers())
         )
 
     @mock.patch("pcs.cli.constraint_ticket.command.parse_args.parse_add")
     def test_put_resource_role_to_options_for_library(self, mock_parse_add):
         mock_parse_add.return_value = (
-            "ticket", "resource_id", "resource_role", {"loss-policy": "fence"}
+            "ticket",
+            "resource_id",
+            "resource_role",
+            {"loss-policy": "fence"},
         )
         lib = mock.MagicMock()
         lib.constraint_ticket = mock.MagicMock()
@@ -54,24 +66,30 @@ class AddTest(TestCase):
 
         mock_parse_add.assert_called_once_with(["argv"])
         lib.constraint_ticket.add.assert_called_once_with(
-            "ticket", "resource_id",
+            "ticket",
+            "resource_id",
             {"loss-policy": "fence", "rsc-role": "resource_role"},
             resource_in_clone_alowed=True,
             duplication_alowed=True,
         )
 
+
 class RemoveTest(TestCase):
     def test_refuse_args_count(self):
-        self.assertRaises(CmdLineInputError, lambda: command.remove(
-            mock.MagicMock(),
-            ["TICKET"],
-            _modifiers(False),
-        ))
-        self.assertRaises(CmdLineInputError, lambda: command.remove(
-            mock.MagicMock(),
-            ["TICKET", "RESOURCE", "SOMETHING_ELSE"],
-            _modifiers(False),
-        ))
+        self.assertRaises(
+            CmdLineInputError,
+            lambda: command.remove(
+                mock.MagicMock(), ["TICKET"], _modifiers(False),
+            ),
+        )
+        self.assertRaises(
+            CmdLineInputError,
+            lambda: command.remove(
+                mock.MagicMock(),
+                ["TICKET", "RESOURCE", "SOMETHING_ELSE"],
+                _modifiers(False),
+            ),
+        )
 
     def test_call_library_remove_with_correct_attrs(self):
         # pylint: disable=no-self-use

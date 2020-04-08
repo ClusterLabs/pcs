@@ -13,11 +13,13 @@ SSL_CIPHERS = "DEFAULT:!RC4"
 CERT = rc("daemon.cert")
 KEY = rc("daemon.key")
 
+
 def remove_ssl_files():
     if os.path.exists(CERT):
         os.remove(CERT)
     if os.path.exists(KEY):
         os.remove(KEY)
+
 
 def damage_ssl_files():
     with open(CERT, "w") as cert:
@@ -25,19 +27,19 @@ def damage_ssl_files():
     with open(KEY, "w") as key:
         key.write("bad content")
 
+
 # various versions of OpenSSL / PyOpenSSL emit different messages
 DAMAGED_SSL_FILES_ERRORS_1 = (
     f"Invalid SSL certificate '{CERT}':"
-        " 'PEM routines:PEM_read_bio:no start line'"
-    ,
-    f"Invalid SSL key '{KEY}': 'PEM routines:PEM_read_bio:no start line'"
+    " 'PEM routines:PEM_read_bio:no start line'",
+    f"Invalid SSL key '{KEY}': 'PEM routines:PEM_read_bio:no start line'",
 )
 DAMAGED_SSL_FILES_ERRORS_2 = (
     f"Invalid SSL certificate '{CERT}':"
-        " 'PEM routines:get_name:no start line'"
-    ,
-    f"Invalid SSL key '{KEY}': 'PEM routines:get_name:no start line'"
+    " 'PEM routines:get_name:no start line'",
+    f"Invalid SSL key '{KEY}': 'PEM routines:get_name:no start line'",
 )
+
 
 class Pair(TestCase):
     def setUp(self):
@@ -55,8 +57,7 @@ class Pair(TestCase):
         damage_ssl_files()
         self.assertTrue(
             self.pair.check()
-            in
-            [
+            in [
                 list(DAMAGED_SSL_FILES_ERRORS_1),
                 list(DAMAGED_SSL_FILES_ERRORS_2),
             ]
@@ -68,8 +69,7 @@ class Pair(TestCase):
         self.pair.regenerate(SERVER_NAME, 1024)
         errors = self.pair.check()
         self.assertEqual(
-            errors,
-            ["Unable to load SSL certificate and/or key: reason"]
+            errors, ["Unable to load SSL certificate and/or key: reason"]
         )
 
     def test_error_if_cert_does_not_match_key(self):
@@ -86,15 +86,12 @@ class Pair(TestCase):
             errors[0].startswith("SSL certificate does not match the key:")
         )
 
+
 class PcsdSSLTest(TestCase):
     def setUp(self):
         remove_ssl_files()
         self.pcsd_ssl = PcsdSSL(
-            SERVER_NAME,
-            CERT,
-            KEY,
-            SSL_OPTIONS,
-            SSL_CIPHERS
+            SERVER_NAME, CERT, KEY, SSL_OPTIONS, SSL_CIPHERS
         )
 
     def tearDown(self):
@@ -109,8 +106,7 @@ class PcsdSSLTest(TestCase):
             self.pcsd_ssl.guarantee_valid_certs()
         self.assertTrue(
             ctx_manager.exception.args
-            in
-            [DAMAGED_SSL_FILES_ERRORS_1, DAMAGED_SSL_FILES_ERRORS_2]
+            in [DAMAGED_SSL_FILES_ERRORS_1, DAMAGED_SSL_FILES_ERRORS_2]
         )
 
     def test_context_uses_given_options(self):

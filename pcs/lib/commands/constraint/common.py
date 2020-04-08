@@ -10,7 +10,11 @@ from pcs.lib.cib.tools import get_constraints
 
 
 def create_with_set(
-    tag_name, prepare_options, env, resource_set_list, constraint_options,
+    tag_name,
+    prepare_options,
+    env,
+    resource_set_list,
+    constraint_options,
     resource_in_clone_alowed=False,
     duplication_alowed=False,
     duplicate_check=None,
@@ -34,7 +38,9 @@ def create_with_set(
 
     find_valid_resource_id = partial(
         constraint.find_valid_resource_id,
-        env.report_processor, cib, resource_in_clone_alowed
+        env.report_processor,
+        cib,
+        resource_in_clone_alowed,
     )
 
     constraint_section = get_constraints(cib)
@@ -43,9 +49,9 @@ def create_with_set(
         tag_name,
         options=prepare_options(cib, constraint_options, resource_set_list),
         resource_set_list=[
-             resource_set.prepare_set(find_valid_resource_id, resource_set_item)
-             for resource_set_item in resource_set_list
-        ]
+            resource_set.prepare_set(find_valid_resource_id, resource_set_item)
+            for resource_set_item in resource_set_list
+        ],
     )
 
     if not duplicate_check:
@@ -62,6 +68,7 @@ def create_with_set(
 
     env.push_cib()
 
+
 def show(tag_name, is_plain, env):
     """
     string tag_name is constraint tag name
@@ -70,7 +77,7 @@ def show(tag_name, is_plain, env):
     env is library environment
     """
     constraints_info = {"plain": [], "with_resource_sets": []}
-    for element in get_constraints(env.get_cib()).findall(".//"+tag_name):
+    for element in get_constraints(env.get_cib()).findall(".//" + tag_name):
         if is_plain(element):
             constraints_info["plain"].append(constraint.export_plain(element))
         else:

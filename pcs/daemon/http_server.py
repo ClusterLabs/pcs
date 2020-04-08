@@ -4,8 +4,10 @@ from tornado.netutil import bind_sockets
 from pcs.daemon.ssl import PcsdSSL
 from pcs.daemon import log
 
+
 class HttpsServerManageException(Exception):
     pass
+
 
 class HttpsServerManage:
     """
@@ -45,8 +47,7 @@ class HttpsServerManage:
         log.pcsd.info("Starting server...")
 
         self.__server = HTTPServer(
-            self.__make_app(self),
-            ssl_options=self.__ssl.create_context()
+            self.__make_app(self), ssl_options=self.__ssl.create_context()
         )
 
         # It is necessary to bind sockets for every new HTTPServer since
@@ -56,7 +57,7 @@ class HttpsServerManage:
             log.pcsd.info(
                 "Binding socket for address '%s' and port '%s'",
                 address if address is not None else "*",
-                self.__port
+                self.__port,
             )
             sockets.extend(bind_sockets(self.__port, address))
 

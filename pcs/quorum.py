@@ -20,6 +20,7 @@ def quorum_config_cmd(lib, argv, modifiers):
     config = lib.quorum.get_config()
     print("\n".join(quorum_config_to_str(config)))
 
+
 def quorum_config_to_str(config):
     """
     Commandline options: no options
@@ -28,41 +29,58 @@ def quorum_config_to_str(config):
 
     lines.append("Options:")
     if "options" in config and config["options"]:
-        lines.extend(indent([
-            "{n}: {v}".format(n=name, v=value)
-            for name, value in sorted(config["options"].items())
-        ]))
+        lines.extend(
+            indent(
+                [
+                    "{n}: {v}".format(n=name, v=value)
+                    for name, value in sorted(config["options"].items())
+                ]
+            )
+        )
 
     if "device" in config and config["device"]:
         lines.append("Device:")
-        lines.extend(indent([
-            "{n}: {v}".format(n=name, v=value)
-            for name, value in sorted(
-                config["device"].get("generic_options", {}).items()
+        lines.extend(
+            indent(
+                [
+                    "{n}: {v}".format(n=name, v=value)
+                    for name, value in sorted(
+                        config["device"].get("generic_options", {}).items()
+                    )
+                ]
             )
-        ]))
+        )
 
         model_settings = [
             "Model: {m}".format(m=config["device"].get("model", ""))
         ]
-        model_settings.extend(indent([
-            "{n}: {v}".format(n=name, v=value)
-            for name, value in sorted(
-                config["device"].get("model_options", {}).items()
+        model_settings.extend(
+            indent(
+                [
+                    "{n}: {v}".format(n=name, v=value)
+                    for name, value in sorted(
+                        config["device"].get("model_options", {}).items()
+                    )
+                ]
             )
-        ]))
+        )
         lines.extend(indent(model_settings))
 
         heuristics_options = config["device"].get("heuristics_options", {})
         if heuristics_options:
             heuristics_settings = ["Heuristics:"]
-            heuristics_settings.extend(indent([
-                "{n}: {v}".format(n=name, v=value)
-                for name, value in sorted(heuristics_options.items())
-            ]))
+            heuristics_settings.extend(
+                indent(
+                    [
+                        "{n}: {v}".format(n=name, v=value)
+                        for name, value in sorted(heuristics_options.items())
+                    ]
+                )
+            )
             lines.extend(indent(heuristics_settings))
 
     return lines
+
 
 def quorum_expected_votes_cmd(lib, argv, modifiers):
     """
@@ -73,6 +91,7 @@ def quorum_expected_votes_cmd(lib, argv, modifiers):
         raise CmdLineInputError()
     lib.quorum.set_expected_votes_live(argv[0])
 
+
 def quorum_status_cmd(lib, argv, modifiers):
     """
     Options: no options
@@ -81,6 +100,7 @@ def quorum_status_cmd(lib, argv, modifiers):
     if argv:
         raise CmdLineInputError()
     print(lib.quorum.status())
+
 
 def quorum_update_cmd(lib, argv, modifiers):
     """
@@ -104,6 +124,7 @@ def quorum_update_cmd(lib, argv, modifiers):
         force=modifiers.get("--force"),
     )
 
+
 def _parse_quorum_device_groups(arg_list):
     keyword_list = ["model", "heuristics"]
     groups = parse_args.group_by_keywords(
@@ -111,16 +132,15 @@ def _parse_quorum_device_groups(arg_list):
         set(keyword_list),
         implicit_first_group_key="generic",
         keyword_repeat_allowed=False,
-        only_found_keywords=True
+        only_found_keywords=True,
     )
     for keyword in keyword_list:
         if keyword not in groups:
             continue
         if not groups[keyword]:
-            raise CmdLineInputError(
-                "No {0} options specified".format(keyword)
-            )
+            raise CmdLineInputError("No {0} options specified".format(keyword))
     return groups
+
 
 def quorum_device_add_cmd(lib, argv, modifiers):
     """
@@ -160,6 +180,7 @@ def quorum_device_add_cmd(lib, argv, modifiers):
         skip_offline_nodes=modifiers.get("--skip-offline"),
     )
 
+
 def quorum_device_remove_cmd(lib, argv, modifiers):
     """
     Options:
@@ -174,9 +195,8 @@ def quorum_device_remove_cmd(lib, argv, modifiers):
     if argv:
         raise CmdLineInputError()
 
-    lib.quorum.remove_device(
-        skip_offline_nodes=modifiers.get("--skip-offline")
-    )
+    lib.quorum.remove_device(skip_offline_nodes=modifiers.get("--skip-offline"))
+
 
 def quorum_device_status_cmd(lib, argv, modifiers):
     """
@@ -187,6 +207,7 @@ def quorum_device_status_cmd(lib, argv, modifiers):
     if argv:
         raise CmdLineInputError()
     print(lib.quorum.status_device(modifiers.get("--full")))
+
 
 def quorum_device_update_cmd(lib, argv, modifiers):
     """
@@ -220,6 +241,7 @@ def quorum_device_update_cmd(lib, argv, modifiers):
         skip_offline_nodes=modifiers.get("--skip-offline"),
     )
 
+
 def quorum_device_heuristics_remove_cmd(lib, argv, modifiers):
     """
     Options:
@@ -236,6 +258,7 @@ def quorum_device_heuristics_remove_cmd(lib, argv, modifiers):
     lib.quorum.remove_device_heuristics(
         skip_offline_nodes=modifiers.get("--skip-offline"),
     )
+
 
 # TODO switch to new architecture, move to lib
 def quorum_unblock_cmd(lib, argv, modifiers):
@@ -293,7 +316,7 @@ def quorum_unblock_cmd(lib, argv, modifiers):
     startup_fencing = utils.get_set_properties().get("startup-fencing", "")
     utils.set_cib_property(
         "startup-fencing",
-        "false" if startup_fencing.lower() != "false" else "true"
+        "false" if startup_fencing.lower() != "false" else "true",
     )
     utils.set_cib_property("startup-fencing", startup_fencing)
     print("Waiting for nodes canceled")

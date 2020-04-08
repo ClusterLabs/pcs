@@ -8,9 +8,11 @@ from pcs_test.tools.command_env.config_http import HttpConfig
 from pcs_test.tools.command_env.config_raw_file import RawFileConfig
 from pcs_test.tools.command_env.config_runner import RunnerConfig
 
+
 class Spy:
     def __init__(self, known_hosts):
         self.known_hosts = known_hosts
+
 
 class Config:
     # pylint: disable=invalid-name
@@ -33,12 +35,18 @@ class Config:
     def add_extension(self, name, Extension):
         if hasattr(self, name):
             raise AssertionError(
-                "Config (integration tests) has the extension '{0}' already."
-                .format(name)
+                (
+                    "Config (integration tests) has the extension '{0}' "
+                    "already."
+                ).format(name)
             )
-        setattr(self, name, self.__wrap_helper(
-            Extension(self.__calls, self.__wrap_helper, self)
-        ))
+        setattr(
+            self,
+            name,
+            self.__wrap_helper(
+                Extension(self.__calls, self.__wrap_helper, self)
+            ),
+        )
 
     def set_spy(self, known_hosts):
         self.spy = Spy(known_hosts)
@@ -63,9 +71,11 @@ class Config:
         string name -- name of method in helper
         callable method
         """
+
         def wrapped_method(*args, **kwargs):
             method(helper, *args, **kwargs)
             return self
+
         setattr(helper, name, wrapped_method)
 
     def __wrap_helper(self, helper):

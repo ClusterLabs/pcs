@@ -18,9 +18,7 @@ from pcs.lib.communication.tools import (
 from pcs.lib.communication.qdevice import QdeviceBase
 
 
-class GetCaCert(
-    AllSameDataMixin, AllAtOnceStrategyMixin, RunRemotelyBase
-):
+class GetCaCert(AllSameDataMixin, AllAtOnceStrategyMixin, RunRemotelyBase):
     def __init__(self, report_processor):
         super(GetCaCert, self).__init__(report_processor)
         self._data = []
@@ -48,12 +46,18 @@ class GetCaCert(
 
 
 class ClientSetup(
-    SimpleResponseProcessingNoResponseOnSuccessMixin, SkipOfflineMixin,
-    AllSameDataMixin, AllAtOnceStrategyMixin, RunRemotelyBase,
+    SimpleResponseProcessingNoResponseOnSuccessMixin,
+    SkipOfflineMixin,
+    AllSameDataMixin,
+    AllAtOnceStrategyMixin,
+    RunRemotelyBase,
 ):
     def __init__(
-        self, report_processor, ca_cert, skip_offline_targets=False,
-        allow_skip_offline=True
+        self,
+        report_processor,
+        ca_cert,
+        skip_offline_targets=False,
+        allow_skip_offline=True,
     ):
         super(ClientSetup, self).__init__(report_processor)
         if allow_skip_offline:
@@ -63,7 +67,7 @@ class ClientSetup(
     def _get_request_data(self):
         return RequestData(
             "remote/qdevice_net_client_init_certificate_storage",
-            [("ca_certificate", base64.b64encode(self._ca_cert))]
+            [("ca_certificate", base64.b64encode(self._ca_cert))],
         )
 
 
@@ -85,9 +89,10 @@ class SignCertificate(AllAtOnceStrategyMixin, RunRemotelyBase):
                     [
                         ("certificate_request", base64.b64encode(cert)),
                         ("cluster_name", cluster_name),
-                    ]
-                )
-            ) for target, cert, cluster_name in self._input_data
+                    ],
+                ),
+            )
+            for target, cert, cluster_name in self._input_data
         ]
 
     def _process_response(self, response):
@@ -110,12 +115,18 @@ class SignCertificate(AllAtOnceStrategyMixin, RunRemotelyBase):
 
 
 class ClientImportCertificateAndKey(
-    SimpleResponseProcessingMixin, SkipOfflineMixin, AllSameDataMixin,
-    AllAtOnceStrategyMixin, RunRemotelyBase
+    SimpleResponseProcessingMixin,
+    SkipOfflineMixin,
+    AllSameDataMixin,
+    AllAtOnceStrategyMixin,
+    RunRemotelyBase,
 ):
     def __init__(
-        self, report_processor, pk12, skip_offline_targets=False,
-        allow_skip_offline=True
+        self,
+        report_processor,
+        pk12,
+        skip_offline_targets=False,
+        allow_skip_offline=True,
     ):
         super(ClientImportCertificateAndKey, self).__init__(report_processor)
         if allow_skip_offline:
@@ -125,7 +136,7 @@ class ClientImportCertificateAndKey(
     def _get_request_data(self):
         return RequestData(
             "remote/qdevice_net_client_import_certificate",
-            [("certificate", base64.b64encode(self._pk12))]
+            [("certificate", base64.b64encode(self._pk12))],
         )
 
     def _get_success_report(self, node_label):

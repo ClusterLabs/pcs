@@ -4,7 +4,7 @@ import os
 from pcs.daemon import auth
 from pcs.daemon.app import ui
 from pcs_test.tier0.daemon.app import fixtures_app
-from pcs_test.tools.misc import(
+from pcs_test.tools.misc import (
     create_setup_patch_mixin,
     get_test_resource as rc,
 )
@@ -23,6 +23,7 @@ if not os.path.exists(SPA_DIR):
 
 # Don't write errors to test output.
 logging.getLogger("tornado.access").setLevel(logging.CRITICAL)
+
 
 class AppTest(
     fixtures_app.AppUiTestMixin, create_setup_patch_mixin(ui.app_session)
@@ -43,15 +44,16 @@ class AppTest(
             url_prefix=PREFIX,
             app_dir=SPA_DIR,
             fallback_page_path=FALLBACK,
-            session_storage=self.session_storage
+            session_storage=self.session_storage,
         )
+
 
 class Static(AppTest):
     def test_index(self):
         self.assert_success_response(
-            self.get(f"{PREFIX}"),
-            self.index_content,
+            self.get(f"{PREFIX}"), self.index_content,
         )
+
 
 class Fallback(AppTest):
     def setUp(self):
@@ -67,9 +69,9 @@ class Fallback(AppTest):
 
     def test_index(self):
         self.assert_success_response(
-            self.get(f"{PREFIX}"),
-            self.fallback_content,
+            self.get(f"{PREFIX}"), self.fallback_content,
         )
+
 
 class Login(AppTest):
     def setUp(self):
@@ -82,22 +84,23 @@ class Login(AppTest):
         return auth.UserAuthInfo(
             username,
             self.user_auth_info.groups,
-            is_authorized=self.user_auth_info.valid
+            is_authorized=self.user_auth_info.valid,
         )
 
     def test_login_attempt_failed(self):
         self.user_auth_info.valid = False
         self.assert_unauth_ajax(
-            self.post(f'{PREFIX}login', LOGIN_BODY, is_ajax=True)
+            self.post(f"{PREFIX}login", LOGIN_BODY, is_ajax=True)
         )
 
     def test_login_attempt_succeeded(self):
         self.user_auth_info.valid = True
-        response = self.post(f'{PREFIX}login', LOGIN_BODY, is_ajax=True)
+        response = self.post(f"{PREFIX}login", LOGIN_BODY, is_ajax=True)
         self.assert_success_response(
             response,
-            self.session_storage.provide(self.extract_sid(response)).ajax_id
+            self.session_storage.provide(self.extract_sid(response)).ajax_id,
         )
+
 
 class Logout(AppTest):
     def test_can_logout(self):

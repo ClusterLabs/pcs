@@ -1,7 +1,7 @@
-'''
+"""
 The intention is put there knowledge about cluster state structure.
 Hide information about underlaying xml is desired too.
-'''
+"""
 import os.path
 from collections import defaultdict
 from typing import Dict, Any
@@ -19,15 +19,17 @@ from pcs.lib.pacemaker.values import (
 )
 from pcs.lib.xml_tools import find_parent
 
+
 class ResourceNotFound(Exception):
     pass
 
+
 class _Attrs:
     def __init__(self, owner_name, attrib, required_attrs):
-        '''
+        """
         attrib lxml.etree._Attrib - wrapped attribute collection
         required_attrs dict of required atribute names object_name:xml_attribute
-        '''
+        """
         self.owner_name = owner_name
         self.attrib = attrib
         self.required_attrs = required_attrs
@@ -42,14 +44,17 @@ class _Attrs:
                 return self.attrib[attr_specification]
             except KeyError:
                 raise AttributeError(
-                    "Missing attribute '{0}' ('{1}' in source) in '{2}'"
-                    .format(name, self.required_attrs[name], self.owner_name)
+                    "Missing attribute '{0}' ('{1}' in source) in '{2}'".format(
+                        name, self.required_attrs[name], self.owner_name
+                    )
                 )
 
         raise AttributeError(
-            "'{0}' does not declare attribute '{1}'"
-            .format(self.owner_name, name)
+            "'{0}' does not declare attribute '{1}'".format(
+                self.owner_name, name
+            )
         )
+
 
 class _Children:
     def __init__(self, owner_name, dom_part, children, sections):
@@ -63,17 +68,19 @@ class _Children:
             element_name, wrapper = self.children[name]
             return [
                 wrapper(element)
-                for element in self.dom_part.findall('.//' + element_name)
+                for element in self.dom_part.findall(".//" + element_name)
             ]
 
         if name in self.sections.keys():
             element_name, wrapper = self.sections[name]
-            return wrapper(self.dom_part.findall('.//' + element_name)[0])
+            return wrapper(self.dom_part.findall(".//" + element_name)[0])
 
         raise AttributeError(
-            "'{0}' does not declare child or section '{1}'"
-            .format(self.owner_name, name)
+            "'{0}' does not declare child or section '{1}'".format(
+                self.owner_name, name
+            )
         )
+
 
 class _Element:
     # Note: not properly typed
@@ -86,9 +93,7 @@ class _Element:
     def __init__(self, dom_part):
         self.dom_part = dom_part
         self.attrs = _Attrs(
-            self.__class__.__name__,
-            self.dom_part.attrib,
-            self.required_attrs
+            self.__class__.__name__, self.dom_part.attrib, self.required_attrs
         )
         self.children_access = _Children(
             self.__class__.__name__,
@@ -100,43 +105,49 @@ class _Element:
     def __getattr__(self, name):
         return getattr(self.children_access, name)
 
+
 class _SummaryNodes(_Element):
     required_attrs = {
-        'count': ('number', int),
+        "count": ("number", int),
     }
+
 
 class _SummaryResources(_Element):
     required_attrs = {
-        'count': ('number', int),
+        "count": ("number", int),
     }
+
 
 class _SummarySection(_Element):
     sections = {
-        'nodes': ('nodes_configured', _SummaryNodes),
-        'resources': ('resources_configured', _SummaryResources),
+        "nodes": ("nodes_configured", _SummaryNodes),
+        "resources": ("resources_configured", _SummaryResources),
     }
+
 
 class _Node(_Element):
     required_attrs = {
-        'id': 'id',
-        'name': 'name',
-        'type': 'type',
-        'online': ('online', is_true),
-        'standby': ('standby', is_true),
-        'standby_onfail': ('standby_onfail', is_true),
-        'maintenance': ('maintenance', is_true),
-        'pending': ('pending', is_true),
-        'unclean': ('unclean', is_true),
-        'shutdown': ('shutdown', is_true),
-        'expected_up': ('expected_up', is_true),
-        'is_dc': ('is_dc', is_true),
-        'resources_running': ('resources_running', int),
+        "id": "id",
+        "name": "name",
+        "type": "type",
+        "online": ("online", is_true),
+        "standby": ("standby", is_true),
+        "standby_onfail": ("standby_onfail", is_true),
+        "maintenance": ("maintenance", is_true),
+        "pending": ("pending", is_true),
+        "unclean": ("unclean", is_true),
+        "shutdown": ("shutdown", is_true),
+        "expected_up": ("expected_up", is_true),
+        "is_dc": ("is_dc", is_true),
+        "resources_running": ("resources_running", int),
     }
+
 
 class _NodeSection(_Element):
     children = {
-        'nodes': ('node', _Node),
+        "nodes": ("node", _Node),
     }
+
 
 def get_cluster_state_dom(xml):
     try:
@@ -149,23 +160,27 @@ def get_cluster_state_dom(xml):
             ReportItem.error(reports.messages.BadClusterStateFormat())
         )
 
+
 class ClusterState(_Element):
     sections = {
-        'summary': ('summary', _SummarySection),
-        'node_section': ('nodes', _NodeSection),
+        "summary": ("summary", _SummarySection),
+        "node_section": ("nodes", _NodeSection),
     }
 
     def __init__(self, xml):
         self.dom = get_cluster_state_dom(xml)
         super(ClusterState, self).__init__(self.dom)
 
+
 def _id_xpath_predicate(resource_id):
     return """(@id="{0}" or starts-with(@id, "{0}:"))""".format(resource_id)
+
 
 def _get_primitives_for_state_check(
     cluster_state, resource_id, expected_running
 ):
-    primitives = cluster_state.xpath("""
+    primitives = cluster_state.xpath(
+        """
         .//resource[{predicate_id}]
         |
         .//group[{predicate_id}]/resource[{predicate_position}]
@@ -176,51 +191,53 @@ def _get_primitives_for_state_check(
         |
         .//bundle[@id="{id}"]/replica/resource
     """.format(
-        id=resource_id,
-        predicate_id=_id_xpath_predicate(resource_id),
-        predicate_position=("last()" if expected_running else "1")
-    ))
+            id=resource_id,
+            predicate_id=_id_xpath_predicate(resource_id),
+            predicate_position=("last()" if expected_running else "1"),
+        )
+    )
     return [
-        element for element in primitives
-            if not is_true(element.attrib.get("failed", ""))
+        element
+        for element in primitives
+        if not is_true(element.attrib.get("failed", ""))
     ]
+
 
 def _get_primitive_roles_with_nodes(primitive_el_list):
     # Clone resources are represented by multiple primitive elements.
     roles_with_nodes = defaultdict(set)
     for resource_element in primitive_el_list:
         if resource_element.attrib["role"] in ["Started", "Master", "Slave"]:
-            roles_with_nodes[resource_element.attrib["role"]].update([
-                node.attrib["name"]
-                for node in resource_element.findall(".//node")
-            ])
+            roles_with_nodes[resource_element.attrib["role"]].update(
+                [
+                    node.attrib["name"]
+                    for node in resource_element.findall(".//node")
+                ]
+            )
     return {role: sorted(nodes) for role, nodes in roles_with_nodes.items()}
+
 
 def get_resource_state(cluster_state, resource_id):
     return _get_primitive_roles_with_nodes(
         _get_primitives_for_state_check(
-            cluster_state,
-            resource_id,
-            expected_running=True
+            cluster_state, resource_id, expected_running=True
         )
     )
+
 
 def info_resource_state(cluster_state, resource_id):
     roles_with_nodes = get_resource_state(cluster_state, resource_id)
     if not roles_with_nodes:
-        return ReportItem.info(
-            reports.messages.ResourceDoesNotRun(resource_id)
-        )
+        return ReportItem.info(reports.messages.ResourceDoesNotRun(resource_id))
     return ReportItem.info(
         reports.messages.ResourceRunningOnNodes(resource_id, roles_with_nodes)
     )
 
+
 def ensure_resource_state(expected_running, cluster_state, resource_id):
     roles_with_nodes = _get_primitive_roles_with_nodes(
         _get_primitives_for_state_check(
-            cluster_state,
-            resource_id,
-            expected_running
+            cluster_state, resource_id, expected_running
         )
     )
     if not roles_with_nodes:
@@ -233,13 +250,14 @@ def ensure_resource_state(expected_running, cluster_state, resource_id):
             reports.messages.ResourceDoesNotRun(resource_id),
         )
     return ReportItem(
-            reports.item.ReportItemSeverity(
-                reports.ReportItemSeverity.INFO
-                if expected_running
-                else reports.ReportItemSeverity.ERROR
-            ),
-        reports.messages.ResourceRunningOnNodes(resource_id, roles_with_nodes)
+        reports.item.ReportItemSeverity(
+            reports.ReportItemSeverity.INFO
+            if expected_running
+            else reports.ReportItemSeverity.ERROR
+        ),
+        reports.messages.ResourceRunningOnNodes(resource_id, roles_with_nodes),
     )
+
 
 def ensure_resource_running(cluster_state, resource_id):
     return ensure_resource_state(
@@ -248,6 +266,7 @@ def ensure_resource_running(cluster_state, resource_id):
         resource_id=resource_id,
     )
 
+
 def is_resource_managed(cluster_state, resource_id):
     """
     Check if the resource is managed
@@ -255,30 +274,34 @@ def is_resource_managed(cluster_state, resource_id):
     etree cluster_state -- status of the cluster
     string resource_id -- id of the resource
     """
-    primitive_list = cluster_state.xpath("""
+    primitive_list = cluster_state.xpath(
+        """
         .//resource[{predicate_id}]
         |
         .//group[{predicate_id}]/resource
-        """.format(predicate_id=_id_xpath_predicate(resource_id))
+        """.format(
+            predicate_id=_id_xpath_predicate(resource_id)
+        )
     )
     if primitive_list:
         for primitive in primitive_list:
             if is_false(primitive.attrib.get("managed", "")):
                 return False
             parent = find_parent(primitive, ["clone", "bundle"])
-            if (
-                parent is not None
-                and
-                is_false(parent.attrib.get("managed", ""))
+            if parent is not None and is_false(
+                parent.attrib.get("managed", "")
             ):
                 return False
         return True
 
-    parent_list = cluster_state.xpath("""
+    parent_list = cluster_state.xpath(
+        """
         .//clone[@id="{0}"]
         |
         .//bundle[@id="{0}"]
-        """.format(resource_id)
+        """.format(
+            resource_id
+        )
     )
     for parent in parent_list:
         if is_false(parent.attrib.get("managed", "")):

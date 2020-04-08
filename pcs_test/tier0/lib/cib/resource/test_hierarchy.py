@@ -17,14 +17,17 @@ from pcs.lib.cib.tools import IdProvider
 def _resource(cib, id_):
     return cib.find(f".//*[@id='{id_}']")
 
+
 def _resources(cib, *ids):
     return [_resource(cib, id_) for id_ in ids]
 
-class ValidateMoveResourcesToGroupMixin():
+
+class ValidateMoveResourcesToGroupMixin:
     def setUp(self):
         # pylint does not know this mixin goes to TestCase
         # pylint: disable=invalid-name
-        self.cib = etree.fromstring("""
+        self.cib = etree.fromstring(
+            """
             <resources>
                 <group id="G">
                     <primitive id="RG1" />
@@ -45,14 +48,13 @@ class ValidateMoveResourcesToGroupMixin():
                     </primitive>
                 </bundle>
             </resources>
-        """)
+        """
+        )
 
     def test_no_resources_specified(self):
         assert_report_item_list_equal(
             self._validate("G", []),
-            [
-                fixture.error(report_codes.CANNOT_GROUP_RESOURCE_NO_RESOURCES),
-            ]
+            [fixture.error(report_codes.CANNOT_GROUP_RESOURCE_NO_RESOURCES),],
         )
 
     def test_group_is_not_group(self):
@@ -65,7 +67,7 @@ class ValidateMoveResourcesToGroupMixin():
                     expected_types=["group"],
                     current_type="meta_attributes",
                 ),
-            ]
+            ],
         )
 
     def test_resources_are_not_primitives(self):
@@ -82,7 +84,7 @@ class ValidateMoveResourcesToGroupMixin():
                     resource_id="RB1-bundle",
                     resource_type="bundle",
                 ),
-            ]
+            ],
         )
 
     def test_resources_are_in_clones_etc(self):
@@ -99,7 +101,7 @@ class ValidateMoveResourcesToGroupMixin():
                     resource_id="RB1",
                     resource_type="bundle",
                 ),
-            ]
+            ],
         )
 
     def test_resources_already_in_the_group(self):
@@ -111,42 +113,38 @@ class ValidateMoveResourcesToGroupMixin():
                     resource_list=["RG1", "RG2"],
                     group_id="G",
                 ),
-            ]
+            ],
         )
 
     def test_allow_moving_resources_in_a_group_if_adjacent(self):
         assert_report_item_list_equal(
-            self._validate("G", ["RG2", "R1"], "RG1"),
-            [
-            ]
+            self._validate("G", ["RG2", "R1"], "RG1"), []
         )
 
     def test_adjacent_resource_not_in_the_group(self):
+        # pylint: disable=line-too-long
         assert_report_item_list_equal(
             self._validate("G", ["R1"], "R2"),
             [
                 fixture.error(
-                    report_codes
-                        .CANNOT_GROUP_RESOURCE_ADJACENT_RESOURCE_NOT_IN_GROUP
-                    ,
+                    report_codes.CANNOT_GROUP_RESOURCE_ADJACENT_RESOURCE_NOT_IN_GROUP,
                     adjacent_resource_id="R2",
                     group_id="G",
                 ),
-            ]
+            ],
         )
 
     def test_adjacent_resource_in_another_group(self):
+        # pylint: disable=line-too-long
         assert_report_item_list_equal(
             self._validate("G", ["R1"], "RGX"),
             [
                 fixture.error(
-                    report_codes
-                        .CANNOT_GROUP_RESOURCE_ADJACENT_RESOURCE_NOT_IN_GROUP
-                    ,
+                    report_codes.CANNOT_GROUP_RESOURCE_ADJACENT_RESOURCE_NOT_IN_GROUP,
                     adjacent_resource_id="RGX",
                     group_id="G",
                 ),
-            ]
+            ],
         )
 
     def test_adjacent_resource_to_be_grouped(self):
@@ -157,7 +155,7 @@ class ValidateMoveResourcesToGroupMixin():
                     report_codes.CANNOT_GROUP_RESOURCE_NEXT_TO_ITSELF,
                     resource_id="RG1",
                 ),
-            ]
+            ],
         )
 
     def test_resources_specified_twice(self):
@@ -168,7 +166,7 @@ class ValidateMoveResourcesToGroupMixin():
                     report_codes.CANNOT_GROUP_RESOURCE_MORE_THAN_ONCE,
                     resource_list=["R1", "R2"],
                 ),
-            ]
+            ],
         )
 
 
@@ -200,7 +198,7 @@ class ValidateMoveResourcesToGroupByElements(
                     resource_id="RB1-meta_attributes",
                     resource_type="meta_attributes",
                 ),
-            ]
+            ],
         )
 
 
@@ -222,10 +220,7 @@ class ValidateMoveResourcesToGroupByIds(
             self._resource(group),
             self._resources(resources),
             self._resource(adjacent) if adjacent else None,
-        ).validate(
-            self.cib,
-            IdProvider(self.cib),
-        )
+        ).validate(self.cib, IdProvider(self.cib),)
 
     def test_new_group_not_valid_id(self):
         assert_report_item_list_equal(
@@ -245,7 +240,7 @@ class ValidateMoveResourcesToGroupByIds(
                     is_first_char=False,
                     invalid_character=":",
                 ),
-            ]
+            ],
         )
 
     def test_missing_resources_specified(self):
@@ -254,7 +249,7 @@ class ValidateMoveResourcesToGroupByIds(
             [
                 fixture.report_not_found("RX1", context_type="resources"),
                 fixture.report_not_found("RX2", context_type="resources"),
-            ]
+            ],
         )
 
     def test_resources_are_not_resources(self):
@@ -265,42 +260,42 @@ class ValidateMoveResourcesToGroupByIds(
                     report_codes.ID_BELONGS_TO_UNEXPECTED_TYPE,
                     id="RB1-meta_attributes",
                     expected_types=[
-                        "bundle", "clone", "group", "master", "primitive",
+                        "bundle",
+                        "clone",
+                        "group",
+                        "master",
+                        "primitive",
                     ],
                     current_type="meta_attributes",
                 ),
-            ]
+            ],
         )
 
     def test_adjacent_resource_new_group(self):
+        # pylint: disable=line-too-long
         assert_report_item_list_equal(
             self._validate("G-new", ["R1"], "R2"),
             [
                 fixture.error(
-                    report_codes
-                        .CANNOT_GROUP_RESOURCE_ADJACENT_RESOURCE_FOR_NEW_GROUP
-                    ,
+                    report_codes.CANNOT_GROUP_RESOURCE_ADJACENT_RESOURCE_FOR_NEW_GROUP,
                     adjacent_resource_id="R2",
                     group_id="G-new",
                 ),
-            ]
+            ],
         )
 
     def test_adjacent_resource_doesnt_exist(self):
+        # pylint: disable=line-too-long
         assert_report_item_list_equal(
             self._validate("G", ["R1"], "RX"),
             [
                 fixture.error(
-                    report_codes
-                        .CANNOT_GROUP_RESOURCE_ADJACENT_RESOURCE_NOT_IN_GROUP
-                    ,
+                    report_codes.CANNOT_GROUP_RESOURCE_ADJACENT_RESOURCE_NOT_IN_GROUP,
                     adjacent_resource_id="RX",
                     group_id="G",
                 ),
-            ]
+            ],
         )
-
-
 
 
 class MoveResourcesToGroup(TestCase):
@@ -333,8 +328,7 @@ class MoveResourcesToGroup(TestCase):
         """
         cib = etree.fromstring(cib_before)
         hierarchy.move_resources_to_group(
-            _resource(cib, "G"),
-            _resources(cib, "R3", "R1")
+            _resource(cib, "G"), _resources(cib, "R3", "R1")
         )
         assert_xml_equal(cib_after, etree_to_str(cib))
 
@@ -356,7 +350,7 @@ class MoveResourcesToGroup(TestCase):
         hierarchy.move_resources_to_group(
             _resource(cib, "G"),
             _resources(cib, "R3", "R1", "RG3"),
-            adjacent_resource=_resource(cib, "RG1")
+            adjacent_resource=_resource(cib, "RG1"),
         )
         assert_xml_equal(cib_after, etree_to_str(cib))
 
@@ -378,7 +372,7 @@ class MoveResourcesToGroup(TestCase):
         hierarchy.move_resources_to_group(
             _resource(cib, "G"),
             _resources(cib, "R3", "R1", "RG2"),
-            adjacent_resource=_resource(cib, "RG3")
+            adjacent_resource=_resource(cib, "RG3"),
         )
         assert_xml_equal(cib_after, etree_to_str(cib))
 
@@ -401,7 +395,7 @@ class MoveResourcesToGroup(TestCase):
             _resource(cib, "G"),
             _resources(cib, "R3", "R1", "RG3"),
             adjacent_resource=_resource(cib, "RG2"),
-            put_after_adjacent=False
+            put_after_adjacent=False,
         )
         assert_xml_equal(cib_after, etree_to_str(cib))
 
@@ -424,7 +418,7 @@ class MoveResourcesToGroup(TestCase):
             _resource(cib, "G"),
             _resources(cib, "R3", "R1", "RG3"),
             adjacent_resource=_resource(cib, "RG1"),
-            put_after_adjacent=False
+            put_after_adjacent=False,
         )
         assert_xml_equal(cib_after, etree_to_str(cib))
 
@@ -460,8 +454,7 @@ class MoveResourcesToGroup(TestCase):
         """
         cib = etree.fromstring(cib_before)
         hierarchy.move_resources_to_group(
-            _resource(cib, "G"),
-            _resources(cib, "R2"),
+            _resource(cib, "G"), _resources(cib, "R2"),
         )
         assert_xml_equal(cib_after, etree_to_str(cib))
 
@@ -493,8 +486,7 @@ class MoveResourcesToGroup(TestCase):
         """
         cib = etree.fromstring(cib_before)
         hierarchy.move_resources_to_group(
-            _resource(cib, "G"),
-            _resources(cib, "R1"),
+            _resource(cib, "G"), _resources(cib, "R1"),
         )
         assert_xml_equal(cib_after, etree_to_str(cib))
 
@@ -528,8 +520,7 @@ class MoveResourcesToGroup(TestCase):
         """
         cib = etree.fromstring(cib_before)
         hierarchy.move_resources_to_group(
-            _resource(cib, "G"),
-            _resources(cib, "R1"),
+            _resource(cib, "G"), _resources(cib, "R1"),
         )
         assert_xml_equal(cib_after, etree_to_str(cib))
 

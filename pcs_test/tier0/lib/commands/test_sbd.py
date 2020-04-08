@@ -38,16 +38,35 @@ def _assert_equal_list_of_dictionaries_without_order(expected, actual):
 
 class ValidateSbdOptionsTest(TestCase):
     def setUp(self):
-        self.allowed_sbd_options = sorted([
-            "SBD_DELAY_START", "SBD_STARTMODE", "SBD_WATCHDOG_TIMEOUT",
-            "SBD_TIMEOUT_ACTION",
-        ])
-        self.timeout_action_allowed_values = sorted([
-            "flush", "noflush", "off", "reboot", "crashdump", "flush,off",
-            "flush,reboot", "flush,crashdump", "noflush,off", "noflush,reboot",
-            "noflush,crashdump", "off,flush", "off,noflush", "reboot,flush",
-            "reboot,noflush", "crashdump,flush", "crashdump,noflush",
-        ])
+        self.allowed_sbd_options = sorted(
+            [
+                "SBD_DELAY_START",
+                "SBD_STARTMODE",
+                "SBD_WATCHDOG_TIMEOUT",
+                "SBD_TIMEOUT_ACTION",
+            ]
+        )
+        self.timeout_action_allowed_values = sorted(
+            [
+                "flush",
+                "noflush",
+                "off",
+                "reboot",
+                "crashdump",
+                "flush,off",
+                "flush,reboot",
+                "flush,crashdump",
+                "noflush,off",
+                "noflush,reboot",
+                "noflush,crashdump",
+                "off,flush",
+                "off,noflush",
+                "reboot,flush",
+                "reboot,noflush",
+                "crashdump,flush",
+                "crashdump,noflush",
+            ]
+        )
 
     def test_all_ok(self):
         config = {
@@ -74,7 +93,7 @@ class ValidateSbdOptionsTest(TestCase):
                     cannot_be_empty=False,
                     forbidden_characters=None,
                 ),
-            ]
+            ],
         )
 
     def test_invalid_value_forced(self):
@@ -94,7 +113,7 @@ class ValidateSbdOptionsTest(TestCase):
                     cannot_be_empty=False,
                     forbidden_characters=None,
                 ),
-            ]
+            ],
         )
 
     def test_unknown_options(self):
@@ -103,7 +122,7 @@ class ValidateSbdOptionsTest(TestCase):
             "SBD_WATCHDOG_TIMEOUT": "5",
             "SBD_STARTMODE": "clean",
             "SBD_UNKNOWN": "",
-            "another_unknown_option": "some value"
+            "another_unknown_option": "some value",
         }
         assert_report_item_list_equal(
             cmd_sbd._validate_sbd_options(config),
@@ -116,9 +135,9 @@ class ValidateSbdOptionsTest(TestCase):
                     option_type=None,
                     allowed=self.allowed_sbd_options,
                     allowed_patterns=[],
-                    force_code=reports.codes.FORCE_OPTIONS
+                    force_code=reports.codes.FORCE_OPTIONS,
                 ),
-            ]
+            ],
         )
 
     def test_unknown_options_forced(self):
@@ -127,7 +146,7 @@ class ValidateSbdOptionsTest(TestCase):
             "SBD_WATCHDOG_TIMEOUT": "5",
             "SBD_STARTMODE": "clean",
             "SBD_UNKNOWN": "",
-            "another_unknown_option": "some value"
+            "another_unknown_option": "some value",
         }
         # just make sure there is no exception raised
         assert_report_item_list_equal(
@@ -142,9 +161,8 @@ class ValidateSbdOptionsTest(TestCase):
                     allowed=self.allowed_sbd_options,
                     allowed_patterns=[],
                 ),
-            ]
+            ],
         )
-
 
     def test_unsupported_options(self):
         config = {
@@ -168,7 +186,7 @@ class ValidateSbdOptionsTest(TestCase):
                     allowed=self.allowed_sbd_options,
                     allowed_patterns=[],
                 ),
-            ]
+            ],
         )
 
     def test_invalid_and_unsupported_options(self):
@@ -178,7 +196,7 @@ class ValidateSbdOptionsTest(TestCase):
             "SBD_STARTMODE": "clean",
             "SBD_WATCHDOG_DEV": "/dev/watchdog",
             "SBD_UNKNOWN": "",
-            "SBD_OPTS": "  "
+            "SBD_OPTS": "  ",
         }
 
         assert_report_item_list_equal(
@@ -199,7 +217,7 @@ class ValidateSbdOptionsTest(TestCase):
                     allowed_patterns=[],
                     force_code=reports.codes.FORCE_OPTIONS,
                 ),
-            ]
+            ],
         )
 
     def test_invalid_and_unsupported_options_forced(self):
@@ -232,14 +250,11 @@ class ValidateSbdOptionsTest(TestCase):
                     allowed=self.allowed_sbd_options,
                     allowed_patterns=[],
                 ),
-            ]
+            ],
         )
 
     def test_watchdog_timeout_is_not_present(self):
-        config = {
-            "SBD_DELAY_START": "yes",
-            "SBD_STARTMODE": "clean"
-        }
+        config = {"SBD_DELAY_START": "yes", "SBD_STARTMODE": "clean"}
         self.assertEqual([], cmd_sbd._validate_sbd_options(config))
 
     def test_watchdog_timeout_is_nonnegative_int(self):
@@ -259,7 +274,7 @@ class ValidateSbdOptionsTest(TestCase):
                     cannot_be_empty=False,
                     forbidden_characters=None,
                 )
-            ]
+            ],
         )
 
     def test_watchdog_timeout_is_not_int(self):
@@ -279,7 +294,7 @@ class ValidateSbdOptionsTest(TestCase):
                     cannot_be_empty=False,
                     forbidden_characters=None,
                 )
-            ]
+            ],
         )
 
     def test_watchdog_timeout_is_none(self):
@@ -299,7 +314,7 @@ class ValidateSbdOptionsTest(TestCase):
                     cannot_be_empty=False,
                     forbidden_characters=None,
                 )
-            ]
+            ],
         )
 
 
@@ -324,9 +339,10 @@ class ValidateWatchdogDictTest(TestCase):
                 (
                     Severities.ERROR,
                     reports.codes.WATCHDOG_INVALID,
-                    {"watchdog": watchdog}
-                ) for watchdog in ["", None]
-            ]
+                    {"watchdog": watchdog},
+                )
+                for watchdog in ["", None]
+            ],
         )
 
 
@@ -337,9 +353,7 @@ class GetFullTargetDictTest(TestCase):
         ]
 
     def test_not_using_default(self):
-        target_dict = {
-            "node" + str(i): "val" + str(i) for i in range(4)
-        }
+        target_dict = {"node" + str(i): "val" + str(i) for i in range(4)}
         expected = {
             self.target_list[0].label: "val1",
             self.target_list[1].label: "val2",
@@ -347,13 +361,11 @@ class GetFullTargetDictTest(TestCase):
         }
         self.assertEqual(
             expected,
-            cmd_sbd._get_full_target_dict(self.target_list, target_dict, None)
+            cmd_sbd._get_full_target_dict(self.target_list, target_dict, None),
         )
 
     def test_using_default(self):
-        target_dict = {
-            "node" + str(i): "val" + str(i) for i in range(3)
-        }
+        target_dict = {"node" + str(i): "val" + str(i) for i in range(3)}
         default = "default"
         expected = {
             self.target_list[0].label: "val1",
@@ -364,7 +376,7 @@ class GetFullTargetDictTest(TestCase):
             expected,
             cmd_sbd._get_full_target_dict(
                 self.target_list, target_dict, default
-            )
+            ),
         )
 
 
@@ -385,9 +397,9 @@ SBD_WATCHDOG_TIMEOUT=0
             {
                 "SBD_OPTS": '"-n node1"',
                 "SBD_WATCHDOG_DEV": "/dev/watchdog",
-                "SBD_WATCHDOG_TIMEOUT": "0"
+                "SBD_WATCHDOG_TIMEOUT": "0",
             },
-            cmd_sbd.get_local_sbd_config(self.mock_env)
+            cmd_sbd.get_local_sbd_config(self.mock_env),
         )
         self.assertEqual(1, mock_config.call_count)
 
@@ -404,11 +416,8 @@ SBD_WATCHDOG_TIMEOUT=0
             (
                 Severities.ERROR,
                 reports.codes.UNABLE_TO_GET_SBD_CONFIG,
-                {
-                    "node": node,
-                    "reason": reason,
-                }
-            )
+                {"node": node, "reason": reason,},
+            ),
         )
 
 
@@ -416,9 +425,7 @@ class CommonTest(TestCase):
     @classmethod
     def setUpClass(cls):
         cls.patcher = mock.patch.object(
-            LibraryEnvironment,
-            "cmd_runner",
-            lambda self: runner
+            LibraryEnvironment, "cmd_runner", lambda self: runner
         )
         cls.patcher.start()
 
@@ -428,8 +435,7 @@ class CommonTest(TestCase):
 
     def setUp(self):
         self.env = LibraryEnvironment(
-            mock.MagicMock(logging.Logger),
-            MockLibraryReportProcessor()
+            mock.MagicMock(logging.Logger), MockLibraryReportProcessor()
         )
 
 
@@ -466,49 +472,49 @@ class InitializeBlockDevicesTest(CommonTest):
             "loop-timeout": "10",
             "allocate-timeout": "3",
             "msgwait-timeout": "2",
-
         }
-        runner.set_runs(self.fixture_sbd_init(
-            device_list,
-            [
-                ("-2", "3"),
-                ("-3", "10"),
-                ("-4", "2"),
-                ("-1", "1"),
-            ]
-        ))
+        runner.set_runs(
+            self.fixture_sbd_init(
+                device_list,
+                [("-2", "3"), ("-3", "10"), ("-4", "2"), ("-1", "1"),],
+            )
+        )
         cmd_sbd.initialize_block_devices(self.env, device_list, option_dict)
         runner.assert_everything_launched()
-        self.env.report_processor.assert_reports([
-            (
-                Severities.INFO,
-                reports.codes.SBD_DEVICE_INITIALIZATION_STARTED,
-                {"device_list": device_list}
-            ),
-            (
-                Severities.INFO,
-                reports.codes.SBD_DEVICE_INITIALIZATION_SUCCESS,
-                {"device_list": device_list}
-            ),
-        ])
+        self.env.report_processor.assert_reports(
+            [
+                (
+                    Severities.INFO,
+                    reports.codes.SBD_DEVICE_INITIALIZATION_STARTED,
+                    {"device_list": device_list},
+                ),
+                (
+                    Severities.INFO,
+                    reports.codes.SBD_DEVICE_INITIALIZATION_SUCCESS,
+                    {"device_list": device_list},
+                ),
+            ]
+        )
 
     def test_no_options(self):
         device_list = ["dev1", "dev2"]
         runner.set_runs(self.fixture_sbd_init(device_list, {}))
         cmd_sbd.initialize_block_devices(self.env, device_list, {})
         runner.assert_everything_launched()
-        self.env.report_processor.assert_reports([
-            (
-                Severities.INFO,
-                reports.codes.SBD_DEVICE_INITIALIZATION_STARTED,
-                {"device_list": device_list}
-            ),
-            (
-                Severities.INFO,
-                reports.codes.SBD_DEVICE_INITIALIZATION_SUCCESS,
-                {"device_list": device_list}
-            ),
-        ])
+        self.env.report_processor.assert_reports(
+            [
+                (
+                    Severities.INFO,
+                    reports.codes.SBD_DEVICE_INITIALIZATION_STARTED,
+                    {"device_list": device_list},
+                ),
+                (
+                    Severities.INFO,
+                    reports.codes.SBD_DEVICE_INITIALIZATION_SUCCESS,
+                    {"device_list": device_list},
+                ),
+            ]
+        )
 
     def test_validation_failed(self):
         option_dict = {
@@ -520,7 +526,9 @@ class InitializeBlockDevicesTest(CommonTest):
             "msgwait-timeout": "-2",
         }
         allowed_options = [
-            "watchdog-timeout", "loop-timeout", "allocate-timeout",
+            "watchdog-timeout",
+            "loop-timeout",
+            "allocate-timeout",
             "msgwait-timeout",
         ]
         assert_raise_library_error(
@@ -532,10 +540,7 @@ class InitializeBlockDevicesTest(CommonTest):
                 (
                     Severities.ERROR,
                     reports.codes.REQUIRED_OPTIONS_ARE_MISSING,
-                    {
-                        "option_names": ["device"],
-                        "option_type": None,
-                    }
+                    {"option_names": ["device"], "option_type": None,},
                 ),
                 (
                     Severities.ERROR,
@@ -545,14 +550,13 @@ class InitializeBlockDevicesTest(CommonTest):
                         "option_type": None,
                         "allowed": sorted(allowed_options),
                         "allowed_patterns": [],
-                    }
+                    },
                 ),
             ]
-            +
-            [
+            + [
                 self.fixture_invalid_value(opt, option_dict[opt])
                 for opt in allowed_options
-            ]
+            ],
         )
 
 
@@ -581,21 +585,13 @@ class GetLocalDevicesInfoTest(CommonTest):
 SBD_DEVICE="/dev1;/dev2"
         """
         runner.set_runs(
-            self.fixture_sbd_enabled(True) +
-            self.fixture_sbd_info("/dev1", "1") +
-            self.fixture_sbd_info("/dev2", "2")
+            self.fixture_sbd_enabled(True)
+            + self.fixture_sbd_info("/dev1", "1")
+            + self.fixture_sbd_info("/dev2", "2")
         )
         expected_output = [
-            {
-                "device": "/dev1",
-                "list": "1",
-                "dump": None,
-            },
-            {
-                "device": "/dev2",
-                "list": "2",
-                "dump": None,
-            },
+            {"device": "/dev1", "list": "1", "dump": None,},
+            {"device": "/dev2", "list": "2", "dump": None,},
         ]
         self.assertEqual(
             expected_output, cmd_sbd.get_local_devices_info(self.env)
@@ -610,23 +606,15 @@ SBD_DEVICE="/dev1;/dev2"
 SBD_DEVICE="/dev1;/dev2"
         """
         runner.set_runs(
-            self.fixture_sbd_enabled(True) +
-            self.fixture_sbd_info("/dev1", "1") +
-            self.fixture_sbd_dump("/dev1", "3") +
-            self.fixture_sbd_info("/dev2", "2") +
-            self.fixture_sbd_dump("/dev2", "4")
+            self.fixture_sbd_enabled(True)
+            + self.fixture_sbd_info("/dev1", "1")
+            + self.fixture_sbd_dump("/dev1", "3")
+            + self.fixture_sbd_info("/dev2", "2")
+            + self.fixture_sbd_dump("/dev2", "4")
         )
         expected_output = [
-            {
-                "device": "/dev1",
-                "list": "1",
-                "dump": "3",
-            },
-            {
-                "device": "/dev2",
-                "list": "2",
-                "dump": "4",
-            },
+            {"device": "/dev1", "list": "1", "dump": "3",},
+            {"device": "/dev2", "list": "2", "dump": "4",},
         ]
         self.assertEqual(
             expected_output, cmd_sbd.get_local_devices_info(self.env, dump=True)
@@ -657,51 +645,35 @@ SBD_DEVICE="/dev1;/dev2"
 SBD_DEVICE="/dev1;/dev2;/dev3"
         """
         runner.set_runs(
-            self.fixture_sbd_enabled(True) +
-            self.fixture_sbd_info("/dev1", "1", 1) +
-            self.fixture_sbd_info("/dev2", "2") +
-            self.fixture_sbd_dump("/dev2", "4", 1) +
-            self.fixture_sbd_info("/dev3", "5") +
-            self.fixture_sbd_dump("/dev3", "6")
+            self.fixture_sbd_enabled(True)
+            + self.fixture_sbd_info("/dev1", "1", 1)
+            + self.fixture_sbd_info("/dev2", "2")
+            + self.fixture_sbd_dump("/dev2", "4", 1)
+            + self.fixture_sbd_info("/dev3", "5")
+            + self.fixture_sbd_dump("/dev3", "6")
         )
         expected_output = [
-            {
-                "device": "/dev1",
-                "list": None,
-                "dump": None,
-            },
-            {
-                "device": "/dev2",
-                "list": "2",
-                "dump": None,
-            },
-            {
-                "device": "/dev3",
-                "list": "5",
-                "dump": "6",
-            },
+            {"device": "/dev1", "list": None, "dump": None,},
+            {"device": "/dev2", "list": "2", "dump": None,},
+            {"device": "/dev3", "list": "5", "dump": "6",},
         ]
         self.assertEqual(
             expected_output, cmd_sbd.get_local_devices_info(self.env, dump=True)
         )
-        self.env.report_processor.assert_reports([
-            (
-                Severities.WARNING,
-                reports.codes.SBD_DEVICE_LIST_ERROR,
-                {
-                    "device": "/dev1",
-                    "reason": "1"
-                }
-            ),
-            (
-                Severities.WARNING,
-                reports.codes.SBD_DEVICE_DUMP_ERROR,
-                {
-                    "device": "/dev2",
-                    "reason": "4"
-                }
-            ),
-        ])
+        self.env.report_processor.assert_reports(
+            [
+                (
+                    Severities.WARNING,
+                    reports.codes.SBD_DEVICE_LIST_ERROR,
+                    {"device": "/dev1", "reason": "1"},
+                ),
+                (
+                    Severities.WARNING,
+                    reports.codes.SBD_DEVICE_DUMP_ERROR,
+                    {"device": "/dev2", "reason": "4"},
+                ),
+            ]
+        )
         runner.assert_everything_launched()
         mock_config.assert_called_once_with()
         mock_config_exists.assert_called_once_with(settings.sbd_config)
@@ -712,11 +684,13 @@ class SetMessageTest(CommonTest):
     def fixture_call_sbd_message(
         device, node, message, stderr="", return_code=0
     ):
-        return [Call(
-            "sbd -d {0} message {1} {2}".format(device, node, message),
-            stderr=stderr,
-            returncode=return_code
-        )]
+        return [
+            Call(
+                "sbd -d {0} message {1} {2}".format(device, node, message),
+                stderr=stderr,
+                returncode=return_code,
+            )
+        ]
 
     def test_empty_options(self):
         assert_raise_library_error(
@@ -728,10 +702,7 @@ class SetMessageTest(CommonTest):
                 (
                     Severities.ERROR,
                     reports.codes.REQUIRED_OPTIONS_ARE_MISSING,
-                    {
-                        "option_names": ["device", "node"],
-                        "option_type": None,
-                    }
+                    {"option_names": ["device", "node"], "option_type": None,},
                 ),
                 fixture.error(
                     reports.codes.INVALID_OPTION_VALUE,
@@ -741,7 +712,7 @@ class SetMessageTest(CommonTest):
                     cannot_be_empty=False,
                     forbidden_characters=None,
                 ),
-            ]
+            ],
         )
 
     def test_invalid_message_type(self):
@@ -759,7 +730,7 @@ class SetMessageTest(CommonTest):
                     cannot_be_empty=False,
                     forbidden_characters=None,
                 )
-            ]
+            ],
         )
 
     def test_success(self):
@@ -781,7 +752,7 @@ class SetMessageTest(CommonTest):
                     "node": "node",
                     "sbd_message": "test",
                     "reason": "error",
-                }
-            )
+                },
+            ),
         )
         runner.assert_everything_launched()

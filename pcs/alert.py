@@ -34,7 +34,7 @@ def alert_add(lib, argv, modifiers):
         main_args.get("path", None),
         prepare_options(sections["options"]),
         prepare_options(sections["meta"]),
-        main_args.get("description", None)
+        main_args.get("description", None),
     )
 
 
@@ -58,7 +58,7 @@ def alert_update(lib, argv, modifiers):
         main_args.get("path", None),
         prepare_options(sections["options"]),
         prepare_options(sections["meta"]),
-        main_args.get("description", None)
+        main_args.get("description", None),
     )
 
 
@@ -97,7 +97,7 @@ def recipient_add(lib, argv, modifiers):
         prepare_options(sections["meta"]),
         recipient_id=main_args.get("id", None),
         description=main_args.get("description", None),
-        allow_same_value=modifiers.get("--force")
+        allow_same_value=modifiers.get("--force"),
     )
 
 
@@ -123,7 +123,7 @@ def recipient_update(lib, argv, modifiers):
         prepare_options(sections["meta"]),
         recipient_value=main_args.get("value", None),
         description=main_args.get("description", None),
-        allow_same_value=modifiers.get("--force")
+        allow_same_value=modifiers.get("--force"),
     )
 
 
@@ -142,8 +142,7 @@ def recipient_remove(lib, argv, modifiers):
 def _nvset_to_str(nvset_obj):
     # TODO duplicite to pcs.resource._nvpairs_strings
     key_val = {
-        nvpair_obj["name"]: nvpair_obj["value"]
-        for nvpair_obj in nvset_obj
+        nvpair_obj["name"]: nvpair_obj["value"] for nvpair_obj in nvset_obj
     }
     output = []
     for name, value in sorted(key_val.items()):
@@ -158,13 +157,17 @@ def __description_attributes_to_str(obj):
     if obj.get("description"):
         output.append("Description: {desc}".format(desc=obj["description"]))
     if obj.get("instance_attributes"):
-        output.append("Options: {attributes}".format(
-            attributes=_nvset_to_str(obj["instance_attributes"])
-        ))
+        output.append(
+            "Options: {attributes}".format(
+                attributes=_nvset_to_str(obj["instance_attributes"])
+            )
+        )
     if obj.get("meta_attributes"):
-        output.append("Meta options: {attributes}".format(
-            attributes=_nvset_to_str(obj["meta_attributes"])
-        ))
+        output.append(
+            "Meta options: {attributes}".format(
+                attributes=_nvset_to_str(obj["meta_attributes"])
+            )
+        )
     return output
 
 
@@ -180,15 +183,19 @@ def _alert_to_str(alert):
         content.append("Recipients:")
         content.extend(indent(recipients, 1))
 
-    return ["Alert: {alert_id} (path={path})".format(
-        alert_id=alert["id"], path=alert["path"]
-    )] + indent(content, 1)
+    return [
+        "Alert: {alert_id} (path={path})".format(
+            alert_id=alert["id"], path=alert["path"]
+        )
+    ] + indent(content, 1)
 
 
 def _recipient_to_str(recipient):
-    return ["Recipient: {id} (value={value})".format(
-        value=recipient["value"], id=recipient["id"]
-    )] + indent(__description_attributes_to_str(recipient), 1)
+    return [
+        "Recipient: {id} (value={value})".format(
+            value=recipient["value"], id=recipient["id"]
+        )
+    ] + indent(__description_attributes_to_str(recipient), 1)
 
 
 def print_alert_config(lib, argv, modifiers):
@@ -201,6 +208,7 @@ def print_alert_config(lib, argv, modifiers):
         raise CmdLineInputError()
     print("\n".join(alert_config_lines(lib)))
 
+
 def alert_config_lines(lib):
     lines = ["Alerts:"]
     alert_list = lib.alert.get_all_alerts()
@@ -210,6 +218,7 @@ def alert_config_lines(lib):
     else:
         lines.append(" No alerts defined")
     return lines
+
 
 def print_alerts_in_json(lib, argv, modifiers):
     """

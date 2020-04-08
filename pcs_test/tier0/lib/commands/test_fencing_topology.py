@@ -23,7 +23,7 @@ from pcs.lib.commands import fencing_topology as lib
 create_lib_env = partial(
     LibraryEnvironment,
     mock.MagicMock(logging.Logger),
-    MockLibraryReportProcessor()
+    MockLibraryReportProcessor(),
 )
 patch_env = partial(mock.patch.object, LibraryEnvironment)
 patch_command = create_patcher("pcs.lib.commands.fencing_topology")
@@ -39,8 +39,12 @@ patch_command = create_patcher("pcs.lib.commands.fencing_topology")
 @patch_env("cmd_runner", lambda self: "mocked cmd_runner")
 class AddLevel(TestCase):
     def prepare_mocks(
-        self, mock_get_cib, mock_status_xml, mock_status, mock_get_topology,
-        mock_get_resources
+        self,
+        mock_get_cib,
+        mock_status_xml,
+        mock_status,
+        mock_get_topology,
+        mock_get_resources,
     ):
         mock_get_cib.return_value = "mocked cib"
         mock_status_xml.return_value = "mock get_cluster_status_xml"
@@ -51,8 +55,12 @@ class AddLevel(TestCase):
         mock_get_resources.return_value = "resources_el"
 
     def assert_mocks(
-        self, mock_status_xml, mock_status, mock_get_topology,
-        mock_get_resources, mock_push_cib
+        self,
+        mock_status_xml,
+        mock_status,
+        mock_get_topology,
+        mock_get_resources,
+        mock_push_cib,
     ):
         mock_status_xml.assert_called_once_with("mocked cmd_runner")
         mock_status.assert_called_once_with("mock get_cluster_status_xml")
@@ -61,18 +69,32 @@ class AddLevel(TestCase):
         mock_push_cib.assert_called_once_with()
 
     def test_success(
-        self, mock_get_cib, mock_status_xml, mock_status, mock_push_cib,
-        mock_get_topology, mock_get_resources, mock_add_level
+        self,
+        mock_get_cib,
+        mock_status_xml,
+        mock_status,
+        mock_push_cib,
+        mock_get_topology,
+        mock_get_resources,
+        mock_add_level,
     ):
         self.prepare_mocks(
-            mock_get_cib, mock_status_xml, mock_status, mock_get_topology,
-            mock_get_resources
+            mock_get_cib,
+            mock_status_xml,
+            mock_status,
+            mock_get_topology,
+            mock_get_resources,
         )
         lib_env = create_lib_env()
 
         lib.add_level(
-            lib_env, "level", "target type", "target value", "devices",
-            "force device", "force node"
+            lib_env,
+            "level",
+            "target type",
+            "target value",
+            "devices",
+            "force device",
+            "force node",
         )
 
         mock_add_level.assert_called_once_with(
@@ -85,27 +107,44 @@ class AddLevel(TestCase):
             "devices",
             "nodes",
             "force device",
-            "force node"
+            "force node",
         )
         mock_get_cib.assert_called_once_with(None)
         self.assert_mocks(
-            mock_status_xml, mock_status, mock_get_topology, mock_get_resources,
-            mock_push_cib
+            mock_status_xml,
+            mock_status,
+            mock_get_topology,
+            mock_get_resources,
+            mock_push_cib,
         )
 
     def test_target_attribute_updates_cib(
-        self, mock_get_cib, mock_status_xml, mock_status, mock_push_cib,
-        mock_get_topology, mock_get_resources, mock_add_level
+        self,
+        mock_get_cib,
+        mock_status_xml,
+        mock_status,
+        mock_push_cib,
+        mock_get_topology,
+        mock_get_resources,
+        mock_add_level,
     ):
         self.prepare_mocks(
-            mock_get_cib, mock_status_xml, mock_status, mock_get_topology,
-            mock_get_resources
+            mock_get_cib,
+            mock_status_xml,
+            mock_status,
+            mock_get_topology,
+            mock_get_resources,
         )
         lib_env = create_lib_env()
 
         lib.add_level(
-            lib_env, "level", TARGET_TYPE_ATTRIBUTE, "target value", "devices",
-            "force device", "force node"
+            lib_env,
+            "level",
+            TARGET_TYPE_ATTRIBUTE,
+            "target value",
+            "devices",
+            "force device",
+            "force node",
         )
 
         mock_add_level.assert_called_once_with(
@@ -118,27 +157,44 @@ class AddLevel(TestCase):
             "devices",
             "nodes",
             "force device",
-            "force node"
+            "force node",
         )
         mock_get_cib.assert_called_once_with(Version(2, 4, 0))
         self.assert_mocks(
-            mock_status_xml, mock_status, mock_get_topology, mock_get_resources,
-            mock_push_cib
+            mock_status_xml,
+            mock_status,
+            mock_get_topology,
+            mock_get_resources,
+            mock_push_cib,
         )
 
     def test_target_regexp_updates_cib(
-        self, mock_get_cib, mock_status_xml, mock_status, mock_push_cib,
-        mock_get_topology, mock_get_resources, mock_add_level
+        self,
+        mock_get_cib,
+        mock_status_xml,
+        mock_status,
+        mock_push_cib,
+        mock_get_topology,
+        mock_get_resources,
+        mock_add_level,
     ):
         self.prepare_mocks(
-            mock_get_cib, mock_status_xml, mock_status, mock_get_topology,
-            mock_get_resources
+            mock_get_cib,
+            mock_status_xml,
+            mock_status,
+            mock_get_topology,
+            mock_get_resources,
         )
         lib_env = create_lib_env()
 
         lib.add_level(
-            lib_env, "level", TARGET_TYPE_REGEXP, "target value", "devices",
-            "force device", "force node"
+            lib_env,
+            "level",
+            TARGET_TYPE_REGEXP,
+            "target value",
+            "devices",
+            "force device",
+            "force node",
         )
 
         mock_add_level.assert_called_once_with(
@@ -151,13 +207,17 @@ class AddLevel(TestCase):
             "devices",
             "nodes",
             "force device",
-            "force node"
+            "force node",
         )
         mock_get_cib.assert_called_once_with(Version(2, 3, 0))
         self.assert_mocks(
-            mock_status_xml, mock_status, mock_get_topology, mock_get_resources,
-            mock_push_cib
+            mock_status_xml,
+            mock_status,
+            mock_get_topology,
+            mock_get_resources,
+            mock_push_cib,
         )
+
 
 @patch_command("cib_fencing_topology.export")
 @patch_command("get_fencing_topology")
@@ -169,10 +229,7 @@ class GetConfig(TestCase):
         mock_export.return_value = "exported config"
         lib_env = create_lib_env()
 
-        self.assertEqual(
-            "exported config",
-            lib.get_config(lib_env)
-        )
+        self.assertEqual("exported config", lib.get_config(lib_env))
 
         mock_export.assert_called_once_with("topology el")
         mock_get_topology.assert_called_once_with("mocked cib")
@@ -265,15 +322,17 @@ class RemoveLevelsByParams(TestCase):
                 devices=["dev1", "dev2"],
             )
         )
-        self.env_assist.assert_reports([
-            fixture.error(
-                report_codes.CIB_FENCING_LEVEL_DOES_NOT_EXIST,
-                level="2",
-                target_type=TARGET_TYPE_ATTRIBUTE,
-                target_value=("fencing", "improved"),
-                devices=["dev1", "dev2"],
-            ),
-        ])
+        self.env_assist.assert_reports(
+            [
+                fixture.error(
+                    report_codes.CIB_FENCING_LEVEL_DOES_NOT_EXIST,
+                    level="2",
+                    target_type=TARGET_TYPE_ATTRIBUTE,
+                    target_value=("fencing", "improved"),
+                    devices=["dev1", "dev2"],
+                ),
+            ]
+        )
 
     def test_devices_target_regexp_present(self):
         self.config.runner.cib.load(fencing_topology=self.fixture_cib_regexp)
@@ -299,15 +358,17 @@ class RemoveLevelsByParams(TestCase):
                 devices=["dev1", "dev2"],
             )
         )
-        self.env_assist.assert_reports([
-            fixture.error(
-                report_codes.CIB_FENCING_LEVEL_DOES_NOT_EXIST,
-                level="2",
-                target_type=TARGET_TYPE_REGEXP,
-                target_value="node\\d+",
-                devices=["dev1", "dev2"],
-            ),
-        ])
+        self.env_assist.assert_reports(
+            [
+                fixture.error(
+                    report_codes.CIB_FENCING_LEVEL_DOES_NOT_EXIST,
+                    level="2",
+                    target_type=TARGET_TYPE_REGEXP,
+                    target_value="node\\d+",
+                    devices=["dev1", "dev2"],
+                ),
+            ]
+        )
 
     def test_devices_target_node_present(self):
         self.config.runner.cib.load(fencing_topology=self.fixture_cib_node)
@@ -347,22 +408,24 @@ class RemoveLevelsByParams(TestCase):
                 target_may_be_a_device=True,
             )
         )
-        self.env_assist.assert_reports([
-            fixture.error(
-                report_codes.CIB_FENCING_LEVEL_DOES_NOT_EXIST,
-                level="2",
-                target_type=TARGET_TYPE_NODE,
-                target_value="dev1",
-                devices=["dev2"],
-            ),
-            fixture.error(
-                report_codes.CIB_FENCING_LEVEL_DOES_NOT_EXIST,
-                level="2",
-                target_type=None,
-                target_value=None,
-                devices=["dev1", "dev2"],
-            ),
-        ])
+        self.env_assist.assert_reports(
+            [
+                fixture.error(
+                    report_codes.CIB_FENCING_LEVEL_DOES_NOT_EXIST,
+                    level="2",
+                    target_type=TARGET_TYPE_NODE,
+                    target_value="dev1",
+                    devices=["dev2"],
+                ),
+                fixture.error(
+                    report_codes.CIB_FENCING_LEVEL_DOES_NOT_EXIST,
+                    level="2",
+                    target_type=None,
+                    target_value=None,
+                    devices=["dev1", "dev2"],
+                ),
+            ]
+        )
 
     def test_devices_target_node_missing_guessing_disabled(self):
         self.config.runner.cib.load(fencing_topology=self.fixture_cib_node)
@@ -376,15 +439,17 @@ class RemoveLevelsByParams(TestCase):
                 devices=["dev2"],
             )
         )
-        self.env_assist.assert_reports([
-            fixture.error(
-                report_codes.CIB_FENCING_LEVEL_DOES_NOT_EXIST,
-                level="1",
-                target_type=TARGET_TYPE_NODE,
-                target_value="dev1",
-                devices=["dev2"],
-            ),
-        ])
+        self.env_assist.assert_reports(
+            [
+                fixture.error(
+                    report_codes.CIB_FENCING_LEVEL_DOES_NOT_EXIST,
+                    level="1",
+                    target_type=TARGET_TYPE_NODE,
+                    target_value="dev1",
+                    devices=["dev2"],
+                ),
+            ]
+        )
 
 
 @patch_command("cib_fencing_topology.verify")
@@ -397,8 +462,13 @@ class RemoveLevelsByParams(TestCase):
 @patch_env("cmd_runner", lambda self: "mocked cmd_runner")
 class Verify(TestCase):
     def test_success(
-        self, mock_status_xml, mock_status, mock_push_cib, mock_get_topology,
-        mock_get_resources, mock_verify
+        self,
+        mock_status_xml,
+        mock_status,
+        mock_push_cib,
+        mock_get_topology,
+        mock_get_resources,
+        mock_verify,
     ):
         mock_status_xml.return_value = "mock get_cluster_status_xml"
         mock_status.return_value = mock.MagicMock(
@@ -411,9 +481,7 @@ class Verify(TestCase):
         lib.verify(lib_env)
 
         mock_verify.assert_called_once_with(
-            "topology el",
-            "resources_el",
-            "nodes"
+            "topology el", "resources_el", "nodes"
         )
         mock_status_xml.assert_called_once_with("mocked cmd_runner")
         mock_status.assert_called_once_with("mock get_cluster_status_xml")

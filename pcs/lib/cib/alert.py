@@ -21,6 +21,7 @@ TAG_RECIPIENT = "recipient"
 find_alert = partial(find_element_by_tag_and_id, TAG_ALERT)
 find_recipient = partial(find_element_by_tag_and_id, TAG_RECIPIENT)
 
+
 def _update_optional_attribute(element, attribute, value):
     """
     Update optional attribute of element. Remove existing element if value
@@ -37,12 +38,13 @@ def _update_optional_attribute(element, attribute, value):
     elif attribute in element.attrib:
         del element.attrib[attribute]
 
+
 def ensure_recipient_value_is_unique(
     reporter: ReportProcessor,
     alert,
     recipient_value,
     recipient_id="",
-    allow_duplicity=False
+    allow_duplicity=False,
 ):
     """
     Ensures that recipient_value is unique in alert.
@@ -67,9 +69,8 @@ def ensure_recipient_value_is_unique(
                     allow_duplicity,
                 ),
                 message=reports.messages.CibAlertRecipientAlreadyExists(
-                    alert.get("id", None),
-                    recipient_value,
-                )
+                    alert.get("id", None), recipient_value,
+                ),
             )
         )
         if reporter.has_errors:
@@ -135,7 +136,7 @@ def add_recipient(
     recipient_value,
     recipient_id=None,
     description="",
-    allow_same_value=False
+    allow_same_value=False,
 ):
     """
     Add recipient to alert with specified id. Returns added recipient element.
@@ -175,7 +176,7 @@ def update_recipient(
     recipient_id,
     recipient_value=None,
     description=None,
-    allow_same_value=False
+    allow_same_value=False,
 ):
     """
     Update specified recipient. Returns updated recipient element.
@@ -196,7 +197,7 @@ def update_recipient(
             recipient.getparent(),
             recipient_value,
             recipient_id=recipient_id,
-            allow_duplicity=allow_same_value
+            allow_duplicity=allow_same_value,
         )
         recipient.set("value", recipient_value)
     _update_optional_attribute(recipient, "description", description)
@@ -232,17 +233,19 @@ def get_all_recipients(alert):
     """
     recipient_list = []
     for recipient in alert.findall("./recipient"):
-        recipient_list.append({
-            "id": recipient.get("id"),
-            "value": recipient.get("value"),
-            "description": recipient.get("description", ""),
-            "instance_attributes": get_nvset(
-                get_sub_element(recipient, "instance_attributes")
-            ),
-            "meta_attributes": get_nvset(
-                get_sub_element(recipient, "meta_attributes")
-            )
-        })
+        recipient_list.append(
+            {
+                "id": recipient.get("id"),
+                "value": recipient.get("value"),
+                "description": recipient.get("description", ""),
+                "instance_attributes": get_nvset(
+                    get_sub_element(recipient, "instance_attributes")
+                ),
+                "meta_attributes": get_nvset(
+                    get_sub_element(recipient, "meta_attributes")
+                ),
+            }
+        )
     return recipient_list
 
 
@@ -264,16 +267,18 @@ def get_all_alerts(tree):
     """
     alert_list = []
     for alert in get_alerts(tree).findall("./alert"):
-        alert_list.append({
-            "id": alert.get("id"),
-            "path": alert.get("path"),
-            "description": alert.get("description", ""),
-            "instance_attributes": get_nvset(
-                get_sub_element(alert, "instance_attributes")
-            ),
-            "meta_attributes": get_nvset(
-                get_sub_element(alert, "meta_attributes")
-            ),
-            "recipient_list": get_all_recipients(alert)
-        })
+        alert_list.append(
+            {
+                "id": alert.get("id"),
+                "path": alert.get("path"),
+                "description": alert.get("description", ""),
+                "instance_attributes": get_nvset(
+                    get_sub_element(alert, "instance_attributes")
+                ),
+                "meta_attributes": get_nvset(
+                    get_sub_element(alert, "meta_attributes")
+                ),
+                "recipient_list": get_all_recipients(alert),
+            }
+        )
     return alert_list

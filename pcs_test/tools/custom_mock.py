@@ -10,12 +10,15 @@ from pcs.common.reports import (
 )
 import pcs.common.pcs_pycurl as pycurl
 
+
 def get_getaddrinfo_mock(resolvable_addr_list):
     def socket_getaddrinfo(host, port, family=0, type=0, proto=0, flags=0):
         # pylint: disable=redefined-builtin, unused-argument
         if host not in resolvable_addr_list:
             raise socket.gaierror(1, "")
+
     return socket_getaddrinfo
+
 
 def patch_getaddrinfo(test_case, addr_list):
     """
@@ -47,17 +50,20 @@ class MockLibraryReportProcessor(ReportProcessor):
 
     def assert_reports(self, expected_report_info_list, hint=""):
         assert_report_item_list_equal(
-            self.report_item_list,
-            expected_report_info_list,
-            hint=hint
+            self.report_item_list, expected_report_info_list, hint=hint
         )
 
 
 class MockCurl:
     # pylint: disable=too-many-instance-attributes
     def __init__(
-            self, info=None, output=b"", debug_output_list=None, exception=None,
-            error=None, request=None
+        self,
+        info=None,
+        output=b"",
+        debug_output_list=None,
+        exception=None,
+        error=None,
+        request=None,
     ):
         # we don't need exception anymore, because we don't use perform on
         # easy hanlers. but for now it has to stay as it is because it is sill
@@ -107,7 +113,7 @@ class MockCurl:
         if self._error:
             return
         if self._exception:
-            #pylint: disable=raising-bad-type
+            # pylint: disable=raising-bad-type
             raise self._exception
         if pycurl.WRITEFUNCTION in self._opts:
             self._opts[pycurl.WRITEFUNCTION](self._output)
@@ -124,7 +130,8 @@ class MockCurlSimple:
         )
         self.debug_buffer = io.BytesIO()
         self.debug_buffer.write(
-            debug_output if isinstance(debug_output, bytes)
+            debug_output
+            if isinstance(debug_output, bytes)
             else debug_output.encode("utf-8")
         )
         self.request_obj = request

@@ -17,10 +17,12 @@ from pcs.lib.errors import LibraryError
 
 TIMEOUT = 10
 
+
 class FixturesMixin:
     container_type = None
     bundle_id = None
     image = None
+
     @property
     def fixture_resources_bundle_simple(self):
         return """
@@ -35,6 +37,7 @@ class FixturesMixin:
             image=self.image,
         )
 
+
 class SetUpMixin:
     initial_resources = "<resources/>"
     initial_cib_filename = "cib-empty.xml"
@@ -47,15 +50,16 @@ class SetUpMixin:
             resources=self.initial_resources,
         )
 
+
 class UpgradeMixin(FixturesMixin):
     old_version_cib_filename = None
 
     def test_cib_upgrade(self):
-        (self.config
-            .runner.cib.load(
+        (
+            self.config.runner.cib.load(
                 name="load_cib_old_version",
                 filename=self.old_version_cib_filename,
-                before="runner.cib.load"
+                before="runner.cib.load",
             )
             .runner.cib.upgrade(before="runner.cib.load")
             .env.push_cib(resources=self.fixture_resources_bundle_simple)
@@ -63,9 +67,10 @@ class UpgradeMixin(FixturesMixin):
 
         self.run_bundle_cmd()
 
-        self.env_assist.assert_reports([
-            fixture.info(report_codes.CIB_UPGRADE_SUCCESSFUL)
-        ])
+        self.env_assist.assert_reports(
+            [fixture.info(report_codes.CIB_UPGRADE_SUCCESSFUL)]
+        )
+
 
 class ParametrizedContainerMixin(SetUpMixin):
     container_type = None
@@ -89,8 +94,7 @@ class ParametrizedContainerMixin(SetUpMixin):
                         />
                     </bundle>
                 </resources>
-            """
-            .format(
+            """.format(
                 container_type=self.container_type,
                 bundle_id=self.bundle_id,
                 image=self.image,
@@ -109,8 +113,8 @@ class ParametrizedContainerMixin(SetUpMixin):
         )
 
     def test_cib_upgrade_promoted_max(self):
-        (self.config
-            .runner.cib.load(
+        (
+            self.config.runner.cib.load(
                 name="load_cib_old_version",
                 filename="cib-empty-2.8.xml",
                 resources=self.initial_resources,
@@ -127,8 +131,7 @@ class ParametrizedContainerMixin(SetUpMixin):
                             />
                         </bundle>
                     </resources>
-                """
-                .format(
+                """.format(
                     container_type=self.container_type,
                     bundle_id=self.bundle_id,
                     image=self.image,
@@ -137,21 +140,12 @@ class ParametrizedContainerMixin(SetUpMixin):
         )
 
         self.run_bundle_cmd(
-            container_options={
-                "image": self.image,
-                "promoted-max": "0",
-            }
+            container_options={"image": self.image, "promoted-max": "0",}
         )
 
-        self.env_assist.assert_reports([
-            (
-                severities.INFO,
-                report_codes.CIB_UPGRADE_SUCCESSFUL,
-                {
-                },
-                None
-            ),
-        ])
+        self.env_assist.assert_reports(
+            [(severities.INFO, report_codes.CIB_UPGRADE_SUCCESSFUL, {}, None),]
+        )
 
     def test_deprecated_options(self):
         # Setting both deprecated options and their new variants is tested in
@@ -164,31 +158,29 @@ class ParametrizedContainerMixin(SetUpMixin):
                         <{container_type} image="{image}" masters="1" />
                     </bundle>
                 </resources>
-            """
-            .format(
+            """.format(
                 container_type=self.container_type,
                 bundle_id=self.bundle_id,
                 image=self.image,
             ),
         )
         self.run_bundle_cmd(
-            container_options={
-                "image": self.image,
-                "masters": "1",
-            },
+            container_options={"image": self.image, "masters": "1",},
         )
-        self.env_assist.assert_reports([
-            (
-                severities.WARNING,
-                report_codes.DEPRECATED_OPTION,
-                {
-                    "option_name": "masters",
-                    "option_type": "container",
-                    "replaced_by": ["promoted-max"],
-                },
-                None
-            ),
-        ])
+        self.env_assist.assert_reports(
+            [
+                (
+                    severities.WARNING,
+                    report_codes.DEPRECATED_OPTION,
+                    {
+                        "option_name": "masters",
+                        "option_type": "container",
+                        "replaced_by": ["promoted-max"],
+                    },
+                    None,
+                ),
+            ]
+        )
 
     def test_invalid_container_options(self):
         self.env_assist.assert_raise_library_error(
@@ -199,114 +191,111 @@ class ParametrizedContainerMixin(SetUpMixin):
                     "masters": "-1",
                     "promoted-max": "-2",
                 },
-                force_options=True
+                force_options=True,
             )
         )
-        self.env_assist.assert_reports([
-            (
-                severities.WARNING,
-                report_codes.DEPRECATED_OPTION,
-                {
-                    "option_name": "masters",
-                    "option_type": "container",
-                    "replaced_by": ["promoted-max"],
-                },
-                None
-            ),
-            (
-                severities.ERROR,
-                report_codes.REQUIRED_OPTIONS_ARE_MISSING,
-                {
-                    "option_type": "container",
-                    "option_names": ["image", ],
-                },
-                None
-            ),
-            fixture.error(
-                report_codes.INVALID_OPTION_VALUE,
-                option_name="masters",
-                option_value="-1",
-                allowed_values="a non-negative integer",
-                cannot_be_empty=False,
-                forbidden_characters=None,
-            ),
-            fixture.error(
-                report_codes.INVALID_OPTION_VALUE,
-                option_name="promoted-max",
-                option_value="-2",
-                allowed_values="a non-negative integer",
-                cannot_be_empty=False,
-                forbidden_characters=None,
-            ),
-            (
-                severities.ERROR,
-                report_codes.MUTUALLY_EXCLUSIVE_OPTIONS,
-                {
-                    "option_names": ["masters", "promoted-max", ],
-                    "option_type": "container",
-                },
-                None
-            ),
-            fixture.error(
-                report_codes.INVALID_OPTION_VALUE,
-                option_name="replicas",
-                option_value="0",
-                allowed_values="a positive integer",
-                cannot_be_empty=False,
-                forbidden_characters=None,
-            ),
-            fixture.error(
-                report_codes.INVALID_OPTION_VALUE,
-                option_name="replicas-per-host",
-                option_value="0",
-                allowed_values="a positive integer",
-                cannot_be_empty=False,
-                forbidden_characters=None,
-            ),
-        ])
+        self.env_assist.assert_reports(
+            [
+                (
+                    severities.WARNING,
+                    report_codes.DEPRECATED_OPTION,
+                    {
+                        "option_name": "masters",
+                        "option_type": "container",
+                        "replaced_by": ["promoted-max"],
+                    },
+                    None,
+                ),
+                (
+                    severities.ERROR,
+                    report_codes.REQUIRED_OPTIONS_ARE_MISSING,
+                    {"option_type": "container", "option_names": ["image",],},
+                    None,
+                ),
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_name="masters",
+                    option_value="-1",
+                    allowed_values="a non-negative integer",
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
+                ),
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_name="promoted-max",
+                    option_value="-2",
+                    allowed_values="a non-negative integer",
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
+                ),
+                (
+                    severities.ERROR,
+                    report_codes.MUTUALLY_EXCLUSIVE_OPTIONS,
+                    {
+                        "option_names": ["masters", "promoted-max",],
+                        "option_type": "container",
+                    },
+                    None,
+                ),
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_name="replicas",
+                    option_value="0",
+                    allowed_values="a positive integer",
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
+                ),
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_name="replicas-per-host",
+                    option_value="0",
+                    allowed_values="a positive integer",
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
+                ),
+            ]
+        )
 
     def test_empty_image(self):
         self.env_assist.assert_raise_library_error(
             lambda: self.run_bundle_cmd(
-                container_options={
-                    "image": "",
-                },
-                force_options=True
+                container_options={"image": "",}, force_options=True
             )
         )
-        self.env_assist.assert_reports([
-            fixture.error(
-                report_codes.INVALID_OPTION_VALUE,
-                option_name="image",
-                option_value="",
-                allowed_values="image name",
-                cannot_be_empty=True,
-                forbidden_characters=None,
-            ),
-        ])
+        self.env_assist.assert_reports(
+            [
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_name="image",
+                    option_value="",
+                    allowed_values="image name",
+                    cannot_be_empty=True,
+                    forbidden_characters=None,
+                ),
+            ]
+        )
 
     def test_unknow_container_option(self):
         self.env_assist.assert_raise_library_error(
             lambda: self.run_bundle_cmd(
-                container_options={
-                    "image": self.image,
-                    "extra": "option",
-                }
+                container_options={"image": self.image, "extra": "option",}
             )
         )
-        self.env_assist.assert_reports([
-            (
-                severities.ERROR,
-                report_codes.INVALID_OPTIONS,
-                {
-                    "option_names": ["extra", ],
-                    "option_type": "container",
-                    "allowed": sorted(list(GENERIC_CONTAINER_OPTIONS)),
-                    "allowed_patterns": [],
-                },
-                report_codes.FORCE_OPTIONS
-            ),
-        ])
+        self.env_assist.assert_reports(
+            [
+                (
+                    severities.ERROR,
+                    report_codes.INVALID_OPTIONS,
+                    {
+                        "option_names": ["extra",],
+                        "option_type": "container",
+                        "allowed": sorted(list(GENERIC_CONTAINER_OPTIONS)),
+                        "allowed_patterns": [],
+                    },
+                    report_codes.FORCE_OPTIONS,
+                ),
+            ]
+        )
 
     def test_unknow_container_option_forced(self):
         self.config.env.push_cib(
@@ -316,33 +305,32 @@ class ParametrizedContainerMixin(SetUpMixin):
                         <{container_type} image="{image}" extra="option" />
                     </bundle>
                 </resources>
-            """
-            .format(
+            """.format(
                 container_type=self.container_type,
                 bundle_id=self.bundle_id,
                 image=self.image,
             ),
         )
         self.run_bundle_cmd(
-            container_options={
-                "image": self.image,
-                "extra": "option",
-            },
-            force_options=True
+            container_options={"image": self.image, "extra": "option",},
+            force_options=True,
         )
-        self.env_assist.assert_reports([
-            (
-                severities.WARNING,
-                report_codes.INVALID_OPTIONS,
-                {
-                    "option_names": ["extra", ],
-                    "option_type": "container",
-                    "allowed": sorted(list(GENERIC_CONTAINER_OPTIONS)),
-                    "allowed_patterns": [],
-                },
-                None
-            ),
-        ])
+        self.env_assist.assert_reports(
+            [
+                (
+                    severities.WARNING,
+                    report_codes.INVALID_OPTIONS,
+                    {
+                        "option_names": ["extra",],
+                        "option_type": "container",
+                        "allowed": sorted(list(GENERIC_CONTAINER_OPTIONS)),
+                        "allowed_patterns": [],
+                    },
+                    None,
+                ),
+            ]
+        )
+
 
 class NetworkMixin(SetUpMixin):
     container_type = None
@@ -363,8 +351,7 @@ class NetworkMixin(SetUpMixin):
                         />
                     </bundle>
                 </resources>
-            """
-            .format(
+            """.format(
                 container_type=self.container_type,
                 bundle_id=self.bundle_id,
                 image=self.image,
@@ -389,33 +376,35 @@ class NetworkMixin(SetUpMixin):
                 }
             )
         )
-        self.env_assist.assert_reports([
-            fixture.error(
-                report_codes.INVALID_OPTION_VALUE,
-                option_name="control-port",
-                option_value="0",
-                allowed_values="a port number (1..65535)",
-                cannot_be_empty=False,
-                forbidden_characters=None,
-            ),
-            fixture.error(
-                report_codes.INVALID_OPTION_VALUE,
-                force_code=report_codes.FORCE_OPTIONS,
-                option_name="host-netmask",
-                option_value="abc",
-                allowed_values="a number of bits of the mask (1..32)",
-                cannot_be_empty=False,
-                forbidden_characters=None,
-            ),
-            fixture.error(
-                report_codes.INVALID_OPTIONS,
-                force_code=report_codes.FORCE_OPTIONS,
-                option_names=["extra"],
-                option_type="network",
-                allowed=sorted(NETWORK_OPTIONS),
-                allowed_patterns=[],
-            ),
-        ])
+        self.env_assist.assert_reports(
+            [
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_name="control-port",
+                    option_value="0",
+                    allowed_values="a port number (1..65535)",
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
+                ),
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    force_code=report_codes.FORCE_OPTIONS,
+                    option_name="host-netmask",
+                    option_value="abc",
+                    allowed_values="a number of bits of the mask (1..32)",
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
+                ),
+                fixture.error(
+                    report_codes.INVALID_OPTIONS,
+                    force_code=report_codes.FORCE_OPTIONS,
+                    option_names=["extra"],
+                    option_type="network",
+                    allowed=sorted(NETWORK_OPTIONS),
+                    allowed_patterns=[],
+                ),
+            ]
+        )
 
     def test_options_forced(self):
         self.config.env.push_cib(
@@ -426,42 +415,41 @@ class NetworkMixin(SetUpMixin):
                         <network host-netmask="abc" extra="option" />
                     </bundle>
                 </resources>
-            """
-            .format(
+            """.format(
                 container_type=self.container_type,
                 bundle_id=self.bundle_id,
                 image=self.image,
             ),
         )
         self.run_bundle_cmd(
-            network_options={
-                "host-netmask": "abc",
-                "extra": "option",
-            },
-            force_options=True
+            network_options={"host-netmask": "abc", "extra": "option",},
+            force_options=True,
         )
 
-        self.env_assist.assert_reports([
-            fixture.warn(
-                report_codes.INVALID_OPTION_VALUE,
-                option_name="host-netmask",
-                option_value="abc",
-                allowed_values="a number of bits of the mask (1..32)",
-                cannot_be_empty=False,
-                forbidden_characters=None,
-            ),
-            (
-                severities.WARNING,
-                report_codes.INVALID_OPTIONS,
-                {
-                    "option_names": ["extra", ],
-                    "option_type": "network",
-                    "allowed": sorted(list(NETWORK_OPTIONS)),
-                    "allowed_patterns": [],
-                },
-                None
-            ),
-        ])
+        self.env_assist.assert_reports(
+            [
+                fixture.warn(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_name="host-netmask",
+                    option_value="abc",
+                    allowed_values="a number of bits of the mask (1..32)",
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
+                ),
+                (
+                    severities.WARNING,
+                    report_codes.INVALID_OPTIONS,
+                    {
+                        "option_names": ["extra",],
+                        "option_type": "network",
+                        "allowed": sorted(list(NETWORK_OPTIONS)),
+                        "allowed_patterns": [],
+                    },
+                    None,
+                ),
+            ]
+        )
+
 
 class PortMapMixin(SetUpMixin):
     container_type = None
@@ -491,8 +479,7 @@ class PortMapMixin(SetUpMixin):
                         </network>
                     </bundle>
                 </resources>
-            """
-            .format(
+            """.format(
                 container_type=self.container_type,
                 bundle_id=self.bundle_id,
                 image=self.image,
@@ -500,21 +487,16 @@ class PortMapMixin(SetUpMixin):
         )
         self.run_bundle_cmd(
             port_map=[
-                {
-                    "port": "1001",
-                },
+                {"port": "1001",},
                 {
                     # use an autogenerated id of the previous item
-                    "id":
-                        "{bundle_id}-port-map-1001"
-                        .format(bundle_id=self.bundle_id)
-                    ,
+                    "id": "{bundle_id}-port-map-1001".format(
+                        bundle_id=self.bundle_id
+                    ),
                     "port": "2000",
                     "internal-port": "2002",
                 },
-                {
-                    "range": "3000-3300",
-                },
+                {"range": "3000-3300",},
             ]
         )
 
@@ -523,139 +505,132 @@ class PortMapMixin(SetUpMixin):
             lambda: self.run_bundle_cmd(
                 port_map=[
                     {},
-                    {
-                        "id": "not#valid",
-                    },
-                    {
-                        "internal-port": "1000",
-                    },
-                    {
-                        "port": "abc",
-                    },
+                    {"id": "not#valid",},
+                    {"internal-port": "1000",},
+                    {"port": "abc",},
                     {
                         "port": "2000",
                         "range": "3000-4000",
                         "internal-port": "def",
                     },
                 ],
-                force_options=True
+                force_options=True,
             )
         )
-        self.env_assist.assert_reports([
-            # first
-            (
-                severities.ERROR,
-                report_codes.REQUIRED_OPTION_OF_ALTERNATIVES_IS_MISSING,
-                {
-                    "option_type": "port-map",
-                    "option_names": ["port", "range"],
-                },
-                None
-            ),
-            # second
-            (
-                severities.ERROR,
-                report_codes.INVALID_ID_BAD_CHAR,
-                {
-                    "invalid_character": "#",
-                    "id": "not#valid",
-                    "id_description": "port-map id",
-                    "is_first_char": False,
-                },
-                None
-            ),
-            (
-                severities.ERROR,
-                report_codes.REQUIRED_OPTION_OF_ALTERNATIVES_IS_MISSING,
-                {
-                    "option_type": "port-map",
-                    "option_names": ["port", "range"],
-                },
-                None
-            ),
-            # third
-            (
-                severities.ERROR,
-                report_codes.PREREQUISITE_OPTION_IS_MISSING,
-                {
-                    "option_type": "port-map",
-                    "option_name": "internal-port",
-                    "prerequisite_type": "port-map",
-                    "prerequisite_name": "port",
-                },
-                None
-            ),
-            (
-                severities.ERROR,
-                report_codes.REQUIRED_OPTION_OF_ALTERNATIVES_IS_MISSING,
-                {
-                    "option_type": "port-map",
-                    "option_names": ["port", "range"],
-                },
-                None
-            ),
-            # fourth
-            fixture.error(
-                report_codes.INVALID_OPTION_VALUE,
-                option_name="port",
-                option_value="abc",
-                allowed_values="a port number (1..65535)",
-                cannot_be_empty=False,
-                forbidden_characters=None,
-            ),
-            # fifth
-            (
-                severities.ERROR,
-                report_codes.MUTUALLY_EXCLUSIVE_OPTIONS,
-                {
-                    "option_names": ["port", "range", ],
-                    "option_type": "port-map",
-                },
-                None
-            ),
-            fixture.error(
-                report_codes.INVALID_OPTION_VALUE,
-                option_name="internal-port",
-                option_value="def",
-                allowed_values="a port number (1..65535)",
-                cannot_be_empty=False,
-                forbidden_characters=None,
-            ),
-        ])
+        self.env_assist.assert_reports(
+            [
+                # first
+                (
+                    severities.ERROR,
+                    report_codes.REQUIRED_OPTION_OF_ALTERNATIVES_IS_MISSING,
+                    {
+                        "option_type": "port-map",
+                        "option_names": ["port", "range"],
+                    },
+                    None,
+                ),
+                # second
+                (
+                    severities.ERROR,
+                    report_codes.INVALID_ID_BAD_CHAR,
+                    {
+                        "invalid_character": "#",
+                        "id": "not#valid",
+                        "id_description": "port-map id",
+                        "is_first_char": False,
+                    },
+                    None,
+                ),
+                (
+                    severities.ERROR,
+                    report_codes.REQUIRED_OPTION_OF_ALTERNATIVES_IS_MISSING,
+                    {
+                        "option_type": "port-map",
+                        "option_names": ["port", "range"],
+                    },
+                    None,
+                ),
+                # third
+                (
+                    severities.ERROR,
+                    report_codes.PREREQUISITE_OPTION_IS_MISSING,
+                    {
+                        "option_type": "port-map",
+                        "option_name": "internal-port",
+                        "prerequisite_type": "port-map",
+                        "prerequisite_name": "port",
+                    },
+                    None,
+                ),
+                (
+                    severities.ERROR,
+                    report_codes.REQUIRED_OPTION_OF_ALTERNATIVES_IS_MISSING,
+                    {
+                        "option_type": "port-map",
+                        "option_names": ["port", "range"],
+                    },
+                    None,
+                ),
+                # fourth
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_name="port",
+                    option_value="abc",
+                    allowed_values="a port number (1..65535)",
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
+                ),
+                # fifth
+                (
+                    severities.ERROR,
+                    report_codes.MUTUALLY_EXCLUSIVE_OPTIONS,
+                    {
+                        "option_names": ["port", "range",],
+                        "option_type": "port-map",
+                    },
+                    None,
+                ),
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_name="internal-port",
+                    option_value="def",
+                    allowed_values="a port number (1..65535)",
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
+                ),
+            ]
+        )
 
     def test_forceable_options_errors(self):
         self.env_assist.assert_raise_library_error(
             lambda: self.run_bundle_cmd(
-                port_map=[
-                    {
-                        "range": "3000",
-                        "extra": "option",
-                    },
-                ]
+                port_map=[{"range": "3000", "extra": "option",},]
             )
         )
-        self.env_assist.assert_reports([
-            (
-                severities.ERROR,
-                report_codes.INVALID_OPTIONS,
-                {
-                    "option_names": ["extra", ],
-                    "option_type": "port-map",
-                    "allowed": sorted(list(PORT_MAP_OPTIONS)),
-                    "allowed_patterns": [],
-                },
-                report_codes.FORCE_OPTIONS
-            ),
-            fixture.error(
-                report_codes.INVALID_OPTION_VALUE,
-                force_code=report_codes.FORCE_OPTIONS,
-                option_name="range",
-                option_value="3000",
-                allowed_values="port-port",
-                cannot_be_empty=False,
-                forbidden_characters=None,
-            ),
-        ])
+        self.env_assist.assert_reports(
+            [
+                (
+                    severities.ERROR,
+                    report_codes.INVALID_OPTIONS,
+                    {
+                        "option_names": ["extra",],
+                        "option_type": "port-map",
+                        "allowed": sorted(list(PORT_MAP_OPTIONS)),
+                        "allowed_patterns": [],
+                    },
+                    report_codes.FORCE_OPTIONS,
+                ),
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    force_code=report_codes.FORCE_OPTIONS,
+                    option_name="range",
+                    option_value="3000",
+                    allowed_values="port-port",
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
+                ),
+            ]
+        )
 
     def test_forceable_options_errors_forced(self):
         self.config.env.push_cib(
@@ -672,8 +647,7 @@ class PortMapMixin(SetUpMixin):
                         </network>
                     </bundle>
                 </resources>
-            """
-            .format(
+            """.format(
                 container_type=self.container_type,
                 bundle_id=self.bundle_id,
                 image=self.image,
@@ -681,36 +655,33 @@ class PortMapMixin(SetUpMixin):
         )
 
         self.run_bundle_cmd(
-            port_map=[
-                {
-                    "range": "3000",
-                    "extra": "option",
-                },
-            ],
-            force_options=True
+            port_map=[{"range": "3000", "extra": "option",},],
+            force_options=True,
         )
 
-        self.env_assist.assert_reports([
-            (
-                severities.WARNING,
-                report_codes.INVALID_OPTIONS,
-                {
-                    "option_names": ["extra", ],
-                    "option_type": "port-map",
-                    "allowed": sorted(list(PORT_MAP_OPTIONS)),
-                    "allowed_patterns": [],
-                },
-                None
-            ),
-            fixture.warn(
-                report_codes.INVALID_OPTION_VALUE,
-                option_name="range",
-                option_value="3000",
-                allowed_values="port-port",
-                cannot_be_empty=False,
-                forbidden_characters=None,
-            ),
-        ])
+        self.env_assist.assert_reports(
+            [
+                (
+                    severities.WARNING,
+                    report_codes.INVALID_OPTIONS,
+                    {
+                        "option_names": ["extra",],
+                        "option_type": "port-map",
+                        "allowed": sorted(list(PORT_MAP_OPTIONS)),
+                        "allowed_patterns": [],
+                    },
+                    None,
+                ),
+                fixture.warn(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_name="range",
+                    option_value="3000",
+                    allowed_values="port-port",
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
+                ),
+            ]
+        )
 
 
 class StorageMapMixin(SetUpMixin):
@@ -750,8 +721,7 @@ class StorageMapMixin(SetUpMixin):
                         </storage>
                     </bundle>
                 </resources>
-            """
-            .format(
+            """.format(
                 container_type=self.container_type,
                 bundle_id=self.bundle_id,
                 image=self.image,
@@ -760,19 +730,15 @@ class StorageMapMixin(SetUpMixin):
 
         self.run_bundle_cmd(
             storage_map=[
-                {
-                    "source-dir": "/tmp/bundle1a",
-                    "target-dir": "/tmp/bundle1b",
-                },
+                {"source-dir": "/tmp/bundle1a", "target-dir": "/tmp/bundle1b",},
                 {
                     # use an autogenerated id of the previous item
-                    "id":
-                        "{bundle_id}-storage-map"
-                        .format(bundle_id=self.bundle_id)
-                    ,
+                    "id": "{bundle_id}-storage-map".format(
+                        bundle_id=self.bundle_id
+                    ),
                     "source-dir": "/tmp/bundle2a",
                     "target-dir": "/tmp/bundle2b",
-                    "options": "extra options 1"
+                    "options": "extra options 1",
                 },
                 {
                     "source-dir-root": "/tmp/bundle3a",
@@ -780,13 +746,12 @@ class StorageMapMixin(SetUpMixin):
                 },
                 {
                     # use an autogenerated id of the previous item
-                    "id":
-                        "{bundle_id}-storage-map-2"
-                        .format(bundle_id=self.bundle_id)
-                    ,
+                    "id": "{bundle_id}-storage-map-2".format(
+                        bundle_id=self.bundle_id
+                    ),
                     "source-dir-root": "/tmp/bundle4a",
                     "target-dir": "/tmp/bundle4b",
-                    "options": "extra options 2"
+                    "options": "extra options 2",
                 },
             ]
         )
@@ -795,8 +760,7 @@ class StorageMapMixin(SetUpMixin):
         self.env_assist.assert_raise_library_error(
             lambda: self.run_bundle_cmd(
                 storage_map=[
-                    {
-                    },
+                    {},
                     {
                         "id": "not#valid",
                         "source-dir": "/tmp/bundle1a",
@@ -804,51 +768,53 @@ class StorageMapMixin(SetUpMixin):
                         "target-dir": "/tmp/bundle1c",
                     },
                 ],
-                force_options=True
+                force_options=True,
             )
         )
-        self.env_assist.assert_reports([
-            # first
-            (
-                severities.ERROR,
-                report_codes.REQUIRED_OPTION_OF_ALTERNATIVES_IS_MISSING,
-                {
-                    "option_type": "storage-map",
-                    "option_names": ["source-dir", "source-dir-root"],
-                },
-                None
-            ),
-            (
-                severities.ERROR,
-                report_codes.REQUIRED_OPTIONS_ARE_MISSING,
-                {
-                    "option_type": "storage-map",
-                    "option_names": ["target-dir", ],
-                },
-                None
-            ),
-            # second
-            (
-                severities.ERROR,
-                report_codes.INVALID_ID_BAD_CHAR,
-                {
-                    "invalid_character": "#",
-                    "id": "not#valid",
-                    "id_description": "storage-map id",
-                    "is_first_char": False,
-                },
-                None
-            ),
-            (
-                severities.ERROR,
-                report_codes.MUTUALLY_EXCLUSIVE_OPTIONS,
-                {
-                    "option_type": "storage-map",
-                    "option_names": ["source-dir", "source-dir-root"],
-                },
-                None
-            ),
-        ])
+        self.env_assist.assert_reports(
+            [
+                # first
+                (
+                    severities.ERROR,
+                    report_codes.REQUIRED_OPTION_OF_ALTERNATIVES_IS_MISSING,
+                    {
+                        "option_type": "storage-map",
+                        "option_names": ["source-dir", "source-dir-root"],
+                    },
+                    None,
+                ),
+                (
+                    severities.ERROR,
+                    report_codes.REQUIRED_OPTIONS_ARE_MISSING,
+                    {
+                        "option_type": "storage-map",
+                        "option_names": ["target-dir",],
+                    },
+                    None,
+                ),
+                # second
+                (
+                    severities.ERROR,
+                    report_codes.INVALID_ID_BAD_CHAR,
+                    {
+                        "invalid_character": "#",
+                        "id": "not#valid",
+                        "id_description": "storage-map id",
+                        "is_first_char": False,
+                    },
+                    None,
+                ),
+                (
+                    severities.ERROR,
+                    report_codes.MUTUALLY_EXCLUSIVE_OPTIONS,
+                    {
+                        "option_type": "storage-map",
+                        "option_names": ["source-dir", "source-dir-root"],
+                    },
+                    None,
+                ),
+            ]
+        )
 
     def test_forceable_options_errors(self):
         self.env_assist.assert_raise_library_error(
@@ -862,19 +828,21 @@ class StorageMapMixin(SetUpMixin):
                 ]
             )
         )
-        self.env_assist.assert_reports([
-            (
-                severities.ERROR,
-                report_codes.INVALID_OPTIONS,
-                {
-                    "option_names": ["extra", ],
-                    "option_type": "storage-map",
-                    "allowed": sorted(list(STORAGE_MAP_OPTIONS)),
-                    "allowed_patterns": [],
-                },
-                report_codes.FORCE_OPTIONS
-            ),
-        ])
+        self.env_assist.assert_reports(
+            [
+                (
+                    severities.ERROR,
+                    report_codes.INVALID_OPTIONS,
+                    {
+                        "option_names": ["extra",],
+                        "option_type": "storage-map",
+                        "allowed": sorted(list(STORAGE_MAP_OPTIONS)),
+                        "allowed_patterns": [],
+                    },
+                    report_codes.FORCE_OPTIONS,
+                ),
+            ]
+        )
 
     def test_forceable_options_errors_forced(self):
         self.config.env.push_cib(
@@ -892,8 +860,7 @@ class StorageMapMixin(SetUpMixin):
                         </storage>
                     </bundle>
                 </resources>
-            """
-            .format(
+            """.format(
                 container_type=self.container_type,
                 bundle_id=self.bundle_id,
                 image=self.image,
@@ -908,7 +875,7 @@ class StorageMapMixin(SetUpMixin):
                     "extra": "option",
                 },
             ],
-            force_options=True
+            force_options=True,
         )
 
         self.env_assist.assert_reports(
@@ -917,15 +884,16 @@ class StorageMapMixin(SetUpMixin):
                     severities.WARNING,
                     report_codes.INVALID_OPTIONS,
                     {
-                        "option_names": ["extra", ],
+                        "option_names": ["extra",],
                         "option_type": "storage-map",
                         "allowed": sorted(list(STORAGE_MAP_OPTIONS)),
                         "allowed_patterns": [],
                     },
-                    None
+                    None,
                 ),
             ]
         )
+
 
 class MetaMixin(SetUpMixin):
     container_type = None
@@ -946,18 +914,14 @@ class MetaMixin(SetUpMixin):
                         </meta_attributes>
                     </bundle>
                 </resources>
-            """
-            .format(
+            """.format(
                 container_type=self.container_type,
                 bundle_id=self.bundle_id,
                 image=self.image,
             )
         )
         self.run_bundle_cmd(
-            meta_attributes={
-                "target-role": "Stopped",
-                "is-managed": "false",
-            }
+            meta_attributes={"target-role": "Stopped", "is-managed": "false",}
         )
 
     def test_disabled(self):
@@ -972,16 +936,14 @@ class MetaMixin(SetUpMixin):
                         <{container_type} image="{image}" />
                     </bundle>
                 </resources>
-            """
-            .format(
+            """.format(
                 container_type=self.container_type,
                 bundle_id=self.bundle_id,
                 image=self.image,
             )
         )
-        self.run_bundle_cmd(
-            ensure_disabled=True
-        )
+        self.run_bundle_cmd(ensure_disabled=True)
+
 
 class AllOptionsMixin(SetUpMixin):
     container_type = None
@@ -1048,8 +1010,7 @@ class AllOptionsMixin(SetUpMixin):
                         </storage>
                     </bundle>
                 </resources>
-            """
-            .format(
+            """.format(
                 container_type=self.container_type,
                 bundle_id=self.bundle_id,
                 image=self.image,
@@ -1072,36 +1033,27 @@ class AllOptionsMixin(SetUpMixin):
                 "ip-range-start": "192.168.100.200",
             },
             port_map=[
-                {
-                    "port": "1001",
-                },
+                {"port": "1001",},
                 {
                     # use an autogenerated id of the previous item
-                    "id":
-                        "{bundle_id}-port-map-1001"
-                        .format(bundle_id=self.bundle_id)
-                    ,
+                    "id": "{bundle_id}-port-map-1001".format(
+                        bundle_id=self.bundle_id
+                    ),
                     "port": "2000",
                     "internal-port": "2002",
                 },
-                {
-                    "range": "3000-3300",
-                },
+                {"range": "3000-3300",},
             ],
             storage_map=[
-                {
-                    "source-dir": "/tmp/bundle1a",
-                    "target-dir": "/tmp/bundle1b",
-                },
+                {"source-dir": "/tmp/bundle1a", "target-dir": "/tmp/bundle1b",},
                 {
                     # use an autogenerated id of the previous item
-                    "id":
-                        "{bundle_id}-storage-map"
-                        .format(bundle_id=self.bundle_id)
-                    ,
+                    "id": "{bundle_id}-storage-map".format(
+                        bundle_id=self.bundle_id
+                    ),
                     "source-dir": "/tmp/bundle2a",
                     "target-dir": "/tmp/bundle2b",
-                    "options": "extra options 1"
+                    "options": "extra options 1",
                 },
                 {
                     "source-dir-root": "/tmp/bundle3a",
@@ -1109,22 +1061,21 @@ class AllOptionsMixin(SetUpMixin):
                 },
                 {
                     # use an autogenerated id of the previous item
-                    "id":
-                        "{bundle_id}-port-map-1001-1"
-                        .format(bundle_id=self.bundle_id)
-                    ,
+                    "id": "{bundle_id}-port-map-1001-1".format(
+                        bundle_id=self.bundle_id
+                    ),
                     "source-dir-root": "/tmp/bundle4a",
                     "target-dir": "/tmp/bundle4b",
-                    "options": "extra options 2"
+                    "options": "extra options 2",
                 },
-            ]
+            ],
         )
+
 
 class WaitMixin(FixturesMixin):
     initial_resources = "<resources/>"
     bundle_id = None
     image = None
-
 
     @property
     def fixture_status_running(self):
@@ -1151,7 +1102,9 @@ class WaitMixin(FixturesMixin):
                     </replica>
                 </bundle>
             </resources>
-        """.format(bundle_id=self.bundle_id)
+        """.format(
+            bundle_id=self.bundle_id
+        )
 
     @property
     def fixture_status_not_running(self):
@@ -1174,7 +1127,9 @@ class WaitMixin(FixturesMixin):
                     </replica>
                 </bundle>
             </resources>
-        """.format(bundle_id=self.bundle_id)
+        """.format(
+            bundle_id=self.bundle_id
+        )
 
     @property
     def fixture_resources_bundle_simple_disabled(self):
@@ -1188,15 +1143,17 @@ class WaitMixin(FixturesMixin):
                     <docker image="{image}" />
                 </bundle>
             </resources>
-        """.format(bundle_id=self.bundle_id, image=self.image)
-
+        """.format(
+            bundle_id=self.bundle_id, image=self.image
+        )
 
     def setUp(self):
         # pylint: disable=invalid-name
         self.env_assist, self.config = get_env_tools(test_case=self)
-        (self.config
-            .runner.pcmk.can_wait()
-            .runner.cib.load(resources=self.initial_resources)
+        (
+            self.config.runner.pcmk.can_wait().runner.cib.load(
+                resources=self.initial_resources
+            )
         )
 
     def test_wait_fail(self):
@@ -1205,8 +1162,9 @@ class WaitMixin(FixturesMixin):
             Pending actions:
                     Action 12: {bundle_id}-node2-stop on node2
             Error performing operation: Timer expired
-            """
-            .format(bundle_id=self.bundle_id)
+            """.format(
+                bundle_id=self.bundle_id
+            )
         ).strip()
         self.config.env.push_cib(
             resources=self.fixture_resources_bundle_simple,
@@ -1215,89 +1173,85 @@ class WaitMixin(FixturesMixin):
                 reports.item.ReportItem.error(
                     reports.messages.WaitForIdleTimedOut(wait_error_message)
                 )
-            )
+            ),
         )
         self.env_assist.assert_raise_library_error(
             lambda: self.run_bundle_cmd(wait=TIMEOUT),
-            [
-                fixture.report_wait_for_idle_timed_out(wait_error_message)
-            ],
-            expected_in_processor=False
+            [fixture.report_wait_for_idle_timed_out(wait_error_message)],
+            expected_in_processor=False,
         )
 
     @skip_unless_pacemaker_supports_bundle
     def test_wait_ok_run_ok(self):
-        (self.config
-            .env.push_cib(
-                resources=self.fixture_resources_bundle_simple,
-                wait=TIMEOUT
-            )
-            .runner.pcmk.load_state(resources=self.fixture_status_running)
+        (
+            self.config.env.push_cib(
+                resources=self.fixture_resources_bundle_simple, wait=TIMEOUT
+            ).runner.pcmk.load_state(resources=self.fixture_status_running)
         )
         self.run_bundle_cmd(wait=TIMEOUT)
-        self.env_assist.assert_reports([
-            fixture.report_resource_running(
-                self.bundle_id,
-                {"Started": ["node1", "node2"]}
-            ),
-        ])
+        self.env_assist.assert_reports(
+            [
+                fixture.report_resource_running(
+                    self.bundle_id, {"Started": ["node1", "node2"]}
+                ),
+            ]
+        )
 
     @skip_unless_pacemaker_supports_bundle
     def test_wait_ok_run_fail(self):
-        (self.config
-            .env.push_cib(
-                resources=self.fixture_resources_bundle_simple,
-                wait=TIMEOUT
-            )
-            .runner.pcmk.load_state(resources=self.fixture_status_not_running)
+        (
+            self.config.env.push_cib(
+                resources=self.fixture_resources_bundle_simple, wait=TIMEOUT
+            ).runner.pcmk.load_state(resources=self.fixture_status_not_running)
         )
         self.env_assist.assert_raise_library_error(
             lambda: self.run_bundle_cmd(wait=TIMEOUT)
         )
-        self.env_assist.assert_reports([
-            fixture.report_resource_not_running(
-                self.bundle_id,
-                severities.ERROR
-            ),
-        ])
+        self.env_assist.assert_reports(
+            [
+                fixture.report_resource_not_running(
+                    self.bundle_id, severities.ERROR
+                ),
+            ]
+        )
 
     @skip_unless_pacemaker_supports_bundle
     def test_disabled_wait_ok_run_ok(self):
-        (self.config
-            .env.push_cib(
+        (
+            self.config.env.push_cib(
                 resources=self.fixture_resources_bundle_simple_disabled,
-                wait=TIMEOUT
-            )
-            .runner.pcmk.load_state(resources=self.fixture_status_not_running)
+                wait=TIMEOUT,
+            ).runner.pcmk.load_state(resources=self.fixture_status_not_running)
         )
         self.run_bundle_cmd(ensure_disabled=True, wait=TIMEOUT)
-        self.env_assist.assert_reports([
-            (
-                severities.INFO,
-                report_codes.RESOURCE_DOES_NOT_RUN,
-                {
-                    "resource_id": self.bundle_id,
-                },
-                None
-            )
-        ])
+        self.env_assist.assert_reports(
+            [
+                (
+                    severities.INFO,
+                    report_codes.RESOURCE_DOES_NOT_RUN,
+                    {"resource_id": self.bundle_id,},
+                    None,
+                )
+            ]
+        )
 
     @skip_unless_pacemaker_supports_bundle
     def test_disabled_wait_ok_run_fail(self):
-        (self.config
-            .env.push_cib(
+        (
+            self.config.env.push_cib(
                 resources=self.fixture_resources_bundle_simple_disabled,
-                wait=TIMEOUT
-            )
-            .runner.pcmk.load_state(resources=self.fixture_status_running)
+                wait=TIMEOUT,
+            ).runner.pcmk.load_state(resources=self.fixture_status_running)
         )
         self.env_assist.assert_raise_library_error(
             lambda: self.run_bundle_cmd(ensure_disabled=True, wait=TIMEOUT)
         )
-        self.env_assist.assert_reports([
-            fixture.report_resource_running(
-                self.bundle_id,
-                {"Started": ["node1", "node2"]},
-                severities.ERROR
-            )
-        ])
+        self.env_assist.assert_reports(
+            [
+                fixture.report_resource_running(
+                    self.bundle_id,
+                    {"Started": ["node1", "node2"]},
+                    severities.ERROR,
+                )
+            ]
+        )

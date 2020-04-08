@@ -6,8 +6,10 @@ def create_resource_id(resources_section, name, suffix):
         resources_section.getroottree(), "booth-{0}-{1}".format(name, suffix)
     )
 
+
 def is_ip_resource(resource_element):
     return resource_element.attrib.get("type", "") == "IPaddr2"
+
 
 def find_grouped_ip_element_to_remove(booth_element):
     group = booth_element.getparent()
@@ -26,6 +28,7 @@ def find_grouped_ip_element_to_remove(booth_element):
             return element
     return None
 
+
 def get_remover(resource_remove):
     def remove_from_cluster(booth_element_list):
         for element in booth_element_list:
@@ -36,17 +39,25 @@ def get_remover(resource_remove):
 
     return remove_from_cluster
 
+
 def find_for_config(resources_section, booth_config_file_path):
-    return resources_section.xpath(("""
+    return resources_section.xpath(
+        (
+            """
         .//primitive[
             @type="booth-site"
             and
             instance_attributes[nvpair[@name="config" and @value="{0}"]]
         ]
-    """).format(booth_config_file_path))
+    """
+        ).format(booth_config_file_path)
+    )
+
 
 def find_bound_ip(resources_section, booth_config_file_path):
-    return resources_section.xpath(("""
+    return resources_section.xpath(
+        (
+            """
         .//group[
             primitive[
                 @type="booth-site"
@@ -60,4 +71,6 @@ def find_bound_ip(resources_section, booth_config_file_path):
         /instance_attributes
         /nvpair[@name="ip"]
         /@value
-    """).format(booth_config_file_path))
+    """
+        ).format(booth_config_file_path)
+    )

@@ -345,7 +345,22 @@ mypy:
 
 python_static_code_analysis_reqirements: pylint_requirements mypy_requirements
 
-python_static_code_analysis: pylint mypy
+python_static_code_analysis: mypy pylint
+
+BLACK_CMD = black --config pyproject.toml
+
+black_check:
+	$(BLACK_CMD) --check .
+
+black:
+	$(BLACK_CMD) .
+
+python_tests:
+	$(PYTHON) pcs_test/suite.py
+
+tests: python_tests
+
+check: black_check python_static_code_analysis tests
 
 
 # RPM BUILD

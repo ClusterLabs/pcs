@@ -3,6 +3,7 @@ from pcs_test.tools.xml import etree_to_str
 
 CALL_TYPE_PUSH_CIB = "CALL_TYPE_PUSH_CIB"
 
+
 class Call:
     type = CALL_TYPE_PUSH_CIB
 
@@ -41,7 +42,7 @@ def get_push_cib(call_queue):
             (
                 "Trying to call env.push_cib (call no. {0}) but cib in env does"
                 " not match\n\n"
-            ).format(i)
+            ).format(i),
         )
 
         if wait != expected_call.wait:
@@ -54,7 +55,9 @@ def get_push_cib(call_queue):
 
         if expected_call.exception:
             raise expected_call.exception
+
     return push_cib
+
 
 def is_push_cib_call_in(call_queue):
     return call_queue.has_type(CALL_TYPE_PUSH_CIB)

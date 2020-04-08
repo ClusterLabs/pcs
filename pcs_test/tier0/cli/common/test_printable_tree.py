@@ -14,6 +14,7 @@ class Node:
         detail = " (verbose)" if verbose else ""
         return f"{self.title}{detail}"
 
+
 def node(an_id, detail=0, leaf=False, members=None):
     return Node(
         f"{an_id}-title",
@@ -21,6 +22,7 @@ def node(an_id, detail=0, leaf=False, members=None):
         leaf,
         members=members or [],
     )
+
 
 class TreeToLines(TestCase):
     def test_verbose(self):
@@ -39,21 +41,12 @@ class TreeToLines(TestCase):
 
     def test_detail_simple(self):
         self.assertEqual(
-            [
-                "l0-title",
-                "   l0-detail0",
-            ],
-            lib.tree_to_lines(node("l0", 1)),
+            ["l0-title", "   l0-detail0",], lib.tree_to_lines(node("l0", 1)),
         )
 
     def test_detail(self):
         self.assertEqual(
-            [
-                "l0-title",
-                "   l0-detail0",
-                "   l0-detail1",
-                "   l0-detail2",
-            ],
+            ["l0-title", "   l0-detail0", "   l0-detail1", "   l0-detail2",],
             lib.tree_to_lines(node("l0", 3)),
         )
 
@@ -65,10 +58,7 @@ class TreeToLines(TestCase):
 
     def test_one_member(self):
         self.assertEqual(
-            [
-                "l0-title",
-                "`- l1-title",
-            ],
+            ["l0-title", "`- l1-title",],
             lib.tree_to_lines(node("l0", members=[node("l1")])),
         )
 
@@ -80,12 +70,7 @@ class TreeToLines(TestCase):
 
     def test_multiple_members(self):
         self.assertEqual(
-            [
-                "l0-title",
-                "|- l1-title",
-                "|- l2-title",
-                "`- l3-title",
-            ],
+            ["l0-title", "|- l1-title", "|- l2-title", "`- l3-title",],
             lib.tree_to_lines(
                 node("l0", members=[node("l1"), node("l2"), node("l3")])
             ),
@@ -156,16 +141,21 @@ class TreeToLines(TestCase):
                     members=[
                         node("00", 2),
                         node(
-                            "01", members=[
+                            "01",
+                            members=[
                                 node("010", members=[node("0100", leaf=True)]),
                                 node("011"),
                             ],
                         ),
                         node(
-                            "02", 3, members=[
+                            "02",
+                            3,
+                            members=[
                                 node("020"),
                                 node(
-                                    "021", 1, members=[
+                                    "021",
+                                    1,
+                                    members=[
                                         node("0210", leaf=True),
                                         node("0211", 2),
                                         node("0212", members=[node("02120")]),
@@ -201,15 +191,25 @@ class TreeToLines(TestCase):
                 "         `- 00120-title",
             ],
             lib.tree_to_lines(
-                node("0", 1, members=[
-                    node("00", members=[
-                        node("000", 2),
-                        node("001", members=[
-                            node("0010", leaf=True),
-                            node("0011", 2),
-                            node("0012", members=[node("00120")]),
-                        ]),
-                    ]),
-                ])
+                node(
+                    "0",
+                    1,
+                    members=[
+                        node(
+                            "00",
+                            members=[
+                                node("000", 2),
+                                node(
+                                    "001",
+                                    members=[
+                                        node("0010", leaf=True),
+                                        node("0011", 2),
+                                        node("0012", members=[node("00120")]),
+                                    ],
+                                ),
+                            ],
+                        ),
+                    ],
+                )
             ),
         )

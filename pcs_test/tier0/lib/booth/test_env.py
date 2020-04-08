@@ -16,8 +16,7 @@ class BoothEnv(TestCase):
         # pylint: disable=no-self-use
         assert_raise_library_error(
             lambda: env.BoothEnv(
-                "my_booth",
-                {"config_data": "some config data".encode("utf-8")}
+                "my_booth", {"config_data": "some config data".encode("utf-8")}
             ),
             fixture.error(
                 report_codes.LIVE_ENVIRONMENT_NOT_CONSISTENT,
@@ -30,8 +29,7 @@ class BoothEnv(TestCase):
         # pylint: disable=no-self-use
         assert_raise_library_error(
             lambda: env.BoothEnv(
-                "my_booth",
-                {"key_data": "some key data".encode("utf-8")}
+                "my_booth", {"key_data": "some key data".encode("utf-8")}
             ),
             fixture.error(
                 report_codes.LIVE_ENVIRONMENT_NOT_CONSISTENT,
@@ -47,11 +45,11 @@ class BoothEnv(TestCase):
         self.assertFalse(isinstance(my_env.key.raw_file, GhostFile))
         self.assertEqual(
             os.path.join(settings.booth_config_dir, "my_booth.conf"),
-            my_env.config_path
+            my_env.config_path,
         )
         self.assertEqual(
             os.path.join(settings.booth_config_dir, "my_booth.key"),
-            my_env.key_path
+            my_env.key_path,
         )
         self.assertEqual([], my_env.ghost_file_codes)
         self.assertEqual({}, my_env.export())
@@ -61,7 +59,6 @@ class BoothEnv(TestCase):
         facade = my_env.create_facade(site_list, arbitrator_list)
         self.assertEqual(site_list, facade.get_sites())
         self.assertEqual(arbitrator_list, facade.get_arbitrators())
-
 
     def test_ghost(self):
         config_data = "some config_data".encode("utf-8")
@@ -73,7 +70,7 @@ class BoothEnv(TestCase):
                 "config_data": config_data,
                 "key_data": key_data,
                 "key_path": key_path,
-            }
+            },
         )
         self.assertEqual("my_booth", my_env.instance_name)
         self.assertTrue(isinstance(my_env.config.raw_file, GhostFile))
@@ -82,19 +79,19 @@ class BoothEnv(TestCase):
             dummy_path = my_env.config_path
         self.assertEqual(
             "Reading config path is supported only in live environment",
-            str(cm.exception)
+            str(cm.exception),
         )
         self.assertEqual(key_path, my_env.key_path)
         self.assertEqual(
             [file_type_codes.BOOTH_CONFIG, file_type_codes.BOOTH_KEY],
-            my_env.ghost_file_codes
+            my_env.ghost_file_codes,
         )
         self.assertEqual(
             {
                 "config_file": {"content": config_data},
                 "key_file": {"content": key_data},
             },
-            my_env.export()
+            my_env.export(),
         )
 
         site_list = ["site1", "site2"]
@@ -123,7 +120,7 @@ class BoothEnv(TestCase):
                     "config_data": "some config data",
                     "key_data": "some key data",
                     "key_path": "some key path",
-                }
+                },
             ),
             fixture.error(
                 report_codes.BOOTH_INVALID_NAME,
@@ -133,7 +130,4 @@ class BoothEnv(TestCase):
         )
 
     def test_default_instance(self):
-        self.assertEqual(
-            env.BoothEnv(None, {}).instance_name,
-            "booth"
-        )
+        self.assertEqual(env.BoothEnv(None, {}).instance_name, "booth")

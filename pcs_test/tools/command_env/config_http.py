@@ -8,26 +8,27 @@ from pcs_test.tools.command_env.config_http_host import HostShortcuts
 from pcs_test.tools.command_env.config_http_pcmk import PcmkShortcuts
 from pcs_test.tools.command_env.config_http_sbd import SbdShortcuts
 from pcs_test.tools.command_env.config_http_status import StatusShortcuts
-from pcs_test.tools.command_env.mock_node_communicator import(
+from pcs_test.tools.command_env.mock_node_communicator import (
     place_communication,
     place_requests,
     place_responses,
 )
 from pcs_test.tools.command_env.mock_node_communicator import (
-    place_multinode_call
+    place_multinode_call,
 )
 
 # pylint: disable=line-too-long
 
+
 def _mutual_exclusive(param_names, **kwargs):
     entered = {
-        key: value for key, value in kwargs.items()
+        key: value
+        for key, value in kwargs.items()
         if key in param_names and value is not None
     }
     if len(entered) != 1:
         raise AssertionError(
-            "Exactly one of '{0}' must be specified, \nwas specified:\n{1}"
-            .format(
+            "Exactly one of '{0}' must be specified, \nwas specified:\n{1}".format(
                 "', '".join(param_names),
                 pprint.pformat(entered) if entered else "  nothing",
             )
@@ -65,8 +66,12 @@ class HttpConfig:
         place_responses(self.__calls, name, response_list)
 
     def put_file(
-        self, communication_list, name="http.common.put_file",
-        results=None, files=None, **kwargs
+        self,
+        communication_list,
+        name="http.common.put_file",
+        results=None,
+        files=None,
+        **kwargs,
     ):
         """
         Example:
@@ -97,17 +102,20 @@ class HttpConfig:
         if files:
             kwargs["param_list"] = [("data_json", json.dumps(files))]
 
-
         self.place_multinode_call(
             name,
             communication_list=communication_list,
             action="remote/put_file",
-            **kwargs
+            **kwargs,
         )
 
     def remove_file(
-        self, communication_list, name="http.common.remove_file",
-        results=None, files=None, **kwargs
+        self,
+        communication_list,
+        name="http.common.remove_file",
+        results=None,
+        files=None,
+        **kwargs,
     ):
         """
         Example:
@@ -136,17 +144,20 @@ class HttpConfig:
         if files:
             kwargs["param_list"] = [("data_json", json.dumps(files))]
 
-
         self.place_multinode_call(
             name,
             communication_list=communication_list,
             action="remote/remove_file",
-            **kwargs
+            **kwargs,
         )
 
     def manage_services(
-        self, communication_list, name="http.common.manage_services",
-        results=None, action_map=None, **kwargs
+        self,
+        communication_list,
+        name="http.common.manage_services",
+        results=None,
+        action_map=None,
+        **kwargs,
     ):
         """
         Example:
@@ -178,9 +189,7 @@ class HttpConfig:
         """
         _mutual_exclusive(["output", "results"], results=results, **kwargs)
         _mutual_exclusive(
-            ["action_map", "param_list"],
-            action_map=action_map,
-            **kwargs
+            ["action_map", "param_list"], action_map=action_map, **kwargs
         )
 
         if results:
@@ -189,12 +198,11 @@ class HttpConfig:
         if action_map:
             kwargs["param_list"] = [("data_json", json.dumps(action_map))]
 
-
         self.place_multinode_call(
             name,
             communication_list=communication_list,
             action="remote/manage_services",
-            **kwargs
+            **kwargs,
         )
 
     def place_multinode_call(self, *args, **kwargs):

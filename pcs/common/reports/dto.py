@@ -5,9 +5,7 @@ from typing import (
     Optional,
 )
 
-from pcs.common.interface.dto import (
-    DataTransferObject,
-)
+from pcs.common.interface.dto import DataTransferObject
 
 from .types import (
     ForceCode,

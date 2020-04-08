@@ -6,7 +6,7 @@ from pcs_test.tools.custom_mock import MockCurlSimple
 from pcs import settings
 from pcs.common import pcs_pycurl as pycurl
 from pcs.common.host import Destination
-from pcs.common.node_communicator import(
+from pcs.common.node_communicator import (
     RequestTarget,
     RequestData,
     Request,
@@ -18,25 +18,23 @@ from pcs.common.node_communicator import(
 CALL_TYPE_HTTP_ADD_REQUESTS = "CALL_TYPE_HTTP_ADD_REQUESTS"
 CALL_TYPE_HTTP_START_LOOP = "CALL_TYPE_HTTP_START_LOOP"
 
+
 def log_request(request):
     label_data = [
-            ("action", request.action),
-            ("label", request.target.label),
-            ("data", parse_qs(request.data)),
-        ]
+        ("action", request.action),
+        ("label", request.target.label),
+        ("data", parse_qs(request.data)),
+    ]
 
-    if (
-        request.target.dest_list
-        !=
-        [Destination(request.target.label, settings.pcsd_default_port)]
-    ):
-        label_data.append(
-            ("dest_list", request.target.dest_list)
-        )
+    if request.target.dest_list != [
+        Destination(request.target.label, settings.pcsd_default_port)
+    ]:
+        label_data.append(("dest_list", request.target.dest_list))
 
-    return "  ".join([
-        "{0}:'{1}'".format(key, value) for key, value in label_data
-    ])
+    return "  ".join(
+        ["{0}:'{1}'".format(key, value) for key, value in label_data]
+    )
+
 
 def log_response(response, indent=0):
     label_data = [
@@ -44,76 +42,83 @@ def log_response(response, indent=0):
         ("label", response.request.target.label),
     ]
 
-    if (
-        response.request.target.dest_list
-        !=
-        [
-            Destination(
-                response.request.target.label, settings.pcsd_default_port
-            ),
-        ]
-    ):
-        label_data.append((
-            "dest_list",
-            response.request.target.dest_list
-        ))
+    if response.request.target.dest_list != [
+        Destination(response.request.target.label, settings.pcsd_default_port),
+    ]:
+        label_data.append(("dest_list", response.request.target.dest_list))
 
     label_data.append(("was_connected", response.was_connected))
 
     if response.was_connected:
         label_data.append(("respose_code", response.response_code))
     else:
-        label_data.extend([
-            ("errno", response.errno),
-            ("error_msg", response.error_msg),
-        ])
+        label_data.extend(
+            [("errno", response.errno), ("error_msg", response.error_msg),]
+        )
 
     label_data.append(("data", parse_qs(response.request.data)))
 
     return "{0}{1}".format(
-        "  "*indent,
-        "  ".join([
-            "{0}:'{1}'".format(key, value) for key, value in label_data
-        ]),
+        "  " * indent,
+        "  ".join(
+            ["{0}:'{1}'".format(key, value) for key, value in label_data]
+        ),
     )
+
 
 def different_request_lists(expected_request_list, request_list):
     return AssertionError(
         (
             "Method add_request of NodeCommunicator expected"
             " request_list:\n  * {0}\nbut got: \n  * {1}"
-        )
-        .format(
+        ).format(
             "\n  * ".join(log_request(r) for r in expected_request_list),
             "\n  * ".join(log_request(r) for r in request_list),
         )
     )
 
+
 def bad_request_list_content(errors):
     return AssertionError(
-        "NodeCommunicator.add_request got different requests than expected:{0}"
-        .format("".join([
-            "\n  call index {call_index}:{call_details}".format(
-                call_index=call_index,
-                call_details="".join([
-                    "\n    mismatch in {option_name}:"
-                    "\n      expected: {expected_value}"
-                    "\n      real:     {real_value}"
-                    .format(
-                        option_name=option_name,
-                        expected_value=pair[0],
-                        real_value=pair[1]
+        (
+            "NodeCommunicator.add_request got different requests than "
+            "expected:{0}"
+        ).format(
+            "".join(
+                [
+                    "\n  call index {call_index}:{call_details}".format(
+                        call_index=call_index,
+                        call_details="".join(
+                            [
+                                "\n    mismatch in {option_name}:"
+                                "\n      expected: {expected_value}"
+                                "\n      real:     {real_value}".format(
+                                    option_name=option_name,
+                                    expected_value=pair[0],
+                                    real_value=pair[1],
+                                )
+                                for option_name, pair in value.items()
+                            ]
+                        ),
                     )
-                    for option_name, pair in value.items()
-                ])
+                    for call_index, value in errors.items()
+                ]
             )
-            for call_index, value in errors.items()
-        ]))
+        )
     )
 
+
 def _communication_to_response(
-    label, dest_list, action, param_list, response_code, output, debug_output,
-    was_connected, errno, error_msg
+    label,
+    dest_list,
+    action,
+    param_list,
+    response_code,
+    output,
+    debug_output,
+    was_connected,
+    errno,
+    error_msg,
 ):
     return Response(
         MockCurlSimple(
@@ -130,17 +135,24 @@ def _communication_to_response(
                 #    The actual token value doesn't matter.
                 RequestTarget(label, dest_list=dest_list, token=None),
                 RequestData(action, param_list),
-            )
+            ),
         ),
         was_connected=was_connected,
         errno=errno,
         error_msg=error_msg,
     )
 
+
 def create_communication(
-    communication_list, action="", param_list=None, response_code=200,
-    output="", debug_output="", was_connected=True, errno=0,
-    error_msg=None
+    communication_list,
+    action="",
+    param_list=None,
+    response_code=200,
+    output="",
+    debug_output="",
+    was_connected=True,
+    errno=0,
+    error_msg=None,
 ):
     """
     list of dict communication_list -- each dict describes one request-response
@@ -193,9 +205,14 @@ def create_communication(
     request_list = [response.request for response in response_list]
     return request_list, response_list
 
+
 def place_multinode_call(
-    calls, name, node_labels=None, communication_list=None, before=None,
-    **kwargs
+    calls,
+    name,
+    node_labels=None,
+    communication_list=None,
+    before=None,
+    **kwargs,
 ):
     """
     Shortcut for adding a call sending the same request to one or more nodes
@@ -206,19 +223,17 @@ def place_multinode_call(
     list communication_list -- use these custom responses
     **kwargs -- see __module__.create_communication
     """
-    if (
-        (node_labels is None and communication_list is None)
-        or
-        (node_labels and communication_list)
+    if (node_labels is None and communication_list is None) or (
+        node_labels and communication_list
     ):
         raise AssertionError(
             "Exactly one of 'node_labels', 'communication_list' "
             "must be specified"
         )
     communication_list = (
-        communication_list if communication_list is not None
-        else
-        [{"label": label} for label in node_labels]
+        communication_list
+        if communication_list is not None
+        else [{"label": label} for label in node_labels]
     )
     place_communication(
         calls, name, communication_list, before=before, **kwargs
@@ -267,22 +282,23 @@ class AddRequestCall:
 
     def format(self):
         return "Requests:\n    * {0}".format(
-            "\n    * ".join([
-                log_request(request) for request in self.request_list
-            ])
+            "\n    * ".join(
+                [log_request(request) for request in self.request_list]
+            )
         )
 
     def __repr__(self):
         return str("<HttpAddRequest '{0}'>").format(self.request_list)
+
 
 class StartLoopCall:
     type = CALL_TYPE_HTTP_START_LOOP
 
     def format(self):
         return "Responses:\n    * {0}".format(
-            "\n    * ".join([
-                log_response(response) for response in self.response_list
-            ])
+            "\n    * ".join(
+                [log_response(response) for response in self.response_list]
+            )
         )
 
     def __init__(self, response_list):
@@ -290,6 +306,7 @@ class StartLoopCall:
 
     def __repr__(self):
         return str("<HttpStartLoop '{0}'>").format(self.response_list)
+
 
 def _compare_request_data(expected, real):
     if expected == real:
@@ -325,8 +342,7 @@ class NodeCommunicator:
 
     def add_requests(self, request_list):
         _, add_request_call = self.__call_queue.take(
-            CALL_TYPE_HTTP_ADD_REQUESTS,
-            request_list,
+            CALL_TYPE_HTTP_ADD_REQUESTS, request_list,
         )
 
         expected_request_list = add_request_call.request_list
@@ -346,22 +362,21 @@ class NodeCommunicator:
             if expected_request.target.label != real_request.target.label:
                 diff["target.label"] = (
                     expected_request.target.label,
-                    real_request.target.label
+                    real_request.target.label,
                 )
 
             if (
                 expected_request.target.dest_list
-                !=
-                real_request.target.dest_list
+                != real_request.target.dest_list
             ):
                 diff["target.dest_list"] = (
                     expected_request.target.dest_list,
-                    real_request.target.dest_list
+                    real_request.target.dest_list,
                 )
 
             if not _compare_request_data(
                 expected_request._data.structured_data,
-                real_request._data.structured_data
+                real_request._data.structured_data,
             ):
                 diff["data"] = (
                     expected_request._data.structured_data,
@@ -375,7 +390,6 @@ class NodeCommunicator:
             raise self.__call_queue.error_with_context(
                 bad_request_list_content(errors)
             )
-
 
     def start_loop(self):
         _, call = self.__call_queue.take(CALL_TYPE_HTTP_START_LOOP)

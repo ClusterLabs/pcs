@@ -11,17 +11,16 @@ from pcs_test.tools import fixture
 
 REASON = "error msg"
 
+
 class Config(TestCase):
     def setUp(self):
         self.env_assist, self.config = get_env_tools(self)
 
     def test_success(self):
-        (self.config
-            .raw_file.exists(
-                file_type_codes.PCS_DR_CONFIG,
-                settings.pcsd_dr_config_location,
-            )
-            .raw_file.read(
+        (
+            self.config.raw_file.exists(
+                file_type_codes.PCS_DR_CONFIG, settings.pcsd_dr_config_location,
+            ).raw_file.read(
                 file_type_codes.PCS_DR_CONFIG,
                 settings.pcsd_dr_config_location,
                 content="""
@@ -46,24 +45,19 @@ class Config(TestCase):
         self.assertEqual(
             dr.get_config(self.env_assist.get_env()),
             {
-                "local_site": {
-                    "node_list": [],
-                    "site_role": "PRIMARY",
-                },
-                 "remote_site_list": [
+                "local_site": {"node_list": [], "site_role": "PRIMARY",},
+                "remote_site_list": [
                     {
-                        "node_list": [
-                            {"name": "recovery-node"},
-                        ],
-                       "site_role": "RECOVERY",
+                        "node_list": [{"name": "recovery-node"},],
+                        "site_role": "RECOVERY",
                     },
                 ],
-            }
+            },
         )
 
     def test_config_missing(self):
-        (self.config
-            .raw_file.exists(
+        (
+            self.config.raw_file.exists(
                 file_type_codes.PCS_DR_CONFIG,
                 settings.pcsd_dr_config_location,
                 exists=False,
@@ -72,19 +66,15 @@ class Config(TestCase):
         self.env_assist.assert_raise_library_error(
             lambda: dr.get_config(self.env_assist.get_env()),
         )
-        self.env_assist.assert_reports([
-            fixture.error(
-                report_codes.DR_CONFIG_DOES_NOT_EXIST,
-            ),
-        ])
+        self.env_assist.assert_reports(
+            [fixture.error(report_codes.DR_CONFIG_DOES_NOT_EXIST,),]
+        )
 
     def test_config_read_error(self):
-        (self.config
-            .raw_file.exists(
-                file_type_codes.PCS_DR_CONFIG,
-                settings.pcsd_dr_config_location,
-            )
-            .raw_file.read(
+        (
+            self.config.raw_file.exists(
+                file_type_codes.PCS_DR_CONFIG, settings.pcsd_dr_config_location,
+            ).raw_file.read(
                 file_type_codes.PCS_DR_CONFIG,
                 settings.pcsd_dr_config_location,
                 exception_msg=REASON,
@@ -93,23 +83,23 @@ class Config(TestCase):
         self.env_assist.assert_raise_library_error(
             lambda: dr.get_config(self.env_assist.get_env()),
         )
-        self.env_assist.assert_reports([
-            fixture.error(
-                report_codes.FILE_IO_ERROR,
-                file_type_code=file_type_codes.PCS_DR_CONFIG,
-                file_path=settings.pcsd_dr_config_location,
-                operation=RawFileError.ACTION_READ,
-                reason=REASON,
-            ),
-        ])
+        self.env_assist.assert_reports(
+            [
+                fixture.error(
+                    report_codes.FILE_IO_ERROR,
+                    file_type_code=file_type_codes.PCS_DR_CONFIG,
+                    file_path=settings.pcsd_dr_config_location,
+                    operation=RawFileError.ACTION_READ,
+                    reason=REASON,
+                ),
+            ]
+        )
 
     def test_config_parse_error(self):
-        (self.config
-            .raw_file.exists(
-                file_type_codes.PCS_DR_CONFIG,
-                settings.pcsd_dr_config_location,
-            )
-            .raw_file.read(
+        (
+            self.config.raw_file.exists(
+                file_type_codes.PCS_DR_CONFIG, settings.pcsd_dr_config_location,
+            ).raw_file.read(
                 file_type_codes.PCS_DR_CONFIG,
                 settings.pcsd_dr_config_location,
                 content="bad content",
@@ -118,15 +108,17 @@ class Config(TestCase):
         self.env_assist.assert_raise_library_error(
             lambda: dr.get_config(self.env_assist.get_env()),
         )
-        self.env_assist.assert_reports([
-            fixture.error(
-                report_codes.PARSE_ERROR_JSON_FILE,
-                file_type_code=file_type_codes.PCS_DR_CONFIG,
-                file_path=settings.pcsd_dr_config_location,
-                line_number=1,
-                column_number=1,
-                position=0,
-                reason="Expecting value",
-                full_msg="Expecting value: line 1 column 1 (char 0)",
-            ),
-        ])
+        self.env_assist.assert_reports(
+            [
+                fixture.error(
+                    report_codes.PARSE_ERROR_JSON_FILE,
+                    file_type_code=file_type_codes.PCS_DR_CONFIG,
+                    file_path=settings.pcsd_dr_config_location,
+                    line_number=1,
+                    column_number=1,
+                    position=0,
+                    reason="Expecting value",
+                    full_msg="Expecting value: line 1 column 1 (char 0)",
+                ),
+            ]
+        )

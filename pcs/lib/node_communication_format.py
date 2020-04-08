@@ -9,6 +9,7 @@ from pcs.common import reports
 from pcs.common.reports.item import ReportItem
 from pcs.lib.errors import LibraryError
 
+
 def create_pcmk_remote_actions(action_list):
     return {
         "pacemaker_remote {0}".format(action): service_cmd_format(
@@ -16,6 +17,7 @@ def create_pcmk_remote_actions(action_list):
         )
         for action in action_list
     }
+
 
 def pcmk_authkey_format(authkey_content):
     """
@@ -28,6 +30,7 @@ def pcmk_authkey_format(authkey_content):
         "rewrite_existing": True,
     }
 
+
 def corosync_authkey_format(authkey_content):
     """
     Return a dict usable in the communication with a remote/put_file
@@ -39,15 +42,14 @@ def corosync_authkey_format(authkey_content):
         "rewrite_existing": True,
     }
 
+
 def pcmk_authkey_file(authkey_content):
-    return {
-        "pacemaker_remote authkey": pcmk_authkey_format(authkey_content)
-    }
+    return {"pacemaker_remote authkey": pcmk_authkey_format(authkey_content)}
+
 
 def corosync_authkey_file(authkey_content):
-    return {
-        "corosync authkey": corosync_authkey_format(authkey_content)
-    }
+    return {"corosync authkey": corosync_authkey_format(authkey_content)}
+
 
 def corosync_conf_format(corosync_conf_content):
     return {
@@ -55,10 +57,10 @@ def corosync_conf_format(corosync_conf_content):
         "data": corosync_conf_content,
     }
 
+
 def corosync_conf_file(corosync_conf_content):
-    return {
-        "corosync.conf": corosync_conf_format(corosync_conf_content)
-    }
+    return {"corosync.conf": corosync_conf_format(corosync_conf_content)}
+
 
 def pcs_dr_config_format(dr_conf_content: bytes) -> Dict[str, Any]:
     return {
@@ -67,10 +69,10 @@ def pcs_dr_config_format(dr_conf_content: bytes) -> Dict[str, Any]:
         "rewrite_existing": True,
     }
 
+
 def pcs_dr_config_file(dr_conf_content: bytes) -> Dict[str, Any]:
-    return {
-        "disaster-recovery config": pcs_dr_config_format(dr_conf_content)
-    }
+    return {"disaster-recovery config": pcs_dr_config_format(dr_conf_content)}
+
 
 def pcs_settings_conf_format(content):
     return {
@@ -79,10 +81,10 @@ def pcs_settings_conf_format(content):
         "rewrite_existing": True,
     }
 
+
 def pcs_settings_conf_file(content):
-    return {
-        "pcs_settings.conf": pcs_settings_conf_format(content)
-    }
+    return {"pcs_settings.conf": pcs_settings_conf_format(content)}
+
 
 def service_cmd_format(service, command):
     """
@@ -96,8 +98,10 @@ def service_cmd_format(service, command):
         "command": command,
     }
 
+
 class Result(namedtuple("Result", "code message")):
     """ Wrapper over some call results """
+
 
 def unpack_items_from_response(main_response, main_key, node_label):
     """
@@ -114,20 +118,17 @@ def unpack_items_from_response(main_response, main_key, node_label):
     """
     is_in_expected_format = (
         isinstance(main_response, dict)
-        and
-        main_key in main_response
-        and
-        isinstance(main_response[main_key], dict)
+        and main_key in main_response
+        and isinstance(main_response[main_key], dict)
     )
 
     if not is_in_expected_format:
         raise LibraryError(
-            ReportItem.error(
-                reports.messages.InvalidResponseFormat(node_label)
-            )
+            ReportItem.error(reports.messages.InvalidResponseFormat(node_label))
         )
 
     return main_response[main_key]
+
 
 def response_items_to_result(response_items, expected_keys, node_label):
     """
@@ -143,18 +144,14 @@ def response_items_to_result(response_items, expected_keys, node_label):
     """
     if set(expected_keys) != set(response_items.keys()):
         raise LibraryError(
-            ReportItem.error(
-                reports.messages.InvalidResponseFormat(node_label)
-            )
+            ReportItem.error(reports.messages.InvalidResponseFormat(node_label))
         )
 
     for result in response_items.values():
-        if(
+        if (
             not isinstance(result, dict)
-            or
-            "code" not in result
-            or
-            "message" not in result
+            or "code" not in result
+            or "message" not in result
         ):
             raise LibraryError(
                 ReportItem.error(
@@ -168,9 +165,7 @@ def response_items_to_result(response_items, expected_keys, node_label):
     }
 
 
-def response_to_result(
-    main_response, main_key, expected_keys, node_label
-):
+def response_to_result(main_response, main_key, expected_keys, node_label):
     """
     Validate response (from remote/put_file or remote/run_action) and transform
     results from dict to Result.
@@ -189,8 +184,9 @@ def response_to_result(
     return response_items_to_result(
         unpack_items_from_response(main_response, main_key, node_label),
         expected_keys,
-        node_label
+        node_label,
     )
+
 
 def get_format_result(code_message_map):
     def format_result(result):
@@ -198,4 +194,5 @@ def get_format_result(code_message_map):
             return code_message_map[result.code]
 
         return result.message
+
     return format_result

@@ -4,3 +4,4 @@ pylint==2.4.4
 tornado>=6.0.3
 mypy==0.770
 dacite
+black

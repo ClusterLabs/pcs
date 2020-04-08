@@ -35,9 +35,9 @@ class FileToolbox(NamedTuple):
     # Turns a structure produced by the parser and the facade to raw data
     exporter: Type[ExporterInterface]
     # Checks that the structure is valid
-    validator: None # TBI
+    validator: None  # TBI
     # Provides means for file syncing based on the file's version
-    version_controller: None # TBI
+    version_controller: None  # TBI
 
 
 class JsonParserException(ParserErrorException):
@@ -45,10 +45,12 @@ class JsonParserException(ParserErrorException):
         super().__init__()
         self.json_exception = json_exception
 
+
 class JsonParser(ParserInterface):
     """
     Adapts standard json parser to our interfaces
     """
+
     @staticmethod
     def parse(raw_file_data: bytes) -> Dict[str, Any]:
         try:
@@ -63,7 +65,7 @@ class JsonParser(ParserInterface):
         file_type_code: code.FileTypeCode,
         file_path: str,
         force_code: reports.types.ForceCode,
-        is_forced_or_warning: bool
+        is_forced_or_warning: bool,
     ) -> reports.ReportItemList:
         if isinstance(exception, JsonParserException):
             if isinstance(exception.json_exception, json.JSONDecodeError):
@@ -85,15 +87,17 @@ class JsonParser(ParserInterface):
                 ]
         raise exception
 
+
 class JsonExporter(ExporterInterface):
     """
     Adapts standard json exporter to our interfaces
     """
+
     @staticmethod
-    def export(config_structure: Dict[str, Any])-> bytes:
-        return json.dumps(
-            config_structure, indent=4, sort_keys=True,
-        ).encode("utf-8")
+    def export(config_structure: Dict[str, Any]) -> bytes:
+        return json.dumps(config_structure, indent=4, sort_keys=True,).encode(
+            "utf-8"
+        )
 
 
 class NoopParser(ParserInterface):
@@ -107,14 +111,16 @@ class NoopParser(ParserInterface):
         file_type_code: code.FileTypeCode,
         file_path: str,
         force_code: reports.types.ForceCode,
-        is_forced_or_warning: bool
+        is_forced_or_warning: bool,
     ) -> reports.ReportItemList:
         return []
+
 
 class NoopExporter(ExporterInterface):
     @staticmethod
     def export(config_structure: bytes) -> bytes:
         return config_structure
+
 
 class NoopFacade(FacadeInterface):
     @classmethod
@@ -128,43 +134,44 @@ _toolboxes = {
         facade=BoothConfigFacade,
         parser=BoothConfigParser,
         exporter=BoothConfigExporter,
-        validator=None, # TODO needed for files syncing
-        version_controller=None, # TODO needed for files syncing
+        validator=None,  # TODO needed for files syncing
+        version_controller=None,  # TODO needed for files syncing
     ),
     code.BOOTH_KEY: FileToolbox(
         file_type_code=code.BOOTH_KEY,
         facade=NoopFacade,
         parser=NoopParser,
         exporter=NoopExporter,
-        validator=None, # TODO needed for files syncing
-        version_controller=None, # TODO needed for files syncing
+        validator=None,  # TODO needed for files syncing
+        version_controller=None,  # TODO needed for files syncing
     ),
     code.PACEMAKER_AUTHKEY: FileToolbox(
         file_type_code=code.PACEMAKER_AUTHKEY,
         facade=NoopFacade,
         parser=NoopParser,
         exporter=NoopExporter,
-        validator=None, # TODO needed for files syncing
-        version_controller=None, # TODO needed for files syncing
+        validator=None,  # TODO needed for files syncing
+        version_controller=None,  # TODO needed for files syncing
     ),
     code.PCS_KNOWN_HOSTS: FileToolbox(
         file_type_code=code.PCS_KNOWN_HOSTS,
         # TODO needed for 'auth' and 'deauth' commands
-        facade=None, # type: ignore
+        facade=None,  # type: ignore
         parser=JsonParser,
         exporter=JsonExporter,
-        validator=None, # TODO needed for files syncing
-        version_controller=None, # TODO needed for files syncing
+        validator=None,  # TODO needed for files syncing
+        version_controller=None,  # TODO needed for files syncing
     ),
     code.PCS_DR_CONFIG: FileToolbox(
         file_type_code=code.PCS_DR_CONFIG,
         facade=DrConfigFacade,
         parser=JsonParser,
         exporter=JsonExporter,
-        validator=None, # TODO needed for files syncing
-        version_controller=None, # TODO needed for files syncing
+        validator=None,  # TODO needed for files syncing
+        version_controller=None,  # TODO needed for files syncing
     ),
 }
+
 
 def for_file_type(file_type_code: code.FileTypeCode) -> FileToolbox:
     return _toolboxes[file_type_code]

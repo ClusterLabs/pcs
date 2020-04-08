@@ -23,7 +23,6 @@ status_cmd = create_router(
         "resources": resource_status,
         "xml": status.xml_status,
         "status": status.full_status,
-
         # removed commands
         # These print error messages which point users to the changes section in
         # pcs manpage.

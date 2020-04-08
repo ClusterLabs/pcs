@@ -11,11 +11,7 @@ def list_agents(lib_env, describe=True, search=None):
     runner = lib_env.cmd_runner()
     agent_names = resource_agent.list_stonith_agents(runner)
     return _complete_agent_list(
-        runner,
-        agent_names,
-        describe,
-        search,
-        resource_agent.StonithAgent
+        runner, agent_names, describe, search, resource_agent.StonithAgent
     )
 
 
@@ -28,6 +24,6 @@ def describe_agent(lib_env, agent_name):
         lib_env.report_processor,
         lib_env.cmd_runner(),
         agent_name,
-        absent_agent_supported=False
+        absent_agent_supported=False,
     )
     return agent.get_full_info()

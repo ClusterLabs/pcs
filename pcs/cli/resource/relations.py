@@ -23,9 +23,7 @@ from pcs.cli.common.printable_tree import (
 
 
 def show_resource_relations_cmd(
-    lib: Any,
-    argv: Sequence[str],
-    modifiers: InputModifiers,
+    lib: Any, argv: Sequence[str], modifiers: InputModifiers,
 ) -> None:
     """
     Options:
@@ -76,7 +74,6 @@ class ResourceRelationBase(PrintableTreeNode):
         raise NotImplementedError()
 
 
-
 class ResourcePrintableNode(ResourceRelationBase):
     @classmethod
     def from_dto(
@@ -98,9 +95,10 @@ class ResourcePrintableNode(ResourceRelationBase):
                     # 10 items, it would be required to also prepend zeros for
                     # lower numbers. E.g: if there is 100 options, it should
                     # starts as 000, 001, ...
-                    item.relation_entity.type, 9 # type: ignore
+                    item.relation_entity.type,  # type: ignore
+                    9,
                 ),
-                _id=item.relation_entity.id
+                _id=item.relation_entity.id,
             )
 
         return cls(
@@ -112,7 +110,7 @@ class ResourcePrintableNode(ResourceRelationBase):
                 ],
                 key=_relation_comparator,
             ),
-            resource_dto.is_leaf
+            resource_dto.is_leaf,
         )
 
     def get_title(self, verbose: bool) -> str:
@@ -146,7 +144,7 @@ class RelationPrintableNode(ResourceRelationBase):
                 ],
                 key=lambda item: item.relation_entity.id,
             ),
-            relation_dto.is_leaf
+            relation_dto.is_leaf,
         )
 
     def get_title(self, verbose: bool) -> str:
@@ -175,8 +173,7 @@ class RelationPrintableNode(ResourceRelationBase):
             return _order_set_metadata_to_str(ent.metadata)
         if (
             ent.type is ResourceRelationType.INNER_RESOURCES
-            and
-            len(ent.members) > 1
+            and len(ent.members) > 1
         ):
             return ["members: {}".format(" ".join(ent.members))]
         return []
@@ -196,16 +193,23 @@ def _order_metadata_to_str(metadata: Mapping[str, Any]) -> Sequence[str]:
 def _order_set_metadata_to_str(metadata: Mapping[str, Any]) -> Sequence[str]:
     result = []
     for res_set in metadata["sets"]:
-        result.append("   set {resources}{options}".format(
-            resources=" ".join(res_set["members"]),
-            options=_resource_set_options_to_str(res_set["metadata"]),
-        ))
+        result.append(
+            "   set {resources}{options}".format(
+                resources=" ".join(res_set["members"]),
+                options=_resource_set_options_to_str(res_set["metadata"]),
+            )
+        )
     return _order_common_metadata_to_str(metadata) + result
 
 
 def _resource_set_options_to_str(metadata: Mapping[str, Any]) -> str:
     supported_keys = (
-        "sequential", "require-all", "ordering", "action", "role", "kind",
+        "sequential",
+        "require-all",
+        "ordering",
+        "action",
+        "role",
+        "kind",
         "score",
     )
     result = _filter_supported_keys(metadata, supported_keys)
@@ -215,11 +219,13 @@ def _resource_set_options_to_str(metadata: Mapping[str, Any]) -> str:
 def _filter_supported_keys(
     data: Mapping[str, Any], supported_keys: Iterable[str]
 ) -> str:
-    return " ".join([
-        f"{key}={value}"
-        for key, value in sorted(data.items())
-        if key in supported_keys
-    ])
+    return " ".join(
+        [
+            f"{key}={value}"
+            for key, value in sorted(data.items())
+            if key in supported_keys
+        ]
+    )
 
 
 def _order_common_metadata_to_str(metadata: Mapping[str, Any]) -> List[str]:

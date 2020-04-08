@@ -10,7 +10,7 @@ from pcs.lib.errors import LibraryError
 from pcs.lib.pacemaker.values import RESOURCE_ROLES
 from pcs.lib.xml_tools import remove_when_pointless
 
-TAG_NAME = 'rsc_ticket'
+TAG_NAME = "rsc_ticket"
 DESCRIPTION = "constraint id"
 ATTRIB = {
     "loss-policy": ("fence", "stop", "freeze", "demote"),
@@ -20,6 +20,7 @@ ATTRIB_PLAIN = {
     "rsc": None,
     "rsc-role": RESOURCE_ROLES,
 }
+
 
 def _validate_options_common(options):
     report_list = []
@@ -38,12 +39,14 @@ def _validate_options_common(options):
         options["loss-policy"] = loss_policy
     return report_list
 
+
 def _create_id(cib, ticket, resource_id, resource_role):
     return tools.find_unique_id(
         cib,
-        "-".join(('ticket', ticket, resource_id))
-        +("-{0}".format(resource_role) if resource_role else "")
+        "-".join(("ticket", ticket, resource_id))
+        + ("-{0}".format(resource_role) if resource_role else ""),
     )
+
 
 def prepare_options_with_set(cib, options, resource_set_list):
     options = constraint.prepare_options(
@@ -64,6 +67,7 @@ def prepare_options_with_set(cib, options, resource_set_list):
     if report_list:
         raise LibraryError(*report_list)
     return options
+
 
 def prepare_options_plain(cib, options, ticket, resource_id):
     options = options.copy()
@@ -114,20 +118,23 @@ def prepare_options_plain(cib, options, ticket, resource_id):
             cib,
             options["ticket"],
             resource_id,
-            options.get("rsc-role", "")
+            options.get("rsc-role", ""),
         ),
-        partial(tools.check_new_id_applicable, cib, DESCRIPTION)
+        partial(tools.check_new_id_applicable, cib, DESCRIPTION),
     )
+
 
 def create_plain(constraint_section, options):
     element = etree.SubElement(constraint_section, TAG_NAME)
     element.attrib.update(options)
     return element
 
+
 def remove_plain(constraint_section, ticket_key, resource_id):
     ticket_element_list = constraint_section.xpath(
-        './/rsc_ticket[@ticket="{0}" and @rsc="{1}"]'
-        .format(ticket_key, resource_id)
+        './/rsc_ticket[@ticket="{0}" and @rsc="{1}"]'.format(
+            ticket_key, resource_id
+        )
     )
 
     for ticket_element in ticket_element_list:
@@ -135,10 +142,12 @@ def remove_plain(constraint_section, ticket_key, resource_id):
 
     return len(ticket_element_list) > 0
 
+
 def remove_with_resource_set(constraint_section, ticket_key, resource_id):
     ref_element_list = constraint_section.xpath(
-        './/rsc_ticket[@ticket="{0}"]/resource_set/resource_ref[@id="{1}"]'
-        .format(ticket_key, resource_id)
+        (
+            './/rsc_ticket[@ticket="{0}"]/resource_set/resource_ref[@id="{1}"]'
+        ).format(ticket_key, resource_id)
     )
 
     for ref_element in ref_element_list:
@@ -149,12 +158,13 @@ def remove_with_resource_set(constraint_section, ticket_key, resource_id):
         if not len(set_element):
             ticket_element = set_element.getparent()
             ticket_element.remove(set_element)
-            #We do not care about attributes since without an attribute "rsc"
-            #they are pointless. Attribute "rsc" is mutually exclusive with
-            #resource_set (see rng) so it cannot be in this ticket_element.
+            # We do not care about attributes since without an attribute "rsc"
+            # they are pointless. Attribute "rsc" is mutually exclusive with
+            # resource_set (see rng) so it cannot be in this ticket_element.
             remove_when_pointless(ticket_element, attribs_important=False)
 
     return len(ref_element_list) > 0
+
 
 def are_duplicate_plain(element, other_element):
     return all(
@@ -162,9 +172,8 @@ def are_duplicate_plain(element, other_element):
         for name in ("ticket", "rsc", "rsc-role")
     )
 
+
 def are_duplicate_with_resource_set(element, other_element):
-    return (
-        element.attrib["ticket"] == other_element.attrib["ticket"]
-        and
-        constraint.have_duplicate_resource_sets(element, other_element)
-    )
+    return element.attrib["ticket"] == other_element.attrib[
+        "ticket"
+    ] and constraint.have_duplicate_resource_sets(element, other_element)

@@ -37,11 +37,13 @@ from pcs.lib.pacemaker.live import (
 from pcs.lib.resource_agent import STONITH_ACTION_REPLACED_BY
 from pcs.lib.sbd import get_sbd_service_name
 
+
 class _ServiceStatus(NamedTuple):
     service: str
     display_always: bool
     enabled: bool
     running: bool
+
 
 def full_cluster_status_plaintext(
     env: LibraryEnvironment,
@@ -63,8 +65,7 @@ def full_cluster_status_plaintext(
         raise LibraryError(
             ReportItem.error(
                 reports.messages.LiveEnvironmentNotConsistent(
-                    [file_type_codes.CIB],
-                    [file_type_codes.COROSYNC_CONF],
+                    [file_type_codes.CIB], [file_type_codes.COROSYNC_CONF],
                 )
             )
         )
@@ -72,8 +73,7 @@ def full_cluster_status_plaintext(
         raise LibraryError(
             ReportItem.error(
                 reports.messages.LiveEnvironmentNotConsistent(
-                    [file_type_codes.COROSYNC_CONF],
-                    [file_type_codes.CIB],
+                    [file_type_codes.COROSYNC_CONF], [file_type_codes.CIB],
                 )
             )
         )
@@ -91,9 +91,11 @@ def full_cluster_status_plaintext(
     corosync_conf = env.get_corosync_conf()
     cib = env.get_cib()
     if verbose:
-        ticket_status_text, ticket_status_stderr, ticket_status_retval = (
-            get_ticket_status_text(runner)
-        )
+        (
+            ticket_status_text,
+            ticket_status_stderr,
+            ticket_status_retval,
+        ) = get_ticket_status_text(runner)
     # get extra info if live
     if live:
         try:
@@ -142,25 +144,27 @@ def full_cluster_status_plaintext(
     if live:
         if verbose:
             parts.extend(["", "PCSD Status:"])
-            parts.extend(indent(
-                _format_node_reachability(node_name_list, node_reachability)
-            ))
+            parts.extend(
+                indent(
+                    _format_node_reachability(node_name_list, node_reachability)
+                )
+            )
         parts.extend(["", "Daemon Status:"])
-        parts.extend(indent(
-            _format_local_services_status(local_services_status)
-        ))
+        parts.extend(
+            indent(_format_local_services_status(local_services_status))
+        )
     return "\n".join(parts)
 
-def _stonith_warnings(
-    cib: Element,
-    is_sbd_running: bool
-) -> List[str]:
+
+def _stonith_warnings(cib: Element, is_sbd_running: bool) -> List[str]:
     warning_list = []
 
     is_stonith_enabled = stonith.is_stonith_enabled(get_crm_config(cib))
-    stonith_all, stonith_with_action, stonith_with_method_cycle = (
-        stonith.get_misconfigured_resources(get_resources(cib))
-    )
+    (
+        stonith_all,
+        stonith_with_action,
+        stonith_with_method_cycle,
+    ) = stonith.get_misconfigured_resources(get_resources(cib))
 
     if is_stonith_enabled and not stonith_all and not is_sbd_running:
         warning_list.append(
@@ -183,17 +187,16 @@ def _stonith_warnings(
             "Following stonith devices have the 'method' option set "
             "to 'cycle' which is potentially dangerous, please consider using "
             "'onoff': {0}".format(
-                format_list([
-                    x.get("id", "") for x in stonith_with_method_cycle
-                ]),
+                format_list(
+                    [x.get("id", "") for x in stonith_with_method_cycle]
+                ),
             )
         )
 
     return warning_list
 
-def _get_local_services_status(
-    runner: CommandRunner
-) -> List[_ServiceStatus]:
+
+def _get_local_services_status(runner: CommandRunner) -> List[_ServiceStatus]:
     service_def = [
         # (service name, display even if not enabled nor running)
         ("corosync", True),
@@ -205,15 +208,18 @@ def _get_local_services_status(
     service_status_list = []
     for service, display_always in service_def:
         try:
-            service_status_list.append(_ServiceStatus(
-                service,
-                display_always,
-                is_service_enabled(runner, service),
-                is_service_running(runner, service),
-            ))
+            service_status_list.append(
+                _ServiceStatus(
+                    service,
+                    display_always,
+                    is_service_enabled(runner, service),
+                    is_service_running(runner, service),
+                )
+            )
         except LibraryError:
             pass
     return service_status_list
+
 
 def _format_local_services_status(
     service_status_list: Iterable[_ServiceStatus],
@@ -222,11 +228,12 @@ def _format_local_services_status(
         "{service}: {active}/{enabled}".format(
             service=status.service,
             active=("active" if status.running else "inactive"),
-            enabled=("enabled" if status.enabled else "disabled")
+            enabled=("enabled" if status.enabled else "disabled"),
         )
         for status in service_status_list
         if status.display_always or status.enabled or status.running
     ]
+
 
 def _get_node_reachability(
     node_target_factory: NodeTargetLibFactory,
@@ -236,16 +243,17 @@ def _get_node_reachability(
 ) -> Mapping[str, str]:
     # we are not interested in reports telling the user which nodes are
     # unknown since we display that info in the list of nodes
-    dummy_report_list, target_list = (
-        node_target_factory.get_target_list_with_reports(node_name_list)
-    )
+    (
+        dummy_report_list,
+        target_list,
+    ) = node_target_factory.get_target_list_with_reports(node_name_list)
     com_cmd = CheckReachability(report_processor)
     com_cmd.set_targets(target_list)
     return run_communication(node_communicator, com_cmd)
 
+
 def _format_node_reachability(
-    node_name_list: Iterable[str],
-    node_reachability: Mapping[str, str]
+    node_name_list: Iterable[str], node_reachability: Mapping[str, str]
 ) -> List[str]:
     translate = {
         CheckReachability.REACHABLE: "Online",
@@ -257,7 +265,7 @@ def _format_node_reachability(
             node=node_name,
             status=translate[
                 node_reachability.get(node_name, CheckReachability.UNAUTH)
-            ]
+            ],
         )
         for node_name in sorted(node_name_list)
     ]

@@ -8,11 +8,15 @@ from pcs.lib.pacemaker.values import is_false
 
 # TODO replace by the new finding function
 def is_stonith_resource(resources_el, name):
-    return len(
-        resources_el.xpath(
-            "primitive[@id='{0}' and @class='stonith']".format(name)
+    return (
+        len(
+            resources_el.xpath(
+                "primitive[@id='{0}' and @class='stonith']".format(name)
+            )
         )
-    ) > 0
+        > 0
+    )
+
 
 def is_stonith_enabled(crm_config_el: Element) -> bool:
     # We should read the default value from pacemaker. However, that may slow
@@ -26,6 +30,7 @@ def is_stonith_enabled(crm_config_el: Element) -> bool:
             stonith_enabled = False
             break
     return stonith_enabled
+
 
 def get_misconfigured_resources(
     resources_el: Element,
@@ -43,8 +48,7 @@ def get_misconfigured_resources(
                 stonith_with_action.append(stonith)
             if (
                 nvpair.get("name") == "method"
-                and
-                nvpair.get("value") == "cycle"
+                and nvpair.get("value") == "cycle"
             ):
                 stonith_with_method_cycle.append(stonith)
     return stonith_all, stonith_with_action, stonith_with_method_cycle

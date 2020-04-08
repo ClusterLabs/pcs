@@ -45,7 +45,7 @@ class NodeTargetFactory(TestCase):
     def test_from_hostname_known(self):
         self.assert_equal_known_host_target(
             self.known_host,
-            self.factory.get_target_from_hostname(self.known_name)
+            self.factory.get_target_from_hostname(self.known_name),
         )
 
     def test_from_hostname_unknown(self):
@@ -69,18 +69,16 @@ class RequestDataUrlEncodeTest(TestCase):
         action = "action"
         orig_data = [
             ("key1", "value1"),
-            ("spacial characters", "+-+/%&?'\";[]()*^$#@!~`{:}<>")
+            ("spacial characters", "+-+/%&?'\";[]()*^$#@!~`{:}<>"),
         ]
         data = lib.RequestData(action, orig_data)
         self.assertEqual(action, data.action)
         self.assertEqual(orig_data, data.structured_data)
         expected_raw_data_variants = (
             "key1=value1&spacial+characters=%2B-%2B%2F%25%26%3F%27%22%3B%5B"
-                "%5D%28%29%2A%5E%24%23%40%21%7E%60%7B%3A%7D%3C%3E"
-            ,
+            "%5D%28%29%2A%5E%24%23%40%21%7E%60%7B%3A%7D%3C%3E",
             "key1=value1&spacial+characters=%2B-%2B%2F%25%26%3F%27%22%3B%5B"
-                "%5D%28%29%2A%5E%24%23%40%21~%60%7B%3A%7D%3C%3E"
-            ,
+            "%5D%28%29%2A%5E%24%23%40%21~%60%7B%3A%7D%3C%3E",
         )
         self.assertTrue(data.data in expected_raw_data_variants)
 
@@ -119,13 +117,12 @@ class RequestTargetFromKnownHost(TestCase):
             [
                 host.Destination("addr1", "addr2"),
                 host.Destination("addr2", "port2"),
-            ]
+            ],
         )
         target = lib.RequestTarget.from_known_host(known_host)
         self.assertEqual(known_host.name, target.label)
         self.assertEqual(known_host.token, target.token)
         self.assertEqual(known_host.dest_list, target.dest_list)
-
 
 
 class RequestUrlTest(TestCase):
@@ -137,10 +134,7 @@ class RequestUrlTest(TestCase):
     def assert_url(self, actual_url, hostname, action, port=None):
         if port is None:
             port = settings.pcsd_default_port
-        self.assertEqual(
-            f"https://{hostname}:{port}/{action}",
-            actual_url
-        )
+        self.assertEqual(f"https://{hostname}:{port}/{action}", actual_url)
 
     def test_url_basic(self):
         hostname = "host"
@@ -159,22 +153,25 @@ class RequestUrlTest(TestCase):
                     hostname, dest_list=[Destination(hostname, port)]
                 )
             ).url,
-            hostname, self.action, port=port,
+            hostname,
+            self.action,
+            port=port,
         )
 
     def test_url_ipv6(self):
         host_addr = "::1"
         self.assert_url(
             self._get_request(lib.RequestTarget(host_addr)).url,
-            "[{0}]".format(host_addr), self.action,
+            "[{0}]".format(host_addr),
+            self.action,
         )
 
     def test_url_multiaddr(self):
         hosts = ["ring0", "ring1"]
         action = "action"
-        request = self._get_request(lib.RequestTarget(
-            "label", dest_list=_addr_list_to_dest(hosts)
-        ))
+        request = self._get_request(
+            lib.RequestTarget("label", dest_list=_addr_list_to_dest(hosts))
+        )
         self.assert_url(request.url, hosts[0], action)
         request.next_dest()
         self.assert_url(request.url, hosts[1], action)
@@ -194,9 +191,9 @@ class RequestHostTest(TestCase):
 
     def test_multiple_hosts(self):
         hosts = ["host1", "host2", "host3"]
-        request = self._get_request(lib.RequestTarget(
-            "label", dest_list=_addr_list_to_dest(hosts)
-        ))
+        request = self._get_request(
+            lib.RequestTarget("label", dest_list=_addr_list_to_dest(hosts))
+        )
         for hostname in hosts:
             self.assertEqual(Destination(hostname, None), request.dest)
             if hostname == hosts[-1]:
@@ -282,10 +279,12 @@ class CreateRequestHandleTest(TestCase):
 
     def test_all_info(self, mock_curl):
         mock_curl.return_value = MockCurl(
-            None, b"output", [
+            None,
+            b"output",
+            [
                 (pycurl.DEBUG_TEXT, b"debug"),
                 (pycurl.DEBUG_DATA_OUT, b"info\n"),
-            ]
+            ],
         )
         request = lib.Request(
             lib.RequestTarget(
@@ -293,7 +292,7 @@ class CreateRequestHandleTest(TestCase):
                 token="token_val",
                 dest_list=_addr_list_to_dest(["host1", "host2"], port=123),
             ),
-            lib.RequestData("action", [("data", "value")])
+            lib.RequestData("action", [("data", "value")]),
         )
         cookies = {
             "name1": "val1",
@@ -368,7 +367,7 @@ class CommunicatorBaseTest(TestCase):
 
 @mock.patch(
     "pcs.common.node_communicator.pycurl.CurlMulti",
-    side_effect=lambda: MockCurlMulti([1])
+    side_effect=lambda: MockCurlMulti([1]),
 )
 @mock.patch("pcs.common.node_communicator._create_request_handle")
 class CommunicatorSimpleTest(CommunicatorBaseTest):
@@ -420,7 +419,7 @@ class CommunicatorMultiTest(CommunicatorBaseTest):
     @mock.patch("pcs.common.node_communicator._create_request_handle")
     @mock.patch(
         "pcs.common.node_communicator.pycurl.CurlMulti",
-        side_effect=lambda: MockCurlMulti([1, 1])
+        side_effect=lambda: MockCurlMulti([1, 1]),
     )
     def test_call_start_loop_multiple_times(self, _, mock_create_handle):
         com = self.get_communicator()
@@ -435,12 +434,13 @@ class CommunicatorMultiTest(CommunicatorBaseTest):
     @mock.patch("pcs.common.node_communicator.pycurl.Curl")
     @mock.patch(
         "pcs.common.node_communicator.pycurl.CurlMulti",
-        side_effect=lambda: MockCurlMulti([2, 0, 0, 1, 0, 1, 1])
+        side_effect=lambda: MockCurlMulti([2, 0, 0, 1, 0, 1, 1]),
     )
     def test_multiple(self, _, mock_curl):
         com = self.get_communicator()
         action = "action"
         counter = {"counter": 0}
+
         def _create_mock_curl():
             counter["counter"] += 1
             return (
@@ -448,6 +448,7 @@ class CommunicatorMultiTest(CommunicatorBaseTest):
                 if counter["counter"] != 2
                 else MockCurl(error=(pycurl.E_SEND_ERROR, "reason"))
             )
+
         mock_curl.side_effect = _create_mock_curl
         request_list = [fixture_request(i, action) for i in range(3)]
         com.add_requests(request_list)
@@ -469,15 +470,12 @@ class CommunicatorMultiTest(CommunicatorBaseTest):
             self.assertEqual(i != 1, response_list[i].was_connected)
         logger_calls = (
             [mock.call.log_request_start(request_list[i]) for i in range(3)]
-            +
-            [
+            + [
                 mock.call.log_response(response_list[0]),
                 mock.call.log_request_start(request_list[3]),
             ]
-            +
-            [mock.call.log_response(response_list[i]) for i in range(1, 4)]
-            +
-            [
+            + [mock.call.log_response(response_list[i]) for i in range(1, 4)]
+            + [
                 mock.call.log_request_start(request_list[4]),
                 mock.call.log_response(response_list[4]),
             ]
@@ -499,7 +497,7 @@ def fixture_logger_request_retry_calls(response, hostname):
 @mock.patch.object(lib.Response, "connection_successful")
 @mock.patch(
     "pcs.common.node_communicator.pycurl.CurlMulti",
-    side_effect=lambda: MockCurlMulti([1, 0, 1, 1, 1])
+    side_effect=lambda: MockCurlMulti([1, 0, 1, 1, 1]),
 )
 @mock.patch("pcs.common.node_communicator._create_request_handle")
 class MultiaddressCommunicatorTest(CommunicatorBaseTest):
@@ -509,6 +507,7 @@ class MultiaddressCommunicatorTest(CommunicatorBaseTest):
         com = self.get_multiaddress_communicator()
         counter = {"counter": 0}
         expected_response_list = []
+
         def _con_successful(handle):
             response = lib.Response(handle, True)
             expected_response_list.append(response)
@@ -521,14 +520,14 @@ class MultiaddressCommunicatorTest(CommunicatorBaseTest):
 
         def _mock_create_request_handle(request, _, __):
             counter["counter"] += 1
-            return(
+            return (
                 MockCurl(request=request)
                 if counter["counter"] > 2
                 else MockCurl(
-                    error=(pycurl.E_SEND_ERROR, "reason"),
-                    request=request,
+                    error=(pycurl.E_SEND_ERROR, "reason"), request=request,
                 )
             )
+
         mock_con_successful.side_effect = _con_successful
         mock_con_failure.side_effect = _con_failure
         mock_create_handle.side_effect = _mock_create_request_handle
@@ -537,9 +536,9 @@ class MultiaddressCommunicatorTest(CommunicatorBaseTest):
                 "label",
                 dest_list=_addr_list_to_dest(
                     ["host{0}".format(i) for i in range(4)]
-                )
+                ),
             ),
-            lib.RequestData("action")
+            lib.RequestData("action"),
         )
         com.add_requests([request])
         response_list = list(com.start_loop())
@@ -551,20 +550,20 @@ class MultiaddressCommunicatorTest(CommunicatorBaseTest):
         self.assertEqual(Destination("host2", None), request.dest)
         self.assertEqual(3, mock_create_handle.call_count)
         self.assertEqual(3, len(expected_response_list))
-        mock_create_handle.assert_has_calls([
-            mock.call(request, {}, settings.default_request_timeout)
-            for _ in range(3)
-        ])
+        mock_create_handle.assert_has_calls(
+            [
+                mock.call(request, {}, settings.default_request_timeout)
+                for _ in range(3)
+            ]
+        )
         logger_calls = (
             fixture_logger_request_retry_calls(
                 expected_response_list[0], Destination("host0", None)
             )
-            +
-            fixture_logger_request_retry_calls(
+            + fixture_logger_request_retry_calls(
                 expected_response_list[1], Destination("host1", None)
             )
-            +
-            [
+            + [
                 mock.call.log_request_start(request),
                 mock.call.log_response(response),
             ]
@@ -577,6 +576,7 @@ class MultiaddressCommunicatorTest(CommunicatorBaseTest):
         self, mock_create_handle, _, mock_con_successful, mock_con_failure
     ):
         expected_response_list = []
+
         def _con_failure(handle, errno, err_msg):
             response = lib.Response(handle, False, errno, err_msg)
             expected_response_list.append(response)
@@ -594,7 +594,7 @@ class MultiaddressCommunicatorTest(CommunicatorBaseTest):
                     ["host{0}".format(i) for i in range(4)]
                 ),
             ),
-            lib.RequestData("action")
+            lib.RequestData("action"),
         )
         com.add_requests([request])
         response_list = list(com.start_loop())
@@ -606,27 +606,26 @@ class MultiaddressCommunicatorTest(CommunicatorBaseTest):
         self.assertEqual(4, mock_create_handle.call_count)
         mock_con_successful.assert_not_called()
         self.assertEqual(4, len(expected_response_list))
-        mock_create_handle.assert_has_calls([
-            mock.call(request, {}, settings.default_request_timeout)
-            for _ in range(3)
-        ])
+        mock_create_handle.assert_has_calls(
+            [
+                mock.call(request, {}, settings.default_request_timeout)
+                for _ in range(3)
+            ]
+        )
         logger_calls = (
             fixture_logger_request_retry_calls(
                 expected_response_list[0], Destination("host0", None)
             )
-            +
-            fixture_logger_request_retry_calls(
+            + fixture_logger_request_retry_calls(
                 expected_response_list[1], Destination("host1", None)
             )
-            +
-            fixture_logger_request_retry_calls(
+            + fixture_logger_request_retry_calls(
                 expected_response_list[2], Destination("host2", None)
             )
-            +
-            [
+            + [
                 mock.call.log_request_start(request),
                 mock.call.log_response(response),
-                mock.call.log_no_more_addresses(response)
+                mock.call.log_no_more_addresses(response),
             ]
         )
         self.assertEqual(logger_calls, self.mock_com_log.mock_calls)

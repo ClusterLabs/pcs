@@ -1,7 +1,8 @@
 class ParserErrorException(Exception):
     pass
 
-class ParserInterface():
+
+class ParserInterface:
     @staticmethod
     def parse(raw_file_data):
         raise NotImplementedError()
@@ -13,7 +14,7 @@ class ParserInterface():
         raise NotImplementedError()
 
 
-class ExporterInterface():
+class ExporterInterface:
     @staticmethod
     def export(config_structure):
         """
@@ -24,7 +25,7 @@ class ExporterInterface():
         raise NotImplementedError()
 
 
-class FacadeInterface():
+class FacadeInterface:
     # Facades should also implement a 'create' classmethod which creates a new
     # facade with a minimalistic config in it. This method for sure has
     # different interface in each class (depending on which config's facade it

@@ -13,7 +13,8 @@ from pcs.lib.cib.resource import common
 from pcs.lib.cib.tools import IdProvider
 
 
-fixture_cib = etree.fromstring("""
+fixture_cib = etree.fromstring(
+    """
     <resources>
         <primitive id="A" />
         <clone id="B-clone">
@@ -43,7 +44,8 @@ fixture_cib = etree.fromstring("""
             <primitive id="H" />
         </bundle>
     </resources>
-""")
+    """
+)
 
 
 class AreMetaDisabled(TestCase):
@@ -86,7 +88,8 @@ class IsCloneDeactivatedByMeta(TestCase):
 
 class FindOneOrMoreResources(TestCase):
     def setUp(self):
-        self.cib = etree.fromstring("""
+        self.cib = etree.fromstring(
+            """
             <resources>
                 <primitive id="R1" />
                 <primitive id="R2" />
@@ -94,7 +97,8 @@ class FindOneOrMoreResources(TestCase):
                 <primitive id="R1x" />
                 <primitive id="R2x" />
             </resources>
-        """)
+        """
+        )
 
         def searcher(resource_element):
             return [
@@ -102,34 +106,26 @@ class FindOneOrMoreResources(TestCase):
                     ".//*[@id='{0}x']".format(resource_element.get("id"))
                 )
             ]
+
         self.additional_search = searcher
 
     def test_one_existing(self):
         report_list = []
         resource = common.find_one_resource_and_report(
-            self.cib,
-            "R1",
-            report_list
+            self.cib, "R1", report_list
         )
         self.assertEqual("R1", resource.attrib.get("id"))
-        assert_report_item_list_equal(
-            report_list,
-            []
-        )
+        assert_report_item_list_equal(report_list, [])
 
     def test_one_nonexistant(self):
         report_list = []
         resource = common.find_one_resource_and_report(
-            self.cib,
-            "R-missing",
-            report_list
+            self.cib, "R-missing", report_list
         )
         self.assertIsNone(resource)
         assert_report_item_list_equal(
             report_list,
-            [
-                fixture.report_not_found("R-missing", context_type="resources"),
-            ]
+            [fixture.report_not_found("R-missing", context_type="resources"),],
         )
 
     def test_one_additional_search(self):
@@ -141,44 +137,34 @@ class FindOneOrMoreResources(TestCase):
             additional_search=self.additional_search,
         )
         self.assertEqual("R1x", resource.attrib.get("id"))
-        assert_report_item_list_equal(
-            report_list,
-            []
-        )
+        assert_report_item_list_equal(report_list, [])
 
     def test_more_existing(self):
         report_list = []
         resource_list = common.find_resources_and_report(
-            self.cib,
-            ["R1", "R2"],
-            report_list
+            self.cib, ["R1", "R2"], report_list
         )
         self.assertEqual(
             ["R1", "R2"],
-            [resource.attrib.get("id") for resource in resource_list]
+            [resource.attrib.get("id") for resource in resource_list],
         )
-        assert_report_item_list_equal(
-            report_list,
-            []
-        )
+        assert_report_item_list_equal(report_list, [])
 
     def test_more_some_missing(self):
         report_list = []
         resource_list = common.find_resources_and_report(
-            self.cib,
-            ["R1", "R2", "RY1", "RY2"],
-            report_list
+            self.cib, ["R1", "R2", "RY1", "RY2"], report_list
         )
         self.assertEqual(
             ["R1", "R2"],
-            [resource.attrib.get("id") for resource in resource_list]
+            [resource.attrib.get("id") for resource in resource_list],
         )
         assert_report_item_list_equal(
             report_list,
             [
                 fixture.report_not_found("RY1", context_type="resources"),
                 fixture.report_not_found("RY2", context_type="resources"),
-            ]
+            ],
         )
 
     def test_more_additional_search(self):
@@ -191,12 +177,9 @@ class FindOneOrMoreResources(TestCase):
         )
         self.assertEqual(
             ["R1x", "R2x"],
-            [resource.attrib.get("id") for resource in resource_list]
+            [resource.attrib.get("id") for resource in resource_list],
         )
-        assert_report_item_list_equal(
-            report_list,
-            []
-        )
+        assert_report_item_list_equal(report_list, [])
 
 
 class FindResourcesMixin:
@@ -205,15 +188,16 @@ class FindResourcesMixin:
     def assert_find_resources(self, input_resource_id, output_resource_ids):
         self.assertEqual(
             self._iterable_type(output_resource_ids),
-            self._iterable_type([
-                element.get("id", "")
-                for element in
-                self._tested_fn(
-                    fixture_cib.find(
-                        './/*[@id="{0}"]'.format(input_resource_id)
+            self._iterable_type(
+                [
+                    element.get("id", "")
+                    for element in self._tested_fn(
+                        fixture_cib.find(
+                            './/*[@id="{0}"]'.format(input_resource_id)
+                        )
                     )
-                )
-            ])
+                ]
+            ),
         )
 
     def test_group(self):
@@ -356,7 +340,7 @@ class IsWrapperResource(TestCase):
             is_wrapper,
             common.is_wrapper_resource(
                 fixture_cib.find('.//*[@id="{0}"]'.format(res_id))
-            )
+            ),
         )
 
     def test_primitive(self):
@@ -409,9 +393,9 @@ class IsWrapperResource(TestCase):
 
 class GetParentResource(TestCase):
     def assert_parent_resource(self, input_resource_id, output_resource_id):
-        res_el = common.get_parent_resource(fixture_cib.find(
-            './/*[@id="{0}"]'.format(input_resource_id)
-        ))
+        res_el = common.get_parent_resource(
+            fixture_cib.find('.//*[@id="{0}"]'.format(input_resource_id))
+        )
         self.assertEqual(
             output_resource_id, res_el.get("id") if res_el is not None else None
         )
@@ -470,13 +454,12 @@ class FindResourcesToEnable(TestCase):
             output_resource_ids,
             [
                 element.get("id", "")
-                for element in
-                common.find_resources_to_enable(
+                for element in common.find_resources_to_enable(
                     fixture_cib.find(
                         './/*[@id="{0}"]'.format(input_resource_id)
                     )
                 )
-            ]
+            ],
         )
 
     def test_primitive(self):
@@ -547,7 +530,7 @@ class Enable(TestCase):
                 <resource>
                     <meta_attributes />
                 </resource>
-            """
+            """,
         )
 
     def test_enabled(self):
@@ -559,7 +542,7 @@ class Enable(TestCase):
             """
                 <resource>
                 </resource>
-            """
+            """,
         )
 
     def test_only_first_meta(self):
@@ -584,7 +567,7 @@ class Enable(TestCase):
                         <nvpair name="target-role" value="something" />
                     </meta_attributes>
                 </resource>
-            """
+            """,
         )
 
 
@@ -619,7 +602,7 @@ class Disable(TestCase):
                             name="target-role" value="Stopped" />
                     </meta_attributes>
                 </resource>
-            """
+            """,
         )
 
     def test_only_first_meta(self):
@@ -644,7 +627,7 @@ class Disable(TestCase):
                     <meta_attributes id="R-meta_attributes-2">
                     </meta_attributes>
                 </resource>
-            """
+            """,
         )
 
 
@@ -654,13 +637,12 @@ class FindResourcesToManage(TestCase):
             output_resource_ids,
             [
                 element.get("id", "")
-                for element in
-                common.find_resources_to_manage(
+                for element in common.find_resources_to_manage(
                     fixture_cib.find(
                         './/*[@id="{0}"]'.format(input_resource_id)
                     )
                 )
-            ]
+            ],
         )
 
     def test_primitive(self):
@@ -717,13 +699,12 @@ class FindResourcesToUnmanage(TestCase):
             output_resource_ids,
             [
                 element.get("id", "")
-                for element in
-                common.find_resources_to_unmanage(
+                for element in common.find_resources_to_unmanage(
                     fixture_cib.find(
                         './/*[@id="{0}"]'.format(input_resource_id)
                     )
                 )
-            ]
+            ],
         )
 
     def test_primitive(self):
@@ -794,7 +775,7 @@ class Manage(TestCase):
                 <resource>
                     <meta_attributes />
                 </resource>
-            """
+            """,
         )
 
     def test_managed(self):
@@ -806,7 +787,7 @@ class Manage(TestCase):
             """
                 <resource>
                 </resource>
-            """
+            """,
         )
 
     def test_only_first_meta(self):
@@ -831,7 +812,7 @@ class Manage(TestCase):
                         <nvpair name="is-managed" value="something" />
                     </meta_attributes>
                 </resource>
-            """
+            """,
         )
 
 
@@ -866,7 +847,7 @@ class Unmanage(TestCase):
                             name="is-managed" value="false" />
                     </meta_attributes>
                 </resource>
-            """
+            """,
         )
 
     def test_only_first_meta(self):
@@ -891,26 +872,29 @@ class Unmanage(TestCase):
                     <meta_attributes id="R-meta_attributes-2">
                     </meta_attributes>
                 </resource>
-            """
+            """,
         )
 
 
-class ValidateMoveBanClearMixin():
-    #pylint: disable=too-many-public-methods
+class ValidateMoveBanClearMixin:
+    # pylint: disable=too-many-public-methods,line-too-long
     @staticmethod
     def _fixture_clone(promotable=False):
-        return etree.fromstring(f"""
+        return etree.fromstring(
+            f"""
             <clone id="R-clone">
                 <primitive id="R" />
                 <meta_attributes>
                     <nvpair name="promotable" value="{'true' if promotable else 'false'}" />
                 </meta_attributes>
             </clone>
-        """)
+            """
+        )
 
     @staticmethod
     def _fixture_group_clone(promotable=False):
-        return etree.fromstring(f"""
+        return etree.fromstring(
+            f"""
             <clone id="G-clone">
                 <group id="G">
                     <primitive id="R" />
@@ -919,39 +903,38 @@ class ValidateMoveBanClearMixin():
                     <nvpair name="promotable" value="{'true' if promotable else 'false'}" />
                 </meta_attributes>
             </clone>
-        """)
+            """
+        )
 
     @staticmethod
     def _fixture_master():
-        return etree.fromstring(f"""
+        return etree.fromstring(
+            f"""
             <master id="R-master">
                 <primitive id="R" />
             </master>
-        """)
+            """
+        )
 
     @staticmethod
     def _fixture_group_master():
-        return etree.fromstring(f"""
+        return etree.fromstring(
+            f"""
             <master id="G-master">
                 <group id="G">
                     <primitive id="R" />
                 </group>
             </master>
-        """)
+        """
+        )
 
     def test_master_true_promotable_clone(self):
         element = self._fixture_clone(True)
-        assert_report_item_list_equal(
-            self.validate(element, True),
-            []
-        )
+        assert_report_item_list_equal(self.validate(element, True), [])
 
     def test_master_false_promotable_clone(self):
         element = self._fixture_clone(True)
-        assert_report_item_list_equal(
-            self.validate(element, False),
-            []
-        )
+        assert_report_item_list_equal(self.validate(element, False), [])
 
     def test_master_true_clone(self):
         element = self._fixture_clone(False)
@@ -963,29 +946,20 @@ class ValidateMoveBanClearMixin():
                     resource_id="R-clone",
                     promotable_id=None,
                 ),
-            ]
+            ],
         )
 
     def test_master_false_clone(self):
         element = self._fixture_clone(False)
-        assert_report_item_list_equal(
-            self.validate(element, False),
-            []
-        )
+        assert_report_item_list_equal(self.validate(element, False), [])
 
     def test_master_true_master(self):
         element = self._fixture_master()
-        assert_report_item_list_equal(
-            self.validate(element, True),
-            []
-        )
+        assert_report_item_list_equal(self.validate(element, True), [])
 
     def test_master_false_master(self):
         element = self._fixture_master()
-        assert_report_item_list_equal(
-            self.validate(element, False),
-            []
-        )
+        assert_report_item_list_equal(self.validate(element, False), [])
 
     def test_master_true_promotable_clone_resource(self):
         element = self._fixture_clone(True)
@@ -997,14 +971,13 @@ class ValidateMoveBanClearMixin():
                     resource_id="R",
                     promotable_id="R-clone",
                 ),
-            ]
+            ],
         )
 
     def test_master_false_promotable_clone_resource(self):
         element = self._fixture_clone(True)
         assert_report_item_list_equal(
-            self.validate(element.find("./primitive"), False),
-            []
+            self.validate(element.find("./primitive"), False), []
         )
 
     def test_master_true_promotable_clone_group(self):
@@ -1017,14 +990,13 @@ class ValidateMoveBanClearMixin():
                     resource_id="G",
                     promotable_id="G-clone",
                 ),
-            ]
+            ],
         )
 
     def test_master_false_promotable_clone_group(self):
         element = self._fixture_group_clone(True)
         assert_report_item_list_equal(
-            self.validate(element.find("./group"), False),
-            []
+            self.validate(element.find("./group"), False), []
         )
 
     def test_master_true_promotable_clone_group_resource(self):
@@ -1037,14 +1009,13 @@ class ValidateMoveBanClearMixin():
                     resource_id="R",
                     promotable_id="G-clone",
                 ),
-            ]
+            ],
         )
 
     def test_master_false_promotable_clone_group_resource(self):
         element = self._fixture_group_clone(True)
         assert_report_item_list_equal(
-            self.validate(element.find("./group/primitive"), False),
-            []
+            self.validate(element.find("./group/primitive"), False), []
         )
 
     def test_master_true_clone_resource(self):
@@ -1057,14 +1028,13 @@ class ValidateMoveBanClearMixin():
                     resource_id="R",
                     promotable_id=None,
                 ),
-            ]
+            ],
         )
 
     def test_master_false_clone_resource(self):
         element = self._fixture_clone(False)
         assert_report_item_list_equal(
-            self.validate(element.find("./primitive"), False),
-            []
+            self.validate(element.find("./primitive"), False), []
         )
 
     def test_master_true_clone_group(self):
@@ -1077,14 +1047,13 @@ class ValidateMoveBanClearMixin():
                     resource_id="G",
                     promotable_id=None,
                 ),
-            ]
+            ],
         )
 
     def test_master_false_clone_group(self):
         element = self._fixture_group_clone(False)
         assert_report_item_list_equal(
-            self.validate(element.find("./group"), False),
-            []
+            self.validate(element.find("./group"), False), []
         )
 
     def test_master_true_clone_group_resource(self):
@@ -1097,14 +1066,13 @@ class ValidateMoveBanClearMixin():
                     resource_id="R",
                     promotable_id=None,
                 ),
-            ]
+            ],
         )
 
     def test_master_false_clone_group_resource(self):
         element = self._fixture_group_clone(False)
         assert_report_item_list_equal(
-            self.validate(element.find("./group/primitive"), False),
-            []
+            self.validate(element.find("./group/primitive"), False), []
         )
 
     def test_master_true_master_resource(self):
@@ -1117,7 +1085,7 @@ class ValidateMoveBanClearMixin():
                     resource_id="R",
                     promotable_id="R-master",
                 ),
-            ]
+            ],
         )
 
     def test_master_true_master_group(self):
@@ -1130,7 +1098,7 @@ class ValidateMoveBanClearMixin():
                     resource_id="G",
                     promotable_id="G-master",
                 ),
-            ]
+            ],
         )
 
     def test_master_true_master_group_resource(self):
@@ -1143,7 +1111,7 @@ class ValidateMoveBanClearMixin():
                     resource_id="R",
                     promotable_id="G-master",
                 ),
-            ]
+            ],
         )
 
 
@@ -1155,11 +1123,13 @@ class ValidateMove(ValidateMoveBanClearMixin, TestCase):
 
     @staticmethod
     def _fixture_bundle():
-        return etree.fromstring(f"""
+        return etree.fromstring(
+            f"""
             <bundle id="R-bundle">
                 <primitive id="R" />
             </bundle>
-        """)
+        """
+        )
 
     def test_master_false_promotable_clone(self):
         element = self._fixture_clone(True)
@@ -1171,7 +1141,7 @@ class ValidateMove(ValidateMoveBanClearMixin, TestCase):
                     resource_id="R-clone",
                     promotable_id="R-clone",
                 ),
-            ]
+            ],
         )
 
     def test_master_true_clone(self):
@@ -1183,7 +1153,7 @@ class ValidateMove(ValidateMoveBanClearMixin, TestCase):
                     report_codes.CANNOT_MOVE_RESOURCE_CLONE,
                     resource_id="R-clone",
                 ),
-            ]
+            ],
         )
 
     def test_master_false_clone(self):
@@ -1195,7 +1165,7 @@ class ValidateMove(ValidateMoveBanClearMixin, TestCase):
                     report_codes.CANNOT_MOVE_RESOURCE_CLONE,
                     resource_id="R-clone",
                 ),
-            ]
+            ],
         )
 
     def test_master_false_master(self):
@@ -1208,7 +1178,7 @@ class ValidateMove(ValidateMoveBanClearMixin, TestCase):
                     resource_id="R-master",
                     promotable_id="R-master",
                 ),
-            ]
+            ],
         )
 
     def test_master_false_promotable_clone_resource(self):
@@ -1221,7 +1191,7 @@ class ValidateMove(ValidateMoveBanClearMixin, TestCase):
                     resource_id="R",
                     promotable_id="R-clone",
                 ),
-            ]
+            ],
         )
 
     def test_master_false_promotable_clone_group(self):
@@ -1234,7 +1204,7 @@ class ValidateMove(ValidateMoveBanClearMixin, TestCase):
                     resource_id="G",
                     promotable_id="G-clone",
                 ),
-            ]
+            ],
         )
 
     def test_master_false_promotable_clone_group_resource(self):
@@ -1247,7 +1217,7 @@ class ValidateMove(ValidateMoveBanClearMixin, TestCase):
                     resource_id="R",
                     promotable_id="G-clone",
                 ),
-            ]
+            ],
         )
 
     def test_master_true_clone_resource(self):
@@ -1256,10 +1226,9 @@ class ValidateMove(ValidateMoveBanClearMixin, TestCase):
             self.validate(element.find("./primitive"), True),
             [
                 fixture.error(
-                    report_codes.CANNOT_MOVE_RESOURCE_CLONE,
-                    resource_id="R",
+                    report_codes.CANNOT_MOVE_RESOURCE_CLONE, resource_id="R",
                 ),
-            ]
+            ],
         )
 
     def test_master_false_clone_resource(self):
@@ -1268,10 +1237,9 @@ class ValidateMove(ValidateMoveBanClearMixin, TestCase):
             self.validate(element.find("./primitive"), False),
             [
                 fixture.error(
-                    report_codes.CANNOT_MOVE_RESOURCE_CLONE,
-                    resource_id="R",
+                    report_codes.CANNOT_MOVE_RESOURCE_CLONE, resource_id="R",
                 ),
-            ]
+            ],
         )
 
     def test_master_true_clone_group(self):
@@ -1280,10 +1248,9 @@ class ValidateMove(ValidateMoveBanClearMixin, TestCase):
             self.validate(element.find("./group"), True),
             [
                 fixture.error(
-                    report_codes.CANNOT_MOVE_RESOURCE_CLONE,
-                    resource_id="G",
+                    report_codes.CANNOT_MOVE_RESOURCE_CLONE, resource_id="G",
                 ),
-            ]
+            ],
         )
 
     def test_master_false_clone_group(self):
@@ -1292,10 +1259,9 @@ class ValidateMove(ValidateMoveBanClearMixin, TestCase):
             self.validate(element.find("./group"), False),
             [
                 fixture.error(
-                    report_codes.CANNOT_MOVE_RESOURCE_CLONE,
-                    resource_id="G",
+                    report_codes.CANNOT_MOVE_RESOURCE_CLONE, resource_id="G",
                 ),
-            ]
+            ],
         )
 
     def test_master_true_clone_group_resource(self):
@@ -1304,10 +1270,9 @@ class ValidateMove(ValidateMoveBanClearMixin, TestCase):
             self.validate(element.find("./group/primitive"), True),
             [
                 fixture.error(
-                    report_codes.CANNOT_MOVE_RESOURCE_CLONE,
-                    resource_id="R",
+                    report_codes.CANNOT_MOVE_RESOURCE_CLONE, resource_id="R",
                 ),
-            ]
+            ],
         )
 
     def test_master_false_clone_group_resource(self):
@@ -1316,10 +1281,9 @@ class ValidateMove(ValidateMoveBanClearMixin, TestCase):
             self.validate(element.find("./group/primitive"), False),
             [
                 fixture.error(
-                    report_codes.CANNOT_MOVE_RESOURCE_CLONE,
-                    resource_id="R",
+                    report_codes.CANNOT_MOVE_RESOURCE_CLONE, resource_id="R",
                 ),
-            ]
+            ],
         )
 
     def test_bundle(self):
@@ -1331,15 +1295,15 @@ class ValidateMove(ValidateMoveBanClearMixin, TestCase):
                     report_codes.CANNOT_MOVE_RESOURCE_BUNDLE,
                     resource_id="R-bundle",
                 ),
-            ]
+            ],
         )
 
     def test_bundle_resource(self):
         element = self._fixture_bundle()
         assert_report_item_list_equal(
-            self.validate(element.find("./primitive"), False),
-            []
+            self.validate(element.find("./primitive"), False), []
         )
+
 
 class ValidateBan(ValidateMoveBanClearMixin, TestCase):
     validate = staticmethod(common.validate_ban)
@@ -1351,6 +1315,5 @@ class ValidateBan(ValidateMoveBanClearMixin, TestCase):
 class ValidateUnmoveUnban(ValidateMoveBanClearMixin, TestCase):
     validate = staticmethod(common.validate_unmove_unban)
     report_code_bad_master = (
-        report_codes
-            .CANNOT_UNMOVE_UNBAN_RESOURCE_MASTER_RESOURCE_NOT_PROMOTABLE
+        report_codes.CANNOT_UNMOVE_UNBAN_RESOURCE_MASTER_RESOURCE_NOT_PROMOTABLE
     )

@@ -20,9 +20,12 @@ FILE_IS_BINARY = False
 
 patch_file = create_patcher("pcs.common.file")
 
+
 def fixture_metadata(
-    owner=FILE_OWNER, group=FILE_GROUP, permissions=FILE_PERMISSIONS,
-    binary=FILE_IS_BINARY
+    owner=FILE_OWNER,
+    group=FILE_GROUP,
+    permissions=FILE_PERMISSIONS,
+    binary=FILE_IS_BINARY,
 ):
     return FileMetadata(
         FILE_TYPE_CODE, FILE_PATH, owner, group, permissions, binary
@@ -61,16 +64,12 @@ class RawFileRead(TestCase):
 
     def test_success_text(self, mock_flock):
         self.assert_read_in_correct_mode(
-            mock_flock,
-            RawFile(fixture_metadata()),
-            "r",
+            mock_flock, RawFile(fixture_metadata()), "r",
         )
 
     def test_success_binary(self, mock_flock):
         self.assert_read_in_correct_mode(
-            mock_flock,
-            RawFile(fixture_metadata(binary=True)),
-            "rb",
+            mock_flock, RawFile(fixture_metadata(binary=True)), "rb",
         )
 
     def test_cannot_open(self, mock_flock):
@@ -123,6 +122,7 @@ class RawFileRead(TestCase):
 @patch_file("os.chmod")
 class RawFileWrite(TestCase):
     fileno = 123
+
     def assert_success(self, mock_flock, raw_file, mode, can_overwrite):
         file_data = "some file data".encode("utf-8")
         written_data = file_data
@@ -141,7 +141,7 @@ class RawFileWrite(TestCase):
             mock_flock,
             RawFile(fixture_metadata(owner=None, group=None, permissions=None)),
             "x",
-            False
+            False,
         )
         mock_chown.assert_not_called()
         mock_chmod.assert_not_called()
@@ -149,11 +149,13 @@ class RawFileWrite(TestCase):
     def test_success_minimal_binary(self, mock_chmod, mock_chown, mock_flock):
         self.assert_success(
             mock_flock,
-            RawFile(fixture_metadata(
-                owner=None, group=None, permissions=None, binary=True
-            )),
+            RawFile(
+                fixture_metadata(
+                    owner=None, group=None, permissions=None, binary=True
+                )
+            ),
             "xb",
-            False
+            False,
         )
         mock_chown.assert_not_called()
         mock_chmod.assert_not_called()
@@ -163,7 +165,7 @@ class RawFileWrite(TestCase):
             mock_flock,
             RawFile(fixture_metadata(owner=None, group=None, permissions=None)),
             "w",
-            True
+            True,
         )
         mock_chown.assert_not_called()
         mock_chmod.assert_not_called()
@@ -171,11 +173,13 @@ class RawFileWrite(TestCase):
     def test_success_overwrite_binary(self, mock_chmod, mock_chown, mock_flock):
         self.assert_success(
             mock_flock,
-            RawFile(fixture_metadata(
-                owner=None, group=None, permissions=None, binary=True
-            )),
+            RawFile(
+                fixture_metadata(
+                    owner=None, group=None, permissions=None, binary=True
+                )
+            ),
             "wb",
-            True
+            True,
         )
         mock_chown.assert_not_called()
         mock_chmod.assert_not_called()
@@ -185,7 +189,7 @@ class RawFileWrite(TestCase):
             mock_flock,
             RawFile(fixture_metadata(group=None, permissions=None)),
             "x",
-            False
+            False,
         )
         mock_chown.assert_called_once_with(FILE_PATH, FILE_OWNER, None)
         mock_chmod.assert_not_called()
@@ -195,17 +199,14 @@ class RawFileWrite(TestCase):
             mock_flock,
             RawFile(fixture_metadata(owner=None, permissions=None)),
             "x",
-            False
+            False,
         )
         mock_chown.assert_called_once_with(FILE_PATH, None, FILE_GROUP)
         mock_chmod.assert_not_called()
 
     def test_success_owner_both(self, mock_chmod, mock_chown, mock_flock):
         self.assert_success(
-            mock_flock,
-            RawFile(fixture_metadata(permissions=None)),
-            "x",
-            False
+            mock_flock, RawFile(fixture_metadata(permissions=None)), "x", False
         )
         mock_chown.assert_called_once_with(FILE_PATH, FILE_OWNER, FILE_GROUP)
         mock_chmod.assert_not_called()
@@ -215,7 +216,7 @@ class RawFileWrite(TestCase):
             mock_flock,
             RawFile(fixture_metadata(owner=None, group=None)),
             "x",
-            False
+            False,
         )
         mock_chown.assert_not_called()
         mock_chmod.assert_called_once_with(self.fileno, FILE_PERMISSIONS)
@@ -223,12 +224,7 @@ class RawFileWrite(TestCase):
     def test_success_chown_permissions(
         self, mock_chmod, mock_chown, mock_flock
     ):
-        self.assert_success(
-            mock_flock,
-            RawFile(fixture_metadata()),
-            "x",
-            False
-        )
+        self.assert_success(mock_flock, RawFile(fixture_metadata()), "x", False)
         mock_chown.assert_called_once_with(FILE_PATH, FILE_OWNER, FILE_GROUP)
         mock_chmod.assert_called_once_with(self.fileno, FILE_PERMISSIONS)
 

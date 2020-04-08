@@ -31,10 +31,14 @@ class GetFullClusterStatusPlaintext(
             [
                 (
                     "data_json",
-                    json.dumps(dict(
-                        hide_inactive_resources=self._hide_inactive_resources,
-                        verbose=self._verbose,
-                    ))
+                    json.dumps(
+                        dict(
+                            hide_inactive_resources=(
+                                self._hide_inactive_resources
+                            ),
+                            verbose=self._verbose,
+                        )
+                    ),
                 )
             ],
         )
@@ -58,9 +62,7 @@ class GetFullClusterStatusPlaintext(
                 self._report(
                     ReportItem.error(
                         reports.messages.NodeCommunicationCommandUnsuccessful(
-                            node,
-                            response.request.action,
-                            output["status_msg"],
+                            node, response.request.action, output["status_msg"],
                         )
                     )
                 )
@@ -73,13 +75,12 @@ class GetFullClusterStatusPlaintext(
                 for report_data in output["report_list"]:
                     if (
                         report_data["severity"] == ReportItemSeverity.ERROR
-                        and
-                        report_data["report_text"]
+                        and report_data["report_text"]
                     ):
+                        # pylint: disable=line-too-long
                         self._report(
                             ReportItem.error(
-                                reports.messages
-                                .NodeCommunicationCommandUnsuccessful(
+                                reports.messages.NodeCommunicationCommandUnsuccessful(
                                     node,
                                     response.request.action,
                                     report_data["report_text"],
@@ -88,9 +89,7 @@ class GetFullClusterStatusPlaintext(
                         )
         except (ValueError, LookupError, TypeError):
             self._report(
-                ReportItem.warning(
-                    reports.messages.InvalidResponseFormat(node)
-                )
+                ReportItem.warning(reports.messages.InvalidResponseFormat(node))
             )
 
         return self._get_next_list()

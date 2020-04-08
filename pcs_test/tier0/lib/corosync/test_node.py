@@ -14,9 +14,7 @@ class AddrsPlain(TestCase):
     @staticmethod
     def _fixture_one_addr():
         return CorosyncNode(
-            "node1",
-            [CorosyncNodeAddress("10.0.0.1", "1")],
-            "1"
+            "node1", [CorosyncNodeAddress("10.0.0.1", "1")], "1"
         )
 
     @staticmethod
@@ -29,7 +27,7 @@ class AddrsPlain(TestCase):
                 CorosyncNodeAddress("10.0.0.4", "4"),
                 CorosyncNodeAddress("10.0.0.3", "3"),
             ],
-            "1"
+            "1",
         )
 
     def test_no_addrs_set_get_one(self):
@@ -78,24 +76,23 @@ class AddrsPlain(TestCase):
     def test_several_addrs_set_get_all(self):
         node = self._fixture_several_addrs()
         self.assertEqual(
-            ["10.0.0.0", "10.0.0.1", "10.0.0.4", "10.0.0.3"],
-            node.addrs_plain()
+            ["10.0.0.0", "10.0.0.1", "10.0.0.4", "10.0.0.3"], node.addrs_plain()
         )
 
     def test_several_addrs_set_get_all_except_one(self):
         node = self._fixture_several_addrs()
         self.assertEqual(
             ["10.0.0.0", "10.0.0.4", "10.0.0.3"],
-            node.addrs_plain(except_link="1")
+            node.addrs_plain(except_link="1"),
         )
 
     def test_several_addrs_set_get_all_except_another(self):
         node = self._fixture_several_addrs()
         self.assertEqual(
             ["10.0.0.0", "10.0.0.1", "10.0.0.4", "10.0.0.3"],
-            node.addrs_plain(except_link=1)
+            node.addrs_plain(except_link=1),
         )
         self.assertEqual(
             ["10.0.0.0", "10.0.0.1", "10.0.0.4", "10.0.0.3"],
-            node.addrs_plain(except_link="2")
+            node.addrs_plain(except_link="2"),
         )

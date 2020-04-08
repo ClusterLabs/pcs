@@ -10,6 +10,7 @@ from pcs.lib.booth import constants
 
 __TICKET_NAME_RE = re.compile(r"^[\w-]+$")
 
+
 def check_instance_name(name):
     """
     Check that specified booth instance name is valid
@@ -22,12 +23,12 @@ def check_instance_name(name):
         report_list.append(
             ReportItem.error(
                 report.messages.BoothInvalidName(
-                    name,
-                    "contains illegal character '/'",
+                    name, "contains illegal character '/'",
                 )
             )
         )
     return report_list
+
 
 def create(site_list, arbitrator_list):
     """
@@ -67,6 +68,7 @@ def create(site_list, arbitrator_list):
 
     return report_list
 
+
 def add_ticket(
     conf_facade, ticket_name, ticket_options, allow_unknown_options=False
 ):
@@ -81,11 +83,10 @@ def add_ticket(
     """
     return (
         _validate_ticket_name(ticket_name)
-        +
-        _validate_ticket_unique(conf_facade, ticket_name)
-        +
-        _validate_ticket_options(ticket_options, allow_unknown_options)
+        + _validate_ticket_unique(conf_facade, ticket_name)
+        + _validate_ticket_options(ticket_options, allow_unknown_options)
     )
+
 
 def remove_ticket(conf_facade, ticket_name):
     """
@@ -102,6 +103,7 @@ def remove_ticket(conf_facade, ticket_name):
         ]
     return []
 
+
 def _validate_ticket_name(ticket_name):
     if not __TICKET_NAME_RE.search(ticket_name):
         return [
@@ -111,33 +113,27 @@ def _validate_ticket_name(ticket_name):
         ]
     return []
 
+
 def _validate_ticket_unique(conf_facade, ticket_name):
     if conf_facade.has_ticket(ticket_name):
         return [
-            ReportItem.error(
-                report.messages.BoothTicketDuplicate(ticket_name)
-            )
+            ReportItem.error(report.messages.BoothTicketDuplicate(ticket_name))
         ]
     return []
 
+
 def _validate_ticket_options(options, allow_unknown_options):
-    validator_list = (
-        [
-            validate.NamesIn(
-                constants.TICKET_KEYS,
-                option_type="booth ticket",
-                banned_name_list=constants.GLOBAL_KEYS,
-                **validate.set_warning(
-                    report_codes.FORCE_OPTIONS,
-                    allow_unknown_options
-                )
+    validator_list = [
+        validate.NamesIn(
+            constants.TICKET_KEYS,
+            option_type="booth ticket",
+            banned_name_list=constants.GLOBAL_KEYS,
+            **validate.set_warning(
+                report_codes.FORCE_OPTIONS, allow_unknown_options
             ),
-        ]
-        +
-        [validate.ValueNotEmpty(option, None) for option in options]
-    )
+        ),
+    ] + [validate.ValueNotEmpty(option, None) for option in options]
     normalized_options = validate.values_to_pairs(
-        options,
-        lambda key, value: value.strip()
+        options, lambda key, value: value.strip()
     )
     return validate.ValidatorAll(validator_list).validate(normalized_options)

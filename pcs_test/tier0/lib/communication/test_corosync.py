@@ -1,16 +1,19 @@
 from unittest import TestCase
 
+
 class CheckCorosyncOffline(TestCase):
     """
     tested in:
         pcs_test.tier0.lib.test_env.PushCorosyncConfLiveNoQdeviceTest
     """
 
+
 class DistributeCorosyncConf(TestCase):
     """
     tested in:
         pcs_test.tier0.lib.test_env.PushCorosyncConfLiveNoQdeviceTest
     """
+
 
 class ReloadCorosyncConf(TestCase):
     """

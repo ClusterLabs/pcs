@@ -13,12 +13,15 @@ from pcs.lib.interface.config import (
     ParserInterface,
 )
 
+
 class ConfigItem(namedtuple("ConfigItem", "key value details")):
     def __new__(cls, key, value, details=None):
         return super().__new__(cls, key, value, details or [])
 
+
 class InvalidLines(ParserErrorException):
     pass
+
 
 class Parser(ParserInterface):
     @staticmethod
@@ -31,39 +34,40 @@ class Parser(ParserInterface):
     def exception_to_report_list(
         exception, file_type_code, file_path, force_code, is_forced_or_warning
     ):
-        del file_type_code # this is defined by the report code
+        del file_type_code  # this is defined by the report code
         if isinstance(exception, InvalidLines):
             return [
                 ReportItem(
                     severity=get_severity(force_code, is_forced_or_warning),
                     message=reports.messages.BoothConfigUnexpectedLines(
-                        exception.args[0],
-                        file_path,
+                        exception.args[0], file_path,
                     ),
                 )
             ]
         raise exception
 
+
 class Exporter(ExporterInterface):
     @staticmethod
     def export(config_structure):
-        return "\n".join(
-            _build_to_lines(config_structure) + [""]
-        ).encode("utf-8")
+        return "\n".join(_build_to_lines(config_structure) + [""]).encode(
+            "utf-8"
+        )
+
 
 def _build_to_lines(config_line_list, deep=0):
     line_list = []
     for key, value, details in config_line_list:
         line_value = value if key != "ticket" else '"{0}"'.format(value)
-        line_list.append("{0}{1} = {2}".format("  "*deep, key, line_value))
+        line_list.append("{0}{1} = {2}".format("  " * deep, key, line_value))
         if details:
-            line_list.extend(_build_to_lines(details, deep+1))
+            line_list.extend(_build_to_lines(details, deep + 1))
     return line_list
 
 
 def _organize_lines(raw_line_list):
-    #Decision: Global key is moved up when is below ticket. Alternative is move
-    #it below all ticket details. But it is confusing.
+    # Decision: Global key is moved up when is below ticket. Alternative is move
+    # it below all ticket details. But it is confusing.
     global_section = []
     ticket_section = []
     current_ticket = None
@@ -78,6 +82,7 @@ def _organize_lines(raw_line_list):
 
     return global_section + ticket_section
 
+
 def _search_with_multiple_re(re_object_list, string):
     """
     return MatchObject of first matching regular expression object or None
@@ -90,13 +95,17 @@ def _search_with_multiple_re(re_object_list, string):
             return match
     return None
 
+
 def _parse_to_raw_lines(config_content):
     keyword_part = r"^(?P<key>[a-zA-Z0-9_-]+)\s*=\s*"
-    expression_list = [re.compile(pattern.format(keyword_part)) for pattern in [
-        r"""{0}(?P<value>[^'"]+)$""",
-        r"""{0}'(?P<value>[^']*)'\s*(#.*)?$""",
-        r"""{0}"(?P<value>[^"]*)"\s*(#.*)?$""",
-    ]]
+    expression_list = [
+        re.compile(pattern.format(keyword_part))
+        for pattern in [
+            r"""{0}(?P<value>[^'"]+)$""",
+            r"""{0}'(?P<value>[^']*)'\s*(#.*)?$""",
+            r"""{0}"(?P<value>[^"]*)"\s*(#.*)?$""",
+        ]
+    ]
 
     line_list = []
     invalid_line_list = []

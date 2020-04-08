@@ -1,8 +1,9 @@
-from pcs.cli.resource.parse_args import(
-    parse_create_simple as parse_resource_create_args
+from pcs.cli.resource.parse_args import (
+    parse_create_simple as parse_resource_create_args,
 )
 from pcs.cli.common.errors import CmdLineInputError
 from pcs.cli.common.parse_args import prepare_options
+
 
 def _node_add_remote_separate_name_and_addr(arg_list):
     """
@@ -20,6 +21,7 @@ def _node_add_remote_separate_name_and_addr(arg_list):
         rest_args = arg_list[2:]
     return node_name, node_addr, rest_args
 
+
 def node_add_remote(lib, arg_list, modifiers):
     """
     Options:
@@ -34,8 +36,13 @@ def node_add_remote(lib, arg_list, modifiers):
       * -f
     """
     modifiers.ensure_only_supported(
-        "--wait", "--force", "--skip-offline", "--request-timeout",
-        "--corosync_conf", "-f", "--no-default-ops",
+        "--wait",
+        "--force",
+        "--skip-offline",
+        "--request-timeout",
+        "--corosync_conf",
+        "-f",
+        "--no-default-ops",
     )
     if not arg_list:
         raise CmdLineInputError()
@@ -62,6 +69,7 @@ def node_add_remote(lib, arg_list, modifiers):
         wait=modifiers.get("--wait"),
     )
 
+
 def create_node_remove_remote(remove_resource):
     def node_remove_remote(lib, arg_list, modifiers):
         """
@@ -76,8 +84,11 @@ def create_node_remove_remote(remove_resource):
           * -f
         """
         modifiers.ensure_only_supported(
-            "--force", "--skip-offline", "--request-timeout",
-            "--corosync_conf", "-f",
+            "--force",
+            "--skip-offline",
+            "--request-timeout",
+            "--corosync_conf",
+            "-f",
         )
         if len(arg_list) != 1:
             raise CmdLineInputError()
@@ -88,7 +99,9 @@ def create_node_remove_remote(remove_resource):
             allow_remove_multiple_nodes=modifiers.get("--force"),
             allow_pacemaker_remote_service_fail=modifiers.get("--force"),
         )
+
     return node_remove_remote
+
 
 def node_add_guest(lib, arg_list, modifiers):
     """
@@ -103,12 +116,15 @@ def node_add_guest(lib, arg_list, modifiers):
       * -f
     """
     modifiers.ensure_only_supported(
-        "--wait", "--force", "--skip-offline", "--request-timeout",
-        "--corosync_conf", "-f",
+        "--wait",
+        "--force",
+        "--skip-offline",
+        "--request-timeout",
+        "--corosync_conf",
+        "-f",
     )
     if len(arg_list) < 2:
         raise CmdLineInputError()
-
 
     node_name = arg_list[0]
     resource_id = arg_list[1]
@@ -124,6 +140,7 @@ def node_add_guest(lib, arg_list, modifiers):
         wait=modifiers.get("--wait"),
     )
 
+
 def node_remove_guest(lib, arg_list, modifiers):
     """
     Options:
@@ -137,8 +154,12 @@ def node_remove_guest(lib, arg_list, modifiers):
       * -f
     """
     modifiers.ensure_only_supported(
-        "--wait", "--force", "--skip-offline", "--request-timeout",
-        "--corosync_conf", "-f",
+        "--wait",
+        "--force",
+        "--skip-offline",
+        "--request-timeout",
+        "--corosync_conf",
+        "-f",
     )
     if len(arg_list) != 1:
         raise CmdLineInputError()
@@ -151,6 +172,7 @@ def node_remove_guest(lib, arg_list, modifiers):
         wait=modifiers.get("--wait"),
     )
 
+
 def node_clear(lib, arg_list, modifiers):
     """
     Options:
@@ -161,6 +183,5 @@ def node_clear(lib, arg_list, modifiers):
         raise CmdLineInputError()
 
     lib.cluster.node_clear(
-        arg_list[0],
-        allow_clear_cluster_node=modifiers.get("--force")
+        arg_list[0], allow_clear_cluster_node=modifiers.get("--force")
     )

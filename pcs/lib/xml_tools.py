@@ -1,8 +1,10 @@
 from lxml import etree
 
+
 def get_root(tree):
     # ElementTree has getroot, Elemet has getroottree
     return tree.getroot() if hasattr(tree, "getroot") else tree.getroottree()
+
 
 def find_parent(element, tag_names):
     """
@@ -18,9 +20,13 @@ def find_parent(element, tag_names):
             return candidate
         candidate = candidate.getparent()
 
+
 def get_sub_element(
-    element, sub_element_tag, new_id=None, new_index=None,
-    append_if_missing=True
+    element,
+    sub_element_tag,
+    new_id=None,
+    new_index=None,
+    append_if_missing=True,
 ):
     """
     Returns the FIRST sub-element sub_element_tag of element. It will create new
@@ -45,8 +51,10 @@ def get_sub_element(
                 element.insert(new_index, sub_element)
     return sub_element
 
+
 def export_attributes(element):
-    return  dict((key, value) for key, value in element.attrib.items())
+    return dict((key, value) for key, value in element.attrib.items())
+
 
 def update_attribute_remove_empty(element, name, value):
     """
@@ -62,6 +70,7 @@ def update_attribute_remove_empty(element, name, value):
         return
     element.set(name, value)
 
+
 def update_attributes_remove_empty(element, attributtes):
     """
     Set an attributes' values or remove an attribute if its new value is ""
@@ -71,6 +80,7 @@ def update_attributes_remove_empty(element, attributtes):
     """
     for name, value in attributtes.items():
         update_attribute_remove_empty(element, name, value)
+
 
 def etree_element_attibutes_to_dict(etree_el, required_key_list):
     """
@@ -84,16 +94,18 @@ def etree_element_attibutes_to_dict(etree_el, required_key_list):
     """
     return {key: etree_el.get(key) for key in required_key_list}
 
+
 def etree_to_str(tree):
     """
     Export a lxml tree to a string
     etree tree - the tree to be exported
     """
-    #etree returns string in bytes: b'xml'
-    #python 3 removed .encode() from byte strings
-    #run(...) calls subprocess.Popen.communicate which calls encode...
-    #so there is bytes to str conversion
+    # etree returns string in bytes: b'xml'
+    # python 3 removed .encode() from byte strings
+    # run(...) calls subprocess.Popen.communicate which calls encode...
+    # so there is bytes to str conversion
     return etree.tostring(tree).decode()
+
 
 def is_element_useful(element, attribs_important=True):
     """
@@ -116,12 +128,9 @@ def is_element_useful(element, attribs_important=True):
         attributes even if it has no sub-elements
     """
     return len(element) or (
-        attribs_important
-        and
-        element.attrib
-        and
-        element.attrib.keys() != ["id"]
+        attribs_important and element.attrib and element.attrib.keys() != ["id"]
     )
+
 
 def append_when_useful(parent, element, attribs_important=True, index=None):
     """
@@ -143,6 +152,7 @@ def append_when_useful(parent, element, attribs_important=True, index=None):
             parent.insert(index, element)
     return element
 
+
 def remove_when_pointless(element, attribs_important=True):
     """
     Remove an element when it is not worth keeping (see is_element_useful for
@@ -154,6 +164,7 @@ def remove_when_pointless(element, attribs_important=True):
     """
     if not is_element_useful(element, attribs_important):
         element.getparent().remove(element)
+
 
 def reset_element(element, keep_attrs=None):
     """

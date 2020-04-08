@@ -16,23 +16,17 @@ class GetStatusTextTest(TestCase):
 
     def test_success(self):
         self.mock_runner.run.return_value = ("status info", "", 0)
-        self.assertEqual(
-            "status info",
-            lib.get_status_text(self.mock_runner)
-        )
-        self.mock_runner.run.assert_called_once_with([
-            self.qdevice_tool, "-s"
-        ])
+        self.assertEqual("status info", lib.get_status_text(self.mock_runner))
+        self.mock_runner.run.assert_called_once_with([self.qdevice_tool, "-s"])
 
     def test_success_verbose(self):
         self.mock_runner.run.return_value = ("status info", "", 0)
         self.assertEqual(
-            "status info",
-            lib.get_status_text(self.mock_runner, True)
+            "status info", lib.get_status_text(self.mock_runner, True)
         )
-        self.mock_runner.run.assert_called_once_with([
-            self.qdevice_tool, "-s", "-v"
-        ])
+        self.mock_runner.run.assert_called_once_with(
+            [self.qdevice_tool, "-s", "-v"]
+        )
 
     def test_error(self):
         self.mock_runner.run.return_value = ("some info", "status error", 1)
@@ -41,12 +35,7 @@ class GetStatusTextTest(TestCase):
             (
                 severity.ERROR,
                 report_codes.COROSYNC_QUORUM_GET_STATUS_ERROR,
-                {
-                    "reason": "status error\nsome info",
-                    "node": "",
-                }
-            )
+                {"reason": "status error\nsome info", "node": "",},
+            ),
         )
-        self.mock_runner.run.assert_called_once_with([
-            self.qdevice_tool, "-s"
-        ])
+        self.mock_runner.run.assert_called_once_with([self.qdevice_tool, "-s"])

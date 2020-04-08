@@ -14,21 +14,49 @@ ARG_TYPE_DELIMITER = "%"
 # p = password (cluster auth), u = user (cluster auth),
 PCS_SHORT_OPTIONS = "hf:p:u:"
 PCS_LONG_OPTIONS = [
-    "debug", "version", "help", "fullhelp",
-    "force", "skip-offline", "interactive", "autodelete", "simulate",
-    "all", "full", "local", "wait", "config",
-    "start", "enable", "disabled", "off", "request-timeout=",
+    "debug",
+    "version",
+    "help",
+    "fullhelp",
+    "force",
+    "skip-offline",
+    "interactive",
+    "autodelete",
+    "simulate",
+    "all",
+    "full",
+    "local",
+    "wait",
+    "config",
+    "start",
+    "enable",
+    "disabled",
+    "off",
+    "request-timeout=",
     # resource (safe-)disable
-    "safe", "no-strict",
+    "safe",
+    "no-strict",
     # resource cleanup | refresh
     "strict",
-    "pacemaker", "corosync",
-    "no-default-ops", "defaults", "nodesc",
-    "master", "name=", "group=", "node=",
-    "from=", "to=", "after=", "before=",
+    "pacemaker",
+    "corosync",
+    "no-default-ops",
+    "defaults",
+    "nodesc",
+    "master",
+    "name=",
+    "group=",
+    "node=",
+    "from=",
+    "to=",
+    "after=",
+    "before=",
     "corosync_conf=",
-    "booth-conf=", "booth-key=", "no-watchdog-validation", "no-keys-sync",
-    #in pcs status - do not display resource status on inactive node
+    "booth-conf=",
+    "booth-key=",
+    "no-watchdog-validation",
+    "no-keys-sync",
+    # in pcs status - do not display resource status on inactive node
     "hide-inactive",
     # pcs resource (un)manage - enable or disable monitor operations
     "monitor",
@@ -39,11 +67,15 @@ PCS_LONG_OPTIONS = [
     "expired",
 ]
 
+
 def split_list(arg_list, separator):
     """return list of list of arg_list using separator as delimiter"""
     separator_indexes = [i for i, x in enumerate(arg_list) if x == separator]
-    bounds = zip([0]+[i+1 for i in separator_indexes], separator_indexes+[None])
+    bounds = zip(
+        [0] + [i + 1 for i in separator_indexes], separator_indexes + [None]
+    )
     return [arg_list[i:j] for i, j in bounds]
+
 
 def split_list_by_any_keywords(arg_list, keyword_label):
     """
@@ -55,8 +87,7 @@ def split_list_by_any_keywords(arg_list, keyword_label):
     if "=" in arg_list[0]:
         raise CmdLineInputError(
             "Invalid character '=' in {} '{}'".format(
-                keyword_label,
-                arg_list[0],
+                keyword_label, arg_list[0],
             )
         )
     current_keyword = None
@@ -69,12 +100,12 @@ def split_list_by_any_keywords(arg_list, keyword_label):
             if current_keyword in groups:
                 raise CmdLineInputError(
                     "{} '{}' defined multiple times".format(
-                        keyword_label.capitalize(),
-                        current_keyword
+                        keyword_label.capitalize(), current_keyword
                     )
                 )
             groups[current_keyword] = []
     return groups
+
 
 def split_option(arg, allow_empty_value=True):
     """
@@ -98,6 +129,7 @@ def split_option(arg, allow_empty_value=True):
         raise CmdLineInputError("value of '{0}' option is empty".format(key))
     return key, value
 
+
 def prepare_options(cmdline_args, allowed_repeatable_options=()):
     """
     Get a dict of options from cmdline key=value args
@@ -119,10 +151,13 @@ def prepare_options(cmdline_args, allowed_repeatable_options=()):
             options[name].append(value)
         elif options[name] != value:
             raise CmdLineInputError(
-                "duplicate option '{0}' with different values '{1}' and '{2}'"
-                .format(name, options[name], value)
+                (
+                    "duplicate option '{0}' with different values '{1}' and "
+                    "'{2}'"
+                ).format(name, options[name], value)
             )
     return options
+
 
 def prepare_options_allowed(
     cmdline_args, allowed_options, allowed_repeatable_options=()
@@ -139,22 +174,26 @@ def prepare_options_allowed(
     parsed_options = prepare_options(
         cmdline_args, allowed_repeatable_options=allowed_repeatable_options
     )
-    unknown_options = (
-        frozenset(parsed_options.keys()) - frozenset(allowed_options)
+    unknown_options = frozenset(parsed_options.keys()) - frozenset(
+        allowed_options
     )
     if unknown_options:
         raise CmdLineInputError(
             "Unknown option{s} '{options}'".format(
                 s=("s" if len(unknown_options) > 1 else ""),
-                options="', '".join(sorted(unknown_options))
+                options="', '".join(sorted(unknown_options)),
             )
         )
     return parsed_options
 
+
 def group_by_keywords(
-    arg_list, keyword_set,
-    implicit_first_group_key=None, keyword_repeat_allowed=True,
-    group_repeated_keywords=None, only_found_keywords=False
+    arg_list,
+    keyword_set,
+    implicit_first_group_key=None,
+    keyword_repeat_allowed=True,
+    group_repeated_keywords=None,
+    only_found_keywords=False,
 ):
     """
     Return dictionary with keywords as keys and following arguments as value.
@@ -181,15 +220,16 @@ def group_by_keywords(
     def get_keywords_for_grouping():
         if not group_repeated_keywords:
             return []
-        #implicit_first_group_key is not keyword: when it is in
-        #group_repeated_keywords but not in keyword_set is considered as
-        #unknown.
+        # implicit_first_group_key is not keyword: when it is in
+        # group_repeated_keywords but not in keyword_set is considered as
+        # unknown.
         unknown_keywords = set(group_repeated_keywords) - set(keyword_set)
         if unknown_keywords:
-            #to avoid developer mistake
+            # to avoid developer mistake
             raise AssertionError(
-                "Keywords in grouping not in keyword set: {0}"
-                .format(", ".join(unknown_keywords))
+                "Keywords in grouping not in keyword set: {0}".format(
+                    ", ".join(unknown_keywords)
+                )
             )
         return group_repeated_keywords
 
@@ -199,10 +239,9 @@ def group_by_keywords(
             for keyword in keyword_set:
                 if keyword not in completed_groups:
                     completed_groups[keyword] = []
-            if(
+            if (
                 implicit_first_group_key
-                and
-                implicit_first_group_key not in completed_groups
+                and implicit_first_group_key not in completed_groups
             ):
                 completed_groups[implicit_first_group_key] = []
         return completed_groups
@@ -210,10 +249,8 @@ def group_by_keywords(
     def is_acceptable_keyword_occurence(keyword):
         return (
             keyword not in groups.keys()
-            or
-            keyword_repeat_allowed
-            or
-            keyword in keywords_for_grouping
+            or keyword_repeat_allowed
+            or keyword in keywords_for_grouping
         )
 
     def process_keyword(keyword):
@@ -251,6 +288,7 @@ def group_by_keywords(
 
     return get_completed_groups()
 
+
 def parse_typed_arg(arg, allowed_types, default_type):
     """
     Get (type, value) from a typed commandline argument.
@@ -268,45 +306,47 @@ def parse_typed_arg(arg, allowed_types, default_type):
         return default_type, arg_value
     if arg_type not in allowed_types:
         raise CmdLineInputError(
-            "'{arg_type}' is not an allowed type for '{arg_full}', use {hint}"
-            .format(
+            (
+                "'{arg_type}' is not an allowed type for '{arg_full}', use "
+                "{hint}"
+            ).format(
                 arg_type=arg_type,
                 arg_full=arg,
-                hint=", ".join(sorted(allowed_types))
+                hint=", ".join(sorted(allowed_types)),
             )
         )
     return arg_type, arg_value
 
+
 def is_num(arg):
     return arg.isdigit() or arg.lower() == "infinity"
+
 
 def is_negative_num(arg):
     return arg.startswith("-") and is_num(arg[1:])
 
+
 def is_short_option_expecting_value(arg):
     return (
         len(arg) == 2
-        and
-        arg[0] == "-"
-        and
-        "{0}:".format(arg[1]) in PCS_SHORT_OPTIONS
+        and arg[0] == "-"
+        and "{0}:".format(arg[1]) in PCS_SHORT_OPTIONS
     )
+
 
 def is_long_option_expecting_value(arg):
     return (
         len(arg) > 2
-        and
-        arg[0:2] == "--"
-        and
-        "{0}=".format(arg[2:]) in PCS_LONG_OPTIONS
+        and arg[0:2] == "--"
+        and "{0}=".format(arg[2:]) in PCS_LONG_OPTIONS
     )
 
+
 def is_option_expecting_value(arg):
-    return (
-        is_short_option_expecting_value(arg)
-        or
-        is_long_option_expecting_value(arg)
-    )
+    return is_short_option_expecting_value(
+        arg
+    ) or is_long_option_expecting_value(arg)
+
 
 def filter_out_non_option_negative_numbers(arg_list):
     """
@@ -324,11 +364,12 @@ def filter_out_non_option_negative_numbers(arg_list):
     """
     args_without_negative_nums = []
     for i, arg in enumerate(arg_list):
-        prev_arg = arg_list[i-1] if i > 0 else ""
+        prev_arg = arg_list[i - 1] if i > 0 else ""
         if not is_negative_num(arg) or is_option_expecting_value(prev_arg):
             args_without_negative_nums.append(arg)
 
     return args_without_negative_nums
+
 
 def filter_out_options(arg_list):
     """
@@ -338,75 +379,71 @@ def filter_out_options(arg_list):
     """
     args_without_options = []
     for i, arg in enumerate(arg_list):
-        prev_arg = arg_list[i-1] if i > 0 else ""
-        if(
-            not is_option_expecting_value(prev_arg)
-            and (
-                not arg.startswith("-")
-                or
-                arg == "-"
-                or
-                is_negative_num(arg)
-            )
+        prev_arg = arg_list[i - 1] if i > 0 else ""
+        if not is_option_expecting_value(prev_arg) and (
+            not arg.startswith("-") or arg == "-" or is_negative_num(arg)
         ):
             args_without_options.append(arg)
     return args_without_options
 
 
-class InputModifiers():
+class InputModifiers:
     def __init__(self, options):
         self._defined_options = set(options.keys())
         self._options = dict(options)
-        self._options.update({
-            # boolean values
-            "--all": "--all" in options,
-            "--autodelete": "--autodelete" in options,
-            "--config": "--config" in options,
-            "--corosync": "--corosync" in options,
-            "--debug": "--debug" in options,
-            "--defaults": "--defaults" in options,
-            "--disabled": "--disabled" in options,
-            "--enable": "--enable" in options,
-            "--expired": "--expired" in options,
-            "--force": "--force" in options,
-            "--full": "--full" in options,
-            # TODO remove
-            # used only in deprecated 'pcs resource|stonith show'
-            "--groups": "--groups" in options,
-            "--hide-inactive": "--hide-inactive" in options,
-            "--interactive": "--interactive" in options,
-            "--local": "--local" in options,
-            "--master": "--master" in options,
-            "--monitor": "--monitor" in options,
-            "--no-default-ops": "--no-default-ops" in options,
-            "--nodesc": "--nodesc" in options,
-            "--no-keys-sync": "--no-keys-sync" in options,
-            "--no-strict": "--no-strict" in options,
-            "--no-watchdog-validation": "--no-watchdog-validation" in options,
-            "--off": "--off" in options,
-            "--pacemaker": "--pacemaker" in options,
-            "--safe": "--safe" in options,
-            "--simulate": "--simulate" in options,
-            "--skip-offline": "--skip-offline" in options,
-            "--start": "--start" in options,
-            "--strict": "--strict" in options,
-            # string values
-            "--after": options.get("--after", None),
-            "--before": options.get("--before", None),
-            "--booth-conf": options.get("--booth-conf", None),
-            "--booth-key": options.get("--booth-key", None),
-            "--corosync_conf": options.get("--corosync_conf", None),
-            "--from": options.get("--from", None),
-            "--group": options.get("--group", None),
-            "--name": options.get("--name", None),
-            "--node": options.get("--node", None),
-            "--request-timeout": options.get("--request-timeout", None),
-            "--to": options.get("--to", None),
-            "--wait": options.get("--wait", False),
-            "-f": options.get("-f", None),
-            "-p": options.get("-p", None),
-            "-u": options.get("-u", None),
-        })
+        self._options.update(
+            {
+                # boolean values
+                "--all": "--all" in options,
+                "--autodelete": "--autodelete" in options,
+                "--config": "--config" in options,
+                "--corosync": "--corosync" in options,
+                "--debug": "--debug" in options,
+                "--defaults": "--defaults" in options,
+                "--disabled": "--disabled" in options,
+                "--enable": "--enable" in options,
+                "--expired": "--expired" in options,
+                "--force": "--force" in options,
+                "--full": "--full" in options,
+                # TODO remove
+                # used only in deprecated 'pcs resource|stonith show'
+                "--groups": "--groups" in options,
+                "--hide-inactive": "--hide-inactive" in options,
+                "--interactive": "--interactive" in options,
+                "--local": "--local" in options,
+                "--master": "--master" in options,
+                "--monitor": "--monitor" in options,
+                "--no-default-ops": "--no-default-ops" in options,
+                "--nodesc": "--nodesc" in options,
+                "--no-keys-sync": "--no-keys-sync" in options,
+                "--no-strict": "--no-strict" in options,
+                "--no-watchdog-validation": "--no-watchdog-validation"
+                in options,
+                "--off": "--off" in options,
+                "--pacemaker": "--pacemaker" in options,
+                "--safe": "--safe" in options,
+                "--simulate": "--simulate" in options,
+                "--skip-offline": "--skip-offline" in options,
+                "--start": "--start" in options,
+                "--strict": "--strict" in options,
+                # string values
+                "--after": options.get("--after", None),
+                "--before": options.get("--before", None),
+                "--booth-conf": options.get("--booth-conf", None),
+                "--booth-key": options.get("--booth-key", None),
+                "--corosync_conf": options.get("--corosync_conf", None),
+                "--from": options.get("--from", None),
+                "--group": options.get("--group", None),
+                "--name": options.get("--name", None),
+                "--node": options.get("--node", None),
+                "--request-timeout": options.get("--request-timeout", None),
+                "--to": options.get("--to", None),
+                "--wait": options.get("--wait", False),
+                "-f": options.get("-f", None),
+                "-p": options.get("-p", None),
+                "-u": options.get("-u", None),
+            }
+        )
 
     def get_subset(self, *options, **custom_options):
         opt_dict = {
@@ -420,7 +457,9 @@ class InputModifiers():
     ):
         unsupported_options = (
             # --debug is supported in all commands
-            self._defined_options - set(supported_options) - set(["--debug"])
+            self._defined_options
+            - set(supported_options)
+            - set(["--debug"])
         )
         if unsupported_options:
             pluralize = lambda word: format_plural(unsupported_options, word)
@@ -434,7 +473,7 @@ class InputModifiers():
                 # Print error messages which point users to the changes section
                 # in pcs manpage.
                 # To be removed in the next significant version.
-                hint=(HINT_SYNTAX_CHANGE if hint_syntax_changed else None)
+                hint=(HINT_SYNTAX_CHANGE if hint_syntax_changed else None),
             )
 
     def ensure_not_mutually_exclusive(self, *mutually_exclusive):
@@ -453,8 +492,7 @@ class InputModifiers():
         if disallowed:
             raise CmdLineInputError(
                 "'{}' cannot be used with {}".format(
-                    checked,
-                    format_list(sorted(disallowed))
+                    checked, format_list(sorted(disallowed))
                 )
             )
 

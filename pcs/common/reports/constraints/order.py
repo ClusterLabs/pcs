@@ -20,10 +20,8 @@ def constraint_plain(constraint_info, with_id=False):
     oc_sym = ""
     oc_id_out = ""
     oc_options = ""
-    if (
-        "symmetrical" in options
-        and
-        not _is_true(options.get("symmetrical", "false"))
+    if "symmetrical" in options and not _is_true(
+        options.get("symmetrical", "false")
     ):
         oc_sym = "(non-symmetrical)"
     if oc_kind != "":
@@ -33,19 +31,40 @@ def constraint_plain(constraint_info, with_id=False):
     else:
         score_text = "(score:" + oc_score + ")"
     if with_id:
-        oc_id_out = "(id:"+oc_id+")"
+        oc_id_out = "(id:" + oc_id + ")"
     already_processed_options = (
-        "first", "then", "first-action", "then-action", "id", "score", "kind",
-        "symmetrical"
+        "first",
+        "then",
+        "first-action",
+        "then-action",
+        "id",
+        "score",
+        "kind",
+        "symmetrical",
     )
-    oc_options = " ".join([
-        "{0}={1}".format(name, value)
-        for name, value in options.items()
-        if name not in already_processed_options
-    ])
+    oc_options = " ".join(
+        [
+            "{0}={1}".format(name, value)
+            for name, value in options.items()
+            if name not in already_processed_options
+        ]
+    )
     if oc_options:
         oc_options = "(Options: " + oc_options + ")"
-    return " ".join([arg for arg in [
-        first_action, oc_resource1, "then", then_action, oc_resource2,
-        score_text, oc_sym, oc_options, oc_id_out
-    ] if arg])
+    return " ".join(
+        [
+            arg
+            for arg in [
+                first_action,
+                oc_resource1,
+                "then",
+                then_action,
+                oc_resource2,
+                score_text,
+                oc_sym,
+                oc_options,
+                oc_id_out,
+            ]
+            if arg
+        ]
+    )

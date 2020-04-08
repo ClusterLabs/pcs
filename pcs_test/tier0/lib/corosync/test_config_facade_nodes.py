@@ -5,6 +5,7 @@ from pcs_test.tools.assertions import ac
 
 import pcs.lib.corosync.config_facade as lib
 
+
 class GetNodesTest(TestCase):
     def assert_equal_nodelist(self, expected, real):
         real_nodes = [
@@ -30,15 +31,18 @@ class GetNodesTest(TestCase):
         self.assertEqual(0, len(nodes))
 
     def test_empty_nodelist(self):
-        config = dedent("""\
+        config = dedent(
+            """\
             nodelist {
             }
-        """)
+        """
+        )
         nodes = self.nodes_from_config(config)
         self.assertEqual(0, len(nodes))
 
     def test_one_nodelist(self):
-        config = dedent("""\
+        config = dedent(
+            """\
             nodelist {
                 node {
                     ring0_addr: n1a
@@ -52,7 +56,8 @@ class GetNodesTest(TestCase):
                     nodeid: 2
                 }
             }
-        """)
+        """
+        )
         nodes = self.nodes_from_config(config)
         self.assert_equal_nodelist(
             [
@@ -63,11 +68,12 @@ class GetNodesTest(TestCase):
                     "addrs": [("0", "n2a"), ("1", "n2b")],
                 },
             ],
-            nodes
+            nodes,
         )
 
     def test_more_nodelists(self):
-        config = dedent("""\
+        config = dedent(
+            """\
             nodelist {
                 node {
                     ring0_addr: n1a
@@ -83,7 +89,8 @@ class GetNodesTest(TestCase):
                     nodeid: 2
                 }
             }
-        """)
+        """
+        )
         nodes = self.nodes_from_config(config)
         self.assert_equal_nodelist(
             [
@@ -94,11 +101,13 @@ class GetNodesTest(TestCase):
                     "addrs": [("0", "n2a"), ("1", "n2b")],
                 },
             ],
-            nodes
+            nodes,
         )
 
     def test_missing_values(self):
-        config = dedent("""\
+        # pylint: disable=trailing-whitespace
+        config = dedent(
+            """\
             nodelist {
                 node {
                     ring0_addr: n1a
@@ -127,7 +136,8 @@ class GetNodesTest(TestCase):
                     name: n5n
                 }
             }
-        """)
+        """
+        )
         nodes = self.nodes_from_config(config)
         self.assert_equal_nodelist(
             [
@@ -141,7 +151,7 @@ class GetNodesTest(TestCase):
                     "addrs": [("1", "n5b"), ("3", "n5d")],
                 },
             ],
-            nodes
+            nodes,
         )
         self.assertEqual(["n1a"], nodes[0].addrs_plain())
         self.assertEqual(["n2a"], nodes[1].addrs_plain())
@@ -150,7 +160,8 @@ class GetNodesTest(TestCase):
         self.assertEqual(["n5b", "n5d"], nodes[4].addrs_plain())
 
     def test_sort_rings(self):
-        config = dedent("""\
+        config = dedent(
+            """\
             nodelist {
                 node {
                     ring3_addr: n1d
@@ -160,21 +171,23 @@ class GetNodesTest(TestCase):
                     name: n1n
                 }
             }
-        """)
+        """
+        )
         nodes = self.nodes_from_config(config)
         self.assert_equal_nodelist(
             [
                 {
                     "id": "1",
                     "name": "n1n",
-                    "addrs": [("0", "n1a"), ("1", "n1b"), ("3", "n1d")]
+                    "addrs": [("0", "n1a"), ("1", "n1b"), ("3", "n1d")],
                 },
             ],
-            nodes
+            nodes,
         )
 
     def test_addr_type(self):
-        config = dedent("""\
+        config = dedent(
+            """\
             nodelist {
                 node {
                     ring0_addr: 10.0.0.1
@@ -189,7 +202,8 @@ class GetNodesTest(TestCase):
                     nodeid: 2
                 }
             }
-        """)
+        """
+        )
         nodes = self.nodes_from_config(config)
         self.assertEqual(nodes[0].addrs[0].type, "IPv4")
         self.assertEqual(nodes[0].addrs[1].type, "FQDN")
@@ -200,7 +214,8 @@ class GetNodesTest(TestCase):
 class AddNodesTest(TestCase):
     def test_adding_two_nodes(self):
         # pylint: disable=no-self-use
-        config = dedent("""\
+        config = dedent(
+            """\
             nodelist {
                 node {
                     ring0_addr: node1-addr1
@@ -209,20 +224,18 @@ class AddNodesTest(TestCase):
                     name: node1
                 }
             }
-        """)
+        """
+        )
         facade = lib.ConfigFacade.from_string(config)
-        facade.add_nodes([
-            dict(
-                name="node3",
-                addrs=["node3-addr1", "node3-addr2"],
-            ),
-            dict(
-                name="node2",
-                addrs=["node2-addr1", "node2-addr2"],
-            ),
-        ])
+        facade.add_nodes(
+            [
+                dict(name="node3", addrs=["node3-addr1", "node3-addr2"],),
+                dict(name="node2", addrs=["node2-addr1", "node2-addr2"],),
+            ]
+        )
 
-        expected_config = dedent("""\
+        expected_config = dedent(
+            """\
             nodelist {
                 node {
                     ring0_addr: node1-addr1
@@ -245,12 +258,14 @@ class AddNodesTest(TestCase):
                     nodeid: 3
                 }
             }
-        """)
+        """
+        )
         ac(expected_config, facade.config.export())
 
     def test_skipped_and_out_of_order_links_and_nodes_ids(self):
         # pylint: disable=no-self-use
-        config = dedent("""\
+        config = dedent(
+            """\
             nodelist {
                 node {
                     ring1_addr: node1-addr1
@@ -276,24 +291,28 @@ class AddNodesTest(TestCase):
                     name: node2
                 }
             }
-        """)
+        """
+        )
         facade = lib.ConfigFacade.from_string(config)
-        facade.add_nodes([
-            dict(
-                name="node6",
-                addrs=["node6-addr1", "node6-addr2", "node6-addr5"],
-            ),
-            dict(
-                name="node3",
-                addrs=["node3-addr1", "node3-addr2", "node3-addr5"],
-            ),
-            dict(
-                name="node5",
-                addrs=["node5-addr1", "node5-addr2", "node5-addr5"],
-            ),
-        ])
+        facade.add_nodes(
+            [
+                dict(
+                    name="node6",
+                    addrs=["node6-addr1", "node6-addr2", "node6-addr5"],
+                ),
+                dict(
+                    name="node3",
+                    addrs=["node3-addr1", "node3-addr2", "node3-addr5"],
+                ),
+                dict(
+                    name="node5",
+                    addrs=["node5-addr1", "node5-addr2", "node5-addr5"],
+                ),
+            ]
+        )
 
-        expected_config = dedent("""\
+        expected_config = dedent(
+            """\
             nodelist {
                 node {
                     ring1_addr: node1-addr1
@@ -343,12 +362,14 @@ class AddNodesTest(TestCase):
                     nodeid: 6
                 }
             }
-        """)
+        """
+        )
         ac(expected_config, facade.config.export())
 
     def test_enable_two_node(self):
         # pylint: disable=no-self-use
-        config = dedent("""\
+        config = dedent(
+            """\
             nodelist {
                 node {
                     ring0_addr: node1-addr1
@@ -360,12 +381,14 @@ class AddNodesTest(TestCase):
             quorum {
                 provider: corosync_votequorum
             }
-        """)
+        """
+        )
         facade = lib.ConfigFacade.from_string(config)
-        facade.add_nodes([
-            dict(name="node2", addrs=["node2-addr1"]),
-        ])
-        expected_config = dedent("""\
+        facade.add_nodes(
+            [dict(name="node2", addrs=["node2-addr1"]),]
+        )
+        expected_config = dedent(
+            """\
             nodelist {
                 node {
                     ring0_addr: node1-addr1
@@ -384,12 +407,14 @@ class AddNodesTest(TestCase):
                 provider: corosync_votequorum
                 two_node: 1
             }
-        """)
+        """
+        )
         ac(expected_config, facade.config.export())
 
     def test_disable_two_node(self):
         # pylint: disable=no-self-use
-        config = dedent("""\
+        config = dedent(
+            """\
             nodelist {
                 node {
                     ring0_addr: node1-addr1
@@ -408,12 +433,14 @@ class AddNodesTest(TestCase):
                 provider: corosync_votequorum
                 two_node: 1
             }
-        """)
+        """
+        )
         facade = lib.ConfigFacade.from_string(config)
-        facade.add_nodes([
-            dict(name="node3", addrs=["node3-addr1"]),
-        ])
-        expected_config = dedent("""\
+        facade.add_nodes(
+            [dict(name="node3", addrs=["node3-addr1"]),]
+        )
+        expected_config = dedent(
+            """\
             nodelist {
                 node {
                     ring0_addr: node1-addr1
@@ -437,14 +464,16 @@ class AddNodesTest(TestCase):
             quorum {
                 provider: corosync_votequorum
             }
-        """)
+        """
+        )
         ac(expected_config, facade.config.export())
 
 
 class RemoveNodes(TestCase):
     def test_remove(self):
         # pylint: disable=no-self-use
-        config = dedent("""\
+        config = dedent(
+            """\
             nodelist {
                 node {
                     ring0_addr: node1-addr1
@@ -490,10 +519,12 @@ class RemoveNodes(TestCase):
             quorum {
                 provider: corosync_votequorum
             }
-        """)
+        """
+        )
         facade = lib.ConfigFacade.from_string(config)
         facade.remove_nodes(["node3", "node4", "nodeX"])
-        expected_config = dedent("""\
+        expected_config = dedent(
+            """\
             nodelist {
                 node {
                     ring0_addr: node1-addr1
@@ -517,12 +548,14 @@ class RemoveNodes(TestCase):
             quorum {
                 provider: corosync_votequorum
             }
-        """)
+        """
+        )
         ac(expected_config, facade.config.export())
 
     def test_enable_two_nodes(self):
         # pylint: disable=no-self-use
-        config = dedent("""\
+        config = dedent(
+            """\
             nodelist {
                 node {
                     ring0_addr: node1-addr1
@@ -546,10 +579,12 @@ class RemoveNodes(TestCase):
             quorum {
                 provider: corosync_votequorum
             }
-        """)
+        """
+        )
         facade = lib.ConfigFacade.from_string(config)
         facade.remove_nodes(["node3"])
-        expected_config = dedent("""\
+        expected_config = dedent(
+            """\
             nodelist {
                 node {
                     ring0_addr: node1-addr1
@@ -568,12 +603,14 @@ class RemoveNodes(TestCase):
                 provider: corosync_votequorum
                 two_node: 1
             }
-        """)
+        """
+        )
         ac(expected_config, facade.config.export())
 
     def test_disable_two_nodes(self):
         # pylint: disable=no-self-use
-        config = dedent("""\
+        config = dedent(
+            """\
             nodelist {
                 node {
                     ring0_addr: node1-addr1
@@ -592,10 +629,12 @@ class RemoveNodes(TestCase):
                 provider: corosync_votequorum
                 two_node: 1
             }
-        """)
+        """
+        )
         facade = lib.ConfigFacade.from_string(config)
         facade.remove_nodes(["node2"])
-        expected_config = dedent("""\
+        expected_config = dedent(
+            """\
             nodelist {
                 node {
                     ring0_addr: node1-addr1
@@ -607,5 +646,6 @@ class RemoveNodes(TestCase):
             quorum {
                 provider: corosync_votequorum
             }
-        """)
+        """
+        )
         ac(expected_config, facade.config.export())

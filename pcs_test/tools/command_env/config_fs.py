@@ -13,8 +13,14 @@ class FsConfig:
         self.__calls = call_collection
 
     def open(
-        self, path, return_value=None, side_effect=None, name="fs.open",
-        mode="r", before=None, instead=None
+        self,
+        path,
+        return_value=None,
+        side_effect=None,
+        name="fs.open",
+        mode="r",
+        before=None,
+        instead=None,
     ):
         call = FsCall(
             "open",
@@ -37,37 +43,45 @@ class FsConfig:
         self.__calls.place(name, call, before, instead)
 
     def chmod(
-        self, path, mode, side_effect=None, name="os.chmod", before=None,
+        self,
+        path,
+        mode,
+        side_effect=None,
+        name="os.chmod",
+        before=None,
         instead=None,
     ):
         call = FsCall(
             "os.chmod",
-            call_kwargs=dict(
-                fd=path,
-                mode=mode,
-            ),
+            call_kwargs=dict(fd=path, mode=mode,),
             side_effect=side_effect,
         )
         self.__calls.place(name, call, before, instead)
 
     def chown(
-        self, path, uid, gid, side_effect=None, name="os.chown", before=None,
+        self,
+        path,
+        uid,
+        gid,
+        side_effect=None,
+        name="os.chown",
+        before=None,
         instead=None,
     ):
         call = FsCall(
             "os.chown",
-            call_kwargs=dict(
-                fd=path,
-                uid=uid,
-                gid=gid,
-            ),
+            call_kwargs=dict(fd=path, uid=uid, gid=gid,),
             side_effect=side_effect,
         )
         self.__calls.place(name, call, before, instead)
 
     def isfile(
-        self, path, return_value=True, name="fs.isfile", before=None,
-        instead=None
+        self,
+        path,
+        return_value=True,
+        name="fs.isfile",
+        before=None,
+        instead=None,
     ):
         call = FsCall(
             "os.path.isfile",
@@ -77,8 +91,12 @@ class FsConfig:
         self.__calls.place(name, call, before, instead)
 
     def isdir(
-        self, path, return_value=True, name="fs.isdir", before=None,
-        instead=None
+        self,
+        path,
+        return_value=True,
+        name="fs.isdir",
+        before=None,
+        instead=None,
     ):
         call = FsCall(
             "os.path.isdir",
@@ -88,8 +106,12 @@ class FsConfig:
         self.__calls.place(name, call, before, instead)
 
     def listdir(
-        self, path, return_value=(), name="fs.listdir", before=None,
-        instead=None
+        self,
+        path,
+        return_value=(),
+        name="fs.listdir",
+        before=None,
+        instead=None,
     ):
         call = FsCall(
             "os.listdir",

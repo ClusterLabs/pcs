@@ -14,9 +14,7 @@ from pcs.lib.external import CommandRunner, is_service_enabled
 testdir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 runner = CommandRunner(
-    mock.MagicMock(logging.Logger),
-    MockLibraryReportProcessor(),
-    os.environ
+    mock.MagicMock(logging.Logger), MockLibraryReportProcessor(), os.environ
 )
 
 
@@ -41,14 +39,11 @@ class ParametrizedTestMetaClass(type):
             # This should fail
             attr = 3
     """
+
     def __init__(cls, classname, bases, class_dict):
         for attr_name in dir(cls):
             attr = getattr(cls, attr_name)
-            if (
-                attr_name.startswith("_test")
-                and
-                hasattr(attr, "__call__")
-            ):
+            if attr_name.startswith("_test") and hasattr(attr, "__call__"):
                 setattr(cls, attr_name[1:], attr)
 
         super().__init__(classname, bases, class_dict)
@@ -59,6 +54,7 @@ def dict_to_modifiers(options):
         if val is True:
             return ""
         return val
+
     return InputModifiers(
         {
             f"--{opt}": _convert_val(val)
@@ -67,18 +63,22 @@ def dict_to_modifiers(options):
         }
     )
 
+
 def get_test_resource(name):
     """Return full path to a test resource file specified by name"""
     return os.path.join(testdir, "resources", name)
+
 
 def read_test_resource(name):
     with open(get_test_resource(name)) as a_file:
         return a_file.read()
 
+
 def cmp3(a, b):
     # python3 doesn't have the cmp function, this is an official workaround
     # https://docs.python.org/3.0/whatsnew/3.0.html#ordering-comparisons
     return (a > b) - (a < b)
+
 
 def compare_version(a, b):
     if a[0] == b[0]:
@@ -87,17 +87,17 @@ def compare_version(a, b):
         return cmp3(a[1], b[1])
     return cmp3(a[0], b[0])
 
+
 def is_minimum_pacemaker_version(major, minor, rev):
     return is_version_sufficient(
-        get_current_pacemaker_version(),
-        (major, minor, rev)
+        get_current_pacemaker_version(), (major, minor, rev)
     )
 
+
 def get_current_pacemaker_version():
-    output, dummy_stderr, dummy_retval = runner.run([
-        os.path.join(settings.pacemaker_binaries, "crm_mon"),
-        "--version",
-    ])
+    output, dummy_stderr, dummy_retval = runner.run(
+        [os.path.join(settings.pacemaker_binaries, "crm_mon"), "--version",]
+    )
     pacemaker_version = output.split("\n")[0]
     r = re.compile(r"Pacemaker (\d+)\.(\d+)\.(\d+)")
     m = r.match(pacemaker_version)
@@ -106,17 +106,19 @@ def get_current_pacemaker_version():
     rev = int(m.group(3))
     return major, minor, rev
 
+
 def is_version_sufficient(current_version, minimal_version):
     return compare_version(current_version, minimal_version) > -1
+
 
 def format_version(version_tuple):
     return ".".join([str(x) for x in version_tuple])
 
+
 def is_minimum_pacemaker_features(cmajor, cminor, crev):
-    output, dummy_stderr, dummy_retval = runner.run([
-        os.path.join(settings.pacemaker_binaries, "pacemakerd"),
-        "--features",
-    ])
+    output, dummy_stderr, dummy_retval = runner.run(
+        [os.path.join(settings.pacemaker_binaries, "pacemakerd"), "--features",]
+    )
     features_version = output.split("\n")[1]
     r = re.compile(r"Supporting v(\d+)\.(\d+)\.(\d+):")
     m = r.search(features_version)
@@ -124,6 +126,7 @@ def is_minimum_pacemaker_features(cmajor, cminor, crev):
     minor = int(m.group(2))
     rev = int(m.group(3))
     return compare_version((major, minor, rev), (cmajor, cminor, crev)) > -1
+
 
 def skip_unless_pacemaker_version(version_tuple, feature):
     current_version = get_current_pacemaker_version()
@@ -135,29 +138,30 @@ def skip_unless_pacemaker_version(version_tuple, feature):
         ).format(
             current_version=format_version(current_version),
             minimal_version=format_version(version_tuple),
-            feature=feature
-        )
+            feature=feature,
+        ),
     )
 
+
 skip_unless_crm_rule = skip_unless_pacemaker_version(
-    (2, 0, 2),
-    "listing of constraints that might be expired"
+    (2, 0, 2), "listing of constraints that might be expired"
 )
+
 
 def skip_unless_pacemaker_features(version_tuple, feature):
     return skipUnless(
         is_minimum_pacemaker_features(*version_tuple),
-        "Pacemaker must support feature set version {version} to test {feature}"
-            .format(
-                version=format_version(version_tuple),
-                feature=feature
-            )
+        (
+            "Pacemaker must support feature set version {version} to test "
+            "{feature}"
+        ).format(version=format_version(version_tuple), feature=feature),
     )
 
+
 skip_unless_pacemaker_supports_bundle = skip_unless_pacemaker_features(
-    (3, 1, 0),
-    "bundle resources with promoted-max attribute"
+    (3, 1, 0), "bundle resources with promoted-max attribute"
 )
+
 
 def skip_if_service_enabled(service_name):
     return skipUnless(
@@ -165,11 +169,10 @@ def skip_if_service_enabled(service_name):
         "Service {0} must be disabled".format(service_name),
     )
 
+
 def skip_unless_root():
-    return skipUnless(
-        os.getuid() == 0,
-        "Root user required"
-    )
+    return skipUnless(os.getuid() == 0, "Root user required")
+
 
 def create_patcher(target_prefix_or_module):
     """
@@ -186,15 +189,17 @@ def create_patcher(target_prefix_or_module):
 
     def patch(target, *args, **kwargs):
         return mock.patch("{0}.{1}".format(prefix, target), *args, **kwargs)
+
     return patch
+
 
 def outdent(text):
     line_list = text.splitlines()
-    smallest_indentation = min([
-        len(line) - len(line.lstrip(" "))
-        for line in line_list if line
-    ])
+    smallest_indentation = min(
+        [len(line) - len(line.lstrip(" ")) for line in line_list if line]
+    )
     return "\n".join([line[smallest_indentation:] for line in line_list])
+
 
 def create_setup_patch_mixin(module_specification_or_patcher):
     """
@@ -226,4 +231,5 @@ def create_setup_patch_mixin(module_specification_or_patcher):
             patcher = patch_module(target_suffix, *args, **kwargs)
             self.addCleanup(patcher.stop)
             return patcher.start()
+
     return SetupPatchMixin

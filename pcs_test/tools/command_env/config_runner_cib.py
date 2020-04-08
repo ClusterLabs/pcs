@@ -1,4 +1,4 @@
-from pcs_test.tools.command_env.mock_runner import(
+from pcs_test.tools.command_env.mock_runner import (
     Call as RunnerCall,
     CheckStdinEqualXml,
 )
@@ -26,7 +26,7 @@ class CibShortcuts:
         returncode=0,
         stderr=None,
         instead=None,
-        **modifier_shortcuts
+        **modifier_shortcuts,
     ):
         """
         Create call for loading cib.
@@ -48,12 +48,8 @@ class CibShortcuts:
             MODIFIER_GENERATORS - please refer it when you are adding params
             here)
         """
-        if(returncode != 0 or stderr is not None) and (
-           modifiers is not None
-           or
-           filename is not None
-           or
-           modifier_shortcuts
+        if (returncode != 0 or stderr is not None) and (
+            modifiers is not None or filename is not None or modifier_shortcuts
         ):
             raise AssertionError(
                 "Do not combine parameters 'returncode' and 'stderr' with"
@@ -68,9 +64,7 @@ class CibShortcuts:
                 rc(filename if filename else self.cib_filename)
             ) as cib_file:
                 cib = modify_cib(
-                    cib_file.read(),
-                    modifiers,
-                    **modifier_shortcuts
+                    cib_file.read(), modifiers, **modifier_shortcuts
                 )
                 call = RunnerCall(command, stdout=cib)
 
@@ -111,7 +105,7 @@ class CibShortcuts:
         instead=None,
         stderr="",
         returncode=0,
-        **modifier_shortcuts
+        **modifier_shortcuts,
     ):
         """
         Create call for pushing cib.
@@ -132,9 +126,7 @@ class CibShortcuts:
             here)
         """
         cib = modify_cib(
-            self.__calls.get(load_key).stdout,
-            modifiers,
-            **modifier_shortcuts
+            self.__calls.get(load_key).stdout, modifiers, **modifier_shortcuts
         )
         self.__calls.place(
             name,
@@ -148,10 +140,7 @@ class CibShortcuts:
         )
 
     def push_independent(
-        self,
-        cib,
-        name="runner.cib.push_independent",
-        instead=None,
+        self, cib, name="runner.cib.push_independent", instead=None,
     ):
         """
         Create call for pushing cib.
@@ -178,7 +167,7 @@ class CibShortcuts:
         name="runner.cib.diff",
         stdout="resulting diff",
         stderr="",
-        returncode=1 # 0 -> old and new are the same, 1 -> old and new differ
+        returncode=1,  # 0 -> old and new are the same, 1 -> old and new differ
     ):
         """
         Create a call for diffing two CIBs stored in two files
@@ -207,7 +196,7 @@ class CibShortcuts:
         cib_diff="resulting diff",
         stdout="",
         stderr="",
-        returncode=0
+        returncode=0,
     ):
         """
         Create a call for pushing a diff of CIBs
@@ -233,7 +222,5 @@ class CibShortcuts:
         string before -- key of call before which this new call is to be placed
         """
         self.__calls.place(
-            name,
-            RunnerCall("cibadmin --upgrade --force"),
-            before=before
+            name, RunnerCall("cibadmin --upgrade --force"), before=before
         )

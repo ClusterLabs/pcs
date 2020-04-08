@@ -75,23 +75,20 @@ def config_setup(
             tools.generate_binary_key(
                 random_bytes_count=settings.booth_authkey_bytes
             ),
-            can_overwrite=overwrite_existing
+            can_overwrite=overwrite_existing,
         )
         booth_env.config.write_facade(
-            booth_conf,
-            can_overwrite=overwrite_existing
+            booth_conf, can_overwrite=overwrite_existing
         )
     except FileAlreadyExists as e:
         report_processor.report(
             ReportItem(
                 severity=reports.item.get_severity(
-                    reports.codes.FORCE_FILE_OVERWRITE,
-                    overwrite_existing,
+                    reports.codes.FORCE_FILE_OVERWRITE, overwrite_existing,
                 ),
                 message=reports.messages.FileAlreadyExists(
-                    e.metadata.file_type_code,
-                    e.metadata.path,
-                )
+                    e.metadata.file_type_code, e.metadata.path,
+                ),
             )
         )
     except RawFileError as e:
@@ -121,14 +118,12 @@ def config_destroy(
 
     # TODO use constants in reports
     if resource.find_for_config(
-        get_resources(env.get_cib()),
-        booth_env.config_path,
+        get_resources(env.get_cib()), booth_env.config_path,
     ):
         report_processor.report(
             ReportItem.error(
                 reports.messages.BoothConfigIsUsed(
-                    instance_name,
-                   "in cluster resource",
+                    instance_name, "in cluster resource",
                 )
             )
         )
@@ -141,8 +136,7 @@ def config_destroy(
             report_processor.report(
                 ReportItem.error(
                     reports.messages.BoothConfigIsUsed(
-                        instance_name,
-                       "(running in systemd)",
+                        instance_name, "(running in systemd)",
                     )
                 )
             )
@@ -153,8 +147,7 @@ def config_destroy(
             report_processor.report(
                 ReportItem.error(
                     reports.messages.BoothConfigIsUsed(
-                        instance_name,
-                       "(enabled in systemd)",
+                        instance_name, "(enabled in systemd)",
                     )
                 )
             )
@@ -246,9 +239,9 @@ def config_text(env: LibraryEnvironment, instance_name=None, node_name=None):
             raise LibraryError()
 
     com_cmd = BoothGetConfig(env.report_processor, instance_name)
-    com_cmd.set_targets([
-        env.get_node_target_factory().get_target_from_hostname(node_name)
-    ])
+    com_cmd.set_targets(
+        [env.get_node_target_factory().get_target_from_hostname(node_name)]
+    )
     # pylint: disable=unsubscriptable-object
     # In general, pylint is right. And it cannot know in this case code is OK.
     # It is covered by tests.
@@ -259,9 +252,7 @@ def config_text(env: LibraryEnvironment, instance_name=None, node_name=None):
         return remote_data["config"]["data"].encode("utf-8")
     except KeyError:
         raise LibraryError(
-            ReportItem.error(
-                reports.messages.InvalidResponseFormat(node_name)
-            )
+            ReportItem.error(reports.messages.InvalidResponseFormat(node_name))
         )
 
 
@@ -290,7 +281,7 @@ def config_ticket_add(
                 booth_conf,
                 ticket_name,
                 options,
-                allow_unknown_options=allow_unknown_options
+                allow_unknown_options=allow_unknown_options,
             )
         )
         if report_processor.has_errors:
@@ -308,9 +299,7 @@ def config_ticket_add(
 
 
 def config_ticket_remove(
-    env: LibraryEnvironment,
-    ticket_name,
-    instance_name=None,
+    env: LibraryEnvironment, ticket_name, instance_name=None,
 ):
     """
     remove a ticket from booth configuration
@@ -370,9 +359,7 @@ def create_in_cluster(
     # validate
     if resource.find_for_config(resources_section, booth_env.config_path):
         report_processor.report(
-            ReportItem.error(
-                reports.messages.BoothAlreadyInCib(instance_name)
-            )
+            ReportItem.error(reports.messages.BoothAlreadyInCib(instance_name))
         )
     # verify the config exists and is readable
     try:
@@ -384,37 +371,36 @@ def create_in_cluster(
     # validation done
 
     create_id = partial(
-        resource.create_resource_id,
-        resources_section,
-        instance_name
+        resource.create_resource_id, resources_section, instance_name
     )
     get_agent = partial(
         find_valid_resource_agent_by_name,
         env.report_processor,
         env.cmd_runner(),
-        allowed_absent=allow_absent_resource_agent
+        allowed_absent=allow_absent_resource_agent,
     )
     create_primitive = partial(
-        primitive.create,
-        env.report_processor,
-        resources_section,
-        id_provider
+        primitive.create, env.report_processor, resources_section, id_provider
     )
     into_booth_group = partial(
         group.place_resource,
         group.provide_group(resources_section, create_id("group")),
     )
 
-    into_booth_group(create_primitive(
-        create_id("ip"),
-        get_agent("ocf:heartbeat:IPaddr2"),
-        instance_attributes={"ip": ip},
-    ))
-    into_booth_group(create_primitive(
-        create_id("service"),
-        get_agent("ocf:pacemaker:booth-site"),
-        instance_attributes={"config": booth_env.config_path},
-    ))
+    into_booth_group(
+        create_primitive(
+            create_id("ip"),
+            get_agent("ocf:heartbeat:IPaddr2"),
+            instance_attributes={"ip": ip},
+        )
+    )
+    into_booth_group(
+        create_primitive(
+            create_id("service"),
+            get_agent("ocf:pacemaker:booth-site"),
+            instance_attributes={"config": booth_env.config_path},
+        )
+    )
 
     env.push_cib()
 
@@ -479,10 +465,7 @@ def restart(
 
 
 def ticket_grant(
-    env: LibraryEnvironment,
-    ticket_name,
-    site_ip=None,
-    instance_name=None,
+    env: LibraryEnvironment, ticket_name, site_ip=None, instance_name=None,
 ):
     """
     Grant a ticket to the site specified by site_ip
@@ -493,19 +476,12 @@ def ticket_grant(
     string instance_name -- booth instance name
     """
     return _ticket_operation(
-        "grant",
-        env,
-        ticket_name,
-        site_ip=site_ip,
-        instance_name=instance_name,
+        "grant", env, ticket_name, site_ip=site_ip, instance_name=instance_name,
     )
 
 
 def ticket_revoke(
-    env: LibraryEnvironment,
-    ticket_name,
-    site_ip=None,
-    instance_name=None,
+    env: LibraryEnvironment, ticket_name, site_ip=None, instance_name=None,
 ):
     """
     Revoke a ticket from the site specified by site_ip
@@ -525,19 +501,14 @@ def ticket_revoke(
 
 
 def _ticket_operation(
-    operation,
-    env: LibraryEnvironment,
-    ticket_name,
-    site_ip,
-    instance_name
+    operation, env: LibraryEnvironment, ticket_name, site_ip, instance_name
 ):
     booth_env = env.get_booth_env(instance_name)
     _ensure_live_env(env, booth_env)
 
     if not site_ip:
         site_ip_list = resource.find_bound_ip(
-            get_resources(env.get_cib()),
-            booth_env.config_path
+            get_resources(env.get_cib()), booth_env.config_path
         )
         if len(site_ip_list) != 1:
             raise LibraryError(
@@ -547,9 +518,9 @@ def _ticket_operation(
             )
         site_ip = site_ip_list[0]
 
-    stdout, stderr, return_code = env.cmd_runner().run([
-        settings.booth_binary, operation, "-s", site_ip, ticket_name
-    ])
+    stdout, stderr, return_code = env.cmd_runner().run(
+        [settings.booth_binary, operation, "-s", site_ip, ticket_name]
+    )
 
     if return_code != 0:
         raise LibraryError(
@@ -565,9 +536,7 @@ def _ticket_operation(
 
 
 def config_sync(
-    env: LibraryEnvironment,
-    instance_name=None,
-    skip_offline_nodes=False,
+    env: LibraryEnvironment, instance_name=None, skip_offline_nodes=False,
 ):
     """
     Send specified local booth configuration to all nodes in the local cluster.
@@ -604,9 +573,11 @@ def config_sync(
                 os.path.basename(authfile_path) if authfile_path else None
             )
         else:
-            authfile_name, authfile_data, authfile_report_list = (
-                config_files.get_authfile_name_and_data(booth_conf)
-            )
+            (
+                authfile_name,
+                authfile_data,
+                authfile_report_list,
+            ) = config_files.get_authfile_name_and_data(booth_conf)
             report_processor.report_list(authfile_report_list)
     except RawFileError as e:
         report_processor.report(raw_file_error_report(e))
@@ -623,12 +594,11 @@ def config_sync(
         booth_conf_data,
         authfile=authfile_name,
         authfile_data=authfile_data,
-        skip_offline_targets=skip_offline_nodes
+        skip_offline_targets=skip_offline_nodes,
     )
     com_cmd.set_targets(
         env.get_node_target_factory().get_target_list(
-            cluster_nodes_names,
-            skip_non_existing=skip_offline_nodes,
+            cluster_nodes_names, skip_non_existing=skip_offline_nodes,
         )
     )
     run_and_raise(env.get_node_communicator(), com_cmd)
@@ -659,11 +629,15 @@ def enable_booth(env: LibraryEnvironment, instance_name=None):
                 )
             )
         )
-    env.report_processor.report(ReportItem.info(
-        reports.messages.ServiceActionSucceeded(
-            reports.const.SERVICE_ACTION_ENABLE, "booth", instance=instance_name
+    env.report_processor.report(
+        ReportItem.info(
+            reports.messages.ServiceActionSucceeded(
+                reports.const.SERVICE_ACTION_ENABLE,
+                "booth",
+                instance=instance_name,
+            )
         )
-    ))
+    )
 
 
 def disable_booth(env: LibraryEnvironment, instance_name=None):
@@ -761,7 +735,7 @@ def stop_booth(env: LibraryEnvironment, instance_name=None):
                     reports.const.SERVICE_ACTION_STOP,
                     "booth",
                     e.message,
-                    instance=instance_name
+                    instance=instance_name,
                 )
             )
         )
@@ -793,15 +767,14 @@ def pull_config(env: LibraryEnvironment, node_name, instance_name=None):
     env.report_processor.report(
         ReportItem.info(
             reports.messages.BoothFetchingConfigFromNode(
-                node_name,
-                config=instance_name,
+                node_name, config=instance_name,
             )
         )
     )
     com_cmd = BoothGetConfig(env.report_processor, instance_name)
-    com_cmd.set_targets([
-        env.get_node_target_factory().get_target_from_hostname(node_name)
-    ])
+    com_cmd.set_targets(
+        [env.get_node_target_factory().get_target_from_hostname(node_name)]
+    )
     # pylint: disable=unsubscriptable-object
     # In general, pylint is right. And it cannot know in this case code is OK.
     # It is covered by tests.
@@ -810,8 +783,7 @@ def pull_config(env: LibraryEnvironment, node_name, instance_name=None):
         # TODO adapt to new file transfer framework once it is written
         if (
             output["authfile"]["name"] is not None
-            and
-            output["authfile"]["data"]
+            and output["authfile"]["data"]
         ):
             authfile_name = output["authfile"]["name"]
             report_list = config_validators.check_instance_name(authfile_name)
@@ -819,14 +791,11 @@ def pull_config(env: LibraryEnvironment, node_name, instance_name=None):
                 raise LibraryError(*report_list)
             booth_key = FileInstance.for_booth_key(authfile_name)
             booth_key.write_raw(
-                base64.b64decode(
-                    output["authfile"]["data"].encode("utf-8")
-                ),
-                can_overwrite=True
+                base64.b64decode(output["authfile"]["data"].encode("utf-8")),
+                can_overwrite=True,
             )
         booth_env.config.write_raw(
-            output["config"]["data"].encode("utf-8"),
-            can_overwrite=True
+            output["config"]["data"].encode("utf-8"), can_overwrite=True
         )
         env.report_processor.report(
             ReportItem.info(
@@ -839,9 +808,7 @@ def pull_config(env: LibraryEnvironment, node_name, instance_name=None):
         report_processor.report(raw_file_error_report(e))
     except KeyError:
         raise LibraryError(
-            ReportItem.error(
-                reports.messages.InvalidResponseFormat(node_name)
-            )
+            ReportItem.error(reports.messages.InvalidResponseFormat(node_name))
         )
     if report_processor.has_errors:
         raise LibraryError()
@@ -871,8 +838,7 @@ def _find_resource_elements_for_operation(
     allow_multiple,
 ):
     booth_element_list = resource.find_for_config(
-        resources_section,
-        booth_env.config_path,
+        resources_section, booth_env.config_path,
     )
 
     if not booth_element_list:
@@ -885,8 +851,7 @@ def _find_resource_elements_for_operation(
         report_processor.report(
             ReportItem(
                 severity=get_severity(
-                    report_codes.FORCE_BOOTH_REMOVE_FROM_CIB,
-                    allow_multiple,
+                    report_codes.FORCE_BOOTH_REMOVE_FROM_CIB, allow_multiple,
                 ),
                 message=reports.messages.BoothMultipleTimesInCib(
                     booth_env.instance_name,
@@ -898,6 +863,7 @@ def _find_resource_elements_for_operation(
 
     return booth_element_list
 
+
 def _ensure_live_booth_env(booth_env):
     if booth_env.ghost_file_codes:
         raise LibraryError(
@@ -907,6 +873,7 @@ def _ensure_live_booth_env(booth_env):
                 )
             )
         )
+
 
 def _ensure_live_env(env: LibraryEnvironment, booth_env):
     not_live = (

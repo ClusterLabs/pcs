@@ -9,6 +9,7 @@ def separate_tail_option_candidates(arg_list):
 
     return arg_list, []
 
+
 def parse_add(arg_list):
     info, option_candidates = separate_tail_option_candidates(arg_list)
 
@@ -19,8 +20,9 @@ def parse_add(arg_list):
 
     if len(resource_specification) not in (1, 2):
         raise CmdLineInputError(
-            "invalid resource specification: '{0}'"
-            .format(" ".join(resource_specification))
+            "invalid resource specification: '{0}'".format(
+                " ".join(resource_specification)
+            )
         )
 
     if len(resource_specification) == 2:
@@ -33,5 +35,5 @@ def parse_add(arg_list):
         ticket,
         resource_id,
         resource_role,
-        parse_args.prepare_options(option_candidates)
+        parse_args.prepare_options(option_candidates),
     )

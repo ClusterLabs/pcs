@@ -2,10 +2,15 @@ import random
 import string
 from time import time as now
 
+
 class Session:
     def __init__(
-        self, sid, username=None, groups=None, is_authenticated=False,
-        ajax_id=None
+        self,
+        sid,
+        username=None,
+        groups=None,
+        is_authenticated=False,
+        ajax_id=None,
     ):
         # Session id propageted via cookies.
         self.__sid = sid
@@ -20,8 +25,7 @@ class Session:
         self.__ajax_id = None
         if self.__is_authenticated:
             self.__ajax_id = (
-                ajax_id if ajax_id
-                else f"{int(now())}-{random.randint(1, 100)}"
+                ajax_id if ajax_id else f"{int(now())}-{random.randint(1, 100)}"
             )
         # Groups of the user. Similary to username, it does not mean that the
         # user is authenticated when the groups are loaded.
@@ -64,6 +68,7 @@ class Session:
     def was_unused_last(self, seconds):
         return now() > self.__last_access + seconds
 
+
 class Storage:
     def __init__(self, lifetime_seconds):
         self.__sessions = {}
@@ -76,7 +81,8 @@ class Storage:
 
     def drop_expired(self):
         obsolete_sid_list = [
-            sid for sid, session in self.__sessions.items()
+            sid
+            for sid, session in self.__sessions.items()
             if session.was_unused_last(self.__lifetime_seconds)
         ]
         for sid in obsolete_sid_list:
@@ -105,8 +111,7 @@ class Storage:
             or
             # Do not let a user (an attacker?) to force us to use their sid.
             sid not in self.__sessions
-            or
-            self.__sessions[sid].was_unused_last(self.__lifetime_seconds)
+            or self.__sessions[sid].was_unused_last(self.__lifetime_seconds)
         )
 
     def __valid_sid(self, sid):
@@ -119,13 +124,10 @@ class Storage:
 
     def __generate_sid(self):
         for _ in range(10):
-            sid = ''.join(
-                random.choices(
-                    string.ascii_lowercase + string.digits,
-                    k=64
-                )
+            sid = "".join(
+                random.choices(string.ascii_lowercase + string.digits, k=64)
             )
             if sid not in self.__sessions:
                 return sid
-        #TODO what to do?
+        # TODO what to do?
         raise Exception("Cannot generate unique sid")

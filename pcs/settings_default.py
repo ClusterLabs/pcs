@@ -11,12 +11,10 @@ corosync_conf_dir = "/etc/corosync/"
 corosync_conf_file = os.path.join(corosync_conf_dir, "corosync.conf")
 corosync_uidgid_dir = os.path.join(corosync_conf_dir, "uidgid.d/")
 corosync_qdevice_net_server_certs_dir = os.path.join(
-    corosync_conf_dir,
-    "qnetd/nssdb"
+    corosync_conf_dir, "qnetd/nssdb"
 )
 corosync_qdevice_net_client_certs_dir = os.path.join(
-    corosync_conf_dir,
-    "qdevice/net/nssdb"
+    corosync_conf_dir, "qdevice/net/nssdb"
 )
 corosync_qdevice_net_client_ca_file_name = "qnetd-cacert.crt"
 corosync_authkey_file = os.path.join(corosync_conf_dir, "authkey")
@@ -40,7 +38,7 @@ crm_report = os.path.join(pacemaker_binaries, "crm_report")
 crm_rule = os.path.join(pacemaker_binaries, "crm_rule")
 crm_verify = os.path.join(pacemaker_binaries, "crm_verify")
 cibadmin = os.path.join(pacemaker_binaries, "cibadmin")
-crm_mon_schema = '/usr/share/pacemaker/crm_mon.rng'
+crm_mon_schema = "/usr/share/pacemaker/crm_mon.rng"
 agent_metadata_schema = "/usr/share/resource-agents/ra-api-1.dtd"
 pcsd_var_location = "/var/lib/pcsd/"
 pcsd_ruby_socket = "/run/pcsd-ruby.socket"
@@ -78,17 +76,19 @@ default_ssl_ciphers = "DEFAULT:!RC4:!3DES:@STRENGTH"
 # Ssl options are based on default options in python (maybe with some extra
 # options). Format here is the same as the PCSD_SSL_OPTIONS environment
 # variable format (string with coma as a delimiter).
-default_ssl_options = ",".join([
-    "OP_NO_COMPRESSION",
-    "OP_CIPHER_SERVER_PREFERENCE",
-    "OP_SINGLE_DH_USE",
-    "OP_SINGLE_ECDH_USE",
-    "OP_NO_SSLv2",
-    "OP_NO_SSLv3",
-    "OP_NO_TLSv1",
-    "OP_NO_TLSv1_1",
-    "OP_NO_RENEGOTIATION",
-])
+default_ssl_options = ",".join(
+    [
+        "OP_NO_COMPRESSION",
+        "OP_CIPHER_SERVER_PREFERENCE",
+        "OP_SINGLE_DH_USE",
+        "OP_SINGLE_ECDH_USE",
+        "OP_NO_SSLv2",
+        "OP_NO_SSLv3",
+        "OP_NO_TLSv1",
+        "OP_NO_TLSv1_1",
+        "OP_NO_RENEGOTIATION",
+    ]
+)
 # Set pcsd_gem_path to None if there are no bundled ruby gems and the path does
 # not exists.
 pcsd_gem_path = "vendor/bundle/ruby"

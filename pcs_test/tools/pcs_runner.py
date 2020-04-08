@@ -5,8 +5,7 @@ from pcs_test.tools.misc import get_test_resource as rc
 from pcs import utils
 
 __pcs_location = os.path.join(
-    os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
-    "pcs_for_tests"
+    os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "pcs_for_tests"
 )
 _temp_cib = rc("temp-cib.xml")
 
@@ -27,13 +26,11 @@ class PcsRunner:
             self.cib_file,
             args,
             corosync_conf_opt=self.corosync_conf_opt,
-            mock_settings=self.mock_settings
+            mock_settings=self.mock_settings,
         )
 
 
-def pcs(
-    cib_file, args, corosync_conf_opt=None, mock_settings=None
-):
+def pcs(cib_file, args, corosync_conf_opt=None, mock_settings=None):
     """
     Run pcs with -f on specified file
     Return tuple with:

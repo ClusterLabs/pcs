@@ -21,10 +21,12 @@ class GetQuorumOptionsTest(TestCase):
         self.assertFalse(facade.need_qdevice_reload)
 
     def test_empty_quorum(self):
-        config = dedent("""\
+        config = dedent(
+            """\
             quorum {
             }
-        """)
+        """
+        )
         facade = lib.ConfigFacade.from_string(config)
         options = facade.get_quorum_options()
         self.assertEqual({}, options)
@@ -32,11 +34,13 @@ class GetQuorumOptionsTest(TestCase):
         self.assertFalse(facade.need_qdevice_reload)
 
     def test_no_options(self):
-        config = dedent("""\
+        config = dedent(
+            """\
             quorum {
                 provider: corosync_votequorum
             }
-        """)
+        """
+        )
         facade = lib.ConfigFacade.from_string(config)
         options = facade.get_quorum_options()
         self.assertEqual({}, options)
@@ -44,7 +48,8 @@ class GetQuorumOptionsTest(TestCase):
         self.assertFalse(facade.need_qdevice_reload)
 
     def test_some_options(self):
-        config = dedent("""\
+        config = dedent(
+            """\
             quorum {
                 provider: corosync_votequorum
                 wait_for_all: 0
@@ -53,7 +58,8 @@ class GetQuorumOptionsTest(TestCase):
                 last_man_standing: 0
                 last_man_standing_window: 1000
             }
-        """)
+        """
+        )
         facade = lib.ConfigFacade.from_string(config)
         options = facade.get_quorum_options()
         self.assertEqual(
@@ -63,31 +69,29 @@ class GetQuorumOptionsTest(TestCase):
                 "last_man_standing_window": "1000",
                 "wait_for_all": "0",
             },
-            options
+            options,
         )
         self.assertFalse(facade.need_stopped_cluster)
         self.assertFalse(facade.need_qdevice_reload)
 
     def test_option_repeated(self):
-        config = dedent("""\
+        config = dedent(
+            """\
             quorum {
                 wait_for_all: 0
                 wait_for_all: 1
             }
-        """)
+        """
+        )
         facade = lib.ConfigFacade.from_string(config)
         options = facade.get_quorum_options()
-        self.assertEqual(
-            {
-                "wait_for_all": "1",
-            },
-            options
-        )
+        self.assertEqual({"wait_for_all": "1",}, options)
         self.assertFalse(facade.need_stopped_cluster)
         self.assertFalse(facade.need_qdevice_reload)
 
     def test_quorum_repeated(self):
-        config = dedent("""\
+        config = dedent(
+            """\
             quorum {
                 wait_for_all: 0
                 last_man_standing: 0
@@ -96,7 +100,8 @@ class GetQuorumOptionsTest(TestCase):
                 last_man_standing_window: 1000
                 wait_for_all: 1
             }
-        """)
+        """
+        )
         facade = lib.ConfigFacade.from_string(config)
         options = facade.get_quorum_options()
         self.assertEqual(
@@ -105,7 +110,7 @@ class GetQuorumOptionsTest(TestCase):
                 "last_man_standing_window": "1000",
                 "wait_for_all": "1",
             },
-            options
+            options,
         )
         self.assertFalse(facade.need_stopped_cluster)
         self.assertFalse(facade.need_qdevice_reload)
@@ -113,28 +118,34 @@ class GetQuorumOptionsTest(TestCase):
 
 class IsEnabledAutoTieBreaker(TestCase):
     def test_enabled(self):
-        config = dedent("""\
+        config = dedent(
+            """\
             quorum {
                 auto_tie_breaker: 1
             }
-        """)
+        """
+        )
         facade = lib.ConfigFacade.from_string(config)
         self.assertTrue(facade.is_enabled_auto_tie_breaker())
 
     def test_disabled(self):
-        config = dedent("""\
+        config = dedent(
+            """\
             quorum {
                 auto_tie_breaker: 0
             }
-        """)
+        """
+        )
         facade = lib.ConfigFacade.from_string(config)
         self.assertFalse(facade.is_enabled_auto_tie_breaker())
 
     def test_no_value(self):
-        config = dedent("""\
+        config = dedent(
+            """\
             quorum {
             }
-        """)
+        """
+        )
         facade = lib.ConfigFacade.from_string(config)
         self.assertFalse(facade.is_enabled_auto_tie_breaker())
 
@@ -155,12 +166,14 @@ class SetQuorumOptionsTest(TestCase):
         self.assertTrue(facade.need_stopped_cluster)
         self.assertFalse(facade.need_qdevice_reload)
         self.assertEqual(
-            dedent("""\
+            dedent(
+                """\
                 quorum {
                     wait_for_all: 0
                 }
-            """),
-            facade.config.export()
+            """
+            ),
+            facade.config.export(),
         )
 
     def test_del_missing_section(self):
@@ -185,13 +198,11 @@ class SetQuorumOptionsTest(TestCase):
         self.assertTrue(facade.need_stopped_cluster)
         self.assertFalse(facade.need_qdevice_reload)
         test_facade = lib.ConfigFacade.from_string(facade.config.export())
-        self.assertEqual(
-            expected_options,
-            test_facade.get_quorum_options()
-        )
+        self.assertEqual(expected_options, test_facade.get_quorum_options())
 
     def test_complex(self):
-        config = dedent("""\
+        config = dedent(
+            """\
             quorum {
                 wait_for_all: 0
                 last_man_standing_window: 1000
@@ -200,7 +211,8 @@ class SetQuorumOptionsTest(TestCase):
                 wait_for_all: 0
                 last_man_standing: 1
             }
-        """)
+        """
+        )
         facade = lib.ConfigFacade.from_string(config)
         facade.set_quorum_options(
             {
@@ -219,7 +231,7 @@ class SetQuorumOptionsTest(TestCase):
                 "last_man_standing": "1",
                 "wait_for_all": "1",
             },
-            test_facade.get_quorum_options()
+            test_facade.get_quorum_options(),
         )
 
     def test_2nodes_atb_on(self):
@@ -232,8 +244,7 @@ class SetQuorumOptionsTest(TestCase):
         self.assertTrue(facade.need_stopped_cluster)
         self.assertFalse(facade.need_qdevice_reload)
         self.assertEqual(
-            "1",
-            facade.get_quorum_options().get("auto_tie_breaker", None)
+            "1", facade.get_quorum_options().get("auto_tie_breaker", None)
         )
 
         two_node = self.get_two_node(facade)
@@ -249,8 +260,7 @@ class SetQuorumOptionsTest(TestCase):
         self.assertTrue(facade.need_stopped_cluster)
         self.assertFalse(facade.need_qdevice_reload)
         self.assertEqual(
-            "0",
-            facade.get_quorum_options().get("auto_tie_breaker", None)
+            "0", facade.get_quorum_options().get("auto_tie_breaker", None)
         )
 
         two_node = self.get_two_node(facade)
@@ -266,8 +276,7 @@ class SetQuorumOptionsTest(TestCase):
         self.assertTrue(facade.need_stopped_cluster)
         self.assertFalse(facade.need_qdevice_reload)
         self.assertEqual(
-            "1",
-            facade.get_quorum_options().get("auto_tie_breaker", None)
+            "1", facade.get_quorum_options().get("auto_tie_breaker", None)
         )
 
         two_node = self.get_two_node(facade)
@@ -283,8 +292,7 @@ class SetQuorumOptionsTest(TestCase):
         self.assertTrue(facade.need_stopped_cluster)
         self.assertFalse(facade.need_qdevice_reload)
         self.assertEqual(
-            "0",
-            facade.get_quorum_options().get("auto_tie_breaker", None)
+            "0", facade.get_quorum_options().get("auto_tie_breaker", None)
         )
 
         two_node = self.get_two_node(facade)

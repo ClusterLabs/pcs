@@ -4,7 +4,8 @@ from pcs.common.reports import codes as report_codes
 
 OFFLINE_ERROR_MSG = "Could not resolve host"
 
-class EnvConfigMixin():
+
+class EnvConfigMixin:
     def __init__(self, call_collection, wrap_helper, config):
         # pylint: disable=unused-argument
         self.__calls = call_collection
@@ -14,14 +15,15 @@ class EnvConfigMixin():
         self, label=None, dest_list=None, result=None, **kwargs
     ):
         if kwargs.get("was_connected", True):
-            result = result if result is not None else {
-                "code": "success",
-                "message": "",
-            }
+            result = (
+                result
+                if result is not None
+                else {"code": "success", "message": "",}
+            )
 
             kwargs["results"] = {
                 "pacemaker_remote stop": result,
-                "pacemaker_remote disable": result
+                "pacemaker_remote disable": result,
             }
         elif result is not None:
             raise AssertionError(
@@ -51,21 +53,18 @@ class EnvConfigMixin():
                     "command": "disable",
                 },
             },
-            **kwargs
+            **kwargs,
         )
 
-    def remove_authkey(
-        self, communication_list, result=None, **kwargs
-    ):
+    def remove_authkey(self, communication_list, result=None, **kwargs):
         if kwargs.get("was_connected", True):
-            result = result if result is not None else {
-                "code": "deleted",
-                "message": "",
-            }
+            result = (
+                result
+                if result is not None
+                else {"code": "deleted", "message": "",}
+            )
 
-            kwargs["results"] = {
-                "pacemaker_remote authkey": result
-            }
+            kwargs["results"] = {"pacemaker_remote authkey": result}
         elif result is not None:
             raise AssertionError(
                 "Keyword 'result' makes no sense with 'was_connected=False'"
@@ -73,21 +72,18 @@ class EnvConfigMixin():
         self.config.http.remove_file(
             communication_list=communication_list,
             files={
-                "pacemaker_remote authkey": {
-                    "type": "pcmk_remote_authkey",
-                }
+                "pacemaker_remote authkey": {"type": "pcmk_remote_authkey",}
             },
-            **kwargs
+            **kwargs,
         )
 
-REPORTS = (fixture.ReportStore()
+
+REPORTS = (
+    fixture.ReportStore()
     .info(
         "pcmk_remote_disable_stop_started",
         report_codes.SERVICE_COMMANDS_ON_NODES_STARTED,
-        action_list=[
-            "pacemaker_remote stop",
-            "pacemaker_remote disable",
-        ],
+        action_list=["pacemaker_remote stop", "pacemaker_remote disable",],
     )
     .info(
         "pcmk_remote_disable_success",
@@ -111,13 +107,14 @@ REPORTS = (fixture.ReportStore()
     )
 )
 
-EXTRA_REPORTS = (fixture.ReportStore()
+EXTRA_REPORTS = (
+    fixture.ReportStore()
     .error(
         "manage_services_connection_failed",
         report_codes.NODE_COMMUNICATION_ERROR_UNABLE_TO_CONNECT,
         command="remote/manage_services",
         reason=OFFLINE_ERROR_MSG,
-        force_code=report_codes.SKIP_OFFLINE_NODES
+        force_code=report_codes.SKIP_OFFLINE_NODES,
     )
     .as_warn(
         "manage_services_connection_failed",
@@ -129,8 +126,7 @@ EXTRA_REPORTS = (fixture.ReportStore()
         command="remote/remove_file",
     )
     .as_warn(
-        "remove_file_connection_failed",
-        "remove_file_connection_failed_warn",
+        "remove_file_connection_failed", "remove_file_connection_failed_warn",
     )
     .error(
         "authkey_remove_failed",
@@ -139,10 +135,7 @@ EXTRA_REPORTS = (fixture.ReportStore()
         file_description="pacemaker authkey",
         force_code=report_codes.SKIP_FILE_DISTRIBUTION_ERRORS,
     )
-    .as_warn(
-        "authkey_remove_failed",
-        "authkey_remove_failed_warn",
-    )
+    .as_warn("authkey_remove_failed", "authkey_remove_failed_warn",)
     .error(
         "pcmk_remote_disable_failed",
         report_codes.SERVICE_COMMAND_ON_NODE_ERROR,
@@ -150,17 +143,11 @@ EXTRA_REPORTS = (fixture.ReportStore()
         service_command_description="pacemaker_remote disable",
         force_code=report_codes.SKIP_ACTION_ON_NODES_ERRORS,
     )
-    .as_warn(
-        "pcmk_remote_disable_failed",
-        "pcmk_remote_disable_failed_warn",
-    )
+    .as_warn("pcmk_remote_disable_failed", "pcmk_remote_disable_failed_warn",)
     .copy(
         "pcmk_remote_disable_failed",
         "pcmk_remote_stop_failed",
         service_command_description="pacemaker_remote stop",
     )
-    .as_warn(
-        "pcmk_remote_stop_failed",
-        "pcmk_remote_stop_failed_warn",
-    )
+    .as_warn("pcmk_remote_stop_failed", "pcmk_remote_stop_failed_warn",)
 )

@@ -8,7 +8,8 @@ from pcs_test.tools.assertions import assert_xml_equal
 
 CALL_TYPE_RUNNER = "CALL_TYPE_RUNNER"
 
-class CheckStdinEqual():
+
+class CheckStdinEqual:
     def __init__(self, expected_stdin):
         self.expected_stdin = expected_stdin
 
@@ -19,11 +20,11 @@ class CheckStdinEqual():
                     "With command\n\n    '{0}'"
                     "\n\nexpected stdin:\n\n'{1}'"
                     "\n\nbut was:\n\n'{2}'"
-                )
-                .format(command, self.expected_stdin, stdin)
+                ).format(command, self.expected_stdin, stdin)
             )
 
-class CheckStdinEqualXml():
+
+class CheckStdinEqualXml:
     def __init__(self, expected_stdin):
         self.expected_stdin = expected_stdin
 
@@ -34,8 +35,9 @@ class CheckStdinEqualXml():
             (
                 "Trying to run command no. {0}"
                 "\n\n    '{1}'\n\nwith expected xml stdin.\n"
-            ).format(order_num, command)
+            ).format(order_num, command),
         )
+
 
 def check_no_stdin(stdin, command, order_num):
     if stdin:
@@ -43,9 +45,9 @@ def check_no_stdin(stdin, command, order_num):
             (
                 "With command\n\n    '{0}'\n\nno stdin expected but was"
                 "\n\n'{1}'"
-            )
-            .format(command, stdin)
+            ).format(command, stdin)
         )
+
 
 COMMAND_COMPLETIONS = {
     "cibadmin": path.join(settings.pacemaker_binaries, "cibadmin"),
@@ -67,20 +69,17 @@ COMMAND_COMPLETIONS = {
     "stonith_admin": path.join(settings.pacemaker_binaries, "stonith_admin"),
 }
 
+
 def complete_command(command):
     for shortcut, full_path in COMMAND_COMPLETIONS.items():
-        if (
-            command == shortcut
-            or
-            command.startswith(f"{shortcut} ")
-        ):
-            return full_path + command[len(shortcut):]
+        if command == shortcut or command.startswith(f"{shortcut} "):
+            return full_path + command[len(shortcut) :]
     return command
 
+
 def bad_call(order_num, expected_command, entered_command):
-    return (
-        "As {0}. command expected\n    '{1}'\nbut was\n    '{2}'"
-        .format(order_num, expected_command, entered_command)
+    return "As {0}. command expected\n    '{1}'\nbut was\n    '{2}'".format(
+        order_num, expected_command, entered_command
     )
 
 
@@ -103,8 +102,7 @@ class Call:
 
     def __repr__(self):
         return str("<Runner '{0}' returncode='{1}'>").format(
-            self.command,
-            self.returncode
+            self.command, self.returncode
         )
 
 
@@ -129,4 +127,4 @@ class Runner:
             )
 
         call.check_stdin(stdin_string, command, i)
-        return  call.stdout, call.stderr, call.returncode
+        return call.stdout, call.stderr, call.returncode

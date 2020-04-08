@@ -15,9 +15,15 @@ from pcs.lib.errors import LibraryError
 from pcs.lib.pacemaker.live import get_cluster_status_xml
 from pcs.lib.pacemaker.state import ClusterState
 
+
 def add_level(
-    lib_env: LibraryEnvironment, level, target_type, target_value, devices,
-    force_device=False, force_node=False
+    lib_env: LibraryEnvironment,
+    level,
+    target_type,
+    target_value,
+    devices,
+    force_device=False,
+    force_node=False,
 ):
     """
     Validate and add a new fencing level
@@ -49,11 +55,12 @@ def add_level(
             get_cluster_status_xml(lib_env.cmd_runner())
         ).node_section.nodes,
         force_device,
-        force_node
+        force_node,
     )
     if lib_env.report_processor.has_errors:
         raise LibraryError()
     lib_env.push_cib()
+
 
 def get_config(lib_env: LibraryEnvironment):
     """
@@ -67,6 +74,7 @@ def get_config(lib_env: LibraryEnvironment):
     cib = lib_env.get_cib()
     return cib_fencing_topology.export(get_fencing_topology(cib))
 
+
 def remove_all_levels(lib_env: LibraryEnvironment):
     """
     Remove all fencing levels
@@ -76,6 +84,7 @@ def remove_all_levels(lib_env: LibraryEnvironment):
         get_fencing_topology(lib_env.get_cib())
     )
     lib_env.push_cib()
+
 
 def remove_levels_by_params(
     lib_env: LibraryEnvironment,
@@ -104,7 +113,7 @@ def remove_levels_by_params(
         target_type,
         target_value,
         devices,
-        ignore_if_missing
+        ignore_if_missing,
     )
 
     if not target_may_be_a_device or target_type != TARGET_TYPE_NODE:
@@ -133,8 +142,7 @@ def remove_levels_by_params(
     for report_item in report_list:
         if (
             report_item.message.code
-            ==
-            report.codes.CIB_FENCING_LEVEL_DOES_NOT_EXIST
+            == report.codes.CIB_FENCING_LEVEL_DOES_NOT_EXIST
         ):
             level_not_found = True
             break
@@ -146,12 +154,7 @@ def remove_levels_by_params(
     if devices:
         target_and_devices.extend(devices)
     report_list_second = cib_fencing_topology.remove_levels_by_params(
-        topology_el,
-        level,
-        None,
-        None,
-        target_and_devices,
-        ignore_if_missing
+        topology_el, level, None, None, target_and_devices, ignore_if_missing
     )
     if not report.has_errors(report_list_second):
         lib_env.report_processor.report_list(report_list_second)
@@ -161,6 +164,7 @@ def remove_levels_by_params(
     lib_env.report_processor.report_list(report_list)
     lib_env.report_processor.report_list(report_list_second)
     raise LibraryError()
+
 
 def verify(lib_env: LibraryEnvironment):
     """
@@ -175,7 +179,7 @@ def verify(lib_env: LibraryEnvironment):
             get_resources(cib),
             ClusterState(
                 get_cluster_status_xml(lib_env.cmd_runner())
-            ).node_section.nodes
+            ).node_section.nodes,
         )
     )
     if lib_env.report_processor.has_errors:

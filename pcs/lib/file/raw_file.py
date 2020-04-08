@@ -7,7 +7,7 @@ from typing import Optional
 # places
 # pylint: disable=unused-import
 from pcs.common import reports
-from pcs.common.file import(
+from pcs.common.file import (
     RawFile as RealFile,
     RawFileError,
     RawFileInterface,
@@ -16,10 +16,11 @@ from pcs.common.reports import ReportItem
 
 # TODO add logging (logger / debug reports ?)
 
+
 def raw_file_error_report(
     error: RawFileError,
     force_code: Optional[reports.types.ForceCode] = None,
-    is_forced_or_warning: bool = False
+    is_forced_or_warning: bool = False,
 ) -> ReportItem:
     """
     Translate a RawFileError instance to a report
@@ -40,6 +41,7 @@ def raw_file_error_report(
             ),
         ),
     )
+
 
 def export_ghost_file(ghost_file):
     """
@@ -81,7 +83,7 @@ class GhostFile(RawFileInterface):
                 self.metadata,
                 RawFileError.ACTION_READ,
                 # get "no such file" message as defined and worded in the system
-                os.strerror(errno.ENOENT)
+                os.strerror(errno.ENOENT),
             )
         return self.__file_data
 

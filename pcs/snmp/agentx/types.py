@@ -1,4 +1,5 @@
 from collections import namedtuple
+
 # pylint: disable=import-error
 import pyagentx
 
@@ -36,6 +37,7 @@ class Oid(
       If set, this entity is threated as object identifier in MIB  and data_type
       is ignored.
     """
+
     def __new__(cls, oid, str_oid, data_type=None, member_list=None):
         return super(Oid, cls).__new__(
             cls, oid, str_oid, data_type, member_list

@@ -15,9 +15,7 @@ cluster_cmd = create_router(
         "help": lambda lib, argv, modifiers: usage.cluster(argv),
         "setup": cluster.cluster_setup,
         "sync": create_router(
-            {
-                "corosync": cluster.sync_nodes,
-            },
+            {"corosync": cluster.sync_nodes,},
             ["cluster", "sync"],
             default_cmd="corosync",
         ),
@@ -41,7 +39,7 @@ cluster_cmd = create_router(
                 "remove": cluster.link_remove,
                 "update": cluster.link_update,
             },
-            ["cluster", "link"]
+            ["cluster", "link"],
         ),
         "node": create_router(
             {
@@ -61,7 +59,7 @@ cluster_cmd = create_router(
                     resource.resource_remove
                 ),
             },
-            ["cluster", "node"]
+            ["cluster", "node"],
         ),
         "uidgid": cluster.cluster_uidgid,
         "corosync": cluster.cluster_get_corosync_conf,
@@ -70,7 +68,6 @@ cluster_cmd = create_router(
         "verify": cluster.cluster_verify,
         "report": cluster.cluster_report,
         "remove_nodes_from_cib": cluster.remove_nodes_from_cib,
-
         # removed commands
         # These print error messages which point users to the changes section in
         # pcs manpage.
@@ -88,7 +85,7 @@ cluster_cmd = create_router(
                     "pcs cluster node remove-guest",
                 ),
             },
-            ["cluster", "node"]
+            ["cluster", "node"],
         ),
         "standby": lambda lib, argv, modifiers: raise_command_replaced(
             "pcs node standby"
@@ -97,5 +94,5 @@ cluster_cmd = create_router(
             "pcs node unstandby"
         ),
     },
-    ["cluster"]
+    ["cluster"],
 )

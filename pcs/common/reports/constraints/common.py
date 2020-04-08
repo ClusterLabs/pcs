@@ -1,8 +1,9 @@
 def constraint_plain(constraint_type, constraint_info, with_id=False):
     return "{0} {1}".format(
         constraint_type,
-        ' '.join(prepare_options(constraint_info['options'], with_id))
+        " ".join(prepare_options(constraint_info["options"], with_id)),
     )
+
 
 def resource_sets(set_list, with_id=True):
     """
@@ -19,15 +20,18 @@ def resource_sets(set_list, with_id=True):
 
     return report
 
+
 def options(options_dict):
     return [
-        key+"="+value
+        key + "=" + value
         for key, value in sorted(options_dict.items())
         if key != "id"
     ]
 
+
 def id_from_options(options_dict):
-    return "(id:"+options_dict.get("id", "")+")"
+    return "(id:" + options_dict.get("id", "") + ")"
+
 
 def constraint_with_sets(constraint_info, with_id=True):
     """
@@ -37,15 +41,12 @@ def constraint_with_sets(constraint_info, with_id=True):
     options_dict = options(constraint_info["options"])
     return " ".join(
         resource_sets(constraint_info["resource_sets"], with_id)
-        +
-        (["setoptions"] + options_dict if options_dict else [])
-        +
-        ([id_from_options(constraint_info["options"])] if with_id else [])
+        + (["setoptions"] + options_dict if options_dict else [])
+        + ([id_from_options(constraint_info["options"])] if with_id else [])
     )
 
+
 def prepare_options(options_dict, with_id=True):
-    return (
-        options(options_dict)
-        +
-        ([id_from_options(options_dict)] if with_id else [])
+    return options(options_dict) + (
+        [id_from_options(options_dict)] if with_id else []
     )

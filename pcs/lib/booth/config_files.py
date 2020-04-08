@@ -16,13 +16,11 @@ def get_all_configs_file_names():
     return [
         file_name
         for file_name in os.listdir(settings.booth_config_dir)
-        if
-            file_name.endswith(".conf")
-            and
-            len(file_name) > len(".conf")
-            and
-            os.path.isfile(os.path.join(settings.booth_config_dir, file_name))
+        if file_name.endswith(".conf")
+        and len(file_name) > len(".conf")
+        and os.path.isfile(os.path.join(settings.booth_config_dir, file_name))
     ]
+
 
 def get_authfile_name_and_data(booth_conf_facade):
     """

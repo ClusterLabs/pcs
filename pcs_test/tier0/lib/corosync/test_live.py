@@ -14,15 +14,13 @@ from pcs.lib.corosync import live as lib
 
 # pylint: disable=no-self-use
 
+
 class GetLocalCorosyncConfTest(TestCase):
     def test_success(self):
         path = rc("corosync.conf")
         settings.corosync_conf_file = path
         with open(path) as a_file:
-            self.assertEqual(
-                lib.get_local_corosync_conf(),
-                a_file.read()
-            )
+            self.assertEqual(lib.get_local_corosync_conf(), a_file.read())
 
     def test_error(self):
         path = rc("corosync.conf.nonexistent")
@@ -32,11 +30,8 @@ class GetLocalCorosyncConfTest(TestCase):
             (
                 severity.ERROR,
                 report_codes.UNABLE_TO_READ_COROSYNC_CONFIG,
-                {
-                    "path": path,
-                    "reason": "No such file or directory",
-                }
-            )
+                {"path": path, "reason": "No such file or directory",},
+            ),
         )
 
 
@@ -48,30 +43,22 @@ class GetQuorumStatusTextTest(TestCase):
     def test_success(self):
         self.mock_runner.run.return_value = ("status info", "", 0)
         self.assertEqual(
-            "status info",
-            lib.get_quorum_status_text(self.mock_runner)
+            "status info", lib.get_quorum_status_text(self.mock_runner)
         )
-        self.mock_runner.run.assert_called_once_with([
-            self.quorum_tool, "-p"
-        ])
+        self.mock_runner.run.assert_called_once_with([self.quorum_tool, "-p"])
 
     def test_success_with_retval_1(self):
         self.mock_runner.run.return_value = ("status info", "", 1)
         self.assertEqual(
-            "status info",
-            lib.get_quorum_status_text(self.mock_runner)
+            "status info", lib.get_quorum_status_text(self.mock_runner)
         )
-        self.mock_runner.run.assert_called_once_with([
-            self.quorum_tool, "-p"
-        ])
+        self.mock_runner.run.assert_called_once_with([self.quorum_tool, "-p"])
 
     def test_error(self):
         self.mock_runner.run.return_value = ("some info", "status error", 2)
         with self.assertRaises(lib.QuorumStatusReadException) as cm:
             lib.get_quorum_status_text(self.mock_runner)
-        self.mock_runner.run.assert_called_once_with([
-            self.quorum_tool, "-p"
-        ])
+        self.mock_runner.run.assert_called_once_with([self.quorum_tool, "-p"])
         self.assertEqual(cm.exception.reason, "status error")
 
 
@@ -91,9 +78,9 @@ class SetExpectedVotesTest(TestCase):
 
         lib.set_expected_votes(mock_runner, 3)
 
-        mock_runner.run.assert_called_once_with([
-            self.path("corosync-quorumtool"), "-e", "3"
-        ])
+        mock_runner.run.assert_called_once_with(
+            [self.path("corosync-quorumtool"), "-e", "3"]
+        )
 
     def test_error(self):
         cmd_retval = 1
@@ -107,21 +94,21 @@ class SetExpectedVotesTest(TestCase):
             (
                 severity.ERROR,
                 report_codes.COROSYNC_QUORUM_SET_EXPECTED_VOTES_ERROR,
-                {
-                    "reason": cmd_stderr,
-                }
-            )
+                {"reason": cmd_stderr,},
+            ),
         )
 
-        mock_runner.run.assert_called_once_with([
-            self.path("corosync-quorumtool"), "-e", "3"
-        ])
+        mock_runner.run.assert_called_once_with(
+            [self.path("corosync-quorumtool"), "-e", "3"]
+        )
 
 
 class QuorumStatusParse(TestCase):
     # pylint: disable=protected-access
     def test_quorate_no_qdevice(self):
-        status = lib.QuorumStatus.from_string(dedent("""\
+        status = lib.QuorumStatus.from_string(
+            dedent(
+                """\
             Quorum information
             ------------------
             Date:             Fri Jan 16 13:03:28 2015
@@ -145,7 +132,9 @@ class QuorumStatusParse(TestCase):
                      1          3         NR rh70-node1
                      2          2         NR rh70-node2 (local)
                      3          1         NR rh70-node3
-        """))
+        """
+            )
+        )
         self.assertEqual(status.is_quorate, True)
         self.assertEqual(status.votes_needed_for_quorum, 2)
         self.assertEqual(status.qdevice_votes, 0)
@@ -159,7 +148,9 @@ class QuorumStatusParse(TestCase):
         )
 
     def test_quorate_with_qdevice(self):
-        status = lib.QuorumStatus.from_string(dedent("""\
+        status = lib.QuorumStatus.from_string(
+            dedent(
+                """\
             Quorum information
             ------------------
             Date:             Fri Jan 16 13:03:28 2015
@@ -184,7 +175,9 @@ class QuorumStatusParse(TestCase):
                      2          2    A,V,MNW rh70-node2 (local)
                      3          1    A,V,MNW rh70-node3
                      0          4            Qdevice
-        """))
+        """
+            )
+        )
         self.assertEqual(status.is_quorate, True)
         self.assertEqual(status.votes_needed_for_quorum, 6)
         self.assertEqual(status.qdevice_votes, 4)
@@ -198,7 +191,9 @@ class QuorumStatusParse(TestCase):
         )
 
     def test_quorate_with_qdevice_lost(self):
-        status = lib.QuorumStatus.from_string(dedent("""\
+        status = lib.QuorumStatus.from_string(
+            dedent(
+                """\
             Quorum information
             ------------------
             Date:             Fri Jan 16 13:03:28 2015
@@ -223,7 +218,9 @@ class QuorumStatusParse(TestCase):
                      2          2   NA,V,MNW rh70-node2 (local)
                      3          1   NA,V,MNW rh70-node3
                      0          0            Qdevice (votes 4)
-        """))
+        """
+            )
+        )
         self.assertEqual(status.is_quorate, True)
         self.assertEqual(status.votes_needed_for_quorum, 6)
         self.assertEqual(status.qdevice_votes, 0)
@@ -237,7 +234,10 @@ class QuorumStatusParse(TestCase):
         )
 
     def test_no_quorate_no_qdevice(self):
-        status = lib.QuorumStatus.from_string(dedent("""\
+        # pylint: disable=trailing-whitespace
+        status = lib.QuorumStatus.from_string(
+            dedent(
+                """\
             Quorum information
             ------------------
             Date:             Fri Jan 16 13:03:35 2015
@@ -259,19 +259,21 @@ class QuorumStatusParse(TestCase):
             ----------------------
                 Nodeid      Votes    Qdevice Name
                          1          1         NR rh70-node1 (local)
-        """))
+        """
+            )
+        )
         self.assertEqual(status.is_quorate, False)
         self.assertEqual(status.votes_needed_for_quorum, 2)
         self.assertEqual(status.qdevice_votes, 0)
         self.assertEqual(
             status._data["node_list"],
-            [
-                {"name": "rh70-node1", "votes": 1, "local": True},
-            ],
+            [{"name": "rh70-node1", "votes": 1, "local": True},],
         )
 
     def test_no_quorate_with_qdevice(self):
-        status = lib.QuorumStatus.from_string(dedent("""\
+        status = lib.QuorumStatus.from_string(
+            dedent(
+                """\
             Quorum information
             ------------------
             Date:             Fri Jan 16 13:03:35 2015
@@ -294,15 +296,15 @@ class QuorumStatusParse(TestCase):
                 Nodeid      Votes    Qdevice Name
                      1          1         NR rh70-node1 (local)
                      0          0            Qdevice (votes 1)
-        """))
+        """
+            )
+        )
         self.assertEqual(status.is_quorate, False)
         self.assertEqual(status.votes_needed_for_quorum, 2)
         self.assertEqual(status.qdevice_votes, 0)
         self.assertEqual(
             status._data["node_list"],
-            [
-                {"name": "rh70-node1", "votes": 1, "local": True},
-            ],
+            [{"name": "rh70-node1", "votes": 1, "local": True},],
         )
 
     def test_error_empty_string(self):
@@ -310,12 +312,15 @@ class QuorumStatusParse(TestCase):
             lib.QuorumStatus.from_string("")
         self.assertEqual(
             cm.exception.reason,
-            "Missing required section(s): 'node_list', 'quorate', 'quorum'"
+            "Missing required section(s): 'node_list', 'quorate', 'quorum'",
         )
 
     def test_error_missing_quorum(self):
+        # pylint: disable=trailing-whitespace
         with self.assertRaises(lib.QuorumStatusParsingException) as cm:
-            lib.QuorumStatus.from_string(dedent("""\
+            lib.QuorumStatus.from_string(
+                dedent(
+                    """\
                 Quorum information
                 ------------------
                 Date:             Fri Jan 16 13:03:28 2015
@@ -339,15 +344,19 @@ class QuorumStatusParse(TestCase):
                          1          1         NR rh70-node1 (local)
                          2          1         NR rh70-node2
                          3          1         NR rh70-node3
-            """))
+            """
+                )
+            )
         self.assertEqual(
             cm.exception.reason,
-            "Unable to read number of votes needed for quorum"
+            "Unable to read number of votes needed for quorum",
         )
 
     def test_error_quorum_garbage(self):
         with self.assertRaises(lib.QuorumStatusParsingException) as cm:
-            lib.QuorumStatus.from_string(dedent("""\
+            lib.QuorumStatus.from_string(
+                dedent(
+                    """\
                 Quorum information
                 ------------------
                 Date:             Fri Jan 16 13:03:28 2015
@@ -371,15 +380,19 @@ class QuorumStatusParse(TestCase):
                          1          1         NR rh70-node1 (local)
                          2          1         NR rh70-node2
                          3          1         NR rh70-node3
-            """))
+            """
+                )
+            )
         self.assertEqual(
             cm.exception.reason,
-            "Unable to read number of votes needed for quorum"
+            "Unable to read number of votes needed for quorum",
         )
 
     def test_error_node_votes_garbage(self):
         with self.assertRaises(lib.QuorumStatusParsingException) as cm:
-            lib.QuorumStatus.from_string(dedent("""\
+            lib.QuorumStatus.from_string(
+                dedent(
+                    """\
                 Quorum information
                 ------------------
                 Date:             Fri Jan 16 13:03:28 2015
@@ -403,338 +416,333 @@ class QuorumStatusParse(TestCase):
                          1          1         NR rh70-node1 (local)
                          2        foo         NR rh70-node2
                          3          1         NR rh70-node3
-            """))
-        self.assertEqual(
-            cm.exception.reason,
-            ""
-        )
+            """
+                )
+            )
+        self.assertEqual(cm.exception.reason, "")
 
 
 class QuorumStatusQuorumLossNodes(TestCase):
     def test_not_quorate(self):
-        status = lib.QuorumStatus({
-            "quorate": False,
-        })
+        status = lib.QuorumStatus({"quorate": False,})
         self.assertEqual(
-            status.stopping_nodes_cause_quorum_loss(["rh70-node3"]),
-            False
+            status.stopping_nodes_cause_quorum_loss(["rh70-node3"]), False
         )
 
     def test_one_node_still_quorate_1(self):
-        status = lib.QuorumStatus({
-            "quorate": True,
-            "quorum": 4,
-            "node_list": [
-                {"name": "rh70-node1", "votes": 3, "local": True},
-                {"name": "rh70-node2", "votes": 2, "local": False},
-                {"name": "rh70-node3", "votes": 1, "local": False},
-            ],
-            "qdevice_list": [],
-        })
+        status = lib.QuorumStatus(
+            {
+                "quorate": True,
+                "quorum": 4,
+                "node_list": [
+                    {"name": "rh70-node1", "votes": 3, "local": True},
+                    {"name": "rh70-node2", "votes": 2, "local": False},
+                    {"name": "rh70-node3", "votes": 1, "local": False},
+                ],
+                "qdevice_list": [],
+            }
+        )
         self.assertEqual(
-            status.stopping_nodes_cause_quorum_loss(["rh70-node3"]),
-            False
+            status.stopping_nodes_cause_quorum_loss(["rh70-node3"]), False
         )
 
     def test_one_node_still_quorate_2(self):
-        status = lib.QuorumStatus({
-            "quorate": True,
-            "quorum": 4,
-            "node_list": [
-                {"name": "rh70-node1", "votes": 3, "local": True},
-                {"name": "rh70-node2", "votes": 2, "local": False},
-                {"name": "rh70-node3", "votes": 1, "local": False},
-            ],
-            "qdevice_list": [],
-        })
+        status = lib.QuorumStatus(
+            {
+                "quorate": True,
+                "quorum": 4,
+                "node_list": [
+                    {"name": "rh70-node1", "votes": 3, "local": True},
+                    {"name": "rh70-node2", "votes": 2, "local": False},
+                    {"name": "rh70-node3", "votes": 1, "local": False},
+                ],
+                "qdevice_list": [],
+            }
+        )
         self.assertEqual(
-            status.stopping_nodes_cause_quorum_loss(["rh70-node2"]),
-            False
+            status.stopping_nodes_cause_quorum_loss(["rh70-node2"]), False
         )
 
     def test_one_node_quorum_loss(self):
-        status = lib.QuorumStatus({
-            "quorate": True,
-            "quorum": 4,
-            "node_list": [
-                {"name": "rh70-node1", "votes": 3, "local": True},
-                {"name": "rh70-node2", "votes": 2, "local": False},
-                {"name": "rh70-node3", "votes": 1, "local": False},
-            ],
-            "qdevice_list": [],
-        })
+        status = lib.QuorumStatus(
+            {
+                "quorate": True,
+                "quorum": 4,
+                "node_list": [
+                    {"name": "rh70-node1", "votes": 3, "local": True},
+                    {"name": "rh70-node2", "votes": 2, "local": False},
+                    {"name": "rh70-node3", "votes": 1, "local": False},
+                ],
+                "qdevice_list": [],
+            }
+        )
         self.assertEqual(
-            status.stopping_nodes_cause_quorum_loss(["rh70-node1"]),
-            True
+            status.stopping_nodes_cause_quorum_loss(["rh70-node1"]), True
         )
 
     def test_more_nodes_still_quorate(self):
-        status = lib.QuorumStatus({
-            "quorate": True,
-            "quorum": 4,
-            "node_list": [
-                {"name": "rh70-node1", "votes": 4, "local": True},
-                {"name": "rh70-node2", "votes": 1, "local": False},
-                {"name": "rh70-node3", "votes": 1, "local": False},
-            ],
-            "qdevice_list": [],
-        })
+        status = lib.QuorumStatus(
+            {
+                "quorate": True,
+                "quorum": 4,
+                "node_list": [
+                    {"name": "rh70-node1", "votes": 4, "local": True},
+                    {"name": "rh70-node2", "votes": 1, "local": False},
+                    {"name": "rh70-node3", "votes": 1, "local": False},
+                ],
+                "qdevice_list": [],
+            }
+        )
         self.assertEqual(
             status.stopping_nodes_cause_quorum_loss(
                 ["rh70-node2", "rh70-node3"]
             ),
-            False
+            False,
         )
 
     def test_more_nodes_quorum_loss(self):
-        status = lib.QuorumStatus({
-            "quorate": True,
-            "quorum": 4,
-            "node_list": [
-                {"name": "rh70-node1", "votes": 3, "local": True},
-                {"name": "rh70-node2", "votes": 2, "local": False},
-                {"name": "rh70-node3", "votes": 1, "local": False},
-            ],
-            "qdevice_list": [],
-        })
+        status = lib.QuorumStatus(
+            {
+                "quorate": True,
+                "quorum": 4,
+                "node_list": [
+                    {"name": "rh70-node1", "votes": 3, "local": True},
+                    {"name": "rh70-node2", "votes": 2, "local": False},
+                    {"name": "rh70-node3", "votes": 1, "local": False},
+                ],
+                "qdevice_list": [],
+            }
+        )
         self.assertEqual(
             status.stopping_nodes_cause_quorum_loss(
                 ["rh70-node2", "rh70-node3"]
             ),
-            True
+            True,
         )
 
     def test_qdevice_still_quorate(self):
-        status = lib.QuorumStatus({
-            "quorate": True,
-            "quorum": 3,
-            "node_list": [
-                {"name": "rh70-node1", "votes": 1, "local": True},
-                {"name": "rh70-node2", "votes": 1, "local": False},
-                {"name": "rh70-node3", "votes": 1, "local": False},
-            ],
-            "qdevice_list": [
-                {"name": "Qdevice", "votes": 1, "local": False},
-            ],
-        })
+        status = lib.QuorumStatus(
+            {
+                "quorate": True,
+                "quorum": 3,
+                "node_list": [
+                    {"name": "rh70-node1", "votes": 1, "local": True},
+                    {"name": "rh70-node2", "votes": 1, "local": False},
+                    {"name": "rh70-node3", "votes": 1, "local": False},
+                ],
+                "qdevice_list": [
+                    {"name": "Qdevice", "votes": 1, "local": False},
+                ],
+            }
+        )
         self.assertEqual(
-            status.stopping_nodes_cause_quorum_loss(["rh70-node2"]),
-            False
+            status.stopping_nodes_cause_quorum_loss(["rh70-node2"]), False
         )
 
     def test_qdevice_quorum_lost(self):
-        status = lib.QuorumStatus({
-            "quorate": True,
-            "quorum": 3,
-            "node_list": [
-                {"name": "rh70-node1", "votes": 1, "local": True},
-                {"name": "rh70-node2", "votes": 1, "local": False},
-                {"name": "rh70-node3", "votes": 1, "local": False},
-            ],
-            "qdevice_list": [
-                {"name": "Qdevice", "votes": 1, "local": False},
-            ],
-        })
+        status = lib.QuorumStatus(
+            {
+                "quorate": True,
+                "quorum": 3,
+                "node_list": [
+                    {"name": "rh70-node1", "votes": 1, "local": True},
+                    {"name": "rh70-node2", "votes": 1, "local": False},
+                    {"name": "rh70-node3", "votes": 1, "local": False},
+                ],
+                "qdevice_list": [
+                    {"name": "Qdevice", "votes": 1, "local": False},
+                ],
+            }
+        )
         self.assertEqual(
             status.stopping_nodes_cause_quorum_loss(
                 ["rh70-node2", "rh70-node3"]
             ),
-            True
+            True,
         )
 
     def test_qdevice_lost_still_quorate(self):
-        status = lib.QuorumStatus({
-            "quorate": True,
-            "quorum": 4, # expect qdevice votes == 1
-            "node_list": [
-                {"name": "rh70-node1", "votes": 2, "local": True},
-                {"name": "rh70-node2", "votes": 2, "local": False},
-                {"name": "rh70-node3", "votes": 2, "local": False},
-            ],
-            "qdevice_list": [
-                {"name": "Qdevice", "votes": 0, "local": False},
-            ],
-        })
+        status = lib.QuorumStatus(
+            {
+                "quorate": True,
+                "quorum": 4,  # expect qdevice votes == 1
+                "node_list": [
+                    {"name": "rh70-node1", "votes": 2, "local": True},
+                    {"name": "rh70-node2", "votes": 2, "local": False},
+                    {"name": "rh70-node3", "votes": 2, "local": False},
+                ],
+                "qdevice_list": [
+                    {"name": "Qdevice", "votes": 0, "local": False},
+                ],
+            }
+        )
         self.assertEqual(
-            status.stopping_nodes_cause_quorum_loss(["rh70-node2"]),
-            False
+            status.stopping_nodes_cause_quorum_loss(["rh70-node2"]), False
         )
 
     def test_qdevice_lost_quorum_lost(self):
-        status = lib.QuorumStatus({
-            "quorate": True,
-            "quorum": 4, # expect qdevice votes == 1
-            "node_list": [
-                {"name": "rh70-node1", "votes": 2, "local": True},
-                {"name": "rh70-node2", "votes": 2, "local": False},
-                {"name": "rh70-node3", "votes": 2, "local": False},
-            ],
-            "qdevice_list": [
-                {"name": "Qdevice", "votes": 0, "local": False},
-            ],
-        })
+        status = lib.QuorumStatus(
+            {
+                "quorate": True,
+                "quorum": 4,  # expect qdevice votes == 1
+                "node_list": [
+                    {"name": "rh70-node1", "votes": 2, "local": True},
+                    {"name": "rh70-node2", "votes": 2, "local": False},
+                    {"name": "rh70-node3", "votes": 2, "local": False},
+                ],
+                "qdevice_list": [
+                    {"name": "Qdevice", "votes": 0, "local": False},
+                ],
+            }
+        )
         self.assertEqual(
             status.stopping_nodes_cause_quorum_loss(
                 ["rh70-node2", "rh70-node3"]
             ),
-            True
+            True,
         )
 
 
 class QuorumStatusQuorumLossLocal(TestCase):
     def test_not_quorate(self):
-        status = lib.QuorumStatus({
-            "quorate": False,
-        })
-        self.assertEqual(
-            status.stopping_local_node_cause_quorum_loss(),
-            False
-        )
+        status = lib.QuorumStatus({"quorate": False,})
+        self.assertEqual(status.stopping_local_node_cause_quorum_loss(), False)
 
     def test_local_node_not_in_list(self):
-        status = lib.QuorumStatus({
-            "quorate": True,
-            "quorum": 1,
-            "node_list": [
-                {"name": "rh70-node3", "votes": 1, "local": False},
-            ],
-            "qdevice_list": [],
-        })
-        self.assertEqual(
-            status.stopping_local_node_cause_quorum_loss(),
-            False
+        status = lib.QuorumStatus(
+            {
+                "quorate": True,
+                "quorum": 1,
+                "node_list": [
+                    {"name": "rh70-node3", "votes": 1, "local": False},
+                ],
+                "qdevice_list": [],
+            }
         )
+        self.assertEqual(status.stopping_local_node_cause_quorum_loss(), False)
 
     def test_local_node_alone_in_list(self):
-        status = lib.QuorumStatus({
-            "quorate": True,
-            "quorum": 1,
-            "node_list": [
-                {"name": "rh70-node3", "votes": 1, "local": True},
-            ],
-            "qdevice_list": [],
-        })
-        self.assertEqual(
-            status.stopping_local_node_cause_quorum_loss(),
-            True
+        status = lib.QuorumStatus(
+            {
+                "quorate": True,
+                "quorum": 1,
+                "node_list": [
+                    {"name": "rh70-node3", "votes": 1, "local": True},
+                ],
+                "qdevice_list": [],
+            }
         )
+        self.assertEqual(status.stopping_local_node_cause_quorum_loss(), True)
 
     def test_local_node_still_quorate_1(self):
-        status = lib.QuorumStatus({
-            "quorate": True,
-            "quorum": 4,
-            "node_list": [
-                {"name": "rh70-node1", "votes": 3, "local": False},
-                {"name": "rh70-node2", "votes": 2, "local": False},
-                {"name": "rh70-node3", "votes": 1, "local": True},
-            ],
-            "qdevice_list": [],
-        })
-        self.assertEqual(
-            status.stopping_local_node_cause_quorum_loss(),
-            False
+        status = lib.QuorumStatus(
+            {
+                "quorate": True,
+                "quorum": 4,
+                "node_list": [
+                    {"name": "rh70-node1", "votes": 3, "local": False},
+                    {"name": "rh70-node2", "votes": 2, "local": False},
+                    {"name": "rh70-node3", "votes": 1, "local": True},
+                ],
+                "qdevice_list": [],
+            }
         )
+        self.assertEqual(status.stopping_local_node_cause_quorum_loss(), False)
 
     def test_local_node_still_quorate_2(self):
-        status = lib.QuorumStatus({
-            "quorate": True,
-            "quorum": 4,
-            "node_list": [
-                {"name": "rh70-node1", "votes": 3, "local": False},
-                {"name": "rh70-node2", "votes": 2, "local": True},
-                {"name": "rh70-node3", "votes": 1, "local": False},
-            ],
-            "qdevice_list": [],
-        })
-        self.assertEqual(
-            status.stopping_local_node_cause_quorum_loss(),
-            False
+        status = lib.QuorumStatus(
+            {
+                "quorate": True,
+                "quorum": 4,
+                "node_list": [
+                    {"name": "rh70-node1", "votes": 3, "local": False},
+                    {"name": "rh70-node2", "votes": 2, "local": True},
+                    {"name": "rh70-node3", "votes": 1, "local": False},
+                ],
+                "qdevice_list": [],
+            }
         )
+        self.assertEqual(status.stopping_local_node_cause_quorum_loss(), False)
 
     def test_local_node_quorum_loss(self):
-        status = lib.QuorumStatus({
-            "quorate": True,
-            "quorum": 4,
-            "node_list": [
-                {"name": "rh70-node1", "votes": 3, "local": True},
-                {"name": "rh70-node2", "votes": 2, "local": False},
-                {"name": "rh70-node3", "votes": 1, "local": False},
-            ],
-            "qdevice_list": [],
-        })
-        self.assertEqual(
-            status.stopping_local_node_cause_quorum_loss(),
-            True
+        status = lib.QuorumStatus(
+            {
+                "quorate": True,
+                "quorum": 4,
+                "node_list": [
+                    {"name": "rh70-node1", "votes": 3, "local": True},
+                    {"name": "rh70-node2", "votes": 2, "local": False},
+                    {"name": "rh70-node3", "votes": 1, "local": False},
+                ],
+                "qdevice_list": [],
+            }
         )
+        self.assertEqual(status.stopping_local_node_cause_quorum_loss(), True)
 
     def test_qdevice_still_quorate(self):
-        status = lib.QuorumStatus({
-            "quorate": True,
-            "quorum": 3,
-            "node_list": [
-                {"name": "rh70-node1", "votes": 1, "local": True},
-                {"name": "rh70-node2", "votes": 1, "local": False},
-                {"name": "rh70-node3", "votes": 1, "local": False},
-            ],
-            "qdevice_list": [
-                {"name": "Qdevice", "votes": 1, "local": False},
-            ],
-        })
-        self.assertEqual(
-            status.stopping_local_node_cause_quorum_loss(),
-            False
+        status = lib.QuorumStatus(
+            {
+                "quorate": True,
+                "quorum": 3,
+                "node_list": [
+                    {"name": "rh70-node1", "votes": 1, "local": True},
+                    {"name": "rh70-node2", "votes": 1, "local": False},
+                    {"name": "rh70-node3", "votes": 1, "local": False},
+                ],
+                "qdevice_list": [
+                    {"name": "Qdevice", "votes": 1, "local": False},
+                ],
+            }
         )
+        self.assertEqual(status.stopping_local_node_cause_quorum_loss(), False)
 
     def test_qdevice_quorum_lost(self):
-        status = lib.QuorumStatus({
-            "quorate": True,
-            "quorum": 4,
-            "node_list": [
-                {"name": "rh70-node1", "votes": 4, "local": True},
-                {"name": "rh70-node2", "votes": 1, "local": False},
-                {"name": "rh70-node3", "votes": 1, "local": False},
-            ],
-            "qdevice_list": [
-                {"name": "Qdevice", "votes": 1, "local": False},
-            ],
-        })
-        self.assertEqual(
-            status.stopping_local_node_cause_quorum_loss(),
-            True
+        status = lib.QuorumStatus(
+            {
+                "quorate": True,
+                "quorum": 4,
+                "node_list": [
+                    {"name": "rh70-node1", "votes": 4, "local": True},
+                    {"name": "rh70-node2", "votes": 1, "local": False},
+                    {"name": "rh70-node3", "votes": 1, "local": False},
+                ],
+                "qdevice_list": [
+                    {"name": "Qdevice", "votes": 1, "local": False},
+                ],
+            }
         )
+        self.assertEqual(status.stopping_local_node_cause_quorum_loss(), True)
 
     def test_qdevice_lost_still_quorate(self):
-        status = lib.QuorumStatus({
-            "quorate": True,
-            "quorum": 4, # expect qdevice votes == 1
-            "node_list": [
-                {"name": "rh70-node1", "votes": 2, "local": True},
-                {"name": "rh70-node2", "votes": 2, "local": False},
-                {"name": "rh70-node3", "votes": 2, "local": False},
-            ],
-            "qdevice_list": [
-                {"name": "Qdevice", "votes": 0, "local": False},
-            ],
-        })
-        self.assertEqual(
-            status.stopping_local_node_cause_quorum_loss(),
-            False
+        status = lib.QuorumStatus(
+            {
+                "quorate": True,
+                "quorum": 4,  # expect qdevice votes == 1
+                "node_list": [
+                    {"name": "rh70-node1", "votes": 2, "local": True},
+                    {"name": "rh70-node2", "votes": 2, "local": False},
+                    {"name": "rh70-node3", "votes": 2, "local": False},
+                ],
+                "qdevice_list": [
+                    {"name": "Qdevice", "votes": 0, "local": False},
+                ],
+            }
         )
+        self.assertEqual(status.stopping_local_node_cause_quorum_loss(), False)
 
     def test_qdevice_lost_quorum_lost(self):
-        status = lib.QuorumStatus({
-            "quorate": True,
-            "quorum": 5, # expect qdevice votes == 1
-            "node_list": [
-                {"name": "rh70-node1", "votes": 4, "local": True},
-                {"name": "rh70-node2", "votes": 2, "local": False},
-                {"name": "rh70-node3", "votes": 2, "local": False},
-            ],
-            "qdevice_list": [
-                {"name": "Qdevice", "votes": 0, "local": False},
-            ],
-        })
-        self.assertEqual(
-            status.stopping_local_node_cause_quorum_loss(),
-            True
+        status = lib.QuorumStatus(
+            {
+                "quorate": True,
+                "quorum": 5,  # expect qdevice votes == 1
+                "node_list": [
+                    {"name": "rh70-node1", "votes": 4, "local": True},
+                    {"name": "rh70-node2", "votes": 2, "local": False},
+                    {"name": "rh70-node3", "votes": 2, "local": False},
+                ],
+                "qdevice_list": [
+                    {"name": "Qdevice", "votes": 0, "local": False},
+                ],
+            }
         )
+        self.assertEqual(status.stopping_local_node_cause_quorum_loss(), True)

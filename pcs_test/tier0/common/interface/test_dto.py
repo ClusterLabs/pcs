@@ -19,9 +19,7 @@ def _import_all(_path):
 
 def _all_subclasses(cls):
     subclasses = set(cls.__subclasses__())
-    return subclasses.union(
-        {s for c in subclasses for s in _all_subclasses(c)}
-    )
+    return subclasses.union({s for c in subclasses for s in _all_subclasses(c)})
 
 
 class DatatransferObjectTest(TestCase):

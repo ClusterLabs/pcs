@@ -12,10 +12,10 @@ from pcs.lib.external import CommandRunner
 class ValidateParameters(TestCase):
     def setUp(self):
         self.agent = lib_ra.StonithAgent(
-            mock.MagicMock(spec_set=CommandRunner),
-            "fence_dummy"
+            mock.MagicMock(spec_set=CommandRunner), "fence_dummy"
         )
-        self.metadata = etree.XML("""
+        self.metadata = etree.XML(
+            """
             <resource-agent>
                 <parameters>
                     <parameter name="test_param" required="0">
@@ -32,7 +32,8 @@ class ValidateParameters(TestCase):
                     </parameter>
                 </parameters>
             </resource-agent>
-        """)
+        """
+        )
         patcher = mock.patch.object(lib_ra.StonithAgent, "_get_metadata")
         self.addCleanup(patcher.stop)
         self.get_metadata = patcher.start()
@@ -43,23 +44,22 @@ class ValidateParameters(TestCase):
         )
         self.addCleanup(patcher_fenced.stop)
         self.get_fenced_metadata = patcher_fenced.start()
-        self.get_fenced_metadata.return_value = etree.XML("""
+        self.get_fenced_metadata.return_value = etree.XML(
+            """
             <resource-agent>
                 <parameters />
             </resource-agent>
-        """)
+        """
+        )
         self.report_error = (
             severity.ERROR,
             report_codes.DEPRECATED_OPTION,
             {
                 "option_name": "action",
                 "option_type": "stonith",
-                "replaced_by": [
-                    "pcmk_off_action",
-                    "pcmk_reboot_action"
-                ],
+                "replaced_by": ["pcmk_off_action", "pcmk_reboot_action"],
             },
-            report_codes.FORCE_OPTIONS
+            report_codes.FORCE_OPTIONS,
         )
         self.report_warning = (
             severity.WARNING,
@@ -67,46 +67,35 @@ class ValidateParameters(TestCase):
             {
                 "option_name": "action",
                 "option_type": "stonith",
-                "replaced_by": [
-                    "pcmk_off_action",
-                    "pcmk_reboot_action"
-                ],
+                "replaced_by": ["pcmk_off_action", "pcmk_reboot_action"],
             },
-            None
+            None,
         )
 
 
 class ValidateParametersCreate(ValidateParameters):
     def test_action_is_deprecated(self):
         assert_report_item_list_equal(
-            self.agent.validate_parameters_create({
-                "action": "reboot",
-                "required_param": "value",
-            }),
-            [
-                self.report_error,
-            ],
+            self.agent.validate_parameters_create(
+                {"action": "reboot", "required_param": "value",}
+            ),
+            [self.report_error,],
         )
 
     def test_action_is_deprecated_forced(self):
         assert_report_item_list_equal(
-            self.agent.validate_parameters_create({
-                "action": "reboot",
-                "required_param": "value",
-            }, force=True),
-            [
-                self.report_warning,
-            ],
+            self.agent.validate_parameters_create(
+                {"action": "reboot", "required_param": "value",}, force=True
+            ),
+            [self.report_warning,],
         )
 
     def test_action_not_reported_deprecated_when_empty(self):
         assert_report_item_list_equal(
-            self.agent.validate_parameters_create({
-                "action": "",
-                "required_param": "value",
-            }),
-            [
-            ],
+            self.agent.validate_parameters_create(
+                {"action": "", "required_param": "value",}
+            ),
+            [],
         )
 
 
@@ -114,78 +103,44 @@ class ValidateParametersUpdate(ValidateParameters):
     def test_action_is_deprecated(self):
         assert_report_item_list_equal(
             self.agent.validate_parameters_update(
-                {
-                    "required_param": "value",
-                },
-                {
-                    "action": "reboot",
-                }
+                {"required_param": "value",}, {"action": "reboot",}
             ),
-            [
-                self.report_error,
-            ],
+            [self.report_error,],
         )
 
     def test_action_not_reported_when_not_updated(self):
         assert_report_item_list_equal(
             self.agent.validate_parameters_update(
-                {
-                    "required_param": "value",
-                    "action": "reboot",
-                },
-                {
-                    "required_param": "value2",
-                }
+                {"required_param": "value", "action": "reboot",},
+                {"required_param": "value2",},
             ),
-            [
-            ],
+            [],
         )
 
     def test_action_is_deprecated_when_set_already(self):
         assert_report_item_list_equal(
             self.agent.validate_parameters_update(
-                {
-                    "required_param": "value",
-                    "action": "off",
-                },
-                {
-                    "action": "reboot",
-                }
+                {"required_param": "value", "action": "off",},
+                {"action": "reboot",},
             ),
-            [
-                self.report_error,
-            ],
+            [self.report_error,],
         )
 
     def test_action_is_deprecated_forced(self):
         assert_report_item_list_equal(
             self.agent.validate_parameters_update(
-                {
-                    "required_param": "value",
-                },
-                {
-                    "action": "reboot",
-                },
-                force=True
+                {"required_param": "value",}, {"action": "reboot",}, force=True
             ),
-            [
-                self.report_warning,
-            ],
+            [self.report_warning,],
         )
 
     def test_action_not_reported_deprecated_when_empty(self):
         assert_report_item_list_equal(
             self.agent.validate_parameters_update(
-                {
-                    "required_param": "value",
-                    "action": "reboot",
-                },
-                {
-                    "action": "",
-                },
+                {"required_param": "value", "action": "reboot",},
+                {"action": "",},
             ),
-            [
-            ],
+            [],
         )
 
 
@@ -203,24 +158,19 @@ class StonithAgentMetadataGetCibDefaultActions(TestCase):
 
     def setUp(self):
         self.agent = lib_ra.StonithAgent(
-            mock.MagicMock(spec_set=CommandRunner),
-            "fence_dummy"
+            mock.MagicMock(spec_set=CommandRunner), "fence_dummy"
         )
 
     def test_select_only_actions_for_cib(self, get_actions):
         get_actions.return_value = self.fixture_actions
         self.assertEqual(
-            [
-                {"name": "monitor", "interval": "10s", "timeout": "30s"}
-            ],
-            self.agent.get_cib_default_actions()
+            [{"name": "monitor", "interval": "10s", "timeout": "30s"}],
+            self.agent.get_cib_default_actions(),
         )
 
     def test_select_only_necessary_actions_for_cib(self, get_actions):
         get_actions.return_value = self.fixture_actions
         self.assertEqual(
-            [
-                {"name": "monitor", "interval": "10s", "timeout": "30s"}
-            ],
-            self.agent.get_cib_default_actions(necessary_only=True)
+            [{"name": "monitor", "interval": "10s", "timeout": "30s"}],
+            self.agent.get_cib_default_actions(necessary_only=True),
         )

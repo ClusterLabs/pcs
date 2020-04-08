@@ -14,11 +14,12 @@ def set_property(lib, argv, modifiers):
     """
     del lib
     modifiers.ensure_only_supported(
-        "--force", "-f",
+        "--force",
+        "-f",
         # The hint is defined to print error messages which point users to the
         # changes section in pcs manpage.
         # To be removed in the next significant version.
-        hint_syntax_changed=modifiers.is_specified("--node")
+        hint_syntax_changed=modifiers.is_specified("--node"),
     )
     if not argv:
         raise CmdLineInputError()
@@ -28,7 +29,7 @@ def set_property(lib, argv, modifiers):
     forced = modifiers.get("--force")
     properties = {}
     for arg in argv:
-        args = arg.split('=')
+        args = arg.split("=")
         if len(args) != 2:
             utils.err("invalid property format: '{0}'".format(arg), False)
             failed = True
@@ -47,14 +48,14 @@ def set_property(lib, argv, modifiers):
                     utils.err(
                         "invalid value of property: '{0}', (use --force to "
                         "override)".format(arg),
-                        False
+                        False,
                     )
                     failed = True
             except utils.UnknownPropertyException:
                 utils.err(
                     "unknown cluster property: '{0}', (use --force to "
                     "override)".format(args[0]),
-                    False
+                    False,
                 )
                 failed = True
 
@@ -75,11 +76,12 @@ def unset_property(lib, argv, modifiers):
     """
     del lib
     modifiers.ensure_only_supported(
-        "--force", "-f",
+        "--force",
+        "-f",
         # The hint is defined to print error messages which point users to the
         # changes section in pcs manpage.
         # To be removed in the next significant version.
-        hint_syntax_changed=modifiers.is_specified("--node")
+        hint_syntax_changed=modifiers.is_specified("--node"),
     )
     if not argv:
         raise CmdLineInputError()
@@ -88,6 +90,7 @@ def unset_property(lib, argv, modifiers):
     for arg in argv:
         utils.set_cib_property(arg, "", cib_dom)
     utils.replace_cib_configuration(cib_dom)
+
 
 def list_property(lib, argv, modifiers):
     """
@@ -98,11 +101,13 @@ def list_property(lib, argv, modifiers):
     """
     del lib
     modifiers.ensure_only_supported(
-        "--defaults", "--all", "-f",
+        "--defaults",
+        "--all",
+        "-f",
         # The hint is defined to print error messages which point users to the
         # changes section in pcs manpage.
         # To be removed in the next significant version.
-        hint_syntax_changed=modifiers.is_specified("--node")
+        hint_syntax_changed=modifiers.is_specified("--node"),
     )
     if len(argv) > 1:
         raise CmdLineInputError()
@@ -122,8 +127,7 @@ def list_property(lib, argv, modifiers):
 
     if not modifiers.get("--defaults"):
         configured_properties = utils.get_set_properties(
-            None if print_all else argv[0],
-            properties
+            None if print_all else argv[0], properties
         )
         if modifiers.get("--all"):
             properties.update(configured_properties)
@@ -133,6 +137,7 @@ def list_property(lib, argv, modifiers):
     print("Cluster Properties:")
     for prop, val in sorted(properties.items()):
         print(" {0}: {1}".format(prop, val))
+
 
 def get_default_properties():
     """

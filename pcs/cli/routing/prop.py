@@ -12,9 +12,10 @@ property_cmd = create_router(
         "unset": prop.unset_property,
         "list": prop.list_property,
         "show": prop.list_property,
-        "get_cluster_properties_definition":
-            prop.print_cluster_properties_definition,
+        "get_cluster_properties_definition": (
+            prop.print_cluster_properties_definition
+        ),
     },
     ["property"],
-    default_cmd="list"
+    default_cmd="list",
 )

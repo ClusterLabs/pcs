@@ -15,31 +15,35 @@ from pcs.daemon.app.common import RedirectHandler
 from pcs.daemon.env import prepare_env
 from pcs.daemon.http_server import HttpsServerManage
 
+
 class SignalInfo:
-    #pylint: disable=too-few-public-methods
+    # pylint: disable=too-few-public-methods
     server_manage = None
     ioloop_started = False
 
+
 def handle_signal(incomming_signal, frame):
-    #pylint: disable=unused-argument
-    log.pcsd.warning('Caught signal: %s, shutting down', incomming_signal)
+    # pylint: disable=unused-argument
+    log.pcsd.warning("Caught signal: %s, shutting down", incomming_signal)
     if SignalInfo.server_manage:
         SignalInfo.server_manage.stop()
     if SignalInfo.ioloop_started:
         IOLoop.current().stop()
     raise SystemExit(0)
 
+
 def sign_ioloop_started():
     SignalInfo.ioloop_started = True
 
-def config_sync(
-    sync_config_lock: Lock, ruby_pcsd_wrapper: ruby_pcsd.Wrapper
-):
+
+def config_sync(sync_config_lock: Lock, ruby_pcsd_wrapper: ruby_pcsd.Wrapper):
     async def config_synchronization():
         async with sync_config_lock:
             next_run_time = await ruby_pcsd_wrapper.sync_configs()
         IOLoop.current().call_at(next_run_time, config_synchronization)
+
     return config_synchronization
+
 
 def configure_app(
     session_storage: session.Storage,
@@ -47,7 +51,7 @@ def configure_app(
     sync_config_lock: Lock,
     public_dir,
     disable_gui=False,
-    debug=False
+    debug=False,
 ):
     def make_app(https_server_manage: HttpsServerManage):
         """
@@ -56,37 +60,31 @@ def configure_app(
             object via the method `initialize`.
         """
         routes = sinatra_remote.get_routes(
-            ruby_pcsd_wrapper,
-            sync_config_lock,
-            https_server_manage,
+            ruby_pcsd_wrapper, sync_config_lock, https_server_manage,
         )
 
         if not disable_gui:
             routes.extend(
                 # old web ui by default
                 [(r"/", RedirectHandler, dict(url="/manage"))]
-                +
-                [(r"/ui", RedirectHandler, dict(url="/ui/"))]
-                +
-                ui.get_routes(
+                + [(r"/ui", RedirectHandler, dict(url="/ui/"))]
+                + ui.get_routes(
                     url_prefix="/ui/",
                     app_dir=os.path.join(public_dir, "ui"),
                     fallback_page_path=os.path.join(
-                        public_dir,
-                        "ui_instructions.html",
+                        public_dir, "ui_instructions.html",
                     ),
                     session_storage=session_storage,
                 )
-                +
-                sinatra_ui.get_routes(
-                    session_storage,
-                    ruby_pcsd_wrapper,
-                    public_dir
+                + sinatra_ui.get_routes(
+                    session_storage, ruby_pcsd_wrapper, public_dir
                 )
             )
 
         return Application(routes, debug=debug)
+
     return make_app
+
 
 def main():
     signal.signal(signal.SIGTERM, handle_signal)
@@ -104,8 +102,7 @@ def main():
 
     sync_config_lock = Lock()
     ruby_pcsd_wrapper = ruby_pcsd.Wrapper(
-        settings.pcsd_ruby_socket,
-        debug=env.PCSD_DEBUG,
+        settings.pcsd_ruby_socket, debug=env.PCSD_DEBUG,
     )
     make_app = configure_app(
         session.Storage(env.PCSD_SESSION_LIFETIME),
@@ -131,8 +128,7 @@ def main():
         ).start()
     except socket.gaierror as e:
         log.pcsd.error(
-            "Unable to bind to specific address(es), exiting: %s ",
-            e
+            "Unable to bind to specific address(es), exiting: %s ", e
         )
         raise SystemExit(1)
     except OSError as e:

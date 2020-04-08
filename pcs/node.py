@@ -8,6 +8,7 @@ from pcs.cli.common.errors import (
 from pcs.cli.common.parse_args import prepare_options
 import pcs.lib.pacemaker.live as lib_pacemaker
 
+
 def node_attribute_cmd(lib, argv, modifiers):
     """
     Options:
@@ -27,6 +28,7 @@ def node_attribute_cmd(lib, argv, modifiers):
         # --force is used only when setting attributes
         attribute_set_cmd(argv.pop(0), argv)
 
+
 def node_utilization_cmd(lib, argv, modifiers):
     """
     Options:
@@ -43,6 +45,7 @@ def node_utilization_cmd(lib, argv, modifiers):
         print_node_utilization(argv.pop(0), filter_name=modifiers.get("--name"))
     else:
         set_node_utilization(argv.pop(0), argv)
+
 
 def node_maintenance_cmd(lib, argv, modifiers, enable):
     """
@@ -63,6 +66,7 @@ def node_maintenance_cmd(lib, argv, modifiers, enable):
         # -f cannot be used when editing local node
         lib.node.maintenance_unmaintenance_local(enable, wait)
 
+
 def node_standby_cmd(lib, argv, modifiers, enable):
     """
     Options:
@@ -81,6 +85,7 @@ def node_standby_cmd(lib, argv, modifiers, enable):
     else:
         # -f cannot be used when editing local node
         lib.node.standby_unstandby_local(enable, wait)
+
 
 def set_node_utilization(node, argv):
     """
@@ -127,6 +132,7 @@ def set_node_utilization(node, argv):
     utils.dom_update_utilization(node_el, nvpair_dict, "nodes-")
     utils.replace_cib_configuration(cib)
 
+
 def print_node_utilization(filter_node=None, filter_name=None):
     """
     Commandline options:
@@ -136,20 +142,19 @@ def print_node_utilization(filter_node=None, filter_name=None):
 
     node_element_list = cib.getElementsByTagName("node")
 
-
-    if(
+    if (
         filter_node
-        and
-        filter_node not in [
+        and filter_node
+        not in [
             node_element.getAttribute("uname")
             for node_element in node_element_list
         ]
         and (
             utils.usefile
-            or
-            filter_node not in [
-                node_attrs.name for node_attrs
-                in utils.getNodeAttributesFromPacemaker()
+            or filter_node
+            not in [
+                node_attrs.name
+                for node_attrs in utils.getNodeAttributesFromPacemaker()
             ]
         )
     ):
@@ -167,6 +172,7 @@ def print_node_utilization(filter_node=None, filter_name=None):
     for node in sorted(utilization):
         print(" {0}: {1}".format(node, utilization[node]))
 
+
 def node_pacemaker_status(lib, argv, modifiers):
     """
     Internal pcs-pcsd command
@@ -174,9 +180,8 @@ def node_pacemaker_status(lib, argv, modifiers):
     del lib
     del argv
     del modifiers
-    print(json.dumps(
-        lib_pacemaker.get_local_node_status(utils.cmd_runner())
-    ))
+    print(json.dumps(lib_pacemaker.get_local_node_status(utils.cmd_runner())))
+
 
 def attribute_show_cmd(filter_node=None, filter_attr=None):
     """
@@ -184,11 +189,11 @@ def attribute_show_cmd(filter_node=None, filter_attr=None):
       * -f - CIB file (in lib wrapper)
     """
     node_attributes = utils.get_node_attributes(
-        filter_node=filter_node,
-        filter_attr=filter_attr
+        filter_node=filter_node, filter_attr=filter_attr
     )
     print("Node Attributes:")
     attribute_print(node_attributes)
+
 
 def attribute_set_cmd(node, argv):
     """
@@ -198,6 +203,7 @@ def attribute_set_cmd(node, argv):
     """
     for name, value in prepare_options(argv).items():
         utils.set_node_attribute(name, value, node)
+
 
 def attribute_print(node_attributes):
     """

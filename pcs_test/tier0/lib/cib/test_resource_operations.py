@@ -16,6 +16,7 @@ from pcs.lib.validate import ValuePair
 
 patch_operations = create_patcher("pcs.lib.cib.resource.operations")
 
+
 @patch_operations("get_remaining_defaults")
 @patch_operations("complete_all_intervals")
 @patch_operations("validate_different_intervals")
@@ -24,9 +25,13 @@ patch_operations = create_patcher("pcs.lib.cib.resource.operations")
 @patch_operations("operations_to_normalized")
 class Prepare(TestCase):
     def test_prepare(
-        self, operations_to_normalized, normalized_to_operations,
-        validate_operation_list, validate_different_intervals,
-        complete_all_intervals, get_remaining_defaults
+        self,
+        operations_to_normalized,
+        normalized_to_operations,
+        validate_operation_list,
+        validate_different_intervals,
+        complete_all_intervals,
+        get_remaining_defaults,
     ):
         validate_operation_list.return_value = ["options_report"]
         validate_different_intervals.return_value = [
@@ -70,7 +75,7 @@ class Prepare(TestCase):
         validate_operation_list.assert_called_once_with(
             operations_to_normalized.return_value,
             allowed_operation_name_list,
-            allow_invalid
+            allow_invalid,
         )
         validate_different_intervals.assert_called_once_with(
             normalized_to_operations.return_value
@@ -81,12 +86,11 @@ class Prepare(TestCase):
         get_remaining_defaults.assert_called_once_with(
             report_processor,
             normalized_to_operations.return_value,
-            default_operation_list
+            default_operation_list,
         )
-        report_processor.report_list.assert_called_once_with([
-            "options_report",
-            "different_interval_report",
-        ])
+        report_processor.report_list.assert_called_once_with(
+            ["options_report", "different_interval_report",]
+        )
 
 
 class ValidateDifferentIntervals(TestCase):
@@ -94,49 +98,52 @@ class ValidateDifferentIntervals(TestCase):
         operations.validate_different_intervals([])
 
     def test_return_empty_reports_on_operations_without_duplication(self):
-        operations.validate_different_intervals([
-            {"name": "monitor", "interval": "10s"},
-            {"name": "monitor", "interval": "5s"},
-            {"name": "start", "interval": "5s"},
-        ])
+        operations.validate_different_intervals(
+            [
+                {"name": "monitor", "interval": "10s"},
+                {"name": "monitor", "interval": "5s"},
+                {"name": "start", "interval": "5s"},
+            ]
+        )
 
     def test_return_report_on_duplicated_intervals(self):
         assert_report_item_list_equal(
-            operations.validate_different_intervals([
-                {"name": "monitor", "interval": "3600s"},
-                {"name": "monitor", "interval": "60m"},
-                {"name": "monitor", "interval": "1h"},
-                {"name": "monitor", "interval": "60s"},
-                {"name": "monitor", "interval": "1m"},
-                {"name": "monitor", "interval": "5s"},
-            ]),
-            [(
-                severities.ERROR,
-                report_codes.RESOURCE_OPERATION_INTERVAL_DUPLICATION,
-                {
-                    "duplications": {
-                        "monitor": [
-                            ["3600s", "60m", "1h"],
-                            ["60s", "1m"],
-                        ],
+            operations.validate_different_intervals(
+                [
+                    {"name": "monitor", "interval": "3600s"},
+                    {"name": "monitor", "interval": "60m"},
+                    {"name": "monitor", "interval": "1h"},
+                    {"name": "monitor", "interval": "60s"},
+                    {"name": "monitor", "interval": "1m"},
+                    {"name": "monitor", "interval": "5s"},
+                ]
+            ),
+            [
+                (
+                    severities.ERROR,
+                    report_codes.RESOURCE_OPERATION_INTERVAL_DUPLICATION,
+                    {
+                        "duplications": {
+                            "monitor": [["3600s", "60m", "1h"], ["60s", "1m"],],
+                        },
                     },
-                },
-            )]
+                )
+            ],
         )
+
 
 class MakeUniqueIntervals(TestCase):
     def setUp(self):
         self.report_processor = MockLibraryReportProcessor()
         self.run = partial(
-            operations.make_unique_intervals,
-            self.report_processor
+            operations.make_unique_intervals, self.report_processor
         )
 
     def test_return_copy_input_when_no_interval_duplication(self):
         operation_list = [
             {"name": "monitor", "interval": "10s"},
             {"name": "monitor", "interval": "5s"},
-            {"name": "monitor", },
+            {"name": "monitor",},
             {"name": "monitor", "interval": ""},
             {"name": "start", "interval": "5s"},
         ]
@@ -144,14 +151,16 @@ class MakeUniqueIntervals(TestCase):
 
     def test_adopt_duplicit_values(self):
         self.assertEqual(
-            self.run([
-                {"name": "monitor", "interval": "60s"},
-                {"name": "monitor", "interval": "1m"},
-                {"name": "monitor", "interval": "5s"},
-                {"name": "monitor", "interval": "6s"},
-                {"name": "monitor", "interval": "5s"},
-                {"name": "start", "interval": "5s"},
-            ]),
+            self.run(
+                [
+                    {"name": "monitor", "interval": "60s"},
+                    {"name": "monitor", "interval": "1m"},
+                    {"name": "monitor", "interval": "5s"},
+                    {"name": "monitor", "interval": "6s"},
+                    {"name": "monitor", "interval": "5s"},
+                    {"name": "start", "interval": "5s"},
+                ]
+            ),
             [
                 {"name": "monitor", "interval": "60s"},
                 {"name": "monitor", "interval": "61"},
@@ -159,40 +168,45 @@ class MakeUniqueIntervals(TestCase):
                 {"name": "monitor", "interval": "6s"},
                 {"name": "monitor", "interval": "7"},
                 {"name": "start", "interval": "5s"},
-            ]
+            ],
         )
 
-        assert_report_item_list_equal(self.report_processor.report_item_list, [
-            (
-                severities.WARNING,
-                report_codes.RESOURCE_OPERATION_INTERVAL_ADAPTED,
-                {
-                    "operation_name": "monitor",
-                    "original_interval": "1m",
-                    "adapted_interval": "61",
-                },
-            ),
-            (
-                severities.WARNING,
-                report_codes.RESOURCE_OPERATION_INTERVAL_ADAPTED,
-                {
-                    "operation_name": "monitor",
-                    "original_interval": "5s",
-                    "adapted_interval": "7",
-                },
-            ),
-        ])
+        assert_report_item_list_equal(
+            self.report_processor.report_item_list,
+            [
+                (
+                    severities.WARNING,
+                    report_codes.RESOURCE_OPERATION_INTERVAL_ADAPTED,
+                    {
+                        "operation_name": "monitor",
+                        "original_interval": "1m",
+                        "adapted_interval": "61",
+                    },
+                ),
+                (
+                    severities.WARNING,
+                    report_codes.RESOURCE_OPERATION_INTERVAL_ADAPTED,
+                    {
+                        "operation_name": "monitor",
+                        "original_interval": "5s",
+                        "adapted_interval": "7",
+                    },
+                ),
+            ],
+        )
 
     def test_keep_duplicit_values_when_are_not_valid_interval(self):
         self.assertEqual(
-            self.run([
-                {"name": "monitor", "interval": "some"},
-                {"name": "monitor", "interval": "some"},
-            ]),
+            self.run(
+                [
+                    {"name": "monitor", "interval": "some"},
+                    {"name": "monitor", "interval": "some"},
+                ]
+            ),
             [
                 {"name": "monitor", "interval": "some"},
                 {"name": "monitor", "interval": "some"},
-            ]
+            ],
         )
 
 
@@ -209,7 +223,7 @@ class Normalize(TestCase):
             {
                 key: operations.normalize(key, value)
                 for key, value in operation.items()
-            }
+            },
         )
 
     def test_return_operation_with_normalized_values(self):
@@ -222,33 +236,30 @@ class Normalize(TestCase):
                 "record-pending": "true",
                 "enabled": "1",
             },
-            {key: operations.normalize(key, value) for key, value in {
-                "name": "monitor",
-                "role": "master",
-                "timeout": "10",
-                "on-fail": "Ignore",
-                "record-pending": "True",
-                "enabled": "1",
-            }.items()}
+            {
+                key: operations.normalize(key, value)
+                for key, value in {
+                    "name": "monitor",
+                    "role": "master",
+                    "timeout": "10",
+                    "on-fail": "Ignore",
+                    "record-pending": "True",
+                    "enabled": "1",
+                }.items()
+            },
         )
+
 
 class ValidateOperation(TestCase):
     def assert_operation_produces_report(self, operation, report_list):
         assert_report_item_list_equal(
-            operations.validate_operation_list(
-                [operation],
-                ["monitor"],
-            ),
-            report_list
+            operations.validate_operation_list([operation], ["monitor"],),
+            report_list,
         )
 
     def test_return_empty_report_on_valid_operation(self):
         self.assert_operation_produces_report(
-            {
-                "name": "monitor",
-                "role": "Master"
-            },
-            []
+            {"name": "monitor", "role": "Master"}, []
         )
 
     def test_validate_all_individual_options(self):
@@ -268,11 +279,20 @@ class ValidateOperation(TestCase):
                     option_names=["unknown"],
                     option_type="resource operation",
                     allowed=[
-                        "OCF_CHECK_LEVEL", "description", "enabled", "id",
-                        "interval", "interval-origin", "name", "on-fail",
-                        "record-pending", "role", "start-delay", "timeout",
+                        "OCF_CHECK_LEVEL",
+                        "description",
+                        "enabled",
+                        "id",
+                        "interval",
+                        "interval-origin",
+                        "name",
+                        "on-fail",
+                        "record-pending",
+                        "role",
+                        "start-delay",
+                        "timeout",
                     ],
-                    allowed_patterns=[]
+                    allowed_patterns=[],
                 ),
                 fixture.error(
                     report_codes.INVALID_OPTION_VALUE,
@@ -296,8 +316,13 @@ class ValidateOperation(TestCase):
                     option_value="b",
                     option_name="on-fail",
                     allowed_values=[
-                        "ignore", "block", "stop", "restart", "standby",
-                        "fence", "restart-container",
+                        "ignore",
+                        "block",
+                        "stop",
+                        "restart",
+                        "standby",
+                        "fence",
+                        "restart-container",
                     ],
                     cannot_be_empty=False,
                     forbidden_characters=None,
@@ -330,10 +355,7 @@ class ValidateOperation(TestCase):
 
     def test_return_error_when_unknown_operation_attribute(self):
         self.assert_operation_produces_report(
-            {
-                "name": "monitor",
-                "unknown": "invalid",
-            },
+            {"name": "monitor", "unknown": "invalid",},
             [
                 (
                     severities.ERROR,
@@ -344,16 +366,14 @@ class ValidateOperation(TestCase):
                         "allowed": sorted(operations.ATTRIBUTES),
                         "allowed_patterns": [],
                     },
-                    None
+                    None,
                 ),
             ],
         )
 
     def test_return_errror_when_missing_key_name(self):
         self.assert_operation_produces_report(
-            {
-                "role": "Master"
-            },
+            {"role": "Master"},
             [
                 (
                     severities.ERROR,
@@ -362,18 +382,14 @@ class ValidateOperation(TestCase):
                         "option_names": ["name"],
                         "option_type": "resource operation",
                     },
-                    None
+                    None,
                 ),
             ],
         )
 
     def test_return_error_when_both_interval_origin_and_start_delay(self):
         self.assert_operation_produces_report(
-            {
-                "name": "monitor",
-                "interval-origin": "a",
-                "start-delay": "b",
-            },
+            {"name": "monitor", "interval-origin": "a", "start-delay": "b",},
             [
                 (
                     severities.ERROR,
@@ -382,17 +398,14 @@ class ValidateOperation(TestCase):
                         "option_names": ["interval-origin", "start-delay"],
                         "option_type": "resource operation",
                     },
-                    None
+                    None,
                 ),
             ],
         )
 
     def test_return_error_on_invalid_id(self):
         self.assert_operation_produces_report(
-            {
-                "name": "monitor",
-                "id": "a#b",
-            },
+            {"name": "monitor", "id": "a#b",},
             [
                 (
                     severities.ERROR,
@@ -403,7 +416,7 @@ class ValidateOperation(TestCase):
                         "invalid_character": "#",
                         "is_first_char": False,
                     },
-                    None
+                    None,
                 ),
             ],
         )
@@ -419,14 +432,15 @@ class GetRemainingDefaults(TestCase):
             operations.get_remaining_defaults(
                 report_processor=None,
                 operation_list=[{"name": "monitor"}],
-                default_operation_list=[{"name": "monitor"}, {"name": "start"}]
+                default_operation_list=[{"name": "monitor"}, {"name": "start"}],
             ),
-            [{"name": "start"}]
+            [{"name": "start"}],
         )
 
 
 class GetResourceOperations(TestCase):
-    resource_el = etree.fromstring("""
+    resource_el = etree.fromstring(
+        """
         <primitive class="ocf" id="dummy" provider="pacemaker" type="Stateful">
             <operations>
                 <op id="dummy-start" interval="0s" name="start" timeout="20"/>
@@ -437,47 +451,45 @@ class GetResourceOperations(TestCase):
                     role="Slave" timeout="20"/>
             </operations>
         </primitive>
-    """)
-    resource_noop_el = etree.fromstring("""
+    """
+    )
+    resource_noop_el = etree.fromstring(
+        """
         <primitive class="ocf" id="dummy" provider="pacemaker" type="Stateful">
         </primitive>
-    """)
+    """
+    )
 
     def assert_op_list(self, op_list, expected_ids):
-        self.assertEqual(
-            [op.attrib.get("id") for op in op_list],
-            expected_ids
-        )
+        self.assertEqual([op.attrib.get("id") for op in op_list], expected_ids)
 
     def test_all_operations(self):
         self.assert_op_list(
             operations.get_resource_operations(self.resource_el),
-            ["dummy-start", "dummy-stop", "dummy-monitor-m", "dummy-monitor-s"]
+            ["dummy-start", "dummy-stop", "dummy-monitor-m", "dummy-monitor-s"],
         )
 
     def test_filter_operations(self):
         self.assert_op_list(
             operations.get_resource_operations(self.resource_el, ["start"]),
-            ["dummy-start"]
+            ["dummy-start"],
         )
 
     def test_filter_more_operations(self):
         self.assert_op_list(
             operations.get_resource_operations(
-                self.resource_el,
-                ["monitor", "stop"]
+                self.resource_el, ["monitor", "stop"]
             ),
-            ["dummy-stop", "dummy-monitor-m", "dummy-monitor-s"]
+            ["dummy-stop", "dummy-monitor-m", "dummy-monitor-s"],
         )
 
     def test_filter_none(self):
         self.assert_op_list(
             operations.get_resource_operations(self.resource_el, ["promote"]),
-            []
+            [],
         )
 
     def test_no_operations(self):
         self.assert_op_list(
-            operations.get_resource_operations(self.resource_noop_el),
-            []
+            operations.get_resource_operations(self.resource_noop_el), []
         )

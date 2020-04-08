@@ -34,6 +34,7 @@ def qdevice_setup(lib_env: LibraryEnvironment, model, enable, start):
     if start:
         _service_start(lib_env, qdevice_net.qdevice_start)
 
+
 def qdevice_destroy(lib_env: LibraryEnvironment, model, proceed_if_used=False):
     """
     Stop and disable qdevice on local host and remove its configuration
@@ -42,10 +43,7 @@ def qdevice_destroy(lib_env: LibraryEnvironment, model, proceed_if_used=False):
     """
     _check_model(model)
     _check_qdevice_not_used(
-        lib_env.report_processor,
-        lib_env.cmd_runner(),
-        model,
-        proceed_if_used
+        lib_env.report_processor, lib_env.cmd_runner(), model, proceed_if_used
     )
     _service_stop(lib_env, qdevice_net.qdevice_stop)
     _service_disable(lib_env, qdevice_net.qdevice_disable)
@@ -54,11 +52,9 @@ def qdevice_destroy(lib_env: LibraryEnvironment, model, proceed_if_used=False):
         ReportItem.info(reports.messages.QdeviceDestroySuccess(model))
     )
 
+
 def qdevice_status_text(
-    lib_env: LibraryEnvironment,
-    model,
-    verbose=False,
-    cluster=None,
+    lib_env: LibraryEnvironment, model, verbose=False, cluster=None,
 ):
     """
     Get runtime status of a quorum device in plain text
@@ -69,15 +65,14 @@ def qdevice_status_text(
     _check_model(model)
     runner = lib_env.cmd_runner()
     try:
-        return (
-            qdevice_net.qdevice_status_generic_text(runner, verbose)
-            +
-            qdevice_net.qdevice_status_cluster_text(runner, cluster, verbose)
-        )
+        return qdevice_net.qdevice_status_generic_text(
+            runner, verbose
+        ) + qdevice_net.qdevice_status_cluster_text(runner, cluster, verbose)
     except qdevice_net.QnetdNotRunningException:
         raise LibraryError(
             ReportItem.error(reports.messages.QdeviceNotRunning(model))
         )
+
 
 def qdevice_enable(lib_env: LibraryEnvironment, model):
     """
@@ -86,12 +81,14 @@ def qdevice_enable(lib_env: LibraryEnvironment, model):
     _check_model(model)
     _service_enable(lib_env, qdevice_net.qdevice_enable)
 
+
 def qdevice_disable(lib_env: LibraryEnvironment, model):
     """
     make qdevice not start automatically on boot on local host
     """
     _check_model(model)
     _service_disable(lib_env, qdevice_net.qdevice_disable)
+
 
 def qdevice_start(lib_env: LibraryEnvironment, model):
     """
@@ -100,11 +97,10 @@ def qdevice_start(lib_env: LibraryEnvironment, model):
     _check_model(model)
     if not qdevice_net.qdevice_initialized():
         raise LibraryError(
-            ReportItem.error(
-                reports.messages.QdeviceNotInitialized(model)
-            )
+            ReportItem.error(reports.messages.QdeviceNotInitialized(model))
         )
     _service_start(lib_env, qdevice_net.qdevice_start)
+
 
 def qdevice_stop(lib_env: LibraryEnvironment, model, proceed_if_used=False):
     """
@@ -114,12 +110,10 @@ def qdevice_stop(lib_env: LibraryEnvironment, model, proceed_if_used=False):
     """
     _check_model(model)
     _check_qdevice_not_used(
-        lib_env.report_processor,
-        lib_env.cmd_runner(),
-        model,
-        proceed_if_used
+        lib_env.report_processor, lib_env.cmd_runner(), model, proceed_if_used
     )
     _service_stop(lib_env, qdevice_net.qdevice_stop)
+
 
 def qdevice_kill(lib_env: LibraryEnvironment, model):
     """
@@ -128,10 +122,9 @@ def qdevice_kill(lib_env: LibraryEnvironment, model):
     _check_model(model)
     _service_kill(lib_env, qdevice_net.qdevice_kill)
 
+
 def qdevice_net_sign_certificate_request(
-    lib_env: LibraryEnvironment,
-    certificate_request,
-    cluster_name,
+    lib_env: LibraryEnvironment, certificate_request, cluster_name,
 ):
     """
     Sign node certificate request by qnetd CA
@@ -146,17 +139,16 @@ def qdevice_net_sign_certificate_request(
                 reports.messages.InvalidOptionValue(
                     "qnetd certificate request",
                     certificate_request,
-                    ["base64 encoded certificate"]
+                    ["base64 encoded certificate"],
                 )
             )
         )
     return base64.b64encode(
         qdevice_net.qdevice_sign_certificate_request(
-            lib_env.cmd_runner(),
-            certificate_request_data,
-            cluster_name
+            lib_env.cmd_runner(), certificate_request_data, cluster_name
         )
     )
+
 
 def client_net_setup(lib_env: LibraryEnvironment, ca_certificate):
     """
@@ -169,13 +161,14 @@ def client_net_setup(lib_env: LibraryEnvironment, ca_certificate):
         raise LibraryError(
             ReportItem.error(
                 reports.messages.InvalidOptionValue(
-                "qnetd CA certificate",
-                ca_certificate,
-                ["base64 encoded certificate"]
+                    "qnetd CA certificate",
+                    ca_certificate,
+                    ["base64 encoded certificate"],
                 )
             )
         )
     qdevice_net.client_setup(lib_env.cmd_runner(), ca_certificate_data)
+
 
 def client_net_import_certificate(lib_env: LibraryEnvironment, certificate):
     """
@@ -190,14 +183,14 @@ def client_net_import_certificate(lib_env: LibraryEnvironment, certificate):
                 reports.messages.InvalidOptionValue(
                     "qnetd client certificate",
                     certificate,
-                    ["base64 encoded certificate"]
+                    ["base64 encoded certificate"],
                 )
             )
         )
     qdevice_net.client_import_certificate_and_key(
-        lib_env.cmd_runner(),
-        certificate_data
+        lib_env.cmd_runner(), certificate_data
     )
+
 
 def client_net_destroy(lib_env: LibraryEnvironment):
     # pylint: disable=unused-argument
@@ -206,6 +199,7 @@ def client_net_destroy(lib_env: LibraryEnvironment):
     """
     qdevice_net.client_destroy()
 
+
 def _check_model(model):
     if model != "net":
         raise LibraryError(
@@ -213,6 +207,7 @@ def _check_model(model):
                 reports.messages.InvalidOptionValue("model", model, ["net"])
             )
         )
+
 
 def _check_qdevice_not_used(
     reporter: ReportProcessor, runner, model, force=False
@@ -231,11 +226,12 @@ def _check_qdevice_not_used(
                 severity=get_severity(report_codes.FORCE_QDEVICE_USED, force),
                 message=reports.messages.QdeviceUsedByClusters(
                     connected_clusters,
-                )
+                ),
             )
         )
         if reporter.has_errors:
             raise LibraryError()
+
 
 def _service_start(lib_env: LibraryEnvironment, func):
     lib_env.report_processor.report(
@@ -263,6 +259,7 @@ def _service_start(lib_env: LibraryEnvironment, func):
         )
     )
 
+
 def _service_stop(lib_env: LibraryEnvironment, func):
     lib_env.report_processor.report(
         ReportItem.info(
@@ -289,6 +286,7 @@ def _service_stop(lib_env: LibraryEnvironment, func):
         )
     )
 
+
 def _service_kill(lib_env: LibraryEnvironment, func):
     try:
         func(lib_env.cmd_runner())
@@ -311,6 +309,7 @@ def _service_kill(lib_env: LibraryEnvironment, func):
         )
     )
 
+
 def _service_enable(lib_env: LibraryEnvironment, func):
     try:
         func(lib_env.cmd_runner())
@@ -318,9 +317,7 @@ def _service_enable(lib_env: LibraryEnvironment, func):
         raise LibraryError(
             ReportItem.error(
                 reports.messages.ServiceActionFailed(
-                    reports.const.SERVICE_ACTION_ENABLE,
-                    e.service,
-                    e.message,
+                    reports.const.SERVICE_ACTION_ENABLE, e.service, e.message,
                 )
             )
         )
@@ -332,6 +329,7 @@ def _service_enable(lib_env: LibraryEnvironment, func):
         )
     )
 
+
 def _service_disable(lib_env: LibraryEnvironment, func):
     try:
         func(lib_env.cmd_runner())
@@ -339,9 +337,7 @@ def _service_disable(lib_env: LibraryEnvironment, func):
         raise LibraryError(
             ReportItem.error(
                 reports.messages.ServiceActionFailed(
-                    reports.const.SERVICE_ACTION_DISABLE,
-                    e.service,
-                    e.message,
+                    reports.const.SERVICE_ACTION_DISABLE, e.service, e.message,
                 )
             )
         )

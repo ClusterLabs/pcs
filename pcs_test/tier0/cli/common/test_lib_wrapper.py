@@ -2,14 +2,15 @@ from unittest import mock, TestCase
 
 from pcs.cli.common.lib_wrapper import Library
 
+
 class LibraryWrapperTest(TestCase):
     def test_raises_for_bad_path(self):
         mock_middleware_factory = mock.MagicMock()
-        lib = Library('env', mock_middleware_factory)
+        lib = Library("env", mock_middleware_factory)
         self.assertRaises(Exception, lambda: lib.no_valid_library_part)
 
-    @mock.patch('pcs.cli.common.lib_wrapper.constraint_order.create_with_set')
-    @mock.patch('pcs.cli.common.lib_wrapper.cli_env_to_lib_env')
+    @mock.patch("pcs.cli.common.lib_wrapper.constraint_order.create_with_set")
+    @mock.patch("pcs.cli.common.lib_wrapper.cli_env_to_lib_env")
     def test_bind_to_library(self, mock_cli_env_to_lib_env, mock_order_set):
         # pylint: disable=no-self-use
         lib_env = mock.MagicMock()
@@ -20,13 +21,12 @@ class LibraryWrapperTest(TestCase):
         def dummy_middleware(next_in_line, env, *args, **kwargs):
             return next_in_line(env, *args, **kwargs)
 
-
         mock_middleware_factory = mock.MagicMock()
         mock_middleware_factory.cib = dummy_middleware
         mock_middleware_factory.corosync_conf_existing = dummy_middleware
         mock_env = mock.MagicMock()
         Library(mock_env, mock_middleware_factory).constraint_order.set(
-            'first', second="third"
+            "first", second="third"
         )
 
         mock_order_set.assert_called_once_with(lib_env, "first", second="third")

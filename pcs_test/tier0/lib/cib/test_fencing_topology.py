@@ -35,7 +35,8 @@ patch_lib = create_patcher("pcs.lib.cib.fencing_topology")
 class CibMixin:
     @staticmethod
     def get_cib():
-        return etree.fromstring("""
+        return etree.fromstring(
+            """
             <cib><configuration>
             <fencing-topology>
                 <fencing-level
@@ -73,12 +74,14 @@ class CibMixin:
                 />
             </fencing-topology>
             </configuration></cib>
-        """)
+        """
+        )
 
 
 class StatusNodesMixin:
     def get_status(self):
-        return ClusterState("""
+        return ClusterState(
+            """
             <crm_mon version="2.0.3">
                 <summary>
                     <stack type="corosync" />
@@ -109,7 +112,8 @@ class StatusNodesMixin:
                     />
                 </nodes>
             </crm_mon>
-        """).node_section.nodes
+        """
+        ).node_section.nodes
 
 
 @patch_lib("_append_level_element")
@@ -132,66 +136,108 @@ class AddLevel(TestCase):
         self.force_node = "a force for a node"
 
     def assert_validators_called(
-        self, mock_val_level, mock_val_target, mock_val_devices, mock_val_dupl,
-        dupl_called=True
+        self,
+        mock_val_level,
+        mock_val_target,
+        mock_val_devices,
+        mock_val_dupl,
+        dupl_called=True,
     ):
         mock_val_level.assert_called_once_with(self.level)
         mock_val_target.assert_called_once_with(
-            self.cluster_status_nodes, self.target_type, self.target_value,
-            self.force_node
+            self.cluster_status_nodes,
+            self.target_type,
+            self.target_value,
+            self.force_node,
         )
         mock_val_devices.assert_called_once_with(
             self.resources_el, self.devices, self.force_device
         )
         if dupl_called:
             mock_val_dupl.assert_called_once_with(
-                self.topology_el, self.level, self.target_type,
-                self.target_value, self.devices
+                self.topology_el,
+                self.level,
+                self.target_type,
+                self.target_value,
+                self.devices,
             )
         else:
             mock_val_dupl.assert_not_called()
 
     def assert_called_invalid(
-        self, mock_val_level, mock_val_target, mock_val_devices, mock_val_dupl,
-        mock_append, dupl_called=True, report_list=None
+        self,
+        mock_val_level,
+        mock_val_target,
+        mock_val_devices,
+        mock_val_dupl,
+        mock_append,
+        dupl_called=True,
+        report_list=None,
     ):
         report_list = report_list or []
         with self.assertRaises(LibraryError):
             lib.add_level(
-                self.reporter, self.topology_el, self.resources_el, self.level,
-                self.target_type, self.target_value, self.devices,
-                self.cluster_status_nodes, self.force_device, self.force_node
+                self.reporter,
+                self.topology_el,
+                self.resources_el,
+                self.level,
+                self.target_type,
+                self.target_value,
+                self.devices,
+                self.cluster_status_nodes,
+                self.force_device,
+                self.force_node,
             )
         assert_report_item_list_equal(
-            self.reporter.report_item_list,
-            report_list
+            self.reporter.report_item_list, report_list
         )
         self.assert_validators_called(
-            mock_val_level, mock_val_target, mock_val_devices, mock_val_dupl,
-            dupl_called
+            mock_val_level,
+            mock_val_target,
+            mock_val_devices,
+            mock_val_dupl,
+            dupl_called,
         )
         mock_append.assert_not_called()
 
     def test_success(
-        self, mock_val_level, mock_val_target, mock_val_devices, mock_val_dupl,
-        mock_append
+        self,
+        mock_val_level,
+        mock_val_target,
+        mock_val_devices,
+        mock_val_dupl,
+        mock_append,
     ):
         lib.add_level(
-            self.reporter, self.topology_el, self.resources_el, self.level,
-            self.target_type, self.target_value, self.devices,
-            self.cluster_status_nodes, self.force_device, self.force_node
+            self.reporter,
+            self.topology_el,
+            self.resources_el,
+            self.level,
+            self.target_type,
+            self.target_value,
+            self.devices,
+            self.cluster_status_nodes,
+            self.force_device,
+            self.force_node,
         )
         self.assert_validators_called(
             mock_val_level, mock_val_target, mock_val_devices, mock_val_dupl
         )
         mock_append.assert_called_once_with(
-            self.topology_el, "valid_level", self.target_type,
-            self.target_value, self.devices
+            self.topology_el,
+            "valid_level",
+            self.target_type,
+            self.target_value,
+            self.devices,
         )
 
     def test_invalid_level(
-        self, mock_val_level, mock_val_target, mock_val_devices, mock_val_dupl,
-        mock_append
+        self,
+        mock_val_level,
+        mock_val_target,
+        mock_val_devices,
+        mock_val_dupl,
+        mock_append,
     ):
         mock_val_level.return_value = (
             [
@@ -201,7 +247,7 @@ class AddLevel(TestCase):
                     )
                 )
             ],
-            None
+            None,
         )
         report_list = [
             fixture.error(
@@ -214,18 +260,25 @@ class AddLevel(TestCase):
             ),
         ]
         self.assert_called_invalid(
-            mock_val_level, mock_val_target, mock_val_devices, mock_val_dupl,
-            mock_append, dupl_called=False, report_list=report_list
+            mock_val_level,
+            mock_val_target,
+            mock_val_devices,
+            mock_val_dupl,
+            mock_append,
+            dupl_called=False,
+            report_list=report_list,
         )
 
     def test_invalid_target(
-        self, mock_val_level, mock_val_target, mock_val_devices, mock_val_dupl,
-        mock_append
+        self,
+        mock_val_level,
+        mock_val_target,
+        mock_val_devices,
+        mock_val_dupl,
+        mock_append,
     ):
         mock_val_target.return_value = [
-            ReportItem.error(
-                reports.messages.NodeNotFound(self.target_value)
-            )
+            ReportItem.error(reports.messages.NodeNotFound(self.target_value))
         ]
         report_list = [
             fixture.error(
@@ -235,13 +288,22 @@ class AddLevel(TestCase):
             ),
         ]
         self.assert_called_invalid(
-            mock_val_level, mock_val_target, mock_val_devices, mock_val_dupl,
-            mock_append, dupl_called=False, report_list=report_list
+            mock_val_level,
+            mock_val_target,
+            mock_val_devices,
+            mock_val_dupl,
+            mock_append,
+            dupl_called=False,
+            report_list=report_list,
         )
 
     def test_invalid_devices(
-        self, mock_val_level, mock_val_target, mock_val_devices, mock_val_dupl,
-        mock_append
+        self,
+        mock_val_level,
+        mock_val_target,
+        mock_val_devices,
+        mock_val_dupl,
+        mock_append,
     ):
         mock_val_devices.return_value = [
             ReportItem.error(
@@ -255,13 +317,22 @@ class AddLevel(TestCase):
             ),
         ]
         self.assert_called_invalid(
-            mock_val_level, mock_val_target, mock_val_devices, mock_val_dupl,
-            mock_append, dupl_called=False, report_list=report_list
+            mock_val_level,
+            mock_val_target,
+            mock_val_devices,
+            mock_val_dupl,
+            mock_append,
+            dupl_called=False,
+            report_list=report_list,
         )
 
     def test_already_exists(
-        self, mock_val_level, mock_val_target, mock_val_devices, mock_val_dupl,
-        mock_append
+        self,
+        mock_val_level,
+        mock_val_target,
+        mock_val_devices,
+        mock_val_dupl,
+        mock_append,
     ):
         mock_val_dupl.return_value = [
             reports.item.ReportItem.error(
@@ -283,8 +354,13 @@ class AddLevel(TestCase):
             ),
         ]
         self.assert_called_invalid(
-            mock_val_level, mock_val_target, mock_val_devices, mock_val_dupl,
-            mock_append, dupl_called=True, report_list=report_list
+            mock_val_level,
+            mock_val_target,
+            mock_val_devices,
+            mock_val_dupl,
+            mock_append,
+            dupl_called=True,
+            report_list=report_list,
         )
 
 
@@ -295,10 +371,7 @@ class RemoveAllLevels(TestCase, CibMixin):
 
     def test_success(self):
         lib.remove_all_levels(self.tree)
-        assert_xml_equal(
-            "<fencing-topology />",
-            etree_to_str(self.tree)
-        )
+        assert_xml_equal("<fencing-topology />", etree_to_str(self.tree))
 
 
 class RemoveLevelsByParams(TestCase, CibMixin):
@@ -314,12 +387,10 @@ class RemoveLevelsByParams(TestCase, CibMixin):
         return [el.get("id") for el in self.tree.findall("fencing-level")]
 
     def test_level(self):
-        report_list = lib.remove_levels_by_params(
-            self.tree, level=2
-        )
+        report_list = lib.remove_levels_by_params(self.tree, level=2)
         self.assertEqual(
             self.get_remaining_ids(),
-            ["fl1", "fl3", "fl5", "fl7", "fl8", "fl9", "fl10"]
+            ["fl1", "fl3", "fl5", "fl7", "fl8", "fl9", "fl10"],
         )
         assert_report_item_list_equal(report_list, [])
 
@@ -329,7 +400,7 @@ class RemoveLevelsByParams(TestCase, CibMixin):
         )
         self.assertEqual(
             self.get_remaining_ids(),
-            ["fl3", "fl4", "fl5", "fl6", "fl7", "fl8", "fl9", "fl10"]
+            ["fl3", "fl4", "fl5", "fl6", "fl7", "fl8", "fl9", "fl10"],
         )
         assert_report_item_list_equal(report_list, [])
 
@@ -339,28 +410,27 @@ class RemoveLevelsByParams(TestCase, CibMixin):
         )
         self.assertEqual(
             self.get_remaining_ids(),
-            ["fl1", "fl2", "fl3", "fl4", "fl7", "fl8", "fl9", "fl10"]
+            ["fl1", "fl2", "fl3", "fl4", "fl7", "fl8", "fl9", "fl10"],
         )
         assert_report_item_list_equal(report_list, [])
 
     def test_target_attrib(self):
         report_list = lib.remove_levels_by_params(
-            self.tree, target_type=TARGET_TYPE_ATTRIBUTE,
-            target_value=("fencing", "improved")
+            self.tree,
+            target_type=TARGET_TYPE_ATTRIBUTE,
+            target_value=("fencing", "improved"),
         )
         self.assertEqual(
             self.get_remaining_ids(),
-            ["fl1", "fl2", "fl3", "fl4", "fl5", "fl6", "fl9", "fl10"]
+            ["fl1", "fl2", "fl3", "fl4", "fl5", "fl6", "fl9", "fl10"],
         )
         assert_report_item_list_equal(report_list, [])
 
     def test_one_device(self):
-        report_list = lib.remove_levels_by_params(
-            self.tree, devices=["d3"]
-        )
+        report_list = lib.remove_levels_by_params(self.tree, devices=["d3"])
         self.assertEqual(
             self.get_remaining_ids(),
-            ["fl1", "fl3", "fl5", "fl6", "fl7", "fl8", "fl9", "fl10"]
+            ["fl1", "fl3", "fl5", "fl6", "fl7", "fl8", "fl9", "fl10"],
         )
         assert_report_item_list_equal(report_list, [])
 
@@ -370,7 +440,7 @@ class RemoveLevelsByParams(TestCase, CibMixin):
         )
         self.assertEqual(
             self.get_remaining_ids(),
-            ["fl1", "fl2", "fl4", "fl5", "fl6", "fl7", "fl8", "fl9", "fl10"]
+            ["fl1", "fl2", "fl4", "fl5", "fl6", "fl7", "fl8", "fl9", "fl10"],
         )
         assert_report_item_list_equal(report_list, [])
 
@@ -380,7 +450,7 @@ class RemoveLevelsByParams(TestCase, CibMixin):
         )
         self.assertEqual(
             self.get_remaining_ids(),
-            ["fl1", "fl2", "fl3", "fl5", "fl6", "fl7", "fl8", "fl9", "fl10"]
+            ["fl1", "fl2", "fl3", "fl5", "fl6", "fl7", "fl8", "fl9", "fl10"],
         )
         assert_report_item_list_equal(report_list, [])
 
@@ -399,19 +469,27 @@ class RemoveLevelsByParams(TestCase, CibMixin):
                         "allowed_types": [
                             "node",
                             "regular expression",
-                            "attribute_name=value"
-                        ]
+                            "attribute_name=value",
+                        ],
                     },
-                    None
+                    None,
                 ),
-            ]
+            ],
         )
         self.assertEqual(
             self.get_remaining_ids(),
             [
-                "fl1", "fl2", "fl3", "fl4", "fl5", "fl6", "fl7", "fl8", "fl9",
-                "fl10"
-            ]
+                "fl1",
+                "fl2",
+                "fl3",
+                "fl4",
+                "fl5",
+                "fl6",
+                "fl7",
+                "fl8",
+                "fl9",
+                "fl10",
+            ],
         )
 
     def test_no_such_level(self):
@@ -425,21 +503,29 @@ class RemoveLevelsByParams(TestCase, CibMixin):
                     severity.ERROR,
                     report_codes.CIB_FENCING_LEVEL_DOES_NOT_EXIST,
                     {
-                        "devices": ["d3", ],
+                        "devices": ["d3",],
                         "target_type": TARGET_TYPE_NODE,
                         "target_value": "nodeB",
                         "level": 9,
                     },
-                    None
+                    None,
                 ),
-            ]
+            ],
         )
         self.assertEqual(
             self.get_remaining_ids(),
             [
-                "fl1", "fl2", "fl3", "fl4", "fl5", "fl6", "fl7", "fl8", "fl9",
-                "fl10"
-            ]
+                "fl1",
+                "fl2",
+                "fl3",
+                "fl4",
+                "fl5",
+                "fl6",
+                "fl7",
+                "fl8",
+                "fl9",
+                "fl10",
+            ],
         )
 
     def test_no_such_level_ignore_missing(self):
@@ -450,10 +536,19 @@ class RemoveLevelsByParams(TestCase, CibMixin):
         self.assertEqual(
             self.get_remaining_ids(),
             [
-                "fl1", "fl2", "fl3", "fl4", "fl5", "fl6", "fl7", "fl8", "fl9",
-                "fl10"
-            ]
+                "fl1",
+                "fl2",
+                "fl3",
+                "fl4",
+                "fl5",
+                "fl6",
+                "fl7",
+                "fl8",
+                "fl9",
+                "fl10",
+            ],
         )
+
 
 class RemoveDeviceFromAllLevels(TestCase, CibMixin):
     def setUp(self):
@@ -494,7 +589,7 @@ class RemoveDeviceFromAllLevels(TestCase, CibMixin):
                 />
             </fencing-topology>
             """,
-            etree_to_str(self.tree)
+            etree_to_str(self.tree),
         )
 
     def test_no_such_device(self):
@@ -510,8 +605,7 @@ class Export(TestCase, CibMixin):
 
     def test_empty(self):
         self.assertEqual(
-            lib.export(etree.fromstring("<fencing-topology />")),
-            []
+            lib.export(etree.fromstring("<fencing-topology />")), []
         )
 
     def test_success(self):
@@ -577,8 +671,8 @@ class Export(TestCase, CibMixin):
                     "target_type": "attribute",
                     "target_value": ("fencing", "remote-special"),
                     "devices": ["dR-special"],
-                }
-            ]
+                },
+            ],
         )
 
 
@@ -619,28 +713,28 @@ class Verify(TestCase, CibMixin, StatusNodesMixin):
                 report_codes.STONITH_RESOURCES_DO_NOT_EXIST,
                 {
                     "stonith_ids": [
-                        "d1", "d2", "d3", "d4", "d5", "dR", "dR-special"
+                        "d1",
+                        "d2",
+                        "d3",
+                        "d4",
+                        "d5",
+                        "dR",
+                        "dR-special",
                     ],
                 },
-                None
+                None,
             ),
             (
                 severity.ERROR,
                 report_codes.NODE_NOT_FOUND,
-                {
-                    "node": "nodeA",
-                    "searched_types": [],
-                },
-                None
+                {"node": "nodeA", "searched_types": [],},
+                None,
             ),
             (
                 severity.ERROR,
                 report_codes.NODE_NOT_FOUND,
-                {
-                    "node": "nodeB",
-                    "searched_types": [],
-                },
-                None
+                {"node": "nodeB", "searched_types": [],},
+                None,
             ),
         ]
         assert_report_item_list_equal(report_list, report)
@@ -678,7 +772,7 @@ class ValidateLevel(TestCase):
                             cannot_be_empty=False,
                             forbidden_characters=None,
                         ),
-                    ]
+                    ],
                 )
 
 
@@ -703,36 +797,40 @@ class ValidateTargetTypewise(TestCase):
 
     def test_empty(self):
         report_list = lib._validate_target_typewise("")
-        report = [(
-            severity.ERROR,
-            report_codes.INVALID_OPTION_TYPE,
-            {
-                "option_name": "target",
-                "allowed_types": [
-                    "node",
-                    "regular expression",
-                    "attribute_name=value"
-                ],
-            },
-            None
-        )]
+        report = [
+            (
+                severity.ERROR,
+                report_codes.INVALID_OPTION_TYPE,
+                {
+                    "option_name": "target",
+                    "allowed_types": [
+                        "node",
+                        "regular expression",
+                        "attribute_name=value",
+                    ],
+                },
+                None,
+            )
+        ]
         assert_report_item_list_equal(report_list, report)
 
     def test_invalid(self):
         report_list = lib._validate_target_typewise("bad_target")
-        report = [(
-            severity.ERROR,
-            report_codes.INVALID_OPTION_TYPE,
-            {
-                "option_name": "target",
-                "allowed_types": [
-                    "node",
-                    "regular expression",
-                    "attribute_name=value"
-                ],
-            },
-            None
-        )]
+        report = [
+            (
+                severity.ERROR,
+                report_codes.INVALID_OPTION_TYPE,
+                {
+                    "option_name": "target",
+                    "allowed_types": [
+                        "node",
+                        "regular expression",
+                        "attribute_name=value",
+                    ],
+                },
+                None,
+            )
+        ]
         assert_report_item_list_equal(report_list, report)
 
 
@@ -745,73 +843,70 @@ class ValidateTargetValuewise(TestCase, StatusNodesMixin):
             lib._validate_target_valuewise(
                 self.state, TARGET_TYPE_NODE, "nodeA"
             ),
-            []
+            [],
         )
 
     def test_node_empty(self):
         report_list = lib._validate_target_valuewise(
             self.state, TARGET_TYPE_NODE, ""
         )
-        report = [(
-            severity.ERROR,
-            report_codes.NODE_NOT_FOUND,
-            {
-                "node": "",
-                "searched_types": [],
-            },
-            report_codes.FORCE_NODE_DOES_NOT_EXIST
-        )]
+        report = [
+            (
+                severity.ERROR,
+                report_codes.NODE_NOT_FOUND,
+                {"node": "", "searched_types": [],},
+                report_codes.FORCE_NODE_DOES_NOT_EXIST,
+            )
+        ]
         assert_report_item_list_equal(report_list, report)
 
     def test_node_invalid(self):
         report_list = lib._validate_target_valuewise(
             self.state, TARGET_TYPE_NODE, "rh7-x"
         )
-        report = [(
-            severity.ERROR,
-            report_codes.NODE_NOT_FOUND,
-            {
-                "node": "rh7-x",
-                "searched_types": [],
-            },
-            report_codes.FORCE_NODE_DOES_NOT_EXIST
-        )]
+        report = [
+            (
+                severity.ERROR,
+                report_codes.NODE_NOT_FOUND,
+                {"node": "rh7-x", "searched_types": [],},
+                report_codes.FORCE_NODE_DOES_NOT_EXIST,
+            )
+        ]
         assert_report_item_list_equal(report_list, report)
 
     def test_node_invalid_force(self):
         report_list = lib._validate_target_valuewise(
             self.state, TARGET_TYPE_NODE, "rh7-x", force_node=True
         )
-        report = [(
-            severity.WARNING,
-            report_codes.NODE_NOT_FOUND,
-            {
-                "node": "rh7-x",
-                "searched_types": [],
-            },
-            None
-        )]
+        report = [
+            (
+                severity.WARNING,
+                report_codes.NODE_NOT_FOUND,
+                {"node": "rh7-x", "searched_types": [],},
+                None,
+            )
+        ]
         assert_report_item_list_equal(report_list, report)
 
     def test_node_invalid_not_forceable(self):
         report_list = lib._validate_target_valuewise(
             self.state, TARGET_TYPE_NODE, "rh7-x", allow_force=False
         )
-        report = [(
-            severity.ERROR,
-            report_codes.NODE_NOT_FOUND,
-            {
-                "node": "rh7-x",
-                "searched_types": [],
-            },
-            None
-        )]
+        report = [
+            (
+                severity.ERROR,
+                report_codes.NODE_NOT_FOUND,
+                {"node": "rh7-x", "searched_types": [],},
+                None,
+            )
+        ]
         assert_report_item_list_equal(report_list, report)
 
 
 class ValidateDevices(TestCase):
     def setUp(self):
-        self.resources_el = etree.fromstring("""
+        self.resources_el = etree.fromstring(
+            """
             <resources>
                 <primitive id="dummy"
                     class="ocf" provider="pacemaker" type="Stateful"
@@ -819,71 +914,71 @@ class ValidateDevices(TestCase):
                 <primitive id="stonith1" class="stonith" type="fence_xvm" />
                 <primitive id="stonith2" class="stonith" type="fence_apc" />
             </resources>
-        """)
+        """
+        )
 
     def test_success(self):
         report_list = []
-        report_list.extend(lib._validate_devices(
-            self.resources_el, ["stonith1"]
-        ))
-        report_list.extend(lib._validate_devices(
-            self.resources_el, ["stonith1", "stonith2"]
-        ))
+        report_list.extend(
+            lib._validate_devices(self.resources_el, ["stonith1"])
+        )
+        report_list.extend(
+            lib._validate_devices(self.resources_el, ["stonith1", "stonith2"])
+        )
         assert_report_item_list_equal(report_list, [])
 
     def test_empty(self):
         report_list = lib._validate_devices(self.resources_el, [])
-        report = [(
-            severity.ERROR,
-            report_codes.REQUIRED_OPTIONS_ARE_MISSING,
-            {
-                "option_type": None,
-                "option_names": ["stonith devices"],
-            },
-            None
-        )]
+        report = [
+            (
+                severity.ERROR,
+                report_codes.REQUIRED_OPTIONS_ARE_MISSING,
+                {"option_type": None, "option_names": ["stonith devices"],},
+                None,
+            )
+        ]
         assert_report_item_list_equal(report_list, report)
 
     def test_invalid(self):
         report_list = lib._validate_devices(
             self.resources_el, ["dummy", "fenceX"]
         )
-        report = [(
-            severity.ERROR,
-            report_codes.STONITH_RESOURCES_DO_NOT_EXIST,
-            {
-                "stonith_ids": ["dummy", "fenceX"],
-            },
-            report_codes.FORCE_STONITH_RESOURCE_DOES_NOT_EXIST
-        )]
+        report = [
+            (
+                severity.ERROR,
+                report_codes.STONITH_RESOURCES_DO_NOT_EXIST,
+                {"stonith_ids": ["dummy", "fenceX"],},
+                report_codes.FORCE_STONITH_RESOURCE_DOES_NOT_EXIST,
+            )
+        ]
         assert_report_item_list_equal(report_list, report)
 
     def test_invalid_forced(self):
         report_list = lib._validate_devices(
             self.resources_el, ["dummy", "fenceX"], force_device=True
         )
-        report = [(
-            severity.WARNING,
-            report_codes.STONITH_RESOURCES_DO_NOT_EXIST,
-            {
-                "stonith_ids": ["dummy", "fenceX"],
-            },
-            None
-        )]
+        report = [
+            (
+                severity.WARNING,
+                report_codes.STONITH_RESOURCES_DO_NOT_EXIST,
+                {"stonith_ids": ["dummy", "fenceX"],},
+                None,
+            )
+        ]
         assert_report_item_list_equal(report_list, report)
 
     def test_node_invalid_not_forceable(self):
         report_list = lib._validate_devices(
             self.resources_el, ["dummy", "fenceX"], allow_force=False
         )
-        report = [(
-            severity.ERROR,
-            report_codes.STONITH_RESOURCES_DO_NOT_EXIST,
-            {
-                "stonith_ids": ["dummy", "fenceX"],
-            },
-            None
-        )]
+        report = [
+            (
+                severity.ERROR,
+                report_codes.STONITH_RESOURCES_DO_NOT_EXIST,
+                {"stonith_ids": ["dummy", "fenceX"],},
+                None,
+            )
+        ]
         assert_report_item_list_equal(report_list, report)
 
 
@@ -911,17 +1006,19 @@ class ValidateLevelTargetDevicesDoesNotExist(TestCase):
         mock_find.assert_called_once_with(
             "tree", "level", "target_type", "target_value", ["devices"]
         )
-        report = [(
-            severity.ERROR,
-            report_codes.CIB_FENCING_LEVEL_ALREADY_EXISTS,
-            {
-                "devices": ["devices"],
-                "target_type": "target_type",
-                "target_value": "target_value",
-                "level": "level",
-            },
-            None
-        )]
+        report = [
+            (
+                severity.ERROR,
+                report_codes.CIB_FENCING_LEVEL_ALREADY_EXISTS,
+                {
+                    "devices": ["devices"],
+                    "target_type": "target_type",
+                    "target_value": "target_value",
+                    "level": "level",
+                },
+                None,
+            )
+        ]
         assert_report_item_list_equal(report_list, report)
 
 
@@ -942,7 +1039,7 @@ class AppendLevelElement(TestCase):
                 />
             </fencing-topology>
             """,
-            etree_to_str(self.tree)
+            etree_to_str(self.tree),
         )
 
     def test_node_pattern(self):
@@ -958,7 +1055,7 @@ class AppendLevelElement(TestCase):
                 />
             </fencing-topology>
             """,
-            etree_to_str(self.tree)
+            etree_to_str(self.tree),
         )
 
     def test_node_attribute(self):
@@ -976,7 +1073,7 @@ class AppendLevelElement(TestCase):
                 />
             </fencing-topology>
             """,
-            etree_to_str(self.tree)
+            etree_to_str(self.tree),
         )
 
 
@@ -992,73 +1089,94 @@ class FindLevelElements(TestCase, CibMixin):
         self.assertEqual(
             self.get_ids(lib._find_level_elements(self.tree)),
             [
-                "fl1", "fl2", "fl3", "fl4", "fl5", "fl6", "fl7", "fl8", "fl9",
-                "fl10"
-            ]
+                "fl1",
+                "fl2",
+                "fl3",
+                "fl4",
+                "fl5",
+                "fl6",
+                "fl7",
+                "fl8",
+                "fl9",
+                "fl10",
+            ],
         )
 
     def test_no_such_level(self):
         self.assertEqual(
-            self.get_ids(lib._find_level_elements(
-                self.tree, level=2, target_type=TARGET_TYPE_NODE,
-                target_value="nodeB", devices=["d5"]
-            )),
-            []
+            self.get_ids(
+                lib._find_level_elements(
+                    self.tree,
+                    level=2,
+                    target_type=TARGET_TYPE_NODE,
+                    target_value="nodeB",
+                    devices=["d5"],
+                )
+            ),
+            [],
         )
 
     def test_level(self):
         self.assertEqual(
-            self.get_ids(lib._find_level_elements(
-                self.tree, level=1
-            )),
-            ["fl1", "fl3", "fl5"]
+            self.get_ids(lib._find_level_elements(self.tree, level=1)),
+            ["fl1", "fl3", "fl5"],
         )
 
     def test_target_node(self):
         self.assertEqual(
-            self.get_ids(lib._find_level_elements(
-                self.tree, target_type=TARGET_TYPE_NODE, target_value="nodeB"
-            )),
-            ["fl3", "fl4"]
+            self.get_ids(
+                lib._find_level_elements(
+                    self.tree,
+                    target_type=TARGET_TYPE_NODE,
+                    target_value="nodeB",
+                )
+            ),
+            ["fl3", "fl4"],
         )
 
     def test_target_pattern(self):
         self.assertEqual(
-            self.get_ids(lib._find_level_elements(
-                self.tree, target_type=TARGET_TYPE_REGEXP,
-                target_value="node-R.*"
-            )),
-            ["fl9"]
+            self.get_ids(
+                lib._find_level_elements(
+                    self.tree,
+                    target_type=TARGET_TYPE_REGEXP,
+                    target_value="node-R.*",
+                )
+            ),
+            ["fl9"],
         )
 
     def test_target_attribute(self):
         self.assertEqual(
-            self.get_ids(lib._find_level_elements(
-                self.tree, target_type=TARGET_TYPE_ATTRIBUTE,
-                target_value=("fencing", "improved")
-            )),
-            ["fl7", "fl8"]
+            self.get_ids(
+                lib._find_level_elements(
+                    self.tree,
+                    target_type=TARGET_TYPE_ATTRIBUTE,
+                    target_value=("fencing", "improved"),
+                )
+            ),
+            ["fl7", "fl8"],
         )
 
     def test_devices(self):
         self.assertEqual(
-            self.get_ids(lib._find_level_elements(
-                self.tree, devices=["d3"]
-            )),
-            ["fl2", "fl4"]
+            self.get_ids(lib._find_level_elements(self.tree, devices=["d3"])),
+            ["fl2", "fl4"],
         )
 
         self.assertEqual(
-            self.get_ids(lib._find_level_elements(
-                self.tree, devices=["d1", "d2"]
-            )),
-            ["fl1"]
+            self.get_ids(
+                lib._find_level_elements(self.tree, devices=["d1", "d2"])
+            ),
+            ["fl1"],
         )
 
     def test_combination(self):
         self.assertEqual(
-            self.get_ids(lib._find_level_elements(
-                self.tree, 2, TARGET_TYPE_NODE, "nodeB", ["d3"]
-            )),
-            ["fl4"]
+            self.get_ids(
+                lib._find_level_elements(
+                    self.tree, 2, TARGET_TYPE_NODE, "nodeB", ["d3"]
+                )
+            ),
+            ["fl4"],
         )

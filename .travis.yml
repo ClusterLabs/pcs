@@ -34,6 +34,8 @@ script:
   - docker run $DIST make -C $SRC_PATH mypy
   # python linter
   - docker run $DIST make -C $SRC_PATH pylint
+  # python code format check
+  - docker run $DIST make -C $SRC_PATH black_check
   # ruby test suite
   - docker run
      -e "GEM_HOME=$GEM_HOME"

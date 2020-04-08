@@ -7,8 +7,9 @@ LOGGER_NAMES = [
     "tornado.general",
 ]
 
-#pylint:disable=invalid-name
+# pylint:disable=invalid-name
 pcsd = logging.getLogger("pcs.daemon")
+
 
 def from_external_source(level, created: float, usecs: int, message, group_id):
     record = pcsd.makeRecord(
@@ -37,18 +38,18 @@ def from_external_source(level, created: float, usecs: int, message, group_id):
     record.pcsd_group_id = str(group_id).zfill(5)
     pcsd.handle(record)
 
+
 class Formatter(logging.Formatter):
-    default_time_format = '%Y-%m-%dT%H:%M:%S'
+    default_time_format = "%Y-%m-%dT%H:%M:%S"
     # It produces `datetime.miliseconds`
-    default_msec_format = '%s.%03d'
+    default_msec_format = "%s.%03d"
 
     def __init__(self):
         super().__init__(
             fmt="{levelname[0]}, [{asctime} #{pcsd_group_id}]"
-                " {levelname:>8s} -- : {message}"
-            ,
+            " {levelname:>8s} -- : {message}",
             datefmt=None,
-            style="{"
+            style="{",
         )
 
     def format(self, record):
@@ -59,6 +60,7 @@ class Formatter(logging.Formatter):
             record.pcsd_group_id = "00000"
         return super().format(record)
 
+
 def setup(log_file):
     handler = logging.handlers.WatchedFileHandler(log_file, encoding="utf8")
     handler.setFormatter(Formatter())
@@ -67,6 +69,7 @@ def setup(log_file):
         pcsd_log = logging.getLogger(logger_name)
         pcsd_log.addHandler(handler)
         pcsd_log.setLevel(logging.INFO)
+
 
 def enable_debug():
     # Debug messages won't be written if we call setLevel(logging.DEBUG) on the

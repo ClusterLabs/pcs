@@ -1,6 +1,4 @@
-from typing import (
-    List,
-)
+from typing import List
 
 from pcs import settings
 from pcs.common import reports
@@ -8,11 +6,13 @@ from pcs.common.reports.item import ReportItem
 from pcs.lib.corosync import config_parser, constants, node
 from pcs.lib.errors import LibraryError
 
+
 class ConfigFacade:
     # pylint: disable=too-many-public-methods
     """
     Provides high level access to a corosync config file
     """
+
     @classmethod
     def from_string(cls, config_string):
         """
@@ -152,28 +152,31 @@ class ConfigFacade:
                 if not node_data:
                     continue
                 # add the node data to the resulting list
-                result.append(node.CorosyncNode(
-                    node_data.get("name"),
-                    [
-                        node.CorosyncNodeAddress(
-                            node_data[f"ring{i}_addr"],
-                            str(i)
-                        )
-                        for i in range(constants.LINKS_MAX)
-                        if node_data.get(f"ring{i}_addr")
-                    ],
-                    node_data.get("nodeid")
-                ))
+                result.append(
+                    node.CorosyncNode(
+                        node_data.get("name"),
+                        [
+                            node.CorosyncNodeAddress(
+                                node_data[f"ring{i}_addr"], str(i)
+                            )
+                            for i in range(constants.LINKS_MAX)
+                            if node_data.get(f"ring{i}_addr")
+                        ],
+                        node_data.get("nodeid"),
+                    )
+                )
         return result
 
     def _get_used_nodeid_list(self):
         used_ids = []
         for nodelist in self.config.get_sections("nodelist"):
             for node_section in nodelist.get_sections("node"):
-                used_ids.extend([
-                    int(attr[1])
-                    for attr in node_section.get_attributes("nodeid")
-                ])
+                used_ids.extend(
+                    [
+                        int(attr[1])
+                        for attr in node_section.get_attributes("nodeid")
+                    ]
+                )
         return used_ids
 
     @staticmethod
@@ -201,7 +204,8 @@ class ConfigFacade:
                 if not node_data:
                     continue
                 return [
-                    str(i) for i in range(constants.LINKS_MAX)
+                    str(i)
+                    for i in range(constants.LINKS_MAX)
                     if node_data.get(f"ring{i}_addr")
                 ]
 
@@ -209,9 +213,7 @@ class ConfigFacade:
     def _create_node_section(node_id, node_options, link_ids):
         node_section = config_parser.Section("node")
         for link_id, link_addr in zip(link_ids, node_options["addrs"]):
-            node_section.add_attribute(
-                "ring{}_addr".format(link_id), link_addr
-            )
+            node_section.add_attribute("ring{}_addr".format(link_id), link_addr)
         node_section.add_attribute("name", node_options["name"])
         node_section.add_attribute("nodeid", node_id)
         return node_section
@@ -231,7 +233,7 @@ class ConfigFacade:
                 self._create_node_section(
                     next(node_id_generator),
                     node_options,
-                    self.get_used_linknumber_list()
+                    self.get_used_linknumber_list(),
                 )
             )
         self.__update_two_node()
@@ -311,8 +313,7 @@ class ConfigFacade:
                 node_name = self._get_node_data(node_section).get("name")
                 if node_name in node_addr_map:
                     node_section.add_attribute(
-                        f"ring{linknumber}_addr",
-                        node_addr_map[node_name]
+                        f"ring{linknumber}_addr", node_addr_map[node_name]
                     )
 
         # Add link options.
@@ -360,7 +361,7 @@ class ConfigFacade:
                 interface_number = interface_section.get_attribute_value(
                     "linknumber",
                     # if no linknumber is set, corosync treats it as 0
-                    "0"
+                    "0",
                 )
                 if interface_number in link_list:
                     totem_section.del_section(interface_section)
@@ -391,8 +392,7 @@ class ConfigFacade:
                     node_name = self._get_node_data(node_section).get("name")
                     if node_name in node_addr_map:
                         node_section.set_attribute(
-                            f"ring{linknumber}_addr",
-                            node_addr_map[node_name]
+                            f"ring{linknumber}_addr", node_addr_map[node_name]
                         )
         # change options
         if options:
@@ -411,7 +411,7 @@ class ConfigFacade:
             self._set_link_options(
                 options,
                 interface_section_list=target_interface_section_list,
-                linknumber=linknumber
+                linknumber=linknumber,
             )
         self.__remove_empty_sections(self.config)
 
@@ -485,11 +485,11 @@ class ConfigFacade:
         self.__set_section_options(totem_section_list, generic_options)
         self.__set_section_options(
             totem_section_list,
-            _add_prefix_to_dict_keys("knet_compression_", compression_options)
+            _add_prefix_to_dict_keys("knet_compression_", compression_options),
         )
         self.__set_section_options(
             totem_section_list,
-            _add_prefix_to_dict_keys("crypto_", crypto_options)
+            _add_prefix_to_dict_keys("crypto_", crypto_options),
         )
         self.__remove_empty_sections(self.config)
         self._need_stopped_cluster = True
@@ -597,10 +597,9 @@ class ConfigFacade:
             if value and regexp.match(name):
                 exec_found = True
                 break
-        return (
-            not exec_found
-            and
-            heuristics_options.get("mode") in ("on", "sync")
+        return not exec_found and heuristics_options.get("mode") in (
+            "on",
+            "sync",
         )
 
     def add_quorum_device(
@@ -631,11 +630,10 @@ class ConfigFacade:
             for device in quorum.get_sections("device"):
                 quorum.del_section(device)
             for name, value in quorum.get_attributes():
-                if (
-                    name in remove_need_stopped_cluster
-                    and
-                    value not in ["", "0"]
-                ):
+                if name in remove_need_stopped_cluster and value not in [
+                    "",
+                    "0",
+                ]:
                     self._need_stopped_cluster = True
         # remove conflicting quorum options
         attrs_to_remove = {
@@ -798,17 +796,11 @@ class ConfigFacade:
     def __remove_empty_sections(self, parent_section):
         for section in parent_section.get_sections():
             self.__remove_empty_sections(section)
-            if (
-                section.empty
-                or
-                (
-                    section.name == "interface"
-                    and
-                    list(section.get_attributes_dict().keys()) == ["linknumber"]
-                )
+            if section.empty or (
+                section.name == "interface"
+                and list(section.get_attributes_dict().keys()) == ["linknumber"]
             ):
                 parent_section.del_section(section)
-
 
     @staticmethod
     def __translate_link_options(options, input_to_corosync=True):
@@ -844,6 +836,7 @@ class ConfigFacade:
                     del result["broadcast"]
 
         return result
+
 
 def _add_prefix_to_dict_keys(prefix, data):
     return {"{}{}".format(prefix, key): value for key, value in data.items()}

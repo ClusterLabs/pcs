@@ -3,10 +3,12 @@ from tornado.web import (
     RedirectHandler as TornadoRedirectHandler,
 )
 
+
 class EnhanceHeadersMixin:
     """
     EnhanceHeadersMixin allows to add security headers to GUI urls.
     """
+
     def set_strict_transport_security(self):
         # rhbz 1558063
         # The HTTP Strict-Transport-Security response header (often abbreviated
@@ -42,10 +44,12 @@ class EnhanceHeadersMixin:
         # CSP.
         self.set_header("X-Xss-Protection", "1; mode=block")
 
+
 class BaseHandler(EnhanceHeadersMixin, RequestHandler):
     """
     BaseHandler adds for all urls Strict-Transport-Security.
     """
+
     def set_default_headers(self):
         self.set_strict_transport_security()
 
@@ -53,13 +57,15 @@ class BaseHandler(EnhanceHeadersMixin, RequestHandler):
         # abstract method `data_received` does need to be overriden. This
         # method should be implemented to handle streamed request data.
         # BUT we currently do not plan to use it SO:
-        #pylint: disable=abstract-method
+        # pylint: disable=abstract-method
         pass
+
 
 class RedirectHandler(EnhanceHeadersMixin, TornadoRedirectHandler):
     """
     RedirectHandler with Strict-Transport-Security headers.
     """
+
     # abstract method `data_received` is not used in redirect:
     # pylint: disable=abstract-method
     def initialize(self, url, permanent=True):

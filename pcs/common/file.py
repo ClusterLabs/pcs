@@ -17,7 +17,7 @@ FileMetadata = namedtuple(
         "owner_group_name",
         "permissions",
         "is_binary",
-    ]
+    ],
 )
 
 
@@ -51,7 +51,7 @@ class FileAlreadyExists(RawFileError):
         super().__init__(metadata, RawFileError.ACTION_WRITE)
 
 
-class RawFileInterface():
+class RawFileInterface:
     def __init__(self, metadata):
         """
         FileMetadata metadata -- describes the file and provides its metadata
@@ -98,16 +98,15 @@ class RawFile(RawFileInterface):
                 fcntl.flock(my_file.fileno(), fcntl.LOCK_SH)
                 content = my_file.read()
                 return (
-                    content if self.metadata.is_binary
+                    content
+                    if self.metadata.is_binary
                     else content.encode("utf-8")
                 )
         except OSError as e:
             # Specific expection if the file does not exist is not needed,
             # anyone can and should check that using the exists method.
             raise RawFileError(
-                self.metadata,
-                RawFileError.ACTION_READ,
-                format_os_error(e)
+                self.metadata, RawFileError.ACTION_READ, format_os_error(e)
             )
 
     def write(self, file_data, can_overwrite=False):
@@ -129,8 +128,7 @@ class RawFile(RawFileInterface):
                 # data into it.
                 if (
                     self.metadata.owner_user_name is not None
-                    or
-                    self.metadata.owner_group_name is not None
+                    or self.metadata.owner_group_name is not None
                 ):
                     try:
                         shutil.chown(
@@ -140,15 +138,13 @@ class RawFile(RawFileInterface):
                         )
                     except LookupError as e:
                         raise RawFileError(
-                            self.metadata,
-                            RawFileError.ACTION_CHOWN,
-                            str(e)
+                            self.metadata, RawFileError.ACTION_CHOWN, str(e)
                         )
                     except OSError as e:
                         raise RawFileError(
                             self.metadata,
                             RawFileError.ACTION_CHOWN,
-                            format_os_error(e)
+                            format_os_error(e),
                         )
 
                 if self.metadata.permissions is not None:
@@ -158,20 +154,19 @@ class RawFile(RawFileInterface):
                         raise RawFileError(
                             self.metadata,
                             RawFileError.ACTION_CHMOD,
-                            format_os_error(e)
+                            format_os_error(e),
                         )
                 # Write file data
                 my_file.write(
-                    file_data if self.metadata.is_binary
+                    file_data
+                    if self.metadata.is_binary
                     else file_data.decode("utf-8")
                 )
         except FileExistsError as e:
             raise FileAlreadyExists(self.metadata)
         except OSError as e:
             raise RawFileError(
-                self.metadata,
-                RawFileError.ACTION_WRITE,
-                format_os_error(e)
+                self.metadata, RawFileError.ACTION_WRITE, format_os_error(e)
             )
 
     def remove(self, fail_if_file_not_found=True):

@@ -9,6 +9,7 @@ import pcs.lib.pacemaker.values as lib
 
 # pylint: disable=no-self-use
 
+
 class BooleanTest(TestCase):
     def test_true_is_true(self):
         self.assertTrue(lib.is_true("true"))
@@ -129,10 +130,8 @@ class ValidateIdTest(TestCase):
             (
                 severity.ERROR,
                 report_codes.INVALID_ID_IS_EMPTY,
-                {
-                    "id_description": "test id",
-                }
-            )
+                {"id_description": "test id",},
+            ),
         )
 
     def test_invalid_first_character(self):
@@ -147,58 +146,42 @@ class ValidateIdTest(TestCase):
 
         info["id"] = "0"
         info["invalid_character"] = "0"
-        assert_raise_library_error(
-            lambda: lib.validate_id("0", desc),
-            report
-        )
+        assert_raise_library_error(lambda: lib.validate_id("0", desc), report)
 
         info["id"] = "-"
         info["invalid_character"] = "-"
-        assert_raise_library_error(
-            lambda: lib.validate_id("-", desc),
-            report
-        )
+        assert_raise_library_error(lambda: lib.validate_id("-", desc), report)
 
         info["id"] = "."
         info["invalid_character"] = "."
-        assert_raise_library_error(
-            lambda: lib.validate_id(".", desc),
-            report
-        )
+        assert_raise_library_error(lambda: lib.validate_id(".", desc), report)
 
         info["id"] = ":"
         info["invalid_character"] = ":"
-        assert_raise_library_error(
-            lambda: lib.validate_id(":", desc),
-            report
-        )
+        assert_raise_library_error(lambda: lib.validate_id(":", desc), report)
 
         info["id"] = "0dummy"
         info["invalid_character"] = "0"
         assert_raise_library_error(
-            lambda: lib.validate_id("0dummy", desc),
-            report
+            lambda: lib.validate_id("0dummy", desc), report
         )
 
         info["id"] = "-dummy"
         info["invalid_character"] = "-"
         assert_raise_library_error(
-            lambda: lib.validate_id("-dummy", desc),
-            report
+            lambda: lib.validate_id("-dummy", desc), report
         )
 
         info["id"] = ".dummy"
         info["invalid_character"] = "."
         assert_raise_library_error(
-            lambda: lib.validate_id(".dummy", desc),
-            report
+            lambda: lib.validate_id(".dummy", desc), report
         )
 
         info["id"] = ":dummy"
         info["invalid_character"] = ":"
         assert_raise_library_error(
-            lambda: lib.validate_id(":dummy", desc),
-            report
+            lambda: lib.validate_id(":dummy", desc), report
         )
 
     def test_invalid_character(self):
@@ -214,30 +197,27 @@ class ValidateIdTest(TestCase):
         info["id"] = "dum:my"
         info["invalid_character"] = ":"
         assert_raise_library_error(
-            lambda: lib.validate_id("dum:my", desc),
-            report
+            lambda: lib.validate_id("dum:my", desc), report
         )
 
         info["id"] = "dummy:"
         info["invalid_character"] = ":"
         assert_raise_library_error(
-            lambda: lib.validate_id("dummy:", desc),
-            report
+            lambda: lib.validate_id("dummy:", desc), report
         )
 
         info["id"] = "dum?my"
         info["invalid_character"] = "?"
         assert_raise_library_error(
-            lambda: lib.validate_id("dum?my", desc),
-            report
+            lambda: lib.validate_id("dum?my", desc), report
         )
 
         info["id"] = "dummy?"
         info["invalid_character"] = "?"
         assert_raise_library_error(
-            lambda: lib.validate_id("dummy?", desc),
-            report
+            lambda: lib.validate_id("dummy?", desc), report
         )
+
 
 class SanitizeId(TestCase):
     def test_dont_change_valid_id(self):
@@ -265,6 +245,7 @@ class SanitizeId(TestCase):
 
         self.assertEqual("dummy", lib.sanitize_id("dum:my"))
         self.assertEqual("dum_my", lib.sanitize_id("dum:my", "_"))
+
 
 class IsScoreValueTest(TestCase):
     def test_returns_true_for_number(self):

@@ -19,6 +19,7 @@ temp_cib = rc("temp-cib.xml")
 
 TestCase.maxDiff = None
 
+
 class UtilsTest(TestCase):
     @staticmethod
     def get_cib_empty():
@@ -30,7 +31,8 @@ class UtilsTest(TestCase):
 
     def get_cib_resources(self):
         cib_dom = self.get_cib_empty()
-        new_resources = xml.dom.minidom.parseString("""
+        new_resources = xml.dom.minidom.parseString(
+            """
             <resources>
                   <primitive id="myResource"
                         class="ocf" provider="heartbeat" type="Dummy">
@@ -78,7 +80,8 @@ class UtilsTest(TestCase):
                   </bundle>
                   <bundle id="myEmptyBundle"/>
             </resources>
-        """).documentElement
+        """
+        ).documentElement
         resources = cib_dom.getElementsByTagName("resources")[0]
         resources.parentNode.replaceChild(new_resources, resources)
         return cib_dom
@@ -111,7 +114,9 @@ class UtilsTest(TestCase):
             utils.dom_get_resource_clone_ms_parent(cib_dom, "myClonedResource")
         )
         self.assertFalse(
-            utils.dom_get_resource_clone_ms_parent(cib_dom, "myMasteredResource")
+            utils.dom_get_resource_clone_ms_parent(
+                cib_dom, "myMasteredResource"
+            )
         )
         self.assertIsNone(utils.dom_get_bundle(cib_dom, "myResource"))
         self.assertIsNone(utils.dom_get_bundle(cib_dom, "notExisting"))
@@ -120,42 +125,69 @@ class UtilsTest(TestCase):
         )
 
         cib_dom = self.get_cib_resources()
-        all_ids = set([
-            "none", "myResource",
-            "myClone", "myClonedResource",
-            "myUniqueClone", "myUniqueClonedResource",
-            "myMaster", "myMasteredResource",
-            "myGroup", "myGroupedResource",
-            "myGroupClone", "myClonedGroup", "myClonedGroupedResource",
-            "myGroupMaster", "myMasteredGroup", "myMasteredGroupedResource",
-            "myBundledResource", "myBundle", "myEmptyBundle",
-        ])
-
-        resource_ids = set([
-            "myResource",
-            "myClonedResource", "myUniqueClonedResource",
-            "myGroupedResource", "myMasteredResource",
-            "myClonedGroupedResource", "myMasteredGroupedResource",
-            "myBundledResource",
-        ])
-        test_dom_get(
-            utils.dom_get_resource, cib_dom,
-            resource_ids, all_ids - resource_ids
+        all_ids = set(
+            [
+                "none",
+                "myResource",
+                "myClone",
+                "myClonedResource",
+                "myUniqueClone",
+                "myUniqueClonedResource",
+                "myMaster",
+                "myMasteredResource",
+                "myGroup",
+                "myGroupedResource",
+                "myGroupClone",
+                "myClonedGroup",
+                "myClonedGroupedResource",
+                "myGroupMaster",
+                "myMasteredGroup",
+                "myMasteredGroupedResource",
+                "myBundledResource",
+                "myBundle",
+                "myEmptyBundle",
+            ]
         )
 
-        cloned_ids = set([
-            "myClonedResource", "myUniqueClonedResource",
-            "myClonedGroupedResource"
-        ])
+        resource_ids = set(
+            [
+                "myResource",
+                "myClonedResource",
+                "myUniqueClonedResource",
+                "myGroupedResource",
+                "myMasteredResource",
+                "myClonedGroupedResource",
+                "myMasteredGroupedResource",
+                "myBundledResource",
+            ]
+        )
         test_dom_get(
-            utils.dom_get_resource_clone, cib_dom,
-            cloned_ids, all_ids - cloned_ids
+            utils.dom_get_resource,
+            cib_dom,
+            resource_ids,
+            all_ids - resource_ids,
+        )
+
+        cloned_ids = set(
+            [
+                "myClonedResource",
+                "myUniqueClonedResource",
+                "myClonedGroupedResource",
+            ]
+        )
+        test_dom_get(
+            utils.dom_get_resource_clone,
+            cib_dom,
+            cloned_ids,
+            all_ids - cloned_ids,
         )
 
         mastered_ids = set(["myMasteredResource", "myMasteredGroupedResource"])
         test_dom_get(
-            utils.dom_get_resource_masterslave, cib_dom,
-            mastered_ids, all_ids - mastered_ids
+            utils.dom_get_resource_masterslave,
+            cib_dom,
+            mastered_ids,
+            all_ids - mastered_ids,
         )
 
         group_ids = set(["myGroup", "myClonedGroup", "myMasteredGroup"])
@@ -165,110 +197,111 @@ class UtilsTest(TestCase):
 
         cloned_group_ids = set(["myClonedGroup"])
         test_dom_get(
-            utils.dom_get_group_clone, cib_dom,
-            cloned_group_ids, all_ids - cloned_group_ids
+            utils.dom_get_group_clone,
+            cib_dom,
+            cloned_group_ids,
+            all_ids - cloned_group_ids,
         )
 
         clone_ids = set(["myClone", "myUniqueClone", "myGroupClone"])
         test_dom_get(
-            utils.dom_get_clone, cib_dom,
-            clone_ids, all_ids - clone_ids
+            utils.dom_get_clone, cib_dom, clone_ids, all_ids - clone_ids
         )
 
         mastered_group_ids = set(["myMasteredGroup"])
         test_dom_get(
-            utils.dom_get_group_masterslave, cib_dom,
-            mastered_group_ids, all_ids - mastered_group_ids
+            utils.dom_get_group_masterslave,
+            cib_dom,
+            mastered_group_ids,
+            all_ids - mastered_group_ids,
         )
 
         master_ids = set(["myMaster", "myGroupMaster"])
         test_dom_get(
-            utils.dom_get_master, cib_dom,
-            master_ids, all_ids - master_ids
+            utils.dom_get_master, cib_dom, master_ids, all_ids - master_ids
         )
 
         bundle_ids = set(["myBundle", "myEmptyBundle"])
         test_dom_get(
-            utils.dom_get_bundle, cib_dom,
-            bundle_ids, all_ids - bundle_ids
+            utils.dom_get_bundle, cib_dom, bundle_ids, all_ids - bundle_ids
         )
 
         self.assert_element_id(
             utils.dom_get_clone_ms_resource(cib_dom, "myClone"),
-            "myClonedResource"
+            "myClonedResource",
         )
         self.assert_element_id(
             utils.dom_get_clone_ms_resource(cib_dom, "myGroupClone"),
-            "myClonedGroup"
+            "myClonedGroup",
         )
         self.assert_element_id(
             utils.dom_get_clone_ms_resource(cib_dom, "myMaster"),
-            "myMasteredResource"
+            "myMasteredResource",
         )
         self.assert_element_id(
             utils.dom_get_clone_ms_resource(cib_dom, "myGroupMaster"),
-            "myMasteredGroup"
+            "myMasteredGroup",
         )
 
         self.assert_element_id(
             utils.dom_get_resource_clone_ms_parent(cib_dom, "myClonedResource"),
-            "myClone"
+            "myClone",
         )
         self.assert_element_id(
             utils.dom_get_resource_clone_ms_parent(cib_dom, "myClonedGroup"),
-            "myGroupClone"
+            "myGroupClone",
         )
         self.assert_element_id(
             utils.dom_get_resource_clone_ms_parent(
                 cib_dom, "myClonedGroupedResource"
             ),
-            "myGroupClone"
+            "myGroupClone",
         )
         self.assert_element_id(
             utils.dom_get_resource_clone_ms_parent(
                 cib_dom, "myMasteredResource"
             ),
-            "myMaster"
+            "myMaster",
         )
         self.assert_element_id(
-            utils.dom_get_resource_clone_ms_parent(
-                cib_dom, "myMasteredGroup"
-            ),
-            "myGroupMaster"
+            utils.dom_get_resource_clone_ms_parent(cib_dom, "myMasteredGroup"),
+            "myGroupMaster",
         )
         self.assert_element_id(
             utils.dom_get_resource_clone_ms_parent(
                 cib_dom, "myMasteredGroupedResource"
             ),
-            "myGroupMaster"
+            "myGroupMaster",
+        )
+        self.assertEqual(
+            None, utils.dom_get_resource_clone_ms_parent(cib_dom, "myResource")
+        )
+        self.assertEqual(
+            None, utils.dom_get_resource_clone_ms_parent(cib_dom, "myGroup")
         )
         self.assertEqual(
             None,
-            utils.dom_get_resource_clone_ms_parent(cib_dom, "myResource")
-        )
-        self.assertEqual(
-            None,
-            utils.dom_get_resource_clone_ms_parent(cib_dom, "myGroup")
-        )
-        self.assertEqual(
-            None,
-            utils.dom_get_resource_clone_ms_parent(cib_dom, "myGroupedResource")
+            utils.dom_get_resource_clone_ms_parent(
+                cib_dom, "myGroupedResource"
+            ),
         )
 
-        self.assertIsNone(utils.dom_get_resource_bundle(
-            utils.dom_get_bundle(cib_dom, "myEmptyBundle")
-        ))
+        self.assertIsNone(
+            utils.dom_get_resource_bundle(
+                utils.dom_get_bundle(cib_dom, "myEmptyBundle")
+            )
+        )
         self.assert_element_id(
             utils.dom_get_resource_bundle(
                 utils.dom_get_bundle(cib_dom, "myBundle")
             ),
             "myBundledResource",
-            "primitive"
+            "primitive",
         )
 
         self.assert_element_id(
             utils.dom_get_resource_bundle_parent(cib_dom, "myBundledResource"),
-            "myBundle"
+            "myBundle",
         )
         self.assertIsNone(
             utils.dom_get_resource_bundle_parent(cib_dom, "myResource")
@@ -305,7 +338,8 @@ class UtilsTest(TestCase):
 
     def testDomGetResourceRemoteNodeName(self):
         dom = self.get_cib_empty()
-        new_resources = xml.dom.minidom.parseString("""
+        new_resources = xml.dom.minidom.parseString(
+            """
             <resources>
                 <primitive id="dummy1"
                         class="ocf" provider="heartbeat" type="Dummy">
@@ -334,7 +368,8 @@ class UtilsTest(TestCase):
                         class="ocf" provider="pacemaker" type="remote">
                 </primitive>
             </resources>
-        """).documentElement
+        """
+        ).documentElement
         resources = dom.getElementsByTagName("resources")[0]
         resources.parentNode.replaceChild(new_resources, resources)
 
@@ -342,30 +377,31 @@ class UtilsTest(TestCase):
             None,
             utils.dom_get_resource_remote_node_name(
                 utils.dom_get_resource(dom, "dummy1")
-            )
+            ),
         )
         self.assertEqual(
             None,
             utils.dom_get_resource_remote_node_name(
                 utils.dom_get_resource(dom, "dummy2")
-            )
+            ),
         )
         self.assertEqual(
             "guest1",
             utils.dom_get_resource_remote_node_name(
                 utils.dom_get_resource(dom, "vm-guest1")
-            )
+            ),
         )
         self.assertEqual(
             "dummy3",
             utils.dom_get_resource_remote_node_name(
                 utils.dom_get_resource(dom, "dummy3")
-            )
+            ),
         )
 
     def test_dom_get_meta_attr_value(self):
         dom = self.get_cib_empty()
-        new_resources = xml.dom.minidom.parseString("""
+        new_resources = xml.dom.minidom.parseString(
+            """
             <resources>
                 <primitive id="dummy1"
                         class="ocf" provider="heartbeat" type="Dummy">
@@ -391,7 +427,8 @@ class UtilsTest(TestCase):
                     </instance_attributes>
                 </primitive>
             </resources>
-        """).documentElement
+        """
+        ).documentElement
         resources = dom.getElementsByTagName("resources")[0]
         resources.parentNode.replaceChild(new_resources, resources)
 
@@ -399,29 +436,30 @@ class UtilsTest(TestCase):
             None,
             utils.dom_get_meta_attr_value(
                 utils.dom_get_resource(dom, "dummy1"), "foo"
-            )
+            ),
         )
         self.assertEqual(
             None,
             utils.dom_get_meta_attr_value(
                 utils.dom_get_resource(dom, "dummy2"), "remote-node"
-            )
+            ),
         )
         self.assertEqual(
             "guest1",
             utils.dom_get_meta_attr_value(
                 utils.dom_get_resource(dom, "vm-guest1"), "remote-node"
-            )
+            ),
         )
         self.assertEqual(
             None,
             utils.dom_get_meta_attr_value(
                 utils.dom_get_resource(dom, "vm-guest1"), "foo"
-            )
+            ),
         )
 
     def testGetElementWithId(self):
-        dom = xml.dom.minidom.parseString("""
+        dom = xml.dom.minidom.parseString(
+            """
             <aa>
                 <bb id="bb1"/>
                 <bb/>
@@ -432,7 +470,8 @@ class UtilsTest(TestCase):
                     <cc id="cc2"/>
                 </bb>
             </aa>
-        """).documentElement
+        """
+        ).documentElement
 
         self.assert_element_id(
             utils.dom_get_element_with_id(dom, "bb", "bb1"), "bb1"
@@ -445,11 +484,9 @@ class UtilsTest(TestCase):
         )
         self.assert_element_id(
             utils.dom_get_element_with_id(
-                utils.dom_get_element_with_id(dom, "bb", "bb2"),
-                "cc",
-                "cc1"
+                utils.dom_get_element_with_id(dom, "bb", "bb2"), "cc", "cc1"
             ),
-            "cc1"
+            "cc1",
         )
         self.assertEqual(None, utils.dom_get_element_with_id(dom, "dd", "bb1"))
         self.assertEqual(None, utils.dom_get_element_with_id(dom, "bb", "bb4"))
@@ -457,14 +494,13 @@ class UtilsTest(TestCase):
         self.assertEqual(
             None,
             utils.dom_get_element_with_id(
-                utils.dom_get_element_with_id(dom, "bb", "bb2"),
-                "cc",
-                "cc2"
-            )
+                utils.dom_get_element_with_id(dom, "bb", "bb2"), "cc", "cc2"
+            ),
         )
 
     def test_dom_get_parent_by_tag_name(self):
-        dom = xml.dom.minidom.parseString("""
+        dom = xml.dom.minidom.parseString(
+            """
             <aa id="aa1">
                 <bb id="bb1"/>
                 <bb id="bb2">
@@ -475,21 +511,19 @@ class UtilsTest(TestCase):
                 </bb>
                 <dd id="dd1" />
             </aa>
-        """).documentElement
+        """
+        ).documentElement
         bb1 = utils.dom_get_element_with_id(dom, "bb", "bb1")
         cc1 = utils.dom_get_element_with_id(dom, "cc", "cc1")
 
         self.assert_element_id(
-            utils.dom_get_parent_by_tag_names(bb1, ["aa"]),
-            "aa1"
+            utils.dom_get_parent_by_tag_names(bb1, ["aa"]), "aa1"
         )
         self.assert_element_id(
-            utils.dom_get_parent_by_tag_names(cc1, ["aa"]),
-            "aa1"
+            utils.dom_get_parent_by_tag_names(cc1, ["aa"]), "aa1"
         )
         self.assert_element_id(
-            utils.dom_get_parent_by_tag_names(cc1, ["bb"]),
-            "bb2"
+            utils.dom_get_parent_by_tag_names(cc1, ["bb"]), "bb2"
         )
 
         self.assertEqual(None, utils.dom_get_parent_by_tag_names(bb1, ["cc"]))
@@ -500,44 +534,44 @@ class UtilsTest(TestCase):
         dom = self.get_cib_resources()
         self.assertEqual(
             (True, "", "myClone"),
-            utils.validate_constraint_resource(dom, "myClone")
+            utils.validate_constraint_resource(dom, "myClone"),
         )
         self.assertEqual(
             (True, "", "myGroupClone"),
-            utils.validate_constraint_resource(dom, "myGroupClone")
+            utils.validate_constraint_resource(dom, "myGroupClone"),
         )
         self.assertEqual(
             (True, "", "myMaster"),
-            utils.validate_constraint_resource(dom, "myMaster")
+            utils.validate_constraint_resource(dom, "myMaster"),
         )
         self.assertEqual(
             (True, "", "myGroupMaster"),
-            utils.validate_constraint_resource(dom, "myGroupMaster")
+            utils.validate_constraint_resource(dom, "myGroupMaster"),
         )
         self.assertEqual(
             (True, "", "myBundle"),
-            utils.validate_constraint_resource(dom, "myBundle")
+            utils.validate_constraint_resource(dom, "myBundle"),
         )
         self.assertEqual(
             (True, "", "myEmptyBundle"),
-            utils.validate_constraint_resource(dom, "myEmptyBundle")
+            utils.validate_constraint_resource(dom, "myEmptyBundle"),
         )
         self.assertEqual(
             (True, "", "myResource"),
-            utils.validate_constraint_resource(dom, "myResource")
+            utils.validate_constraint_resource(dom, "myResource"),
         )
         self.assertEqual(
             (True, "", "myGroup"),
-            utils.validate_constraint_resource(dom, "myGroup")
+            utils.validate_constraint_resource(dom, "myGroup"),
         )
         self.assertEqual(
             (True, "", "myGroupedResource"),
-            utils.validate_constraint_resource(dom, "myGroupedResource")
+            utils.validate_constraint_resource(dom, "myGroupedResource"),
         )
 
         self.assertEqual(
             (False, "Resource 'myNonexistent' does not exist", None),
-            utils.validate_constraint_resource(dom, "myNonexistent")
+            utils.validate_constraint_resource(dom, "myNonexistent"),
         )
 
         message = (
@@ -545,28 +579,24 @@ class UtilsTest(TestCase):
             "%s when adding constraints. Use --force to override."
         )
         self.assertEqual(
-            (
-                False,
-                message % ("myClonedResource", "myClone"),
-                "myClone"
-            ),
-            utils.validate_constraint_resource(dom, "myClonedResource")
+            (False, message % ("myClonedResource", "myClone"), "myClone"),
+            utils.validate_constraint_resource(dom, "myClonedResource"),
         )
         self.assertEqual(
             (
                 False,
                 message % ("myClonedGroup", "myGroupClone"),
-                "myGroupClone"
+                "myGroupClone",
             ),
-            utils.validate_constraint_resource(dom, "myClonedGroup")
+            utils.validate_constraint_resource(dom, "myClonedGroup"),
         )
         self.assertEqual(
             (
                 False,
                 message % ("myClonedGroupedResource", "myGroupClone"),
-                "myGroupClone"
+                "myGroupClone",
             ),
-            utils.validate_constraint_resource(dom, "myClonedGroupedResource")
+            utils.validate_constraint_resource(dom, "myClonedGroupedResource"),
         )
 
         message = (
@@ -574,28 +604,26 @@ class UtilsTest(TestCase):
             "%s when adding constraints. Use --force to override."
         )
         self.assertEqual(
-            (
-                False,
-                message % ("myMasteredResource", "myMaster"),
-                "myMaster"
-            ),
-            utils.validate_constraint_resource(dom, "myMasteredResource")
+            (False, message % ("myMasteredResource", "myMaster"), "myMaster"),
+            utils.validate_constraint_resource(dom, "myMasteredResource"),
         )
         self.assertEqual(
             (
                 False,
                 message % ("myMasteredGroup", "myGroupMaster"),
-                "myGroupMaster"
+                "myGroupMaster",
             ),
-            utils.validate_constraint_resource(dom, "myMasteredGroup")
+            utils.validate_constraint_resource(dom, "myMasteredGroup"),
         )
         self.assertEqual(
             (
                 False,
                 message % ("myMasteredGroupedResource", "myGroupMaster"),
-                "myGroupMaster"
+                "myGroupMaster",
             ),
-            utils.validate_constraint_resource(dom, "myMasteredGroupedResource")
+            utils.validate_constraint_resource(
+                dom, "myMasteredGroupedResource"
+            ),
         )
 
         message = (
@@ -603,42 +631,40 @@ class UtilsTest(TestCase):
             "%s when adding constraints. Use --force to override."
         )
         self.assertEqual(
-            (
-                False,
-                message % ("myBundledResource", "myBundle"),
-                "myBundle"
-            ),
-            utils.validate_constraint_resource(dom, "myBundledResource")
+            (False, message % ("myBundledResource", "myBundle"), "myBundle"),
+            utils.validate_constraint_resource(dom, "myBundledResource"),
         )
 
         utils.pcs_options["--force"] = True
         self.assertEqual(
             (True, "", "myClone"),
-            utils.validate_constraint_resource(dom, "myClonedResource")
+            utils.validate_constraint_resource(dom, "myClonedResource"),
         )
         self.assertEqual(
             (True, "", "myGroupClone"),
-            utils.validate_constraint_resource(dom, "myClonedGroup")
+            utils.validate_constraint_resource(dom, "myClonedGroup"),
         )
         self.assertEqual(
             (True, "", "myGroupClone"),
-            utils.validate_constraint_resource(dom, "myClonedGroupedResource")
+            utils.validate_constraint_resource(dom, "myClonedGroupedResource"),
         )
         self.assertEqual(
             (True, "", "myMaster"),
-            utils.validate_constraint_resource(dom, "myMasteredResource")
+            utils.validate_constraint_resource(dom, "myMasteredResource"),
         )
         self.assertEqual(
             (True, "", "myGroupMaster"),
-            utils.validate_constraint_resource(dom, "myMasteredGroup")
+            utils.validate_constraint_resource(dom, "myMasteredGroup"),
         )
         self.assertEqual(
             (True, "", "myGroupMaster"),
-            utils.validate_constraint_resource(dom, "myMasteredGroupedResource")
+            utils.validate_constraint_resource(
+                dom, "myMasteredGroupedResource"
+            ),
         )
         self.assertEqual(
             (True, "", "myBundle"),
-            utils.validate_constraint_resource(dom, "myBundledResource")
+            utils.validate_constraint_resource(dom, "myBundledResource"),
         )
 
     def testValidateXmlId(self):
@@ -657,59 +683,57 @@ class UtilsTest(TestCase):
 
         self.assertEqual(
             (False, "test id cannot be empty"),
-            utils.validate_xml_id("", "test id")
+            utils.validate_xml_id("", "test id"),
         )
 
         msg = "invalid test id '%s', '%s' is not a valid first character for a test id"
         self.assertEqual(
-            (False, msg % ("0", "0")),
-            utils.validate_xml_id("0", "test id")
+            (False, msg % ("0", "0")), utils.validate_xml_id("0", "test id")
         )
         self.assertEqual(
-            (False, msg % ("-", "-")),
-            utils.validate_xml_id("-", "test id")
+            (False, msg % ("-", "-")), utils.validate_xml_id("-", "test id")
         )
         self.assertEqual(
-            (False, msg % (".", ".")),
-            utils.validate_xml_id(".", "test id")
+            (False, msg % (".", ".")), utils.validate_xml_id(".", "test id")
         )
         self.assertEqual(
-            (False, msg % (":", ":")),
-            utils.validate_xml_id(":", "test id")
+            (False, msg % (":", ":")), utils.validate_xml_id(":", "test id")
         )
         self.assertEqual(
             (False, msg % ("0dummy", "0")),
-            utils.validate_xml_id("0dummy", "test id")
+            utils.validate_xml_id("0dummy", "test id"),
         )
         self.assertEqual(
             (False, msg % ("-dummy", "-")),
-            utils.validate_xml_id("-dummy", "test id")
+            utils.validate_xml_id("-dummy", "test id"),
         )
         self.assertEqual(
             (False, msg % (".dummy", ".")),
-            utils.validate_xml_id(".dummy", "test id")
+            utils.validate_xml_id(".dummy", "test id"),
         )
         self.assertEqual(
             (False, msg % (":dummy", ":")),
-            utils.validate_xml_id(":dummy", "test id")
+            utils.validate_xml_id(":dummy", "test id"),
         )
 
-        msg = "invalid test id '%s', '%s' is not a valid character for a test id"
+        msg = (
+            "invalid test id '%s', '%s' is not a valid character for a test id"
+        )
         self.assertEqual(
             (False, msg % ("dum:my", ":")),
-            utils.validate_xml_id("dum:my", "test id")
+            utils.validate_xml_id("dum:my", "test id"),
         )
         self.assertEqual(
             (False, msg % ("dummy:", ":")),
-            utils.validate_xml_id("dummy:", "test id")
+            utils.validate_xml_id("dummy:", "test id"),
         )
         self.assertEqual(
             (False, msg % ("dum?my", "?")),
-            utils.validate_xml_id("dum?my", "test id")
+            utils.validate_xml_id("dum?my", "test id"),
         )
         self.assertEqual(
             (False, msg % ("dummy?", "?")),
-            utils.validate_xml_id("dummy?", "test id")
+            utils.validate_xml_id("dummy?", "test id"),
         )
 
     def testIsIso8601Date(self):
@@ -760,7 +784,8 @@ class UtilsTest(TestCase):
 
     def get_cib_status_lrm(self):
         cib_dom = self.get_cib_empty()
-        new_status = xml.dom.minidom.parseString("""
+        new_status = xml.dom.minidom.parseString(
+            """
 <status>
   <node_state id="1" uname="rh70-node1">
     <lrm id="1">
@@ -791,13 +816,15 @@ class UtilsTest(TestCase):
     </lrm>
   </node_state>
 </status>
-        """).documentElement
+        """
+        ).documentElement
         status = cib_dom.getElementsByTagName("status")[0]
         status.parentNode.replaceChild(new_status, status)
         return cib_dom
 
     def test_resource_running_on(self):
-        status = xml.dom.minidom.parseString("""
+        status = xml.dom.minidom.parseString(
+            """
 <crm_mon>
     <summary />
     <nodes />
@@ -875,187 +902,185 @@ class UtilsTest(TestCase):
         </resource>
     </resources>
 </crm_mon>
-        """).documentElement
+        """
+        ).documentElement
 
         self.assertEqual(
             utils.resource_running_on("myResource", status),
             {
-                'message':
-                    "Resource 'myResource' is running on node rh70-node1.",
-                'is_running': True,
-                'nodes_master': [],
-                'nodes_slave': [],
-                'nodes_started': ["rh70-node1"],
-            }
+                "message": "Resource 'myResource' is running on node rh70-node1.",
+                "is_running": True,
+                "nodes_master": [],
+                "nodes_slave": [],
+                "nodes_started": ["rh70-node1"],
+            },
         )
         self.assertEqual(
             utils.resource_running_on("myClonedResource", status),
             {
-                'message':
-                    "Resource 'myClonedResource' is running on nodes "
-                        "rh70-node1, rh70-node2, rh70-node3.",
-                'is_running': True,
-                'nodes_master': [],
-                'nodes_slave': [],
-                'nodes_started': ["rh70-node1", "rh70-node2", "rh70-node3"],
-            }
+                "message": "Resource 'myClonedResource' is running on nodes "
+                "rh70-node1, rh70-node2, rh70-node3.",
+                "is_running": True,
+                "nodes_master": [],
+                "nodes_slave": [],
+                "nodes_started": ["rh70-node1", "rh70-node2", "rh70-node3"],
+            },
         )
         self.assertEqual(
             utils.resource_running_on("myClone", status),
             {
-                'message':
-                    "Resource 'myClone' is running on nodes "
-                        "rh70-node1, rh70-node2, rh70-node3.",
-                'is_running': True,
-                'nodes_master': [],
-                'nodes_slave': [],
-                'nodes_started': ["rh70-node1", "rh70-node2", "rh70-node3"],
-            }
+                "message": "Resource 'myClone' is running on nodes "
+                "rh70-node1, rh70-node2, rh70-node3.",
+                "is_running": True,
+                "nodes_master": [],
+                "nodes_slave": [],
+                "nodes_started": ["rh70-node1", "rh70-node2", "rh70-node3"],
+            },
         )
         self.assertEqual(
             utils.resource_running_on("myMasteredResource", status),
             {
-                'message':
-                    "Resource 'myMasteredResource' is master on node "
-                        "rh70-node1; slave on nodes rh70-node2, rh70-node3.",
-                'is_running': True,
-                'nodes_master': ["rh70-node1"],
-                'nodes_slave': ["rh70-node2", "rh70-node3"],
-                'nodes_started': [],
-            }
+                "message": "Resource 'myMasteredResource' is master on node "
+                "rh70-node1; slave on nodes rh70-node2, rh70-node3.",
+                "is_running": True,
+                "nodes_master": ["rh70-node1"],
+                "nodes_slave": ["rh70-node2", "rh70-node3"],
+                "nodes_started": [],
+            },
         )
         self.assertEqual(
             utils.resource_running_on("myMaster", status),
             {
-                'message':
-                    "Resource 'myMaster' is master on node "
-                        "rh70-node1; slave on nodes rh70-node2, rh70-node3.",
-                'is_running': True,
-                'nodes_master': ["rh70-node1"],
-                'nodes_slave': ["rh70-node2", "rh70-node3"],
-                'nodes_started': [],
-            }
+                "message": "Resource 'myMaster' is master on node "
+                "rh70-node1; slave on nodes rh70-node2, rh70-node3.",
+                "is_running": True,
+                "nodes_master": ["rh70-node1"],
+                "nodes_slave": ["rh70-node2", "rh70-node3"],
+                "nodes_started": [],
+            },
         )
         self.assertEqual(
             utils.resource_running_on("myGroupedResource", status),
             {
-                'message':
-                    "Resource 'myGroupedResource' is running on node "
-                        "rh70-node2.",
-                'is_running': True,
-                'nodes_master': [],
-                'nodes_slave': [],
-                'nodes_started': ["rh70-node2"],
-            }
+                "message": "Resource 'myGroupedResource' is running on node "
+                "rh70-node2.",
+                "is_running": True,
+                "nodes_master": [],
+                "nodes_slave": [],
+                "nodes_started": ["rh70-node2"],
+            },
         )
         self.assertEqual(
             utils.resource_running_on("myGroup", status),
             {
-                'message':
-                    "Resource 'myGroup' is running on node "
-                        "rh70-node2.",
-                'is_running': True,
-                'nodes_master': [],
-                'nodes_slave': [],
-                'nodes_started': ["rh70-node2"],
-            }
+                "message": "Resource 'myGroup' is running on node "
+                "rh70-node2.",
+                "is_running": True,
+                "nodes_master": [],
+                "nodes_slave": [],
+                "nodes_started": ["rh70-node2"],
+            },
         )
         self.assertEqual(
             utils.resource_running_on("myClonedGroupedResource", status),
             {
-                'message':
-                    "Resource 'myClonedGroupedResource' is running on nodes "
-                        "rh70-node1, rh70-node2, rh70-node3, rh70-node3.",
-                'is_running': True,
-                'nodes_master': [],
-                'nodes_slave': [],
-                'nodes_started': ["rh70-node1", "rh70-node2", "rh70-node3",
-                    "rh70-node3"],
-            }
+                "message": "Resource 'myClonedGroupedResource' is running on nodes "
+                "rh70-node1, rh70-node2, rh70-node3, rh70-node3.",
+                "is_running": True,
+                "nodes_master": [],
+                "nodes_slave": [],
+                "nodes_started": [
+                    "rh70-node1",
+                    "rh70-node2",
+                    "rh70-node3",
+                    "rh70-node3",
+                ],
+            },
         )
         self.assertEqual(
             utils.resource_running_on("myClonedGroup", status),
             {
-                'message':
-                    "Resource 'myClonedGroup' is running on nodes "
-                        "rh70-node1, rh70-node2, rh70-node3, rh70-node3.",
-                'is_running': True,
-                'nodes_master': [],
-                'nodes_slave': [],
-                'nodes_started': ["rh70-node1", "rh70-node2", "rh70-node3",
-                    "rh70-node3"],
-            }
+                "message": "Resource 'myClonedGroup' is running on nodes "
+                "rh70-node1, rh70-node2, rh70-node3, rh70-node3.",
+                "is_running": True,
+                "nodes_master": [],
+                "nodes_slave": [],
+                "nodes_started": [
+                    "rh70-node1",
+                    "rh70-node2",
+                    "rh70-node3",
+                    "rh70-node3",
+                ],
+            },
         )
         self.assertEqual(
             utils.resource_running_on("myGroupClone", status),
             {
-                'message':
-                    "Resource 'myGroupClone' is running on nodes "
-                        "rh70-node1, rh70-node2, rh70-node3, rh70-node3.",
-                'is_running': True,
-                'nodes_master': [],
-                'nodes_slave': [],
-                'nodes_started': ["rh70-node1", "rh70-node2", "rh70-node3",
-                    "rh70-node3"],
-            }
+                "message": "Resource 'myGroupClone' is running on nodes "
+                "rh70-node1, rh70-node2, rh70-node3, rh70-node3.",
+                "is_running": True,
+                "nodes_master": [],
+                "nodes_slave": [],
+                "nodes_started": [
+                    "rh70-node1",
+                    "rh70-node2",
+                    "rh70-node3",
+                    "rh70-node3",
+                ],
+            },
         )
         self.assertEqual(
             utils.resource_running_on("myMasteredGroupedResource", status),
             {
-                'message':
-                    "Resource 'myMasteredGroupedResource' is master on node "
-                        "rh70-node2; slave on nodes rh70-node1, rh70-node3.",
-                'is_running': True,
-                'nodes_master': ["rh70-node2"],
-                'nodes_slave': ["rh70-node1", "rh70-node3"],
-                'nodes_started': [],
-            }
+                "message": "Resource 'myMasteredGroupedResource' is master on node "
+                "rh70-node2; slave on nodes rh70-node1, rh70-node3.",
+                "is_running": True,
+                "nodes_master": ["rh70-node2"],
+                "nodes_slave": ["rh70-node1", "rh70-node3"],
+                "nodes_started": [],
+            },
         )
         self.assertEqual(
             utils.resource_running_on("myMasteredGroup", status),
             {
-                'message':
-                    "Resource 'myMasteredGroup' is master on node "
-                        "rh70-node2; slave on nodes rh70-node1, rh70-node3.",
-                'is_running': True,
-                'nodes_master': ["rh70-node2"],
-                'nodes_slave': ["rh70-node1", "rh70-node3"],
-                'nodes_started': [],
-            }
+                "message": "Resource 'myMasteredGroup' is master on node "
+                "rh70-node2; slave on nodes rh70-node1, rh70-node3.",
+                "is_running": True,
+                "nodes_master": ["rh70-node2"],
+                "nodes_slave": ["rh70-node1", "rh70-node3"],
+                "nodes_started": [],
+            },
         )
         self.assertEqual(
             utils.resource_running_on("myGroupMaster", status),
             {
-                'message':
-                    "Resource 'myGroupMaster' is master on node "
-                        "rh70-node2; slave on nodes rh70-node1, rh70-node3.",
-                'is_running': True,
-                'nodes_master': ["rh70-node2"],
-                'nodes_slave': ["rh70-node1", "rh70-node3"],
-                'nodes_started': [],
-            }
+                "message": "Resource 'myGroupMaster' is master on node "
+                "rh70-node2; slave on nodes rh70-node1, rh70-node3.",
+                "is_running": True,
+                "nodes_master": ["rh70-node2"],
+                "nodes_slave": ["rh70-node1", "rh70-node3"],
+                "nodes_started": [],
+            },
         )
         self.assertEqual(
             utils.resource_running_on("notMyResource", status),
             {
-                'message':
-                    "Resource 'notMyResource' is not running on any node",
-                'is_running': False,
-                'nodes_master': [],
-                'nodes_slave': [],
-                'nodes_started': [],
-            }
+                "message": "Resource 'notMyResource' is not running on any node",
+                "is_running": False,
+                "nodes_master": [],
+                "nodes_slave": [],
+                "nodes_started": [],
+            },
         )
         self.assertEqual(
             utils.resource_running_on("myStoppedResource", status),
             {
-                'message':
-                    "Resource 'myStoppedResource' is not running on any node",
-                'is_running': False,
-                'nodes_master': [],
-                'nodes_slave': [],
-                'nodes_started': [],
-            }
+                "message": "Resource 'myStoppedResource' is not running on any node",
+                "is_running": False,
+                "nodes_master": [],
+                "nodes_slave": [],
+                "nodes_started": [],
+            },
         )
 
     def test_get_operations_from_transitions(self):
@@ -1063,43 +1088,43 @@ class UtilsTest(TestCase):
         self.assertEqual(
             [
                 {
-                    'id': 'dummy',
-                    'long_id': 'dummy',
-                    'operation': 'stop',
-                    'on_node': 'rh7-3',
+                    "id": "dummy",
+                    "long_id": "dummy",
+                    "operation": "stop",
+                    "on_node": "rh7-3",
                 },
                 {
-                    'id': 'dummy',
-                    'long_id': 'dummy',
-                    'operation': 'start',
-                    'on_node': 'rh7-2',
+                    "id": "dummy",
+                    "long_id": "dummy",
+                    "operation": "start",
+                    "on_node": "rh7-2",
                 },
                 {
-                    'id': 'd0',
-                    'long_id': 'd0:1',
-                    'operation': 'stop',
-                    'on_node': 'rh7-1',
+                    "id": "d0",
+                    "long_id": "d0:1",
+                    "operation": "stop",
+                    "on_node": "rh7-1",
                 },
                 {
-                    'id': 'd0',
-                    'long_id': 'd0:1',
-                    'operation': 'start',
-                    'on_node': 'rh7-2',
+                    "id": "d0",
+                    "long_id": "d0:1",
+                    "operation": "start",
+                    "on_node": "rh7-2",
                 },
                 {
-                    'id': 'state',
-                    'long_id': 'state:0',
-                    'operation': 'stop',
-                    'on_node': 'rh7-3',
+                    "id": "state",
+                    "long_id": "state:0",
+                    "operation": "stop",
+                    "on_node": "rh7-3",
                 },
                 {
-                    'id': 'state',
-                    'long_id': 'state:0',
-                    'operation': 'start',
-                    'on_node': 'rh7-2',
+                    "id": "state",
+                    "long_id": "state:0",
+                    "operation": "start",
+                    "on_node": "rh7-2",
                 },
             ],
-            utils.get_operations_from_transitions(transitions)
+            utils.get_operations_from_transitions(transitions),
         )
 
         transitions = xml.dom.minidom.parse(rc("transitions02.xml"))
@@ -1134,9 +1159,9 @@ class UtilsTest(TestCase):
                     "long_id": "dummy8",
                     "operation": "start",
                     "on_node": "virt-142",
-                }
+                },
             ],
-            utils.get_operations_from_transitions(transitions)
+            utils.get_operations_from_transitions(transitions),
         )
 
     def test_get_resources_location_from_operations(self):
@@ -1145,7 +1170,7 @@ class UtilsTest(TestCase):
         operations = []
         self.assertEqual(
             {},
-            utils.get_resources_location_from_operations(cib_dom, operations)
+            utils.get_resources_location_from_operations(cib_dom, operations),
         )
 
         operations = [
@@ -1158,14 +1183,14 @@ class UtilsTest(TestCase):
         ]
         self.assertEqual(
             {
-                'myResource': {
-                    'id': 'myResource',
-                    'id_for_constraint': 'myResource',
-                    'long_id': 'myResource',
-                    'start_on_node': 'rh7-1',
-                 },
+                "myResource": {
+                    "id": "myResource",
+                    "id_for_constraint": "myResource",
+                    "long_id": "myResource",
+                    "start_on_node": "rh7-1",
+                },
             },
-            utils.get_resources_location_from_operations(cib_dom, operations)
+            utils.get_resources_location_from_operations(cib_dom, operations),
         )
 
         operations = [
@@ -1196,14 +1221,14 @@ class UtilsTest(TestCase):
         ]
         self.assertEqual(
             {
-                'myResource': {
-                    'id': 'myResource',
-                    'id_for_constraint': 'myResource',
-                    'long_id': 'myResource',
-                    'start_on_node': 'rh7-2',
-                 },
+                "myResource": {
+                    "id": "myResource",
+                    "id_for_constraint": "myResource",
+                    "long_id": "myResource",
+                    "start_on_node": "rh7-2",
+                },
             },
-            utils.get_resources_location_from_operations(cib_dom, operations)
+            utils.get_resources_location_from_operations(cib_dom, operations),
         )
 
         operations = [
@@ -1234,26 +1259,26 @@ class UtilsTest(TestCase):
         ]
         self.assertEqual(
             {
-                'myResource': {
-                    'id': 'myResource',
-                    'id_for_constraint': 'myResource',
-                    'long_id': 'myResource',
-                    'start_on_node': 'rh7-1',
-                 },
-                'myClonedResource:0': {
-                    'id': 'myClonedResource',
-                    'id_for_constraint': 'myClone',
-                    'long_id': 'myClonedResource:0',
-                    'start_on_node': 'rh7-2',
-                 },
-                'myClonedResource:1': {
-                    'id': 'myClonedResource',
-                    'id_for_constraint': 'myClone',
-                    'long_id': 'myClonedResource:1',
-                    'start_on_node': 'rh7-3',
-                 },
+                "myResource": {
+                    "id": "myResource",
+                    "id_for_constraint": "myResource",
+                    "long_id": "myResource",
+                    "start_on_node": "rh7-1",
+                },
+                "myClonedResource:0": {
+                    "id": "myClonedResource",
+                    "id_for_constraint": "myClone",
+                    "long_id": "myClonedResource:0",
+                    "start_on_node": "rh7-2",
+                },
+                "myClonedResource:1": {
+                    "id": "myClonedResource",
+                    "id_for_constraint": "myClone",
+                    "long_id": "myClonedResource:1",
+                    "start_on_node": "rh7-3",
+                },
             },
-            utils.get_resources_location_from_operations(cib_dom, operations)
+            utils.get_resources_location_from_operations(cib_dom, operations),
         )
 
         operations = [
@@ -1278,20 +1303,20 @@ class UtilsTest(TestCase):
         ]
         self.assertEqual(
             {
-                'myUniqueClonedResource:0': {
-                    'id': 'myUniqueClonedResource:0',
-                    'id_for_constraint': 'myUniqueClone',
-                    'long_id': 'myUniqueClonedResource:0',
-                    'start_on_node': 'rh7-1',
-                 },
-                'myUniqueClonedResource:2': {
-                    'id': 'myUniqueClonedResource:2',
-                    'id_for_constraint': 'myUniqueClone',
-                    'long_id': 'myUniqueClonedResource:2',
-                    'start_on_node': 'rh7-3',
-                 },
+                "myUniqueClonedResource:0": {
+                    "id": "myUniqueClonedResource:0",
+                    "id_for_constraint": "myUniqueClone",
+                    "long_id": "myUniqueClonedResource:0",
+                    "start_on_node": "rh7-1",
+                },
+                "myUniqueClonedResource:2": {
+                    "id": "myUniqueClonedResource:2",
+                    "id_for_constraint": "myUniqueClone",
+                    "long_id": "myUniqueClonedResource:2",
+                    "start_on_node": "rh7-3",
+                },
             },
-            utils.get_resources_location_from_operations(cib_dom, operations)
+            utils.get_resources_location_from_operations(cib_dom, operations),
         )
 
         operations = [
@@ -1316,20 +1341,20 @@ class UtilsTest(TestCase):
         ]
         self.assertEqual(
             {
-                'myMasteredGroupedResource:0': {
-                    'id': 'myMasteredGroupedResource',
-                    'id_for_constraint': 'myGroupMaster',
-                    'long_id': 'myMasteredGroupedResource:0',
-                    'start_on_node': 'rh7-1',
-                 },
-                'myMasteredGroupedResource:1': {
-                    'id': 'myMasteredGroupedResource',
-                    'id_for_constraint': 'myGroupMaster',
-                    'long_id': 'myMasteredGroupedResource:1',
-                    'promote_on_node': 'rh7-3',
-                 },
+                "myMasteredGroupedResource:0": {
+                    "id": "myMasteredGroupedResource",
+                    "id_for_constraint": "myGroupMaster",
+                    "long_id": "myMasteredGroupedResource:0",
+                    "start_on_node": "rh7-1",
+                },
+                "myMasteredGroupedResource:1": {
+                    "id": "myMasteredGroupedResource",
+                    "id_for_constraint": "myGroupMaster",
+                    "long_id": "myMasteredGroupedResource:1",
+                    "promote_on_node": "rh7-3",
+                },
             },
-            utils.get_resources_location_from_operations(cib_dom, operations)
+            utils.get_resources_location_from_operations(cib_dom, operations),
         )
 
         operations = [
@@ -1361,7 +1386,7 @@ class UtilsTest(TestCase):
                     "start_on_node": "rh7-2",
                 },
             },
-            utils.get_resources_location_from_operations(cib_dom, operations)
+            utils.get_resources_location_from_operations(cib_dom, operations),
         )
 
     def test_is_int(self):
@@ -1401,7 +1426,7 @@ class UtilsTest(TestCase):
         self.assertEqual(dom_get_child_elements(node)[0].tagName, "utilization")
         self.assertEqual(
             dom_get_child_elements(node)[0].getAttribute("id"),
-            "rh7-1-utilization"
+            "rh7-1-utilization",
         )
         child2 = utils.dom_prepare_child_element(
             node, "utilization", "rh7-1-utilization"
@@ -1426,12 +1451,14 @@ class UtilsTest(TestCase):
         self.assertEqual(pair.getAttribute("id"), "prefix2-another_name")
 
     def test_dom_update_nv_pair_update(self):
-        nv_set = xml.dom.minidom.parseString("""
+        nv_set = xml.dom.minidom.parseString(
+            """
         <nv_set>
             <nvpair id="prefix-test_name" name="test_name" value="test_val"/>
             <nvpair id="prefix2-another_name" name="another_name" value="value"/>
         </nv_set>
-        """).documentElement
+        """
+        ).documentElement
         utils.dom_update_nv_pair(nv_set, "test_name", "new_value")
         self.assertEqual(len(dom_get_child_elements(nv_set)), 2)
         pair1 = dom_get_child_elements(nv_set)[0]
@@ -1444,12 +1471,14 @@ class UtilsTest(TestCase):
         self.assertEqual(pair2.getAttribute("id"), "prefix2-another_name")
 
     def test_dom_update_nv_pair_remove(self):
-        nv_set = xml.dom.minidom.parseString("""
+        nv_set = xml.dom.minidom.parseString(
+            """
         <nv_set>
             <nvpair id="prefix-test_name" name="test_name" value="test_val"/>
             <nvpair id="prefix2-another_name" name="another_name" value="value"/>
         </nv_set>
-        """).documentElement
+        """
+        ).documentElement
         utils.dom_update_nv_pair(nv_set, "non_existing_name", "")
         self.assertEqual(len(dom_get_child_elements(nv_set)), 2)
         utils.dom_update_nv_pair(nv_set, "another_name", "")
@@ -1467,41 +1496,41 @@ class UtilsTest(TestCase):
         )
         self.assertEqual(
             out,
-            [("key", "value"), ("key2", "val=ue"), ("k e y", " v a l u e ")]
+            [("key", "value"), ("key2", "val=ue"), ("k e y", " v a l u e ")],
         )
 
     def test_dom_update_utilization_invalid(self):
-        #commands writes to stderr
-        #we want clean test output, so we capture it
+        # commands writes to stderr
+        # we want clean test output, so we capture it
         tmp_stderr = sys.stderr
         sys.stderr = StringIO()
 
-        el = xml.dom.minidom.parseString("""
+        el = xml.dom.minidom.parseString(
+            """
         <resource id="test_id"/>
-        """).documentElement
+        """
+        ).documentElement
         self.assertRaises(
             SystemExit,
-            utils.dom_update_utilization, el, {"name": "invalid_val"}
+            utils.dom_update_utilization,
+            el,
+            {"name": "invalid_val"},
         )
 
         self.assertRaises(
-            SystemExit,
-            utils.dom_update_utilization, el, {"name": "0.01"}
+            SystemExit, utils.dom_update_utilization, el, {"name": "0.01"}
         )
 
         sys.stderr = tmp_stderr
 
     def test_dom_update_utilization_add(self):
-        el = xml.dom.minidom.parseString("""
+        el = xml.dom.minidom.parseString(
+            """
         <resource id="test_id"/>
-        """).documentElement
+        """
+        ).documentElement
         utils.dom_update_utilization(
-            el,
-            {
-                "name": "",
-                "key": "-1",
-                "keys": "90",
-            }
+            el, {"name": "", "key": "-1", "keys": "90",}
         )
 
         self.assertEqual(len(dom_get_child_elements(el)), 1)
@@ -1512,65 +1541,57 @@ class UtilsTest(TestCase):
 
         self.assertEqual(
             dom_get_child_elements(u)[0].getAttribute("id"),
-            "test_id-utilization-key"
+            "test_id-utilization-key",
         )
         self.assertEqual(
-            dom_get_child_elements(u)[0].getAttribute("name"),
-            "key"
+            dom_get_child_elements(u)[0].getAttribute("name"), "key"
         )
         self.assertEqual(
-            dom_get_child_elements(u)[0].getAttribute("value"),
-            "-1"
+            dom_get_child_elements(u)[0].getAttribute("value"), "-1"
         )
         self.assertEqual(
             dom_get_child_elements(u)[1].getAttribute("id"),
-            "test_id-utilization-keys"
+            "test_id-utilization-keys",
         )
         self.assertEqual(
-            dom_get_child_elements(u)[1].getAttribute("name"),
-            "keys"
+            dom_get_child_elements(u)[1].getAttribute("name"), "keys"
         )
         self.assertEqual(
-            dom_get_child_elements(u)[1].getAttribute("value"),
-            "90"
+            dom_get_child_elements(u)[1].getAttribute("value"), "90"
         )
 
     def test_dom_update_utilization_update_remove(self):
-        el = xml.dom.minidom.parseString("""
+        el = xml.dom.minidom.parseString(
+            """
         <resource id="test_id">
             <utilization id="test_id-utilization">
                 <nvpair id="test_id-utilization-key" name="key" value="-1"/>
                 <nvpair id="test_id-utilization-keys" name="keys" value="90"/>
             </utilization>
         </resource>
-        """).documentElement
-        utils.dom_update_utilization(
-            el,
-            {
-                "key": "100",
-                "keys": "",
-            }
-        )
+        """
+        ).documentElement
+        utils.dom_update_utilization(el, {"key": "100", "keys": "",})
 
         u = dom_get_child_elements(el)[0]
         self.assertEqual(len(dom_get_child_elements(u)), 1)
         self.assertEqual(
             dom_get_child_elements(u)[0].getAttribute("id"),
-            "test_id-utilization-key"
+            "test_id-utilization-key",
         )
         self.assertEqual(
-            dom_get_child_elements(u)[0].getAttribute("name"),
-            "key"
+            dom_get_child_elements(u)[0].getAttribute("name"), "key"
         )
         self.assertEqual(
-            dom_get_child_elements(u)[0].getAttribute("value"),
-            "100"
+            dom_get_child_elements(u)[0].getAttribute("value"), "100"
         )
 
     def test_dom_update_meta_attr_add(self):
-        el = xml.dom.minidom.parseString("""
+        el = xml.dom.minidom.parseString(
+            """
         <resource id="test_id"/>
-        """).documentElement
+        """
+        ).documentElement
         utils.dom_update_meta_attr(
             el, [("name", ""), ("key", "test"), ("key2", "val")]
         )
@@ -1583,111 +1604,113 @@ class UtilsTest(TestCase):
 
         self.assertEqual(
             dom_get_child_elements(u)[0].getAttribute("id"),
-            "test_id-meta_attributes-key"
+            "test_id-meta_attributes-key",
         )
         self.assertEqual(
-            dom_get_child_elements(u)[0].getAttribute("name"),
-            "key"
+            dom_get_child_elements(u)[0].getAttribute("name"), "key"
         )
         self.assertEqual(
-            dom_get_child_elements(u)[0].getAttribute("value"),
-            "test"
+            dom_get_child_elements(u)[0].getAttribute("value"), "test"
         )
         self.assertEqual(
             dom_get_child_elements(u)[1].getAttribute("id"),
-            "test_id-meta_attributes-key2"
+            "test_id-meta_attributes-key2",
         )
         self.assertEqual(
-            dom_get_child_elements(u)[1].getAttribute("name"),
-            "key2"
+            dom_get_child_elements(u)[1].getAttribute("name"), "key2"
         )
         self.assertEqual(
-            dom_get_child_elements(u)[1].getAttribute("value"),
-            "val"
+            dom_get_child_elements(u)[1].getAttribute("value"), "val"
         )
 
     def test_dom_update_meta_attr_update_remove(self):
-        el = xml.dom.minidom.parseString("""
+        el = xml.dom.minidom.parseString(
+            """
         <resource id="test_id">
             <meta_attributes id="test_id-utilization">
                 <nvpair id="test_id-meta_attributes-key" name="key" value="test"/>
                 <nvpair id="test_id-meta_attributes-key2" name="key2" value="val"/>
             </meta_attributes>
         </resource>
-        """).documentElement
-        utils.dom_update_meta_attr(
-            el, [("key", "another_val"), ("key2", "")]
-        )
+        """
+        ).documentElement
+        utils.dom_update_meta_attr(el, [("key", "another_val"), ("key2", "")])
 
         u = dom_get_child_elements(el)[0]
         self.assertEqual(len(dom_get_child_elements(u)), 1)
         self.assertEqual(
             dom_get_child_elements(u)[0].getAttribute("id"),
-            "test_id-meta_attributes-key"
+            "test_id-meta_attributes-key",
         )
         self.assertEqual(
-            dom_get_child_elements(u)[0].getAttribute("name"),
-            "key"
+            dom_get_child_elements(u)[0].getAttribute("name"), "key"
         )
         self.assertEqual(
-            dom_get_child_elements(u)[0].getAttribute("value"),
-            "another_val"
+            dom_get_child_elements(u)[0].getAttribute("value"), "another_val"
         )
 
     def test_get_utilization(self):
-        el = xml.dom.minidom.parseString("""
+        el = xml.dom.minidom.parseString(
+            """
         <resource id="test_id">
             <utilization id="test_id-utilization">
                 <nvpair id="test_id-utilization-key" name="key" value="-1"/>
                 <nvpair id="test_id-utilization-keys" name="keys" value="90"/>
             </utilization>
         </resource>
-        """).documentElement
+        """
+        ).documentElement
         self.assertEqual({"key": "-1", "keys": "90"}, utils.get_utilization(el))
 
     def test_get_utilization_str(self):
-        el = xml.dom.minidom.parseString("""
+        el = xml.dom.minidom.parseString(
+            """
         <resource id="test_id">
             <utilization id="test_id-utilization">
                 <nvpair id="test_id-utilization-key" name="key" value="-1"/>
                 <nvpair id="test_id-utilization-keys" name="keys" value="90"/>
             </utilization>
         </resource>
-        """).documentElement
+        """
+        ).documentElement
         self.assertEqual("key=-1 keys=90", utils.get_utilization_str(el))
 
     def test_get_cluster_property_from_xml_enum(self):
-        el = ET.fromstring("""
+        el = ET.fromstring(
+            """
         <parameter name="no-quorum-policy" unique="0">
             <shortdesc lang="en">What to do when the cluster does not have quorum</shortdesc>
             <content type="enum" default="stop"/>
             <longdesc lang="en">What to do when the cluster does not have quorum  Allowed values: stop, freeze, ignore, suicide</longdesc>
         </parameter>
-        """)
+        """
+        )
         expected = {
             "name": "no-quorum-policy",
             "shortdesc": "What to do when the cluster does not have quorum",
             "longdesc": "",
             "type": "enum",
             "default": "stop",
-            "enum": ["stop", "freeze", "ignore", "suicide"]
+            "enum": ["stop", "freeze", "ignore", "suicide"],
         }
         self.assertEqual(expected, utils.get_cluster_property_from_xml(el))
 
     def test_get_cluster_property_from_xml(self):
-        el = ET.fromstring("""
+        el = ET.fromstring(
+            """
         <parameter name="an-integer-property" unique="0">
             <shortdesc lang="en"></shortdesc>
             <content type="integer" default="0"/>
             <longdesc lang="en"></longdesc>
         </parameter>
-        """)
+        """
+        )
         expected = {
             "name": "an-integer-property",
             "shortdesc": "",
             "longdesc": "",
             "type": "integer",
-            "default": "0"
+            "default": "0",
         }
         self.assertEqual(expected, utils.get_cluster_property_from_xml(el))
 
@@ -1763,7 +1786,7 @@ class UtilsTest(TestCase):
                 "longdesc": "long int description",
                 "type": "integer",
                 "default": "0",
-                "source": "pacemaker-schedulerd"
+                "source": "pacemaker-schedulerd",
             },
             "property-enum": {
                 "name": "property-enum",
@@ -1775,7 +1798,7 @@ class UtilsTest(TestCase):
                 "type": "enum",
                 "default": "stop",
                 "enum": ["stop", "freeze", "ignore", "suicide"],
-                "source": "pacemaker-schedulerd"
+                "source": "pacemaker-schedulerd",
             },
             "property-bool": {
                 "name": "property-bool",
@@ -1783,54 +1806,65 @@ class UtilsTest(TestCase):
                 "longdesc": "Enable CIB ACL",
                 "type": "boolean",
                 "default": "false",
-                "source": "cib"
-            }
+                "source": "cib",
+            },
         }
-        self.assertTrue(utils.is_valid_cluster_property(
-            definition, "property-int", "10"
-        ))
-        self.assertTrue(utils.is_valid_cluster_property(
-            definition, "property-int", "-1"
-        ))
-        self.assertTrue(utils.is_valid_cluster_property(
-            definition, "property-enum", "freeze"
-        ))
-        self.assertTrue(utils.is_valid_cluster_property(
-            definition, "property-enum", "suicide"
-        ))
-        self.assertTrue(utils.is_valid_cluster_property(
-            definition, "property-bool", "true"
-        ))
-        self.assertTrue(utils.is_valid_cluster_property(
-            definition, "property-bool", "false"
-        ))
-        self.assertTrue(utils.is_valid_cluster_property(
-            definition, "property-bool", "on"
-        ))
-        self.assertTrue(utils.is_valid_cluster_property(
-            definition, "property-bool", "OFF"
-        ))
-        self.assertFalse(utils.is_valid_cluster_property(
-            definition, "property-int", "test"
-        ))
-        self.assertFalse(utils.is_valid_cluster_property(
-            definition, "property-int", "1.2"
-        ))
-        self.assertFalse(utils.is_valid_cluster_property(
-            definition, "property-enum", "invalid"
-        ))
-        self.assertFalse(utils.is_valid_cluster_property(
-            definition, "property-bool", "not"
-        ))
+        self.assertTrue(
+            utils.is_valid_cluster_property(definition, "property-int", "10")
+        )
+        self.assertTrue(
+            utils.is_valid_cluster_property(definition, "property-int", "-1")
+        )
+        self.assertTrue(
+            utils.is_valid_cluster_property(
+                definition, "property-enum", "freeze"
+            )
+        )
+        self.assertTrue(
+            utils.is_valid_cluster_property(
+                definition, "property-enum", "suicide"
+            )
+        )
+        self.assertTrue(
+            utils.is_valid_cluster_property(definition, "property-bool", "true")
+        )
+        self.assertTrue(
+            utils.is_valid_cluster_property(
+                definition, "property-bool", "false"
+            )
+        )
+        self.assertTrue(
+            utils.is_valid_cluster_property(definition, "property-bool", "on")
+        )
+        self.assertTrue(
+            utils.is_valid_cluster_property(definition, "property-bool", "OFF")
+        )
+        self.assertFalse(
+            utils.is_valid_cluster_property(definition, "property-int", "test")
+        )
+        self.assertFalse(
+            utils.is_valid_cluster_property(definition, "property-int", "1.2")
+        )
+        self.assertFalse(
+            utils.is_valid_cluster_property(
+                definition, "property-enum", "invalid"
+            )
+        )
+        self.assertFalse(
+            utils.is_valid_cluster_property(definition, "property-bool", "not")
+        )
         self.assertRaises(
             utils.UnknownPropertyException,
-            utils.is_valid_cluster_property, definition, "unknown", "value"
+            utils.is_valid_cluster_property,
+            definition,
+            "unknown",
+            "value",
         )
 
     def assert_element_id(self, node, node_id, tag=None):
         self.assertTrue(
             isinstance(node, xml.dom.minidom.Element),
-            "element with id '%s' not found" % node_id
+            "element with id '%s' not found" % node_id,
         )
         self.assertEqual(node.getAttribute("id"), node_id)
         if tag:
@@ -1843,44 +1877,43 @@ class RunParallelTest(TestCase):
         def worker():
             sleep(sleepSeconds)
             log.append(name)
+
         return worker
 
     def test_run_all_workers(self):
         log = []
         utils.run_parallel(
             [
-                self.fixture_create_worker(log, 'first'),
-                self.fixture_create_worker(log, 'second'),
+                self.fixture_create_worker(log, "first"),
+                self.fixture_create_worker(log, "second"),
             ],
-            wait_seconds=.1
+            wait_seconds=0.1,
         )
 
-        self.assertEqual(
-            sorted(log),
-            sorted(['first', 'second'])
-        )
+        self.assertEqual(sorted(log), sorted(["first", "second"]))
 
 
 class NodeActionTaskTest(TestCase):
     def test_can_run_action(self):
         def action(node, arg, kwarg=None):
-            return (0, ':'.join([node, arg, kwarg]))
+            return (0, ":".join([node, arg, kwarg]))
 
         report_list = []
-        def report(node, returncode, output):
-            report_list.append('|'.join([node, str(returncode), output]))
 
-        task = utils.create_task(report, action, 'node', 'arg', kwarg='kwarg')
+        def report(node, returncode, output):
+            report_list.append("|".join([node, str(returncode), output]))
+
+        task = utils.create_task(report, action, "node", "arg", kwarg="kwarg")
         task()
 
-        self.assertEqual(['node|0|node:arg:kwarg'], report_list)
+        self.assertEqual(["node|0|node:arg:kwarg"], report_list)
 
 
 class TouchCibFile(TestCase):
     @mock.patch("pcs.utils.os.path.isfile", mock.Mock(return_value=False))
     @mock.patch(
         "pcs.utils.write_empty_cib",
-        mock.Mock(side_effect=EnvironmentError("some message"))
+        mock.Mock(side_effect=EnvironmentError("some message")),
     )
     @mock.patch("pcs.utils.err")
     def test_exception_is_transformed_correctly(self, err):

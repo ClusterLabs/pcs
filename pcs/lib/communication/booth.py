@@ -14,13 +14,21 @@ from pcs.lib.communication.tools import (
 
 
 class BoothSendConfig(
-    SimpleResponseProcessingMixin, SkipOfflineMixin, AllSameDataMixin,
-    AllAtOnceStrategyMixin, RunRemotelyBase,
+    SimpleResponseProcessingMixin,
+    SkipOfflineMixin,
+    AllSameDataMixin,
+    AllAtOnceStrategyMixin,
+    RunRemotelyBase,
 ):
     # TODO adapt to new file transfer framework once it is written
     def __init__(
-        self, report_processor, booth_name, config_data,
-        authfile=None, authfile_data=None, skip_offline_targets=False
+        self,
+        report_processor,
+        booth_name,
+        config_data,
+        authfile=None,
+        authfile_data=None,
+        skip_offline_targets=False,
     ):
         super(BoothSendConfig, self).__init__(report_processor)
         self._set_skip_offline(skip_offline_targets)
@@ -33,13 +41,13 @@ class BoothSendConfig(
         data = {
             "config": {
                 "name": "{0}.conf".format(self._booth_name),
-                "data": self._config_data
+                "data": self._config_data,
             }
         }
         if self._authfile is not None and self._authfile_data is not None:
             data["authfile"] = {
                 "name": self._authfile,
-                "data": base64.b64encode(self._authfile_data).decode("utf-8")
+                "data": base64.b64encode(self._authfile_data).decode("utf-8"),
             }
         return RequestData(
             "remote/booth_set_config", [("data_json", json.dumps(data))]
@@ -48,8 +56,7 @@ class BoothSendConfig(
     def _get_success_report(self, node_label):
         return ReportItem.info(
             reports.messages.BoothConfigAcceptedByNode(
-                node=node_label,
-                name_list=[self._booth_name],
+                node=node_label, name_list=[self._booth_name],
             )
         )
 
@@ -88,7 +95,9 @@ class ProcessJsonDataMixin:
 
 
 class BoothGetConfig(
-    ProcessJsonDataMixin, AllSameDataMixin, AllAtOnceStrategyMixin,
+    ProcessJsonDataMixin,
+    AllSameDataMixin,
+    AllAtOnceStrategyMixin,
     RunRemotelyBase,
 ):
     def __init__(self, report_processor, booth_name):
@@ -102,7 +111,9 @@ class BoothGetConfig(
 
 
 class BoothSaveFiles(
-    ProcessJsonDataMixin, AllSameDataMixin, AllAtOnceStrategyMixin,
+    ProcessJsonDataMixin,
+    AllSameDataMixin,
+    AllAtOnceStrategyMixin,
     RunRemotelyBase,
 ):
     def __init__(self, report_processor, file_list, rewrite_existing=True):
@@ -129,7 +140,7 @@ class BoothSaveFiles(
                 ReportItem.info(
                     reports.messages.BoothConfigAcceptedByNode(
                         node=target.label,
-                        name_list=sorted(parsed_data["saved"])
+                        name_list=sorted(parsed_data["saved"]),
                     )
                 )
             )
@@ -146,16 +157,14 @@ class BoothSaveFiles(
                             "",
                             filename,
                             node=target.label,
-                        )
+                        ),
                     )
                 )
             for file, reason in dict(parsed_data["failed"]).items():
                 self._report(
                     ReportItem.error(
                         reports.messages.BoothConfigDistributionNodeError(
-                            target.label,
-                            reason,
-                            file,
+                            target.label, reason, file,
                         )
                     )
                 )

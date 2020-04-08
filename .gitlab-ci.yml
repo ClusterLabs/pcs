@@ -28,6 +28,19 @@ rpm_build:
     paths:
       - rpms
 
+black:
+  stage: stage1
+  script:
+    - "dnf install -y
+        python3
+        python3-pip
+        make
+        time
+        which
+      "
+    - make install_pip
+    - make black_check
+
 pylint:
   stage: stage1
   script:

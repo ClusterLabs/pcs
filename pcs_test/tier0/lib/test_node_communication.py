@@ -40,9 +40,11 @@ class NodeTargetLibFactory(TestCase):
                 [
                     Destination(
                         "addr{}{}".format(i, j), "port{}{}".format(i, j)
-                    ) for j in range(2)
-                ]
-            ) for i in range(2)
+                    )
+                    for j in range(2)
+                ],
+            )
+            for i in range(2)
         }
         self.report_processor = MockLibraryReportProcessor()
         self.factory = lib.NodeTargetLibFactory(
@@ -57,8 +59,7 @@ class NodeTargetLibFactory(TestCase):
     def test_one_host(self):
         host = "host0"
         self.assert_equal_known_host_target(
-            self.known_hosts[host],
-            self.factory.get_target_list([host])[0]
+            self.known_hosts[host], self.factory.get_target_list([host])[0]
         )
         self.report_processor.assert_reports([])
 
@@ -77,7 +78,7 @@ class NodeTargetLibFactory(TestCase):
         report = fixture.error(
             report_codes.HOST_NOT_FOUND,
             force_code=report_codes.SKIP_OFFLINE_NODES,
-            host_list=unknown_hosts
+            host_list=unknown_hosts,
         )
         assert_raise_library_error(
             lambda: self.factory.get_target_list([host] + unknown_hosts)
@@ -88,8 +89,7 @@ class NodeTargetLibFactory(TestCase):
         host = "host0"
         unknown_hosts = ["node0", "node1"]
         report = fixture.error(
-            report_codes.HOST_NOT_FOUND,
-            host_list=unknown_hosts
+            report_codes.HOST_NOT_FOUND, host_list=unknown_hosts
         )
         assert_raise_library_error(
             lambda: self.factory.get_target_list(
@@ -107,9 +107,9 @@ class NodeTargetLibFactory(TestCase):
         self.assert_equal_known_host_target(
             self.known_hosts[host], target_list[0]
         )
-        self.report_processor.assert_reports([
-            fixture.warn(report_codes.HOST_NOT_FOUND, host_list=unknown_hosts)
-        ])
+        self.report_processor.assert_reports(
+            [fixture.warn(report_codes.HOST_NOT_FOUND, host_list=unknown_hosts)]
+        )
 
     def test_no_host_found(self):
         unknown_hosts = ["node0", "node1"]
@@ -117,9 +117,9 @@ class NodeTargetLibFactory(TestCase):
             fixture.error(
                 report_codes.HOST_NOT_FOUND,
                 force_code=report_codes.SKIP_OFFLINE_NODES,
-                host_list=unknown_hosts
+                host_list=unknown_hosts,
             ),
-            fixture.error(report_codes.NONE_HOST_FOUND)
+            fixture.error(report_codes.NONE_HOST_FOUND),
         ]
         assert_raise_library_error(
             lambda: self.factory.get_target_list(unknown_hosts),
@@ -130,7 +130,7 @@ class NodeTargetLibFactory(TestCase):
         unknown_hosts = ["node0", "node1"]
         report_list = [
             fixture.warn(report_codes.HOST_NOT_FOUND, host_list=unknown_hosts),
-            fixture.error(report_codes.NONE_HOST_FOUND)
+            fixture.error(report_codes.NONE_HOST_FOUND),
         ]
         assert_raise_library_error(
             lambda: self.factory.get_target_list(
@@ -180,10 +180,10 @@ class ResponseToReportItemTest(TestCase):
                 {
                     "node": self.host,
                     "command": self.request,
-                    "reason": self.data.decode("utf-8")
+                    "reason": self.data.decode("utf-8"),
                 },
-                None
-            )
+                None,
+            ),
         )
 
     def test_code_401(self):
@@ -195,10 +195,10 @@ class ResponseToReportItemTest(TestCase):
                 {
                     "node": self.host,
                     "command": self.request,
-                    "reason": "HTTP error: 401"
+                    "reason": "HTTP error: 401",
                 },
-                None
-            )
+                None,
+            ),
         )
 
     def test_code_403(self):
@@ -210,10 +210,10 @@ class ResponseToReportItemTest(TestCase):
                 {
                     "node": self.host,
                     "command": self.request,
-                    "reason": "HTTP error: 403"
+                    "reason": "HTTP error: 403",
                 },
-                None
-            )
+                None,
+            ),
         )
 
     def test_code_404(self):
@@ -225,10 +225,10 @@ class ResponseToReportItemTest(TestCase):
                 {
                     "node": self.host,
                     "command": self.request,
-                    "reason": "HTTP error: 404"
+                    "reason": "HTTP error: 404",
                 },
-                None
-            )
+                None,
+            ),
         )
 
     def test_code_other(self):
@@ -240,10 +240,10 @@ class ResponseToReportItemTest(TestCase):
                 {
                     "node": self.host,
                     "command": self.request,
-                    "reason": "HTTP error: 500"
+                    "reason": "HTTP error: 500",
                 },
-                None
-            )
+                None,
+            ),
         )
 
     def test_timed_out(self):
@@ -255,13 +255,9 @@ class ResponseToReportItemTest(TestCase):
             (
                 severity.ERROR,
                 report_codes.NODE_COMMUNICATION_ERROR_TIMED_OUT,
-                {
-                    "node": self.host,
-                    "command": self.request,
-                    "reason": "err"
-                },
-                None
-            )
+                {"node": self.host, "command": self.request, "reason": "err"},
+                None,
+            ),
         )
 
     def test_timedouted(self):
@@ -273,13 +269,9 @@ class ResponseToReportItemTest(TestCase):
             (
                 severity.ERROR,
                 report_codes.NODE_COMMUNICATION_ERROR_TIMED_OUT,
-                {
-                    "node": self.host,
-                    "command": self.request,
-                    "reason": "err"
-                },
-                None
-            )
+                {"node": self.host, "command": self.request, "reason": "err"},
+                None,
+            ),
         )
 
     def test_unable_to_connect(self):
@@ -291,75 +283,57 @@ class ResponseToReportItemTest(TestCase):
             (
                 severity.ERROR,
                 report_codes.NODE_COMMUNICATION_ERROR_UNABLE_TO_CONNECT,
-                {
-                    "node": self.host,
-                    "command": self.request,
-                    "reason": "err"
-                },
-                None
-            )
+                {"node": self.host, "command": self.request, "reason": "err"},
+                None,
+            ),
         )
 
 
 class IsProxySetTest(TestCase):
     def test_without_proxy(self):
-        self.assertFalse(lib.is_proxy_set({
-            "var1": "value",
-            "var2": "val",
-        }))
+        self.assertFalse(lib.is_proxy_set({"var1": "value", "var2": "val",}))
 
     def test_multiple(self):
-        self.assertTrue(lib.is_proxy_set({
-            "var1": "val",
-            "https_proxy": "test.proxy",
-            "var2": "val",
-            "all_proxy": "test2.proxy",
-            "var3": "val",
-        }))
+        self.assertTrue(
+            lib.is_proxy_set(
+                {
+                    "var1": "val",
+                    "https_proxy": "test.proxy",
+                    "var2": "val",
+                    "all_proxy": "test2.proxy",
+                    "var3": "val",
+                }
+            )
+        )
 
     def test_empty_string(self):
-        self.assertFalse(lib.is_proxy_set({
-            "all_proxy": "",
-        }))
+        self.assertFalse(lib.is_proxy_set({"all_proxy": "",}))
 
     def test_http_proxy(self):
-        self.assertFalse(lib.is_proxy_set({
-            "http_proxy": "test.proxy",
-        }))
+        self.assertFalse(lib.is_proxy_set({"http_proxy": "test.proxy",}))
 
     def test_HTTP_PROXY(self):
         # pylint: disable=invalid-name
-        self.assertFalse(lib.is_proxy_set({
-            "HTTP_PROXY": "test.proxy",
-        }))
+        self.assertFalse(lib.is_proxy_set({"HTTP_PROXY": "test.proxy",}))
 
     def test_https_proxy(self):
-        self.assertTrue(lib.is_proxy_set({
-            "https_proxy": "test.proxy",
-        }))
+        self.assertTrue(lib.is_proxy_set({"https_proxy": "test.proxy",}))
 
     def test_HTTPS_PROXY(self):
         # pylint: disable=invalid-name
-        self.assertTrue(lib.is_proxy_set({
-            "HTTPS_PROXY": "test.proxy",
-        }))
+        self.assertTrue(lib.is_proxy_set({"HTTPS_PROXY": "test.proxy",}))
 
     def test_all_proxy(self):
-        self.assertTrue(lib.is_proxy_set({
-            "all_proxy": "test.proxy",
-        }))
+        self.assertTrue(lib.is_proxy_set({"all_proxy": "test.proxy",}))
 
     def test_ALL_PROXY(self):
         # pylint: disable=invalid-name
-        self.assertTrue(lib.is_proxy_set({
-            "ALL_PROXY": "test.proxy",
-        }))
+        self.assertTrue(lib.is_proxy_set({"ALL_PROXY": "test.proxy",}))
 
     def test_no_proxy(self):
-        self.assertTrue(lib.is_proxy_set({
-            "no_proxy": "*",
-            "all_proxy": "test.proxy",
-        }))
+        self.assertTrue(
+            lib.is_proxy_set({"no_proxy": "*", "all_proxy": "test.proxy",})
+        )
 
 
 def fixture_logger_call_send(url, data):
@@ -370,7 +344,8 @@ def fixture_logger_call_send(url, data):
 
 
 def fixture_logger_call_debug_data(url, data):
-    send_msg = outdent("""\
+    send_msg = outdent(
+        """\
         Communication debug info for calling: {url}
         --Debug Communication Info Start--
         {data}
@@ -384,9 +359,9 @@ def fixture_logger_call_connected(url, response_code, response_data):
         "Finished calling: {url}\nResponse Code: {code}"
         + "\n--Debug Response Start--\n{response}\n--Debug Response End--"
     )
-    return mock.call.debug(result_msg.format(
-        url=url, code=response_code, response=response_data
-    ))
+    return mock.call.debug(
+        result_msg.format(url=url, code=response_code, response=response_data)
+    )
 
 
 def fixture_logger_call_not_connected(node, reason):
@@ -406,72 +381,69 @@ def fixture_logger_calls_on_success(
         fixture_logger_call_debug_data(url, debug_data),
     ]
 
+
 def fixture_report_item_list_send(url, data):
-    return [(
-        severity.DEBUG,
-        report_codes.NODE_COMMUNICATION_STARTED,
-        {
-            "target": url,
-            "data": data,
-        }
-    )]
+    return [
+        (
+            severity.DEBUG,
+            report_codes.NODE_COMMUNICATION_STARTED,
+            {"target": url, "data": data,},
+        )
+    ]
 
 
 def fixture_report_item_list_debug(url, data):
-    return [(
-        severity.DEBUG,
-        report_codes.NODE_COMMUNICATION_DEBUG_INFO,
-        {
-            "target": url,
-            "data": data,
-        }
-    )]
+    return [
+        (
+            severity.DEBUG,
+            report_codes.NODE_COMMUNICATION_DEBUG_INFO,
+            {"target": url, "data": data,},
+        )
+    ]
 
 
 def fixture_report_item_list_connected(url, response_code, response_data):
-    return [(
-        severity.DEBUG,
-        report_codes.NODE_COMMUNICATION_FINISHED,
-        {
-            "target": url,
-            "response_code": response_code,
-            "response_data": response_data,
-        }
-    )]
+    return [
+        (
+            severity.DEBUG,
+            report_codes.NODE_COMMUNICATION_FINISHED,
+            {
+                "target": url,
+                "response_code": response_code,
+                "response_data": response_data,
+            },
+        )
+    ]
 
 
 def fixture_report_item_list_not_connected(node, reason):
-    return [(
-        severity.DEBUG,
-        report_codes.NODE_COMMUNICATION_NOT_CONNECTED,
-        {
-            "node": node,
-            "reason": reason,
-        },
-        None
-    )]
+    return [
+        (
+            severity.DEBUG,
+            report_codes.NODE_COMMUNICATION_NOT_CONNECTED,
+            {"node": node, "reason": reason,},
+            None,
+        )
+    ]
 
 
 def fixture_report_item_list_proxy_set(node, address):
-    return [(
-        severity.WARNING,
-        report_codes.NODE_COMMUNICATION_PROXY_IS_SET,
-        {
-            "node": node,
-            "address": address,
-        },
-        None
-    )]
+    return [
+        (
+            severity.WARNING,
+            report_codes.NODE_COMMUNICATION_PROXY_IS_SET,
+            {"node": node, "address": address,},
+            None,
+        )
+    ]
 
 
 def fixture_report_item_list_on_success(
     url, response_code, response_data, debug_data
 ):
-    return (
-        fixture_report_item_list_connected(url, response_code, response_data)
-        +
-        fixture_report_item_list_debug(url, debug_data)
-    )
+    return fixture_report_item_list_connected(
+        url, response_code, response_data
+    ) + fixture_report_item_list_debug(url, debug_data)
 
 
 def fixture_request():
@@ -492,7 +464,7 @@ class CommunicatorLoggerTest(TestCase):
         )
         self.assertEqual(
             [fixture_logger_call_send(request.url, request.data)],
-            self.logger.mock_calls
+            self.logger.mock_calls,
         )
 
     def test_log_response_connected(self):
@@ -513,14 +485,14 @@ class CommunicatorLoggerTest(TestCase):
                 response.request.url,
                 expected_code,
                 expected_data,
-                expected_debug_data
+                expected_debug_data,
             )
         )
         logger_calls = fixture_logger_calls_on_success(
             response.request.url,
             expected_code,
             expected_data,
-            expected_debug_data
+            expected_debug_data,
         )
         self.assertEqual(logger_calls, self.logger.mock_calls)
 
@@ -542,8 +514,7 @@ class CommunicatorLoggerTest(TestCase):
             fixture_report_item_list_not_connected(
                 response.request.host_label, error_msg
             )
-            +
-            fixture_report_item_list_debug(
+            + fixture_report_item_list_debug(
                 response.request.url, expected_debug_data
             )
         )
@@ -553,7 +524,7 @@ class CommunicatorLoggerTest(TestCase):
             ),
             fixture_logger_call_debug_data(
                 response.request.url, expected_debug_data
-            )
+            ),
         ]
         self.assertEqual(logger_calls, self.logger.mock_calls)
 
@@ -575,12 +546,10 @@ class CommunicatorLoggerTest(TestCase):
             fixture_report_item_list_not_connected(
                 response.request.host_label, error_msg
             )
-            +
-            fixture_report_item_list_proxy_set(
+            + fixture_report_item_list_proxy_set(
                 response.request.host_label, response.request.host_label
             )
-            +
-            fixture_report_item_list_debug(
+            + fixture_report_item_list_debug(
                 response.request.url, expected_debug_data
             )
         )
@@ -591,7 +560,7 @@ class CommunicatorLoggerTest(TestCase):
             fixture_logger_call_proxy_set(),
             fixture_logger_call_debug_data(
                 response.request.url, expected_debug_data
-            )
+            ),
         ]
         self.assertEqual(logger_calls, self.logger.mock_calls)
 
@@ -605,19 +574,23 @@ class CommunicatorLoggerTest(TestCase):
             "e",
         )
         self.com_logger.log_retry(response, prev_host)
-        self.reporter.assert_reports([(
-            severity.WARNING,
-            report_codes.NODE_COMMUNICATION_RETRYING,
-            {
-                "node": response.request.host_label,
-                "failed_address": prev_addr,
-                "failed_port": prev_port,
-                "next_address": response.request.dest.addr,
-                "next_port": settings.pcsd_default_port,
-                "request": response.request.url,
-            },
-            None
-        )])
+        self.reporter.assert_reports(
+            [
+                (
+                    severity.WARNING,
+                    report_codes.NODE_COMMUNICATION_RETRYING,
+                    {
+                        "node": response.request.host_label,
+                        "failed_address": prev_addr,
+                        "failed_port": prev_port,
+                        "next_address": response.request.dest.addr,
+                        "next_port": settings.pcsd_default_port,
+                        "request": response.request.url,
+                    },
+                    None,
+                )
+            ]
+        )
         logger_call = mock.call.warning(
             (
                 "Unable to connect to '{label}' via address '{old_addr}' and "
@@ -638,22 +611,25 @@ class CommunicatorLoggerTest(TestCase):
         response = Response.connection_failure(
             MockCurlSimple(request=fixture_request()),
             pycurl.E_HTTP_POST_ERROR,
-            "e"
+            "e",
         )
         self.com_logger.log_no_more_addresses(response)
-        self.reporter.assert_reports([(
-            severity.WARNING,
-            report_codes.NODE_COMMUNICATION_NO_MORE_ADDRESSES,
-            {
-                "node": response.request.host_label,
-                "request": response.request.url,
-            },
-            None
-        )])
+        self.reporter.assert_reports(
+            [
+                (
+                    severity.WARNING,
+                    report_codes.NODE_COMMUNICATION_NO_MORE_ADDRESSES,
+                    {
+                        "node": response.request.host_label,
+                        "request": response.request.url,
+                    },
+                    None,
+                )
+            ]
+        )
         logger_call = mock.call.warning(
             "No more addresses for node {label} to run '{req}'".format(
-                label=response.request.host_label,
-                req=response.request.url,
+                label=response.request.host_label, req=response.request.url,
             )
         )
         self.assertEqual([logger_call], self.logger.mock_calls)

@@ -35,10 +35,9 @@ def standby_unstandby_local(lib_env, standby, wait=False):
         wait with specified timeout
     """
     return _set_instance_attrs_local_node(
-        lib_env,
-        _create_standby_unstandby_dict(standby),
-        wait
+        lib_env, _create_standby_unstandby_dict(standby), wait
     )
+
 
 def standby_unstandby_list(lib_env, standby, node_names, wait=False):
     """
@@ -51,11 +50,9 @@ def standby_unstandby_list(lib_env, standby, node_names, wait=False):
         wait with specified timeout
     """
     return _set_instance_attrs_node_list(
-        lib_env,
-        _create_standby_unstandby_dict(standby),
-        node_names,
-        wait
+        lib_env, _create_standby_unstandby_dict(standby), node_names, wait
     )
+
 
 def standby_unstandby_all(lib_env, standby, wait=False):
     """
@@ -67,10 +64,9 @@ def standby_unstandby_all(lib_env, standby, wait=False):
         wait with specified timeout
     """
     return _set_instance_attrs_all_nodes(
-        lib_env,
-        _create_standby_unstandby_dict(standby),
-        wait
+        lib_env, _create_standby_unstandby_dict(standby), wait
     )
+
 
 def maintenance_unmaintenance_local(lib_env, maintenance, wait=False):
     """
@@ -82,10 +78,9 @@ def maintenance_unmaintenance_local(lib_env, maintenance, wait=False):
         wait with specified timeout
     """
     return _set_instance_attrs_local_node(
-        lib_env,
-        _create_maintenance_unmaintenance_dict(maintenance),
-        wait
+        lib_env, _create_maintenance_unmaintenance_dict(maintenance), wait
     )
+
 
 def maintenance_unmaintenance_list(
     lib_env, maintenance, node_names, wait=False
@@ -103,8 +98,9 @@ def maintenance_unmaintenance_list(
         lib_env,
         _create_maintenance_unmaintenance_dict(maintenance),
         node_names,
-        wait
+        wait,
     )
+
 
 def maintenance_unmaintenance_all(lib_env, maintenance, wait=False):
     """
@@ -116,16 +112,17 @@ def maintenance_unmaintenance_all(lib_env, maintenance, wait=False):
         wait with specified timeout
     """
     return _set_instance_attrs_all_nodes(
-        lib_env,
-        _create_maintenance_unmaintenance_dict(maintenance),
-        wait
+        lib_env, _create_maintenance_unmaintenance_dict(maintenance), wait
     )
+
 
 def _create_standby_unstandby_dict(standby):
     return {"standby": "on" if standby else ""}
 
+
 def _create_maintenance_unmaintenance_dict(maintenance):
     return {"maintenance": "on" if maintenance else ""}
+
 
 def _set_instance_attrs_local_node(lib_env, attrs, wait):
     if not lib_env.is_cib_live:
@@ -143,8 +140,9 @@ def _set_instance_attrs_local_node(lib_env, attrs, wait):
             IdProvider(cib),
             get_local_node_name(runner),
             attrs,
-            state_nodes=state_nodes
+            state_nodes=state_nodes,
         )
+
 
 def _set_instance_attrs_node_list(lib_env, attrs, node_names, wait):
     with cib_runner_nodes(lib_env, wait) as (cib, dummy_runner, state_nodes):
@@ -160,20 +158,13 @@ def _set_instance_attrs_node_list(lib_env, attrs, node_names, wait):
 
         for node in node_names:
             update_node_instance_attrs(
-                cib,
-                IdProvider(cib),
-                node,
-                attrs,
-                state_nodes=state_nodes
+                cib, IdProvider(cib), node, attrs, state_nodes=state_nodes
             )
+
 
 def _set_instance_attrs_all_nodes(lib_env, attrs, wait):
     with cib_runner_nodes(lib_env, wait) as (cib, dummy_runner, state_nodes):
         for node in [node.attrs.name for node in state_nodes]:
             update_node_instance_attrs(
-                cib,
-                IdProvider(cib),
-                node,
-                attrs,
-                state_nodes=state_nodes
+                cib, IdProvider(cib), node, attrs, state_nodes=state_nodes
             )

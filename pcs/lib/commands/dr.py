@@ -63,21 +63,23 @@ def get_config(env: LibraryEnvironment) -> Mapping[str, Any]:
     if report_processor.has_errors:
         raise LibraryError()
 
-    return dto.to_dict(DrConfigDto(
-        local_site=DrConfigSiteDto(
-            site_role=dr_config.local_role,
-            node_list=[],
-        ),
-        remote_site_list=[
-            DrConfigSiteDto(
-                site_role=site.role,
-                node_list=[
-                    DrConfigNodeDto(name=name) for name in site.node_name_list
-                ]
-            )
-            for site in dr_config.get_remote_site_list()
-        ]
-    ))
+    return dto.to_dict(
+        DrConfigDto(
+            local_site=DrConfigSiteDto(
+                site_role=dr_config.local_role, node_list=[],
+            ),
+            remote_site_list=[
+                DrConfigSiteDto(
+                    site_role=site.role,
+                    node_list=[
+                        DrConfigNodeDto(name=name)
+                        for name in site.node_name_list
+                    ],
+                )
+                for site in dr_config.get_remote_site_list()
+            ],
+        )
+    )
 
 
 def set_recovery_site(env: LibraryEnvironment, node_name: str) -> None:
@@ -102,8 +104,7 @@ def set_recovery_site(env: LibraryEnvironment, node_name: str) -> None:
     target_factory = env.get_node_target_factory()
 
     local_nodes, report_list = get_existing_nodes_names(
-        env.get_corosync_conf(),
-        error_on_missing_name=True
+        env.get_corosync_conf(), error_on_missing_name=True
     )
     report_processor.report_list(report_list)
 
@@ -117,10 +118,8 @@ def set_recovery_site(env: LibraryEnvironment, node_name: str) -> None:
     )
     report_processor.report_list(report_list)
 
-    report_list, remote_targets = (
-        target_factory.get_target_list_with_reports(
-            [node_name], allow_skip=False, report_none_host_found=False
-        )
+    report_list, remote_targets = target_factory.get_target_list_with_reports(
+        [node_name], allow_skip=False, report_none_host_found=False
     )
     report_processor.report_list(report_list)
 
@@ -133,7 +132,7 @@ def set_recovery_site(env: LibraryEnvironment, node_name: str) -> None:
         CorosyncConfigFacade.from_string(
             run_and_raise(env.get_node_communicator(), com_cmd)
         ),
-        error_on_missing_name=True
+        error_on_missing_name=True,
     )
     if report_processor.report_list(report_list).has_errors:
         raise LibraryError()
@@ -144,9 +143,9 @@ def set_recovery_site(env: LibraryEnvironment, node_name: str) -> None:
     )
     if report_processor.report_list(report_list).has_errors:
         raise LibraryError()
-    dr_config_exporter = (
-        get_file_toolbox(file_type_codes.PCS_DR_CONFIG).exporter
-    )
+    dr_config_exporter = get_file_toolbox(
+        file_type_codes.PCS_DR_CONFIG
+    ).exporter
     # create dr config for remote cluster
     remote_dr_cfg = dr_env.create_facade(DrRole.RECOVERY)
     remote_dr_cfg.add_site(DrRole.PRIMARY, local_nodes)
@@ -155,7 +154,7 @@ def set_recovery_site(env: LibraryEnvironment, node_name: str) -> None:
         env.report_processor,
         node_communication_format.pcs_dr_config_file(
             dr_config_exporter.export(remote_dr_cfg.config)
-        )
+        ),
     )
     distribute_file_cmd.set_targets(remote_targets)
     run_and_raise(env.get_node_communicator(), distribute_file_cmd)
@@ -166,7 +165,7 @@ def set_recovery_site(env: LibraryEnvironment, node_name: str) -> None:
         env.report_processor,
         node_communication_format.pcs_dr_config_file(
             dr_config_exporter.export(local_dr_cfg.config)
-        )
+        ),
     )
     distribute_file_cmd.set_targets(local_targets)
     run_and_raise(env.get_node_communicator(), distribute_file_cmd)
@@ -193,7 +192,7 @@ def status_all_sites_plaintext(
     # make changes on the skipped nodes later manually.
     # This command only reads from nodes so it automatically asks other nodes
     # if one is offline / misbehaving.
-    class SiteData():
+    class SiteData:
         def __init__(
             self,
             local: bool,
@@ -205,7 +204,6 @@ def status_all_sites_plaintext(
             self.target_list = target_list
             self.status_loaded = False
             self.status_plaintext = ""
-
 
     if env.ghost_file_codes:
         raise LibraryError(
@@ -227,19 +225,18 @@ def status_all_sites_plaintext(
     local_nodes, report_list = get_existing_nodes_names(env.get_corosync_conf())
     report_processor.report_list(report_list)
     report_list, local_targets = target_factory.get_target_list_with_reports(
-        local_nodes,
-        skip_non_existing=True,
+        local_nodes, skip_non_existing=True,
     )
     report_processor.report_list(report_list)
     site_data_list.append(SiteData(True, dr_config.local_role, local_targets))
 
     # get remote sites' nodes
     for conf_remote_site in dr_config.get_remote_site_list():
-        report_list, remote_targets = (
-            target_factory.get_target_list_with_reports(
-                conf_remote_site.node_name_list,
-                skip_non_existing=True,
-            )
+        (
+            report_list,
+            remote_targets,
+        ) = target_factory.get_target_list_with_reports(
+            conf_remote_site.node_name_list, skip_non_existing=True,
         )
         report_processor.report_list(report_list)
         site_data_list.append(
@@ -261,22 +258,26 @@ def status_all_sites_plaintext(
         )
 
     return [
-        dto.to_dict(DrSiteStatusDto(
-            local_site=site_data.local,
-            site_role=site_data.role,
-            status_plaintext=site_data.status_plaintext,
-            status_successfully_obtained=site_data.status_loaded,
-        ))
+        dto.to_dict(
+            DrSiteStatusDto(
+                local_site=site_data.local,
+                site_role=site_data.role,
+                status_plaintext=site_data.status_plaintext,
+                status_successfully_obtained=site_data.status_loaded,
+            )
+        )
         for site_data in site_data_list
     ]
+
 
 def _load_dr_config(
     config_file: FileInstance,
 ) -> Tuple[ReportItemList, DrConfigFacade]:
     if not config_file.raw_file.exists():
-        return [
-            ReportItem.error(reports.messages.DrConfigDoesNotExist()),
-        ], DrConfigFacade.empty()
+        return (
+            [ReportItem.error(reports.messages.DrConfigDoesNotExist()),],
+            DrConfigFacade.empty(),
+        )
     try:
         return [], config_file.read_to_facade()
     except RawFileError as e:
@@ -284,7 +285,7 @@ def _load_dr_config(
     except ParserErrorException as e:
         return (
             config_file.parser_exception_to_report_list(e),
-            DrConfigFacade.empty()
+            DrConfigFacade.empty(),
         )
 
 
@@ -320,14 +321,15 @@ def destroy(env: LibraryEnvironment, force_flags: Container[str] = ()) -> None:
 
     target_factory = env.get_node_target_factory()
     report_list, targets = target_factory.get_target_list_with_reports(
-         remote_nodes + local_nodes, skip_non_existing=skip_offline,
+        remote_nodes + local_nodes, skip_non_existing=skip_offline,
     )
     report_processor.report_list(report_list)
     if report_processor.has_errors:
         raise LibraryError()
 
     com_cmd = RemoveFilesWithoutForces(
-        env.report_processor, {
+        env.report_processor,
+        {
             "pcs disaster-recovery config": {
                 "type": "pcs_disaster_recovery_conf",
             },

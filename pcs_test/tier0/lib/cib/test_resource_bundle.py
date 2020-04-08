@@ -8,6 +8,7 @@ from pcs.lib.cib.resource import bundle
 # - pcs_test.tier0.lib.commands.resource.test_bundle_update
 # - pcs_test.tier0.lib.commands.resource.test_resource_create
 
+
 class IsBundle(TestCase):
     def test_is_bundle(self):
         self.assertTrue(bundle.is_bundle(etree.fromstring("<bundle/>")))
@@ -19,7 +20,7 @@ class GetInnerResource(TestCase):
     def assert_inner_resource(self, resource_id, xml):
         self.assertEqual(
             resource_id,
-            bundle.get_inner_resource(etree.fromstring(xml)).get("id", "")
+            bundle.get_inner_resource(etree.fromstring(xml)).get("id", ""),
         )
 
     def test_primitive(self):
@@ -31,5 +32,5 @@ class GetInnerResource(TestCase):
                     <primitive id="A" />
                     <meta_attributes />
                 </bundle>
-            """
+            """,
         )

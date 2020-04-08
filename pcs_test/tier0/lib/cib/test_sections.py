@@ -1,9 +1,9 @@
 from unittest import TestCase
 from lxml import etree
 
-from pcs_test.tools.assertions import(
+from pcs_test.tools.assertions import (
     assert_xml_equal,
-    assert_raise_library_error
+    assert_raise_library_error,
 )
 from pcs_test.tools.xml import etree_to_str
 
@@ -35,19 +35,17 @@ class Get(TestCase):
             <configuration>
                 <acls/>
             </configuration>
-            """
+            """,
         )
 
     def test_get_existing_optinal(self):
         self.assert_element_content(
-            sections.get(self.tree, sections.ACLS),
-            "<acls/>"
+            sections.get(self.tree, sections.ACLS), "<acls/>"
         )
 
     def test_get_no_existing_optinal(self):
         self.assert_element_content(
-            sections.get(self.tree, sections.ALERTS),
-            "<alerts/>"
+            sections.get(self.tree, sections.ALERTS), "<alerts/>"
         )
         self.assert_element_content(
             self.tree,
@@ -58,7 +56,7 @@ class Get(TestCase):
                     <alerts/>
                 </configuration>
             </cib>
-            """
+            """,
         )
 
     def test_raises_on_no_existing_mandatory_section(self):
@@ -67,8 +65,6 @@ class Get(TestCase):
             (
                 severities.ERROR,
                 report_codes.CIB_CANNOT_FIND_MANDATORY_SECTION,
-                {
-                    "section": "configuration/nodes",
-                }
+                {"section": "configuration/nodes",},
             ),
         )

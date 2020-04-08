@@ -12,13 +12,16 @@ from pcs.daemon.ssl import PcsdSSL
 PORT = 1234
 BIND_ADDRESSES = ["addr1", "addr2"]
 
+
 def addr2sock(addr_list):
     return [f"sock:{addr}" for addr in addr_list]
+
 
 BIND_SOCKETS = addr2sock(BIND_ADDRESSES)
 
 # Don't write errors to test output.
 logging.getLogger("pcs.daemon").setLevel(logging.CRITICAL)
+
 
 class ManageTest(TestCase, create_setup_patch_mixin(http_server)):
     def setUp(self):
@@ -31,10 +34,7 @@ class ManageTest(TestCase, create_setup_patch_mixin(http_server)):
 
         self.app = MagicMock()
         self.https_server_manage = http_server.HttpsServerManage(
-            Mock(return_value=self.app),
-            PORT,
-            BIND_ADDRESSES,
-            self.pcsd_ssl,
+            Mock(return_value=self.app), PORT, BIND_ADDRESSES, self.pcsd_ssl,
         )
         self.assertEqual(0, len(self.server_list))
         self.assertFalse(self.https_server_manage.server_is_running)

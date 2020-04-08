@@ -26,12 +26,10 @@ def fixture_primitive_xml(_id):
         <primitive id="{_id}" class="ocf" provider="pacemaker" type="Dummy"/>
     """
 
+
 def fixture_node(entity, members=None, leaf=False):
-    return dict(
-        relation_entity=entity,
-        is_leaf=leaf,
-        members=members or [],
-    )
+    return dict(relation_entity=entity, is_leaf=leaf, members=members or [],)
+
 
 def fixture_order(res1, res2, kind="Mandatory", score=None):
     _id = f"order-{res1}-{res2}"
@@ -62,12 +60,9 @@ class GetResourceRelationsTree(TestCase):
         resource_id = "not_existing"
         self.env_assist.assert_raise_library_error(
             lambda: resource.get_resource_relations_tree(
-                self.env_assist.get_env(),
-                resource_id,
+                self.env_assist.get_env(), resource_id,
             ),
-            [
-                fixture.report_not_found(resource_id, context_type="resources"),
-            ],
+            [fixture.report_not_found(resource_id, context_type="resources"),],
             expected_in_processor=False,
         )
 
@@ -98,8 +93,9 @@ class GetResourceRelationsTree(TestCase):
             expected,
             resource.get_resource_relations_tree(
                 self.env_assist.get_env(), "d1"
-            )
+            ),
         )
+
 
 class GetResourceRelationsTreeComplex(TestCase):
     def setUp(self):
@@ -116,15 +112,15 @@ class GetResourceRelationsTreeComplex(TestCase):
                 </resources>
             """.format(
                 primitives=(
-                    fixture_primitive_xml("d1") +
-                    fixture_primitive_xml("d2") +
-                    fixture_primitive_xml("d3")
+                    fixture_primitive_xml("d1")
+                    + fixture_primitive_xml("d2")
+                    + fixture_primitive_xml("d3")
                 ),
                 in_group=(
-                    fixture_primitive_xml("cgd1") +
-                    fixture_primitive_xml("cgd2") +
-                    fixture_primitive_xml("cgd0")
-                )
+                    fixture_primitive_xml("cgd1")
+                    + fixture_primitive_xml("cgd2")
+                    + fixture_primitive_xml("cgd0")
+                ),
             ),
             constraints="""
             <constraints>
@@ -150,7 +146,9 @@ class GetResourceRelationsTreeComplex(TestCase):
         )
         self.d1_members = ["order-d1-d2", "pcs_rsc_order_set_1"]
         self.d2_members = [
-            "order-d1-d2", "order-cgd1-d2", "pcs_rsc_order_set_1",
+            "order-d1-d2",
+            "order-cgd1-d2",
+            "pcs_rsc_order_set_1",
         ]
         self.order_set = dict(
             id="pcs_rsc_order_set_1",
@@ -200,39 +198,47 @@ class GetResourceRelationsTreeComplex(TestCase):
         )
         order_opt = fixture_order("cgd1", "d2", kind="Optional", score="10")
         expected = fixture_node(
-            fixture_primitive("d1", self.d1_members), [
+            fixture_primitive("d1", self.d1_members),
+            [
                 fixture_node(
-                    fixture_order("d1", "d2"), [
+                    fixture_order("d1", "d2"),
+                    [
                         fixture_node(
-                            fixture_primitive("d2", self.d2_members), [
+                            fixture_primitive("d2", self.d2_members),
+                            [
                                 fixture_node(
-                                    order_opt, [
+                                    order_opt,
+                                    [
                                         fixture_node(
                                             fixture_primitive(
                                                 "cgd1",
                                                 ["order-cgd1-d2", "outer:cg"],
-                                            ), [
+                                            ),
+                                            [
                                                 fixture_node(
-                                                    outer_cg, [
+                                                    outer_cg,
+                                                    [
                                                         fixture_node(
                                                             self.cg_ent,
                                                             leaf=True,
                                                         ),
-                                                    ]
+                                                    ],
                                                 )
-                                            ]
+                                            ],
                                         ),
                                     ],
                                 ),
-                                fixture_node(self.order_set, leaf=True)
+                                fixture_node(self.order_set, leaf=True),
                             ],
                         )
-                    ]
+                    ],
                 ),
                 fixture_node(
-                    self.order_set, [
+                    self.order_set,
+                    [
                         fixture_node(
-                            self.cg_ent, [
+                            self.cg_ent,
+                            [
                                 fixture_node(
                                     dict(
                                         id="inner:cg",
@@ -241,7 +247,8 @@ class GetResourceRelationsTreeComplex(TestCase):
                                         ),
                                         members=["cgd1", "cgd2", "cgd0"],
                                         metadata=dict(id="cg"),
-                                    ), [
+                                    ),
+                                    [
                                         fixture_node(
                                             fixture_primitive(
                                                 "cgd1",
@@ -259,7 +266,7 @@ class GetResourceRelationsTreeComplex(TestCase):
                                                 "cgd0", ["outer:cg"]
                                             ),
                                         ),
-                                    ]
+                                    ],
                                 ),
                                 fixture_node(
                                     dict(
@@ -268,8 +275,9 @@ class GetResourceRelationsTreeComplex(TestCase):
                                             ResourceRelationType.OUTER_RESOURCE
                                         ),
                                         members=["c"],
-                                        metadata=dict(id="c")
-                                    ), [
+                                        metadata=dict(id="c"),
+                                    ),
+                                    [
                                         fixture_node(
                                             dict(
                                                 id="c",
@@ -277,10 +285,10 @@ class GetResourceRelationsTreeComplex(TestCase):
                                                 members=["inner:c"],
                                                 metadata=dict(id="c"),
                                             ),
-                                            []
+                                            [],
                                         )
-                                    ]
-                                )
+                                    ],
+                                ),
                             ],
                         ),
                         fixture_node(
@@ -288,14 +296,14 @@ class GetResourceRelationsTreeComplex(TestCase):
                         ),
                         fixture_node(
                             fixture_primitive("d3", ["pcs_rsc_order_set_1"]),
-                        )
+                        ),
                     ],
-                )
+                ),
             ],
         )
         self.assertEqual(
             expected,
             resource.get_resource_relations_tree(
                 self.env_assist.get_env(), "d1"
-            )
+            ),
         )

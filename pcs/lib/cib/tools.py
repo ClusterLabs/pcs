@@ -15,10 +15,12 @@ from pcs.lib.xml_tools import get_root, get_sub_element
 
 VERSION_FORMAT = r"(?P<major>\d+)\.(?P<minor>\d+)(\.(?P<rev>\d+))?$"
 
+
 class IdProvider:
     """
     Book ids for future use in the CIB and generate new ids accordingly
     """
+
     def __init__(self, cib_element):
         """
         etree cib_element -- any element of the xml to being check against
@@ -55,7 +57,7 @@ class IdProvider:
         return report_list
 
 
-class ElementSearcher():
+class ElementSearcher:
     """
     Search for an element, allow to book its id if not found, provide reports
 
@@ -70,6 +72,7 @@ class ElementSearcher():
     else:
         raise LibraryError(es.get_errors())
     """
+
     def __init__(
         self, tags, element_id, context_element, element_type_desc=None
     ):
@@ -113,7 +116,7 @@ class ElementSearcher():
         validate_id(
             self._element_id,
             description=id_description,
-            reporter=self._book_errors
+            reporter=self._book_errors,
         )
         if not self._book_errors:
             self._book_errors += id_provider.book_ids(self._element_id)
@@ -123,10 +126,8 @@ class ElementSearcher():
         """
         Report why the element has not been found or booking its id failed
         """
-        if (
-            self.element_found()
-            or
-            (self._book_errors is not None and not self._book_errors)
+        if self.element_found() or (
+            self._book_errors is not None and not self._book_errors
         ):
             raise AssertionError(
                 "Improper usage: cannot report errors when there are none"
@@ -192,11 +193,12 @@ def does_id_exist(tree, check_id):
     # do not search in /cib/status, it may contain references to previously
     # existing and deleted resources and thus preventing creating them again
 
-    #pacemaker creates an implicit resource for the pacemaker_remote connection,
-    #which will be named the same as the value of the remote-node attribute of
-    #the explicit resource. So the value of nvpair named "remote-node" is
-    #considered to be id
-    existing = get_root(tree).xpath("""
+    # pacemaker creates an implicit resource for the pacemaker_remote
+    # connection, which will be named the same as the value of the remote-node
+    # attribute of the explicit resource. So the value of nvpair named
+    # "remote-node" is considered to be id
+    existing = get_root(tree).xpath(
+        """
         (
             /cib/*[name()!="status"]
             |
@@ -221,8 +223,12 @@ def does_id_exist(tree, check_id):
                 ]
             )
         ]
-    """.format(check_id))
+    """.format(
+            check_id
+        )
+    )
     return len(existing) > 0
+
 
 # DEPRECATED, use IdProvider instead
 def validate_id_does_not_exist(tree, _id):
@@ -233,6 +239,7 @@ def validate_id_does_not_exist(tree, _id):
         raise LibraryError(
             ReportItem.error(reports.messages.IdAlreadyExists(_id))
         )
+
 
 # DEPRECATED, use IdProvider instead
 def find_unique_id(tree, check_id, reserved_ids=None):
@@ -251,6 +258,7 @@ def find_unique_id(tree, check_id, reserved_ids=None):
         temp_id = "{0}-{1}".format(check_id, counter)
         counter += 1
     return temp_id
+
 
 # DEPRECATED, use ElementSearcher instead
 def find_element_by_tag_and_id(
@@ -277,12 +285,14 @@ def find_element_by_tag_and_id(
     if not none_if_id_unused:
         raise LibraryError(*report_list)
     filtered_reports = [
-        report_item for report_item in report_list
+        report_item
+        for report_item in report_list
         if report_item.message.code != report_codes.ID_NOT_FOUND
     ]
     if filtered_reports:
         raise LibraryError(*filtered_reports)
     return None
+
 
 def create_subelement_id(context_element, suffix, id_provider):
     proposed_id = sanitize_id(
@@ -290,11 +300,13 @@ def create_subelement_id(context_element, suffix, id_provider):
     )
     return id_provider.allocate_id(proposed_id)
 
+
 # DEPRECATED
 # use ElementSearcher, IdProvider or pcs.lib.validate.ValueId instead
 def check_new_id_applicable(tree, description, _id):
     validate_id(_id, description)
     validate_id_does_not_exist(tree, _id)
+
 
 def get_configuration(tree):
     """
@@ -303,12 +315,14 @@ def get_configuration(tree):
     """
     return sections.get(tree, sections.CONFIGURATION)
 
+
 def get_acls(tree):
     """
     Return 'acls' element from tree, create a new one if missing
     tree cib etree node
     """
     return sections.get(tree, sections.ACLS)
+
 
 def get_alerts(tree):
     """
@@ -317,12 +331,14 @@ def get_alerts(tree):
     """
     return sections.get(tree, sections.ALERTS)
 
+
 def get_constraints(tree):
     """
     Return 'constraint' element from tree
     tree cib etree node
     """
     return sections.get(tree, sections.CONSTRAINTS)
+
 
 def get_crm_config(tree: Element) -> Element:
     """
@@ -332,6 +348,7 @@ def get_crm_config(tree: Element) -> Element:
     """
     return sections.get(tree, sections.CRM_CONFIG)
 
+
 def get_fencing_topology(tree):
     """
     Return the 'fencing-topology' element from the tree
@@ -339,12 +356,14 @@ def get_fencing_topology(tree):
     """
     return sections.get(tree, sections.FENCING_TOPOLOGY)
 
+
 def get_nodes(tree):
     """
     Return 'nodes' element from the tree
     tree cib etree node
     """
     return sections.get(tree, sections.NODES)
+
 
 def get_resources(tree: Element) -> Element:
     """
@@ -354,12 +373,14 @@ def get_resources(tree: Element) -> Element:
     """
     return sections.get(tree, sections.RESOURCES)
 
+
 def get_status(tree):
     """
     Return the 'status' element from the tree
     tree -- cib etree node
     """
     return get_sub_element(tree, "status")
+
 
 def _get_cib_version(cib, attribute, regexp, none_if_missing=False):
     version = cib.get(attribute)
@@ -387,8 +408,9 @@ def _get_cib_version(cib, attribute, regexp, none_if_missing=False):
     return Version(
         int(match.group("major")),
         int(match.group("minor")),
-        int(match.group("rev")) if match.group("rev") else None
+        int(match.group("rev")) if match.group("rev") else None,
     )
+
 
 def get_pacemaker_version_by_which_cib_was_validated(cib):
     """
@@ -401,8 +423,9 @@ def get_pacemaker_version_by_which_cib_was_validated(cib):
     return _get_cib_version(
         cib,
         "validate-with",
-        re.compile(r"pacemaker-{0}".format(VERSION_FORMAT))
+        re.compile(r"pacemaker-{0}".format(VERSION_FORMAT)),
     )
+
 
 def get_cib_crm_feature_set(cib, none_if_missing=False):
     """
@@ -416,5 +439,5 @@ def get_cib_crm_feature_set(cib, none_if_missing=False):
         cib,
         "crm_feature_set",
         re.compile(VERSION_FORMAT),
-        none_if_missing=none_if_missing
+        none_if_missing=none_if_missing,
     )

@@ -7,6 +7,7 @@ ERRORS_HAVE_OCURRED = (
     "Error: Errors have occurred, therefore pcs is unable to continue\n"
 )
 
+
 class PlainStonith(ResourceTest):
     @need_load_xvm_fence_agent
     def test_simplest(self):
@@ -20,7 +21,7 @@ class PlainStonith(ResourceTest):
                         />
                     </operations>
                 </primitive>
-            </resources>"""
+            </resources>""",
         )
 
     def test_base_with_agent_that_provides_unfencing(self):
@@ -39,16 +40,16 @@ class PlainStonith(ResourceTest):
                         />
                     </operations>
                 </primitive>
-            </resources>"""
+            </resources>""",
         )
 
     def test_error_when_not_valid_name(self):
         self.assert_pcs_fail_regardless_of_force(
             "stonith create S fence_xvm:invalid",
             "Error: Invalid stonith agent name 'fence_xvm:invalid'. List of"
-                " agents can be obtained by using command 'pcs stonith list'."
-                " Do not use the 'stonith:' prefix. Agent name cannot contain"
-                " the ':' character.\n"
+            " agents can be obtained by using command 'pcs stonith list'."
+            " Do not use the 'stonith:' prefix. Agent name cannot contain"
+            " the ':' character.\n",
         )
 
     def test_error_when_not_valid_agent(self):
@@ -66,10 +67,7 @@ class PlainStonith(ResourceTest):
                 "Metadata query for stonith:absent failed: Input/output error, "
                 "use --force to override\n"
             )
-        self.assert_pcs_fail(
-            "stonith create S absent",
-            stdout_full=error
-        )
+        self.assert_pcs_fail("stonith create S absent", stdout_full=error)
 
     def test_warning_when_not_valid_agent(self):
         if PCMK_2_0_3_PLUS:
@@ -96,7 +94,7 @@ class PlainStonith(ResourceTest):
                     </operations>
                 </primitive>
             </resources>""",
-            output=error
+            output=error,
         )
 
     @need_load_xvm_fence_agent
@@ -116,7 +114,7 @@ class PlainStonith(ResourceTest):
                         />
                     </operations>
                 </primitive>
-            </resources>"""
+            </resources>""",
         )
 
     def test_debug_and_verbose_allowed(self):
@@ -144,7 +142,7 @@ class PlainStonith(ResourceTest):
                         />
                     </operations>
                 </primitive>
-            </resources>"""
+            </resources>""",
         )
 
     @need_load_xvm_fence_agent
@@ -152,9 +150,8 @@ class PlainStonith(ResourceTest):
         self.assert_pcs_fail(
             "stonith create S fence_xvm action=reboot",
             "Error: stonith option 'action' is deprecated and should not be"
-                " used, use 'pcmk_off_action', 'pcmk_reboot_action' instead, "
-                "use --force to override\n"
-            + ERRORS_HAVE_OCURRED
+            " used, use 'pcmk_off_action', 'pcmk_reboot_action' instead, "
+            "use --force to override\n" + ERRORS_HAVE_OCURRED,
         )
 
     @need_load_xvm_fence_agent
@@ -176,7 +173,7 @@ class PlainStonith(ResourceTest):
                 </primitive>
             </resources>""",
             "Warning: stonith option 'action' is deprecated and should not be"
-                " used, use 'pcmk_off_action', 'pcmk_reboot_action' instead\n"
+            " used, use 'pcmk_off_action', 'pcmk_reboot_action' instead\n",
         )
 
 
@@ -198,7 +195,7 @@ class WithMeta(ResourceTest):
                         />
                     </operations>
                 </primitive>
-            </resources>"""
+            </resources>""",
         )
 
     def test_base_with_agent_that_provides_unfencing_with_meta_provides(self):
@@ -217,8 +214,9 @@ class WithMeta(ResourceTest):
                         />
                     </operations>
                 </primitive>
-            </resources>"""
+            </resources>""",
         )
+
 
 class InGroup(ResourceTest):
     @need_load_xvm_fence_agent
@@ -235,7 +233,7 @@ class InGroup(ResourceTest):
                         </operations>
                     </primitive>
                 </group>
-            </resources>"""
+            </resources>""",
         )
 
     @need_load_xvm_fence_agent
@@ -260,7 +258,7 @@ class InGroup(ResourceTest):
                         </operations>
                     </primitive>
                 </group>
-            </resources>"""
+            </resources>""",
         )
 
     @need_load_xvm_fence_agent
@@ -285,15 +283,17 @@ class InGroup(ResourceTest):
                         </operations>
                     </primitive>
                 </group>
-            </resources>"""
+            </resources>""",
         )
 
     @need_load_xvm_fence_agent
     def test_command_simply_puts_stonith_into_group_after_another(self):
-        self.assert_pcs_success_all([
-            "stonith create S1 fence_xvm --group G",
-            "stonith create S2 fence_xvm --group G",
-        ])
+        self.assert_pcs_success_all(
+            [
+                "stonith create S1 fence_xvm --group G",
+                "stonith create S2 fence_xvm --group G",
+            ]
+        )
         self.assert_effect(
             "stonith create S3 fence_xvm --group G --after S1",
             """<resources>
@@ -320,44 +320,44 @@ class InGroup(ResourceTest):
                         </operations>
                     </primitive>
                 </group>
-            </resources>"""
+            </resources>""",
         )
 
     @need_load_xvm_fence_agent
     def test_fail_when_inteded_before_item_does_not_exist(self):
         self.assert_pcs_fail(
             "stonith create S2 fence_xvm --group G --before S1",
-            "Error: there is no resource 'S1' in the group 'G'\n"
+            "Error: there is no resource 'S1' in the group 'G'\n",
         )
 
     @need_load_xvm_fence_agent
     def test_fail_when_inteded_after_item_does_not_exist(self):
         self.assert_pcs_fail(
             "stonith create S2 fence_xvm --group G --after S1",
-            "Error: there is no resource 'S1' in the group 'G'\n"
+            "Error: there is no resource 'S1' in the group 'G'\n",
         )
 
     def test_fail_when_entered_both_after_and_before(self):
         self.assert_pcs_fail(
             "stonith create S fence_xvm --group G --after S1 --before S2",
-            "Error: you cannot specify both --before and --after\n"
+            "Error: you cannot specify both --before and --after\n",
         )
 
     def test_fail_when_after_is_used_without_group(self):
         self.assert_pcs_fail(
             "stonith create S fence_xvm --after S1",
-            "Error: you cannot use --after without --group\n"
+            "Error: you cannot use --after without --group\n",
         )
 
     def test_fail_when_before_is_used_without_group(self):
         self.assert_pcs_fail(
             "stonith create S fence_xvm --before S1",
-            "Error: you cannot use --before without --group\n"
+            "Error: you cannot use --before without --group\n",
         )
 
     def test_fail_when_before_after_conflicts_and_moreover_without_group(self):
         self.assert_pcs_fail(
             "stonith create S fence_xvm --after S1 --before S2",
             "Error: you cannot specify both --before and --after"
-                " and you have to specify --group\n"
+            " and you have to specify --group\n",
         )

@@ -1,6 +1,7 @@
 from pcs_test.tier0.cib_resource.common import ResourceTest
 from pcs_test.tier0.cib_resource.stonith_common import need_load_xvm_fence_agent
 
+
 @need_load_xvm_fence_agent
 class Enable(ResourceTest):
     def test_enable_disabled_stonith(self):
@@ -19,7 +20,7 @@ class Enable(ResourceTest):
                         />
                     </operations>
                 </primitive>
-            </resources>"""
+            </resources>""",
         )
         self.assert_effect(
             "stonith enable S",
@@ -32,7 +33,7 @@ class Enable(ResourceTest):
                         />
                     </operations>
                 </primitive>
-            </resources>"""
+            </resources>""",
         )
 
     def test_keep_enabled_stonith(self):
@@ -49,6 +50,7 @@ class Enable(ResourceTest):
         self.assert_effect("stonith create S fence_xvm", result_xml)
         self.assert_effect("stonith enable S", result_xml)
 
+
 @need_load_xvm_fence_agent
 class Disable(ResourceTest):
     def test_disable_enabled_stonith(self):
@@ -62,7 +64,7 @@ class Disable(ResourceTest):
                         />
                     </operations>
                 </primitive>
-            </resources>"""
+            </resources>""",
         )
         self.assert_effect(
             "stonith disable S",
@@ -79,7 +81,7 @@ class Disable(ResourceTest):
                         />
                     </operations>
                 </primitive>
-            </resources>"""
+            </resources>""",
         )
 
     def test_keep_disabled_stonith(self):

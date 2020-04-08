@@ -13,11 +13,11 @@ from pcs.common import types
 
 
 PrimitiveType = Union[str, int, float, bool, None]
-DtoPayload = Dict[str, "SerializableType"] # type: ignore
-SerializableType = Union[ # type: ignore
+DtoPayload = Dict[str, "SerializableType"]  # type: ignore
+SerializableType = Union[  # type: ignore
     PrimitiveType,
-    DtoPayload, # type: ignore
-    Iterable["SerializableType"], # type: ignore
+    DtoPayload,  # type: ignore
+    Iterable["SerializableType"],  # type: ignore
 ]
 
 T = TypeVar("T")
@@ -42,12 +42,7 @@ def from_dict(cls: Type[DtoType], data: DtoPayload) -> DtoType:
         data=data,
         # NOTE: all enum types has to be listed here in key cast
         # see: https://github.com/konradhalas/dacite#casting
-        config=dacite.Config(
-            cast=[
-                types.DrRole,
-                types.ResourceRelationType,
-            ],
-        ),
+        config=dacite.Config(cast=[types.DrRole, types.ResourceRelationType,],),
     )
 
 

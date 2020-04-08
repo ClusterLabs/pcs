@@ -16,7 +16,7 @@ from pcs.common.node_communicator import Request, RequestData, RequestTarget
 from pcs import utils
 
 logger_handler = logging.StreamHandler()
-logger_handler.setFormatter(logging.Formatter('%(levelname)s: %(message)s'))
+logger_handler.setFormatter(logging.Formatter("%(levelname)s: %(message)s"))
 logger = logging.getLogger("pcs")
 logger.setLevel(logging.DEBUG)
 logger.addHandler(logger_handler)
@@ -26,13 +26,15 @@ global_target = RequestTarget(
     dest_list=[
         Destination("httpbin.org2", 433),
         Destination("httpbin.org", 443),
-    ]
+    ],
 )
 
 pprint.pprint(global_target)
 
+
 def get_request(timeout):
     return Request(global_target, RequestData("delay/{0}".format(timeout)))
+
 
 lib_env = utils.get_lib_env()
 # utils.pcs_options["--debug"] = True

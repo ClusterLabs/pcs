@@ -4,6 +4,7 @@ from pcs.cli.constraint_ticket import parse_args
 from pcs.cli.reports.output import error
 from pcs.common.reports import constraints
 
+
 def create_with_set(lib, argv, modifiers):
     """
     create ticket constraint with resource set
@@ -19,10 +20,9 @@ def create_with_set(lib, argv, modifiers):
     """
     modifiers.ensure_only_supported("--force", "-f")
     command.create_with_set(
-        lib.constraint_ticket.set,
-        argv,
-        modifiers,
+        lib.constraint_ticket.set, argv, modifiers,
     )
+
 
 def add(lib, argv, modifiers):
     """
@@ -42,7 +42,7 @@ def add(lib, argv, modifiers):
     if "rsc-role" in options:
         raise CmdLineInputError(
             "Resource role must not be specified among options"
-            +", specify it before resource id"
+            + ", specify it before resource id"
         )
 
     if resource_role:
@@ -56,6 +56,7 @@ def add(lib, argv, modifiers):
         duplication_alowed=modifiers.get("--force"),
     )
 
+
 def remove(lib, argv, modifiers):
     """
     Options:
@@ -67,6 +68,7 @@ def remove(lib, argv, modifiers):
     ticket, resource_id = argv
     if not lib.constraint_ticket.remove(ticket, resource_id):
         raise error("no matching ticket constraint found")
+
 
 def show(lib, argv, modifiers):
     """
@@ -82,9 +84,13 @@ def show(lib, argv, modifiers):
     modifiers.ensure_only_supported("-f", "--full")
     if argv:
         raise CmdLineInputError()
-    print("\n".join(command.show(
-        "Ticket Constraints:",
-        lib.constraint_ticket.show,
-        constraints.ticket_plain,
-        modifiers,
-    )))
+    print(
+        "\n".join(
+            command.show(
+                "Ticket Constraints:",
+                lib.constraint_ticket.show,
+                constraints.ticket_plain,
+                modifiers,
+            )
+        )
+    )

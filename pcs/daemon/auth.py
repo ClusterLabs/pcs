@@ -16,27 +16,33 @@ from pcs.daemon import log
 class pam_message(Structure):
     _fields_ = [("msg_style", c_int), ("msg", POINTER(c_char))]
 
+
 class pam_response(Structure):
     _fields_ = [("resp", POINTER(c_char)), ("resp_retcode", c_int)]
+
 
 class pam_handle(Structure):
     _fields_ = [("handle", c_void_p)]
 
+
 pam_conversation = CFUNCTYPE(
-    c_int, #return value type
-    c_int, #num_msg
-    POINTER(POINTER(pam_message)), #msg
-    POINTER(POINTER(pam_response)), #resp
-    c_void_p, #appdata_ptr
+    c_int,  # return value type
+    c_int,  # num_msg
+    POINTER(POINTER(pam_message)),  # msg
+    POINTER(POINTER(pam_response)),  # resp
+    c_void_p,  # appdata_ptr
 )
+
 
 class pam_conv(Structure):
     _fields_ = [("conv", pam_conversation), ("appdata_ptr", c_void_p)]
+
 
 def prep_fn(fn, restype, argtypes):
     fn.restype = restype
     fn.argtypes = argtypes
     return fn
+
 
 # c_char_p represents the C char * datatype when it points to a zero-terminated
 # string. For a general character pointer that may also point to binary data,
@@ -50,21 +56,23 @@ pam_end = prep_fn(libpam.pam_end, c_int, [pam_handle, c_int])
 pam_start = prep_fn(
     libpam.pam_start,
     c_int,
-    [c_char_p, c_char_p, POINTER(pam_conv), POINTER(pam_handle)]
+    [c_char_p, c_char_p, POINTER(pam_conv), POINTER(pam_handle)],
 )
 
 PAM_SUCCESS = 0
 PAM_PROMPT_ECHO_OFF = 1
 PCSD_SERVICE = "pcsd"
-HA_ADM_GROUP = "haclient"# TODO use pacemaker_gname (??? + explanation why)
+HA_ADM_GROUP = "haclient"  # TODO use pacemaker_gname (??? + explanation why)
+
 
 def authenticate_by_pam(username, password):
     @pam_conversation
-    def conv(num_msg, msg, resp, appdata_ptr): # pylint: disable=unused-argument
+    def conv(
+        num_msg, msg, resp, appdata_ptr
+    ):  # pylint: disable=unused-argument
         # it is: *resp = (pam_response *) calloc(num_msg, sizeof(pam_response))
         resp[0] = cast(
-            calloc(num_msg, sizeof(pam_response)),
-            POINTER(pam_response)
+            calloc(num_msg, sizeof(pam_response)), POINTER(pam_response)
         )
         for i in range(num_msg):
             if msg[i].contents.msg_style == PAM_PROMPT_ECHO_OFF:
@@ -78,38 +86,37 @@ def authenticate_by_pam(username, password):
         PCSD_SERVICE.encode("utf8"),
         username.encode("utf8"),
         byref(conversation),
-        byref(pamh)
+        byref(pamh),
     )
     if returncode == PAM_SUCCESS:
         returncode = pam_authenticate(pamh, 0)
     pam_end(pamh, returncode)
     return returncode == PAM_SUCCESS
 
+
 def get_user_groups_sync(username):
-    return tuple([
-        group.gr_name
-        for group in grp.getgrall()
-        if username in group.gr_mem
-    ] + [
-        # `group.gr_mem` does not contain the `username` when `group` is
-        # primary for the `username` (the same is in /etc/group). So it is
-        # necessary to add the primary group.
-        grp.getgrgid(pwd.getpwnam(username).pw_gid).gr_name
-    ])
+    return tuple(
+        [group.gr_name for group in grp.getgrall() if username in group.gr_mem]
+        + [
+            # `group.gr_mem` does not contain the `username` when `group` is
+            # primary for the `username` (the same is in /etc/group). So it is
+            # necessary to add the primary group.
+            grp.getgrgid(pwd.getpwnam(username).pw_gid).gr_name
+        ]
+    )
+
 
 UserAuthInfo = namedtuple("UserAuthInfo", "name groups is_authorized")
+
 
 class LoginLogger:
     @staticmethod
     def unable_determine_groups(username, e):
         log.pcsd.info(
-            "Unable to determine groups of user '%s': %s",
-            username,
-            e
+            "Unable to determine groups of user '%s': %s", username, e
         )
         log.pcsd.info(
-            "Failed login by '%s' (unable to determine user's groups)",
-            username
+            "Failed login by '%s' (unable to determine user's groups)", username
         )
 
     @staticmethod
@@ -117,32 +124,30 @@ class LoginLogger:
         log.pcsd.info(
             "Failed login by '%s' (user is not a member of '%s' group)",
             username,
-            ha_adm_group
+            ha_adm_group,
         )
 
     @staticmethod
     def success(username):
         log.pcsd.info("Successful login by '%s'", username)
 
+
 class PlainLogger:
     @staticmethod
     def unable_determine_groups(username, e):
         log.pcsd.info(
-            "Unable to determine groups of user '%s': %s",
-            username,
-            e
+            "Unable to determine groups of user '%s': %s", username, e
         )
 
     @staticmethod
     def not_ha_adm_member(username, ha_adm_group):
         log.pcsd.info(
-            "User '%s' is not a member of '%s' group",
-            username,
-            ha_adm_group
+            "User '%s' is not a member of '%s' group", username, ha_adm_group
         )
 
     def success(self, username):
         pass
+
 
 def check_user_groups_sync(username, logger) -> UserAuthInfo:
     try:
@@ -158,6 +163,7 @@ def check_user_groups_sync(username, logger) -> UserAuthInfo:
     logger.success(username)
     return UserAuthInfo(username, groups, is_authorized=True)
 
+
 def authorize_user_sync(username, password) -> UserAuthInfo:
     log.pcsd.info("Attempting login by '%s'", username)
 
@@ -168,6 +174,7 @@ def authorize_user_sync(username, password) -> UserAuthInfo:
         return UserAuthInfo(username, [], is_authorized=False)
 
     return check_user_groups_sync(username, LoginLogger())
+
 
 # TODO async/await version - how to do it?
 # When async/await is used then the problem is:
@@ -181,10 +188,12 @@ def run_in_process(sync_fn, *args):
     pool.shutdown()
     return result
 
+
 @coroutine
 def authorize_user(username, password) -> UserAuthInfo:
     user = yield run_in_process(authorize_user_sync, username, password)
     return user
+
 
 @coroutine
 def check_user_groups(username) -> UserAuthInfo:

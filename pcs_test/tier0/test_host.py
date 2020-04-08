@@ -5,6 +5,7 @@ from pcs_test.tools.misc import dict_to_modifiers
 from pcs import host
 from pcs.cli.common.errors import CmdLineInputError
 
+
 class HostAuth(TestCase):
     host_names = {
         "node-01": {
@@ -32,10 +33,9 @@ class HostAuth(TestCase):
         arg_list = []
         for name, addr, port in name_addr_port_tuple_list:
             port = ":{}".format(port) if port is not None else ""
-            arg_list.extend([
-                name,
-                "addr={}{}".format(addr, port),
-            ])
+            arg_list.extend(
+                [name, "addr={}{}".format(addr, port),]
+            )
         return arg_list
 
     def _assert_invalid_port(self, name_addr_port_tuple_list):
@@ -45,10 +45,10 @@ class HostAuth(TestCase):
             host.auth_cmd(self.lib, arg_list, dict_to_modifiers({}))
         _, addr, port = name_addr_port_tuple_list[-1]
         self.assertEqual(
-            "Invalid port number in address '{addr}:{port}', use 1..65535"
-                .format(addr=addr, port=port)
-            ,
-            cm.exception.message
+            (
+                "Invalid port number in address '{addr}:{port}', use 1..65535"
+            ).format(addr=addr, port=port),
+            cm.exception.message,
         )
         mock_auth_hosts.assert_not_called()
         self.patch_auth_hosts.stop()
@@ -59,23 +59,29 @@ class HostAuth(TestCase):
         mock_auth_hosts = self.patch_auth_hosts.start()
         host.auth_cmd(self.lib, arg_list, dict_to_modifiers({}))
         mock_get_user_and_pass.assert_called_once_with()
-        mock_auth_hosts.assert_called_once_with({
-            name: {
-                "dest_list": [dict(
-                    addr=addr if addr.count(":") <= 1 else addr.strip("[]"),
-                    port=port,
-                )],
-                "username": "hacluster",
-                "password": "password",
+        mock_auth_hosts.assert_called_once_with(
+            {
+                name: {
+                    "dest_list": [
+                        dict(
+                            addr=addr
+                            if addr.count(":") <= 1
+                            else addr.strip("[]"),
+                            port=port,
+                        )
+                    ],
+                    "username": "hacluster",
+                    "password": "password",
+                }
+                for name, addr, port in name_addr_port_tuple_list
             }
-            for name, addr, port in name_addr_port_tuple_list
-        })
+        )
         self.patch_get_user_and_pass.stop()
         self.patch_auth_hosts.stop()
 
     def run_port_subtests(self, assert_function, port_list):
         for addr_type in ["hostname", "ipv4", "ipv6"]:
-            name_list = sorted(self.host_names.keys())[0:len(port_list)]
+            name_list = sorted(self.host_names.keys())[0 : len(port_list)]
             addr_list = [self.host_names[name][addr_type] for name in name_list]
 
             with self.subTest(addr_type=addr_type):
@@ -99,8 +105,7 @@ class HostAuth(TestCase):
 
     def test_invalid_port_notanumber_multinode(self):
         self.run_port_subtests(
-            self._assert_invalid_port,
-            [1, "notanumber"],
+            self._assert_invalid_port, [1, "notanumber"],
         )
 
     def test_invalid_port_lower_bound_multinode(self):

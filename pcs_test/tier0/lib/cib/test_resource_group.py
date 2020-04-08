@@ -24,8 +24,8 @@ class ProvideGroup(TestCase):
         self.cib = etree.fromstring(
             '<cib><resources><group id="g"/></resources></cib>'
         )
-        self.group_element = self.cib.find('.//group')
-        self.resources_section = self.cib.find('.//resources')
+        self.group_element = self.cib.find(".//group")
+        self.resources_section = self.cib.find(".//resources")
 
     def test_search_in_whole_tree(self, find_element_by_tag_and_id):
         def find_group(*args, **kwargs):
@@ -35,24 +35,26 @@ class ProvideGroup(TestCase):
         find_element_by_tag_and_id.side_effect = find_group
 
         self.assertEqual(
-            self.group_element,
-            group.provide_group(self.resources_section, "g")
+            self.group_element, group.provide_group(self.resources_section, "g")
         )
 
     def test_create_group_when_not_exists(self, find_element_by_tag_and_id):
         find_element_by_tag_and_id.return_value = None
         group_element = group.provide_group(self.resources_section, "g2")
-        self.assertEqual('group', group_element.tag)
-        self.assertEqual('g2', group_element.attrib["id"])
+        self.assertEqual("group", group_element.tag)
+        self.assertEqual("g2", group_element.attrib["id"])
+
 
 class PlaceResource(TestCase):
     def setUp(self):
-        self.group_element = etree.fromstring("""
+        self.group_element = etree.fromstring(
+            """
             <group id="g">
                 <primitive id="a"/>
                 <primitive id="b"/>
             </group>
-        """)
+        """
+        )
         self.primitive_element = etree.Element("primitive", {"id": "c"})
 
     def assert_final_order(
@@ -62,7 +64,7 @@ class PlaceResource(TestCase):
             self.group_element,
             self.primitive_element,
             adjacent_resource_id,
-            put_after_adjacent
+            put_after_adjacent,
         )
         assert_xml_equal(
             etree.tostring(self.group_element).decode(),
@@ -72,7 +74,9 @@ class PlaceResource(TestCase):
                     <primitive id="{1}"/>
                     <primitive id="{2}"/>
                 </group>
-            """.format(*id_list)
+            """.format(
+                *id_list
+            ),
         )
 
     def test_append_at_the_end_when_adjacent_is_not_specified(self):
@@ -97,9 +101,7 @@ class PlaceResource(TestCase):
             (
                 severities.ERROR,
                 report_codes.CANNOT_GROUP_RESOURCE_NEXT_TO_ITSELF,
-                {
-                    "resource_id": "c",
-                },
+                {"resource_id": "c",},
             ),
         )
 
@@ -119,7 +121,7 @@ class PlaceResource(TestCase):
                     "context_type": "group",
                     "context_id": "g",
                 },
-                None
+                None,
             ),
         )
 
@@ -131,7 +133,7 @@ class GetInnerResource(TestCase):
             [
                 element.attrib.get("id", "")
                 for element in group.get_inner_resources(etree.fromstring(xml))
-            ]
+            ],
         )
 
     def test_one(self):
@@ -143,7 +145,7 @@ class GetInnerResource(TestCase):
                     <primitive id="A" />
                     <meta_attributes />
                 </group>
-            """
+            """,
         )
 
     def test_more(self):
@@ -157,5 +159,5 @@ class GetInnerResource(TestCase):
                     <primitive id="B" />
                     <meta_attributes />
                 </group>
-            """
+            """,
         )

@@ -1,8 +1,6 @@
 from pcs import settings
 from pcs.common import reports
-from pcs.common.reports import (
-    codes as report_codes,
-)
+from pcs.common.reports import codes as report_codes
 from pcs.common.reports.item import ReportItem
 from pcs.lib.communication.sbd import (
     CheckSbd,
@@ -29,23 +27,29 @@ from pcs.lib.node import get_existing_nodes_names
 
 
 UNSUPPORTED_SBD_OPTION_LIST = [
-    "SBD_WATCHDOG_DEV", "SBD_OPTS", "SBD_PACEMAKER", "SBD_DEVICE"
+    "SBD_WATCHDOG_DEV",
+    "SBD_OPTS",
+    "SBD_PACEMAKER",
+    "SBD_DEVICE",
 ]
 ALLOWED_SBD_OPTION_LIST = [
-    "SBD_DELAY_START", "SBD_STARTMODE", "SBD_WATCHDOG_TIMEOUT",
+    "SBD_DELAY_START",
+    "SBD_STARTMODE",
+    "SBD_WATCHDOG_TIMEOUT",
     "SBD_TIMEOUT_ACTION",
 ]
 _TIMEOUT_ACTION_ALLOWED_VALUES = (
-    {"flush", "noflush"}, {"reboot", "off", "crashdump"}
+    {"flush", "noflush"},
+    {"reboot", "off", "crashdump"},
 )
 _tuple = lambda set1, set2: {f"{v1},{v2}" for v1 in set1 for v2 in set2}
 TIMEOUT_ACTION_ALLOWED_VALUE_LIST = sorted(
-    _TIMEOUT_ACTION_ALLOWED_VALUES[0] |
-    _TIMEOUT_ACTION_ALLOWED_VALUES[1] |
-    _tuple(
+    _TIMEOUT_ACTION_ALLOWED_VALUES[0]
+    | _TIMEOUT_ACTION_ALLOWED_VALUES[1]
+    | _tuple(
         _TIMEOUT_ACTION_ALLOWED_VALUES[0], _TIMEOUT_ACTION_ALLOWED_VALUES[1]
-    ) |
-    _tuple(
+    )
+    | _tuple(
         _TIMEOUT_ACTION_ALLOWED_VALUES[1], _TIMEOUT_ACTION_ALLOWED_VALUES[0]
     )
 )
@@ -67,7 +71,7 @@ def _validate_sbd_options(
             banned_name_list=UNSUPPORTED_SBD_OPTION_LIST,
             **validate.set_warning(
                 report_codes.FORCE_OPTIONS, allow_unknown_opts
-            )
+            ),
         ),
         validate.ValueNonnegativeInteger("SBD_WATCHDOG_TIMEOUT"),
         validate.ValueIn(
@@ -75,7 +79,7 @@ def _validate_sbd_options(
             TIMEOUT_ACTION_ALLOWED_VALUE_LIST,
             **validate.set_warning(
                 report_codes.FORCE_OPTIONS, allow_invalid_option_values
-            )
+            ),
         ),
     ]
     return validate.ValidatorAll(validators).validate(sbd_config)
@@ -112,9 +116,15 @@ def _get_full_target_dict(target_list, node_value_dict, default_value):
 
 
 def enable_sbd(
-    lib_env, default_watchdog, watchdog_dict, sbd_options,
-    default_device_list=None, node_device_dict=None, allow_unknown_opts=False,
-    ignore_offline_nodes=False, no_watchdog_validation=False,
+    lib_env,
+    default_watchdog,
+    watchdog_dict,
+    sbd_options,
+    default_device_list=None,
+    node_device_dict=None,
+    allow_unknown_opts=False,
+    ignore_offline_nodes=False,
+    no_watchdog_validation=False,
     allow_invalid_option_values=False,
 ):
     # pylint: disable=too-many-arguments, too-many-locals
@@ -168,21 +178,20 @@ def enable_sbd(
 
     if lib_env.report_processor.report_list(
         get_nodes_report_list
-        +
-        [
+        + [
             ReportItem.error(reports.messages.NodeNotFound(node))
             for node in (
                 set(list(watchdog_dict.keys()) + list(node_device_dict.keys()))
-                -
-                set(node_list)
+                - set(node_list)
             )
         ]
-        +
-        _validate_watchdog_dict(full_watchdog_dict)
-        +
-        (sbd.validate_nodes_devices(full_device_dict) if using_devices else [])
-        +
-        _validate_sbd_options(
+        + _validate_watchdog_dict(full_watchdog_dict)
+        + (
+            sbd.validate_nodes_devices(full_device_dict)
+            if using_devices
+            else []
+        )
+        + _validate_sbd_options(
             sbd_options, allow_unknown_opts, allow_invalid_option_values
         )
     ).has_errors:
@@ -197,9 +206,7 @@ def enable_sbd(
     # check if SBD can be enabled
     if no_watchdog_validation:
         lib_env.report_processor.report(
-            ReportItem.warning(
-                reports.messages.SbdWatchdogValidationInactive()
-            )
+            ReportItem.warning(reports.messages.SbdWatchdogValidationInactive())
         )
     com_cmd = CheckSbd(lib_env.report_processor)
     for target in online_targets:
@@ -209,7 +216,8 @@ def enable_sbd(
                 # Do not send watchdog if validation is turned off. Listing of
                 # available watchdogs in pcsd may restart the machine in some
                 # corner cases.
-                "" if no_watchdog_validation
+                ""
+                if no_watchdog_validation
                 else full_watchdog_dict[target.label]
             ),
             full_device_dict[target.label] if using_devices else [],
@@ -238,8 +246,8 @@ def enable_sbd(
                 config,
                 target.label,
                 full_watchdog_dict[target.label],
-                full_device_dict[target.label]
-            )
+                full_device_dict[target.label],
+            ),
         )
     run_and_raise(lib_env.get_node_communicator(), com_cmd)
 
@@ -282,8 +290,7 @@ def disable_sbd(lib_env, ignore_offline_nodes=False):
     )
     com_cmd.set_targets(
         lib_env.get_node_target_factory().get_target_list(
-            node_list,
-            skip_non_existing=ignore_offline_nodes,
+            node_list, skip_non_existing=ignore_offline_nodes,
         )
     )
     online_nodes = run_and_raise(lib_env.get_node_communicator(), com_cmd)
@@ -330,8 +337,7 @@ def get_cluster_sbd_status(lib_env):
     com_cmd = GetSbdStatus(lib_env.report_processor)
     com_cmd.set_targets(
         lib_env.get_node_target_factory().get_target_list(
-            node_list,
-            skip_non_existing=True
+            node_list, skip_non_existing=True
         )
     )
     return run_com(lib_env.get_node_communicator(), com_cmd)
@@ -366,8 +372,7 @@ def get_cluster_sbd_config(lib_env):
     com_cmd = GetSbdConfig(lib_env.report_processor)
     com_cmd.set_targets(
         lib_env.get_node_target_factory().get_target_list(
-            node_list,
-            skip_non_existing=True
+            node_list, skip_non_existing=True
         )
     )
     return run_com(lib_env.get_node_communicator(), com_cmd)
@@ -401,14 +406,13 @@ def initialize_block_devices(lib_env, device_list, option_dict):
 
     supported_options = sbd.DEVICE_INITIALIZATION_OPTIONS_MAPPING.keys()
 
-    report_item_list += (
-        validate.NamesIn(supported_options).validate(option_dict)
+    report_item_list += validate.NamesIn(supported_options).validate(
+        option_dict
     )
 
-    report_item_list += validate.ValidatorAll([
-            validate.ValueNonnegativeInteger(key)
-            for key in supported_options
-        ]).validate(option_dict)
+    report_item_list += validate.ValidatorAll(
+        [validate.ValueNonnegativeInteger(key) for key in supported_options]
+    ).validate(option_dict)
 
     if lib_env.report_processor.report_list(report_item_list).has_errors:
         raise LibraryError()
@@ -515,8 +519,6 @@ def test_local_watchdog(lib_env, watchdog=None):
     watchdog string -- watchdog to trigger
     """
     lib_env.report_processor.report(
-        ReportItem.info(
-            reports.messages.SystemWillReset()
-        )
+        ReportItem.info(reports.messages.SystemWillReset())
     )
     sbd.test_watchdog(lib_env.cmd_runner(), watchdog)

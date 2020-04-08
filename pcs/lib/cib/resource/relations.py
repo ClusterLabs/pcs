@@ -81,13 +81,10 @@ class ResourceRelationNode:
         parents = set(self._get_all_parents())
         if (
             self != member
-            and
-            member.obj.id not in parents
-            and
-            (
+            and member.obj.id not in parents
+            and (
                 member._opposite_id not in parents
-                or
-                len(member.obj.members) > 1
+                or len(member.obj.members) > 1
             )
         ):
             member._parent = self
@@ -133,9 +130,7 @@ class ResourceRelationTreeBuilder:
                 continue
             self._processed_nodes.add(node.obj.id)
             for node_id in node.obj.members:
-                node.add_member(
-                    ResourceRelationNode(self._all[node_id])
-                )
+                node.add_member(ResourceRelationNode(self._all[node_id]))
             self._nodes_to_process.extend(node.members)
         return root
 
@@ -182,7 +177,7 @@ class ResourceRelationsFetcher:
 
     @staticmethod
     def _get_all_members(
-        relation_list: Iterable[RelationEntityDto]
+        relation_list: Iterable[RelationEntityDto],
     ) -> AbstractSet[str]:
         result: Set[str] = set()
         for relation in relation_list:
@@ -212,16 +207,16 @@ class ResourceRelationsFetcher:
             relations.append(_get_outer_resource_relation(parent_el))
         return relations
 
-    def _get_ordering_coinstraints(
-        self, resource_id: str
-    ) -> Iterable[Element]:
-        return self._constraints_section.xpath(f"""
+    def _get_ordering_coinstraints(self, resource_id: str) -> Iterable[Element]:
+        return self._constraints_section.xpath(
+            f"""
             .//rsc_order[
                 not (descendant::resource_set)
                 and
                 (@first='{resource_id}' or @then='{resource_id}')
             ]
-        """)
+        """
+        )
 
     def _get_ordering_set_constraints(
         self, resource_id: str
@@ -233,7 +228,7 @@ class ResourceRelationsFetcher:
 
 # relation obj to RelationEntityDto obj
 def _get_inner_resources_relation(
-    parent_resource_el: Element
+    parent_resource_el: Element,
 ) -> RelationEntityDto:
     attrs = parent_resource_el.attrib
     return RelationEntityDto(
@@ -248,7 +243,7 @@ def _get_inner_resources_relation(
 
 
 def _get_outer_resource_relation(
-    parent_resource_el: Element
+    parent_resource_el: Element,
 ) -> RelationEntityDto:
     attrs = parent_resource_el.attrib
     return RelationEntityDto(
@@ -260,7 +255,7 @@ def _get_outer_resource_relation(
 
 
 def _get_ordering_constraint_relation(
-    ord_const_el: Element
+    ord_const_el: Element,
 ) -> RelationEntityDto:
     attrs = ord_const_el.attrib
     return RelationEntityDto(
@@ -272,7 +267,7 @@ def _get_ordering_constraint_relation(
 
 
 def _get_ordering_set_constraint_relation(
-    ord_set_const_el: Element
+    ord_set_const_el: Element,
 ) -> RelationEntityDto:
     attrs = ord_set_const_el.attrib
     members: Set[str] = set()

@@ -25,6 +25,7 @@ from pcs.lib.cib.tools import find_unique_id
 from pcs.lib.errors import LibraryError
 from pcs.lib.pacemaker.values import sanitize_id, validate_id
 
+
 def add_level(
     reporter: ReportProcessor,
     topology_el,
@@ -35,7 +36,7 @@ def add_level(
     devices,
     cluster_status_nodes,
     force_device=False,
-    force_node=False
+    force_node=False,
 ):
     # pylint: disable=too-many-arguments
     """
@@ -55,12 +56,10 @@ def add_level(
     report_list, valid_level = _validate_level(level)
     reporter.report_list(
         report_list
-        +
-        _validate_target(
+        + _validate_target(
             cluster_status_nodes, target_type, target_value, force_node
         )
-        +
-        _validate_devices(resources_el, devices, force_device)
+        + _validate_devices(resources_el, devices, force_device)
     )
     if reporter.has_errors:
         raise LibraryError()
@@ -74,6 +73,7 @@ def add_level(
     _append_level_element(
         topology_el, valid_level, target_type, target_value, devices
     )
+
 
 def remove_all_levels(topology_el):
     """
@@ -89,6 +89,7 @@ def remove_all_levels(topology_el):
     # https://bugzilla.redhat.com/show_bug.cgi?id=1642514
     for level_el in topology_el.findall("fencing-level"):
         level_el.getparent().remove(level_el)
+
 
 def remove_levels_by_params(
     topology_el,
@@ -141,6 +142,7 @@ def remove_levels_by_params(
         el.getparent().remove(el)
     return report_list
 
+
 def remove_device_from_all_levels(topology_el, device_id):
     """
     Remove specified stonith device from all fencing levels.
@@ -166,6 +168,7 @@ def remove_device_from_all_levels(topology_el, device_id):
         else:
             level_el.getparent().remove(level_el)
 
+
 def export(topology_el):
     """
     Export all fencing levels.
@@ -188,16 +191,19 @@ def export(topology_el):
             target_type = TARGET_TYPE_ATTRIBUTE
             target_value = (
                 level_el.get("target-attribute"),
-                level_el.get("target-value")
+                level_el.get("target-value"),
             )
         if target_type and target_value:
-            export_levels.append({
-                "target_type": target_type,
-                "target_value": target_value,
-                "level": level_el.get("index"),
-                "devices": level_el.get("devices").split(",")
-            })
+            export_levels.append(
+                {
+                    "target_type": target_type,
+                    "target_value": target_value,
+                    "level": level_el.get("index"),
+                    "devices": level_el.get("devices").split(","),
+                }
+            )
     return export_levels
+
 
 def verify(topology_el, resources_el, cluster_status_nodes) -> ReportItemList:
     """
@@ -217,20 +223,20 @@ def verify(topology_el, resources_el, cluster_status_nodes) -> ReportItemList:
             used_nodes.add(level_el.get("target"))
 
     if used_devices:
-        report_list.extend(_validate_devices(
-            resources_el,
-            sorted(used_devices),
-            allow_force=False
-        ))
+        report_list.extend(
+            _validate_devices(
+                resources_el, sorted(used_devices), allow_force=False
+            )
+        )
 
     for node in sorted(used_nodes):
-        report_list.extend(_validate_target_valuewise(
-            cluster_status_nodes,
-            TARGET_TYPE_NODE,
-            node,
-            allow_force=False
-        ))
+        report_list.extend(
+            _validate_target_valuewise(
+                cluster_status_nodes, TARGET_TYPE_NODE, node, allow_force=False
+            )
+        )
     return report_list
+
 
 def _validate_level(level) -> Tuple[ReportItemList, Optional[int]]:
     report_list: ReportItemList = []
@@ -249,35 +255,39 @@ def _validate_level(level) -> Tuple[ReportItemList, Optional[int]]:
     )
     return report_list, None
 
+
 def _validate_target(
     cluster_status_nodes, target_type, target_value, force_node=False
 ) -> ReportItemList:
-    return (
-        _validate_target_typewise(target_type)
-        +
-        _validate_target_valuewise(
-            cluster_status_nodes, target_type, target_value, force_node
-        )
+    return _validate_target_typewise(target_type) + _validate_target_valuewise(
+        cluster_status_nodes, target_type, target_value, force_node
     )
+
 
 def _validate_target_typewise(target_type) -> ReportItemList:
     report_list: ReportItemList = []
     if target_type not in [
-        TARGET_TYPE_NODE, TARGET_TYPE_ATTRIBUTE, TARGET_TYPE_REGEXP
+        TARGET_TYPE_NODE,
+        TARGET_TYPE_ATTRIBUTE,
+        TARGET_TYPE_REGEXP,
     ]:
         report_list.append(
             ReportItem.error(
                 reports.messages.InvalidOptionType(
                     "target",
-                    ["node", "regular expression", "attribute_name=value"]
+                    ["node", "regular expression", "attribute_name=value"],
                 )
             )
         )
     return report_list
 
+
 def _validate_target_valuewise(
-    cluster_status_nodes, target_type, target_value, force_node=False,
-    allow_force=True
+    cluster_status_nodes,
+    target_type,
+    target_value,
+    force_node=False,
+    allow_force=True,
 ) -> ReportItemList:
     report_list: ReportItemList = []
     if target_type == TARGET_TYPE_NODE:
@@ -299,18 +309,16 @@ def _validate_target_valuewise(
                             None
                             if force_node or not allow_force
                             else report_codes.FORCE_NODE_DOES_NOT_EXIST
-                        )
+                        ),
                     ),
                     message=reports.messages.NodeNotFound(target_value),
                 )
             )
     return report_list
 
+
 def _validate_devices(
-    resources_el,
-    devices,
-    force_device=False,
-    allow_force=True
+    resources_el, devices, force_device=False, allow_force=True
 ) -> ReportItemList:
     report_list: ReportItemList = []
     if not devices:
@@ -323,9 +331,7 @@ def _validate_devices(
     for dev in devices:
         validate_id_report_list: ReportItemList = []
         validate_id(
-            dev,
-            description="device id",
-            reporter=validate_id_report_list
+            dev, description="device id", reporter=validate_id_report_list
         )
         report_list.extend(validate_id_report_list)
         if has_errors(validate_id_report_list):
@@ -343,7 +349,8 @@ def _validate_devices(
                         else ReportItemSeverity.ERROR
                     ),
                     force_code=(
-                        None if force_device or not allow_force
+                        None
+                        if force_device or not allow_force
                         else report_codes.FORCE_STONITH_RESOURCE_DOES_NOT_EXIST
                     ),
                 ),
@@ -353,6 +360,7 @@ def _validate_devices(
             )
         )
     return report_list
+
 
 def _validate_level_target_devices_does_not_exist(
     tree, level, target_type, target_value, devices
@@ -368,12 +376,10 @@ def _validate_level_target_devices_does_not_exist(
         )
     return report_list
 
+
 def _append_level_element(tree, level, target_type, target_value, devices):
     level_el = etree.SubElement(
-        tree,
-        "fencing-level",
-        index=str(level),
-        devices=",".join(devices)
+        tree, "fencing-level", index=str(level), devices=",".join(devices)
     )
     if target_type == TARGET_TYPE_NODE:
         level_el.set("target", target_value)
@@ -387,9 +393,10 @@ def _append_level_element(tree, level, target_type, target_value, devices):
         id_part = target_value[0]
     level_el.set(
         "id",
-        find_unique_id(tree, sanitize_id("fl-{0}-{1}".format(id_part, level)))
+        find_unique_id(tree, sanitize_id("fl-{0}-{1}".format(id_part, level))),
     )
     return level_el
+
 
 def _find_level_elements(
     tree, level=None, target_type=None, target_value=None, devices=None
@@ -402,10 +409,8 @@ def _find_level_elements(
             xpath_target = "@target-pattern='{0}'".format(target_value)
         elif target_type == TARGET_TYPE_ATTRIBUTE:
             xpath_target = (
-                "@target-attribute='{0}' and @target-value='{1}'".format(
-                    target_value[0], target_value[1]
-                )
-            )
+                "@target-attribute='{0}' and @target-value='{1}'"
+            ).format(target_value[0], target_value[1])
     xpath_devices = ""
     if devices:
         xpath_devices = "@devices='{0}'".format(",".join(devices))

@@ -14,31 +14,37 @@ class JsonParser(TestCase):
 
     def test_success(self):
         self.assertEqual(
-            toolbox.JsonParser.parse(dedent("""
+            toolbox.JsonParser.parse(
+                dedent(
+                    """
                 {
                     "simple": "value",
                     "list": ["item1", "item2"]
                 }
                 """
-            )),
-            {
-                "simple": "value",
-                "list": ["item1", "item2"],
-            }
+                )
+            ),
+            {"simple": "value", "list": ["item1", "item2"],},
         )
 
     def _parse_error(self, force_code, is_forced):
         with self.assertRaises(ParserErrorException) as cm:
-            toolbox.JsonParser.parse(dedent("""
+            toolbox.JsonParser.parse(
+                dedent(
+                    """
                 {
                     "simple": "value",
                     "list": ["item1" "item2"]
                 }
                 """
-            ))
+                )
+            )
         return toolbox.JsonParser.exception_to_report_list(
-            cm.exception, self.file_type_code, self.file_path, force_code,
-            is_forced
+            cm.exception,
+            self.file_type_code,
+            self.file_path,
+            force_code,
+            is_forced,
         )
 
     def _parse_error_report_args(self):
@@ -58,9 +64,9 @@ class JsonParser(TestCase):
             [
                 fixture.error(
                     report_codes.PARSE_ERROR_JSON_FILE,
-                    **self._parse_error_report_args()
+                    **self._parse_error_report_args(),
                 ),
-            ]
+            ],
         )
 
     def test_parse_error_forcible(self):
@@ -70,9 +76,9 @@ class JsonParser(TestCase):
                 fixture.error(
                     report_codes.PARSE_ERROR_JSON_FILE,
                     force_code="force code",
-                    **self._parse_error_report_args()
+                    **self._parse_error_report_args(),
                 ),
-            ]
+            ],
         )
 
     def test_parse_error_forced(self):
@@ -81,9 +87,9 @@ class JsonParser(TestCase):
             [
                 fixture.warn(
                     report_codes.PARSE_ERROR_JSON_FILE,
-                    **self._parse_error_report_args()
+                    **self._parse_error_report_args(),
                 ),
-            ]
+            ],
         )
 
 
@@ -91,12 +97,10 @@ class JsonExporter(TestCase):
     def test_success(self):
         self.assertEqual(
             toolbox.JsonExporter.export(
-                {
-                    "simple": "value",
-                    "list": ["item1", "item2"],
-                }
+                {"simple": "value", "list": ["item1", "item2"],}
             ),
-            dedent("""\
+            dedent(
+                """\
                 {
                     "list": [
                         "item1",
@@ -104,5 +108,6 @@ class JsonExporter(TestCase):
                     ],
                     "simple": "value"
                 }
-            """.rstrip()).encode("utf-8")
+            """.rstrip()
+            ).encode("utf-8"),
         )

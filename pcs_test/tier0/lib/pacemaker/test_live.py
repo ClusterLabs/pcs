@@ -21,6 +21,7 @@ from pcs.lib.external import CommandRunner
 
 # pylint: disable=no-self-use
 
+
 def get_runner(stdout="", stderr="", returncode=0, env_vars=None):
     runner = mock.MagicMock(spec_set=CommandRunner)
     runner.run.return_value = (stdout, stderr, returncode)
@@ -43,9 +44,7 @@ class GetClusterStatusXmlTest(LibraryPacemakerTest):
         expected_stderr = ""
         expected_retval = 0
         mock_runner = get_runner(
-            expected_stdout,
-            expected_stderr,
-            expected_retval
+            expected_stdout, expected_stderr, expected_retval
         )
 
         real_xml = lib.get_cluster_status_xml(mock_runner)
@@ -58,9 +57,7 @@ class GetClusterStatusXmlTest(LibraryPacemakerTest):
         expected_stderr = "some error"
         expected_retval = 1
         mock_runner = get_runner(
-            expected_stdout,
-            expected_stderr,
-            expected_retval
+            expected_stdout, expected_stderr, expected_retval
         )
 
         assert_raise_library_error(
@@ -68,19 +65,18 @@ class GetClusterStatusXmlTest(LibraryPacemakerTest):
             (
                 Severity.ERROR,
                 report_codes.CRM_MON_ERROR,
-                {
-                    "reason": expected_stderr + "\n" + expected_stdout,
-                }
-            )
+                {"reason": expected_stderr + "\n" + expected_stdout,},
+            ),
         )
 
         mock_runner.run.assert_called_once_with(self.crm_mon_cmd())
+
 
 class GetClusterStatusText(TestCase):
     def setUp(self):
         self.mock_fencehistory_supported = mock.patch(
             "pcs.lib.pacemaker.live.is_fence_history_supported_status",
-            return_value=True
+            return_value=True,
         )
         self.mock_fencehistory_supported.start()
         self.expected_stdout = "cluster status"
@@ -103,9 +99,9 @@ class GetClusterStatusText(TestCase):
             mock_runner, False, False
         )
 
-        mock_runner.run.assert_called_once_with([
-            "/usr/sbin/crm_mon", "--one-shot", "--inactive"
-        ])
+        mock_runner.run.assert_called_once_with(
+            ["/usr/sbin/crm_mon", "--one-shot", "--inactive"]
+        )
         self.assertEqual(self.expected_stdout, real_status)
         self.assertEqual(warnings, [])
 
@@ -115,10 +111,17 @@ class GetClusterStatusText(TestCase):
             mock_runner, False, True
         )
 
-        mock_runner.run.assert_called_once_with([
-            "/usr/sbin/crm_mon", "--one-shot", "--inactive", "--show-detail",
-            "--show-node-attributes", "--failcounts", "--fence-history=3",
-        ])
+        mock_runner.run.assert_called_once_with(
+            [
+                "/usr/sbin/crm_mon",
+                "--one-shot",
+                "--inactive",
+                "--show-detail",
+                "--show-node-attributes",
+                "--failcounts",
+                "--fence-history=3",
+            ]
+        )
         self.assertEqual(self.expected_stdout, real_status)
         self.assertEqual(warnings, [])
 
@@ -126,7 +129,7 @@ class GetClusterStatusText(TestCase):
         self.mock_fencehistory_supported.stop()
         self.mock_fencehistory_supported = mock.patch(
             "pcs.lib.pacemaker.live.is_fence_history_supported_status",
-            return_value=False
+            return_value=False,
         )
         self.mock_fencehistory_supported.start()
 
@@ -135,10 +138,16 @@ class GetClusterStatusText(TestCase):
             mock_runner, False, True
         )
 
-        mock_runner.run.assert_called_once_with([
-            "/usr/sbin/crm_mon", "--one-shot", "--inactive", "--show-detail",
-            "--show-node-attributes", "--failcounts",
-        ])
+        mock_runner.run.assert_called_once_with(
+            [
+                "/usr/sbin/crm_mon",
+                "--one-shot",
+                "--inactive",
+                "--show-detail",
+                "--show-node-attributes",
+                "--failcounts",
+            ]
+        )
         self.assertEqual(self.expected_stdout, real_status)
         self.assertEqual(warnings, [])
 
@@ -148,9 +157,9 @@ class GetClusterStatusText(TestCase):
             mock_runner, True, False
         )
 
-        mock_runner.run.assert_called_once_with([
-            "/usr/sbin/crm_mon", "--one-shot"
-        ])
+        mock_runner.run.assert_called_once_with(
+            ["/usr/sbin/crm_mon", "--one-shot"]
+        )
         self.assertEqual(self.expected_stdout, real_status)
         self.assertEqual(warnings, [])
 
@@ -160,10 +169,16 @@ class GetClusterStatusText(TestCase):
             mock_runner, True, True
         )
 
-        mock_runner.run.assert_called_once_with([
-            "/usr/sbin/crm_mon", "--one-shot", "--show-detail",
-            "--show-node-attributes", "--failcounts", "--fence-history=3",
-        ])
+        mock_runner.run.assert_called_once_with(
+            [
+                "/usr/sbin/crm_mon",
+                "--one-shot",
+                "--show-detail",
+                "--show-node-attributes",
+                "--failcounts",
+                "--fence-history=3",
+            ]
+        )
         self.assertEqual(self.expected_stdout, real_status)
         self.assertEqual(warnings, [])
 
@@ -173,14 +188,13 @@ class GetClusterStatusText(TestCase):
             lambda: lib.get_cluster_status_text(mock_runner, False, False),
             (
                 fixture.error(
-                    report_codes.CRM_MON_ERROR,
-                    reason="stderr\nstdout"
+                    report_codes.CRM_MON_ERROR, reason="stderr\nstdout"
                 )
-            )
+            ),
         )
-        mock_runner.run.assert_called_once_with([
-            "/usr/sbin/crm_mon", "--one-shot", "--inactive"
-        ])
+        mock_runner.run.assert_called_once_with(
+            ["/usr/sbin/crm_mon", "--one-shot", "--inactive"]
+        )
 
     def test_warnings(self):
         mock_runner = self.get_runner(
@@ -190,9 +204,9 @@ class GetClusterStatusText(TestCase):
             mock_runner, False, False
         )
 
-        mock_runner.run.assert_called_once_with([
-            "/usr/sbin/crm_mon", "--one-shot", "--inactive"
-        ])
+        mock_runner.run.assert_called_once_with(
+            ["/usr/sbin/crm_mon", "--one-shot", "--inactive"]
+        )
         self.assertEqual(self.expected_stdout, real_status)
         self.assertEqual(warnings, ["msgA", "msgC"])
 
@@ -204,15 +218,22 @@ class GetClusterStatusText(TestCase):
             mock_runner, False, True
         )
 
-        mock_runner.run.assert_called_once_with([
-            "/usr/sbin/crm_mon", "--one-shot", "--inactive", "--show-detail",
-            "--show-node-attributes", "--failcounts", "--fence-history=3",
-        ])
+        mock_runner.run.assert_called_once_with(
+            [
+                "/usr/sbin/crm_mon",
+                "--one-shot",
+                "--inactive",
+                "--show-detail",
+                "--show-node-attributes",
+                "--failcounts",
+                "--fence-history=3",
+            ]
+        )
         self.assertEqual(self.expected_stdout, real_status)
         self.assertEqual(
-            warnings,
-            ["msgA", "DEBUG: msgB", "msgC", "DEBUG: msgd"]
+            warnings, ["msgA", "DEBUG: msgB", "msgC", "DEBUG: msgd"]
         )
+
 
 class GetCibXmlTest(LibraryPacemakerTest):
     def test_success(self):
@@ -220,9 +241,7 @@ class GetCibXmlTest(LibraryPacemakerTest):
         expected_stderr = ""
         expected_retval = 0
         mock_runner = get_runner(
-            expected_stdout,
-            expected_stderr,
-            expected_retval
+            expected_stdout, expected_stderr, expected_retval
         )
 
         real_xml = lib.get_cib_xml(mock_runner)
@@ -237,9 +256,7 @@ class GetCibXmlTest(LibraryPacemakerTest):
         expected_stderr = "some error"
         expected_retval = 1
         mock_runner = get_runner(
-            expected_stdout,
-            expected_stderr,
-            expected_retval
+            expected_stdout, expected_stderr, expected_retval
         )
 
         assert_raise_library_error(
@@ -247,10 +264,8 @@ class GetCibXmlTest(LibraryPacemakerTest):
             (
                 Severity.ERROR,
                 report_codes.CIB_LOAD_ERROR,
-                {
-                    "reason": expected_stderr + "\n" + expected_stdout,
-                }
-            )
+                {"reason": expected_stderr + "\n" + expected_stdout,},
+            ),
         )
 
         mock_runner.run.assert_called_once_with(
@@ -263,9 +278,7 @@ class GetCibXmlTest(LibraryPacemakerTest):
         expected_retval = 0
         scope = "test_scope"
         mock_runner = get_runner(
-            expected_stdout,
-            expected_stderr,
-            expected_retval
+            expected_stdout, expected_stderr, expected_retval
         )
 
         real_xml = lib.get_cib_xml(mock_runner, scope)
@@ -273,7 +286,9 @@ class GetCibXmlTest(LibraryPacemakerTest):
         mock_runner.run.assert_called_once_with(
             [
                 self.path("cibadmin"),
-                "--local", "--query", "--scope={0}".format(scope)
+                "--local",
+                "--query",
+                "--scope={0}".format(scope),
             ]
         )
         self.assertEqual(expected_stdout, real_xml)
@@ -288,9 +303,7 @@ class GetCibXmlTest(LibraryPacemakerTest):
         expected_retval = 105
         scope = "test_scope"
         mock_runner = get_runner(
-            expected_stdout,
-            expected_stderr,
-            expected_retval
+            expected_stdout, expected_stderr, expected_retval
         )
 
         assert_raise_library_error(
@@ -301,16 +314,19 @@ class GetCibXmlTest(LibraryPacemakerTest):
                 {
                     "scope": scope,
                     "reason": expected_stderr + "\n" + expected_stdout,
-                }
-            )
+                },
+            ),
         )
 
         mock_runner.run.assert_called_once_with(
             [
                 self.path("cibadmin"),
-                "--local", "--query", "--scope={0}".format(scope)
+                "--local",
+                "--query",
+                "--scope={0}".format(scope),
             ]
         )
+
 
 class GetCibTest(LibraryPacemakerTest):
     def test_success(self):
@@ -327,17 +343,15 @@ class GetCibTest(LibraryPacemakerTest):
             fixture.error(
                 report_codes.CIB_LOAD_ERROR_BAD_FORMAT,
                 reason=f"{reason} (line 1)",
-            )
+            ),
         )
         xml_fromstring_mock.assert_called_once_with(xml)
+
 
 class Verify(LibraryPacemakerTest):
     def test_run_on_live_cib(self):
         runner = get_runner()
-        self.assertEqual(
-            lib.verify(runner),
-            ("", "", 0, False)
-        )
+        self.assertEqual(lib.verify(runner), ("", "", 0, False))
         runner.run.assert_called_once_with(
             [self.path("crm_verify"), "--live-check"],
         )
@@ -353,10 +367,7 @@ class Verify(LibraryPacemakerTest):
 
     def test_run_verbose(self):
         runner = get_runner()
-        self.assertEqual(
-            lib.verify(runner, verbose=True),
-            ("", "", 0, False)
-        )
+        self.assertEqual(lib.verify(runner, verbose=True), ("", "", 0, False))
         runner.run.assert_called_once_with(
             [self.path("crm_verify"), "-V", "-V", "--live-check"],
         )
@@ -365,10 +376,7 @@ class Verify(LibraryPacemakerTest):
         fake_tmp_file = "/fake/tmp/file"
         runner = get_runner(env_vars={"CIB_file": fake_tmp_file})
 
-        self.assertEqual(
-            lib.verify(runner, verbose=True),
-            ("", "", 0, False)
-        )
+        self.assertEqual(lib.verify(runner, verbose=True), ("", "", 0, False))
         runner.run.assert_called_once_with(
             [self.path("crm_verify"), "-V", "-V", "--xml-file", fake_tmp_file],
         )
@@ -397,17 +405,15 @@ class Verify(LibraryPacemakerTest):
         )
         out_stderr = []
         for input_lines in in_stderr:
-            out_stderr.append([
-                line for line in input_lines if "-V" not in line
-            ])
+            out_stderr.append(
+                [line for line in input_lines if "-V" not in line]
+            )
         return zip(in_stderr, out_stderr)
 
     @staticmethod
     def get_in_out_unfiltered_data():
         in_out_data = (
-            (
-                "no verbose option in stderr\n",
-            ),
+            ("no verbose option in stderr\n",),
             (
                 "some output\n",
                 "Options '-V -V' do not match\n",
@@ -440,22 +446,19 @@ class Verify(LibraryPacemakerTest):
 
     def test_error_can_be_more_verbose(self):
         self.subtest_filter_stderr_and_can_be_more_verbose(
-            self.get_in_out_filtered_stderr(),
-            True,
+            self.get_in_out_filtered_stderr(), True,
         )
 
     def test_error_cannot_be_more_verbose(self):
         self.subtest_filter_stderr_and_can_be_more_verbose(
-            self.get_in_out_unfiltered_data(),
-            False,
+            self.get_in_out_unfiltered_data(), False,
         )
 
     def test_error_cannot_be_more_verbose_in_verbose_mode(self):
         self.subtest_filter_stderr_and_can_be_more_verbose(
             (
                 list(self.get_in_out_filtered_stderr())
-                +
-                list(self.get_in_out_unfiltered_data())
+                + list(self.get_in_out_unfiltered_data())
             ),
             False,
             verbose=True,
@@ -469,22 +472,23 @@ class ReplaceCibConfigurationTest(LibraryPacemakerTest):
         expected_stderr = ""
         expected_retval = 0
         mock_runner = get_runner(
-            expected_stdout,
-            expected_stderr,
-            expected_retval
+            expected_stdout, expected_stderr, expected_retval
         )
 
         lib.replace_cib_configuration(
-            mock_runner,
-            XmlManipulation.from_str(xml).tree
+            mock_runner, XmlManipulation.from_str(xml).tree
         )
 
         mock_runner.run.assert_called_once_with(
             [
-                self.path("cibadmin"), "--replace", "--verbose", "--xml-pipe",
-                "--scope", "configuration"
+                self.path("cibadmin"),
+                "--replace",
+                "--verbose",
+                "--xml-pipe",
+                "--scope",
+                "configuration",
             ],
-            stdin_string=xml
+            stdin_string=xml,
         )
 
     def test_error(self):
@@ -493,34 +497,32 @@ class ReplaceCibConfigurationTest(LibraryPacemakerTest):
         expected_stderr = "expected stderr"
         expected_retval = 1
         mock_runner = get_runner(
-            expected_stdout,
-            expected_stderr,
-            expected_retval
+            expected_stdout, expected_stderr, expected_retval
         )
 
         assert_raise_library_error(
             lambda: lib.replace_cib_configuration(
-                    mock_runner,
-                    XmlManipulation.from_str(xml).tree
-                )
-            ,
+                mock_runner, XmlManipulation.from_str(xml).tree
+            ),
             (
                 Severity.ERROR,
                 report_codes.CIB_PUSH_ERROR,
-                {
-                    "reason": expected_stderr,
-                    "pushed_cib": expected_stdout,
-                }
-            )
+                {"reason": expected_stderr, "pushed_cib": expected_stdout,},
+            ),
         )
 
         mock_runner.run.assert_called_once_with(
             [
-                self.path("cibadmin"), "--replace", "--verbose", "--xml-pipe",
-                "--scope", "configuration"
+                self.path("cibadmin"),
+                "--replace",
+                "--verbose",
+                "--xml-pipe",
+                "--scope",
+                "configuration",
             ],
-            stdin_string=xml
+            stdin_string=xml,
         )
+
 
 class UpgradeCibTest(TestCase):
     # pylint: disable=protected-access
@@ -536,23 +538,20 @@ class UpgradeCibTest(TestCase):
         expected_stderr = "some error"
         expected_retval = 1
         mock_runner = get_runner(
-            expected_stdout,
-            expected_stderr,
-            expected_retval
+            expected_stdout, expected_stderr, expected_retval
         )
         assert_raise_library_error(
             lambda: lib._upgrade_cib(mock_runner),
             (
                 Severity.ERROR,
                 report_codes.CIB_UPGRADE_FAILED,
-                {
-                    "reason": expected_stderr + "\n" + expected_stdout,
-                }
-            )
+                {"reason": expected_stderr + "\n" + expected_stdout,},
+            ),
         )
         mock_runner.run.assert_called_once_with(
             ["/usr/sbin/cibadmin", "--upgrade", "--force"]
         )
+
 
 @mock.patch("pcs.lib.pacemaker.live.get_cib_xml")
 @mock.patch("pcs.lib.pacemaker.live._upgrade_cib")
@@ -563,18 +562,16 @@ class EnsureCibVersionTest(TestCase):
 
     def test_same_version(self, mock_upgrade, mock_get_cib):
         self.assertTrue(
-            lib.ensure_cib_version(
-                self.mock_runner, self.cib, Version(2, 3, 4)
-            ) is None
+            lib.ensure_cib_version(self.mock_runner, self.cib, Version(2, 3, 4))
+            is None
         )
         mock_upgrade.assert_not_called()
         mock_get_cib.assert_not_called()
 
     def test_higher_version(self, mock_upgrade, mock_get_cib):
         self.assertTrue(
-            lib.ensure_cib_version(
-                self.mock_runner, self.cib, Version(2, 3, 3)
-            ) is None
+            lib.ensure_cib_version(self.mock_runner, self.cib, Version(2, 3, 3))
+            is None
         )
         mock_upgrade.assert_not_called()
         mock_get_cib.assert_not_called()
@@ -588,7 +585,7 @@ class EnsureCibVersionTest(TestCase):
                 lib.ensure_cib_version(
                     self.mock_runner, self.cib, Version(2, 3, 5)
                 )
-            ).decode()
+            ).decode(),
         )
         mock_upgrade.assert_called_once_with(self.mock_runner)
         mock_get_cib.assert_called_once_with(self.mock_runner)
@@ -602,7 +599,7 @@ class EnsureCibVersionTest(TestCase):
                 lib.ensure_cib_version(
                     self.mock_runner, self.cib, Version(2, 3, 5)
                 )
-            ).decode()
+            ).decode(),
         )
         mock_upgrade.assert_called_once_with(self.mock_runner)
         mock_get_cib.assert_called_once_with(self.mock_runner)
@@ -616,11 +613,8 @@ class EnsureCibVersionTest(TestCase):
             (
                 Severity.ERROR,
                 report_codes.CIB_UPGRADE_FAILED_TO_MINIMAL_REQUIRED_VERSION,
-                {
-                    "required_version": "2.3.5",
-                    "current_version": "2.3.4"
-                }
-            )
+                {"required_version": "2.3.5", "current_version": "2.3.4"},
+            ),
         )
         mock_upgrade.assert_called_once_with(self.mock_runner)
         mock_get_cib.assert_called_once_with(self.mock_runner)
@@ -634,11 +628,8 @@ class EnsureCibVersionTest(TestCase):
             (
                 Severity.ERROR,
                 report_codes.CIB_UPGRADE_FAILED,
-                {
-                    "reason":
-                        start_tag_error_text(),
-                }
-            )
+                {"reason": start_tag_error_text(),},
+            ),
         )
         mock_upgrade.assert_called_once_with(self.mock_runner)
         mock_get_cib.assert_called_once_with(self.mock_runner)
@@ -659,9 +650,7 @@ class SimulateCibXml(LibraryPacemakerTest):
         expected_stderr = ""
         expected_retval = 0
         mock_runner = get_runner(
-            expected_stdout,
-            expected_stderr,
-            expected_retval
+            expected_stdout, expected_stderr, expected_retval
         )
 
         result = lib.simulate_cib_xml(mock_runner, "<cib />")
@@ -673,11 +662,13 @@ class SimulateCibXml(LibraryPacemakerTest):
             [
                 self.path("crm_simulate"),
                 "--simulate",
-                "--save-output", tmpfile_new_cib.name,
-                "--save-graph", tmpfile_transitions.name,
+                "--save-output",
+                tmpfile_new_cib.name,
+                "--save-graph",
+                tmpfile_transitions.name,
                 "--xml-pipe",
             ],
-            stdin_string="<cib />"
+            stdin_string="<cib />",
         )
 
     def test_error_creating_cib(self, mock_write_tmpfile):
@@ -686,8 +677,7 @@ class SimulateCibXml(LibraryPacemakerTest):
         assert_raise_library_error(
             lambda: lib.simulate_cib_xml(mock_runner, "<cib />"),
             fixture.error(
-                report_codes.CIB_SIMULATE_ERROR,
-                reason="some error",
+                report_codes.CIB_SIMULATE_ERROR, reason="some error",
             ),
         )
         mock_runner.run.assert_not_called()
@@ -696,14 +686,13 @@ class SimulateCibXml(LibraryPacemakerTest):
         tmpfile_new_cib = mock.MagicMock()
         mock_write_tmpfile.side_effect = [
             tmpfile_new_cib,
-            OSError(1, "some error")
+            OSError(1, "some error"),
         ]
         mock_runner = get_runner()
         assert_raise_library_error(
             lambda: lib.simulate_cib_xml(mock_runner, "<cib />"),
             fixture.error(
-                report_codes.CIB_SIMULATE_ERROR,
-                reason="some error",
+                report_codes.CIB_SIMULATE_ERROR, reason="some error",
             ),
         )
         mock_runner.run.assert_not_called()
@@ -719,16 +708,13 @@ class SimulateCibXml(LibraryPacemakerTest):
         expected_stderr = "some error"
         expected_retval = 1
         mock_runner = get_runner(
-            expected_stdout,
-            expected_stderr,
-            expected_retval
+            expected_stdout, expected_stderr, expected_retval
         )
 
         assert_raise_library_error(
             lambda: lib.simulate_cib_xml(mock_runner, "<cib />"),
             fixture.error(
-                report_codes.CIB_SIMULATE_ERROR,
-                reason="some error",
+                report_codes.CIB_SIMULATE_ERROR, reason="some error",
             ),
         )
 
@@ -744,16 +730,13 @@ class SimulateCibXml(LibraryPacemakerTest):
         expected_stderr = ""
         expected_retval = 0
         mock_runner = get_runner(
-            expected_stdout,
-            expected_stderr,
-            expected_retval
+            expected_stdout, expected_stderr, expected_retval
         )
 
         assert_raise_library_error(
             lambda: lib.simulate_cib_xml(mock_runner, "<cib />"),
             fixture.error(
-                report_codes.CIB_SIMULATE_ERROR,
-                reason="some error",
+                report_codes.CIB_SIMULATE_ERROR, reason="some error",
             ),
         )
 
@@ -770,16 +753,13 @@ class SimulateCibXml(LibraryPacemakerTest):
         expected_stderr = ""
         expected_retval = 0
         mock_runner = get_runner(
-            expected_stdout,
-            expected_stderr,
-            expected_retval
+            expected_stdout, expected_stderr, expected_retval
         )
 
         assert_raise_library_error(
             lambda: lib.simulate_cib_xml(mock_runner, "<cib />"),
             fixture.error(
-                report_codes.CIB_SIMULATE_ERROR,
-                reason="some error",
+                report_codes.CIB_SIMULATE_ERROR, reason="some error",
             ),
         )
 
@@ -796,7 +776,9 @@ class SimulateCib(TestCase):
 
     def test_success(self, mock_simulate):
         mock_simulate.return_value = (
-            self.simulate_output, self.transitions, self.new_cib
+            self.simulate_output,
+            self.transitions,
+            self.new_cib,
         )
         result = lib.simulate_cib(self.runner, self.cib)
         self.assertEqual(result[0], "some output")
@@ -806,7 +788,9 @@ class SimulateCib(TestCase):
 
     def test_invalid_cib(self, mock_simulate):
         mock_simulate.return_value = (
-            self.simulate_output, "bad transitions", self.new_cib
+            self.simulate_output,
+            "bad transitions",
+            self.new_cib,
         )
         assert_raise_library_error(
             lambda: lib.simulate_cib(self.runner, self.cib),
@@ -821,7 +805,9 @@ class SimulateCib(TestCase):
 
     def test_invalid_transitions(self, mock_simulate):
         mock_simulate.return_value = (
-            self.simulate_output, self.transitions, "bad new cib"
+            self.simulate_output,
+            self.transitions,
+            "bad new cib",
         )
         assert_raise_library_error(
             lambda: lib.simulate_cib(self.runner, self.cib),
@@ -840,10 +826,10 @@ class GetLocalNodeStatusTest(TestCase):
         self.env_assist, self.config = get_env_tools(test_case=self)
 
     def test_offline(self):
-        (self.config
-            .runner.pcmk.load_state(
+        (
+            self.config.runner.pcmk.load_state(
                 stderr="error: Could not connect to cluster (is it running?)",
-                returncode=102
+                returncode=102,
             )
         )
 
@@ -852,43 +838,38 @@ class GetLocalNodeStatusTest(TestCase):
         self.assertEqual(dict(offline=True), real_status)
 
     def test_invalid_status(self):
-        (self.config
-            .runner.pcmk.load_state(stdout="invalid xml")
-        )
+        (self.config.runner.pcmk.load_state(stdout="invalid xml"))
 
         env = self.env_assist.get_env()
         self.env_assist.assert_raise_library_error(
             lambda: lib.get_local_node_status(env.cmd_runner()),
             [
                 fixture.error(
-                    report_codes.BAD_CLUSTER_STATE_FORMAT,
-                    force_code=None
+                    report_codes.BAD_CLUSTER_STATE_FORMAT, force_code=None
                 )
             ],
-            expected_in_processor=False
+            expected_in_processor=False,
         )
 
     def test_success(self):
-        (self.config
-            .runner.pcmk.load_state(nodes=[
-                fixture.state_node(i, f"name_{i}") for i in range(1, 4)
-            ])
-            .runner.pcmk.local_node_name(node_name="name_2")
+        (
+            self.config.runner.pcmk.load_state(
+                nodes=[fixture.state_node(i, f"name_{i}") for i in range(1, 4)]
+            ).runner.pcmk.local_node_name(node_name="name_2")
         )
 
         env = self.env_assist.get_env()
         real_status = lib.get_local_node_status(env.cmd_runner())
         self.assertEqual(
             dict(offline=False, **fixture.state_node("2", "name_2")),
-            real_status
+            real_status,
         )
 
     def test_node_not_in_status(self):
-        (self.config
-            .runner.pcmk.load_state(nodes=[
-                fixture.state_node(i, f"name_{i}") for i in range(1, 4)
-            ])
-            .runner.pcmk.local_node_name(node_name="name_X")
+        (
+            self.config.runner.pcmk.load_state(
+                nodes=[fixture.state_node(i, f"name_{i}") for i in range(1, 4)]
+            ).runner.pcmk.local_node_name(node_name="name_X")
         )
 
         env = self.env_assist.get_env()
@@ -899,18 +880,17 @@ class GetLocalNodeStatusTest(TestCase):
                     report_codes.NODE_NOT_FOUND,
                     force_code=None,
                     node="name_X",
-                    searched_types=[]
+                    searched_types=[],
                 )
             ],
-            expected_in_processor=False
+            expected_in_processor=False,
         )
 
     def test_error_getting_node_name(self):
-        (self.config
-            .runner.pcmk.load_state(nodes=[
-                fixture.state_node(i, f"name_{i}") for i in range(1, 4)
-            ])
-            .runner.pcmk.local_node_name(
+        (
+            self.config.runner.pcmk.load_state(
+                nodes=[fixture.state_node(i, f"name_{i}") for i in range(1, 4)]
+            ).runner.pcmk.local_node_name(
                 stdout="some info", stderr="some error", returncode=1
             )
         )
@@ -922,26 +902,20 @@ class GetLocalNodeStatusTest(TestCase):
                 fixture.error(
                     report_codes.PACEMAKER_LOCAL_NODE_NAME_NOT_FOUND,
                     force_code=None,
-                    reason="some error\nsome info"
+                    reason="some error\nsome info",
                 )
             ],
-            expected_in_processor=False
+            expected_in_processor=False,
         )
 
 
 class RemoveNode(LibraryPacemakerTest):
     def test_success(self):
         mock_runner = get_runner("", "", 0)
-        lib.remove_node(
-            mock_runner,
-            "NODE_NAME"
+        lib.remove_node(mock_runner, "NODE_NAME")
+        mock_runner.run.assert_called_once_with(
+            [self.path("crm_node"), "--force", "--remove", "NODE_NAME",]
         )
-        mock_runner.run.assert_called_once_with([
-            self.path("crm_node"),
-            "--force",
-            "--remove",
-            "NODE_NAME",
-        ])
 
     def test_error(self):
         expected_stderr = "expected stderr"
@@ -955,8 +929,8 @@ class RemoveNode(LibraryPacemakerTest):
                     "node": "",
                     "node_list_to_remove": ["NODE_NAME"],
                     "reason": expected_stderr,
-                }
-            )
+                },
+            ),
         )
 
 
@@ -969,15 +943,11 @@ class ResourceCleanupTest(TestCase):
         self.env_assist, self.config = get_env_tools(test_case=self)
 
     def assert_output(self, real_output):
-        self.assertEqual(
-            self.stdout + "\n" + self.stderr,
-            real_output
-        )
+        self.assertEqual(self.stdout + "\n" + self.stderr, real_output)
 
     def test_basic(self):
         self.config.runner.pcmk.resource_cleanup(
-            stdout=self.stdout,
-            stderr=self.stderr
+            stdout=self.stdout, stderr=self.stderr
         )
         env = self.env_assist.get_env()
         real_output = lib.resource_cleanup(env.cmd_runner())
@@ -985,9 +955,7 @@ class ResourceCleanupTest(TestCase):
 
     def test_resource(self):
         self.config.runner.pcmk.resource_cleanup(
-            stdout=self.stdout,
-            stderr=self.stderr,
-            resource=self.resource
+            stdout=self.stdout, stderr=self.stderr, resource=self.resource
         )
         env = self.env_assist.get_env()
         real_output = lib.resource_cleanup(
@@ -1010,15 +978,11 @@ class ResourceCleanupTest(TestCase):
 
     def test_node(self):
         self.config.runner.pcmk.resource_cleanup(
-            stdout=self.stdout,
-            stderr=self.stderr,
-            node=self.node
+            stdout=self.stdout, stderr=self.stderr, node=self.node
         )
 
         env = self.env_assist.get_env()
-        real_output = lib.resource_cleanup(
-            env.cmd_runner(), node=self.node
-        )
+        real_output = lib.resource_cleanup(env.cmd_runner(), node=self.node)
         self.assert_output(real_output)
 
     def test_all_options(self):
@@ -1041,9 +1005,7 @@ class ResourceCleanupTest(TestCase):
 
     def test_error_cleanup(self):
         self.config.runner.pcmk.resource_cleanup(
-            stdout=self.stdout,
-            stderr=self.stderr,
-            returncode=1
+            stdout=self.stdout, stderr=self.stderr, returncode=1
         )
 
         env = self.env_assist.get_env()
@@ -1057,7 +1019,7 @@ class ResourceCleanupTest(TestCase):
                     node=None,
                 )
             ],
-            expected_in_processor=False
+            expected_in_processor=False,
         )
 
 
@@ -1088,17 +1050,10 @@ class ResourceRefreshTest(LibraryPacemakerTest):
         self.assertEqual(len(return_value_list), len(call_list))
         self.assertEqual(len(return_value_list), mock_runner.run.call_count)
         mock_runner.run.assert_has_calls(call_list)
-        self.assertEqual(
-            expected_stdout + "\n" + expected_stderr,
-            real_output
-        )
+        self.assertEqual(expected_stdout + "\n" + expected_stderr, real_output)
 
     def test_threshold_exceeded(self):
-        mock_runner = get_runner(
-            self.fixture_status_xml(1000, 1000),
-            "",
-            0
-        )
+        mock_runner = get_runner(self.fixture_status_xml(1000, 1000), "", 0)
 
         assert_raise_library_error(
             lambda: lib.resource_refresh(mock_runner),
@@ -1106,8 +1061,8 @@ class ResourceRefreshTest(LibraryPacemakerTest):
                 Severity.ERROR,
                 report_codes.RESOURCE_REFRESH_TOO_TIME_CONSUMING,
                 {"threshold": 100},
-                report_codes.FORCE_LOAD_THRESHOLD
-            )
+                report_codes.FORCE_LOAD_THRESHOLD,
+            ),
         )
 
         mock_runner.run.assert_called_once_with(self.crm_mon_cmd())
@@ -1122,10 +1077,7 @@ class ResourceRefreshTest(LibraryPacemakerTest):
         mock_runner.run.assert_called_once_with(
             [self.path("crm_resource"), "--refresh"]
         )
-        self.assertEqual(
-            expected_stdout + "\n" + expected_stderr,
-            real_output
-        )
+        self.assertEqual(expected_stdout + "\n" + expected_stderr, real_output)
 
     def test_resource(self):
         resource = "test_resource"
@@ -1138,10 +1090,7 @@ class ResourceRefreshTest(LibraryPacemakerTest):
         mock_runner.run.assert_called_once_with(
             [self.path("crm_resource"), "--refresh", "--resource", resource]
         )
-        self.assertEqual(
-            expected_stdout + "\n" + expected_stderr,
-            real_output
-        )
+        self.assertEqual(expected_stdout + "\n" + expected_stderr, real_output)
 
     def test_resource_strict(self):
         resource = "test_resource"
@@ -1162,10 +1111,7 @@ class ResourceRefreshTest(LibraryPacemakerTest):
                 "--force",
             ]
         )
-        self.assertEqual(
-            expected_stdout + "\n" + expected_stderr,
-            real_output
-        )
+        self.assertEqual(expected_stdout + "\n" + expected_stderr, real_output)
 
     def test_node(self):
         node = "test_node"
@@ -1178,10 +1124,7 @@ class ResourceRefreshTest(LibraryPacemakerTest):
         mock_runner.run.assert_called_once_with(
             [self.path("crm_resource"), "--refresh", "--node", node]
         )
-        self.assertEqual(
-            expected_stdout + "\n" + expected_stderr,
-            real_output
-        )
+        self.assertEqual(expected_stdout + "\n" + expected_stderr, real_output)
 
     def test_all_options(self):
         node = "test_node"
@@ -1197,22 +1140,22 @@ class ResourceRefreshTest(LibraryPacemakerTest):
         mock_runner.run.assert_called_once_with(
             [
                 self.path("crm_resource"),
-                "--refresh", "--resource", resource, "--node", node, "--force"
+                "--refresh",
+                "--resource",
+                resource,
+                "--node",
+                node,
+                "--force",
             ]
         )
-        self.assertEqual(
-            expected_stdout + "\n" + expected_stderr,
-            real_output
-        )
+        self.assertEqual(expected_stdout + "\n" + expected_stderr, real_output)
 
     def test_error_state(self):
         expected_stdout = "some info"
         expected_stderr = "some error"
         expected_retval = 1
         mock_runner = get_runner(
-            expected_stdout,
-            expected_stderr,
-            expected_retval
+            expected_stdout, expected_stderr, expected_retval
         )
 
         assert_raise_library_error(
@@ -1220,10 +1163,8 @@ class ResourceRefreshTest(LibraryPacemakerTest):
             (
                 Severity.ERROR,
                 report_codes.CRM_MON_ERROR,
-                {
-                    "reason": expected_stderr + "\n" + expected_stdout,
-                }
-            )
+                {"reason": expected_stderr + "\n" + expected_stdout,},
+            ),
         )
 
         mock_runner.run.assert_called_once_with(self.crm_mon_cmd())
@@ -1252,8 +1193,8 @@ class ResourceRefreshTest(LibraryPacemakerTest):
                     "reason": expected_stderr + "\n" + expected_stdout,
                     "resource": None,
                     "node": None,
-                }
-            )
+                },
+            ),
         )
 
         self.assertEqual(len(return_value_list), len(call_list))
@@ -1267,14 +1208,10 @@ class ResourcesWaitingTest(LibraryPacemakerTest):
         expected_stderr = "something --wait something else"
         expected_retval = 1
         mock_runner = get_runner(
-            expected_stdout,
-            expected_stderr,
-            expected_retval
+            expected_stdout, expected_stderr, expected_retval
         )
 
-        self.assertTrue(
-            lib.has_wait_for_idle_support(mock_runner)
-        )
+        self.assertTrue(lib.has_wait_for_idle_support(mock_runner))
         mock_runner.run.assert_called_once_with(
             [self.path("crm_resource"), "-?"]
         )
@@ -1284,14 +1221,10 @@ class ResourcesWaitingTest(LibraryPacemakerTest):
         expected_stderr = ""
         expected_retval = 1
         mock_runner = get_runner(
-            expected_stdout,
-            expected_stderr,
-            expected_retval
+            expected_stdout, expected_stderr, expected_retval
         )
 
-        self.assertTrue(
-            lib.has_wait_for_idle_support(mock_runner)
-        )
+        self.assertTrue(lib.has_wait_for_idle_support(mock_runner))
         mock_runner.run.assert_called_once_with(
             [self.path("crm_resource"), "-?"]
         )
@@ -1301,39 +1234,29 @@ class ResourcesWaitingTest(LibraryPacemakerTest):
         expected_stderr = "something something else"
         expected_retval = 1
         mock_runner = get_runner(
-            expected_stdout,
-            expected_stderr,
-            expected_retval
+            expected_stdout, expected_stderr, expected_retval
         )
 
-        self.assertFalse(
-            lib.has_wait_for_idle_support(mock_runner)
-        )
+        self.assertFalse(lib.has_wait_for_idle_support(mock_runner))
         mock_runner.run.assert_called_once_with(
             [self.path("crm_resource"), "-?"]
         )
 
     @mock.patch(
-        "pcs.lib.pacemaker.live.has_wait_for_idle_support",
-        autospec=True
+        "pcs.lib.pacemaker.live.has_wait_for_idle_support", autospec=True
     )
     def test_ensure_support_success(self, mock_obj):
         mock_obj.return_value = True
         self.assertEqual(None, lib.ensure_wait_for_idle_support(mock.Mock()))
 
     @mock.patch(
-        "pcs.lib.pacemaker.live.has_wait_for_idle_support",
-        autospec=True
+        "pcs.lib.pacemaker.live.has_wait_for_idle_support", autospec=True
     )
     def test_ensure_support_error(self, mock_obj):
         mock_obj.return_value = False
         assert_raise_library_error(
             lambda: lib.ensure_wait_for_idle_support(mock.Mock()),
-            (
-                Severity.ERROR,
-                report_codes.WAIT_FOR_IDLE_NOT_SUPPORTED,
-                {}
-            )
+            (Severity.ERROR, report_codes.WAIT_FOR_IDLE_NOT_SUPPORTED, {}),
         )
 
     def test_wait_success(self):
@@ -1341,9 +1264,7 @@ class ResourcesWaitingTest(LibraryPacemakerTest):
         expected_stderr = "expected stderr"
         expected_retval = 0
         mock_runner = get_runner(
-            expected_stdout,
-            expected_stderr,
-            expected_retval
+            expected_stdout, expected_stderr, expected_retval
         )
 
         self.assertEqual(None, lib.wait_for_idle(mock_runner))
@@ -1358,9 +1279,7 @@ class ResourcesWaitingTest(LibraryPacemakerTest):
         expected_retval = 0
         timeout = 10
         mock_runner = get_runner(
-            expected_stdout,
-            expected_stderr,
-            expected_retval
+            expected_stdout, expected_stderr, expected_retval
         )
 
         self.assertEqual(None, lib.wait_for_idle(mock_runner, timeout))
@@ -1368,7 +1287,8 @@ class ResourcesWaitingTest(LibraryPacemakerTest):
         mock_runner.run.assert_called_once_with(
             [
                 self.path("crm_resource"),
-                "--wait", "--timeout={0}".format(timeout)
+                "--wait",
+                "--timeout={0}".format(timeout),
             ]
         )
 
@@ -1377,9 +1297,7 @@ class ResourcesWaitingTest(LibraryPacemakerTest):
         expected_stderr = "some error"
         expected_retval = 1
         mock_runner = get_runner(
-            expected_stdout,
-            expected_stderr,
-            expected_retval
+            expected_stdout, expected_stderr, expected_retval
         )
 
         assert_raise_library_error(
@@ -1387,10 +1305,8 @@ class ResourcesWaitingTest(LibraryPacemakerTest):
             (
                 Severity.ERROR,
                 report_codes.WAIT_FOR_IDLE_ERROR,
-                {
-                    "reason": expected_stderr + "\n" + expected_stdout,
-                }
-            )
+                {"reason": expected_stderr + "\n" + expected_stdout,},
+            ),
         )
 
         mock_runner.run.assert_called_once_with(
@@ -1402,9 +1318,7 @@ class ResourcesWaitingTest(LibraryPacemakerTest):
         expected_stderr = "some error"
         expected_retval = 124
         mock_runner = get_runner(
-            expected_stdout,
-            expected_stderr,
-            expected_retval
+            expected_stdout, expected_stderr, expected_retval
         )
 
         assert_raise_library_error(
@@ -1412,10 +1326,8 @@ class ResourcesWaitingTest(LibraryPacemakerTest):
             (
                 Severity.ERROR,
                 report_codes.WAIT_FOR_IDLE_TIMED_OUT,
-                {
-                    "reason": expected_stderr + "\n" + expected_stdout,
-                }
-            )
+                {"reason": expected_stderr + "\n" + expected_stdout,},
+            ),
         )
 
         mock_runner.run.assert_called_once_with(

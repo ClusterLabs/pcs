@@ -14,7 +14,7 @@ class ManageUnmanage(
             # pylint:disable=undefined-variable
             etree.parse(cib).findall(".//resources")[0]
         )
-    )
+    ),
 ):
     empty_cib = rc("cib-empty.xml")
     temp_cib = rc("temp-cib.xml")
@@ -44,7 +44,9 @@ class ManageUnmanage(
                     </operations>
                 </primitive>
             </resources>
-        """.format(empty_meta_b=(empty_meta_b if add_empty_meta_b else ""))
+        """.format(
+            empty_meta_b=(empty_meta_b if add_empty_meta_b else "")
+        )
 
     def setUp(self):
         shutil.copy(self.empty_cib, self.temp_cib)
@@ -59,29 +61,26 @@ class ManageUnmanage(
         if not managed:
             self.assert_pcs_success(
                 "resource unmanage {0} {1}".format(
-                    name,
-                    "--monitor" if with_monitors else ""
+                    name, "--monitor" if with_monitors else ""
                 )
             )
 
     def test_unmanage_none(self):
         self.assert_pcs_fail(
             "resource unmanage",
-            "Error: You must specify resource(s) to unmanage\n"
+            "Error: You must specify resource(s) to unmanage\n",
         )
 
     def test_manage_none(self):
         self.assert_pcs_fail(
-            "resource manage",
-            "Error: You must specify resource(s) to manage\n"
+            "resource manage", "Error: You must specify resource(s) to manage\n"
         )
 
     def test_unmanage_one(self):
         self.fixture_resource("A")
         self.fixture_resource("B")
         self.assert_effect(
-            "resource unmanage A",
-            self.fixture_cib_unmanaged_a()
+            "resource unmanage A", self.fixture_cib_unmanaged_a()
         )
 
     def test_manage_one(self):
@@ -89,7 +88,7 @@ class ManageUnmanage(
         self.fixture_resource("B", managed=False)
         self.assert_effect(
             "resource manage B",
-            self.fixture_cib_unmanaged_a(add_empty_meta_b=True)
+            self.fixture_cib_unmanaged_a(add_empty_meta_b=True),
         )
 
     def test_unmanage_monitor(self):
@@ -111,7 +110,7 @@ class ManageUnmanage(
                     </operations>
                 </primitive>
             </resources>
-            """
+            """,
         )
 
     def test_unmanage_monitor_enabled(self):
@@ -133,7 +132,7 @@ class ManageUnmanage(
                     </operations>
                 </primitive>
             </resources>
-            """
+            """,
         )
 
     def test_manage_monitor(self):
@@ -150,7 +149,7 @@ class ManageUnmanage(
                     </operations>
                 </primitive>
             </resources>
-            """
+            """,
         )
 
     def test_manage_monitor_disabled(self):
@@ -170,7 +169,7 @@ class ManageUnmanage(
             </resources>
             """,
             "Warning: Resource 'A' has no enabled monitor operations."
-                " Re-run with '--monitor' to enable them.\n"
+            " Re-run with '--monitor' to enable them.\n",
         )
 
     def test_unmanage_more(self):
@@ -205,7 +204,7 @@ class ManageUnmanage(
                     </operations>
                 </primitive>
             </resources>
-            """
+            """,
         )
 
     def test_manage_more(self):
@@ -232,7 +231,7 @@ class ManageUnmanage(
                     </operations>
                 </primitive>
             </resources>
-            """
+            """,
         )
 
     def test_unmanage_nonexistent(self):
@@ -240,7 +239,7 @@ class ManageUnmanage(
 
         self.assert_pcs_fail(
             "resource unmanage A B",
-            "Error: bundle/clone/group/resource 'B' does not exist\n"
+            "Error: bundle/clone/group/resource 'B' does not exist\n",
         )
         self.assert_resources_xml_in_cib(
             """
@@ -261,7 +260,7 @@ class ManageUnmanage(
 
         self.assert_pcs_fail(
             "resource manage A B",
-            "Error: bundle/clone/group/resource 'B' does not exist\n"
+            "Error: bundle/clone/group/resource 'B' does not exist\n",
         )
         self.assert_resources_xml_in_cib(
             """

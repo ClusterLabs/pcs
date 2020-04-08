@@ -8,11 +8,14 @@ from pcs.lib.errors import LibraryError
 
 TAG = "group"
 
+
 def is_group(resource_el):
     return resource_el.tag == TAG
 
+
 def append_new(resources_section, group_id):
     return etree.SubElement(resources_section, TAG, id=group_id)
+
 
 # DEPRECATED: combines validation + searching for an existing group
 # (find_element_by_tag_and_id) with group creation; use
@@ -26,18 +29,18 @@ def provide_group(resources_section, group_id):
     string group_id is id of group
     """
     group_element = find_element_by_tag_and_id(
-        TAG,
-        resources_section,
-        group_id,
-        none_if_id_unused=True
+        TAG, resources_section, group_id, none_if_id_unused=True
     )
     if group_element is None:
         group_element = etree.SubElement(resources_section, TAG, id=group_id)
     return group_element
 
+
 def place_resource(
-    group_element, primitive_element,
-    adjacent_resource_id=None, put_after_adjacent=False
+    group_element,
+    primitive_element,
+    adjacent_resource_id=None,
+    put_after_adjacent=False,
 ):
     """
     Add resource into group. This function is also applicable for a modification
@@ -67,9 +70,7 @@ def place_resource(
         return
 
     adjacent_resource = find_element_by_tag_and_id(
-        "primitive",
-        group_element,
-        adjacent_resource_id,
+        "primitive", group_element, adjacent_resource_id,
     )
 
     if put_after_adjacent and adjacent_resource.getnext() is None:
@@ -77,10 +78,10 @@ def place_resource(
         return
 
     index = group_element.index(
-        adjacent_resource.getnext() if put_after_adjacent
-        else adjacent_resource
+        adjacent_resource.getnext() if put_after_adjacent else adjacent_resource
     )
     group_element.insert(index, primitive_element)
+
 
 def get_inner_resources(group_el):
     return group_el.xpath("./primitive")

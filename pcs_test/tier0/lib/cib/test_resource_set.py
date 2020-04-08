@@ -1,9 +1,9 @@
 from unittest import mock, TestCase
 from lxml import etree
 
-from pcs_test.tools.assertions import(
+from pcs_test.tools.assertions import (
     assert_raise_library_error,
-    assert_xml_equal
+    assert_xml_equal,
 )
 
 from pcs.common.reports import ReportItemSeverity as severities
@@ -19,18 +19,18 @@ class PrepareSetTest(TestCase):
         find_valid_id.side_effect = lambda id: {"A": "AA", "B": "BB"}[id]
         self.assertEqual(
             {"ids": ["AA", "BB"], "options": {"sequential": "true"}},
-            resource_set.prepare_set(find_valid_id, {
-                "ids": ["A", "B"],
-                "options": {"sequential": "true"}
-            })
+            resource_set.prepare_set(
+                find_valid_id,
+                {"ids": ["A", "B"], "options": {"sequential": "true"}},
+            ),
         )
 
     def test_refuse_invalid_attribute_name(self):
         assert_raise_library_error(
-            lambda: resource_set.prepare_set(mock.Mock(), {
-                "ids": ["A", "B"],
-                "options": {"invalid_name": "true"}
-            }),
+            lambda: resource_set.prepare_set(
+                mock.Mock(),
+                {"ids": ["A", "B"], "options": {"invalid_name": "true"}},
+            ),
             (
                 severities.ERROR,
                 report_codes.INVALID_OPTIONS,
@@ -39,33 +39,41 @@ class PrepareSetTest(TestCase):
                     "option_type": None,
                     "allowed": ["action", "require-all", "role", "sequential"],
                     "allowed_patterns": [],
-            }),
+                },
+            ),
         )
 
     def test_refuse_invalid_attribute_value(self):
         assert_raise_library_error(
-            lambda: resource_set.prepare_set(mock.Mock(), {
-                "ids": ["A", "B"],
-                "options": {"role": "invalid"}
-            }),
-            (severities.ERROR, report_codes.INVALID_OPTION_VALUE, {
-                'option_name': 'role',
-                'allowed_values': ('Master', 'Slave', 'Started', 'Stopped'),
-                'option_value': 'invalid',
-                'cannot_be_empty': False,
-                'forbidden_characters': None,
-            }),
+            lambda: resource_set.prepare_set(
+                mock.Mock(), {"ids": ["A", "B"], "options": {"role": "invalid"}}
+            ),
+            (
+                severities.ERROR,
+                report_codes.INVALID_OPTION_VALUE,
+                {
+                    "option_name": "role",
+                    "allowed_values": ("Master", "Slave", "Started", "Stopped"),
+                    "option_value": "invalid",
+                    "cannot_be_empty": False,
+                    "forbidden_characters": None,
+                },
+            ),
         )
+
 
 class ExtractIdListTest(TestCase):
     def test_return_id_list_from_resource_set_list(self):
         self.assertEqual(
             [["A", "B"], ["C", "D"]],
-            resource_set.extract_id_set_list([
-                {"ids": ["A", "B"], "options": {}},
-                {"ids": ["C", "D"], "options": {}},
-            ])
+            resource_set.extract_id_set_list(
+                [
+                    {"ids": ["A", "B"], "options": {}},
+                    {"ids": ["C", "D"], "options": {}},
+                ]
+            ),
         )
+
 
 class CreateTest(TestCase):
     def test_resource_set_to_parent(self):
@@ -74,14 +82,18 @@ class CreateTest(TestCase):
             constraint_element,
             {"ids": ["A", "B"], "options": {"sequential": "true"}},
         )
-        assert_xml_equal(etree.tostring(constraint_element).decode(), """
+        assert_xml_equal(
+            etree.tostring(constraint_element).decode(),
+            """
             <constraint>
               <resource_set id="pcs_rsc_set_A_B" sequential="true">
                 <resource_ref id="A"></resource_ref>
                 <resource_ref id="B"></resource_ref>
               </resource_set>
             </constraint>
-        """)
+        """,
+        )
+
 
 class GetResourceIdListTest(TestCase):
     def test_returns_id_list_from_element(self):
@@ -90,9 +102,9 @@ class GetResourceIdListTest(TestCase):
             etree.SubElement(element, "resource_ref").attrib["id"] = _id
 
         self.assertEqual(
-            ["A", "B"],
-            resource_set.get_resource_id_set_list(element)
+            ["A", "B"], resource_set.get_resource_id_set_list(element)
         )
+
 
 class ExportTest(TestCase):
     def test_returns_element_in_dict_representation(self):
@@ -102,6 +114,6 @@ class ExportTest(TestCase):
             etree.SubElement(element, "resource_ref").attrib["id"] = _id
 
         self.assertEqual(
-            {'options': {'role': 'Master'}, 'ids': ['A', 'B']},
-            resource_set.export(element)
+            {"options": {"role": "Master"}, "ids": ["A", "B"]},
+            resource_set.export(element),
         )

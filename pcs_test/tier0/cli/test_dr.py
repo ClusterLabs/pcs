@@ -26,29 +26,20 @@ class Config(TestCase):
 
     def test_success(self, mock_print):
         self.lib.dr.get_config.return_value = {
-            "local_site": {
-                "node_list": [],
-                "site_role": "RECOVERY",
-            },
+            "local_site": {"node_list": [], "site_role": "RECOVERY",},
             "remote_site_list": [
                 {
-                    "node_list": [
-                        {"name": "nodeA2"},
-                        {"name": "nodeA1"},
-                    ],
+                    "node_list": [{"name": "nodeA2"}, {"name": "nodeA1"},],
                     "site_role": "PRIMARY",
                 },
-                {
-                    "node_list": [
-                        {"name": "nodeB1"},
-                    ],
-                    "site_role": "RECOVERY",
-                }
+                {"node_list": [{"name": "nodeB1"},], "site_role": "RECOVERY",},
             ],
         }
         self._call_cmd([])
         self.lib.dr.get_config.assert_called_once_with()
-        mock_print.assert_called_once_with(dedent("""\
+        mock_print.assert_called_once_with(
+            dedent(
+                """\
             Local site:
               Role: Recovery
             Remote site:
@@ -59,7 +50,9 @@ class Config(TestCase):
             Remote site:
               Role: Recovery
               Nodes:
-                nodeB1"""))
+                nodeB1"""
+            )
+        )
 
     @mock.patch("pcs.cli.reports.output.sys.stderr.write")
     def test_invalid_response(self, mock_stderr, mock_print):
@@ -74,7 +67,7 @@ class Config(TestCase):
         mock_print.assert_not_called()
         mock_stderr.assert_called_once_with(
             "Error: Unable to communicate with pcsd, received response:\n"
-                "['wrong response', {'x': 'y'}]\n"
+            "['wrong response', {'x': 'y'}]\n"
         )
 
 
@@ -118,7 +111,8 @@ class Status(TestCase):
                 "local_site": True,
                 "site_role": "PRIMARY",
                 "status_plaintext": (
-                    "local cluster\nstatus" if local_success
+                    "local cluster\nstatus"
+                    if local_success
                     else "this should never be displayed"
                 ),
                 "status_successfully_obtained": local_success,
@@ -127,7 +121,8 @@ class Status(TestCase):
                 "local_site": False,
                 "site_role": "RECOVERY",
                 "status_plaintext": (
-                    "remote cluster\nstatus" if remote_success
+                    "remote cluster\nstatus"
+                    if remote_success
                     else "this should never be displayed"
                 ),
                 "status_successfully_obtained": remote_success,
@@ -136,7 +131,8 @@ class Status(TestCase):
 
     @staticmethod
     def _fixture_print():
-        return dedent("""\
+        return dedent(
+            """\
             --- Local cluster - Primary site ---
             local cluster
             status
@@ -194,14 +190,17 @@ class Status(TestCase):
         self.lib.dr.status_all_sites_plaintext.assert_called_once_with(
             hide_inactive_resources=False, verbose=False
         )
-        mock_print.assert_called_once_with(dedent("""\
+        mock_print.assert_called_once_with(
+            dedent(
+                """\
             --- Local cluster - Primary site ---
             Error: Unable to get status of the cluster from any node
 
             --- Remote cluster - Recovery site ---
             remote cluster
             status"""
-        ))
+            )
+        )
         mock_stderr.assert_called_once_with(
             "Error: Unable to get status of all sites\n"
         )
@@ -215,7 +214,9 @@ class Status(TestCase):
         self.lib.dr.status_all_sites_plaintext.assert_called_once_with(
             hide_inactive_resources=False, verbose=False
         )
-        mock_print.assert_called_once_with(dedent("""\
+        mock_print.assert_called_once_with(
+            dedent(
+                """\
             --- Local cluster - Primary site ---
             local cluster
             status
@@ -223,7 +224,8 @@ class Status(TestCase):
 
             --- Remote cluster - Recovery site ---
             Error: Unable to get status of the cluster from any node"""
-        ))
+            )
+        )
         mock_stderr.assert_called_once_with(
             "Error: Unable to get status of all sites\n"
         )
@@ -237,13 +239,16 @@ class Status(TestCase):
         self.lib.dr.status_all_sites_plaintext.assert_called_once_with(
             hide_inactive_resources=False, verbose=False
         )
-        mock_print.assert_called_once_with(dedent("""\
+        mock_print.assert_called_once_with(
+            dedent(
+                """\
             --- Local cluster - Primary site ---
             Error: Unable to get status of the cluster from any node
 
             --- Remote cluster - Recovery site ---
             Error: Unable to get status of the cluster from any node"""
-        ))
+            )
+        )
         mock_stderr.assert_called_once_with(
             "Error: Unable to get status of all sites\n"
         )
@@ -263,7 +268,7 @@ class Status(TestCase):
         mock_print.assert_not_called()
         mock_stderr.assert_called_once_with(
             "Error: Unable to communicate with pcsd, received response:\n"
-                "['wrong response', {'x': 'y'}]\n"
+            "['wrong response', {'x': 'y'}]\n"
         )
 
 

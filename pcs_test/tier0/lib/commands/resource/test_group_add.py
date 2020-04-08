@@ -36,15 +36,12 @@ class GroupAdd(TestCase):
                 <primitive id="R2" />
             </resources>
         """
-        (self.config
-            .runner.cib.load(resources=resources_before)
-            .env.push_cib(resources=resources_after)
+        (
+            self.config.runner.cib.load(
+                resources=resources_before
+            ).env.push_cib(resources=resources_after)
         )
-        resource.group_add(
-            self.env_assist.get_env(),
-            "G",
-            ["R3", "R1"]
-        )
+        resource.group_add(self.env_assist.get_env(), "G", ["R3", "R1"])
 
     def test_new_group(self):
         resources_before = """
@@ -63,15 +60,12 @@ class GroupAdd(TestCase):
                 </group>
             </resources>
         """
-        (self.config
-            .runner.cib.load(resources=resources_before)
-            .env.push_cib(resources=resources_after)
+        (
+            self.config.runner.cib.load(
+                resources=resources_before
+            ).env.push_cib(resources=resources_after)
         )
-        resource.group_add(
-            self.env_assist.get_env(),
-            "G",
-            ["R3", "R1"]
-        )
+        resource.group_add(self.env_assist.get_env(), "G", ["R3", "R1"])
 
     def _assert_with_adjacent(self, adjacent_id, after_adjacent):
         resources_before = """
@@ -98,16 +92,17 @@ class GroupAdd(TestCase):
                 <primitive id="R2" />
             </resources>
         """
-        (self.config
-            .runner.cib.load(resources=resources_before)
-            .env.push_cib(resources=resources_after)
+        (
+            self.config.runner.cib.load(
+                resources=resources_before
+            ).env.push_cib(resources=resources_after)
         )
         resource.group_add(
             self.env_assist.get_env(),
             "G",
             ["R3", "RGX", "R1"],
             adjacent_resource_id=adjacent_id,
-            put_after_adjacent=after_adjacent
+            put_after_adjacent=after_adjacent,
         )
 
     def test_after_adjacent(self):
@@ -151,14 +146,13 @@ class GroupAdd(TestCase):
                 </group>
             </resources>
         """
-        (self.config
-            .runner.cib.load(resources=resources_before)
-            .env.push_cib(resources=resources_after)
+        (
+            self.config.runner.cib.load(
+                resources=resources_before
+            ).env.push_cib(resources=resources_after)
         )
         resource.group_add(
-            self.env_assist.get_env(),
-            "G",
-            ["RX1", "RY2", "RC1", "RM1"]
+            self.env_assist.get_env(), "G", ["RX1", "RY2", "RC1", "RM1"]
         )
 
     def test_validation(self):
@@ -178,14 +172,12 @@ class GroupAdd(TestCase):
                 </clone>
             </resources>
         """
-        (self.config
-            .runner.cib.load(resources=resources_before)
-        )
+        (self.config.runner.cib.load(resources=resources_before))
         self.env_assist.assert_raise_library_error(
             lambda: resource.group_add(
                 self.env_assist.get_env(),
                 "R1-meta_attributes",
-                ["R2", "R4", "R3", "R2-meta_attributes", "RC1-clone", "RC1"]
+                ["R2", "R4", "R3", "R2-meta_attributes", "RC1-clone", "RC1"],
             )
         )
         self.env_assist.assert_reports(
@@ -202,7 +194,11 @@ class GroupAdd(TestCase):
                     report_codes.ID_BELONGS_TO_UNEXPECTED_TYPE,
                     id="R2-meta_attributes",
                     expected_types=[
-                        "bundle", "clone", "group", "master", "primitive",
+                        "bundle",
+                        "clone",
+                        "group",
+                        "master",
+                        "primitive",
                     ],
                     current_type="meta_attributes",
                 ),
@@ -231,23 +227,20 @@ class GroupAdd(TestCase):
                 <primitive id="R1" />
             </resources>
         """
-        (self.config
-            .runner.cib.load(resources=resources_before)
-        )
+        (self.config.runner.cib.load(resources=resources_before))
         self.env_assist.assert_raise_library_error(
             lambda: resource.group_add(
                 self.env_assist.get_env(),
                 "G",
                 ["R1"],
-                adjacent_resource_id="RX1"
+                adjacent_resource_id="RX1",
             )
         )
         self.env_assist.assert_reports(
             [
                 fixture.error(
-                    report_codes
-                        .CANNOT_GROUP_RESOURCE_ADJACENT_RESOURCE_NOT_IN_GROUP
-                    ,
+                    # pylint: disable=line-too-long
+                    report_codes.CANNOT_GROUP_RESOURCE_ADJACENT_RESOURCE_NOT_IN_GROUP,
                     adjacent_resource_id="RX1",
                     group_id="G",
                 ),
@@ -273,14 +266,16 @@ class GroupAddWait(TestCase):
             </resources>
         """
         self.timeout = 10
-        (self.config
-            .runner.pcmk.can_wait()
+        (
+            self.config.runner.pcmk.can_wait()
             .runner.cib.load(resources=resources_before)
             .env.push_cib(resources=resources_after, wait=self.timeout)
         )
 
     def test_group_running(self):
-        resources_state = fixture.complete_state_resources(etree.fromstring("""
+        resources_state = fixture.complete_state_resources(
+            etree.fromstring(
+                """
             <resources>
                 <group id="G" number_resources="2">
                     <resource id="R1" role="Started" nodes_running_on="1">
@@ -291,25 +286,23 @@ class GroupAddWait(TestCase):
                      </resource>
                 </group>
             </resources>
-        """))
+        """
+            )
+        )
         self.config.runner.pcmk.load_state(
             resources=etree_to_str(resources_state)
         )
         resource.group_add(
-            self.env_assist.get_env(),
-            "G",
-            ["R1", "R2"],
-            wait=self.timeout,
+            self.env_assist.get_env(), "G", ["R1", "R2"], wait=self.timeout,
         )
-        self.env_assist.assert_reports([
-            fixture.report_resource_running(
-                "G",
-                {"Started": ["node1"]}
-            ),
-        ])
+        self.env_assist.assert_reports(
+            [fixture.report_resource_running("G", {"Started": ["node1"]}),]
+        )
 
     def test_group_not_running(self):
-        resources_state = fixture.complete_state_resources(etree.fromstring("""
+        resources_state = fixture.complete_state_resources(
+            etree.fromstring(
+                """
             <resources>
                 <group id="G" number_resources="2">
                     <resource id="R1" role="Started" nodes_running_on="1">
@@ -319,16 +312,15 @@ class GroupAddWait(TestCase):
                      </resource>
                 </group>
             </resources>
-        """))
+        """
+            )
+        )
         self.config.runner.pcmk.load_state(
             resources=etree_to_str(resources_state)
         )
         resource.group_add(
-            self.env_assist.get_env(),
-            "G",
-            ["R1", "R2"],
-            wait=self.timeout,
+            self.env_assist.get_env(), "G", ["R1", "R2"], wait=self.timeout,
         )
-        self.env_assist.assert_reports([
-            fixture.report_resource_not_running("G"),
-        ])
+        self.env_assist.assert_reports(
+            [fixture.report_resource_not_running("G"),]
+        )

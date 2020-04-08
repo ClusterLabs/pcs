@@ -4,16 +4,19 @@ from lxml import etree
 
 def dom_get_child_elements(element):
     return [
-        child for child in element.childNodes
+        child
+        for child in element.childNodes
         if child.nodeType == xml.dom.minidom.Node.ELEMENT_NODE
     ]
 
+
 def etree_to_str(tree):
-    #etree returns string in bytes: b'xml'
-    #python 3 removed .encode() from byte strings
-    #run(...) calls subprocess.Popen.communicate which calls encode...
-    #so there is bytes to str conversion
+    # etree returns string in bytes: b'xml'
+    # python 3 removed .encode() from byte strings
+    # run(...) calls subprocess.Popen.communicate which calls encode...
+    # so there is bytes to str conversion
     return etree.tostring(tree).decode()
+
 
 class XmlManipulation:
     @classmethod

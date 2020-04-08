@@ -35,9 +35,7 @@ class LibraryEnvironmentTest(TestCase):
     def test_user_set(self):
         user = "testuser"
         env = LibraryEnvironment(
-            self.mock_logger,
-            self.mock_reporter,
-            user_login=user
+            self.mock_logger, self.mock_reporter, user_login=user
         )
         self.assertEqual(user, env.user_login)
 
@@ -48,15 +46,14 @@ class LibraryEnvironmentTest(TestCase):
     def test_usergroups_set(self):
         groups = ["some", "group"]
         env = LibraryEnvironment(
-            self.mock_logger,
-            self.mock_reporter,
-            user_groups=groups
+            self.mock_logger, self.mock_reporter, user_groups=groups
         )
         self.assertEqual(groups, env.user_groups)
 
     def test_usergroups_not_set(self):
         env = LibraryEnvironment(self.mock_logger, self.mock_reporter)
         self.assertEqual([], env.user_groups)
+
 
 class GhostFileCodes(TestCase):
     def setUp(self):
@@ -68,35 +65,32 @@ class GhostFileCodes(TestCase):
             self.mock_logger,
             self.mock_reporter,
             cib_data=cib_data,
-            corosync_conf_data=corosync_conf_data
+            corosync_conf_data=corosync_conf_data,
         )
 
     def test_nothing(self):
-        self.assertEqual(
-            self._fixture_get_env().ghost_file_codes,
-            []
-        )
+        self.assertEqual(self._fixture_get_env().ghost_file_codes, [])
 
     def test_corosync(self):
         self.assertEqual(
             self._fixture_get_env(corosync_conf_data="x").ghost_file_codes,
-            [file_type_codes.COROSYNC_CONF]
+            [file_type_codes.COROSYNC_CONF],
         )
 
     def test_cib(self):
         self.assertEqual(
             self._fixture_get_env(cib_data="x").ghost_file_codes,
-            [file_type_codes.CIB]
+            [file_type_codes.CIB],
         )
 
     def test_all(self):
         self.assertEqual(
             self._fixture_get_env(
-                cib_data="x",
-                corosync_conf_data="x",
+                cib_data="x", corosync_conf_data="x",
             ).ghost_file_codes,
-            sorted([file_type_codes.COROSYNC_CONF, file_type_codes.CIB])
+            sorted([file_type_codes.COROSYNC_CONF, file_type_codes.CIB]),
         )
+
 
 @patch_env("CommandRunner")
 class CmdRunner(TestCase):
@@ -111,11 +105,7 @@ class CmdRunner(TestCase):
         runner = env.cmd_runner()
         self.assertEqual(expected_runner, runner)
         mock_runner.assert_called_once_with(
-            self.mock_logger,
-            self.mock_reporter,
-            {
-                "LC_ALL": "C",
-            }
+            self.mock_logger, self.mock_reporter, {"LC_ALL": "C",}
         )
 
     def test_user(self, mock_runner):
@@ -123,19 +113,14 @@ class CmdRunner(TestCase):
         mock_runner.return_value = expected_runner
         user = "testuser"
         env = LibraryEnvironment(
-            self.mock_logger,
-            self.mock_reporter,
-            user_login=user
+            self.mock_logger, self.mock_reporter, user_login=user
         )
         runner = env.cmd_runner()
         self.assertEqual(expected_runner, runner)
         mock_runner.assert_called_once_with(
             self.mock_logger,
             self.mock_reporter,
-            {
-                "CIB_user": user,
-                "LC_ALL": "C",
-            }
+            {"CIB_user": user, "LC_ALL": "C",},
         )
 
     @patch_env("write_tmpfile")
@@ -146,19 +131,14 @@ class CmdRunner(TestCase):
         mock_instance.name = rc("file.tmp")
         mock_tmpfile.return_value = mock_instance
         env = LibraryEnvironment(
-            self.mock_logger,
-            self.mock_reporter,
-            cib_data="<cib />"
+            self.mock_logger, self.mock_reporter, cib_data="<cib />"
         )
         runner = env.cmd_runner()
         self.assertEqual(expected_runner, runner)
         mock_runner.assert_called_once_with(
             self.mock_logger,
             self.mock_reporter,
-            {
-                "LC_ALL": "C",
-                "CIB_file": rc("file.tmp"),
-            }
+            {"LC_ALL": "C", "CIB_file": rc("file.tmp"),},
         )
         mock_tmpfile.assert_called_once_with("<cib />")
 
@@ -169,7 +149,7 @@ class EnsureValidWait(TestCase):
         self.create_env = partial(
             LibraryEnvironment,
             mock.MagicMock(logging.Logger),
-            MockLibraryReportProcessor()
+            MockLibraryReportProcessor(),
         )
 
     @property
@@ -192,8 +172,8 @@ class EnsureValidWait(TestCase):
                 severity.ERROR,
                 report_codes.WAIT_FOR_IDLE_NOT_LIVE_CLUSTER,
                 {},
-                None
-            )
+                None,
+            ),
         )
 
     @patch_env("get_valid_timeout_seconds")

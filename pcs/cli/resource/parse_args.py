@@ -11,15 +11,15 @@ def parse_create_simple(arg_list):
     )
 
     parts = {
-        "meta":  prepare_options(groups.get("meta", [])),
-        "options":  prepare_options(groups.get("options", [])),
+        "meta": prepare_options(groups.get("meta", [])),
+        "options": prepare_options(groups.get("options", [])),
         "op": [
-            prepare_options(op)
-            for op in build_operations(groups.get("op", []))
+            prepare_options(op) for op in build_operations(groups.get("op", []))
         ],
     }
 
     return parts
+
 
 def parse_create(arg_list):
     groups = group_by_keywords(
@@ -32,8 +32,8 @@ def parse_create(arg_list):
 
     try:
         parts = {
-            "meta":  prepare_options(groups.get("meta", [])),
-            "options":  prepare_options(groups.get("options", [])),
+            "meta": prepare_options(groups.get("meta", [])),
+            "options": prepare_options(groups.get("options", [])),
             "op": [
                 prepare_options(op)
                 for op in build_operations(groups.get("op", []))
@@ -57,11 +57,12 @@ def parse_create(arg_list):
                     "Master/Slave resources have been renamed to promotable "
                     "clones, please use the 'promotable' keyword instead of "
                     "'master'. " + SEE_MAN_CHANGES
-                )
+                ),
             )
         raise e
 
     return parts
+
 
 def _parse_bundle_groups(arg_list):
     """
@@ -91,6 +92,7 @@ def _parse_bundle_groups(arg_list):
                 )
     return groups
 
+
 def parse_bundle_create_options(arg_list):
     """
     Commandline options: no options
@@ -105,16 +107,16 @@ def parse_bundle_create_options(arg_list):
         "container": prepare_options(container_options),
         "network": prepare_options(groups.get("network", [])),
         "port_map": [
-            prepare_options(port_map)
-            for port_map in groups.get("port-map", [])
+            prepare_options(port_map) for port_map in groups.get("port-map", [])
         ],
         "storage_map": [
             prepare_options(storage_map)
             for storage_map in groups.get("storage-map", [])
         ],
-        "meta": prepare_options(groups.get("meta", []))
+        "meta": prepare_options(groups.get("meta", [])),
     }
     return parts
+
 
 def parse_bundle_reset_options(arg_list):
     """
@@ -126,16 +128,16 @@ def parse_bundle_reset_options(arg_list):
         "container": prepare_options(container_options),
         "network": prepare_options(groups.get("network", [])),
         "port_map": [
-            prepare_options(port_map)
-            for port_map in groups.get("port-map", [])
+            prepare_options(port_map) for port_map in groups.get("port-map", [])
         ],
         "storage_map": [
             prepare_options(storage_map)
             for storage_map in groups.get("storage-map", [])
         ],
-        "meta": prepare_options(groups.get("meta", []))
+        "meta": prepare_options(groups.get("meta", [])),
     }
     return parts
+
 
 def _split_bundle_map_update_op_and_options(
     map_arg_list, result_parts, map_name
@@ -153,6 +155,7 @@ def _split_bundle_map_update_op_and_options(
     else:
         raise _bundle_map_update_not_valid(map_name)
 
+
 def _bundle_map_update_not_valid(map_name):
     """
     Commandline options: no options
@@ -164,6 +167,7 @@ def _bundle_map_update_not_valid(map_name):
         ).format(map=map_name)
     )
 
+
 def parse_bundle_update_options(arg_list):
     """
     Commandline options: no options
@@ -171,9 +175,7 @@ def parse_bundle_update_options(arg_list):
     groups = _parse_bundle_groups(arg_list)
     port_map = {"add": [], "remove": []}
     for map_group in groups.get("port-map", []):
-        _split_bundle_map_update_op_and_options(
-            map_group, port_map, "port-map"
-        )
+        _split_bundle_map_update_op_and_options(map_group, port_map, "port-map")
     storage_map = {"add": [], "remove": []}
     for map_group in groups.get("storage-map", []):
         _split_bundle_map_update_op_and_options(
@@ -186,9 +188,10 @@ def parse_bundle_update_options(arg_list):
         "port_map_remove": port_map["remove"],
         "storage_map_add": storage_map["add"],
         "storage_map_remove": storage_map["remove"],
-        "meta": prepare_options(groups.get("meta", []))
+        "meta": prepare_options(groups.get("meta", [])),
     }
     return parts
+
 
 def build_operations(op_group_list):
     """
@@ -201,11 +204,11 @@ def build_operations(op_group_list):
     """
     operation_list = []
     for op_group in op_group_list:
-        #empty operation is not allowed
+        # empty operation is not allowed
         if not op_group:
             raise __not_enough_parts_in_operation()
 
-        #every operation group needs to start with operation name
+        # every operation group needs to start with operation name
         if "=" in op_group[0]:
             raise __every_operation_needs_name()
 
@@ -215,18 +218,21 @@ def build_operations(op_group_list):
             else:
                 operation_list[-1].append(arg)
 
-    #every operation needs at least name and one option
-    #there can be more than one operation in op_group: check is after processing
+    # every operation needs at least name and one option
+    # there can be more than one operation in op_group: check is after
+    # processing
     if any([len(operation) < 2 for operation in operation_list]):
         raise __not_enough_parts_in_operation()
 
     return operation_list
+
 
 def __not_enough_parts_in_operation():
     return CmdLineInputError(
         "When using 'op' you must specify an operation name"
         " and at least one option"
     )
+
 
 def __every_operation_needs_name():
     return CmdLineInputError(

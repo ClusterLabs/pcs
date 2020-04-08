@@ -12,7 +12,7 @@ from pcs.lib.file.instance import FileInstance
 from pcs.lib.errors import LibraryError
 
 
-class BoothEnv():
+class BoothEnv:
     def __init__(self, instance_name, booth_files_data):
         """
         Create a new BoothEnv
@@ -22,8 +22,7 @@ class BoothEnv():
         """
         if (
             "config_data" in booth_files_data
-            and
-            "key_data" not in booth_files_data
+            and "key_data" not in booth_files_data
         ):
             raise LibraryError(
                 ReportItem.error(
@@ -35,8 +34,7 @@ class BoothEnv():
             )
         if (
             "config_data" not in booth_files_data
-            and
-            "key_data" in booth_files_data
+            and "key_data" in booth_files_data
         ):
             raise LibraryError(
                 ReportItem.error(
@@ -54,11 +52,11 @@ class BoothEnv():
 
         self._config_file = FileInstance.for_booth_config(
             f"{self._instance_name}.conf",
-            **self._init_file_data(booth_files_data, "config_data")
+            **self._init_file_data(booth_files_data, "config_data"),
         )
         self._key_file = FileInstance.for_booth_key(
             f"{self._instance_name}.key",
-            **self._init_file_data(booth_files_data, "key_data")
+            **self._init_file_data(booth_files_data, "key_data"),
         )
         if isinstance(self._key_file.raw_file, raw_file.GhostFile):
             self._key_path = booth_files_data.get("key_path", "")
@@ -69,14 +67,8 @@ class BoothEnv():
     def _init_file_data(booth_files_data, file_key):
         # ghost file not specified
         if not file_key in booth_files_data:
-            return dict(
-                ghost_file=False,
-                ghost_data=None,
-            )
-        return dict(
-            ghost_file=True,
-            ghost_data=booth_files_data[file_key],
-        )
+            return dict(ghost_file=False, ghost_data=None,)
+        return dict(ghost_file=True, ghost_data=booth_files_data[file_key],)
 
     @property
     def instance_name(self):
@@ -113,8 +105,7 @@ class BoothEnv():
 
     def create_facade(self, site_list, arbitrator_list):
         return self._config_file.toolbox.facade.create(
-            site_list,
-            arbitrator_list
+            site_list, arbitrator_list
         )
 
     def export(self):

@@ -45,8 +45,8 @@ class QdeviceBadModelTest(QdeviceTestCase):
                     "allowed_values": ["net"],
                     "cannot_be_empty": False,
                     "forbidden_characters": None,
-                }
-            )
+                },
+            ),
         )
 
     def test_setup(self):
@@ -55,9 +55,7 @@ class QdeviceBadModelTest(QdeviceTestCase):
         )
 
     def test_destroy(self):
-        self.base_test(
-            lambda: lib.qdevice_destroy(self.lib_env, "bad model")
-        )
+        self.base_test(lambda: lib.qdevice_destroy(self.lib_env, "bad model"))
 
     def test_status_text(self):
         self.base_test(
@@ -65,39 +63,25 @@ class QdeviceBadModelTest(QdeviceTestCase):
         )
 
     def test_enable(self):
-        self.base_test(
-            lambda: lib.qdevice_enable(self.lib_env, "bad model")
-        )
+        self.base_test(lambda: lib.qdevice_enable(self.lib_env, "bad model"))
 
     def test_disable(self):
-        self.base_test(
-            lambda: lib.qdevice_disable(self.lib_env, "bad model")
-        )
+        self.base_test(lambda: lib.qdevice_disable(self.lib_env, "bad model"))
 
     def test_start(self):
-        self.base_test(
-            lambda: lib.qdevice_start(self.lib_env, "bad model")
-        )
+        self.base_test(lambda: lib.qdevice_start(self.lib_env, "bad model"))
 
     def test_stop(self):
-        self.base_test(
-            lambda: lib.qdevice_stop(self.lib_env, "bad model")
-        )
+        self.base_test(lambda: lib.qdevice_stop(self.lib_env, "bad model"))
 
     def test_kill(self):
-        self.base_test(
-            lambda: lib.qdevice_kill(self.lib_env, "bad model")
-        )
+        self.base_test(lambda: lib.qdevice_kill(self.lib_env, "bad model"))
 
 
 @mock.patch("pcs.lib.external.start_service")
 @mock.patch("pcs.lib.external.enable_service")
 @mock.patch("pcs.lib.commands.qdevice.qdevice_net.qdevice_setup")
-@mock.patch.object(
-    LibraryEnvironment,
-    "cmd_runner",
-    lambda self: "mock_runner"
-)
+@mock.patch.object(LibraryEnvironment, "cmd_runner", lambda self: "mock_runner")
 class QdeviceNetSetupTest(QdeviceTestCase):
     def test_success(self, mock_net_setup, mock_net_enable, mock_net_start):
         lib.qdevice_setup(self.lib_env, "net", False, False)
@@ -111,11 +95,9 @@ class QdeviceNetSetupTest(QdeviceTestCase):
                 (
                     severity.INFO,
                     report_codes.QDEVICE_INITIALIZATION_SUCCESS,
-                    {
-                        "model": "net",
-                    }
+                    {"model": "net",},
                 )
-            ]
+            ],
         )
 
     def test_start_enable_success(
@@ -132,9 +114,7 @@ class QdeviceNetSetupTest(QdeviceTestCase):
                 (
                     severity.INFO,
                     report_codes.QDEVICE_INITIALIZATION_SUCCESS,
-                    {
-                        "model": "net",
-                    }
+                    {"model": "net",},
                 ),
                 (
                     severity.INFO,
@@ -144,7 +124,7 @@ class QdeviceNetSetupTest(QdeviceTestCase):
                         "service": "quorum device",
                         "node": "",
                         "instance": "",
-                    }
+                    },
                 ),
                 (
                     severity.INFO,
@@ -153,7 +133,7 @@ class QdeviceNetSetupTest(QdeviceTestCase):
                         "action": reports.const.SERVICE_ACTION_START,
                         "service": "quorum device",
                         "instance": "",
-                    }
+                    },
                 ),
                 (
                     severity.INFO,
@@ -163,33 +143,27 @@ class QdeviceNetSetupTest(QdeviceTestCase):
                         "service": "quorum device",
                         "node": "",
                         "instance": "",
-                    }
-                )
-            ]
+                    },
+                ),
+            ],
         )
 
-    def test_init_failed(
-        self, mock_net_setup, mock_net_enable, mock_net_start
-    ):
+    def test_init_failed(self, mock_net_setup, mock_net_enable, mock_net_start):
         mock_net_setup.side_effect = LibraryError("mock_report_item")
         self.assertRaises(
             LibraryError,
-            lambda: lib.qdevice_setup(self.lib_env, "net", False, False)
+            lambda: lib.qdevice_setup(self.lib_env, "net", False, False),
         )
         mock_net_setup.assert_called_once_with("mock_runner")
         mock_net_enable.assert_not_called()
         mock_net_start.assert_not_called()
-        assert_report_item_list_equal(
-            self.mock_reporter.report_item_list,
-            []
-        )
+        assert_report_item_list_equal(self.mock_reporter.report_item_list, [])
 
     def test_enable_failed(
         self, mock_net_setup, mock_net_enable, mock_net_start
     ):
         mock_net_enable.side_effect = EnableServiceError(
-            "test service",
-            "test error"
+            "test service", "test error"
         )
 
         assert_raise_library_error(
@@ -203,8 +177,8 @@ class QdeviceNetSetupTest(QdeviceTestCase):
                     "reason": "test error",
                     "node": "",
                     "instance": "",
-                }
-            )
+                },
+            ),
         )
 
         mock_net_setup.assert_called_once_with("mock_runner")
@@ -216,19 +190,16 @@ class QdeviceNetSetupTest(QdeviceTestCase):
                 (
                     severity.INFO,
                     report_codes.QDEVICE_INITIALIZATION_SUCCESS,
-                    {
-                        "model": "net",
-                    }
+                    {"model": "net",},
                 )
-            ]
+            ],
         )
 
     def test_start_failed(
         self, mock_net_setup, mock_net_enable, mock_net_start
     ):
         mock_net_start.side_effect = StartServiceError(
-            "test service",
-            "test error"
+            "test service", "test error"
         )
 
         assert_raise_library_error(
@@ -242,8 +213,8 @@ class QdeviceNetSetupTest(QdeviceTestCase):
                     "reason": "test error",
                     "node": "",
                     "instance": "",
-                }
-            )
+                },
+            ),
         )
 
         mock_net_setup.assert_called_once_with("mock_runner")
@@ -255,9 +226,7 @@ class QdeviceNetSetupTest(QdeviceTestCase):
                 (
                     severity.INFO,
                     report_codes.QDEVICE_INITIALIZATION_SUCCESS,
-                    {
-                        "model": "net",
-                    }
+                    {"model": "net",},
                 ),
                 (
                     severity.INFO,
@@ -267,7 +236,7 @@ class QdeviceNetSetupTest(QdeviceTestCase):
                         "service": "quorum device",
                         "node": "",
                         "instance": "",
-                    }
+                    },
                 ),
                 (
                     severity.INFO,
@@ -276,9 +245,9 @@ class QdeviceNetSetupTest(QdeviceTestCase):
                         "action": reports.const.SERVICE_ACTION_START,
                         "service": "quorum device",
                         "instance": "",
-                    }
-                )
-            ]
+                    },
+                ),
+            ],
         )
 
 
@@ -286,11 +255,7 @@ class QdeviceNetSetupTest(QdeviceTestCase):
 @mock.patch("pcs.lib.external.stop_service")
 @mock.patch("pcs.lib.external.disable_service")
 @mock.patch("pcs.lib.commands.qdevice.qdevice_net.qdevice_destroy")
-@mock.patch.object(
-    LibraryEnvironment,
-    "cmd_runner",
-    lambda self: "mock_runner"
-)
+@mock.patch.object(LibraryEnvironment, "cmd_runner", lambda self: "mock_runner")
 class QdeviceNetDestroyTest(QdeviceTestCase):
     def test_success_not_used(
         self, mock_net_destroy, mock_net_disable, mock_net_stop, mock_status
@@ -301,8 +266,7 @@ class QdeviceNetDestroyTest(QdeviceTestCase):
 
         mock_net_stop.assert_called_once_with("mock_runner", "corosync-qnetd")
         mock_net_disable.assert_called_once_with(
-            "mock_runner",
-            "corosync-qnetd"
+            "mock_runner", "corosync-qnetd"
         )
         mock_net_destroy.assert_called_once_with()
         assert_report_item_list_equal(
@@ -315,7 +279,7 @@ class QdeviceNetDestroyTest(QdeviceTestCase):
                         "action": reports.const.SERVICE_ACTION_STOP,
                         "service": "quorum device",
                         "instance": "",
-                    }
+                    },
                 ),
                 (
                     severity.INFO,
@@ -325,7 +289,7 @@ class QdeviceNetDestroyTest(QdeviceTestCase):
                         "service": "quorum device",
                         "node": "",
                         "instance": "",
-                    }
+                    },
                 ),
                 (
                     severity.INFO,
@@ -335,16 +299,14 @@ class QdeviceNetDestroyTest(QdeviceTestCase):
                         "service": "quorum device",
                         "node": "",
                         "instance": "",
-                    }
+                    },
                 ),
                 (
                     severity.INFO,
                     report_codes.QDEVICE_DESTROY_SUCCESS,
-                    {
-                        "model": "net",
-                    }
-                )
-            ]
+                    {"model": "net",},
+                ),
+            ],
         )
 
     def test_success_used_forced(
@@ -356,8 +318,7 @@ class QdeviceNetDestroyTest(QdeviceTestCase):
 
         mock_net_stop.assert_called_once_with("mock_runner", "corosync-qnetd")
         mock_net_disable.assert_called_once_with(
-            "mock_runner",
-            "corosync-qnetd"
+            "mock_runner", "corosync-qnetd"
         )
         mock_net_destroy.assert_called_once_with()
         assert_report_item_list_equal(
@@ -366,9 +327,7 @@ class QdeviceNetDestroyTest(QdeviceTestCase):
                 (
                     severity.WARNING,
                     report_codes.QDEVICE_USED_BY_CLUSTERS,
-                    {
-                        "clusters": ["a_cluster"],
-                    }
+                    {"clusters": ["a_cluster"],},
                 ),
                 (
                     severity.INFO,
@@ -377,7 +336,7 @@ class QdeviceNetDestroyTest(QdeviceTestCase):
                         "action": reports.const.SERVICE_ACTION_STOP,
                         "service": "quorum device",
                         "instance": "",
-                    }
+                    },
                 ),
                 (
                     severity.INFO,
@@ -387,7 +346,7 @@ class QdeviceNetDestroyTest(QdeviceTestCase):
                         "service": "quorum device",
                         "node": "",
                         "instance": "",
-                    }
+                    },
                 ),
                 (
                     severity.INFO,
@@ -397,16 +356,14 @@ class QdeviceNetDestroyTest(QdeviceTestCase):
                         "service": "quorum device",
                         "node": "",
                         "instance": "",
-                    }
+                    },
                 ),
                 (
                     severity.INFO,
                     report_codes.QDEVICE_DESTROY_SUCCESS,
-                    {
-                        "model": "net",
-                    }
-                )
-            ]
+                    {"model": "net",},
+                ),
+            ],
         )
 
     def test_used_not_forced(
@@ -423,12 +380,10 @@ class QdeviceNetDestroyTest(QdeviceTestCase):
                 (
                     severity.ERROR,
                     report_codes.QDEVICE_USED_BY_CLUSTERS,
-                    {
-                        "clusters": ["a_cluster"],
-                    },
-                    report_codes.FORCE_QDEVICE_USED
+                    {"clusters": ["a_cluster"],},
+                    report_codes.FORCE_QDEVICE_USED,
                 ),
-            ]
+            ],
         )
 
         mock_net_stop.assert_not_called()
@@ -440,8 +395,7 @@ class QdeviceNetDestroyTest(QdeviceTestCase):
     ):
         mock_status.return_value = ""
         mock_net_stop.side_effect = StopServiceError(
-            "test service",
-            "test error"
+            "test service", "test error"
         )
 
         assert_raise_library_error(
@@ -455,8 +409,8 @@ class QdeviceNetDestroyTest(QdeviceTestCase):
                     "reason": "test error",
                     "node": "",
                     "instance": "",
-                }
-            )
+                },
+            ),
         )
 
         mock_net_stop.assert_called_once_with("mock_runner", "corosync-qnetd")
@@ -472,9 +426,9 @@ class QdeviceNetDestroyTest(QdeviceTestCase):
                         "action": reports.const.SERVICE_ACTION_STOP,
                         "service": "quorum device",
                         "instance": "",
-                    }
+                    },
                 )
-            ]
+            ],
         )
 
     def test_disable_failed(
@@ -482,8 +436,7 @@ class QdeviceNetDestroyTest(QdeviceTestCase):
     ):
         mock_status.return_value = ""
         mock_net_disable.side_effect = DisableServiceError(
-            "test service",
-            "test error"
+            "test service", "test error"
         )
 
         assert_raise_library_error(
@@ -497,14 +450,13 @@ class QdeviceNetDestroyTest(QdeviceTestCase):
                     "reason": "test error",
                     "node": "",
                     "instance": "",
-                }
-            )
+                },
+            ),
         )
 
         mock_net_stop.assert_called_once_with("mock_runner", "corosync-qnetd")
         mock_net_disable.assert_called_once_with(
-            "mock_runner",
-            "corosync-qnetd"
+            "mock_runner", "corosync-qnetd"
         )
         mock_net_destroy.assert_not_called()
         assert_report_item_list_equal(
@@ -517,7 +469,7 @@ class QdeviceNetDestroyTest(QdeviceTestCase):
                         "action": reports.const.SERVICE_ACTION_STOP,
                         "service": "quorum device",
                         "instance": "",
-                    }
+                    },
                 ),
                 (
                     severity.INFO,
@@ -527,9 +479,9 @@ class QdeviceNetDestroyTest(QdeviceTestCase):
                         "service": "quorum device",
                         "node": "",
                         "instance": "",
-                    }
-                )
-            ]
+                    },
+                ),
+            ],
         )
 
     def test_destroy_failed(
@@ -539,14 +491,12 @@ class QdeviceNetDestroyTest(QdeviceTestCase):
         mock_net_destroy.side_effect = LibraryError("mock_report_item")
 
         self.assertRaises(
-            LibraryError,
-            lambda: lib.qdevice_destroy(self.lib_env, "net")
+            LibraryError, lambda: lib.qdevice_destroy(self.lib_env, "net")
         )
 
         mock_net_stop.assert_called_once_with("mock_runner", "corosync-qnetd")
         mock_net_disable.assert_called_once_with(
-            "mock_runner",
-            "corosync-qnetd"
+            "mock_runner", "corosync-qnetd"
         )
         mock_net_destroy.assert_called_once_with()
         assert_report_item_list_equal(
@@ -559,7 +509,7 @@ class QdeviceNetDestroyTest(QdeviceTestCase):
                         "action": reports.const.SERVICE_ACTION_STOP,
                         "service": "quorum device",
                         "instance": "",
-                    }
+                    },
                 ),
                 (
                     severity.INFO,
@@ -569,7 +519,7 @@ class QdeviceNetDestroyTest(QdeviceTestCase):
                         "service": "quorum device",
                         "node": "",
                         "instance": "",
-                    }
+                    },
                 ),
                 (
                     severity.INFO,
@@ -579,19 +529,15 @@ class QdeviceNetDestroyTest(QdeviceTestCase):
                         "service": "quorum device",
                         "node": "",
                         "instance": "",
-                    }
-                )
-            ]
+                    },
+                ),
+            ],
         )
 
 
 @mock.patch("pcs.lib.commands.qdevice.qdevice_net.qdevice_status_cluster_text")
 @mock.patch("pcs.lib.commands.qdevice.qdevice_net.qdevice_status_generic_text")
-@mock.patch.object(
-    LibraryEnvironment,
-    "cmd_runner",
-    lambda self: "mock_runner"
-)
+@mock.patch.object(LibraryEnvironment, "cmd_runner", lambda self: "mock_runner")
 class TestQdeviceNetStatusTextTest(QdeviceTestCase):
     def test_success(self, mock_status_generic, mock_status_cluster):
         mock_status_generic.return_value = "generic status info\n"
@@ -599,7 +545,7 @@ class TestQdeviceNetStatusTextTest(QdeviceTestCase):
 
         self.assertEqual(
             lib.qdevice_status_text(self.lib_env, "net"),
-             "generic status info\ncluster status info\n"
+            "generic status info\ncluster status info\n",
         )
 
         mock_status_generic.assert_called_once_with("mock_runner", False)
@@ -611,7 +557,7 @@ class TestQdeviceNetStatusTextTest(QdeviceTestCase):
 
         self.assertEqual(
             lib.qdevice_status_text(self.lib_env, "net", verbose=True),
-             "generic status info\ncluster status info\n"
+            "generic status info\ncluster status info\n",
         )
 
         mock_status_generic.assert_called_once_with("mock_runner", True)
@@ -623,7 +569,7 @@ class TestQdeviceNetStatusTextTest(QdeviceTestCase):
 
         self.assertEqual(
             lib.qdevice_status_text(self.lib_env, "net", cluster="name"),
-             "generic status info\ncluster status info\n"
+            "generic status info\ncluster status info\n",
         )
 
         mock_status_generic.assert_called_once_with("mock_runner", False)
@@ -638,8 +584,7 @@ class TestQdeviceNetStatusTextTest(QdeviceTestCase):
         mock_status_cluster.return_value = "cluster status info\n"
 
         self.assertRaises(
-            LibraryError,
-            lambda: lib.qdevice_status_text(self.lib_env, "net")
+            LibraryError, lambda: lib.qdevice_status_text(self.lib_env, "net")
         )
 
         mock_status_generic.assert_called_once_with("mock_runner", False)
@@ -652,8 +597,7 @@ class TestQdeviceNetStatusTextTest(QdeviceTestCase):
         mock_status_cluster.side_effect = LibraryError("mock_report_item")
 
         self.assertRaises(
-            LibraryError,
-            lambda: lib.qdevice_status_text(self.lib_env, "net")
+            LibraryError, lambda: lib.qdevice_status_text(self.lib_env, "net")
         )
 
         mock_status_generic.assert_called_once_with("mock_runner", False)
@@ -661,11 +605,7 @@ class TestQdeviceNetStatusTextTest(QdeviceTestCase):
 
 
 @mock.patch("pcs.lib.external.enable_service")
-@mock.patch.object(
-    LibraryEnvironment,
-    "cmd_runner",
-    lambda self: "mock_runner"
-)
+@mock.patch.object(LibraryEnvironment, "cmd_runner", lambda self: "mock_runner")
 class QdeviceNetEnableTest(QdeviceTestCase):
     def test_success(self, mock_net_enable):
         lib.qdevice_enable(self.lib_env, "net")
@@ -681,15 +621,14 @@ class QdeviceNetEnableTest(QdeviceTestCase):
                         "service": "quorum device",
                         "node": "",
                         "instance": "",
-                    }
+                    },
                 )
-            ]
+            ],
         )
 
     def test_failed(self, mock_net_enable):
         mock_net_enable.side_effect = EnableServiceError(
-            "test service",
-            "test error"
+            "test service", "test error"
         )
 
         assert_raise_library_error(
@@ -703,24 +642,19 @@ class QdeviceNetEnableTest(QdeviceTestCase):
                     "reason": "test error",
                     "node": "",
                     "instance": "",
-                }
-            )
+                },
+            ),
         )
         mock_net_enable.assert_called_once_with("mock_runner", "corosync-qnetd")
 
 
 @mock.patch("pcs.lib.external.disable_service")
-@mock.patch.object(
-    LibraryEnvironment,
-    "cmd_runner",
-    lambda self: "mock_runner"
-)
+@mock.patch.object(LibraryEnvironment, "cmd_runner", lambda self: "mock_runner")
 class QdeviceNetDisableTest(QdeviceTestCase):
     def test_success(self, mock_net_disable):
         lib.qdevice_disable(self.lib_env, "net")
         mock_net_disable.assert_called_once_with(
-            "mock_runner",
-            "corosync-qnetd"
+            "mock_runner", "corosync-qnetd"
         )
         assert_report_item_list_equal(
             self.mock_reporter.report_item_list,
@@ -733,15 +667,14 @@ class QdeviceNetDisableTest(QdeviceTestCase):
                         "service": "quorum device",
                         "node": "",
                         "instance": "",
-                    }
+                    },
                 )
-            ]
+            ],
         )
 
     def test_failed(self, mock_net_disable):
         mock_net_disable.side_effect = DisableServiceError(
-            "test service",
-            "test error"
+            "test service", "test error"
         )
 
         assert_raise_library_error(
@@ -755,22 +688,17 @@ class QdeviceNetDisableTest(QdeviceTestCase):
                     "reason": "test error",
                     "node": "",
                     "instance": "",
-                }
-            )
+                },
+            ),
         )
         mock_net_disable.assert_called_once_with(
-            "mock_runner",
-            "corosync-qnetd"
+            "mock_runner", "corosync-qnetd"
         )
 
 
 @mock.patch("pcs.lib.corosync.qdevice_net.qdevice_initialized")
 @mock.patch("pcs.lib.external.start_service")
-@mock.patch.object(
-    LibraryEnvironment,
-    "cmd_runner",
-    lambda self: "mock_runner"
-)
+@mock.patch.object(LibraryEnvironment, "cmd_runner", lambda self: "mock_runner")
 class QdeviceNetStartTest(QdeviceTestCase):
     def test_success(self, mock_net_start, mock_qdevice_initialized):
         mock_qdevice_initialized.return_value = True
@@ -787,7 +715,7 @@ class QdeviceNetStartTest(QdeviceTestCase):
                         "action": reports.const.SERVICE_ACTION_START,
                         "service": "quorum device",
                         "instance": "",
-                    }
+                    },
                 ),
                 (
                     severity.INFO,
@@ -797,15 +725,14 @@ class QdeviceNetStartTest(QdeviceTestCase):
                         "service": "quorum device",
                         "node": "",
                         "instance": "",
-                    }
-                )
-            ]
+                    },
+                ),
+            ],
         )
 
     def test_failed(self, mock_net_start, mock_qdevice_initialized):
         mock_net_start.side_effect = StartServiceError(
-            "test service",
-            "test error"
+            "test service", "test error"
         )
         mock_qdevice_initialized.return_value = True
 
@@ -820,8 +747,8 @@ class QdeviceNetStartTest(QdeviceTestCase):
                     "reason": "test error",
                     "node": "",
                     "instance": "",
-                }
-            )
+                },
+            ),
         )
         mock_net_start.assert_called_once_with("mock_runner", "corosync-qnetd")
         mock_qdevice_initialized.assert_called_once_with()
@@ -835,9 +762,9 @@ class QdeviceNetStartTest(QdeviceTestCase):
                         "action": reports.const.SERVICE_ACTION_START,
                         "service": "quorum device",
                         "instance": "",
-                    }
+                    },
                 )
-            ]
+            ],
         )
 
     def test_qdevice_not_initialized(
@@ -850,10 +777,8 @@ class QdeviceNetStartTest(QdeviceTestCase):
             (
                 severity.ERROR,
                 report_codes.QDEVICE_NOT_INITIALIZED,
-                {
-                    "model": "net",
-                }
-            )
+                {"model": "net",},
+            ),
         )
         mock_net_start.assert_not_called()
         mock_qdevice_initialized.assert_called_once_with()
@@ -861,11 +786,7 @@ class QdeviceNetStartTest(QdeviceTestCase):
 
 @mock.patch("pcs.lib.corosync.qdevice_net.qdevice_status_cluster_text")
 @mock.patch("pcs.lib.external.stop_service")
-@mock.patch.object(
-    LibraryEnvironment,
-    "cmd_runner",
-    lambda self: "mock_runner"
-)
+@mock.patch.object(LibraryEnvironment, "cmd_runner", lambda self: "mock_runner")
 class QdeviceNetStopTest(QdeviceTestCase):
     def test_success_not_used(self, mock_net_stop, mock_status):
         mock_status.return_value = ""
@@ -883,7 +804,7 @@ class QdeviceNetStopTest(QdeviceTestCase):
                         "action": reports.const.SERVICE_ACTION_STOP,
                         "service": "quorum device",
                         "instance": "",
-                    }
+                    },
                 ),
                 (
                     severity.INFO,
@@ -893,9 +814,9 @@ class QdeviceNetStopTest(QdeviceTestCase):
                         "service": "quorum device",
                         "node": "",
                         "instance": "",
-                    }
-                )
-            ]
+                    },
+                ),
+            ],
         )
 
     def test_success_used_forced(self, mock_net_stop, mock_status):
@@ -910,9 +831,7 @@ class QdeviceNetStopTest(QdeviceTestCase):
                 (
                     severity.WARNING,
                     report_codes.QDEVICE_USED_BY_CLUSTERS,
-                    {
-                        "clusters": ["a_cluster"],
-                    }
+                    {"clusters": ["a_cluster"],},
                 ),
                 (
                     severity.INFO,
@@ -921,7 +840,7 @@ class QdeviceNetStopTest(QdeviceTestCase):
                         "action": reports.const.SERVICE_ACTION_STOP,
                         "service": "quorum device",
                         "instance": "",
-                    }
+                    },
                 ),
                 (
                     severity.INFO,
@@ -931,20 +850,16 @@ class QdeviceNetStopTest(QdeviceTestCase):
                         "service": "quorum device",
                         "node": "",
                         "instance": "",
-                    }
-                )
-            ]
+                    },
+                ),
+            ],
         )
 
     def test_used_not_forced(self, mock_net_stop, mock_status):
         mock_status.return_value = 'Cluster "a_cluster":\n'
 
         assert_raise_library_error(
-            lambda: lib.qdevice_stop(
-                self.lib_env,
-                "net",
-                proceed_if_used=False
-            )
+            lambda: lib.qdevice_stop(self.lib_env, "net", proceed_if_used=False)
         )
         assert_report_item_list_equal(
             self.mock_reporter.report_item_list,
@@ -952,20 +867,17 @@ class QdeviceNetStopTest(QdeviceTestCase):
                 (
                     severity.ERROR,
                     report_codes.QDEVICE_USED_BY_CLUSTERS,
-                    {
-                        "clusters": ["a_cluster"],
-                    },
-                    report_codes.FORCE_QDEVICE_USED
+                    {"clusters": ["a_cluster"],},
+                    report_codes.FORCE_QDEVICE_USED,
                 ),
-            ]
+            ],
         )
         mock_net_stop.assert_not_called()
 
     def test_failed(self, mock_net_stop, mock_status):
         mock_status.return_value = ""
         mock_net_stop.side_effect = StopServiceError(
-            "test service",
-            "test error"
+            "test service", "test error"
         )
 
         assert_raise_library_error(
@@ -979,8 +891,8 @@ class QdeviceNetStopTest(QdeviceTestCase):
                     "reason": "test error",
                     "node": "",
                     "instance": "",
-                }
-            )
+                },
+            ),
         )
         mock_net_stop.assert_called_once_with("mock_runner", "corosync-qnetd")
         assert_report_item_list_equal(
@@ -993,25 +905,18 @@ class QdeviceNetStopTest(QdeviceTestCase):
                         "action": reports.const.SERVICE_ACTION_STOP,
                         "service": "quorum device",
                         "instance": "",
-                    }
+                    },
                 )
-            ]
+            ],
         )
 
 
 @mock.patch("pcs.lib.external.kill_services")
-@mock.patch.object(
-    LibraryEnvironment,
-    "cmd_runner",
-    lambda self: "mock_runner"
-)
+@mock.patch.object(LibraryEnvironment, "cmd_runner", lambda self: "mock_runner")
 class QdeviceNetKillTest(QdeviceTestCase):
     def test_success(self, mock_net_kill):
         lib.qdevice_kill(self.lib_env, "net")
-        mock_net_kill.assert_called_once_with(
-            "mock_runner",
-            ["corosync-qnetd"]
-        )
+        mock_net_kill.assert_called_once_with("mock_runner", ["corosync-qnetd"])
         assert_report_item_list_equal(
             self.mock_reporter.report_item_list,
             [
@@ -1023,15 +928,14 @@ class QdeviceNetKillTest(QdeviceTestCase):
                         "service": "quorum device",
                         "node": "",
                         "instance": "",
-                    }
+                    },
                 )
-            ]
+            ],
         )
 
     def test_failed(self, mock_net_kill):
         mock_net_kill.side_effect = KillServicesError(
-            ["test service"],
-            "test error"
+            ["test service"], "test error"
         )
 
         assert_raise_library_error(
@@ -1045,23 +949,16 @@ class QdeviceNetKillTest(QdeviceTestCase):
                     "reason": "test error",
                     "node": "",
                     "instance": "",
-                }
-            )
+                },
+            ),
         )
-        mock_net_kill.assert_called_once_with(
-            "mock_runner",
-            ["corosync-qnetd"]
-        )
+        mock_net_kill.assert_called_once_with("mock_runner", ["corosync-qnetd"])
 
 
 @mock.patch(
     "pcs.lib.commands.qdevice.qdevice_net.qdevice_sign_certificate_request"
 )
-@mock.patch.object(
-    LibraryEnvironment,
-    "cmd_runner",
-    lambda self: "mock_runner"
-)
+@mock.patch.object(LibraryEnvironment, "cmd_runner", lambda self: "mock_runner")
 class QdeviceNetSignCertificateRequestTest(QdeviceTestCase):
     def test_success(self, mock_qdevice_func):
         qdevice_func_input = "certificate request".encode("utf-8")
@@ -1072,16 +969,12 @@ class QdeviceNetSignCertificateRequestTest(QdeviceTestCase):
         self.assertEqual(
             base64.b64encode(qdevice_func_output),
             lib.qdevice_net_sign_certificate_request(
-                self.lib_env,
-                base64.b64encode(qdevice_func_input),
-                cluster_name
-            )
+                self.lib_env, base64.b64encode(qdevice_func_input), cluster_name
+            ),
         )
 
         mock_qdevice_func.assert_called_once_with(
-            "mock_runner",
-            qdevice_func_input,
-            cluster_name
+            "mock_runner", qdevice_func_input, cluster_name
         )
 
     def test_bad_input(self, mock_qdevice_func):
@@ -1090,9 +983,7 @@ class QdeviceNetSignCertificateRequestTest(QdeviceTestCase):
 
         assert_raise_library_error(
             lambda: lib.qdevice_net_sign_certificate_request(
-                self.lib_env,
-                qdevice_func_input,
-                cluster_name
+                self.lib_env, qdevice_func_input, cluster_name
             ),
             (
                 severity.ERROR,
@@ -1103,19 +994,15 @@ class QdeviceNetSignCertificateRequestTest(QdeviceTestCase):
                     "allowed_values": ["base64 encoded certificate"],
                     "cannot_be_empty": False,
                     "forbidden_characters": None,
-                }
-            )
+                },
+            ),
         )
 
         mock_qdevice_func.assert_not_called()
 
 
 @mock.patch("pcs.lib.commands.qdevice.qdevice_net.client_setup")
-@mock.patch.object(
-    LibraryEnvironment,
-    "cmd_runner",
-    lambda self: "mock_runner"
-)
+@mock.patch.object(LibraryEnvironment, "cmd_runner", lambda self: "mock_runner")
 class ClientNetSetupTest(QdeviceTestCase):
     def test_success(self, mock_qdevice_func):
         qdevice_func_input = "CA certificate".encode("utf-8")
@@ -1123,8 +1010,7 @@ class ClientNetSetupTest(QdeviceTestCase):
         lib.client_net_setup(self.lib_env, base64.b64encode(qdevice_func_input))
 
         mock_qdevice_func.assert_called_once_with(
-            "mock_runner",
-            qdevice_func_input
+            "mock_runner", qdevice_func_input
         )
 
     def test_bad_input(self, mock_qdevice_func):
@@ -1141,8 +1027,8 @@ class ClientNetSetupTest(QdeviceTestCase):
                     "allowed_values": ["base64 encoded certificate"],
                     "cannot_be_empty": False,
                     "forbidden_characters": None,
-                }
-            )
+                },
+            ),
         )
 
         mock_qdevice_func.assert_not_called()
@@ -1151,23 +1037,17 @@ class ClientNetSetupTest(QdeviceTestCase):
 @mock.patch(
     "pcs.lib.commands.qdevice.qdevice_net.client_import_certificate_and_key"
 )
-@mock.patch.object(
-    LibraryEnvironment,
-    "cmd_runner",
-    lambda self: "mock_runner"
-)
+@mock.patch.object(LibraryEnvironment, "cmd_runner", lambda self: "mock_runner")
 class ClientNetImportCertificateTest(QdeviceTestCase):
     def test_success(self, mock_qdevice_func):
         qdevice_func_input = "client certificate".encode("utf-8")
 
         lib.client_net_import_certificate(
-            self.lib_env,
-            base64.b64encode(qdevice_func_input)
+            self.lib_env, base64.b64encode(qdevice_func_input)
         )
 
         mock_qdevice_func.assert_called_once_with(
-            "mock_runner",
-            qdevice_func_input
+            "mock_runner", qdevice_func_input
         )
 
     def test_bad_input(self, mock_qdevice_func):
@@ -1175,8 +1055,7 @@ class ClientNetImportCertificateTest(QdeviceTestCase):
 
         assert_raise_library_error(
             lambda: lib.client_net_import_certificate(
-                self.lib_env,
-                qdevice_func_input
+                self.lib_env, qdevice_func_input
             ),
             (
                 severity.ERROR,
@@ -1187,8 +1066,8 @@ class ClientNetImportCertificateTest(QdeviceTestCase):
                     "allowed_values": ["base64 encoded certificate"],
                     "cannot_be_empty": False,
                     "forbidden_characters": None,
-                }
-            )
+                },
+            ),
         )
 
         mock_qdevice_func.assert_not_called()

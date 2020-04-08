@@ -1,6 +1,6 @@
 from unittest import TestCase
 
-from pcs.cli.common.parse_args import(
+from pcs.cli.common.parse_args import (
     group_by_keywords,
     parse_typed_arg,
     prepare_options,
@@ -21,142 +21,129 @@ from pcs.cli.common.errors import CmdLineInputError
 
 class PrepareOptionsTest(TestCase):
     def test_refuse_option_without_value(self):
-        self.assertRaises(
-            CmdLineInputError, lambda: prepare_options(['abc'])
-        )
+        self.assertRaises(CmdLineInputError, lambda: prepare_options(["abc"]))
 
     def test_prepare_option_dict_form_args(self):
-        self.assertEqual({'a': 'b', 'c': 'd'}, prepare_options(['a=b', 'c=d']))
+        self.assertEqual({"a": "b", "c": "d"}, prepare_options(["a=b", "c=d"]))
 
     def test_prepare_option_dict_with_empty_value(self):
-        self.assertEqual({'a': ''}, prepare_options(['a=']))
+        self.assertEqual({"a": ""}, prepare_options(["a="]))
 
     def test_refuse_option_without_key(self):
-        self.assertRaises(
-            CmdLineInputError, lambda: prepare_options(['=a'])
-        )
+        self.assertRaises(CmdLineInputError, lambda: prepare_options(["=a"]))
 
     def test_refuse_options_with_same_key_and_differend_value(self):
         self.assertRaises(
-            CmdLineInputError, lambda: prepare_options(['a=a', "a=b"])
+            CmdLineInputError, lambda: prepare_options(["a=a", "a=b"])
         )
 
     def test_accept_options_with_same_key_and_same_value(self):
-        self.assertEqual({'a': '1'}, prepare_options(["a=1", "a=1"]))
+        self.assertEqual({"a": "1"}, prepare_options(["a=1", "a=1"]))
 
     def test_allow_repeatable(self):
         self.assertEqual(
-            {'a': ['1', '2']},
-            prepare_options(["a=1", "a=2"], allowed_repeatable_options=("a"))
+            {"a": ["1", "2"]},
+            prepare_options(["a=1", "a=2"], allowed_repeatable_options=("a")),
         )
 
     def test_allow_repeatable_only_once(self):
         self.assertEqual(
-            {'a': ['1']},
-            prepare_options(["a=1"], allowed_repeatable_options=("a"))
+            {"a": ["1"]},
+            prepare_options(["a=1"], allowed_repeatable_options=("a")),
         )
 
     def test_allow_repeatable_multiple(self):
         self.assertEqual(
-            {'a': ['1', '3', '2', '4']},
+            {"a": ["1", "3", "2", "4"]},
             prepare_options(
                 ["a=1", "a=3", "a=2", "a=4"], allowed_repeatable_options=("a")
-            )
+            ),
         )
 
 
 class PrepareOptionsAllowedTest(TestCase):
     def test_refuse_option_without_value(self):
         self.assertRaises(
-            CmdLineInputError, lambda: prepare_options_allowed(['abc'], ["abc"])
+            CmdLineInputError, lambda: prepare_options_allowed(["abc"], ["abc"])
         )
 
     def test_prepare_option_dict_form_args(self):
         self.assertEqual(
-            {'a': 'b', 'c': 'd'},
-            prepare_options_allowed(['a=b', 'c=d'], ["a", "c"]))
+            {"a": "b", "c": "d"},
+            prepare_options_allowed(["a=b", "c=d"], ["a", "c"]),
+        )
 
     def test_prepare_option_dict_with_empty_value(self):
-        self.assertEqual({'a': ''}, prepare_options_allowed(['a='], "a"))
+        self.assertEqual({"a": ""}, prepare_options_allowed(["a="], "a"))
 
     def test_refuse_option_without_key(self):
         self.assertRaises(
-            CmdLineInputError, lambda: prepare_options_allowed(['=a'], ["a"])
+            CmdLineInputError, lambda: prepare_options_allowed(["=a"], ["a"])
         )
 
     def test_refuse_options_with_same_key_and_differend_value(self):
         self.assertRaises(
             CmdLineInputError,
-            lambda: prepare_options_allowed(['a=a', "a=b"], ["a"])
+            lambda: prepare_options_allowed(["a=a", "a=b"], ["a"]),
         )
 
     def test_accept_options_with_same_key_and_same_value(self):
         self.assertEqual(
-            {'a': '1'},
-            prepare_options_allowed(["a=1", "a=1"], ["a"]))
+            {"a": "1"}, prepare_options_allowed(["a=1", "a=1"], ["a"])
+        )
 
     def test_allow_repeatable(self):
         self.assertEqual(
-            {'a': ['1', '2']},
+            {"a": ["1", "2"]},
             prepare_options_allowed(
-                ["a=1", "a=2"],
-                ["a"],
-                allowed_repeatable_options=("a")
-            )
+                ["a=1", "a=2"], ["a"], allowed_repeatable_options=("a")
+            ),
         )
 
     def test_allow_repeatable_only_once(self):
         self.assertEqual(
-            {'a': ['1']},
+            {"a": ["1"]},
             prepare_options_allowed(
-                ["a=1"],
-                ["a"],
-                allowed_repeatable_options=("a")
-            )
+                ["a=1"], ["a"], allowed_repeatable_options=("a")
+            ),
         )
 
     def test_allow_repeatable_multiple(self):
         self.assertEqual(
-            {'a': ['1', '3', '2', '4']},
+            {"a": ["1", "3", "2", "4"]},
             prepare_options_allowed(
                 ["a=1", "a=3", "a=2", "a=4"],
                 ["a"],
-                allowed_repeatable_options=("a")
-            )
+                allowed_repeatable_options=("a"),
+            ),
         )
 
     def test_option_not_allowed(self):
         with self.assertRaises(CmdLineInputError) as cm:
             prepare_options_allowed(["a=1"], [])
-        self.assertEqual(
-            str(cm.exception),
-            "Unknown option 'a'"
-        )
+        self.assertEqual(str(cm.exception), "Unknown option 'a'")
 
     def test_options_not_allowed(self):
         with self.assertRaises(CmdLineInputError) as cm:
             prepare_options_allowed(["d=1", "a=2", "c=3", "b=4"], ["a", "b"])
-        self.assertEqual(
-            str(cm.exception),
-            "Unknown options 'c', 'd'"
-        )
+        self.assertEqual(str(cm.exception), "Unknown options 'c', 'd'")
 
 
 class SplitListTest(TestCase):
     def test_returns_list_with_original_when_separator_not_in_original(self):
-        self.assertEqual([['a', 'b']], split_list(['a', 'b'], 'c'))
+        self.assertEqual([["a", "b"]], split_list(["a", "b"], "c"))
 
     def test_returns_splited_list(self):
         self.assertEqual(
-            [['a', 'b'], ['c', 'd']],
-            split_list(['a', 'b', '|', 'c', 'd'], '|')
+            [["a", "b"], ["c", "d"]], split_list(["a", "b", "|", "c", "d"], "|")
         )
 
     def test_behave_like_string_split_when_the_separator_edges(self):
         self.assertEqual(
-            [[], ['a', 'b'], ['c', 'd'], []],
-            split_list(['|', 'a', 'b', '|', 'c', 'd', "|"], '|')
+            [[], ["a", "b"], ["c", "d"], []],
+            split_list(["|", "a", "b", "|", "c", "d", "|"], "|"),
         )
+
 
 class SplitByKeywords(TestCase):
     def test_split_with_implicit_first_keyword(self):
@@ -164,69 +151,47 @@ class SplitByKeywords(TestCase):
             group_by_keywords(
                 [0, "first", 1, 2, "second", 3],
                 set(["first", "second"]),
-                implicit_first_group_key="zero"
+                implicit_first_group_key="zero",
             ),
-            {
-                "zero": [0],
-                "first": [1, 2],
-                "second": [3],
-            }
+            {"zero": [0], "first": [1, 2], "second": [3],},
         )
 
     def test_splict_without_implict_keyword(self):
         self.assertEqual(
             group_by_keywords(
-                ["first", 1, 2, "second", 3],
-                set(["first", "second"]),
+                ["first", 1, 2, "second", 3], set(["first", "second"]),
             ),
-            {
-                "first": [1, 2],
-                "second": [3],
-            }
+            {"first": [1, 2], "second": [3],},
         )
 
     def test_raises_when_args_do_not_start_with_keyword_nor_implicit(self):
-        self.assertRaises(CmdLineInputError, lambda: group_by_keywords(
-            [0, "first", 1, 2, "second", 3],
-            set(["first", "second"]),
-        ))
+        self.assertRaises(
+            CmdLineInputError,
+            lambda: group_by_keywords(
+                [0, "first", 1, 2, "second", 3], set(["first", "second"]),
+            ),
+        )
 
     def test_returns_dict_with_empty_lists_for_no_args(self):
         self.assertEqual(
-            group_by_keywords(
-                [],
-                set(["first", "second"])
-            ),
-            {
-                "first": [],
-                "second": [],
-            }
+            group_by_keywords([], set(["first", "second"])),
+            {"first": [], "second": [],},
         )
 
     def test_returns_dict_with_empty_lists_for_no_args_implicit_case(self):
         self.assertEqual(
             group_by_keywords(
-                [],
-                set(["first", "second"]),
-                implicit_first_group_key="zero",
+                [], set(["first", "second"]), implicit_first_group_key="zero",
             ),
-            {
-                "zero": [],
-                "first": [],
-                "second": [],
-            }
+            {"zero": [], "first": [], "second": [],},
         )
 
     def test_returns_dict_with_empty_lists_for_no_opts_and_only_found_kws(self):
         self.assertEqual(
             group_by_keywords(
-                ["first"],
-                set(["first", "second"]),
-                only_found_keywords=True,
+                ["first"], set(["first", "second"]), only_found_keywords=True,
             ),
-            {
-                "first": [],
-            }
+            {"first": [],},
         )
 
     def test_returns_empty_lists_no_opts_and_only_found_kws_with_grouping(self):
@@ -237,13 +202,7 @@ class SplitByKeywords(TestCase):
                 group_repeated_keywords=["second"],
                 only_found_keywords=True,
             ),
-            {
-                "second": [
-                    [1],
-                    [],
-                    [2, 3],
-                ],
-            }
+            {"second": [[1], [], [2, 3],],},
         )
 
     def test_empty_repeatable(self):
@@ -254,11 +213,7 @@ class SplitByKeywords(TestCase):
                 group_repeated_keywords=["second"],
                 only_found_keywords=True,
             ),
-            {
-                "second": [
-                    [],
-                ],
-            }
+            {"second": [[],],},
         )
 
     def test_allow_keywords_repeating(self):
@@ -267,63 +222,58 @@ class SplitByKeywords(TestCase):
                 ["first", 1, 2, "second", 3, "first", 4],
                 set(["first", "second"]),
             ),
-            {
-                "first": [1, 2, 4],
-                "second": [3],
-            }
+            {"first": [1, 2, 4], "second": [3],},
         )
 
     def test_can_disallow_keywords_repeating(self):
-        self.assertRaises(CmdLineInputError, lambda: group_by_keywords(
-            ["first", 1, 2, "second", 3, "first"],
-            set(["first", "second"]),
-            keyword_repeat_allowed=False,
-        ))
+        self.assertRaises(
+            CmdLineInputError,
+            lambda: group_by_keywords(
+                ["first", 1, 2, "second", 3, "first"],
+                set(["first", "second"]),
+                keyword_repeat_allowed=False,
+            ),
+        )
 
     def test_group_repeating_keyword_occurences(self):
         self.assertEqual(
             group_by_keywords(
                 ["first", 1, 2, "second", 3, "first", 4],
                 set(["first", "second"]),
-                group_repeated_keywords=["first"]
+                group_repeated_keywords=["first"],
             ),
-            {
-                "first": [[1, 2], [4]],
-                "second": [3],
-            }
+            {"first": [[1, 2], [4]], "second": [3],},
         )
 
     def test_raises_on_group_repeated_keywords_inconsistency(self):
-        self.assertRaises(AssertionError, lambda: group_by_keywords(
-            [],
-            set(["first", "second"]),
-            group_repeated_keywords=["first", "third"],
-            implicit_first_group_key="third"
-        ))
+        self.assertRaises(
+            AssertionError,
+            lambda: group_by_keywords(
+                [],
+                set(["first", "second"]),
+                group_repeated_keywords=["first", "third"],
+                implicit_first_group_key="third",
+            ),
+        )
 
     def test_implicit_first_kw_not_applyed_in_the_middle(self):
         self.assertEqual(
             group_by_keywords(
                 [1, 2, "first", 3, "zero", 4],
                 set(["first"]),
-                implicit_first_group_key="zero"
+                implicit_first_group_key="zero",
             ),
-            {
-                "zero": [1, 2],
-                "first": [3, "zero", 4],
-            }
+            {"zero": [1, 2], "first": [3, "zero", 4],},
         )
+
     def test_implicit_first_kw_applyed_in_the_middle_when_is_in_kwds(self):
         self.assertEqual(
             group_by_keywords(
                 [1, 2, "first", 3, "zero", 4],
                 set(["first", "zero"]),
-                implicit_first_group_key="zero"
+                implicit_first_group_key="zero",
             ),
-            {
-                "zero": [1, 2, 4],
-                "first": [3],
-            }
+            {"zero": [1, 2, 4], "first": [3],},
         )
 
 
@@ -363,10 +313,7 @@ class SplitOption(TestCase):
 
 class ParseTypedArg(TestCase):
     def assert_parse(self, arg, parsed):
-        self.assertEqual(
-            parse_typed_arg(arg, ["t0", "t1", "t2"], "t0"),
-            parsed
-        )
+        self.assertEqual(parse_typed_arg(arg, ["t0", "t1", "t2"], "t0"), parsed)
 
     def test_no_type(self):
         self.assert_parse("value", ("t0", "value"))
@@ -379,8 +326,7 @@ class ParseTypedArg(TestCase):
 
     def test_bad_type(self):
         self.assertRaises(
-            CmdLineInputError,
-            lambda: self.assert_parse("tX%value", "aaa")
+            CmdLineInputError, lambda: self.assert_parse("tX%value", "aaa")
         )
 
     def test_escape_delimiter(self):
@@ -391,6 +337,7 @@ class ParseTypedArg(TestCase):
         self.assert_parse("t2%va%lu%e", ("t2", "va%lu%e"))
         self.assert_parse("t2%%va%lu%e", ("t2", "%va%lu%e"))
 
+
 class FilterOutNonOptionNegativeNumbers(TestCase):
     def test_does_not_remove_anything_when_no_negative_numbers(self):
         args = ["first", "second"]
@@ -398,55 +345,55 @@ class FilterOutNonOptionNegativeNumbers(TestCase):
 
     def test_remove_negative_number(self):
         self.assertEqual(
-            ["first"],
-            filter_out_non_option_negative_numbers(["first", "-1"])
+            ["first"], filter_out_non_option_negative_numbers(["first", "-1"])
         )
 
     def test_remove_negative_infinity(self):
         self.assertEqual(
             ["first"],
-            filter_out_non_option_negative_numbers(["first", "-INFINITY"])
+            filter_out_non_option_negative_numbers(["first", "-INFINITY"]),
         )
         self.assertEqual(
             ["first"],
-            filter_out_non_option_negative_numbers(["first", "-infinity"])
+            filter_out_non_option_negative_numbers(["first", "-infinity"]),
         )
 
     def test_not_remove_follower_of_short_signed_option(self):
         self.assertEqual(
             ["first", "-f", "-1"],
-            filter_out_non_option_negative_numbers(["first", "-f", "-1"])
+            filter_out_non_option_negative_numbers(["first", "-f", "-1"]),
         )
 
     def test_remove_follower_of_short_unsigned_option(self):
         self.assertEqual(
             ["first", "-h"],
-            filter_out_non_option_negative_numbers(["first", "-h", "-1"])
+            filter_out_non_option_negative_numbers(["first", "-h", "-1"]),
         )
 
     def test_not_remove_follower_of_long_signed_option(self):
         self.assertEqual(
             ["first", "--name", "-1"],
-            filter_out_non_option_negative_numbers(["first", "--name", "-1"])
+            filter_out_non_option_negative_numbers(["first", "--name", "-1"]),
         )
 
     def test_remove_follower_of_long_unsigned_option(self):
         self.assertEqual(
             ["first", "--clone"],
-            filter_out_non_option_negative_numbers(["first", "--clone", "-1"])
+            filter_out_non_option_negative_numbers(["first", "--clone", "-1"]),
         )
 
     def test_does_not_remove_dash(self):
         self.assertEqual(
             ["first", "-"],
-            filter_out_non_option_negative_numbers(["first", "-"])
+            filter_out_non_option_negative_numbers(["first", "-"]),
         )
 
     def test_does_not_remove_dash_dash(self):
         self.assertEqual(
             ["first", "--"],
-            filter_out_non_option_negative_numbers(["first", "--"])
+            filter_out_non_option_negative_numbers(["first", "--"]),
         )
+
 
 class FilterOutOptions(TestCase):
     def test_does_not_remove_anything_when_no_options(self):
@@ -455,51 +402,43 @@ class FilterOutOptions(TestCase):
 
     def test_remove_unsigned_short_option(self):
         self.assertEqual(
-            ["first", "second"],
-            filter_out_options(["first", "-h", "second"])
+            ["first", "second"], filter_out_options(["first", "-h", "second"])
         )
 
     def test_remove_signed_short_option_with_value(self):
         self.assertEqual(
-            ["first"],
-            filter_out_options(["first", "-f", "second"])
+            ["first"], filter_out_options(["first", "-f", "second"])
         )
 
     def test_not_remove_value_of_signed_short_option_when_value_bundled(self):
         self.assertEqual(
             ["first", "second"],
-            filter_out_options(["first", "-fvalue", "second"])
+            filter_out_options(["first", "-fvalue", "second"]),
         )
 
     def test_remove_unsigned_long_option(self):
         self.assertEqual(
             ["first", "second"],
-            filter_out_options(["first", "--clone", "second"])
+            filter_out_options(["first", "--clone", "second"]),
         )
 
     def test_remove_signed_long_option_with_value(self):
         self.assertEqual(
-            ["first"],
-            filter_out_options(["first", "--name", "second"])
+            ["first"], filter_out_options(["first", "--name", "second"])
         )
 
     def test_not_remove_value_of_signed_long_option_when_value_bundled(self):
         self.assertEqual(
             ["first", "second"],
-            filter_out_options(["first", "--name=value", "second"])
+            filter_out_options(["first", "--name=value", "second"]),
         )
 
     def test_does_not_remove_dash(self):
-        self.assertEqual(
-            ["first", "-"],
-            filter_out_options(["first", "-"])
-        )
+        self.assertEqual(["first", "-"], filter_out_options(["first", "-"]))
 
     def test_remove_dash_dash(self):
-        self.assertEqual(
-            ["first"],
-            filter_out_options(["first", "--"])
-        )
+        self.assertEqual(["first"], filter_out_options(["first", "--"]))
+
 
 class IsNum(TestCase):
     def test_returns_true_on_number(self):
@@ -510,6 +449,7 @@ class IsNum(TestCase):
 
     def test_returns_false_on_no_number(self):
         self.assertFalse(is_num("no-num"))
+
 
 class IsNegativeNum(TestCase):
     def test_returns_true_on_negative_number(self):
@@ -523,6 +463,7 @@ class IsNegativeNum(TestCase):
 
     def test_returns_false_on_no_number(self):
         self.assertFalse(is_negative_num("no-num"))
+
 
 class IsShortOptionExpectingValue(TestCase):
     def test_returns_true_on_short_option_with_value(self):
@@ -542,6 +483,7 @@ class IsShortOptionExpectingValue(TestCase):
 
     def test_returns_false_on_option_including_value(self):
         self.assertFalse(is_short_option_expecting_value("-fvalue"))
+
 
 class IsLongOptionExpectingValue(TestCase):
     def test_returns_true_on_long_option_with_value(self):
@@ -563,6 +505,7 @@ class IsLongOptionExpectingValue(TestCase):
 
     def test_returns_false_on_option_including_value(self):
         self.assertFalse(is_long_option_expecting_value("--name=Name"))
+
 
 class IsOptionExpectingValue(TestCase):
     def test_returns_true_on_short_option_with_value(self):
@@ -665,7 +608,7 @@ class InputModifiersTest(TestCase):
             self.ensure("a", "e")
         self.assertEqual(
             "Specified option 'e' is not supported in this command",
-            cm.exception.message
+            cm.exception.message,
         )
 
     def test_not_supported_multiple(self):
@@ -673,7 +616,7 @@ class InputModifiersTest(TestCase):
             self.ensure("a", "g", "d", "c", "b", "e")
         self.assertEqual(
             "Specified options 'd', 'e', 'g' are not supported in this command",
-            cm.exception.message
+            cm.exception.message,
         )
 
     def test_get_existing(self):
@@ -683,9 +626,7 @@ class InputModifiersTest(TestCase):
         self.assertEqual(1, InputModifiers({"a": 1}).get("a", default=2))
 
     def test_multiple_get_existing(self):
-        self.assertEqual(
-            2, InputModifiers(dict(c=3, a=1, b=2)).get("b")
-        )
+        self.assertEqual(2, InputModifiers(dict(c=3, a=1, b=2)).get("b"))
 
     def test_multiple_get_existing_with_default(self):
         self.assertEqual(
@@ -753,51 +694,40 @@ class InputModifiersTest(TestCase):
         self.assertFalse(InputModifiers({"a": "1"}).is_specified("--debug"))
 
     def test_mutually_exclusive_not_specified(self):
-        InputModifiers(
-            {"a": 1, "b": 2, "c": 3}
-        ).ensure_not_mutually_exclusive("x", "y")
+        InputModifiers({"a": 1, "b": 2, "c": 3}).ensure_not_mutually_exclusive(
+            "x", "y"
+        )
 
     def test_mutually_exclusive_one_specified(self):
-        InputModifiers(
-            {"a": 1, "b": 2}
-        ).ensure_not_mutually_exclusive("a", "c")
+        InputModifiers({"a": 1, "b": 2}).ensure_not_mutually_exclusive("a", "c")
 
     def test_mutually_exclusive_more_specified(self):
         with self.assertRaises(CmdLineInputError) as cm:
             InputModifiers(
                 {"a": 1, "b": 2, "c": 3}
             ).ensure_not_mutually_exclusive("c", "a")
-        self.assertEqual(
-            str(cm.exception),
-            "Only one of 'a', 'c' can be used"
-        )
+        self.assertEqual(str(cm.exception), "Only one of 'a', 'c' can be used")
 
     def test_incompatible_checked_not_defined(self):
-        InputModifiers(
-            {"a": 1, "b": 2, "c": 3}
-        ).ensure_not_incompatible("x", ["a", "c"])
+        InputModifiers({"a": 1, "b": 2, "c": 3}).ensure_not_incompatible(
+            "x", ["a", "c"]
+        )
 
     def test_incompatible_incompatible_not_defined(self):
-        InputModifiers(
-            {"a": 1, "b": 2, "c": 3}
-        ).ensure_not_incompatible("a", ["z", "y"])
+        InputModifiers({"a": 1, "b": 2, "c": 3}).ensure_not_incompatible(
+            "a", ["z", "y"]
+        )
 
     def test_incompatible_one(self):
         with self.assertRaises(CmdLineInputError) as cm:
-            InputModifiers(
-                {"a": 1, "b": 2, "c": 3}
-            ).ensure_not_incompatible("a", ["b", "y"])
-        self.assertEqual(
-            str(cm.exception),
-            "'a' cannot be used with 'b'"
-        )
+            InputModifiers({"a": 1, "b": 2, "c": 3}).ensure_not_incompatible(
+                "a", ["b", "y"]
+            )
+        self.assertEqual(str(cm.exception), "'a' cannot be used with 'b'")
 
     def test_incompatible_several(self):
         with self.assertRaises(CmdLineInputError) as cm:
             InputModifiers(
                 {"a": 1, "b": 2, "c": 3, "d": 4}
             ).ensure_not_incompatible("a", ["d", "b"])
-        self.assertEqual(
-            str(cm.exception),
-            "'a' cannot be used with 'b', 'd'"
-        )
+        self.assertEqual(str(cm.exception), "'a' cannot be used with 'b', 'd'")

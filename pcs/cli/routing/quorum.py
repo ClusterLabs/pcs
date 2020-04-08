@@ -19,14 +19,14 @@ quorum_cmd = create_router(
                         "delete": quorum.quorum_device_heuristics_remove_cmd,
                         "remove": quorum.quorum_device_heuristics_remove_cmd,
                     },
-                    ["quorum", "device", "heuristics"]
+                    ["quorum", "device", "heuristics"],
                 ),
                 "delete": quorum.quorum_device_remove_cmd,
                 "remove": quorum.quorum_device_remove_cmd,
                 "status": quorum.quorum_device_status_cmd,
                 "update": quorum.quorum_device_update_cmd,
             },
-            ["quorum", "device"]
+            ["quorum", "device"],
         ),
         # TODO switch to new architecture
         "unblock": quorum.quorum_unblock_cmd,

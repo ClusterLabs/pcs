@@ -2,6 +2,7 @@ from pcs.cli.constraint import parse_args
 from pcs.common.reports.constraints import constraint_with_sets
 from pcs.common.str_tools import indent
 
+
 def create_with_set(create_with_set_library_call, argv, modifiers):
     """
     callable create_with_set_library_call create constraint with set
@@ -17,10 +18,12 @@ def create_with_set(create_with_set_library_call, argv, modifiers):
     """
     resource_set_list, constraint_options = parse_args.prepare_set_args(argv)
     create_with_set_library_call(
-        resource_set_list, constraint_options,
+        resource_set_list,
+        constraint_options,
         resource_in_clone_alowed=modifiers.get("--force"),
         duplication_alowed=modifiers.get("--force"),
     )
+
 
 def show_constraints_with_set(constraint_list, show_detail, indent_step=2):
     """
@@ -36,8 +39,9 @@ def show_constraints_with_set(constraint_list, show_detail, indent_step=2):
             constraint_with_sets(constraint, with_id=show_detail)
             for constraint in constraint_list
         ],
-        indent_step=indent_step
+        indent_step=indent_step,
     )
+
 
 def show(caption, load_constraints, format_options, modifiers):
     """
@@ -57,17 +61,20 @@ def show(caption, load_constraints, format_options, modifiers):
     constraints = load_constraints()
 
     line_list = [caption]
-    line_list.extend([
-        "  " + format_options(constraint_options_dict, show_detail)
-        for constraint_options_dict in constraints["plain"]
-    ])
+    line_list.extend(
+        [
+            "  " + format_options(constraint_options_dict, show_detail)
+            for constraint_options_dict in constraints["plain"]
+        ]
+    )
 
     if constraints["with_resource_sets"]:
         line_list.extend(
-            indent(show_constraints_with_set(
-                constraints["with_resource_sets"],
-                show_detail
-            ))
+            indent(
+                show_constraints_with_set(
+                    constraints["with_resource_sets"], show_detail
+                )
+            )
         )
 
     return line_list

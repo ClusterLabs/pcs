@@ -28,19 +28,23 @@ PCSD_SESSION_LIFETIME = "PCSD_SESSION_LIFETIME"
 PCSD_DEV = "PCSD_DEV"
 PCSD_STATIC_FILES_DIR = "PCSD_STATIC_FILES_DIR"
 
-Env = namedtuple("Env", [
-    PCSD_PORT,
-    PCSD_SSL_CIPHERS,
-    PCSD_SSL_OPTIONS,
-    PCSD_BIND_ADDR,
-    NOTIFY_SOCKET,
-    PCSD_DEBUG,
-    PCSD_DISABLE_GUI,
-    PCSD_SESSION_LIFETIME,
-    PCSD_STATIC_FILES_DIR,
-    PCSD_DEV,
-    "has_errors",
-])
+Env = namedtuple(
+    "Env",
+    [
+        PCSD_PORT,
+        PCSD_SSL_CIPHERS,
+        PCSD_SSL_OPTIONS,
+        PCSD_BIND_ADDR,
+        NOTIFY_SOCKET,
+        PCSD_DEBUG,
+        PCSD_DISABLE_GUI,
+        PCSD_SESSION_LIFETIME,
+        PCSD_STATIC_FILES_DIR,
+        PCSD_DEV,
+        "has_errors",
+    ],
+)
+
 
 def prepare_env(environ, logger=None):
     loader = EnvLoader(environ)
@@ -64,11 +68,12 @@ def prepare_env(environ, logger=None):
             logger.warning(warning)
     return env
 
+
 def str_to_ssl_options(ssl_options_string, reports):
     ssl_options = 0
     # We are tolerant to trailing whitespaces and trailing comas.
     raw_ssl_options = ssl_options_string.strip(" ,")
-    if not raw_ssl_options: #raw_ssl_options.split(",") == [""]
+    if not raw_ssl_options:  # raw_ssl_options.split(",") == [""]
         return ssl_options
     for raw_option in raw_ssl_options.split(","):
         option = raw_option.strip()
@@ -85,6 +90,7 @@ def str_to_ssl_options(ssl_options_string, reports):
         else:
             reports.append(f"Ignoring unknown SSL option '{option}'")
     return ssl_options
+
 
 class EnvLoader:
     def __init__(self, environ):
@@ -104,10 +110,9 @@ class EnvLoader:
 
     def ssl_ciphers(self):
         ssl_ciphers = self.environ.get(
-            PCSD_SSL_CIPHERS,
-            settings.default_ssl_ciphers
+            PCSD_SSL_CIPHERS, settings.default_ssl_ciphers
         )
-        try: #validate ciphers
+        try:  # validate ciphers
             ssl.SSLContext().set_ciphers(ssl_ciphers)
         except ssl.SSLError as e:
             self.errors.append(f"Invalid ciphers: '{e}'")
@@ -119,8 +124,7 @@ class EnvLoader:
             # may be a typo - let them correct it. They are able to correct it
             # in pcsd.conf.
             return str_to_ssl_options(
-                self.environ[PCSD_SSL_OPTIONS],
-                self.errors
+                self.environ[PCSD_SSL_OPTIONS], self.errors
             )
         # Vanilla pcsd should run even on an "exotic" system. If there is
         # a wrong option it is not probably a typo... User should not be
@@ -145,8 +149,7 @@ class EnvLoader:
 
     def session_lifetime(self):
         session_lifetime = self.environ.get(
-            PCSD_SESSION_LIFETIME,
-            settings.gui_session_lifetime_seconds
+            PCSD_SESSION_LIFETIME, settings.gui_session_lifetime_seconds
         )
         try:
             return int(session_lifetime)
@@ -164,7 +167,7 @@ class EnvLoader:
         return self.__in_pcsd_path(
             PCSD_STATIC_FILES_DIR_NAME,
             "Directory with web UI assets",
-            existence_required=not self.pcsd_disable_gui()
+            existence_required=not self.pcsd_disable_gui(),
         )
 
     @lru_cache()

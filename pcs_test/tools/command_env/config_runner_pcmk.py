@@ -24,12 +24,15 @@ AGENT_FILENAME_MAP = {
     "ocf:pacemaker:booth-site": "resource_agent_ocf_pacemaker_booth-site.xml",
 }
 
+
 def _fixture_state_resources_xml(
-    resource_id="A", resource_agent="ocf::heartbeat:Dummy", role="Started",
-    failed="false", node_name="node1"
+    resource_id="A",
+    resource_agent="ocf::heartbeat:Dummy",
+    role="Started",
+    failed="false",
+    node_name="node1",
 ):
-    return(
-        """
+    return """
         <resources>
             <resource
                 id="{resource_id}"
@@ -41,18 +44,28 @@ def _fixture_state_resources_xml(
             </resource>
         </resources>
         """.format(
-            resource_id=resource_id,
-            resource_agent=resource_agent,
-            role=role,
-            failed=failed,
-            node_name=node_name,
-        )
+        resource_id=resource_id,
+        resource_agent=resource_agent,
+        role=role,
+        failed=failed,
+        node_name=node_name,
     )
 
+
 def _fixture_state_node_xml(
-    id, name, type="member", online=True, standby=False, standby_onfail=False,
-    maintenance=False, pending=False, unclean=False, shutdown=False,
-    expected_up=True, is_dc=False, resources_running=0
+    id,
+    name,
+    type="member",
+    online=True,
+    standby=False,
+    standby_onfail=False,
+    maintenance=False,
+    pending=False,
+    unclean=False,
+    shutdown=False,
+    expected_up=True,
+    is_dc=False,
+    resources_running=0,
 ):
     # This function uses a "clever" way of defaulting an input **dict containing
     # attributes of an xml element.
@@ -71,8 +84,8 @@ def _fixture_state_node_xml(
     return "<node {0}/>".format(" ".join(xml_attrs))
 
 
-class PcmkShortcuts():
-    #pylint: disable=too-many-public-methods
+class PcmkShortcuts:
+    # pylint: disable=too-many-public-methods
     def __init__(self, calls):
         self.__calls = calls
         self.default_wait_timeout = DEFAULT_WAIT_TIMEOUT
@@ -119,8 +132,12 @@ class PcmkShortcuts():
         )
 
     def fence_history_get(
-        self, name="runner.pcmk.fence_history_get", node=None, stdout="",
-        stderr="", returncode=0
+        self,
+        name="runner.pcmk.fence_history_get",
+        node=None,
+        stdout="",
+        stderr="",
+        returncode=0,
     ):
         """
         Create call for getting plain text fencing history.
@@ -142,8 +159,12 @@ class PcmkShortcuts():
         )
 
     def fence_history_cleanup(
-        self, name="runner.pcmk.fence_history_cleanup", node=None, stdout="",
-        stderr="", returncode=0
+        self,
+        name="runner.pcmk.fence_history_cleanup",
+        node=None,
+        stdout="",
+        stderr="",
+        returncode=0,
     ):
         """
         Create call for cleaning fencing history up.
@@ -165,8 +186,11 @@ class PcmkShortcuts():
         )
 
     def fence_history_update(
-        self, name="runner.pcmk.fence_history_update", stdout="", stderr="",
-        returncode=0
+        self,
+        name="runner.pcmk.fence_history_update",
+        stdout="",
+        stderr="",
+        returncode=0,
     ):
         """
         Create call for updating fencing history.
@@ -187,9 +211,15 @@ class PcmkShortcuts():
         )
 
     def load_state(
-        self, name="runner.pcmk.load_state", filename="crm_mon.minimal.xml",
-        resources=None, raw_resources=None, nodes=None, stdout="", stderr="",
-        returncode=0
+        self,
+        name="runner.pcmk.load_state",
+        filename="crm_mon.minimal.xml",
+        resources=None,
+        raw_resources=None,
+        nodes=None,
+        stdout="",
+        stderr="",
+        returncode=0,
     ):
         """
         Create call for loading pacemaker state.
@@ -203,10 +233,8 @@ class PcmkShortcuts():
         int returncode -- crm_mon's returncode
         """
         # pylint: disable=too-many-boolean-expressions
-        if (
-            (resources or raw_resources is not None or nodes)
-            and
-            (stdout or stderr or returncode)
+        if (resources or raw_resources is not None or nodes) and (
+            stdout or stderr or returncode
         ):
             raise AssertionError(
                 "Cannot specify resources or nodes when stdout, stderr or "
@@ -217,15 +245,15 @@ class PcmkShortcuts():
                 "Cannot use 'resources' and 'raw_resources' together"
             )
 
-        if (stdout or stderr or returncode):
+        if stdout or stderr or returncode:
             self.__calls.place(
                 name,
                 RunnerCall(
                     "crm_mon --one-shot --as-xml --inactive",
                     stdout=stdout,
                     stderr=stderr,
-                    returncode=returncode
-                )
+                    returncode=returncode,
+                ),
             )
             return
 
@@ -245,12 +273,18 @@ class PcmkShortcuts():
                 )
 
         # set correct number of nodes and resources into the status
-        resources_count = len(state.xpath(" | ".join([
-            "./resources/bundle",
-            "./resources/clone",
-            "./resources/group",
-            "./resources/resource",
-        ])))
+        resources_count = len(
+            state.xpath(
+                " | ".join(
+                    [
+                        "./resources/bundle",
+                        "./resources/clone",
+                        "./resources/group",
+                        "./resources/resource",
+                    ]
+                )
+            )
+        )
         nodes_count = len(state.findall("./nodes/node"))
         state.find("./summary/nodes_configured").set("number", str(nodes_count))
         state.find("./summary/resources_configured").set(
@@ -262,13 +296,18 @@ class PcmkShortcuts():
             RunnerCall(
                 "crm_mon --one-shot --as-xml --inactive",
                 stdout=etree_to_str(state),
-            )
+            ),
         )
 
     def load_state_plaintext(
-        self, name="runner.pcmk.load_state_plaintext",
-        inactive=True, verbose=False, fence_history=False,
-        stdout="", stderr="", returncode=0,
+        self,
+        name="runner.pcmk.load_state_plaintext",
+        inactive=True,
+        verbose=False,
+        fence_history=False,
+        stdout="",
+        stderr="",
+        returncode=0,
     ):
         """
         Create a call for loading plaintext pacemaker status
@@ -285,9 +324,9 @@ class PcmkShortcuts():
         if inactive:
             flags.append("--inactive")
         if verbose:
-            flags.extend([
-                "--show-detail", "--show-node-attributes", "--failcounts"
-            ])
+            flags.extend(
+                ["--show-detail", "--show-node-attributes", "--failcounts"]
+            )
             if fence_history:
                 flags.append("--fence-history=3")
         self.__calls.place(
@@ -301,8 +340,11 @@ class PcmkShortcuts():
         )
 
     def load_ticket_state_plaintext(
-        self, name="runner.pcmk.load_ticket_state_plaintext",
-        stdout="", stderr="", returncode=0,
+        self,
+        name="runner.pcmk.load_ticket_state_plaintext",
+        stdout="",
+        stderr="",
+        returncode=0,
     ):
         """
         Create a call for loading plaintext tickets status
@@ -347,24 +389,26 @@ class PcmkShortcuts():
         elif agent_name in AGENT_FILENAME_MAP:
             agent_metadata_filename = AGENT_FILENAME_MAP[agent_name]
         elif not agent_is_missing:
-            raise AssertionError((
-                "Filename with metadata of agent '{0}' not specified.\n"
-                "Please specify file with metadata for agent:\n"
-                "  a) explicitly for this test:"
-                " config.runner.pcmk.load_agent(agent_name='{0}',"
-                " filename='FILENAME_HERE.xml')\n"
-                "  b) implicitly for agent '{0}' in 'AGENT_FILENAME_MAP' in"
-                " '{1}'\n"
-                "Place agent metadata into '{2}FILENAME_HERE.xml'"
-            ).format(agent_name, os.path.realpath(__file__), rc("")))
+            raise AssertionError(
+                (
+                    "Filename with metadata of agent '{0}' not specified.\n"
+                    "Please specify file with metadata for agent:\n"
+                    "  a) explicitly for this test:"
+                    " config.runner.pcmk.load_agent(agent_name='{0}',"
+                    " filename='FILENAME_HERE.xml')\n"
+                    "  b) implicitly for agent '{0}' in 'AGENT_FILENAME_MAP' in"
+                    " '{1}'\n"
+                    "Place agent metadata into '{2}FILENAME_HERE.xml'"
+                ).format(agent_name, os.path.realpath(__file__), rc(""))
+            )
 
         if agent_is_missing:
             if stderr is None:
                 stderr = (
                     f"Agent {agent_name} not found or does not support "
-                        "meta-data: Invalid argument (22)\n"
+                    "meta-data: Invalid argument (22)\n"
                     f"Metadata query for {agent_name} failed: Input/output "
-                        "error\n"
+                    "error\n"
                 )
             self.__calls.place(
                 name,
@@ -372,7 +416,7 @@ class PcmkShortcuts():
                     "crm_resource --show-metadata {0}".format(agent_name),
                     stdout="",
                     stderr=stderr,
-                    returncode=74
+                    returncode=74,
                 ),
                 instead=instead,
             )
@@ -419,15 +463,21 @@ class PcmkShortcuts():
                 f"{settings.pacemaker_fenced} metadata",
                 stdout=stdout,
                 stderr=stderr,
-                returncode=returncode
+                returncode=returncode,
             ),
             before=before,
             instead=instead,
         )
 
     def local_node_name(
-        self, name="runner.pcmk.local_node_name", instead=None, before=None,
-        node_name="", stdout="", stderr="", returncode=0
+        self,
+        name="runner.pcmk.local_node_name",
+        instead=None,
+        before=None,
+        node_name="",
+        stdout="",
+        stderr="",
+        returncode=0,
     ):
         """
         Create a call for crm_node --name
@@ -454,7 +504,7 @@ class PcmkShortcuts():
                 " ".join(cmd),
                 stdout=(node_name if node_name else stdout),
                 stderr=stderr,
-                returncode=returncode
+                returncode=returncode,
             ),
             before=before,
             instead=instead,
@@ -470,7 +520,7 @@ class PcmkShortcuts():
         strict=False,
         stdout="",
         stderr="",
-        returncode=0
+        returncode=0,
     ):
         """
         Create a call for crm_resource --cleanup
@@ -500,7 +550,7 @@ class PcmkShortcuts():
                 " ".join(cmd),
                 stdout=stdout,
                 stderr=stderr,
-                returncode=returncode
+                returncode=returncode,
             ),
             before=before,
             instead=instead,
@@ -517,7 +567,7 @@ class PcmkShortcuts():
         lifetime=None,
         stdout="",
         stderr="",
-        returncode=0
+        returncode=0,
     ):
         """
         Create a call for crm_resource --move
@@ -553,7 +603,7 @@ class PcmkShortcuts():
         lifetime=None,
         stdout="",
         stderr="",
-        returncode=0
+        returncode=0,
     ):
         """
         Create a call for crm_resource --ban
@@ -589,7 +639,7 @@ class PcmkShortcuts():
         expired=None,
         stdout="",
         stderr="",
-        returncode=0
+        returncode=0,
     ):
         """
         Create a call for crm_resource --clear
@@ -627,7 +677,7 @@ class PcmkShortcuts():
         expired=None,
         stdout="",
         stderr="",
-        returncode=0
+        returncode=0,
     ):
         cmd = ["crm_resource", action]
         if resource:
@@ -646,7 +696,7 @@ class PcmkShortcuts():
                 " ".join(cmd),
                 stdout=stdout,
                 stderr=stderr,
-                returncode=returncode
+                returncode=returncode,
             ),
             before=before,
             instead=instead,
@@ -662,8 +712,7 @@ class PcmkShortcuts():
         string stderr -- crm_resource help text
         """
         self.__calls.place(
-            name,
-            RunnerCall("crm_resource -?", stderr=stderr),
+            name, RunnerCall("crm_resource -?", stderr=stderr),
         )
 
     def wait(
@@ -688,7 +737,7 @@ class PcmkShortcuts():
                 ),
                 stderr=stderr,
                 returncode=returncode,
-            )
+            ),
         )
 
     def can_wait(
@@ -701,14 +750,15 @@ class PcmkShortcuts():
         string before -- key of call before which this new call is to be placed
         """
         self.__calls.place(
-            name,
-            RunnerCall("crm_resource -?", stdout=stdout),
-            before=before
+            name, RunnerCall("crm_resource -?", stdout=stdout), before=before
         )
 
     def verify(
-        self, name="runner.pcmk.verify", cib_tempfile=None, stderr=None,
-        verbose=False
+        self,
+        name="runner.pcmk.verify",
+        cib_tempfile=None,
+        stderr=None,
+        verbose=False,
     ):
         """
         Create call that checks that wait for idle is supported
@@ -721,8 +771,9 @@ class PcmkShortcuts():
             RunnerCall(
                 "crm_verify{0} {1}".format(
                     " -V -V" if verbose else "",
-                    "--xml-file {0}".format(cib_tempfile) if cib_tempfile
-                        else "--live-check"
+                    "--xml-file {0}".format(cib_tempfile)
+                    if cib_tempfile
+                    else "--live-check",
                 ),
                 stderr=("" if stderr is None else stderr),
                 returncode=(0 if stderr is None else 55),
@@ -730,8 +781,11 @@ class PcmkShortcuts():
         )
 
     def remove_node(
-        self, node_name,
-        stderr="", returncode=0, name="runner.pcmk.remove_node",
+        self,
+        node_name,
+        stderr="",
+        returncode=0,
+        name="runner.pcmk.remove_node",
     ):
         self.__calls.place(
             name,
@@ -743,11 +797,16 @@ class PcmkShortcuts():
         )
 
     def simulate_cib(
-        self, new_cib_filepath, transitions_filepath,
-        cib_modifiers=None, cib_load_name="runner.cib.load",
-        stdout="", stderr="", returncode=0,
+        self,
+        new_cib_filepath,
+        transitions_filepath,
+        cib_modifiers=None,
+        cib_load_name="runner.cib.load",
+        stdout="",
+        stderr="",
+        returncode=0,
         name="runner.pcmk.simulate_cib",
-        **modifier_shortcuts
+        **modifier_shortcuts,
     ):
         """
         Create a call for simulating effects of cib changes
@@ -772,12 +831,15 @@ class PcmkShortcuts():
         cib_xml = modify_cib(
             self.__calls.get(cib_load_name).stdout,
             cib_modifiers,
-            **modifier_shortcuts
+            **modifier_shortcuts,
         )
         cmd = [
-            "crm_simulate", "--simulate",
-            "--save-output", new_cib_filepath,
-            "--save-graph", transitions_filepath,
+            "crm_simulate",
+            "--simulate",
+            "--save-output",
+            new_cib_filepath,
+            "--save-graph",
+            transitions_filepath,
             "--xml-pipe",
         ]
         self.__calls.place(

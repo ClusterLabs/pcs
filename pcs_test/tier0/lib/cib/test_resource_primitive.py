@@ -15,7 +15,8 @@ class FindPrimitivesByAgent(TestCase):
         self.agent.get_standard.return_value = "standard"
         self.agent.get_provider.return_value = "provider"
         self.agent.get_type.return_value = "agent_type"
-        self.resources_section = etree.fromstring("""
+        self.resources_section = etree.fromstring(
+            """
         <resources>
             <primitive
                 class="standard" provider="provider" type="agent_type" id="r0"
@@ -53,7 +54,8 @@ class FindPrimitivesByAgent(TestCase):
                 />
             </clone>
         </resources>
-        """)
+        """
+        )
 
     def test_stonith(self):
         self.agent.get_standard.return_value = "stonith"
@@ -121,19 +123,13 @@ class AppendNew(TestCase):
         append_new_instance_attributes,
     ):
         create_operations.assert_called_once_with(
-            primitive_element,
-            self.id_provider,
-            self.operation_list
+            primitive_element, self.id_provider, self.operation_list
         )
         append_new_meta_attributes.assert_called_once_with(
-            primitive_element,
-            self.meta_attributes,
-            self.id_provider
+            primitive_element, self.meta_attributes, self.id_provider
         )
         append_new_instance_attributes.assert_called_once_with(
-            primitive_element,
-            self.instance_attributes,
-            self.id_provider
+            primitive_element, self.instance_attributes, self.id_provider
         )
 
     def test_append_without_provider(
@@ -144,8 +140,7 @@ class AppendNew(TestCase):
     ):
         primitive_element = self.run("RESOURCE_ID", "OCF", None, "DUMMY")
         self.assertEqual(
-            primitive_element,
-            self.resources_section.find(".//primitive")
+            primitive_element, self.resources_section.find(".//primitive")
         )
         self.assertEqual(primitive_element.attrib["class"], "OCF")
         self.assertEqual(primitive_element.attrib["type"], "DUMMY")
@@ -166,8 +161,7 @@ class AppendNew(TestCase):
     ):
         primitive_element = self.run("RESOURCE_ID", "OCF", "HEARTBEAT", "DUMMY")
         self.assertEqual(
-            primitive_element,
-            self.resources_section.find(".//primitive")
+            primitive_element, self.resources_section.find(".//primitive")
         )
         self.assertEqual(primitive_element.attrib["class"], "OCF")
         self.assertEqual(primitive_element.attrib["type"], "DUMMY")

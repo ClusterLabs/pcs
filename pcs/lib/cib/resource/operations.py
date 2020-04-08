@@ -17,11 +17,7 @@ from pcs.lib.cib.tools import (
     does_id_exist,
 )
 from pcs.lib.errors import LibraryError
-from pcs.lib.pacemaker.values import (
-    is_true,
-    timeout_to_seconds,
-    RESOURCE_ROLES
-)
+from pcs.lib.pacemaker.values import is_true, timeout_to_seconds, RESOURCE_ROLES
 
 OPERATION_NVPAIR_ATTRIBUTES = [
     "OCF_CHECK_LEVEL",
@@ -59,13 +55,16 @@ BOOLEAN_VALUES = [
     "false",
 ]
 
-#normalize(key, value) -> normalized_value
-normalize = validate.option_value_normalization({
-    "role": lambda value: value.lower().capitalize(),
-    "on-fail": lambda value: value.lower(),
-    "record-pending": lambda value: value.lower(),
-    "enabled": lambda value: value.lower(),
-})
+# normalize(key, value) -> normalized_value
+normalize = validate.option_value_normalization(
+    {
+        "role": lambda value: value.lower().capitalize(),
+        "on-fail": lambda value: value.lower(),
+        "record-pending": lambda value: value.lower(),
+        "enabled": lambda value: value.lower(),
+    }
+)
+
 
 def prepare(
     report_processor: ReportProcessor,
@@ -90,9 +89,7 @@ def prepare(
     report_list: ReportItemList = []
     report_list.extend(
         validate_operation_list(
-            operations_to_validate,
-            allowed_operation_name_list,
-            allow_invalid
+            operations_to_validate, allowed_operation_name_list, allow_invalid
         )
     )
 
@@ -104,20 +101,19 @@ def prepare(
         raise LibraryError()
 
     return complete_all_intervals(operation_list) + get_remaining_defaults(
-        report_processor,
-        operation_list,
-        default_operation_list
+        report_processor, operation_list, default_operation_list
     )
+
 
 def operations_to_normalized(raw_operation_list):
     return [
         validate.values_to_pairs(op, normalize) for op in raw_operation_list
     ]
 
+
 def normalized_to_operations(normalized_pairs):
-    return [
-        validate.pairs_to_values(op) for op in normalized_pairs
-    ]
+    return [validate.pairs_to_values(op) for op in normalized_pairs]
+
 
 def validate_operation_list(
     operation_list, allowed_operation_name_list, allow_invalid=False
@@ -132,15 +128,14 @@ def validate_operation_list(
             "name",
             allowed_operation_name_list,
             option_name_for_report="operation name",
-            **kwargs
+            **kwargs,
         ),
         validate.ValueIn("role", RESOURCE_ROLES),
         validate.ValueIn("on-fail", ON_FAIL_VALUES),
         validate.ValueIn("record-pending", BOOLEAN_VALUES),
         validate.ValueIn("enabled", BOOLEAN_VALUES),
         validate.MutuallyExclusive(
-            ["interval-origin", "start-delay"],
-            option_type=option_type
+            ["interval-origin", "start-delay"], option_type=option_type
         ),
         validate.ValueId("id", option_name_for_report="operation id"),
     ]
@@ -150,6 +145,7 @@ def validate_operation_list(
     for operation in operation_list:
         report_list.extend(validator_all.validate(operation))
     return report_list
+
 
 def get_remaining_defaults(
     report_processor, operation_list, default_operation_list
@@ -165,15 +161,17 @@ def get_remaining_defaults(
     return make_unique_intervals(
         report_processor,
         [
-            default_operation for default_operation in default_operation_list
-            if default_operation["name"] not in [
-                operation["name"] for operation in operation_list
-            ]
-        ]
+            default_operation
+            for default_operation in default_operation_list
+            if default_operation["name"]
+            not in [operation["name"] for operation in operation_list]
+        ],
     )
+
 
 def get_interval_uniquer():
     used_intervals_map = defaultdict(set)
+
     def get_uniq_interval(name, initial_interval):
         """
         Return unique interval for name based on initial_interval if
@@ -195,7 +193,9 @@ def get_interval_uniquer():
             normalized_interval += 1
         used_intervals.add(normalized_interval)
         return str(normalized_interval)
+
     return get_uniq_interval
+
 
 def make_unique_intervals(report_processor: ReportProcessor, operation_list):
     """
@@ -210,8 +210,7 @@ def make_unique_intervals(report_processor: ReportProcessor, operation_list):
         adapted = operation.copy()
         if "interval" in adapted:
             adapted["interval"] = get_unique_interval(
-                operation["name"],
-                operation["interval"]
+                operation["name"], operation["interval"]
             )
             if adapted["interval"] != operation["interval"]:
                 report_processor.report(
@@ -226,6 +225,7 @@ def make_unique_intervals(report_processor: ReportProcessor, operation_list):
         adapted_operation_list.append(adapted)
     return adapted_operation_list
 
+
 def validate_different_intervals(operation_list):
     """
     Check that the same operations (e.g. monitor) have different interval.
@@ -235,8 +235,7 @@ def validate_different_intervals(operation_list):
     duplication_map = defaultdict(lambda: defaultdict(list))
     for operation in operation_list:
         interval = operation.get(
-            "interval",
-            get_default_interval(operation["name"])
+            "interval", get_default_interval(operation["name"])
         )
         seconds = timeout_to_seconds(interval)
         duplication_map[operation["name"]][seconds].append(interval)
@@ -257,6 +256,7 @@ def validate_different_intervals(operation_list):
         ]
     return []
 
+
 def create_id(context_element, id_provider, name, interval):
     """
     Create id for op element.
@@ -265,10 +265,9 @@ def create_id(context_element, id_provider, name, interval):
     mixed interval is the interval attribute of operation
     """
     return create_subelement_id(
-        context_element,
-        "{0}-interval-{1}".format(name, interval),
-        id_provider
+        context_element, "{0}-interval-{1}".format(name, interval), id_provider
     )
+
 
 def create_operations(primitive_element, id_provider, operation_list):
     """
@@ -282,6 +281,7 @@ def create_operations(primitive_element, id_provider, operation_list):
     for operation in sorted(operation_list, key=lambda op: op["name"]):
         append_new_operation(operations_element, id_provider, operation)
 
+
 def append_new_operation(operations_element, id_provider, options):
     """
     Create op element and apend it to operations_element.
@@ -291,7 +291,8 @@ def append_new_operation(operations_element, id_provider, options):
     dict options are attributes of operation
     """
     attribute_map = dict(
-        (key, value) for key, value in options.items()
+        (key, value)
+        for key, value in options.items()
         if key not in OPERATION_NVPAIR_ATTRIBUTES
     )
     if "id" in attribute_map:
@@ -302,21 +303,20 @@ def append_new_operation(operations_element, id_provider, options):
                 )
             )
     else:
-        attribute_map.update({
-            "id": create_id(
-                operations_element.getparent(),
-                id_provider,
-                options["name"],
-                options["interval"]
-            )
-        })
-    op_element = etree.SubElement(
-        operations_element,
-        "op",
-        attribute_map,
-    )
+        attribute_map.update(
+            {
+                "id": create_id(
+                    operations_element.getparent(),
+                    id_provider,
+                    options["name"],
+                    options["interval"],
+                )
+            }
+        )
+    op_element = etree.SubElement(operations_element, "op", attribute_map,)
     nvpair_attribute_map = dict(
-        (key, value) for key, value in options.items()
+        (key, value)
+        for key, value in options.items()
         if key in OPERATION_NVPAIR_ATTRIBUTES
     )
 
@@ -326,6 +326,7 @@ def append_new_operation(operations_element, id_provider, options):
         )
 
     return op_element
+
 
 def get_resource_operations(resource_el, names=None):
     """
@@ -339,6 +340,7 @@ def get_resource_operations(resource_el, names=None):
         if not names or op_el.attrib.get("name", "") in names
     ]
 
+
 def disable(operation_element):
     """
     Disable the specified operation
@@ -346,12 +348,14 @@ def disable(operation_element):
     """
     operation_element.attrib["enabled"] = "false"
 
+
 def enable(operation_element):
     """
     Enable the specified operation
     etree operation_element -- the operation
     """
     operation_element.attrib.pop("enabled", None)
+
 
 def is_enabled(operation_element):
     """
