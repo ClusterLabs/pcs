@@ -9,7 +9,8 @@ from xml.etree.ElementTree import Element
 
 from lxml.etree import _Element
 
-from pcs.lib import reports
+from pcs.common import reports
+from pcs.common.reports.item import ReportItem
 from pcs.lib.cib import nvpair
 from pcs.lib.cib.resource.bundle import (
     TAG as TAG_BUNDLE,
@@ -88,7 +89,9 @@ def find_resources_and_report(
     if not additional_search:
         additional_search = lambda x: [x]
     if resource_tags is None:
-        resource_tags = TAG_CLONE_ALL + [TAG_GROUP, TAG_PRIMITIVE, TAG_BUNDLE]
+        resource_tags = sorted(
+            TAG_CLONE_ALL + [TAG_GROUP, TAG_PRIMITIVE, TAG_BUNDLE]
+        )
 
     resource_el_list = []
     for res_id in resource_ids:
@@ -99,7 +102,7 @@ def find_resources_and_report(
             report_list.extend(searcher.get_errors())
     return resource_el_list
 
-def find_primitives(resource_el):
+def find_primitives(resource_el: Element) -> List[Element]:
     """
     Get list of primitives contained in a given resource
     etree resource_el -- resource element
@@ -356,7 +359,11 @@ def validate_move(resource_element, master):
 
     if analysis.is_bundle:
         report_list.append(
-            reports.cannot_move_resource_bundle(resource_element.get("id"))
+            ReportItem.error(
+                reports.messages.CannotMoveResourceBundle(
+                    resource_element.get("id")
+                )
+            )
         )
         return report_list
 
@@ -366,7 +373,11 @@ def validate_move(resource_element, master):
         (analysis.is_promotable_clone or analysis.is_in_promotable_clone)
     ):
         report_list.append(
-            reports.cannot_move_resource_clone(resource_element.get("id"))
+            ReportItem.error(
+                reports.messages.CannotMoveResourceClone(
+                    resource_element.get("id")
+                )
+            )
         )
         return report_list
 
@@ -380,16 +391,19 @@ def validate_move(resource_element, master):
         # resources. 2) To prevent users from accidentally move slave role.
         # This check can be removed if someone requests it.
         report_list.append(
-            reports.cannot_move_resource_promotable_not_master(
-                resource_element.get("id"),
-                analysis.promotable_clone_id
+            ReportItem.error(
+                reports.messages.CannotMoveResourcePromotableNotMaster(
+                    resource_element.get("id"), analysis.promotable_clone_id,
+                )
             )
         )
     elif master and not analysis.is_promotable_clone:
         report_list.append(
-            reports.cannot_move_resource_master_resource_not_promotable(
-                resource_element.get("id"),
-                promotable_id=analysis.promotable_clone_id
+            ReportItem.error(
+                reports.messages.CannotMoveResourceMasterResourceNotPromotable(
+                    resource_element.get("id"),
+                    promotable_id=analysis.promotable_clone_id,
+                )
             )
         )
 
@@ -407,9 +421,11 @@ def validate_ban(resource_element, master):
 
     if master and not analysis.is_promotable_clone:
         report_list.append(
-            reports.cannot_ban_resource_master_resource_not_promotable(
-                resource_element.get("id"),
-                promotable_id=analysis.promotable_clone_id
+            ReportItem.error(
+                reports.messages.CannotBanResourceMasterResourceNotPromotable(
+                    resource_element.get("id"),
+                    promotable_id=analysis.promotable_clone_id,
+                )
             )
         )
 
@@ -426,12 +442,13 @@ def validate_unmove_unban(resource_element, master):
     analysis = _validate_move_ban_clear_analyzer(resource_element)
 
     if master and not analysis.is_promotable_clone:
-        report_list.append(
-            reports.cannot_unmove_unban_resource_master_resource_not_promotable(
+        # pylint: disable=line-too-long
+        report_list.append(ReportItem.error(
+            reports.messages.CannotUnmoveUnbanResourceMasterResourceNotPromotable(
                 resource_element.get("id"),
                 promotable_id=analysis.promotable_clone_id
             )
-        )
+        ))
 
     return report_list
 

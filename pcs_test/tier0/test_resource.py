@@ -143,7 +143,7 @@ class ResourceDescribe(TestCase, AssertPcsMixin):
             "resource describe dummy",
             (
                 "Error: Multiple agents match 'dummy', please specify full"
-                " name: ocf:heartbeat:Dummy, ocf:pacemaker:Dummy\n"
+                " name: 'ocf:heartbeat:Dummy', 'ocf:pacemaker:Dummy'\n"
             )
         )
 
@@ -205,7 +205,7 @@ class Resource(TestCase, AssertPcsMixin):
 
     def testCaseInsensitive(self):
         o,r = pcs(temp_cib, "resource create --no-default-ops D0 dummy")
-        ac(o, "Error: Multiple agents match 'dummy', please specify full name: ocf:heartbeat:Dummy, ocf:pacemaker:Dummy\n")
+        ac(o, "Error: Multiple agents match 'dummy', please specify full name: 'ocf:heartbeat:Dummy', 'ocf:pacemaker:Dummy'\n")
         assert r == 1
 
         self.assert_pcs_success(

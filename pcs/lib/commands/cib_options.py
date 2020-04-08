@@ -1,6 +1,7 @@
 from functools import partial
 
-from pcs.lib import reports
+from pcs.common import reports
+from pcs.common.reports.item import ReportItem
 from pcs.lib.cib import sections
 from pcs.lib.cib.nvpair import arrange_first_meta_attributes
 from pcs.lib.cib.tools import IdProvider
@@ -20,7 +21,9 @@ def _set_any_defaults(section_name, env: LibraryEnvironment, options):
     # cause the whole change to be rejected by pacemaker with a "permission
     # denied" message.
     # https://bugzilla.redhat.com/show_bug.cgi?id=1642514
-    env.report_processor.report(reports.defaults_can_be_overriden())
+    env.report_processor.report(
+        ReportItem.warning(reports.messages.DefaultsCanBeOverriden())
+    )
 
     if not options:
         return

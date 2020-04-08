@@ -11,8 +11,8 @@ from pcs_test.tools.assertions import (
     assert_report_item_list_equal,
 )
 
-from pcs.common import report_codes
 from pcs.common.reports import ReportItemSeverity as severities
+from pcs.common.reports import codes as report_codes
 from pcs.lib.cib.constraint import constraint
 
 # pylint: disable=no-self-use, redundant-keyword-arg
@@ -237,10 +237,8 @@ def fixture_constraint_section(return_value):
     constraint_section.findall.return_value = return_value
     return constraint_section
 
-@mock.patch("pcs.lib.cib.constraint.constraint.export_with_set")
 class CheckIsWithoutDuplicationTest(TestCase):
-    def test_raises_when_duplicate_element_found(self, export_with_set):
-        export_with_set.return_value = "exported_duplicate_element"
+    def test_raises_when_duplicate_element_found(self):
         element = mock.MagicMock()
         element.tag = "constraint_type"
 
@@ -248,7 +246,10 @@ class CheckIsWithoutDuplicationTest(TestCase):
         assert_raise_library_error(
             lambda: constraint.check_is_without_duplication(
                 report_processor,
-                fixture_constraint_section(["duplicate_element"]), element,
+                fixture_constraint_section([
+                    etree.Element("tag", {"id": "duplicate_element"})
+                ]),
+                element,
                 are_duplicate=lambda e1, e2: True,
                 export_element=constraint.export_with_set,
             )
@@ -257,17 +258,28 @@ class CheckIsWithoutDuplicationTest(TestCase):
             report_processor.report_item_list,
             [
                 (
+                    severities.INFO,
+                    report_codes.DUPLICATE_CONSTRAINTS_LIST,
+                    {
+                        'constraint_info_list': [{
+                            'resource_sets': [],
+                            'options': {'id': 'duplicate_element'},
+                        }],
+                        'constraint_type': 'constraint_type'
+                    },
+                ),
+                (
                     severities.ERROR,
                     report_codes.DUPLICATE_CONSTRAINTS_EXIST,
                     {
-                        'constraint_info_list': ['exported_duplicate_element'],
-                        'constraint_type': 'constraint_type'
+                        'constraint_ids': ['duplicate_element'],
                     },
                     report_codes.FORCE_CONSTRAINT_DUPLICATE
                 )
             ]
         )
 
+    @mock.patch("pcs.lib.cib.constraint.constraint.export_with_set")
     def test_success_when_no_duplication_found(self, export_with_set):
         export_with_set.return_value = "exported_duplicate_element"
         element = mock.MagicMock()
@@ -279,15 +291,18 @@ class CheckIsWithoutDuplicationTest(TestCase):
             are_duplicate=lambda e1, e2: True,
             export_element=constraint.export_with_set,
         )
-    def test_report_when_duplication_allowed(self, export_with_set):
-        export_with_set.return_value = "exported_duplicate_element"
+
+    def test_report_when_duplication_allowed(self):
         element = mock.MagicMock()
         element.tag = "constraint_type"
 
         report_processor = MockLibraryReportProcessor()
         constraint.check_is_without_duplication(
             report_processor,
-            fixture_constraint_section(["duplicate_element"]), element,
+            fixture_constraint_section([
+                etree.Element("tag", {"id": "duplicate_element"})
+            ]),
+            element,
             are_duplicate=lambda e1, e2: True,
             export_element=constraint.export_with_set,
             duplication_alowed=True,
@@ -296,11 +311,21 @@ class CheckIsWithoutDuplicationTest(TestCase):
             report_processor.report_item_list,
             [
                 (
+                    severities.INFO,
+                    report_codes.DUPLICATE_CONSTRAINTS_LIST,
+                    {
+                        'constraint_info_list': [{
+                            'resource_sets': [],
+                            'options': {'id': 'duplicate_element'},
+                        }],
+                        'constraint_type': 'constraint_type'
+                    },
+                ),
+                (
                     severities.WARNING,
                     report_codes.DUPLICATE_CONSTRAINTS_EXIST,
                     {
-                        'constraint_info_list': ['exported_duplicate_element'],
-                        'constraint_type': 'constraint_type'
+                        'constraint_ids': ['duplicate_element'],
                     },
                 )
             ]

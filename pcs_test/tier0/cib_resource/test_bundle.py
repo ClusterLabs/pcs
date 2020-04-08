@@ -218,7 +218,7 @@ class BundleCreate(BundleCreateCommon):
                 </resources>
             """,
             "Warning: container option 'masters' is deprecated and should not "
-                "be used, use promoted-max instead\n"
+                "be used, use 'promoted-max' instead\n"
         )
 
     def test_deprecated_masters_and_promoted_max(self):
@@ -231,7 +231,7 @@ class BundleCreate(BundleCreateCommon):
                 "can be used\n"
                 + ERRORS_HAVE_OCURRED +
                 "Warning: container option 'masters' is deprecated and should "
-                "not be used, use promoted-max instead\n"
+                "not be used, use 'promoted-max' instead\n"
         )
 
     def test_fail_when_missing_args_1(self):
@@ -489,7 +489,7 @@ class BundleUpdate(BundleCreateCommon):
                 </resources>
             """,
             "Warning: container option 'masters' is deprecated and should not "
-                "be used, use promoted-max instead\n"
+                "be used, use 'promoted-max' instead\n"
         )
 
     def test_delete_masters(self):
@@ -497,7 +497,7 @@ class BundleUpdate(BundleCreateCommon):
         self.assert_pcs_success(
             "resource bundle update B container masters=2",
             "Warning: container option 'masters' is deprecated and should not "
-                "be used, use promoted-max instead\n"
+                "be used, use 'promoted-max' instead\n"
         )
         self.assert_effect(
             "resource bundle update B container masters=",
@@ -527,7 +527,7 @@ class BundleUpdate(BundleCreateCommon):
                 "option 'promoted-max' is already set\n"
                 + ERRORS_HAVE_OCURRED +
                 "Warning: container option 'masters' is deprecated and should "
-                "not be used, use promoted-max instead\n"
+                "not be used, use 'promoted-max' instead\n"
         )
 
     def test_masters_set_after_promoted_max_with_remove(self):
@@ -545,7 +545,7 @@ class BundleUpdate(BundleCreateCommon):
                 </resources>
             """,
             "Warning: container option 'masters' is deprecated and should not "
-                "be used, use promoted-max instead\n"
+                "be used, use 'promoted-max' instead\n"
         )
 
     def test_promoted_max_set_after_masters(self):
@@ -553,7 +553,7 @@ class BundleUpdate(BundleCreateCommon):
         self.assert_pcs_success(
             "resource bundle update B container masters=2",
             "Warning: container option 'masters' is deprecated and should not "
-                "be used, use promoted-max instead\n"
+                "be used, use 'promoted-max' instead\n"
         )
         self.assert_pcs_fail(
             "resource bundle update B container promoted-max=3",
@@ -567,7 +567,7 @@ class BundleUpdate(BundleCreateCommon):
         self.assert_pcs_success(
             "resource bundle update B container masters=2",
             "Warning: container option 'masters' is deprecated and should not "
-                "be used, use promoted-max instead\n"
+                "be used, use 'promoted-max' instead\n"
         )
         self.assert_effect(
             "resource bundle update B container masters= promoted-max=3",

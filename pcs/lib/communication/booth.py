@@ -1,11 +1,9 @@
 import base64
 import json
 
-from pcs.common import report_codes
+from pcs.common import reports
+from pcs.common.reports.item import ReportItem
 from pcs.common.node_communicator import RequestData
-from pcs.common.reports import ReportItemSeverity
-from pcs.lib import reports
-from pcs.lib.booth import reports as reports_booth
 from pcs.lib.communication.tools import (
     AllAtOnceStrategyMixin,
     AllSameDataMixin,
@@ -48,12 +46,17 @@ class BoothSendConfig(
         )
 
     def _get_success_report(self, node_label):
-        return reports_booth.booth_config_accepted_by_node(
-            node_label, [self._booth_name]
+        return ReportItem.info(
+            reports.messages.BoothConfigAcceptedByNode(
+                node=node_label,
+                name_list=[self._booth_name],
+            )
         )
 
     def before(self):
-        self._report(reports_booth.booth_config_distribution_started())
+        self._report(
+            ReportItem.info(reports.messages.BoothConfigDistributionStarted())
+        )
 
 
 class ProcessJsonDataMixin:
@@ -74,7 +77,11 @@ class ProcessJsonDataMixin:
         try:
             self._data.append((target, json.loads(response.data)))
         except ValueError:
-            self._report(reports.invalid_response_format(target.label))
+            self._report(
+                ReportItem.error(
+                    reports.messages.InvalidResponseFormat(target.label)
+                )
+            )
 
     def on_complete(self):
         return self._data
@@ -119,28 +126,42 @@ class BoothSaveFiles(
         try:
             parsed_data = json.loads(response.data)
             self._report(
-                reports_booth.booth_config_accepted_by_node(
-                    target.label, list(parsed_data["saved"])
+                ReportItem.info(
+                    reports.messages.BoothConfigAcceptedByNode(
+                        node=target.label,
+                        name_list=sorted(parsed_data["saved"])
+                    )
                 )
             )
             for filename in list(parsed_data["existing"]):
-                self._report(reports.file_already_exists(
-                    "", # TODO specify file type; this will be overhauled to
-                        # a generic file transport framework anyway
-                    filename,
-                    severity=(
-                        ReportItemSeverity.WARNING if self._rewrite_existing
-                        else ReportItemSeverity.ERROR
-                    ),
-                    forceable=(
-                        None if self._rewrite_existing
-                        else report_codes.FORCE_FILE_OVERWRITE
-                    ),
-                    node=target.label,
-                ))
+                self._report(
+                    ReportItem(
+                        severity=reports.item.get_severity(
+                            reports.codes.FORCE_FILE_OVERWRITE,
+                            self._rewrite_existing,
+                        ),
+                        message=reports.messages.FileAlreadyExists(
+                            # TODO specify file type; this will be overhauled
+                            # to a generic file transport framework anyway
+                            "",
+                            filename,
+                            node=target.label,
+                        )
+                    )
+                )
             for file, reason in dict(parsed_data["failed"]).items():
-                self._report(reports_booth.booth_config_distribution_node_error(
-                    target.label, reason, file
-                ))
+                self._report(
+                    ReportItem.error(
+                        reports.messages.BoothConfigDistributionNodeError(
+                            target.label,
+                            reason,
+                            file,
+                        )
+                    )
+                )
         except (KeyError, TypeError, ValueError):
-            self._report(reports.invalid_response_format(target.label))
+            self._report(
+                ReportItem.error(
+                    reports.messages.InvalidResponseFormat(target.label)
+                )
+            )

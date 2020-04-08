@@ -3,7 +3,7 @@ from unittest import TestCase
 from pcs_test.tools import fixture
 from pcs_test.tools.assertions import assert_report_item_list_equal
 
-from pcs.common import report_codes
+from pcs.common.reports import codes as report_codes
 from pcs.lib.booth import config_validators
 from pcs.lib.booth.config_facade import ConfigFacade
 from pcs.lib.booth.config_parser import ConfigItem
@@ -81,7 +81,7 @@ class Create(TestCase):
             [
                 fixture.error(
                     report_codes.BOOTH_ADDRESS_DUPLICATION,
-                    addresses=["1.1.1.1"],
+                    duplicate_addresses=["1.1.1.1"],
                 ),
             ]
         )
@@ -103,7 +103,7 @@ class Create(TestCase):
                 ),
                 fixture.error(
                     report_codes.BOOTH_ADDRESS_DUPLICATION,
-                    addresses=["1.1.1.1"],
+                    duplicate_addresses=["1.1.1.1"],
                 ),
             ]
         )

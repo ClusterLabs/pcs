@@ -3,8 +3,7 @@ from pcs.common.fencing_topology import (
     TARGET_TYPE_NODE,
     TARGET_TYPE_REGEXP,
 )
-from pcs.common import report_codes
-from pcs.common.reports import has_errors
+from pcs.common import reports as report
 from pcs.common.tools import Version
 from pcs.lib.cib import fencing_topology as cib_fencing_topology
 from pcs.lib.cib.tools import (
@@ -125,7 +124,7 @@ def remove_levels_by_params(
     # in that case.
     # CLI has no way to figure out what the first parameter is. Therefore, the
     # lib must try both cases if asked to do so.
-    if not has_errors(report_list):
+    if not report.has_errors(report_list):
         lib_env.report_processor.report_list(report_list)
         lib_env.push_cib()
         return
@@ -133,9 +132,9 @@ def remove_levels_by_params(
     level_not_found = False
     for report_item in report_list:
         if (
-            report_item.code
+            report_item.message.code
             ==
-            report_codes.CIB_FENCING_LEVEL_DOES_NOT_EXIST
+            report.codes.CIB_FENCING_LEVEL_DOES_NOT_EXIST
         ):
             level_not_found = True
             break
@@ -154,7 +153,7 @@ def remove_levels_by_params(
         target_and_devices,
         ignore_if_missing
     )
-    if not has_errors(report_list_second):
+    if not report.has_errors(report_list_second):
         lib_env.report_processor.report_list(report_list_second)
         lib_env.push_cib()
         return

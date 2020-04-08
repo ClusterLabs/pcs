@@ -14,8 +14,8 @@ from pcs_test.tools import fixture
 from pcs_test.tools.misc import create_patcher
 from pcs_test.tools.xml import XmlManipulation
 
-from pcs.common import report_codes
 from pcs.common.reports import ReportItemSeverity as severity
+from pcs.common.reports import codes as report_codes
 from pcs.lib import resource_agent as lib_ra
 from pcs.lib.errors import LibraryError
 from pcs.lib.external import CommandRunner
@@ -1348,6 +1348,7 @@ class AgentMetadataValidateParamsCreate(TestCase):
                         "req2_old",
                     ],
                     option_type="agent",
+                    allowed_patterns=[],
                 ),
             ]
         )
@@ -1380,6 +1381,7 @@ class AgentMetadataValidateParamsCreate(TestCase):
                         "req2_old",
                     ],
                     option_type="agent",
+                    allowed_patterns=[],
                 ),
             ]
         )
@@ -1456,6 +1458,7 @@ class AgentMetadataValidateParamsUpdate(TestCase):
                         "req2_old",
                     ],
                     option_type="agent",
+                    allowed_patterns=[],
                 ),
             ]
         )
@@ -1490,6 +1493,7 @@ class AgentMetadataValidateParamsUpdate(TestCase):
                         "req2_old",
                     ],
                     option_type="agent",
+                    allowed_patterns=[],
                 ),
             ]
         )
@@ -2227,23 +2231,29 @@ class FindResourceAgentByNameTest(TestCase):
             self.runner,
         )
 
-    @patch_agent("reports.agent_name_guessed")
     @patch_agent("guess_exactly_one_resource_agent_full_name")
-    def test_returns_guessed_agent(self, mock_guess, mock_report):
+    def test_returns_guessed_agent(self, mock_guess):
         #setup
         name = "Delay"
         guessed_name = "ocf:heartbeat:Delay"
-        report = "AGENT_NAME_GUESSED"
 
         agent = mock.MagicMock(get_name=mock.Mock(return_value=guessed_name))
         mock_guess.return_value = agent
-        mock_report.return_value = report
 
         #test
         self.assertEqual(agent, self.run(name))
         mock_guess.assert_called_once_with(self.runner, name)
-        self.report_processor.report.assert_called_once_with(report)
-        mock_report.assert_called_once_with(name, guessed_name)
+        self.report_processor.report.assert_called_once()
+        assert_report_item_list_equal(
+            [self.report_processor.report.call_args[0][0]],
+            [
+                fixture.info(
+                    report_codes.AGENT_NAME_GUESSED,
+                    entered_name=name,
+                    guessed_name=guessed_name,
+                )
+            ],
+        )
 
     @patch_agent("ResourceAgent")
     def test_returns_real_agent_when_is_there(self, ResourceAgent):

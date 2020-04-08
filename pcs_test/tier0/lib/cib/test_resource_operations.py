@@ -7,7 +7,7 @@ from pcs_test.tools.assertions import assert_report_item_list_equal
 from pcs_test.tools.custom_mock import MockLibraryReportProcessor
 from pcs_test.tools.misc import create_patcher
 
-from pcs.common import report_codes
+from pcs.common.reports import codes as report_codes
 from pcs.lib.cib.resource import operations
 from pcs.common.reports import ReportItemSeverity as severities
 from pcs.lib.validate import ValuePair
@@ -319,7 +319,7 @@ class ValidateOperation(TestCase):
                     forbidden_characters=None,
                 ),
                 fixture.error(
-                    report_codes.INVALID_ID,
+                    report_codes.INVALID_ID_BAD_CHAR,
                     id="0",
                     id_description="operation id",
                     is_first_char=True,
@@ -396,7 +396,7 @@ class ValidateOperation(TestCase):
             [
                 (
                     severities.ERROR,
-                    report_codes.INVALID_ID,
+                    report_codes.INVALID_ID_BAD_CHAR,
                     {
                         "id": "a#b",
                         "id_description": "operation id",

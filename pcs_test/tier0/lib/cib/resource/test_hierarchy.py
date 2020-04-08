@@ -9,7 +9,7 @@ from pcs_test.tools.assertions import (
 )
 from pcs_test.tools.xml import etree_to_str
 
-from pcs.common import report_codes
+from pcs.common.reports import codes as report_codes
 from pcs.lib.cib.resource import hierarchy
 from pcs.lib.cib.tools import IdProvider
 
@@ -232,14 +232,14 @@ class ValidateMoveResourcesToGroupByIds(
             self._validate("1Gr:oup", ["R1"]),
             [
                 fixture.error(
-                    report_codes.INVALID_ID,
+                    report_codes.INVALID_ID_BAD_CHAR,
                     id="1Gr:oup",
                     id_description="group name",
                     is_first_char=True,
                     invalid_character="1",
                 ),
                 fixture.error(
-                    report_codes.INVALID_ID,
+                    report_codes.INVALID_ID_BAD_CHAR,
                     id="1Gr:oup",
                     id_description="group name",
                     is_first_char=False,
@@ -265,7 +265,7 @@ class ValidateMoveResourcesToGroupByIds(
                     report_codes.ID_BELONGS_TO_UNEXPECTED_TYPE,
                     id="RB1-meta_attributes",
                     expected_types=[
-                        "clone", "master", "group", "primitive", "bundle"
+                        "bundle", "clone", "group", "master", "primitive",
                     ],
                     current_type="meta_attributes",
                 ),

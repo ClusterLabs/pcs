@@ -5,7 +5,7 @@ from pcs_test.tools import fixture
 from pcs_test.tools.assertions import assert_report_item_list_equal
 from pcs_test.tools.custom_mock import patch_getaddrinfo
 
-from pcs.common import report_codes
+from pcs.common.reports import codes as report_codes
 from pcs.lib.cib.node import PacemakerNode
 from pcs.lib.corosync import config_validators, constants, node
 
@@ -92,7 +92,7 @@ class AddLink(TestCase):
                     report_codes.COROSYNC_CANNOT_ADD_REMOVE_LINKS_BAD_TRANSPORT,
                     add_or_not_remove=True,
                     actual_transport=transport,
-                    required_transport_list=["knet"]
+                    required_transports=["knet"]
                 )
             ]
         )
@@ -423,7 +423,7 @@ class AddLink(TestCase):
             [
                 fixture.error(
                     report_codes.COROSYNC_IP_VERSION_MISMATCH_IN_LINKS,
-                    link_numbers=None,
+                    link_numbers=[],
                 ),
             ]
         )
@@ -787,7 +787,7 @@ class RemoveLinks(TestCase):
                     report_codes.COROSYNC_CANNOT_ADD_REMOVE_LINKS_BAD_TRANSPORT,
                     add_or_not_remove=False,
                     actual_transport=transport,
-                    required_transport_list=["knet"]
+                    required_transports=["knet"]
                 )
             ]
         )
@@ -811,8 +811,8 @@ class RemoveLinks(TestCase):
             [
                 fixture.error(
                     report_codes.COROSYNC_LINK_DOES_NOT_EXIST_CANNOT_REMOVE,
-                    link_list=["abc", "4", "15"],
-                    existing_link_list=["0", "1", "3", "10", "11"],
+                    link_list=sorted(["abc", "4", "15"]),
+                    existing_link_list=sorted(["0", "1", "3", "10", "11"]),
                 )
             ]
         )
@@ -861,7 +861,7 @@ class RemoveLinks(TestCase):
                 fixture.error(
                     report_codes.COROSYNC_LINK_DOES_NOT_EXIST_CANNOT_REMOVE,
                     link_list=["2"],
-                    existing_link_list=["0", "1", "3", "10", "11"],
+                    existing_link_list=sorted(["0", "1", "3", "10", "11"]),
                 )
             ]
         )
@@ -876,12 +876,12 @@ class RemoveLinks(TestCase):
             [
                 fixture.error(
                     report_codes.COROSYNC_LINK_NUMBER_DUPLICATION,
-                    link_number_list=["abc", "1", "11"],
+                    link_number_list=sorted(["abc", "1", "11"]),
                 ),
                 fixture.error(
                     report_codes.COROSYNC_LINK_DOES_NOT_EXIST_CANNOT_REMOVE,
                     link_list=["abc"],
-                    existing_link_list=["0", "1", "3", "10", "11"],
+                    existing_link_list=sorted(["0", "1", "3", "10", "11"]),
                 )
             ]
         )
@@ -1087,7 +1087,7 @@ class UpdateLinkAddressesMixin():
             [
                 fixture.error(
                     report_codes.COROSYNC_IP_VERSION_MISMATCH_IN_LINKS,
-                    link_numbers=None,
+                    link_numbers=[],
                 ),
             ]
         )
@@ -1273,7 +1273,7 @@ class UpdateLinkAddressesUdp(UpdateLinkAddressesMixin, TestCase):
             [
                 fixture.error(
                     report_codes.COROSYNC_IP_VERSION_MISMATCH_IN_LINKS,
-                    link_numbers=None,
+                    link_numbers=[],
                 ),
             ]
         )
@@ -1304,7 +1304,7 @@ class UpdateLinkAddressesUdp(UpdateLinkAddressesMixin, TestCase):
             [
                 fixture.error(
                     report_codes.COROSYNC_IP_VERSION_MISMATCH_IN_LINKS,
-                    link_numbers=None,
+                    link_numbers=[],
                 ),
             ]
         )
@@ -1391,7 +1391,7 @@ class UpdateLinkAddressesKnet(UpdateLinkAddressesMixin, TestCase):
             [
                 fixture.error(
                     report_codes.COROSYNC_IP_VERSION_MISMATCH_IN_LINKS,
-                    link_numbers=None,
+                    link_numbers=[],
                 ),
             ]
         )
@@ -1426,7 +1426,7 @@ class UpdateLinkAddressesKnet(UpdateLinkAddressesMixin, TestCase):
             [
                 fixture.error(
                     report_codes.COROSYNC_IP_VERSION_MISMATCH_IN_LINKS,
-                    link_numbers=None,
+                    link_numbers=[],
                 ),
             ]
         )

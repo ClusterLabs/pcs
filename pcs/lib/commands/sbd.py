@@ -1,6 +1,9 @@
 from pcs import settings
-from pcs.common import report_codes
-from pcs.common.reports import ReportItemSeverity as Severities
+from pcs.common import reports
+from pcs.common.reports import (
+    codes as report_codes,
+)
+from pcs.common.reports.item import ReportItem
 from pcs.lib.communication.sbd import (
     CheckSbd,
     DisableSbdService,
@@ -17,7 +20,6 @@ from pcs.lib.communication.tools import (
     run_and_raise,
 )
 from pcs.lib import (
-    reports,
     sbd,
     validate,
 )
@@ -87,7 +89,7 @@ def _validate_watchdog_dict(watchdog_dict):
     watchdog_dict -- dictionary with node names as keys and value as watchdog
     """
     return [
-        reports.invalid_watchdog_path(watchdog)
+        ReportItem.error(reports.messages.WatchdogInvalid(watchdog))
         for watchdog in watchdog_dict.values()
         if not watchdog
     ]
@@ -150,7 +152,9 @@ def enable_sbd(
 
     node_list, get_nodes_report_list = get_existing_nodes_names(corosync_conf)
     if not node_list:
-        get_nodes_report_list.append(reports.corosync_config_no_nodes_defined())
+        get_nodes_report_list.append(
+            ReportItem.error(reports.messages.CorosyncConfigNoNodesDefined())
+        )
     target_list = lib_env.get_node_target_factory().get_target_list(
         node_list, skip_non_existing=ignore_offline_nodes,
     )
@@ -166,7 +170,7 @@ def enable_sbd(
         get_nodes_report_list
         +
         [
-            reports.node_not_found(node)
+            ReportItem.error(reports.messages.NodeNotFound(node))
             for node in (
                 set(list(watchdog_dict.keys()) + list(node_device_dict.keys()))
                 -
@@ -193,7 +197,9 @@ def enable_sbd(
     # check if SBD can be enabled
     if no_watchdog_validation:
         lib_env.report_processor.report(
-            reports.sbd_watchdog_validation_inactive()
+            ReportItem.warning(
+                reports.messages.SbdWatchdogValidationInactive()
+            )
         )
     com_cmd = CheckSbd(lib_env.report_processor)
     for target in online_targets:
@@ -214,7 +220,9 @@ def enable_sbd(
     if not using_devices:
         if sbd.atb_has_to_be_enabled_pre_enable_check(corosync_conf):
             lib_env.report_processor.report(
-                reports.corosync_quorum_atb_will_be_enabled_due_to_sbd()
+                ReportItem.warning(
+                    reports.messages.CorosyncQuorumAtbWillBeEnabledDueToSbd()
+                )
             )
             corosync_conf.set_quorum_options({"auto_tie_breaker": "1"})
             lib_env.push_corosync_conf(corosync_conf, ignore_offline_nodes)
@@ -246,7 +254,9 @@ def enable_sbd(
     run_and_raise(lib_env.get_node_communicator(), com_cmd)
 
     lib_env.report_processor.report(
-        reports.cluster_restart_required_to_apply_changes()
+        ReportItem.warning(
+            reports.messages.ClusterRestartRequiredToApplyChanges()
+        )
     )
 
 
@@ -261,7 +271,9 @@ def disable_sbd(lib_env, ignore_offline_nodes=False):
         lib_env.get_corosync_conf()
     )
     if not node_list:
-        get_nodes_report_list.append(reports.corosync_config_no_nodes_defined())
+        get_nodes_report_list.append(
+            ReportItem.error(reports.messages.CorosyncConfigNoNodesDefined())
+        )
     if lib_env.report_processor.report_list(get_nodes_report_list).has_errors:
         raise LibraryError()
 
@@ -285,7 +297,9 @@ def disable_sbd(lib_env, ignore_offline_nodes=False):
     run_and_raise(lib_env.get_node_communicator(), com_cmd)
 
     lib_env.report_processor.report(
-        reports.cluster_restart_required_to_apply_changes()
+        ReportItem.warning(
+            reports.messages.ClusterRestartRequiredToApplyChanges()
+        )
     )
 
 
@@ -307,7 +321,9 @@ def get_cluster_sbd_status(lib_env):
         lib_env.get_corosync_conf()
     )
     if not node_list:
-        get_nodes_report_list.append(reports.corosync_config_no_nodes_defined())
+        get_nodes_report_list.append(
+            ReportItem.error(reports.messages.CorosyncConfigNoNodesDefined())
+        )
     if lib_env.report_processor.report_list(get_nodes_report_list).has_errors:
         raise LibraryError()
 
@@ -341,7 +357,9 @@ def get_cluster_sbd_config(lib_env):
         lib_env.get_corosync_conf()
     )
     if not node_list:
-        get_nodes_report_list.append(reports.corosync_config_no_nodes_defined())
+        get_nodes_report_list.append(
+            ReportItem.error(reports.messages.CorosyncConfigNoNodesDefined())
+        )
     if lib_env.report_processor.report_list(get_nodes_report_list).has_errors:
         raise LibraryError()
 
@@ -376,7 +394,9 @@ def initialize_block_devices(lib_env, device_list, option_dict):
     report_item_list = []
     if not device_list:
         report_item_list.append(
-            reports.required_options_are_missing(["device"])
+            ReportItem.error(
+                reports.messages.RequiredOptionsAreMissing(["device"])
+            )
         )
 
     supported_options = sbd.DEVICE_INITIALIZATION_OPTIONS_MAPPING.keys()
@@ -435,7 +455,7 @@ def get_local_devices_info(lib_env, dump=False):
         output.append(obj)
 
     for report_item in report_item_list:
-        report_item.severity = Severities.WARNING
+        report_item.severity = reports.item.ReportItemSeverity.warning()
     if lib_env.report_processor.report_list(report_item_list).has_errors:
         raise LibraryError()
     return output
@@ -458,12 +478,18 @@ def set_message(lib_env, device, node_name, message):
         missing_options.append("node")
     if missing_options:
         report_item_list.append(
-            reports.required_options_are_missing(missing_options)
+            ReportItem.error(
+                reports.messages.RequiredOptionsAreMissing(missing_options)
+            )
         )
     supported_messages = settings.sbd_message_types
     if message not in supported_messages:
         report_item_list.append(
-            reports.invalid_option_value("message", message, supported_messages)
+            ReportItem.error(
+                reports.messages.InvalidOptionValue(
+                    "message", message, supported_messages
+                )
+            )
         )
     if lib_env.report_processor.report_list(report_item_list).has_errors:
         raise LibraryError()
@@ -488,5 +514,9 @@ def test_local_watchdog(lib_env, watchdog=None):
     lib_env LibraryEnvironment
     watchdog string -- watchdog to trigger
     """
-    lib_env.report_processor.report(reports.system_will_reset())
+    lib_env.report_processor.report(
+        ReportItem.info(
+            reports.messages.SystemWillReset()
+        )
+    )
     sbd.test_watchdog(lib_env.cmd_runner(), watchdog)

@@ -1,6 +1,7 @@
+from pcs.common import reports
 from pcs.common.reports import ReportItemList
+from pcs.common.reports.item import ReportItem
 from pcs.common.tools import Version
-from pcs.lib import reports
 from pcs.lib.cib import alert
 from pcs.lib.cib.nvpair import (
     arrange_first_instance_attributes,
@@ -34,7 +35,11 @@ def create_alert(
     description -- alert description description
     """
     if not path:
-        raise LibraryError(reports.required_options_are_missing(["path"]))
+        raise LibraryError(
+            ReportItem.error(
+                reports.messages.RequiredOptionsAreMissing(["path"])
+            )
+        )
 
     cib = lib_env.get_cib(REQUIRED_CIB_VERSION)
     id_provider = IdProvider(cib)
@@ -126,7 +131,9 @@ def add_recipient(
     """
     if not recipient_value:
         raise LibraryError(
-            reports.required_options_are_missing(["value"])
+            ReportItem.error(
+                reports.messages.RequiredOptionsAreMissing(["value"])
+            )
         )
 
     cib = lib_env.get_cib(REQUIRED_CIB_VERSION)
@@ -174,7 +181,9 @@ def update_recipient(
     """
     if not recipient_value and recipient_value is not None:
         raise LibraryError(
-            reports.cib_alert_recipient_invalid_value(recipient_value)
+            ReportItem.error(
+                reports.messages.CibAlertRecipientValueInvalid(recipient_value)
+            )
         )
     cib = lib_env.get_cib(REQUIRED_CIB_VERSION)
     id_provider = IdProvider(cib)

@@ -8,8 +8,8 @@ from pcs_test.tools.misc import (
     skip_unless_pacemaker_supports_bundle,
 )
 
-from pcs.common import report_codes
-from pcs.lib import reports
+from pcs.common import reports
+from pcs.common.reports import codes as report_codes
 from pcs.lib.commands import resource
 from pcs.lib.errors import LibraryError
 
@@ -370,7 +370,9 @@ class Create(TestCase):
                 option_name="operation name",
                 option_value="moni*tor",
                 allowed_values=["start", "stop", "monitor", "reload",
-                    "migrate_to", "migrate_from", "meta-data", "validate-all"]
+                    "migrate_to", "migrate_from", "meta-data", "validate-all"],
+                cannot_be_empty=False,
+                forbidden_characters=None,
             ),
         ])
 
@@ -422,7 +424,7 @@ class Create(TestCase):
                 operation_list=[],
                 meta_attributes={},
                 instance_attributes={"state": "1"},
-            )
+            ),
         )
         self.env_assist.assert_reports([
             fixture.error(
@@ -430,7 +432,7 @@ class Create(TestCase):
                 instance_attr_name="state",
                 instance_attr_value="1",
                 agent_name="ocf:heartbeat:Dummy",
-                resource_id_list={"B", "X"},
+                resource_id_list=["B", "X"],
                 force_code=report_codes.FORCE_OPTIONS,
             )
         ])
@@ -547,7 +549,7 @@ class Create(TestCase):
                     instance_attr_name="state",
                     instance_attr_value="1",
                     agent_name="ocf:heartbeat:Dummy",
-                    resource_id_list={"B", "X"},
+                    resource_id_list=["B", "X"],
                 )
             ]
         )
@@ -571,7 +573,9 @@ class CreateWait(TestCase):
             resources=fixture_cib_resources_xml_primitive_simplest,
             wait=TIMEOUT,
             exception=LibraryError(
-                reports.wait_for_idle_timed_out(wait_error_message)
+                reports.item.ReportItem.error(
+                    reports.messages.WaitForIdleTimedOut(wait_error_message)
+                )
             ),
             instead="env.push_cib"
         )
@@ -730,7 +734,9 @@ class CreateInGroup(TestCase):
             resources=fixture_cib_resources_xml_group_simplest,
             wait=TIMEOUT,
             exception=LibraryError(
-                reports.wait_for_idle_timed_out(wait_error_message)
+                reports.item.ReportItem.error(
+                    reports.messages.WaitForIdleTimedOut(wait_error_message)
+                )
             )
         )
 
@@ -853,7 +859,9 @@ class CreateAsClone(TestCase):
             resources=fixture_cib_resources_xml_clone_simplest,
             wait=TIMEOUT,
             exception=LibraryError(
-                reports.wait_for_idle_timed_out(wait_error_message)
+                reports.item.ReportItem.error(
+                    reports.messages.WaitForIdleTimedOut(wait_error_message)
+                )
             )
         )
         self.env_assist.assert_raise_library_error(
@@ -1391,7 +1399,9 @@ class CreateInToBundle(TestCase):
                 resources=self.fixture_resources_post_simple,
                 wait=TIMEOUT,
                 exception=LibraryError(
-                    reports.wait_for_idle_timed_out(wait_error_message)
+                    reports.item.ReportItem.error(
+                        reports.messages.WaitForIdleTimedOut(wait_error_message)
+                    )
                 )
             )
         )

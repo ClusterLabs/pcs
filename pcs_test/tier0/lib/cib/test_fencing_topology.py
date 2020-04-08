@@ -10,14 +10,15 @@ from pcs_test.tools.custom_mock import MockLibraryReportProcessor
 from pcs_test.tools.misc import create_patcher
 from pcs_test.tools.xml import etree_to_str
 
-from pcs.common import report_codes
+from pcs.common import reports
+from pcs.common.reports import codes as report_codes
 from pcs.common.fencing_topology import (
     TARGET_TYPE_NODE,
     TARGET_TYPE_REGEXP,
     TARGET_TYPE_ATTRIBUTE,
 )
 from pcs.common.reports import ReportItemSeverity as severity
-from pcs.lib import reports
+from pcs.common.reports.item import ReportItem
 from pcs.lib.errors import LibraryError
 from pcs.lib.pacemaker.state import ClusterState
 
@@ -194,8 +195,10 @@ class AddLevel(TestCase):
     ):
         mock_val_level.return_value = (
             [
-                reports.invalid_option_value(
-                    "level", self.level, "a positive integer"
+                reports.item.ReportItem.error(
+                    reports.messages.InvalidOptionValue(
+                        "level", self.level, "a positive integer"
+                    )
                 )
             ],
             None
@@ -220,7 +223,9 @@ class AddLevel(TestCase):
         mock_append
     ):
         mock_val_target.return_value = [
-            reports.node_not_found(self.target_value)
+            ReportItem.error(
+                reports.messages.NodeNotFound(self.target_value)
+            )
         ]
         report_list = [
             fixture.error(
@@ -239,7 +244,9 @@ class AddLevel(TestCase):
         mock_append
     ):
         mock_val_devices.return_value = [
-            reports.stonith_resources_do_not_exist(self.devices)
+            ReportItem.error(
+                reports.messages.StonithResourcesDoNotExist(self.devices)
+            )
         ]
         report_list = [
             fixture.error(
@@ -257,8 +264,13 @@ class AddLevel(TestCase):
         mock_append
     ):
         mock_val_dupl.return_value = [
-            reports.fencing_level_already_exists(
-                self.level, self.target_type, self.target_value, self.devices
+            reports.item.ReportItem.error(
+                reports.messages.CibFencingLevelAlreadyExists(
+                    self.level,
+                    self.target_type,
+                    self.target_value,
+                    self.devices,
+                )
             )
         ]
         report_list = [
@@ -617,6 +629,7 @@ class Verify(TestCase, CibMixin, StatusNodesMixin):
                 report_codes.NODE_NOT_FOUND,
                 {
                     "node": "nodeA",
+                    "searched_types": [],
                 },
                 None
             ),
@@ -625,6 +638,7 @@ class Verify(TestCase, CibMixin, StatusNodesMixin):
                 report_codes.NODE_NOT_FOUND,
                 {
                     "node": "nodeB",
+                    "searched_types": [],
                 },
                 None
             ),
@@ -743,6 +757,7 @@ class ValidateTargetValuewise(TestCase, StatusNodesMixin):
             report_codes.NODE_NOT_FOUND,
             {
                 "node": "",
+                "searched_types": [],
             },
             report_codes.FORCE_NODE_DOES_NOT_EXIST
         )]
@@ -757,6 +772,7 @@ class ValidateTargetValuewise(TestCase, StatusNodesMixin):
             report_codes.NODE_NOT_FOUND,
             {
                 "node": "rh7-x",
+                "searched_types": [],
             },
             report_codes.FORCE_NODE_DOES_NOT_EXIST
         )]
@@ -771,6 +787,7 @@ class ValidateTargetValuewise(TestCase, StatusNodesMixin):
             report_codes.NODE_NOT_FOUND,
             {
                 "node": "rh7-x",
+                "searched_types": [],
             },
             None
         )]
@@ -785,6 +802,7 @@ class ValidateTargetValuewise(TestCase, StatusNodesMixin):
             report_codes.NODE_NOT_FOUND,
             {
                 "node": "rh7-x",
+                "searched_types": [],
             },
             None
         )]

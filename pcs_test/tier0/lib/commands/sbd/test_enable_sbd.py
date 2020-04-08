@@ -7,7 +7,8 @@ from pcs_test.tools.command_env import get_env_tools
 from pcs_test.tools.misc import get_test_resource, outdent
 
 from pcs import settings
-from pcs.common import report_codes
+from pcs.common import reports
+from pcs.common.reports import codes as report_codes
 from pcs.lib.commands.sbd import (
     ALLOWED_SBD_OPTION_LIST,
     TIMEOUT_ACTION_ALLOWED_VALUE_LIST,
@@ -57,14 +58,22 @@ def _sbd_enable_successful_report_list_fixture(
             for node in online_node_list
         ]
         +
-        [fixture.info(report_codes.SBD_ENABLING_STARTED)]
+        [
+            fixture.info(
+                reports.codes.SERVICE_ACTION_STARTED,
+                action=reports.const.SERVICE_ACTION_ENABLE,
+                service="sbd",
+                instance="",
+            )
+        ]
         +
         [
             fixture.info(
-                report_codes.SERVICE_ENABLE_SUCCESS,
+                reports.codes.SERVICE_ACTION_SUCCEEDED,
+                action=reports.const.SERVICE_ACTION_ENABLE,
                 service="sbd",
                 node=node,
-                instance=None
+                instance="",
             ) for node in online_node_list
         ]
         +
@@ -721,6 +730,7 @@ class Validations(TestCase):
             fixture.error(
                 report_codes.SBD_NO_DEVICE_FOR_NODE,
                 node=self.node_list[1],
+                sbd_enabled_in_cluster=False,
             ),
         ])
 
@@ -1082,7 +1092,9 @@ class Validations(TestCase):
                     report_codes.WATCHDOG_INVALID, watchdog=""
                 ),
                 fixture.error(
-                    report_codes.SBD_NO_DEVICE_FOR_NODE, node=self.node_list[1],
+                    report_codes.SBD_NO_DEVICE_FOR_NODE,
+                    node=self.node_list[1],
+                    sbd_enabled_in_cluster=False,
                 ),
                 fixture.error(
                     report_codes.SBD_TOO_MANY_DEVICES_FOR_NODE,
@@ -1199,10 +1211,11 @@ class FailureHandling(TestCase):
             +
             [
                 fixture.info(
-                    report_codes.SERVICE_ENABLE_SUCCESS,
+                    reports.codes.SERVICE_ACTION_SUCCEEDED,
+                    action=reports.const.SERVICE_ACTION_ENABLE,
                     service="sbd",
                     node=self.node_list[1],
-                    instance=None
+                    instance="",
                 ),
                 fixture.error(
                     report_codes.NODE_COMMUNICATION_COMMAND_UNSUCCESSFUL,
@@ -1234,10 +1247,11 @@ class FailureHandling(TestCase):
             +
             [
                 fixture.info(
-                    report_codes.SERVICE_ENABLE_SUCCESS,
+                    reports.codes.SERVICE_ACTION_SUCCEEDED,
+                    action=reports.const.SERVICE_ACTION_ENABLE,
                     service="sbd",
                     node=self.node_list[1],
-                    instance=None
+                    instance="",
                 ),
                 fixture.error(
                     report_codes.NODE_COMMUNICATION_ERROR_UNABLE_TO_CONNECT,

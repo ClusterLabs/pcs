@@ -4,8 +4,8 @@ from pcs import (
 )
 from pcs.cli.common import parse_args
 from pcs.cli.common.errors import CmdLineInputError
-from pcs.cli.common.reports import process_library_reports
-from pcs.common.tools import indent
+from pcs.cli.reports import process_library_reports
+from pcs.common.str_tools import indent
 from pcs.lib.node import get_existing_nodes_names
 
 

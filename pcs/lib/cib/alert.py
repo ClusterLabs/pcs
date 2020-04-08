@@ -1,12 +1,9 @@
 from functools import partial
 from lxml import etree
 
-from pcs.common import report_codes
-from pcs.common.reports import (
-    ReportProcessor,
-    ReportItemSeverity as Severities,
-)
-from pcs.lib import reports
+from pcs.common import reports
+from pcs.common.reports import ReportProcessor
+from pcs.common.reports.item import ReportItem
 from pcs.lib.errors import LibraryError
 from pcs.lib.cib.nvpair import get_nvset
 from pcs.lib.cib.tools import (
@@ -63,15 +60,18 @@ def ensure_recipient_value_is_unique(
         )
     )
     if recipient_list:
-        reporter.report(reports.cib_alert_recipient_already_exists(
-            alert.get("id", None),
-            recipient_value,
-            Severities.WARNING if allow_duplicity else Severities.ERROR,
-            forceable=(
-                None if allow_duplicity
-                else report_codes.FORCE_ALERT_RECIPIENT_VALUE_NOT_UNIQUE
+        reporter.report(
+            ReportItem(
+                severity=reports.item.get_severity(
+                    reports.codes.FORCE_ALERT_RECIPIENT_VALUE_NOT_UNIQUE,
+                    allow_duplicity,
+                ),
+                message=reports.messages.CibAlertRecipientAlreadyExists(
+                    alert.get("id", None),
+                    recipient_value,
+                )
             )
-        ))
+        )
         if reporter.has_errors:
             raise LibraryError()
 

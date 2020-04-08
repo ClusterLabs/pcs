@@ -7,8 +7,8 @@ from pcs_test.tools.assertions import(
 )
 from pcs_test.tools.misc import create_setup_patch_mixin
 
-from pcs.common import report_codes
 from pcs.common.reports import ReportItemSeverity as severities
+from pcs.common.reports import codes as report_codes
 from pcs.lib.cib.node import PacemakerNode
 from pcs.lib.cib.resource import guest_node
 from pcs.lib.cib.tools import IdProvider
@@ -160,6 +160,9 @@ class ValidateOptions(TestCase):
                     {
                         "option_name": "remote-connect-timeout",
                         "option_value": "invalid",
+                        "allowed_values": (
+                            "time interval (e.g. 1, 2s, 3m, 4h, ...)"
+                        ),
                         "cannot_be_empty": False,
                         "forbidden_characters": None,
                     },

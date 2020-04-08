@@ -13,7 +13,7 @@ from pcs_test.tier0.lib.commands.remote_node.fixtures_remove import(
 from pcs_test.tools import fixture
 from pcs_test.tools.command_env import get_env_tools
 
-from pcs.common import report_codes
+from pcs.common.reports import codes as report_codes
 from pcs.common.host import Destination
 from pcs.lib.commands.remote_node import(
     node_remove_remote as node_remove_remote_orig
@@ -172,7 +172,7 @@ class RemoveRemoteOthers(TestCase):
                 fixture.error(
                     report_codes.NODE_NOT_FOUND,
                     node="NOEXISTENT",
-                    searched_types="remote",
+                    searched_types=["remote"],
                 )
             ],
             expected_in_processor=False

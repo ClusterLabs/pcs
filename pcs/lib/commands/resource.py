@@ -1,16 +1,21 @@
+# pylint: disable=too-many-lines
 from contextlib import contextmanager
 from functools import partial
 from typing import (
     Any,
+    Iterable,
+    List,
     Mapping,
     Set,
 )
+from xml.etree.ElementTree import Element
 
-from pcs.common import file_type_codes, report_codes
+from pcs.common import file_type_codes
 from pcs.common.interface import dto
-from pcs.common.reports import ReportItemSeverity as severities
+from pcs.common import reports
+from pcs.common.reports import ReportItemList
+from pcs.common.reports.item import ReportItem
 from pcs.common.tools import Version
-from pcs.lib import reports
 from pcs.lib.cib import (
     resource,
     status as cib_status,
@@ -87,10 +92,13 @@ def _validate_remote_connection(
 
     report_list = []
     report_list.append(
-        reports.get_problem_creator(
-            report_codes.FORCE_NOT_SUITABLE_COMMAND,
-            allow_not_suitable_command
-        )(reports.use_command_node_add_remote)
+        ReportItem(
+            severity=reports.item.get_severity(
+                reports.codes.FORCE_NOT_SUITABLE_COMMAND,
+                allow_not_suitable_command
+            ),
+            message=reports.messages.UseCommandNodeAddRemote(),
+        )
     )
 
     report_list.extend(
@@ -112,19 +120,23 @@ def _validate_guest_change(
     node_name = resource.guest_node.get_node_name_from_options(meta_attributes)
 
     report_list = []
-    create_report = reports.use_command_node_add_guest
     if (
         detect_remove
         and
         not resource.guest_node.get_guest_option_value(meta_attributes)
     ):
-        create_report = reports.use_command_node_remove_guest
+        report_msg = reports.messages.UseCommandNodeRemoveGuest()
+    else:
+        report_msg = reports.messages.UseCommandNodeAddGuest()
 
     report_list.append(
-        reports.get_problem_creator(
-            report_codes.FORCE_NOT_SUITABLE_COMMAND,
-            allow_not_suitable_command
-        )(create_report)
+        ReportItem(
+            severity=reports.item.get_severity(
+                reports.codes.FORCE_NOT_SUITABLE_COMMAND,
+                allow_not_suitable_command,
+            ),
+            message=report_msg,
+        )
     )
 
     report_list.extend(
@@ -142,7 +154,11 @@ def _validate_guest_change(
 def _get_nodes_to_validate_against(env, tree):
     if not env.is_corosync_conf_live and env.is_cib_live:
         raise LibraryError(
-            reports.live_environment_required(["COROSYNC_CONF"])
+            ReportItem.error(
+                reports.messages.LiveEnvironmentRequired(
+                    [file_type_codes.COROSYNC_CONF]
+                )
+            )
         )
 
     if not env.is_cib_live and env.is_corosync_conf_live:
@@ -529,13 +545,15 @@ def create_into_bundle(
         bundle_el = _find_bundle(resources_section, bundle_id)
         if not resource.bundle.is_pcmk_remote_accessible(bundle_el):
             if env.report_processor.report(
-                reports.get_problem_creator(
-                    report_codes.FORCE_RESOURCE_IN_BUNDLE_NOT_ACCESSIBLE,
-                    allow_not_accessible_resource
-                )(
-                    reports.resource_in_bundle_not_accessible,
-                    bundle_id,
-                    resource_id
+                ReportItem(
+                    severity=reports.item.get_severity(
+                        reports.codes.FORCE_RESOURCE_IN_BUNDLE_NOT_ACCESSIBLE,
+                        allow_not_accessible_resource,
+                    ),
+                    message=reports.messages.ResourceInBundleNotAccessible(
+                        bundle_id,
+                        resource_id,
+                    )
                 )
             ).has_errors:
                 raise LibraryError()
@@ -804,7 +822,9 @@ def disable_safe(env: LibraryEnvironment, resource_ids, strict, wait):
     """
     if not env.is_cib_live:
         raise LibraryError(
-            reports.live_environment_required([file_type_codes.CIB])
+            ReportItem.error(
+                reports.messages.LiveEnvironmentRequired([file_type_codes.CIB])
+            )
         )
 
     with resource_environment(
@@ -866,10 +886,12 @@ def disable_safe(env: LibraryEnvironment, resource_ids, strict, wait):
         other_affected = other_affected - inner_resources_names_set
         if other_affected:
             raise LibraryError(
-                reports.resource_disable_affects_other_resources(
-                    resource_ids,
-                    other_affected,
-                    plaintext_status,
+                ReportItem.error(
+                    reports.messages.ResourceDisableAffectsOtherResources(
+                        sorted(resource_ids),
+                        sorted(other_affected),
+                        plaintext_status,
+                    )
                 )
             )
 
@@ -882,7 +904,9 @@ def disable_simulate(env, resource_ids):
     """
     if not env.is_cib_live:
         raise LibraryError(
-            reports.live_environment_required([file_type_codes.CIB])
+            ReportItem.error(
+                reports.messages.LiveEnvironmentRequired([file_type_codes.CIB])
+            )
         )
 
     resources_section = get_resources(env.get_cib())
@@ -927,23 +951,34 @@ def _resource_list_enable_disable(
         res_id = resource_el.attrib["id"]
         try:
             if not is_resource_managed(cluster_state, res_id):
-                report_list.append(reports.resource_is_unmanaged(res_id))
+                report_list.append(
+                    ReportItem.warning(
+                        reports.messages.ResourceIsUnmanaged(res_id)
+                    )
+                )
             func(resource_el, id_provider)
         except ResourceNotFound:
             report_list.append(
-                reports.id_not_found(
-                    res_id,
-                    ["primitive", "clone", "group", "bundle", "master"]
-               )
+                ReportItem.error(
+                    reports.messages.IdNotFound(
+                        res_id,
+                        ["bundle", "clone", "group", "master", "primitive"],
+                    )
+                )
             )
     return report_list
 
-def unmanage(env, resource_ids, with_monitor=False):
+def unmanage(
+    env: LibraryEnvironment,
+    resource_ids: Iterable[str],
+    with_monitor: bool = False,
+) -> None:
     """
     Set specified resources not to be managed by the cluster
-    LibraryEnvironment env --
-    strings resource_ids -- ids of the resources to become unmanaged
-    bool with_monitor -- disable resources' monitor operations
+
+    env -- environment
+    resource_ids -- ids of the resources to become unmanaged
+    with_monitor -- disable resources' monitor operations
     """
     with resource_environment(env) as resources_section:
         id_provider = IdProvider(resources_section)
@@ -968,22 +1003,27 @@ def unmanage(env, resource_ids, with_monitor=False):
             ):
                 resource.operations.disable(op)
 
-def manage(env, resource_ids, with_monitor=False):
+def manage(
+    env: LibraryEnvironment,
+    resource_ids: Iterable[str],
+    with_monitor: bool = False,
+) -> None:
     """
     Set specified resource to be managed by the cluster
-    LibraryEnvironment env --
-    strings resource_ids -- ids of the resources to become managed
-    bool with_monitor -- enable resources' monitor operations
+
+    env -- environment
+    resource_ids -- ids of the resources to become managed
+    with_monitor -- enable resources' monitor operations
     """
     with resource_environment(env) as resources_section:
         id_provider = IdProvider(resources_section)
-        report_list = []
+        report_list: ReportItemList = []
         resource_el_list = _find_resources_or_raise(
             resources_section,
             resource_ids,
             resource.common.find_resources_to_manage
         )
-        primitives = []
+        primitives: List[Element] = []
 
         for resource_el in resource_el_list:
             resource.common.manage(resource_el, id_provider)
@@ -1011,8 +1051,10 @@ def manage(env, resource_ids, with_monitor=False):
                 if op_list and not monitor_enabled:
                     # do not advise enabling monitors if there are none defined
                     report_list.append(
-                        reports.resource_managed_no_monitor_enabled(
-                            resource_el.get("id", "")
+                        ReportItem.warning(
+                            reports.messages.ResourceManagedNoMonitorEnabled(
+                                resource_el.get("id", "")
+                            )
                         )
                     )
 
@@ -1077,7 +1119,11 @@ def get_failcounts(
     report_items = []
     if interval is not None and operation is None:
         report_items.append(
-            reports.prerequisite_option_is_missing("interval", "operation")
+            ReportItem.error(
+                reports.messages.PrerequisiteOptionIsMissing(
+                    "interval", "operation"
+                )
+            )
         )
     if interval is not None:
         report_items.extend(
@@ -1247,15 +1293,25 @@ class _Move(_MoveBanTemplate):
         )
 
     def _report_action_stopped_resource(self, resource_id):
-        return reports.cannot_move_resource_stopped_no_node_specified(
-            resource_id
+        return ReportItem.error(
+            reports.messages.CannotMoveResourceStoppedNoNodeSpecified(
+                resource_id
+            )
         )
 
     def _report_action_pcmk_error(self, resource_id, stdout, stderr):
-        return reports.resource_move_pcmk_error(resource_id, stdout, stderr)
+        return ReportItem.error(
+            reports.messages.ResourceMovePcmkError(resource_id, stdout, stderr)
+        )
 
     def _report_action_pcmk_success(self, resource_id, stdout, stderr):
-        return reports.resource_move_pcmk_success(resource_id, stdout, stderr)
+        return ReportItem.info(
+            reports.messages.ResourceMovePcmkSuccess(
+                resource_id,
+                stdout,
+                stderr,
+            )
+        )
 
     def _report_wait_result(
         self, resource_id, node, resource_running_on_before,
@@ -1264,7 +1320,7 @@ class _Move(_MoveBanTemplate):
         allowed_nodes = frozenset([node] if node else [])
         running_on_nodes = self._running_on_nodes(resource_running_on_after)
 
-        severity = severities.INFO
+        severity = reports.item.ReportItemSeverity.info()
         if (
             resource_running_on_before # running resource moved
             and (
@@ -1275,13 +1331,18 @@ class _Move(_MoveBanTemplate):
                 (resource_running_on_before == resource_running_on_after)
            )
         ):
-            severity = severities.ERROR
+            severity = reports.item.ReportItemSeverity.error()
         if not resource_running_on_after:
-            return reports.resource_does_not_run(resource_id, severity=severity)
-        return reports.resource_running_on_nodes(
-            resource_id,
-            resource_running_on_after,
-            severity=severity
+            return ReportItem(
+                severity,
+                reports.messages.ResourceDoesNotRun(resource_id),
+            )
+        return ReportItem(
+            severity,
+            reports.messages.ResourceRunningOnNodes(
+                resource_id,
+                resource_running_on_after,
+            )
         )
 
 class _Ban(_MoveBanTemplate):
@@ -1294,15 +1355,23 @@ class _Ban(_MoveBanTemplate):
         )
 
     def _report_action_stopped_resource(self, resource_id):
-        return reports.cannot_ban_resource_stopped_no_node_specified(
-            resource_id
+        return ReportItem.error(
+            reports.messages.CannotBanResourceStoppedNoNodeSpecified(
+                resource_id,
+            )
         )
 
     def _report_action_pcmk_error(self, resource_id, stdout, stderr):
-        return reports.resource_ban_pcmk_error(resource_id, stdout, stderr)
+        return ReportItem.error(
+            reports.messages.ResourceBanPcmkError(resource_id, stdout, stderr)
+        )
 
-    def _report_action_pcmk_success(self, resource_id, stdout, stderr):
-        return reports.resource_ban_pcmk_success(resource_id, stdout, stderr)
+    def _report_action_pcmk_success(
+        self, resource_id: str, stdout: str, stderr: str,
+    ) -> ReportItem:
+        return ReportItem.info(
+            reports.messages.ResourceBanPcmkSuccess(resource_id, stdout, stderr)
+        )
 
     def _report_wait_result(
         self, resource_id, node, resource_running_on_before,
@@ -1314,19 +1383,24 @@ class _Ban(_MoveBanTemplate):
         else:
             banned_nodes = self._running_on_nodes(resource_running_on_before)
 
-        severity = severities.INFO
+        severity = reports.item.ReportItemSeverity.info()
         if (
             not banned_nodes.isdisjoint(running_on_nodes)
             or
             (resource_running_on_before and not running_on_nodes)
         ):
-            severity = severities.ERROR
+            severity = reports.item.ReportItemSeverity.error()
         if not resource_running_on_after:
-            return reports.resource_does_not_run(resource_id, severity=severity)
-        return reports.resource_running_on_nodes(
-            resource_id,
-            resource_running_on_after,
-            severity=severity
+            return ReportItem(
+                severity,
+                reports.messages.ResourceDoesNotRun(resource_id),
+            )
+        return ReportItem(
+            severity,
+            reports.messages.ResourceRunningOnNodes(
+                resource_id,
+                resource_running_on_after,
+            )
         )
 
 def unmove_unban(
@@ -1361,7 +1435,9 @@ def unmove_unban(
         not has_resource_unmove_unban_expired_support(env.cmd_runner())
     ):
         report_list.append(
-            reports.resource_unmove_unban_pcmk_expired_not_supported()
+            ReportItem.error(
+                reports.messages.ResourceUnmoveUnbanPcmkExpiredNotSupported()
+            )
         )
     if env.report_processor.report_list(report_list).has_errors:
         raise LibraryError()
@@ -1372,12 +1448,18 @@ def unmove_unban(
     )
     if retval != 0:
         raise LibraryError(
-            reports.resource_unmove_unban_pcmk_error(
-                resource_id, stdout, stderr
+            ReportItem.error(
+                reports.messages.ResourceUnmoveUnbanPcmkError(
+                    resource_id, stdout, stderr
+                )
             )
         )
     env.report_processor.report(
-        reports.resource_unmove_unban_pcmk_success(resource_id, stdout, stderr)
+        ReportItem.info(
+            reports.messages.ResourceUnmoveUnbanPcmkSuccess(
+                resource_id, stdout, stderr
+            )
+        )
     )
 
     # process wait

@@ -1,5 +1,6 @@
+from pcs.common import reports
 from pcs.common.reports import ReportProcessor
-from pcs.lib import reports
+from pcs.common.reports.item import ReportItem
 from pcs.lib.cib.node import PacemakerNode
 from pcs.lib.cib.resource import primitive
 from pcs.lib.resource_agent import(
@@ -107,14 +108,18 @@ def get_node_name_from_resource(resource_element):
 
 def _validate_server_not_used(agent, option_dict):
     if "server" in option_dict:
-        return [reports.invalid_options(
-            ["server"],
-            sorted([
-                attr["name"] for attr in agent.get_parameters()
-                if attr["name"] != "server"
-            ]),
-            "resource",
-        )]
+        return [
+            ReportItem.error(
+                reports.messages.InvalidOptions(
+                    ["server"],
+                    sorted([
+                        attr["name"] for attr in agent.get_parameters()
+                        if attr["name"] != "server"
+                    ]),
+                    "resource",
+                ),
+            )
+        ]
     return []
 
 
@@ -123,7 +128,7 @@ def validate_host_not_conflicts(
 ):
     host = instance_attributes.get("server", node_name)
     if host in existing_nodes_addrs:
-        return [reports.id_already_exists(host)]
+        return [ReportItem.error(reports.messages.IdAlreadyExists(host))]
     return []
 
 def validate_create(
@@ -144,12 +149,18 @@ def validate_create(
 
     addr_is_used = False
     if new_node_addr in existing_nodes_addrs:
-        report_list.append(reports.id_already_exists(new_node_addr))
+        report_list.append(
+            ReportItem.error(reports.messages.IdAlreadyExists(new_node_addr))
+        )
         addr_is_used = True
 
     if not addr_is_used or new_node_addr != new_node_name:
         if new_node_name in existing_nodes_names:
-            report_list.append(reports.id_already_exists(new_node_name))
+            report_list.append(
+                ReportItem.error(
+                    reports.messages.IdAlreadyExists(new_node_name)
+                )
+            )
 
     return report_list
 

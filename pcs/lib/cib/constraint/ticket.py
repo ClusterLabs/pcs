@@ -2,7 +2,8 @@ from functools import partial
 
 from lxml import etree
 
-from pcs.lib import reports
+from pcs.common import reports
+from pcs.common.reports.item import ReportItem
 from pcs.lib.cib.constraint import constraint
 from pcs.lib.cib import tools
 from pcs.lib.errors import LibraryError
@@ -21,15 +22,21 @@ ATTRIB_PLAIN = {
 }
 
 def _validate_options_common(options):
-    report = []
+    report_list = []
     if "loss-policy" in options:
         loss_policy = options["loss-policy"].lower()
         if options["loss-policy"] not in ATTRIB["loss-policy"]:
-            report.append(reports.invalid_option_value(
-                "loss-policy", options["loss-policy"], ATTRIB["loss-policy"]
-            ))
+            report_list.append(
+                ReportItem.error(
+                    reports.messages.InvalidOptionValue(
+                        "loss-policy",
+                        options["loss-policy"],
+                        ATTRIB["loss-policy"],
+                    )
+                )
+            )
         options["loss-policy"] = loss_policy
-    return report
+    return report_list
 
 def _create_id(cib, ticket, resource_id, resource_role):
     return tools.find_unique_id(
@@ -47,39 +54,57 @@ def prepare_options_with_set(cib, options, resource_set_list):
         ),
         validate_id=partial(tools.check_new_id_applicable, cib, DESCRIPTION),
     )
-    report = _validate_options_common(options)
+    report_list = _validate_options_common(options)
     if "ticket" not in options or not options["ticket"].strip():
-        report.append(reports.required_options_are_missing(['ticket']))
-    if report:
-        raise LibraryError(*report)
+        report_list.append(
+            ReportItem.error(
+                reports.messages.RequiredOptionsAreMissing(["ticket"])
+            )
+        )
+    if report_list:
+        raise LibraryError(*report_list)
     return options
 
 def prepare_options_plain(cib, options, ticket, resource_id):
     options = options.copy()
 
-    report = _validate_options_common(options)
+    report_list = _validate_options_common(options)
 
     if not ticket:
-        report.append(reports.required_options_are_missing(['ticket']))
+        report_list.append(
+            ReportItem.error(
+                reports.messages.RequiredOptionsAreMissing(["ticket"])
+            )
+        )
     options["ticket"] = ticket
 
     if not resource_id:
-        report.append(reports.required_options_are_missing(['rsc']))
+        report_list.append(
+            ReportItem.error(
+                reports.messages.RequiredOptionsAreMissing(["rsc"])
+            )
+        )
     options["rsc"] = resource_id
 
     if "rsc-role" in options:
         if options["rsc-role"]:
             resource_role = options["rsc-role"].lower().capitalize()
             if resource_role not in ATTRIB_PLAIN["rsc-role"]:
-                report.append(reports.invalid_option_value(
-                    "rsc-role", options["rsc-role"], ATTRIB_PLAIN["rsc-role"]
-                ))
+                report_list.append(
+                    ReportItem.error(
+                        reports.messages.InvalidOptionValue(
+                            "rsc-role",
+                            options["rsc-role"],
+                            ATTRIB_PLAIN["rsc-role"],
+                        )
+                    )
+                )
             options["rsc-role"] = resource_role
         else:
             del options["rsc-role"]
 
-    if report:
-        raise LibraryError(*report)
+    if report_list:
+        raise LibraryError(*report_list)
 
     return constraint.prepare_options(
         tuple(list(ATTRIB) + list(ATTRIB_PLAIN)),

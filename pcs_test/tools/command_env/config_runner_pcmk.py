@@ -328,6 +328,7 @@ class PcmkShortcuts():
         agent_name="ocf:heartbeat:Dummy",
         agent_filename=None,
         agent_is_missing=False,
+        stderr=None,
         instead=None,
     ):
         """
@@ -358,17 +359,19 @@ class PcmkShortcuts():
             ).format(agent_name, os.path.realpath(__file__), rc("")))
 
         if agent_is_missing:
+            if stderr is None:
+                stderr = (
+                    f"Agent {agent_name} not found or does not support "
+                        "meta-data: Invalid argument (22)\n"
+                    f"Metadata query for {agent_name} failed: Input/output "
+                        "error\n"
+                )
             self.__calls.place(
                 name,
                 RunnerCall(
                     "crm_resource --show-metadata {0}".format(agent_name),
                     stdout="",
-                    stderr=(
-                        f"Agent {agent_name} not found or does not support "
-                            "meta-data: Invalid argument (22)\n"
-                        f"Metadata query for {agent_name} failed: Input/output "
-                            "error\n"
-                    ),
+                    stderr=stderr,
                     returncode=74
                 ),
                 instead=instead,
@@ -380,7 +383,8 @@ class PcmkShortcuts():
                 name,
                 RunnerCall(
                     "crm_resource --show-metadata {0}".format(agent_name),
-                    stdout=a_file.read()
+                    stdout=a_file.read(),
+                    stderr=stderr,
                 ),
                 instead=instead,
             )

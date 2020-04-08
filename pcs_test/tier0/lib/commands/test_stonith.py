@@ -4,7 +4,7 @@ from unittest import TestCase
 from pcs_test.tools import fixture
 from pcs_test.tools.command_env import get_env_tools
 
-from pcs.common import report_codes
+from pcs.common.reports import codes as report_codes
 from pcs.lib.commands import stonith
 from pcs.lib.resource_agent import StonithAgent
 
@@ -283,6 +283,8 @@ class CreateMixin():
                     "on", "off", "reboot", "status", "list", "list-status",
                     "monitor", "metadata", "validate-all",
                 ],
+                cannot_be_empty=False,
+                forbidden_characters=None,
             ),
             fixture.warn(
                 report_codes.INVALID_OPTIONS,
@@ -451,7 +453,7 @@ class CreateInGroup(CreateMixin, TestCase):
             ),
             [
                 fixture.error(
-                    report_codes.INVALID_ID,
+                    report_codes.INVALID_ID_BAD_CHAR,
                     id="0-group",
                     id_description="group name",
                     is_first_char=True,

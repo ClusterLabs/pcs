@@ -1,8 +1,11 @@
 from lxml import etree
 
-from pcs.common import report_codes
-from pcs.common.reports import ReportItemSeverity
-from pcs.lib import reports, validate
+from pcs.common import reports
+from pcs.common.reports import (
+    codes as report_codes,
+)
+from pcs.common.reports.item import ReportItem
+from pcs.lib import validate
 from pcs.lib.cib.nvpair import (
     append_new_meta_attributes,
     arrange_first_meta_attributes,
@@ -187,9 +190,11 @@ def reset_to_minimal(bundle_element):
             reset_element(child, keep_attrs=["image"])
 
 def _get_report_unsupported_container(bundle_el):
-    return reports.resource_bundle_unsupported_container_type(
-        bundle_el.get("id"),
-        GENERIC_CONTAINER_TYPES,
+    return ReportItem.error(
+        reports.messages.ResourceBundleUnsupportedContainerType(
+            bundle_el.get("id"),
+            sorted(GENERIC_CONTAINER_TYPES),
+        )
     )
 
 def validate_update(
@@ -341,9 +346,14 @@ def add_resource(bundle_element, primitive_element):
     # a bundle may currently contain at most one primitive resource
     inner_primitive = bundle_element.find(TAG_PRIMITIVE)
     if inner_primitive is not None:
-        raise LibraryError(reports.resource_bundle_already_contains_a_resource(
-            bundle_element.get("id"), inner_primitive.get("id")
-        ))
+        raise LibraryError(
+            ReportItem.error(
+                reports.messages.ResourceBundleAlreadyContainsAResource(
+                    bundle_element.get("id"),
+                    inner_primitive.get("id"),
+                )
+            )
+        )
     bundle_element.append(primitive_element)
 
 def get_inner_resource(bundle_el):
@@ -362,10 +372,12 @@ def _is_supported_container(container_el):
 def _validate_container(container_type, container_options, force_options=False):
     if container_type not in GENERIC_CONTAINER_TYPES:
         return [
-            reports.invalid_option_value(
-                "container type",
-                container_type,
-                GENERIC_CONTAINER_TYPES,
+            ReportItem.error(
+                reports.messages.InvalidOptionValue(
+                    "container type",
+                    container_type,
+                    GENERIC_CONTAINER_TYPES,
+                )
             )
         ]
     return _validate_generic_container_options(container_options, force_options)
@@ -393,9 +405,10 @@ def _validate_generic_container_options(container_options, force_options=False):
     deprecation_reports = []
     if "masters" in container_options:
         deprecation_reports.append(
-            reports.deprecated_option(
-                "masters", ["promoted-max"], "container",
-                severity=ReportItemSeverity.WARNING
+            ReportItem.warning(
+                reports.messages.DeprecatedOption(
+                    "masters", ["promoted-max"], "container",
+                )
             )
         )
 
@@ -472,9 +485,10 @@ def _validate_generic_container_options_update(
         # deprecated. They may be removing it because they just found out it is
         # deprecated.
         deprecation_reports.append(
-            reports.deprecated_option(
-                "masters", ["promoted-max"], "container",
-                severity=ReportItemSeverity.WARNING
+            ReportItem.warning(
+                reports.messages.DeprecatedOption(
+                    "masters", ["promoted-max"], "container",
+                )
             )
         )
     # Do not allow to set masters if promoted-max is set unless promoted-max is
@@ -486,8 +500,10 @@ def _validate_generic_container_options_update(
         container_el.get("promoted-max") and options.get("promoted-max") != ""
     ):
         deprecation_reports.append(
-            reports.prerequisite_option_must_not_be_set(
-                "masters", "promoted-max", "container", "container"
+            ReportItem.error(
+                reports.messages.PrerequisiteOptionMustNotBeSet(
+                    "masters", "promoted-max", "container", "container"
+                )
             )
         )
     if (
@@ -496,8 +512,10 @@ def _validate_generic_container_options_update(
         container_el.get("masters") and options.get("masters") != ""
     ):
         deprecation_reports.append(
-            reports.prerequisite_option_must_not_be_set(
-                "promoted-max", "masters", "container", "container"
+            ReportItem.error(
+                reports.messages.PrerequisiteOptionMustNotBeSet(
+                    "promoted-max", "masters", "container", "container"
+                )
             )
         )
 
@@ -556,12 +574,15 @@ def _validate_network_options_update(
         not _is_pcmk_remote_acccessible_after_update(network_el, options)
     ):
         report_list.append(
-            reports.get_problem_creator(
-                report_codes.FORCE_OPTIONS, force_options
-            )(
-                reports.resource_in_bundle_not_accessible,
-                bundle_el.get("id"),
-                inner_primitive.get("id")
+            ReportItem(
+                severity=reports.item.get_severity(
+                    report_codes.FORCE_OPTIONS,
+                    force_options,
+                ),
+                message=reports.messages.ResourceInBundleNotAccessible(
+                    bundle_el.get("id"),
+                    inner_primitive.get("id"),
+                ),
             )
         )
 

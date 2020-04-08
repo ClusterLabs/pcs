@@ -3,7 +3,7 @@ from textwrap import dedent
 from lxml import etree
 
 from pcs import settings
-from pcs.cli.common.console_report import error
+from pcs.cli.reports.output import error
 from pcs.common.tools import xml_fromstring
 
 

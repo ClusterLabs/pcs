@@ -3,23 +3,22 @@ import os.path
 from functools import partial
 
 from pcs import settings
-from pcs.common import (
-    file_type_codes,
-    report_codes,
-)
+from pcs.common import file_type_codes
+from pcs.common import reports
 from pcs.common.file import FileAlreadyExists, RawFileError
-from pcs.common.reports import (
-    ReportProcessor,
-    ReportItemSeverity,
+from pcs.common.reports import ReportProcessor
+from pcs.common.reports import codes as report_codes
+from pcs.common.reports.item import (
+    get_severity,
+    ReportItem,
 )
-from pcs.common.tools import join_multilines
-from pcs.lib import external, reports, tools
+from pcs.common.str_tools import join_multilines
+from pcs.lib import external, tools
 from pcs.lib.cib.resource import primitive, group
 from pcs.lib.booth import (
     config_files,
     config_validators,
     constants,
-    reports as booth_reports,
     resource,
     status,
 )
@@ -71,10 +70,6 @@ def config_setup(
     booth_conf = booth_env.create_facade(site_list, arbitrator_list)
     booth_conf.set_authfile(booth_env.key_path)
 
-    report_creator = reports.get_problem_creator(
-        force_code=report_codes.FORCE_FILE_OVERWRITE,
-        is_forced=overwrite_existing
-    )
     try:
         booth_env.key.write_raw(
             tools.generate_binary_key(
@@ -88,10 +83,15 @@ def config_setup(
         )
     except FileAlreadyExists as e:
         report_processor.report(
-            report_creator(
-                reports.file_already_exists,
-                e.metadata.file_type_code,
-                e.metadata.path,
+            ReportItem(
+                severity=reports.item.get_severity(
+                    reports.codes.FORCE_FILE_OVERWRITE,
+                    overwrite_existing,
+                ),
+                message=reports.messages.FileAlreadyExists(
+                    e.metadata.file_type_code,
+                    e.metadata.path,
+                )
             )
         )
     except RawFileError as e:
@@ -120,24 +120,44 @@ def config_destroy(
     _ensure_live_env(env, booth_env)
 
     # TODO use constants in reports
-    config_is_used = partial(booth_reports.booth_config_is_used, instance_name)
     if resource.find_for_config(
         get_resources(env.get_cib()),
         booth_env.config_path,
     ):
-        report_processor.report(config_is_used("in cluster resource"))
+        report_processor.report(
+            ReportItem.error(
+                reports.messages.BoothConfigIsUsed(
+                    instance_name,
+                   "in cluster resource",
+                )
+            )
+        )
     # Only systemd is currently supported. Initd does not supports multiple
     # instances (here specified by name)
     if external.is_systemctl():
         if external.is_service_running(
             env.cmd_runner(), "booth", instance_name
         ):
-            report_processor.report(config_is_used("(running in systemd)"))
+            report_processor.report(
+                ReportItem.error(
+                    reports.messages.BoothConfigIsUsed(
+                        instance_name,
+                       "(running in systemd)",
+                    )
+                )
+            )
 
         if external.is_service_enabled(
             env.cmd_runner(), "booth", instance_name
         ):
-            report_processor.report(config_is_used("(enabled in systemd)"))
+            report_processor.report(
+                ReportItem.error(
+                    reports.messages.BoothConfigIsUsed(
+                        instance_name,
+                       "(enabled in systemd)",
+                    )
+                )
+            )
     if report_processor.has_errors:
         raise LibraryError()
 
@@ -180,10 +200,12 @@ def config_destroy(
                 )
         else:
             report_processor.report(
-                booth_reports.booth_unsupported_file_location(
-                    authfile_path,
-                    settings.booth_config_dir,
-                    file_type_codes.BOOTH_KEY,
+                ReportItem.warning(
+                    reports.messages.BoothUnsupportedFileLocation(
+                        authfile_path,
+                        settings.booth_config_dir,
+                        file_type_codes.BOOTH_KEY,
+                    )
                 )
             )
     if report_processor.has_errors:
@@ -236,7 +258,11 @@ def config_text(env: LibraryEnvironment, instance_name=None, node_name=None):
         # which send and receive configs as bytes instead of strings
         return remote_data["config"]["data"].encode("utf-8")
     except KeyError:
-        raise LibraryError(reports.invalid_response_format(node_name))
+        raise LibraryError(
+            ReportItem.error(
+                reports.messages.InvalidResponseFormat(node_name)
+            )
+        )
 
 
 def config_ticket_add(
@@ -344,7 +370,9 @@ def create_in_cluster(
     # validate
     if resource.find_for_config(resources_section, booth_env.config_path):
         report_processor.report(
-            booth_reports.booth_already_in_cib(instance_name)
+            ReportItem.error(
+                reports.messages.BoothAlreadyInCib(instance_name)
+            )
         )
     # verify the config exists and is readable
     try:
@@ -513,7 +541,9 @@ def _ticket_operation(
         )
         if len(site_ip_list) != 1:
             raise LibraryError(
-                booth_reports.booth_cannot_determine_local_site_ip()
+                ReportItem.error(
+                    reports.messages.BoothCannotDetermineLocalSiteIp()
+                )
             )
         site_ip = site_ip_list[0]
 
@@ -523,11 +553,13 @@ def _ticket_operation(
 
     if return_code != 0:
         raise LibraryError(
-            booth_reports.booth_ticket_operation_failed(
-                operation,
-                join_multilines([stderr, stdout]),
-                site_ip,
-                ticket_name
+            ReportItem.error(
+                reports.messages.BoothTicketOperationFailed(
+                    operation,
+                    join_multilines([stderr, stdout]),
+                    site_ip,
+                    ticket_name,
+                )
             )
         )
 
@@ -548,8 +580,8 @@ def config_sync(
     booth_env = env.get_booth_env(instance_name)
     if not env.is_cib_live:
         raise LibraryError(
-            reports.live_environment_required(
-                [file_type_codes.CIB],
+            ReportItem.error(
+                reports.messages.LiveEnvironmentRequired([file_type_codes.CIB])
             )
         )
 
@@ -557,7 +589,9 @@ def config_sync(
         env.get_corosync_conf()
     )
     if not cluster_nodes_names:
-        report_list.append(reports.corosync_config_no_nodes_defined())
+        report_list.append(
+            ReportItem.error(reports.messages.CorosyncConfigNoNodesDefined())
+        )
     report_processor.report_list(report_list)
 
     try:
@@ -615,11 +649,20 @@ def enable_booth(env: LibraryEnvironment, instance_name=None):
     try:
         external.enable_service(env.cmd_runner(), "booth", instance_name)
     except external.EnableServiceError as e:
-        raise LibraryError(reports.service_enable_error(
-            "booth", e.message, instance=instance_name
-        ))
-    env.report_processor.report(reports.service_enable_success(
-        "booth", instance=instance_name
+        raise LibraryError(
+            ReportItem.error(
+                reports.messages.ServiceActionFailed(
+                    reports.const.SERVICE_ACTION_ENABLE,
+                    "booth",
+                    e.message,
+                    instance=instance_name,
+                )
+            )
+        )
+    env.report_processor.report(ReportItem.info(
+        reports.messages.ServiceActionSucceeded(
+            reports.const.SERVICE_ACTION_ENABLE, "booth", instance=instance_name
+        )
     ))
 
 
@@ -638,12 +681,25 @@ def disable_booth(env: LibraryEnvironment, instance_name=None):
     try:
         external.disable_service(env.cmd_runner(), "booth", instance_name)
     except external.DisableServiceError as e:
-        raise LibraryError(reports.service_disable_error(
-            "booth", e.message, instance=instance_name
-        ))
-    env.report_processor.report(reports.service_disable_success(
-        "booth", instance=instance_name
-    ))
+        raise LibraryError(
+            ReportItem.error(
+                reports.messages.ServiceActionFailed(
+                    reports.const.SERVICE_ACTION_DISABLE,
+                    "booth",
+                    e.message,
+                    instance=instance_name,
+                )
+            )
+        )
+    env.report_processor.report(
+        ReportItem.info(
+            reports.messages.ServiceActionSucceeded(
+                reports.const.SERVICE_ACTION_DISABLE,
+                "booth",
+                instance=instance_name,
+            )
+        )
+    )
 
 
 def start_booth(env: LibraryEnvironment, instance_name=None):
@@ -663,12 +719,25 @@ def start_booth(env: LibraryEnvironment, instance_name=None):
     try:
         external.start_service(env.cmd_runner(), "booth", instance_name)
     except external.StartServiceError as e:
-        raise LibraryError(reports.service_start_error(
-            "booth", e.message, instance=instance_name
-        ))
-    env.report_processor.report(reports.service_start_success(
-        "booth", instance=instance_name
-    ))
+        raise LibraryError(
+            ReportItem.error(
+                reports.messages.ServiceActionFailed(
+                    reports.const.SERVICE_ACTION_START,
+                    "booth",
+                    e.message,
+                    instance=instance_name,
+                )
+            )
+        )
+    env.report_processor.report(
+        ReportItem.info(
+            reports.messages.ServiceActionSucceeded(
+                reports.const.SERVICE_ACTION_START,
+                "booth",
+                instance=instance_name,
+            )
+        )
+    )
 
 
 def stop_booth(env: LibraryEnvironment, instance_name=None):
@@ -686,12 +755,25 @@ def stop_booth(env: LibraryEnvironment, instance_name=None):
     try:
         external.stop_service(env.cmd_runner(), "booth", instance_name)
     except external.StopServiceError as e:
-        raise LibraryError(reports.service_stop_error(
-            "booth", e.message, instance=instance_name
-        ))
-    env.report_processor.report(reports.service_stop_success(
-        "booth", instance=instance_name
-    ))
+        raise LibraryError(
+            ReportItem.error(
+                reports.messages.ServiceActionFailed(
+                    reports.const.SERVICE_ACTION_STOP,
+                    "booth",
+                    e.message,
+                    instance=instance_name
+                )
+            )
+        )
+    env.report_processor.report(
+        ReportItem.info(
+            reports.messages.ServiceActionSucceeded(
+                reports.const.SERVICE_ACTION_STOP,
+                "booth",
+                instance=instance_name,
+            )
+        )
+    )
 
 
 def pull_config(env: LibraryEnvironment, node_name, instance_name=None):
@@ -709,8 +791,11 @@ def pull_config(env: LibraryEnvironment, node_name, instance_name=None):
     _ensure_live_env(env, booth_env)
 
     env.report_processor.report(
-        booth_reports.booth_fetching_config_from_node_started(
-            node_name, instance_name
+        ReportItem.info(
+            reports.messages.BoothFetchingConfigFromNode(
+                node_name,
+                config=instance_name,
+            )
         )
     )
     com_cmd = BoothGetConfig(env.report_processor, instance_name)
@@ -744,14 +829,20 @@ def pull_config(env: LibraryEnvironment, node_name, instance_name=None):
             can_overwrite=True
         )
         env.report_processor.report(
-            booth_reports.booth_config_accepted_by_node(
-                name_list=[instance_name]
+            ReportItem.info(
+                reports.messages.BoothConfigAcceptedByNode(
+                    name_list=[instance_name]
+                )
             )
         )
     except RawFileError as e:
         report_processor.report(raw_file_error_report(e))
     except KeyError:
-        raise LibraryError(reports.invalid_response_format(node_name))
+        raise LibraryError(
+            ReportItem.error(
+                reports.messages.InvalidResponseFormat(node_name)
+            )
+        )
     if report_processor.has_errors:
         raise LibraryError()
 
@@ -786,16 +877,20 @@ def _find_resource_elements_for_operation(
 
     if not booth_element_list:
         report_processor.report(
-            booth_reports.booth_not_exists_in_cib(booth_env.instance_name)
+            ReportItem.error(
+                reports.messages.BoothNotExistsInCib(booth_env.instance_name)
+            )
         )
     elif len(booth_element_list) > 1:
         report_processor.report(
-            booth_reports.booth_multiple_times_in_cib(
-                booth_env.instance_name,
-                severity=(
-                    ReportItemSeverity.WARNING if allow_multiple
-                    else ReportItemSeverity.ERROR
-                )
+            ReportItem(
+                severity=get_severity(
+                    report_codes.FORCE_BOOTH_REMOVE_FROM_CIB,
+                    allow_multiple,
+                ),
+                message=reports.messages.BoothMultipleTimesInCib(
+                    booth_env.instance_name,
+                ),
             )
         )
     if report_processor.has_errors:
@@ -806,7 +901,11 @@ def _find_resource_elements_for_operation(
 def _ensure_live_booth_env(booth_env):
     if booth_env.ghost_file_codes:
         raise LibraryError(
-            reports.live_environment_required(booth_env.ghost_file_codes)
+            ReportItem.error(
+                reports.messages.LiveEnvironmentRequired(
+                    booth_env.ghost_file_codes
+                )
+            )
         )
 
 def _ensure_live_env(env: LibraryEnvironment, booth_env):
@@ -818,4 +917,6 @@ def _ensure_live_env(env: LibraryEnvironment, booth_env):
         ([file_type_codes.CIB] if not env.is_cib_live else [])
     )
     if not_live:
-        raise LibraryError(reports.live_environment_required(not_live))
+        raise LibraryError(
+            ReportItem.error(reports.messages.LiveEnvironmentRequired(not_live))
+        )

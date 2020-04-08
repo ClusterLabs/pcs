@@ -7,8 +7,8 @@ from pcs_test.tools.assertions import (
 )
 from pcs_test.tools.xml import etree_to_str
 
-from pcs.common import report_codes
 from pcs.common.reports import ReportItemSeverity as severity
+from pcs.common.reports import codes as report_codes
 from pcs.lib.cib.tools import IdProvider
 from pcs.lib.pacemaker.state import ClusterState
 
@@ -245,7 +245,7 @@ class EnsureNodeExists(TestCase):
             (
                 severity.ERROR,
                 report_codes.NODE_NOT_FOUND,
-                {"node": "name-missing"},
+                {"node": "name-missing", "searched_types": []},
                 None
             ),
         )
@@ -258,7 +258,7 @@ class EnsureNodeExists(TestCase):
             (
                 severity.ERROR,
                 report_codes.NODE_NOT_FOUND,
-                {"node": "name-missing"},
+                {"node": "name-missing", "searched_types": []},
                 None
             ),
         )

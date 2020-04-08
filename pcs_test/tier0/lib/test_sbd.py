@@ -8,9 +8,9 @@ from pcs_test.tools.custom_mock import MockLibraryReportProcessor
 from pcs_test.tools.misc import outdent
 
 from pcs import settings
-from pcs.common import report_codes
+from pcs.common import reports
 from pcs.common.reports import ReportItemSeverity as Severities
-from pcs.lib import reports
+from pcs.common.reports import codes as report_codes
 from pcs.lib.errors import LibraryError
 from pcs.lib.external import CommandRunner
 import pcs.lib.sbd as lib_sbd
@@ -386,7 +386,9 @@ class GetLocalSbdDeviceListTest(TestCase):
         node = "local node"
         error = "error string"
         mock_sbd_config.side_effect = LibraryError(
-            reports.unable_to_get_sbd_config(node, error)
+            reports.item.ReportItem.error(
+                reports.messages.UnableToGetSbdConfig(node, error)
+            )
         )
         assert_raise_library_error(
             lib_sbd.get_local_sbd_device_list,
@@ -517,7 +519,7 @@ class SetMessageTest(TestCase):
                 {
                     "device": "device",
                     "node": "node",
-                    "message": "test",
+                    "sbd_message": "test",
                     "reason": error,
                 }
             )
@@ -554,6 +556,7 @@ class ValidateDeviceDictTest(TestCase):
                     report_codes.SBD_NO_DEVICE_FOR_NODE,
                     {
                         "node": "node1",
+                        "sbd_enabled_in_cluster": False,
                     }
                 ),
                 (

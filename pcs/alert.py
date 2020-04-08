@@ -3,7 +3,7 @@ from functools import partial
 
 from pcs.cli.common.errors import CmdLineInputError
 from pcs.cli.common.parse_args import prepare_options, group_by_keywords
-from pcs.common.tools import indent
+from pcs.common.str_tools import indent
 
 parse_cmd_sections = partial(group_by_keywords, implicit_first_group_key="main")
 

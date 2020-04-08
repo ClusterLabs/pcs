@@ -6,14 +6,17 @@ from typing import (
 )
 from xml.etree.ElementTree import Element
 
-from pcs.common import file_type_codes
+from pcs.common import (
+    file_type_codes,
+    reports,
+)
 from pcs.common.node_communicator import Communicator
 from pcs.common.reports import ReportProcessor
-from pcs.common.tools import (
+from pcs.common.reports.item import ReportItem
+from pcs.common.str_tools import (
     format_list,
     indent,
 )
-from pcs.lib import reports
 from pcs.lib.cib import stonith
 from pcs.lib.cib.tools import get_crm_config, get_resources
 from pcs.lib.communication.nodes import CheckReachability
@@ -58,16 +61,20 @@ def full_cluster_status_plaintext(
     # validation
     if not env.is_cib_live and env.is_corosync_conf_live:
         raise LibraryError(
-            reports.live_environment_not_consistent(
-                [file_type_codes.CIB],
-                [file_type_codes.COROSYNC_CONF],
+            ReportItem.error(
+                reports.messages.LiveEnvironmentNotConsistent(
+                    [file_type_codes.CIB],
+                    [file_type_codes.COROSYNC_CONF],
+                )
             )
         )
     if env.is_cib_live and not env.is_corosync_conf_live:
         raise LibraryError(
-            reports.live_environment_not_consistent(
-                [file_type_codes.COROSYNC_CONF],
-                [file_type_codes.CIB],
+            ReportItem.error(
+                reports.messages.LiveEnvironmentNotConsistent(
+                    [file_type_codes.COROSYNC_CONF],
+                    [file_type_codes.CIB],
+                )
             )
         )
 
@@ -166,7 +173,7 @@ def _stonith_warnings(
                 "Following stonith devices have the 'action' option set, "
                 "it is recommended to set {0} instead: {1}"
             ).format(
-                format_list(STONITH_ACTION_REPLACED_BY),
+                format_list(list(STONITH_ACTION_REPLACED_BY)),
                 format_list([x.get("id", "") for x in stonith_with_action]),
             )
         )

@@ -1,6 +1,6 @@
+from pcs.common import reports
 from pcs.common.node_communicator import RequestData
-from pcs.common.reports import ReportItemSeverity
-from pcs.lib import reports
+from pcs.common.reports.item import ReportItem
 from pcs.lib.corosync import live as corosync_live
 from pcs.lib.communication.tools import (
     AllAtOnceStrategyMixin,
@@ -21,11 +21,19 @@ class Destroy(
         return RequestData("remote/cluster_destroy")
 
     def _get_success_report(self, node_label):
-        return reports.cluster_destroy_success(node_label)
+        return ReportItem.info(
+            reports.messages.ClusterDestroySuccess(node_label)
+        )
 
     def before(self):
         self._set_skip_offline(False, force_code=None)
-        self._report(reports.cluster_destroy_started(self._target_label_list))
+        self._report(
+            ReportItem.info(
+                reports.messages.ClusterDestroyStarted(
+                    sorted(self._target_label_list)
+                )
+            )
+        )
 
 
 class DestroyWarnOnFailure(
@@ -37,24 +45,38 @@ class DestroyWarnOnFailure(
         return RequestData("remote/cluster_destroy")
 
     def _process_response(self, response):
-        report = response_to_report_item(
-            response, severity=ReportItemSeverity.WARNING
+        report_item = response_to_report_item(
+            response, severity=reports.ReportItemSeverity.WARNING
         )
         node_label = response.request.target.label
-        if report is None:
-            self._report(reports.cluster_destroy_success(node_label))
+        if report_item is None:
+            self._report(
+                ReportItem.info(
+                    reports.messages.ClusterDestroySuccess(node_label)
+                )
+            )
         else:
-            self._report(report)
+            self._report(report_item)
             self._unreachable_nodes.append(node_label)
 
     def before(self):
-        self._report(reports.cluster_destroy_started(self._target_label_list))
+        self._report(
+            ReportItem.info(
+                reports.messages.ClusterDestroyStarted(
+                    sorted(self._target_label_list)
+                )
+            )
+        )
         self._unreachable_nodes = []
 
     def on_complete(self):
         if self._unreachable_nodes:
             self._report(
-                reports.nodes_to_remove_unreachable(self._unreachable_nodes)
+                ReportItem.warning(
+                    reports.messages.NodesToRemoveUnreachable(
+                        sorted(self._unreachable_nodes)
+                    )
+                )
             )
 
 
@@ -66,13 +88,13 @@ class GetQuorumStatus(AllSameDataMixin, OneByOneStrategyMixin, RunRemotelyBase):
         return RequestData("remote/get_quorum_info")
 
     def _process_response(self, response):
-        report = response_to_report_item(
-            response, severity=ReportItemSeverity.WARNING
+        report_item = response_to_report_item(
+            response, severity=reports.ReportItemSeverity.WARNING
         )
         node = response.request.target.label
-        if report is not None:
+        if report_item is not None:
             self._has_failure = True
-            self._report(report)
+            self._report(report_item)
             return self._get_next_list()
         if response.data.strip() == "Cannot initialize CMAP service":
             # corosync is not running on the node, this is OK
@@ -87,10 +109,11 @@ class GetQuorumStatus(AllSameDataMixin, OneByOneStrategyMixin, RunRemotelyBase):
         except corosync_live.QuorumStatusParsingException as e:
             self._has_failure = True
             self._report(
-                reports.corosync_quorum_get_status_error(
-                    e.reason,
-                    node=node,
-                    severity=ReportItemSeverity.WARNING,
+                ReportItem.warning(
+                    reports.messages.CorosyncQuorumGetStatusError(
+                        e.reason,
+                        node=node,
+                    )
                 )
             )
             return self._get_next_list()

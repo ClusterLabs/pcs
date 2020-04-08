@@ -9,6 +9,7 @@ import sys
 import tempfile
 import time
 import xml.dom.minidom
+from typing import cast
 
 from pcs import (
     settings,
@@ -22,25 +23,20 @@ from pcs.cli.common.errors import (
     HINT_SYNTAX_CHANGE,
     msg_command_replaced,
 )
-from pcs.cli.common.reports import (
-    build_report_message,
-    process_library_reports,
-)
-from pcs.common import report_codes
+from pcs.cli.reports import process_library_reports
+from pcs.cli.reports.messages import report_item_msg_from_dto
 from pcs.common.node_communicator import (
     HostNotFound,
     Request,
     RequestData,
 )
+from pcs.common import reports
 from pcs.common.reports import (
+    codes as report_codes,
     ReportItem,
-    ReportItemSeverity,
 )
 from pcs.common.tools import Version
-from pcs.lib import (
-    sbd as lib_sbd,
-    reports,
-)
+from pcs.lib import sbd as lib_sbd
 from pcs.lib.cib.tools import VERSION_FORMAT
 from pcs.lib.commands.remote_node import _destroy_pcmk_remote_env
 from pcs.lib.communication.nodes import CheckAuth
@@ -53,7 +49,7 @@ from pcs.lib.corosync import (
     live as corosync_live,
     qdevice_net,
 )
-from pcs.cli.common.console_report import error, warn
+from pcs.cli.reports.output import error, warn
 from pcs.lib.errors import LibraryError
 from pcs.lib.external import disable_service
 from pcs.lib.env import MIN_FEATURE_SET_VERSION_FOR_DIFF
@@ -164,7 +160,9 @@ def sync_nodes(lib, argv, modifiers):
         utils.get_corosync_conf_facade(conf_text=config)
     )
     if not nodes:
-        report_list.append(reports.corosync_config_no_nodes_defined())
+        report_list.append(
+            ReportItem.error(reports.messages.CorosyncConfigNoNodesDefined())
+        )
     if report_list:
         process_library_reports(report_list)
 
@@ -224,7 +222,9 @@ def start_cluster_all():
         utils.get_corosync_conf_facade()
     )
     if not all_nodes:
-        report_list.append(reports.corosync_config_no_nodes_defined())
+        report_list.append(
+            ReportItem.error(reports.messages.CorosyncConfigNoNodesDefined())
+        )
     if report_list:
         process_library_reports(report_list)
 
@@ -283,7 +283,12 @@ def wait_for_local_node_started(stop_at, interval):
                 return 1, "Waiting timeout"
     except LibraryError as e:
         return 1, "Unable to get node status: {0}".format(
-            "\n".join([build_report_message(item) for item in e.args])
+            # pylint: disable=no-member
+            "\n".join(
+                report_item_msg_from_dto(
+                    cast(reports.ReportItemDto, item).message
+                ).message for item in e.args
+            )
         )
 
 def wait_for_remote_node_started(node, stop_at, interval):
@@ -343,7 +348,9 @@ def stop_cluster_all():
         utils.get_corosync_conf_facade()
     )
     if not all_nodes:
-        report_list.append(reports.corosync_config_no_nodes_defined())
+        report_list.append(
+            ReportItem.error(reports.messages.CorosyncConfigNoNodesDefined())
+        )
     if report_list:
         process_library_reports(report_list)
 
@@ -474,7 +481,9 @@ def enable_cluster_all():
         utils.get_corosync_conf_facade()
     )
     if not all_nodes:
-        report_list.append(reports.corosync_config_no_nodes_defined())
+        report_list.append(
+            ReportItem.error(reports.messages.CorosyncConfigNoNodesDefined())
+        )
     if report_list:
         process_library_reports(report_list)
 
@@ -489,7 +498,9 @@ def disable_cluster_all():
         utils.get_corosync_conf_facade()
     )
     if not all_nodes:
-        report_list.append(reports.corosync_config_no_nodes_defined())
+        report_list.append(
+            ReportItem.error(reports.messages.CorosyncConfigNoNodesDefined())
+        )
     if report_list:
         process_library_reports(report_list)
 
@@ -919,15 +930,27 @@ class RemoteAddNodes(RunRemotelyBase):
 
     def _process_response(self, response):
         node_label = response.request.target.label
-        report = self._get_response_report(response)
-        if report is not None:
-            self._report(report)
+        report_item = self._get_response_report(response)
+        if report_item is not None:
+            self._report(report_item)
             return
 
         try:
             output = json.loads(response.data)
             for report_dict in output["report_list"]:
-                self._report(ReportItem.from_dict(report_dict))
+                self._report(
+                    ReportItem(
+                        severity=reports.ReportItemSeverity(
+                            report_dict["severity"],
+                            report_dict["forceable"],
+                        ),
+                        message=reports.messages.LegacyCommonMessage(
+                            report_dict["code"],
+                            report_dict["info"],
+                            report_dict["report_text"],
+                        )
+                    )
+                )
             if output["status"] == "success":
                 self._success = True
             elif output["status"] != "error":
@@ -935,8 +958,8 @@ class RemoteAddNodes(RunRemotelyBase):
 
         except (KeyError, json.JSONDecodeError):
             self._report(
-                reports.invalid_response_format(
-                    node_label, severity=ReportItemSeverity.WARNING
+                ReportItem.warning(
+                    reports.messages.InvalidResponseFormat(node_label)
                 )
             )
 
@@ -1164,7 +1187,11 @@ def cluster_destroy(lib, argv, modifiers):
             utils.get_corosync_conf_facade()
         )
         if not corosync_nodes:
-            report_list.append(reports.corosync_config_no_nodes_defined())
+            report_list.append(
+                ReportItem.error(
+                    reports.messages.CorosyncConfigNoNodesDefined()
+                )
+            )
         if report_list:
             process_library_reports(report_list)
 

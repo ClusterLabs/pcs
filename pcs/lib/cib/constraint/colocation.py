@@ -1,6 +1,7 @@
 from functools import partial
 
-from pcs.lib import reports
+from pcs.common import reports
+from pcs.common.reports.item import ReportItem
 from pcs.lib.cib.constraint import constraint
 from pcs.lib.cib.tools import check_new_id_applicable
 from pcs.lib.errors import LibraryError
@@ -19,13 +20,17 @@ def prepare_options_with_set(cib, options, resource_set_list):
     )
 
     if "score" in options and not is_score(options["score"]):
-        raise LibraryError(reports.invalid_score(options["score"]))
+        raise LibraryError(
+            ReportItem.error(reports.messages.InvalidScore(options["score"]))
+        )
 
     score_attrs_count = len([
         name for name in options.keys() if name in SCORE_NAMES
     ])
     if score_attrs_count > 1:
-        raise LibraryError(reports.multiple_score_options())
+        raise LibraryError(
+            ReportItem.error(reports.messages.MultipleScoreOptions())
+        )
 
     if score_attrs_count == 0:
         options["score"] = SCORE_INFINITY

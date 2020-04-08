@@ -7,8 +7,8 @@ from pcs_test.tools.assertions import (
     assert_xml_equal,
 )
 
-from pcs.common import report_codes
 from pcs.common.reports import ReportItemSeverity as severities
+from pcs.common.reports import codes as report_codes
 from pcs.lib.cib.constraint import ticket
 
 
@@ -97,7 +97,8 @@ class PrepareOptionsPlainTest(TestCase):
                 severities.ERROR,
                 report_codes.REQUIRED_OPTIONS_ARE_MISSING,
                 {
-                    "option_names": ["ticket"]
+                    "option_names": ["ticket"],
+                    "option_type": None,
                 }
             ),
         )
@@ -112,6 +113,7 @@ class PrepareOptionsPlainTest(TestCase):
                 report_codes.REQUIRED_OPTIONS_ARE_MISSING,
                 {
                     "option_names": ["rsc"],
+                    "option_type": None,
                 }
             ),
         )
@@ -225,7 +227,7 @@ class PrepareOptionsWithSetTest(TestCase):
             (
                 severities.ERROR,
                 report_codes.REQUIRED_OPTIONS_ARE_MISSING,
-                {"option_names": ["ticket"]}
+                {"option_names": ["ticket"], "option_type": None}
             )
         )
 
@@ -239,7 +241,7 @@ class PrepareOptionsWithSetTest(TestCase):
             (
                 severities.ERROR,
                 report_codes.REQUIRED_OPTIONS_ARE_MISSING,
-                {"option_names": ["ticket"]}
+                {"option_names": ["ticket"], "option_type": None}
             )
         )
 

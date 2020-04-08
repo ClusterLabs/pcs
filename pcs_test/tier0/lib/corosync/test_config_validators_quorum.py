@@ -4,7 +4,7 @@ from unittest import TestCase
 from pcs_test.tools import fixture
 from pcs_test.tools.assertions import assert_report_item_list_equal
 
-from pcs.common import report_codes
+from pcs.common.reports import codes as report_codes
 from pcs.lib.corosync import config_validators
 
 
@@ -142,7 +142,7 @@ class BaseQuorumOptions():
             [
                 fixture.error(
                     report_codes.COROSYNC_OPTIONS_INCOMPATIBLE_WITH_QDEVICE,
-                    options_names=[
+                    options=[
                         "auto_tie_breaker",
                         "last_man_standing",
                         "last_man_standing_window",
@@ -444,6 +444,7 @@ class AddQuorumDevice(TestCase):
                 fixture.error(
                     report_codes.REQUIRED_OPTIONS_ARE_MISSING,
                     option_names=["algorithm", "host"],
+                    option_type="quorum device model",
                 ),
             ]
         )
@@ -463,6 +464,7 @@ class AddQuorumDevice(TestCase):
                 fixture.error(
                     report_codes.REQUIRED_OPTIONS_ARE_MISSING,
                     option_names=["algorithm", "host"],
+                    option_type="quorum device model",
                 ),
             ]
         )

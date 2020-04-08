@@ -1,4 +1,4 @@
-from pcs.cli.constraint.console_report import prepare_options
+from pcs.common.reports.constraints.common import prepare_options
 
 
 def constraint_plain(constraint_info, with_id=False):

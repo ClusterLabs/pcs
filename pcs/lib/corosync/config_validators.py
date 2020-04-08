@@ -2,8 +2,10 @@
 from collections import Counter, defaultdict, namedtuple
 from itertools import zip_longest
 
-from pcs.common import report_codes
-from pcs.lib import reports, validate
+from pcs.common import reports
+from pcs.common.reports import codes as report_codes
+from pcs.common.reports.item import ReportItem
+from pcs.lib import validate
 from pcs.lib.corosync import constants
 from pcs.lib.corosync.node import(
     ADDR_IPV4,
@@ -94,12 +96,14 @@ def create(
                 addr_count > max_addr_count
             ):
                 report_items.append(
-                    reports.corosync_bad_node_addresses_count(
-                        addr_count,
-                        min_addr_count,
-                        max_addr_count,
-                        node_name=node.get("name"),
-                        node_index=i
+                    ReportItem.error(
+                        reports.messages.CorosyncBadNodeAddressesCount(
+                            actual_count=addr_count,
+                            min_count=min_addr_count,
+                            max_count=max_addr_count,
+                            node_name=node.get("name"),
+                            node_index=i,
+                        )
                     )
                 )
         addr_types = []
@@ -122,7 +126,11 @@ def create(
     # Report all empty and unresolvable addresses at once instead on each own.
     if nodes_with_empty_addr:
         report_items.append(
-            reports.node_addresses_cannot_be_empty(nodes_with_empty_addr)
+            ReportItem.error(
+                reports.messages.NodeAddressesCannotBeEmpty(
+                    sorted(nodes_with_empty_addr),
+                )
+            )
         )
     report_items += _report_unresolvable_addresses_if_any(
         unresolvable_addresses, force_unresolvable
@@ -131,14 +139,18 @@ def create(
     # Reporting single-node errors finished.
     # Now report nodelist and inter-node errors.
     if not node_list:
-        report_items.append(reports.corosync_nodes_missing())
+        report_items.append(
+            ReportItem.error(reports.messages.CorosyncNodesMissing())
+        )
     non_unique_names = {
         name for name, count in all_names_count.items() if count > 1
     }
     if non_unique_names:
         all_names_usable = False
         report_items.append(
-            reports.node_names_duplication(non_unique_names)
+            ReportItem.error(
+                reports.messages.NodeNamesDuplication(sorted(non_unique_names))
+            )
         )
     non_unique_addrs = {
         addr
@@ -149,7 +161,11 @@ def create(
     }
     if non_unique_addrs:
         report_items.append(
-            reports.node_addresses_duplication(non_unique_addrs)
+            ReportItem.error(
+                reports.messages.NodeAddressesDuplication(
+                    sorted(non_unique_addrs),
+                )
+            )
         )
     if all_names_usable:
         # Check for errors using node names in their reports. If node names are
@@ -169,7 +185,11 @@ def create(
             len(Counter(node_addr_count.values()).keys()) > 1
         ):
             report_items.append(
-                reports.corosync_node_address_count_mismatch(node_addr_count)
+                ReportItem.error(
+                    reports.messages.CorosyncNodeAddressCountMismatch(
+                        node_addr_count,
+                    )
+                )
             )
     # Check mixing IPv4 and IPv6 in one link, node names are not relevant
     links_ip_mismatch = []
@@ -178,7 +198,11 @@ def create(
             links_ip_mismatch.append(link)
     if links_ip_mismatch:
         report_items.append(
-            reports.corosync_ip_version_mismatch_in_links(links_ip_mismatch)
+            ReportItem.error(
+                reports.messages.CorosyncIpVersionMismatchInLinks(
+                    links_ip_mismatch,
+                )
+            )
         )
 
     return report_items
@@ -238,8 +262,12 @@ def _validate_addr_type(
         ip_version == constants.IP_VERSION_6
     ):
         report_items.append(
-            reports.corosync_address_ip_version_wrong_for_link(
-                addr, ADDR_IPV6, link_number=link_index
+            ReportItem.error(
+                reports.messages.CorosyncAddressIpVersionWrongForLink(
+                    addr,
+                    ADDR_IPV6,
+                    link_number=link_index,
+                )
             )
         )
     elif (
@@ -248,8 +276,12 @@ def _validate_addr_type(
         ip_version == constants.IP_VERSION_4
     ):
         report_items.append(
-            reports.corosync_address_ip_version_wrong_for_link(
-                addr, ADDR_IPV4, link_number=link_index
+            ReportItem.error(
+                reports.messages.CorosyncAddressIpVersionWrongForLink(
+                    addr,
+                    ADDR_IPV4,
+                    link_number=link_index,
+                )
             )
         )
     report_items += validate.ValueCorosyncValue(
@@ -262,12 +294,14 @@ def _report_unresolvable_addresses_if_any(
     if not unresolvable_addresses:
         return []
     return [
-        reports.get_problem_creator(
-            force_code=report_codes.FORCE_NODE_ADDRESSES_UNRESOLVABLE,
-            is_forced=force_unresolvable,
-        )(
-            reports.node_addresses_unresolvable,
-            unresolvable_addresses,
+        ReportItem(
+            severity=reports.item.get_severity(
+                reports.codes.FORCE_NODE_ADDRESSES_UNRESOLVABLE,
+                force_unresolvable,
+            ),
+            message=reports.messages.NodeAddressesUnresolvable(
+                sorted(unresolvable_addresses),
+            )
         )
     ]
 
@@ -322,12 +356,14 @@ def add_nodes(
         addr_count = len(node.get("addrs") or [])
         if addr_count != number_of_existing_links:
             report_items.append(
-                reports.corosync_bad_node_addresses_count(
-                    addr_count,
-                    number_of_existing_links,
-                    number_of_existing_links,
-                    node_name=node.get("name"),
-                    node_index=i
+                ReportItem.error(
+                    reports.messages.CorosyncBadNodeAddressesCount(
+                        actual_count=addr_count,
+                        min_count=number_of_existing_links,
+                        max_count=number_of_existing_links,
+                        node_name=node.get("name"),
+                        node_index=i,
+                    )
                 )
             )
         addr_types = []
@@ -360,10 +396,12 @@ def add_nodes(
                     existing_addr_types[link_index].link
                 )
                 report_items.append(
-                    reports.corosync_address_ip_version_wrong_for_link(
-                        addr,
-                        existing_addr_types[link_index].addr_type,
-                        existing_addr_types[link_index].link,
+                    ReportItem.error(
+                        reports.messages.CorosyncAddressIpVersionWrongForLink(
+                            addr,
+                            existing_addr_types[link_index].addr_type,
+                            existing_addr_types[link_index].link,
+                        )
                     )
                 )
             report_items += validate.ValueCorosyncValue(
@@ -374,7 +412,11 @@ def add_nodes(
     # Report all empty and unresolvable addresses at once instead on each own.
     if nodes_with_empty_addr:
         report_items.append(
-            reports.node_addresses_cannot_be_empty(nodes_with_empty_addr)
+            ReportItem.error(
+                reports.messages.NodeAddressesCannotBeEmpty(
+                    sorted(nodes_with_empty_addr),
+                )
+            )
         )
     report_items += _report_unresolvable_addresses_if_any(
         unresolvable_addresses, force_unresolvable
@@ -383,31 +425,47 @@ def add_nodes(
     # Reporting single-node errors finished.
     # Now report nodelist and inter-node errors.
     if not node_list:
-        report_items.append(reports.corosync_nodes_missing())
+        report_items.append(
+            ReportItem.error(reports.messages.CorosyncNodesMissing())
+        )
     # Check nodes' names and address are unique
     already_existing_names = existing_names.intersection(new_names_count.keys())
     if already_existing_names:
         report_items.append(
-            reports.node_names_already_exist(already_existing_names)
+            ReportItem.error(
+                reports.messages.NodeNamesAlreadyExist(
+                    sorted(already_existing_names),
+                )
+            )
         )
     already_existing_addrs = existing_addrs.intersection(new_addrs_count.keys())
     if already_existing_addrs:
         report_items.append(
-            reports.node_addresses_already_exist(already_existing_addrs)
+            ReportItem.error(
+                reports.messages.NodeAddressesAlreadyExist(
+                    sorted(already_existing_addrs),
+                )
+            )
         )
     non_unique_names = {
         name for name, count in new_names_count.items() if count > 1
     }
     if non_unique_names:
         report_items.append(
-            reports.node_names_duplication(non_unique_names)
+            ReportItem.error(
+                reports.messages.NodeNamesDuplication(sorted(non_unique_names))
+            )
         )
     non_unique_addrs = {
         addr for addr, count in new_addrs_count.items() if count > 1
     }
     if non_unique_addrs:
         report_items.append(
-            reports.node_addresses_duplication(non_unique_addrs)
+            ReportItem.error(
+                reports.messages.NodeAddressesDuplication(
+                    sorted(non_unique_addrs),
+                )
+            )
         )
     # Check mixing IPv4 and IPv6 in one link, node names are not relevant,
     # skip links already reported due to new nodes have wrong IP version
@@ -424,7 +482,11 @@ def add_nodes(
             links_ip_mismatch.append(existing_links[link_index])
     if links_ip_mismatch:
         report_items.append(
-            reports.corosync_ip_version_mismatch_in_links(links_ip_mismatch)
+            ReportItem.error(
+                reports.messages.CorosyncIpVersionMismatchInLinks(
+                    links_ip_mismatch,
+                )
+            )
         )
     return report_items
 
@@ -439,10 +501,18 @@ def remove_nodes(nodes_names_to_remove, existing_nodes, quorum_device_settings):
     existing_node_names = [node.name for node in existing_nodes]
     report_items = []
     for node in set(nodes_names_to_remove) - set(existing_node_names):
-        report_items.append(reports.node_not_found(node))
+        report_items.append(
+            ReportItem.error(
+                reports.messages.NodeNotFound(node)
+            )
+        )
 
     if not set(existing_node_names) - set(nodes_names_to_remove):
-        report_items.append(reports.cannot_remove_all_cluster_nodes())
+        report_items.append(
+            ReportItem.error(
+                reports.messages.CannotRemoveAllClusterNodes()
+            )
+        )
 
     qdevice_model, qdevice_model_options, _, _ = quorum_device_settings
     if qdevice_model == "net":
@@ -456,7 +526,11 @@ def remove_nodes(nodes_names_to_remove, existing_nodes, quorum_device_settings):
                     str(node.nodeid) == str(tie_breaker_nodeid)
                 ):
                     report_items.append(
-                        reports.node_used_as_tie_breaker(node.name, node.nodeid)
+                        ReportItem.error(
+                            reports.messages.NodeUsedAsTieBreaker(
+                                node.name, node.nodeid
+                            )
+                        )
                     )
 
     return report_items
@@ -470,8 +544,11 @@ def _check_link_options_count(link_count, max_allowed_link_count):
         # link_count < max_allowed_link_count is a valid scenario - for some
         # links no options have been specified
         report_items.append(
-            reports.corosync_too_many_links_options(
-                link_count, max_allowed_link_count
+            ReportItem.error(
+                reports.messages.CorosyncTooManyLinksOptions(
+                    link_count,
+                    max_allowed_link_count,
+                )
             )
         )
     return report_items
@@ -513,11 +590,13 @@ def _update_link_options_udp(new_options, current_options):
     )
     if target_broadcast == "1" and target_mcastaddr is not None:
         report_items.append(
-            reports.prerequisite_option_must_be_disabled(
-                "mcastaddr",
-                "broadcast",
-                option_type="link",
-                prerequisite_type="link"
+            ReportItem.error(
+                reports.messages.PrerequisiteOptionMustBeDisabled(
+                    "mcastaddr",
+                    "broadcast",
+                    option_type="link",
+                    prerequisite_type="link",
+                )
             )
         )
 
@@ -542,11 +621,13 @@ def create_link_list_udp(link_list, max_allowed_link_count):
     # default values taken from `man corosync.conf`
     if options.get("broadcast", "0") == "1" and "mcastaddr" in options:
         report_items.append(
-            reports.prerequisite_option_must_be_disabled(
-                "mcastaddr",
-                "broadcast",
-                option_type="link",
-                prerequisite_type="link"
+            ReportItem.error(
+                reports.messages.PrerequisiteOptionMustBeDisabled(
+                    "mcastaddr",
+                    "broadcast",
+                    option_type="link",
+                    prerequisite_type="link",
+                )
             )
         )
     report_items.extend(
@@ -580,9 +661,12 @@ def create_link_list_knet(link_list, max_allowed_link_count):
                     report_items.append(
                         # Links are defined by node addresses. Therefore we
                         # update link options here, we do not create links.
-                        reports.corosync_link_does_not_exist_cannot_update(
-                            options["linknumber"],
-                            [str(x) for x in range(max_allowed_link_count)]
+                        ReportItem.error(
+                            # pylint: disable=line-too-long
+                            reports.messages.CorosyncLinkDoesNotExistCannotUpdate(
+                                options["linknumber"],
+                                [str(x) for x in range(max_allowed_link_count)]
+                            )
                         )
                     )
         report_items += _add_link_options_knet(options)
@@ -591,7 +675,11 @@ def create_link_list_knet(link_list, max_allowed_link_count):
     ]
     if non_unique_linknumbers:
         report_items.append(
-            reports.corosync_link_number_duplication(non_unique_linknumbers)
+            ReportItem.error(
+                reports.messages.CorosyncLinkNumberDuplication(
+                    non_unique_linknumbers,
+                )
+            )
         )
     report_items.extend(
         _check_link_options_count(len(link_list), max_allowed_link_count)
@@ -708,10 +796,12 @@ def add_link(
     # Check the transport supports adding links
     if transport not in constants.TRANSPORTS_KNET:
         report_items.append(
-            reports.corosync_cannot_add_remove_links_bad_transport(
-                transport,
-                constants.TRANSPORTS_KNET,
-                add_or_not_remove=True,
+            ReportItem.error(
+                reports.messages.CorosyncCannotAddRemoveLinksBadTransport(
+                    transport,
+                    list(constants.TRANSPORTS_KNET),
+                    add_or_not_remove=True,
+                )
             )
         )
         return report_items
@@ -723,11 +813,13 @@ def add_link(
         constants.LINKS_KNET_MAX
     ):
         report_items.append(
-            reports.corosync_cannot_add_remove_links_too_many_few_links(
-                number_of_links_to_add,
-                len(linknumbers_existing) + number_of_links_to_add,
-                constants.LINKS_KNET_MAX,
-                add_or_not_remove=True,
+            ReportItem.error(
+                reports.messages.CorosyncCannotAddRemoveLinksTooManyFewLinks(
+                    number_of_links_to_add,
+                    len(linknumbers_existing) + number_of_links_to_add,
+                    constants.LINKS_KNET_MAX,
+                    add_or_not_remove=True,
+                )
             )
         )
         # Since only one link can be added there is no point in validating the
@@ -743,16 +835,18 @@ def add_link(
         )
     )
     report_items += [
-        reports.corosync_bad_node_addresses_count(
-            actual_count=0,
-            min_count=number_of_links_to_add,
-            max_count=number_of_links_to_add,
-            node_name=node
+        ReportItem.error(
+            reports.messages.CorosyncBadNodeAddressesCount(
+                actual_count=0,
+                min_count=number_of_links_to_add,
+                max_count=number_of_links_to_add,
+                node_name=node
+            )
         )
         for node in sorted(existing_names - set(node_addr_map.keys()))
     ]
     report_items += [
-        reports.node_not_found(node)
+        ReportItem.error(reports.messages.NodeNotFound(node))
         for node in sorted(set(node_addr_map.keys()) - existing_names)
     ]
 
@@ -771,7 +865,11 @@ def add_link(
             )
     if nodes_with_empty_addr:
         report_items.append(
-            reports.node_addresses_cannot_be_empty(nodes_with_empty_addr)
+            ReportItem.error(
+                reports.messages.NodeAddressesCannotBeEmpty(
+                    sorted(nodes_with_empty_addr),
+                )
+            )
         )
     report_items += _report_unresolvable_addresses_if_any(
         unresolvable_addresses, force_unresolvable
@@ -779,7 +877,11 @@ def add_link(
 
     # Check mixing IPv4 and IPv6 in the link
     if ADDR_IPV4 in addr_types and ADDR_IPV6 in addr_types:
-        report_items.append(reports.corosync_ip_version_mismatch_in_links())
+        report_items.append(
+            ReportItem.error(
+                reports.messages.CorosyncIpVersionMismatchInLinks(),
+            )
+        )
 
     # Check addresses are unique
     report_items += _report_non_unique_addresses(
@@ -792,8 +894,10 @@ def add_link(
     if "linknumber" in link_options:
         if link_options["linknumber"] in linknumbers_existing:
             report_items.append(
-                reports.corosync_link_already_exists_cannot_add(
-                    link_options["linknumber"]
+                ReportItem.error(
+                    reports.messages.CorosyncLinkAlreadyExistsCannotAdd(
+                        link_options["linknumber"],
+                    )
                 )
             )
 
@@ -811,10 +915,12 @@ def remove_links(linknumbers_to_remove, linknumbers_existing, transport):
 
     if transport not in constants.TRANSPORTS_KNET:
         report_items.append(
-            reports.corosync_cannot_add_remove_links_bad_transport(
-                transport,
-                constants.TRANSPORTS_KNET,
-                add_or_not_remove=False,
+            ReportItem.error(
+                reports.messages.CorosyncCannotAddRemoveLinksBadTransport(
+                    transport,
+                    list(constants.TRANSPORTS_KNET),
+                    add_or_not_remove=False,
+                )
             )
         )
         return report_items
@@ -826,7 +932,11 @@ def remove_links(linknumbers_to_remove, linknumbers_existing, transport):
     }
     if to_remove_duplicates:
         report_items.append(
-            reports.corosync_link_number_duplication(to_remove_duplicates)
+            ReportItem.error(
+                reports.messages.CorosyncLinkNumberDuplication(
+                    sorted(to_remove_duplicates),
+                )
+            )
         )
 
     to_remove = frozenset(linknumbers_to_remove)
@@ -836,26 +946,32 @@ def remove_links(linknumbers_to_remove, linknumbers_existing, transport):
 
     if not to_remove:
         report_items.append(
-            reports.corosync_cannot_add_remove_links_no_links_specified(
-                add_or_not_remove=False,
+            ReportItem.error(
+                reports.messages.CorosyncCannotAddRemoveLinksNoLinksSpecified(
+                    add_or_not_remove=False,
+                )
             )
         )
     if len(left) < constants.LINKS_KNET_MIN:
         report_items.append(
-            reports.corosync_cannot_add_remove_links_too_many_few_links(
-                # only existing links can be removed, do not count nonexistent
-                # ones
-                len(to_remove & existing),
-                len(left),
-                constants.LINKS_KNET_MIN,
-                add_or_not_remove=False,
+            ReportItem.error(
+                reports.messages.CorosyncCannotAddRemoveLinksTooManyFewLinks(
+                    # only existing links can be removed, do not count
+                    # nonexistent ones
+                    len(to_remove & existing),
+                    len(left),
+                    constants.LINKS_KNET_MIN,
+                    add_or_not_remove=False,
+                )
             )
         )
     if nonexistent:
         report_items.append(
-            reports.corosync_link_does_not_exist_cannot_remove(
-                nonexistent,
-                existing
+            ReportItem.error(
+                reports.messages.CorosyncLinkDoesNotExistCannotRemove(
+                    sorted(nonexistent),
+                    sorted(existing),
+                )
             )
         )
 
@@ -892,8 +1008,11 @@ def update_link(
         # the linknumber is wrong, there is no point in returning possibly
         # misleading errors.
         return [
-            reports.corosync_link_does_not_exist_cannot_update(
-                linknumber, linknumbers_existing
+            ReportItem.error(
+                reports.messages.CorosyncLinkDoesNotExistCannotUpdate(
+                    linknumber,
+                    linknumbers_existing,
+                )
             )
         ]
     # validate link options based on transport
@@ -925,7 +1044,7 @@ def update_link(
         unchanged_addrs.add(node.addr)
     # report unknown nodes
     report_items += [
-        reports.node_not_found(node)
+        ReportItem.error(reports.messages.NodeNotFound(node))
         for node in sorted(set(node_addr_map.keys()) - existing_names)
     ]
     # validate new addresses
@@ -943,14 +1062,22 @@ def update_link(
             )
     if nodes_with_empty_addr:
         report_items.append(
-            reports.node_addresses_cannot_be_empty(nodes_with_empty_addr)
+            ReportItem.error(
+                reports.messages.NodeAddressesCannotBeEmpty(
+                    sorted(nodes_with_empty_addr),
+                )
+            )
         )
     report_items += _report_unresolvable_addresses_if_any(
         unresolvable_addresses, force_unresolvable
     )
     # Check mixing IPv4 and IPv6 in the link - get addresses after update
     if ADDR_IPV4 in link_addr_types and ADDR_IPV6 in link_addr_types:
-        report_items.append(reports.corosync_ip_version_mismatch_in_links())
+        report_items.append(
+            ReportItem.error(
+                reports.messages.CorosyncIpVersionMismatchInLinks(),
+            )
+        )
     # Check address are unique. If new addresses are unique and no new address
     # already exists in the set of addresses not changed by the update, then
     # the new addresses are unique.
@@ -967,7 +1094,11 @@ def _report_non_unique_addresses(existing_addrs, new_addrs):
     already_existing_addrs = existing_addrs.intersection(new_addrs)
     if already_existing_addrs:
         report_items.append(
-            reports.node_addresses_already_exist(already_existing_addrs)
+            ReportItem.error(
+                reports.messages.NodeAddressesAlreadyExist(
+                    sorted(already_existing_addrs),
+                )
+            )
         )
 
     non_unique_addrs = {
@@ -979,7 +1110,11 @@ def _report_non_unique_addresses(existing_addrs, new_addrs):
     }
     if non_unique_addrs:
         report_items.append(
-            reports.node_addresses_duplication(non_unique_addrs)
+            ReportItem.error(
+                reports.messages.NodeAddressesDuplication(
+                    sorted(non_unique_addrs),
+                )
+            )
         )
 
     return report_items
@@ -1013,18 +1148,22 @@ def create_transport_udp(generic_options, compression_options, crypto_options):
 
     if compression_options:
         report_items.append(
-            reports.corosync_transport_unsupported_options(
-                "compression",
-                "udp/udpu",
-                ("knet", )
+            ReportItem.error(
+                reports.messages.CorosyncTransportUnsupportedOptions(
+                    "compression",
+                    "udp/udpu",
+                    ["knet"],
+                )
             )
         )
     if crypto_options:
         report_items.append(
-            reports.corosync_transport_unsupported_options(
-                "crypto",
-                "udp/udpu",
-                ("knet", )
+            ReportItem.error(
+                reports.messages.CorosyncTransportUnsupportedOptions(
+                    "crypto",
+                    "udp/udpu",
+                    ["knet"],
+                )
             )
         )
 
@@ -1111,11 +1250,13 @@ def create_transport_knet(generic_options, compression_options, crypto_options):
         crypto_options.get("hash", "none") == "none"
     ):
         report_items.append(
-            reports.prerequisite_option_must_be_enabled_as_well(
-                "cipher",
-                "hash",
-                option_type="crypto",
-                prerequisite_type="crypto"
+            ReportItem.error(
+                reports.messages.PrerequisiteOptionMustBeEnabledAsWell(
+                    "cipher",
+                    "hash",
+                    option_type="crypto",
+                    prerequisite_type="crypto",
+                )
             )
         )
 
@@ -1197,11 +1338,13 @@ def create_quorum_options(options, has_qdevice):
         options.get("last_man_standing", "0") == "0"
     ):
         report_items.append(
-            reports.prerequisite_option_must_be_enabled_as_well(
-                "last_man_standing_window",
-                "last_man_standing",
-                option_type="quorum",
-                prerequisite_type="quorum"
+            ReportItem.error(
+                reports.messages.PrerequisiteOptionMustBeEnabledAsWell(
+                    "last_man_standing_window",
+                    "last_man_standing",
+                    option_type="quorum",
+                    prerequisite_type="quorum"
+                )
             )
         )
     return report_items
@@ -1235,11 +1378,13 @@ def update_quorum_options(options, has_qdevice, current_options):
         effective_lms == "0"
     ):
         report_items.append(
-            reports.prerequisite_option_must_be_enabled_as_well(
-                "last_man_standing_window",
-                "last_man_standing",
-                option_type="quorum",
-                prerequisite_type="quorum"
+            ReportItem.error(
+                reports.messages.PrerequisiteOptionMustBeEnabledAsWell(
+                    "last_man_standing_window",
+                    "last_man_standing",
+                    option_type="quorum",
+                    prerequisite_type="quorum",
+                )
             )
         )
     return report_items
@@ -1258,8 +1403,10 @@ def _validate_quorum_options(options, has_qdevice, allow_empty_values):
         ]
         if qdevice_incompatible_options:
             report_items.append(
-                reports.corosync_options_incompatible_with_qdevice(
-                    qdevice_incompatible_options
+                ReportItem.error(
+                    reports.messages.CorosyncOptionsIncompatibleWithQdevice(
+                        qdevice_incompatible_options,
+                    )
                 )
             )
 

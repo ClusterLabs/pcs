@@ -4,17 +4,17 @@ from typing import (
     Sequence,
 )
 
-from pcs.cli.common.console_report import error
 from pcs.cli.common.errors import CmdLineInputError
 from pcs.cli.common.parse_args import InputModifiers
-from pcs.common import report_codes
+from pcs.cli.reports.output import error
+from pcs.common.reports import codes as report_codes
 from pcs.common.dr import (
     DrConfigDto,
     DrConfigSiteDto,
     DrSiteStatusDto,
 )
 from pcs.common.interface import dto
-from pcs.common.tools import indent
+from pcs.common.str_tools import indent
 
 def config(
     lib: Any,

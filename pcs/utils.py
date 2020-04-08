@@ -23,6 +23,7 @@ from typing import (
     Any,
     Dict,
     Sequence,
+    Tuple,
 )
 
 from pcs import settings, usage
@@ -31,29 +32,27 @@ from pcs.common import (
     file as pcs_file,
     file_type_codes,
     pcs_pycurl as pycurl,
-    report_codes,
+    reports,
 )
 from pcs.common.host import PcsKnownHost
 from pcs.common.reports import ReportProcessor
-from pcs.common.tools import join_multilines
+from pcs.common.reports.item import ReportItemList
+from pcs.common.reports.messages import CibUpgradeFailedToMinimalRequiredVersion
+from pcs.common.str_tools import join_multilines
 
-from pcs.cli.common import (
-    console_report,
-    middleware,
-)
+from pcs.cli.common import middleware
 from pcs.cli.common.env_cli import Env
 from pcs.cli.common.errors import CmdLineInputError
 from pcs.cli.common.lib_wrapper import Library
 from pcs.cli.common.parse_args import InputModifiers
-from pcs.cli.common.reports import (
-    build_report_message,
+from pcs.cli.reports import (
+    output as reports_output,
     process_library_reports,
     ReportProcessorToConsole,
 )
 import pcs.cli.booth.env
 from pcs.cli.file import metadata as cli_file_metadata
 
-from pcs.lib import reports
 import pcs.lib.corosync.config_parser as corosync_conf_parser
 from pcs.lib.corosync.config_facade import ConfigFacade as corosync_conf_facade
 from pcs.lib.env import LibraryEnvironment
@@ -153,14 +152,10 @@ def cluster_upgrade_to_version(required_version):
     current_version = getValidateWithVersion(dom)
     if current_version < required_version:
         err(
-            console_report.CODE_TO_MESSAGE_BUILDER_MAP[
-                report_codes.CIB_UPGRADE_FAILED_TO_MINIMAL_REQUIRED_VERSION
-            ]({
-                "required_version": ".".join(
-                    [str(x) for x in required_version]
-                ),
-                "current_version": ".".join([str(x) for x in current_version]),
-            })
+            CibUpgradeFailedToMinimalRequiredVersion(
+                ".".join([str(x) for x in current_version]),
+                ".".join([str(x) for x in required_version]),
+            ).message
         )
     return dom
 
@@ -326,13 +321,13 @@ def read_known_hosts_file():
             known_hosts_instance.parser_exception_to_report_list(e)
         )
     except pcs_file.RawFileError as e:
-        console_report.warn(
+        reports_output.warn(
             "Unable to read the known-hosts file: " + e.reason
         )
     except json.JSONDecodeError as e:
-        console_report.warn(f"Unable to parse the known-hosts file: {e}")
+        reports_output.warn(f"Unable to parse the known-hosts file: {e}")
     except (TypeError, KeyError):
-        console_report.warn(
+        reports_output.warn(
             "Warning: Unable to parse the known-hosts file."
         )
     return data
@@ -1971,14 +1966,14 @@ def is_score(var):
     """
     return is_score_value(var)
 
-def validate_xml_id(var, description="id"):
+def validate_xml_id(var: str, description: str = "id") -> Tuple[bool, str]:
     """
     Commandline options: no options
     """
-    try:
-        validate_id(var, description)
-    except LibraryError as e:
-        return False, build_report_message(e.args[0])
+    report_list: ReportItemList = []
+    validate_id(var, description, report_list)
+    if report_list:
+        return False, report_list[0].message.message
     return True, ""
 
 def is_iso8601_date(var):
@@ -2041,7 +2036,13 @@ def enableServices():
             enable_service(cmd_runner(), service)
         except EnableServiceError as e:
             report_item_list.append(
-                reports.service_enable_error(e.service, e.message)
+                reports.item.ReportItem.error(
+                    reports.messages.ServiceActionFailed(
+                        reports.const.SERVICE_ACTION_ENABLE,
+                        e.service,
+                        e.message,
+                    )
+                )
             )
     if report_item_list:
         raise LibraryError(*report_item_list)
@@ -2061,7 +2062,13 @@ def disableServices():
             disable_service(cmd_runner(), service)
         except DisableServiceError as e:
             report_item_list.append(
-                reports.service_disable_error(e.service, e.message)
+                reports.item.ReportItem.error(
+                    reports.messages.ServiceActionFailed(
+                        reports.const.SERVICE_ACTION_DISABLE,
+                        e.service,
+                        e.message,
+                    )
+                )
             )
     if report_item_list:
         raise LibraryError(*report_item_list)

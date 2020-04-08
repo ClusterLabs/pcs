@@ -2,7 +2,8 @@ import base64
 
 from pcs_test.tools import fixture
 
-from pcs.common import file_type_codes, report_codes
+from pcs.common import file_type_codes
+from pcs.common.reports import codes as report_codes
 
 
 OFFLINE_ERROR_MSG = "Could not resolve host"

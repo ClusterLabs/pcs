@@ -5,17 +5,17 @@ from pcs import (
     utils,
 )
 from pcs.cli.common import parse_args
-from pcs.cli.common.console_report import error
 from pcs.cli.common.errors import CmdLineInputError
-from pcs.cli.common.reports import process_library_reports
 from pcs.cli.fencing_topology import target_type_map_cli_to_lib
+from pcs.cli.reports import process_library_reports
+from pcs.cli.reports.output import error
 from pcs.cli.resource.parse_args import parse_create_simple as parse_create_args
 from pcs.common.fencing_topology import (
     TARGET_TYPE_NODE,
     TARGET_TYPE_REGEXP,
     TARGET_TYPE_ATTRIBUTE,
 )
-from pcs.common.tools import indent
+from pcs.common.str_tools import indent
 from pcs.lib.errors import LibraryError
 import pcs.lib.resource_agent as lib_ra
 

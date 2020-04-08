@@ -1,8 +1,9 @@
 import json
 
 from pcs.common.node_communicator import RequestData
+from pcs.common import reports
 from pcs.common.reports import ReportItemSeverity
-from pcs.lib import reports
+from pcs.common.reports.item import ReportItem
 from pcs.lib.communication.tools import (
     AllAtOnceStrategyMixin,
     AllSameDataMixin,
@@ -28,32 +29,50 @@ class CheckCorosyncOffline(
         return RequestData("remote/status")
 
     def _process_response(self, response):
-        report = self._get_response_report(response)
+        report_item = self._get_response_report(response)
         node_label = response.request.target.label
-        if report is not None:
+        if report_item is not None:
             self._report_list([
-                report,
-                reports.corosync_not_running_check_node_error(
-                    node_label,
-                    self._failure_severity,
-                    self._failure_forceable,
+                report_item,
+                ReportItem(
+                    severity=ReportItemSeverity(
+                        self._failure_severity,
+                        self._failure_forceable,
+                    ),
+                    message=reports.messages.CorosyncNotRunningCheckNodeError(
+                        node_label,
+                    )
                 )
             ])
             return
         try:
             status = response.data
             if not json.loads(status)["corosync"]:
-                report = reports.corosync_not_running_on_node_ok(node_label)
+                report_item = ReportItem.info(
+                    reports.messages.CorosyncNotRunningOnNode(node_label),
+                )
             else:
-                report = reports.corosync_running_on_node_fail(node_label)
+                report_item = ReportItem.error(
+                    reports.messages.CorosyncRunningOnNode(node_label),
+                )
         except (KeyError, json.JSONDecodeError):
-            report = reports.corosync_not_running_check_node_error(
-                node_label, self._failure_severity, self._failure_forceable
+            report_item = ReportItem(
+                severity=ReportItemSeverity(
+                    self._failure_severity,
+                    self._failure_forceable,
+                ),
+                message=reports.messages.CorosyncNotRunningCheckNodeError(
+                    node_label,
+                )
             )
-        self._report(report)
+        self._report(report_item)
 
     def before(self):
-        self._report(reports.corosync_not_running_check_started())
+        self._report(
+            ReportItem.info(
+                reports.messages.CorosyncNotRunningCheckStarted()
+            )
+        )
 
 
 class DistributeCorosyncConf(
@@ -74,22 +93,35 @@ class DistributeCorosyncConf(
         )
 
     def _process_response(self, response):
-        report = self._get_response_report(response)
+        report_item = self._get_response_report(response)
         node_label = response.request.target.label
-        if report is None:
-            self._report(reports.corosync_config_accepted_by_node(node_label))
+        if report_item is None:
+            self._report(
+                ReportItem.info(
+                    reports.messages.CorosyncConfigAcceptedByNode(node_label)
+                )
+            )
         else:
             self._report_list([
-                report,
-                reports.corosync_config_distribution_node_error(
-                    node_label,
-                    self._failure_severity,
-                    self._failure_forceable,
+                report_item,
+                ReportItem(
+                    severity=ReportItemSeverity(
+                        self._failure_severity,
+                        self._failure_forceable,
+                    ),
+                    # pylint: disable=line-too-long
+                    message=reports.messages.CorosyncConfigDistributionNodeError(
+                        node_label,
+                    ),
                 )
             ])
 
     def before(self):
-        self._report(reports.corosync_config_distribution_started())
+        self._report(
+            ReportItem.info(
+                reports.messages.CorosyncConfigDistributionStarted()
+            )
+        )
 
 
 class ReloadCorosyncConf(
@@ -102,42 +134,58 @@ class ReloadCorosyncConf(
         return RequestData("remote/reload_corosync_conf")
 
     def _process_response(self, response):
-        report = response_to_report_item(
+        report_item = response_to_report_item(
             response, severity=ReportItemSeverity.WARNING
         )
         node = response.request.target.label
-        if report is not None:
+        if report_item is not None:
             self.__has_failures = True
-            self._report(report)
+            self._report(report_item)
             return self._get_next_list()
         try:
             output = json.loads(response.data)
             if output["code"] == "reloaded":
                 self.__was_successful = True
-                self._report(reports.corosync_config_reloaded(node))
+                self._report(
+                    ReportItem.info(
+                        reports.messages.CorosyncConfigReloaded(node)
+                    )
+                )
                 return []
 
             if output["code"] == "not_running":
-                self._report(reports.corosync_config_reload_not_possible(node))
+                self._report(
+                    ReportItem.warning(
+                        reports.messages.CorosyncConfigReloadNotPossible(node)
+                    )
+                )
             else:
                 self.__has_failures = True
-                self._report(reports.corosync_config_reload_error(
-                    output["message"],
-                    node=node,
-                    severity=ReportItemSeverity.WARNING,
-                ))
+                self._report(
+                    ReportItem.warning(
+                        reports.messages.CorosyncConfigReloadError(
+                            output["message"],
+                            node=node,
+                        )
+                    )
+                )
         except (ValueError, LookupError):
             self.__has_failures = True
-            self._report(reports.invalid_response_format(
-                node,
-                severity=ReportItemSeverity.WARNING,
-            ))
+            self._report(
+                ReportItem.warning(
+                    reports.messages.InvalidResponseFormat(node)
+                )
+            )
 
         return self._get_next_list()
 
     def on_complete(self):
         if not self.__was_successful and self.__has_failures:
-            self._report(reports.unable_to_perform_operation_on_any_node())
+            self._report(
+                ReportItem.error(
+                    reports.messages.UnableToPerformOperationOnAnyNode()
+                )
+            )
 
 
 class GetCorosyncConf(
@@ -151,12 +199,12 @@ class GetCorosyncConf(
         return RequestData("remote/get_corosync_conf")
 
     def _process_response(self, response):
-        report = response_to_report_item(
+        report_item = response_to_report_item(
             response, severity=ReportItemSeverity.WARNING
         )
-        if report is not None:
+        if report_item is not None:
             self.__has_failures = True
-            self._report(report)
+            self._report(report_item)
             return self._get_next_list()
         self.__corosync_conf = response.data
         self.__was_successful = True
@@ -164,5 +212,9 @@ class GetCorosyncConf(
 
     def on_complete(self):
         if not self.__was_successful and self.__has_failures:
-            self._report(reports.unable_to_perform_operation_on_any_node())
+            self._report(
+                ReportItem.error(
+                    reports.messages.UnableToPerformOperationOnAnyNode()
+                )
+            )
         return self.__corosync_conf

@@ -11,19 +11,19 @@ from pcs import (
     usage,
     utils,
 )
-from pcs.cli import (
-    constraint_colocation,
-    constraint_order,
-)
 from pcs.cli.common import parse_args
-from pcs.cli.common.console_report import warn
 from pcs.cli.common.errors import CmdLineInputError
-from pcs.cli.common.reports import process_library_reports
 import pcs.cli.constraint_colocation.command as colocation_command
 import pcs.cli.constraint_order.command as order_command
 from pcs.cli.constraint_ticket import command as ticket_command
-from pcs.common import report_codes
-from pcs.lib import reports
+from pcs.cli.reports import process_library_reports
+from pcs.cli.reports.output import warn
+from pcs.common import reports
+from pcs.common.reports import ReportItem
+from pcs.common.reports.constraints import (
+    colocation as colocation_format,
+    order as order_format,
+)
 from pcs.lib.cib.constraint import resource_set
 from pcs.lib.cib.constraint.order import ATTRIB as order_attrib
 from pcs.lib.node import get_existing_nodes_names
@@ -303,7 +303,7 @@ def colocation_add(lib, argv, modifiers):
                 + "\n".join([
                     "  "
                     +
-                    constraint_colocation.console_report.constraint_plain(
+                    colocation_format.constraint_plain(
                         {"options": dict(dup.attributes.items())},
                         True
                     )
@@ -514,7 +514,7 @@ def _order_add(resource1, resource2, options_list, modifiers):
             utils.err(
                 "duplicate constraint already exists, use --force to override\n"
                 + "\n".join([
-                    "  " + constraint_order.console_report.constraint_plain(
+                    "  " + order_format.constraint_plain(
                             {"options": dict(dup.attributes.items())},
                             True
                         ) for dup in duplicates
@@ -840,10 +840,12 @@ def _show_location_rules(
 def _verify_node_name(node, existing_nodes):
     report_list = []
     if node not in existing_nodes:
-        report_list.append(reports.node_not_found(
-            node,
-            forceable=report_codes.FORCE_NODE_DOES_NOT_EXIST
-        ))
+        report_list.append(
+            ReportItem.error(
+                reports.messages.NodeNotFound(node),
+                force_code=reports.codes.FORCE_NODE_DOES_NOT_EXIST,
+            )
+        )
     return report_list
 
 def _verify_score(score):

@@ -1,15 +1,17 @@
 import re
 from collections import namedtuple
+from typing import cast
 from lxml import etree
 
 from pcs import settings
-from pcs.common import report_codes
+from pcs.common import reports
 from pcs.common.reports import (
+    ReportItem,
     ReportItemSeverity,
     ReportProcessor,
 )
 from pcs.common.tools import xml_fromstring
-from pcs.lib import reports, validate
+from pcs.lib import validate
 from pcs.lib.errors import LibraryError
 from pcs.lib.external import CommandRunner
 from pcs.lib.pacemaker.values import is_true
@@ -269,13 +271,17 @@ def guess_exactly_one_resource_agent_full_name(runner, search_agent_name):
     agents = guess_resource_agent_full_name(runner, search_agent_name)
     if not agents:
         raise LibraryError(
-            reports.agent_name_guess_found_none(search_agent_name)
+            ReportItem.error(
+                reports.messages.AgentNameGuessFoundNone(search_agent_name)
+            )
         )
     if len(agents) > 1:
         raise LibraryError(
-            reports.agent_name_guess_found_more_than_one(
-                search_agent_name,
-                [agent.get_name() for agent in agents]
+            ReportItem.error(
+                reports.messages.AgentNameGuessFoundMoreThanOne(
+                    search_agent_name,
+                    [agent.get_name() for agent in agents]
+                )
             )
         )
     return agents[0]
@@ -299,7 +305,9 @@ def find_valid_resource_agent_by_name(
     if ":" not in name:
         agent = guess_exactly_one_resource_agent_full_name(runner, name)
         report_processor.report(
-            reports.agent_name_guessed(name, agent.get_name())
+            ReportItem.info(
+                reports.messages.AgentNameGuessed(name, agent.get_name())
+            )
         )
         return agent
 
@@ -571,31 +579,47 @@ class Agent():
             validate.NamesIn(
                 {param["name"] for param in self.get_parameters()},
                 option_type=self._agent_type_label,
-                **validate.set_warning(report_codes.FORCE_OPTIONS, force)
+                **validate.set_warning(reports.codes.FORCE_OPTIONS, force)
             ).validate(parameters)
         )
         # TODO remove this "if", see pcs.lib.cib.commands.remote_node.create
         # for details
         if do_not_report_instance_attribute_server_exists:
-            for report in report_items:
-                if report.code == report_codes.INVALID_OPTIONS:
-                    report.info["allowed"] = [
-                        value for value in report.info["allowed"]
-                        if value != "server"
-                    ]
+            for report_item in report_items:
+                if (
+                    isinstance(report_item, ReportItem)
+                    and
+                    isinstance(
+                        report_item.message, reports.messages.InvalidOptions
+                    )
+                ):
+                    report_msg = cast(
+                        reports.messages.InvalidOptions, report_item.message
+                    )
+                    report_item.message = reports.messages.InvalidOptions(
+                        report_msg.option_names,
+                        sorted([
+                            value for value in report_msg.allowed
+                            if value != "server"
+                        ]),
+                        report_msg.option_type,
+                        report_msg.allowed_patterns,
+                    )
 
         # report missing required parameters
         missing_parameters = self._find_missing_required_parameters(
             parameters
         )
         if missing_parameters:
-            forcible, severity = self._validate_report_forcible_severity(force)
-            report_items.append(reports.required_options_are_missing(
-                sorted(missing_parameters),
-                self._agent_type_label,
-                severity=severity,
-                forceable=forcible,
-            ))
+            report_items.append(
+                ReportItem(
+                    severity=self._validate_report_severity(force),
+                    message=reports.messages.RequiredOptionsAreMissing(
+                        sorted(missing_parameters),
+                        self._agent_type_label,
+                    ),
+                )
+            )
 
         return report_items
 
@@ -632,7 +656,7 @@ class Agent():
             validate.NamesIn(
                 {param["name"] for param in self.get_parameters()},
                 option_type=self._agent_type_label,
-                **validate.set_warning(report_codes.FORCE_OPTIONS, force)
+                **validate.set_warning(reports.codes.FORCE_OPTIONS, force)
             ).validate(
                 # Do not report unknown parameters already set in the CIB. They
                 # have been reported already when the were added to the CIB.
@@ -648,23 +672,30 @@ class Agent():
             final_parameters
         )
         if missing_parameters:
-            forcible, severity = self._validate_report_forcible_severity(force)
-            report_items.append(reports.required_options_are_missing(
-                sorted(missing_parameters),
-                self._agent_type_label,
-                severity=severity,
-                forceable=forcible,
-            ))
+            report_items.append(
+                ReportItem(
+                    severity=self._validate_report_severity(force),
+                    message=reports.messages.RequiredOptionsAreMissing(
+                        sorted(missing_parameters),
+                        self._agent_type_label,
+                    ),
+                )
+            )
 
         return report_items
 
-    def _validate_report_forcible_severity(self, force):
-        forcible = report_codes.FORCE_OPTIONS if not force else None
-        severity = (
-            ReportItemSeverity.ERROR if not force
-            else ReportItemSeverity.WARNING
+    @staticmethod
+    def _validate_report_severity(
+        force: bool
+    ) -> reports.item.ReportItemSeverity:
+        return reports.item.ReportItemSeverity(
+            level=(
+                ReportItemSeverity.WARNING if force
+                else ReportItemSeverity.ERROR
+            ),
+            force_code=reports.codes.FORCE_OPTIONS if not force else None,
         )
-        return forcible, severity
+
 
     def _find_missing_required_parameters(self, parameters):
         missing_parameters = set()
@@ -1077,14 +1108,16 @@ class StonithAgent(CrmAgent):
 
     def _validate_action_is_deprecated(self, parameters, force=False):
         if parameters.get("action", ""):
-            forcible, severity = self._validate_report_forcible_severity(force)
-            return [reports.deprecated_option(
-                "action",
-                STONITH_ACTION_REPLACED_BY,
-                self._agent_type_label,
-                severity=severity,
-                forceable=forcible
-            )]
+            return [
+                ReportItem(
+                    self._validate_report_severity(force),
+                    reports.messages.DeprecatedOption(
+                        "action",
+                        sorted(STONITH_ACTION_REPLACED_BY),
+                        self._agent_type_label,
+                    )
+                )
+            ]
         return []
 
     def _filter_parameters(self, parameters):
@@ -1180,12 +1213,19 @@ def resource_agent_error_to_report_item(
     force = None
     if e.__class__ == UnableToGetAgentMetadata:
         if severity == ReportItemSeverity.ERROR and forceable:
-            force = report_codes.FORCE_METADATA_ISSUE
-        return reports.unable_to_get_agent_metadata(
-            e.agent, e.message, severity, force
+            force = reports.codes.FORCE_METADATA_ISSUE
+        return ReportItem(
+            severity=reports.item.ReportItemSeverity(severity, force),
+            message=reports.messages.UnableToGetAgentMetadata(
+                e.agent, e.message
+            ),
         )
     if e.__class__ == InvalidResourceAgentName:
-        return reports.invalid_resource_agent_name(e.agent)
+        return ReportItem.error(
+            reports.messages.InvalidResourceAgentName(e.agent)
+        )
     if e.__class__ == InvalidStonithAgentName:
-        return reports.invalid_stonith_agent_name(e.agent)
+        return ReportItem.error(
+            reports.messages.InvalidStonithAgentName(e.agent)
+        )
     raise e

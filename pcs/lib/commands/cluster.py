@@ -6,20 +6,19 @@ import time
 from pcs import settings
 from pcs.common import (
     file_type_codes,
-    report_codes,
+    reports,
     ssl,
 )
 from pcs.common.file import RawFileError
 from pcs.common.node_communicator import HostNotFound
 from pcs.common.reports import (
+    codes as report_codes,
     ReportProcessor,
-    ReportItemSeverity,
 )
-from pcs.common.tools import (
-    format_environment_error,
-    join_multilines,
-)
-from pcs.lib import reports, node_communication_format, sbd, validate
+from pcs.common.reports.item import ReportItem
+from pcs.common.tools import format_environment_error
+from pcs.common.str_tools import join_multilines
+from pcs.lib import node_communication_format, sbd, validate
 from pcs.lib.booth import sync as booth_sync
 from pcs.lib.cib import fencing_topology
 from pcs.lib.cib.resource.remote_node import find_node_list as get_remote_nodes
@@ -107,12 +106,12 @@ def node_clear(
 
     if node_name in current_nodes:
         if env.report_processor.report(
-            reports.get_problem_creator(
-                report_codes.FORCE_CLEAR_CLUSTER_NODE,
-                allow_clear_cluster_node
-            )(
-                reports.node_to_clear_is_still_in_cluster,
-                node_name
+            ReportItem(
+                severity=reports.item.get_severity(
+                    report_codes.FORCE_CLEAR_CLUSTER_NODE,
+                    allow_clear_cluster_node,
+                ),
+                message=reports.messages.NodeToClearIsStillInCluster(node_name),
             )
         ).has_errors:
             raise LibraryError()
@@ -131,7 +130,12 @@ def verify(env: LibraryEnvironment, verbose=False):
     #upgrade cib at all times inside env.get_cib). Go to a lower level here.
     if verify_returncode != 0:
         env.report_processor.report(
-            reports.invalid_cib_content(verify_stderr, can_be_more_verbose)
+            ReportItem.error(
+                reports.messages.InvalidCibContent(
+                    verify_stderr,
+                    can_be_more_verbose,
+                )
+            )
         )
 
         #Cib is sometimes loadable even if `crm_verify` fails (e.g. when
@@ -385,8 +389,10 @@ def setup(
         # Distribute and reload pcsd SSL certificate
         if sync_ssl_certs:
             report_processor.report(
-                reports.pcsd_ssl_cert_and_key_distribution_started(
-                    [target.label for target in target_list]
+                ReportItem.info(
+                    reports.messages.PcsdSslCertAndKeyDistributionStarted(
+                        sorted([target.label for target in target_list])
+                    )
                 )
             )
             # Local certificate and key cannot be used because the local node
@@ -428,7 +434,9 @@ def setup(
     com_cmd.set_targets(target_list)
     run_and_raise(env.get_node_communicator(), com_cmd)
 
-    if env.report_processor.report(reports.cluster_setup_success()).has_errors:
+    if env.report_processor.report(
+        ReportItem.info(reports.messages.ClusterSetupSuccess())
+    ).has_errors:
         raise LibraryError()
 
     # Optionally enable and start cluster services.
@@ -525,7 +533,11 @@ def add_nodes(
             )
         except HostNotFound:
             report_processor.report(
-                reports.host_not_found([qdevice_model_options["host"]])
+                ReportItem.error(
+                    reports.messages.HostNotFound(
+                        [qdevice_model_options["host"]]
+                    )
+                )
             )
 
     # Get targets for new nodes and report unknown (== not-authorized) nodes.
@@ -591,11 +603,12 @@ def add_nodes(
     except LibraryError:
         cib_nodes = []
         report_processor.report(
-            reports.get_problem_creator(
-                report_codes.FORCE_LOAD_NODES_FROM_CIB,
-                force
-            )(
-                reports.cib_load_error_get_nodes_for_validation
+            ReportItem(
+                reports.item.get_severity(
+                    report_codes.FORCE_LOAD_NODES_FROM_CIB,
+                    force
+                ),
+                reports.messages.CibLoadErrorGetNodesForValidation()
             )
         )
     # corosync validator rejects non-corosync keys
@@ -625,9 +638,10 @@ def add_nodes(
             sbd_options = sbd_node_options.intersection(node.keys())
             if sbd_options and "name" in node:
                 report_processor.report(
-                    reports.sbd_not_used_cannot_set_sbd_options(
-                        sbd_options,
-                        node["name"]
+                    ReportItem.error(
+                        reports.messages.SbdNotUsedCannotSetSbdOptions(
+                            sorted(sbd_options), node["name"]
+                        )
                     )
                 )
 
@@ -658,7 +672,9 @@ def add_nodes(
         ]
         if not online_cluster_target_list:
             report_processor.report(
-                reports.unable_to_perform_operation_on_any_node()
+                ReportItem.error(
+                    reports.messages.UnableToPerformOperationOnAnyNode()
+                )
             )
         elif offline_cluster_target_list and skip_offline_nodes:
             # TODO: report (warn) how to fix offline nodes when they come online
@@ -671,7 +687,9 @@ def add_nodes(
     )
     if atb_has_to_be_enabled:
         report_processor.report(
-            reports.corosync_quorum_atb_will_be_enabled_due_to_sbd()
+            ReportItem.warning(
+                reports.messages.CorosyncQuorumAtbWillBeEnabledDueToSbd()
+            )
         )
         if online_cluster_target_list:
             com_cmd = CheckCorosyncOffline(
@@ -696,7 +714,11 @@ def add_nodes(
     # Validate SBD on new nodes
     if is_sbd_enabled:
         if no_watchdog_validation:
-            report_processor.report(reports.sbd_watchdog_validation_inactive())
+            report_processor.report(
+                ReportItem.warning(
+                    reports.messages.SbdWatchdogValidationInactive()
+                )
+            )
         com_cmd = CheckSbd(report_processor)
         for new_node_target in new_nodes_target_list:
             new_node = new_nodes_dict[new_node_target.label]
@@ -789,8 +811,8 @@ def add_nodes(
 
     # distribute corosync and pacemaker authkeys and other config files
     files_action = {}
-    forceable_io_error_creator = reports.get_problem_creator(
-        report_codes.SKIP_FILE_DISTRIBUTION_ERRORS, force
+    severity = reports.item.get_severity(
+        reports.codes.SKIP_FILE_DISTRIBUTION_ERRORS, force
     )
     if os.path.isfile(settings.corosync_authkey_file):
         try:
@@ -800,13 +822,16 @@ def add_nodes(
                 )
             )
         except EnvironmentError as e:
-            report_processor.report(forceable_io_error_creator(
-                reports.file_io_error,
-                file_type_codes.COROSYNC_AUTHKEY,
-                RawFileError.ACTION_READ,
-                format_environment_error(e),
-                file_path=settings.corosync_authkey_file,
-            ))
+            report_processor.report(
+                ReportItem(
+                    severity, reports.messages.FileIoError(
+                        file_type_codes.COROSYNC_AUTHKEY,
+                        RawFileError.ACTION_READ,
+                        format_environment_error(e),
+                        file_path=settings.corosync_authkey_file,
+                    )
+                )
+            )
 
     if os.path.isfile(settings.pacemaker_authkey_file):
         try:
@@ -816,13 +841,16 @@ def add_nodes(
                 )
             )
         except EnvironmentError as e:
-            report_processor.report(forceable_io_error_creator(
-                reports.file_io_error,
-                file_type_codes.PACEMAKER_AUTHKEY,
-                RawFileError.ACTION_READ,
-                format_environment_error(e),
-                file_path=settings.pacemaker_authkey_file,
-            ))
+            report_processor.report(
+                ReportItem(
+                    severity, reports.messages.FileIoError(
+                        file_type_codes.PACEMAKER_AUTHKEY,
+                        RawFileError.ACTION_READ,
+                        format_environment_error(e),
+                        file_path=settings.pacemaker_authkey_file,
+                    )
+                )
+            )
 
     if os.path.isfile(settings.pcsd_dr_config_location):
         try:
@@ -832,13 +860,16 @@ def add_nodes(
                 )
             )
         except EnvironmentError as e:
-            report_processor.report(forceable_io_error_creator(
-                reports.file_io_error,
-                file_type_codes.PCS_DR_CONFIG,
-                RawFileError.ACTION_READ,
-                format_environment_error(e),
-                file_path=settings.pcsd_dr_config_location,
-            ))
+            report_processor.report(
+                ReportItem(
+                    severity, reports.messages.FileIoError(
+                        file_type_codes.PCS_DR_CONFIG,
+                        RawFileError.ACTION_READ,
+                        format_environment_error(e),
+                        file_path=settings.pcsd_dr_config_location,
+                    )
+                )
+            )
 
     # pcs_settings.conf was previously synced using pcsdcli send_local_configs.
     # This has been changed temporarily until new system for distribution and
@@ -851,13 +882,16 @@ def add_nodes(
                 )
             )
         except EnvironmentError as e:
-            report_processor.report(forceable_io_error_creator(
-                reports.file_io_error,
-                file_type_codes.PCS_SETTINGS_CONF,
-                RawFileError.ACTION_READ,
-                format_environment_error(e),
-                file_path=settings.pcsd_settings_conf_location,
-            ))
+            report_processor.report(
+                ReportItem(
+                    severity, reports.messages.FileIoError(
+                        file_type_codes.PCS_SETTINGS_CONF,
+                        RawFileError.ACTION_READ,
+                        format_environment_error(e),
+                        file_path=settings.pcsd_settings_conf_location,
+                    )
+                )
+            )
 
     # stop here if one of the files could not be loaded and it was not forced
     if report_processor.has_errors:
@@ -874,8 +908,10 @@ def add_nodes(
     # Distribute and reload pcsd SSL certificate
     if sync_ssl_certs:
         report_processor.report(
-            reports.pcsd_ssl_cert_and_key_distribution_started(
-                [target.label for target in new_nodes_target_list]
+            ReportItem.info(
+                reports.messages.PcsdSslCertAndKeyDistributionStarted(
+                    sorted([target.label for target in new_nodes_target_list])
+                )
             )
         )
 
@@ -884,11 +920,13 @@ def add_nodes(
                 ssl_cert = file.read()
         except EnvironmentError as e:
             report_processor.report(
-                reports.file_io_error(
-                    file_type_codes.PCSD_SSL_CERT,
-                    RawFileError.ACTION_READ,
-                    format_environment_error(e),
-                    file_path=settings.pcsd_cert_location,
+                ReportItem.error(
+                    reports.messages.FileIoError(
+                        file_type_codes.PCSD_SSL_CERT,
+                        RawFileError.ACTION_READ,
+                        format_environment_error(e),
+                        file_path=settings.pcsd_cert_location,
+                    )
                 )
             )
         try:
@@ -896,11 +934,13 @@ def add_nodes(
                 ssl_key = file.read()
         except EnvironmentError as e:
             report_processor.report(
-                reports.file_io_error(
-                    file_type_codes.PCSD_SSL_KEY,
-                    RawFileError.ACTION_READ,
-                    format_environment_error(e),
-                    file_path=settings.pcsd_key_location,
+                ReportItem.error(
+                    reports.messages.FileIoError(
+                        file_type_codes.PCSD_SSL_KEY,
+                        RawFileError.ACTION_READ,
+                        format_environment_error(e),
+                        file_path=settings.pcsd_key_location,
+                    )
                 )
             )
         if report_processor.has_errors:
@@ -950,11 +990,15 @@ def add_nodes(
 def _ensure_live_env(env: LibraryEnvironment):
     not_live = []
     if not env.is_cib_live:
-        not_live.append("CIB")
+        not_live.append(file_type_codes.CIB)
     if not env.is_corosync_conf_live:
-        not_live.append("COROSYNC_CONF")
+        not_live.append(file_type_codes.COROSYNC_CONF)
     if not_live:
-        raise LibraryError(reports.live_environment_required(not_live))
+        raise LibraryError(
+            ReportItem.error(
+                reports.messages.LiveEnvironmentRequired(not_live)
+            )
+        )
 
 def _start_cluster(
     communicator_factory,
@@ -999,15 +1043,21 @@ def _wait_for_pacemaker_to_start(
     interval = 2
     stop_at = time.time() + timeout
     report_processor.report(
-        reports.wait_for_node_startup_started(
-            [target.label for target in target_list]
+        ReportItem.info(
+            reports.messages.WaitForNodeStartupStarted(
+                sorted([target.label for target in target_list])
+            )
         )
     )
     error_report_list = []
     has_errors = False
     while target_list:
         if time.time() > stop_at:
-            error_report_list.append(reports.wait_for_node_startup_timed_out())
+            error_report_list.append(
+                ReportItem.error(
+                    reports.messages.WaitForNodeStartupTimedOut()
+                )
+            )
             break
         time.sleep(interval)
         com_cmd = CheckPacemakerStarted(report_processor)
@@ -1016,7 +1066,11 @@ def _wait_for_pacemaker_to_start(
         has_errors = has_errors or com_cmd.has_errors
 
     if error_report_list or has_errors:
-        error_report_list.append(reports.wait_for_node_startup_error())
+        error_report_list.append(
+            ReportItem.error(
+                reports.messages.WaitForNodeStartupError()
+            )
+        )
     return error_report_list
 
 def _host_check_cluster_setup(
@@ -1036,11 +1090,8 @@ def _host_check_cluster_setup(
     required_as_stopped_service_list = (
         required_service_list + ["pacemaker_remote"]
     )
-    report_severity = (
-        ReportItemSeverity.WARNING if force else ReportItemSeverity.ERROR
-    )
-    report_forceable = (
-        None if force else report_codes.FORCE_ALREADY_IN_CLUSTER
+    severity = reports.item.get_severity(
+        report_codes.FORCE_ALREADY_IN_CLUSTER, force
     )
     cluster_exists_on_nodes = False
     for host_name, host_info in host_info_dict.items():
@@ -1054,9 +1105,13 @@ def _host_check_cluster_setup(
                 if not services[service]["installed"]
             ]
             if missing_service_list:
-                report_list.append(reports.service_not_installed(
-                    host_name, missing_service_list
-                ))
+                report_list.append(
+                    ReportItem.error(
+                        reports.messages.ServiceNotInstalled(
+                            host_name, sorted(missing_service_list)
+                        )
+                    )
+                )
             cannot_be_running_service_list = [
                 service for service in required_as_stopped_service_list
                 if service in services and services[service]["running"]
@@ -1064,24 +1119,30 @@ def _host_check_cluster_setup(
             if cannot_be_running_service_list:
                 cluster_exists_on_nodes = True
                 report_list.append(
-                    reports.host_already_in_cluster_services(
-                        host_name,
-                        cannot_be_running_service_list,
-                        severity=report_severity,
-                        forceable=report_forceable,
+                    ReportItem(
+                        severity=severity,
+                        message=reports.messages.HostAlreadyInClusterServices(
+                            host_name,
+                            sorted(cannot_be_running_service_list),
+                        ),
                     )
                 )
             if host_info["cluster_configuration_exists"]:
                 cluster_exists_on_nodes = True
                 report_list.append(
-                    reports.host_already_in_cluster_config(
-                        host_name,
-                        severity=report_severity,
-                        forceable=report_forceable,
+                    ReportItem(
+                        severity=severity,
+                        message=reports.messages.HostAlreadyInClusterConfig(
+                            host_name,
+                        )
                     )
                 )
         except KeyError:
-            report_list.append(reports.invalid_response_format(host_name))
+            report_list.append(
+                ReportItem.error(
+                    reports.messages.InvalidResponseFormat(host_name)
+                )
+            )
 
     if check_services_versions:
         for service, version_dict in service_version_dict.items():
@@ -1091,14 +1152,25 @@ def _host_check_cluster_setup(
 
     if cluster_exists_on_nodes and not force:
         # This is always a forceable error
-        report_list.append(reports.cluster_will_be_destroyed())
+        report_list.append(
+            ReportItem(
+                severity=reports.item.ReportItemSeverity.error(
+                    report_codes.FORCE_ALREADY_IN_CLUSTER
+                ),
+                message=reports.messages.ClusterWillBeDestroyed()
+            )
+        )
     return report_list
 
 def _check_for_not_matching_service_versions(service, service_version_dict):
     if len(set(service_version_dict.values())) <= 1:
         return []
     return [
-        reports.service_version_mismatch(service, service_version_dict)
+        ReportItem.error(
+            reports.messages.ServiceVersionMismatch(
+                service, service_version_dict
+            )
+        )
     ]
 
 def _normalize_dict(input_dict, required_keys):
@@ -1122,8 +1194,10 @@ def _get_addrs_defaulter(report_processor: ReportProcessor, targets_dict):
         target = targets_dict.get(node["name"])
         if target:
             report_processor.report(
-                reports.using_known_host_address_for_host(
-                    node["name"], target.first_addr
+                ReportItem.info(
+                    reports.messages.UsingKnownHostAddressForHost(
+                            node["name"], target.first_addr
+                    )
                 )
             )
             return [target.first_addr]
@@ -1131,12 +1205,16 @@ def _get_addrs_defaulter(report_processor: ReportProcessor, targets_dict):
     return defaulter
 
 def _get_watchdog_defaulter(report_processor: ReportProcessor, targets_dict):
-    # pylint: disable=unused-argument
+    del targets_dict
     def defaulter(node):
-        report_processor.report(reports.using_default_watchdog(
-            settings.sbd_watchdog_default,
-            node["name"],
-        ))
+        report_processor.report(
+            ReportItem.info(
+                reports.messages.UsingDefaultWatchdog(
+                    settings.sbd_watchdog_default,
+                    node["name"],
+                )
+            )
+        )
         return settings.sbd_watchdog_default
     return defaulter
 
@@ -1146,7 +1224,9 @@ def _get_validated_wait_timeout(report_processor, wait, start):
             return False
         if not start:
             report_processor.report(
-                reports.wait_for_node_startup_without_start()
+                ReportItem.error(
+                    reports.messages.WaitForNodeStartupWithoutStart()
+                )
             )
         return get_valid_timeout_seconds(wait)
     except LibraryError as e:
@@ -1165,11 +1245,13 @@ def _is_ssl_cert_sync_enabled(report_processor: ReportProcessor):
                 )
     except EnvironmentError as e:
         report_processor.report(
-            reports.file_io_error(
-                file_type_codes.PCSD_ENVIRONMENT_CONFIG,
-                RawFileError.ACTION_READ,
-                format_environment_error(e),
-                file_path=settings.pcsd_config,
+            ReportItem.error(
+                reports.messages.FileIoError(
+                    file_type_codes.PCSD_ENVIRONMENT_CONFIG,
+                    RawFileError.ACTION_READ,
+                    format_environment_error(e),
+                    file_path=settings.pcsd_config,
+                )
             )
         )
     return False
@@ -1183,8 +1265,12 @@ def _verify_corosync_conf(corosync_conf_facade):
     )
     if bad_sections or bad_attr_names or bad_attr_values:
         raise LibraryError(
-            reports.corosync_config_cannot_save_invalid_names_values(
-                bad_sections, bad_attr_names, bad_attr_values
+            ReportItem.error(
+                reports.messages.CorosyncConfigCannotSaveInvalidNamesValues(
+                    bad_sections,
+                    bad_attr_names,
+                    bad_attr_values,
+                )
             )
         )
 
@@ -1263,7 +1349,9 @@ def remove_nodes(env, node_list, force_flags=None):
     ]
     if not staying_online_target_list:
         report_processor.report(
-            reports.unable_to_connect_to_any_remaining_node()
+            ReportItem.error(
+                reports.messages.UnableToConnectToAnyRemainingNode()
+            )
         )
         # If no remaining node is online, there is no point in checking quorum
         # loss or anything as we would just get errors.
@@ -1280,8 +1368,10 @@ def remove_nodes(env, node_list, force_flags=None):
         )
         if staying_offline_nodes:
             report_processor.report(
-                reports.unable_to_connect_to_all_remaining_node(
-                    staying_offline_nodes
+                ReportItem.warning(
+                    reports.messages.UnableToConnectToAllRemainingNode(
+                        sorted(staying_offline_nodes)
+                    )
                 )
             )
 
@@ -1290,7 +1380,9 @@ def remove_nodes(env, node_list, force_flags=None):
     )
     if atb_has_to_be_enabled:
         report_processor.report(
-            reports.corosync_quorum_atb_will_be_enabled_due_to_sbd()
+            ReportItem.warning(
+                reports.messages.CorosyncQuorumAtbWillBeEnabledDueToSbd()
+            )
         )
         com_cmd = CheckCorosyncOffline(
             report_processor, allow_skip_offline=False,
@@ -1306,23 +1398,28 @@ def remove_nodes(env, node_list, force_flags=None):
         # results in 4-node cluster with 2 online nodes => quorum lost
         # Check quorum loss only if ATB does not need to be enabled. If it is
         # required, cluster has to be turned off and therefore it loses quorum.
-        forceable_report_creator = reports.get_problem_creator(
-            report_codes.FORCE_QUORUM_LOSS, force_quorum_loss
-        )
         com_cmd = cluster.GetQuorumStatus(report_processor)
         com_cmd.set_targets(targets_to_remove)
         failures, quorum_status = run_com(env.get_node_communicator(), com_cmd)
         if quorum_status:
             if quorum_status.stopping_nodes_cause_quorum_loss(node_list):
                 report_processor.report(
-                    forceable_report_creator(
-                        reports.corosync_quorum_will_be_lost
+                    ReportItem(
+                        severity=reports.item.get_severity(
+                            report_codes.FORCE_QUORUM_LOSS,
+                            force_quorum_loss,
+                        ),
+                        message=reports.messages.CorosyncQuorumWillBeLost(),
                     )
                 )
         elif failures or not targets_to_remove:
             report_processor.report(
-                forceable_report_creator(
-                    reports.corosync_quorum_loss_unable_to_check,
+                ReportItem(
+                    severity=reports.item.get_severity(
+                        report_codes.FORCE_QUORUM_LOSS,
+                        force_quorum_loss,
+                    ),
+                    message=reports.messages.CorosyncQuorumLossUnableToCheck(),
                 )
             )
 
@@ -1334,7 +1431,11 @@ def remove_nodes(env, node_list, force_flags=None):
     unknown_to_remove = [name for name in unknown_nodes if name in node_list]
     if unknown_to_remove:
         report_processor.report(
-            reports.nodes_to_remove_unreachable(unknown_to_remove)
+            ReportItem.warning(
+                reports.messages.NodesToRemoveUnreachable(
+                    sorted(unknown_to_remove)
+                )
+            )
         )
     if targets_to_remove:
         com_cmd = cluster.DestroyWarnOnFailure(report_processor)
@@ -1375,7 +1476,11 @@ def remove_nodes_from_cib(env: LibraryEnvironment, node_list):
     """
     # TODO: more advanced error handling
     if not env.is_cib_live:
-        raise LibraryError(reports.live_environment_required(["CIB"]))
+        raise LibraryError(
+            ReportItem.error(
+                reports.messages.LiveEnvironmentRequired([file_type_codes.CIB])
+            )
+        )
 
     if is_service_running(env.cmd_runner(), "pacemaker"):
         for node in node_list:
@@ -1399,9 +1504,11 @@ def remove_nodes_from_cib(env: LibraryEnvironment, node_list):
         )
         if retval != 0:
             raise LibraryError(
-                reports.node_remove_in_pacemaker_failed(
-                    [node],
-                    reason=join_multilines([stderr, stdout])
+                ReportItem.error(
+                    reports.messages.NodeRemoveInPacemakerFailed(
+                        node_list_to_remove=[node],
+                        reason=join_multilines([stderr, stdout]),
+                    )
                 )
             )
 
@@ -1446,11 +1553,12 @@ def add_link(
     except LibraryError:
         cib_nodes = []
         report_processor.report(
-            reports.get_problem_creator(
-                report_codes.FORCE_LOAD_NODES_FROM_CIB,
-                force
-            )(
-                reports.cib_load_error_get_nodes_for_validation
+            ReportItem(
+                reports.item.get_severity(
+                    report_codes.FORCE_LOAD_NODES_FROM_CIB,
+                    force
+                ),
+                reports.messages.CibLoadErrorGetNodesForValidation()
             )
         )
 

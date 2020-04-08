@@ -3,10 +3,8 @@ import re
 from unittest import TestCase
 
 from pcs import settings
-from pcs.common import (
-    file_type_codes,
-    report_codes,
-)
+from pcs.common import file_type_codes
+from pcs.common.reports import codes as report_codes
 from pcs.common.dr import DrRole
 from pcs.common.file import RawFileError
 from pcs.lib.commands import dr

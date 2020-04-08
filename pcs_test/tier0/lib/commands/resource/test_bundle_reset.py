@@ -14,8 +14,8 @@ from pcs_test.tier0.lib.commands.resource.bundle_common import(
 )
 from pcs_test.tools import fixture
 
-from pcs.common import report_codes
 from pcs.common.reports import ReportItemSeverity as severities
+from pcs.common.reports import codes as report_codes
 from pcs.lib.commands.resource import bundle_reset
 
 class BaseMixin(FixturesMixin):

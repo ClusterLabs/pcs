@@ -13,7 +13,7 @@ from pcs.common.pacemaker.resource.relations import (
     ResourceRelationDto,
     ResourceRelationType,
 )
-from pcs.cli.common.console_report import format_optional
+from pcs.common.str_tools import format_optional
 from pcs.cli.common.errors import CmdLineInputError
 from pcs.cli.common.parse_args import InputModifiers
 from pcs.cli.common.printable_tree import (

@@ -152,8 +152,8 @@ class PlainStonith(ResourceTest):
         self.assert_pcs_fail(
             "stonith create S fence_xvm action=reboot",
             "Error: stonith option 'action' is deprecated and should not be"
-                " used, use pcmk_off_action, pcmk_reboot_action instead, use"
-                " --force to override\n"
+                " used, use 'pcmk_off_action', 'pcmk_reboot_action' instead, "
+                "use --force to override\n"
             + ERRORS_HAVE_OCURRED
         )
 
@@ -176,7 +176,7 @@ class PlainStonith(ResourceTest):
                 </primitive>
             </resources>""",
             "Warning: stonith option 'action' is deprecated and should not be"
-                " used, use pcmk_off_action, pcmk_reboot_action instead\n"
+                " used, use 'pcmk_off_action', 'pcmk_reboot_action' instead\n"
         )
 
 

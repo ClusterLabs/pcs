@@ -6,19 +6,20 @@ from typing import (
 
 from lxml import etree
 
-from pcs.common import report_codes
+from pcs.common import reports
 from pcs.common.fencing_topology import (
     TARGET_TYPE_NODE,
     TARGET_TYPE_REGEXP,
     TARGET_TYPE_ATTRIBUTE,
 )
 from pcs.common.reports import (
+    codes as report_codes,
     has_errors,
     ReportItemList,
     ReportItemSeverity,
     ReportProcessor,
 )
-from pcs.lib import reports
+from pcs.common.reports.item import ReportItem
 from pcs.lib.cib.stonith import is_stonith_resource
 from pcs.lib.cib.tools import find_unique_id
 from pcs.lib.errors import LibraryError
@@ -127,9 +128,13 @@ def remove_levels_by_params(
     if not level_el_list:
         if ignore_if_missing:
             return report_list
-        report_list.append(reports.fencing_level_does_not_exist(
-            level, target_type, target_value, devices
-        ))
+        report_list.append(
+            ReportItem.error(
+                reports.messages.CibFencingLevelDoesNotExist(
+                    level, target_type, target_value, devices or []
+                )
+            )
+        )
     if has_errors(report_list):
         return report_list
     for el in level_el_list:
@@ -236,7 +241,11 @@ def _validate_level(level) -> Tuple[ReportItemList, Optional[int]]:
     except ValueError:
         pass
     report_list.append(
-        reports.invalid_option_value("level", level, "a positive integer")
+        ReportItem.error(
+            reports.messages.InvalidOptionValue(
+                "level", level, "a positive integer"
+            )
+        )
     )
     return report_list, None
 
@@ -257,9 +266,11 @@ def _validate_target_typewise(target_type) -> ReportItemList:
         TARGET_TYPE_NODE, TARGET_TYPE_ATTRIBUTE, TARGET_TYPE_REGEXP
     ]:
         report_list.append(
-            reports.invalid_option_type(
-                "target",
-                ["node", "regular expression", "attribute_name=value"]
+            ReportItem.error(
+                reports.messages.InvalidOptionType(
+                    "target",
+                    ["node", "regular expression", "attribute_name=value"]
+                )
             )
         )
     return report_list
@@ -277,14 +288,20 @@ def _validate_target_valuewise(
                 break
         if not node_found:
             report_list.append(
-                reports.node_not_found(
-                    target_value,
-                    severity=ReportItemSeverity.WARNING
-                        if force_node and allow_force
-                        else ReportItemSeverity.ERROR
-                    ,
-                    forceable=None if force_node or not allow_force
-                        else report_codes.FORCE_NODE_DOES_NOT_EXIST
+                ReportItem(
+                    severity=ReportItemSeverity(
+                        level=(
+                            ReportItemSeverity.WARNING
+                            if force_node and allow_force
+                            else ReportItemSeverity.ERROR
+                        ),
+                        force_code=(
+                            None
+                            if force_node or not allow_force
+                            else report_codes.FORCE_NODE_DOES_NOT_EXIST
+                        )
+                    ),
+                    message=reports.messages.NodeNotFound(target_value),
                 )
             )
     return report_list
@@ -298,7 +315,9 @@ def _validate_devices(
     report_list: ReportItemList = []
     if not devices:
         report_list.append(
-            reports.required_options_are_missing(["stonith devices"])
+            ReportItem.error(
+                reports.messages.RequiredOptionsAreMissing(["stonith devices"])
+            )
         )
     invalid_devices = []
     for dev in devices:
@@ -316,13 +335,21 @@ def _validate_devices(
             invalid_devices.append(dev)
     if invalid_devices:
         report_list.append(
-            reports.stonith_resources_do_not_exist(
-                invalid_devices,
-                ReportItemSeverity.WARNING if force_device and allow_force
-                    else ReportItemSeverity.ERROR
-                ,
-                None if force_device or not allow_force
-                    else report_codes.FORCE_STONITH_RESOURCE_DOES_NOT_EXIST
+            ReportItem(
+                severity=ReportItemSeverity(
+                    level=(
+                        ReportItemSeverity.WARNING
+                        if force_device and allow_force
+                        else ReportItemSeverity.ERROR
+                    ),
+                    force_code=(
+                        None if force_device or not allow_force
+                        else report_codes.FORCE_STONITH_RESOURCE_DOES_NOT_EXIST
+                    ),
+                ),
+                message=reports.messages.StonithResourcesDoNotExist(
+                    invalid_devices
+                ),
             )
         )
     return report_list
@@ -333,8 +360,10 @@ def _validate_level_target_devices_does_not_exist(
     report_list: ReportItemList = []
     if _find_level_elements(tree, level, target_type, target_value, devices):
         report_list.append(
-            reports.fencing_level_already_exists(
-                level, target_type, target_value, devices
+            ReportItem.error(
+                reports.messages.CibFencingLevelAlreadyExists(
+                    level, target_type, target_value, devices
+                )
             )
         )
     return report_list

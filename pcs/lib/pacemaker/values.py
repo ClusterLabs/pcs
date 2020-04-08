@@ -1,6 +1,7 @@
 import re
 
-from pcs.lib import reports
+from pcs.common import reports
+from pcs.common.reports.item import ReportItem
 from pcs.lib.errors import LibraryError
 
 
@@ -81,7 +82,11 @@ def get_valid_timeout_seconds(timeout_candidate):
         return None
     wait_timeout = timeout_to_seconds(timeout_candidate)
     if wait_timeout is None:
-        raise LibraryError(reports.invalid_timeout(timeout_candidate))
+        raise LibraryError(
+            ReportItem.error(
+                reports.messages.InvalidTimeoutValue(timeout_candidate)
+            )
+        )
     return wait_timeout
 
 def validate_id(id_candidate, description="id", reporter=None):
@@ -95,29 +100,41 @@ def validate_id(id_candidate, description="id", reporter=None):
     # http://www.w3.org/TR/REC-xml-names/#NT-NCName
     # http://www.w3.org/TR/REC-xml/#NT-Name
     if not id_candidate:
-        report = reports.invalid_id_is_empty(id_candidate, description)
+        report_item = ReportItem.error(
+            reports.messages.InvalidIdIsEmpty(description)
+        )
         if reporter is None:
             # we check for None so it works with an empty list as well
-            raise LibraryError(report)
-        reporter.append(report)
+            raise LibraryError(report_item)
+        reporter.append(report_item)
         return
     if _ID_FIRST_CHAR_NOT_RE.match(id_candidate[0]):
-        report = reports.invalid_id_bad_char(
-            id_candidate, description, id_candidate[0], True
+        report_item = ReportItem.error(
+            reports.messages.InvalidIdBadChar(
+                id_candidate,
+                description,
+                id_candidate[0],
+                True,
+            )
         )
         if reporter is not None:
-            reporter.append(report)
+            reporter.append(report_item)
         else:
-            raise LibraryError(report)
+            raise LibraryError(report_item)
     for char in id_candidate[1:]:
         if _ID_REST_CHARS_NOT_RE.match(char):
-            report = reports.invalid_id_bad_char(
-                id_candidate, description, char, False
+            report_item = ReportItem.error(
+                reports.messages.InvalidIdBadChar(
+                    id_candidate,
+                    description,
+                    char,
+                    False,
+                )
             )
             if reporter is not None:
-                reporter.append(report)
+                reporter.append(report_item)
             else:
-                raise LibraryError(report)
+                raise LibraryError(report_item)
 
 def sanitize_id(id_candidate, replacement=""):
     if not id_candidate:

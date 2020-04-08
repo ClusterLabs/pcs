@@ -1,8 +1,11 @@
 from lxml import etree
 
-from pcs.common import report_codes
-from pcs.common.reports import ReportProcessor
-from pcs.lib import reports
+from pcs.common import reports
+from pcs.common.reports import (
+    codes as report_codes,
+    ReportProcessor,
+)
+from pcs.common.reports.item import ReportItem
 from pcs.lib.cib.nvpair import (
     append_new_instance_attributes,
     append_new_meta_attributes,
@@ -87,7 +90,9 @@ def create(
         instance_attributes = {}
 
     if does_id_exist(resources_section, resource_id):
-        raise LibraryError(reports.id_already_exists(resource_id))
+        raise LibraryError(
+            ReportItem.error(reports.messages.IdAlreadyExists(resource_id))
+        )
     validate_id(resource_id, "{0} name".format(resource_type))
 
     operation_list = prepare_operations(
@@ -183,9 +188,6 @@ def validate_unique_instance_attributes(
     resource_id=None, force=False
 ):
     report_list = []
-    report_creator = reports.get_problem_creator(
-        report_codes.FORCE_OPTIONS, force
-    )
     ra_unique_attributes = [
         param["name"]
         for param in resource_agent.get_parameters()
@@ -210,12 +212,17 @@ def validate_unique_instance_attributes(
         }
         if conflicting_resources:
             report_list.append(
-                report_creator(
-                    reports.resource_instance_attr_value_not_unique,
-                    attr,
-                    instance_attributes[attr],
-                    resource_agent.get_name(),
-                    conflicting_resources,
+                ReportItem(
+                    severity=reports.item.get_severity(
+                        report_codes.FORCE_OPTIONS,
+                        force,
+                    ),
+                    message=reports.messages.ResourceInstanceAttrValueNotUnique(
+                        attr,
+                        instance_attributes[attr],
+                        resource_agent.get_name(),
+                        sorted(conflicting_resources),
+                    )
                 )
             )
     return report_list

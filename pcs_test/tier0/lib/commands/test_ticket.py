@@ -7,8 +7,8 @@ from pcs_test.tools.misc import get_test_resource as rc
 from pcs_test.tools.xml import get_xml_manipulation_creator_from_file
 from pcs_test.tier0.lib.misc import get_mocked_env
 
-from pcs.common import report_codes
 from pcs.common.reports import ReportItemSeverity as severities
+from pcs.common.reports import codes as report_codes
 from pcs.lib.commands.constraint import ticket as ticket_command
 
 patch_commands = create_patcher("pcs.lib.commands.constraint.ticket")

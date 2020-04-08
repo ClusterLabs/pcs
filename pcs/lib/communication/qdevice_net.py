@@ -1,11 +1,12 @@
 import base64
 import binascii
 
+from pcs.common import reports
 from pcs.common.node_communicator import (
     Request,
     RequestData,
 )
-from pcs.lib import reports
+from pcs.common.reports.item import ReportItem
 from pcs.lib.communication.tools import (
     AllAtOnceStrategyMixin,
     AllSameDataMixin,
@@ -36,7 +37,11 @@ class GetCaCert(
         try:
             self._data.append((target, base64.b64decode(response.data)))
         except (TypeError, binascii.Error):
-            self._report(reports.invalid_response_format(target.label))
+            self._report(
+                ReportItem.error(
+                    reports.messages.InvalidResponseFormat(target.label)
+                )
+            )
 
     def on_complete(self):
         return self._data
@@ -94,7 +99,11 @@ class SignCertificate(AllAtOnceStrategyMixin, RunRemotelyBase):
         try:
             self._output_data.append((target, base64.b64decode(response.data)))
         except (TypeError, binascii.Error):
-            self._report(reports.invalid_response_format(target.label))
+            self._report(
+                ReportItem.error(
+                    reports.messages.InvalidResponseFormat(target.label)
+                )
+            )
 
     def on_complete(self):
         return self._output_data
@@ -120,7 +129,9 @@ class ClientImportCertificateAndKey(
         )
 
     def _get_success_report(self, node_label):
-        return reports.qdevice_certificate_accepted_by_node(node_label)
+        return ReportItem.info(
+            reports.messages.QdeviceCertificateAcceptedByNode(node_label)
+        )
 
 
 class ClientDestroy(SimpleResponseProcessingMixin, QdeviceBase):
@@ -128,4 +139,6 @@ class ClientDestroy(SimpleResponseProcessingMixin, QdeviceBase):
         return RequestData("remote/qdevice_net_client_destroy")
 
     def _get_success_report(self, node_label):
-        return reports.qdevice_certificate_removed_from_node(node_label)
+        return ReportItem.info(
+            reports.messages.QdeviceCertificateRemovedFromNode(node_label)
+        )

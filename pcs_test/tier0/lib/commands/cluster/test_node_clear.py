@@ -4,7 +4,7 @@ from pcs_test.tools import fixture
 from pcs_test.tools.command_env import get_env_tools
 from pcs_test.tools.misc import get_test_resource as rc
 
-from pcs.common import report_codes
+from pcs.common.reports import codes as report_codes
 from pcs.lib.commands.cluster import node_clear
 
 
@@ -81,8 +81,8 @@ class NodeClear(TestCase):
             [
                 fixture.error(
                     report_codes.NODE_REMOVE_IN_PACEMAKER_FAILED,
-                    node=None,
                     node_list_to_remove=["nodeX"],
+                    node="",
                     reason="some error"
                 ),
             ],

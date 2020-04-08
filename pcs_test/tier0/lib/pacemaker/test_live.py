@@ -13,8 +13,8 @@ from pcs_test.tools.misc import get_test_resource as rc
 from pcs_test.tools.xml import etree_to_str, XmlManipulation
 
 from pcs import settings
-from pcs.common import report_codes
 from pcs.common.reports import ReportItemSeverity as Severity
+from pcs.common.reports import codes as report_codes
 from pcs.common.tools import Version
 import pcs.lib.pacemaker.live as lib
 from pcs.lib.external import CommandRunner
@@ -317,17 +317,19 @@ class GetCibTest(LibraryPacemakerTest):
         xml = "<xml />"
         assert_xml_equal(xml, str(XmlManipulation((lib.get_cib(xml)))))
 
-    def test_invalid_xml(self):
+    @mock.patch("pcs.lib.pacemaker.live.xml_fromstring")
+    def test_invalid_xml(self, xml_fromstring_mock):
+        reason = "custom reason"
+        xml_fromstring_mock.side_effect = etree.XMLSyntaxError(reason, 1, 1, 1)
         xml = "<invalid><xml />"
         assert_raise_library_error(
             lambda: lib.get_cib(xml),
-            (
-                Severity.ERROR,
+            fixture.error(
                 report_codes.CIB_LOAD_ERROR_BAD_FORMAT,
-                {
-                }
+                reason=f"{reason} (line 1)",
             )
         )
+        xml_fromstring_mock.assert_called_once_with(xml)
 
 class Verify(LibraryPacemakerTest):
     def test_run_on_live_cib(self):
@@ -950,7 +952,7 @@ class RemoveNode(LibraryPacemakerTest):
                 Severity.ERROR,
                 report_codes.NODE_REMOVE_IN_PACEMAKER_FAILED,
                 {
-                    "node": None,
+                    "node": "",
                     "node_list_to_remove": ["NODE_NAME"],
                     "reason": expected_stderr,
                 }
@@ -1050,8 +1052,9 @@ class ResourceCleanupTest(TestCase):
             [
                 fixture.error(
                     report_codes.RESOURCE_CLEANUP_ERROR,
-                    force_code=None,
-                    reason=(self.stderr + "\n" + self.stdout)
+                    reason=(self.stderr + "\n" + self.stdout),
+                    resource=None,
+                    node=None,
                 )
             ],
             expected_in_processor=False
@@ -1247,6 +1250,8 @@ class ResourceRefreshTest(LibraryPacemakerTest):
                 report_codes.RESOURCE_REFRESH_ERROR,
                 {
                     "reason": expected_stderr + "\n" + expected_stdout,
+                    "resource": None,
+                    "node": None,
                 }
             )
         )

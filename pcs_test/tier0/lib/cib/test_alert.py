@@ -8,7 +8,7 @@ from pcs_test.tools.assertions import(
 )
 from pcs_test.tools.custom_mock import MockLibraryReportProcessor
 
-from pcs.common import report_codes
+from pcs.common.reports import codes as report_codes
 from pcs.lib.cib import alert
 from pcs.common.reports import ReportItemSeverity as severities
 
@@ -192,7 +192,7 @@ class CreateAlertTest(TestCase):
             lambda: alert.create_alert(self.tree, "1alert", "/path"),
             (
                 severities.ERROR,
-                report_codes.INVALID_ID,
+                report_codes.INVALID_ID_BAD_CHAR,
                 {
                     "id": "1alert",
                     "id_description": "alert-id",

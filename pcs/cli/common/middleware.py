@@ -1,7 +1,7 @@
 from collections import namedtuple
 from functools import partial
 
-from pcs.cli.common.console_report import error
+from pcs.cli.reports.output import error
 
 
 def build(*middleware_list):

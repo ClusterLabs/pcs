@@ -2,13 +2,22 @@ from collections import namedtuple
 from enum import Enum
 import threading
 from typing import (
-    Iterable,
-    List,
-    Mapping,
-    Optional,
+    MutableSet,
+    TypeVar,
 )
 
 from lxml import etree
+
+
+T = TypeVar("T", bound=type)
+
+
+def get_all_subclasses(cls: T) -> MutableSet[T]:
+    subclasses = set(cls.__subclasses__())
+    return subclasses.union(
+        {s for c in subclasses for s in get_all_subclasses(c)}
+    )
+
 
 def run_parallel(worker, data_list):
     thread_list = []
@@ -28,33 +37,6 @@ def format_os_error(e):
     if e.filename:
         return "{0}: '{1}'".format(e.strerror, e.filename)
     return e.strerror
-
-def indent(line_list: Iterable[str], indent_step: int = 2) -> List[str]:
-    """
-    return line list where each line of input is prefixed by N spaces
-
-    line_list -- original lines
-    indent_step -- count of spaces for line prefix
-    """
-    return [
-        "{0}{1}".format(" " * indent_step, line) if line else line
-        for line in line_list
-    ]
-
-def format_list(
-    item_list: Iterable[str],
-    optional_transformations: Optional[Mapping[str, str]] = None
-) -> str:
-    if not optional_transformations:
-        optional_transformations = {}
-
-    return ", ".join(sorted([
-        "'{0}'".format(optional_transformations.get(item, item))
-        for item in item_list
-    ]))
-
-def join_multilines(strings):
-    return "\n".join([a.strip() for a in strings if a.strip()])
 
 def xml_fromstring(xml):
     # If the xml contains encoding declaration such as:

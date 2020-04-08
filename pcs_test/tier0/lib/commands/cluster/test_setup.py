@@ -12,9 +12,10 @@ from pcs_test.tools.command_env.mock_node_communicator import (
 from pcs_test.tools.custom_mock import patch_getaddrinfo
 
 from pcs import settings
-from pcs.common import file_type_codes, report_codes
+from pcs.common import file_type_codes
 from pcs.common.file import RawFileError
 from pcs.common.host import Destination
+from pcs.common.reports import codes as report_codes
 from pcs.common.ssl import (
     dump_cert,
     dump_key,
@@ -402,7 +403,12 @@ class SetupSuccessMinimal(TestCase):
         self.env_assist.assert_reports(
             reports_success_minimal_fixture()
             +
-            [fixture.info(report_codes.CLUSTER_ENABLE_STARTED)]
+            [
+                fixture.info(
+                    report_codes.CLUSTER_ENABLE_STARTED,
+                    host_name_list=sorted(NODE_LIST),
+                )
+            ]
             +
             [
                 fixture.info(report_codes.CLUSTER_ENABLE_SUCCESS, node=node)
@@ -421,7 +427,12 @@ class SetupSuccessMinimal(TestCase):
         self.env_assist.assert_reports(
             reports_success_minimal_fixture()
             +
-            [fixture.info(report_codes.CLUSTER_START_STARTED)]
+            [
+                fixture.info(
+                    report_codes.CLUSTER_START_STARTED,
+                    host_name_list=sorted(NODE_LIST),
+                )
+            ]
         )
 
     @mock.patch("time.sleep", lambda secs: None)
@@ -441,7 +452,10 @@ class SetupSuccessMinimal(TestCase):
             reports_success_minimal_fixture()
             +
             [
-                fixture.info(report_codes.CLUSTER_START_STARTED),
+                fixture.info(
+                    report_codes.CLUSTER_START_STARTED,
+                    host_name_list=sorted(NODE_LIST),
+                ),
                 fixture.info(
                     report_codes.WAIT_FOR_NODE_STARTUP_STARTED,
                     node_name_list=NODE_LIST,
@@ -471,14 +485,24 @@ class SetupSuccessMinimal(TestCase):
         self.env_assist.assert_reports(
             reports_success_minimal_fixture()
             +
-            [fixture.info(report_codes.CLUSTER_ENABLE_STARTED)]
+            [
+                fixture.info(
+                    report_codes.CLUSTER_ENABLE_STARTED,
+                    host_name_list=sorted(NODE_LIST),
+                )
+            ]
             +
             [
                 fixture.info(report_codes.CLUSTER_ENABLE_SUCCESS, node=node)
                 for node in NODE_LIST
             ]
             +
-            [fixture.info(report_codes.CLUSTER_START_STARTED)]
+            [
+                fixture.info(
+                    report_codes.CLUSTER_START_STARTED,
+                    host_name_list=sorted(NODE_LIST),
+                )
+            ]
         )
 
     @mock.patch("time.sleep", lambda secs: None)
@@ -499,7 +523,12 @@ class SetupSuccessMinimal(TestCase):
         self.env_assist.assert_reports(
             reports_success_minimal_fixture()
             +
-            [fixture.info(report_codes.CLUSTER_ENABLE_STARTED)]
+            [
+                fixture.info(
+                    report_codes.CLUSTER_ENABLE_STARTED,
+                    host_name_list=sorted(NODE_LIST),
+                )
+            ]
             +
             [
                 fixture.info(report_codes.CLUSTER_ENABLE_SUCCESS, node=node)
@@ -507,7 +536,10 @@ class SetupSuccessMinimal(TestCase):
             ]
             +
             [
-                fixture.info(report_codes.CLUSTER_START_STARTED),
+                fixture.info(
+                    report_codes.CLUSTER_START_STARTED,
+                    host_name_list=sorted(NODE_LIST),
+                ),
                 fixture.info(
                     report_codes.WAIT_FOR_NODE_STARTUP_STARTED,
                     node_name_list=NODE_LIST,
@@ -1102,13 +1134,13 @@ class Validation(TestCase):
                     report_codes.COROSYNC_TRANSPORT_UNSUPPORTED_OPTIONS,
                     option_type="compression",
                     actual_transport="udp/udpu",
-                    required_transport_list=("knet", )
+                    required_transports=["knet"],
                 ),
                 fixture.error(
                     report_codes.COROSYNC_TRANSPORT_UNSUPPORTED_OPTIONS,
                     option_type="crypto",
                     actual_transport="udp/udpu",
-                    required_transport_list=("knet", )
+                    required_transports=["knet"],
                 ),
                 fixture.error(
                     report_codes.INVALID_OPTIONS,
@@ -2130,7 +2162,10 @@ class SetupWithWait(TestCase):
             reports_success_minimal_fixture()
             +
             [
-                fixture.info(report_codes.CLUSTER_START_STARTED),
+                fixture.info(
+                    report_codes.CLUSTER_START_STARTED,
+                    host_name_list=sorted(NODE_LIST),
+                ),
                 fixture.info(
                     report_codes.WAIT_FOR_NODE_STARTUP_STARTED,
                     node_name_list=NODE_LIST,
@@ -2166,7 +2201,10 @@ class SetupWithWait(TestCase):
             reports_success_minimal_fixture()
             +
             [
-                fixture.info(report_codes.CLUSTER_START_STARTED),
+                fixture.info(
+                    report_codes.CLUSTER_START_STARTED,
+                    host_name_list=sorted(NODE_LIST),
+                ),
                 fixture.info(
                     report_codes.WAIT_FOR_NODE_STARTUP_STARTED,
                     node_name_list=NODE_LIST,
@@ -2209,7 +2247,10 @@ class SetupWithWait(TestCase):
             reports_success_minimal_fixture()
             +
             [
-                fixture.info(report_codes.CLUSTER_START_STARTED),
+                fixture.info(
+                    report_codes.CLUSTER_START_STARTED,
+                    host_name_list=sorted(NODE_LIST),
+                ),
                 fixture.info(
                     report_codes.WAIT_FOR_NODE_STARTUP_STARTED,
                     node_name_list=NODE_LIST,
@@ -2277,7 +2318,10 @@ class SetupWithWait(TestCase):
             reports_success_minimal_fixture()
             +
             [
-                fixture.info(report_codes.CLUSTER_START_STARTED),
+                fixture.info(
+                    report_codes.CLUSTER_START_STARTED,
+                    host_name_list=sorted(NODE_LIST),
+                ),
                 fixture.info(
                     report_codes.WAIT_FOR_NODE_STARTUP_STARTED,
                     node_name_list=NODE_LIST,
@@ -2354,7 +2398,10 @@ class SetupWithWait(TestCase):
             reports_success_minimal_fixture()
             +
             [
-                fixture.info(report_codes.CLUSTER_START_STARTED),
+                fixture.info(
+                    report_codes.CLUSTER_START_STARTED,
+                    host_name_list=sorted(NODE_LIST),
+                ),
                 fixture.info(
                     report_codes.WAIT_FOR_NODE_STARTUP_STARTED,
                     node_name_list=NODE_LIST,
@@ -2464,14 +2511,24 @@ class Failures(RemoveCallsMixin, TestCase):
         self.env_assist.assert_reports(
             reports_success_minimal_fixture()
             +
-            [fixture.info(report_codes.CLUSTER_ENABLE_STARTED)]
+            [
+                fixture.info(
+                    report_codes.CLUSTER_ENABLE_STARTED,
+                    host_name_list=sorted(NODE_LIST),
+                )
+            ]
             +
             [
                 fixture.info(report_codes.CLUSTER_ENABLE_SUCCESS, node=node)
                 for node in NODE_LIST
             ]
             +
-            [fixture.info(report_codes.CLUSTER_START_STARTED)]
+            [
+                fixture.info(
+                    report_codes.CLUSTER_START_STARTED,
+                    host_name_list=sorted(NODE_LIST),
+                )
+            ]
             +
             self._get_failure_reports("remote/cluster_start")
         )
@@ -2493,7 +2550,12 @@ class Failures(RemoveCallsMixin, TestCase):
         self.env_assist.assert_reports(
             reports_success_minimal_fixture()
             +
-            [fixture.info(report_codes.CLUSTER_ENABLE_STARTED)]
+            [
+                fixture.info(
+                    report_codes.CLUSTER_ENABLE_STARTED,
+                    host_name_list=sorted(NODE_LIST),
+                )
+            ]
             +
             self._get_failure_reports("remote/cluster_enable")
             +

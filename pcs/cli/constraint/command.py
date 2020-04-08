@@ -1,5 +1,6 @@
-from pcs.cli.constraint import parse_args, console_report
-from pcs.common.tools import indent
+from pcs.cli.constraint import parse_args
+from pcs.common.reports.constraints import constraint_with_sets
+from pcs.common.str_tools import indent
 
 def create_with_set(create_with_set_library_call, argv, modifiers):
     """
@@ -32,7 +33,7 @@ def show_constraints_with_set(constraint_list, show_detail, indent_step=2):
     """
     return ["Resource Sets:"] + indent(
         [
-            console_report.constraint_with_sets(constraint, with_id=show_detail)
+            constraint_with_sets(constraint, with_id=show_detail)
             for constraint in constraint_list
         ],
         indent_step=indent_step

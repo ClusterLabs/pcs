@@ -1,8 +1,11 @@
 from pcs import settings
-from pcs.common import file_type_codes
+from pcs.common import (
+    file_type_codes,
+    reports,
+)
 from pcs.common.file import RawFileError
 from pcs.common.tools import format_environment_error
-from pcs.lib import reports
+from pcs.common.reports.item import ReportItem
 from pcs.lib.communication.nodes import SendPcsdSslCertAndKey
 from pcs.lib.communication.tools import run_and_raise
 from pcs.lib.env import LibraryEnvironment
@@ -28,7 +31,9 @@ def synchronize_ssl_certificate(env: LibraryEnvironment, skip_offline=False):
         env.get_corosync_conf()
     )
     if not cluster_nodes_names:
-        report_list.append(reports.corosync_config_no_nodes_defined())
+        report_list.append(
+            ReportItem.error(reports.messages.CorosyncConfigNoNodesDefined())
+        )
     report_processor.report_list(report_list)
 
     try:
@@ -36,11 +41,13 @@ def synchronize_ssl_certificate(env: LibraryEnvironment, skip_offline=False):
             ssl_cert = file.read()
     except EnvironmentError as e:
         report_processor.report(
-            reports.file_io_error(
-                file_type_codes.PCSD_SSL_CERT,
-                RawFileError.ACTION_READ,
-                format_environment_error(e),
-                file_path=settings.pcsd_cert_location,
+            ReportItem.error(
+                reports.messages.FileIoError(
+                    file_type_codes.PCSD_SSL_CERT,
+                    RawFileError.ACTION_READ,
+                    format_environment_error(e),
+                    file_path=settings.pcsd_cert_location,
+                )
             )
         )
     try:
@@ -48,11 +55,13 @@ def synchronize_ssl_certificate(env: LibraryEnvironment, skip_offline=False):
             ssl_key = file.read()
     except EnvironmentError as e:
         report_processor.report(
-            reports.file_io_error(
-                file_type_codes.PCSD_SSL_KEY,
-                RawFileError.ACTION_READ,
-                format_environment_error(e),
-                file_path=settings.pcsd_key_location,
+            ReportItem.error(
+                reports.messages.FileIoError(
+                    file_type_codes.PCSD_SSL_KEY,
+                    RawFileError.ACTION_READ,
+                    format_environment_error(e),
+                    file_path=settings.pcsd_key_location,
+                )
             )
         )
 
@@ -68,8 +77,10 @@ def synchronize_ssl_certificate(env: LibraryEnvironment, skip_offline=False):
         raise LibraryError()
 
     env.report_processor.report(
-        reports.pcsd_ssl_cert_and_key_distribution_started(
-            [target.label for target in target_list]
+        ReportItem.info(
+            reports.messages.PcsdSslCertAndKeyDistributionStarted(
+                sorted([target.label for target in target_list])
+            )
         )
     )
 

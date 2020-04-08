@@ -5,8 +5,8 @@ from unittest import mock, TestCase
 from pcs_test.tools.command_env import get_env_tools
 from pcs_test.tools.custom_mock import MockLibraryReportProcessor
 
-from pcs.common import report_codes
 from pcs.common.reports import ReportItemSeverity as Severities
+from pcs.common.reports import codes as report_codes
 from pcs.lib.env import LibraryEnvironment
 from pcs.lib.external import CommandRunner
 
@@ -58,7 +58,7 @@ class CreateAlertTest(TestCase):
                 (
                     Severities.ERROR,
                     report_codes.REQUIRED_OPTIONS_ARE_MISSING,
-                    {"option_names": ["path"]},
+                    {"option_names": ["path"], "option_type": None},
                     None
                 ),
             ],
@@ -342,7 +342,7 @@ class AddRecipientTest(TestCase):
                 (
                     Severities.ERROR,
                     report_codes.REQUIRED_OPTIONS_ARE_MISSING,
-                    {"option_names": ["value"]}
+                    {"option_names": ["value"], "option_type": None},
                 )
             ],
         )
@@ -618,13 +618,23 @@ class RemoveRecipientTest(TestCase):
                 (
                     Severities.ERROR,
                     report_codes.ID_NOT_FOUND,
-                    {"id": "recipient"},
+                    {
+                        "id": "recipient",
+                        "expected_types": ["recipient"],
+                        "context_type": "alerts",
+                        "context_id": "",
+                    },
                     None
                 ),
                 (
                     Severities.ERROR,
                     report_codes.ID_NOT_FOUND,
-                    {"id": "alert2-recip1"},
+                    {
+                        "id": "alert2-recip1",
+                        "expected_types": ["recipient"],
+                        "context_type": "alerts",
+                        "context_id": "",
+                    },
                     None
                 )
             ]

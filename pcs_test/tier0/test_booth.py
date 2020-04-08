@@ -114,9 +114,9 @@ class SetupTest(BoothMixin, TestCase):
             "booth setup sites 1.1.1.1 arbitrators 1.1.1.1 2.2.2.2 3.3.3.3",
             (
                 "Error: lack of sites for booth configuration (need 2 at least)"
-                    ": sites 1.1.1.1\n"
+                    ": sites '1.1.1.1'\n"
                 "Error: odd number of peers is required (entered 4 peers)\n"
-                "Error: duplicate address for booth configuration: 1.1.1.1\n"
+                "Error: duplicate address for booth configuration: '1.1.1.1'\n"
                 "Error: Errors have occurred, therefore pcs is unable to "
                     "continue\n"
             )

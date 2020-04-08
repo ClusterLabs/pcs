@@ -31,8 +31,12 @@ from collections import namedtuple
 import ipaddress
 import re
 
-from pcs.common.reports import ReportItemSeverity
-from pcs.lib import reports
+from pcs.common import reports
+from pcs.common.reports import (
+    ReportItem,
+    ReportItemList,
+    ReportItemSeverity,
+)
 from pcs.lib.corosync import constants as corosync_constants
 from pcs.lib.pacemaker.values import (
     timeout_to_seconds,
@@ -137,11 +141,11 @@ class ValidatorFirstError(CompoundValidator):
     def validate(self, option_dict):
         report_list = []
         for validator in self._validator_list:
-            new_report_list = validator.validate(option_dict)
+            new_report_list: ReportItemList = validator.validate(option_dict)
             report_list.extend(new_report_list)
             error_reported = False
             for report_item in new_report_list:
-                if report_item.severity == ReportItemSeverity.ERROR:
+                if report_item.severity.level == ReportItemSeverity.ERROR:
                     error_reported = True
                     break
             if error_reported:
@@ -181,10 +185,12 @@ class CorosyncOption(KeyValidator):
             # otherwise setting a cratfed option name could be misused for
             # setting arbitrary corosync.conf settings.
             return [
-                reports.invalid_userdefined_options(
-                    not_valid_options,
-                    self._option_type,
-                    "a-z A-Z 0-9 /_-"
+                ReportItem.error(
+                    reports.messages.InvalidUserdefinedOptions(
+                        sorted(not_valid_options),
+                        self._option_type,
+                        "a-z A-Z 0-9 /_-",
+                    )
                 )
             ]
         return []
@@ -208,11 +214,13 @@ class DependsOnOption(KeyValidator):
 
     def validate(self, option_dict):
         return [
-            reports.prerequisite_option_is_missing(
-                option_name,
-                self._prerequisite_name,
-                self._option_type,
-                self._prerequisite_type
+            ReportItem.error(
+                reports.messages.PrerequisiteOptionIsMissing(
+                    option_name,
+                    self._prerequisite_name,
+                    self._option_type,
+                    self._prerequisite_type,
+                )
             )
             for option_name in self._option_name_list
             if (
@@ -230,9 +238,11 @@ class IsRequiredAll(KeyValidator):
     def validate(self, option_dict):
         missing = set(self._option_name_list) - set(option_dict.keys())
         if missing:
-            return [reports.required_options_are_missing(
-                missing,
-                self._option_type,
+            return [ReportItem.error(
+                reports.messages.RequiredOptionsAreMissing(
+                    sorted(missing),
+                    self._option_type,
+                )
             )]
         return []
 
@@ -244,10 +254,14 @@ class IsRequiredSome(KeyValidator):
     def validate(self, option_dict):
         found = set(self._option_name_list) & set(option_dict.keys())
         if not found:
-            return [reports.required_option_of_alternatives_is_missing(
-                self._option_name_list,
-                self._option_type,
-            )]
+            return [
+                ReportItem.error(
+                    reports.messages.RequiredOptionOfAlternativesIsMissing(
+                        self._option_name_list,
+                        self._option_type,
+                    )
+                )
+            ]
         return []
 
 class MutuallyExclusive(KeyValidator):
@@ -258,10 +272,14 @@ class MutuallyExclusive(KeyValidator):
     def validate(self, option_dict):
         found = set(self._option_name_list) & set(option_dict.keys())
         if len(found) > 1:
-            return [reports.mutually_exclusive_options(
-                found,
-                self._option_type,
-            )]
+            return [
+                ReportItem.error(
+                    reports.messages.MutuallyExclusiveOptions(
+                        sorted(found),
+                        self._option_type,
+                    )
+                )
+            ]
         return []
 
 class NamesIn(KeyValidator):
@@ -293,25 +311,31 @@ class NamesIn(KeyValidator):
         invalid_names = name_set - set(self._option_name_list) - banned_names
 
         report_list = []
-
-        create_report = reports.get_problem_creator(
-            self._code_for_warning,
-            self._produce_warning
-        )
         if invalid_names:
-            report_list.append(create_report(
-                reports.invalid_options,
-                invalid_names,
-                self._option_name_list,
-                self._option_type,
-                allowed_option_patterns=self._allowed_option_patterns,
-            ))
+            report_list.append(
+                ReportItem(
+                    severity=reports.item.get_severity(
+                        self._code_for_warning,
+                        self._produce_warning,
+                    ),
+                    message=reports.messages.InvalidOptions(
+                        sorted(invalid_names),
+                        sorted(self._option_name_list),
+                        self._option_type,
+                        allowed_patterns=sorted(self._allowed_option_patterns),
+                    )
+                )
+            )
         if banned_names:
-            report_list.append(reports.invalid_options(
-                banned_names,
-                self._option_name_list,
-                self._option_type,
-            ))
+            report_list.append(
+                ReportItem.error(
+                    reports.messages.InvalidOptions(
+                        sorted(banned_names),
+                        sorted(self._option_name_list),
+                        self._option_type,
+                    )
+                )
+            )
         return report_list
 
 ### values validators
@@ -367,18 +391,21 @@ class ValuePredicateBase(ValueValidator):
 
     def _validate_value(self, value):
         if not self._is_valid(value.normalized):
-            create_report = reports.get_problem_creator(
-                self._code_for_warning,
-                self._produce_warning
-            )
-            return [create_report(
-                reports.invalid_option_value,
-                self._get_option_name_for_report(),
-                value.original,
-                self._get_allowed_values(),
-                cannot_be_empty=self._value_cannot_be_empty,
-                forbidden_characters=self._forbidden_characters,
-            )]
+            return [
+                ReportItem(
+                    severity=reports.item.get_severity(
+                        self._code_for_warning,
+                        self._produce_warning,
+                    ),
+                    message=reports.messages.InvalidOptionValue(
+                        self._get_option_name_for_report(),
+                        value.original,
+                        self._get_allowed_values(),
+                        cannot_be_empty=self._value_cannot_be_empty,
+                        forbidden_characters=self._forbidden_characters,
+                    )
+                )
+            ]
 
         return []
 
@@ -408,16 +435,19 @@ class ValueCorosyncValue(ValueValidator):
             # otherwise setting a cratfed option value could be misused for
             # setting arbitrary corosync.conf settings.
             return [
-                reports.invalid_option_value(
-                    self._get_option_name_for_report(),
-                    value.original,
-                    None,
-                    # Make it actually print "\n" and "\r" strings instead of
-                    # going to the next line.
-                    # Let the user know all forbidden characters right away. Do
-                    # not let them try them one by one by only reporting those
-                    # actually used in the value.
-                    forbidden_characters="{}\\n\\r"
+                ReportItem.error(
+                    reports.messages.InvalidOptionValue(
+                        self._get_option_name_for_report(),
+                        value.original,
+                        None,
+                        # Make it actually print "\n" and "\r" strings instead
+                        # of going to the next line.
+                        # Let the user know all
+                        # forbidden characters right away. Do not let them try
+                        # them one by one by only reporting those actually used
+                        # in the value.
+                        forbidden_characters="{}\\n\\r"
+                    )
                 )
             ]
         return []

@@ -3,7 +3,8 @@ from typing import (
 )
 
 from pcs import settings
-from pcs.lib import reports
+from pcs.common import reports
+from pcs.common.reports.item import ReportItem
 from pcs.lib.corosync import config_parser, constants, node
 from pcs.lib.errors import LibraryError
 
@@ -22,35 +23,48 @@ class ConfigFacade:
             return cls(config_parser.parse_string(config_string))
         except config_parser.MissingClosingBraceException:
             raise LibraryError(
-                reports.corosync_config_parser_missing_closing_brace()
+                ReportItem.error(
+                    reports.messages.ParseErrorCorosyncConfMissingClosingBrace()
+                )
             )
         except config_parser.UnexpectedClosingBraceException:
+            # pylint: disable=line-too-long
             raise LibraryError(
-                reports.corosync_config_parser_unexpected_closing_brace()
+                ReportItem.error(
+                    reports.messages.ParseErrorCorosyncConfUnexpectedClosingBrace()
+                )
             )
         except config_parser.MissingSectionNameBeforeOpeningBraceException:
             # pylint: disable=line-too-long
             raise LibraryError(
-                reports.corosync_config_parser_missing_section_name_before_opening_brace()
+                ReportItem.error(
+                    reports.messages.ParseErrorCorosyncConfMissingSectionNameBeforeOpeningBrace()
+                )
             )
         except config_parser.ExtraCharactersAfterOpeningBraceException:
             # pylint: disable=line-too-long
             raise LibraryError(
-                reports.corosync_config_parser_extra_characters_after_opening_brace()
+                ReportItem.error(
+                    reports.messages.ParseErrorCorosyncConfExtraCharactersAfterOpeningBrace()
+                )
             )
         except config_parser.ExtraCharactersBeforeOrAfterClosingBraceException:
             # pylint: disable=line-too-long
             raise LibraryError(
-                reports.corosync_config_parser_extra_characters_before_or_after_closing_brace()
+                ReportItem.error(
+                    reports.messages.ParseErrorCorosyncConfExtraCharactersBeforeOrAfterClosingBrace()
+                )
             )
         except config_parser.LineIsNotSectionNorKeyValueException:
             # pylint: disable=line-too-long
             raise LibraryError(
-                reports.corosync_config_parser_line_is_not_section_nor_key_value()
+                ReportItem.error(
+                    reports.messages.ParseErrorCorosyncConfLineIsNotSectionNorKeyValue()
+                )
             )
         except config_parser.CorosyncConfParserException:
             raise LibraryError(
-                reports.corosync_config_parser_other_error()
+                ReportItem.error(reports.messages.ParseErrorCorosyncConf())
             )
 
     @classmethod
@@ -602,7 +616,9 @@ class ConfigFacade:
         dict heuristics_options -- heuristics options
         """
         if self.has_quorum_device():
-            raise LibraryError(reports.qdevice_already_defined())
+            raise LibraryError(
+                ReportItem.error(reports.messages.QdeviceAlreadyDefined())
+            )
 
         # configuration cleanup
         remove_need_stopped_cluster = {
@@ -661,7 +677,9 @@ class ConfigFacade:
         dict heuristics_options -- heuristics options
         """
         if not self.has_quorum_device():
-            raise LibraryError(reports.qdevice_not_defined())
+            raise LibraryError(
+                ReportItem.error(reports.messages.QdeviceNotDefined())
+            )
         model = self.get_quorum_device_model()
 
         # set new configuration
@@ -699,7 +717,9 @@ class ConfigFacade:
         Remove quorum device heuristics configuration
         """
         if not self.has_quorum_device():
-            raise LibraryError(reports.qdevice_not_defined())
+            raise LibraryError(
+                ReportItem.error(reports.messages.QdeviceNotDefined())
+            )
         for quorum in self.config.get_sections("quorum"):
             for device in quorum.get_sections("device"):
                 for heuristics in device.get_sections("heuristics"):
@@ -712,7 +732,9 @@ class ConfigFacade:
         Remove all quorum device configuration
         """
         if not self.has_quorum_device():
-            raise LibraryError(reports.qdevice_not_defined())
+            raise LibraryError(
+                ReportItem.error(reports.messages.QdeviceNotDefined())
+            )
         for quorum in self.config.get_sections("quorum"):
             for device in quorum.get_sections("device"):
                 quorum.del_section(device)

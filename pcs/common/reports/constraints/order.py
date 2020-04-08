@@ -1,4 +1,8 @@
-from pcs.lib.pacemaker.values import is_true
+# Reiplementing function pcs.lib.pacemaker.values.is_true to avaoid cyslic
+# imports. This is a temporary solution.
+def _is_true(val) -> bool:
+    return val.lower() in {"true", "on", "yes", "y", "1"}
+
 
 def constraint_plain(constraint_info, with_id=False):
     """
@@ -19,7 +23,7 @@ def constraint_plain(constraint_info, with_id=False):
     if (
         "symmetrical" in options
         and
-        not is_true(options.get("symmetrical", "false"))
+        not _is_true(options.get("symmetrical", "false"))
     ):
         oc_sym = "(non-symmetrical)"
     if oc_kind != "":

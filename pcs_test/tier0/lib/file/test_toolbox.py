@@ -1,7 +1,7 @@
 from textwrap import dedent
 from unittest import TestCase
 
-from pcs.common import report_codes
+from pcs.common.reports import codes as report_codes
 from pcs.lib.file import toolbox
 from pcs.lib.interface.config import ParserErrorException
 from pcs_test.tools import fixture

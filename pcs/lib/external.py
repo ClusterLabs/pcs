@@ -7,10 +7,11 @@ from typing import (
 )
 
 from pcs import settings
+from pcs.common import reports
 from pcs.common.reports import ReportProcessor
+from pcs.common.reports.item import ReportItem
 from pcs.common.system import is_systemd as is_systemctl
-from pcs.common.tools import join_multilines
-from pcs.lib import reports
+from pcs.common.str_tools import join_multilines
 from pcs.lib.errors import LibraryError
 
 
@@ -86,8 +87,12 @@ class CommandRunner:
             )
         )
         self._reporter.report(
-            reports.run_external_process_started(
-                log_args, stdin_string, env_vars
+            ReportItem.debug(
+                reports.messages.RunExternalProcessStarted(
+                    log_args,
+                    stdin_string,
+                    env_vars,
+                )
             )
         )
 
@@ -117,7 +122,12 @@ class CommandRunner:
             retval = process.returncode
         except OSError as e:
             raise LibraryError(
-                reports.run_external_process_error(log_args, e.strerror)
+                ReportItem.error(
+                    reports.messages.RunExternalProcessError(
+                        log_args,
+                        e.strerror,
+                    )
+                )
             )
 
         self._logger.debug(
@@ -132,9 +142,16 @@ class CommandRunner:
                 out_err=out_err
             )
         )
-        self._reporter.report(reports.run_external_process_finished(
-            log_args, retval, out_std, out_err
-        ))
+        self._reporter.report(
+            ReportItem.debug(
+                reports.messages.RunExternalProcessFinished(
+                    log_args,
+                    retval,
+                    out_std,
+                    out_err,
+                )
+            )
+        )
         return out_std, out_err, retval
 
 
@@ -150,7 +167,9 @@ def ensure_is_systemd():
     """
     if not is_systemctl():
         raise LibraryError(
-            reports.unsupported_operation_on_non_systemd_systems()
+            ReportItem.error(
+                reports.messages.UnsupportedOperationOnNonSystemdSystems()
+            )
         )
 
 

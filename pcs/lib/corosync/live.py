@@ -2,7 +2,8 @@ import os.path
 import re
 
 from pcs import settings
-from pcs.lib import reports
+from pcs.common import reports
+from pcs.common.reports.item import ReportItem
 from pcs.lib.errors import LibraryError
 
 def get_local_corosync_conf():
@@ -14,7 +15,11 @@ def get_local_corosync_conf():
         with open(path, "r", encoding="utf-8") as a_file:
             return a_file.read()
     except EnvironmentError as e:
-        raise LibraryError(reports.corosync_config_read_error(path, e.strerror))
+        raise LibraryError(
+            ReportItem.error(
+                reports.messages.UnableToReadCorosyncConfig(path, e.strerror)
+            )
+        )
 
 def get_quorum_status_text(runner):
     """
@@ -41,7 +46,9 @@ def set_expected_votes(runner, votes):
     ])
     if retval != 0:
         raise LibraryError(
-            reports.corosync_quorum_set_expected_votes_error(stderr)
+            ReportItem.error(
+                reports.messages.CorosyncQuorumSetExpectedVotesError(stderr)
+            )
         )
     return stdout
 

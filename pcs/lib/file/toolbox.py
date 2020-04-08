@@ -6,9 +6,11 @@ from typing import (
 )
 import json
 
-from pcs.common import file_type_codes as code
-from pcs.common.reports import ReportItemList
-from pcs.lib import reports
+from pcs.common import (
+    file_type_codes as code,
+    reports,
+)
+from pcs.common.reports.item import ReportItem
 from pcs.lib.booth.config_facade import ConfigFacade as BoothConfigFacade
 from pcs.lib.booth.config_parser import (
     Exporter as BoothConfigExporter,
@@ -60,24 +62,25 @@ class JsonParser(ParserInterface):
         exception: JsonParserException,
         file_type_code: code.FileTypeCode,
         file_path: str,
-        force_code: str, # TODO: fix
+        force_code: reports.types.ForceCode,
         is_forced_or_warning: bool
-    ) -> ReportItemList:
-        report_creator = reports.get_problem_creator(
-            force_code=force_code, is_forced=is_forced_or_warning
-        )
+    ) -> reports.ReportItemList:
         if isinstance(exception, JsonParserException):
             if isinstance(exception.json_exception, json.JSONDecodeError):
                 return [
-                    report_creator(
-                        reports.parse_error_json_file,
-                        file_type_code,
-                        exception.json_exception.lineno,
-                        exception.json_exception.colno,
-                        exception.json_exception.pos,
-                        exception.json_exception.msg,
-                        str(exception.json_exception),
-                        file_path=file_path,
+                    ReportItem(
+                        severity=reports.item.get_severity(
+                            force_code, is_forced_or_warning,
+                        ),
+                        message=reports.messages.ParseErrorJsonFile(
+                            file_type_code,
+                            exception.json_exception.lineno,
+                            exception.json_exception.colno,
+                            exception.json_exception.pos,
+                            exception.json_exception.msg,
+                            str(exception.json_exception),
+                            file_path=file_path,
+                        ),
                     )
                 ]
         raise exception
@@ -103,9 +106,9 @@ class NoopParser(ParserInterface):
         exception: ParserErrorException,
         file_type_code: code.FileTypeCode,
         file_path: str,
-        force_code: str, # TODO: fix
+        force_code: reports.types.ForceCode,
         is_forced_or_warning: bool
-    ) -> ReportItemList:
+    ) -> reports.ReportItemList:
         return []
 
 class NoopExporter(ExporterInterface):

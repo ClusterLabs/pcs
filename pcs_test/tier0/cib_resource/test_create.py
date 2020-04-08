@@ -937,7 +937,7 @@ class FailOrWarn(ResourceTest):
         self.assert_pcs_fail(
             "resource create R Dummy",
             "Error: Multiple agents match 'Dummy', please specify full name:"
-                " ocf:heartbeat:Dummy, ocf:pacemaker:Dummy\n"
+                " 'ocf:heartbeat:Dummy', 'ocf:pacemaker:Dummy'\n"
         )
 
     def test_for_options_not_matching_resource_agent(self):

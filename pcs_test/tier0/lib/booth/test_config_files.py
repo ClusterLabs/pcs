@@ -5,8 +5,9 @@ from pcs_test.tools import fixture
 from pcs_test.tools.assertions import assert_report_item_list_equal
 
 from pcs import settings
-from pcs.common import file_type_codes, report_codes
+from pcs.common import file_type_codes
 from pcs.common.file import RawFileError
+from pcs.common.reports import codes as report_codes
 from pcs.lib.booth import config_files
 from pcs.lib.booth.config_facade import ConfigFacade
 

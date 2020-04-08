@@ -3,7 +3,8 @@ import re
 from textwrap import dedent
 from unittest import mock, TestCase
 
-from pcs.common import report_codes
+from pcs.common import reports
+from pcs.common.reports import codes as report_codes
 from pcs.lib.corosync.config_facade import ConfigFacade as CorosyncConfigFacade
 from pcs.lib.corosync.config_parser import Section as CorosyncSection
 
@@ -540,6 +541,8 @@ class PushCorosyncConfLiveNoQdeviceTest(PushCorosyncConfLiveBase):
                 report_codes.NODE_COMMUNICATION_ERROR_NOT_AUTHORIZED,
                 force_code=report_codes.SKIP_OFFLINE_NODES,
                 node="node-2",
+                command="remote/status",
+                reason="HTTP error: 401",
             ),
             fixture.error(
                 report_codes.COROSYNC_NOT_RUNNING_CHECK_NODE_ERROR,
@@ -688,28 +691,32 @@ class PushCorosyncConfLiveWithQdeviceTest(PushCorosyncConfLiveBase):
             ),
             fixture.info(report_codes.QDEVICE_CLIENT_RELOAD_STARTED),
             fixture.info(
-                report_codes.SERVICE_STOP_SUCCESS,
+                reports.codes.SERVICE_ACTION_SUCCEEDED,
+                action=reports.const.SERVICE_ACTION_STOP,
+                service="corosync-qdevice",
                 node="node-1",
-                service="corosync-qdevice",
-                instance=None,
+                instance="",
             ),
             fixture.info(
-                report_codes.SERVICE_STOP_SUCCESS,
+                reports.codes.SERVICE_ACTION_SUCCEEDED,
+                action=reports.const.SERVICE_ACTION_STOP,
+                service="corosync-qdevice",
                 node="node-2",
-                service="corosync-qdevice",
-                instance=None,
+                instance="",
             ),
             fixture.info(
-                report_codes.SERVICE_START_SUCCESS,
+                reports.codes.SERVICE_ACTION_SUCCEEDED,
+                action=reports.const.SERVICE_ACTION_START,
+                service="corosync-qdevice",
                 node="node-1",
-                service="corosync-qdevice",
-                instance=None,
+                instance="",
             ),
             fixture.info(
-                report_codes.SERVICE_START_SUCCESS,
-                node="node-2",
+                reports.codes.SERVICE_ACTION_SUCCEEDED,
+                action=reports.const.SERVICE_ACTION_START,
                 service="corosync-qdevice",
-                instance=None,
+                node="node-2",
+                instance="",
             ),
         ])
 
@@ -771,30 +778,34 @@ class PushCorosyncConfLiveWithQdeviceTest(PushCorosyncConfLiveBase):
             ),
             fixture.info(report_codes.QDEVICE_CLIENT_RELOAD_STARTED),
             fixture.info(
-                report_codes.SERVICE_STOP_SUCCESS,
+                reports.codes.SERVICE_ACTION_SUCCEEDED,
+                action=reports.const.SERVICE_ACTION_STOP,
+                service="corosync-qdevice",
                 node="node-1",
-                service="corosync-qdevice",
-                instance=None,
+                instance="",
             ),
             fixture.info(
-                report_codes.SERVICE_STOP_SUCCESS,
+                reports.codes.SERVICE_ACTION_SUCCEEDED,
+                action=reports.const.SERVICE_ACTION_STOP,
+                service="corosync-qdevice",
                 node="node-2",
-                service="corosync-qdevice",
-                instance=None,
+                instance="",
             ),
             fixture.info(
-                report_codes.SERVICE_START_SKIPPED,
+                reports.codes.SERVICE_ACTION_SKIPPED,
+                action=reports.const.SERVICE_ACTION_START,
+                service="corosync-qdevice",
+                reason="corosync is not running",
                 node="node-1",
-                service="corosync-qdevice",
-                instance=None,
-                reason="corosync is not running",
+                instance="",
             ),
             fixture.info(
-                report_codes.SERVICE_START_SKIPPED,
-                node="node-2",
+                reports.codes.SERVICE_ACTION_SKIPPED,
+                action=reports.const.SERVICE_ACTION_START,
                 service="corosync-qdevice",
-                instance=None,
                 reason="corosync is not running",
+                node="node-2",
+                instance="",
             ),
         ])
 
@@ -859,10 +870,11 @@ class PushCorosyncConfLiveWithQdeviceTest(PushCorosyncConfLiveBase):
             ),
             fixture.info(report_codes.QDEVICE_CLIENT_RELOAD_STARTED),
             fixture.info(
-                report_codes.SERVICE_STOP_SUCCESS,
-                node="node-1",
+                reports.codes.SERVICE_ACTION_SUCCEEDED,
+                action=reports.const.SERVICE_ACTION_STOP,
                 service="corosync-qdevice",
-                instance=None,
+                node="node-1",
+                instance="",
             ),
             fixture.error(
                 report_codes.NODE_COMMUNICATION_COMMAND_UNSUCCESSFUL,
@@ -879,10 +891,11 @@ class PushCorosyncConfLiveWithQdeviceTest(PushCorosyncConfLiveBase):
                 command="remote/qdevice_client_start",
             ),
             fixture.info(
-                report_codes.SERVICE_START_SUCCESS,
-                node="node-2",
+                reports.codes.SERVICE_ACTION_SUCCEEDED,
+                action=reports.const.SERVICE_ACTION_START,
                 service="corosync-qdevice",
-                instance=None,
+                node="node-2",
+                instance="",
             ),
         ])
 
@@ -979,10 +992,11 @@ class PushCorosyncConfLiveWithQdeviceTest(PushCorosyncConfLiveBase):
             ),
             fixture.info(report_codes.QDEVICE_CLIENT_RELOAD_STARTED),
             fixture.info(
-                report_codes.SERVICE_STOP_SUCCESS,
-                node="node-1",
+                reports.codes.SERVICE_ACTION_SUCCEEDED,
+                action=reports.const.SERVICE_ACTION_STOP,
                 service="corosync-qdevice",
-                instance=None,
+                node="node-1",
+                instance="",
             ),
             fixture.warn(
                 report_codes.NODE_COMMUNICATION_COMMAND_UNSUCCESSFUL,
@@ -997,10 +1011,11 @@ class PushCorosyncConfLiveWithQdeviceTest(PushCorosyncConfLiveBase):
                 command="remote/qdevice_client_start",
             ),
             fixture.info(
-                report_codes.SERVICE_START_SUCCESS,
-                node="node-2",
+                reports.codes.SERVICE_ACTION_SUCCEEDED,
+                action=reports.const.SERVICE_ACTION_START,
                 service="corosync-qdevice",
-                instance=None,
+                node="node-2",
+                instance="",
             ),
         ])
 

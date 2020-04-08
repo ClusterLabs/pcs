@@ -1,6 +1,7 @@
 from lxml import etree
 
-from pcs.lib import reports
+from pcs.common import reports
+from pcs.common.reports.item import ReportItem
 from pcs.lib.cib.tools import find_unique_id
 from pcs.lib.errors import LibraryError
 from pcs.lib.pacemaker.values import RESOURCE_ROLES
@@ -27,11 +28,19 @@ def validate_options(options):
     for name, value in options.items():
         if name not in ATTRIB:
             raise LibraryError(
-                reports.invalid_options([name], list(ATTRIB.keys()), None)
+                ReportItem.error(
+                    reports.messages.InvalidOptions(
+                        [name], sorted(ATTRIB.keys()), None
+                    )
+                )
             )
         if value not in ATTRIB[name]:
             raise LibraryError(
-                reports.invalid_option_value(name, value, ATTRIB[name])
+                ReportItem.error(
+                    reports.messages.InvalidOptionValue(
+                        name, value, ATTRIB[name]
+                    )
+                )
             )
 
 def extract_id_set_list(resource_set_list):

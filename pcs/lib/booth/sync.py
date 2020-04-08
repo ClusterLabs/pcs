@@ -1,11 +1,10 @@
 import base64
 
-from pcs.common import report_codes
+from pcs.common import reports
 from pcs.common.file import RawFileError
-from pcs.lib.booth import (
-    config_files,
-    reports as booth_reports,
-)
+from pcs.common.reports import codes as report_codes
+from pcs.common.reports.item import ReportItem
+from pcs.lib.booth import config_files
 from pcs.lib.communication.booth import BoothSaveFiles
 from pcs.lib.communication.tools import run
 from pcs.lib.errors import LibraryError
@@ -78,7 +77,9 @@ def send_all_config_to_node(
         # no booth configs exist, nothing to be synced
         return
 
-    reporter.report(booth_reports.booth_config_distribution_started())
+    reporter.report(
+        ReportItem.info(reports.messages.BoothConfigDistributionStarted())
+    )
     com_cmd = BoothSaveFiles(
         reporter, file_list, rewrite_existing=rewrite_existing
     )

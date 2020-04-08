@@ -4,7 +4,7 @@ from unittest import TestCase
 from pcs_test.tools import fixture
 from pcs_test.tools.command_env import get_env_tools
 
-from pcs.common import report_codes
+from pcs.common.reports import codes as report_codes
 from pcs.lib.commands import cluster
 
 class RemoveLinks(TestCase):
@@ -133,7 +133,7 @@ class RemoveLinks(TestCase):
                 ),
                 fixture.error(
                     report_codes.COROSYNC_LINK_DOES_NOT_EXIST_CANNOT_REMOVE,
-                    link_list=["abc", "3"],
+                    link_list=sorted(["abc", "3"]),
                     existing_link_list=["0"],
                 )
             ]

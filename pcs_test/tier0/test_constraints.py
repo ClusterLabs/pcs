@@ -2108,16 +2108,19 @@ Ticket Constraints:
         self.assertEqual(0, returnVal)
 
         output, returnVal = pcs(temp_cib, "constraint order set D1 D2")
-        ac(output, """\
-Error: duplicate constraint already exists, use --force to override
-  set D1 D2 (id:pcs_rsc_set_D1_D2) (id:pcs_rsc_order_set_D1_D2)
-""" + ERRORS_HAVE_OCURRED)
+        ac(output, console_report(
+            "Error: duplicate constraint already exists, use --force to "
+            "override",
+            ERRORS_HAVE_OCURRED + "Duplicate constraints:",
+            "  set D1 D2 (id:pcs_rsc_set_D1_D2) (id:pcs_rsc_order_set_D1_D2)",
+        ))
         self.assertEqual(1, returnVal)
 
         output, returnVal = pcs(temp_cib, "constraint order set D1 D2 --force")
         ac(output, console_report(
-            "Warning: duplicate constraint already exists",
+            "Duplicate constraints:",
             "  set D1 D2 (id:pcs_rsc_set_D1_D2) (id:pcs_rsc_order_set_D1_D2)",
+            "Warning: duplicate constraint already exists",
         ))
         self.assertEqual(0, returnVal)
 
@@ -2126,16 +2129,19 @@ Error: duplicate constraint already exists, use --force to override
         self.assertEqual(0, returnVal)
 
         output, returnVal = pcs(temp_cib, "constraint order set D1 D2 set D5 D6")
-        ac(output, """\
-Error: duplicate constraint already exists, use --force to override
-  set D1 D2 (id:pcs_rsc_set_D1_D2-2) set D5 D6 (id:pcs_rsc_set_D5_D6) (id:pcs_rsc_order_set_D1_D2_set_D5_D6)
-""" + ERRORS_HAVE_OCURRED)
+        ac(output, console_report(
+            "Error: duplicate constraint already exists, use --force to "
+            "override",
+            ERRORS_HAVE_OCURRED + "Duplicate constraints:",
+            "  set D1 D2 (id:pcs_rsc_set_D1_D2-2) set D5 D6 (id:pcs_rsc_set_D5_D6) (id:pcs_rsc_order_set_D1_D2_set_D5_D6)",
+        ))
         self.assertEqual(1, returnVal)
 
         output, returnVal = pcs(temp_cib, "constraint order set D1 D2 set D5 D6 --force")
         ac(output, console_report(
-            "Warning: duplicate constraint already exists",
+            "Duplicate constraints:",
             "  set D1 D2 (id:pcs_rsc_set_D1_D2-2) set D5 D6 (id:pcs_rsc_set_D5_D6) (id:pcs_rsc_order_set_D1_D2_set_D5_D6)",
+            "Warning: duplicate constraint already exists",
         ))
         self.assertEqual(0, returnVal)
 
@@ -2145,16 +2151,19 @@ Error: duplicate constraint already exists, use --force to override
         self.assertEqual(0, returnVal)
 
         output, returnVal = pcs(temp_cib, "constraint colocation set D1 D2")
-        ac(output, """\
-Error: duplicate constraint already exists, use --force to override
-  set D1 D2 (id:pcs_rsc_set_D1_D2-4) setoptions score=INFINITY (id:pcs_rsc_colocation_set_D1_D2)
-""" + ERRORS_HAVE_OCURRED)
+        ac(output, console_report(
+            "Error: duplicate constraint already exists, use --force to "
+            "override",
+            ERRORS_HAVE_OCURRED + "Duplicate constraints:",
+            "  set D1 D2 (id:pcs_rsc_set_D1_D2-4) setoptions score=INFINITY (id:pcs_rsc_colocation_set_D1_D2)",
+        ))
         self.assertEqual(1, returnVal)
 
         output, returnVal = pcs(temp_cib, "constraint colocation set D1 D2 --force")
         ac(output, console_report(
+            "Duplicate constraints:",
+            "  set D1 D2 (id:pcs_rsc_set_D1_D2-4) setoptions score=INFINITY (id:pcs_rsc_colocation_set_D1_D2)",
             "Warning: duplicate constraint already exists",
-            "  set D1 D2 (id:pcs_rsc_set_D1_D2-4) setoptions score=INFINITY (id:pcs_rsc_colocation_set_D1_D2)"
         ))
         self.assertEqual(0, returnVal)
 
@@ -2163,18 +2172,21 @@ Error: duplicate constraint already exists, use --force to override
         self.assertEqual(0, returnVal)
 
         output, returnVal = pcs(temp_cib, "constraint colocation set D1 D2 set D5 D6")
-        ac(output, """\
-Error: duplicate constraint already exists, use --force to override
-  set D1 D2 (id:pcs_rsc_set_D1_D2-6) set D5 D6 (id:pcs_rsc_set_D5_D6-2) setoptions score=INFINITY (id:pcs_rsc_colocation_set_D1_D2_set_D5_D6)
-""" + ERRORS_HAVE_OCURRED)
+        ac(output, console_report(
+            "Error: duplicate constraint already exists, use --force to "
+            "override",
+            ERRORS_HAVE_OCURRED + "Duplicate constraints:",
+            "  set D1 D2 (id:pcs_rsc_set_D1_D2-6) set D5 D6 (id:pcs_rsc_set_D5_D6-2) setoptions score=INFINITY (id:pcs_rsc_colocation_set_D1_D2_set_D5_D6)",
+        ))
         self.assertEqual(1, returnVal)
 
         output, returnVal = pcs(temp_cib,
             "constraint colocation set D1 D2 set D5 D6 --force"
         )
         ac(output, console_report(
+            "Duplicate constraints:",
+            "  set D1 D2 (id:pcs_rsc_set_D1_D2-6) set D5 D6 (id:pcs_rsc_set_D5_D6-2) setoptions score=INFINITY (id:pcs_rsc_colocation_set_D1_D2_set_D5_D6)",
             "Warning: duplicate constraint already exists",
-            "  set D1 D2 (id:pcs_rsc_set_D1_D2-6) set D5 D6 (id:pcs_rsc_set_D5_D6-2) setoptions score=INFINITY (id:pcs_rsc_colocation_set_D1_D2_set_D5_D6)"
         ))
         self.assertEqual(0, returnVal)
 
@@ -2573,8 +2585,9 @@ class TicketAdd(ConstraintBaseTest):
             (
                 "Error: duplicate constraint already exists, use --force to "
                     "override\n"
+                + ERRORS_HAVE_OCURRED +
+                "Duplicate constraints:\n"
                 "  Master A loss-policy=fence ticket=T (id:ticket-T-A-Master)\n"
-                + ERRORS_HAVE_OCURRED
             )
         )
 
@@ -2584,8 +2597,9 @@ class TicketAdd(ConstraintBaseTest):
         )
         self.assert_pcs_success(
             'constraint ticket add T master A loss-policy=fence --force', [
+                "Duplicate constraints:",
+                "  Master A loss-policy=fence ticket=T (id:ticket-T-A-Master)",
                 "Warning: duplicate constraint already exists",
-                "  Master A loss-policy=fence ticket=T (id:ticket-T-A-Master)"
             ]
         )
         self.assert_pcs_success('constraint ticket show', stdout_full=[
@@ -2611,8 +2625,9 @@ class TicketDeleteRemoveTest(ConstraintBaseTest):
         self.assert_pcs_success(
             'constraint ticket add T A --force',
             stdout_full=[
+                "Duplicate constraints:",
+                "  A ticket=T (id:ticket-T-A)",
                 "Warning: duplicate constraint already exists",
-                "  A ticket=T (id:ticket-T-A)"
             ]
         )
         self.assert_pcs_success(

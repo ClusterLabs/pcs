@@ -1,5 +1,6 @@
+from pcs.common import reports
 from pcs.common.node_communicator import RequestData
-from pcs.lib import reports
+from pcs.common.reports.item import ReportItem
 from pcs.lib.communication.tools import (
     AllAtOnceStrategyMixin,
     AllSameDataMixin,
@@ -24,7 +25,13 @@ class Stop(SimpleResponseProcessingMixin, QdeviceBase):
         return RequestData("remote/qdevice_client_stop")
 
     def _get_success_report(self, node_label):
-        return reports.service_stop_success("corosync-qdevice", node_label)
+        return ReportItem.info(
+            reports.messages.ServiceActionSucceeded(
+                reports.const.SERVICE_ACTION_STOP,
+                "corosync-qdevice",
+                node_label,
+            )
+        )
 
 
 class Start(QdeviceBase):
@@ -36,14 +43,21 @@ class Start(QdeviceBase):
         node_label = response.request.target.label
         if report is None:
             if response.data == "corosync is not running, skipping":
-                report = reports.service_start_skipped(
-                    "corosync-qdevice",
-                    "corosync is not running",
-                    node_label
+                report = ReportItem.info(
+                    reports.messages.ServiceActionSkipped(
+                        reports.const.SERVICE_ACTION_START,
+                        "corosync-qdevice",
+                        "corosync is not running",
+                        node_label,
+                    )
                 )
             else:
-                report = reports.service_start_success(
-                    "corosync-qdevice", node_label
+                report = ReportItem.info(
+                    reports.messages.ServiceActionSucceeded(
+                        reports.const.SERVICE_ACTION_START,
+                        "corosync-qdevice",
+                        node_label,
+                    )
                 )
         self._report(report)
 
@@ -57,14 +71,21 @@ class Enable(QdeviceBase):
         node_label = response.request.target.label
         if report is None:
             if response.data == "corosync is not enabled, skipping":
-                report = reports.service_enable_skipped(
-                    "corosync-qdevice",
-                    "corosync is not enabled",
-                    node_label
+                report = ReportItem.info(
+                    reports.messages.ServiceActionSkipped(
+                        reports.const.SERVICE_ACTION_ENABLE,
+                        "corosync-qdevice",
+                        "corosync is not enabled",
+                        node_label,
+                    )
                 )
             else:
-                report = reports.service_enable_success(
-                    "corosync-qdevice", node_label
+                report = ReportItem.info(
+                    reports.messages.ServiceActionSucceeded(
+                        reports.const.SERVICE_ACTION_ENABLE,
+                        "corosync-qdevice",
+                        node_label,
+                    )
                 )
         self._report(report)
 
@@ -74,4 +95,10 @@ class Disable(SimpleResponseProcessingMixin, QdeviceBase):
         return RequestData("remote/qdevice_client_disable")
 
     def _get_success_report(self, node_label):
-        return reports.service_disable_success("corosync-qdevice", node_label)
+        return ReportItem.info(
+            reports.messages.ServiceActionSucceeded(
+                reports.const.SERVICE_ACTION_DISABLE,
+                "corosync-qdevice",
+                node_label,
+            )
+        )

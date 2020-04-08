@@ -7,9 +7,9 @@ from pcs_test.tools.assertions import assert_raise_library_error
 from pcs_test.tools.misc import get_test_resource
 
 from pcs import settings
-from pcs.common import report_codes
+from pcs.common import reports
 from pcs.common.reports import ReportItemSeverity as severity
-from pcs.lib import reports
+from pcs.common.reports import codes as report_codes
 from pcs.lib.errors import LibraryError
 from pcs.lib.external import CommandRunner
 
@@ -280,15 +280,19 @@ class QdeviceSignCertificateRequestTest(CertificateTestCase):
 
         mock_tmp_store.assert_called_once_with(
             "certificate request",
-            reports.qdevice_certificate_sign_error
+            reports.messages.QdeviceCertificateSignError,
         )
         self.mock_runner.run.assert_called_once_with([
             _qnetd_cert_tool,
             "-s", "-c", self.mock_tmpfile.name, "-n", "clusterName"
         ])
-        mock_get_cert.assert_called_once_with(
+        self.assertEqual(
             "tool output",
-            reports.qdevice_certificate_sign_error
+            mock_get_cert.call_args[0][0]
+        )
+        self.assertEqual(
+            reports.messages.QdeviceCertificateSignError("tool output"),
+            mock_get_cert.call_args[0][1]("tool output"),
         )
 
     @mock.patch(
@@ -358,7 +362,7 @@ class QdeviceSignCertificateRequestTest(CertificateTestCase):
 
         mock_tmp_store.assert_called_once_with(
             "certificate request",
-            reports.qdevice_certificate_sign_error
+            reports.messages.QdeviceCertificateSignError,
         )
         self.mock_runner.run.assert_called_once_with([
             _qnetd_cert_tool,
@@ -386,15 +390,19 @@ class QdeviceSignCertificateRequestTest(CertificateTestCase):
 
         mock_tmp_store.assert_called_once_with(
             "certificate request",
-            reports.qdevice_certificate_sign_error
+            reports.messages.QdeviceCertificateSignError,
         )
         self.mock_runner.run.assert_called_once_with([
             _qnetd_cert_tool,
             "-s", "-c", self.mock_tmpfile.name, "-n", "clusterName"
         ])
-        mock_get_cert.assert_called_once_with(
+        self.assertEqual(
             "tool output",
-            reports.qdevice_certificate_sign_error
+            mock_get_cert.call_args[0][0]
+        )
+        self.assertEqual(
+            reports.messages.QdeviceCertificateSignError("tool output"),
+            mock_get_cert.call_args[0][1]("tool output"),
         )
 
 
@@ -514,7 +522,11 @@ class ClientGenerateCertificateRequestTest(CertificateTestCase):
         self.assertEqual(1, len(mock_get_cert.mock_calls))
         self.assertEqual(
             "tool output",
-            mock_get_cert.call_args[0][0]
+            mock_get_cert.call_args[0][0],
+        )
+        self.assertEqual(
+            reports.messages.QdeviceInitializationError("net", "tool output"),
+            mock_get_cert.call_args[0][1]("tool output"),
         )
 
     @mock.patch(
@@ -585,14 +597,18 @@ class ClientCertRequestToPk12Test(CertificateTestCase):
 
         mock_tmp_store.assert_called_once_with(
             "certificate request",
-            reports.qdevice_certificate_import_error
+            reports.messages.QdeviceCertificateImportError,
         )
         self.mock_runner.run.assert_called_once_with([
             _client_cert_tool, "-M", "-c", self.mock_tmpfile.name
         ])
-        mock_get_cert.assert_called_once_with(
+        self.assertEqual(
             "tool output",
-            reports.qdevice_certificate_import_error
+            mock_get_cert.call_args[0][0]
+        )
+        self.assertEqual(
+            reports.messages.QdeviceCertificateImportError("tool output"),
+            mock_get_cert.call_args[0][1]("tool output"),
         )
 
     @mock.patch(
@@ -634,7 +650,7 @@ class ClientCertRequestToPk12Test(CertificateTestCase):
 
         mock_tmp_store.assert_called_once_with(
             "certificate request",
-            reports.qdevice_certificate_import_error
+            reports.messages.QdeviceCertificateImportError,
         )
         self.mock_runner.run.assert_not_called()
         mock_get_cert.assert_not_called()
@@ -663,7 +679,7 @@ class ClientCertRequestToPk12Test(CertificateTestCase):
 
         mock_tmp_store.assert_called_once_with(
             "certificate request",
-            reports.qdevice_certificate_import_error
+            reports.messages.QdeviceCertificateImportError,
         )
         self.mock_runner.run.assert_called_once_with([
             _client_cert_tool, "-M", "-c", self.mock_tmpfile.name
@@ -689,14 +705,18 @@ class ClientCertRequestToPk12Test(CertificateTestCase):
 
         mock_tmp_store.assert_called_once_with(
             "certificate request",
-            reports.qdevice_certificate_import_error
+            reports.messages.QdeviceCertificateImportError,
         )
         self.mock_runner.run.assert_called_once_with([
             _client_cert_tool, "-M", "-c", self.mock_tmpfile.name
         ])
-        mock_get_cert.assert_called_once_with(
+        self.assertEqual(
             "tool output",
-            reports.qdevice_certificate_import_error
+            mock_get_cert.call_args[0][0]
+        )
+        self.assertEqual(
+            reports.messages.QdeviceCertificateImportError("tool output"),
+            mock_get_cert.call_args[0][1]("tool output"),
         )
 
 
@@ -717,7 +737,7 @@ class ClientImportCertificateAndKeyTest(CertificateTestCase):
 
         mock_tmp_store.assert_called_once_with(
             "pk12 certificate",
-            reports.qdevice_certificate_import_error
+            reports.messages.QdeviceCertificateImportError,
         )
         self.mock_runner.run.assert_called_once_with([
             _client_cert_tool, "-m", "-c", self.mock_tmpfile.name
@@ -762,7 +782,7 @@ class ClientImportCertificateAndKeyTest(CertificateTestCase):
 
         mock_tmp_store.assert_called_once_with(
             "pk12 certificate",
-            reports.qdevice_certificate_import_error
+            reports.messages.QdeviceCertificateImportError,
         )
         self.mock_runner.run.assert_not_called()
 
@@ -790,11 +810,11 @@ class ClientImportCertificateAndKeyTest(CertificateTestCase):
 
         mock_tmp_store.assert_called_once_with(
             "pk12 certificate",
-            reports.qdevice_certificate_import_error
+            reports.messages.QdeviceCertificateImportError,
         )
         mock_tmp_store.assert_called_once_with(
             "pk12 certificate",
-            reports.qdevice_certificate_import_error
+            reports.messages.QdeviceCertificateImportError,
         )
         self.mock_runner.run.assert_called_once_with([
             _client_cert_tool, "-m", "-c", self.mock_tmpfile.name
@@ -841,12 +861,12 @@ class GetOutputCertificateTest(TestCase):
 
     def test_message_not_found(self):
         cert_tool_output = "some rubbish output"
-        report_func = reports.qdevice_certificate_import_error
+        report_item_message = reports.messages.QdeviceCertificateImportError
 
         assert_raise_library_error(
             lambda: lib._get_output_certificate(
                 cert_tool_output,
-                report_func
+                report_item_message,
             ),
             (
                 severity.ERROR,
@@ -865,12 +885,12 @@ class GetOutputCertificateTest(TestCase):
             some other line
             """.format(self.file_path)
         )
-        report_func = reports.qdevice_certificate_import_error
+        report_item_message = reports.messages.QdeviceCertificateImportError
 
         assert_raise_library_error(
             lambda: lib._get_output_certificate(
                 cert_tool_output,
-                report_func
+                report_item_message,
             ),
             (
                 severity.ERROR,

@@ -5,7 +5,7 @@ from pcs_test.tools import fixture
 from pcs_test.tools.assertions import assert_report_item_list_equal
 from pcs_test.tools.custom_mock import patch_getaddrinfo
 
-from pcs.common import report_codes
+from pcs.common.reports import codes as report_codes
 from pcs.lib.corosync import config_validators
 
 # pylint: disable=no-self-use
@@ -1449,7 +1449,7 @@ class CreateLinkListKnet(CreateLinkListCommonMixin, TestCase):
             [
                 fixture.error(
                     report_codes.COROSYNC_LINK_NUMBER_DUPLICATION,
-                    link_number_list=["0", "2"]
+                    link_number_list=["2", "0"]
                 )
             ]
         )
@@ -1692,13 +1692,13 @@ class CreateTransportUdp(TestCase):
                     report_codes.COROSYNC_TRANSPORT_UNSUPPORTED_OPTIONS,
                     option_type="compression",
                     actual_transport="udp/udpu",
-                    required_transport_list=("knet", )
+                    required_transports=["knet"],
                 ),
                 fixture.error(
                     report_codes.COROSYNC_TRANSPORT_UNSUPPORTED_OPTIONS,
                     option_type="crypto",
                     actual_transport="udp/udpu",
-                    required_transport_list=("knet", )
+                    required_transports=["knet"],
                 ),
             ]
         )

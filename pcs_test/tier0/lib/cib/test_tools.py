@@ -10,8 +10,8 @@ from pcs_test.tools import fixture
 from pcs_test.tools.misc import get_test_resource as rc
 from pcs_test.tools.xml import get_xml_manipulation_creator_from_file
 
-from pcs.common import report_codes
 from pcs.common.reports import ReportItemSeverity as severities
+from pcs.common.reports import codes as report_codes
 from pcs.common.tools import Version
 
 from pcs.lib.cib import tools as lib
@@ -618,8 +618,8 @@ class FindTagWithId(TestCase):
                 severities.ERROR,
                 report_codes.OBJECT_WITH_ID_IN_UNEXPECTED_CONTEXT,
                 {
-                    "type": "primitive",
-                    "id": "a",
+                    "object_type": "primitive",
+                    "object_id": "a",
                     "expected_context_type": "group",
                     "expected_context_id": "g2",
                 },
@@ -743,8 +743,8 @@ class ElementSearcher(TestCase):
             [
                 fixture.error(
                     report_codes.OBJECT_WITH_ID_IN_UNEXPECTED_CONTEXT,
-                    id="a",
-                    type="primitive",
+                    object_id="a",
+                    object_type="primitive",
                     expected_context_type="group",
                     expected_context_id="g2",
                 ),
@@ -839,7 +839,7 @@ class ElementSearcher(TestCase):
             searcher.get_errors(),
             [
                 fixture.error(
-                    report_codes.INVALID_ID,
+                    report_codes.INVALID_ID_BAD_CHAR,
                     id="1a",
                     id_description="group name",
                     is_first_char=True,

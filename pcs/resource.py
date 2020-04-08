@@ -16,24 +16,22 @@ from pcs import (
 from pcs.settings import (
     pacemaker_wait_timeout_status as PACEMAKER_WAIT_TIMEOUT_STATUS,
 )
-from pcs.cli.common.console_report import error, warn
 from pcs.cli.common.errors import CmdLineInputError, raise_command_replaced
 from pcs.cli.common.parse_args import (
     prepare_options,
     prepare_options_allowed,
     InputModifiers,
 )
-from pcs.cli.common.reports import (
-    process_library_reports,
-    ReportItemSeverity,
-)
+from pcs.cli.reports import process_library_reports
+from pcs.cli.reports.output import error, warn
 from pcs.cli.resource.parse_args import (
     parse_bundle_create_options,
     parse_bundle_reset_options,
     parse_bundle_update_options,
     parse_create as parse_create_args,
 )
-from pcs.common.tools import indent
+from pcs.common.str_tools import indent
+from pcs.common.reports import ReportItemSeverity
 import pcs.lib.cib.acl as lib_acl
 from pcs.lib.cib.resource import (
     bundle,

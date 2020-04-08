@@ -7,7 +7,10 @@ from typing import (
     Tuple,
 )
 
-from pcs.common import file_type_codes, report_codes
+from pcs.common import (
+    file_type_codes,
+    reports,
+)
 from pcs.common.dr import (
     DrConfigDto,
     DrConfigNodeDto,
@@ -17,9 +20,13 @@ from pcs.common.dr import (
 from pcs.common.interface import dto
 from pcs.common.file import RawFileError
 from pcs.common.node_communicator import RequestTarget
-from pcs.common.reports import ReportItemList
+from pcs.common.reports import (
+    codes as report_codes,
+    ReportItemList,
+)
+from pcs.common.reports.item import ReportItem
 
-from pcs.lib import node_communication_format, reports
+from pcs.lib import node_communication_format
 from pcs.lib.communication.corosync import GetCorosyncConf
 from pcs.lib.communication.nodes import (
     DistributeFilesWithoutForces,
@@ -82,12 +89,16 @@ def set_recovery_site(env: LibraryEnvironment, node_name: str) -> None:
     """
     if env.ghost_file_codes:
         raise LibraryError(
-            reports.live_environment_required(env.ghost_file_codes)
+            ReportItem.error(
+                reports.messages.LiveEnvironmentRequired(env.ghost_file_codes)
+            )
         )
     report_processor = env.report_processor
     dr_env = env.get_dr_env()
     if dr_env.config.raw_file.exists():
-        report_processor.report(reports.dr_config_already_exist())
+        report_processor.report(
+            ReportItem.error(reports.messages.DrConfigAlreadyExist())
+        )
     target_factory = env.get_node_target_factory()
 
     local_nodes, report_list = get_existing_nodes_names(
@@ -97,7 +108,9 @@ def set_recovery_site(env: LibraryEnvironment, node_name: str) -> None:
     report_processor.report_list(report_list)
 
     if node_name in local_nodes:
-        report_processor.report(reports.node_in_local_cluster(node_name))
+        report_processor.report(
+            ReportItem.error(reports.messages.NodeInLocalCluster(node_name))
+        )
 
     report_list, local_targets = target_factory.get_target_list_with_reports(
         local_nodes, allow_skip=False, report_none_host_found=False
@@ -196,7 +209,9 @@ def status_all_sites_plaintext(
 
     if env.ghost_file_codes:
         raise LibraryError(
-            reports.live_environment_required(env.ghost_file_codes)
+            ReportItem.error(
+                reports.messages.LiveEnvironmentRequired(env.ghost_file_codes)
+            )
         )
 
     report_processor = env.report_processor
@@ -259,7 +274,9 @@ def _load_dr_config(
     config_file: FileInstance,
 ) -> Tuple[ReportItemList, DrConfigFacade]:
     if not config_file.raw_file.exists():
-        return [reports.dr_config_does_not_exist()], DrConfigFacade.empty()
+        return [
+            ReportItem.error(reports.messages.DrConfigDoesNotExist()),
+        ], DrConfigFacade.empty()
     try:
         return [], config_file.read_to_facade()
     except RawFileError as e:
@@ -277,7 +294,9 @@ def destroy(env: LibraryEnvironment, force_flags: Container[str] = ()) -> None:
     """
     if env.ghost_file_codes:
         raise LibraryError(
-            reports.live_environment_required(env.ghost_file_codes)
+            ReportItem.error(
+                reports.messages.LiveEnvironmentRequired(env.ghost_file_codes)
+            )
         )
 
     report_processor = env.report_processor

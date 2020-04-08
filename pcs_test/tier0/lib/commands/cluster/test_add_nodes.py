@@ -15,9 +15,10 @@ from pcs_test.tools.custom_mock import patch_getaddrinfo
 from pcs import settings
 from pcs.common import (
     file_type_codes,
-    report_codes,
+    reports,
 )
 from pcs.common.file import RawFileError
+from pcs.common.reports import codes as report_codes
 from pcs.lib.commands import cluster
 
 QDEVICE_HOST = "qdevice.host"
@@ -329,14 +330,22 @@ class LocalConfig():
             name="local.disable_sbd.http.sbd.disable_sbd",
         )
         self.expected_reports.extend(
-            [fixture.info(report_codes.SBD_DISABLING_STARTED)]
+            [
+                fixture.info(
+                    reports.codes.SERVICE_ACTION_STARTED,
+                    action=reports.const.SERVICE_ACTION_DISABLE,
+                    service="sbd",
+                    instance="",
+                )
+            ]
             +
             [
                 fixture.info(
-                    report_codes.SERVICE_DISABLE_SUCCESS,
+                    reports.codes.SERVICE_ACTION_SUCCEEDED,
+                    action=reports.const.SERVICE_ACTION_DISABLE,
                     service="sbd",
                     node=node,
-                    instance=None,
+                    instance="",
                 ) for node in node_labels
             ]
         )
@@ -366,14 +375,22 @@ class LocalConfig():
                 ) for node in node_labels
             ]
             +
-            [fixture.info(report_codes.SBD_ENABLING_STARTED)]
+            [
+                fixture.info(
+                    reports.codes.SERVICE_ACTION_STARTED,
+                    action=reports.const.SERVICE_ACTION_ENABLE,
+                    service="sbd",
+                    instance="",
+                )
+            ]
             +
             [
                 fixture.info(
-                    report_codes.SERVICE_ENABLE_SUCCESS,
+                    reports.codes.SERVICE_ACTION_SUCCEEDED,
+                    action=reports.const.SERVICE_ACTION_ENABLE,
                     service="sbd",
-                    instance=None,
                     node=node,
+                    instance="",
                 ) for node in node_labels
             ]
         )
@@ -812,7 +829,12 @@ class AddNodesSuccessMinimal(TestCase):
         self.env_assist.assert_reports(
             self.expected_reports
             +
-            [fixture.info(report_codes.CLUSTER_ENABLE_STARTED)]
+            [
+                fixture.info(
+                    report_codes.CLUSTER_ENABLE_STARTED,
+                    host_name_list=sorted(self.new_nodes),
+                )
+            ]
             +
             [
                 fixture.info(report_codes.CLUSTER_ENABLE_SUCCESS, node=node)
@@ -860,7 +882,12 @@ class AddNodesSuccessMinimal(TestCase):
         self.env_assist.assert_reports(
             self.expected_reports
             +
-            [fixture.info(report_codes.CLUSTER_START_STARTED)]
+            [
+                fixture.info(
+                    report_codes.CLUSTER_START_STARTED,
+                    host_name_list=self.new_nodes,
+                )
+            ]
         )
 
     def test_start_1_existing_1_new(self):
@@ -910,7 +937,10 @@ class AddNodesSuccessMinimal(TestCase):
             self.expected_reports
             +
             [
-                fixture.info(report_codes.CLUSTER_START_STARTED),
+                fixture.info(
+                    report_codes.CLUSTER_START_STARTED,
+                    host_name_list=sorted(self.new_nodes),
+                ),
                 fixture.info(
                     report_codes.WAIT_FOR_NODE_STARTUP_STARTED,
                     node_name_list=self.new_nodes,
@@ -969,14 +999,24 @@ class AddNodesSuccessMinimal(TestCase):
         self.env_assist.assert_reports(
             self.expected_reports
             +
-            [fixture.info(report_codes.CLUSTER_ENABLE_STARTED)]
+            [
+                fixture.info(
+                    report_codes.CLUSTER_ENABLE_STARTED,
+                    host_name_list=sorted(self.new_nodes),
+                )
+            ]
             +
             [
                 fixture.info(report_codes.CLUSTER_ENABLE_SUCCESS, node=node)
                 for node in self.new_nodes
             ]
             +
-            [fixture.info(report_codes.CLUSTER_START_STARTED)]
+            [
+                fixture.info(
+                    report_codes.CLUSTER_START_STARTED,
+                    host_name_list=sorted(self.new_nodes),
+                )
+            ]
         )
 
     def test_enable_start_1_existing_1_new(self):
@@ -1025,7 +1065,12 @@ class AddNodesSuccessMinimal(TestCase):
         self.env_assist.assert_reports(
             self.expected_reports
             +
-            [fixture.info(report_codes.CLUSTER_ENABLE_STARTED)]
+            [
+                fixture.info(
+                    report_codes.CLUSTER_ENABLE_STARTED,
+                    host_name_list=sorted(self.new_nodes),
+                )
+            ]
             +
             [
                 fixture.info(report_codes.CLUSTER_ENABLE_SUCCESS, node=node)
@@ -1033,7 +1078,10 @@ class AddNodesSuccessMinimal(TestCase):
             ]
             +
             [
-                fixture.info(report_codes.CLUSTER_START_STARTED),
+                fixture.info(
+                    report_codes.CLUSTER_START_STARTED,
+                    host_name_list=self.new_nodes,
+                ),
                 fixture.info(
                     report_codes.WAIT_FOR_NODE_STARTUP_STARTED,
                     node_name_list=self.new_nodes,
@@ -2767,13 +2815,13 @@ class FailureBoothConfigsDistribution(TestCase):
             ) for node in self.new_nodes
         ]
 
-    def _add_nodes_with_lib_error(self, reports=None):
-        if reports is None:
-            reports = []
+    def _add_nodes_with_lib_error(self, report_list=None):
+        if report_list is None:
+            report_list = []
         self.env_assist.assert_raise_library_error(
             # pylint: disable=unnecessary-lambda
             lambda: self._add_nodes(),
-            reports,
+            report_list,
             expected_in_processor=False,
         )
 
@@ -3391,27 +3439,35 @@ class FailureDisableSbd(TestCase):
                 ) for node in self.new_nodes
             ]
             +
-            [fixture.info(report_codes.SBD_DISABLING_STARTED)]
+            [
+                fixture.info(
+                    reports.codes.SERVICE_ACTION_STARTED,
+                    action=reports.const.SERVICE_ACTION_DISABLE,
+                    service="sbd",
+                    instance="",
+                )
+            ]
             +
             [
                 fixture.info(
-                    report_codes.SERVICE_DISABLE_SUCCESS,
+                    reports.codes.SERVICE_ACTION_SUCCEEDED,
+                    action=reports.const.SERVICE_ACTION_DISABLE,
                     service="sbd",
                     node=node,
-                    instance=None,
+                    instance="",
                 ) for node in self.successful_nodes
             ]
         )
 
-    def _add_nodes_with_lib_error(self, reports=None):
-        if reports is None:
-            reports = []
+    def _add_nodes_with_lib_error(self, report_list=None):
+        if report_list is None:
+            report_list = []
         self.env_assist.assert_raise_library_error(
             lambda: cluster.add_nodes(
                 self.env_assist.get_env(),
                 [{"name": node} for node in self.new_nodes],
             ),
-            reports,
+            report_list,
             expected_in_processor=False,
         )
 
@@ -3513,9 +3569,9 @@ class FailureEnableSbd(TestCase):
             ]
         )
 
-    def _add_nodes_with_lib_error(self, reports=None):
-        if reports is None:
-            reports = []
+    def _add_nodes_with_lib_error(self, report_list=None):
+        if report_list is None:
+            report_list = []
         self.env_assist.assert_raise_library_error(
             lambda: cluster.add_nodes(
                 self.env_assist.get_env(),
@@ -3524,7 +3580,7 @@ class FailureEnableSbd(TestCase):
                     for node in self.new_nodes
                 ],
             ),
-            reports,
+            report_list,
             expected_in_processor=False,
         )
 
@@ -3566,14 +3622,22 @@ class FailureEnableSbd(TestCase):
                 ) for node in self.new_nodes
             ]
             +
-            [fixture.info(report_codes.SBD_ENABLING_STARTED)]
+            [
+                fixture.info(
+                    reports.codes.SERVICE_ACTION_STARTED,
+                    action=reports.const.SERVICE_ACTION_ENABLE,
+                    service="sbd",
+                    instance="",
+                )
+            ]
             +
             [
                 fixture.info(
-                    report_codes.SERVICE_ENABLE_SUCCESS,
+                    reports.codes.SERVICE_ACTION_SUCCEEDED,
+                    action=reports.const.SERVICE_ACTION_ENABLE,
                     service="sbd",
                     node=node,
-                    instance=None,
+                    instance="",
                 ) for node in self.successful_nodes
             ]
             +
@@ -3711,9 +3775,9 @@ class FailureQdevice(TestCase):
             ]
         )
 
-    def _add_nodes_with_lib_error(self, reports=None):
-        if reports is None:
-            reports = []
+    def _add_nodes_with_lib_error(self, report_list=None):
+        if report_list is None:
+            report_list = []
         self.env_assist.assert_raise_library_error(
             lambda: cluster.add_nodes(
                 self.env_assist.get_env(),
@@ -3721,7 +3785,7 @@ class FailureQdevice(TestCase):
                     {"name": node} for node in self.new_nodes
                 ],
             ),
-            reports,
+            report_list,
             expected_in_processor=False,
         )
 
@@ -4117,15 +4181,15 @@ class FailureKnownHostsUpdate(TestCase):
             ]
         )
 
-    def _add_nodes_with_lib_error(self, reports=None):
-        if reports is None:
-            reports = []
+    def _add_nodes_with_lib_error(self, report_list=None):
+        if report_list is None:
+            report_list = []
         self.env_assist.assert_raise_library_error(
             lambda: cluster.add_nodes(
                 self.env_assist.get_env(),
                 [{"name": node} for node in self.new_nodes],
             ),
-            reports,
+            report_list,
             expected_in_processor=False,
         )
 

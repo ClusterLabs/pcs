@@ -9,9 +9,9 @@ from pcs_test.tools.misc import (
     skip_unless_pacemaker_supports_bundle,
 )
 
-from pcs.common import report_codes
+from pcs.common import reports
 from pcs.common.reports import ReportItemSeverity as severities
-from pcs.lib import reports
+from pcs.common.reports import codes as report_codes
 from pcs.lib.commands import resource
 from pcs.lib.errors import LibraryError
 
@@ -927,8 +927,10 @@ class Wait(TestCase):
                 resources=fixture_primitive_cib_enabled_with_meta,
                 wait=TIMEOUT,
                 exception=LibraryError(
-                    reports.wait_for_idle_timed_out(
-                        self.fixture_wait_timeout_error
+                    reports.item.ReportItem.error(
+                        reports.messages.WaitForIdleTimedOut(
+                            self.fixture_wait_timeout_error
+                        )
                     )
                 )
             )
@@ -952,8 +954,10 @@ class Wait(TestCase):
                 resources=fixture_primitive_cib_disabled,
                 wait=TIMEOUT,
                 exception=LibraryError(
-                    reports.wait_for_idle_timed_out(
-                        self.fixture_wait_timeout_error
+                    reports.item.ReportItem.error(
+                        reports.messages.WaitForIdleTimedOut(
+                            self.fixture_wait_timeout_error
+                        )
                     )
                 )
             )

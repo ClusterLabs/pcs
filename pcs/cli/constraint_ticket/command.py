@@ -1,7 +1,8 @@
 from pcs.cli.common.errors import CmdLineInputError
 from pcs.cli.constraint import command
-from pcs.cli.constraint_ticket import parse_args, console_report
-from pcs.cli.common.console_report import error
+from pcs.cli.constraint_ticket import parse_args
+from pcs.cli.reports.output import error
+from pcs.common.reports import constraints
 
 def create_with_set(lib, argv, modifiers):
     """
@@ -84,6 +85,6 @@ def show(lib, argv, modifiers):
     print("\n".join(command.show(
         "Ticket Constraints:",
         lib.constraint_ticket.show,
-        console_report.constraint_plain,
+        constraints.ticket_plain,
         modifiers,
     )))

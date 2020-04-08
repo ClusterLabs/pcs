@@ -1,7 +1,7 @@
-from pcs.common import report_codes
+from pcs.common import reports
+from pcs.common.reports.item import ReportItem
 from pcs.common.node_communicator import Request
 from pcs.common.reports import ReportItemSeverity
-from pcs.lib import reports
 from pcs.lib.node_communication import response_to_report_item
 from pcs.lib.errors import LibraryError
 
@@ -108,11 +108,12 @@ class RunRemotelyBase(CommunicationCommandInterface):
 
         list report_list -- list of ReportItem objects
         """
+
         self.__report_processor.report_list(report_list)
         if self.has_errors:
             return
         for report_item in report_list:
-            if report_item.severity == ReportItemSeverity.ERROR:
+            if report_item.severity.level == reports.ReportItemSeverity.ERROR:
                 self.__has_errors = True
                 return
 
@@ -216,7 +217,11 @@ class MarkSuccessfulMixin:
 
     def on_complete(self):
         if not self.__successful:
-            self._report(reports.unable_to_perform_operation_on_any_node())
+            self._report(
+                ReportItem.error(
+                    reports.messages.UnableToPerformOperationOnAnyNode()
+                )
+            )
 
 
 class AllSameDataMixin:
@@ -319,7 +324,9 @@ class SkipOfflineMixin:
     _report_pcsd_too_old_on_404: bool
 
     def _set_skip_offline(
-        self, skip_offline_targets, force_code=report_codes.SKIP_OFFLINE_NODES
+        self,
+        skip_offline_targets,
+        force_code=reports.codes.SKIP_OFFLINE_NODES,
     ):
         """
         Set value of skip_offline_targets flag.

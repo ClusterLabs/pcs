@@ -1,9 +1,11 @@
-from pcs.cli.common.console_report import format_plural
 from pcs.cli.common.errors import (
     CmdLineInputError,
     HINT_SYNTAX_CHANGE,
 )
-from pcs.common.tools import format_list
+from pcs.common.str_tools import (
+    format_list,
+    format_plural,
+)
 
 
 ARG_TYPE_DELIMITER = "%"

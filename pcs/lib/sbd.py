@@ -2,11 +2,10 @@ import re
 from os import path
 
 from pcs import settings
+from pcs.common import reports
 from pcs.common.reports import ReportProcessor
-from pcs.lib import (
-    external,
-    reports,
-)
+from pcs.common.reports.item import ReportItem
+from pcs.lib import external
 from pcs.lib.tools import dict_to_environment_file, environment_file_to_dict
 from pcs.lib.errors import LibraryError
 
@@ -110,8 +109,9 @@ def validate_new_nodes_devices(nodes_devices):
             adding_nodes_to_sbd_enabled_cluster=True
         )
     return [
-        reports.sbd_with_devices_not_used_cannot_set_device(node)
-        for node, devices in nodes_devices.items() if devices
+        ReportItem.error(
+            reports.messages.SbdWithDevicesNotUsedCannotSetDevice(node)
+        ) for node, devices in nodes_devices.items() if devices
     ]
 
 
@@ -131,19 +131,31 @@ def validate_nodes_devices(
     for node_label, device_list in node_device_dict.items():
         if not device_list:
             report_item_list.append(
-                reports.sbd_no_device_for_node(
-                    node_label,
-                    sbd_enabled_in_cluster=adding_nodes_to_sbd_enabled_cluster
+                ReportItem.error(
+                    reports.messages.SbdNoDeviceForNode(
+                        node_label,
+                        sbd_enabled_in_cluster=(
+                            adding_nodes_to_sbd_enabled_cluster
+                        ),
+                    )
                 )
             )
         elif len(device_list) > settings.sbd_max_device_num:
-            report_item_list.append(reports.sbd_too_many_devices_for_node(
-                node_label, device_list, settings.sbd_max_device_num
-            ))
+            report_item_list.append(
+                ReportItem.error(
+                    reports.messages.SbdTooManyDevicesForNode(
+                        node_label, device_list, settings.sbd_max_device_num
+                    )
+                )
+            )
         for device in device_list:
             if not device or not path.isabs(device):
                 report_item_list.append(
-                    reports.sbd_device_path_not_absolute(device, node_label)
+                    ReportItem.error(
+                        reports.messages.SbdDevicePathNotAbsolute(
+                            device, node_label
+                        )
+                    )
                 )
     return report_item_list
 
@@ -182,9 +194,11 @@ def get_local_sbd_config():
         with open(settings.sbd_config, "r") as sbd_cfg:
             return sbd_cfg.read()
     except EnvironmentError as e:
-        raise LibraryError(reports.unable_to_get_sbd_config(
-            "local node", str(e)
-        ))
+        raise LibraryError(
+            ReportItem.error(
+                reports.messages.UnableToGetSbdConfig("local node", str(e))
+            )
+        )
 
 
 def get_sbd_service_name() -> str:
@@ -227,7 +241,9 @@ def initialize_block_devices(
     option_dict -- dictionary of options and their values
     """
     report_processor.report(
-        reports.sbd_device_initialization_started(device_list)
+        ReportItem.info(
+            reports.messages.SbdDeviceInitializationStarted(device_list)
+        )
     )
 
     cmd = [settings.sbd_binary]
@@ -241,10 +257,16 @@ def initialize_block_devices(
     _, std_err, ret_val = cmd_runner.run(cmd)
     if ret_val != 0:
         raise LibraryError(
-            reports.sbd_device_initialization_error(device_list, std_err)
+            ReportItem.error(
+                reports.messages.SbdDeviceInitializationError(
+                    device_list, std_err
+                )
+            )
         )
     report_processor.report(
-        reports.sbd_device_initialization_success(device_list)
+        ReportItem.info(
+            reports.messages.SbdDeviceInitializationSuccess(device_list)
+        )
     )
 
 
@@ -287,7 +309,11 @@ def get_device_messages_info(cmd_runner, device):
     )
     if ret_val != 0:
         # sbd writes error message into std_out
-        raise LibraryError(reports.sbd_device_list_error(device, std_out))
+        raise LibraryError(
+            ReportItem.error(
+                reports.messages.SbdDeviceListError(device, std_out)
+            )
+        )
     return std_out
 
 
@@ -303,7 +329,11 @@ def get_device_sbd_header_dump(cmd_runner, device):
     )
     if ret_val != 0:
         # sbd writes error message into std_out
-        raise LibraryError(reports.sbd_device_dump_error(device, std_out))
+        raise LibraryError(
+            ReportItem.error(
+                reports.messages.SbdDeviceDumpError(device, std_out)
+            )
+        )
     return std_out
 
 
@@ -320,9 +350,13 @@ def set_message(cmd_runner, device, node_name, message):
         [settings.sbd_binary, "-d", device, "message", node_name, message]
     )
     if ret_val != 0:
-        raise LibraryError(reports.sbd_device_message_error(
-            device, node_name, message, std_err
-        ))
+        raise LibraryError(
+            ReportItem.error(
+                reports.messages.SbdDeviceMessageError(
+                    device, node_name, message, std_err
+                )
+            )
+        )
 
 
 def get_available_watchdogs(cmd_runner):
@@ -336,7 +370,9 @@ def get_available_watchdogs(cmd_runner):
         [settings.sbd_binary, "query-watchdog"]
     )
     if ret_val != 0:
-        raise LibraryError(reports.sbd_list_watchdog_error(std_err))
+        raise LibraryError(
+            ReportItem.error(reports.messages.SbdListWatchdogError(std_err))
+        )
     return {
         match.group("watchdog"): {
             key: match.group(key) for key in ["identity", "driver", "caution"]
@@ -351,6 +387,16 @@ def test_watchdog(cmd_runner, watchdog=None):
     std_out, dummy_std_err, ret_val = cmd_runner.run(cmd)
     if ret_val:
         if "Multiple watchdog devices discovered" in std_out:
-            raise LibraryError(reports.sbd_watchdog_test_multiple_devices())
-        raise LibraryError(reports.sbd_watchdog_test_error(std_out))
-    raise LibraryError(reports.sbd_watchdog_test_failed())
+            raise LibraryError(
+                ReportItem.error(
+                    reports.messages.SbdWatchdogTestMultipleDevices()
+                )
+            )
+        raise LibraryError(
+            ReportItem.error(
+                reports.messages.SbdWatchdogTestError(std_out)
+            )
+        )
+    raise LibraryError(
+        ReportItem.error(reports.messages.SbdWatchdogTestFailed())
+    )

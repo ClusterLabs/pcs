@@ -9,8 +9,9 @@ from pcs_test.tools.misc import (
     get_test_resource as rc,
 )
 
-from pcs.common import file_type_codes, report_codes
+from pcs.common import file_type_codes
 from pcs.common.reports import ReportItemSeverity as severity
+from pcs.common.reports import codes as report_codes
 from pcs.lib.env import LibraryEnvironment
 
 
@@ -73,19 +74,19 @@ class GhostFileCodes(TestCase):
     def test_nothing(self):
         self.assertEqual(
             self._fixture_get_env().ghost_file_codes,
-            set()
+            []
         )
 
     def test_corosync(self):
         self.assertEqual(
             self._fixture_get_env(corosync_conf_data="x").ghost_file_codes,
-            set([file_type_codes.COROSYNC_CONF])
+            [file_type_codes.COROSYNC_CONF]
         )
 
     def test_cib(self):
         self.assertEqual(
             self._fixture_get_env(cib_data="x").ghost_file_codes,
-            set([file_type_codes.CIB])
+            [file_type_codes.CIB]
         )
 
     def test_all(self):
@@ -94,7 +95,7 @@ class GhostFileCodes(TestCase):
                 cib_data="x",
                 corosync_conf_data="x",
             ).ghost_file_codes,
-            set([file_type_codes.COROSYNC_CONF, file_type_codes.CIB])
+            sorted([file_type_codes.COROSYNC_CONF, file_type_codes.CIB])
         )
 
 @patch_env("CommandRunner")

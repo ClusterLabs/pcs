@@ -4,9 +4,9 @@ from pcs_test.tools import fixture
 from pcs_test.tools.command_env import get_env_tools
 from pcs_test.tools.misc import skip_unless_pacemaker_supports_bundle
 
-from pcs.common import report_codes
+from pcs.common import reports
 from pcs.common.reports import ReportItemSeverity as severities
-from pcs.lib import reports
+from pcs.common.reports import codes as report_codes
 from pcs.lib.cib.resource.bundle import (
     GENERIC_CONTAINER_OPTIONS,
     NETWORK_OPTIONS,
@@ -555,7 +555,7 @@ class PortMapMixin(SetUpMixin):
             # second
             (
                 severities.ERROR,
-                report_codes.INVALID_ID,
+                report_codes.INVALID_ID_BAD_CHAR,
                 {
                     "invalid_character": "#",
                     "id": "not#valid",
@@ -830,7 +830,7 @@ class StorageMapMixin(SetUpMixin):
             # second
             (
                 severities.ERROR,
-                report_codes.INVALID_ID,
+                report_codes.INVALID_ID_BAD_CHAR,
                 {
                     "invalid_character": "#",
                     "id": "not#valid",
@@ -1212,7 +1212,9 @@ class WaitMixin(FixturesMixin):
             resources=self.fixture_resources_bundle_simple,
             wait=TIMEOUT,
             exception=LibraryError(
-                reports.wait_for_idle_timed_out(wait_error_message)
+                reports.item.ReportItem.error(
+                    reports.messages.WaitForIdleTimedOut(wait_error_message)
+                )
             )
         )
         self.env_assist.assert_raise_library_error(

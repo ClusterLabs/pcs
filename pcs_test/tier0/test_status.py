@@ -24,7 +24,7 @@ class StonithWarningTest(TestCase, AssertPcsMixin):
         self.assert_pcs_success(
             "stonith create Sa fence_apc ip=i username=u action=reboot --force",
             "Warning: stonith option 'action' is deprecated and should not be"
-                " used, use pcmk_off_action, pcmk_reboot_action instead\n"
+                " used, use 'pcmk_off_action', 'pcmk_reboot_action' instead\n"
         )
 
     def fixture_stonith_cycle(self):

@@ -10,9 +10,9 @@ from pcs_test.tools.misc import (
     skip_unless_pacemaker_supports_bundle,
 )
 
-from pcs.common import report_codes
+from pcs.common import reports
 from pcs.common.reports import ReportItemSeverity as severities
-from pcs.lib import reports
+from pcs.common.reports import codes as report_codes
 from pcs.lib.commands import resource
 from pcs.lib.errors import LibraryError
 
@@ -269,6 +269,7 @@ class ContainerParametrized(TestCase):
                     "option_names": ["extra", ],
                     "option_type": "container",
                     "allowed": self.allowed_options,
+                    "allowed_patterns": [],
                 },
                 report_codes.FORCE_OPTIONS
             ),
@@ -298,6 +299,7 @@ class ContainerParametrized(TestCase):
                     "option_names": ["extra", ],
                     "option_type": "container",
                     "allowed": self.allowed_options,
+                    "allowed_patterns": [],
                 },
                 None
             ),
@@ -860,6 +862,7 @@ class Network(TestCase):
                     "option_names": ["extra", ],
                     "option_type": "network",
                     "allowed": self.allowed_options,
+                    "allowed_patterns": [],
                 },
                 report_codes.FORCE_OPTIONS
             ),
@@ -887,6 +890,7 @@ class Network(TestCase):
                         "option_names": ["extra", ],
                         "option_type": "network",
                         "allowed": self.allowed_options,
+                    "allowed_patterns": [],
                     },
                     None
                 ),
@@ -1381,7 +1385,9 @@ class Wait(TestCase):
             resources=self.fixture_resources_bundle_simple,
             wait=TIMEOUT,
             exception=LibraryError(
-                reports.wait_for_idle_timed_out(wait_error_message)
+                reports.item.ReportItem.error(
+                    reports.messages.WaitForIdleTimedOut(wait_error_message)
+                )
             ),
             instead="env.push_cib"
         )

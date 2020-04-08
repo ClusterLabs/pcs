@@ -4,10 +4,11 @@ from typing import (
 from xml.etree.ElementTree import Element
 
 from pcs.common import file_type_codes
+from pcs.common import reports
 from pcs.common.node_communicator import Communicator, NodeCommunicatorFactory
 from pcs.common.reports import ReportProcessor
+from pcs.common.reports.item import ReportItem
 from pcs.common.tools import Version
-from pcs.lib import reports
 from pcs.lib.booth.env import BoothEnv
 from pcs.lib.cib.tools import get_cib_crm_feature_set
 from pcs.lib.dr.env import DrEnv
@@ -119,7 +120,7 @@ class LibraryEnvironment:
             codes.add(file_type_codes.CIB)
         if not self.is_corosync_conf_live:
             codes.add(file_type_codes.COROSYNC_CONF)
-        return codes
+        return sorted(codes)
 
     def get_cib(self, minimal_version: Optional[Version] = None) -> Element:
         if self.__loaded_cib_diff_source is not None:
@@ -137,7 +138,9 @@ class LibraryEnvironment:
                 self.__loaded_cib_diff_source = etree_to_str(upgraded_cib)
                 if not self._cib_upgrade_reported:
                     self.report_processor.report(
-                        reports.cib_upgrade_successful()
+                        ReportItem.info(
+                            reports.messages.CibUpgradeSuccessful()
+                        )
                     )
                 self._cib_upgrade_reported = True
         self.__loaded_cib_diff_source_feature_set = (
@@ -165,7 +168,11 @@ class LibraryEnvironment:
 
         if wait not in self.__timeout_cache:
             if not self.is_cib_live:
-                raise LibraryError(reports.wait_for_idle_not_live_cluster())
+                raise LibraryError(
+                    ReportItem.error(
+                        reports.messages.WaitForIdleNotLiveCluster()
+                    )
+                )
             ensure_wait_for_idle_support(self.cmd_runner())
             self.__timeout_cache[wait] = get_valid_timeout_seconds(wait)
         return self.__timeout_cache[wait]
@@ -208,9 +215,14 @@ class LibraryEnvironment:
             MIN_FEATURE_SET_VERSION_FOR_DIFF
         ):
             self.report_processor.report(
-                reports.cib_push_forced_full_due_to_crm_feature_set(
-                    MIN_FEATURE_SET_VERSION_FOR_DIFF,
-                    self.__loaded_cib_diff_source_feature_set
+                ReportItem.warning(
+                    reports.messages.CibPushForcedFullDueToCrmFeatureSet(
+                        str(MIN_FEATURE_SET_VERSION_FOR_DIFF.normalize()),
+                        str(
+                            self.__loaded_cib_diff_source_feature_set
+                            .normalize()
+                        )
+                    )
                 )
             )
             return self.__push_cib_full(self.__loaded_cib_to_modify, wait=wait)
@@ -286,8 +298,12 @@ class LibraryEnvironment:
         )
         if bad_sections or bad_attr_names or bad_attr_values:
             raise LibraryError(
-                reports.corosync_config_cannot_save_invalid_names_values(
-                    bad_sections, bad_attr_names, bad_attr_values
+                ReportItem.error(
+                    reports.messages.CorosyncConfigCannotSaveInvalidNamesValues(
+                        bad_sections,
+                        bad_attr_names,
+                        bad_attr_values,
+                    )
                 )
             )
         corosync_conf_data = corosync_conf_facade.config.export()
@@ -343,7 +359,7 @@ class LibraryEnvironment:
         # Reload qdevice if needed
         if need_qdevice_reload:
             self.report_processor.report(
-                reports.qdevice_client_reload_started()
+                ReportItem.info(reports.messages.QdeviceClientReloadStarted())
             )
             com_cmd = qdevice.Stop(self.report_processor, skip_offline_nodes)
             com_cmd.set_targets(target_list)
@@ -378,13 +394,19 @@ class LibraryEnvironment:
                     cib_data = self._cib_data
                     self._cib_data_tmp_file = write_tmpfile(cib_data)
                     self.report_processor.report(
-                        reports.tmp_file_write(
-                            self._cib_data_tmp_file.name,
-                            cib_data
+                        ReportItem.debug(
+                            reports.messages.TmpFileWrite(
+                                self._cib_data_tmp_file.name,
+                                cib_data
+                            )
                         )
                     )
                 except EnvironmentError as e:
-                    raise LibraryError(reports.cib_save_tmp_error(str(e)))
+                    raise LibraryError(
+                        ReportItem.error(
+                            reports.messages.CibSaveTmpError(str(e))
+                        )
+                    )
             runner_env["CIB_file"] = self._cib_data_tmp_file.name
 
         return CommandRunner(self.logger, self.report_processor, runner_env)
