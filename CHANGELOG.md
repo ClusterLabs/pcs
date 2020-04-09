@@ -1,6 +1,6 @@
 # Change Log
 
-## [Unreleased]
+## [0.9.169] - 2020-04-09
 
 ### Added
 - `pcs resource relations` command shows relations between resources such as
