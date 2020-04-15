@@ -123,6 +123,7 @@ def corosync_conf_fixture(
     transport_options=None,
     compression_options=None,
     crypto_options=None,
+    cluster_name=None,
 ):
     # pylint: disable=too-many-arguments, too-many-locals
     if transport_type == "knet" and not crypto_options:
@@ -167,7 +168,7 @@ def corosync_conf_fixture(
             ]
         )
     return COROSYNC_CONF_TEMPLATE.format(
-        cluster_name=CLUSTER_NAME,
+        cluster_name=(CLUSTER_NAME if cluster_name is None else cluster_name),
         node_list="\n".join(
             [
                 NODE_TEMPLATE.format(
@@ -735,6 +736,8 @@ class Setup2NodeSuccessMinimal(TestCase):
     lambda ssl_key, server_name: PCSD_SSL_CERT,
 )
 class Validation(TestCase):
+    # pylint: disable=too-many-instance-attributes
+    # pylint: disable=too-many-public-methods
     def setUp(self):
         self.env_assist, self.config = get_env_tools(self)
         self.config.env.set_known_nodes(["node1", "node2", "node3", "node4"])
@@ -744,6 +747,7 @@ class Validation(TestCase):
         self.command_node_list = [
             dict(name=node, addrs=[f"{node}.addr"]) for node in NODE_LIST
         ]
+        self.corosync_node_list = {node: [f"{node}.addr"] for node in NODE_LIST}
         self.get_host_info_ok = {
             "services": {
                 service: {
@@ -883,6 +887,68 @@ class Validation(TestCase):
                 ),
                 fixture.error(report_codes.COROSYNC_NODES_MISSING),
             ]
+        )
+
+    def test_cluster_name_gfs2(self):
+        # Test that the force is passed correctly to the cluster name validators
+        cluster_name = "bad cluster.name for gfs2"
+        (
+            self.config.http.host.get_host_info(
+                NODE_LIST, output_data=self.get_host_info_ok,
+            )
+            .fs.isfile(settings.pcsd_config)
+            .fs.open(
+                settings.pcsd_config,
+                # Tests for other cases are in SslCertSync class.
+                mock.mock_open(
+                    read_data="PCSD_SSL_CERT_SYNC_ENABLED=false\n"
+                )(),
+            )
+        )
+
+        self.env_assist.assert_raise_library_error(
+            lambda: cluster.setup(
+                self.env_assist.get_env(), cluster_name, self.command_node_list,
+            )
+        )
+        self.env_assist.assert_reports(
+            [
+                fixture.error(
+                    report_codes.COROSYNC_CLUSTER_NAME_INVALID_FOR_GFS2,
+                    force_code=report_codes.FORCE_OPTIONS,
+                    cluster_name=cluster_name,
+                    max_length=32,
+                    allowed_characters="a-z A-Z 0-9 _-",
+                ),
+            ]
+        )
+
+    def test_cluster_name_gfs2_forced(self):
+        # Test that the force is passed correctly to the cluster name validators
+        cluster_name = "bad cluster.name for gfs2"
+        config_succes_minimal_fixture(
+            self.config,
+            corosync_conf=corosync_conf_fixture(
+                self.corosync_node_list, cluster_name=cluster_name,
+            ),
+        )
+
+        cluster.setup(
+            self.env_assist.get_env(),
+            cluster_name,
+            self.command_node_list,
+            force_flags=[report_codes.FORCE],
+        )
+        self.env_assist.assert_reports(
+            [
+                fixture.warn(
+                    report_codes.COROSYNC_CLUSTER_NAME_INVALID_FOR_GFS2,
+                    cluster_name=cluster_name,
+                    max_length=32,
+                    allowed_characters="a-z A-Z 0-9 _-",
+                ),
+            ]
+            + reports_success_minimal_fixture(using_known_hosts_addresses=False)
         )
 
     def test_unresolvable_addrs(self):

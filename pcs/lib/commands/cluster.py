@@ -292,6 +292,7 @@ def setup(
             transport_type,
             ip_version,
             force_unresolvable=force,
+            force_cluster_name=force,
         )
     )
     max_node_addr_count = max([len(node["addrs"]) for node in nodes], default=0)

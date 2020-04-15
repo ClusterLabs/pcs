@@ -3,8 +3,11 @@ from collections import Counter, defaultdict, namedtuple
 from itertools import zip_longest
 
 from pcs.common import reports
-from pcs.common.reports import codes as report_codes
-from pcs.common.reports.item import ReportItem
+from pcs.common.reports import (
+    codes as report_codes,
+    get_severity,
+    ReportItem,
+)
 from pcs.lib import validate
 from pcs.lib.corosync import constants
 from pcs.lib.corosync.node import (
@@ -31,8 +34,52 @@ class _LinkAddrType(namedtuple("_LinkAddrType", "link addr_type")):
     pass
 
 
+class _ClusterNameGfs2Validator(validate.ValueValidator):
+    def __init__(
+        self,
+        option_name,
+        option_name_for_report=None,
+        code_for_warning=None,
+        produce_warning=False,
+    ):
+        """
+        srring option_name -- name of the option to check
+        string option_name_for_report -- optional option_name override
+        string code_for_warning -- which code makes this produce warnings
+        bool produce_warning -- False produces an error, True a warning
+        """
+        super().__init__(
+            option_name, option_name_for_report=option_name_for_report
+        )
+        self._code_for_warning = code_for_warning
+        self._produce_warning = produce_warning
+
+    def _validate_value(self, value):
+        if not isinstance(value.normalized, str):
+            return []
+        if not validate.matches_regexp(
+            value.normalized, r"^[a-zA-Z0-9_-]{0,32}$"
+        ):
+            return [
+                ReportItem(
+                    get_severity(self._code_for_warning, self._produce_warning),
+                    reports.messages.CorosyncClusterNameInvalidForGfs2(
+                        cluster_name=value.original,
+                        max_length=32,
+                        allowed_characters="a-z A-Z 0-9 _-",
+                    ),
+                )
+            ]
+        return []
+
+
 def create(
-    cluster_name, node_list, transport, ip_version, force_unresolvable=False
+    cluster_name,
+    node_list,
+    transport,
+    ip_version,
+    force_unresolvable=False,
+    force_cluster_name=False,
 ):
     # pylint: disable=too-many-locals
     # pylint: disable=too-many-branches
@@ -46,13 +93,23 @@ def create(
     string ip_version -- which IP family node addresses should be
     bool force_unresolvable -- if True, report unresolvable addresses as
         warnings instead of errors
+    bool force_cluster_name -- if True, report forcible cluster name issues as
+        warnings instead of errors
     """
     # cluster name and transport validation
     validators = [
         validate.ValueNotEmpty(
             "name", None, option_name_for_report="cluster name"
         ),
-        validate.ValueCorosyncValue("name"),
+        _ClusterNameGfs2Validator(
+            "name",
+            option_name_for_report="cluster name",
+            code_for_warning=report_codes.FORCE_OPTIONS,
+            produce_warning=force_cluster_name,
+        ),
+        validate.ValueCorosyncValue(
+            "name", option_name_for_report="cluster name"
+        ),
         validate.ValueIn("transport", constants.TRANSPORTS_ALL),
         validate.ValueCorosyncValue("transport"),
     ]
@@ -300,7 +357,7 @@ def _report_unresolvable_addresses_if_any(
         return []
     return [
         ReportItem(
-            severity=reports.item.get_severity(
+            severity=get_severity(
                 reports.codes.FORCE_NODE_ADDRESSES_UNRESOLVABLE,
                 force_unresolvable,
             ),

@@ -1,5 +1,14 @@
 # Change Log
 
+## [Unreleased]
+
+### Added
+- When creating a cluster, verify the cluster name does not prevent mounting
+  GFS2 volumes ([rhbz#1782553])
+
+[rhbz#1782553]: https://bugzilla.redhat.com/show_bug.cgi?id=1782553
+
+
 ## [0.10.5] - 2020-03-18
 
 ### Added

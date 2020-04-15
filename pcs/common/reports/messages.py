@@ -1611,6 +1611,31 @@ class CorosyncOptionsIncompatibleWithQdevice(ReportItemMessage):
 
 
 @dataclass(frozen=True)
+class CorosyncClusterNameInvalidForGfs2(ReportItemMessage):
+    """
+    Chosen cluster name will prevent using GFS2 volumes in the cluster
+
+    cluster_name -- the entered cluster name
+    max_length -- maximal cluster name length supported by GFS2
+    allowed_characters -- allowed cluster name characters supported by GFS2
+    """
+
+    cluster_name: str
+    max_length: int
+    allowed_characters: str
+    _code = codes.COROSYNC_CLUSTER_NAME_INVALID_FOR_GFS2
+
+    @property
+    def message(self) -> str:
+        return (
+            f"Chosen cluster name '{self.cluster_name}' will prevent mounting "
+            f"GFS2 volumes in the cluster, use at most {self.max_length} "
+            f"of {self.allowed_characters} characters; you may safely "
+            f"override this if you do not intend to use GFS2"
+        )
+
+
+@dataclass(frozen=True)
 class CorosyncBadNodeAddressesCount(ReportItemMessage):
     """
     Wrong number of addresses set for a corosync node.

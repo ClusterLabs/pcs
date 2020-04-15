@@ -1035,6 +1035,20 @@ class CorosyncOptionsIncompatibleWithQdevice(NameBuildTest):
         )
 
 
+class CorosyncClusterNameInvalidForGfs2(NameBuildTest):
+    def test_success(self):
+        self.assert_message_from_report(
+            "Chosen cluster name 'cluster name' will prevent mounting GFS2 "
+            "volumes in the cluster, use at most 16 of a-z A-Z characters; "
+            "you may safely override this if you do not intend to use GFS2",
+            reports.CorosyncClusterNameInvalidForGfs2(
+                cluster_name="cluster name",
+                max_length=16,
+                allowed_characters="a-z A-Z",
+            ),
+        )
+
+
 class CorosyncBadNodeAddressesCount(NameBuildTest):
     def test_no_node_info(self):
         self.assert_message_from_report(

@@ -101,6 +101,64 @@ class Create(TestCase):
             ],
         )
 
+    def test_clustername_gfs2_too_long(self):
+        assert_report_item_list_equal(
+            config_validators.create(
+                33 * "a",
+                [{"name": "node1", "addrs": ["addr01"]},],
+                "udp",
+                "ipv4",
+            ),
+            [
+                fixture.error(
+                    report_codes.COROSYNC_CLUSTER_NAME_INVALID_FOR_GFS2,
+                    force_code=report_codes.FORCE_OPTIONS,
+                    cluster_name=(33 * "a"),
+                    max_length=32,
+                    allowed_characters="a-z A-Z 0-9 _-",
+                ),
+            ],
+        )
+
+    def test_clustername_gfs2_bad_characters(self):
+        assert_report_item_list_equal(
+            config_validators.create(
+                "cluster.name",
+                [{"name": "node1", "addrs": ["addr01"]},],
+                "udp",
+                "ipv4",
+            ),
+            [
+                fixture.error(
+                    report_codes.COROSYNC_CLUSTER_NAME_INVALID_FOR_GFS2,
+                    force_code=report_codes.FORCE_OPTIONS,
+                    cluster_name="cluster.name",
+                    max_length=32,
+                    allowed_characters="a-z A-Z 0-9 _-",
+                ),
+            ],
+        )
+
+    def test_clustername_gfs2_forced(self):
+        cluster_name = (16 * "a") + ".: @" + (16 * "b")
+        assert_report_item_list_equal(
+            config_validators.create(
+                cluster_name,
+                [{"name": "node1", "addrs": ["addr01"]},],
+                "udp",
+                "ipv4",
+                force_cluster_name=True,
+            ),
+            [
+                fixture.warn(
+                    report_codes.COROSYNC_CLUSTER_NAME_INVALID_FOR_GFS2,
+                    cluster_name=cluster_name,
+                    max_length=32,
+                    allowed_characters="a-z A-Z 0-9 _-",
+                ),
+            ],
+        )
+
     def test_nodelist_empty(self):
         assert_report_item_list_equal(
             config_validators.create("test-cluster", [], "udp", "ipv4"),
@@ -717,9 +775,16 @@ class Create(TestCase):
             ),
             [
                 fixture.error(
+                    report_codes.COROSYNC_CLUSTER_NAME_INVALID_FOR_GFS2,
+                    force_code=report_codes.FORCE_OPTIONS,
+                    cluster_name="test-{cluster",
+                    max_length=32,
+                    allowed_characters="a-z A-Z 0-9 _-",
+                ),
+                fixture.error(
                     report_codes.INVALID_OPTION_VALUE,
                     option_value="test-{cluster",
-                    option_name="name",
+                    option_name="cluster name",
                     **forbidden_characters_kwargs,
                 ),
                 fixture.error(
