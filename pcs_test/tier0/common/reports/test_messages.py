@@ -4523,17 +4523,20 @@ class TagAdjacentReferenceIdNotInTheTag(NameBuildTest):
         )
 
 
-class TagCannotAddAndRemoveTheSameIdsAtOnce(NameBuildTest):
+class TagCannotAddAndRemoveIdsAtTheSameTime(NameBuildTest):
     def test_message_one_item(self):
         self.assert_message_from_report(
-            "Cannot add and remove the same ids at once: 'id1'",
-            reports.TagCannotAddAndRemoveTheSameIdsAtOnce(["id1"]),
+            "Ids cannot be added and removed at the same time: 'id1'",
+            reports.TagCannotAddAndRemoveIdsAtTheSameTime(["id1"]),
         )
 
     def test_message_more_items(self):
         self.assert_message_from_report(
-            "Cannot add and remove the same ids at once: 'id1', 'id2', 'id3'",
-            reports.TagCannotAddAndRemoveTheSameIdsAtOnce(
+            (
+                "Ids cannot be added and removed at the same time: 'id1', "
+                "'id2', 'id3'"
+            ),
+            reports.TagCannotAddAndRemoveIdsAtTheSameTime(
                 ["id3", "id2", "id1"],
             ),
         )
@@ -4543,14 +4546,14 @@ class TagCannotAddReferenceIdAlreadyInTheTag(NameBuildTest):
     def test_message_singular(self):
         self.assert_message_from_report(
             "Cannot add reference id already in the tag 'tag_id': 'id1'",
-            reports.TagCannotAddReferenceIdsAlreadyInTheTag(["id1"], "tag_id",),
+            reports.TagCannotAddReferenceIdsAlreadyInTheTag("tag_id", ["id1"],),
         )
 
     def test_message_plural(self):
         self.assert_message_from_report(
             "Cannot add reference ids already in the tag 'TAG': 'id1', 'id2'",
             reports.TagCannotAddReferenceIdsAlreadyInTheTag(
-                ["id2", "id1"], "TAG",
+                "TAG", ["id2", "id1"],
             ),
         )
 
@@ -4581,7 +4584,7 @@ class TagCannotPutIdNextToItself(NameBuildTest):
 class TagCannotRemoveAdjacentId(NameBuildTest):
     def test_message(self):
         self.assert_message_from_report(
-            "Cannot remove id 'some_id' where we want to put ids next to",
+            "Cannot remove id 'some_id' next to which ids are being to put",
             reports.TagCannotRemoveAdjacentId("some_id"),
         )
 
@@ -4589,7 +4592,7 @@ class TagCannotRemoveAdjacentId(NameBuildTest):
 class TagCannotRemoveReferencesWithoutRemovingTag(NameBuildTest):
     def test_message(self):
         self.assert_message_from_report(
-            "Cannot remove references from a tag without removing the tag.",
+            "There would be no references left in the tag",
             reports.TagCannotRemoveReferencesWithoutRemovingTag(),
         )
 
@@ -4619,6 +4622,14 @@ class TagCannotRemoveTagsNoTagsSpecified(NameBuildTest):
         self.assert_message_from_report(
             "Cannot remove tags, no tags to remove specified",
             reports.TagCannotRemoveTagsNoTagsSpecified(),
+        )
+
+
+class TagCannotSpecifyAdjacentIdWithoutIdsToAdd(NameBuildTest):
+    def test_message(self):
+        self.assert_message_from_report(
+            "Cannot specify adjacent id 'some-id' without ids to add",
+            reports.TagCannotSpecifyAdjacentIdWithoutIdsToAdd("some-id"),
         )
 
 

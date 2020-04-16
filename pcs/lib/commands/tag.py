@@ -111,49 +111,30 @@ def update(
     Update specified tag by given id references.
 
     env -- provides all for communication with externals
-    tag_id -- identifier of new tag
-    idref_add -- reference ids to add
-    idref_remove -- reference ids to remove
-    adjacent_idref -- id of the existing reference in tag
-    put_after_adjacent -- flag where to put references
+    tag_id -- id of an existing tag to be updated
+    idref_add -- reference ids to be added
+    idref_remove -- reference ids to be removed
+    adjacent_idref -- id of the element next to which the added elements will
+        be put
+    put_after_adjacent -- put elements after (True) or before (False) the
+        adjacent element
     """
     with cib_tags_section(env) as tags_section:
-        tag_list, report_list = tag.find_tag_elements_by_ids(
-            tags_section, [tag_id],
+        validator = tag.ValidateTagUpdateByIds(
+            tag_id, idref_add, idref_remove, adjacent_idref,
         )
-        report_list += tag.validate_add_remove_ids(
-            get_resources(get_root(tags_section)),
-            tag_id,
-            idref_add,
-            idref_remove,
-            adjacent_idref,
-        )
-        if env.report_processor.report_list(report_list).has_errors:
+        if env.report_processor.report_list(
+            validator.validate(
+                get_resources(get_root(tags_section)), tags_section,
+            )
+        ).has_errors:
             raise LibraryError()
-
-        adjacent_element, report_list = tag.find_adjacent_obj_ref(
-            tag_list[0], adjacent_idref,
-        )
-        env.report_processor.report_list(report_list)
-        obj_ref_list, _ = tag.find_obj_ref_elements_in_tag(
-            tag_list[0], idref_add,
-        )
-        env.report_processor.report_list(
-            tag.validate_add_obj_ref(obj_ref_list, adjacent_element, tag_id)
-        )
-
-        remove_el_list, report_list = tag.find_obj_ref_elements_in_tag(
-            tag_list[0], idref_remove,
-        )
-        # avoid removing all references from tag that would leave tag empty
-        if not idref_add:
-            report_list += tag.validate_remove_obj_ref(remove_el_list)
-        if env.report_processor.report_list(report_list).has_errors:
-            raise LibraryError()
-        tag.add_obj_ref(
-            tag_list[0],
-            tag.create_obj_ref_elements(idref_add, obj_ref_list),
-            adjacent_element,
-            put_after_adjacent,
-        )
-        tag.remove_obj_ref(remove_el_list)
+        tag_element = validator.tag_element()
+        if tag_element is not None:
+            tag.add_obj_ref(
+                tag_element,
+                validator.add_obj_ref_element_list(),
+                validator.adjacent_obj_ref_element(),
+                put_after_adjacent,
+            )
+            tag.remove_obj_ref(validator.remove_obj_ref_element_list())

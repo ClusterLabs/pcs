@@ -605,6 +605,22 @@ class TagUpdate(TestTagMixin, TestCase):
             ),
         )
 
+    def test_fail_tag_update_add_ids_not_specified(self):
+        self.assert_pcs_fail(
+            "tag update tag1 add",
+            stdout_start=(
+                "Hint: Specify at least one id for 'add' or 'remove' arguments."
+            ),
+        )
+
+    def test_fail_tag_update_remove_ids_not_specified(self):
+        self.assert_pcs_fail(
+            "tag update tag1 remove",
+            stdout_start=(
+                "Hint: Specify at least one id for 'add' or 'remove' arguments."
+            ),
+        )
+
     def test_fail_tag_and_add_id_not_exist(self):
         self.assert_pcs_fail(
             "tag update nonexisting_tag add nonexisting_resource",
@@ -617,12 +633,25 @@ class TagUpdate(TestTagMixin, TestCase):
             ),
         )
 
-    def test_fail_id_is_not_tag_and_tag_id_in_add_ids(self):
+    def test_fail_add_id_exist_but_belongs_to_unexpected_type(self):
+        self.assert_pcs_success(
+            "resource create dummy-with-metadata ocf:pacemaker:Dummy"
+        )
+        self.assert_pcs_fail(
+            "tag update tag1 add dummy-with-metadata-start-interval-0s",
+            (
+                "Error: 'dummy-with-metadata-start-interval-0s' is not a "
+                "bundle/clone/group/resource\n"
+                "Error: Errors have occurred, therefore pcs is unable to "
+                "continue\n"
+            ),
+        )
+
+    def test_fail_id_is_not_tag(self):
         self.assert_pcs_fail(
             "tag update a add a",
             (
                 "Error: 'a' is not a tag\n"
-                "Error: Tag cannot contain itself\n"
                 "Error: Errors have occurred, therefore pcs is unable to "
                 "continue\n"
             ),
@@ -656,8 +685,6 @@ class TagUpdate(TestTagMixin, TestCase):
             (
                 "Error: There is no reference id 'no_id' in the tag 'tag1', "
                 "cannot put reference ids next to it in the tag\n"
-                "Error: Cannot add reference id already in the tag 'tag1': "
-                "'e1'\n"
                 "Error: Errors have occurred, therefore pcs is unable to "
                 "continue\n"
             ),
@@ -667,14 +694,14 @@ class TagUpdate(TestTagMixin, TestCase):
         self.assert_pcs_fail(
             "tag update tag1 add e1 e1 e2 e2 --before e1 remove e1 e1 e2 e2",
             (
+                "Error: Ids cannot be added and removed at the same time: "
+                "'e1', 'e2'\n"
                 "Error: Ids to add must be unique, duplicate ids: 'e1', 'e2'\n"
                 "Error: Ids to remove must be unique, duplicate ids: 'e1', 'e2'"
                 "\n"
-                "Error: Cannot add and remove the same ids at once: 'e1', 'e2'"
-                "\n"
                 "Error: Cannot put id 'e1' next to itself.\n"
-                "Error: Cannot remove id 'e1' where we want to put ids next to"
-                "\n"
+                "Error: Cannot remove id 'e1' next to which ids are being to "
+                "put\n"
                 "Error: Errors have occurred, therefore pcs is unable to "
                 "continue\n"
             ),
@@ -684,8 +711,32 @@ class TagUpdate(TestTagMixin, TestCase):
         self.assert_pcs_fail(
             "tag update tag1 remove e1 e2 e3",
             (
-                "Error: Cannot remove references from a tag without removing "
-                "the tag.\n"
+                "Error: There would be no references left in the tag, please "
+                "remove the whole tag using the 'pcs tag remove ...' command\n"
+                "Error: Errors have occurred, therefore pcs is unable to "
+                "continue\n"
+            ),
+        )
+
+    def test_fail_add_new_ids_and_remove_it_at_the_same_time(self):
+        self.assert_pcs_fail(
+            "tag update tag1 add a b remove a b",
+            (
+                "Error: Ids cannot be added and removed at the same time: 'a', "
+                "'b'\n"
+                "Error: there is no obj_ref 'a' in the tag 'tag1'\n"
+                "Error: there is no obj_ref 'b' in the tag 'tag1'\n"
+                "Error: Errors have occurred, therefore pcs is unable to "
+                "continue\n"
+            ),
+        )
+
+    def test_fail_remove_ids_not_in_tag(self):
+        self.assert_pcs_fail(
+            "tag update tag1 remove nonexistent1 nonexistent2",
+            (
+                "Error: there is no obj_ref 'nonexistent1' in the tag 'tag1'\n"
+                "Error: there is no obj_ref 'nonexistent2' in the tag 'tag1'\n"
                 "Error: Errors have occurred, therefore pcs is unable to "
                 "continue\n"
             ),

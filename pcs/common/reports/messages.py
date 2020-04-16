@@ -6178,38 +6178,38 @@ class TagAdjacentReferenceIdNotInTheTag(ReportItemMessage):
     Cannot put reference ids next to an adjacent reference id in a tag, because
     the adjacent reference id does not belong to the tag.
 
-    adjacent_idref -- id of an adjacent reference id
+    adjacent_id -- adjacent reference id
     tag_id -- tag id
     """
 
-    adjacent_idref: str
+    adjacent_id: str
     tag_id: str
     _code = codes.TAG_ADJACENT_REFERENCE_ID_NOT_IN_THE_TAG
 
     @property
     def message(self) -> str:
         return (
-            f"There is no reference id '{self.adjacent_idref}' in the tag "
+            f"There is no reference id '{self.adjacent_id}' in the tag "
             f"'{self.tag_id}', cannot put reference ids next to it in the tag"
         )
 
 
 @dataclass(frozen=True)
-class TagCannotAddAndRemoveTheSameIdsAtOnce(ReportItemMessage):
+class TagCannotAddAndRemoveIdsAtTheSameTime(ReportItemMessage):
     """
-    Cannot add and remove the same ids at once. Avoid operation without an
+    Cannot add and remove ids at the same time. Avoid operation without an
     effect.
 
     idref_list -- common ids from add and remove lists
     """
 
     idref_list: List[str]
-    _code = codes.TAG_CANNOT_ADD_AND_REMOVE_THE_SAME_IDS_AT_ONCE
+    _code = codes.TAG_CANNOT_ADD_AND_REMOVE_IDS_AT_THE_SAME_TIME
 
     @property
     def message(self) -> str:
         idref_list = format_list(self.idref_list)
-        return f"Cannot add and remove the same ids at once: {idref_list}"
+        return f"Ids cannot be added and removed at the same time: {idref_list}"
 
 
 @dataclass(frozen=True)
@@ -6217,12 +6217,12 @@ class TagCannotAddReferenceIdsAlreadyInTheTag(ReportItemMessage):
     """
     Cannot add reference ids already in the tag.
 
-    idref_list -- reference ids already in tag
     tag_id -- tag id
+    idref_list -- reference ids already in tag
     """
 
-    idref_list: List[str]
     tag_id: str
+    idref_list: List[str]
     _code = codes.TAG_CANNOT_ADD_REFERENCE_IDS_ALREADY_IN_THE_TAG
 
     @property
@@ -6267,14 +6267,16 @@ class TagCannotCreateEmptyTagNoIdsSpecified(ReportItemMessage):
 class TagCannotPutIdNextToItself(ReportItemMessage):
     """
     Cannot put id next to itself. Wrong adjacent id.
+
+    adjacent_id -- adjacent reference id
     """
 
-    idref: str
+    adjacent_id: str
     _code = codes.TAG_CANNOT_PUT_ID_NEXT_TO_ITSELF
 
     @property
     def message(self) -> str:
-        return f"Cannot put id '{self.idref}' next to itself."
+        return f"Cannot put id '{self.adjacent_id}' next to itself."
 
 
 @dataclass(frozen=True)
@@ -6282,16 +6284,17 @@ class TagCannotRemoveAdjacentId(ReportItemMessage):
     """
     Cannot remove adjacent id.
 
-    idref -- adjacent reference id
+    adjacent_id -- adjacent reference id
     """
 
-    idref: str
+    adjacent_id: str
     _code = codes.TAG_CANNOT_REMOVE_ADJACENT_ID
 
     @property
     def message(self) -> str:
         return (
-            f"Cannot remove id '{self.idref}' where we want to put ids next to"
+            f"Cannot remove id '{self.adjacent_id}' next to which ids are being"
+            " to put"
         )
 
 
@@ -6305,7 +6308,7 @@ class TagCannotRemoveReferencesWithoutRemovingTag(ReportItemMessage):
 
     @property
     def message(self) -> str:
-        return "Cannot remove references from a tag without removing the tag."
+        return "There would be no references left in the tag"
 
 
 @dataclass(frozen=True)
@@ -6344,6 +6347,25 @@ class TagCannotRemoveTagsNoTagsSpecified(ReportItemMessage):
     @property
     def message(self) -> str:
         return "Cannot remove tags, no tags to remove specified"
+
+
+@dataclass(frozen=True)
+class TagCannotSpecifyAdjacentIdWithoutIdsToAdd(ReportItemMessage):
+    """
+    Cannot specify adjacent id without ids to add.
+
+    adjacent_id -- adjacent reference id
+    """
+
+    adjacent_id: str
+    _code = codes.TAG_CANNOT_SPECIFY_ADJACENT_ID_WITHOUT_IDS_TO_ADD
+
+    @property
+    def message(self) -> str:
+        return (
+            f"Cannot specify adjacent id '{self.adjacent_id}' without ids to "
+            "add"
+        )
 
 
 @dataclass(frozen=True)

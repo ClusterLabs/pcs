@@ -212,19 +212,19 @@ class TagUpdate(TestCase):
         )
         self.tag.update.assert_not_called()
 
-    def test_add_success(self):
+    def test_only_add(self):
         self._call_cmd(["tag_id", "add", "id1"])
         self.tag.update.assert_called_once_with(
             "tag_id", ["id1"], [], adjacent_idref=None, put_after_adjacent=True,
         )
 
-    def test_remove_success(self):
+    def test_only_remove(self):
         self._call_cmd(["tag_id", "remove", "id1"])
         self.tag.update.assert_called_once_with(
             "tag_id", [], ["id1"], adjacent_idref=None, put_after_adjacent=True,
         )
 
-    def test_add_remove_success(self):
+    def test_both_add_remove(self):
         self._call_cmd(["tag_id", "remove", "i", "j", "add", "k", "l"])
         self.tag.update.assert_called_once_with(
             "tag_id",
@@ -234,14 +234,40 @@ class TagUpdate(TestCase):
             put_after_adjacent=True,
         )
 
-    def test_add_after_success(self):
+    def test_only_add_after(self):
         self._call_cmd(["tag_id", "add", "id1"], dict(after="A"))
         self.tag.update.assert_called_once_with(
             "tag_id", ["id1"], [], adjacent_idref="A", put_after_adjacent=True,
         )
 
-    def test_add_before_success(self):
+    def test_only_add_before(self):
         self._call_cmd(["tag_id", "add", "id1"], dict(before="B"))
         self.tag.update.assert_called_once_with(
             "tag_id", ["id1"], [], adjacent_idref="B", put_after_adjacent=False,
+        )
+
+    def test_add_after_and_remove(self):
+        self._call_cmd(
+            ["tag_id", "add", "id1", "id2", "remove", "id3", "id4"],
+            dict(after="A"),
+        )
+        self.tag.update.assert_called_once_with(
+            "tag_id",
+            ["id1", "id2"],
+            ["id3", "id4"],
+            adjacent_idref="A",
+            put_after_adjacent=True,
+        )
+
+    def test_add_before_and_remove(self):
+        self._call_cmd(
+            ["tag_id", "add", "id1", "id2", "remove", "id3", "id4"],
+            dict(before="B"),
+        )
+        self.tag.update.assert_called_once_with(
+            "tag_id",
+            ["id1", "id2"],
+            ["id3", "id4"],
+            adjacent_idref="B",
+            put_after_adjacent=False,
         )

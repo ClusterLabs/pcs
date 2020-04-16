@@ -275,34 +275,6 @@ class AppendWhenUseful(TestCase):
         assert_xml_equal(self.tree_str, etree_to_str(self.tree))
 
 
-class AppendElements(TestCase):
-    def setUp(self):
-        self.root = etree.Element("root")
-        self.parent_a = etree.SubElement(self.root, "parent-a")
-        self.child_a1 = etree.SubElement(self.parent_a, "child-a1")
-        self.parent_b = etree.SubElement(self.root, "parent-b")
-        self.child_b1 = etree.SubElement(self.parent_b, "child-b1")
-        self.to_append = [etree.Element(i) for i in "abc"] + [self.child_a1]
-
-    def test_append(self):
-        lib.append_elements(self.parent_b, self.to_append)
-        assert_xml_equal(
-            """
-            <root>
-                <parent-a/>
-                <parent-b>
-                    <child-b1/>
-                    <a/>
-                    <b/>
-                    <c/>
-                    <child-a1/>
-                </parent-b>
-            </root>
-            """,
-            etree_to_str(self.root),
-        )
-
-
 class MoveElements(TestCase):
     def setUp(self):
         self.root = etree.Element("root")
@@ -313,7 +285,7 @@ class MoveElements(TestCase):
         self.new2 = etree.SubElement(self.new1, "new2")
 
     def test_move_inside_before(self):
-        lib.move_elements(self.first, [self.third, self.second])
+        lib.move_elements([self.third, self.second], self.first)
         assert_xml_equal(
             """
             <root>
@@ -326,7 +298,9 @@ class MoveElements(TestCase):
         )
 
     def test_move_inside_after(self):
-        lib.move_elements(self.second, [self.third, self.first], True)
+        lib.move_elements(
+            [self.third, self.first], self.second, put_after_adjacent=True,
+        )
         assert_xml_equal(
             """
             <root>
@@ -339,7 +313,7 @@ class MoveElements(TestCase):
         )
 
     def test_move_into_before(self):
-        lib.move_elements(self.first, [self.new1, self.new2])
+        lib.move_elements([self.new1, self.new2], self.first)
         assert_xml_equal(
             """
             <root>
@@ -354,7 +328,7 @@ class MoveElements(TestCase):
         )
 
     def test_move_into_after(self):
-        lib.move_elements(self.second, [self.new1], True)
+        lib.move_elements([self.new1], self.second, put_after_adjacent=True)
         assert_xml_equal(
             """
             <root>
@@ -370,7 +344,7 @@ class MoveElements(TestCase):
         )
 
     def test_move_combined_before(self):
-        lib.move_elements(self.first, [self.third, self.new2])
+        lib.move_elements([self.third, self.new2], self.first)
         assert_xml_equal(
             """
             <root>
@@ -384,7 +358,9 @@ class MoveElements(TestCase):
         )
 
     def test_move_combined_after(self):
-        lib.move_elements(self.third, [self.new2, self.second], True)
+        lib.move_elements(
+            [self.new2, self.second], self.third, put_after_adjacent=True,
+        )
         assert_xml_equal(
             """
             <root>
@@ -410,20 +386,3 @@ class RemoveOneElement(TestCase):
     def test_remove_element_without_parent(self):
         lib.remove_one_element(self.root)
         assert_xml_equal("<root><sub/></root>", etree_to_str(self.root))
-
-
-class RemoveElements(TestCase):
-    def setUp(self):
-        self.root = etree.Element("root")
-        self.parent = etree.SubElement(self.root, "parent")
-        self.child = etree.SubElement(self.parent, "child")
-        self.attr = etree.SubElement(self.root, "attr", {"a": "A", "b": "B"})
-        self.noparent = etree.Element("noparent")
-
-    def test_remove_same_parent(self):
-        lib.remove_elements([self.parent, self.attr])
-        assert_xml_equal("<root/>", etree_to_str(self.root))
-
-    def test_remove_different_parents(self):
-        lib.remove_elements([self.noparent, self.child, self.attr])
-        assert_xml_equal("<root><parent/></root>", etree_to_str(self.root))

@@ -390,6 +390,17 @@ class WaitForIdleNotLiveCluster(CliReportMessageCustom):
         return "Cannot use '-f' together with '--wait'"
 
 
+class TagCannotRemoveReferencesWithoutRemovingTag(CliReportMessageCustom):
+    _obj: messages.TagCannotRemoveReferencesWithoutRemovingTag
+
+    @property
+    def message(self) -> str:
+        return (
+            f"There would be no references left in the tag, please remove the "
+            "whole tag using the 'pcs tag remove ...' command"
+        )
+
+
 def _create_report_msg_map() -> Dict[str, type]:
     result: Dict[str, type] = {}
     for report_msg_cls in get_all_subclasses(CliReportMessageCustom):

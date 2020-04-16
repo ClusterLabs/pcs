@@ -1466,7 +1466,7 @@ def resource_remove(resource_id, output=True, is_remove_remote_context=False):
         get_resources(xml_etree), resource_id, [],  # no need for report_list
     )
     if resource_el is not None:
-        tag_obj_ref_list = find_resource_ref_elements_in_tags(
+        tag_obj_ref_list, _ = find_resource_ref_elements_in_tags(
             get_tags(xml_etree),
             [
                 element.get("id", "")
