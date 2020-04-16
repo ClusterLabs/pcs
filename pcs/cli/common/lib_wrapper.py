@@ -462,7 +462,7 @@ def load_module(env, middleware_factory, name):
                 "delete": tag.remove,
                 "list": tag.config,
                 "remove": tag.remove,
-            }
+            },
         )
 
     raise Exception("No library part '{0}'".format(name))

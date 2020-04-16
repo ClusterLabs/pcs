@@ -2127,6 +2127,7 @@ Commands:
         return None
     return output
 
+
 def tag(args=(), pout=True):
     output = """
 Usage: pcs tag <command>

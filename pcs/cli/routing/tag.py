@@ -12,5 +12,5 @@ tag_cmd = create_router(
         "remove": tag.tag_remove,
     },
     ["tag"],
-    default_cmd="config"
+    default_cmd="config",
 )

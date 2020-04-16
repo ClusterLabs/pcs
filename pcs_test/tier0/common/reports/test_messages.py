@@ -4493,8 +4493,7 @@ class BoothTicketOperationFailedTest(NameBuildTest):
 class TagCannotContainItself(NameBuildTest):
     def test_message(self):
         self.assert_message_from_report(
-            "Tag cannot contain itself",
-            reports.TagCannotContainItself()
+            "Tag cannot contain itself", reports.TagCannotContainItself()
         )
 
 
@@ -4502,7 +4501,7 @@ class TagCannotCreateEmptyTagNoIdsSpecified(NameBuildTest):
     def test_message(self):
         self.assert_message_from_report(
             "Cannot create empty tag, no resource ids specified",
-            reports.TagCannotCreateEmptyTagNoIdsSpecified()
+            reports.TagCannotCreateEmptyTagNoIdsSpecified(),
         )
 
 
@@ -4512,9 +4511,8 @@ class TagCannotRemoveTagReferencedInConstraints(NameBuildTest):
             "Tag 'tag1' cannot be removed because it is referenced in "
             "constraint 'constraint-id-1'",
             reports.TagCannotRemoveTagReferencedInConstraints(
-                "tag1",
-                ['constraint-id-1'],
-            )
+                "tag1", ["constraint-id-1"],
+            ),
         )
 
     def test_message_plural(self):
@@ -4522,9 +4520,8 @@ class TagCannotRemoveTagReferencedInConstraints(NameBuildTest):
             "Tag 'tag2' cannot be removed because it is referenced in "
             "constraints 'constraint-id-1', 'constraint-id-2'",
             reports.TagCannotRemoveTagReferencedInConstraints(
-                "tag2",
-                ["constraint-id-1", "constraint-id-2"],
-            )
+                "tag2", ["constraint-id-1", "constraint-id-2"],
+            ),
         )
 
 
@@ -4532,7 +4529,7 @@ class TagCannotRemoveTagsNoTagsSpecified(NameBuildTest):
     def test_message(self):
         self.assert_message_from_report(
             "Cannot remove tags, no tags to remove specified",
-            reports.TagCannotRemoveTagsNoTagsSpecified()
+            reports.TagCannotRemoveTagsNoTagsSpecified(),
         )
 
 

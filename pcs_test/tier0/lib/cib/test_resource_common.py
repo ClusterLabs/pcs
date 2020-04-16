@@ -1333,7 +1333,7 @@ class ValidateUnmoveUnban(ValidateMoveBanClearMixin, TestCase):
 
 
 class FindResourcesToDelete(TestCase):
-    #pylint: disable=too-many-public-methods
+    # pylint: disable=too-many-public-methods
     def assert_element2element_list(self, element_id, element_id_list):
         self.assertEqual(
             common.find_resources_to_delete(
@@ -1368,8 +1368,7 @@ class FindResourcesToDelete(TestCase):
 
     def test_clone_with_group(self):
         self.assert_element2element_list(
-            "E-clone",
-            ["E-clone", "E", "E1", "E2"],
+            "E-clone", ["E-clone", "E", "E1", "E2"],
         )
 
     def test_group_in_clone(self):
@@ -1380,8 +1379,7 @@ class FindResourcesToDelete(TestCase):
 
     def test_master_with_group(self):
         self.assert_element2element_list(
-            "F-master",
-            ["F-master", "F", "F1", "F2"],
+            "F-master", ["F-master", "F", "F1", "F2"],
         )
 
     def test_group_in_master(self):

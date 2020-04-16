@@ -49,7 +49,7 @@ from pcs.lib.cib.tools import (
     get_resources,
     get_tags,
 )
-from pcs.lib.commands.resource import(
+from pcs.lib.commands.resource import (
     _validate_guest_change,
     _get_nodes_to_validate_against,
 )
@@ -1455,7 +1455,7 @@ def resource_remove(resource_id, output=True, is_remove_remote_context=False):
             get_cluster_state_dom(
                 lib_pacemaker.get_cluster_status_xml(utils.cmd_runner())
             ),
-            bundle_id
+            bundle_id,
         )
         return bool(roles_with_nodes)
 
@@ -1463,9 +1463,7 @@ def resource_remove(resource_id, output=True, is_remove_remote_context=False):
     cib_xml = utils.get_cib()
     xml_etree = lib_pacemaker.get_cib(cib_xml)
     resource_el = find_one_resource_and_report(
-        get_resources(xml_etree),
-        resource_id,
-        [], # no need for report_list
+        get_resources(xml_etree), resource_id, [],  # no need for report_list
     )
     if resource_el is not None:
         tag_obj_ref_list = find_resource_ref_elements_in_tags(
@@ -1476,10 +1474,12 @@ def resource_remove(resource_id, output=True, is_remove_remote_context=False):
             ],
         )
         if tag_obj_ref_list:
-            tag_id_list = sorted({
-                obj_ref.getparent().get("id", "")
-                for obj_ref in tag_obj_ref_list
-            })
+            tag_id_list = sorted(
+                {
+                    obj_ref.getparent().get("id", "")
+                    for obj_ref in tag_obj_ref_list
+                }
+            )
             utils.err(
                 "Unable to remove resource '{resource}' because it is "
                 "referenced in the tag{s}: {tags}".format(

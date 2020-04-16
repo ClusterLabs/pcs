@@ -198,9 +198,11 @@ def report_not_found(res_id, context_type="", expected_types=None):
                 "group",
                 "master",
                 "primitive",
-            ] if expected_types is None else expected_types,
+            ]
+            if expected_types is None
+            else expected_types,
         },
-        None
+        None,
     )
 
 

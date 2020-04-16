@@ -6,6 +6,7 @@ from pcs.cli.tag import command
 from pcs.lib.errors import LibraryError
 from pcs_test.tools.misc import dict_to_modifiers
 
+
 class TagCreate(TestCase):
     def setUp(self):
         self.lib = mock.Mock(spec_set=["tag"])
@@ -43,15 +44,10 @@ class TagCreate(TestCase):
 @mock.patch("pcs.cli.tag.command.print")
 class TagConfig(TestCase):
     tag_dicts = [
-        {
-            "tag_id": "tag1",
-            "idref_list": ["i1", "i2", "i3"],
-        },
-        {
-            "tag_id": "tag2",
-            "idref_list": ["j1", "j2", "j3"],
-        },
+        {"tag_id": "tag1", "idref_list": ["i1", "i2", "i3"],},
+        {"tag_id": "tag2", "idref_list": ["j1", "j2", "j3"],},
     ]
+
     def setUp(self):
         self.lib = mock.Mock(spec_set=["tag"])
         self.tag = mock.Mock(spec_set=["config"])
@@ -70,7 +66,9 @@ class TagConfig(TestCase):
         self.tag.config.return_value = self.tag_dicts
         self._call_cmd([])
         self.tag.config.assert_called_once_with([])
-        mock_print.assert_called_once_with(dedent("""\
+        mock_print.assert_called_once_with(
+            dedent(
+                """\
             tag1
               i1
               i2
@@ -78,33 +76,45 @@ class TagConfig(TestCase):
             tag2
               j1
               j2
-              j3"""))
+              j3"""
+            )
+        )
 
     def test_specified_tag(self, mock_print):
         self.tag.config.return_value = self.tag_dicts[1:2]
         self._call_cmd(["tag2"])
         self.tag.config.assert_called_once_with(["tag2"])
-        mock_print.assert_called_once_with(dedent("""\
+        mock_print.assert_called_once_with(
+            dedent(
+                """\
             tag2
               j1
               j2
-              j3"""))
+              j3"""
+            )
+        )
 
     def test_specified_another_tag(self, mock_print):
         self.tag.config.return_value = self.tag_dicts[0:1]
         self._call_cmd(["tag1"])
         self.tag.config.assert_called_once_with(["tag1"])
-        mock_print.assert_called_once_with(dedent("""\
+        mock_print.assert_called_once_with(
+            dedent(
+                """\
             tag1
               i1
               i2
-              i3"""))
+              i3"""
+            )
+        )
 
     def test_specified_more_tags_are_printed_in_given_order(self, mock_print):
         self.tag.config.return_value = self.tag_dicts[::-1]
         self._call_cmd(["tag2", "tag1"])
         self.tag.config.assert_called_once_with(["tag2", "tag1"])
-        mock_print.assert_called_once_with(dedent("""\
+        mock_print.assert_called_once_with(
+            dedent(
+                """\
             tag2
               j1
               j2
@@ -112,7 +122,9 @@ class TagConfig(TestCase):
             tag1
               i1
               i2
-              i3"""))
+              i3"""
+            )
+        )
 
     def test_no_print_on_exception(self, mock_print):
         self.tag.config.side_effect = LibraryError()

@@ -45,24 +45,15 @@ class TestTagMixin(
         self.assert_pcs_success(
             (
                 "resource create {} ocf:pacemaker:Dummy clone --no-default-ops"
-            ).format(
-                _id,
-            )
+            ).format(_id,)
         )
 
     def fixture_location_constraint_with_id(
-        self,
-        constraint_id,
-        resource_id,
-        node_id="rh7-1",
-        score="INFINITY",
+        self, constraint_id, resource_id, node_id="rh7-1", score="INFINITY",
     ):
         self.assert_pcs_success(
             "constraint location add {} {} {} {} --force".format(
-                constraint_id,
-                resource_id,
-                node_id,
-                score,
+                constraint_id, resource_id, node_id, score,
             ),
             stdout_start="Warning: Validation for node existence",
         )
@@ -103,12 +94,10 @@ class TagCreate(TestTagMixin, TestCase):
 
     def test_create_not_enough_arguments(self):
         self.assert_pcs_fail(
-            "tag create",
-            stdout_start="\nUsage: pcs tag <command>",
+            "tag create", stdout_start="\nUsage: pcs tag <command>",
         )
         self.assert_pcs_fail(
-            "tag create tag",
-            stdout_start="\nUsage: pcs tag <command>",
+            "tag create tag", stdout_start="\nUsage: pcs tag <command>",
         )
         self.assert_pcs_success("tag", " No tags defined\n")
 
@@ -217,13 +206,11 @@ class TagConfigListBase(TestTagMixin):
 
     def test_config_empty(self):
         self.assert_pcs_success(
-            "tag",
-            " No tags defined\n",
+            "tag", " No tags defined\n",
         )
 
         self.assert_pcs_success(
-            f"tag {self.command}",
-            " No tags defined\n",
+            f"tag {self.command}", " No tags defined\n",
         )
 
     def test_config_tag_does_not_exist(self):
@@ -304,15 +291,13 @@ class TagConfigListBase(TestTagMixin):
 
 
 class TagConfig(
-    TagConfigListBase,
-    TestCase,
+    TagConfigListBase, TestCase,
 ):
     command = "config"
 
 
 class TagList(
-    TagConfigListBase,
-    TestCase,
+    TagConfigListBase, TestCase,
 ):
     command = "list"
 
@@ -380,10 +365,7 @@ class PcsConfigTagsTest(TestTagMixin, TestCase):
 
     def test_config_no_tags(self):
         self.assert_pcs_success(
-            "config",
-            self.fixture_expected_config(
-                tags="\n No tags defined\n"
-            )
+            "config", self.fixture_expected_config(tags="\n No tags defined\n")
         )
 
     def test_config_tags_defined(self):
@@ -394,8 +376,7 @@ class PcsConfigTagsTest(TestTagMixin, TestCase):
         self.assert_pcs_success(
             "config",
             self.fixture_expected_config(
-                resources=self.expected_resources,
-                tags=self.expected_tags,
+                resources=self.expected_resources, tags=self.expected_tags,
             ),
         )
 
@@ -411,8 +392,7 @@ class TagRemoveDeleteBase(TestTagMixin):
     def test_remove_not_enough_arguments(self):
         self.fixture_tags(1)
         self.assert_pcs_fail(
-            f"tag {self.command}",
-            stdout_start="\nUsage: pcs tag <command>",
+            f"tag {self.command}", stdout_start="\nUsage: pcs tag <command>",
         )
         self.assert_resources_xml_in_cib(
             """
@@ -502,15 +482,13 @@ class TagRemoveDeleteBase(TestTagMixin):
 
 
 class TagRemove(
-    TagRemoveDeleteBase,
-    TestCase,
+    TagRemoveDeleteBase, TestCase,
 ):
     command = "remove"
 
 
 class TagDelete(
-    TagRemoveDeleteBase,
-    TestCase,
+    TagRemoveDeleteBase, TestCase,
 ):
     command = "delete"
 
@@ -563,15 +541,14 @@ class ResourceRemoveDeleteBase(TestTagMixin):
             self.fixture_error_message("duplicate-tag", ["TAG3"]),
         )
 
+
 class ResourceRemove(
-    ResourceRemoveDeleteBase,
-    TestCase,
+    ResourceRemoveDeleteBase, TestCase,
 ):
     command = "remove"
 
 
 class ResourceDelete(
-    ResourceRemoveDeleteBase,
-    TestCase,
+    ResourceRemoveDeleteBase, TestCase,
 ):
     command = "delete"

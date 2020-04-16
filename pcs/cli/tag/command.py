@@ -6,10 +6,9 @@ from pcs.cli.common.errors import CmdLineInputError
 from pcs.cli.common.parse_args import InputModifiers
 from pcs.common.str_tools import indent
 
+
 def tag_create(
-    lib: Any,
-    argv: Sequence[str],
-    modifiers: InputModifiers,
+    lib: Any, argv: Sequence[str], modifiers: InputModifiers,
 ) -> None:
     """
     Options:
@@ -21,10 +20,9 @@ def tag_create(
     tag_id, idref_list = argv[0], argv[1:]
     lib.tag.create(tag_id, idref_list)
 
+
 def tag_config(
-    lib: Any,
-    argv: Sequence[str],
-    modifiers: InputModifiers,
+    lib: Any, argv: Sequence[str], modifiers: InputModifiers,
 ) -> None:
     """
     Options:
@@ -41,10 +39,9 @@ def tag_config(
         lines.extend(indent(tag["idref_list"]))
     print("\n".join(lines))
 
+
 def tag_remove(
-    lib: Any,
-    argv: Sequence[str],
-    modifiers: InputModifiers,
+    lib: Any, argv: Sequence[str], modifiers: InputModifiers,
 ) -> None:
     """
     Options:

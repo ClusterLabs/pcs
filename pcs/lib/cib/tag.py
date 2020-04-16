@@ -16,14 +16,13 @@ from lxml.etree import _Element
 
 from pcs.common import reports
 from pcs.common.reports import ReportItem, ReportItemList
-from pcs.lib.cib.resource.common import (
-    find_resources_and_report,
-)
+from pcs.lib.cib.resource.common import find_resources_and_report
 from pcs.lib.cib.tools import ElementSearcher, IdProvider
 from pcs.lib.pacemaker.values import validate_id
 
 TAG_TAG = "tag"
 TAG_OBJREF = "obj_ref"
+
 
 def _validate_tag_id(tag_id: str, id_provider: IdProvider) -> ReportItemList:
     """
@@ -37,9 +36,9 @@ def _validate_tag_id(tag_id: str, id_provider: IdProvider) -> ReportItemList:
     report_list.extend(id_provider.book_ids(tag_id))
     return report_list
 
+
 def _validate_tag_id_not_in_idref_list(
-    tag_id: str,
-    idref_list: Container[str],
+    tag_id: str, idref_list: Container[str],
 ) -> ReportItemList:
     """
     Validate that idref_list does not contain tag_id.
@@ -51,6 +50,7 @@ def _validate_tag_id_not_in_idref_list(
         return [ReportItem.error(reports.messages.TagCannotContainItself())]
     return []
 
+
 def _validate_duplicate_reference_ids(
     idref_list: Iterable[str],
 ) -> ReportItemList:
@@ -60,9 +60,7 @@ def _validate_duplicate_reference_ids(
     idref_list -- reference ids which we want to tag
     """
     duplicate_ids_list = [
-        id
-        for id, count in Counter(idref_list).items()
-        if count > 1
+        id for id, count in Counter(idref_list).items() if count > 1
     ]
     if duplicate_ids_list:
         return [
@@ -72,9 +70,9 @@ def _validate_duplicate_reference_ids(
         ]
     return []
 
+
 def _validate_reference_ids_are_resources(
-    resources_section: Element,
-    idref_list: Iterable[str],
+    resources_section: Element, idref_list: Iterable[str],
 ) -> ReportItemList:
     """
     Validate that ids are resources.
@@ -92,11 +90,10 @@ def _validate_reference_ids_are_resources(
         ]
     report_list: ReportItemList = []
     find_resources_and_report(
-        resources_section,
-        idref_list,
-        report_list,
+        resources_section, idref_list, report_list,
     )
     return report_list
+
 
 def validate_create_tag(
     resources_section: Element,
@@ -117,17 +114,14 @@ def validate_create_tag(
     """
     return (
         _validate_tag_id(tag_id, id_provider)
-        +
-        _validate_tag_id_not_in_idref_list(tag_id, idref_list)
-        +
-        _validate_reference_ids_are_resources(resources_section, idref_list)
-        +
-        _validate_duplicate_reference_ids(idref_list)
+        + _validate_tag_id_not_in_idref_list(tag_id, idref_list)
+        + _validate_reference_ids_are_resources(resources_section, idref_list)
+        + _validate_duplicate_reference_ids(idref_list)
     )
 
+
 def validate_remove_tag(
-    constraint_section: Element,
-    to_remove_tag_list: Iterable[str],
+    constraint_section: Element, to_remove_tag_list: Iterable[str],
 ) -> ReportItemList:
     """
     Validation function for tag removal.
@@ -146,8 +140,7 @@ def validate_remove_tag(
     report_list = []
     for tag_id in to_remove_tag_list:
         constraint_list = find_constraints_referencing_tag(
-            constraint_section,
-            tag_id,
+            constraint_section, tag_id,
         )
         if constraint_list:
             report_list.append(
@@ -162,9 +155,9 @@ def validate_remove_tag(
             )
     return report_list
 
+
 def find_obj_ref_elements(
-    tags_section: Element,
-    idref_list: Iterable[str],
+    tags_section: Element, idref_list: Iterable[str],
 ) -> List[Element]:
     """
     Find obj_ref elements which contain ids from specified list.
@@ -181,9 +174,9 @@ def find_obj_ref_elements(
             element_list.extend(cast(List[Element], obj_ref_list))
     return element_list
 
+
 def find_constraints_referencing_tag(
-    constraints_section: Element,
-    tag_id: str,
+    constraints_section: Element, tag_id: str,
 ) -> Iterable[Element]:
     """
     Find constraint elements which are referencing specified tag.
@@ -220,13 +213,15 @@ def find_constraints_referencing_tag(
         (./rsc_colocation|./rsc_location|./rsc_order|./rsc_ticket)[
             ./resource_set/resource_ref[@id="{_id}"]
         ]
-        """.format(_id=tag_id)
+        """.format(
+            _id=tag_id
+        )
     )
     return cast(Iterable[Element], constraint_list)
 
+
 def find_tag_elements_by_ids(
-    tags_section: Element,
-    tag_id_list: Iterable[str],
+    tags_section: Element, tag_id_list: Iterable[str],
 ) -> Tuple[List[Element], ReportItemList]:
     """
     Try to find tag elements by ids and return them with non-empty report
@@ -246,10 +241,9 @@ def find_tag_elements_by_ids(
 
     return element_list, report_list
 
+
 def create_tag(
-    tags_section: Element,
-    tag_id: str,
-    idref_list: Iterable[str],
+    tags_section: Element, tag_id: str, idref_list: Iterable[str],
 ) -> Element:
     """
     Create new tag element and add it to cib.
@@ -264,9 +258,8 @@ def create_tag(
         etree.SubElement(tag_el, TAG_OBJREF, id=ref_id)
     return cast(Element, tag_el)
 
-def remove_tag(
-    tag_elements: Iterable[Element],
-) -> None:
+
+def remove_tag(tag_elements: Iterable[Element],) -> None:
     """
     Remove given tag elements from a cib.
 
@@ -278,6 +271,7 @@ def remove_tag(
         if parent is not None:
             parent.remove(element)
 
+
 def get_list_of_tag_elements(tags_section: Element) -> List[Element]:
     """
     Get list of tag elements from cib.
@@ -285,6 +279,7 @@ def get_list_of_tag_elements(tags_section: Element) -> List[Element]:
     tags_section -- element tags
     """
     return tags_section.findall("tag")
+
 
 def tag_element_to_dict(
     tag_element: Element,
