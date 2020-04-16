@@ -1487,6 +1487,9 @@ monitor interval=20 (A-monitor-interval-20)
 
             Cluster Properties:
 
+            Tags:
+             No tags defined
+
             Quorum:
               Options:
             """
@@ -1706,6 +1709,9 @@ monitor interval=20 (A-monitor-interval-20)
              No defaults set
 
             Cluster Properties:
+
+            Tags:
+             No tags defined
 
             Quorum:
               Options:

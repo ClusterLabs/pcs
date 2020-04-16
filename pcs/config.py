@@ -184,6 +184,16 @@ def _config_show_cib_lines(lib):
             indent_step=1,
         )
     )
+    all_lines.append("")
+    all_lines.append("Tags:")
+    tags = lib.tag.config([])
+    if not tags:
+        all_lines.append(" No tags defined")
+    tag_lines = []
+    for tag in tags:
+        tag_lines.append(tag["tag_id"])
+        tag_lines.extend(indent(tag["idref_list"]))
+    all_lines.extend(indent(tag_lines, indent_step=1))
     return all_lines
 
 

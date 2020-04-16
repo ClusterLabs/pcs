@@ -19,6 +19,7 @@ ALERTS = "alerts"
 FENCING_TOPOLOGY = "fencing-topology"
 OP_DEFAULTS = "op_defaults"
 RSC_DEFAULTS = "rsc_defaults"
+TAGS = "tags"
 
 __MANDATORY_SECTIONS = [
     CONFIGURATION,
@@ -34,6 +35,7 @@ __OPTIONAL_SECTIONS = [
     FENCING_TOPOLOGY,
     OP_DEFAULTS,
     RSC_DEFAULTS,
+    TAGS,
 ]
 
 

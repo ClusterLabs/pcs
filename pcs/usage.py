@@ -25,6 +25,7 @@ def full_usage():
     out += strip_extras(alert([], False))
     out += strip_extras(client([], False))
     out += strip_extras(dr([], False))
+    out += strip_extras(tag([], False))
     print(out.strip())
     print("Examples:\n" + examples.replace(r" \ ", ""))
 
@@ -131,6 +132,7 @@ def generate_completion_tree_from_usage():
     tree["booth"] = generate_tree(booth([], False))
     tree["client"] = generate_tree(client([], False))
     tree["dr"] = generate_tree(dr([], False))
+    tree["tag"] = generate_tree(tag([], False))
     return tree
 
 
@@ -204,6 +206,7 @@ Commands:
     alert       Manage pacemaker alerts.
     client      Manage pcsd client configuration.
     dr          Manage disaster recovery configuration.
+    tag         Manage pacemaker tags.
 """
     # Advanced usage to possibly add later
     #  --corosync_conf=<corosync file> Specify alternative corosync.conf file
@@ -2125,6 +2128,30 @@ Commands:
     return output
 
 
+def tag(args=(), pout=True):
+    output = """
+Usage: pcs tag <command>
+Manage pacemaker tags.
+
+Commands:
+    [config|list [<tag id>...]]
+        Display configured tags.
+
+    create <tag id> <id> [<id>]...
+        Create a tag containing the specified ids.
+
+    delete <tag id>...
+        Delete specified tags.
+
+    remove <tag id>...
+        Delete specified tags.
+"""
+    if pout:
+        print(sub_usage(args, output))
+        return None
+    return output
+
+
 def dr(args=(), pout=True):
     output = """
 Usage: pcs dr <command>
@@ -2170,6 +2197,7 @@ def show(main_usage_name, rest_usage_names):
         "resource": resource,
         "status": status,
         "stonith": stonith,
+        "tag": tag,
     }
     if main_usage_name not in usage_map:
         raise Exception(

@@ -382,6 +382,14 @@ def get_status(tree):
     return get_sub_element(tree, "status")
 
 
+def get_tags(tree):
+    """
+    Return 'tags' element from tree, create a new one if missing
+    tree -- cib etree node
+    """
+    return sections.get(tree, sections.TAGS)
+
+
 def _get_cib_version(cib, attribute, regexp, none_if_missing=False):
     version = cib.get(attribute)
     if version is None:
