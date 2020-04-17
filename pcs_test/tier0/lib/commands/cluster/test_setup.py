@@ -3159,3 +3159,118 @@ class SslCertSync(RemoveCallsMixin, TestCase):
                 )
             ]
         )
+
+
+class SetupLocal(TestCase):
+    def setUp(self):
+        self.env_assist, self.config = get_env_tools(self)
+
+    def test_minimal(self):
+        self.config.env.set_known_nodes(NODE_LIST + ["random_node"])
+        patch_getaddrinfo(self, NODE_LIST)
+        self.assertEqual(
+            corosync_conf_fixture(COROSYNC_NODE_LIST),
+            cluster.setup_local(
+                self.env_assist.get_env(),
+                CLUSTER_NAME,
+                COMMAND_NODE_LIST,
+                transport_type=None,
+                transport_options={},
+                link_list=[],
+                compression_options={},
+                crypto_options={},
+                totem_options={},
+                quorum_options={},
+                force_flags=[],
+            ),
+        )
+        self.env_assist.assert_reports(
+            [
+                fixture.info(
+                    report_codes.USING_KNOWN_HOST_ADDRESS_FOR_HOST,
+                    host_name=node,
+                    address=node,
+                )
+                for node in NODE_LIST
+            ]
+        )
+
+    def test_address_defaulting(self):
+        self.config.env.set_known_nodes(NODE_LIST[2:] + ["random_node"])
+        self.maxDiff = None
+        patch_getaddrinfo(self, NODE_LIST + ["node2.addr"])
+        self.assertEqual(
+            corosync_conf_fixture(
+                {
+                    "node1": ["node1"],
+                    "node2": ["node2.addr"],
+                    "node3": ["node3"],
+                }
+            ),
+            cluster.setup_local(
+                self.env_assist.get_env(),
+                CLUSTER_NAME,
+                [
+                    dict(name="node1"),
+                    dict(name="node2", addrs=["node2.addr"]),
+                    dict(name="node3"),
+                ],
+                transport_type=None,
+                transport_options={},
+                link_list=[],
+                compression_options={},
+                crypto_options={},
+                totem_options={},
+                quorum_options={},
+                force_flags=[],
+            ),
+        )
+        self.env_assist.assert_reports(
+            [
+                fixture.info(
+                    report_codes.USING_KNOWN_HOST_ADDRESS_FOR_HOST,
+                    host_name="node3",
+                    address="node3",
+                )
+            ]
+        )
+
+    def test_errors_from_all_validators(self):
+        patch_getaddrinfo(self, [])
+
+        self.env_assist.assert_raise_library_error(
+            lambda: cluster.setup_local(
+                self.env_assist.get_env(),
+                "",
+                [],
+                transport_type="tcp",
+                transport_options={},
+                link_list=[],
+                compression_options={},
+                crypto_options={},
+                totem_options={},
+                quorum_options={},
+                force_flags=[],
+            )
+        )
+        self.env_assist.assert_reports(
+            [
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_value="",
+                    option_name="cluster name",
+                    allowed_values=None,
+                    cannot_be_empty=True,
+                    forbidden_characters=None,
+                ),
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_value="tcp",
+                    option_name="transport",
+                    allowed_values=("knet", "udp", "udpu"),
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
+                ),
+                fixture.error(report_codes.COROSYNC_NODES_MISSING),
+            ]
+        )

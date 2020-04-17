@@ -1597,17 +1597,23 @@ def cluster_setup(lib, argv, modifiers):
         as warnings
       * --no-keys-sync - do not create and distribute pcsd ssl cert and key,
         corosync and pacemaker authkeys
+      * --corosync_conf - corosycn.conf file path
     """
+    is_local = modifiers.is_specified("--corosync_conf")
+    allowed_options = ["--force"]
+    if is_local:
+        allowed_options.append("--corosync_conf")
+    else:
+        allowed_options += ["--wait", "--start", "--enable", "--no-keys-sync"]
     modifiers.ensure_only_supported(
-        "--wait",
-        "--start",
-        "--enable",
-        "--force",
-        "--no-keys-sync",
+        *allowed_options,
         # The hint is defined to print error messages which point users to the
         # changes section in pcs manpage.
         # To be removed in the next significant version.
         hint_syntax_changed=modifiers.is_specified("--name"),
+        # TODO: add note to amn page about removing --local from pcs cluster
+        # setup and replacing its functionality with --corosync_conf and add
+        # add warnign about this change when used
     )
     # pylint: disable=invalid-name
     if len(argv) < 2:
@@ -1640,7 +1646,32 @@ def cluster_setup(lib, argv, modifiers):
     if modifiers.get("--force"):
         force_flags.append(report_codes.FORCE)
 
-    lib.cluster.setup(
+    if not is_local:
+        lib.cluster.setup(
+            cluster_name,
+            nodes,
+            transport_type=transport_type,
+            transport_options=transport_options.get(
+                TRANSPORT_DEFAULT_SECTION, {}
+            ),
+            link_list=transport_options.get(LINK_KEYWORD, []),
+            compression_options=transport_options.get("compression", {}),
+            crypto_options=transport_options.get("crypto", {}),
+            totem_options=parse_args.prepare_options(
+                parsed_args.get("totem", [])
+            ),
+            quorum_options=parse_args.prepare_options(
+                parsed_args.get("quorum", [])
+            ),
+            wait=modifiers.get("--wait"),
+            start=modifiers.get("--start"),
+            enable=modifiers.get("--enable"),
+            no_keys_sync=modifiers.get("--no-keys-sync"),
+            force_flags=force_flags,
+        )
+        return
+
+    corosync_conf_data = lib.cluster.setup_local(
         cluster_name,
         nodes,
         transport_type=transport_type,
@@ -1652,12 +1683,18 @@ def cluster_setup(lib, argv, modifiers):
         quorum_options=parse_args.prepare_options(
             parsed_args.get("quorum", [])
         ),
-        wait=modifiers.get("--wait"),
-        start=modifiers.get("--start"),
-        enable=modifiers.get("--enable"),
-        no_keys_sync=modifiers.get("--no-keys-sync"),
         force_flags=force_flags,
     )
+    try:
+        # TODO: act properly in case file already exists
+        with open(modifiers.get("--corosync_conf"), "w") as corosync_conf:
+            corosync_conf.write(corosync_conf_data)
+    except EnvironmentError as e:
+        raise error(
+            "Unable to write {0}: {1}".format(
+                modifiers.get("--corosync_conf"), e.strerror
+            )
+        )
 
 
 def _parse_add_node(argv):
