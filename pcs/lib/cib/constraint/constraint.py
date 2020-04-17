@@ -98,11 +98,19 @@ def export_plain(element):
     return {"options": export_attributes(element)}
 
 def create_id(cib, type_prefix, resource_set_list):
-    id = "pcs_" +type_prefix +"".join([
-        "_set_"+"_".join(id_set)
-        for id_set in resource_set.extract_id_set_list(resource_set_list)
-    ])
-    return find_unique_id(cib, id)
+    # Create a semi-random id. We need it to be predictable (for testing), short
+    # and somehow different than other ids so that we don't spend much time in
+    # find_unique_id.
+    # Avoid using actual resource names. It makes the id very long (consider 10
+    # or more resources in a set constraint). Also, if a resource is deleted
+    # and therefore removed from the constraint, the id no longer matches the
+    # constraint.
+    resource_ids = []
+    for _set in resource_set_list:
+        resource_ids.extend(_set["ids"])
+    id_part = "".join([_id[0] + _id[-1] for _id in resource_ids][:3])
+    return find_unique_id(cib, "{0}_set_{1}".format(type_prefix, id_part)
+    )
 
 def have_duplicate_resource_sets(element, other_element):
     get_id_set_list = lambda element: [

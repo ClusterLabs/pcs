@@ -36,7 +36,7 @@ class PrepareOptionsWithSetTest(TestCase):
         self.assertEqual(expected_options, self.prepare(options))
         mock_create_id.assert_called_once_with(
             self.cib,
-            order.TAG_NAME,
+            "order",
             self.resource_set_list
         )
 

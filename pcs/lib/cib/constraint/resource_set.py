@@ -39,9 +39,6 @@ def validate_options(options):
                 reports.invalid_option_value(name, value, ATTRIB[name])
             )
 
-def extract_id_set_list(resource_set_list):
-    return [resource_set["ids"] for resource_set in resource_set_list]
-
 def create(parent, resource_set):
     """
     parent - lxml element for append new resource_set
@@ -50,7 +47,7 @@ def create(parent, resource_set):
     element.attrib.update(resource_set["options"])
     element.attrib["id"] = find_unique_id(
         parent.getroottree(),
-        "pcs_rsc_set_{0}".format("_".join(resource_set["ids"]))
+        "{0}_set".format(parent.attrib.get("id", "constraint_set"))
     )
 
     for id in resource_set["ids"]:
