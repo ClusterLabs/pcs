@@ -27,7 +27,7 @@ class PrepareOptionsWithSetTest(TestCase):
         expected_options.update({"id": "generated_id"})
         self.assertEqual(expected_options, self.prepare(options))
         mock_create_id.assert_called_once_with(
-            self.cib, colocation.TAG_NAME, self.resource_set_list
+            self.cib, "colocation", self.resource_set_list
         )
 
     def test_refuse_invalid_id(self, mock_check_new_id_applicable):

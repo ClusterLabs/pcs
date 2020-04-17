@@ -58,11 +58,11 @@ class CreateWithSetTest(TestCase):
             etree.XML(
                 """
             <rsc_some id="some_id" symmetrical="true">
-                  <resource_set id="pcs_rsc_set_A_B" role="Master">
+                  <resource_set id="some_id_set" role="Master">
                       <resource_ref id="A"></resource_ref>
                       <resource_ref id="B"></resource_ref>
                   </resource_set>
-                  <resource_set action="start" id="pcs_rsc_set_E_F">
+                  <resource_set action="start" id="some_id_set-1">
                       <resource_ref id="E"></resource_ref>
                       <resource_ref id="F"></resource_ref>
                   </resource_set>
@@ -103,14 +103,14 @@ class CreateWithSetTest(TestCase):
                                         "ids": ["A", "B"],
                                         "options": {
                                             "role": "Master",
-                                            "id": "pcs_rsc_set_A_B",
+                                            "id": "some_id_set",
                                         },
                                     },
                                     {
                                         "ids": ["E", "F"],
                                         "options": {
                                             "action": "start",
-                                            "id": "pcs_rsc_set_E_F",
+                                            "id": "some_id_set-1",
                                         },
                                     },
                                 ],
@@ -136,11 +136,11 @@ class CreateWithSetTest(TestCase):
             etree.XML(
                 """
             <rsc_some id="some_id" symmetrical="true">
-                <resource_set id="pcs_rsc_set_A_B" role="Master">
+                <resource_set id="some_id_set" role="Master">
                     <resource_ref id="A"></resource_ref>
                     <resource_ref id="B"></resource_ref>
                 </resource_set>
-                <resource_set action="start" id="pcs_rsc_set_E_F">
+                <resource_set action="start" id="some_id_set-1">
                     <resource_ref id="E"></resource_ref>
                     <resource_ref id="F"></resource_ref>
                 </resource_set>
@@ -152,11 +152,11 @@ class CreateWithSetTest(TestCase):
             etree.XML(
                 """
             <rsc_some id="some_id" symmetrical="true">
-                <resource_set id="pcs_rsc_set_A_B-1" role="Master">
+                <resource_set id="some_id_set-2" role="Master">
                     <resource_ref id="A"></resource_ref>
                     <resource_ref id="B"></resource_ref>
                 </resource_set>
-                <resource_set action="start" id="pcs_rsc_set_E_F-1">
+                <resource_set action="start" id="some_id_set-3">
                     <resource_ref id="E"></resource_ref>
                     <resource_ref id="F"></resource_ref>
                 </resource_set>
@@ -209,7 +209,7 @@ class ShowTest(TestCase):
                                 "ids": ["A", "B"],
                                 "options": {
                                     "role": "Master",
-                                    "id": "pcs_rsc_set_A_B",
+                                    "id": "some_id_set",
                                 },
                             }
                         ],
@@ -222,7 +222,7 @@ class ShowTest(TestCase):
                                 "ids": ["E", "F"],
                                 "options": {
                                     "action": "start",
-                                    "id": "pcs_rsc_set_E_F",
+                                    "id": "some_id_set-1",
                                 },
                             }
                         ],

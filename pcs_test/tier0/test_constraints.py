@@ -959,14 +959,14 @@ Ticket Constraints:
             """\
 Colocation Constraints:
   Resource Sets:
-    set D5 D6 D7 require-all=true sequential=false (id:pcs_rsc_set_D5_D6_D7) set D8 D9 action=start require-all=false role=Stopped sequential=true (id:pcs_rsc_set_D8_D9) setoptions score=INFINITY (id:pcs_rsc_colocation_set_D5_D6_D7_set_D8_D9)
-    set D5 D6 (id:pcs_rsc_set_D5_D6) setoptions score=INFINITY (id:pcs_rsc_colocation_set_D5_D6)
-    set D5 D6 action=stop role=Started (id:pcs_rsc_set_D5_D6-1) set D7 D8 action=promote role=Slave (id:pcs_rsc_set_D7_D8) set D8 D9 action=demote role=Master (id:pcs_rsc_set_D8_D9-1) setoptions score=INFINITY (id:pcs_rsc_colocation_set_D5_D6_set_D7_D8_set_D8_D9)
+    set D5 D6 D7 require-all=true sequential=false (id:colocation_set_D5D6D7_set) set D8 D9 action=start require-all=false role=Stopped sequential=true (id:colocation_set_D5D6D7_set-1) setoptions score=INFINITY (id:colocation_set_D5D6D7)
+    set D5 D6 (id:colocation_set_D5D6_set) setoptions score=INFINITY (id:colocation_set_D5D6)
+    set D5 D6 action=stop role=Started (id:colocation_set_D5D6D7-1_set) set D7 D8 action=promote role=Slave (id:colocation_set_D5D6D7-1_set-1) set D8 D9 action=demote role=Master (id:colocation_set_D5D6D7-1_set-2) setoptions score=INFINITY (id:colocation_set_D5D6D7-1)
 """,
         )
         assert r == 0
 
-        o, r = pcs(temp_cib, "constraint delete pcs_rsc_colocation_set_D5_D6")
+        o, r = pcs(temp_cib, "constraint delete colocation_set_D5D6")
         ac(o, "")
         assert r == 0
 
@@ -976,8 +976,8 @@ Colocation Constraints:
             """\
 Colocation Constraints:
   Resource Sets:
-    set D5 D6 D7 require-all=true sequential=false (id:pcs_rsc_set_D5_D6_D7) set D8 D9 action=start require-all=false role=Stopped sequential=true (id:pcs_rsc_set_D8_D9) setoptions score=INFINITY (id:pcs_rsc_colocation_set_D5_D6_D7_set_D8_D9)
-    set D5 D6 action=stop role=Started (id:pcs_rsc_set_D5_D6-1) set D7 D8 action=promote role=Slave (id:pcs_rsc_set_D7_D8) set D8 D9 action=demote role=Master (id:pcs_rsc_set_D8_D9-1) setoptions score=INFINITY (id:pcs_rsc_colocation_set_D5_D6_set_D7_D8_set_D8_D9)
+    set D5 D6 D7 require-all=true sequential=false (id:colocation_set_D5D6D7_set) set D8 D9 action=start require-all=false role=Stopped sequential=true (id:colocation_set_D5D6D7_set-1) setoptions score=INFINITY (id:colocation_set_D5D6D7)
+    set D5 D6 action=stop role=Started (id:colocation_set_D5D6D7-1_set) set D7 D8 action=promote role=Slave (id:colocation_set_D5D6D7-1_set-1) set D8 D9 action=demote role=Master (id:colocation_set_D5D6D7-1_set-2) setoptions score=INFINITY (id:colocation_set_D5D6D7-1)
 """,
         )
         assert r == 0
@@ -987,8 +987,8 @@ Colocation Constraints:
             o,
             outdent(
                 """\
-            Removing D5 from set pcs_rsc_set_D5_D6_D7
-            Removing D5 from set pcs_rsc_set_D5_D6-1
+            Removing D5 from set colocation_set_D5D6D7_set
+            Removing D5 from set colocation_set_D5D6D7-1_set
             Deleting Resource - D5
             """
             ),
@@ -1000,9 +1000,9 @@ Colocation Constraints:
             o,
             outdent(
                 """\
-            Removing D6 from set pcs_rsc_set_D5_D6_D7
-            Removing D6 from set pcs_rsc_set_D5_D6-1
-            Removing set pcs_rsc_set_D5_D6-1
+            Removing D6 from set colocation_set_D5D6D7_set
+            Removing D6 from set colocation_set_D5D6D7-1_set
+            Removing set colocation_set_D5D6D7-1_set
             Deleting Resource - D6
             """
             ),
@@ -1012,14 +1012,26 @@ Colocation Constraints:
         o, r = pcs(temp_cib, "constraint ref D7")
         ac(
             o,
-            "Resource: D7\n  pcs_rsc_colocation_set_D5_D6_D7_set_D8_D9\n  pcs_rsc_colocation_set_D5_D6_set_D7_D8_set_D8_D9\n",
+            outdent(
+                """\
+            Resource: D7
+              colocation_set_D5D6D7
+              colocation_set_D5D6D7-1
+            """
+            ),
         )
         assert r == 0
 
         o, r = pcs(temp_cib, "constraint ref D8")
         ac(
             o,
-            "Resource: D8\n  pcs_rsc_colocation_set_D5_D6_D7_set_D8_D9\n  pcs_rsc_colocation_set_D5_D6_set_D7_D8_set_D8_D9\n",
+            outdent(
+                """\
+            Resource: D8
+              colocation_set_D5D6D7
+              colocation_set_D5D6D7-1
+            """
+            ),
         )
         assert r == 0
 
@@ -1340,13 +1352,13 @@ Colocation Constraints:
             """\
 Ordering Constraints:
   Resource Sets:
-    set D5 D6 D7 require-all=true sequential=false (id:pcs_rsc_set_D5_D6_D7) set D8 D9 action=start require-all=false role=Stopped sequential=true (id:pcs_rsc_set_D8_D9) (id:pcs_rsc_order_set_D5_D6_D7_set_D8_D9)
-    set D5 D6 (id:pcs_rsc_set_D5_D6) (id:pcs_rsc_order_set_D5_D6)
-    set D5 D6 action=stop role=Started (id:pcs_rsc_set_D5_D6-1) set D7 D8 action=promote role=Slave (id:pcs_rsc_set_D7_D8) set D8 D9 action=demote role=Master (id:pcs_rsc_set_D8_D9-1) (id:pcs_rsc_order_set_D5_D6_set_D7_D8_set_D8_D9)
+    set D5 D6 D7 require-all=true sequential=false (id:order_set_D5D6D7_set) set D8 D9 action=start require-all=false role=Stopped sequential=true (id:order_set_D5D6D7_set-1) (id:order_set_D5D6D7)
+    set D5 D6 (id:order_set_D5D6_set) (id:order_set_D5D6)
+    set D5 D6 action=stop role=Started (id:order_set_D5D6D7-1_set) set D7 D8 action=promote role=Slave (id:order_set_D5D6D7-1_set-1) set D8 D9 action=demote role=Master (id:order_set_D5D6D7-1_set-2) (id:order_set_D5D6D7-1)
 """,
         )
 
-        o, r = pcs(temp_cib, "constraint remove pcs_rsc_order_set_D5_D6")
+        o, r = pcs(temp_cib, "constraint remove order_set_D5D6")
         assert r == 0
         ac(o, "")
 
@@ -1357,8 +1369,8 @@ Ordering Constraints:
             """\
 Ordering Constraints:
   Resource Sets:
-    set D5 D6 D7 require-all=true sequential=false (id:pcs_rsc_set_D5_D6_D7) set D8 D9 action=start require-all=false role=Stopped sequential=true (id:pcs_rsc_set_D8_D9) (id:pcs_rsc_order_set_D5_D6_D7_set_D8_D9)
-    set D5 D6 action=stop role=Started (id:pcs_rsc_set_D5_D6-1) set D7 D8 action=promote role=Slave (id:pcs_rsc_set_D7_D8) set D8 D9 action=demote role=Master (id:pcs_rsc_set_D8_D9-1) (id:pcs_rsc_order_set_D5_D6_set_D7_D8_set_D8_D9)
+    set D5 D6 D7 require-all=true sequential=false (id:order_set_D5D6D7_set) set D8 D9 action=start require-all=false role=Stopped sequential=true (id:order_set_D5D6D7_set-1) (id:order_set_D5D6D7)
+    set D5 D6 action=stop role=Started (id:order_set_D5D6D7-1_set) set D7 D8 action=promote role=Slave (id:order_set_D5D6D7-1_set-1) set D8 D9 action=demote role=Master (id:order_set_D5D6D7-1_set-2) (id:order_set_D5D6D7-1)
 """,
         )
 
@@ -1367,8 +1379,8 @@ Ordering Constraints:
             o,
             outdent(
                 """\
-            Removing D5 from set pcs_rsc_set_D5_D6_D7
-            Removing D5 from set pcs_rsc_set_D5_D6-1
+            Removing D5 from set order_set_D5D6D7_set
+            Removing D5 from set order_set_D5D6D7-1_set
             Deleting Resource - D5
             """
             ),
@@ -1380,9 +1392,9 @@ Ordering Constraints:
             o,
             outdent(
                 """\
-            Removing D6 from set pcs_rsc_set_D5_D6_D7
-            Removing D6 from set pcs_rsc_set_D5_D6-1
-            Removing set pcs_rsc_set_D5_D6-1
+            Removing D6 from set order_set_D5D6D7_set
+            Removing D6 from set order_set_D5D6D7-1_set
+            Removing set order_set_D5D6D7-1_set
             Deleting Resource - D6
             """
             ),
@@ -1473,9 +1485,9 @@ Error: invalid option 'foo', allowed options are: 'id', 'kind', 'symmetrical'
 Location Constraints:
 Ordering Constraints:
   Resource Sets:
-    set D7 require-all=true sequential=false (id:pcs_rsc_set_D5_D6_D7) set D8 D9 action=start require-all=false role=Stopped sequential=true (id:pcs_rsc_set_D8_D9) (id:pcs_rsc_order_set_D5_D6_D7_set_D8_D9)
-    set D7 D8 action=promote role=Slave (id:pcs_rsc_set_D7_D8) set D8 D9 action=demote role=Master (id:pcs_rsc_set_D8_D9-1) (id:pcs_rsc_order_set_D5_D6_set_D7_D8_set_D8_D9)
-    set D1 D2 (id:pcs_rsc_set_D1_D2) setoptions kind=Mandatory symmetrical=false (id:pcs_rsc_order_set_D1_D2)
+    set D7 require-all=true sequential=false (id:order_set_D5D6D7_set) set D8 D9 action=start require-all=false role=Stopped sequential=true (id:order_set_D5D6D7_set-1) (id:order_set_D5D6D7)
+    set D7 D8 action=promote role=Slave (id:order_set_D5D6D7-1_set-1) set D8 D9 action=demote role=Master (id:order_set_D5D6D7-1_set-2) (id:order_set_D5D6D7-1)
+    set D1 D2 (id:order_set_D1D2_set) setoptions kind=Mandatory symmetrical=false (id:order_set_D1D2)
 Colocation Constraints:
 Ticket Constraints:
 """,
@@ -1877,11 +1889,11 @@ Location Constraints:
 Ordering Constraints:
   start stateful1 then start dummy1 (kind:Mandatory) (id:order-stateful1-dummy1-mandatory)
   Resource Sets:
-    set stateful1 dummy1 (id:pcs_rsc_set_stateful1_dummy1) (id:pcs_rsc_order_set_stateful1_dummy1)
+    set stateful1 dummy1 (id:order_set_s1d1_set) (id:order_set_s1d1)
 Colocation Constraints:
   stateful1 with dummy1 (score:INFINITY) (id:colocation-stateful1-dummy1-INFINITY)
   Resource Sets:
-    set stateful1 dummy1 (id:pcs_rsc_set_stateful1_dummy1-1) setoptions score=INFINITY (id:pcs_rsc_colocation_set_stateful1_dummy1)
+    set stateful1 dummy1 (id:colocation_set_s1d1_set) setoptions score=INFINITY (id:colocation_set_s1d1)
 Ticket Constraints:
 """,
         )
@@ -2058,11 +2070,11 @@ Location Constraints:
 Ordering Constraints:
   start dummy then start dummy1 (kind:Mandatory) (id:order-dummy-dummy1-mandatory)
   Resource Sets:
-    set dummy1 dummy (id:pcs_rsc_set_dummy1_dummy) (id:pcs_rsc_order_set_dummy1_dummy)
+    set dummy1 dummy (id:order_set_d1dy_set) (id:order_set_d1dy)
 Colocation Constraints:
   dummy with dummy1 (score:INFINITY) (id:colocation-dummy-dummy1-INFINITY)
   Resource Sets:
-    set dummy1 dummy (id:pcs_rsc_set_dummy1_dummy-1) setoptions score=INFINITY (id:pcs_rsc_colocation_set_dummy1_dummy)
+    set dummy1 dummy (id:colocation_set_d1dy_set) setoptions score=INFINITY (id:colocation_set_d1dy)
 Ticket Constraints:
 """,
         )
@@ -2772,7 +2784,7 @@ Ticket Constraints:
                 "Error: duplicate constraint already exists, use --force to "
                 "override",
                 ERRORS_HAVE_OCURRED + "Duplicate constraints:",
-                "  set D1 D2 (id:pcs_rsc_set_D1_D2) (id:pcs_rsc_order_set_D1_D2)",
+                "  set D1 D2 (id:order_set_D1D2_set) (id:order_set_D1D2)",
             ),
         )
         self.assertEqual(1, returnVal)
@@ -2782,7 +2794,7 @@ Ticket Constraints:
             output,
             console_report(
                 "Duplicate constraints:",
-                "  set D1 D2 (id:pcs_rsc_set_D1_D2) (id:pcs_rsc_order_set_D1_D2)",
+                "  set D1 D2 (id:order_set_D1D2_set) (id:order_set_D1D2)",
                 "Warning: duplicate constraint already exists",
             ),
         )
@@ -2803,7 +2815,7 @@ Ticket Constraints:
                 "Error: duplicate constraint already exists, use --force to "
                 "override",
                 ERRORS_HAVE_OCURRED + "Duplicate constraints:",
-                "  set D1 D2 (id:pcs_rsc_set_D1_D2-2) set D5 D6 (id:pcs_rsc_set_D5_D6) (id:pcs_rsc_order_set_D1_D2_set_D5_D6)",
+                "  set D1 D2 (id:order_set_D1D2D5_set) set D5 D6 (id:order_set_D1D2D5_set-1) (id:order_set_D1D2D5)",
             ),
         )
         self.assertEqual(1, returnVal)
@@ -2815,7 +2827,7 @@ Ticket Constraints:
             output,
             console_report(
                 "Duplicate constraints:",
-                "  set D1 D2 (id:pcs_rsc_set_D1_D2-2) set D5 D6 (id:pcs_rsc_set_D5_D6) (id:pcs_rsc_order_set_D1_D2_set_D5_D6)",
+                "  set D1 D2 (id:order_set_D1D2D5_set) set D5 D6 (id:order_set_D1D2D5_set-1) (id:order_set_D1D2D5)",
                 "Warning: duplicate constraint already exists",
             ),
         )
@@ -2832,7 +2844,7 @@ Ticket Constraints:
                 "Error: duplicate constraint already exists, use --force to "
                 "override",
                 ERRORS_HAVE_OCURRED + "Duplicate constraints:",
-                "  set D1 D2 (id:pcs_rsc_set_D1_D2-4) setoptions score=INFINITY (id:pcs_rsc_colocation_set_D1_D2)",
+                "  set D1 D2 (id:colocation_set_D1D2_set) setoptions score=INFINITY (id:colocation_set_D1D2)",
             ),
         )
         self.assertEqual(1, returnVal)
@@ -2844,7 +2856,7 @@ Ticket Constraints:
             output,
             console_report(
                 "Duplicate constraints:",
-                "  set D1 D2 (id:pcs_rsc_set_D1_D2-4) setoptions score=INFINITY (id:pcs_rsc_colocation_set_D1_D2)",
+                "  set D1 D2 (id:colocation_set_D1D2_set) setoptions score=INFINITY (id:colocation_set_D1D2)",
                 "Warning: duplicate constraint already exists",
             ),
         )
@@ -2865,7 +2877,7 @@ Ticket Constraints:
                 "Error: duplicate constraint already exists, use --force to "
                 "override",
                 ERRORS_HAVE_OCURRED + "Duplicate constraints:",
-                "  set D1 D2 (id:pcs_rsc_set_D1_D2-6) set D5 D6 (id:pcs_rsc_set_D5_D6-2) setoptions score=INFINITY (id:pcs_rsc_colocation_set_D1_D2_set_D5_D6)",
+                "  set D1 D2 (id:colocation_set_D1D2D5_set) set D5 D6 (id:colocation_set_D1D2D5_set-1) setoptions score=INFINITY (id:colocation_set_D1D2D5)",
             ),
         )
         self.assertEqual(1, returnVal)
@@ -2877,7 +2889,7 @@ Ticket Constraints:
             output,
             console_report(
                 "Duplicate constraints:",
-                "  set D1 D2 (id:pcs_rsc_set_D1_D2-6) set D5 D6 (id:pcs_rsc_set_D5_D6-2) setoptions score=INFINITY (id:pcs_rsc_colocation_set_D1_D2_set_D5_D6)",
+                "  set D1 D2 (id:colocation_set_D1D2D5_set) set D5 D6 (id:colocation_set_D1D2D5_set-1) setoptions score=INFINITY (id:colocation_set_D1D2D5)",
                 "Warning: duplicate constraint already exists",
             ),
         )
@@ -2898,18 +2910,18 @@ Ticket Constraints:
 Location Constraints:
 Ordering Constraints:
   Resource Sets:
-    set D1 D2 (id:pcs_rsc_set_D1_D2) (id:pcs_rsc_order_set_D1_D2)
-    set D1 D2 (id:pcs_rsc_set_D1_D2-1) (id:pcs_rsc_order_set_D1_D2-1)
-    set D1 D2 (id:pcs_rsc_set_D1_D2-2) set D5 D6 (id:pcs_rsc_set_D5_D6) (id:pcs_rsc_order_set_D1_D2_set_D5_D6)
-    set D1 D2 (id:pcs_rsc_set_D1_D2-3) set D5 D6 (id:pcs_rsc_set_D5_D6-1) (id:pcs_rsc_order_set_D1_D2_set_D5_D6-1)
-    set D6 D1 (id:pcs_rsc_set_D6_D1-1) (id:pcs_rsc_order_set_D6_D1)
+    set D1 D2 (id:order_set_D1D2_set) (id:order_set_D1D2)
+    set D1 D2 (id:order_set_D1D2-1_set) (id:order_set_D1D2-1)
+    set D1 D2 (id:order_set_D1D2D5_set) set D5 D6 (id:order_set_D1D2D5_set-1) (id:order_set_D1D2D5)
+    set D1 D2 (id:order_set_D1D2D5-1_set) set D5 D6 (id:order_set_D1D2D5-1_set-1) (id:order_set_D1D2D5-1)
+    set D6 D1 (id:order_set_D6D1_set) (id:order_set_D6D1)
 Colocation Constraints:
   Resource Sets:
-    set D1 D2 (id:pcs_rsc_set_D1_D2-4) setoptions score=INFINITY (id:pcs_rsc_colocation_set_D1_D2)
-    set D1 D2 (id:pcs_rsc_set_D1_D2-5) setoptions score=INFINITY (id:pcs_rsc_colocation_set_D1_D2-1)
-    set D1 D2 (id:pcs_rsc_set_D1_D2-6) set D5 D6 (id:pcs_rsc_set_D5_D6-2) setoptions score=INFINITY (id:pcs_rsc_colocation_set_D1_D2_set_D5_D6)
-    set D1 D2 (id:pcs_rsc_set_D1_D2-7) set D5 D6 (id:pcs_rsc_set_D5_D6-3) setoptions score=INFINITY (id:pcs_rsc_colocation_set_D1_D2_set_D5_D6-1)
-    set D6 D1 (id:pcs_rsc_set_D6_D1) setoptions score=INFINITY (id:pcs_rsc_colocation_set_D6_D1)
+    set D1 D2 (id:colocation_set_D1D2_set) setoptions score=INFINITY (id:colocation_set_D1D2)
+    set D1 D2 (id:colocation_set_D1D2-1_set) setoptions score=INFINITY (id:colocation_set_D1D2-1)
+    set D1 D2 (id:colocation_set_D1D2D5_set) set D5 D6 (id:colocation_set_D1D2D5_set-1) setoptions score=INFINITY (id:colocation_set_D1D2D5)
+    set D1 D2 (id:colocation_set_D1D2D5-1_set) set D5 D6 (id:colocation_set_D1D2D5-1_set-1) setoptions score=INFINITY (id:colocation_set_D1D2D5-1)
+    set D6 D1 (id:colocation_set_D6D1_set) setoptions score=INFINITY (id:colocation_set_D6D1)
 Ticket Constraints:
 """,
         )
@@ -3214,14 +3226,14 @@ Ordering Constraints:
   start D1 then start D2 (kind:Mandatory) (id:id7)
   start D2 then start D1 (kind:Optional) (id:id8)
   Resource Sets:
-    set D1 D2 (id:pcs_rsc_set_D1_D2-1) (id:id5)
-    set D2 D1 (id:pcs_rsc_set_D2_D1-1) setoptions kind=Mandatory (id:id6)
+    set D1 D2 (id:id5_set) (id:id5)
+    set D2 D1 (id:id6_set) setoptions kind=Mandatory (id:id6)
 Colocation Constraints:
   D1 with D2 (score:INFINITY) (id:id1)
   D2 with D1 (score:100) (id:id2)
   Resource Sets:
-    set D1 D2 (id:pcs_rsc_set_D1_D2) setoptions score=INFINITY (id:id3)
-    set D2 D1 (id:pcs_rsc_set_D2_D1) setoptions score=100 (id:id4)
+    set D1 D2 (id:id3_set) setoptions score=INFINITY (id:id3)
+    set D2 D1 (id:id4_set) setoptions score=100 (id:id4)
 Ticket Constraints:
 """,
         )
@@ -4038,10 +4050,8 @@ class BundleColocation(Bundle):
             "constraint colocation set B X",
             """
                 <constraints>
-                    <rsc_colocation id="pcs_rsc_colocation_set_B_X"
-                        score="INFINITY"
-                    >
-                        <resource_set id="pcs_rsc_set_B_X">
+                    <rsc_colocation id="colocation_set_BBXX" score="INFINITY">
+                        <resource_set id="colocation_set_BBXX_set">
                             <resource_ref id="B" />
                             <resource_ref id="X" />
                         </resource_set>
@@ -4064,10 +4074,8 @@ class BundleColocation(Bundle):
             "constraint colocation set R X --force",
             """
                 <constraints>
-                    <rsc_colocation id="pcs_rsc_colocation_set_R_X"
-                        score="INFINITY"
-                    >
-                        <resource_set id="pcs_rsc_set_R_X">
+                    <rsc_colocation id="colocation_set_RRXX" score="INFINITY">
+                        <resource_set id="colocation_set_RRXX_set">
                             <resource_ref id="R" />
                             <resource_ref id="X" />
                         </resource_set>
@@ -4126,8 +4134,8 @@ class BundleOrder(Bundle):
             "constraint order set B X",
             """
                 <constraints>
-                    <rsc_order id="pcs_rsc_order_set_B_X">
-                        <resource_set id="pcs_rsc_set_B_X">
+                    <rsc_order id="order_set_BBXX">
+                        <resource_set id="order_set_BBXX_set">
                             <resource_ref id="B" />
                             <resource_ref id="X" />
                         </resource_set>
@@ -4150,8 +4158,8 @@ class BundleOrder(Bundle):
             "constraint order set R X --force",
             """
                 <constraints>
-                    <rsc_order id="pcs_rsc_order_set_R_X">
-                        <resource_set id="pcs_rsc_set_R_X">
+                    <rsc_order id="order_set_RRXX">
+                        <resource_set id="order_set_RRXX_set">
                             <resource_ref id="R" />
                             <resource_ref id="X" />
                         </resource_set>
@@ -4201,8 +4209,8 @@ class BundleTicket(Bundle):
             "constraint ticket set B setoptions ticket=T",
             """
                 <constraints>
-                    <rsc_ticket id="pcs_rsc_ticket_set_B" ticket="T">
-                        <resource_set id="pcs_rsc_set_B">
+                    <rsc_ticket id="ticket_set_BB" ticket="T">
+                        <resource_set id="ticket_set_BB_set">
                             <resource_ref id="B" />
                         </resource_set>
                     </rsc_ticket>
@@ -4224,8 +4232,8 @@ class BundleTicket(Bundle):
             "constraint ticket set R setoptions ticket=T --force",
             """
                 <constraints>
-                    <rsc_ticket id="pcs_rsc_ticket_set_R" ticket="T">
-                        <resource_set id="pcs_rsc_set_R">
+                    <rsc_ticket id="ticket_set_RR" ticket="T">
+                        <resource_set id="ticket_set_RR_set">
                             <resource_ref id="R" />
                         </resource_set>
                     </rsc_ticket>

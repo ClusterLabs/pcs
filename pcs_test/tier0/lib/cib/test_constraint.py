@@ -210,19 +210,14 @@ class PrepareOptionsTest(TestCase):
 
 
 class CreateIdTest(TestCase):
-    @mock.patch(
-        "pcs.lib.cib.constraint.constraint.resource_set.extract_id_set_list"
-    )
     @mock.patch("pcs.lib.cib.constraint.constraint.find_unique_id")
-    def test_create_id_from_resource_set_list(self, mock_find_id, mock_extract):
-        mock_extract.return_value = [["A", "B"], ["C"]]
+    def test_create_id_from_resource_set_list(self, mock_find_id):
+        resource_set_list = [{"ids": ["A", "B"]}, {"ids": ["C"]}]
         mock_find_id.return_value = "some_id"
         self.assertEqual(
-            "some_id",
-            constraint.create_id("cib", "PREFIX", "resource_set_list"),
+            "some_id", constraint.create_id("cib", "PREFIX", resource_set_list),
         )
-        mock_extract.assert_called_once_with("resource_set_list")
-        mock_find_id.assert_called_once_with("cib", "pcs_PREFIX_set_A_B_set_C")
+        mock_find_id.assert_called_once_with("cib", "PREFIX_set_AABBCC")
 
 
 def fixture_constraint_section(return_value):
@@ -343,7 +338,7 @@ class CreateWithSetTest(TestCase):
             """
             <constraints>
                 <ticket a="b">
-                    <resource_set c="d" id="pcs_rsc_set_A_B">
+                    <resource_set c="d" id="constraint_set_set">
                         <resource_ref id="A"/>
                         <resource_ref id="B"/>
                     </resource_set>

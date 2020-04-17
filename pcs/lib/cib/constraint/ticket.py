@@ -53,7 +53,7 @@ def prepare_options_with_set(cib, options, resource_set_list):
         tuple(ATTRIB.keys()),
         options,
         create_id_fn=partial(
-            constraint.create_id, cib, TAG_NAME, resource_set_list
+            constraint.create_id, cib, "ticket", resource_set_list
         ),
         validate_id=partial(tools.check_new_id_applicable, cib, DESCRIPTION),
     )

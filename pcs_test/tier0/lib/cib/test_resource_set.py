@@ -62,19 +62,6 @@ class PrepareSetTest(TestCase):
         )
 
 
-class ExtractIdListTest(TestCase):
-    def test_return_id_list_from_resource_set_list(self):
-        self.assertEqual(
-            [["A", "B"], ["C", "D"]],
-            resource_set.extract_id_set_list(
-                [
-                    {"ids": ["A", "B"], "options": {}},
-                    {"ids": ["C", "D"], "options": {}},
-                ]
-            ),
-        )
-
-
 class CreateTest(TestCase):
     def test_resource_set_to_parent(self):
         constraint_element = etree.Element("constraint")
@@ -86,7 +73,7 @@ class CreateTest(TestCase):
             etree.tostring(constraint_element).decode(),
             """
             <constraint>
-              <resource_set id="pcs_rsc_set_A_B" sequential="true">
+              <resource_set id="constraint_set_set" sequential="true">
                 <resource_ref id="A"></resource_ref>
                 <resource_ref id="B"></resource_ref>
               </resource_set>

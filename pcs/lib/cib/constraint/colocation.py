@@ -16,7 +16,7 @@ def prepare_options_with_set(cib, options, resource_set_list):
     options = constraint.prepare_options(
         tuple(SCORE_NAMES),
         options,
-        partial(constraint.create_id, cib, TAG_NAME, resource_set_list),
+        partial(constraint.create_id, cib, "colocation", resource_set_list),
         partial(check_new_id_applicable, cib, DESCRIPTION),
     )
 
