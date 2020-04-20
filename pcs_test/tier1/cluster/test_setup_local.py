@@ -1,72 +1,130 @@
-import tempfile
-from unittest import TestCase
+import json
 from textwrap import dedent
+from unittest import TestCase
 
 from pcs_test.tools.assertions import AssertPcsMixin
-
+from pcs_test.tools.misc import get_tmp_file
 from pcs_test.tools.pcs_runner import PcsRunner
 
 
-# TODO: switch check of created corosync.conf with a new command for displaying
-# corosync.conf once avalable
 class SetupLocal(AssertPcsMixin, TestCase):
     def setUp(self):
-        self.corosync_conf_file = tempfile.NamedTemporaryFile("r")
+        self.corosync_conf_file = get_tmp_file(
+            "tier1_cluster_setup_local_corosync.conf"
+        )
+        self.known_hosts_file = get_tmp_file(
+            "tier1_cluster_setup_local_known-hosts"
+        )
         self.pcs_runner = PcsRunner(
-            cib_file=None, corosync_conf_opt=self.corosync_conf_file.name
+            cib_file=None,
+            corosync_conf_opt=self.corosync_conf_file.name,
+            mock_settings={
+                "pcsd_known_hosts_location": self.known_hosts_file.name,
+            },
         )
 
     def tearDown(self):
         self.corosync_conf_file.close()
+        if not self.known_hosts_file.closed:
+            self.known_hosts_file.close()
 
-    def test_minimal(self):
-        _, code = self.pcs_runner.run(
-            # need to use --froce for not failing on unresolvable addresses
-            "cluster setup cluster_name node1 node2 --force",
+    def fixture_known_hosts(self, node_list):
+        data = {
+            "format_version": 1,
+            "data_version": 1,
+            "known_hosts": {},
+        }
+        for node in node_list:
+            data["known_hosts"][node["name"]] = {
+                "dest_list": [{"addr": f"{node['addr']}", "port": 2224}],
+                "token": f"{node['name']}_token",
+            }
+        self.known_hosts_file.write(json.dumps(data))
+        self.known_hosts_file.flush()
+
+    @staticmethod
+    def fixture_corosync_conf_minimal(node1_addr, node2_addr):
+        return dedent(
+            f"""\
+            totem {{
+                version: 2
+                cluster_name: cluster_name
+                transport: knet
+                crypto_cipher: aes256
+                crypto_hash: sha256
+            }}
+
+            nodelist {{
+                node {{
+                    ring0_addr: {node1_addr}
+                    name: node1
+                    nodeid: 1
+                }}
+
+                node {{
+                    ring0_addr: {node2_addr}
+                    name: node2
+                    nodeid: 2
+                }}
+            }}
+
+            quorum {{
+                provider: corosync_votequorum
+                two_node: 1
+            }}
+
+            logging {{
+                to_logfile: yes
+                logfile: /var/log/cluster/corosync.log
+                to_syslog: yes
+                timestamp: on
+            }}
+            """
         )
-        self.assertEqual(code, 0)
-        self.assertEqual(
-            self.corosync_conf_file.read(),
+
+    def test_minimal_no_known_hosts(self):
+        self.known_hosts_file.close()
+        self.assert_pcs_success(
+            # need to use --force for not failing on unresolvable addresses
+            "cluster setup cluster_name node1 node2 --force",
             dedent(
-                """\
-                totem {
-                    version: 2
-                    cluster_name: cluster_name
-                    transport: knet
-                    crypto_cipher: aes256
-                    crypto_hash: sha256
-                }
-
-                nodelist {
-                    node {
-                        ring0_addr: node1
-                        name: node1
-                        nodeid: 1
-                    }
-
-                    node {
-                        ring0_addr: node2
-                        name: node2
-                        nodeid: 2
-                    }
-                }
-
-                quorum {
-                    provider: corosync_votequorum
-                    two_node: 1
-                }
-
-                logging {
-                    to_logfile: yes
-                    logfile: /var/log/cluster/corosync.log
-                    to_syslog: yes
-                    timestamp: on
-                }
+                # pylint: disable=line-too-long
+                f"""\
+                Warning: Unable to read the known-hosts file: No such file or directory: '{self.known_hosts_file.name}'
+                No addresses specified for host 'node1', using 'node1'
+                No addresses specified for host 'node2', using 'node2'
+                Warning: Unable to resolve addresses: 'node1', 'node2'
                 """
             ),
         )
+        self.assertEqual(
+            self.corosync_conf_file.read(),
+            self.fixture_corosync_conf_minimal("node1", "node2"),
+        )
+
+    def test_minimal_all_known_hosts(self):
+        self.fixture_known_hosts(
+            [
+                {"name": "node1", "addr": "10.0.1.1"},
+                {"name": "node2", "addr": "10.0.1.2"},
+            ]
+        )
+        self.assert_pcs_success(
+            "cluster setup cluster_name node1 node2",
+            dedent(
+                f"""\
+                No addresses specified for host 'node1', using '10.0.1.1'
+                No addresses specified for host 'node2', using '10.0.1.2'
+                """
+            ),
+        )
+        self.assertEqual(
+            self.corosync_conf_file.read(),
+            self.fixture_corosync_conf_minimal("10.0.1.1", "10.0.1.2"),
+        )
 
     def test_multiple_options(self):
+        self.fixture_known_hosts([])
         self.assert_pcs_success(
             "cluster setup cluster_name node1 addr=127.0.0.1 addr=127.0.1.1 "
             "addr=127.0.2.3 node2 addr=127.0.0.2 addr=127.0.1.2 addr=127.0.2.2 "
@@ -160,6 +218,7 @@ class SetupLocal(AssertPcsMixin, TestCase):
 
     def test_failure(self):
         # pylint: disable=line-too-long
+        self.fixture_known_hosts([])
         self.assert_pcs_fail(
             "cluster setup cluster_name node1 addr=127.0.0.1 addr=127.0.1.1.2 "
             "addr=127.0.2.3 node2 addr=127.0.0.2 addr=127.0.2.2 "

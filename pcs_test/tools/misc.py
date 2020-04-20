@@ -1,6 +1,7 @@
 import logging
 import os
 import re
+import tempfile
 from unittest import mock, skipUnless
 
 from pcs_test.tools.custom_mock import MockLibraryReportProcessor
@@ -67,6 +68,19 @@ def dict_to_modifiers(options):
 def get_test_resource(name):
     """Return full path to a test resource file specified by name"""
     return os.path.join(testdir, "resources", name)
+
+
+def get_tmp_file(name=None, mode="w+"):
+    """Create a temp file with a unique name in our test dir"""
+    tmp_dir = get_test_resource("temp")
+    if not os.path.exists(tmp_dir):
+        os.makedirs(tmp_dir)
+    return tempfile.NamedTemporaryFile(
+        mode=mode,
+        suffix=".tmp",  # for .gitignore
+        prefix=(f"{name}." if name else None),
+        dir=tmp_dir,
+    )
 
 
 def read_test_resource(name):

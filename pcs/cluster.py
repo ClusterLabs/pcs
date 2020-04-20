@@ -25,16 +25,17 @@ from pcs.cli.common.errors import (
 )
 from pcs.cli.reports import process_library_reports
 from pcs.cli.reports.messages import report_item_msg_from_dto
+from pcs.common import reports
 from pcs.common.node_communicator import (
     HostNotFound,
     Request,
     RequestData,
 )
-from pcs.common import reports
 from pcs.common.reports import (
     codes as report_codes,
     ReportItem,
 )
+from pcs.common.str_tools import format_list
 from pcs.common.tools import Version
 from pcs.lib import sbd as lib_sbd
 from pcs.lib.cib.tools import VERSION_FORMAT
@@ -1597,25 +1598,35 @@ def cluster_setup(lib, argv, modifiers):
         as warnings
       * --no-keys-sync - do not create and distribute pcsd ssl cert and key,
         corosync and pacemaker authkeys
-      * --corosync_conf - corosycn.conf file path
+      * --corosync_conf - corosync.conf file path, do not talk to cluster nodes
     """
+    # pylint: disable=too-many-locals
     is_local = modifiers.is_specified("--corosync_conf")
-    allowed_options = ["--force"]
-    if is_local:
-        allowed_options.append("--corosync_conf")
-    else:
-        allowed_options += ["--wait", "--start", "--enable", "--no-keys-sync"]
+
+    allowed_options_common = ["--force"]
+    allowed_options_live = ["--wait", "--start", "--enable", "--no-keys-sync"]
+    allowed_options_local = ["--corosync_conf"]
     modifiers.ensure_only_supported(
-        *allowed_options,
+        *(
+            allowed_options_common
+            + allowed_options_live
+            + allowed_options_local
+        ),
         # The hint is defined to print error messages which point users to the
         # changes section in pcs manpage.
         # To be removed in the next significant version.
-        hint_syntax_changed=modifiers.is_specified("--name"),
-        # TODO: add note to amn page about removing --local from pcs cluster
-        # setup and replacing its functionality with --corosync_conf and add
-        # add warnign about this change when used
+        hint_syntax_changed=modifiers.is_specified_any(["--local", "--name"])
+        # TODO: add a note to man page about removing --local from pcs cluster
+        # setup and replacing its functionality with --corosync_conf
     )
-    # pylint: disable=invalid-name
+    if is_local and modifiers.is_specified_any(allowed_options_live):
+        raise CmdLineInputError(
+            (
+                "Cannot specify any of {banned} when '--corosync_conf' is "
+                "specified"
+            ).format(banned=format_list(allowed_options_live))
+        )
+
     if len(argv) < 2:
         raise CmdLineInputError()
     cluster_name, *argv = argv

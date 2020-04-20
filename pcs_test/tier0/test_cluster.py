@@ -1,7 +1,6 @@
 from functools import partial
 import os
 import shutil
-import tempfile
 from unittest import mock, TestCase
 
 from pcs_test.tools.assertions import (
@@ -11,6 +10,7 @@ from pcs_test.tools.assertions import (
 from pcs_test.tools.misc import (
     dict_to_modifiers,
     get_test_resource as rc,
+    get_tmp_file,
     skip_unless_pacemaker_version,
     skip_unless_root,
 )
@@ -599,8 +599,8 @@ class ClusterSetup(TestCase):
                 },
             )
         self.assertEqual(
-            "Specified options '--enable', '--no-keys-sync', '--start', "
-            "'--wait' are not supported in this command",
+            "Cannot specify any of '--enable', '--no-keys-sync', '--start', "
+            "'--wait' when '--corosync_conf' is specified",
             cm.exception.message,
         )
 
@@ -608,7 +608,7 @@ class ClusterSetup(TestCase):
         node_name = "node"
         corosync_conf_data = "new corosync.conf"
         self.cluster.setup_local.return_value = corosync_conf_data
-        with tempfile.NamedTemporaryFile("r") as output_file:
+        with get_tmp_file("test_cluster_corosync.conf") as output_file:
             self.call_cmd([node_name], {"corosync_conf": output_file.name})
             self.assertEqual(output_file.read(), corosync_conf_data)
 
@@ -617,7 +617,7 @@ class ClusterSetup(TestCase):
     def test_corosync_conf_full_knet(self):
         corosync_conf_data = "new corosync.conf"
         self.cluster.setup_local.return_value = corosync_conf_data
-        with tempfile.NamedTemporaryFile("r") as output_file:
+        with get_tmp_file("test_cluster_corosync.conf") as output_file:
             self.call_cmd(
                 [
                     "node0",

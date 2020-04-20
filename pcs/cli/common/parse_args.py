@@ -499,6 +499,12 @@ class InputModifiers:
     def is_specified(self, option):
         return option in self._defined_options
 
+    def is_specified_any(self, option_list):
+        for option in option_list:
+            if self.is_specified(option):
+                return True
+        return False
+
     def get(self, option, default=None):
         if option in self._defined_options:
             return self._options[option]

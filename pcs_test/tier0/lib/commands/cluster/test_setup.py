@@ -3197,7 +3197,6 @@ class SetupLocal(TestCase):
 
     def test_address_defaulting(self):
         self.config.env.set_known_nodes(NODE_LIST[2:] + ["random_node"])
-        self.maxDiff = None
         patch_getaddrinfo(self, NODE_LIST + ["node2.addr"])
         self.assertEqual(
             corosync_conf_fixture(
@@ -3229,9 +3228,14 @@ class SetupLocal(TestCase):
             [
                 fixture.info(
                     report_codes.USING_KNOWN_HOST_ADDRESS_FOR_HOST,
+                    host_name="node1",
+                    address="node1",
+                ),
+                fixture.info(
+                    report_codes.USING_KNOWN_HOST_ADDRESS_FOR_HOST,
                     host_name="node3",
                     address="node3",
-                )
+                ),
             ]
         )
 

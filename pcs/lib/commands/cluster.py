@@ -5,9 +5,10 @@ import time
 
 from typing import (
     Any,
-    Dict,
-    List,
+    Container,
+    Mapping,
     Optional,
+    Sequence,
 )
 
 from pcs import settings
@@ -428,18 +429,18 @@ def setup(
 def setup_local(
     env: LibraryEnvironment,
     cluster_name: str,
-    nodes: List[Dict[str, Any]],
+    nodes: Sequence[Mapping[str, Any]],
     transport_type: Optional[str],
-    transport_options: Dict[str, str],
-    link_list: List[Dict[str, Any]],
-    compression_options: Dict[str, str],
-    crypto_options: Dict[str, str],
-    totem_options: Dict[str, str],
-    quorum_options: Dict[str, str],
-    force_flags: List[reports.types.ForceCode],
+    transport_options: Mapping[str, str],
+    link_list: Sequence[Mapping[str, Any]],
+    compression_options: Mapping[str, str],
+    crypto_options: Mapping[str, str],
+    totem_options: Mapping[str, str],
+    quorum_options: Mapping[str, str],
+    force_flags: Container[reports.types.ForceCode],
 ) -> str:
     """
-    Return corosync.conf based on specified parameters.
+    Return corosync.conf text based on specified parameters.
     Raise LibraryError on any error.
 
     env
@@ -496,15 +497,12 @@ def setup_local(
     # specified. This allows users not to specify node addresses at all which
     # simplifies the whole cluster setup command / form significantly.
 
-    # If there is not address for node in known host use its name as
+    # If there is no address for a node in known-hosts, use its name as the
     # default address
-    addrs_defaulter = (
-        lambda node: _get_addrs_defaulter(
-            report_processor, {target.label: target for target in target_list}
-        )(node)
-        or [node["name"]]
-        if "name" in node
-        else []
+    addrs_defaulter = _get_addrs_defaulter(
+        report_processor,
+        {target.label: target for target in target_list},
+        default_to_name_if_no_target=True,
     )
     nodes = [
         _set_defaults_in_dict(node, {"addrs": addrs_defaulter})
@@ -546,14 +544,14 @@ def setup_local(
 
 def _validate_create_corosync_conf(
     cluster_name: str,
-    nodes: List[Dict[str, Any]],
+    nodes: Sequence[Mapping[str, Any]],
     transport_type: str,
-    transport_options: Dict[str, str],
-    link_list: List[Dict[str, Any]],
-    compression_options: Dict[str, str],
-    crypto_options: Dict[str, str],
-    totem_options: Dict[str, str],
-    quorum_options: Dict[str, str],
+    transport_options: Mapping[str, str],
+    link_list: Sequence[Mapping[str, Any]],
+    compression_options: Mapping[str, str],
+    crypto_options: Mapping[str, str],
+    totem_options: Mapping[str, str],
+    quorum_options: Mapping[str, str],
     force: bool,
 ) -> reports.ReportItemList:
     # pylint: disable=too-many-arguments
@@ -606,14 +604,14 @@ def _validate_create_corosync_conf(
 
 def _create_corosync_conf(
     cluster_name: str,
-    nodes: List[Dict[str, Any]],
+    nodes: Sequence[Mapping[str, Any]],
     transport_type: str,
-    transport_options: Dict[str, str],
-    link_list: List[Dict[str, Any]],
-    compression_options: Dict[str, str],
-    crypto_options: Dict[str, str],
-    totem_options: Dict[str, str],
-    quorum_options: Dict[str, str],
+    transport_options: Mapping[str, str],
+    link_list: Sequence[Mapping[str, Any]],
+    compression_options: Mapping[str, str],
+    crypto_options: Mapping[str, str],
+    totem_options: Mapping[str, str],
+    quorum_options: Mapping[str, str],
 ) -> config_facade.ConfigFacade:
     # pylint: disable=too-many-arguments
     corosync_conf = config_facade.ConfigFacade.create(
@@ -1386,20 +1384,29 @@ def _set_defaults_in_dict(input_dict, defaults):
     return completed
 
 
-def _get_addrs_defaulter(report_processor: ReportProcessor, targets_dict):
+def _get_addrs_defaulter(
+    report_processor: ReportProcessor,
+    targets_dict,
+    default_to_name_if_no_target: bool = False,
+):
     def defaulter(node):
         if "name" not in node:
             return []
+        address_for_use = None
         target = targets_dict.get(node["name"])
         if target:
+            address_for_use = target.first_addr
+        elif default_to_name_if_no_target:
+            address_for_use = node["name"]
+        if address_for_use:
             report_processor.report(
                 ReportItem.info(
                     reports.messages.UsingKnownHostAddressForHost(
-                        node["name"], target.first_addr
+                        node["name"], address_for_use
                     )
                 )
             )
-            return [target.first_addr]
+            return [address_for_use]
         return []
 
     return defaulter
