@@ -680,9 +680,12 @@ Commands:
                 [<transport options>] [link <link options>]...
                 [compression <compression options>] [crypto <crypto options>]
             ] [totem <totem options>] [quorum <quorum options>]
-            [--enable] [--start [--wait[=<n>]]] [--no-keys-sync]
+            ([--enable] [--start [--wait[=<n>]]] [--no-keys-sync])
+            | [--corosync_conf <path>]
         Create a cluster from the listed nodes and synchronize cluster
-        configuration files to them.
+        configuration files to them. If --corosync_conf is specified, do not
+        connect to other nodes and save corosync.conf to the specified path; see
+        'Local only mode' below for details.
 
         Nodes are specified by their names and optionally their addresses. If
         no addresses are specified for a node, pcs will configure corosync to
@@ -740,6 +743,25 @@ Commands:
         --no-keys-sync will skip creating and distributing pcsd SSL certificate
             and key and corosync and pacemaker authkey files. Use this if you
             provide your own certificates and keys.
+
+        Local only mode:
+        By default, pcs connects to all specified nodes to verify they can be
+        used in the new cluster and to send cluster configuration files to them.
+        If this is not what you want, specify --corosync_conf option followed by
+        a file path. Pcs will save corosync.conf to the specified file and will
+        not connect to cluster nodes. These are the task pcs skips in that case:
+        * make sure the nodes are not running or configured to run a cluster
+          already
+        * make sure cluster packages are installed on all nodes and their
+          versions are compatible
+        * make sure there are no cluster configuration files on any node (run
+          'pcs cluster destroy' and remove pcs_settings.conf file on all nodes)
+        * synchronize corosync and pacemaker authkeys, /etc/corosync/authkey
+          and /etc/pacemaker/authkey respectively, and the corosync.conf file
+        * authenticate the cluster nodes against each other ('pcs cluster auth'
+          or 'pcs host auth' command)
+        * synchronize pcsd certificates (so that pcs web UI can be used in an HA
+          mode)
 
         Examples:
         Create a cluster with default settings:

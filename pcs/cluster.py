@@ -1626,9 +1626,7 @@ def cluster_setup(lib, argv, modifiers):
         # The hint is defined to print error messages which point users to the
         # changes section in pcs manpage.
         # To be removed in the next significant version.
-        hint_syntax_changed=modifiers.is_specified_any(["--local", "--name"])
-        # TODO: add a note to man page about removing --local from pcs cluster
-        # setup and replacing its functionality with --corosync_conf
+        hint_syntax_changed=modifiers.is_specified_any(["--local", "--name"]),
     )
     if is_local and modifiers.is_specified_any(allowed_options_live):
         raise CmdLineInputError(

@@ -175,6 +175,14 @@
         daemon urls: cluster_setup
       </description>
     </capability>
+    <capability id="cluster.create.local" in-pcs="1" in-pcsd="0">
+      <description>
+        Do not connect to nodes when creating a cluster. Save created
+        corosync.conf to the specified file instead.
+
+        pcs commands: cluster setup --corosync_conf=path
+      </description>
+    </capability>
     <capability id="cluster.destroy" in-pcs="1" in-pcsd="1">
       <description>
         Destroy cluster on the local host.
