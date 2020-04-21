@@ -584,6 +584,16 @@ class ClusterSetup(TestCase):
             force_flags=[report_codes.FORCE],
         )
 
+    def test_live_with_local_modifiers(self):
+        node_name = "node"
+        with self.assertRaises(CmdLineInputError) as cm:
+            self.call_cmd([node_name], {"overwrite": True})
+        self.assertEqual(
+            "Cannot specify '--overwrite' when '--corosync_conf' is not "
+            "specified",
+            cm.exception.message,
+        )
+
     def test_corosync_conf_not_supported_modifiers(self):
         node_name = "node"
         with self.assertRaises(CmdLineInputError) as cm:
@@ -606,18 +616,21 @@ class ClusterSetup(TestCase):
 
     def test_corosync_conf(self):
         node_name = "node"
-        corosync_conf_data = "new corosync.conf"
+        corosync_conf_data = b"new corosync.conf"
         self.cluster.setup_local.return_value = corosync_conf_data
-        with get_tmp_file("test_cluster_corosync.conf") as output_file:
-            self.call_cmd([node_name], {"corosync_conf": output_file.name})
+        with get_tmp_file("test_cluster_corosync.conf", "rb") as output_file:
+            self.call_cmd(
+                [node_name],
+                {"corosync_conf": output_file.name, "overwrite": True},
+            )
             self.assertEqual(output_file.read(), corosync_conf_data)
 
         self.assert_setup_local_called_with([_node(node_name)])
 
     def test_corosync_conf_full_knet(self):
-        corosync_conf_data = "new corosync.conf"
+        corosync_conf_data = b"new corosync.conf"
         self.cluster.setup_local.return_value = corosync_conf_data
-        with get_tmp_file("test_cluster_corosync.conf") as output_file:
+        with get_tmp_file("test_cluster_corosync.conf", "rb") as output_file:
             self.call_cmd(
                 [
                     "node0",
@@ -653,7 +666,7 @@ class ClusterSetup(TestCase):
                     "cb=2",
                     "cc=3",
                 ],
-                {"corosync_conf": output_file.name},
+                {"corosync_conf": output_file.name, "overwrite": True},
             )
             self.assertEqual(output_file.read(), corosync_conf_data)
         self.assert_setup_local_called_with(

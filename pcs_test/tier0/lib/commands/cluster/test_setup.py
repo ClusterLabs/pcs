@@ -3182,7 +3182,7 @@ class SetupLocal(TestCase):
                 totem_options={},
                 quorum_options={},
                 force_flags=[],
-            ),
+            ).decode("utf-8"),
         )
         self.env_assist.assert_reports(
             [
@@ -3222,7 +3222,7 @@ class SetupLocal(TestCase):
                 totem_options={},
                 quorum_options={},
                 force_flags=[],
-            ),
+            ).decode("utf-8"),
         )
         self.env_assist.assert_reports(
             [

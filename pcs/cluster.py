@@ -23,17 +23,18 @@ from pcs.cli.common.errors import (
     HINT_SYNTAX_CHANGE,
     msg_command_replaced,
 )
+from pcs.cli.file import metadata as file_metadata
 from pcs.cli.reports import process_library_reports
 from pcs.cli.reports.messages import report_item_msg_from_dto
-from pcs.common import reports
+from pcs.common import (
+    file as pcs_file,
+    file_type_codes,
+    reports,
+)
 from pcs.common.node_communicator import (
     HostNotFound,
     Request,
     RequestData,
-)
-from pcs.common.reports import (
-    codes as report_codes,
-    ReportItem,
 )
 from pcs.common.str_tools import format_list
 from pcs.common.tools import Version
@@ -171,7 +172,9 @@ def sync_nodes(lib, argv, modifiers):
     )
     if not nodes:
         report_list.append(
-            ReportItem.error(reports.messages.CorosyncConfigNoNodesDefined())
+            reports.ReportItem.error(
+                reports.messages.CorosyncConfigNoNodesDefined()
+            )
         )
     if report_list:
         process_library_reports(report_list)
@@ -234,7 +237,9 @@ def start_cluster_all():
     )
     if not all_nodes:
         report_list.append(
-            ReportItem.error(reports.messages.CorosyncConfigNoNodesDefined())
+            reports.ReportItem.error(
+                reports.messages.CorosyncConfigNoNodesDefined()
+            )
         )
     if report_list:
         process_library_reports(report_list)
@@ -371,7 +376,9 @@ def stop_cluster_all():
     )
     if not all_nodes:
         report_list.append(
-            ReportItem.error(reports.messages.CorosyncConfigNoNodesDefined())
+            reports.ReportItem.error(
+                reports.messages.CorosyncConfigNoNodesDefined()
+            )
         )
     if report_list:
         process_library_reports(report_list)
@@ -504,7 +511,9 @@ def enable_cluster_all():
     )
     if not all_nodes:
         report_list.append(
-            ReportItem.error(reports.messages.CorosyncConfigNoNodesDefined())
+            reports.ReportItem.error(
+                reports.messages.CorosyncConfigNoNodesDefined()
+            )
         )
     if report_list:
         process_library_reports(report_list)
@@ -522,7 +531,9 @@ def disable_cluster_all():
     )
     if not all_nodes:
         report_list.append(
-            ReportItem.error(reports.messages.CorosyncConfigNoNodesDefined())
+            reports.ReportItem.error(
+                reports.messages.CorosyncConfigNoNodesDefined()
+            )
         )
     if report_list:
         process_library_reports(report_list)
@@ -972,7 +983,7 @@ class RemoteAddNodes(RunRemotelyBase):
             output = json.loads(response.data)
             for report_dict in output["report_list"]:
                 self._report(
-                    ReportItem(
+                    reports.ReportItem(
                         severity=reports.ReportItemSeverity(
                             report_dict["severity"], report_dict["forceable"],
                         ),
@@ -990,7 +1001,7 @@ class RemoteAddNodes(RunRemotelyBase):
 
         except (KeyError, json.JSONDecodeError):
             self._report(
-                ReportItem.warning(
+                reports.ReportItem.warning(
                     reports.messages.InvalidResponseFormat(node_label)
                 )
             )
@@ -1035,9 +1046,9 @@ def node_add_outside_cluster(lib, argv, modifiers):
 
     force_flags = []
     if modifiers.get("--force"):
-        force_flags.append(report_codes.FORCE)
+        force_flags.append(reports.codes.FORCE)
     if modifiers.get("--skip-offline"):
-        force_flags.append(report_codes.SKIP_OFFLINE_NODES)
+        force_flags.append(reports.codes.SKIP_OFFLINE_NODES)
     cmd_data = dict(
         nodes=[node_dict],
         wait=modifiers.get("--wait"),
@@ -1079,9 +1090,9 @@ def node_remove(lib, argv, modifiers):
 
     force_flags = []
     if modifiers.get("--force"):
-        force_flags.append(report_codes.FORCE)
+        force_flags.append(reports.codes.FORCE)
     if modifiers.get("--skip-offline"):
-        force_flags.append(report_codes.SKIP_OFFLINE_NODES)
+        force_flags.append(reports.codes.SKIP_OFFLINE_NODES)
 
     lib.cluster.remove_nodes(argv, force_flags=force_flags)
 
@@ -1233,7 +1244,7 @@ def cluster_destroy(lib, argv, modifiers):
         )
         if not corosync_nodes:
             report_list.append(
-                ReportItem.error(
+                reports.ReportItem.error(
                     reports.messages.CorosyncConfigNoNodesDefined()
                 )
             )
@@ -1605,7 +1616,7 @@ def cluster_setup(lib, argv, modifiers):
 
     allowed_options_common = ["--force"]
     allowed_options_live = ["--wait", "--start", "--enable", "--no-keys-sync"]
-    allowed_options_local = ["--corosync_conf"]
+    allowed_options_local = ["--corosync_conf", "--overwrite"]
     modifiers.ensure_only_supported(
         *(
             allowed_options_common
@@ -1625,6 +1636,11 @@ def cluster_setup(lib, argv, modifiers):
                 "Cannot specify any of {banned} when '--corosync_conf' is "
                 "specified"
             ).format(banned=format_list(allowed_options_live))
+        )
+    if not is_local and modifiers.is_specified("--overwrite"):
+        raise CmdLineInputError(
+            "Cannot specify '--overwrite' when '--corosync_conf' is not "
+            "specified"
         )
 
     if len(argv) < 2:
@@ -1655,7 +1671,7 @@ def cluster_setup(lib, argv, modifiers):
 
     force_flags = []
     if modifiers.get("--force"):
-        force_flags.append(report_codes.FORCE)
+        force_flags.append(reports.codes.FORCE)
 
     if not is_local:
         lib.cluster.setup(
@@ -1696,14 +1712,36 @@ def cluster_setup(lib, argv, modifiers):
         ),
         force_flags=force_flags,
     )
+
+    corosync_conf_file = pcs_file.RawFile(
+        file_metadata.for_file_type(
+            file_type_codes.COROSYNC_CONF, modifiers.get("--corosync_conf")
+        )
+    )
+    overwrite = modifiers.is_specified("--overwrite")
     try:
-        # TODO: act properly in case file already exists
-        with open(modifiers.get("--corosync_conf"), "w") as corosync_conf:
-            corosync_conf.write(corosync_conf_data)
-    except EnvironmentError as e:
-        raise error(
-            "Unable to write {0}: {1}".format(
-                modifiers.get("--corosync_conf"), e.strerror
+        corosync_conf_file.write(corosync_conf_data, can_overwrite=overwrite)
+    # TODO do not use LibraryError
+    except pcs_file.FileAlreadyExists as e:
+        raise LibraryError(
+            reports.ReportItem(
+                severity=reports.item.get_severity(
+                    reports.codes.FORCE_OVERWRITE, overwrite
+                ),
+                message=reports.messages.FileAlreadyExists(
+                    e.metadata.file_type_code, e.metadata.path,
+                ),
+            )
+        )
+    except pcs_file.RawFileError as e:
+        raise LibraryError(
+            reports.ReportItem.error(
+                reports.messages.FileIoError(
+                    e.metadata.file_type_code,
+                    e.action,
+                    e.reason,
+                    file_path=e.metadata.path,
+                )
             )
         )
 
@@ -1754,9 +1792,9 @@ def node_add(lib, argv, modifiers):
 
     force_flags = []
     if modifiers.get("--force"):
-        force_flags.append(report_codes.FORCE)
+        force_flags.append(reports.codes.FORCE)
     if modifiers.get("--skip-offline"):
-        force_flags.append(report_codes.SKIP_OFFLINE_NODES)
+        force_flags.append(reports.codes.SKIP_OFFLINE_NODES)
 
     lib.cluster.add_nodes(
         nodes=[node_dict],
@@ -1794,9 +1832,9 @@ def link_add(lib, argv, modifiers):
 
     force_flags = []
     if modifiers.get("--force"):
-        force_flags.append(report_codes.FORCE)
+        force_flags.append(reports.codes.FORCE)
     if modifiers.get("--skip-offline"):
-        force_flags.append(report_codes.SKIP_OFFLINE_NODES)
+        force_flags.append(reports.codes.SKIP_OFFLINE_NODES)
 
     parsed = parse_args.group_by_keywords(
         argv,
@@ -1824,7 +1862,7 @@ def link_remove(lib, argv, modifiers):
 
     force_flags = []
     if modifiers.get("--skip-offline"):
-        force_flags.append(report_codes.SKIP_OFFLINE_NODES)
+        force_flags.append(reports.codes.SKIP_OFFLINE_NODES)
 
     lib.cluster.remove_links(argv, force_flags=force_flags)
 
@@ -1845,9 +1883,9 @@ def link_update(lib, argv, modifiers):
 
     force_flags = []
     if modifiers.get("--force"):
-        force_flags.append(report_codes.FORCE)
+        force_flags.append(reports.codes.FORCE)
     if modifiers.get("--skip-offline"):
-        force_flags.append(report_codes.SKIP_OFFLINE_NODES)
+        force_flags.append(reports.codes.SKIP_OFFLINE_NODES)
 
     linknumber = argv[0]
     parsed = parse_args.group_by_keywords(

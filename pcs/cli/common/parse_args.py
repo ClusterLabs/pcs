@@ -65,6 +65,8 @@ PCS_LONG_OPTIONS = [
     "groups",
     # "pcs resource clear --expired" - only clear expired moves and bans
     "expired",
+    # allow overwriting existing files, currently meant for / used in CLI only
+    "overwrite",
 ]
 
 
@@ -420,6 +422,7 @@ class InputModifiers:
                 "--no-watchdog-validation": "--no-watchdog-validation"
                 in options,
                 "--off": "--off" in options,
+                "--overwrite": "--overwrite" in options,
                 "--pacemaker": "--pacemaker" in options,
                 "--safe": "--safe" in options,
                 "--simulate": "--simulate" in options,

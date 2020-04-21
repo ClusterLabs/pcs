@@ -438,7 +438,7 @@ def setup_local(
     totem_options: Mapping[str, str],
     quorum_options: Mapping[str, str],
     force_flags: Container[reports.types.ForceCode],
-) -> str:
+) -> bytes:
     """
     Return corosync.conf text based on specified parameters.
     Raise LibraryError on any error.
@@ -529,17 +529,21 @@ def setup_local(
     # Validation done. If errors occured, an exception has been raised and we
     # don't get below this line.
 
-    return _create_corosync_conf(
-        cluster_name,
-        nodes,
-        transport_type,
-        transport_options,
-        link_list,
-        compression_options,
-        crypto_options,
-        totem_options,
-        quorum_options,
-    ).config.export()
+    return (
+        _create_corosync_conf(
+            cluster_name,
+            nodes,
+            transport_type,
+            transport_options,
+            link_list,
+            compression_options,
+            crypto_options,
+            totem_options,
+            quorum_options,
+        )
+        .config.export()
+        .encode("utf-8")
+    )
 
 
 def _validate_create_corosync_conf(

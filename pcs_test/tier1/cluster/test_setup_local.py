@@ -82,11 +82,35 @@ class SetupLocal(AssertPcsMixin, TestCase):
             """
         )
 
+    def test_file_already_exists(self):
+        self.fixture_known_hosts(
+            [
+                {"name": "node1", "addr": "10.0.1.1"},
+                {"name": "node2", "addr": "10.0.1.2"},
+            ]
+        )
+        self.corosync_conf_file.write("some already existing content")
+        self.assert_pcs_fail(
+            "cluster setup cluster_name node1 node2",
+            dedent(
+                # pylint: disable=line-too-long
+                f"""\
+                Error: Corosync configuration file '{self.corosync_conf_file.name}' already exists, use --overwrite to overwrite existing file(s)
+                No addresses specified for host 'node1', using '10.0.1.1'
+                No addresses specified for host 'node2', using '10.0.1.2'
+                """
+            ),
+        )
+        self.corosync_conf_file.seek(0)
+        self.assertEqual(
+            self.corosync_conf_file.read(), "some already existing content"
+        )
+
     def test_minimal_no_known_hosts(self):
         self.known_hosts_file.close()
         self.assert_pcs_success(
             # need to use --force for not failing on unresolvable addresses
-            "cluster setup cluster_name node1 node2 --force",
+            "cluster setup cluster_name node1 node2 --force --overwrite",
             dedent(
                 # pylint: disable=line-too-long
                 f"""\
@@ -110,7 +134,7 @@ class SetupLocal(AssertPcsMixin, TestCase):
             ]
         )
         self.assert_pcs_success(
-            "cluster setup cluster_name node1 node2",
+            "cluster setup cluster_name node1 node2 --overwrite",
             dedent(
                 f"""\
                 No addresses specified for host 'node1', using '10.0.1.1'
@@ -135,7 +159,7 @@ class SetupLocal(AssertPcsMixin, TestCase):
             "link linknumber=1 transport=udp compression level=2 model=zlib "
             "threshold=10 crypto cipher=aes256 hash=sha512 model=openssl totem "
             "consensus=0 downcheck=1 token=12 quorum last_man_standing=1 "
-            "last_man_standing_window=10",
+            "last_man_standing_window=10 --overwrite",
         )
         self.assertEqual(
             self.corosync_conf_file.read(),
