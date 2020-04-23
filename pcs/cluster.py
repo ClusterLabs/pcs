@@ -1722,13 +1722,11 @@ def cluster_setup(lib, argv, modifiers):
     # TODO do not use LibraryError
     except pcs_file.FileAlreadyExists as e:
         raise LibraryError(
-            reports.ReportItem(
-                severity=reports.item.get_severity(
-                    reports.codes.FORCE_OVERWRITE, overwrite
-                ),
+            reports.ReportItem.error(
                 message=reports.messages.FileAlreadyExists(
                     e.metadata.file_type_code, e.metadata.path,
                 ),
+                force_code=reports.codes.FORCE_OVERWRITE,
             )
         )
     except pcs_file.RawFileError as e:
