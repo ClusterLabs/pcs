@@ -15,10 +15,9 @@ from pcs_test.tools.command_env import get_env_tools
 from pcs_test.tools.misc import get_test_resource as rc
 
 from pcs import settings
-from pcs.common import file_type_codes
+from pcs.common import file_type_codes, reports
 from pcs.common.file import RawFileError
 from pcs.common.host import Destination
-from pcs.common.reports import codes as report_codes
 from pcs.lib.commands.remote_node import node_add_remote as node_add_remote_orig
 
 
@@ -204,7 +203,7 @@ class AddRemote(TestCase):
             lambda: node_add_remote(self.env_assist.get_env()), []
         )
         self.env_assist.assert_reports(
-            [fixture.error(report_codes.ID_ALREADY_EXISTS, id=NODE_NAME,)]
+            [fixture.error(reports.codes.ID_ALREADY_EXISTS, id=NODE_NAME,)]
         )
 
     @mock.patch("pcs.lib.commands.remote_node.generate_binary_key")
@@ -271,8 +270,8 @@ class AddRemote(TestCase):
         self.env_assist.assert_reports(
             [
                 fixture.error(
-                    report_codes.NODE_COMMUNICATION_ERROR_UNABLE_TO_CONNECT,
-                    force_code=report_codes.SKIP_OFFLINE_NODES,
+                    reports.codes.NODE_COMMUNICATION_ERROR_UNABLE_TO_CONNECT,
+                    force_code=reports.codes.SKIP_OFFLINE_NODES,
                     node=NODE_NAME,
                     command="remote/check_auth",
                     reason="Could not resolve host",
@@ -336,18 +335,18 @@ class AddRemote(TestCase):
             fixture_reports_new_node_unreachable(NODE_NAME, omitting=True)
             + [
                 fixture.info(
-                    report_codes.FILES_DISTRIBUTION_STARTED,
+                    reports.codes.FILES_DISTRIBUTION_STARTED,
                     file_list=["pacemaker authkey"],
                     node_list=[NODE_1, NODE_2],
                 ),
                 fixture.warn(
-                    report_codes.NODE_COMMUNICATION_ERROR_UNABLE_TO_CONNECT,
+                    reports.codes.NODE_COMMUNICATION_ERROR_UNABLE_TO_CONNECT,
                     node=NODE_1,
                     command="remote/put_file",
                     reason="Could not resolve host",
                 ),
                 fixture.warn(
-                    report_codes.NODE_COMMUNICATION_ERROR_UNABLE_TO_CONNECT,
+                    reports.codes.NODE_COMMUNICATION_ERROR_UNABLE_TO_CONNECT,
                     node=NODE_2,
                     command="remote/put_file",
                     reason="Could not resolve host",
@@ -390,17 +389,17 @@ class AddRemote(TestCase):
         self.env_assist.assert_reports(
             [
                 fixture.error(
-                    report_codes.SERVICE_NOT_INSTALLED,
+                    reports.codes.SERVICE_NOT_INSTALLED,
                     node=NODE_NAME,
                     service_list=["pacemaker_remote"],
                 ),
                 fixture.error(
-                    report_codes.HOST_ALREADY_IN_CLUSTER_SERVICES,
+                    reports.codes.HOST_ALREADY_IN_CLUSTER_SERVICES,
                     host_name=NODE_NAME,
                     service_list=["corosync", "pacemaker"],
                 ),
                 fixture.error(
-                    report_codes.HOST_ALREADY_IN_CLUSTER_CONFIG,
+                    reports.codes.HOST_ALREADY_IN_CLUSTER_CONFIG,
                     host_name=NODE_NAME,
                 ),
             ]
@@ -426,7 +425,7 @@ class AddRemote(TestCase):
         self.env_assist.assert_reports(
             [
                 fixture.error(
-                    report_codes.INVALID_RESPONSE_FORMAT, node=NODE_NAME,
+                    reports.codes.INVALID_RESPONSE_FORMAT, node=NODE_NAME,
                 )
             ]
         )
@@ -452,7 +451,7 @@ class AddRemote(TestCase):
         self.env_assist.assert_reports(
             [
                 fixture.error(
-                    report_codes.FILE_IO_ERROR,
+                    reports.codes.FILE_IO_ERROR,
                     file_type_code=file_type_codes.PACEMAKER_AUTHKEY,
                     file_path=LocalConfig.PCMK_AUTHKEY_PATH,
                     operation=RawFileError.ACTION_READ,
@@ -475,7 +474,7 @@ class AddRemote(TestCase):
             [],
         )
         self.env_assist.assert_reports(
-            [fixture.error(report_codes.ID_ALREADY_EXISTS, id=NODE_1)]
+            [fixture.error(reports.codes.ID_ALREADY_EXISTS, id=NODE_1)]
         )
 
     def test_unknown_host(self):
@@ -493,8 +492,8 @@ class AddRemote(TestCase):
         self.env_assist.assert_reports(
             [
                 fixture.error(
-                    report_codes.HOST_NOT_FOUND,
-                    force_code=report_codes.SKIP_OFFLINE_NODES,
+                    reports.codes.HOST_NOT_FOUND,
+                    force_code=reports.codes.SKIP_OFFLINE_NODES,
                     host_list=[NODE_NAME],
                 )
             ]
@@ -546,17 +545,17 @@ class AddRemote(TestCase):
             fixture_reports_new_node_unreachable(NODE_NAME)
             + [
                 fixture.info(
-                    report_codes.FILES_DISTRIBUTION_STARTED,
+                    reports.codes.FILES_DISTRIBUTION_STARTED,
                     file_list=["pacemaker authkey"],
                     node_list=[NODE_1, NODE_2],
                 ),
                 fixture.info(
-                    report_codes.FILE_DISTRIBUTION_SUCCESS,
+                    reports.codes.FILE_DISTRIBUTION_SUCCESS,
                     file_description="pacemaker authkey",
                     node=NODE_1,
                 ),
                 fixture.info(
-                    report_codes.FILE_DISTRIBUTION_SUCCESS,
+                    reports.codes.FILE_DISTRIBUTION_SUCCESS,
                     file_description="pacemaker authkey",
                     node=NODE_2,
                 ),
@@ -582,7 +581,7 @@ class AddRemote(TestCase):
         self.env_assist.assert_reports(
             REPORTS.warn(
                 "missing_node_names_in_corosync",
-                report_codes.COROSYNC_CONFIG_MISSING_NAMES_OF_NODES,
+                reports.codes.COROSYNC_CONFIG_MISSING_NAMES_OF_NODES,
                 fatal=False,
             )
         )
@@ -596,7 +595,7 @@ class AddRemote(TestCase):
         self.env_assist.assert_reports(
             REPORTS.warn(
                 "missing_node_names_in_corosync",
-                report_codes.COROSYNC_CONFIG_MISSING_NAMES_OF_NODES,
+                reports.codes.COROSYNC_CONFIG_MISSING_NAMES_OF_NODES,
                 fatal=False,
             )
         )
@@ -632,9 +631,12 @@ class NotLive(TestCase):
         self.env_assist.assert_reports(
             [
                 fixture.info(
-                    report_codes.USING_KNOWN_HOST_ADDRESS_FOR_HOST,
+                    reports.codes.USING_DEFAULT_ADDRESS_FOR_HOST,
                     host_name=NODE_NAME,
                     address=NODE_ADDR_PCSD,
+                    address_source=(
+                        reports.const.DEFAULT_ADDRESS_SOURCE_KNOWN_HOSTS
+                    ),
                 ),
             ]
             + fixture_reports_not_live_cib(NODE_NAME)
@@ -653,9 +655,12 @@ class NotLive(TestCase):
         self.env_assist.assert_reports(
             [
                 fixture.info(
-                    report_codes.USING_KNOWN_HOST_ADDRESS_FOR_HOST,
+                    reports.codes.USING_DEFAULT_ADDRESS_FOR_HOST,
                     host_name=NODE_NAME,
                     address=NODE_NAME,
+                    address_source=(
+                        reports.const.DEFAULT_ADDRESS_SOURCE_HOST_NAME
+                    ),
                 ),
             ]
             + fixture_reports_not_live_cib(NODE_NAME)
@@ -676,7 +681,7 @@ class NotLive(TestCase):
     def test_wait(self):
         self.env_assist.assert_raise_library_error(
             lambda: node_add_remote(self.env_assist.get_env(), wait=1),
-            [fixture.error(report_codes.WAIT_FOR_IDLE_NOT_LIVE_CLUSTER,),],
+            [fixture.error(reports.codes.WAIT_FOR_IDLE_NOT_LIVE_CLUSTER,),],
             expected_in_processor=False,
         )
 
@@ -721,7 +726,7 @@ class WithWait(TestCase):
         self.env_assist.assert_reports(
             REPORTS.info(
                 "resource_running",
-                report_codes.RESOURCE_RUNNING_ON_NODES,
+                reports.codes.RESOURCE_RUNNING_ON_NODES,
                 roles_with_nodes={"Started": [NODE_1]},
                 resource_id=NODE_NAME,
             )
@@ -752,7 +757,7 @@ class WithWait(TestCase):
             REPORTS.reports
             + [
                 fixture.error(
-                    report_codes.RESOURCE_DOES_NOT_RUN, resource_id=NODE_NAME,
+                    reports.codes.RESOURCE_DOES_NOT_RUN, resource_id=NODE_NAME,
                 )
             ]
         )

@@ -3658,11 +3658,15 @@ class ClusterSetupSuccess(NameBuildTest):
         )
 
 
-class UsingKnownHostAddressForHost(NameBuildTest):
+class UsingDefaultAddressForHost(NameBuildTest):
     def test_success(self):
         self.assert_message_from_report(
             "No addresses specified for host 'node-name', using 'node-addr'",
-            reports.UsingKnownHostAddressForHost("node-name", "node-addr"),
+            reports.UsingDefaultAddressForHost(
+                "node-name",
+                "node-addr",
+                const.DEFAULT_ADDRESS_SOURCE_KNOWN_HOSTS,
+            ),
         )
 
 

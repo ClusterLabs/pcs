@@ -305,11 +305,20 @@ def node_add_remote(
         new_target = new_target_list[0] if new_target_list else None
         # default node_addr to an address from known-hosts
         if node_addr is None:
-            node_addr = new_target.first_addr if new_target else node_name
+            if new_target:
+                node_addr = new_target.first_addr
+                node_addr_source = (
+                    reports.const.DEFAULT_ADDRESS_SOURCE_KNOWN_HOSTS
+                )
+            else:
+                node_addr = node_name
+                node_addr_source = (
+                    reports.const.DEFAULT_ADDRESS_SOURCE_HOST_NAME
+                )
             report_processor.report(
                 ReportItem.info(
-                    reports.messages.UsingKnownHostAddressForHost(
-                        node_name, node_addr
+                    reports.messages.UsingDefaultAddressForHost(
+                        node_name, node_addr, node_addr_source
                     )
                 )
             )
@@ -317,11 +326,20 @@ def node_add_remote(
         # default node_addr to an address from known-hosts
         if node_addr is None:
             known_hosts = env.get_known_hosts([node_name])
-            node_addr = known_hosts[0].dest.addr if known_hosts else node_name
+            if known_hosts:
+                node_addr = known_hosts[0].dest.addr
+                node_addr_source = (
+                    reports.const.DEFAULT_ADDRESS_SOURCE_KNOWN_HOSTS
+                )
+            else:
+                node_addr = node_name
+                node_addr_source = (
+                    reports.const.DEFAULT_ADDRESS_SOURCE_HOST_NAME
+                )
             report_processor.report(
                 ReportItem.info(
-                    reports.messages.UsingKnownHostAddressForHost(
-                        node_name, node_addr
+                    reports.messages.UsingDefaultAddressForHost(
+                        node_name, node_addr, node_addr_source
                     )
                 )
             )
@@ -412,7 +430,9 @@ def node_add_guest(
     allow_pacemaker_remote_service_fail=False,
     wait=False,
 ):
+    # pylint: disable=too-many-branches
     # pylint: disable=too-many-locals
+    # pylint: disable=too-many-statements
     """
     Make a guest node from the specified resource
 
@@ -468,12 +488,19 @@ def node_add_guest(
         new_target = new_target_list[0] if new_target_list else None
         # default remote-addr to an address from known-hosts
         if "remote-addr" not in options or options["remote-addr"] is None:
-            new_addr = new_target.first_addr if new_target else node_name
+            if new_target:
+                new_addr = new_target.first_addr
+                new_addr_source = (
+                    reports.const.DEFAULT_ADDRESS_SOURCE_KNOWN_HOSTS
+                )
+            else:
+                new_addr = node_name
+                new_addr_source = reports.const.DEFAULT_ADDRESS_SOURCE_HOST_NAME
             options["remote-addr"] = new_addr
             report_processor.report(
                 ReportItem.info(
-                    reports.messages.UsingKnownHostAddressForHost(
-                        node_name, new_addr
+                    reports.messages.UsingDefaultAddressForHost(
+                        node_name, new_addr, new_addr_source
                     )
                 )
             )
@@ -481,12 +508,19 @@ def node_add_guest(
         # default remote-addr to an address from known-hosts
         if "remote-addr" not in options or options["remote-addr"] is None:
             known_hosts = env.get_known_hosts([node_name])
-            new_addr = known_hosts[0].dest.addr if known_hosts else node_name
+            if known_hosts:
+                new_addr = known_hosts[0].dest.addr
+                new_addr_source = (
+                    reports.const.DEFAULT_ADDRESS_SOURCE_KNOWN_HOSTS
+                )
+            else:
+                new_addr = node_name
+                new_addr_source = reports.const.DEFAULT_ADDRESS_SOURCE_HOST_NAME
             options["remote-addr"] = new_addr
             report_processor.report(
                 ReportItem.info(
-                    reports.messages.UsingKnownHostAddressForHost(
-                        node_name, new_addr
+                    reports.messages.UsingDefaultAddressForHost(
+                        node_name, new_addr, new_addr_source
                     )
                 )
             )

@@ -12,10 +12,9 @@ from pcs_test.tools.command_env.mock_node_communicator import (
 from pcs_test.tools.custom_mock import patch_getaddrinfo
 
 from pcs import settings
-from pcs.common import file_type_codes
+from pcs.common import file_type_codes, reports
 from pcs.common.file import RawFileError
 from pcs.common.host import Destination
-from pcs.common.reports import codes as report_codes
 from pcs.common.ssl import (
     dump_cert,
     dump_key,
@@ -271,32 +270,33 @@ def reports_success_minimal_fixture(
     report_list = (
         [
             fixture.info(
-                report_codes.USING_KNOWN_HOST_ADDRESS_FOR_HOST,
+                reports.codes.USING_DEFAULT_ADDRESS_FOR_HOST,
                 host_name=node,
                 address=node,
+                address_source=reports.const.DEFAULT_ADDRESS_SOURCE_KNOWN_HOSTS,
             )
             for node in node_list
             if using_known_hosts_addresses
         ]
         + [
             fixture.info(
-                report_codes.CLUSTER_DESTROY_STARTED, host_name_list=node_list,
+                reports.codes.CLUSTER_DESTROY_STARTED, host_name_list=node_list,
             ),
         ]
         + [
-            fixture.info(report_codes.CLUSTER_DESTROY_SUCCESS, node=node)
+            fixture.info(reports.codes.CLUSTER_DESTROY_SUCCESS, node=node)
             for node in node_list
         ]
         + [
             fixture.info(
-                report_codes.FILES_REMOVE_FROM_NODES_STARTED,
+                reports.codes.FILES_REMOVE_FROM_NODES_STARTED,
                 file_list=[pcsd_settings_file],
                 node_list=node_list,
             )
         ]
         + [
             fixture.info(
-                report_codes.FILE_REMOVE_FROM_NODE_SUCCESS,
+                reports.codes.FILE_REMOVE_FROM_NODE_SUCCESS,
                 node=node,
                 file_description=pcsd_settings_file,
             )
@@ -307,14 +307,14 @@ def reports_success_minimal_fixture(
         report_list.extend(
             [
                 fixture.info(
-                    report_codes.FILES_DISTRIBUTION_STARTED,
+                    reports.codes.FILES_DISTRIBUTION_STARTED,
                     file_list=auth_file_list,
                     node_list=node_list,
                 )
             ]
             + [
                 fixture.info(
-                    report_codes.FILE_DISTRIBUTION_SUCCESS,
+                    reports.codes.FILE_DISTRIBUTION_SUCCESS,
                     node=node,
                     file_description=file,
                 )
@@ -325,20 +325,20 @@ def reports_success_minimal_fixture(
     report_list.extend(
         [
             fixture.info(
-                report_codes.FILES_DISTRIBUTION_STARTED,
+                reports.codes.FILES_DISTRIBUTION_STARTED,
                 file_list=[corosync_conf_file],
                 node_list=node_list,
             )
         ]
         + [
             fixture.info(
-                report_codes.FILE_DISTRIBUTION_SUCCESS,
+                reports.codes.FILE_DISTRIBUTION_SUCCESS,
                 file_description=corosync_conf_file,
                 node=node,
             )
             for node in node_list
         ]
-        + [fixture.info(report_codes.CLUSTER_SETUP_SUCCESS)]
+        + [fixture.info(reports.codes.CLUSTER_SETUP_SUCCESS)]
     )
     return report_list
 
@@ -363,7 +363,7 @@ class CheckLive(TestCase):
             ),
             [
                 fixture.error(
-                    report_codes.LIVE_ENVIRONMENT_REQUIRED,
+                    reports.codes.LIVE_ENVIRONMENT_REQUIRED,
                     forbidden_options=forbidden_options,
                 )
             ],
@@ -421,12 +421,12 @@ class SetupSuccessMinimal(TestCase):
             reports_success_minimal_fixture()
             + [
                 fixture.info(
-                    report_codes.CLUSTER_ENABLE_STARTED,
+                    reports.codes.CLUSTER_ENABLE_STARTED,
                     host_name_list=sorted(NODE_LIST),
                 )
             ]
             + [
-                fixture.info(report_codes.CLUSTER_ENABLE_SUCCESS, node=node)
+                fixture.info(reports.codes.CLUSTER_ENABLE_SUCCESS, node=node)
                 for node in NODE_LIST
             ]
         )
@@ -443,7 +443,7 @@ class SetupSuccessMinimal(TestCase):
             reports_success_minimal_fixture()
             + [
                 fixture.info(
-                    report_codes.CLUSTER_START_STARTED,
+                    reports.codes.CLUSTER_START_STARTED,
                     host_name_list=sorted(NODE_LIST),
                 )
             ]
@@ -467,16 +467,16 @@ class SetupSuccessMinimal(TestCase):
             reports_success_minimal_fixture()
             + [
                 fixture.info(
-                    report_codes.CLUSTER_START_STARTED,
+                    reports.codes.CLUSTER_START_STARTED,
                     host_name_list=sorted(NODE_LIST),
                 ),
                 fixture.info(
-                    report_codes.WAIT_FOR_NODE_STARTUP_STARTED,
+                    reports.codes.WAIT_FOR_NODE_STARTUP_STARTED,
                     node_name_list=NODE_LIST,
                 ),
             ]
             + [
-                fixture.info(report_codes.CLUSTER_START_SUCCESS, node=node,)
+                fixture.info(reports.codes.CLUSTER_START_SUCCESS, node=node,)
                 for node in NODE_LIST
             ]
         )
@@ -498,17 +498,17 @@ class SetupSuccessMinimal(TestCase):
             reports_success_minimal_fixture()
             + [
                 fixture.info(
-                    report_codes.CLUSTER_ENABLE_STARTED,
+                    reports.codes.CLUSTER_ENABLE_STARTED,
                     host_name_list=sorted(NODE_LIST),
                 )
             ]
             + [
-                fixture.info(report_codes.CLUSTER_ENABLE_SUCCESS, node=node)
+                fixture.info(reports.codes.CLUSTER_ENABLE_SUCCESS, node=node)
                 for node in NODE_LIST
             ]
             + [
                 fixture.info(
-                    report_codes.CLUSTER_START_STARTED,
+                    reports.codes.CLUSTER_START_STARTED,
                     host_name_list=sorted(NODE_LIST),
                 )
             ]
@@ -533,26 +533,26 @@ class SetupSuccessMinimal(TestCase):
             reports_success_minimal_fixture()
             + [
                 fixture.info(
-                    report_codes.CLUSTER_ENABLE_STARTED,
+                    reports.codes.CLUSTER_ENABLE_STARTED,
                     host_name_list=sorted(NODE_LIST),
                 )
             ]
             + [
-                fixture.info(report_codes.CLUSTER_ENABLE_SUCCESS, node=node)
+                fixture.info(reports.codes.CLUSTER_ENABLE_SUCCESS, node=node)
                 for node in NODE_LIST
             ]
             + [
                 fixture.info(
-                    report_codes.CLUSTER_START_STARTED,
+                    reports.codes.CLUSTER_START_STARTED,
                     host_name_list=sorted(NODE_LIST),
                 ),
                 fixture.info(
-                    report_codes.WAIT_FOR_NODE_STARTUP_STARTED,
+                    reports.codes.WAIT_FOR_NODE_STARTUP_STARTED,
                     node_name_list=NODE_LIST,
                 ),
             ]
             + [
-                fixture.info(report_codes.CLUSTER_START_SUCCESS, node=node,)
+                fixture.info(reports.codes.CLUSTER_START_SUCCESS, node=node,)
                 for node in NODE_LIST
             ]
         )
@@ -814,15 +814,18 @@ class Validation(TestCase):
         self.env_assist.assert_reports(
             [
                 fixture.info(
-                    report_codes.USING_KNOWN_HOST_ADDRESS_FOR_HOST,
+                    reports.codes.USING_DEFAULT_ADDRESS_FOR_HOST,
                     host_name=node,
                     address=node,
+                    address_source=(
+                        reports.const.DEFAULT_ADDRESS_SOURCE_KNOWN_HOSTS
+                    ),
                 )
                 for node in ["node3", "node4"]
             ]
             + [
                 fixture.error(
-                    report_codes.COROSYNC_BAD_NODE_ADDRESSES_COUNT,
+                    reports.codes.COROSYNC_BAD_NODE_ADDRESSES_COUNT,
                     actual_count=0,
                     min_count=1,
                     max_count=8,
@@ -830,12 +833,12 @@ class Validation(TestCase):
                     node_index=2,
                 ),
                 fixture.error(
-                    report_codes.NODE_ADDRESSES_UNRESOLVABLE,
-                    force_code=report_codes.FORCE_NODE_ADDRESSES_UNRESOLVABLE,
+                    reports.codes.NODE_ADDRESSES_UNRESOLVABLE,
+                    force_code=reports.codes.FORCE_NODE_ADDRESSES_UNRESOLVABLE,
                     address_list=["addr1", "node3", "node4"],
                 ),
                 fixture.error(
-                    report_codes.COROSYNC_NODE_ADDRESS_COUNT_MISMATCH,
+                    reports.codes.COROSYNC_NODE_ADDRESS_COUNT_MISMATCH,
                     node_addr_count={
                         "node1": 1,
                         "node2": 0,
@@ -870,7 +873,7 @@ class Validation(TestCase):
         self.env_assist.assert_reports(
             [
                 fixture.error(
-                    report_codes.INVALID_OPTION_VALUE,
+                    reports.codes.INVALID_OPTION_VALUE,
                     option_value="",
                     option_name="cluster name",
                     allowed_values=None,
@@ -878,14 +881,14 @@ class Validation(TestCase):
                     forbidden_characters=None,
                 ),
                 fixture.error(
-                    report_codes.INVALID_OPTION_VALUE,
+                    reports.codes.INVALID_OPTION_VALUE,
                     option_value="tcp",
                     option_name="transport",
                     allowed_values=("knet", "udp", "udpu"),
                     cannot_be_empty=False,
                     forbidden_characters=None,
                 ),
-                fixture.error(report_codes.COROSYNC_NODES_MISSING),
+                fixture.error(reports.codes.COROSYNC_NODES_MISSING),
             ]
         )
 
@@ -914,8 +917,8 @@ class Validation(TestCase):
         self.env_assist.assert_reports(
             [
                 fixture.error(
-                    report_codes.COROSYNC_CLUSTER_NAME_INVALID_FOR_GFS2,
-                    force_code=report_codes.FORCE_OPTIONS,
+                    reports.codes.COROSYNC_CLUSTER_NAME_INVALID_FOR_GFS2,
+                    force_code=reports.codes.FORCE_OPTIONS,
                     cluster_name=cluster_name,
                     max_length=32,
                     allowed_characters="a-z A-Z 0-9 _-",
@@ -937,12 +940,12 @@ class Validation(TestCase):
             self.env_assist.get_env(),
             cluster_name,
             self.command_node_list,
-            force_flags=[report_codes.FORCE],
+            force_flags=[reports.codes.FORCE],
         )
         self.env_assist.assert_reports(
             [
                 fixture.warn(
-                    report_codes.COROSYNC_CLUSTER_NAME_INVALID_FOR_GFS2,
+                    reports.codes.COROSYNC_CLUSTER_NAME_INVALID_FOR_GFS2,
                     cluster_name=cluster_name,
                     max_length=32,
                     allowed_characters="a-z A-Z 0-9 _-",
@@ -986,8 +989,8 @@ class Validation(TestCase):
         self.env_assist.assert_reports(
             [
                 fixture.error(
-                    report_codes.NODE_ADDRESSES_UNRESOLVABLE,
-                    force_code=report_codes.FORCE_NODE_ADDRESSES_UNRESOLVABLE,
+                    reports.codes.NODE_ADDRESSES_UNRESOLVABLE,
+                    force_code=reports.codes.FORCE_NODE_ADDRESSES_UNRESOLVABLE,
                     address_list=["addr2"],
                 )
             ]
@@ -1012,12 +1015,12 @@ class Validation(TestCase):
                 {"name": "node3", "addrs": ["addr3"]},
             ],
             transport_type="knet",
-            force_flags=[report_codes.FORCE],
+            force_flags=[reports.codes.FORCE],
         )
         self.env_assist.assert_reports(
             [
                 fixture.warn(
-                    report_codes.NODE_ADDRESSES_UNRESOLVABLE,
+                    reports.codes.NODE_ADDRESSES_UNRESOLVABLE,
                     address_list=["addr2"],
                 )
             ]
@@ -1066,7 +1069,7 @@ class Validation(TestCase):
         self.env_assist.assert_reports(
             [
                 fixture.error(
-                    report_codes.INVALID_OPTIONS,
+                    reports.codes.INVALID_OPTIONS,
                     option_names=["stop"],
                     option_type="quorum",
                     allowed=self.quorum_allowed_options,
@@ -1107,7 +1110,7 @@ class Validation(TestCase):
         self.env_assist.assert_reports(
             [
                 fixture.error(
-                    report_codes.COROSYNC_IP_VERSION_MISMATCH_IN_LINKS,
+                    reports.codes.COROSYNC_IP_VERSION_MISMATCH_IN_LINKS,
                     link_numbers=[0],
                 )
             ]
@@ -1145,7 +1148,7 @@ class Validation(TestCase):
         self.env_assist.assert_reports(
             [
                 fixture.error(
-                    report_codes.COROSYNC_ADDRESS_IP_VERSION_WRONG_FOR_LINK,
+                    reports.codes.COROSYNC_ADDRESS_IP_VERSION_WRONG_FOR_LINK,
                     address="::ffff:10:0:0:3",
                     expected_address_type="IPv4",
                     link_number=0,
@@ -1189,26 +1192,26 @@ class Validation(TestCase):
         self.env_assist.assert_reports(
             [
                 fixture.error(
-                    report_codes.INVALID_OPTIONS,
+                    reports.codes.INVALID_OPTIONS,
                     option_names=["a"],
                     option_type="udp/udpu transport",
                     allowed=["ip_version", "netmtu"],
                     allowed_patterns=[],
                 ),
                 fixture.error(
-                    report_codes.COROSYNC_TRANSPORT_UNSUPPORTED_OPTIONS,
+                    reports.codes.COROSYNC_TRANSPORT_UNSUPPORTED_OPTIONS,
                     option_type="compression",
                     actual_transport="udp/udpu",
                     required_transports=["knet"],
                 ),
                 fixture.error(
-                    report_codes.COROSYNC_TRANSPORT_UNSUPPORTED_OPTIONS,
+                    reports.codes.COROSYNC_TRANSPORT_UNSUPPORTED_OPTIONS,
                     option_type="crypto",
                     actual_transport="udp/udpu",
                     required_transports=["knet"],
                 ),
                 fixture.error(
-                    report_codes.INVALID_OPTIONS,
+                    reports.codes.INVALID_OPTIONS,
                     option_names=["b"],
                     option_type="link",
                     allowed=[
@@ -1221,14 +1224,14 @@ class Validation(TestCase):
                     allowed_patterns=[],
                 ),
                 fixture.error(
-                    report_codes.INVALID_OPTIONS,
+                    reports.codes.INVALID_OPTIONS,
                     option_names=["e"],
                     option_type="totem",
                     allowed=self.totem_allowed_options,
                     allowed_patterns=[],
                 ),
                 fixture.error(
-                    report_codes.INVALID_OPTIONS,
+                    reports.codes.INVALID_OPTIONS,
                     option_names=["f"],
                     option_type="quorum",
                     allowed=self.quorum_allowed_options,
@@ -1279,28 +1282,28 @@ class Validation(TestCase):
         self.env_assist.assert_reports(
             [
                 fixture.error(
-                    report_codes.INVALID_OPTIONS,
+                    reports.codes.INVALID_OPTIONS,
                     option_names=["a"],
                     option_type="knet transport",
                     allowed=["ip_version", "knet_pmtud_interval", "link_mode"],
                     allowed_patterns=[],
                 ),
                 fixture.error(
-                    report_codes.INVALID_OPTIONS,
+                    reports.codes.INVALID_OPTIONS,
                     option_names=["c"],
                     option_type="compression",
                     allowed=["level", "model", "threshold"],
                     allowed_patterns=[],
                 ),
                 fixture.error(
-                    report_codes.INVALID_OPTIONS,
+                    reports.codes.INVALID_OPTIONS,
                     option_names=["d"],
                     option_type="crypto",
                     allowed=["cipher", "hash", "model"],
                     allowed_patterns=[],
                 ),
                 fixture.error(
-                    report_codes.INVALID_OPTIONS,
+                    reports.codes.INVALID_OPTIONS,
                     option_names=["b"],
                     option_type="link",
                     allowed=[
@@ -1316,14 +1319,14 @@ class Validation(TestCase):
                     allowed_patterns=[],
                 ),
                 fixture.error(
-                    report_codes.INVALID_OPTIONS,
+                    reports.codes.INVALID_OPTIONS,
                     option_names=["e"],
                     option_type="totem",
                     allowed=self.totem_allowed_options,
                     allowed_patterns=[],
                 ),
                 fixture.error(
-                    report_codes.INVALID_OPTIONS,
+                    reports.codes.INVALID_OPTIONS,
                     option_names=["f"],
                     option_type="quorum",
                     allowed=self.quorum_allowed_options,
@@ -1363,7 +1366,7 @@ class Validation(TestCase):
         self.env_assist.assert_reports(
             [
                 fixture.error(
-                    report_codes.COROSYNC_BAD_NODE_ADDRESSES_COUNT,
+                    reports.codes.COROSYNC_BAD_NODE_ADDRESSES_COUNT,
                     actual_count=10,
                     min_count=1,
                     max_count=8,
@@ -1395,13 +1398,15 @@ class Validation(TestCase):
                 CLUSTER_NAME,
                 self.command_node_list,
                 transport_type="knet",
-                force_flags=[report_codes.FORCE],
+                force_flags=[reports.codes.FORCE],
             )
         )
         self.env_assist.assert_reports(
             [
-                fixture.error(report_codes.HOST_NOT_FOUND, host_list=NODE_LIST),
-                fixture.error(report_codes.NONE_HOST_FOUND),
+                fixture.error(
+                    reports.codes.HOST_NOT_FOUND, host_list=NODE_LIST
+                ),
+                fixture.error(reports.codes.NONE_HOST_FOUND),
             ]
         )
 
@@ -1433,11 +1438,11 @@ class Validation(TestCase):
                     {"name": "node2", "addrs": ["addr2"]},
                 ],
                 transport_type="knet",
-                force_flags=[report_codes.FORCE],
+                force_flags=[reports.codes.FORCE],
             )
         )
         self.env_assist.assert_reports(
-            [fixture.error(report_codes.HOST_NOT_FOUND, host_list=["node2"]),]
+            [fixture.error(reports.codes.HOST_NOT_FOUND, host_list=["node2"]),]
         )
 
     def test_node_ready_check(self):
@@ -1506,71 +1511,74 @@ class Validation(TestCase):
         self.env_assist.assert_reports(
             [
                 fixture.info(
-                    report_codes.USING_KNOWN_HOST_ADDRESS_FOR_HOST,
+                    reports.codes.USING_DEFAULT_ADDRESS_FOR_HOST,
                     host_name=node,
                     address=node,
+                    address_source=(
+                        reports.const.DEFAULT_ADDRESS_SOURCE_KNOWN_HOSTS
+                    ),
                 )
                 for node in nodelist
             ]
             + [
                 fixture.error(
-                    report_codes.INVALID_RESPONSE_FORMAT, node="node0"
+                    reports.codes.INVALID_RESPONSE_FORMAT, node="node0"
                 ),
                 fixture.error(
-                    report_codes.NODE_COMMUNICATION_COMMAND_UNSUCCESSFUL,
+                    reports.codes.NODE_COMMUNICATION_COMMAND_UNSUCCESSFUL,
                     node="node8",
                     command="remote/check_host",
                     reason="errA",
                 ),
                 fixture.error(
-                    report_codes.NODE_COMMUNICATION_ERROR_UNABLE_TO_CONNECT,
+                    reports.codes.NODE_COMMUNICATION_ERROR_UNABLE_TO_CONNECT,
                     node="node9",
                     command="remote/check_host",
                     reason="errB",
                 ),
                 fixture.error(
-                    report_codes.INVALID_RESPONSE_FORMAT, node="node2"
+                    reports.codes.INVALID_RESPONSE_FORMAT, node="node2"
                 ),
                 fixture.error(
-                    report_codes.HOST_ALREADY_IN_CLUSTER_CONFIG,
+                    reports.codes.HOST_ALREADY_IN_CLUSTER_CONFIG,
                     host_name="node3",
-                    force_code=report_codes.FORCE_ALREADY_IN_CLUSTER,
+                    force_code=reports.codes.FORCE_ALREADY_IN_CLUSTER,
                 ),
                 fixture.error(
-                    report_codes.SERVICE_NOT_INSTALLED,
+                    reports.codes.SERVICE_NOT_INSTALLED,
                     node="node4",
                     service_list=["corosync", "pacemaker"],
                 ),
                 fixture.error(
-                    report_codes.HOST_ALREADY_IN_CLUSTER_SERVICES,
+                    reports.codes.HOST_ALREADY_IN_CLUSTER_SERVICES,
                     host_name="node5",
                     service_list=["corosync", "pacemaker"],
-                    force_code=report_codes.FORCE_ALREADY_IN_CLUSTER,
+                    force_code=reports.codes.FORCE_ALREADY_IN_CLUSTER,
                 ),
                 fixture.error(
-                    report_codes.HOST_ALREADY_IN_CLUSTER_SERVICES,
+                    reports.codes.HOST_ALREADY_IN_CLUSTER_SERVICES,
                     host_name="node6",
                     service_list=["pacemaker_remote"],
-                    force_code=report_codes.FORCE_ALREADY_IN_CLUSTER,
+                    force_code=reports.codes.FORCE_ALREADY_IN_CLUSTER,
                 ),
                 fixture.error(
-                    report_codes.SERVICE_VERSION_MISMATCH,
+                    reports.codes.SERVICE_VERSION_MISMATCH,
                     service="pcsd",
                     hosts_version=host_version,
                 ),
                 fixture.error(
-                    report_codes.SERVICE_VERSION_MISMATCH,
+                    reports.codes.SERVICE_VERSION_MISMATCH,
                     service="corosync",
                     hosts_version=host_version,
                 ),
                 fixture.error(
-                    report_codes.SERVICE_VERSION_MISMATCH,
+                    reports.codes.SERVICE_VERSION_MISMATCH,
                     service="pacemaker",
                     hosts_version=host_version,
                 ),
                 fixture.error(
-                    report_codes.CLUSTER_WILL_BE_DESTROYED,
-                    force_code=report_codes.FORCE_ALREADY_IN_CLUSTER,
+                    reports.codes.CLUSTER_WILL_BE_DESTROYED,
+                    force_code=reports.codes.FORCE_ALREADY_IN_CLUSTER,
                 ),
             ]
         )
@@ -1623,54 +1631,57 @@ class Validation(TestCase):
                 CLUSTER_NAME,
                 [{"name": name, "addrs": None} for name in nodelist],
                 transport_type="knet",
-                force_flags=[report_codes.FORCE],
+                force_flags=[reports.codes.FORCE],
             )
         )
         self.env_assist.assert_reports(
             [
                 fixture.info(
-                    report_codes.USING_KNOWN_HOST_ADDRESS_FOR_HOST,
+                    reports.codes.USING_DEFAULT_ADDRESS_FOR_HOST,
                     host_name=node,
                     address=node,
+                    address_source=(
+                        reports.const.DEFAULT_ADDRESS_SOURCE_KNOWN_HOSTS
+                    ),
                 )
                 for node in nodelist
             ]
             + [
                 fixture.error(
-                    report_codes.INVALID_RESPONSE_FORMAT, node="node0"
+                    reports.codes.INVALID_RESPONSE_FORMAT, node="node0"
                 ),
                 fixture.error(
-                    report_codes.NODE_COMMUNICATION_COMMAND_UNSUCCESSFUL,
+                    reports.codes.NODE_COMMUNICATION_COMMAND_UNSUCCESSFUL,
                     node="node5",
                     command="remote/check_host",
                     reason="errA",
                 ),
                 fixture.error(
-                    report_codes.NODE_COMMUNICATION_ERROR_UNABLE_TO_CONNECT,
+                    reports.codes.NODE_COMMUNICATION_ERROR_UNABLE_TO_CONNECT,
                     node="node6",
                     command="remote/check_host",
                     reason="errB",
                 ),
                 fixture.error(
-                    report_codes.INVALID_RESPONSE_FORMAT, node="node2"
+                    reports.codes.INVALID_RESPONSE_FORMAT, node="node2"
                 ),
                 fixture.error(
-                    report_codes.SERVICE_NOT_INSTALLED,
+                    reports.codes.SERVICE_NOT_INSTALLED,
                     node="node3",
                     service_list=["corosync", "pacemaker"],
                 ),
                 fixture.error(
-                    report_codes.SERVICE_VERSION_MISMATCH,
+                    reports.codes.SERVICE_VERSION_MISMATCH,
                     service="pcsd",
                     hosts_version=host_version,
                 ),
                 fixture.error(
-                    report_codes.SERVICE_VERSION_MISMATCH,
+                    reports.codes.SERVICE_VERSION_MISMATCH,
                     service="corosync",
                     hosts_version=host_version,
                 ),
                 fixture.error(
-                    report_codes.SERVICE_VERSION_MISMATCH,
+                    reports.codes.SERVICE_VERSION_MISMATCH,
                     service="pacemaker",
                     hosts_version=host_version,
                 ),
@@ -1707,22 +1718,22 @@ class Validation(TestCase):
             CLUSTER_NAME,
             COMMAND_NODE_LIST,
             transport_type="knet",
-            force_flags=[report_codes.FORCE],
+            force_flags=[reports.codes.FORCE],
         )
 
         self.env_assist.assert_reports(
             [
                 fixture.warn(
-                    report_codes.HOST_ALREADY_IN_CLUSTER_CONFIG,
+                    reports.codes.HOST_ALREADY_IN_CLUSTER_CONFIG,
                     host_name="node1",
                 ),
                 fixture.warn(
-                    report_codes.HOST_ALREADY_IN_CLUSTER_SERVICES,
+                    reports.codes.HOST_ALREADY_IN_CLUSTER_SERVICES,
                     host_name="node2",
                     service_list=["corosync", "pacemaker"],
                 ),
                 fixture.warn(
-                    report_codes.HOST_ALREADY_IN_CLUSTER_SERVICES,
+                    reports.codes.HOST_ALREADY_IN_CLUSTER_SERVICES,
                     host_name="node3",
                     service_list=["pacemaker_remote"],
                 ),
@@ -1757,7 +1768,7 @@ class Validation(TestCase):
             )
         )
         self.env_assist.assert_reports(
-            [fixture.error(report_codes.INVALID_TIMEOUT_VALUE, timeout="abcd")]
+            [fixture.error(reports.codes.INVALID_TIMEOUT_VALUE, timeout="abcd")]
         )
 
     def test_wait_without_start(self):
@@ -1786,7 +1797,7 @@ class Validation(TestCase):
             )
         )
         self.env_assist.assert_reports(
-            [fixture.error(report_codes.WAIT_FOR_NODE_STARTUP_WITHOUT_START,)]
+            [fixture.error(reports.codes.WAIT_FOR_NODE_STARTUP_WITHOUT_START,)]
         )
 
     def test_errors_from_all_validators(self):
@@ -1829,7 +1840,7 @@ class Validation(TestCase):
         self.env_assist.assert_reports(
             [
                 fixture.error(
-                    report_codes.INVALID_OPTION_VALUE,
+                    reports.codes.INVALID_OPTION_VALUE,
                     option_value="tcp",
                     option_name="transport",
                     allowed_values=("knet", "udp", "udpu"),
@@ -1837,19 +1848,19 @@ class Validation(TestCase):
                     forbidden_characters=None,
                 ),
                 fixture.error(
-                    report_codes.WAIT_FOR_NODE_STARTUP_WITHOUT_START,
+                    reports.codes.WAIT_FOR_NODE_STARTUP_WITHOUT_START,
                 ),
                 fixture.error(
-                    report_codes.INVALID_TIMEOUT_VALUE, timeout="abcd"
+                    reports.codes.INVALID_TIMEOUT_VALUE, timeout="abcd"
                 ),
                 fixture.error(
-                    report_codes.HOST_ALREADY_IN_CLUSTER_CONFIG,
+                    reports.codes.HOST_ALREADY_IN_CLUSTER_CONFIG,
                     host_name="node3",
-                    force_code=report_codes.FORCE_ALREADY_IN_CLUSTER,
+                    force_code=reports.codes.FORCE_ALREADY_IN_CLUSTER,
                 ),
                 fixture.error(
-                    report_codes.CLUSTER_WILL_BE_DESTROYED,
-                    force_code=report_codes.FORCE_ALREADY_IN_CLUSTER,
+                    reports.codes.CLUSTER_WILL_BE_DESTROYED,
+                    force_code=reports.codes.FORCE_ALREADY_IN_CLUSTER,
                 ),
             ]
         )
@@ -2175,21 +2186,21 @@ class SetupWithWait(TestCase):
             reports_success_minimal_fixture()
             + [
                 fixture.info(
-                    report_codes.CLUSTER_START_STARTED,
+                    reports.codes.CLUSTER_START_STARTED,
                     host_name_list=sorted(NODE_LIST),
                 ),
                 fixture.info(
-                    report_codes.WAIT_FOR_NODE_STARTUP_STARTED,
+                    reports.codes.WAIT_FOR_NODE_STARTUP_STARTED,
                     node_name_list=NODE_LIST,
                 ),
             ]
             + [
-                fixture.info(report_codes.CLUSTER_START_SUCCESS, node=node,)
+                fixture.info(reports.codes.CLUSTER_START_SUCCESS, node=node,)
                 for node in NODE_LIST[:1]
             ]
             + [
-                fixture.error(report_codes.WAIT_FOR_NODE_STARTUP_TIMED_OUT),
-                fixture.error(report_codes.WAIT_FOR_NODE_STARTUP_ERROR),
+                fixture.error(reports.codes.WAIT_FOR_NODE_STARTUP_TIMED_OUT),
+                fixture.error(reports.codes.WAIT_FOR_NODE_STARTUP_ERROR),
             ]
         )
 
@@ -2209,15 +2220,15 @@ class SetupWithWait(TestCase):
             reports_success_minimal_fixture()
             + [
                 fixture.info(
-                    report_codes.CLUSTER_START_STARTED,
+                    reports.codes.CLUSTER_START_STARTED,
                     host_name_list=sorted(NODE_LIST),
                 ),
                 fixture.info(
-                    report_codes.WAIT_FOR_NODE_STARTUP_STARTED,
+                    reports.codes.WAIT_FOR_NODE_STARTUP_STARTED,
                     node_name_list=NODE_LIST,
                 ),
-                fixture.error(report_codes.WAIT_FOR_NODE_STARTUP_TIMED_OUT),
-                fixture.error(report_codes.WAIT_FOR_NODE_STARTUP_ERROR),
+                fixture.error(reports.codes.WAIT_FOR_NODE_STARTUP_TIMED_OUT),
+                fixture.error(reports.codes.WAIT_FOR_NODE_STARTUP_ERROR),
             ]
         )
 
@@ -2254,16 +2265,16 @@ class SetupWithWait(TestCase):
             reports_success_minimal_fixture()
             + [
                 fixture.info(
-                    report_codes.CLUSTER_START_STARTED,
+                    reports.codes.CLUSTER_START_STARTED,
                     host_name_list=sorted(NODE_LIST),
                 ),
                 fixture.info(
-                    report_codes.WAIT_FOR_NODE_STARTUP_STARTED,
+                    reports.codes.WAIT_FOR_NODE_STARTUP_STARTED,
                     node_name_list=NODE_LIST,
                 ),
             ]
             + [
-                fixture.info(report_codes.CLUSTER_START_SUCCESS, node=node,)
+                fixture.info(reports.codes.CLUSTER_START_SUCCESS, node=node,)
                 for node in NODE_LIST
             ]
         )
@@ -2312,35 +2323,35 @@ class SetupWithWait(TestCase):
             reports_success_minimal_fixture()
             + [
                 fixture.info(
-                    report_codes.CLUSTER_START_STARTED,
+                    reports.codes.CLUSTER_START_STARTED,
                     host_name_list=sorted(NODE_LIST),
                 ),
                 fixture.info(
-                    report_codes.WAIT_FOR_NODE_STARTUP_STARTED,
+                    reports.codes.WAIT_FOR_NODE_STARTUP_STARTED,
                     node_name_list=NODE_LIST,
                 ),
                 fixture.warn(
-                    report_codes.NODE_COMMUNICATION_ERROR_UNABLE_TO_CONNECT,
+                    reports.codes.NODE_COMMUNICATION_ERROR_UNABLE_TO_CONNECT,
                     node=NODE_LIST[0],
                     command="remote/pacemaker_node_status",
                     reason="error",
                 ),
             ]
             + [
-                fixture.info(report_codes.CLUSTER_START_SUCCESS, node=node,)
+                fixture.info(reports.codes.CLUSTER_START_SUCCESS, node=node,)
                 for node in NODE_LIST[2:3]
             ]
             + [
                 fixture.error(
-                    report_codes.INVALID_RESPONSE_FORMAT, node=NODE_LIST[1]
+                    reports.codes.INVALID_RESPONSE_FORMAT, node=NODE_LIST[1]
                 ),
                 fixture.error(
-                    report_codes.NODE_COMMUNICATION_COMMAND_UNSUCCESSFUL,
+                    reports.codes.NODE_COMMUNICATION_COMMAND_UNSUCCESSFUL,
                     node=NODE_LIST[0],
                     command="remote/pacemaker_node_status",
                     reason="",
                 ),
-                fixture.error(report_codes.WAIT_FOR_NODE_STARTUP_ERROR),
+                fixture.error(reports.codes.WAIT_FOR_NODE_STARTUP_ERROR),
             ]
         )
 
@@ -2380,30 +2391,30 @@ class SetupWithWait(TestCase):
             reports_success_minimal_fixture()
             + [
                 fixture.info(
-                    report_codes.CLUSTER_START_STARTED,
+                    reports.codes.CLUSTER_START_STARTED,
                     host_name_list=sorted(NODE_LIST),
                 ),
                 fixture.info(
-                    report_codes.WAIT_FOR_NODE_STARTUP_STARTED,
+                    reports.codes.WAIT_FOR_NODE_STARTUP_STARTED,
                     node_name_list=NODE_LIST,
                 ),
                 fixture.warn(
-                    report_codes.NODE_COMMUNICATION_ERROR_UNABLE_TO_CONNECT,
+                    reports.codes.NODE_COMMUNICATION_ERROR_UNABLE_TO_CONNECT,
                     node=NODE_LIST[0],
                     command="remote/pacemaker_node_status",
                     reason="error",
                 ),
                 fixture.error(
-                    report_codes.INVALID_RESPONSE_FORMAT, node=NODE_LIST[1],
+                    reports.codes.INVALID_RESPONSE_FORMAT, node=NODE_LIST[1],
                 ),
             ]
             + [
-                fixture.info(report_codes.CLUSTER_START_SUCCESS, node=node,)
+                fixture.info(reports.codes.CLUSTER_START_SUCCESS, node=node,)
                 for node in NODE_LIST[:1]
             ]
             + [
-                fixture.error(report_codes.WAIT_FOR_NODE_STARTUP_TIMED_OUT),
-                fixture.error(report_codes.WAIT_FOR_NODE_STARTUP_ERROR),
+                fixture.error(reports.codes.WAIT_FOR_NODE_STARTUP_TIMED_OUT),
+                fixture.error(reports.codes.WAIT_FOR_NODE_STARTUP_ERROR),
             ]
         )
 
@@ -2447,7 +2458,7 @@ class Failures(RemoveCallsMixin, TestCase):
     def _get_failure_reports(self, command):
         return [
             fixture.error(
-                report_codes.NODE_COMMUNICATION_COMMAND_UNSUCCESSFUL,
+                reports.codes.NODE_COMMUNICATION_COMMAND_UNSUCCESSFUL,
                 node=node,
                 command=command,
                 reason=REASON,
@@ -2455,7 +2466,7 @@ class Failures(RemoveCallsMixin, TestCase):
             for node in self.nodes_failed
         ] + [
             fixture.error(
-                report_codes.NODE_COMMUNICATION_ERROR_UNABLE_TO_CONNECT,
+                reports.codes.NODE_COMMUNICATION_ERROR_UNABLE_TO_CONNECT,
                 node=node,
                 command=command,
                 reason=REASON,
@@ -2485,17 +2496,17 @@ class Failures(RemoveCallsMixin, TestCase):
             reports_success_minimal_fixture()
             + [
                 fixture.info(
-                    report_codes.CLUSTER_ENABLE_STARTED,
+                    reports.codes.CLUSTER_ENABLE_STARTED,
                     host_name_list=sorted(NODE_LIST),
                 )
             ]
             + [
-                fixture.info(report_codes.CLUSTER_ENABLE_SUCCESS, node=node)
+                fixture.info(reports.codes.CLUSTER_ENABLE_SUCCESS, node=node)
                 for node in NODE_LIST
             ]
             + [
                 fixture.info(
-                    report_codes.CLUSTER_START_STARTED,
+                    reports.codes.CLUSTER_START_STARTED,
                     host_name_list=sorted(NODE_LIST),
                 )
             ]
@@ -2520,13 +2531,13 @@ class Failures(RemoveCallsMixin, TestCase):
             reports_success_minimal_fixture()
             + [
                 fixture.info(
-                    report_codes.CLUSTER_ENABLE_STARTED,
+                    reports.codes.CLUSTER_ENABLE_STARTED,
                     host_name_list=sorted(NODE_LIST),
                 )
             ]
             + self._get_failure_reports("remote/cluster_enable")
             + [
-                fixture.info(report_codes.CLUSTER_ENABLE_SUCCESS, node=node)
+                fixture.info(reports.codes.CLUSTER_ENABLE_SUCCESS, node=node)
                 for node in self.nodes_success
             ]
         )
@@ -2552,7 +2563,7 @@ class Failures(RemoveCallsMixin, TestCase):
             reports_success_minimal_fixture()[:-4]
             + [
                 fixture.info(
-                    report_codes.FILE_DISTRIBUTION_SUCCESS,
+                    reports.codes.FILE_DISTRIBUTION_SUCCESS,
                     file_description="corosync.conf",
                     node=node,
                 )
@@ -2596,7 +2607,7 @@ class Failures(RemoveCallsMixin, TestCase):
             reports_success_minimal_fixture()[:-4]
             + [
                 fixture.info(
-                    report_codes.FILE_DISTRIBUTION_SUCCESS,
+                    reports.codes.FILE_DISTRIBUTION_SUCCESS,
                     file_description="corosync.conf",
                     node=node,
                 )
@@ -2604,7 +2615,7 @@ class Failures(RemoveCallsMixin, TestCase):
             ]
             + [
                 fixture.error(
-                    report_codes.FILE_DISTRIBUTION_ERROR,
+                    reports.codes.FILE_DISTRIBUTION_ERROR,
                     file_description="corosync.conf",
                     node=NODE_LIST[0],
                     reason=REASON,
@@ -2636,7 +2647,7 @@ class Failures(RemoveCallsMixin, TestCase):
             reports_success_minimal_fixture()[:-4]
             + [
                 fixture.info(
-                    report_codes.FILE_DISTRIBUTION_SUCCESS,
+                    reports.codes.FILE_DISTRIBUTION_SUCCESS,
                     file_description="corosync.conf",
                     node=node,
                 )
@@ -2644,7 +2655,7 @@ class Failures(RemoveCallsMixin, TestCase):
             ]
             + [
                 fixture.error(
-                    report_codes.INVALID_RESPONSE_FORMAT, node=NODE_LIST[0],
+                    reports.codes.INVALID_RESPONSE_FORMAT, node=NODE_LIST[0],
                 )
             ]
         )
@@ -2668,7 +2679,7 @@ class Failures(RemoveCallsMixin, TestCase):
             reports_success_minimal_fixture()[:-15]
             + [
                 fixture.info(
-                    report_codes.FILE_REMOVE_FROM_NODE_SUCCESS,
+                    reports.codes.FILE_REMOVE_FROM_NODE_SUCCESS,
                     node=node,
                     file_description="pcsd settings",
                 )
@@ -2711,7 +2722,7 @@ class Failures(RemoveCallsMixin, TestCase):
             reports_success_minimal_fixture()[:-15]
             + [
                 fixture.info(
-                    report_codes.FILE_REMOVE_FROM_NODE_SUCCESS,
+                    reports.codes.FILE_REMOVE_FROM_NODE_SUCCESS,
                     node=node,
                     file_description="pcsd settings",
                 )
@@ -2719,7 +2730,7 @@ class Failures(RemoveCallsMixin, TestCase):
             ]
             + [
                 fixture.error(
-                    report_codes.FILE_REMOVE_FROM_NODE_ERROR,
+                    reports.codes.FILE_REMOVE_FROM_NODE_ERROR,
                     node=NODE_LIST[0],
                     file_description="pcsd settings",
                     reason=REASON,
@@ -2750,7 +2761,7 @@ class Failures(RemoveCallsMixin, TestCase):
             reports_success_minimal_fixture()[:-15]
             + [
                 fixture.info(
-                    report_codes.FILE_REMOVE_FROM_NODE_SUCCESS,
+                    reports.codes.FILE_REMOVE_FROM_NODE_SUCCESS,
                     node=node,
                     file_description="pcsd settings",
                 )
@@ -2758,7 +2769,7 @@ class Failures(RemoveCallsMixin, TestCase):
             ]
             + [
                 fixture.error(
-                    report_codes.INVALID_RESPONSE_FORMAT, node=NODE_LIST[0],
+                    reports.codes.INVALID_RESPONSE_FORMAT, node=NODE_LIST[0],
                 )
             ]
         )
@@ -2816,7 +2827,7 @@ class Failures(RemoveCallsMixin, TestCase):
             reports_success_minimal_fixture()[:-11]
             + [
                 fixture.info(
-                    report_codes.FILE_DISTRIBUTION_SUCCESS,
+                    reports.codes.FILE_DISTRIBUTION_SUCCESS,
                     node=node,
                     file_description=file,
                 )
@@ -2825,23 +2836,23 @@ class Failures(RemoveCallsMixin, TestCase):
             ]
             + [
                 fixture.error(
-                    report_codes.FILE_DISTRIBUTION_ERROR,
+                    reports.codes.FILE_DISTRIBUTION_ERROR,
                     node=NODE_LIST[0],
                     reason=REASON,
                     file_description="pacemaker authkey",
                 ),
                 fixture.info(
-                    report_codes.FILE_DISTRIBUTION_SUCCESS,
+                    reports.codes.FILE_DISTRIBUTION_SUCCESS,
                     node=NODE_LIST[0],
                     file_description="corosync authkey",
                 ),
                 fixture.info(
-                    report_codes.FILE_DISTRIBUTION_SUCCESS,
+                    reports.codes.FILE_DISTRIBUTION_SUCCESS,
                     node=NODE_LIST[1],
                     file_description="pacemaker authkey",
                 ),
                 fixture.error(
-                    report_codes.FILE_DISTRIBUTION_ERROR,
+                    reports.codes.FILE_DISTRIBUTION_ERROR,
                     node=NODE_LIST[1],
                     reason=REASON,
                     file_description="corosync authkey",
@@ -2873,7 +2884,7 @@ class Failures(RemoveCallsMixin, TestCase):
             reports_success_minimal_fixture()[:-11]
             + [
                 fixture.info(
-                    report_codes.FILE_DISTRIBUTION_SUCCESS,
+                    reports.codes.FILE_DISTRIBUTION_SUCCESS,
                     node=node,
                     file_description=file,
                 )
@@ -2882,7 +2893,7 @@ class Failures(RemoveCallsMixin, TestCase):
             ]
             + [
                 fixture.error(
-                    report_codes.INVALID_RESPONSE_FORMAT, node=NODE_LIST[0],
+                    reports.codes.INVALID_RESPONSE_FORMAT, node=NODE_LIST[0],
                 ),
             ]
         )
@@ -2908,7 +2919,7 @@ class Failures(RemoveCallsMixin, TestCase):
             reports_success_minimal_fixture()[:-11]
             + [
                 fixture.info(
-                    report_codes.FILE_DISTRIBUTION_SUCCESS,
+                    reports.codes.FILE_DISTRIBUTION_SUCCESS,
                     node=node,
                     file_description=file,
                 )
@@ -2956,7 +2967,7 @@ class Failures(RemoveCallsMixin, TestCase):
         self.env_assist.assert_reports(
             reports_success_minimal_fixture()[:-19]
             + [
-                fixture.info(report_codes.CLUSTER_DESTROY_SUCCESS, node=node)
+                fixture.info(reports.codes.CLUSTER_DESTROY_SUCCESS, node=node)
                 for node in self.nodes_success
             ]
             + self._get_failure_reports("remote/cluster_destroy")
@@ -3048,15 +3059,18 @@ class SslCertSync(RemoveCallsMixin, TestCase):
         self.env_assist.assert_reports(
             [
                 fixture.info(
-                    report_codes.USING_KNOWN_HOST_ADDRESS_FOR_HOST,
+                    reports.codes.USING_DEFAULT_ADDRESS_FOR_HOST,
                     host_name=node,
                     address=node,
+                    address_source=(
+                        reports.const.DEFAULT_ADDRESS_SOURCE_KNOWN_HOSTS
+                    ),
                 )
                 for node in NODE_LIST
             ]
             + [
                 fixture.error(
-                    report_codes.FILE_IO_ERROR,
+                    reports.codes.FILE_IO_ERROR,
                     file_type_code=file_type_codes.PCSD_ENVIRONMENT_CONFIG,
                     file_path=settings.pcsd_config,
                     reason="error reading pcsd config",
@@ -3093,13 +3107,13 @@ class SslCertSync(RemoveCallsMixin, TestCase):
             reports_success_minimal_fixture()
             + [
                 fixture.info(
-                    report_codes.PCSD_SSL_CERT_AND_KEY_DISTRIBUTION_STARTED,
+                    reports.codes.PCSD_SSL_CERT_AND_KEY_DISTRIBUTION_STARTED,
                     node_name_list=NODE_LIST,
                 )
             ]
             + [
                 fixture.info(
-                    report_codes.PCSD_SSL_CERT_AND_KEY_SET_SUCCESS, node=node,
+                    reports.codes.PCSD_SSL_CERT_AND_KEY_SET_SUCCESS, node=node,
                 )
                 for node in NODE_LIST
             ]
@@ -3140,19 +3154,19 @@ class SslCertSync(RemoveCallsMixin, TestCase):
             reports_success_minimal_fixture()[:-5]
             + [
                 fixture.info(
-                    report_codes.PCSD_SSL_CERT_AND_KEY_DISTRIBUTION_STARTED,
+                    reports.codes.PCSD_SSL_CERT_AND_KEY_DISTRIBUTION_STARTED,
                     node_name_list=NODE_LIST,
                 )
             ]
             + [
                 fixture.info(
-                    report_codes.PCSD_SSL_CERT_AND_KEY_SET_SUCCESS, node=node,
+                    reports.codes.PCSD_SSL_CERT_AND_KEY_SET_SUCCESS, node=node,
                 )
                 for node in NODE_LIST[1:]
             ]
             + [
                 fixture.error(
-                    report_codes.NODE_COMMUNICATION_COMMAND_UNSUCCESSFUL,
+                    reports.codes.NODE_COMMUNICATION_COMMAND_UNSUCCESSFUL,
                     node=NODE_LIST[0],
                     command="remote/set_certs",
                     reason=REASON,
@@ -3187,9 +3201,12 @@ class SetupLocal(TestCase):
         self.env_assist.assert_reports(
             [
                 fixture.info(
-                    report_codes.USING_KNOWN_HOST_ADDRESS_FOR_HOST,
+                    reports.codes.USING_DEFAULT_ADDRESS_FOR_HOST,
                     host_name=node,
                     address=node,
+                    address_source=(
+                        reports.const.DEFAULT_ADDRESS_SOURCE_KNOWN_HOSTS
+                    ),
                 )
                 for node in NODE_LIST
             ]
@@ -3227,14 +3244,20 @@ class SetupLocal(TestCase):
         self.env_assist.assert_reports(
             [
                 fixture.info(
-                    report_codes.USING_KNOWN_HOST_ADDRESS_FOR_HOST,
+                    reports.codes.USING_DEFAULT_ADDRESS_FOR_HOST,
                     host_name="node1",
                     address="node1",
+                    address_source=(
+                        reports.const.DEFAULT_ADDRESS_SOURCE_HOST_NAME
+                    ),
                 ),
                 fixture.info(
-                    report_codes.USING_KNOWN_HOST_ADDRESS_FOR_HOST,
+                    reports.codes.USING_DEFAULT_ADDRESS_FOR_HOST,
                     host_name="node3",
                     address="node3",
+                    address_source=(
+                        reports.const.DEFAULT_ADDRESS_SOURCE_KNOWN_HOSTS
+                    ),
                 ),
             ]
         )
@@ -3260,7 +3283,7 @@ class SetupLocal(TestCase):
         self.env_assist.assert_reports(
             [
                 fixture.error(
-                    report_codes.INVALID_OPTION_VALUE,
+                    reports.codes.INVALID_OPTION_VALUE,
                     option_value="",
                     option_name="cluster name",
                     allowed_values=None,
@@ -3268,13 +3291,13 @@ class SetupLocal(TestCase):
                     forbidden_characters=None,
                 ),
                 fixture.error(
-                    report_codes.INVALID_OPTION_VALUE,
+                    reports.codes.INVALID_OPTION_VALUE,
                     option_value="tcp",
                     option_name="transport",
                     allowed_values=("knet", "udp", "udpu"),
                     cannot_be_empty=False,
                     forbidden_characters=None,
                 ),
-                fixture.error(report_codes.COROSYNC_NODES_MISSING),
+                fixture.error(reports.codes.COROSYNC_NODES_MISSING),
             ]
         )

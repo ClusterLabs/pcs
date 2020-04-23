@@ -1400,13 +1400,15 @@ def _get_addrs_defaulter(
         target = targets_dict.get(node["name"])
         if target:
             address_for_use = target.first_addr
+            address_source = reports.const.DEFAULT_ADDRESS_SOURCE_KNOWN_HOSTS
         elif default_to_name_if_no_target:
             address_for_use = node["name"]
+            address_source = reports.const.DEFAULT_ADDRESS_SOURCE_HOST_NAME
         if address_for_use:
             report_processor.report(
                 ReportItem.info(
-                    reports.messages.UsingKnownHostAddressForHost(
-                        node["name"], address_for_use
+                    reports.messages.UsingDefaultAddressForHost(
+                        node["name"], address_for_use, address_source
                     )
                 )
             )

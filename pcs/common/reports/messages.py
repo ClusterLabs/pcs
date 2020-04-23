@@ -4976,14 +4976,15 @@ class ClusterSetupSuccess(ReportItemMessage):
 
 
 @dataclass(frozen=True)
-class UsingKnownHostAddressForHost(ReportItemMessage):
+class UsingDefaultAddressForHost(ReportItemMessage):
     """
-    When no address was specified for a host, its known-host address was used
+    When no address was specified for a host, a default address was used for it
     """
 
     host_name: str
     address: str
-    _code = codes.USING_KNOWN_HOST_ADDRESS_FOR_HOST
+    address_source: types.DefaultAddressSource
+    _code = codes.USING_DEFAULT_ADDRESS_FOR_HOST
 
     @property
     def message(self) -> str:
