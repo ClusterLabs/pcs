@@ -21,6 +21,14 @@ _metadata = {
         permissions=0o600,
         is_binary=True,
     ),
+    code.COROSYNC_CONF: lambda path: FileMetadata(
+        file_type_code=code.COROSYNC_CONF,
+        path=path,
+        owner_user_name=None,
+        owner_group_name=None,
+        permissions=0o644,
+        is_binary=False,
+    ),
     code.PCS_KNOWN_HOSTS: lambda: FileMetadata(
         file_type_code=code.PCS_KNOWN_HOSTS,
         path=os.path.join(os.path.expanduser("~/.pcs"), "known-hosts"),

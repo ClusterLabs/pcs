@@ -10,6 +10,7 @@ from pcs_test.tools.assertions import (
 from pcs_test.tools.misc import (
     dict_to_modifiers,
     get_test_resource as rc,
+    get_tmp_file,
     skip_unless_pacemaker_version,
     skip_unless_root,
 )
@@ -207,12 +208,13 @@ class ClusterSetup(TestCase):
     # pylint: disable=too-many-public-methods
     def setUp(self):
         self.lib = mock.Mock(spec_set=["cluster"])
-        self.cluster = mock.Mock(spec_set=["setup"])
+        self.cluster = mock.Mock(spec_set=["setup", "setup_local"])
         self.lib.cluster = self.cluster
         self.cluster_name = "cluster_name"
 
-    def assert_setup_called_with(self, node_list, **kwargs):
-        default_kwargs = dict(
+    @staticmethod
+    def _get_default_kwargs():
+        return dict(
             transport_type=None,
             transport_options={},
             link_list=[],
@@ -220,14 +222,23 @@ class ClusterSetup(TestCase):
             crypto_options={},
             totem_options={},
             quorum_options={},
-            wait=False,
-            start=False,
-            enable=False,
-            no_keys_sync=False,
             force_flags=[],
+        )
+
+    def assert_setup_called_with(self, node_list, **kwargs):
+        default_kwargs = self._get_default_kwargs()
+        default_kwargs.update(
+            dict(wait=False, start=False, enable=False, no_keys_sync=False)
         )
         default_kwargs.update(kwargs)
         self.cluster.setup.assert_called_once_with(
+            self.cluster_name, node_list, **default_kwargs
+        )
+
+    def assert_setup_local_called_with(self, node_list, **kwargs):
+        default_kwargs = self._get_default_kwargs()
+        default_kwargs.update(kwargs)
+        self.cluster.setup_local.assert_called_once_with(
             self.cluster_name, node_list, **default_kwargs
         )
 
@@ -571,6 +582,110 @@ class ClusterSetup(TestCase):
             wait="15",
             no_keys_sync=True,
             force_flags=[report_codes.FORCE],
+        )
+
+    def test_live_with_local_modifiers(self):
+        node_name = "node"
+        with self.assertRaises(CmdLineInputError) as cm:
+            self.call_cmd([node_name], {"overwrite": True})
+        self.assertEqual(
+            "Cannot specify '--overwrite' when '--corosync_conf' is not "
+            "specified",
+            cm.exception.message,
+        )
+
+    def test_corosync_conf_not_supported_modifiers(self):
+        node_name = "node"
+        with self.assertRaises(CmdLineInputError) as cm:
+            self.call_cmd(
+                [node_name],
+                {
+                    "enable": True,
+                    "start": True,
+                    "wait": "15",
+                    "no-keys-sync": True,
+                    "corosync_conf": "file_path",
+                    "force": True,
+                },
+            )
+        self.assertEqual(
+            "Cannot specify any of '--enable', '--no-keys-sync', '--start', "
+            "'--wait' when '--corosync_conf' is specified",
+            cm.exception.message,
+        )
+
+    def test_corosync_conf(self):
+        node_name = "node"
+        corosync_conf_data = b"new corosync.conf"
+        self.cluster.setup_local.return_value = corosync_conf_data
+        with get_tmp_file("test_cluster_corosync.conf", "rb") as output_file:
+            self.call_cmd(
+                [node_name],
+                {"corosync_conf": output_file.name, "overwrite": True},
+            )
+            self.assertEqual(output_file.read(), corosync_conf_data)
+
+        self.assert_setup_local_called_with([_node(node_name)])
+
+    def test_corosync_conf_full_knet(self):
+        corosync_conf_data = b"new corosync.conf"
+        self.cluster.setup_local.return_value = corosync_conf_data
+        with get_tmp_file("test_cluster_corosync.conf", "rb") as output_file:
+            self.call_cmd(
+                [
+                    "node0",
+                    "node2",
+                    "addr=addr0",
+                    "node1",
+                    "addr=addr1",
+                    "addr=addr2",
+                    "totem",
+                    "a=1",
+                    "b=1",
+                    "quorum",
+                    "c=1",
+                    "d=1",
+                    "transport",
+                    "knet",
+                    "a=a",
+                    "b=b",
+                    "compression",
+                    "a=1",
+                    "b=2",
+                    "c=3",
+                    "crypto",
+                    "d=4",
+                    "e=5",
+                    "link",
+                    "aa=1",
+                    "link",
+                    "ba=1",
+                    "bb=2",
+                    "link",
+                    "ca=1",
+                    "cb=2",
+                    "cc=3",
+                ],
+                {"corosync_conf": output_file.name, "overwrite": True},
+            )
+            self.assertEqual(output_file.read(), corosync_conf_data)
+        self.assert_setup_local_called_with(
+            [
+                _node("node0"),
+                _node("node2", addrs=["addr0"]),
+                _node("node1", addrs=["addr1", "addr2"]),
+            ],
+            totem_options=dict(a="1", b="1"),
+            quorum_options=dict(c="1", d="1"),
+            transport_type="knet",
+            transport_options=dict(a="a", b="b"),
+            compression_options=dict(a="1", b="2", c="3"),
+            crypto_options=dict(d="4", e="5"),
+            link_list=[
+                dict(aa="1"),
+                dict(ba="1", bb="2"),
+                dict(ca="1", cb="2", cc="3"),
+            ],
         )
 
 

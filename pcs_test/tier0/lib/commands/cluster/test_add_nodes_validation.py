@@ -17,7 +17,7 @@ from pcs_test.tools.command_env import get_env_tools
 from pcs_test.tools.custom_mock import patch_getaddrinfo
 
 from pcs import settings
-from pcs.common.reports import codes as report_codes
+from pcs.common import reports
 from pcs.lib.commands import cluster
 
 get_env_tools = partial(get_env_tools, local_extensions={"local": LocalConfig})
@@ -48,7 +48,7 @@ class GetTargets(TestCase):
     def _add_nodes(self, skip_offline=False):
         force_flags = []
         if skip_offline:
-            force_flags.append(report_codes.SKIP_OFFLINE_NODES)
+            force_flags.append(reports.codes.SKIP_OFFLINE_NODES)
         cluster.add_nodes(
             self.env_assist.get_env(),
             [{"name": node, "addrs": [node]} for node in self.new_nodes],
@@ -77,8 +77,8 @@ class GetTargets(TestCase):
             self.expected_reports
             + [
                 fixture.error(
-                    report_codes.HOST_NOT_FOUND,
-                    force_code=report_codes.SKIP_OFFLINE_NODES,
+                    reports.codes.HOST_NOT_FOUND,
+                    force_code=reports.codes.SKIP_OFFLINE_NODES,
                     host_list=self.existing_nodes[:1],
                 )
             ]
@@ -121,7 +121,7 @@ class GetTargets(TestCase):
             self.expected_reports
             + [
                 fixture.warn(
-                    report_codes.HOST_NOT_FOUND,
+                    reports.codes.HOST_NOT_FOUND,
                     host_list=self.existing_nodes[:1],
                 )
             ]
@@ -141,11 +141,11 @@ class GetTargets(TestCase):
             self.expected_reports
             + [
                 fixture.error(
-                    report_codes.HOST_NOT_FOUND,
-                    force_code=report_codes.SKIP_OFFLINE_NODES,
+                    reports.codes.HOST_NOT_FOUND,
+                    force_code=reports.codes.SKIP_OFFLINE_NODES,
                     host_list=self.existing_nodes,
                 ),
-                fixture.error(report_codes.NONE_HOST_FOUND),
+                fixture.error(reports.codes.NONE_HOST_FOUND),
             ]
         )
 
@@ -163,9 +163,9 @@ class GetTargets(TestCase):
             self.expected_reports
             + [
                 fixture.warn(
-                    report_codes.HOST_NOT_FOUND, host_list=self.existing_nodes
+                    reports.codes.HOST_NOT_FOUND, host_list=self.existing_nodes
                 ),
-                fixture.error(report_codes.NONE_HOST_FOUND),
+                fixture.error(reports.codes.NONE_HOST_FOUND),
             ]
         )
 
@@ -191,7 +191,7 @@ class GetTargets(TestCase):
             self.expected_reports
             + [
                 fixture.error(
-                    report_codes.HOST_NOT_FOUND, host_list=[QDEVICE_HOST]
+                    reports.codes.HOST_NOT_FOUND, host_list=[QDEVICE_HOST]
                 ),
             ]
         )
@@ -219,7 +219,7 @@ class GetTargets(TestCase):
             self.expected_reports
             + [
                 fixture.error(
-                    report_codes.HOST_NOT_FOUND, host_list=self.new_nodes[:1]
+                    reports.codes.HOST_NOT_FOUND, host_list=self.new_nodes[:1]
                 )
             ]
         )
@@ -277,7 +277,7 @@ class NoneNamesMissing(TestCase):
         self.env_assist.assert_reports(
             [
                 fixture.error(
-                    report_codes.COROSYNC_CONFIG_MISSING_NAMES_OF_NODES,
+                    reports.codes.COROSYNC_CONFIG_MISSING_NAMES_OF_NODES,
                     fatal=True,
                 ),
             ]
@@ -382,17 +382,23 @@ class Inputs(TestCase):
         self.env_assist.assert_reports(
             [
                 fixture.info(
-                    report_codes.USING_KNOWN_HOST_ADDRESS_FOR_HOST,
+                    reports.codes.USING_DEFAULT_ADDRESS_FOR_HOST,
                     host_name="node3",
                     address="node3",
+                    address_source=(
+                        reports.const.DEFAULT_ADDRESS_SOURCE_KNOWN_HOSTS
+                    ),
                 ),
                 fixture.info(
-                    report_codes.USING_KNOWN_HOST_ADDRESS_FOR_HOST,
+                    reports.codes.USING_DEFAULT_ADDRESS_FOR_HOST,
                     host_name="guest-name",
                     address="guest-name",
+                    address_source=(
+                        reports.const.DEFAULT_ADDRESS_SOURCE_KNOWN_HOSTS
+                    ),
                 ),
                 fixture.error(
-                    report_codes.COROSYNC_BAD_NODE_ADDRESSES_COUNT,
+                    reports.codes.COROSYNC_BAD_NODE_ADDRESSES_COUNT,
                     actual_count=4,
                     min_count=2,
                     max_count=2,
@@ -400,7 +406,7 @@ class Inputs(TestCase):
                     node_index=1,
                 ),
                 fixture.error(
-                    report_codes.COROSYNC_BAD_NODE_ADDRESSES_COUNT,
+                    reports.codes.COROSYNC_BAD_NODE_ADDRESSES_COUNT,
                     actual_count=0,
                     min_count=2,
                     max_count=2,
@@ -408,7 +414,7 @@ class Inputs(TestCase):
                     node_index=2,
                 ),
                 fixture.error(
-                    report_codes.COROSYNC_BAD_NODE_ADDRESSES_COUNT,
+                    reports.codes.COROSYNC_BAD_NODE_ADDRESSES_COUNT,
                     actual_count=1,
                     min_count=2,
                     max_count=2,
@@ -416,7 +422,7 @@ class Inputs(TestCase):
                     node_index=3,
                 ),
                 fixture.error(
-                    report_codes.COROSYNC_BAD_NODE_ADDRESSES_COUNT,
+                    reports.codes.COROSYNC_BAD_NODE_ADDRESSES_COUNT,
                     actual_count=1,
                     min_count=2,
                     max_count=2,
@@ -424,8 +430,8 @@ class Inputs(TestCase):
                     node_index=4,
                 ),
                 fixture.error(
-                    report_codes.NODE_ADDRESSES_UNRESOLVABLE,
-                    force_code=report_codes.FORCE_NODE_ADDRESSES_UNRESOLVABLE,
+                    reports.codes.NODE_ADDRESSES_UNRESOLVABLE,
+                    force_code=reports.codes.FORCE_NODE_ADDRESSES_UNRESOLVABLE,
                     address_list=[
                         "addr1-2",
                         "guest-host",
@@ -436,11 +442,11 @@ class Inputs(TestCase):
                     ],
                 ),
                 fixture.error(
-                    report_codes.NODE_NAMES_ALREADY_EXIST,
+                    reports.codes.NODE_NAMES_ALREADY_EXIST,
                     name_list=["guest-name", "node3", "remote-name"],
                 ),
                 fixture.error(
-                    report_codes.NODE_ADDRESSES_ALREADY_EXIST,
+                    reports.codes.NODE_ADDRESSES_ALREADY_EXIST,
                     address_list=["addr1-2", "guest-host", "remote-host"],
                 ),
             ]
@@ -478,17 +484,20 @@ class Inputs(TestCase):
         self.env_assist.assert_reports(
             [
                 fixture.info(
-                    report_codes.USING_KNOWN_HOST_ADDRESS_FOR_HOST,
+                    reports.codes.USING_DEFAULT_ADDRESS_FOR_HOST,
                     host_name="new1",
                     address="new1",
+                    address_source=(
+                        reports.const.DEFAULT_ADDRESS_SOURCE_KNOWN_HOSTS
+                    ),
                 ),
                 fixture.error(
-                    report_codes.CIB_LOAD_ERROR_GET_NODES_FOR_VALIDATION,
-                    force_code=report_codes.FORCE_LOAD_NODES_FROM_CIB,
+                    reports.codes.CIB_LOAD_ERROR_GET_NODES_FOR_VALIDATION,
+                    force_code=reports.codes.FORCE_LOAD_NODES_FROM_CIB,
                 ),
                 fixture.error(
-                    report_codes.NODE_ADDRESSES_UNRESOLVABLE,
-                    force_code=report_codes.FORCE_NODE_ADDRESSES_UNRESOLVABLE,
+                    reports.codes.NODE_ADDRESSES_UNRESOLVABLE,
+                    force_code=reports.codes.FORCE_NODE_ADDRESSES_UNRESOLVABLE,
                     address_list=["new1"],
                 ),
             ]
@@ -500,21 +509,20 @@ class Inputs(TestCase):
             lambda: cluster.add_nodes(
                 self.env_assist.get_env(),
                 [{"name": "new1", "addrs": ["addr1-1"]}],
-                force_flags=[report_codes.FORCE],
+                force_flags=[reports.codes.FORCE],
             )
         )
         self.env_assist.assert_reports(
             [
                 fixture.warn(
-                    report_codes.CIB_LOAD_ERROR_GET_NODES_FOR_VALIDATION
+                    reports.codes.CIB_LOAD_ERROR_GET_NODES_FOR_VALIDATION
                 ),
                 fixture.warn(
-                    report_codes.NODE_ADDRESSES_UNRESOLVABLE,
-                    # force_code=report_codes.FORCE_NODE_ADDRESSES_UNRESOLVABLE,
+                    reports.codes.NODE_ADDRESSES_UNRESOLVABLE,
                     address_list=["addr1-1"],
                 ),
                 fixture.error(
-                    report_codes.NODE_ADDRESSES_ALREADY_EXIST,
+                    reports.codes.NODE_ADDRESSES_ALREADY_EXIST,
                     address_list=["addr1-1"],
                 ),
             ]
@@ -549,18 +557,18 @@ class Inputs(TestCase):
                     # node add process.
                     {"name": "new1", "addrs": ["node1"]},
                 ],
-                force_flags=[report_codes.FORCE],
+                force_flags=[reports.codes.FORCE],
             )
         )
 
         self.env_assist.assert_reports(
             [
                 fixture.warn(
-                    report_codes.NODE_ADDRESSES_UNRESOLVABLE,
+                    reports.codes.NODE_ADDRESSES_UNRESOLVABLE,
                     address_list=["node1"],
                 ),
                 fixture.error(
-                    report_codes.NODE_ADDRESSES_ALREADY_EXIST,
+                    reports.codes.NODE_ADDRESSES_ALREADY_EXIST,
                     address_list=["node1"],
                 ),
             ]
@@ -607,32 +615,35 @@ class Inputs(TestCase):
         self.env_assist.assert_reports(
             [
                 fixture.info(
-                    report_codes.USING_KNOWN_HOST_ADDRESS_FOR_HOST,
+                    reports.codes.USING_DEFAULT_ADDRESS_FOR_HOST,
                     host_name=node,
                     address=node,
+                    address_source=(
+                        reports.const.DEFAULT_ADDRESS_SOURCE_KNOWN_HOSTS
+                    ),
                 )
                 for node in new_nodes
             ]
             + [
                 fixture.error(
-                    report_codes.INVALID_OPTIONS,
+                    reports.codes.INVALID_OPTIONS,
                     option_names=["nonsense"],
                     option_type="node",
                     allowed=["addrs", "devices", "name", "watchdog"],
                     allowed_patterns=[],
                 ),
                 fixture.error(
-                    report_codes.SBD_NOT_USED_CANNOT_SET_SBD_OPTIONS,
+                    reports.codes.SBD_NOT_USED_CANNOT_SET_SBD_OPTIONS,
                     node="new1",
                     options=["devices", "watchdog"],
                 ),
                 fixture.error(
-                    report_codes.SBD_NOT_USED_CANNOT_SET_SBD_OPTIONS,
+                    reports.codes.SBD_NOT_USED_CANNOT_SET_SBD_OPTIONS,
                     node="new2",
                     options=["devices"],
                 ),
                 fixture.error(
-                    report_codes.SBD_NOT_USED_CANNOT_SET_SBD_OPTIONS,
+                    reports.codes.SBD_NOT_USED_CANNOT_SET_SBD_OPTIONS,
                     node="new3",
                     options=["watchdog"],
                 ),
@@ -697,20 +708,23 @@ class Inputs(TestCase):
         self.env_assist.assert_reports(
             [
                 fixture.info(
-                    report_codes.USING_KNOWN_HOST_ADDRESS_FOR_HOST,
+                    reports.codes.USING_DEFAULT_ADDRESS_FOR_HOST,
                     host_name=node,
                     address=node,
+                    address_source=(
+                        reports.const.DEFAULT_ADDRESS_SOURCE_KNOWN_HOSTS
+                    ),
                 )
                 for node in new_nodes
             ]
             + [
                 fixture.info(
-                    report_codes.USING_DEFAULT_WATCHDOG,
+                    reports.codes.USING_DEFAULT_WATCHDOG,
                     node="new2",
                     watchdog="/dev/watchdog",
                 ),
                 fixture.error(
-                    report_codes.INVALID_OPTIONS,
+                    reports.codes.INVALID_OPTIONS,
                     option_names=["nonsense"],
                     option_type="node",
                     allowed=["addrs", "devices", "name", "watchdog"],
@@ -719,14 +733,14 @@ class Inputs(TestCase):
             ]
             + [
                 fixture.error(
-                    report_codes.SBD_WITH_DEVICES_NOT_USED_CANNOT_SET_DEVICE,
+                    reports.codes.SBD_WITH_DEVICES_NOT_USED_CANNOT_SET_DEVICE,
                     node=node,
                 )
                 for node in ["new1", "new2"]
             ]
-            + [fixture.info(report_codes.SBD_CHECK_STARTED)]
+            + [fixture.info(reports.codes.SBD_CHECK_STARTED)]
             + [
-                fixture.info(report_codes.SBD_CHECK_SUCCESS, node=node)
+                fixture.info(reports.codes.SBD_CHECK_SUCCESS, node=node)
                 for node in new_nodes
             ]
         )
@@ -791,45 +805,48 @@ class Inputs(TestCase):
         self.env_assist.assert_reports(
             [
                 fixture.info(
-                    report_codes.USING_KNOWN_HOST_ADDRESS_FOR_HOST,
+                    reports.codes.USING_DEFAULT_ADDRESS_FOR_HOST,
                     host_name=node,
                     address=node,
+                    address_source=(
+                        reports.const.DEFAULT_ADDRESS_SOURCE_KNOWN_HOSTS
+                    ),
                 )
                 for node in new_nodes
             ]
             + [
                 fixture.info(
-                    report_codes.USING_DEFAULT_WATCHDOG,
+                    reports.codes.USING_DEFAULT_WATCHDOG,
                     node="new2",
                     watchdog="/dev/watchdog",
                 ),
                 fixture.error(
-                    report_codes.INVALID_OPTIONS,
+                    reports.codes.INVALID_OPTIONS,
                     option_names=["nonsense"],
                     option_type="node",
                     allowed=["addrs", "devices", "name", "watchdog"],
                     allowed_patterns=[],
                 ),
                 fixture.error(
-                    report_codes.SBD_TOO_MANY_DEVICES_FOR_NODE,
+                    reports.codes.SBD_TOO_MANY_DEVICES_FOR_NODE,
                     node="new1",
                     device_list=devices1,
                     max_devices=3,
                 ),
                 fixture.error(
-                    report_codes.SBD_DEVICE_PATH_NOT_ABSOLUTE,
+                    reports.codes.SBD_DEVICE_PATH_NOT_ABSOLUTE,
                     node="new2",
                     device="dev/sxf",
                 ),
                 fixture.error(
-                    report_codes.SBD_NO_DEVICE_FOR_NODE,
+                    reports.codes.SBD_NO_DEVICE_FOR_NODE,
                     node="new3",
                     sbd_enabled_in_cluster=True,
                 ),
-                fixture.info(report_codes.SBD_CHECK_STARTED),
+                fixture.info(reports.codes.SBD_CHECK_STARTED),
             ]
             + [
-                fixture.info(report_codes.SBD_CHECK_SUCCESS, node=node)
+                fixture.info(reports.codes.SBD_CHECK_SUCCESS, node=node)
                 for node in new_nodes
             ]
         )
@@ -864,13 +881,16 @@ class Inputs(TestCase):
         self.env_assist.assert_reports(
             [
                 fixture.info(
-                    report_codes.USING_KNOWN_HOST_ADDRESS_FOR_HOST,
+                    reports.codes.USING_DEFAULT_ADDRESS_FOR_HOST,
                     host_name=node,
                     address=node,
+                    address_source=(
+                        reports.const.DEFAULT_ADDRESS_SOURCE_KNOWN_HOSTS
+                    ),
                 )
                 for node in new_nodes
             ]
-            + [fixture.error(report_codes.WAIT_FOR_NODE_STARTUP_WITHOUT_START)]
+            + [fixture.error(reports.codes.WAIT_FOR_NODE_STARTUP_WITHOUT_START)]
         )
 
     def test_wait(self):
@@ -906,15 +926,18 @@ class Inputs(TestCase):
         self.env_assist.assert_reports(
             [
                 fixture.info(
-                    report_codes.USING_KNOWN_HOST_ADDRESS_FOR_HOST,
+                    reports.codes.USING_DEFAULT_ADDRESS_FOR_HOST,
                     host_name=node,
                     address=node,
+                    address_source=(
+                        reports.const.DEFAULT_ADDRESS_SOURCE_KNOWN_HOSTS
+                    ),
                 )
                 for node in new_nodes
             ]
             + [
                 fixture.error(
-                    report_codes.INVALID_TIMEOUT_VALUE, timeout="nonsense"
+                    reports.codes.INVALID_TIMEOUT_VALUE, timeout="nonsense"
                 )
             ]
         )
@@ -980,29 +1003,32 @@ class ClusterStatus(TestCase):
             lambda: cluster.add_nodes(
                 self.env_assist.get_env(),
                 [{"name": "new1"}],
-                force_flags=[report_codes.SKIP_OFFLINE_NODES],
+                force_flags=[reports.codes.SKIP_OFFLINE_NODES],
             )
         )
 
         self.env_assist.assert_reports(
             [
                 fixture.info(
-                    report_codes.USING_KNOWN_HOST_ADDRESS_FOR_HOST,
+                    reports.codes.USING_DEFAULT_ADDRESS_FOR_HOST,
                     host_name=node,
                     address=node,
+                    address_source=(
+                        reports.const.DEFAULT_ADDRESS_SOURCE_KNOWN_HOSTS
+                    ),
                 )
                 for node in new_nodes
             ]
             + [
-                fixture.warn(report_codes.OMITTING_NODE, node="node1",),
+                fixture.warn(reports.codes.OMITTING_NODE, node="node1",),
                 fixture.error(
-                    report_codes.NODE_COMMUNICATION_COMMAND_UNSUCCESSFUL,
+                    reports.codes.NODE_COMMUNICATION_COMMAND_UNSUCCESSFUL,
                     node="node2",
                     command="remote/check_auth",
                     reason="not authorized",
                 ),
                 fixture.error(
-                    report_codes.UNABLE_TO_PERFORM_OPERATION_ON_ANY_NODE
+                    reports.codes.UNABLE_TO_PERFORM_OPERATION_ON_ANY_NODE
                 ),
             ]
         )
@@ -1037,16 +1063,19 @@ class ClusterStatus(TestCase):
         self.env_assist.assert_reports(
             [
                 fixture.info(
-                    report_codes.USING_KNOWN_HOST_ADDRESS_FOR_HOST,
+                    reports.codes.USING_DEFAULT_ADDRESS_FOR_HOST,
                     host_name=node,
                     address=node,
+                    address_source=(
+                        reports.const.DEFAULT_ADDRESS_SOURCE_KNOWN_HOSTS
+                    ),
                 )
                 for node in new_nodes
             ]
             + [
                 fixture.error(
-                    report_codes.NODE_COMMUNICATION_ERROR_UNABLE_TO_CONNECT,
-                    force_code=report_codes.SKIP_OFFLINE_NODES,
+                    reports.codes.NODE_COMMUNICATION_ERROR_UNABLE_TO_CONNECT,
+                    force_code=reports.codes.SKIP_OFFLINE_NODES,
                     node="node1",
                     command="remote/check_auth",
                     reason="an error",
@@ -1089,17 +1118,22 @@ class ClusterStatus(TestCase):
         self.env_assist.assert_reports(
             [
                 fixture.info(
-                    report_codes.USING_KNOWN_HOST_ADDRESS_FOR_HOST,
+                    reports.codes.USING_DEFAULT_ADDRESS_FOR_HOST,
                     host_name=node,
                     address=node,
+                    address_source=(
+                        reports.const.DEFAULT_ADDRESS_SOURCE_KNOWN_HOSTS
+                    ),
                 )
                 for node in new_nodes
             ]
             + [
-                fixture.error(report_codes.WAIT_FOR_NODE_STARTUP_WITHOUT_START),
                 fixture.error(
-                    report_codes.NODE_COMMUNICATION_ERROR_UNABLE_TO_CONNECT,
-                    force_code=report_codes.SKIP_OFFLINE_NODES,
+                    reports.codes.WAIT_FOR_NODE_STARTUP_WITHOUT_START
+                ),
+                fixture.error(
+                    reports.codes.NODE_COMMUNICATION_ERROR_UNABLE_TO_CONNECT,
+                    force_code=reports.codes.SKIP_OFFLINE_NODES,
                     node="node1",
                     command="remote/check_auth",
                     reason="an error",
@@ -1169,47 +1203,50 @@ class ClusterStatus(TestCase):
         self.env_assist.assert_reports(
             [
                 fixture.info(
-                    report_codes.USING_KNOWN_HOST_ADDRESS_FOR_HOST,
+                    reports.codes.USING_DEFAULT_ADDRESS_FOR_HOST,
                     host_name=node,
                     address=node,
+                    address_source=(
+                        reports.const.DEFAULT_ADDRESS_SOURCE_KNOWN_HOSTS
+                    ),
                 )
                 for node in new_nodes
             ]
             + [
                 fixture.info(
-                    report_codes.USING_DEFAULT_WATCHDOG,
+                    reports.codes.USING_DEFAULT_WATCHDOG,
                     node="new1",
                     watchdog="/dev/watchdog",
                 ),
                 fixture.warn(
-                    report_codes.COROSYNC_QUORUM_ATB_WILL_BE_ENABLED_DUE_TO_SBD
+                    reports.codes.COROSYNC_QUORUM_ATB_WILL_BE_ENABLED_DUE_TO_SBD
                 ),
-                fixture.info(report_codes.COROSYNC_NOT_RUNNING_CHECK_STARTED),
+                fixture.info(reports.codes.COROSYNC_NOT_RUNNING_CHECK_STARTED),
                 fixture.error(
-                    report_codes.COROSYNC_RUNNING_ON_NODE, node="node1"
+                    reports.codes.COROSYNC_RUNNING_ON_NODE, node="node1"
                 ),
                 fixture.error(
-                    report_codes.COROSYNC_NOT_RUNNING_CHECK_NODE_ERROR,
+                    reports.codes.COROSYNC_NOT_RUNNING_CHECK_NODE_ERROR,
                     node="node2",
                 ),
                 fixture.error(
-                    report_codes.NODE_COMMUNICATION_ERROR_UNABLE_TO_CONNECT,
+                    reports.codes.NODE_COMMUNICATION_ERROR_UNABLE_TO_CONNECT,
                     node="node3",
                     command="remote/status",
                     reason="an error",
                 ),
                 fixture.error(
-                    report_codes.COROSYNC_NOT_RUNNING_CHECK_NODE_ERROR,
+                    reports.codes.COROSYNC_NOT_RUNNING_CHECK_NODE_ERROR,
                     node="node3",
                 ),
                 fixture.error(
-                    report_codes.COROSYNC_RUNNING_ON_NODE, node="node4"
+                    reports.codes.COROSYNC_RUNNING_ON_NODE, node="node4"
                 ),
                 fixture.info(
-                    report_codes.COROSYNC_NOT_RUNNING_ON_NODE, node="node5"
+                    reports.codes.COROSYNC_NOT_RUNNING_ON_NODE, node="node5"
                 ),
-                fixture.info(report_codes.SBD_CHECK_STARTED),
-                fixture.info(report_codes.SBD_CHECK_SUCCESS, node="new1"),
+                fixture.info(reports.codes.SBD_CHECK_STARTED),
+                fixture.info(reports.codes.SBD_CHECK_SUCCESS, node="new1"),
             ]
         )
 
@@ -1299,47 +1336,50 @@ class ClusterStatus(TestCase):
         self.env_assist.assert_reports(
             [
                 fixture.info(
-                    report_codes.USING_KNOWN_HOST_ADDRESS_FOR_HOST,
+                    reports.codes.USING_DEFAULT_ADDRESS_FOR_HOST,
                     host_name=node,
                     address=node,
+                    address_source=(
+                        reports.const.DEFAULT_ADDRESS_SOURCE_KNOWN_HOSTS
+                    ),
                 )
                 for node in new_nodes
             ]
             + [
                 fixture.error(
-                    report_codes.NODE_COMMUNICATION_ERROR_UNABLE_TO_CONNECT,
+                    reports.codes.NODE_COMMUNICATION_ERROR_UNABLE_TO_CONNECT,
                     node="new5",
                     command="remote/check_host",
                     reason="an error",
                 ),
                 fixture.error(
-                    report_codes.NODE_COMMUNICATION_COMMAND_UNSUCCESSFUL,
+                    reports.codes.NODE_COMMUNICATION_COMMAND_UNSUCCESSFUL,
                     node="new6",
                     command="remote/check_host",
                     reason="an error",
                 ),
                 fixture.error(
-                    report_codes.HOST_ALREADY_IN_CLUSTER_SERVICES,
+                    reports.codes.HOST_ALREADY_IN_CLUSTER_SERVICES,
                     host_name="new1",
                     service_list=["corosync", "pacemaker"],
-                    force_code=report_codes.FORCE_ALREADY_IN_CLUSTER,
+                    force_code=reports.codes.FORCE_ALREADY_IN_CLUSTER,
                 ),
                 fixture.error(
-                    report_codes.SERVICE_NOT_INSTALLED,
+                    reports.codes.SERVICE_NOT_INSTALLED,
                     node="new2",
                     service_list=["corosync", "pacemaker"],
                 ),
                 fixture.error(
-                    report_codes.HOST_ALREADY_IN_CLUSTER_CONFIG,
+                    reports.codes.HOST_ALREADY_IN_CLUSTER_CONFIG,
                     host_name="new3",
-                    force_code=report_codes.FORCE_ALREADY_IN_CLUSTER,
+                    force_code=reports.codes.FORCE_ALREADY_IN_CLUSTER,
                 ),
                 fixture.error(
-                    report_codes.INVALID_RESPONSE_FORMAT, node="new4",
+                    reports.codes.INVALID_RESPONSE_FORMAT, node="new4",
                 ),
                 fixture.error(
-                    report_codes.CLUSTER_WILL_BE_DESTROYED,
-                    force_code=report_codes.FORCE_ALREADY_IN_CLUSTER,
+                    reports.codes.CLUSTER_WILL_BE_DESTROYED,
+                    force_code=reports.codes.FORCE_ALREADY_IN_CLUSTER,
                 ),
             ]
         )
@@ -1357,48 +1397,51 @@ class ClusterStatus(TestCase):
             lambda: cluster.add_nodes(
                 self.env_assist.get_env(),
                 [{"name": name} for name in new_nodes],
-                force_flags=[report_codes.FORCE],
+                force_flags=[reports.codes.FORCE],
             )
         )
 
         self.env_assist.assert_reports(
             [
                 fixture.info(
-                    report_codes.USING_KNOWN_HOST_ADDRESS_FOR_HOST,
+                    reports.codes.USING_DEFAULT_ADDRESS_FOR_HOST,
                     host_name=node,
                     address=node,
+                    address_source=(
+                        reports.const.DEFAULT_ADDRESS_SOURCE_KNOWN_HOSTS
+                    ),
                 )
                 for node in new_nodes
             ]
             + [
                 fixture.error(
-                    report_codes.NODE_COMMUNICATION_ERROR_UNABLE_TO_CONNECT,
+                    reports.codes.NODE_COMMUNICATION_ERROR_UNABLE_TO_CONNECT,
                     node="new5",
                     command="remote/check_host",
                     reason="an error",
                 ),
                 fixture.error(
-                    report_codes.NODE_COMMUNICATION_COMMAND_UNSUCCESSFUL,
+                    reports.codes.NODE_COMMUNICATION_COMMAND_UNSUCCESSFUL,
                     node="new6",
                     command="remote/check_host",
                     reason="an error",
                 ),
                 fixture.warn(
-                    report_codes.HOST_ALREADY_IN_CLUSTER_SERVICES,
+                    reports.codes.HOST_ALREADY_IN_CLUSTER_SERVICES,
                     host_name="new1",
                     service_list=["corosync", "pacemaker"],
                 ),
                 fixture.error(
-                    report_codes.SERVICE_NOT_INSTALLED,
+                    reports.codes.SERVICE_NOT_INSTALLED,
                     node="new2",
                     service_list=["corosync", "pacemaker"],
                 ),
                 fixture.warn(
-                    report_codes.HOST_ALREADY_IN_CLUSTER_CONFIG,
+                    reports.codes.HOST_ALREADY_IN_CLUSTER_CONFIG,
                     host_name="new3",
                 ),
                 fixture.error(
-                    report_codes.INVALID_RESPONSE_FORMAT, node="new4",
+                    reports.codes.INVALID_RESPONSE_FORMAT, node="new4",
                 ),
             ]
         )
@@ -1544,48 +1587,51 @@ class ClusterStatus(TestCase):
         self.env_assist.assert_reports(
             [
                 fixture.info(
-                    report_codes.USING_KNOWN_HOST_ADDRESS_FOR_HOST,
+                    reports.codes.USING_DEFAULT_ADDRESS_FOR_HOST,
                     host_name=node,
                     address=node,
+                    address_source=(
+                        reports.const.DEFAULT_ADDRESS_SOURCE_KNOWN_HOSTS
+                    ),
                 )
                 for node in new_nodes
             ]
             + [
-                fixture.info(report_codes.SBD_CHECK_STARTED),
-                fixture.error(report_codes.SBD_NOT_INSTALLED, node="new1"),
+                fixture.info(reports.codes.SBD_CHECK_STARTED),
+                fixture.error(reports.codes.SBD_NOT_INSTALLED, node="new1"),
                 fixture.error(
-                    report_codes.WATCHDOG_NOT_FOUND,
+                    reports.codes.WATCHDOG_NOT_FOUND,
                     node="new2",
                     watchdog="/dev/watchdog2",
                 ),
                 fixture.error(
-                    report_codes.SBD_DEVICE_DOES_NOT_EXIST,
+                    reports.codes.SBD_DEVICE_DOES_NOT_EXIST,
                     node="new3",
                     device="/dev/sda3",
                 ),
                 fixture.error(
-                    report_codes.SBD_DEVICE_IS_NOT_BLOCK_DEVICE,
+                    reports.codes.SBD_DEVICE_IS_NOT_BLOCK_DEVICE,
                     node="new4",
                     device="/dev/sda4",
                 ),
                 fixture.error(
-                    report_codes.INVALID_RESPONSE_FORMAT, node="new5",
+                    reports.codes.INVALID_RESPONSE_FORMAT, node="new5",
                 ),
                 fixture.error(
-                    report_codes.NODE_COMMUNICATION_COMMAND_UNSUCCESSFUL,
+                    reports.codes.NODE_COMMUNICATION_COMMAND_UNSUCCESSFUL,
                     node="new6",
                     command="remote/check_sbd",
                     reason="an error",
                 ),
                 fixture.error(
-                    report_codes.NODE_COMMUNICATION_ERROR_UNABLE_TO_CONNECT,
+                    reports.codes.NODE_COMMUNICATION_ERROR_UNABLE_TO_CONNECT,
                     node="new7",
                     command="remote/check_sbd",
                     reason="an error",
                 ),
-                fixture.info(report_codes.SBD_CHECK_SUCCESS, node="new8"),
+                fixture.info(reports.codes.SBD_CHECK_SUCCESS, node="new8"),
                 fixture.error(
-                    report_codes.SBD_WATCHDOG_NOT_SUPPORTED,
+                    reports.codes.SBD_WATCHDOG_NOT_SUPPORTED,
                     node="new9",
                     watchdog="/dev/watchdog9",
                 ),
@@ -1663,17 +1709,20 @@ class ClusterStatus(TestCase):
         self.env_assist.assert_reports(
             [
                 fixture.info(
-                    report_codes.USING_KNOWN_HOST_ADDRESS_FOR_HOST,
+                    reports.codes.USING_DEFAULT_ADDRESS_FOR_HOST,
                     host_name=node,
                     address=node,
+                    address_source=(
+                        reports.const.DEFAULT_ADDRESS_SOURCE_KNOWN_HOSTS
+                    ),
                 )
                 for node in new_nodes
             ]
             + [
-                fixture.info(report_codes.SBD_CHECK_STARTED),
-                fixture.error(report_codes.SBD_NOT_INSTALLED, node="new1"),
-                fixture.info(report_codes.SBD_CHECK_SUCCESS, node="new2"),
-                fixture.info(report_codes.SBD_CHECK_SUCCESS, node="new3"),
-                fixture.warn(report_codes.SBD_WATCHDOG_VALIDATION_INACTIVE),
+                fixture.info(reports.codes.SBD_CHECK_STARTED),
+                fixture.error(reports.codes.SBD_NOT_INSTALLED, node="new1"),
+                fixture.info(reports.codes.SBD_CHECK_SUCCESS, node="new2"),
+                fixture.info(reports.codes.SBD_CHECK_SUCCESS, node="new3"),
+                fixture.warn(reports.codes.SBD_WATCHDOG_VALIDATION_INACTIVE),
             ]
         )

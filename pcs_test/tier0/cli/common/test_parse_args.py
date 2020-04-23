@@ -693,6 +693,17 @@ class InputModifiersTest(TestCase):
     def test_not_specified_default(self):
         self.assertFalse(InputModifiers({"a": "1"}).is_specified("--debug"))
 
+    def test_is_specified_any(self):
+        self.assertTrue(InputModifiers({"a": "1"}).is_specified_any(["a", "b"]))
+
+    def test_not_specified_any(self):
+        self.assertFalse(InputModifiers({"a": "1"}).is_specified_any(["b"]))
+
+    def test_not_specified_any_default(self):
+        self.assertFalse(
+            InputModifiers({"a": "1"}).is_specified_any(["--debug"])
+        )
+
     def test_mutually_exclusive_not_specified(self):
         InputModifiers({"a": 1, "b": 2, "c": 3}).ensure_not_mutually_exclusive(
             "x", "y"

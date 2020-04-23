@@ -187,6 +187,7 @@ def load_module(env, middleware_factory, name):
                 "remove_nodes": cluster.remove_nodes,
                 "remove_nodes_from_cib": cluster.remove_nodes_from_cib,
                 "setup": cluster.setup,
+                "setup_local": cluster.setup_local,
                 "update_link": cluster.update_link,
                 "verify": cluster.verify,
             },

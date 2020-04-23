@@ -18,7 +18,6 @@ from pcs.common import (
     reports,
 )
 from pcs.common.file import RawFileError
-from pcs.common.reports import codes as report_codes
 from pcs.lib.commands import cluster
 
 QDEVICE_HOST = "qdevice.host"
@@ -160,7 +159,7 @@ class LocalConfig:
         self.expected_reports.extend(
             [
                 fixture.info(
-                    report_codes.QDEVICE_CERTIFICATE_DISTRIBUTION_STARTED
+                    reports.codes.QDEVICE_CERTIFICATE_DISTRIBUTION_STARTED
                 )
             ]
         )
@@ -213,7 +212,7 @@ class LocalConfig:
         self.expected_reports.extend(
             [
                 fixture.info(
-                    report_codes.QDEVICE_CERTIFICATE_ACCEPTED_BY_NODE,
+                    reports.codes.QDEVICE_CERTIFICATE_ACCEPTED_BY_NODE,
                     node=node,
                 )
                 for node in new_nodes
@@ -239,16 +238,16 @@ class LocalConfig:
             )
         )
         self.expected_reports.extend(
-            [fixture.info(report_codes.COROSYNC_CONFIG_DISTRIBUTION_STARTED)]
+            [fixture.info(reports.codes.COROSYNC_CONFIG_DISTRIBUTION_STARTED)]
             + [
                 fixture.info(
-                    report_codes.COROSYNC_CONFIG_ACCEPTED_BY_NODE, node=node,
+                    reports.codes.COROSYNC_CONFIG_ACCEPTED_BY_NODE, node=node,
                 )
                 for node in existing_nodes + new_nodes
             ]
             + [
                 fixture.info(
-                    report_codes.COROSYNC_CONFIG_RELOADED,
+                    reports.codes.COROSYNC_CONFIG_RELOADED,
                     node=existing_nodes[0],
                 )
             ]
@@ -273,13 +272,13 @@ class LocalConfig:
         self.expected_reports.extend(
             [
                 fixture.warn(
-                    report_codes.COROSYNC_QUORUM_ATB_WILL_BE_ENABLED_DUE_TO_SBD
+                    reports.codes.COROSYNC_QUORUM_ATB_WILL_BE_ENABLED_DUE_TO_SBD
                 ),
-                fixture.info(report_codes.COROSYNC_NOT_RUNNING_CHECK_STARTED),
+                fixture.info(reports.codes.COROSYNC_NOT_RUNNING_CHECK_STARTED),
             ]
             + [
                 fixture.info(
-                    report_codes.COROSYNC_NOT_RUNNING_ON_NODE, node=node
+                    reports.codes.COROSYNC_NOT_RUNNING_ON_NODE, node=node
                 )
                 for node in node_labels
             ]
@@ -307,9 +306,9 @@ class LocalConfig:
             name="local.check_sbd.http.sbd_check_sbd",
         )
         self.expected_reports.extend(
-            [fixture.info(report_codes.SBD_CHECK_STARTED)]
+            [fixture.info(reports.codes.SBD_CHECK_STARTED)]
             + [
-                fixture.info(report_codes.SBD_CHECK_SUCCESS, node=node)
+                fixture.info(reports.codes.SBD_CHECK_SUCCESS, node=node)
                 for node in node_labels
             ]
         )
@@ -356,10 +355,10 @@ class LocalConfig:
             .http.sbd.enable_sbd(node_labels=node_labels)
         )
         self.expected_reports.extend(
-            [fixture.info(report_codes.SBD_CONFIG_DISTRIBUTION_STARTED)]
+            [fixture.info(reports.codes.SBD_CONFIG_DISTRIBUTION_STARTED)]
             + [
                 fixture.info(
-                    report_codes.SBD_CONFIG_ACCEPTED_BY_NODE, node=node,
+                    reports.codes.SBD_CONFIG_ACCEPTED_BY_NODE, node=node,
                 )
                 for node in node_labels
             ]
@@ -436,10 +435,10 @@ class LocalConfig:
             )
         )
         self.expected_reports.extend(
-            [fixture.info(report_codes.BOOTH_CONFIG_DISTRIBUTION_STARTED)]
+            [fixture.info(reports.codes.BOOTH_CONFIG_DISTRIBUTION_STARTED)]
             + [
                 fixture.info(
-                    report_codes.BOOTH_CONFIG_ACCEPTED_BY_NODE,
+                    reports.codes.BOOTH_CONFIG_ACCEPTED_BY_NODE,
                     node=node,
                     name_list=[authfile, config_file],
                 )
@@ -557,14 +556,14 @@ class LocalConfig:
         self.expected_reports.extend(
             [
                 fixture.info(
-                    report_codes.FILES_DISTRIBUTION_STARTED,
+                    reports.codes.FILES_DISTRIBUTION_STARTED,
                     file_list=file_list,
                     node_list=node_labels,
                 )
             ]
             + [
                 fixture.info(
-                    report_codes.FILE_DISTRIBUTION_SUCCESS,
+                    reports.codes.FILE_DISTRIBUTION_SUCCESS,
                     node=node,
                     file_description=file,
                 )
@@ -625,13 +624,13 @@ class LocalConfig:
         self.expected_reports.extend(
             [
                 fixture.info(
-                    report_codes.PCSD_SSL_CERT_AND_KEY_DISTRIBUTION_STARTED,
+                    reports.codes.PCSD_SSL_CERT_AND_KEY_DISTRIBUTION_STARTED,
                     node_name_list=node_labels,
                 )
             ]
             + [
                 fixture.info(
-                    report_codes.PCSD_SSL_CERT_AND_KEY_SET_SUCCESS, node=node,
+                    reports.codes.PCSD_SSL_CERT_AND_KEY_SET_SUCCESS, node=node,
                 )
                 for node in node_labels
             ]
@@ -658,7 +657,7 @@ class CheckLive(TestCase):
             ),
             [
                 fixture.error(
-                    report_codes.LIVE_ENVIRONMENT_REQUIRED,
+                    reports.codes.LIVE_ENVIRONMENT_REQUIRED,
                     forbidden_options=forbidden_options,
                 )
             ],
@@ -751,9 +750,12 @@ class AddNodesSuccessMinimal(TestCase):
         self.expected_reports.extend(
             [
                 fixture.info(
-                    report_codes.USING_KNOWN_HOST_ADDRESS_FOR_HOST,
+                    reports.codes.USING_DEFAULT_ADDRESS_FOR_HOST,
                     host_name=node,
                     address=node,
+                    address_source=(
+                        reports.const.DEFAULT_ADDRESS_SOURCE_KNOWN_HOSTS
+                    ),
                 )
                 for node in self.new_nodes
             ]
@@ -809,12 +811,12 @@ class AddNodesSuccessMinimal(TestCase):
             self.expected_reports
             + [
                 fixture.info(
-                    report_codes.CLUSTER_ENABLE_STARTED,
+                    reports.codes.CLUSTER_ENABLE_STARTED,
                     host_name_list=sorted(self.new_nodes),
                 )
             ]
             + [
-                fixture.info(report_codes.CLUSTER_ENABLE_SUCCESS, node=node)
+                fixture.info(reports.codes.CLUSTER_ENABLE_SUCCESS, node=node)
                 for node in self.new_nodes
             ]
         )
@@ -860,7 +862,7 @@ class AddNodesSuccessMinimal(TestCase):
             self.expected_reports
             + [
                 fixture.info(
-                    report_codes.CLUSTER_START_STARTED,
+                    reports.codes.CLUSTER_START_STARTED,
                     host_name_list=self.new_nodes,
                 )
             ]
@@ -914,16 +916,16 @@ class AddNodesSuccessMinimal(TestCase):
             self.expected_reports
             + [
                 fixture.info(
-                    report_codes.CLUSTER_START_STARTED,
+                    reports.codes.CLUSTER_START_STARTED,
                     host_name_list=sorted(self.new_nodes),
                 ),
                 fixture.info(
-                    report_codes.WAIT_FOR_NODE_STARTUP_STARTED,
+                    reports.codes.WAIT_FOR_NODE_STARTUP_STARTED,
                     node_name_list=self.new_nodes,
                 ),
             ]
             + [
-                fixture.info(report_codes.CLUSTER_START_SUCCESS, node=node,)
+                fixture.info(reports.codes.CLUSTER_START_SUCCESS, node=node,)
                 for node in self.new_nodes
             ]
         )
@@ -974,17 +976,17 @@ class AddNodesSuccessMinimal(TestCase):
             self.expected_reports
             + [
                 fixture.info(
-                    report_codes.CLUSTER_ENABLE_STARTED,
+                    reports.codes.CLUSTER_ENABLE_STARTED,
                     host_name_list=sorted(self.new_nodes),
                 )
             ]
             + [
-                fixture.info(report_codes.CLUSTER_ENABLE_SUCCESS, node=node)
+                fixture.info(reports.codes.CLUSTER_ENABLE_SUCCESS, node=node)
                 for node in self.new_nodes
             ]
             + [
                 fixture.info(
-                    report_codes.CLUSTER_START_STARTED,
+                    reports.codes.CLUSTER_START_STARTED,
                     host_name_list=sorted(self.new_nodes),
                 )
             ]
@@ -1037,26 +1039,26 @@ class AddNodesSuccessMinimal(TestCase):
             self.expected_reports
             + [
                 fixture.info(
-                    report_codes.CLUSTER_ENABLE_STARTED,
+                    reports.codes.CLUSTER_ENABLE_STARTED,
                     host_name_list=sorted(self.new_nodes),
                 )
             ]
             + [
-                fixture.info(report_codes.CLUSTER_ENABLE_SUCCESS, node=node)
+                fixture.info(reports.codes.CLUSTER_ENABLE_SUCCESS, node=node)
                 for node in self.new_nodes
             ]
             + [
                 fixture.info(
-                    report_codes.CLUSTER_START_STARTED,
+                    reports.codes.CLUSTER_START_STARTED,
                     host_name_list=self.new_nodes,
                 ),
                 fixture.info(
-                    report_codes.WAIT_FOR_NODE_STARTUP_STARTED,
+                    reports.codes.WAIT_FOR_NODE_STARTUP_STARTED,
                     node_name_list=self.new_nodes,
                 ),
             ]
             + [
-                fixture.info(report_codes.CLUSTER_START_SUCCESS, node=node,)
+                fixture.info(reports.codes.CLUSTER_START_SUCCESS, node=node,)
                 for node in self.new_nodes
             ]
         )
@@ -1168,9 +1170,12 @@ class SslCertSync(TestCase):
         self.expected_reports.extend(
             [
                 fixture.info(
-                    report_codes.USING_KNOWN_HOST_ADDRESS_FOR_HOST,
+                    reports.codes.USING_DEFAULT_ADDRESS_FOR_HOST,
                     host_name=node,
                     address=node,
+                    address_source=(
+                        reports.const.DEFAULT_ADDRESS_SOURCE_KNOWN_HOSTS
+                    ),
                 )
                 for node in self.new_nodes
             ]
@@ -1377,10 +1382,10 @@ class AddNodeFull(TestCase):
 
         self.env_assist.assert_reports(
             self.expected_reports
-            + [fixture.info(report_codes.SBD_CHECK_STARTED)]
+            + [fixture.info(reports.codes.SBD_CHECK_STARTED)]
             + [
                 fixture.error(
-                    report_codes.SBD_WATCHDOG_NOT_SUPPORTED,
+                    reports.codes.SBD_WATCHDOG_NOT_SUPPORTED,
                     node=node,
                     watchdog=_get_watchdog(node),
                 )
@@ -1464,11 +1469,11 @@ class AddNodeFull(TestCase):
         self.env_assist.assert_reports(
             self.expected_reports
             + [
-                fixture.info(report_codes.SBD_CHECK_STARTED),
-                fixture.warn(report_codes.SBD_WATCHDOG_VALIDATION_INACTIVE),
+                fixture.info(reports.codes.SBD_CHECK_STARTED),
+                fixture.warn(reports.codes.SBD_WATCHDOG_VALIDATION_INACTIVE),
             ]
             + [
-                fixture.info(report_codes.SBD_CHECK_SUCCESS, node=node)
+                fixture.info(reports.codes.SBD_CHECK_SUCCESS, node=node)
                 for node in self.new_nodes
             ]
         )
@@ -1575,16 +1580,19 @@ class FailureReloadCorosyncConf(TestCase):
         self.expected_reports.extend(
             [
                 fixture.info(
-                    report_codes.USING_KNOWN_HOST_ADDRESS_FOR_HOST,
+                    reports.codes.USING_DEFAULT_ADDRESS_FOR_HOST,
                     host_name=node,
                     address=node,
+                    address_source=(
+                        reports.const.DEFAULT_ADDRESS_SOURCE_KNOWN_HOSTS
+                    ),
                 )
                 for node in self.new_nodes
             ]
-            + [fixture.info(report_codes.COROSYNC_CONFIG_DISTRIBUTION_STARTED)]
+            + [fixture.info(reports.codes.COROSYNC_CONFIG_DISTRIBUTION_STARTED)]
             + [
                 fixture.info(
-                    report_codes.COROSYNC_CONFIG_ACCEPTED_BY_NODE, node=node
+                    reports.codes.COROSYNC_CONFIG_ACCEPTED_BY_NODE, node=node
                 )
                 for node in self.existing_nodes + self.new_nodes
             ]
@@ -1624,18 +1632,18 @@ class FailureReloadCorosyncConf(TestCase):
             self.expected_reports
             + [
                 fixture.warn(
-                    report_codes.NODE_COMMUNICATION_ERROR_UNABLE_TO_CONNECT,
+                    reports.codes.NODE_COMMUNICATION_ERROR_UNABLE_TO_CONNECT,
                     node="node1",
                     command=self.cmd_url,
                     reason=self.err_msg,
                 ),
                 fixture.warn(
-                    report_codes.COROSYNC_CONFIG_RELOAD_ERROR,
+                    reports.codes.COROSYNC_CONFIG_RELOAD_ERROR,
                     node="node2",
                     reason=self.err_msg,
                 ),
                 fixture.info(
-                    report_codes.COROSYNC_CONFIG_RELOADED, node="node3",
+                    reports.codes.COROSYNC_CONFIG_RELOADED, node="node3",
                 ),
             ]
         )
@@ -1671,16 +1679,16 @@ class FailureReloadCorosyncConf(TestCase):
             self.expected_reports
             + [
                 fixture.warn(
-                    report_codes.COROSYNC_CONFIG_RELOAD_NOT_POSSIBLE,
+                    reports.codes.COROSYNC_CONFIG_RELOAD_NOT_POSSIBLE,
                     node="node1",
                 ),
                 fixture.warn(
-                    report_codes.COROSYNC_CONFIG_RELOAD_ERROR,
+                    reports.codes.COROSYNC_CONFIG_RELOAD_ERROR,
                     node="node2",
                     reason=self.err_msg,
                 ),
                 fixture.info(
-                    report_codes.COROSYNC_CONFIG_RELOADED, node="node3",
+                    reports.codes.COROSYNC_CONFIG_RELOADED, node="node3",
                 ),
             ]
         )
@@ -1708,7 +1716,8 @@ class FailureReloadCorosyncConf(TestCase):
             self.expected_reports
             + [
                 fixture.warn(
-                    report_codes.COROSYNC_CONFIG_RELOAD_NOT_POSSIBLE, node=node,
+                    reports.codes.COROSYNC_CONFIG_RELOAD_NOT_POSSIBLE,
+                    node=node,
                 )
                 for node in self.existing_nodes
             ]
@@ -1749,21 +1758,21 @@ class FailureReloadCorosyncConf(TestCase):
             self.expected_reports
             + [
                 fixture.warn(
-                    report_codes.NODE_COMMUNICATION_ERROR_UNABLE_TO_CONNECT,
+                    reports.codes.NODE_COMMUNICATION_ERROR_UNABLE_TO_CONNECT,
                     node="node1",
                     command=self.cmd_url,
                     reason=self.err_msg,
                 ),
                 fixture.warn(
-                    report_codes.COROSYNC_CONFIG_RELOAD_ERROR,
+                    reports.codes.COROSYNC_CONFIG_RELOAD_ERROR,
                     node="node2",
                     reason=self.err_msg,
                 ),
                 fixture.warn(
-                    report_codes.INVALID_RESPONSE_FORMAT, node="node3",
+                    reports.codes.INVALID_RESPONSE_FORMAT, node="node3",
                 ),
                 fixture.warn(
-                    report_codes.NODE_COMMUNICATION_COMMAND_UNSUCCESSFUL,
+                    reports.codes.NODE_COMMUNICATION_COMMAND_UNSUCCESSFUL,
                     node="node4",
                     command=self.cmd_url,
                     reason=self.err_msg,
@@ -1771,7 +1780,7 @@ class FailureReloadCorosyncConf(TestCase):
             ]
             + [
                 fixture.error(
-                    report_codes.UNABLE_TO_PERFORM_OPERATION_ON_ANY_NODE,
+                    reports.codes.UNABLE_TO_PERFORM_OPERATION_ON_ANY_NODE,
                 )
             ]
         )
@@ -1811,13 +1820,16 @@ class FailureCorosyncConfDistribution(TestCase):
         self.expected_reports.extend(
             [
                 fixture.info(
-                    report_codes.USING_KNOWN_HOST_ADDRESS_FOR_HOST,
+                    reports.codes.USING_DEFAULT_ADDRESS_FOR_HOST,
                     host_name=node,
                     address=node,
+                    address_source=(
+                        reports.const.DEFAULT_ADDRESS_SOURCE_KNOWN_HOSTS
+                    ),
                 )
                 for node in self.new_nodes
             ]
-            + [fixture.info(report_codes.COROSYNC_CONFIG_DISTRIBUTION_STARTED)]
+            + [fixture.info(reports.codes.COROSYNC_CONFIG_DISTRIBUTION_STARTED)]
         )
         self.updated_corosync_conf_text = corosync_conf_fixture(
             existing_corosync_nodes
@@ -1856,13 +1868,13 @@ class FailureCorosyncConfDistribution(TestCase):
             self.expected_reports
             + [
                 fixture.info(
-                    report_codes.COROSYNC_CONFIG_ACCEPTED_BY_NODE, node=node
+                    reports.codes.COROSYNC_CONFIG_ACCEPTED_BY_NODE, node=node
                 )
                 for node in self.existing_nodes
             ]
             + [
                 fixture.error(
-                    report_codes.NODE_COMMUNICATION_ERROR_UNABLE_TO_CONNECT,
+                    reports.codes.NODE_COMMUNICATION_ERROR_UNABLE_TO_CONNECT,
                     node=node,
                     command="remote/set_corosync_conf",
                     reason=err_output,
@@ -1871,7 +1883,7 @@ class FailureCorosyncConfDistribution(TestCase):
             ]
             + [
                 fixture.error(
-                    report_codes.COROSYNC_CONFIG_DISTRIBUTION_NODE_ERROR,
+                    reports.codes.COROSYNC_CONFIG_DISTRIBUTION_NODE_ERROR,
                     node=node,
                 )
                 for node in self.new_nodes
@@ -1907,19 +1919,19 @@ class FailureCorosyncConfDistribution(TestCase):
             self.expected_reports
             + [
                 fixture.info(
-                    report_codes.COROSYNC_CONFIG_ACCEPTED_BY_NODE, node=node
+                    reports.codes.COROSYNC_CONFIG_ACCEPTED_BY_NODE, node=node
                 )
                 for node in ["node1", "node3", "node4"] + self.new_nodes
             ]
             + [
                 fixture.error(
-                    report_codes.NODE_COMMUNICATION_ERROR_UNABLE_TO_CONNECT,
+                    reports.codes.NODE_COMMUNICATION_ERROR_UNABLE_TO_CONNECT,
                     node="node2",
                     command="remote/set_corosync_conf",
                     reason=err_output,
                 ),
                 fixture.error(
-                    report_codes.COROSYNC_CONFIG_DISTRIBUTION_NODE_ERROR,
+                    reports.codes.COROSYNC_CONFIG_DISTRIBUTION_NODE_ERROR,
                     node="node2",
                 ),
             ]
@@ -1952,7 +1964,7 @@ class FailureCorosyncConfDistribution(TestCase):
             self.expected_reports
             + [
                 fixture.error(
-                    report_codes.NODE_COMMUNICATION_ERROR_UNABLE_TO_CONNECT,
+                    reports.codes.NODE_COMMUNICATION_ERROR_UNABLE_TO_CONNECT,
                     node=node,
                     command="remote/set_corosync_conf",
                     reason=err_output,
@@ -1961,7 +1973,7 @@ class FailureCorosyncConfDistribution(TestCase):
             ]
             + [
                 fixture.error(
-                    report_codes.COROSYNC_CONFIG_DISTRIBUTION_NODE_ERROR,
+                    reports.codes.COROSYNC_CONFIG_DISTRIBUTION_NODE_ERROR,
                     node=node,
                 )
                 for node in node_list
@@ -2009,7 +2021,7 @@ class FailurePcsdSslCertSync(TestCase):
         self.expected_reports.extend(
             [
                 fixture.info(
-                    report_codes.PCSD_SSL_CERT_AND_KEY_DISTRIBUTION_STARTED,
+                    reports.codes.PCSD_SSL_CERT_AND_KEY_DISTRIBUTION_STARTED,
                     node_name_list=self.new_nodes,
                 )
             ]
@@ -2042,14 +2054,14 @@ class FailurePcsdSslCertSync(TestCase):
             self.expected_reports
             + [
                 fixture.error(
-                    report_codes.FILE_IO_ERROR,
+                    reports.codes.FILE_IO_ERROR,
                     file_type_code=file_type_codes.PCSD_SSL_CERT,
                     file_path=settings.pcsd_cert_location,
                     reason="error cert",
                     operation=RawFileError.ACTION_READ,
                 ),
                 fixture.error(
-                    report_codes.FILE_IO_ERROR,
+                    reports.codes.FILE_IO_ERROR,
                     file_type_code=file_type_codes.PCSD_SSL_KEY,
                     file_path=settings.pcsd_key_location,
                     reason="error key",
@@ -2087,13 +2099,13 @@ class FailurePcsdSslCertSync(TestCase):
             self.expected_reports
             + [
                 fixture.info(
-                    report_codes.PCSD_SSL_CERT_AND_KEY_SET_SUCCESS, node=node,
+                    reports.codes.PCSD_SSL_CERT_AND_KEY_SET_SUCCESS, node=node,
                 )
                 for node in self.successful_nodes
             ]
             + [
                 fixture.error(
-                    report_codes.NODE_COMMUNICATION_COMMAND_UNSUCCESSFUL,
+                    reports.codes.NODE_COMMUNICATION_COMMAND_UNSUCCESSFUL,
                     node=node,
                     command="remote/set_certs",
                     reason=self.error,
@@ -2172,16 +2184,19 @@ class FailureFilesDistribution(TestCase):
         self.expected_reports.extend(
             [
                 fixture.info(
-                    report_codes.USING_KNOWN_HOST_ADDRESS_FOR_HOST,
+                    reports.codes.USING_DEFAULT_ADDRESS_FOR_HOST,
                     host_name=node,
                     address=node,
+                    address_source=(
+                        reports.const.DEFAULT_ADDRESS_SOURCE_KNOWN_HOSTS
+                    ),
                 )
                 for node in self.new_nodes
             ]
         )
         self.distribution_started_reports = [
             fixture.info(
-                report_codes.FILES_DISTRIBUTION_STARTED,
+                reports.codes.FILES_DISTRIBUTION_STARTED,
                 file_list=[
                     self.corosync_authkey_file_id,
                     "pacemaker authkey",
@@ -2193,7 +2208,7 @@ class FailureFilesDistribution(TestCase):
         self.successful_reports = (
             [
                 fixture.info(
-                    report_codes.FILE_DISTRIBUTION_SUCCESS,
+                    reports.codes.FILE_DISTRIBUTION_SUCCESS,
                     node=node,
                     file_description=self.corosync_authkey_file_id,
                 )
@@ -2201,7 +2216,7 @@ class FailureFilesDistribution(TestCase):
             ]
             + [
                 fixture.info(
-                    report_codes.FILE_DISTRIBUTION_SUCCESS,
+                    reports.codes.FILE_DISTRIBUTION_SUCCESS,
                     node=node,
                     file_description="pacemaker authkey",
                 )
@@ -2209,7 +2224,7 @@ class FailureFilesDistribution(TestCase):
             ]
             + [
                 fixture.info(
-                    report_codes.FILE_DISTRIBUTION_SUCCESS,
+                    reports.codes.FILE_DISTRIBUTION_SUCCESS,
                     node=node,
                     file_description=self.pcsd_dr_config_file_id,
                 )
@@ -2260,8 +2275,8 @@ class FailureFilesDistribution(TestCase):
             self.expected_reports
             + [
                 fixture.error(
-                    report_codes.FILE_IO_ERROR,
-                    force_code=report_codes.SKIP_FILE_DISTRIBUTION_ERRORS,
+                    reports.codes.FILE_IO_ERROR,
+                    force_code=reports.codes.SKIP_FILE_DISTRIBUTION_ERRORS,
                     file_type_code=file_type_codes.COROSYNC_AUTHKEY,
                     file_path=settings.corosync_authkey_file,
                     reason=(
@@ -2270,8 +2285,8 @@ class FailureFilesDistribution(TestCase):
                     operation=RawFileError.ACTION_READ,
                 ),
                 fixture.error(
-                    report_codes.FILE_IO_ERROR,
-                    force_code=report_codes.SKIP_FILE_DISTRIBUTION_ERRORS,
+                    reports.codes.FILE_IO_ERROR,
+                    force_code=reports.codes.SKIP_FILE_DISTRIBUTION_ERRORS,
                     file_type_code=file_type_codes.PACEMAKER_AUTHKEY,
                     file_path=settings.pacemaker_authkey_file,
                     reason=(
@@ -2280,8 +2295,8 @@ class FailureFilesDistribution(TestCase):
                     operation=RawFileError.ACTION_READ,
                 ),
                 fixture.error(
-                    report_codes.FILE_IO_ERROR,
-                    force_code=report_codes.SKIP_FILE_DISTRIBUTION_ERRORS,
+                    reports.codes.FILE_IO_ERROR,
+                    force_code=reports.codes.SKIP_FILE_DISTRIBUTION_ERRORS,
                     file_type_code=file_type_codes.PCS_DR_CONFIG,
                     file_path=settings.pcsd_dr_config_location,
                     reason=(
@@ -2339,14 +2354,14 @@ class FailureFilesDistribution(TestCase):
         cluster.add_nodes(
             self.env_assist.get_env(),
             [{"name": node} for node in self.new_nodes],
-            force_flags=[report_codes.FORCE],
+            force_flags=[reports.codes.FORCE],
         )
 
         self.env_assist.assert_reports(
             self.expected_reports
             + [
                 fixture.warn(
-                    report_codes.FILE_IO_ERROR,
+                    reports.codes.FILE_IO_ERROR,
                     file_type_code=file_type_codes.COROSYNC_AUTHKEY,
                     file_path=settings.corosync_authkey_file,
                     reason=(
@@ -2355,7 +2370,7 @@ class FailureFilesDistribution(TestCase):
                     operation=RawFileError.ACTION_READ,
                 ),
                 fixture.warn(
-                    report_codes.FILE_IO_ERROR,
+                    reports.codes.FILE_IO_ERROR,
                     file_type_code=file_type_codes.PACEMAKER_AUTHKEY,
                     file_path=settings.pacemaker_authkey_file,
                     reason=(
@@ -2364,7 +2379,7 @@ class FailureFilesDistribution(TestCase):
                     operation=RawFileError.ACTION_READ,
                 ),
                 fixture.warn(
-                    report_codes.FILE_IO_ERROR,
+                    reports.codes.FILE_IO_ERROR,
                     file_type_code=file_type_codes.PCS_DR_CONFIG,
                     file_path=settings.pcsd_dr_config_location,
                     reason=(
@@ -2441,7 +2456,7 @@ class FailureFilesDistribution(TestCase):
             + self.successful_reports
             + [
                 fixture.error(
-                    report_codes.FILE_DISTRIBUTION_ERROR,
+                    reports.codes.FILE_DISTRIBUTION_ERROR,
                     node=node,
                     file_description=self.corosync_authkey_file_id,
                     reason=self.err_msg,
@@ -2450,7 +2465,7 @@ class FailureFilesDistribution(TestCase):
             ]
             + [
                 fixture.error(
-                    report_codes.FILE_DISTRIBUTION_ERROR,
+                    reports.codes.FILE_DISTRIBUTION_ERROR,
                     node=node,
                     file_description="pacemaker authkey",
                     reason=self.err_msg,
@@ -2459,7 +2474,7 @@ class FailureFilesDistribution(TestCase):
             ]
             + [
                 fixture.error(
-                    report_codes.FILE_DISTRIBUTION_ERROR,
+                    reports.codes.FILE_DISTRIBUTION_ERROR,
                     node=node,
                     file_description=self.pcsd_dr_config_file_id,
                     reason=self.err_msg,
@@ -2517,7 +2532,7 @@ class FailureFilesDistribution(TestCase):
             + self.successful_reports
             + [
                 fixture.error(
-                    report_codes.NODE_COMMUNICATION_COMMAND_UNSUCCESSFUL,
+                    reports.codes.NODE_COMMUNICATION_COMMAND_UNSUCCESSFUL,
                     node=node,
                     command="remote/put_file",
                     reason=self.err_msg,
@@ -2574,7 +2589,7 @@ class FailureFilesDistribution(TestCase):
             + self.distribution_started_reports
             + self.successful_reports
             + [
-                fixture.error(report_codes.INVALID_RESPONSE_FORMAT, node=node,)
+                fixture.error(reports.codes.INVALID_RESPONSE_FORMAT, node=node,)
                 for node in self.unsuccessful_nodes
             ]
         )
@@ -2633,7 +2648,7 @@ class FailureFilesDistribution(TestCase):
             + self.successful_reports
             + [
                 fixture.error(
-                    report_codes.NODE_COMMUNICATION_ERROR_UNABLE_TO_CONNECT,
+                    reports.codes.NODE_COMMUNICATION_ERROR_UNABLE_TO_CONNECT,
                     node=node,
                     command="remote/put_file",
                     reason=self.err_msg,
@@ -2702,19 +2717,22 @@ class FailureBoothConfigsDistribution(TestCase):
         self.expected_reports.extend(
             [
                 fixture.info(
-                    report_codes.USING_KNOWN_HOST_ADDRESS_FOR_HOST,
+                    reports.codes.USING_DEFAULT_ADDRESS_FOR_HOST,
                     host_name=node,
                     address=node,
+                    address_source=(
+                        reports.const.DEFAULT_ADDRESS_SOURCE_KNOWN_HOSTS
+                    ),
                 )
                 for node in self.new_nodes
             ]
         )
         self.distribution_started_reports = [
-            fixture.info(report_codes.BOOTH_CONFIG_DISTRIBUTION_STARTED)
+            fixture.info(reports.codes.BOOTH_CONFIG_DISTRIBUTION_STARTED)
         ]
         self.successful_reports = [
             fixture.info(
-                report_codes.BOOTH_CONFIG_ACCEPTED_BY_NODE,
+                reports.codes.BOOTH_CONFIG_ACCEPTED_BY_NODE,
                 node=node,
                 name_list=[self.authfile, self.config_file],
             )
@@ -2737,7 +2755,7 @@ class FailureBoothConfigsDistribution(TestCase):
         )
         self.successful_reports = [
             fixture.info(
-                report_codes.BOOTH_CONFIG_ACCEPTED_BY_NODE,
+                reports.codes.BOOTH_CONFIG_ACCEPTED_BY_NODE,
                 node=node,
                 name_list=[self.authfile2, self.config_file2],
             )
@@ -2774,8 +2792,8 @@ class FailureBoothConfigsDistribution(TestCase):
             self.expected_reports
             + [
                 fixture.error(
-                    report_codes.FILE_IO_ERROR,
-                    force_code=report_codes.SKIP_UNREADABLE_CONFIG,
+                    reports.codes.FILE_IO_ERROR,
+                    force_code=reports.codes.SKIP_UNREADABLE_CONFIG,
                     file_type_code=file_type_codes.BOOTH_CONFIG,
                     file_path=self.config_path,
                     reason=self.err_msg,
@@ -2811,14 +2829,14 @@ class FailureBoothConfigsDistribution(TestCase):
         cluster.add_nodes(
             self.env_assist.get_env(),
             [{"name": node} for node in self.new_nodes],
-            force_flags=[report_codes.FORCE],
+            force_flags=[reports.codes.FORCE],
         )
 
         self.env_assist.assert_reports(
             self.expected_reports
             + [
                 fixture.warn(
-                    report_codes.FILE_IO_ERROR,
+                    reports.codes.FILE_IO_ERROR,
                     file_type_code=file_type_codes.BOOTH_CONFIG,
                     file_path=self.config_path,
                     reason=self.err_msg,
@@ -2886,14 +2904,14 @@ class FailureBoothConfigsDistribution(TestCase):
         cluster.add_nodes(
             self.env_assist.get_env(),
             [{"name": node} for node in self.new_nodes],
-            force_flags=[report_codes.FORCE],
+            force_flags=[reports.codes.FORCE],
         )
 
         self.env_assist.assert_reports(
             self.expected_reports
             + [
                 fixture.warn(
-                    report_codes.FILE_IO_ERROR,
+                    reports.codes.FILE_IO_ERROR,
                     file_type_code=file_type_codes.BOOTH_CONFIG,
                     file_path=self.config_path,
                     reason=self.err_msg,
@@ -2925,8 +2943,8 @@ class FailureBoothConfigsDistribution(TestCase):
             self.expected_reports
             + [
                 fixture.error(
-                    report_codes.FILE_IO_ERROR,
-                    force_code=report_codes.SKIP_UNREADABLE_CONFIG,
+                    reports.codes.FILE_IO_ERROR,
+                    force_code=reports.codes.SKIP_UNREADABLE_CONFIG,
                     file_type_code=file_type_codes.BOOTH_KEY,
                     file_path=self.authfile_path,
                     reason=self.err_msg,
@@ -2971,14 +2989,14 @@ class FailureBoothConfigsDistribution(TestCase):
         cluster.add_nodes(
             self.env_assist.get_env(),
             [{"name": node} for node in self.new_nodes],
-            force_flags=[report_codes.FORCE],
+            force_flags=[reports.codes.FORCE],
         )
 
         self.env_assist.assert_reports(
             self.expected_reports
             + [
                 fixture.warn(
-                    report_codes.FILE_IO_ERROR,
+                    reports.codes.FILE_IO_ERROR,
                     file_type_code=file_type_codes.BOOTH_KEY,
                     file_path=self.authfile_path,
                     reason=self.err_msg,
@@ -3052,14 +3070,14 @@ class FailureBoothConfigsDistribution(TestCase):
         cluster.add_nodes(
             self.env_assist.get_env(),
             [{"name": node} for node in self.new_nodes],
-            force_flags=[report_codes.FORCE],
+            force_flags=[reports.codes.FORCE],
         )
 
         self.env_assist.assert_reports(
             self.expected_reports
             + [
                 fixture.warn(
-                    report_codes.FILE_IO_ERROR,
+                    reports.codes.FILE_IO_ERROR,
                     file_type_code=file_type_codes.BOOTH_KEY,
                     file_path=self.authfile_path,
                     reason=self.err_msg,
@@ -3125,7 +3143,7 @@ class FailureBoothConfigsDistribution(TestCase):
             + self.successful_reports
             + [
                 fixture.info(
-                    report_codes.BOOTH_CONFIG_ACCEPTED_BY_NODE,
+                    reports.codes.BOOTH_CONFIG_ACCEPTED_BY_NODE,
                     node=node,
                     name_list=[self.authfile],
                 )
@@ -3133,7 +3151,7 @@ class FailureBoothConfigsDistribution(TestCase):
             ]
             + [
                 fixture.error(
-                    report_codes.BOOTH_CONFIG_DISTRIBUTION_NODE_ERROR,
+                    reports.codes.BOOTH_CONFIG_DISTRIBUTION_NODE_ERROR,
                     node=node,
                     name=self.config_file,
                     reason=self.err_msg,
@@ -3188,7 +3206,7 @@ class FailureBoothConfigsDistribution(TestCase):
             + self.successful_reports
             + [
                 fixture.error(
-                    report_codes.NODE_COMMUNICATION_COMMAND_UNSUCCESSFUL,
+                    reports.codes.NODE_COMMUNICATION_COMMAND_UNSUCCESSFUL,
                     node=node,
                     command="remote/booth_save_files",
                     reason=self.err_msg,
@@ -3242,7 +3260,7 @@ class FailureBoothConfigsDistribution(TestCase):
             + self.distribution_started_reports
             + self.successful_reports
             + [
-                fixture.error(report_codes.INVALID_RESPONSE_FORMAT, node=node,)
+                fixture.error(reports.codes.INVALID_RESPONSE_FORMAT, node=node,)
                 for node in self.unsuccessful_nodes
             ]
         )
@@ -3298,7 +3316,7 @@ class FailureBoothConfigsDistribution(TestCase):
             + self.successful_reports
             + [
                 fixture.error(
-                    report_codes.NODE_COMMUNICATION_ERROR_UNABLE_TO_CONNECT,
+                    reports.codes.NODE_COMMUNICATION_ERROR_UNABLE_TO_CONNECT,
                     node=node,
                     command="remote/booth_save_files",
                     reason=self.err_msg,
@@ -3345,9 +3363,12 @@ class FailureDisableSbd(TestCase):
         self.expected_reports.extend(
             [
                 fixture.info(
-                    report_codes.USING_KNOWN_HOST_ADDRESS_FOR_HOST,
+                    reports.codes.USING_DEFAULT_ADDRESS_FOR_HOST,
                     host_name=node,
                     address=node,
+                    address_source=(
+                        reports.const.DEFAULT_ADDRESS_SOURCE_KNOWN_HOSTS
+                    ),
                 )
                 for node in self.new_nodes
             ]
@@ -3398,7 +3419,7 @@ class FailureDisableSbd(TestCase):
             self.expected_reports
             + [
                 fixture.error(
-                    report_codes.NODE_COMMUNICATION_COMMAND_UNSUCCESSFUL,
+                    reports.codes.NODE_COMMUNICATION_COMMAND_UNSUCCESSFUL,
                     node=node,
                     command="remote/sbd_disable",
                     reason=self.err_msg,
@@ -3427,7 +3448,7 @@ class FailureDisableSbd(TestCase):
             self.expected_reports
             + [
                 fixture.error(
-                    report_codes.NODE_COMMUNICATION_ERROR_UNABLE_TO_CONNECT,
+                    reports.codes.NODE_COMMUNICATION_ERROR_UNABLE_TO_CONNECT,
                     node=node,
                     command="remote/sbd_disable",
                     reason=self.err_msg,
@@ -3474,9 +3495,12 @@ class FailureEnableSbd(TestCase):
         self.expected_reports.extend(
             [
                 fixture.info(
-                    report_codes.USING_KNOWN_HOST_ADDRESS_FOR_HOST,
+                    reports.codes.USING_DEFAULT_ADDRESS_FOR_HOST,
                     host_name=node,
                     address=node,
+                    address_source=(
+                        reports.const.DEFAULT_ADDRESS_SOURCE_KNOWN_HOSTS
+                    ),
                 )
                 for node in self.new_nodes
             ]
@@ -3523,10 +3547,10 @@ class FailureEnableSbd(TestCase):
 
         self.env_assist.assert_reports(
             self.expected_reports
-            + [fixture.info(report_codes.SBD_CONFIG_DISTRIBUTION_STARTED)]
+            + [fixture.info(reports.codes.SBD_CONFIG_DISTRIBUTION_STARTED)]
             + [
                 fixture.info(
-                    report_codes.SBD_CONFIG_ACCEPTED_BY_NODE, node=node,
+                    reports.codes.SBD_CONFIG_ACCEPTED_BY_NODE, node=node,
                 )
                 for node in self.new_nodes
             ]
@@ -3550,7 +3574,7 @@ class FailureEnableSbd(TestCase):
             ]
             + [
                 fixture.error(
-                    report_codes.NODE_COMMUNICATION_COMMAND_UNSUCCESSFUL,
+                    reports.codes.NODE_COMMUNICATION_COMMAND_UNSUCCESSFUL,
                     node=node,
                     command="remote/sbd_enable",
                     reason=self.err_msg,
@@ -3599,16 +3623,16 @@ class FailureEnableSbd(TestCase):
 
         self.env_assist.assert_reports(
             self.expected_reports
-            + [fixture.info(report_codes.SBD_CONFIG_DISTRIBUTION_STARTED)]
+            + [fixture.info(reports.codes.SBD_CONFIG_DISTRIBUTION_STARTED)]
             + [
                 fixture.info(
-                    report_codes.SBD_CONFIG_ACCEPTED_BY_NODE, node=node,
+                    reports.codes.SBD_CONFIG_ACCEPTED_BY_NODE, node=node,
                 )
                 for node in self.successful_nodes
             ]
             + [
                 fixture.error(
-                    report_codes.NODE_COMMUNICATION_COMMAND_UNSUCCESSFUL,
+                    reports.codes.NODE_COMMUNICATION_COMMAND_UNSUCCESSFUL,
                     node=node,
                     command="remote/set_sbd_config",
                     reason=self.err_msg,
@@ -3631,7 +3655,7 @@ class FailureEnableSbd(TestCase):
         self._add_nodes_with_lib_error(
             [
                 fixture.error(
-                    report_codes.UNABLE_TO_GET_SBD_CONFIG,
+                    reports.codes.UNABLE_TO_GET_SBD_CONFIG,
                     node="local node",
                     reason=f"[Errno 1] {self.err_msg}: '{settings.sbd_config}'",
                 )
@@ -3679,9 +3703,12 @@ class FailureQdevice(TestCase):
         self.expected_reports.extend(
             [
                 fixture.info(
-                    report_codes.USING_KNOWN_HOST_ADDRESS_FOR_HOST,
+                    reports.codes.USING_DEFAULT_ADDRESS_FOR_HOST,
                     host_name=node,
                     address=node,
+                    address_source=(
+                        reports.const.DEFAULT_ADDRESS_SOURCE_KNOWN_HOSTS
+                    ),
                 )
                 for node in self.new_nodes
             ]
@@ -3747,14 +3774,14 @@ class FailureQdevice(TestCase):
             self.expected_reports
             + [
                 fixture.info(
-                    report_codes.QDEVICE_CERTIFICATE_ACCEPTED_BY_NODE,
+                    reports.codes.QDEVICE_CERTIFICATE_ACCEPTED_BY_NODE,
                     node=node,
                 )
                 for node in self.successful_nodes
             ]
             + [
                 fixture.error(
-                    report_codes.NODE_COMMUNICATION_COMMAND_UNSUCCESSFUL,
+                    reports.codes.NODE_COMMUNICATION_COMMAND_UNSUCCESSFUL,
                     node=node,
                     command="remote/qdevice_net_client_import_certificate",
                     reason=self.err_msg,
@@ -3799,7 +3826,7 @@ class FailureQdevice(TestCase):
         self._add_nodes_with_lib_error(
             [
                 fixture.error(
-                    report_codes.QDEVICE_CERTIFICATE_IMPORT_ERROR,
+                    reports.codes.QDEVICE_CERTIFICATE_IMPORT_ERROR,
                     reason=f"{pk12_cert_path}: {self.err_msg}",
                 ),
             ]
@@ -3840,7 +3867,7 @@ class FailureQdevice(TestCase):
         self._add_nodes_with_lib_error(
             [
                 fixture.error(
-                    report_codes.QDEVICE_CERTIFICATE_IMPORT_ERROR,
+                    reports.codes.QDEVICE_CERTIFICATE_IMPORT_ERROR,
                     reason=self.err_msg,
                 ),
             ]
@@ -3872,7 +3899,7 @@ class FailureQdevice(TestCase):
             self.expected_reports
             + [
                 fixture.error(
-                    report_codes.INVALID_RESPONSE_FORMAT, node=QDEVICE_HOST,
+                    reports.codes.INVALID_RESPONSE_FORMAT, node=QDEVICE_HOST,
                 )
             ]
         )
@@ -3908,7 +3935,7 @@ class FailureQdevice(TestCase):
         self._add_nodes_with_lib_error(
             [
                 fixture.error(
-                    report_codes.QDEVICE_INITIALIZATION_ERROR,
+                    reports.codes.QDEVICE_INITIALIZATION_ERROR,
                     model="net",
                     reason=f"{cert_req_path}: {self.err_msg}",
                 ),
@@ -3919,7 +3946,7 @@ class FailureQdevice(TestCase):
             self.expected_reports
             + [
                 fixture.info(
-                    report_codes.QDEVICE_CERTIFICATE_DISTRIBUTION_STARTED
+                    reports.codes.QDEVICE_CERTIFICATE_DISTRIBUTION_STARTED
                 )
             ]
         )
@@ -3952,7 +3979,7 @@ class FailureQdevice(TestCase):
         self._add_nodes_with_lib_error(
             [
                 fixture.error(
-                    report_codes.QDEVICE_INITIALIZATION_ERROR,
+                    reports.codes.QDEVICE_INITIALIZATION_ERROR,
                     model="net",
                     reason=self.err_msg,
                 ),
@@ -3963,7 +3990,7 @@ class FailureQdevice(TestCase):
             self.expected_reports
             + [
                 fixture.info(
-                    report_codes.QDEVICE_CERTIFICATE_DISTRIBUTION_STARTED
+                    reports.codes.QDEVICE_CERTIFICATE_DISTRIBUTION_STARTED
                 )
             ]
         )
@@ -3989,12 +4016,12 @@ class FailureQdevice(TestCase):
             self.expected_reports
             + [
                 fixture.info(
-                    report_codes.QDEVICE_CERTIFICATE_DISTRIBUTION_STARTED
+                    reports.codes.QDEVICE_CERTIFICATE_DISTRIBUTION_STARTED
                 )
             ]
             + [
                 fixture.error(
-                    report_codes.NODE_COMMUNICATION_COMMAND_UNSUCCESSFUL,
+                    reports.codes.NODE_COMMUNICATION_COMMAND_UNSUCCESSFUL,
                     node=node,
                     command=(
                         "remote/qdevice_net_client_init_certificate_storage"
@@ -4023,10 +4050,10 @@ class FailureQdevice(TestCase):
             self.expected_reports
             + [
                 fixture.info(
-                    report_codes.QDEVICE_CERTIFICATE_DISTRIBUTION_STARTED
+                    reports.codes.QDEVICE_CERTIFICATE_DISTRIBUTION_STARTED
                 ),
                 fixture.error(
-                    report_codes.INVALID_RESPONSE_FORMAT, node=QDEVICE_HOST,
+                    reports.codes.INVALID_RESPONSE_FORMAT, node=QDEVICE_HOST,
                 ),
             ]
         )
@@ -4063,9 +4090,12 @@ class FailureKnownHostsUpdate(TestCase):
         self.expected_reports.extend(
             [
                 fixture.info(
-                    report_codes.USING_KNOWN_HOST_ADDRESS_FOR_HOST,
+                    reports.codes.USING_DEFAULT_ADDRESS_FOR_HOST,
                     host_name=node,
                     address=node,
+                    address_source=(
+                        reports.const.DEFAULT_ADDRESS_SOURCE_KNOWN_HOSTS
+                    ),
                 )
                 for node in self.new_nodes
             ]
@@ -4099,7 +4129,7 @@ class FailureKnownHostsUpdate(TestCase):
             self.expected_reports
             + [
                 fixture.error(
-                    report_codes.NODE_COMMUNICATION_COMMAND_UNSUCCESSFUL,
+                    reports.codes.NODE_COMMUNICATION_COMMAND_UNSUCCESSFUL,
                     node=node,
                     command="remote/known_hosts_change",
                     reason=self.err_msg,
@@ -4129,7 +4159,7 @@ class FailureKnownHostsUpdate(TestCase):
             self.expected_reports
             + [
                 fixture.error(
-                    report_codes.NODE_COMMUNICATION_ERROR_UNABLE_TO_CONNECT,
+                    reports.codes.NODE_COMMUNICATION_ERROR_UNABLE_TO_CONNECT,
                     node=node,
                     command="remote/known_hosts_change",
                     reason=self.err_msg,

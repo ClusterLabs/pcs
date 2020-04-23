@@ -65,6 +65,8 @@ PCS_LONG_OPTIONS = [
     "groups",
     # "pcs resource clear --expired" - only clear expired moves and bans
     "expired",
+    # allow overwriting existing files, currently meant for / used in CLI only
+    "overwrite",
 ]
 
 
@@ -420,6 +422,7 @@ class InputModifiers:
                 "--no-watchdog-validation": "--no-watchdog-validation"
                 in options,
                 "--off": "--off" in options,
+                "--overwrite": "--overwrite" in options,
                 "--pacemaker": "--pacemaker" in options,
                 "--safe": "--safe" in options,
                 "--simulate": "--simulate" in options,
@@ -498,6 +501,12 @@ class InputModifiers:
 
     def is_specified(self, option):
         return option in self._defined_options
+
+    def is_specified_any(self, option_list):
+        for option in option_list:
+            if self.is_specified(option):
+                return True
+        return False
 
     def get(self, option, default=None):
         if option in self._defined_options:

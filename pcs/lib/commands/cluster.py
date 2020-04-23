@@ -3,6 +3,14 @@ import math
 import os.path
 import time
 
+from typing import (
+    Any,
+    Container,
+    Mapping,
+    Optional,
+    Sequence,
+)
+
 from pcs import settings
 from pcs.common import (
     file_type_codes,
@@ -245,18 +253,6 @@ def setup(
             "cipher": "aes256",
             "hash": "sha256",
         }
-    # Get IP version for node addresses validation. Defaults taken from man
-    # corosync.conf
-    ip_version = (
-        corosync_constants.IP_VERSION_4
-        if transport_type == "udp"
-        else corosync_constants.IP_VERSION_64
-    )
-    if (
-        transport_options.get("ip_version")
-        in corosync_constants.IP_VERSION_VALUES
-    ):
-        ip_version = transport_options["ip_version"]
 
     report_processor = env.report_processor
     target_factory = env.get_node_target_factory()
@@ -286,39 +282,18 @@ def setup(
 
     # Validate inputs.
     report_processor.report_list(
-        config_validators.create(
+        _validate_create_corosync_conf(
             cluster_name,
             nodes,
             transport_type,
-            ip_version,
-            force_unresolvable=force,
-            force_cluster_name=force,
+            transport_options,
+            link_list,
+            compression_options,
+            crypto_options,
+            totem_options,
+            quorum_options,
+            force,
         )
-    )
-    max_node_addr_count = max([len(node["addrs"]) for node in nodes], default=0)
-    if transport_type in corosync_constants.TRANSPORTS_KNET:
-        report_processor.report_list(
-            config_validators.create_transport_knet(
-                transport_options, compression_options, crypto_options
-            )
-            + config_validators.create_link_list_knet(
-                link_list, max_node_addr_count
-            )
-        )
-    elif transport_type in corosync_constants.TRANSPORTS_UDP:
-        report_processor.report_list(
-            config_validators.create_transport_udp(
-                transport_options, compression_options, crypto_options
-            )
-            + config_validators.create_link_list_udp(
-                link_list, max_node_addr_count
-            )
-        )
-    report_processor.report_list(
-        config_validators.create_totem(totem_options)
-        +
-        # We are creating the config and we know there is no qdevice in it.
-        config_validators.create_quorum_options(quorum_options, False)
     )
 
     # Validate flags
@@ -412,24 +387,21 @@ def setup(
 
     # Create and distribute corosync.conf. Once a node saves corosync.conf it
     # is considered to be in a cluster.
-    corosync_conf = config_facade.ConfigFacade.create(
-        cluster_name, nodes, transport_type
-    )
-    corosync_conf.set_totem_options(totem_options)
-    corosync_conf.set_quorum_options(quorum_options)
-    corosync_conf.create_link_list(link_list)
-    if transport_type in corosync_constants.TRANSPORTS_KNET:
-        corosync_conf.set_transport_knet_options(
-            transport_options, compression_options, crypto_options
-        )
-    elif transport_type in corosync_constants.TRANSPORTS_UDP:
-        corosync_conf.set_transport_udp_options(transport_options)
-
-    _verify_corosync_conf(corosync_conf)  # raises if corosync not valid
+    # raises if corosync not valid
     com_cmd = DistributeFilesWithoutForces(
         env.report_processor,
         node_communication_format.corosync_conf_file(
-            corosync_conf.config.export()
+            _create_corosync_conf(
+                cluster_name,
+                nodes,
+                transport_type,
+                transport_options,
+                link_list,
+                compression_options,
+                crypto_options,
+                totem_options,
+                quorum_options,
+            ).config.export()
         ),
     )
     com_cmd.set_targets(target_list)
@@ -452,6 +424,215 @@ def setup(
             target_list,
             wait_timeout=wait_timeout,
         )
+
+
+def setup_local(
+    env: LibraryEnvironment,
+    cluster_name: str,
+    nodes: Sequence[Mapping[str, Any]],
+    transport_type: Optional[str],
+    transport_options: Mapping[str, str],
+    link_list: Sequence[Mapping[str, Any]],
+    compression_options: Mapping[str, str],
+    crypto_options: Mapping[str, str],
+    totem_options: Mapping[str, str],
+    quorum_options: Mapping[str, str],
+    force_flags: Container[reports.types.ForceCode],
+) -> bytes:
+    """
+    Return corosync.conf text based on specified parameters.
+    Raise LibraryError on any error.
+
+    env
+    cluster_name -- name of a cluster to set up
+    nodes list -- list of dicts which represents node.
+        Supported keys are: name (required), addrs. See note bellow.
+    transport_type -- transport type of a cluster
+    transport_options -- transport specific options
+    link_list -- list of links, depends of transport_type
+    compression_options -- only available for knet transport. In
+        corosync.conf they are prefixed 'knet_compression_'
+    crypto_options -- only available for knet transport'. In corosync.conf
+        they are prefixed 'crypto_'
+    totem_options -- options of section 'totem' in corosync.conf
+    quorum_options -- options of section 'quorum' in corosync.conf
+    force_flags -- list of flags codes
+
+    The command is defaulting node addresses if they are not specified. The
+    defaulting is done for each node individually if and only if the "addrs" key
+    is not present for the node. If the "addrs" key is present and holds an
+    empty list, no defaulting is done.
+    This will default addresses for node2 and won't modify addresses for other
+    nodes (no addresses will be defined for node3):
+    nodes=[
+        {"name": "node1", "addrs": ["node1-addr"]},
+        {"name": "node2"},
+        {"name": "node3", "addrs": []},
+    ]
+    """
+    # pylint: disable=too-many-arguments
+    # pylint: disable=too-many-locals
+    force = report_codes.FORCE in force_flags
+
+    transport_type = transport_type or "knet"
+    nodes = [_normalize_dict(node, {"addrs"}) for node in nodes]
+    if (
+        transport_type in corosync_constants.TRANSPORTS_KNET
+        and not crypto_options
+    ):
+        crypto_options = {
+            "cipher": "aes256",
+            "hash": "sha256",
+        }
+
+    report_processor = env.report_processor
+    target_factory = env.get_node_target_factory()
+
+    # Get targets just for address defaulting, no need to report unknown nodes
+    _, target_list = target_factory.get_target_list_with_reports(
+        [node["name"] for node in nodes if "name" in node], allow_skip=False,
+    )
+
+    # Use an address defined in known-hosts for each node with no addresses
+    # specified. This allows users not to specify node addresses at all which
+    # simplifies the whole cluster setup command / form significantly.
+
+    # If there is no address for a node in known-hosts, use its name as the
+    # default address
+    addrs_defaulter = _get_addrs_defaulter(
+        report_processor,
+        {target.label: target for target in target_list},
+        default_to_name_if_no_target=True,
+    )
+    nodes = [
+        _set_defaults_in_dict(node, {"addrs": addrs_defaulter})
+        for node in nodes
+    ]
+
+    # Validate inputs.
+    if report_processor.report_list(
+        _validate_create_corosync_conf(
+            cluster_name,
+            nodes,
+            transport_type,
+            transport_options,
+            link_list,
+            compression_options,
+            crypto_options,
+            totem_options,
+            quorum_options,
+            force,
+        )
+    ).has_errors:
+        raise LibraryError()
+
+    # Validation done. If errors occured, an exception has been raised and we
+    # don't get below this line.
+
+    return (
+        _create_corosync_conf(
+            cluster_name,
+            nodes,
+            transport_type,
+            transport_options,
+            link_list,
+            compression_options,
+            crypto_options,
+            totem_options,
+            quorum_options,
+        )
+        .config.export()
+        .encode("utf-8")
+    )
+
+
+def _validate_create_corosync_conf(
+    cluster_name: str,
+    nodes: Sequence[Mapping[str, Any]],
+    transport_type: str,
+    transport_options: Mapping[str, str],
+    link_list: Sequence[Mapping[str, Any]],
+    compression_options: Mapping[str, str],
+    crypto_options: Mapping[str, str],
+    totem_options: Mapping[str, str],
+    quorum_options: Mapping[str, str],
+    force: bool,
+) -> reports.ReportItemList:
+    # pylint: disable=too-many-arguments
+
+    # Get IP version for node addresses validation. Defaults taken from man
+    # corosync.conf
+    ip_version = (
+        corosync_constants.IP_VERSION_4
+        if transport_type == "udp"
+        else corosync_constants.IP_VERSION_64
+    )
+    if (
+        transport_options.get("ip_version")
+        in corosync_constants.IP_VERSION_VALUES
+    ):
+        ip_version = transport_options["ip_version"]
+
+    report_list = []
+    report_list += config_validators.create(
+        cluster_name,
+        nodes,
+        transport_type,
+        ip_version,
+        force_unresolvable=force,
+        force_cluster_name=force,
+    )
+    max_node_addr_count = max([len(node["addrs"]) for node in nodes], default=0)
+    if transport_type in corosync_constants.TRANSPORTS_KNET:
+        report_list += config_validators.create_transport_knet(
+            transport_options, compression_options, crypto_options
+        )
+        report_list += config_validators.create_link_list_knet(
+            link_list, max_node_addr_count
+        )
+
+    elif transport_type in corosync_constants.TRANSPORTS_UDP:
+        report_list += config_validators.create_transport_udp(
+            transport_options, compression_options, crypto_options
+        )
+        report_list += config_validators.create_link_list_udp(
+            link_list, max_node_addr_count
+        )
+    return (
+        report_list
+        + config_validators.create_totem(totem_options)
+        # We are creating the config and we know there is no qdevice in it.
+        + config_validators.create_quorum_options(quorum_options, False)
+    )
+
+
+def _create_corosync_conf(
+    cluster_name: str,
+    nodes: Sequence[Mapping[str, Any]],
+    transport_type: str,
+    transport_options: Mapping[str, str],
+    link_list: Sequence[Mapping[str, Any]],
+    compression_options: Mapping[str, str],
+    crypto_options: Mapping[str, str],
+    totem_options: Mapping[str, str],
+    quorum_options: Mapping[str, str],
+) -> config_facade.ConfigFacade:
+    # pylint: disable=too-many-arguments
+    corosync_conf = config_facade.ConfigFacade.create(
+        cluster_name, nodes, transport_type
+    )
+    corosync_conf.set_totem_options(totem_options)
+    corosync_conf.set_quorum_options(quorum_options)
+    corosync_conf.create_link_list(link_list)
+    if transport_type in corosync_constants.TRANSPORTS_KNET:
+        corosync_conf.set_transport_knet_options(
+            transport_options, compression_options, crypto_options
+        )
+    elif transport_type in corosync_constants.TRANSPORTS_UDP:
+        corosync_conf.set_transport_udp_options(transport_options)
+
+    _verify_corosync_conf(corosync_conf)  # raises if corosync not valid
+    return corosync_conf
 
 
 def add_nodes(
@@ -1207,20 +1388,31 @@ def _set_defaults_in_dict(input_dict, defaults):
     return completed
 
 
-def _get_addrs_defaulter(report_processor: ReportProcessor, targets_dict):
+def _get_addrs_defaulter(
+    report_processor: ReportProcessor,
+    targets_dict,
+    default_to_name_if_no_target: bool = False,
+):
     def defaulter(node):
         if "name" not in node:
             return []
+        address_for_use = None
         target = targets_dict.get(node["name"])
         if target:
+            address_for_use = target.first_addr
+            address_source = reports.const.DEFAULT_ADDRESS_SOURCE_KNOWN_HOSTS
+        elif default_to_name_if_no_target:
+            address_for_use = node["name"]
+            address_source = reports.const.DEFAULT_ADDRESS_SOURCE_HOST_NAME
+        if address_for_use:
             report_processor.report(
                 ReportItem.info(
-                    reports.messages.UsingKnownHostAddressForHost(
-                        node["name"], target.first_addr
+                    reports.messages.UsingDefaultAddressForHost(
+                        node["name"], address_for_use, address_source
                     )
                 )
             )
-            return [target.first_addr]
+            return [address_for_use]
         return []
 
     return defaulter
