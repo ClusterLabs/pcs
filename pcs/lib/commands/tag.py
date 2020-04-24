@@ -129,6 +129,7 @@ def update(
             )
         ).has_errors:
             raise LibraryError()
+        # check for mypy
         tag_element = validator.tag_element()
         if tag_element is not None:
             tag.add_obj_ref(

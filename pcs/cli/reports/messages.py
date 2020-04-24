@@ -395,9 +395,10 @@ class TagCannotRemoveReferencesWithoutRemovingTag(CliReportMessageCustom):
 
     @property
     def message(self) -> str:
+        tag_id = self._obj.tag_id
         return (
-            f"There would be no references left in the tag, please remove the "
-            "whole tag using the 'pcs tag remove ...' command"
+            f"There would be no references left in the tag '{tag_id}', please "
+            f"remove the whole tag using the 'pcs tag remove {tag_id}' command"
         )
 
 

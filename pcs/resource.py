@@ -42,9 +42,6 @@ from pcs.lib.cib.resource.common import (
     find_one_resource_and_report,
     find_resources_to_delete,
 )
-from pcs.lib.cib.tag import (
-    find_obj_ref_elements as find_resource_ref_elements_in_tags,
-)
 from pcs.lib.cib.tools import (
     get_resources,
     get_tags,
@@ -1466,13 +1463,13 @@ def resource_remove(resource_id, output=True, is_remove_remote_context=False):
         get_resources(xml_etree), resource_id, [],  # no need for report_list
     )
     if resource_el is not None:
-        tag_obj_ref_list, _ = find_resource_ref_elements_in_tags(
-            get_tags(xml_etree),
-            [
-                element.get("id", "")
-                for element in find_resources_to_delete(resource_el)
-            ],
-        )
+        tag_obj_ref_list = []
+        for el in find_resources_to_delete(resource_el):
+            xpath_result = get_tags(xml_etree).xpath(
+                './/tag/obj_ref[@id="{0}"]'.format(el.get("id", "")),
+            )
+            if xpath_result:
+                tag_obj_ref_list.extend(xpath_result)
         if tag_obj_ref_list:
             tag_id_list = sorted(
                 {
@@ -1482,10 +1479,10 @@ def resource_remove(resource_id, output=True, is_remove_remote_context=False):
             )
             utils.err(
                 "Unable to remove resource '{resource}' because it is "
-                "referenced in the tag{s}: {tags}".format(
+                "referenced in {tags}: {tag_id_list}".format(
                     resource=resource_id,
-                    s="s" if len(tag_id_list) > 1 else "",
-                    tags="', '".join(tag_id_list),
+                    tags="tags" if len(tag_id_list) > 1 else "the tag",
+                    tag_id_list="', '".join(tag_id_list),
                 )
             )
 

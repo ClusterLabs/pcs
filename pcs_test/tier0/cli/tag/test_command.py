@@ -208,7 +208,7 @@ class TagUpdate(TestCase):
                 ["tag_id", "add", "id1"], dict(after="A", before="B"),
             )
         self.assertEqual(
-            cm.exception.message, "you cannot specify both --before and --after"
+            cm.exception.message, "Cannot specify both --before and --after"
         )
         self.tag.update.assert_not_called()
 

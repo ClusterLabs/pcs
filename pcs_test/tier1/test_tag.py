@@ -501,10 +501,10 @@ class ResourceRemoveDeleteBase(TestTagMixin):
     def fixture_error_message(resource, tags):
         return (
             "Error: Unable to remove resource '{resource}' because it is "
-            "referenced in the tag{s}: {tags}\n".format(
+            "referenced in {tags}: {tag_list}\n".format(
                 resource=resource,
-                s="s" if len(tags) > 1 else "",
-                tags="', '".join(tags),
+                tags="tags" if len(tags) > 1 else "the tag",
+                tag_list="', '".join(tags),
             )
         )
 
@@ -700,8 +700,8 @@ class TagUpdate(TestTagMixin, TestCase):
                 "Error: Ids to remove must be unique, duplicate ids: 'e1', 'e2'"
                 "\n"
                 "Error: Cannot put id 'e1' next to itself.\n"
-                "Error: Cannot remove id 'e1' next to which ids are being to "
-                "put\n"
+                "Error: Cannot remove id 'e1' next to which ids are being "
+                "added\n"
                 "Error: Errors have occurred, therefore pcs is unable to "
                 "continue\n"
             ),
@@ -711,8 +711,9 @@ class TagUpdate(TestTagMixin, TestCase):
         self.assert_pcs_fail(
             "tag update tag1 remove e1 e2 e3",
             (
-                "Error: There would be no references left in the tag, please "
-                "remove the whole tag using the 'pcs tag remove ...' command\n"
+                "Error: There would be no references left in the tag 'tag1', "
+                "please remove the whole tag using the 'pcs tag remove tag1' "
+                "command\n"
                 "Error: Errors have occurred, therefore pcs is unable to "
                 "continue\n"
             ),
@@ -724,8 +725,7 @@ class TagUpdate(TestTagMixin, TestCase):
             (
                 "Error: Ids cannot be added and removed at the same time: 'a', "
                 "'b'\n"
-                "Error: there is no obj_ref 'a' in the tag 'tag1'\n"
-                "Error: there is no obj_ref 'b' in the tag 'tag1'\n"
+                "Error: There are no ids in the tag 'tag1': 'a', 'b'\n"
                 "Error: Errors have occurred, therefore pcs is unable to "
                 "continue\n"
             ),
@@ -733,10 +733,10 @@ class TagUpdate(TestTagMixin, TestCase):
 
     def test_fail_remove_ids_not_in_tag(self):
         self.assert_pcs_fail(
-            "tag update tag1 remove nonexistent1 nonexistent2",
+            "tag update tag1 remove nonexistent2 nonexistent1",
             (
-                "Error: there is no obj_ref 'nonexistent1' in the tag 'tag1'\n"
-                "Error: there is no obj_ref 'nonexistent2' in the tag 'tag1'\n"
+                "Error: There are no ids in the tag 'tag1': 'nonexistent1', "
+                "'nonexistent2'\n"
                 "Error: Errors have occurred, therefore pcs is unable to "
                 "continue\n"
             ),

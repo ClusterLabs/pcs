@@ -23,27 +23,13 @@ class TestTagUpdate(TestCase):
             tags=fixture_tags_xml([("t", ["e1", "e2", "e3"])]),
         )
 
-    def test_add_one_id(self):
-        self.config.env.push_cib(
-            tags=fixture_tags_xml([("t", ["e1", "e2", "e3", "a"])]),
-        )
-        cmd_tag.update(self.env_assist.get_env(), "t", ["a"], [])
-
-    def test_add_more_ids(self):
+    def test_add_ids(self):
         self.config.env.push_cib(
             tags=fixture_tags_xml([("t", ["e1", "e2", "e3", "a", "b"])]),
         )
         cmd_tag.update(self.env_assist.get_env(), "t", ["a", "b"], [])
 
-    def test_add_one_before(self):
-        self.config.env.push_cib(
-            tags=fixture_tags_xml([("t", ["a", "e1", "e2", "e3"])]),
-        )
-        cmd_tag.update(
-            self.env_assist.get_env(), "t", ["a"], [], adjacent_idref="e1",
-        )
-
-    def test_add_more_before(self):
+    def test_add_ids_before(self):
         self.config.env.push_cib(
             tags=fixture_tags_xml([("t", ["a", "b", "e1", "e2", "e3"])]),
         )
@@ -51,20 +37,7 @@ class TestTagUpdate(TestCase):
             self.env_assist.get_env(), "t", ["a", "b"], [], adjacent_idref="e1",
         )
 
-    def test_add_one_after(self):
-        self.config.env.push_cib(
-            tags=fixture_tags_xml([("t", ["e1", "e2", "a", "e3"])]),
-        )
-        cmd_tag.update(
-            self.env_assist.get_env(),
-            "t",
-            ["a"],
-            [],
-            adjacent_idref="e2",
-            put_after_adjacent=True,
-        )
-
-    def test_add_more_after(self):
+    def test_add_ids_after(self):
         self.config.env.push_cib(
             tags=fixture_tags_xml([("t", ["e1", "b", "a", "e2", "e3"])]),
         )
@@ -77,11 +50,7 @@ class TestTagUpdate(TestCase):
             put_after_adjacent=True,
         )
 
-    def test_remove_one(self):
-        self.config.env.push_cib(tags=fixture_tags_xml([("t", ["e1", "e3"])]),)
-        cmd_tag.update(self.env_assist.get_env(), "t", [], ["e2"])
-
-    def test_remove_more(self):
+    def test_remove_ids(self):
         self.config.env.push_cib(tags=fixture_tags_xml([("t", ["e2"])]),)
         cmd_tag.update(self.env_assist.get_env(), "t", [], ["e1", "e3"])
 
@@ -209,6 +178,7 @@ class TestTagUpdate(TestCase):
                 fixture.error(
                     # pylint: disable=line-too-long
                     reports.codes.TAG_CANNOT_REMOVE_REFERENCES_WITHOUT_REMOVING_TAG,
+                    tag_id="t",
                 )
             ]
         )

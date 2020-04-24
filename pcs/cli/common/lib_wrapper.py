@@ -282,9 +282,7 @@ def load_module(env, middleware_factory, name):
                     node.maintenance_unmaintenance_local
                 ),
                 "standby_unstandby_all": node.standby_unstandby_all,
-                # pylint: disable=line-too-long
                 "standby_unstandby_list": node.standby_unstandby_list,
-                # pylint: disable=line-too-long
                 "standby_unstandby_local": node.standby_unstandby_local,
             },
         )

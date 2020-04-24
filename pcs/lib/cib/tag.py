@@ -1,4 +1,4 @@
-from collections import Counter, defaultdict, OrderedDict
+from collections import Counter, OrderedDict
 from typing import (
     cast,
     Container,
@@ -146,7 +146,7 @@ def validate_remove_tag(
 ) -> ReportItemList:
     """
     Validation function for tag removal. List of tag elements is not empty and
-    tag is note referenced in constraint.
+    no tag is referenced in any constraint.
 
     constraint_section -- element constraints
     to_remove_tag_list -- list of tag ids for removal
@@ -178,42 +178,13 @@ def validate_remove_tag(
     return report_list
 
 
-def _prepare_add_obj_ref_elements(
-    idref_list: Sequence[str],
-    existing_element_list: Optional[List[Element]] = None,
-) -> List[Element]:
-    """
-    Prepare list of obj_ref elements for adding to a tag from a list of
-    reference ids and list of existing elements. If element with a
-    reference id does not exist, then new element is created. Resulting
-    order of elements respects order of given reference ids.
-
-    idref_list -- list of reference ids which must not contain duplicates
-    existing_element_list -- existing obj_ref elements from a tag
-    """
-    if existing_element_list is None:
-        existing_element_list = []
-    final_element_list = []
-    existing_id2element_dict = {
-        element.get("id", ""): element for element in existing_element_list
-    }
-    for idref in idref_list:
-        if idref in existing_id2element_dict:
-            final_element_list.append(existing_id2element_dict[idref])
-        else:
-            final_element_list.append(
-                cast(Element, etree.Element(TAG_OBJREF, id=idref)),
-            )
-    return final_element_list
-
-
 class ValidateTagUpdateByIds:
     # pylint:disable=too-many-instance-attributes
     """
     Validate update of a tag element by using ids.
 
-    Class provides single validate method, which returns a report item list,
-    and methods for accessing to required elements needed for update.
+    Class provides single validate method which returns a report item list,
+    and methods for accessing required elements needed for update.
 
     Class is inspired by class ValidateMoveResourcesToGroupByIds from module
     'pcs/lib/cib/resource/hierarchy.py' which is used in command 'pcs resource
@@ -221,8 +192,8 @@ class ValidateTagUpdateByIds:
     ValidateMoveResourcesToGroupByElements which implements validation based on
     given elements.
     Validation of tag update from existing elements is not implemented because
-    it wans't needed. Please look into hierarchy module in case you would need
-    validation for tag update from existing elements.
+    it wasn't needed yet. If you need it, feel free to implement it. Take a look
+    at the hierarchy module to see how it's done.
     """
 
     def __init__(
@@ -236,8 +207,9 @@ class ValidateTagUpdateByIds:
         tag_id -- id of an existing tag we want to update
         add_idref_list -- list of reference ids we want to add to the tag
         remove_idref_list -- list of reference ids we want to remove from the
-        tag
-        adjacent_idref -- reference id from the tag where we want to add new ids
+            tag
+        adjacent_idref -- id of an element next to which the added elements will
+            be put
         """
         self._tag_id = tag_id
         self._add_idref_list = add_idref_list
@@ -280,7 +252,7 @@ class ValidateTagUpdateByIds:
 
     def _validate_tag_exists(self, tags_section: Element) -> ReportItemList:
         """
-        Validate that tag with given tag_id exists and save founded element.
+        Validate that tag with given tag_id exists and save the found element.
 
         tags_section -- tags section of a cib
         """
@@ -293,7 +265,7 @@ class ValidateTagUpdateByIds:
 
     def _validate_ids_for_update_are_specified(self) -> ReportItemList:
         """
-        Validate that either of add or remove ids were specifiad or if add ids
+        Validate that either of add or remove ids were specified or that add ids
         were specified in case of specified adjacent id.
         """
         report_list: ReportItemList = []
@@ -334,51 +306,49 @@ class ValidateTagUpdateByIds:
         being added or removed.
         """
         report_list: ReportItemList = []
-        if self._tag_element is not None and self._adjacent_idref is not None:
-            el_list, _ = find_obj_ref_elements(
-                self._tag_element, [self._adjacent_idref],
+        if self._tag_element is None or self._adjacent_idref is None:
+            return report_list
+        self._adjacent_obj_ref_element = self._find_obj_ref_in_tag(
+            self._adjacent_idref,
+        )
+        if self._adjacent_obj_ref_element is None:
+            report_list.append(
+                ReportItem.error(
+                    reports.messages.TagAdjacentReferenceIdNotInTheTag(
+                        self._adjacent_idref, self._tag_id,
+                    )
+                )
             )
-            if el_list:
-                self._adjacent_obj_ref_element = el_list[0]
-            else:
+        if self._adjacent_obj_ref_element is not None:
+            if self._adjacent_idref in self._add_idref_list:
                 report_list.append(
                     ReportItem.error(
-                        reports.messages.TagAdjacentReferenceIdNotInTheTag(
+                        reports.messages.TagCannotPutIdNextToItself(
                             self._adjacent_idref,
-                            self._tag_element.get("id", ""),
                         )
                     )
                 )
-            if self._adjacent_obj_ref_element is not None:
-                if self._adjacent_idref in self._add_idref_list:
-                    report_list.append(
-                        ReportItem.error(
-                            reports.messages.TagCannotPutIdNextToItself(
-                                self._adjacent_idref,
-                            )
+            if self._adjacent_idref in self._remove_idref_list:
+                report_list.append(
+                    ReportItem.error(
+                        reports.messages.TagCannotRemoveAdjacentId(
+                            self._adjacent_idref,
                         )
                     )
-                if self._adjacent_idref in self._remove_idref_list:
-                    report_list.append(
-                        ReportItem.error(
-                            reports.messages.TagCannotRemoveAdjacentId(
-                                self._adjacent_idref,
-                            )
-                        )
-                    )
+                )
         return report_list
 
     def _validate_ids_can_be_added_or_moved(
         self, resources_section: Element,
     ) -> ReportItemList:
         """
-        Validates that ids can be added or moved:
-        - there are no duplciate ids specified
-        - ids belongs to the allowed elements in cas of adding (e.g. resources)
-        - ids do not exist in tag if adjacent id was not specified
-        - create ids if do not exist in tag and adjacend id was specified
-        Save newly created and existing elements into a list respecting the
-        order of given ids to add or move in case of success validation.
+        Validate that ids can be added or moved:
+        - there are no duplicate ids specified
+        - ids belong to elements allowed to be put in a tag in case of adding
+        - ids do not exist in the tag if no adjacent id was specified
+        Save a list of created (for ids newly added to the tag) and found (for
+        ids already existing in the tag) obj_ref elements keeping the order of
+        given ids to add or move them in case of success validation.
         """
         report_list: ReportItemList = []
         unique_add_ids = list(OrderedDict.fromkeys(self._add_idref_list))
@@ -397,119 +367,87 @@ class ValidateTagUpdateByIds:
                 )
             )
         if self._tag_element is not None and self._add_idref_list:
-            existing_element_list, _ = find_obj_ref_elements(
-                self._tag_element, unique_add_ids,
-            )
-            # report if a reference id exists in tag and adjacent reference id
-            # was not specified
-            if self._adjacent_idref is None and existing_element_list:
+            existing_element_id_list = []
+            for id_ref in unique_add_ids:
+                obj_ref = self._find_obj_ref_in_tag(id_ref)
+                if obj_ref is None:
+                    obj_ref = cast(
+                        Element, etree.Element(TAG_OBJREF, id=id_ref),
+                    )
+                else:
+                    existing_element_id_list.append(id_ref)
+                self._add_obj_ref_element_list.append(obj_ref)
+            # report if a reference id exists in tag and no adjacent reference
+            # id was specified
+            if self._adjacent_idref is None and existing_element_id_list:
                 report_list.append(
                     ReportItem.error(
                         # pylint: disable=line-too-long
                         reports.messages.TagCannotAddReferenceIdsAlreadyInTheTag(
-                            self._tag_id,
-                            sorted(
-                                [
-                                    el.get("id", "")
-                                    for el in existing_element_list
-                                ]
-                            ),
+                            self._tag_id, sorted(existing_element_id_list),
                         )
                     )
-                )
-            if not report_list:
-                self._add_obj_ref_element_list = _prepare_add_obj_ref_elements(
-                    self._add_idref_list, existing_element_list,
                 )
         return report_list
 
     def _validate_ids_can_be_removed(self) -> ReportItemList:
         """
         Validate that ids can be removed:
-        - there are no duplciate ids specified
+        - there are no duplicate ids specified
         - ids exist in the tag
         - tag would not be left empty after removal
         Saves found elements to remove in case of succes validation.
         """
         report_list: ReportItemList = []
-        if self._tag_element is not None and self._remove_idref_list:
-            report_list.extend(
-                _validate_add_remove_duplicate_reference_ids(
-                    self._remove_idref_list, add_or_not_remove=False,
-                ),
-            )
-
-            element_list, tmp_report_list = find_obj_ref_elements(
-                self._tag_element,
-                list(OrderedDict.fromkeys(self._remove_idref_list)),
-            )
-            report_list.extend(tmp_report_list)
-
-            if not report_list and not self._add_idref_list:
-                report_list.extend(_validate_remove_obj_ref(element_list),)
-            if not report_list:
-                self._remove_obj_ref_element_list = element_list
-        return report_list
-
-
-def _validate_remove_obj_ref(
-    obj_ref_list: Iterable[Element],
-) -> ReportItemList:
-    """
-    Validation function for obj_ref removal from a tag. Elements obj_ref can be
-    removed without removing their parent tags.
-
-    obj_ref_list -- list of obj_ref elements
-    """
-    report_list: ReportItemList = []
-    parent2children: Dict[_Element, List[_Element]] = defaultdict(list)
-    for _child in obj_ref_list:
-        child = cast(_Element, _child)
-        parent = child.getparent()
-        if parent is not None:
-            parent2children[parent].append(child)
-
-    for parent, children in parent2children.items():
-        if len(parent.findall(f"./{TAG_OBJREF}")) == len(children):
-            report_list.append(
-                ReportItem.error(
-                    # pylint: disable=line-too-long
-                    reports.messages.TagCannotRemoveReferencesWithoutRemovingTag()
-                )
-            )
-    return report_list
-
-
-def find_obj_ref_elements(
-    context_element: Element, idref_list: Iterable[str],
-) -> Tuple[List[Element], ReportItemList]:
-    """
-    Find obj_ref elements which contain ids from specified list.
-
-    context_element -- element where we searching for obj_ref elements, usually
-        element <tags> or <tag>
-    idref_list -- id references list
-    """
-    obj_ref_el_list: List[Element] = []
-    report_list: ReportItemList = []
-    for idref in idref_list:
-        xpath_result = cast(_Element, context_element).xpath(
-            f'.//{TAG_OBJREF}[@id="{idref}"]',
+        if self._tag_element is None or not self._remove_idref_list:
+            return report_list
+        report_list.extend(
+            _validate_add_remove_duplicate_reference_ids(
+                self._remove_idref_list, add_or_not_remove=False,
+            ),
         )
-        if xpath_result:
-            obj_ref_el_list.extend(cast(List[Element], xpath_result))
-        else:
+        missing_id_list = []
+        for id_ref in set(self._remove_idref_list):
+            obj_ref = self._find_obj_ref_in_tag(id_ref)
+            if obj_ref is not None:
+                self._remove_obj_ref_element_list.append(obj_ref)
+            else:
+                missing_id_list.append(id_ref)
+        if missing_id_list:
             report_list.append(
                 ReportItem.error(
-                    reports.messages.IdNotFound(
-                        idref,
-                        [TAG_OBJREF],
-                        context_element.tag,
-                        context_element.attrib.get("id", ""),
+                    reports.messages.TagIdsNotInTheTag(
+                        self._tag_id, sorted(missing_id_list),
                     )
                 )
             )
-    return obj_ref_el_list, report_list
+        if not report_list and not self._add_idref_list:
+            remove_difference = set(
+                self._tag_element.findall(TAG_OBJREF),
+            ).difference(set(self._remove_obj_ref_element_list))
+            if not remove_difference:
+                report_list.append(
+                    ReportItem.error(
+                        # pylint: disable=line-too-long
+                        reports.messages.TagCannotRemoveReferencesWithoutRemovingTag(
+                            self._tag_id,
+                        )
+                    )
+                )
+        return report_list
+
+    def _find_obj_ref_in_tag(self, obj_ref_id: str) -> Optional[Element]:
+        """
+        Find obj_ref element in the tag element being updated.
+
+        obj_ref_id -- reference id
+        """
+        if self._tag_element is None:
+            return None
+        xpath_result = cast(_Element, self._tag_element).xpath(
+            f'./{TAG_OBJREF}[@id="{obj_ref_id}"]',
+        )
+        return cast(List[Element], xpath_result)[0] if xpath_result else None
 
 
 def find_constraints_referencing_tag(
@@ -654,7 +592,7 @@ def get_list_of_tag_elements(tags_section: Element) -> List[Element]:
 
     tags_section -- element tags
     """
-    return tags_section.findall("tag")
+    return tags_section.findall(TAG_TAG)
 
 
 def tag_element_to_dict(
@@ -675,6 +613,6 @@ def tag_element_to_dict(
         "tag_id": tag_element.get("id", default=""),
         "idref_list": [
             obj_ref.get("id", default="")
-            for obj_ref in tag_element.findall("obj_ref")
+            for obj_ref in tag_element.findall(TAG_OBJREF)
         ],
     }

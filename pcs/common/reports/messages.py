@@ -6294,7 +6294,7 @@ class TagCannotRemoveAdjacentId(ReportItemMessage):
     def message(self) -> str:
         return (
             f"Cannot remove id '{self.adjacent_id}' next to which ids are being"
-            " to put"
+            " added"
         )
 
 
@@ -6304,11 +6304,12 @@ class TagCannotRemoveReferencesWithoutRemovingTag(ReportItemMessage):
     Cannot remove references without removing a tag.
     """
 
+    tag_id: str
     _code = codes.TAG_CANNOT_REMOVE_REFERENCES_WITHOUT_REMOVING_TAG
 
     @property
     def message(self) -> str:
-        return "There would be no references left in the tag"
+        return f"There would be no references left in the tag '{self.tag_id}'"
 
 
 @dataclass(frozen=True)
@@ -6378,4 +6379,24 @@ class TagCannotUpdateTagNoIdsSpecified(ReportItemMessage):
 
     @property
     def message(self) -> str:
-        return "Cannot update tag, no ids specified"
+        return "Cannot update tag, no ids to be added or removed specified"
+
+
+@dataclass(frozen=True)
+class TagIdsNotInTheTag(ReportItemMessage):
+    """
+    There are no ids in the tag.
+    """
+
+    tag_id: str
+    id_list: List[str]
+    _code = codes.TAG_IDS_NOT_IN_THE_TAG
+
+    @property
+    def message(self) -> str:
+        return "There {are} no {ids} in the tag '{tag_id}': {id_list}".format(
+            are=format_plural(self.id_list, "is"),
+            ids=format_plural(self.id_list, "id"),
+            tag_id=self.tag_id,
+            id_list=format_list(self.id_list),
+        )

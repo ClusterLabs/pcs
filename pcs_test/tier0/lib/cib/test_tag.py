@@ -709,140 +709,6 @@ class FindConstraintsReferencingTag(ValidateCommonConstraintsTestData):
         self.assert_constraint_id("tag-ticket-set")
 
 
-class FindObjRefElements(TestCase):
-    test_tree = etree.fromstring(
-        """
-        <cib>
-          <configuration>
-            <tags>
-              <tag id="specific-tag">
-                <obj_ref id="a"/>
-                <obj_ref id="b"/>
-                <obj_ref id="multi-ref"/>
-              </tag>
-              <tag id="tag-single-ref">
-                <obj_ref id="single-ref"/>
-              </tag>
-              <tag id="tag-multi-ref1">
-                <obj_ref id="multi-ref"/>
-              </tag>
-              <tag id="tag-multi-ref2">
-                <obj_ref id="multi-ref"/>
-              </tag>
-            </tags>
-          </configuration>
-        </cib>
-        """
-    )
-    specific_tag = test_tree.findall('.//tag[@id="specific-tag"]')[0]
-    specific_multi_ref = test_tree.findall(
-        './/tag[@id="specific-tag"]/obj_ref/[@id="multi-ref"]',
-    )[0]
-
-    def get_obj_ref_elements(self, id_list):
-        element_list = []
-        for _id in id_list:
-            found_elements_list = self.test_tree.findall(f'.//*[@id="{_id}"]',)
-            if found_elements_list:
-                element_list.extend(found_elements_list)
-        return element_list
-
-    def test_tag_existing_references(self):
-        element_list, report_list = lib.find_obj_ref_elements(
-            self.specific_tag, ["a", "b"],
-        )
-        self.assertEqual(element_list, self.get_obj_ref_elements(["a", "b"]))
-        assert_report_item_list_equal(report_list, [])
-
-    def test_tag_not_existing_references(self):
-        element_list, report_list = lib.find_obj_ref_elements(
-            self.specific_tag, ["c", "d"],
-        )
-        self.assertEqual(element_list, [])
-        assert_report_item_list_equal(
-            report_list,
-            [
-                fixture.report_not_found(
-                    _id,
-                    context_type="tag",
-                    expected_types=["obj_ref"],
-                    context_id="specific-tag",
-                )
-                for _id in ["c", "d"]
-            ],
-        )
-
-    def test_tag_existing_and_not_existing_references(self):
-        element_list, report_list = lib.find_obj_ref_elements(
-            self.specific_tag, ["multi-ref", "c"],
-        )
-        self.assertEqual(element_list, [self.specific_multi_ref])
-        assert_report_item_list_equal(
-            report_list,
-            [
-                fixture.report_not_found(
-                    "c",
-                    context_type="tag",
-                    expected_types=["obj_ref"],
-                    context_id="specific-tag",
-                ),
-            ],
-        )
-
-    def test_tags_not_existing_references(self):
-        element_list, report_list = lib.find_obj_ref_elements(
-            get_tags(self.test_tree), ["nonexistent-ref1", "nonexistent-ref2"],
-        )
-        self.assertEqual(element_list, [])
-        assert_report_item_list_equal(
-            report_list,
-            [
-                fixture.report_not_found(
-                    _id, context_type="tags", expected_types=["obj_ref"],
-                )
-                for _id in ["nonexistent-ref1", "nonexistent-ref2"]
-            ],
-        )
-
-    def test_tags_reference_in_one_tag(self):
-        element_list, report_list = lib.find_obj_ref_elements(
-            get_tags(self.test_tree), ["single-ref"],
-        )
-        self.assertEqual(
-            element_list, self.get_obj_ref_elements(["single-ref"]),
-        )
-        assert_report_item_list_equal(report_list, [])
-
-    def test_tags_one_reference_in_several_tags(self):
-        element_list, report_list = lib.find_obj_ref_elements(
-            get_tags(self.test_tree), ["multi-ref"],
-        )
-        self.assertEqual(
-            element_list, self.get_obj_ref_elements(["multi-ref"]),
-        )
-        assert_report_item_list_equal(report_list, [])
-
-    def test_tags_more_references_in_several_tags_and_non_existing(self):
-        element_list, report_list = lib.find_obj_ref_elements(
-            get_tags(self.test_tree),
-            ["multi-ref", "single-ref", "nonexistent-ref1"],
-        )
-        self.assertEqual(
-            element_list,
-            self.get_obj_ref_elements(["multi-ref", "single-ref"]),
-        )
-        assert_report_item_list_equal(
-            report_list,
-            [
-                fixture.report_not_found(
-                    "nonexistent-ref1",
-                    context_type="tags",
-                    expected_types=["obj_ref"],
-                ),
-            ],
-        )
-
-
 class ValidateAddRemoveDuplicateReferenceIds(ValidateCommonTestData):
     duplicated_ids_input_output = (
         (["id1", "id1"], ["id1"],),
@@ -868,61 +734,33 @@ class ValidateAddRemoveDuplicateReferenceIds(ValidateCommonTestData):
 
     def test_add_duplicates(self):
         for input_ids, output_ids in self.duplicated_ids_input_output:
-            assert_report_item_list_equal(
-                lib._validate_add_remove_duplicate_reference_ids(input_ids),
-                [
-                    fixture.error(
-                        reports.codes.TAG_ADD_REMOVE_IDS_DUPLICATION,
-                        duplicate_ids_list=output_ids,
-                        add_or_not_remove=True,
-                    )
-                ],
-            )
+            with self.subTest(input_ids=input_ids, ouput_ids=output_ids):
+                assert_report_item_list_equal(
+                    lib._validate_add_remove_duplicate_reference_ids(input_ids),
+                    [
+                        fixture.error(
+                            reports.codes.TAG_ADD_REMOVE_IDS_DUPLICATION,
+                            duplicate_ids_list=output_ids,
+                            add_or_not_remove=True,
+                        )
+                    ],
+                )
 
     def test_remove_duplicates(self):
         for input_ids, output_ids in self.duplicated_ids_input_output:
-            assert_report_item_list_equal(
-                lib._validate_add_remove_duplicate_reference_ids(
-                    input_ids, False,
-                ),
-                [
-                    fixture.error(
-                        reports.codes.TAG_ADD_REMOVE_IDS_DUPLICATION,
-                        duplicate_ids_list=output_ids,
-                        add_or_not_remove=False,
-                    )
-                ],
-            )
-
-
-class ValidateRemoveObjRef(TestCase):
-    def setUp(self):
-        self.tags = etree.fromstring(FIXTURE_OBJ_REFS)
-
-    def assert_validate_obj_ref(self, idref_list, error=False):
-        report_list = [
-            fixture.error(
-                reports.codes.TAG_CANNOT_REMOVE_REFERENCES_WITHOUT_REMOVING_TAG,
-            )
-        ]
-        assert_report_item_list_equal(
-            lib._validate_remove_obj_ref(
-                get_elements_by_ids(self.tags, idref_list),
-            ),
-            [] if not error else report_list,
-        )
-
-    def test_same_parent_can_remove(self):
-        self.assert_validate_obj_ref("ref2")
-
-    def test_same_parent_cannot_remove(self):
-        self.assert_validate_obj_ref(["ref1", "ref2", "ref3"], error=True)
-
-    def test_different_parent_can_remove(self):
-        self.assert_validate_obj_ref(["ref1", "ref4"])
-
-    def test_different_parent_cannot_remove(self):
-        self.assert_validate_obj_ref(["common", "ref4"], error=True)
+            with self.subTest(input_ids=input_ids, output_ids=output_ids):
+                assert_report_item_list_equal(
+                    lib._validate_add_remove_duplicate_reference_ids(
+                        input_ids, False,
+                    ),
+                    [
+                        fixture.error(
+                            reports.codes.TAG_ADD_REMOVE_IDS_DUPLICATION,
+                            duplicate_ids_list=output_ids,
+                            add_or_not_remove=False,
+                        )
+                    ],
+                )
 
 
 class LibraryRemoveObjRef(TestCase):
@@ -1013,44 +851,6 @@ class LibraryRemoveObjRef(TestCase):
             </tags>
             """,
             etree_to_str(self.cib),
-        )
-
-
-class PrepareAddObjRefElements(TestCase):
-    new_ids = ("a", "b", "c")
-    existing_ids = ("e1", "e2", "e3")
-    existing_elements = (
-        etree.Element("obj_ref", id=_id) for _id in existing_ids
-    )
-    mixed_ids = ("a", "e1", "e2", "b", "e3", "c")
-
-    @staticmethod
-    def assert_prepare_add_obj_ref_elements(el_list, idref_list):
-        for el, _id in zip(el_list, idref_list):
-            assert_xml_equal(f'<obj_ref id="{_id}"/>', etree_to_str(el))
-
-    def test_no_new_ids_no_existing_elements(self):
-        self.assert_prepare_add_obj_ref_elements(
-            lib._prepare_add_obj_ref_elements([], []), [],
-        )
-
-    def test_create_only_from_new_ids(self):
-        self.assert_prepare_add_obj_ref_elements(
-            lib._prepare_add_obj_ref_elements(self.new_ids), self.new_ids,
-        )
-
-    def test_create_only_from_existing_elements(self):
-        self.assert_prepare_add_obj_ref_elements(
-            lib._prepare_add_obj_ref_elements([], self.existing_elements),
-            self.existing_ids,
-        )
-
-    def test_create_from_mixed_ids(self):
-        self.assert_prepare_add_obj_ref_elements(
-            lib._prepare_add_obj_ref_elements(
-                self.mixed_ids, self.existing_elements,
-            ),
-            self.mixed_ids,
         )
 
 
@@ -1341,23 +1141,6 @@ class ValidateTagUpdateByIds(TestCase):
             ],
         )
 
-    def test_existing_tag_and_no_add_ids_with_not_existing_adjacent(self):
-        assert_report_item_list_equal(
-            self._validate("tag", [], ["e2"], adjacent="none"),
-            [
-                fixture.error(
-                    # pylint: disable=line-too-long
-                    reports.codes.TAG_CANNOT_SPECIFY_ADJACENT_ID_WITHOUT_IDS_TO_ADD,
-                    adjacent_id="none",
-                ),
-                fixture.error(
-                    reports.codes.TAG_ADJACENT_REFERENCE_ID_NOT_IN_THE_TAG,
-                    adjacent_id="none",
-                    tag_id="tag",
-                ),
-            ],
-        )
-
     def test_add_ids_erros(self):
         assert_report_item_list_equal(
             self._validate(
@@ -1446,17 +1229,10 @@ class ValidateTagUpdateByIds(TestCase):
                     duplicate_ids_list=["e1", "e2", "none", "none1"],
                     add_or_not_remove=False,
                 ),
-                fixture.report_not_found(
-                    "none",
-                    context_type="tag",
-                    expected_types=["obj_ref"],
-                    context_id="tag",
-                ),
-                fixture.report_not_found(
-                    "none1",
-                    context_type="tag",
-                    expected_types=["obj_ref"],
-                    context_id="tag",
+                fixture.error(
+                    reports.codes.TAG_IDS_NOT_IN_THE_TAG,
+                    tag_id="tag",
+                    id_list=["none", "none1"],
                 ),
             ],
         )
@@ -1468,6 +1244,7 @@ class ValidateTagUpdateByIds(TestCase):
                 fixture.error(
                     # pylint: disable=line-too-long
                     reports.codes.TAG_CANNOT_REMOVE_REFERENCES_WITHOUT_REMOVING_TAG,
+                    tag_id="tag",
                 ),
             ],
         )
@@ -1498,11 +1275,10 @@ class ValidateTagUpdateByIds(TestCase):
                     reports.codes.TAG_CANNOT_ADD_AND_REMOVE_IDS_AT_THE_SAME_TIME,
                     idref_list=["new1"],
                 ),
-                fixture.report_not_found(
-                    "new1",
-                    context_type="tag",
-                    expected_types=["obj_ref"],
-                    context_id="tag",
+                fixture.error(
+                    reports.codes.TAG_IDS_NOT_IN_THE_TAG,
+                    tag_id="tag",
+                    id_list=["new1"],
                 ),
             ],
         )

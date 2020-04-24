@@ -194,8 +194,8 @@ def move_elements(
     put_after_adjacent: bool = False,
 ) -> None:
     """
-    Move elements inside an element or move elements into an element after or
-    before specified element from the element.
+    Move elements inside or into an element after or before specified element
+    in the element.
 
     to_move_list -- elements to be moved
     adjacent_el -- the element next to which the moved elements will be put

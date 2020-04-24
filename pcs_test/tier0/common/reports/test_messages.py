@@ -4584,7 +4584,7 @@ class TagCannotPutIdNextToItself(NameBuildTest):
 class TagCannotRemoveAdjacentId(NameBuildTest):
     def test_message(self):
         self.assert_message_from_report(
-            "Cannot remove id 'some_id' next to which ids are being to put",
+            "Cannot remove id 'some_id' next to which ids are being added",
             reports.TagCannotRemoveAdjacentId("some_id"),
         )
 
@@ -4592,8 +4592,8 @@ class TagCannotRemoveAdjacentId(NameBuildTest):
 class TagCannotRemoveReferencesWithoutRemovingTag(NameBuildTest):
     def test_message(self):
         self.assert_message_from_report(
-            "There would be no references left in the tag",
-            reports.TagCannotRemoveReferencesWithoutRemovingTag(),
+            "There would be no references left in the tag 'tag-id'",
+            reports.TagCannotRemoveReferencesWithoutRemovingTag("tag-id"),
         )
 
 
@@ -4636,6 +4636,20 @@ class TagCannotSpecifyAdjacentIdWithoutIdsToAdd(NameBuildTest):
 class TagCannotUpdateTagNoIdsSpecified(NameBuildTest):
     def test_message(self):
         self.assert_message_from_report(
-            "Cannot update tag, no ids specified",
+            "Cannot update tag, no ids to be added or removed specified",
             reports.TagCannotUpdateTagNoIdsSpecified(),
+        )
+
+
+class TagIdsNotInTheTag(NameBuildTest):
+    def test_message_singular(self):
+        self.assert_message_from_report(
+            "There is no id in the tag 'tag-id': 'a'",
+            reports.TagIdsNotInTheTag("tag-id", ["a"]),
+        )
+
+    def test_message_plural(self):
+        self.assert_message_from_report(
+            "There are no ids in the tag 'tag-id': 'a', 'b'",
+            reports.TagIdsNotInTheTag("tag-id", ["b", "a"]),
         )

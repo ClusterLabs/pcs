@@ -87,7 +87,7 @@ def tag_update(
     adjacent_idref = None
     after_adjacent = True
     if modifiers.is_specified("--after") and modifiers.is_specified("--before"):
-        raise CmdLineInputError("you cannot specify both --before and --after")
+        raise CmdLineInputError("Cannot specify both --before and --after")
     if modifiers.is_specified("--after"):
         adjacent_idref = modifiers.get("--after")
         after_adjacent = True
