@@ -1,9 +1,12 @@
-import shutil
 from unittest import TestCase
 from lxml import etree
 
 from pcs_test.tools.cib import get_assert_pcs_effect_mixin
-from pcs_test.tools.misc import get_test_resource as rc
+from pcs_test.tools.misc import (
+    get_test_resource as rc,
+    get_tmp_file,
+    write_file_to_tmpfile,
+)
 from pcs_test.tools.pcs_runner import PcsRunner
 
 
@@ -17,7 +20,6 @@ class ManageUnmanage(
     ),
 ):
     empty_cib = rc("cib-empty.xml")
-    temp_cib = rc("temp-cib.xml")
 
     @staticmethod
     def fixture_cib_unmanaged_a(add_empty_meta_b=False):
@@ -49,8 +51,12 @@ class ManageUnmanage(
         )
 
     def setUp(self):
-        shutil.copy(self.empty_cib, self.temp_cib)
-        self.pcs_runner = PcsRunner(self.temp_cib)
+        self.temp_cib = get_tmp_file("tier0_cib_resource_manage_unmanage")
+        write_file_to_tmpfile(self.empty_cib, self.temp_cib)
+        self.pcs_runner = PcsRunner(self.temp_cib.name)
+
+    def tearDown(self):
+        self.temp_cib.close()
 
     def fixture_resource(self, name, managed=True, with_monitors=False):
         self.assert_pcs_success(

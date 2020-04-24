@@ -1,13 +1,13 @@
 # pylint: disable=line-too-long
-
-import shutil
 from textwrap import dedent
 from unittest import TestCase
 
 from pcs_test.tools.assertions import AssertPcsMixin
 from pcs_test.tools.misc import (
     get_test_resource as rc,
+    get_tmp_file,
     is_minimum_pacemaker_version,
+    write_file_to_tmpfile,
 )
 from pcs_test.tools.pcs_runner import PcsRunner
 
@@ -16,12 +16,15 @@ PCMK_2_0_3_PLUS = is_minimum_pacemaker_version(2, 0, 3)
 
 class StonithWarningTest(TestCase, AssertPcsMixin):
     empty_cib = rc("cib-empty.xml")
-    temp_cib = rc("temp-cib.xml")
     corosync_conf = rc("corosync.conf")
 
     def setUp(self):
-        shutil.copy(self.empty_cib, self.temp_cib)
-        self.pcs_runner = PcsRunner(self.temp_cib)
+        self.temp_cib = get_tmp_file("tier0_statust_stonith_warning")
+        write_file_to_tmpfile(self.empty_cib, self.temp_cib)
+        self.pcs_runner = PcsRunner(self.temp_cib.name)
+
+    def tearDown(self):
+        self.temp_cib.close()
 
     def fixture_stonith_action(self):
         self.assert_pcs_success(

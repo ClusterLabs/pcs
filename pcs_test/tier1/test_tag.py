@@ -1,5 +1,3 @@
-import os
-import shutil
 from unittest import TestCase
 from textwrap import dedent
 
@@ -8,15 +6,13 @@ from lxml import etree
 from pcs_test.tools.cib import get_assert_pcs_effect_mixin
 from pcs_test.tools.misc import (
     get_test_resource as rc,
+    get_tmp_file,
     outdent,
+    write_file_to_tmpfile,
 )
 from pcs_test.tools.pcs_runner import PcsRunner
 
 
-TIER1_TEST_TAG = rc("tier1_test_tag")
-if not os.path.exists(TIER1_TEST_TAG):
-    os.makedirs(TIER1_TEST_TAG)
-temp_cib = os.path.join(TIER1_TEST_TAG, "temp-cib.xml")
 empty_cib = rc("cib-empty.xml")
 
 
@@ -29,10 +25,14 @@ class TestTagMixin(
     )
 ):
     def setUp(self):
-        # pylint:disable=invalid-name
-        self.temp_cib = temp_cib
-        shutil.copy(empty_cib, self.temp_cib)
-        self.pcs_runner = PcsRunner(self.temp_cib)
+        # pylint: disable=invalid-name
+        self.temp_cib = get_tmp_file("tier1_tag")
+        write_file_to_tmpfile(empty_cib, self.temp_cib)
+        self.pcs_runner = PcsRunner(self.temp_cib.name)
+
+    def tearDown(self):
+        # pylint: disable=invalid-name
+        self.temp_cib.close()
 
     def fixture_dummy_resource(self, _id):
         self.assert_pcs_success(

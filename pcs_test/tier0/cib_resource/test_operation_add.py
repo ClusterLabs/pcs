@@ -1,23 +1,26 @@
-import shutil
 from unittest import TestCase
 
 from pcs_test.tier0.cib_resource.common import get_cib_resources
 from pcs_test.tools.cib import get_assert_pcs_effect_mixin
-from pcs_test.tools.misc import get_test_resource as rc
+from pcs_test.tools.misc import (
+    get_test_resource as rc,
+    get_tmp_file,
+    write_data_to_tmpfile,
+    write_file_to_tmpfile,
+)
 from pcs_test.tools.pcs_runner import PcsRunner
 
 
 class OperationAdd(TestCase, get_assert_pcs_effect_mixin(get_cib_resources)):
-    temp_cib = rc("temp-cib.xml")
     empty_cib = rc("cib-empty.xml")
 
     def setUp(self):
-        self.prepare_cib_file()
-        self.pcs_runner = PcsRunner(self.temp_cib)
+        self.temp_cib = get_tmp_file("tier0_cib_resource_operation_add")
+        self.pcs_runner = PcsRunner(self.temp_cib.name)
+        write_data_to_tmpfile(self.fixture_cib_cache(), self.temp_cib)
 
-    def prepare_cib_file(self):
-        with open(self.temp_cib, "w") as temp_cib_file:
-            temp_cib_file.write(self.fixture_cib_cache())
+    def tearDown(self):
+        self.temp_cib.close()
 
     def fixture_cib_cache(self):
         if not hasattr(self.__class__, "cib_cache"):
@@ -25,8 +28,7 @@ class OperationAdd(TestCase, get_assert_pcs_effect_mixin(get_cib_resources)):
         return self.__class__.cib_cache
 
     def fixture_cib(self):
-        shutil.copy(self.empty_cib, self.temp_cib)
-        self.pcs_runner = PcsRunner(self.temp_cib)
+        write_file_to_tmpfile(self.empty_cib, self.temp_cib)
         self.assert_pcs_success(
             "resource create --no-default-ops R ocf:heartbeat:Dummy"
         )
@@ -38,14 +40,8 @@ class OperationAdd(TestCase, get_assert_pcs_effect_mixin(get_cib_resources)):
         #     />
         #   </operations>
         # </primitive>
-        with open(self.temp_cib) as cib_file:
-            cib_content = cib_file.read()
-
-        # clean
-        self.pcs_runner = None
-        shutil.copy(self.empty_cib, self.temp_cib)
-
-        return cib_content
+        self.temp_cib.seek(0)
+        return self.temp_cib.read()
 
     def test_base_add(self):
         self.assert_effect(

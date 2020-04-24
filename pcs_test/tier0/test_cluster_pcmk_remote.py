@@ -4,6 +4,7 @@ from pcs_test.tools.misc import (
     get_test_resource as rc,
     outdent,
     ParametrizedTestMetaClass,
+    write_data_to_tmpfile,
 )
 
 
@@ -450,8 +451,7 @@ class NodeDeleteRemoveRemote(RemoteTest):
     def fixture_multiple_remote_nodes(self):
         # bypass pcs validation mechanisms (including expected future
         # validation)
-        temp_cib = open(self.temp_cib, "w")
-        temp_cib.write(
+        write_data_to_tmpfile(
             """
             <cib epoch="557" num_updates="122" admin_epoch="0"
                 validate-with="pacemaker-1.2" crm_feature_set="3.0.6"
@@ -483,9 +483,9 @@ class NodeDeleteRemoveRemote(RemoteTest):
               </configuration>
               <status/>
             </cib>
-        """
+            """,
+            self.temp_cib,
         )
-        temp_cib.close()
 
     def _test_usage(self):
         self.assert_pcs_fail(

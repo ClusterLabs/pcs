@@ -70,6 +70,18 @@ def get_test_resource(name):
     return os.path.join(testdir, "resources", name)
 
 
+def get_tmp_dir(name=None):
+    """Create a temp directory with a unique name in our test dir"""
+    tmp_dir = get_test_resource("temp")
+    if not os.path.exists(tmp_dir):
+        os.makedirs(tmp_dir)
+    return tempfile.TemporaryDirectory(
+        suffix=".tmp",  # for .gitignore
+        prefix=(f"{name}." if name else None),
+        dir=tmp_dir,
+    )
+
+
 def get_tmp_file(name=None, mode="w+"):
     """Create a temp file with a unique name in our test dir"""
     tmp_dir = get_test_resource("temp")
@@ -81,6 +93,19 @@ def get_tmp_file(name=None, mode="w+"):
         prefix=(f"{name}." if name else None),
         dir=tmp_dir,
     )
+
+
+def write_data_to_tmpfile(data, tmp_file):
+    tmp_file.seek(0)
+    tmp_file.truncate()
+    tmp_file.write(data)
+    tmp_file.flush()
+    tmp_file.seek(0)
+
+
+def write_file_to_tmpfile(source_file_path, tmp_file):
+    with open(source_file_path) as source:
+        write_data_to_tmpfile(source.read(), tmp_file)
 
 
 def read_test_resource(name):

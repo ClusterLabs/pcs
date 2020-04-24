@@ -1,6 +1,4 @@
 from functools import partial
-import os
-import shutil
 from unittest import mock, TestCase
 
 from pcs_test.tools.assertions import (
@@ -10,9 +8,11 @@ from pcs_test.tools.assertions import (
 from pcs_test.tools.misc import (
     dict_to_modifiers,
     get_test_resource as rc,
+    get_tmp_dir,
     get_tmp_file,
     skip_unless_pacemaker_version,
     skip_unless_root,
+    write_file_to_tmpfile,
 )
 from pcs_test.tools.pcs_runner import (
     pcs,
@@ -27,17 +27,17 @@ from pcs.common.reports import codes as report_codes
 class UidGidTest(TestCase):
     # pylint: disable=invalid-name
     def setUp(self):
-        self.uid_gid_dir = rc("uid_gid.d")
-        if not os.path.exists(self.uid_gid_dir):
-            os.mkdir(self.uid_gid_dir)
+        self.uid_gid_dir = get_tmp_dir("tier0_cluster_uidgid")
 
     def tearDown(self):
-        shutil.rmtree(self.uid_gid_dir)
+        self.uid_gid_dir.cleanup()
 
     def testUIDGID(self):
         # pylint: disable=too-many-statements
         _pcs = partial(
-            pcs, None, mock_settings={"corosync_uidgid_dir": self.uid_gid_dir}
+            pcs,
+            None,
+            mock_settings={"corosync_uidgid_dir": self.uid_gid_dir.name},
         )
         o, r = _pcs("cluster uidgid")
         ac(o, "No uidgids configured\n")
@@ -136,30 +136,32 @@ class UidGidTest(TestCase):
 
 class ClusterUpgradeTest(TestCase, AssertPcsMixin):
     def setUp(self):
-        self.temp_cib = rc("temp-cib.xml")
-        shutil.copy(rc("cib-empty-1.2.xml"), self.temp_cib)
-        self.pcs_runner = PcsRunner(self.temp_cib)
+        self.temp_cib = get_tmp_file("tier0_cluster_upgrade")
+        write_file_to_tmpfile(rc("cib-empty-1.2.xml"), self.temp_cib)
+        self.pcs_runner = PcsRunner(self.temp_cib.name)
+
+    def tearDown(self):
+        self.temp_cib.close()
 
     @skip_unless_pacemaker_version((2, 0, 0), "CIB schema upgrade")
     def test_cluster_upgrade(self):
-        # pylint: disable=no-self-use
         # pylint: disable=invalid-name
-        with open(self.temp_cib) as myfile:
-            data = myfile.read()
-            assert data.find("pacemaker-1.2") != -1
-            assert data.find("pacemaker-2.") == -1
+        self.temp_cib.seek(0)
+        data = self.temp_cib.read()
+        assert data.find("pacemaker-1.2") != -1
+        assert data.find("pacemaker-2.") == -1
 
-        o, r = pcs(self.temp_cib, "cluster cib-upgrade")
+        o, r = pcs(self.temp_cib.name, "cluster cib-upgrade")
         ac(o, "Cluster CIB has been upgraded to latest version\n")
         assert r == 0
 
-        with open(self.temp_cib) as myfile:
-            data = myfile.read()
-            assert data.find("pacemaker-1.2") == -1
-            assert data.find("pacemaker-2.") == -1
-            assert data.find("pacemaker-3.") != -1
+        self.temp_cib.seek(0)
+        data = self.temp_cib.read()
+        assert data.find("pacemaker-1.2") == -1
+        assert data.find("pacemaker-2.") == -1
+        assert data.find("pacemaker-3.") != -1
 
-        o, r = pcs(self.temp_cib, "cluster cib-upgrade")
+        o, r = pcs(self.temp_cib.name, "cluster cib-upgrade")
         ac(o, "Cluster CIB has been upgraded to latest version\n")
         assert r == 0
 

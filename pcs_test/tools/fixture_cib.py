@@ -13,6 +13,7 @@ from pcs.lib.external import CommandRunner
 
 
 def wrap_element_by_master(cib_file, resource_id, master_id=None):
+    cib_file.seek(0)
     cib_tree = etree.parse(cib_file, etree.XMLParser(huge_tree=True)).getroot()
     element = cib_tree.find(f'.//*[@id="{resource_id}"]')
     final_master_id = (
@@ -29,7 +30,7 @@ def wrap_element_by_master(cib_file, resource_id, master_id=None):
     final_xml = etree_to_str(cib_tree)
 
     environ = dict(os.environ)
-    environ["CIB_file"] = cib_file
+    environ["CIB_file"] = cib_file.name
     runner = CommandRunner(
         mock.MagicMock(logging.Logger), MockLibraryReportProcessor(), environ
     )

@@ -1,11 +1,12 @@
-import shutil
 import unittest
 
 from pcs_test.tools.misc import (
     get_test_resource as rc,
+    get_tmp_file,
     skip_unless_pacemaker_version,
     outdent,
     ParametrizedTestMetaClass,
+    write_file_to_tmpfile,
 )
 from pcs_test.tools.assertions import AssertPcsMixin
 from pcs_test.tools.pcs_runner import PcsRunner
@@ -13,7 +14,6 @@ from pcs_test.tools.pcs_runner import PcsRunner
 
 old_cib = rc("cib-empty-2.0.xml")
 empty_cib = rc("cib-empty-2.5.xml")
-temp_cib = rc("temp-cib.xml")
 
 skip_unless_alerts_supported = skip_unless_pacemaker_version(
     (1, 1, 15), "alerts"
@@ -25,15 +25,23 @@ ERRORS_HAVE_OCURRED = (
 
 class PcsAlertTest(unittest.TestCase, AssertPcsMixin):
     def setUp(self):
-        shutil.copy(empty_cib, temp_cib)
-        self.pcs_runner = PcsRunner(temp_cib)
+        self.temp_cib = get_tmp_file("tier0_alert")
+        write_file_to_tmpfile(empty_cib, self.temp_cib)
+        self.pcs_runner = PcsRunner(self.temp_cib.name)
+
+    def tearDown(self):
+        self.temp_cib.close()
 
 
 @skip_unless_alerts_supported
 class AlertCibUpgradeTest(unittest.TestCase, AssertPcsMixin):
     def setUp(self):
-        shutil.copy(old_cib, temp_cib)
-        self.pcs_runner = PcsRunner(temp_cib)
+        self.temp_cib = get_tmp_file("tier0_alert_cib_upgrade")
+        write_file_to_tmpfile(old_cib, self.temp_cib)
+        self.pcs_runner = PcsRunner(self.temp_cib.name)
+
+    def tearDown(self):
+        self.temp_cib.close()
 
     def test_cib_upgrade(self):
         self.assert_pcs_success(

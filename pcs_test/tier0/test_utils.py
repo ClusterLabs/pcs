@@ -11,16 +11,17 @@ from pcs_test.tools.misc import get_test_resource as rc
 
 from pcs import utils
 
-# pylint: disable=too-many-public-methods, too-many-statements, line-too-long, invalid-name
+# pylint: disable=line-too-long
+# pylint: disable=invalid-name
 
 cib_with_nodes = rc("cib-empty-withnodes.xml")
 empty_cib = rc("cib-empty.xml")
-temp_cib = rc("temp-cib.xml")
 
 TestCase.maxDiff = None
 
 
 class UtilsTest(TestCase):
+    # pylint: disable=too-many-public-methods
     @staticmethod
     def get_cib_empty():
         return xml.dom.minidom.parse(empty_cib)
@@ -87,6 +88,7 @@ class UtilsTest(TestCase):
         return cib_dom
 
     def testDomGetResources(self):
+        # pylint: disable=too-many-statements
         def test_dom_get(method, dom, ok_ids, bad_ids):
             for element_id in ok_ids:
                 self.assert_element_id(method(dom, element_id), element_id)

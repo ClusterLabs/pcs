@@ -1,24 +1,25 @@
-# pylint: disable=line-too-long
-
-import shutil
 from unittest import TestCase
 
 from pcs_test.tools.assertions import AssertPcsMixin
 from pcs_test.tools.bin_mock import get_mock_settings
 from pcs_test.tools.misc import (
     get_test_resource as rc,
+    get_tmp_file,
     outdent,
+    write_file_to_tmpfile,
 )
 from pcs_test.tools.pcs_runner import PcsRunner
-
-temp_cib = rc("temp-cib.xml")
 
 
 class OldCibPushTest(TestCase, AssertPcsMixin):
     def setUp(self):
-        shutil.copy(rc("cib-empty-1.2.xml"), temp_cib)
-        self.pcs_runner = PcsRunner(temp_cib)
+        self.temp_cib = get_tmp_file("tier0_misc")
+        write_file_to_tmpfile(rc("cib-empty-1.2.xml"), self.temp_cib)
+        self.pcs_runner = PcsRunner(self.temp_cib.name)
         self.pcs_runner.mock_settings = get_mock_settings("crm_resource_binary")
+
+    def tearDown(self):
+        self.temp_cib.close()
 
     def test_warning_old_push(self):
         self.assert_pcs_success(
@@ -30,6 +31,7 @@ class OldCibPushTest(TestCase, AssertPcsMixin):
         )
         self.assert_pcs_success(
             "resource config",
+            # pylint: disable=line-too-long
             # fmt: off
             outdent(
             """\

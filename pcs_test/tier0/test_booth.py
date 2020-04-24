@@ -1,5 +1,4 @@
 import os
-import shutil
 from textwrap import dedent
 from unittest import mock, skipUnless, TestCase
 
@@ -10,17 +9,15 @@ from pcs_test.tools.assertions import AssertPcsMixin
 from pcs_test.tools.misc import (
     dict_to_modifiers,
     get_test_resource as rc,
+    get_tmp_dir,
+    get_tmp_file,
     outdent,
+    write_file_to_tmpfile,
 )
 from pcs_test.tools.pcs_runner import PcsRunner
 
-# pylint: disable=line-too-long
 
 EMPTY_CIB = rc("cib-empty.xml")
-TEMP_CIB = rc("temp-cib.xml")
-
-BOOTH_CONFIG_FILE = rc("temp-booth.cfg")
-BOOTH_KEY_FILE = rc("temp-booth.key")
 
 BOOTH_RESOURCE_AGENT_INSTALLED = os.path.exists(
     "/usr/lib/ocf/resource.d/pacemaker/booth-site"
@@ -32,48 +29,58 @@ need_booth_resource_agent = skipUnless(
 )
 
 
-def fake_file(command):
-    return "{0} --booth-conf={1} --booth-key={2}".format(
-        command, BOOTH_CONFIG_FILE, BOOTH_KEY_FILE,
-    )
-
-
-def ensure_booth_config_exists():
-    if not os.path.exists(BOOTH_CONFIG_FILE):
-        with open(BOOTH_CONFIG_FILE, "w") as config_file:
-            config_file.write("")
-
-
-def ensure_booth_config_not_exists():
-    if os.path.exists(BOOTH_CONFIG_FILE):
-        os.remove(BOOTH_CONFIG_FILE)
-    if os.path.exists(BOOTH_KEY_FILE):
-        os.remove(BOOTH_KEY_FILE)
-
-
 class BoothLibCallMixin(AssertPcsMixin):
-    # plyint cannot possibly know this is being mixed into TestCase classes
-    # pylint: disable=invalid-name
     def setUp(self):
+        # plyint cannot possibly know this is being mixed into TestCase classes
+        # pylint: disable=invalid-name
         self.pcs_runner = PcsRunner(None)
         self.lib = mock.Mock(spec_set=["booth"])
 
 
 class BoothMixin(AssertPcsMixin):
-    # pylint: disable=invalid-name, arguments-differ
     def setUp(self):
-        shutil.copy(EMPTY_CIB, TEMP_CIB)
-        self.pcs_runner = PcsRunner(TEMP_CIB)
+        # plyint cannot possibly know this is being mixed into TestCase classes
+        # pylint: disable=invalid-name
+        self.booth_dir = get_tmp_dir("tier0_booth")
+        self.booth_cfg_path = os.path.join(self.booth_dir.name, "booth.cfg")
+        self.booth_key_path = os.path.join(self.booth_dir.name, "booth.key")
+        self.temp_cib = get_tmp_file("tier0_booth")
+        write_file_to_tmpfile(EMPTY_CIB, self.temp_cib)
+        self.pcs_runner = PcsRunner(self.temp_cib.name)
         self.lib = mock.Mock(spec_set=["booth"])
 
+    def tearDown(self):
+        # plyint cannot possibly know this is being mixed into TestCase classes
+        # pylint: disable=invalid-name
+        self.temp_cib.close()
+        self.booth_dir.cleanup()
+
+    def fake_file(self, command):
+        return "{0} --booth-conf={1} --booth-key={2}".format(
+            command, self.booth_cfg_path, self.booth_key_path,
+        )
+
+    def ensure_booth_config_exists(self):
+        if not os.path.exists(self.booth_cfg_path):
+            with open(self.booth_cfg_path, "w") as config_file:
+                config_file.write("")
+
+    def ensure_booth_config_not_exists(self):
+        if os.path.exists(self.booth_cfg_path):
+            os.remove(self.booth_cfg_path)
+        if os.path.exists(self.booth_key_path):
+            os.remove(self.booth_key_path)
+
     def assert_pcs_success(self, command, *args, **kwargs):
+        # pylint: disable=arguments-differ
         return super(BoothMixin, self).assert_pcs_success(
-            fake_file(command), *args, **kwargs
+            self.fake_file(command), *args, **kwargs
         )
 
     def assert_pcs_fail(self, command, *args, **kwargs):
+        # pylint: disable=arguments-differ
         return super(BoothMixin, self).assert_pcs_fail(
-            fake_file(command), *args, **kwargs
+            self.fake_file(command), *args, **kwargs
         )
 
     def assert_pcs_fail_original(self, *args, **kwargs):
@@ -87,11 +94,11 @@ class SetupTest(BoothMixin, TestCase):
         self.lib.booth = mock.Mock(spec_set=["config_setup"])
 
     def test_sucess_setup_booth_config(self):
-        ensure_booth_config_not_exists()
+        self.ensure_booth_config_not_exists()
         self.assert_pcs_success(
             "booth setup sites 1.1.1.1 2.2.2.2 arbitrators 3.3.3.3"
         )
-        with open(BOOTH_CONFIG_FILE, "r") as config_file:
+        with open(self.booth_cfg_path, "r") as config_file:
             self.assertEqual(
                 dedent(
                     """\
@@ -100,20 +107,20 @@ class SetupTest(BoothMixin, TestCase):
                     site = 2.2.2.2
                     arbitrator = 3.3.3.3
                     """.format(
-                        BOOTH_KEY_FILE
+                        self.booth_key_path
                     )
                 ),
                 config_file.read(),
             )
-        with open(BOOTH_KEY_FILE, "rb") as key_file:
+        with open(self.booth_key_path, "rb") as key_file:
             self.assertEqual(64, len(key_file.read()))
 
     def test_overwrite_existing_mocked_config(self):
-        ensure_booth_config_exists()
+        self.ensure_booth_config_exists()
         self.assert_pcs_success(
             "booth setup sites 1.1.1.1 2.2.2.2 arbitrators 3.3.3.3",
         )
-        ensure_booth_config_not_exists()
+        self.ensure_booth_config_not_exists()
 
     def test_fail_on_multiple_reasons(self):
         self.assert_pcs_fail(
@@ -224,12 +231,12 @@ class DestroyTest(BoothMixin, TestCase):
 class BoothTest(BoothMixin, TestCase):
     def setUp(self):
         super().setUp()
-        ensure_booth_config_not_exists()
+        self.ensure_booth_config_not_exists()
         self.pcs_runner.cib_file = None
         self.assert_pcs_success(
             "booth setup sites 1.1.1.1 2.2.2.2 arbitrators 3.3.3.3"
         )
-        self.pcs_runner.cib_file = TEMP_CIB
+        self.pcs_runner.cib_file = self.temp_cib.name
 
 
 class AddTicketTest(BoothTest):
@@ -240,7 +247,7 @@ class AddTicketTest(BoothTest):
 
     def test_success_add_ticket(self):
         self.assert_pcs_success("booth ticket add TicketA expire=10")
-        with open(BOOTH_CONFIG_FILE, "r") as config_file:
+        with open(self.booth_cfg_path, "r") as config_file:
             self.assertEqual(
                 dedent(
                     """\
@@ -251,7 +258,7 @@ class AddTicketTest(BoothTest):
                     ticket = "TicketA"
                       expire = 10
                     """.format(
-                        BOOTH_KEY_FILE
+                        self.booth_key_path
                     )
                 ),
                 config_file.read(),
@@ -380,7 +387,7 @@ class DeleteRemoveTicketMixin:
 
     def test_success_remove_ticket(self):
         self.assert_pcs_success("booth ticket add TicketA")
-        with open(BOOTH_CONFIG_FILE, "r") as config_file:
+        with open(self.booth_cfg_path, "r") as config_file:
             self.assertEqual(
                 dedent(
                     """\
@@ -390,13 +397,13 @@ class DeleteRemoveTicketMixin:
                     arbitrator = 3.3.3.3
                     ticket = "TicketA"
                     """.format(
-                        BOOTH_KEY_FILE
+                        self.booth_key_path
                     )
                 ),
                 config_file.read(),
             )
         self.assert_pcs_success(f"booth ticket {self.command} TicketA")
-        with open(BOOTH_CONFIG_FILE, "r") as config_file:
+        with open(self.booth_cfg_path, "r") as config_file:
             self.assertEqual(
                 dedent(
                     """\
@@ -405,7 +412,7 @@ class DeleteRemoveTicketMixin:
                     site = 2.2.2.2
                     arbitrator = 3.3.3.3
                     """.format(
-                        BOOTH_KEY_FILE
+                        self.booth_key_path
                     )
                 ),
                 config_file.read(),
@@ -453,13 +460,7 @@ class RemoveTicketTest(DeleteRemoveTicketMixin, BoothTest):
 @need_booth_resource_agent
 class CreateTest(AssertPcsMixin, TestCase):
     def setUp(self):
-        shutil.copy(EMPTY_CIB, TEMP_CIB)
         self.pcs_runner = PcsRunner(None)
-        ensure_booth_config_not_exists()
-        self.assert_pcs_success(
-            fake_file("booth setup sites 1.1.1.1 2.2.2.2 arbitrators 3.3.3.3")
-        )
-        self.pcs_runner.cib_file = TEMP_CIB
         self.lib = mock.Mock(spec_set=["booth"])
         self.lib.booth = mock.Mock(spec_set=["create_in_cluster"])
 
@@ -518,15 +519,16 @@ class DeleteRemoveTestMixin(AssertPcsMixin):
     def setUp(self):
         # pylint cannot know this will be mixed into a TetsCase class
         # pylint: disable=invalid-name
-        shutil.copy(EMPTY_CIB, TEMP_CIB)
-        self.pcs_runner = PcsRunner(None)
-        ensure_booth_config_not_exists()
-        self.assert_pcs_success(
-            fake_file("booth setup sites 1.1.1.1 2.2.2.2 arbitrators 3.3.3.3")
-        )
-        self.pcs_runner.cib_file = TEMP_CIB
+        self.temp_cib = get_tmp_file("tier0_booth_delete_remove")
+        write_file_to_tmpfile(EMPTY_CIB, self.temp_cib)
+        self.pcs_runner = PcsRunner(self.temp_cib.name)
         self.lib = mock.Mock(spec_set=["booth"])
         self.lib.booth = mock.Mock(spec_set=["remove_from_cluster"])
+
+    def tearDown(self):
+        # plyint cannot possibly know this is being mixed into TestCase classes
+        # pylint: disable=invalid-name
+        self.temp_cib.close()
 
     def test_usage(self):
         self.assert_pcs_fail(
@@ -544,6 +546,7 @@ class DeleteRemoveTestMixin(AssertPcsMixin):
         self.assert_pcs_fail(
             f"booth {self.command}",
             [
+                # pylint: disable=line-too-long
                 "Error: booth instance 'booth' not found in cib",
                 "Error: Errors have occurred, therefore pcs is unable to continue",
             ],

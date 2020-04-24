@@ -1,22 +1,16 @@
 import os.path
 
-from pcs_test.tools.misc import get_test_resource as rc
-
 from pcs import utils
 
 __pcs_location = os.path.join(
     os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "pcs_for_tests"
 )
-_temp_cib = rc("temp-cib.xml")
-
 # this can be changed from suite.py
 test_installed = False
 
 
 class PcsRunner:
-    def __init__(
-        self, cib_file=_temp_cib, corosync_conf_opt=None, mock_settings=None
-    ):
+    def __init__(self, cib_file, corosync_conf_opt=None, mock_settings=None):
         self.cib_file = cib_file
         self.corosync_conf_opt = corosync_conf_opt
         self.mock_settings = mock_settings

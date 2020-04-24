@@ -1,18 +1,21 @@
 # pylint: disable=too-many-lines
-import shutil
 from unittest import TestCase
 import xml.dom.minidom
 
 from pcs import rule
 from pcs_test.tools.assertions import ac, assert_xml_equal
-from pcs_test.tools.misc import get_test_resource as rc
+from pcs_test.tools.misc import (
+    get_test_resource as rc,
+    get_tmp_file,
+    write_file_to_tmpfile,
+)
 from pcs_test.tools.misc import skip_unless_crm_rule
 from pcs_test.tools.pcs_runner import pcs
 
-# pylint: disable=invalid-name, line-too-long
+# pylint: disable=invalid-name
+# pylint: disable=line-too-long
 
 empty_cib = rc("cib-empty.xml")
-temp_cib = rc("temp-cib.xml")
 
 
 class DateValueTest(TestCase):
@@ -1844,11 +1847,15 @@ class ExportAsExpressionTest(TestCase):
 
 class DomRuleAddTest(TestCase):
     def setUp(self):
-        shutil.copy(empty_cib, temp_cib)
+        self.temp_cib = get_tmp_file("tier0_rule_dom_rule_add")
+        write_file_to_tmpfile(empty_cib, self.temp_cib)
         output, returnVal = pcs(
-            temp_cib, "resource create dummy1 ocf:heartbeat:Dummy"
+            self.temp_cib.name, "resource create dummy1 ocf:heartbeat:Dummy"
         )
         assert returnVal == 0 and output == ""
+
+    def tearDown(self):
+        self.temp_cib.close()
 
     def test_success_xml(self):
         self.assertExpressionXml(
@@ -1935,26 +1942,29 @@ class DomRuleAddTest(TestCase):
     @skip_unless_crm_rule
     def test_success(self):
         output, returnVal = pcs(
-            temp_cib, "constraint location dummy1 rule #uname eq node1"
+            self.temp_cib.name,
+            "constraint location dummy1 rule #uname eq node1",
         )
         ac(output, "")
         self.assertEqual(0, returnVal)
 
         output, returnVal = pcs(
-            temp_cib,
+            self.temp_cib.name,
             "constraint location dummy1 rule id=MyRule score=100 role=master #uname eq node2",
         )
         ac(output, "")
         self.assertEqual(0, returnVal)
 
         output, returnVal = pcs(
-            temp_cib,
+            self.temp_cib.name,
             "constraint location dummy1 rule id=complexRule (#uname eq node3 and foo gt version 1.2) or (date-spec hours=12-23 weekdays=1-5 and date in_range 2014-07-26 to duration months=1)",
         )
         ac(output, "")
         self.assertEqual(0, returnVal)
 
-        output, returnVal = pcs(temp_cib, "constraint location show --full")
+        output, returnVal = pcs(
+            self.temp_cib.name, "constraint location show --full"
+        )
         ac(
             output,
             """\
@@ -1980,7 +1990,7 @@ Location Constraints:
         )
         self.assertEqual(0, returnVal)
 
-        output, returnVal = pcs(temp_cib, "constraint location show")
+        output, returnVal = pcs(self.temp_cib.name, "constraint location show")
         ac(
             output,
             """\
@@ -2009,7 +2019,7 @@ Location Constraints:
     @skip_unless_crm_rule
     def test_invalid_score(self):
         output, returnVal = pcs(
-            temp_cib,
+            self.temp_cib.name,
             "constraint location dummy1 rule score=pingd defined pingd",
         )
         ac(
@@ -2019,7 +2029,9 @@ Location Constraints:
         )
         self.assertEqual(0, returnVal)
 
-        output, returnVal = pcs(temp_cib, "constraint location show --full")
+        output, returnVal = pcs(
+            self.temp_cib.name, "constraint location show --full"
+        )
         ac(
             output,
             """\
@@ -2034,13 +2046,13 @@ Location Constraints:
 
     def test_invalid_rule(self):
         output, returnVal = pcs(
-            temp_cib, "constraint location dummy1 rule score=100"
+            self.temp_cib.name, "constraint location dummy1 rule score=100"
         )
         ac(output, "Error: no rule expression was specified\n")
         self.assertEqual(1, returnVal)
 
         output, returnVal = pcs(
-            temp_cib, "constraint location dummy1 rule #uname eq"
+            self.temp_cib.name, "constraint location dummy1 rule #uname eq"
         )
         ac(
             output,
@@ -2050,7 +2062,8 @@ Location Constraints:
         self.assertEqual(1, returnVal)
 
         output, returnVal = pcs(
-            temp_cib, "constraint location dummy1 rule string #uname eq node1"
+            self.temp_cib.name,
+            "constraint location dummy1 rule string #uname eq node1",
         )
         ac(
             output,
@@ -2062,20 +2075,22 @@ Location Constraints:
     @skip_unless_crm_rule
     def test_ivalid_options(self):
         output, returnVal = pcs(
-            temp_cib, "constraint location dummy1 rule role=foo #uname eq node1"
+            self.temp_cib.name,
+            "constraint location dummy1 rule role=foo #uname eq node1",
         )
         ac(output, "Error: invalid role 'foo', use 'master' or 'slave'\n")
         self.assertEqual(1, returnVal)
 
         output, returnVal = pcs(
-            temp_cib,
+            self.temp_cib.name,
             "constraint location dummy1 rule score=100 score-attribute=pingd #uname eq node1",
         )
         ac(output, "Error: can not specify both score and score-attribute\n")
         self.assertEqual(1, returnVal)
 
         output, returnVal = pcs(
-            temp_cib, "constraint location dummy1 rule id=1foo #uname eq node1"
+            self.temp_cib.name,
+            "constraint location dummy1 rule id=1foo #uname eq node1",
         )
         ac(
             output,
@@ -2084,18 +2099,22 @@ Location Constraints:
         )
         self.assertEqual(1, returnVal)
 
-        output, returnVal = pcs(temp_cib, "constraint location show --full")
+        output, returnVal = pcs(
+            self.temp_cib.name, "constraint location show --full"
+        )
         ac(output, "Location Constraints:\n")
         self.assertEqual(0, returnVal)
 
         output, returnVal = pcs(
-            temp_cib,
+            self.temp_cib.name,
             "constraint location dummy1 rule id=MyRule #uname eq node1",
         )
         ac(output, "")
         self.assertEqual(0, returnVal)
 
-        output, returnVal = pcs(temp_cib, "constraint location show --full")
+        output, returnVal = pcs(
+            self.temp_cib.name, "constraint location show --full"
+        )
         ac(
             output,
             """\
@@ -2109,7 +2128,7 @@ Location Constraints:
         self.assertEqual(0, returnVal)
 
         output, returnVal = pcs(
-            temp_cib,
+            self.temp_cib.name,
             "constraint location dummy1 rule id=MyRule #uname eq node1",
         )
         ac(

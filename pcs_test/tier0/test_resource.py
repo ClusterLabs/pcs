@@ -1,6 +1,4 @@
 # pylint: disable=too-many-lines
-import os
-import shutil
 from random import shuffle
 from textwrap import dedent
 from unittest import mock, skip, TestCase
@@ -22,10 +20,13 @@ from pcs_test.tools.fixture_cib import (
 from pcs_test.tools.misc import (
     dict_to_modifiers,
     get_test_resource as rc,
+    get_tmp_file,
     is_minimum_pacemaker_version,
     outdent,
     skip_unless_pacemaker_supports_bundle,
     skip_unless_crm_rule,
+    write_data_to_tmpfile,
+    write_file_to_tmpfile,
 )
 from pcs_test.tools.pcs_runner import (
     pcs,
@@ -54,14 +55,8 @@ ERRORS_HAVE_OCURRED = (
     "Error: Errors have occurred, therefore pcs is unable to continue\n"
 )
 
-RESOURCES_TMP = rc("test_resource")
-if not os.path.exists(RESOURCES_TMP):
-    os.makedirs(RESOURCES_TMP)
-
 empty_cib = rc("cib-empty.xml")
-temp_cib = os.path.join(RESOURCES_TMP, "temp-cib.xml")
 large_cib = rc("cib-large.xml")
-temp_large_cib = os.path.join(RESOURCES_TMP, "temp-cib-large.xml")
 
 
 class ResourceDescribe(TestCase, AssertPcsMixin):
@@ -162,13 +157,19 @@ class ResourceDescribe(TestCase, AssertPcsMixin):
 
 class Resource(TestCase, AssertPcsMixin):
     def setUp(self):
-        shutil.copy(empty_cib, temp_cib)
-        shutil.copy(large_cib, temp_large_cib)
-        self.pcs_runner = PcsRunner(temp_cib)
+        self.temp_cib = get_tmp_file("tier0_resource")
+        self.temp_large_cib = get_tmp_file("tier0_resource_large")
+        write_file_to_tmpfile(empty_cib, self.temp_cib)
+        write_file_to_tmpfile(large_cib, self.temp_large_cib)
+        self.pcs_runner = PcsRunner(self.temp_cib.name)
         self.pcs_runner.mock_settings = get_mock_settings("crm_resource_binary")
 
+    def tearDown(self):
+        self.temp_cib.close()
+        self.temp_large_cib.close()
+
     # Setups up a cluster with Resources, groups, master/slave resource & clones
-    def setupClusterA(self, temp_cib):
+    def setupClusterA(self):
         self.assert_pcs_success(
             "resource create --no-default-ops ClusterIP ocf:heartbeat:IPaddr2"
             " cidr_netmask=32 ip=192.168.0.99 op monitor interval=30s"
@@ -201,10 +202,12 @@ class Resource(TestCase, AssertPcsMixin):
         # pcs no longer allows turning resources into masters but supports
         # existing ones. In order to test it, we need to put a master in the
         # CIB without pcs.
-        wrap_element_by_master(temp_cib, "ClusterIP5", master_id="Master")
+        wrap_element_by_master(self.temp_cib, "ClusterIP5", master_id="Master")
 
     def testCaseInsensitive(self):
-        o, r = pcs(temp_cib, "resource create --no-default-ops D0 dummy")
+        o, r = pcs(
+            self.temp_cib.name, "resource create --no-default-ops D0 dummy"
+        )
         ac(
             o,
             "Error: Multiple agents match 'dummy', please specify full name: 'ocf:heartbeat:Dummy', 'ocf:pacemaker:Dummy'\n",
@@ -229,7 +232,9 @@ class Resource(TestCase, AssertPcsMixin):
             " (deduced from 'ipaddr2')\n",
         )
 
-        o, r = pcs(temp_cib, "resource create --no-default-ops D4 ipaddr3")
+        o, r = pcs(
+            self.temp_cib.name, "resource create --no-default-ops D4 ipaddr3"
+        )
         ac(
             o,
             "Error: Unable to find agent 'ipaddr3', try specifying its full name\n",
@@ -237,19 +242,21 @@ class Resource(TestCase, AssertPcsMixin):
         assert r == 1
 
     def testEmpty(self):
-        output, returnVal = pcs(temp_cib, "resource")
+        output, returnVal = pcs(self.temp_cib.name, "resource")
         assert returnVal == 0, "Unable to list resources"
         assert output == "NO resources configured\n", "Bad output"
 
     def testAddResourcesLargeCib(self):
         output, returnVal = pcs(
-            temp_large_cib,
+            self.temp_large_cib.name,
             "resource create dummy0 ocf:heartbeat:Dummy --no-default-ops",
         )
         ac(output, "")
         assert returnVal == 0
 
-        output, returnVal = pcs(temp_large_cib, "resource config dummy0")
+        output, returnVal = pcs(
+            self.temp_large_cib.name, "resource config dummy0"
+        )
         assert returnVal == 0
         ac(
             output,
@@ -327,17 +334,17 @@ class Resource(TestCase, AssertPcsMixin):
         )
 
         line = "resource op add"
-        output, returnVal = pcs(temp_cib, line)
+        output, returnVal = pcs(self.temp_cib.name, line)
         assert returnVal == 1
         assert output.startswith("\nUsage: pcs resource")
 
         line = "resource op remove"
-        output, returnVal = pcs(temp_cib, line)
+        output, returnVal = pcs(self.temp_cib.name, line)
         assert returnVal == 1
         assert output.startswith("\nUsage: pcs resource")
 
         line = "resource op add ClusterIP monitor interval=31s"
-        output, returnVal = pcs(temp_cib, line)
+        output, returnVal = pcs(self.temp_cib.name, line)
         ac(
             output,
             """\
@@ -348,13 +355,14 @@ monitor interval=30s (ClusterIP-monitor-interval-30s)
         self.assertEqual(1, returnVal)
 
         output, returnVal = pcs(
-            temp_cib, "resource op add ClusterIP monitor interval=31s --force"
+            self.temp_cib.name,
+            "resource op add ClusterIP monitor interval=31s --force",
         )
         assert returnVal == 0
         assert output == ""
 
         line = "resource op add ClusterIP monitor interval=31s"
-        output, returnVal = pcs(temp_cib, line)
+        output, returnVal = pcs(self.temp_cib.name, line)
         ac(
             output,
             """\
@@ -365,7 +373,7 @@ monitor interval=31s (ClusterIP-monitor-interval-31s)
         assert returnVal == 1
 
         line = "resource op add ClusterIP monitor interval=31"
-        output, returnVal = pcs(temp_cib, line)
+        output, returnVal = pcs(self.temp_cib.name, line)
         ac(
             output,
             """\
@@ -376,7 +384,7 @@ monitor interval=31s (ClusterIP-monitor-interval-31s)
         assert returnVal == 1
 
         output, returnVal = pcs(
-            temp_cib, "resource op add ClusterIP moni=tor interval=60"
+            self.temp_cib.name, "resource op add ClusterIP moni=tor interval=60"
         )
         ac(
             output,
@@ -399,13 +407,13 @@ Error: moni=tor does not appear to be a valid operation action
         )
 
         o, r = pcs(
-            temp_cib,
+            self.temp_cib.name,
             "resource create --no-default-ops OPTest ocf:heartbeat:Dummy op monitor interval=30s OCF_CHECK_LEVEL=1 op monitor interval=25s OCF_CHECK_LEVEL=1",
         )
         ac(o, "")
         assert r == 0
 
-        o, r = pcs(temp_cib, "resource config OPTest")
+        o, r = pcs(self.temp_cib.name, "resource config OPTest")
         ac(
             o,
             " Resource: OPTest (class=ocf provider=heartbeat type=Dummy)\n  Operations: monitor interval=30s OCF_CHECK_LEVEL=1 (OPTest-monitor-interval-30s)\n              monitor interval=25s OCF_CHECK_LEVEL=1 (OPTest-monitor-interval-25s)\n",
@@ -413,13 +421,15 @@ Error: moni=tor does not appear to be a valid operation action
         assert r == 0
 
         o, r = pcs(
-            temp_cib,
+            self.temp_cib.name,
             "resource create --no-default-ops OPTest2 ocf:heartbeat:Dummy op monitor interval=30s OCF_CHECK_LEVEL=1 op monitor interval=25s OCF_CHECK_LEVEL=2 op start timeout=30s",
         )
         ac(o, "")
         assert r == 0
 
-        o, r = pcs(temp_cib, "resource op add OPTest2 start timeout=1800s")
+        o, r = pcs(
+            self.temp_cib.name, "resource op add OPTest2 start timeout=1800s"
+        )
         ac(
             o,
             """\
@@ -430,7 +440,7 @@ start interval=0s timeout=30s (OPTest2-start-interval-0s)
         assert r == 1
 
         output, retVal = pcs(
-            temp_cib, "resource op add OPTest2 start interval=100"
+            self.temp_cib.name, "resource op add OPTest2 start interval=100"
         )
         ac(
             output,
@@ -441,11 +451,13 @@ start interval=0s timeout=30s (OPTest2-start-interval-0s)
         )
         self.assertEqual(1, retVal)
 
-        o, r = pcs(temp_cib, "resource op add OPTest2 monitor timeout=1800s")
+        o, r = pcs(
+            self.temp_cib.name, "resource op add OPTest2 monitor timeout=1800s"
+        )
         ac(o, "")
         assert r == 0
 
-        o, r = pcs(temp_cib, "resource config OPTest2")
+        o, r = pcs(self.temp_cib.name, "resource config OPTest2")
         ac(
             o,
             " Resource: OPTest2 (class=ocf provider=heartbeat type=Dummy)\n  Operations: monitor interval=30s OCF_CHECK_LEVEL=1 (OPTest2-monitor-interval-30s)\n              monitor interval=25s OCF_CHECK_LEVEL=2 (OPTest2-monitor-interval-25s)\n              start interval=0s timeout=30s (OPTest2-start-interval-0s)\n              monitor interval=60s timeout=1800s (OPTest2-monitor-interval-60s)\n",
@@ -453,13 +465,13 @@ start interval=0s timeout=30s (OPTest2-start-interval-0s)
         assert r == 0
 
         o, r = pcs(
-            temp_cib,
+            self.temp_cib.name,
             "resource create --no-default-ops OPTest3 ocf:heartbeat:Dummy op monitor OCF_CHECK_LEVEL=1",
         )
         ac(o, "")
         assert r == 0
 
-        o, r = pcs(temp_cib, "resource config OPTest3")
+        o, r = pcs(self.temp_cib.name, "resource config OPTest3")
         ac(
             o,
             " Resource: OPTest3 (class=ocf provider=heartbeat type=Dummy)\n  Operations: monitor interval=60s OCF_CHECK_LEVEL=1 (OPTest3-monitor-interval-60s)\n",
@@ -467,19 +479,20 @@ start interval=0s timeout=30s (OPTest2-start-interval-0s)
         assert r == 0
 
         o, r = pcs(
-            temp_cib,
+            self.temp_cib.name,
             "resource create --no-default-ops OPTest4 ocf:heartbeat:Dummy op monitor interval=30s",
         )
         ac(o, "")
         assert r == 0
 
         o, r = pcs(
-            temp_cib, "resource update OPTest4 op monitor OCF_CHECK_LEVEL=1"
+            self.temp_cib.name,
+            "resource update OPTest4 op monitor OCF_CHECK_LEVEL=1",
         )
         ac(o, "")
         assert r == 0
 
-        o, r = pcs(temp_cib, "resource config OPTest4")
+        o, r = pcs(self.temp_cib.name, "resource config OPTest4")
         ac(
             o,
             " Resource: OPTest4 (class=ocf provider=heartbeat type=Dummy)\n  Operations: monitor interval=60s OCF_CHECK_LEVEL=1 (OPTest4-monitor-interval-60s)\n",
@@ -487,19 +500,20 @@ start interval=0s timeout=30s (OPTest2-start-interval-0s)
         assert r == 0
 
         o, r = pcs(
-            temp_cib,
+            self.temp_cib.name,
             "resource create --no-default-ops OPTest5 ocf:heartbeat:Dummy",
         )
         ac(o, "")
         assert r == 0
 
         o, r = pcs(
-            temp_cib, "resource update OPTest5 op monitor OCF_CHECK_LEVEL=1"
+            self.temp_cib.name,
+            "resource update OPTest5 op monitor OCF_CHECK_LEVEL=1",
         )
         ac(o, "")
         assert r == 0
 
-        o, r = pcs(temp_cib, "resource config OPTest5")
+        o, r = pcs(self.temp_cib.name, "resource config OPTest5")
         ac(
             o,
             " Resource: OPTest5 (class=ocf provider=heartbeat type=Dummy)\n  Operations: monitor interval=60s OCF_CHECK_LEVEL=1 (OPTest5-monitor-interval-60s)\n",
@@ -507,14 +521,14 @@ start interval=0s timeout=30s (OPTest2-start-interval-0s)
         assert r == 0
 
         o, r = pcs(
-            temp_cib,
+            self.temp_cib.name,
             "resource create --no-default-ops OPTest6 ocf:heartbeat:Dummy",
         )
         ac(o, "")
         assert r == 0
 
         o, r = pcs(
-            temp_cib,
+            self.temp_cib.name,
             "resource op add OPTest6 monitor interval=30s OCF_CHECK_LEVEL=1",
         )
         ac(o, "")
@@ -532,21 +546,21 @@ start interval=0s timeout=30s (OPTest2-start-interval-0s)
         )
 
         o, r = pcs(
-            temp_cib,
+            self.temp_cib.name,
             "resource create --no-default-ops OPTest7 ocf:heartbeat:Dummy",
         )
         ac(o, "")
         assert r == 0
 
         o, r = pcs(
-            temp_cib,
+            self.temp_cib.name,
             "resource update OPTest7 op monitor interval=60s OCF_CHECK_LEVEL=1",
         )
         ac(o, "")
         assert r == 0
 
         o, r = pcs(
-            temp_cib,
+            self.temp_cib.name,
             "resource op add OPTest7 monitor interval=61s OCF_CHECK_LEVEL=1",
         )
         ac(
@@ -559,13 +573,13 @@ monitor interval=60s OCF_CHECK_LEVEL=1 (OPTest7-monitor-interval-60s)
         self.assertEqual(1, r)
 
         o, r = pcs(
-            temp_cib,
+            self.temp_cib.name,
             "resource op add OPTest7 monitor interval=61s OCF_CHECK_LEVEL=1 --force",
         )
         ac(o, "")
         assert r == 0
 
-        o, r = pcs(temp_cib, "resource config OPTest7")
+        o, r = pcs(self.temp_cib.name, "resource config OPTest7")
         ac(
             o,
             " Resource: OPTest7 (class=ocf provider=heartbeat type=Dummy)\n  Operations: monitor interval=60s OCF_CHECK_LEVEL=1 (OPTest7-monitor-interval-60s)\n              monitor interval=61s OCF_CHECK_LEVEL=1 (OPTest7-monitor-interval-61s)\n",
@@ -573,7 +587,7 @@ monitor interval=60s OCF_CHECK_LEVEL=1 (OPTest7-monitor-interval-60s)
         assert r == 0
 
         o, r = pcs(
-            temp_cib,
+            self.temp_cib.name,
             "resource op add OPTest7 monitor interval=60s OCF_CHECK_LEVEL=1",
         )
         ac(
@@ -586,7 +600,7 @@ monitor interval=60s OCF_CHECK_LEVEL=1 (OPTest7-monitor-interval-60s)
         assert r == 1
 
         o, r = pcs(
-            temp_cib,
+            self.temp_cib.name,
             "resource create --no-default-ops OCFTest1 ocf:heartbeat:Dummy",
         )
         ac(o, "")
@@ -603,13 +617,14 @@ monitor interval=60s OCF_CHECK_LEVEL=1 (OPTest7-monitor-interval-60s)
         )
 
         o, r = pcs(
-            temp_cib, "resource op add OCFTest1 monitor interval=31s --force"
+            self.temp_cib.name,
+            "resource op add OCFTest1 monitor interval=31s --force",
         )
         ac(o, "")
         assert r == 0
 
         o, r = pcs(
-            temp_cib,
+            self.temp_cib.name,
             "resource op add OCFTest1 monitor interval=30s OCF_CHECK_LEVEL=15",
         )
         ac(o, "")
@@ -628,13 +643,13 @@ monitor interval=60s OCF_CHECK_LEVEL=1 (OPTest7-monitor-interval-60s)
         )
 
         o, r = pcs(
-            temp_cib,
+            self.temp_cib.name,
             "resource update OCFTest1 op monitor interval=61s OCF_CHECK_LEVEL=5",
         )
         ac(o, "")
         assert r == 0
 
-        o, r = pcs(temp_cib, "resource config OCFTest1")
+        o, r = pcs(self.temp_cib.name, "resource config OCFTest1")
         ac(
             o,
             " Resource: OCFTest1 (class=ocf provider=heartbeat type=Dummy)\n  Operations: monitor interval=61s OCF_CHECK_LEVEL=5 (OCFTest1-monitor-interval-61s)\n              monitor interval=31s (OCFTest1-monitor-interval-31s)\n              monitor interval=30s OCF_CHECK_LEVEL=15 (OCFTest1-monitor-interval-30s)\n",
@@ -642,12 +657,13 @@ monitor interval=60s OCF_CHECK_LEVEL=1 (OPTest7-monitor-interval-60s)
         assert r == 0
 
         o, r = pcs(
-            temp_cib, "resource update OCFTest1 op monitor OCF_CHECK_LEVEL=4"
+            self.temp_cib.name,
+            "resource update OCFTest1 op monitor OCF_CHECK_LEVEL=4",
         )
         ac(o, "")
         assert r == 0
 
-        o, r = pcs(temp_cib, "resource config OCFTest1")
+        o, r = pcs(self.temp_cib.name, "resource config OCFTest1")
         ac(
             o,
             " Resource: OCFTest1 (class=ocf provider=heartbeat type=Dummy)\n  Operations: monitor interval=60s OCF_CHECK_LEVEL=4 (OCFTest1-monitor-interval-60s)\n              monitor interval=31s (OCFTest1-monitor-interval-31s)\n              monitor interval=30s OCF_CHECK_LEVEL=15 (OCFTest1-monitor-interval-30s)\n",
@@ -655,13 +671,13 @@ monitor interval=60s OCF_CHECK_LEVEL=1 (OPTest7-monitor-interval-60s)
         assert r == 0
 
         o, r = pcs(
-            temp_cib,
+            self.temp_cib.name,
             "resource update OCFTest1 op monitor OCF_CHECK_LEVEL=4 interval=35s",
         )
         ac(o, "")
         assert r == 0
 
-        o, r = pcs(temp_cib, "resource config OCFTest1")
+        o, r = pcs(self.temp_cib.name, "resource config OCFTest1")
         ac(
             o,
             " Resource: OCFTest1 (class=ocf provider=heartbeat type=Dummy)\n  Operations: monitor interval=35s OCF_CHECK_LEVEL=4 (OCFTest1-monitor-interval-35s)\n              monitor interval=31s (OCFTest1-monitor-interval-31s)\n              monitor interval=30s OCF_CHECK_LEVEL=15 (OCFTest1-monitor-interval-30s)\n",
@@ -928,7 +944,7 @@ monitor interval=60s OCF_CHECK_LEVEL=1 (OPTest7-monitor-interval-60s)
         )
 
         output, returnVal = pcs(
-            temp_cib, "resource update A op monitor interval=20"
+            self.temp_cib.name, "resource update A op monitor interval=20"
         )
         ac(
             output,
@@ -940,7 +956,7 @@ monitor interval=20 (A-monitor-interval-20)
         self.assertEqual(1, returnVal)
 
         output, returnVal = pcs(
-            temp_cib, "resource update A op monitor interval=11"
+            self.temp_cib.name, "resource update A op monitor interval=11"
         )
         ac(output, "")
         self.assertEqual(0, returnVal)
@@ -962,14 +978,15 @@ monitor interval=20 (A-monitor-interval-20)
         )
 
         output, returnVal = pcs(
-            temp_cib, "resource create B ocf:heartbeat:Dummy --no-default-ops"
+            self.temp_cib.name,
+            "resource create B ocf:heartbeat:Dummy --no-default-ops",
         )
         ac(output, "")
         self.assertEqual(0, returnVal)
 
         self.assert_pcs_success("resource op remove B-monitor-interval-10s")
 
-        output, returnVal = pcs(temp_cib, "resource config B")
+        output, returnVal = pcs(self.temp_cib.name, "resource config B")
         ac(
             output,
             outdent(
@@ -981,12 +998,12 @@ monitor interval=20 (A-monitor-interval-20)
         self.assertEqual(0, returnVal)
 
         output, returnVal = pcs(
-            temp_cib, "resource update B op monitor interval=60s"
+            self.temp_cib.name, "resource update B op monitor interval=60s"
         )
         ac(output, "")
         self.assertEqual(0, returnVal)
 
-        output, returnVal = pcs(temp_cib, "resource config B")
+        output, returnVal = pcs(self.temp_cib.name, "resource config B")
         ac(
             output,
             """\
@@ -997,12 +1014,12 @@ monitor interval=20 (A-monitor-interval-20)
         self.assertEqual(0, returnVal)
 
         output, returnVal = pcs(
-            temp_cib, "resource update B op monitor interval=30"
+            self.temp_cib.name, "resource update B op monitor interval=30"
         )
         ac(output, "")
         self.assertEqual(0, returnVal)
 
-        output, returnVal = pcs(temp_cib, "resource config B")
+        output, returnVal = pcs(self.temp_cib.name, "resource config B")
         ac(
             output,
             """\
@@ -1013,12 +1030,13 @@ monitor interval=20 (A-monitor-interval-20)
         self.assertEqual(0, returnVal)
 
         output, returnVal = pcs(
-            temp_cib, "resource update B op start interval=0 timeout=10"
+            self.temp_cib.name,
+            "resource update B op start interval=0 timeout=10",
         )
         ac(output, "")
         self.assertEqual(0, returnVal)
 
-        output, returnVal = pcs(temp_cib, "resource config B")
+        output, returnVal = pcs(self.temp_cib.name, "resource config B")
         ac(
             output,
             """\
@@ -1030,12 +1048,13 @@ monitor interval=20 (A-monitor-interval-20)
         self.assertEqual(0, returnVal)
 
         output, returnVal = pcs(
-            temp_cib, "resource update B op start interval=0 timeout=20"
+            self.temp_cib.name,
+            "resource update B op start interval=0 timeout=20",
         )
         ac(output, "")
         self.assertEqual(0, returnVal)
 
-        output, returnVal = pcs(temp_cib, "resource config B")
+        output, returnVal = pcs(self.temp_cib.name, "resource config B")
         ac(
             output,
             """\
@@ -1047,12 +1066,12 @@ monitor interval=20 (A-monitor-interval-20)
         self.assertEqual(0, returnVal)
 
         output, returnVal = pcs(
-            temp_cib, "resource update B op monitor interval=33"
+            self.temp_cib.name, "resource update B op monitor interval=33"
         )
         ac(output, "")
         self.assertEqual(0, returnVal)
 
-        output, returnVal = pcs(temp_cib, "resource config B")
+        output, returnVal = pcs(self.temp_cib.name, "resource config B")
         ac(
             output,
             """\
@@ -1064,12 +1083,13 @@ monitor interval=20 (A-monitor-interval-20)
         self.assertEqual(0, returnVal)
 
         output, returnVal = pcs(
-            temp_cib, "resource update B op monitor interval=100 role=Master"
+            self.temp_cib.name,
+            "resource update B op monitor interval=100 role=Master",
         )
         ac(output, "")
         self.assertEqual(0, returnVal)
 
-        output, returnVal = pcs(temp_cib, "resource config B")
+        output, returnVal = pcs(self.temp_cib.name, "resource config B")
         ac(
             output,
             """\
@@ -1082,12 +1102,13 @@ monitor interval=20 (A-monitor-interval-20)
         self.assertEqual(0, returnVal)
 
         output, returnVal = pcs(
-            temp_cib, "resource update B op start interval=0 timeout=22"
+            self.temp_cib.name,
+            "resource update B op start interval=0 timeout=22",
         )
         ac(output, "")
         self.assertEqual(0, returnVal)
 
-        output, returnVal = pcs(temp_cib, "resource config B")
+        output, returnVal = pcs(self.temp_cib.name, "resource config B")
         ac(
             output,
             """\
@@ -1101,22 +1122,22 @@ monitor interval=20 (A-monitor-interval-20)
 
     def testGroupDeleteTest(self):
         o, r = pcs(
-            temp_cib,
+            self.temp_cib.name,
             "resource create --no-default-ops A1 ocf:heartbeat:Dummy --group AGroup",
         )
         assert r == 0
         o, r = pcs(
-            temp_cib,
+            self.temp_cib.name,
             "resource create --no-default-ops A2 ocf:heartbeat:Dummy --group AGroup",
         )
         assert r == 0
         o, r = pcs(
-            temp_cib,
+            self.temp_cib.name,
             "resource create --no-default-ops A3 ocf:heartbeat:Dummy --group AGroup",
         )
         assert r == 0
 
-        o, r = pcs(temp_cib, "resource status")
+        o, r = pcs(self.temp_cib.name, "resource status")
         assert r == 0
         if PCMK_2_0_3_PLUS:
             assert_pcs_status(
@@ -1152,15 +1173,15 @@ monitor interval=20 (A-monitor-interval-20)
             ),
         )
 
-        o, r = pcs(temp_cib, "resource status")
+        o, r = pcs(self.temp_cib.name, "resource status")
         assert r == 0
         ac(o, "NO resources configured\n")
 
     @skip_unless_crm_rule
     def testGroupUngroup(self):
-        self.setupClusterA(temp_cib)
+        self.setupClusterA()
         output, returnVal = pcs(
-            temp_cib, "constraint location ClusterIP3 prefers rh7-1"
+            self.temp_cib.name, "constraint location ClusterIP3 prefers rh7-1"
         )
         assert returnVal == 0
         assert output == LOCATION_NODE_VALIDATION_SKIP_WARNING
@@ -1180,27 +1201,34 @@ monitor interval=20 (A-monitor-interval-20)
         )
 
         o, r = pcs(
-            temp_cib, "resource create --no-default-ops A1 ocf:heartbeat:Dummy"
+            self.temp_cib.name,
+            "resource create --no-default-ops A1 ocf:heartbeat:Dummy",
         )
         assert r == 0
         o, r = pcs(
-            temp_cib, "resource create --no-default-ops A2 ocf:heartbeat:Dummy"
+            self.temp_cib.name,
+            "resource create --no-default-ops A2 ocf:heartbeat:Dummy",
         )
         assert r == 0
         o, r = pcs(
-            temp_cib, "resource create --no-default-ops A3 ocf:heartbeat:Dummy"
+            self.temp_cib.name,
+            "resource create --no-default-ops A3 ocf:heartbeat:Dummy",
         )
         assert r == 0
         o, r = pcs(
-            temp_cib, "resource create --no-default-ops A4 ocf:heartbeat:Dummy"
+            self.temp_cib.name,
+            "resource create --no-default-ops A4 ocf:heartbeat:Dummy",
         )
         assert r == 0
         o, r = pcs(
-            temp_cib, "resource create --no-default-ops A5 ocf:heartbeat:Dummy"
+            self.temp_cib.name,
+            "resource create --no-default-ops A5 ocf:heartbeat:Dummy",
         )
         assert r == 0
 
-        o, r = pcs(temp_cib, "resource group add AGroup A1 A2 A3 A4 A5")
+        o, r = pcs(
+            self.temp_cib.name, "resource group add AGroup A1 A2 A3 A4 A5"
+        )
         assert r == 0
 
         self.assert_pcs_success(
@@ -1222,15 +1250,15 @@ monitor interval=20 (A-monitor-interval-20)
             ),
         )
 
-        o, r = pcs(temp_cib, "resource ungroup Noexist")
+        o, r = pcs(self.temp_cib.name, "resource ungroup Noexist")
         assert r == 1
         ac(o, "Error: Group 'Noexist' does not exist\n")
 
-        o, r = pcs(temp_cib, "resource ungroup AGroup A1 A3")
+        o, r = pcs(self.temp_cib.name, "resource ungroup AGroup A1 A3")
         assert r == 0
         assert o == ""
 
-        o, r = pcs(temp_cib, "resource config")
+        o, r = pcs(self.temp_cib.name, "resource config")
         assert r == 0
         ac(
             o,
@@ -1267,18 +1295,20 @@ monitor interval=20 (A-monitor-interval-20)
             ),
         )
 
-        o, r = pcs(temp_cib, "constraint location AGroup prefers rh7-1")
+        o, r = pcs(
+            self.temp_cib.name, "constraint location AGroup prefers rh7-1"
+        )
         assert r == 0
         ac(
             o,
             "Warning: Validation for node existence in the cluster will be skipped\n",
         )
 
-        o, r = pcs(temp_cib, "resource ungroup AGroup A2")
+        o, r = pcs(self.temp_cib.name, "resource ungroup AGroup A2")
         assert r == 0
         ac(o, "")
 
-        o, r = pcs(temp_cib, "constraint")
+        o, r = pcs(self.temp_cib.name, "constraint")
         assert r == 0
         ac(
             o,
@@ -1295,11 +1325,11 @@ monitor interval=20 (A-monitor-interval-20)
             ),
         )
 
-        o, r = pcs(temp_cib, "resource ungroup AGroup")
+        o, r = pcs(self.temp_cib.name, "resource ungroup AGroup")
         assert r == 0
         ac(o, "Removing Constraint - location-AGroup-rh7-1-INFINITY\n")
 
-        o, r = pcs(temp_cib, "resource config AGroup")
+        o, r = pcs(self.temp_cib.name, "resource config AGroup")
         assert r == 1
         ac(o, "Error: unable to find resource 'AGroup'\n")
 
@@ -1323,12 +1353,14 @@ monitor interval=20 (A-monitor-interval-20)
 
     def testGroupLargeResourceRemove(self):
         output, returnVal = pcs(
-            temp_large_cib, "resource group add dummies dummylarge"
+            self.temp_large_cib.name, "resource group add dummies dummylarge"
         )
         ac(output, "")
         assert returnVal == 0
 
-        output, returnVal = pcs(temp_large_cib, "resource delete dummies")
+        output, returnVal = pcs(
+            self.temp_large_cib.name, "resource delete dummies"
+        )
         ac(
             output,
             outdent(
@@ -1346,46 +1378,57 @@ monitor interval=20 (A-monitor-interval-20)
         # and tests overhaul. However, this is the only test where "resource
         # group list" is called. Due to that this test was not deleted.
         output, returnVal = pcs(
-            temp_cib, "resource create --no-default-ops A ocf:heartbeat:Dummy"
+            self.temp_cib.name,
+            "resource create --no-default-ops A ocf:heartbeat:Dummy",
         )
         output, returnVal = pcs(
-            temp_cib, "resource create --no-default-ops B ocf:heartbeat:Dummy"
+            self.temp_cib.name,
+            "resource create --no-default-ops B ocf:heartbeat:Dummy",
         )
         output, returnVal = pcs(
-            temp_cib, "resource create --no-default-ops C ocf:heartbeat:Dummy"
+            self.temp_cib.name,
+            "resource create --no-default-ops C ocf:heartbeat:Dummy",
         )
         output, returnVal = pcs(
-            temp_cib, "resource create --no-default-ops D ocf:heartbeat:Dummy"
+            self.temp_cib.name,
+            "resource create --no-default-ops D ocf:heartbeat:Dummy",
         )
         output, returnVal = pcs(
-            temp_cib, "resource create --no-default-ops E ocf:heartbeat:Dummy"
+            self.temp_cib.name,
+            "resource create --no-default-ops E ocf:heartbeat:Dummy",
         )
         output, returnVal = pcs(
-            temp_cib, "resource create --no-default-ops F ocf:heartbeat:Dummy"
+            self.temp_cib.name,
+            "resource create --no-default-ops F ocf:heartbeat:Dummy",
         )
         output, returnVal = pcs(
-            temp_cib, "resource create --no-default-ops G ocf:heartbeat:Dummy"
+            self.temp_cib.name,
+            "resource create --no-default-ops G ocf:heartbeat:Dummy",
         )
         output, returnVal = pcs(
-            temp_cib, "resource create --no-default-ops H ocf:heartbeat:Dummy"
+            self.temp_cib.name,
+            "resource create --no-default-ops H ocf:heartbeat:Dummy",
         )
         output, returnVal = pcs(
-            temp_cib, "resource create --no-default-ops I ocf:heartbeat:Dummy"
+            self.temp_cib.name,
+            "resource create --no-default-ops I ocf:heartbeat:Dummy",
         )
         output, returnVal = pcs(
-            temp_cib, "resource create --no-default-ops J ocf:heartbeat:Dummy"
+            self.temp_cib.name,
+            "resource create --no-default-ops J ocf:heartbeat:Dummy",
         )
         output, returnVal = pcs(
-            temp_cib, "resource create --no-default-ops K ocf:heartbeat:Dummy"
+            self.temp_cib.name,
+            "resource create --no-default-ops K ocf:heartbeat:Dummy",
         )
 
         output, returnVal = pcs(
-            temp_cib, "resource group add RGA A B C E D K J I"
+            self.temp_cib.name, "resource group add RGA A B C E D K J I"
         )
         assert returnVal == 0
         assert output == "", output
 
-        output, returnVal = pcs(temp_cib, "resource")
+        output, returnVal = pcs(self.temp_cib.name, "resource")
         assert returnVal == 0
         if PCMK_2_0_3_PLUS:
             assert_pcs_status(
@@ -1424,13 +1467,13 @@ monitor interval=20 (A-monitor-interval-20)
 """,
             )
 
-        output, returnVal = pcs(temp_cib, "resource group list")
+        output, returnVal = pcs(self.temp_cib.name, "resource group list")
         ac(output, "RGA: A B C E D K J I\n")
         assert returnVal == 0
 
     @skip_unless_crm_rule
     def testClusterConfig(self):
-        self.setupClusterA(temp_cib)
+        self.setupClusterA()
 
         self.pcs_runner.mock_settings = {
             "corosync_conf_file": rc("corosync.conf"),
@@ -1498,17 +1541,21 @@ monitor interval=20 (A-monitor-interval-20)
 
     def testCloneRemove(self):
         o, r = pcs(
-            temp_cib,
+            self.temp_cib.name,
             "resource create --no-default-ops D1 ocf:heartbeat:Dummy clone",
         )
         ac(o, "")
         assert r == 0
 
-        o, r = pcs(temp_cib, "constraint location D1-clone prefers rh7-1")
+        o, r = pcs(
+            self.temp_cib.name, "constraint location D1-clone prefers rh7-1"
+        )
         ac(o, LOCATION_NODE_VALIDATION_SKIP_WARNING)
         assert r == 0
 
-        o, r = pcs(temp_cib, "constraint location D1 prefers rh7-1 --force")
+        o, r = pcs(
+            self.temp_cib.name, "constraint location D1 prefers rh7-1 --force"
+        )
         ac(o, LOCATION_NODE_VALIDATION_SKIP_WARNING)
         assert r == 0
 
@@ -1534,12 +1581,12 @@ monitor interval=20 (A-monitor-interval-20)
             ),
         )
 
-        o, r = pcs(temp_cib, "resource config")
+        o, r = pcs(self.temp_cib.name, "resource config")
         assert r == 0
         ac(o, "")
 
         o, r = pcs(
-            temp_cib,
+            self.temp_cib.name,
             "resource create d99 ocf:heartbeat:Dummy clone globally-unique=true",
         )
         ac(o, "")
@@ -1549,26 +1596,34 @@ monitor interval=20 (A-monitor-interval-20)
             "resource delete d99", "Deleting Resource - d99\n"
         )
 
-        output, returnVal = pcs(temp_large_cib, "resource clone dummylarge")
+        output, returnVal = pcs(
+            self.temp_large_cib.name, "resource clone dummylarge"
+        )
         ac(output, "")
         assert returnVal == 0
 
-        output, returnVal = pcs(temp_large_cib, "resource delete dummylarge")
+        output, returnVal = pcs(
+            self.temp_large_cib.name, "resource delete dummylarge"
+        )
         ac(output, "Deleting Resource - dummylarge\n")
         assert returnVal == 0
 
     def testCloneGroupLargeResourceRemove(self):
         output, returnVal = pcs(
-            temp_large_cib, "resource group add dummies dummylarge"
+            self.temp_large_cib.name, "resource group add dummies dummylarge"
         )
         ac(output, "")
         assert returnVal == 0
 
-        output, returnVal = pcs(temp_large_cib, "resource clone dummies")
+        output, returnVal = pcs(
+            self.temp_large_cib.name, "resource clone dummies"
+        )
         ac(output, "")
         assert returnVal == 0
 
-        output, returnVal = pcs(temp_large_cib, "resource delete dummies")
+        output, returnVal = pcs(
+            self.temp_large_cib.name, "resource delete dummies"
+        )
         ac(
             output,
             outdent(
@@ -1583,15 +1638,16 @@ monitor interval=20 (A-monitor-interval-20)
 
     @skip_unless_crm_rule
     def testMasterSlaveRemove(self):
-        self.setupClusterA(temp_cib)
+        self.setupClusterA()
         output, returnVal = pcs(
-            temp_cib, "constraint location ClusterIP5 prefers rh7-1 --force"
+            self.temp_cib.name,
+            "constraint location ClusterIP5 prefers rh7-1 --force",
         )
         assert returnVal == 0
         assert output == LOCATION_NODE_VALIDATION_SKIP_WARNING
 
         output, returnVal = pcs(
-            temp_cib, "constraint location Master prefers rh7-2"
+            self.temp_cib.name, "constraint location Master prefers rh7-2"
         )
         assert returnVal == 0
         assert output == LOCATION_NODE_VALIDATION_SKIP_WARNING
@@ -1608,20 +1664,20 @@ monitor interval=20 (A-monitor-interval-20)
         )
 
         output, returnVal = pcs(
-            temp_cib,
+            self.temp_cib.name,
             "resource create --no-default-ops ClusterIP5 ocf:heartbeat:Dummy",
         )
         assert returnVal == 0
         assert output == ""
 
         output, returnVal = pcs(
-            temp_cib, "constraint location ClusterIP5 prefers rh7-1"
+            self.temp_cib.name, "constraint location ClusterIP5 prefers rh7-1"
         )
         assert returnVal == 0
         assert output == LOCATION_NODE_VALIDATION_SKIP_WARNING
 
         output, returnVal = pcs(
-            temp_cib, "constraint location ClusterIP5 prefers rh7-2"
+            self.temp_cib.name, "constraint location ClusterIP5 prefers rh7-2"
         )
         assert returnVal == 0
         assert output == LOCATION_NODE_VALIDATION_SKIP_WARNING
@@ -1642,13 +1698,13 @@ monitor interval=20 (A-monitor-interval-20)
         )
 
         output, returnVal = pcs(
-            temp_cib, "constraint location ClusterIP5 prefers rh7-1"
+            self.temp_cib.name, "constraint location ClusterIP5 prefers rh7-1"
         )
         assert returnVal == 0
         assert output == LOCATION_NODE_VALIDATION_SKIP_WARNING
 
         output, returnVal = pcs(
-            temp_cib, "constraint location ClusterIP5 prefers rh7-2"
+            self.temp_cib.name, "constraint location ClusterIP5 prefers rh7-2"
         )
         assert returnVal == 0
         assert output == LOCATION_NODE_VALIDATION_SKIP_WARNING
@@ -1723,15 +1779,17 @@ monitor interval=20 (A-monitor-interval-20)
         # pcs no longer allows turning resources into masters but supports
         # existing ones. In order to test it, we need to put a master in the
         # CIB without pcs.
-        wrap_element_by_master(temp_large_cib, "dummylarge")
+        wrap_element_by_master(self.temp_large_cib, "dummylarge")
 
-        output, returnVal = pcs(temp_large_cib, "resource delete dummylarge")
+        output, returnVal = pcs(
+            self.temp_large_cib.name, "resource delete dummylarge"
+        )
         ac(output, "Deleting Resource - dummylarge\n")
         assert returnVal == 0
 
     def testMasterSlaveGroupLargeResourceRemove(self):
         output, returnVal = pcs(
-            temp_large_cib, "resource group add dummies dummylarge"
+            self.temp_large_cib.name, "resource group add dummies dummylarge"
         )
         ac(output, "")
         assert returnVal == 0
@@ -1739,9 +1797,11 @@ monitor interval=20 (A-monitor-interval-20)
         # pcs no longer allows turning resources into masters but supports
         # existing ones. In order to test it, we need to put a master in the
         # CIB without pcs.
-        wrap_element_by_master(temp_large_cib, "dummies")
+        wrap_element_by_master(self.temp_large_cib, "dummies")
 
-        output, returnVal = pcs(temp_large_cib, "resource delete dummies")
+        output, returnVal = pcs(
+            self.temp_large_cib.name, "resource delete dummies"
+        )
         ac(
             output,
             outdent(
@@ -1756,25 +1816,29 @@ monitor interval=20 (A-monitor-interval-20)
 
     def testMSGroup(self):
         output, returnVal = pcs(
-            temp_cib, "resource create --no-default-ops D0 ocf:heartbeat:Dummy"
+            self.temp_cib.name,
+            "resource create --no-default-ops D0 ocf:heartbeat:Dummy",
         )
         assert returnVal == 0
         assert output == "", [output]
 
         output, returnVal = pcs(
-            temp_cib, "resource create --no-default-ops D1 ocf:heartbeat:Dummy"
+            self.temp_cib.name,
+            "resource create --no-default-ops D1 ocf:heartbeat:Dummy",
         )
         assert returnVal == 0
         assert output == "", [output]
 
-        output, returnVal = pcs(temp_cib, "resource group add Group D0 D1")
+        output, returnVal = pcs(
+            self.temp_cib.name, "resource group add Group D0 D1"
+        )
         assert returnVal == 0
         assert output == "", [output]
 
         # pcs no longer allows turning resources into masters but supports
         # existing ones. In order to test it, we need to put a master in the
         # CIB without pcs.
-        wrap_element_by_master(temp_cib, "Group", master_id="GroupMaster")
+        wrap_element_by_master(self.temp_cib, "Group", master_id="GroupMaster")
 
         self.assert_pcs_success(
             "resource config",
@@ -1802,61 +1866,66 @@ monitor interval=20 (A-monitor-interval-20)
     @skip_unless_crm_rule
     def testUncloneWithConstraints(self):
         o, r = pcs(
-            temp_cib, "resource create --no-default-ops D0 ocf:pacemaker:Dummy"
+            self.temp_cib.name,
+            "resource create --no-default-ops D0 ocf:pacemaker:Dummy",
         )
         ac(o, "")
         assert r == 0
 
-        o, r = pcs(temp_cib, "resource clone D0")
+        o, r = pcs(self.temp_cib.name, "resource clone D0")
         ac(o, "")
         assert r == 0
 
-        o, r = pcs(temp_cib, "constraint location D0-clone prefers rh7-1")
+        o, r = pcs(
+            self.temp_cib.name, "constraint location D0-clone prefers rh7-1"
+        )
         ac(o, LOCATION_NODE_VALIDATION_SKIP_WARNING)
         assert r == 0
 
-        o, r = pcs(temp_cib, "constraint")
+        o, r = pcs(self.temp_cib.name, "constraint")
         ac(
             o,
             "Location Constraints:\n  Resource: D0-clone\n    Enabled on:\n      Node: rh7-1 (score:INFINITY)\nOrdering Constraints:\nColocation Constraints:\nTicket Constraints:\n",
         )
         assert r == 0
 
-        o, r = pcs(temp_cib, "resource unclone D0-clone")
+        o, r = pcs(self.temp_cib.name, "resource unclone D0-clone")
         ac(o, "")
         assert r == 0
 
     def testUnclone(self):
         # see also BundleClone
         output, returnVal = pcs(
-            temp_cib,
+            self.temp_cib.name,
             "resource create --no-default-ops dummy1 ocf:heartbeat:Dummy",
         )
         ac(output, "")
         self.assertEqual(0, returnVal)
 
         output, returnVal = pcs(
-            temp_cib,
+            self.temp_cib.name,
             "resource create --no-default-ops dummy2 ocf:heartbeat:Dummy",
         )
         ac(output, "")
         self.assertEqual(0, returnVal)
 
         # try to unclone a non-cloned resource
-        output, returnVal = pcs(temp_cib, "resource unclone dummy1")
+        output, returnVal = pcs(self.temp_cib.name, "resource unclone dummy1")
         ac(output, "Error: 'dummy1' is not a clone resource\n")
         self.assertEqual(1, returnVal)
 
-        output, returnVal = pcs(temp_cib, "resource group add gr dummy1")
+        output, returnVal = pcs(
+            self.temp_cib.name, "resource group add gr dummy1"
+        )
         ac(output, "")
         self.assertEqual(0, returnVal)
 
-        output, returnVal = pcs(temp_cib, "resource unclone gr")
+        output, returnVal = pcs(self.temp_cib.name, "resource unclone gr")
         ac(output, "Error: 'gr' is not a clone resource\n")
         self.assertEqual(1, returnVal)
 
         # unclone with a cloned primitive specified
-        output, returnVal = pcs(temp_cib, "resource clone dummy2")
+        output, returnVal = pcs(self.temp_cib.name, "resource clone dummy2")
         ac(output, "")
         self.assertEqual(0, returnVal)
 
@@ -1874,7 +1943,7 @@ monitor interval=20 (A-monitor-interval-20)
             ),
         )
 
-        output, returnVal = pcs(temp_cib, "resource unclone dummy2")
+        output, returnVal = pcs(self.temp_cib.name, "resource unclone dummy2")
         ac(output, "")
         self.assertEqual(0, returnVal)
 
@@ -1892,11 +1961,13 @@ monitor interval=20 (A-monitor-interval-20)
         )
 
         # unclone with a clone itself specified
-        output, returnVal = pcs(temp_cib, "resource group add gr dummy2")
+        output, returnVal = pcs(
+            self.temp_cib.name, "resource group add gr dummy2"
+        )
         ac(output, "")
         self.assertEqual(0, returnVal)
 
-        output, returnVal = pcs(temp_cib, "resource clone gr")
+        output, returnVal = pcs(self.temp_cib.name, "resource clone gr")
         ac(output, "")
         self.assertEqual(0, returnVal)
 
@@ -1914,7 +1985,7 @@ monitor interval=20 (A-monitor-interval-20)
             ),
         )
 
-        output, returnVal = pcs(temp_cib, "resource unclone gr-clone")
+        output, returnVal = pcs(self.temp_cib.name, "resource unclone gr-clone")
         ac(output, "")
         self.assertEqual(0, returnVal)
 
@@ -1932,7 +2003,7 @@ monitor interval=20 (A-monitor-interval-20)
         )
 
         # unclone with a cloned group specified
-        output, returnVal = pcs(temp_cib, "resource clone gr")
+        output, returnVal = pcs(self.temp_cib.name, "resource clone gr")
         ac(output, "")
         self.assertEqual(0, returnVal)
 
@@ -1950,7 +2021,7 @@ monitor interval=20 (A-monitor-interval-20)
             ),
         )
 
-        output, returnVal = pcs(temp_cib, "resource unclone gr")
+        output, returnVal = pcs(self.temp_cib.name, "resource unclone gr")
         ac(output, "")
         self.assertEqual(0, returnVal)
 
@@ -1968,7 +2039,7 @@ monitor interval=20 (A-monitor-interval-20)
         )
 
         # unclone with a cloned grouped resource specified
-        output, returnVal = pcs(temp_cib, "resource clone gr")
+        output, returnVal = pcs(self.temp_cib.name, "resource clone gr")
         ac(output, "")
         self.assertEqual(0, returnVal)
 
@@ -1988,7 +2059,7 @@ monitor interval=20 (A-monitor-interval-20)
 
         self.assertEqual(0, returnVal)
 
-        output, returnVal = pcs(temp_cib, "resource unclone dummy1")
+        output, returnVal = pcs(self.temp_cib.name, "resource unclone dummy1")
         ac(output, "")
         self.assertEqual(0, returnVal)
 
@@ -2006,7 +2077,7 @@ monitor interval=20 (A-monitor-interval-20)
             ),
         )
 
-        output, returnVal = pcs(temp_cib, "resource unclone dummy2")
+        output, returnVal = pcs(self.temp_cib.name, "resource unclone dummy2")
         ac(output, "")
         self.assertEqual(0, returnVal)
 
@@ -2035,15 +2106,17 @@ monitor interval=20 (A-monitor-interval-20)
         )
 
         # try to unclone a non-cloned resource
-        output, returnVal = pcs(temp_cib, "resource unclone dummy1")
+        output, returnVal = pcs(self.temp_cib.name, "resource unclone dummy1")
         ac(output, "Error: 'dummy1' is not a clone resource\n")
         self.assertEqual(1, returnVal)
 
-        output, returnVal = pcs(temp_cib, "resource group add gr dummy1")
+        output, returnVal = pcs(
+            self.temp_cib.name, "resource group add gr dummy1"
+        )
         ac(output, "")
         self.assertEqual(0, returnVal)
 
-        output, returnVal = pcs(temp_cib, "resource unclone gr")
+        output, returnVal = pcs(self.temp_cib.name, "resource unclone gr")
         ac(output, "Error: 'gr' is not a clone resource\n")
         self.assertEqual(1, returnVal)
 
@@ -2051,7 +2124,7 @@ monitor interval=20 (A-monitor-interval-20)
         # pcs no longer allows turning resources into masters but supports
         # existing ones. In order to test it, we need to put a master in the
         # CIB without pcs.
-        wrap_element_by_master(temp_cib, "dummy2")
+        wrap_element_by_master(self.temp_cib, "dummy2")
 
         self.assert_pcs_success(
             "resource config",
@@ -2070,7 +2143,7 @@ monitor interval=20 (A-monitor-interval-20)
             ),
         )
 
-        output, returnVal = pcs(temp_cib, "resource unclone dummy2")
+        output, returnVal = pcs(self.temp_cib.name, "resource unclone dummy2")
         ac(output, "")
         self.assertEqual(0, returnVal)
 
@@ -2090,14 +2163,16 @@ monitor interval=20 (A-monitor-interval-20)
         )
 
         # unclone with a clone itself specified
-        output, returnVal = pcs(temp_cib, "resource group add gr dummy2")
+        output, returnVal = pcs(
+            self.temp_cib.name, "resource group add gr dummy2"
+        )
         ac(output, "")
         self.assertEqual(0, returnVal)
 
         # pcs no longer allows turning resources into masters but supports
         # existing ones. In order to test it, we need to put a master in the
         # CIB without pcs.
-        wrap_element_by_master(temp_cib, "gr")
+        wrap_element_by_master(self.temp_cib, "gr")
 
         self.assert_pcs_success(
             "resource config",
@@ -2116,7 +2191,9 @@ monitor interval=20 (A-monitor-interval-20)
             ),
         )
 
-        output, returnVal = pcs(temp_cib, "resource unclone gr-master")
+        output, returnVal = pcs(
+            self.temp_cib.name, "resource unclone gr-master"
+        )
         ac(output, "")
         self.assertEqual(0, returnVal)
 
@@ -2139,7 +2216,7 @@ monitor interval=20 (A-monitor-interval-20)
         # pcs no longer allows turning resources into masters but supports
         # existing ones. In order to test it, we need to put a master in the
         # CIB without pcs.
-        wrap_element_by_master(temp_cib, "gr")
+        wrap_element_by_master(self.temp_cib, "gr")
 
         self.assert_pcs_success(
             "resource config",
@@ -2158,7 +2235,7 @@ monitor interval=20 (A-monitor-interval-20)
             ),
         )
 
-        output, returnVal = pcs(temp_cib, "resource unclone gr")
+        output, returnVal = pcs(self.temp_cib.name, "resource unclone gr")
         ac(output, "")
         self.assertEqual(0, returnVal)
 
@@ -2178,14 +2255,16 @@ monitor interval=20 (A-monitor-interval-20)
         )
 
         # unclone with a cloned grouped resource specified
-        output, returnVal = pcs(temp_cib, "resource ungroup gr dummy2")
+        output, returnVal = pcs(
+            self.temp_cib.name, "resource ungroup gr dummy2"
+        )
         ac(output, "")
         self.assertEqual(0, returnVal)
 
         # pcs no longer allows turning resources into masters but supports
         # existing ones. In order to test it, we need to put a master in the
         # CIB without pcs.
-        wrap_element_by_master(temp_cib, "gr")
+        wrap_element_by_master(self.temp_cib, "gr")
 
         self.assert_pcs_success(
             "resource config",
@@ -2204,7 +2283,7 @@ monitor interval=20 (A-monitor-interval-20)
             ),
         )
 
-        output, returnVal = pcs(temp_cib, "resource unclone dummy1")
+        output, returnVal = pcs(self.temp_cib.name, "resource unclone dummy1")
         ac(output, "")
         self.assertEqual(0, returnVal)
 
@@ -2222,14 +2301,16 @@ monitor interval=20 (A-monitor-interval-20)
             ),
         )
 
-        output, returnVal = pcs(temp_cib, "resource group add gr dummy1 dummy2")
+        output, returnVal = pcs(
+            self.temp_cib.name, "resource group add gr dummy1 dummy2"
+        )
         ac(output, "")
         self.assertEqual(0, returnVal)
 
         # pcs no longer allows turning resources into masters but supports
         # existing ones. In order to test it, we need to put a master in the
         # CIB without pcs.
-        wrap_element_by_master(temp_cib, "gr")
+        wrap_element_by_master(self.temp_cib, "gr")
 
         self.assert_pcs_success(
             "resource config",
@@ -2248,7 +2329,7 @@ monitor interval=20 (A-monitor-interval-20)
             ),
         )
 
-        output, returnVal = pcs(temp_cib, "resource unclone dummy2")
+        output, returnVal = pcs(self.temp_cib.name, "resource unclone dummy2")
         ac(output, "")
         self.assertEqual(0, returnVal)
 
@@ -2271,24 +2352,24 @@ monitor interval=20 (A-monitor-interval-20)
 
     def testCloneGroupMember(self):
         o, r = pcs(
-            temp_cib,
+            self.temp_cib.name,
             "resource create --no-default-ops D0 ocf:heartbeat:Dummy --group AG",
         )
         ac(o, "")
         assert r == 0
 
         o, r = pcs(
-            temp_cib,
+            self.temp_cib.name,
             "resource create --no-default-ops D1 ocf:heartbeat:Dummy --group AG",
         )
         ac(o, "")
         assert r == 0
 
-        o, r = pcs(temp_cib, "resource clone D0")
+        o, r = pcs(self.temp_cib.name, "resource clone D0")
         ac(o, "")
         assert r == 0
 
-        o, r = pcs(temp_cib, "resource")
+        o, r = pcs(self.temp_cib.name, "resource")
         if PCMK_2_0_3_PLUS:
             assert_pcs_status(
                 o,
@@ -2309,11 +2390,11 @@ monitor interval=20 (A-monitor-interval-20)
             )
         assert r == 0
 
-        o, r = pcs(temp_cib, "resource clone D1")
+        o, r = pcs(self.temp_cib.name, "resource clone D1")
         ac(o, "")
         assert r == 0
 
-        o, r = pcs(temp_cib, "resource")
+        o, r = pcs(self.temp_cib.name, "resource")
         if PCMK_2_0_3_PLUS:
             ac(
                 o,
@@ -2325,24 +2406,24 @@ monitor interval=20 (A-monitor-interval-20)
 
     def testPromotableGroupMember(self):
         o, r = pcs(
-            temp_cib,
+            self.temp_cib.name,
             "resource create --no-default-ops D0 ocf:heartbeat:Dummy --group AG",
         )
         ac(o, "")
         assert r == 0
 
         o, r = pcs(
-            temp_cib,
+            self.temp_cib.name,
             "resource create --no-default-ops D1 ocf:heartbeat:Dummy --group AG",
         )
         ac(o, "")
         assert r == 0
 
-        o, r = pcs(temp_cib, "resource promotable D0")
+        o, r = pcs(self.temp_cib.name, "resource promotable D0")
         ac(o, "")
         assert r == 0
 
-        o, r = pcs(temp_cib, "resource config")
+        o, r = pcs(self.temp_cib.name, "resource config")
         ac(
             o,
             """\
@@ -2357,11 +2438,11 @@ monitor interval=20 (A-monitor-interval-20)
         )
         assert r == 0
 
-        o, r = pcs(temp_cib, "resource promotable D1")
+        o, r = pcs(self.temp_cib.name, "resource promotable D1")
         ac(o, "")
         assert r == 0
 
-        o, r = pcs(temp_cib, "resource config")
+        o, r = pcs(self.temp_cib.name, "resource config")
         ac(
             o,
             """\
@@ -2380,32 +2461,36 @@ monitor interval=20 (A-monitor-interval-20)
     def testCloneMaster(self):
         # see also BundleClone
         output, returnVal = pcs(
-            temp_cib, "resource create --no-default-ops D0 ocf:heartbeat:Dummy"
+            self.temp_cib.name,
+            "resource create --no-default-ops D0 ocf:heartbeat:Dummy",
         )
         assert returnVal == 0
         assert output == "", [output]
         output, returnVal = pcs(
-            temp_cib, "resource create --no-default-ops D1 ocf:heartbeat:Dummy"
+            self.temp_cib.name,
+            "resource create --no-default-ops D1 ocf:heartbeat:Dummy",
         )
         assert returnVal == 0
         assert output == "", [output]
         output, returnVal = pcs(
-            temp_cib, "resource create --no-default-ops D2 ocf:heartbeat:Dummy"
+            self.temp_cib.name,
+            "resource create --no-default-ops D2 ocf:heartbeat:Dummy",
         )
         assert returnVal == 0
         assert output == "", [output]
         output, returnVal = pcs(
-            temp_cib, "resource create --no-default-ops D3 ocf:heartbeat:Dummy"
+            self.temp_cib.name,
+            "resource create --no-default-ops D3 ocf:heartbeat:Dummy",
         )
         assert returnVal == 0
         assert output == "", [output]
 
-        output, returnVal = pcs(temp_cib, "resource clone D0")
+        output, returnVal = pcs(self.temp_cib.name, "resource clone D0")
         assert returnVal == 0
         assert output == "", [output]
 
         output, returnVal = pcs(
-            temp_cib, "resource promotable D3 promotable=false"
+            self.temp_cib.name, "resource promotable D3 promotable=false"
         )
         assert returnVal == 1
         assert (
@@ -2413,19 +2498,21 @@ monitor interval=20 (A-monitor-interval-20)
             == "Error: you cannot specify both promotable option and promotable keyword\n"
         ), [output]
 
-        output, returnVal = pcs(temp_cib, "resource promotable D3")
+        output, returnVal = pcs(self.temp_cib.name, "resource promotable D3")
         assert returnVal == 0
         assert output == "", [output]
 
         # pcs no longer allows turning resources into masters but supports
         # existing ones. In order to test it, we need to put a master in the
         # CIB without pcs.
-        wrap_element_by_master(temp_cib, "D1", master_id="D1-master-custom")
+        wrap_element_by_master(
+            self.temp_cib, "D1", master_id="D1-master-custom"
+        )
 
         # pcs no longer allows turning resources into masters but supports
         # existing ones. In order to test it, we need to put a master in the
         # CIB without pcs.
-        wrap_element_by_master(temp_cib, "D2")
+        wrap_element_by_master(self.temp_cib, "D2")
 
         self.assert_pcs_success(
             "resource config",
@@ -2459,10 +2546,12 @@ monitor interval=20 (A-monitor-interval-20)
         )
 
         output, returnVal = pcs(
-            temp_cib, "resource create --no-default-ops D0 ocf:heartbeat:Dummy"
+            self.temp_cib.name,
+            "resource create --no-default-ops D0 ocf:heartbeat:Dummy",
         )
         output, returnVal = pcs(
-            temp_cib, "resource create --no-default-ops D2 ocf:heartbeat:Dummy"
+            self.temp_cib.name,
+            "resource create --no-default-ops D2 ocf:heartbeat:Dummy",
         )
 
         self.assert_pcs_success(
@@ -2540,40 +2629,44 @@ monitor interval=20 (A-monitor-interval-20)
     )
     def testDebugStartCloneGroup(self):
         o, r = pcs(
-            temp_cib, "resource create D0 ocf:heartbeat:Dummy --group DGroup"
+            self.temp_cib.name,
+            "resource create D0 ocf:heartbeat:Dummy --group DGroup",
         )
         ac(o, "")
         assert r == 0
 
         o, r = pcs(
-            temp_cib, "resource create D1 ocf:heartbeat:Dummy --group DGroup"
+            self.temp_cib.name,
+            "resource create D1 ocf:heartbeat:Dummy --group DGroup",
         )
         ac(o, "")
         assert r == 0
 
-        o, r = pcs(temp_cib, "resource create D2 ocf:heartbeat:Dummy clone")
+        o, r = pcs(
+            self.temp_cib.name, "resource create D2 ocf:heartbeat:Dummy clone"
+        )
         ac(o, "")
         assert r == 0
 
         # pcs no longer allows creating masters but supports existing ones. In
         # order to test it, we need to put a master in the CIB without pcs.
-        fixture_to_cib(temp_cib, fixture_master_xml("D3"))
+        fixture_to_cib(self.temp_cib.name, fixture_master_xml("D3"))
 
-        o, r = pcs(temp_cib, "resource debug-start DGroup")
+        o, r = pcs(self.temp_cib.name, "resource debug-start DGroup")
         ac(
             o,
             "Error: unable to debug-start a group, try one of the group's resource(s) (D0,D1)\n",
         )
         assert r == 1
 
-        o, r = pcs(temp_cib, "resource debug-start D2-clone")
+        o, r = pcs(self.temp_cib.name, "resource debug-start D2-clone")
         ac(
             o,
             "Error: unable to debug-start a clone, try the clone's resource: D2\n",
         )
         assert r == 1
 
-        o, r = pcs(temp_cib, "resource debug-start D3-master")
+        o, r = pcs(self.temp_cib.name, "resource debug-start D3-master")
         ac(
             o,
             "Error: unable to debug-start a master, try the master's resource: D3\n",
@@ -2582,48 +2675,48 @@ monitor interval=20 (A-monitor-interval-20)
 
     def testGroupCloneCreation(self):
         o, r = pcs(
-            temp_cib,
+            self.temp_cib.name,
             "resource create --no-default-ops D1 ocf:heartbeat:Dummy --group DGroup",
         )
         assert r == 0
         assert o == ""
 
-        o, r = pcs(temp_cib, "resource clone DGroup1")
+        o, r = pcs(self.temp_cib.name, "resource clone DGroup1")
         ac(o, "Error: unable to find group or resource: DGroup1\n")
         assert r == 1
 
-        o, r = pcs(temp_cib, "resource clone DGroup")
+        o, r = pcs(self.temp_cib.name, "resource clone DGroup")
         assert r == 0
         assert o == ""
 
-        o, r = pcs(temp_cib, "resource status")
+        o, r = pcs(self.temp_cib.name, "resource status")
         assert r == 0
         if PCMK_2_0_3_PLUS:
             ac(o, "  * Clone Set: DGroup-clone [DGroup]:\n")
         else:
             ac(o, " Clone Set: DGroup-clone [DGroup]\n")
 
-        o, r = pcs(temp_cib, "resource clone DGroup")
+        o, r = pcs(self.temp_cib.name, "resource clone DGroup")
         ac(o, "Error: cannot clone a group that has already been cloned\n")
         assert r == 1
 
     def testGroupPromotableCreation(self):
         o, r = pcs(
-            temp_cib,
+            self.temp_cib.name,
             "resource create --no-default-ops D1 ocf:heartbeat:Dummy --group DGroup",
         )
         assert r == 0
         assert o == ""
 
-        o, r = pcs(temp_cib, "resource promotable DGroup1")
+        o, r = pcs(self.temp_cib.name, "resource promotable DGroup1")
         ac(o, "Error: unable to find group or resource: DGroup1\n")
         assert r == 1
 
-        o, r = pcs(temp_cib, "resource promotable DGroup")
+        o, r = pcs(self.temp_cib.name, "resource promotable DGroup")
         assert r == 0
         assert o == ""
 
-        o, r = pcs(temp_cib, "resource config")
+        o, r = pcs(self.temp_cib.name, "resource config")
         assert r == 0
         ac(
             o,
@@ -2636,42 +2729,35 @@ monitor interval=20 (A-monitor-interval-20)
 """,
         )
 
-        o, r = pcs(temp_cib, "resource promotable DGroup")
+        o, r = pcs(self.temp_cib.name, "resource promotable DGroup")
         ac(o, "Error: cannot clone a group that has already been cloned\n")
         assert r == 1
 
     @skip_unless_crm_rule
     def testGroupRemoveWithConstraints1(self):
         # Load nodes into cib so move will work
-        utils.usefile = True
-        utils.filename = temp_cib
-
-        o, r = utils.run(
-            [
-                "cibadmin",
-                "-M",
-                "--xml-text",
-                '<nodes><node id="1" uname="rh7-1"><instance_attributes id="nodes-1"/></node><node id="2" uname="rh7-2"><instance_attributes id="nodes-2"/></node></nodes>',
-            ]
-        )
-        ac(o, "")
-        assert r == 0
+        self.temp_cib.seek(0)
+        xml = etree.fromstring(self.temp_cib.read())
+        nodes_el = xml.find(".//nodes")
+        etree.SubElement(nodes_el, "node", {"id": "1", "uname": "rh7-1"})
+        etree.SubElement(nodes_el, "node", {"id": "2", "uname": "rh7-2"})
+        write_data_to_tmpfile(etree.tounicode(xml), self.temp_cib)
 
         o, r = pcs(
-            temp_cib,
+            self.temp_cib.name,
             "resource create --no-default-ops D1 ocf:heartbeat:Dummy --group DGroup",
         )
         assert r == 0
         ac(o, "")
 
         o, r = pcs(
-            temp_cib,
+            self.temp_cib.name,
             "resource create --no-default-ops D2 ocf:heartbeat:Dummy --group DGroup",
         )
         assert r == 0
         ac(o, "")
 
-        o, r = pcs(temp_cib, "resource status")
+        o, r = pcs(self.temp_cib.name, "resource status")
         assert r == 0
         if PCMK_2_0_3_PLUS:
             assert_pcs_status(
@@ -2692,11 +2778,11 @@ monitor interval=20 (A-monitor-interval-20)
 """,
             )
 
-        o, r = pcs(temp_cib, "resource move DGroup rh7-1")
+        o, r = pcs(self.temp_cib.name, "resource move DGroup rh7-1")
         ac(o, "")
         assert r == 0
 
-        o, r = pcs(temp_cib, "constraint")
+        o, r = pcs(self.temp_cib.name, "constraint")
         assert r == 0
         ac(
             o,
@@ -2717,36 +2803,40 @@ monitor interval=20 (A-monitor-interval-20)
             ),
         )
 
-        o, r = pcs(temp_cib, "resource status")
+        o, r = pcs(self.temp_cib.name, "resource status")
         assert r == 0
         ac(o, "NO resources configured\n")
 
     def testResourceCloneCreation(self):
         # resource "dummy1" is already in "temp_large_cib
-        output, returnVal = pcs(temp_large_cib, "resource clone dummy1")
+        output, returnVal = pcs(
+            self.temp_large_cib.name, "resource clone dummy1"
+        )
         ac(output, "")
         assert returnVal == 0
 
-        output, returnVal = pcs(temp_large_cib, "resource unclone dummy1")
+        output, returnVal = pcs(
+            self.temp_large_cib.name, "resource unclone dummy1"
+        )
         ac(output, "")
         assert returnVal == 0
 
     def testResourceCloneId(self):
         output, returnVal = pcs(
-            temp_cib,
+            self.temp_cib.name,
             "resource create --no-default-ops dummy-clone ocf:heartbeat:Dummy",
         )
         ac(output, "")
         self.assertEqual(0, returnVal)
 
         output, returnVal = pcs(
-            temp_cib,
+            self.temp_cib.name,
             "resource create --no-default-ops dummy ocf:heartbeat:Dummy",
         )
         ac(output, "")
         self.assertEqual(0, returnVal)
 
-        output, returnVal = pcs(temp_cib, "resource clone dummy")
+        output, returnVal = pcs(self.temp_cib.name, "resource clone dummy")
         ac(output, "")
         self.assertEqual(0, returnVal)
 
@@ -2768,7 +2858,7 @@ monitor interval=20 (A-monitor-interval-20)
         )
 
         output, returnVal = pcs(
-            temp_cib,
+            self.temp_cib.name,
             "resource create --no-default-ops dummy ocf:heartbeat:Dummy clone",
         )
         ac(output, "")
@@ -2789,20 +2879,20 @@ monitor interval=20 (A-monitor-interval-20)
 
     def testResourcePromotableId(self):
         output, returnVal = pcs(
-            temp_cib,
+            self.temp_cib.name,
             "resource create --no-default-ops dummy-clone ocf:heartbeat:Dummy",
         )
         ac(output, "")
         self.assertEqual(0, returnVal)
 
         output, returnVal = pcs(
-            temp_cib,
+            self.temp_cib.name,
             "resource create --no-default-ops dummy ocf:heartbeat:Dummy",
         )
         ac(output, "")
         self.assertEqual(0, returnVal)
 
-        output, returnVal = pcs(temp_cib, "resource promotable dummy")
+        output, returnVal = pcs(self.temp_cib.name, "resource promotable dummy")
         ac(output, "")
         self.assertEqual(0, returnVal)
 
@@ -2825,7 +2915,7 @@ monitor interval=20 (A-monitor-interval-20)
         )
 
         output, returnVal = pcs(
-            temp_cib,
+            self.temp_cib.name,
             "resource create --no-default-ops dummy ocf:heartbeat:Dummy promotable",
         )
         ac(output, "")
@@ -2847,7 +2937,7 @@ monitor interval=20 (A-monitor-interval-20)
 
     def testResourceCloneUpdate(self):
         o, r = pcs(
-            temp_cib,
+            self.temp_cib.name,
             "resource create --no-default-ops D1 ocf:heartbeat:Dummy clone",
         )
         assert r == 0
@@ -2864,7 +2954,7 @@ monitor interval=20 (A-monitor-interval-20)
             ),
         )
 
-        o, r = pcs(temp_cib, "resource update D1-clone foo=bar")
+        o, r = pcs(self.temp_cib.name, "resource update D1-clone foo=bar")
         ac(o, "")
         self.assertEqual(0, r)
 
@@ -2894,7 +2984,7 @@ monitor interval=20 (A-monitor-interval-20)
             ),
         )
 
-        o, r = pcs(temp_cib, "resource update D1-clone foo=")
+        o, r = pcs(self.temp_cib.name, "resource update D1-clone foo=")
         assert r == 0
         ac(o, "")
 
@@ -2912,22 +3002,22 @@ monitor interval=20 (A-monitor-interval-20)
 
     def testGroupRemoveWithConstraints2(self):
         o, r = pcs(
-            temp_cib,
+            self.temp_cib.name,
             "resource create --no-default-ops A ocf:heartbeat:Dummy --group AG",
         )
         assert r == 0
 
         o, r = pcs(
-            temp_cib,
+            self.temp_cib.name,
             "resource create --no-default-ops B ocf:heartbeat:Dummy --group AG",
         )
         assert r == 0
 
-        o, r = pcs(temp_cib, "constraint location AG prefers rh7-1")
+        o, r = pcs(self.temp_cib.name, "constraint location AG prefers rh7-1")
         ac(o, LOCATION_NODE_VALIDATION_SKIP_WARNING)
         assert r == 0
 
-        o, r = pcs(temp_cib, "resource ungroup AG")
+        o, r = pcs(self.temp_cib.name, "resource ungroup AG")
         ac(o, "Removing Constraint - location-AG-rh7-1-INFINITY\n")
         assert r == 0
 
@@ -2944,12 +3034,12 @@ monitor interval=20 (A-monitor-interval-20)
         )
 
         o, r = pcs(
-            temp_cib,
+            self.temp_cib.name,
             "resource create --no-default-ops A1 ocf:heartbeat:Dummy --group AA",
         )
         assert r == 0
         o, r = pcs(
-            temp_cib,
+            self.temp_cib.name,
             "resource create --no-default-ops A2 ocf:heartbeat:Dummy --group AA",
         )
         assert r == 0
@@ -2957,9 +3047,11 @@ monitor interval=20 (A-monitor-interval-20)
         # pcs no longer allows turning resources into masters but supports
         # existing ones. In order to test it, we need to put a master in the
         # CIB without pcs.
-        wrap_element_by_master(temp_cib, "AA")
+        wrap_element_by_master(self.temp_cib, "AA")
 
-        o, r = pcs(temp_cib, "constraint location AA-master prefers rh7-1")
+        o, r = pcs(
+            self.temp_cib.name, "constraint location AA-master prefers rh7-1"
+        )
         assert r == 0
 
         self.assert_pcs_success(
@@ -2978,19 +3070,19 @@ monitor interval=20 (A-monitor-interval-20)
 
     def testMasteredGroup(self):
         o, r = pcs(
-            temp_cib,
+            self.temp_cib.name,
             "resource create --no-default-ops A ocf:heartbeat:Dummy --group AG",
         )
         assert r == 0
 
         o, r = pcs(
-            temp_cib,
+            self.temp_cib.name,
             "resource create --no-default-ops B ocf:heartbeat:Dummy --group AG",
         )
         assert r == 0
 
         o, r = pcs(
-            temp_cib,
+            self.temp_cib.name,
             "resource create --no-default-ops C ocf:heartbeat:Dummy --group AG",
         )
         assert r == 0
@@ -2998,7 +3090,7 @@ monitor interval=20 (A-monitor-interval-20)
         # pcs no longer allows turning resources into masters but supports
         # existing ones. In order to test it, we need to put a master in the
         # CIB without pcs.
-        wrap_element_by_master(temp_cib, "AG", master_id="AGMaster")
+        wrap_element_by_master(self.temp_cib, "AG", master_id="AGMaster")
 
         self.assert_pcs_fail(
             "resource create --no-default-ops A ocf:heartbeat:Dummy",
@@ -3015,16 +3107,16 @@ monitor interval=20 (A-monitor-interval-20)
             "Error: 'AGMaster' already exists\n",
         )
 
-        o, r = pcs(temp_cib, "resource ungroup AG")
+        o, r = pcs(self.temp_cib.name, "resource ungroup AG")
         ac(o, "Error: Cannot remove all resources from a cloned group\n")
         assert r == 1
 
-        o, r = pcs(temp_cib, "resource delete B")
+        o, r = pcs(self.temp_cib.name, "resource delete B")
         assert r == 0
-        o, r = pcs(temp_cib, "resource delete C")
+        o, r = pcs(self.temp_cib.name, "resource delete C")
         assert r == 0
 
-        o, r = pcs(temp_cib, "resource ungroup AG")
+        o, r = pcs(self.temp_cib.name, "resource ungroup AG")
         ac(o, "")
         assert r == 0
 
@@ -3042,20 +3134,20 @@ monitor interval=20 (A-monitor-interval-20)
 
     def testClonedGroup(self):
         output, returnVal = pcs(
-            temp_cib,
+            self.temp_cib.name,
             "resource create --no-default-ops D1 ocf:heartbeat:Dummy --group DG",
         )
         ac(output, "")
         self.assertEqual(0, returnVal)
 
         output, returnVal = pcs(
-            temp_cib,
+            self.temp_cib.name,
             "resource create --no-default-ops D2 ocf:heartbeat:Dummy --group DG",
         )
         ac(output, "")
         self.assertEqual(0, returnVal)
 
-        output, returnVal = pcs(temp_cib, "resource clone DG")
+        output, returnVal = pcs(self.temp_cib.name, "resource clone DG")
         ac(output, "")
         self.assertEqual(0, returnVal)
 
@@ -3086,15 +3178,15 @@ monitor interval=20 (A-monitor-interval-20)
             "Error: 'DG-clone' already exists\n",
         )
 
-        output, returnVal = pcs(temp_cib, "resource ungroup DG")
+        output, returnVal = pcs(self.temp_cib.name, "resource ungroup DG")
         ac(output, "Error: Cannot remove all resources from a cloned group\n")
         self.assertEqual(1, returnVal)
 
-        output, returnVal = pcs(temp_cib, "resource ungroup DG D1 D2")
+        output, returnVal = pcs(self.temp_cib.name, "resource ungroup DG D1 D2")
         ac(output, "Error: Cannot remove all resources from a cloned group\n")
         self.assertEqual(1, returnVal)
 
-        output, returnVal = pcs(temp_cib, "resource ungroup DG D1")
+        output, returnVal = pcs(self.temp_cib.name, "resource ungroup DG D1")
         ac(output, "")
         self.assertEqual(0, returnVal)
 
@@ -3112,7 +3204,7 @@ monitor interval=20 (A-monitor-interval-20)
             ),
         )
 
-        output, returnVal = pcs(temp_cib, "resource ungroup DG")
+        output, returnVal = pcs(self.temp_cib.name, "resource ungroup DG")
         ac(output, "")
         self.assertEqual(0, returnVal)
 
@@ -3137,13 +3229,14 @@ monitor interval=20 (A-monitor-interval-20)
 
         # see also BundleMiscCommands
         o, r = pcs(
-            temp_cib, "resource create --no-default-ops D1 ocf:heartbeat:Dummy"
+            self.temp_cib.name,
+            "resource create --no-default-ops D1 ocf:heartbeat:Dummy",
         )
         ac(o, "")
         assert r == 0
 
         # primitive resource
-        o, r = pcs(temp_cib, "resource disable D1")
+        o, r = pcs(self.temp_cib.name, "resource disable D1")
         ac(o, "")
         assert r == 0
 
@@ -3158,7 +3251,7 @@ monitor interval=20 (A-monitor-interval-20)
             ),
         )
 
-        o, r = pcs(temp_cib, "resource enable D1")
+        o, r = pcs(self.temp_cib.name, "resource enable D1")
         ac(o, "")
         assert r == 0
 
@@ -3173,22 +3266,22 @@ monitor interval=20 (A-monitor-interval-20)
         )
 
         # bad resource name
-        o, r = pcs(temp_cib, "resource enable NoExist")
+        o, r = pcs(self.temp_cib.name, "resource enable NoExist")
         ac(o, "Error: bundle/clone/group/resource 'NoExist' does not exist\n")
         assert r == 1
 
-        o, r = pcs(temp_cib, "resource disable NoExist")
+        o, r = pcs(self.temp_cib.name, "resource disable NoExist")
         ac(o, "Error: bundle/clone/group/resource 'NoExist' does not exist\n")
         assert r == 1
 
         # cloned group
         output, retVal = pcs(
-            temp_cib,
+            self.temp_cib.name,
             "resource create dummy0 ocf:heartbeat:Dummy --group group0",
         )
         ac(output, "")
         assert retVal == 0
-        output, retVal = pcs(temp_cib, "resource clone group0")
+        output, retVal = pcs(self.temp_cib.name, "resource clone group0")
         ac(output, "")
         assert retVal == 0
         self.assert_pcs_success(
@@ -3208,7 +3301,7 @@ monitor interval=20 (A-monitor-interval-20)
             ),
         )
         assert retVal == 0
-        output, retVal = pcs(temp_cib, "resource disable group0")
+        output, retVal = pcs(self.temp_cib.name, "resource disable group0")
         ac(output, "")
         assert retVal == 0
 
@@ -3220,43 +3313,45 @@ monitor interval=20 (A-monitor-interval-20)
 
         # see also BundleMiscCommands
         o, r = pcs(
-            temp_cib, "resource create --no-default-ops D1 ocf:heartbeat:Dummy"
+            self.temp_cib.name,
+            "resource create --no-default-ops D1 ocf:heartbeat:Dummy",
         )
         ac(o, "")
         assert r == 0
 
         o, r = pcs(
-            temp_cib, "resource create --no-default-ops D2 ocf:heartbeat:Dummy"
+            self.temp_cib.name,
+            "resource create --no-default-ops D2 ocf:heartbeat:Dummy",
         )
         ac(o, "")
         assert r == 0
 
         # unmanaged resource - by meta attribute
-        o, r = pcs(temp_cib, "resource unmanage D2")
+        o, r = pcs(self.temp_cib.name, "resource unmanage D2")
         ac(o, "")
         assert r == 0
-        o, r = pcs(temp_cib, "resource disable D2")
+        o, r = pcs(self.temp_cib.name, "resource disable D2")
         ac(o, "Warning: 'D2' is unmanaged\n")
         assert r == 0
-        o, r = pcs(temp_cib, "resource enable D2")
+        o, r = pcs(self.temp_cib.name, "resource enable D2")
         ac(o, "Warning: 'D2' is unmanaged\n")
         assert r == 0
 
         # unmanaged resource - by resource defaults
-        o, r = pcs(temp_cib, "resource defaults is-managed=false")
+        o, r = pcs(self.temp_cib.name, "resource defaults is-managed=false")
         ac(
             o,
             "Warning: Defaults do not apply to resources which override them "
             "with their own defined values\n",
         )
         assert r == 0
-        o, r = pcs(temp_cib, "resource disable D1")
+        o, r = pcs(self.temp_cib.name, "resource disable D1")
         ac(o, "Warning: 'D1' is unmanaged\n")
         assert r == 0
-        o, r = pcs(temp_cib, "resource enable D1")
+        o, r = pcs(self.temp_cib.name, "resource enable D1")
         ac(o, "Warning: 'D1' is unmanaged\n")
         assert r == 0
-        o, r = pcs(temp_cib, "resource defaults is-managed=")
+        o, r = pcs(self.temp_cib.name, "resource defaults is-managed=")
         ac(
             o,
             "Warning: Defaults do not apply to resources which override them "
@@ -3266,51 +3361,53 @@ monitor interval=20 (A-monitor-interval-20)
 
         # resource in an unmanaged group
         o, r = pcs(
-            temp_cib, "resource create --no-default-ops D3 ocf:heartbeat:Dummy"
+            self.temp_cib.name,
+            "resource create --no-default-ops D3 ocf:heartbeat:Dummy",
         )
         ac(o, "")
         assert r == 0
-        o, r = pcs(temp_cib, "resource group add DG D3")
+        o, r = pcs(self.temp_cib.name, "resource group add DG D3")
         ac(o, "")
         assert r == 0
-        o, r = pcs(temp_cib, "resource unmanage DG")
+        o, r = pcs(self.temp_cib.name, "resource unmanage DG")
         ac(o, "")
         assert r == 0
-        o, r = pcs(temp_cib, "resource disable D3")
+        o, r = pcs(self.temp_cib.name, "resource disable D3")
         ac(o, "Warning: 'D3' is unmanaged\n")
         assert r == 0
-        o, r = pcs(temp_cib, "resource enable D3")
+        o, r = pcs(self.temp_cib.name, "resource enable D3")
         ac(o, "Warning: 'D3' is unmanaged\n")
         assert r == 0
-        o, r = pcs(temp_cib, "resource disable DG")
+        o, r = pcs(self.temp_cib.name, "resource disable DG")
         ac(o, "Warning: 'DG' is unmanaged\n")
         assert r == 0
-        o, r = pcs(temp_cib, "resource enable DG")
+        o, r = pcs(self.temp_cib.name, "resource enable DG")
         ac(o, "Warning: 'DG' is unmanaged\n")
         assert r == 0
-        o, r = pcs(temp_cib, "resource manage DG")
+        o, r = pcs(self.temp_cib.name, "resource manage DG")
         ac(o, "")
         assert r == 0
 
         # unmanaged resource in a group
         o, r = pcs(
-            temp_cib, "resource create --no-default-ops D4 ocf:heartbeat:Dummy"
+            self.temp_cib.name,
+            "resource create --no-default-ops D4 ocf:heartbeat:Dummy",
         )
         ac(o, "")
         assert r == 0
-        o, r = pcs(temp_cib, "resource group add DG D4")
+        o, r = pcs(self.temp_cib.name, "resource group add DG D4")
         ac(o, "")
         assert r == 0
-        o, r = pcs(temp_cib, "resource unmanage D4")
+        o, r = pcs(self.temp_cib.name, "resource unmanage D4")
         ac(o, "")
         assert r == 0
-        o, r = pcs(temp_cib, "resource disable DG")
+        o, r = pcs(self.temp_cib.name, "resource disable DG")
         ac(o, "Warning: 'DG' is unmanaged\n")
         assert r == 0
-        o, r = pcs(temp_cib, "resource enable DG")
+        o, r = pcs(self.temp_cib.name, "resource enable DG")
         ac(o, "Warning: 'DG' is unmanaged\n")
         assert r == 0
-        o, r = pcs(temp_cib, "resource manage D4")
+        o, r = pcs(self.temp_cib.name, "resource manage D4")
         ac(o, "")
         assert r == 0
 
@@ -3320,18 +3417,18 @@ monitor interval=20 (A-monitor-interval-20)
         # However those test the pcs library. I'm leaving these tests here to
         # test the cli part for now.
         output, retVal = pcs(
-            temp_cib,
+            self.temp_cib.name,
             "resource create --no-default-ops dummy ocf:heartbeat:Dummy clone",
         )
         ac(output, "")
         self.assertEqual(retVal, 0)
 
         # disable primitive, enable clone
-        output, retVal = pcs(temp_cib, "resource disable dummy")
+        output, retVal = pcs(self.temp_cib.name, "resource disable dummy")
         ac(output, "")
         self.assertEqual(retVal, 0)
 
-        output, retVal = pcs(temp_cib, "resource enable dummy-clone")
+        output, retVal = pcs(self.temp_cib.name, "resource enable dummy-clone")
         ac(output, "")
         self.assertEqual(retVal, 0)
 
@@ -3347,11 +3444,11 @@ monitor interval=20 (A-monitor-interval-20)
         )
 
         # disable clone, enable primitive
-        output, retVal = pcs(temp_cib, "resource disable dummy-clone")
+        output, retVal = pcs(self.temp_cib.name, "resource disable dummy-clone")
         ac(output, "")
         self.assertEqual(retVal, 0)
 
-        output, retVal = pcs(temp_cib, "resource enable dummy")
+        output, retVal = pcs(self.temp_cib.name, "resource enable dummy")
         ac(output, "")
         self.assertEqual(retVal, 0)
 
@@ -3367,15 +3464,15 @@ monitor interval=20 (A-monitor-interval-20)
         )
 
         # disable both primitive and clone, enable clone
-        output, retVal = pcs(temp_cib, "resource disable dummy-clone")
+        output, retVal = pcs(self.temp_cib.name, "resource disable dummy-clone")
         ac(output, "")
         self.assertEqual(retVal, 0)
 
-        output, retVal = pcs(temp_cib, "resource disable dummy")
+        output, retVal = pcs(self.temp_cib.name, "resource disable dummy")
         ac(output, "")
         self.assertEqual(retVal, 0)
 
-        output, retVal = pcs(temp_cib, "resource enable dummy-clone")
+        output, retVal = pcs(self.temp_cib.name, "resource enable dummy-clone")
         ac(output, "")
         self.assertEqual(retVal, 0)
 
@@ -3391,15 +3488,15 @@ monitor interval=20 (A-monitor-interval-20)
         )
 
         # disable both primitive and clone, enable primitive
-        output, retVal = pcs(temp_cib, "resource disable dummy-clone")
+        output, retVal = pcs(self.temp_cib.name, "resource disable dummy-clone")
         ac(output, "")
         self.assertEqual(retVal, 0)
 
-        output, retVal = pcs(temp_cib, "resource disable dummy")
+        output, retVal = pcs(self.temp_cib.name, "resource disable dummy")
         ac(output, "")
         self.assertEqual(retVal, 0)
 
-        output, retVal = pcs(temp_cib, "resource enable dummy")
+        output, retVal = pcs(self.temp_cib.name, "resource enable dummy")
         ac(output, "")
         self.assertEqual(retVal, 0)
 
@@ -3415,7 +3512,7 @@ monitor interval=20 (A-monitor-interval-20)
         )
 
         # disable via 'resource disable', enable via 'resource meta'
-        output, retVal = pcs(temp_cib, "resource disable dummy-clone")
+        output, retVal = pcs(self.temp_cib.name, "resource disable dummy-clone")
         ac(output, "")
         self.assertEqual(retVal, 0)
 
@@ -3431,7 +3528,9 @@ monitor interval=20 (A-monitor-interval-20)
             ),
         )
 
-        output, retVal = pcs(temp_cib, "resource meta dummy-clone target-role=")
+        output, retVal = pcs(
+            self.temp_cib.name, "resource meta dummy-clone target-role="
+        )
         ac(output, "")
         self.assertEqual(retVal, 0)
 
@@ -3448,7 +3547,7 @@ monitor interval=20 (A-monitor-interval-20)
 
         # disable via 'resource meta', enable via 'resource enable'
         output, retVal = pcs(
-            temp_cib, "resource meta dummy-clone target-role=Stopped"
+            self.temp_cib.name, "resource meta dummy-clone target-role=Stopped"
         )
         ac(output, "")
         self.assertEqual(retVal, 0)
@@ -3465,7 +3564,7 @@ monitor interval=20 (A-monitor-interval-20)
             ),
         )
 
-        output, retVal = pcs(temp_cib, "resource enable dummy-clone")
+        output, retVal = pcs(self.temp_cib.name, "resource enable dummy-clone")
         ac(output, "")
         self.assertEqual(retVal, 0)
 
@@ -3488,14 +3587,16 @@ monitor interval=20 (A-monitor-interval-20)
 
         # pcs no longer allows creating masters but supports existing ones. In
         # order to test it, we need to put a master in the CIB without pcs.
-        fixture_to_cib(temp_cib, fixture_master_xml("dummy", all_ops=False))
+        fixture_to_cib(
+            self.temp_cib.name, fixture_master_xml("dummy", all_ops=False)
+        )
 
         # disable primitive, enable master
-        output, retVal = pcs(temp_cib, "resource disable dummy")
+        output, retVal = pcs(self.temp_cib.name, "resource disable dummy")
         ac(output, "")
         self.assertEqual(retVal, 0)
 
-        output, retVal = pcs(temp_cib, "resource enable dummy-master")
+        output, retVal = pcs(self.temp_cib.name, "resource enable dummy-master")
         ac(output, "")
         self.assertEqual(retVal, 0)
 
@@ -3513,11 +3614,13 @@ monitor interval=20 (A-monitor-interval-20)
         )
 
         # disable master, enable primitive
-        output, retVal = pcs(temp_cib, "resource disable dummy-master")
+        output, retVal = pcs(
+            self.temp_cib.name, "resource disable dummy-master"
+        )
         ac(output, "")
         self.assertEqual(retVal, 0)
 
-        output, retVal = pcs(temp_cib, "resource enable dummy")
+        output, retVal = pcs(self.temp_cib.name, "resource enable dummy")
         ac(output, "")
         self.assertEqual(retVal, 0)
 
@@ -3535,15 +3638,17 @@ monitor interval=20 (A-monitor-interval-20)
         )
 
         # disable both primitive and master, enable master
-        output, retVal = pcs(temp_cib, "resource disable dummy-master")
+        output, retVal = pcs(
+            self.temp_cib.name, "resource disable dummy-master"
+        )
         ac(output, "")
         self.assertEqual(retVal, 0)
 
-        output, retVal = pcs(temp_cib, "resource disable dummy")
+        output, retVal = pcs(self.temp_cib.name, "resource disable dummy")
         ac(output, "")
         self.assertEqual(retVal, 0)
 
-        output, retVal = pcs(temp_cib, "resource enable dummy-master")
+        output, retVal = pcs(self.temp_cib.name, "resource enable dummy-master")
         ac(output, "")
         self.assertEqual(retVal, 0)
 
@@ -3561,15 +3666,17 @@ monitor interval=20 (A-monitor-interval-20)
         )
 
         # disable both primitive and master, enable primitive
-        output, retVal = pcs(temp_cib, "resource disable dummy-master")
+        output, retVal = pcs(
+            self.temp_cib.name, "resource disable dummy-master"
+        )
         ac(output, "")
         self.assertEqual(retVal, 0)
 
-        output, retVal = pcs(temp_cib, "resource disable dummy")
+        output, retVal = pcs(self.temp_cib.name, "resource disable dummy")
         ac(output, "")
         self.assertEqual(retVal, 0)
 
-        output, retVal = pcs(temp_cib, "resource enable dummy")
+        output, retVal = pcs(self.temp_cib.name, "resource enable dummy")
         ac(output, "")
         self.assertEqual(retVal, 0)
 
@@ -3587,7 +3694,9 @@ monitor interval=20 (A-monitor-interval-20)
         )
 
         # disable via 'resource disable', enable via 'resource meta'
-        output, retVal = pcs(temp_cib, "resource disable dummy-master")
+        output, retVal = pcs(
+            self.temp_cib.name, "resource disable dummy-master"
+        )
         ac(output, "")
         self.assertEqual(retVal, 0)
 
@@ -3605,7 +3714,7 @@ monitor interval=20 (A-monitor-interval-20)
         )
 
         output, retVal = pcs(
-            temp_cib, "resource meta dummy-master target-role="
+            self.temp_cib.name, "resource meta dummy-master target-role="
         )
         ac(output, "")
         self.assertEqual(retVal, 0)
@@ -3625,7 +3734,7 @@ monitor interval=20 (A-monitor-interval-20)
 
         # disable via 'resource meta', enable via 'resource enable'
         output, retVal = pcs(
-            temp_cib, "resource meta dummy-master target-role=Stopped"
+            self.temp_cib.name, "resource meta dummy-master target-role=Stopped"
         )
         ac(output, "")
         self.assertEqual(retVal, 0)
@@ -3643,7 +3752,7 @@ monitor interval=20 (A-monitor-interval-20)
             ),
         )
 
-        output, retVal = pcs(temp_cib, "resource enable dummy-master")
+        output, retVal = pcs(self.temp_cib.name, "resource enable dummy-master")
         ac(output, "")
         self.assertEqual(retVal, 0)
 
@@ -3779,13 +3888,14 @@ monitor interval=20 (A-monitor-interval-20)
 
     def testOPOption(self):
         o, r = pcs(
-            temp_cib, "resource create --no-default-ops B ocf:heartbeat:Dummy"
+            self.temp_cib.name,
+            "resource create --no-default-ops B ocf:heartbeat:Dummy",
         )
         ac(o, "")
         assert r == 0
 
         o, r = pcs(
-            temp_cib,
+            self.temp_cib.name,
             "resource update B ocf:heartbeat:Dummy op monitor interval=30s blah=blah",
         )
         ac(
@@ -3795,12 +3905,16 @@ monitor interval=20 (A-monitor-interval-20)
         assert r == 1
 
         o, r = pcs(
-            temp_cib, "resource create --no-default-ops C ocf:heartbeat:Dummy"
+            self.temp_cib.name,
+            "resource create --no-default-ops C ocf:heartbeat:Dummy",
         )
         ac(o, "")
         assert r == 0
 
-        o, r = pcs(temp_cib, "resource op add C monitor interval=30s blah=blah")
+        o, r = pcs(
+            self.temp_cib.name,
+            "resource op add C monitor interval=30s blah=blah",
+        )
         ac(
             o,
             "Error: blah is not a valid op option (use --force to override)\n",
@@ -3808,7 +3922,8 @@ monitor interval=20 (A-monitor-interval-20)
         assert r == 1
 
         output, returnVal = pcs(
-            temp_cib, "resource op add C monitor interval=60 role=role"
+            self.temp_cib.name,
+            "resource op add C monitor interval=60 role=role",
         )
         ac(
             output,
@@ -3831,7 +3946,7 @@ Error: role must be: Stopped, Started, Slave or Master (use --force to override)
         )
 
         o, r = pcs(
-            temp_cib,
+            self.temp_cib.name,
             "resource update B op monitor interval=30s monitor interval=31s role=master",
         )
         ac(
@@ -3841,7 +3956,7 @@ Error: role must be: Stopped, Started, Slave or Master (use --force to override)
         assert r == 1
 
         o, r = pcs(
-            temp_cib,
+            self.temp_cib.name,
             "resource update B op monitor interval=30s monitor interval=31s role=Master",
         )
         ac(o, "")
@@ -3860,7 +3975,7 @@ Error: role must be: Stopped, Started, Slave or Master (use --force to override)
             ),
         )
 
-        o, r = pcs(temp_cib, "resource update B op interval=5s")
+        o, r = pcs(self.temp_cib.name, "resource update B op interval=5s")
         ac(
             o,
             "Error: interval=5s does not appear to be a valid operation action\n",
@@ -3868,26 +3983,26 @@ Error: role must be: Stopped, Started, Slave or Master (use --force to override)
         assert r == 1
 
     def testCloneBadResources(self):
-        self.setupClusterA(temp_cib)
-        o, r = pcs(temp_cib, "resource clone ClusterIP4")
+        self.setupClusterA()
+        o, r = pcs(self.temp_cib.name, "resource clone ClusterIP4")
         ac(o, "Error: ClusterIP4 is already a clone resource\n")
         assert r == 1
 
-        o, r = pcs(temp_cib, "resource clone ClusterIP5")
+        o, r = pcs(self.temp_cib.name, "resource clone ClusterIP5")
         ac(o, "Error: ClusterIP5 is already a clone resource\n")
         assert r == 1
 
-        o, r = pcs(temp_cib, "resource promotable ClusterIP4")
+        o, r = pcs(self.temp_cib.name, "resource promotable ClusterIP4")
         ac(o, "Error: ClusterIP4 is already a clone resource\n")
         assert r == 1
 
-        o, r = pcs(temp_cib, "resource promotable ClusterIP5")
+        o, r = pcs(self.temp_cib.name, "resource promotable ClusterIP5")
         ac(o, "Error: ClusterIP5 is already a clone resource\n")
         assert r == 1
 
     def testGroupMSAndClone(self):
         o, r = pcs(
-            temp_cib,
+            self.temp_cib.name,
             "resource create --no-default-ops D3 ocf:heartbeat:Dummy promotable --group xxx clone",
         )
         ac(
@@ -3897,7 +4012,7 @@ Error: role must be: Stopped, Started, Slave or Master (use --force to override)
         assert r == 1
 
         o, r = pcs(
-            temp_cib,
+            self.temp_cib.name,
             "resource create --no-default-ops D4 ocf:heartbeat:Dummy promotable --group xxx",
         )
         ac(
@@ -3908,13 +4023,13 @@ Error: role must be: Stopped, Started, Slave or Master (use --force to override)
 
     def testResourceCloneGroup(self):
         o, r = pcs(
-            temp_cib,
+            self.temp_cib.name,
             "resource create --no-default-ops dummy0 ocf:heartbeat:Dummy --group group",
         )
         ac(o, "")
         assert r == 0
 
-        o, r = pcs(temp_cib, "resource clone group")
+        o, r = pcs(self.temp_cib.name, "resource clone group")
         ac(o, "")
         assert r == 0
 
@@ -3990,25 +4105,25 @@ Error: role must be: Stopped, Started, Slave or Master (use --force to override)
 
     def testClonedMasteredGroup(self):
         output, retVal = pcs(
-            temp_cib,
+            self.temp_cib.name,
             "resource create dummy1 ocf:heartbeat:Dummy --no-default-ops --group dummies",
         )
         ac(output, "")
         assert retVal == 0
         output, retVal = pcs(
-            temp_cib,
+            self.temp_cib.name,
             "resource create dummy2 ocf:heartbeat:Dummy --no-default-ops --group dummies",
         )
         ac(output, "")
         assert retVal == 0
         output, retVal = pcs(
-            temp_cib,
+            self.temp_cib.name,
             "resource create dummy3 ocf:heartbeat:Dummy --no-default-ops --group dummies",
         )
         ac(output, "")
         assert retVal == 0
 
-        output, retVal = pcs(temp_cib, "resource clone dummies")
+        output, retVal = pcs(self.temp_cib.name, "resource clone dummies")
         ac(output, "")
         assert retVal == 0
 
@@ -4028,10 +4143,12 @@ Error: role must be: Stopped, Started, Slave or Master (use --force to override)
             ),
         )
 
-        output, retVal = pcs(temp_cib, "resource unclone dummies-clone")
+        output, retVal = pcs(
+            self.temp_cib.name, "resource unclone dummies-clone"
+        )
         ac(output, "")
         assert retVal == 0
-        output, retVal = pcs(temp_cib, "resource status")
+        output, retVal = pcs(self.temp_cib.name, "resource status")
         if PCMK_2_0_3_PLUS:
             assert_pcs_status(
                 output,
@@ -4058,7 +4175,7 @@ Error: role must be: Stopped, Started, Slave or Master (use --force to override)
             )
         assert retVal == 0
 
-        output, retVal = pcs(temp_cib, "resource clone dummies")
+        output, retVal = pcs(self.temp_cib.name, "resource clone dummies")
         ac(output, "")
         assert retVal == 0
 
@@ -4090,24 +4207,24 @@ Error: role must be: Stopped, Started, Slave or Master (use --force to override)
             """
             ),
         )
-        output, retVal = pcs(temp_cib, "resource status")
+        output, retVal = pcs(self.temp_cib.name, "resource status")
         ac(output, "NO resources configured\n")
         assert retVal == 0
 
         output, retVal = pcs(
-            temp_cib,
+            self.temp_cib.name,
             "resource create dummy1 ocf:heartbeat:Dummy --no-default-ops --group dummies",
         )
         ac(output, "")
         assert retVal == 0
         output, retVal = pcs(
-            temp_cib,
+            self.temp_cib.name,
             "resource create dummy2 ocf:heartbeat:Dummy --no-default-ops --group dummies",
         )
         ac(output, "")
         assert retVal == 0
         output, retVal = pcs(
-            temp_cib,
+            self.temp_cib.name,
             "resource create dummy3 ocf:heartbeat:Dummy --no-default-ops --group dummies",
         )
         ac(output, "")
@@ -4116,7 +4233,7 @@ Error: role must be: Stopped, Started, Slave or Master (use --force to override)
         # pcs no longer allows turning resources into masters but supports
         # existing ones. In order to test it, we need to put a master in the
         # CIB without pcs.
-        wrap_element_by_master(temp_cib, "dummies")
+        wrap_element_by_master(self.temp_cib, "dummies")
 
         self.assert_pcs_success(
             "resource config dummies-master",
@@ -4135,10 +4252,12 @@ Error: role must be: Stopped, Started, Slave or Master (use --force to override)
             ),
         )
 
-        output, retVal = pcs(temp_cib, "resource unclone dummies-master")
+        output, retVal = pcs(
+            self.temp_cib.name, "resource unclone dummies-master"
+        )
         ac(output, "")
         assert retVal == 0
-        output, retVal = pcs(temp_cib, "resource status")
+        output, retVal = pcs(self.temp_cib.name, "resource status")
         if PCMK_2_0_3_PLUS:
             assert_pcs_status(
                 output,
@@ -4168,7 +4287,7 @@ Error: role must be: Stopped, Started, Slave or Master (use --force to override)
         # pcs no longer allows turning resources into masters but supports
         # existing ones. In order to test it, we need to put a master in the
         # CIB without pcs.
-        wrap_element_by_master(temp_cib, "dummies")
+        wrap_element_by_master(self.temp_cib, "dummies")
 
         self.assert_pcs_success(
             "resource config dummies-master",
@@ -4199,7 +4318,7 @@ Error: role must be: Stopped, Started, Slave or Master (use --force to override)
             """
             ),
         )
-        output, retVal = pcs(temp_cib, "resource status")
+        output, retVal = pcs(self.temp_cib.name, "resource status")
         ac(output, "NO resources configured\n")
         assert retVal == 0
 
@@ -4245,7 +4364,7 @@ Error: role must be: Stopped, Started, Slave or Master (use --force to override)
             """
         )
 
-        cib_original, retVal = pcs(temp_cib, "cluster cib")
+        cib_original, retVal = pcs(self.temp_cib.name, "cluster cib")
         self.assertEqual(0, retVal)
 
         resources = set(
@@ -4270,8 +4389,7 @@ Error: role must be: Stopped, Started, Slave or Master (use --force to override)
         self.assertFalse(cib_in is cib_out)
         self.assertEqual(resources, updated_resources)
         self.assert_pcs_success("resource config", status)
-        with open(temp_cib, "w") as f:
-            f.write(cib_out.toxml())
+        write_data_to_tmpfile(cib_out.toxml(), self.temp_cib)
 
         self.assert_pcs_success(
             "resource config",
@@ -4308,8 +4426,7 @@ Error: role must be: Stopped, Started, Slave or Master (use --force to override)
         )
 
         resources = set(["D1", "DG1", "DC", "DGC1"])
-        with open(temp_cib, "w") as f:
-            f.write(cib_original)
+        write_data_to_tmpfile(cib_original, self.temp_cib)
         self.assert_pcs_success("resource config", status)
         cib_in = utils.parseString(cib_original)
         cib_out, updated_resources = resource.resource_relocate_set_stickiness(
@@ -4318,8 +4435,7 @@ Error: role must be: Stopped, Started, Slave or Master (use --force to override)
         self.assertFalse(cib_in is cib_out)
         self.assertEqual(resources, updated_resources)
         self.assert_pcs_success("resource config", status)
-        with open(temp_cib, "w") as f:
-            f.write(cib_out.toxml())
+        write_data_to_tmpfile(cib_out.toxml(), self.temp_cib)
         self.assert_pcs_success(
             "resource config",
             outdent(
@@ -4349,8 +4465,7 @@ Error: role must be: Stopped, Started, Slave or Master (use --force to override)
         )
 
         resources = set(["GRC-clone", "GRC", "DGC1", "DGC2"])
-        with open(temp_cib, "w") as f:
-            f.write(cib_original)
+        write_data_to_tmpfile(cib_original, self.temp_cib)
         self.assert_pcs_success("resource config", status)
         cib_in = utils.parseString(cib_original)
         cib_out, updated_resources = resource.resource_relocate_set_stickiness(
@@ -4359,8 +4474,7 @@ Error: role must be: Stopped, Started, Slave or Master (use --force to override)
         self.assertFalse(cib_in is cib_out)
         self.assertEqual(resources, updated_resources)
         self.assert_pcs_success("resource config", status)
-        with open(temp_cib, "w") as f:
-            f.write(cib_out.toxml())
+        write_data_to_tmpfile(cib_out.toxml(), self.temp_cib)
         self.assert_pcs_success(
             "resource config",
             outdent(
@@ -4390,8 +4504,7 @@ Error: role must be: Stopped, Started, Slave or Master (use --force to override)
         )
 
         resources = set(["GR", "DG1", "DG2", "DC-clone", "DC"])
-        with open(temp_cib, "w") as f:
-            f.write(cib_original)
+        write_data_to_tmpfile(cib_original, self.temp_cib)
         self.assert_pcs_success("resource config", status)
         cib_in = utils.parseString(cib_original)
         cib_out, updated_resources = resource.resource_relocate_set_stickiness(
@@ -4400,8 +4513,7 @@ Error: role must be: Stopped, Started, Slave or Master (use --force to override)
         self.assertFalse(cib_in is cib_out)
         self.assertEqual(resources, updated_resources)
         self.assert_pcs_success("resource config", status)
-        with open(temp_cib, "w") as f:
-            f.write(cib_out.toxml())
+        write_data_to_tmpfile(cib_out.toxml(), self.temp_cib)
         self.assert_pcs_success(
             "resource config",
             outdent(
@@ -4444,12 +4556,19 @@ class OperationDeleteRemoveMixin(
 
     def setUp(self):
         self.empty_cib = empty_cib
-        self.temp_cib = temp_cib
-        shutil.copy(self.empty_cib, self.temp_cib)
-        shutil.copy(large_cib, temp_large_cib)
-        self.pcs_runner = PcsRunner(self.temp_cib)
+        self.temp_cib = get_tmp_file("tier0_resource_operation_delete")
+        self.temp_large_cib = get_tmp_file(
+            "tier0_resource_large_operation_delete"
+        )
+        write_file_to_tmpfile(empty_cib, self.temp_cib)
+        write_file_to_tmpfile(large_cib, self.temp_large_cib)
+        self.pcs_runner = PcsRunner(self.temp_cib.name)
         self.pcs_runner.mock_settings = get_mock_settings("crm_resource_binary")
         self.command = "to-be-overriden"
+
+    def tearDown(self):
+        self.temp_cib.close()
+        self.temp_large_cib.close()
 
     fixture_xml_1_monitor = """
         <resources>
@@ -4606,11 +4725,16 @@ class Utilization(
 ):
     def setUp(self):
         self.empty_cib = empty_cib
-        self.temp_cib = temp_cib
-        shutil.copy(self.empty_cib, self.temp_cib)
-        shutil.copy(large_cib, temp_large_cib)
-        self.pcs_runner = PcsRunner(self.temp_cib)
+        self.temp_cib = get_tmp_file("tier0_resource_utilization")
+        self.temp_large_cib = get_tmp_file("tier0_resource_utilization_large")
+        write_file_to_tmpfile(empty_cib, self.temp_cib)
+        write_file_to_tmpfile(large_cib, self.temp_large_cib)
+        self.pcs_runner = PcsRunner(self.temp_cib.name)
         self.pcs_runner.mock_settings = get_mock_settings("crm_resource_binary")
+
+    def tearDown(self):
+        self.temp_cib.close()
+        self.temp_large_cib.close()
 
     @staticmethod
     def fixture_xml_resource_no_utilization():
@@ -4676,19 +4800,23 @@ class Utilization(
     def testResrourceUtilizationSet(self):
         # see also BundleMiscCommands
         output, returnVal = pcs(
-            temp_large_cib, "resource utilization dummy test1=10"
+            self.temp_large_cib.name, "resource utilization dummy test1=10"
         )
         ac("", output)
         self.assertEqual(0, returnVal)
 
-        output, returnVal = pcs(temp_large_cib, "resource utilization dummy1")
+        output, returnVal = pcs(
+            self.temp_large_cib.name, "resource utilization dummy1"
+        )
         expected_out = """\
 Resource Utilization:
  dummy1: \n"""
         ac(expected_out, output)
         self.assertEqual(0, returnVal)
 
-        output, returnVal = pcs(temp_large_cib, "resource utilization dummy")
+        output, returnVal = pcs(
+            self.temp_large_cib.name, "resource utilization dummy"
+        )
         expected_out = """\
 Resource Utilization:
  dummy: test1=10
@@ -4697,11 +4825,14 @@ Resource Utilization:
         self.assertEqual(0, returnVal)
 
         output, returnVal = pcs(
-            temp_large_cib, "resource utilization dummy test1=-10 test4=1234"
+            self.temp_large_cib.name,
+            "resource utilization dummy test1=-10 test4=1234",
         )
         ac("", output)
         self.assertEqual(0, returnVal)
-        output, returnVal = pcs(temp_large_cib, "resource utilization dummy")
+        output, returnVal = pcs(
+            self.temp_large_cib.name, "resource utilization dummy"
+        )
         expected_out = """\
 Resource Utilization:
  dummy: test1=-10 test4=1234
@@ -4710,11 +4841,14 @@ Resource Utilization:
         self.assertEqual(0, returnVal)
 
         output, returnVal = pcs(
-            temp_large_cib, "resource utilization dummy1 test2=321 empty="
+            self.temp_large_cib.name,
+            "resource utilization dummy1 test2=321 empty=",
         )
         ac("", output)
         self.assertEqual(0, returnVal)
-        output, returnVal = pcs(temp_large_cib, "resource utilization dummy1")
+        output, returnVal = pcs(
+            self.temp_large_cib.name, "resource utilization dummy1"
+        )
         expected_out = """\
 Resource Utilization:
  dummy1: test2=321
@@ -4722,7 +4856,9 @@ Resource Utilization:
         ac(expected_out, output)
         self.assertEqual(0, returnVal)
 
-        output, returnVal = pcs(temp_large_cib, "resource utilization")
+        output, returnVal = pcs(
+            self.temp_large_cib.name, "resource utilization"
+        )
         expected_out = """\
 Resource Utilization:
  dummy: test1=-10 test4=1234
@@ -4733,7 +4869,7 @@ Resource Utilization:
 
     def test_resource_utilization_set_invalid(self):
         output, returnVal = pcs(
-            temp_large_cib, "resource utilization dummy test"
+            self.temp_large_cib.name, "resource utilization dummy test"
         )
         expected_out = """\
 Error: missing value of 'test' option
@@ -4742,7 +4878,7 @@ Error: missing value of 'test' option
         self.assertEqual(1, returnVal)
 
         output, returnVal = pcs(
-            temp_large_cib, "resource utilization dummy =10"
+            self.temp_large_cib.name, "resource utilization dummy =10"
         )
         expected_out = """\
 Error: missing key in '=10' option
@@ -4750,15 +4886,8 @@ Error: missing key in '=10' option
         ac(expected_out, output)
         self.assertEqual(1, returnVal)
 
-        output, returnVal = pcs(temp_large_cib, "resource utilization dummy0")
-        expected_out = """\
-Error: Unable to find a resource: dummy0
-"""
-        ac(expected_out, output)
-        self.assertEqual(1, returnVal)
-
         output, returnVal = pcs(
-            temp_large_cib, "resource utilization dummy0 test=10"
+            self.temp_large_cib.name, "resource utilization dummy0"
         )
         expected_out = """\
 Error: Unable to find a resource: dummy0
@@ -4767,7 +4896,17 @@ Error: Unable to find a resource: dummy0
         self.assertEqual(1, returnVal)
 
         output, returnVal = pcs(
-            temp_large_cib, "resource utilization dummy1 test1=10 test=int"
+            self.temp_large_cib.name, "resource utilization dummy0 test=10"
+        )
+        expected_out = """\
+Error: Unable to find a resource: dummy0
+"""
+        ac(expected_out, output)
+        self.assertEqual(1, returnVal)
+
+        output, returnVal = pcs(
+            self.temp_large_cib.name,
+            "resource utilization dummy1 test1=10 test=int",
         )
         expected_out = """\
 Error: Value of utilization attribute must be integer: 'test=int'
@@ -4801,10 +4940,13 @@ class MetaAttrs(
 ):
     def setUp(self):
         self.empty_cib = empty_cib
-        self.temp_cib = temp_cib
-        shutil.copy(self.empty_cib, self.temp_cib)
-        self.pcs_runner = PcsRunner(self.temp_cib)
+        self.temp_cib = get_tmp_file("tier0_resource_meta")
+        write_file_to_tmpfile(empty_cib, self.temp_cib)
+        self.pcs_runner = PcsRunner(self.temp_cib.name)
         self.pcs_runner.mock_settings = get_mock_settings("crm_resource_binary")
+
+    def tearDown(self):
+        self.temp_cib.close()
 
     @staticmethod
     def fixture_xml_resource_no_meta():
@@ -4886,22 +5028,26 @@ class MetaAttrs(
             "interval=35 meta test7=test7a test6="
         )
 
-        output, returnVal = pcs(temp_cib, "resource meta D1 d1meta=superd1meta")
-        assert returnVal == 0
-        assert output == "", [output]
-
-        output, returnVal = pcs(temp_cib, "resource group add TestRG D1")
+        output, returnVal = pcs(
+            self.temp_cib.name, "resource meta D1 d1meta=superd1meta"
+        )
         assert returnVal == 0
         assert output == "", [output]
 
         output, returnVal = pcs(
-            temp_cib,
+            self.temp_cib.name, "resource group add TestRG D1"
+        )
+        assert returnVal == 0
+        assert output == "", [output]
+
+        output, returnVal = pcs(
+            self.temp_cib.name,
             "resource meta TestRG testrgmeta=mymeta testrgmeta2=mymeta2",
         )
         assert returnVal == 0
         assert output == "", [output]
 
-        output, returnVal = pcs(temp_cib, "resource config")
+        output, returnVal = pcs(self.temp_cib.name, "resource config")
         ac(
             output,
             """\
@@ -4961,10 +5107,13 @@ class UpdateInstanceAttrs(
 
     def setUp(self):
         self.empty_cib = empty_cib
-        self.temp_cib = temp_cib
-        shutil.copy(self.empty_cib, self.temp_cib)
-        self.pcs_runner = PcsRunner(self.temp_cib)
+        self.temp_cib = get_tmp_file("tier0_resource_update_instance_attrs")
+        write_file_to_tmpfile(empty_cib, self.temp_cib)
+        self.pcs_runner = PcsRunner(self.temp_cib.name)
         self.pcs_runner.mock_settings = get_mock_settings("crm_resource_binary")
+
+    def tearDown(self):
+        self.temp_cib.close()
 
     @staticmethod
     def fixture_xml_resource_no_attrs():
@@ -5126,8 +5275,12 @@ class UpdateInstanceAttrs(
 
 class ResourcesReferencedFromAcl(TestCase, AssertPcsMixin):
     def setUp(self):
-        shutil.copy(empty_cib, temp_cib)
-        self.pcs_runner = PcsRunner(temp_cib)
+        self.temp_cib = get_tmp_file("tier0_resource_referenced_from_acl")
+        write_file_to_tmpfile(empty_cib, self.temp_cib)
+        self.pcs_runner = PcsRunner(self.temp_cib.name)
+
+    def tearDown(self):
+        self.temp_cib.close()
 
     def test_remove_referenced_primitive_resource(self):
         self.assert_pcs_success("resource create dummy ocf:heartbeat:Dummy")
@@ -5171,8 +5324,12 @@ class ResourcesReferencedFromAcl(TestCase, AssertPcsMixin):
 
 class CloneMasterUpdate(TestCase, AssertPcsMixin):
     def setUp(self):
-        shutil.copy(empty_cib, temp_cib)
-        self.pcs_runner = PcsRunner(temp_cib)
+        self.temp_cib = get_tmp_file("tier0_resource_clone_master_update")
+        write_file_to_tmpfile(empty_cib, self.temp_cib)
+        self.pcs_runner = PcsRunner(self.temp_cib.name)
+
+    def tearDown(self):
+        self.temp_cib.close()
 
     def test_no_op_allowed_in_clone_update(self):
         self.assert_pcs_success(
@@ -5220,7 +5377,7 @@ class CloneMasterUpdate(TestCase, AssertPcsMixin):
     def test_no_op_allowed_in_master_update(self):
         # pcs no longer allows creating masters but supports existing ones. In
         # order to test it, we need to put a master in the CIB without pcs.
-        fixture_to_cib(temp_cib, fixture_master_xml("dummy"))
+        fixture_to_cib(self.temp_cib.name, fixture_master_xml("dummy"))
         show = outdent(
             """\
              Clone: dummy-master
@@ -5246,12 +5403,10 @@ class CloneMasterUpdate(TestCase, AssertPcsMixin):
 
 
 class TransforMasterToClone(ResourceTest):
-    temp_cib = os.path.join(RESOURCES_TMP, "temp-cib.xml")
-
     def test_transform_master_without_meta_on_meta(self):
         # pcs no longer allows creating masters but supports existing ones. In
         # order to test it, we need to put a master in the CIB without pcs.
-        fixture_to_cib(self.temp_cib, fixture_master_xml("dummy"))
+        fixture_to_cib(self.temp_cib.name, fixture_master_xml("dummy"))
         self.assert_effect(
             "resource meta dummy-master a=b",
             """<resources>
@@ -5293,7 +5448,7 @@ class TransforMasterToClone(ResourceTest):
         # pcs no longer allows creating masters but supports existing ones. In
         # order to test it, we need to put a master in the CIB without pcs.
         fixture_to_cib(
-            self.temp_cib,
+            self.temp_cib.name,
             fixture_master_xml("dummy", meta_dict=dict(a="A", b="B", c="C")),
         )
         self.assert_effect(
@@ -5339,7 +5494,7 @@ class TransforMasterToClone(ResourceTest):
     def test_transform_master_without_meta_on_update(self):
         # pcs no longer allows creating masters but supports existing ones. In
         # order to test it, we need to put a master in the CIB without pcs.
-        fixture_to_cib(self.temp_cib, fixture_master_xml("dummy"))
+        fixture_to_cib(self.temp_cib.name, fixture_master_xml("dummy"))
         self.assert_effect(
             "resource update dummy-master meta a=b",
             """<resources>
@@ -5381,7 +5536,7 @@ class TransforMasterToClone(ResourceTest):
         # pcs no longer allows creating masters but supports existing ones. In
         # order to test it, we need to put a master in the CIB without pcs.
         fixture_to_cib(
-            self.temp_cib,
+            self.temp_cib.name,
             fixture_master_xml("dummy", meta_dict=dict(a="A", b="B", c="C")),
         )
         self.assert_effect(
@@ -5427,8 +5582,12 @@ class TransforMasterToClone(ResourceTest):
 
 class ResourceRemoveWithTicket(TestCase, AssertPcsMixin):
     def setUp(self):
-        shutil.copy(empty_cib, temp_cib)
-        self.pcs_runner = PcsRunner(temp_cib)
+        self.temp_cib = get_tmp_file("tier0_resource_remove_with_ticket")
+        write_file_to_tmpfile(empty_cib, self.temp_cib)
+        self.pcs_runner = PcsRunner(self.temp_cib.name)
+
+    def tearDown(self):
+        self.temp_cib.close()
 
     def test_remove_ticket(self):
         self.assert_pcs_success("resource create A ocf:heartbeat:Dummy")
@@ -5457,12 +5616,15 @@ class BundleCommon(
         )
     ),
 ):
-    temp_cib = os.path.join(RESOURCES_TMP, "temp-cib.xml")
     empty_cib = rc("cib-empty-2.8.xml")
 
     def setUp(self):
-        shutil.copy(self.empty_cib, self.temp_cib)
-        self.pcs_runner = PcsRunner(self.temp_cib)
+        self.temp_cib = get_tmp_file("tier0_resource_bundle")
+        write_file_to_tmpfile(self.empty_cib, self.temp_cib)
+        self.pcs_runner = PcsRunner(self.temp_cib.name)
+
+    def tearDown(self):
+        self.temp_cib.close()
 
     def fixture_primitive(self, name, bundle):
         self.assert_pcs_success(
@@ -5765,8 +5927,12 @@ class BundleMiscCommands(BundleCommon):
 
 class ResourceUpdateRemoteAndGuestChecks(TestCase, AssertPcsMixin):
     def setUp(self):
-        shutil.copy(empty_cib, temp_cib)
-        self.pcs_runner = PcsRunner(temp_cib)
+        self.temp_cib = get_tmp_file("tier0_resource_update_remote_guest")
+        write_file_to_tmpfile(empty_cib, self.temp_cib)
+        self.pcs_runner = PcsRunner(self.temp_cib.name)
+
+    def tearDown(self):
+        self.temp_cib.close()
 
     def test_update_fail_on_pacemaker_guest_attempt(self):
         self.assert_pcs_success("resource create R ocf:heartbeat:Dummy",)
@@ -5867,9 +6033,13 @@ class ResourceUpdateRemoteAndGuestChecks(TestCase, AssertPcsMixin):
 
 class ResourceUpdateUniqueAttrChecks(TestCase, AssertPcsMixin):
     def setUp(self):
-        shutil.copy(empty_cib, temp_cib)
-        self.pcs_runner = PcsRunner(temp_cib)
+        self.temp_cib = get_tmp_file("tier0_resource_update_unique_attr")
+        write_file_to_tmpfile(empty_cib, self.temp_cib)
+        self.pcs_runner = PcsRunner(self.temp_cib.name)
         self.pcs_runner.mock_settings = get_mock_settings("crm_resource_binary")
+
+    def tearDown(self):
+        self.temp_cib.close()
 
     def test_unique_err(self):
         self.assert_pcs_success(

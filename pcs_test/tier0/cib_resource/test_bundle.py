@@ -1,4 +1,3 @@
-import shutil
 from unittest import TestCase
 from lxml import etree
 
@@ -7,8 +6,10 @@ from pcs_test.tools.assertions import AssertPcsMixin
 from pcs_test.tools.cib import get_assert_pcs_effect_mixin
 from pcs_test.tools.misc import (
     get_test_resource as rc,
+    get_tmp_file,
     outdent,
     skip_unless_pacemaker_supports_bundle,
+    write_file_to_tmpfile,
 )
 from pcs_test.tools.pcs_runner import PcsRunner
 
@@ -29,22 +30,22 @@ class BundleCreateCommon(
         )
     ),
 ):
-    temp_cib = rc("temp-cib.xml")
-    empty_cib = None
+    empty_cib = rc("cib-empty.xml")
 
     def setUp(self):
-        shutil.copy(self.empty_cib, self.temp_cib)
-        self.pcs_runner = PcsRunner(self.temp_cib)
+        self.temp_cib = get_tmp_file("tier0_bundle_create")
+        write_file_to_tmpfile(self.empty_cib, self.temp_cib)
+        self.pcs_runner = PcsRunner(self.temp_cib.name)
         self.pcs_runner.mock_settings = get_mock_settings("crm_resource_binary")
+
+    def tearDown(self):
+        self.temp_cib.close()
 
 
 @skip_unless_pacemaker_supports_bundle
 class BundleCreateUpgradeCib(BundleCreateCommon):
-    def setUp(self):
-        self.pcs_runner = PcsRunner(self.temp_cib)
-
     def test_success(self):
-        shutil.copy(rc("cib-empty-2.0.xml"), self.temp_cib)
+        write_file_to_tmpfile(rc("cib-empty-2.0.xml"), self.temp_cib)
         self.assert_effect(
             "resource bundle create B1 container docker image=pcs:test",
             """
@@ -58,7 +59,7 @@ class BundleCreateUpgradeCib(BundleCreateCommon):
         )
 
     def test_upgrade_for_promoted_max(self):
-        shutil.copy(rc("cib-empty-2.8.xml"), self.temp_cib)
+        write_file_to_tmpfile(rc("cib-empty-2.8.xml"), self.temp_cib)
         self.assert_effect(
             "resource bundle create B1 container docker image=pcs:test "
             "promoted-max=2",
@@ -323,11 +324,8 @@ class BundleCreate(BundleCreateCommon):
 
 @skip_unless_pacemaker_supports_bundle
 class BundleUpdateUpgradeCib(BundleCreateCommon):
-    def setUp(self):
-        self.pcs_runner = PcsRunner(self.temp_cib)
-
     def test_upgrade_for_promoted_max(self):
-        shutil.copy(rc("cib-empty-2.8.xml"), self.temp_cib)
+        write_file_to_tmpfile(rc("cib-empty-2.8.xml"), self.temp_cib)
         self.assert_pcs_success(
             "resource bundle create B container docker image=pcs:test"
         )
@@ -638,12 +636,15 @@ class BundleUpdate(BundleCreateCommon):
 @skip_unless_pacemaker_supports_bundle
 class BundleShow(TestCase, AssertPcsMixin):
     empty_cib = rc("cib-empty.xml")
-    temp_cib = rc("temp-cib.xml")
 
     def setUp(self):
-        shutil.copy(self.empty_cib, self.temp_cib)
-        self.pcs_runner = PcsRunner(self.temp_cib)
+        self.temp_cib = get_tmp_file("tier0_bundle_show")
+        write_file_to_tmpfile(self.empty_cib, self.temp_cib)
+        self.pcs_runner = PcsRunner(self.temp_cib.name)
         self.pcs_runner.mock_settings = get_mock_settings("crm_resource_binary")
+
+    def tearDown(self):
+        self.temp_cib.close()
 
     def test_minimal(self):
         self.assert_pcs_success(

@@ -1,4 +1,3 @@
-import shutil
 from unittest import mock, TestCase
 
 from lxml import etree
@@ -10,7 +9,9 @@ from pcs_test.tools.assertions import (
 from pcs_test.tools.cib import get_assert_pcs_effect_mixin
 from pcs_test.tools.misc import (
     get_test_resource as rc,
+    get_tmp_file,
     outdent,
+    write_file_to_tmpfile,
 )
 from pcs_test.tools.pcs_runner import (
     pcs,
@@ -23,7 +24,6 @@ from pcs import utils
 # pylint: disable=invalid-name, line-too-long
 
 empty_cib = rc("cib-empty-withnodes.xml")
-temp_cib = rc("temp-cib.xml")
 
 
 class NodeUtilizationSet(
@@ -36,10 +36,12 @@ class NodeUtilizationSet(
     ),
 ):
     def setUp(self):
-        self.empty_cib = empty_cib
-        self.temp_cib = temp_cib
-        shutil.copy(self.empty_cib, self.temp_cib)
-        self.pcs_runner = PcsRunner(self.temp_cib)
+        self.temp_cib = get_tmp_file("tier0_node_utilization_set")
+        write_file_to_tmpfile(empty_cib, self.temp_cib)
+        self.pcs_runner = PcsRunner(self.temp_cib.name)
+
+    def tearDown(self):
+        self.temp_cib.close()
 
     @staticmethod
     def fixture_xml_no_utilization():
@@ -80,18 +82,20 @@ class NodeUtilizationSet(
         """
 
     def test_node_utilization_set(self):
-        output, returnVal = pcs(temp_cib, "node utilization rh7-1 test1=10")
+        output, returnVal = pcs(
+            self.temp_cib.name, "node utilization rh7-1 test1=10"
+        )
         ac("", output)
         self.assertEqual(0, returnVal)
 
-        output, returnVal = pcs(temp_cib, "node utilization rh7-2")
+        output, returnVal = pcs(self.temp_cib.name, "node utilization rh7-2")
         expected_out = """\
 Node Utilization:
 """
         ac(expected_out, output)
         self.assertEqual(0, returnVal)
 
-        output, returnVal = pcs(temp_cib, "node utilization rh7-1")
+        output, returnVal = pcs(self.temp_cib.name, "node utilization rh7-1")
         expected_out = """\
 Node Utilization:
  rh7-1: test1=10
@@ -100,11 +104,11 @@ Node Utilization:
         self.assertEqual(0, returnVal)
 
         output, returnVal = pcs(
-            temp_cib, "node utilization rh7-1 test1=-10 test4=1234"
+            self.temp_cib.name, "node utilization rh7-1 test1=-10 test4=1234"
         )
         ac("", output)
         self.assertEqual(0, returnVal)
-        output, returnVal = pcs(temp_cib, "node utilization rh7-1")
+        output, returnVal = pcs(self.temp_cib.name, "node utilization rh7-1")
         expected_out = """\
 Node Utilization:
  rh7-1: test1=-10 test4=1234
@@ -113,11 +117,11 @@ Node Utilization:
         self.assertEqual(0, returnVal)
 
         output, returnVal = pcs(
-            temp_cib, "node utilization rh7-2 test2=321 empty="
+            self.temp_cib.name, "node utilization rh7-2 test2=321 empty="
         )
         ac("", output)
         self.assertEqual(0, returnVal)
-        output, returnVal = pcs(temp_cib, "node utilization rh7-2")
+        output, returnVal = pcs(self.temp_cib.name, "node utilization rh7-2")
         expected_out = """\
 Node Utilization:
  rh7-2: test2=321
@@ -125,7 +129,7 @@ Node Utilization:
         ac(expected_out, output)
         self.assertEqual(0, returnVal)
 
-        output, returnVal = pcs(temp_cib, "node utilization")
+        output, returnVal = pcs(self.temp_cib.name, "node utilization")
         expected_out = """\
 Node Utilization:
  rh7-1: test1=-10 test4=1234
@@ -134,11 +138,15 @@ Node Utilization:
         ac(expected_out, output)
         self.assertEqual(0, returnVal)
 
-        output, returnVal = pcs(temp_cib, "node utilization rh7-2 test1=-20")
+        output, returnVal = pcs(
+            self.temp_cib.name, "node utilization rh7-2 test1=-20"
+        )
         ac("", output)
         self.assertEqual(0, returnVal)
 
-        output, returnVal = pcs(temp_cib, "node utilization --name test1")
+        output, returnVal = pcs(
+            self.temp_cib.name, "node utilization --name test1"
+        )
         expected_out = """\
 Node Utilization:
  rh7-1: test1=-10
@@ -147,7 +155,9 @@ Node Utilization:
         ac(expected_out, output)
         self.assertEqual(0, returnVal)
 
-        output, returnVal = pcs(temp_cib, "node utilization --name test1 rh7-2")
+        output, returnVal = pcs(
+            self.temp_cib.name, "node utilization --name test1 rh7-2"
+        )
         expected_out = """\
 Node Utilization:
  rh7-2: test1=-20
@@ -196,8 +206,12 @@ Node Utilization:
 
 class NodeUtilizationPrint(TestCase, AssertPcsMixin):
     def setUp(self):
-        shutil.copy(empty_cib, temp_cib)
-        self.pcs_runner = PcsRunner(temp_cib)
+        self.temp_cib = get_tmp_file("tier0_node_utilization_print")
+        write_file_to_tmpfile(empty_cib, self.temp_cib)
+        self.pcs_runner = PcsRunner(self.temp_cib.name)
+
+    def tearDown(self):
+        self.temp_cib.close()
 
     @mock.patch("pcs.node.utils")
     def test_refuse_when_node_not_in_cib_and_is_not_remote(self, mock_utils):
@@ -222,8 +236,12 @@ class NodeUtilizationPrint(TestCase, AssertPcsMixin):
 
 class NodeStandby(TestCase, AssertPcsMixin):
     def setUp(self):
-        shutil.copy(rc("cib-empty-with3nodes.xml"), temp_cib)
-        self.pcs_runner = PcsRunner(temp_cib)
+        self.temp_cib = get_tmp_file("tier0_node_standby")
+        write_file_to_tmpfile(rc("cib-empty-with3nodes.xml"), self.temp_cib)
+        self.pcs_runner = PcsRunner(self.temp_cib.name)
+
+    def tearDown(self):
+        self.temp_cib.close()
 
     def fixture_standby_all(self):
         self.assert_pcs_success("node standby --all")
@@ -365,8 +383,12 @@ class NodeStandby(TestCase, AssertPcsMixin):
 
 class NodeMaintenance(TestCase, AssertPcsMixin):
     def setUp(self):
-        shutil.copy(rc("cib-empty-with3nodes.xml"), temp_cib)
-        self.pcs_runner = PcsRunner(temp_cib)
+        self.temp_cib = get_tmp_file("tier0_node_maintenance")
+        write_file_to_tmpfile(rc("cib-empty-with3nodes.xml"), self.temp_cib)
+        self.pcs_runner = PcsRunner(self.temp_cib.name)
+
+    def tearDown(self):
+        self.temp_cib.close()
 
     def fixture_maintenance_all(self):
         self.assert_pcs_success("node maintenance --all")
@@ -517,14 +539,16 @@ class NodeAttributeTest(
         )
     ),
 ):
+    # pylint: disable=too-many-public-methods
     def setUp(self):
-        self.empty_cib = empty_cib
-        self.temp_cib = temp_cib
-        shutil.copy(self.empty_cib, self.temp_cib)
-        self.pcs_runner = PcsRunner(self.temp_cib)
+        self.temp_cib = get_tmp_file("tier0_node_attribute")
+        write_file_to_tmpfile(empty_cib, self.temp_cib)
+        self.pcs_runner = PcsRunner(self.temp_cib.name)
 
-    @staticmethod
-    def fixture_attrs(nodes, attrs=None):
+    def tearDown(self):
+        self.temp_cib.close()
+
+    def fixture_attrs(self, nodes, attrs=None):
         attrs = dict() if attrs is None else attrs
         xml_lines = ["<nodes>"]
         for node_id, node_name in enumerate(nodes, 1):
@@ -543,7 +567,7 @@ class NodeAttributeTest(
         utils_usefile_original = utils.usefile
         utils_filename_original = utils.filename
         utils.usefile = True
-        utils.filename = temp_cib
+        utils.filename = self.temp_cib.name
         output, retval = utils.run(
             ["cibadmin", "--modify", "--xml-text", "\n".join(xml_lines)]
         )
@@ -782,7 +806,7 @@ Node Attributes:
         # this behaves differently than the rest of pcs - instead of doing
         # nothing it returns an error.
         # Should be changed to be consistent with the rest of pcs.
-        output, retval = pcs(self.temp_cib, "node attribute rh7-1 test=")
+        output, retval = pcs(self.temp_cib.name, "node attribute rh7-1 test=")
         self.assertEqual(
             output, "Error: attribute: 'test' doesn't exist for node: 'rh7-1'\n"
         )

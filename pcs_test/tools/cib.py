@@ -1,4 +1,5 @@
 from pcs_test.tools.assertions import AssertPcsMixin, assert_xml_equal
+from pcs_test.tools.misc import write_data_to_tmpfile
 
 
 def xml_format(xml_string):
@@ -66,9 +67,9 @@ def get_assert_pcs_effect_mixin(get_cib_part):
                 if isinstance(alternative_cmds, list)
                 else [alternative_cmds]
             )
-            cib_content = ""
-            with open(self.temp_cib) as cib_file:
-                cib_content = cib_file.read()
+            self.temp_cib.seek(0)
+            cib_content = self.temp_cib.read()
+            self.temp_cib.seek(0)
             for alternative in alternative_list[:-1]:
                 self.assert_effect_single(
                     alternative,
@@ -77,8 +78,7 @@ def get_assert_pcs_effect_mixin(get_cib_part):
                     output_start,
                     output_regexp,
                 )
-                with open(self.temp_cib, "w") as cib_file:
-                    cib_file.write(cib_content)
+                write_data_to_tmpfile(cib_content, self.temp_cib)
 
             self.assert_effect_single(
                 alternative_list[-1],

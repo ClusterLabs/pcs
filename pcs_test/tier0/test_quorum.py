@@ -1,11 +1,12 @@
-import shutil
 from textwrap import dedent
 from unittest import TestCase
 
 from pcs_test.tools.assertions import AssertPcsMixin
 from pcs_test.tools.misc import (
     get_test_resource as rc,
+    get_tmp_file,
     ParametrizedTestMetaClass,
+    write_file_to_tmpfile,
 )
 from pcs_test.tools.pcs_runner import PcsRunner
 
@@ -14,25 +15,28 @@ from pcs_test.tools.pcs_runner import PcsRunner
 coro_conf = rc("corosync.conf")
 coro_qdevice_conf = rc("corosync-3nodes-qdevice.conf")
 coro_qdevice_heuristics_conf = rc("corosync-3nodes-qdevice-heuristics.conf")
-temp_conf = rc("corosync.conf.tmp")
 
 
 class TestBase(TestCase, AssertPcsMixin):
     def setUp(self):
-        shutil.copy(coro_conf, temp_conf)
+        self.temp_conf = get_tmp_file("tier0_quorum")
+        write_file_to_tmpfile(coro_conf, self.temp_conf)
         # The tested commands work differently when non-live corosync.conf
         # (--corosync_conf) is used. In these tests it is not possible to cover
         # all the live config behavior, so we stick to using a non-live config.
         # Live behavior is tested in pcs_test.tier0.lib.commands.test_quorum.
-        self.pcs_runner = PcsRunner(cib_file=None, corosync_conf_opt=temp_conf)
+        self.pcs_runner = PcsRunner(
+            cib_file=None, corosync_conf_opt=self.temp_conf.name
+        )
 
-    @staticmethod
-    def fixture_conf_qdevice():
-        shutil.copy(coro_qdevice_conf, temp_conf)
+    def tearDown(self):
+        self.temp_conf.close()
 
-    @staticmethod
-    def fixture_conf_qdevice_heuristics():
-        shutil.copy(coro_qdevice_heuristics_conf, temp_conf)
+    def fixture_conf_qdevice(self):
+        write_file_to_tmpfile(coro_qdevice_conf, self.temp_conf)
+
+    def fixture_conf_qdevice_heuristics(self):
+        write_file_to_tmpfile(coro_qdevice_heuristics_conf, self.temp_conf)
 
 
 class QuorumConfigTest(TestBase):

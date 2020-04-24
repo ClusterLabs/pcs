@@ -1,5 +1,4 @@
 # pylint: disable=too-many-lines
-import os
 import shutil
 from unittest import mock, TestCase
 
@@ -12,11 +11,13 @@ from pcs_test.tools.assertions import AssertPcsMixin
 from pcs_test.tools.bin_mock import get_mock_settings
 from pcs_test.tools.misc import (
     get_test_resource as rc,
+    get_tmp_file,
     is_minimum_pacemaker_version,
     skip_unless_pacemaker_version,
     skip_unless_crm_rule,
     outdent,
     ParametrizedTestMetaClass,
+    write_file_to_tmpfile,
 )
 from pcs_test.tools.pcs_runner import (
     pcs,
@@ -31,12 +32,8 @@ PCMK_2_0_3_PLUS = is_minimum_pacemaker_version(2, 0, 3)
 ERRORS_HAVE_OCURRED = (
     "Error: Errors have occurred, therefore pcs is unable to continue\n"
 )
-STONITH_TMP = rc("test_stonith")
-if not os.path.exists(STONITH_TMP):
-    os.makedirs(STONITH_TMP)
 
 empty_cib = rc("cib-empty.xml")
-temp_cib = os.path.join(STONITH_TMP, "temp-cib.xml")
 
 # target-pattern attribute was added in pacemaker 1.1.13 with validate-with 2.3.
 # However in pcs this was implemented much later together with target-attribute
@@ -105,12 +102,16 @@ Stonith options:
 
 class StonithTest(TestCase, AssertPcsMixin):
     def setUp(self):
-        self.pcs_runner = PcsRunner(temp_cib)
+        self.temp_cib = get_tmp_file("tier0_test_stonith")
+        write_file_to_tmpfile(empty_cib, self.temp_cib)
+        self.pcs_runner = PcsRunner(self.temp_cib.name)
         self.pcs_runner.mock_settings = get_mock_settings("crm_resource_binary")
         self.pcs_runner.mock_settings["corosync_conf_file"] = rc(
             "corosync.conf"
         )
-        shutil.copy(empty_cib, temp_cib)
+
+    def tearDown(self):
+        self.temp_cib.close()
 
     @skip_unless_crm_rule
     def testStonithCreation(self):
@@ -509,7 +510,7 @@ class StonithTest(TestCase, AssertPcsMixin):
         )
 
     def testStonithDeleteRemovesLevel(self):
-        shutil.copy(rc("cib-empty-with3nodes.xml"), temp_cib)
+        shutil.copy(rc("cib-empty-with3nodes.xml"), self.temp_cib.name)
 
         self.assert_pcs_success(
             "stonith create n1-ipmi fence_apc --force",
@@ -802,14 +803,18 @@ class StonithTest(TestCase, AssertPcsMixin):
     def testNoStonithWarning(self):
         # pylint: disable=unused-variable
         corosync_conf = rc("corosync.conf")
-        o, r = pcs(temp_cib, "status", corosync_conf_opt=corosync_conf)
+        o, r = pcs(
+            self.temp_cib.name, "status", corosync_conf_opt=corosync_conf
+        )
         self.assertIn("No stonith devices and stonith-enabled is not false", o)
 
         self.assert_pcs_success(
             "stonith create test_stonith fence_apc ip=i username=u pcmk_host_argument=node1"
         )
 
-        o, r = pcs(temp_cib, "status", corosync_conf_opt=corosync_conf)
+        o, r = pcs(
+            self.temp_cib.name, "status", corosync_conf_opt=corosync_conf
+        )
         self.assertNotIn(
             "No stonith devices and stonith-enabled is not false", o
         )
@@ -818,20 +823,30 @@ class StonithTest(TestCase, AssertPcsMixin):
             "stonith delete test_stonith", "Deleting Resource - test_stonith\n"
         )
 
-        o, r = pcs(temp_cib, "status", corosync_conf_opt=corosync_conf)
+        o, r = pcs(
+            self.temp_cib.name, "status", corosync_conf_opt=corosync_conf
+        )
         self.assertIn("No stonith devices and stonith-enabled is not false", o)
 
 
 class LevelTestsBase(TestCase, AssertPcsMixin):
     def setUp(self):
+        self.temp_cib = get_tmp_file("tier0_test_stonith_level")
         if fencing_level_attribute_supported:
-            shutil.copy(rc("cib-empty-2.5-withnodes.xml"), temp_cib)
+            write_file_to_tmpfile(
+                rc("cib-empty-2.5-withnodes.xml"), self.temp_cib
+            )
         else:
-            shutil.copy(rc("cib-empty-2.3-withnodes.xml"), temp_cib)
-        self.pcs_runner = PcsRunner(temp_cib)
+            write_file_to_tmpfile(
+                rc("cib-empty-2.3-withnodes.xml"), self.temp_cib
+            )
+        self.pcs_runner = PcsRunner(self.temp_cib.name)
         self.pcs_runner.mock_settings = get_mock_settings("crm_resource_binary")
         self.config = ""
         self.config_lines = []
+
+    def tearDown(self):
+        self.temp_cib.close()
 
     def fixture_stonith_resource(self, name):
         self.assert_pcs_success(
@@ -898,8 +913,12 @@ class LevelBadCommand(LevelTestsBase):
 @skip_unless_fencing_level_supported
 class LevelAddTargetUpgradesCib(LevelTestsBase):
     def setUp(self):
-        shutil.copy(rc("cib-empty-withnodes.xml"), temp_cib)
-        self.pcs_runner = PcsRunner(temp_cib)
+        self.temp_cib = get_tmp_file("tier0_test_stonith_level")
+        write_file_to_tmpfile(rc("cib-empty-withnodes.xml"), self.temp_cib)
+        self.pcs_runner = PcsRunner(self.temp_cib.name)
+
+    def tearDown(self):
+        self.temp_cib.close()
 
     @skip_unless_fencing_level_attribute_supported
     def test_attribute(self):
@@ -1771,9 +1790,6 @@ class SbdDeviceSetup(TestCase):
 
 class StonithUpdate(ResourceTest):
     def setUp(self):
-        # use our temp file instead of parent's one so parallel tests don't
-        # overwrite it
-        self.temp_cib = temp_cib
         super().setUp()
         self.pcs_runner.mock_settings = get_mock_settings("crm_resource_binary")
         self.fixture_create_stonith()

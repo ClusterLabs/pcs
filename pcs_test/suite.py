@@ -5,7 +5,7 @@ import sys
 import unittest
 
 try:
-    from testtools import ConcurrentTestSuite, iterate_tests
+    from testtools import ConcurrentTestSuite
     import concurrencytest
 
     can_concurrency = True
@@ -96,32 +96,6 @@ def discover_tests(explicitly_enumerated_tests, exclude_enumerated_tests=False):
     return unittest.TestLoader().loadTestsFromNames(explicitly_enumerated_tests)
 
 
-def partition_tests(suite, count):
-    # Keep the same interface as the original concurrencytest.partition_tests
-    independent_old_modules = [
-        "pcs_test.tier0.test_constraints",
-        "pcs_test.tier0.test_resource",
-        "pcs_test.tier0.test_stonith",
-    ]
-    old_tests = []  # tests are not independent, cannot run in parallel
-    old_tests_independent = {}  # independent modules
-    independent_tests = []
-    for test in iterate_tests(suite):
-        module = test.__class__.__module__
-        if not (
-            module.startswith("pcs_test.tier0.test_")
-            or module.startswith("pcs_test.tier0.cib_resource")
-        ):
-            independent_tests.append(test)
-        elif module in independent_old_modules:
-            if module not in old_tests_independent:
-                old_tests_independent[module] = []
-            old_tests_independent[module].append(test)
-        else:
-            old_tests.append(test)
-    return [old_tests, independent_tests] + list(old_tests_independent.values())
-
-
 run_concurrently = can_concurrency and "--no-parallel" not in sys.argv
 
 explicitly_enumerated_tests = [
@@ -153,12 +127,8 @@ if "--list" in sys.argv:
 
 tests_to_run = discovered_tests
 if run_concurrently:
-    # replace the partitioning function with our own
-    concurrencytest.partition_tests = partition_tests
     tests_to_run = ConcurrentTestSuite(
-        discovered_tests,
-        # the number doesn't matter, we do our own partitioning which ignores it
-        concurrencytest.fork_for_tests(1),
+        discovered_tests, concurrencytest.fork_for_tests(),
     )
 
 

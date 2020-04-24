@@ -1,4 +1,3 @@
-import shutil
 import unittest
 
 from pcs_test.tools.assertions import (
@@ -7,30 +6,36 @@ from pcs_test.tools.assertions import (
 )
 from pcs_test.tools.misc import (
     get_test_resource as rc,
+    get_tmp_file,
     skip_unless_pacemaker_version,
+    write_file_to_tmpfile,
 )
 from pcs_test.tools.pcs_runner import (
     pcs,
     PcsRunner,
 )
 
-# pylint: disable=too-many-public-methods, invalid-name, no-self-use, too-many-statements
+# pylint: disable=invalid-name
+# pylint: disable=no-self-use
+# pylint: disable=too-many-public-methods
+# pylint: disable=too-many-statements
 
 old_cib = rc("cib-empty-1.2.xml")
 empty_cib = rc("cib-empty.xml")
-temp_cib = rc("temp-cib.xml")
 
 
 class ACLTest(unittest.TestCase, AssertPcsMixin):
-    pcs_runner = None
-
     def setUp(self):
-        shutil.copy(empty_cib, temp_cib)
-        self.pcs_runner = PcsRunner(temp_cib)
+        self.temp_cib = get_tmp_file("tier0_acl")
+        write_file_to_tmpfile(empty_cib, self.temp_cib)
+        self.pcs_runner = PcsRunner(self.temp_cib.name)
+
+    def tearDown(self):
+        self.temp_cib.close()
 
     @skip_unless_pacemaker_version((2, 0, 0), "CIB schema upgrade")
     def testAutoUpgradeofCIB(self):
-        shutil.copy(old_cib, temp_cib)
+        write_file_to_tmpfile(old_cib, self.temp_cib)
 
         self.assert_pcs_success(
             "acl show",
@@ -38,76 +43,76 @@ class ACLTest(unittest.TestCase, AssertPcsMixin):
             "\n\nCIB has been upgraded to the latest schema version.\n",
         )
 
-        with open(temp_cib) as myfile:
-            data = myfile.read()
-            assert data.find("pacemaker-1.2") == -1
-            assert data.find("pacemaker-2.") == -1
-            assert data.find("pacemaker-3.") != -1
+        data = self.temp_cib.seek(0)
+        data = self.temp_cib.read()
+        assert data.find("pacemaker-1.2") == -1
+        assert data.find("pacemaker-2.") == -1
+        assert data.find("pacemaker-3.") != -1
 
     def testEnableDisable(self):
-        o, r = pcs(temp_cib, "acl disable")
+        o, r = pcs(self.temp_cib.name, "acl disable")
         assert r == 0
         ac(o, "")
 
-        o, r = pcs(temp_cib, "acl")
+        o, r = pcs(self.temp_cib.name, "acl")
         assert r == 0
         ac(o, "ACLs are disabled, run 'pcs acl enable' to enable\n\n")
 
-        o, r = pcs(temp_cib, "acl enable")
+        o, r = pcs(self.temp_cib.name, "acl enable")
         assert r == 0
         ac(o, "")
 
-        o, r = pcs(temp_cib, "acl")
+        o, r = pcs(self.temp_cib.name, "acl")
         assert r == 0
         ac(o, "ACLs are enabled\n\n")
 
-        o, r = pcs(temp_cib, "acl disable")
+        o, r = pcs(self.temp_cib.name, "acl disable")
         assert r == 0
         ac(o, "")
 
-        o, r = pcs(temp_cib, "acl")
+        o, r = pcs(self.temp_cib.name, "acl")
         assert r == 0
         ac(o, "ACLs are disabled, run 'pcs acl enable' to enable\n\n")
 
     def testUserGroupCreateDeleteWithRoles(self):
         o, r = pcs(
-            temp_cib,
+            self.temp_cib.name,
             "acl role create role1 read xpath /xpath1/ write xpath /xpath2/",
         )
         assert r == 0
         ac(o, "")
 
         o, r = pcs(
-            temp_cib,
+            self.temp_cib.name,
             "acl role create role2 deny xpath /xpath3/ deny xpath /xpath4/",
         )
         assert r == 0
         ac(o, "")
 
         o, r = pcs(
-            temp_cib,
+            self.temp_cib.name,
             "acl role create role3 read xpath /xpath5/ read xpath /xpath6/",
         )
         assert r == 0
         ac(o, "")
 
-        o, r = pcs(temp_cib, "acl user create user1 roleX")
+        o, r = pcs(self.temp_cib.name, "acl user create user1 roleX")
         ac(o, "Error: ACL role 'roleX' does not exist\n")
         self.assertEqual(1, r)
 
-        o, r = pcs(temp_cib, "acl user create user1 role1 roleX")
+        o, r = pcs(self.temp_cib.name, "acl user create user1 role1 roleX")
         ac(o, "Error: ACL role 'roleX' does not exist\n")
         self.assertEqual(1, r)
 
-        o, r = pcs(temp_cib, "acl group create group1 roleX")
+        o, r = pcs(self.temp_cib.name, "acl group create group1 roleX")
         ac(o, "Error: ACL role 'roleX' does not exist\n")
         self.assertEqual(1, r)
 
-        o, r = pcs(temp_cib, "acl group create group1 role1 roleX")
+        o, r = pcs(self.temp_cib.name, "acl group create group1 role1 roleX")
         ac(o, "Error: ACL role 'roleX' does not exist\n")
         self.assertEqual(1, r)
 
-        o, r = pcs(temp_cib, "acl")
+        o, r = pcs(self.temp_cib.name, "acl")
         ac(
             o,
             """\
@@ -126,15 +131,15 @@ Role: role3
         )
         self.assertEqual(0, r)
 
-        o, r = pcs(temp_cib, "acl user create user1 role1 role2")
+        o, r = pcs(self.temp_cib.name, "acl user create user1 role1 role2")
         assert r == 0
         ac(o, "")
 
-        o, r = pcs(temp_cib, "acl group create group1 role1 role3")
+        o, r = pcs(self.temp_cib.name, "acl group create group1 role1 role3")
         assert r == 0
         ac(o, "")
 
-        o, r = pcs(temp_cib, "acl")
+        o, r = pcs(self.temp_cib.name, "acl")
         assert r == 0
         ac(
             o,
@@ -157,39 +162,39 @@ Role: role3
 """,
         )
 
-        o, r = pcs(temp_cib, "acl role create group1")
+        o, r = pcs(self.temp_cib.name, "acl role create group1")
         assert r == 1
         ac(o, "Error: 'group1' already exists\n")
 
-        o, r = pcs(temp_cib, "acl role create role1")
+        o, r = pcs(self.temp_cib.name, "acl role create role1")
         assert r == 1
         ac(o, "Error: 'role1' already exists\n")
 
-        o, r = pcs(temp_cib, "acl user create user1")
+        o, r = pcs(self.temp_cib.name, "acl user create user1")
         assert r == 1
         ac(o, "Error: 'user1' already exists\n")
 
-        o, r = pcs(temp_cib, "acl group create group1")
+        o, r = pcs(self.temp_cib.name, "acl group create group1")
         assert r == 1
         ac(o, "Error: 'group1' already exists\n")
 
-        o, r = pcs(temp_cib, "acl group create role1")
+        o, r = pcs(self.temp_cib.name, "acl group create role1")
         assert r == 1
         ac(o, "Error: 'role1' already exists\n")
 
-        o, r = pcs(temp_cib, "acl role assign role1 to noexist")
+        o, r = pcs(self.temp_cib.name, "acl role assign role1 to noexist")
         assert r == 1
         ac(o, "Error: ACL group/ACL user 'noexist' does not exist\n")
 
-        o, r = pcs(temp_cib, "acl role assign noexist to user1")
+        o, r = pcs(self.temp_cib.name, "acl role assign noexist to user1")
         assert r == 1
         ac(o, "Error: ACL role 'noexist' does not exist\n")
 
-        o, r = pcs(temp_cib, "acl role assign role3 to user1")
+        o, r = pcs(self.temp_cib.name, "acl role assign role3 to user1")
         assert r == 0
         ac(o, "")
 
-        o, r = pcs(temp_cib, "acl")
+        o, r = pcs(self.temp_cib.name, "acl")
         assert r == 0
         ac(
             o,
@@ -212,19 +217,19 @@ Role: role3
 """,
         )
 
-        o, r = pcs(temp_cib, "acl role unassign noexist from user1")
+        o, r = pcs(self.temp_cib.name, "acl role unassign noexist from user1")
         assert r == 1
         ac(o, "Error: Role 'noexist' is not assigned to 'user1'\n")
 
-        o, r = pcs(temp_cib, "acl role unassign role3 from noexist")
+        o, r = pcs(self.temp_cib.name, "acl role unassign role3 from noexist")
         assert r == 1
         ac(o, "Error: ACL group/ACL user 'noexist' does not exist\n")
 
-        o, r = pcs(temp_cib, "acl role unassign role3 from user1")
+        o, r = pcs(self.temp_cib.name, "acl role unassign role3 from user1")
         assert r == 0
         ac(o, "")
 
-        o, r = pcs(temp_cib, "acl")
+        o, r = pcs(self.temp_cib.name, "acl")
         assert r == 0
         ac(
             o,
@@ -247,15 +252,15 @@ Role: role3
 """,
         )
 
-        o, r = pcs(temp_cib, "acl role unassign role2 from user1")
+        o, r = pcs(self.temp_cib.name, "acl role unassign role2 from user1")
         assert r == 0
         ac(o, "")
 
-        o, r = pcs(temp_cib, "acl role unassign role1 from user1")
+        o, r = pcs(self.temp_cib.name, "acl role unassign role1 from user1")
         assert r == 0
         ac(o, "")
 
-        o, r = pcs(temp_cib, "acl")
+        o, r = pcs(self.temp_cib.name, "acl")
         ac(
             o,
             """\
@@ -278,11 +283,11 @@ Role: role3
         )
         assert r == 0
 
-        o, r = pcs(temp_cib, "acl role delete role3")
+        o, r = pcs(self.temp_cib.name, "acl role delete role3")
         assert r == 0
         ac(o, "")
 
-        o, r = pcs(temp_cib, "acl")
+        o, r = pcs(self.temp_cib.name, "acl")
         ac(
             o,
             """\
@@ -302,11 +307,11 @@ Role: role2
         )
         assert r == 0
 
-        o, r = pcs(temp_cib, "acl role assign role2 to user1")
+        o, r = pcs(self.temp_cib.name, "acl role assign role2 to user1")
         assert r == 0
         ac(o, "")
 
-        o, r = pcs(temp_cib, "acl")
+        o, r = pcs(self.temp_cib.name, "acl")
         assert r == 0
         ac(
             o,
@@ -326,11 +331,11 @@ Role: role2
 """,
         )
 
-        o, r = pcs(temp_cib, "acl role assign role1 user1")
+        o, r = pcs(self.temp_cib.name, "acl role assign role1 user1")
         ac(o, "")
         assert r == 0
 
-        o, r = pcs(temp_cib, "acl")
+        o, r = pcs(self.temp_cib.name, "acl")
         ac(
             o,
             """\
@@ -350,11 +355,14 @@ Role: role2
         )
         assert r == 0
 
-        o, r = pcs(temp_cib, "acl role unassign role2 from user1 --autodelete")
+        o, r = pcs(
+            self.temp_cib.name,
+            "acl role unassign role2 from user1 --autodelete",
+        )
         ac(o, "")
         assert r == 0
 
-        o, r = pcs(temp_cib, "acl")
+        o, r = pcs(self.temp_cib.name, "acl")
         ac(
             o,
             """\
@@ -374,11 +382,14 @@ Role: role2
         )
         assert r == 0
 
-        o, r = pcs(temp_cib, "acl role unassign role1 from user1 --autodelete")
+        o, r = pcs(
+            self.temp_cib.name,
+            "acl role unassign role1 from user1 --autodelete",
+        )
         ac(o, "")
         assert r == 0
 
-        o, r = pcs(temp_cib, "acl")
+        o, r = pcs(self.temp_cib.name, "acl")
         ac(
             o,
             """\
@@ -396,11 +407,11 @@ Role: role2
         )
         assert r == 0
 
-        o, r = pcs(temp_cib, "acl user create user1 role1 role2")
+        o, r = pcs(self.temp_cib.name, "acl user create user1 role1 role2")
         ac(o, "")
         assert r == 0
 
-        o, r = pcs(temp_cib, "acl")
+        o, r = pcs(self.temp_cib.name, "acl")
         ac(
             o,
             """\
@@ -420,11 +431,11 @@ Role: role2
         )
         assert r == 0
 
-        o, r = pcs(temp_cib, "acl role delete role1 --autodelete")
+        o, r = pcs(self.temp_cib.name, "acl role delete role1 --autodelete")
         ac(o, "")
         assert r == 0
 
-        o, r = pcs(temp_cib, "acl")
+        o, r = pcs(self.temp_cib.name, "acl")
         ac(
             o,
             """\
@@ -439,11 +450,11 @@ Role: role2
         )
         assert r == 0
 
-        o, r = pcs(temp_cib, "acl role delete role2")
+        o, r = pcs(self.temp_cib.name, "acl role delete role2")
         ac(o, "")
         assert r == 0
 
-        o, r = pcs(temp_cib, "acl")
+        o, r = pcs(self.temp_cib.name, "acl")
         ac(
             o,
             """\
@@ -456,35 +467,35 @@ User: user1
         assert r == 0
 
     def testUserGroupCreateDelete(self):
-        o, r = pcs(temp_cib, "acl")
+        o, r = pcs(self.temp_cib.name, "acl")
         assert r == 0
         ac(o, "ACLs are disabled, run 'pcs acl enable' to enable\n\n")
 
-        o, r = pcs(temp_cib, "acl user create user1")
+        o, r = pcs(self.temp_cib.name, "acl user create user1")
         ac(o, "")
         assert r == 0
 
-        o, r = pcs(temp_cib, "acl user create user2")
+        o, r = pcs(self.temp_cib.name, "acl user create user2")
         assert r == 0
         ac(o, "")
 
-        o, r = pcs(temp_cib, "acl user create user1")
+        o, r = pcs(self.temp_cib.name, "acl user create user1")
         assert r == 1
         ac(o, "Error: 'user1' already exists\n")
 
-        o, r = pcs(temp_cib, "acl group create group1")
+        o, r = pcs(self.temp_cib.name, "acl group create group1")
         ac(o, "")
         assert r == 0
 
-        o, r = pcs(temp_cib, "acl group create group2")
+        o, r = pcs(self.temp_cib.name, "acl group create group2")
         assert r == 0
         ac(o, "")
 
-        o, r = pcs(temp_cib, "acl group create group1")
+        o, r = pcs(self.temp_cib.name, "acl group create group1")
         assert r == 1
         ac(o, "Error: 'group1' already exists\n")
 
-        o, r = pcs(temp_cib, "acl")
+        o, r = pcs(self.temp_cib.name, "acl")
         ac(
             o,
             """\
@@ -502,11 +513,11 @@ Group: group2
         )
         assert r == 0
 
-        o, r = pcs(temp_cib, "acl group delete user1")
+        o, r = pcs(self.temp_cib.name, "acl group delete user1")
         assert r == 1
         ac(o, "Error: 'user1' is not an ACL group\n")
 
-        o, r = pcs(temp_cib, "acl")
+        o, r = pcs(self.temp_cib.name, "acl")
         ac(
             o,
             """\
@@ -524,11 +535,11 @@ Group: group2
         )
         assert r == 0
 
-        o, r = pcs(temp_cib, "acl group delete group2")
+        o, r = pcs(self.temp_cib.name, "acl group delete group2")
         ac(o, "")
         assert r == 0
 
-        o, r = pcs(temp_cib, "acl")
+        o, r = pcs(self.temp_cib.name, "acl")
         ac(
             o,
             """\
@@ -544,11 +555,11 @@ Group: group1
         )
         assert r == 0
 
-        o, r = pcs(temp_cib, "acl group remove group1")
+        o, r = pcs(self.temp_cib.name, "acl group remove group1")
         ac(o, "")
         assert r == 0
 
-        o, r = pcs(temp_cib, "acl")
+        o, r = pcs(self.temp_cib.name, "acl")
         ac(
             o,
             """\
@@ -562,11 +573,11 @@ User: user2
         )
         assert r == 0
 
-        o, r = pcs(temp_cib, "acl user delete user1")
+        o, r = pcs(self.temp_cib.name, "acl user delete user1")
         ac(o, "")
         assert r == 0
 
-        o, r = pcs(temp_cib, "acl")
+        o, r = pcs(self.temp_cib.name, "acl")
         ac(
             o,
             """\
@@ -578,123 +589,147 @@ User: user2
         )
         assert r == 0
 
-        o, r = pcs(temp_cib, "acl user remove user2")
+        o, r = pcs(self.temp_cib.name, "acl user remove user2")
         ac(o, "")
         assert r == 0
 
-        o, r = pcs(temp_cib, "acl")
+        o, r = pcs(self.temp_cib.name, "acl")
         assert r == 0
         ac(o, "ACLs are disabled, run 'pcs acl enable' to enable\n\n")
 
     def testRoleCreateDelete(self):
-        o, r = pcs(temp_cib, "acl role create role0 read")
+        o, r = pcs(self.temp_cib.name, "acl role create role0 read")
         self.assertTrue(o.startswith("\nUsage: pcs acl role create..."))
         self.assertEqual(1, r)
 
-        o, r = pcs(temp_cib, "acl role create role0 read //resources")
+        o, r = pcs(self.temp_cib.name, "acl role create role0 read //resources")
         self.assertTrue(o.startswith("\nUsage: pcs acl role create..."))
         self.assertEqual(1, r)
 
-        o, r = pcs(temp_cib, "acl role create role0 read xpath")
+        o, r = pcs(self.temp_cib.name, "acl role create role0 read xpath")
         self.assertTrue(o.startswith("\nUsage: pcs acl role create..."))
         self.assertEqual(1, r)
 
-        o, r = pcs(temp_cib, "acl role create role0 read id")
-        self.assertTrue(o.startswith("\nUsage: pcs acl role create..."))
-        self.assertEqual(1, r)
-
-        o, r = pcs(temp_cib, "acl role create role0 readX xpath //resources")
-        self.assertTrue(o.startswith("\nUsage: pcs acl role create..."))
-        self.assertEqual(1, r)
-
-        o, r = pcs(temp_cib, "acl role create role0 read xpathX //resources")
-        self.assertTrue(o.startswith("\nUsage: pcs acl role create..."))
-        self.assertEqual(1, r)
-
-        o, r = pcs(temp_cib, "acl role create role0 description=test read")
+        o, r = pcs(self.temp_cib.name, "acl role create role0 read id")
         self.assertTrue(o.startswith("\nUsage: pcs acl role create..."))
         self.assertEqual(1, r)
 
         o, r = pcs(
-            temp_cib, "acl role create role0 description=test read //resources"
+            self.temp_cib.name, "acl role create role0 readX xpath //resources"
         )
         self.assertTrue(o.startswith("\nUsage: pcs acl role create..."))
         self.assertEqual(1, r)
 
         o, r = pcs(
-            temp_cib, "acl role create role0 description=test read xpath"
+            self.temp_cib.name, "acl role create role0 read xpathX //resources"
         )
         self.assertTrue(o.startswith("\nUsage: pcs acl role create..."))
         self.assertEqual(1, r)
 
-        o, r = pcs(temp_cib, "acl role create role0 description=test read id")
+        o, r = pcs(
+            self.temp_cib.name, "acl role create role0 description=test read"
+        )
         self.assertTrue(o.startswith("\nUsage: pcs acl role create..."))
         self.assertEqual(1, r)
 
         o, r = pcs(
-            temp_cib,
+            self.temp_cib.name,
+            "acl role create role0 description=test read //resources",
+        )
+        self.assertTrue(o.startswith("\nUsage: pcs acl role create..."))
+        self.assertEqual(1, r)
+
+        o, r = pcs(
+            self.temp_cib.name,
+            "acl role create role0 description=test read xpath",
+        )
+        self.assertTrue(o.startswith("\nUsage: pcs acl role create..."))
+        self.assertEqual(1, r)
+
+        o, r = pcs(
+            self.temp_cib.name, "acl role create role0 description=test read id"
+        )
+        self.assertTrue(o.startswith("\nUsage: pcs acl role create..."))
+        self.assertEqual(1, r)
+
+        o, r = pcs(
+            self.temp_cib.name,
             "acl role create role0 description=test readX xpath //resources",
         )
         self.assertTrue(o.startswith("\nUsage: pcs acl role create..."))
         self.assertEqual(1, r)
 
         o, r = pcs(
-            temp_cib,
+            self.temp_cib.name,
             "acl role create role0 description=test read xpathX //resources",
         )
         self.assertTrue(o.startswith("\nUsage: pcs acl role create..."))
         self.assertEqual(1, r)
 
-        o, r = pcs(temp_cib, "acl role create role0 desc=test read")
-        self.assertTrue(o.startswith("\nUsage: pcs acl role create..."))
-        self.assertEqual(1, r)
-
-        o, r = pcs(temp_cib, "acl role create role0 desc=test read //resources")
-        self.assertTrue(o.startswith("\nUsage: pcs acl role create..."))
-        self.assertEqual(1, r)
-
-        o, r = pcs(temp_cib, "acl role create role0 desc=test read xpath")
-        self.assertTrue(o.startswith("\nUsage: pcs acl role create..."))
-        self.assertEqual(1, r)
-
-        o, r = pcs(temp_cib, "acl role create role0 desc=test read id")
+        o, r = pcs(self.temp_cib.name, "acl role create role0 desc=test read")
         self.assertTrue(o.startswith("\nUsage: pcs acl role create..."))
         self.assertEqual(1, r)
 
         o, r = pcs(
-            temp_cib, "acl role create role0 desc=test readX xpath //resources"
+            self.temp_cib.name,
+            "acl role create role0 desc=test read //resources",
         )
         self.assertTrue(o.startswith("\nUsage: pcs acl role create..."))
         self.assertEqual(1, r)
 
         o, r = pcs(
-            temp_cib, "acl role create role0 desc=test read xpathX //resources"
+            self.temp_cib.name, "acl role create role0 desc=test read xpath"
         )
         self.assertTrue(o.startswith("\nUsage: pcs acl role create..."))
         self.assertEqual(1, r)
 
-        o, r = pcs(temp_cib, "acl")
+        o, r = pcs(
+            self.temp_cib.name, "acl role create role0 desc=test read id"
+        )
+        self.assertTrue(o.startswith("\nUsage: pcs acl role create..."))
+        self.assertEqual(1, r)
+
+        o, r = pcs(
+            self.temp_cib.name,
+            "acl role create role0 desc=test readX xpath //resources",
+        )
+        self.assertTrue(o.startswith("\nUsage: pcs acl role create..."))
+        self.assertEqual(1, r)
+
+        o, r = pcs(
+            self.temp_cib.name,
+            "acl role create role0 desc=test read xpathX //resources",
+        )
+        self.assertTrue(o.startswith("\nUsage: pcs acl role create..."))
+        self.assertEqual(1, r)
+
+        o, r = pcs(self.temp_cib.name, "acl")
         ac(o, "ACLs are disabled, run 'pcs acl enable' to enable\n\n")
         self.assertEqual(0, r)
 
-        o, r = pcs(temp_cib, "acl role create role0")
+        o, r = pcs(self.temp_cib.name, "acl role create role0")
         ac(o, "")
         assert r == 0
 
-        o, r = pcs(temp_cib, "acl role create role0")
+        o, r = pcs(self.temp_cib.name, "acl role create role0")
         ac(o, "Error: 'role0' already exists\n")
         assert r == 1
 
-        o, r = pcs(temp_cib, "acl role create role0d description='empty role'")
-        ac(o, "")
-        assert r == 0
-
-        o, r = pcs(temp_cib, "acl role create role1 read xpath /xpath/")
+        o, r = pcs(
+            self.temp_cib.name,
+            "acl role create role0d description='empty role'",
+        )
         ac(o, "")
         assert r == 0
 
         o, r = pcs(
-            temp_cib,
+            self.temp_cib.name, "acl role create role1 read xpath /xpath/"
+        )
+        ac(o, "")
+        assert r == 0
+
+        o, r = pcs(
+            self.temp_cib.name,
             "acl role create role2 description='with description' "
             "READ XPATH /xpath/",
         )
@@ -702,14 +737,14 @@ User: user2
         ac(o, "")
 
         o, r = pcs(
-            temp_cib,
+            self.temp_cib.name,
             "acl role create role3 Read XPath /xpath_query/ wRiTe xpATH "
             "/xpath_query2/ deny xpath /xpath_query3/",
         )
         assert r == 0
         ac(o, "")
 
-        o, r = pcs(temp_cib, "acl")
+        o, r = pcs(self.temp_cib.name, "acl")
         ac(
             o,
             """\
@@ -731,11 +766,11 @@ Role: role3
         )
         assert r == 0
 
-        o, r = pcs(temp_cib, "acl role delete role2")
+        o, r = pcs(self.temp_cib.name, "acl role delete role2")
         assert r == 0
         ac(o, "")
 
-        o, r = pcs(temp_cib, "acl")
+        o, r = pcs(self.temp_cib.name, "acl")
         ac(
             o,
             """\
@@ -754,53 +789,53 @@ Role: role3
         )
         assert r == 0
 
-        o, r = pcs(temp_cib, "acl role delete role2")
+        o, r = pcs(self.temp_cib.name, "acl role delete role2")
         assert r == 1
         ac(o, "Error: ACL role 'role2' does not exist\n")
 
-        o, r = pcs(temp_cib, "acl role delete role1")
+        o, r = pcs(self.temp_cib.name, "acl role delete role1")
         assert r == 0
         ac(o, "")
 
-        o, r = pcs(temp_cib, "acl role remove role3")
+        o, r = pcs(self.temp_cib.name, "acl role remove role3")
         assert r == 0
         ac(o, "")
 
-        o, r = pcs(temp_cib, "acl role remove role0")
+        o, r = pcs(self.temp_cib.name, "acl role remove role0")
         assert r == 0
         ac(o, "")
 
-        o, r = pcs(temp_cib, "acl role remove role0d")
+        o, r = pcs(self.temp_cib.name, "acl role remove role0d")
         assert r == 0
         ac(o, "")
 
-        o, r = pcs(temp_cib, "acl")
+        o, r = pcs(self.temp_cib.name, "acl")
         ac(o, "ACLs are disabled, run 'pcs acl enable' to enable\n\n")
         assert r == 0
 
     def testPermissionAddDelete(self):
         o, r = pcs(
-            temp_cib,
+            self.temp_cib.name,
             "acl role create role1 read xpath /xpath1/ write xpath /xpath2/",
         )
         ac(o, "")
         assert r == 0
 
         o, r = pcs(
-            temp_cib,
+            self.temp_cib.name,
             "acl role create role2 read xpath /xpath3/ write xpath /xpath4/",
         )
         ac(o, "")
         assert r == 0
 
         o, r = pcs(
-            temp_cib,
+            self.temp_cib.name,
             "acl role create role3 read xpath /xpath5/ write xpath /xpath6/",
         )
         ac(o, "")
         assert r == 0
 
-        o, r = pcs(temp_cib, "acl show")
+        o, r = pcs(self.temp_cib.name, "acl show")
         assert r == 0
         ac(
             o,
@@ -819,15 +854,19 @@ Role: role3
 """,
         )
 
-        o, r = pcs(temp_cib, "acl permission add role1 deny xpath /myxpath1/")
+        o, r = pcs(
+            self.temp_cib.name, "acl permission add role1 deny xpath /myxpath1/"
+        )
         ac(o, "")
         assert r == 0
 
-        o, r = pcs(temp_cib, "acl permission add role4 deny xpath /myxpath2/")
+        o, r = pcs(
+            self.temp_cib.name, "acl permission add role4 deny xpath /myxpath2/"
+        )
         ac(o, "")
         assert r == 0
 
-        o, r = pcs(temp_cib, "acl show")
+        o, r = pcs(self.temp_cib.name, "acl show")
         assert r == 0
         ac(
             o,
@@ -849,19 +888,19 @@ Role: role4
 """,
         )
 
-        o, r = pcs(temp_cib, "acl permission delete role4-deny")
+        o, r = pcs(self.temp_cib.name, "acl permission delete role4-deny")
         ac(o, "")
         assert r == 0
 
-        o, r = pcs(temp_cib, "acl permission delete role4-deny")
+        o, r = pcs(self.temp_cib.name, "acl permission delete role4-deny")
         ac(o, "Error: ACL permission 'role4-deny' does not exist\n")
         assert r == 1
 
-        o, r = pcs(temp_cib, "acl permission remove role4-deny")
+        o, r = pcs(self.temp_cib.name, "acl permission remove role4-deny")
         ac(o, "Error: ACL permission 'role4-deny' does not exist\n")
         assert r == 1
 
-        o, r = pcs(temp_cib, "acl show")
+        o, r = pcs(self.temp_cib.name, "acl show")
         assert r == 0
         ac(
             o,
@@ -882,15 +921,15 @@ Role: role4
 """,
         )
 
-        o, r = pcs(temp_cib, "acl permission delete role3-read")
+        o, r = pcs(self.temp_cib.name, "acl permission delete role3-read")
         ac(o, "")
         assert r == 0
 
-        o, r = pcs(temp_cib, "acl permission delete role3-write")
+        o, r = pcs(self.temp_cib.name, "acl permission delete role3-write")
         ac(o, "")
         assert r == 0
 
-        o, r = pcs(temp_cib, "acl")
+        o, r = pcs(self.temp_cib.name, "acl")
         ac(
             o,
             """\
@@ -909,27 +948,27 @@ Role: role4
         )
         assert r == 0
 
-        o, r = pcs(temp_cib, "acl permission remove role1-read")
+        o, r = pcs(self.temp_cib.name, "acl permission remove role1-read")
         ac(o, "")
         self.assertEqual(0, r)
 
-        o, r = pcs(temp_cib, "acl permission remove role1-write")
+        o, r = pcs(self.temp_cib.name, "acl permission remove role1-write")
         ac(o, "")
         self.assertEqual(0, r)
 
-        o, r = pcs(temp_cib, "acl permission remove role1-deny")
+        o, r = pcs(self.temp_cib.name, "acl permission remove role1-deny")
         ac(o, "")
         self.assertEqual(0, r)
 
-        o, r = pcs(temp_cib, "acl permission remove role2-read")
+        o, r = pcs(self.temp_cib.name, "acl permission remove role2-read")
         ac(o, "")
         self.assertEqual(0, r)
 
-        o, r = pcs(temp_cib, "acl permission remove role2-write")
+        o, r = pcs(self.temp_cib.name, "acl permission remove role2-write")
         ac(o, "")
         self.assertEqual(0, r)
 
-        o, r = pcs(temp_cib, "acl")
+        o, r = pcs(self.temp_cib.name, "acl")
         ac(
             o,
             """\
@@ -943,47 +982,61 @@ Role: role4
         )
         self.assertEqual(0, r)
 
-        o, r = pcs(temp_cib, "acl permission add role1 read")
-        self.assertTrue(o.startswith("\nUsage: pcs acl permission add..."))
-        self.assertEqual(1, r)
-
-        o, r = pcs(temp_cib, "acl permission add role1 read //resources")
-        self.assertTrue(o.startswith("\nUsage: pcs acl permission add..."))
-        self.assertEqual(1, r)
-
-        o, r = pcs(temp_cib, "acl permission add role1 read xpath")
-        self.assertTrue(o.startswith("\nUsage: pcs acl permission add..."))
-        self.assertEqual(1, r)
-
-        o, r = pcs(temp_cib, "acl permission add role1 read id")
-        self.assertTrue(o.startswith("\nUsage: pcs acl permission add..."))
-        self.assertEqual(1, r)
-
-        o, r = pcs(temp_cib, "acl permission add role1 readX xpath //resources")
-        self.assertTrue(o.startswith("\nUsage: pcs acl permission add..."))
-        self.assertEqual(1, r)
-
-        o, r = pcs(temp_cib, "acl permission add role1 read xpathX //resources")
-        self.assertTrue(o.startswith("\nUsage: pcs acl permission add..."))
-        self.assertEqual(1, r)
-
-        o, r = pcs(temp_cib, "acl permission add role1 read id dummy read")
+        o, r = pcs(self.temp_cib.name, "acl permission add role1 read")
         self.assertTrue(o.startswith("\nUsage: pcs acl permission add..."))
         self.assertEqual(1, r)
 
         o, r = pcs(
-            temp_cib, "acl permission add role1 read id dummy read //resources"
+            self.temp_cib.name, "acl permission add role1 read //resources"
+        )
+        self.assertTrue(o.startswith("\nUsage: pcs acl permission add..."))
+        self.assertEqual(1, r)
+
+        o, r = pcs(self.temp_cib.name, "acl permission add role1 read xpath")
+        self.assertTrue(o.startswith("\nUsage: pcs acl permission add..."))
+        self.assertEqual(1, r)
+
+        o, r = pcs(self.temp_cib.name, "acl permission add role1 read id")
+        self.assertTrue(o.startswith("\nUsage: pcs acl permission add..."))
+        self.assertEqual(1, r)
+
+        o, r = pcs(
+            self.temp_cib.name,
+            "acl permission add role1 readX xpath //resources",
         )
         self.assertTrue(o.startswith("\nUsage: pcs acl permission add..."))
         self.assertEqual(1, r)
 
         o, r = pcs(
-            temp_cib, "acl permission add role1 read id dummy read xpath"
+            self.temp_cib.name,
+            "acl permission add role1 read xpathX //resources",
         )
         self.assertTrue(o.startswith("\nUsage: pcs acl permission add..."))
         self.assertEqual(1, r)
 
-        o, r = pcs(temp_cib, "acl permission add role1 read id dummy read id")
+        o, r = pcs(
+            self.temp_cib.name, "acl permission add role1 read id dummy read"
+        )
+        self.assertTrue(o.startswith("\nUsage: pcs acl permission add..."))
+        self.assertEqual(1, r)
+
+        o, r = pcs(
+            self.temp_cib.name,
+            "acl permission add role1 read id dummy read //resources",
+        )
+        self.assertTrue(o.startswith("\nUsage: pcs acl permission add..."))
+        self.assertEqual(1, r)
+
+        o, r = pcs(
+            self.temp_cib.name,
+            "acl permission add role1 read id dummy read xpath",
+        )
+        self.assertTrue(o.startswith("\nUsage: pcs acl permission add..."))
+        self.assertEqual(1, r)
+
+        o, r = pcs(
+            self.temp_cib.name, "acl permission add role1 read id dummy read id"
+        )
         self.assertTrue(o.startswith("\nUsage: pcs acl permission add..."))
         self.assertEqual(1, r)
 
@@ -997,7 +1050,7 @@ Role: role4
             stdout_start="\nUsage: pcs acl permission add...",
         )
 
-        o, r = pcs(temp_cib, "acl")
+        o, r = pcs(self.temp_cib.name, "acl")
         ac(
             o,
             """\
