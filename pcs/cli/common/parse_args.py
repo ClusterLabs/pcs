@@ -78,6 +78,8 @@ PCS_LONG_OPTIONS = [
     "no-expire-check",
     # allow overwriting existing files, currently meant for / used in CLI only
     "overwrite",
+    # output format of commands, e.g: json, cmd, text, ...
+    "output-format",
 ]
 
 
@@ -489,6 +491,7 @@ class InputModifiers:
                 "--group": options.get("--group", None),
                 "--name": options.get("--name", None),
                 "--node": options.get("--node", None),
+                "--output-format": options.get("--output-format", "text"),
                 "--request-timeout": options.get("--request-timeout", None),
                 "--to": options.get("--to", None),
                 "--wait": options.get("--wait", False),

@@ -1387,6 +1387,30 @@ class CorosyncConfigReloadNotPossible(ReportItemMessage):
         )
 
 
+@dataclass(frozen=True)
+class CorosyncConfigUnsupportedTransport(ReportItemMessage):
+    """
+    Transport type defined in corosync.conf is unknown.
+    """
+
+    actual_transport: str
+    supported_transport_types: List[str]
+    _code = codes.COROSYNC_CONFIG_UNSUPPORTED_TRANSPORT
+
+    @property
+    def message(self) -> str:
+        return (
+            "Transport '{actual_transport}' currently configured in "
+            "corosync.conf is unsupported. Supported transport types are: "
+            "{supported_transport_types}"
+        ).format(
+            actual_transport=self.actual_transport,
+            supported_transport_types=format_list(
+                self.supported_transport_types
+            ),
+        )
+
+
 # TODO: remove in favour of reports in new file framework
 @dataclass(frozen=True)
 class UnableToReadCorosyncConfig(ReportItemMessage):

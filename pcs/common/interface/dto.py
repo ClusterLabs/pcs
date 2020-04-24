@@ -47,6 +47,7 @@ def from_dict(cls: Type[DtoType], data: DtoPayload) -> DtoType:
                 types.CibNvsetType,
                 types.CibRuleInEffectStatus,
                 types.CibRuleExpressionType,
+                types.CorosyncTransportType,
                 types.DrRole,
                 types.ResourceRelationType,
             ]

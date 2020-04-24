@@ -871,6 +871,20 @@ class CorosyncConfigReloadNotPossible(NameBuildTest):
         )
 
 
+class CorosyncConfigUnsupportedTransport(NameBuildTest):
+    def test_success(self):
+        self.assert_message_from_report(
+            (
+                "Transport 'netk' currently configured in corosync.conf is "
+                "unsupported. Supported transport types are: 'knet', 'udp', "
+                "'udpu'"
+            ),
+            reports.CorosyncConfigUnsupportedTransport(
+                "netk", ["udp", "knet", "udpu"]
+            ),
+        )
+
+
 class UnableToReadCorosyncConfig(NameBuildTest):
     def test_all(self):
         self.assert_message_from_report(

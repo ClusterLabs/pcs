@@ -182,6 +182,8 @@ def load_module(env, middleware_factory, name):
             {
                 "add_link": cluster.add_link,
                 "add_nodes": cluster.add_nodes,
+                "config_update_local": cluster.config_update_local,
+                "get_corosync_conf_struct": cluster.get_corosync_conf_struct,
                 "node_clear": cluster.node_clear,
                 "remove_links": cluster.remove_links,
                 "remove_nodes": cluster.remove_nodes,

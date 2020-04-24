@@ -9,7 +9,14 @@ import sys
 import tempfile
 import time
 import xml.dom.minidom
-from typing import cast
+from typing import (
+    cast,
+    Any,
+    Iterable,
+    List,
+    Mapping,
+    Optional,
+)
 
 from pcs import (
     settings,
@@ -31,12 +38,20 @@ from pcs.common import (
     file_type_codes,
     reports,
 )
+from pcs.common.corosync_conf import (
+    CorosyncNodeDto,
+    CorosyncConfDto,
+)
+from pcs.common.interface import dto
 from pcs.common.node_communicator import (
     HostNotFound,
     Request,
     RequestData,
 )
-from pcs.common.str_tools import format_list
+from pcs.common.str_tools import (
+    format_list,
+    indent,
+)
 from pcs.common.tools import Version
 from pcs.lib import sbd as lib_sbd
 from pcs.lib.cib.tools import VERSION_FORMAT
@@ -1750,6 +1765,217 @@ def cluster_setup(lib, argv, modifiers):
                 )
             )
         ) from e
+
+
+def config_update(
+    lib: Any, argv: List[str], modifiers: parse_args.InputModifiers
+) -> None:
+    """
+    Options:
+      * --corosync_conf - corosync.conf file path, do not talk to cluster nodes
+    """
+    modifiers.ensure_only_supported("--corosync_conf")
+    parsed_args = parse_args.group_by_keywords(
+        argv, ["transport", "compression", "crypto", "totem"],
+    )
+    if not modifiers.is_specified("--corosync_conf"):
+        lib.cluster.config_update(
+            parse_args.prepare_options(parsed_args["transport"]),
+            parse_args.prepare_options(parsed_args["compression"]),
+            parse_args.prepare_options(parsed_args["crypto"]),
+            parse_args.prepare_options(parsed_args["totem"]),
+        )
+        return
+    corosync_conf_file = pcs_file.RawFile(
+        file_metadata.for_file_type(
+            file_type_codes.COROSYNC_CONF, modifiers.get("--corosync_conf")
+        )
+    )
+
+    try:
+        corosync_conf_file.write(
+            lib.cluster.config_update_local(
+                corosync_conf_file.read(),
+                parse_args.prepare_options(parsed_args["transport"]),
+                parse_args.prepare_options(parsed_args["compression"]),
+                parse_args.prepare_options(parsed_args["crypto"]),
+                parse_args.prepare_options(parsed_args["totem"]),
+            ),
+            can_overwrite=True,
+        )
+    except pcs_file.RawFileError as e:
+        # TODO do not use LibraryError
+        raise LibraryError(
+            reports.ReportItem.error(
+                reports.messages.FileIoError(
+                    e.metadata.file_type_code,
+                    e.action,
+                    e.reason,
+                    file_path=e.metadata.path,
+                )
+            )
+        ) from e
+
+
+def _format_options(label: str, options: Mapping[str, str]) -> List[str]:
+    output = []
+    if options:
+        output.append(f"{label}:")
+        output.extend(
+            indent(f"{opt}: {val}" for opt, val in sorted(options.items()))
+        )
+    return output
+
+
+def _format_nodes(nodes: Iterable[CorosyncNodeDto]) -> List[str]:
+    output = ["Nodes:"]
+    for node in nodes:
+        output.extend(
+            indent(
+                [f"{node.name} (nodeid: {node.nodeid})"]
+                + indent(
+                    f"{addr.addr} (link: {addr.link})" for addr in node.addrs
+                )
+            )
+        )
+    return output
+
+
+# TODO: update usage.py
+def config_show(
+    lib: Any, argv: List[str], modifiers: parse_args.InputModifiers
+) -> None:
+    """
+    Options:
+      * --corosync_conf - corosync.conf file path, do not talk to cluster nodes
+      * --output-format - supported formats: text, cmd, json
+    """
+    modifiers.ensure_only_supported("--corosync_conf", "--output-format")
+    if argv:
+        raise CmdLineInputError()
+    output_format = modifiers.get("--output-format")
+    supported_formats = ["text", "cmd", "json"]
+    if not output_format in supported_formats:
+        raise CmdLineInputError(
+            "Unknown value '{}' for '--output-format' option. Supported values are: {}".format(
+                output_format, format_list(supported_formats)
+            )
+        )
+    corosync_conf_dto = lib.cluster.get_corosync_conf_struct()
+    if output_format == "cmd":
+        output = " \\\n".join(_config_get_cmd(corosync_conf_dto))
+    elif output_format == "json":
+        output = json.dumps(dto.to_dict(corosync_conf_dto))
+    else:
+        output = "\n".join(_config_get_text(corosync_conf_dto))
+    print(output)
+
+
+def _config_get_text(corosync_conf: CorosyncConfDto) -> List[str]:
+    lines = [
+        f"Cluster Name: {corosync_conf.cluster_name}",
+        "Transport: {}".format(corosync_conf.transport.lower()),
+    ]
+    lines.extend(_format_nodes(corosync_conf.nodes))
+    if corosync_conf.links_options:
+        lines.append("Links")
+        for linknum, link_options in sorted(
+            corosync_conf.links_options.items()
+        ):
+            lines.extend(
+                indent(_format_options(f"Link {linknum}", link_options))
+            )
+
+    lines.extend(
+        _format_options("Transport Options", corosync_conf.transport_options)
+    )
+    lines.extend(
+        _format_options(
+            "Compression Options", corosync_conf.compression_options
+        )
+    )
+    lines.extend(
+        _format_options("Crypto Options", corosync_conf.crypto_options)
+    )
+    lines.extend(_format_options("Totem Options", corosync_conf.totem_options))
+    lines.extend(
+        _format_options("Quorum Options", corosync_conf.quorum_options)
+    )
+    if corosync_conf.quorum_device:
+        lines.append(f"Quorum Device: {corosync_conf.quorum_device.model}")
+        lines.extend(
+            indent(
+                _format_options(
+                    "Options", corosync_conf.quorum_device.generic_options
+                )
+            )
+        )
+        lines.extend(
+            indent(
+                _format_options(
+                    "Model Options", corosync_conf.quorum_device.model_options,
+                )
+            )
+        )
+        lines.extend(
+            indent(
+                _format_options(
+                    "Heuristics",
+                    corosync_conf.quorum_device.heuristics_options,
+                )
+            )
+        )
+    return lines
+
+
+def _corosync_node_to_cmd_line(node: CorosyncNodeDto) -> str:
+    return " ".join(
+        [node.name]
+        + [
+            f"addr={addr.addr}"
+            for addr in sorted(node.addrs, key=lambda addr: addr.link)
+        ]
+    )
+
+
+def _section_to_lines(
+    options: Mapping[str, str], keyword: Optional[str] = None
+) -> List[str]:
+    output: List[str] = []
+    if options:
+        if keyword:
+            output.append(keyword)
+        output.extend(
+            indent([f"{key}={val}" for key, val in sorted(options.items())])
+        )
+    return indent(output)
+
+
+def _config_get_cmd(corosync_conf: CorosyncConfDto) -> List[str]:
+    # TODO: print warning in case qdevice is set up
+    lines = [f"pcs cluster setup {corosync_conf.cluster_name}"]
+    lines += indent(
+        [
+            _corosync_node_to_cmd_line(node)
+            for node in sorted(
+                corosync_conf.nodes, key=lambda node: node.nodeid
+            )
+        ]
+    )
+    transport = [
+        "transport",
+        str(corosync_conf.transport.value).lower(),
+    ] + _section_to_lines(corosync_conf.transport_options)
+    for _, link in sorted(corosync_conf.links_options.items()):
+        transport.extend(_section_to_lines(link, "link"))
+    transport.extend(
+        _section_to_lines(corosync_conf.compression_options, "compression")
+    )
+    transport.extend(_section_to_lines(corosync_conf.crypto_options, "crypto"))
+    lines.extend(indent(transport))
+    lines.extend(_section_to_lines(corosync_conf.totem_options, "totem"))
+    lines.extend(_section_to_lines(corosync_conf.quorum_options, "quorum"))
+    return lines
 
 
 def _parse_add_node(argv):

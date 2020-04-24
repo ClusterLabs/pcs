@@ -1,4 +1,11 @@
-from typing import List
+from typing import (
+    cast,
+    Dict,
+    Iterable,
+    List,
+    Mapping,
+    Optional,
+)
 
 from pcs import settings
 from pcs.common import reports
@@ -6,6 +13,10 @@ from pcs.common.reports.item import ReportItem
 from pcs.lib.corosync import config_parser, constants, node
 from pcs.lib.errors import LibraryError
 from pcs.lib.interface.config import FacadeInterface
+
+
+_KNET_COMPRESSION_OPTIONS_PREFIX = "knet_compression_"
+_KNET_CRYPTO_OPTIONS_PREFIX = "crypto_"
 
 
 class ConfigFacade(FacadeInterface):
@@ -90,10 +101,7 @@ class ConfigFacade(FacadeInterface):
         return self._need_qdevice_reload
 
     def get_cluster_name(self) -> str:
-        name = ""
-        for totem in self.config.get_sections("totem"):
-            name = totem.get_attribute_value("cluster_name", name)
-        return name
+        return cast(str, self._get_option_value("totem", "cluster_name", ""))
 
     # To get a list of nodenames use pcs.lib.node.get_existing_nodes_names
 
@@ -406,22 +414,59 @@ class ConfigFacade(FacadeInterface):
         }
 
     def get_transport(self):
-        transport = None
-        for totem in self.config.get_sections("totem"):
-            transport = totem.get_attribute_value("transport", transport)
+        transport = self._get_option_value("totem", "transport")
         return transport if transport else constants.TRANSPORT_DEFAULT
 
     def get_ip_version(self):
-        ip_version = None
-        for totem in self.config.get_sections("totem"):
-            ip_version = totem.get_attribute_value("ip_version", ip_version)
+        ip_version = self._get_option_value("totem", "ip_version")
         if ip_version:
             return ip_version
         if self.get_transport() == "udp":
             return constants.IP_VERSION_4
         return constants.IP_VERSION_64
 
-    def set_transport_udp_options(self, options):
+    def _get_option_value(
+        self, section: str, option: str, default: Optional[str] = None
+    ) -> Optional[str]:
+        for sec in self.config.get_sections(section):
+            default = sec.get_attribute_value(option, default)
+        return default
+
+    def _has_changed(
+        self, section: str, option_name: str, new_value: Optional[str]
+    ) -> bool:
+        if new_value is None:
+            return False
+        return self._get_option_value(section, option_name) != new_value
+
+    # TODO: tests
+    def set_transport_options(
+        self,
+        transport_options: Mapping[str, str],
+        compression_options: Mapping[str, str],
+        crypto_options: Mapping[str, str],
+    ) -> None:
+        """
+        Set transport options for transport type currently used
+
+        generic_options -- generic transport options
+        compression_options -- compression options
+        crypto_options -- crypto options
+        """
+        transport_type = self.get_transport()
+        if transport_type in constants.TRANSPORTS_KNET:
+            self._set_transport_knet_options(
+                transport_options, compression_options, crypto_options
+            )
+        elif transport_type in constants.TRANSPORTS_UDP:
+            self._set_transport_udp_options(transport_options)
+        if any(
+            self._has_changed("totem", opt, transport_options.get(opt))
+            for opt in constants.TRANSPORT_RUNTIME_CHANGE_BANNED_OPTIONS
+        ):
+            self._need_stopped_cluster = True
+
+    def _set_transport_udp_options(self, options):
         """
         Set transport options for udp transports
 
@@ -429,9 +474,8 @@ class ConfigFacade(FacadeInterface):
         """
         totem_section_list = self.__ensure_section(self.config, "totem")
         self.__set_section_options(totem_section_list, options)
-        self._need_stopped_cluster = True
 
-    def set_transport_knet_options(
+    def _set_transport_knet_options(
         self, generic_options, compression_options, crypto_options
     ):
         """
@@ -445,14 +489,71 @@ class ConfigFacade(FacadeInterface):
         self.__set_section_options(totem_section_list, generic_options)
         self.__set_section_options(
             totem_section_list,
-            _add_prefix_to_dict_keys("knet_compression_", compression_options),
+            _add_prefix_to_dict_keys(
+                _KNET_COMPRESSION_OPTIONS_PREFIX, compression_options
+            ),
         )
         self.__set_section_options(
             totem_section_list,
-            _add_prefix_to_dict_keys("crypto_", crypto_options),
+            _add_prefix_to_dict_keys(
+                _KNET_CRYPTO_OPTIONS_PREFIX, crypto_options
+            ),
         )
         self.__remove_empty_sections(self.config)
-        self._need_stopped_cluster = True
+
+    def _filter_options(
+        self,
+        section_name: str,
+        allowed_options: Iterable[str],
+        prefix: str = "",
+    ) -> Dict[str, str]:
+        options = {}
+        for section in self.config.get_sections(section_name):
+            for name, value in section.get_attributes():
+                if (
+                    name.startswith(prefix)
+                    and name[len(prefix) :] in allowed_options
+                ):
+                    options[name[len(prefix) :]] = value
+        return options
+
+    # TODO: tests, generalize for transport options
+    def get_transport_options(self) -> Dict[str, str]:
+        """
+        Get configurable generic transport options
+        """
+        transport_type = self.get_transport()
+        if transport_type in constants.TRANSPORTS_KNET:
+            return self._filter_options(
+                "totem", constants.TRANSPORT_KNET_GENERIC_OPTIONS
+            )
+        if transport_type in constants.TRANSPORTS_UDP:
+            return self._filter_options(
+                "totem", constants.TRANSPORT_UDP_GENERIC_OPTIONS
+            )
+        return {}
+
+    # TODO: tests, generalize for transport options
+    def get_compression_options(self) -> Dict[str, str]:
+        """
+        Get configurable compression options
+        """
+        return self._filter_options(
+            "totem",
+            constants.TRANSPORT_KNET_COMPRESSION_OPTIONS,
+            _KNET_COMPRESSION_OPTIONS_PREFIX,
+        )
+
+    # TODO: tests, generalize for transport options
+    def get_crypto_options(self) -> Dict[str, str]:
+        """
+        Get configurable crypto options
+        """
+        return self._filter_options(
+            "totem",
+            constants.TRANSPORT_KNET_CRYPTO_OPTIONS,
+            _KNET_CRYPTO_OPTIONS_PREFIX,
+        )
 
     def set_totem_options(self, options):
         """
@@ -469,6 +570,15 @@ class ConfigFacade(FacadeInterface):
         # options are still written to the totem section. The options which pcs
         # keeps in the totem section for users do not currently need the
         # cluster to be stopped when updating them.
+        # Note: all options in totem section supported by pcs are runtime
+        # configurable.
+
+    # TODO: tests, generalize for transport options
+    def get_totem_options(self) -> Dict[str, str]:
+        """
+        Get configurable totem options
+        """
+        return self._filter_options("totem", constants.TOTEM_OPTIONS)
 
     def set_quorum_options(self, options):
         """
@@ -482,25 +592,17 @@ class ConfigFacade(FacadeInterface):
         self.__remove_empty_sections(self.config)
         self._need_stopped_cluster = True
 
-    def get_quorum_options(self):
+    def get_quorum_options(self) -> Dict[str, str]:
         """
         Get configurable options from the "quorum" section
         """
-        options = {}
-        for section in self.config.get_sections("quorum"):
-            for name, value in section.get_attributes():
-                if name in constants.QUORUM_OPTIONS:
-                    options[name] = value
-        return options
+        return self._filter_options("quorum", constants.QUORUM_OPTIONS)
 
     def is_enabled_auto_tie_breaker(self):
         """
         Returns True if auto tie braker option is enabled, False otherwise.
         """
-        atb = "0"
-        for quorum in self.config.get_sections("quorum"):
-            atb = quorum.get_attribute_value("auto_tie_breaker", atb)
-        return atb == "1"
+        return self._get_option_value("quorum", "auto_tie_breaker", "0") == "1"
 
     def has_quorum_device(self):
         """
