@@ -102,17 +102,21 @@ ruby_tests:
     - /usr/bin/ruby -I ./pcsd -I ./pcsd/test pcsd/test/test_all_suite.rb
 
 python_tier0_tests:
-  stage: stage2
-  needs:
-    - rpm_build
+  stage: stage1
   script:
     - "dnf install -y
+        make
+        python3
+        python3-distro
+        python3-lxml
         python3-pip
-        rpms/pcs-ci-*.rpm
+        python3-pycurl
+        python3-pyOpenSSL
+        which
         "
+    - make install_pip
     - python3 -m pip install concurrencytest
-    - rm -rf pcs pcsd # make sure we are testing installed package
-    - pcs_test/suite.py -v --installed --tier0
+    - pcs_test/suite.py -v --tier0
 
 python_tier1_tests:
   stage: stage2
