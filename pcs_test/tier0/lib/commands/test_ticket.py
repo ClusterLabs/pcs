@@ -1,11 +1,7 @@
 from unittest import mock, TestCase
 
-from pcs_test.tools.assertions import assert_raise_library_error
 from pcs_test.tools.command_env import get_env_tools
 from pcs_test.tools.misc import create_patcher
-from pcs_test.tools.misc import get_test_resource as rc
-from pcs_test.tools.xml import get_xml_manipulation_creator_from_file
-from pcs_test.tier0.lib.misc import get_mocked_env
 
 from pcs.common.reports import ReportItemSeverity as severities
 from pcs.common.reports import codes as report_codes
@@ -15,11 +11,6 @@ patch_commands = create_patcher("pcs.lib.commands.constraint.ticket")
 
 
 class CreateTest(TestCase):
-    def setUp(self):
-        self.create_cib = get_xml_manipulation_creator_from_file(
-            rc("cib-empty.xml")
-        )
-
     def test_sucess_create(self):
         env_assist, config = get_env_tools(test_case=self)
         (
@@ -52,28 +43,36 @@ class CreateTest(TestCase):
         )
 
     def test_refuse_for_nonexisting_resource(self):
-        env = get_mocked_env(cib_data=str(self.create_cib()))
-        assert_raise_library_error(
+        env_assist, config = get_env_tools(test_case=self)
+        config.runner.cib.load()
+        env_assist.assert_raise_library_error(
             lambda: ticket_command.create(
-                env, "ticketA", "resourceA", "master", {"loss-policy": "fence"}
+                env_assist.get_env(),
+                "ticketA",
+                "resourceA",
+                "master",
+                {"loss-policy": "fence"},
             ),
-            (
-                severities.ERROR,
-                report_codes.ID_NOT_FOUND,
-                {
-                    "context_type": "cib",
-                    "context_id": "",
-                    "id": "resourceA",
-                    "expected_types": [
-                        "bundle",
-                        "clone",
-                        "group",
-                        "master",
-                        "primitive",
-                    ],
-                },
-                None,
-            ),
+            [
+                (
+                    severities.ERROR,
+                    report_codes.ID_NOT_FOUND,
+                    {
+                        "context_type": "cib",
+                        "context_id": "",
+                        "id": "resourceA",
+                        "expected_types": [
+                            "bundle",
+                            "clone",
+                            "group",
+                            "master",
+                            "primitive",
+                        ],
+                    },
+                    None,
+                ),
+            ],
+            expected_in_processor=False,
         )
 
 

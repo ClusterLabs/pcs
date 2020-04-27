@@ -8,7 +8,6 @@ from pcs_test.tools.custom_mock import MockLibraryReportProcessor
 from pcs.common.reports import ReportItemSeverity as Severities
 from pcs.common.reports import codes as report_codes
 from pcs.lib.env import LibraryEnvironment
-from pcs.lib.external import CommandRunner
 
 import pcs.lib.commands.alert as cmd_alert
 
@@ -642,18 +641,17 @@ class RemoveRecipientTest(TestCase):
         cmd_alert.remove_recipient(self.env_assist.get_env(), [])
 
 
+@mock.patch.object(LibraryEnvironment, "get_cib")
 @mock.patch("pcs.lib.cib.alert.get_all_alerts")
 class GetAllAlertsTest(TestCase):
     def setUp(self):
         self.mock_log = mock.MagicMock(spec_set=logging.Logger)
-        self.mock_run = mock.MagicMock(spec_set=CommandRunner)
         self.mock_rep = MockLibraryReportProcessor()
-        self.mock_env = LibraryEnvironment(
-            self.mock_log, self.mock_rep, cib_data="<cib/>"
-        )
+        self.mock_env = LibraryEnvironment(self.mock_log, self.mock_rep)
 
-    def test_success(self, mock_alerts):
+    def test_success(self, mock_alerts, mock_get_cib):
         mock_alerts.return_value = [{"id": "alert"}]
+        mock_get_cib.return_value = "<cib/>"
         self.assertEqual(
             [{"id": "alert"}], cmd_alert.get_all_alerts(self.mock_env)
         )

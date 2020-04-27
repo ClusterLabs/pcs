@@ -85,7 +85,9 @@ class ClusterStatusTest(TestBase):
             (severities.ERROR, report_codes.BAD_CLUSTER_STATE_FORMAT, {}),
         )
 
-    def test_refuse_invalid_document(self):
+    @mock.patch("pcs.lib.pacemaker.state._validate_cluster_state_dom")
+    def test_refuse_invalid_document(self, mock_validate):
+        mock_validate.side_effect = etree.DocumentInvalid("some error")
         self.covered_status.append_to_first_tag_name(
             "nodes", '<node without="required attributes" />'
         )
