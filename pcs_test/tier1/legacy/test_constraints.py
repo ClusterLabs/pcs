@@ -61,7 +61,7 @@ skip_unless_location_rsc_pattern = skip_unless_pacemaker_version(
 )
 
 
-@skip_unless_crm_rule
+@skip_unless_crm_rule()
 class ConstraintTest(unittest.TestCase):
     def setUp(self):
         self.temp_cib = get_tmp_file("tier1_constraints")
@@ -3827,7 +3827,7 @@ class LocationTypePatternWithCibUpgrade(LocationTypePattern):
 
 
 @skip_unless_location_rsc_pattern
-@skip_unless_crm_rule
+@skip_unless_crm_rule()
 class LocationShowWithPattern(ConstraintBaseTest):
     # This was written while implementing rsc-pattern to location constraints.
     # Thus it focuses only the new feature (rsc-pattern) and it is NOT a
@@ -4108,7 +4108,7 @@ class Bundle(ConstraintEffect):
         )
 
 
-@skip_unless_pacemaker_supports_bundle
+@skip_unless_pacemaker_supports_bundle()
 class BundleLocation(Bundle):
     def test_bundle_prefers(self):
         self.assert_effect(
@@ -4221,7 +4221,7 @@ class BundleLocation(Bundle):
         )
 
 
-@skip_unless_pacemaker_supports_bundle
+@skip_unless_pacemaker_supports_bundle()
 class BundleColocation(Bundle):
     def setUp(self):
         super(BundleColocation, self).setUp()
@@ -4299,7 +4299,7 @@ class BundleColocation(Bundle):
         )
 
 
-@skip_unless_pacemaker_supports_bundle
+@skip_unless_pacemaker_supports_bundle()
 class BundleOrder(Bundle):
     def setUp(self):
         super(BundleOrder, self).setUp()
@@ -4384,7 +4384,7 @@ class BundleOrder(Bundle):
         )
 
 
-@skip_unless_pacemaker_supports_bundle
+@skip_unless_pacemaker_supports_bundle()
 class BundleTicket(Bundle):
     def test_bundle(self):
         self.assert_effect(
@@ -4629,7 +4629,7 @@ class LocationAdd(ConstraintEffect):
         self.assert_resources_xml_in_cib("<constraints/>")
 
 
-@skip_unless_crm_rule
+@skip_unless_crm_rule()
 class ExpiredConstraints(ConstraintBaseTest):
     _tomorrow = (datetime.date.today() + datetime.timedelta(days=1)).strftime(
         "%Y-%m-%d"

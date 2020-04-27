@@ -6,7 +6,6 @@ from pcs_test.tools.command_env import get_env_tools
 from pcs_test.tools.misc import (
     get_test_resource as rc,
     outdent,
-    skip_unless_pacemaker_supports_bundle,
 )
 
 from pcs.common import reports
@@ -1674,7 +1673,6 @@ class EnableClonedGroup(TestCase):
         )
 
 
-@skip_unless_pacemaker_supports_bundle
 class DisableBundle(TestCase):
     def setUp(self):
         self.env_assist, self.config = get_env_tools(test_case=self)
@@ -1718,7 +1716,6 @@ class DisableBundle(TestCase):
         )
 
 
-@skip_unless_pacemaker_supports_bundle
 class EnableBundle(TestCase):
     def setUp(self):
         self.env_assist, self.config = get_env_tools(test_case=self)

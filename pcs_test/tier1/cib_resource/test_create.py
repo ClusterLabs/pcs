@@ -728,7 +728,7 @@ class Promotable(TestCase, AssertPcsMixin):
         )
 
 
-@skip_unless_pacemaker_supports_bundle
+@skip_unless_pacemaker_supports_bundle()
 class Bundle(ResourceTest):
     empty_cib = rc("cib-empty-2.8.xml")
 

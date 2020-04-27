@@ -110,7 +110,7 @@ class StonithTest(TestCase, AssertPcsMixin):
     def tearDown(self):
         self.temp_cib.close()
 
-    @skip_unless_crm_rule
+    @skip_unless_crm_rule()
     def testStonithCreation(self):
         self.assert_pcs_fail(
             "stonith create test1 fence_noexist",
@@ -1281,7 +1281,7 @@ class LevelAdd(LevelTestsBase):
 
 
 @skip_unless_fencing_level_supported
-@skip_unless_crm_rule
+@skip_unless_crm_rule()
 class LevelConfig(LevelTestsBase):
     full_config = outdent(
         """\

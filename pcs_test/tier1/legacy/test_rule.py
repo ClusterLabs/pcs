@@ -27,7 +27,7 @@ class DomRuleAddTest(TestCase):
     def tearDown(self):
         self.temp_cib.close()
 
-    @skip_unless_crm_rule
+    @skip_unless_crm_rule()
     def test_success(self):
         output, returnVal = pcs(
             self.temp_cib.name,
@@ -104,7 +104,7 @@ Location Constraints:
         )
         self.assertEqual(0, returnVal)
 
-    @skip_unless_crm_rule
+    @skip_unless_crm_rule()
     def test_invalid_score(self):
         output, returnVal = pcs(
             self.temp_cib.name,
@@ -160,7 +160,7 @@ Location Constraints:
         )
         self.assertEqual(1, returnVal)
 
-    @skip_unless_crm_rule
+    @skip_unless_crm_rule()
     def test_ivalid_options(self):
         output, returnVal = pcs(
             self.temp_cib.name,

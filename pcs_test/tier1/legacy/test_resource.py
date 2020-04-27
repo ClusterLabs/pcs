@@ -1174,7 +1174,7 @@ monitor interval=20 (A-monitor-interval-20)
         assert r == 0
         ac(o, "NO resources configured\n")
 
-    @skip_unless_crm_rule
+    @skip_unless_crm_rule()
     def testGroupUngroup(self):
         self.setupClusterA()
         output, returnVal = pcs(
@@ -1468,7 +1468,7 @@ monitor interval=20 (A-monitor-interval-20)
         ac(output, "RGA: A B C E D K J I\n")
         assert returnVal == 0
 
-    @skip_unless_crm_rule
+    @skip_unless_crm_rule()
     def testClusterConfig(self):
         self.setupClusterA()
 
@@ -1633,7 +1633,7 @@ monitor interval=20 (A-monitor-interval-20)
         )
         assert returnVal == 0
 
-    @skip_unless_crm_rule
+    @skip_unless_crm_rule()
     def testMasterSlaveRemove(self):
         self.setupClusterA()
         output, returnVal = pcs(
@@ -1860,7 +1860,7 @@ monitor interval=20 (A-monitor-interval-20)
             "resource delete D1", "Deleting Resource (and group and M/S) - D1\n"
         )
 
-    @skip_unless_crm_rule
+    @skip_unless_crm_rule()
     def testUncloneWithConstraints(self):
         o, r = pcs(
             self.temp_cib.name,
@@ -2730,7 +2730,7 @@ monitor interval=20 (A-monitor-interval-20)
         ac(o, "Error: cannot clone a group that has already been cloned\n")
         assert r == 1
 
-    @skip_unless_crm_rule
+    @skip_unless_crm_rule()
     def testGroupRemoveWithConstraints1(self):
         # Load nodes into cib so move will work
         self.temp_cib.seek(0)
@@ -5639,7 +5639,7 @@ class BundleCommon(
         )
 
 
-@skip_unless_pacemaker_supports_bundle
+@skip_unless_pacemaker_supports_bundle()
 class BundleShow(BundleCommon):
     # TODO: add test for podman (requires pcmk features 3.2)
     empty_cib = rc("cib-empty.xml")
@@ -5671,7 +5671,7 @@ class BundleShow(BundleCommon):
         )
 
 
-@skip_unless_pacemaker_supports_bundle
+@skip_unless_pacemaker_supports_bundle()
 class BundleDelete(BundleCommon):
     def test_without_primitive(self):
         self.fixture_bundle("B")
@@ -5710,7 +5710,7 @@ class BundleDelete(BundleCommon):
         )
 
 
-@skip_unless_pacemaker_supports_bundle
+@skip_unless_pacemaker_supports_bundle()
 class BundleGroup(BundleCommon):
     def test_group_delete_primitive(self):
         self.fixture_bundle("B")
@@ -5733,7 +5733,7 @@ class BundleGroup(BundleCommon):
         )
 
 
-@skip_unless_pacemaker_supports_bundle
+@skip_unless_pacemaker_supports_bundle()
 class BundleClone(BundleCommon):
     def test_clone_bundle(self):
         self.fixture_bundle("B")
@@ -5755,7 +5755,7 @@ class BundleClone(BundleCommon):
         )
 
 
-@skip_unless_pacemaker_supports_bundle
+@skip_unless_pacemaker_supports_bundle()
 class BundleMiscCommands(BundleCommon):
     def test_resource_enable_bundle(self):
         self.fixture_bundle("B")

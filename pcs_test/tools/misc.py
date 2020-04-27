@@ -1,3 +1,4 @@
+from functools import lru_cache
 import logging
 import os
 import re
@@ -133,6 +134,7 @@ def is_minimum_pacemaker_version(major, minor, rev):
     )
 
 
+@lru_cache()
 def get_current_pacemaker_version():
     output, dummy_stderr, dummy_retval = runner.run(
         [os.path.join(settings.pacemaker_binaries, "crm_mon"), "--version",]
@@ -155,6 +157,12 @@ def format_version(version_tuple):
 
 
 def is_minimum_pacemaker_features(cmajor, cminor, crev):
+    major, minor, rev = _get_current_pacemaker_features()
+    return compare_version((major, minor, rev), (cmajor, cminor, crev)) > -1
+
+
+@lru_cache()
+def _get_current_pacemaker_features():
     output, dummy_stderr, dummy_retval = runner.run(
         [os.path.join(settings.pacemaker_binaries, "pacemakerd"), "--features",]
     )
@@ -164,7 +172,7 @@ def is_minimum_pacemaker_features(cmajor, cminor, crev):
     major = int(m.group(1))
     minor = int(m.group(2))
     rev = int(m.group(3))
-    return compare_version((major, minor, rev), (cmajor, cminor, crev)) > -1
+    return major, minor, rev
 
 
 def skip_unless_pacemaker_version(version_tuple, feature):
@@ -182,9 +190,10 @@ def skip_unless_pacemaker_version(version_tuple, feature):
     )
 
 
-skip_unless_crm_rule = skip_unless_pacemaker_version(
-    (2, 0, 2), "listing of constraints that might be expired"
-)
+def skip_unless_crm_rule():
+    return skip_unless_pacemaker_version(
+        (2, 0, 2), "listing of constraints that might be expired"
+    )
 
 
 def skip_unless_pacemaker_features(version_tuple, feature):
@@ -197,9 +206,10 @@ def skip_unless_pacemaker_features(version_tuple, feature):
     )
 
 
-skip_unless_pacemaker_supports_bundle = skip_unless_pacemaker_features(
-    (3, 1, 0), "bundle resources with promoted-max attribute"
-)
+def skip_unless_pacemaker_supports_bundle():
+    return skip_unless_pacemaker_features(
+        (3, 1, 0), "bundle resources with promoted-max attribute"
+    )
 
 
 def skip_if_service_enabled(service_name):
