@@ -1,10 +1,9 @@
 # pylint: disable=too-many-lines
-from random import shuffle
 from textwrap import dedent
-from unittest import mock, skip, TestCase
+from unittest import skip, TestCase
 from lxml import etree
 
-from pcs_test.tier0.cib_resource.common import ResourceTest
+from pcs_test.tier1.cib_resource.common import ResourceTest
 from pcs_test.tools.assertions import (
     ac,
     AssertPcsMixin,
@@ -18,7 +17,6 @@ from pcs_test.tools.fixture_cib import (
     wrap_element_by_master,
 )
 from pcs_test.tools.misc import (
-    dict_to_modifiers,
     get_test_resource as rc,
     get_tmp_file,
     is_minimum_pacemaker_version,
@@ -35,7 +33,6 @@ from pcs_test.tools.pcs_runner import (
 
 from pcs import utils
 from pcs import resource
-from pcs.cli.common.errors import CmdLineInputError
 from pcs.constraint import LOCATION_NODE_VALIDATION_SKIP_MSG
 
 # pylint: disable=invalid-name
@@ -157,8 +154,8 @@ class ResourceDescribe(TestCase, AssertPcsMixin):
 
 class Resource(TestCase, AssertPcsMixin):
     def setUp(self):
-        self.temp_cib = get_tmp_file("tier0_resource")
-        self.temp_large_cib = get_tmp_file("tier0_resource_large")
+        self.temp_cib = get_tmp_file("tier1_resource")
+        self.temp_large_cib = get_tmp_file("tier1_resource_large")
         write_file_to_tmpfile(empty_cib, self.temp_cib)
         write_file_to_tmpfile(large_cib, self.temp_large_cib)
         self.pcs_runner = PcsRunner(self.temp_cib.name)
@@ -4556,9 +4553,9 @@ class OperationDeleteRemoveMixin(
 
     def setUp(self):
         self.empty_cib = empty_cib
-        self.temp_cib = get_tmp_file("tier0_resource_operation_delete")
+        self.temp_cib = get_tmp_file("tier1_resource_operation_delete")
         self.temp_large_cib = get_tmp_file(
-            "tier0_resource_large_operation_delete"
+            "tier1_resource_large_operation_delete"
         )
         write_file_to_tmpfile(empty_cib, self.temp_cib)
         write_file_to_tmpfile(large_cib, self.temp_large_cib)
@@ -4725,8 +4722,8 @@ class Utilization(
 ):
     def setUp(self):
         self.empty_cib = empty_cib
-        self.temp_cib = get_tmp_file("tier0_resource_utilization")
-        self.temp_large_cib = get_tmp_file("tier0_resource_utilization_large")
+        self.temp_cib = get_tmp_file("tier1_resource_utilization")
+        self.temp_large_cib = get_tmp_file("tier1_resource_utilization_large")
         write_file_to_tmpfile(empty_cib, self.temp_cib)
         write_file_to_tmpfile(large_cib, self.temp_large_cib)
         self.pcs_runner = PcsRunner(self.temp_cib.name)
@@ -4940,7 +4937,7 @@ class MetaAttrs(
 ):
     def setUp(self):
         self.empty_cib = empty_cib
-        self.temp_cib = get_tmp_file("tier0_resource_meta")
+        self.temp_cib = get_tmp_file("tier1_resource_meta")
         write_file_to_tmpfile(empty_cib, self.temp_cib)
         self.pcs_runner = PcsRunner(self.temp_cib.name)
         self.pcs_runner.mock_settings = get_mock_settings("crm_resource_binary")
@@ -5100,14 +5097,14 @@ class UpdateInstanceAttrs(
     ),
 ):
     # The idempotency with remote-node is tested in
-    # pcs_test/tier0/test_cluster_pcmk_remote.py in
+    # pcs_test/tier1/legacy/test_cluster_pcmk_remote.py in
     # NodeAddGuest.test_success_when_guest_node_matches_with_existing_guest
 
     # see also BundleMiscCommands
 
     def setUp(self):
         self.empty_cib = empty_cib
-        self.temp_cib = get_tmp_file("tier0_resource_update_instance_attrs")
+        self.temp_cib = get_tmp_file("tier1_resource_update_instance_attrs")
         write_file_to_tmpfile(empty_cib, self.temp_cib)
         self.pcs_runner = PcsRunner(self.temp_cib.name)
         self.pcs_runner.mock_settings = get_mock_settings("crm_resource_binary")
@@ -5275,7 +5272,7 @@ class UpdateInstanceAttrs(
 
 class ResourcesReferencedFromAcl(TestCase, AssertPcsMixin):
     def setUp(self):
-        self.temp_cib = get_tmp_file("tier0_resource_referenced_from_acl")
+        self.temp_cib = get_tmp_file("tier1_resource_referenced_from_acl")
         write_file_to_tmpfile(empty_cib, self.temp_cib)
         self.pcs_runner = PcsRunner(self.temp_cib.name)
 
@@ -5324,7 +5321,7 @@ class ResourcesReferencedFromAcl(TestCase, AssertPcsMixin):
 
 class CloneMasterUpdate(TestCase, AssertPcsMixin):
     def setUp(self):
-        self.temp_cib = get_tmp_file("tier0_resource_clone_master_update")
+        self.temp_cib = get_tmp_file("tier1_resource_clone_master_update")
         write_file_to_tmpfile(empty_cib, self.temp_cib)
         self.pcs_runner = PcsRunner(self.temp_cib.name)
 
@@ -5582,7 +5579,7 @@ class TransforMasterToClone(ResourceTest):
 
 class ResourceRemoveWithTicket(TestCase, AssertPcsMixin):
     def setUp(self):
-        self.temp_cib = get_tmp_file("tier0_resource_remove_with_ticket")
+        self.temp_cib = get_tmp_file("tier1_resource_remove_with_ticket")
         write_file_to_tmpfile(empty_cib, self.temp_cib)
         self.pcs_runner = PcsRunner(self.temp_cib.name)
 
@@ -5619,7 +5616,7 @@ class BundleCommon(
     empty_cib = rc("cib-empty-2.8.xml")
 
     def setUp(self):
-        self.temp_cib = get_tmp_file("tier0_resource_bundle")
+        self.temp_cib = get_tmp_file("tier1_resource_bundle")
         write_file_to_tmpfile(self.empty_cib, self.temp_cib)
         self.pcs_runner = PcsRunner(self.temp_cib.name)
 
@@ -5927,7 +5924,7 @@ class BundleMiscCommands(BundleCommon):
 
 class ResourceUpdateRemoteAndGuestChecks(TestCase, AssertPcsMixin):
     def setUp(self):
-        self.temp_cib = get_tmp_file("tier0_resource_update_remote_guest")
+        self.temp_cib = get_tmp_file("tier1_resource_update_remote_guest")
         write_file_to_tmpfile(empty_cib, self.temp_cib)
         self.pcs_runner = PcsRunner(self.temp_cib.name)
 
@@ -6033,7 +6030,7 @@ class ResourceUpdateRemoteAndGuestChecks(TestCase, AssertPcsMixin):
 
 class ResourceUpdateUniqueAttrChecks(TestCase, AssertPcsMixin):
     def setUp(self):
-        self.temp_cib = get_tmp_file("tier0_resource_update_unique_attr")
+        self.temp_cib = get_tmp_file("tier1_resource_update_unique_attr")
         write_file_to_tmpfile(empty_cib, self.temp_cib)
         self.pcs_runner = PcsRunner(self.temp_cib.name)
         self.pcs_runner.mock_settings = get_mock_settings("crm_resource_binary")
@@ -6155,839 +6152,3 @@ class ResourceUpdateUniqueAttrChecks(TestCase, AssertPcsMixin):
             """
             ),
         )
-
-
-class FailcountShow(TestCase):
-    def setUp(self):
-        self.lib = mock.Mock(spec_set=["resource"])
-        self.resource = mock.Mock(spec_set=["get_failcounts"])
-        self.get_failcounts = mock.Mock()
-        self.lib.resource = self.resource
-        self.lib.resource.get_failcounts = self.get_failcounts
-
-    def assert_failcount_output(
-        self,
-        lib_failures,
-        expected_output,
-        resource_id=None,
-        node=None,
-        operation=None,
-        interval=None,
-        full=False,
-    ):
-        self.get_failcounts.return_value = lib_failures
-        ac(
-            resource.resource_failcount_show(
-                self.lib, resource_id, node, operation, interval, full
-            ),
-            expected_output,
-        )
-
-    def fixture_failures_monitor(self):
-        failures = [
-            {
-                "node": "node2",
-                "resource": "resource",
-                "clone_id": None,
-                "operation": "monitor",
-                "interval": "500",
-                "fail_count": 10,
-                "last_failure": 1528871946,
-            },
-            {
-                "node": "node2",
-                "resource": "resource",
-                "clone_id": None,
-                "operation": "monitor",
-                "interval": "1500",
-                "fail_count": 150,
-                "last_failure": 1528871956,
-            },
-            {
-                "node": "node1",
-                "resource": "resource",
-                "clone_id": None,
-                "operation": "monitor",
-                "interval": "1500",
-                "fail_count": 25,
-                "last_failure": 1528871966,
-            },
-        ]
-        shuffle(failures)
-        return failures
-
-    def fixture_failures(self):
-        failures = self.fixture_failures_monitor() + [
-            {
-                "node": "node1",
-                "resource": "clone",
-                "clone_id": "0",
-                "operation": "start",
-                "interval": "0",
-                "fail_count": "INFINITY",
-                "last_failure": 1528871936,
-            },
-            {
-                "node": "node1",
-                "resource": "clone",
-                "clone_id": "1",
-                "operation": "start",
-                "interval": "0",
-                "fail_count": "INFINITY",
-                "last_failure": 1528871936,
-            },
-            {
-                "node": "node2",
-                "resource": "clone",
-                "clone_id": "0",
-                "operation": "start",
-                "interval": "0",
-                "fail_count": "INFINITY",
-                "last_failure": 1528871936,
-            },
-            {
-                "node": "node2",
-                "resource": "clone",
-                "clone_id": "1",
-                "operation": "start",
-                "interval": "0",
-                "fail_count": "INFINITY",
-                "last_failure": 1528871936,
-            },
-            {
-                "node": "node1",
-                "resource": "resource",
-                "clone_id": None,
-                "operation": "start",
-                "interval": "0",
-                "fail_count": 100,
-                "last_failure": 1528871966,
-            },
-            {
-                "node": "node1",
-                "resource": "resource",
-                "clone_id": None,
-                "operation": "start",
-                "interval": "0",
-                "fail_count": "INFINITY",
-                "last_failure": 1528871966,
-            },
-        ]
-        shuffle(failures)
-        return failures
-
-    def test_no_failcounts(self):
-        self.assert_failcount_output([], "No failcounts")
-
-    def test_no_failcounts_resource(self):
-        self.assert_failcount_output(
-            [], "No failcounts for resource 'res'", resource_id="res"
-        )
-
-    def test_no_failcounts_node(self):
-        self.assert_failcount_output(
-            [], "No failcounts on node 'nod'", node="nod"
-        )
-
-    def test_no_failcounts_operation(self):
-        self.assert_failcount_output(
-            [], "No failcounts for operation 'ope'", operation="ope"
-        )
-
-    def test_no_failcounts_operation_interval(self):
-        self.assert_failcount_output(
-            [],
-            "No failcounts for operation 'ope' with interval '10'",
-            operation="ope",
-            interval="10",
-        )
-
-    def test_no_failcounts_resource_node(self):
-        self.assert_failcount_output(
-            [],
-            "No failcounts for resource 'res' on node 'nod'",
-            resource_id="res",
-            node="nod",
-        )
-
-    def test_no_failcounts_resource_operation(self):
-        self.assert_failcount_output(
-            [],
-            "No failcounts for operation 'ope' of resource 'res'",
-            resource_id="res",
-            operation="ope",
-        )
-
-    def test_no_failcounts_resource_operation_interval(self):
-        self.assert_failcount_output(
-            [],
-            "No failcounts for operation 'ope' with interval '10' of resource "
-            "'res'",
-            resource_id="res",
-            operation="ope",
-            interval="10",
-        )
-
-    def test_no_failcounts_resource_node_operation_interval(self):
-        self.assert_failcount_output(
-            [],
-            "No failcounts for operation 'ope' with interval '10' of resource "
-            "'res' on node 'nod'",
-            resource_id="res",
-            node="nod",
-            operation="ope",
-            interval="10",
-        )
-
-    def test_no_failcounts_node_operation(self):
-        self.assert_failcount_output(
-            [],
-            "No failcounts for operation 'ope' on node 'nod'",
-            node="nod",
-            operation="ope",
-        )
-
-    def test_no_failcounts_node_operation_interval(self):
-        self.assert_failcount_output(
-            [],
-            "No failcounts for operation 'ope' with interval '10' on node 'nod'",
-            node="nod",
-            operation="ope",
-            interval="10",
-        )
-
-    def test_failcounts_short(self):
-        self.assert_failcount_output(
-            self.fixture_failures(),
-            dedent(
-                """\
-                Failcounts for resource 'clone'
-                  node1: INFINITY
-                  node2: INFINITY
-                Failcounts for resource 'resource'
-                  node1: INFINITY
-                  node2: 160"""
-            ),
-            full=False,
-        )
-
-    def test_failcounts_full(self):
-        self.assert_failcount_output(
-            self.fixture_failures(),
-            dedent(
-                """\
-                Failcounts for resource 'clone'
-                  node1:
-                    start 0ms: INFINITY
-                  node2:
-                    start 0ms: INFINITY
-                Failcounts for resource 'resource'
-                  node1:
-                    monitor 1500ms: 25
-                    start 0ms: INFINITY
-                  node2:
-                    monitor 1500ms: 150
-                    monitor 500ms: 10"""
-            ),
-            full=True,
-        )
-
-    def test_failcounts_short_filter(self):
-        self.assert_failcount_output(
-            self.fixture_failures_monitor(),
-            dedent(
-                """\
-                Failcounts for operation 'monitor' of resource 'resource'
-                  node1: 25
-                  node2: 160"""
-            ),
-            operation="monitor",
-            full=False,
-        )
-
-    def test_failcounts_full_filter(self):
-        self.assert_failcount_output(
-            self.fixture_failures_monitor(),
-            dedent(
-                """\
-                Failcounts for operation 'monitor' of resource 'resource'
-                  node1:
-                    monitor 1500ms: 25
-                  node2:
-                    monitor 1500ms: 150
-                    monitor 500ms: 10"""
-            ),
-            operation="monitor",
-            full=True,
-        )
-
-
-class GroupAdd(TestCase, AssertPcsMixin):
-    def setUp(self):
-        self.lib = mock.Mock(spec_set=["resource"])
-        self.resource = mock.Mock(spec_set=["group_add"])
-        self.lib.resource = self.resource
-
-    def test_no_args(self):
-        with self.assertRaises(CmdLineInputError) as cm:
-            resource.resource_group_add_cmd(
-                self.lib, [], dict_to_modifiers(dict())
-            )
-        self.assertIsNone(cm.exception.message)
-        self.resource.group_add.assert_not_called()
-
-    def test_no_resources(self):
-        with self.assertRaises(CmdLineInputError) as cm:
-            resource.resource_group_add_cmd(
-                self.lib, ["G"], dict_to_modifiers(dict())
-            )
-        self.assertIsNone(cm.exception.message)
-        self.resource.group_add.assert_not_called()
-
-    def test_both_after_and_before(self):
-        with self.assertRaises(CmdLineInputError) as cm:
-            resource.resource_group_add_cmd(
-                self.lib,
-                ["G", "R1", "R2"],
-                dict_to_modifiers(dict(after="A", before="B")),
-            )
-        self.assertEqual(
-            cm.exception.message, "you cannot specify both --before and --after"
-        )
-        self.resource.group_add.assert_not_called()
-
-    def test_success(self):
-        resource.resource_group_add_cmd(
-            self.lib, ["G", "R1", "R2"], dict_to_modifiers(dict())
-        )
-        self.resource.group_add.assert_called_once_with(
-            "G",
-            ["R1", "R2"],
-            adjacent_resource_id=None,
-            put_after_adjacent=True,
-            wait=False,
-        )
-
-    def test_success_before(self):
-        resource.resource_group_add_cmd(
-            self.lib, ["G", "R1", "R2"], dict_to_modifiers(dict(before="X"))
-        )
-        self.resource.group_add.assert_called_once_with(
-            "G",
-            ["R1", "R2"],
-            adjacent_resource_id="X",
-            put_after_adjacent=False,
-            wait=False,
-        )
-
-    def test_success_after(self):
-        resource.resource_group_add_cmd(
-            self.lib, ["G", "R1", "R2"], dict_to_modifiers(dict(after="X"))
-        )
-        self.resource.group_add.assert_called_once_with(
-            "G",
-            ["R1", "R2"],
-            adjacent_resource_id="X",
-            put_after_adjacent=True,
-            wait=False,
-        )
-
-    def test_success_wait(self):
-        resource.resource_group_add_cmd(
-            self.lib, ["G", "R1", "R2"], dict_to_modifiers(dict(wait="10"))
-        )
-        self.resource.group_add.assert_called_once_with(
-            "G",
-            ["R1", "R2"],
-            adjacent_resource_id=None,
-            put_after_adjacent=True,
-            wait="10",
-        )
-
-
-class ResourceMoveBanMixin:
-    def test_no_args(self):
-        with self.assertRaises(CmdLineInputError) as cm:
-            self.cli_command(self.lib, [], dict_to_modifiers(dict()))
-        self.assertEqual(cm.exception.message, self.no_args_error)
-        self.lib_command.assert_not_called()
-
-    def test_too_many_args(self):
-        with self.assertRaises(CmdLineInputError) as cm:
-            self.cli_command(
-                self.lib,
-                ["resource", "arg1", "arg2", "arg3"],
-                dict_to_modifiers(dict()),
-            )
-        self.assertIsNone(cm.exception.message)
-        self.lib_command.assert_not_called()
-
-    def test_node_twice(self):
-        with self.assertRaises(CmdLineInputError) as cm:
-            self.cli_command(
-                self.lib,
-                ["resource", "node1", "node2"],
-                dict_to_modifiers(dict()),
-            )
-        self.assertIsNone(cm.exception.message)
-        self.lib_command.assert_not_called()
-
-    def test_lifetime_twice(self):
-        with self.assertRaises(CmdLineInputError) as cm:
-            self.cli_command(
-                self.lib,
-                ["resource", "lifetime=1h", "lifetime=2h"],
-                dict_to_modifiers(dict()),
-            )
-        self.assertIsNone(cm.exception.message)
-        self.lib_command.assert_not_called()
-
-    def test_succes(self):
-        self.cli_command(self.lib, ["resource"], dict_to_modifiers(dict()))
-        self.lib_command.assert_called_once_with(
-            "resource", lifetime=None, master=False, node=None, wait=False
-        )
-
-    def test_success_node(self):
-        self.cli_command(
-            self.lib, ["resource", "node"], dict_to_modifiers(dict())
-        )
-        self.lib_command.assert_called_once_with(
-            "resource", lifetime=None, master=False, node="node", wait=False
-        )
-
-    def test_success_lifetime(self):
-        self.cli_command(
-            self.lib, ["resource", "lifetime=1h"], dict_to_modifiers(dict())
-        )
-        self.lib_command.assert_called_once_with(
-            "resource", lifetime="P1h", master=False, node=None, wait=False
-        )
-
-    def test_success_lifetime_unchanged(self):
-        self.cli_command(
-            self.lib, ["resource", "lifetime=T1h"], dict_to_modifiers(dict())
-        )
-        self.lib_command.assert_called_once_with(
-            "resource", lifetime="T1h", master=False, node=None, wait=False
-        )
-
-    def test_succes_node_lifetime(self):
-        self.cli_command(
-            self.lib,
-            ["resource", "node", "lifetime=1h"],
-            dict_to_modifiers(dict()),
-        )
-        self.lib_command.assert_called_once_with(
-            "resource", lifetime="P1h", master=False, node="node", wait=False
-        )
-
-    def test_success_lifetime_node(self):
-        self.cli_command(
-            self.lib,
-            ["resource", "lifetime=1h", "node"],
-            dict_to_modifiers(dict()),
-        )
-        self.lib_command.assert_called_once_with(
-            "resource", lifetime="P1h", master=False, node="node", wait=False
-        )
-
-    def test_success_all_options(self):
-        self.cli_command(
-            self.lib,
-            ["resource", "lifetime=1h", "node"],
-            dict_to_modifiers(dict(master=True, wait="10")),
-        )
-        self.lib_command.assert_called_once_with(
-            "resource", lifetime="P1h", master=True, node="node", wait="10"
-        )
-
-
-class ResourceMove(ResourceMoveBanMixin, TestCase):
-    def setUp(self):
-        self.lib = mock.Mock(spec_set=["resource"])
-        self.resource = mock.Mock(spec_set=["move"])
-        self.lib.resource = self.resource
-        self.lib_command = self.resource.move
-        self.cli_command = resource.resource_move
-        self.no_args_error = "must specify a resource to move"
-
-
-class ResourceBan(ResourceMoveBanMixin, TestCase):
-    def setUp(self):
-        self.lib = mock.Mock(spec_set=["resource"])
-        self.resource = mock.Mock(spec_set=["ban"])
-        self.lib.resource = self.resource
-        self.lib_command = self.resource.ban
-        self.cli_command = resource.resource_ban
-        self.no_args_error = "must specify a resource to ban"
-
-
-class ResourceClear(TestCase):
-    def setUp(self):
-        self.lib = mock.Mock(spec_set=["resource"])
-        self.resource = mock.Mock(spec_set=["unmove_unban"])
-        self.lib.resource = self.resource
-
-    def test_no_args(self):
-        with self.assertRaises(CmdLineInputError) as cm:
-            resource.resource_unmove_unban(
-                self.lib, [], dict_to_modifiers(dict())
-            )
-        self.assertEqual(
-            cm.exception.message, "must specify a resource to clear"
-        )
-        self.resource.unmove_unban.assert_not_called()
-
-    def test_too_many_args(self):
-        with self.assertRaises(CmdLineInputError) as cm:
-            resource.resource_unmove_unban(
-                self.lib,
-                ["resource", "arg1", "arg2"],
-                dict_to_modifiers(dict()),
-            )
-        self.assertIsNone(cm.exception.message)
-        self.resource.unmove_unban.assert_not_called()
-
-    def test_succes(self):
-        resource.resource_unmove_unban(
-            self.lib, ["resource"], dict_to_modifiers(dict())
-        )
-        self.resource.unmove_unban.assert_called_once_with(
-            "resource", node=None, master=False, expired=False, wait=False
-        )
-
-    def test_success_node(self):
-        resource.resource_unmove_unban(
-            self.lib, ["resource", "node"], dict_to_modifiers(dict())
-        )
-        self.resource.unmove_unban.assert_called_once_with(
-            "resource", node="node", master=False, expired=False, wait=False
-        )
-
-    def test_success_all_options(self):
-        resource.resource_unmove_unban(
-            self.lib,
-            ["resource", "node"],
-            dict_to_modifiers(dict(master=True, expired=True, wait="10")),
-        )
-        self.resource.unmove_unban.assert_called_once_with(
-            "resource", node="node", master=True, expired=True, wait="10"
-        )
-
-
-class ResourceDisable(TestCase):
-    def setUp(self):
-        self.lib = mock.Mock(spec_set=["resource"])
-        self.resource = mock.Mock(
-            spec_set=["disable", "disable_safe", "disable_simulate"]
-        )
-        self.lib.resource = self.resource
-
-    def test_no_args(self):
-        with self.assertRaises(CmdLineInputError) as cm:
-            resource.resource_disable_cmd(
-                self.lib, [], dict_to_modifiers(dict())
-            )
-        self.assertEqual(
-            cm.exception.message, "You must specify resource(s) to disable"
-        )
-        self.resource.disable.assert_not_called()
-        self.resource.disable_safe.assert_not_called()
-        self.resource.disable_simulate.assert_not_called()
-
-    def test_one_resource(self):
-        resource.resource_disable_cmd(
-            self.lib, ["R1"], dict_to_modifiers(dict())
-        )
-        self.resource.disable.assert_called_once_with(["R1"], False)
-        self.resource.disable_safe.assert_not_called()
-        self.resource.disable_simulate.assert_not_called()
-
-    def test_more_resources(self):
-        resource.resource_disable_cmd(
-            self.lib, ["R1", "R2"], dict_to_modifiers(dict())
-        )
-        self.resource.disable.assert_called_once_with(["R1", "R2"], False)
-        self.resource.disable_safe.assert_not_called()
-        self.resource.disable_simulate.assert_not_called()
-
-    def test_safe(self):
-        resource.resource_disable_cmd(
-            self.lib, ["R1", "R2"], dict_to_modifiers(dict(safe=True))
-        )
-        self.resource.disable_safe.assert_called_once_with(
-            ["R1", "R2"], True, False
-        )
-        self.resource.disable.assert_not_called()
-        self.resource.disable_simulate.assert_not_called()
-
-    def test_safe_wait(self):
-        resource.resource_disable_cmd(
-            self.lib,
-            ["R1", "R2"],
-            dict_to_modifiers(dict(safe=True, wait="10")),
-        )
-        self.resource.disable_safe.assert_called_once_with(
-            ["R1", "R2"], True, "10"
-        )
-        self.resource.disable.assert_not_called()
-        self.resource.disable_simulate.assert_not_called()
-
-    def test_safe_no_strict(self):
-        resource.resource_disable_cmd(
-            self.lib, ["R1", "R2"], dict_to_modifiers({"no-strict": True})
-        )
-        self.resource.disable_safe.assert_called_once_with(
-            ["R1", "R2"], False, False
-        )
-        self.resource.disable.assert_not_called()
-        self.resource.disable_simulate.assert_not_called()
-
-    def test_safe_no_strict_wait(self):
-        resource.resource_disable_cmd(
-            self.lib,
-            ["R1", "R2"],
-            dict_to_modifiers({"no-strict": True, "wait": "10"}),
-        )
-        self.resource.disable_safe.assert_called_once_with(
-            ["R1", "R2"], False, "10"
-        )
-        self.resource.disable.assert_not_called()
-        self.resource.disable_simulate.assert_not_called()
-
-    @mock.patch("pcs.resource.print")
-    def test_simulate(self, mock_print):
-        self.resource.disable_simulate.return_value = "simulate output"
-        resource.resource_disable_cmd(
-            self.lib, ["R1", "R2"], dict_to_modifiers(dict(simulate=True))
-        )
-        self.resource.disable_simulate.assert_called_once_with(["R1", "R2"])
-        self.resource.disable.assert_not_called()
-        self.resource.disable_safe.assert_not_called()
-        mock_print.assert_called_once_with("simulate output")
-
-    def test_simulate_wait(self):
-        with self.assertRaises(CmdLineInputError) as cm:
-            resource.resource_disable_cmd(
-                self.lib,
-                ["R1"],
-                dict_to_modifiers(dict(simulate=True, wait=True)),
-            )
-        self.assertEqual(
-            cm.exception.message,
-            "Only one of '--simulate', '--wait' can be used",
-        )
-        self.resource.disable.assert_not_called()
-        self.resource.disable_safe.assert_not_called()
-        self.resource.disable_simulate.assert_not_called()
-
-    def test_simulate_safe(self):
-        with self.assertRaises(CmdLineInputError) as cm:
-            resource.resource_disable_cmd(
-                self.lib,
-                ["R1"],
-                dict_to_modifiers(
-                    {"no-strict": True, "simulate": True, "safe": True}
-                ),
-            )
-        self.assertEqual(
-            cm.exception.message,
-            "'--simulate' cannot be used with '--no-strict', '--safe'",
-        )
-        self.resource.disable.assert_not_called()
-        self.resource.disable_safe.assert_not_called()
-        self.resource.disable_simulate.assert_not_called()
-
-    def test_wait(self):
-        resource.resource_disable_cmd(
-            self.lib, ["R1", "R2"], dict_to_modifiers(dict(wait="10"))
-        )
-        self.resource.disable.assert_called_once_with(["R1", "R2"], "10")
-        self.resource.disable_safe.assert_not_called()
-        self.resource.disable_simulate.assert_not_called()
-
-
-class ResourceSafeDisable(TestCase):
-    def setUp(self):
-        self.lib = mock.Mock(spec_set=["resource"])
-        self.resource = mock.Mock(
-            spec_set=["disable", "disable_safe", "disable_simulate"]
-        )
-        self.lib.resource = self.resource
-        self.force_warning = (
-            "option '--force' is specified therefore checks for disabling "
-            "resource safely will be skipped"
-        )
-
-    def test_no_args(self):
-        with self.assertRaises(CmdLineInputError) as cm:
-            resource.resource_safe_disable_cmd(
-                self.lib, [], dict_to_modifiers({})
-            )
-        self.assertEqual(
-            cm.exception.message, "You must specify resource(s) to disable"
-        )
-        self.resource.disable.assert_not_called()
-        self.resource.disable_safe.assert_not_called()
-        self.resource.disable_simulate.assert_not_called()
-
-    def test_one_resource(self):
-        resource.resource_safe_disable_cmd(
-            self.lib, ["R1"], dict_to_modifiers({})
-        )
-        self.resource.disable_safe.assert_called_once_with(["R1"], True, False)
-        self.resource.disable.assert_not_called()
-        self.resource.disable_simulate.assert_not_called()
-
-    def test_more_resources(self):
-        resource.resource_safe_disable_cmd(
-            self.lib, ["R1", "R2"], dict_to_modifiers({})
-        )
-        self.resource.disable_safe.assert_called_once_with(
-            ["R1", "R2"], True, False
-        )
-        self.resource.disable.assert_not_called()
-        self.resource.disable_simulate.assert_not_called()
-
-    def test_wait(self):
-        resource.resource_safe_disable_cmd(
-            self.lib, ["R1", "R2"], dict_to_modifiers(dict(wait="10"))
-        )
-        self.resource.disable_safe.assert_called_once_with(
-            ["R1", "R2"], True, "10"
-        )
-        self.resource.disable.assert_not_called()
-        self.resource.disable_simulate.assert_not_called()
-
-    def test_no_strict(self):
-        resource.resource_safe_disable_cmd(
-            self.lib, ["R1", "R2"], dict_to_modifiers({"no-strict": True})
-        )
-        self.resource.disable_safe.assert_called_once_with(
-            ["R1", "R2"], False, False
-        )
-        self.resource.disable.assert_not_called()
-        self.resource.disable_simulate.assert_not_called()
-
-    def test_no_strict_wait(self):
-        resource.resource_safe_disable_cmd(
-            self.lib,
-            ["R1", "R2"],
-            dict_to_modifiers({"no-strict": True, "wait": "10"}),
-        )
-        self.resource.disable_safe.assert_called_once_with(
-            ["R1", "R2"], False, "10"
-        )
-        self.resource.disable.assert_not_called()
-        self.resource.disable_simulate.assert_not_called()
-
-    @mock.patch("pcs.resource.warn")
-    def test_force(self, mock_warn):
-        resource.resource_safe_disable_cmd(
-            self.lib, ["R1", "R2"], dict_to_modifiers({"force": True})
-        )
-        self.resource.disable.assert_called_once_with(["R1", "R2"], False)
-        self.resource.disable_safe.assert_not_called()
-        self.resource.disable_simulate.assert_not_called()
-        mock_warn.assert_called_once_with(self.force_warning)
-
-    @mock.patch("pcs.resource.warn")
-    def test_force_wait(self, mock_warn):
-        resource.resource_safe_disable_cmd(
-            self.lib,
-            ["R1", "R2"],
-            dict_to_modifiers({"force": True, "wait": "10"}),
-        )
-        self.resource.disable.assert_called_once_with(["R1", "R2"], "10")
-        self.resource.disable_safe.assert_not_called()
-        self.resource.disable_simulate.assert_not_called()
-        mock_warn.assert_called_once_with(self.force_warning)
-
-    @mock.patch("pcs.resource.print")
-    def test_simulate(self, mock_print):
-        self.resource.disable_simulate.return_value = "simulate output"
-        resource.resource_safe_disable_cmd(
-            self.lib, ["R1", "R2"], dict_to_modifiers(dict(simulate=True))
-        )
-        self.resource.disable_simulate.assert_called_once_with(["R1", "R2"])
-        self.resource.disable.assert_not_called()
-        self.resource.disable_safe.assert_not_called()
-        mock_print.assert_called_once_with("simulate output")
-
-    def test_simulate_wait(self):
-        with self.assertRaises(CmdLineInputError) as cm:
-            resource.resource_safe_disable_cmd(
-                self.lib,
-                ["R1"],
-                dict_to_modifiers(dict(simulate=True, wait=True)),
-            )
-        self.assertEqual(
-            cm.exception.message,
-            "Only one of '--simulate', '--wait' can be used",
-        )
-        self.resource.disable.assert_not_called()
-        self.resource.disable_safe.assert_not_called()
-        self.resource.disable_simulate.assert_not_called()
-
-    def test_simulate_force(self):
-        with self.assertRaises(CmdLineInputError) as cm:
-            resource.resource_safe_disable_cmd(
-                self.lib,
-                ["R1"],
-                dict_to_modifiers(dict(simulate=True, force=True)),
-            )
-        self.assertEqual(
-            cm.exception.message,
-            "Only one of '--force', '--simulate' can be used",
-        )
-        self.resource.disable.assert_not_called()
-        self.resource.disable_safe.assert_not_called()
-        self.resource.disable_simulate.assert_not_called()
-
-    def test_simulate_no_strict(self):
-        with self.assertRaises(CmdLineInputError) as cm:
-            resource.resource_safe_disable_cmd(
-                self.lib,
-                ["R1"],
-                dict_to_modifiers({"simulate": True, "no-strict": True}),
-            )
-        self.assertEqual(
-            cm.exception.message,
-            "Only one of '--no-strict', '--simulate' can be used",
-        )
-        self.resource.disable.assert_not_called()
-        self.resource.disable_safe.assert_not_called()
-        self.resource.disable_simulate.assert_not_called()
-
-    def test_simulate_no_strict_force(self):
-        with self.assertRaises(CmdLineInputError) as cm:
-            resource.resource_safe_disable_cmd(
-                self.lib,
-                ["R1"],
-                dict_to_modifiers(
-                    {"simulate": True, "no-strict": True, "force": True}
-                ),
-            )
-        self.assertEqual(
-            cm.exception.message,
-            "Only one of '--force', '--no-strict', '--simulate' can be used",
-        )
-        self.resource.disable.assert_not_called()
-        self.resource.disable_safe.assert_not_called()
-        self.resource.disable_simulate.assert_not_called()
-
-    def test_force_no_strict(self):
-        with self.assertRaises(CmdLineInputError) as cm:
-            resource.resource_safe_disable_cmd(
-                self.lib,
-                ["R1"],
-                dict_to_modifiers({"force": True, "no-strict": True}),
-            )
-        self.assertEqual(
-            cm.exception.message,
-            "Only one of '--force', '--no-strict' can be used",
-        )
-        self.resource.disable.assert_not_called()
-        self.resource.disable_safe.assert_not_called()
-        self.resource.disable_simulate.assert_not_called()

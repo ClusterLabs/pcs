@@ -355,8 +355,13 @@ black_check:
 black:
 	$(BLACK_CMD) .
 
-python_tests:
-	$(PYTHON) pcs_test/suite.py
+python_tests: python_tests_tier0 python_tests_tier1
+
+python_tests_tier0:
+	$(PYTHON) pcs_test/suite.py --tier0
+
+python_tests_tier1:
+	$(PYTHON) pcs_test/suite.py --tier1
 
 tests: python_tests
 

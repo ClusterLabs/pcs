@@ -107,6 +107,19 @@ python_tier0_tests:
     - rpm_build
   script:
     - "dnf install -y
+        python3-pip
+        rpms/pcs-ci-*.rpm
+        "
+    - python3 -m pip install concurrencytest
+    - rm -rf pcs pcsd # make sure we are testing installed package
+    - pcs_test/suite.py -v --installed --tier0
+
+python_tier1_tests:
+  stage: stage2
+  needs:
+    - rpm_build
+  script:
+    - "dnf install -y
         python3-mock
         python3-pip
         fence-agents-scsi
@@ -118,7 +131,7 @@ python_tier0_tests:
         "
     - python3 -m pip install concurrencytest
     - rm -rf pcs pcsd # make sure we are testing installed package
-    - pcs_test/suite.py -v --installed
+    - pcs_test/suite.py -v --installed --tier1
 
 python_smoke_tests:
   stage: stage2

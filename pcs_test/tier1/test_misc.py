@@ -13,7 +13,7 @@ from pcs_test.tools.pcs_runner import PcsRunner
 
 class OldCibPushTest(TestCase, AssertPcsMixin):
     def setUp(self):
-        self.temp_cib = get_tmp_file("tier0_misc")
+        self.temp_cib = get_tmp_file("tier1_misc")
         write_file_to_tmpfile(rc("cib-empty-1.2.xml"), self.temp_cib)
         self.pcs_runner = PcsRunner(self.temp_cib.name)
         self.pcs_runner.mock_settings = get_mock_settings("crm_resource_binary")

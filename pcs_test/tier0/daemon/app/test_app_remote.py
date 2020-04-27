@@ -103,7 +103,7 @@ class SyncConfigMutualExclusive(AppTest):
         fetch_sync_options = lambda: self.http_client.fetch(
             self.get_url("/remote/set_sync_options"), **kwargs
         )
-        return self.io_loop.run_sync(fetch_sync_options, timeout=1)
+        return self.io_loop.run_sync(fetch_sync_options, timeout=0.5)
 
     def check_call_wrapper_without_lock(self, method):
         self.assert_wrappers_response(self.fetch_set_sync_options(method))

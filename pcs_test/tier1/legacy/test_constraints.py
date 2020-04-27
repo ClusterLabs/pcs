@@ -64,7 +64,7 @@ skip_unless_location_rsc_pattern = skip_unless_pacemaker_version(
 @skip_unless_crm_rule
 class ConstraintTest(unittest.TestCase):
     def setUp(self):
-        self.temp_cib = get_tmp_file("tier0_constraints")
+        self.temp_cib = get_tmp_file("tier1_constraints")
         write_file_to_tmpfile(empty_cib, self.temp_cib)
 
     def tearDown(self):
@@ -3451,7 +3451,7 @@ class ConstraintBaseTest(unittest.TestCase, AssertPcsMixin):
     empty_cib = rc("cib-empty.xml")
 
     def setUp(self):
-        self.temp_cib = get_tmp_file("tier0_constraint")
+        self.temp_cib = get_tmp_file("tier1_constraint")
         write_file_to_tmpfile(self.empty_cib, self.temp_cib)
         self.pcs_runner = PcsRunner(self.temp_cib.name)
         self.assert_pcs_success("resource create A ocf:heartbeat:Dummy")
@@ -3672,7 +3672,7 @@ class ConstraintEffect(
     empty_cib = rc("cib-empty.xml")
 
     def setUp(self):
-        self.temp_cib = get_tmp_file("tier0_constraint")
+        self.temp_cib = get_tmp_file("tier1_constraint")
         write_file_to_tmpfile(self.empty_cib, self.temp_cib)
         self.pcs_runner = PcsRunner(self.temp_cib.name)
 
@@ -4469,7 +4469,7 @@ class LocationPrefersAvoidsMixin(
     )
 ):
     def setUp(self):
-        self.temp_cib = get_tmp_file("tier0_constraint_location")
+        self.temp_cib = get_tmp_file("tier1_constraint_location")
         write_file_to_tmpfile(self.empty_cib, self.temp_cib)
         self.pcs_runner = PcsRunner(self.temp_cib.name)
         self.command = "to-be-overriden"

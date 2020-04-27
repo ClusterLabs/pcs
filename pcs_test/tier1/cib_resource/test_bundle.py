@@ -33,7 +33,7 @@ class BundleCreateCommon(
     empty_cib = rc("cib-empty.xml")
 
     def setUp(self):
-        self.temp_cib = get_tmp_file("tier0_bundle_create")
+        self.temp_cib = get_tmp_file("tier1_bundle_create")
         write_file_to_tmpfile(self.empty_cib, self.temp_cib)
         self.pcs_runner = PcsRunner(self.temp_cib.name)
         self.pcs_runner.mock_settings = get_mock_settings("crm_resource_binary")
@@ -638,7 +638,7 @@ class BundleShow(TestCase, AssertPcsMixin):
     empty_cib = rc("cib-empty.xml")
 
     def setUp(self):
-        self.temp_cib = get_tmp_file("tier0_bundle_show")
+        self.temp_cib = get_tmp_file("tier1_bundle_show")
         write_file_to_tmpfile(self.empty_cib, self.temp_cib)
         self.pcs_runner = PcsRunner(self.temp_cib.name)
         self.pcs_runner.mock_settings = get_mock_settings("crm_resource_binary")

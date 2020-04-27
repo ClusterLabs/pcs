@@ -8,16 +8,20 @@ env:
   matrix:
     - DIST=fedora30
       RUBY_BIN=/usr/bin/ruby
-      PYTHON_TEST_ARGS=""
+      PYTHON_TEST0_ARGS=""
+      PYTHON_TEST1_ARGS=""
     - DIST=fedora31
       RUBY_BIN=/usr/bin/ruby
-      PYTHON_TEST_ARGS=""
+      PYTHON_TEST0_ARGS=""
+      PYTHON_TEST1_ARGS=""
     - DIST=fedora32
       RUBY_BIN=/usr/bin/ruby
-      PYTHON_TEST_ARGS=""
+      PYTHON_TEST0_ARGS=""
+      PYTHON_TEST1_ARGS=""
     - DIST=centos8
       RUBY_BIN=/usr/bin/ruby
-      PYTHON_TEST_ARGS=""
+      PYTHON_TEST0_ARGS=""
+      PYTHON_TEST1_ARGS=""
       GEM_HOME=$SRC_PATH/pcsd/vendor/bundle/ruby
 
 services:
@@ -32,7 +36,8 @@ before_install:
 
 script:
   # python test suite
-  - docker run $DIST $SRC_PATH/pcs_test/suite.py -v --vanilla $PYTHON_TEST_ARGS
+  - docker run $DIST $SRC_PATH/pcs_test/suite.py -v --vanilla --tier0 $PYTHON_TEST0_ARGS
+  - docker run $DIST $SRC_PATH/pcs_test/suite.py -v --vanilla --tier1 $PYTHON_TEST1_ARGS
   # python static types check
   - docker run $DIST make -C $SRC_PATH mypy
   # python linter

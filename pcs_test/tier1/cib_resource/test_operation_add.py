@@ -1,6 +1,6 @@
 from unittest import TestCase
 
-from pcs_test.tier0.cib_resource.common import get_cib_resources
+from pcs_test.tier1.cib_resource.common import get_cib_resources
 from pcs_test.tools.cib import get_assert_pcs_effect_mixin
 from pcs_test.tools.misc import (
     get_test_resource as rc,
@@ -15,7 +15,7 @@ class OperationAdd(TestCase, get_assert_pcs_effect_mixin(get_cib_resources)):
     empty_cib = rc("cib-empty.xml")
 
     def setUp(self):
-        self.temp_cib = get_tmp_file("tier0_cib_resource_operation_add")
+        self.temp_cib = get_tmp_file("tier1_cib_resource_operation_add")
         self.pcs_runner = PcsRunner(self.temp_cib.name)
         write_data_to_tmpfile(self.fixture_cib_cache(), self.temp_cib)
 
