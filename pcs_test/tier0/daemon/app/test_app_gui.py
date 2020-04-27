@@ -3,7 +3,7 @@ import os
 
 from pcs_test.tools.misc import (
     create_setup_patch_mixin,
-    get_test_resource as rc,
+    get_tmp_dir,
 )
 from pcs_test.tier0.daemon.app import fixtures_app
 
@@ -14,11 +14,6 @@ from pcs.daemon.app import sinatra_ui
 USER = "user"
 PASSWORD = "password"
 LOGIN_BODY = {"username": USER, "password": PASSWORD}
-PUBLIC_DIR = rc("web_public")
-CSS_DIR = os.path.join(PUBLIC_DIR, "css")
-
-if not os.path.exists(CSS_DIR):
-    os.makedirs(CSS_DIR)
 
 # Don't write errors to test output.
 logging.getLogger("tornado.access").setLevel(logging.CRITICAL)
@@ -30,11 +25,16 @@ class AppTest(
 ):
     def setUp(self):
         self.wrapper = fixtures_app.RubyPcsdWrapper(ruby_pcsd.SINATRA_GUI)
+        self.public_dir = get_tmp_dir("tier0_daemon_app_gui")
         super().setUp()
+
+    def tearDown(self):
+        super().tearDown()
+        self.public_dir.cleanup()
 
     def get_routes(self):
         return sinatra_ui.get_routes(
-            self.session_storage, self.wrapper, PUBLIC_DIR,
+            self.session_storage, self.wrapper, self.public_dir.name,
         )
 
     def assert_is_redirect(self, response, location, status_code=302):
@@ -143,15 +143,13 @@ class Logout(AppTest):
 class Static(AppTest):
     # pylint: disable=too-many-ancestors
     def setUp(self):
-        self.style_path = os.path.join(CSS_DIR, "style.css")
+        super().setUp()
+        self.css_dir_path = os.path.join(self.public_dir.name, "css")
+        os.makedirs(self.css_dir_path)
+        self.style_path = os.path.join(self.css_dir_path, "style.css")
         self.css = "body{color:black};"
         with open(self.style_path, "w") as style:
             style.write(self.css)
-        super().setUp()
-
-    def tearDown(self):
-        os.remove(self.style_path)
-        super().tearDown()
 
     def test_css(self):
         self.assert_success_response(self.get("/css/style.css"), self.css)

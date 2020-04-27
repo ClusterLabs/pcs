@@ -3,63 +3,64 @@ from unittest import mock, TestCase
 
 from OpenSSL import SSL
 
-from pcs_test.tools.misc import get_test_resource as rc
+from pcs_test.tools.misc import get_tmp_dir
 
 from pcs.daemon.ssl import PcsdSSL, CertKeyPair, SSLCertKeyException
 
 SERVER_NAME = "pcsd-daemon"
 SSL_OPTIONS = 0
 SSL_CIPHERS = "DEFAULT:!RC4"
-CERT = rc("daemon.cert")
-KEY = rc("daemon.key")
 
 
-def remove_ssl_files():
-    if os.path.exists(CERT):
-        os.remove(CERT)
-    if os.path.exists(KEY):
-        os.remove(KEY)
-
-
-def damage_ssl_files():
-    with open(CERT, "w") as cert:
-        cert.write("bad content")
-    with open(KEY, "w") as key:
-        key.write("bad content")
-
-
-# various versions of OpenSSL / PyOpenSSL emit different messages
-DAMAGED_SSL_FILES_ERRORS_1 = (
-    f"Invalid SSL certificate '{CERT}':"
-    " 'PEM routines:PEM_read_bio:no start line'",
-    f"Invalid SSL key '{KEY}': 'PEM routines:PEM_read_bio:no start line'",
-)
-DAMAGED_SSL_FILES_ERRORS_2 = (
-    f"Invalid SSL certificate '{CERT}':"
-    " 'PEM routines:get_name:no start line'",
-    f"Invalid SSL key '{KEY}': 'PEM routines:get_name:no start line'",
-)
-
-
-class Pair(TestCase):
+class SslFilesMixin:
     def setUp(self):
-        remove_ssl_files()
-        self.pair = CertKeyPair(CERT, KEY)
+        # pylint cannot possibly know this is being mixed into TestCase classes
+        # pylint: disable=invalid-name
+        self.ssl_dir = get_tmp_dir("tier0_daemon_ssl")
+        self.cert_path = os.path.join(self.ssl_dir.name, "daemon.cert")
+        self.key_path = os.path.join(self.ssl_dir.name, "daemon.key")
+        # various versions of OpenSSL / PyOpenSSL emit different messages
+        self.DAMAGED_SSL_FILES_ERRORS_1 = (
+            f"Invalid SSL certificate '{self.cert_path}':"
+            " 'PEM routines:PEM_read_bio:no start line'",
+            f"Invalid SSL key '{self.key_path}':"
+            " 'PEM routines:PEM_read_bio:no start line'",
+        )
+        self.DAMAGED_SSL_FILES_ERRORS_2 = (
+            f"Invalid SSL certificate '{self.cert_path}':"
+            " 'PEM routines:get_name:no start line'",
+            f"Invalid SSL key '{self.key_path}':"
+            " 'PEM routines:get_name:no start line'",
+        )
 
     def tearDown(self):
-        remove_ssl_files()
+        # pylint cannot possibly know this is being mixed into TestCase classes
+        # pylint: disable=invalid-name
+        self.ssl_dir.cleanup()
+
+    def damage_ssl_files(self):
+        with open(self.cert_path, "w") as cert:
+            cert.write("bad content")
+        with open(self.key_path, "w") as key:
+            key.write("bad content")
+
+
+class Pair(SslFilesMixin, TestCase):
+    def setUp(self):
+        super().setUp()
+        self.pair = CertKeyPair(self.cert_path, self.key_path)
 
     def test_generated_key_check_success(self):
         self.pair.regenerate(SERVER_NAME)
         self.assertEqual(self.pair.check(), [])
 
     def test_error_if_files_with_bad_content(self):
-        damage_ssl_files()
+        self.damage_ssl_files()
         self.assertTrue(
             self.pair.check()
             in [
-                list(DAMAGED_SSL_FILES_ERRORS_1),
-                list(DAMAGED_SSL_FILES_ERRORS_2),
+                list(self.DAMAGED_SSL_FILES_ERRORS_1),
+                list(self.DAMAGED_SSL_FILES_ERRORS_2),
             ]
         )
 
@@ -74,10 +75,10 @@ class Pair(TestCase):
 
     def test_error_if_cert_does_not_match_key(self):
         self.pair.regenerate(SERVER_NAME)
-        with open(KEY, "rb") as key_file:
+        with open(self.key_path, "rb") as key_file:
             key_content = key_file.read()
         self.pair.regenerate(SERVER_NAME)
-        with open(KEY, "wb") as key_file:
+        with open(self.key_path, "wb") as key_file:
             key_file.write(key_content)
 
         errors = self.pair.check()
@@ -87,26 +88,26 @@ class Pair(TestCase):
         )
 
 
-class PcsdSSLTest(TestCase):
+class PcsdSSLTest(SslFilesMixin, TestCase):
     def setUp(self):
-        remove_ssl_files()
+        super().setUp()
         self.pcsd_ssl = PcsdSSL(
-            SERVER_NAME, CERT, KEY, SSL_OPTIONS, SSL_CIPHERS
+            SERVER_NAME, self.cert_path, self.key_path, SSL_OPTIONS, SSL_CIPHERS
         )
-
-    def tearDown(self):
-        remove_ssl_files()
 
     def test_is_ok_when_ssl_files_does_not_exist(self):
         self.pcsd_ssl.guarantee_valid_certs()
 
     def test_raises_when_ssl_files_are_damaged(self):
-        damage_ssl_files()
+        self.damage_ssl_files()
         with self.assertRaises(SSLCertKeyException) as ctx_manager:
             self.pcsd_ssl.guarantee_valid_certs()
         self.assertTrue(
             ctx_manager.exception.args
-            in [DAMAGED_SSL_FILES_ERRORS_1, DAMAGED_SSL_FILES_ERRORS_2]
+            in [
+                self.DAMAGED_SSL_FILES_ERRORS_1,
+                self.DAMAGED_SSL_FILES_ERRORS_2,
+            ]
         )
 
     def test_context_uses_given_options(self):
