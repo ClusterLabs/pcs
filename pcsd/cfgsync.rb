@@ -114,10 +114,7 @@ module Cfgsync
     def save()
       begin
         file = nil
-        # File.open(path, mode, options)
-        # File.open(path, mode, perm, options)
-        # In order to set permissions, the method must be called with 4 arguments.
-        file = File.open(self.class.file_path, 'w', self.class.file_perm, {})
+        file = File.open(self.class.file_path, 'w', self.class.file_perm)
         file.flock(File::LOCK_EX)
         file.write(self.text)
         $logger.info(
@@ -219,7 +216,7 @@ module Cfgsync
     def save()
       dirname = File.dirname(self.class.file_path)
       if not File.directory?(dirname)
-        FileUtils.mkdir_p(dirname, {:mode => 0700})
+        FileUtils.mkdir_p(dirname, :mode => 0700)
       end
       super
     end
@@ -422,10 +419,7 @@ module Cfgsync
       text = JSON.pretty_generate(data)
       begin
         file = nil
-        # File.open(path, mode, options)
-        # File.open(path, mode, perm, options)
-        # In order to set permissions, the method must be called with 4 arguments.
-        file = File.open(CFG_SYNC_CONTROL, 'w', 0600, {})
+        file = File.open(CFG_SYNC_CONTROL, 'w', 0600)
         file.flock(File::LOCK_EX)
         file.write(text)
       rescue => e
