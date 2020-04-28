@@ -12,9 +12,9 @@ import pwd
 import grp
 import tempfile
 import time
-import platform
 import shutil
 import difflib
+import distro
 
 try:
     import clufter.facts
@@ -991,8 +991,7 @@ def config_import_cman(lib, argv, modifiers):
 
 
 def _get_linux_dist():
-    # pylint: disable=deprecated-method
-    return ",".join(platform.linux_distribution(full_distribution_name=0))
+    return ",".join(distro.linux_distribution(full_distribution_name=False))
 
 
 def config_export_pcs_commands(lib, argv, modifiers, verbose=False):

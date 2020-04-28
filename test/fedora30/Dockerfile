@@ -5,6 +5,7 @@ ARG src_path
 RUN dnf install -y \
         # python
         python3 \
+        python3-distro \
         python3-lxml \
         python3-mock \
         python3-pycurl \

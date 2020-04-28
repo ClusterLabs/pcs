@@ -7,6 +7,7 @@ RUN dnf install -y \
         --enablerepo=PowerTools \
         # python
         python3 \
+        python3-distro \
         python3-lxml \
         python3-mock \
         python3-pip \
