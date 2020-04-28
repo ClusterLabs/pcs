@@ -4644,12 +4644,12 @@ class TagCannotUpdateTagNoIdsSpecified(NameBuildTest):
 class TagIdsNotInTheTag(NameBuildTest):
     def test_message_singular(self):
         self.assert_message_from_report(
-            "There is no id in the tag 'tag-id': 'a'",
+            "Tag 'tag-id' does not contain id: 'a'",
             reports.TagIdsNotInTheTag("tag-id", ["a"]),
         )
 
     def test_message_plural(self):
         self.assert_message_from_report(
-            "There are no ids in the tag 'tag-id': 'a', 'b'",
+            "Tag 'tag-id' does not contain ids: 'a', 'b'",
             reports.TagIdsNotInTheTag("tag-id", ["b", "a"]),
         )

@@ -632,7 +632,7 @@ class TagUpdate(TestTagMixin, TestCase):
             (
                 "Error: Ids cannot be added and removed at the same time: 'y1',"
                 " 'y2'\n"
-                "Error: There are no ids in the tag 'tag1': 'y1', 'y2'\n"
+                "Error: Tag 'tag1' does not contain ids: 'y1', 'y2'\n"
                 "Error: Errors have occurred, therefore pcs is unable to "
                 "continue\n"
             ),
@@ -643,7 +643,7 @@ class TagUpdate(TestTagMixin, TestCase):
         self.assert_pcs_fail(
             "tag update tag1 remove nonexistent2 nonexistent1",
             (
-                "Error: There are no ids in the tag 'tag1': 'nonexistent1', "
+                "Error: Tag 'tag1' does not contain ids: 'nonexistent1', "
                 "'nonexistent2'\n"
                 "Error: Errors have occurred, therefore pcs is unable to "
                 "continue\n"

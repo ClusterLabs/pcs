@@ -6385,7 +6385,7 @@ class TagCannotUpdateTagNoIdsSpecified(ReportItemMessage):
 @dataclass(frozen=True)
 class TagIdsNotInTheTag(ReportItemMessage):
     """
-    There are no ids in the tag.
+    Specified ids are not present in the specified tag.
     """
 
     tag_id: str
@@ -6394,9 +6394,8 @@ class TagIdsNotInTheTag(ReportItemMessage):
 
     @property
     def message(self) -> str:
-        return "There {are} no {ids} in the tag '{tag_id}': {id_list}".format(
-            are=format_plural(self.id_list, "is"),
-            ids=format_plural(self.id_list, "id"),
+        return "Tag '{tag_id}' does not contain {ids}: {id_list}".format(
             tag_id=self.tag_id,
+            ids=format_plural(self.id_list, "id"),
             id_list=format_list(self.id_list),
         )
