@@ -704,6 +704,10 @@ get '/clusters_overview' do
   clusters_overview(params, request, getAuthUser())
 end
 
+get '/imported-cluster-list' do
+  imported_cluster_list(params, request, getAuthUser())
+end
+
 get '/permissions/?' do
   @manage = true
   pcs_config = PCSConfig.new(Cfgsync::PcsdSettings.from_file().text())

@@ -989,6 +989,15 @@ def status_all(params, request, auth_user, nodes=[], dont_update_config=false)
   return JSON.generate(final_response)
 end
 
+def imported_cluster_list(params, request, auth_user)
+  config = PCSConfig.new(Cfgsync::PcsdSettings.from_file().text())
+  imported_clusters = {"cluster_list" => []}
+  config.clusters.each { |cluster|
+    imported_clusters["cluster_list"] << { "name": cluster.name }
+  }
+  return JSON.generate(imported_clusters)
+end
+
 def clusters_overview(params, request, auth_user)
   cluster_map = {}
   forbidden_clusters = {}
