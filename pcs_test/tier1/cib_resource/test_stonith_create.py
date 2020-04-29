@@ -1,5 +1,5 @@
-from pcs_test.tier0.cib_resource.common import ResourceTest
-from pcs_test.tier0.cib_resource.stonith_common import need_load_xvm_fence_agent
+from pcs_test.tier1.cib_resource.common import ResourceTest
+from pcs_test.tier1.cib_resource.stonith_common import need_load_xvm_fence_agent
 from pcs_test.tools.misc import is_minimum_pacemaker_version
 
 PCMK_2_0_3_PLUS = is_minimum_pacemaker_version(2, 0, 3)

@@ -2,7 +2,6 @@ from textwrap import dedent
 
 from pcs_test.tools import fixture
 from pcs_test.tools.command_env import get_env_tools
-from pcs_test.tools.misc import skip_unless_pacemaker_supports_bundle
 
 from pcs.common import reports
 from pcs.common.reports import ReportItemSeverity as severities
@@ -1181,7 +1180,6 @@ class WaitMixin(FixturesMixin):
             expected_in_processor=False,
         )
 
-    @skip_unless_pacemaker_supports_bundle
     def test_wait_ok_run_ok(self):
         (
             self.config.env.push_cib(
@@ -1197,7 +1195,6 @@ class WaitMixin(FixturesMixin):
             ]
         )
 
-    @skip_unless_pacemaker_supports_bundle
     def test_wait_ok_run_fail(self):
         (
             self.config.env.push_cib(
@@ -1215,7 +1212,6 @@ class WaitMixin(FixturesMixin):
             ]
         )
 
-    @skip_unless_pacemaker_supports_bundle
     def test_disabled_wait_ok_run_ok(self):
         (
             self.config.env.push_cib(
@@ -1235,7 +1231,6 @@ class WaitMixin(FixturesMixin):
             ]
         )
 
-    @skip_unless_pacemaker_supports_bundle
     def test_disabled_wait_ok_run_fail(self):
         (
             self.config.env.push_cib(

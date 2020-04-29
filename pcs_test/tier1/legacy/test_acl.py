@@ -26,7 +26,7 @@ empty_cib = rc("cib-empty.xml")
 
 class ACLTest(unittest.TestCase, AssertPcsMixin):
     def setUp(self):
-        self.temp_cib = get_tmp_file("tier0_acl")
+        self.temp_cib = get_tmp_file("tier1_acl")
         write_file_to_tmpfile(empty_cib, self.temp_cib)
         self.pcs_runner = PcsRunner(self.temp_cib.name)
 

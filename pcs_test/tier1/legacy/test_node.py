@@ -36,7 +36,7 @@ class NodeUtilizationSet(
     ),
 ):
     def setUp(self):
-        self.temp_cib = get_tmp_file("tier0_node_utilization_set")
+        self.temp_cib = get_tmp_file("tier1_node_utilization_set")
         write_file_to_tmpfile(empty_cib, self.temp_cib)
         self.pcs_runner = PcsRunner(self.temp_cib.name)
 
@@ -206,7 +206,7 @@ Node Utilization:
 
 class NodeUtilizationPrint(TestCase, AssertPcsMixin):
     def setUp(self):
-        self.temp_cib = get_tmp_file("tier0_node_utilization_print")
+        self.temp_cib = get_tmp_file("tier1_node_utilization_print")
         write_file_to_tmpfile(empty_cib, self.temp_cib)
         self.pcs_runner = PcsRunner(self.temp_cib.name)
 
@@ -236,7 +236,7 @@ class NodeUtilizationPrint(TestCase, AssertPcsMixin):
 
 class NodeStandby(TestCase, AssertPcsMixin):
     def setUp(self):
-        self.temp_cib = get_tmp_file("tier0_node_standby")
+        self.temp_cib = get_tmp_file("tier1_node_standby")
         write_file_to_tmpfile(rc("cib-empty-with3nodes.xml"), self.temp_cib)
         self.pcs_runner = PcsRunner(self.temp_cib.name)
 
@@ -383,7 +383,7 @@ class NodeStandby(TestCase, AssertPcsMixin):
 
 class NodeMaintenance(TestCase, AssertPcsMixin):
     def setUp(self):
-        self.temp_cib = get_tmp_file("tier0_node_maintenance")
+        self.temp_cib = get_tmp_file("tier1_node_maintenance")
         write_file_to_tmpfile(rc("cib-empty-with3nodes.xml"), self.temp_cib)
         self.pcs_runner = PcsRunner(self.temp_cib.name)
 
@@ -541,7 +541,7 @@ class NodeAttributeTest(
 ):
     # pylint: disable=too-many-public-methods
     def setUp(self):
-        self.temp_cib = get_tmp_file("tier0_node_attribute")
+        self.temp_cib = get_tmp_file("tier1_node_attribute")
         write_file_to_tmpfile(empty_cib, self.temp_cib)
         self.pcs_runner = PcsRunner(self.temp_cib.name)
 

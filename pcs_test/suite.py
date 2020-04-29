@@ -68,28 +68,31 @@ def tests_from_suite(test_candidate):
     return test_id_list
 
 
-def autodiscover_tests():
+def autodiscover_tests(tier=None):
     # ...Find all the test modules by recursing into subdirectories from the
     # specified start directory...
     # ...All test modules must be importable from the top level of the project.
     # If the start directory is not the top level directory then the top level
     # directory must be specified separately...
     # So test are loaded from PACKAGE_DIR/pcs but their names starts with "pcs."
+    test_dir = os.path.join(PACKAGE_DIR, "pcs_test")
+    if tier is not None:
+        test_dir = os.path.join(test_dir, f"tier{tier}")
     return unittest.TestLoader().discover(
-        start_dir=os.path.join(PACKAGE_DIR, "pcs_test"),
-        pattern="test_*.py",
-        top_level_dir=PACKAGE_DIR,
+        start_dir=test_dir, pattern="test_*.py", top_level_dir=PACKAGE_DIR,
     )
 
 
-def discover_tests(explicitly_enumerated_tests, exclude_enumerated_tests=False):
+def discover_tests(
+    explicitly_enumerated_tests, exclude_enumerated_tests=False, tier=None
+):
     if not explicitly_enumerated_tests:
-        return autodiscover_tests()
+        return autodiscover_tests(tier=tier)
     if exclude_enumerated_tests:
         return unittest.TestLoader().loadTestsFromNames(
             [
                 test_name
-                for test_name in tests_from_suite(autodiscover_tests())
+                for test_name in tests_from_suite(autodiscover_tests(tier=tier))
                 if test_name not in explicitly_enumerated_tests
             ]
         )
@@ -113,11 +116,19 @@ explicitly_enumerated_tests = [
         "--traditional-verbose",
         "--vanilla",
         "--installed",
+        "--tier0",
+        "--tier1",
     )
 ]
 
+tier = None
+if "--tier0" in sys.argv:
+    tier = 0
+elif "--tier1" in sys.argv:
+    tier = 1
+
 discovered_tests = discover_tests(
-    explicitly_enumerated_tests, "--all-but" in sys.argv
+    explicitly_enumerated_tests, "--all-but" in sys.argv, tier=tier
 )
 if "--list" in sys.argv:
     test_list = tests_from_suite(discovered_tests)

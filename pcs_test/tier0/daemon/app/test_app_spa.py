@@ -6,20 +6,13 @@ from pcs.daemon.app import ui
 from pcs_test.tier0.daemon.app import fixtures_app
 from pcs_test.tools.misc import (
     create_setup_patch_mixin,
-    get_test_resource as rc,
+    get_tmp_dir,
 )
 
 USER = "user"
 PASSWORD = "password"
 LOGIN_BODY = {"username": USER, "password": PASSWORD}
-PUBLIC_DIR = rc("web_public")
 PREFIX = "/ui/"
-SPA_DIR = os.path.join(PUBLIC_DIR, "ui")
-FALLBACK = os.path.join(PUBLIC_DIR, "fallback.html")
-INDEX = os.path.join(SPA_DIR, "index.html")
-
-if not os.path.exists(SPA_DIR):
-    os.makedirs(SPA_DIR)
 
 # Don't write errors to test output.
 logging.getLogger("tornado.access").setLevel(logging.CRITICAL)
@@ -29,21 +22,25 @@ class AppTest(
     fixtures_app.AppUiTestMixin, create_setup_patch_mixin(ui.app_session)
 ):
     def setUp(self):
+        self.public_dir = get_tmp_dir("tier0_daemon_app_spa")
+        self.spa_dir_path = os.path.join(self.public_dir.name, "ui")
+        os.makedirs(self.spa_dir_path)
+        self.fallback_path = os.path.join(self.public_dir.name, "fallback.html")
+        self.index_path = os.path.join(self.spa_dir_path, "index.html")
         self.index_content = "<html/>"
-        with open(INDEX, "w") as index:
+        with open(self.index_path, "w") as index:
             index.write(self.index_content)
         super().setUp()
 
     def tearDown(self):
-        if os.path.isfile(INDEX):
-            os.remove(INDEX)
+        self.public_dir.cleanup()
         super().tearDown()
 
     def get_routes(self):
         return ui.get_routes(
             url_prefix=PREFIX,
-            app_dir=SPA_DIR,
-            fallback_page_path=FALLBACK,
+            app_dir=self.spa_dir_path,
+            fallback_page_path=self.fallback_path,
             session_storage=self.session_storage,
         )
 
@@ -58,14 +55,10 @@ class Static(AppTest):
 class Fallback(AppTest):
     def setUp(self):
         super().setUp()
-        os.remove(INDEX)
+        os.remove(self.index_path)
         self.fallback_content = "fallback"
-        with open(FALLBACK, "w") as index:
+        with open(self.fallback_path, "w") as index:
             index.write(self.fallback_content)
-
-    def tearDown(self):
-        os.remove(FALLBACK)
-        super().tearDown()
 
     def test_index(self):
         self.assert_success_response(

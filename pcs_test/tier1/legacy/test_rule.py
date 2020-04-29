@@ -1847,7 +1847,7 @@ class ExportAsExpressionTest(TestCase):
 
 class DomRuleAddTest(TestCase):
     def setUp(self):
-        self.temp_cib = get_tmp_file("tier0_rule_dom_rule_add")
+        self.temp_cib = get_tmp_file("tier1_rule_dom_rule_add")
         write_file_to_tmpfile(empty_cib, self.temp_cib)
         output, returnVal = pcs(
             self.temp_cib.name, "resource create dummy1 ocf:heartbeat:Dummy"
@@ -1939,7 +1939,7 @@ class DomRuleAddTest(TestCase):
             """,
         )
 
-    @skip_unless_crm_rule
+    @skip_unless_crm_rule()
     def test_success(self):
         output, returnVal = pcs(
             self.temp_cib.name,
@@ -2016,7 +2016,7 @@ Location Constraints:
         )
         self.assertEqual(0, returnVal)
 
-    @skip_unless_crm_rule
+    @skip_unless_crm_rule()
     def test_invalid_score(self):
         output, returnVal = pcs(
             self.temp_cib.name,
@@ -2072,7 +2072,7 @@ Location Constraints:
         )
         self.assertEqual(1, returnVal)
 
-    @skip_unless_crm_rule
+    @skip_unless_crm_rule()
     def test_ivalid_options(self):
         output, returnVal = pcs(
             self.temp_cib.name,

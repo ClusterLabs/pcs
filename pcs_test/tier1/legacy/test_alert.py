@@ -25,7 +25,7 @@ ERRORS_HAVE_OCURRED = (
 
 class PcsAlertTest(unittest.TestCase, AssertPcsMixin):
     def setUp(self):
-        self.temp_cib = get_tmp_file("tier0_alert")
+        self.temp_cib = get_tmp_file("tier1_alert")
         write_file_to_tmpfile(empty_cib, self.temp_cib)
         self.pcs_runner = PcsRunner(self.temp_cib.name)
 
@@ -36,7 +36,7 @@ class PcsAlertTest(unittest.TestCase, AssertPcsMixin):
 @skip_unless_alerts_supported
 class AlertCibUpgradeTest(unittest.TestCase, AssertPcsMixin):
     def setUp(self):
-        self.temp_cib = get_tmp_file("tier0_alert_cib_upgrade")
+        self.temp_cib = get_tmp_file("tier1_alert_cib_upgrade")
         write_file_to_tmpfile(old_cib, self.temp_cib)
         self.pcs_runner = PcsRunner(self.temp_cib.name)
 

@@ -33,7 +33,7 @@ class BundleCreateCommon(
     empty_cib = rc("cib-empty.xml")
 
     def setUp(self):
-        self.temp_cib = get_tmp_file("tier0_bundle_create")
+        self.temp_cib = get_tmp_file("tier1_bundle_create")
         write_file_to_tmpfile(self.empty_cib, self.temp_cib)
         self.pcs_runner = PcsRunner(self.temp_cib.name)
         self.pcs_runner.mock_settings = get_mock_settings("crm_resource_binary")
@@ -42,7 +42,7 @@ class BundleCreateCommon(
         self.temp_cib.close()
 
 
-@skip_unless_pacemaker_supports_bundle
+@skip_unless_pacemaker_supports_bundle()
 class BundleCreateUpgradeCib(BundleCreateCommon):
     def test_success(self):
         write_file_to_tmpfile(rc("cib-empty-2.0.xml"), self.temp_cib)
@@ -74,7 +74,7 @@ class BundleCreateUpgradeCib(BundleCreateCommon):
         )
 
 
-@skip_unless_pacemaker_supports_bundle
+@skip_unless_pacemaker_supports_bundle()
 class BundleReset(BundleCreateCommon):
     empty_cib = rc("cib-empty.xml")
 
@@ -100,7 +100,7 @@ class BundleReset(BundleCreateCommon):
         )
 
 
-@skip_unless_pacemaker_supports_bundle
+@skip_unless_pacemaker_supports_bundle()
 class BundleCreate(BundleCreateCommon):
     empty_cib = rc("cib-empty.xml")
 
@@ -322,7 +322,7 @@ class BundleCreate(BundleCreateCommon):
         self.assert_no_options("meta")
 
 
-@skip_unless_pacemaker_supports_bundle
+@skip_unless_pacemaker_supports_bundle()
 class BundleUpdateUpgradeCib(BundleCreateCommon):
     def test_upgrade_for_promoted_max(self):
         write_file_to_tmpfile(rc("cib-empty-2.8.xml"), self.temp_cib)
@@ -335,7 +335,7 @@ class BundleUpdateUpgradeCib(BundleCreateCommon):
         )
 
 
-@skip_unless_pacemaker_supports_bundle
+@skip_unless_pacemaker_supports_bundle()
 class BundleUpdate(BundleCreateCommon):
     empty_cib = rc("cib-empty.xml")
 
@@ -633,12 +633,12 @@ class BundleUpdate(BundleCreateCommon):
         self.assert_no_options("meta")
 
 
-@skip_unless_pacemaker_supports_bundle
+@skip_unless_pacemaker_supports_bundle()
 class BundleShow(TestCase, AssertPcsMixin):
     empty_cib = rc("cib-empty.xml")
 
     def setUp(self):
-        self.temp_cib = get_tmp_file("tier0_bundle_show")
+        self.temp_cib = get_tmp_file("tier1_bundle_show")
         write_file_to_tmpfile(self.empty_cib, self.temp_cib)
         self.pcs_runner = PcsRunner(self.temp_cib.name)
         self.pcs_runner.mock_settings = get_mock_settings("crm_resource_binary")

@@ -19,7 +19,7 @@ coro_qdevice_heuristics_conf = rc("corosync-3nodes-qdevice-heuristics.conf")
 
 class TestBase(TestCase, AssertPcsMixin):
     def setUp(self):
-        self.temp_conf = get_tmp_file("tier0_quorum")
+        self.temp_conf = get_tmp_file("tier1_quorum")
         write_file_to_tmpfile(coro_conf, self.temp_conf)
         # The tested commands work differently when non-live corosync.conf
         # (--corosync_conf) is used. In these tests it is not possible to cover

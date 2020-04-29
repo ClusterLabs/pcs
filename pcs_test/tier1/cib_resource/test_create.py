@@ -1,7 +1,7 @@
 import re
 from unittest import mock, TestCase
 
-from pcs_test.tier0.cib_resource.common import ResourceTest
+from pcs_test.tier1.cib_resource.common import ResourceTest
 from pcs_test.tools.assertions import AssertPcsMixin
 from pcs_test.tools.bin_mock import get_mock_settings
 from pcs_test.tools.misc import (
@@ -728,7 +728,7 @@ class Promotable(TestCase, AssertPcsMixin):
         )
 
 
-@skip_unless_pacemaker_supports_bundle
+@skip_unless_pacemaker_supports_bundle()
 class Bundle(ResourceTest):
     empty_cib = rc("cib-empty-2.8.xml")
 

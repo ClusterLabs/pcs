@@ -3,10 +3,7 @@ from unittest import TestCase
 
 from pcs_test.tools import fixture
 from pcs_test.tools.command_env import get_env_tools
-from pcs_test.tools.misc import (
-    outdent,
-    skip_unless_pacemaker_supports_bundle,
-)
+from pcs_test.tools.misc import outdent
 
 from pcs.common import reports
 from pcs.common.reports import codes as report_codes
@@ -1391,7 +1388,6 @@ class CreateInToBundle(TestCase):
             expected_in_processor=False,
         )
 
-    @skip_unless_pacemaker_supports_bundle
     def test_wait_ok_run_ok(self):
         (
             self.config.runner.pcmk.load_agent()
@@ -1409,7 +1405,6 @@ class CreateInToBundle(TestCase):
             [fixture.report_resource_running("A", {"Started": ["node1"]}),]
         )
 
-    @skip_unless_pacemaker_supports_bundle
     def test_wait_ok_run_fail(self):
         (
             self.config.runner.pcmk.load_agent()
@@ -1429,7 +1424,6 @@ class CreateInToBundle(TestCase):
             [fixture.error(report_codes.RESOURCE_DOES_NOT_RUN, resource_id="A")]
         )
 
-    @skip_unless_pacemaker_supports_bundle
     def test_disabled_wait_ok_not_running(self):
         (
             self.config.runner.pcmk.load_agent()
@@ -1447,7 +1441,6 @@ class CreateInToBundle(TestCase):
             [fixture.report_resource_not_running("A")]
         )
 
-    @skip_unless_pacemaker_supports_bundle
     def test_disabled_wait_ok_running(self):
         (
             self.config.runner.pcmk.load_agent()
@@ -1473,7 +1466,6 @@ class CreateInToBundle(TestCase):
             ]
         )
 
-    @skip_unless_pacemaker_supports_bundle
     def test_no_port_no_ip(self):
         resources_fixture = """
             <resources>
@@ -1500,7 +1492,6 @@ class CreateInToBundle(TestCase):
             ]
         )
 
-    @skip_unless_pacemaker_supports_bundle
     def test_no_port_no_ip_forced(self):
         resources_fixture = """
             <resources>
@@ -1556,11 +1547,9 @@ class CreateInToBundle(TestCase):
         )
         create_bundle(self.env_assist.get_env(), wait=False)
 
-    @skip_unless_pacemaker_supports_bundle
     def test_port_defined(self):
         self._test_with_network_defined('<network control-port="12345"/>')
 
-    @skip_unless_pacemaker_supports_bundle
     def test_ip_range_defined(self):
         self._test_with_network_defined(
             '<network ip-range-start="192.168.100.200"/>'

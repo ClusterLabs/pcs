@@ -51,7 +51,7 @@ class ManageUnmanage(
         )
 
     def setUp(self):
-        self.temp_cib = get_tmp_file("tier0_cib_resource_manage_unmanage")
+        self.temp_cib = get_tmp_file("tier1_cib_resource_manage_unmanage")
         write_file_to_tmpfile(self.empty_cib, self.temp_cib)
         self.pcs_runner = PcsRunner(self.temp_cib.name)
 

@@ -149,11 +149,15 @@ class _NodeSection(_Element):
     }
 
 
+def _validate_cluster_state_dom(dom):
+    if os.path.isfile(settings.crm_mon_schema):
+        etree.RelaxNG(file=settings.crm_mon_schema).assertValid(dom)
+
+
 def get_cluster_state_dom(xml):
     try:
         dom = xml_fromstring(xml)
-        if os.path.isfile(settings.crm_mon_schema):
-            etree.RelaxNG(file=settings.crm_mon_schema).assertValid(dom)
+        _validate_cluster_state_dom(dom)
         return dom
     except (etree.XMLSyntaxError, etree.DocumentInvalid):
         raise LibraryError(

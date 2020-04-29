@@ -5,10 +5,7 @@ from unittest import TestCase
 
 from pcs_test.tools import fixture
 from pcs_test.tools.command_env import get_env_tools
-from pcs_test.tools.misc import (
-    ParametrizedTestMetaClass,
-    skip_unless_pacemaker_supports_bundle,
-)
+from pcs_test.tools.misc import ParametrizedTestMetaClass
 
 from pcs.common import reports
 from pcs.common.reports import ReportItemSeverity as severities
@@ -1322,7 +1319,6 @@ class Wait(TestCase):
             expected_in_processor=False,
         )
 
-    @skip_unless_pacemaker_supports_bundle
     def test_wait_ok_running(self):
         (
             self.config.runner.pcmk.load_state(
@@ -1338,7 +1334,6 @@ class Wait(TestCase):
             ]
         )
 
-    @skip_unless_pacemaker_supports_bundle
     def test_wait_ok_not_running(self):
         (
             self.config.runner.pcmk.load_state(

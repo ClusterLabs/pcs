@@ -21,7 +21,7 @@ empty_cib = rc("cib-empty.xml")
 
 class PropertyTest(TestCase):
     def setUp(self):
-        self.temp_cib = get_tmp_file("tier0_properties")
+        self.temp_cib = get_tmp_file("tier1_properties")
         write_file_to_tmpfile(empty_cib, self.temp_cib)
         self.pcs_runner = PcsRunner(self.temp_cib.name)
 
@@ -345,7 +345,7 @@ class PropertyUnset(
     ),
 ):
     def setUp(self):
-        self.temp_cib = get_tmp_file("tier0_properties_unset")
+        self.temp_cib = get_tmp_file("tier1_properties_unset")
         write_file_to_tmpfile(empty_cib, self.temp_cib)
         self.pcs_runner = PcsRunner(self.temp_cib.name)
 
