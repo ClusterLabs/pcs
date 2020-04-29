@@ -1,13 +1,18 @@
-# Required version of pylint: 2.4.1
-# This project should not containt any issues reported by the required version
-# of pylint when using this command to run the linter on the whole project:
-# $ ./run_pylint.sh
+# Required version of pylint: see requirements.txt
+#
+# To install linters and their dependencies, run:
+# $ make python_static_code_analysis_reqirements
+#
+# This project should not containt any issues reported by any linter when using
+# this command to run linters on the whole project:
+# $ make black_check python_static_code_analysis
 
 [MASTER]
 extension-pkg-whitelist=lxml.etree,pycurl
 
 [MESSAGES CONTROL]
-disable=missing-docstring, fixme, bad-continuation
+# line-too-long and trailing-whitespace is handled by black
+disable=bad-continuation, fixme, line-too-long, missing-docstring, trailing-whitespace
 # Everything in module context is a constant, but our naming convetion allows
 # constants to have same name format as variables
 const-rgx=(([A-Z_][A-Z0-9_]*)|(__.*__))|([a-z_][a-z0-9_]*)$
