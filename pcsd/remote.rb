@@ -166,29 +166,60 @@ def cluster_status_gui(auth_user, cluster_name, dont_update_config=false)
     return 403, 'Permission denied'
   end
 
+  if dont_update_config
+    return JSON.generate(status)
+  end
+
+  # source for :corosync_offline, etc... is result of command `pcs status nodes
+  # both` launched on one of cluster nodes.
   new_cluster_nodes = []
   new_cluster_nodes += status[:corosync_offline] if status[:corosync_offline]
   new_cluster_nodes += status[:corosync_online] if status[:corosync_online]
   new_cluster_nodes += status[:pacemaker_offline] if status[:pacemaker_offline]
   new_cluster_nodes += status[:pacemaker_online] if status[:pacemaker_online]
   new_cluster_nodes.uniq!
+  if new_cluster_nodes.length == 0
+    # We haven't got direct info about participating nodes from one of cluster
+    # nodes. But it does not mean that cluster does not exist - all nodes can
+    # be offline!
+    # So, we use nodes from :node_list. There is a set of nodes we have
+    # provided to `cluster_status_from_nodes` (i.e. from pcs_settings) minus
+    # nodes that reliably have said that they are in another cluster. If
+    # :node_list is empty it means that all nodes from pcs_settings have said
+    # that they are in another cluster and requested cluster should be removed
+    # from pcs_settings.
+    new_cluster_nodes = status[:node_list].map{|n| n[:name]}
+  end
+
+  config = PCSConfig.new(Cfgsync::PcsdSettings.from_file().text())
+
+  if config.cluster_nodes_equal?(cluster_name, new_cluster_nodes)
+    return JSON.generate(status)
+  end
+
+  _update_pcsd_settings(config, cluster_name, new_cluster_nodes)
 
   if new_cluster_nodes.length > 0
-    config = PCSConfig.new(Cfgsync::PcsdSettings.from_file().text())
-    if !(dont_update_config or config.cluster_nodes_equal?(cluster_name, new_cluster_nodes))
-      old_cluster_nodes = config.get_nodes(cluster_name)
-      $logger.info("Updating node list for: #{cluster_name} #{old_cluster_nodes}->#{new_cluster_nodes}")
-      config.update_cluster(cluster_name, new_cluster_nodes)
-      sync_config = Cfgsync::PcsdSettings.from_text(config.text())
-      # on version conflict just go on, config will be corrected eventually
-      # by displaying the cluster in the web UI
-      Cfgsync::save_sync_new_version(
-          sync_config, get_corosync_nodes_names(), $cluster_name, true
-      )
-      return cluster_status_gui(auth_user, cluster_name, true)
-    end
+    return cluster_status_gui(auth_user, cluster_name, true)
   end
   return JSON.generate(status)
+end
+
+def _update_pcsd_settings(config, cluster_name, new_nodes)
+  old_nodes = config.get_nodes(cluster_name)
+  if new_nodes.length > 0
+    # removing log is embeded in config.update_cluster
+    $logger.info(
+      "Updating node list for: #{cluster_name} #{old_nodes}->#{new_nodes}"
+    )
+  end
+  config.update_cluster(cluster_name, new_nodes)
+  sync_config = Cfgsync::PcsdSettings.from_text(config.text())
+  # on version conflict just go on, config will be corrected eventually
+  # by displaying the cluster in the web UI
+  Cfgsync::save_sync_new_version(
+    sync_config, get_corosync_nodes_names(), $cluster_name, true
+  )
 end
 
 # get cluster status and return it to a remote gui or other client
