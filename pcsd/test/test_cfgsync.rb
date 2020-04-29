@@ -122,7 +122,7 @@ end
 
 class TestPcsdSettings < Test::Unit::TestCase
   def teardown()
-    FileUtils.rm(CFG_PCSD_SETTINGS, {:force => true})
+    FileUtils.rm(CFG_PCSD_SETTINGS, :force => true)
   end
 
   def test_basics()
@@ -191,7 +191,7 @@ end
 
 class TestPcsdKnownHosts < Test::Unit::TestCase
   def teardown()
-    FileUtils.rm(CFG_PCSD_KNOWN_HOSTS, {:force => true})
+    FileUtils.rm(CFG_PCSD_KNOWN_HOSTS, :force => true)
   end
 
   def test_basics()
@@ -256,7 +256,7 @@ class TestConfigSyncControll < Test::Unit::TestCase
   end
 
   def test_bad_file()
-    FileUtils.rm(CFG_SYNC_CONTROL, {:force => true})
+    FileUtils.rm(CFG_SYNC_CONTROL, :force => true)
     assert(!Cfgsync::ConfigSyncControl.sync_thread_paused?())
     assert(!Cfgsync::ConfigSyncControl.sync_thread_disabled?())
     assert(Cfgsync::ConfigSyncControl.sync_thread_allowed?())
@@ -729,7 +729,7 @@ class TestMergeKnownHosts < Test::Unit::TestCase
   end
 
   def teardown()
-    FileUtils.rm(CFG_PCSD_KNOWN_HOSTS, {:force => true})
+    FileUtils.rm(CFG_PCSD_KNOWN_HOSTS, :force => true)
   end
 
   def fixture_old_cfg()

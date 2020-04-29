@@ -1,4 +1,4 @@
-FROM fedora:31
+FROM fedora:32
 
 ARG src_path
 

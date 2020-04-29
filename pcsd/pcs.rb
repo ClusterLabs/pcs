@@ -1105,10 +1105,7 @@ end
 def write_file_lock(path, perm, data, binary=false, user=nil, group=nil)
   file = nil
   begin
-    # File.open(path, mode, options)
-    # File.open(path, mode, perm, options)
-    # In order to set permissions, the method must be called with 4 arguments.
-    file = File.open(path, binary ? 'wb' : 'w', perm, {})
+    file = File.open(path, binary ? 'wb' : 'w', perm)
     file.flock(File::LOCK_EX)
     if user or group
       File.chown(get_uid(user), get_gid(group), path)

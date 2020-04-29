@@ -627,8 +627,8 @@ def set_certs(params, request, auth_user)
     rescue => e
       # clean the files if we ended in the middle
       # the files will be regenerated on next pcsd start
-      FileUtils.rm(CRT_FILE, {:force => true})
-      FileUtils.rm(KEY_FILE, {:force => true})
+      FileUtils.rm(CRT_FILE, :force => true)
+      FileUtils.rm(KEY_FILE, :force => true)
       return [400, "cannot save ssl files: #{e}"]
     end
   end
