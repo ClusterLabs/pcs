@@ -30,3 +30,17 @@ def fixture_constraints_for_tags(tag_list):
         )
         + "</constraints>"
     )
+
+
+def fixture_resouces_for_reference_ids(id_list):
+    return (
+        "<resources>"
+        + "".join(
+            (
+                f"<primitive class='ocf' id='{_id}' provider='pacemaker' "
+                "type='Dummy'/>"
+            )
+            for _id in id_list
+        )
+        + "</resources>"
+    )

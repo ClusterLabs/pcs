@@ -463,6 +463,7 @@ def load_module(env, middleware_factory, name):
                 "delete": tag.remove,
                 "list": tag.config,
                 "remove": tag.remove,
+                "update": tag.update,
             },
         )
 

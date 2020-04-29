@@ -4494,6 +4494,70 @@ class BoothTicketOperationFailedTest(NameBuildTest):
         )
 
 
+class TagAddRemoveIdsDuplication(NameBuildTest):
+    def test_message_add(self):
+        self.assert_message_from_report(
+            "Ids to add must be unique, duplicate ids: 'dup1', 'dup2'",
+            reports.TagAddRemoveIdsDuplication(
+                duplicate_ids_list=["dup2", "dup1"],
+            ),
+        )
+
+    def test_message_remove(self):
+        self.assert_message_from_report(
+            "Ids to remove must be unique, duplicate ids: 'dup1', 'dup2'",
+            reports.TagAddRemoveIdsDuplication(
+                duplicate_ids_list=["dup2", "dup1"], add_or_not_remove=False,
+            ),
+        )
+
+
+class TagAdjacentReferenceIdNotInTheTag(NameBuildTest):
+    def test_messag(self):
+        self.assert_message_from_report(
+            (
+                "There is no reference id 'adj_id' in the tag 'tag_id', cannot "
+                "put reference ids next to it in the tag"
+            ),
+            reports.TagAdjacentReferenceIdNotInTheTag("adj_id", "tag_id"),
+        )
+
+
+class TagCannotAddAndRemoveIdsAtTheSameTime(NameBuildTest):
+    def test_message_one_item(self):
+        self.assert_message_from_report(
+            "Ids cannot be added and removed at the same time: 'id1'",
+            reports.TagCannotAddAndRemoveIdsAtTheSameTime(["id1"]),
+        )
+
+    def test_message_more_items(self):
+        self.assert_message_from_report(
+            (
+                "Ids cannot be added and removed at the same time: 'id1', "
+                "'id2', 'id3'"
+            ),
+            reports.TagCannotAddAndRemoveIdsAtTheSameTime(
+                ["id3", "id2", "id1"],
+            ),
+        )
+
+
+class TagCannotAddReferenceIdAlreadyInTheTag(NameBuildTest):
+    def test_message_singular(self):
+        self.assert_message_from_report(
+            "Cannot add reference id already in the tag 'tag_id': 'id1'",
+            reports.TagCannotAddReferenceIdsAlreadyInTheTag("tag_id", ["id1"],),
+        )
+
+    def test_message_plural(self):
+        self.assert_message_from_report(
+            "Cannot add reference ids already in the tag 'TAG': 'id1', 'id2'",
+            reports.TagCannotAddReferenceIdsAlreadyInTheTag(
+                "TAG", ["id2", "id1"],
+            ),
+        )
+
+
 class TagCannotContainItself(NameBuildTest):
     def test_message(self):
         self.assert_message_from_report(
@@ -4506,6 +4570,30 @@ class TagCannotCreateEmptyTagNoIdsSpecified(NameBuildTest):
         self.assert_message_from_report(
             "Cannot create empty tag, no resource ids specified",
             reports.TagCannotCreateEmptyTagNoIdsSpecified(),
+        )
+
+
+class TagCannotPutIdNextToItself(NameBuildTest):
+    def test_message(self):
+        self.assert_message_from_report(
+            "Cannot put id 'some_id' next to itself.",
+            reports.TagCannotPutIdNextToItself("some_id"),
+        )
+
+
+class TagCannotRemoveAdjacentId(NameBuildTest):
+    def test_message(self):
+        self.assert_message_from_report(
+            "Cannot remove id 'some_id' next to which ids are being added",
+            reports.TagCannotRemoveAdjacentId("some_id"),
+        )
+
+
+class TagCannotRemoveReferencesWithoutRemovingTag(NameBuildTest):
+    def test_message(self):
+        self.assert_message_from_report(
+            "There would be no references left in the tag 'tag-id'",
+            reports.TagCannotRemoveReferencesWithoutRemovingTag("tag-id"),
         )
 
 
@@ -4524,7 +4612,7 @@ class TagCannotRemoveTagReferencedInConstraints(NameBuildTest):
             "Tag 'tag2' cannot be removed because it is referenced in "
             "constraints 'constraint-id-1', 'constraint-id-2'",
             reports.TagCannotRemoveTagReferencedInConstraints(
-                "tag2", ["constraint-id-1", "constraint-id-2"],
+                "tag2", ["constraint-id-2", "constraint-id-1"],
             ),
         )
 
@@ -4537,9 +4625,31 @@ class TagCannotRemoveTagsNoTagsSpecified(NameBuildTest):
         )
 
 
-class TagIdsDuplication(NameBuildTest):
+class TagCannotSpecifyAdjacentIdWithoutIdsToAdd(NameBuildTest):
     def test_message(self):
         self.assert_message_from_report(
-            "Ids must be unique, duplicate ids: 'dup1', 'dup2'",
-            reports.TagIdsDuplication(["dup1", "dup2"]),
+            "Cannot specify adjacent id 'some-id' without ids to add",
+            reports.TagCannotSpecifyAdjacentIdWithoutIdsToAdd("some-id"),
+        )
+
+
+class TagCannotUpdateTagNoIdsSpecified(NameBuildTest):
+    def test_message(self):
+        self.assert_message_from_report(
+            "Cannot update tag, no ids to be added or removed specified",
+            reports.TagCannotUpdateTagNoIdsSpecified(),
+        )
+
+
+class TagIdsNotInTheTag(NameBuildTest):
+    def test_message_singular(self):
+        self.assert_message_from_report(
+            "Tag 'tag-id' does not contain id: 'a'",
+            reports.TagIdsNotInTheTag("tag-id", ["a"]),
+        )
+
+    def test_message_plural(self):
+        self.assert_message_from_report(
+            "Tag 'tag-id' does not contain ids: 'a', 'b'",
+            reports.TagIdsNotInTheTag("tag-id", ["b", "a"]),
         )

@@ -2169,6 +2169,14 @@ Commands:
 
     remove <tag id>...
         Delete specified tags.
+
+    update <tag id> [add <id> [<id>]... [--before <id> | --after <id>]]
+            [remove <id> [<id>]...]
+        Update a tag using the specified ids. Ids can be added, removed or
+        moved in a tag. You can use --before or --after to specify the position
+        of the added ids relatively to some id already existing in the tag. By
+        adding ids to a tag they are already in and specifying --after or
+        --before you can move the ids in the tag.
 """
     if pout:
         print(sub_usage(args, output))

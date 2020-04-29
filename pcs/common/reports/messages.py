@@ -6155,6 +6155,89 @@ class BoothTicketOperationFailed(ReportItemMessage):
 
 
 @dataclass(frozen=True)
+class TagAddRemoveIdsDuplication(ReportItemMessage):
+    """
+    Duplicate reference ids were found in tag create or update add/remove
+    specification.
+    """
+
+    duplicate_ids_list: List[str]
+    add_or_not_remove: bool = True
+    _code = codes.TAG_ADD_REMOVE_IDS_DUPLICATION
+
+    @property
+    def message(self) -> str:
+        action = "add" if self.add_or_not_remove else "remove"
+        duplicate_ids = format_list(self.duplicate_ids_list)
+        return f"Ids to {action} must be unique, duplicate ids: {duplicate_ids}"
+
+
+@dataclass(frozen=True)
+class TagAdjacentReferenceIdNotInTheTag(ReportItemMessage):
+    """
+    Cannot put reference ids next to an adjacent reference id in a tag, because
+    the adjacent reference id does not belong to the tag.
+
+    adjacent_id -- adjacent reference id
+    tag_id -- tag id
+    """
+
+    adjacent_id: str
+    tag_id: str
+    _code = codes.TAG_ADJACENT_REFERENCE_ID_NOT_IN_THE_TAG
+
+    @property
+    def message(self) -> str:
+        return (
+            f"There is no reference id '{self.adjacent_id}' in the tag "
+            f"'{self.tag_id}', cannot put reference ids next to it in the tag"
+        )
+
+
+@dataclass(frozen=True)
+class TagCannotAddAndRemoveIdsAtTheSameTime(ReportItemMessage):
+    """
+    Cannot add and remove ids at the same time. Avoid operation without an
+    effect.
+
+    idref_list -- common ids from add and remove lists
+    """
+
+    idref_list: List[str]
+    _code = codes.TAG_CANNOT_ADD_AND_REMOVE_IDS_AT_THE_SAME_TIME
+
+    @property
+    def message(self) -> str:
+        idref_list = format_list(self.idref_list)
+        return f"Ids cannot be added and removed at the same time: {idref_list}"
+
+
+@dataclass(frozen=True)
+class TagCannotAddReferenceIdsAlreadyInTheTag(ReportItemMessage):
+    """
+    Cannot add reference ids already in the tag.
+
+    tag_id -- tag id
+    idref_list -- reference ids already in tag
+    """
+
+    tag_id: str
+    idref_list: List[str]
+    _code = codes.TAG_CANNOT_ADD_REFERENCE_IDS_ALREADY_IN_THE_TAG
+
+    @property
+    def message(self) -> str:
+        return (
+            "Cannot add reference {ids} already in the tag '{tag_id}': "
+            "{idref_list}"
+        ).format(
+            ids=format_plural(self.idref_list, "id"),
+            tag_id=self.tag_id,
+            idref_list=format_list(self.idref_list),
+        )
+
+
+@dataclass(frozen=True)
 class TagCannotContainItself(ReportItemMessage):
     """
     List of object reference ids contains the same id as specified tag_id.
@@ -6178,6 +6261,55 @@ class TagCannotCreateEmptyTagNoIdsSpecified(ReportItemMessage):
     @property
     def message(self) -> str:
         return "Cannot create empty tag, no resource ids specified"
+
+
+@dataclass(frozen=True)
+class TagCannotPutIdNextToItself(ReportItemMessage):
+    """
+    Cannot put id next to itself. Wrong adjacent id.
+
+    adjacent_id -- adjacent reference id
+    """
+
+    adjacent_id: str
+    _code = codes.TAG_CANNOT_PUT_ID_NEXT_TO_ITSELF
+
+    @property
+    def message(self) -> str:
+        return f"Cannot put id '{self.adjacent_id}' next to itself."
+
+
+@dataclass(frozen=True)
+class TagCannotRemoveAdjacentId(ReportItemMessage):
+    """
+    Cannot remove adjacent id.
+
+    adjacent_id -- adjacent reference id
+    """
+
+    adjacent_id: str
+    _code = codes.TAG_CANNOT_REMOVE_ADJACENT_ID
+
+    @property
+    def message(self) -> str:
+        return (
+            f"Cannot remove id '{self.adjacent_id}' next to which ids are being"
+            " added"
+        )
+
+
+@dataclass(frozen=True)
+class TagCannotRemoveReferencesWithoutRemovingTag(ReportItemMessage):
+    """
+    Cannot remove references without removing a tag.
+    """
+
+    tag_id: str
+    _code = codes.TAG_CANNOT_REMOVE_REFERENCES_WITHOUT_REMOVING_TAG
+
+    @property
+    def message(self) -> str:
+        return f"There would be no references left in the tag '{self.tag_id}'"
 
 
 @dataclass(frozen=True)
@@ -6219,17 +6351,51 @@ class TagCannotRemoveTagsNoTagsSpecified(ReportItemMessage):
 
 
 @dataclass(frozen=True)
-class TagIdsDuplication(ReportItemMessage):
+class TagCannotSpecifyAdjacentIdWithoutIdsToAdd(ReportItemMessage):
     """
-    Duplicate reference ids were found in tag specification.
+    Cannot specify adjacent id without ids to add.
 
-    tag_id -- tag id
+    adjacent_id -- adjacent reference id
     """
 
-    duplicate_ids_list: List[str]
-    _code = codes.TAG_IDS_DUPLICATION
+    adjacent_id: str
+    _code = codes.TAG_CANNOT_SPECIFY_ADJACENT_ID_WITHOUT_IDS_TO_ADD
 
     @property
     def message(self) -> str:
-        duplicate_ids_list = format_list(self.duplicate_ids_list)
-        return f"Ids must be unique, duplicate ids: {duplicate_ids_list}"
+        return (
+            f"Cannot specify adjacent id '{self.adjacent_id}' without ids to "
+            "add"
+        )
+
+
+@dataclass(frozen=True)
+class TagCannotUpdateTagNoIdsSpecified(ReportItemMessage):
+    """
+    Cannot update tag, no ids specified.
+    """
+
+    _code = codes.TAG_CANNOT_UPDATE_TAG_NO_IDS_SPECIFIED
+
+    @property
+    def message(self) -> str:
+        return "Cannot update tag, no ids to be added or removed specified"
+
+
+@dataclass(frozen=True)
+class TagIdsNotInTheTag(ReportItemMessage):
+    """
+    Specified ids are not present in the specified tag.
+    """
+
+    tag_id: str
+    id_list: List[str]
+    _code = codes.TAG_IDS_NOT_IN_THE_TAG
+
+    @property
+    def message(self) -> str:
+        return "Tag '{tag_id}' does not contain {ids}: {id_list}".format(
+            tag_id=self.tag_id,
+            ids=format_plural(self.id_list, "id"),
+            id_list=format_list(self.id_list),
+        )

@@ -10,6 +10,7 @@ tag_cmd = create_router(
         "help": lambda lib, argv, modifiers: usage.tag(argv),
         "list": tag.tag_config,
         "remove": tag.tag_remove,
+        "update": tag.tag_update,
     },
     ["tag"],
     default_cmd="config",

@@ -470,6 +470,17 @@ class WaitForIdleNotLiveCluster(CliReportMessageTestBase):
         )
 
 
+class TagCannotRemoveReferencesWithoutRemovingTag(CliReportMessageTestBase):
+    def test_success(self):
+        self.assert_message(
+            messages.TagCannotRemoveReferencesWithoutRemovingTag("tag-id"),
+            (
+                "There would be no references left in the tag 'tag-id', please "
+                "remove the whole tag using the 'pcs tag remove tag-id' command"
+            ),
+        )
+
+
 # TODO: create test/check that all subclasses of
 # pcs.cli.reports.messages.CliReportMessageCustom have their test class with
 # the same name in this file

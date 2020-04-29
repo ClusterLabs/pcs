@@ -3,6 +3,7 @@ from typing import (
     Dict,
     Iterable,
     Iterator,
+    Optional,
     Sequence,
 )
 from xml.etree.ElementTree import Element
@@ -96,3 +97,45 @@ def remove(env: LibraryEnvironment, tag_list: Iterable[str]) -> None:
         if env.report_processor.report_list(report_list).has_errors:
             raise LibraryError()
         tag.remove_tag(tag_elements)
+
+
+def update(
+    env: LibraryEnvironment,
+    tag_id: str,
+    idref_add: Sequence[str],
+    idref_remove: Sequence[str],
+    adjacent_idref: Optional[str] = None,
+    put_after_adjacent: bool = False,
+) -> None:
+    """
+    Update specified tag by given id references.
+
+    env -- provides all for communication with externals
+    tag_id -- id of an existing tag to be updated
+    idref_add -- reference ids to be added
+    idref_remove -- reference ids to be removed
+    adjacent_idref -- id of the element next to which the added elements will
+        be put
+    put_after_adjacent -- put elements after (True) or before (False) the
+        adjacent element
+    """
+    with cib_tags_section(env) as tags_section:
+        validator = tag.ValidateTagUpdateByIds(
+            tag_id, idref_add, idref_remove, adjacent_idref,
+        )
+        if env.report_processor.report_list(
+            validator.validate(
+                get_resources(get_root(tags_section)), tags_section,
+            )
+        ).has_errors:
+            raise LibraryError()
+        # check for mypy
+        tag_element = validator.tag_element()
+        if tag_element is not None:
+            tag.add_obj_ref(
+                tag_element,
+                validator.add_obj_ref_element_list(),
+                validator.adjacent_obj_ref_element(),
+                put_after_adjacent,
+            )
+            tag.remove_obj_ref(validator.remove_obj_ref_element_list())

@@ -1,4 +1,8 @@
+from typing import cast, Iterable
+from xml.etree.ElementTree import Element
+
 from lxml import etree
+from lxml.etree import _Element
 
 
 def get_root(tree):
@@ -153,7 +157,9 @@ def append_when_useful(parent, element, attribs_important=True, index=None):
     return element
 
 
-def remove_when_pointless(element, attribs_important=True):
+def remove_when_pointless(
+    element: Element, attribs_important: bool = True,
+) -> None:
     """
     Remove an element when it is not worth keeping (see is_element_useful for
         details).
@@ -163,7 +169,7 @@ def remove_when_pointless(element, attribs_important=True):
         attributes
     """
     if not is_element_useful(element, attribs_important):
-        element.getparent().remove(element)
+        remove_one_element(element)
 
 
 def reset_element(element, keep_attrs=None):
@@ -180,3 +186,36 @@ def reset_element(element, keep_attrs=None):
     for key in element.attrib.keys():
         if key not in keep_attrs:
             del element.attrib[key]
+
+
+def move_elements(
+    to_move_list: Iterable[Element],
+    adjacent_el: Element,
+    put_after_adjacent: bool = False,
+) -> None:
+    """
+    Move elements inside or into an element after or before specified element
+    in the element.
+
+    to_move_list -- elements to be moved
+    adjacent_el -- the element next to which the moved elements will be put
+    put_after_adjacent -- put elements after (True) or before (False) the
+        adjacent element
+    """
+    for el in to_move_list:
+        if put_after_adjacent:
+            cast(_Element, adjacent_el).addnext(cast(_Element, el))
+            adjacent_el = el
+        else:
+            cast(_Element, adjacent_el).addprevious(cast(_Element, el))
+
+
+def remove_one_element(element: Element) -> None:
+    """
+    Remove single specified element.
+
+    element -- element to be removed
+    """
+    parent = cast(_Element, element).getparent()
+    if parent is not None:
+        parent.remove(cast(_Element, element))

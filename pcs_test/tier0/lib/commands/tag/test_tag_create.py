@@ -62,7 +62,9 @@ class TestTagCreate(TestCase):
                     for _id in ["", ""]
                 ],
                 fixture.error(
-                    reports.codes.TAG_IDS_DUPLICATION, duplicate_ids_list=[""],
+                    reports.codes.TAG_ADD_REMOVE_IDS_DUPLICATION,
+                    duplicate_ids_list=[""],
+                    add_or_not_remove=True,
                 ),
             ]
         )
