@@ -145,7 +145,7 @@ class FixtureMixin:
                         />
             """
             )
-            + f"""
+            + """
                     </operations>
                 </primitive>
             </group>"""

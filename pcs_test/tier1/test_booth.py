@@ -68,13 +68,13 @@ class BoothMixin(AssertPcsMixin):
             os.remove(self.booth_key_path)
 
     def assert_pcs_success(self, command, *args, **kwargs):
-        # pylint: disable=arguments-differ
+        # pylint: disable=signature-differs
         return super(BoothMixin, self).assert_pcs_success(
             self.fake_file(command), *args, **kwargs
         )
 
     def assert_pcs_fail(self, command, *args, **kwargs):
-        # pylint: disable=arguments-differ
+        # pylint: disable=signature-differs
         return super(BoothMixin, self).assert_pcs_fail(
             self.fake_file(command), *args, **kwargs
         )

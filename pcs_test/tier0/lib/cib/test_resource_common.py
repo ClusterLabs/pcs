@@ -922,7 +922,7 @@ class ValidateMoveBanClearMixin:
     @staticmethod
     def _fixture_master():
         return etree.fromstring(
-            f"""
+            """
             <master id="R-master">
                 <primitive id="R" />
             </master>
@@ -932,13 +932,13 @@ class ValidateMoveBanClearMixin:
     @staticmethod
     def _fixture_group_master():
         return etree.fromstring(
-            f"""
+            """
             <master id="G-master">
                 <group id="G">
                     <primitive id="R" />
                 </group>
             </master>
-        """
+            """
         )
 
     def test_master_true_promotable_clone(self):
@@ -1137,11 +1137,11 @@ class ValidateMove(ValidateMoveBanClearMixin, TestCase):
     @staticmethod
     def _fixture_bundle():
         return etree.fromstring(
-            f"""
+            """
             <bundle id="R-bundle">
                 <primitive id="R" />
             </bundle>
-        """
+            """
         )
 
     def test_master_false_promotable_clone(self):

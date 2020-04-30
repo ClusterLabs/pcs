@@ -136,7 +136,7 @@ class SetupLocal(AssertPcsMixin, TestCase):
         self.assert_pcs_success(
             "cluster setup cluster_name node1 node2 --overwrite",
             dedent(
-                f"""\
+                """\
                 No addresses specified for host 'node1', using '10.0.1.1'
                 No addresses specified for host 'node2', using '10.0.1.2'
                 """

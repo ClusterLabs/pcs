@@ -31,7 +31,7 @@ def tree_to_lines(
     result = []
     note = ""
     if node.is_leaf:
-        note = f" [displayed elsewhere]"
+        note = " [displayed elsewhere]"
     title = node.get_title(verbose)
     result.append(f"{title_prefix}{title}{note}")
     if node.is_leaf:

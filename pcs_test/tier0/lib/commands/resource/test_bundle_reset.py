@@ -484,7 +484,7 @@ class NoMetaIdRegenerationMixin(BaseMixin, SetUpMixin):
     def test_dont_regenerate_meta_attributes_id(self):
         self.config.env.push_cib(
             replace={
-                ".//resources/bundle/meta_attributes": f"""
+                ".//resources/bundle/meta_attributes": """
                     <meta_attributes id="CUSTOM_ID">
                         <nvpair
                             id="CUSTOM_ID-target-role"

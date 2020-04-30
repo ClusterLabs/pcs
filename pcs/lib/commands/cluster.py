@@ -919,6 +919,7 @@ def add_nodes(
             # Do not send watchdog if validation is turned off. Listing of
             # available watchdogs in pcsd may restart the machine in some
             # corner cases.
+            # pylint: disable=unexpected-keyword-arg
             com_cmd.add_request(
                 new_node_target,
                 watchdog="" if no_watchdog_validation else new_node["watchdog"],
@@ -975,6 +976,7 @@ def add_nodes(
         com_cmd = SetSbdConfig(env.report_processor)
         for new_node_target in new_nodes_target_list:
             new_node = new_nodes_dict[new_node_target.label]
+            # pylint: disable=too-many-function-args
             com_cmd.add_request(
                 new_node_target,
                 sbd.create_sbd_config(

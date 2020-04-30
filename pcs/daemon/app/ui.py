@@ -67,7 +67,8 @@ class Logout(app_session.Mixin, AjaxMixin, BaseHandler):
 class StaticFileMayBe(StaticFile):
     # pylint: disable=abstract-method
     def get(self, *args, **kwargs):
-        # pylint: disable=arguments-differ
+        # pylint: disable=signature-differs
+        # pylint: disable=invalid-overridden-method
         if not os.path.isdir(str(self.root)):
             # spa is probably not installed
             self.set_status(404, "Not Found")
