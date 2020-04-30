@@ -5,9 +5,10 @@ from pcs.common import reports
 from pcs.common.reports.item import ReportItem
 from pcs.lib.corosync import config_parser, constants, node
 from pcs.lib.errors import LibraryError
+from pcs.lib.interface.config import FacadeInterface
 
 
-class ConfigFacade:
+class ConfigFacade(FacadeInterface):
     # pylint: disable=too-many-public-methods
     """
     Provides high level access to a corosync config file
@@ -21,50 +22,11 @@ class ConfigFacade:
         """
         try:
             return cls(config_parser.parse_string(config_string))
-        except config_parser.MissingClosingBraceException as e:
-            raise LibraryError(
-                ReportItem.error(
-                    reports.messages.ParseErrorCorosyncConfMissingClosingBrace()
-                )
-            ) from e
-        except config_parser.UnexpectedClosingBraceException as e:
-            # pylint: disable=line-too-long
-            raise LibraryError(
-                ReportItem.error(
-                    reports.messages.ParseErrorCorosyncConfUnexpectedClosingBrace()
-                )
-            ) from e
-        except config_parser.MissingSectionNameBeforeOpeningBraceException as e:
-            # pylint: disable=line-too-long
-            raise LibraryError(
-                ReportItem.error(
-                    reports.messages.ParseErrorCorosyncConfMissingSectionNameBeforeOpeningBrace()
-                )
-            ) from e
-        except config_parser.ExtraCharactersAfterOpeningBraceException as e:
-            # pylint: disable=line-too-long
-            raise LibraryError(
-                ReportItem.error(
-                    reports.messages.ParseErrorCorosyncConfExtraCharactersAfterOpeningBrace()
-                )
-            ) from e
-        except config_parser.ExtraCharactersBeforeOrAfterClosingBraceException as e:
-            # pylint: disable=line-too-long
-            raise LibraryError(
-                ReportItem.error(
-                    reports.messages.ParseErrorCorosyncConfExtraCharactersBeforeOrAfterClosingBrace()
-                )
-            ) from e
-        except config_parser.LineIsNotSectionNorKeyValueException as e:
-            # pylint: disable=line-too-long
-            raise LibraryError(
-                ReportItem.error(
-                    reports.messages.ParseErrorCorosyncConfLineIsNotSectionNorKeyValue()
-                )
-            ) from e
         except config_parser.CorosyncConfParserException as e:
             raise LibraryError(
-                ReportItem.error(reports.messages.ParseErrorCorosyncConf())
+                ReportItem.error(
+                    config_parser.parser_exception_to_report_msg(e)
+                )
             ) from e
 
     @classmethod
@@ -113,15 +75,11 @@ class ConfigFacade:
         Create a facade around a parsed corosync config file
         parsed_config parsed corosync config
         """
-        self._config = parsed_config
+        super().__init__(parsed_config)
         # set to True if changes cannot be applied on running cluster
         self._need_stopped_cluster = False
         # set to True if qdevice reload is required to apply changes
         self._need_qdevice_reload = False
-
-    @property
-    def config(self):
-        return self._config
 
     @property
     def need_stopped_cluster(self):

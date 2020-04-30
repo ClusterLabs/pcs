@@ -16,6 +16,11 @@ from pcs.lib.booth.config_parser import (
     Exporter as BoothConfigExporter,
     Parser as BoothConfigParser,
 )
+from pcs.lib.corosync.config_facade import ConfigFacade as CorosyncConfigFacade
+from pcs.lib.corosync.config_parser import (
+    Exporter as CorosyncConfigExporter,
+    Parser as CorosyncConfigParser,
+)
 from pcs.lib.dr.config.facade import Facade as DrConfigFacade
 from pcs.lib.interface.config import (
     ExporterInterface,
@@ -144,6 +149,14 @@ _toolboxes = {
         exporter=NoopExporter,
         validator=None,  # TODO needed for files syncing
         version_controller=None,  # TODO needed for files syncing
+    ),
+    code.COROSYNC_CONF: FileToolbox(
+        file_type_code=code.COROSYNC_CONF,
+        facade=CorosyncConfigFacade,
+        parser=CorosyncConfigParser,
+        exporter=CorosyncConfigExporter,
+        validator=None,
+        version_controller=None,
     ),
     code.PACEMAKER_AUTHKEY: FileToolbox(
         file_type_code=code.PACEMAKER_AUTHKEY,
