@@ -14,7 +14,14 @@ import tempfile
 import time
 import shutil
 import difflib
-import distro
+
+try:
+    import distro
+
+    no_distro_package = False
+except ImportError:
+    no_distro_package = True
+    import platform
 
 try:
     import clufter.facts
@@ -991,7 +998,15 @@ def config_import_cman(lib, argv, modifiers):
 
 
 def _get_linux_dist():
-    return ",".join(distro.linux_distribution(full_distribution_name=False))
+    if no_distro_package:
+        # For Python 3.8+, python3-distro is a required dependency and we
+        # should never get here. Pylint, of course, cannot know that.
+        # pylint: disable=deprecated-method
+        # pylint: disable=no-member
+        distribution = platform.linux_distribution(full_distribution_name=False)
+    else:
+        distribution = distro.linux_distribution(full_distribution_name=False)
+    return ",".join(distribution)
 
 
 def config_export_pcs_commands(lib, argv, modifiers, verbose=False):

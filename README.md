@@ -25,7 +25,7 @@ There are two pcs branches currently:
 
 These are the runtime dependencies of pcs and pcsd:
 * python 3.6+
-* python3-distro
+* python3-distro (for python 3.8+)
 * python3-lxml
 * python3-pycurl
 * python3-setuptools

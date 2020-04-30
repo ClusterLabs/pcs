@@ -120,7 +120,6 @@ BuildRequires: platform-python-setuptools
 %endif
 
 BuildRequires: python3-devel
-BuildRequires: python3-distro
 
 # gcc for compiling custom rubygems
 BuildRequires: gcc
@@ -156,7 +155,9 @@ Requires: python3-lxml
 Requires: python3-pycurl
 # clufter and its dependencies
 Requires: python3-clufter => 0.70.0
+%if "%{python3_version}" != "3.6" && "%{python3_version}" != "3.7"
 Requires: python3-distro
+%endif
 # ruby and gems for pcsd
 Requires: ruby >= 2.2.0
 Requires: rubygems
