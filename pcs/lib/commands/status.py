@@ -1,3 +1,4 @@
+import os.path
 from typing import (
     Iterable,
     List,
@@ -6,6 +7,7 @@ from typing import (
 )
 from xml.etree.ElementTree import Element
 
+from pcs import settings
 from pcs.common import (
     file_type_codes,
     reports,
@@ -17,7 +19,7 @@ from pcs.common.str_tools import (
     format_list,
     indent,
 )
-from pcs.lib.cib import stonith
+from pcs.lib.cib import nvpair, stonith
 from pcs.lib.cib.tools import get_crm_config, get_resources
 from pcs.lib.communication.nodes import CheckReachability
 from pcs.lib.communication.tools import run as run_communication
@@ -59,6 +61,7 @@ def full_cluster_status_plaintext(
     """
     # pylint: disable=too-many-branches
     # pylint: disable=too-many-locals
+    # pylint: disable=too-many-statements
 
     # validation
     if not env.is_cib_live and env.is_corosync_conf_live:
@@ -88,7 +91,11 @@ def full_cluster_status_plaintext(
     status_text, warning_list = get_cluster_status_text(
         runner, hide_inactive_resources, verbose
     )
-    corosync_conf = env.get_corosync_conf()
+    corosync_conf = None
+    # If we are live on a remote node, we have no corosync.conf.
+    # TODO Use the new file framework so the path is not exposed.
+    if not live or os.path.exists(settings.corosync_conf_file):
+        corosync_conf = env.get_corosync_conf()
     cib = env.get_cib()
     if verbose:
         (
@@ -103,7 +110,7 @@ def full_cluster_status_plaintext(
         except LibraryError:
             pass
         local_services_status = _get_local_services_status(runner)
-        if verbose:
+        if verbose and corosync_conf:
             node_name_list, node_names_report_list = get_existing_nodes_names(
                 corosync_conf
             )
@@ -123,8 +130,15 @@ def full_cluster_status_plaintext(
     if report_processor.has_errors:
         raise LibraryError()
 
+    cluster_name = (
+        corosync_conf.get_cluster_name()
+        if corosync_conf
+        else nvpair.get_value(
+            "cluster_property_set", get_crm_config(cib), "cluster-name", ""
+        )
+    )
     parts = []
-    parts.append(f"Cluster name: {corosync_conf.get_cluster_name()}")
+    parts.append(f"Cluster name: {cluster_name}")
     if warning_list:
         parts.extend(["", "WARNINGS:"] + warning_list + [""])
     parts.append(status_text)
@@ -142,7 +156,7 @@ def full_cluster_status_plaintext(
         else:
             parts.extend(indent(ticket_status_text.splitlines()))
     if live:
-        if verbose:
+        if verbose and corosync_conf:
             parts.extend(["", "PCSD Status:"])
             parts.extend(
                 indent(

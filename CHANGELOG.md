@@ -13,10 +13,13 @@
   [rhbz#1824206])
 - Pcs is now compatible with Ruby 2.7 and Python 3.8. To achieve this, it newly
   depends on python3-distro package.
+- `pcs status` works on remote nodes again (broken since pcs-0.10.4)
+  ([rhbz#1830552])
 
 [rhbz#1387358]: https://bugzilla.redhat.com/show_bug.cgi?id=1387358
 [rhbz#1782553]: https://bugzilla.redhat.com/show_bug.cgi?id=1782553
 [rhbz#1824206]: https://bugzilla.redhat.com/show_bug.cgi?id=1824206
+[rhbz#1830552]: https://bugzilla.redhat.com/show_bug.cgi?id=1830552
 
 
 ## [0.10.5] - 2020-03-18

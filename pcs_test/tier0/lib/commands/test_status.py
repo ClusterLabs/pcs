@@ -1,6 +1,7 @@
 from textwrap import dedent
 from unittest import TestCase
 
+from pcs import settings
 from pcs.common import file_type_codes
 from pcs.common.reports import codes as report_codes
 from pcs.lib.commands import status
@@ -10,16 +11,33 @@ from pcs_test.tools.misc import read_test_resource as rc_read
 
 
 class FullClusterStatusPlaintext(TestCase):
+    # pylint: disable=too-many-public-methods
     def setUp(self):
         self.env_assist, self.config = get_env_tools(self)
         self.node_name_list = ["node1", "node2", "node3"]
         self.maxDiff = None
+
+    @staticmethod
+    def _fixture_xml_clustername(name):
+        return """
+            <crm_config>
+                <cluster_property_set id="cib-bootstrap-options">
+                    <nvpair
+                        id="cib-bootstrap-options-cluster-name"
+                        name="cluster-name" value="{name}"
+                    />
+                </cluster_property_set>
+            </crm_config>
+            """.format(
+            name=name
+        )
 
     def _fixture_config_live_minimal(self):
         (
             self.config.runner.pcmk.load_state_plaintext(
                 stdout="crm_mon cluster status",
             )
+            .fs.exists(settings.corosync_conf_file, return_value=True)
             .corosync_conf.load()
             .runner.cib.load(
                 resources="""
@@ -27,6 +45,25 @@ class FullClusterStatusPlaintext(TestCase):
                     <primitive id="S" class="stonith" type="fence_dummy" />
                 </resources>
             """
+            )
+            .runner.systemctl.is_active(
+                "sbd", is_active=False, name="runner.systemctl.is_active.sbd"
+            )
+        )
+
+    def _fixture_config_live_remote_minimal(self):
+        (
+            self.config.runner.pcmk.load_state_plaintext(
+                stdout="crm_mon cluster status",
+            )
+            .fs.exists(settings.corosync_conf_file, return_value=False)
+            .runner.cib.load(
+                optional_in_conf=self._fixture_xml_clustername("test-cib"),
+                resources="""
+                <resources>
+                    <primitive id="S" class="stonith" type="fence_dummy" />
+                </resources>
+            """,
             )
             .runner.systemctl.is_active(
                 "sbd", is_active=False, name="runner.systemctl.is_active.sbd"
@@ -155,7 +192,9 @@ class FullClusterStatusPlaintext(TestCase):
         (
             self.config.runner.pcmk.load_state_plaintext(
                 stdout="crm_mon cluster status",
-            ).corosync_conf.load_content("invalid corosync conf")
+            )
+            .fs.exists(settings.corosync_conf_file, return_value=True)
+            .corosync_conf.load_content("invalid corosync conf")
         )
         self.env_assist.assert_raise_library_error(
             lambda: status.full_cluster_status_plaintext(
@@ -175,6 +214,7 @@ class FullClusterStatusPlaintext(TestCase):
             self.config.runner.pcmk.load_state_plaintext(
                 stdout="crm_mon cluster status",
             )
+            .fs.exists(settings.corosync_conf_file, return_value=True)
             .corosync_conf.load()
             .runner.cib.load_content(
                 "some stdout", stderr="cib load error", returncode=1
@@ -216,6 +256,7 @@ class FullClusterStatusPlaintext(TestCase):
             .runner.pcmk.load_state_plaintext(
                 verbose=True, stdout="crm_mon cluster status",
             )
+            .fs.exists(settings.corosync_conf_file, return_value=True)
             .corosync_conf.load(node_name_list=self.node_name_list)
             .runner.cib.load(
                 resources="""
@@ -256,6 +297,82 @@ class FullClusterStatusPlaintext(TestCase):
                 Daemon Status:
                   corosync: active/enabled
                   pacemaker: active/enabled
+                  pcsd: active/enabled"""
+            ),
+        )
+
+    def test_success_live_remote_node(self):
+        self._fixture_config_live_remote_minimal()
+        self._fixture_config_local_daemons(
+            corosync_enabled=False,
+            corosync_active=False,
+            pacemaker_enabled=False,
+            pacemaker_active=False,
+            pacemaker_remote_enabled=True,
+            pacemaker_remote_active=True,
+        )
+        self.assertEqual(
+            status.full_cluster_status_plaintext(self.env_assist.get_env()),
+            dedent(
+                """\
+                Cluster name: test-cib
+                crm_mon cluster status
+
+                Daemon Status:
+                  corosync: inactive/disabled
+                  pacemaker: inactive/disabled
+                  pacemaker_remote: active/enabled
+                  pcsd: active/enabled"""
+            ),
+        )
+
+    def test_success_live_remote_node_verbose(self):
+        (
+            self.config.runner.pcmk.can_fence_history_status(
+                stderr="not supported"
+            )
+            .runner.pcmk.load_state_plaintext(
+                verbose=True, stdout="crm_mon cluster status",
+            )
+            .fs.exists(settings.corosync_conf_file, return_value=False)
+            .runner.cib.load(
+                optional_in_conf=self._fixture_xml_clustername("test-cib"),
+                resources="""
+                <resources>
+                    <primitive id="S" class="stonith" type="fence_dummy" />
+                </resources>
+            """,
+            )
+            .runner.pcmk.load_ticket_state_plaintext(stdout="ticket status")
+            .runner.systemctl.is_active(
+                "sbd", is_active=False, name="runner.systemctl.is_active.sbd"
+            )
+        )
+        self._fixture_config_local_daemons(
+            corosync_enabled=False,
+            corosync_active=False,
+            pacemaker_enabled=False,
+            pacemaker_active=False,
+            pacemaker_remote_enabled=True,
+            pacemaker_remote_active=True,
+        )
+
+        self.assertEqual(
+            status.full_cluster_status_plaintext(
+                self.env_assist.get_env(), verbose=True
+            ),
+            dedent(
+                """\
+                Cluster name: test-cib
+                crm_mon cluster status
+
+                Tickets:
+                  ticket status
+
+                Daemon Status:
+                  corosync: inactive/disabled
+                  pacemaker: inactive/disabled
+                  pacemaker_remote: active/enabled
                   pcsd: active/enabled"""
             ),
         )
@@ -323,6 +440,7 @@ class FullClusterStatusPlaintext(TestCase):
                 fence_history=True,
                 stdout="crm_mon cluster status",
             )
+            .fs.exists(settings.corosync_conf_file, return_value=True)
             .corosync_conf.load(node_name_list=self.node_name_list)
             .runner.cib.load(
                 resources="""
@@ -376,6 +494,7 @@ class FullClusterStatusPlaintext(TestCase):
             .runner.pcmk.load_state_plaintext(
                 verbose=True, stdout="crm_mon cluster status",
             )
+            .fs.exists(settings.corosync_conf_file, return_value=True)
             .corosync_conf.load(node_name_list=self.node_name_list)
             .runner.cib.load(
                 resources="""
@@ -436,6 +555,7 @@ class FullClusterStatusPlaintext(TestCase):
             self.config.runner.pcmk.load_state_plaintext(
                 stdout="crm_mon cluster status",
             )
+            .fs.exists(settings.corosync_conf_file, return_value=True)
             .corosync_conf.load()
             .runner.cib.load()
             .runner.systemctl.is_active(
@@ -467,6 +587,7 @@ class FullClusterStatusPlaintext(TestCase):
             self.config.runner.pcmk.load_state_plaintext(
                 stdout="crm_mon cluster status",
             )
+            .fs.exists(settings.corosync_conf_file, return_value=True)
             .corosync_conf.load()
             .runner.cib.load()
             .runner.systemctl.is_active(
@@ -494,6 +615,7 @@ class FullClusterStatusPlaintext(TestCase):
             self.config.runner.pcmk.load_state_plaintext(
                 stdout="crm_mon cluster status",
             )
+            .fs.exists(settings.corosync_conf_file, return_value=True)
             .corosync_conf.load()
             .runner.cib.load(
                 resources="""
@@ -553,6 +675,7 @@ class FullClusterStatusPlaintext(TestCase):
             .runner.pcmk.load_state_plaintext(
                 verbose=True, stdout="crm_mon cluster status",
             )
+            .fs.exists(settings.corosync_conf_file, return_value=True)
             .corosync_conf.load(node_name_list=self.node_name_list)
             .runner.cib.load(
                 resources="""
