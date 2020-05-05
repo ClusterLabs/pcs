@@ -207,12 +207,12 @@ end
 
 def _update_pcsd_settings(config, cluster_name, new_nodes)
   old_nodes = config.get_nodes(cluster_name)
-  if new_nodes.length > 0
-    # removing log is embeded in config.update_cluster
-    $logger.info(
-      "Updating node list for: #{cluster_name} #{old_nodes}->#{new_nodes}"
-    )
-  end
+  
+  # removing log is embeded in config.update_cluster
+  $logger.info(
+    "Updating node list for: #{cluster_name} #{old_nodes}->#{new_nodes}"
+  )
+
   config.update_cluster(cluster_name, new_nodes)
   sync_config = Cfgsync::PcsdSettings.from_text(config.text())
   # on version conflict just go on, config will be corrected eventually
