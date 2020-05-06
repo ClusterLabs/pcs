@@ -382,7 +382,7 @@ def get_status(tree):
     return get_sub_element(tree, "status")
 
 
-def get_tags(tree):
+def get_tags(tree: Element) -> Element:
     """
     Return 'tags' element from tree, create a new one if missing
     tree -- cib etree node

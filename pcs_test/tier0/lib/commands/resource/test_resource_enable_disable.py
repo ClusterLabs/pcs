@@ -17,6 +17,7 @@ from pcs.lib.errors import LibraryError
 
 TIMEOUT = 10
 
+
 fixture_primitive_cib_enabled = """
     <resources>
         <primitive class="ocf" id="A" provider="heartbeat" type="Dummy">
@@ -630,8 +631,9 @@ class EnablePrimitive(TestCase):
 
         self.env_assist.assert_raise_library_error(
             lambda: resource.enable(self.env_assist.get_env(), ["B"], False),
-            [fixture.report_not_found("B", "resources")],
-            expected_in_processor=False,
+        )
+        self.env_assist.assert_reports(
+            [fixture.report_not_resource_or_tag("B")]
         )
 
     def test_nonexistent_resource_in_status(self):
@@ -802,11 +804,12 @@ class MoreResources(TestCase):
             lambda: resource.enable(
                 self.env_assist.get_env(), ["B", "X", "Y", "A"], wait=False
             ),
+        )
+        self.env_assist.assert_reports(
             [
-                fixture.report_not_found("X", "resources"),
-                fixture.report_not_found("Y", "resources"),
+                fixture.report_not_resource_or_tag("X"),
+                fixture.report_not_resource_or_tag("Y"),
             ],
-            expected_in_processor=False,
         )
 
     def test_bad_resource_disable(self):
@@ -868,8 +871,9 @@ class Wait(TestCase):
 
         self.env_assist.assert_raise_library_error(
             lambda: resource.enable(self.env_assist.get_env(), ["B"], TIMEOUT),
-            [fixture.report_not_found("B", "resources"),],
-            expected_in_processor=False,
+        )
+        self.env_assist.assert_reports(
+            [fixture.report_not_resource_or_tag("B")]
         )
 
     def test_disable_dont_wait_on_error(self):

@@ -3264,11 +3264,19 @@ monitor interval=20 (A-monitor-interval-20)
 
         # bad resource name
         o, r = pcs(self.temp_cib.name, "resource enable NoExist")
-        ac(o, "Error: bundle/clone/group/resource 'NoExist' does not exist\n")
+        ac(
+            o,
+            (
+                "Error: bundle/clone/group/resource/tag 'NoExist' does not exist\n"
+                "Error: Errors have occurred, therefore pcs is unable to continue\n"
+            ),
+        )
         assert r == 1
 
         o, r = pcs(self.temp_cib.name, "resource disable NoExist")
-        ac(o, "Error: bundle/clone/group/resource 'NoExist' does not exist\n")
+        ac(
+            o, "Error: bundle/clone/group/resource 'NoExist' does not exist\n",
+        )
         assert r == 1
 
         # cloned group
@@ -3847,7 +3855,10 @@ monitor interval=20 (A-monitor-interval-20)
 
         self.assert_pcs_fail(
             "resource enable dummy3 dummyX",
-            "Error: bundle/clone/group/resource 'dummyX' does not exist\n",
+            (
+                "Error: bundle/clone/group/resource/tag 'dummyX' does not exist\n"
+                "Error: Errors have occurred, therefore pcs is unable to continue\n"
+            ),
         )
         self.assert_pcs_success(
             "resource config",

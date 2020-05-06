@@ -3,9 +3,11 @@ from contextlib import contextmanager
 from functools import partial
 from typing import (
     Any,
+    Callable,
     Iterable,
     List,
     Mapping,
+    Optional,
     Set,
 )
 from xml.etree.ElementTree import Element
@@ -66,6 +68,26 @@ def resource_environment(
 ):
     env.ensure_wait_satisfiable(wait)
     yield get_resources(env.get_cib(required_cib_version))
+    env.push_cib(wait=wait)
+    if wait is not False and wait_for_resource_ids:
+        state = env.get_cluster_state()
+        if env.report_processor.report_list(
+            [
+                resource_state_reporter(state, res_id)
+                for res_id in wait_for_resource_ids
+            ]
+        ).has_errors:
+            raise LibraryError()
+
+
+def _push_cib_wait(
+    env: LibraryEnvironment,
+    wait: bool = False,
+    wait_for_resource_ids: Optional[List[str]] = None,
+    resource_state_reporter: Callable[
+        [Element, str], ReportItem
+    ] = info_resource_state,
+) -> None:
     env.push_cib(wait=wait)
     if wait is not False and wait_for_resource_ids:
         state = env.get_cluster_state()
@@ -993,31 +1015,45 @@ def disable_simulate(env, resource_ids):
     return plaintext_status
 
 
-def enable(env, resource_ids, wait):
+def enable(env, resource_or_tag_ids, wait):
     """
     Allow specified resource to be started by the cluster
     LibraryEnvironment env --
     strings resource_ids -- ids of the resources to be enabled
     mixed wait -- False: no wait, None: wait default timeout, int: wait timeout
     """
-    with resource_environment(
-        env, wait, resource_ids, _ensure_disabled_after_wait(False)
-    ) as resources_section:
-        id_provider = IdProvider(resources_section)
-        resource_el_list = _find_resources_or_raise(
-            resources_section,
-            resource_ids,
-            resource.common.find_resources_to_enable,
+    env.ensure_wait_satisfiable(wait)
+    cib = env.get_cib()
+    resources_section = get_resources(cib)
+    (
+        resource_or_tag_el_list,
+        report_list,
+    ) = resource.common.find_resources_or_tags(cib, resource_or_tag_ids)
+    if env.report_processor.report_list(report_list).has_errors:
+        raise LibraryError()
+
+    resource_el_list = resource.common.expand_tags_to_resources(
+        resources_section, resource_or_tag_el_list,
+    )
+    to_enable_set = set()
+    for el in resource_el_list:
+        to_enable_set.update(resource.common.find_resources_to_enable(el))
+
+    if env.report_processor.report_list(
+        _resource_list_enable_disable(
+            to_enable_set,
+            resource.common.enable,
+            IdProvider(resources_section),
+            env.get_cluster_state(),
         )
-        if env.report_processor.report_list(
-            _resource_list_enable_disable(
-                resource_el_list,
-                resource.common.enable,
-                id_provider,
-                env.get_cluster_state(),
-            )
-        ).has_errors:
-            raise LibraryError()
+    ).has_errors:
+        raise LibraryError()
+    _push_cib_wait(
+        env,
+        wait,
+        [el.get("id", "") for el in resource_el_list],
+        _ensure_disabled_after_wait(False),
+    )
 
 
 def _resource_list_enable_disable(
