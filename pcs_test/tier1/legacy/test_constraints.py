@@ -181,7 +181,7 @@ class ConstraintTest(unittest.TestCase):
 
         output, returnVal = pcs(
             self.temp_cib.name,
-            "constraint location D6 rule score=INFINITY date-spec operation=date_spec years=2005",
+            "constraint location D6 rule score=INFINITY date-spec operation=date_spec years=3005",
         )
         assert output == "", [output]
         assert returnVal == 0
@@ -242,7 +242,7 @@ Location Constraints:
     Constraint: location-D6
       Rule: score=INFINITY (id:location-D6-rule)
         Expression: (id:location-D6-rule-expr)
-          Date Spec: years=2005 (id:location-D6-rule-expr-datespec)
+          Date Spec: years=3005 (id:location-D6-rule-expr-datespec)
 Ordering Constraints:
 Colocation Constraints:
 Ticket Constraints:
@@ -291,7 +291,7 @@ Location Constraints:
     Constraint: location-D6
       Rule: score=INFINITY (id:location-D6-rule)
         Expression: (id:location-D6-rule-expr)
-          Date Spec: years=2005 (id:location-D6-rule-expr-datespec)
+          Date Spec: years=3005 (id:location-D6-rule-expr-datespec)
 Ordering Constraints:
 Colocation Constraints:
 Ticket Constraints:
@@ -3851,9 +3851,9 @@ class LocationShowWithPattern(ConstraintBaseTest):
                 "constraint location add my-id1 R3 node1 -INFINITY resource-discovery=never",
                 "constraint location add my-id2 R3 node2 -INFINITY resource-discovery=never",
                 "constraint location add my-id3 regexp%R_[0-9]+ node4 -INFINITY resource-discovery=never",
-                "constraint location R1 rule score=-INFINITY date-spec operation=date_spec years=2005",
-                "constraint location R1 rule score=-INFINITY date-spec operation=date_spec years=2007",
-                "constraint location regexp%R_[0-9]+ rule score=-INFINITY date-spec operation=date_spec years=2006",
+                "constraint location R1 rule score=-INFINITY date-spec operation=date_spec years=3005",
+                "constraint location R1 rule score=-INFINITY date-spec operation=date_spec years=3007",
+                "constraint location regexp%R_[0-9]+ rule score=-INFINITY date-spec operation=date_spec years=3006",
                 "constraint location regexp%R_[0-9]+ rule score=20 defined pingd",
             ]
         )
@@ -3875,7 +3875,7 @@ class LocationShowWithPattern(ConstraintBaseTest):
                 Constraint: location-R_0-9
                   Rule: score=-INFINITY (id:location-R_0-9-rule)
                     Expression: (id:location-R_0-9-rule-expr)
-                      Date Spec: years=2006 (id:location-R_0-9-rule-expr-datespec)
+                      Date Spec: years=3006 (id:location-R_0-9-rule-expr-datespec)
                 Constraint: location-R_0-9-1
                   Rule: score=20 (id:location-R_0-9-1-rule)
                     Expression: defined pingd (id:location-R_0-9-1-rule-expr)
@@ -3892,11 +3892,11 @@ class LocationShowWithPattern(ConstraintBaseTest):
                 Constraint: location-R1
                   Rule: score=-INFINITY (id:location-R1-rule)
                     Expression: (id:location-R1-rule-expr)
-                      Date Spec: years=2005 (id:location-R1-rule-expr-datespec)
+                      Date Spec: years=3005 (id:location-R1-rule-expr-datespec)
                 Constraint: location-R1-1
                   Rule: score=-INFINITY (id:location-R1-1-rule)
                     Expression: (id:location-R1-1-rule-expr)
-                      Date Spec: years=2007 (id:location-R1-1-rule-expr-datespec)
+                      Date Spec: years=3007 (id:location-R1-1-rule-expr-datespec)
               Resource: R2
                 Enabled on:
                   Node: node3 (score:INFINITY) (id:location-R2-node3-INFINITY)
@@ -3927,7 +3927,7 @@ class LocationShowWithPattern(ConstraintBaseTest):
                 Constraint: location-R_0-9
                   Rule: score=-INFINITY
                     Expression:
-                      Date Spec: years=2006
+                      Date Spec: years=3006
                 Constraint: location-R_0-9-1
                   Rule: score=20
                     Expression: defined pingd
@@ -3944,11 +3944,11 @@ class LocationShowWithPattern(ConstraintBaseTest):
                 Constraint: location-R1
                   Rule: score=-INFINITY
                     Expression:
-                      Date Spec: years=2005
+                      Date Spec: years=3005
                 Constraint: location-R1-1
                   Rule: score=-INFINITY
                     Expression:
-                      Date Spec: years=2007
+                      Date Spec: years=3007
               Resource: R2
                 Enabled on:
                   Node: node3 (score:INFINITY)
@@ -4007,7 +4007,7 @@ class LocationShowWithPattern(ConstraintBaseTest):
                 Constraint: location-R_0-9
                   Rule: score=-INFINITY (id:location-R_0-9-rule)
                     Expression: (id:location-R_0-9-rule-expr)
-                      Date Spec: years=2006 (id:location-R_0-9-rule-expr-datespec)
+                      Date Spec: years=3006 (id:location-R_0-9-rule-expr-datespec)
                 Constraint: location-R_0-9-1
                   Rule: score=20 (id:location-R_0-9-1-rule)
                     Expression: defined pingd (id:location-R_0-9-1-rule-expr)
@@ -4015,11 +4015,11 @@ class LocationShowWithPattern(ConstraintBaseTest):
                 Constraint: location-R1
                   Rule: score=-INFINITY (id:location-R1-rule)
                     Expression: (id:location-R1-rule-expr)
-                      Date Spec: years=2005 (id:location-R1-rule-expr-datespec)
+                      Date Spec: years=3005 (id:location-R1-rule-expr-datespec)
                 Constraint: location-R1-1
                   Rule: score=-INFINITY (id:location-R1-1-rule)
                     Expression: (id:location-R1-1-rule-expr)
-                      Date Spec: years=2007 (id:location-R1-1-rule-expr-datespec)
+                      Date Spec: years=3007 (id:location-R1-1-rule-expr-datespec)
             """
             ),
         )
@@ -4040,7 +4040,7 @@ class LocationShowWithPattern(ConstraintBaseTest):
                 Constraint: location-R_0-9
                   Rule: score=-INFINITY
                     Expression:
-                      Date Spec: years=2006
+                      Date Spec: years=3006
                 Constraint: location-R_0-9-1
                   Rule: score=20
                     Expression: defined pingd
@@ -4048,11 +4048,11 @@ class LocationShowWithPattern(ConstraintBaseTest):
                 Constraint: location-R1
                   Rule: score=-INFINITY
                     Expression:
-                      Date Spec: years=2005
+                      Date Spec: years=3005
                 Constraint: location-R1-1
                   Rule: score=-INFINITY
                     Expression:
-                      Date Spec: years=2007
+                      Date Spec: years=3007
             """
             ),
         )
@@ -4072,7 +4072,7 @@ class LocationShowWithPattern(ConstraintBaseTest):
                 Constraint: location-R_0-9
                   Rule: score=-INFINITY
                     Expression:
-                      Date Spec: years=2006
+                      Date Spec: years=3006
                 Constraint: location-R_0-9-1
                   Rule: score=20
                     Expression: defined pingd
