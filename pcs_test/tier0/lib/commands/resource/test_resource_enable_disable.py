@@ -577,8 +577,9 @@ class DisablePrimitive(TestCase):
 
         self.env_assist.assert_raise_library_error(
             lambda: resource.disable(self.env_assist.get_env(), ["B"], False),
-            [fixture.report_not_found("B", "resources")],
-            expected_in_processor=False,
+        )
+        self.env_assist.assert_reports(
+            [fixture.report_not_resource_or_tag("B")]
         )
 
     def test_nonexistent_resource_in_status(self):
@@ -819,11 +820,12 @@ class MoreResources(TestCase):
             lambda: resource.disable(
                 self.env_assist.get_env(), ["B", "X", "Y", "A"], wait=False
             ),
+        )
+        self.env_assist.assert_reports(
             [
-                fixture.report_not_found("X", "resources"),
-                fixture.report_not_found("Y", "resources"),
+                fixture.report_not_resource_or_tag("X"),
+                fixture.report_not_resource_or_tag("Y"),
             ],
-            expected_in_processor=False,
         )
 
 
@@ -881,8 +883,9 @@ class Wait(TestCase):
 
         self.env_assist.assert_raise_library_error(
             lambda: resource.disable(self.env_assist.get_env(), ["B"], TIMEOUT),
-            [fixture.report_not_found("B", "resources"),],
-            expected_in_processor=False,
+        )
+        self.env_assist.assert_reports(
+            [fixture.report_not_resource_or_tag("B")]
         )
 
     def test_enable_resource_stopped(self):
@@ -1837,8 +1840,9 @@ class DisableSimulate(TestCase):
         self.config.runner.cib.load()
         self.env_assist.assert_raise_library_error(
             lambda: resource.disable_simulate(self.env_assist.get_env(), ["A"]),
-            [fixture.report_not_found("A", "resources"),],
-            expected_in_processor=False,
+        )
+        self.env_assist.assert_reports(
+            [fixture.report_not_resource_or_tag("A")],
         )
 
     def test_success(self, mock_write_tmpfile):
@@ -2109,8 +2113,9 @@ class DisableSafeMixin:
             lambda: resource.disable_safe(
                 self.env_assist.get_env(), ["A"], self.strict, False
             ),
-            [fixture.report_not_found("A", "resources"),],
-            expected_in_processor=False,
+        )
+        self.env_assist.assert_reports(
+            [fixture.report_not_resource_or_tag("A")]
         )
 
     def test_simulate_error(self, mock_write_tmpfile):

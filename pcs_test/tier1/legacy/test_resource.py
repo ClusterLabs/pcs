@@ -3275,7 +3275,11 @@ monitor interval=20 (A-monitor-interval-20)
 
         o, r = pcs(self.temp_cib.name, "resource disable NoExist")
         ac(
-            o, "Error: bundle/clone/group/resource 'NoExist' does not exist\n",
+            o,
+            (
+                "Error: bundle/clone/group/resource/tag 'NoExist' does not exist\n"
+                "Error: Errors have occurred, therefore pcs is unable to continue\n"
+            ),
         )
         assert r == 1
 
@@ -3877,7 +3881,10 @@ monitor interval=20 (A-monitor-interval-20)
 
         self.assert_pcs_fail(
             "resource disable dummy1 dummyX",
-            "Error: bundle/clone/group/resource 'dummyX' does not exist\n",
+            (
+                "Error: bundle/clone/group/resource/tag 'dummyX' does not exist\n"
+                "Error: Errors have occurred, therefore pcs is unable to continue\n"
+            ),
         )
         self.assert_pcs_success(
             "resource config",
