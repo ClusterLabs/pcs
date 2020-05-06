@@ -894,7 +894,8 @@ def _verify_score(score):
 
 def _get_rule_status(rule_id, cib):
     _, _, retval = utils.cmd_runner().run(
-        [settings.crm_rule, "--check", "--rule=" + rule_id, "-X-"], cib
+        [settings.crm_rule, "--check", "--rule", rule_id, "--xml-text", "-"],
+        cib,
     )
     translation_map = {
         CrmRuleReturnCode.IN_EFFECT.value: RULE_IN_EFFECT,
