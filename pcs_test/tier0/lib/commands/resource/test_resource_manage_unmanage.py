@@ -738,8 +738,9 @@ class UnmanagePrimitive(TestCase):
 
         self.env_assist.assert_raise_library_error(
             lambda: resource.unmanage(self.env_assist.get_env(), ["B"]),
-            [fixture.report_not_found("B", "resources")],
-            expected_in_processor=False,
+        )
+        self.env_assist.assert_reports(
+            [fixture.report_not_resource_or_tag("B")]
         )
 
     def test_primitive(self):
@@ -1303,11 +1304,12 @@ class MoreResources(TestCase):
             lambda: resource.unmanage(
                 self.env_assist.get_env(), ["B", "X", "Y", "A"]
             ),
+        )
+        self.env_assist.assert_reports(
             [
-                fixture.report_not_found("X", "resources"),
-                fixture.report_not_found("Y", "resources"),
+                fixture.report_not_resource_or_tag("X"),
+                fixture.report_not_resource_or_tag("Y"),
             ],
-            expected_in_processor=False,
         )
 
     def test_bad_resource_enable(self):

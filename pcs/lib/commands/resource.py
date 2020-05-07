@@ -1096,35 +1096,44 @@ def _resource_list_enable_disable(
 
 def unmanage(
     env: LibraryEnvironment,
-    resource_ids: Iterable[str],
+    resource_or_tag_ids: Iterable[str],
     with_monitor: bool = False,
 ) -> None:
     """
     Set specified resources not to be managed by the cluster
 
     env -- environment
-    resource_ids -- ids of the resources to become unmanaged
+    resource_or_tag_ids -- ids of the resources to become unmanaged
     with_monitor -- disable resources' monitor operations
     """
-    with resource_environment(env) as resources_section:
-        id_provider = IdProvider(resources_section)
-        resource_el_list = _find_resources_or_raise(
-            resources_section,
-            resource_ids,
-            resource.common.find_resources_to_unmanage,
-        )
-        primitives = []
+    cib = env.get_cib()
+    resources_section = get_resources(cib)
+    (
+        resource_or_tag_el_list,
+        report_list,
+    ) = resource.common.find_resources_or_tags(cib, resource_or_tag_ids)
+    if env.report_processor.report_list(report_list).has_errors:
+        raise LibraryError()
 
-        for resource_el in resource_el_list:
-            resource.common.unmanage(resource_el, id_provider)
-            if with_monitor:
-                primitives.extend(resource.common.find_primitives(resource_el))
+    resource_el_list = resource.common.expand_tags_to_resources(
+        resources_section, resource_or_tag_el_list,
+    )
+    to_unmanage_set = set()
+    for el in resource_el_list:
+        to_unmanage_set.update(resource.common.find_resources_to_unmanage(el))
 
-        for resource_el in set(primitives):
-            for op in resource.operations.get_resource_operations(
-                resource_el, ["monitor"]
-            ):
-                resource.operations.disable(op)
+    primitives_set = set()
+    for resource_el in to_unmanage_set:
+        resource.common.unmanage(resource_el, IdProvider(resources_section))
+        if with_monitor:
+            primitives_set.update(resource.common.find_primitives(resource_el))
+
+    for resource_el in primitives_set:
+        for op in resource.operations.get_resource_operations(
+            resource_el, ["monitor"]
+        ):
+            resource.operations.disable(op)
+    env.push_cib()
 
 
 def manage(
