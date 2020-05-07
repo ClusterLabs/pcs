@@ -187,7 +187,7 @@ def add_colocation_constraint(
     score = "INFINITY"
   end
   command = [
-    PCS, "constraint", "colocation", "add", resourceA, resourceB, score
+    PCS, "constraint", "colocation", "add", resourceA, "with", resourceB, score
   ]
   command << '--force' if force
   stdout, stderr, retval = run_cmd(auth_user, *command)

@@ -15,11 +15,13 @@
   depends on python3-distro package.
 - `pcs status` works on remote nodes again (broken since pcs-0.10.4)
   ([rhbz#1830552])
+- Fixed inability to create colocation constraint from web ui ([rhbz#1832973])
 
 [rhbz#1387358]: https://bugzilla.redhat.com/show_bug.cgi?id=1387358
 [rhbz#1782553]: https://bugzilla.redhat.com/show_bug.cgi?id=1782553
 [rhbz#1824206]: https://bugzilla.redhat.com/show_bug.cgi?id=1824206
 [rhbz#1830552]: https://bugzilla.redhat.com/show_bug.cgi?id=1830552
+[rhbz#1832973]: https://bugzilla.redhat.com/show_bug.cgi?id=1832973
 
 
 ## [0.10.5] - 2020-03-18
