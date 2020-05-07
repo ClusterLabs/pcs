@@ -1138,57 +1138,69 @@ def unmanage(
 
 def manage(
     env: LibraryEnvironment,
-    resource_ids: Iterable[str],
+    resource_or_tag_ids: Iterable[str],
     with_monitor: bool = False,
 ) -> None:
     """
     Set specified resource to be managed by the cluster
 
     env -- environment
-    resource_ids -- ids of the resources to become managed
+    resource_or_tag_ids -- ids of the resources to become managed, or in case
+        of tag id, all resources in tag are to be managed
     with_monitor -- enable resources' monitor operations
     """
-    with resource_environment(env) as resources_section:
-        id_provider = IdProvider(resources_section)
-        report_list: ReportItemList = []
-        resource_el_list = _find_resources_or_raise(
-            resources_section,
-            resource_ids,
-            resource.common.find_resources_to_manage,
+    cib = env.get_cib()
+    resources_section = get_resources(cib)
+    report_list: ReportItemList = []
+
+    (
+        resource_or_tag_el_list,
+        report_list,
+    ) = resource.common.find_resources_or_tags(cib, resource_or_tag_ids)
+    if env.report_processor.report_list(report_list).has_errors:
+        raise LibraryError()
+
+    resource_el_list = resource.common.expand_tags_to_resources(
+        resources_section, resource_or_tag_el_list,
+    )
+    to_manage_set = set()
+    for resource_el in resource_el_list:
+        to_manage_set.update(
+            resource.common.find_resources_to_manage(resource_el),
         )
-        primitives: List[Element] = []
 
-        for resource_el in resource_el_list:
-            resource.common.manage(resource_el, id_provider)
-            primitives.extend(resource.common.find_primitives(resource_el))
+    primitives_set = set()
+    for resource_el in to_manage_set:
+        resource.common.manage(resource_el, IdProvider(resources_section))
+        primitives_set.update(resource.common.find_primitives(resource_el))
 
-        for resource_el in sorted(
-            set(primitives), key=lambda element: element.get("id", "")
-        ):
-            op_list = resource.operations.get_resource_operations(
-                resource_el, ["monitor"]
-            )
-            if with_monitor:
-                for op in op_list:
-                    resource.operations.enable(op)
-            else:
-                monitor_enabled = False
-                for op in op_list:
-                    if resource.operations.is_enabled(op):
-                        monitor_enabled = True
-                        break
-                if op_list and not monitor_enabled:
-                    # do not advise enabling monitors if there are none defined
-                    report_list.append(
-                        ReportItem.warning(
-                            reports.messages.ResourceManagedNoMonitorEnabled(
-                                resource_el.get("id", "")
-                            )
+    for resource_el in sorted(
+        primitives_set, key=lambda element: element.get("id", "")
+    ):
+        op_list = resource.operations.get_resource_operations(
+            resource_el, ["monitor"]
+        )
+        if with_monitor:
+            for op in op_list:
+                resource.operations.enable(op)
+        else:
+            monitor_enabled = False
+            for op in op_list:
+                if resource.operations.is_enabled(op):
+                    monitor_enabled = True
+                    break
+            if op_list and not monitor_enabled:
+                # do not advise enabling monitors if there are none defined
+                report_list.append(
+                    ReportItem.warning(
+                        reports.messages.ResourceManagedNoMonitorEnabled(
+                            resource_el.get("id", "")
                         )
                     )
-
-        if env.report_processor.report_list(report_list).has_errors:
-            raise LibraryError()
+                )
+    if env.report_processor.report_list(report_list).has_errors:
+        raise LibraryError()
+    env.push_cib()
 
 
 def group_add(
