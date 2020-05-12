@@ -1,6 +1,7 @@
-# pylint: disable=line-too-long
+# pylint: disable=too-many-lines,line-too-long
 from unittest import TestCase
 
+from pcs_test.tier0.lib.commands.tag.tag_common import fixture_tags_xml
 from pcs_test.tools import fixture
 from pcs_test.tools.command_env import get_env_tools
 
@@ -727,6 +728,34 @@ def fixture_report_no_monitors(resource_id):
         {"resource_id": resource_id,},
         None,
     )
+
+
+class UnmanageTag(TestCase):
+    def setUp(self):
+        self.env_assist, self.config = get_env_tools(test_case=self)
+
+    def test_tag(self):
+        (
+            self.config.runner.cib.load(
+                resources=fixture_primitive_cib_managed,
+                tags=fixture_tags_xml([("T", ("A"))]),
+            ).env.push_cib(resources=fixture_primitive_cib_unmanaged)
+        )
+        resource.unmanage(self.env_assist.get_env(), ["T"])
+
+
+class ManageTag(TestCase):
+    def setUp(self):
+        self.env_assist, self.config = get_env_tools(test_case=self)
+
+    def test_tag(self):
+        (
+            self.config.runner.cib.load(
+                resources=fixture_primitive_cib_unmanaged,
+                tags=fixture_tags_xml([("T", ("A"))]),
+            ).env.push_cib(resources=fixture_primitive_cib_managed_with_meta)
+        )
+        resource.manage(self.env_assist.get_env(), ["T"])
 
 
 class UnmanagePrimitive(TestCase):
