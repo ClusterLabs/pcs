@@ -130,7 +130,7 @@ class Wrapper:
 
     def prepare_curl_callback(self, curl):
         curl.setopt(pycurl.UNIX_SOCKET_PATH, self.__pcsd_ruby_socket)
-        curl.setopt(pycurl.TIMEOUT, 70)
+        curl.setopt(pycurl.TIMEOUT, 0)
 
     async def send_to_ruby(self, request: RubyDaemonRequest):
         try:

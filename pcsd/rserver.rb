@@ -63,7 +63,7 @@ use TornadoCommunicationMiddleware
 require 'pcsd'
 
 ::Rack::Handler.get('thin').run(
-  Sinatra::Application, :Host => PCSD_RUBY_SOCKET
+  Sinatra::Application, :Host => PCSD_RUBY_SOCKET, :timeout => 0
 ) do |server|
   puts server.class
   server.threaded = true
