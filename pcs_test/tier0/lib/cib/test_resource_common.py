@@ -1450,13 +1450,9 @@ class FindResourcesOrTags(TestCase):
             fixture_cib, resource_or_tag_ids,
         )
         assert_report_item_list_equal(report_list, expected_report_list)
-        self.assertEqual(len(element_list), len(expected_ids))
         self.assertEqual(
-            set(element_list),
-            {
-                fixture_cib.find('.//*[@id="{0}"]'.format(_id))
-                for _id in expected_ids
-            },
+            sorted(el.get("id", "") for el in element_list),
+            sorted(expected_ids),
         )
 
     def test_nonexistent_id(self):
@@ -1521,11 +1517,8 @@ class ExpandTagsToResources(TestCase):
         )
         self.assertEqual(len(element_list), len(expected_ids))
         self.assertEqual(
-            set(element_list),
-            {
-                fixture_cib.find('.//*[@id="{0}"]'.format(_id))
-                for _id in expected_ids
-            },
+            sorted(el.get("id", "") for el in element_list),
+            sorted(expected_ids),
         )
 
     def test_resources_only(self):

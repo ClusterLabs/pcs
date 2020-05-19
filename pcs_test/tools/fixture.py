@@ -2,7 +2,9 @@ import json
 
 from pcs.common.reports import ReportItemSeverity as severities
 from pcs.common.reports import codes as report_codes
-from pcs.lib.cib.resource.common import ALL_RESOURCE_XML_TAGS
+
+
+ALL_RESOURCE_XML_TAGS = ["bundle", "clone", "group", "master", "primitive"]
 
 
 def state_node(

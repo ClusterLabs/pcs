@@ -108,10 +108,7 @@ def find_resources_and_report(
     if not additional_search:
         additional_search = lambda x: [x]
     if resource_tags is None:
-        resource_tags = sorted(
-            TAG_CLONE_ALL + [TAG_GROUP, TAG_PRIMITIVE, TAG_BUNDLE]
-        )
-
+        resource_tags = ALL_RESOURCE_XML_TAGS
     resource_el_list = []
     for res_id in resource_ids:
         searcher = ElementSearcher(resource_tags, res_id, context_element)
@@ -163,17 +160,14 @@ def find_resources_or_tags(
     for _id in set(id_list):
         xpath_result = cast(_Element, cib).xpath(
             """
-            /cib/configuration/resources//*[
-                self::bundle
-                or self::clone
-                or self::group
-                or self::master
-                or self::primitive
-            ][@id="{_id}"]
+            /cib/configuration/resources//*[{resource_tags}][@id="{_id}"]
             |
             /cib/configuration/tags/tag[@id="{_id}"]
             """.format(
-                _id=_id
+                _id=_id,
+                resource_tags=" or ".join(
+                    f"self::{tag}" for tag in ALL_RESOURCE_XML_TAGS
+                ),
             )
         )
         if xpath_result:
