@@ -2117,7 +2117,7 @@ def resource_enable_cmd(lib, argv, modifiers):
     """
     modifiers.ensure_only_supported("--wait", "-f")
     if not argv:
-        utils.err("You must specify resource(s) to enable")
+        raise CmdLineInputError("You must specify resource(s) to enable")
     resources = argv
     lib.resource.enable(resources, modifiers.get("--wait"))
 
@@ -2323,7 +2323,7 @@ def resource_manage_cmd(lib, argv, modifiers):
     """
     modifiers.ensure_only_supported("-f", "--monitor")
     if not argv:
-        utils.err("You must specify resource(s) to manage")
+        raise CmdLineInputError("You must specify resource(s) to manage")
     resources = argv
     lib.resource.manage(resources, with_monitor=modifiers.get("--monitor"))
 
@@ -2336,7 +2336,7 @@ def resource_unmanage_cmd(lib, argv, modifiers):
     """
     modifiers.ensure_only_supported("-f", "--monitor")
     if not argv:
-        utils.err("You must specify resource(s) to unmanage")
+        raise CmdLineInputError("You must specify resource(s) to unmanage")
     resources = argv
     lib.resource.unmanage(resources, with_monitor=modifiers.get("--monitor"))
 
