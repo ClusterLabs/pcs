@@ -122,6 +122,8 @@ BuildRequires: platform-python-setuptools
 %endif
 
 BuildRequires: python3-devel
+# for tier0 tests
+BuildRequires: python3-pyparsing
 
 # gcc for compiling custom rubygems
 BuildRequires: gcc
@@ -155,6 +157,7 @@ Requires: platform-python-setuptools
 
 Requires: python3-lxml
 Requires: python3-pycurl
+Requires: python3-pyparsing
 # clufter and its dependencies
 Requires: python3-clufter => 0.70.0
 %if "%{python3_version}" != "3.6" && "%{python3_version}" != "3.7"

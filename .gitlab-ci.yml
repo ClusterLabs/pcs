@@ -51,6 +51,7 @@ pylint:
         python3-pip
         python3-pycurl
         python3-pyOpenSSL
+        python3-pyparsing
         findutils
         make
         time
@@ -69,6 +70,7 @@ mypy:
         python3-pip
         python3-pycurl
         python3-pyOpenSSL
+        python3-pyparsing
         git
         make
         tar
@@ -112,6 +114,7 @@ python_tier0_tests:
         python3-pip
         python3-pycurl
         python3-pyOpenSSL
+        python3-pyparsing
         which
         "
     - make install_pip
