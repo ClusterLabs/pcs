@@ -106,10 +106,10 @@ Deletes the resource, group, bundle or clone (and all resources within the group
 remove <resource id|group id|bundle id|clone id>
 Deletes the resource, group, bundle or clone (and all resources within the group/bundle/clone).
 .TP
-enable <resource id>... [\fB\-\-wait\fR[=n]]
+enable <resource id | tag id>... [\fB\-\-wait\fR[=n]]
 Allow the cluster to start the resources. Depending on the rest of the configuration (constraints, options, failures, etc), the resources may remain stopped. If \fB\-\-wait\fR is specified, pcs will wait up to 'n' seconds for the resources to start and then return 0 if the resources are started, or 1 if the resources have not yet started. If 'n' is not specified it defaults to 60 minutes.
 .TP
-disable <resource id>... [\fB\-\-safe\fR [\fB\-\-no\-strict\fR]] [\fB\-\-simulate\fR] [\fB\-\-wait\fR[=n]]
+disable <resource id | tag id>... [\fB\-\-safe\fR [\fB\-\-no\-strict\fR]] [\fB\-\-simulate\fR] [\fB\-\-wait\fR[=n]]
 Attempt to stop the resources if they are running and forbid the cluster from starting them again. Depending on the rest of the configuration (constraints, options, failures, etc), the resources may remain started.
 .br
 If \fB\-\-safe\fR is specified, no changes to the cluster configuration will be made if other than specified resources would be affected in any way.
@@ -120,7 +120,7 @@ If \fB\-\-simulate\fR is specified, no changes to the cluster configuration will
 .br
 If \fB\-\-wait\fR is specified, pcs will wait up to 'n' seconds for the resources to stop and then return 0 if the resources are stopped or 1 if the resources have not stopped. If 'n' is not specified it defaults to 60 minutes.
 .TP
-safe\-disable <resource id>... [\fB\-\-no\-strict\fR] [\fB\-\-simulate\fR] [\fB\-\-wait\fR[=n]] [\fB\-\-force\fR]
+safe\-disable <resource id | tag id>... [\fB\-\-no\-strict\fR] [\fB\-\-simulate\fR] [\fB\-\-wait\fR[=n]] [\fB\-\-force\fR]
 Attempt to stop the resources if they are running and forbid the cluster from starting them again. Depending on the rest of the configuration (constraints, options, failures, etc), the resources may remain started. No changes to the cluster configuration will be made if other than specified resources would be affected in any way.
 .br
 If \fB\-\-no\-strict\fR is specified, no changes to the cluster configuration will be made if other than specified resources would get stopped or demoted. Moving resources between nodes is allowed.
@@ -226,10 +226,10 @@ Configure specified bundle with given options. Unlike bundle update, this comman
 bundle update <bundle id> [container <container options>] [network <network options>] [port\-map (add <port options>) | (delete | remove <id>...)]... [storage\-map (add <storage options>) | (delete | remove <id>...)]... [meta <meta options>] [\fB\-\-wait\fR[=n]]
 Add, remove or change options to specified bundle. If you wish to update a resource encapsulated in the bundle, use the 'pcs resource update' command instead and specify the resource id.  If \fB\-\-wait\fR is specified, pcs will wait up to 'n' seconds for the operation to finish (including moving resources if appropriate) and then return 0 on success or 1 on error.  If 'n' is not specified it defaults to 60 minutes.
 .TP
-manage <resource id>... [\fB\-\-monitor\fR]
+manage <resource id | tag id>... [\fB\-\-monitor\fR]
 Set resources listed to managed mode (default). If \fB\-\-monitor\fR is specified, enable all monitor operations of the resources.
 .TP
-unmanage <resource id>... [\fB\-\-monitor\fR]
+unmanage <resource id | tag id>... [\fB\-\-monitor\fR]
 Set resources listed to unmanaged mode. When a resource is in unmanaged mode, the cluster is not allowed to start nor stop the resource. If \fB\-\-monitor\fR is specified, disable all monitor operations of the resources.
 .TP
 defaults [options]
