@@ -1281,6 +1281,13 @@
         pcs commands: resource disable --wait, resource enable --wait
       </description>
     </capability>
+    <capability id="pcmk.resource.enable-disable.tag" in-pcs="1" in-pcsd="0">
+      <description>
+        Disable or enable resources in specified tags at once.
+
+        pcs commands: resource disable, resource enable
+      </description>
+    </capability>
     <capability id="pcmk.resource.disable.safe" in-pcs="1" in-pcsd="0">
       <description>
         Do not disable resources if other resources would be affected.
@@ -1289,9 +1296,25 @@
           resource safe-disable
       </description>
     </capability>
+    <capability id="pcmk.resource.disable.safe.tag" in-pcs="1" in-pcsd="0">
+      <description>
+        Do not disable resources in specified tags if other resources would be
+        affected.
+
+        pcs commands: resource disable --safe [--no-strict],
+          resource safe-disable
+      </description>
+    </capability>
     <capability id="pcmk.resource.disable.simulate" in-pcs="1" in-pcsd="0">
       <description>
         Show effects caused by disabling resources.
+
+        pcs commands: resource disable --simulate
+      </description>
+    </capability>
+    <capability id="pcmk.resource.disable.simulate.tag" in-pcs="1" in-pcsd="0">
+      <description>
+        Show effects caused by disabling resources in specified tags.
 
         pcs commands: resource disable --simulate
       </description>
@@ -1318,6 +1341,13 @@
         into unmanaged or managed mode respectively.
 
         pcs commands: resource ( unmanage | manage ) --with-monitor
+      </description>
+    </capability>
+    <capability id="pcmk.resource.manage-unmanage.tag" in-pcs="1" in-pcsd="0">
+      <description>
+        Put resources in specified tags into unmanaged or managed mode at once.
+
+        pcs commands: resource unmanage, resource manage
       </description>
     </capability>
     <capability id="pcmk.resource.utilization" in-pcs="1" in-pcsd="1">
@@ -1614,6 +1644,18 @@
         name.
 
         pcs commands: regexp%pattern
+      </description>
+    </capability>
+    <capability id="pcmk.tag" in-pcs="1" in-pcsd="0">
+      <description>
+        Support pacemaker tags:
+        * create a tag
+        * update an existing tag
+        * remove specified tags
+        * show cluster tag configuration
+
+        pcs commands: tag (config | list), tag create, tag (delete | remove),
+          tag update
       </description>
     </capability>
 
