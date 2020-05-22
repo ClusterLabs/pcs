@@ -20,6 +20,8 @@ class SinatraGui(app_session.Mixin, Sinatra):
         # pylint: disable=arguments-differ
         app_session.Mixin.initialize(self, session_storage)
         Sinatra.initialize(self, ruby_pcsd_wrapper)
+        # add security related headers to all responses
+        self.enhance_headers()
 
     def before_sinatra_use(self):
         pass
@@ -58,7 +60,6 @@ class SinatraGuiProtected(SinatraGui):
         self.sid_to_cookies()
 
         if not self.session.is_authenticated:
-            self.enhance_headers()
             self.redirect("/login", status=302)  # redirect temporary (302)
             self.can_use_sinatra = False
 
@@ -80,7 +81,6 @@ class SinatraAjaxProtected(SinatraGui, AjaxMixin):
         if self.was_sid_in_request_cookies():
             self.put_request_cookies_sid_to_response_cookies_sid()
         if not self.is_authorized:
-            self.enhance_headers()
             raise self.unauthorized()
 
 
@@ -101,8 +101,6 @@ class Login(SinatraGui, AjaxMixin):
     async def post(self, *args, **kwargs):
         # This is the way of old (ruby) pcsd. Post login generates a session
         # cookie. No matter if authentication succeeded or failed.
-        self.enhance_headers()
-
         await self.session_auth_user(
             self.get_body_argument("username"),
             self.get_body_argument("password"),

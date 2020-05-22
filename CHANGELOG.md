@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Security
+- Web UI sends HTTP headers: Content-Security-Policy, X-Frame-Options and
+  X-Xss-Protection
+
 ### Added
 - When creating a cluster, verify the cluster name does not prevent mounting
   GFS2 volumes ([rhbz#1782553])

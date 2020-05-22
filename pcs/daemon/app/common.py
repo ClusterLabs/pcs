@@ -34,6 +34,17 @@ class EnhanceHeadersMixin:
         # into other sites.
         self.set_header("X-Frame-Options", "SAMEORIGIN")
 
+        # The HTTP Content-Security-Policy (CSP) frame-ancestors directive
+        # specifies valid parents that may embed a page using <frame>,
+        # <iframe>, <object>, <embed>, or <applet>.
+
+        # Requested upstream:
+        # https://lists.clusterlabs.org/pipermail/users/2020-May/027199.html
+
+        # For now, I'm just setting this to the same value as already present
+        # X-Frame-Options header to keep them consistent.
+        self.set_header("Content-Security-Policy", "frame-ancestors 'self'")
+
         # The HTTP X-XSS-Protection response header is a feature of Internet
         # Explorer, Chrome and Safari that stops pages from loading when they
         # detect reflected cross-site scripting (XSS) attacks. Although these

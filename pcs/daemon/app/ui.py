@@ -14,6 +14,8 @@ class SPAHandler(BaseHandler):
         # pylint: disable=arguments-differ
         self.__index = index
         self.__fallback = fallback
+        # add security related headers to all responses
+        self.enhance_headers()
 
     def get(self, *args, **kwargs):
         del args, kwargs
@@ -35,7 +37,6 @@ class Login(SPAHandler, app_session.Mixin, AjaxMixin):
         del args, kwargs
         # This is the way of old (ruby) pcsd. Post login generates a session
         # cookie. No matter if authentication succeeded or failed.
-        self.enhance_headers()
 
         await self.session_auth_user(
             self.get_body_argument("username"),
