@@ -9,11 +9,29 @@ import pyparsing
 
 from pcs.common.str_tools import indent
 
-# TODO fix todos in functions
-# TODO handle exceptions from pyparsing
-# TODO write more tests?
+pyparsing.ParserElement.enablePackrat()
+
 # TODO make all the classes private if not used anywhere outside of the module
 #       or write their doctexts
+
+
+class RuleParseError(Exception):
+    def __init__(
+        self,
+        rule_string: str,
+        rule_line: str,
+        lineno: int,
+        colno: int,
+        pos: int,
+        msg: str,
+    ):
+        super().__init__()
+        self.rule_string = rule_string
+        self.rule_line = rule_line
+        self.lineno = lineno
+        self.colno = colno
+        self.pos = pos
+        self.msg = msg
 
 
 def parse_rule(
@@ -29,9 +47,14 @@ def parse_rule(
     if not rule_string:
         return BoolAndExpr([])
 
-    parsed = __get_rule_parser(
-        allow_rsc_expr=allow_rsc_expr, allow_op_expr=allow_op_expr
-    ).parseString(rule_string, parseAll=True)[0]
+    try:
+        parsed = __get_rule_parser(
+            allow_rsc_expr=allow_rsc_expr, allow_op_expr=allow_op_expr
+        ).parseString(rule_string, parseAll=True)[0]
+    except pyparsing.ParseException as e:
+        raise RuleParseError(
+            rule_string, e.line, e.lineno, e.col, e.loc, e.args[2],
+        )
 
     if not isinstance(parsed, BoolExpr):
         # If we only got a representation on an inner rule element instead of a
@@ -151,24 +174,30 @@ def __get_rule_parser(
 
     rsc_expr = pyparsing.And(
         [
-            pyparsing.Suppress(pyparsing.CaselessKeyword("resource")),
+            # Call setName for nice errors: turn 'Suppress:("resource")' into
+            # '"resource"'. If there were no Suppress, the name would be
+            # '"resource"'.
+            pyparsing.Suppress(pyparsing.CaselessKeyword("resource")).setName(
+                '"resource"'
+            ),
             # resource name
             # Up to three parts seperated by ":". The parts can contain any
             # characters except whitespace (token separator), ":" (parts
-            # separator) and ")(" (brackets).
+            # separator) and "()" (brackets).
             pyparsing.Regex(
-                r"((?P<standard>[^\s:)(]+):((?P<provider>[^\s:)(]+):)?)?(?P<type>[^\s:)(]+)"
-            ),
+                r"((?P<standard>[^\s:()]+):((?P<provider>[^\s:()]+):)?)?(?P<type>[^\s:()]+)"
+            ).setName("<resource name>"),
         ]
     )
     rsc_expr.setParseAction(RscExpr)
 
-    # TODO do not allow any whitespace between any parts of this expr
     op_interval = pyparsing.And(
         [
             pyparsing.CaselessKeyword("interval"),
-            pyparsing.Suppress("="),
-            # interval value: number followed by a time unit
+            # no spaces allowed around the "="
+            pyparsing.Suppress("=").leaveWhitespace().setName("="),
+            # interval value: number followed by a time unit, no spaces allowed
+            # between the number and the unit thanks to Combine being used
             pyparsing.Combine(
                 pyparsing.And(
                     [
@@ -176,20 +205,20 @@ def __get_rule_parser(
                         pyparsing.Optional(pyparsing.Word(pyparsing.alphas)),
                     ]
                 )
-            ),
+            ).setName("<integer>[<time unit>]"),
         ]
     )
     op_interval.setParseAction(NameValuePair)
     op_expr = pyparsing.And(
         [
-            pyparsing.Suppress(pyparsing.CaselessKeyword("op")),
+            pyparsing.Suppress(pyparsing.CaselessKeyword("op")).setName('"op"'),
             # operation name
             # It can by any string containing any characters except whitespace
-            # (token separator) and ")(" (brackets). Operations are defined in
+            # (token separator) and "()" (brackets). Operations are defined in
             # agents' metadata which we do not have access to (e.g. when the
             # user sets operation "my_check" and doesn't even specify agent's
             # name).
-            pyparsing.Regex(r"[^\s)(]+"),
+            pyparsing.Regex(r"[^\s()]+").setName("<operation name>"),
             pyparsing.Optional(op_interval),
         ]
     )

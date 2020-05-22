@@ -239,3 +239,22 @@ class Parser(TestCase):
                         )
                     ),
                 )
+
+    def test_not_valid_rule(self):
+        test_data = [
+            ("resource", (1, 9, 8, "Expected <resource name>")),
+            ("op", (1, 3, 2, "Expected <operation name>")),
+            ("resource rA and", (1, 13, 12, "Expected end of text")),
+            ("resource rA and op ", (1, 13, 12, "Expected end of text")),
+            ("resource rA and (", (1, 13, 12, "Expected end of text")),
+        ]
+
+        for rule_string, exception_data in test_data:
+            with self.subTest(rule_string=rule_string):
+                with self.assertRaises(rule.RuleParseError) as cm:
+                    rule.parse_rule(
+                        rule_string, allow_rsc_expr=True, allow_op_expr=True
+                    )
+            e = cm.exception
+            self.assertEqual(exception_data, (e.lineno, e.colno, e.pos, e.msg))
+            self.assertEqual(rule_string, e.rule_string)
