@@ -38,6 +38,18 @@ class HstsMiddleware
   end
 end
 
+class CSPMiddleware
+  def initialize(app)
+    @app = app
+  end
+
+  def call(env)
+    status, headers, body = @app.call(env)
+    headers['Content-Security-Policy'] ||= "frame-ancestors 'self'"
+    [status, headers, body]
+  end
+end
+
 class RemoveServerHeaderMiddleware
   def initialize(app)
     @app = app
@@ -52,6 +64,7 @@ end
 
 use Rack::CommonLogger
 use HstsMiddleware
+use CSPMiddleware
 use RemoveServerHeaderMiddleware
 
 set :app_file, __FILE__
