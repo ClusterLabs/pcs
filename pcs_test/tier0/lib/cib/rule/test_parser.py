@@ -13,8 +13,7 @@ class Parser(TestCase):
                 dedent(
                     """\
                     BOOL AND
-                      RESOURCE
-                        dummy"""
+                      RESOURCE type=dummy"""
                 ),
             ),
             (
@@ -22,8 +21,7 @@ class Parser(TestCase):
                 dedent(
                     """\
                     BOOL AND
-                      RESOURCE
-                        systemd:Dummy"""
+                      RESOURCE standard=systemd type=Dummy"""
                 ),
             ),
             (
@@ -31,8 +29,7 @@ class Parser(TestCase):
                 dedent(
                     """\
                     BOOL AND
-                      RESOURCE
-                        ocf:pacemaker:Dummy"""
+                      RESOURCE standard=ocf provider=pacemaker type=Dummy"""
                 ),
             ),
             (
@@ -40,8 +37,7 @@ class Parser(TestCase):
                 dedent(
                     """\
                     BOOL AND
-                      OPERATION
-                        monitor"""
+                      OPERATION name=monitor"""
                 ),
             ),
             (
@@ -49,11 +45,7 @@ class Parser(TestCase):
                 dedent(
                     """\
                     BOOL AND
-                      OPERATION
-                        monitor
-                        NAME-VALUE
-                          interval
-                          10"""
+                      OPERATION name=monitor interval=10"""
                 ),
             ),
             (
@@ -61,10 +53,8 @@ class Parser(TestCase):
                 dedent(
                     """\
                     BOOL AND
-                      RESOURCE
-                        dummy
-                      OPERATION
-                        monitor"""
+                      RESOURCE type=dummy
+                      OPERATION name=monitor"""
                 ),
             ),
             (
@@ -72,13 +62,8 @@ class Parser(TestCase):
                 dedent(
                     """\
                     BOOL OR
-                      RESOURCE
-                        dummy
-                      OPERATION
-                        monitor
-                        NAME-VALUE
-                          interval
-                          15s"""
+                      RESOURCE type=dummy
+                      OPERATION name=monitor interval=15s"""
                 ),
             ),
             (
@@ -86,10 +71,8 @@ class Parser(TestCase):
                 dedent(
                     """\
                     BOOL AND
-                      OPERATION
-                        monitor
-                      RESOURCE
-                        dummy"""
+                      OPERATION name=monitor
+                      RESOURCE type=dummy"""
                 ),
             ),
             (
@@ -97,13 +80,8 @@ class Parser(TestCase):
                 dedent(
                     """\
                     BOOL OR
-                      OPERATION
-                        monitor
-                        NAME-VALUE
-                          interval
-                          5min
-                      RESOURCE
-                        dummy"""
+                      OPERATION name=monitor interval=5min
+                      RESOURCE type=dummy"""
                 ),
             ),
             (
@@ -112,12 +90,9 @@ class Parser(TestCase):
                     """\
                     BOOL AND
                       BOOL OR
-                        RESOURCE
-                          dummy
-                        RESOURCE
-                          delay
-                      OPERATION
-                        monitor"""
+                        RESOURCE type=dummy
+                        RESOURCE type=delay
+                      OPERATION name=monitor"""
                 ),
             ),
             (
@@ -126,12 +101,9 @@ class Parser(TestCase):
                     """\
                     BOOL OR
                       BOOL AND
-                        OPERATION
-                          start
-                        OPERATION
-                          stop
-                      RESOURCE
-                        dummy"""
+                        OPERATION name=start
+                        OPERATION name=stop
+                      RESOURCE type=dummy"""
                 ),
             ),
             (
@@ -139,13 +111,10 @@ class Parser(TestCase):
                 dedent(
                     """\
                     BOOL OR
-                      OPERATION
-                        monitor
+                      OPERATION name=monitor
                       BOOL AND
-                        RESOURCE
-                          dummy
-                        RESOURCE
-                          delay"""
+                        RESOURCE type=dummy
+                        RESOURCE type=delay"""
                 ),
             ),
             (
@@ -153,13 +122,10 @@ class Parser(TestCase):
                 dedent(
                     """\
                     BOOL AND
-                      RESOURCE
-                        dummy
+                      RESOURCE type=dummy
                       BOOL OR
-                        OPERATION
-                          start
-                        OPERATION
-                          stop"""
+                        OPERATION name=start
+                        OPERATION name=stop"""
                 ),
             ),
             (
@@ -167,12 +133,9 @@ class Parser(TestCase):
                 dedent(
                     """\
                     BOOL AND
-                      RESOURCE
-                        dummy
-                      RESOURCE
-                        delay
-                      OPERATION
-                        monitor"""
+                      RESOURCE type=dummy
+                      RESOURCE type=delay
+                      OPERATION name=monitor"""
                 ),
             ),
             (
@@ -181,14 +144,10 @@ class Parser(TestCase):
                     """\
                     BOOL AND
                       BOOL OR
-                        RESOURCE
-                          rA
-                        RESOURCE
-                          rB
-                        RESOURCE
-                          rC
-                      OPERATION
-                        monitor"""
+                        RESOURCE type=rA
+                        RESOURCE type=rB
+                        RESOURCE type=rC
+                      OPERATION name=monitor"""
                 ),
             ),
             (
@@ -197,14 +156,10 @@ class Parser(TestCase):
                     """\
                     BOOL OR
                       BOOL AND
-                        OPERATION
-                          start
-                        OPERATION
-                          stop
-                        OPERATION
-                          monitor
-                      RESOURCE
-                        delay"""
+                        OPERATION name=start
+                        OPERATION name=stop
+                        OPERATION name=monitor
+                      RESOURCE type=delay"""
                 ),
             ),
             (
@@ -213,19 +168,13 @@ class Parser(TestCase):
                     """\
                     BOOL AND
                       BOOL OR
-                        RESOURCE
-                          rA
-                        RESOURCE
-                          rB
-                        RESOURCE
-                          rC
+                        RESOURCE type=rA
+                        RESOURCE type=rB
+                        RESOURCE type=rC
                       BOOL OR
-                        OPERATION
-                          oX
-                        OPERATION
-                          oY
-                        OPERATION
-                          oZ"""
+                        OPERATION name=oX
+                        OPERATION name=oY
+                        OPERATION name=oZ"""
                 ),
             ),
         ]

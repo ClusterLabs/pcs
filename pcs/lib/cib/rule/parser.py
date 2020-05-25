@@ -7,12 +7,16 @@ from typing import (
 
 import pyparsing
 
-from pcs.common.str_tools import indent
+from .expression_part import (
+    BOOL_AND,
+    BOOL_OR,
+    BoolExpr,
+    OpExpr,
+    RscExpr,
+    RuleExprPart,
+)
 
 pyparsing.ParserElement.enablePackrat()
-
-# TODO make all the classes private if not used anywhere outside of the module
-#       or write their doctexts
 
 
 class RuleParseError(Exception):
@@ -36,7 +40,7 @@ class RuleParseError(Exception):
 
 def parse_rule(
     rule_string: str, allow_rsc_expr: bool = False, allow_op_expr: bool = False
-) -> "RuleExprPart":
+) -> RuleExprPart:
     """
     Parse a rule string and return a corresponding semantic tree
 
@@ -45,7 +49,7 @@ def parse_rule(
     allow_op_expr -- allow resource operation expressions in the rule
     """
     if not rule_string:
-        return BoolAndExpr([])
+        return BoolExpr(BOOL_AND, [])
 
     try:
         parsed = __get_rule_parser(
@@ -60,55 +64,9 @@ def parse_rule(
         # If we only got a representation on an inner rule element instead of a
         # rule element itself, wrap the result in a default AND-rule. (There is
         # only one expression so "and" vs. "or" doesn't really matter.)
-        parsed = BoolAndExpr([parsed])
+        parsed = BoolExpr(BOOL_AND, [parsed])
 
     return parsed
-
-
-class RuleExprPart:
-    def __init__(self, token_list: pyparsing.ParseResults):
-        self._args = token_list
-
-    def _token_str(self) -> str:
-        raise NotImplementedError()
-
-    def __str__(self) -> str:
-        # This is used for visualizing the parsed tree for purposes of testing
-        # and debugging.
-        str_args = []
-        for arg in self._args:
-            str_args.extend(str(arg).splitlines())
-        return "\n".join([self._token_str()] + indent(str_args))
-
-
-class RscExpr(RuleExprPart):
-    def _token_str(self) -> str:
-        return "RESOURCE"
-
-
-class OpExpr(RuleExprPart):
-    def _token_str(self) -> str:
-        return "OPERATION"
-
-
-class NameValuePair(RuleExprPart):
-    def _token_str(self) -> str:
-        return "NAME-VALUE"
-
-
-class BoolExpr(RuleExprPart):
-    def _token_str(self) -> str:
-        raise NotImplementedError()
-
-
-class BoolAndExpr(BoolExpr):
-    def _token_str(self) -> str:
-        return "BOOL AND"
-
-
-class BoolOrExpr(BoolExpr):
-    def _token_str(self) -> str:
-        return "BOOL OR"
 
 
 def __operator_operands(
@@ -127,9 +85,9 @@ def __operator_operands(
 def __build_bool_tree(token_list: pyparsing.ParseResults) -> RuleExprPart:
     # See pyparsing examples
     # https://github.com/pyparsing/pyparsing/blob/master/examples/eval_arith.py
-    token_to_class = {
-        "and": BoolAndExpr,
-        "or": BoolOrExpr,
+    token_to_operator = {
+        "and": BOOL_AND,
+        "or": BOOL_OR,
     }
     operand_left = token_list[0][0]
     last_operator: Optional[str] = None
@@ -146,17 +104,32 @@ def __build_bool_tree(token_list: pyparsing.ParseResults) -> RuleExprPart:
             # The operator has changed. Put all the stacked operands into the
             # correct BoolExpr class and start the stacking again. The created
             # class is the left operand of the current operator.
-            operand_left = token_to_class[last_operator](
-                [operand_left] + operand_list
+            operand_left = BoolExpr(
+                token_to_operator[last_operator], [operand_left] + operand_list
             )
             operand_list = [operand_right]
         last_operator = operator
     if operand_list and last_operator:
         # Use any of the remaining stacked operands.
-        operand_left = token_to_class[last_operator](
-            [operand_left] + operand_list
+        operand_left = BoolExpr(
+            token_to_operator[last_operator], [operand_left] + operand_list
         )
     return operand_left
+
+
+def __build_op_expr(parse_result: pyparsing.ParseResults) -> RuleExprPart:
+    # Those attr are defined by setResultsName in op_expr grammar rule
+    return OpExpr(
+        parse_result.name,
+        parse_result.interval.value if parse_result.interval else None,
+    )
+
+
+def __build_rsc_expr(parse_result: pyparsing.ParseResults) -> RuleExprPart:
+    # Those attrs are defined by the regexp in rsc_expr grammar rule
+    return RscExpr(
+        parse_result.standard, parse_result.provider, parse_result.type
+    )
 
 
 def __get_rule_parser(
@@ -168,18 +141,22 @@ def __get_rule_parser(
     # set defaults for specified resources and/or operation using rules. When
     # implementing that feature, there was no time to reimplement all the other
     # rule expressions from old code. The plan is to move old rule parser code
-    # here once there is time / need to do it. To do that, create new date_expr
-    # and attr_expr in a way similar to existing rsc_expr and op_expr. Then,
-    # add the new expressions into simple_expr_list and test the whole thing.
+    # here once there is time / need to do it.
+    # How to add other rule expressions:
+    #   1 Create new grammar rules in a way similar to existing rsc_expr and
+    #     op_expr. Use setName for better description of a grammar when printed.
+    #     Use setResultsName for an easy access to parsed parts.
+    #   2 Create new classes in expression_part module, probably one for each
+    #     type of expression. Those are data containers holding the parsed data
+    #     independent of the parser.
+    #   3 Create builders for the new classes and connect them to created
+    #     grammar rules using setParseAction.
+    #   4 Add the new expressions into simple_expr_list.
+    #   5 Test and debug the whole thing.
 
     rsc_expr = pyparsing.And(
         [
-            # Call setName for nice errors: turn 'Suppress:("resource")' into
-            # '"resource"'. If there were no Suppress, the name would be
-            # '"resource"'.
-            pyparsing.Suppress(pyparsing.CaselessKeyword("resource")).setName(
-                '"resource"'
-            ),
+            pyparsing.CaselessKeyword("resource"),
             # resource name
             # Up to three parts seperated by ":". The parts can contain any
             # characters except whitespace (token separator), ":" (parts
@@ -189,13 +166,13 @@ def __get_rule_parser(
             ).setName("<resource name>"),
         ]
     )
-    rsc_expr.setParseAction(RscExpr)
+    rsc_expr.setParseAction(__build_rsc_expr)
 
     op_interval = pyparsing.And(
         [
             pyparsing.CaselessKeyword("interval"),
             # no spaces allowed around the "="
-            pyparsing.Suppress("=").leaveWhitespace().setName("="),
+            pyparsing.Literal("=").leaveWhitespace(),
             # interval value: number followed by a time unit, no spaces allowed
             # between the number and the unit thanks to Combine being used
             pyparsing.Combine(
@@ -205,24 +182,27 @@ def __get_rule_parser(
                         pyparsing.Optional(pyparsing.Word(pyparsing.alphas)),
                     ]
                 )
-            ).setName("<integer>[<time unit>]"),
+            )
+            .setName("<integer>[<time unit>]")
+            .setResultsName("value"),
         ]
     )
-    op_interval.setParseAction(NameValuePair)
     op_expr = pyparsing.And(
         [
-            pyparsing.Suppress(pyparsing.CaselessKeyword("op")).setName('"op"'),
+            pyparsing.CaselessKeyword("op"),
             # operation name
             # It can by any string containing any characters except whitespace
             # (token separator) and "()" (brackets). Operations are defined in
             # agents' metadata which we do not have access to (e.g. when the
             # user sets operation "my_check" and doesn't even specify agent's
             # name).
-            pyparsing.Regex(r"[^\s()]+").setName("<operation name>"),
-            pyparsing.Optional(op_interval),
+            pyparsing.Regex(r"[^\s()]+")
+            .setName("<operation name>")
+            .setResultsName("name"),
+            pyparsing.Optional(op_interval).setResultsName("interval"),
         ]
     )
-    op_expr.setParseAction(OpExpr)
+    op_expr.setParseAction(__build_op_expr)
 
     simple_expr_list = []
     if allow_rsc_expr:
@@ -235,7 +215,7 @@ def __get_rule_parser(
     # https://github.com/pyparsing/pyparsing/blob/master/examples/simpleBool.py
     # https://github.com/pyparsing/pyparsing/blob/master/examples/eval_arith.py
     bool_operator = pyparsing.Or(
-        [pyparsing.CaselessKeyword("and"), pyparsing.CaselessKeyword("or"),]
+        [pyparsing.CaselessKeyword("and"), pyparsing.CaselessKeyword("or")]
     )
     bool_expr = pyparsing.infixNotation(
         simple_expr,
