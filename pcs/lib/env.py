@@ -321,6 +321,13 @@ class LibraryEnvironment:
         need_qdevice_reload,
         skip_offline_nodes,
     ):
+        # TODO
+        # * check for online nodes and run all commands on them only
+        # * if those commands fail, exit with an error
+        # * add support for allow_skip_offline=False
+        # * use simple report procesor
+        # Correct reloading is done in pcs.lib.cluster.remove_nodes for example.
+
         # Check if the cluster is stopped when needed
         if need_stopped_cluster:
             com_cmd = CheckCorosyncOffline(
