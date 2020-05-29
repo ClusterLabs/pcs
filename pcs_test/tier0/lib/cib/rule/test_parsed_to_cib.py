@@ -21,7 +21,7 @@ class Base(TestCase):
     @staticmethod
     def assert_cib(tree, expected_xml):
         xml = etree.fromstring('<root id="X"/>')
-        rule.build_cib(xml, tree, IdProvider(xml))
+        rule.rule_to_cib(xml, IdProvider(xml), tree)
         assert_xml_equal(
             '<root id="X">' + expected_xml + "</root>", etree_to_str(xml)
         )

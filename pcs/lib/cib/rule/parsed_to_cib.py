@@ -4,7 +4,10 @@ from xml.etree.ElementTree import Element
 from lxml import etree
 from lxml.etree import _Element
 
-from pcs.lib.cib.tools import IdProvider
+from pcs.lib.cib.tools import (
+    IdProvider,
+    create_subelement_id,
+)
 
 from .expression_part import (
     BoolExpr,
@@ -15,14 +18,14 @@ from .expression_part import (
 
 
 def export(
-    parent_el: Element, expr_tree: BoolExpr, id_provider: IdProvider
+    parent_el: Element, id_provider: IdProvider, expr_tree: BoolExpr,
 ) -> Element:
     """
     Export parsed rule to a CIB element
 
     parent_el -- element to place the rule into
-    expr_tree -- parsed rule tree root
     id_provider -- elements' ids generator
+    expr_tree -- parsed rule tree root
     """
     element = __export_part(parent_el, expr_tree, id_provider)
     # Add score only to the top level rule element (which is represented by
@@ -57,7 +60,7 @@ def __export_bool(
         cast(_Element, parent_el),
         "rule",
         {
-            "id": id_provider.allocate_id(__id(parent_el, "-rule")),
+            "id": create_subelement_id(parent_el, "rule", id_provider),
             "boolean-op": boolean.operator.lower(),
         },
     )
@@ -73,7 +76,7 @@ def __export_op(
         cast(_Element, parent_el),
         "op_expression",
         {
-            "id": id_provider.allocate_id(__id(parent_el, f"-op-{op.name}")),
+            "id": create_subelement_id(parent_el, f"op-{op.name}", id_provider),
             "name": op.name,
         },
     )
@@ -90,8 +93,13 @@ def __export_rsc(
         cast(_Element, parent_el),
         "rsc_expression",
         {
-            "id": id_provider.allocate_id(__id(parent_el, f"-rsc-{rsc.type}")),
-            "class": rsc.standard,
+            "id": create_subelement_id(
+                parent_el, f"rsc-{rsc.type}", id_provider
+            ),
+            # rsc.standard is optional but in this stage it is expected to be
+            # set by other code, mypy cannot know that so it correctly throws
+            # an error here, hence the cast
+            "class": cast(str, rsc.standard),
             "type": rsc.type,
         },
     )
@@ -99,7 +107,3 @@ def __export_rsc(
         # for whatever reason, mypy thinks "_Element" has no attribute "set"
         element.set("provider", rsc.provider)  # type: ignore
     return cast(Element, element)
-
-
-def __id(parent_el: Element, id_part: str) -> str:
-    return parent_el.get("id", "") + id_part

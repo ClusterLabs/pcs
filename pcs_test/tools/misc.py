@@ -210,6 +210,12 @@ def skip_unless_pacemaker_supports_bundle():
     )
 
 
+def skip_unless_pacemaker_supports_rsc_and_op_rules():
+    return skip_unless_pacemaker_features(
+        (3, 4, 0), "rsc_expression and op_expression elements in rule elements"
+    )
+
+
 def skip_if_service_enabled(service_name):
     return skipUnless(
         not is_service_enabled(runner, service_name),

@@ -6,7 +6,12 @@ import textwrap
 import time
 import json
 
-from typing import Any, List
+from typing import (
+    Any,
+    Callable,
+    List,
+    Sequence,
+)
 
 from pcs import (
     usage,
@@ -19,6 +24,7 @@ from pcs.settings import (
 )
 from pcs.cli.common.errors import CmdLineInputError, raise_command_replaced
 from pcs.cli.common.parse_args import (
+    group_by_keywords,
     prepare_options,
     prepare_options_allowed,
     InputModifiers,
@@ -31,8 +37,8 @@ from pcs.cli.resource.parse_args import (
     parse_bundle_update_options,
     parse_create as parse_create_args,
 )
+from pcs.common import reports
 from pcs.common.str_tools import indent
-from pcs.common.reports import ReportItemSeverity
 import pcs.lib.cib.acl as lib_acl
 from pcs.lib.cib.resource import (
     bundle,
@@ -113,28 +119,105 @@ def resource_utilization_cmd(lib, argv, modifiers):
         set_resource_utilization(argv.pop(0), argv)
 
 
-def resource_defaults_cmd(lib, argv, modifiers):
+def _defaults_set_add_cmd(
+    lib_command: Callable[..., Any],
+    argv: Sequence[str],
+    modifiers: InputModifiers,
+):
+    modifiers.ensure_only_supported("-f", "--force")
+
+    groups = group_by_keywords(
+        argv,
+        set(["values", "rule"]),
+        implicit_first_group_key="options",
+        keyword_repeat_allowed=False,
+    )
+    force_flags = set()
+    if modifiers.get("--force"):
+        force_flags.add(reports.codes.FORCE)
+
+    lib_command(
+        prepare_options(groups["values"]),
+        prepare_options(groups["options"]),
+        nvset_rule=(" ".join(groups["rule"]) if groups["rule"] else None),
+        force_flags=force_flags,
+    )
+
+
+def resource_defaults_set_add_cmd(
+    lib: Any, argv: Sequence[str], modifiers: InputModifiers,
+) -> None:
     """
     Options:
       * -f - CIB file
+      * --force - allow unknown options
     """
-    modifiers.ensure_only_supported("-f")
+    return _defaults_set_add_cmd(
+        lib.cib_options.resource_defaults_create, argv, modifiers
+    )
+
+
+def resource_op_defaults_set_add_cmd(
+    lib: Any, argv: Sequence[str], modifiers: InputModifiers,
+) -> None:
+    """
+    Options:
+      * -f - CIB file
+      * --force - allow unknown options
+    """
+    return _defaults_set_add_cmd(
+        lib.cib_options.operation_defaults_create, argv, modifiers
+    )
+
+
+def resource_defaults_cmd(lib, argv, modifiers):
+    # TODO cleanup once all commands are here
+    # TODO Is there any syntax to be removed? Add it to deprecations.
+    """
+    Options:
+      * -f - CIB file
+      * --force - allow unknown options
+    """
+    modifiers.ensure_only_supported("-f", "--force")
     if not argv:
         print("\n".join(show_defaults(utils.get_cib_dom(), "rsc_defaults")))
-    else:
-        lib.cib_options.set_resources_defaults(prepare_options(argv))
+        return
+
+    sub_cmd = argv[0]
+    try:
+        if sub_cmd == "set-add":
+            resource_defaults_set_add_cmd(lib, argv[1:], modifiers)
+        else:
+            # TODO remove this legacy command, use a new one
+            lib.cib_options.set_resources_defaults(prepare_options(argv))
+    except CmdLineInputError as e:
+        utils.exit_on_cmdline_input_errror(e, "resource", ["defaults", sub_cmd])
 
 
 def resource_op_defaults_cmd(lib, argv, modifiers):
+    # TODO cleanup once all commands are here
+    # TODO Is there any syntax to be removed? Add it to deprecations.
     """
     Options:
       * -f - CIB file
+      * --force - allow unknown options
     """
-    modifiers.ensure_only_supported("-f")
+    modifiers.ensure_only_supported("-f", "--force")
     if not argv:
         print("\n".join(show_defaults(utils.get_cib_dom(), "op_defaults")))
-    else:
-        lib.cib_options.set_operations_defaults(prepare_options(argv))
+        return
+
+    sub_cmd = argv[0]
+    try:
+        if sub_cmd == "set-add":
+            resource_op_defaults_set_add_cmd(lib, argv[1:], modifiers)
+        else:
+            # TODO remove this legacy command, use a new one
+            lib.cib_options.set_operations_defaults(prepare_options(argv))
+    except CmdLineInputError as e:
+        utils.exit_on_cmdline_input_errror(
+            e, "resource", ["op", "defaults", sub_cmd]
+        )
 
 
 def resource_op_add_cmd(lib, argv, modifiers):
@@ -741,9 +824,9 @@ def resource_update(lib, args, modifiers, deal_with_guest_change=True):
             process_library_reports(report_list)
     except lib_ra.ResourceAgentError as e:
         severity = (
-            ReportItemSeverity.WARNING
+            reports.ReportItemSeverity.WARNING
             if modifiers.get("--force")
-            else ReportItemSeverity.ERROR
+            else reports.ReportItemSeverity.ERROR
         )
         process_library_reports(
             [lib_ra.resource_agent_error_to_report_item(e, severity)]

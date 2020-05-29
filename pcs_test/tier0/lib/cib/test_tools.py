@@ -233,8 +233,8 @@ class FindUniqueIdTest(CibToolsTest):
         )
 
 
-class CreateNvsetIdTest(TestCase):
-    def test_create_plain_id_when_no_confilicting_id_there(self):
+class CreateSubelementId(TestCase):
+    def test_create_plain_id_when_no_conflicting_id_there(self):
         context = etree.fromstring('<cib><a id="b"/></cib>')
         self.assertEqual(
             "b-name",
@@ -247,6 +247,15 @@ class CreateNvsetIdTest(TestCase):
         context = etree.fromstring('<cib><a id="b"><c id="b-name"/></a></cib>')
         self.assertEqual(
             "b-name-1",
+            lib.create_subelement_id(
+                context.find(".//a"), "name", lib.IdProvider(context)
+            ),
+        )
+
+    def test_parent_has_no_id(self):
+        context = etree.fromstring("<cib><a/></cib>")
+        self.assertEqual(
+            "a-name",
             lib.create_subelement_id(
                 context.find(".//a"), "name", lib.IdProvider(context)
             ),

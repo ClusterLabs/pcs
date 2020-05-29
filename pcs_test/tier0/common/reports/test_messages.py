@@ -4653,3 +4653,19 @@ class TagIdsNotInTheTag(NameBuildTest):
             "Tag 'tag-id' does not contain ids: 'a', 'b'",
             reports.TagIdsNotInTheTag("tag-id", ["b", "a"]),
         )
+
+
+class CibRuleParseError(NameBuildTest):
+    def test_success(self):
+        self.assert_message_from_report(
+            "'resource dummy op monitor' is not a valid rule expression, "
+            "parse error near or after line 1 column 16",
+            reports.CibRuleParseError(
+                "resource dummy op monitor",
+                "Expected end of text",
+                "resource dummy op monitor",
+                1,
+                16,
+                15,
+            ),
+        )

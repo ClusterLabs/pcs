@@ -28,7 +28,7 @@ class IdProvider:
         self._cib = get_root(cib_element)
         self._booked_ids = set()
 
-    def allocate_id(self, proposed_id):
+    def allocate_id(self, proposed_id: str) -> str:
         """
         Generate a new unique id based on the proposal and keep track of it
         string proposed_id -- requested id
@@ -294,9 +294,11 @@ def find_element_by_tag_and_id(
     return None
 
 
-def create_subelement_id(context_element, suffix, id_provider):
+def create_subelement_id(
+    context_element: Element, suffix: str, id_provider: IdProvider
+) -> str:
     proposed_id = sanitize_id(
-        "{0}-{1}".format(context_element.get("id"), suffix)
+        "{0}-{1}".format(context_element.get("id", context_element.tag), suffix)
     )
     return id_provider.allocate_id(proposed_id)
 

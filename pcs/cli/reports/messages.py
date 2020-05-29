@@ -402,6 +402,29 @@ class TagCannotRemoveReferencesWithoutRemovingTag(CliReportMessageCustom):
         )
 
 
+class CibRuleParseError(CliReportMessageCustom):
+    _obj: messages.CibRuleParseError
+
+    @property
+    def message(self) -> str:
+        # Messages coming from the parser are not very useful and readable,
+        # they mostly contain one line grammar expression covering the whole
+        # rule. No user would be able to parse that. Therefore we omit the
+        # messages.
+        return (
+            "'{rule_string}' is not a valid rule expression, parse error near "
+            "or after line {line_number} column {column_number}\n"
+            "  {rule_line}\n"
+            "  {marker}"
+        ).format(
+            rule_string=self._obj.rule_string,
+            rule_line=self._obj.rule_line,
+            line_number=self._obj.line_number,
+            column_number=self._obj.column_number,
+            marker=("-" * (self._obj.column_number - 1) + "^"),
+        )
+
+
 def _create_report_msg_map() -> Dict[str, type]:
     result: Dict[str, type] = {}
     for report_msg_cls in get_all_subclasses(CliReportMessageCustom):

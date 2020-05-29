@@ -40,7 +40,7 @@ class RuleParseError(Exception):
 
 def parse_rule(
     rule_string: str, allow_rsc_expr: bool = False, allow_op_expr: bool = False
-) -> RuleExprPart:
+) -> BoolExpr:
     """
     Parse a rule string and return a corresponding semantic tree
 

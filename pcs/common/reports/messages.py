@@ -6399,3 +6399,40 @@ class TagIdsNotInTheTag(ReportItemMessage):
             ids=format_plural(self.id_list, "id"),
             id_list=format_list(self.id_list),
         )
+
+
+@dataclass(frozen=True)
+class CibRuleParseError(ReportItemMessage):
+    """
+    Unable to parse pacemaker cib rule expression string
+
+    rule_string -- the whole rule expression string
+    reason -- error message from rule parser
+    rule_line -- part of rule_string - the line where the error occurred
+    line_number -- the line where parsing failed
+    column_number -- the column where parsing failed
+    position -- the start index where parsing failed
+    """
+
+    rule_string: str
+    reason: str
+    rule_line: str
+    line_number: int
+    column_number: int
+    position: int
+    _code = codes.CIB_RULE_PARSE_ERROR
+
+    @property
+    def message(self) -> str:
+        # Messages coming from the parser are not very useful and readable,
+        # they mostly contain one line grammar expression covering the whole
+        # rule. No user would be able to parse that. Therefore we omit the
+        # messages.
+        return (
+            "'{rule_string}' is not a valid rule expression, parse error near "
+            "or after line {line_number} column {column_number}"
+        ).format(
+            rule_string=self.rule_string,
+            line_number=self.line_number,
+            column_number=self.column_number,
+        )

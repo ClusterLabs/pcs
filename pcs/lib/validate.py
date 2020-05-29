@@ -39,6 +39,7 @@ from pcs.common.reports import (
 )
 from pcs.lib.corosync import constants as corosync_constants
 from pcs.lib.pacemaker.values import (
+    is_score,
     timeout_to_seconds,
     validate_id,
 )
@@ -674,6 +675,20 @@ class ValuePositiveInteger(ValuePredicateBase):
 
     def _get_allowed_values(self):
         return "a positive integer"
+
+
+class ValueScore(ValueValidator):
+    """
+    Report INVALID_SCORE if the value is not a valid CIB score
+    """
+
+    def _validate_value(self, value):
+        report_list = []
+        if not is_score(value.normalized):
+            report_list.append(
+                ReportItem.error(reports.messages.InvalidScore(value.original))
+            )
+        return report_list
 
 
 class ValueTimeInterval(ValuePredicateBase):

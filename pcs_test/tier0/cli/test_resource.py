@@ -10,6 +10,7 @@ from pcs_test.tools.misc import dict_to_modifiers
 
 from pcs import resource
 from pcs.cli.common.errors import CmdLineInputError
+from pcs.common.reports import codes as report_codes
 
 
 class FailcountShow(TestCase):
@@ -1080,3 +1081,115 @@ class ResourceUnmanage(TestCase):
         self.resource.unmanage.assert_called_once_with(
             ["R1", "R2"], with_monitor=True
         )
+
+
+class DefaultsSetAddMixin:
+    cli_command_name = ""
+    lib_command_name = ""
+
+    def setUp(self):
+        # pylint: disable=invalid-name
+        self.lib = mock.Mock(spec_set=["cib_options"])
+        self.cib_options = mock.Mock(spec_set=[self.lib_command_name])
+        self.lib.cib_options = self.cib_options
+        self.lib_command = getattr(self.cib_options, self.lib_command_name)
+        self.cli_command = getattr(resource, self.cli_command_name)
+
+    def _call_cmd(self, argv, modifiers=None):
+        modifiers = modifiers or dict()
+        self.cli_command(self.lib, argv, dict_to_modifiers(modifiers))
+
+    def test_no_args(self):
+        self._call_cmd([])
+        self.lib_command.assert_called_once_with(
+            {}, {}, nvset_rule=None, force_flags=set()
+        )
+
+    def test_no_values(self):
+        self._call_cmd(["values", "rule"])
+        self.lib_command.assert_called_once_with(
+            {}, {}, nvset_rule=None, force_flags=set()
+        )
+
+    def test_bad_options_or_keyword(self):
+        with self.assertRaises(CmdLineInputError) as cm:
+            self._call_cmd(["aaa"])
+        self.assertEqual(
+            cm.exception.message, "missing value of 'aaa' option",
+        )
+        self.lib_command.assert_not_called()
+
+    def test_bad_values(self):
+        with self.assertRaises(CmdLineInputError) as cm:
+            self._call_cmd(["values", "aaa"])
+        self.assertEqual(
+            cm.exception.message, "missing value of 'aaa' option",
+        )
+        self.lib_command.assert_not_called()
+
+    def test_options(self):
+        self._call_cmd(["id=custom-id", "score=10"])
+        self.lib_command.assert_called_once_with(
+            {},
+            {"id": "custom-id", "score": "10"},
+            nvset_rule=None,
+            force_flags=set(),
+        )
+
+    def test_nvpairs(self):
+        self._call_cmd(["values", "name1=value1", "name2=value2"])
+        self.lib_command.assert_called_once_with(
+            {"name1": "value1", "name2": "value2"},
+            {},
+            nvset_rule=None,
+            force_flags=set(),
+        )
+
+    def test_rule(self):
+        self._call_cmd(["rule", "resource", "dummy", "or", "op", "monitor"])
+        self.lib_command.assert_called_once_with(
+            {},
+            {},
+            nvset_rule="resource dummy or op monitor",
+            force_flags=set(),
+        )
+
+    def test_force(self):
+        self._call_cmd([], {"force": True})
+        self.lib_command.assert_called_once_with(
+            {}, {}, nvset_rule=None, force_flags=set([report_codes.FORCE])
+        )
+
+    def test_all(self):
+        self._call_cmd(
+            [
+                "id=custom-id",
+                "score=10",
+                "values",
+                "name1=value1",
+                "name2=value2",
+                "rule",
+                "resource",
+                "dummy",
+                "or",
+                "op",
+                "monitor",
+            ],
+            {"force": True},
+        )
+        self.lib_command.assert_called_once_with(
+            {"name1": "value1", "name2": "value2"},
+            {"id": "custom-id", "score": "10"},
+            nvset_rule="resource dummy or op monitor",
+            force_flags=set([report_codes.FORCE]),
+        )
+
+
+class RscDefaultsSetAdd(DefaultsSetAddMixin, TestCase):
+    cli_command_name = "resource_defaults_set_add_cmd"
+    lib_command_name = "resource_defaults_create"
+
+
+class OpDefaultsSetAdd(DefaultsSetAddMixin, TestCase):
+    cli_command_name = "resource_op_defaults_set_add_cmd"
+    lib_command_name = "operation_defaults_create"

@@ -447,6 +447,20 @@ Commands:
         currently configured defaults. Defaults do not apply to resources which
         override them with their own defined operations.
 
+    op defaults set-add [<set options>] [values <name>=<value>...]
+            [rule <expression>]
+        Create a new set of default values for resource operations. You may
+        specify a rule describing resources and / or operations to which the set
+        applies.
+        Set options are: id, score
+        Expression looks like one of the following:
+          op <operation name> [interval=<interval>]
+          resource [<standard>:[<provider>:]]<type>
+          <expression> and|or <expression>
+          ( <expression> )
+        NOTE: Defaults do not apply to resources which override them with their
+        own defined values.
+
     meta <resource id | group id | clone id> <meta options>
          [--wait[=n]]
         Add specified options to the specified resource, group or clone. Meta
@@ -565,6 +579,18 @@ Commands:
         Set default values for resources, if no options are passed, lists
         currently configured defaults. Defaults do not apply to resources which
         override them with their own defined values.
+
+    defaults set-add [<set options>] [values <name>=<value>...]
+            [rule <expression>]
+        Create a new set of default values for resources. You may specify a rule
+        describing resources to which the set applies.
+        Set options are: id, score
+        Expression looks like one of the following:
+          resource [<standard>:[<provider>:]]<type>
+          <expression> and|or <expression>
+          ( <expression> )
+        NOTE: Defaults do not apply to resources which override them with their
+        own defined values.
 
     cleanup [<resource id>] [node=<node>] [operation=<operation>
             [interval=<interval>]] [--strict]
