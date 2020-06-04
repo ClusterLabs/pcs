@@ -273,7 +273,7 @@ Commands:
         Deletes the resource, group, bundle or clone (and all resources within
         the group/bundle/clone).
 
-    enable <resource id|tag id>... [--wait[=n]]
+    enable <resource id | tag id>... [--wait[=n]]
         Allow the cluster to start the resources. Depending on the rest of the
         configuration (constraints, options, failures, etc), the resources may
         remain stopped. If --wait is specified, pcs will wait up to 'n' seconds
@@ -281,7 +281,8 @@ Commands:
         started, or 1 if the resources have not yet started. If 'n' is not
         specified it defaults to 60 minutes.
 
-    disable <resource id|tag id>... [--safe [--no-strict]] [--simulate] [--wait[=n]]
+    disable <resource id | tag id>... [--safe [--no-strict]] [--simulate]
+            [--wait[=n]]
         Attempt to stop the resources if they are running and forbid the
         cluster from starting them again. Depending on the rest of the
         configuration (constraints, options, failures, etc), the resources may
@@ -298,8 +299,8 @@ Commands:
         if the resources have not stopped. If 'n' is not specified it defaults
         to 60 minutes.
 
-    safe-disable <resource id|tag id>... [--no-strict] [--simulate] [--wait[=n]]
-            [--force]
+    safe-disable <resource id | tag id>... [--no-strict] [--simulate]
+            [--wait[=n]] [--force]
         Attempt to stop the resources if they are running and forbid the
         cluster from starting them again. Depending on the rest of the
         configuration (constraints, options, failures, etc), the resources may

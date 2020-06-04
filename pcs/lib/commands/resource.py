@@ -17,6 +17,7 @@ from pcs.common.interface import dto
 from pcs.common import reports
 from pcs.common.reports import ReportItemList
 from pcs.common.reports.item import ReportItem
+from pcs.common.reports.processor import ReportProcessor
 from pcs.common.tools import Version
 from pcs.lib.cib import (
     resource,
@@ -876,9 +877,11 @@ def _disable_validate_and_edit_cib(
 ):
     if env.report_processor.report_list(
         _resource_list_enable_disable(
-            _find_resources_expand_tags_or_raise(env, cib, resource_or_tag_ids),
+            _find_resources_expand_tags_or_raise(
+                env.report_processor, cib, resource_or_tag_ids,
+            ),
             resource.common.disable,
-            IdProvider(get_resources(cib)),
+            IdProvider(cib),
             env.get_cluster_state(),
         )
     ).has_errors:
@@ -932,13 +935,13 @@ def disable_safe(
     env.ensure_wait_satisfiable(wait)
     cib = env.get_cib()
     resource_el_list = _find_resources_expand_tags_or_raise(
-        env, cib, resource_or_tag_ids
+        env.report_processor, cib, resource_or_tag_ids
     )
     if env.report_processor.report_list(
         _resource_list_enable_disable(
             resource_el_list,
             resource.common.disable,
-            IdProvider(get_resources(cib)),
+            IdProvider(cib),
             env.get_cluster_state(),
         )
     ).has_errors:
@@ -1035,7 +1038,7 @@ def enable(
     env.ensure_wait_satisfiable(wait)
     cib = env.get_cib()
     resource_el_list = _find_resources_expand_tags_or_raise(
-        env, cib, resource_or_tag_ids
+        env.report_processor, cib, resource_or_tag_ids
     )
     to_enable_set = set()
     for el in resource_el_list:
@@ -1045,7 +1048,7 @@ def enable(
         _resource_list_enable_disable(
             to_enable_set,
             resource.common.enable,
-            IdProvider(get_resources(cib)),
+            IdProvider(cib),
             env.get_cluster_state(),
         )
     ).has_errors:
@@ -1100,13 +1103,13 @@ def unmanage(
     cib = env.get_cib()
     to_unmanage_set = set()
     for el in _find_resources_expand_tags_or_raise(
-        env, cib, resource_or_tag_ids
+        env.report_processor, cib, resource_or_tag_ids
     ):
         to_unmanage_set.update(resource.common.find_resources_to_unmanage(el))
 
     primitives_set = set()
     for resource_el in to_unmanage_set:
-        resource.common.unmanage(resource_el, IdProvider(get_resources(cib)))
+        resource.common.unmanage(resource_el, IdProvider(cib))
         if with_monitor:
             primitives_set.update(resource.common.find_primitives(resource_el))
 
@@ -1136,7 +1139,7 @@ def manage(
 
     to_manage_set = set()
     for resource_el in _find_resources_expand_tags_or_raise(
-        env, cib, resource_or_tag_ids
+        env.report_processor, cib, resource_or_tag_ids
     ):
         to_manage_set.update(
             resource.common.find_resources_to_manage(resource_el),
@@ -1144,7 +1147,7 @@ def manage(
 
     primitives_set = set()
     for resource_el in to_manage_set:
-        resource.common.manage(resource_el, IdProvider(get_resources(cib)))
+        resource.common.manage(resource_el, IdProvider(cib))
         primitives_set.update(resource.common.find_primitives(resource_el))
 
     for resource_el in sorted(
@@ -1625,14 +1628,16 @@ def _find_resources_or_raise(
 
 
 def _find_resources_expand_tags_or_raise(
-    env: LibraryEnvironment, cib: Element, resource_or_tag_ids: Iterable[str],
+    report_processor: ReportProcessor,
+    cib: Element,
+    resource_or_tag_ids: Iterable[str],
 ):
     resources_section = get_resources(cib)
     (
         resource_or_tag_el_list,
         report_list,
     ) = resource.common.find_resources_or_tags(cib, resource_or_tag_ids)
-    if env.report_processor.report_list(report_list).has_errors:
+    if report_processor.report_list(report_list).has_errors:
         raise LibraryError()
     return resource.common.expand_tags_to_resources(
         resources_section, resource_or_tag_el_list,
