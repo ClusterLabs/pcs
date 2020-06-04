@@ -13,6 +13,7 @@ from pcs import (
     utils,
     constraint,
 )
+from pcs.common.str_tools import format_list
 from pcs.settings import (
     pacemaker_wait_timeout_status as PACEMAKER_WAIT_TIMEOUT_STATUS,
 )
@@ -1482,7 +1483,7 @@ def resource_remove(resource_id, output=True, is_remove_remote_context=False):
                 "referenced in {tags}: {tag_id_list}".format(
                     resource=resource_id,
                     tags="tags" if len(tag_id_list) > 1 else "the tag",
-                    tag_id_list="', '".join(tag_id_list),
+                    tag_id_list=format_list(tag_id_list),
                 )
             )
 
