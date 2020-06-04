@@ -469,23 +469,23 @@ Commands:
         then return 0 on success or 1 on error. If 'n' is not specified it
         defaults to 60 minutes.
 
-    group delete <group id> <resource id> [resource id] ... [resource id]
-          [--wait[=n]]
-        Remove the specified resource(s) from the group, removing the group if
-        no resources remain in it. If --wait is specified, pcs will wait up to
-        'n' seconds for the operation to finish (including moving resources if
-        appropriate) and then return 0 on success or 1 on error. If 'n' is not
-        specified it defaults to 60 minutes.
+    group delete <group id> [resource id]... [--wait[=n]]
+        Remove the group (note: this does not remove any resources from the
+        cluster) or if resources are specified, remove the specified resources
+        from the group.  If --wait is specified, pcs will wait up to 'n' seconds
+        for the operation to finish (including moving resources if appropriate)
+        and the return 0 on success or 1 on error.  If 'n' is not specified it
+        defaults to 60 minutes.
 
-    group remove <group id> <resource id> [resource id] ... [resource id]
-          [--wait[=n]]
-        Remove the specified resource(s) from the group, removing the group if
-        no resources remain in it. If --wait is specified, pcs will wait up to
-        'n' seconds for the operation to finish (including moving resources if
-        appropriate) and then return 0 on success or 1 on error. If 'n' is not
-        specified it defaults to 60 minutes.
+    group remove <group id> [resource id]... [--wait[=n]]
+        Remove the group (note: this does not remove any resources from the
+        cluster) or if resources are specified, remove the specified resources
+        from the group.  If --wait is specified, pcs will wait up to 'n' seconds
+        for the operation to finish (including moving resources if appropriate)
+        and the return 0 on success or 1 on error.  If 'n' is not specified it
+        defaults to 60 minutes.
 
-    ungroup <group id> [resource id] ... [resource id] [--wait[=n]]
+    ungroup <group id> [resource id]... [--wait[=n]]
         Remove the group (note: this does not remove any resources from the
         cluster) or if resources are specified, remove the specified resources
         from the group.  If --wait is specified, pcs will wait up to 'n' seconds

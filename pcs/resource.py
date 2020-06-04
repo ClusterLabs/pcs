@@ -1780,6 +1780,15 @@ def remove_resource_references(
     Commandline options: no options
     NOTE: -f - will be used only if dom will be None
     """
+    for obj_ref in dom.getElementsByTagName("obj_ref"):
+        if obj_ref.getAttribute("id") == resource_id:
+            tag = obj_ref.parentNode
+            tag.removeChild(obj_ref)
+            if tag.getElementsByTagName(obj_ref).length == 0:
+                remove_resource_references(
+                    dom, tag.getAttribute("id"), output=output,
+                )
+                tag.parentNode.removeChild(tag)
     constraint.remove_constraints_containing(
         resource_id, output, constraints_element, dom
     )
@@ -1836,7 +1845,6 @@ def resource_group_rm(cib_dom, group_name, resource_ids):
         and len(resources_to_move) == res_in_group
     ):
         utils.err("Cannot remove all resources from a cloned group")
-
     target_node = group_match.parentNode
     if is_cloned_group and res_in_group > 1:
         target_node = dom.getElementsByTagName("resources")[0]
