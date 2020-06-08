@@ -415,7 +415,7 @@ module ClusterEntity
   class CRMResourceStatus < JSONable
     attr_accessor :id, :resource_agent, :managed, :failed, :role, :active,
                   :orphaned, :failure_ignored, :nodes_running_on, :pending,
-                  :node
+                  :node, :blocked, :target_role
 
     def initialize(resource_crm_element=nil)
       @id = nil
@@ -429,6 +429,8 @@ module ClusterEntity
       @nodes_running_on = 0
       @pending = nil
       @node = nil
+      @blocked = false
+      @target_role = ""
 
       if resource_crm_element and resource_crm_element.name == 'resource'
         crm = resource_crm_element
@@ -442,6 +444,8 @@ module ClusterEntity
         @failure_ignored = crm.attributes['failure_ignored'] == 'true'
         @nodes_running_on = crm.attributes['nodes_running_on'].to_i
         @pending = crm.attributes['pending']
+        @blocked = crm.attributes['blocked'] == 'true'
+        @target_role = crm.attributes['target_role']
         node = crm.elements['node']
         if node
           @node = {

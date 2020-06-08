@@ -1009,6 +1009,8 @@ class TestPrimitive < Test::Unit::TestCase
           "failure_ignored": false,
           "nodes_running_on": 1,
           "pending": null,
+          "blocked": false,
+          "target_role": null,
           "node": {
             "name": "node1",
             "id": "1",
@@ -1290,6 +1292,8 @@ class TestGroup < Test::Unit::TestCase
               "failure_ignored": false,
               "nodes_running_on": 1,
               "pending": null,
+              "blocked": false,
+              "target_role": null,
               "node": {
                 "name": "node3",
                 "id": "3",
@@ -1338,6 +1342,8 @@ class TestGroup < Test::Unit::TestCase
               "failure_ignored": false,
               "nodes_running_on": 1,
               "pending": null,
+              "blocked": false,
+              "target_role": null,
               "node": {
                 "name": "node3",
                 "id": "3",
@@ -2069,6 +2075,8 @@ class TestClonePcmk1 < Test::Unit::TestCase
             "failure_ignored": false,
             "nodes_running_on": 1,
             "pending": null,
+            "blocked": false,
+            "target_role": null,
             "node": {
               "name": "node3",
               "id": "3",
@@ -2086,6 +2094,8 @@ class TestClonePcmk1 < Test::Unit::TestCase
             "failure_ignored": false,
             "nodes_running_on": 1,
             "pending": null,
+            "blocked": false,
+            "target_role": null,
             "node": {
               "name": "node1",
               "id": "1",
@@ -2103,6 +2113,8 @@ class TestClonePcmk1 < Test::Unit::TestCase
             "failure_ignored": false,
             "nodes_running_on": 1,
             "pending": null,
+            "blocked": false,
+            "target_role": null,
             "node": {
               "name": "node2",
               "id": "2",
@@ -2215,6 +2227,8 @@ class TestClonePcmk1 < Test::Unit::TestCase
                 "failure_ignored": false,
                 "nodes_running_on": 1,
                 "pending": null,
+                "blocked": false,
+                "target_role": null,
                 "node": {
                   "name": "node3",
                   "id": "3",
@@ -2231,6 +2245,8 @@ class TestClonePcmk1 < Test::Unit::TestCase
                 "orphaned": false,
                 "failure_ignored": false,
                 "nodes_running_on": 1,
+                "blocked": false,
+                "target_role": null,
                 "pending": null,
                 "node": {
                   "name": "node1",
@@ -2248,6 +2264,8 @@ class TestClonePcmk1 < Test::Unit::TestCase
                 "orphaned": false,
                 "failure_ignored": false,
                 "nodes_running_on": 1,
+                "blocked": false,
+                "target_role": null,
                 "pending": null,
                 "node": {
                   "name": "node2",
@@ -2302,6 +2320,8 @@ class TestClonePcmk1 < Test::Unit::TestCase
                 "failure_ignored": false,
                 "nodes_running_on": 1,
                 "pending": null,
+                "blocked": false,
+                "target_role": null,
                 "node": {
                   "name": "node3",
                   "id": "3",
@@ -2319,6 +2339,8 @@ class TestClonePcmk1 < Test::Unit::TestCase
                 "failure_ignored": false,
                 "nodes_running_on": 1,
                 "pending": null,
+                "blocked": false,
+                "target_role": null,
                 "node": {
                   "name": "node1",
                   "id": "1",
@@ -2336,6 +2358,8 @@ class TestClonePcmk1 < Test::Unit::TestCase
                 "failure_ignored": false,
                 "nodes_running_on": 1,
                 "pending": null,
+                "blocked": false,
+                "target_role": null,
                 "node": {
                   "name": "node2",
                   "id": "2",
@@ -3036,6 +3060,8 @@ class TestMasterSlavePcmk1 < Test::Unit::TestCase
             "failure_ignored": false,
             "nodes_running_on": 1,
             "pending": null,
+            "blocked": false,
+            "target_role": null,
             "node": {
               "name": "node3",
               "id": "3",
@@ -3053,6 +3079,8 @@ class TestMasterSlavePcmk1 < Test::Unit::TestCase
             "failure_ignored": false,
             "nodes_running_on": 1,
             "pending": null,
+            "blocked": false,
+            "target_role": null,
             "node": {
               "name": "node1",
               "id": "1",
@@ -3070,6 +3098,8 @@ class TestMasterSlavePcmk1 < Test::Unit::TestCase
             "failure_ignored": false,
             "nodes_running_on": 1,
             "pending": null,
+            "blocked": false,
+            "target_role": null,
             "node": {
               "name": "node2",
               "id": "2",
@@ -3180,6 +3210,8 @@ class TestMasterSlavePcmk1 < Test::Unit::TestCase
                 "failure_ignored": false,
                 "nodes_running_on": 1,
                 "pending": null,
+                "blocked": false,
+                "target_role": null,
                 "node": {
                   "name": "node3",
                   "id": "3",
@@ -3197,6 +3229,8 @@ class TestMasterSlavePcmk1 < Test::Unit::TestCase
                 "failure_ignored": false,
                 "nodes_running_on": 1,
                 "pending": null,
+                "blocked": false,
+                "target_role": null,
                 "node": {
                   "name": "node1",
                   "id": "1",
@@ -3214,6 +3248,8 @@ class TestMasterSlavePcmk1 < Test::Unit::TestCase
                 "failure_ignored": false,
                 "nodes_running_on": 1,
                 "pending": null,
+                "blocked": false,
+                "target_role": null,
                 "node": {
                   "name": "node2",
                   "id": "2",
@@ -3267,6 +3303,8 @@ class TestMasterSlavePcmk1 < Test::Unit::TestCase
                 "failure_ignored": false,
                 "nodes_running_on": 1,
                 "pending": null,
+                "blocked": false,
+                "target_role": null,
                 "node": {
                   "name": "node3",
                   "id": "3",
@@ -3284,6 +3322,8 @@ class TestMasterSlavePcmk1 < Test::Unit::TestCase
                 "failure_ignored": false,
                 "nodes_running_on": 1,
                 "pending": null,
+                "blocked": false,
+                "target_role": null,
                 "node": {
                   "name": "node1",
                   "id": "1",
@@ -3301,6 +3341,8 @@ class TestMasterSlavePcmk1 < Test::Unit::TestCase
                 "failure_ignored": false,
                 "nodes_running_on": 1,
                 "pending": null,
+                "blocked": false,
+                "target_role": null,
                 "node": {
                   "name": "node2",
                   "id": "2",
@@ -4040,6 +4082,8 @@ class TestClone < Test::Unit::TestCase
             "failure_ignored": false,
             "nodes_running_on": 1,
             "pending": null,
+            "blocked": false,
+            "target_role": null,
             "node": {
               "name": "node3",
               "id": "3",
@@ -4057,6 +4101,8 @@ class TestClone < Test::Unit::TestCase
             "failure_ignored": false,
             "nodes_running_on": 1,
             "pending": null,
+            "blocked": false,
+            "target_role": null,
             "node": {
               "name": "node1",
               "id": "1",
@@ -4074,6 +4120,8 @@ class TestClone < Test::Unit::TestCase
             "failure_ignored": false,
             "nodes_running_on": 1,
             "pending": null,
+            "blocked": false,
+            "target_role": null,
             "node": {
               "name": "node2",
               "id": "2",
@@ -4186,6 +4234,8 @@ class TestClone < Test::Unit::TestCase
                 "failure_ignored": false,
                 "nodes_running_on": 1,
                 "pending": null,
+                "blocked": false,
+                "target_role": null,
                 "node": {
                   "name": "node3",
                   "id": "3",
@@ -4203,6 +4253,8 @@ class TestClone < Test::Unit::TestCase
                 "failure_ignored": false,
                 "nodes_running_on": 1,
                 "pending": null,
+                "blocked": false,
+                "target_role": null,
                 "node": {
                   "name": "node1",
                   "id": "1",
@@ -4220,6 +4272,8 @@ class TestClone < Test::Unit::TestCase
                 "failure_ignored": false,
                 "nodes_running_on": 1,
                 "pending": null,
+                "blocked": false,
+                "target_role": null,
                 "node": {
                   "name": "node2",
                   "id": "2",
@@ -4273,6 +4327,8 @@ class TestClone < Test::Unit::TestCase
                 "failure_ignored": false,
                 "nodes_running_on": 1,
                 "pending": null,
+                "blocked": false,
+                "target_role": null,
                 "node": {
                   "name": "node3",
                   "id": "3",
@@ -4290,6 +4346,8 @@ class TestClone < Test::Unit::TestCase
                 "failure_ignored": false,
                 "nodes_running_on": 1,
                 "pending": null,
+                "blocked": false,
+                "target_role": null,
                 "node": {
                   "name": "node1",
                   "id": "1",
@@ -4307,6 +4365,8 @@ class TestClone < Test::Unit::TestCase
                 "failure_ignored": false,
                 "nodes_running_on": 1,
                 "pending": null,
+                "blocked": false,
+                "target_role": null,
                 "node": {
                   "name": "node2",
                   "id": "2",
@@ -5155,6 +5215,8 @@ class TestCloneFromMasterElement < Test::Unit::TestCase
             "failure_ignored": false,
             "nodes_running_on": 1,
             "pending": null,
+            "blocked": false,
+            "target_role": null,
             "node": {
               "name": "node3",
               "id": "3",
@@ -5172,6 +5234,8 @@ class TestCloneFromMasterElement < Test::Unit::TestCase
             "failure_ignored": false,
             "nodes_running_on": 1,
             "pending": null,
+            "blocked": false,
+            "target_role": null,
             "node": {
               "name": "node1",
               "id": "1",
@@ -5189,6 +5253,8 @@ class TestCloneFromMasterElement < Test::Unit::TestCase
             "failure_ignored": false,
             "nodes_running_on": 1,
             "pending": null,
+            "blocked": false,
+            "target_role": null,
             "node": {
               "name": "node2",
               "id": "2",
@@ -5300,6 +5366,8 @@ class TestCloneFromMasterElement < Test::Unit::TestCase
                 "failure_ignored": false,
                 "nodes_running_on": 1,
                 "pending": null,
+                "blocked": false,
+                "target_role": null,
                 "node": {
                   "name": "node3",
                   "id": "3",
@@ -5317,6 +5385,8 @@ class TestCloneFromMasterElement < Test::Unit::TestCase
                 "failure_ignored": false,
                 "nodes_running_on": 1,
                 "pending": null,
+                "blocked": false,
+                "target_role": null,
                 "node": {
                   "name": "node1",
                   "id": "1",
@@ -5334,6 +5404,8 @@ class TestCloneFromMasterElement < Test::Unit::TestCase
                 "failure_ignored": false,
                 "nodes_running_on": 1,
                 "pending": null,
+                "blocked": false,
+                "target_role": null,
                 "node": {
                   "name": "node2",
                   "id": "2",
@@ -5387,6 +5459,8 @@ class TestCloneFromMasterElement < Test::Unit::TestCase
                 "failure_ignored": false,
                 "nodes_running_on": 1,
                 "pending": null,
+                "blocked": false,
+                "target_role": null,
                 "node": {
                   "name": "node3",
                   "id": "3",
@@ -5404,6 +5478,8 @@ class TestCloneFromMasterElement < Test::Unit::TestCase
                 "failure_ignored": false,
                 "nodes_running_on": 1,
                 "pending": null,
+                "blocked": false,
+                "target_role": null,
                 "node": {
                   "name": "node1",
                   "id": "1",
@@ -5421,6 +5497,8 @@ class TestCloneFromMasterElement < Test::Unit::TestCase
                 "failure_ignored": false,
                 "nodes_running_on": 1,
                 "pending": null,
+                "blocked": false,
+                "target_role": null,
                 "node": {
                   "name": "node2",
                   "id": "2",
