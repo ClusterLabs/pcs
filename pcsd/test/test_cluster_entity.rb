@@ -277,12 +277,31 @@ class TestResourceStatus < Test::Unit::TestCase
     assert_equal(false, s.failure_ignored)
     assert_equal(s.nodes_running_on, 1)
     assert_nil(s.pending)
+    assert_equal(false, s.blocked)
+    assert_nil(s.target_role)
     node = {
       :name => 'node1',
       :id => '1',
       :cached => false
     }
     assert(node == s.node)
+  end
+
+  def test_init_blocked_and_target_role
+    s = ClusterEntity::CRMResourceStatus.new(@crm_mon.elements["//resource[@id='dummy2']"])
+    assert_equal('dummy2', s.id)
+    assert_equal('ocf::heartbeat:Dummy', s.resource_agent)
+    assert(s.managed)
+    assert_equal(false, s.failed)
+    assert_equal('Stopped', s.role)
+    assert_equal(false, s.active)
+    assert_equal(false, s.orphaned)
+    assert_equal(false, s.failure_ignored)
+    assert_equal(s.nodes_running_on, 0)
+    assert_nil(s.pending)
+    assert_equal(true, s.blocked)
+    assert_equal('Started', s.target_role)
+    assert_nil(s.node)
   end
 
   def test_init_invalid_element
@@ -1016,6 +1035,52 @@ class TestPrimitive < Test::Unit::TestCase
             "id": "1",
             "cached": false
           }
+        }
+      ],
+      "operations": []
+    }'
+    hash = JSON.parse(json, {:symbolize_names => true})
+    # assert_equal_hashes(hash, obj.to_status('2'))
+    assert(hash == obj.to_status('2'))
+  end
+
+  def test_to_status_version2_blocked_and_target_role
+    obj = ClusterEntity::Primitive.new(
+      @cib.elements["//primitive[@id='dummy2']"],
+      ClusterEntity::get_rsc_status(@crm_mon)
+    )
+    json = '{
+      "id": "dummy2",
+      "meta_attr": [],
+      "utilization": [],
+      "error_list": [],
+      "warning_list": [],
+      "class_type": "primitive",
+      "parent_id": null,
+      "disabled": false,
+      "agentname": "ocf::heartbeat:Dummy",
+      "provider": "heartbeat",
+      "type": "Dummy",
+      "stonith": false,
+      "instance_attr": [
+      ],
+      "status": "blocked",
+      "class": "ocf",
+      "crm_status": [
+        {
+          "id": "dummy2",
+          "resource_agent": "ocf::heartbeat:Dummy",
+          "managed": true,
+          "failed": false,
+          "role": "Stopped",
+          "active": false,
+          "orphaned": false,
+          "failure_ignored": false,
+          "nodes_running_on": 0,
+          "pending": null,
+          "blocked": true,
+          "target_role": "Started",
+          "node": null
         }
       ],
       "operations": []

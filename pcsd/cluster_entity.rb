@@ -430,7 +430,7 @@ module ClusterEntity
       @pending = nil
       @node = nil
       @blocked = false
-      @target_role = ""
+      @target_role = nil
 
       if resource_crm_element and resource_crm_element.name == 'resource'
         crm = resource_crm_element
