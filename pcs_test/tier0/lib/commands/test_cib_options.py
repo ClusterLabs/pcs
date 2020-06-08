@@ -4,6 +4,15 @@ from pcs_test.tools import fixture
 from pcs_test.tools.command_env import get_env_tools
 
 from pcs.common import reports
+from pcs.common.pacemaker.nvset import (
+    CibNvpairDto,
+    CibNvsetDto,
+)
+from pcs.common.pacemaker.rule import CibRuleExpressionDto
+from pcs.common.types import (
+    CibNvsetType,
+    CibRuleExpressionType,
+)
 from pcs.lib.commands import cib_options
 
 
@@ -218,4 +227,110 @@ class ResourceDefaultsCreate(DefaultsCreateMixin, TestCase):
 
 class OperationDefaultsCreate(DefaultsCreateMixin, TestCase):
     command = staticmethod(cib_options.operation_defaults_create)
+    tag = "op_defaults"
+
+
+class DefaultsConfigMixin:
+    command = lambda *args, **kwargs: None
+    tag = ""
+
+    def setUp(self):
+        # pylint: disable=invalid-name
+        self.env_assist, self.config = get_env_tools(self)
+
+    def test_empty(self):
+        defaults_xml = f"""<{self.tag} />"""
+        self.config.runner.cib.load(
+            filename="cib-empty-3.4.xml", optional_in_conf=defaults_xml
+        )
+        self.assertEqual([], self.command(self.env_assist.get_env()))
+
+    def test_full(self):
+        defaults_xml = f"""
+            <{self.tag}>
+                <meta_attributes id="{self.tag}-meta_attributes">
+                    <rule id="{self.tag}-meta_attributes-rule"
+                        boolean-op="and" score="INFINITY"
+                    >
+                        <rsc_expression
+                            id="{self.tag}-meta_attributes-rule-rsc-Dummy"
+                            class="ocf" provider="pacemaker" type="Dummy"
+                        />
+                    </rule>
+                    <nvpair id="my-id-pair1" name="name1" value="value1" />
+                    <nvpair id="my-id-pair2" name="name2" value="value2" />
+                </meta_attributes>
+                <instance_attributes id="instance">
+                    <nvpair id="instance-pair" name="inst" value="ance" />
+                </instance_attributes>
+                <meta_attributes id="meta-plain" score="123">
+                    <nvpair id="my-id-pair3" name="name1" value="value1" />
+                </meta_attributes>
+            </{self.tag}>
+        """
+        self.config.runner.cib.load(
+            filename="cib-empty-3.4.xml", optional_in_conf=defaults_xml
+        )
+        self.assertEqual(
+            [
+                CibNvsetDto(
+                    f"{self.tag}-meta_attributes",
+                    CibNvsetType.META,
+                    {},
+                    CibRuleExpressionDto(
+                        f"{self.tag}-meta_attributes-rule",
+                        CibRuleExpressionType.RULE,
+                        False,
+                        {"boolean-op": "and", "score": "INFINITY"},
+                        None,
+                        None,
+                        [
+                            CibRuleExpressionDto(
+                                f"{self.tag}-meta_attributes-rule-rsc-Dummy",
+                                CibRuleExpressionType.RSC_EXPRESSION,
+                                False,
+                                {
+                                    "class": "ocf",
+                                    "provider": "pacemaker",
+                                    "type": "Dummy",
+                                },
+                                None,
+                                None,
+                                [],
+                                "resource ocf:pacemaker:Dummy",
+                            ),
+                        ],
+                        "resource ocf:pacemaker:Dummy",
+                    ),
+                    [
+                        CibNvpairDto("my-id-pair1", "name1", "value1"),
+                        CibNvpairDto("my-id-pair2", "name2", "value2"),
+                    ],
+                ),
+                CibNvsetDto(
+                    "instance",
+                    CibNvsetType.INSTANCE,
+                    {},
+                    None,
+                    [CibNvpairDto("instance-pair", "inst", "ance")],
+                ),
+                CibNvsetDto(
+                    "meta-plain",
+                    CibNvsetType.META,
+                    {"score": "123"},
+                    None,
+                    [CibNvpairDto("my-id-pair3", "name1", "value1")],
+                ),
+            ],
+            self.command(self.env_assist.get_env()),
+        )
+
+
+class ResourceDefaultsConfig(DefaultsConfigMixin, TestCase):
+    command = staticmethod(cib_options.resource_defaults_config)
+    tag = "rsc_defaults"
+
+
+class OperationDefaultsConfig(DefaultsConfigMixin, TestCase):
+    command = staticmethod(cib_options.operation_defaults_config)
     tag = "op_defaults"

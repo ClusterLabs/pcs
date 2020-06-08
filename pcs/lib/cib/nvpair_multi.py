@@ -1,5 +1,6 @@
 from typing import (
     cast,
+    List,
     Mapping,
     NewType,
     Optional,
@@ -10,22 +11,78 @@ from lxml import etree
 from lxml.etree import _Element
 
 from pcs.common import reports
+from pcs.common.pacemaker.nvset import (
+    CibNvpairDto,
+    CibNvsetDto,
+)
+from pcs.common.types import CibNvsetType
 from pcs.lib import validate
 from pcs.lib.cib.rule import (
     RuleParseError,
     RuleRoot,
     parse_rule,
+    rule_element_to_dto,
     rule_to_cib,
 )
 from pcs.lib.cib.tools import (
     IdProvider,
     create_subelement_id,
 )
+from pcs.lib.xml_tools import export_attributes
 
 
 NvsetTag = NewType("NvsetTag", str)
 NVSET_INSTANCE = NvsetTag("instance_attributes")
 NVSET_META = NvsetTag("meta_attributes")
+
+_tag_to_type = {
+    cast(str, NVSET_META): CibNvsetType.META,
+    cast(str, NVSET_INSTANCE): CibNvsetType.INSTANCE,
+}
+
+
+def nvpair_element_to_dto(nvpair_el: Element) -> CibNvpairDto:
+    """
+    Export an nvpair xml element to its DTO
+    """
+    return CibNvpairDto(
+        nvpair_el.get("id", ""),
+        nvpair_el.get("name", ""),
+        nvpair_el.get("value", ""),
+    )
+
+
+def nvset_element_to_dto(nvset_el: Element) -> CibNvsetDto:
+    """
+    Export an nvset xml element to its DTO
+    """
+    rule_el = nvset_el.find("./rule")
+    return CibNvsetDto(
+        nvset_el.get("id", ""),
+        _tag_to_type[nvset_el.tag],
+        export_attributes(nvset_el, with_id=False),
+        None if rule_el is None else rule_element_to_dto(rule_el),
+        [
+            nvpair_element_to_dto(nvpair_el)
+            for nvpair_el in nvset_el.iterfind("./nvpair")
+        ],
+    )
+
+
+def find_nvsets(parent_element: Element) -> List[Element]:
+    """
+    Get all nvset xml elements in the given parent element
+    """
+    return cast(
+        # The xpath method has a complicated return value, but we know our xpath
+        # expression only returns elements.
+        List[Element],
+        cast(_Element, parent_element).xpath(
+            "./*[{nvset_tags}]".format(
+                nvset_tags=" or ".join(f"self::{tag}" for tag in _tag_to_type)
+            )
+        ),
+    )
 
 
 class ValidateNvsetAppendNew:

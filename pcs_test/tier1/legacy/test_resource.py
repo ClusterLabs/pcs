@@ -1421,9 +1421,9 @@ monitor interval=20 (A-monitor-interval-20)
              No alerts defined
 
             Resources Defaults:
-             No defaults set
+              No defaults set
             Operations Defaults:
-             No defaults set
+              No defaults set
 
             Cluster Properties:
 
@@ -1657,9 +1657,9 @@ monitor interval=20 (A-monitor-interval-20)
              No alerts defined
 
             Resources Defaults:
-             No defaults set
+              No defaults set
             Operations Defaults:
-             No defaults set
+              No defaults set
 
             Cluster Properties:
 

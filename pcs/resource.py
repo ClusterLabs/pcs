@@ -29,6 +29,8 @@ from pcs.cli.common.parse_args import (
     prepare_options_allowed,
     InputModifiers,
 )
+from pcs.cli.common.routing import create_router
+from pcs.cli.nvset import nvset_dto_list_to_lines
 from pcs.cli.reports import process_library_reports
 from pcs.cli.reports.output import error, warn
 from pcs.cli.resource.parse_args import (
@@ -170,54 +172,100 @@ def resource_op_defaults_set_add_cmd(
     )
 
 
+def _defaults_config_cmd(
+    lib_command: Callable[..., Any],
+    argv: Sequence[str],
+    modifiers: InputModifiers,
+) -> None:
+    """
+    Options:
+      * -f - CIB file
+      * --full - verbose output
+    """
+    if argv:
+        raise CmdLineInputError()
+    modifiers.ensure_only_supported("-f", "--full")
+    print(
+        "\n".join(
+            nvset_dto_list_to_lines(
+                lib_command(),
+                with_ids=modifiers.get("--full"),
+                text_if_empty="No defaults set",
+            )
+        )
+    )
+
+
+def resource_defaults_config_cmd(
+    lib: Any, argv: Sequence[str], modifiers: InputModifiers,
+) -> None:
+    """
+    Options:
+      * -f - CIB file
+      * --full - verbose output
+    """
+    return _defaults_config_cmd(
+        lib.cib_options.resource_defaults_config, argv, modifiers
+    )
+
+
+def resource_op_defaults_config_cmd(
+    lib: Any, argv: Sequence[str], modifiers: InputModifiers,
+) -> None:
+    """
+    Options:
+      * -f - CIB file
+      * --full - verbose output
+    """
+    return _defaults_config_cmd(
+        lib.cib_options.operation_defaults_config, argv, modifiers
+    )
+
+
 def resource_defaults_cmd(lib, argv, modifiers):
-    # TODO cleanup once all commands are here
-    # TODO Is there any syntax to be removed? Add it to deprecations.
     """
     Options:
       * -f - CIB file
       * --force - allow unknown options
     """
-    modifiers.ensure_only_supported("-f", "--force")
-    if not argv:
-        print("\n".join(show_defaults(utils.get_cib_dom(), "rsc_defaults")))
-        return
+    # TODO cleanup once all commands are here and move to routing if possible
+    # TODO Is there any syntax to be removed? Add it to deprecations.
+    if argv and "=" in argv[0]:
+        # TODO remove this legacy command, use a new one
+        return lib.cib_options.set_resources_defaults(prepare_options(argv))
 
-    sub_cmd = argv[0]
-    try:
-        if sub_cmd == "set-add":
-            resource_defaults_set_add_cmd(lib, argv[1:], modifiers)
-        else:
-            # TODO remove this legacy command, use a new one
-            lib.cib_options.set_resources_defaults(prepare_options(argv))
-    except CmdLineInputError as e:
-        utils.exit_on_cmdline_input_errror(e, "resource", ["defaults", sub_cmd])
+    router = create_router(
+        {
+            "config": resource_defaults_config_cmd,
+            "set-add": resource_defaults_set_add_cmd,
+        },
+        ["resource", "defaults"],
+        default_cmd="config",
+    )
+    return router(lib, argv, modifiers)
 
 
 def resource_op_defaults_cmd(lib, argv, modifiers):
-    # TODO cleanup once all commands are here
+    # TODO cleanup once all commands are here and move to routing if possible
     # TODO Is there any syntax to be removed? Add it to deprecations.
     """
     Options:
       * -f - CIB file
       * --force - allow unknown options
     """
-    modifiers.ensure_only_supported("-f", "--force")
-    if not argv:
-        print("\n".join(show_defaults(utils.get_cib_dom(), "op_defaults")))
-        return
+    if argv and "=" in argv[0]:
+        # TODO remove this legacy command, use a new one
+        return lib.cib_options.set_operations_defaults(prepare_options(argv))
 
-    sub_cmd = argv[0]
-    try:
-        if sub_cmd == "set-add":
-            resource_op_defaults_set_add_cmd(lib, argv[1:], modifiers)
-        else:
-            # TODO remove this legacy command, use a new one
-            lib.cib_options.set_operations_defaults(prepare_options(argv))
-    except CmdLineInputError as e:
-        utils.exit_on_cmdline_input_errror(
-            e, "resource", ["op", "defaults", sub_cmd]
-        )
+    router = create_router(
+        {
+            "config": resource_op_defaults_config_cmd,
+            "set-add": resource_op_defaults_set_add_cmd,
+        },
+        ["resource", "op", "defaults"],
+        default_cmd="config",
+    )
+    return router(lib, argv, modifiers)
 
 
 def resource_op_add_cmd(lib, argv, modifiers):
@@ -2626,30 +2674,6 @@ def resource_failcount_show(lib, resource, node, operation, interval, full):
     return "\n".join(result_lines)
 
 
-def show_defaults(cib_dom, def_type):
-    """
-    Commandline options: no options
-    """
-    defs = cib_dom.getElementsByTagName(def_type)
-    if not defs:
-        return ["No defaults set"]
-    defs = defs[0]
-
-    # TODO duplicite to _nvpairs_strings
-    key_val = {
-        nvpair.getAttribute("name"): nvpair.getAttribute("value")
-        for nvpair in defs.getElementsByTagName("nvpair")
-    }
-    if not key_val:
-        return ["No defaults set"]
-    strings = []
-    for name, value in sorted(key_val.items()):
-        if " " in value:
-            value = f'"{value}"'
-        strings.append(f"{name}={value}")
-    return strings
-
-
 def resource_node_lines(node):
     """
     Commandline options: no options
@@ -2760,6 +2784,7 @@ def _nvpairs_strings(node, parent_tag, extra_vars_dict=None):
     """
     Commandline options: no options
     """
+    # In the new architecture, this is implemented in pcs.cli.nvset.
     key_val = {
         nvpair.attrib["name"]: nvpair.attrib["value"]
         for nvpair in node.findall(f"{parent_tag}/nvpair")

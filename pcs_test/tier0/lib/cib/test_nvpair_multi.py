@@ -11,6 +11,15 @@ from pcs_test.tools.assertions import (
 from pcs_test.tools.xml import etree_to_str
 
 from pcs.common import reports
+from pcs.common.pacemaker.nvset import (
+    CibNvpairDto,
+    CibNvsetDto,
+)
+from pcs.common.pacemaker.rule import CibRuleExpressionDto
+from pcs.common.types import (
+    CibNvsetType,
+    CibRuleExpressionType,
+)
 from pcs.lib.cib import nvpair_multi
 from pcs.lib.cib.rule.expression_part import (
     BOOL_AND,
@@ -19,6 +28,104 @@ from pcs.lib.cib.rule.expression_part import (
     RscExpr,
 )
 from pcs.lib.cib.tools import IdProvider
+
+
+class NvpairElementToDto(TestCase):
+    def test_success(self):
+        xml = etree.fromstring(
+            """
+            <nvpair id="my-id" name="my-name" value="my-value" />
+        """
+        )
+        self.assertEqual(
+            nvpair_multi.nvpair_element_to_dto(xml),
+            CibNvpairDto("my-id", "my-name", "my-value"),
+        )
+
+
+class NvsetElementToDto(TestCase):
+    tag_type = (
+        ("meta_attributes", CibNvsetType.META),
+        ("instance_attributes", CibNvsetType.INSTANCE),
+    )
+
+    def test_minimal(self):
+        for tag, nvtype in self.tag_type:
+            with self.subTest(tag=tag, nvset_type=nvtype):
+                xml = etree.fromstring(f"""<{tag} id="my-id" />""")
+                self.assertEqual(
+                    nvpair_multi.nvset_element_to_dto(xml),
+                    CibNvsetDto("my-id", nvtype, {}, None, []),
+                )
+
+    def test_full(self):
+        for tag, nvtype in self.tag_type:
+            with self.subTest(tag=tag, nvset_type=nvtype):
+                xml = etree.fromstring(
+                    f"""
+                    <{tag} id="my-id" score="150">
+                        <rule id="my-id-rule" boolean-op="or">
+                            <op_expression id="my-id-rule-op" name="monitor" />
+                        </rule>
+                        <nvpair id="my-id-pair1" name="name1" value="value1" />
+                        <nvpair id="my-id-pair2" name="name2" value="value2" />
+                    </{tag}>
+                """
+                )
+                self.assertEqual(
+                    nvpair_multi.nvset_element_to_dto(xml),
+                    CibNvsetDto(
+                        "my-id",
+                        nvtype,
+                        {"score": "150"},
+                        CibRuleExpressionDto(
+                            "my-id-rule",
+                            CibRuleExpressionType.RULE,
+                            False,
+                            {"boolean-op": "or"},
+                            None,
+                            None,
+                            [
+                                CibRuleExpressionDto(
+                                    "my-id-rule-op",
+                                    CibRuleExpressionType.OP_EXPRESSION,
+                                    False,
+                                    {"name": "monitor"},
+                                    None,
+                                    None,
+                                    [],
+                                    "op monitor",
+                                ),
+                            ],
+                            "op monitor",
+                        ),
+                        [
+                            CibNvpairDto("my-id-pair1", "name1", "value1"),
+                            CibNvpairDto("my-id-pair2", "name2", "value2"),
+                        ],
+                    ),
+                )
+
+
+class FindNvsets(TestCase):
+    def test_empty(self):
+        xml = etree.fromstring("<parent />")
+        self.assertEqual([], nvpair_multi.find_nvsets(xml))
+
+    def test_full(self):
+        xml = etree.fromstring(
+            """
+            <parent>
+                <meta_attributes id="set1" />
+                <instance_attributes id="set2" />
+                <not_an_nvset id="set3" />
+            </parent>
+        """
+        )
+        self.assertEqual(
+            ["set1", "set2"],
+            [el.get("id") for el in nvpair_multi.find_nvsets(xml)],
+        )
 
 
 class ValidateNvsetAppendNew(TestCase):

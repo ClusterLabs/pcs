@@ -3,14 +3,17 @@ from unittest import TestCase
 
 from lxml import etree
 
+from pcs_test.tools.assertions import AssertPcsMixin
 from pcs_test.tools.cib import get_assert_pcs_effect_mixin
 from pcs_test.tools.misc import (
     get_test_resource as rc,
     get_tmp_file,
     skip_unless_pacemaker_supports_rsc_and_op_rules,
+    write_data_to_tmpfile,
     write_file_to_tmpfile,
 )
 from pcs_test.tools.pcs_runner import PcsRunner
+from pcs_test.tools.xml import XmlManipulation
 
 
 empty_cib = rc("cib-empty-2.0.xml")
@@ -21,7 +24,6 @@ class TestDefaultsMixin:
     def setUp(self):
         # pylint: disable=invalid-name
         self.temp_cib = get_tmp_file("tier1_cib_options")
-        write_file_to_tmpfile(empty_cib, self.temp_cib)
         self.pcs_runner = PcsRunner(self.temp_cib.name)
 
     def tearDown(self):
@@ -29,9 +31,77 @@ class TestDefaultsMixin:
         self.temp_cib.close()
 
 
+class DefaultsConfigMixin(TestDefaultsMixin, AssertPcsMixin):
+    cli_command = ""
+    prefix = ""
+
+    def setUp(self):
+        super().setUp()
+        xml_rsc = """
+            <rsc_defaults>
+                <meta_attributes id="rsc-set1" score="10">
+                    <nvpair id="rsc-set1-nv1" name="name1" value="rsc1"/>
+                    <nvpair id="rsc-set1-nv2" name="name2" value="rsc2"/>
+                </meta_attributes>
+                <meta_attributes id="rsc-setA">
+                    <nvpair id="rsc-setA-nv1" name="name1" value="rscA"/>
+                    <nvpair id="rsc-setA-nv2" name="name2" value="rscB"/>
+                </meta_attributes>
+            </rsc_defaults>
+        """
+        xml_op = """
+            <op_defaults>
+                <meta_attributes id="op-set1" score="10">
+                    <nvpair id="op-set1-nv1" name="name1" value="op1"/>
+                    <nvpair id="op-set1-nv2" name="name2" value="op2"/>
+                </meta_attributes>
+                <meta_attributes id="op-setA">
+                    <nvpair id="op-setA-nv1" name="name1" value="opA"/>
+                    <nvpair id="op-setA-nv2" name="name2" value="opB"/>
+                </meta_attributes>
+            </op_defaults>
+        """
+        xml_manip = XmlManipulation.from_file(empty_cib)
+        xml_manip.append_to_first_tag_name("configuration", xml_rsc, xml_op)
+        write_data_to_tmpfile(str(xml_manip), self.temp_cib)
+
+    def test_success(self):
+        self.assert_pcs_success(
+            self.cli_command,
+            stdout_full=dedent(
+                f"""\
+                Meta Attrs: {self.prefix}-set1 score=10
+                  name1={self.prefix}1
+                  name2={self.prefix}2
+                Meta Attrs: {self.prefix}-setA
+                  name1={self.prefix}A
+                  name2={self.prefix}B
+            """
+            ),
+        )
+
+
+class RscDefaultsConfig(
+    DefaultsConfigMixin, TestCase,
+):
+    cli_command = "resource defaults"
+    prefix = "rsc"
+
+
+class OpDefaultsConfig(
+    DefaultsConfigMixin, TestCase,
+):
+    cli_command = "resource op defaults"
+    prefix = "op"
+
+
 class DefaultsSetAddMixin(TestDefaultsMixin):
     cli_command = ""
     cib_tag = ""
+
+    def setUp(self):
+        super().setUp()
+        write_file_to_tmpfile(empty_cib, self.temp_cib)
 
     def test_no_args(self):
         self.assert_effect(

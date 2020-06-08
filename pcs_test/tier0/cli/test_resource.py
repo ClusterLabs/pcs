@@ -10,7 +10,16 @@ from pcs_test.tools.misc import dict_to_modifiers
 
 from pcs import resource
 from pcs.cli.common.errors import CmdLineInputError
+from pcs.common.pacemaker.nvset import (
+    CibNvpairDto,
+    CibNvsetDto,
+)
+from pcs.common.pacemaker.rule import CibRuleExpressionDto
 from pcs.common.reports import codes as report_codes
+from pcs.common.types import (
+    CibNvsetType,
+    CibRuleExpressionType,
+)
 
 
 class FailcountShow(TestCase):
@@ -1081,6 +1090,142 @@ class ResourceUnmanage(TestCase):
         self.resource.unmanage.assert_called_once_with(
             ["R1", "R2"], with_monitor=True
         )
+
+
+@mock.patch("pcs.resource.print")
+class DefaultsConfigMixin:
+    cli_command_name = ""
+    lib_command_name = ""
+
+    dto_list = [
+        CibNvsetDto(
+            "my-meta_attributes",
+            CibNvsetType.META,
+            {},
+            CibRuleExpressionDto(
+                "my-meta-rule",
+                CibRuleExpressionType.RULE,
+                False,
+                {"boolean-op": "and", "score": "INFINITY"},
+                None,
+                None,
+                [
+                    CibRuleExpressionDto(
+                        "my-meta-rule-rsc",
+                        CibRuleExpressionType.RSC_EXPRESSION,
+                        False,
+                        {
+                            "class": "ocf",
+                            "provider": "pacemaker",
+                            "type": "Dummy",
+                        },
+                        None,
+                        None,
+                        [],
+                        "resource ocf:pacemaker:Dummy",
+                    ),
+                ],
+                "resource ocf:pacemaker:Dummy",
+            ),
+            [
+                CibNvpairDto("my-id-pair1", "name1", "value1"),
+                CibNvpairDto("my-id-pair2", "name2", "value2"),
+            ],
+        ),
+        CibNvsetDto(
+            "instance",
+            CibNvsetType.INSTANCE,
+            {},
+            None,
+            [CibNvpairDto("instance-pair", "inst", "ance")],
+        ),
+        CibNvsetDto(
+            "meta-plain",
+            CibNvsetType.META,
+            {"score": "123"},
+            None,
+            [CibNvpairDto("my-id-pair3", "name 1", "value 1")],
+        ),
+    ]
+
+    def setUp(self):
+        # pylint: disable=invalid-name
+        self.lib = mock.Mock(spec_set=["cib_options"])
+        self.cib_options = mock.Mock(spec_set=[self.lib_command_name])
+        self.lib.cib_options = self.cib_options
+        self.lib_command = getattr(self.cib_options, self.lib_command_name)
+        self.cli_command = getattr(resource, self.cli_command_name)
+
+    def _call_cmd(self, argv, modifiers=None):
+        modifiers = modifiers or dict()
+        self.cli_command(self.lib, argv, dict_to_modifiers(modifiers))
+
+    def test_no_args(self, mock_print):
+        self.lib_command.return_value = []
+        self._call_cmd([])
+        self.lib_command.assert_called_once_with()
+        mock_print.assert_called_once_with("No defaults set")
+
+    def test_usage(self, mock_print):
+        with self.assertRaises(CmdLineInputError) as cm:
+            self._call_cmd(["arg"])
+        self.assertIsNone(cm.exception.message)
+        self.lib_command.assert_not_called()
+        mock_print.assert_not_called()
+
+    def test_full(self, mock_print):
+        self.lib_command.return_value = []
+        self._call_cmd([], {"full": True})
+        self.lib_command.assert_called_once_with()
+        mock_print.assert_called_once_with("No defaults set")
+
+    def test_print(self, mock_print):
+        self.lib_command.return_value = self.dto_list
+        self._call_cmd([])
+        self.lib_command.assert_called_once_with()
+        mock_print.assert_called_once_with(
+            dedent(
+                '''\
+                Meta Attrs: my-meta_attributes
+                  name1=value1
+                  name2=value2
+                  Rule: boolean-op=and score=INFINITY
+                    Expression: resource ocf:pacemaker:Dummy
+                Attributes: instance
+                  inst=ance
+                Meta Attrs: meta-plain score=123
+                  "name 1"="value 1"'''
+            )
+        )
+
+    def test_print_full(self, mock_print):
+        self.lib_command.return_value = self.dto_list
+        self._call_cmd([], {"full": True})
+        self.lib_command.assert_called_once_with()
+        mock_print.assert_called_once_with(
+            dedent(
+                '''\
+                Meta Attrs: my-meta_attributes
+                  name1=value1
+                  name2=value2
+                  Rule: boolean-op=and score=INFINITY (id:my-meta-rule)
+                    Expression: resource ocf:pacemaker:Dummy (id:my-meta-rule-rsc)
+                Attributes: instance
+                  inst=ance
+                Meta Attrs: meta-plain score=123
+                  "name 1"="value 1"'''
+            )
+        )
+
+
+class RscDefaultsConfig(DefaultsConfigMixin, TestCase):
+    cli_command_name = "resource_defaults_config_cmd"
+    lib_command_name = "resource_defaults_config"
+
+
+class OpDefaultsConfig(DefaultsConfigMixin, TestCase):
+    cli_command_name = "resource_op_defaults_config_cmd"
+    lib_command_name = "operation_defaults_config"
 
 
 class DefaultsSetAddMixin:

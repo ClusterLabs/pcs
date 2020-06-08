@@ -2,15 +2,19 @@ from functools import partial
 from typing import (
     Any,
     Container,
+    List,
     Mapping,
     Optional,
 )
 
 from pcs.common import reports
+from pcs.common.pacemaker.nvset import CibNvsetDto
 from pcs.common.reports.item import ReportItem
 from pcs.common.tools import Version
-from pcs.lib.cib import nvpair_multi
-from pcs.lib.cib import sections
+from pcs.lib.cib import (
+    nvpair_multi,
+    sections,
+)
 from pcs.lib.cib.nvpair import arrange_first_meta_attributes
 from pcs.lib.cib.tools import IdProvider
 from pcs.lib.env import LibraryEnvironment
@@ -33,7 +37,7 @@ def resource_defaults_create(
     nvset_rule -- optional rule describing when the created nvset applies
     force_flags -- list of flags codes
     """
-    return __defaults_create(
+    return _defaults_create(
         env,
         sections.RSC_DEFAULTS,
         dict(rule_allows_rsc_expr=True, rule_allows_op_expr=False),
@@ -60,7 +64,7 @@ def operation_defaults_create(
     nvset_rule -- optional rule describing when the created nvset applies
     force_flags -- list of flags codes
     """
-    return __defaults_create(
+    return _defaults_create(
         env,
         sections.OP_DEFAULTS,
         dict(rule_allows_rsc_expr=True, rule_allows_op_expr=True),
@@ -71,7 +75,7 @@ def operation_defaults_create(
     )
 
 
-def __defaults_create(
+def _defaults_create(
     env: LibraryEnvironment,
     cib_section: str,
     validator_options: Mapping[str, Any],
@@ -118,6 +122,31 @@ def __defaults_create(
         ReportItem.warning(reports.messages.DefaultsCanBeOverriden())
     )
     env.push_cib()
+
+
+def resource_defaults_config(env: LibraryEnvironment) -> List[CibNvsetDto]:
+    """
+    List all resource defaults nvsets
+    """
+    return _defaults_config(env, sections.RSC_DEFAULTS)
+
+
+def operation_defaults_config(env: LibraryEnvironment) -> List[CibNvsetDto]:
+    """
+    List all operation defaults nvsets
+    """
+    return _defaults_config(env, sections.OP_DEFAULTS)
+
+
+def _defaults_config(
+    env: LibraryEnvironment, cib_section: str,
+) -> List[CibNvsetDto]:
+    return [
+        nvpair_multi.nvset_element_to_dto(nvset_el)
+        for nvset_el in nvpair_multi.find_nvsets(
+            sections.get(env.get_cib(), cib_section)
+        )
+    ]
 
 
 def _set_any_defaults(

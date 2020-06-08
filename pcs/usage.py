@@ -442,10 +442,14 @@ Commands:
     op remove <operation id>
         Remove the specified operation id.
 
-    op defaults [options]
-        Set default values for operations, if no options are passed, lists
-        currently configured defaults. Defaults do not apply to resources which
-        override them with their own defined operations.
+    op defaults [config] [--full]
+        List currently configured default values for operations. If --full is
+        specified, also list ids.
+
+    op defaults <options>
+        Set default values for operations.
+        NOTE: Defaults do not apply to resources which override them with their
+        own defined values.
 
     op defaults set-add [<set options>] [values <name>=<value>...]
             [rule <expression>]
@@ -575,10 +579,14 @@ Commands:
         --monitor is specified, disable all monitor operations of the
         resources.
 
-    defaults [options]
-        Set default values for resources, if no options are passed, lists
-        currently configured defaults. Defaults do not apply to resources which
-        override them with their own defined values.
+    defaults [config] [--full]
+        List currently configured default values for resources. If --full is
+        specified, also list ids.
+
+    defaults <options>
+        Set default values for resources.
+        NOTE: Defaults do not apply to resources which override them with their
+        own defined values.
 
     defaults set-add [<set options>] [values <name>=<value>...]
             [rule <expression>]

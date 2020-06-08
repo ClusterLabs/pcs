@@ -246,9 +246,9 @@ class PcsConfigTagsTest(TestTagMixin, TestCase):
          No alerts defined
 
         Resources Defaults:
-         No defaults set
+          No defaults set
         Operations Defaults:
-         No defaults set
+          No defaults set
 
         Cluster Properties:
         {tags}

@@ -12,7 +12,6 @@ from pcs.lib.cib.rule.expression_part import (
     BoolExpr,
     OpExpr,
     RscExpr,
-    RuleExprPart,
 )
 from pcs.lib.cib.tools import IdProvider
 
