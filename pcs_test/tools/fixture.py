@@ -4,6 +4,9 @@ from pcs.common.reports import ReportItemSeverity as severities
 from pcs.common.reports import codes as report_codes
 
 
+ALL_RESOURCE_XML_TAGS = ["bundle", "clone", "group", "master", "primitive"]
+
+
 def state_node(
     id,
     name,
@@ -194,17 +197,19 @@ def report_not_found(
             "context_type": context_type,
             "context_id": context_id,
             "id": res_id,
-            "expected_types": [
-                "bundle",
-                "clone",
-                "group",
-                "master",
-                "primitive",
-            ]
-            if expected_types is None
-            else expected_types,
+            "expected_types": (
+                ALL_RESOURCE_XML_TAGS
+                if expected_types is None
+                else expected_types
+            ),
         },
         None,
+    )
+
+
+def report_not_resource_or_tag(element_id):
+    return report_not_found(
+        element_id, expected_types=sorted(ALL_RESOURCE_XML_TAGS + ["tag"])
     )
 
 

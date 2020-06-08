@@ -848,3 +848,118 @@ class ResourceSafeDisable(TestCase):
         self.resource.disable.assert_not_called()
         self.resource.disable_safe.assert_not_called()
         self.resource.disable_simulate.assert_not_called()
+
+
+class ResourceEnable(TestCase):
+    def setUp(self):
+        self.lib = mock.Mock(spec_set=["resource"])
+        self.resource = mock.Mock(spec_set=["enable"])
+        self.lib.resource = self.resource
+
+    def test_no_args(self):
+        with self.assertRaises(CmdLineInputError) as cm:
+            resource.resource_enable_cmd(
+                self.lib, [], dict_to_modifiers(dict())
+            )
+        self.assertEqual(
+            cm.exception.message, "You must specify resource(s) to enable"
+        )
+        self.resource.enable.assert_not_called()
+
+    def test_one_resource(self):
+        resource.resource_enable_cmd(
+            self.lib, ["R1"], dict_to_modifiers(dict())
+        )
+        self.resource.enable.assert_called_once_with(["R1"], False)
+
+    def test_more_resources(self):
+        resource.resource_enable_cmd(
+            self.lib, ["R1", "R2"], dict_to_modifiers(dict())
+        )
+        self.resource.enable.assert_called_once_with(["R1", "R2"], False)
+
+    def test_wait(self):
+        resource.resource_enable_cmd(
+            self.lib, ["R1", "R2"], dict_to_modifiers(dict(wait="10")),
+        )
+        self.resource.enable.assert_called_once_with(["R1", "R2"], "10")
+
+
+class ResourceManage(TestCase):
+    def setUp(self):
+        self.lib = mock.Mock(spec_set=["resource"])
+        self.resource = mock.Mock(spec_set=["manage"])
+        self.lib.resource = self.resource
+
+    def test_no_args(self):
+        with self.assertRaises(CmdLineInputError) as cm:
+            resource.resource_manage_cmd(
+                self.lib, [], dict_to_modifiers(dict())
+            )
+        self.assertEqual(
+            cm.exception.message, "You must specify resource(s) to manage"
+        )
+        self.resource.manage.assert_not_called()
+
+    def test_one_resource(self):
+        resource.resource_manage_cmd(
+            self.lib, ["R1"], dict_to_modifiers(dict())
+        )
+        self.resource.manage.assert_called_once_with(["R1"], with_monitor=False)
+
+    def test_more_resources(self):
+        resource.resource_manage_cmd(
+            self.lib, ["R1", "R2"], dict_to_modifiers(dict())
+        )
+        self.resource.manage.assert_called_once_with(
+            ["R1", "R2"], with_monitor=False
+        )
+
+    def test_monitor(self):
+        resource.resource_manage_cmd(
+            self.lib, ["R1", "R2"], dict_to_modifiers(dict(monitor=True)),
+        )
+        self.resource.manage.assert_called_once_with(
+            ["R1", "R2"], with_monitor=True
+        )
+
+
+class ResourceUnmanage(TestCase):
+    def setUp(self):
+        self.lib = mock.Mock(spec_set=["resource"])
+        self.resource = mock.Mock(spec_set=["unmanage"])
+        self.lib.resource = self.resource
+
+    def test_no_args(self):
+        with self.assertRaises(CmdLineInputError) as cm:
+            resource.resource_unmanage_cmd(
+                self.lib, [], dict_to_modifiers(dict())
+            )
+        self.assertEqual(
+            cm.exception.message, "You must specify resource(s) to unmanage"
+        )
+        self.resource.unmanage.assert_not_called()
+
+    def test_one_resource(self):
+        resource.resource_unmanage_cmd(
+            self.lib, ["R1"], dict_to_modifiers(dict())
+        )
+        self.resource.unmanage.assert_called_once_with(
+            ["R1"], with_monitor=False
+        )
+
+    def test_more_resources(self):
+        resource.resource_unmanage_cmd(
+            self.lib, ["R1", "R2"], dict_to_modifiers(dict())
+        )
+        self.resource.unmanage.assert_called_once_with(
+            ["R1", "R2"], with_monitor=False
+        )
+
+    def test_monitor(self):
+        resource.resource_unmanage_cmd(
+            self.lib, ["R1", "R2"], dict_to_modifiers(dict(monitor=True)),
+        )
+        self.resource.unmanage.assert_called_once_with(
+            ["R1", "R2"], with_monitor=True
+        )

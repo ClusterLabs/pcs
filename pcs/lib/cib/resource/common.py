@@ -1,16 +1,18 @@
 from collections import namedtuple
 from typing import (
     cast,
+    Iterable,
     List,
     Optional,
     Set,
+    Tuple,
 )
 from xml.etree.ElementTree import Element
 
 from lxml.etree import _Element
 
 from pcs.common import reports
-from pcs.common.reports.item import ReportItem
+from pcs.common.reports.item import ReportItem, ReportItemList
 from pcs.lib.cib import nvpair
 from pcs.lib.cib.resource.bundle import (
     TAG as TAG_BUNDLE,
@@ -36,6 +38,11 @@ from pcs.lib.cib.resource.primitive import (
 )
 from pcs.lib.cib.tools import ElementSearcher
 from pcs.lib.xml_tools import find_parent
+
+
+ALL_RESOURCE_XML_TAGS = sorted(
+    TAG_CLONE_ALL + [TAG_GROUP, TAG_PRIMITIVE, TAG_BUNDLE]
+)
 
 
 def are_meta_disabled(meta_attributes):
@@ -101,10 +108,7 @@ def find_resources_and_report(
     if not additional_search:
         additional_search = lambda x: [x]
     if resource_tags is None:
-        resource_tags = sorted(
-            TAG_CLONE_ALL + [TAG_GROUP, TAG_PRIMITIVE, TAG_BUNDLE]
-        )
-
+        resource_tags = ALL_RESOURCE_XML_TAGS
     resource_el_list = []
     for res_id in resource_ids:
         searcher = ElementSearcher(resource_tags, res_id, context_element)
@@ -113,6 +117,74 @@ def find_resources_and_report(
         else:
             report_list.extend(searcher.get_errors())
     return resource_el_list
+
+
+def expand_tags_to_resources(
+    resources_section: Element, resource_or_tag_el_list: Iterable[Element],
+) -> List[Element]:
+    """
+    Substitute tag elements in the given list with resource elements which tags
+    refer to.
+
+    resources_section -- element resources of a cib tree
+    resource_or_tag_el_list -- element list which contains tag or resource
+        elements
+    """
+    only_resources_set = set()
+    for el in resource_or_tag_el_list:
+        if el.tag == "tag":
+            for _id in [
+                obj_ref.get("id", "") for obj_ref in el.findall("obj_ref")
+            ]:
+                searcher = ElementSearcher(
+                    ALL_RESOURCE_XML_TAGS, _id, resources_section,
+                )
+                if searcher.element_found():
+                    only_resources_set.add(searcher.get_element())
+        else:
+            only_resources_set.add(el)
+    return list(only_resources_set)
+
+
+def find_resources_or_tags(
+    cib: Element, id_list: Iterable[str],
+) -> Tuple[List[Element], ReportItemList]:
+    """
+    Find resource elements by using resource or tag ids.
+
+    cib -- cib element
+    id_list -- resource or tag ids
+    """
+    resource_or_tag_el_list = []
+    not_found_id_list: List[str] = []
+    for _id in set(id_list):
+        xpath_result = cast(_Element, cib).xpath(
+            """
+            /cib/configuration/resources//*[{resource_tags}][@id="{_id}"]
+            |
+            /cib/configuration/tags/tag[@id="{_id}"]
+            """.format(
+                _id=_id,
+                resource_tags=" or ".join(
+                    f"self::{tag}" for tag in ALL_RESOURCE_XML_TAGS
+                ),
+            )
+        )
+        if xpath_result:
+            resource_or_tag_el_list.append(cast(List[Element], xpath_result)[0])
+        else:
+            not_found_id_list.append(_id)
+
+    report_list: ReportItemList = []
+    for _id in sorted(not_found_id_list):
+        report_list.append(
+            ReportItem.error(
+                reports.messages.IdNotFound(
+                    _id, sorted(ALL_RESOURCE_XML_TAGS + ["tag"]),
+                ),
+            ),
+        )
+    return resource_or_tag_el_list, report_list
 
 
 def find_primitives(resource_el: Element) -> List[Element]:

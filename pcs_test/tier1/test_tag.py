@@ -411,7 +411,7 @@ class ResourceRemoveDeleteBase(TestTagMixin):
             "referenced in {tags}: {tag_list}\n".format(
                 resource=resource,
                 tags="tags" if len(tags) > 1 else "the tag",
-                tag_list="', '".join(tags),
+                tag_list=", ".join(f"'{tag}'" for tag in tags),
             )
         )
 

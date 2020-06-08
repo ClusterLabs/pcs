@@ -1,6 +1,7 @@
 # pylint: disable=too-many-lines,line-too-long
 from unittest import mock, TestCase
 
+from pcs_test.tier0.lib.commands.tag.tag_common import fixture_tags_xml
 from pcs_test.tools import fixture
 from pcs_test.tools.command_env import get_env_tools
 from pcs_test.tools.misc import (
@@ -16,6 +17,7 @@ from pcs.lib.errors import LibraryError
 
 
 TIMEOUT = 10
+
 
 fixture_primitive_cib_enabled = """
     <resources>
@@ -558,6 +560,9 @@ fixture_bundle_status_unmanaged = fixture_bundle_status_template.format(
 )
 
 
+fixture_tag = fixture_tags_xml([("T", ("A", "B"))])
+
+
 def fixture_report_unmanaged(resource_id):
     return (
         severities.WARNING,
@@ -576,8 +581,9 @@ class DisablePrimitive(TestCase):
 
         self.env_assist.assert_raise_library_error(
             lambda: resource.disable(self.env_assist.get_env(), ["B"], False),
-            [fixture.report_not_found("B", "resources")],
-            expected_in_processor=False,
+        )
+        self.env_assist.assert_reports(
+            [fixture.report_not_resource_or_tag("B")]
         )
 
     def test_nonexistent_resource_in_status(self):
@@ -630,8 +636,9 @@ class EnablePrimitive(TestCase):
 
         self.env_assist.assert_raise_library_error(
             lambda: resource.enable(self.env_assist.get_env(), ["B"], False),
-            [fixture.report_not_found("B", "resources")],
-            expected_in_processor=False,
+        )
+        self.env_assist.assert_reports(
+            [fixture.report_not_resource_or_tag("B")]
         )
 
     def test_nonexistent_resource_in_status(self):
@@ -802,11 +809,12 @@ class MoreResources(TestCase):
             lambda: resource.enable(
                 self.env_assist.get_env(), ["B", "X", "Y", "A"], wait=False
             ),
+        )
+        self.env_assist.assert_reports(
             [
-                fixture.report_not_found("X", "resources"),
-                fixture.report_not_found("Y", "resources"),
+                fixture.report_not_resource_or_tag("X"),
+                fixture.report_not_resource_or_tag("Y"),
             ],
-            expected_in_processor=False,
         )
 
     def test_bad_resource_disable(self):
@@ -816,11 +824,12 @@ class MoreResources(TestCase):
             lambda: resource.disable(
                 self.env_assist.get_env(), ["B", "X", "Y", "A"], wait=False
             ),
+        )
+        self.env_assist.assert_reports(
             [
-                fixture.report_not_found("X", "resources"),
-                fixture.report_not_found("Y", "resources"),
+                fixture.report_not_resource_or_tag("X"),
+                fixture.report_not_resource_or_tag("Y"),
             ],
-            expected_in_processor=False,
         )
 
 
@@ -868,8 +877,9 @@ class Wait(TestCase):
 
         self.env_assist.assert_raise_library_error(
             lambda: resource.enable(self.env_assist.get_env(), ["B"], TIMEOUT),
-            [fixture.report_not_found("B", "resources"),],
-            expected_in_processor=False,
+        )
+        self.env_assist.assert_reports(
+            [fixture.report_not_resource_or_tag("B")]
         )
 
     def test_disable_dont_wait_on_error(self):
@@ -877,8 +887,9 @@ class Wait(TestCase):
 
         self.env_assist.assert_raise_library_error(
             lambda: resource.disable(self.env_assist.get_env(), ["B"], TIMEOUT),
-            [fixture.report_not_found("B", "resources"),],
-            expected_in_processor=False,
+        )
+        self.env_assist.assert_reports(
+            [fixture.report_not_resource_or_tag("B")]
         )
 
     def test_enable_resource_stopped(self):
@@ -1833,11 +1844,12 @@ class DisableSimulate(TestCase):
         self.config.runner.cib.load()
         self.env_assist.assert_raise_library_error(
             lambda: resource.disable_simulate(self.env_assist.get_env(), ["A"]),
-            [fixture.report_not_found("A", "resources"),],
-            expected_in_processor=False,
+        )
+        self.env_assist.assert_reports(
+            [fixture.report_not_resource_or_tag("A")],
         )
 
-    def test_success(self, mock_write_tmpfile):
+    def test_success_resource_id(self, mock_write_tmpfile):
         mock_write_tmpfile.side_effect = [
             self.tmpfile_new_cib,
             self.tmpfile_transitions,
@@ -1855,6 +1867,30 @@ class DisableSimulate(TestCase):
         )
 
         result = resource.disable_simulate(self.env_assist.get_env(), ["A"])
+        self.assertEqual("simulate output", result)
+
+    def test_success_with_tag_id(self, mock_write_tmpfile):
+        mock_write_tmpfile.side_effect = [
+            self.tmpfile_new_cib,
+            self.tmpfile_transitions,
+            AssertionError("No other write_tmpfile call expected"),
+        ]
+        (
+            self.config.runner.cib.load(
+                resources=fixture_two_primitives_cib_enabled, tags=fixture_tag,
+            )
+            .runner.pcmk.load_state(
+                resources=fixture_two_primitives_status_managed
+            )
+            .runner.pcmk.simulate_cib(
+                self.tmpfile_new_cib.name,
+                self.tmpfile_transitions.name,
+                stdout="simulate output",
+                resources=fixture_two_primitives_cib_disabled_both,
+            )
+        )
+
+        result = resource.disable_simulate(self.env_assist.get_env(), ["T"])
         self.assertEqual("simulate output", result)
 
     def test_simulate_error(self, mock_write_tmpfile):
@@ -2105,8 +2141,9 @@ class DisableSafeMixin:
             lambda: resource.disable_safe(
                 self.env_assist.get_env(), ["A"], self.strict, False
             ),
-            [fixture.report_not_found("A", "resources"),],
-            expected_in_processor=False,
+        )
+        self.env_assist.assert_reports(
+            [fixture.report_not_resource_or_tag("A")]
         )
 
     def test_simulate_error(self, mock_write_tmpfile):
@@ -2144,6 +2181,35 @@ class DisableSafeMixin:
         )
         resource.disable_safe(
             self.env_assist.get_env(), ["A", "B"], self.strict, False,
+        )
+
+    def test_resources_in_tag_stopped(self, mock_write_tmpfile):
+        self.tmpfile_transitions.read.return_value = (
+            self.fixture_transitions_both_stopped
+        )
+        mock_write_tmpfile.side_effect = [
+            self.tmpfile_new_cib,
+            self.tmpfile_transitions,
+            AssertionError("No other write_tmpfile call expected"),
+        ]
+        (
+            self.config.runner.cib.load(
+                resources=fixture_two_primitives_cib_enabled,
+                tags=fixture_tags_xml([("T1", ("A", "B"))]),
+            )
+            .runner.pcmk.load_state(
+                resources=fixture_two_primitives_status_managed
+            )
+            .runner.pcmk.simulate_cib(
+                self.tmpfile_new_cib.name,
+                self.tmpfile_transitions.name,
+                stdout="simulate output",
+                resources=fixture_two_primitives_cib_disabled_both,
+            )
+            .env.push_cib(resources=fixture_two_primitives_cib_disabled_both)
+        )
+        resource.disable_safe(
+            self.env_assist.get_env(), ["T1"], self.strict, False,
         )
 
     def test_other_resources_stopped(self, mock_write_tmpfile):
@@ -2589,3 +2655,40 @@ class DisableSafeStrict(DisableSafeMixin, TestCase):
             ],
             expected_in_processor=False,
         )
+
+
+class DisableTags(TestCase):
+    def setUp(self):
+        self.env_assist, self.config = get_env_tools(test_case=self)
+
+    def test_tag_id(self):
+        (
+            self.config.runner.cib.load(
+                resources=fixture_two_primitives_cib_enabled, tags=fixture_tag,
+            )
+            .runner.pcmk.load_state(
+                resources=fixture_two_primitives_status_managed,
+            )
+            .env.push_cib(resources=fixture_two_primitives_cib_disabled_both)
+        )
+        resource.disable(self.env_assist.get_env(), ["T"], False)
+
+
+class EnableTags(TestCase):
+    def setUp(self):
+        self.env_assist, self.config = get_env_tools(test_case=self)
+
+    def test_tag_id(self):
+        (
+            self.config.runner.cib.load(
+                resources=fixture_two_primitives_cib_disabled_both,
+                tags=fixture_tag,
+            )
+            .runner.pcmk.load_state(
+                resources=fixture_two_primitives_status_managed,
+            )
+            .env.push_cib(
+                resources=fixture_two_primitives_cib_enabled_with_meta_both,
+            )
+        )
+        resource.enable(self.env_assist.get_env(), ["T"], False)

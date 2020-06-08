@@ -3,10 +3,12 @@ from contextlib import contextmanager
 from functools import partial
 from typing import (
     Any,
+    Callable,
     Iterable,
-    List,
     Mapping,
+    Optional,
     Set,
+    Union,
 )
 from xml.etree.ElementTree import Element
 
@@ -15,6 +17,7 @@ from pcs.common.interface import dto
 from pcs.common import reports
 from pcs.common.reports import ReportItemList
 from pcs.common.reports.item import ReportItem
+from pcs.common.reports.processor import ReportProcessor
 from pcs.common.tools import Version
 from pcs.lib.cib import (
     resource,
@@ -53,7 +56,6 @@ from pcs.lib.resource_agent import (
     find_valid_resource_agent_by_name as get_agent,
 )
 from pcs.lib.validate import ValueTimeInterval
-from pcs.lib.xml_tools import get_root
 
 
 @contextmanager
@@ -66,6 +68,17 @@ def resource_environment(
 ):
     env.ensure_wait_satisfiable(wait)
     yield get_resources(env.get_cib(required_cib_version))
+    _push_cib_wait(env, wait, wait_for_resource_ids, resource_state_reporter)
+
+
+def _push_cib_wait(
+    env: LibraryEnvironment,
+    wait: Optional[Union[bool, int]] = False,
+    wait_for_resource_ids: Optional[Iterable[str]] = None,
+    resource_state_reporter: Callable[
+        [Element, str], ReportItem
+    ] = info_resource_state,
+) -> None:
     env.push_cib(wait=wait)
     if wait is not False and wait_for_resource_ids:
         state = env.get_cluster_state()
@@ -859,43 +872,140 @@ def bundle_update(
         )
 
 
-def _disable_validate_and_edit_cib(env, resources_section, resource_ids):
-    id_provider = IdProvider(resources_section)
-    resource_el_list = _find_resources_or_raise(resources_section, resource_ids)
+def _disable_validate_and_edit_cib(
+    env: LibraryEnvironment, cib: Element, resource_or_tag_ids: Iterable[str],
+):
     if env.report_processor.report_list(
         _resource_list_enable_disable(
-            resource_el_list,
+            _find_resources_expand_tags_or_raise(
+                env.report_processor, cib, resource_or_tag_ids,
+            ),
             resource.common.disable,
-            id_provider,
+            IdProvider(cib),
             env.get_cluster_state(),
         )
     ).has_errors:
         raise LibraryError()
 
 
-def disable(env, resource_ids, wait):
+def disable(
+    env: LibraryEnvironment,
+    resource_or_tag_ids: Iterable[str],
+    wait: Optional[Union[bool, int]],
+):
     """
-    Disallow specified resource to be started by the cluster
+    Disallow specified resources to be started by the cluster
 
-    LibraryEnvironment env --
-    strings resource_ids -- ids of the resources to be disabled
-    mixed wait -- False: no wait, None: wait default timeout, int: wait timeout
+    env -- provides all for communication with externals
+    resource_or_tag_ids -- ids of the resources to become disabled, or in case
+        of tag ids, all resources in tags are to be disabled
+    wait -- False: no wait, None: wait default timeout, int: wait timeout
     """
-    with resource_environment(
-        env, wait, resource_ids, _ensure_disabled_after_wait(True)
-    ) as resources_section:
-        _disable_validate_and_edit_cib(env, resources_section, resource_ids)
+    env.ensure_wait_satisfiable(wait)
+    _disable_validate_and_edit_cib(env, env.get_cib(), resource_or_tag_ids)
+    _push_cib_wait(
+        env, wait, resource_or_tag_ids, _ensure_disabled_after_wait(True)
+    )
 
 
-def disable_safe(env: LibraryEnvironment, resource_ids, strict, wait):
+def disable_safe(
+    env: LibraryEnvironment,
+    resource_or_tag_ids: Iterable[str],
+    strict: bool,
+    wait: Optional[Union[bool, int]],
+):
     """
-    Disallow specified resource to be started by the cluster only if there is
+    Disallow specified resources to be started by the cluster only if there is
     no effect on other resources
 
-    env
-    strings resource_ids -- ids of the resources to be disabled
-    bool strict -- if False, allow resources to be migrated
-    mixed wait -- False: no wait, None: wait default timeout, int: wait timeout
+    env -- provides all for communication with externals
+    resource_or_tag_ids -- ids of the resources to become disabled, or in case
+        of tag ids, all resources in tags are to be disabled
+    strict -- if False, allow resources to be migrated
+    wait -- False: no wait, None: wait default timeout, int: wait timeout
+    """
+    # pylint: disable=too-many-locals
+    if not env.is_cib_live:
+        raise LibraryError(
+            ReportItem.error(
+                reports.messages.LiveEnvironmentRequired([file_type_codes.CIB])
+            )
+        )
+
+    env.ensure_wait_satisfiable(wait)
+    cib = env.get_cib()
+    resource_el_list = _find_resources_expand_tags_or_raise(
+        env.report_processor, cib, resource_or_tag_ids
+    )
+    if env.report_processor.report_list(
+        _resource_list_enable_disable(
+            resource_el_list,
+            resource.common.disable,
+            IdProvider(cib),
+            env.get_cluster_state(),
+        )
+    ).has_errors:
+        raise LibraryError()
+
+    inner_resources_names_set = set()
+    for resource_el in resource_el_list:
+        # pylint: disable=line-too-long
+        inner_resources_names_set.update(
+            {
+                inner_resource_el.get("id")
+                for inner_resource_el in resource.common.get_all_inner_resources(
+                    resource_el
+                )
+            }
+        )
+
+    plaintext_status, transitions, dummy_cib = simulate_cib(
+        env.cmd_runner(), cib,
+    )
+    simulated_operations = simulate_tools.get_operations_from_transitions(
+        transitions
+    )
+    resource_ids = sorted(el.get("id", "") for el in resource_el_list)
+    other_affected: Set[str] = set()
+    if strict:
+        other_affected = set(
+            simulate_tools.get_resources_from_operations(
+                simulated_operations, exclude=resource_ids
+            )
+        )
+    else:
+        other_affected = set(
+            simulate_tools.get_resources_left_stopped(
+                simulated_operations, exclude=resource_ids
+            )
+            + simulate_tools.get_resources_left_demoted(
+                simulated_operations, exclude=resource_ids
+            )
+        )
+
+    # Stopping a clone stops all its inner resources. That should not block
+    # stopping the clone.
+    other_affected = other_affected - inner_resources_names_set
+    if other_affected:
+        raise LibraryError(
+            ReportItem.error(
+                reports.messages.ResourceDisableAffectsOtherResources(
+                    resource_ids, sorted(other_affected), plaintext_status,
+                )
+            )
+        )
+    _push_cib_wait(env, wait, resource_ids, _ensure_disabled_after_wait(True))
+
+
+def disable_simulate(
+    env: LibraryEnvironment, resource_or_tag_ids: Iterable[str],
+):
+    """
+    Simulate disallowing specified resources to be started by the cluster
+
+    env -- provides all for communication with externals
+    resource_or_tag_ids -- ids of the resources to become disabled, or in case
+        of tag ids, all resources in tags are to be disabled
     """
     if not env.is_cib_live:
         raise LibraryError(
@@ -904,120 +1014,51 @@ def disable_safe(env: LibraryEnvironment, resource_ids, strict, wait):
             )
         )
 
-    with resource_environment(
-        env, wait, resource_ids, _ensure_disabled_after_wait(True)
-    ) as resources_section:
-        id_provider = IdProvider(resources_section)
-        resource_el_list = _find_resources_or_raise(
-            resources_section, resource_ids
-        )
-        if env.report_processor.report_list(
-            _resource_list_enable_disable(
-                resource_el_list,
-                resource.common.disable,
-                id_provider,
-                env.get_cluster_state(),
-            )
-        ).has_errors:
-            raise LibraryError()
-
-        inner_resources_names_set = set()
-        for resource_el in resource_el_list:
-            # pylint: disable=line-too-long
-            inner_resources_names_set.update(
-                {
-                    inner_resource_el.get("id")
-                    for inner_resource_el in resource.common.get_all_inner_resources(
-                        resource_el
-                    )
-                }
-            )
-
-        plaintext_status, transitions, dummy_cib = simulate_cib(
-            env.cmd_runner(), get_root(resources_section)
-        )
-        simulated_operations = simulate_tools.get_operations_from_transitions(
-            transitions
-        )
-        other_affected: Set[str] = set()
-        if strict:
-            other_affected = set(
-                simulate_tools.get_resources_from_operations(
-                    simulated_operations, exclude=resource_ids
-                )
-            )
-        else:
-            other_affected = set(
-                simulate_tools.get_resources_left_stopped(
-                    simulated_operations, exclude=resource_ids
-                )
-                + simulate_tools.get_resources_left_demoted(
-                    simulated_operations, exclude=resource_ids
-                )
-            )
-
-        # Stopping a clone stops all its inner resources. That should not block
-        # stopping the clone.
-        other_affected = other_affected - inner_resources_names_set
-        if other_affected:
-            raise LibraryError(
-                ReportItem.error(
-                    reports.messages.ResourceDisableAffectsOtherResources(
-                        sorted(resource_ids),
-                        sorted(other_affected),
-                        plaintext_status,
-                    )
-                )
-            )
-
-
-def disable_simulate(env, resource_ids):
-    """
-    Simulate disallowing specified resource to be started by the cluster
-
-    LibraryEnvironment env --
-    strings resource_ids -- ids of the resources to be disabled
-    """
-    if not env.is_cib_live:
-        raise LibraryError(
-            ReportItem.error(
-                reports.messages.LiveEnvironmentRequired([file_type_codes.CIB])
-            )
-        )
-
-    resources_section = get_resources(env.get_cib())
-    _disable_validate_and_edit_cib(env, resources_section, resource_ids)
+    cib = env.get_cib()
+    _disable_validate_and_edit_cib(env, cib, resource_or_tag_ids)
     plaintext_status, dummy_transitions, dummy_cib = simulate_cib(
-        env.cmd_runner(), get_root(resources_section)
+        env.cmd_runner(), cib,
     )
     return plaintext_status
 
 
-def enable(env, resource_ids, wait):
+def enable(
+    env: LibraryEnvironment,
+    resource_or_tag_ids: Iterable[str],
+    wait: Optional[Union[bool, int]],
+):
     """
-    Allow specified resource to be started by the cluster
-    LibraryEnvironment env --
-    strings resource_ids -- ids of the resources to be enabled
-    mixed wait -- False: no wait, None: wait default timeout, int: wait timeout
+    Allow specified resources to be started by the cluster
+
+    env -- provides all for communication with externals
+    resource_or_tag_ids -- ids of the resources to become enabled, or in case
+        of tag ids, all resources in tags are to be enabled
+    wait -- False: no wait, None: wait default timeout, int: wait timeout
     """
-    with resource_environment(
-        env, wait, resource_ids, _ensure_disabled_after_wait(False)
-    ) as resources_section:
-        id_provider = IdProvider(resources_section)
-        resource_el_list = _find_resources_or_raise(
-            resources_section,
-            resource_ids,
-            resource.common.find_resources_to_enable,
+    env.ensure_wait_satisfiable(wait)
+    cib = env.get_cib()
+    resource_el_list = _find_resources_expand_tags_or_raise(
+        env.report_processor, cib, resource_or_tag_ids
+    )
+    to_enable_set = set()
+    for el in resource_el_list:
+        to_enable_set.update(resource.common.find_resources_to_enable(el))
+
+    if env.report_processor.report_list(
+        _resource_list_enable_disable(
+            to_enable_set,
+            resource.common.enable,
+            IdProvider(cib),
+            env.get_cluster_state(),
         )
-        if env.report_processor.report_list(
-            _resource_list_enable_disable(
-                resource_el_list,
-                resource.common.enable,
-                id_provider,
-                env.get_cluster_state(),
-            )
-        ).has_errors:
-            raise LibraryError()
+    ).has_errors:
+        raise LibraryError()
+    _push_cib_wait(
+        env,
+        wait,
+        [el.get("id", "") for el in resource_el_list],
+        _ensure_disabled_after_wait(False),
+    )
 
 
 def _resource_list_enable_disable(
@@ -1048,90 +1089,94 @@ def _resource_list_enable_disable(
 
 def unmanage(
     env: LibraryEnvironment,
-    resource_ids: Iterable[str],
+    resource_or_tag_ids: Iterable[str],
     with_monitor: bool = False,
 ) -> None:
     """
     Set specified resources not to be managed by the cluster
 
-    env -- environment
-    resource_ids -- ids of the resources to become unmanaged
+    env -- provides all for communication with externals
+    resource_or_tag_ids -- ids of the resources to become unmanaged, or in case
+        of tag ids, all resources in tags are to be managed
     with_monitor -- disable resources' monitor operations
     """
-    with resource_environment(env) as resources_section:
-        id_provider = IdProvider(resources_section)
-        resource_el_list = _find_resources_or_raise(
-            resources_section,
-            resource_ids,
-            resource.common.find_resources_to_unmanage,
-        )
-        primitives = []
+    cib = env.get_cib()
+    to_unmanage_set = set()
+    for el in _find_resources_expand_tags_or_raise(
+        env.report_processor, cib, resource_or_tag_ids
+    ):
+        to_unmanage_set.update(resource.common.find_resources_to_unmanage(el))
 
-        for resource_el in resource_el_list:
-            resource.common.unmanage(resource_el, id_provider)
-            if with_monitor:
-                primitives.extend(resource.common.find_primitives(resource_el))
+    primitives_set = set()
+    for resource_el in to_unmanage_set:
+        resource.common.unmanage(resource_el, IdProvider(cib))
+        if with_monitor:
+            primitives_set.update(resource.common.find_primitives(resource_el))
 
-        for resource_el in set(primitives):
-            for op in resource.operations.get_resource_operations(
-                resource_el, ["monitor"]
-            ):
-                resource.operations.disable(op)
+    for resource_el in primitives_set:
+        for op in resource.operations.get_resource_operations(
+            resource_el, ["monitor"]
+        ):
+            resource.operations.disable(op)
+    env.push_cib()
 
 
 def manage(
     env: LibraryEnvironment,
-    resource_ids: Iterable[str],
+    resource_or_tag_ids: Iterable[str],
     with_monitor: bool = False,
 ) -> None:
     """
-    Set specified resource to be managed by the cluster
+    Set specified resources to be managed by the cluster
 
-    env -- environment
-    resource_ids -- ids of the resources to become managed
+    env -- provides all for communication with externals
+    resource_or_tag_ids -- ids of the resources to become managed, or in case
+        of tag id, all resources in tag are to be managed
     with_monitor -- enable resources' monitor operations
     """
-    with resource_environment(env) as resources_section:
-        id_provider = IdProvider(resources_section)
-        report_list: ReportItemList = []
-        resource_el_list = _find_resources_or_raise(
-            resources_section,
-            resource_ids,
-            resource.common.find_resources_to_manage,
+    cib = env.get_cib()
+    report_list: ReportItemList = []
+
+    to_manage_set = set()
+    for resource_el in _find_resources_expand_tags_or_raise(
+        env.report_processor, cib, resource_or_tag_ids
+    ):
+        to_manage_set.update(
+            resource.common.find_resources_to_manage(resource_el),
         )
-        primitives: List[Element] = []
 
-        for resource_el in resource_el_list:
-            resource.common.manage(resource_el, id_provider)
-            primitives.extend(resource.common.find_primitives(resource_el))
+    primitives_set = set()
+    for resource_el in to_manage_set:
+        resource.common.manage(resource_el, IdProvider(cib))
+        primitives_set.update(resource.common.find_primitives(resource_el))
 
-        for resource_el in sorted(
-            set(primitives), key=lambda element: element.get("id", "")
-        ):
-            op_list = resource.operations.get_resource_operations(
-                resource_el, ["monitor"]
-            )
-            if with_monitor:
-                for op in op_list:
-                    resource.operations.enable(op)
-            else:
-                monitor_enabled = False
-                for op in op_list:
-                    if resource.operations.is_enabled(op):
-                        monitor_enabled = True
-                        break
-                if op_list and not monitor_enabled:
-                    # do not advise enabling monitors if there are none defined
-                    report_list.append(
-                        ReportItem.warning(
-                            reports.messages.ResourceManagedNoMonitorEnabled(
-                                resource_el.get("id", "")
-                            )
+    for resource_el in sorted(
+        primitives_set, key=lambda element: element.get("id", "")
+    ):
+        op_list = resource.operations.get_resource_operations(
+            resource_el, ["monitor"]
+        )
+        if with_monitor:
+            for op in op_list:
+                resource.operations.enable(op)
+        else:
+            monitor_enabled = False
+            for op in op_list:
+                if resource.operations.is_enabled(op):
+                    monitor_enabled = True
+                    break
+            if op_list and not monitor_enabled:
+                # do not advise enabling monitors if there are none defined
+                report_list.append(
+                    ReportItem.warning(
+                        reports.messages.ResourceManagedNoMonitorEnabled(
+                            resource_el.get("id", "")
                         )
                     )
-
-        if env.report_processor.report_list(report_list).has_errors:
-            raise LibraryError()
+                )
+    if env.report_processor.report_list(report_list).has_errors:
+        raise LibraryError()
+    env.push_cib()
 
 
 def group_add(
@@ -1580,3 +1625,20 @@ def _find_resources_or_raise(
     if report_list:
         raise LibraryError(*report_list)
     return resource_el_list
+
+
+def _find_resources_expand_tags_or_raise(
+    report_processor: ReportProcessor,
+    cib: Element,
+    resource_or_tag_ids: Iterable[str],
+):
+    resources_section = get_resources(cib)
+    (
+        resource_or_tag_el_list,
+        report_list,
+    ) = resource.common.find_resources_or_tags(cib, resource_or_tag_ids)
+    if report_processor.report_list(report_list).has_errors:
+        raise LibraryError()
+    return resource.common.expand_tags_to_resources(
+        resources_section, resource_or_tag_el_list,
+    )

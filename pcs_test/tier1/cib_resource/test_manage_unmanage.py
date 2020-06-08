@@ -71,6 +71,13 @@ class ManageUnmanage(
                 )
             )
 
+    def fixture_tag(self, name, ids):
+        self.assert_pcs_success(
+            "tag create {tag_name} {ids}".format(
+                tag_name=name, ids=" ".join(ids),
+            )
+        )
+
     def test_unmanage_none(self):
         self.assert_pcs_fail(
             "resource unmanage",
@@ -181,8 +188,9 @@ class ManageUnmanage(
     def test_unmanage_more(self):
         self.fixture_resource("A")
         self.fixture_resource("B")
+        self.fixture_tag("TA", ["A"])
         self.assert_effect(
-            "resource unmanage A B",
+            "resource unmanage TA B",
             """
             <resources>
                 <primitive class="ocf" id="A" provider="heartbeat" type="Dummy">
@@ -216,8 +224,9 @@ class ManageUnmanage(
     def test_manage_more(self):
         self.fixture_resource("A", managed=False)
         self.fixture_resource("B", managed=False)
+        self.fixture_tag("TA", ["A"])
         self.assert_effect(
-            "resource manage A B",
+            "resource manage TA B",
             """
             <resources>
                 <primitive class="ocf" id="A" provider="heartbeat" type="Dummy">
@@ -245,7 +254,10 @@ class ManageUnmanage(
 
         self.assert_pcs_fail(
             "resource unmanage A B",
-            "Error: bundle/clone/group/resource 'B' does not exist\n",
+            (
+                "Error: bundle/clone/group/resource/tag 'B' does not exist\n"
+                "Error: Errors have occurred, therefore pcs is unable to continue\n"
+            ),
         )
         self.assert_resources_xml_in_cib(
             """
@@ -266,7 +278,10 @@ class ManageUnmanage(
 
         self.assert_pcs_fail(
             "resource manage A B",
-            "Error: bundle/clone/group/resource 'B' does not exist\n",
+            (
+                "Error: bundle/clone/group/resource/tag 'B' does not exist\n"
+                "Error: Errors have occurred, therefore pcs is unable to continue\n"
+            ),
         )
         self.assert_resources_xml_in_cib(
             """

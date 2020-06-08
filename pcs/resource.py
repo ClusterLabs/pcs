@@ -13,6 +13,7 @@ from pcs import (
     utils,
     constraint,
 )
+from pcs.common.str_tools import format_list
 from pcs.settings import (
     pacemaker_wait_timeout_status as PACEMAKER_WAIT_TIMEOUT_STATUS,
 )
@@ -1482,7 +1483,7 @@ def resource_remove(resource_id, output=True, is_remove_remote_context=False):
                 "referenced in {tags}: {tag_id_list}".format(
                     resource=resource_id,
                     tags="tags" if len(tag_id_list) > 1 else "the tag",
-                    tag_id_list="', '".join(tag_id_list),
+                    tag_id_list=format_list(tag_id_list),
                 )
             )
 
@@ -1780,6 +1781,15 @@ def remove_resource_references(
     Commandline options: no options
     NOTE: -f - will be used only if dom will be None
     """
+    for obj_ref in dom.getElementsByTagName("obj_ref"):
+        if obj_ref.getAttribute("id") == resource_id:
+            tag = obj_ref.parentNode
+            tag.removeChild(obj_ref)
+            if tag.getElementsByTagName(obj_ref).length == 0:
+                remove_resource_references(
+                    dom, tag.getAttribute("id"), output=output,
+                )
+                tag.parentNode.removeChild(tag)
     constraint.remove_constraints_containing(
         resource_id, output, constraints_element, dom
     )
@@ -1836,7 +1846,6 @@ def resource_group_rm(cib_dom, group_name, resource_ids):
         and len(resources_to_move) == res_in_group
     ):
         utils.err("Cannot remove all resources from a cloned group")
-
     target_node = group_match.parentNode
     if is_cloned_group and res_in_group > 1:
         target_node = dom.getElementsByTagName("resources")[0]
@@ -2117,7 +2126,7 @@ def resource_enable_cmd(lib, argv, modifiers):
     """
     modifiers.ensure_only_supported("--wait", "-f")
     if not argv:
-        utils.err("You must specify resource(s) to enable")
+        raise CmdLineInputError("You must specify resource(s) to enable")
     resources = argv
     lib.resource.enable(resources, modifiers.get("--wait"))
 
@@ -2323,7 +2332,7 @@ def resource_manage_cmd(lib, argv, modifiers):
     """
     modifiers.ensure_only_supported("-f", "--monitor")
     if not argv:
-        utils.err("You must specify resource(s) to manage")
+        raise CmdLineInputError("You must specify resource(s) to manage")
     resources = argv
     lib.resource.manage(resources, with_monitor=modifiers.get("--monitor"))
 
@@ -2336,7 +2345,7 @@ def resource_unmanage_cmd(lib, argv, modifiers):
     """
     modifiers.ensure_only_supported("-f", "--monitor")
     if not argv:
-        utils.err("You must specify resource(s) to unmanage")
+        raise CmdLineInputError("You must specify resource(s) to unmanage")
     resources = argv
     lib.resource.unmanage(resources, with_monitor=modifiers.get("--monitor"))
 

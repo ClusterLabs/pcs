@@ -273,7 +273,7 @@ Commands:
         Deletes the resource, group, bundle or clone (and all resources within
         the group/bundle/clone).
 
-    enable <resource id>... [--wait[=n]]
+    enable <resource id | tag id>... [--wait[=n]]
         Allow the cluster to start the resources. Depending on the rest of the
         configuration (constraints, options, failures, etc), the resources may
         remain stopped. If --wait is specified, pcs will wait up to 'n' seconds
@@ -281,7 +281,8 @@ Commands:
         started, or 1 if the resources have not yet started. If 'n' is not
         specified it defaults to 60 minutes.
 
-    disable <resource id>... [--safe [--no-strict]] [--simulate] [--wait[=n]]
+    disable <resource id | tag id>... [--safe [--no-strict]] [--simulate]
+            [--wait[=n]]
         Attempt to stop the resources if they are running and forbid the
         cluster from starting them again. Depending on the rest of the
         configuration (constraints, options, failures, etc), the resources may
@@ -298,8 +299,8 @@ Commands:
         if the resources have not stopped. If 'n' is not specified it defaults
         to 60 minutes.
 
-    safe-disable <resource id>... [--no-strict] [--simulate] [--wait[=n]]
-            [--force]
+    safe-disable <resource id | tag id>... [--no-strict] [--simulate]
+            [--wait[=n]] [--force]
         Attempt to stop the resources if they are running and forbid the
         cluster from starting them again. Depending on the rest of the
         configuration (constraints, options, failures, etc), the resources may
@@ -468,23 +469,23 @@ Commands:
         then return 0 on success or 1 on error. If 'n' is not specified it
         defaults to 60 minutes.
 
-    group delete <group id> <resource id> [resource id] ... [resource id]
-          [--wait[=n]]
-        Remove the specified resource(s) from the group, removing the group if
-        no resources remain in it. If --wait is specified, pcs will wait up to
-        'n' seconds for the operation to finish (including moving resources if
-        appropriate) and then return 0 on success or 1 on error. If 'n' is not
-        specified it defaults to 60 minutes.
+    group delete <group id> [resource id]... [--wait[=n]]
+        Remove the group (note: this does not remove any resources from the
+        cluster) or if resources are specified, remove the specified resources
+        from the group.  If --wait is specified, pcs will wait up to 'n' seconds
+        for the operation to finish (including moving resources if appropriate)
+        and the return 0 on success or 1 on error.  If 'n' is not specified it
+        defaults to 60 minutes.
 
-    group remove <group id> <resource id> [resource id] ... [resource id]
-          [--wait[=n]]
-        Remove the specified resource(s) from the group, removing the group if
-        no resources remain in it. If --wait is specified, pcs will wait up to
-        'n' seconds for the operation to finish (including moving resources if
-        appropriate) and then return 0 on success or 1 on error. If 'n' is not
-        specified it defaults to 60 minutes.
+    group remove <group id> [resource id]... [--wait[=n]]
+        Remove the group (note: this does not remove any resources from the
+        cluster) or if resources are specified, remove the specified resources
+        from the group.  If --wait is specified, pcs will wait up to 'n' seconds
+        for the operation to finish (including moving resources if appropriate)
+        and the return 0 on success or 1 on error.  If 'n' is not specified it
+        defaults to 60 minutes.
 
-    ungroup <group id> [resource id] ... [resource id] [--wait[=n]]
+    ungroup <group id> [resource id]... [--wait[=n]]
         Remove the group (note: this does not remove any resources from the
         cluster) or if resources are specified, remove the specified resources
         from the group.  If --wait is specified, pcs will wait up to 'n' seconds
@@ -546,11 +547,11 @@ Commands:
         moving resources if appropriate) and then return 0 on success or 1 on
         error. If 'n' is not specified it defaults to 60 minutes.
 
-    manage <resource id>... [--monitor]
+    manage <resource id | tag id>... [--monitor]
         Set resources listed to managed mode (default). If --monitor is
         specified, enable all monitor operations of the resources.
 
-    unmanage <resource id>... [--monitor]
+    unmanage <resource id | tag id>... [--monitor]
         Set resources listed to unmanaged mode. When a resource is in unmanaged
         mode, the cluster is not allowed to start nor stop the resource. If
         --monitor is specified, disable all monitor operations of the
