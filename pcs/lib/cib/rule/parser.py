@@ -162,7 +162,7 @@ def __get_rule_parser(
             # characters except whitespace (token separator), ":" (parts
             # separator) and "()" (brackets).
             pyparsing.Regex(
-                r"((?P<standard>[^\s:()]+):((?P<provider>[^\s:()]+):)?)?(?P<type>[^\s:()]+)"
+                r"(?P<standard>[^\s:()]+)?:(?P<provider>[^\s:()]+)?:(?P<type>[^\s:()]+)?"
             ).setName("<resource name>"),
         ]
     )

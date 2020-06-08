@@ -202,11 +202,13 @@ Expression looks like one of the following:
 .br
   op <operation name> [interval=<interval>]
 .br
-  resource [<standard>:[<provider>:]]<type>
+  resource [<standard>]:[<provider>]:[<type>]
 .br
   <expression> and|or <expression>
 .br
   ( <expression> )
+.br
+You may specify all or any of 'standard', 'provider' and 'type' in a resource expression. For example: 'resource ocf::' matches all resources of 'ocf' standard, while 'resource ::Dummy' matches all resources of 'Dummy' type regardless of their standard and provider.
 .br
 NOTE: Defaults do not apply to resources which override them with their own defined values.
 .TP
@@ -269,11 +271,13 @@ Set options are: id, score
 .br
 Expression looks like one of the following:
 .br
-  resource [<standard>:[<provider>:]]<type>
+  resource [<standard>]:[<provider>]:[<type>]
 .br
   <expression> and|or <expression>
 .br
   ( <expression> )
+.br
+You may specify all or any of 'standard', 'provider' and 'type' in a resource expression. For example: 'resource ocf::' matches all resources of 'ocf' standard, while 'resource ::Dummy' matches all resources of 'Dummy' type regardless of their standard and provider.
 .br
 NOTE: Defaults do not apply to resources which override them with their own defined values.
 .TP

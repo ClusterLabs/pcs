@@ -63,8 +63,8 @@ class SimpleBool(Base):
                     f"""
                         <rule id="X-rule" boolean-op="{op_out}" score="INFINITY">
                             <op_expression id="X-rule-op-start" name="start" />
-                            <rsc_expression id="X-rule-rsc-pcsd" class="systemd"
-                                type="pcsd"
+                            <rsc_expression id="X-rule-rsc-systemd-pcsd"
+                                class="systemd" type="pcsd"
                             />
                         </rule>
                     """,
@@ -92,20 +92,66 @@ class SimpleOp(Base):
 
 
 class SimpleRsc(Base):
-    def test_2_part(self):
+    def test_class(self):
         self.assert_cib(
-            RscExpr("systemd", None, "pcsd"),
+            RscExpr("ocf", None, None),
             """
-                <rsc_expression id="X-rsc-pcsd" class="systemd" type="pcsd" />
+                <rsc_expression id="X-rsc-ocf" class="ocf" />
             """,
         )
 
-    def test_3_part(self):
+    def test_provider(self):
+        self.assert_cib(
+            RscExpr(None, "pacemaker", None),
+            """
+                <rsc_expression id="X-rsc-pacemaker" provider="pacemaker" />
+            """,
+        )
+
+    def type(self):
+        self.assert_cib(
+            RscExpr(None, None, "Dummy"),
+            """
+                <rsc_expression id="X-rsc-Dummy" type="Dummy" />
+            """,
+        )
+
+    def test_provider_type(self):
+        self.assert_cib(
+            RscExpr(None, "pacemaker", "Dummy"),
+            """
+                <rsc_expression id="X-rsc-pacemaker-Dummy"
+                    provider="pacemaker" type="Dummy"
+                />
+            """,
+        )
+
+    def test_class_provider(self):
+        self.assert_cib(
+            RscExpr("ocf", "pacemaker", None),
+            """
+                <rsc_expression id="X-rsc-ocf-pacemaker"
+                    class="ocf" provider="pacemaker"
+                />
+            """,
+        )
+
+    def test_class_type(self):
+        self.assert_cib(
+            RscExpr("systemd", None, "pcsd"),
+            """
+                <rsc_expression id="X-rsc-systemd-pcsd"
+                    class="systemd" type="pcsd"
+                />
+            """,
+        )
+
+    def test_class_provider_type(self):
         self.assert_cib(
             RscExpr("ocf", "pacemaker", "Dummy"),
             """
-                <rsc_expression id="X-rsc-Dummy" class="ocf"
-                    provider="pacemaker" type="Dummy"
+                <rsc_expression id="X-rsc-ocf-pacemaker-Dummy"
+                    class="ocf" provider="pacemaker" type="Dummy"
                 />
             """,
         )
@@ -140,14 +186,14 @@ class Complex(Base):
             """
                 <rule id="X-rule" boolean-op="and" score="INFINITY">
                   <rule id="X-rule-rule" boolean-op="or">
-                    <rsc_expression id="X-rule-rule-rsc-Dummy"
+                    <rsc_expression id="X-rule-rule-rsc-ocf-pacemaker-Dummy"
                         class="ocf" provider="pacemaker" type="Dummy"
                     />
                     <op_expression id="X-rule-rule-op-start" name="start" />
-                    <rsc_expression id="X-rule-rule-rsc-pcsd"
+                    <rsc_expression id="X-rule-rule-rsc-systemd-pcsd"
                         class="systemd" type="pcsd"
                     />
-                    <rsc_expression id="X-rule-rule-rsc-Dummy-1"
+                    <rsc_expression id="X-rule-rule-rsc-ocf-heartbeat-Dummy"
                         class="ocf" provider="heartbeat" type="Dummy"
                     />
                   </rule>
@@ -155,7 +201,7 @@ class Complex(Base):
                     <op_expression id="X-rule-rule-1-op-monitor"
                         name="monitor" interval="30s"
                     />
-                    <rsc_expression id="X-rule-rule-1-rsc-Dummy"
+                    <rsc_expression id="X-rule-rule-1-rsc-ocf-pacemaker-Dummy"
                         class="ocf" provider="pacemaker" type="Dummy"
                     />
                     <op_expression id="X-rule-rule-1-op-start" name="start" />

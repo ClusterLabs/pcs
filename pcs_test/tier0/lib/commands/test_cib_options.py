@@ -70,7 +70,7 @@ class DefaultsCreateMixin:
                         boolean-op="and" score="INFINITY"
                     >
                         <rsc_expression
-                            id="{self.tag}-meta_attributes-rule-rsc-Dummy"
+                            id="{self.tag}-meta_attributes-rule-rsc-ocf-pacemaker-Dummy"
                             class="ocf" provider="pacemaker" type="Dummy"
                         />
                     </rule>
@@ -107,7 +107,7 @@ class DefaultsCreateMixin:
             <{self.tag}>
                 <meta_attributes id="my-id" score="10">
                     <rule id="my-id-rule" boolean-op="and" score="INFINITY">
-                        <rsc_expression id="my-id-rule-rsc-Dummy"
+                        <rsc_expression id="my-id-rule-rsc-ocf-pacemaker-Dummy"
                             class="ocf" provider="pacemaker" type="Dummy"
                         />
                     </rule>

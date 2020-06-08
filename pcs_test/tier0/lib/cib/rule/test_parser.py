@@ -9,7 +9,15 @@ class Parser(TestCase):
         test_data = [
             ("", "BOOL AND"),
             (
-                "resource dummy",
+                "resource ::",
+                dedent(
+                    """\
+                    BOOL AND
+                      RESOURCE"""
+                ),
+            ),
+            (
+                "resource ::dummy",
                 dedent(
                     """\
                     BOOL AND
@@ -17,11 +25,43 @@ class Parser(TestCase):
                 ),
             ),
             (
-                "resource systemd:Dummy",
+                "resource ocf::",
+                dedent(
+                    """\
+                    BOOL AND
+                      RESOURCE standard=ocf"""
+                ),
+            ),
+            (
+                "resource :pacemaker:",
+                dedent(
+                    """\
+                    BOOL AND
+                      RESOURCE provider=pacemaker"""
+                ),
+            ),
+            (
+                "resource systemd::Dummy",
                 dedent(
                     """\
                     BOOL AND
                       RESOURCE standard=systemd type=Dummy"""
+                ),
+            ),
+            (
+                "resource ocf:pacemaker:",
+                dedent(
+                    """\
+                    BOOL AND
+                      RESOURCE standard=ocf provider=pacemaker"""
+                ),
+            ),
+            (
+                "resource :pacemaker:Dummy",
+                dedent(
+                    """\
+                    BOOL AND
+                      RESOURCE provider=pacemaker type=Dummy"""
                 ),
             ),
             (
@@ -49,7 +89,7 @@ class Parser(TestCase):
                 ),
             ),
             (
-                "resource dummy and op monitor",
+                "resource ::dummy and op monitor",
                 dedent(
                     """\
                     BOOL AND
@@ -58,7 +98,7 @@ class Parser(TestCase):
                 ),
             ),
             (
-                "resource dummy or op monitor interval=15s",
+                "resource ::dummy or op monitor interval=15s",
                 dedent(
                     """\
                     BOOL OR
@@ -67,7 +107,7 @@ class Parser(TestCase):
                 ),
             ),
             (
-                "op monitor and resource dummy",
+                "op monitor and resource ::dummy",
                 dedent(
                     """\
                     BOOL AND
@@ -76,7 +116,7 @@ class Parser(TestCase):
                 ),
             ),
             (
-                "op monitor interval=5min or resource dummy",
+                "op monitor interval=5min or resource ::dummy",
                 dedent(
                     """\
                     BOOL OR
@@ -85,7 +125,7 @@ class Parser(TestCase):
                 ),
             ),
             (
-                "(resource dummy or resource delay) and op monitor",
+                "(resource ::dummy or resource ::delay) and op monitor",
                 dedent(
                     """\
                     BOOL AND
@@ -96,7 +136,7 @@ class Parser(TestCase):
                 ),
             ),
             (
-                "(op start and op stop) or resource dummy",
+                "(op start and op stop) or resource ::dummy",
                 dedent(
                     """\
                     BOOL OR
@@ -107,7 +147,7 @@ class Parser(TestCase):
                 ),
             ),
             (
-                "op monitor or (resource dummy and resource delay)",
+                "op monitor or (resource ::dummy and resource ::delay)",
                 dedent(
                     """\
                     BOOL OR
@@ -118,7 +158,7 @@ class Parser(TestCase):
                 ),
             ),
             (
-                "resource dummy and (op start or op stop)",
+                "resource ::dummy and (op start or op stop)",
                 dedent(
                     """\
                     BOOL AND
@@ -129,7 +169,7 @@ class Parser(TestCase):
                 ),
             ),
             (
-                "resource dummy and resource delay and op monitor",
+                "resource ::dummy and resource ::delay and op monitor",
                 dedent(
                     """\
                     BOOL AND
@@ -139,7 +179,7 @@ class Parser(TestCase):
                 ),
             ),
             (
-                "resource rA or resource rB or resource rC and op monitor",
+                "resource ::rA or resource ::rB or resource ::rC and op monitor",
                 dedent(
                     """\
                     BOOL AND
@@ -151,7 +191,7 @@ class Parser(TestCase):
                 ),
             ),
             (
-                "op start and op stop and op monitor or resource delay",
+                "op start and op stop and op monitor or resource ::delay",
                 dedent(
                     """\
                     BOOL OR
@@ -163,7 +203,7 @@ class Parser(TestCase):
                 ),
             ),
             (
-                "(resource rA or resource rB or resource rC) and (op oX or op oY or op oZ)",
+                "(resource ::rA or resource ::rB or resource ::rC) and (op oX or op oY or op oZ)",
                 dedent(
                     """\
                     BOOL AND
@@ -193,9 +233,9 @@ class Parser(TestCase):
         test_data = [
             ("resource", (1, 9, 8, "Expected <resource name>")),
             ("op", (1, 3, 2, "Expected <operation name>")),
-            ("resource rA and", (1, 13, 12, "Expected end of text")),
-            ("resource rA and op ", (1, 13, 12, "Expected end of text")),
-            ("resource rA and (", (1, 13, 12, "Expected end of text")),
+            ("resource ::rA and", (1, 15, 14, "Expected end of text")),
+            ("resource ::rA and op ", (1, 15, 14, "Expected end of text")),
+            ("resource ::rA and (", (1, 15, 14, "Expected end of text")),
         ]
 
         for rule_string, exception_data in test_data:

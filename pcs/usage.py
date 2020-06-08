@@ -459,9 +459,13 @@ Commands:
         Set options are: id, score
         Expression looks like one of the following:
           op <operation name> [interval=<interval>]
-          resource [<standard>:[<provider>:]]<type>
+          resource [<standard>]:[<provider>]:[<type>]
           <expression> and|or <expression>
           ( <expression> )
+        You may specify all or any of 'standard', 'provider' and 'type' in
+        a resource expression. For example: 'resource ocf::' matches all
+        resources of 'ocf' standard, while 'resource ::Dummy' matches all
+        resources of 'Dummy' type regardless of their standard and provider.
         NOTE: Defaults do not apply to resources which override them with their
         own defined values.
 
@@ -594,9 +598,13 @@ Commands:
         describing resources to which the set applies.
         Set options are: id, score
         Expression looks like one of the following:
-          resource [<standard>:[<provider>:]]<type>
+          resource [<standard>]:[<provider>]:[<type>]
           <expression> and|or <expression>
           ( <expression> )
+        You may specify all or any of 'standard', 'provider' and 'type' in
+        a resource expression. For example: 'resource ocf::' matches all
+        resources of 'ocf' standard, while 'resource ::Dummy' matches all
+        resources of 'Dummy' type regardless of their standard and provider.
         NOTE: Defaults do not apply to resources which override them with their
         own defined values.
 

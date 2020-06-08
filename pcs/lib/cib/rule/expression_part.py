@@ -68,7 +68,10 @@ class RscExpr(SimpleExpr):
     _attrs = ("standard", "provider", "type")
 
     def __init__(
-        self, r_standard: Optional[str], r_provider: Optional[str], r_type: str
+        self,
+        r_standard: Optional[str],
+        r_provider: Optional[str],
+        r_type: Optional[str],
     ):
         self.standard = r_standard
         self.provider = r_provider

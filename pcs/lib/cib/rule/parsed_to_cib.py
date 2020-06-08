@@ -89,21 +89,19 @@ def __export_op(
 def __export_rsc(
     parent_el: Element, rsc: RscExpr, id_provider: IdProvider
 ) -> Element:
+    id_part = "-".join(filter(None, [rsc.standard, rsc.provider, rsc.type]))
     element = etree.SubElement(
         cast(_Element, parent_el),
         "rsc_expression",
-        {
-            "id": create_subelement_id(
-                parent_el, f"rsc-{rsc.type}", id_provider
-            ),
-            # rsc.standard is optional but in this stage it is expected to be
-            # set by other code, mypy cannot know that so it correctly throws
-            # an error here, hence the cast
-            "class": cast(str, rsc.standard),
-            "type": rsc.type,
-        },
+        {"id": create_subelement_id(parent_el, f"rsc-{id_part}", id_provider)},
     )
+    if rsc.standard:
+        # for whatever reason, mypy thinks "_Element" has no attribute "set"
+        element.set("class", rsc.standard)  # type: ignore
     if rsc.provider:
         # for whatever reason, mypy thinks "_Element" has no attribute "set"
         element.set("provider", rsc.provider)  # type: ignore
+    if rsc.type:
+        # for whatever reason, mypy thinks "_Element" has no attribute "set"
+        element.set("type", rsc.type)  # type: ignore
     return cast(Element, element)

@@ -148,7 +148,7 @@ class ValidateNvsetAppendNew(TestCase):
             self.id_provider,
             {"name": "value"},
             {"id": "some-id", "score": "10"},
-            nvset_rule="resource stateful",
+            nvset_rule="resource ::stateful",
             rule_allows_rsc_expr=True,
             rule_allows_op_expr=True,
         )
@@ -322,7 +322,7 @@ class NvsetAppendNew(TestCase):
                             boolean-op="and" score="INFINITY"
                         >
                             <rsc_expression
-                                id="a-meta_attributes-rule-rsc-Dummy"
+                                id="a-meta_attributes-rule-rsc-ocf-pacemaker-Dummy"
                                 class="ocf" provider="pacemaker" type="Dummy"
                             />
                             <op_expression id="a-meta_attributes-rule-op-start" 
@@ -394,7 +394,7 @@ class NvsetAppendNew(TestCase):
                         <rule id="custom-id-rule"
                             boolean-op="and" score="INFINITY"
                         >
-                            <rsc_expression id="custom-id-rule-rsc-Dummy"
+                            <rsc_expression id="custom-id-rule-rsc-ocf-pacemaker-Dummy"
                                 class="ocf" provider="pacemaker" type="Dummy"
                             />
                             <op_expression id="custom-id-rule-op-start" 
