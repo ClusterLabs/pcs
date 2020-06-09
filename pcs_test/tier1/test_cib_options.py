@@ -95,7 +95,7 @@ class OpDefaultsConfig(
     prefix = "op"
 
 
-class DefaultsSetAddMixin(TestDefaultsMixin):
+class DefaultsSetCreateMixin(TestDefaultsMixin):
     cli_command = ""
     cib_tag = ""
 
@@ -105,7 +105,7 @@ class DefaultsSetAddMixin(TestDefaultsMixin):
 
     def test_no_args(self):
         self.assert_effect(
-            f"{self.cli_command} set-add",
+            f"{self.cli_command} set create",
             dedent(
                 f"""\
                 <{self.cib_tag}>
@@ -122,8 +122,8 @@ class DefaultsSetAddMixin(TestDefaultsMixin):
     def test_success(self):
         self.assert_effect(
             (
-                f"{self.cli_command} set-add id=mine score=10 "
-                "values nam1=val1 nam2=val2 --force"
+                f"{self.cli_command} set create id=mine score=10 "
+                "meta nam1=val1 nam2=val2 --force"
             ),
             dedent(
                 f"""\
@@ -147,29 +147,57 @@ class DefaultsSetAddMixin(TestDefaultsMixin):
         self.assertEqual("TODO", True)
 
 
-class RscDefaultsSetAdd(
+class RscDefaultsSetCreate(
     get_assert_pcs_effect_mixin(
         lambda cib: etree.tostring(
             # pylint:disable=undefined-variable
             etree.parse(cib).findall(".//rsc_defaults")[0]
         )
     ),
-    DefaultsSetAddMixin,
+    DefaultsSetCreateMixin,
     TestCase,
 ):
     cli_command = "resource defaults"
     cib_tag = "rsc_defaults"
 
 
-class OpDefaultsSetAdd(
+class OpDefaultsSetCreate(
     get_assert_pcs_effect_mixin(
         lambda cib: etree.tostring(
             # pylint:disable=undefined-variable
             etree.parse(cib).findall(".//op_defaults")[0]
         )
     ),
-    DefaultsSetAddMixin,
+    DefaultsSetCreateMixin,
     TestCase,
 ):
     cli_command = "resource op defaults"
     cib_tag = "op_defaults"
+
+
+class DefaultsSetUsageMixin(TestDefaultsMixin, AssertPcsMixin):
+    cli_command = ""
+
+    def test_no_args(self):
+        self.assert_pcs_fail(
+            f"{self.cli_command} set",
+            stdout_start=f"\nUsage: pcs {self.cli_command} set...\n",
+        )
+
+    def test_bad_command(self):
+        self.assert_pcs_fail(
+            f"{self.cli_command} set bad-command",
+            stdout_start=f"\nUsage: pcs {self.cli_command} set ...\n",
+        )
+
+
+class RscDefaultsSetUsage(
+    DefaultsSetUsageMixin, TestCase,
+):
+    cli_command = "resource defaults"
+
+
+class OpDefaultsSetUsage(
+    DefaultsSetUsageMixin, TestCase,
+):
+    cli_command = "resource op defaults"

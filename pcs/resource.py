@@ -121,7 +121,7 @@ def resource_utilization_cmd(lib, argv, modifiers):
         set_resource_utilization(argv.pop(0), argv)
 
 
-def _defaults_set_add_cmd(
+def _defaults_set_create_cmd(
     lib_command: Callable[..., Any],
     argv: Sequence[str],
     modifiers: InputModifiers,
@@ -130,7 +130,7 @@ def _defaults_set_add_cmd(
 
     groups = group_by_keywords(
         argv,
-        set(["values", "rule"]),
+        set(["meta", "rule"]),
         implicit_first_group_key="options",
         keyword_repeat_allowed=False,
     )
@@ -139,14 +139,14 @@ def _defaults_set_add_cmd(
         force_flags.add(reports.codes.FORCE)
 
     lib_command(
-        prepare_options(groups["values"]),
+        prepare_options(groups["meta"]),
         prepare_options(groups["options"]),
         nvset_rule=(" ".join(groups["rule"]) if groups["rule"] else None),
         force_flags=force_flags,
     )
 
 
-def resource_defaults_set_add_cmd(
+def resource_defaults_set_create_cmd(
     lib: Any, argv: Sequence[str], modifiers: InputModifiers,
 ) -> None:
     """
@@ -154,12 +154,12 @@ def resource_defaults_set_add_cmd(
       * -f - CIB file
       * --force - allow unknown options
     """
-    return _defaults_set_add_cmd(
+    return _defaults_set_create_cmd(
         lib.cib_options.resource_defaults_create, argv, modifiers
     )
 
 
-def resource_op_defaults_set_add_cmd(
+def resource_op_defaults_set_create_cmd(
     lib: Any, argv: Sequence[str], modifiers: InputModifiers,
 ) -> None:
     """
@@ -167,7 +167,7 @@ def resource_op_defaults_set_add_cmd(
       * -f - CIB file
       * --force - allow unknown options
     """
-    return _defaults_set_add_cmd(
+    return _defaults_set_create_cmd(
         lib.cib_options.operation_defaults_create, argv, modifiers
     )
 
@@ -237,7 +237,10 @@ def resource_defaults_cmd(lib, argv, modifiers):
     router = create_router(
         {
             "config": resource_defaults_config_cmd,
-            "set-add": resource_defaults_set_add_cmd,
+            "set": create_router(
+                {"create": resource_defaults_set_create_cmd,},
+                ["resource", "defaults", "set"],
+            ),
         },
         ["resource", "defaults"],
         default_cmd="config",
@@ -260,7 +263,10 @@ def resource_op_defaults_cmd(lib, argv, modifiers):
     router = create_router(
         {
             "config": resource_op_defaults_config_cmd,
-            "set-add": resource_op_defaults_set_add_cmd,
+            "set": create_router(
+                {"create": resource_op_defaults_set_create_cmd,},
+                ["resource", "op", "defaults", "set"],
+            ),
         },
         ["resource", "op", "defaults"],
         default_cmd="config",

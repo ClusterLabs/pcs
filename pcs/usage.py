@@ -451,8 +451,8 @@ Commands:
         NOTE: Defaults do not apply to resources which override them with their
         own defined values.
 
-    op defaults set-add [<set options>] [values <name>=<value>...]
-            [rule <expression>]
+    op defaults set create [<set options>] [meta [<name>=<value>]...]
+            [rule [<expression>]]
         Create a new set of default values for resource operations. You may
         specify a rule describing resources and / or operations to which the set
         applies.
@@ -592,8 +592,8 @@ Commands:
         NOTE: Defaults do not apply to resources which override them with their
         own defined values.
 
-    defaults set-add [<set options>] [values <name>=<value>...]
-            [rule <expression>]
+    defaults set create [<set options>] [meta [<name>=<value>]...]
+            [rule [<expression>]]
         Create a new set of default values for resources. You may specify a rule
         describing resources to which the set applies.
         Set options are: id, score

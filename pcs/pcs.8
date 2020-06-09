@@ -193,7 +193,7 @@ Set default values for operations.
 .br
 NOTE: Defaults do not apply to resources which override them with their own defined values.
 .TP
-op defaults set\-add [<set options>] [values <name>=<value>...] [rule <expression>]
+op defaults set create [<set options>] [meta [<name>=<value>]...] [rule [<expression>]]
 Create a new set of default values for resource operations. You may specify a rule describing resources and / or operations to which the set applies.
 .br
 Set options are: id, score
@@ -264,7 +264,7 @@ Set default values for resources.
 .br
 NOTE: Defaults do not apply to resources which override them with their own defined values.
 .TP
-defaults set\-add [<set options>] [values <name>=<value>...] [rule <expression>]
+defaults set create [<set options>] [meta [<name>=<value>]...] [rule [<expression>]]
 Create a new set of default values for resources. You may specify a rule describing resources to which the set applies.
 .br
 Set options are: id, score
