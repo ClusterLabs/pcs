@@ -2056,26 +2056,34 @@ def resource_disable_cmd(lib, argv, modifiers):
     """
     Options:
       * -f - CIB file
+      * --brief - show brief output of --simulate
       * --safe - only disable if no other resource gets stopped or demoted
       * --simulate - do not push the CIB, print its effects
       * --no-strict - allow disable if other resource is affected
       * --wait
     """
     modifiers.ensure_only_supported(
-        "-f", "--safe", "--simulate", "--no-strict", "--wait"
+        "-f", "--brief", "--safe", "--simulate", "--no-strict", "--wait"
     )
     modifiers.ensure_not_mutually_exclusive("-f", "--simulate", "--wait")
-    modifiers.ensure_not_incompatible(
-        "--simulate", {"-f", "--safe", "--no-strict", "--wait"}
-    )
-    modifiers.ensure_not_incompatible("--safe", {"-f", "--simulate"})
-    modifiers.ensure_not_incompatible("--no-strict", {"-f", "--simulate"})
+    modifiers.ensure_not_incompatible("--simulate", {"-f", "--safe", "--wait"})
+    modifiers.ensure_not_incompatible("--safe", {"-f", "--simulate", "--brief"})
+    modifiers.ensure_not_incompatible("--no-strict", {"-f"})
 
     if not argv:
         raise CmdLineInputError("You must specify resource(s) to disable")
 
     if modifiers.get("--simulate"):
-        print(lib.resource.disable_simulate(argv))
+        result = lib.resource.disable_simulate(
+            argv, not modifiers.get("--no-strict")
+        )
+        if modifiers.get("--brief"):
+            # if the result is empty, printing it would produce a new line,
+            # which is not wanted
+            if result["other_affected_resource_list"]:
+                print("\n".join(result["other_affected_resource_list"]))
+            return
+        print(result["plaintext_simulated_status"])
         return
     if modifiers.get("--safe") or modifiers.get("--no-strict"):
         lib.resource.disable_safe(
@@ -2090,17 +2098,16 @@ def resource_safe_disable_cmd(
 ) -> None:
     """
     Options:
+      * --brief - show brief output of --simulate
       * --force - skip checks for safe resource disable
       * --no-strict - allow disable if other resource is affected
       * --simulate - do not push the CIB, print its effects
       * --wait
     """
     modifiers.ensure_only_supported(
-        "--force", "--no-strict", "--simulate", "--wait"
+        "--brief", "--force", "--no-strict", "--simulate", "--wait"
     )
-    modifiers.ensure_not_mutually_exclusive(
-        "--force", "--simulate", "--no-strict"
-    )
+    modifiers.ensure_not_incompatible("--force", {"--no-strict", "--simulate"})
     custom_options = {}
     if modifiers.get("--force"):
         warn(
@@ -2113,7 +2120,7 @@ def resource_safe_disable_cmd(
         lib,
         argv,
         modifiers.get_subset(
-            "--wait", "--no-strict", "--simulate", **custom_options
+            "--wait", "--no-strict", "--simulate", "--brief", **custom_options
         ),
     )
 

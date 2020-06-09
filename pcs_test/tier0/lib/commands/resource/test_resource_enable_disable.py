@@ -1810,120 +1810,7 @@ class EnableBundle(TestCase):
         )
 
 
-@mock.patch("pcs.lib.pacemaker.live.write_tmpfile")
-class DisableSimulate(TestCase):
-    def setUp(self):
-        self.env_assist, self.config = get_env_tools(test_case=self)
-        self.tmpfile_new_cib = mock.MagicMock()
-        self.tmpfile_new_cib.name = rc("new_cib.tmp")
-        self.tmpfile_new_cib.read.return_value = "<new-cib/>"
-        self.tmpfile_transitions = mock.MagicMock()
-        self.tmpfile_transitions.name = rc("transitions.tmp")
-        self.tmpfile_transitions.read.return_value = "<transitions/>"
-
-    def test_not_live(self, mock_write_tmpfile):
-        mock_write_tmpfile.side_effect = [
-            AssertionError("No other write_tmpfile call expected")
-        ]
-        self.config.env.set_cib_data("<cib />")
-        self.env_assist.assert_raise_library_error(
-            lambda: resource.disable_simulate(self.env_assist.get_env(), ["A"]),
-            [
-                fixture.error(
-                    report_codes.LIVE_ENVIRONMENT_REQUIRED,
-                    forbidden_options=["CIB"],
-                ),
-            ],
-            expected_in_processor=False,
-        )
-
-    def test_nonexistent_resource(self, mock_write_tmpfile):
-        mock_write_tmpfile.side_effect = [
-            AssertionError("No other write_tmpfile call expected")
-        ]
-        self.config.runner.cib.load()
-        self.env_assist.assert_raise_library_error(
-            lambda: resource.disable_simulate(self.env_assist.get_env(), ["A"]),
-        )
-        self.env_assist.assert_reports(
-            [fixture.report_not_resource_or_tag("A")],
-        )
-
-    def test_success_resource_id(self, mock_write_tmpfile):
-        mock_write_tmpfile.side_effect = [
-            self.tmpfile_new_cib,
-            self.tmpfile_transitions,
-            AssertionError("No other write_tmpfile call expected"),
-        ]
-        (
-            self.config.runner.cib.load(resources=fixture_primitive_cib_enabled)
-            .runner.pcmk.load_state(resources=fixture_primitive_status_managed)
-            .runner.pcmk.simulate_cib(
-                self.tmpfile_new_cib.name,
-                self.tmpfile_transitions.name,
-                stdout="simulate output",
-                resources=fixture_primitive_cib_disabled,
-            )
-        )
-
-        result = resource.disable_simulate(self.env_assist.get_env(), ["A"])
-        self.assertEqual("simulate output", result)
-
-    def test_success_with_tag_id(self, mock_write_tmpfile):
-        mock_write_tmpfile.side_effect = [
-            self.tmpfile_new_cib,
-            self.tmpfile_transitions,
-            AssertionError("No other write_tmpfile call expected"),
-        ]
-        (
-            self.config.runner.cib.load(
-                resources=fixture_two_primitives_cib_enabled, tags=fixture_tag,
-            )
-            .runner.pcmk.load_state(
-                resources=fixture_two_primitives_status_managed
-            )
-            .runner.pcmk.simulate_cib(
-                self.tmpfile_new_cib.name,
-                self.tmpfile_transitions.name,
-                stdout="simulate output",
-                resources=fixture_two_primitives_cib_disabled_both,
-            )
-        )
-
-        result = resource.disable_simulate(self.env_assist.get_env(), ["T"])
-        self.assertEqual("simulate output", result)
-
-    def test_simulate_error(self, mock_write_tmpfile):
-        mock_write_tmpfile.side_effect = [
-            self.tmpfile_new_cib,
-            self.tmpfile_transitions,
-            AssertionError("No other write_tmpfile call expected"),
-        ]
-        (
-            self.config.runner.cib.load(resources=fixture_primitive_cib_enabled)
-            .runner.pcmk.load_state(resources=fixture_primitive_status_managed)
-            .runner.pcmk.simulate_cib(
-                self.tmpfile_new_cib.name,
-                self.tmpfile_transitions.name,
-                stdout="some stdout",
-                stderr="some stderr",
-                returncode=1,
-                resources=fixture_primitive_cib_disabled,
-            )
-        )
-
-        self.env_assist.assert_raise_library_error(
-            lambda: resource.disable_simulate(self.env_assist.get_env(), ["A"]),
-            [
-                fixture.error(
-                    report_codes.CIB_SIMULATE_ERROR, reason="some stderr",
-                ),
-            ],
-            expected_in_processor=False,
-        )
-
-
-class DisableSafeMixin:
+class DisableSafeFixturesMixin:
     fixture_transitions_both_stopped = """
         <transition_graph>
           <synapse>
@@ -2114,6 +2001,184 @@ class DisableSafeMixin:
             )
         )
 
+
+@mock.patch("pcs.lib.pacemaker.live.write_tmpfile")
+class DisableSimulate(DisableSafeFixturesMixin, TestCase):
+    def test_not_live(self, mock_write_tmpfile):
+        mock_write_tmpfile.side_effect = [
+            AssertionError("No other write_tmpfile call expected")
+        ]
+        self.config.env.set_cib_data("<cib />")
+        self.env_assist.assert_raise_library_error(
+            lambda: resource.disable_simulate(
+                self.env_assist.get_env(), ["A"], True
+            ),
+            [
+                fixture.error(
+                    report_codes.LIVE_ENVIRONMENT_REQUIRED,
+                    forbidden_options=["CIB"],
+                ),
+            ],
+            expected_in_processor=False,
+        )
+
+    def test_nonexistent_resource(self, mock_write_tmpfile):
+        mock_write_tmpfile.side_effect = [
+            AssertionError("No other write_tmpfile call expected")
+        ]
+        self.config.runner.cib.load()
+        self.env_assist.assert_raise_library_error(
+            lambda: resource.disable_simulate(
+                self.env_assist.get_env(), ["A"], True
+            ),
+        )
+        self.env_assist.assert_reports(
+            [fixture.report_not_resource_or_tag("A")],
+        )
+
+    def test_success_no_others_stopped(self, mock_write_tmpfile):
+        self.fixture_disable_both_resources(mock_write_tmpfile)
+        self.config.runner.pcmk.simulate_cib(
+            self.tmpfile_new_cib.name,
+            self.tmpfile_transitions.name,
+            stdout="simulate output",
+            resources=fixture_two_primitives_cib_disabled_both,
+        )
+
+        result = resource.disable_simulate(
+            self.env_assist.get_env(), ["A", "B"], True
+        )
+        self.assertEqual(
+            result,
+            dict(
+                plaintext_simulated_status="simulate output",
+                other_affected_resource_list=[],
+            ),
+        )
+
+    def test_success_others_stopped(self, mock_write_tmpfile):
+        self.fixture_disable_both_resources(mock_write_tmpfile)
+        self.config.runner.pcmk.simulate_cib(
+            self.tmpfile_new_cib.name,
+            self.tmpfile_transitions.name,
+            stdout="simulate output",
+            resources=fixture_two_primitives_cib_disabled,
+        )
+
+        result = resource.disable_simulate(
+            self.env_assist.get_env(), ["A"], True
+        )
+        self.assertEqual(
+            result,
+            dict(
+                plaintext_simulated_status="simulate output",
+                other_affected_resource_list=["B"],
+            ),
+        )
+
+    def test_success_others_migrated_strict(self, mock_write_tmpfile):
+        self.fixture_migrate_one_resource(mock_write_tmpfile)
+        self.config.runner.pcmk.simulate_cib(
+            self.tmpfile_new_cib.name,
+            self.tmpfile_transitions.name,
+            stdout="simulate output",
+            resources=fixture_two_primitives_cib_disabled,
+        )
+        result = resource.disable_simulate(
+            self.env_assist.get_env(), ["A"], True
+        )
+        self.assertEqual(
+            result,
+            dict(
+                plaintext_simulated_status="simulate output",
+                other_affected_resource_list=["B"],
+            ),
+        )
+
+    def test_success_others_migrated_no_strict(self, mock_write_tmpfile):
+        self.fixture_migrate_one_resource(mock_write_tmpfile)
+        self.config.runner.pcmk.simulate_cib(
+            self.tmpfile_new_cib.name,
+            self.tmpfile_transitions.name,
+            stdout="simulate output",
+            resources=fixture_two_primitives_cib_disabled,
+        )
+        result = resource.disable_simulate(
+            self.env_assist.get_env(), ["A"], False
+        )
+        self.assertEqual(
+            result,
+            dict(
+                plaintext_simulated_status="simulate output",
+                other_affected_resource_list=[],
+            ),
+        )
+
+    def test_success_with_tag_id(self, mock_write_tmpfile):
+        mock_write_tmpfile.side_effect = [
+            self.tmpfile_new_cib,
+            self.tmpfile_transitions,
+            AssertionError("No other write_tmpfile call expected"),
+        ]
+        (
+            self.config.runner.cib.load(
+                resources=fixture_two_primitives_cib_enabled, tags=fixture_tag,
+            )
+            .runner.pcmk.load_state(
+                resources=fixture_two_primitives_status_managed
+            )
+            .runner.pcmk.simulate_cib(
+                self.tmpfile_new_cib.name,
+                self.tmpfile_transitions.name,
+                stdout="simulate output",
+                resources=fixture_two_primitives_cib_disabled_both,
+            )
+        )
+
+        result = resource.disable_simulate(
+            self.env_assist.get_env(), ["T"], True
+        )
+        self.assertEqual(
+            result,
+            dict(
+                plaintext_simulated_status="simulate output",
+                other_affected_resource_list=[],
+            ),
+        )
+
+    def test_simulate_error(self, mock_write_tmpfile):
+        mock_write_tmpfile.side_effect = [
+            self.tmpfile_new_cib,
+            self.tmpfile_transitions,
+            AssertionError("No other write_tmpfile call expected"),
+        ]
+        (
+            self.config.runner.cib.load(resources=fixture_primitive_cib_enabled)
+            .runner.pcmk.load_state(resources=fixture_primitive_status_managed)
+            .runner.pcmk.simulate_cib(
+                self.tmpfile_new_cib.name,
+                self.tmpfile_transitions.name,
+                stdout="some stdout",
+                stderr="some stderr",
+                returncode=1,
+                resources=fixture_primitive_cib_disabled,
+            )
+        )
+
+        self.env_assist.assert_raise_library_error(
+            lambda: resource.disable_simulate(
+                self.env_assist.get_env(), ["A"], True
+            ),
+            [
+                fixture.error(
+                    report_codes.CIB_SIMULATE_ERROR, reason="some stderr",
+                ),
+            ],
+            expected_in_processor=False,
+        )
+
+
+class DisableSafeMixin(DisableSafeFixturesMixin):
     def test_not_live(self, mock_write_tmpfile):
         mock_write_tmpfile.side_effect = [
             AssertionError("No other write_tmpfile call expected")

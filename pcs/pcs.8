@@ -109,23 +109,23 @@ Deletes the resource, group, bundle or clone (and all resources within the group
 enable <resource id | tag id>... [\fB\-\-wait\fR[=n]]
 Allow the cluster to start the resources. Depending on the rest of the configuration (constraints, options, failures, etc), the resources may remain stopped. If \fB\-\-wait\fR is specified, pcs will wait up to 'n' seconds for the resources to start and then return 0 if the resources are started, or 1 if the resources have not yet started. If 'n' is not specified it defaults to 60 minutes.
 .TP
-disable <resource id | tag id>... [\fB\-\-safe\fR [\fB\-\-no\-strict\fR]] [\fB\-\-simulate\fR] [\fB\-\-wait\fR[=n]]
+disable <resource id | tag id>... [\fB\-\-safe\fR [\fB\-\-no\-strict\fR]] [\fB\-\-simulate\fR [\fB\-\-brief\fR]] [\fB\-\-wait\fR[=n]]
 Attempt to stop the resources if they are running and forbid the cluster from starting them again. Depending on the rest of the configuration (constraints, options, failures, etc), the resources may remain started.
 .br
 If \fB\-\-safe\fR is specified, no changes to the cluster configuration will be made if other than specified resources would be affected in any way.
 .br
 If \fB\-\-no\-strict\fR is specified, no changes to the cluster configuration will be made if other than specified resources would get stopped or demoted. Moving resources between nodes is allowed.
 .br
-If \fB\-\-simulate\fR is specified, no changes to the cluster configuration will be made and the effect of the changes will be printed instead.
+If \fB\-\-simulate\fR is specified, no changes to the cluster configuration will be made and the effect of the changes will be printed instead. If \fB\-\-brief\fR is also specified, only a list of affected resources will be printed.
 .br
 If \fB\-\-wait\fR is specified, pcs will wait up to 'n' seconds for the resources to stop and then return 0 if the resources are stopped or 1 if the resources have not stopped. If 'n' is not specified it defaults to 60 minutes.
 .TP
-safe\-disable <resource id | tag id>... [\fB\-\-no\-strict\fR] [\fB\-\-simulate\fR] [\fB\-\-wait\fR[=n]] [\fB\-\-force\fR]
+safe\-disable <resource id | tag id>... [\fB\-\-no\-strict\fR] [\fB\-\-simulate\fR [\fB\-\-brief\fR]] [\fB\-\-wait\fR[=n]] [\fB\-\-force\fR]
 Attempt to stop the resources if they are running and forbid the cluster from starting them again. Depending on the rest of the configuration (constraints, options, failures, etc), the resources may remain started. No changes to the cluster configuration will be made if other than specified resources would be affected in any way.
 .br
 If \fB\-\-no\-strict\fR is specified, no changes to the cluster configuration will be made if other than specified resources would get stopped or demoted. Moving resources between nodes is allowed.
 .br
-If \fB\-\-simulate\fR is specified, no changes to the cluster configuration will be made and the effect of the changes will be printed instead.
+If \fB\-\-simulate\fR is specified, no changes to the cluster configuration will be made and the effect of the changes will be printed instead. If \fB\-\-brief\fR is also specified, only a list of affected resources will be printed.
 .br
 If \fB\-\-wait\fR is specified, pcs will wait up to 'n' seconds for the resources to stop and then return 0 if the resources are stopped or 1 if the resources have not stopped. If 'n' is not specified it defaults to 60 minutes.
 .br

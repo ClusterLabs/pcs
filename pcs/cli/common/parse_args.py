@@ -33,6 +33,7 @@ PCS_LONG_OPTIONS = [
     "disabled",
     "off",
     "request-timeout=",
+    "brief",
     # resource (safe-)disable
     "safe",
     "no-strict",
@@ -398,6 +399,7 @@ class InputModifiers:
                 # boolean values
                 "--all": "--all" in options,
                 "--autodelete": "--autodelete" in options,
+                "--brief": "--brief" in options,
                 "--config": "--config" in options,
                 "--corosync": "--corosync" in options,
                 "--debug": "--debug" in options,

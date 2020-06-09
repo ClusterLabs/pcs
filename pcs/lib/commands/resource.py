@@ -5,9 +5,11 @@ from typing import (
     Any,
     Callable,
     Iterable,
+    List,
     Mapping,
     Optional,
     Set,
+    Tuple,
     Union,
 )
 from xml.etree.ElementTree import Element
@@ -30,6 +32,7 @@ from pcs.lib.cib.tools import (
     IdProvider,
 )
 from pcs.lib.env import LibraryEnvironment
+from pcs.lib.external import CommandRunner
 from pcs.lib.node import get_existing_nodes_names_addrs
 from pcs.lib.errors import LibraryError
 from pcs.lib.pacemaker import simulate as simulate_tools
@@ -874,18 +877,84 @@ def bundle_update(
 
 def _disable_validate_and_edit_cib(
     env: LibraryEnvironment, cib: Element, resource_or_tag_ids: Iterable[str],
-):
+) -> List[Element]:
+    resource_el_list = _find_resources_expand_tags_or_raise(
+        env.report_processor, cib, resource_or_tag_ids
+    )
     if env.report_processor.report_list(
         _resource_list_enable_disable(
-            _find_resources_expand_tags_or_raise(
-                env.report_processor, cib, resource_or_tag_ids,
-            ),
+            resource_el_list,
             resource.common.disable,
             IdProvider(cib),
             env.get_cluster_state(),
         )
     ).has_errors:
         raise LibraryError()
+    return resource_el_list
+
+
+def _disable_get_element_ids(
+    disabled_resource_el_list: Iterable[Element],
+) -> Tuple[Set[str], Set[str]]:
+    """
+    Turn a list of elements asked by a user to be disabled to a list of their
+    IDs and a list of IDs of their inner elements. Remember, the user can
+    specify tags instead of resources. Therefore the list of disabled
+    resources' IDs returned by this function may be different than the list of
+    IDs entered in the command.
+    """
+    inner_resource_id_set = set()
+    disabled_resource_id_set = set()
+    for resource_el in disabled_resource_el_list:
+        disabled_resource_id_set.add(resource_el.get("id"))
+        inner_resource_id_set.update(
+            {
+                inner_resource_el.get("id")
+                for inner_resource_el in resource.common.get_all_inner_resources(
+                    resource_el
+                )
+            }
+        )
+    # Make sure we only return found IDs and not None to match the function's
+    # return type annotation.
+    return (
+        set(filter(None, disabled_resource_id_set)),
+        set(filter(None, inner_resource_id_set)),
+    )
+
+
+def _disable_run_simulate(
+    cmd_runner: CommandRunner,
+    cib: Element,
+    disabled_resource_ids: Set[str],
+    inner_resource_ids: Set[str],
+    strict: bool,
+) -> Tuple[str, Set[str]]:
+    plaintext_status, transitions, dummy_cib = simulate_cib(cmd_runner, cib)
+    simulated_operations = simulate_tools.get_operations_from_transitions(
+        transitions
+    )
+    other_affected: Set[str] = set()
+    if strict:
+        other_affected = set(
+            simulate_tools.get_resources_from_operations(
+                simulated_operations, exclude=disabled_resource_ids
+            )
+        )
+    else:
+        other_affected = set(
+            simulate_tools.get_resources_left_stopped(
+                simulated_operations, exclude=disabled_resource_ids
+            )
+            + simulate_tools.get_resources_left_demoted(
+                simulated_operations, exclude=disabled_resource_ids
+            )
+        )
+
+    # Stopping a clone stops all its inner resources. That should not block
+    # stopping the clone.
+    other_affected = other_affected - inner_resource_ids
+    return plaintext_status, other_affected
 
 
 def disable(
@@ -934,78 +1003,44 @@ def disable_safe(
 
     env.ensure_wait_satisfiable(wait)
     cib = env.get_cib()
-    resource_el_list = _find_resources_expand_tags_or_raise(
-        env.report_processor, cib, resource_or_tag_ids
+    resource_el_list = _disable_validate_and_edit_cib(
+        env, cib, resource_or_tag_ids
     )
-    if env.report_processor.report_list(
-        _resource_list_enable_disable(
-            resource_el_list,
-            resource.common.disable,
-            IdProvider(cib),
-            env.get_cluster_state(),
-        )
-    ).has_errors:
-        raise LibraryError()
-
-    inner_resources_names_set = set()
-    for resource_el in resource_el_list:
-        # pylint: disable=line-too-long
-        inner_resources_names_set.update(
-            {
-                inner_resource_el.get("id")
-                for inner_resource_el in resource.common.get_all_inner_resources(
-                    resource_el
-                )
-            }
-        )
-
-    plaintext_status, transitions, dummy_cib = simulate_cib(
-        env.cmd_runner(), cib,
+    disabled_resource_id_set, inner_resource_id_set = _disable_get_element_ids(
+        resource_el_list
     )
-    simulated_operations = simulate_tools.get_operations_from_transitions(
-        transitions
+    plaintext_status, other_affected = _disable_run_simulate(
+        env.cmd_runner(),
+        cib,
+        disabled_resource_id_set,
+        inner_resource_id_set,
+        strict,
     )
-    resource_ids = sorted(el.get("id", "") for el in resource_el_list)
-    other_affected: Set[str] = set()
-    if strict:
-        other_affected = set(
-            simulate_tools.get_resources_from_operations(
-                simulated_operations, exclude=resource_ids
-            )
-        )
-    else:
-        other_affected = set(
-            simulate_tools.get_resources_left_stopped(
-                simulated_operations, exclude=resource_ids
-            )
-            + simulate_tools.get_resources_left_demoted(
-                simulated_operations, exclude=resource_ids
-            )
-        )
-
-    # Stopping a clone stops all its inner resources. That should not block
-    # stopping the clone.
-    other_affected = other_affected - inner_resources_names_set
     if other_affected:
         raise LibraryError(
             ReportItem.error(
                 reports.messages.ResourceDisableAffectsOtherResources(
-                    resource_ids, sorted(other_affected), plaintext_status,
+                    sorted(disabled_resource_id_set),
+                    sorted(other_affected),
+                    plaintext_status,
                 )
             )
         )
-    _push_cib_wait(env, wait, resource_ids, _ensure_disabled_after_wait(True))
+    _push_cib_wait(
+        env, wait, disabled_resource_id_set, _ensure_disabled_after_wait(True)
+    )
 
 
 def disable_simulate(
-    env: LibraryEnvironment, resource_or_tag_ids: Iterable[str],
-):
+    env: LibraryEnvironment, resource_or_tag_ids: Iterable[str], strict: bool
+) -> Mapping[str, Union[str, List[str]]]:
     """
     Simulate disallowing specified resources to be started by the cluster
 
     env -- provides all for communication with externals
     resource_or_tag_ids -- ids of the resources to become disabled, or in case
         of tag ids, all resources in tags are to be disabled
+    bool strict -- if False, allow resources to be migrated
     """
     if not env.is_cib_live:
         raise LibraryError(
@@ -1015,11 +1050,23 @@ def disable_simulate(
         )
 
     cib = env.get_cib()
-    _disable_validate_and_edit_cib(env, cib, resource_or_tag_ids)
-    plaintext_status, dummy_transitions, dummy_cib = simulate_cib(
-        env.cmd_runner(), cib,
+    resource_el_list = _disable_validate_and_edit_cib(
+        env, cib, resource_or_tag_ids
     )
-    return plaintext_status
+    disabled_resource_id_set, inner_resource_id_set = _disable_get_element_ids(
+        resource_el_list
+    )
+    plaintext_status, other_affected = _disable_run_simulate(
+        env.cmd_runner(),
+        cib,
+        disabled_resource_id_set,
+        inner_resource_id_set,
+        strict,
+    )
+    return dict(
+        plaintext_simulated_status=plaintext_status,
+        other_affected_resource_list=sorted(other_affected),
+    )
 
 
 def enable(
