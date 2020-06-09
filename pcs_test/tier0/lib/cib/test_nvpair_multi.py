@@ -1,4 +1,3 @@
-from textwrap import dedent
 from unittest import TestCase
 
 from lxml import etree
@@ -156,12 +155,10 @@ class ValidateNvsetAppendNew(TestCase):
             validator.validate(), [],
         )
         self.assertEqual(
-            str(validator.get_parsed_rule()),
-            dedent(
-                """\
-                BOOL AND
-                  RESOURCE type=stateful"""
-            ),
+            repr(validator.get_parsed_rule()),
+            "BoolExpr(operator='AND', children=["
+            "RscExpr(standard=None, provider=None, type='stateful')"
+            "])",
         )
 
     def test_id_not_valid(self):
