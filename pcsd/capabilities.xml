@@ -1145,7 +1145,17 @@
       <description>
         Show effects caused by disabling resources.
 
-        pcs commands: resource disable --simulate
+        pcs commands: resource disable --simulate,
+          resource safe-disable --simulate
+      </description>
+    </capability>
+    <capability id="pcmk.resource.disable.simulate.brief" in-pcs="1" in-pcsd="0">
+      <description>
+        Show only a list of affected resources instead of the whole listing of
+        effects caused by disabling resources.
+
+        pcs commands: resource disable --simulate --brief,
+          resource safe-disable --simulate --brief
       </description>
     </capability>
     <capability id="pcmk.resource.manage-unmanage" in-pcs="1" in-pcsd="1">

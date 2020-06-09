@@ -2960,6 +2960,7 @@ def get_modifiers():
         "autocorrect": "--autocorrect" in pcs_options,
         "autodelete": "--autodelete" in pcs_options,
         "before": pcs_options.get("--before", None),
+        "brief": "--brief" in pcs_options,
         "corosync_conf": pcs_options.get("--corosync_conf", None),
         "describe": "--nodesc" not in pcs_options,
         "device": pcs_options.get("--device", []),

@@ -2041,6 +2041,7 @@ def resource_disable_cmd(lib, argv, modifiers):
     """
     Options:
       * -f - CIB file
+      * --brief - show brief output of --simulate
       * --safe - only disable if no other resource gets stopped or demoted
       * --simulate - do not push the CIB, print its effects
       * --no-strict - allow disable if other resource is affected
@@ -2050,7 +2051,17 @@ def resource_disable_cmd(lib, argv, modifiers):
         raise CmdLineInputError("You must specify resource(s) to disable")
 
     if modifiers["simulate"]:
-        print(lib.resource.disable_simulate(argv))
+        result = lib.resource.disable_simulate(
+            argv,
+            not modifiers["no-strict"],
+        )
+        if modifiers["brief"]:
+            # if the result is empty, printing it would produce a new line,
+            # which is not wanted
+            if result["other_affected_resource_list"]:
+                print("\n".join(result["other_affected_resource_list"]))
+            return
+        print(result["plaintext_simulated_status"])
         return
     if modifiers["safe"] or modifiers["no-strict"]:
         lib.resource.disable_safe(
@@ -2065,6 +2076,7 @@ def resource_disable_cmd(lib, argv, modifiers):
 def resource_safe_disable_cmd(lib, argv, modifiers):
     """
     Options:
+      * --brief - show brief output of --simulate
       * --force - skip checks for safe resource disable
       * --no-strict - allow disable if other resource is affected
       * --simulate - do not push the CIB, print its effects

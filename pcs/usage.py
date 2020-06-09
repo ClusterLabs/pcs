@@ -252,7 +252,8 @@ Commands:
         started, or 1 if the resources have not yet started. If 'n' is not
         specified it defaults to 60 minutes.
 
-    disable <resource id>... [--safe [--no-strict]] [--simulate] [--wait[=n]]
+    disable <resource id>... [--safe [--no-strict]] [--simulate [--brief]]
+            [--wait[=n]]
         Attempt to stop the resources if they are running and forbid the
         cluster from starting them again. Depending on the rest of the
         configuration (constraints, options, failures, etc), the resources may
@@ -263,14 +264,16 @@ Commands:
         will be made if other than specified resources would get stopped or
         demoted. Moving resources between nodes is allowed.
         If --simulate is specified, no changes to the cluster configuration
-        will be made and the effect of the changes will be printed instead.
+        will be made and the effect of the changes will be printed instead. If
+        --brief is also specified, only a list of affected resources will be
+        printed.
         If --wait is specified, pcs will wait up to 'n' seconds for the
         resources to stop and then return 0 if the resources are stopped or 1
         if the resources have not stopped. If 'n' is not specified it defaults
         to 60 minutes.
 
-    safe-disable <resource id>... [--no-strict] [--simulate] [--wait[=n]]
-            [--force]
+    safe-disable <resource id>... [--no-strict] [--simulate [--brief]]
+            [--wait[=n]] [--force]
         Attempt to stop the resources if they are running and forbid the
         cluster from starting them again. Depending on the rest of the
         configuration (constraints, options, failures, etc), the resources may
@@ -280,7 +283,9 @@ Commands:
         will be made if other than specified resources would get stopped or
         demoted. Moving resources between nodes is allowed.
         If --simulate is specified, no changes to the cluster configuration
-        will be made and the effect of the changes will be printed instead.
+        will be made and the effect of the changes will be printed instead. If
+        --brief is also specified, only a list of affected resources will be
+        printed.
         If --wait is specified, pcs will wait up to 'n' seconds for the
         resources to stop and then return 0 if the resources are stopped or 1
         if the resources have not stopped. If 'n' is not specified it defaults

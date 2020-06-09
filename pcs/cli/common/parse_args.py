@@ -18,7 +18,7 @@ PCS_LONG_OPTIONS = [
     "force", "skip-offline", "autocorrect", "interactive", "autodelete",
     "all", "full", "groups", "local", "wait", "config", "async",
     "start", "enable", "disabled", "off", "request-timeout=",
-    "safe", "no-strict", "strict", "simulate",
+    "safe", "no-strict", "strict", "simulate", "brief",
     "pacemaker", "corosync",
     "no-default-ops", "defaults", "nodesc",
     "clone", "master", "name=", "group=", "node=",

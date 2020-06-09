@@ -6463,6 +6463,7 @@ class ResourceDisable(TestCase):
 
     def run_cmd(self, argv, modifiers=None):
         default_modifiers = {
+            "brief": False,
             "safe": False,
             "simulate": False,
             "no-strict": False,
@@ -6471,6 +6472,16 @@ class ResourceDisable(TestCase):
         if modifiers:
             default_modifiers.update(modifiers)
         resource.resource_disable_cmd(self.lib, argv, default_modifiers)
+
+    @staticmethod
+    def _fixture_output(plaintext=None, resources=None):
+        plaintext = plaintext if plaintext is not None else "simulate output"
+        resources = resources if resources is not None else ["Rx", "Ry"]
+        return dict(
+            plaintext_simulated_status=plaintext,
+            other_affected_resource_list=resources,
+        )
+
 
     def test_no_args(self):
         with self.assertRaises(CmdLineInputError) as cm:
@@ -6529,12 +6540,51 @@ class ResourceDisable(TestCase):
 
     @mock.patch("pcs.resource.print")
     def test_simulate(self, mock_print):
-        self.resource.disable_simulate.return_value = "simulate output"
+        self.resource.disable_simulate.return_value = self._fixture_output()
         self.run_cmd(["R1", "R2"], dict(simulate=True))
-        self.resource.disable_simulate.assert_called_once_with(["R1", "R2"])
+        self.resource.disable_simulate.assert_called_once_with(
+            ["R1", "R2"], True
+        )
         self.resource.disable.assert_not_called()
         self.resource.disable_safe.assert_not_called()
         mock_print.assert_called_once_with("simulate output")
+
+    @mock.patch("pcs.resource.print")
+    def test_simulate_brief(self, mock_print):
+        self.resource.disable_simulate.return_value = self._fixture_output()
+        self.run_cmd(["R1", "R2"], dict(simulate=True, brief=True))
+        self.resource.disable_simulate.assert_called_once_with(
+            ["R1", "R2"], True
+        )
+        self.resource.disable.assert_not_called()
+        self.resource.disable_safe.assert_not_called()
+        mock_print.assert_called_once_with("Rx\nRy")
+
+    @mock.patch("pcs.resource.print")
+    def test_simulate_brief_nostrict(self, mock_print):
+        self.resource.disable_simulate.return_value = self._fixture_output()
+        self.run_cmd(
+            ["R1", "R2"], {"simulate": True, "brief": True, "no-strict": True}
+        )
+        self.resource.disable_simulate.assert_called_once_with(
+            ["R1", "R2"], False
+        )
+        self.resource.disable.assert_not_called()
+        self.resource.disable_safe.assert_not_called()
+        mock_print.assert_called_once_with("Rx\nRy")
+
+    @mock.patch("pcs.resource.print")
+    def test_simulate_brief_nothing_affected(self, mock_print):
+        self.resource.disable_simulate.return_value = self._fixture_output(
+            resources=[]
+        )
+        self.run_cmd(["R1", "R2"], dict(simulate=True, brief=True))
+        self.resource.disable_simulate.assert_called_once_with(
+            ["R1", "R2"], True
+        )
+        self.resource.disable.assert_not_called()
+        self.resource.disable_safe.assert_not_called()
+        mock_print.assert_not_called()
 
     def test_wait(self):
         self.run_cmd(["R1", "R2"], dict(wait="10"))
@@ -6557,6 +6607,7 @@ class ResourceSafeDisable(TestCase):
 
     def run_cmd(self, argv, modifiers=None):
         default_modifiers = {
+            "brief": False,
             "safe": False,
             "simulate": False,
             "no-strict": False,
@@ -6566,6 +6617,15 @@ class ResourceSafeDisable(TestCase):
         if modifiers:
             default_modifiers.update(modifiers)
         resource.resource_safe_disable_cmd(self.lib, argv, default_modifiers)
+
+    @staticmethod
+    def _fixture_output(plaintext=None, resources=None):
+        plaintext = plaintext if plaintext is not None else "simulate output"
+        resources = resources if resources is not None else ["Rx", "Ry"]
+        return dict(
+            plaintext_simulated_status=plaintext,
+            other_affected_resource_list=resources,
+        )
 
     def test_no_args(self):
         with self.assertRaises(CmdLineInputError) as cm:
@@ -6639,9 +6699,51 @@ class ResourceSafeDisable(TestCase):
 
     @mock.patch("pcs.resource.print")
     def test_simulate(self, mock_print):
-        self.resource.disable_simulate.return_value = "simulate output"
+        self.resource.disable_simulate.return_value = self._fixture_output()
         self.run_cmd(["R1", "R2"], dict(simulate=True))
-        self.resource.disable_simulate.assert_called_once_with(["R1", "R2"])
+        self.resource.disable_simulate.assert_called_once_with(
+            ["R1", "R2"], True
+        )
         self.resource.disable.assert_not_called()
         self.resource.disable_safe.assert_not_called()
         mock_print.assert_called_once_with("simulate output")
+
+    @mock.patch("pcs.resource.print")
+    def test_simulate_brief(self, mock_print):
+        self.resource.disable_simulate.return_value = self._fixture_output()
+        self.run_cmd(["R1", "R2"], dict(simulate=True, brief=True))
+        self.resource.disable_simulate.assert_called_once_with(
+            ["R1", "R2"], True
+        )
+        self.resource.disable.assert_not_called()
+        self.resource.disable_safe.assert_not_called()
+        mock_print.assert_called_once_with("Rx\nRy")
+
+    @mock.patch("pcs.resource.print")
+    def test_simulate_brief_nostrict(self, mock_print):
+        self.resource.disable_simulate.return_value = self._fixture_output()
+        self.run_cmd(
+            ["R1", "R2"], {"simulate": True, "brief": True, "no-strict": True}
+        )
+        self.resource.disable_simulate.assert_called_once_with(
+            ["R1", "R2"], False
+        )
+        self.resource.disable.assert_not_called()
+        self.resource.disable_safe.assert_not_called()
+        mock_print.assert_called_once_with("Rx\nRy")
+
+    @mock.patch("pcs.resource.print")
+    def test_simulate_brief_nothing_affected(self, mock_print):
+        self.resource.disable_simulate.return_value = self._fixture_output(
+            resources=[]
+        )
+        self.run_cmd(
+            ["R1", "R2"],
+            {"simulate": True, "brief": True, "no-strict": True}
+        )
+        self.resource.disable_simulate.assert_called_once_with(
+            ["R1", "R2"], False
+        )
+        self.resource.disable.assert_not_called()
+        self.resource.disable_safe.assert_not_called()
+        mock_print.assert_not_called()

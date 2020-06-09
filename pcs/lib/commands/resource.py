@@ -732,6 +732,48 @@ def _disable_validate_and_edit_cib(env, resources_section, resource_ids):
             env.get_cluster_state()
         )
     )
+    return resource_el_list
+
+def _disable_run_simulate(cmd_runner, cib, disabled_resource_el_list, strict):
+    inner_resources_names_set = set()
+    disabled_resource_ids = set()
+    for resource_el in disabled_resource_el_list:
+        disabled_resource_ids.add(resource_el.get("id"))
+        inner_resources_names_set.update({
+            inner_resource_el.get("id")
+            for inner_resource_el
+                in resource.common.get_all_inner_resources(resource_el)
+        })
+
+    plaintext_status, transitions, dummy_cib = simulate_cib(cmd_runner, cib)
+    simulated_operations = (
+        simulate_tools.get_operations_from_transitions(transitions)
+    )
+    other_affected = set()
+    if strict:
+        other_affected = set(
+            simulate_tools.get_resources_from_operations(
+                simulated_operations,
+                exclude=disabled_resource_ids,
+            )
+        )
+    else:
+        other_affected = set(
+            simulate_tools.get_resources_left_stopped(
+                simulated_operations,
+                exclude=disabled_resource_ids,
+            )
+            +
+            simulate_tools.get_resources_left_demoted(
+                simulated_operations,
+                exclude=disabled_resource_ids,
+            )
+        )
+
+    # Stopping a clone stops all its inner resources. That should not block
+    # stopping the clone.
+    other_affected = other_affected - inner_resources_names_set
+    return plaintext_status, other_affected
 
 def disable(env, resource_ids, wait):
     """
@@ -762,57 +804,15 @@ def disable_safe(env, resource_ids, strict, wait):
     with resource_environment(
         env, wait, resource_ids, _ensure_disabled_after_wait(True)
     ) as resources_section:
-        resource_el_list = _find_resources_or_raise(
-            resources_section,
-            resource_ids
+        resource_el_list =_disable_validate_and_edit_cib(
+            env, resources_section, resource_ids
         )
-        env.report_processor.process_list(
-            _resource_list_enable_disable(
-                resource_el_list,
-                resource.common.disable,
-                env.get_cluster_state()
-            )
-        )
-
-        inner_resources_names_set = set()
-        for resource_el in resource_el_list:
-            inner_resources_names_set.update({
-                inner_resource_el.get("id")
-                for inner_resource_el
-                    in resource.common.get_all_inner_resources(resource_el)
-            })
-
-        plaintext_status, transitions, dummy_cib = simulate_cib(
+        plaintext_status, other_affected = _disable_run_simulate(
             env.cmd_runner(),
-            get_root(resources_section)
+            get_root(resources_section),
+            resource_el_list,
+            strict,
         )
-        simulated_operations = (
-            simulate_tools.get_operations_from_transitions(transitions)
-        )
-        other_affected = set()
-        if strict:
-            other_affected = set(
-                simulate_tools.get_resources_from_operations(
-                    simulated_operations,
-                    exclude=resource_ids
-                )
-            )
-        else:
-            other_affected = set(
-                simulate_tools.get_resources_left_stopped(
-                    simulated_operations,
-                    exclude=resource_ids
-                )
-                +
-                simulate_tools.get_resources_left_demoted(
-                    simulated_operations,
-                    exclude=resource_ids
-                )
-            )
-
-        # Stopping a clone stops all its inner resources. That should not block
-        # stopping the clone.
-        other_affected = other_affected - inner_resources_names_set
         if other_affected:
             raise LibraryError(
                 reports.resource_disable_affects_other_resources(
@@ -822,23 +822,31 @@ def disable_safe(env, resource_ids, strict, wait):
                 )
             )
 
-def disable_simulate(env, resource_ids):
+def disable_simulate(env, resource_ids, strict):
     """
     Simulate disallowing specified resource to be started by the cluster
 
     LibraryEnvironment env --
     strings resource_ids -- ids of the resources to be disabled
+    bool strict -- if False, allow resources to be migrated
     """
     if not env.is_cib_live:
         raise LibraryError(reports.live_environment_required(["CIB"]))
 
-    resources_section = get_resources(env.get_cib())
-    _disable_validate_and_edit_cib(env, resources_section, resource_ids)
-    plaintext_status, dummy_transitions, dummy_cib = simulate_cib(
-        env.cmd_runner(),
-        get_root(resources_section)
+    cib = env.get_cib()
+    resource_el_list = _disable_validate_and_edit_cib(
+        env, get_resources(cib), resource_ids
     )
-    return plaintext_status
+    plaintext_status, other_affected = _disable_run_simulate(
+        env.cmd_runner(),
+        cib,
+        resource_el_list,
+        strict,
+    )
+    return dict(
+        plaintext_simulated_status=plaintext_status,
+        other_affected_resource_list=sorted(other_affected),
+    )
 
 def enable(env, resource_ids, wait):
     """
