@@ -121,7 +121,11 @@ def __build_op_expr(parse_result: pyparsing.ParseResults) -> RuleExprPart:
     # Those attr are defined by setResultsName in op_expr grammar rule
     return OpExpr(
         parse_result.name,
-        parse_result.interval.value if parse_result.interval else None,
+        # pyparsing-2.1.0 puts "interval_value" into parse_result.interval as
+        # defined in the grammar AND it also puts "interval_value" into
+        # parse_result. pyparsing-2.4.0 only puts "interval_value" into
+        # parse_result. Not sure why, maybe it's a bug, maybe it's intentional.
+        parse_result.interval_value if parse_result.interval_value else None,
     )
 
 
@@ -184,7 +188,7 @@ def __get_rule_parser(
                 )
             )
             .setName("<integer>[<time unit>]")
-            .setResultsName("value"),
+            .setResultsName("interval_value"),
         ]
     )
     op_expr = pyparsing.And(
