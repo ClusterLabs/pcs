@@ -61,6 +61,13 @@
           <nvpair id="dummy1-meta_attributes-attr2" name="attr2" value="10"/>
         </meta_attributes>
       </primitive>
+      <primitive class="ocf" id="dummy2" provider="heartbeat" type="Dummy">
+        <operations>
+          <op id="dummy2-start-interval-0s" interval="0s" name="start" timeout="20"/>
+          <op id="dummy2-stop-interval-0s" interval="0s" name="stop" timeout="20"/>
+          <op id="dummy2-monitor-interval-10" interval="10" name="monitor" timeout="20"/>
+        </operations>
+      </primitive>
       <group id="group1">
         <primitive class="ocf" id="dummy3" provider="heartbeat" type="Dummy">
           <instance_attributes id="dummy3-instance_attributes"/>

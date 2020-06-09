@@ -26,6 +26,8 @@
         <resource id="dummy1" resource_agent="ocf::heartbeat:Dummy" role="Started" active="true" orphaned="false" managed="true" failed="false" failure_ignored="false" nodes_running_on="1" >
             <node name="node1" id="1" cached="false"/>
         </resource>
+        <resource id="dummy2" resource_agent="ocf::heartbeat:Dummy" role="Stopped" active="false" orphaned="false" managed="true" failed="false" failure_ignored="false" nodes_running_on="0" target_role="Started" blocked="true">
+        </resource>
         <group id="group1" number_resources="2" >
              <resource id="dummy3" resource_agent="ocf::heartbeat:Dummy" role="Started" active="true" orphaned="false" managed="true" failed="false" failure_ignored="false" nodes_running_on="1" >
                  <node name="node3" id="3" cached="false"/>
