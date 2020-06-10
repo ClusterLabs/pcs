@@ -20,29 +20,30 @@ Summary: Pacemaker Configuration System
 %endif
 
 # ui_commit can be determined by hash, tag or branch
-%global ui_commit 0.1.1
+%global ui_commit 0.1.3
 %global ui_src_name pcs-web-ui-%{ui_commit}
 
 %global pcs_snmp_pkg_name  pcs-snmp
 
 %global pyagentx_version   0.4.pcs.2
-%global tornado_version    6.0.3
+%global tornado_version    6.0.4
 %global dataclasses_version 0.6
-%global dacite_version 1.1.0
-%global version_rubygem_backports  3.11.4
+%global dacite_version 1.5.0
+%global version_rubygem_backports  3.17.2
 %global version_rubygem_daemons  1.3.1
-%global version_rubygem_ethon  0.11.0
+%global version_rubygem_ethon  0.12.0
 %global version_rubygem_eventmachine  1.2.7
-%global version_rubygem_ffi  1.9.25
-%global version_rubygem_json  2.1.0
-%global version_rubygem_mustermann  1.0.3
+%global version_rubygem_ffi  1.13.1
+%global version_rubygem_json  2.3.0
+%global version_rubygem_mustermann  1.1.1
 %global version_rubygem_open4  1.3.4
-%global version_rubygem_rack  2.0.6
-%global version_rubygem_rack_protection  2.0.4
-%global version_rubygem_rack_test  1.0.0
-%global version_rubygem_sinatra  2.0.4
+%global version_rubygem_rack  2.2.2
+%global version_rubygem_rack_protection  2.0.8.1
+%global version_rubygem_rack_test  1.1.0
+%global version_rubygem_ruby2_keywords  0.0.2
+%global version_rubygem_sinatra  2.0.8.1
 %global version_rubygem_thin  1.7.2
-%global version_rubygem_tilt  2.0.9
+%global version_rubygem_tilt  2.0.10
 
 %if "%{python3_version}" == "3.6"
 %define dataclasses_required 1
@@ -99,6 +100,7 @@ Source92: https://rubygems.org/downloads/tilt-%{version_rubygem_tilt}.gem
 Source93: https://rubygems.org/downloads/eventmachine-%{version_rubygem_eventmachine}.gem
 Source94: https://rubygems.org/downloads/daemons-%{version_rubygem_daemons}.gem
 Source95: https://rubygems.org/downloads/thin-%{version_rubygem_thin}.gem
+Source96: https://rubygems.org/downloads/ruby2_keywords-%{version_rubygem_ruby2_keywords}.gem
 
 Source100: https://github.com/idevat/pcs-web-ui/archive/%{ui_commit}/%{ui_src_name}.tar.gz
 Source101: https://github.com/idevat/pcs-web-ui/releases/download/%{ui_commit}/pcs-web-ui-node-modules-%{ui_commit}.tar.xz
@@ -198,6 +200,7 @@ Provides: bundled(open4) = %{version_rubygem_open4}
 Provides: bundled(rack) = %{version_rubygem_rack}
 Provides: bundled(rack) = %{version_rubygem_rack_protection}
 Provides: bundled(rack) = %{version_rubygem_rack_test}
+Provides: bundled(ruby2_keywords) = %{version_rubygem_ruby2_keywords}
 Provides: bundled(sinatra) = %{version_rubygem_sinatra}
 Provides: bundled(thin) = %{version_rubygem_thin}
 Provides: bundled(tilt) = %{version_rubygem_tilt}
@@ -258,6 +261,7 @@ cp -f %SOURCE92 pcsd/vendor/cache
 cp -f %SOURCE93 pcsd/vendor/cache
 cp -f %SOURCE94 pcsd/vendor/cache
 cp -f %SOURCE95 pcsd/vendor/cache
+cp -f %SOURCE96 pcsd/vendor/cache
 
 
 # 3) dir for python bundles
@@ -316,6 +320,7 @@ gem install \
   %{rubygem_cache_dir}/rack-protection-%{version_rubygem_rack_protection}.gem \
   %{rubygem_cache_dir}/rack-test-%{version_rubygem_rack_test}.gem \
   %{rubygem_cache_dir}/rack-%{version_rubygem_rack}.gem \
+  %{rubygem_cache_dir}/ruby2_keywords-%{version_rubygem_ruby2_keywords}.gem \
   %{rubygem_cache_dir}/sinatra-%{version_rubygem_sinatra}.gem \
   %{rubygem_cache_dir}/thin-%{version_rubygem_thin}.gem \
   %{rubygem_cache_dir}/tilt-%{version_rubygem_tilt}.gem \
