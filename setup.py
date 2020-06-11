@@ -102,7 +102,7 @@ class PureLib(_SomeDir):
 
 setup(
     name="pcs",
-    version="0.10.5",
+    version="0.10.6",
     description="Pacemaker Configuration System",
     author="Chris Feist",
     author_email="cfeist@redhat.com",

@@ -1,6 +1,6 @@
 # Change Log
 
-## [Unreleased]
+## [0.10.6] - 2020-06-11
 
 ### Security
 - Web UI sends HTTP headers: Content-Security-Policy, X-Frame-Options and
