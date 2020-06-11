@@ -56,11 +56,14 @@ class IdProvider(object):
         return report_list
 
 
-def does_id_exist(tree, check_id):
+def get_configuration_elements_by_id(tree, check_id):
     """
-    Checks to see if id exists in the xml dom passed
-    tree cib etree node
-    check_id id to check
+    Return any configuration elements (not in status section of cib) with value
+    of attribte id specified as 'check_id'
+
+    tree -- any element in xml tree, whole tree (not only its subtree) will be
+        searched
+    check_id -- id to find
     """
 
     # do not search in /cib/status, it may contain references to previously
@@ -70,7 +73,7 @@ def does_id_exist(tree, check_id):
     #which will be named the same as the value of the remote-node attribute of
     #the explicit resource. So the value of nvpair named "remote-node" is
     #considered to be id
-    existing = get_root(tree).xpath("""
+    return get_root(tree).xpath("""
         (
             /cib/*[name()!="status"]
             |
@@ -96,7 +99,15 @@ def does_id_exist(tree, check_id):
             )
         ]
     """.format(check_id))
-    return len(existing) > 0
+
+
+def does_id_exist(tree, check_id):
+    """
+    Checks to see if id exists in the xml dom passed
+    tree cib etree node
+    check_id id to check
+    """
+    return len(get_configuration_elements_by_id(tree, check_id)) > 0
 
 def validate_id_does_not_exist(tree, id):
     """
@@ -155,11 +166,10 @@ def find_element_by_tag_and_id(
     if element_list:
         return element_list[0]
 
-    element = get_root(context_element).find(
-        './/*[@id="{0}"]'.format(element_id)
-    )
+    elements = get_configuration_elements_by_id(context_element, element_id)
 
-    if element is not None:
+    if elements:
+        element = elements[0]
         raise LibraryError(
             reports.id_belongs_to_unexpected_type(
                 element_id,
