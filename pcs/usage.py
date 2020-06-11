@@ -469,6 +469,12 @@ Commands:
         NOTE: Defaults do not apply to resources which override them with their
         own defined values.
 
+    op defaults set delete [<set id>]...
+        Delete specified options sets.
+
+    op defaults set remove [<set id>]...
+        Delete specified options sets.
+
     meta <resource id | group id | clone id> <meta options>
          [--wait[=n]]
         Add specified options to the specified resource, group or clone. Meta
@@ -607,6 +613,12 @@ Commands:
         resources of 'Dummy' type regardless of their standard and provider.
         NOTE: Defaults do not apply to resources which override them with their
         own defined values.
+
+    defaults set delete [<set id>]...
+        Delete specified options sets.
+
+    defaults set remove [<set id>]...
+        Delete specified options sets.
 
     cleanup [<resource id>] [node=<node>] [operation=<operation>
             [interval=<interval>]] [--strict]

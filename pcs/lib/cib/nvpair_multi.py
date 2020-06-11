@@ -1,9 +1,11 @@
 from typing import (
     cast,
+    Iterable,
     List,
     Mapping,
     NewType,
     Optional,
+    Tuple,
 )
 from xml.etree.ElementTree import Element
 
@@ -15,6 +17,7 @@ from pcs.common.pacemaker.nvset import (
     CibNvpairDto,
     CibNvsetDto,
 )
+from pcs.common.reports import ReportItemList
 from pcs.common.types import CibNvsetType
 from pcs.lib import validate
 from pcs.lib.cib.rule import (
@@ -25,10 +28,14 @@ from pcs.lib.cib.rule import (
     rule_to_cib,
 )
 from pcs.lib.cib.tools import (
+    ElementSearcher,
     IdProvider,
     create_subelement_id,
 )
-from pcs.lib.xml_tools import export_attributes
+from pcs.lib.xml_tools import (
+    export_attributes,
+    remove_one_element,
+)
 
 
 NvsetTag = NewType("NvsetTag", str)
@@ -72,6 +79,8 @@ def nvset_element_to_dto(nvset_el: Element) -> CibNvsetDto:
 def find_nvsets(parent_element: Element) -> List[Element]:
     """
     Get all nvset xml elements in the given parent element
+
+    parent_element -- an element to look for nvsets in
     """
     return cast(
         # The xpath method has a complicated return value, but we know our xpath
@@ -83,6 +92,32 @@ def find_nvsets(parent_element: Element) -> List[Element]:
             )
         ),
     )
+
+
+def find_nvsets_by_ids(
+    parent_element: Element, id_list: Iterable[str]
+) -> Tuple[List[Element], ReportItemList]:
+    """
+    Find nvset elements by their IDs and return them with non-empty report
+    list in case of errors.
+
+    parent_element -- an element to look for nvsets in
+    id_list -- nvset IDs to be look for
+    """
+    element_list = []
+    report_list: ReportItemList = []
+    for nvset_id in id_list:
+        searcher = ElementSearcher(
+            _tag_to_type.keys(),
+            nvset_id,
+            parent_element,
+            element_type_desc="options set",
+        )
+        if searcher.element_found():
+            element_list.append(searcher.get_element())
+        else:
+            report_list.extend(searcher.get_errors())
+    return element_list, report_list
 
 
 class ValidateNvsetAppendNew:
@@ -209,6 +244,16 @@ def nvset_append_new(
     for name, value in nvpair_dict.items():
         _set_nvpair(cast(Element, nvset_el), id_provider, name, value)
     return cast(Element, nvset_el)
+
+
+def nvset_remove(nvset_el_list: Iterable[Element]) -> None:
+    """
+    Remove given nvset elements from CIB
+
+    nvset_el_list -- nvset elements to be removed
+    """
+    for nvset_el in nvset_el_list:
+        remove_one_element(nvset_el)
 
 
 def _set_nvpair(

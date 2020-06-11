@@ -2,6 +2,7 @@ from functools import partial
 from typing import (
     Any,
     Container,
+    Iterable,
     List,
     Mapping,
     Optional,
@@ -147,6 +148,44 @@ def _defaults_config(
             sections.get(env.get_cib(), cib_section)
         )
     ]
+
+
+def resource_defaults_remove(
+    env: LibraryEnvironment, nvset_id_list: Iterable[str]
+) -> None:
+    """
+    Remove specified resource defaults nvsets
+
+    env --
+    nvset_id_list -- nvset IDs to be removed
+    """
+    return _defaults_remove(env, sections.RSC_DEFAULTS, nvset_id_list)
+
+
+def operation_defaults_remove(
+    env: LibraryEnvironment, nvset_id_list: Iterable[str]
+) -> None:
+    """
+    Remove specified operation defaults nvsets
+
+    env --
+    nvset_id_list -- nvset IDs to be removed
+    """
+    return _defaults_remove(env, sections.OP_DEFAULTS, nvset_id_list)
+
+
+def _defaults_remove(
+    env: LibraryEnvironment, cib_section: str, nvset_id_list: Iterable[str]
+) -> None:
+    if not nvset_id_list:
+        return
+    nvset_elements, report_list = nvpair_multi.find_nvsets_by_ids(
+        sections.get(env.get_cib(), cib_section), nvset_id_list
+    )
+    if env.report_processor.report_list(report_list).has_errors:
+        raise LibraryError()
+    nvpair_multi.nvset_remove(nvset_elements)
+    env.push_cib()
 
 
 def _set_any_defaults(

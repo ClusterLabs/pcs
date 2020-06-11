@@ -120,6 +120,7 @@ _type_articles = {
     "ACL user": "an",
     "ACL role": "an",
     "ACL permission": "an",
+    "options set": "an",
 }
 
 

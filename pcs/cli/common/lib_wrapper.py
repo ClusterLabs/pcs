@@ -390,8 +390,10 @@ def load_module(env, middleware_factory, name):
             {
                 "operation_defaults_config": cib_options.operation_defaults_config,
                 "operation_defaults_create": cib_options.operation_defaults_create,
+                "operation_defaults_remove": cib_options.operation_defaults_remove,
                 "resource_defaults_config": cib_options.resource_defaults_config,
                 "resource_defaults_create": cib_options.resource_defaults_create,
+                "resource_defaults_remove": cib_options.resource_defaults_remove,
                 # TODO remove
                 "set_operations_defaults": cib_options.set_operations_defaults,
                 # TODO remove

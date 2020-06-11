@@ -17,11 +17,25 @@ from pcs.common.types import (
 )
 
 
-@mock.patch("pcs.resource.print")
-class DefaultsConfigMixin:
+class DefaultsBaseMixin:
     cli_command_name = ""
     lib_command_name = ""
 
+    def setUp(self):
+        # pylint: disable=invalid-name
+        self.lib = mock.Mock(spec_set=["cib_options"])
+        self.cib_options = mock.Mock(spec_set=[self.lib_command_name])
+        self.lib.cib_options = self.cib_options
+        self.lib_command = getattr(self.cib_options, self.lib_command_name)
+        self.cli_command = getattr(resource, self.cli_command_name)
+
+    def _call_cmd(self, argv, modifiers=None):
+        modifiers = modifiers or dict()
+        self.cli_command(self.lib, argv, dict_to_modifiers(modifiers))
+
+
+@mock.patch("pcs.resource.print")
+class DefaultsConfigMixin(DefaultsBaseMixin):
     dto_list = [
         CibNvsetDto(
             "my-meta_attributes",
@@ -72,18 +86,6 @@ class DefaultsConfigMixin:
             [CibNvpairDto("my-id-pair3", "name 1", "value 1")],
         ),
     ]
-
-    def setUp(self):
-        # pylint: disable=invalid-name
-        self.lib = mock.Mock(spec_set=["cib_options"])
-        self.cib_options = mock.Mock(spec_set=[self.lib_command_name])
-        self.lib.cib_options = self.cib_options
-        self.lib_command = getattr(self.cib_options, self.lib_command_name)
-        self.cli_command = getattr(resource, self.cli_command_name)
-
-    def _call_cmd(self, argv, modifiers=None):
-        modifiers = modifiers or dict()
-        self.cli_command(self.lib, argv, dict_to_modifiers(modifiers))
 
     def test_no_args(self, mock_print):
         self.lib_command.return_value = []
@@ -153,22 +155,7 @@ class OpDefaultsConfig(DefaultsConfigMixin, TestCase):
     lib_command_name = "operation_defaults_config"
 
 
-class DefaultsSetCreateMixin:
-    cli_command_name = ""
-    lib_command_name = ""
-
-    def setUp(self):
-        # pylint: disable=invalid-name
-        self.lib = mock.Mock(spec_set=["cib_options"])
-        self.cib_options = mock.Mock(spec_set=[self.lib_command_name])
-        self.lib.cib_options = self.cib_options
-        self.lib_command = getattr(self.cib_options, self.lib_command_name)
-        self.cli_command = getattr(resource, self.cli_command_name)
-
-    def _call_cmd(self, argv, modifiers=None):
-        modifiers = modifiers or dict()
-        self.cli_command(self.lib, argv, dict_to_modifiers(modifiers))
-
+class DefaultsSetCreateMixin(DefaultsBaseMixin):
     def test_no_args(self):
         self._call_cmd([])
         self.lib_command.assert_called_once_with(
@@ -263,3 +250,23 @@ class RscDefaultsSetCreate(DefaultsSetCreateMixin, TestCase):
 class OpDefaultsSetCreate(DefaultsSetCreateMixin, TestCase):
     cli_command_name = "resource_op_defaults_set_create_cmd"
     lib_command_name = "operation_defaults_create"
+
+
+class DefaultsSetRemoveMixin(DefaultsBaseMixin):
+    def test_no_args(self):
+        self._call_cmd([])
+        self.lib_command.assert_called_once_with([])
+
+    def test_some_args(self):
+        self._call_cmd(["set1", "set2"])
+        self.lib_command.assert_called_once_with(["set1", "set2"])
+
+
+class RscDefaultsSetRemove(DefaultsSetRemoveMixin, TestCase):
+    cli_command_name = "resource_defaults_set_remove_cmd"
+    lib_command_name = "resource_defaults_remove"
+
+
+class OpDefaultsSetRemove(DefaultsSetRemoveMixin, TestCase):
+    cli_command_name = "resource_op_defaults_set_remove_cmd"
+    lib_command_name = "operation_defaults_remove"

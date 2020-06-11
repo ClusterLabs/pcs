@@ -222,6 +222,43 @@ def resource_op_defaults_config_cmd(
     )
 
 
+def _defaults_set_remove_cmd(
+    lib_command: Callable[..., Any],
+    argv: Sequence[str],
+    modifiers: InputModifiers,
+) -> None:
+    """
+    Options:
+      * -f - CIB file
+    """
+    modifiers.ensure_only_supported("-f")
+    lib_command(argv)
+
+
+def resource_defaults_set_remove_cmd(
+    lib: Any, argv: Sequence[str], modifiers: InputModifiers,
+) -> None:
+    """
+    Options:
+      * -f - CIB file
+    """
+    return _defaults_set_remove_cmd(
+        lib.cib_options.resource_defaults_remove, argv, modifiers
+    )
+
+
+def resource_op_defaults_set_remove_cmd(
+    lib: Any, argv: Sequence[str], modifiers: InputModifiers,
+) -> None:
+    """
+    Options:
+      * -f - CIB file
+    """
+    return _defaults_set_remove_cmd(
+        lib.cib_options.operation_defaults_remove, argv, modifiers
+    )
+
+
 def resource_defaults_cmd(lib, argv, modifiers):
     """
     Options:
@@ -238,7 +275,11 @@ def resource_defaults_cmd(lib, argv, modifiers):
         {
             "config": resource_defaults_config_cmd,
             "set": create_router(
-                {"create": resource_defaults_set_create_cmd,},
+                {
+                    "create": resource_defaults_set_create_cmd,
+                    "delete": resource_defaults_set_remove_cmd,
+                    "remove": resource_defaults_set_remove_cmd,
+                },
                 ["resource", "defaults", "set"],
             ),
         },
@@ -264,7 +305,11 @@ def resource_op_defaults_cmd(lib, argv, modifiers):
         {
             "config": resource_op_defaults_config_cmd,
             "set": create_router(
-                {"create": resource_op_defaults_set_create_cmd,},
+                {
+                    "create": resource_op_defaults_set_create_cmd,
+                    "delete": resource_op_defaults_set_remove_cmd,
+                    "remove": resource_op_defaults_set_remove_cmd,
+                },
                 ["resource", "op", "defaults", "set"],
             ),
         },

@@ -127,6 +127,39 @@ class FindNvsets(TestCase):
         )
 
 
+class FindNvsetsByIds(TestCase):
+    def test_success(self):
+        xml = etree.fromstring(
+            """
+            <parent>
+                <meta_attributes id="set1" />
+                <instance_attributes id="set2" />
+                <not_an_nvset id="set3" />
+                <meta_attributes id="set4" />
+            </parent>
+        """
+        )
+        element_list, report_list = nvpair_multi.find_nvsets_by_ids(
+            xml, ["set1", "set2", "set3", "setX"]
+        )
+        self.assertEqual(
+            ["set1", "set2"], [el.get("id") for el in element_list],
+        )
+        assert_report_item_list_equal(
+            report_list,
+            [
+                fixture.report_unexpected_element(
+                    "set3", "not_an_nvset", ["options set"]
+                ),
+                fixture.report_not_found(
+                    "setX",
+                    context_type="parent",
+                    expected_types=["options set"],
+                ),
+            ],
+        )
+
+
 class ValidateNvsetAppendNew(TestCase):
     def setUp(self):
         self.id_provider = IdProvider(
@@ -408,4 +441,31 @@ class NvsetAppendNew(TestCase):
                 </context>
             """,
             etree_to_str(context_element),
+        )
+
+
+class NvsetRemove(TestCase):
+    # pylint: disable=no-self-use
+    def test_success(self):
+        xml = etree.fromstring(
+            """
+            <parent>
+                <meta_attributes id="set1" />
+                <instance_attributes id="set2" />
+                <not_an_nvset id="set3" />
+                <meta_attributes id="set4" />
+            </parent>
+        """
+        )
+        nvpair_multi.nvset_remove(
+            [xml.find(".//*[@id='set2']"), xml.find(".//*[@id='set4']")]
+        )
+        assert_xml_equal(
+            """
+            <parent>
+                <meta_attributes id="set1" />
+                <not_an_nvset id="set3" />
+            </parent>
+            """,
+            etree_to_str(xml),
         )

@@ -334,3 +334,107 @@ class ResourceDefaultsConfig(DefaultsConfigMixin, TestCase):
 class OperationDefaultsConfig(DefaultsConfigMixin, TestCase):
     command = staticmethod(cib_options.operation_defaults_config)
     tag = "op_defaults"
+
+
+class DefaultsRemoveMixin:
+    command = lambda *args, **kwargs: None
+    tag = ""
+
+    def setUp(self):
+        # pylint: disable=invalid-name
+        self.env_assist, self.config = get_env_tools(self)
+
+    def test_nothing_to_delete(self):
+        self.command(self.env_assist.get_env(), [])
+
+    def test_defaults_section_missing(self):
+        self.config.runner.cib.load(filename="cib-empty-1.2.xml")
+        self.env_assist.assert_raise_library_error(
+            lambda: self.command(self.env_assist.get_env(), ["set1"])
+        )
+        self.env_assist.assert_reports(
+            [
+                fixture.report_not_found(
+                    "set1",
+                    context_type=self.tag,
+                    expected_types=["options set"],
+                ),
+            ]
+        )
+
+    def test_success(self):
+        self.config.runner.cib.load(
+            filename="cib-empty-1.2.xml",
+            optional_in_conf=f"""
+                <{self.tag}>
+                    <meta_attributes id="set1" />
+                    <instance_attributes id="set2" />
+                    <not_an_nvset id="set3" />
+                    <meta_attributes id="set4" />
+                    <instance_attributes id="set5" />
+                </{self.tag}>
+            """,
+        )
+        self.config.env.push_cib(
+            optional_in_conf=f"""
+                <{self.tag}>
+                    <meta_attributes id="set1" />
+                    <not_an_nvset id="set3" />
+                    <meta_attributes id="set4" />
+                </{self.tag}>
+        """
+        )
+        self.command(self.env_assist.get_env(), ["set2", "set5"])
+
+    def test_delete_all_keep_the_section(self):
+        self.config.runner.cib.load(
+            filename="cib-empty-1.2.xml",
+            optional_in_conf=f"""
+                <{self.tag}>
+                    <meta_attributes id="set1" />
+                </{self.tag}>
+            """,
+        )
+        self.config.env.push_cib(optional_in_conf=f"<{self.tag} />")
+        self.command(self.env_assist.get_env(), ["set1"])
+
+    def test_nvset_not_found(self):
+        self.config.runner.cib.load(
+            filename="cib-empty-1.2.xml",
+            optional_in_conf=f"""
+                <{self.tag}>
+                    <meta_attributes id="set1" />
+                    <instance_attributes id="set2" />
+                    <not_an_nvset id="set3" />
+                    <meta_attributes id="set4" />
+                    <instance_attributes id="set5" />
+                </{self.tag}>
+            """,
+        )
+        self.env_assist.assert_raise_library_error(
+            lambda: self.command(
+                self.env_assist.get_env(), ["set2", "set3", "setX"]
+            )
+        )
+        self.env_assist.assert_reports(
+            [
+                fixture.report_unexpected_element(
+                    "set3", "not_an_nvset", ["options set"]
+                ),
+                fixture.report_not_found(
+                    "setX",
+                    context_type=self.tag,
+                    expected_types=["options set"],
+                ),
+            ]
+        )
+
+
+class ResourceDefaultsRemove(DefaultsRemoveMixin, TestCase):
+    command = staticmethod(cib_options.resource_defaults_remove)
+    tag = "rsc_defaults"
+
+
+class OperationDefaultsRemove(DefaultsRemoveMixin, TestCase):
+    command = staticmethod(cib_options.operation_defaults_remove)
+    tag = "op_defaults"

@@ -175,6 +175,82 @@ class OpDefaultsSetCreate(
     cib_tag = "op_defaults"
 
 
+class DefaultsSetDeleteMixin(TestDefaultsMixin, AssertPcsMixin):
+    cli_command = ""
+    prefix = ""
+    cib_tag = ""
+
+    def setUp(self):
+        super().setUp()
+        xml_rsc = """
+            <rsc_defaults>
+                <meta_attributes id="rsc-set1" />
+                <meta_attributes id="rsc-set2" />
+                <meta_attributes id="rsc-set3" />
+                <meta_attributes id="rsc-set4" />
+            </rsc_defaults>
+        """
+        xml_op = """
+            <op_defaults>
+                <meta_attributes id="op-set1" />
+                <meta_attributes id="op-set2" />
+                <meta_attributes id="op-set3" />
+                <meta_attributes id="op-set4" />
+            </op_defaults>
+        """
+        xml_manip = XmlManipulation.from_file(empty_cib)
+        xml_manip.append_to_first_tag_name("configuration", xml_rsc, xml_op)
+        write_data_to_tmpfile(str(xml_manip), self.temp_cib)
+
+    def test_success(self):
+        self.assert_effect(
+            [
+                f"{self.cli_command} set delete {self.prefix}-set1 "
+                f"{self.prefix}-set3",
+                f"{self.cli_command} set remove {self.prefix}-set1 "
+                f"{self.prefix}-set3",
+            ],
+            dedent(
+                f"""\
+                <{self.cib_tag}>
+                    <meta_attributes id="{self.prefix}-set2" />
+                    <meta_attributes id="{self.prefix}-set4" />
+                </{self.cib_tag}>
+            """
+            ),
+        )
+
+
+class RscDefaultsSetDelete(
+    get_assert_pcs_effect_mixin(
+        lambda cib: etree.tostring(
+            # pylint:disable=undefined-variable
+            etree.parse(cib).findall(".//rsc_defaults")[0]
+        )
+    ),
+    DefaultsSetDeleteMixin,
+    TestCase,
+):
+    cli_command = "resource defaults"
+    prefix = "rsc"
+    cib_tag = "rsc_defaults"
+
+
+class OpDefaultsSetDelete(
+    get_assert_pcs_effect_mixin(
+        lambda cib: etree.tostring(
+            # pylint:disable=undefined-variable
+            etree.parse(cib).findall(".//op_defaults")[0]
+        )
+    ),
+    DefaultsSetDeleteMixin,
+    TestCase,
+):
+    cli_command = "resource op defaults"
+    prefix = "op"
+    cib_tag = "op_defaults"
+
+
 class DefaultsSetUsageMixin(TestDefaultsMixin, AssertPcsMixin):
     cli_command = ""
 
