@@ -24,7 +24,7 @@ build_gems_without_bundler:
 	vendor/cache/rack-2.2.2.gem \
 	vendor/cache/rack-protection-2.0.8.1.gem \
 	vendor/cache/rack-test-1.1.0.gem \
-	vendor/cache/ruby2_keywords-0.0.2.gem
+	vendor/cache/ruby2_keywords-0.0.2.gem \
 	vendor/cache/sinatra-2.0.8.1.gem \
 	vendor/cache/tilt-2.0.10.gem \
 	vendor/cache/eventmachine-1.2.7.gem \
