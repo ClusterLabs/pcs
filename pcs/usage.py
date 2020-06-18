@@ -446,7 +446,7 @@ Commands:
         List currently configured default values for operations. If --full is
         specified, also list ids.
 
-    op defaults <options>
+    op defaults <name>=<value>...
         Set default values for operations.
         NOTE: Defaults do not apply to resources which override them with their
         own defined values.
@@ -474,6 +474,12 @@ Commands:
 
     op defaults set remove [<set id>]...
         Delete specified options sets.
+
+    op defaults set update <set id> [meta [<name>=<value>]...]
+        Add, remove or change values in specified set of default values for
+        resource operations.
+        NOTE: Defaults do not apply to resources which override them with their
+        own defined values.
 
     meta <resource id | group id | clone id> <meta options>
          [--wait[=n]]
@@ -593,7 +599,7 @@ Commands:
         List currently configured default values for resources. If --full is
         specified, also list ids.
 
-    defaults <options>
+    defaults <name>=<value>...
         Set default values for resources.
         NOTE: Defaults do not apply to resources which override them with their
         own defined values.
@@ -619,6 +625,12 @@ Commands:
 
     defaults set remove [<set id>]...
         Delete specified options sets.
+
+    defaults set update <set id> [meta [<name>=<value>]...]
+        Add, remove or change values in specified set of default values for
+        resources.
+        NOTE: Defaults do not apply to resources which override them with their
+        own defined values.
 
     cleanup [<resource id>] [node=<node>] [operation=<operation>
             [interval=<interval>]] [--strict]

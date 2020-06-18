@@ -4669,3 +4669,13 @@ class CibRuleParseError(NameBuildTest):
                 15,
             ),
         )
+
+
+class CibNvsetAmbiguousProvideNvsetId(NameBuildTest):
+    def test_success(self):
+        self.assert_message_from_report(
+            "Several options sets exist, please specify an option set ID",
+            reports.CibNvsetAmbiguousProvideNvsetId(
+                const.PCS_COMMAND_RESOURCE_DEFAULTS_UPDATE
+            ),
+        )

@@ -425,6 +425,26 @@ class CibRuleParseError(CliReportMessageCustom):
         )
 
 
+class CibNvsetAmbiguousProvideNvsetId(CliReportMessageCustom):
+    _obj: messages.CibNvsetAmbiguousProvideNvsetId
+
+    @property
+    def message(self) -> str:
+        command_map = {
+            const.PCS_COMMAND_RESOURCE_DEFAULTS_UPDATE: (
+                "pcs resource defaults set update"
+            ),
+            const.PCS_COMMAND_OPERATION_DEFAULTS_UPDATE: (
+                "pcs resource op defaults set update"
+            ),
+        }
+        command = command_map.get(self._obj.pcs_command, "")
+        return (
+            f"Several options sets exist, please use the '{command}' command "
+            "and specify an option set ID"
+        )
+
+
 def _create_report_msg_map() -> Dict[str, type]:
     result: Dict[str, type] = {}
     for report_msg_cls in get_all_subclasses(CliReportMessageCustom):

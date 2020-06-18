@@ -259,17 +259,67 @@ def resource_op_defaults_set_remove_cmd(
     )
 
 
+def _defaults_set_update_cmd(
+    lib_command: Callable[..., Any],
+    argv: Sequence[str],
+    modifiers: InputModifiers,
+) -> None:
+    """
+    Options:
+      * -f - CIB file
+    """
+    modifiers.ensure_only_supported("-f")
+    if not argv:
+        raise CmdLineInputError()
+
+    set_id = argv[0]
+    groups = group_by_keywords(
+        argv[1:], set(["meta"]), keyword_repeat_allowed=False,
+    )
+    lib_command(
+        set_id, prepare_options(groups["meta"]),
+    )
+
+
+def resource_defaults_set_update_cmd(
+    lib: Any, argv: Sequence[str], modifiers: InputModifiers,
+) -> None:
+    """
+    Options:
+      * -f - CIB file
+    """
+    return _defaults_set_update_cmd(
+        lib.cib_options.resource_defaults_update, argv, modifiers
+    )
+
+
+def resource_op_defaults_set_update_cmd(
+    lib: Any, argv: Sequence[str], modifiers: InputModifiers,
+) -> None:
+    """
+    Options:
+      * -f - CIB file
+    """
+    return _defaults_set_update_cmd(
+        lib.cib_options.operation_defaults_update, argv, modifiers
+    )
+
+
 def resource_defaults_cmd(lib, argv, modifiers):
     """
     Options:
       * -f - CIB file
       * --force - allow unknown options
     """
-    # TODO cleanup once all commands are here and move to routing if possible
     # TODO Is there any syntax to be removed? Add it to deprecations.
     if argv and "=" in argv[0]:
-        # TODO remove this legacy command, use a new one
-        return lib.cib_options.set_resources_defaults(prepare_options(argv))
+        warn(
+            "This command is deprecated and will be removed. "
+            "Please use 'pcs resource defaults set update' instead."
+        )
+        return lib.cib_options.resource_defaults_update(
+            None, prepare_options(argv)
+        )
 
     router = create_router(
         {
@@ -279,6 +329,7 @@ def resource_defaults_cmd(lib, argv, modifiers):
                     "create": resource_defaults_set_create_cmd,
                     "delete": resource_defaults_set_remove_cmd,
                     "remove": resource_defaults_set_remove_cmd,
+                    "update": resource_defaults_set_update_cmd,
                 },
                 ["resource", "defaults", "set"],
             ),
@@ -290,7 +341,6 @@ def resource_defaults_cmd(lib, argv, modifiers):
 
 
 def resource_op_defaults_cmd(lib, argv, modifiers):
-    # TODO cleanup once all commands are here and move to routing if possible
     # TODO Is there any syntax to be removed? Add it to deprecations.
     """
     Options:
@@ -298,8 +348,13 @@ def resource_op_defaults_cmd(lib, argv, modifiers):
       * --force - allow unknown options
     """
     if argv and "=" in argv[0]:
-        # TODO remove this legacy command, use a new one
-        return lib.cib_options.set_operations_defaults(prepare_options(argv))
+        warn(
+            "This command is deprecated and will be removed. "
+            "Please use 'pcs resource op defaults set update' instead."
+        )
+        return lib.cib_options.operation_defaults_update(
+            None, prepare_options(argv)
+        )
 
     router = create_router(
         {
@@ -309,6 +364,7 @@ def resource_op_defaults_cmd(lib, argv, modifiers):
                     "create": resource_op_defaults_set_create_cmd,
                     "delete": resource_op_defaults_set_remove_cmd,
                     "remove": resource_op_defaults_set_remove_cmd,
+                    "update": resource_op_defaults_set_update_cmd,
                 },
                 ["resource", "op", "defaults", "set"],
             ),

@@ -1,4 +1,3 @@
-from functools import partial
 from typing import (
     Any,
     Container,
@@ -16,7 +15,6 @@ from pcs.lib.cib import (
     nvpair_multi,
     sections,
 )
-from pcs.lib.cib.nvpair import arrange_first_meta_attributes
 from pcs.lib.cib.tools import IdProvider
 from pcs.lib.env import LibraryEnvironment
 from pcs.lib.errors import LibraryError
@@ -78,7 +76,7 @@ def operation_defaults_create(
 
 def _defaults_create(
     env: LibraryEnvironment,
-    cib_section: str,
+    cib_section_name: str,
     validator_options: Mapping[str, Any],
     nvpairs: Mapping[str, str],
     nvset_options: Mapping[str, str],
@@ -109,9 +107,8 @@ def _defaults_create(
     ).has_errors:
         raise LibraryError()
 
-    parent_el = sections.get(cib, cib_section)
     nvpair_multi.nvset_append_new(
-        parent_el,
+        sections.get(cib, cib_section_name),
         id_provider,
         nvpair_multi.NVSET_META,
         nvpairs,
@@ -140,12 +137,12 @@ def operation_defaults_config(env: LibraryEnvironment) -> List[CibNvsetDto]:
 
 
 def _defaults_config(
-    env: LibraryEnvironment, cib_section: str,
+    env: LibraryEnvironment, cib_section_name: str,
 ) -> List[CibNvsetDto]:
     return [
         nvpair_multi.nvset_element_to_dto(nvset_el)
         for nvset_el in nvpair_multi.find_nvsets(
-            sections.get(env.get_cib(), cib_section)
+            sections.get(env.get_cib(), cib_section_name)
         )
     ]
 
@@ -175,12 +172,12 @@ def operation_defaults_remove(
 
 
 def _defaults_remove(
-    env: LibraryEnvironment, cib_section: str, nvset_id_list: Iterable[str]
+    env: LibraryEnvironment, cib_section_name: str, nvset_id_list: Iterable[str]
 ) -> None:
     if not nvset_id_list:
         return
     nvset_elements, report_list = nvpair_multi.find_nvsets_by_ids(
-        sections.get(env.get_cib(), cib_section), nvset_id_list
+        sections.get(env.get_cib(), cib_section_name), nvset_id_list
     )
     if env.report_processor.report_list(report_list).has_errors:
         raise LibraryError()
@@ -188,52 +185,125 @@ def _defaults_remove(
     env.push_cib()
 
 
-def _set_any_defaults(
-    section_name: str, env: LibraryEnvironment, options: Mapping[str, str]
+def resource_defaults_update(
+    env: LibraryEnvironment,
+    nvset_id: Optional[str],
+    nvpairs: Mapping[str, str],
 ) -> None:
-    # TODO remove
     """
-    string section_name -- determine the section of defaults
-    env -- provides access to outside environment
-    dict options -- are desired options with its values; when value is empty the
-        option have to be removed
+    Update specified resource defaults nvset
+
+    env --
+    nvset_id -- nvset ID to be updated; if None, update an existing nvset if
+        there is only one
+    nvpairs -- name-value pairs to be put into the nvset
     """
-    # Do not ever remove the nvset element, even if it is empty. There may be
-    # ACLs set in pacemaker which allow "write" for nvpairs (adding, changing
-    # and removing) but not nvsets. In such a case, removing the nvset would
-    # cause the whole change to be rejected by pacemaker with a "permission
-    # denied" message.
-    # https://bugzilla.redhat.com/show_bug.cgi?id=1642514
+    return _defaults_update(
+        env,
+        sections.RSC_DEFAULTS,
+        nvset_id,
+        nvpairs,
+        reports.const.PCS_COMMAND_RESOURCE_DEFAULTS_UPDATE,
+    )
+
+
+def operation_defaults_update(
+    env: LibraryEnvironment,
+    nvset_id: Optional[str],
+    nvpairs: Mapping[str, str],
+) -> None:
+    """
+    Update specified operation defaults nvset
+
+    env --
+    nvset_id -- nvset ID to be updated; if None, update an existing nvset if
+        there is only one
+    nvpairs -- name-value pairs to be put into the nvset
+    """
+    return _defaults_update(
+        env,
+        sections.OP_DEFAULTS,
+        nvset_id,
+        nvpairs,
+        reports.const.PCS_COMMAND_OPERATION_DEFAULTS_UPDATE,
+    )
+
+
+def _defaults_update(
+    env: LibraryEnvironment,
+    cib_section_name: str,
+    nvset_id: Optional[str],
+    nvpairs: Mapping[str, str],
+    pcs_command: reports.types.PcsCommand,
+) -> None:
+    cib = env.get_cib()
+    id_provider = IdProvider(cib)
+
+    if nvset_id is None:
+        # TODO mark deprecated and put to a list of deprecated functionalities
+
+        # Backward compatibility code to support an old use case where no id
+        # was requested and provided and the first meta_attributes nvset was
+        # created / updated. However, we check that there is only one nvset
+        # present in the CIB to prevent breaking the configuration with
+        # multiple nvsets in place.
+
+        if not nvpairs:
+            return
+
+        # Do not create new defaults element if we are only removing values
+        # from it.
+        only_removing = True
+        for value in nvpairs.values():
+            if value != "":
+                only_removing = False
+                break
+        if only_removing and not sections.exists(cib, cib_section_name):
+            env.report_processor.report(
+                ReportItem.warning(reports.messages.DefaultsCanBeOverriden())
+            )
+            return
+
+        nvset_elements = nvpair_multi.find_nvsets(
+            sections.get(cib, cib_section_name)
+        )
+        if len(nvset_elements) > 1:
+            env.report_processor.report(
+                reports.item.ReportItem.error(
+                    reports.messages.CibNvsetAmbiguousProvideNvsetId(
+                        pcs_command
+                    )
+                )
+            )
+            raise LibraryError()
+        env.report_processor.report(
+            ReportItem.warning(reports.messages.DefaultsCanBeOverriden())
+        )
+        if len(nvset_elements) == 1:
+            nvpair_multi.nvset_update(nvset_elements[0], id_provider, nvpairs)
+        elif only_removing:
+            # do not create new nvset if there is none and we are only removing
+            # nvpairs
+            return
+        else:
+            nvpair_multi.nvset_append_new(
+                sections.get(cib, cib_section_name),
+                id_provider,
+                nvpair_multi.NVSET_META,
+                nvpairs,
+                {},
+            )
+        env.push_cib()
+        return
+
+    nvset_elements, report_list = nvpair_multi.find_nvsets_by_ids(
+        sections.get(cib, cib_section_name), [nvset_id]
+    )
+    if env.report_processor.report_list(report_list).has_errors:
+        raise LibraryError()
+
+    nvpair_multi.nvset_update(nvset_elements[0], id_provider, nvpairs)
     env.report_processor.report(
         ReportItem.warning(reports.messages.DefaultsCanBeOverriden())
     )
-
-    if not options:
-        return
-
-    cib = env.get_cib()
-
-    # Do not create new defaults element if we are only removing values from it.
-    only_removing = True
-    for value in options.values():
-        if value != "":
-            only_removing = False
-            break
-    if only_removing and not sections.exists(cib, section_name):
-        return
-
-    defaults_section = sections.get(cib, section_name)
-    arrange_first_meta_attributes(
-        defaults_section,
-        options,
-        IdProvider(cib),
-        new_id="{0}-options".format(section_name),
-    )
-
     env.push_cib()
-
-
-# TODO remove
-set_operations_defaults = partial(_set_any_defaults, sections.OP_DEFAULTS)
-# TODO remove
-set_resources_defaults = partial(_set_any_defaults, sections.RSC_DEFAULTS)

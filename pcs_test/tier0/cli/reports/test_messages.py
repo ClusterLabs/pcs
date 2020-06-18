@@ -499,6 +499,17 @@ class CibRuleParseError(CliReportMessageTestBase):
         )
 
 
+class CibNvsetAmbiguousProvideNvsetId(CliReportMessageTestBase):
+    def test_success(self):
+        self.assert_message(
+            messages.CibNvsetAmbiguousProvideNvsetId(
+                const.PCS_COMMAND_RESOURCE_DEFAULTS_UPDATE
+            ),
+            "Several options sets exist, please use the 'pcs resource defaults "
+            "set update' command and specify an option set ID",
+        )
+
+
 # TODO: create test/check that all subclasses of
 # pcs.cli.reports.messages.CliReportMessageCustom have their test class with
 # the same name in this file

@@ -270,3 +270,35 @@ class RscDefaultsSetRemove(DefaultsSetRemoveMixin, TestCase):
 class OpDefaultsSetRemove(DefaultsSetRemoveMixin, TestCase):
     cli_command_name = "resource_op_defaults_set_remove_cmd"
     lib_command_name = "operation_defaults_remove"
+
+
+class DefaultsSetUpdateMixin(DefaultsBaseMixin):
+    def test_no_args(self):
+        with self.assertRaises(CmdLineInputError) as cm:
+            self._call_cmd([])
+        self.assertIsNone(cm.exception.message)
+        self.lib_command.assert_not_called()
+
+    def test_no_meta(self):
+        self._call_cmd(["nvset-id"])
+        self.lib_command.assert_called_once_with("nvset-id", {})
+
+    def test_no_meta_values(self):
+        self._call_cmd(["nvset-id", "meta"])
+        self.lib_command.assert_called_once_with("nvset-id", {})
+
+    def test_meta_values(self):
+        self._call_cmd(["nvset-id", "meta", "a=b", "c=d"])
+        self.lib_command.assert_called_once_with(
+            "nvset-id", {"a": "b", "c": "d"}
+        )
+
+
+class RscDefaultsSetUpdate(DefaultsSetUpdateMixin, TestCase):
+    cli_command_name = "resource_defaults_set_update_cmd"
+    lib_command_name = "resource_defaults_update"
+
+
+class OpDefaultsSetUpdate(DefaultsSetUpdateMixin, TestCase):
+    cli_command_name = "resource_op_defaults_set_update_cmd"
+    lib_command_name = "operation_defaults_update"

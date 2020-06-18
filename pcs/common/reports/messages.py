@@ -6437,3 +6437,18 @@ class CibRuleParseError(ReportItemMessage):
             line_number=self.line_number,
             column_number=self.column_number,
         )
+
+
+@dataclass(frozen=True)
+class CibNvsetAmbiguousProvideNvsetId(ReportItemMessage):
+    """
+    An old command supporting only one nvset have been used when several nvsets
+    exist. We require an nvset ID the command should work with to be specified.
+    """
+
+    pcs_command: types.PcsCommand
+    _code = codes.CIB_NVSET_AMBIGUOUS_PROVIDE_NVSET_ID
+
+    @property
+    def message(self) -> str:
+        return "Several options sets exist, please specify an option set ID"

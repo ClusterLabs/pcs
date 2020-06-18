@@ -438,3 +438,237 @@ class ResourceDefaultsRemove(DefaultsRemoveMixin, TestCase):
 class OperationDefaultsRemove(DefaultsRemoveMixin, TestCase):
     command = staticmethod(cib_options.operation_defaults_remove)
     tag = "op_defaults"
+
+
+class DefaultsUpdateLegacyMixin:
+    # This class tests legacy use cases of not providing an nvset ID
+    command = lambda *args, **kwargs: None
+    tag = ""
+    command_for_report = None
+
+    def setUp(self):
+        # pylint: disable=invalid-name
+        self.env_assist, self.config = get_env_tools(self)
+        self.reports = [fixture.warn(reports.codes.DEFAULTS_CAN_BE_OVERRIDEN)]
+
+    def tearDown(self):
+        # pylint: disable=invalid-name
+        self.env_assist.assert_reports(self.reports)
+
+    def fixture_initial_defaults(self):
+        return f"""
+            <{self.tag}>
+                <meta_attributes id="{self.tag}-options">
+                    <nvpair id="{self.tag}-options-a" name="a" value="b"/>
+                    <nvpair id="{self.tag}-options-b" name="b" value="c"/>
+                </meta_attributes>
+            </{self.tag}>
+        """
+
+    def test_change(self):
+        self.config.runner.cib.load(
+            optional_in_conf=self.fixture_initial_defaults()
+        )
+        self.config.env.push_cib(
+            optional_in_conf=f"""
+            <{self.tag}>
+                <meta_attributes id="{self.tag}-options">
+                    <nvpair id="{self.tag}-options-a" name="a" value="B"/>
+                    <nvpair id="{self.tag}-options-b" name="b" value="C"/>
+                </meta_attributes>
+            </{self.tag}>
+        """
+        )
+        self.command(self.env_assist.get_env(), None, {"a": "B", "b": "C"})
+
+    def test_add(self):
+        self.config.runner.cib.load(
+            optional_in_conf=self.fixture_initial_defaults()
+        )
+        self.config.env.push_cib(
+            optional_in_conf=f"""
+            <{self.tag}>
+                <meta_attributes id="{self.tag}-options">
+                    <nvpair id="{self.tag}-options-a" name="a" value="b"/>
+                    <nvpair id="{self.tag}-options-b" name="b" value="c"/>
+                    <nvpair id="{self.tag}-options-c" name="c" value="d"/>
+                </meta_attributes>
+            </{self.tag}>
+        """
+        )
+        self.command(self.env_assist.get_env(), None, {"c": "d"})
+
+    def test_remove(self):
+        self.config.runner.cib.load(
+            optional_in_conf=self.fixture_initial_defaults()
+        )
+        self.config.env.push_cib(
+            remove=(
+                f"./configuration/{self.tag}/meta_attributes/nvpair[@name='a']"
+            )
+        )
+        self.command(self.env_assist.get_env(), None, {"a": ""})
+
+    def test_add_section_if_missing(self):
+        self.config.runner.cib.load()
+        self.config.env.push_cib(
+            optional_in_conf=f"""
+            <{self.tag}>
+                <meta_attributes id="{self.tag}-meta_attributes">
+                    <nvpair id="{self.tag}-meta_attributes-a" name="a" value="A"/>
+                </meta_attributes>
+            </{self.tag}>
+        """
+        )
+        self.command(self.env_assist.get_env(), None, {"a": "A"})
+
+    def test_add_meta_if_missing(self):
+        self.config.runner.cib.load(optional_in_conf=f"<{self.tag} />")
+        self.config.env.push_cib(
+            optional_in_conf=f"""
+            <{self.tag}>
+                <meta_attributes id="{self.tag}-meta_attributes">
+                    <nvpair id="{self.tag}-meta_attributes-a" name="a" value="A"/>
+                </meta_attributes>
+            </{self.tag}>
+        """
+        )
+        self.command(self.env_assist.get_env(), None, {"a": "A"})
+
+    def test_dont_add_section_if_only_removing(self):
+        self.config.runner.cib.load()
+        self.command(self.env_assist.get_env(), None, {"a": "", "b": ""})
+
+    def test_dont_add_meta_if_only_removing(self):
+        self.config.runner.cib.load(optional_in_conf=f"<{self.tag} />")
+        self.command(self.env_assist.get_env(), None, {"a": "", "b": ""})
+
+    def test_keep_section_when_empty(self):
+        self.config.runner.cib.load(
+            optional_in_conf=self.fixture_initial_defaults()
+        )
+        self.config.env.push_cib(remove=f"./configuration/{self.tag}//nvpair")
+        self.command(self.env_assist.get_env(), None, {"a": "", "b": ""})
+
+    def test_ambiguous(self):
+        self.config.runner.cib.load(
+            optional_in_conf=f"""
+                <{self.tag}>
+                    <meta_attributes id="{self.tag}-options">
+                        <nvpair id="{self.tag}-options-a" name="a" value="b"/>
+                        <nvpair id="{self.tag}-options-b" name="b" value="c"/>
+                    </meta_attributes>
+                    <meta_attributes id="{self.tag}-options-1">
+                        <nvpair id="{self.tag}-options-c" name="c" value="d"/>
+                    </meta_attributes>
+                </{self.tag}>
+            """
+        )
+        self.env_assist.assert_raise_library_error(
+            lambda: self.command(self.env_assist.get_env(), None, {"x": "y"})
+        )
+        self.reports = [
+            fixture.error(
+                reports.codes.CIB_NVSET_AMBIGUOUS_PROVIDE_NVSET_ID,
+                pcs_command=self.command_for_report,
+            )
+        ]
+
+
+class DefaultsUpdateMixin:
+    command = lambda *args, **kwargs: None
+    tag = ""
+
+    def setUp(self):
+        # pylint: disable=invalid-name
+        self.env_assist, self.config = get_env_tools(self)
+
+    def fixture_initial_defaults(self):
+        return f"""
+            <{self.tag}>
+                <meta_attributes id="{self.tag}-options">
+                    <nvpair id="{self.tag}-options-a" name="a" value="b"/>
+                    <nvpair id="{self.tag}-options-b" name="b" value="c"/>
+                    <nvpair id="{self.tag}-options-c" name="c" value="d"/>
+                </meta_attributes>
+            </{self.tag}>
+        """
+
+    def test_success(self):
+        self.config.runner.cib.load(
+            optional_in_conf=self.fixture_initial_defaults()
+        )
+        self.config.env.push_cib(
+            optional_in_conf=f"""
+            <{self.tag}>
+                <meta_attributes id="{self.tag}-options">
+                    <nvpair id="{self.tag}-options-a" name="a" value="B"/>
+                    <nvpair id="{self.tag}-options-b" name="b" value="c"/>
+                    <nvpair id="{self.tag}-options-d" name="d" value="e"/>
+                </meta_attributes>
+            </{self.tag}>
+        """
+        )
+        self.command(
+            self.env_assist.get_env(),
+            f"{self.tag}-options",
+            {"a": "B", "c": "", "d": "e"},
+        )
+        self.env_assist.assert_reports(
+            [fixture.warn(reports.codes.DEFAULTS_CAN_BE_OVERRIDEN)]
+        )
+
+    def test_nvset_doesnt_exist(self):
+        self.config.runner.cib.load(
+            optional_in_conf=self.fixture_initial_defaults()
+        )
+        self.env_assist.assert_raise_library_error(
+            lambda: self.command(
+                self.env_assist.get_env(), "wrong-nvset-id", {},
+            )
+        )
+        self.env_assist.assert_reports(
+            [
+                fixture.report_not_found(
+                    "wrong-nvset-id",
+                    context_type=self.tag,
+                    expected_types=["options set"],
+                ),
+            ]
+        )
+
+    def test_keep_elements_when_empty(self):
+        self.config.runner.cib.load(
+            optional_in_conf=self.fixture_initial_defaults()
+        )
+        self.config.env.push_cib(remove=f"./configuration/{self.tag}//nvpair")
+        self.command(
+            self.env_assist.get_env(),
+            f"{self.tag}-options",
+            {"a": "", "b": "", "c": ""},
+        )
+        self.env_assist.assert_reports(
+            [fixture.warn(reports.codes.DEFAULTS_CAN_BE_OVERRIDEN)]
+        )
+
+
+class ResourceDefaultsUpdateLegacy(DefaultsUpdateLegacyMixin, TestCase):
+    command = staticmethod(cib_options.resource_defaults_update)
+    tag = "rsc_defaults"
+    command_for_report = reports.const.PCS_COMMAND_RESOURCE_DEFAULTS_UPDATE
+
+
+class OperationDefaultsUpdateLegacy(DefaultsUpdateLegacyMixin, TestCase):
+    command = staticmethod(cib_options.operation_defaults_update)
+    tag = "op_defaults"
+    command_for_report = reports.const.PCS_COMMAND_OPERATION_DEFAULTS_UPDATE
+
+
+class ResourceDefaultsUpdate(DefaultsUpdateMixin, TestCase):
+    command = staticmethod(cib_options.resource_defaults_update)
+    tag = "rsc_defaults"
+
+
+class OperationDefaultsUpdate(DefaultsUpdateMixin, TestCase):
+    command = staticmethod(cib_options.operation_defaults_update)
+    tag = "op_defaults"

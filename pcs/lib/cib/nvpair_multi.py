@@ -84,7 +84,7 @@ def find_nvsets(parent_element: Element) -> List[Element]:
     """
     return cast(
         # The xpath method has a complicated return value, but we know our xpath
-        # expression only returns elements.
+        # expression returns only elements.
         List[Element],
         cast(_Element, parent_element).xpath(
             "./*[{nvset_tags}]".format(
@@ -102,7 +102,7 @@ def find_nvsets_by_ids(
     list in case of errors.
 
     parent_element -- an element to look for nvsets in
-    id_list -- nvset IDs to be look for
+    id_list -- nvset IDs to be looked for
     """
     element_list = []
     report_list: ReportItemList = []
@@ -256,6 +256,26 @@ def nvset_remove(nvset_el_list: Iterable[Element]) -> None:
         remove_one_element(nvset_el)
 
 
+def nvset_update(
+    nvset_el: Element, id_provider: IdProvider, nvpair_dict: Mapping[str, str],
+) -> None:
+    """
+    Update an existing nvset
+
+    nvset_el -- nvset to be updated
+    id_provider -- elements' ids generator
+    nvpair_dict -- nvpairs to be put into the nvset
+    """
+    # Do not ever remove the nvset element, even if it is empty. There may be
+    # ACLs set in pacemaker which allow "write" for nvpairs (adding, changing
+    # and removing) but not nvsets. In such a case, removing the nvset would
+    # cause the whole change to be rejected by pacemaker with a "permission
+    # denied" message.
+    # https://bugzilla.redhat.com/show_bug.cgi?id=1642514
+    for name, value in nvpair_dict.items():
+        _set_nvpair(nvset_el, id_provider, name, value)
+
+
 def _set_nvpair(
     nvset_element: Element, id_provider: IdProvider, name: str, value: str
 ):
@@ -267,7 +287,12 @@ def _set_nvpair(
     name -- name of the nvpair to be set
     value -- value of the nvpair to be set, if "" the nvpair will be removed
     """
-    nvpair_el_list = nvset_element.findall("./nvpair[@name='{0}']".format(name))
+    nvpair_el_list = cast(
+        # The xpath method has a complicated return value, but we know our xpath
+        # expression returns only elements.
+        List[Element],
+        cast(_Element, nvset_element).xpath("./nvpair[@name=$name]", name=name),
+    )
 
     if not nvpair_el_list:
         if value != "":

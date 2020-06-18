@@ -251,6 +251,149 @@ class OpDefaultsSetDelete(
     cib_tag = "op_defaults"
 
 
+class DefaultsSetUpdateMixin(TestDefaultsMixin, AssertPcsMixin):
+    cli_command = ""
+    prefix = ""
+    cib_tag = ""
+
+    def test_success_legacy(self):
+        write_file_to_tmpfile(empty_cib, self.temp_cib)
+        warnings = (
+            "Warning: This command is deprecated and will be removed. "
+            f"Please use 'pcs {self.cli_command} set update' instead.\n"
+            "Warning: Defaults do not apply to resources which override "
+            "them with their own defined values\n"
+        )
+
+        self.assert_effect(
+            f"{self.cli_command} name1=value1 name2=value2 name3=value3",
+            dedent(
+                f"""\
+                <{self.cib_tag}>
+                    <meta_attributes id="{self.cib_tag}-meta_attributes">
+                        <nvpair id="{self.cib_tag}-meta_attributes-name1"
+                            name="name1" value="value1"
+                        />
+                        <nvpair id="{self.cib_tag}-meta_attributes-name2"
+                            name="name2" value="value2"
+                        />
+                        <nvpair id="{self.cib_tag}-meta_attributes-name3"
+                            name="name3" value="value3"
+                        />
+                    </meta_attributes>
+                </{self.cib_tag}>
+            """
+            ),
+            output=warnings,
+        )
+
+        self.assert_effect(
+            f"{self.cli_command} name2=value2A name3=",
+            dedent(
+                f"""\
+                <{self.cib_tag}>
+                    <meta_attributes id="{self.cib_tag}-meta_attributes">
+                        <nvpair id="{self.cib_tag}-meta_attributes-name1"
+                            name="name1" value="value1"
+                        />
+                        <nvpair id="{self.cib_tag}-meta_attributes-name2"
+                            name="name2" value="value2A"
+                        />
+                    </meta_attributes>
+                </{self.cib_tag}>
+            """
+            ),
+            output=warnings,
+        )
+
+        self.assert_effect(
+            f"{self.cli_command} name1= name2=",
+            dedent(
+                f"""\
+                <{self.cib_tag}>
+                    <meta_attributes id="{self.cib_tag}-meta_attributes" />
+                </{self.cib_tag}>
+            """
+            ),
+            output=warnings,
+        )
+
+    def test_success(self):
+        xml = f"""
+            <{self.cib_tag}>
+                <meta_attributes id="my-set">
+                    <nvpair id="my-set-name1" name="name1" value="value1" />
+                    <nvpair id="my-set-name2" name="name2" value="value2" />
+                    <nvpair id="my-set-name3" name="name3" value="value3" />
+                </meta_attributes>
+            </{self.cib_tag}>
+        """
+        xml_manip = XmlManipulation.from_file(empty_cib)
+        xml_manip.append_to_first_tag_name("configuration", xml)
+        write_data_to_tmpfile(str(xml_manip), self.temp_cib)
+        warnings = (
+            "Warning: Defaults do not apply to resources which override "
+            "them with their own defined values\n"
+        )
+
+        self.assert_effect(
+            f"{self.cli_command} set update my-set meta name2=value2A name3=",
+            dedent(
+                f"""\
+                <{self.cib_tag}>
+                    <meta_attributes id="my-set">
+                        <nvpair id="my-set-name1" name="name1" value="value1" />
+                        <nvpair id="my-set-name2" name="name2" value="value2A" />
+                    </meta_attributes>
+                </{self.cib_tag}>
+            """
+            ),
+            output=warnings,
+        )
+
+        self.assert_effect(
+            f"{self.cli_command} set update my-set meta name1= name2=",
+            dedent(
+                f"""\
+                <{self.cib_tag}>
+                    <meta_attributes id="my-set" />
+                </{self.cib_tag}>
+            """
+            ),
+            output=warnings,
+        )
+
+
+class RscDefaultsSetUpdate(
+    get_assert_pcs_effect_mixin(
+        lambda cib: etree.tostring(
+            # pylint:disable=undefined-variable
+            etree.parse(cib).findall(".//rsc_defaults")[0]
+        )
+    ),
+    DefaultsSetUpdateMixin,
+    TestCase,
+):
+    cli_command = "resource defaults"
+    prefix = "rsc"
+    cib_tag = "rsc_defaults"
+
+
+class OpDefaultsSetUpdate(
+    get_assert_pcs_effect_mixin(
+        lambda cib: etree.tostring(
+            # pylint:disable=undefined-variable
+            etree.parse(cib).findall(".//op_defaults")[0]
+        )
+    ),
+    DefaultsSetUpdateMixin,
+    TestCase,
+):
+    cli_command = "resource op defaults"
+    prefix = "op"
+    cib_tag = "op_defaults"
+
+
 class DefaultsSetUsageMixin(TestDefaultsMixin, AssertPcsMixin):
     cli_command = ""
 

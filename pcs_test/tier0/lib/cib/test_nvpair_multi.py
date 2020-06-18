@@ -469,3 +469,45 @@ class NvsetRemove(TestCase):
             """,
             etree_to_str(xml),
         )
+
+
+class NvsetUpdate(TestCase):
+    # pylint: disable=no-self-use
+    def test_success_nvpair_all_cases(self):
+        nvset_element = etree.fromstring(
+            """
+            <meta_attributes id="set1">
+                <nvpair id="pair1" name="name1" value="value1" />
+                <nvpair id="pair2" name="name2" value="value2" />
+                <nvpair id="pair3" name="name 3" value="value 3" />
+                <nvpair id="pair4" name="name4" value="value4" />
+                <nvpair id="pair4A" name="name4" value="value4A" />
+                <nvpair id="pair4B" name="name4" value="value4B" />
+            </meta_attributes>
+        """
+        )
+        id_provider = IdProvider(nvset_element)
+        nvpair_multi.nvset_update(
+            nvset_element,
+            id_provider,
+            {
+                "name2": "",  # delete
+                "name 3": "value 3 new",  # change and escaping spaces
+                "name4": "value4new",  # change and make unique
+                "name5": "",  # do not add empty
+                "name'6'": 'value"6"',  # escaping
+            },
+        )
+        assert_xml_equal(
+            """
+            <meta_attributes id="set1">
+                <nvpair id="pair1" name="name1" value="value1" />
+                <nvpair id="pair3" name="name 3" value="value 3 new" />
+                <nvpair id="pair4" name="name4" value="value4new" />
+                <nvpair id="set1-name6"
+                    name="name&#x27;6&#x27;" value="value&quot;6&quot;"
+                />
+            </meta_attributes>
+            """,
+            etree_to_str(nvset_element),
+        )

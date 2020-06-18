@@ -1,8 +1,14 @@
 from .types import (
     DefaultAddressSource,
+    PcsCommand,
     ReasonType,
     ServiceAction,
 )
+
+PCS_COMMAND_OPERATION_DEFAULTS_UPDATE = PcsCommand(
+    "resource op defaults update"
+)
+PCS_COMMAND_RESOURCE_DEFAULTS_UPDATE = PcsCommand("resource defaults update")
 
 SERVICE_ACTION_START = ServiceAction("START")
 SERVICE_ACTION_STOP = ServiceAction("STOP")

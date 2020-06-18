@@ -188,7 +188,7 @@ Remove the specified operation id.
 op defaults [config] [\fB\-\-full\fR]
 List currently configured default values for operations. If \fB\-\-full\fR is specified, also list ids.
 .TP
-op defaults <options>
+op defaults <name>=<value>
 Set default values for operations.
 .br
 NOTE: Defaults do not apply to resources which override them with their own defined values.
@@ -217,6 +217,11 @@ Delete specified options sets.
 .TP
 op defaults set remove [<set id>]...
 Delete specified options sets.
+.TP
+op defaults set update <set id> [meta [<name>=<value>]...]
+Add, remove or change values in specified set of default values for resource operations.
+.br
+NOTE: Defaults do not apply to resources which override them with their own defined values.
 .TP
 meta <resource id | group id | clone id> <meta options> [\fB\-\-wait\fR[=n]]
 Add specified options to the specified resource, group or clone. Meta options should be in the format of name=value, options may be removed by setting an option without a value. If \fB\-\-wait\fR is specified, pcs will wait up to 'n' seconds for the changes to take effect and then return 0 if the changes have been processed or 1 otherwise. If 'n' is not specified it defaults to 60 minutes.
@@ -265,7 +270,7 @@ Set resources listed to unmanaged mode. When a resource is in unmanaged mode, th
 defaults [config] [\fB\-\-full\fR]
 List currently configured default values for resources. If \fB\-\-full\fR is specified, also list ids.
 .TP
-defaults <options>
+defaults <name>=<value>
 Set default values for resources.
 .br
 NOTE: Defaults do not apply to resources which override them with their own defined values.
@@ -292,6 +297,11 @@ Delete specified options sets.
 .TP
 defaults set remove [<set id>]...
 Delete specified options sets.
+.TP
+defaults set update <set id> [meta [<name>=<value>]...]
+Add, remove or change values in specified set of default values for resources.
+.br
+NOTE: Defaults do not apply to resources which override them with their own defined values.
 .TP
 cleanup [<resource id>] [node=<node>] [operation=<operation> [interval=<interval>]] [\fB\-\-strict\fR]
 Make the cluster forget failed operations from history of the resource and re\-detect its current state. This can be useful to purge knowledge of past failures that have since been resolved.
