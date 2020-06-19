@@ -51,7 +51,9 @@ def format_list_custom_last_separator(
     )
 
 
-def format_name_value_list(item_list: Sequence[Tuple[Any, Any]]) -> List[str]:
+# For now, Tuple[str, str] is sufficient. Feel free to change it if needed,
+# e.g. when values can be integers.
+def format_name_value_list(item_list: Sequence[Tuple[str, str]]) -> List[str]:
     """
     Turn 2-tuples to 'name=value' strings with standard quoting
     """

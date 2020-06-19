@@ -481,10 +481,10 @@ class TagCannotRemoveReferencesWithoutRemovingTag(CliReportMessageTestBase):
         )
 
 
-class CibRuleParseError(CliReportMessageTestBase):
+class RuleExpressionParseError(CliReportMessageTestBase):
     def test_success(self):
         self.assert_message(
-            messages.CibRuleParseError(
+            messages.RuleExpressionParseError(
                 "resource dummy op monitor",
                 "Expected end of text",
                 "resource dummy op monitor",

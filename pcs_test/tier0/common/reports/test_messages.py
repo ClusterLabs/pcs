@@ -4655,12 +4655,12 @@ class TagIdsNotInTheTag(NameBuildTest):
         )
 
 
-class CibRuleParseError(NameBuildTest):
+class RuleExpressionParseError(NameBuildTest):
     def test_success(self):
         self.assert_message_from_report(
             "'resource dummy op monitor' is not a valid rule expression, "
             "parse error near or after line 1 column 16",
-            reports.CibRuleParseError(
+            reports.RuleExpressionParseError(
                 "resource dummy op monitor",
                 "Expected end of text",
                 "resource dummy op monitor",

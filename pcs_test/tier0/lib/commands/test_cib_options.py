@@ -155,7 +155,7 @@ class DefaultsCreateMixin:
                     allowed_patterns=[],
                 ),
                 fixture.error(
-                    reports.codes.CIB_RULE_PARSE_ERROR,
+                    reports.codes.RULE_EXPRESSION_PARSE_ERROR,
                     rule_string="bad rule",
                     reason='Expected "resource"',
                     rule_line="bad rule",
@@ -213,7 +213,7 @@ class ResourceDefaultsCreate(DefaultsCreateMixin, TestCase):
         self.env_assist.assert_reports(
             [
                 fixture.error(
-                    reports.codes.CIB_RULE_PARSE_ERROR,
+                    reports.codes.RULE_EXPRESSION_PARSE_ERROR,
                     rule_string="op monitor",
                     reason='Expected "resource"',
                     rule_line="op monitor",

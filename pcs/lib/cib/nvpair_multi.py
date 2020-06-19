@@ -43,8 +43,8 @@ NVSET_INSTANCE = NvsetTag("instance_attributes")
 NVSET_META = NvsetTag("meta_attributes")
 
 _tag_to_type = {
-    cast(str, NVSET_META): CibNvsetType.META,
-    cast(str, NVSET_INSTANCE): CibNvsetType.INSTANCE,
+    str(NVSET_META): CibNvsetType.META,
+    str(NVSET_INSTANCE): CibNvsetType.INSTANCE,
 }
 
 
@@ -192,7 +192,7 @@ class ValidateNvsetAppendNew:
             except RuleParseError as e:
                 report_list.append(
                     reports.ReportItem.error(
-                        reports.messages.CibRuleParseError(
+                        reports.messages.RuleExpressionParseError(
                             e.rule_string,
                             e.msg,
                             e.rule_line,
@@ -236,9 +236,7 @@ def nvset_append_new(
     nvset_el = etree.SubElement(cast(_Element, parent_element), nvset_tag)
     for name, value in nvset_options.items():
         if value != "":
-            # for whatever reason, mypy thinks "_Element" has no attribute
-            # "set"
-            nvset_el.set(name, value)  # type: ignore
+            nvset_el.attrib[name] = value
     if nvset_rule:
         rule_to_cib(cast(Element, nvset_el), id_provider, nvset_rule)
     for name, value in nvpair_dict.items():

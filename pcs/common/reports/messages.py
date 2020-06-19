@@ -6403,7 +6403,7 @@ class TagIdsNotInTheTag(ReportItemMessage):
 
 
 @dataclass(frozen=True)
-class CibRuleParseError(ReportItemMessage):
+class RuleExpressionParseError(ReportItemMessage):
     """
     Unable to parse pacemaker cib rule expression string
 
@@ -6421,7 +6421,7 @@ class CibRuleParseError(ReportItemMessage):
     line_number: int
     column_number: int
     position: int
-    _code = codes.CIB_RULE_PARSE_ERROR
+    _code = codes.RULE_EXPRESSION_PARSE_ERROR
 
     @property
     def message(self) -> str:
@@ -6430,12 +6430,8 @@ class CibRuleParseError(ReportItemMessage):
         # rule. No user would be able to parse that. Therefore we omit the
         # messages.
         return (
-            "'{rule_string}' is not a valid rule expression, parse error near "
-            "or after line {line_number} column {column_number}"
-        ).format(
-            rule_string=self.rule_string,
-            line_number=self.line_number,
-            column_number=self.column_number,
+            f"'{self.rule_string}' is not a valid rule expression, parse error "
+            f"near or after line {self.line_number} column {self.column_number}"
         )
 
 

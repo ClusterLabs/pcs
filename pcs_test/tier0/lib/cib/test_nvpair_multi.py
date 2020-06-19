@@ -274,7 +274,7 @@ class ValidateNvsetAppendNew(TestCase):
             validator.validate(force_options=True),
             [
                 fixture.error(
-                    reports.codes.CIB_RULE_PARSE_ERROR,
+                    reports.codes.RULE_EXPRESSION_PARSE_ERROR,
                     rule_string="bad rule",
                     reason='Expected "resource"',
                     rule_line="bad rule",

@@ -3,7 +3,6 @@ from typing import (
     Mapping,
     Optional,
     Sequence,
-    Union,
 )
 
 from pcs.common.interface.dto import DataTransferObject
@@ -21,7 +20,7 @@ class CibNvpairDto(DataTransferObject):
 @dataclass(frozen=True)
 class CibNvsetDto(DataTransferObject):
     id: str  # pylint: disable=invalid-name
-    type: Union[CibNvsetType, str]
+    type: CibNvsetType
     options: Mapping[str, str]
     rule: Optional[CibRuleExpressionDto]
     nvpairs: Sequence[CibNvpairDto]

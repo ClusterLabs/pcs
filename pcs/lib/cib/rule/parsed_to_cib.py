@@ -81,8 +81,7 @@ def __export_op(
         },
     )
     if op.interval:
-        # for whatever reason, mypy thinks "_Element" has no attribute "set"
-        element.set("interval", op.interval)  # type: ignore
+        element.attrib["interval"] = op.interval
     return cast(Element, element)
 
 
@@ -96,12 +95,9 @@ def __export_rsc(
         {"id": create_subelement_id(parent_el, f"rsc-{id_part}", id_provider)},
     )
     if rsc.standard:
-        # for whatever reason, mypy thinks "_Element" has no attribute "set"
-        element.set("class", rsc.standard)  # type: ignore
+        element.attrib["class"] = rsc.standard
     if rsc.provider:
-        # for whatever reason, mypy thinks "_Element" has no attribute "set"
-        element.set("provider", rsc.provider)  # type: ignore
+        element.attrib["provider"] = rsc.provider
     if rsc.type:
-        # for whatever reason, mypy thinks "_Element" has no attribute "set"
-        element.set("type", rsc.type)  # type: ignore
+        element.attrib["type"] = rsc.type
     return cast(Element, element)

@@ -1,7 +1,8 @@
 from typing import (
     cast,
+    Iterable,
     List,
-    Sequence,
+    Optional,
 )
 
 from pcs.cli.rule import rule_expression_dto_to_lines
@@ -14,9 +15,9 @@ from pcs.common.types import CibNvsetType
 
 
 def nvset_dto_list_to_lines(
-    nvset_dto_list: Sequence[CibNvsetDto],
+    nvset_dto_list: Iterable[CibNvsetDto],
     with_ids: bool = False,
-    text_if_empty: str = None,
+    text_if_empty: Optional[str] = None,
 ) -> List[str]:
     if not nvset_dto_list:
         return [text_if_empty] if text_if_empty else []

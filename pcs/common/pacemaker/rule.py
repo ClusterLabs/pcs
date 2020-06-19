@@ -3,7 +3,6 @@ from typing import (
     Mapping,
     Optional,
     Sequence,
-    Union,
 )
 
 from pcs.common.interface.dto import DataTransferObject
@@ -20,7 +19,7 @@ class CibRuleDateCommonDto(DataTransferObject):
 class CibRuleExpressionDto(DataTransferObject):
     # pylint: disable=too-many-instance-attributes
     id: str  # pylint: disable=invalid-name
-    type: Union[CibRuleExpressionType, str]
+    type: CibRuleExpressionType
     is_expired: bool  # only valid for type==rule
     options: Mapping[str, str]
     date_spec: Optional[CibRuleDateCommonDto]
