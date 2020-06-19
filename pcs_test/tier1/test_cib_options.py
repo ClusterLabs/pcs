@@ -35,8 +35,7 @@ class DefaultsConfigMixin(TestDefaultsMixin, AssertPcsMixin):
     cli_command = ""
     prefix = ""
 
-    def setUp(self):
-        super().setUp()
+    def test_success(self):
         xml_rsc = """
             <rsc_defaults>
                 <meta_attributes id="rsc-set1" score="10">
@@ -65,7 +64,6 @@ class DefaultsConfigMixin(TestDefaultsMixin, AssertPcsMixin):
         xml_manip.append_to_first_tag_name("configuration", xml_rsc, xml_op)
         write_data_to_tmpfile(str(xml_manip), self.temp_cib)
 
-    def test_success(self):
         self.assert_pcs_success(
             self.cli_command,
             stdout_full=dedent(
@@ -87,12 +85,70 @@ class RscDefaultsConfig(
     cli_command = "resource defaults"
     prefix = "rsc"
 
+    @skip_unless_pacemaker_supports_rsc_and_op_rules()
+    def test_success_rules(self):
+        xml = """
+            <rsc_defaults>
+                <meta_attributes id="X">
+                    <rule id="X-rule" boolean-op="and" score="INFINITY">
+                        <rsc_expression id="X-rule-rsc-Dummy" type="Dummy"/>
+                    </rule>
+                    <nvpair id="X-nam1" name="nam1" value="val1"/>
+                </meta_attributes>
+            </rsc_defaults>
+        """
+        xml_manip = XmlManipulation.from_file(empty_cib_rules)
+        xml_manip.append_to_first_tag_name("configuration", xml)
+        write_data_to_tmpfile(str(xml_manip), self.temp_cib)
+
+        self.assert_pcs_success(
+            self.cli_command,
+            stdout_full=dedent(
+                """\
+                Meta Attrs: X
+                  nam1=val1
+                  Rule: boolean-op=and score=INFINITY
+                    Expression: resource ::Dummy
+            """
+            ),
+        )
+
 
 class OpDefaultsConfig(
     DefaultsConfigMixin, TestCase,
 ):
     cli_command = "resource op defaults"
     prefix = "op"
+
+    @skip_unless_pacemaker_supports_rsc_and_op_rules()
+    def test_success_rules(self):
+        xml = """
+            <op_defaults>
+                <meta_attributes id="X">
+                    <rule id="X-rule" boolean-op="and" score="INFINITY">
+                        <rsc_expression id="X-rule-rsc-Dummy" type="Dummy"/>
+                        <op_expression id="X-rule-op-monitor" name="monitor"/>
+                    </rule>
+                    <nvpair id="X-nam1" name="nam1" value="val1"/>
+                </meta_attributes>
+            </op_defaults>
+        """
+        xml_manip = XmlManipulation.from_file(empty_cib_rules)
+        xml_manip.append_to_first_tag_name("configuration", xml)
+        write_data_to_tmpfile(str(xml_manip), self.temp_cib)
+
+        self.assert_pcs_success(
+            self.cli_command,
+            stdout_full=dedent(
+                """\
+                Meta Attrs: X
+                  nam1=val1
+                  Rule: boolean-op=and score=INFINITY
+                    Expression: resource ::Dummy
+                    Expression: op monitor
+            """
+            ),
+        )
 
 
 class DefaultsSetCreateMixin(TestDefaultsMixin):
@@ -141,11 +197,6 @@ class DefaultsSetCreateMixin(TestDefaultsMixin):
             ),
         )
 
-    @skip_unless_pacemaker_supports_rsc_and_op_rules()
-    def test_success_rules(self):
-        # TODO new pacemaker is needed
-        self.assertEqual("TODO", True)
-
 
 class RscDefaultsSetCreate(
     get_assert_pcs_effect_mixin(
@@ -160,6 +211,30 @@ class RscDefaultsSetCreate(
     cli_command = "resource defaults"
     cib_tag = "rsc_defaults"
 
+    @skip_unless_pacemaker_supports_rsc_and_op_rules()
+    def test_success_rules(self):
+        self.assert_effect(
+            (
+                f"{self.cli_command} set create id=X meta nam1=val1 "
+                "rule resource ::Dummy"
+            ),
+            f"""\
+            <{self.cib_tag}>
+                <meta_attributes id="X">
+                    <rule id="X-rule" boolean-op="and" score="INFINITY">
+                        <rsc_expression id="X-rule-rsc-Dummy" type="Dummy"/>
+                    </rule>
+                    <nvpair id="X-nam1" name="nam1" value="val1"/>
+                </meta_attributes>
+            </{self.cib_tag}>
+            """,
+            output=(
+                "CIB has been upgraded to the latest schema version.\n"
+                "Warning: Defaults do not apply to resources which override "
+                "them with their own defined values\n"
+            ),
+        )
+
 
 class OpDefaultsSetCreate(
     get_assert_pcs_effect_mixin(
@@ -173,6 +248,31 @@ class OpDefaultsSetCreate(
 ):
     cli_command = "resource op defaults"
     cib_tag = "op_defaults"
+
+    @skip_unless_pacemaker_supports_rsc_and_op_rules()
+    def test_success_rules(self):
+        self.assert_effect(
+            (
+                f"{self.cli_command} set create id=X meta nam1=val1 "
+                "rule resource ::Dummy and op monitor"
+            ),
+            f"""\
+            <{self.cib_tag}>
+                <meta_attributes id="X">
+                    <rule id="X-rule" boolean-op="and" score="INFINITY">
+                        <rsc_expression id="X-rule-rsc-Dummy" type="Dummy"/>
+                        <op_expression id="X-rule-op-monitor" name="monitor"/>
+                    </rule>
+                    <nvpair id="X-nam1" name="nam1" value="val1"/>
+                </meta_attributes>
+            </{self.cib_tag}>
+            """,
+            output=(
+                "CIB has been upgraded to the latest schema version.\n"
+                "Warning: Defaults do not apply to resources which override "
+                "them with their own defined values\n"
+            ),
+        )
 
 
 class DefaultsSetDeleteMixin(TestDefaultsMixin, AssertPcsMixin):

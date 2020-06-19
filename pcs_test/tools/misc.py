@@ -5,6 +5,8 @@ import re
 import tempfile
 from unittest import mock, skipUnless
 
+from lxml import etree
+
 from pcs_test.tools.custom_mock import MockLibraryReportProcessor
 
 from pcs import settings
@@ -128,12 +130,12 @@ def compare_version(a, b):
 
 def is_minimum_pacemaker_version(major, minor, rev):
     return is_version_sufficient(
-        get_current_pacemaker_version(), (major, minor, rev)
+        _get_current_pacemaker_version(), (major, minor, rev)
     )
 
 
 @lru_cache()
-def get_current_pacemaker_version():
+def _get_current_pacemaker_version():
     output, dummy_stderr, dummy_retval = runner.run(
         [os.path.join(settings.pacemaker_binaries, "crm_mon"), "--version",]
     )
@@ -144,6 +146,26 @@ def get_current_pacemaker_version():
     minor = int(m.group(2))
     rev = int(m.group(3))
     return major, minor, rev
+
+
+@lru_cache()
+def _get_current_cib_schema_version():
+    regexp = re.compile(r"pacemaker-((\d+)\.(\d+))")
+    all_versions = set()
+    xml = etree.parse("/usr/share/pacemaker/versions.rng").getroot()
+    for value_el in xml.xpath(
+        ".//x:attribute[@name='validate-with']//x:value",
+        namespaces={"x": "http://relaxng.org/ns/structure/1.0"},
+    ):
+        match = re.match(regexp, value_el.text)
+        if match:
+            all_versions.add((int(match.group(2)), int(match.group(3))))
+    return sorted(all_versions)[-1]
+
+
+def _is_minimum_cib_schema_version(cmajor, cminor, crev):
+    major, minor = _get_current_cib_schema_version()
+    return compare_version((major, minor, 0), (cmajor, cminor, crev)) > -1
 
 
 def is_version_sufficient(current_version, minimal_version):
@@ -174,12 +196,37 @@ def _get_current_pacemaker_features():
 
 
 def skip_unless_pacemaker_version(version_tuple, feature):
-    current_version = get_current_pacemaker_version()
+    current_version = _get_current_pacemaker_version()
     return skipUnless(
         is_version_sufficient(current_version, version_tuple),
         (
             "Pacemaker version is too old (current: {current_version},"
             " must be >= {minimal_version}) to test {feature}"
+        ).format(
+            current_version=format_version(current_version),
+            minimal_version=format_version(version_tuple),
+            feature=feature,
+        ),
+    )
+
+
+def skip_unless_pacemaker_features(version_tuple, feature):
+    return skipUnless(
+        is_minimum_pacemaker_features(*version_tuple),
+        (
+            "Pacemaker must support feature set version {version} to test "
+            "{feature}"
+        ).format(version=format_version(version_tuple), feature=feature),
+    )
+
+
+def skip_unless_cib_schema_version(version_tuple, feature):
+    current_version = _get_current_cib_schema_version()
+    return skipUnless(
+        _is_minimum_cib_schema_version(*version_tuple),
+        (
+            "Pacemaker supported CIB schema version is too low (current: "
+            "{current_version}, must be >= {minimal_version}) to test {feature}"
         ).format(
             current_version=format_version(current_version),
             minimal_version=format_version(version_tuple),
@@ -194,16 +241,6 @@ def skip_unless_crm_rule():
     )
 
 
-def skip_unless_pacemaker_features(version_tuple, feature):
-    return skipUnless(
-        is_minimum_pacemaker_features(*version_tuple),
-        (
-            "Pacemaker must support feature set version {version} to test "
-            "{feature}"
-        ).format(version=format_version(version_tuple), feature=feature),
-    )
-
-
 def skip_unless_pacemaker_supports_bundle():
     return skip_unless_pacemaker_features(
         (3, 1, 0), "bundle resources with promoted-max attribute"
@@ -211,7 +248,7 @@ def skip_unless_pacemaker_supports_bundle():
 
 
 def skip_unless_pacemaker_supports_rsc_and_op_rules():
-    return skip_unless_pacemaker_features(
+    return skip_unless_cib_schema_version(
         (3, 4, 0), "rsc_expression and op_expression elements in rule elements"
     )
 
