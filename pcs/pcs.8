@@ -223,6 +223,11 @@ Add, remove or change values in specified set of default values for resource ope
 .br
 NOTE: Defaults do not apply to resources which override them with their own defined values.
 .TP
+op defaults update <name>=<value>...
+Set default values for operations. This is a simplified command useful for cases when you only manage one set of default values.
+.br
+NOTE: Defaults do not apply to resources which override them with their own defined values.
+.TP
 meta <resource id | group id | clone id> <meta options> [\fB\-\-wait\fR[=n]]
 Add specified options to the specified resource, group or clone. Meta options should be in the format of name=value, options may be removed by setting an option without a value. If \fB\-\-wait\fR is specified, pcs will wait up to 'n' seconds for the changes to take effect and then return 0 if the changes have been processed or 1 otherwise. If 'n' is not specified it defaults to 60 minutes.
 .br
@@ -300,6 +305,11 @@ Delete specified options sets.
 .TP
 defaults set update <set id> [meta [<name>=<value>]...]
 Add, remove or change values in specified set of default values for resources.
+.br
+NOTE: Defaults do not apply to resources which override them with their own defined values.
+.TP
+defaults update <name>=<value>...
+Set default values for resources. This is a simplified command useful for cases when you only manage one set of default values.
 .br
 NOTE: Defaults do not apply to resources which override them with their own defined values.
 .TP

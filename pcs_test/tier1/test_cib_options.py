@@ -356,68 +356,6 @@ class DefaultsSetUpdateMixin(TestDefaultsMixin, AssertPcsMixin):
     prefix = ""
     cib_tag = ""
 
-    def test_success_legacy(self):
-        write_file_to_tmpfile(empty_cib, self.temp_cib)
-        warnings = (
-            "Warning: This command is deprecated and will be removed. "
-            f"Please use 'pcs {self.cli_command} set update' instead.\n"
-            "Warning: Defaults do not apply to resources which override "
-            "them with their own defined values\n"
-        )
-
-        self.assert_effect(
-            f"{self.cli_command} name1=value1 name2=value2 name3=value3",
-            dedent(
-                f"""\
-                <{self.cib_tag}>
-                    <meta_attributes id="{self.cib_tag}-meta_attributes">
-                        <nvpair id="{self.cib_tag}-meta_attributes-name1"
-                            name="name1" value="value1"
-                        />
-                        <nvpair id="{self.cib_tag}-meta_attributes-name2"
-                            name="name2" value="value2"
-                        />
-                        <nvpair id="{self.cib_tag}-meta_attributes-name3"
-                            name="name3" value="value3"
-                        />
-                    </meta_attributes>
-                </{self.cib_tag}>
-            """
-            ),
-            output=warnings,
-        )
-
-        self.assert_effect(
-            f"{self.cli_command} name2=value2A name3=",
-            dedent(
-                f"""\
-                <{self.cib_tag}>
-                    <meta_attributes id="{self.cib_tag}-meta_attributes">
-                        <nvpair id="{self.cib_tag}-meta_attributes-name1"
-                            name="name1" value="value1"
-                        />
-                        <nvpair id="{self.cib_tag}-meta_attributes-name2"
-                            name="name2" value="value2A"
-                        />
-                    </meta_attributes>
-                </{self.cib_tag}>
-            """
-            ),
-            output=warnings,
-        )
-
-        self.assert_effect(
-            f"{self.cli_command} name1= name2=",
-            dedent(
-                f"""\
-                <{self.cib_tag}>
-                    <meta_attributes id="{self.cib_tag}-meta_attributes" />
-                </{self.cib_tag}>
-            """
-            ),
-            output=warnings,
-        )
-
     def test_success(self):
         xml = f"""
             <{self.cib_tag}>
@@ -520,3 +458,114 @@ class OpDefaultsSetUsage(
     DefaultsSetUsageMixin, TestCase,
 ):
     cli_command = "resource op defaults"
+
+
+class DefaultsUpdateMixin(TestDefaultsMixin, AssertPcsMixin):
+    cli_command = ""
+    prefix = ""
+    cib_tag = ""
+
+    def assert_success_legacy(self, update_keyword):
+        write_file_to_tmpfile(empty_cib, self.temp_cib)
+        warning_lines = []
+        if not update_keyword:
+            warning_lines.append(
+                "Warning: This command is deprecated and will be removed. "
+                f"Please use 'pcs {self.cli_command} update' instead.\n"
+            )
+        warning_lines.append(
+            "Warning: Defaults do not apply to resources which override "
+            "them with their own defined values\n"
+        )
+        warnings = "".join(warning_lines)
+
+        update = "update" if update_keyword else ""
+
+        self.assert_effect(
+            f"{self.cli_command} {update} name1=value1 name2=value2 name3=value3",
+            dedent(
+                f"""\
+                <{self.cib_tag}>
+                    <meta_attributes id="{self.cib_tag}-meta_attributes">
+                        <nvpair id="{self.cib_tag}-meta_attributes-name1"
+                            name="name1" value="value1"
+                        />
+                        <nvpair id="{self.cib_tag}-meta_attributes-name2"
+                            name="name2" value="value2"
+                        />
+                        <nvpair id="{self.cib_tag}-meta_attributes-name3"
+                            name="name3" value="value3"
+                        />
+                    </meta_attributes>
+                </{self.cib_tag}>
+            """
+            ),
+            output=warnings,
+        )
+
+        self.assert_effect(
+            f"{self.cli_command} {update} name2=value2A name3=",
+            dedent(
+                f"""\
+                <{self.cib_tag}>
+                    <meta_attributes id="{self.cib_tag}-meta_attributes">
+                        <nvpair id="{self.cib_tag}-meta_attributes-name1"
+                            name="name1" value="value1"
+                        />
+                        <nvpair id="{self.cib_tag}-meta_attributes-name2"
+                            name="name2" value="value2A"
+                        />
+                    </meta_attributes>
+                </{self.cib_tag}>
+            """
+            ),
+            output=warnings,
+        )
+
+        self.assert_effect(
+            f"{self.cli_command} {update} name1= name2=",
+            dedent(
+                f"""\
+                <{self.cib_tag}>
+                    <meta_attributes id="{self.cib_tag}-meta_attributes" />
+                </{self.cib_tag}>
+            """
+            ),
+            output=warnings,
+        )
+
+    def test_deprecated(self):
+        self.assert_success_legacy(False)
+
+    def test_legacy(self):
+        self.assert_success_legacy(True)
+
+
+class RscDefaultsUpdate(
+    get_assert_pcs_effect_mixin(
+        lambda cib: etree.tostring(
+            # pylint:disable=undefined-variable
+            etree.parse(cib).findall(".//rsc_defaults")[0]
+        )
+    ),
+    DefaultsUpdateMixin,
+    TestCase,
+):
+    cli_command = "resource defaults"
+    prefix = "rsc"
+    cib_tag = "rsc_defaults"
+
+
+class OpDefaultsUpdate(
+    get_assert_pcs_effect_mixin(
+        lambda cib: etree.tostring(
+            # pylint:disable=undefined-variable
+            etree.parse(cib).findall(".//op_defaults")[0]
+        )
+    ),
+    DefaultsUpdateMixin,
+    TestCase,
+):
+    cli_command = "resource op defaults"
+    prefix = "op"
+    cib_tag = "op_defaults"

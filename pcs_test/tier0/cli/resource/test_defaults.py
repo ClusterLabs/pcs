@@ -302,3 +302,23 @@ class RscDefaultsSetUpdate(DefaultsSetUpdateMixin, TestCase):
 class OpDefaultsSetUpdate(DefaultsSetUpdateMixin, TestCase):
     cli_command_name = "resource_op_defaults_set_update_cmd"
     lib_command_name = "operation_defaults_update"
+
+
+class DefaultsUpdateMixin(DefaultsBaseMixin):
+    def test_no_args(self):
+        self._call_cmd([])
+        self.lib_command.assert_called_once_with(None, {})
+
+    def test_args(self):
+        self._call_cmd(["a=b", "c="])
+        self.lib_command.assert_called_once_with(None, {"a": "b", "c": ""})
+
+
+class RscDefaultsUpdate(DefaultsUpdateMixin, TestCase):
+    cli_command_name = "resource_defaults_legacy_cmd"
+    lib_command_name = "resource_defaults_update"
+
+
+class OpDefaultsUpdate(DefaultsUpdateMixin, TestCase):
+    cli_command_name = "resource_op_defaults_legacy_cmd"
+    lib_command_name = "operation_defaults_update"

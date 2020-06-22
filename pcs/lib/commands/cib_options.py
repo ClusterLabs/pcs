@@ -240,13 +240,16 @@ def _defaults_update(
     id_provider = IdProvider(cib)
 
     if nvset_id is None:
-        # TODO mark deprecated and put to a list of deprecated functionalities
-
         # Backward compatibility code to support an old use case where no id
         # was requested and provided and the first meta_attributes nvset was
         # created / updated. However, we check that there is only one nvset
         # present in the CIB to prevent breaking the configuration with
         # multiple nvsets in place.
+
+        # This is to be supported as it provides means of easily managing
+        # defaults if only one set of defaults is needed.
+
+        # TODO move this to a separate lib command.
 
         if not nvpairs:
             return

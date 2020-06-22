@@ -1,13 +1,86 @@
 from functools import partial
+from typing import (
+    Any,
+    List,
+)
 
 from pcs import (
     resource,
     usage,
 )
 from pcs.cli.common.errors import raise_command_replaced
+from pcs.cli.common.parse_args import InputModifiers
 from pcs.cli.common.routing import create_router
 
 from pcs.cli.resource.relations import show_resource_relations_cmd
+
+
+def resource_defaults_cmd(
+    lib: Any, argv: List[str], modifiers: InputModifiers
+) -> None:
+    """
+    Options:
+      * -f - CIB file
+      * --force - allow unknown options
+    """
+    if argv and "=" in argv[0]:
+        # DEPRECATED legacy command
+        return resource.resource_defaults_legacy_cmd(
+            lib, argv, modifiers, deprecated_syntax_used=True
+        )
+
+    router = create_router(
+        {
+            "config": resource.resource_defaults_config_cmd,
+            "set": create_router(
+                {
+                    "create": resource.resource_defaults_set_create_cmd,
+                    "delete": resource.resource_defaults_set_remove_cmd,
+                    "remove": resource.resource_defaults_set_remove_cmd,
+                    "update": resource.resource_defaults_set_update_cmd,
+                },
+                ["resource", "defaults", "set"],
+            ),
+            "update": resource.resource_defaults_legacy_cmd,
+        },
+        ["resource", "defaults"],
+        default_cmd="config",
+    )
+    return router(lib, argv, modifiers)
+
+
+def resource_op_defaults_cmd(
+    lib: Any, argv: List[str], modifiers: InputModifiers
+) -> None:
+    """
+    Options:
+      * -f - CIB file
+      * --force - allow unknown options
+    """
+    if argv and "=" in argv[0]:
+        # DEPRECATED legacy command
+        return resource.resource_op_defaults_legacy_cmd(
+            lib, argv, modifiers, deprecated_syntax_used=True
+        )
+
+    router = create_router(
+        {
+            "config": resource.resource_op_defaults_config_cmd,
+            "set": create_router(
+                {
+                    "create": resource.resource_op_defaults_set_create_cmd,
+                    "delete": resource.resource_op_defaults_set_remove_cmd,
+                    "remove": resource.resource_op_defaults_set_remove_cmd,
+                    "update": resource.resource_op_defaults_set_update_cmd,
+                },
+                ["resource", "op", "defaults", "set"],
+            ),
+            "update": resource.resource_op_defaults_legacy_cmd,
+        },
+        ["resource", "op", "defaults"],
+        default_cmd="config",
+    )
+    return router(lib, argv, modifiers)
 
 
 resource_cmd = create_router(
@@ -68,14 +141,14 @@ resource_cmd = create_router(
         "failcount": resource.resource_failcount,
         "op": create_router(
             {
-                "defaults": resource.resource_op_defaults_cmd,
+                "defaults": resource_op_defaults_cmd,
                 "add": resource.resource_op_add_cmd,
                 "remove": resource.resource_op_delete_cmd,
                 "delete": resource.resource_op_delete_cmd,
             },
             ["resource", "op"],
         ),
-        "defaults": resource.resource_defaults_cmd,
+        "defaults": resource_defaults_cmd,
         "cleanup": resource.resource_cleanup,
         "refresh": resource.resource_refresh,
         "relocate": create_router(

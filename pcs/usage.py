@@ -481,6 +481,12 @@ Commands:
         NOTE: Defaults do not apply to resources which override them with their
         own defined values.
 
+    op defaults update <name>=<value>...
+        Set default values for operations. This is a simplified command useful
+        for cases when you only manage one set of default values.
+        NOTE: Defaults do not apply to resources which override them with their
+        own defined values.
+
     meta <resource id | group id | clone id> <meta options>
          [--wait[=n]]
         Add specified options to the specified resource, group or clone. Meta
@@ -629,6 +635,12 @@ Commands:
     defaults set update <set id> [meta [<name>=<value>]...]
         Add, remove or change values in specified set of default values for
         resources.
+        NOTE: Defaults do not apply to resources which override them with their
+        own defined values.
+
+    defaults update <name>=<value>...
+        Set default values for resources. This is a simplified command useful
+        for cases when you only manage one set of default values.
         NOTE: Defaults do not apply to resources which override them with their
         own defined values.
 

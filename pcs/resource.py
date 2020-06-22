@@ -29,7 +29,6 @@ from pcs.cli.common.parse_args import (
     prepare_options_allowed,
     InputModifiers,
 )
-from pcs.cli.common.routing import create_router
 from pcs.cli.nvset import nvset_dto_list_to_lines
 from pcs.cli.reports import process_library_reports
 from pcs.cli.reports.output import error, warn
@@ -305,74 +304,44 @@ def resource_op_defaults_set_update_cmd(
     )
 
 
-def resource_defaults_cmd(lib, argv, modifiers):
+def resource_defaults_legacy_cmd(
+    lib: Any,
+    argv: Sequence[str],
+    modifiers: InputModifiers,
+    deprecated_syntax_used: bool = False,
+) -> None:
     """
     Options:
       * -f - CIB file
-      * --force - allow unknown options
     """
-    # TODO Is there any syntax to be removed? Add it to deprecations.
-    if argv and "=" in argv[0]:
+    del modifiers
+    if deprecated_syntax_used:
         warn(
             "This command is deprecated and will be removed. "
-            "Please use 'pcs resource defaults set update' instead."
+            "Please use 'pcs resource defaults update' instead."
         )
-        return lib.cib_options.resource_defaults_update(
-            None, prepare_options(argv)
-        )
-
-    router = create_router(
-        {
-            "config": resource_defaults_config_cmd,
-            "set": create_router(
-                {
-                    "create": resource_defaults_set_create_cmd,
-                    "delete": resource_defaults_set_remove_cmd,
-                    "remove": resource_defaults_set_remove_cmd,
-                    "update": resource_defaults_set_update_cmd,
-                },
-                ["resource", "defaults", "set"],
-            ),
-        },
-        ["resource", "defaults"],
-        default_cmd="config",
-    )
-    return router(lib, argv, modifiers)
+    return lib.cib_options.resource_defaults_update(None, prepare_options(argv))
 
 
-def resource_op_defaults_cmd(lib, argv, modifiers):
-    # TODO Is there any syntax to be removed? Add it to deprecations.
+def resource_op_defaults_legacy_cmd(
+    lib: Any,
+    argv: Sequence[str],
+    modifiers: InputModifiers,
+    deprecated_syntax_used: bool = False,
+) -> None:
     """
     Options:
       * -f - CIB file
-      * --force - allow unknown options
     """
-    if argv and "=" in argv[0]:
+    del modifiers
+    if deprecated_syntax_used:
         warn(
             "This command is deprecated and will be removed. "
-            "Please use 'pcs resource op defaults set update' instead."
+            "Please use 'pcs resource op defaults update' instead."
         )
-        return lib.cib_options.operation_defaults_update(
-            None, prepare_options(argv)
-        )
-
-    router = create_router(
-        {
-            "config": resource_op_defaults_config_cmd,
-            "set": create_router(
-                {
-                    "create": resource_op_defaults_set_create_cmd,
-                    "delete": resource_op_defaults_set_remove_cmd,
-                    "remove": resource_op_defaults_set_remove_cmd,
-                    "update": resource_op_defaults_set_update_cmd,
-                },
-                ["resource", "op", "defaults", "set"],
-            ),
-        },
-        ["resource", "op", "defaults"],
-        default_cmd="config",
+    return lib.cib_options.operation_defaults_update(
+        None, prepare_options(argv)
     )
-    return router(lib, argv, modifiers)
 
 
 def resource_op_add_cmd(lib, argv, modifiers):
