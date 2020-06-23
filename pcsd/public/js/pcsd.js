@@ -1164,7 +1164,7 @@ function remove_resource(ids, force) {
         error == "timeout" ||
         xhr.responseText == '{"noresponse":true}'
       ) {
-        message = "Operation takes longer to complete than expected.";
+        message = "Operation takes longer to complete than expected but it will continue in the background.";
       } else {
         message = "Unable to remove resources (" + error + ")";
         if (
