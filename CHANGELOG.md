@@ -1,5 +1,14 @@
 # Change Log
 
+## [Unreleased]
+
+### Added
+- Support for multiple sets of resource and operation defaults, including
+  support for rules with 'resource' and 'op' expressions ([rhbz#1817547])
+
+[rhbz#1817547]: https://bugzilla.redhat.com/show_bug.cgi?id=1817547
+
+
 ## [0.10.6] - 2020-06-11
 
 ### Security

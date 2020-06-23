@@ -245,14 +245,14 @@ def report_resource_running(resource, roles, severity=severities.INFO):
     )
 
 
-def report_unexpected_element(element_id, elemet_type, expected_types):
+def report_unexpected_element(element_id, element_type, expected_types):
     return (
         severities.ERROR,
         report_codes.ID_BELONGS_TO_UNEXPECTED_TYPE,
         {
             "id": element_id,
             "expected_types": expected_types,
-            "current_type": elemet_type,
+            "current_type": element_type,
         },
         None,
     )

@@ -481,6 +481,35 @@ class TagCannotRemoveReferencesWithoutRemovingTag(CliReportMessageTestBase):
         )
 
 
+class RuleExpressionParseError(CliReportMessageTestBase):
+    def test_success(self):
+        self.assert_message(
+            messages.RuleExpressionParseError(
+                "resource dummy op monitor",
+                "Expected end of text",
+                "resource dummy op monitor",
+                1,
+                16,
+                15,
+            ),
+            "'resource dummy op monitor' is not a valid rule expression, "
+            "parse error near or after line 1 column 16\n"
+            "  resource dummy op monitor\n"
+            "  ---------------^",
+        )
+
+
+class CibNvsetAmbiguousProvideNvsetId(CliReportMessageTestBase):
+    def test_success(self):
+        self.assert_message(
+            messages.CibNvsetAmbiguousProvideNvsetId(
+                const.PCS_COMMAND_RESOURCE_DEFAULTS_UPDATE
+            ),
+            "Several options sets exist, please use the 'pcs resource defaults "
+            "set update' command and specify an option set ID",
+        )
+
+
 # TODO: create test/check that all subclasses of
 # pcs.cli.reports.messages.CliReportMessageCustom have their test class with
 # the same name in this file

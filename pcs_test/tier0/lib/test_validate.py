@@ -1238,6 +1238,33 @@ class ValuePositiveInteger(TestCase):
         )
 
 
+class ValueScore(TestCase):
+    def test_valid_score(self):
+        for score in [
+            "1",
+            "-1",
+            "+1",
+            "123",
+            "-123",
+            "+123",
+            "INFINITY",
+            "-INFINITY",
+            "+INFINITY",
+        ]:
+            with self.subTest(score=score):
+                assert_report_item_list_equal(
+                    validate.ValueScore("a").validate({"a": score}), [],
+                )
+
+    def test_not_valid_score(self):
+        for score in ["something", "++1", "--1", "++INFINITY"]:
+            with self.subTest(score=score):
+                assert_report_item_list_equal(
+                    validate.ValueScore("a").validate({"a": score}),
+                    [fixture.error(report_codes.INVALID_SCORE, score=score,),],
+                )
+
+
 class ValueTimeInterval(TestCase):
     def test_no_reports_for_valid_time_interval(self):
         for interval in ["0", "1s", "2sec", "3m", "4min", "5h", "6hr"]:

@@ -3,6 +3,8 @@ from typing import (
     Any,
     List,
     Mapping,
+    Sequence,
+    Tuple,
     TypeVar,
 )
 
@@ -47,6 +49,36 @@ def format_list_custom_last_separator(
         last_separator,
         format_list(item_list[-1:], separator=separator),
     )
+
+
+# For now, Tuple[str, str] is sufficient. Feel free to change it if needed,
+# e.g. when values can be integers.
+def format_name_value_list(item_list: Sequence[Tuple[str, str]]) -> List[str]:
+    """
+    Turn 2-tuples to 'name=value' strings with standard quoting
+    """
+    output = []
+    for name, value in item_list:
+        name = quote(name, "= ")
+        value = quote(value, "= ")
+        output.append(f"{name}={value}")
+    return output
+
+
+def quote(string: str, chars_to_quote: str) -> str:
+    """
+    Quote a string if it contains specified characters
+
+    string -- the string to be processed
+    chars_to_quote -- the characters causing quoting
+    """
+    if not frozenset(chars_to_quote) & frozenset(string):
+        return string
+    if '"' not in string:
+        return f'"{string}"'
+    if "'" not in string:
+        return f"'{string}'"
+    return '"{string}"'.format(string=string.replace('"', '\\"'))
 
 
 def join_multilines(strings):

@@ -1,16 +1,17 @@
 from unittest import TestCase
 
 from pcs.common import file_type_codes
-from pcs.common.file import RawFileError
-from pcs.common.reports import (
-    const,
-    messages as reports,
-)
 from pcs.common.fencing_topology import (
     TARGET_TYPE_NODE,
     TARGET_TYPE_REGEXP,
     TARGET_TYPE_ATTRIBUTE,
 )
+from pcs.common.file import RawFileError
+from pcs.common.reports import (
+    const,
+    messages as reports,
+)
+from pcs.common.types import CibRuleExpressionType
 
 # pylint: disable=too-many-lines
 
@@ -4652,4 +4653,48 @@ class TagIdsNotInTheTag(NameBuildTest):
         self.assert_message_from_report(
             "Tag 'tag-id' does not contain ids: 'a', 'b'",
             reports.TagIdsNotInTheTag("tag-id", ["b", "a"]),
+        )
+
+
+class RuleExpressionParseError(NameBuildTest):
+    def test_success(self):
+        self.assert_message_from_report(
+            "'resource dummy op monitor' is not a valid rule expression, "
+            "parse error near or after line 1 column 16",
+            reports.RuleExpressionParseError(
+                "resource dummy op monitor",
+                "Expected end of text",
+                "resource dummy op monitor",
+                1,
+                16,
+                15,
+            ),
+        )
+
+
+class RuleExpressionNotAllowed(NameBuildTest):
+    def test_op(self):
+        self.assert_message_from_report(
+            "Keyword 'op' cannot be used in a rule in this command",
+            reports.RuleExpressionNotAllowed(
+                CibRuleExpressionType.OP_EXPRESSION
+            ),
+        )
+
+    def test_rsc(self):
+        self.assert_message_from_report(
+            "Keyword 'resource' cannot be used in a rule in this command",
+            reports.RuleExpressionNotAllowed(
+                CibRuleExpressionType.RSC_EXPRESSION
+            ),
+        )
+
+
+class CibNvsetAmbiguousProvideNvsetId(NameBuildTest):
+    def test_success(self):
+        self.assert_message_from_report(
+            "Several options sets exist, please specify an option set ID",
+            reports.CibNvsetAmbiguousProvideNvsetId(
+                const.PCS_COMMAND_RESOURCE_DEFAULTS_UPDATE
+            ),
         )

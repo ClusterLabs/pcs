@@ -9,6 +9,7 @@ RUN dnf install -y \
         python3-mock \
         python3-pycurl \
         python3-pyOpenSSL \
+        python3-pyparsing \
         # ruby
         ruby \
         ruby-devel \

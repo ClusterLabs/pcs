@@ -249,6 +249,39 @@ class FormatListCustomLastSeparatort(TestCase):
         )
 
 
+class FormatNameValueList(TestCase):
+    def test_empty(self):
+        self.assertEqual([], tools.format_name_value_list([]))
+
+    def test_many(self):
+        self.assertEqual(
+            ["name1=value1", '"name=2"="value 2"', '"name 3"="value=3"'],
+            tools.format_name_value_list(
+                [
+                    ("name1", "value1"),
+                    ("name=2", "value 2"),
+                    ("name 3", "value=3"),
+                ]
+            ),
+        )
+
+
+class Quote(TestCase):
+    def test_no_quote(self):
+        self.assertEqual("string", tools.quote("string", " "))
+        self.assertEqual("string", tools.quote("string", " ="))
+
+    def test_quote(self):
+        self.assertEqual('"str ing"', tools.quote("str ing", " ="))
+        self.assertEqual('"str=ing"', tools.quote("str=ing", " ="))
+
+    def test_alternative_quote(self):
+        self.assertEqual("""'st"r i"ng'""", tools.quote('st"r i"ng', " "))
+
+    def test_escape(self):
+        self.assertEqual('''"st\\"r i'ng"''', tools.quote("st\"r i'ng", " "))
+
+
 class Transform(TestCase):
     def test_transform(self):
         self.assertEqual(

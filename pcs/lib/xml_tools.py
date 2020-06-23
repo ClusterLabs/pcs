@@ -1,4 +1,4 @@
-from typing import cast, Iterable
+from typing import cast, Dict, Iterable
 from xml.etree.ElementTree import Element
 
 from lxml import etree
@@ -56,8 +56,11 @@ def get_sub_element(
     return sub_element
 
 
-def export_attributes(element):
-    return dict((key, value) for key, value in element.attrib.items())
+def export_attributes(element: Element, with_id: bool = True) -> Dict[str, str]:
+    result = dict((key, value) for key, value in element.attrib.items())
+    if not with_id:
+        result.pop("id", None)
+    return result
 
 
 def update_attribute_remove_empty(element, name, value):

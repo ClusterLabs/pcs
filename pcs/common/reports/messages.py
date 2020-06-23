@@ -27,6 +27,7 @@ from pcs.common.str_tools import (
     indent,
     is_iterable_not_str,
 )
+from pcs.common.types import CibRuleExpressionType
 
 from . import (
     codes,
@@ -120,6 +121,7 @@ _type_articles = {
     "ACL user": "an",
     "ACL role": "an",
     "ACL permission": "an",
+    "options set": "an",
 }
 
 
@@ -6399,3 +6401,74 @@ class TagIdsNotInTheTag(ReportItemMessage):
             ids=format_plural(self.id_list, "id"),
             id_list=format_list(self.id_list),
         )
+
+
+@dataclass(frozen=True)
+class RuleExpressionParseError(ReportItemMessage):
+    """
+    Unable to parse pacemaker cib rule expression string
+
+    rule_string -- the whole rule expression string
+    reason -- error message from rule parser
+    rule_line -- part of rule_string - the line where the error occurred
+    line_number -- the line where parsing failed
+    column_number -- the column where parsing failed
+    position -- the start index where parsing failed
+    """
+
+    rule_string: str
+    reason: str
+    rule_line: str
+    line_number: int
+    column_number: int
+    position: int
+    _code = codes.RULE_EXPRESSION_PARSE_ERROR
+
+    @property
+    def message(self) -> str:
+        # Messages coming from the parser are not very useful and readable,
+        # they mostly contain one line grammar expression covering the whole
+        # rule. No user would be able to parse that. Therefore we omit the
+        # messages.
+        return (
+            f"'{self.rule_string}' is not a valid rule expression, parse error "
+            f"near or after line {self.line_number} column {self.column_number}"
+        )
+
+
+@dataclass(frozen=True)
+class RuleExpressionNotAllowed(ReportItemMessage):
+    """
+    Used rule expression is not allowed in current context
+
+    expression_type -- disallowed expression type
+    """
+
+    expression_type: CibRuleExpressionType
+    _code = codes.RULE_EXPRESSION_NOT_ALLOWED
+
+    @property
+    def message(self) -> str:
+        type_map = {
+            CibRuleExpressionType.OP_EXPRESSION: "op",
+            CibRuleExpressionType.RSC_EXPRESSION: "resource",
+        }
+        return (
+            f"Keyword '{type_map[self.expression_type]}' cannot be used "
+            "in a rule in this command"
+        )
+
+
+@dataclass(frozen=True)
+class CibNvsetAmbiguousProvideNvsetId(ReportItemMessage):
+    """
+    An old command supporting only one nvset have been used when several nvsets
+    exist. We require an nvset ID the command should work with to be specified.
+    """
+
+    pcs_command: types.PcsCommand
+    _code = codes.CIB_NVSET_AMBIGUOUS_PROVIDE_NVSET_ID
+
+    @property
+    def message(self) -> str:
+        return "Several options sets exist, please specify an option set ID"

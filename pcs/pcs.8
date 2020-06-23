@@ -185,8 +185,48 @@ Remove specified operation (note: you must specify the exact operation propertie
 op remove <operation id>
 Remove the specified operation id.
 .TP
-op defaults [options]
-Set default values for operations, if no options are passed, lists currently configured defaults. Defaults do not apply to resources which override them with their own defined operations.
+op defaults [config] [\fB\-\-full\fR]
+List currently configured default values for operations. If \fB\-\-full\fR is specified, also list ids.
+.TP
+op defaults <name>=<value>
+Set default values for operations.
+.br
+NOTE: Defaults do not apply to resources which override them with their own defined values.
+.TP
+op defaults set create [<set options>] [meta [<name>=<value>]...] [rule [<expression>]]
+Create a new set of default values for resource operations. You may specify a rule describing resources and / or operations to which the set applies.
+.br
+Set options are: id, score
+.br
+Expression looks like one of the following:
+.br
+  op <operation name> [interval=<interval>]
+.br
+  resource [<standard>]:[<provider>]:[<type>]
+.br
+  <expression> and|or <expression>
+.br
+  ( <expression> )
+.br
+You may specify all or any of 'standard', 'provider' and 'type' in a resource expression. For example: 'resource ocf::' matches all resources of 'ocf' standard, while 'resource ::Dummy' matches all resources of 'Dummy' type regardless of their standard and provider.
+.br
+NOTE: Defaults do not apply to resources which override them with their own defined values.
+.TP
+op defaults set delete [<set id>]...
+Delete specified options sets.
+.TP
+op defaults set remove [<set id>]...
+Delete specified options sets.
+.TP
+op defaults set update <set id> [meta [<name>=<value>]...]
+Add, remove or change values in specified set of default values for resource operations.
+.br
+NOTE: Defaults do not apply to resources which override them with their own defined values.
+.TP
+op defaults update <name>=<value>...
+Set default values for operations. This is a simplified command useful for cases when you only manage one set of default values.
+.br
+NOTE: Defaults do not apply to resources which override them with their own defined values.
 .TP
 meta <resource id | group id | clone id> <meta options> [\fB\-\-wait\fR[=n]]
 Add specified options to the specified resource, group or clone. Meta options should be in the format of name=value, options may be removed by setting an option without a value. If \fB\-\-wait\fR is specified, pcs will wait up to 'n' seconds for the changes to take effect and then return 0 if the changes have been processed or 1 otherwise. If 'n' is not specified it defaults to 60 minutes.
@@ -232,8 +272,46 @@ Set resources listed to managed mode (default). If \fB\-\-monitor\fR is specifie
 unmanage <resource id | tag id>... [\fB\-\-monitor\fR]
 Set resources listed to unmanaged mode. When a resource is in unmanaged mode, the cluster is not allowed to start nor stop the resource. If \fB\-\-monitor\fR is specified, disable all monitor operations of the resources.
 .TP
-defaults [options]
-Set default values for resources, if no options are passed, lists currently configured defaults. Defaults do not apply to resources which override them with their own defined values.
+defaults [config] [\fB\-\-full\fR]
+List currently configured default values for resources. If \fB\-\-full\fR is specified, also list ids.
+.TP
+defaults <name>=<value>
+Set default values for resources.
+.br
+NOTE: Defaults do not apply to resources which override them with their own defined values.
+.TP
+defaults set create [<set options>] [meta [<name>=<value>]...] [rule [<expression>]]
+Create a new set of default values for resources. You may specify a rule describing resources to which the set applies.
+.br
+Set options are: id, score
+.br
+Expression looks like one of the following:
+.br
+  resource [<standard>]:[<provider>]:[<type>]
+.br
+  <expression> and|or <expression>
+.br
+  ( <expression> )
+.br
+You may specify all or any of 'standard', 'provider' and 'type' in a resource expression. For example: 'resource ocf::' matches all resources of 'ocf' standard, while 'resource ::Dummy' matches all resources of 'Dummy' type regardless of their standard and provider.
+.br
+NOTE: Defaults do not apply to resources which override them with their own defined values.
+.TP
+defaults set delete [<set id>]...
+Delete specified options sets.
+.TP
+defaults set remove [<set id>]...
+Delete specified options sets.
+.TP
+defaults set update <set id> [meta [<name>=<value>]...]
+Add, remove or change values in specified set of default values for resources.
+.br
+NOTE: Defaults do not apply to resources which override them with their own defined values.
+.TP
+defaults update <name>=<value>...
+Set default values for resources. This is a simplified command useful for cases when you only manage one set of default values.
+.br
+NOTE: Defaults do not apply to resources which override them with their own defined values.
 .TP
 cleanup [<resource id>] [node=<node>] [operation=<operation> [interval=<interval>]] [\fB\-\-strict\fR]
 Make the cluster forget failed operations from history of the resource and re\-detect its current state. This can be useful to purge knowledge of past failures that have since been resolved.

@@ -402,6 +402,45 @@ class TagCannotRemoveReferencesWithoutRemovingTag(CliReportMessageCustom):
         )
 
 
+class RuleExpressionParseError(CliReportMessageCustom):
+    _obj: messages.RuleExpressionParseError
+
+    @property
+    def message(self) -> str:
+        # Messages coming from the parser are not very useful and readable,
+        # they mostly contain one line grammar expression covering the whole
+        # rule. No user would be able to parse that. Therefore we omit the
+        # messages.
+        marker = "-" * (self._obj.column_number - 1) + "^"
+        return (
+            f"'{self._obj.rule_string}' is not a valid rule expression, parse "
+            f"error near or after line {self._obj.line_number} column "
+            f"{self._obj.column_number}\n"
+            f"  {self._obj.rule_line}\n"
+            f"  {marker}"
+        )
+
+
+class CibNvsetAmbiguousProvideNvsetId(CliReportMessageCustom):
+    _obj: messages.CibNvsetAmbiguousProvideNvsetId
+
+    @property
+    def message(self) -> str:
+        command_map = {
+            const.PCS_COMMAND_RESOURCE_DEFAULTS_UPDATE: (
+                "pcs resource defaults set update"
+            ),
+            const.PCS_COMMAND_OPERATION_DEFAULTS_UPDATE: (
+                "pcs resource op defaults set update"
+            ),
+        }
+        command = command_map.get(self._obj.pcs_command, "")
+        return (
+            f"Several options sets exist, please use the '{command}' command "
+            "and specify an option set ID"
+        )
+
+
 def _create_report_msg_map() -> Dict[str, type]:
     result: Dict[str, type] = {}
     for report_msg_cls in get_all_subclasses(CliReportMessageCustom):

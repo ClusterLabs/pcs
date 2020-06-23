@@ -293,9 +293,9 @@ class StonithTest(TestCase, AssertPcsMixin):
              No alerts defined
 
             Resources Defaults:
-             No defaults set
+              No defaults set
             Operations Defaults:
-             No defaults set
+              No defaults set
 
             Cluster Properties:
 
@@ -1305,9 +1305,9 @@ class LevelConfig(LevelTestsBase):
          No alerts defined
 
         Resources Defaults:
-         No defaults set
+          No defaults set
         Operations Defaults:
-         No defaults set
+          No defaults set
 
         Cluster Properties:
 

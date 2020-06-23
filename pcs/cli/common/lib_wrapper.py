@@ -388,8 +388,14 @@ def load_module(env, middleware_factory, name):
             env,
             middleware.build(middleware_factory.cib,),
             {
-                "set_operations_defaults": cib_options.set_operations_defaults,
-                "set_resources_defaults": cib_options.set_resources_defaults,
+                "operation_defaults_config": cib_options.operation_defaults_config,
+                "operation_defaults_create": cib_options.operation_defaults_create,
+                "operation_defaults_remove": cib_options.operation_defaults_remove,
+                "operation_defaults_update": cib_options.operation_defaults_update,
+                "resource_defaults_config": cib_options.resource_defaults_config,
+                "resource_defaults_create": cib_options.resource_defaults_create,
+                "resource_defaults_remove": cib_options.resource_defaults_remove,
+                "resource_defaults_update": cib_options.resource_defaults_update,
             },
         )
 

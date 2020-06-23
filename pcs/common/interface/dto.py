@@ -42,7 +42,14 @@ def from_dict(cls: Type[DtoType], data: DtoPayload) -> DtoType:
         data=data,
         # NOTE: all enum types has to be listed here in key cast
         # see: https://github.com/konradhalas/dacite#casting
-        config=dacite.Config(cast=[types.DrRole, types.ResourceRelationType,],),
+        config=dacite.Config(
+            cast=[
+                types.CibNvsetType,
+                types.CibRuleExpressionType,
+                types.DrRole,
+                types.ResourceRelationType,
+            ]
+        ),
     )
 
 

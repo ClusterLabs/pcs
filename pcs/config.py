@@ -48,6 +48,7 @@ from pcs import (
 from pcs.cli.common import middleware
 from pcs.cli.common.errors import CmdLineInputError
 from pcs.cli.constraint import command as constraint_command
+from pcs.cli.nvset import nvset_dto_list_to_lines
 from pcs.cli.reports import process_library_reports
 from pcs.common.reports import constraints as constraints_reports
 from pcs.common.str_tools import indent
@@ -96,7 +97,8 @@ def _config_show_cib_lines(lib):
     Commandline options:
       * -f - CIB file
     """
-    # update of pcs_options will change output of constraint show
+    # update of pcs_options will change output of constraint show and
+    # displaying resources and operations defaults
     utils.pcs_options["--full"] = 1
     # get latest modifiers object after updating pcs_options
     modifiers = utils.get_input_modifiers()
@@ -172,11 +174,23 @@ def _config_show_cib_lines(lib):
     all_lines.append("")
     all_lines.append("Resources Defaults:")
     all_lines.extend(
-        indent(resource.show_defaults(cib_dom, "rsc_defaults"), indent_step=1)
+        indent(
+            nvset_dto_list_to_lines(
+                lib.cib_options.resource_defaults_config(),
+                with_ids=modifiers.get("--full"),
+                text_if_empty="No defaults set",
+            )
+        )
     )
     all_lines.append("Operations Defaults:")
     all_lines.extend(
-        indent(resource.show_defaults(cib_dom, "op_defaults"), indent_step=1)
+        indent(
+            nvset_dto_list_to_lines(
+                lib.cib_options.operation_defaults_config(),
+                with_ids=modifiers.get("--full"),
+                text_if_empty="No defaults set",
+            )
+        )
     )
 
     all_lines.append("")
