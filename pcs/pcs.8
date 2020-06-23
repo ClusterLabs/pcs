@@ -325,7 +325,7 @@ If a node is not specified then resources / stonith devices on all nodes will be
 refresh [<resource id>] [node=<node>] [\fB\-\-strict\fR]
 Make the cluster forget the complete operation history (including failures) of the resource and re\-detect its current state. If you are interested in forgetting failed operations only, use the 'pcs resource cleanup' command.
 .br
-If the named resource is part of a group, or one numbered instance of a clone or bundled resource, the clean\-up applies to the whole collective resource unless \fB\-\-strict\fR is given.
+If the named resource is part of a group, or one numbered instance of a clone or bundled resource, the refresh applies to the whole collective resource unless \fB\-\-strict\fR is given.
 .br
 If a resource id is not specified then all resources / stonith devices will be refreshed.
 .br
@@ -613,7 +613,7 @@ If a node is not specified then resources / stonith devices on all nodes will be
 refresh [<stonith id>] [\fB\-\-node\fR <node>] [\fB\-\-strict\fR]
 Make the cluster forget the complete operation history (including failures) of the stonith device and re\-detect its current state. If you are interested in forgetting failed operations only, use the 'pcs stonith cleanup' command.
 .br
-If the named stonith device is part of a group, or one numbered instance of a clone or bundled resource, the clean\-up applies to the whole collective resource unless \fB\-\-strict\fR is given.
+If the named stonith device is part of a group, or one numbered instance of a clone or bundled resource, the refresh applies to the whole collective resource unless \fB\-\-strict\fR is given.
 .br
 If a stonith id is not specified then all resources / stonith devices will be refreshed.
 .br

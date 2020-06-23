@@ -663,7 +663,7 @@ Commands:
         interested in forgetting failed operations only, use the 'pcs resource
         cleanup' command.
         If the named resource is part of a group, or one numbered instance of a
-        clone or bundled resource, the clean-up applies to the whole collective
+        clone or bundled resource, the refresh applies to the whole collective
         resource unless --strict is given.
         If a resource id is not specified then all resources / stonith devices
         will be refreshed.
@@ -1214,7 +1214,7 @@ Commands:
         are interested in forgetting failed operations only, use the 'pcs
         stonith cleanup' command.
         If the named stonith device is part of a group, or one numbered
-        instance of a clone or bundled resource, the clean-up applies to the
+        instance of a clone or bundled resource, the refresh applies to the
         whole collective resource unless --strict is given.
         If a stonith id is not specified then all resources / stonith devices
         will be refreshed.
