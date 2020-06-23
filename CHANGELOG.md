@@ -6,6 +6,12 @@
 - Support for multiple sets of resource and operation defaults, including
   support for rules with 'resource' and 'op' expressions ([rhbz#1817547])
 
+### Deprecated
+- `pcs resource [op] defaults <name>=<value>...` commands are deprecated now.
+  Use `pcs resource [op] defaults update <name>=<value>...` if you only manage
+  one set of defaults, or `pcs resource [op] defaults set` if you manage
+  several sets of defaults. ([rhbz#1817547])
+
 [rhbz#1817547]: https://bugzilla.redhat.com/show_bug.cgi?id=1817547
 
 
