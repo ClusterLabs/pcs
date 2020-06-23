@@ -156,34 +156,13 @@ def find_resources_or_tags(
     id_list -- resource or tag ids
     """
     resource_or_tag_el_list = []
-    not_found_id_list: List[str] = []
-    for _id in set(id_list):
-        xpath_result = cast(_Element, cib).xpath(
-            """
-            /cib/configuration/resources//*[{resource_tags}][@id="{_id}"]
-            |
-            /cib/configuration/tags/tag[@id="{_id}"]
-            """.format(
-                _id=_id,
-                resource_tags=" or ".join(
-                    f"self::{tag}" for tag in ALL_RESOURCE_XML_TAGS
-                ),
-            )
-        )
-        if xpath_result:
-            resource_or_tag_el_list.append(cast(List[Element], xpath_result)[0])
-        else:
-            not_found_id_list.append(_id)
-
     report_list: ReportItemList = []
-    for _id in sorted(not_found_id_list):
-        report_list.append(
-            ReportItem.error(
-                reports.messages.IdNotFound(
-                    _id, sorted(ALL_RESOURCE_XML_TAGS + ["tag"]),
-                ),
-            ),
-        )
+    for _id in set(id_list):
+        searcher = ElementSearcher(ALL_RESOURCE_XML_TAGS + ["tag"], _id, cib)
+        if searcher.element_found():
+            resource_or_tag_el_list.append(searcher.get_element())
+        else:
+            report_list.extend(searcher.get_errors())
     return resource_or_tag_el_list, report_list
 
 

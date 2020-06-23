@@ -207,9 +207,12 @@ def report_not_found(
     )
 
 
-def report_not_resource_or_tag(element_id):
+def report_not_resource_or_tag(element_id, context_type="cib", context_id=""):
     return report_not_found(
-        element_id, expected_types=sorted(ALL_RESOURCE_XML_TAGS + ["tag"])
+        element_id,
+        context_type=context_type,
+        expected_types=sorted(ALL_RESOURCE_XML_TAGS + ["tag"]),
+        context_id=context_id,
     )
 
 
