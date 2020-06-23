@@ -145,7 +145,7 @@ class ValidateCommonTestData(TestCase):
     existent_tags = ["first_tag", "second_tag"]
     id_to_context_type_map = {
         "no1": "rsc_location",
-        "no2": "node_state",
+        "no2": "resources",
         "nonexistent1": "resources",
         "nonexistent2": "resources",
         "#invalid-tag-id": "resources",
@@ -244,7 +244,10 @@ class ValidateCreateTag(ValidateCommonTestData):
             [
                 fixture.report_invalid_id(tag_id, "#", id_description="id"),
                 fixture.error(reports.codes.TAG_CANNOT_CONTAIN_ITSELF),
-                *fixture_unexpected_element_reports(2 * self.nonresource_ids),
+                *fixture_unexpected_element_reports(
+                    2 * self.nonresource_ids[:1]
+                ),
+                *fixture_id_not_found_reports(2 * self.nonresource_ids[1:]),
                 *fixture_id_not_found_reports([tag_id]),
                 fixture.error(
                     reports.codes.TAG_ADD_REMOVE_IDS_DUPLICATION,
@@ -422,7 +425,8 @@ class ValidateReferenceIdsAreResources(ValidateCommonTestData):
             lib._validate_reference_ids_are_resources(
                 get_resources(self.test_tree), self.nonresource_ids,
             ),
-            fixture_unexpected_element_reports(self.nonresource_ids),
+            fixture_unexpected_element_reports(self.nonresource_ids[:1])
+            + fixture_id_not_found_reports(self.nonresource_ids[1:]),
         )
 
     def test_mixed_ids(self):
@@ -431,8 +435,9 @@ class ValidateReferenceIdsAreResources(ValidateCommonTestData):
                 get_resources(self.test_tree),
                 self.resource_ids + self.nonresource_ids + self.nonexistent_ids,
             ),
-            fixture_id_not_found_reports(self.nonexistent_ids)
-            + fixture_unexpected_element_reports(self.nonresource_ids),
+            fixture_unexpected_element_reports(self.nonresource_ids[:1])
+            + fixture_id_not_found_reports(self.nonresource_ids[1:])
+            + fixture_id_not_found_reports(self.nonexistent_ids),
         )
 
 
@@ -484,8 +489,15 @@ class FindTagElementsByIdsTest(ValidateCommonTestData):
         assert_report_item_list_equal(
             report_list,
             fixture_unexpected_element_reports(
-                self.nonresource_ids, expected_types=["tag"],
-            ),
+                self.nonresource_ids[:1], expected_types=["tag"]
+            )
+            + [
+                fixture.report_not_found(
+                    self.nonresource_ids[1],
+                    context_type="tags",
+                    expected_types=["tag"],
+                )
+            ],
         )
         self.assertEqual(element_list, [])
 
@@ -1024,9 +1036,12 @@ class ValidateTagUpdateByIds(TestCase):
                 <obj_ref id="e3"/>
               </tag>
             </tags>
+            <rsc_defaults>
+                <meta_attributes id="other_id" />
+            </rsc_defaults>
           </configuration>
           <status>
-            <node_state id="other_id"/>
+            <node_state id="status_id"/>
           </status>
         </cib>
         """
@@ -1068,7 +1083,7 @@ class ValidateTagUpdateByIds(TestCase):
 
     def test_not_existing_tag_id_and_bad_add_ids(self):
         assert_report_item_list_equal(
-            self._validate("none_tag", ["none", "other_id"], []),
+            self._validate("none_tag", ["none", "status_id", "other_id"], []),
             [
                 fixture.report_not_found(
                     "none_tag", context_type="tags", expected_types=["tag"],
@@ -1078,8 +1093,13 @@ class ValidateTagUpdateByIds(TestCase):
                     context_type="resources",
                     expected_types=self.OBJ_REF_EXPCTED_TYPES,
                 ),
+                fixture.report_not_found(
+                    "status_id",
+                    context_type="resources",
+                    expected_types=self.OBJ_REF_EXPCTED_TYPES,
+                ),
                 fixture.report_unexpected_element(
-                    "other_id", "node_state", self.OBJ_REF_EXPCTED_TYPES
+                    "other_id", "meta_attributes", self.OBJ_REF_EXPCTED_TYPES
                 ),
             ],
         )
@@ -1154,6 +1174,8 @@ class ValidateTagUpdateByIds(TestCase):
                     "other_id",
                     "e1",
                     "e1",
+                    "status_id",
+                    "status_id",
                     "e2",
                     "e2",
                 ],
@@ -1162,7 +1184,14 @@ class ValidateTagUpdateByIds(TestCase):
             [
                 fixture.error(
                     reports.codes.TAG_ADD_REMOVE_IDS_DUPLICATION,
-                    duplicate_ids_list=["e1", "e2", "new1", "none", "other_id"],
+                    duplicate_ids_list=[
+                        "e1",
+                        "e2",
+                        "new1",
+                        "none",
+                        "other_id",
+                        "status_id",
+                    ],
                     add_or_not_remove=True,
                 ),
                 fixture.report_not_found(
@@ -1171,7 +1200,12 @@ class ValidateTagUpdateByIds(TestCase):
                     expected_types=self.OBJ_REF_EXPCTED_TYPES,
                 ),
                 fixture.report_unexpected_element(
-                    "other_id", "node_state", self.OBJ_REF_EXPCTED_TYPES
+                    "other_id", "meta_attributes", self.OBJ_REF_EXPCTED_TYPES
+                ),
+                fixture.report_not_found(
+                    "status_id",
+                    context_type="resources",
+                    expected_types=self.OBJ_REF_EXPCTED_TYPES,
                 ),
                 fixture.error(
                     # pylint: disable=line-too-long
