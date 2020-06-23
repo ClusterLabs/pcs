@@ -213,13 +213,8 @@ class ResourceDefaultsCreate(DefaultsCreateMixin, TestCase):
         self.env_assist.assert_reports(
             [
                 fixture.error(
-                    reports.codes.RULE_EXPRESSION_PARSE_ERROR,
-                    rule_string="op monitor",
-                    reason='Expected "resource"',
-                    rule_line="op monitor",
-                    line_number=1,
-                    column_number=1,
-                    position=0,
+                    reports.codes.RULE_EXPRESSION_NOT_ALLOWED,
+                    expression_type=CibRuleExpressionType.OP_EXPRESSION,
                 ),
             ]
         )

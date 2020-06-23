@@ -5,3 +5,4 @@ from .parser import (
     RuleParseError,
 )
 from .parsed_to_cib import export as rule_to_cib
+from .validator import Validator as RuleValidator

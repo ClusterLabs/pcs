@@ -23,6 +23,7 @@ from pcs.lib import validate
 from pcs.lib.cib.rule import (
     RuleParseError,
     RuleRoot,
+    RuleValidator,
     parse_rule,
     rule_element_to_dto,
     rule_to_cib,
@@ -179,15 +180,19 @@ class ValidateNvsetAppendNew:
         # TODO write and call parsed rule validation and cleanup and tests
         if self._nvset_rule:
             try:
-                # TODO Instead of setting allow flags we want to have them set
-                # to True always and check the parsed rule tree in validator
-                # instead. That will give us better error messages, such as "op
-                # expression cannot be used in this context" instead of an
-                # universal "parse error"
+                # Allow flags are set to True always, the parsed rule tree is
+                # checked in the validator instead. That gives us better error
+                # messages, such as "op expression cannot be used in this
+                # context" instead of a universal "parse error".
                 self._nvset_rule_parsed = parse_rule(
-                    self._nvset_rule,
-                    allow_rsc_expr=self._allow_rsc_expr,
-                    allow_op_expr=self._allow_op_expr,
+                    self._nvset_rule, allow_rsc_expr=True, allow_op_expr=True
+                )
+                report_list.extend(
+                    RuleValidator(
+                        self._nvset_rule_parsed,
+                        allow_rsc_expr=self._allow_rsc_expr,
+                        allow_op_expr=self._allow_op_expr,
+                    ).get_reports()
                 )
             except RuleParseError as e:
                 report_list.append(

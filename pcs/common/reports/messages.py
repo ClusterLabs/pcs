@@ -27,6 +27,7 @@ from pcs.common.str_tools import (
     indent,
     is_iterable_not_str,
 )
+from pcs.common.types import CibRuleExpressionType
 
 from . import (
     codes,
@@ -6432,6 +6433,29 @@ class RuleExpressionParseError(ReportItemMessage):
         return (
             f"'{self.rule_string}' is not a valid rule expression, parse error "
             f"near or after line {self.line_number} column {self.column_number}"
+        )
+
+
+@dataclass(frozen=True)
+class RuleExpressionNotAllowed(ReportItemMessage):
+    """
+    Used rule expression is not allowed in current context
+
+    expression_type -- disallowed expression type
+    """
+
+    expression_type: CibRuleExpressionType
+    _code = codes.RULE_EXPRESSION_NOT_ALLOWED
+
+    @property
+    def message(self) -> str:
+        type_map = {
+            CibRuleExpressionType.OP_EXPRESSION: "op",
+            CibRuleExpressionType.RSC_EXPRESSION: "resource",
+        }
+        return (
+            f"Keyword '{type_map[self.expression_type]}' cannot be used "
+            "in a rule in this command"
         )
 
 
