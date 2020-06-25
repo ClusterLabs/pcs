@@ -133,7 +133,7 @@ class ElementSearcher:
                 "Improper usage: cannot report errors when there are none"
             )
 
-        element_list = _get_configuration_elements_by_id(
+        element_list = get_configuration_elements_by_id(
             self._context_element, self._element_id
         )
 
@@ -185,10 +185,11 @@ class ElementSearcher:
                 return
 
 
-def _get_configuration_elements_by_id(tree: Element, check_id: str):
+def get_configuration_elements_by_id(tree: Element, check_id: str):
     """
     Return any configuration elements (not in status section of cib) with value
-    of attribte id specified as 'check_id'
+    of attribute id specified as 'check_id'; skip any and all elements having id
+    attribute which does not actually serve as an id.
 
     tree -- any element in xml tree, whole tree (not only its subtree) will be
         searched
@@ -213,6 +214,8 @@ def _get_configuration_elements_by_id(tree: Element, check_id: str):
                 name()!="acl_target"
                 and
                 name()!="role"
+                and
+                name()!="obj_ref"
                 and
                 @id=$check_id
             ) or (
@@ -239,7 +242,7 @@ def does_id_exist(tree, check_id):
     tree cib -- etree node
     check_id -- id to check
     """
-    return len(_get_configuration_elements_by_id(tree, check_id)) > 0
+    return len(get_configuration_elements_by_id(tree, check_id)) > 0
 
 
 # DEPRECATED, use IdProvider instead

@@ -1328,3 +1328,49 @@ class ValidateTagUpdateByIds(TestCase):
                 ),
             ],
         )
+
+
+class ExpandTag(TestCase):
+    def setUp(self):
+        self.cib = etree.fromstring(
+            """
+            <cib>
+                <configuration>
+                    <resources>
+                        <primitive id="R1"/>
+                        <clone id="C">
+                            <primitive id="RC"/>
+                        </clone>
+                        <primitive id="R2"/>
+                    </resources>
+                    <tags>
+                        <tag id="tag1">
+                            <obj_ref id="R1"/>
+                            <obj_ref id="C"/>
+                        </tag>
+                        <tag id="tag2">
+                            <obj_ref id="R2"/>
+                        </tag>
+                    </tags>
+                </configuration>
+            </cib>
+        """
+        )
+
+    @staticmethod
+    def get_ids(elements):
+        return [el.get("id") for el in elements]
+
+    def test_no_tag(self):
+        el_list = lib.expand_tag(self.cib.xpath(".//primitive[@id='R1']")[0])
+        self.assertEqual(self.get_ids(el_list), ["R1"])
+
+    def test_expand_all_types(self):
+        el_list = lib.expand_tag(self.cib.xpath(".//tag[@id='tag1']")[0])
+        self.assertEqual(self.get_ids(el_list), ["R1", "C"])
+
+    def test_expand_selected_types(self):
+        el_list = lib.expand_tag(
+            self.cib.xpath(".//tag[@id='tag1']")[0], ["clone"]
+        )
+        self.assertEqual(self.get_ids(el_list), ["C"])

@@ -171,9 +171,16 @@ class ResourceRelationsFetcher:
     def _get_resource_el(self, res_id: str) -> Element:
         # client of this class should ensure that res_id really exists in CIB,
         # so here we don't need to handle possible reports
-        return common.find_one_resource_and_report(
-            self._resources_section, res_id, []
+        resource_el, dummy_report_list = common.find_one_resource(
+            self._resources_section, res_id
         )
+        if resource_el is None:
+            # Two reasons for raising an error:
+            # 1) pcs would fail anyway, it's better to fail here and be able to
+            #    figure out what happened
+            # 2) mypy
+            raise AssertionError(f"Resource '{res_id}' not found")
+        return resource_el
 
     @staticmethod
     def _get_all_members(
