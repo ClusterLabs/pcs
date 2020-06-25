@@ -21,7 +21,7 @@ build_gems_without_bundler:
 	vendor/cache/json-2.3.0.gem \
 	vendor/cache/mustermann-1.1.1.gem \
 	vendor/cache/open4-1.3.4.gem \
-	vendor/cache/rack-2.2.2.gem \
+	vendor/cache/rack-2.2.3.gem \
 	vendor/cache/rack-protection-2.0.8.1.gem \
 	vendor/cache/rack-test-1.1.0.gem \
 	vendor/cache/ruby2_keywords-0.0.2.gem \

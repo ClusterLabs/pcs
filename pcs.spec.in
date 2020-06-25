@@ -37,7 +37,7 @@ Summary: Pacemaker Configuration System
 %global version_rubygem_json  2.3.0
 %global version_rubygem_mustermann  1.1.1
 %global version_rubygem_open4  1.3.4
-%global version_rubygem_rack  2.2.2
+%global version_rubygem_rack  2.2.3
 %global version_rubygem_rack_protection  2.0.8.1
 %global version_rubygem_rack_test  1.1.0
 %global version_rubygem_ruby2_keywords  0.0.2
