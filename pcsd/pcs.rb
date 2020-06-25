@@ -9,7 +9,7 @@ require 'net/https'
 require 'uri'
 require 'json'
 require 'fileutils'
-require 'backports'
+require 'backports/latest'
 require 'base64'
 require 'ethon'
 
