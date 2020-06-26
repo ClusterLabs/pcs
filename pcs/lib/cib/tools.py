@@ -351,7 +351,7 @@ def get_alerts(tree):
     return sections.get(tree, sections.ALERTS)
 
 
-def get_constraints(tree):
+def get_constraints(tree: Element) -> Element:
     """
     Return 'constraint' element from tree
     tree cib etree node

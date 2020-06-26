@@ -9,6 +9,7 @@ import json
 from typing import (
     Any,
     Callable,
+    cast,
     List,
     Sequence,
 )
@@ -188,7 +189,7 @@ def _defaults_config_cmd(
         "\n".join(
             nvset_dto_list_to_lines(
                 lib_command(),
-                with_ids=modifiers.get("--full"),
+                with_ids=cast(bool, modifiers.get("--full")),
                 text_if_empty="No defaults set",
             )
         )

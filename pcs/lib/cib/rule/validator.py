@@ -7,6 +7,7 @@ from .expression_part import (
     BoolExpr,
     OpExpr,
     RscExpr,
+    RuleExprPart,
 )
 
 
@@ -29,14 +30,8 @@ class Validator:
         self._allow_rsc_expr = allow_rsc_expr
         self._disallowed_expr_list: Set[CibRuleExpressionType] = set()
 
-        self._method_map = {
-            BoolExpr: self._validate_bool_expr,
-            OpExpr: self._validate_op_expr,
-            RscExpr: self._validate_rsc_expr,
-        }
-
     def get_reports(self) -> reports.ReportItemList:
-        self._method_map[type(self._rule)](self._rule)
+        self._call_validate(self._rule)
         report_list = []
         for expr_type in self._disallowed_expr_list:
             report_list.append(
@@ -46,17 +41,25 @@ class Validator:
             )
         return report_list
 
-    def _validate_bool_expr(self, expr: BoolExpr):
-        for child in expr.children:
-            if type(child) in self._method_map:
-                self._method_map[type(child)](child)
+    def _call_validate(self, expr: RuleExprPart) -> None:
+        if isinstance(expr, BoolExpr):
+            return self._validate_bool_expr(expr)
+        if isinstance(expr, OpExpr):
+            return self._validate_op_expr(expr)
+        if isinstance(expr, RscExpr):
+            return self._validate_rsc_expr(expr)
+        return None
 
-    def _validate_op_expr(self, expr):
+    def _validate_bool_expr(self, expr: BoolExpr) -> None:
+        for child in expr.children:
+            self._call_validate(child)
+
+    def _validate_op_expr(self, expr: OpExpr) -> None:
         del expr
         if not self._allow_op_expr:
             self._disallowed_expr_list.add(CibRuleExpressionType.OP_EXPRESSION)
 
-    def _validate_rsc_expr(self, expr):
+    def _validate_rsc_expr(self, expr: RscExpr) -> None:
         del expr
         if not self._allow_rsc_expr:
             self._disallowed_expr_list.add(CibRuleExpressionType.RSC_EXPRESSION)

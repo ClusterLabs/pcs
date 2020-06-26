@@ -1,3 +1,9 @@
+from typing import (
+    Mapping,
+    Iterable,
+    Union,
+)
+
 from pcs.cli.common.errors import (
     CmdLineInputError,
     HINT_SYNTAX_CHANGE,
@@ -7,6 +13,7 @@ from pcs.common.str_tools import (
     format_plural,
 )
 
+ModifierValueType = Union[None, bool, str]
 
 ARG_TYPE_DELIMITER = "%"
 
@@ -391,7 +398,7 @@ def filter_out_options(arg_list):
 
 
 class InputModifiers:
-    def __init__(self, options):
+    def __init__(self, options: Mapping[str, ModifierValueType]):
         self._defined_options = set(options.keys())
         self._options = dict(options)
         self._options.update(
@@ -458,7 +465,7 @@ class InputModifiers:
         return InputModifiers(opt_dict)
 
     def ensure_only_supported(
-        self, *supported_options, hint_syntax_changed=False
+        self, *supported_options, hint_syntax_changed: bool = False
     ):
         unsupported_options = (
             # --debug is supported in all commands
@@ -501,16 +508,18 @@ class InputModifiers:
                 )
             )
 
-    def is_specified(self, option):
+    def is_specified(self, option: str) -> bool:
         return option in self._defined_options
 
-    def is_specified_any(self, option_list):
+    def is_specified_any(self, option_list: Iterable[str]) -> bool:
         for option in option_list:
             if self.is_specified(option):
                 return True
         return False
 
-    def get(self, option, default=None):
+    def get(
+        self, option: str, default: ModifierValueType = None
+    ) -> ModifierValueType:
         if option in self._defined_options:
             return self._options[option]
         if default is not None:

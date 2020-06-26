@@ -1,5 +1,6 @@
 from typing import (
     Any,
+    cast,
     Iterable,
     List,
     Mapping,
@@ -39,7 +40,9 @@ def show_resource_relations_cmd(
             lib.resource.get_resource_relations_tree(argv[0]),
         )
     )
-    for line in tree_to_lines(tree, verbose=modifiers.get("--full")):
+    for line in tree_to_lines(
+        tree, verbose=cast(bool, modifiers.get("--full"))
+    ):
         print(line)
 
 

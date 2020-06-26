@@ -281,7 +281,7 @@ def nvset_update(
 
 def _set_nvpair(
     nvset_element: Element, id_provider: IdProvider, name: str, value: str
-):
+) -> None:
     """
     Ensure name-value pair is set / removed in specified nvset
 

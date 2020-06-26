@@ -3,9 +3,11 @@ from typing import (
     Any,
     List,
     Mapping,
+    Optional,
     Sequence,
     Tuple,
     TypeVar,
+    Union,
 )
 
 
@@ -126,15 +128,19 @@ def _add_s(word):
     return word + "s"
 
 
-def format_plural(depends_on, singular, plural=None):
+def format_plural(
+    depends_on: Union[int, Iterable],
+    singular: str,
+    plural: Optional[str] = None,
+) -> str:
     """
     Takes the singular word form and returns its plural form if depends_on
     is not equal to one/contains one item
 
     iterable/int/string depends_on -- if number (of items) isn't equal to one,
         returns plural
-    string singular -- singular word (like: is, do, node)
-    string plural -- optional irregular plural form
+    singular -- singular word (like: is, do, node)
+    plural -- optional irregular plural form
     """
     common_plurals = {
         "is": "are",

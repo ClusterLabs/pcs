@@ -13,6 +13,8 @@ from typing import (
     Tuple,
 )
 
+from lxml.etree import _Element
+
 from pcs.common.pacemaker.resource.relations import (
     RelationEntityDto,
     ResourceRelationDto,
@@ -215,21 +217,29 @@ class ResourceRelationsFetcher:
         return relations
 
     def _get_ordering_coinstraints(self, resource_id: str) -> Iterable[Element]:
-        return self._constraints_section.xpath(
-            f"""
-            .//rsc_order[
-                not (descendant::resource_set)
-                and
-                (@first='{resource_id}' or @then='{resource_id}')
-            ]
-        """
+        return cast(
+            Iterable[Element],
+            cast(_Element, self._constraints_section).xpath(
+                """
+                .//rsc_order[
+                    not (descendant::resource_set)
+                    and
+                    (@first=$resource_id or @then=$resource_id)
+                ]
+                """,
+                resource_id=resource_id,
+            ),
         )
 
     def _get_ordering_set_constraints(
         self, resource_id: str
     ) -> Iterable[Element]:
-        return self._constraints_section.xpath(
-            f".//rsc_order[./resource_set/resource_ref[@id='{resource_id}']]"
+        return cast(
+            Iterable[Element],
+            cast(_Element, self._constraints_section).xpath(
+                ".//rsc_order[./resource_set/resource_ref[@id=$resource_id]]",
+                resource_id=resource_id,
+            ),
         )
 
 
