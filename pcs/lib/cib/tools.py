@@ -217,6 +217,8 @@ def get_configuration_elements_by_id(tree: Element, check_id: str):
                 and
                 name()!="obj_ref"
                 and
+                name()!="resource_ref"
+                and
                 @id=$check_id
             ) or (
                 name()="primitive"
