@@ -61,9 +61,10 @@ class GetResourceRelationsTree(TestCase):
         self.env_assist.assert_raise_library_error(
             lambda: resource.get_resource_relations_tree(
                 self.env_assist.get_env(), resource_id,
-            ),
-            [fixture.report_not_found(resource_id, context_type="resources"),],
-            expected_in_processor=False,
+            )
+        )
+        self.env_assist.assert_reports(
+            [fixture.report_not_found(resource_id, context_type="resources")]
         )
 
     def test_simple(self):

@@ -47,7 +47,7 @@ from pcs.lib.cib.resource import (
     primitive,
 )
 from pcs.lib.cib.resource.common import (
-    find_one_resource_and_report,
+    find_one_resource,
     find_resources_to_delete,
 )
 from pcs.lib.cib.tools import (
@@ -1667,8 +1667,8 @@ def resource_remove(resource_id, output=True, is_remove_remote_context=False):
     # if the resource is referenced in tags then exit with an error message
     cib_xml = utils.get_cib()
     xml_etree = lib_pacemaker.get_cib(cib_xml)
-    resource_el = find_one_resource_and_report(
-        get_resources(xml_etree), resource_id, [],  # no need for report_list
+    resource_el, dummy_report_list = find_one_resource(
+        get_resources(xml_etree), resource_id
     )
     if resource_el is not None:
         tag_obj_ref_list = []

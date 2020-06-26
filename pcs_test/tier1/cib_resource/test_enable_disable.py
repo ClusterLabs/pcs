@@ -5,6 +5,7 @@ from pcs_test.tools.cib import get_assert_pcs_effect_mixin
 from pcs_test.tools.misc import (
     get_test_resource as rc,
     get_tmp_file,
+    write_data_to_tmpfile,
     write_file_to_tmpfile,
 )
 from pcs_test.tools.pcs_runner import PcsRunner
@@ -170,4 +171,36 @@ class EnableDisable(
                 </primitive>
             </resources>
             """
+        )
+
+    def test_resource_disable_non_existing_with_failed_action(self):
+        xml = """
+            <cib epoch="557" num_updates="122" admin_epoch="0" crm_feature_set="3.0.14" validate-with="pacemaker-2.10" update-origin="rh7-3" update-client="crmd" cib-last-written="Thu Aug 23 16:49:17 2012" have-quorum="0" dc-uuid="2">
+              <configuration>
+                <crm_config/>
+                <nodes>
+                </nodes>
+                <resources/>
+                <constraints/>
+              </configuration>
+              <status>
+                <node_state id="1" uname="rh7-1" in_ccm="true" crmd="online" crm-debug-origin="do_update_resource" join="member" expected="member">
+                  <lrm id="1">
+                    <lrm_resources>
+                      <lrm_resource id="A" type="apache" class="ocf" provider="heartbeat">
+                        <lrm_rsc_op id="A_last_0" operation_key="A_monitor_0" operation="monitor" crm-debug-origin="do_update_resource" crm_feature_set="3.0.14" transition-key="1:1104:7:817ee250-d179-483a-819e-9be9cb0e06df" transition-magic="0:7;1:1104:7:817ee250-d179-483a-819e-9be9cb0e06df" exit-reason="" on_node="rh7-1" call-id="1079" rc-code="7" op-status="0" interval="0" last-run="1591791198" last-rc-change="1591791198" exec-time="275" queue-time="0" op-digest="f2317cad3d54cec5d7d7aa7d0bf35cf8"/>
+                      </lrm_resource>
+                    </lrm_resources>
+                  </lrm>
+                </node_state>
+              </status>
+            </cib>
+            """
+        write_data_to_tmpfile(xml, self.temp_cib)
+        self.assert_pcs_fail(
+            "resource disable A",
+            (
+                "Error: bundle/clone/group/resource/tag 'A' does not exist\n"
+                "Error: Errors have occurred, therefore pcs is unable to continue\n"
+            ),
         )

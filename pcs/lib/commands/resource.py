@@ -19,11 +19,14 @@ from pcs.common.interface import dto
 from pcs.common import reports
 from pcs.common.reports import ReportItemList
 from pcs.common.reports.item import ReportItem
-from pcs.common.reports.processor import ReportProcessor
 from pcs.common.tools import Version
 from pcs.lib.cib import (
     resource,
     status as cib_status,
+)
+from pcs.lib.cib.tag import (
+    expand_tag,
+    TAG_TAG,
 )
 from pcs.lib.cib.tools import (
     find_element_by_tag_and_id,
@@ -878,9 +881,10 @@ def bundle_update(
 def _disable_validate_and_edit_cib(
     env: LibraryEnvironment, cib: Element, resource_or_tag_ids: Iterable[str],
 ) -> List[Element]:
-    resource_el_list = _find_resources_expand_tags_or_raise(
-        env.report_processor, cib, resource_or_tag_ids
+    resource_el_list, report_list = _find_resources_expand_tags(
+        cib, resource_or_tag_ids
     )
+    env.report_processor.report_list(report_list)
     if env.report_processor.report_list(
         _resource_list_enable_disable(
             resource_el_list,
@@ -1084,9 +1088,11 @@ def enable(
     """
     env.ensure_wait_satisfiable(wait)
     cib = env.get_cib()
-    resource_el_list = _find_resources_expand_tags_or_raise(
-        env.report_processor, cib, resource_or_tag_ids
+    resource_el_list, report_list = _find_resources_expand_tags(
+        cib, resource_or_tag_ids
     )
+    env.report_processor.report_list(report_list)
+
     to_enable_set = set()
     for el in resource_el_list:
         to_enable_set.update(resource.common.find_resources_to_enable(el))
@@ -1148,14 +1154,15 @@ def unmanage(
     with_monitor -- disable resources' monitor operations
     """
     cib = env.get_cib()
-    to_unmanage_set = set()
-    for el in _find_resources_expand_tags_or_raise(
-        env.report_processor, cib, resource_or_tag_ids
-    ):
-        to_unmanage_set.update(resource.common.find_resources_to_unmanage(el))
+    resource_el_list, report_list = _find_resources_expand_tags(
+        cib, resource_or_tag_ids, resource.common.find_resources_to_unmanage
+    )
+    env.report_processor.report_list(report_list)
+    if env.report_processor.has_errors:
+        raise LibraryError()
 
     primitives_set = set()
-    for resource_el in to_unmanage_set:
+    for resource_el in resource_el_list:
         resource.common.unmanage(resource_el, IdProvider(cib))
         if with_monitor:
             primitives_set.update(resource.common.find_primitives(resource_el))
@@ -1182,18 +1189,13 @@ def manage(
     with_monitor -- enable resources' monitor operations
     """
     cib = env.get_cib()
-    report_list: ReportItemList = []
 
-    to_manage_set = set()
-    for resource_el in _find_resources_expand_tags_or_raise(
-        env.report_processor, cib, resource_or_tag_ids
-    ):
-        to_manage_set.update(
-            resource.common.find_resources_to_manage(resource_el),
-        )
+    resource_el_list, report_list = _find_resources_expand_tags(
+        cib, resource_or_tag_ids, resource.common.find_resources_to_manage
+    )
 
     primitives_set = set()
-    for resource_el in to_manage_set:
+    for resource_el in resource_el_list:
         resource.common.manage(resource_el, IdProvider(cib))
         primitives_set.update(resource.common.find_primitives(resource_el))
 
@@ -1396,9 +1398,8 @@ class _MoveBanTemplate:
         # validate
         env.ensure_wait_satisfiable(wait)  # raises on error
 
-        report_list = []
-        resource_el = resource.common.find_one_resource_and_report(
-            get_resources(env.get_cib()), resource_id, report_list,
+        resource_el, report_list = resource.common.find_one_resource(
+            get_resources(env.get_cib()), resource_id
         )
         if resource_el is not None:
             report_list.extend(self._validate(resource_el, master))
@@ -1582,9 +1583,8 @@ def unmove_unban(
     # validate
     env.ensure_wait_satisfiable(wait)  # raises on error
 
-    report_list = []
-    resource_el = resource.common.find_one_resource_and_report(
-        get_resources(env.get_cib()), resource_id, report_list,
+    resource_el, report_list = resource.common.find_one_resource(
+        get_resources(env.get_cib()), resource_id
     )
     if resource_el is not None:
         report_list.extend(
@@ -1642,7 +1642,13 @@ def get_resource_relations_tree(
         tree
     """
     cib = env.get_cib()
-    _find_resources_or_raise(get_resources(cib), [resource_id])
+
+    dummy_resource_el, report_list = resource.common.find_one_resource(
+        get_resources(cib), resource_id
+    )
+    if env.report_processor.report_list(report_list).has_errors:
+        raise LibraryError()
+
     (
         resources_dict,
         relations_dict,
@@ -1658,34 +1664,28 @@ def get_resource_relations_tree(
     )
 
 
-def _find_resources_or_raise(
-    context_element, resource_ids, additional_search=None, resource_tags=None
-):
-    report_list = []
-    resource_el_list = resource.common.find_resources_and_report(
-        context_element,
-        resource_ids,
-        report_list,
-        additional_search=additional_search,
-        resource_tags=resource_tags,
-    )
-    if report_list:
-        raise LibraryError(*report_list)
-    return resource_el_list
-
-
-def _find_resources_expand_tags_or_raise(
-    report_processor: ReportProcessor,
+def _find_resources_expand_tags(
     cib: Element,
     resource_or_tag_ids: Iterable[str],
-):
-    resources_section = get_resources(cib)
-    (
-        resource_or_tag_el_list,
-        report_list,
-    ) = resource.common.find_resources_or_tags(cib, resource_or_tag_ids)
-    if report_processor.report_list(report_list).has_errors:
-        raise LibraryError()
-    return resource.common.expand_tags_to_resources(
-        resources_section, resource_or_tag_el_list,
+    additional_search: Optional[Callable[[Element], List[Element]]] = None,
+) -> Tuple[List[Element], ReportItemList]:
+    rsc_or_tag_el_list, report_list = resource.common.find_resources(
+        cib,
+        resource_or_tag_ids,
+        resource_tags=resource.common.ALL_RESOURCE_XML_TAGS + [TAG_TAG],
     )
+
+    resource_set = set()
+    for el in rsc_or_tag_el_list:
+        resource_set.update(
+            expand_tag(
+                el, only_expand_types=resource.common.ALL_RESOURCE_XML_TAGS
+            )
+        )
+    if not additional_search:
+        return list(resource_set), report_list
+
+    final_set = set()
+    for el in resource_set:
+        final_set.update(additional_search(el))
+    return list(final_set), report_list

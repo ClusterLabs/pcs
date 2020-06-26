@@ -577,7 +577,10 @@ class DisablePrimitive(TestCase):
         self.env_assist, self.config = get_env_tools(test_case=self)
 
     def test_nonexistent_resource(self):
-        (self.config.runner.cib.load(resources=fixture_primitive_cib_enabled))
+        self.config.runner.cib.load(resources=fixture_primitive_cib_enabled)
+        self.config.runner.pcmk.load_state(
+            resources=fixture_primitive_status_managed
+        )
 
         self.env_assist.assert_raise_library_error(
             lambda: resource.disable(self.env_assist.get_env(), ["B"], False),
@@ -632,7 +635,8 @@ class EnablePrimitive(TestCase):
         self.env_assist, self.config = get_env_tools(test_case=self)
 
     def test_nonexistent_resource(self):
-        (self.config.runner.cib.load(resources=fixture_primitive_cib_disabled))
+        self.config.runner.cib.load(resources=fixture_primitive_cib_disabled)
+        self.config.runner.pcmk.load_state()
 
         self.env_assist.assert_raise_library_error(
             lambda: resource.enable(self.env_assist.get_env(), ["B"], False),
@@ -803,7 +807,8 @@ class MoreResources(TestCase):
         )
 
     def test_bad_resource_enable(self):
-        (self.config.runner.cib.load(resources=self.fixture_cib_disabled))
+        self.config.runner.cib.load(resources=self.fixture_cib_disabled)
+        self.config.runner.pcmk.load_state(resources=self.fixture_status)
 
         self.env_assist.assert_raise_library_error(
             lambda: resource.enable(
@@ -814,11 +819,13 @@ class MoreResources(TestCase):
             [
                 fixture.report_not_resource_or_tag("X"),
                 fixture.report_not_resource_or_tag("Y"),
+                fixture_report_unmanaged("B"),
             ],
         )
 
     def test_bad_resource_disable(self):
-        (self.config.runner.cib.load(resources=self.fixture_cib_enabled))
+        self.config.runner.cib.load(resources=self.fixture_cib_enabled)
+        self.config.runner.pcmk.load_state(resources=self.fixture_status)
 
         self.env_assist.assert_raise_library_error(
             lambda: resource.disable(
@@ -829,6 +836,7 @@ class MoreResources(TestCase):
             [
                 fixture.report_not_resource_or_tag("X"),
                 fixture.report_not_resource_or_tag("Y"),
+                fixture_report_unmanaged("B"),
             ],
         )
 
@@ -873,7 +881,8 @@ class Wait(TestCase):
     ).strip()
 
     def test_enable_dont_wait_on_error(self):
-        (self.config.runner.cib.load(resources=fixture_primitive_cib_disabled))
+        self.config.runner.cib.load(resources=fixture_primitive_cib_disabled)
+        self.config.runner.pcmk.load_state()
 
         self.env_assist.assert_raise_library_error(
             lambda: resource.enable(self.env_assist.get_env(), ["B"], TIMEOUT),
@@ -883,7 +892,8 @@ class Wait(TestCase):
         )
 
     def test_disable_dont_wait_on_error(self):
-        (self.config.runner.cib.load(resources=fixture_primitive_cib_enabled))
+        self.config.runner.cib.load(resources=fixture_primitive_cib_enabled)
+        self.config.runner.pcmk.load_state()
 
         self.env_assist.assert_raise_library_error(
             lambda: resource.disable(self.env_assist.get_env(), ["B"], TIMEOUT),
@@ -2027,6 +2037,7 @@ class DisableSimulate(DisableSafeFixturesMixin, TestCase):
             AssertionError("No other write_tmpfile call expected")
         ]
         self.config.runner.cib.load()
+        self.config.runner.pcmk.load_state()
         self.env_assist.assert_raise_library_error(
             lambda: resource.disable_simulate(
                 self.env_assist.get_env(), ["A"], True
@@ -2202,6 +2213,7 @@ class DisableSafeMixin(DisableSafeFixturesMixin):
             AssertionError("No other write_tmpfile call expected")
         ]
         self.config.runner.cib.load()
+        self.config.runner.pcmk.load_state()
         self.env_assist.assert_raise_library_error(
             lambda: resource.disable_safe(
                 self.env_assist.get_env(), ["A"], self.strict, False

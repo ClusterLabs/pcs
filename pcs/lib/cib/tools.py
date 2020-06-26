@@ -133,11 +133,12 @@ class ElementSearcher:
                 "Improper usage: cannot report errors when there are none"
             )
 
-        element = get_root(self._context_element).find(
-            f'.//*[@id="{self._element_id}"]'
+        element_list = get_configuration_elements_by_id(
+            self._context_element, self._element_id
         )
 
-        if element is not None:
+        if element_list:
+            element = element_list[0]
             if element.tag in self._tag_list:
                 return [
                     ReportItem.error(
@@ -175,21 +176,25 @@ class ElementSearcher:
         self._executed = True
         for tag in self._tag_list:
             element_list = self._context_element.xpath(
-                f'.//{tag}[@id="{self._element_id}"]'
+                ".//*[local-name()=$tag_name and @id=$element_id]",
+                tag_name=tag,
+                element_id=self._element_id,
             )
             if element_list:
                 self._element = element_list[0]
                 return
 
 
-# DEPRECATED, use IdProvider instead
-def does_id_exist(tree, check_id):
+def get_configuration_elements_by_id(tree: Element, check_id: str):
     """
-    Checks to see if id exists in the xml dom passed
-    tree cib etree node
-    check_id id to check
-    """
+    Return any configuration elements (not in status section of cib) with value
+    of attribute id specified as 'check_id'; skip any and all elements having id
+    attribute which does not actually serve as an id.
 
+    tree -- any element in xml tree, whole tree (not only its subtree) will be
+        searched
+    check_id -- id to find
+    """
     # do not search in /cib/status, it may contain references to previously
     # existing and deleted resources and thus preventing creating them again
 
@@ -197,7 +202,7 @@ def does_id_exist(tree, check_id):
     # connection, which will be named the same as the value of the remote-node
     # attribute of the explicit resource. So the value of nvpair named
     # "remote-node" is considered to be id
-    existing = get_root(tree).xpath(
+    return get_root(tree).xpath(
         """
         (
             /cib/*[name()!="status"]
@@ -210,7 +215,11 @@ def does_id_exist(tree, check_id):
                 and
                 name()!="role"
                 and
-                @id="{0}"
+                name()!="obj_ref"
+                and
+                name()!="resource_ref"
+                and
+                @id=$check_id
             ) or (
                 name()="primitive"
                 and
@@ -218,16 +227,24 @@ def does_id_exist(tree, check_id):
                     nvpair[
                         @name="remote-node"
                         and
-                        @value="{0}"
+                        @value=$check_id
                     ]
                 ]
             )
         ]
-    """.format(
-            check_id
-        )
+        """,
+        check_id=check_id,
     )
-    return len(existing) > 0
+
+
+# DEPRECATED, use IdProvider instead
+def does_id_exist(tree, check_id):
+    """
+    Checks to see if id exists in the xml dom passed
+    tree cib -- etree node
+    check_id -- id to check
+    """
+    return len(get_configuration_elements_by_id(tree, check_id)) > 0
 
 
 # DEPRECATED, use IdProvider instead

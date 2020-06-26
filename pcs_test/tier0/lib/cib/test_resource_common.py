@@ -60,16 +60,6 @@ fixture_cib = etree.fromstring(
                     </group>
                 </master>
             </resources>
-            <tags>
-                <tag id="T-A">
-                    <obj_ref id="A"/>
-                </tag>
-                <tag id="T-clones">
-                    <obj_ref id="B-clone"/>
-                    <obj_ref id="E-clone"/>
-                    <obj_ref id="J-clone"/>
-                </tag>
-            </tags>
         </configuration>
     </cib>
     """
@@ -138,39 +128,21 @@ class FindOneOrMoreResources(TestCase):
         self.additional_search = searcher
 
     def test_one_existing(self):
-        report_list = []
-        resource = common.find_one_resource_and_report(
-            self.cib, "R1", report_list
-        )
+        resource, report_list = common.find_one_resource(self.cib, "R1")
         self.assertEqual("R1", resource.attrib.get("id"))
         assert_report_item_list_equal(report_list, [])
 
     def test_one_nonexistant(self):
-        report_list = []
-        resource = common.find_one_resource_and_report(
-            self.cib, "R-missing", report_list
-        )
+        resource, report_list = common.find_one_resource(self.cib, "R-missing")
         self.assertIsNone(resource)
         assert_report_item_list_equal(
             report_list,
             [fixture.report_not_found("R-missing", context_type="resources"),],
         )
 
-    def test_one_additional_search(self):
-        report_list = []
-        resource = common.find_one_resource_and_report(
-            self.cib,
-            "R1",
-            report_list,
-            additional_search=self.additional_search,
-        )
-        self.assertEqual("R1x", resource.attrib.get("id"))
-        assert_report_item_list_equal(report_list, [])
-
     def test_more_existing(self):
-        report_list = []
-        resource_list = common.find_resources_and_report(
-            self.cib, ["R1", "R2"], report_list
+        resource_list, report_list = common.find_resources(
+            self.cib, ["R1", "R2"]
         )
         self.assertEqual(
             ["R1", "R2"],
@@ -179,9 +151,8 @@ class FindOneOrMoreResources(TestCase):
         assert_report_item_list_equal(report_list, [])
 
     def test_more_some_missing(self):
-        report_list = []
-        resource_list = common.find_resources_and_report(
-            self.cib, ["R1", "R2", "RY1", "RY2"], report_list
+        resource_list, report_list = common.find_resources(
+            self.cib, ["R1", "R2", "RY1", "RY2"]
         )
         self.assertEqual(
             ["R1", "R2"],
@@ -194,20 +165,6 @@ class FindOneOrMoreResources(TestCase):
                 fixture.report_not_found("RY2", context_type="resources"),
             ],
         )
-
-    def test_more_additional_search(self):
-        report_list = []
-        resource_list = common.find_resources_and_report(
-            self.cib,
-            ["R1", "R2"],
-            report_list,
-            additional_search=self.additional_search,
-        )
-        self.assertEqual(
-            ["R1x", "R2x"],
-            [resource.attrib.get("id") for resource in resource_list],
-        )
-        assert_report_item_list_equal(report_list, [])
 
 
 class FindResourcesMixin:
@@ -1435,101 +1392,3 @@ class FindResourcesToDelete(TestCase):
 
     def test_single_primitive_in_mastered_group(self):
         self.assert_element2element_list("K1", ["K-master", "K", "K1"])
-
-
-class FindResourcesOrTags(TestCase):
-    def assert_find_resources_or_tags(
-        self, resource_or_tag_ids, expected_ids=None, expected_report_list=None,
-    ):
-        if expected_report_list is None:
-            expected_report_list = []
-        if expected_ids is None:
-            expected_ids = resource_or_tag_ids
-
-        element_list, report_list = common.find_resources_or_tags(
-            fixture_cib, resource_or_tag_ids,
-        )
-        assert_report_item_list_equal(report_list, expected_report_list)
-        self.assertEqual(
-            sorted(el.get("id", "") for el in element_list),
-            sorted(expected_ids),
-        )
-
-    def test_nonexistent_id(self):
-        self.assert_find_resources_or_tags(
-            ["no-id1", "no-id2"],
-            expected_ids=[],
-            expected_report_list=[
-                fixture.report_not_resource_or_tag("no-id1"),
-                fixture.report_not_resource_or_tag("no-id2"),
-            ],
-        )
-
-    def test_nonexistent_duplicate_ids(self):
-        self.assert_find_resources_or_tags(
-            ["no-id1", "no-id1", "no-id2", "no-id2"],
-            expected_ids=[],
-            expected_report_list=[
-                fixture.report_not_resource_or_tag("no-id1"),
-                fixture.report_not_resource_or_tag("no-id2"),
-            ],
-        )
-
-    def test_duplicate_ids(self):
-        self.assert_find_resources_or_tags(
-            ["A", "A", "A"], expected_ids=["A"],
-        )
-
-    def test_bundles(self):
-        self.assert_find_resources_or_tags(["G-bundle", "H-bundle"])
-
-    def test_clones(self):
-        self.assert_find_resources_or_tags(["B-clone", "E-clone", "J-clone"])
-
-    def test_groups(self):
-        self.assert_find_resources_or_tags(["D", "E", "F", "I", "J", "K"])
-
-    def test_masters(self):
-        self.assert_find_resources_or_tags(["C-master", "F-master", "K-master"])
-
-    def test_primitives(self):
-        self.assert_find_resources_or_tags(
-            ["A", "B", "C", "D1", "D2", "E1", "E2", "F1", "F2", "H"],
-        )
-
-    def test_tags(self):
-        self.assert_find_resources_or_tags(["T-A", "T-clones"])
-
-    def test_resource_and_tags_ids_together(self):
-        self.assert_find_resources_or_tags(["T-A", "T-clones", "D", "A"])
-
-
-class ExpandTagsToResources(TestCase):
-    def assert_expand_tags_to_resources(
-        self, resource_or_tag_ids, expected_ids
-    ):
-        element_list = common.expand_tags_to_resources(
-            fixture_cib.find(".//resources"),
-            [
-                fixture_cib.find('.//*[@id="{0}"]'.format(_id))
-                for _id in resource_or_tag_ids
-            ],
-        )
-        self.assertEqual(len(element_list), len(expected_ids))
-        self.assertEqual(
-            sorted(el.get("id", "") for el in element_list),
-            sorted(expected_ids),
-        )
-
-    def test_resources_only(self):
-        self.assert_expand_tags_to_resources(
-            ["A", "B", "C", "D"], ["A", "B", "C", "D"],
-        )
-
-    def test_tags_only(self):
-        self.assert_expand_tags_to_resources(
-            ["T-A", "T-clones"], ["A", "B-clone", "E-clone", "J-clone"],
-        )
-
-    def test_no_duplicates_after_expansion(self):
-        self.assert_expand_tags_to_resources(["T-A", "A"], ["A"])

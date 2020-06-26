@@ -220,7 +220,7 @@ class ValidateMoveResourcesToGroupByIds(
             self._resource(group),
             self._resources(resources),
             self._resource(adjacent) if adjacent else None,
-        ).validate(self.cib, IdProvider(self.cib),)
+        ).validate(self.cib, IdProvider(self.cib))
 
     def test_new_group_not_valid_id(self):
         assert_report_item_list_equal(

@@ -17,8 +17,12 @@ from lxml.etree import _Element
 
 from pcs.common import reports
 from pcs.common.reports import ReportItem, ReportItemList
-from pcs.lib.cib.resource.common import find_resources_and_report
-from pcs.lib.cib.tools import ElementSearcher, IdProvider
+from pcs.lib.cib.resource.common import find_resources
+from pcs.lib.cib.tools import (
+    ElementSearcher,
+    get_configuration_elements_by_id,
+    IdProvider,
+)
 from pcs.lib.pacemaker.values import validate_id
 from pcs.lib.xml_tools import (
     find_parent,
@@ -108,10 +112,7 @@ def _validate_reference_ids_are_resources(
     resources_section -- element resources
     idref_list -- reference ids to validate
     """
-    report_list: ReportItemList = []
-    find_resources_and_report(
-        resources_section, idref_list, report_list,
-    )
+    dummy_resources, report_list = find_resources(resources_section, idref_list)
     return report_list
 
 
@@ -616,3 +617,36 @@ def tag_element_to_dict(
             for obj_ref in tag_element.findall(TAG_OBJREF)
         ],
     }
+
+
+def expand_tag(
+    some_or_tag_el: Element, only_expand_types: Iterable[str] = None
+) -> List[Element]:
+    """
+    Substitute a tag element with elements which the tag refers to.
+
+    some_or_tag_el -- an already expanded element or a tag element to expand
+    only_expand_types -- if specified, return only elements of these types
+    """
+    if some_or_tag_el.tag != TAG_TAG:
+        return [some_or_tag_el]
+
+    conf_section = find_parent(some_or_tag_el, "configuration")
+    if conf_section is None:
+        return []
+
+    expanded_elements = []
+    for element_id in [
+        obj_ref.get("id", "") for obj_ref in some_or_tag_el.iterfind(TAG_OBJREF)
+    ]:
+        if only_expand_types:
+            searcher = ElementSearcher(
+                only_expand_types, element_id, conf_section
+            )
+            if searcher.element_found():
+                expanded_elements.append(searcher.get_element())
+        else:
+            expanded_elements.extend(
+                get_configuration_elements_by_id(conf_section, element_id)
+            )
+    return expanded_elements

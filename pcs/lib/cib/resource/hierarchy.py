@@ -244,9 +244,10 @@ class ValidateMoveResourcesToGroupByIds(ValidateMoveResourcesToGroup):
         # example: 'C' is a clone, clones cannot be put into a group. If we
         # only searched for primitives here, we would get 'C' is not a
         # resource, which is not that informative.
-        self._resource_element_list = common.find_resources_and_report(
-            resources_section, self._resource_id_list, report_list
+        self._resource_element_list, my_report_list = common.find_resources(
+            resources_section, self._resource_id_list
         )
+        report_list.extend(my_report_list)
 
         # Get an adjacent resource element.
         if self._adjacent_resource_id is not None:
