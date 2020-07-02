@@ -356,6 +356,21 @@ def resource_op_add_cmd(lib, argv, modifiers):
     if not argv:
         raise CmdLineInputError()
     res_id = argv.pop(0)
+
+    # Check if we need to upgrade cib schema.
+    # To do that, argv must be parsed, which is duplication of parsing in
+    # resource_operation_add. But we need to upgrade the cib first before
+    # calling that function. Hopefully, this will be fixed in the new pcs
+    # architecture.
+
+    # argv[0] is an operation name
+    op_properties = utils.convert_args_to_tuples(argv[1:])
+    for key, value in op_properties:
+        if key == "on-fail" and value == "demote":
+            utils.checkAndUpgradeCIB(3, 4, 0)
+            break
+
+    # add the requested operation
     utils.replace_cib_configuration(
         resource_operation_add(utils.get_cib_dom(), res_id, argv)
     )
@@ -896,8 +911,6 @@ def resource_update(lib, args, modifiers, deal_with_guest_change=True):
     if len(args) < 2:
         raise CmdLineInputError()
     res_id = args.pop(0)
-    cib_xml = utils.get_cib()
-    dom = utils.get_cib_dom(cib_xml=cib_xml)
 
     # Extract operation arguments
     ra_values, op_values, meta_values = parse_resource_options(args)
@@ -907,6 +920,28 @@ def resource_update(lib, args, modifiers, deal_with_guest_change=True):
     if modifiers.is_specified("--wait"):
         wait_timeout = utils.validate_wait_get_timeout()
         wait = True
+
+    # Check if we need to upgrade cib schema.
+    # To do that, argv must be parsed, which is duplication of parsing below.
+    # But we need to upgrade the cib first before calling that function.
+    # Hopefully, this will be fixed in the new pcs architecture.
+
+    cib_upgraded = False
+    for op_argv in op_values:
+        if cib_upgraded:
+            break
+        if len(op_argv) < 2:
+            continue
+        # argv[0] is an operation name
+        op_vars = utils.convert_args_to_tuples(op_argv[1:])
+        for k, v in op_vars:
+            if k == "on-fail" and v == "demote":
+                utils.checkAndUpgradeCIB(3, 4, 0)
+                cib_upgraded = True
+                break
+
+    cib_xml = utils.get_cib()
+    dom = utils.get_cib_dom(cib_xml=cib_xml)
 
     resource = utils.dom_get_resource(dom, res_id)
     if not resource:
@@ -995,21 +1030,21 @@ def resource_update(lib, args, modifiers, deal_with_guest_change=True):
     else:
         operations = operations[0]
 
-    for element in op_values:
-        if not element:
+    for op_argv in op_values:
+        if not op_argv:
             continue
 
-        op_name = element[0]
+        op_name = op_argv[0]
         if op_name.find("=") != -1:
             utils.err(
                 "%s does not appear to be a valid operation action" % op_name
             )
 
-        if len(element) < 2:
+        if len(op_argv) < 2:
             continue
 
         op_role = ""
-        op_vars = utils.convert_args_to_tuples(element[1:])
+        op_vars = utils.convert_args_to_tuples(op_argv[1:])
 
         for k, v in op_vars:
             if k == "role":
@@ -1033,7 +1068,7 @@ def resource_update(lib, args, modifiers, deal_with_guest_change=True):
         dom = resource_operation_add(
             dom,
             res_id,
-            element,
+            op_argv,
             validate_strict=False,
             before_op=updating_op_before,
         )

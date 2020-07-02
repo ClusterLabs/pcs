@@ -118,7 +118,7 @@ FIXTURE_RESOURCES_TEMPLATE = """
                     interval="0s" name="migrate_to" timeout="60"
                 />
                 <op id="node-name-monitor-interval-60s"
-                    interval="60s" name="monitor" timeout="30"
+                    interval="60s" name="monitor" timeout="30" {onfail}
                 />
                 <op id="node-name-reload-interval-0s"
                   interval="0s" name="reload" timeout="60"
@@ -133,7 +133,9 @@ FIXTURE_RESOURCES_TEMPLATE = """
         </primitive>
     </resources>
 """
-FIXTURE_RESOURCES = FIXTURE_RESOURCES_TEMPLATE.format(server="remote-host")
+FIXTURE_RESOURCES = FIXTURE_RESOURCES_TEMPLATE.format(
+    server="remote-host", onfail=""
+)
 
 
 class AddRemote(TestCase):
@@ -178,11 +180,47 @@ class AddRemote(TestCase):
             .local.push_existing_authkey_to_remote(NODE_NAME, NODE_DEST_LIST)
             .local.run_pacemaker_remote(NODE_NAME, NODE_DEST_LIST)
             .env.push_cib(
-                resources=FIXTURE_RESOURCES_TEMPLATE.format(server=NODE_NAME)
+                resources=FIXTURE_RESOURCES_TEMPLATE.format(
+                    server=NODE_NAME, onfail=""
+                )
             )
         )
         node_add_remote(self.env_assist.get_env(), node_addr=NODE_NAME)
         self.env_assist.assert_reports(REPORTS)
+
+    def test_cib_upgrade_on_onfail_demote(self):
+        self._config_success_base()
+        self.config.runner.cib.load(
+            filename="cib-empty-3.4.xml", instead="runner.cib.load",
+        )
+        self.config.runner.cib.upgrade(before="runner.cib.load")
+        self.config.runner.cib.load(
+            filename="cib-empty-3.3.xml",
+            name="load_cib_old_version",
+            before="runner.cib.upgrade",
+        )
+        self.config.env.push_cib(
+            resources=FIXTURE_RESOURCES_TEMPLATE.format(
+                server="remote-host", onfail='on-fail="demote"'
+            ),
+            instead="env.push_cib",
+        )
+        node_add_remote(
+            self.env_assist.get_env(),
+            operations=[
+                {
+                    "name": "monitor",
+                    "timeout": "30",
+                    "interval": "60s",
+                    "on-fail": "demote",
+                }
+            ],
+        )
+        self.env_assist.assert_reports(
+            REPORTS.info(
+                "cib_upgrade_successful", reports.codes.CIB_UPGRADE_SUCCESSFUL
+            )
+        )
 
     def test_node_name_conflict_report_is_unique(self):
         (
@@ -623,7 +661,7 @@ class NotLive(TestCase):
             .runner.pcmk.load_agent(agent_name="ocf:pacemaker:remote")
             .env.push_cib(
                 resources=FIXTURE_RESOURCES_TEMPLATE.format(
-                    server=NODE_ADDR_PCSD
+                    server=NODE_ADDR_PCSD, onfail=""
                 )
             )
         )
@@ -648,7 +686,9 @@ class NotLive(TestCase):
             self.config.runner.cib.load()
             .runner.pcmk.load_agent(agent_name="ocf:pacemaker:remote")
             .env.push_cib(
-                resources=FIXTURE_RESOURCES_TEMPLATE.format(server=NODE_NAME)
+                resources=FIXTURE_RESOURCES_TEMPLATE.format(
+                    server=NODE_NAME, onfail=""
+                )
             )
         )
         node_add_remote(self.env_assist.get_env(), no_node_addr=True)
@@ -672,7 +712,9 @@ class NotLive(TestCase):
             self.config.runner.cib.load()
             .runner.pcmk.load_agent(agent_name="ocf:pacemaker:remote")
             .env.push_cib(
-                resources=FIXTURE_RESOURCES_TEMPLATE.format(server="addr")
+                resources=FIXTURE_RESOURCES_TEMPLATE.format(
+                    server="addr", onfail=""
+                )
             )
         )
         node_add_remote(self.env_assist.get_env(), node_addr="addr")

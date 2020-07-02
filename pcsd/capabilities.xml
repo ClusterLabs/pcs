@@ -465,6 +465,13 @@
         pcs commands: cluster node ( add-remote | delete-remote | remove-remote )
       </description>
     </capability>
+    <capability id="node.remote.onfail-demote" in-pcs="1" in-pcsd="0">
+      <description>
+        Support for "demote" value of resource operation's "on-fail" option
+
+        pcs commands: cluster node add-remote
+      </description>
+    </capability>
 
 
 
@@ -1056,6 +1063,13 @@
         pcs commands: resource create ... op
       </description>
     </capability>
+    <capability id="pcmk.resource.create.operations.onfail-demote" in-pcs="1" in-pcsd="0">
+      <description>
+        Support for "demote" value of resource operation's "on-fail" option
+
+        pcs commands: resource create ... op
+      </description>
+    </capability>
     <capability id="pcmk.resource.create.wait" in-pcs="1" in-pcsd="0">
       <description>
         Wait for the created resource to start.
@@ -1105,6 +1119,13 @@
         pcs commands: resource update ... op
       </description>
     </capability>
+    <capability id="pcmk.resource.update.operations.onfail-demote" in-pcs="1" in-pcsd="0">
+      <description>
+        Support for "demote" value of resource operation's "on-fail" option
+
+        pcs commands: resource update ... op
+      </description>
+    </capability>
     <capability id="pcmk.resource.update.wait" in-pcs="1" in-pcsd="0">
       <description>
         Wait for the changes to take effect.
@@ -1141,6 +1162,13 @@
         options).
 
         pcs commands: resource op ( add | delete | remove )
+      </description>
+    </capability>
+    <capability id="pcmk.resource.update-operations.onfail-demote" in-pcs="1" in-pcsd="0">
+      <description>
+        Support for "demote" value of resource operation's "on-fail" option
+
+        pcs commands: resource op add
       </description>
     </capability>
 
@@ -1551,6 +1579,20 @@
     <capability id="pcmk.stonith.create.operations" in-pcs="1" in-pcsd="0">
       <description>
         Set resource operations when creating a stonith resource.
+
+        pcs commands: stonith create ... op
+      </description>
+    </capability>
+    <capability id="pcmk.stonith.create.operations" in-pcs="1" in-pcsd="0">
+      <description>
+        Set resource operations when creating a stonith resource.
+
+        pcs commands: stonith create ... op
+      </description>
+    </capability>
+    <capability id="pcmk.stonith.create.operations.onfail-demote" in-pcs="1" in-pcsd="0">
+      <description>
+        Support for "demote" value of resource operation's "on-fail" option
 
         pcs commands: stonith create ... op
       </description>

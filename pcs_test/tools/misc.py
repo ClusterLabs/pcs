@@ -253,6 +253,12 @@ def skip_unless_pacemaker_supports_rsc_and_op_rules():
     )
 
 
+def skip_unless_pacemaker_supports_op_onfail_demote():
+    return skip_unless_cib_schema_version(
+        (3, 4, 0), "resource operations with 'on-fail' option set to 'demote'"
+    )
+
+
 def skip_if_service_enabled(service_name):
     return skipUnless(
         not is_service_enabled(runner, service_name),

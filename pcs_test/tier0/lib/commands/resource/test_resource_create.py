@@ -35,13 +35,19 @@ def create(
     )
 
 
-def create_group(env, wait=TIMEOUT, disabled=False, meta_attributes=None):
+def create_group(
+    env,
+    wait=TIMEOUT,
+    disabled=False,
+    meta_attributes=None,
+    operation_list=None,
+):
     return resource.create_in_group(
         env,
         "A",
         "ocf:heartbeat:Dummy",
         "G",
-        operation_list=[],
+        operation_list=operation_list if operation_list else [],
         meta_attributes=meta_attributes if meta_attributes else {},
         instance_attributes={},
         wait=wait,
@@ -50,13 +56,18 @@ def create_group(env, wait=TIMEOUT, disabled=False, meta_attributes=None):
 
 
 def create_clone(
-    env, wait=TIMEOUT, disabled=False, meta_attributes=None, clone_options=None
+    env,
+    wait=TIMEOUT,
+    disabled=False,
+    meta_attributes=None,
+    clone_options=None,
+    operation_list=None,
 ):
     return resource.create_as_clone(
         env,
         "A",
         "ocf:heartbeat:Dummy",
-        operation_list=[],
+        operation_list=operation_list if operation_list else [],
         meta_attributes=meta_attributes if meta_attributes else {},
         instance_attributes={},
         clone_meta_options=clone_options if clone_options else {},
@@ -71,12 +82,13 @@ def create_bundle(
     disabled=False,
     meta_attributes=None,
     allow_not_accessible_resource=False,
+    operation_list=None,
 ):
     return resource.create_into_bundle(
         env,
         "A",
         "ocf:heartbeat:Dummy",
-        operation_list=[],
+        operation_list=operation_list if operation_list else [],
         meta_attributes=meta_attributes if meta_attributes else {},
         instance_attributes={},
         bundle_id="B",
@@ -576,6 +588,60 @@ class Create(TestCase):
             ]
         )
 
+    def test_cib_upgrade_on_onfail_demote(self):
+        self.config.runner.cib.load(
+            filename="cib-empty-3.3.xml",
+            instead="runner.cib.load",
+            name="load_cib_old_version",
+        )
+        self.config.runner.cib.upgrade()
+        self.config.runner.cib.load(filename="cib-empty-3.4.xml")
+        self.config.env.push_cib(
+            resources="""
+                <resources>
+                    <primitive class="ocf" id="A" provider="heartbeat"
+                        type="Dummy"
+                    >
+                        <operations>
+                            <op id="A-migrate_from-interval-0s" interval="0s"
+                                name="migrate_from" timeout="20"
+                            />
+                            <op id="A-migrate_to-interval-0s" interval="0s"
+                                name="migrate_to" timeout="20"
+                            />
+                            <op id="A-monitor-interval-10" interval="10"
+                                name="monitor" timeout="10" on-fail="demote"
+                            />
+                            <op id="A-reload-interval-0s" interval="0s"
+                                name="reload" timeout="20"
+                            />
+                            <op id="A-start-interval-0s" interval="0s"
+                                name="start" timeout="20"
+                            />
+                            <op id="A-stop-interval-0s" interval="0s"
+                                name="stop" timeout="20"
+                            />
+                        </operations>
+                    </primitive>
+                </resources>
+            """
+        )
+
+        create(
+            self.env_assist.get_env(),
+            operation_list=[
+                {
+                    "name": "monitor",
+                    "timeout": "10",
+                    "interval": "10",
+                    "on-fail": "demote",
+                }
+            ],
+        )
+        self.env_assist.assert_reports(
+            [fixture.info(report_codes.CIB_UPGRADE_SUCCESSFUL)]
+        )
+
 
 class CreateWait(TestCase):
     def setUp(self):
@@ -746,6 +812,66 @@ class CreateInGroup(TestCase):
 
         create_group(self.env_assist.get_env(), wait=False)
 
+    def test_cib_upgrade_on_onfail_demote(self):
+        self.config.remove(name="runner.pcmk.can_wait")
+        self.config.runner.cib.load(
+            filename="cib-empty-3.3.xml",
+            instead="runner.cib.load",
+            name="load_cib_old_version",
+        )
+        self.config.runner.cib.upgrade()
+        self.config.runner.cib.load(filename="cib-empty-3.4.xml")
+        self.config.env.push_cib(
+            resources="""
+                <resources>
+                    <group id="G">
+                        <primitive class="ocf" id="A" provider="heartbeat"
+                            type="Dummy"
+                        >
+                            <operations>
+                                <op id="A-migrate_from-interval-0s"
+                                    interval="0s" name="migrate_from"
+                                    timeout="20"
+                                />
+                                <op id="A-migrate_to-interval-0s"
+                                    interval="0s" name="migrate_to"
+                                    timeout="20"
+                                />
+                                <op id="A-monitor-interval-10" interval="10"
+                                    name="monitor" timeout="10" on-fail="demote"
+                                />
+                                <op id="A-reload-interval-0s" interval="0s"
+                                    name="reload" timeout="20"
+                                />
+                                <op id="A-start-interval-0s" interval="0s"
+                                    name="start" timeout="20"
+                                />
+                                <op id="A-stop-interval-0s" interval="0s"
+                                    name="stop" timeout="20"
+                                />
+                            </operations>
+                        </primitive>
+                    </group>
+                </resources>
+            """
+        )
+
+        create_group(
+            self.env_assist.get_env(),
+            operation_list=[
+                {
+                    "name": "monitor",
+                    "timeout": "10",
+                    "interval": "10",
+                    "on-fail": "demote",
+                }
+            ],
+            wait=False,
+        )
+        self.env_assist.assert_reports(
+            [fixture.info(report_codes.CIB_UPGRADE_SUCCESSFUL)]
+        )
+
     def test_fail_wait(self):
         self.config.env.push_cib(
             resources=fixture_cib_resources_xml_group_simplest,
@@ -858,6 +984,62 @@ class CreateAsClone(TestCase):
             )
         )
         create_clone(self.env_assist.get_env(), wait=False)
+
+    def test_cib_upgrade_on_onfail_demote(self):
+        self.config.remove(name="runner.pcmk.can_wait")
+        self.config.runner.cib.load(
+            filename="cib-empty-3.3.xml",
+            instead="runner.cib.load",
+            name="load_cib_old_version",
+        )
+        self.config.runner.cib.upgrade()
+        self.config.runner.cib.load(filename="cib-empty-3.4.xml")
+        self.config.env.push_cib(
+            resources="""<resources>
+                <clone id="A-clone">
+                    <primitive class="ocf" id="A" provider="heartbeat"
+                        type="Dummy"
+                    >
+                        <operations>
+                            <op id="A-migrate_from-interval-0s" interval="0s"
+                                name="migrate_from" timeout="20"
+                            />
+                            <op id="A-migrate_to-interval-0s" interval="0s"
+                                name="migrate_to" timeout="20"
+                            />
+                            <op id="A-monitor-interval-10" interval="10"
+                                name="monitor" timeout="10" on-fail="demote"
+                            />
+                            <op id="A-reload-interval-0s" interval="0s"
+                                name="reload" timeout="20"
+                            />
+                            <op id="A-start-interval-0s" interval="0s"
+                                name="start" timeout="20"
+                            />
+                            <op id="A-stop-interval-0s" interval="0s"
+                                name="stop" timeout="20"
+                            />
+                        </operations>
+                    </primitive>
+                </clone>
+            </resources>"""
+        )
+
+        create_clone(
+            self.env_assist.get_env(),
+            operation_list=[
+                {
+                    "name": "monitor",
+                    "timeout": "10",
+                    "interval": "10",
+                    "on-fail": "demote",
+                }
+            ],
+            wait=False,
+        )
+        self.env_assist.assert_reports(
+            [fixture.info(report_codes.CIB_UPGRADE_SUCCESSFUL)]
+        )
 
     def test_fail_wait(self):
         self.config.env.push_cib(
@@ -1168,7 +1350,7 @@ class CreateInToBundle(TestCase):
                             name="migrate_to" timeout="20"
                         />
                         <op id="A-monitor-interval-10" interval="10"
-                            name="monitor" timeout="20"
+                            name="monitor" timeout="20" {onfail}
                         />
                         <op id="A-reload-interval-0s" interval="0s" name="reload"
                             timeout="20"
@@ -1190,7 +1372,8 @@ class CreateInToBundle(TestCase):
         fixture_resource_post_simple_without_network.format(
             network="""
                 <network control-port="12345" ip-range-start="192.168.100.200"/>
-            """
+            """,
+            onfail=""
         )
     )
     # fmt: on
@@ -1286,6 +1469,42 @@ class CreateInToBundle(TestCase):
             .env.push_cib(resources=self.fixture_resources_post_simple)
         )
         create_bundle(self.env_assist.get_env(), wait=False)
+        self.env_assist.assert_reports(
+            [fixture.info(report_codes.CIB_UPGRADE_SUCCESSFUL)]
+        )
+
+    def test_cib_upgrade_on_onfail_demote(self):
+        self.config.runner.pcmk.load_agent()
+        self.config.runner.cib.load(
+            filename="cib-empty-3.3.xml", name="load_cib_old_version",
+        )
+        self.config.runner.cib.upgrade()
+        self.config.runner.cib.load(
+            filename="cib-empty-3.4.xml", resources=self.fixture_resources_pre
+        )
+        self.config.env.push_cib(
+            resources=self.fixture_resource_post_simple_without_network.format(
+                network="""
+                    <network
+                        control-port="12345" ip-range-start="192.168.100.200"
+                    />
+                """,
+                onfail='on-fail="demote"',
+            )
+        )
+
+        create_bundle(
+            self.env_assist.get_env(),
+            operation_list=[
+                {
+                    "name": "monitor",
+                    "timeout": "20",
+                    "interval": "10",
+                    "on-fail": "demote",
+                }
+            ],
+            wait=False,
+        )
         self.env_assist.assert_reports(
             [fixture.info(report_codes.CIB_UPGRADE_SUCCESSFUL)]
         )
@@ -1504,7 +1723,7 @@ class CreateInToBundle(TestCase):
             .env.push_cib(
                 resources=(
                     self.fixture_resource_post_simple_without_network.format(
-                        network=""
+                        network="", onfail=""
                     )
                 )
             )
@@ -1540,7 +1759,7 @@ class CreateInToBundle(TestCase):
             .env.push_cib(
                 resources=(
                     self.fixture_resource_post_simple_without_network.format(
-                        network=network
+                        network=network, onfail=""
                     )
                 )
             )

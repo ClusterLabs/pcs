@@ -1,3 +1,10 @@
+from typing import (
+    Iterable,
+    Mapping,
+    Optional,
+    Union,
+)
+
 from pcs import settings
 from pcs.common import reports
 from pcs.common.file import RawFileError
@@ -13,6 +20,10 @@ from pcs.lib.cib.tools import (
     ElementSearcher,
     get_resources,
 )
+
+# TODO lib.commands should never import each other. This is to be removed when
+# the 'resource create' commands are overhauled.
+from pcs.lib.commands.resource import get_required_cib_version_for_primitive
 from pcs.lib.communication.nodes import (
     DistributeFiles,
     GetHostInfo,
@@ -24,6 +35,7 @@ from pcs.lib.communication.tools import (
     run as run_com,
     run_and_raise,
 )
+from pcs.lib.corosync.config_facade import ConfigFacade as CorosyncConfigFacade
 from pcs.lib.env import LibraryEnvironment
 from pcs.lib.errors import LibraryError
 from pcs.lib.file.instance import FileInstance
@@ -31,6 +43,9 @@ from pcs.lib.file.raw_file import raw_file_error_report
 from pcs.lib.node import get_existing_nodes_names_addrs
 from pcs.lib.pacemaker import state
 from pcs.lib.pacemaker.live import remove_node
+
+
+WaitType = Union[None, bool, int]
 
 
 def _reports_skip_new_node(new_node_name, reason_type):
@@ -220,19 +235,19 @@ def _ensure_resource_running(env: LibraryEnvironment, resource_id):
 
 
 def node_add_remote(
-    env,
-    node_name,
-    node_addr,
-    operations,
-    meta_attributes,
-    instance_attributes,
-    skip_offline_nodes=False,
-    allow_incomplete_distribution=False,
-    allow_pacemaker_remote_service_fail=False,
-    allow_invalid_operation=False,
-    allow_invalid_instance_attributes=False,
-    use_default_operations=True,
-    wait=False,
+    env: LibraryEnvironment,
+    node_name: str,
+    node_addr: Optional[str],
+    operations: Iterable[Mapping[str, str]],
+    meta_attributes: Mapping[str, str],
+    instance_attributes: Mapping[str, str],
+    skip_offline_nodes: bool = False,
+    allow_incomplete_distribution: bool = False,
+    allow_pacemaker_remote_service_fail: bool = False,
+    allow_invalid_operation: bool = False,
+    allow_invalid_instance_attributes: bool = False,
+    use_default_operations: bool = True,
+    wait: WaitType = False,
 ):
     # pylint: disable=too-many-arguments
     # pylint: disable=too-many-branches
@@ -241,34 +256,36 @@ def node_add_remote(
     """
     create an ocf:pacemaker:remote resource and use it as a remote node
 
-    LibraryEnvironment env -- provides all for communication with externals
-    string node_name -- the name of the new node
-    mixed node_addr -- the address of the new node or None for default
-    list of dict operations -- attributes for each entered operation
-    dict meta_attributes -- attributes for primitive/meta_attributes
-    dict instance_attributes -- attributes for primitive/instance_attributes
-    bool skip_offline_nodes -- if True, ignore when some nodes are offline
-    bool allow_incomplete_distribution -- if True, allow this command to
+    env -- provides all for communication with externals
+    node_name -- the name of the new node
+    node_addr -- the address of the new node or None for default
+    operations -- attributes for each entered operation
+    meta_attributes -- attributes for primitive/meta_attributes
+    instance_attributes -- attributes for primitive/instance_attributes
+    skip_offline_nodes -- if True, ignore when some nodes are offline
+    allow_incomplete_distribution -- if True, allow this command to
         finish successfully even if file distribution did not succeed
-    bool allow_pacemaker_remote_service_fail -- if True, allow this command to
+    allow_pacemaker_remote_service_fail -- if True, allow this command to
         finish successfully even if starting/enabling pacemaker_remote did not
         succeed
-    bool allow_invalid_operation -- if True, allow to use operations that
+    allow_invalid_operation -- if True, allow to use operations that
         are not listed in a resource agent metadata
-    bool allow_invalid_instance_attributes -- if True, allow to use instance
+    allow_invalid_instance_attributes -- if True, allow to use instance
         attributes that are not listed in a resource agent metadata and allow to
         omit required instance_attributes
-    bool use_default_operations -- if True, add operations specified in
+    use_default_operations -- if True, add operations specified in
         a resource agent metadata to the resource
-    mixed wait -- a flag for controlling waiting for pacemaker idle mechanism
+    wait -- a flag for controlling waiting for pacemaker idle mechanism
     """
     env.ensure_wait_satisfiable(wait)
 
     report_processor = env.report_processor
-    cib = env.get_cib()
+    cib = env.get_cib(
+        minimal_version=get_required_cib_version_for_primitive(operations)
+    )
     id_provider = IdProvider(cib)
     if env.is_cib_live:
-        corosync_conf = env.get_corosync_conf()
+        corosync_conf: Optional[CorosyncConfigFacade] = env.get_corosync_conf()
     else:
         corosync_conf = None
         report_processor.report(

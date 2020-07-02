@@ -64,6 +64,9 @@ from pcs.lib.resource_agent import (
 from pcs.lib.validate import ValueTimeInterval
 
 
+WaitType = Union[None, bool, int]
+
+
 @contextmanager
 def resource_environment(
     env,
@@ -265,44 +268,43 @@ def _get_required_cib_version_for_container(
 
 
 def create(
-    env,
-    resource_id,
-    resource_agent_name,
-    operation_list,
-    meta_attributes,
-    instance_attributes,
-    allow_absent_agent=False,
-    allow_invalid_operation=False,
-    allow_invalid_instance_attributes=False,
-    use_default_operations=True,
-    ensure_disabled=False,
-    wait=False,
-    allow_not_suitable_command=False,
+    env: LibraryEnvironment,
+    resource_id: str,
+    resource_agent_name: str,
+    operation_list: Iterable[Mapping[str, str]],
+    meta_attributes: Mapping[str, str],
+    instance_attributes: Mapping[str, str],
+    allow_absent_agent: bool = False,
+    allow_invalid_operation: bool = False,
+    allow_invalid_instance_attributes: bool = False,
+    use_default_operations: bool = True,
+    ensure_disabled: bool = False,
+    wait: WaitType = False,
+    allow_not_suitable_command: bool = False,
 ):
     # pylint: disable=too-many-arguments, too-many-locals
     """
-    Create resource in a cib.
+    Create a primitive resource in a cib.
 
-    LibraryEnvironment env provides all for communication with externals
-    string resource_id is identifier of resource
-    string resource_agent_name contains name for the identification of agent
-    list of dict operation_list contains attributes for each entered operation
-    dict meta_attributes contains attributes for primitive/meta_attributes
-    dict instance_attributes contains attributes for
-        primitive/instance_attributes
-    bool allow_absent_agent is a flag for allowing agent that is not installed
+    env -- provides all for communication with externals
+    resource_id -- is identifier of resource
+    resource_agent_name -- contains name for the identification of agent
+    operation_list -- contains attributes for each entered operation
+    meta_attributes -- contains attributes for primitive/meta_attributes
+    instance_attributes -- contains attributes for primitive/instance_attributes
+    allow_absent_agent -- is a flag for allowing agent that is not installed
         in a system
-    bool allow_invalid_operation is a flag for allowing to use operations that
+    allow_invalid_operation -- is a flag for allowing to use operations that
         are not listed in a resource agent metadata
-    bool allow_invalid_instance_attributes is a flag for allowing to use
+    allow_invalid_instance_attributes -- is a flag for allowing to use
         instance attributes that are not listed in a resource agent metadata
         or for allowing to not use the instance_attributes that are required in
         resource agent metadata
-    bool use_default_operations is a flag for stopping stopping of adding
+    use_default_operations -- is a flag for stopping stopping of adding
         default cib operations (specified in a resource agent)
-    bool ensure_disabled is flag that keeps resource in target-role "Stopped"
-    mixed wait is flag for controlling waiting for pacemaker idle mechanism
-    bool allow_not_suitable_command -- flag for FORCE_NOT_SUITABLE_COMMAND
+    ensure_disabled -- is flag that keeps resource in target-role "Stopped"
+    wait -- is flag for controlling waiting for pacemaker idle mechanism
+    allow_not_suitable_command -- flag for FORCE_NOT_SUITABLE_COMMAND
     """
     resource_agent = get_agent(
         env.report_processor,
@@ -317,6 +319,9 @@ def create(
         _ensure_disabled_after_wait(
             ensure_disabled
             or resource.common.are_meta_disabled(meta_attributes)
+        ),
+        required_cib_version=get_required_cib_version_for_primitive(
+            operation_list
         ),
     ) as resources_section:
         id_provider = IdProvider(resources_section)
@@ -348,46 +353,45 @@ def create(
 
 
 def create_as_clone(
-    env,
-    resource_id,
-    resource_agent_name,
-    operation_list,
-    meta_attributes,
-    instance_attributes,
-    clone_meta_options,
-    allow_absent_agent=False,
-    allow_invalid_operation=False,
-    allow_invalid_instance_attributes=False,
-    use_default_operations=True,
-    ensure_disabled=False,
-    wait=False,
-    allow_not_suitable_command=False,
+    env: LibraryEnvironment,
+    resource_id: str,
+    resource_agent_name: str,
+    operation_list: Iterable[Mapping[str, str]],
+    meta_attributes: Mapping[str, str],
+    instance_attributes: Mapping[str, str],
+    clone_meta_options: Mapping[str, str],
+    allow_absent_agent: bool = False,
+    allow_invalid_operation: bool = False,
+    allow_invalid_instance_attributes: bool = False,
+    use_default_operations: bool = True,
+    ensure_disabled: bool = False,
+    wait: WaitType = False,
+    allow_not_suitable_command: bool = False,
 ):
     # pylint: disable=too-many-arguments, too-many-locals
     """
-    Create resource in a clone
+    Create a primitive resource in a clone
 
-    LibraryEnvironment env provides all for communication with externals
-    string resource_id is identifier of resource
-    string resource_agent_name contains name for the identification of agent
-    list of dict operation_list contains attributes for each entered operation
-    dict meta_attributes contains attributes for primitive/meta_attributes
-    dict instance_attributes contains attributes for
-        primitive/instance_attributes
-    dict clone_meta_options contains attributes for clone/meta_attributes
-    bool allow_absent_agent is a flag for allowing agent that is not installed
+    env -- provides all for communication with externals
+    resource_id -- is identifier of resource
+    resource_agent_name -- contains name for the identification of agent
+    operation_list -- contains attributes for each entered operation
+    meta_attributes -- contains attributes for primitive/meta_attributes
+    instance_attributes -- contains attributes for primitive/instance_attributes
+    clone_meta_options -- contains attributes for clone/meta_attributes
+    allow_absent_agent -- is a flag for allowing agent that is not installed
         in a system
-    bool allow_invalid_operation is a flag for allowing to use operations that
+    allow_invalid_operation -- is a flag for allowing to use operations that
         are not listed in a resource agent metadata
-    bool allow_invalid_instance_attributes is a flag for allowing to use
+    allow_invalid_instance_attributes -- is a flag for allowing to use
         instance attributes that are not listed in a resource agent metadata
         or for allowing to not use the instance_attributes that are required in
         resource agent metadata
-    bool use_default_operations is a flag for stopping stopping of adding
+    use_default_operations -- is a flag for stopping stopping of adding
         default cib operations (specified in a resource agent)
-    bool ensure_disabled is flag that keeps resource in target-role "Stopped"
-    mixed wait is flag for controlling waiting for pacemaker idle mechanism
-    bool allow_not_suitable_command -- flag for FORCE_NOT_SUITABLE_COMMAND
+    ensure_disabled -- is flag that keeps resource in target-role "Stopped"
+    wait -- is flag for controlling waiting for pacemaker idle mechanism
+    allow_not_suitable_command -- flag for FORCE_NOT_SUITABLE_COMMAND
     """
     resource_agent = get_agent(
         env.report_processor,
@@ -403,6 +407,9 @@ def create_as_clone(
             ensure_disabled
             or resource.common.are_meta_disabled(meta_attributes)
             or resource.common.is_clone_deactivated_by_meta(clone_meta_options)
+        ),
+        required_cib_version=get_required_cib_version_for_primitive(
+            operation_list
         ),
     ) as resources_section:
         id_provider = IdProvider(resources_section)
@@ -440,49 +447,50 @@ def create_as_clone(
 
 
 def create_in_group(
-    env,
-    resource_id,
-    resource_agent_name,
-    group_id,
-    operation_list,
-    meta_attributes,
-    instance_attributes,
-    allow_absent_agent=False,
-    allow_invalid_operation=False,
-    allow_invalid_instance_attributes=False,
-    use_default_operations=True,
-    ensure_disabled=False,
-    adjacent_resource_id=None,
-    put_after_adjacent=False,
-    wait=False,
-    allow_not_suitable_command=False,
+    env: LibraryEnvironment,
+    resource_id: str,
+    resource_agent_name: str,
+    group_id: str,
+    operation_list: Iterable[Mapping[str, str]],
+    meta_attributes: Mapping[str, str],
+    instance_attributes: Mapping[str, str],
+    allow_absent_agent: bool = False,
+    allow_invalid_operation: bool = False,
+    allow_invalid_instance_attributes: bool = False,
+    use_default_operations: bool = True,
+    ensure_disabled: bool = False,
+    adjacent_resource_id: Optional[str] = None,
+    put_after_adjacent: bool = False,
+    wait: WaitType = False,
+    allow_not_suitable_command: bool = False,
 ):
     # pylint: disable=too-many-arguments, too-many-locals
     """
     Create resource in a cib and put it into defined group
 
-    LibraryEnvironment env provides all for communication with externals
-    string resource_id is identifier of resource
-    string resource_agent_name contains name for the identification of agent
-    string group_id is identificator for group to put primitive resource inside
-    list of dict operation_list contains attributes for each entered operation
-    dict meta_attributes contains attributes for primitive/meta_attributes
-    bool allow_absent_agent is a flag for allowing agent that is not installed
+    env -- provides all for communication with externals
+    resource_id -- is identifier of resource
+    resource_agent_name -- contains name for the identification of agent
+    group_id -- is identificator for group to put primitive resource inside
+    operation_list -- contains attributes for each entered operation
+    meta_attributes -- contains attributes for primitive/meta_attributes
+    instance_attributes -- contains attributes for primitive/instance_attributes
+    allow_absent_agent -- is a flag for allowing agent that is not installed
         in a system
-    bool allow_invalid_operation is a flag for allowing to use operations that
+    allow_invalid_operation -- is a flag for allowing to use operations that
         are not listed in a resource agent metadata
-    bool allow_invalid_instance_attributes is a flag for allowing to use
+    allow_invalid_instance_attributes -- is a flag for allowing to use
         instance attributes that are not listed in a resource agent metadata
         or for allowing to not use the instance_attributes that are required in
         resource agent metadata
-    bool use_default_operations is a flag for stopping stopping of adding
+    use_default_operations -- is a flag for stopping stopping of adding
         default cib operations (specified in a resource agent)
-    bool ensure_disabled is flag that keeps resource in target-role "Stopped"
-    string adjacent_resource_id identify neighbor of a newly created resource
-    bool put_after_adjacent is flag to put a newly create resource befor/after
+    ensure_disabled -- is flag that keeps resource in target-role "Stopped"
+    adjacent_resource_id -- identify neighbor of a newly created resource
+    put_after_adjacent -- is flag to put a newly create resource befor/after
         adjacent resource
-    mixed wait is flag for controlling waiting for pacemaker idle mechanism
-    bool allow_not_suitable_command -- flag for FORCE_NOT_SUITABLE_COMMAND
+    wait -- is flag for controlling waiting for pacemaker idle mechanism
+    allow_not_suitable_command -- flag for FORCE_NOT_SUITABLE_COMMAND
     """
     resource_agent = get_agent(
         env.report_processor,
@@ -497,6 +505,9 @@ def create_in_group(
         _ensure_disabled_after_wait(
             ensure_disabled
             or resource.common.are_meta_disabled(meta_attributes)
+        ),
+        required_cib_version=get_required_cib_version_for_primitive(
+            operation_list
         ),
     ) as resources_section:
         id_provider = IdProvider(resources_section)
@@ -535,48 +546,48 @@ def create_in_group(
 
 
 def create_into_bundle(
-    env,
-    resource_id,
-    resource_agent_name,
-    operation_list,
-    meta_attributes,
-    instance_attributes,
-    bundle_id,
-    allow_absent_agent=False,
-    allow_invalid_operation=False,
-    allow_invalid_instance_attributes=False,
-    use_default_operations=True,
-    ensure_disabled=False,
-    wait=False,
-    allow_not_suitable_command=False,
-    allow_not_accessible_resource=False,
+    env: LibraryEnvironment,
+    resource_id: str,
+    resource_agent_name: str,
+    operation_list: Iterable[Mapping[str, str]],
+    meta_attributes: Mapping[str, str],
+    instance_attributes: Mapping[str, str],
+    bundle_id: str,
+    allow_absent_agent: bool = False,
+    allow_invalid_operation: bool = False,
+    allow_invalid_instance_attributes: bool = False,
+    use_default_operations: bool = True,
+    ensure_disabled: bool = False,
+    wait: WaitType = False,
+    allow_not_suitable_command: bool = False,
+    allow_not_accessible_resource: bool = False,
 ):
     # pylint: disable=too-many-arguments, too-many-locals
     """
     Create a new resource in a cib and put it into an existing bundle
 
-    LibraryEnvironment env provides all for communication with externals
-    string resource_id is identifier of resource
-    string resource_agent_name contains name for the identification of agent
-    list of dict operation_list contains attributes for each entered operation
-    dict meta_attributes contains attributes for primitive/meta_attributes
-    dict instance_attributes contains attributes for
+    env -- provides all for communication with externals
+    resource_id -- is identifier of resource
+    resource_agent_name -- contains name for the identification of agent
+    operation_list -- contains attributes for each entered operation
+    meta_attributes -- contains attributes for primitive/meta_attributes
+    instance_attributes -- contains attributes for
         primitive/instance_attributes
-    string bundle_id is id of an existing bundle to put the created resource in
-    bool allow_absent_agent is a flag for allowing agent that is not installed
+    bundle_id -- is id of an existing bundle to put the created resource in
+    allow_absent_agent -- is a flag for allowing agent that is not installed
         in a system
-    bool allow_invalid_operation is a flag for allowing to use operations that
+    allow_invalid_operation -- is a flag for allowing to use operations that
         are not listed in a resource agent metadata
-    bool allow_invalid_instance_attributes is a flag for allowing to use
+    allow_invalid_instance_attributes -- is a flag for allowing to use
         instance attributes that are not listed in a resource agent metadata
         or for allowing to not use the instance_attributes that are required in
         resource agent metadata
-    bool use_default_operations is a flag for stopping stopping of adding
+    use_default_operations -- is a flag for stopping stopping of adding
         default cib operations (specified in a resource agent)
-    bool ensure_disabled is flag that keeps resource in target-role "Stopped"
-    mixed wait is flag for controlling waiting for pacemaker idle mechanism
-    bool allow_not_suitable_command -- flag for FORCE_NOT_SUITABLE_COMMAND
-    bool allow_not_accessible_resource -- flag for
+    ensure_disabled -- is flag that keeps resource in target-role "Stopped"
+    wait -- is flag for controlling waiting for pacemaker idle mechanism
+    allow_not_suitable_command -- flag for FORCE_NOT_SUITABLE_COMMAND
+    allow_not_accessible_resource -- flag for
         FORCE_RESOURCE_IN_BUNDLE_NOT_ACCESSIBLE
     """
     resource_agent = get_agent(
@@ -585,6 +596,11 @@ def create_into_bundle(
         resource_agent_name,
         allow_absent_agent,
     )
+    required_cib_version = get_required_cib_version_for_primitive(
+        operation_list
+    )
+    if not required_cib_version:
+        required_cib_version = Version(2, 8, 0)
     with resource_environment(
         env,
         wait,
@@ -593,7 +609,7 @@ def create_into_bundle(
             ensure_disabled
             or resource.common.are_meta_disabled(meta_attributes)
         ),
-        required_cib_version=Version(2, 8, 0),
+        required_cib_version=required_cib_version,
     ) as resources_section:
         id_provider = IdProvider(resources_section)
         _check_special_cases(
@@ -1074,9 +1090,7 @@ def disable_simulate(
 
 
 def enable(
-    env: LibraryEnvironment,
-    resource_or_tag_ids: Iterable[str],
-    wait: Optional[Union[bool, int]],
+    env: LibraryEnvironment, resource_or_tag_ids: Iterable[str], wait: WaitType,
 ):
     """
     Allow specified resources to be started by the cluster
@@ -1689,3 +1703,12 @@ def _find_resources_expand_tags(
     for el in resource_set:
         final_set.update(additional_search(el))
     return list(final_set), report_list
+
+
+def get_required_cib_version_for_primitive(
+    op_list: Iterable[Mapping[str, str]]
+) -> Optional[Version]:
+    for op in op_list:
+        if op.get("on-fail", "") == "demote":
+            return Version(3, 4, 0)
+    return None

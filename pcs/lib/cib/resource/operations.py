@@ -39,13 +39,14 @@ ATTRIBUTES = [
 ]
 
 ON_FAIL_VALUES = [
-    "ignore",
     "block",
-    "stop",
-    "restart",
-    "standby",
+    "demote",
     "fence",
+    "ignore",
+    "restart",
     "restart-container",
+    "standby",
+    "stop",
 ]
 
 BOOLEAN_VALUES = [

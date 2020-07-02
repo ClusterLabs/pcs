@@ -1143,7 +1143,7 @@ class FailOrWarnOp(ResourceTest):
             " monitor on-fail=Abc",
             (
                 "Error: 'Abc' is not a valid on-fail value, use 'block', "
-                "'fence', 'ignore', 'restart', 'restart-container', "
+                "'demote', 'fence', 'ignore', 'restart', 'restart-container', "
                 "'standby', 'stop'\n" + ERRORS_HAVE_OCURRED
             ),
         )

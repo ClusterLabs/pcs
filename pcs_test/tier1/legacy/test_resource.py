@@ -22,6 +22,7 @@ from pcs_test.tools.misc import (
     is_minimum_pacemaker_version,
     outdent,
     skip_unless_pacemaker_supports_bundle,
+    skip_unless_pacemaker_supports_op_onfail_demote,
     skip_unless_crm_rule,
     write_data_to_tmpfile,
     write_file_to_tmpfile,
@@ -721,6 +722,28 @@ monitor interval=60s OCF_CHECK_LEVEL=1 (OPTest7-monitor-interval-60s)
                           monitor interval=15 role=Master (state-monitor-interval-15)
             """
             ),
+        )
+
+    @skip_unless_pacemaker_supports_op_onfail_demote()
+    def test_add_operation_onfail_demote_upgrade_cib(self):
+        write_file_to_tmpfile(rc("cib-empty-3.3.xml"), self.temp_cib)
+        self.assert_pcs_success(
+            "resource create --no-default-ops R ocf:pacemaker:Dummy"
+        )
+        self.assert_pcs_success(
+            "resource op add R start on-fail=demote",
+            stdout_full="Cluster CIB has been upgraded to latest version\n",
+        )
+
+    @skip_unless_pacemaker_supports_op_onfail_demote()
+    def test_update_add_operation_onfail_demote_upgrade_cib(self):
+        write_file_to_tmpfile(rc("cib-empty-3.3.xml"), self.temp_cib)
+        self.assert_pcs_success(
+            "resource create --no-default-ops R ocf:pacemaker:Dummy"
+        )
+        self.assert_pcs_success(
+            "resource update R op start on-fail=demote",
+            stdout_full="Cluster CIB has been upgraded to latest version\n",
         )
 
     def _test_delete_remove_operation(self, command):
