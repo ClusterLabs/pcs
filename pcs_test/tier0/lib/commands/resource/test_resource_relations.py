@@ -10,7 +10,7 @@ from pcs.lib.commands import resource
 def fixture_primitive(_id, members):
     return dict(
         id=_id,
-        type="primitive",
+        type=ResourceRelationType.RSC_PRIMITIVE,
         metadata={
             "id": _id,
             "class": "ocf",
@@ -185,7 +185,7 @@ class GetResourceRelationsTreeComplex(TestCase):
         )
         self.cg_ent = dict(
             id="cg",
-            type="group",
+            type=ResourceRelationType.RSC_GROUP,
             members=["pcs_rsc_order_set_1", "inner:cg", "outer:c"],
             metadata=dict(id="cg"),
         )
@@ -282,7 +282,7 @@ class GetResourceRelationsTreeComplex(TestCase):
                                         fixture_node(
                                             dict(
                                                 id="c",
-                                                type="clone",
+                                                type=ResourceRelationType.RSC_CLONE,
                                                 members=["inner:c"],
                                                 metadata=dict(id="c"),
                                             ),

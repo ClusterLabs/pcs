@@ -14,7 +14,6 @@ from pcs.cli.resource import relations
 
 class ShowResourceRelationsCmd(TestCase):
     def setUp(self):
-        self.maxDiff = None
         self.lib_call = mock.Mock()
         self.lib = mock.Mock(spec_set=["resource"])
         self.lib.resource = mock.Mock(spec_set=["get_resource_relations_tree"])
@@ -23,7 +22,7 @@ class ShowResourceRelationsCmd(TestCase):
             ResourceRelationDto(
                 RelationEntityDto(
                     "d1",
-                    "primitive",
+                    ResourceRelationType.RSC_PRIMITIVE,
                     [],
                     {"class": "ocf", "provider": "pacemaker", "type": "Dummy",},
                 ),
@@ -46,7 +45,7 @@ class ShowResourceRelationsCmd(TestCase):
                             ResourceRelationDto(
                                 RelationEntityDto(
                                     "d2",
-                                    "primitive",
+                                    ResourceRelationType.RSC_PRIMITIVE,
                                     [],
                                     {
                                         "class": "ocf",
@@ -69,7 +68,9 @@ class ShowResourceRelationsCmd(TestCase):
                         ),
                         [
                             ResourceRelationDto(
-                                RelationEntityDto("g1", "group", [], {}),
+                                RelationEntityDto(
+                                    "g1", ResourceRelationType.RSC_GROUP, [], {}
+                                ),
                                 [],
                                 True,
                             ),
@@ -137,7 +138,7 @@ class ShowResourceRelationsCmd(TestCase):
 def _fixture_dummy(_id):
     return RelationEntityDto(
         _id,
-        "primitive",
+        ResourceRelationType.RSC_PRIMITIVE,
         [],
         {"class": "ocf", "provider": "pacemaker", "type": "Dummy",},
     )
@@ -214,7 +215,9 @@ class ResourcePrintableNode(TestCase):
 
     def test_primitive_without_provider_class(self):
         obj = relations.ResourcePrintableNode(
-            RelationEntityDto("d1", "primitive", [], {"type": "Dummy",}),
+            RelationEntityDto(
+                "d1", ResourceRelationType.RSC_PRIMITIVE, [], {"type": "Dummy",}
+            ),
             [],
             False,
         )
@@ -224,7 +227,10 @@ class ResourcePrintableNode(TestCase):
     def test_primitive_without_provider(self):
         obj = relations.ResourcePrintableNode(
             RelationEntityDto(
-                "d1", "primitive", [], {"class": "ocf", "type": "Dummy",}
+                "d1",
+                ResourceRelationType.RSC_PRIMITIVE,
+                [],
+                {"class": "ocf", "type": "Dummy",},
             ),
             [],
             False,
@@ -238,7 +244,7 @@ class ResourcePrintableNode(TestCase):
         obj = relations.ResourcePrintableNode(
             RelationEntityDto(
                 "d1",
-                "primitive",
+                ResourceRelationType.RSC_PRIMITIVE,
                 [],
                 {"provider": "pacemaker", "type": "Dummy",},
             ),
@@ -255,7 +261,7 @@ class ResourcePrintableNode(TestCase):
             RelationEntityDto("an_id", "a_type", [], {}), [], False,
         )
         self.assertEqual(
-            "an_id (resource: a_type)", obj.get_title(verbose=True)
+            "an_id (resource: <unknown>)", obj.get_title(verbose=True)
         )
         self.assertEqual([], obj.detail)
 

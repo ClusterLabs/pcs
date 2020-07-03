@@ -44,7 +44,7 @@ class ResourceRelationNode(TestCase):
             RelationEntityDto,
             dict(
                 id=f"ent_id{index}",
-                type="ent_type",
+                type=str(ResourceRelationType.INNER_RESOURCES.value),
                 members=[f"{index}m1", f"{index}m2", f"{index}m0"],
                 metadata=dict(id=f"ent_id{index}", k0="val0", k1="val1",),
             ),
@@ -170,13 +170,13 @@ class ResourceRelationsFetcher(TestCase):
             {
                 "d1": RelationEntityDto(
                     "d1",
-                    "primitive",
+                    ResourceRelationType.RSC_PRIMITIVE,
                     ["order-d1-d2-mandatory"],
                     fixture_dummy_metadata("d1"),
                 ),
                 "d2": RelationEntityDto(
                     "d2",
-                    "primitive",
+                    ResourceRelationType.RSC_PRIMITIVE,
                     ["order-d1-d2-mandatory"],
                     fixture_dummy_metadata("d2"),
                 ),
@@ -233,7 +233,7 @@ class ResourceRelationsFetcher(TestCase):
         )
         rsc_entity = lambda _id: RelationEntityDto(
             _id,
-            "primitive",
+            ResourceRelationType.RSC_PRIMITIVE,
             ["pcs_rsc_order_set_1"],
             fixture_dummy_metadata(_id),
         )
@@ -295,18 +295,21 @@ class ResourceRelationsFetcher(TestCase):
             {
                 "d1": RelationEntityDto(
                     "d1",
-                    "primitive",
+                    ResourceRelationType.RSC_PRIMITIVE,
                     ["outer:g1"],
                     fixture_dummy_metadata("d1"),
                 ),
                 "d2": RelationEntityDto(
                     "d2",
-                    "primitive",
+                    ResourceRelationType.RSC_PRIMITIVE,
                     ["outer:g1"],
                     fixture_dummy_metadata("d2"),
                 ),
                 "g1": RelationEntityDto(
-                    "g1", "group", ["inner:g1"], {"id": "g1"}
+                    "g1",
+                    ResourceRelationType.RSC_GROUP,
+                    ["inner:g1"],
+                    {"id": "g1"},
                 ),
             },
             {
@@ -328,7 +331,7 @@ class ResourceRelationsFetcher(TestCase):
             with self.subTest(resource=res):
                 self.assertEqual(expected, obj.get_relations(res))
 
-    def _test_wrapper(self, wrapper_tag):
+    def _test_wrapper(self, wrapper_tag, rel_type):
         obj = lib.ResourceRelationsFetcher(
             fixture_cib(
                 f"""
@@ -343,12 +346,12 @@ class ResourceRelationsFetcher(TestCase):
             {
                 "d1": RelationEntityDto(
                     "d1",
-                    "primitive",
+                    ResourceRelationType.RSC_PRIMITIVE,
                     ["outer:w1"],
                     fixture_dummy_metadata("d1"),
                 ),
                 "w1": RelationEntityDto(
-                    "w1", wrapper_tag, ["inner:w1"], {"id": "w1"}
+                    "w1", rel_type, ["inner:w1"], {"id": "w1"}
                 ),
             },
             {
@@ -371,10 +374,13 @@ class ResourceRelationsFetcher(TestCase):
                 self.assertEqual(expected, obj.get_relations(res))
 
     def test_clone(self):
-        self._test_wrapper("clone")
+        self._test_wrapper("clone", ResourceRelationType.RSC_CLONE)
+
+    def test_master(self):
+        self._test_wrapper("master", ResourceRelationType.RSC_CLONE)
 
     def test_bundle(self):
-        self._test_wrapper("bundle")
+        self._test_wrapper("bundle", ResourceRelationType.RSC_BUNDLE)
 
     def test_cloned_group(self):
         obj = lib.ResourceRelationsFetcher(
@@ -394,21 +400,27 @@ class ResourceRelationsFetcher(TestCase):
             {
                 "d1": RelationEntityDto(
                     "d1",
-                    "primitive",
+                    ResourceRelationType.RSC_PRIMITIVE,
                     ["outer:g1"],
                     fixture_dummy_metadata("d1"),
                 ),
                 "d2": RelationEntityDto(
                     "d2",
-                    "primitive",
+                    ResourceRelationType.RSC_PRIMITIVE,
                     ["outer:g1"],
                     fixture_dummy_metadata("d2"),
                 ),
                 "g1": RelationEntityDto(
-                    "g1", "group", ["inner:g1", "outer:c1"], {"id": "g1"}
+                    "g1",
+                    ResourceRelationType.RSC_GROUP,
+                    ["inner:g1", "outer:c1"],
+                    {"id": "g1"},
                 ),
                 "c1": RelationEntityDto(
-                    "c1", "clone", ["inner:c1"], {"id": "c1"}
+                    "c1",
+                    ResourceRelationType.RSC_CLONE,
+                    ["inner:c1"],
+                    {"id": "c1"},
                 ),
             },
             {
@@ -447,7 +459,10 @@ class ResourceRelationTreeBuilder(TestCase):
     @staticmethod
     def primitive_fixture(_id, members):
         return RelationEntityDto(
-            _id, "primitive", members, fixture_dummy_metadata(_id)
+            _id,
+            ResourceRelationType.RSC_PRIMITIVE,
+            members,
+            fixture_dummy_metadata(_id),
         )
 
     def test_resource_not_present(self):

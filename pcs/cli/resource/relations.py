@@ -5,7 +5,6 @@ from typing import (
     List,
     Mapping,
     Sequence,
-    Union,
 )
 
 from pcs.common.interface import dto
@@ -117,15 +116,20 @@ class ResourcePrintableNode(ResourceRelationBase):
         )
 
     def get_title(self, verbose: bool) -> str:
-        rsc_type = self._relation_entity.type
         metadata = self._relation_entity.metadata
-        if rsc_type == "primitive":
-            rsc_type = "{_class}{_provider}{_type}".format(
+        rsc_type = self._relation_entity.type
+        type_str = {
+            ResourceRelationType.RSC_GROUP: "group",
+            ResourceRelationType.RSC_BUNDLE: "bundle",
+            ResourceRelationType.RSC_CLONE: "clone",
+        }.get(rsc_type, "<unknown>")
+        if rsc_type == ResourceRelationType.RSC_PRIMITIVE:
+            type_str = "{_class}{_provider}{_type}".format(
                 _class=format_optional(metadata.get("class"), "{}:"),
                 _provider=format_optional(metadata.get("provider"), "{}:"),
                 _type=metadata.get("type"),
             )
-        detail = f" (resource: {rsc_type})" if verbose else ""
+        detail = f" (resource: {type_str})" if verbose else ""
         return f"{self._relation_entity.id}{detail}"
 
     @property
@@ -151,7 +155,7 @@ class RelationPrintableNode(ResourceRelationBase):
         )
 
     def get_title(self, verbose: bool) -> str:
-        rel_type_map: Mapping[Union[str, ResourceRelationType], str] = {
+        rel_type_map: Mapping[ResourceRelationType, str] = {
             ResourceRelationType.ORDER: "order",
             ResourceRelationType.ORDER_SET: "order set",
             ResourceRelationType.INNER_RESOURCES: "inner resource(s)",

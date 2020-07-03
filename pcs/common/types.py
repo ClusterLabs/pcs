@@ -21,6 +21,11 @@ class ResourceRelationType(AutoNameEnum):
     ORDER_SET = auto()
     INNER_RESOURCES = auto()
     OUTER_RESOURCE = auto()
+    RSC_PRIMITIVE = auto()
+    RSC_CLONE = auto()
+    RSC_GROUP = auto()
+    RSC_BUNDLE = auto()
+    RSC_UNKNOWN = auto()
 
 
 class DrRole(AutoNameEnum):

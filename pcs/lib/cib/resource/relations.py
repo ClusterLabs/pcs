@@ -160,7 +160,7 @@ class ResourceRelationsFetcher:
             }
             resources[res_id] = RelationEntityDto(
                 res_id,
-                res_el.tag,
+                _get_resource_relation_type(res_el),
                 list(res_relations.keys()),
                 dict(res_el.attrib),
             )
@@ -241,6 +241,16 @@ class ResourceRelationsFetcher:
                 resource_id=resource_id,
             ),
         )
+
+
+def _get_resource_relation_type(res_el: Element) -> ResourceRelationType:
+    return {
+        "primitive": ResourceRelationType.RSC_PRIMITIVE,
+        "group": ResourceRelationType.RSC_GROUP,
+        "bundle": ResourceRelationType.RSC_BUNDLE,
+        "clone": ResourceRelationType.RSC_CLONE,
+        "master": ResourceRelationType.RSC_CLONE,
+    }.get(res_el.tag, ResourceRelationType.RSC_UNKNOWN)
 
 
 # relation obj to RelationEntityDto obj
