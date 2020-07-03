@@ -1,6 +1,7 @@
 from .types import (
     BoothConfigUsedWhere,
     DefaultAddressSource,
+    FenceHistoryCommandType,
     PcsCommand,
     ReasonType,
     ServiceAction,
@@ -16,6 +17,10 @@ BOOTH_CONFIG_USED_ENABLED_IN_SYSTEMD = BoothConfigUsedWhere(
 BOOTH_CONFIG_USED_RUNNING_IN_SYSTEMD = BoothConfigUsedWhere(
     "running in systemd"
 )
+
+FENCE_HISTORY_COMMAND_CLEANUP = FenceHistoryCommandType("cleanup")
+FENCE_HISTORY_COMMAND_SHOW = FenceHistoryCommandType("show")
+FENCE_HISTORY_COMMAND_UPDATE = FenceHistoryCommandType("update")
 
 PCS_COMMAND_OPERATION_DEFAULTS_UPDATE = PcsCommand(
     "resource op defaults update"

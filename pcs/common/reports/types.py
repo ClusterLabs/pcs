@@ -2,6 +2,7 @@ from typing import NewType
 
 BoothConfigUsedWhere = NewType("BoothConfigUsedWhere", str)
 DefaultAddressSource = NewType("DefaultAddressSource", str)
+FenceHistoryCommandType = NewType("FenceHistoryCommandType", str)
 ForceCode = NewType("ForceCode", str)
 MessageCode = NewType("MessageCode", str)
 PcsCommand = NewType("PcsCommand", str)

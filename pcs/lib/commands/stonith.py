@@ -201,7 +201,9 @@ def history_get_text(env: LibraryEnvironment, node: Optional[str] = None):
     except FenceHistoryCommandErrorException as e:
         raise LibraryError(
             ReportItem.error(
-                reports.messages.FenceHistoryCommandError(str(e), "show")
+                reports.messages.FenceHistoryCommandError(
+                    str(e), reports.const.FENCE_HISTORY_COMMAND_SHOW
+                )
             )
         )
 
@@ -224,7 +226,9 @@ def history_cleanup(env: LibraryEnvironment, node: Optional[str] = None):
     except FenceHistoryCommandErrorException as e:
         raise LibraryError(
             ReportItem.error(
-                reports.messages.FenceHistoryCommandError(str(e), "cleanup")
+                reports.messages.FenceHistoryCommandError(
+                    str(e), reports.const.FENCE_HISTORY_COMMAND_CLEANUP
+                )
             )
         )
 
@@ -246,6 +250,8 @@ def history_update(env: LibraryEnvironment):
     except FenceHistoryCommandErrorException as e:
         raise LibraryError(
             ReportItem.error(
-                reports.messages.FenceHistoryCommandError(str(e), "update")
+                reports.messages.FenceHistoryCommandError(
+                    str(e), reports.const.FENCE_HISTORY_COMMAND_UPDATE
+                )
             )
         )

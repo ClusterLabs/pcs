@@ -5275,16 +5275,21 @@ class FenceHistoryCommandError(ReportItemMessage):
     Pacemaker command for working with fence history returned an error
 
     reason -- output of the pacemaker command
-    command_label -- label of the command - what it should have achieved
+    command -- the action of the command - what it should have achieved
     """
 
     reason: str
-    command_label: str
+    command: types.FenceHistoryCommandType
     _code = codes.FENCE_HISTORY_COMMAND_ERROR
 
     @property
     def message(self) -> str:
-        return f"Unable to {self.command_label} fence history: {self.reason}"
+        command_label = {
+            const.FENCE_HISTORY_COMMAND_CLEANUP: "cleanup",
+            const.FENCE_HISTORY_COMMAND_SHOW: "show",
+            const.FENCE_HISTORY_COMMAND_UPDATE: "update",
+        }.get(self.command, self.command)
+        return f"Unable to {command_label} fence history: {self.reason}"
 
 
 @dataclass(frozen=True)

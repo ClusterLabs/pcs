@@ -3,7 +3,7 @@ from unittest import TestCase
 from pcs_test.tools import fixture
 from pcs_test.tools.command_env import get_env_tools
 
-from pcs.common.reports import codes as report_codes
+from pcs.common import reports
 from pcs.lib.commands import stonith
 
 
@@ -47,8 +47,8 @@ class HistoryGetText(TestCase):
             lambda: stonith.history_get_text(self.env_assist.get_env()),
             [
                 fixture.error(
-                    report_codes.FENCE_HISTORY_COMMAND_ERROR,
-                    command_label="show",
+                    reports.codes.FENCE_HISTORY_COMMAND_ERROR,
+                    command=reports.const.FENCE_HISTORY_COMMAND_SHOW,
                     reason=(stderr + stdout).strip(),
                 )
             ],
@@ -63,7 +63,7 @@ class HistoryGetText(TestCase):
         )
         self.env_assist.assert_raise_library_error(
             lambda: stonith.history_get_text(self.env_assist.get_env()),
-            [fixture.error(report_codes.FENCE_HISTORY_NOT_SUPPORTED,)],
+            [fixture.error(reports.codes.FENCE_HISTORY_NOT_SUPPORTED)],
             expected_in_processor=False,
         )
 
@@ -96,8 +96,8 @@ class HistoryCleanup(TestCase):
             lambda: stonith.history_cleanup(self.env_assist.get_env()),
             [
                 fixture.error(
-                    report_codes.FENCE_HISTORY_COMMAND_ERROR,
-                    command_label="cleanup",
+                    reports.codes.FENCE_HISTORY_COMMAND_ERROR,
+                    command=reports.const.FENCE_HISTORY_COMMAND_CLEANUP,
                     reason=(stderr + stdout).strip(),
                 )
             ],
@@ -112,7 +112,7 @@ class HistoryCleanup(TestCase):
         )
         self.env_assist.assert_raise_library_error(
             lambda: stonith.history_cleanup(self.env_assist.get_env()),
-            [fixture.error(report_codes.FENCE_HISTORY_NOT_SUPPORTED,)],
+            [fixture.error(reports.codes.FENCE_HISTORY_NOT_SUPPORTED)],
             expected_in_processor=False,
         )
 
@@ -138,8 +138,8 @@ class HistoryUpdate(TestCase):
             lambda: stonith.history_update(self.env_assist.get_env()),
             [
                 fixture.error(
-                    report_codes.FENCE_HISTORY_COMMAND_ERROR,
-                    command_label="update",
+                    reports.codes.FENCE_HISTORY_COMMAND_ERROR,
+                    command=reports.const.FENCE_HISTORY_COMMAND_UPDATE,
                     reason=(stderr + stdout).strip(),
                 )
             ],
@@ -154,6 +154,6 @@ class HistoryUpdate(TestCase):
         )
         self.env_assist.assert_raise_library_error(
             lambda: stonith.history_update(self.env_assist.get_env()),
-            [fixture.error(report_codes.FENCE_HISTORY_NOT_SUPPORTED,)],
+            [fixture.error(reports.codes.FENCE_HISTORY_NOT_SUPPORTED)],
             expected_in_processor=False,
         )

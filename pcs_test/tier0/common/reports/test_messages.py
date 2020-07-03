@@ -3868,7 +3868,9 @@ class FenceHistoryCommandError(NameBuildTest):
     def test_success(self):
         self.assert_message_from_report(
             "Unable to show fence history: reason",
-            reports.FenceHistoryCommandError("reason", "show"),
+            reports.FenceHistoryCommandError(
+                "reason", reports.const.FENCE_HISTORY_COMMAND_SHOW
+            ),
         )
 
 
