@@ -37,8 +37,8 @@ _metadata = {
     code.PACEMAKER_AUTHKEY: lambda: FileMetadata(
         file_type_code=code.PACEMAKER_AUTHKEY,
         path=settings.pacemaker_authkey_file,
-        owner_user_name="hacluster",
-        owner_group_name="haclient",
+        owner_user_name=settings.pacemaker_uname,
+        owner_group_name=settings.pacemaker_gname,
         permissions=0o400,
         is_binary=True,
     ),
