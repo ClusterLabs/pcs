@@ -1,8 +1,20 @@
 from .types import (
+    BoothConfigUsedWhere,
     DefaultAddressSource,
     PcsCommand,
     ReasonType,
     ServiceAction,
+)
+
+
+BOOTH_CONFIG_USED_IN_CLUSTER_RESOURCE = BoothConfigUsedWhere(
+    "in a cluster resource"
+)
+BOOTH_CONFIG_USED_ENABLED_IN_SYSTEMD = BoothConfigUsedWhere(
+    "enabled in systemd"
+)
+BOOTH_CONFIG_USED_RUNNING_IN_SYSTEMD = BoothConfigUsedWhere(
+    "running in systemd"
 )
 
 PCS_COMMAND_OPERATION_DEFAULTS_UPDATE = PcsCommand(

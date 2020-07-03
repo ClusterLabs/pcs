@@ -24,7 +24,7 @@ class CheckInstanceName(TestCase):
                 fixture.error(
                     report_codes.BOOTH_INVALID_NAME,
                     name=instance,
-                    reason="contains illegal character '/'",
+                    forbidden_characters="/",
                 ),
             ],
         )

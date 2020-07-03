@@ -1,3 +1,11 @@
+from typing import (
+    cast,
+    List,
+)
+from xml.etree.ElementTree import Element
+
+from lxml.etree import _Element
+
 from pcs.lib.cib.tools import find_unique_id
 
 
@@ -40,37 +48,47 @@ def get_remover(resource_remove):
     return remove_from_cluster
 
 
-def find_for_config(resources_section, booth_config_file_path):
-    return resources_section.xpath(
-        (
+def find_for_config(
+    resources_section: Element, booth_config_file_path: str
+) -> List[Element]:
+    return cast(
+        List[Element],
+        cast(_Element, resources_section).xpath(
             """
-        .//primitive[
-            @type="booth-site"
-            and
-            instance_attributes[nvpair[@name="config" and @value="{0}"]]
-        ]
-    """
-        ).format(booth_config_file_path)
-    )
-
-
-def find_bound_ip(resources_section, booth_config_file_path):
-    return resources_section.xpath(
-        (
-            """
-        .//group[
-            primitive[
+            .//primitive[
                 @type="booth-site"
                 and
                 instance_attributes[
-                    nvpair[@name="config" and @value="{0}"]
+                    nvpair[@name="config" and @value=$booth_name]
                 ]
             ]
-        ]
-        /primitive[@type="IPaddr2"]
-        /instance_attributes
-        /nvpair[@name="ip"]
-        /@value
-    """
-        ).format(booth_config_file_path)
+            """,
+            booth_name=booth_config_file_path,
+        ),
+    )
+
+
+def find_bound_ip(
+    resources_section: Element, booth_config_file_path: str
+) -> List[Element]:
+    return cast(
+        List[Element],
+        cast(_Element, resources_section).xpath(
+            """
+            .//group[
+                primitive[
+                    @type="booth-site"
+                    and
+                    instance_attributes[
+                        nvpair[@name="config" and @value=$booth_name]
+                    ]
+                ]
+            ]
+            /primitive[@type="IPaddr2"]
+            /instance_attributes
+            /nvpair[@name="ip"]
+            /@value
+            """,
+            booth_name=booth_config_file_path,
+        ),
     )

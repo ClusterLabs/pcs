@@ -14,7 +14,6 @@ from pcs.common import (
     reports,
 )
 from pcs.common.file import RawFileError
-from pcs.common.reports import codes as report_codes
 from pcs.lib.commands import booth as commands
 
 RANDOM_KEY = "I'm so random!".encode()
@@ -23,9 +22,7 @@ REASON = "This is a reason"
 
 def fixture_report_invalid_name(name):
     return fixture.error(
-        report_codes.BOOTH_INVALID_NAME,
-        name=name,
-        reason="contains illegal character '/'",
+        reports.codes.BOOTH_INVALID_NAME, name=name, forbidden_characters="/",
     )
 
 
@@ -206,7 +203,7 @@ class ConfigSetup(TestCase, FixtureMixin):
             )
         )
         self.env_assist.assert_reports(
-            [fixture.error(report_codes.BOOTH_EVEN_PEERS_NUM, number=4,),]
+            [fixture.error(reports.codes.BOOTH_EVEN_PEERS_NUM, number=4)]
         )
 
     def fixture_config_success(self, instance_name="booth"):
@@ -264,8 +261,8 @@ class ConfigSetup(TestCase, FixtureMixin):
         self.env_assist.assert_reports(
             [
                 fixture.error(
-                    report_codes.FILE_ALREADY_EXISTS,
-                    force_code=report_codes.FORCE_FILE_OVERWRITE,
+                    reports.codes.FILE_ALREADY_EXISTS,
+                    force_code=reports.codes.FORCE_FILE_OVERWRITE,
                     file_type_code=file_type_codes.BOOTH_CONFIG,
                     file_path=self.fixture_cfg_path(),
                     node="",
@@ -292,8 +289,8 @@ class ConfigSetup(TestCase, FixtureMixin):
         self.env_assist.assert_reports(
             [
                 fixture.error(
-                    report_codes.FILE_ALREADY_EXISTS,
-                    force_code=report_codes.FORCE_FILE_OVERWRITE,
+                    reports.codes.FILE_ALREADY_EXISTS,
+                    force_code=reports.codes.FORCE_FILE_OVERWRITE,
                     file_type_code=file_type_codes.BOOTH_KEY,
                     file_path=self.fixture_key_path(),
                     node="",
@@ -351,7 +348,7 @@ class ConfigSetup(TestCase, FixtureMixin):
         self.env_assist.assert_reports(
             [
                 fixture.error(
-                    report_codes.FILE_IO_ERROR,
+                    reports.codes.FILE_IO_ERROR,
                     file_type_code=file_type_codes.BOOTH_CONFIG,
                     file_path=self.fixture_cfg_path(),
                     reason=error,
@@ -381,7 +378,7 @@ class ConfigSetup(TestCase, FixtureMixin):
         self.env_assist.assert_reports(
             [
                 fixture.error(
-                    report_codes.FILE_IO_ERROR,
+                    reports.codes.FILE_IO_ERROR,
                     file_type_code=file_type_codes.BOOTH_KEY,
                     file_path=self.fixture_key_path(),
                     reason=error,
@@ -419,7 +416,7 @@ class ConfigSetup(TestCase, FixtureMixin):
             ),
             [
                 fixture.error(
-                    report_codes.LIVE_ENVIRONMENT_NOT_CONSISTENT,
+                    reports.codes.LIVE_ENVIRONMENT_NOT_CONSISTENT,
                     mocked_files=[file_type_codes.BOOTH_CONFIG],
                     required_files=[file_type_codes.BOOTH_KEY],
                 ),
@@ -519,7 +516,7 @@ class ConfigDestroy(TestCase, FixtureMixin):
             lambda: commands.config_destroy(self.env_assist.get_env(),),
             [
                 fixture.error(
-                    report_codes.LIVE_ENVIRONMENT_REQUIRED,
+                    reports.codes.LIVE_ENVIRONMENT_REQUIRED,
                     forbidden_options=[
                         file_type_codes.BOOTH_CONFIG,
                         file_type_codes.BOOTH_KEY,
@@ -535,7 +532,7 @@ class ConfigDestroy(TestCase, FixtureMixin):
             lambda: commands.config_destroy(self.env_assist.get_env(),),
             [
                 fixture.error(
-                    report_codes.LIVE_ENVIRONMENT_REQUIRED,
+                    reports.codes.LIVE_ENVIRONMENT_REQUIRED,
                     forbidden_options=[file_type_codes.CIB,],
                 ),
             ],
@@ -555,7 +552,7 @@ class ConfigDestroy(TestCase, FixtureMixin):
             lambda: commands.config_destroy(self.env_assist.get_env(),),
             [
                 fixture.error(
-                    report_codes.LIVE_ENVIRONMENT_REQUIRED,
+                    reports.codes.LIVE_ENVIRONMENT_REQUIRED,
                     forbidden_options=[
                         file_type_codes.BOOTH_CONFIG,
                         file_type_codes.BOOTH_KEY,
@@ -586,19 +583,22 @@ class ConfigDestroy(TestCase, FixtureMixin):
         self.env_assist.assert_reports(
             [
                 fixture.error(
-                    report_codes.BOOTH_CONFIG_IS_USED,
+                    reports.codes.BOOTH_CONFIG_IS_USED,
                     name=instance_name,
-                    detail="in cluster resource",
+                    detail=reports.const.BOOTH_CONFIG_USED_IN_CLUSTER_RESOURCE,
+                    resource_name="booth_resource",
                 ),
                 fixture.error(
-                    report_codes.BOOTH_CONFIG_IS_USED,
+                    reports.codes.BOOTH_CONFIG_IS_USED,
                     name=instance_name,
-                    detail="(enabled in systemd)",
+                    detail=reports.const.BOOTH_CONFIG_USED_ENABLED_IN_SYSTEMD,
+                    resource_name=None,
                 ),
                 fixture.error(
-                    report_codes.BOOTH_CONFIG_IS_USED,
+                    reports.codes.BOOTH_CONFIG_IS_USED,
                     name=instance_name,
-                    detail="(running in systemd)",
+                    detail=reports.const.BOOTH_CONFIG_USED_RUNNING_IN_SYSTEMD,
+                    resource_name=None,
                 ),
             ]
         )
@@ -620,8 +620,8 @@ class ConfigDestroy(TestCase, FixtureMixin):
         self.env_assist.assert_reports(
             [
                 fixture.error(
-                    report_codes.FILE_IO_ERROR,
-                    force_code=report_codes.FORCE_BOOTH_DESTROY,
+                    reports.codes.FILE_IO_ERROR,
+                    force_code=reports.codes.FORCE_BOOTH_DESTROY,
                     file_type_code=file_type_codes.BOOTH_CONFIG,
                     file_path=self.fixture_cfg_path(),
                     reason=error,
@@ -652,7 +652,7 @@ class ConfigDestroy(TestCase, FixtureMixin):
         self.env_assist.assert_reports(
             [
                 fixture.warn(
-                    report_codes.FILE_IO_ERROR,
+                    reports.codes.FILE_IO_ERROR,
                     file_type_code=file_type_codes.BOOTH_CONFIG,
                     file_path=self.fixture_cfg_path(),
                     reason=error,
@@ -677,8 +677,8 @@ class ConfigDestroy(TestCase, FixtureMixin):
         self.env_assist.assert_reports(
             [
                 fixture.error(
-                    report_codes.BOOTH_CONFIG_UNEXPECTED_LINES,
-                    force_code=report_codes.FORCE_BOOTH_DESTROY,
+                    reports.codes.BOOTH_CONFIG_UNEXPECTED_LINES,
+                    force_code=reports.codes.FORCE_BOOTH_DESTROY,
                     line_list=["invalid config"],
                     file_path=self.fixture_cfg_path(),
                 ),
@@ -706,7 +706,7 @@ class ConfigDestroy(TestCase, FixtureMixin):
         self.env_assist.assert_reports(
             [
                 fixture.warn(
-                    report_codes.BOOTH_CONFIG_UNEXPECTED_LINES,
+                    reports.codes.BOOTH_CONFIG_UNEXPECTED_LINES,
                     line_list=["invalid config"],
                     file_path=self.fixture_cfg_path(),
                 ),
@@ -761,8 +761,8 @@ class ConfigDestroy(TestCase, FixtureMixin):
         self.env_assist.assert_reports(
             [
                 fixture.error(
-                    report_codes.FILE_IO_ERROR,
-                    force_code=report_codes.FORCE_BOOTH_DESTROY,
+                    reports.codes.FILE_IO_ERROR,
+                    force_code=reports.codes.FORCE_BOOTH_DESTROY,
                     file_type_code=file_type_codes.BOOTH_KEY,
                     file_path=self.fixture_key_path(),
                     reason=error,
@@ -801,7 +801,7 @@ class ConfigDestroy(TestCase, FixtureMixin):
         self.env_assist.assert_reports(
             [
                 fixture.warn(
-                    report_codes.FILE_IO_ERROR,
+                    reports.codes.FILE_IO_ERROR,
                     file_type_code=file_type_codes.BOOTH_KEY,
                     file_path=self.fixture_key_path(),
                     reason=error,
@@ -840,7 +840,7 @@ class ConfigDestroy(TestCase, FixtureMixin):
         self.env_assist.assert_reports(
             [
                 fixture.error(
-                    report_codes.FILE_IO_ERROR,
+                    reports.codes.FILE_IO_ERROR,
                     file_type_code=file_type_codes.BOOTH_CONFIG,
                     file_path=self.fixture_cfg_path(),
                     reason=error,
@@ -869,7 +869,7 @@ class ConfigDestroy(TestCase, FixtureMixin):
         self.env_assist.assert_reports(
             [
                 fixture.warn(
-                    report_codes.BOOTH_UNSUPPORTED_FILE_LOCATION,
+                    reports.codes.BOOTH_UNSUPPORTED_FILE_LOCATION,
                     file_type_code=file_type_codes.BOOTH_KEY,
                     file_path=key_path,
                     expected_dir=self.booth_dir,
@@ -936,7 +936,7 @@ class ConfigText(TestCase, FixtureMixin):
             lambda: commands.config_text(self.env_assist.get_env(),),
             [
                 fixture.error(
-                    report_codes.LIVE_ENVIRONMENT_REQUIRED,
+                    reports.codes.LIVE_ENVIRONMENT_REQUIRED,
                     forbidden_options=[
                         file_type_codes.BOOTH_CONFIG,
                         file_type_codes.BOOTH_KEY,
@@ -961,7 +961,7 @@ class ConfigText(TestCase, FixtureMixin):
         self.env_assist.assert_reports(
             [
                 fixture.error(
-                    report_codes.FILE_IO_ERROR,
+                    reports.codes.FILE_IO_ERROR,
                     file_type_code=file_type_codes.BOOTH_CONFIG,
                     file_path=self.fixture_cfg_path(),
                     reason=error,
@@ -1013,7 +1013,7 @@ class ConfigText(TestCase, FixtureMixin):
         self.env_assist.assert_reports(
             [
                 fixture.error(
-                    report_codes.NODE_COMMUNICATION_COMMAND_UNSUCCESSFUL,
+                    reports.codes.NODE_COMMUNICATION_COMMAND_UNSUCCESSFUL,
                     node=node_name,
                     command="remote/booth_get_config",
                     reason=server_error,
@@ -1040,7 +1040,7 @@ class ConfigText(TestCase, FixtureMixin):
         self.env_assist.assert_reports(
             [
                 fixture.error(
-                    report_codes.INVALID_RESPONSE_FORMAT, node=node_name,
+                    reports.codes.INVALID_RESPONSE_FORMAT, node=node_name,
                 ),
             ]
         )
@@ -1070,7 +1070,7 @@ class ConfigText(TestCase, FixtureMixin):
         self.env_assist.assert_reports(
             [
                 fixture.error(
-                    report_codes.NODE_COMMUNICATION_ERROR_UNABLE_TO_CONNECT,
+                    reports.codes.NODE_COMMUNICATION_ERROR_UNABLE_TO_CONNECT,
                     node=node_name,
                     command="remote/booth_get_config",
                     reason=error,
@@ -1196,7 +1196,7 @@ class ConfigTicketAdd(TestCase, FixtureMixin):
         self.env_assist.assert_reports(
             [
                 fixture.error(
-                    report_codes.BOOTH_TICKET_DUPLICATE, ticket_name="ticketA",
+                    reports.codes.BOOTH_TICKET_DUPLICATE, ticket_name="ticketA",
                 ),
             ]
         )
@@ -1217,12 +1217,12 @@ class ConfigTicketAdd(TestCase, FixtureMixin):
         self.env_assist.assert_reports(
             [
                 fixture.error(
-                    report_codes.BOOTH_TICKET_NAME_INVALID,
+                    reports.codes.BOOTH_TICKET_NAME_INVALID,
                     ticket_name="@ticketA",
                 ),
                 fixture.error(
-                    report_codes.INVALID_OPTIONS,
-                    force_code=report_codes.FORCE_OPTIONS,
+                    reports.codes.INVALID_OPTIONS,
+                    force_code=reports.codes.FORCE_OPTIONS,
                     option_names=["a"],
                     option_type="booth ticket",
                     allowed=[
@@ -1264,7 +1264,7 @@ class ConfigTicketAdd(TestCase, FixtureMixin):
         self.env_assist.assert_reports(
             [
                 fixture.warn(
-                    report_codes.INVALID_OPTIONS,
+                    reports.codes.INVALID_OPTIONS,
                     option_names=["a"],
                     option_type="booth ticket",
                     allowed=[
@@ -1298,7 +1298,7 @@ class ConfigTicketAdd(TestCase, FixtureMixin):
         self.env_assist.assert_reports(
             [
                 fixture.error(
-                    report_codes.BOOTH_CONFIG_UNEXPECTED_LINES,
+                    reports.codes.BOOTH_CONFIG_UNEXPECTED_LINES,
                     line_list=["invalid config"],
                     file_path=self.fixture_cfg_path(),
                 ),
@@ -1322,7 +1322,7 @@ class ConfigTicketAdd(TestCase, FixtureMixin):
         self.env_assist.assert_reports(
             [
                 fixture.error(
-                    report_codes.FILE_IO_ERROR,
+                    reports.codes.FILE_IO_ERROR,
                     file_type_code=file_type_codes.BOOTH_CONFIG,
                     file_path=self.fixture_cfg_path(),
                     reason=error,
@@ -1343,7 +1343,7 @@ class ConfigTicketAdd(TestCase, FixtureMixin):
         self.env_assist.assert_reports(
             [
                 fixture.error(
-                    report_codes.FILE_IO_ERROR,
+                    reports.codes.FILE_IO_ERROR,
                     file_type_code=file_type_codes.BOOTH_CONFIG,
                     file_path="",
                     reason="No such file or directory",
@@ -1375,7 +1375,7 @@ class ConfigTicketAdd(TestCase, FixtureMixin):
         self.env_assist.assert_reports(
             [
                 fixture.error(
-                    report_codes.FILE_IO_ERROR,
+                    reports.codes.FILE_IO_ERROR,
                     file_type_code=file_type_codes.BOOTH_CONFIG,
                     file_path=self.fixture_cfg_path(),
                     reason=error,
@@ -1507,7 +1507,7 @@ class ConfigTicketRemove(TestCase, FixtureMixin):
         self.env_assist.assert_reports(
             [
                 fixture.error(
-                    report_codes.BOOTH_TICKET_DOES_NOT_EXIST,
+                    reports.codes.BOOTH_TICKET_DOES_NOT_EXIST,
                     ticket_name="ticketB",
                 ),
             ]
@@ -1529,7 +1529,7 @@ class ConfigTicketRemove(TestCase, FixtureMixin):
         self.env_assist.assert_reports(
             [
                 fixture.error(
-                    report_codes.BOOTH_CONFIG_UNEXPECTED_LINES,
+                    reports.codes.BOOTH_CONFIG_UNEXPECTED_LINES,
                     line_list=["invalid config"],
                     file_path=self.fixture_cfg_path(),
                 ),
@@ -1553,7 +1553,7 @@ class ConfigTicketRemove(TestCase, FixtureMixin):
         self.env_assist.assert_reports(
             [
                 fixture.error(
-                    report_codes.FILE_IO_ERROR,
+                    reports.codes.FILE_IO_ERROR,
                     file_type_code=file_type_codes.BOOTH_CONFIG,
                     file_path=self.fixture_cfg_path(),
                     reason=error,
@@ -1574,7 +1574,7 @@ class ConfigTicketRemove(TestCase, FixtureMixin):
         self.env_assist.assert_reports(
             [
                 fixture.error(
-                    report_codes.FILE_IO_ERROR,
+                    reports.codes.FILE_IO_ERROR,
                     file_type_code=file_type_codes.BOOTH_CONFIG,
                     file_path="",
                     reason="No such file or directory",
@@ -1606,7 +1606,7 @@ class ConfigTicketRemove(TestCase, FixtureMixin):
         self.env_assist.assert_reports(
             [
                 fixture.error(
-                    report_codes.FILE_IO_ERROR,
+                    reports.codes.FILE_IO_ERROR,
                     file_type_code=file_type_codes.BOOTH_CONFIG,
                     file_path=self.fixture_cfg_path(),
                     reason=error,
@@ -1705,7 +1705,7 @@ class CreateInCluster(TestCase, FixtureMixin):
             ),
             [
                 fixture.error(
-                    report_codes.LIVE_ENVIRONMENT_REQUIRED,
+                    reports.codes.LIVE_ENVIRONMENT_REQUIRED,
                     forbidden_options=[
                         file_type_codes.BOOTH_CONFIG,
                         file_type_codes.BOOTH_KEY,
@@ -1731,7 +1731,7 @@ class CreateInCluster(TestCase, FixtureMixin):
             )
         )
         self.env_assist.assert_reports(
-            [fixture.error(report_codes.BOOTH_ALREADY_IN_CIB, name="booth",),]
+            [fixture.error(reports.codes.BOOTH_ALREADY_IN_CIB, name="booth")]
         )
 
     def test_booth_config_does_not_exist(self):
@@ -1751,7 +1751,7 @@ class CreateInCluster(TestCase, FixtureMixin):
         self.env_assist.assert_reports(
             [
                 fixture.error(
-                    report_codes.FILE_IO_ERROR,
+                    reports.codes.FILE_IO_ERROR,
                     file_type_code=file_type_codes.BOOTH_CONFIG,
                     file_path=self.fixture_cfg_path(),
                     reason=error,
@@ -1781,8 +1781,8 @@ class CreateInCluster(TestCase, FixtureMixin):
             ),
             [
                 fixture.error(
-                    report_codes.UNABLE_TO_GET_AGENT_METADATA,
-                    force_code=report_codes.FORCE_METADATA_ISSUE,
+                    reports.codes.UNABLE_TO_GET_AGENT_METADATA,
+                    force_code=reports.codes.FORCE_METADATA_ISSUE,
                     agent="ocf:heartbeat:IPaddr2",
                     reason=REASON,
                 ),
@@ -1815,8 +1815,8 @@ class CreateInCluster(TestCase, FixtureMixin):
             ),
             [
                 fixture.error(
-                    report_codes.UNABLE_TO_GET_AGENT_METADATA,
-                    force_code=report_codes.FORCE_METADATA_ISSUE,
+                    reports.codes.UNABLE_TO_GET_AGENT_METADATA,
+                    force_code=reports.codes.FORCE_METADATA_ISSUE,
                     agent="ocf:pacemaker:booth-site",
                     reason=REASON,
                 ),
@@ -1856,12 +1856,12 @@ class CreateInCluster(TestCase, FixtureMixin):
         self.env_assist.assert_reports(
             [
                 fixture.warn(
-                    report_codes.UNABLE_TO_GET_AGENT_METADATA,
+                    reports.codes.UNABLE_TO_GET_AGENT_METADATA,
                     agent="ocf:heartbeat:IPaddr2",
                     reason=REASON,
                 ),
                 fixture.warn(
-                    report_codes.UNABLE_TO_GET_AGENT_METADATA,
+                    reports.codes.UNABLE_TO_GET_AGENT_METADATA,
                     agent="ocf:pacemaker:booth-site",
                     reason=REASON,
                 ),
@@ -1949,7 +1949,7 @@ class RemoveFromCluster(TestCase, FixtureMixin):
             ),
             [
                 fixture.error(
-                    report_codes.LIVE_ENVIRONMENT_REQUIRED,
+                    reports.codes.LIVE_ENVIRONMENT_REQUIRED,
                     forbidden_options=[
                         file_type_codes.BOOTH_CONFIG,
                         file_type_codes.BOOTH_KEY,
@@ -1970,7 +1970,7 @@ class RemoveFromCluster(TestCase, FixtureMixin):
         self.env_assist.assert_reports(
             [
                 fixture.error(
-                    report_codes.BOOTH_NOT_EXISTS_IN_CIB, name="booth",
+                    reports.codes.BOOTH_NOT_EXISTS_IN_CIB, name="booth",
                 ),
             ]
         )
@@ -1990,8 +1990,8 @@ class RemoveFromCluster(TestCase, FixtureMixin):
         self.env_assist.assert_reports(
             [
                 fixture.error(
-                    report_codes.BOOTH_MULTIPLE_TIMES_IN_CIB,
-                    force_code=report_codes.FORCE_BOOTH_REMOVE_FROM_CIB,
+                    reports.codes.BOOTH_MULTIPLE_TIMES_IN_CIB,
+                    force_code=reports.codes.FORCE_BOOTH_REMOVE_FROM_CIB,
                     name="booth",
                 ),
             ]
@@ -2012,7 +2012,7 @@ class RemoveFromCluster(TestCase, FixtureMixin):
         self.env_assist.assert_reports(
             [
                 fixture.warn(
-                    report_codes.BOOTH_MULTIPLE_TIMES_IN_CIB, name="booth",
+                    reports.codes.BOOTH_MULTIPLE_TIMES_IN_CIB, name="booth",
                 ),
             ]
         )
@@ -2081,7 +2081,7 @@ class Restart(TestCase, FixtureMixin):
             ),
             [
                 fixture.error(
-                    report_codes.LIVE_ENVIRONMENT_REQUIRED,
+                    reports.codes.LIVE_ENVIRONMENT_REQUIRED,
                     forbidden_options=[
                         file_type_codes.BOOTH_CONFIG,
                         file_type_codes.BOOTH_KEY,
@@ -2103,7 +2103,7 @@ class Restart(TestCase, FixtureMixin):
         self.env_assist.assert_reports(
             [
                 fixture.error(
-                    report_codes.BOOTH_NOT_EXISTS_IN_CIB, name="booth",
+                    reports.codes.BOOTH_NOT_EXISTS_IN_CIB, name="booth",
                 ),
             ]
         )
@@ -2123,8 +2123,8 @@ class Restart(TestCase, FixtureMixin):
         self.env_assist.assert_reports(
             [
                 fixture.error(
-                    report_codes.BOOTH_MULTIPLE_TIMES_IN_CIB,
-                    force_code=report_codes.FORCE_BOOTH_REMOVE_FROM_CIB,
+                    reports.codes.BOOTH_MULTIPLE_TIMES_IN_CIB,
+                    force_code=reports.codes.FORCE_BOOTH_REMOVE_FROM_CIB,
                     name="booth",
                 ),
             ]
@@ -2145,7 +2145,7 @@ class Restart(TestCase, FixtureMixin):
         self.env_assist.assert_reports(
             [
                 fixture.warn(
-                    report_codes.BOOTH_MULTIPLE_TIMES_IN_CIB, name="booth",
+                    reports.codes.BOOTH_MULTIPLE_TIMES_IN_CIB, name="booth",
                 ),
             ]
         )
@@ -2186,7 +2186,7 @@ class TicketGrantRevokeMixin(FixtureMixin):
             lambda: self.command(self.env_assist.get_env(), self.ticket,),
             [
                 fixture.error(
-                    report_codes.LIVE_ENVIRONMENT_REQUIRED,
+                    reports.codes.LIVE_ENVIRONMENT_REQUIRED,
                     forbidden_options=[
                         file_type_codes.BOOTH_CONFIG,
                         file_type_codes.BOOTH_KEY,
@@ -2216,7 +2216,7 @@ class TicketGrantRevokeMixin(FixtureMixin):
             lambda: self.command(self.env_assist.get_env(), self.ticket,),
             [
                 fixture.error(
-                    report_codes.BOOTH_CANNOT_DETERMINE_LOCAL_SITE_IP,
+                    reports.codes.BOOTH_CANNOT_DETERMINE_LOCAL_SITE_IP,
                 ),
             ],
             expected_in_processor=False,
@@ -2236,7 +2236,7 @@ class TicketGrantRevokeMixin(FixtureMixin):
             ),
             [
                 fixture.error(
-                    report_codes.BOOTH_TICKET_OPERATION_FAILED,
+                    reports.codes.BOOTH_TICKET_OPERATION_FAILED,
                     operation=self.operation,
                     ticket_name=self.ticket,
                     site_ip=self.site_ip,
@@ -2310,10 +2310,10 @@ class ConfigSyncTest(TestCase, FixtureMixin):
 
     def fixture_reports_success(self, instance_name="booth"):
         return [
-            fixture.info(report_codes.BOOTH_CONFIG_DISTRIBUTION_STARTED)
+            fixture.info(reports.codes.BOOTH_CONFIG_DISTRIBUTION_STARTED)
         ] + [
             fixture.info(
-                report_codes.BOOTH_CONFIG_ACCEPTED_BY_NODE,
+                reports.codes.BOOTH_CONFIG_ACCEPTED_BY_NODE,
                 node=node,
                 name_list=[instance_name],
             )
@@ -2351,8 +2351,8 @@ class ConfigSyncTest(TestCase, FixtureMixin):
             lambda: commands.config_sync(self.env_assist.get_env(),),
             [
                 fixture.error(
-                    report_codes.LIVE_ENVIRONMENT_REQUIRED,
-                    forbidden_options=[file_type_codes.CIB,],
+                    reports.codes.LIVE_ENVIRONMENT_REQUIRED,
+                    forbidden_options=[file_type_codes.CIB],
                 ),
             ],
             expected_in_processor=False,
@@ -2414,15 +2414,15 @@ class ConfigSyncTest(TestCase, FixtureMixin):
         commands.config_sync(self.env_assist.get_env(),)
         self.env_assist.assert_reports(
             [
-                fixture.info(report_codes.BOOTH_CONFIG_DISTRIBUTION_STARTED),
+                fixture.info(reports.codes.BOOTH_CONFIG_DISTRIBUTION_STARTED),
                 fixture.warn(
-                    report_codes.COROSYNC_CONFIG_MISSING_NAMES_OF_NODES,
+                    reports.codes.COROSYNC_CONFIG_MISSING_NAMES_OF_NODES,
                     fatal=False,
                 ),
             ]
             + [
                 fixture.info(
-                    report_codes.BOOTH_CONFIG_ACCEPTED_BY_NODE,
+                    reports.codes.BOOTH_CONFIG_ACCEPTED_BY_NODE,
                     node=node,
                     name_list=["booth"],
                 )
@@ -2444,10 +2444,10 @@ class ConfigSyncTest(TestCase, FixtureMixin):
         self.env_assist.assert_reports(
             [
                 fixture.warn(
-                    report_codes.COROSYNC_CONFIG_MISSING_NAMES_OF_NODES,
+                    reports.codes.COROSYNC_CONFIG_MISSING_NAMES_OF_NODES,
                     fatal=False,
                 ),
-                fixture.error(report_codes.COROSYNC_CONFIG_NO_NODES_DEFINED,),
+                fixture.error(reports.codes.COROSYNC_CONFIG_NO_NODES_DEFINED),
             ]
         )
 
@@ -2474,18 +2474,18 @@ class ConfigSyncTest(TestCase, FixtureMixin):
         )
         self.env_assist.assert_reports(
             [
-                fixture.info(report_codes.BOOTH_CONFIG_DISTRIBUTION_STARTED),
+                fixture.info(reports.codes.BOOTH_CONFIG_DISTRIBUTION_STARTED),
                 fixture.info(
-                    report_codes.BOOTH_CONFIG_ACCEPTED_BY_NODE,
+                    reports.codes.BOOTH_CONFIG_ACCEPTED_BY_NODE,
                     node=self.node_list[1],
                     name_list=["booth"],
                 ),
                 fixture.error(
-                    report_codes.NODE_COMMUNICATION_COMMAND_UNSUCCESSFUL,
+                    reports.codes.NODE_COMMUNICATION_COMMAND_UNSUCCESSFUL,
                     node=self.node_list[0],
                     reason=self.reason,
                     command="remote/booth_set_config",
-                    force_code=report_codes.SKIP_OFFLINE_NODES,
+                    force_code=reports.codes.SKIP_OFFLINE_NODES,
                 ),
             ]
         )
@@ -2512,14 +2512,14 @@ class ConfigSyncTest(TestCase, FixtureMixin):
         commands.config_sync(self.env_assist.get_env(), skip_offline_nodes=True)
         self.env_assist.assert_reports(
             [
-                fixture.info(report_codes.BOOTH_CONFIG_DISTRIBUTION_STARTED),
+                fixture.info(reports.codes.BOOTH_CONFIG_DISTRIBUTION_STARTED),
                 fixture.info(
-                    report_codes.BOOTH_CONFIG_ACCEPTED_BY_NODE,
+                    reports.codes.BOOTH_CONFIG_ACCEPTED_BY_NODE,
                     node=self.node_list[1],
                     name_list=["booth"],
                 ),
                 fixture.warn(
-                    report_codes.NODE_COMMUNICATION_COMMAND_UNSUCCESSFUL,
+                    reports.codes.NODE_COMMUNICATION_COMMAND_UNSUCCESSFUL,
                     node=self.node_list[0],
                     reason=self.reason,
                     command="remote/booth_set_config",
@@ -2552,18 +2552,18 @@ class ConfigSyncTest(TestCase, FixtureMixin):
         )
         self.env_assist.assert_reports(
             [
-                fixture.info(report_codes.BOOTH_CONFIG_DISTRIBUTION_STARTED),
+                fixture.info(reports.codes.BOOTH_CONFIG_DISTRIBUTION_STARTED),
                 fixture.info(
-                    report_codes.BOOTH_CONFIG_ACCEPTED_BY_NODE,
+                    reports.codes.BOOTH_CONFIG_ACCEPTED_BY_NODE,
                     node=self.node_list[1],
                     name_list=["booth"],
                 ),
                 fixture.error(
-                    report_codes.NODE_COMMUNICATION_ERROR_UNABLE_TO_CONNECT,
+                    reports.codes.NODE_COMMUNICATION_ERROR_UNABLE_TO_CONNECT,
                     node=self.node_list[0],
                     reason=self.reason,
                     command="remote/booth_set_config",
-                    force_code=report_codes.SKIP_OFFLINE_NODES,
+                    force_code=reports.codes.SKIP_OFFLINE_NODES,
                 ),
             ]
         )
@@ -2591,14 +2591,14 @@ class ConfigSyncTest(TestCase, FixtureMixin):
         commands.config_sync(self.env_assist.get_env(), skip_offline_nodes=True)
         self.env_assist.assert_reports(
             [
-                fixture.info(report_codes.BOOTH_CONFIG_DISTRIBUTION_STARTED),
+                fixture.info(reports.codes.BOOTH_CONFIG_DISTRIBUTION_STARTED),
                 fixture.info(
-                    report_codes.BOOTH_CONFIG_ACCEPTED_BY_NODE,
+                    reports.codes.BOOTH_CONFIG_ACCEPTED_BY_NODE,
                     node=self.node_list[1],
                     name_list=["booth"],
                 ),
                 fixture.warn(
-                    report_codes.NODE_COMMUNICATION_ERROR_UNABLE_TO_CONNECT,
+                    reports.codes.NODE_COMMUNICATION_ERROR_UNABLE_TO_CONNECT,
                     node=self.node_list[0],
                     reason=self.reason,
                     command="remote/booth_set_config",
@@ -2620,7 +2620,7 @@ class ConfigSyncTest(TestCase, FixtureMixin):
         self.env_assist.assert_reports(
             [
                 fixture.error(
-                    report_codes.FILE_IO_ERROR,
+                    reports.codes.FILE_IO_ERROR,
                     file_type_code=file_type_codes.BOOTH_CONFIG,
                     file_path=self.fixture_cfg_path(),
                     reason=self.reason,
@@ -2644,7 +2644,7 @@ class ConfigSyncTest(TestCase, FixtureMixin):
         self.env_assist.assert_reports(
             [
                 fixture.error(
-                    report_codes.FILE_IO_ERROR,
+                    reports.codes.FILE_IO_ERROR,
                     file_type_code=file_type_codes.BOOTH_CONFIG,
                     file_path="",
                     reason="No such file or directory",
@@ -2667,7 +2667,7 @@ class ConfigSyncTest(TestCase, FixtureMixin):
         self.env_assist.assert_reports(
             [
                 fixture.error(
-                    report_codes.BOOTH_CONFIG_UNEXPECTED_LINES,
+                    reports.codes.BOOTH_CONFIG_UNEXPECTED_LINES,
                     line_list=["invalid config"],
                     file_path=self.fixture_cfg_path(),
                 ),
@@ -2689,7 +2689,7 @@ class ConfigSyncTest(TestCase, FixtureMixin):
         self.env_assist.assert_reports(
             [
                 fixture.error(
-                    report_codes.BOOTH_CONFIG_UNEXPECTED_LINES,
+                    reports.codes.BOOTH_CONFIG_UNEXPECTED_LINES,
                     line_list=["invalid config"],
                     file_path=None,
                 ),
@@ -2718,7 +2718,7 @@ class ConfigSyncTest(TestCase, FixtureMixin):
         self.env_assist.assert_reports(
             [
                 fixture.error(
-                    report_codes.FILE_IO_ERROR,
+                    reports.codes.FILE_IO_ERROR,
                     file_type_code=file_type_codes.BOOTH_KEY,
                     file_path=self.fixture_key_path(),
                     reason=self.reason,
@@ -2742,7 +2742,7 @@ class ConfigSyncTest(TestCase, FixtureMixin):
         self.env_assist.assert_reports(
             [
                 fixture.error(
-                    report_codes.FILE_IO_ERROR,
+                    reports.codes.FILE_IO_ERROR,
                     file_type_code=file_type_codes.BOOTH_KEY,
                     file_path="",
                     reason="No such file or directory",
@@ -2765,10 +2765,10 @@ class ConfigSyncTest(TestCase, FixtureMixin):
         )
         commands.config_sync(self.env_assist.get_env())
         self.env_assist.assert_reports(
-            [fixture.info(report_codes.BOOTH_CONFIG_DISTRIBUTION_STARTED)]
+            [fixture.info(reports.codes.BOOTH_CONFIG_DISTRIBUTION_STARTED)]
             + [
                 fixture.info(
-                    report_codes.BOOTH_CONFIG_ACCEPTED_BY_NODE,
+                    reports.codes.BOOTH_CONFIG_ACCEPTED_BY_NODE,
                     node=node,
                     name_list=["booth"],
                 )
@@ -2793,16 +2793,16 @@ class ConfigSyncTest(TestCase, FixtureMixin):
         self.env_assist.assert_reports(
             [
                 fixture.warn(
-                    report_codes.BOOTH_UNSUPPORTED_FILE_LOCATION,
+                    reports.codes.BOOTH_UNSUPPORTED_FILE_LOCATION,
                     file_type_code=file_type_codes.BOOTH_KEY,
                     file_path="/etc/my_booth.key",
                     expected_dir=settings.booth_config_dir,
                 ),
-                fixture.info(report_codes.BOOTH_CONFIG_DISTRIBUTION_STARTED),
+                fixture.info(reports.codes.BOOTH_CONFIG_DISTRIBUTION_STARTED),
             ]
             + [
                 fixture.info(
-                    report_codes.BOOTH_CONFIG_ACCEPTED_BY_NODE,
+                    reports.codes.BOOTH_CONFIG_ACCEPTED_BY_NODE,
                     node=node,
                     name_list=["booth"],
                 )
@@ -2841,7 +2841,7 @@ class EnableDisableStartStopMixin(FixtureMixin):
             ),
             [
                 fixture.error(
-                    report_codes.UNSUPPORTED_OPERATION_ON_NON_SYSTEMD_SYSTEMS,
+                    reports.codes.UNSUPPORTED_OPERATION_ON_NON_SYSTEMD_SYSTEMS,
                 ),
             ],
             expected_in_processor=False,
@@ -2860,7 +2860,7 @@ class EnableDisableStartStopMixin(FixtureMixin):
             lambda: self.command(self.env_assist.get_env(),),
             [
                 fixture.error(
-                    report_codes.LIVE_ENVIRONMENT_REQUIRED,
+                    reports.codes.LIVE_ENVIRONMENT_REQUIRED,
                     forbidden_options=[
                         file_type_codes.BOOTH_CONFIG,
                         file_type_codes.BOOTH_KEY,
@@ -2976,12 +2976,12 @@ class PullConfigBase(TestCase, FixtureMixin):
         self.node_name = "node"
         self.report_list = [
             fixture.info(
-                report_codes.BOOTH_FETCHING_CONFIG_FROM_NODE,
+                reports.codes.BOOTH_FETCHING_CONFIG_FROM_NODE,
                 node=self.node_name,
                 config=self.name,
             ),
             fixture.info(
-                report_codes.BOOTH_CONFIG_ACCEPTED_BY_NODE,
+                reports.codes.BOOTH_CONFIG_ACCEPTED_BY_NODE,
                 node="",
                 name_list=[self.name],
             ),
@@ -3018,12 +3018,12 @@ class PullConfigSuccessCustomInstance(TestCase, FixtureMixin):
         self.node_name = "node"
         self.report_list = [
             fixture.info(
-                report_codes.BOOTH_FETCHING_CONFIG_FROM_NODE,
+                reports.codes.BOOTH_FETCHING_CONFIG_FROM_NODE,
                 node=self.node_name,
                 config=self.name,
             ),
             fixture.info(
-                report_codes.BOOTH_CONFIG_ACCEPTED_BY_NODE,
+                reports.codes.BOOTH_CONFIG_ACCEPTED_BY_NODE,
                 node=None,
                 name_list=[self.name],
             ),
@@ -3048,12 +3048,12 @@ class PullConfigSuccessCustomInstance(TestCase, FixtureMixin):
         self.env_assist.assert_reports(
             [
                 fixture.info(
-                    report_codes.BOOTH_FETCHING_CONFIG_FROM_NODE,
+                    reports.codes.BOOTH_FETCHING_CONFIG_FROM_NODE,
                     node=self.node_name,
                     config=self.name,
                 ),
                 fixture.info(
-                    report_codes.BOOTH_CONFIG_ACCEPTED_BY_NODE,
+                    reports.codes.BOOTH_CONFIG_ACCEPTED_BY_NODE,
                     node="",
                     name_list=[self.name],
                 ),
@@ -3091,7 +3091,7 @@ class PullConfigFailure(PullConfigBase):
             ),
             [
                 fixture.error(
-                    report_codes.LIVE_ENVIRONMENT_REQUIRED,
+                    reports.codes.LIVE_ENVIRONMENT_REQUIRED,
                     forbidden_options=[
                         file_type_codes.BOOTH_CONFIG,
                         file_type_codes.BOOTH_KEY,
@@ -3126,7 +3126,7 @@ class PullConfigFailure(PullConfigBase):
             self.report_list[:1]
             + [
                 fixture.error(
-                    report_codes.FILE_IO_ERROR,
+                    reports.codes.FILE_IO_ERROR,
                     file_type_code=file_type_codes.BOOTH_CONFIG,
                     file_path=self.config_path,
                     reason=self.reason,
@@ -3158,7 +3158,7 @@ class PullConfigFailure(PullConfigBase):
             [
                 self.report_list[0],
                 fixture.error(
-                    report_codes.NODE_COMMUNICATION_ERROR_UNABLE_TO_CONNECT,
+                    reports.codes.NODE_COMMUNICATION_ERROR_UNABLE_TO_CONNECT,
                     force_code=None,
                     node=self.node_name,
                     command="remote/booth_get_config",
@@ -3187,7 +3187,7 @@ class PullConfigFailure(PullConfigBase):
             [
                 self.report_list[0],
                 fixture.error(
-                    report_codes.NODE_COMMUNICATION_COMMAND_UNSUCCESSFUL,
+                    reports.codes.NODE_COMMUNICATION_COMMAND_UNSUCCESSFUL,
                     force_code=None,
                     node=self.node_name,
                     command="remote/booth_get_config",
@@ -3212,7 +3212,7 @@ class PullConfigFailure(PullConfigBase):
             [
                 self.report_list[0],
                 fixture.error(
-                    report_codes.INVALID_RESPONSE_FORMAT, node=self.node_name,
+                    reports.codes.INVALID_RESPONSE_FORMAT, node=self.node_name,
                 ),
             ]
         )
@@ -3235,7 +3235,7 @@ class PullConfigFailure(PullConfigBase):
             [
                 self.report_list[0],
                 fixture.error(
-                    report_codes.INVALID_RESPONSE_FORMAT, node=self.node_name,
+                    reports.codes.INVALID_RESPONSE_FORMAT, node=self.node_name,
                 ),
             ]
         )
@@ -3308,7 +3308,7 @@ class PullConfigWithAuthfileFailure(PullConfigWithAuthfile):
             self.report_list[:1]
             + [
                 fixture.error(
-                    report_codes.FILE_IO_ERROR,
+                    reports.codes.FILE_IO_ERROR,
                     file_type_code=file_type_codes.BOOTH_KEY,
                     file_path=self.authfile_path,
                     reason=self.reason,
@@ -3345,7 +3345,7 @@ class GetStatus(TestCase):
             lambda: commands.get_status(self.env_assist.get_env(),),
             [
                 fixture.error(
-                    report_codes.LIVE_ENVIRONMENT_REQUIRED,
+                    reports.codes.LIVE_ENVIRONMENT_REQUIRED,
                     forbidden_options=[
                         file_type_codes.BOOTH_CONFIG,
                         file_type_codes.BOOTH_KEY,
@@ -3392,7 +3392,7 @@ class GetStatus(TestCase):
             lambda: commands.get_status(self.env_assist.get_env()),
             [
                 fixture.error(
-                    report_codes.BOOTH_DAEMON_STATUS_ERROR,
+                    reports.codes.BOOTH_DAEMON_STATUS_ERROR,
                     reason="some error\nsome output",
                 ),
             ],
@@ -3411,7 +3411,7 @@ class GetStatus(TestCase):
             lambda: commands.get_status(self.env_assist.get_env()),
             [
                 fixture.error(
-                    report_codes.BOOTH_TICKET_STATUS_ERROR,
+                    reports.codes.BOOTH_TICKET_STATUS_ERROR,
                     reason="some error\nsome output",
                 ),
             ],
@@ -3432,7 +3432,7 @@ class GetStatus(TestCase):
             lambda: commands.get_status(self.env_assist.get_env()),
             [
                 fixture.error(
-                    report_codes.BOOTH_PEERS_STATUS_ERROR,
+                    reports.codes.BOOTH_PEERS_STATUS_ERROR,
                     reason="some error\nsome output",
                 ),
             ],

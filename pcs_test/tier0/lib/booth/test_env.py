@@ -107,7 +107,7 @@ class BoothEnv(TestCase):
             fixture.error(
                 report_codes.BOOTH_INVALID_NAME,
                 name="/tmp/booth/booth",
-                reason="contains illegal character '/'",
+                forbidden_characters="/",
             ),
         )
 
@@ -125,7 +125,7 @@ class BoothEnv(TestCase):
             fixture.error(
                 report_codes.BOOTH_INVALID_NAME,
                 name="../../booth/booth",
-                reason="contains illegal character '/'",
+                forbidden_characters="/",
             ),
         )
 

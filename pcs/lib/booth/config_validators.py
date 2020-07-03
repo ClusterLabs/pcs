@@ -19,12 +19,9 @@ def check_instance_name(name):
     """
     report_list = []
     if "/" in name:
-        # TODO drop plaintext from the report
         report_list.append(
             ReportItem.error(
-                report.messages.BoothInvalidName(
-                    name, "contains illegal character '/'",
-                )
+                report.messages.BoothInvalidName(name, forbidden_characters="/")
             )
         )
     return report_list

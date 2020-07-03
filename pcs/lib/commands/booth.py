@@ -1,6 +1,7 @@
 import base64
-import os.path
 from functools import partial
+import os.path
+from typing import Optional
 
 from pcs import settings
 from pcs.common import file_type_codes
@@ -99,31 +100,33 @@ def config_setup(
 
 def config_destroy(
     env: LibraryEnvironment,
-    instance_name=None,
-    ignore_config_load_problems=False,
-):
+    instance_name: Optional[str] = None,
+    ignore_config_load_problems: bool = False,
+) -> None:
     # pylint: disable=too-many-branches
     """
     remove booth configuration files
 
     env
-    string instance_name -- booth instance name
-    bool ignore_config_load_problems -- delete as much as possible when unable
-            to read booth configs for the given booth instance
+    instance_name -- booth instance name
+    ignore_config_load_problems -- delete as much as possible when unable to
+        read booth configs for the given booth instance
     """
     report_processor = env.report_processor
     booth_env = env.get_booth_env(instance_name)
-    instance_name = booth_env.instance_name
+    found_instance_name = booth_env.instance_name
     _ensure_live_env(env, booth_env)
 
-    # TODO use constants in reports
-    if resource.find_for_config(
+    booth_resource_list = resource.find_for_config(
         get_resources(env.get_cib()), booth_env.config_path,
-    ):
+    )
+    if booth_resource_list:
         report_processor.report(
             ReportItem.error(
                 reports.messages.BoothConfigIsUsed(
-                    instance_name, "in cluster resource",
+                    found_instance_name,
+                    reports.const.BOOTH_CONFIG_USED_IN_CLUSTER_RESOURCE,
+                    resource_name=booth_resource_list[0].get("id", ""),
                 )
             )
         )
@@ -131,23 +134,25 @@ def config_destroy(
     # instances (here specified by name)
     if external.is_systemctl():
         if external.is_service_running(
-            env.cmd_runner(), "booth", instance_name
+            env.cmd_runner(), "booth", found_instance_name
         ):
             report_processor.report(
                 ReportItem.error(
                     reports.messages.BoothConfigIsUsed(
-                        instance_name, "(running in systemd)",
+                        found_instance_name,
+                        reports.const.BOOTH_CONFIG_USED_RUNNING_IN_SYSTEMD,
                     )
                 )
             )
 
         if external.is_service_enabled(
-            env.cmd_runner(), "booth", instance_name
+            env.cmd_runner(), "booth", found_instance_name
         ):
             report_processor.report(
                 ReportItem.error(
                     reports.messages.BoothConfigIsUsed(
-                        instance_name, "(enabled in systemd)",
+                        found_instance_name,
+                        reports.const.BOOTH_CONFIG_USED_ENABLED_IN_SYSTEMD,
                     )
                 )
             )

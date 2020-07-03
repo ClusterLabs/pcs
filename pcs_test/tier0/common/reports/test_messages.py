@@ -4251,8 +4251,8 @@ class BoothConfigUnexpectedLines(NameBuildTest):
 class BoothInvalidName(NameBuildTest):
     def test_success(self):
         self.assert_message_from_report(
-            "booth name '/name' is not valid (invalid characters)",
-            reports.BoothInvalidName("/name", "invalid characters"),
+            "booth name '/name' is not valid, it cannot contain /{} characters",
+            reports.BoothInvalidName("/name", "/{}"),
         )
 
 
@@ -4300,15 +4300,36 @@ class BoothNotExistsInCib(NameBuildTest):
 
 
 class BoothConfigIsUsed(NameBuildTest):
-    def test_minimal(self):
+    def test_cluster(self):
         self.assert_message_from_report(
-            "booth instance 'name' is used", reports.BoothConfigIsUsed("name"),
+            "booth instance 'name' is used in a cluster resource",
+            reports.BoothConfigIsUsed(
+                "name", reports.const.BOOTH_CONFIG_USED_IN_CLUSTER_RESOURCE
+            ),
         )
 
-    def test_all(self):
+    def test_cluster_resource(self):
         self.assert_message_from_report(
-            "booth instance 'name' is used some details",
-            reports.BoothConfigIsUsed("name", detail="some details"),
+            "booth instance 'name' is used in cluster resource 'R'",
+            reports.BoothConfigIsUsed(
+                "name", reports.const.BOOTH_CONFIG_USED_IN_CLUSTER_RESOURCE, "R"
+            ),
+        )
+
+    def test_systemd_enabled(self):
+        self.assert_message_from_report(
+            "booth instance 'name' is used - it is enabled in systemd",
+            reports.BoothConfigIsUsed(
+                "name", reports.const.BOOTH_CONFIG_USED_ENABLED_IN_SYSTEMD
+            ),
+        )
+
+    def test_systemd_running(self):
+        self.assert_message_from_report(
+            "booth instance 'name' is used - it is running by systemd",
+            reports.BoothConfigIsUsed(
+                "name", reports.const.BOOTH_CONFIG_USED_RUNNING_IN_SYSTEMD
+            ),
         )
 
 

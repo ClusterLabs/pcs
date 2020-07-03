@@ -5810,20 +5810,22 @@ class BoothConfigUnexpectedLines(ReportItemMessage):
 @dataclass(frozen=True)
 class BoothInvalidName(ReportItemMessage):
     """
-    Booth instance name have rules. For example it cannot contain illegal
-    characters like '/'. But some of rules was violated.
+    Booth instance name is not valid
 
     name -- entered booth instance name
-    reason -- decription of the error
+    forbidden_characters -- characters the name cannot contain
     """
 
     name: str
-    reason: str
+    forbidden_characters: str
     _code = codes.BOOTH_INVALID_NAME
 
     @property
     def message(self) -> str:
-        return f"booth name '{self.name}' is not valid ({self.reason})"
+        return (
+            f"booth name '{self.name}' is not valid, it cannot contain "
+            f"{self.forbidden_characters} characters"
+        )
 
 
 @dataclass(frozen=True)
@@ -5925,19 +5927,31 @@ class BoothConfigIsUsed(ReportItemMessage):
     Booth config use detected during destroy request.
 
     name -- booth instance name
-    detail -- provide more details (for example booth instance is used as
+    detail -- provides more details (for example booth instance is used as
         cluster resource or is started/enabled under systemd)
+    resource_name -- which resource uses the booth instance, only valid if
+        detail == BOOTH_CONFIG_USED_IN_CLUSTER_RESOURCE
     """
 
     name: str
-    detail: str = ""
+    detail: types.BoothConfigUsedWhere
+    resource_name: Optional[str] = None
     _code = codes.BOOTH_CONFIG_IS_USED
 
     @property
     def message(self) -> str:
-        return "booth instance '{name}' is used{detail}".format(
-            name=self.name, detail=format_optional(self.detail, " {}"),
-        )
+        detail_map = {
+            const.BOOTH_CONFIG_USED_IN_CLUSTER_RESOURCE: "in a cluster resource",
+            const.BOOTH_CONFIG_USED_ENABLED_IN_SYSTEMD: "- it is enabled in systemd",
+            const.BOOTH_CONFIG_USED_RUNNING_IN_SYSTEMD: "- it is running by systemd",
+        }
+        detail = detail_map.get(self.detail, str(self.detail))
+        if (
+            self.detail == const.BOOTH_CONFIG_USED_IN_CLUSTER_RESOURCE
+            and self.resource_name
+        ):
+            detail = f"in cluster resource '{self.resource_name}'"
+        return f"booth instance '{self.name}' is used {detail}"
 
 
 @dataclass(frozen=True)
