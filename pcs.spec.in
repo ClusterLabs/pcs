@@ -5,11 +5,17 @@
 Name: pcs
 Version: %{pcs_git_version}
 Release: 99.git.%{numcommit}.%{commit}.1%{?dist}
+# https://docs.fedoraproject.org/en-US/packaging-guidelines/LicensingGuidelines/
 # https://fedoraproject.org/wiki/Licensing:Main?rd=Licensing#Good_Licenses
 # GPLv2: pcs
-# ASL 2.0: tornado
-# MIT: handlebars
-License: GPLv2 and ASL 2.0 and MIT
+# ASL 2.0: dataclasses, tornado
+# MIT: handlebars, backports, dacite, daemons, ethon, mustermann, rack,
+#      rack-protection, rack-test, sinatra, tilt
+# GPLv2 or Ruby: eventmachne, json
+# (GPLv2 or Ruby) and BSD: thin
+# BSD or Ruby: open4, ruby2_keywords
+# BSD and MIT: ffi
+License: GPLv2 and ASL 2.0 and MIT and BSD and (GPLv2 or Ruby) and (BSD or Ruby)
 URL: https://github.com/ClusterLabs/pcs
 Summary: Pacemaker Configuration System
 
@@ -330,6 +336,25 @@ gem install \
   -- '--with-ldflags=-Wl,-z,relro -Wl,-z,ibt -Wl,-z,now -Wl,--gc-sections' \
      '--with-cflags=-O2 -ffunction-sections'
 
+# prepare license files
+# some rubygems do not have a license file (ruby2_keywords, thin)
+mv %{rubygem_bundle_dir}/gems/backports-%{version_rubygem_backports}/LICENSE.txt backports_LICENSE.txt
+mv %{rubygem_bundle_dir}/gems/daemons-%{version_rubygem_daemons}/LICENSE daemons_LICENSE
+mv %{rubygem_bundle_dir}/gems/ethon-%{version_rubygem_ethon}/LICENSE ethon_LICENSE
+mv %{rubygem_bundle_dir}/gems/eventmachine-%{version_rubygem_eventmachine}/LICENSE eventmachine_LICENSE
+mv %{rubygem_bundle_dir}/gems/eventmachine-%{version_rubygem_eventmachine}/GNU eventmachine_GNU
+mv %{rubygem_bundle_dir}/gems/ffi-%{version_rubygem_ffi}/COPYING ffi_COPYING
+mv %{rubygem_bundle_dir}/gems/ffi-%{version_rubygem_ffi}/LICENSE ffi_LICENSE
+mv %{rubygem_bundle_dir}/gems/ffi-%{version_rubygem_ffi}/LICENSE.SPECS ffi_LICENSE.SPECS
+mv %{rubygem_bundle_dir}/gems/json-%{version_rubygem_json}/LICENSE json_LICENSE
+mv %{rubygem_bundle_dir}/gems/mustermann-%{version_rubygem_mustermann}/LICENSE mustermann_LICENSE
+mv %{rubygem_bundle_dir}/gems/open4-%{version_rubygem_open4}/LICENSE open4_LICENSE
+mv %{rubygem_bundle_dir}/gems/rack-%{version_rubygem_rack}/MIT-LICENSE rack_MIT-LICENSE
+mv %{rubygem_bundle_dir}/gems/rack-protection-%{version_rubygem_rack_protection}/License rack-protection_License
+mv %{rubygem_bundle_dir}/gems/rack-test-%{version_rubygem_rack_test}/MIT-LICENSE.txt rack-test_MIT-LICENSE.txt
+mv %{rubygem_bundle_dir}/gems/sinatra-%{version_rubygem_sinatra}/LICENSE sinatra_LICENSE
+mv %{rubygem_bundle_dir}/gems/tilt-%{version_rubygem_tilt}/COPYING tilt_COPYING
+
 # We can remove files required for gem compilation
 rm -rf %{rubygem_bundle_dir}/gems/ffi-%{version_rubygem_ffi}/ext
 rm -rf %{rubygem_bundle_dir}/gems/json-%{version_rubygem_json}/ext
@@ -426,6 +451,23 @@ rm -r -v ${pcsd_dir}/public/js/dev
 %license dataclasses_LICENSE.txt
 %endif
 %license COPYING
+# rugygem licenses
+%license backports_LICENSE.txt
+%license daemons_LICENSE
+%license ethon_LICENSE
+%license eventmachine_LICENSE
+%license eventmachine_GNU
+%license ffi_COPYING
+%license ffi_LICENSE
+%license ffi_LICENSE.SPECS
+%license json_LICENSE
+%license mustermann_LICENSE
+%license open4_LICENSE
+%license rack_MIT-LICENSE
+%license rack-protection_License
+%license rack-test_MIT-LICENSE.txt
+%license sinatra_LICENSE
+%license tilt_COPYING
 %{python3_sitelib}/pcs
 %{python3_sitelib}/pcs-*.egg-info
 %{_sbindir}/pcs
