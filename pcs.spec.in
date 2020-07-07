@@ -113,7 +113,6 @@ Source101: https://github.com/idevat/pcs-web-ui/releases/download/%{ui_commit}/p
 
 #printf from coreutils is used in makefile
 BuildRequires: coreutils
-BuildRequires: execstack
 BuildRequires: tar
 
 # python for pcs
@@ -189,6 +188,8 @@ Requires(postun): systemd
 # pam is used for authentication inside daemon (python ctypes)
 # more details: https://bugzilla.redhat.com/show_bug.cgi?id=1717113
 Requires: pam
+# needs logrotate for /etc/logrotate.d/pcsd
+Requires: logrotate
 # pcsd fonts
 Recommends: liberation-sans-fonts
 Recommends: overpass-fonts
@@ -356,8 +357,10 @@ mv %{rubygem_bundle_dir}/gems/sinatra-%{version_rubygem_sinatra}/LICENSE sinatra
 mv %{rubygem_bundle_dir}/gems/tilt-%{version_rubygem_tilt}/COPYING tilt_COPYING
 
 # We can remove files required for gem compilation
+rm -rf %{rubygem_bundle_dir}/gems/eventmachine-%{version_rubygem_eventmachine}/ext
 rm -rf %{rubygem_bundle_dir}/gems/ffi-%{version_rubygem_ffi}/ext
 rm -rf %{rubygem_bundle_dir}/gems/json-%{version_rubygem_json}/ext
+rm -rf %{rubygem_bundle_dir}/gems/thin-%{version_rubygem_thin}/ext
 
 
 # With this file there is "File is not stripped" problem during rpmdiff
@@ -485,7 +488,7 @@ rm -r -v ${pcsd_dir}/public/js/dev
 %{_unitdir}/pcsd-ruby.service
 %{_datadir}/bash-completion/completions/pcs
 %{_sharedstatedir}/pcsd
-%{_sysconfdir}/pam.d/pcsd
+%config(noreplace) %{_sysconfdir}/pam.d/pcsd
 %dir %{_var}/log/pcsd
 %config(noreplace) %{_sysconfdir}/logrotate.d/pcsd
 %config(noreplace) %{_sysconfdir}/sysconfig/pcsd
