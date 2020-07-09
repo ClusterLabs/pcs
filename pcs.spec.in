@@ -28,7 +28,7 @@ Summary: Pacemaker Configuration System
 %global pyagentx_version   0.4.pcs.2
 %global tornado_version    6.0.4
 %global dataclasses_version 0.6
-%global dacite_version 1.5.0.python3.9.fix
+%global dacite_version 1.5.1
 %global version_rubygem_backports  3.17.2
 %global version_rubygem_daemons  1.3.1
 %global version_rubygem_ethon  0.12.0
@@ -84,9 +84,7 @@ Source42: https://github.com/tornadoweb/tornado/archive/v%{tornado_version}/torn
 %if %{defined dataclasses_required}
 Source43: https://github.com/ericvsmith/dataclasses/archive/%{dataclasses_version}/dataclasses-%{dataclasses_version}.tar.gz
 %endif
-# Temporarily use patched version of dacite until it is fixed in upstream
-# Source44: https://github.com/konradhalas/dacite/archive/v%%{dacite_version}/dacite-%%{dacite_version}.tar.gz
-Source44: https://github.com/ondrejmular/dacite/archive/v%{dacite_version}/dacite-%{dacite_version}.tar.gz
+Source44: https://github.com/konradhalas/dacite/archive/v%{dacite_version}/dacite-%{dacite_version}.tar.gz
 
 Source81: https://rubygems.org/downloads/backports-%{version_rubygem_backports}.gem
 Source82: https://rubygems.org/downloads/ethon-%{version_rubygem_ethon}.gem
