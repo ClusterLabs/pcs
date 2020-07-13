@@ -64,14 +64,63 @@ FIXTURE_AGROUP_XML = fixture_group_xml(
 )
 
 
-class TestGroupMixin(
-    get_assert_pcs_effect_mixin(
-        lambda cib: etree.tostring(
-            # pylint:disable=undefined-variable
-            etree.parse(cib).findall(".//resources")[0]
-        )
-    ),
-):
+FIXTURE_CONSTRAINTS_CONFIG_XML = """
+    <constraints>
+        <rsc_location id="location-AGroup-rh7-1-INFINITY" node="rh7-1"
+            rsc="AGroup" score="INFINITY"/>
+        <rsc_location id="location-TagGroupOnly-rh7-1-INFINITY"
+            node="rh7-1" rsc="TagGroupOnly" score="INFINITY"/>
+    </constraints>
+"""
+
+FIXTURE_CLONE_TAG_CONSTRAINTS = """
+    <constraints>
+        <rsc_location id="location-AGroup-rh7-1-INFINITY" node="rh7-1"
+            rsc="AGroup-clone" score="INFINITY"
+        />
+        <rsc_location id="location-TagGroupOnly-rh7-1-INFINITY"
+            node="rh7-1" rsc="TagGroupOnly" score="INFINITY"
+        />
+    </constraints>
+"""
+
+
+FIXTURE_CLONE_CONSTRAINT = """
+    <constraints>
+        <rsc_location id="location-AGroup-rh7-1-INFINITY" node="rh7-1"
+            rsc="AGroup-clone" score="INFINITY"
+        />
+    </constraints>
+"""
+
+
+FIXTURE_TAGS_CONFIG_XML = """
+    <tags>
+        <tag id="TagGroupOnly">
+            <obj_ref id="AGroup"/>
+        </tag>
+        <tag id="TagNotGroupOnly">
+            <obj_ref id="AGroup"/>
+            <obj_ref id="A1"/>
+            <obj_ref id="A2"/>
+            <obj_ref id="A3"/>
+        </tag>
+    </tags>
+"""
+
+
+FIXTURE_TAGS_RESULT_XML = """
+    <tags>
+        <tag id="TagNotGroupOnly">
+            <obj_ref id="A1"/>
+            <obj_ref id="A2"/>
+            <obj_ref id="A3"/>
+        </tag>
+    </tags>
+"""
+
+
+class TestGroupMixin:
     empty_cib = rc("cib-empty.xml")
 
     def setUp(self):
@@ -81,17 +130,7 @@ class TestGroupMixin(
         xml_manip = XmlManipulation.from_file(self.empty_cib)
         xml_manip.append_to_first_tag_name("resources", FIXTURE_AGROUP_XML)
         xml_manip.append_to_first_tag_name(
-            "configuration",
-            """
-            <tags>
-                <tag id="T1">
-                    <obj_ref id="AGroup"/>
-                </tag>
-                <tag id="T2">
-                    <obj_ref id="AGroup"/>
-                </tag>
-            </tags>
-            """,
+            "configuration", FIXTURE_TAGS_CONFIG_XML,
         )
         xml_manip.append_to_first_tag_name(
             "constraints",
@@ -100,8 +139,8 @@ class TestGroupMixin(
                 rsc="AGroup" score="INFINITY"/>
             """,
             """
-            <rsc_location id="location-T1-rh7-1-INFINITY" node="rh7-1" rsc="T1"
-                score="INFINITY"/>
+            <rsc_location id="location-TagGroupOnly-rh7-1-INFINITY"
+                node="rh7-1" rsc="TagGroupOnly" score="INFINITY"/>
             """,
         )
         write_data_to_tmpfile(str(xml_manip), self.temp_cib)
@@ -111,8 +150,32 @@ class TestGroupMixin(
         self.temp_cib.close()
 
 
-class GroupDeleteRemoveUngroupBase(TestGroupMixin):
+class GroupDeleteRemoveUngroupBase(
+    get_assert_pcs_effect_mixin(
+        lambda cib: etree.tostring(
+            # pylint:disable=undefined-variable
+            etree.parse(cib).findall(".//resources")[0]
+        )
+    ),
+    TestGroupMixin,
+):
     command = None
+
+    def assert_tags_xml(self, expected_xml):
+        self.assert_resources_xml_in_cib(
+            expected_xml,
+            get_cib_part_func=lambda cib: etree.tostring(
+                etree.parse(cib).findall(".//tags")[0],
+            ),
+        )
+
+    def assert_constraint_xml(self, expected_xml):
+        self.assert_resources_xml_in_cib(
+            expected_xml,
+            get_cib_part_func=lambda cib: etree.tostring(
+                etree.parse(cib).findall(".//constraints")[0],
+            ),
+        )
 
     def test_nonexistent_group(self):
         self.assert_pcs_fail(
@@ -122,6 +185,8 @@ class GroupDeleteRemoveUngroupBase(TestGroupMixin):
         self.assert_resources_xml_in_cib(
             fixture_resources_xml([FIXTURE_AGROUP_XML]),
         )
+        self.assert_tags_xml(FIXTURE_TAGS_CONFIG_XML)
+        self.assert_constraint_xml(FIXTURE_CONSTRAINTS_CONFIG_XML)
 
     def test_not_a_group_id(self):
         self.assert_pcs_fail(
@@ -130,6 +195,8 @@ class GroupDeleteRemoveUngroupBase(TestGroupMixin):
         self.assert_resources_xml_in_cib(
             fixture_resources_xml([FIXTURE_AGROUP_XML]),
         )
+        self.assert_tags_xml(FIXTURE_TAGS_CONFIG_XML)
+        self.assert_constraint_xml(FIXTURE_CONSTRAINTS_CONFIG_XML)
 
     def test_whole_group(self):
         self.assert_effect(
@@ -142,10 +209,12 @@ class GroupDeleteRemoveUngroupBase(TestGroupMixin):
                 ],
             ),
             output=(
-                "Removing Constraint - location-T1-rh7-1-INFINITY\n"
+                "Removing Constraint - location-TagGroupOnly-rh7-1-INFINITY\n"
                 "Removing Constraint - location-AGroup-rh7-1-INFINITY\n"
             ),
         )
+        self.assert_tags_xml(FIXTURE_TAGS_RESULT_XML)
+        self.assert_constraint_xml("<constraints/>")
 
     def test_specified_resources(self):
         self.assert_effect(
@@ -160,6 +229,26 @@ class GroupDeleteRemoveUngroupBase(TestGroupMixin):
                 ],
             ),
         )
+        self.assert_tags_xml(FIXTURE_TAGS_CONFIG_XML)
+        self.assert_constraint_xml(FIXTURE_CONSTRAINTS_CONFIG_XML)
+
+    def test_all_resources(self):
+        self.assert_effect(
+            f"resource {self.command} AGroup A1 A2 A3",
+            fixture_resources_xml(
+                [
+                    fixture_primitive_xml("A1"),
+                    fixture_primitive_xml("A2"),
+                    fixture_primitive_xml("A3"),
+                ],
+            ),
+            output=(
+                "Removing Constraint - location-TagGroupOnly-rh7-1-INFINITY\n"
+                "Removing Constraint - location-AGroup-rh7-1-INFINITY\n"
+            ),
+        )
+        self.assert_tags_xml(FIXTURE_TAGS_RESULT_XML)
+        self.assert_constraint_xml("<constraints/>")
 
     def test_cloned_group(self):
         self.assert_pcs_success("resource clone AGroup")
@@ -172,6 +261,8 @@ class GroupDeleteRemoveUngroupBase(TestGroupMixin):
                 [fixture_clone_xml("AGroup-clone", FIXTURE_AGROUP_XML)],
             )
         )
+        self.assert_tags_xml(FIXTURE_TAGS_CONFIG_XML)
+        self.assert_constraint_xml(FIXTURE_CLONE_TAG_CONSTRAINTS)
 
     def test_cloned_group_all_resorces_specified(self):
         self.assert_pcs_success("resource clone AGroup")
@@ -184,6 +275,8 @@ class GroupDeleteRemoveUngroupBase(TestGroupMixin):
                 [fixture_clone_xml("AGroup-clone", FIXTURE_AGROUP_XML)],
             )
         )
+        self.assert_tags_xml(FIXTURE_TAGS_CONFIG_XML)
+        self.assert_constraint_xml(FIXTURE_CLONE_TAG_CONSTRAINTS)
 
     def test_cloned_group_with_one_resource(self):
         self.assert_pcs_success("resource clone AGroup")
@@ -199,8 +292,10 @@ class GroupDeleteRemoveUngroupBase(TestGroupMixin):
                     fixture_primitive_xml("A2"),
                 ],
             ),
-            output="Removing Constraint - location-T1-rh7-1-INFINITY\n",
+            output="Removing Constraint - location-TagGroupOnly-rh7-1-INFINITY\n",
         )
+        self.assert_tags_xml(FIXTURE_TAGS_RESULT_XML)
+        self.assert_constraint_xml(FIXTURE_CLONE_CONSTRAINT)
 
 
 class ResourceUngroup(GroupDeleteRemoveUngroupBase, TestCase):

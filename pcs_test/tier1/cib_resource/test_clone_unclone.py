@@ -55,6 +55,38 @@ FIXTURE_RESOURCES = """
 )
 
 
+FIXTURE_CONSTRAINTS_CONFIG_XML = """
+    <constraints>
+        <rsc_location id="location-C-clone-rh7-1-INFINITY" node="rh7-1"
+            rsc="C-clone" score="INFINITY"/>
+        <rsc_location id="location-TagCloneOnly-rh7-1-INFINITY"
+            node="rh7-1" rsc="TagCloneOnly" score="INFINITY"/>
+    </constraints>
+"""
+
+
+FIXTURE_TAGS_CONFIG_XML = """
+    <tags>
+        <tag id="TagCloneOnly">
+            <obj_ref id="C-clone"/>
+        </tag>
+        <tag id="TagNotCloneOnly">
+            <obj_ref id="C-clone"/>
+            <obj_ref id="Dummy"/>
+        </tag>
+    </tags>
+"""
+
+
+FIXTURE_TAGS_RESULT_XML = """
+    <tags>
+        <tag id="TagNotCloneOnly">
+            <obj_ref id="Dummy"/>
+        </tag>
+    </tags>
+"""
+
+
 class Unclone(
     TestCase,
     get_assert_pcs_effect_mixin(
@@ -66,6 +98,22 @@ class Unclone(
 ):
     empty_cib = rc("cib-empty.xml")
 
+    def assert_tags_xml(self, expected_xml):
+        self.assert_resources_xml_in_cib(
+            expected_xml,
+            get_cib_part_func=lambda cib: etree.tostring(
+                etree.parse(cib).findall(".//tags")[0],
+            ),
+        )
+
+    def assert_constraint_xml(self, expected_xml):
+        self.assert_resources_xml_in_cib(
+            expected_xml,
+            get_cib_part_func=lambda cib: etree.tostring(
+                etree.parse(cib).findall(".//constraints")[0],
+            ),
+        )
+
     def setUp(self):
         # pylint: disable=invalid-name
         self.temp_cib = get_tmp_file("tier1_cib_resource_group_ungroup")
@@ -75,18 +123,7 @@ class Unclone(
             "resources", FIXTURE_CLONE, FIXTURE_DUMMY,
         )
         xml_manip.append_to_first_tag_name(
-            "configuration",
-            """
-            <tags>
-                <tag id="T1">
-                    <obj_ref id="C-clone"/>
-                    <obj_ref id="Dummy"/>
-                </tag>
-                <tag id="T2">
-                    <obj_ref id="C-clone"/>
-                </tag>
-            </tags>
-            """,
+            "configuration", FIXTURE_TAGS_CONFIG_XML,
         )
         xml_manip.append_to_first_tag_name(
             "constraints",
@@ -95,8 +132,8 @@ class Unclone(
                 rsc="C-clone" score="INFINITY"/>
             """,
             """
-            <rsc_location id="location-T1-rh7-1-INFINITY" node="rh7-1" rsc="T1"
-                score="INFINITY"/>
+            <rsc_location id="location-TagCloneOnly-rh7-1-INFINITY"
+                node="rh7-1" rsc="TagCloneOnly" score="INFINITY"/>
             """,
         )
         write_data_to_tmpfile(str(xml_manip), self.temp_cib)
@@ -111,6 +148,8 @@ class Unclone(
             "Error: could not find resource: NonExistentClone\n",
         )
         self.assert_resources_xml_in_cib(FIXTURE_CLONE_AND_RESOURCE)
+        self.assert_tags_xml(FIXTURE_TAGS_CONFIG_XML)
+        self.assert_constraint_xml(FIXTURE_CONSTRAINTS_CONFIG_XML)
 
     def test_not_clone_resource(self):
         self.assert_pcs_fail(
@@ -118,9 +157,15 @@ class Unclone(
             "Error: 'Dummy' is not a clone resource\n",
         )
         self.assert_resources_xml_in_cib(FIXTURE_CLONE_AND_RESOURCE)
+        self.assert_tags_xml(FIXTURE_TAGS_CONFIG_XML)
+        self.assert_constraint_xml(FIXTURE_CONSTRAINTS_CONFIG_XML)
 
     def test_unclone_clone_id(self):
         self.assert_effect("resource unclone C-clone", FIXTURE_RESOURCES)
+        self.assert_tags_xml(FIXTURE_TAGS_RESULT_XML)
+        self.assert_constraint_xml("<constraints/>")
 
     def test_unclone_resoruce_id(self):
         self.assert_effect("resource unclone C", FIXTURE_RESOURCES)
+        self.assert_tags_xml(FIXTURE_TAGS_RESULT_XML)
+        self.assert_constraint_xml("<constraints/>")

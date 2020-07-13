@@ -2028,7 +2028,7 @@ def remove_resource_references(
         if obj_ref.getAttribute("id") == resource_id:
             tag = obj_ref.parentNode
             tag.removeChild(obj_ref)
-            if tag.getElementsByTagName(obj_ref).length == 0:
+            if tag.getElementsByTagName("obj_ref").length == 0:
                 remove_resource_references(
                     dom, tag.getAttribute("id"), output=output,
                 )

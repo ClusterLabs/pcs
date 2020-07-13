@@ -30,8 +30,14 @@ def xml_format(xml_string):
 
 def get_assert_pcs_effect_mixin(get_cib_part):
     class AssertPcsEffectMixin(AssertPcsMixin):
-        def assert_resources_xml_in_cib(self, expected_xml_resources):
-            xml = get_cib_part(self.temp_cib)
+        def assert_resources_xml_in_cib(
+            self, expected_xml_resources, get_cib_part_func=None,
+        ):
+            self.temp_cib.seek(0)
+            if get_cib_part_func is not None:
+                xml = get_cib_part_func(self.temp_cib)
+            else:
+                xml = get_cib_part(self.temp_cib)
             try:
                 assert_xml_equal(expected_xml_resources, xml.decode())
             except AssertionError as e:

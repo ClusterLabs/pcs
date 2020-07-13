@@ -8,6 +8,10 @@
 - Support for "demote" value of resource operation's "on-fail" option
   ([rhbz#1843079])
 
+### Fixed
+- Prevent removing non-empty tag by removing tagged resource group or clone
+  ([rhbz#1857295])
+
 ### Deprecated
 - `pcs resource [op] defaults <name>=<value>...` commands are deprecated now.
   Use `pcs resource [op] defaults update <name>=<value>...` if you only manage
@@ -16,6 +20,7 @@
 
 [rhbz#1817547]: https://bugzilla.redhat.com/show_bug.cgi?id=1817547
 [rhbz#1843079]: https://bugzilla.redhat.com/show_bug.cgi?id=1843079
+[rhbz#1857295]: https://bugzilla.redhat.com/show_bug.cgi?id=1857295
 
 
 ## [0.10.6] - 2020-06-11
