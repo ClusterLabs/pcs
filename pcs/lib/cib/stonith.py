@@ -2,7 +2,8 @@ from typing import (
     List,
     Tuple,
 )
-from xml.etree.ElementTree import Element
+
+from lxml.etree import _Element
 
 from pcs.lib.pacemaker.values import is_false
 
@@ -18,7 +19,7 @@ def is_stonith_resource(resources_el, name):
     )
 
 
-def is_stonith_enabled(crm_config_el: Element) -> bool:
+def is_stonith_enabled(crm_config_el: _Element) -> bool:
     # We should read the default value from pacemaker. However, that may slow
     # pcs down as we need to run 'pacemaker-schedulerd metadata' to get it.
     stonith_enabled = True
@@ -33,8 +34,8 @@ def is_stonith_enabled(crm_config_el: Element) -> bool:
 
 
 def get_misconfigured_resources(
-    resources_el: Element,
-) -> Tuple[List[Element], List[Element], List[Element]]:
+    resources_el: _Element,
+) -> Tuple[List[_Element], List[_Element], List[_Element]]:
     """
     Return stonith: all, 'action' option set, 'method' option set to 'cycle'
     """

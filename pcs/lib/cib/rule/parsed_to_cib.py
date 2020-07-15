@@ -1,6 +1,3 @@
-from typing import cast
-from xml.etree.ElementTree import Element
-
 from lxml import etree
 from lxml.etree import _Element
 
@@ -18,8 +15,8 @@ from .expression_part import (
 
 
 def export(
-    parent_el: Element, id_provider: IdProvider, expr_tree: BoolExpr,
-) -> Element:
+    parent_el: _Element, id_provider: IdProvider, expr_tree: BoolExpr,
+) -> _Element:
     """
     Export parsed rule to a CIB element
 
@@ -36,13 +33,13 @@ def export(
     # it is always INFINITY. Once this code is used for other rules, modify
     # this behavior as needed.
     if isinstance(expr_tree, BoolExpr):
-        element.set("score", "INFINITY")
+        element.attrib["score"] = "INFINITY"
     return element
 
 
 def __export_part(
-    parent_el: Element, expr_tree: RuleExprPart, id_provider: IdProvider
-) -> Element:
+    parent_el: _Element, expr_tree: RuleExprPart, id_provider: IdProvider
+) -> _Element:
     part_export_map = {
         BoolExpr: __export_bool,
         OpExpr: __export_op,
@@ -54,10 +51,10 @@ def __export_part(
 
 
 def __export_bool(
-    parent_el: Element, boolean: BoolExpr, id_provider: IdProvider
-) -> Element:
+    parent_el: _Element, boolean: BoolExpr, id_provider: IdProvider
+) -> _Element:
     element = etree.SubElement(
-        cast(_Element, parent_el),
+        parent_el,
         "rule",
         {
             "id": create_subelement_id(parent_el, "rule", id_provider),
@@ -65,15 +62,15 @@ def __export_bool(
         },
     )
     for child in boolean.children:
-        __export_part(cast(Element, element), child, id_provider)
-    return cast(Element, element)
+        __export_part(element, child, id_provider)
+    return element
 
 
 def __export_op(
-    parent_el: Element, op: OpExpr, id_provider: IdProvider
-) -> Element:
+    parent_el: _Element, op: OpExpr, id_provider: IdProvider
+) -> _Element:
     element = etree.SubElement(
-        cast(_Element, parent_el),
+        parent_el,
         "op_expression",
         {
             "id": create_subelement_id(parent_el, f"op-{op.name}", id_provider),
@@ -82,15 +79,15 @@ def __export_op(
     )
     if op.interval:
         element.attrib["interval"] = op.interval
-    return cast(Element, element)
+    return element
 
 
 def __export_rsc(
-    parent_el: Element, rsc: RscExpr, id_provider: IdProvider
-) -> Element:
+    parent_el: _Element, rsc: RscExpr, id_provider: IdProvider
+) -> _Element:
     id_part = "-".join(filter(None, [rsc.standard, rsc.provider, rsc.type]))
     element = etree.SubElement(
-        cast(_Element, parent_el),
+        parent_el,
         "rsc_expression",
         {"id": create_subelement_id(parent_el, f"rsc-{id_part}", id_provider)},
     )
@@ -100,4 +97,4 @@ def __export_rsc(
         element.attrib["provider"] = rsc.provider
     if rsc.type:
         element.attrib["type"] = rsc.type
-    return cast(Element, element)
+    return element

@@ -1,4 +1,3 @@
-from xml.etree.ElementTree import Element
 from typing import (
     cast,
     AbstractSet,
@@ -138,7 +137,7 @@ class ResourceRelationTreeBuilder:
 
 
 class ResourceRelationsFetcher:
-    def __init__(self, cib: Element):
+    def __init__(self, cib: _Element):
         self._cib = cib
         self._resources_section = tools.get_resources(self._cib)
         self._constraints_section = tools.get_constraints(self._cib)
@@ -162,7 +161,7 @@ class ResourceRelationsFetcher:
                 res_id,
                 _get_resource_relation_type(res_el),
                 list(res_relations.keys()),
-                dict(res_el.attrib),
+                dict(cast(Mapping[str, str], res_el.attrib)),
             )
             relations.update(res_relations)
             resources_to_process.update(
@@ -170,7 +169,7 @@ class ResourceRelationsFetcher:
             )
         return resources, relations
 
-    def _get_resource_el(self, res_id: str) -> Element:
+    def _get_resource_el(self, res_id: str) -> _Element:
         # client of this class should ensure that res_id really exists in CIB,
         # so here we don't need to handle possible reports
         resource_el, dummy_report_list = common.find_one_resource(
@@ -194,9 +193,9 @@ class ResourceRelationsFetcher:
         return result
 
     def _get_resource_relations(
-        self, resource_el: Element
+        self, resource_el: _Element
     ) -> Sequence[RelationEntityDto]:
-        resource_id = resource_el.attrib["id"]
+        resource_id = str(resource_el.attrib["id"])
         relations = [
             _get_ordering_constraint_relation(item)
             for item in self._get_ordering_coinstraints(resource_id)
@@ -216,10 +215,10 @@ class ResourceRelationsFetcher:
             relations.append(_get_outer_resource_relation(parent_el))
         return relations
 
-    def _get_ordering_coinstraints(self, resource_id: str) -> Iterable[Element]:
+    def _get_ordering_coinstraints(self, resource_id: str) -> List[_Element]:
         return cast(
-            Iterable[Element],
-            cast(_Element, self._constraints_section).xpath(
+            List[_Element],
+            self._constraints_section.xpath(
                 """
                 .//rsc_order[
                     not (descendant::resource_set)
@@ -231,38 +230,36 @@ class ResourceRelationsFetcher:
             ),
         )
 
-    def _get_ordering_set_constraints(
-        self, resource_id: str
-    ) -> Iterable[Element]:
+    def _get_ordering_set_constraints(self, resource_id: str) -> List[_Element]:
         return cast(
-            Iterable[Element],
-            cast(_Element, self._constraints_section).xpath(
+            List[_Element],
+            self._constraints_section.xpath(
                 ".//rsc_order[./resource_set/resource_ref[@id=$resource_id]]",
                 resource_id=resource_id,
             ),
         )
 
 
-def _get_resource_relation_type(res_el: Element) -> ResourceRelationType:
+def _get_resource_relation_type(res_el: _Element) -> ResourceRelationType:
     return {
         "primitive": ResourceRelationType.RSC_PRIMITIVE,
         "group": ResourceRelationType.RSC_GROUP,
         "bundle": ResourceRelationType.RSC_BUNDLE,
         "clone": ResourceRelationType.RSC_CLONE,
         "master": ResourceRelationType.RSC_CLONE,
-    }.get(res_el.tag, ResourceRelationType.RSC_UNKNOWN)
+    }.get(str(res_el.tag), ResourceRelationType.RSC_UNKNOWN)
 
 
 # relation obj to RelationEntityDto obj
 def _get_inner_resources_relation(
-    parent_resource_el: Element,
+    parent_resource_el: _Element,
 ) -> RelationEntityDto:
-    attrs = parent_resource_el.attrib
+    attrs = cast(Mapping[str, str], parent_resource_el.attrib)
     return RelationEntityDto(
         INNER_RESOURCE_ID_TEMPLATE.format(attrs["id"]),
         ResourceRelationType.INNER_RESOURCES,
         [
-            res.attrib["id"]
+            str(res.attrib["id"])
             for res in common.get_inner_resources(parent_resource_el)
         ],
         dict(attrs),
@@ -270,45 +267,45 @@ def _get_inner_resources_relation(
 
 
 def _get_outer_resource_relation(
-    parent_resource_el: Element,
+    parent_resource_el: _Element,
 ) -> RelationEntityDto:
-    attrs = parent_resource_el.attrib
+    attrs = cast(Mapping[str, str], parent_resource_el.attrib)
     return RelationEntityDto(
         OUTER_RESOURCE_ID_TEMPLATE.format(attrs["id"]),
         ResourceRelationType.OUTER_RESOURCE,
-        [attrs["id"]],
+        [str(attrs["id"])],
         dict(attrs),
     )
 
 
 def _get_ordering_constraint_relation(
-    ord_const_el: Element,
+    ord_const_el: _Element,
 ) -> RelationEntityDto:
-    attrs = ord_const_el.attrib
+    attrs = cast(Mapping[str, str], ord_const_el.attrib)
     return RelationEntityDto(
-        attrs["id"],
+        str(attrs["id"]),
         ResourceRelationType.ORDER,
-        [attrs["first"], attrs["then"]],
+        [str(attrs["first"]), str(attrs["then"])],
         dict(attrs),
     )
 
 
 def _get_ordering_set_constraint_relation(
-    ord_set_const_el: Element,
+    ord_set_const_el: _Element,
 ) -> RelationEntityDto:
-    attrs = ord_set_const_el.attrib
+    attrs = cast(Mapping[str, str], ord_set_const_el.attrib)
     members: Set[str] = set()
     metadata: MutableMapping[str, Any] = dict(attrs)
     metadata["sets"] = []
     for rsc_set_el in ord_set_const_el.findall("resource_set"):
         rsc_set: MutableMapping[str, Any] = dict(
-            id=rsc_set_el.get("id"),
-            metadata=dict(rsc_set_el.attrib),
+            id=str(rsc_set_el.get("id")),
+            metadata=dict(cast(Mapping[str, str], rsc_set_el.attrib)),
             members=[],
         )
         metadata["sets"].append(rsc_set)
         for rsc_ref in rsc_set_el.findall("resource_ref"):
-            rsc_id = rsc_ref.attrib["id"]
+            rsc_id = str(rsc_ref.attrib["id"])
             members.add(rsc_id)
             rsc_set["members"].append(rsc_id)
 

@@ -1,5 +1,10 @@
 import re
-from xml.etree.ElementTree import Element
+from typing import (
+    cast,
+    List,
+)
+
+from lxml.etree import _Element
 
 from pcs.common import reports
 from pcs.common.reports import codes as report_codes
@@ -185,7 +190,9 @@ class ElementSearcher:
                 return
 
 
-def get_configuration_elements_by_id(tree: Element, check_id: str):
+def get_configuration_elements_by_id(
+    tree: _Element, check_id: str
+) -> List[_Element]:
     """
     Return any configuration elements (not in status section of cib) with value
     of attribute id specified as 'check_id'; skip any and all elements having id
@@ -202,38 +209,41 @@ def get_configuration_elements_by_id(tree: Element, check_id: str):
     # connection, which will be named the same as the value of the remote-node
     # attribute of the explicit resource. So the value of nvpair named
     # "remote-node" is considered to be id
-    return get_root(tree).xpath(
-        """
-        (
-            /cib/*[name()!="status"]
-            |
-            /*[name()!="cib"]
-        )
-        //*[
+    return cast(
+        List[_Element],
+        get_root(tree).xpath(
+            """
             (
-                name()!="acl_target"
-                and
-                name()!="role"
-                and
-                name()!="obj_ref"
-                and
-                name()!="resource_ref"
-                and
-                @id=$check_id
-            ) or (
-                name()="primitive"
-                and
-                meta_attributes[
-                    nvpair[
-                        @name="remote-node"
-                        and
-                        @value=$check_id
-                    ]
-                ]
+                /cib/*[name()!="status"]
+                |
+                /*[name()!="cib"]
             )
-        ]
-        """,
-        check_id=check_id,
+            //*[
+                (
+                    name()!="acl_target"
+                    and
+                    name()!="role"
+                    and
+                    name()!="obj_ref"
+                    and
+                    name()!="resource_ref"
+                    and
+                    @id=$check_id
+                ) or (
+                    name()="primitive"
+                    and
+                    meta_attributes[
+                        nvpair[
+                            @name="remote-node"
+                            and
+                            @value=$check_id
+                        ]
+                    ]
+                )
+            ]
+            """,
+            check_id=check_id,
+        ),
     )
 
 
@@ -312,7 +322,7 @@ def find_element_by_tag_and_id(
 
 
 def create_subelement_id(
-    context_element: Element, suffix: str, id_provider: IdProvider
+    context_element: _Element, suffix: str, id_provider: IdProvider
 ) -> str:
     proposed_id = sanitize_id(
         "{0}-{1}".format(context_element.get("id", context_element.tag), suffix)
@@ -351,7 +361,7 @@ def get_alerts(tree):
     return sections.get(tree, sections.ALERTS)
 
 
-def get_constraints(tree: Element) -> Element:
+def get_constraints(tree: _Element) -> _Element:
     """
     Return 'constraint' element from tree
     tree cib etree node
@@ -359,7 +369,7 @@ def get_constraints(tree: Element) -> Element:
     return sections.get(tree, sections.CONSTRAINTS)
 
 
-def get_crm_config(tree: Element) -> Element:
+def get_crm_config(tree: _Element) -> _Element:
     """
     Return 'crm_config' element from tree, raise LibraryError if missing
 
@@ -384,7 +394,7 @@ def get_nodes(tree):
     return sections.get(tree, sections.NODES)
 
 
-def get_resources(tree: Element) -> Element:
+def get_resources(tree: _Element) -> _Element:
     """
     Return the 'resources' element from the tree
 
@@ -401,7 +411,7 @@ def get_status(tree):
     return get_sub_element(tree, "status")
 
 
-def get_tags(tree: Element) -> Element:
+def get_tags(tree: _Element) -> _Element:
     """
     Return 'tags' element from tree, create a new one if missing
     tree -- cib etree node

@@ -4,7 +4,8 @@ from typing import (
     Optional,
     Tuple,
 )
-from xml.etree.ElementTree import Element
+
+from lxml.etree import _Element
 
 from pcs.common import reports
 from pcs.common.reports import ReportItemList
@@ -19,7 +20,7 @@ from pcs.lib.xml_tools import get_root
 
 def get_existing_nodes_names(
     corosync_conf: Optional[CorosyncConfigFacade] = None,
-    cib: Optional[Element] = None,
+    cib: Optional[_Element] = None,
     error_on_missing_name: bool = False,
 ) -> Tuple[List[str], ReportItemList]:
     return __get_nodes_names(
@@ -43,7 +44,7 @@ def get_existing_nodes_names_addrs(
 
 def __get_nodes(
     corosync_conf: Optional[CorosyncConfigFacade] = None,
-    cib: Optional[Element] = None,
+    cib: Optional[_Element] = None,
 ) -> Tuple[Iterable[CorosyncNode], Iterable[PacemakerNode]]:
     corosync_nodes = corosync_conf.get_nodes() if corosync_conf else []
     remote_and_guest_nodes: Iterable[PacemakerNode] = []

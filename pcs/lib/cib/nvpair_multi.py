@@ -7,7 +7,6 @@ from typing import (
     Optional,
     Tuple,
 )
-from xml.etree.ElementTree import Element
 
 from lxml import etree
 from lxml.etree import _Element
@@ -49,25 +48,25 @@ _tag_to_type = {
 }
 
 
-def nvpair_element_to_dto(nvpair_el: Element) -> CibNvpairDto:
+def nvpair_element_to_dto(nvpair_el: _Element) -> CibNvpairDto:
     """
     Export an nvpair xml element to its DTO
     """
     return CibNvpairDto(
-        nvpair_el.get("id", ""),
-        nvpair_el.get("name", ""),
-        nvpair_el.get("value", ""),
+        str(nvpair_el.get("id", "")),
+        str(nvpair_el.get("name", "")),
+        str(nvpair_el.get("value", "")),
     )
 
 
-def nvset_element_to_dto(nvset_el: Element) -> CibNvsetDto:
+def nvset_element_to_dto(nvset_el: _Element) -> CibNvsetDto:
     """
     Export an nvset xml element to its DTO
     """
     rule_el = nvset_el.find("./rule")
     return CibNvsetDto(
-        nvset_el.get("id", ""),
-        _tag_to_type[nvset_el.tag],
+        str(nvset_el.get("id", "")),
+        _tag_to_type[str(nvset_el.tag)],
         export_attributes(nvset_el, with_id=False),
         None if rule_el is None else rule_element_to_dto(rule_el),
         [
@@ -77,7 +76,7 @@ def nvset_element_to_dto(nvset_el: Element) -> CibNvsetDto:
     )
 
 
-def find_nvsets(parent_element: Element) -> List[Element]:
+def find_nvsets(parent_element: _Element) -> List[_Element]:
     """
     Get all nvset xml elements in the given parent element
 
@@ -86,8 +85,8 @@ def find_nvsets(parent_element: Element) -> List[Element]:
     return cast(
         # The xpath method has a complicated return value, but we know our xpath
         # expression returns only elements.
-        List[Element],
-        cast(_Element, parent_element).xpath(
+        List[_Element],
+        parent_element.xpath(
             "./*[{nvset_tags}]".format(
                 nvset_tags=" or ".join(f"self::{tag}" for tag in _tag_to_type)
             )
@@ -96,8 +95,8 @@ def find_nvsets(parent_element: Element) -> List[Element]:
 
 
 def find_nvsets_by_ids(
-    parent_element: Element, id_list: Iterable[str]
-) -> Tuple[List[Element], ReportItemList]:
+    parent_element: _Element, id_list: Iterable[str]
+) -> Tuple[List[_Element], ReportItemList]:
     """
     Find nvset elements by their IDs and return them with non-empty report
     list in case of errors.
@@ -215,13 +214,13 @@ class ValidateNvsetAppendNew:
 
 
 def nvset_append_new(
-    parent_element: Element,
+    parent_element: _Element,
     id_provider: IdProvider,
     nvset_tag: NvsetTag,
     nvpair_dict: Mapping[str, str],
     nvset_options: Mapping[str, str],
     nvset_rule: Optional[RuleRoot] = None,
-) -> Element:
+) -> _Element:
     """
     Create new nvset and append it to CIB
 
@@ -238,18 +237,18 @@ def nvset_append_new(
             parent_element, nvset_tag, id_provider
         )
 
-    nvset_el = etree.SubElement(cast(_Element, parent_element), nvset_tag)
+    nvset_el = etree.SubElement(parent_element, nvset_tag)
     for name, value in nvset_options.items():
         if value != "":
             nvset_el.attrib[name] = value
     if nvset_rule:
-        rule_to_cib(cast(Element, nvset_el), id_provider, nvset_rule)
+        rule_to_cib(nvset_el, id_provider, nvset_rule)
     for name, value in nvpair_dict.items():
-        _set_nvpair(cast(Element, nvset_el), id_provider, name, value)
-    return cast(Element, nvset_el)
+        _set_nvpair(nvset_el, id_provider, name, value)
+    return nvset_el
 
 
-def nvset_remove(nvset_el_list: Iterable[Element]) -> None:
+def nvset_remove(nvset_el_list: Iterable[_Element]) -> None:
     """
     Remove given nvset elements from CIB
 
@@ -260,7 +259,7 @@ def nvset_remove(nvset_el_list: Iterable[Element]) -> None:
 
 
 def nvset_update(
-    nvset_el: Element, id_provider: IdProvider, nvpair_dict: Mapping[str, str],
+    nvset_el: _Element, id_provider: IdProvider, nvpair_dict: Mapping[str, str],
 ) -> None:
     """
     Update an existing nvset
@@ -280,7 +279,7 @@ def nvset_update(
 
 
 def _set_nvpair(
-    nvset_element: Element, id_provider: IdProvider, name: str, value: str
+    nvset_element: _Element, id_provider: IdProvider, name: str, value: str
 ) -> None:
     """
     Ensure name-value pair is set / removed in specified nvset
@@ -293,14 +292,14 @@ def _set_nvpair(
     nvpair_el_list = cast(
         # The xpath method has a complicated return value, but we know our xpath
         # expression returns only elements.
-        List[Element],
-        cast(_Element, nvset_element).xpath("./nvpair[@name=$name]", name=name),
+        List[_Element],
+        nvset_element.xpath("./nvpair[@name=$name]", name=name),
     )
 
     if not nvpair_el_list:
         if value != "":
             etree.SubElement(
-                cast(_Element, nvset_element),
+                nvset_element,
                 "nvpair",
                 {
                     "id": create_subelement_id(
@@ -316,7 +315,7 @@ def _set_nvpair(
         return
 
     if value != "":
-        nvpair_el_list[0].set("value", value)
+        nvpair_el_list[0].attrib["value"] = value
     else:
         nvset_element.remove(nvpair_el_list[0])
     for nvpair_el in nvpair_el_list[1:]:

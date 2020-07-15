@@ -2,7 +2,6 @@ from typing import (
     cast,
     List,
 )
-from xml.etree.ElementTree import Element
 
 from lxml.etree import _Element
 
@@ -49,11 +48,11 @@ def get_remover(resource_remove):
 
 
 def find_for_config(
-    resources_section: Element, booth_config_file_path: str
-) -> List[Element]:
+    resources_section: _Element, booth_config_file_path: str
+) -> List[_Element]:
     return cast(
-        List[Element],
-        cast(_Element, resources_section).xpath(
+        List[_Element],
+        resources_section.xpath(
             """
             .//primitive[
                 @type="booth-site"
@@ -69,11 +68,11 @@ def find_for_config(
 
 
 def find_bound_ip(
-    resources_section: Element, booth_config_file_path: str
-) -> List[Element]:
+    resources_section: _Element, booth_config_file_path: str
+) -> List[_Element]:
     return cast(
-        List[Element],
-        cast(_Element, resources_section).xpath(
+        List[_Element],
+        resources_section.xpath(
             """
             .//group[
                 primitive[

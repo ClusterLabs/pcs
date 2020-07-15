@@ -5,7 +5,8 @@ from typing import (
     Mapping,
     NamedTuple,
 )
-from xml.etree.ElementTree import Element
+
+from lxml.etree import _Element
 
 from pcs import settings
 from pcs.common import (
@@ -170,7 +171,7 @@ def full_cluster_status_plaintext(
     return "\n".join(parts)
 
 
-def _stonith_warnings(cib: Element, is_sbd_running: bool) -> List[str]:
+def _stonith_warnings(cib: _Element, is_sbd_running: bool) -> List[str]:
     warning_list = []
 
     is_stonith_enabled = stonith.is_stonith_enabled(get_crm_config(cib))
@@ -192,7 +193,9 @@ def _stonith_warnings(cib: Element, is_sbd_running: bool) -> List[str]:
                 "it is recommended to set {0} instead: {1}"
             ).format(
                 format_list(list(STONITH_ACTION_REPLACED_BY)),
-                format_list([x.get("id", "") for x in stonith_with_action]),
+                format_list(
+                    [str(x.get("id", "")) for x in stonith_with_action]
+                ),
             )
         )
 
@@ -202,7 +205,7 @@ def _stonith_warnings(cib: Element, is_sbd_running: bool) -> List[str]:
             "to 'cycle' which is potentially dangerous, please consider using "
             "'onoff': {0}".format(
                 format_list(
-                    [x.get("id", "") for x in stonith_with_method_cycle]
+                    [str(x.get("id", "")) for x in stonith_with_method_cycle]
                 ),
             )
         )

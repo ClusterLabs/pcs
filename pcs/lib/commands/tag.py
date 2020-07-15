@@ -6,7 +6,8 @@ from typing import (
     Optional,
     Sequence,
 )
-from xml.etree.ElementTree import Element
+
+from lxml.etree import _Element
 
 from pcs.common.tools import Version
 from pcs.lib.cib import tag
@@ -25,7 +26,7 @@ REQUIRED_CIB_VERSION = Version(1, 3, 0)
 
 
 @contextmanager
-def cib_tags_section(env: LibraryEnvironment) -> Iterator[Element]:
+def cib_tags_section(env: LibraryEnvironment) -> Iterator[_Element]:
     yield get_tags(env.get_cib(REQUIRED_CIB_VERSION))
     env.push_cib()
 
@@ -64,7 +65,7 @@ def config(
     env -- provides all for communication with externals
     tag_filter -- list of tags we want to get
     """
-    tags_section: Element = get_tags(env.get_cib(REQUIRED_CIB_VERSION))
+    tags_section: _Element = get_tags(env.get_cib(REQUIRED_CIB_VERSION))
     if tag_filter:
         tag_element_list, report_list = tag.find_tag_elements_by_ids(
             tags_section, tag_filter,

@@ -10,7 +10,6 @@ from typing import (
     Tuple,
     Union,
 )
-from xml.etree.ElementTree import Element
 
 from lxml import etree
 from lxml.etree import _Element
@@ -104,7 +103,7 @@ def _validate_tag_create_idref_list_not_empty(
 
 
 def _validate_reference_ids_are_resources(
-    resources_section: Element, idref_list: Iterable[str],
+    resources_section: _Element, idref_list: Iterable[str],
 ) -> ReportItemList:
     """
     Validate that ids are resources.
@@ -117,7 +116,7 @@ def _validate_reference_ids_are_resources(
 
 
 def validate_create_tag(
-    resources_section: Element,
+    resources_section: _Element,
     tag_id: str,
     idref_list: Sequence[str],
     id_provider: IdProvider,
@@ -143,7 +142,7 @@ def validate_create_tag(
 
 
 def validate_remove_tag(
-    constraint_section: Element, to_remove_tag_list: Iterable[str],
+    constraint_section: _Element, to_remove_tag_list: Iterable[str],
 ) -> ReportItemList:
     """
     Validation function for tag removal. List of tag elements is not empty and
@@ -171,7 +170,10 @@ def validate_remove_tag(
                     reports.messages.TagCannotRemoveTagReferencedInConstraints(
                         tag_id,
                         sorted(
-                            [elem.get("id", "") for elem in constraint_list]
+                            [
+                                str(elem.get("id", ""))
+                                for elem in constraint_list
+                            ]
                         ),
                     )
                 )
@@ -216,25 +218,25 @@ class ValidateTagUpdateByIds:
         self._add_idref_list = add_idref_list
         self._remove_idref_list = remove_idref_list
         self._adjacent_idref = adjacent_idref
-        self._tag_element: Optional[Element] = None
-        self._add_obj_ref_element_list: List[Element] = []
-        self._adjacent_obj_ref_element: Optional[Element] = None
-        self._remove_obj_ref_element_list: List[Element] = []
+        self._tag_element: Optional[_Element] = None
+        self._add_obj_ref_element_list: List[_Element] = []
+        self._adjacent_obj_ref_element: Optional[_Element] = None
+        self._remove_obj_ref_element_list: List[_Element] = []
 
-    def tag_element(self) -> Optional[Element]:
+    def tag_element(self) -> Optional[_Element]:
         return self._tag_element
 
-    def add_obj_ref_element_list(self) -> List[Element]:
+    def add_obj_ref_element_list(self) -> List[_Element]:
         return self._add_obj_ref_element_list
 
-    def adjacent_obj_ref_element(self) -> Optional[Element]:
+    def adjacent_obj_ref_element(self) -> Optional[_Element]:
         return self._adjacent_obj_ref_element
 
-    def remove_obj_ref_element_list(self) -> List[Element]:
+    def remove_obj_ref_element_list(self) -> List[_Element]:
         return self._remove_obj_ref_element_list
 
     def validate(
-        self, resources_section: Element, tags_section: Element,
+        self, resources_section: _Element, tags_section: _Element,
     ) -> ReportItemList:
         """
         Run the validation and return a report item list
@@ -251,7 +253,7 @@ class ValidateTagUpdateByIds:
             + self._validate_adjacent_id()
         )
 
-    def _validate_tag_exists(self, tags_section: Element) -> ReportItemList:
+    def _validate_tag_exists(self, tags_section: _Element) -> ReportItemList:
         """
         Validate that tag with given tag_id exists and save the found element.
 
@@ -340,7 +342,7 @@ class ValidateTagUpdateByIds:
         return report_list
 
     def _validate_ids_can_be_added_or_moved(
-        self, resources_section: Element,
+        self, resources_section: _Element,
     ) -> ReportItemList:
         """
         Validate that ids can be added or moved:
@@ -372,9 +374,7 @@ class ValidateTagUpdateByIds:
             for id_ref in unique_add_ids:
                 obj_ref = self._find_obj_ref_in_tag(id_ref)
                 if obj_ref is None:
-                    obj_ref = cast(
-                        Element, etree.Element(TAG_OBJREF, id=id_ref),
-                    )
+                    obj_ref = etree.Element(TAG_OBJREF, id=id_ref)
                 else:
                     existing_element_id_list.append(id_ref)
                 self._add_obj_ref_element_list.append(obj_ref)
@@ -437,7 +437,7 @@ class ValidateTagUpdateByIds:
                 )
         return report_list
 
-    def _find_obj_ref_in_tag(self, obj_ref_id: str) -> Optional[Element]:
+    def _find_obj_ref_in_tag(self, obj_ref_id: str) -> Optional[_Element]:
         """
         Find obj_ref element in the tag element being updated.
 
@@ -445,22 +445,23 @@ class ValidateTagUpdateByIds:
         """
         if self._tag_element is None:
             return None
-        xpath_result = cast(_Element, self._tag_element).xpath(
-            f'./{TAG_OBJREF}[@id="{obj_ref_id}"]',
+        xpath_result = cast(
+            List[_Element],
+            self._tag_element.xpath(f'./{TAG_OBJREF}[@id="{obj_ref_id}"]',),
         )
-        return cast(List[Element], xpath_result)[0] if xpath_result else None
+        return xpath_result[0] if xpath_result else None
 
 
 def find_constraints_referencing_tag(
-    constraints_section: Element, tag_id: str,
-) -> Iterable[Element]:
+    constraints_section: _Element, tag_id: str,
+) -> List[_Element]:
     """
     Find constraint elements which are referencing specified tag.
 
     constraints_section -- element constraints
     tag_id -- tag id
     """
-    constraint_list = cast(_Element, constraints_section).xpath(
+    constraint_list = constraints_section.xpath(
         """
         ./rsc_colocation[
             not (descendant::resource_set)
@@ -493,12 +494,12 @@ def find_constraints_referencing_tag(
             _id=tag_id
         )
     )
-    return cast(Iterable[Element], constraint_list)
+    return cast(List[_Element], constraint_list)
 
 
 def find_tag_elements_by_ids(
-    tags_section: Element, tag_id_list: Iterable[str],
-) -> Tuple[List[Element], ReportItemList]:
+    tags_section: _Element, tag_id_list: Iterable[str],
+) -> Tuple[List[_Element], ReportItemList]:
     """
     Try to find tag elements by ids and return them with non-empty report
     list in case of errors.
@@ -519,8 +520,8 @@ def find_tag_elements_by_ids(
 
 
 def create_tag(
-    tags_section: Element, tag_id: str, idref_list: Iterable[str],
-) -> Element:
+    tags_section: _Element, tag_id: str, idref_list: Iterable[str],
+) -> _Element:
     """
     Create new tag element and add it to cib.
     Returns newly created tag element.
@@ -529,13 +530,13 @@ def create_tag(
     tag_id -- identifier of new tag
     idref_list -- reference ids which we want to tag
     """
-    tag_el = etree.SubElement(cast(_Element, tags_section), TAG_TAG, id=tag_id)
+    tag_el = etree.SubElement(tags_section, TAG_TAG, id=tag_id)
     for ref_id in idref_list:
         etree.SubElement(tag_el, TAG_OBJREF, id=ref_id)
-    return cast(Element, tag_el)
+    return tag_el
 
 
-def remove_tag(tag_elements: Iterable[Element],) -> None:
+def remove_tag(tag_elements: Iterable[_Element],) -> None:
     """
     Remove given tag elements from a cib.
 
@@ -545,7 +546,7 @@ def remove_tag(tag_elements: Iterable[Element],) -> None:
         remove_one_element(tag)
 
 
-def remove_obj_ref(obj_ref_list: Iterable[Element]) -> None:
+def remove_obj_ref(obj_ref_list: Iterable[_Element]) -> None:
     """
     Remove specified obj_ref elements and also their parents if they remain
     empty after obj_ref removal.
@@ -561,9 +562,9 @@ def remove_obj_ref(obj_ref_list: Iterable[Element]) -> None:
 
 
 def add_obj_ref(
-    tag_element: Element,
-    obj_ref_el_list: Iterable[Element],
-    adjacent_element: Optional[Element],
+    tag_element: _Element,
+    obj_ref_el_list: Iterable[_Element],
+    adjacent_element: Optional[_Element],
     put_after_adjacent: bool = False,
 ) -> None:
     """
@@ -587,7 +588,7 @@ def add_obj_ref(
             tag_element.append(obj_ref)
 
 
-def get_list_of_tag_elements(tags_section: Element) -> List[Element]:
+def get_list_of_tag_elements(tags_section: _Element) -> List[_Element]:
     """
     Get list of tag elements from cib.
 
@@ -597,7 +598,7 @@ def get_list_of_tag_elements(tags_section: Element) -> List[Element]:
 
 
 def tag_element_to_dict(
-    tag_element: Element,
+    tag_element: _Element,
 ) -> Dict[str, Union[str, Iterable[str]]]:
     """
     Convert tag element to the dict structure
@@ -611,17 +612,17 @@ def tag_element_to_dict(
     """
     return {
         # NOTE: .get("id", default="") for typing  there always be an id
-        "tag_id": tag_element.get("id", default=""),
+        "tag_id": str(tag_element.get("id", default="")),
         "idref_list": [
-            obj_ref.get("id", default="")
+            str(obj_ref.get("id", default=""))
             for obj_ref in tag_element.findall(TAG_OBJREF)
         ],
     }
 
 
 def expand_tag(
-    some_or_tag_el: Element, only_expand_types: Iterable[str] = None
-) -> List[Element]:
+    some_or_tag_el: _Element, only_expand_types: Iterable[str] = None
+) -> List[_Element]:
     """
     Substitute a tag element with elements which the tag refers to.
 
@@ -637,7 +638,8 @@ def expand_tag(
 
     expanded_elements = []
     for element_id in [
-        obj_ref.get("id", "") for obj_ref in some_or_tag_el.iterfind(TAG_OBJREF)
+        str(obj_ref.get("id", ""))
+        for obj_ref in some_or_tag_el.iterfind(TAG_OBJREF)
     ]:
         if only_expand_types:
             searcher = ElementSearcher(

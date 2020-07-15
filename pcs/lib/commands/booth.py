@@ -126,7 +126,7 @@ def config_destroy(
                 reports.messages.BoothConfigIsUsed(
                     found_instance_name,
                     reports.const.BOOTH_CONFIG_USED_IN_CLUSTER_RESOURCE,
-                    resource_name=booth_resource_list[0].get("id", ""),
+                    resource_name=str(booth_resource_list[0].get("id", "")),
                 )
             )
         )

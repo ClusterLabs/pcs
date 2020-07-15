@@ -1,5 +1,4 @@
-from typing import cast, Dict, Iterable
-from xml.etree.ElementTree import Element
+from typing import Dict, Iterable
 
 from lxml import etree
 from lxml.etree import _Element
@@ -56,8 +55,10 @@ def get_sub_element(
     return sub_element
 
 
-def export_attributes(element: Element, with_id: bool = True) -> Dict[str, str]:
-    result = dict((key, value) for key, value in element.attrib.items())
+def export_attributes(
+    element: _Element, with_id: bool = True
+) -> Dict[str, str]:
+    result = {str(key): str(value) for key, value in element.attrib.items()}
     if not with_id:
         result.pop("id", None)
     return result
@@ -161,7 +162,7 @@ def append_when_useful(parent, element, attribs_important=True, index=None):
 
 
 def remove_when_pointless(
-    element: Element, attribs_important: bool = True,
+    element: _Element, attribs_important: bool = True,
 ) -> None:
     """
     Remove an element when it is not worth keeping (see is_element_useful for
@@ -192,8 +193,8 @@ def reset_element(element, keep_attrs=None):
 
 
 def move_elements(
-    to_move_list: Iterable[Element],
-    adjacent_el: Element,
+    to_move_list: Iterable[_Element],
+    adjacent_el: _Element,
     put_after_adjacent: bool = False,
 ) -> None:
     """
@@ -207,18 +208,18 @@ def move_elements(
     """
     for el in to_move_list:
         if put_after_adjacent:
-            cast(_Element, adjacent_el).addnext(cast(_Element, el))
+            adjacent_el.addnext(el)
             adjacent_el = el
         else:
-            cast(_Element, adjacent_el).addprevious(cast(_Element, el))
+            adjacent_el.addprevious(el)
 
 
-def remove_one_element(element: Element) -> None:
+def remove_one_element(element: _Element) -> None:
     """
     Remove single specified element.
 
     element -- element to be removed
     """
-    parent = cast(_Element, element).getparent()
+    parent = element.getparent()
     if parent is not None:
-        parent.remove(cast(_Element, element))
+        parent.remove(element)

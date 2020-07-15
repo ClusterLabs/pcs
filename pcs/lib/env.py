@@ -1,5 +1,6 @@
 from typing import Optional
-from xml.etree.ElementTree import Element
+
+from lxml.etree import _Element
 
 from pcs.common import file_type_codes
 from pcs.common import reports
@@ -121,7 +122,7 @@ class LibraryEnvironment:
             codes.add(file_type_codes.COROSYNC_CONF)
         return sorted(codes)
 
-    def get_cib(self, minimal_version: Optional[Version] = None) -> Element:
+    def get_cib(self, minimal_version: Optional[Version] = None) -> _Element:
         if self.__loaded_cib_diff_source is not None:
             raise AssertionError("CIB has already been loaded")
         self.__loaded_cib_diff_source = get_cib_xml(self.cmd_runner())

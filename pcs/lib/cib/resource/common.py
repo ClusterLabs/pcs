@@ -1,13 +1,11 @@
 from collections import namedtuple
 from typing import (
-    cast,
     Iterable,
     List,
     Optional,
     Set,
     Tuple,
 )
-from xml.etree.ElementTree import Element
 
 from lxml.etree import _Element
 
@@ -64,10 +62,10 @@ def is_clone_deactivated_by_meta(meta_attributes):
 
 
 def find_one_resource(
-    context_element: Element,
+    context_element: _Element,
     resource_id: str,
     resource_tags: Optional[Iterable[str]] = None,
-) -> Tuple[Optional[Element], ReportItemList]:
+) -> Tuple[Optional[_Element], ReportItemList]:
     """
     Find a single resource or return None if not found
 
@@ -83,10 +81,10 @@ def find_one_resource(
 
 
 def find_resources(
-    context_element: Element,
+    context_element: _Element,
     resource_ids: Iterable[str],
     resource_tags: Optional[Iterable[str]] = None,
-) -> Tuple[List[Element], ReportItemList]:
+) -> Tuple[List[_Element], ReportItemList]:
     """
     Find a list of resource
 
@@ -107,7 +105,7 @@ def find_resources(
     return resource_el_list, report_list
 
 
-def find_primitives(resource_el: Element) -> List[Element]:
+def find_primitives(resource_el: _Element) -> List[_Element]:
     """
     Get list of primitives contained in a given resource
     etree resource_el -- resource element
@@ -124,7 +122,7 @@ def find_primitives(resource_el: Element) -> List[Element]:
     return []
 
 
-def get_all_inner_resources(resource_el: Element) -> Set[Element]:
+def get_all_inner_resources(resource_el: _Element) -> Set[_Element]:
     """
     Return all inner resources (both direct and indirect) of a resource
     Example: for a clone containing a group, this function will return both
@@ -132,7 +130,7 @@ def get_all_inner_resources(resource_el: Element) -> Set[Element]:
 
     resource_el -- resource element to get its inner resources
     """
-    all_inner: Set[Element] = set()
+    all_inner: Set[_Element] = set()
     to_process = set([resource_el])
     while to_process:
         new_inner = get_inner_resources(to_process.pop())
@@ -141,7 +139,7 @@ def get_all_inner_resources(resource_el: Element) -> Set[Element]:
     return all_inner
 
 
-def get_inner_resources(resource_el: Element) -> List[Element]:
+def get_inner_resources(resource_el: _Element) -> List[_Element]:
     """
     Return list of inner resources (direct descendants) of a resource
     specified as resource_el.
@@ -160,7 +158,7 @@ def get_inner_resources(resource_el: Element) -> List[Element]:
     return []
 
 
-def is_wrapper_resource(resource_el: Element) -> bool:
+def is_wrapper_resource(resource_el: _Element) -> bool:
     """
     Return True for resource_el of types that can contain other resource(s)
     (these are: group, bundle, clone) and False otherwise.
@@ -174,7 +172,7 @@ def is_wrapper_resource(resource_el: Element) -> bool:
     )
 
 
-def get_parent_resource(resource_el: Element) -> Optional[Element]:
+def get_parent_resource(resource_el: _Element) -> Optional[_Element]:
     """
     Return a direct ancestor of a specified resource or None if the resource
     has no ancestor.
@@ -183,7 +181,7 @@ def get_parent_resource(resource_el: Element) -> Optional[Element]:
 
     resource_el -- resource element of which parent resource should be returned
     """
-    parent_el = cast(Element, cast(_Element, resource_el).getparent())
+    parent_el = resource_el.getparent()
     if parent_el is not None and is_wrapper_resource(parent_el):
         return parent_el
     return None
@@ -347,7 +345,7 @@ def unmanage(resource_el, id_provider):
     )
 
 
-def find_resources_to_delete(resource_el: Element) -> List[Element]:
+def find_resources_to_delete(resource_el: _Element) -> List[_Element]:
     """
     Get resources to delete, children and parents of the given resource if
     necessary.

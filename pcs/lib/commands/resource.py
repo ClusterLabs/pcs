@@ -2,6 +2,7 @@
 from contextlib import contextmanager
 from functools import partial
 from typing import (
+    cast,
     Any,
     Callable,
     Iterable,
@@ -12,7 +13,8 @@ from typing import (
     Tuple,
     Union,
 )
-from xml.etree.ElementTree import Element
+
+from lxml.etree import _Element
 
 from pcs.common import file_type_codes
 from pcs.common.interface import dto
@@ -85,7 +87,7 @@ def _push_cib_wait(
     wait: Optional[Union[bool, int]] = False,
     wait_for_resource_ids: Optional[Iterable[str]] = None,
     resource_state_reporter: Callable[
-        [Element, str], ReportItem
+        [_Element, str], ReportItem
     ] = info_resource_state,
 ) -> None:
     env.push_cib(wait=wait)
@@ -895,8 +897,8 @@ def bundle_update(
 
 
 def _disable_validate_and_edit_cib(
-    env: LibraryEnvironment, cib: Element, resource_or_tag_ids: Iterable[str],
-) -> List[Element]:
+    env: LibraryEnvironment, cib: _Element, resource_or_tag_ids: Iterable[str],
+) -> List[_Element]:
     resource_el_list, report_list = _find_resources_expand_tags(
         cib, resource_or_tag_ids
     )
@@ -914,7 +916,7 @@ def _disable_validate_and_edit_cib(
 
 
 def _disable_get_element_ids(
-    disabled_resource_el_list: Iterable[Element],
+    disabled_resource_el_list: Iterable[_Element],
 ) -> Tuple[Set[str], Set[str]]:
     """
     Turn a list of elements asked by a user to be disabled to a list of their
@@ -926,10 +928,10 @@ def _disable_get_element_ids(
     inner_resource_id_set = set()
     disabled_resource_id_set = set()
     for resource_el in disabled_resource_el_list:
-        disabled_resource_id_set.add(resource_el.get("id"))
+        disabled_resource_id_set.add(cast(Optional[str], resource_el.get("id")))
         inner_resource_id_set.update(
             {
-                inner_resource_el.get("id")
+                cast(Optional[str], inner_resource_el.get("id"))
                 for inner_resource_el in resource.common.get_all_inner_resources(
                     resource_el
                 )
@@ -945,7 +947,7 @@ def _disable_get_element_ids(
 
 def _disable_run_simulate(
     cmd_runner: CommandRunner,
-    cib: Element,
+    cib: _Element,
     disabled_resource_ids: Set[str],
     inner_resource_ids: Set[str],
     strict: bool,
@@ -1123,7 +1125,7 @@ def enable(
     _push_cib_wait(
         env,
         wait,
-        [el.get("id", "") for el in resource_el_list],
+        [str(el.get("id", "")) for el in resource_el_list],
         _ensure_disabled_after_wait(False),
     )
 
@@ -1233,7 +1235,7 @@ def manage(
                 report_list.append(
                     ReportItem.warning(
                         reports.messages.ResourceManagedNoMonitorEnabled(
-                            resource_el.get("id", "")
+                            str(resource_el.get("id", ""))
                         )
                     )
                 )
@@ -1679,10 +1681,10 @@ def get_resource_relations_tree(
 
 
 def _find_resources_expand_tags(
-    cib: Element,
+    cib: _Element,
     resource_or_tag_ids: Iterable[str],
-    additional_search: Optional[Callable[[Element], List[Element]]] = None,
-) -> Tuple[List[Element], ReportItemList]:
+    additional_search: Optional[Callable[[_Element], List[_Element]]] = None,
+) -> Tuple[List[_Element], ReportItemList]:
     rsc_or_tag_el_list, report_list = resource.common.find_resources(
         cib,
         resource_or_tag_ids,
