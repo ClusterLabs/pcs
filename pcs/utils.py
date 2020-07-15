@@ -1671,6 +1671,7 @@ def is_valid_cib_scope(scope):
         "crm_config",
         "rsc_defaults",
         "op_defaults",
+        "acls",
         "status",
     ]
 
