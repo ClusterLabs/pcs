@@ -932,10 +932,10 @@ Commands:
         Get the raw xml from the CIB (Cluster Information Base).  If a filename
         is provided, we save the CIB to that file, otherwise the CIB is
         printed.  Specify scope to get a specific section of the CIB.  Valid
-        values of the scope are: configuration, nodes, resources, constraints,
-        crm_config, rsc_defaults, op_defaults, status.  --config is the same as
-        scope=configuration.  Do not specify a scope if you want to edit
-        the saved CIB using pcs (pcs -f <command>).
+        values of the scope are: acls, configuration, nodes, resources,
+        constraints, crm_config, rsc_defaults, op_defaults, status.  --config
+        is the same as scope=configuration.  Do not specify a scope if you want
+        to edit the saved CIB using pcs (pcs -f <command>).
 
     cib-push <filename> [--wait[=<n>]]
             [diff-against=<filename_original> | scope=<scope> | --config]
@@ -946,7 +946,7 @@ Commands:
         If diff-against is specified, pcs diffs contents of filename against
         contents of filename_original and pushes the result to the CIB.
         Specify scope to push a specific section of the CIB.  Valid values
-        of the scope are: configuration, nodes, resources, constraints,
+        of the scope are: acls, configuration, nodes, resources, constraints,
         crm_config, rsc_defaults, op_defaults.  --config is the same as
         scope=configuration.  Use of --config is recommended.  Do not specify
         a scope if you need to push the whole CIB or be warned in the case
@@ -966,7 +966,7 @@ Commands:
     edit [scope=<scope> | --config]
         Edit the cib in the editor specified by the $EDITOR environment
         variable and push out any changes upon saving.  Specify scope to edit
-        a specific section of the CIB.  Valid values of the scope are:
+        a specific section of the CIB.  Valid values of the scope are: acls,
         configuration, nodes, resources, constraints, crm_config, rsc_defaults,
         op_defaults.  --config is the same as scope=configuration.  Use of
         --config is recommended.  Do not specify a scope if you need to edit
