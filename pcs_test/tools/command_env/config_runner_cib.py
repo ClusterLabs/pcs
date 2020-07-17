@@ -56,7 +56,7 @@ class CibShortcuts:
                 " parameters 'modifiers', 'filename' and 'modifier_shortcuts'"
             )
 
-        command = "cibadmin --local --query"
+        command = ["cibadmin", "--local", "--query"]
         if returncode != 0:
             call = RunnerCall(command, stderr=stderr, returncode=returncode)
         else:
@@ -90,7 +90,7 @@ class CibShortcuts:
             placed
         string before -- key of call before which this new call is to be placed
         """
-        command = "cibadmin --local --query"
+        command = ["cibadmin", "--local", "--query"]
         if returncode != 0:
             call = RunnerCall(command, stderr=stderr, returncode=returncode)
         else:
@@ -131,7 +131,14 @@ class CibShortcuts:
         self.__calls.place(
             name,
             RunnerCall(
-                "cibadmin --replace --verbose --xml-pipe --scope configuration",
+                [
+                    "cibadmin",
+                    "--replace",
+                    "--verbose",
+                    "--xml-pipe",
+                    "--scope",
+                    "configuration",
+                ],
                 stderr=stderr,
                 returncode=returncode,
                 check_stdin=CheckStdinEqualXml(cib),
@@ -154,7 +161,14 @@ class CibShortcuts:
         self.__calls.place(
             name,
             RunnerCall(
-                "cibadmin --replace --verbose --xml-pipe --scope configuration",
+                [
+                    "cibadmin",
+                    "--replace",
+                    "--verbose",
+                    "--xml-pipe",
+                    "--scope",
+                    "configuration",
+                ],
                 check_stdin=CheckStdinEqualXml(cib),
             ),
             instead=instead,
@@ -181,9 +195,14 @@ class CibShortcuts:
         self.__calls.place(
             name,
             RunnerCall(
-                "crm_diff --original {old} --new {new} --no-version".format(
-                    old=cib_old_file, new=cib_new_file
-                ),
+                [
+                    "crm_diff",
+                    "--original",
+                    cib_old_file,
+                    "--new",
+                    cib_new_file,
+                    "--no-version",
+                ],
                 stdout=stdout,
                 stderr=stderr,
                 returncode=returncode,
@@ -206,7 +225,7 @@ class CibShortcuts:
         self.__calls.place(
             name,
             RunnerCall(
-                "cibadmin --patch --verbose --xml-pipe",
+                ["cibadmin", "--patch", "--verbose", "--xml-pipe"],
                 check_stdin=CheckStdinEqualXml(cib_diff),
                 stdout=stdout,
                 stderr=stderr,
@@ -222,5 +241,7 @@ class CibShortcuts:
         string before -- key of call before which this new call is to be placed
         """
         self.__calls.place(
-            name, RunnerCall("cibadmin --upgrade --force"), before=before
+            name,
+            RunnerCall(["cibadmin", "--upgrade", "--force"]),
+            before=before,
         )

@@ -66,27 +66,27 @@ class SuccessMinimal(TestCase):
         # TODO: we do not test environment variables in runner
         for node in self.nodes:
             self.config.runner.place(
-                (
-                    f"{settings.cibadmin} --delete-all --force "
-                    f"--xpath=/cib/configuration/nodes/node[@uname='{node}']"
-                ),
+                [
+                    settings.cibadmin,
+                    "--delete-all",
+                    "--force",
+                    f"--xpath=/cib/configuration/nodes/node[@uname='{node}']",
+                ],
                 name=f"remove_node.{node}",
             )
         cluster.remove_nodes_from_cib(self.env_assist.get_env(), self.nodes)
 
     def test_failure_pcmk_not_running(self):
         err_msg = "an error"
-        cmd = (
-            f"{settings.cibadmin} --delete-all --force "
-            "--xpath=/cib/configuration/nodes/node[@uname='{}']"
-        )
+        cmd = [settings.cibadmin, "--delete-all", "--force"]
+        cmd_xpath = "--xpath=/cib/configuration/nodes/node[@uname='{}']"
         self.config.runner.systemctl.is_active("pacemaker", is_active=False)
         # TODO: we do not test environment variables in runner
         self.config.runner.place(
-            cmd.format(self.nodes[0]), name="remove_node_success",
+            cmd + [cmd_xpath.format(self.nodes[0])], name="remove_node_success",
         )
         self.config.runner.place(
-            cmd.format(self.nodes[1]),
+            cmd + [cmd_xpath.format(self.nodes[1])],
             returncode=1,
             stderr=err_msg,
             name="remove_node_failure",

@@ -55,6 +55,9 @@ COMMAND_COMPLETIONS = {
     "corosync-cfgtool": path.join(
         settings.corosync_binaries, "corosync-cfgtool"
     ),
+    "corosync-qdevice-net-certutil": path.join(
+        settings.corosync_binaries, "corosync-qdevice-net-certutil"
+    ),
     "corosync-quorumtool": path.join(
         settings.corosync_binaries, "corosync-quorumtool"
     ),
@@ -72,8 +75,8 @@ COMMAND_COMPLETIONS = {
 
 def complete_command(command):
     for shortcut, full_path in COMMAND_COMPLETIONS.items():
-        if command == shortcut or command.startswith(f"{shortcut} "):
-            return full_path + command[len(shortcut) :]
+        if command[0] == shortcut:
+            return [full_path] + command[1:]
     return command
 
 
@@ -118,13 +121,12 @@ class Runner:
     def run(
         self, args, stdin_string=None, env_extend=None, binary_output=False
     ):
-        command = " ".join(args)
-        i, call = self.__call_queue.take(CALL_TYPE_RUNNER, command)
+        i, call = self.__call_queue.take(CALL_TYPE_RUNNER, args)
 
-        if command != call.command:
+        if args != call.command:
             raise self.__call_queue.error_with_context(
-                bad_call(i, call.command, command)
+                bad_call(i, call.command, args)
             )
 
-        call.check_stdin(stdin_string, command, i)
+        call.check_stdin(stdin_string, args, i)
         return call.stdout, call.stderr, call.returncode

@@ -30,9 +30,9 @@ class BoothShortcuts:
         string instead -- the key of a call instead of which this new call is to
             be placed
         """
-        cmd = f"{settings.booth_binary} status"
+        cmd = [settings.booth_binary, "status"]
         if instance_name:
-            cmd += f" -c {instance_name}"
+            cmd.extend(["-c", instance_name])
         self.__calls.place(
             name,
             RunnerCall(
@@ -65,9 +65,9 @@ class BoothShortcuts:
         string instead -- the key of a call instead of which this new call is to
             be placed
         """
-        cmd = f"{settings.booth_binary} peers"
+        cmd = [settings.booth_binary, "peers"]
         if instance_name:
-            cmd += f" -c {instance_name}"
+            cmd.extend(["-c", instance_name])
         self.__calls.place(
             name,
             RunnerCall(
@@ -100,9 +100,9 @@ class BoothShortcuts:
         string instead -- the key of a call instead of which this new call is to
             be placed
         """
-        cmd = f"{settings.booth_binary} list"
+        cmd = [settings.booth_binary, "list"]
         if instance_name:
-            cmd += f" -c {instance_name}"
+            cmd.extend(["-c", instance_name])
         self.__calls.place(
             name,
             RunnerCall(
@@ -141,7 +141,7 @@ class BoothShortcuts:
         self.__calls.place(
             name,
             RunnerCall(
-                f"{settings.booth_binary} grant -s {site_ip} {ticket_name}",
+                [settings.booth_binary, "grant", "-s", site_ip, ticket_name],
                 stdout=stdout,
                 stderr=stderr,
                 returncode=returncode,
@@ -179,7 +179,7 @@ class BoothShortcuts:
         self.__calls.place(
             name,
             RunnerCall(
-                f"{settings.booth_binary} revoke -s {site_ip} {ticket_name}",
+                [settings.booth_binary, "revoke", "-s", site_ip, ticket_name],
                 stdout=stdout,
                 stderr=stderr,
                 returncode=returncode,

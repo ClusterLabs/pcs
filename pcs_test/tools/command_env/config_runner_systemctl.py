@@ -20,7 +20,7 @@ class SystemctlShortcuts:
         self.__calls.place(
             name,
             RunnerCall(
-                f"{settings.systemctl_binary} disable {service}.service",
+                [settings.systemctl_binary, "disable", f"{service}.service"],
                 stdout=stdout,
                 stderr=stderr,
                 returncode=returncode,
@@ -38,7 +38,7 @@ class SystemctlShortcuts:
         self.__calls.place(
             name,
             RunnerCall(
-                f"{settings.systemctl_binary} enable {service}.service",
+                [settings.systemctl_binary, "enable", f"{service}.service"],
                 stdout=stdout,
                 stderr=stderr,
                 returncode=returncode,
@@ -56,7 +56,7 @@ class SystemctlShortcuts:
         self.__calls.place(
             name,
             RunnerCall(
-                f"{settings.systemctl_binary} start {service}.service",
+                [settings.systemctl_binary, "start", f"{service}.service"],
                 stdout=stdout,
                 stderr=stderr,
                 returncode=returncode,
@@ -74,7 +74,7 @@ class SystemctlShortcuts:
         self.__calls.place(
             name,
             RunnerCall(
-                f"{settings.systemctl_binary} stop {service}.service",
+                [settings.systemctl_binary, "stop", f"{service}.service"],
                 stdout=stdout,
                 stderr=stderr,
                 returncode=returncode,
@@ -90,9 +90,7 @@ class SystemctlShortcuts:
         self.__calls.place(
             name,
             RunnerCall(
-                "{bin_path} is-active {service}.service".format(
-                    bin_path=settings.systemctl_binary, service=service,
-                ),
+                [settings.systemctl_binary, "is-active", f"{service}.service"],
                 **args,
             ),
         )
@@ -111,9 +109,7 @@ class SystemctlShortcuts:
         self.__calls.place(
             name,
             RunnerCall(
-                "{bin_path} is-enabled {service}.service".format(
-                    bin_path=settings.systemctl_binary, service=service,
-                ),
+                [settings.systemctl_binary, "is-enabled", f"{service}.service"],
                 **args,
             ),
             before=before,
@@ -164,9 +160,7 @@ class SystemctlShortcuts:
         self.__calls.place(
             name,
             RunnerCall(
-                "{bin_path} list-unit-files --full".format(
-                    bin_path=settings.systemctl_binary
-                ),
+                [settings.systemctl_binary, "list-unit-files", "--full"],
                 stdout=output,
             ),
             before=before,

@@ -19,7 +19,7 @@ class SbdShortcuts:
         self.__calls.place(
             name,
             RunnerCall(
-                "{} query-watchdog".format(settings.sbd_binary),
+                [settings.sbd_binary, "query-watchdog"],
                 stdout=output,
                 stderr=stderr,
                 returncode=returncode,

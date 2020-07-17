@@ -107,7 +107,7 @@ class PcmkShortcuts:
         """
         self.__calls.place(
             name,
-            RunnerCall("stonith_admin --help-all", stderr=stderr),
+            RunnerCall(["stonith_admin", "--help-all"], stderr=stderr),
             instead=instead,
         )
 
@@ -127,7 +127,7 @@ class PcmkShortcuts:
         """
         self.__calls.place(
             name,
-            RunnerCall("crm_mon --help-all", stderr=stderr),
+            RunnerCall(["crm_mon", "--help-all"], stderr=stderr),
             instead=instead,
         )
 
@@ -151,7 +151,7 @@ class PcmkShortcuts:
         self.__calls.place(
             name,
             RunnerCall(
-                "stonith_admin --history {0} --verbose".format(node),
+                ["stonith_admin", "--history", node, "--verbose"],
                 stdout=stdout,
                 stderr=stderr,
                 returncode=returncode,
@@ -178,7 +178,7 @@ class PcmkShortcuts:
         self.__calls.place(
             name,
             RunnerCall(
-                "stonith_admin --history {0} --cleanup".format(node),
+                ["stonith_admin", "--history", node, "--cleanup"],
                 stdout=stdout,
                 stderr=stderr,
                 returncode=returncode,
@@ -203,7 +203,7 @@ class PcmkShortcuts:
         self.__calls.place(
             name,
             RunnerCall(
-                "stonith_admin --history * --broadcast",
+                ["stonith_admin", "--history", "*", "--broadcast"],
                 stdout=stdout,
                 stderr=stderr,
                 returncode=returncode,
@@ -249,7 +249,7 @@ class PcmkShortcuts:
             self.__calls.place(
                 name,
                 RunnerCall(
-                    "crm_mon --one-shot --as-xml --inactive",
+                    ["crm_mon", "--one-shot", "--as-xml", "--inactive"],
                     stdout=stdout,
                     stderr=stderr,
                     returncode=returncode,
@@ -294,7 +294,7 @@ class PcmkShortcuts:
         self.__calls.place(
             name,
             RunnerCall(
-                "crm_mon --one-shot --as-xml --inactive",
+                ["crm_mon", "--one-shot", "--as-xml", "--inactive"],
                 stdout=etree_to_str(state),
             ),
         )
@@ -332,7 +332,7 @@ class PcmkShortcuts:
         self.__calls.place(
             name,
             RunnerCall(
-                "crm_mon {}".format(" ".join(flags)),
+                ["crm_mon"] + flags,
                 stdout=stdout,
                 stderr=stderr,
                 returncode=returncode,
@@ -357,7 +357,7 @@ class PcmkShortcuts:
         self.__calls.place(
             name,
             RunnerCall(
-                "crm_ticket --details",
+                ["crm_ticket", "--details"],
                 stdout=stdout,
                 stderr=stderr,
                 returncode=returncode,
@@ -413,7 +413,7 @@ class PcmkShortcuts:
             self.__calls.place(
                 name,
                 RunnerCall(
-                    "crm_resource --show-metadata {0}".format(agent_name),
+                    ["crm_resource", "--show-metadata", agent_name],
                     stdout="",
                     stderr=stderr,
                     returncode=74,
@@ -426,7 +426,7 @@ class PcmkShortcuts:
             self.__calls.place(
                 name,
                 RunnerCall(
-                    "crm_resource --show-metadata {0}".format(agent_name),
+                    ["crm_resource", "--show-metadata", agent_name],
                     stdout=a_file.read(),
                     stderr=stderr,
                 ),
@@ -460,7 +460,7 @@ class PcmkShortcuts:
         self.__calls.place(
             name,
             RunnerCall(
-                f"{settings.pacemaker_fenced} metadata",
+                [settings.pacemaker_fenced, "metadata"],
                 stdout=stdout,
                 stderr=stderr,
                 returncode=returncode,
@@ -497,11 +497,10 @@ class PcmkShortcuts:
                 "Cannot specify node_name when stdout, stderr or returncode is "
                 "specified"
             )
-        cmd = ["crm_node", "--name"]
         self.__calls.place(
             name,
             RunnerCall(
-                " ".join(cmd),
+                ["crm_node", "--name"],
                 stdout=(node_name if node_name else stdout),
                 stderr=stderr,
                 returncode=returncode,
@@ -547,10 +546,7 @@ class PcmkShortcuts:
         self.__calls.place(
             name,
             RunnerCall(
-                " ".join(cmd),
-                stdout=stdout,
-                stderr=stderr,
-                returncode=returncode,
+                cmd, stdout=stdout, stderr=stderr, returncode=returncode,
             ),
             before=before,
             instead=instead,
@@ -693,10 +689,7 @@ class PcmkShortcuts:
         self.__calls.place(
             name,
             RunnerCall(
-                " ".join(cmd),
-                stdout=stdout,
-                stderr=stderr,
-                returncode=returncode,
+                cmd, stdout=stdout, stderr=stderr, returncode=returncode,
             ),
             before=before,
             instead=instead,
@@ -712,7 +705,7 @@ class PcmkShortcuts:
         string stderr -- crm_resource help text
         """
         self.__calls.place(
-            name, RunnerCall("crm_resource -?", stderr=stderr),
+            name, RunnerCall(["crm_resource", "-?"], stderr=stderr),
         )
 
     def wait(
@@ -732,9 +725,15 @@ class PcmkShortcuts:
         self.__calls.place(
             name,
             RunnerCall(
-                "crm_resource --wait --timeout={0}".format(
-                    timeout if timeout else self.default_wait_timeout
-                ),
+                [
+                    "crm_resource",
+                    "--wait",
+                    "--timeout={0}".format(
+                        timeout
+                        if timeout is not None
+                        else self.default_wait_timeout
+                    ),
+                ],
                 stderr=stderr,
                 returncode=returncode,
             ),
@@ -750,7 +749,9 @@ class PcmkShortcuts:
         string before -- key of call before which this new call is to be placed
         """
         self.__calls.place(
-            name, RunnerCall("crm_resource -?", stdout=stdout), before=before
+            name,
+            RunnerCall(["crm_resource", "-?"], stdout=stdout),
+            before=before,
         )
 
     def verify(
@@ -766,15 +767,17 @@ class PcmkShortcuts:
         string name -- key of the call
         string before -- key of call before which this new call is to be placed
         """
+        cmd = ["crm_verify"]
+        if verbose:
+            cmd.extend(["-V", "-V"])
+        if cib_tempfile:
+            cmd.extend(["--xml-file", cib_tempfile])
+        else:
+            cmd.append("--live-check")
         self.__calls.place(
             name,
             RunnerCall(
-                "crm_verify{0} {1}".format(
-                    " -V -V" if verbose else "",
-                    "--xml-file {0}".format(cib_tempfile)
-                    if cib_tempfile
-                    else "--live-check",
-                ),
+                cmd,
                 stderr=("" if stderr is None else stderr),
                 returncode=(0 if stderr is None else 55),
             ),
@@ -790,7 +793,7 @@ class PcmkShortcuts:
         self.__calls.place(
             name,
             RunnerCall(
-                "crm_node --force --remove {0}".format(node_name),
+                ["crm_node", "--force", "--remove", node_name],
                 stderr=stderr,
                 returncode=returncode,
             ),
@@ -845,7 +848,7 @@ class PcmkShortcuts:
         self.__calls.place(
             name,
             RunnerCall(
-                " ".join(cmd),
+                cmd,
                 stdout=stdout,
                 stderr=stderr,
                 returncode=returncode,

@@ -1,9 +1,5 @@
-import os.path
-
 from pcs_test.tools.misc import outdent
 from pcs_test.tools.command_env.mock_runner import Call as RunnerCall
-
-from pcs import settings
 
 
 class CorosyncShortcuts:
@@ -20,7 +16,7 @@ class CorosyncShortcuts:
         self.__calls.place(
             name,
             RunnerCall(
-                "corosync -v",
+                ["corosync", "-v"],
                 stdout=outdent(
                     """\
                     Corosync Cluster Engine, version '{0}'
@@ -50,13 +46,7 @@ class CorosyncShortcuts:
         self.__calls.place(
             name,
             RunnerCall(
-                "{binary} -r -n {cluster_name}".format(
-                    binary=os.path.join(
-                        settings.corosync_binaries,
-                        "corosync-qdevice-net-certutil",
-                    ),
-                    cluster_name=cluster_name,
-                ),
+                ["corosync-qdevice-net-certutil", "-r", "-n", cluster_name],
                 stdout=(
                     stdout
                     if stdout is not None
@@ -83,13 +73,7 @@ class CorosyncShortcuts:
         self.__calls.place(
             name,
             RunnerCall(
-                "{binary} -M -c {cert_path}".format(
-                    binary=os.path.join(
-                        settings.corosync_binaries,
-                        "corosync-qdevice-net-certutil",
-                    ),
-                    cert_path=cert_path,
-                ),
+                ["corosync-qdevice-net-certutil", "-M", "-c", cert_path],
                 stdout=(
                     stdout
                     if stdout is not None
@@ -148,7 +132,7 @@ class CorosyncShortcuts:
         self.__calls.place(
             name,
             RunnerCall(
-                "corosync-quorumtool -p",
+                ["corosync-quorumtool", "-p"],
                 stdout=stdout,
                 stderr=stderr,
                 returncode=returncode,

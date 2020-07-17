@@ -452,7 +452,7 @@ class InitializeBlockDevicesTest(CommonTest):
             cmd += [opt, val]
 
         cmd.append("create")
-        return [Call(" ".join(cmd), stdout, stderr, return_code)]
+        return [Call(cmd, stdout, stderr, return_code)]
 
     @staticmethod
     def fixture_invalid_value(option, value):
@@ -567,17 +567,17 @@ class GetLocalDevicesInfoTest(CommonTest):
     @staticmethod
     def fixture_sbd_enabled(enabled):
         cmd = [settings.systemctl_binary, "is-enabled", "sbd.service"]
-        return [Call(" ".join(cmd), returncode=0 if enabled else 1)]
+        return [Call(cmd, returncode=0 if enabled else 1)]
 
     @staticmethod
     def fixture_sbd_info(device, stdout="", return_code=0):
         cmd = ["sbd", "-d", device, "list"]
-        return [Call(" ".join(cmd), stdout, returncode=return_code)]
+        return [Call(cmd, stdout, returncode=return_code)]
 
     @staticmethod
     def fixture_sbd_dump(device, stdout="", return_code=0):
         cmd = ["sbd", "-d", device, "dump"]
-        return [Call(" ".join(cmd), stdout, returncode=return_code)]
+        return [Call(cmd, stdout, returncode=return_code)]
 
     def test_success(self, mock_config, mock_config_exists):
         mock_config_exists.return_value = True
@@ -686,7 +686,7 @@ class SetMessageTest(CommonTest):
     ):
         return [
             Call(
-                "sbd -d {0} message {1} {2}".format(device, node, message),
+                ["sbd", "-d", device, "message", node, message],
                 stderr=stderr,
                 returncode=return_code,
             )
