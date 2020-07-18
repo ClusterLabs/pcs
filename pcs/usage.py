@@ -968,9 +968,10 @@ Commands:
         variable and push out any changes upon saving.  Specify scope to edit
         a specific section of the CIB.  Valid values of the scope are: acls,
         configuration, nodes, resources, constraints, crm_config, rsc_defaults,
-        op_defaults.  --config is the same as scope=configuration.  Use of
-        --config is recommended.  Do not specify a scope if you need to edit
-        the whole CIB or be warned in the case of outdated CIB.
+        op_defaults, acls, fencing-topology, tags, alerts.  --config is the
+        same as scope=configuration.  Use of --config is recommended.  Do not
+        specify a scope if you need to edit the whole CIB or be warned in the
+        case of outdated CIB.
 
     node add <node name> [addr=<node address>]... [watchdog=<watchdog path>]
             [device=<SBD device path>]... [--start [--wait[=<n>]]] [--enable]

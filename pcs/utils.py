@@ -1672,7 +1672,9 @@ def is_valid_cib_scope(scope):
         "rsc_defaults",
         "op_defaults",
         "acls",
-        "status",
+        "fencing-topology",
+        "tags",
+        "alerts",
     ]
 
 
