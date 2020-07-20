@@ -1664,17 +1664,17 @@ def is_valid_cib_scope(scope):
     Commandline options: no options
     """
     return scope in [
+        "acls",
+        "alerts",
         "configuration",
-        "nodes",
-        "resources",
         "constraints",
         "crm_config",
-        "rsc_defaults",
-        "op_defaults",
-        "acls",
         "fencing-topology",
+        "nodes",
+        "op_defaults",
+        "resources",
+        "rsc_defaults",
         "tags",
-        "alerts",
     ]
 
 
