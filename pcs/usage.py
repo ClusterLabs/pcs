@@ -929,13 +929,14 @@ Commands:
         corosync.conf file.
 
     cib [filename] [scope=<scope> | --config]
-        Get the raw xml from the CIB (Cluster Information Base).  If a filename
+        Get the raw xml from the CIB (Cluster Information Base). If a filename
         is provided, we save the CIB to that file, otherwise the CIB is
-        printed.  Specify scope to get a specific section of the CIB.  Valid
-        values of the scope are: acls, configuration, nodes, resources,
-        constraints, crm_config, rsc_defaults, op_defaults, status.  --config
-        is the same as scope=configuration.  Do not specify a scope if you want
-        to edit the saved CIB using pcs (pcs -f <command>).
+        printed. Specify scope to get a specific section of the CIB. Valid
+        values of the scope are: acls, alerts, configuration, constraints,
+        crm_config, fencing-topology, nodes, op_defaults, resources,
+        rsc_defaults, tags. --config is the same as scope=configuration. Do not
+        specify a scope if you want to edit the saved CIB using pcs (pcs -f
+        <command>).
 
     cib-push <filename> [--wait[=<n>]]
             [diff-against=<filename_original> | scope=<scope> | --config]
@@ -945,12 +946,12 @@ Commands:
         modifications (pcs -f <command>) for the one-off push.
         If diff-against is specified, pcs diffs contents of filename against
         contents of filename_original and pushes the result to the CIB.
-        Specify scope to push a specific section of the CIB.  Valid values
-        of the scope are: acls, configuration, nodes, resources, constraints,
-        crm_config, rsc_defaults, op_defaults.  --config is the same as
-        scope=configuration.  Use of --config is recommended.  Do not specify
-        a scope if you need to push the whole CIB or be warned in the case
-        of outdated CIB.
+        Specify scope to push a specific section of the CIB. Valid values of
+        the scope are: acls, alerts, configuration, constraints, crm_config,
+        fencing-topology, nodes, op_defaults, resources, rsc_defaults, tags.
+        --config is the same as scope=configuration. Use of --config is
+        recommended. Do not specify a scope if you need to push the whole CIB
+        or be warned in the case of outdated CIB.
         If --wait is specified wait up to 'n' seconds for changes to be applied.
         WARNING: the selected scope of the CIB will be overwritten by the
         current content of the specified file.
@@ -965,12 +966,13 @@ Commands:
 
     edit [scope=<scope> | --config]
         Edit the cib in the editor specified by the $EDITOR environment
-        variable and push out any changes upon saving.  Specify scope to edit
-        a specific section of the CIB.  Valid values of the scope are: acls,
-        configuration, nodes, resources, constraints, crm_config, rsc_defaults,
-        op_defaults.  --config is the same as scope=configuration.  Use of
-        --config is recommended.  Do not specify a scope if you need to edit
-        the whole CIB or be warned in the case of outdated CIB.
+        variable and push out any changes upon saving. Specify scope to edit a
+        specific section of the CIB. Valid values of the scope are: acls,
+        alerts, configuration, constraints, crm_config, fencing-topology,
+        nodes, op_defaults, resources, rsc_defaults, tags. --config is the same
+        as scope=configuration. Use of --config is recommended. Do not specify
+        a scope if you need to edit the whole CIB or be warned in the case of
+        outdated CIB.
 
     node add <node name> [addr=<node address>]... [watchdog=<watchdog path>]
             [device=<SBD device path>]... [--start [--wait[=<n>]]] [--enable]
