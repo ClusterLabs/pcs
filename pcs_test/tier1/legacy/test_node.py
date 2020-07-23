@@ -83,19 +83,23 @@ class NodeUtilizationSet(
 
     def test_node_utilization_set(self):
         output, returnVal = pcs(
-            self.temp_cib.name, "node utilization rh7-1 test1=10"
+            self.temp_cib.name, "node utilization rh7-1 test1=10".split()
         )
         ac("", output)
         self.assertEqual(0, returnVal)
 
-        output, returnVal = pcs(self.temp_cib.name, "node utilization rh7-2")
+        output, returnVal = pcs(
+            self.temp_cib.name, "node utilization rh7-2".split()
+        )
         expected_out = """\
 Node Utilization:
 """
         ac(expected_out, output)
         self.assertEqual(0, returnVal)
 
-        output, returnVal = pcs(self.temp_cib.name, "node utilization rh7-1")
+        output, returnVal = pcs(
+            self.temp_cib.name, "node utilization rh7-1".split()
+        )
         expected_out = """\
 Node Utilization:
  rh7-1: test1=10
@@ -104,11 +108,14 @@ Node Utilization:
         self.assertEqual(0, returnVal)
 
         output, returnVal = pcs(
-            self.temp_cib.name, "node utilization rh7-1 test1=-10 test4=1234"
+            self.temp_cib.name,
+            "node utilization rh7-1 test1=-10 test4=1234".split(),
         )
         ac("", output)
         self.assertEqual(0, returnVal)
-        output, returnVal = pcs(self.temp_cib.name, "node utilization rh7-1")
+        output, returnVal = pcs(
+            self.temp_cib.name, "node utilization rh7-1".split()
+        )
         expected_out = """\
 Node Utilization:
  rh7-1: test1=-10 test4=1234
@@ -117,11 +124,14 @@ Node Utilization:
         self.assertEqual(0, returnVal)
 
         output, returnVal = pcs(
-            self.temp_cib.name, "node utilization rh7-2 test2=321 empty="
+            self.temp_cib.name,
+            "node utilization rh7-2 test2=321 empty=".split(),
         )
         ac("", output)
         self.assertEqual(0, returnVal)
-        output, returnVal = pcs(self.temp_cib.name, "node utilization rh7-2")
+        output, returnVal = pcs(
+            self.temp_cib.name, "node utilization rh7-2".split()
+        )
         expected_out = """\
 Node Utilization:
  rh7-2: test2=321
@@ -129,7 +139,7 @@ Node Utilization:
         ac(expected_out, output)
         self.assertEqual(0, returnVal)
 
-        output, returnVal = pcs(self.temp_cib.name, "node utilization")
+        output, returnVal = pcs(self.temp_cib.name, "node utilization".split())
         expected_out = """\
 Node Utilization:
  rh7-1: test1=-10 test4=1234
@@ -139,13 +149,13 @@ Node Utilization:
         self.assertEqual(0, returnVal)
 
         output, returnVal = pcs(
-            self.temp_cib.name, "node utilization rh7-2 test1=-20"
+            self.temp_cib.name, "node utilization rh7-2 test1=-20".split()
         )
         ac("", output)
         self.assertEqual(0, returnVal)
 
         output, returnVal = pcs(
-            self.temp_cib.name, "node utilization --name test1"
+            self.temp_cib.name, "node utilization --name test1".split()
         )
         expected_out = """\
 Node Utilization:
@@ -156,7 +166,7 @@ Node Utilization:
         self.assertEqual(0, returnVal)
 
         output, returnVal = pcs(
-            self.temp_cib.name, "node utilization --name test1 rh7-2"
+            self.temp_cib.name, "node utilization --name test1 rh7-2".split(),
         )
         expected_out = """\
 Node Utilization:
@@ -167,40 +177,43 @@ Node Utilization:
 
     def test_refuse_non_option_attribute_parameter_among_options(self):
         self.assert_pcs_fail(
-            "node utilization rh7-1 net",
+            "node utilization rh7-1 net".split(),
             "Error: missing value of 'net' option\n",
         )
 
     def test_refuse_option_without_key(self):
         self.assert_pcs_fail(
-            "node utilization rh7-1 =1", "Error: missing key in '=1' option\n",
+            "node utilization rh7-1 =1".split(),
+            "Error: missing key in '=1' option\n",
         )
 
     def test_refuse_unknown_node(self):
         self.assert_pcs_fail(
-            "node utilization rh7-0 test=10",
+            "node utilization rh7-0 test=10".split(),
             "Error: Unable to find a node: rh7-0\n",
         )
 
     def test_refuse_value_not_int(self):
         self.assert_pcs_fail(
-            "node utilization rh7-1 test1=10 test=int",
+            "node utilization rh7-1 test1=10 test=int".split(),
             "Error: Value of utilization attribute must be integer: "
             "'test=int'\n",
         )
 
     def test_keep_empty_nvset(self):
         self.assert_effect(
-            "node utilization rh7-1 test=100",
+            "node utilization rh7-1 test=100".split(),
             self.fixture_xml_with_utilization(),
         )
         self.assert_effect(
-            "node utilization rh7-1 test=", self.fixture_xml_empty_utilization()
+            "node utilization rh7-1 test=".split(),
+            self.fixture_xml_empty_utilization(),
         )
 
     def test_dont_create_nvset_on_removal(self):
         self.assert_effect(
-            "node utilization rh7-1 test=", self.fixture_xml_no_utilization()
+            "node utilization rh7-1 test=".split(),
+            self.fixture_xml_no_utilization(),
         )
 
 
@@ -229,7 +242,7 @@ class NodeUtilizationPrint(TestCase, AssertPcsMixin):
 
     def test_refuse_when_node_not_in_mocked_cib(self):
         self.assert_pcs_fail(
-            "node utilization some_nonexistent_node",
+            "node utilization some_nonexistent_node".split(),
             ["Error: Unable to find a node: some_nonexistent_node",],
         )
 
@@ -244,15 +257,15 @@ class NodeStandby(TestCase, AssertPcsMixin):
         self.temp_cib.close()
 
     def fixture_standby_all(self):
-        self.assert_pcs_success("node standby --all")
+        self.assert_pcs_success("node standby --all".split())
         self.assert_standby_all()
 
     def assert_standby_none(self):
-        self.assert_pcs_success("node attribute", "Node Attributes:\n")
+        self.assert_pcs_success("node attribute".split(), "Node Attributes:\n")
 
     def assert_standby_all(self):
         self.assert_pcs_success(
-            "node attribute",
+            "node attribute".split(),
             outdent(
                 """\
                 Node Attributes:
@@ -266,27 +279,29 @@ class NodeStandby(TestCase, AssertPcsMixin):
     def test_local_node(self):
         self.assert_standby_none()
         self.assert_pcs_fail(
-            "node standby", "Error: Node(s) must be specified if -f is used\n"
+            "node standby".split(),
+            "Error: Node(s) must be specified if -f is used\n",
         )
         self.assert_standby_none()
 
         self.fixture_standby_all()
         self.assert_pcs_fail(
-            "node unstandby", "Error: Node(s) must be specified if -f is used\n"
+            "node unstandby".split(),
+            "Error: Node(s) must be specified if -f is used\n",
         )
         self.assert_standby_all()
 
     def test_one_bad_node(self):
         self.assert_standby_none()
         self.assert_pcs_fail(
-            "node standby nonexistant-node",
+            "node standby nonexistant-node".split(),
             "Error: Node 'nonexistant-node' does not appear to exist in configuration\n",
         )
         self.assert_standby_none()
 
         self.fixture_standby_all()
         self.assert_pcs_fail(
-            "node unstandby nonexistant-node",
+            "node unstandby nonexistant-node".split(),
             "Error: Node 'nonexistant-node' does not appear to exist in configuration\n",
         )
         self.assert_standby_all()
@@ -294,7 +309,7 @@ class NodeStandby(TestCase, AssertPcsMixin):
     def test_bad_node_cancels_all_changes(self):
         self.assert_standby_none()
         self.assert_pcs_fail(
-            "node standby rh7-1 nonexistant-node and-another rh7-2",
+            "node standby rh7-1 nonexistant-node and-another rh7-2".split(),
             "Error: Node 'nonexistant-node' does not appear to exist in configuration\n"
             "Error: Node 'and-another' does not appear to exist in configuration\n",
         )
@@ -302,7 +317,7 @@ class NodeStandby(TestCase, AssertPcsMixin):
 
         self.fixture_standby_all()
         self.assert_pcs_fail(
-            "node standby rh7-1 nonexistant-node and-another rh7-2",
+            "node standby rh7-1 nonexistant-node and-another rh7-2".split(),
             "Error: Node 'nonexistant-node' does not appear to exist in configuration\n"
             "Error: Node 'and-another' does not appear to exist in configuration\n",
         )
@@ -310,17 +325,17 @@ class NodeStandby(TestCase, AssertPcsMixin):
 
     def test_all_nodes(self):
         self.assert_standby_none()
-        self.assert_pcs_success("node standby --all")
+        self.assert_pcs_success("node standby --all".split())
         self.fixture_standby_all()
 
-        self.assert_pcs_success("node unstandby --all")
+        self.assert_pcs_success("node unstandby --all".split())
         self.assert_standby_none()
 
     def test_one_node_with_repeat(self):
         self.assert_standby_none()
-        self.assert_pcs_success("node standby rh7-1")
+        self.assert_pcs_success("node standby rh7-1".split())
         self.assert_pcs_success(
-            "node attribute",
+            "node attribute".split(),
             outdent(
                 """\
                 Node Attributes:
@@ -328,12 +343,12 @@ class NodeStandby(TestCase, AssertPcsMixin):
                 """
             ),
         )
-        self.assert_pcs_success("node standby rh7-1")
+        self.assert_pcs_success("node standby rh7-1".split())
 
         self.fixture_standby_all()
-        self.assert_pcs_success("node unstandby rh7-1")
+        self.assert_pcs_success("node unstandby rh7-1".split())
         self.assert_pcs_success(
-            "node attribute",
+            "node attribute".split(),
             outdent(
                 """\
                 Node Attributes:
@@ -342,13 +357,13 @@ class NodeStandby(TestCase, AssertPcsMixin):
                 """
             ),
         )
-        self.assert_pcs_success("node unstandby rh7-1")
+        self.assert_pcs_success("node unstandby rh7-1".split())
 
     def test_more_nodes(self):
         self.assert_standby_none()
-        self.assert_pcs_success("node standby rh7-1 rh7-2")
+        self.assert_pcs_success("node standby rh7-1 rh7-2".split())
         self.assert_pcs_success(
-            "node attribute",
+            "node attribute".split(),
             outdent(
                 """\
                 Node Attributes:
@@ -359,9 +374,9 @@ class NodeStandby(TestCase, AssertPcsMixin):
         )
 
         self.fixture_standby_all()
-        self.assert_pcs_success("node unstandby rh7-1 rh7-2")
+        self.assert_pcs_success("node unstandby rh7-1 rh7-2".split())
         self.assert_pcs_success(
-            "node attribute",
+            "node attribute".split(),
             outdent(
                 """\
                 Node Attributes:
@@ -372,11 +387,11 @@ class NodeStandby(TestCase, AssertPcsMixin):
 
     def test_all_and_nodelist(self):
         self.assert_pcs_fail(
-            "node standby rh7-1 rh7-2 --all",
+            "node standby rh7-1 rh7-2 --all".split(),
             stdout_full="Error: Cannot specify both --all and a list of nodes.\n",
         )
         self.assert_pcs_fail(
-            "node unstandby rh7-1 rh7-2 --all",
+            "node unstandby rh7-1 rh7-2 --all".split(),
             stdout_full="Error: Cannot specify both --all and a list of nodes.\n",
         )
 
@@ -391,15 +406,15 @@ class NodeMaintenance(TestCase, AssertPcsMixin):
         self.temp_cib.close()
 
     def fixture_maintenance_all(self):
-        self.assert_pcs_success("node maintenance --all")
+        self.assert_pcs_success("node maintenance --all".split())
         self.assert_maintenance_all()
 
     def assert_maintenance_none(self):
-        self.assert_pcs_success("node attribute", "Node Attributes:\n")
+        self.assert_pcs_success("node attribute".split(), "Node Attributes:\n")
 
     def assert_maintenance_all(self):
         self.assert_pcs_success(
-            "node attribute",
+            "node attribute".split(),
             outdent(
                 """\
                 Node Attributes:
@@ -413,14 +428,14 @@ class NodeMaintenance(TestCase, AssertPcsMixin):
     def test_local_node(self):
         self.assert_maintenance_none()
         self.assert_pcs_fail(
-            "node maintenance",
+            "node maintenance".split(),
             "Error: Node(s) must be specified if -f is used\n",
         )
         self.assert_maintenance_none()
 
         self.fixture_maintenance_all()
         self.assert_pcs_fail(
-            "node unmaintenance",
+            "node unmaintenance".split(),
             "Error: Node(s) must be specified if -f is used\n",
         )
         self.assert_maintenance_all()
@@ -428,14 +443,14 @@ class NodeMaintenance(TestCase, AssertPcsMixin):
     def test_one_bad_node(self):
         self.assert_maintenance_none()
         self.assert_pcs_fail(
-            "node maintenance nonexistant-node",
+            "node maintenance nonexistant-node".split(),
             "Error: Node 'nonexistant-node' does not appear to exist in configuration\n",
         )
         self.assert_maintenance_none()
 
         self.fixture_maintenance_all()
         self.assert_pcs_fail(
-            "node unmaintenance nonexistant-node",
+            "node unmaintenance nonexistant-node".split(),
             "Error: Node 'nonexistant-node' does not appear to exist in configuration\n",
         )
         self.assert_maintenance_all()
@@ -443,7 +458,7 @@ class NodeMaintenance(TestCase, AssertPcsMixin):
     def test_bad_node_cancels_all_changes(self):
         self.assert_maintenance_none()
         self.assert_pcs_fail(
-            "node maintenance rh7-1 nonexistant-node and-another rh7-2",
+            "node maintenance rh7-1 nonexistant-node and-another rh7-2".split(),
             "Error: Node 'nonexistant-node' does not appear to exist in configuration\n"
             "Error: Node 'and-another' does not appear to exist in configuration\n",
         )
@@ -451,7 +466,7 @@ class NodeMaintenance(TestCase, AssertPcsMixin):
 
         self.fixture_maintenance_all()
         self.assert_pcs_fail(
-            "node maintenance rh7-1 nonexistant-node and-another rh7-2",
+            "node maintenance rh7-1 nonexistant-node and-another rh7-2".split(),
             "Error: Node 'nonexistant-node' does not appear to exist in configuration\n"
             "Error: Node 'and-another' does not appear to exist in configuration\n",
         )
@@ -459,17 +474,17 @@ class NodeMaintenance(TestCase, AssertPcsMixin):
 
     def test_all_nodes(self):
         self.assert_maintenance_none()
-        self.assert_pcs_success("node maintenance --all")
+        self.assert_pcs_success("node maintenance --all".split())
         self.fixture_maintenance_all()
 
-        self.assert_pcs_success("node unmaintenance --all")
+        self.assert_pcs_success("node unmaintenance --all".split())
         self.assert_maintenance_none()
 
     def test_one_node_with_repeat(self):
         self.assert_maintenance_none()
-        self.assert_pcs_success("node maintenance rh7-1")
+        self.assert_pcs_success("node maintenance rh7-1".split())
         self.assert_pcs_success(
-            "node attribute",
+            "node attribute".split(),
             outdent(
                 """\
                 Node Attributes:
@@ -477,12 +492,12 @@ class NodeMaintenance(TestCase, AssertPcsMixin):
                 """
             ),
         )
-        self.assert_pcs_success("node maintenance rh7-1")
+        self.assert_pcs_success("node maintenance rh7-1".split())
 
         self.fixture_maintenance_all()
-        self.assert_pcs_success("node unmaintenance rh7-1")
+        self.assert_pcs_success("node unmaintenance rh7-1".split())
         self.assert_pcs_success(
-            "node attribute",
+            "node attribute".split(),
             outdent(
                 """\
                 Node Attributes:
@@ -491,13 +506,13 @@ class NodeMaintenance(TestCase, AssertPcsMixin):
                 """
             ),
         )
-        self.assert_pcs_success("node unmaintenance rh7-1")
+        self.assert_pcs_success("node unmaintenance rh7-1".split())
 
     def test_more_nodes(self):
         self.assert_maintenance_none()
-        self.assert_pcs_success("node maintenance rh7-1 rh7-2")
+        self.assert_pcs_success("node maintenance rh7-1 rh7-2".split())
         self.assert_pcs_success(
-            "node attribute",
+            "node attribute".split(),
             outdent(
                 """\
                 Node Attributes:
@@ -508,9 +523,9 @@ class NodeMaintenance(TestCase, AssertPcsMixin):
         )
 
         self.fixture_maintenance_all()
-        self.assert_pcs_success("node unmaintenance rh7-1 rh7-2")
+        self.assert_pcs_success("node unmaintenance rh7-1 rh7-2".split())
         self.assert_pcs_success(
-            "node attribute",
+            "node attribute".split(),
             outdent(
                 """\
                 Node Attributes:
@@ -521,11 +536,11 @@ class NodeMaintenance(TestCase, AssertPcsMixin):
 
     def test_all_and_nodelist(self):
         self.assert_pcs_fail(
-            "node maintenance rh7-1 rh7-2 --all",
+            "node maintenance rh7-1 rh7-2 --all".split(),
             stdout_full="Error: Cannot specify both --all and a list of nodes.\n",
         )
         self.assert_pcs_fail(
-            "node unmaintenance rh7-1 rh7-2 --all",
+            "node unmaintenance rh7-1 rh7-2 --all".split(),
             stdout_full="Error: Cannot specify both --all and a list of nodes.\n",
         )
 
@@ -614,7 +629,7 @@ class NodeAttributeTest(
 
     def test_show_empty(self):
         self.fixture_attrs(["rh7-1", "rh7-2"])
-        self.assert_pcs_success("node attribute", "Node Attributes:\n")
+        self.assert_pcs_success("node attribute".split(), "Node Attributes:\n")
 
     def test_show_nonempty(self):
         self.fixture_attrs(
@@ -622,7 +637,7 @@ class NodeAttributeTest(
             {"rh7-1": {"IP": "192.168.1.1",}, "rh7-2": {"IP": "192.168.1.2",},},
         )
         self.assert_pcs_success(
-            "node attribute",
+            "node attribute".split(),
             """\
 Node Attributes:
  rh7-1: IP=192.168.1.1
@@ -639,7 +654,7 @@ Node Attributes:
             },
         )
         self.assert_pcs_success(
-            "node attribute",
+            "node attribute".split(),
             """\
 Node Attributes:
  rh7-1: IP=192.168.1.1 alias=node1
@@ -656,7 +671,7 @@ Node Attributes:
             },
         )
         self.assert_pcs_success(
-            "node attribute rh7-1",
+            "node attribute rh7-1".split(),
             """\
 Node Attributes:
  rh7-1: IP=192.168.1.1 alias=node1
@@ -672,7 +687,7 @@ Node Attributes:
             },
         )
         self.assert_pcs_success(
-            "node attribute rh7-3",
+            "node attribute rh7-3".split(),
             """\
 Node Attributes:
 """,
@@ -687,7 +702,7 @@ Node Attributes:
             },
         )
         self.assert_pcs_success(
-            "node attribute --name alias",
+            "node attribute --name alias".split(),
             """\
 Node Attributes:
  rh7-1: alias=node1
@@ -704,7 +719,7 @@ Node Attributes:
             },
         )
         self.assert_pcs_success(
-            "node attribute --name missing",
+            "node attribute --name missing".split(),
             """\
 Node Attributes:
 """,
@@ -719,7 +734,7 @@ Node Attributes:
             },
         )
         self.assert_pcs_success(
-            "node attribute --name alias rh7-1",
+            "node attribute --name alias rh7-1".split(),
             """\
 Node Attributes:
  rh7-1: alias=node1
@@ -728,17 +743,17 @@ Node Attributes:
 
     def test_set_new(self):
         self.fixture_attrs(["rh7-1", "rh7-2"])
-        self.assert_pcs_success("node attribute rh7-1 IP=192.168.1.1")
+        self.assert_pcs_success("node attribute rh7-1 IP=192.168.1.1".split())
         self.assert_pcs_success(
-            "node attribute",
+            "node attribute".split(),
             """\
 Node Attributes:
  rh7-1: IP=192.168.1.1
 """,
         )
-        self.assert_pcs_success("node attribute rh7-2 IP=192.168.1.2")
+        self.assert_pcs_success("node attribute rh7-2 IP=192.168.1.2".split())
         self.assert_pcs_success(
-            "node attribute",
+            "node attribute".split(),
             """\
 Node Attributes:
  rh7-1: IP=192.168.1.1
@@ -751,9 +766,9 @@ Node Attributes:
             ["rh7-1", "rh7-2"],
             {"rh7-1": {"IP": "192.168.1.1",}, "rh7-2": {"IP": "192.168.1.2",},},
         )
-        self.assert_pcs_success("node attribute rh7-2 IP=192.168.2.2")
+        self.assert_pcs_success("node attribute rh7-2 IP=192.168.2.2".split())
         self.assert_pcs_success(
-            "node attribute",
+            "node attribute".split(),
             """\
 Node Attributes:
  rh7-1: IP=192.168.1.1
@@ -766,9 +781,9 @@ Node Attributes:
             ["rh7-1", "rh7-2"],
             {"rh7-1": {"IP": "192.168.1.1",}, "rh7-2": {"IP": "192.168.1.2",},},
         )
-        self.assert_pcs_success("node attribute rh7-2 IP=")
+        self.assert_pcs_success("node attribute rh7-2 IP=".split())
         self.assert_pcs_success(
-            "node attribute",
+            "node attribute".split(),
             """\
 Node Attributes:
  rh7-1: IP=192.168.1.1
@@ -781,7 +796,7 @@ Node Attributes:
             {"rh7-1": {"IP": "192.168.1.1",}, "rh7-2": {"IP": "192.168.1.2",},},
         )
         self.assert_pcs_result(
-            "node attribute rh7-1 missing=",
+            "node attribute rh7-1 missing=".split(),
             "Error: attribute: 'missing' doesn't exist for node: 'rh7-1'\n",
             returncode=2,
         )
@@ -791,14 +806,18 @@ Node Attributes:
             ["rh7-1", "rh7-2"],
             {"rh7-1": {"IP": "192.168.1.1",}, "rh7-2": {"IP": "192.168.1.2",},},
         )
-        self.assert_pcs_success("node attribute rh7-1 missing= --force", "")
+        self.assert_pcs_success(
+            "node attribute rh7-1 missing= --force".split(), ""
+        )
 
     def test_keep_empty_nvset(self):
         self.assert_effect(
-            "node attribute rh7-1 test=100", self.fixture_xml_with_attrs()
+            "node attribute rh7-1 test=100".split(),
+            self.fixture_xml_with_attrs(),
         )
         self.assert_effect(
-            "node attribute rh7-1 test=", self.fixture_xml_empty_attrs()
+            "node attribute rh7-1 test=".split(),
+            self.fixture_xml_empty_attrs(),
         )
 
     def test_dont_create_nvset_on_removal(self):
@@ -806,7 +825,9 @@ Node Attributes:
         # this behaves differently than the rest of pcs - instead of doing
         # nothing it returns an error.
         # Should be changed to be consistent with the rest of pcs.
-        output, retval = pcs(self.temp_cib.name, "node attribute rh7-1 test=")
+        output, retval = pcs(
+            self.temp_cib.name, "node attribute rh7-1 test=".split()
+        )
         self.assertEqual(
             output, "Error: attribute: 'test' doesn't exist for node: 'rh7-1'\n"
         )

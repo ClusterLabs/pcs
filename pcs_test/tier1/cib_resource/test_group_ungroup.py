@@ -179,7 +179,7 @@ class GroupDeleteRemoveUngroupBase(
 
     def test_nonexistent_group(self):
         self.assert_pcs_fail(
-            f"resource {self.command} NonExistentGroup",
+            ["resource"] + self.command + ["NonExistentGroup"],
             "Error: Group 'NonExistentGroup' does not exist\n",
         )
         self.assert_resources_xml_in_cib(
@@ -190,7 +190,8 @@ class GroupDeleteRemoveUngroupBase(
 
     def test_not_a_group_id(self):
         self.assert_pcs_fail(
-            f"resource {self.command} A1", "Error: Group 'A1' does not exist\n",
+            ["resource"] + self.command + ["A1"],
+            "Error: Group 'A1' does not exist\n",
         )
         self.assert_resources_xml_in_cib(
             fixture_resources_xml([FIXTURE_AGROUP_XML]),
@@ -200,7 +201,7 @@ class GroupDeleteRemoveUngroupBase(
 
     def test_whole_group(self):
         self.assert_effect(
-            f"resource {self.command} AGroup",
+            ["resource"] + self.command + ["AGroup"],
             fixture_resources_xml(
                 [
                     fixture_primitive_xml("A1"),
@@ -218,7 +219,7 @@ class GroupDeleteRemoveUngroupBase(
 
     def test_specified_resources(self):
         self.assert_effect(
-            f"resource {self.command} AGroup A1 A3",
+            ["resource"] + self.command + ["AGroup", "A1", "A3"],
             fixture_resources_xml(
                 [
                     fixture_group_xml(
@@ -234,7 +235,7 @@ class GroupDeleteRemoveUngroupBase(
 
     def test_all_resources(self):
         self.assert_effect(
-            f"resource {self.command} AGroup A1 A2 A3",
+            ["resource"] + self.command + ["AGroup", "A1", "A2", "A3"],
             fixture_resources_xml(
                 [
                     fixture_primitive_xml("A1"),
@@ -251,9 +252,9 @@ class GroupDeleteRemoveUngroupBase(
         self.assert_constraint_xml("<constraints/>")
 
     def test_cloned_group(self):
-        self.assert_pcs_success("resource clone AGroup")
+        self.assert_pcs_success("resource clone AGroup".split())
         self.assert_pcs_fail(
-            f"resource {self.command} AGroup",
+            ["resource"] + self.command + ["AGroup"],
             "Error: Cannot remove all resources from a cloned group\n",
         )
         self.assert_resources_xml_in_cib(
@@ -265,9 +266,9 @@ class GroupDeleteRemoveUngroupBase(
         self.assert_constraint_xml(FIXTURE_CLONE_TAG_CONSTRAINTS)
 
     def test_cloned_group_all_resorces_specified(self):
-        self.assert_pcs_success("resource clone AGroup")
+        self.assert_pcs_success("resource clone AGroup".split())
         self.assert_pcs_fail(
-            f"resource {self.command} AGroup A1 A2 A3",
+            ["resource"] + self.command + ["AGroup", "A1", "A2", "A3"],
             "Error: Cannot remove all resources from a cloned group\n",
         )
         self.assert_resources_xml_in_cib(
@@ -279,10 +280,10 @@ class GroupDeleteRemoveUngroupBase(
         self.assert_constraint_xml(FIXTURE_CLONE_TAG_CONSTRAINTS)
 
     def test_cloned_group_with_one_resource(self):
-        self.assert_pcs_success("resource clone AGroup")
-        self.assert_pcs_success("resource ungroup AGroup A1 A2")
+        self.assert_pcs_success("resource clone AGroup".split())
+        self.assert_pcs_success("resource ungroup AGroup A1 A2".split())
         self.assert_effect(
-            f"resource {self.command} AGroup",
+            ["resource"] + self.command + ["AGroup"],
             fixture_resources_xml(
                 [
                     fixture_clone_xml(
@@ -299,12 +300,12 @@ class GroupDeleteRemoveUngroupBase(
 
 
 class ResourceUngroup(GroupDeleteRemoveUngroupBase, TestCase):
-    command = "ungroup"
+    command = ["ungroup"]
 
 
 class GroupDelete(GroupDeleteRemoveUngroupBase, TestCase):
-    command = "group delete"
+    command = ["group", "delete"]
 
 
 class GroupRemove(GroupDeleteRemoveUngroupBase, TestCase):
-    command = "group remove"
+    command = ["group", "remove"]

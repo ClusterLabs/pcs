@@ -64,7 +64,7 @@ class TestTagMixin(
 class TagCreate(TestTagMixin, TestCase):
     def test_create_success(self):
         self.assert_effect(
-            "tag create new x1 x2",
+            "tag create new x1 x2".split(),
             self.fixture_tags_xml(
                 append=(
                     """
@@ -79,16 +79,16 @@ class TagCreate(TestTagMixin, TestCase):
 
     def test_create_not_enough_arguments(self):
         self.assert_pcs_fail(
-            "tag create", stdout_start="\nUsage: pcs tag <command>",
+            "tag create".split(), stdout_start="\nUsage: pcs tag <command>",
         )
         self.assert_pcs_fail(
-            "tag create tag", stdout_start="\nUsage: pcs tag <command>",
+            "tag create tag".split(), stdout_start="\nUsage: pcs tag <command>",
         )
         self.assert_resources_xml_in_cib(self.fixture_tags_xml())
 
     def test_create_invalid_tag_id(self):
         self.assert_pcs_fail(
-            "tag create 1tag x1 x2",
+            "tag create 1tag x1 x2".split(),
             (
                 "Error: invalid id '1tag', '1' is not a valid first character "
                 "for a id\n"
@@ -100,7 +100,7 @@ class TagCreate(TestTagMixin, TestCase):
 
     def test_create_nonexistent_ids(self):
         self.assert_pcs_fail(
-            "tag create tag noid-01 noid-02",
+            "tag create tag noid-01 noid-02".split(),
             (
                 "Error: bundle/clone/group/resource 'noid-01' does not exist\n"
                 "Error: bundle/clone/group/resource 'noid-02' does not exist\n"
@@ -112,7 +112,7 @@ class TagCreate(TestTagMixin, TestCase):
 
     def test_create_duplicate_ids(self):
         self.assert_pcs_fail(
-            "tag create tag x2 x2 x1 x1 x3",
+            "tag create tag x2 x2 x1 x1 x3".split(),
             (
                 "Error: Ids to add must be unique, duplicate ids: 'x1', "
                 "'x2'\n"
@@ -124,7 +124,7 @@ class TagCreate(TestTagMixin, TestCase):
 
     def test_create_tag_id_already_exists(self):
         self.assert_pcs_fail(
-            "tag create x1 x2 x3",
+            "tag create x1 x2 x3".split(),
             (
                 "Error: 'x1' already exists\n"
                 "Error: Errors have occurred, therefore pcs is unable to "
@@ -135,7 +135,7 @@ class TagCreate(TestTagMixin, TestCase):
 
     def test_create_tag_contains_itself(self):
         self.assert_pcs_fail(
-            "tag create x1 x1",
+            "tag create x1 x1".split(),
             (
                 "Error: 'x1' already exists\n"
                 "Error: Tag cannot contain itself\n"
@@ -147,7 +147,7 @@ class TagCreate(TestTagMixin, TestCase):
 
     def test_create_nonresource_ref_id(self):
         self.assert_pcs_fail(
-            "tag create tag cx1 cx2",
+            "tag create tag cx1 cx2".split(),
             (
                 "Error: 'cx1' is not a bundle/clone/group/resource\n"
                 "Error: 'cx2' is not a bundle/clone/group/resource\n"
@@ -165,16 +165,16 @@ class TagConfigListBase(TestTagMixin):
         write_file_to_tmpfile(empty_cib, self.temp_cib)
 
         self.assert_pcs_success(
-            "tag", " No tags defined\n",
+            ["tag"], " No tags defined\n",
         )
 
         self.assert_pcs_success(
-            f"tag {self.command}", " No tags defined\n",
+            ["tag", self.command], " No tags defined\n",
         )
 
     def test_config_tag_does_not_exist(self):
         self.assert_pcs_fail(
-            f"tag {self.command} notag2 notag1",
+            ["tag", self.command, "notag2", "notag1"],
             (
                 "Error: tag 'notag2' does not exist\n"
                 "Error: tag 'notag1' does not exist\n"
@@ -186,7 +186,7 @@ class TagConfigListBase(TestTagMixin):
 
     def test_config_tags_defined(self):
         self.assert_pcs_success(
-            f"tag {self.command}",
+            ["tag", self.command],
             dedent(
                 """\
                 tag1
@@ -204,7 +204,7 @@ class TagConfigListBase(TestTagMixin):
 
     def test_config_specified_tags(self):
         self.assert_pcs_success(
-            f"tag {self.command} tag2 tag1",
+            ["tag", self.command, "tag2", "tag1"],
             dedent(
                 """\
                 tag2
@@ -341,11 +341,11 @@ class PcsConfigTagsTest(TestTagMixin, TestCase):
             "corosync_conf_file": rc("corosync.conf")
         }
 
-        self.assert_pcs_success("config", self.fixture_expected_config())
+        self.assert_pcs_success(["config"], self.fixture_expected_config())
 
     def test_config_tags_defined(self):
         self.assert_pcs_success(
-            "config",
+            ["config"],
             self.fixture_expected_config(
                 constraints=self.expected_constraints,
                 resources=self.expected_resources,
@@ -359,13 +359,13 @@ class TagRemoveDeleteBase(TestTagMixin):
 
     def test_remove_not_enough_arguments(self):
         self.assert_pcs_fail(
-            f"tag {self.command}", stdout_start="\nUsage: pcs tag <command>",
+            ["tag", self.command], stdout_start="\nUsage: pcs tag <command>",
         )
         self.assert_resources_xml_in_cib(self.fixture_tags_xml())
 
     def test_remove_nonexistent_tags(self):
         self.assert_pcs_fail(
-            f"tag {self.command} tagY tagX",
+            ["tag", self.command, "tagY", "tagX"],
             (
                 "Error: tag 'tagY' does not exist\n"
                 "Error: tag 'tagX' does not exist\n"
@@ -377,12 +377,12 @@ class TagRemoveDeleteBase(TestTagMixin):
 
     def test_remove_one_tag(self):
         self.assert_effect(
-            f"tag {self.command} tag1", self.fixture_tags_xml(tag1=""),
+            ["tag", self.command, "tag1"], self.fixture_tags_xml(tag1=""),
         )
 
     def test_remove_all_tags(self):
         self.assert_effect(
-            f"tag {self.command} tag1 tag2 tag3",
+            ["tag", self.command, "tag1", "tag2", "tag3"],
             """
             <tags/>
             """,
@@ -417,28 +417,28 @@ class ResourceRemoveDeleteBase(TestTagMixin):
 
     def test_resource_not_referenced_in_tags(self):
         self.assert_pcs_success(
-            f"resource {self.command} not-in-tags",
+            ["resource", self.command, "not-in-tags"],
             "Deleting Resource - not-in-tags\n",
         )
         self.assert_resources_xml_in_cib(self.fixture_tags_xml())
 
     def test_resource_referenced_in_a_single_tag(self):
         self.assert_pcs_fail(
-            f"resource {self.command} x1",
+            ["resource", self.command, "x1"],
             self.fixture_error_message("x1", ["tag1"]),
         )
         self.assert_resources_xml_in_cib(self.fixture_tags_xml())
 
     def test_resource_referenced_in_multiple_tags(self):
         self.assert_pcs_fail(
-            f"resource {self.command} x2",
+            ["resource", self.command, "x2"],
             self.fixture_error_message("x2", ["tag1", "tag2"]),
         )
         self.assert_resources_xml_in_cib(self.fixture_tags_xml())
 
     def test_related_clone_resource_in_tag(self):
         self.assert_pcs_fail(
-            f"resource {self.command} y2",
+            ["resource", self.command, "y2"],
             self.fixture_error_message("y2", ["tag3"]),
         )
         self.assert_resources_xml_in_cib(self.fixture_tags_xml())
@@ -459,7 +459,7 @@ class ResourceDelete(
 class TagUpdate(TestTagMixin, TestCase):
     def test_success_add_new_existing_before_and_remove(self):
         self.assert_effect(
-            "tag update tag1 add y1 y2 x3 --before x2 remove x1",
+            "tag update tag1 add y1 y2 x3 --before x2 remove x1".split(),
             self.fixture_tags_xml(
                 tag1=(
                     """
@@ -476,7 +476,7 @@ class TagUpdate(TestTagMixin, TestCase):
 
     def test_success_add_new_existing_after_and_remove(self):
         self.assert_effect(
-            "tag update tag1 add x3 y1 y2 --after x1 remove x2",
+            "tag update tag1 add x3 y1 y2 --after x1 remove x2".split(),
             self.fixture_tags_xml(
                 tag1=(
                     """
@@ -493,13 +493,13 @@ class TagUpdate(TestTagMixin, TestCase):
 
     def test_fail_not_enough_arguments(self):
         self.assert_pcs_fail(
-            "tag update", stdout_start="\nUsage: pcs tag <command>",
+            "tag update".split(), stdout_start="\nUsage: pcs tag <command>",
         )
         self.assert_resources_xml_in_cib(self.fixture_tags_xml())
 
     def test_fail_tag_update_ids_not_specified(self):
         self.assert_pcs_fail(
-            "tag update tag1",
+            "tag update tag1".split(),
             stdout_start=(
                 "Hint: Specify at least one id for 'add' or 'remove' arguments."
             ),
@@ -508,7 +508,7 @@ class TagUpdate(TestTagMixin, TestCase):
 
     def test_fail_tag_update_add_ids_not_specified(self):
         self.assert_pcs_fail(
-            "tag update tag1 add",
+            "tag update tag1 add".split(),
             stdout_start=(
                 "Hint: Specify at least one id for 'add' or 'remove' arguments."
             ),
@@ -517,7 +517,7 @@ class TagUpdate(TestTagMixin, TestCase):
 
     def test_fail_tag_update_remove_ids_not_specified(self):
         self.assert_pcs_fail(
-            "tag update tag1 remove",
+            "tag update tag1 remove".split(),
             stdout_start=(
                 "Hint: Specify at least one id for 'add' or 'remove' arguments."
             ),
@@ -526,7 +526,7 @@ class TagUpdate(TestTagMixin, TestCase):
 
     def test_fail_tag_and_add_id_not_exist(self):
         self.assert_pcs_fail(
-            "tag update nonexisting_tag add nonexisting_resource",
+            "tag update nonexisting_tag add nonexisting_resource".split(),
             (
                 "Error: tag 'nonexisting_tag' does not exist\n"
                 "Error: bundle/clone/group/resource 'nonexisting_resource' "
@@ -539,7 +539,7 @@ class TagUpdate(TestTagMixin, TestCase):
 
     def test_fail_add_id_exist_but_belongs_to_unexpected_type(self):
         self.assert_pcs_fail(
-            "tag update tag1 add cx1",
+            "tag update tag1 add cx1".split(),
             (
                 "Error: 'cx1' is not a bundle/clone/group/resource\n"
                 "Error: Errors have occurred, therefore pcs is unable to "
@@ -550,7 +550,7 @@ class TagUpdate(TestTagMixin, TestCase):
 
     def test_fail_id_is_not_tag(self):
         self.assert_pcs_fail(
-            "tag update y1 add y1",
+            "tag update y1 add y1".split(),
             (
                 "Error: 'y1' is not a tag\n"
                 "Error: Errors have occurred, therefore pcs is unable to "
@@ -561,7 +561,7 @@ class TagUpdate(TestTagMixin, TestCase):
 
     def test_fail_add_ids_already_in_tag(self):
         self.assert_pcs_fail(
-            "tag update tag1 add x1 x2",
+            "tag update tag1 add x1 x2".split(),
             (
                 "Error: Cannot add reference ids already in the tag 'tag1': "
                 "'x1', 'x2'\n"
@@ -573,7 +573,7 @@ class TagUpdate(TestTagMixin, TestCase):
 
     def test_fail_before_id_does_not_exist(self):
         self.assert_pcs_fail(
-            "tag update tag1 add y1 --before no_id",
+            "tag update tag1 add y1 --before no_id".split(),
             (
                 "Error: There is no reference id 'no_id' in the tag 'tag1', "
                 "cannot put reference ids next to it in the tag\n"
@@ -585,7 +585,7 @@ class TagUpdate(TestTagMixin, TestCase):
 
     def test_fail_after_id_does_not_exist(self):
         self.assert_pcs_fail(
-            "tag update tag1 add x1 --after no_id",
+            "tag update tag1 add x1 --after no_id".split(),
             (
                 "Error: There is no reference id 'no_id' in the tag 'tag1', "
                 "cannot put reference ids next to it in the tag\n"
@@ -597,7 +597,7 @@ class TagUpdate(TestTagMixin, TestCase):
 
     def test_fail_adding_removing_adjacent_id_duplicated(self):
         self.assert_pcs_fail(
-            "tag update tag1 add x1 x1 x2 x2 --before x1 remove x1 x1 x2 x2",
+            "tag update tag1 add x1 x1 x2 x2 --before x1 remove x1 x1 x2 x2".split(),
             (
                 "Error: Ids cannot be added and removed at the same time: "
                 "'x1', 'x2'\n"
@@ -615,7 +615,7 @@ class TagUpdate(TestTagMixin, TestCase):
 
     def test_fail_removed_ids_would_leave_tag_empty(self):
         self.assert_pcs_fail(
-            "tag update tag1 remove x1 x2 x3",
+            "tag update tag1 remove x1 x2 x3".split(),
             (
                 "Error: There would be no references left in the tag 'tag1', "
                 "please remove the whole tag using the 'pcs tag remove tag1' "
@@ -628,7 +628,7 @@ class TagUpdate(TestTagMixin, TestCase):
 
     def test_fail_add_new_ids_and_remove_it_at_the_same_time(self):
         self.assert_pcs_fail(
-            "tag update tag1 add y1 y2 remove y1 y2",
+            "tag update tag1 add y1 y2 remove y1 y2".split(),
             (
                 "Error: Ids cannot be added and removed at the same time: 'y1',"
                 " 'y2'\n"
@@ -641,7 +641,7 @@ class TagUpdate(TestTagMixin, TestCase):
 
     def test_fail_remove_ids_not_in_tag(self):
         self.assert_pcs_fail(
-            "tag update tag1 remove nonexistent2 nonexistent1",
+            "tag update tag1 remove nonexistent2 nonexistent1".split(),
             (
                 "Error: Tag 'tag1' does not contain ids: 'nonexistent1', "
                 "'nonexistent2'\n"

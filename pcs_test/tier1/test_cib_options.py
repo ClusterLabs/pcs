@@ -32,7 +32,7 @@ class TestDefaultsMixin:
 
 
 class DefaultsConfigMixin(TestDefaultsMixin, AssertPcsMixin):
-    cli_command = ""
+    cli_command = []
     prefix = ""
 
     def test_success(self):
@@ -82,7 +82,7 @@ class DefaultsConfigMixin(TestDefaultsMixin, AssertPcsMixin):
 class RscDefaultsConfig(
     DefaultsConfigMixin, TestCase,
 ):
-    cli_command = "resource defaults"
+    cli_command = ["resource", "defaults"]
     prefix = "rsc"
 
     @skip_unless_pacemaker_supports_rsc_and_op_rules()
@@ -117,7 +117,7 @@ class RscDefaultsConfig(
 class OpDefaultsConfig(
     DefaultsConfigMixin, TestCase,
 ):
-    cli_command = "resource op defaults"
+    cli_command = ["resource", "op", "defaults"]
     prefix = "op"
 
     @skip_unless_pacemaker_supports_rsc_and_op_rules()
@@ -152,7 +152,7 @@ class OpDefaultsConfig(
 
 
 class DefaultsSetCreateMixin(TestDefaultsMixin):
-    cli_command = ""
+    cli_command = []
     cib_tag = ""
 
     def setUp(self):
@@ -161,7 +161,7 @@ class DefaultsSetCreateMixin(TestDefaultsMixin):
 
     def test_no_args(self):
         self.assert_effect(
-            f"{self.cli_command} set create",
+            self.cli_command + ["set", "create"],
             dedent(
                 f"""\
                 <{self.cib_tag}>
@@ -177,10 +177,8 @@ class DefaultsSetCreateMixin(TestDefaultsMixin):
 
     def test_success(self):
         self.assert_effect(
-            (
-                f"{self.cli_command} set create id=mine score=10 "
-                "meta nam1=val1 nam2=val2 --force"
-            ),
+            self.cli_command
+            + "set create id=mine score=10 meta nam1=val1 nam2=val2 --force".split(),
             dedent(
                 f"""\
                 <{self.cib_tag}>
@@ -208,16 +206,14 @@ class RscDefaultsSetCreate(
     DefaultsSetCreateMixin,
     TestCase,
 ):
-    cli_command = "resource defaults"
+    cli_command = ["resource", "defaults"]
     cib_tag = "rsc_defaults"
 
     @skip_unless_pacemaker_supports_rsc_and_op_rules()
     def test_success_rules(self):
         self.assert_effect(
-            (
-                f"{self.cli_command} set create id=X meta nam1=val1 "
-                "rule resource ::Dummy"
-            ),
+            self.cli_command
+            + "set create id=X meta nam1=val1 rule resource ::Dummy".split(),
             f"""\
             <{self.cib_tag}>
                 <meta_attributes id="X">
@@ -246,16 +242,14 @@ class OpDefaultsSetCreate(
     DefaultsSetCreateMixin,
     TestCase,
 ):
-    cli_command = "resource op defaults"
+    cli_command = ["resource", "op", "defaults"]
     cib_tag = "op_defaults"
 
     @skip_unless_pacemaker_supports_rsc_and_op_rules()
     def test_success_rules(self):
         self.assert_effect(
-            (
-                f"{self.cli_command} set create id=X meta nam1=val1 "
-                "rule resource ::Dummy and op monitor"
-            ),
+            self.cli_command
+            + "set create id=X meta nam1=val1 rule resource ::Dummy and op monitor".split(),
             f"""\
             <{self.cib_tag}>
                 <meta_attributes id="X">
@@ -276,7 +270,7 @@ class OpDefaultsSetCreate(
 
 
 class DefaultsSetDeleteMixin(TestDefaultsMixin, AssertPcsMixin):
-    cli_command = ""
+    cli_command = []
     prefix = ""
     cib_tag = ""
 
@@ -305,10 +299,10 @@ class DefaultsSetDeleteMixin(TestDefaultsMixin, AssertPcsMixin):
     def test_success(self):
         self.assert_effect(
             [
-                f"{self.cli_command} set delete {self.prefix}-set1 "
-                f"{self.prefix}-set3",
-                f"{self.cli_command} set remove {self.prefix}-set1 "
-                f"{self.prefix}-set3",
+                self.cli_command
+                + f"set delete {self.prefix}-set1 {self.prefix}-set3".split(),
+                self.cli_command
+                + f"set remove {self.prefix}-set1 {self.prefix}-set3".split(),
             ],
             dedent(
                 f"""\
@@ -331,7 +325,7 @@ class RscDefaultsSetDelete(
     DefaultsSetDeleteMixin,
     TestCase,
 ):
-    cli_command = "resource defaults"
+    cli_command = ["resource", "defaults"]
     prefix = "rsc"
     cib_tag = "rsc_defaults"
 
@@ -346,13 +340,13 @@ class OpDefaultsSetDelete(
     DefaultsSetDeleteMixin,
     TestCase,
 ):
-    cli_command = "resource op defaults"
+    cli_command = ["resource", "op", "defaults"]
     prefix = "op"
     cib_tag = "op_defaults"
 
 
 class DefaultsSetUpdateMixin(TestDefaultsMixin, AssertPcsMixin):
-    cli_command = ""
+    cli_command = []
     prefix = ""
     cib_tag = ""
 
@@ -375,7 +369,8 @@ class DefaultsSetUpdateMixin(TestDefaultsMixin, AssertPcsMixin):
         )
 
         self.assert_effect(
-            f"{self.cli_command} set update my-set meta name2=value2A name3=",
+            self.cli_command
+            + "set update my-set meta name2=value2A name3=".split(),
             dedent(
                 f"""\
                 <{self.cib_tag}>
@@ -390,7 +385,7 @@ class DefaultsSetUpdateMixin(TestDefaultsMixin, AssertPcsMixin):
         )
 
         self.assert_effect(
-            f"{self.cli_command} set update my-set meta name1= name2=",
+            self.cli_command + "set update my-set meta name1= name2=".split(),
             dedent(
                 f"""\
                 <{self.cib_tag}>
@@ -412,7 +407,7 @@ class RscDefaultsSetUpdate(
     DefaultsSetUpdateMixin,
     TestCase,
 ):
-    cli_command = "resource defaults"
+    cli_command = ["resource", "defaults"]
     prefix = "rsc"
     cib_tag = "rsc_defaults"
 
@@ -427,41 +422,41 @@ class OpDefaultsSetUpdate(
     DefaultsSetUpdateMixin,
     TestCase,
 ):
-    cli_command = "resource op defaults"
+    cli_command = ["resource", "op", "defaults"]
     prefix = "op"
     cib_tag = "op_defaults"
 
 
 class DefaultsSetUsageMixin(TestDefaultsMixin, AssertPcsMixin):
-    cli_command = ""
+    cli_command = []
 
     def test_no_args(self):
         self.assert_pcs_fail(
-            f"{self.cli_command} set",
-            stdout_start=f"\nUsage: pcs {self.cli_command} set...\n",
+            self.cli_command + ["set"],
+            stdout_start=f"\nUsage: pcs {' '.join(self.cli_command)} set...\n",
         )
 
     def test_bad_command(self):
         self.assert_pcs_fail(
-            f"{self.cli_command} set bad-command",
-            stdout_start=f"\nUsage: pcs {self.cli_command} set ...\n",
+            self.cli_command + ["set", "bad-command"],
+            stdout_start=f"\nUsage: pcs {' '.join(self.cli_command)} set ...\n",
         )
 
 
 class RscDefaultsSetUsage(
     DefaultsSetUsageMixin, TestCase,
 ):
-    cli_command = "resource defaults"
+    cli_command = ["resource", "defaults"]
 
 
 class OpDefaultsSetUsage(
     DefaultsSetUsageMixin, TestCase,
 ):
-    cli_command = "resource op defaults"
+    cli_command = ["resource", "op", "defaults"]
 
 
 class DefaultsUpdateMixin(TestDefaultsMixin, AssertPcsMixin):
-    cli_command = ""
+    cli_command = []
     prefix = ""
     cib_tag = ""
 
@@ -471,7 +466,7 @@ class DefaultsUpdateMixin(TestDefaultsMixin, AssertPcsMixin):
         if not update_keyword:
             warning_lines.append(
                 "Warning: This command is deprecated and will be removed. "
-                f"Please use 'pcs {self.cli_command} update' instead.\n"
+                f"Please use 'pcs {' '.join(self.cli_command)} update' instead.\n"
             )
         warning_lines.append(
             "Warning: Defaults do not apply to resources which override "
@@ -479,10 +474,12 @@ class DefaultsUpdateMixin(TestDefaultsMixin, AssertPcsMixin):
         )
         warnings = "".join(warning_lines)
 
-        update = "update" if update_keyword else ""
+        command = self.cli_command[:]
+        if update_keyword:
+            command.append("update")
 
         self.assert_effect(
-            f"{self.cli_command} {update} name1=value1 name2=value2 name3=value3",
+            command + "name1=value1 name2=value2 name3=value3".split(),
             dedent(
                 f"""\
                 <{self.cib_tag}>
@@ -504,7 +501,7 @@ class DefaultsUpdateMixin(TestDefaultsMixin, AssertPcsMixin):
         )
 
         self.assert_effect(
-            f"{self.cli_command} {update} name2=value2A name3=",
+            command + "name2=value2A name3=".split(),
             dedent(
                 f"""\
                 <{self.cib_tag}>
@@ -523,7 +520,7 @@ class DefaultsUpdateMixin(TestDefaultsMixin, AssertPcsMixin):
         )
 
         self.assert_effect(
-            f"{self.cli_command} {update} name1= name2=",
+            command + "name1= name2=".split(),
             dedent(
                 f"""\
                 <{self.cib_tag}>
@@ -551,7 +548,7 @@ class RscDefaultsUpdate(
     DefaultsUpdateMixin,
     TestCase,
 ):
-    cli_command = "resource defaults"
+    cli_command = ["resource", "defaults"]
     prefix = "rsc"
     cib_tag = "rsc_defaults"
 
@@ -566,6 +563,6 @@ class OpDefaultsUpdate(
     DefaultsUpdateMixin,
     TestCase,
 ):
-    cli_command = "resource op defaults"
+    cli_command = ["resource", "op", "defaults"]
     prefix = "op"
     cib_tag = "op_defaults"

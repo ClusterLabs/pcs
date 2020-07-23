@@ -28,18 +28,25 @@ class StonithWarningTest(TestCase, AssertPcsMixin):
 
     def fixture_stonith_action(self):
         self.assert_pcs_success(
-            "stonith create Sa fence_apc ip=i username=u action=reboot --force",
+            (
+                "stonith create Sa fence_apc ip=i username=u action=reboot "
+                "--force"
+            ).split(),
             "Warning: stonith option 'action' is deprecated and should not be"
             " used, use 'pcmk_off_action', 'pcmk_reboot_action' instead\n",
         )
 
     def fixture_stonith_cycle(self):
-        self.assert_pcs_success("stonith create Sc fence_ipmilan method=cycle")
+        self.assert_pcs_success(
+            "stonith create Sc fence_ipmilan method=cycle".split()
+        )
 
     def fixture_resource(self):
         self.assert_pcs_success(
-            "resource create dummy ocf:pacemaker:Dummy action=reboot "
-            "method=cycle --force",
+            (
+                "resource create dummy ocf:pacemaker:Dummy action=reboot "
+                "method=cycle --force"
+            ).split(),
             "Warning: invalid resource options: 'action', 'method', allowed "
             "options are: 'envfile', 'fail_start_on', 'fake', 'op_sleep', "
             "'passwd', 'state', 'trace_file', 'trace_ra'\n",
@@ -51,7 +58,7 @@ class StonithWarningTest(TestCase, AssertPcsMixin):
         self.pcs_runner.corosync_conf_opt = self.corosync_conf
         if PCMK_2_0_3_PLUS:
             self.assert_pcs_success(
-                "status",
+                ["status"],
                 stdout_start=dedent(
                     """\
                     Cluster name: test99
@@ -65,7 +72,7 @@ class StonithWarningTest(TestCase, AssertPcsMixin):
             )
         else:
             self.assert_pcs_success(
-                "status",
+                ["status"],
                 stdout_start=dedent(
                     """\
                     Cluster name: test99
@@ -85,7 +92,7 @@ class StonithWarningTest(TestCase, AssertPcsMixin):
         self.pcs_runner.corosync_conf_opt = self.corosync_conf
         if PCMK_2_0_3_PLUS:
             self.assert_pcs_success(
-                "status",
+                ["status"],
                 stdout_start=dedent(
                     """\
                     Cluster name: test99
@@ -99,7 +106,7 @@ class StonithWarningTest(TestCase, AssertPcsMixin):
             )
         else:
             self.assert_pcs_success(
-                "status",
+                ["status"],
                 stdout_start=dedent(
                     """\
                     Cluster name: test99
@@ -120,7 +127,7 @@ class StonithWarningTest(TestCase, AssertPcsMixin):
         self.pcs_runner.corosync_conf_opt = self.corosync_conf
         if PCMK_2_0_3_PLUS:
             self.assert_pcs_success(
-                "status",
+                ["status"],
                 stdout_start=dedent(
                     """\
                     Cluster name: test99
@@ -135,7 +142,7 @@ class StonithWarningTest(TestCase, AssertPcsMixin):
             )
         else:
             self.assert_pcs_success(
-                "status",
+                ["status"],
                 stdout_start=dedent(
                     """\
                     Cluster name: test99
@@ -154,7 +161,7 @@ class StonithWarningTest(TestCase, AssertPcsMixin):
         self.pcs_runner.corosync_conf_opt = self.corosync_conf
         if PCMK_2_0_3_PLUS:
             self.assert_pcs_success(
-                "status",
+                ["status"],
                 stdout_start=dedent(
                     """\
                     Cluster name: test99
@@ -168,7 +175,7 @@ class StonithWarningTest(TestCase, AssertPcsMixin):
             )
         else:
             self.assert_pcs_success(
-                "status",
+                ["status"],
                 stdout_start=dedent(
                     """\
                     Cluster name: test99
@@ -183,11 +190,11 @@ class StonithWarningTest(TestCase, AssertPcsMixin):
             )
 
     def test_disabled_stonith_does_not_care_about_missing_devices(self):
-        self.assert_pcs_success("property set stonith-enabled=false")
+        self.assert_pcs_success("property set stonith-enabled=false".split())
         self.pcs_runner.corosync_conf_opt = self.corosync_conf
         if PCMK_2_0_3_PLUS:
             self.assert_pcs_success(
-                "status",
+                ["status"],
                 stdout_start=dedent(
                     """\
                     Cluster name: test99
@@ -197,7 +204,7 @@ class StonithWarningTest(TestCase, AssertPcsMixin):
             )
         else:
             self.assert_pcs_success(
-                "status",
+                ["status"],
                 stdout_start=dedent(
                     """\
                     Cluster name: test99

@@ -46,7 +46,7 @@ class RemoteTest(ResourceTest):
 class NodeAddRemote(RemoteTest):
     def test_fail_on_duplicit_address_specification(self):
         self.assert_pcs_fail(
-            "cluster node add-remote remote-node ADDRESS server=DIFFERENT",
+            "cluster node add-remote remote-node ADDRESS server=DIFFERENT".split(),
             "Error: invalid resource option 'server', allowed options"
             " are: 'port', 'reconnect_interval', 'trace_file', 'trace_ra'\n"
             "Error: Errors have occurred, therefore pcs is unable to continue\n"
@@ -57,7 +57,7 @@ class NodeAddRemote(RemoteTest):
 
     def test_fail_on_unknown_instance_attribute_not_offer_server(self):
         self.assert_pcs_fail(
-            "cluster node add-remote remote-node ADDRESS abcd=efgh",
+            "cluster node add-remote remote-node ADDRESS abcd=efgh".split(),
             "Error: invalid resource option 'abcd', allowed options"
             " are: 'port', 'reconnect_interval', 'trace_file', 'trace_ra', "
             "use --force to override\n"
@@ -69,13 +69,13 @@ class NodeAddRemote(RemoteTest):
 
     def test_fail_on_bad_commandline_usage(self):
         self.assert_pcs_fail(
-            "cluster node add-remote",
+            "cluster node add-remote".split(),
             stdout_start="\nUsage: pcs cluster node add-remote...",
         )
 
     def test_success(self):
         self.assert_effect(
-            "cluster node add-remote node-name node-addr",
+            "cluster node add-remote node-name node-addr".split(),
             """<resources>
                 <primitive class="ocf" id="node-name" provider="pacemaker"
                     type="remote"
@@ -112,7 +112,7 @@ class NodeAddRemote(RemoteTest):
 
     def test_success_no_default_ops(self):
         self.assert_effect(
-            "cluster node add-remote node-name node-addr --no-default-ops",
+            "cluster node add-remote node-name node-addr --no-default-ops".split(),
             """<resources>
                 <primitive class="ocf" id="node-name" provider="pacemaker"
                     type="remote"
@@ -134,7 +134,7 @@ class NodeAddRemote(RemoteTest):
 
     def test_fail_when_server_already_used(self):
         self.assert_effect(
-            "cluster node add-remote A node-addr --no-default-ops",
+            "cluster node add-remote A node-addr --no-default-ops".split(),
             """<resources>
                 <primitive class="ocf" id="A" provider="pacemaker"
                     type="remote"
@@ -154,7 +154,7 @@ class NodeAddRemote(RemoteTest):
             output=fixture_nolive_add_report("A"),
         )
         self.assert_pcs_fail(
-            "cluster node add-remote B node-addr",
+            "cluster node add-remote B node-addr".split(),
             "Error: 'node-addr' already exists\n"
             "Error: Errors have occurred, therefore pcs is unable to continue\n"
             "Unable to check if there is a conflict with nodes set in corosync "
@@ -165,15 +165,15 @@ class NodeAddRemote(RemoteTest):
     def test_fail_when_server_already_used_as_guest(self):
         self.pcs_runner.corosync_conf_opt = None
         self.assert_pcs_success(
-            "resource create G ocf:heartbeat:Dummy --no-default-ops",
+            "resource create G ocf:heartbeat:Dummy --no-default-ops".split(),
         )
         self.pcs_runner.corosync_conf_opt = self.corosync_conf
         self.assert_pcs_success(
-            "cluster node add-guest node-name G remote-addr=node-addr",
+            "cluster node add-guest node-name G remote-addr=node-addr".split(),
             fixture_nolive_add_report("node-name"),
         )
         self.assert_pcs_fail(
-            "cluster node add-remote B node-addr",
+            "cluster node add-remote B node-addr".split(),
             "Error: 'node-addr' already exists\n"
             "Error: Errors have occurred, therefore pcs is unable to "
             "continue\n"
@@ -187,7 +187,7 @@ class NodeAddGuest(RemoteTest):
     def create_resource(self):
         self.pcs_runner.corosync_conf_opt = None
         self.assert_effect(
-            "resource create G ocf:heartbeat:Dummy --no-default-ops",
+            "resource create G ocf:heartbeat:Dummy --no-default-ops".split(),
             """<resources>
                 <primitive class="ocf" id="G" provider="heartbeat" type="Dummy">
                     <operations>
@@ -202,14 +202,14 @@ class NodeAddGuest(RemoteTest):
 
     def test_fail_on_bad_commandline_usage(self):
         self.assert_pcs_fail(
-            "cluster node add-guest",
+            "cluster node add-guest".split(),
             stdout_start="\nUsage: pcs cluster node add-guest...",
         )
 
     def test_fail_when_option_remote_node_specified(self):
         self.create_resource()
         self.assert_pcs_fail(
-            "cluster node add-guest node-name G remote-node=node-name",
+            "cluster node add-guest node-name G remote-node=node-name".split(),
             stdout_start="Error: invalid guest option 'remote-node',"
             " allowed options are: 'remote-addr', 'remote-connect-timeout',"
             " 'remote-port'\n",
@@ -218,14 +218,16 @@ class NodeAddGuest(RemoteTest):
     def test_fail_when_resource_has_already_remote_node_meta(self):
         self.pcs_runner.corosync_conf_opt = None
         self.assert_pcs_success(
-            "resource create already-guest-node ocf:heartbeat:Dummy"
-            " meta remote-node=some --force",
+            (
+                "resource create already-guest-node ocf:heartbeat:Dummy "
+                "meta remote-node=some --force"
+            ).split(),
             "Warning: this command is not sufficient for creating a guest node,"
             " use 'pcs cluster node add-guest'\n",
         )
         self.pcs_runner.corosync_conf_opt = self.corosync_conf
         self.assert_pcs_fail(
-            "cluster node add-guest node-name already-guest-node remote-addr=a",
+            "cluster node add-guest node-name already-guest-node remote-addr=a".split(),
             "Error: the resource 'already-guest-node' is already a guest node\n"
             "Error: Errors have occurred, therefore pcs is unable to continue\n"
             "Unable to check if there is a conflict with nodes set in corosync "
@@ -235,7 +237,7 @@ class NodeAddGuest(RemoteTest):
 
     def test_fail_on_combined_reasons(self):
         self.assert_pcs_fail(
-            "cluster node add-guest node-name G a=b remote-addr=a",
+            "cluster node add-guest node-name G a=b remote-addr=a".split(),
             "Error: invalid guest option 'a', allowed options are:"
             " 'remote-addr', 'remote-connect-timeout', 'remote-port'\n"
             "Error: resource 'G' does not exist\n"
@@ -248,7 +250,7 @@ class NodeAddGuest(RemoteTest):
     def test_fail_when_disallowed_option_appear(self):
         self.create_resource()
         self.assert_pcs_fail(
-            "cluster node add-guest node-name G a=b remote-addr=a",
+            "cluster node add-guest node-name G a=b remote-addr=a".split(),
             "Error: invalid guest option 'a', allowed options are:"
             " 'remote-addr', 'remote-connect-timeout', 'remote-port'\n"
             "Error: Errors have occurred, therefore pcs is unable to continue\n"
@@ -260,8 +262,10 @@ class NodeAddGuest(RemoteTest):
     def test_fail_when_invalid_interval_appear(self):
         self.create_resource()
         self.assert_pcs_fail(
-            "cluster node add-guest node-name G remote-connect-timeout=A "
-            "remote-addr=a",
+            (
+                "cluster node add-guest node-name G remote-connect-timeout=A "
+                "remote-addr=a"
+            ).split(),
             "Error: 'A' is not a valid remote-connect-timeout value, use time"
             " interval (e.g. 1, 2s, 3m, 4h, ...)\n"
             "Error: Errors have occurred, therefore pcs is unable to continue\n"
@@ -273,8 +277,10 @@ class NodeAddGuest(RemoteTest):
     def test_fail_when_invalid_port_appear(self):
         self.create_resource()
         self.assert_pcs_fail(
-            "cluster node add-guest node-name G remote-port=70000 "
-            "remote-addr=a",
+            (
+                "cluster node add-guest node-name G remote-port=70000 "
+                "remote-addr=a"
+            ).split(),
             "Error: '70000' is not a valid remote-port value, use a port number"
             " (1..65535)\n"
             "Error: Errors have occurred, therefore pcs is unable to continue\n"
@@ -286,10 +292,12 @@ class NodeAddGuest(RemoteTest):
     def test_fail_when_guest_node_conflicts_with_existing_id(self):
         self.create_resource()
         self.pcs_runner.corosync_conf_opt = None
-        self.assert_pcs_success("resource create CONFLICT ocf:heartbeat:Dummy")
+        self.assert_pcs_success(
+            "resource create CONFLICT ocf:heartbeat:Dummy".split()
+        )
         self.pcs_runner.corosync_conf_opt = self.corosync_conf
         self.assert_pcs_fail(
-            "cluster node add-guest CONFLICT G remote-addr=a",
+            "cluster node add-guest CONFLICT G remote-addr=a".split(),
             "Error: 'CONFLICT' already exists\n"
             "Error: Errors have occurred, therefore pcs is unable to continue\n"
             "Unable to check if there is a conflict with nodes set in corosync "
@@ -300,14 +308,14 @@ class NodeAddGuest(RemoteTest):
     def test_fail_when_guest_node_conflicts_with_existing_guest(self):
         self.create_resource()
         self.pcs_runner.corosync_conf_opt = None
-        self.assert_pcs_success("resource create H ocf:heartbeat:Dummy")
+        self.assert_pcs_success("resource create H ocf:heartbeat:Dummy".split())
         self.pcs_runner.corosync_conf_opt = self.corosync_conf
         self.assert_pcs_success(
-            "cluster node add-guest node-name G remote-addr=a",
+            "cluster node add-guest node-name G remote-addr=a".split(),
             fixture_nolive_add_report("node-name"),
         )
         self.assert_pcs_fail(
-            "cluster node add-guest node-name H remote-addr=b",
+            "cluster node add-guest node-name H remote-addr=b".split(),
             "Error: 'node-name' already exists\n"
             "Error: Errors have occurred, therefore pcs is unable to continue\n"
             "Unable to check if there is a conflict with nodes set in corosync "
@@ -319,13 +327,13 @@ class NodeAddGuest(RemoteTest):
         self.create_resource()
         self.pcs_runner.corosync_conf_opt = None
         self.assert_pcs_success(
-            "resource create R ocf:pacemaker:remote server=node-addr --force",
+            "resource create R ocf:pacemaker:remote server=node-addr --force".split(),
             "Warning: this command is not sufficient for creating a remote"
             " connection, use 'pcs cluster node add-remote'\n",
         )
         self.pcs_runner.corosync_conf_opt = self.corosync_conf
         self.assert_pcs_fail(
-            "cluster node add-guest node-name G remote-addr=node-addr",
+            "cluster node add-guest node-name G remote-addr=node-addr".split(),
             "Error: 'node-addr' already exists\n"
             "Error: Errors have occurred, therefore pcs is unable to continue\n"
             "Unable to check if there is a conflict with nodes set in corosync "
@@ -337,13 +345,13 @@ class NodeAddGuest(RemoteTest):
         self.create_resource()
         self.pcs_runner.corosync_conf_opt = None
         self.assert_pcs_success(
-            "resource create R ocf:pacemaker:remote server=node-addr --force",
+            "resource create R ocf:pacemaker:remote server=node-addr --force".split(),
             "Warning: this command is not sufficient for creating a remote"
             " connection, use 'pcs cluster node add-remote'\n",
         )
         self.pcs_runner.corosync_conf_opt = self.corosync_conf
         self.assert_pcs_fail(
-            "cluster node add-guest R G remote-addr=a",
+            "cluster node add-guest R G remote-addr=a".split(),
             "Error: 'R' already exists\n"
             "Error: Errors have occurred, therefore pcs is unable to continue\n"
             "Unable to check if there is a conflict with nodes set in corosync "
@@ -354,7 +362,7 @@ class NodeAddGuest(RemoteTest):
     def test_success(self):
         self.create_resource()
         self.assert_effect(
-            "cluster node add-guest node-name G remote-addr=node-addr",
+            "cluster node add-guest node-name G remote-addr=node-addr".split(),
             """<resources>
                 <primitive class="ocf" id="G" provider="heartbeat" type="Dummy">
                     <meta_attributes id="G-meta_attributes">
@@ -381,17 +389,21 @@ class NodeAddGuest(RemoteTest):
         # keep it here.
         self.create_resource()
         self.assert_pcs_success(
-            "cluster node add-guest node-name G remote-addr=a",
+            "cluster node add-guest node-name G remote-addr=a".split(),
             fixture_nolive_add_report("node-name"),
         )
         self.pcs_runner.corosync_conf_opt = None
-        self.assert_pcs_success("resource update G meta remote-node=node-name",)
+        self.assert_pcs_success(
+            "resource update G meta remote-node=node-name".split()
+        )
 
     def test_success_with_options(self):
         self.create_resource()
         self.assert_effect(
-            "cluster node add-guest node-name G remote-port=3121"
-            " remote-addr=node-addr remote-connect-timeout=80s",
+            (
+                "cluster node add-guest node-name G remote-port=3121 "
+                "remote-addr=node-addr remote-connect-timeout=80s"
+            ).split(),
             """<resources>
                 <primitive class="ocf" id="G" provider="heartbeat" type="Dummy">
                     <meta_attributes id="G-meta_attributes">
@@ -425,8 +437,10 @@ class NodeDeleteRemoveRemote(RemoteTest):
     def fixture_remote_node(self):
         self.pcs_runner.corosync_conf_opt = None
         self.assert_effect(
-            "resource create NODE-NAME ocf:pacemaker:remote server=NODE-HOST"
-            " --no-default-ops --force",
+            (
+                "resource create NODE-NAME ocf:pacemaker:remote "
+                "server=NODE-HOST --no-default-ops --force"
+            ).split(),
             """<resources>
                 <primitive class="ocf" id="NODE-NAME" provider="pacemaker"
                     type="remote"
@@ -489,13 +503,13 @@ class NodeDeleteRemoveRemote(RemoteTest):
 
     def _test_usage(self):
         self.assert_pcs_fail(
-            f"cluster node {self.command}",
+            ["cluster", "node", self.command],
             stdout_start=f"\nUsage: pcs cluster node {self.command}...",
         )
 
     def _test_fail_when_node_does_not_exists(self):
         self.assert_pcs_fail(
-            f"cluster node {self.command} not-existent",
+            ["cluster", "node", self.command, "not-existent"],
             "Error: remote node 'not-existent' does not appear to exist in"
             " configuration\n",
         )
@@ -503,7 +517,7 @@ class NodeDeleteRemoveRemote(RemoteTest):
     def _test_success_remove_by_host(self):
         self.fixture_remote_node()
         self.assert_effect(
-            f"cluster node {self.command} NODE-HOST",
+            ["cluster", "node", self.command, "NODE-HOST"],
             "<resources/>",
             fixture_nolive_remove_report(["NODE-NAME"])
             + outdent(
@@ -516,7 +530,7 @@ class NodeDeleteRemoveRemote(RemoteTest):
     def _test_success_remove_by_node_name(self):
         self.fixture_remote_node()
         self.assert_effect(
-            f"cluster node {self.command} NODE-NAME",
+            ["cluster", "node", self.command, "NODE-NAME"],
             "<resources/>",
             fixture_nolive_remove_report(["NODE-NAME"])
             + outdent(
@@ -529,7 +543,7 @@ class NodeDeleteRemoveRemote(RemoteTest):
     def _test_refuse_on_duplicit(self):
         self.fixture_multiple_remote_nodes()
         self.assert_pcs_fail(
-            f"cluster node {self.command} HOST-A",
+            ["cluster", "node", self.command, "HOST-A"],
             "Error: more than one resource for 'HOST-A' found: "
             "'HOST-A', 'NODE-NAME', use --force to override\n"
             + ERRORS_HAVE_OCURRED,
@@ -538,7 +552,7 @@ class NodeDeleteRemoveRemote(RemoteTest):
     def _test_success_remove_multiple_nodes(self):
         self.fixture_multiple_remote_nodes()
         self.assert_effect(
-            f"cluster node {self.command} HOST-A --force",
+            ["cluster", "node", self.command, "HOST-A", "--force"],
             "<resources/>",
             (
                 "Warning: more than one resource for 'HOST-A' found: "
@@ -572,8 +586,10 @@ class NodeDeleteRemoveGuest(RemoteTest):
     def fixture_guest_node(self):
         self.pcs_runner.corosync_conf_opt = None
         self.assert_effect(
-            "resource create NODE-ID ocf:heartbeat:Dummy --no-default-ops"
-            " meta remote-node=NODE-NAME remote-addr=NODE-HOST --force",
+            (
+                "resource create NODE-ID ocf:heartbeat:Dummy --no-default-ops "
+                "meta remote-node=NODE-NAME remote-addr=NODE-HOST --force"
+            ).split(),
             """<resources>
                 <primitive class="ocf" id="NODE-ID" provider="heartbeat"
                     type="Dummy"
@@ -600,13 +616,13 @@ class NodeDeleteRemoveGuest(RemoteTest):
 
     def _test_usage(self):
         self.assert_pcs_fail(
-            f"cluster node {self.command}",
+            ["cluster", "node", self.command],
             stdout_start=f"\nUsage: pcs cluster node {self.command}...",
         )
 
     def _test_fail_when_node_does_not_exists(self):
         self.assert_pcs_fail(
-            f"cluster node {self.command} not-existent --force",
+            ["cluster", "node", self.command, "not-existent", "--force"],
             "Error: guest node 'not-existent' does not appear to exist in"
             " configuration\n",
         )
@@ -614,7 +630,7 @@ class NodeDeleteRemoveGuest(RemoteTest):
     def assert_remove_by_identifier(self, identifier):
         self.fixture_guest_node()
         self.assert_effect(
-            f"cluster node {self.command} {identifier}",
+            ["cluster", "node", self.command, identifier],
             """<resources>
                 <primitive class="ocf" id="NODE-ID" provider="heartbeat"
                     type="Dummy"

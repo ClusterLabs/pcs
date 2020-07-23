@@ -45,7 +45,7 @@ class AlertCibUpgradeTest(unittest.TestCase, AssertPcsMixin):
 
     def test_cib_upgrade(self):
         self.assert_pcs_success(
-            "alert config",
+            "alert config".split(),
             """\
 Alerts:
  No alerts defined
@@ -53,12 +53,12 @@ Alerts:
         )
 
         self.assert_pcs_success(
-            "alert create path=test",
+            "alert create path=test".split(),
             "CIB has been upgraded to the latest schema version.\n",
         )
 
         self.assert_pcs_success(
-            "alert config",
+            "alert config".split(),
             """\
 Alerts:
  Alert: alert (path=test)
@@ -70,18 +70,18 @@ Alerts:
 class CreateAlertTest(PcsAlertTest):
     def test_create_multiple_without_id(self):
         self.assert_pcs_success(
-            "alert config",
+            "alert config".split(),
             """\
 Alerts:
  No alerts defined
 """,
         )
 
-        self.assert_pcs_success("alert create path=test")
-        self.assert_pcs_success("alert create path=test")
-        self.assert_pcs_success("alert create path=test2")
+        self.assert_pcs_success("alert create path=test".split())
+        self.assert_pcs_success("alert create path=test".split())
+        self.assert_pcs_success("alert create path=test2".split())
         self.assert_pcs_success(
-            "alert config",
+            "alert config".split(),
             """\
 Alerts:
  Alert: alert (path=test)
@@ -92,21 +92,21 @@ Alerts:
 
     def test_create_multiple_with_id(self):
         self.assert_pcs_success(
-            "alert config",
+            "alert config".split(),
             """\
 Alerts:
  No alerts defined
 """,
         )
-        self.assert_pcs_success("alert create id=alert1 path=test")
+        self.assert_pcs_success("alert create id=alert1 path=test".split())
         self.assert_pcs_success(
-            "alert create id=alert2 description=desc path=test"
+            "alert create id=alert2 description=desc path=test".split()
         )
         self.assert_pcs_success(
-            "alert create description=desc2 path=test2 id=alert3"
+            "alert create description=desc2 path=test2 id=alert3".split()
         )
         self.assert_pcs_success(
-            "alert config",
+            "alert config".split(),
             """\
 Alerts:
  Alert: alert1 (path=test)
@@ -119,11 +119,13 @@ Alerts:
 
     def test_create_with_options(self):
         self.assert_pcs_success(
-            "alert create id=alert1 description=desc path=test "
-            "options opt2=val2 opt1=val1 meta m2=v2 m1=v1"
+            (
+                "alert create id=alert1 description=desc path=test "
+                "options opt2=val2 opt1=val1 meta m2=v2 m1=v1"
+            ).split()
         )
         self.assert_pcs_success(
-            "alert config",
+            "alert config".split(),
             """\
 Alerts:
  Alert: alert1 (path=test)
@@ -134,13 +136,13 @@ Alerts:
         )
 
     def test_already_exists(self):
-        self.assert_pcs_success("alert create id=alert1 path=test")
+        self.assert_pcs_success("alert create id=alert1 path=test".split())
         self.assert_pcs_fail(
-            "alert create id=alert1 path=test",
+            "alert create id=alert1 path=test".split(),
             "Error: 'alert1' already exists\n",
         )
         self.assert_pcs_success(
-            "alert config",
+            "alert config".split(),
             """\
 Alerts:
  Alert: alert1 (path=test)
@@ -149,7 +151,7 @@ Alerts:
 
     def test_path_is_required(self):
         self.assert_pcs_fail(
-            "alert create id=alert1",
+            "alert create id=alert1".split(),
             "Error: required option 'path' is missing\n",
         )
 
@@ -158,18 +160,20 @@ Alerts:
 class UpdateAlertTest(PcsAlertTest):
     def test_update_everything(self):
         self.assert_pcs_success(
-            "alert config",
+            "alert config".split(),
             """\
 Alerts:
  No alerts defined
 """,
         )
         self.assert_pcs_success(
-            "alert create id=alert1 description=desc path=test "
-            "options opt1=val1 opt3=val3 meta m1=v1 m3=v3"
+            (
+                "alert create id=alert1 description=desc path=test "
+                "options opt1=val1 opt3=val3 meta m1=v1 m3=v3"
+            ).split()
         )
         self.assert_pcs_success(
-            "alert config",
+            "alert config".split(),
             """\
 Alerts:
  Alert: alert1 (path=test)
@@ -179,11 +183,13 @@ Alerts:
 """,
         )
         self.assert_pcs_success(
-            "alert update alert1 description=new_desc path=/new/path "
-            "options opt1= opt2=test opt3=1 meta m1= m2=v m3=3"
+            (
+                "alert update alert1 description=new_desc path=/new/path "
+                "options opt1= opt2=test opt3=1 meta m1= m2=v m3=3"
+            ).split()
         )
         self.assert_pcs_success(
-            "alert config",
+            "alert config".split(),
             """\
 Alerts:
  Alert: alert1 (path=/new/path)
@@ -195,7 +201,8 @@ Alerts:
 
     def test_not_existing_alert(self):
         self.assert_pcs_fail(
-            "alert update alert1", "Error: alert 'alert1' does not exist\n"
+            "alert update alert1".split(),
+            "Error: alert 'alert1' does not exist\n",
         )
 
 
@@ -204,19 +211,19 @@ class DeleteRemoveAlertTest(PcsAlertTest):
 
     def _test_usage(self):
         self.assert_pcs_fail(
-            f"alert {self.command}",
+            ["alert", self.command],
             stdout_start=f"\nUsage: pcs alert <command>\n    {self.command} <",
         )
 
     def _test_not_existing_alert(self):
         self.assert_pcs_fail(
-            f"alert {self.command} alert1",
+            ["alert", self.command, "alert1"],
             ("Error: alert 'alert1' does not exist\n" + ERRORS_HAVE_OCURRED),
         )
 
     def _test_one(self):
         self.assert_pcs_success(
-            "alert config",
+            "alert config".split(),
             outdent(
                 """\
                 Alerts:
@@ -225,9 +232,9 @@ class DeleteRemoveAlertTest(PcsAlertTest):
             ),
         )
 
-        self.assert_pcs_success("alert create path=test id=alert1")
+        self.assert_pcs_success("alert create path=test id=alert1".split())
         self.assert_pcs_success(
-            "alert config",
+            "alert config".split(),
             outdent(
                 """\
                 Alerts:
@@ -235,9 +242,9 @@ class DeleteRemoveAlertTest(PcsAlertTest):
                 """
             ),
         )
-        self.assert_pcs_success(f"alert {self.command} alert1")
+        self.assert_pcs_success(["alert", self.command, "alert1"])
         self.assert_pcs_success(
-            "alert config",
+            "alert config".split(),
             outdent(
                 """\
                 Alerts:
@@ -248,7 +255,7 @@ class DeleteRemoveAlertTest(PcsAlertTest):
 
     def _test_multiple(self):
         self.assert_pcs_success(
-            "alert config",
+            "alert config".split(),
             outdent(
                 """\
                 Alerts:
@@ -257,11 +264,11 @@ class DeleteRemoveAlertTest(PcsAlertTest):
             ),
         )
 
-        self.assert_pcs_success("alert create path=test id=alert1")
-        self.assert_pcs_success("alert create path=test id=alert2")
-        self.assert_pcs_success("alert create path=test id=alert3")
+        self.assert_pcs_success("alert create path=test id=alert1".split())
+        self.assert_pcs_success("alert create path=test id=alert2".split())
+        self.assert_pcs_success("alert create path=test id=alert3".split())
         self.assert_pcs_success(
-            "alert config",
+            "alert config".split(),
             outdent(
                 """\
                 Alerts:
@@ -271,9 +278,9 @@ class DeleteRemoveAlertTest(PcsAlertTest):
                 """
             ),
         )
-        self.assert_pcs_success(f"alert {self.command} alert1 alert3")
+        self.assert_pcs_success(["alert", self.command, "alert1", "alert3"])
         self.assert_pcs_success(
-            "alert config",
+            "alert config".split(),
             outdent(
                 """\
                 Alerts:
@@ -300,17 +307,19 @@ class RemoveAlertTest(
 @skip_unless_alerts_supported
 class AddRecipientTest(PcsAlertTest):
     def test_success(self):
-        self.assert_pcs_success("alert create path=test")
+        self.assert_pcs_success("alert create path=test".split())
         self.assert_pcs_success(
-            "alert config",
+            "alert config".split(),
             """\
 Alerts:
  Alert: alert (path=test)
 """,
         )
-        self.assert_pcs_success("alert recipient add alert value=rec_value")
         self.assert_pcs_success(
-            "alert config",
+            "alert recipient add alert value=rec_value".split()
+        )
+        self.assert_pcs_success(
+            "alert config".split(),
             """\
 Alerts:
  Alert: alert (path=test)
@@ -319,11 +328,13 @@ Alerts:
 """,
         )
         self.assert_pcs_success(
-            "alert recipient add alert value=rec_value2 id=my-recipient "
-            "description=description options o2=2 o1=1 meta m2=v2 m1=v1"
+            (
+                "alert recipient add alert value=rec_value2 id=my-recipient "
+                "description=description options o2=2 o1=1 meta m2=v2 m1=v1"
+            ).split()
         )
         self.assert_pcs_success(
-            "alert config",
+            "alert config".split(),
             """\
 Alerts:
  Alert: alert (path=test)
@@ -337,33 +348,33 @@ Alerts:
         )
 
     def test_already_exists(self):
-        self.assert_pcs_success("alert create path=test")
+        self.assert_pcs_success("alert create path=test".split())
         self.assert_pcs_success(
-            "alert recipient add alert value=rec_value id=rec"
+            "alert recipient add alert value=rec_value id=rec".split()
         )
         self.assert_pcs_fail(
-            "alert recipient add alert value=value id=rec",
+            "alert recipient add alert value=value id=rec".split(),
             "Error: 'rec' already exists\n",
         )
         self.assert_pcs_fail(
-            "alert recipient add alert value=value id=alert",
+            "alert recipient add alert value=value id=alert".split(),
             "Error: 'alert' already exists\n",
         )
 
     def test_same_value(self):
-        self.assert_pcs_success("alert create path=test")
+        self.assert_pcs_success("alert create path=test".split())
         self.assert_pcs_success(
-            "alert recipient add alert value=rec_value id=rec"
+            "alert recipient add alert value=rec_value id=rec".split()
         )
         self.assert_pcs_fail(
-            "alert recipient add alert value=rec_value",
+            "alert recipient add alert value=rec_value".split(),
             (
                 "Error: Recipient 'rec_value' in alert 'alert' already exists, "
                 "use --force to override\n" + ERRORS_HAVE_OCURRED
             ),
         )
         self.assert_pcs_success(
-            "alert config",
+            "alert config".split(),
             """\
 Alerts:
  Alert: alert (path=test)
@@ -372,11 +383,11 @@ Alerts:
 """,
         )
         self.assert_pcs_success(
-            "alert recipient add alert value=rec_value --force",
+            "alert recipient add alert value=rec_value --force".split(),
             "Warning: Recipient 'rec_value' in alert 'alert' already exists\n",
         )
         self.assert_pcs_success(
-            "alert config",
+            "alert config".split(),
             """\
 Alerts:
  Alert: alert (path=test)
@@ -387,9 +398,9 @@ Alerts:
         )
 
     def test_no_value(self):
-        self.assert_pcs_success("alert create path=test")
+        self.assert_pcs_success("alert create path=test".split())
         self.assert_pcs_fail(
-            "alert recipient add alert id=rec",
+            "alert recipient add alert id=rec".split(),
             "Error: required option 'value' is missing\n",
         )
 
@@ -397,13 +408,15 @@ Alerts:
 @skip_unless_alerts_supported
 class UpdateRecipientAlert(PcsAlertTest):
     def test_success(self):
-        self.assert_pcs_success("alert create path=test")
+        self.assert_pcs_success("alert create path=test".split())
         self.assert_pcs_success(
-            "alert recipient add alert value=rec_value description=description "
-            "options o1=1 o3=3 meta m1=v1 m3=v3"
+            (
+                "alert recipient add alert value=rec_value "
+                "description=description options o1=1 o3=3 meta m1=v1 m3=v3"
+            ).split()
         )
         self.assert_pcs_success(
-            "alert config",
+            "alert config".split(),
             """\
 Alerts:
  Alert: alert (path=test)
@@ -415,11 +428,13 @@ Alerts:
 """,
         )
         self.assert_pcs_success(
-            "alert recipient update alert-recipient value=new description=desc "
-            "options o1= o2=v2 o3=3 meta m1= m2=2 m3=3"
+            (
+                "alert recipient update alert-recipient value=new "
+                "description=desc options o1= o2=v2 o3=3 meta m1= m2=2 m3=3"
+            ).split()
         )
         self.assert_pcs_success(
-            "alert config",
+            "alert config".split(),
             """\
 Alerts:
  Alert: alert (path=test)
@@ -431,10 +446,10 @@ Alerts:
 """,
         )
         self.assert_pcs_success(
-            "alert recipient update alert-recipient value=new"
+            "alert recipient update alert-recipient value=new".split()
         )
         self.assert_pcs_success(
-            "alert config",
+            "alert config".split(),
             """\
 Alerts:
  Alert: alert (path=test)
@@ -447,11 +462,13 @@ Alerts:
         )
 
     def test_value_exists(self):
-        self.assert_pcs_success("alert create path=test")
-        self.assert_pcs_success("alert recipient add alert value=rec_value")
-        self.assert_pcs_success("alert recipient add alert value=value")
+        self.assert_pcs_success("alert create path=test".split())
         self.assert_pcs_success(
-            "alert config",
+            "alert recipient add alert value=rec_value".split()
+        )
+        self.assert_pcs_success("alert recipient add alert value=value".split())
+        self.assert_pcs_success(
+            "alert config".split(),
             """\
 Alerts:
  Alert: alert (path=test)
@@ -461,18 +478,18 @@ Alerts:
 """,
         )
         self.assert_pcs_fail(
-            "alert recipient update alert-recipient value=value",
+            "alert recipient update alert-recipient value=value".split(),
             (
                 "Error: Recipient 'value' in alert 'alert' already exists, "
                 "use --force to override\n" + ERRORS_HAVE_OCURRED
             ),
         )
         self.assert_pcs_success(
-            "alert recipient update alert-recipient value=value --force",
+            "alert recipient update alert-recipient value=value --force".split(),
             "Warning: Recipient 'value' in alert 'alert' already exists\n",
         )
         self.assert_pcs_success(
-            "alert config",
+            "alert config".split(),
             """\
 Alerts:
  Alert: alert (path=test)
@@ -483,10 +500,12 @@ Alerts:
         )
 
     def test_value_same_as_previous(self):
-        self.assert_pcs_success("alert create path=test")
-        self.assert_pcs_success("alert recipient add alert value=rec_value")
+        self.assert_pcs_success("alert create path=test".split())
         self.assert_pcs_success(
-            "alert config",
+            "alert recipient add alert value=rec_value".split()
+        )
+        self.assert_pcs_success(
+            "alert config".split(),
             """\
 Alerts:
  Alert: alert (path=test)
@@ -495,10 +514,10 @@ Alerts:
 """,
         )
         self.assert_pcs_success(
-            "alert recipient update alert-recipient value=rec_value"
+            "alert recipient update alert-recipient value=rec_value".split()
         )
         self.assert_pcs_success(
-            "alert config",
+            "alert config".split(),
             """\
 Alerts:
  Alert: alert (path=test)
@@ -509,17 +528,17 @@ Alerts:
 
     def test_no_recipient(self):
         self.assert_pcs_fail(
-            "alert recipient update rec description=desc",
+            "alert recipient update rec description=desc".split(),
             "Error: recipient 'rec' does not exist\n",
         )
 
     def test_empty_value(self):
-        self.assert_pcs_success("alert create path=test")
+        self.assert_pcs_success("alert create path=test".split())
         self.assert_pcs_success(
-            "alert recipient add alert value=rec_value id=rec"
+            "alert recipient add alert value=rec_value id=rec".split()
         )
         self.assert_pcs_fail(
-            "alert recipient update rec value=",
+            "alert recipient update rec value=".split(),
             "Error: Recipient value '' is not valid.\n",
         )
 
@@ -529,7 +548,7 @@ class DeleteRemoveRecipientTest(PcsAlertTest):
 
     def _test_usage(self):
         self.assert_pcs_fail(
-            f"alert recipient {self.command}",
+            ["alert", "recipient", self.command],
             stdout_start=outdent(
                 f"""
                 Usage: pcs alert <command>
@@ -538,12 +557,12 @@ class DeleteRemoveRecipientTest(PcsAlertTest):
         )
 
     def _test_one(self):
-        self.assert_pcs_success("alert create path=test")
+        self.assert_pcs_success("alert create path=test".split())
         self.assert_pcs_success(
-            "alert recipient add alert value=rec_value id=rec"
+            "alert recipient add alert value=rec_value id=rec".split()
         )
         self.assert_pcs_success(
-            "alert config",
+            "alert config".split(),
             outdent(
                 """\
                 Alerts:
@@ -553,9 +572,9 @@ class DeleteRemoveRecipientTest(PcsAlertTest):
                 """
             ),
         )
-        self.assert_pcs_success(f"alert recipient {self.command} rec")
+        self.assert_pcs_success(["alert", "recipient", self.command, "rec"])
         self.assert_pcs_success(
-            "alert config",
+            "alert config".split(),
             outdent(
                 """\
                 Alerts:
@@ -565,22 +584,22 @@ class DeleteRemoveRecipientTest(PcsAlertTest):
         )
 
     def _test_multiple(self):
-        self.assert_pcs_success("alert create path=test id=alert1")
-        self.assert_pcs_success("alert create path=test id=alert2")
+        self.assert_pcs_success("alert create path=test id=alert1".split())
+        self.assert_pcs_success("alert create path=test id=alert2".split())
         self.assert_pcs_success(
-            "alert recipient add alert1 value=rec_value1 id=rec1"
+            "alert recipient add alert1 value=rec_value1 id=rec1".split()
         )
         self.assert_pcs_success(
-            "alert recipient add alert1 value=rec_value2 id=rec2"
+            "alert recipient add alert1 value=rec_value2 id=rec2".split()
         )
         self.assert_pcs_success(
-            "alert recipient add alert2 value=rec_value3 id=rec3"
+            "alert recipient add alert2 value=rec_value3 id=rec3".split()
         )
         self.assert_pcs_success(
-            "alert recipient add alert2 value=rec_value4 id=rec4"
+            "alert recipient add alert2 value=rec_value4 id=rec4".split()
         )
         self.assert_pcs_success(
-            "alert config",
+            "alert config".split(),
             outdent(
                 """\
                 Alerts:
@@ -596,10 +615,10 @@ class DeleteRemoveRecipientTest(PcsAlertTest):
             ),
         )
         self.assert_pcs_success(
-            f"alert recipient {self.command} rec1 rec2 rec4"
+            ["alert", "recipient", self.command, "rec1", "rec2", "rec4"]
         )
         self.assert_pcs_success(
-            "alert config",
+            "alert config".split(),
             outdent(
                 """\
                 Alerts:
@@ -612,19 +631,19 @@ class DeleteRemoveRecipientTest(PcsAlertTest):
         )
 
     def _test_no_recipient(self):
-        self.assert_pcs_success("alert create path=test id=alert1")
+        self.assert_pcs_success("alert create path=test id=alert1".split())
         self.assert_pcs_success(
-            "alert recipient add alert1 value=rec_value1 id=rec1"
+            "alert recipient add alert1 value=rec_value1 id=rec1".split()
         )
         self.assert_pcs_fail(
-            f"alert recipient {self.command} rec1 rec2 rec3",
+            ["alert", "recipient", self.command, "rec1", "rec2", "rec3"],
             (
                 "Error: recipient 'rec2' does not exist\n"
                 "Error: recipient 'rec3' does not exist\n" + ERRORS_HAVE_OCURRED
             ),
         )
         self.assert_pcs_success(
-            "alert config",
+            "alert config".split(),
             outdent(
                 """\
                 Alerts:

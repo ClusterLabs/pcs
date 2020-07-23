@@ -31,27 +31,29 @@ class EnableDisable(
         self.temp_cib.close()
 
     def fixture_resource(self, name, disabled=False):
-        self.assert_pcs_success(
-            (
-                "resource create {0} ocf:heartbeat:Dummy --no-default-ops{1}"
-            ).format(name, " --disabled" if disabled else "")
-        )
+        cmd = [
+            "resource",
+            "create",
+            name,
+            "ocf:heartbeat:Dummy",
+            "--no-default-ops",
+        ]
+        if disabled:
+            cmd.append("--disabled")
+        self.assert_pcs_success(cmd)
 
     def fixture_tag(self, name, ids):
-        self.assert_pcs_success(
-            "tag create {tag_name} {ids}".format(
-                tag_name=name, ids=" ".join(ids),
-            )
-        )
+        self.assert_pcs_success(["tag", "create", name] + ids)
 
     def test_enable_none(self):
         self.assert_pcs_fail(
-            "resource enable", "Error: You must specify resource(s) to enable\n"
+            "resource enable".split(),
+            "Error: You must specify resource(s) to enable\n",
         )
 
     def test_disable_none(self):
         self.assert_pcs_fail(
-            "resource disable",
+            "resource disable".split(),
             "Error: You must specify resource(s) to disable\n",
         )
 
@@ -60,7 +62,7 @@ class EnableDisable(
         self.fixture_resource("B", disabled=True)
         self.fixture_tag("TA", ["A"])
         self.assert_effect(
-            "resource enable TA B",
+            "resource enable TA B".split(),
             """
             <resources>
                 <primitive class="ocf" id="A" provider="heartbeat" type="Dummy">
@@ -89,7 +91,7 @@ class EnableDisable(
         self.fixture_tag("TA", ["A"])
 
         self.assert_effect(
-            "resource disable B TA",
+            "resource disable B TA".split(),
             """
             <resources>
                 <primitive class="ocf" id="A" provider="heartbeat" type="Dummy">
@@ -124,7 +126,7 @@ class EnableDisable(
         self.fixture_resource("A", disabled=True)
 
         self.assert_pcs_fail(
-            "resource enable A B",
+            "resource enable A B".split(),
             (
                 "Error: bundle/clone/group/resource/tag 'B' does not exist\n"
                 "Error: Errors have occurred, therefore pcs is unable to continue\n"
@@ -153,7 +155,7 @@ class EnableDisable(
         self.fixture_resource("A", disabled=False)
 
         self.assert_pcs_fail(
-            "resource disable A B",
+            "resource disable A B".split(),
             (
                 "Error: bundle/clone/group/resource/tag 'B' does not exist\n"
                 "Error: Errors have occurred, therefore pcs is unable to continue\n"
@@ -198,7 +200,7 @@ class EnableDisable(
             """
         write_data_to_tmpfile(xml, self.temp_cib)
         self.assert_pcs_fail(
-            "resource disable A",
+            "resource disable A".split(),
             (
                 "Error: bundle/clone/group/resource/tag 'A' does not exist\n"
                 "Error: Errors have occurred, therefore pcs is unable to continue\n"

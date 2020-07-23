@@ -60,54 +60,54 @@ class ManageUnmanage(
 
     def fixture_resource(self, name, managed=True, with_monitors=False):
         self.assert_pcs_success(
-            "resource create {0} ocf:heartbeat:Dummy --no-default-ops".format(
-                name
-            )
+            [
+                "resource",
+                "create",
+                name,
+                "ocf:heartbeat:Dummy",
+                "--no-default-ops",
+            ]
         )
         if not managed:
-            self.assert_pcs_success(
-                "resource unmanage {0} {1}".format(
-                    name, "--monitor" if with_monitors else ""
-                )
-            )
+            cmd = ["resource", "unmanage", name]
+            if with_monitors:
+                cmd.append("--monitor")
+            self.assert_pcs_success(cmd)
 
     def fixture_tag(self, name, ids):
-        self.assert_pcs_success(
-            "tag create {tag_name} {ids}".format(
-                tag_name=name, ids=" ".join(ids),
-            )
-        )
+        self.assert_pcs_success(["tag", "create", name] + ids)
 
     def test_unmanage_none(self):
         self.assert_pcs_fail(
-            "resource unmanage",
+            "resource unmanage".split(),
             "Error: You must specify resource(s) to unmanage\n",
         )
 
     def test_manage_none(self):
         self.assert_pcs_fail(
-            "resource manage", "Error: You must specify resource(s) to manage\n"
+            "resource manage".split(),
+            "Error: You must specify resource(s) to manage\n",
         )
 
     def test_unmanage_one(self):
         self.fixture_resource("A")
         self.fixture_resource("B")
         self.assert_effect(
-            "resource unmanage A", self.fixture_cib_unmanaged_a()
+            "resource unmanage A".split(), self.fixture_cib_unmanaged_a()
         )
 
     def test_manage_one(self):
         self.fixture_resource("A", managed=False)
         self.fixture_resource("B", managed=False)
         self.assert_effect(
-            "resource manage B",
+            "resource manage B".split(),
             self.fixture_cib_unmanaged_a(add_empty_meta_b=True),
         )
 
     def test_unmanage_monitor(self):
         self.fixture_resource("A")
         self.assert_effect(
-            "resource unmanage A --monitor",
+            "resource unmanage A --monitor".split(),
             """
             <resources>
                 <primitive class="ocf" id="A" provider="heartbeat" type="Dummy">
@@ -129,7 +129,7 @@ class ManageUnmanage(
     def test_unmanage_monitor_enabled(self):
         self.fixture_resource("A")
         self.assert_effect(
-            "resource unmanage A",
+            "resource unmanage A".split(),
             """
             <resources>
                 <primitive class="ocf" id="A" provider="heartbeat" type="Dummy">
@@ -151,7 +151,7 @@ class ManageUnmanage(
     def test_manage_monitor(self):
         self.fixture_resource("A", managed=True, with_monitors=True)
         self.assert_effect(
-            "resource manage A --monitor",
+            "resource manage A --monitor".split(),
             """
             <resources>
                 <primitive class="ocf" id="A" provider="heartbeat" type="Dummy">
@@ -168,7 +168,7 @@ class ManageUnmanage(
     def test_manage_monitor_disabled(self):
         self.fixture_resource("A", managed=False, with_monitors=True)
         self.assert_effect(
-            "resource manage A",
+            "resource manage A".split(),
             """
             <resources>
                 <primitive class="ocf" id="A" provider="heartbeat" type="Dummy">
@@ -190,7 +190,7 @@ class ManageUnmanage(
         self.fixture_resource("B")
         self.fixture_tag("TA", ["A"])
         self.assert_effect(
-            "resource unmanage TA B",
+            "resource unmanage TA B".split(),
             """
             <resources>
                 <primitive class="ocf" id="A" provider="heartbeat" type="Dummy">
@@ -226,7 +226,7 @@ class ManageUnmanage(
         self.fixture_resource("B", managed=False)
         self.fixture_tag("TA", ["A"])
         self.assert_effect(
-            "resource manage TA B",
+            "resource manage TA B".split(),
             """
             <resources>
                 <primitive class="ocf" id="A" provider="heartbeat" type="Dummy">
@@ -253,7 +253,7 @@ class ManageUnmanage(
         self.fixture_resource("A")
 
         self.assert_pcs_fail(
-            "resource unmanage A B",
+            "resource unmanage A B".split(),
             (
                 "Error: bundle/clone/group/resource/tag 'B' does not exist\n"
                 "Error: Errors have occurred, therefore pcs is unable to continue\n"
@@ -277,7 +277,7 @@ class ManageUnmanage(
         self.fixture_resource("A", managed=False)
 
         self.assert_pcs_fail(
-            "resource manage A B",
+            "resource manage A B".split(),
             (
                 "Error: bundle/clone/group/resource/tag 'B' does not exist\n"
                 "Error: Errors have occurred, therefore pcs is unable to continue\n"

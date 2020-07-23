@@ -52,9 +52,10 @@ class BoothMixin(AssertPcsMixin):
         self.booth_dir.cleanup()
 
     def fake_file(self, command):
-        return "{0} --booth-conf={1} --booth-key={2}".format(
-            command, self.booth_cfg_path, self.booth_key_path,
-        )
+        return command + [
+            f"--booth-conf={self.booth_cfg_path}",
+            f"--booth-key={self.booth_key_path}",
+        ]
 
     def ensure_booth_config_exists(self):
         if not os.path.exists(self.booth_cfg_path):
@@ -91,7 +92,7 @@ class SetupTest(BoothMixin, TestCase):
     def test_success_setup_booth_config(self):
         self.ensure_booth_config_not_exists()
         self.assert_pcs_success(
-            "booth setup sites 1.1.1.1 2.2.2.2 arbitrators 3.3.3.3"
+            "booth setup sites 1.1.1.1 2.2.2.2 arbitrators 3.3.3.3".split()
         )
         with open(self.booth_cfg_path, "r") as config_file:
             self.assertEqual(
@@ -113,13 +114,15 @@ class SetupTest(BoothMixin, TestCase):
     def test_overwrite_existing_mocked_config(self):
         self.ensure_booth_config_exists()
         self.assert_pcs_success(
-            "booth setup sites 1.1.1.1 2.2.2.2 arbitrators 3.3.3.3",
+            "booth setup sites 1.1.1.1 2.2.2.2 arbitrators 3.3.3.3".split(),
         )
         self.ensure_booth_config_not_exists()
 
     def test_fail_on_multiple_reasons(self):
         self.assert_pcs_fail(
-            "booth setup sites 1.1.1.1 arbitrators 1.1.1.1 2.2.2.2 3.3.3.3",
+            (
+                "booth setup sites 1.1.1.1 arbitrators 1.1.1.1 2.2.2.2 3.3.3.3"
+            ).split(),
             (
                 "Error: lack of sites for booth configuration (need 2 at least)"
                 ": sites '1.1.1.1'\n"
@@ -132,16 +135,22 @@ class SetupTest(BoothMixin, TestCase):
 
     def test_refuse_partialy_mocked_environment(self):
         self.assert_pcs_fail_original(
-            "booth setup sites 1.1.1.1 2.2.2.2 arbitrators 3.3.3.3"
-            " --booth-conf=/some/file",  # no --booth-key!
+            # no --booth-key!
+            (
+                "booth setup sites 1.1.1.1 2.2.2.2 arbitrators 3.3.3.3 "
+                "--booth-conf=/some/file"
+            ).split(),
             (
                 "Error: When --booth-conf is specified, --booth-key must be "
                 "specified as well\n"
             ),
         )
         self.assert_pcs_fail_original(
-            "booth setup sites 1.1.1.1 2.2.2.2 arbitrators 3.3.3.3"
-            " --booth-key=/some/file",  # no --booth-conf!
+            # no --booth-conf!
+            (
+                "booth setup sites 1.1.1.1 2.2.2.2 arbitrators 3.3.3.3 "
+                "--booth-key=/some/file"
+            ).split(),
             (
                 "Error: When --booth-key is specified, --booth-conf must be "
                 "specified as well\n"
@@ -150,11 +159,11 @@ class SetupTest(BoothMixin, TestCase):
 
     def test_show_usage_when_no_site_specified(self):
         self.assert_pcs_fail(
-            "booth setup arbitrators 3.3.3.3",
+            "booth setup arbitrators 3.3.3.3".split(),
             stdout_start="\nUsage: pcs booth <command>\n    setup",
         )
         self.assert_pcs_fail(
-            "booth setup",
+            "booth setup".split(),
             stdout_start="\nUsage: pcs booth <command>\n    setup",
         )
 
@@ -166,7 +175,7 @@ class DestroyTest(BoothMixin, TestCase):
 
     def test_failed_when_using_mocked_booth_env(self):
         self.assert_pcs_fail(
-            "booth destroy",
+            "booth destroy".split(),
             (
                 "Error: Specified options '--booth-conf', '--booth-key' are "
                 "not supported in this command\n"
@@ -180,13 +189,13 @@ class BoothTest(BoothMixin, TestCase):
         self.pcs_runner.cib_file = None
         self.ensure_booth_config_not_exists()
         self.assert_pcs_success(
-            "booth setup sites 1.1.1.1 2.2.2.2 arbitrators 3.3.3.3"
+            "booth setup sites 1.1.1.1 2.2.2.2 arbitrators 3.3.3.3".split()
         )
 
 
 class AddTicketTest(BoothTest):
     def test_success_add_ticket(self):
-        self.assert_pcs_success("booth ticket add TicketA expire=10")
+        self.assert_pcs_success("booth ticket add TicketA expire=10".split())
         with open(self.booth_cfg_path, "r") as config_file:
             self.assertEqual(
                 dedent(
@@ -206,7 +215,7 @@ class AddTicketTest(BoothTest):
 
     def test_fail_on_bad_ticket_name(self):
         self.assert_pcs_fail(
-            "booth ticket add @TicketA",
+            "booth ticket add @TicketA".split(),
             (
                 "Error: booth ticket name '@TicketA' is not valid, use "
                 "alphanumeric chars or dash\n"
@@ -216,9 +225,9 @@ class AddTicketTest(BoothTest):
         )
 
     def test_fail_on_duplicit_ticket_name(self):
-        self.assert_pcs_success("booth ticket add TicketA")
+        self.assert_pcs_success("booth ticket add TicketA".split())
         self.assert_pcs_fail(
-            "booth ticket add TicketA",
+            "booth ticket add TicketA".split(),
             (
                 "Error: booth ticket name 'TicketA' already exists in "
                 "configuration\n"
@@ -229,7 +238,7 @@ class AddTicketTest(BoothTest):
 
     def test_fail_on_invalid_options(self):
         self.assert_pcs_fail(
-            "booth ticket add TicketA site=a timeout=",
+            "booth ticket add TicketA site=a timeout=".split(),
             (
                 "Error: invalid booth ticket option 'site', allowed options"
                 " are: 'acquire-after', 'attr-prereq', "
@@ -248,7 +257,7 @@ class AddTicketTest(BoothTest):
             " 'expire', 'renewal-freq', 'retries', 'timeout', 'weights'"
         )
         self.assert_pcs_fail(
-            "booth ticket add TicketA unknown=a",
+            "booth ticket add TicketA unknown=a".split(),
             (
                 "Error: {0}, use --force to override\n"
                 "Error: Errors have occurred, therefore pcs is unable to "
@@ -256,13 +265,13 @@ class AddTicketTest(BoothTest):
             ).format(msg),
         )
         self.assert_pcs_success(
-            "booth ticket add TicketA unknown=a --force",
+            "booth ticket add TicketA unknown=a --force".split(),
             "Warning: {0}\n".format(msg),
         )
 
     def test_not_enough_args(self):
         self.assert_pcs_fail(
-            "booth ticket add",
+            "booth ticket add".split(),
             stdout_start="\nUsage: pcs booth <command>\n    ticket add",
         )
 
@@ -272,7 +281,7 @@ class DeleteRemoveTicketMixin:
 
     def test_not_enough_args(self):
         self.assert_pcs_fail(
-            f"booth ticket {self.command}",
+            ["booth", "ticket", self.command],
             stdout_start=outdent(
                 f"""
                 Usage: pcs booth <command>
@@ -282,7 +291,7 @@ class DeleteRemoveTicketMixin:
 
     def test_too_many_args(self):
         self.assert_pcs_fail(
-            f"booth ticket {self.command} aaa bbb",
+            ["booth", "ticket", self.command, "aaa", "bbb"],
             stdout_start=outdent(
                 f"""
                 Usage: pcs booth <command>
@@ -291,7 +300,7 @@ class DeleteRemoveTicketMixin:
         )
 
     def test_success_remove_ticket(self):
-        self.assert_pcs_success("booth ticket add TicketA")
+        self.assert_pcs_success("booth ticket add TicketA".split())
         with open(self.booth_cfg_path, "r") as config_file:
             self.assertEqual(
                 dedent(
@@ -307,7 +316,7 @@ class DeleteRemoveTicketMixin:
                 ),
                 config_file.read(),
             )
-        self.assert_pcs_success(f"booth ticket {self.command} TicketA")
+        self.assert_pcs_success(["booth", "ticket", self.command, "TicketA"])
         with open(self.booth_cfg_path, "r") as config_file:
             self.assertEqual(
                 dedent(
@@ -325,7 +334,7 @@ class DeleteRemoveTicketMixin:
 
     def test_fail_when_ticket_does_not_exist(self):
         self.assert_pcs_fail(
-            f"booth ticket {self.command} TicketA",
+            ["booth", "ticket", self.command, "TicketA"],
             (
                 "Error: booth ticket name 'TicketA' does not exist\n"
                 "Error: Errors have occurred, therefore pcs is unable to "
@@ -346,7 +355,7 @@ class RemoveTicketTest(DeleteRemoveTicketMixin, BoothTest):
 class CreateTest(BoothMixinNoFiles, TestCase):
     def test_not_enough_args(self):
         self.assert_pcs_fail(
-            "booth create",
+            "booth create".split(),
             stdout_start=outdent(
                 """
                 Usage: pcs booth <command>
@@ -354,7 +363,7 @@ class CreateTest(BoothMixinNoFiles, TestCase):
             ),
         )
         self.assert_pcs_fail(
-            "booth create ip",
+            "booth create ip".split(),
             stdout_start=outdent(
                 """
                 Usage: pcs booth <command>
@@ -364,7 +373,7 @@ class CreateTest(BoothMixinNoFiles, TestCase):
 
     def test_too_many_args(self):
         self.assert_pcs_fail(
-            "booth create ip aaa bbb",
+            "booth create ip aaa bbb".split(),
             stdout_start=outdent(
                 """
                 Usage: pcs booth <command>
@@ -390,7 +399,7 @@ class DeleteRemoveTestMixin(AssertPcsMixin):
 
     def test_usage(self):
         self.assert_pcs_fail(
-            f"booth {self.command} a b",
+            ["booth", self.command, "a", "b"],
             stdout_start=outdent(
                 f"""
                 Usage: pcs booth <command>
@@ -400,9 +409,11 @@ class DeleteRemoveTestMixin(AssertPcsMixin):
         )
 
     def test_failed_when_no_booth_configuration_created(self):
-        self.assert_pcs_success("resource status", "NO resources configured\n")
+        self.assert_pcs_success(
+            "resource status".split(), "NO resources configured\n"
+        )
         self.assert_pcs_fail(
-            f"booth {self.command}",
+            ["booth", self.command],
             [
                 # pylint: disable=line-too-long
                 "Error: booth instance 'booth' not found in cib",
@@ -424,7 +435,7 @@ class RemoveTest(DeleteRemoveTestMixin, TestCase):
 class TicketGrantTest(BoothMixinNoFiles, TestCase):
     def test_not_enough_args(self):
         self.assert_pcs_fail(
-            "booth ticket grant",
+            "booth ticket grant".split(),
             stdout_start=outdent(
                 """
                 Usage: pcs booth <command>
@@ -434,7 +445,7 @@ class TicketGrantTest(BoothMixinNoFiles, TestCase):
 
     def test_too_many_args(self):
         self.assert_pcs_fail(
-            "booth ticket grant aaa bbb ccc",
+            "booth ticket grant aaa bbb ccc".split(),
             stdout_start=outdent(
                 """
                 Usage: pcs booth <command>
@@ -446,7 +457,7 @@ class TicketGrantTest(BoothMixinNoFiles, TestCase):
 class TicketRevokeTest(BoothMixinNoFiles, TestCase):
     def test_not_enough_args(self):
         self.assert_pcs_fail(
-            "booth ticket revoke",
+            "booth ticket revoke".split(),
             stdout_start=outdent(
                 """
                 Usage: pcs booth <command>
@@ -456,7 +467,7 @@ class TicketRevokeTest(BoothMixinNoFiles, TestCase):
 
     def test_too_many_args(self):
         self.assert_pcs_fail(
-            "booth ticket revoke aaa bbb ccc",
+            "booth ticket revoke aaa bbb ccc".split(),
             stdout_start=outdent(
                 """
                 Usage: pcs booth <command>
@@ -468,7 +479,7 @@ class TicketRevokeTest(BoothMixinNoFiles, TestCase):
 class Restart(BoothMixinNoFiles, TestCase):
     def test_too_many_args(self):
         self.assert_pcs_fail(
-            "booth restart aaa",
+            "booth restart aaa".split(),
             stdout_start=outdent(
                 """
                 Usage: pcs booth <command>
@@ -480,7 +491,7 @@ class Restart(BoothMixinNoFiles, TestCase):
 class Sync(BoothMixinNoFiles, TestCase):
     def test_too_many_args(self):
         self.assert_pcs_fail(
-            "booth sync aaa",
+            "booth sync aaa".split(),
             stdout_start=outdent(
                 """
                 Usage: pcs booth <command>
@@ -492,7 +503,7 @@ class Sync(BoothMixinNoFiles, TestCase):
 class BoothServiceTestMixin(BoothMixinNoFiles):
     def test_too_many_args(self):
         self.assert_pcs_fail(
-            f"booth {self.cmd_label} aaa",
+            ["booth", self.cmd_label, "aaa"],
             stdout_start=outdent(
                 f"""
                 Usage: pcs booth <command>
@@ -532,7 +543,7 @@ class Stop(BoothServiceTestMixin, TestCase):
 class Pull(BoothMixinNoFiles, TestCase):
     def test_not_enough_args(self):
         self.assert_pcs_fail(
-            "booth pull",
+            "booth pull".split(),
             stdout_start=outdent(
                 """
                 Usage: pcs booth <command>
@@ -542,7 +553,7 @@ class Pull(BoothMixinNoFiles, TestCase):
 
     def test_too_many_args(self):
         self.assert_pcs_fail(
-            "booth pull aaa bbb",
+            "booth pull aaa bbb".split(),
             stdout_start=outdent(
                 """
                 Usage: pcs booth <command>
@@ -556,7 +567,7 @@ class Pull(BoothMixinNoFiles, TestCase):
 class Status(BoothMixinNoFiles, TestCase):
     def test_too_many_args(self):
         self.assert_pcs_fail(
-            "booth status aaa",
+            "booth status aaa".split(),
             stdout_start=outdent(
                 """
                 Usage: pcs booth <command>

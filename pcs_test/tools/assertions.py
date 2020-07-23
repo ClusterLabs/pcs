@@ -103,7 +103,7 @@ class AssertPcsMixin:
     ):
         self.assert_pcs_fail(command, stdout_full, stdout_start, stdout_regexp)
         self.assert_pcs_fail(
-            command + " --force", stdout_full, stdout_start, stdout_regexp
+            command + ["--force"], stdout_full, stdout_start, stdout_regexp
         )
 
     def assert_pcs_result(

@@ -91,7 +91,7 @@ class SetupLocal(AssertPcsMixin, TestCase):
         )
         self.corosync_conf_file.write("some already existing content")
         self.assert_pcs_fail(
-            "cluster setup cluster_name node1 node2",
+            "cluster setup cluster_name node1 node2".split(),
             dedent(
                 # pylint: disable=line-too-long
                 f"""\
@@ -110,7 +110,7 @@ class SetupLocal(AssertPcsMixin, TestCase):
         self.known_hosts_file.close()
         self.assert_pcs_success(
             # need to use --force for not failing on unresolvable addresses
-            "cluster setup cluster_name node1 node2 --force --overwrite",
+            "cluster setup cluster_name node1 node2 --force --overwrite".split(),
             dedent(
                 # pylint: disable=line-too-long
                 f"""\
@@ -134,7 +134,7 @@ class SetupLocal(AssertPcsMixin, TestCase):
             ]
         )
         self.assert_pcs_success(
-            "cluster setup cluster_name node1 node2 --overwrite",
+            "cluster setup cluster_name node1 node2 --overwrite".split(),
             dedent(
                 """\
                 No addresses specified for host 'node1', using '10.0.1.1'
@@ -150,16 +150,22 @@ class SetupLocal(AssertPcsMixin, TestCase):
     def test_multiple_options(self):
         self.fixture_known_hosts([])
         self.assert_pcs_success(
-            "cluster setup cluster_name node1 addr=127.0.0.1 addr=127.0.1.1 "
-            "addr=127.0.2.3 node2 addr=127.0.0.2 addr=127.0.1.2 addr=127.0.2.2 "
-            "node3 addr=127.0.0.3 addr=127.0.1.3 addr=127.0.2.1 transport knet "
-            "ip_version=ipv4 link_mode=passive link linknumber=2 "
-            "link_priority=100 mcastport=12345 ping_interval=1 "
-            "ping_precision=2 ping_timeout=3 pong_count=4 transport=sctp "
-            "link linknumber=1 transport=udp compression level=2 model=zlib "
-            "threshold=10 crypto cipher=aes256 hash=sha512 model=openssl totem "
-            "consensus=0 downcheck=1 token=12 quorum last_man_standing=1 "
-            "last_man_standing_window=10 --overwrite",
+            (
+                "cluster setup cluster_name "
+                "node1 addr=127.0.0.1 addr=127.0.1.1 addr=127.0.2.3 "
+                "node2 addr=127.0.0.2 addr=127.0.1.2 addr=127.0.2.2 "
+                "node3 addr=127.0.0.3 addr=127.0.1.3 addr=127.0.2.1 "
+                "transport knet ip_version=ipv4 link_mode=passive "
+                "link linknumber=2 link_priority=100 mcastport=12345 "
+                "ping_interval=1 ping_precision=2 ping_timeout=3 pong_count=4 "
+                "transport=sctp "
+                "link linknumber=1 transport=udp "
+                "compression level=2 model=zlib threshold=10 "
+                "crypto cipher=aes256 hash=sha512 model=openssl "
+                "totem consensus=0 downcheck=1 token=12 "
+                "quorum last_man_standing=1 last_man_standing_window=10 "
+                "--overwrite"
+            ).split()
         )
         self.assertEqual(
             self.corosync_conf_file.read(),
@@ -244,16 +250,21 @@ class SetupLocal(AssertPcsMixin, TestCase):
         # pylint: disable=line-too-long
         self.fixture_known_hosts([])
         self.assert_pcs_fail(
-            "cluster setup cluster_name node1 addr=127.0.0.1 addr=127.0.1.1.2 "
-            "addr=127.0.2.3 node2 addr=127.0.0.2 addr=127.0.2.2 "
-            "node3 addr=127.0.0.3 addr=127.0.1.3 addr=127.0.2.1 transport knet "
-            "ip_version=ipv4 link_mode=passive link linknumber=2 "
-            "link_priority=100 mcastport=123450 ping_interval=1 "
-            "ping_precision=2 ping_timeout=3 pong__count=4 transport=sctp "
-            "link linknumber=3 transport=udp compression level=2 model=zlib "
-            "threshold=10 crypto hash=sha512 model=openssl totem "
-            "consensus=0 downcheck=1 token=12 quorum lst_man_standing=1 "
-            "last_man_standing_window=10",
+            (
+                "cluster setup cluster_name "
+                "node1 addr=127.0.0.1 addr=127.0.1.1.2 addr=127.0.2.3 "
+                "node2 addr=127.0.0.2 addr=127.0.2.2 "
+                "node3 addr=127.0.0.3 addr=127.0.1.3 addr=127.0.2.1 "
+                "transport knet ip_version=ipv4 link_mode=passive "
+                "link linknumber=2 link_priority=100 mcastport=123450 "
+                "ping_interval=1 ping_precision=2 ping_timeout=3 pong__count=4 "
+                "transport=sctp "
+                "link linknumber=3 transport=udp "
+                "compression level=2 model=zlib threshold=10 "
+                "crypto hash=sha512 model=openssl "
+                "totem consensus=0 downcheck=1 token=12 "
+                "quorum lst_man_standing=1 last_man_standing_window=10"
+            ).split(),
             stdout_full=dedent(
                 """\
                 Error: Unable to resolve addresses: '127.0.1.1.2', use --force to override

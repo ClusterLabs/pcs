@@ -90,31 +90,31 @@ class ConstraintTest(unittest.TestCase):
 
     # Sets up a cluster with Resources, groups, master/slave resource and clones
     def setupClusterA(self):
-        line = "resource create D1 ocf:heartbeat:Dummy"
+        line = "resource create D1 ocf:heartbeat:Dummy".split()
         output, returnVal = pcs(self.temp_cib.name, line)
         assert returnVal == 0 and output == ""
 
-        line = "resource create D2 ocf:heartbeat:Dummy"
+        line = "resource create D2 ocf:heartbeat:Dummy".split()
         output, returnVal = pcs(self.temp_cib.name, line)
         assert returnVal == 0 and output == ""
 
-        line = "resource create D3 ocf:heartbeat:Dummy"
+        line = "resource create D3 ocf:heartbeat:Dummy".split()
         output, returnVal = pcs(self.temp_cib.name, line)
         assert returnVal == 0 and output == ""
 
-        line = "resource create D4 ocf:heartbeat:Dummy"
+        line = "resource create D4 ocf:heartbeat:Dummy".split()
         output, returnVal = pcs(self.temp_cib.name, line)
         assert returnVal == 0 and output == ""
 
-        line = "resource create D5 ocf:heartbeat:Dummy"
+        line = "resource create D5 ocf:heartbeat:Dummy".split()
         output, returnVal = pcs(self.temp_cib.name, line)
         assert returnVal == 0 and output == ""
 
-        line = "resource create D6 ocf:heartbeat:Dummy"
+        line = "resource create D6 ocf:heartbeat:Dummy".split()
         output, returnVal = pcs(self.temp_cib.name, line)
         assert returnVal == 0 and output == ""
 
-        line = "resource clone D3"
+        line = "resource clone D3".split()
         output, returnVal = pcs(self.temp_cib.name, line)
         assert returnVal == 0 and output == ""
 
@@ -127,27 +127,27 @@ class ConstraintTest(unittest.TestCase):
         self.fixture_resources()
         output, returnVal = pcs(
             self.temp_cib.name,
-            "constraint location D1 rule score=222 '#uname' eq c00n03",
+            "constraint location D1 rule score=222 #uname eq c00n03".split(),
         )
         assert output == "", [output]
         assert returnVal == 0
 
         output, returnVal = pcs(
             self.temp_cib.name,
-            "constraint location D2 rule score=-INFINITY '#uname' eq c00n04",
+            "constraint location D2 rule score=-INFINITY #uname eq c00n04".split(),
         )
         assert returnVal == 0
         assert output == "", [output]
 
         o, r = pcs(
             self.temp_cib.name,
-            "resource create C1 ocf:heartbeat:Dummy --group C1-group",
+            "resource create C1 ocf:heartbeat:Dummy --group C1-group".split(),
         )
         assert r == 0 and o == "", o
 
         output, returnVal = pcs(
             self.temp_cib.name,
-            "constraint location C1-group rule score=pingd defined pingd",
+            "constraint location C1-group rule score=pingd defined pingd".split(),
         )
         assert returnVal == 0
         assert (
@@ -157,7 +157,7 @@ class ConstraintTest(unittest.TestCase):
 
         output, returnVal = pcs(
             self.temp_cib.name,
-            "constraint location D3 rule score=pingd defined pingd --force",
+            "constraint location D3 rule score=pingd defined pingd --force".split(),
         )
         assert returnVal == 0
         assert (
@@ -167,40 +167,57 @@ class ConstraintTest(unittest.TestCase):
 
         output, returnVal = pcs(
             self.temp_cib.name,
-            "constraint location D4 rule score=INFINITY date start=2005-001 gt --force",
+            (
+                "constraint location D4 rule score=INFINITY "
+                "date start=2005-001 gt --force"
+            ).split(),
         )
         assert returnVal == 0
         assert output == "", [output]
 
         output, returnVal = pcs(
             self.temp_cib.name,
-            "constraint location D5 rule score=INFINITY date start=2005-001 end=2006-001 in_range",
+            (
+                "constraint location D5 rule score=INFINITY "
+                "date start=2005-001 end=2006-001 in_range"
+            ).split(),
         )
         assert returnVal == 0
         assert output == "", [output]
 
         output, returnVal = pcs(
             self.temp_cib.name,
-            "constraint location D6 rule score=INFINITY date-spec operation=date_spec years=3005",
+            (
+                "constraint location D6 rule score=INFINITY "
+                "date-spec operation=date_spec years=3005"
+            ).split(),
         )
         assert output == "", [output]
         assert returnVal == 0
 
         output, returnVal = pcs(
             self.temp_cib.name,
-            "constraint location D3 rule score=-INFINITY not_defined pingd or pingd lte 0 --force",
+            (
+                "constraint location D3 rule score=-INFINITY "
+                "not_defined pingd or pingd lte 0 --force"
+            ).split(),
         )
         assert returnVal == 0
         assert output == "", [output]
 
         output, returnVal = pcs(
             self.temp_cib.name,
-            "constraint location D3 rule score=-INFINITY not_defined pingd and pingd lte 0 --force",
+            (
+                "constraint location D3 rule score=-INFINITY "
+                "not_defined pingd and pingd lte 0 --force"
+            ).split(),
         )
         assert returnVal == 0
         assert output == "", [output]
 
-        output, returnVal = pcs(self.temp_cib.name, "constraint --full --all")
+        output, returnVal = pcs(
+            self.temp_cib.name, "constraint --full --all".split()
+        )
         assert returnVal == 0
         ac(
             output,
@@ -249,15 +266,21 @@ Ticket Constraints:
 """,
         )
 
-        o, r = pcs(self.temp_cib.name, "constraint remove location-C1-group")
+        o, r = pcs(
+            self.temp_cib.name, "constraint remove location-C1-group".split()
+        )
         ac(o, "")
         assert r == 0
 
-        o, r = pcs(self.temp_cib.name, "constraint delete location-D4-rule")
+        o, r = pcs(
+            self.temp_cib.name, "constraint delete location-D4-rule".split()
+        )
         ac(o, "")
         assert r == 0
 
-        output, returnVal = pcs(self.temp_cib.name, "constraint --full --all")
+        output, returnVal = pcs(
+            self.temp_cib.name, "constraint --full --all".split()
+        )
         assert returnVal == 0
         ac(
             output,
@@ -302,12 +325,15 @@ Ticket Constraints:
         self.fixture_resources()
         o, r = pcs(
             self.temp_cib.name,
-            "constraint location D1 rule score=INFINITY not_defined pingd or pingd lte 0",
+            (
+                "constraint location D1 rule score=INFINITY "
+                "not_defined pingd or pingd lte 0"
+            ).split(),
         )
         ac(o, "")
         assert r == 0
 
-        output, returnVal = pcs(self.temp_cib.name, "constraint --full")
+        output, returnVal = pcs(self.temp_cib.name, "constraint --full".split())
         assert returnVal == 0
         ac(
             output,
@@ -325,7 +351,7 @@ Ticket Constraints:
         )
 
     def testEmptyConstraints(self):
-        output, returnVal = pcs(self.temp_cib.name, "constraint")
+        output, returnVal = pcs(self.temp_cib.name, ["constraint"])
         assert (
             returnVal == 0
             and output
@@ -334,7 +360,9 @@ Ticket Constraints:
 
     def testMultipleOrderConstraints(self):
         self.fixture_resources()
-        o, r = pcs(self.temp_cib.name, "constraint order stop D1 then stop D2")
+        o, r = pcs(
+            self.temp_cib.name, "constraint order stop D1 then stop D2".split(),
+        )
         ac(
             o,
             "Adding D1 D2 (kind: Mandatory) (Options: first-action=stop then-action=stop)\n",
@@ -342,7 +370,8 @@ Ticket Constraints:
         assert r == 0
 
         o, r = pcs(
-            self.temp_cib.name, "constraint order start D1 then start D2"
+            self.temp_cib.name,
+            "constraint order start D1 then start D2".split(),
         )
         ac(
             o,
@@ -350,7 +379,7 @@ Ticket Constraints:
         )
         assert r == 0
 
-        o, r = pcs(self.temp_cib.name, "constraint --full")
+        o, r = pcs(self.temp_cib.name, "constraint --full".split())
         ac(
             o,
             "Location Constraints:\nOrdering Constraints:\n  stop D1 then stop D2 (kind:Mandatory) (id:order-D1-D2-mandatory)\n  start D1 then start D2 (kind:Mandatory) (id:order-D1-D2-mandatory-1)\nColocation Constraints:\nTicket Constraints:\n",
@@ -359,7 +388,9 @@ Ticket Constraints:
 
     def test_order_options_empty_value(self):
         self.fixture_resources()
-        o, r = pcs(self.temp_cib.name, "constraint order D1 then D2 option1=")
+        o, r = pcs(
+            self.temp_cib.name, "constraint order D1 then D2 option1=".split(),
+        )
         self.assertIn("value of 'option1' option is empty", o)
         self.assertEqual(r, 1)
 
@@ -370,52 +401,57 @@ Ticket Constraints:
             "create a constraint for more than two resources.\n"
         )
 
-        o, r = pcs(self.temp_cib.name, "constraint order D1 then D2 then D3")
-        self.assertIn(msg, o)
-        self.assertEqual(r, 1)
-
         o, r = pcs(
-            self.temp_cib.name,
-            "constraint order start D1 then start D2 then start D3",
-        )
-        self.assertIn(msg, o)
-        self.assertEqual(r, 1)
-
-        o, r = pcs(
-            self.temp_cib.name, "constraint order start D1 then D2 then D3"
-        )
-        self.assertIn(msg, o)
-        self.assertEqual(r, 1)
-
-        o, r = pcs(
-            self.temp_cib.name, "constraint order D1 then start D2 then D3"
-        )
-        self.assertIn(msg, o)
-        self.assertEqual(r, 1)
-
-        o, r = pcs(
-            self.temp_cib.name, "constraint order D1 then D2 then start D3"
+            self.temp_cib.name, "constraint order D1 then D2 then D3".split(),
         )
         self.assertIn(msg, o)
         self.assertEqual(r, 1)
 
         o, r = pcs(
             self.temp_cib.name,
-            "constraint order start D1 then D2 then start D3",
+            "constraint order start D1 then start D2 then start D3".split(),
         )
         self.assertIn(msg, o)
         self.assertEqual(r, 1)
 
         o, r = pcs(
             self.temp_cib.name,
-            "constraint order D1 then start D2 then start D3",
+            "constraint order start D1 then D2 then D3".split(),
         )
         self.assertIn(msg, o)
         self.assertEqual(r, 1)
 
         o, r = pcs(
             self.temp_cib.name,
-            "constraint order start D1 then D2 then start D3",
+            "constraint order D1 then start D2 then D3".split(),
+        )
+        self.assertIn(msg, o)
+        self.assertEqual(r, 1)
+
+        o, r = pcs(
+            self.temp_cib.name,
+            "constraint order D1 then D2 then start D3".split(),
+        )
+        self.assertIn(msg, o)
+        self.assertEqual(r, 1)
+
+        o, r = pcs(
+            self.temp_cib.name,
+            "constraint order start D1 then D2 then start D3".split(),
+        )
+        self.assertIn(msg, o)
+        self.assertEqual(r, 1)
+
+        o, r = pcs(
+            self.temp_cib.name,
+            "constraint order D1 then start D2 then start D3".split(),
+        )
+        self.assertIn(msg, o)
+        self.assertEqual(r, 1)
+
+        o, r = pcs(
+            self.temp_cib.name,
+            "constraint order start D1 then D2 then start D3".split(),
         )
         self.assertIn(msg, o)
         self.assertEqual(r, 1)
@@ -425,13 +461,13 @@ Ticket Constraints:
     )
     def testOrderConstraintRequireAll(self):
         self.fixture_resources()
-        o, r = pcs(self.temp_cib.name, "cluster cib-upgrade")
+        o, r = pcs(self.temp_cib.name, "cluster cib-upgrade".split())
         ac(o, "Cluster CIB has been upgraded to latest version\n")
         assert r == 0
 
         o, r = pcs(
             self.temp_cib.name,
-            "constraint order start D1 then start D2 require-all=false",
+            "constraint order start D1 then start D2 require-all=false".split(),
         )
         ac(
             o,
@@ -439,7 +475,7 @@ Ticket Constraints:
         )
         assert r == 0
 
-        o, r = pcs(self.temp_cib.name, "constraint --full")
+        o, r = pcs(self.temp_cib.name, "constraint --full".split())
         ac(
             o,
             """\
@@ -455,14 +491,14 @@ Ticket Constraints:
     def testAllConstraints(self):
         self.fixture_resources()
         output, returnVal = pcs(
-            self.temp_cib.name, "constraint location D5 prefers node1"
+            self.temp_cib.name, "constraint location D5 prefers node1".split(),
         )
         assert (
             returnVal == 0 and output == LOCATION_NODE_VALIDATION_SKIP_WARNING
         ), output
 
         output, returnVal = pcs(
-            self.temp_cib.name, "constraint order Master then D5"
+            self.temp_cib.name, "constraint order Master then D5".split()
         )
         assert (
             returnVal == 0
@@ -471,11 +507,12 @@ Ticket Constraints:
         ), output
 
         output, returnVal = pcs(
-            self.temp_cib.name, "constraint colocation add Master with D5"
+            self.temp_cib.name,
+            "constraint colocation add Master with D5".split(),
         )
         assert returnVal == 0 and output == "", output
 
-        output, returnVal = pcs(self.temp_cib.name, "constraint --full")
+        output, returnVal = pcs(self.temp_cib.name, "constraint --full".split())
         assert returnVal == 0
         ac(
             output,
@@ -494,7 +531,9 @@ Ticket Constraints:
             ),
         )
 
-        output, returnVal = pcs(self.temp_cib.name, "constraint show --full")
+        output, returnVal = pcs(
+            self.temp_cib.name, "constraint show --full".split()
+        )
         assert returnVal == 0
         ac(
             output,
@@ -517,28 +556,28 @@ Ticket Constraints:
     def testLocationConstraints(self):
         self.fixture_resources()
         output, returnVal = pcs(
-            self.temp_cib.name, "constraint location D5 prefers node1"
+            self.temp_cib.name, "constraint location D5 prefers node1".split(),
         )
         assert (
             returnVal == 0 and output == LOCATION_NODE_VALIDATION_SKIP_WARNING
         ), output
 
         output, returnVal = pcs(
-            self.temp_cib.name, "constraint location D5 avoids node1"
+            self.temp_cib.name, "constraint location D5 avoids node1".split(),
         )
         assert (
             returnVal == 0 and output == LOCATION_NODE_VALIDATION_SKIP_WARNING
         ), output
 
         output, returnVal = pcs(
-            self.temp_cib.name, "constraint location D5 prefers node1"
+            self.temp_cib.name, "constraint location D5 prefers node1".split(),
         )
         assert (
             returnVal == 0 and output == LOCATION_NODE_VALIDATION_SKIP_WARNING
         ), output
 
         output, returnVal = pcs(
-            self.temp_cib.name, "constraint location D5 avoids node2"
+            self.temp_cib.name, "constraint location D5 avoids node2".split(),
         )
         assert (
             returnVal == 0 and output == LOCATION_NODE_VALIDATION_SKIP_WARNING
@@ -546,12 +585,12 @@ Ticket Constraints:
 
         output, returnVal = pcs(
             self.temp_cib.name,
-            "constraint location add location-D5-node1-INFINITY ",
+            "constraint location add location-D5-node1-INFINITY".split(),
         )
         assert returnVal == 1
         assert output.startswith("\nUsage: pcs constraint"), output
 
-        output, returnVal = pcs(self.temp_cib.name, "constraint --full")
+        output, returnVal = pcs(self.temp_cib.name, "constraint --full".split())
         assert returnVal == 0
         ac(
             output,
@@ -572,17 +611,17 @@ Ticket Constraints:
 
         output, returnVal = pcs(
             self.temp_cib.name,
-            "constraint location delete location-D5-node1-INFINITY",
+            "constraint location delete location-D5-node1-INFINITY".split(),
         )
         assert returnVal == 0 and output == "", output
 
         output, returnVal = pcs(
             self.temp_cib.name,
-            "constraint location remove location-D5-node2--INFINITY",
+            "constraint location remove location-D5-node2--INFINITY".split(),
         )
         assert returnVal == 0 and output == "", output
 
-        output, returnVal = pcs(self.temp_cib.name, "constraint --full")
+        output, returnVal = pcs(self.temp_cib.name, "constraint --full".split())
         assert returnVal == 0
         ac(
             output,
@@ -599,35 +638,35 @@ Ticket Constraints:
     def testConstraintRemoval(self):
         self.fixture_resources()
         output, returnVal = pcs(
-            self.temp_cib.name, "constraint location D5 prefers node1"
+            self.temp_cib.name, "constraint location D5 prefers node1".split(),
         )
         assert (
             returnVal == 0 and output == LOCATION_NODE_VALIDATION_SKIP_WARNING
         ), output
 
         output, returnVal = pcs(
-            self.temp_cib.name, "constraint location D6 prefers node1"
+            self.temp_cib.name, "constraint location D6 prefers node1".split(),
         )
         assert (
             returnVal == 0 and output == LOCATION_NODE_VALIDATION_SKIP_WARNING
         ), output
 
         output, returnVal = pcs(
-            self.temp_cib.name, "constraint remove blahblah"
+            self.temp_cib.name, "constraint remove blahblah".split()
         )
         assert returnVal == 1 and output.startswith(
             "Error: Unable to find constraint - 'blahblah'"
         ), output
 
         output, returnVal = pcs(
-            self.temp_cib.name, "constraint delete blahblah"
+            self.temp_cib.name, "constraint delete blahblah".split()
         )
         assert returnVal == 1 and output.startswith(
             "Error: Unable to find constraint - 'blahblah'"
         ), output
 
         output, returnVal = pcs(
-            self.temp_cib.name, "constraint location show --full"
+            self.temp_cib.name, "constraint location show --full".split()
         )
         ac(
             output,
@@ -647,13 +686,13 @@ Ticket Constraints:
 
         output, returnVal = pcs(
             self.temp_cib.name,
-            "constraint remove location-D5-node1-INFINITY location-D6-node1-INFINITY",
+            "constraint remove location-D5-node1-INFINITY location-D6-node1-INFINITY".split(),
         )
         ac(output, "")
         assert returnVal == 0
 
         output, returnVal = pcs(
-            self.temp_cib.name, "constraint location show --full"
+            self.temp_cib.name, "constraint location show --full".split()
         )
         ac(output, "Location Constraints:\n")
         assert returnVal == 0
@@ -673,57 +712,60 @@ Ticket Constraints:
         )
 
         o, r = pcs(
-            self.temp_cib.name, "constraint colocation add D1 with D3-clone"
-        )
-        assert r == 0 and o == "", o
-
-        o, r = pcs(
-            self.temp_cib.name, "constraint colocation add D1 with D2 100"
+            self.temp_cib.name,
+            "constraint colocation add D1 with D3-clone".split(),
         )
         assert r == 0 and o == "", o
 
         o, r = pcs(
             self.temp_cib.name,
-            "constraint colocation add D1 with D2 -100 --force",
-        )
-        assert r == 0 and o == "", o
-
-        o, r = pcs(
-            self.temp_cib.name, "constraint colocation add Master with D5 100"
+            "constraint colocation add D1 with D2 100".split(),
         )
         assert r == 0 and o == "", o
 
         o, r = pcs(
             self.temp_cib.name,
-            "constraint colocation add master M1-master with master M2-master",
+            "constraint colocation add D1 with D2 -100 --force".split(),
         )
         assert r == 0 and o == "", o
 
         o, r = pcs(
             self.temp_cib.name,
-            "constraint colocation add M3-master with M4-master",
+            "constraint colocation add Master with D5 100".split(),
         )
         assert r == 0 and o == "", o
 
         o, r = pcs(
             self.temp_cib.name,
-            "constraint colocation add slave M5-master with started M6-master 500",
+            "constraint colocation add master M1-master with master M2-master".split(),
         )
         assert r == 0 and o == "", o
 
         o, r = pcs(
             self.temp_cib.name,
-            "constraint colocation add M7-master with Master M8-master",
+            "constraint colocation add M3-master with M4-master".split(),
         )
         assert r == 0 and o == "", o
 
         o, r = pcs(
             self.temp_cib.name,
-            "constraint colocation add Slave M9-master with M10-master",
+            "constraint colocation add slave M5-master with started M6-master 500".split(),
         )
         assert r == 0 and o == "", o
 
-        o, r = pcs(self.temp_cib.name, "constraint")
+        o, r = pcs(
+            self.temp_cib.name,
+            "constraint colocation add M7-master with Master M8-master".split(),
+        )
+        assert r == 0 and o == "", o
+
+        o, r = pcs(
+            self.temp_cib.name,
+            "constraint colocation add Slave M9-master with M10-master".split(),
+        )
+        assert r == 0 and o == "", o
+
+        o, r = pcs(self.temp_cib.name, ["constraint"])
         ac(
             o,
             outdent(
@@ -748,17 +790,17 @@ Ticket Constraints:
 
         o, r = pcs(
             self.temp_cib.name,
-            "constraint colocation delete M1-master M2-master",
+            "constraint colocation delete M1-master M2-master".split(),
         )
         assert r == 0 and o == "", o
 
         o, r = pcs(
             self.temp_cib.name,
-            "constraint colocation remove M5-master M6-master",
+            "constraint colocation remove M5-master M6-master".split(),
         )
         assert r == 0 and o == "", o
 
-        o, r = pcs(self.temp_cib.name, "constraint")
+        o, r = pcs(self.temp_cib.name, ["constraint"])
         ac(
             o,
             outdent(
@@ -790,19 +832,19 @@ Ticket Constraints:
             )
             self.assertEqual(returnVal, 1)
 
-        assert_usage("constraint colocation add D1")
-        assert_usage("constraint colocation add master D1")
-        assert_usage("constraint colocation add D1 with")
-        assert_usage("constraint colocation add master D1 with")
+        assert_usage("constraint colocation add D1".split())
+        assert_usage("constraint colocation add master D1".split())
+        assert_usage("constraint colocation add D1 with".split())
+        assert_usage("constraint colocation add master D1 with".split())
 
-        assert_usage("constraint colocation add D1 D2")
-        assert_usage("constraint colocation add master D1 D2")
-        assert_usage("constraint colocation add D1 master D2")
-        assert_usage("constraint colocation add master D1 master D2")
+        assert_usage("constraint colocation add D1 D2".split())
+        assert_usage("constraint colocation add master D1 D2".split())
+        assert_usage("constraint colocation add D1 master D2".split())
+        assert_usage("constraint colocation add master D1 master D2".split())
 
-        assert_usage("constraint colocation add D1 D2 D3")
+        assert_usage("constraint colocation add D1 D2 D3".split())
 
-        output, returnVal = pcs(self.temp_cib.name, "constraint")
+        output, returnVal = pcs(self.temp_cib.name, ["constraint"])
         self.assertEqual(
             output,
             outdent(
@@ -820,18 +862,19 @@ Ticket Constraints:
         self.fixture_resources()
 
         output, returnVal = pcs(
-            self.temp_cib.name, "constraint colocation add D1 with D20"
+            self.temp_cib.name, "constraint colocation add D1 with D20".split(),
         )
         self.assertEqual(output, "Error: Resource 'D20' does not exist\n")
         self.assertEqual(returnVal, 1)
 
         output, returnVal = pcs(
-            self.temp_cib.name, "constraint colocation add D10 with D20"
+            self.temp_cib.name,
+            "constraint colocation add D10 with D20".split(),
         )
         self.assertEqual(output, "Error: Resource 'D10' does not exist\n")
         self.assertEqual(returnVal, 1)
 
-        output, returnVal = pcs(self.temp_cib.name, "constraint")
+        output, returnVal = pcs(self.temp_cib.name, ["constraint"])
         self.assertEqual(
             output,
             outdent(
@@ -850,12 +893,12 @@ Ticket Constraints:
 
         output, returnVal = pcs(
             self.temp_cib.name,
-            "constraint colocation add D1 with D2 -100 id=abcd node-attribute=y",
+            "constraint colocation add D1 with D2 -100 id=abcd node-attribute=y".split(),
         )
         self.assertEqual(output, "")
         self.assertEqual(returnVal, 0)
 
-        output, returnVal = pcs(self.temp_cib.name, "constraint")
+        output, returnVal = pcs(self.temp_cib.name, ["constraint"])
         self.assertEqual(
             output,
             outdent(
@@ -872,7 +915,8 @@ Ticket Constraints:
 
     def test_colocation_invalid_role(self):
         o, r = pcs(
-            self.temp_cib.name, "constraint colocation add abc D1 with D2"
+            self.temp_cib.name,
+            "constraint colocation add abc D1 with D2".split(),
         )
         ac(
             o,
@@ -882,7 +926,8 @@ Ticket Constraints:
         self.assertEqual(r, 1)
 
         o, r = pcs(
-            self.temp_cib.name, "constraint colocation add D1 with def D2"
+            self.temp_cib.name,
+            "constraint colocation add D1 with def D2".split(),
         )
         ac(
             o,
@@ -892,7 +937,8 @@ Ticket Constraints:
         self.assertEqual(r, 1)
 
         o, r = pcs(
-            self.temp_cib.name, "constraint colocation add abc D1 with def D2"
+            self.temp_cib.name,
+            "constraint colocation add abc D1 with def D2".split(),
         )
         ac(
             o,
@@ -909,63 +955,65 @@ Ticket Constraints:
         )
 
         o, r = pcs(
-            self.temp_cib.name, "constraint colocation add D1 with D2 with D3"
+            self.temp_cib.name,
+            "constraint colocation add D1 with D2 with D3".split(),
         )
         self.assertIn(msg, o)
         self.assertEqual(r, 1)
 
         o, r = pcs(
             self.temp_cib.name,
-            "constraint colocation add master D1 with D2 with D3",
+            "constraint colocation add master D1 with D2 with D3".split(),
         )
         self.assertIn(msg, o)
         self.assertEqual(r, 1)
 
         o, r = pcs(
             self.temp_cib.name,
-            "constraint colocation add D1 with master D2 with D3",
+            "constraint colocation add D1 with master D2 with D3".split(),
         )
         self.assertIn(msg, o)
         self.assertEqual(r, 1)
 
         o, r = pcs(
             self.temp_cib.name,
-            "constraint colocation add D1 with D2 with master D3",
+            "constraint colocation add D1 with D2 with master D3".split(),
         )
         self.assertIn(msg, o)
         self.assertEqual(r, 1)
 
         o, r = pcs(
             self.temp_cib.name,
-            "constraint colocation add master D1 with master D2 with D3",
+            "constraint colocation add master D1 with master D2 with D3".split(),
         )
         self.assertIn(msg, o)
         self.assertEqual(r, 1)
 
         o, r = pcs(
             self.temp_cib.name,
-            "constraint colocation add master D1 with D2 with master D3",
+            "constraint colocation add master D1 with D2 with master D3".split(),
         )
         self.assertIn(msg, o)
         self.assertEqual(r, 1)
 
         o, r = pcs(
             self.temp_cib.name,
-            "constraint colocation add D1 with master D2 with master D3",
+            "constraint colocation add D1 with master D2 with master D3".split(),
         )
         self.assertIn(msg, o)
         self.assertEqual(r, 1)
 
         o, r = pcs(
             self.temp_cib.name,
-            "constraint colocation add master D1 with master D2 with master D3",
+            "constraint colocation add master D1 with master D2 with master D3".split(),
         )
         self.assertIn(msg, o)
         self.assertEqual(r, 1)
 
     def test_colocation_options_empty_value(self):
         o, r = pcs(
-            self.temp_cib.name, "constraint colocation add D1 with D2 option1="
+            self.temp_cib.name,
+            "constraint colocation add D1 with D2 option1=".split(),
         )
         self.assertIn("value of 'option1' option is empty", o)
         self.assertEqual(r, 1)
@@ -973,57 +1021,72 @@ Ticket Constraints:
     # see also BundleColocation
     def testColocationSets(self):
         self.fixture_resources()
-        line = "resource create D7 ocf:heartbeat:Dummy"
+        line = "resource create D7 ocf:heartbeat:Dummy".split()
         output, returnVal = pcs(self.temp_cib.name, line)
         assert returnVal == 0 and output == ""
 
-        line = "resource create D8 ocf:heartbeat:Dummy"
+        line = "resource create D8 ocf:heartbeat:Dummy".split()
         output, returnVal = pcs(self.temp_cib.name, line)
         assert returnVal == 0 and output == ""
 
-        line = "resource create D9 ocf:heartbeat:Dummy"
+        line = "resource create D9 ocf:heartbeat:Dummy".split()
         output, returnVal = pcs(self.temp_cib.name, line)
         assert returnVal == 0 and output == ""
 
-        o, r = pcs(self.temp_cib.name, "constraint colocation set")
-        assert o.startswith("\nUsage: pcs constraint")
-        assert r == 1
-
-        o, r = pcs(self.temp_cib.name, "constraint colocation set D7 D8 set")
+        o, r = pcs(self.temp_cib.name, "constraint colocation set".split())
         assert o.startswith("\nUsage: pcs constraint")
         assert r == 1
 
         o, r = pcs(
-            self.temp_cib.name, "constraint colocation set D7 D8 set set D8 D9"
-        )
-        assert o.startswith("\nUsage: pcs constraint")
-        assert r == 1
-
-        o, r = pcs(
-            self.temp_cib.name, "constraint colocation set setoptions score=100"
+            self.temp_cib.name, "constraint colocation set D7 D8 set".split(),
         )
         assert o.startswith("\nUsage: pcs constraint")
         assert r == 1
 
         o, r = pcs(
             self.temp_cib.name,
-            "constraint colocation set D5 D6 D7 sequential=false require-all=true set D8 D9 sequential=true require-all=false action=start role=Stopped setoptions score=INFINITY ",
+            "constraint colocation set D7 D8 set set D8 D9".split(),
+        )
+        assert o.startswith("\nUsage: pcs constraint")
+        assert r == 1
+
+        o, r = pcs(
+            self.temp_cib.name,
+            "constraint colocation set setoptions score=100".split(),
+        )
+        assert o.startswith("\nUsage: pcs constraint")
+        assert r == 1
+
+        o, r = pcs(
+            self.temp_cib.name,
+            (
+                "constraint colocation "
+                "set D5 D6 D7 sequential=false require-all=true "
+                "set D8 D9 sequential=true require-all=false action=start role=Stopped "
+                "setoptions score=INFINITY"
+            ).split(),
         )
         ac(o, "")
         assert r == 0
 
-        o, r = pcs(self.temp_cib.name, "constraint colocation set D5 D6")
+        o, r = pcs(
+            self.temp_cib.name, "constraint colocation set D5 D6".split()
+        )
         assert r == 0
         ac(o, "")
 
         o, r = pcs(
             self.temp_cib.name,
-            "constraint colocation set D5 D6 action=stop role=Started set D7 D8 action=promote role=Slave set D8 D9 action=demote role=Master",
+            (
+                "constraint colocation "
+                "set D5 D6 action=stop role=Started set D7 D8 action=promote role=Slave "
+                "set D8 D9 action=demote role=Master"
+            ).split(),
         )
         assert r == 0
         ac(o, "")
 
-        o, r = pcs(self.temp_cib.name, "constraint colocation --full")
+        o, r = pcs(self.temp_cib.name, "constraint colocation --full".split())
         ac(
             o,
             """\
@@ -1036,11 +1099,13 @@ Colocation Constraints:
         )
         assert r == 0
 
-        o, r = pcs(self.temp_cib.name, "constraint delete colocation_set_D5D6")
+        o, r = pcs(
+            self.temp_cib.name, "constraint delete colocation_set_D5D6".split()
+        )
         ac(o, "")
         assert r == 0
 
-        o, r = pcs(self.temp_cib.name, "constraint colocation --full")
+        o, r = pcs(self.temp_cib.name, "constraint colocation --full".split())
         ac(
             o,
             """\
@@ -1052,7 +1117,7 @@ Colocation Constraints:
         )
         assert r == 0
 
-        o, r = pcs(self.temp_cib.name, "resource delete D5")
+        o, r = pcs(self.temp_cib.name, "resource delete D5".split())
         ac(
             o,
             outdent(
@@ -1065,7 +1130,7 @@ Colocation Constraints:
         )
         assert r == 0
 
-        o, r = pcs(self.temp_cib.name, "resource delete D6")
+        o, r = pcs(self.temp_cib.name, "resource delete D6".split())
         ac(
             o,
             outdent(
@@ -1079,7 +1144,7 @@ Colocation Constraints:
         )
         assert r == 0
 
-        o, r = pcs(self.temp_cib.name, "constraint ref D7")
+        o, r = pcs(self.temp_cib.name, "constraint ref D7".split())
         ac(
             o,
             outdent(
@@ -1092,7 +1157,7 @@ Colocation Constraints:
         )
         assert r == 0
 
-        o, r = pcs(self.temp_cib.name, "constraint ref D8")
+        o, r = pcs(self.temp_cib.name, "constraint ref D8".split())
         ac(
             o,
             outdent(
@@ -1106,7 +1171,8 @@ Colocation Constraints:
         assert r == 0
 
         output, retValue = pcs(
-            self.temp_cib.name, "constraint colocation set D1 D2 sequential=foo"
+            self.temp_cib.name,
+            "constraint colocation set D1 D2 sequential=foo".split(),
         )
         ac(
             output,
@@ -1116,7 +1182,7 @@ Colocation Constraints:
 
         output, retValue = pcs(
             self.temp_cib.name,
-            "constraint colocation set D1 D2 require-all=foo",
+            "constraint colocation set D1 D2 require-all=foo".split(),
         )
         ac(
             output,
@@ -1125,7 +1191,8 @@ Colocation Constraints:
         self.assertEqual(1, retValue)
 
         output, retValue = pcs(
-            self.temp_cib.name, "constraint colocation set D1 D2 role=foo"
+            self.temp_cib.name,
+            "constraint colocation set D1 D2 role=foo".split(),
         )
         ac(
             output,
@@ -1134,7 +1201,8 @@ Colocation Constraints:
         self.assertEqual(1, retValue)
 
         output, retValue = pcs(
-            self.temp_cib.name, "constraint colocation set D1 D2 action=foo"
+            self.temp_cib.name,
+            "constraint colocation set D1 D2 action=foo".split(),
         )
         ac(
             output,
@@ -1143,7 +1211,8 @@ Colocation Constraints:
         self.assertEqual(1, retValue)
 
         output, retValue = pcs(
-            self.temp_cib.name, "constraint colocation set D1 D2 foo=bar"
+            self.temp_cib.name,
+            "constraint colocation set D1 D2 foo=bar".split(),
         )
         ac(
             output,
@@ -1153,7 +1222,7 @@ Colocation Constraints:
 
         output, retValue = pcs(
             self.temp_cib.name,
-            "constraint colocation set D1 D2 setoptions foo=bar",
+            "constraint colocation set D1 D2 setoptions foo=bar".split(),
         )
         ac(
             output,
@@ -1163,7 +1232,7 @@ Colocation Constraints:
 
         output, retValue = pcs(
             self.temp_cib.name,
-            "constraint colocation set D1 D2 setoptions score=foo",
+            "constraint colocation set D1 D2 setoptions score=foo".split(),
         )
         ac(
             output,
@@ -1173,14 +1242,14 @@ Colocation Constraints:
 
         output, retValue = pcs(
             self.temp_cib.name,
-            "constraint colocation set D1 D2 setoptions score=100 score-attribute=foo",
+            "constraint colocation set D1 D2 setoptions score=100 score-attribute=foo".split(),
         )
         ac(output, "Error: multiple score options cannot be specified\n")
         self.assertEqual(1, retValue)
 
         output, retValue = pcs(
             self.temp_cib.name,
-            "constraint colocation set D1 D2 setoptions score-attribute=foo",
+            "constraint colocation set D1 D2 setoptions score-attribute=foo".split(),
         )
         ac(output, "")
         self.assertEqual(0, retValue)
@@ -1188,32 +1257,40 @@ Colocation Constraints:
     @skip_unless_location_resource_discovery
     def testConstraintResourceDiscoveryRules(self):
         o, r = pcs(
-            self.temp_cib.name, "resource create crd ocf:heartbeat:Dummy"
-        )
-        ac(o, "")
-        assert r == 0
-
-        o, r = pcs(
-            self.temp_cib.name, "resource create crd1 ocf:heartbeat:Dummy"
+            self.temp_cib.name,
+            "resource create crd ocf:heartbeat:Dummy".split(),
         )
         ac(o, "")
         assert r == 0
 
         o, r = pcs(
             self.temp_cib.name,
-            "constraint location crd rule resource-discovery=exclusive score=-INFINITY opsrole ne controller0 and opsrole ne controller1",
+            "resource create crd1 ocf:heartbeat:Dummy".split(),
+        )
+        ac(o, "")
+        assert r == 0
+
+        o, r = pcs(
+            self.temp_cib.name,
+            (
+                "constraint location crd rule resource-discovery=exclusive "
+                "score=-INFINITY opsrole ne controller0 and opsrole ne controller1"
+            ).split(),
         )
         ac(o, "Cluster CIB has been upgraded to latest version\n")
         assert r == 0
 
         o, r = pcs(
             self.temp_cib.name,
-            "constraint location crd1 rule resource-discovery=exclusive score=-INFINITY opsrole2 ne controller2",
+            (
+                "constraint location crd1 rule resource-discovery=exclusive "
+                "score=-INFINITY opsrole2 ne controller2"
+            ).split(),
         )
         ac(o, "")
         assert r == 0
 
-        o, r = pcs(self.temp_cib.name, "constraint --full")
+        o, r = pcs(self.temp_cib.name, "constraint --full".split())
         ac(
             o,
             "\n".join(
@@ -1240,20 +1317,22 @@ Colocation Constraints:
     @skip_unless_location_resource_discovery
     def testConstraintResourceDiscovery(self):
         o, r = pcs(
-            self.temp_cib.name, "resource create crd ocf:heartbeat:Dummy"
-        )
-        ac(o, "")
-        assert r == 0
-
-        o, r = pcs(
-            self.temp_cib.name, "resource create crd1 ocf:heartbeat:Dummy"
+            self.temp_cib.name,
+            "resource create crd ocf:heartbeat:Dummy".split(),
         )
         ac(o, "")
         assert r == 0
 
         o, r = pcs(
             self.temp_cib.name,
-            "constraint location add my_constraint_id crd my_node -INFINITY resource-discovery=always",
+            "resource create crd1 ocf:heartbeat:Dummy".split(),
+        )
+        ac(o, "")
+        assert r == 0
+
+        o, r = pcs(
+            self.temp_cib.name,
+            "constraint location add my_constraint_id crd my_node -INFINITY resource-discovery=always".split(),
         )
         ac(
             o,
@@ -1264,12 +1343,12 @@ Colocation Constraints:
 
         o, r = pcs(
             self.temp_cib.name,
-            "constraint location add my_constraint_id2 crd1 my_node -INFINITY resource-discovery=never",
+            "constraint location add my_constraint_id2 crd1 my_node -INFINITY resource-discovery=never".split(),
         )
         ac(o, LOCATION_NODE_VALIDATION_SKIP_WARNING)
         assert r == 0
 
-        o, r = pcs(self.temp_cib.name, "constraint --full")
+        o, r = pcs(self.temp_cib.name, "constraint --full".split())
         ac(
             o,
             outdent(
@@ -1291,146 +1370,139 @@ Colocation Constraints:
 
         o, r = pcs(
             self.temp_cib.name,
-            "constraint location add my_constraint_id3 crd1 my_node2 -INFINITY bad-opt=test",
+            "constraint location add my_constraint_id3 crd1 my_node2 -INFINITY bad-opt=test".split(),
         )
         ac(o, "Error: bad option 'bad-opt', use --force to override\n")
         assert r == 1
 
     def testOrderSetsRemoval(self):
-        o, r = pcs(self.temp_cib.name, "resource create T0 ocf:heartbeat:Dummy")
+        for i in range(9):
+            o, r = pcs(
+                self.temp_cib.name,
+                f"resource create T{i} ocf:heartbeat:Dummy".split(),
+            )
+            ac(o, "")
+            assert r == 0
+        o, r = pcs(self.temp_cib.name, "constraint order set T0 T1 T2".split())
         ac(o, "")
         assert r == 0
-        o, r = pcs(self.temp_cib.name, "resource create T1 ocf:heartbeat:Dummy")
-        ac(o, "")
-        assert r == 0
-        o, r = pcs(self.temp_cib.name, "resource create T2 ocf:heartbeat:Dummy")
-        ac(o, "")
-        assert r == 0
-        o, r = pcs(self.temp_cib.name, "resource create T3 ocf:heartbeat:Dummy")
-        ac(o, "")
-        assert r == 0
-        o, r = pcs(self.temp_cib.name, "resource create T4 ocf:heartbeat:Dummy")
-        ac(o, "")
-        assert r == 0
-        o, r = pcs(self.temp_cib.name, "resource create T5 ocf:heartbeat:Dummy")
-        ac(o, "")
-        assert r == 0
-        o, r = pcs(self.temp_cib.name, "resource create T6 ocf:heartbeat:Dummy")
-        ac(o, "")
-        assert r == 0
-        o, r = pcs(self.temp_cib.name, "resource create T7 ocf:heartbeat:Dummy")
-        ac(o, "")
-        assert r == 0
-        o, r = pcs(self.temp_cib.name, "resource create T8 ocf:heartbeat:Dummy")
-        ac(o, "")
-        assert r == 0
-        o, r = pcs(self.temp_cib.name, "constraint order set T0 T1 T2")
-        ac(o, "")
-        assert r == 0
-        o, r = pcs(self.temp_cib.name, "constraint order set T2 T3")
+        o, r = pcs(self.temp_cib.name, "constraint order set T2 T3".split())
         ac(o, "")
         assert r == 0
 
-        o, r = pcs(self.temp_cib.name, "constraint order remove T1")
+        o, r = pcs(self.temp_cib.name, "constraint order remove T1".split())
         ac(o, "")
         assert r == 0
 
-        o, r = pcs(self.temp_cib.name, "constraint order remove T1")
+        o, r = pcs(self.temp_cib.name, "constraint order remove T1".split())
         ac(o, "Error: No matching resources found in ordering list\n")
         assert r == 1
 
-        o, r = pcs(self.temp_cib.name, "constraint order delete T1")
+        o, r = pcs(self.temp_cib.name, "constraint order delete T1".split())
         ac(o, "Error: No matching resources found in ordering list\n")
         assert r == 1
 
-        o, r = pcs(self.temp_cib.name, "constraint order")
+        o, r = pcs(self.temp_cib.name, "constraint order".split())
         ac(
             o,
             "Ordering Constraints:\n  Resource Sets:\n    set T0 T2\n    set T2 T3\n",
         )
         assert r == 0
 
-        o, r = pcs(self.temp_cib.name, "constraint order delete T2")
+        o, r = pcs(self.temp_cib.name, "constraint order delete T2".split())
         ac(o, "")
         assert r == 0
 
-        o, r = pcs(self.temp_cib.name, "constraint order")
+        o, r = pcs(self.temp_cib.name, "constraint order".split())
         ac(
             o,
             "Ordering Constraints:\n  Resource Sets:\n    set T0\n    set T3\n",
         )
         assert r == 0
 
-        o, r = pcs(self.temp_cib.name, "constraint order delete T0")
+        o, r = pcs(self.temp_cib.name, "constraint order delete T0".split())
         ac(o, "")
         assert r == 0
 
-        o, r = pcs(self.temp_cib.name, "constraint order")
+        o, r = pcs(self.temp_cib.name, "constraint order".split())
         ac(o, "Ordering Constraints:\n  Resource Sets:\n    set T3\n")
         assert r == 0
 
-        o, r = pcs(self.temp_cib.name, "constraint order remove T3")
+        o, r = pcs(self.temp_cib.name, "constraint order remove T3".split())
         ac(o, "")
         assert r == 0
 
-        o, r = pcs(self.temp_cib.name, "constraint order")
+        o, r = pcs(self.temp_cib.name, "constraint order".split())
         ac(o, "Ordering Constraints:\n")
         assert r == 0
 
     # see also BundleOrder
     def testOrderSets(self):
         self.fixture_resources()
-        line = "resource create D7 ocf:heartbeat:Dummy"
+        line = "resource create D7 ocf:heartbeat:Dummy".split()
         output, returnVal = pcs(self.temp_cib.name, line)
         assert returnVal == 0 and output == ""
 
-        line = "resource create D8 ocf:heartbeat:Dummy"
+        line = "resource create D8 ocf:heartbeat:Dummy".split()
         output, returnVal = pcs(self.temp_cib.name, line)
         assert returnVal == 0 and output == ""
 
-        line = "resource create D9 ocf:heartbeat:Dummy"
+        line = "resource create D9 ocf:heartbeat:Dummy".split()
         output, returnVal = pcs(self.temp_cib.name, line)
         assert returnVal == 0 and output == ""
 
-        o, r = pcs(self.temp_cib.name, "constraint order set")
-        assert o.startswith("\nUsage: pcs constraint")
-        assert r == 1
-
-        o, r = pcs(self.temp_cib.name, "constraint order set D7 D8 set")
+        o, r = pcs(self.temp_cib.name, "constraint order set".split())
         assert o.startswith("\nUsage: pcs constraint")
         assert r == 1
 
         o, r = pcs(
-            self.temp_cib.name, "constraint order set D7 D8 set set D8 D9"
-        )
-        assert o.startswith("\nUsage: pcs constraint")
-        assert r == 1
-
-        o, r = pcs(
-            self.temp_cib.name, "constraint order set setoptions score=100"
+            self.temp_cib.name, "constraint order set D7 D8 set".split(),
         )
         assert o.startswith("\nUsage: pcs constraint")
         assert r == 1
 
         o, r = pcs(
             self.temp_cib.name,
-            "constraint order set D5 D6 D7 sequential=false require-all=true set D8 D9 sequential=true require-all=false action=start role=Stopped",
+            "constraint order set D7 D8 set set D8 D9".split(),
+        )
+        assert o.startswith("\nUsage: pcs constraint")
+        assert r == 1
+
+        o, r = pcs(
+            self.temp_cib.name,
+            "constraint order set setoptions score=100".split(),
+        )
+        assert o.startswith("\nUsage: pcs constraint")
+        assert r == 1
+
+        o, r = pcs(
+            self.temp_cib.name,
+            (
+                "constraint order "
+                "set D5 D6 D7 sequential=false require-all=true "
+                "set D8 D9 sequential=true require-all=false action=start role=Stopped"
+            ).split(),
         )
         ac(o, "")
         assert r == 0
 
-        o, r = pcs(self.temp_cib.name, "constraint order set D5 D6")
+        o, r = pcs(self.temp_cib.name, "constraint order set D5 D6".split())
         assert r == 0
         ac(o, "")
 
         o, r = pcs(
             self.temp_cib.name,
-            "constraint order set D5 D6 action=stop role=Started set D7 D8 action=promote role=Slave set D8 D9 action=demote role=Master",
+            (
+                "constraint order "
+                "set D5 D6 action=stop role=Started "
+                "set D7 D8 action=promote role=Slave "
+                "set D8 D9 action=demote role=Master"
+            ).split(),
         )
         assert r == 0
         ac(o, "")
 
-        o, r = pcs(self.temp_cib.name, "constraint order --full")
+        o, r = pcs(self.temp_cib.name, "constraint order --full".split())
         assert r == 0
         ac(
             o,
@@ -1443,11 +1515,13 @@ Ordering Constraints:
 """,
         )
 
-        o, r = pcs(self.temp_cib.name, "constraint remove order_set_D5D6")
+        o, r = pcs(
+            self.temp_cib.name, "constraint remove order_set_D5D6".split()
+        )
         assert r == 0
         ac(o, "")
 
-        o, r = pcs(self.temp_cib.name, "constraint order --full")
+        o, r = pcs(self.temp_cib.name, "constraint order --full".split())
         assert r == 0
         ac(
             o,
@@ -1459,7 +1533,7 @@ Ordering Constraints:
 """,
         )
 
-        o, r = pcs(self.temp_cib.name, "resource delete D5")
+        o, r = pcs(self.temp_cib.name, "resource delete D5".split())
         ac(
             o,
             outdent(
@@ -1472,7 +1546,7 @@ Ordering Constraints:
         )
         assert r == 0
 
-        o, r = pcs(self.temp_cib.name, "resource delete D6")
+        o, r = pcs(self.temp_cib.name, "resource delete D6".split())
         ac(
             o,
             outdent(
@@ -1487,7 +1561,8 @@ Ordering Constraints:
         assert r == 0
 
         output, retValue = pcs(
-            self.temp_cib.name, "constraint order set D1 D2 sequential=foo"
+            self.temp_cib.name,
+            "constraint order set D1 D2 sequential=foo".split(),
         )
         ac(
             output,
@@ -1496,7 +1571,8 @@ Ordering Constraints:
         self.assertEqual(1, retValue)
 
         output, retValue = pcs(
-            self.temp_cib.name, "constraint order set D1 D2 require-all=foo"
+            self.temp_cib.name,
+            "constraint order set D1 D2 require-all=foo".split(),
         )
         ac(
             output,
@@ -1505,7 +1581,7 @@ Ordering Constraints:
         self.assertEqual(1, retValue)
 
         output, retValue = pcs(
-            self.temp_cib.name, "constraint order set D1 D2 role=foo"
+            self.temp_cib.name, "constraint order set D1 D2 role=foo".split(),
         )
         ac(
             output,
@@ -1514,7 +1590,7 @@ Ordering Constraints:
         self.assertEqual(1, retValue)
 
         output, retValue = pcs(
-            self.temp_cib.name, "constraint order set D1 D2 action=foo"
+            self.temp_cib.name, "constraint order set D1 D2 action=foo".split(),
         )
         ac(
             output,
@@ -1523,7 +1599,7 @@ Ordering Constraints:
         self.assertEqual(1, retValue)
 
         output, retValue = pcs(
-            self.temp_cib.name, "constraint order set D1 D2 foo=bar"
+            self.temp_cib.name, "constraint order set D1 D2 foo=bar".split(),
         )
         ac(
             output,
@@ -1532,7 +1608,8 @@ Ordering Constraints:
         self.assertEqual(1, retValue)
 
         output, retValue = pcs(
-            self.temp_cib.name, "constraint order set D1 D2 setoptions foo=bar"
+            self.temp_cib.name,
+            "constraint order set D1 D2 setoptions foo=bar".split(),
         )
         ac(
             output,
@@ -1543,7 +1620,8 @@ Error: invalid option 'foo', allowed options are: 'id', 'kind', 'symmetrical'
         self.assertEqual(1, retValue)
 
         output, retValue = pcs(
-            self.temp_cib.name, "constraint order set D1 D2 setoptions kind=foo"
+            self.temp_cib.name,
+            "constraint order set D1 D2 setoptions kind=foo".split(),
         )
         ac(
             output,
@@ -1553,7 +1631,7 @@ Error: invalid option 'foo', allowed options are: 'id', 'kind', 'symmetrical'
 
         output, retValue = pcs(
             self.temp_cib.name,
-            "constraint order set D1 D2 setoptions symmetrical=foo",
+            "constraint order set D1 D2 setoptions symmetrical=foo".split(),
         )
         ac(
             output,
@@ -1563,12 +1641,12 @@ Error: invalid option 'foo', allowed options are: 'id', 'kind', 'symmetrical'
 
         output, retValue = pcs(
             self.temp_cib.name,
-            "constraint order set D1 D2 setoptions symmetrical=false kind=mandatory",
+            "constraint order set D1 D2 setoptions symmetrical=false kind=mandatory".split(),
         )
         ac(output, "")
         self.assertEqual(0, retValue)
 
-        output, retValue = pcs(self.temp_cib.name, "constraint --full")
+        output, retValue = pcs(self.temp_cib.name, "constraint --full".split())
         ac(
             output,
             """\
@@ -1586,37 +1664,41 @@ Ticket Constraints:
 
     def testLocationConstraintRule(self):
         self.fixture_resources()
-        o, r = pcs(self.temp_cib.name, "constraint location D1 prefers rh7-1")
+        o, r = pcs(
+            self.temp_cib.name, "constraint location D1 prefers rh7-1".split(),
+        )
         assert r == 0 and o == LOCATION_NODE_VALIDATION_SKIP_WARNING, o
 
-        o, r = pcs(self.temp_cib.name, "constraint location D2 prefers rh7-2")
+        o, r = pcs(
+            self.temp_cib.name, "constraint location D2 prefers rh7-2".split(),
+        )
         assert r == 0 and o == LOCATION_NODE_VALIDATION_SKIP_WARNING, o
 
         o, r = pcs(
             self.temp_cib.name,
-            "constraint rule add location-D1-rh7-1-INFINITY #uname eq rh7-1",
+            "constraint rule add location-D1-rh7-1-INFINITY #uname eq rh7-1".split(),
         )
         assert r == 0 and o == "", o
 
         o, r = pcs(
             self.temp_cib.name,
-            "constraint rule add location-D1-rh7-1-INFINITY #uname eq rh7-1",
+            "constraint rule add location-D1-rh7-1-INFINITY #uname eq rh7-1".split(),
         )
         assert r == 0 and o == "", o
 
         o, r = pcs(
             self.temp_cib.name,
-            "constraint rule add location-D1-rh7-1-INFINITY #uname eq rh7-1",
+            "constraint rule add location-D1-rh7-1-INFINITY #uname eq rh7-1".split(),
         )
         assert r == 0 and o == "", o
 
         o, r = pcs(
             self.temp_cib.name,
-            "constraint rule add location-D2-rh7-2-INFINITY date-spec hours=9-16 weekdays=1-5",
+            "constraint rule add location-D2-rh7-2-INFINITY date-spec hours=9-16 weekdays=1-5".split(),
         )
         assert r == 0 and o == "", o
 
-        o, r = pcs(self.temp_cib.name, "constraint --full")
+        o, r = pcs(self.temp_cib.name, "constraint --full".split())
         assert r == 0
         ac(
             o,
@@ -1643,20 +1725,20 @@ Ticket Constraints:
 
         o, r = pcs(
             self.temp_cib.name,
-            "constraint rule remove location-D1-rh7-1-INFINITY-rule-1",
+            "constraint rule remove location-D1-rh7-1-INFINITY-rule-1".split(),
         )
         ac(o, "Removing Rule: location-D1-rh7-1-INFINITY-rule-1\n")
         assert r == 0
 
         o, r = pcs(
             self.temp_cib.name,
-            "constraint rule remove location-D1-rh7-1-INFINITY-rule-2",
+            "constraint rule remove location-D1-rh7-1-INFINITY-rule-2".split(),
         )
         assert (
             r == 0 and o == "Removing Rule: location-D1-rh7-1-INFINITY-rule-2\n"
         ), o
 
-        o, r = pcs(self.temp_cib.name, "constraint --full")
+        o, r = pcs(self.temp_cib.name, "constraint --full".split())
         assert r == 0
         ac(
             o,
@@ -1679,13 +1761,13 @@ Ticket Constraints:
 
         o, r = pcs(
             self.temp_cib.name,
-            "constraint rule delete location-D1-rh7-1-INFINITY-rule",
+            "constraint rule delete location-D1-rh7-1-INFINITY-rule".split(),
         )
         assert (
             r == 0 and o == "Removing Constraint: location-D1-rh7-1-INFINITY\n"
         ), o
 
-        o, r = pcs(self.temp_cib.name, "constraint --full")
+        o, r = pcs(self.temp_cib.name, "constraint --full".split())
         assert r == 0
         ac(
             o,
@@ -1703,21 +1785,22 @@ Ticket Constraints:
         )
 
         o, r = pcs(
-            self.temp_cib.name, "constraint location D1 rule role=master"
+            self.temp_cib.name,
+            "constraint location D1 rule role=master".split(),
         )
         ac(o, "Error: no rule expression was specified\n")
         assert r == 1
 
         o, r = pcs(
             self.temp_cib.name,
-            "constraint location non-existant-resource rule role=master '#uname' eq rh7-1",
+            "constraint location non-existant-resource rule role=master #uname eq rh7-1".split(),
         )
         ac(o, "Error: Resource 'non-existant-resource' does not exist\n")
         assert r == 1
 
         output, returnVal = pcs(
             self.temp_cib.name,
-            "constraint rule add location-D1-rh7-1-INFINITY '#uname' eq rh7-2",
+            "constraint rule add location-D1-rh7-1-INFINITY #uname eq rh7-2".split(),
         )
         ac(
             output,
@@ -1727,7 +1810,7 @@ Ticket Constraints:
 
         output, returnVal = pcs(
             self.temp_cib.name,
-            "constraint rule add location-D2-rh7-2-INFINITY id=123 #uname eq rh7-2",
+            "constraint rule add location-D2-rh7-2-INFINITY id=123 #uname eq rh7-2".split(),
         )
         ac(
             output,
@@ -1742,12 +1825,12 @@ Ticket Constraints:
 
         o, r = pcs(
             self.temp_cib.name,
-            "constraint location stateful0 rule role=master '#uname' eq rh7-1 --force",
+            "constraint location stateful0 rule role=master #uname eq rh7-1 --force".split(),
         )
         ac(o, "")
         assert r == 0
 
-        o, r = pcs(self.temp_cib.name, "constraint --full")
+        o, r = pcs(self.temp_cib.name, "constraint --full".split())
         ac(
             o,
             """\
@@ -1769,7 +1852,7 @@ Ticket Constraints:
 
         o, r = pcs(
             self.temp_cib.name,
-            "constraint location stateful1 rule rulename '#uname' eq rh7-1 --force",
+            "constraint location stateful1 rule rulename #uname eq rh7-1 --force".split(),
         )
         ac(
             o,
@@ -1779,7 +1862,7 @@ Ticket Constraints:
 
         o, r = pcs(
             self.temp_cib.name,
-            "constraint location stateful1 rule role=master rulename '#uname' eq rh7-1 --force",
+            "constraint location stateful1 rule role=master rulename #uname eq rh7-1 --force".split(),
         )
         ac(
             o,
@@ -1789,7 +1872,7 @@ Ticket Constraints:
 
         o, r = pcs(
             self.temp_cib.name,
-            "constraint location stateful1 rule role=master 25 --force",
+            "constraint location stateful1 rule role=master 25 --force".split(),
         )
         ac(
             o,
@@ -1805,7 +1888,8 @@ Ticket Constraints:
         )
 
         o, r = pcs(
-            self.temp_cib.name, "resource create dummy1 ocf:heartbeat:Dummy"
+            self.temp_cib.name,
+            "resource create dummy1 ocf:heartbeat:Dummy".split(),
         )
         ac(o, "")
         assert r == 0
@@ -1816,7 +1900,7 @@ Ticket Constraints:
 
         o, r = pcs(
             self.temp_cib.name,
-            "resource create stateful2 ocf:pacemaker:Stateful --group statefulG",
+            "resource create stateful2 ocf:pacemaker:Stateful --group statefulG".split(),
             mock_settings=get_mock_settings("crm_resource_binary"),
         )
         ac(
@@ -1833,7 +1917,8 @@ Warning: changing a monitor operation interval from 10s to 11 to make the operat
         wrap_element_by_master(self.temp_cib, "statefulG")
 
         o, r = pcs(
-            self.temp_cib.name, "constraint location stateful1 prefers rh7-1"
+            self.temp_cib.name,
+            "constraint location stateful1 prefers rh7-1".split(),
         )
         ac(
             o,
@@ -1843,7 +1928,8 @@ Warning: changing a monitor operation interval from 10s to 11 to make the operat
         assert r == 1
 
         o, r = pcs(
-            self.temp_cib.name, "constraint location statefulG prefers rh7-1"
+            self.temp_cib.name,
+            "constraint location statefulG prefers rh7-1".split(),
         )
         ac(
             o,
@@ -1854,7 +1940,7 @@ Warning: changing a monitor operation interval from 10s to 11 to make the operat
 
         o, r = pcs(
             self.temp_cib.name,
-            "constraint location stateful1 rule #uname eq rh7-1",
+            "constraint location stateful1 rule #uname eq rh7-1".split(),
         )
         ac(
             o,
@@ -1864,45 +1950,17 @@ Warning: changing a monitor operation interval from 10s to 11 to make the operat
 
         o, r = pcs(
             self.temp_cib.name,
-            "constraint location statefulG rule #uname eq rh7-1",
+            "constraint location statefulG rule #uname eq rh7-1".split(),
         )
         ac(
             o,
             "Error: statefulG is a clone resource, you should use the clone id: statefulG-master when adding constraints. Use --force to override.\n",
-        )
-        assert r == 1
-
-        o, r = pcs(self.temp_cib.name, "constraint order stateful1 then dummy1")
-        ac(
-            o,
-            "Error: stateful1 is a clone resource, you should use the clone id: stateful1-master when adding constraints. Use --force to override.\n",
-        )
-        assert r == 1
-
-        o, r = pcs(self.temp_cib.name, "constraint order dummy1 then statefulG")
-        ac(
-            o,
-            "Error: statefulG is a clone resource, you should use the clone id: statefulG-master when adding constraints. Use --force to override.\n",
-        )
-        assert r == 1
-
-        o, r = pcs(self.temp_cib.name, "constraint order set stateful1 dummy1")
-        ac(
-            o,
-            "Error: stateful1 is a clone resource, you should use the clone id: stateful1-master when adding constraints, use --force to override\n",
-        )
-        assert r == 1
-
-        o, r = pcs(self.temp_cib.name, "constraint order set dummy1 statefulG")
-        ac(
-            o,
-            "Error: statefulG is a clone resource, you should use the clone id: statefulG-master when adding constraints, use --force to override\n",
         )
         assert r == 1
 
         o, r = pcs(
             self.temp_cib.name,
-            "constraint colocation add stateful1 with dummy1",
+            "constraint order stateful1 then dummy1".split(),
         )
         ac(
             o,
@@ -1912,7 +1970,7 @@ Warning: changing a monitor operation interval from 10s to 11 to make the operat
 
         o, r = pcs(
             self.temp_cib.name,
-            "constraint colocation add dummy1 with statefulG",
+            "constraint order dummy1 then statefulG".split(),
         )
         ac(
             o,
@@ -1921,7 +1979,7 @@ Warning: changing a monitor operation interval from 10s to 11 to make the operat
         assert r == 1
 
         o, r = pcs(
-            self.temp_cib.name, "constraint colocation set dummy1 stateful1"
+            self.temp_cib.name, "constraint order set stateful1 dummy1".split(),
         )
         ac(
             o,
@@ -1930,7 +1988,7 @@ Warning: changing a monitor operation interval from 10s to 11 to make the operat
         assert r == 1
 
         o, r = pcs(
-            self.temp_cib.name, "constraint colocation set statefulG dummy1"
+            self.temp_cib.name, "constraint order set dummy1 statefulG".split(),
         )
         ac(
             o,
@@ -1938,7 +1996,47 @@ Warning: changing a monitor operation interval from 10s to 11 to make the operat
         )
         assert r == 1
 
-        o, r = pcs(self.temp_cib.name, "constraint --full")
+        o, r = pcs(
+            self.temp_cib.name,
+            "constraint colocation add stateful1 with dummy1".split(),
+        )
+        ac(
+            o,
+            "Error: stateful1 is a clone resource, you should use the clone id: stateful1-master when adding constraints. Use --force to override.\n",
+        )
+        assert r == 1
+
+        o, r = pcs(
+            self.temp_cib.name,
+            "constraint colocation add dummy1 with statefulG".split(),
+        )
+        ac(
+            o,
+            "Error: statefulG is a clone resource, you should use the clone id: statefulG-master when adding constraints. Use --force to override.\n",
+        )
+        assert r == 1
+
+        o, r = pcs(
+            self.temp_cib.name,
+            "constraint colocation set dummy1 stateful1".split(),
+        )
+        ac(
+            o,
+            "Error: stateful1 is a clone resource, you should use the clone id: stateful1-master when adding constraints, use --force to override\n",
+        )
+        assert r == 1
+
+        o, r = pcs(
+            self.temp_cib.name,
+            "constraint colocation set statefulG dummy1".split(),
+        )
+        ac(
+            o,
+            "Error: statefulG is a clone resource, you should use the clone id: statefulG-master when adding constraints, use --force to override\n",
+        )
+        assert r == 1
+
+        o, r = pcs(self.temp_cib.name, "constraint --full".split())
         ac(
             o,
             "Location Constraints:\nOrdering Constraints:\nColocation Constraints:\nTicket Constraints:\n",
@@ -1947,20 +2045,21 @@ Warning: changing a monitor operation interval from 10s to 11 to make the operat
 
         o, r = pcs(
             self.temp_cib.name,
-            "constraint location stateful1 prefers rh7-1 --force",
+            "constraint location stateful1 prefers rh7-1 --force".split(),
         )
         ac(o, LOCATION_NODE_VALIDATION_SKIP_WARNING)
         assert r == 0
 
         o, r = pcs(
             self.temp_cib.name,
-            "constraint location statefulG rule #uname eq rh7-1 --force",
+            "constraint location statefulG rule #uname eq rh7-1 --force".split(),
         )
         ac(o, "")
         assert r == 0
 
         o, r = pcs(
-            self.temp_cib.name, "constraint order stateful1 then dummy1 --force"
+            self.temp_cib.name,
+            "constraint order stateful1 then dummy1 --force".split(),
         )
         ac(
             o,
@@ -1969,7 +2068,8 @@ Warning: changing a monitor operation interval from 10s to 11 to make the operat
         assert r == 0
 
         o, r = pcs(
-            self.temp_cib.name, "constraint order set stateful1 dummy1 --force"
+            self.temp_cib.name,
+            "constraint order set stateful1 dummy1 --force".split(),
         )
         ac(
             o,
@@ -1979,14 +2079,14 @@ Warning: changing a monitor operation interval from 10s to 11 to make the operat
 
         o, r = pcs(
             self.temp_cib.name,
-            "constraint colocation add stateful1 with dummy1 --force",
+            "constraint colocation add stateful1 with dummy1 --force".split(),
         )
         ac(o, "")
         assert r == 0
 
         o, r = pcs(
             self.temp_cib.name,
-            "constraint colocation set stateful1 dummy1 --force",
+            "constraint colocation set stateful1 dummy1 --force".split(),
         )
         ac(
             o,
@@ -1994,7 +2094,7 @@ Warning: changing a monitor operation interval from 10s to 11 to make the operat
         )
         assert r == 0
 
-        o, r = pcs(self.temp_cib.name, "constraint --full")
+        o, r = pcs(self.temp_cib.name, "constraint --full".split())
         ac(
             o,
             """\
@@ -2027,31 +2127,33 @@ Ticket Constraints:
         )
 
         o, r = pcs(
-            self.temp_cib.name, "resource create dummy1 ocf:heartbeat:Dummy"
+            self.temp_cib.name,
+            "resource create dummy1 ocf:heartbeat:Dummy".split(),
         )
         ac(o, "")
         assert r == 0
 
         o, r = pcs(
             self.temp_cib.name,
-            "resource create dummy ocf:heartbeat:Dummy clone",
+            "resource create dummy ocf:heartbeat:Dummy clone".split(),
         )
         ac(o, "")
         assert r == 0
 
         o, r = pcs(
             self.temp_cib.name,
-            "resource create dummy2 ocf:heartbeat:Dummy --group dummyG",
+            "resource create dummy2 ocf:heartbeat:Dummy --group dummyG".split(),
         )
         ac(o, "")
         assert r == 0
 
-        o, r = pcs(self.temp_cib.name, "resource clone dummyG")
+        o, r = pcs(self.temp_cib.name, "resource clone dummyG".split())
         ac(o, "")
         assert r == 0
 
         o, r = pcs(
-            self.temp_cib.name, "constraint location dummy prefers rh7-1"
+            self.temp_cib.name,
+            "constraint location dummy prefers rh7-1".split(),
         )
         ac(
             o,
@@ -2061,7 +2163,8 @@ Ticket Constraints:
         assert r == 1
 
         o, r = pcs(
-            self.temp_cib.name, "constraint location dummyG prefers rh7-1"
+            self.temp_cib.name,
+            "constraint location dummyG prefers rh7-1".split(),
         )
         ac(
             o,
@@ -2071,7 +2174,8 @@ Ticket Constraints:
         assert r == 1
 
         o, r = pcs(
-            self.temp_cib.name, "constraint location dummy rule #uname eq rh7-1"
+            self.temp_cib.name,
+            "constraint location dummy rule #uname eq rh7-1".split(),
         )
         ac(
             o,
@@ -2081,44 +2185,16 @@ Ticket Constraints:
 
         o, r = pcs(
             self.temp_cib.name,
-            "constraint location dummyG rule #uname eq rh7-1",
+            "constraint location dummyG rule #uname eq rh7-1".split(),
         )
         ac(
             o,
             "Error: dummyG is a clone resource, you should use the clone id: dummyG-clone when adding constraints. Use --force to override.\n",
-        )
-        assert r == 1
-
-        o, r = pcs(self.temp_cib.name, "constraint order dummy then dummy1")
-        ac(
-            o,
-            "Error: dummy is a clone resource, you should use the clone id: dummy-clone when adding constraints. Use --force to override.\n",
-        )
-        assert r == 1
-
-        o, r = pcs(self.temp_cib.name, "constraint order dummy1 then dummyG")
-        ac(
-            o,
-            "Error: dummyG is a clone resource, you should use the clone id: dummyG-clone when adding constraints. Use --force to override.\n",
-        )
-        assert r == 1
-
-        o, r = pcs(self.temp_cib.name, "constraint order set dummy1 dummy")
-        ac(
-            o,
-            "Error: dummy is a clone resource, you should use the clone id: dummy-clone when adding constraints, use --force to override\n",
-        )
-        assert r == 1
-
-        o, r = pcs(self.temp_cib.name, "constraint order set dummyG dummy1")
-        ac(
-            o,
-            "Error: dummyG is a clone resource, you should use the clone id: dummyG-clone when adding constraints, use --force to override\n",
         )
         assert r == 1
 
         o, r = pcs(
-            self.temp_cib.name, "constraint colocation add dummy with dummy1"
+            self.temp_cib.name, "constraint order dummy then dummy1".split(),
         )
         ac(
             o,
@@ -2127,7 +2203,7 @@ Ticket Constraints:
         assert r == 1
 
         o, r = pcs(
-            self.temp_cib.name, "constraint colocation add dummy1 with dummyG"
+            self.temp_cib.name, "constraint order dummy1 then dummyG".split(),
         )
         ac(
             o,
@@ -2135,7 +2211,9 @@ Ticket Constraints:
         )
         assert r == 1
 
-        o, r = pcs(self.temp_cib.name, "constraint colocation set dummy1 dummy")
+        o, r = pcs(
+            self.temp_cib.name, "constraint order set dummy1 dummy".split(),
+        )
         ac(
             o,
             "Error: dummy is a clone resource, you should use the clone id: dummy-clone when adding constraints, use --force to override\n",
@@ -2143,7 +2221,7 @@ Ticket Constraints:
         assert r == 1
 
         o, r = pcs(
-            self.temp_cib.name, "constraint colocation set dummy1 dummyG"
+            self.temp_cib.name, "constraint order set dummyG dummy1".split(),
         )
         ac(
             o,
@@ -2151,7 +2229,47 @@ Ticket Constraints:
         )
         assert r == 1
 
-        o, r = pcs(self.temp_cib.name, "constraint --full")
+        o, r = pcs(
+            self.temp_cib.name,
+            "constraint colocation add dummy with dummy1".split(),
+        )
+        ac(
+            o,
+            "Error: dummy is a clone resource, you should use the clone id: dummy-clone when adding constraints. Use --force to override.\n",
+        )
+        assert r == 1
+
+        o, r = pcs(
+            self.temp_cib.name,
+            "constraint colocation add dummy1 with dummyG".split(),
+        )
+        ac(
+            o,
+            "Error: dummyG is a clone resource, you should use the clone id: dummyG-clone when adding constraints. Use --force to override.\n",
+        )
+        assert r == 1
+
+        o, r = pcs(
+            self.temp_cib.name,
+            "constraint colocation set dummy1 dummy".split(),
+        )
+        ac(
+            o,
+            "Error: dummy is a clone resource, you should use the clone id: dummy-clone when adding constraints, use --force to override\n",
+        )
+        assert r == 1
+
+        o, r = pcs(
+            self.temp_cib.name,
+            "constraint colocation set dummy1 dummyG".split(),
+        )
+        ac(
+            o,
+            "Error: dummyG is a clone resource, you should use the clone id: dummyG-clone when adding constraints, use --force to override\n",
+        )
+        assert r == 1
+
+        o, r = pcs(self.temp_cib.name, "constraint --full".split())
         ac(
             o,
             "Location Constraints:\nOrdering Constraints:\nColocation Constraints:\nTicket Constraints:\n",
@@ -2160,20 +2278,21 @@ Ticket Constraints:
 
         o, r = pcs(
             self.temp_cib.name,
-            "constraint location dummy prefers rh7-1 --force",
+            "constraint location dummy prefers rh7-1 --force".split(),
         )
         ac(o, LOCATION_NODE_VALIDATION_SKIP_WARNING)
         assert r == 0
 
         o, r = pcs(
             self.temp_cib.name,
-            "constraint location dummyG rule #uname eq rh7-1 --force",
+            "constraint location dummyG rule #uname eq rh7-1 --force".split(),
         )
         ac(o, "")
         assert r == 0
 
         o, r = pcs(
-            self.temp_cib.name, "constraint order dummy then dummy1 --force"
+            self.temp_cib.name,
+            "constraint order dummy then dummy1 --force".split(),
         )
         ac(
             o,
@@ -2182,7 +2301,8 @@ Ticket Constraints:
         assert r == 0
 
         o, r = pcs(
-            self.temp_cib.name, "constraint order set dummy1 dummy --force"
+            self.temp_cib.name,
+            "constraint order set dummy1 dummy --force".split(),
         )
         ac(
             o,
@@ -2192,13 +2312,14 @@ Ticket Constraints:
 
         o, r = pcs(
             self.temp_cib.name,
-            "constraint colocation add dummy with dummy1 --force",
+            "constraint colocation add dummy with dummy1 --force".split(),
         )
         ac(o, "")
         assert r == 0
 
         o, r = pcs(
-            self.temp_cib.name, "constraint colocation set dummy1 dummy --force"
+            self.temp_cib.name,
+            "constraint colocation set dummy1 dummy --force".split(),
         )
         ac(
             o,
@@ -2206,7 +2327,7 @@ Ticket Constraints:
         )
         assert r == 0
 
-        o, r = pcs(self.temp_cib.name, "constraint --full")
+        o, r = pcs(self.temp_cib.name, "constraint --full".split())
         ac(
             o,
             """\
@@ -2248,7 +2369,7 @@ Ticket Constraints:
             + ' cibadmin -R --scope constraints --xml-text \'<constraints><rsc_location id="cli-prefer-stateful0-master" role="Master" rsc="stateful0-master" node="rh7-1" score="INFINITY"/><rsc_location id="cli-ban-stateful0-master-on-rh7-1" rsc="stateful0-master" role="Slave" node="rh7-1" score="-INFINITY"/></constraints>\''
         )
 
-        o, r = pcs(self.temp_cib.name, "constraint")
+        o, r = pcs(self.temp_cib.name, ["constraint"])
         ac(
             o,
             outdent(
@@ -2271,14 +2392,15 @@ Ticket Constraints:
         write_file_to_tmpfile(large_cib, self.temp_cib)
 
         output, returnVal = pcs(
-            self.temp_cib.name, "constraint location dummy prefers rh7-1"
+            self.temp_cib.name,
+            "constraint location dummy prefers rh7-1".split(),
         )
         ac(output, LOCATION_NODE_VALIDATION_SKIP_WARNING)
         assert returnVal == 0
 
         output, returnVal = pcs(
             self.temp_cib.name,
-            "constraint location show resources dummy --full",
+            "constraint location show resources dummy --full".split(),
         )
         ac(
             output,
@@ -2295,25 +2417,27 @@ Ticket Constraints:
 
         output, returnVal = pcs(
             self.temp_cib.name,
-            "constraint location remove location-dummy-rh7-1-INFINITY",
+            "constraint location remove location-dummy-rh7-1-INFINITY".split(),
         )
         ac(output, "")
         assert returnVal == 0
 
         output, returnVal = pcs(
-            self.temp_cib.name, "constraint colocation add dummy1 with dummy2"
+            self.temp_cib.name,
+            "constraint colocation add dummy1 with dummy2".split(),
         )
         ac(output, "")
         assert returnVal == 0
 
         output, returnVal = pcs(
-            self.temp_cib.name, "constraint colocation remove dummy1 dummy2"
+            self.temp_cib.name,
+            "constraint colocation remove dummy1 dummy2".split(),
         )
         ac(output, "")
         assert returnVal == 0
 
         output, returnVal = pcs(
-            self.temp_cib.name, "constraint order dummy1 then dummy2"
+            self.temp_cib.name, "constraint order dummy1 then dummy2".split(),
         )
         ac(
             output,
@@ -2322,20 +2446,21 @@ Ticket Constraints:
         assert returnVal == 0
 
         output, returnVal = pcs(
-            self.temp_cib.name, "constraint order remove dummy1"
+            self.temp_cib.name, "constraint order remove dummy1".split()
         )
         ac(output, "")
         assert returnVal == 0
 
         output, returnVal = pcs(
-            self.temp_cib.name, "constraint location dummy prefers rh7-1"
+            self.temp_cib.name,
+            "constraint location dummy prefers rh7-1".split(),
         )
         ac(output, LOCATION_NODE_VALIDATION_SKIP_WARNING)
         assert returnVal == 0
 
         output, returnVal = pcs(
             self.temp_cib.name,
-            "constraint location show resources dummy --full",
+            "constraint location show resources dummy --full".split(),
         )
         ac(
             output,
@@ -2352,7 +2477,7 @@ Ticket Constraints:
 
         output, returnVal = pcs(
             self.temp_cib.name,
-            "constraint remove location-dummy-rh7-1-INFINITY",
+            "constraint remove location-dummy-rh7-1-INFINITY".split(),
         )
         ac(output, "")
         assert returnVal == 0
@@ -2360,19 +2485,19 @@ Ticket Constraints:
     def testConstraintResourceCloneUpdate(self):
         self.fixture_resources()
         output, returnVal = pcs(
-            self.temp_cib.name, "constraint location D1 prefers rh7-1"
+            self.temp_cib.name, "constraint location D1 prefers rh7-1".split(),
         )
         ac(output, LOCATION_NODE_VALIDATION_SKIP_WARNING)
         assert returnVal == 0
 
         output, returnVal = pcs(
-            self.temp_cib.name, "constraint colocation add D1 with D5"
+            self.temp_cib.name, "constraint colocation add D1 with D5".split(),
         )
         ac(output, "")
         assert returnVal == 0
 
         output, returnVal = pcs(
-            self.temp_cib.name, "constraint order D1 then D5"
+            self.temp_cib.name, "constraint order D1 then D5".split()
         )
         ac(
             output,
@@ -2383,7 +2508,7 @@ Adding D1 D5 (kind: Mandatory) (Options: first-action=start then-action=start)
         assert returnVal == 0
 
         output, returnVal = pcs(
-            self.temp_cib.name, "constraint order D6 then D1"
+            self.temp_cib.name, "constraint order D6 then D1".split()
         )
         ac(
             output,
@@ -2394,11 +2519,11 @@ Adding D6 D1 (kind: Mandatory) (Options: first-action=start then-action=start)
         assert returnVal == 0
 
         assert returnVal == 0
-        output, returnVal = pcs(self.temp_cib.name, "resource clone D1")
+        output, returnVal = pcs(self.temp_cib.name, "resource clone D1".split())
         ac(output, "")
         assert returnVal == 0
 
-        output, returnVal = pcs(self.temp_cib.name, "constraint --full")
+        output, returnVal = pcs(self.temp_cib.name, "constraint --full".split())
         ac(
             output,
             """\
@@ -2418,24 +2543,26 @@ Ticket Constraints:
 
     def testConstraintGroupCloneUpdate(self):
         self.fixture_resources()
-        output, returnVal = pcs(self.temp_cib.name, "resource group add DG D1")
+        output, returnVal = pcs(
+            self.temp_cib.name, "resource group add DG D1".split()
+        )
         ac(output, "")
         assert returnVal == 0
 
         output, returnVal = pcs(
-            self.temp_cib.name, "constraint location DG prefers rh7-1"
+            self.temp_cib.name, "constraint location DG prefers rh7-1".split(),
         )
         ac(output, LOCATION_NODE_VALIDATION_SKIP_WARNING)
         assert returnVal == 0
 
         output, returnVal = pcs(
-            self.temp_cib.name, "constraint colocation add DG with D5"
+            self.temp_cib.name, "constraint colocation add DG with D5".split(),
         )
         ac(output, "")
         assert returnVal == 0
 
         output, returnVal = pcs(
-            self.temp_cib.name, "constraint order DG then D5"
+            self.temp_cib.name, "constraint order DG then D5".split()
         )
         ac(
             output,
@@ -2446,7 +2573,7 @@ Adding DG D5 (kind: Mandatory) (Options: first-action=start then-action=start)
         assert returnVal == 0
 
         output, returnVal = pcs(
-            self.temp_cib.name, "constraint order D6 then DG"
+            self.temp_cib.name, "constraint order D6 then DG".split()
         )
         ac(
             output,
@@ -2457,11 +2584,11 @@ Adding D6 DG (kind: Mandatory) (Options: first-action=start then-action=start)
         assert returnVal == 0
 
         assert returnVal == 0
-        output, returnVal = pcs(self.temp_cib.name, "resource clone DG")
+        output, returnVal = pcs(self.temp_cib.name, "resource clone DG".split())
         ac(output, "")
         assert returnVal == 0
 
-        output, returnVal = pcs(self.temp_cib.name, "constraint --full")
+        output, returnVal = pcs(self.temp_cib.name, "constraint --full".split())
         ac(
             output,
             """\
@@ -2485,9 +2612,11 @@ Ticket Constraints:
         # deleting the remote node resource
         output, returnVal = pcs(
             self.temp_cib.name,
-            "resource create vm-guest1 ocf:heartbeat:VirtualDomain"
-            ' hypervisor="qemu:///system" config="/root/guest1.xml" meta'
-            " remote-node=guest1 --force",
+            (
+                "resource create vm-guest1 ocf:heartbeat:VirtualDomain "
+                "hypervisor=qemu:///system config=/root/guest1.xml "
+                "meta remote-node=guest1 --force"
+            ).split(),
         )
         ac(
             output,
@@ -2497,30 +2626,34 @@ Ticket Constraints:
         self.assertEqual(0, returnVal)
 
         output, returnVal = pcs(
-            self.temp_cib.name, "constraint location D1 prefers node1=100"
+            self.temp_cib.name,
+            "constraint location D1 prefers node1=100".split(),
         )
         ac(output, LOCATION_NODE_VALIDATION_SKIP_WARNING)
         self.assertEqual(0, returnVal)
 
         output, returnVal = pcs(
-            self.temp_cib.name, "constraint location D1 prefers guest1=200"
+            self.temp_cib.name,
+            "constraint location D1 prefers guest1=200".split(),
         )
         ac(output, LOCATION_NODE_VALIDATION_SKIP_WARNING)
         self.assertEqual(0, returnVal)
 
         output, returnVal = pcs(
-            self.temp_cib.name, "constraint location D2 avoids node2=300"
+            self.temp_cib.name,
+            "constraint location D2 avoids node2=300".split(),
         )
         ac(output, LOCATION_NODE_VALIDATION_SKIP_WARNING)
         self.assertEqual(0, returnVal)
 
         output, returnVal = pcs(
-            self.temp_cib.name, "constraint location D2 avoids guest1=400"
+            self.temp_cib.name,
+            "constraint location D2 avoids guest1=400".split(),
         )
         ac(output, LOCATION_NODE_VALIDATION_SKIP_WARNING)
         self.assertEqual(0, returnVal)
 
-        output, returnVal = pcs(self.temp_cib.name, "constraint --full")
+        output, returnVal = pcs(self.temp_cib.name, "constraint --full".split())
         ac(
             output,
             """\
@@ -2540,7 +2673,9 @@ Ticket Constraints:
         )
         self.assertEqual(0, returnVal)
 
-        output, returnVal = pcs(self.temp_cib.name, "resource delete vm-guest1")
+        output, returnVal = pcs(
+            self.temp_cib.name, "resource delete vm-guest1".split()
+        )
         ac(
             output,
             outdent(
@@ -2553,7 +2688,7 @@ Ticket Constraints:
         )
         self.assertEqual(0, returnVal)
 
-        output, returnVal = pcs(self.temp_cib.name, "constraint --full")
+        output, returnVal = pcs(self.temp_cib.name, "constraint --full".split())
         ac(
             output,
             """\
@@ -2575,9 +2710,11 @@ Ticket Constraints:
         # removing the remote node
         output, returnVal = pcs(
             self.temp_cib.name,
-            "resource create vm-guest1 ocf:heartbeat:VirtualDomain"
-            ' hypervisor="qemu:///system" config="/root/guest1.xml"'
-            " meta remote-node=guest1 --force",
+            (
+                "resource create vm-guest1 ocf:heartbeat:VirtualDomain "
+                "hypervisor=qemu:///system config=/root/guest1.xml "
+                "meta remote-node=guest1 --force"
+            ).split(),
         )
         ac(
             output,
@@ -2587,18 +2724,20 @@ Ticket Constraints:
         self.assertEqual(0, returnVal)
 
         output, returnVal = pcs(
-            self.temp_cib.name, "constraint location D1 prefers guest1=200"
+            self.temp_cib.name,
+            "constraint location D1 prefers guest1=200".split(),
         )
         ac(output, LOCATION_NODE_VALIDATION_SKIP_WARNING)
         self.assertEqual(0, returnVal)
 
         output, returnVal = pcs(
-            self.temp_cib.name, "constraint location D2 avoids guest1=400"
+            self.temp_cib.name,
+            "constraint location D2 avoids guest1=400".split(),
         )
         ac(output, LOCATION_NODE_VALIDATION_SKIP_WARNING)
         self.assertEqual(0, returnVal)
 
-        output, returnVal = pcs(self.temp_cib.name, "constraint --full")
+        output, returnVal = pcs(self.temp_cib.name, "constraint --full".split())
         ac(
             output,
             """\
@@ -2620,7 +2759,7 @@ Ticket Constraints:
 
         output, returnVal = pcs(
             self.temp_cib.name,
-            "cluster node remove-guest guest1",
+            "cluster node remove-guest guest1".split(),
             corosync_conf_opt=rc("corosync.conf"),
         )
         ac(
@@ -2634,7 +2773,7 @@ Ticket Constraints:
         )
         self.assertEqual(0, returnVal)
 
-        output, returnVal = pcs(self.temp_cib.name, "constraint --full")
+        output, returnVal = pcs(self.temp_cib.name, "constraint --full".split())
         ac(
             output,
             """\
@@ -2654,7 +2793,9 @@ Ticket Constraints:
         )
         self.assertEqual(0, returnVal)
 
-        output, returnVal = pcs(self.temp_cib.name, "resource delete vm-guest1")
+        output, returnVal = pcs(
+            self.temp_cib.name, "resource delete vm-guest1".split()
+        )
         ac(output, "Deleting Resource - vm-guest1\n")
         self.assertEqual(0, returnVal)
 
@@ -2662,7 +2803,11 @@ Ticket Constraints:
         # deleting the remote node resource
         output, returnVal = pcs(
             self.temp_cib.name,
-            'resource create vm-guest1 ocf:heartbeat:VirtualDomain hypervisor="qemu:///system" config="/root/guest1.xml" meta remote-node=guest1 --force',
+            (
+                "resource create vm-guest1 ocf:heartbeat:VirtualDomain "
+                "hypervisor=qemu:///system config=/root/guest1.xml "
+                "meta remote-node=guest1 --force"
+            ).split(),
         )
         ac(
             output,
@@ -2672,12 +2817,15 @@ Ticket Constraints:
         self.assertEqual(0, returnVal)
 
         output, returnVal = pcs(
-            self.temp_cib.name, "constraint location vm-guest1 prefers node1"
+            self.temp_cib.name,
+            "constraint location vm-guest1 prefers node1".split(),
         )
         ac(output, LOCATION_NODE_VALIDATION_SKIP_WARNING)
         self.assertEqual(0, returnVal)
 
-        output, returnVal = pcs(self.temp_cib.name, "resource delete vm-guest1")
+        output, returnVal = pcs(
+            self.temp_cib.name, "resource delete vm-guest1".split()
+        )
         ac(
             output,
             outdent(
@@ -2694,7 +2842,7 @@ Ticket Constraints:
     def testDuplicateOrder(self):
         self.fixture_resources()
         output, returnVal = pcs(
-            self.temp_cib.name, "constraint order D1 then D2"
+            self.temp_cib.name, "constraint order D1 then D2".split()
         )
         ac(
             output,
@@ -2705,7 +2853,7 @@ Adding D1 D2 (kind: Mandatory) (Options: first-action=start then-action=start)
         self.assertEqual(0, returnVal)
 
         output, returnVal = pcs(
-            self.temp_cib.name, "constraint order D1 then D2"
+            self.temp_cib.name, "constraint order D1 then D2".split()
         )
         ac(
             output,
@@ -2717,7 +2865,7 @@ Error: duplicate constraint already exists, use --force to override
         self.assertEqual(1, returnVal)
 
         output, returnVal = pcs(
-            self.temp_cib.name, "constraint order D1 then D2 --force"
+            self.temp_cib.name, "constraint order D1 then D2 --force".split(),
         )
         ac(
             output,
@@ -2728,7 +2876,8 @@ Adding D1 D2 (kind: Mandatory) (Options: first-action=start then-action=start)
         self.assertEqual(0, returnVal)
 
         output, returnVal = pcs(
-            self.temp_cib.name, "constraint order start D1 then start D2"
+            self.temp_cib.name,
+            "constraint order start D1 then start D2".split(),
         )
         ac(
             output,
@@ -2742,7 +2891,7 @@ Error: duplicate constraint already exists, use --force to override
 
         output, returnVal = pcs(
             self.temp_cib.name,
-            "constraint order start D1 then start D2 --force",
+            "constraint order start D1 then start D2 --force".split(),
         )
         ac(
             output,
@@ -2753,7 +2902,8 @@ Adding D1 D2 (kind: Mandatory) (Options: first-action=start then-action=start)
         self.assertEqual(0, returnVal)
 
         output, returnVal = pcs(
-            self.temp_cib.name, "constraint order start D2 then start D5"
+            self.temp_cib.name,
+            "constraint order start D2 then start D5".split(),
         )
         ac(
             output,
@@ -2764,7 +2914,8 @@ Adding D2 D5 (kind: Mandatory) (Options: first-action=start then-action=start)
         self.assertEqual(0, returnVal)
 
         output, returnVal = pcs(
-            self.temp_cib.name, "constraint order start D2 then start D5"
+            self.temp_cib.name,
+            "constraint order start D2 then start D5".split(),
         )
         ac(
             output,
@@ -2777,7 +2928,7 @@ Error: duplicate constraint already exists, use --force to override
 
         output, returnVal = pcs(
             self.temp_cib.name,
-            "constraint order start D2 then start D5 --force",
+            "constraint order start D2 then start D5 --force".split(),
         )
         ac(
             output,
@@ -2788,7 +2939,7 @@ Adding D2 D5 (kind: Mandatory) (Options: first-action=start then-action=start)
         self.assertEqual(0, returnVal)
 
         output, returnVal = pcs(
-            self.temp_cib.name, "constraint order stop D5 then stop D6"
+            self.temp_cib.name, "constraint order stop D5 then stop D6".split(),
         )
         ac(
             output,
@@ -2799,7 +2950,7 @@ Adding D5 D6 (kind: Mandatory) (Options: first-action=stop then-action=stop)
         self.assertEqual(0, returnVal)
 
         output, returnVal = pcs(
-            self.temp_cib.name, "constraint order stop D5 then stop D6"
+            self.temp_cib.name, "constraint order stop D5 then stop D6".split(),
         )
         ac(
             output,
@@ -2811,7 +2962,8 @@ Error: duplicate constraint already exists, use --force to override
         self.assertEqual(1, returnVal)
 
         output, returnVal = pcs(
-            self.temp_cib.name, "constraint order stop D5 then stop D6 --force"
+            self.temp_cib.name,
+            "constraint order stop D5 then stop D6 --force".split(),
         )
         ac(
             output,
@@ -2821,7 +2973,7 @@ Adding D5 D6 (kind: Mandatory) (Options: first-action=stop then-action=stop)
         )
         self.assertEqual(0, returnVal)
 
-        output, returnVal = pcs(self.temp_cib.name, "constraint --full")
+        output, returnVal = pcs(self.temp_cib.name, "constraint --full".split())
         ac(
             output,
             """\
@@ -2843,25 +2995,13 @@ Ticket Constraints:
     def testDuplicateColocation(self):
         self.fixture_resources()
         output, returnVal = pcs(
-            self.temp_cib.name, "constraint colocation add D1 with D2"
+            self.temp_cib.name, "constraint colocation add D1 with D2".split(),
         )
         ac(output, "")
         self.assertEqual(0, returnVal)
 
         output, returnVal = pcs(
-            self.temp_cib.name, "constraint colocation add D1 with D2"
-        )
-        ac(
-            output,
-            """\
-Error: duplicate constraint already exists, use --force to override
-  D1 with D2 (score:INFINITY) (id:colocation-D1-D2-INFINITY)
-""",
-        )
-        self.assertEqual(1, returnVal)
-
-        output, returnVal = pcs(
-            self.temp_cib.name, "constraint colocation add D1 with D2 50"
+            self.temp_cib.name, "constraint colocation add D1 with D2".split(),
         )
         ac(
             output,
@@ -2874,14 +3014,27 @@ Error: duplicate constraint already exists, use --force to override
 
         output, returnVal = pcs(
             self.temp_cib.name,
-            "constraint colocation add D1 with D2 50 --force",
+            "constraint colocation add D1 with D2 50".split(),
+        )
+        ac(
+            output,
+            """\
+Error: duplicate constraint already exists, use --force to override
+  D1 with D2 (score:INFINITY) (id:colocation-D1-D2-INFINITY)
+""",
+        )
+        self.assertEqual(1, returnVal)
+
+        output, returnVal = pcs(
+            self.temp_cib.name,
+            "constraint colocation add D1 with D2 50 --force".split(),
         )
         ac(output, "")
         self.assertEqual(0, returnVal)
 
         output, returnVal = pcs(
             self.temp_cib.name,
-            "constraint colocation add started D1 with started D2",
+            "constraint colocation add started D1 with started D2".split(),
         )
         ac(
             output,
@@ -2895,28 +3048,28 @@ Error: duplicate constraint already exists, use --force to override
 
         output, returnVal = pcs(
             self.temp_cib.name,
-            "constraint colocation add started D1 with started D2 --force",
+            "constraint colocation add started D1 with started D2 --force".split(),
         )
         ac(output, "")
         self.assertEqual(0, returnVal)
 
         output, returnVal = pcs(
             self.temp_cib.name,
-            "constraint colocation add started D2 with started D5",
+            "constraint colocation add started D2 with started D5".split(),
         )
         ac(output, "")
         self.assertEqual(0, returnVal)
 
         output, returnVal = pcs(
             self.temp_cib.name,
-            "constraint colocation add stopped D2 with stopped D5",
+            "constraint colocation add stopped D2 with stopped D5".split(),
         )
         ac(output, "")
         self.assertEqual(0, returnVal)
 
         output, returnVal = pcs(
             self.temp_cib.name,
-            "constraint colocation add stopped D2 with stopped D5",
+            "constraint colocation add stopped D2 with stopped D5".split(),
         )
         ac(
             output,
@@ -2929,12 +3082,12 @@ Error: duplicate constraint already exists, use --force to override
 
         output, returnVal = pcs(
             self.temp_cib.name,
-            "constraint colocation add stopped D2 with stopped D5 --force",
+            "constraint colocation add stopped D2 with stopped D5 --force".split(),
         )
         ac(output, "")
         self.assertEqual(0, returnVal)
 
-        output, returnVal = pcs(self.temp_cib.name, "constraint --full")
+        output, returnVal = pcs(self.temp_cib.name, "constraint --full".split())
         ac(
             output,
             """\
@@ -2954,13 +3107,13 @@ Ticket Constraints:
     def testDuplicateSetConstraints(self):
         self.fixture_resources()
         output, returnVal = pcs(
-            self.temp_cib.name, "constraint order set D1 D2"
+            self.temp_cib.name, "constraint order set D1 D2".split()
         )
         ac(output, "")
         self.assertEqual(0, returnVal)
 
         output, returnVal = pcs(
-            self.temp_cib.name, "constraint order set D1 D2"
+            self.temp_cib.name, "constraint order set D1 D2".split()
         )
         ac(
             output,
@@ -2974,7 +3127,7 @@ Ticket Constraints:
         self.assertEqual(1, returnVal)
 
         output, returnVal = pcs(
-            self.temp_cib.name, "constraint order set D1 D2 --force"
+            self.temp_cib.name, "constraint order set D1 D2 --force".split(),
         )
         ac(
             output,
@@ -2987,13 +3140,13 @@ Ticket Constraints:
         self.assertEqual(0, returnVal)
 
         output, returnVal = pcs(
-            self.temp_cib.name, "constraint order set D1 D2 set D5 D6"
+            self.temp_cib.name, "constraint order set D1 D2 set D5 D6".split(),
         )
         ac(output, "")
         self.assertEqual(0, returnVal)
 
         output, returnVal = pcs(
-            self.temp_cib.name, "constraint order set D1 D2 set D5 D6"
+            self.temp_cib.name, "constraint order set D1 D2 set D5 D6".split(),
         )
         ac(
             output,
@@ -3007,7 +3160,8 @@ Ticket Constraints:
         self.assertEqual(1, returnVal)
 
         output, returnVal = pcs(
-            self.temp_cib.name, "constraint order set D1 D2 set D5 D6 --force"
+            self.temp_cib.name,
+            "constraint order set D1 D2 set D5 D6 --force".split(),
         )
         ac(
             output,
@@ -3020,13 +3174,13 @@ Ticket Constraints:
         self.assertEqual(0, returnVal)
 
         output, returnVal = pcs(
-            self.temp_cib.name, "constraint colocation set D1 D2"
+            self.temp_cib.name, "constraint colocation set D1 D2".split()
         )
         ac(output, "")
         self.assertEqual(0, returnVal)
 
         output, returnVal = pcs(
-            self.temp_cib.name, "constraint colocation set D1 D2"
+            self.temp_cib.name, "constraint colocation set D1 D2".split()
         )
         ac(
             output,
@@ -3040,7 +3194,8 @@ Ticket Constraints:
         self.assertEqual(1, returnVal)
 
         output, returnVal = pcs(
-            self.temp_cib.name, "constraint colocation set D1 D2 --force"
+            self.temp_cib.name,
+            "constraint colocation set D1 D2 --force".split(),
         )
         ac(
             output,
@@ -3053,13 +3208,15 @@ Ticket Constraints:
         self.assertEqual(0, returnVal)
 
         output, returnVal = pcs(
-            self.temp_cib.name, "constraint colocation set D1 D2 set D5 D6"
+            self.temp_cib.name,
+            "constraint colocation set D1 D2 set D5 D6".split(),
         )
         ac(output, "")
         self.assertEqual(0, returnVal)
 
         output, returnVal = pcs(
-            self.temp_cib.name, "constraint colocation set D1 D2 set D5 D6"
+            self.temp_cib.name,
+            "constraint colocation set D1 D2 set D5 D6".split(),
         )
         ac(
             output,
@@ -3074,7 +3231,7 @@ Ticket Constraints:
 
         output, returnVal = pcs(
             self.temp_cib.name,
-            "constraint colocation set D1 D2 set D5 D6 --force",
+            "constraint colocation set D1 D2 set D5 D6 --force".split(),
         )
         ac(
             output,
@@ -3087,18 +3244,18 @@ Ticket Constraints:
         self.assertEqual(0, returnVal)
 
         output, returnVal = pcs(
-            self.temp_cib.name, "constraint colocation set D6 D1"
+            self.temp_cib.name, "constraint colocation set D6 D1".split()
         )
         ac(output, "")
         self.assertEqual(0, returnVal)
 
         output, returnVal = pcs(
-            self.temp_cib.name, "constraint order set D6 D1"
+            self.temp_cib.name, "constraint order set D6 D1".split()
         )
         ac(output, "")
         self.assertEqual(0, returnVal)
 
-        output, returnVal = pcs(self.temp_cib.name, "constraint --full")
+        output, returnVal = pcs(self.temp_cib.name, "constraint --full".split())
         ac(
             output,
             """\
@@ -3124,13 +3281,15 @@ Ticket Constraints:
     def testDuplicateLocationRules(self):
         self.fixture_resources()
         output, returnVal = pcs(
-            self.temp_cib.name, "constraint location D1 rule #uname eq node1"
+            self.temp_cib.name,
+            "constraint location D1 rule #uname eq node1".split(),
         )
         ac(output, "")
         self.assertEqual(0, returnVal)
 
         output, returnVal = pcs(
-            self.temp_cib.name, "constraint location D1 rule #uname eq node1"
+            self.temp_cib.name,
+            "constraint location D1 rule #uname eq node1".split(),
         )
         ac(
             output,
@@ -3145,27 +3304,28 @@ Error: duplicate constraint already exists, use --force to override
 
         output, returnVal = pcs(
             self.temp_cib.name,
-            "constraint location D1 rule #uname eq node1 --force",
-        )
-        ac(output, "")
-        self.assertEqual(0, returnVal)
-
-        output, returnVal = pcs(
-            self.temp_cib.name, "constraint location D2 rule #uname eq node1"
+            "constraint location D1 rule #uname eq node1 --force".split(),
         )
         ac(output, "")
         self.assertEqual(0, returnVal)
 
         output, returnVal = pcs(
             self.temp_cib.name,
-            "constraint location D2 rule #uname eq node1 or #uname eq node2",
+            "constraint location D2 rule #uname eq node1".split(),
         )
         ac(output, "")
         self.assertEqual(0, returnVal)
 
         output, returnVal = pcs(
             self.temp_cib.name,
-            "constraint location D2 rule #uname eq node1 or #uname eq node2",
+            "constraint location D2 rule #uname eq node1 or #uname eq node2".split(),
+        )
+        ac(output, "")
+        self.assertEqual(0, returnVal)
+
+        output, returnVal = pcs(
+            self.temp_cib.name,
+            "constraint location D2 rule #uname eq node1 or #uname eq node2".split(),
         )
         ac(
             output,
@@ -3181,7 +3341,7 @@ Error: duplicate constraint already exists, use --force to override
 
         output, returnVal = pcs(
             self.temp_cib.name,
-            "constraint location D2 rule #uname eq node2 or #uname eq node1",
+            "constraint location D2 rule #uname eq node2 or #uname eq node1".split(),
         )
         ac(
             output,
@@ -3197,12 +3357,12 @@ Error: duplicate constraint already exists, use --force to override
 
         output, returnVal = pcs(
             self.temp_cib.name,
-            "constraint location D2 rule #uname eq node2 or #uname eq node1 --force",
+            "constraint location D2 rule #uname eq node2 or #uname eq node1 --force".split(),
         )
         ac(output, "")
         self.assertEqual(0, returnVal)
 
-        output, returnVal = pcs(self.temp_cib.name, "constraint --full")
+        output, returnVal = pcs(self.temp_cib.name, "constraint --full".split())
         ac(
             output,
             """\
@@ -3236,7 +3396,8 @@ Ticket Constraints:
     def testConstraintsCustomId(self):
         self.fixture_resources()
         output, returnVal = pcs(
-            self.temp_cib.name, "constraint colocation add D1 with D2 id=1id"
+            self.temp_cib.name,
+            "constraint colocation add D1 with D2 id=1id".split(),
         )
         ac(
             output,
@@ -3247,13 +3408,15 @@ Error: invalid constraint id '1id', '1' is not a valid first character for a con
         self.assertEqual(1, returnVal)
 
         output, returnVal = pcs(
-            self.temp_cib.name, "constraint colocation add D1 with D2 id=id1"
+            self.temp_cib.name,
+            "constraint colocation add D1 with D2 id=id1".split(),
         )
         ac(output, "")
         self.assertEqual(0, returnVal)
 
         output, returnVal = pcs(
-            self.temp_cib.name, "constraint colocation add D1 with D2 id=id1"
+            self.temp_cib.name,
+            "constraint colocation add D1 with D2 id=id1".split(),
         )
         ac(
             output,
@@ -3265,14 +3428,14 @@ Error: id 'id1' is already in use, please specify another one
 
         output, returnVal = pcs(
             self.temp_cib.name,
-            "constraint colocation add D2 with D1 100 id=id2",
+            "constraint colocation add D2 with D1 100 id=id2".split(),
         )
         ac(output, "")
         self.assertEqual(0, returnVal)
 
         output, returnVal = pcs(
             self.temp_cib.name,
-            "constraint colocation set D1 D2 setoptions id=3id",
+            "constraint colocation set D1 D2 setoptions id=3id".split(),
         )
         ac(
             output,
@@ -3284,27 +3447,28 @@ Error: invalid constraint id '3id', '3' is not a valid first character for a con
 
         output, returnVal = pcs(
             self.temp_cib.name,
-            "constraint colocation set D1 D2 setoptions id=id3",
+            "constraint colocation set D1 D2 setoptions id=id3".split(),
         )
         ac(output, "")
         self.assertEqual(0, returnVal)
 
         output, returnVal = pcs(
             self.temp_cib.name,
-            "constraint colocation set D1 D2 setoptions id=id3",
+            "constraint colocation set D1 D2 setoptions id=id3".split(),
         )
         ac(output, "Error: 'id3' already exists\n")
         self.assertEqual(1, returnVal)
 
         output, returnVal = pcs(
             self.temp_cib.name,
-            "constraint colocation set D2 D1 setoptions score=100 id=id4",
+            "constraint colocation set D2 D1 setoptions score=100 id=id4".split(),
         )
         ac(output, "")
         self.assertEqual(0, returnVal)
 
         output, returnVal = pcs(
-            self.temp_cib.name, "constraint order set D1 D2 setoptions id=5id"
+            self.temp_cib.name,
+            "constraint order set D1 D2 setoptions id=5id".split(),
         )
         ac(
             output,
@@ -3315,26 +3479,28 @@ Error: invalid constraint id '5id', '5' is not a valid first character for a con
         self.assertEqual(1, returnVal)
 
         output, returnVal = pcs(
-            self.temp_cib.name, "constraint order set D1 D2 setoptions id=id5"
+            self.temp_cib.name,
+            "constraint order set D1 D2 setoptions id=id5".split(),
         )
         ac(output, "")
         self.assertEqual(0, returnVal)
 
         output, returnVal = pcs(
-            self.temp_cib.name, "constraint order set D1 D2 setoptions id=id5"
+            self.temp_cib.name,
+            "constraint order set D1 D2 setoptions id=id5".split(),
         )
         ac(output, "Error: 'id5' already exists\n")
         self.assertEqual(1, returnVal)
 
         output, returnVal = pcs(
             self.temp_cib.name,
-            "constraint order set D2 D1 setoptions kind=Mandatory id=id6",
+            "constraint order set D2 D1 setoptions kind=Mandatory id=id6".split(),
         )
         ac(output, "")
         self.assertEqual(0, returnVal)
 
         output, returnVal = pcs(
-            self.temp_cib.name, "constraint order D1 then D2 id=7id"
+            self.temp_cib.name, "constraint order D1 then D2 id=7id".split(),
         )
         ac(
             output,
@@ -3345,7 +3511,7 @@ Error: invalid constraint id '7id', '7' is not a valid first character for a con
         self.assertEqual(1, returnVal)
 
         output, returnVal = pcs(
-            self.temp_cib.name, "constraint order D1 then D2 id=id7"
+            self.temp_cib.name, "constraint order D1 then D2 id=id7".split(),
         )
         ac(
             output,
@@ -3356,7 +3522,7 @@ Adding D1 D2 (kind: Mandatory) (Options: id=id7 first-action=start then-action=s
         self.assertEqual(0, returnVal)
 
         output, returnVal = pcs(
-            self.temp_cib.name, "constraint order D1 then D2 id=id7"
+            self.temp_cib.name, "constraint order D1 then D2 id=id7".split(),
         )
         ac(
             output,
@@ -3368,7 +3534,7 @@ Error: id 'id7' is already in use, please specify another one
 
         output, returnVal = pcs(
             self.temp_cib.name,
-            "constraint order D2 then D1 kind=Optional id=id8",
+            "constraint order D2 then D1 kind=Optional id=id8".split(),
         )
         ac(
             output,
@@ -3380,7 +3546,7 @@ Adding D2 D1 (kind: Optional) (Options: id=id8 first-action=start then-action=st
 
         output, returnVal = pcs(
             self.temp_cib.name,
-            "constraint location D1 rule constraint-id=9id defined pingd",
+            "constraint location D1 rule constraint-id=9id defined pingd".split(),
         )
         ac(
             output,
@@ -3392,14 +3558,14 @@ Error: invalid constraint id '9id', '9' is not a valid first character for a con
 
         output, returnVal = pcs(
             self.temp_cib.name,
-            "constraint location D1 rule constraint-id=id9 defined pingd",
+            "constraint location D1 rule constraint-id=id9 defined pingd".split(),
         )
         ac(output, "")
         self.assertEqual(0, returnVal)
 
         output, returnVal = pcs(
             self.temp_cib.name,
-            "constraint location D1 rule constraint-id=id9 defined pingd",
+            "constraint location D1 rule constraint-id=id9 defined pingd".split(),
         )
         ac(
             output,
@@ -3411,12 +3577,12 @@ Error: id 'id9' is already in use, please specify another one
 
         output, returnVal = pcs(
             self.temp_cib.name,
-            "constraint location D2 rule score=100 constraint-id=id10 id=rule1 defined pingd",
+            "constraint location D2 rule score=100 constraint-id=id10 id=rule1 defined pingd".split(),
         )
         ac(output, "")
         self.assertEqual(0, returnVal)
 
-        output, returnVal = pcs(self.temp_cib.name, "constraint --full")
+        output, returnVal = pcs(self.temp_cib.name, "constraint --full".split())
         ac(
             output,
             """\
@@ -3454,8 +3620,8 @@ class ConstraintBaseTest(unittest.TestCase, AssertPcsMixin):
         self.temp_cib = get_tmp_file("tier1_constraint")
         write_file_to_tmpfile(self.empty_cib, self.temp_cib)
         self.pcs_runner = PcsRunner(self.temp_cib.name)
-        self.assert_pcs_success("resource create A ocf:heartbeat:Dummy")
-        self.assert_pcs_success("resource create B ocf:heartbeat:Dummy")
+        self.assert_pcs_success("resource create A ocf:heartbeat:Dummy".split())
+        self.assert_pcs_success("resource create B ocf:heartbeat:Dummy".split())
 
     def tearDown(self):
         self.temp_cib.close()
@@ -3464,7 +3630,7 @@ class ConstraintBaseTest(unittest.TestCase, AssertPcsMixin):
 class CommonCreateWithSet(ConstraintBaseTest):
     def test_refuse_when_resource_does_not_exist(self):
         self.assert_pcs_fail(
-            "constraint ticket set A C setoptions ticket=T",
+            "constraint ticket set A C setoptions ticket=T".split(),
             ["Error: bundle/clone/group/resource 'C' does not exist"],
         )
 
@@ -3472,13 +3638,15 @@ class CommonCreateWithSet(ConstraintBaseTest):
 class TicketCreateWithSet(ConstraintBaseTest):
     def test_create_ticket(self):
         self.assert_pcs_success(
-            "constraint ticket set A B setoptions ticket=T loss-policy=fence"
+            "constraint ticket set A B setoptions ticket=T loss-policy=fence".split()
         )
 
     def test_can_skip_loss_policy(self):
-        self.assert_pcs_success("constraint ticket set A B setoptions ticket=T")
         self.assert_pcs_success(
-            "constraint ticket show",
+            "constraint ticket set A B setoptions ticket=T".split()
+        )
+        self.assert_pcs_success(
+            "constraint ticket show".split(),
             stdout_full=[
                 "Ticket Constraints:",
                 "  Resource Sets:",
@@ -3488,7 +3656,7 @@ class TicketCreateWithSet(ConstraintBaseTest):
 
     def test_refuse_bad_loss_policy(self):
         self.assert_pcs_fail(
-            "constraint ticket set A B setoptions ticket=T loss-policy=none",
+            "constraint ticket set A B setoptions ticket=T loss-policy=none".split(),
             [
                 "Error: 'none' is not a valid loss-policy value, use 'demote', "
                 + "'fence', 'freeze', 'stop'",
@@ -3497,13 +3665,13 @@ class TicketCreateWithSet(ConstraintBaseTest):
 
     def test_refuse_when_ticket_option_is_missing(self):
         self.assert_pcs_fail(
-            "constraint ticket set A B setoptions loss-policy=fence",
+            "constraint ticket set A B setoptions loss-policy=fence".split(),
             ["Error: required option 'ticket' is missing"],
         )
 
     def test_refuse_when_option_is_invalid(self):
         self.assert_pcs_fail(
-            "constraint ticket set A B setoptions loss-policy",
+            "constraint ticket set A B setoptions loss-policy".split(),
             stdout_start=["Error: missing value of 'loss-policy' option"],
         )
 
@@ -3511,10 +3679,10 @@ class TicketCreateWithSet(ConstraintBaseTest):
 class TicketAdd(ConstraintBaseTest):
     def test_create_ticket(self):
         self.assert_pcs_success(
-            "constraint ticket add T master A loss-policy=fence"
+            "constraint ticket add T master A loss-policy=fence".split()
         )
         self.assert_pcs_success(
-            "constraint ticket show",
+            "constraint ticket show".split(),
             stdout_full=[
                 "Ticket Constraints:",
                 "  Master A loss-policy=fence ticket=T",
@@ -3523,13 +3691,13 @@ class TicketAdd(ConstraintBaseTest):
 
     def test_refuse_noexistent_resource_id(self):
         self.assert_pcs_fail(
-            "constraint ticket add T master AA loss-policy=fence",
+            "constraint ticket add T master AA loss-policy=fence".split(),
             ["Error: bundle/clone/group/resource 'AA' does not exist"],
         )
 
     def test_refuse_invalid_role(self):
         self.assert_pcs_fail(
-            "constraint ticket add T bad-role A loss-policy=fence",
+            "constraint ticket add T bad-role A loss-policy=fence".split(),
             [
                 "Error: 'bad-role' is not a valid rsc-role value, use "
                 + "'Master', 'Slave', 'Started', 'Stopped'",
@@ -3538,10 +3706,10 @@ class TicketAdd(ConstraintBaseTest):
 
     def test_refuse_duplicate_ticket(self):
         self.assert_pcs_success(
-            "constraint ticket add T master A loss-policy=fence"
+            "constraint ticket add T master A loss-policy=fence".split()
         )
         self.assert_pcs_fail(
-            "constraint ticket add T master A loss-policy=fence",
+            "constraint ticket add T master A loss-policy=fence".split(),
             (
                 "Error: duplicate constraint already exists, use --force to "
                 "override\n" + ERRORS_HAVE_OCURRED + "Duplicate constraints:\n"
@@ -3551,10 +3719,10 @@ class TicketAdd(ConstraintBaseTest):
 
     def test_accept_duplicate_ticket_with_force(self):
         self.assert_pcs_success(
-            "constraint ticket add T master A loss-policy=fence"
+            "constraint ticket add T master A loss-policy=fence".split()
         )
         self.assert_pcs_success(
-            "constraint ticket add T master A loss-policy=fence --force",
+            "constraint ticket add T master A loss-policy=fence --force".split(),
             [
                 "Duplicate constraints:",
                 "  Master A loss-policy=fence ticket=T (id:ticket-T-A-Master)",
@@ -3562,7 +3730,7 @@ class TicketAdd(ConstraintBaseTest):
             ],
         )
         self.assert_pcs_success(
-            "constraint ticket show",
+            "constraint ticket show".split(),
             stdout_full=[
                 "Ticket Constraints:",
                 "  Master A loss-policy=fence ticket=T",
@@ -3576,7 +3744,7 @@ class TicketDeleteRemoveTest(ConstraintBaseTest):
 
     def _test_usage(self):
         self.assert_pcs_fail(
-            f"constraint ticket {self.command}",
+            ["constraint", "ticket", self.command],
             stdout_start=outdent(
                 f"""
                 Usage: pcs constraint [constraints]...
@@ -3586,19 +3754,23 @@ class TicketDeleteRemoveTest(ConstraintBaseTest):
 
     def _test_remove_multiple_tickets(self):
         # fixture
-        self.assert_pcs_success("constraint ticket add T A")
+        self.assert_pcs_success("constraint ticket add T A".split())
         self.assert_pcs_success(
-            "constraint ticket add T A --force",
+            "constraint ticket add T A --force".split(),
             stdout_full=[
                 "Duplicate constraints:",
                 "  A ticket=T (id:ticket-T-A)",
                 "Warning: duplicate constraint already exists",
             ],
         )
-        self.assert_pcs_success("constraint ticket set A B setoptions ticket=T")
-        self.assert_pcs_success("constraint ticket set A setoptions ticket=T")
         self.assert_pcs_success(
-            "constraint ticket show",
+            "constraint ticket set A B setoptions ticket=T".split()
+        )
+        self.assert_pcs_success(
+            "constraint ticket set A setoptions ticket=T".split()
+        )
+        self.assert_pcs_success(
+            "constraint ticket show".split(),
             stdout_full=[
                 "Ticket Constraints:",
                 "  A ticket=T",
@@ -3610,10 +3782,12 @@ class TicketDeleteRemoveTest(ConstraintBaseTest):
         )
 
         # test
-        self.assert_pcs_success(f"constraint ticket {self.command} T A")
+        self.assert_pcs_success(
+            ["constraint", "ticket", self.command, "T", "A"]
+        )
 
         self.assert_pcs_success(
-            "constraint ticket show",
+            "constraint ticket show".split(),
             stdout_full=[
                 "Ticket Constraints:",
                 "  Resource Sets:",
@@ -3623,10 +3797,11 @@ class TicketDeleteRemoveTest(ConstraintBaseTest):
 
     def _test_fail_when_no_matching_ticket_constraint_here(self):
         self.assert_pcs_success(
-            "constraint ticket show", stdout_full=["Ticket Constraints:",]
+            "constraint ticket show".split(),
+            stdout_full=["Ticket Constraints:"],
         )
         self.assert_pcs_fail(
-            f"constraint ticket {self.command} T A",
+            ["constraint", "ticket", self.command, "T", "A"],
             ["Error: no matching ticket constraint found"],
         )
 
@@ -3645,12 +3820,14 @@ class TicketRemoveTest(
 
 class TicketShow(ConstraintBaseTest):
     def test_show_set(self):
-        self.assert_pcs_success("constraint ticket set A B setoptions ticket=T")
         self.assert_pcs_success(
-            "constraint ticket add T master A loss-policy=fence"
+            "constraint ticket set A B setoptions ticket=T".split()
         )
         self.assert_pcs_success(
-            "constraint ticket show",
+            "constraint ticket add T master A loss-policy=fence".split()
+        )
+        self.assert_pcs_success(
+            "constraint ticket show".split(),
             [
                 "Ticket Constraints:",
                 "  Master A loss-policy=fence ticket=T",
@@ -3681,7 +3858,7 @@ class ConstraintEffect(
 
     def fixture_primitive(self, name):
         self.assert_pcs_success(
-            "resource create {0} ocf:heartbeat:Dummy".format(name)
+            ["resource", "create", name, "ocf:heartbeat:Dummy"]
         )
 
 
@@ -3694,9 +3871,9 @@ class LocationTypeId(ConstraintEffect):
         self.fixture_primitive("A")
         self.assert_effect(
             [
-                "constraint location A prefers node1",
-                "constraint location %A prefers node1",
-                "constraint location resource%A prefers node1",
+                "constraint location A prefers node1".split(),
+                "constraint location %A prefers node1".split(),
+                "constraint location resource%A prefers node1".split(),
             ],
             """<constraints>
                 <rsc_location id="location-A-node1-INFINITY" node="node1"
@@ -3710,9 +3887,9 @@ class LocationTypeId(ConstraintEffect):
         self.fixture_primitive("A")
         self.assert_effect(
             [
-                "constraint location A avoids node1",
-                "constraint location %A avoids node1",
-                "constraint location resource%A avoids node1",
+                "constraint location A avoids node1".split(),
+                "constraint location %A avoids node1".split(),
+                "constraint location resource%A avoids node1".split(),
             ],
             """<constraints>
                 <rsc_location id="location-A-node1--INFINITY" node="node1"
@@ -3726,9 +3903,9 @@ class LocationTypeId(ConstraintEffect):
         self.fixture_primitive("A")
         self.assert_effect(
             [
-                "constraint location add my-id A node1 INFINITY",
-                "constraint location add my-id %A node1 INFINITY",
-                "constraint location add my-id resource%A node1 INFINITY",
+                "constraint location add my-id A node1 INFINITY".split(),
+                "constraint location add my-id %A node1 INFINITY".split(),
+                "constraint location add my-id resource%A node1 INFINITY".split(),
             ],
             """<constraints>
                 <rsc_location id="my-id" node="node1" rsc="A" score="INFINITY"/>
@@ -3740,9 +3917,9 @@ class LocationTypeId(ConstraintEffect):
         self.fixture_primitive("A")
         self.assert_effect(
             [
-                "constraint location A rule '#uname' eq node1",
-                "constraint location %A rule '#uname' eq node1",
-                "constraint location resource%A rule '#uname' eq node1",
+                "constraint location A rule #uname eq node1".split(),
+                "constraint location %A rule #uname eq node1".split(),
+                "constraint location resource%A rule #uname eq node1".split(),
             ],
             """<constraints>
                 <rsc_location id="location-A" rsc="A">
@@ -3771,7 +3948,7 @@ class LocationTypePattern(ConstraintEffect):
     def test_prefers(self):
         self._stdout = LOCATION_NODE_VALIDATION_SKIP_WARNING + self._stdout
         self.assert_effect(
-            "constraint location regexp%res_[0-9] prefers node1",
+            "constraint location regexp%res_[0-9] prefers node1".split(),
             """<constraints>
                 <rsc_location id="location-res_0-9-node1-INFINITY" node="node1"
                     rsc-pattern="res_[0-9]" score="INFINITY"
@@ -3783,7 +3960,7 @@ class LocationTypePattern(ConstraintEffect):
     def test_avoids(self):
         self._stdout = LOCATION_NODE_VALIDATION_SKIP_WARNING + self._stdout
         self.assert_effect(
-            "constraint location regexp%res_[0-9] avoids node1",
+            "constraint location regexp%res_[0-9] avoids node1".split(),
             """<constraints>
                 <rsc_location id="location-res_0-9-node1--INFINITY" node="node1"
                     rsc-pattern="res_[0-9]" score="-INFINITY"
@@ -3795,7 +3972,7 @@ class LocationTypePattern(ConstraintEffect):
     def test_add(self):
         self._stdout = LOCATION_NODE_VALIDATION_SKIP_WARNING + self._stdout
         self.assert_effect(
-            "constraint location add my-id regexp%res_[0-9] node1 INFINITY",
+            "constraint location add my-id regexp%res_[0-9] node1 INFINITY".split(),
             """<constraints>
                 <rsc_location id="my-id" node="node1" rsc-pattern="res_[0-9]"
                     score="INFINITY"
@@ -3806,7 +3983,7 @@ class LocationTypePattern(ConstraintEffect):
 
     def test_rule(self):
         self.assert_effect(
-            "constraint location regexp%res_[0-9]  rule '#uname' eq node1",
+            "constraint location regexp%res_[0-9] rule #uname eq node1".split(),
             """<constraints>
                 <rsc_location id="location-res_0-9" rsc-pattern="res_[0-9]">
                     <rule id="location-res_0-9-rule" score="INFINITY">
@@ -3838,30 +4015,30 @@ class LocationShowWithPattern(ConstraintBaseTest):
     def fixture(self):
         self.assert_pcs_success_all(
             [
-                "resource create R1 ocf:heartbeat:Dummy",
-                "resource create R2 ocf:heartbeat:Dummy",
-                "resource create R3 ocf:heartbeat:Dummy",
-                "constraint location R1 prefers node1 node2=20",
-                "constraint location R1 avoids node3=30 node4",
-                "constraint location R2 prefers node3 node4=20",
-                "constraint location R2 avoids node1=30 node2",
-                "constraint location regexp%R_[0-9]+ prefers node1 node2=20",
-                "constraint location regexp%R_[0-9]+ avoids node3=30",
-                "constraint location regexp%R_[a-z]+ avoids node3=30",
-                "constraint location add my-id1 R3 node1 -INFINITY resource-discovery=never",
-                "constraint location add my-id2 R3 node2 -INFINITY resource-discovery=never",
-                "constraint location add my-id3 regexp%R_[0-9]+ node4 -INFINITY resource-discovery=never",
-                "constraint location R1 rule score=-INFINITY date-spec operation=date_spec years=3005",
-                "constraint location R1 rule score=-INFINITY date-spec operation=date_spec years=3007",
-                "constraint location regexp%R_[0-9]+ rule score=-INFINITY date-spec operation=date_spec years=3006",
-                "constraint location regexp%R_[0-9]+ rule score=20 defined pingd",
+                "resource create R1 ocf:heartbeat:Dummy".split(),
+                "resource create R2 ocf:heartbeat:Dummy".split(),
+                "resource create R3 ocf:heartbeat:Dummy".split(),
+                "constraint location R1 prefers node1 node2=20".split(),
+                "constraint location R1 avoids node3=30 node4".split(),
+                "constraint location R2 prefers node3 node4=20".split(),
+                "constraint location R2 avoids node1=30 node2".split(),
+                "constraint location regexp%R_[0-9]+ prefers node1 node2=20".split(),
+                "constraint location regexp%R_[0-9]+ avoids node3=30".split(),
+                "constraint location regexp%R_[a-z]+ avoids node3=30".split(),
+                "constraint location add my-id1 R3 node1 -INFINITY resource-discovery=never".split(),
+                "constraint location add my-id2 R3 node2 -INFINITY resource-discovery=never".split(),
+                "constraint location add my-id3 regexp%R_[0-9]+ node4 -INFINITY resource-discovery=never".split(),
+                "constraint location R1 rule score=-INFINITY date-spec operation=date_spec years=3005".split(),
+                "constraint location R1 rule score=-INFINITY date-spec operation=date_spec years=3007".split(),
+                "constraint location regexp%R_[0-9]+ rule score=-INFINITY date-spec operation=date_spec years=3006".split(),
+                "constraint location regexp%R_[0-9]+ rule score=20 defined pingd".split(),
             ]
         )
 
     def test_show(self):
         self.fixture()
         self.assert_pcs_success(
-            "constraint location show --all --full",
+            "constraint location show --all --full".split(),
             outdent(
                 """\
             Location Constraints:
@@ -3913,7 +4090,7 @@ class LocationShowWithPattern(ConstraintBaseTest):
         )
 
         self.assert_pcs_success(
-            "constraint location show",
+            "constraint location show".split(),
             outdent(
                 """\
             Location Constraints:
@@ -3965,7 +4142,7 @@ class LocationShowWithPattern(ConstraintBaseTest):
         )
 
         self.assert_pcs_success(
-            "constraint location show nodes --full",
+            "constraint location show nodes --full".split(),
             outdent(
                 # pylint:disable=trailing-whitespace
                 """\
@@ -4025,7 +4202,7 @@ class LocationShowWithPattern(ConstraintBaseTest):
         )
 
         self.assert_pcs_success(
-            "constraint location show nodes node2",
+            "constraint location show nodes node2".split(),
             outdent(
                 """\
             Location Constraints:
@@ -4058,7 +4235,7 @@ class LocationShowWithPattern(ConstraintBaseTest):
         )
 
         self.assert_pcs_success(
-            "constraint location show resources regexp%R_[0-9]+",
+            "constraint location show resources regexp%R_[0-9]+".split(),
             outdent(
                 """\
             Location Constraints:
@@ -4094,17 +4271,29 @@ class Bundle(ConstraintEffect):
             super(Bundle, self).fixture_primitive(name)
             return
         self.assert_pcs_success(
-            "resource create {0} ocf:heartbeat:Dummy bundle {1}".format(
-                name, bundle
-            )
+            [
+                "resource",
+                "create",
+                name,
+                "ocf:heartbeat:Dummy",
+                "bundle",
+                bundle,
+            ]
         )
 
     def fixture_bundle(self, name):
         self.assert_pcs_success(
-            (
-                "resource bundle create {0} container docker image=pcs:test "
-                "network control-port=1234"
-            ).format(name)
+            [
+                "resource",
+                "bundle",
+                "create",
+                name,
+                "container",
+                "docker",
+                "image=pcs:test",
+                "network",
+                "control-port=1234",
+            ]
         )
 
 
@@ -4112,7 +4301,7 @@ class Bundle(ConstraintEffect):
 class BundleLocation(Bundle):
     def test_bundle_prefers(self):
         self.assert_effect(
-            "constraint location B prefers node1",
+            "constraint location B prefers node1".split(),
             """
                 <constraints>
                     <rsc_location id="location-B-node1-INFINITY" node="node1"
@@ -4125,7 +4314,7 @@ class BundleLocation(Bundle):
 
     def test_bundle_avoids(self):
         self.assert_effect(
-            "constraint location B avoids node1",
+            "constraint location B avoids node1".split(),
             """
                 <constraints>
                     <rsc_location id="location-B-node1--INFINITY" node="node1"
@@ -4138,7 +4327,7 @@ class BundleLocation(Bundle):
 
     def test_bundle_location(self):
         self.assert_effect(
-            "constraint location add id B node1 100",
+            "constraint location add id B node1 100".split(),
             """
                 <constraints>
                     <rsc_location id="id" node="node1" rsc="B" score="100" />
@@ -4150,7 +4339,7 @@ class BundleLocation(Bundle):
     def test_primitive_prefers(self):
         self.fixture_primitive("R", "B")
         self.assert_pcs_fail(
-            "constraint location R prefers node1",
+            "constraint location R prefers node1".split(),
             (
                 "Error: R is a bundle resource, you should use the bundle id: "
                 "B when adding constraints. Use --force to override.\n"
@@ -4161,7 +4350,7 @@ class BundleLocation(Bundle):
     def test_primitive_prefers_force(self):
         self.fixture_primitive("R", "B")
         self.assert_effect(
-            "constraint location R prefers node1 --force",
+            "constraint location R prefers node1 --force".split(),
             """
                 <constraints>
                     <rsc_location id="location-R-node1-INFINITY" node="node1"
@@ -4175,7 +4364,7 @@ class BundleLocation(Bundle):
     def test_primitive_avoids(self):
         self.fixture_primitive("R", "B")
         self.assert_pcs_fail(
-            "constraint location R avoids node1",
+            "constraint location R avoids node1".split(),
             (
                 "Error: R is a bundle resource, you should use the bundle id: "
                 "B when adding constraints. Use --force to override.\n"
@@ -4186,7 +4375,7 @@ class BundleLocation(Bundle):
     def test_primitive_avoids_force(self):
         self.fixture_primitive("R", "B")
         self.assert_effect(
-            "constraint location R avoids node1 --force",
+            "constraint location R avoids node1 --force".split(),
             """
                 <constraints>
                     <rsc_location id="location-R-node1--INFINITY" node="node1"
@@ -4200,7 +4389,7 @@ class BundleLocation(Bundle):
     def test_primitive_location(self):
         self.fixture_primitive("R", "B")
         self.assert_pcs_fail(
-            "constraint location add id R node1 100",
+            "constraint location add id R node1 100".split(),
             (
                 "Error: R is a bundle resource, you should use the bundle id: "
                 "B when adding constraints. Use --force to override.\n"
@@ -4211,7 +4400,7 @@ class BundleLocation(Bundle):
     def test_primitive_location_force(self):
         self.fixture_primitive("R", "B")
         self.assert_effect(
-            "constraint location add id R node1 100 --force",
+            "constraint location add id R node1 100 --force".split(),
             """
                 <constraints>
                     <rsc_location id="id" node="node1" rsc="R" score="100" />
@@ -4229,7 +4418,7 @@ class BundleColocation(Bundle):
 
     def test_bundle(self):
         self.assert_effect(
-            "constraint colocation add B with X",
+            "constraint colocation add B with X".split(),
             """
                 <constraints>
                     <rsc_colocation id="colocation-B-X-INFINITY"
@@ -4241,7 +4430,7 @@ class BundleColocation(Bundle):
     def test_primitive(self):
         self.fixture_primitive("R", "B")
         self.assert_pcs_fail(
-            "constraint colocation add R with X",
+            "constraint colocation add R with X".split(),
             "Error: R is a bundle resource, you should use the bundle id: B "
             "when adding constraints. Use --force to override.\n",
         )
@@ -4249,7 +4438,7 @@ class BundleColocation(Bundle):
     def test_primitive_force(self):
         self.fixture_primitive("R", "B")
         self.assert_effect(
-            "constraint colocation add R with X --force",
+            "constraint colocation add R with X --force".split(),
             """
                 <constraints>
                     <rsc_colocation id="colocation-R-X-INFINITY"
@@ -4260,7 +4449,7 @@ class BundleColocation(Bundle):
 
     def test_bundle_set(self):
         self.assert_effect(
-            "constraint colocation set B X",
+            "constraint colocation set B X".split(),
             """
                 <constraints>
                     <rsc_colocation id="colocation_set_BBXX" score="INFINITY">
@@ -4276,7 +4465,7 @@ class BundleColocation(Bundle):
     def test_primitive_set(self):
         self.fixture_primitive("R", "B")
         self.assert_pcs_fail(
-            "constraint colocation set R X",
+            "constraint colocation set R X".split(),
             "Error: R is a bundle resource, you should use the bundle id: B "
             "when adding constraints, use --force to override\n",
         )
@@ -4284,7 +4473,7 @@ class BundleColocation(Bundle):
     def test_primitive_set_force(self):
         self.fixture_primitive("R", "B")
         self.assert_effect(
-            "constraint colocation set R X --force",
+            "constraint colocation set R X --force".split(),
             """
                 <constraints>
                     <rsc_colocation id="colocation_set_RRXX" score="INFINITY">
@@ -4307,7 +4496,7 @@ class BundleOrder(Bundle):
 
     def test_bundle(self):
         self.assert_effect(
-            "constraint order B then X",
+            "constraint order B then X".split(),
             """
                 <constraints>
                     <rsc_order id="order-B-X-mandatory"
@@ -4322,7 +4511,7 @@ class BundleOrder(Bundle):
     def test_primitive(self):
         self.fixture_primitive("R", "B")
         self.assert_pcs_fail(
-            "constraint order R then X",
+            "constraint order R then X".split(),
             "Error: R is a bundle resource, you should use the bundle id: B "
             "when adding constraints. Use --force to override.\n",
         )
@@ -4330,7 +4519,7 @@ class BundleOrder(Bundle):
     def test_primitive_force(self):
         self.fixture_primitive("R", "B")
         self.assert_effect(
-            "constraint order R then X --force",
+            "constraint order R then X --force".split(),
             """
                 <constraints>
                     <rsc_order id="order-R-X-mandatory"
@@ -4344,7 +4533,7 @@ class BundleOrder(Bundle):
 
     def test_bundle_set(self):
         self.assert_effect(
-            "constraint order set B X",
+            "constraint order set B X".split(),
             """
                 <constraints>
                     <rsc_order id="order_set_BBXX">
@@ -4360,7 +4549,7 @@ class BundleOrder(Bundle):
     def test_primitive_set(self):
         self.fixture_primitive("R", "B")
         self.assert_pcs_fail(
-            "constraint order set R X",
+            "constraint order set R X".split(),
             "Error: R is a bundle resource, you should use the bundle id: B "
             "when adding constraints, use --force to override\n",
         )
@@ -4368,7 +4557,7 @@ class BundleOrder(Bundle):
     def test_primitive_set_force(self):
         self.fixture_primitive("R", "B")
         self.assert_effect(
-            "constraint order set R X --force",
+            "constraint order set R X --force".split(),
             """
                 <constraints>
                     <rsc_order id="order_set_RRXX">
@@ -4388,7 +4577,7 @@ class BundleOrder(Bundle):
 class BundleTicket(Bundle):
     def test_bundle(self):
         self.assert_effect(
-            "constraint ticket add T B",
+            "constraint ticket add T B".split(),
             """
                 <constraints>
                     <rsc_ticket id="ticket-T-B" rsc="B" ticket="T" />
@@ -4399,7 +4588,7 @@ class BundleTicket(Bundle):
     def test_primitive(self):
         self.fixture_primitive("R", "B")
         self.assert_pcs_fail(
-            "constraint ticket add T R",
+            "constraint ticket add T R".split(),
             "Error: R is a bundle resource, you should use the bundle id: B "
             "when adding constraints, use --force to override\n",
         )
@@ -4407,7 +4596,7 @@ class BundleTicket(Bundle):
     def test_primitive_force(self):
         self.fixture_primitive("R", "B")
         self.assert_effect(
-            "constraint ticket add T R --force",
+            "constraint ticket add T R --force".split(),
             """
                 <constraints>
                     <rsc_ticket id="ticket-T-R" rsc="R" ticket="T" />
@@ -4419,7 +4608,7 @@ class BundleTicket(Bundle):
 
     def test_bundle_set(self):
         self.assert_effect(
-            "constraint ticket set B setoptions ticket=T",
+            "constraint ticket set B setoptions ticket=T".split(),
             """
                 <constraints>
                     <rsc_ticket id="ticket_set_BB" ticket="T">
@@ -4434,7 +4623,7 @@ class BundleTicket(Bundle):
     def test_primitive_set(self):
         self.fixture_primitive("R", "B")
         self.assert_pcs_fail(
-            "constraint ticket set R setoptions ticket=T",
+            "constraint ticket set R setoptions ticket=T".split(),
             "Error: R is a bundle resource, you should use the bundle id: B "
             "when adding constraints, use --force to override\n",
         )
@@ -4442,7 +4631,7 @@ class BundleTicket(Bundle):
     def test_primitive_set_force(self):
         self.fixture_primitive("R", "B")
         self.assert_effect(
-            "constraint ticket set R setoptions ticket=T --force",
+            "constraint ticket set R setoptions ticket=T --force".split(),
             """
                 <constraints>
                     <rsc_ticket id="ticket_set_RR" ticket="T">
@@ -4482,15 +4671,13 @@ class LocationPrefersAvoidsMixin(
 
     @staticmethod
     def _unpack_node_score_list_to_cmd(node_score_list):
-        return " ".join(
-            [
-                "{node}{score}".format(
-                    node=item.node,
-                    score="" if item.score is None else f"={item.score}",
-                )
-                for item in node_score_list
-            ]
-        )
+        return [
+            "{node}{score}".format(
+                node=item.node,
+                score="" if item.score is None else f"={item.score}",
+            )
+            for item in node_score_list
+        ]
 
     def _construct_xml(self, node_score_list):
         return "\n".join(
@@ -4514,7 +4701,7 @@ class LocationPrefersAvoidsMixin(
         self.fixture_primitive("dummy")
         self.assert_effect(
             (
-                f"constraint location dummy {self.command} "
+                ["constraint", "location", "dummy", self.command]
                 + self._unpack_node_score_list_to_cmd(node_score_list)
             ),
             self._construct_xml(node_score_list),
@@ -4526,7 +4713,7 @@ class LocationPrefersAvoidsMixin(
         self.fixture_primitive("dummy")
         self.assert_pcs_fail(
             (
-                f"constraint location dummy {self.command} "
+                ["constraint", "location", "dummy", self.command]
                 + self._unpack_node_score_list_to_cmd(node_score_list)
             ),
             error_msg + LOCATION_NODE_VALIDATION_SKIP_WARNING,
@@ -4609,7 +4796,7 @@ class LocationAvoids(ConstraintEffect, LocationPrefersAvoidsMixin):
 class LocationAdd(ConstraintEffect):
     def test_invalid_score(self):
         self.assert_pcs_fail(
-            "constraint location add location1 D1 rh7-1 bar",
+            "constraint location add location1 D1 rh7-1 bar".split(),
             (
                 "Error: invalid score 'bar', use integer or INFINITY or "
                 "-INFINITY\n" + LOCATION_NODE_VALIDATION_SKIP_WARNING
@@ -4619,7 +4806,7 @@ class LocationAdd(ConstraintEffect):
 
     def test_invalid_location(self):
         self.assert_pcs_fail(
-            "constraint location add loc:dummy D1 rh7-1 100",
+            "constraint location add loc:dummy D1 rh7-1 100".split(),
             (
                 "Error: invalid constraint id 'loc:dummy', ':' is not a valid "
                 "character for a constraint id\n"
@@ -4636,17 +4823,31 @@ class ExpiredConstraints(ConstraintBaseTest):
     )
 
     def fixture_group(self):
-        self.assert_pcs_success("resource create dummy1 ocf:heartbeat:Dummy")
-        self.assert_pcs_success("resource create dummy2 ocf:heartbeat:Dummy")
-        self.assert_pcs_success("resource group add dummy_group dummy1 dummy2")
+        self.assert_pcs_success(
+            "resource create dummy1 ocf:heartbeat:Dummy".split()
+        )
+        self.assert_pcs_success(
+            "resource create dummy2 ocf:heartbeat:Dummy".split()
+        )
+        self.assert_pcs_success(
+            "resource group add dummy_group dummy1 dummy2".split()
+        )
 
     def fixture_primitive(self):
-        self.assert_pcs_success("resource create dummy ocf:heartbeat:Dummy")
+        self.assert_pcs_success(
+            "resource create dummy ocf:heartbeat:Dummy".split()
+        )
 
     def fixture_multiple_primitive(self):
-        self.assert_pcs_success("resource create D1 ocf:heartbeat:Dummy")
-        self.assert_pcs_success("resource create D2 ocf:heartbeat:Dummy")
-        self.assert_pcs_success("resource create D3 ocf:heartbeat:Dummy")
+        self.assert_pcs_success(
+            "resource create D1 ocf:heartbeat:Dummy".split()
+        )
+        self.assert_pcs_success(
+            "resource create D2 ocf:heartbeat:Dummy".split()
+        )
+        self.assert_pcs_success(
+            "resource create D3 ocf:heartbeat:Dummy".split()
+        )
 
     def test_crm_rule_missing(self):
         self.pcs_runner = PcsRunner(
@@ -4654,11 +4855,13 @@ class ExpiredConstraints(ConstraintBaseTest):
         )
         self.fixture_primitive()
         self.assert_pcs_success(
-            "constraint location dummy rule id=test-rule score=INFINITY "
-            "date lt 2019-01-01"
+            (
+                "constraint location dummy rule id=test-rule score=INFINITY "
+                "date lt 2019-01-01"
+            ).split()
         )
         self.assert_pcs_result(
-            "constraint",
+            ["constraint"],
             CRM_RULE_MISSING_MSG
             + outdent(
                 """\
@@ -4677,11 +4880,13 @@ class ExpiredConstraints(ConstraintBaseTest):
     def test_in_effect_primitive_plain(self):
         self.fixture_primitive()
         self.assert_pcs_success(
-            "constraint location dummy rule id=test-rule score=INFINITY "
-            "date gt 2019-01-01"
+            (
+                "constraint location dummy rule id=test-rule score=INFINITY "
+                "date gt 2019-01-01"
+            ).split()
         )
         self.assert_pcs_result(
-            "constraint",
+            ["constraint"],
             outdent(
                 """\
             Location Constraints:
@@ -4699,11 +4904,13 @@ class ExpiredConstraints(ConstraintBaseTest):
     def test_in_effect_primitive_full(self):
         self.fixture_primitive()
         self.assert_pcs_success(
-            "constraint location dummy rule id=test-rule score=INFINITY "
-            "date gt 2019-01-01"
+            (
+                "constraint location dummy rule id=test-rule score=INFINITY "
+                "date gt 2019-01-01"
+            ).split()
         )
         self.assert_pcs_result(
-            "constraint --full",
+            "constraint --full".split(),
             outdent(
                 """\
             Location Constraints:
@@ -4721,11 +4928,13 @@ class ExpiredConstraints(ConstraintBaseTest):
     def test_in_effect_primitive_all(self):
         self.fixture_primitive()
         self.assert_pcs_success(
-            "constraint location dummy rule id=test-rule score=INFINITY "
-            "date gt 2019-01-01"
+            (
+                "constraint location dummy rule id=test-rule score=INFINITY "
+                "date gt 2019-01-01"
+            ).split()
         )
         self.assert_pcs_result(
-            "constraint --all",
+            "constraint --all".split(),
             outdent(
                 """\
             Location Constraints:
@@ -4743,11 +4952,13 @@ class ExpiredConstraints(ConstraintBaseTest):
     def test_in_effect_primitive_full_all(self):
         self.fixture_primitive()
         self.assert_pcs_success(
-            "constraint location dummy rule id=test-rule score=INFINITY "
-            "date gt 2019-01-01"
+            (
+                "constraint location dummy rule id=test-rule score=INFINITY "
+                "date gt 2019-01-01"
+            ).split()
         )
         self.assert_pcs_result(
-            "constraint --full --all",
+            "constraint --full --all".split(),
             outdent(
                 """\
                 Location Constraints:
@@ -4765,11 +4976,13 @@ class ExpiredConstraints(ConstraintBaseTest):
     def test_in_effect_group_plain(self):
         self.fixture_group()
         self.assert_pcs_success(
-            "constraint location dummy_group rule id=test-rule score=INFINITY "
-            "date gt 2019-01-01"
+            (
+                "constraint location dummy_group rule id=test-rule score=INFINITY "
+                "date gt 2019-01-01"
+            ).split()
         )
         self.assert_pcs_result(
-            "constraint",
+            ["constraint"],
             outdent(
                 """\
             Location Constraints:
@@ -4787,11 +5000,13 @@ class ExpiredConstraints(ConstraintBaseTest):
     def test_expired_primitive_plain(self):
         self.fixture_primitive()
         self.assert_pcs_success(
-            "constraint location dummy rule id=test-rule score=INFINITY "
-            "date lt 2019-01-01"
+            (
+                "constraint location dummy rule id=test-rule score=INFINITY "
+                "date lt 2019-01-01"
+            ).split()
         )
         self.assert_pcs_result(
-            "constraint",
+            ["constraint"],
             outdent(
                 """\
                 Location Constraints:
@@ -4805,11 +5020,13 @@ class ExpiredConstraints(ConstraintBaseTest):
     def test_expired_primitive_full(self):
         self.fixture_primitive()
         self.assert_pcs_success(
-            "constraint location dummy rule id=test-rule score=INFINITY "
-            "date lt 2019-01-01"
+            (
+                "constraint location dummy rule id=test-rule score=INFINITY "
+                "date lt 2019-01-01"
+            ).split()
         )
         self.assert_pcs_result(
-            "constraint --full",
+            "constraint --full".split(),
             outdent(
                 """\
                 Location Constraints:
@@ -4823,11 +5040,13 @@ class ExpiredConstraints(ConstraintBaseTest):
     def test_expired_primitive_all(self):
         self.fixture_primitive()
         self.assert_pcs_success(
-            "constraint location dummy rule id=test-rule score=INFINITY "
-            "date lt 2019-01-01"
+            (
+                "constraint location dummy rule id=test-rule score=INFINITY "
+                "date lt 2019-01-01"
+            ).split()
         )
         self.assert_pcs_result(
-            "constraint --all",
+            "constraint --all".split(),
             outdent(
                 """\
                 Location Constraints:
@@ -4845,11 +5064,13 @@ class ExpiredConstraints(ConstraintBaseTest):
     def test_expired_primitive_full_all(self):
         self.fixture_primitive()
         self.assert_pcs_success(
-            "constraint location dummy rule id=test-rule score=INFINITY "
-            "date lt 2019-01-01"
+            (
+                "constraint location dummy rule id=test-rule score=INFINITY "
+                "date lt 2019-01-01"
+            ).split()
         )
         self.assert_pcs_result(
-            "constraint --full --all",
+            "constraint --full --all".split(),
             outdent(
                 """\
                 Location Constraints:
@@ -4867,11 +5088,13 @@ class ExpiredConstraints(ConstraintBaseTest):
     def test_expired_group_plain(self):
         self.fixture_group()
         self.assert_pcs_success(
-            "constraint location dummy_group rule id=test-rule score=INFINITY "
-            "date lt 2019-01-01"
+            (
+                "constraint location dummy_group rule id=test-rule score=INFINITY "
+                "date lt 2019-01-01"
+            ).split()
         )
         self.assert_pcs_result(
-            "constraint",
+            ["constraint"],
             outdent(
                 """\
                 Location Constraints:
@@ -4885,11 +5108,13 @@ class ExpiredConstraints(ConstraintBaseTest):
     def test_indeterminate_primitive_plain(self):
         self.fixture_primitive()
         self.assert_pcs_success(
-            "constraint location dummy rule id=test-rule score=INFINITY "
-            "date eq 2019-01-01 or date eq 2019-03-01"
+            (
+                "constraint location dummy rule id=test-rule score=INFINITY "
+                "date eq 2019-01-01 or date eq 2019-03-01"
+            ).split()
         )
         self.assert_pcs_result(
-            "constraint",
+            ["constraint"],
             outdent(
                 """\
                 Location Constraints:
@@ -4908,11 +5133,13 @@ class ExpiredConstraints(ConstraintBaseTest):
     def test_indeterminate_primitive_full(self):
         self.fixture_primitive()
         self.assert_pcs_success(
-            "constraint location dummy rule id=test-rule score=INFINITY "
-            "date eq 2019-01-01 or date eq 2019-03-01"
+            (
+                "constraint location dummy rule id=test-rule score=INFINITY "
+                "date eq 2019-01-01 or date eq 2019-03-01"
+            ).split()
         )
         self.assert_pcs_result(
-            "constraint --full",
+            "constraint --full".split(),
             outdent(
                 """\
                 Location Constraints:
@@ -4931,11 +5158,13 @@ class ExpiredConstraints(ConstraintBaseTest):
     def test_indeterminate_primitive_all(self):
         self.fixture_primitive()
         self.assert_pcs_success(
-            "constraint location dummy rule id=test-rule score=INFINITY "
-            "date eq 2019-01-01 or date eq 2019-03-01"
+            (
+                "constraint location dummy rule id=test-rule score=INFINITY "
+                "date eq 2019-01-01 or date eq 2019-03-01"
+            ).split()
         )
         self.assert_pcs_result(
-            "constraint --all",
+            "constraint --all".split(),
             outdent(
                 """\
                 Location Constraints:
@@ -4954,11 +5183,13 @@ class ExpiredConstraints(ConstraintBaseTest):
     def test_indeterminate_primitive_full_all(self):
         self.fixture_primitive()
         self.assert_pcs_success(
-            "constraint location dummy rule id=test-rule score=INFINITY "
-            "date eq 2019-01-01 or date eq 2019-03-01"
+            (
+                "constraint location dummy rule id=test-rule score=INFINITY "
+                "date eq 2019-01-01 or date eq 2019-03-01"
+            ).split()
         )
         self.assert_pcs_result(
-            "constraint --full --all",
+            "constraint --full --all".split(),
             outdent(
                 """\
                 Location Constraints:
@@ -4977,11 +5208,13 @@ class ExpiredConstraints(ConstraintBaseTest):
     def test_indeterminate_group_plain(self):
         self.fixture_group()
         self.assert_pcs_success(
-            "constraint location dummy_group rule id=test-rule score=INFINITY "
-            "date eq 2019-01-01 or date eq 2019-03-01"
+            (
+                "constraint location dummy_group rule id=test-rule score=INFINITY "
+                "date eq 2019-01-01 or date eq 2019-03-01"
+            ).split()
         )
         self.assert_pcs_result(
-            "constraint",
+            ["constraint"],
             outdent(
                 """\
                 Location Constraints:
@@ -5000,11 +5233,11 @@ class ExpiredConstraints(ConstraintBaseTest):
     def test_not_yet_in_effect_primitive_plain(self):
         self.fixture_primitive()
         self.assert_pcs_success(
-            "constraint location dummy rule id=test-rule score=INFINITY "
-            "date gt " + self._tomorrow
+            "constraint location dummy rule id=test-rule score=INFINITY date gt".split()
+            + [self._tomorrow]
         )
         self.assert_pcs_result(
-            "constraint",
+            ["constraint"],
             outdent(
                 f"""\
                 Location Constraints:
@@ -5022,11 +5255,11 @@ class ExpiredConstraints(ConstraintBaseTest):
     def test_not_yet_in_effect_primitive_full(self):
         self.fixture_primitive()
         self.assert_pcs_success(
-            "constraint location dummy rule id=test-rule score=INFINITY "
-            "date gt " + self._tomorrow
+            "constraint location dummy rule id=test-rule score=INFINITY date gt".split()
+            + [self._tomorrow]
         )
         self.assert_pcs_result(
-            "constraint --full",
+            "constraint --full".split(),
             outdent(
                 f"""\
                 Location Constraints:
@@ -5044,11 +5277,11 @@ class ExpiredConstraints(ConstraintBaseTest):
     def test_not_yet_in_effect_primitive_all(self):
         self.fixture_primitive()
         self.assert_pcs_success(
-            "constraint location dummy rule id=test-rule score=INFINITY "
-            "date gt " + self._tomorrow
+            "constraint location dummy rule id=test-rule score=INFINITY date gt".split()
+            + [self._tomorrow]
         )
         self.assert_pcs_result(
-            "constraint --all",
+            "constraint --all".split(),
             outdent(
                 f"""\
                 Location Constraints:
@@ -5066,11 +5299,11 @@ class ExpiredConstraints(ConstraintBaseTest):
     def test_not_yet_in_effect_primitive_full_all(self):
         self.fixture_primitive()
         self.assert_pcs_success(
-            "constraint location dummy rule id=test-rule score=INFINITY "
-            "date gt " + self._tomorrow
+            "constraint location dummy rule id=test-rule score=INFINITY date gt".split()
+            + [self._tomorrow]
         )
         self.assert_pcs_result(
-            "constraint --full --all",
+            "constraint --full --all".split(),
             outdent(
                 f"""\
                 Location Constraints:
@@ -5088,11 +5321,11 @@ class ExpiredConstraints(ConstraintBaseTest):
     def test_not_yet_in_effect_group_plain(self):
         self.fixture_group()
         self.assert_pcs_success(
-            "constraint location dummy_group rule id=test-rule score=INFINITY "
-            "date gt " + self._tomorrow
+            "constraint location dummy_group rule id=test-rule score=INFINITY date gt".split()
+            + [self._tomorrow]
         )
         self.assert_pcs_result(
-            "constraint",
+            ["constraint"],
             outdent(
                 f"""\
                 Location Constraints:
@@ -5110,32 +5343,44 @@ class ExpiredConstraints(ConstraintBaseTest):
     def test_complex_primitive_plain(self):
         self.fixture_multiple_primitive()
         self.assert_pcs_success(
-            "constraint location D1 rule id=test-rule-D1-1 score=INFINITY "
-            "not_defined pingd"
+            (
+                "constraint location D1 rule id=test-rule-D1-1 score=INFINITY "
+                "not_defined pingd"
+            ).split()
         )
         self.assert_pcs_success(
-            "constraint location D1 rule id=test-rule-D1-2 score=INFINITY "
-            "( date eq 2019-01-01 or date eq 2019-01-30 ) and #uname eq node1"
+            (
+                "constraint location D1 rule id=test-rule-D1-2 score=INFINITY "
+                "( date eq 2019-01-01 or date eq 2019-01-30 ) and #uname eq node1"
+            ).split()
         )
         self.assert_pcs_success(
-            "constraint location D2 rule id=test-constr-D2 score=INFINITY "
-            "date in_range 2019-01-01 to 2019-02-01"
+            (
+                "constraint location D2 rule id=test-constr-D2 score=INFINITY "
+                "date in_range 2019-01-01 to 2019-02-01"
+            ).split()
         )
         self.assert_pcs_success(
-            "constraint rule add location-D2 id=test-duration "
-            "score=INFINITY date in_range 2019-03-01 to duration weeks=2"
+            (
+                "constraint rule add location-D2 id=test-duration score=INFINITY "
+                "date in_range 2019-03-01 to duration weeks=2"
+            ).split()
         )
         self.assert_pcs_success(
-            "constraint location D3 rule id=test-rule-D3-0 score=INFINITY "
-            "date in_range 2019-03-01 to duration weeks=2"
+            (
+                "constraint location D3 rule id=test-rule-D3-0 score=INFINITY "
+                "date in_range 2019-03-01 to duration weeks=2"
+            ).split()
         )
         self.assert_pcs_success(
-            "constraint rule add location-D3 id=test-defined "
-            "score=INFINITY not_defined pingd"
+            (
+                "constraint rule add location-D3 id=test-defined score=INFINITY "
+                "not_defined pingd"
+            ).split()
         )
 
         self.assert_pcs_result(
-            "constraint",
+            ["constraint"],
             outdent(
                 """\
                 Location Constraints:
@@ -5166,32 +5411,44 @@ class ExpiredConstraints(ConstraintBaseTest):
     def test_complex_primitive_all(self):
         self.fixture_multiple_primitive()
         self.assert_pcs_success(
-            "constraint location D1 rule id=test-rule-D1 score=INFINITY "
-            "not_defined pingd"
+            (
+                "constraint location D1 rule id=test-rule-D1 score=INFINITY "
+                "not_defined pingd"
+            ).split()
         )
         self.assert_pcs_success(
-            "constraint location D1 rule id=test-rule-D1-2 score=INFINITY "
-            "( date eq 2019-01-01 or date eq 2019-01-30 ) and #uname eq node1"
+            (
+                "constraint location D1 rule id=test-rule-D1-2 score=INFINITY "
+                "( date eq 2019-01-01 or date eq 2019-01-30 ) and #uname eq node1"
+            ).split()
         )
         self.assert_pcs_success(
-            "constraint location D2 rule id=test-constr-D2 score=INFINITY "
-            "date in_range 2019-01-01 to 2019-02-01"
+            (
+                "constraint location D2 rule id=test-constr-D2 score=INFINITY "
+                "date in_range 2019-01-01 to 2019-02-01"
+            ).split()
         )
         self.assert_pcs_success(
-            "constraint rule add location-D2 id=test-duration "
-            "score=INFINITY date in_range 2019-03-01 to duration weeks=2"
+            (
+                "constraint rule add location-D2 id=test-duration score=INFINITY "
+                "date in_range 2019-03-01 to duration weeks=2"
+            ).split()
         )
         self.assert_pcs_success(
-            "constraint location D3 rule id=test-rule-D3-0 score=INFINITY "
-            "date in_range 2019-03-01 to duration weeks=2"
+            (
+                "constraint location D3 rule id=test-rule-D3-0 score=INFINITY "
+                "date in_range 2019-03-01 to duration weeks=2"
+            ).split()
         )
         self.assert_pcs_success(
-            "constraint rule add location-D3 id=test-defined "
-            "score=INFINITY not_defined pingd"
+            (
+                "constraint rule add location-D3 id=test-defined score=INFINITY "
+                "not_defined pingd"
+            ).split()
         )
 
         self.assert_pcs_result(
-            "constraint --all",
+            "constraint --all".split(),
             outdent(
                 """\
                 Location Constraints:

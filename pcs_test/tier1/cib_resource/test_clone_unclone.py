@@ -144,7 +144,7 @@ class Unclone(
 
     def test_nonexistent_clone(self):
         self.assert_pcs_fail(
-            "resource unclone NonExistentClone",
+            "resource unclone NonExistentClone".split(),
             "Error: could not find resource: NonExistentClone\n",
         )
         self.assert_resources_xml_in_cib(FIXTURE_CLONE_AND_RESOURCE)
@@ -153,7 +153,7 @@ class Unclone(
 
     def test_not_clone_resource(self):
         self.assert_pcs_fail(
-            "resource unclone Dummy",
+            "resource unclone Dummy".split(),
             "Error: 'Dummy' is not a clone resource\n",
         )
         self.assert_resources_xml_in_cib(FIXTURE_CLONE_AND_RESOURCE)
@@ -161,11 +161,13 @@ class Unclone(
         self.assert_constraint_xml(FIXTURE_CONSTRAINTS_CONFIG_XML)
 
     def test_unclone_clone_id(self):
-        self.assert_effect("resource unclone C-clone", FIXTURE_RESOURCES)
+        self.assert_effect(
+            "resource unclone C-clone".split(), FIXTURE_RESOURCES
+        )
         self.assert_tags_xml(FIXTURE_TAGS_RESULT_XML)
         self.assert_constraint_xml("<constraints/>")
 
     def test_unclone_resoruce_id(self):
-        self.assert_effect("resource unclone C", FIXTURE_RESOURCES)
+        self.assert_effect("resource unclone C".split(), FIXTURE_RESOURCES)
         self.assert_tags_xml(FIXTURE_TAGS_RESULT_XML)
         self.assert_constraint_xml("<constraints/>")

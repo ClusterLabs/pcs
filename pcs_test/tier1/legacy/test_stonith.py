@@ -1,5 +1,6 @@
 # pylint: disable=too-many-lines
 import shutil
+from textwrap import dedent
 from unittest import TestCase
 
 from pcs.common.str_tools import indent
@@ -55,26 +56,28 @@ class StonithDescribeTest(TestCase, AssertPcsMixin):
 
     def test_success(self):
         self.assert_pcs_success(
-            "stonith describe fence_apc",
-            stdout_start="""\
-fence_apc - Fence agent for APC over telnet/ssh
+            "stonith describe fence_apc".split(),
+            stdout_start=dedent(
+                """\
+                fence_apc - Fence agent for APC over telnet/ssh
 
-fence_apc is an I/O Fencing agent which can be used with the APC network power switch. It logs into device via telnet/ssh  and reboots a specified outlet. Lengthy telnet/ssh connections should be avoided while a GFS cluster  is  running  because  the  connection will block any necessary fencing actions.
+                fence_apc is an I/O Fencing agent which can be used with the APC network power switch. It logs into device via telnet/ssh  and reboots a specified outlet. Lengthy telnet/ssh connections should be avoided while a GFS cluster  is  running  because  the  connection will block any necessary fencing actions.
 
-Stonith options:
-""",
+                Stonith options:
+                """
+            ),
         )
 
     def test_full(self):
         stdout, pcs_returncode = self.pcs_runner.run(
-            "stonith describe fence_apc --full",
+            "stonith describe fence_apc --full".split(),
         )
         self.assertEqual(0, pcs_returncode)
         self.assertTrue("pcmk_list_retries" in stdout)
 
     def test_nonextisting_agent(self):
         self.assert_pcs_fail(
-            "stonith describe fence_noexist",
+            "stonith describe fence_noexist".split(),
             stdout_full=(
                 "Error: Agent 'fence_noexist' is not installed or does not "
                 "provide valid metadata: Agent fence_noexist not found or does "
@@ -86,13 +89,13 @@ Stonith options:
 
     def test_not_enough_params(self):
         self.assert_pcs_fail(
-            "stonith describe",
+            "stonith describe".split(),
             stdout_start="\nUsage: pcs stonith describe...\n",
         )
 
     def test_too_many_params(self):
         self.assert_pcs_fail(
-            "stonith describe agent1 agent2",
+            "stonith describe agent1 agent2".split(),
             stdout_start="\nUsage: pcs stonith describe...\n",
         )
 
@@ -113,7 +116,7 @@ class StonithTest(TestCase, AssertPcsMixin):
     @skip_unless_crm_rule()
     def testStonithCreation(self):
         self.assert_pcs_fail(
-            "stonith create test1 fence_noexist",
+            "stonith create test1 fence_noexist".split(),
             stdout_full=(
                 "Error: Agent 'fence_noexist' is not installed or does not "
                 "provide valid metadata: Agent fence_noexist not found or does "
@@ -124,7 +127,7 @@ class StonithTest(TestCase, AssertPcsMixin):
         )
 
         self.assert_pcs_success(
-            "stonith create test1 fence_noexist --force",
+            "stonith create test1 fence_noexist --force".split(),
             stdout_full=(
                 "Warning: Agent 'fence_noexist' is not installed or does not "
                 "provide valid metadata: Agent fence_noexist not found or does "
@@ -135,7 +138,7 @@ class StonithTest(TestCase, AssertPcsMixin):
         )
 
         self.assert_pcs_fail(
-            "stonith create test2 fence_apc",
+            "stonith create test2 fence_apc".split(),
             (
                 "Error: required stonith options 'ip', 'username' are missing, "
                 "use --force to override\n" + ERRORS_HAVE_OCURRED
@@ -143,18 +146,18 @@ class StonithTest(TestCase, AssertPcsMixin):
         )
 
         self.assert_pcs_success(
-            "stonith create test2 fence_apc --force",
+            "stonith create test2 fence_apc --force".split(),
             "Warning: required stonith options 'ip', 'username' are missing\n",
         )
 
         self.assert_pcs_fail(
-            "stonith create test3 fence_apc bad_argument=test",
+            "stonith create test3 fence_apc bad_argument=test".split(),
             stdout_start="Error: invalid stonith option 'bad_argument',"
             " allowed options are:",
         )
 
         self.assert_pcs_fail(
-            "stonith create test9 fence_apc pcmk_status_action=xxx",
+            "stonith create test9 fence_apc pcmk_status_action=xxx".split(),
             (
                 "Error: required stonith options 'ip', 'username' are missing, "
                 "use --force to override\n" + ERRORS_HAVE_OCURRED
@@ -162,12 +165,12 @@ class StonithTest(TestCase, AssertPcsMixin):
         )
 
         self.assert_pcs_success(
-            "stonith create test9 fence_apc pcmk_status_action=xxx --force",
+            "stonith create test9 fence_apc pcmk_status_action=xxx --force".split(),
             "Warning: required stonith options 'ip', 'username' are missing\n",
         )
 
         self.assert_pcs_success(
-            "stonith config test9",
+            "stonith config test9".split(),
             outdent(
                 """\
              Resource: test9 (class=stonith type=fence_apc)
@@ -178,11 +181,11 @@ class StonithTest(TestCase, AssertPcsMixin):
         )
 
         self.assert_pcs_success(
-            "stonith delete test9", "Deleting Resource - test9\n"
+            "stonith delete test9".split(), "Deleting Resource - test9\n"
         )
 
         self.assert_pcs_fail(
-            "stonith create test3 fence_ilo ip=test",
+            "stonith create test3 fence_ilo ip=test".split(),
             (
                 "Error: required stonith option 'username' is missing, use "
                 "--force to override\n" + ERRORS_HAVE_OCURRED
@@ -190,23 +193,23 @@ class StonithTest(TestCase, AssertPcsMixin):
         )
 
         self.assert_pcs_success(
-            "stonith create test3 fence_ilo ip=test --force",
+            "stonith create test3 fence_ilo ip=test --force".split(),
             "Warning: required stonith option 'username' is missing\n",
         )
 
         # Testing that pcmk_host_check, pcmk_host_list & pcmk_host_map are
         # allowed for stonith agents
         self.assert_pcs_success(
-            "stonith create apc-fencing fence_apc ip=morph-apc username=apc password=apc switch=1 pcmk_host_map=buzz-01:1;buzz-02:2;buzz-03:3;buzz-04:4;buzz-05:5 pcmk_host_check=static-list pcmk_host_list=buzz-01,buzz-02,buzz-03,buzz-04,buzz-05",
+            "stonith create apc-fencing fence_apc ip=morph-apc username=apc password=apc switch=1 pcmk_host_map=buzz-01:1;buzz-02:2;buzz-03:3;buzz-04:4;buzz-05:5 pcmk_host_check=static-list pcmk_host_list=buzz-01,buzz-02,buzz-03,buzz-04,buzz-05".split(),
         )
 
         self.assert_pcs_fail(
-            "resource config apc-fencing",
+            "resource config apc-fencing".split(),
             "Error: unable to find resource 'apc-fencing'\n",
         )
 
         self.assert_pcs_success(
-            "stonith config apc-fencing",
+            "stonith config apc-fencing".split(),
             outdent(
                 """\
              Resource: apc-fencing (class=stonith type=fence_apc)
@@ -217,21 +220,22 @@ class StonithTest(TestCase, AssertPcsMixin):
         )
 
         self.assert_pcs_success(
-            "stonith remove apc-fencing", "Deleting Resource - apc-fencing\n"
+            "stonith remove apc-fencing".split(),
+            "Deleting Resource - apc-fencing\n",
         )
 
         self.assert_pcs_fail(
-            "stonith update test3 bad_ipaddr=test username=login",
+            "stonith update test3 bad_ipaddr=test username=login".split(),
             stdout_regexp=(
                 "^Error: invalid stonith option 'bad_ipaddr', allowed options"
                 " are: [^\n]+, use --force to override\n$"
             ),
         )
 
-        self.assert_pcs_success("stonith update test3 username=testA")
+        self.assert_pcs_success("stonith update test3 username=testA".split())
 
         self.assert_pcs_success(
-            "stonith config test2",
+            "stonith config test2".split(),
             outdent(
                 """\
              Resource: test2 (class=stonith type=fence_apc)
@@ -241,7 +245,7 @@ class StonithTest(TestCase, AssertPcsMixin):
         )
 
         self.assert_pcs_success(
-            "stonith config",
+            "stonith config".split(),
             outdent(
                 """\
              Resource: test1 (class=stonith type=fence_noexist)
@@ -256,12 +260,22 @@ class StonithTest(TestCase, AssertPcsMixin):
         )
 
         self.assert_pcs_success(
-            "stonith create test-fencing fence_apc 'pcmk_host_list=rhel7-node1 rhel7-node2' op monitor interval=61s --force",
+            [
+                "stonith",
+                "create",
+                "test-fencing",
+                "fence_apc",
+                "pcmk_host_list=rhel7-node1 rhel7-node2",
+                "op",
+                "monitor",
+                "interval=61s",
+                "--force",
+            ],
             "Warning: required stonith options 'ip', 'username' are missing\n",
         )
 
         self.assert_pcs_success(
-            "config show",
+            "config show".split(),
             outdent(
                 """\
             Cluster Name: test99
@@ -311,7 +325,7 @@ class StonithTest(TestCase, AssertPcsMixin):
     def test_stonith_create_does_not_require_deprecated(self):
         # 'ipaddr' and 'login' are obsoleted by 'ip' and 'username'
         self.assert_pcs_fail(
-            "stonith create test2 fence_apc",
+            "stonith create test2 fence_apc".split(),
             (
                 "Error: required stonith options 'ip', 'username' are missing, "
                 "use --force to override\n" + ERRORS_HAVE_OCURRED
@@ -320,9 +334,11 @@ class StonithTest(TestCase, AssertPcsMixin):
 
     def test_stonith_create_deprecated_and_obsoleting(self):
         # 'ipaddr' and 'login' are obsoleted by 'ip' and 'username'
-        self.assert_pcs_success("stonith create S fence_apc ip=i login=l")
         self.assert_pcs_success(
-            "stonith config S",
+            "stonith create S fence_apc ip=i login=l".split()
+        )
+        self.assert_pcs_success(
+            "stonith config S".split(),
             outdent(
                 """\
              Resource: S (class=stonith type=fence_apc)
@@ -335,10 +351,10 @@ class StonithTest(TestCase, AssertPcsMixin):
     def test_stonith_create_both_deprecated_and_obsoleting(self):
         # 'ipaddr' and 'login' are obsoleted by 'ip' and 'username'
         self.assert_pcs_success(
-            "stonith create S fence_apc ip=i1 login=l ipaddr=i2 username=u"
+            "stonith create S fence_apc ip=i1 login=l ipaddr=i2 username=u".split()
         )
         self.assert_pcs_success(
-            "stonith config S",
+            "stonith config S".split(),
             outdent(
                 """\
              Resource: S (class=stonith type=fence_apc)
@@ -349,22 +365,18 @@ class StonithTest(TestCase, AssertPcsMixin):
         )
 
     def test_stonith_create_provides_unfencing(self):
-        self.assert_pcs_success("stonith create f1 fence_scsi")
-
+        self.assert_pcs_success("stonith create f1 fence_scsi".split())
         self.assert_pcs_success(
-            "stonith create f2 fence_scsi meta provides=unfencing"
+            "stonith create f2 fence_scsi meta provides=unfencing".split()
         )
-
         self.assert_pcs_success(
-            "stonith create f3 fence_scsi meta provides=something"
+            "stonith create f3 fence_scsi meta provides=something".split()
         )
-
         self.assert_pcs_success(
-            "stonith create f4 fence_xvm meta provides=something"
+            "stonith create f4 fence_xvm meta provides=something".split()
         )
-
         self.assert_pcs_success(
-            "stonith config",
+            "stonith config".split(),
             outdent(
                 """\
              Resource: f1 (class=stonith type=fence_scsi)
@@ -385,7 +397,7 @@ class StonithTest(TestCase, AssertPcsMixin):
 
     def test_stonith_create_action(self):
         self.assert_pcs_fail(
-            "stonith create test fence_apc ip=i username=u action=a",
+            "stonith create test fence_apc ip=i username=u action=a".split(),
             (
                 "Error: stonith option 'action' is deprecated and should not be"
                 " used, use 'pcmk_off_action', 'pcmk_reboot_action' instead,"
@@ -394,13 +406,13 @@ class StonithTest(TestCase, AssertPcsMixin):
         )
 
         self.assert_pcs_success(
-            "stonith create test fence_apc ip=i username=u action=a --force",
+            "stonith create test fence_apc ip=i username=u action=a --force".split(),
             "Warning: stonith option 'action' is deprecated and should not be"
             " used, use 'pcmk_off_action', 'pcmk_reboot_action' instead\n",
         )
 
         self.assert_pcs_success(
-            "stonith config",
+            "stonith config".split(),
             outdent(
                 """\
                  Resource: test (class=stonith type=fence_apc)
@@ -412,11 +424,11 @@ class StonithTest(TestCase, AssertPcsMixin):
 
     def test_stonith_create_action_empty(self):
         self.assert_pcs_success(
-            "stonith create test fence_apc ip=i username=u action="
+            "stonith create test fence_apc ip=i username=u action=".split()
         )
 
         self.assert_pcs_success(
-            "stonith config",
+            "stonith config".split(),
             # TODO fix code and test - there should be no action in the attribs
             outdent(
                 """\
@@ -428,10 +440,12 @@ class StonithTest(TestCase, AssertPcsMixin):
         )
 
     def test_stonith_update_action(self):
-        self.assert_pcs_success("stonith create test fence_apc ip=i username=u")
+        self.assert_pcs_success(
+            "stonith create test fence_apc ip=i username=u".split()
+        )
 
         self.assert_pcs_success(
-            "stonith config",
+            "stonith config".split(),
             outdent(
                 """\
                  Resource: test (class=stonith type=fence_apc)
@@ -442,20 +456,20 @@ class StonithTest(TestCase, AssertPcsMixin):
         )
 
         self.assert_pcs_fail(
-            "stonith update test action=a",
+            "stonith update test action=a".split(),
             "Error: stonith option 'action' is deprecated and should not be"
             " used, use 'pcmk_off_action', 'pcmk_reboot_action' instead,"
             " use --force to override\n",
         )
 
         self.assert_pcs_success(
-            "stonith update test action=a --force",
+            "stonith update test action=a --force".split(),
             "Warning: stonith option 'action' is deprecated and should not be"
             " used, use 'pcmk_off_action', 'pcmk_reboot_action' instead\n",
         )
 
         self.assert_pcs_success(
-            "stonith config",
+            "stonith config".split(),
             outdent(
                 """\
                  Resource: test (class=stonith type=fence_apc)
@@ -465,10 +479,10 @@ class StonithTest(TestCase, AssertPcsMixin):
             ),
         )
 
-        self.assert_pcs_success("stonith update test action=")
+        self.assert_pcs_success("stonith update test action=".split())
 
         self.assert_pcs_success(
-            "stonith config",
+            "stonith config".split(),
             outdent(
                 """\
                  Resource: test (class=stonith type=fence_apc)
@@ -481,22 +495,29 @@ class StonithTest(TestCase, AssertPcsMixin):
     def testStonithFenceConfirm(self):
         self.pcs_runner.cib_file = None
         self.assert_pcs_fail(
-            "stonith fence blah blah",
+            "stonith fence blah blah".split(),
             "Error: must specify one (and only one) node to fence\n",
         )
         self.assert_pcs_fail(
-            "stonith confirm blah blah",
+            "stonith confirm blah blah".split(),
             "Error: must specify one (and only one) node to confirm fenced\n",
         )
 
     def testPcmkHostList(self):
         self.assert_pcs_success(
-            "stonith create F1 fence_apc 'pcmk_host_list=nodea nodeb' --force",
+            [
+                "stonith",
+                "create",
+                "F1",
+                "fence_apc",
+                "pcmk_host_list=nodea nodeb",
+                "--force",
+            ],
             "Warning: required stonith options 'ip', 'username' are missing\n",
         )
 
         self.assert_pcs_success(
-            "stonith config F1",
+            "stonith config F1".split(),
             outdent(
                 """\
              Resource: F1 (class=stonith type=fence_apc)
@@ -510,45 +531,45 @@ class StonithTest(TestCase, AssertPcsMixin):
         shutil.copy(rc("cib-empty-with3nodes.xml"), self.temp_cib.name)
 
         self.assert_pcs_success(
-            "stonith create n1-ipmi fence_apc --force",
+            "stonith create n1-ipmi fence_apc --force".split(),
             "Warning: required stonith options 'ip', 'username' are missing\n",
         )
         self.assert_pcs_success(
-            "stonith create n2-ipmi fence_apc --force",
+            "stonith create n2-ipmi fence_apc --force".split(),
             "Warning: required stonith options 'ip', 'username' are missing\n",
         )
         self.assert_pcs_success(
-            "stonith create n1-apc1 fence_apc --force",
+            "stonith create n1-apc1 fence_apc --force".split(),
             "Warning: required stonith options 'ip', 'username' are missing\n",
         )
         self.assert_pcs_success(
-            "stonith create n1-apc2 fence_apc --force",
+            "stonith create n1-apc2 fence_apc --force".split(),
             "Warning: required stonith options 'ip', 'username' are missing\n",
         )
         self.assert_pcs_success(
-            "stonith create n2-apc1 fence_apc --force",
+            "stonith create n2-apc1 fence_apc --force".split(),
             "Warning: required stonith options 'ip', 'username' are missing\n",
         )
         self.assert_pcs_success(
-            "stonith create n2-apc2 fence_apc --force",
+            "stonith create n2-apc2 fence_apc --force".split(),
             "Warning: required stonith options 'ip', 'username' are missing\n",
         )
         self.assert_pcs_success(
-            "stonith create n2-apc3 fence_apc --force",
+            "stonith create n2-apc3 fence_apc --force".split(),
             "Warning: required stonith options 'ip', 'username' are missing\n",
         )
         self.assert_pcs_success_all(
             [
-                "stonith level add 1 rh7-1 n1-ipmi",
-                "stonith level add 2 rh7-1 n1-apc1,n1-apc2,n2-apc2",
-                "stonith level add 1 rh7-2 n2-ipmi",
-                "stonith level add 2 rh7-2 n2-apc1,n2-apc2,n2-apc3",
+                "stonith level add 1 rh7-1 n1-ipmi".split(),
+                "stonith level add 2 rh7-1 n1-apc1,n1-apc2,n2-apc2".split(),
+                "stonith level add 1 rh7-2 n2-ipmi".split(),
+                "stonith level add 2 rh7-2 n2-apc1,n2-apc2,n2-apc3".split(),
             ]
         )
 
         if PCMK_2_0_3_PLUS:
             self.assert_pcs_success(
-                "stonith",
+                ["stonith"],
                 outdent(
                     """\
                   * n1-ipmi\t(stonith:fence_apc):\tStopped
@@ -570,7 +591,7 @@ class StonithTest(TestCase, AssertPcsMixin):
             )
         else:
             self.assert_pcs_success(
-                "stonith",
+                ["stonith"],
                 outdent(
                     """\
                  n1-ipmi\t(stonith:fence_apc):\tStopped
@@ -591,12 +612,12 @@ class StonithTest(TestCase, AssertPcsMixin):
             )
 
         self.assert_pcs_success(
-            "stonith delete n2-apc2", "Deleting Resource - n2-apc2\n"
+            "stonith delete n2-apc2".split(), "Deleting Resource - n2-apc2\n"
         )
 
         if PCMK_2_0_3_PLUS:
             self.assert_pcs_success(
-                "stonith",
+                ["stonith"],
                 outdent(
                     """\
                   * n1-ipmi\t(stonith:fence_apc):\tStopped
@@ -617,7 +638,7 @@ class StonithTest(TestCase, AssertPcsMixin):
             )
         else:
             self.assert_pcs_success(
-                "stonith",
+                ["stonith"],
                 outdent(
                     """\
                  n1-ipmi\t(stonith:fence_apc):\tStopped
@@ -637,12 +658,12 @@ class StonithTest(TestCase, AssertPcsMixin):
             )
 
         self.assert_pcs_success(
-            "stonith remove n2-apc1", "Deleting Resource - n2-apc1\n"
+            "stonith remove n2-apc1".split(), "Deleting Resource - n2-apc1\n"
         )
 
         if PCMK_2_0_3_PLUS:
             self.assert_pcs_success(
-                "stonith",
+                ["stonith"],
                 outdent(
                     """\
                   * n1-ipmi\t(stonith:fence_apc):\tStopped
@@ -662,7 +683,7 @@ class StonithTest(TestCase, AssertPcsMixin):
             )
         else:
             self.assert_pcs_success(
-                "stonith",
+                ["stonith"],
                 outdent(
                     """\
                  n1-ipmi\t(stonith:fence_apc):\tStopped
@@ -681,12 +702,12 @@ class StonithTest(TestCase, AssertPcsMixin):
             )
 
         self.assert_pcs_success(
-            "stonith delete n2-apc3", "Deleting Resource - n2-apc3\n"
+            "stonith delete n2-apc3".split(), "Deleting Resource - n2-apc3\n"
         )
 
         if PCMK_2_0_3_PLUS:
             self.assert_pcs_success(
-                "stonith",
+                ["stonith"],
                 outdent(
                     """\
                   * n1-ipmi\t(stonith:fence_apc):\tStopped
@@ -704,7 +725,7 @@ class StonithTest(TestCase, AssertPcsMixin):
             )
         else:
             self.assert_pcs_success(
-                "stonith",
+                ["stonith"],
                 outdent(
                     """\
                  n1-ipmi\t(stonith:fence_apc):\tStopped
@@ -721,12 +742,12 @@ class StonithTest(TestCase, AssertPcsMixin):
             )
 
         self.assert_pcs_success(
-            "resource remove n1-apc1", "Deleting Resource - n1-apc1\n"
+            "resource remove n1-apc1".split(), "Deleting Resource - n1-apc1\n"
         )
 
         if PCMK_2_0_3_PLUS:
             self.assert_pcs_success(
-                "stonith",
+                ["stonith"],
                 outdent(
                     """\
                   * n1-ipmi\t(stonith:fence_apc):\tStopped
@@ -743,7 +764,7 @@ class StonithTest(TestCase, AssertPcsMixin):
             )
         else:
             self.assert_pcs_success(
-                "stonith",
+                ["stonith"],
                 outdent(
                     """\
                  n1-ipmi\t(stonith:fence_apc):\tStopped
@@ -759,7 +780,7 @@ class StonithTest(TestCase, AssertPcsMixin):
             )
 
         self.assert_pcs_success(
-            "resource delete n1-apc2",
+            "resource delete n1-apc2".split(),
             outdent(
                 """\
             Deleting Resource - n1-apc2
@@ -769,7 +790,7 @@ class StonithTest(TestCase, AssertPcsMixin):
 
         if PCMK_2_0_3_PLUS:
             self.assert_pcs_success(
-                "stonith",
+                ["stonith"],
                 outdent(
                     """\
                   * n1-ipmi\t(stonith:fence_apc):\tStopped
@@ -784,7 +805,7 @@ class StonithTest(TestCase, AssertPcsMixin):
             )
         else:
             self.assert_pcs_success(
-                "stonith",
+                ["stonith"],
                 outdent(
                     """\
                  n1-ipmi\t(stonith:fence_apc):\tStopped
@@ -801,27 +822,28 @@ class StonithTest(TestCase, AssertPcsMixin):
         # pylint: disable=unused-variable
         corosync_conf = rc("corosync.conf")
         o, r = pcs(
-            self.temp_cib.name, "status", corosync_conf_opt=corosync_conf
+            self.temp_cib.name, ["status"], corosync_conf_opt=corosync_conf
         )
         self.assertIn("No stonith devices and stonith-enabled is not false", o)
 
         self.assert_pcs_success(
-            "stonith create test_stonith fence_apc ip=i username=u pcmk_host_argument=node1"
+            "stonith create test_stonith fence_apc ip=i username=u pcmk_host_argument=node1".split()
         )
 
         o, r = pcs(
-            self.temp_cib.name, "status", corosync_conf_opt=corosync_conf
+            self.temp_cib.name, ["status"], corosync_conf_opt=corosync_conf
         )
         self.assertNotIn(
             "No stonith devices and stonith-enabled is not false", o
         )
 
         self.assert_pcs_success(
-            "stonith delete test_stonith", "Deleting Resource - test_stonith\n"
+            "stonith delete test_stonith".split(),
+            "Deleting Resource - test_stonith\n",
         )
 
         o, r = pcs(
-            self.temp_cib.name, "status", corosync_conf_opt=corosync_conf
+            self.temp_cib.name, ["status"], corosync_conf_opt=corosync_conf
         )
         self.assertIn("No stonith devices and stonith-enabled is not false", o)
 
@@ -847,9 +869,15 @@ class LevelTestsBase(TestCase, AssertPcsMixin):
 
     def fixture_stonith_resource(self, name):
         self.assert_pcs_success(
-            "stonith create {name} fence_apc 'pcmk_host_list=rh7-1 rh7-2' ip=i username=u".format(
-                name=name
-            )
+            [
+                "stonith",
+                "create",
+                name,
+                "fence_apc",
+                "pcmk_host_list=rh7-1 rh7-2",
+                "ip=i",
+                "username=u",
+            ]
         )
 
     def fixture_full_configuration(self):
@@ -857,12 +885,14 @@ class LevelTestsBase(TestCase, AssertPcsMixin):
         self.fixture_stonith_resource("F2")
         self.fixture_stonith_resource("F3")
 
-        self.assert_pcs_success("stonith level add 1 rh7-1 F1")
-        self.assert_pcs_success("stonith level add 2 rh7-1 F2")
-        self.assert_pcs_success("stonith level add 2 rh7-2 F1")
-        self.assert_pcs_success("stonith level add 1 rh7-2 F2")
-        self.assert_pcs_success(r"stonith level add 4 regexp%rh7-\d F3")
-        self.assert_pcs_success(r"stonith level add 3 regexp%rh7-\d F2 F1")
+        self.assert_pcs_success("stonith level add 1 rh7-1 F1".split())
+        self.assert_pcs_success("stonith level add 2 rh7-1 F2".split())
+        self.assert_pcs_success("stonith level add 2 rh7-2 F1".split())
+        self.assert_pcs_success("stonith level add 1 rh7-2 F2".split())
+        self.assert_pcs_success("stonith level add 4 regexp%rh7-\\d F3".split())
+        self.assert_pcs_success(
+            "stonith level add 3 regexp%rh7-\\d F2 F1".split()
+        )
 
         self.config = outdent(
             """\
@@ -882,10 +912,10 @@ class LevelTestsBase(TestCase, AssertPcsMixin):
         if not fencing_level_attribute_supported:
             return
         self.assert_pcs_success(
-            "stonith level add 5 attrib%fencewith=levels1 F3 F2"
+            "stonith level add 5 attrib%fencewith=levels1 F3 F2".split()
         )
         self.assert_pcs_success(
-            "stonith level add 6 attrib%fencewith=levels2 F3 F1"
+            "stonith level add 6 attrib%fencewith=levels2 F3 F1".split()
         )
         self.config += outdent(
             """\
@@ -902,7 +932,7 @@ class LevelTestsBase(TestCase, AssertPcsMixin):
 class LevelBadCommand(LevelTestsBase):
     def test_success(self):
         self.assert_pcs_fail(
-            "stonith level nonsense",
+            "stonith level nonsense".split(),
             stdout_start="\nUsage: pcs stonith level ...\n",
         )
 
@@ -921,11 +951,11 @@ class LevelAddTargetUpgradesCib(LevelTestsBase):
     def test_attribute(self):
         self.fixture_stonith_resource("F1")
         self.assert_pcs_success(
-            "stonith level add 1 attrib%fencewith=levels F1",
+            "stonith level add 1 attrib%fencewith=levels F1".split(),
             "CIB has been upgraded to the latest schema version.\n",
         )
         self.assert_pcs_success(
-            "stonith level",
+            "stonith level".split(),
             outdent(
                 """\
                 Target: fencewith=levels
@@ -937,11 +967,11 @@ class LevelAddTargetUpgradesCib(LevelTestsBase):
     def test_regexp(self):
         self.fixture_stonith_resource("F1")
         self.assert_pcs_success(
-            r"stonith level add 1 regexp%node-\d+ F1",
+            "stonith level add 1 regexp%node-\\d+ F1".split(),
             "CIB has been upgraded to the latest schema version.\n",
         )
         self.assert_pcs_success(
-            "stonith level",
+            "stonith level".split(),
             outdent(
                 """\
                 Target: node-\\d+
@@ -955,23 +985,23 @@ class LevelAddTargetUpgradesCib(LevelTestsBase):
 class LevelAdd(LevelTestsBase):
     def test_not_enough_params(self):
         self.assert_pcs_fail(
-            "stonith level add",
+            "stonith level add".split(),
             stdout_start="\nUsage: pcs stonith level add...\n",
         )
 
         self.assert_pcs_fail(
-            "stonith level add 1",
+            "stonith level add 1".split(),
             stdout_start="\nUsage: pcs stonith level add...\n",
         )
 
         self.assert_pcs_fail(
-            "stonith level add 1 nodeA",
+            "stonith level add 1 nodeA".split(),
             stdout_start="\nUsage: pcs stonith level add...\n",
         )
 
     def test_add_wrong_target_type(self):
         self.assert_pcs_fail(
-            "stonith level add 1 error%value F1",
+            "stonith level add 1 error%value F1".split(),
             "Error: 'error' is not an allowed type for 'error%value', "
             "use attrib, node, regexp\n",
         )
@@ -979,35 +1009,35 @@ class LevelAdd(LevelTestsBase):
     def test_add_bad_level(self):
         self.fixture_stonith_resource("F1")
         self.assert_pcs_fail(
-            "stonith level add NaN rh7-1 F1",
+            "stonith level add NaN rh7-1 F1".split(),
             (
                 "Error: 'NaN' is not a valid level value, use a positive "
                 "integer\n" + ERRORS_HAVE_OCURRED
             ),
         )
         self.assert_pcs_fail(
-            "stonith level add -10 rh7-1 F1",
+            "stonith level add -10 rh7-1 F1".split(),
             (
                 "Error: '-10' is not a valid level value, use a positive "
                 "integer\n" + ERRORS_HAVE_OCURRED
             ),
         )
         self.assert_pcs_fail(
-            "stonith level add 10abc rh7-1 F1",
+            "stonith level add 10abc rh7-1 F1".split(),
             (
                 "Error: '10abc' is not a valid level value, use a positive "
                 "integer\n" + ERRORS_HAVE_OCURRED
             ),
         )
         self.assert_pcs_fail(
-            "stonith level add 0 rh7-1 F1",
+            "stonith level add 0 rh7-1 F1".split(),
             (
                 "Error: '0' is not a valid level value, use a positive "
                 "integer\n" + ERRORS_HAVE_OCURRED
             ),
         )
         self.assert_pcs_fail(
-            "stonith level add 000 rh7-1 F1",
+            "stonith level add 000 rh7-1 F1".split(),
             (
                 "Error: '000' is not a valid level value, use a positive "
                 "integer\n" + ERRORS_HAVE_OCURRED
@@ -1016,7 +1046,7 @@ class LevelAdd(LevelTestsBase):
 
     def test_add_bad_device(self):
         self.assert_pcs_fail(
-            "stonith level add 1 rh7-1 dev@ce",
+            "stonith level add 1 rh7-1 dev@ce".split(),
             (
                 "Error: invalid device id 'dev@ce', '@' is not a valid "
                 "character for a device id\n" + ERRORS_HAVE_OCURRED
@@ -1025,7 +1055,7 @@ class LevelAdd(LevelTestsBase):
 
     def test_add_more_errors(self):
         self.assert_pcs_fail(
-            "stonith level add x rh7-X F0 dev@ce",
+            "stonith level add x rh7-X F0 dev@ce".split(),
             outdent(
                 """\
                 Error: 'x' is not a valid level value, use a positive integer
@@ -1038,7 +1068,7 @@ class LevelAdd(LevelTestsBase):
         )
 
         self.assert_pcs_fail(
-            "stonith level add x rh7-X F0 dev@ce --force",
+            "stonith level add x rh7-X F0 dev@ce --force".split(),
             outdent(
                 """\
                 Error: 'x' is not a valid level value, use a positive integer
@@ -1052,9 +1082,9 @@ class LevelAdd(LevelTestsBase):
 
     def test_add_level_leading_zero(self):
         self.fixture_stonith_resource("F1")
-        self.assert_pcs_success("stonith level add 0002 rh7-1 F1")
+        self.assert_pcs_success("stonith level add 0002 rh7-1 F1".split())
         self.assert_pcs_success(
-            "stonith level",
+            "stonith level".split(),
             outdent(
                 """\
                 Target: rh7-1
@@ -1065,9 +1095,9 @@ class LevelAdd(LevelTestsBase):
 
     def test_add_node(self):
         self.fixture_stonith_resource("F1")
-        self.assert_pcs_success("stonith level add 1 rh7-1 F1")
+        self.assert_pcs_success("stonith level add 1 rh7-1 F1".split())
         self.assert_pcs_success(
-            "stonith level",
+            "stonith level".split(),
             outdent(
                 """\
                 Target: rh7-1
@@ -1077,14 +1107,14 @@ class LevelAdd(LevelTestsBase):
         )
 
         self.assert_pcs_fail(
-            "stonith level add 1 rh7-1 F1",
+            "stonith level add 1 rh7-1 F1".split(),
             (
                 "Error: Fencing level for 'rh7-1' at level '1' with device(s) "
                 "'F1' already exists\n" + ERRORS_HAVE_OCURRED
             ),
         )
         self.assert_pcs_success(
-            "stonith level",
+            "stonith level".split(),
             outdent(
                 """\
                 Target: rh7-1
@@ -1095,9 +1125,9 @@ class LevelAdd(LevelTestsBase):
 
     def test_add_node_pattern(self):
         self.fixture_stonith_resource("F1")
-        self.assert_pcs_success(r"stonith level add 1 regexp%rh7-\d F1")
+        self.assert_pcs_success("stonith level add 1 regexp%rh7-\\d F1".split())
         self.assert_pcs_success(
-            "stonith level",
+            "stonith level".split(),
             outdent(
                 """\
                 Target: rh7-\\d
@@ -1107,14 +1137,14 @@ class LevelAdd(LevelTestsBase):
         )
 
         self.assert_pcs_fail(
-            r"stonith level add 1 regexp%rh7-\d F1",
+            "stonith level add 1 regexp%rh7-\\d F1".split(),
             (
                 r"Error: Fencing level for 'rh7-\d' at level '1' with device(s) "
                 "'F1' already exists\n" + ERRORS_HAVE_OCURRED
             ),
         )
         self.assert_pcs_success(
-            "stonith level",
+            "stonith level".split(),
             outdent(
                 """\
                 Target: rh7-\\d
@@ -1127,10 +1157,10 @@ class LevelAdd(LevelTestsBase):
     def test_add_node_attribute(self):
         self.fixture_stonith_resource("F1")
         self.assert_pcs_success(
-            "stonith level add 1 attrib%fencewith=levels F1"
+            "stonith level add 1 attrib%fencewith=levels F1".split()
         )
         self.assert_pcs_success(
-            "stonith level",
+            "stonith level".split(),
             outdent(
                 """\
                 Target: fencewith=levels
@@ -1140,14 +1170,14 @@ class LevelAdd(LevelTestsBase):
         )
 
         self.assert_pcs_fail(
-            "stonith level add 1 attrib%fencewith=levels F1",
+            "stonith level add 1 attrib%fencewith=levels F1".split(),
             (
                 "Error: Fencing level for 'fencewith=levels' at level '1' with "
                 "device(s) 'F1' already exists\n" + ERRORS_HAVE_OCURRED
             ),
         )
         self.assert_pcs_success(
-            "stonith level",
+            "stonith level".split(),
             outdent(
                 """\
                 Target: fencewith=levels
@@ -1159,9 +1189,9 @@ class LevelAdd(LevelTestsBase):
     def test_add_more_devices(self):
         self.fixture_stonith_resource("F1")
         self.fixture_stonith_resource("F2")
-        self.assert_pcs_success("stonith level add 1 rh7-1 F1 F2")
+        self.assert_pcs_success("stonith level add 1 rh7-1 F1 F2".split())
         self.assert_pcs_success(
-            "stonith level",
+            "stonith level".split(),
             outdent(
                 """\
                 Target: rh7-1
@@ -1175,9 +1205,9 @@ class LevelAdd(LevelTestsBase):
         self.fixture_stonith_resource("F2")
         self.fixture_stonith_resource("F3")
 
-        self.assert_pcs_success("stonith level add 1 rh7-1 F1,F2")
+        self.assert_pcs_success("stonith level add 1 rh7-1 F1,F2".split())
         self.assert_pcs_success(
-            "stonith level",
+            "stonith level".split(),
             outdent(
                 """\
                 Target: rh7-1
@@ -1186,9 +1216,9 @@ class LevelAdd(LevelTestsBase):
             ),
         )
 
-        self.assert_pcs_success("stonith level add 2 rh7-1 F1,F2 F3")
+        self.assert_pcs_success("stonith level add 2 rh7-1 F1,F2 F3".split())
         self.assert_pcs_success(
-            "stonith level",
+            "stonith level".split(),
             outdent(
                 """\
                 Target: rh7-1
@@ -1198,9 +1228,9 @@ class LevelAdd(LevelTestsBase):
             ),
         )
 
-        self.assert_pcs_success("stonith level add 3 rh7-1 F1 F2,F3")
+        self.assert_pcs_success("stonith level add 3 rh7-1 F1 F2,F3".split())
         self.assert_pcs_success(
-            "stonith level",
+            "stonith level".split(),
             outdent(
                 """\
                 Target: rh7-1
@@ -1214,18 +1244,18 @@ class LevelAdd(LevelTestsBase):
     def test_nonexistant_node(self):
         self.fixture_stonith_resource("F1")
         self.assert_pcs_fail(
-            "stonith level add 1 rh7-X F1",
+            "stonith level add 1 rh7-X F1".split(),
             (
                 "Error: Node 'rh7-X' does not appear to exist in configuration"
                 ", use --force to override\n" + ERRORS_HAVE_OCURRED
             ),
         )
         self.assert_pcs_success(
-            "stonith level add 1 rh7-X F1 --force",
+            "stonith level add 1 rh7-X F1 --force".split(),
             "Warning: Node 'rh7-X' does not appear to exist in configuration\n",
         )
         self.assert_pcs_success(
-            "stonith level",
+            "stonith level".split(),
             outdent(
                 """\
                 Target: rh7-X
@@ -1236,18 +1266,18 @@ class LevelAdd(LevelTestsBase):
 
     def test_nonexistant_device(self):
         self.assert_pcs_fail(
-            "stonith level add 1 rh7-1 F1",
+            "stonith level add 1 rh7-1 F1".split(),
             (
                 "Error: Stonith resource(s) 'F1' do not exist"
                 ", use --force to override\n" + ERRORS_HAVE_OCURRED
             ),
         )
         self.assert_pcs_success(
-            "stonith level add 1 rh7-1 F1 --force",
+            "stonith level add 1 rh7-1 F1 --force".split(),
             "Warning: Stonith resource(s) 'F1' do not exist\n",
         )
         self.assert_pcs_success(
-            "stonith level",
+            "stonith level".split(),
             outdent(
                 """\
                 Target: rh7-1
@@ -1259,18 +1289,18 @@ class LevelAdd(LevelTestsBase):
     def test_nonexistant_devices(self):
         self.fixture_stonith_resource("F1")
         self.assert_pcs_fail(
-            "stonith level add 1 rh7-1 F1 F2 F3",
+            "stonith level add 1 rh7-1 F1 F2 F3".split(),
             (
                 "Error: Stonith resource(s) 'F2', 'F3' do not exist"
                 ", use --force to override\n" + ERRORS_HAVE_OCURRED
             ),
         )
         self.assert_pcs_success(
-            "stonith level add 1 rh7-1 F1 F2 F3 --force",
+            "stonith level add 1 rh7-1 F1 F2 F3 --force".split(),
             "Warning: Stonith resource(s) 'F2', 'F3' do not exist\n",
         )
         self.assert_pcs_success(
-            "stonith level",
+            "stonith level".split(),
             outdent(
                 """\
                 Target: rh7-1
@@ -1320,20 +1350,20 @@ class LevelConfig(LevelTestsBase):
     )
 
     def test_empty(self):
-        self.assert_pcs_success("stonith level config", "")
-        self.assert_pcs_success("stonith level", "")
-        self.assert_pcs_success("stonith", "NO stonith devices configured\n")
+        self.assert_pcs_success("stonith level config".split(), "")
+        self.assert_pcs_success("stonith level".split(), "")
+        self.assert_pcs_success(["stonith"], "NO stonith devices configured\n")
         self.pcs_runner.mock_settings["corosync_conf_file"] = rc(
             "corosync.conf"
         )
         self.assert_pcs_success(
-            "config", self.full_config.format(devices="", levels="")
+            ["config"], self.full_config.format(devices="", levels="")
         )
 
     def test_all_posibilities(self):
         self.fixture_full_configuration()
-        self.assert_pcs_success("stonith level config", self.config)
-        self.assert_pcs_success("stonith level", self.config)
+        self.assert_pcs_success("stonith level config".split(), self.config)
+        self.assert_pcs_success("stonith level".split(), self.config)
         if PCMK_2_0_3_PLUS:
             result = outdent(
                 """\
@@ -1351,7 +1381,7 @@ class LevelConfig(LevelTestsBase):
                 """
             )
         self.assert_pcs_success(
-            "stonith",
+            ["stonith"],
             result + "\n".join(indent(self.config_lines, 1)) + "\n",
             despace=True,
         )
@@ -1359,7 +1389,7 @@ class LevelConfig(LevelTestsBase):
             "corosync.conf"
         )
         self.assert_pcs_success(
-            "config",
+            ["config"],
             self.full_config.format(
                 devices="""
  Resource: F1 (class=stonith type=fence_apc)
@@ -1384,45 +1414,49 @@ class LevelClear(LevelTestsBase):
         self.fixture_full_configuration()
 
     def test_clear_all(self):
-        self.assert_pcs_success("stonith level clear")
-        self.assert_pcs_success("stonith level config", "")
+        self.assert_pcs_success("stonith level clear".split())
+        self.assert_pcs_success("stonith level config".split(), "")
 
     def test_clear_nonexistant_node_or_device(self):
-        self.assert_pcs_success("stonith level clear rh-X")
-        self.assert_pcs_success("stonith level config", self.config)
+        self.assert_pcs_success("stonith level clear rh-X".split())
+        self.assert_pcs_success("stonith level config".split(), self.config)
 
     def test_clear_nonexistant_devices(self):
-        self.assert_pcs_success("stonith level clear F1,F5")
-        self.assert_pcs_success("stonith level config", self.config)
+        self.assert_pcs_success("stonith level clear F1,F5".split())
+        self.assert_pcs_success("stonith level config".split(), self.config)
 
     def test_pattern_is_not_device(self):
-        self.assert_pcs_success("stonith level clear regexp%F1")
-        self.assert_pcs_success("stonith level config", self.config)
+        self.assert_pcs_success("stonith level clear regexp%F1".split())
+        self.assert_pcs_success("stonith level config".split(), self.config)
 
     def test_clear_node(self):
-        self.assert_pcs_success("stonith level clear rh7-1")
+        self.assert_pcs_success("stonith level clear rh7-1".split())
         self.assert_pcs_success(
-            "stonith level config", "\n".join(self.config_lines[3:]) + "\n"
+            "stonith level config".split(),
+            "\n".join(self.config_lines[3:]) + "\n",
         )
 
     def test_clear_pattern(self):
-        self.assert_pcs_success(r"stonith level clear regexp%rh7-\d")
+        self.assert_pcs_success("stonith level clear regexp%rh7-\\d".split())
         self.assert_pcs_success(
-            "stonith level config",
+            "stonith level config".split(),
             "\n".join(self.config_lines[:6] + self.config_lines[9:]) + "\n",
         )
 
     @skip_unless_fencing_level_attribute_supported
     def test_clear_attribute(self):
-        self.assert_pcs_success("stonith level clear attrib%fencewith=levels2")
         self.assert_pcs_success(
-            "stonith level config", "\n".join(self.config_lines[:11]) + "\n"
+            "stonith level clear attrib%fencewith=levels2".split()
+        )
+        self.assert_pcs_success(
+            "stonith level config".split(),
+            "\n".join(self.config_lines[:11]) + "\n",
         )
 
     def test_clear_device(self):
-        self.assert_pcs_success("stonith level clear F1")
+        self.assert_pcs_success("stonith level clear F1".split())
         self.assert_pcs_success(
-            "stonith level config",
+            "stonith level config".split(),
             "\n".join(
                 self.config_lines[0:1]
                 + self.config_lines[2:5]
@@ -1432,9 +1466,9 @@ class LevelClear(LevelTestsBase):
         )
 
     def test_clear_devices(self):
-        self.assert_pcs_success("stonith level clear F2,F1")
+        self.assert_pcs_success("stonith level clear F2,F1".split())
         self.assert_pcs_success(
-            "stonith level config",
+            "stonith level config".split(),
             "\n".join(self.config_lines[:7] + self.config_lines[8:]) + "\n",
         )
 
@@ -1448,7 +1482,7 @@ class LevelDeleteRemove(LevelTestsBase):
 
     def _test_usage(self):
         self.assert_pcs_fail(
-            f"stonith level {self.command}",
+            ["stonith", "level", self.command],
             stdout_start=outdent(
                 f"""
                 Usage: pcs stonith level {self.command}...
@@ -1458,7 +1492,7 @@ class LevelDeleteRemove(LevelTestsBase):
 
     def _test_nonexisting_level_node_device(self):
         self.assert_pcs_fail(
-            f"stonith level {self.command} 1 rh7-1 F3",
+            ["stonith", "level", self.command, "1", "rh7-1", "F3"],
             outdent(
                 """\
                 Error: Fencing level for 'rh7-1' at level '1' with device(s) 'F3' does not exist
@@ -1467,41 +1501,41 @@ class LevelDeleteRemove(LevelTestsBase):
             )
             + ERRORS_HAVE_OCURRED,
         )
-        self.assert_pcs_success("stonith level config", self.config)
+        self.assert_pcs_success("stonith level config".split(), self.config)
 
     def _test_nonexisting_level_pattern_device(self):
         self.assert_pcs_fail(
-            f"stonith level {self.command} 1 regexp%rh7-\\d F3",
+            ["stonith", "level", self.command, "1", r"regexp%rh7-\d", "F3"],
             (
                 "Error: Fencing level for 'rh7-\\d' at level '1' with "
                 "device(s) 'F3' does not exist\n" + ERRORS_HAVE_OCURRED
             ),
         )
-        self.assert_pcs_success("stonith level config", self.config)
+        self.assert_pcs_success("stonith level config".split(), self.config)
 
         self.assert_pcs_fail(
-            f"stonith level {self.command} 3 regexp%rh7-\\d F1,F2",
+            ["stonith", "level", self.command, "3", r"regexp%rh7-\d", "F1,F2"],
             (
                 "Error: Fencing level for 'rh7-\\d' at level '3' with "
                 "device(s) 'F1', 'F2' does not exist\n" + ERRORS_HAVE_OCURRED
             ),
         )
-        self.assert_pcs_success("stonith level config", self.config)
+        self.assert_pcs_success("stonith level config".split(), self.config)
 
     def _test_nonexisting_level(self):
         self.assert_pcs_fail(
-            f"stonith level {self.command} 9",
+            ["stonith", "level", self.command, "9"],
             (
                 "Error: Fencing level at level '9' does not exist\n"
                 + ERRORS_HAVE_OCURRED
             ),
         )
-        self.assert_pcs_success("stonith level config", self.config)
+        self.assert_pcs_success("stonith level config".split(), self.config)
 
     def _test_remove_level(self):
-        self.assert_pcs_success(f"stonith level {self.command} 1")
+        self.assert_pcs_success(["stonith", "level", self.command, "1"])
         self.assert_pcs_success(
-            "stonith level config",
+            "stonith level config".split(),
             "\n".join(
                 self.config_lines[0:1]
                 + self.config_lines[2:4]
@@ -1511,74 +1545,100 @@ class LevelDeleteRemove(LevelTestsBase):
         )
 
     def _test_remove_level_node(self):
-        self.assert_pcs_success(f"stonith level {self.command} 1 rh7-2")
         self.assert_pcs_success(
-            "stonith level config",
+            ["stonith", "level", self.command, "1", "rh7-2"]
+        )
+        self.assert_pcs_success(
+            "stonith level config".split(),
             "\n".join(self.config_lines[:4] + self.config_lines[5:]) + "\n",
         )
 
     def _test_remove_level_pattern(self):
         self.assert_pcs_success(
-            f"stonith level {self.command} 3 regexp%rh7-\\d"
+            ["stonith", "level", self.command, "3", r"regexp%rh7-\d"]
         )
         self.assert_pcs_success(
-            "stonith level config",
+            "stonith level config".split(),
             "\n".join(self.config_lines[:7] + self.config_lines[8:]) + "\n",
         )
 
     @skip_unless_fencing_level_attribute_supported
     def _test_remove_level_attrib(self):
         self.assert_pcs_success(
-            f"stonith level {self.command} 6 attrib%fencewith=levels2"
+            ["stonith", "level", self.command, "6", "attrib%fencewith=levels2"]
         )
         self.assert_pcs_success(
-            "stonith level config", "\n".join(self.config_lines[:11]) + "\n"
+            "stonith level config".split(),
+            "\n".join(self.config_lines[:11]) + "\n",
         )
 
     def _test_remove_level_device(self):
-        self.assert_pcs_success(f"stonith level {self.command} 1 F2")
+        self.assert_pcs_success(["stonith", "level", self.command, "1", "F2"])
         self.assert_pcs_success(
-            "stonith level config",
+            "stonith level config".split(),
             "\n".join(self.config_lines[:4] + self.config_lines[5:]) + "\n",
         )
 
     def _test_remove_level_devices(self):
-        self.assert_pcs_success(f"stonith level {self.command} 3 F2 F1")
         self.assert_pcs_success(
-            "stonith level config",
+            ["stonith", "level", self.command, "3", "F2", "F1"]
+        )
+        self.assert_pcs_success(
+            "stonith level config".split(),
             "\n".join(self.config_lines[:7] + self.config_lines[8:]) + "\n",
         )
 
     def _test_remove_level_devices_old_syntax(self):
-        self.assert_pcs_success(f"stonith level {self.command} 3 F2,F1")
         self.assert_pcs_success(
-            "stonith level config",
+            ["stonith", "level", self.command, "3", "F2,F1"]
+        )
+        self.assert_pcs_success(
+            "stonith level config".split(),
             "\n".join(self.config_lines[:7] + self.config_lines[8:]) + "\n",
         )
 
     def _test_remove_level_node_device(self):
-        self.assert_pcs_success(f"stonith level {self.command} 1 rh7-2 F2")
         self.assert_pcs_success(
-            "stonith level config",
+            ["stonith", "level", self.command, "1", "rh7-2", "F2"]
+        )
+        self.assert_pcs_success(
+            "stonith level config".split(),
             "\n".join(self.config_lines[:4] + self.config_lines[5:]) + "\n",
         )
 
     def _test_remove_level_pattern_device(self):
         self.assert_pcs_success(
-            f"stonith level {self.command} 3 regexp%rh7-\\d F2 F1"
+            [
+                "stonith",
+                "level",
+                self.command,
+                "3",
+                r"regexp%rh7-\d",
+                "F2",
+                "F1",
+            ]
         )
         self.assert_pcs_success(
-            "stonith level config",
+            "stonith level config".split(),
             "\n".join(self.config_lines[:7] + self.config_lines[8:]) + "\n",
         )
 
     @skip_unless_fencing_level_attribute_supported
     def _test_remove_level_attrib_device(self):
         self.assert_pcs_success(
-            f"stonith level {self.command} 6 attrib%fencewith=levels2 F3 F1"
+            [
+                "stonith",
+                "level",
+                self.command,
+                "6",
+                "attrib%fencewith=levels2",
+                "F3",
+                "F1",
+            ]
         )
         self.assert_pcs_success(
-            "stonith level config", "\n".join(self.config_lines[:11]) + "\n"
+            "stonith level config".split(),
+            "\n".join(self.config_lines[:11]) + "\n",
         )
 
 
@@ -1596,18 +1656,18 @@ class LevelRemove(LevelDeleteRemove, metaclass=ParametrizedTestMetaClass):
 class LevelVerify(LevelTestsBase):
     def test_success(self):
         self.fixture_full_configuration()
-        self.assert_pcs_success("stonith level verify", "")
+        self.assert_pcs_success("stonith level verify".split(), "")
 
     def test_errors(self):
         self.fixture_stonith_resource("F1")
 
-        self.assert_pcs_success("stonith level add 1 rh7-1 F1")
+        self.assert_pcs_success("stonith level add 1 rh7-1 F1".split())
         self.assert_pcs_success(
-            "stonith level add 2 rh7-1 FX --force",
+            "stonith level add 2 rh7-1 FX --force".split(),
             "Warning: Stonith resource(s) 'FX' do not exist\n",
         )
         self.assert_pcs_success(
-            "stonith level add 1 rh7-X FX --force",
+            "stonith level add 1 rh7-X FX --force".split(),
             outdent(
                 """\
                 Warning: Node 'rh7-X' does not appear to exist in configuration
@@ -1616,7 +1676,7 @@ class LevelVerify(LevelTestsBase):
             ),
         )
         self.assert_pcs_success(
-            "stonith level add 2 rh7-Y FY --force",
+            "stonith level add 2 rh7-Y FY --force".split(),
             outdent(
                 """\
                 Warning: Node 'rh7-Y' does not appear to exist in configuration
@@ -1625,16 +1685,25 @@ class LevelVerify(LevelTestsBase):
             ),
         )
         self.assert_pcs_success(
-            r"stonith level add 4 regexp%rh7-\d FX --force",
+            "stonith level add 4 regexp%rh7-\\d FX --force".split(),
             "Warning: Stonith resource(s) 'FX' do not exist\n",
         )
         self.assert_pcs_success(
-            r"stonith level add 3 regexp%rh7-\d FY FZ --force",
+            [
+                "stonith",
+                "level",
+                "add",
+                "3",
+                r"regexp%rh7-\d",
+                "FY",
+                "FZ",
+                "--force",
+            ],
             "Warning: Stonith resource(s) 'FY', 'FZ' do not exist\n",
         )
 
         self.assert_pcs_fail(
-            "stonith level verify",
+            "stonith level verify".split(),
             (
                 "Error: Stonith resource(s) 'FX', 'FY', 'FZ' do not exist\n"
                 "Error: Node 'rh7-X' does not appear to exist in "
@@ -1653,7 +1722,7 @@ class StonithUpdate(ResourceTest):
 
     def fixture_create_stonith(self):
         self.assert_effect(
-            "stonith create S fence_apc ip=i login=l ssh=0 debug=d",
+            "stonith create S fence_apc ip=i login=l ssh=0 debug=d".split(),
             """
             <resources>
                 <primitive class="stonith" id="S" type="fence_apc">
@@ -1683,7 +1752,7 @@ class StonithUpdate(ResourceTest):
 
     def test_set_deprecated_param(self):
         self.assert_effect(
-            "stonith update S debug=D",
+            "stonith update S debug=D".split(),
             """
             <resources>
                 <primitive class="stonith" id="S" type="fence_apc">
@@ -1713,7 +1782,7 @@ class StonithUpdate(ResourceTest):
 
     def test_unset_deprecated_param(self):
         self.assert_effect(
-            "stonith update S debug=",
+            "stonith update S debug=".split(),
             """
             <resources>
                 <primitive class="stonith" id="S" type="fence_apc">
@@ -1740,14 +1809,14 @@ class StonithUpdate(ResourceTest):
 
     def test_unset_deprecated_required_param(self):
         self.assert_pcs_fail(
-            "stonith update S login=",
+            "stonith update S login=".split(),
             "Error: required stonith option 'username' is missing, use --force "
             "to override\n",
         )
 
     def test_set_obsoleting_param(self):
         self.assert_effect(
-            "stonith update S ssh=1",
+            "stonith update S ssh=1".split(),
             """
             <resources>
                 <primitive class="stonith" id="S" type="fence_apc">
@@ -1777,7 +1846,7 @@ class StonithUpdate(ResourceTest):
 
     def test_unset_obsoleting_param(self):
         self.assert_effect(
-            "stonith update S ssh=",
+            "stonith update S ssh=".split(),
             """
             <resources>
                 <primitive class="stonith" id="S" type="fence_apc">
@@ -1804,14 +1873,14 @@ class StonithUpdate(ResourceTest):
 
     def test_unset_obsoleting_required_param(self):
         self.assert_pcs_fail(
-            "stonith update S ip=",
+            "stonith update S ip=".split(),
             "Error: required stonith option 'ip' is missing, use --force "
             "to override\n",
         )
 
     def test_unset_deprecated_required_set_obsoleting(self):
         self.assert_effect(
-            "stonith update S login= username=u",
+            "stonith update S login= username=u".split(),
             """
             <resources>
                 <primitive class="stonith" id="S" type="fence_apc">
@@ -1841,7 +1910,7 @@ class StonithUpdate(ResourceTest):
 
     def test_unset_obsoleting_required_set_deprecated(self):
         self.assert_effect(
-            "stonith update S ip= ipaddr=I",
+            "stonith update S ip= ipaddr=I".split(),
             """
             <resources>
                 <primitive class="stonith" id="S" type="fence_apc">
@@ -1871,7 +1940,7 @@ class StonithUpdate(ResourceTest):
 
     def test_set_both_deprecated_and_obsoleting(self):
         self.assert_effect(
-            "stonith update S ip=I1 ipaddr=I2",
+            "stonith update S ip=I1 ipaddr=I2".split(),
             """
             <resources>
                 <primitive class="stonith" id="S" type="fence_apc">

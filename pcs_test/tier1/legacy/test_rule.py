@@ -1850,7 +1850,8 @@ class DomRuleAddTest(TestCase):
         self.temp_cib = get_tmp_file("tier1_rule_dom_rule_add")
         write_file_to_tmpfile(empty_cib, self.temp_cib)
         output, returnVal = pcs(
-            self.temp_cib.name, "resource create dummy1 ocf:heartbeat:Dummy"
+            self.temp_cib.name,
+            "resource create dummy1 ocf:heartbeat:Dummy".split(),
         )
         assert returnVal == 0 and output == ""
 
@@ -1943,27 +1944,27 @@ class DomRuleAddTest(TestCase):
     def test_success(self):
         output, returnVal = pcs(
             self.temp_cib.name,
-            "constraint location dummy1 rule #uname eq node1",
+            "constraint location dummy1 rule #uname eq node1".split(),
         )
         ac(output, "")
         self.assertEqual(0, returnVal)
 
         output, returnVal = pcs(
             self.temp_cib.name,
-            "constraint location dummy1 rule id=MyRule score=100 role=master #uname eq node2",
+            "constraint location dummy1 rule id=MyRule score=100 role=master #uname eq node2".split(),
         )
         ac(output, "")
         self.assertEqual(0, returnVal)
 
         output, returnVal = pcs(
             self.temp_cib.name,
-            "constraint location dummy1 rule id=complexRule (#uname eq node3 and foo gt version 1.2) or (date-spec hours=12-23 weekdays=1-5 and date in_range 2014-07-26 to duration months=1)",
+            "constraint location dummy1 rule id=complexRule (#uname eq node3 and foo gt version 1.2) or (date-spec hours=12-23 weekdays=1-5 and date in_range 2014-07-26 to duration months=1)".split(),
         )
         ac(output, "")
         self.assertEqual(0, returnVal)
 
         output, returnVal = pcs(
-            self.temp_cib.name, "constraint location show --full"
+            self.temp_cib.name, "constraint location show --full".split()
         )
         ac(
             output,
@@ -1990,7 +1991,9 @@ Location Constraints:
         )
         self.assertEqual(0, returnVal)
 
-        output, returnVal = pcs(self.temp_cib.name, "constraint location show")
+        output, returnVal = pcs(
+            self.temp_cib.name, "constraint location show".split()
+        )
         ac(
             output,
             """\
@@ -2020,7 +2023,7 @@ Location Constraints:
     def test_invalid_score(self):
         output, returnVal = pcs(
             self.temp_cib.name,
-            "constraint location dummy1 rule score=pingd defined pingd",
+            "constraint location dummy1 rule score=pingd defined pingd".split(),
         )
         ac(
             output,
@@ -2030,7 +2033,7 @@ Location Constraints:
         self.assertEqual(0, returnVal)
 
         output, returnVal = pcs(
-            self.temp_cib.name, "constraint location show --full"
+            self.temp_cib.name, "constraint location show --full".split()
         )
         ac(
             output,
@@ -2046,13 +2049,15 @@ Location Constraints:
 
     def test_invalid_rule(self):
         output, returnVal = pcs(
-            self.temp_cib.name, "constraint location dummy1 rule score=100"
+            self.temp_cib.name,
+            "constraint location dummy1 rule score=100".split(),
         )
         ac(output, "Error: no rule expression was specified\n")
         self.assertEqual(1, returnVal)
 
         output, returnVal = pcs(
-            self.temp_cib.name, "constraint location dummy1 rule #uname eq"
+            self.temp_cib.name,
+            "constraint location dummy1 rule #uname eq".split(),
         )
         ac(
             output,
@@ -2063,7 +2068,7 @@ Location Constraints:
 
         output, returnVal = pcs(
             self.temp_cib.name,
-            "constraint location dummy1 rule string #uname eq node1",
+            "constraint location dummy1 rule string #uname eq node1".split(),
         )
         ac(
             output,
@@ -2076,21 +2081,21 @@ Location Constraints:
     def test_ivalid_options(self):
         output, returnVal = pcs(
             self.temp_cib.name,
-            "constraint location dummy1 rule role=foo #uname eq node1",
+            "constraint location dummy1 rule role=foo #uname eq node1".split(),
         )
         ac(output, "Error: invalid role 'foo', use 'master' or 'slave'\n")
         self.assertEqual(1, returnVal)
 
         output, returnVal = pcs(
             self.temp_cib.name,
-            "constraint location dummy1 rule score=100 score-attribute=pingd #uname eq node1",
+            "constraint location dummy1 rule score=100 score-attribute=pingd #uname eq node1".split(),
         )
         ac(output, "Error: can not specify both score and score-attribute\n")
         self.assertEqual(1, returnVal)
 
         output, returnVal = pcs(
             self.temp_cib.name,
-            "constraint location dummy1 rule id=1foo #uname eq node1",
+            "constraint location dummy1 rule id=1foo #uname eq node1".split(),
         )
         ac(
             output,
@@ -2100,20 +2105,20 @@ Location Constraints:
         self.assertEqual(1, returnVal)
 
         output, returnVal = pcs(
-            self.temp_cib.name, "constraint location show --full"
+            self.temp_cib.name, "constraint location show --full".split()
         )
         ac(output, "Location Constraints:\n")
         self.assertEqual(0, returnVal)
 
         output, returnVal = pcs(
             self.temp_cib.name,
-            "constraint location dummy1 rule id=MyRule #uname eq node1",
+            "constraint location dummy1 rule id=MyRule #uname eq node1".split(),
         )
         ac(output, "")
         self.assertEqual(0, returnVal)
 
         output, returnVal = pcs(
-            self.temp_cib.name, "constraint location show --full"
+            self.temp_cib.name, "constraint location show --full".split()
         )
         ac(
             output,
@@ -2129,7 +2134,7 @@ Location Constraints:
 
         output, returnVal = pcs(
             self.temp_cib.name,
-            "constraint location dummy1 rule id=MyRule #uname eq node1",
+            "constraint location dummy1 rule id=MyRule #uname eq node1".split(),
         )
         ac(
             output,

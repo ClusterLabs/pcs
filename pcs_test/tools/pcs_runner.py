@@ -33,18 +33,6 @@ def pcs(cib_file, args, corosync_conf_opt=None, mock_settings=None):
     """
     if mock_settings is None:
         mock_settings = {}
-    arg_split = args.split()
-    arg_split_temp = []
-    in_quote = False
-    for arg in arg_split:
-        if in_quote:
-            arg_split_temp[-1] = arg_split_temp[-1] + " " + arg.replace("'", "")
-            if arg.find("'") != -1:
-                in_quote = False
-        else:
-            arg_split_temp.append(arg.replace("'", ""))
-            if arg.find("'") != -1 and not (arg[0] == "'" and arg[-1] == "'"):
-                in_quote = True
 
     env_mock_settings_prefix = "PCS.SETTINGS."
     env = {
@@ -54,7 +42,7 @@ def pcs(cib_file, args, corosync_conf_opt=None, mock_settings=None):
     if test_installed:
         env["PCS_TEST.TEST_INSTALLED"] = "1"
 
-    cmd = [__pcs_location] + arg_split_temp
+    cmd = [__pcs_location] + args
     if cib_file:
         cmd.extend(["-f", cib_file])
     if corosync_conf_opt:

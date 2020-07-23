@@ -70,7 +70,7 @@ def get_assert_pcs_effect_mixin(get_cib_part):
         ):
             alternative_list = (
                 alternative_cmds
-                if isinstance(alternative_cmds, list)
+                if isinstance(alternative_cmds[0], list)
                 else [alternative_cmds]
             )
             self.temp_cib.seek(0)

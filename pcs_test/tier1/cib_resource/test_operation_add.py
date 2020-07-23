@@ -30,7 +30,7 @@ class OperationAdd(TestCase, get_assert_pcs_effect_mixin(get_cib_resources)):
     def fixture_cib(self):
         write_file_to_tmpfile(self.empty_cib, self.temp_cib)
         self.assert_pcs_success(
-            "resource create --no-default-ops R ocf:heartbeat:Dummy"
+            "resource create --no-default-ops R ocf:heartbeat:Dummy".split()
         )
         # add to cib:
         # <primitive class="ocf" id="R" provider="heartbeat" type="Dummy">
@@ -45,7 +45,7 @@ class OperationAdd(TestCase, get_assert_pcs_effect_mixin(get_cib_resources)):
 
     def test_base_add(self):
         self.assert_effect(
-            "resource op add R start interval=20s",
+            "resource op add R start interval=20s".split(),
             """<resources>
                 <primitive class="ocf" id="R" provider="heartbeat" type="Dummy">
                     <operations>
@@ -63,8 +63,10 @@ class OperationAdd(TestCase, get_assert_pcs_effect_mixin(get_cib_resources)):
     def test_add_with_OCF_CHECK_LEVEL(self):
         # pylint: disable=invalid-name
         self.assert_effect(
-            "resource op add R start interval=20s OCF_CHECK_LEVEL=1"
-            " description=test-description",
+            (
+                "resource op add R start interval=20s OCF_CHECK_LEVEL=1 "
+                "description=test-description"
+            ).split(),
             """<resources>
                 <primitive class="ocf" id="R" provider="heartbeat" type="Dummy">
                     <operations>
@@ -90,7 +92,7 @@ class OperationAdd(TestCase, get_assert_pcs_effect_mixin(get_cib_resources)):
 
     def test_can_multiple_operation_add(self):
         self.assert_effect(
-            "resource op add R start interval=20s",
+            "resource op add R start interval=20s".split(),
             """<resources>
                 <primitive class="ocf" id="R" provider="heartbeat" type="Dummy">
                     <operations>
@@ -105,7 +107,7 @@ class OperationAdd(TestCase, get_assert_pcs_effect_mixin(get_cib_resources)):
             </resources>""",
         )
         self.assert_effect(
-            "resource op add R stop interval=30s",
+            "resource op add R stop interval=30s".split(),
             """<resources>
                 <primitive class="ocf" id="R" provider="heartbeat" type="Dummy">
                     <operations>
@@ -125,7 +127,7 @@ class OperationAdd(TestCase, get_assert_pcs_effect_mixin(get_cib_resources)):
 
     def test_id_specified(self):
         self.assert_effect(
-            "resource op add R start timeout=30 id=abcd",
+            "resource op add R start timeout=30 id=abcd".split(),
             """<resources>
                 <primitive class="ocf" id="R" provider="heartbeat" type="Dummy">
                     <operations>
@@ -140,20 +142,20 @@ class OperationAdd(TestCase, get_assert_pcs_effect_mixin(get_cib_resources)):
 
     def test_invalid_id(self):
         self.assert_pcs_fail_regardless_of_force(
-            "resource op add R start timeout=30 id=ab#cd",
+            "resource op add R start timeout=30 id=ab#cd".split(),
             "Error: invalid operation id 'ab#cd', '#' is not a valid"
             " character for a operation id\n",
         )
 
     def test_duplicate_id(self):
         self.assert_pcs_fail_regardless_of_force(
-            "resource op add R start timeout=30 id=R",
+            "resource op add R start timeout=30 id=R".split(),
             "Error: id 'R' is already in use, please specify another one\n",
         )
 
     def test_unknown_option(self):
         self.assert_pcs_fail(
-            "resource op add R start timeout=30 requires=quorum",
+            "resource op add R start timeout=30 requires=quorum".split(),
             (
                 "Error: requires is not a valid op option (use --force to "
                 "override)\n"

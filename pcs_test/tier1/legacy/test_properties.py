@@ -29,23 +29,25 @@ class PropertyTest(TestCase):
         self.temp_cib.close()
 
     def testEmpty(self):
-        output, returnVal = pcs(self.temp_cib.name, "property")
+        output, returnVal = pcs(self.temp_cib.name, ["property"])
         assert returnVal == 0, "Unable to list resources"
         assert output == "Cluster Properties:\n", [output]
 
     def testDefaults(self):
-        output, returnVal = pcs(self.temp_cib.name, "property --defaults")
+        output, returnVal = pcs(
+            self.temp_cib.name, "property --defaults".split()
+        )
         prop_defaults = output
         assert returnVal == 0, "Unable to list resources"
         assert output.startswith("Cluster Properties:\n batch-limit")
 
-        output, returnVal = pcs(self.temp_cib.name, "property --all")
+        output, returnVal = pcs(self.temp_cib.name, "property --all".split())
         assert returnVal == 0, "Unable to list resources"
         assert output.startswith("Cluster Properties:\n batch-limit")
         ac(output, prop_defaults)
 
         output, returnVal = pcs(
-            self.temp_cib.name, "property set blahblah=blah"
+            self.temp_cib.name, "property set blahblah=blah".split()
         )
         assert returnVal == 1
         assert (
@@ -55,123 +57,99 @@ class PropertyTest(TestCase):
         ), [output]
 
         output, returnVal = pcs(
-            self.temp_cib.name, "property set blahblah=blah --force"
+            self.temp_cib.name, "property set blahblah=blah --force".split()
         )
         assert returnVal == 0, output
         assert output == "", output
 
         output, returnVal = pcs(
-            self.temp_cib.name, "property set stonith-enabled=false"
+            self.temp_cib.name, "property set stonith-enabled=false".split()
         )
         assert returnVal == 0, output
         assert output == "", output
 
-        output, returnVal = pcs(self.temp_cib.name, "property")
+        output, returnVal = pcs(self.temp_cib.name, ["property"])
         assert returnVal == 0
         assert (
             output
             == "Cluster Properties:\n blahblah: blah\n stonith-enabled: false\n"
         ), [output]
 
-        output, returnVal = pcs(self.temp_cib.name, "property --defaults")
+        output, returnVal = pcs(
+            self.temp_cib.name, "property --defaults".split()
+        )
         assert returnVal == 0, "Unable to list resources"
         assert output.startswith("Cluster Properties:\n batch-limit")
         ac(output, prop_defaults)
 
-        output, returnVal = pcs(self.temp_cib.name, "property --all")
+        output, returnVal = pcs(self.temp_cib.name, "property --all".split())
         assert returnVal == 0, "Unable to list resources"
         assert "blahblah: blah" in output
         assert "stonith-enabled: false" in output
         assert output.startswith("Cluster Properties:\n batch-limit")
 
     def testBadProperties(self):
-        o, r = pcs(self.temp_cib.name, "property set xxxx=zzzz")
+        o, r = pcs(self.temp_cib.name, "property set xxxx=zzzz".split())
         self.assertEqual(r, 1)
         ac(
             # pylint: disable=line-too-long
             o,
             "Error: unknown cluster property: 'xxxx', (use --force to override)\n",
         )
-        o, _ = pcs(self.temp_cib.name, "property list")
+        o, _ = pcs(self.temp_cib.name, "property list".split())
         ac(o, "Cluster Properties:\n")
 
         output, returnVal = pcs(
-            self.temp_cib.name, "property set =5678 --force"
+            self.temp_cib.name, "property set =5678 --force".split()
         )
         ac(output, "Error: empty property name: '=5678'\n")
         self.assertEqual(returnVal, 1)
-        o, _ = pcs(self.temp_cib.name, "property list")
-        ac(o, "Cluster Properties:\n")
-
-        output, returnVal = pcs(self.temp_cib.name, "property set =5678")
-        ac(output, "Error: empty property name: '=5678'\n")
-        self.assertEqual(returnVal, 1)
-        o, _ = pcs(self.temp_cib.name, "property list")
-        ac(o, "Cluster Properties:\n")
-
-        output, returnVal = pcs(self.temp_cib.name, "property set bad_format")
-        ac(output, "Error: invalid property format: 'bad_format'\n")
-        self.assertEqual(returnVal, 1)
-        o, _ = pcs(self.temp_cib.name, "property list")
+        o, _ = pcs(self.temp_cib.name, "property list".split())
         ac(o, "Cluster Properties:\n")
 
         output, returnVal = pcs(
-            self.temp_cib.name, "property set bad_format --force"
+            self.temp_cib.name, "property set =5678".split()
+        )
+        ac(output, "Error: empty property name: '=5678'\n")
+        self.assertEqual(returnVal, 1)
+        o, _ = pcs(self.temp_cib.name, "property list".split())
+        ac(o, "Cluster Properties:\n")
+
+        output, returnVal = pcs(
+            self.temp_cib.name, "property set bad_format".split()
         )
         ac(output, "Error: invalid property format: 'bad_format'\n")
         self.assertEqual(returnVal, 1)
-        o, _ = pcs(self.temp_cib.name, "property list")
+        o, _ = pcs(self.temp_cib.name, "property list".split())
         ac(o, "Cluster Properties:\n")
 
-        o, r = pcs(self.temp_cib.name, "property unset zzzzz")
+        output, returnVal = pcs(
+            self.temp_cib.name, "property set bad_format --force".split()
+        )
+        ac(output, "Error: invalid property format: 'bad_format'\n")
+        self.assertEqual(returnVal, 1)
+        o, _ = pcs(self.temp_cib.name, "property list".split())
+        ac(o, "Cluster Properties:\n")
+
+        o, r = pcs(self.temp_cib.name, "property unset zzzzz".split())
         self.assertEqual(r, 1)
         ac(o, "Error: can't remove property: 'zzzzz' that doesn't exist\n")
-        o, _ = pcs(self.temp_cib.name, "property list")
+        o, _ = pcs(self.temp_cib.name, "property list".split())
         ac(o, "Cluster Properties:\n")
 
-        o, r = pcs(self.temp_cib.name, "property unset zzzz --force")
+        o, r = pcs(self.temp_cib.name, "property unset zzzz --force".split())
         self.assertEqual(r, 0)
         ac(o, "")
-        o, _ = pcs(self.temp_cib.name, "property list")
+        o, _ = pcs(self.temp_cib.name, "property list".split())
         ac(o, "Cluster Properties:\n")
 
     def test_set_property_validation_enum(self):
         output, returnVal = pcs(
-            self.temp_cib.name, "property set no-quorum-policy=freeze"
+            self.temp_cib.name, "property set no-quorum-policy=freeze".split()
         )
         ac(output, "")
         self.assertEqual(returnVal, 0)
-        o, _ = pcs(self.temp_cib.name, "property list")
-        ac(
-            o,
-            """Cluster Properties:
- no-quorum-policy: freeze
-""",
-        )
-
-        output, returnVal = pcs(
-            self.temp_cib.name, "property set no-quorum-policy=freeze --force"
-        )
-        ac(output, "")
-        self.assertEqual(returnVal, 0)
-        o, _ = pcs(self.temp_cib.name, "property list")
-        ac(
-            o,
-            """Cluster Properties:
- no-quorum-policy: freeze
-""",
-        )
-
-        output, returnVal = pcs(
-            self.temp_cib.name, "property set no-quorum-policy=not_valid_value"
-        )
-        ac(
-            output,
-            "Error: invalid value of property: "
-            "'no-quorum-policy=not_valid_value', (use --force to override)\n",
-        )
-        self.assertEqual(returnVal, 1)
-        o, _ = pcs(self.temp_cib.name, "property list")
+        o, _ = pcs(self.temp_cib.name, "property list".split())
         ac(
             o,
             """Cluster Properties:
@@ -181,11 +159,43 @@ class PropertyTest(TestCase):
 
         output, returnVal = pcs(
             self.temp_cib.name,
-            "property set no-quorum-policy=not_valid_value --force",
+            "property set no-quorum-policy=freeze --force".split(),
         )
         ac(output, "")
         self.assertEqual(returnVal, 0)
-        o, _ = pcs(self.temp_cib.name, "property list")
+        o, _ = pcs(self.temp_cib.name, "property list".split())
+        ac(
+            o,
+            """Cluster Properties:
+ no-quorum-policy: freeze
+""",
+        )
+
+        output, returnVal = pcs(
+            self.temp_cib.name,
+            "property set no-quorum-policy=not_valid_value".split(),
+        )
+        ac(
+            output,
+            "Error: invalid value of property: "
+            "'no-quorum-policy=not_valid_value', (use --force to override)\n",
+        )
+        self.assertEqual(returnVal, 1)
+        o, _ = pcs(self.temp_cib.name, "property list".split())
+        ac(
+            o,
+            """Cluster Properties:
+ no-quorum-policy: freeze
+""",
+        )
+
+        output, returnVal = pcs(
+            self.temp_cib.name,
+            "property set no-quorum-policy=not_valid_value --force".split(),
+        )
+        ac(output, "")
+        self.assertEqual(returnVal, 0)
+        o, _ = pcs(self.temp_cib.name, "property list".split())
         ac(
             o,
             """Cluster Properties:
@@ -195,11 +205,11 @@ class PropertyTest(TestCase):
 
     def test_set_property_validation_boolean(self):
         output, returnVal = pcs(
-            self.temp_cib.name, "property set enable-acl=TRUE"
+            self.temp_cib.name, "property set enable-acl=TRUE".split()
         )
         ac(output, "")
         self.assertEqual(returnVal, 0)
-        o, _ = pcs(self.temp_cib.name, "property list")
+        o, _ = pcs(self.temp_cib.name, "property list".split())
         ac(
             o,
             """Cluster Properties:
@@ -208,11 +218,11 @@ class PropertyTest(TestCase):
         )
 
         output, returnVal = pcs(
-            self.temp_cib.name, "property set enable-acl=no"
+            self.temp_cib.name, "property set enable-acl=no".split()
         )
         ac(output, "")
         self.assertEqual(returnVal, 0)
-        o, _ = pcs(self.temp_cib.name, "property list")
+        o, _ = pcs(self.temp_cib.name, "property list".split())
         ac(
             o,
             """Cluster Properties:
@@ -221,28 +231,11 @@ class PropertyTest(TestCase):
         )
 
         output, returnVal = pcs(
-            self.temp_cib.name, "property set enable-acl=TRUE --force"
+            self.temp_cib.name, "property set enable-acl=TRUE --force".split(),
         )
         ac(output, "")
         self.assertEqual(returnVal, 0)
-        o, _ = pcs(self.temp_cib.name, "property list")
-        ac(
-            o,
-            """Cluster Properties:
- enable-acl: TRUE
-""",
-        )
-
-        output, returnVal = pcs(
-            self.temp_cib.name, "property set enable-acl=not_valid_value"
-        )
-        ac(
-            output,
-            "Error: invalid value of property: "
-            "'enable-acl=not_valid_value', (use --force to override)\n",
-        )
-        self.assertEqual(returnVal, 1)
-        o, _ = pcs(self.temp_cib.name, "property list")
+        o, _ = pcs(self.temp_cib.name, "property list".split())
         ac(
             o,
             """Cluster Properties:
@@ -252,11 +245,29 @@ class PropertyTest(TestCase):
 
         output, returnVal = pcs(
             self.temp_cib.name,
-            "property set enable-acl=not_valid_value --force",
+            "property set enable-acl=not_valid_value".split(),
+        )
+        ac(
+            output,
+            "Error: invalid value of property: "
+            "'enable-acl=not_valid_value', (use --force to override)\n",
+        )
+        self.assertEqual(returnVal, 1)
+        o, _ = pcs(self.temp_cib.name, "property list".split())
+        ac(
+            o,
+            """Cluster Properties:
+ enable-acl: TRUE
+""",
+        )
+
+        output, returnVal = pcs(
+            self.temp_cib.name,
+            "property set enable-acl=not_valid_value --force".split(),
         )
         ac(output, "")
         self.assertEqual(returnVal, 0)
-        o, _ = pcs(self.temp_cib.name, "property list")
+        o, _ = pcs(self.temp_cib.name, "property list".split())
         ac(
             o,
             """Cluster Properties:
@@ -266,11 +277,11 @@ class PropertyTest(TestCase):
 
     def test_set_property_validation_integer(self):
         output, returnVal = pcs(
-            self.temp_cib.name, "property set migration-limit=0"
+            self.temp_cib.name, "property set migration-limit=0".split()
         )
         ac(output, "")
         self.assertEqual(returnVal, 0)
-        o, _ = pcs(self.temp_cib.name, "property list")
+        o, _ = pcs(self.temp_cib.name, "property list".split())
         ac(
             o,
             """Cluster Properties:
@@ -279,11 +290,11 @@ class PropertyTest(TestCase):
         )
 
         output, returnVal = pcs(
-            self.temp_cib.name, "property set migration-limit=-10"
+            self.temp_cib.name, "property set migration-limit=-10".split()
         )
         ac(output, "")
         self.assertEqual(returnVal, 0)
-        o, _ = pcs(self.temp_cib.name, "property list")
+        o, _ = pcs(self.temp_cib.name, "property list".split())
         ac(
             o,
             """Cluster Properties:
@@ -292,11 +303,12 @@ class PropertyTest(TestCase):
         )
 
         output, returnVal = pcs(
-            self.temp_cib.name, "property set migration-limit=0 --force"
+            self.temp_cib.name,
+            "property set migration-limit=0 --force".split(),
         )
         ac(output, "")
         self.assertEqual(returnVal, 0)
-        o, _ = pcs(self.temp_cib.name, "property list")
+        o, _ = pcs(self.temp_cib.name, "property list".split())
         ac(
             o,
             """Cluster Properties:
@@ -305,7 +317,7 @@ class PropertyTest(TestCase):
         )
 
         output, returnVal = pcs(
-            self.temp_cib.name, "property set migration-limit=0.1"
+            self.temp_cib.name, "property set migration-limit=0.1".split()
         )
         ac(
             output,
@@ -313,7 +325,7 @@ class PropertyTest(TestCase):
             "'migration-limit=0.1', (use --force to override)\n",
         )
         self.assertEqual(returnVal, 1)
-        o, _ = pcs(self.temp_cib.name, "property list")
+        o, _ = pcs(self.temp_cib.name, "property list".split())
         ac(
             o,
             """Cluster Properties:
@@ -322,11 +334,12 @@ class PropertyTest(TestCase):
         )
 
         output, returnVal = pcs(
-            self.temp_cib.name, "property set migration-limit=0.1 --force"
+            self.temp_cib.name,
+            "property set migration-limit=0.1 --force".split(),
         )
         ac(output, "")
         self.assertEqual(returnVal, 0)
-        o, _ = pcs(self.temp_cib.name, "property list")
+        o, _ = pcs(self.temp_cib.name, "property list".split())
         ac(
             o,
             """Cluster Properties:
@@ -383,10 +396,11 @@ class PropertyUnset(
 
     def test_keep_empty_nvset(self):
         self.assert_effect(
-            "property set batch-limit=100", self.fixture_xml_with_props()
+            "property set batch-limit=100".split(),
+            self.fixture_xml_with_props(),
         )
         self.assert_effect(
-            "property unset batch-limit", self.fixture_xml_empty_props()
+            "property unset batch-limit".split(), self.fixture_xml_empty_props()
         )
 
     def test_dont_create_nvset_on_removal(self):
@@ -394,6 +408,6 @@ class PropertyUnset(
         # of pcs - instead of doing nothing it returns an error.
         # Should be changed to be consistent with the rest of pcs.
         self.assert_pcs_fail(
-            "property unset batch-limit",
+            "property unset batch-limit".split(),
             "Error: can't remove property: 'batch-limit' that doesn't exist\n",
         )

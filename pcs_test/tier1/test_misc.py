@@ -23,14 +23,14 @@ class OldCibPushTest(TestCase, AssertPcsMixin):
 
     def test_warning_old_push(self):
         self.assert_pcs_success(
-            "resource create dummy ocf:pacemaker:Dummy --no-default-ops",
+            "resource create dummy ocf:pacemaker:Dummy --no-default-ops".split(),
             "Warning: Replacing the whole CIB instead of applying a diff, "
             "a race condition may happen if the CIB is pushed more than "
             "once simultaneously. To fix this, upgrade pacemaker to get "
             "crm_feature_set at least 3.0.9, current is 3.0.8.\n",
         )
         self.assert_pcs_success(
-            "resource config",
+            "resource config".split(),
             # pylint: disable=line-too-long
             # fmt: off
             outdent(

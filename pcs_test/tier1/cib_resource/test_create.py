@@ -16,6 +16,7 @@ from pcs.cli.common.parse_args import InputModifiers
 # pylint: disable=invalid-name
 # pylint: disable=no-self-use
 # pylint: disable=unused-argument
+# pylint: disable=too-many-lines
 # pylint: disable=too-many-public-methods
 
 ERRORS_HAVE_OCURRED = (
@@ -30,7 +31,7 @@ class Success(ResourceTest):
 
     def test_base_create(self):
         self.assert_effect(
-            "resource create R ocf:heartbeat:Dummy --no-default-ops",
+            "resource create R ocf:heartbeat:Dummy --no-default-ops".split(),
             """<resources>
                 <primitive class="ocf" id="R" provider="heartbeat" type="Dummy">
                     <operations>
@@ -46,7 +47,7 @@ class Success(ResourceTest):
         # crm_resource returns the same metadata for any systemd resource, no
         # matter if it exists or not
         self.assert_effect(
-            "resource create R systemd:test@a:b --no-default-ops",
+            "resource create R systemd:test@a:b --no-default-ops".split(),
             """<resources>
                 <primitive class="systemd" id="R" type="test@a:b">
                     <operations>
@@ -60,7 +61,7 @@ class Success(ResourceTest):
 
     def test_base_create_with_default_ops(self):
         self.assert_effect(
-            "resource create R ocf:heartbeat:Dummy",
+            "resource create R ocf:heartbeat:Dummy".split(),
             """<resources>
                 <primitive class="ocf" id="R" provider="heartbeat" type="Dummy">
                     <operations>
@@ -89,8 +90,10 @@ class Success(ResourceTest):
 
     def test_create_with_options(self):
         self.assert_effect(
-            "resource create --no-default-ops R ocf:heartbeat:IPaddr2"
-            " ip=192.168.0.99 cidr_netmask=32",
+            (
+                "resource create --no-default-ops R ocf:heartbeat:IPaddr2 "
+                "ip=192.168.0.99 cidr_netmask=32"
+            ).split(),
             """<resources>
                 <primitive class="ocf" id="R" provider="heartbeat"
                     type="IPaddr2"
@@ -117,8 +120,10 @@ class Success(ResourceTest):
         # are allowed for all ocf:heartbeat and ocf:pacemaker agents. This test
         # checks it is possible to set them without --force.
         self.assert_effect(
-            "resource create --no-default-ops R ocf:heartbeat:Dummy"
-            " trace_ra=1 trace_file=/root/trace",
+            (
+                "resource create --no-default-ops R ocf:heartbeat:Dummy "
+                "trace_ra=1 trace_file=/root/trace"
+            ).split(),
             """<resources>
                 <primitive class="ocf" id="R" provider="heartbeat"
                     type="Dummy"
@@ -142,8 +147,10 @@ class Success(ResourceTest):
 
     def test_create_with_options_and_operations(self):
         self.assert_effect(
-            "resource create --no-default-ops R ocf:heartbeat:IPaddr2"
-            " ip=192.168.0.99 cidr_netmask=32  op monitor interval=30s",
+            (
+                "resource create --no-default-ops R ocf:heartbeat:IPaddr2 "
+                "ip=192.168.0.99 cidr_netmask=32 op monitor interval=30s"
+            ).split(),
             """<resources>
                 <primitive class="ocf" id="R" provider="heartbeat"
                     type="IPaddr2"
@@ -167,7 +174,10 @@ class Success(ResourceTest):
 
     def test_create_disabled(self):
         self.assert_effect(
-            "resource create R ocf:heartbeat:Dummy --no-default-ops --disabled",
+            (
+                "resource create R ocf:heartbeat:Dummy --no-default-ops "
+                "--disabled"
+            ).split(),
             """<resources>
                 <primitive class="ocf" id="R" provider="heartbeat" type="Dummy">
                     <meta_attributes id="R-meta_attributes">
@@ -186,7 +196,7 @@ class Success(ResourceTest):
 
     def test_with_clone(self):
         self.assert_effect(
-            "resource create R ocf:heartbeat:Dummy --no-default-ops clone",
+            "resource create R ocf:heartbeat:Dummy --no-default-ops clone".split(),
             """<resources>
                 <clone id="R-clone">
                     <primitive class="ocf" id="R" provider="heartbeat"
@@ -205,9 +215,9 @@ class Success(ResourceTest):
     def test_with_clone_options(self):
         self.assert_effect(
             (
-                "resource create R ocf:heartbeat:Dummy --no-default-ops clone"
-                " notify=true"
-            ),
+                "resource create R ocf:heartbeat:Dummy --no-default-ops clone "
+                "notify=true"
+            ).split(),
             """<resources>
                 <clone id="R-clone">
                     <primitive class="ocf" id="R" provider="heartbeat"
@@ -230,8 +240,10 @@ class Success(ResourceTest):
 
     def test_create_with_options_and_meta(self):
         self.assert_effect(
-            "resource create --no-default-ops R ocf:heartbeat:IPaddr2"
-            " ip=192.168.0.99 cidr_netmask=32 meta is-managed=false",
+            (
+                "resource create --no-default-ops R ocf:heartbeat:IPaddr2 "
+                "ip=192.168.0.99 cidr_netmask=32 meta is-managed=false"
+            ).split(),
             """<resources>
                 <primitive class="ocf" id="R" provider="heartbeat"
                     type="IPaddr2"
@@ -266,8 +278,10 @@ class SuccessOperations(ResourceTest):
 
     def test_create_with_operations(self):
         self.assert_effect(
-            "resource create --no-default-ops R ocf:heartbeat:Dummy"
-            " op monitor interval=30s",
+            (
+                "resource create --no-default-ops R ocf:heartbeat:Dummy "
+                "op monitor interval=30s"
+            ).split(),
             """<resources>
                 <primitive class="ocf" id="R" provider="heartbeat" type="Dummy">
                     <operations>
@@ -281,8 +295,10 @@ class SuccessOperations(ResourceTest):
 
     def test_multiple_op_keyword(self):
         self.assert_effect(
-            "resource create R ocf:heartbeat:Dummy --no-default-ops"
-            " op monitor interval=30s op monitor interval=20s",
+            (
+                "resource create R ocf:heartbeat:Dummy --no-default-ops "
+                "op monitor interval=30s op monitor interval=20s"
+            ).split(),
             """<resources>
                 <primitive class="ocf" id="R" provider="heartbeat" type="Dummy">
                     <operations>
@@ -299,8 +315,10 @@ class SuccessOperations(ResourceTest):
 
     def test_multiple_operations_same_op_keyword(self):
         self.assert_effect(
-            "resource create R ocf:heartbeat:Dummy --no-default-ops"
-            " op monitor interval=30s monitor interval=20s",
+            (
+                "resource create R ocf:heartbeat:Dummy --no-default-ops "
+                "op monitor interval=30s monitor interval=20s"
+            ).split(),
             """<resources>
                 <primitive class="ocf" id="R" provider="heartbeat" type="Dummy">
                     <operations>
@@ -317,8 +335,10 @@ class SuccessOperations(ResourceTest):
 
     def test_multiple_op_options_for_same_action(self):
         self.assert_effect(
-            "resource create R ocf:heartbeat:Dummy --no-default-ops"
-            " op monitor interval=30s timeout=20s",
+            (
+                "resource create R ocf:heartbeat:Dummy --no-default-ops "
+                "op monitor interval=30s timeout=20s"
+            ).split(),
             """<resources>
                 <primitive class="ocf" id="R" provider="heartbeat" type="Dummy">
                     <operations>
@@ -332,8 +352,10 @@ class SuccessOperations(ResourceTest):
 
     def test_op_with_OCF_CHECK_LEVEL(self):
         self.assert_effect(
-            "resource create R ocf:heartbeat:Dummy --no-default-ops"
-            " op monitor interval=30s timeout=20s OCF_CHECK_LEVEL=1",
+            (
+                "resource create R ocf:heartbeat:Dummy --no-default-ops "
+                "op monitor interval=30s timeout=20s OCF_CHECK_LEVEL=1"
+            ).split(),
             """<resources>
                 <primitive class="ocf" id="R" provider="heartbeat" type="Dummy">
                     <operations>
@@ -358,7 +380,7 @@ class SuccessOperations(ResourceTest):
 
     def test_default_ops_only(self):
         self.assert_effect(
-            "resource create R ocf:heartbeat:Dummy",
+            "resource create R ocf:heartbeat:Dummy".split(),
             """<resources>
                 <primitive class="ocf" id="R" provider="heartbeat" type="Dummy">
                     <operations>
@@ -387,7 +409,7 @@ class SuccessOperations(ResourceTest):
 
     def test_merging_default_ops_explictly_specified(self):
         self.assert_effect(
-            "resource create R ocf:heartbeat:Dummy op start timeout=200",
+            "resource create R ocf:heartbeat:Dummy op start timeout=200".split(),
             """<resources>
                 <primitive class="ocf" id="R" provider="heartbeat" type="Dummy">
                     <operations>
@@ -416,7 +438,7 @@ class SuccessOperations(ResourceTest):
 
     def test_completing_monitor_operation(self):
         self.assert_effect(
-            "resource create --no-default-ops R ocf:heartbeat:Dummy",
+            "resource create --no-default-ops R ocf:heartbeat:Dummy".split(),
             """<resources>
                 <primitive class="ocf" id="R" provider="heartbeat" type="Dummy">
                     <operations>
@@ -430,7 +452,7 @@ class SuccessOperations(ResourceTest):
 
     def test_adapt_second_op_interval(self):
         self.assert_effect(
-            "resource create R ocf:pacemaker:Stateful",
+            "resource create R ocf:pacemaker:Stateful".split(),
             """<resources>
                 <primitive class="ocf" id="R" provider="pacemaker"
                     type="Stateful"
@@ -460,8 +482,10 @@ class SuccessOperations(ResourceTest):
 
     def test_warn_on_forced_unknown_operation(self):
         self.assert_effect(
-            "resource create --no-default-ops R ocf:heartbeat:Dummy"
-            " op monitro interval=30s --force",
+            (
+                "resource create --no-default-ops R ocf:heartbeat:Dummy "
+                "op monitro interval=30s --force"
+            ).split(),
             """<resources>
                 <primitive class="ocf" id="R" provider="heartbeat" type="Dummy">
                     <operations>
@@ -481,8 +505,10 @@ class SuccessOperations(ResourceTest):
 
     def test_op_id(self):
         self.assert_effect(
-            "resource create --no-default-ops R ocf:heartbeat:Dummy"
-            " op monitor interval=30s id=abcd",
+            (
+                "resource create --no-default-ops R ocf:heartbeat:Dummy "
+                "op monitor interval=30s id=abcd"
+            ).split(),
             """<resources>
                 <primitive class="ocf" id="R" provider="heartbeat" type="Dummy">
                     <operations>
@@ -496,7 +522,10 @@ class SuccessOperations(ResourceTest):
 class SuccessGroup(ResourceTest):
     def test_with_group(self):
         self.assert_effect(
-            "resource create R ocf:heartbeat:Dummy --no-default-ops --group G",
+            (
+                "resource create R ocf:heartbeat:Dummy --no-default-ops "
+                "--group G"
+            ).split(),
             """<resources>
                 <group id="G">
                     <primitive class="ocf" id="R" provider="heartbeat"
@@ -514,14 +543,21 @@ class SuccessGroup(ResourceTest):
 
     def test_with_existing_group(self):
         self.assert_pcs_success(
-            "resource create R0 ocf:heartbeat:Dummy --no-default-ops --group G"
+            (
+                "resource create R0 ocf:heartbeat:Dummy --no-default-ops "
+                "--group G"
+            ).split(),
         )
         self.assert_effect(
             [
-                "resource create R ocf:heartbeat:Dummy --no-default-ops --group"
-                " G",
-                "resource create R ocf:heartbeat:Dummy --no-default-ops --group"
-                " G --after R0",
+                (
+                    "resource create R ocf:heartbeat:Dummy --no-default-ops "
+                    "--group G"
+                ).split(),
+                (
+                    "resource create R ocf:heartbeat:Dummy --no-default-ops "
+                    "--group G --after R0"
+                ).split(),
             ],
             """<resources>
                 <group id="G">
@@ -550,15 +586,21 @@ class SuccessGroup(ResourceTest):
     def test_with_group_with_after(self):
         self.assert_pcs_success_all(
             [
-                "resource create R0 ocf:heartbeat:Dummy --no-default-ops "
-                "--group G",
-                "resource create R1 ocf:heartbeat:Dummy --no-default-ops "
-                "--group G",
+                (
+                    "resource create R0 ocf:heartbeat:Dummy --no-default-ops "
+                    "--group G"
+                ).split(),
+                (
+                    "resource create R1 ocf:heartbeat:Dummy --no-default-ops "
+                    "--group G"
+                ).split(),
             ]
         )
         self.assert_effect(
-            "resource create R ocf:heartbeat:Dummy --no-default-ops --group G"
-            " --after R0",
+            (
+                "resource create R ocf:heartbeat:Dummy --no-default-ops "
+                "--group G --after R0"
+            ).split(),
             """<resources>
                 <group id="G">
                     <primitive class="ocf" id="R0" provider="heartbeat"
@@ -595,11 +637,16 @@ class SuccessGroup(ResourceTest):
 
     def test_with_group_with_before(self):
         self.assert_pcs_success(
-            "resource create R0 ocf:heartbeat:Dummy --no-default-ops --group G"
+            (
+                "resource create R0 ocf:heartbeat:Dummy --no-default-ops "
+                "--group G"
+            ).split(),
         )
         self.assert_effect(
-            "resource create R ocf:heartbeat:Dummy --no-default-ops --group G"
-            " --before R0",
+            (
+                "resource create R ocf:heartbeat:Dummy --no-default-ops "
+                "--group G --before R0"
+            ).split(),
             """<resources>
                 <group id="G">
                     <primitive class="ocf" id="R" provider="heartbeat"
@@ -628,7 +675,7 @@ class SuccessGroup(ResourceTest):
 class SuccessClone(ResourceTest):
     def test_clone_places_disabled_correctly(self):
         self.assert_effect(
-            "resource create R ocf:heartbeat:Dummy clone --disabled",
+            "resource create R ocf:heartbeat:Dummy clone --disabled".split(),
             """<resources>
                 <clone id="R-clone">
                     <meta_attributes id="R-clone-meta_attributes">
@@ -705,24 +752,30 @@ class Promotable(TestCase, AssertPcsMixin):
 
     def test_fail_on_promotable(self):
         self.assert_pcs_fail(
-            "resource create R ocf:pacemaker:Stateful promotable "
-            "promotable=a",
+            (
+                "resource create R ocf:pacemaker:Stateful promotable "
+                "promotable=a"
+            ).split(),
             "Error: you cannot specify both promotable option and promotable "
             "keyword\n",
         )
 
     def test_fail_on_promotable_true(self):
         self.assert_pcs_fail(
-            "resource create R ocf:pacemaker:Stateful promotable "
-            "promotable=true",
+            (
+                "resource create R ocf:pacemaker:Stateful promotable "
+                "promotable=true"
+            ).split(),
             "Error: you cannot specify both promotable option and promotable "
             "keyword\n",
         )
 
     def test_fail_on_promotable_false(self):
         self.assert_pcs_fail(
-            "resource create R ocf:pacemaker:Stateful promotable "
-            "promotable=false",
+            (
+                "resource create R ocf:pacemaker:Stateful promotable "
+                "promotable=false"
+            ).split(),
             "Error: you cannot specify both promotable option and promotable "
             "keyword\n",
         )
@@ -735,39 +788,51 @@ class Bundle(ResourceTest):
     def fixture_primitive(self, name, bundle=None):
         if bundle:
             self.assert_pcs_success(
-                "resource create {0} ocf:heartbeat:Dummy bundle {1}".format(
-                    name, bundle
-                )
+                [
+                    "resource",
+                    "create",
+                    name,
+                    "ocf:heartbeat:Dummy",
+                    "bundle",
+                    bundle,
+                ]
             )
         else:
             self.assert_pcs_success(
-                "resource create {0} ocf:heartbeat:Dummy".format(name)
+                ["resource", "create", name, "ocf:heartbeat:Dummy"]
             )
 
     def fixture_bundle(self, name):
         self.assert_pcs_success(
-            (
-                "resource bundle create {0} container docker image=pcs:test "
-                "network control-port=1234"
-            ).format(name)
+            [
+                "resource",
+                "bundle",
+                "create",
+                name,
+                "container",
+                "docker",
+                "image=pcs:test",
+                "network",
+                "control-port=1234",
+            ],
         )
 
     def test_bundle_id_not_specified(self):
         self.assert_pcs_fail(
-            "resource create R ocf:heartbeat:Dummy --no-default-ops bundle",
+            "resource create R ocf:heartbeat:Dummy --no-default-ops bundle".split(),
             "Error: you have to specify exactly one bundle\n",
         )
 
     def test_bundle_id_is_not_bundle(self):
         self.fixture_primitive("R1")
         self.assert_pcs_fail(
-            "resource create R2 ocf:heartbeat:Dummy bundle R1",
+            "resource create R2 ocf:heartbeat:Dummy bundle R1".split(),
             "Error: 'R1' is not a bundle\n",
         )
 
     def test_bundle_id_does_not_exist(self):
         self.assert_pcs_fail(
-            "resource create R1 ocf:heartbeat:Dummy bundle B",
+            "resource create R1 ocf:heartbeat:Dummy bundle B".split(),
             "Error: bundle 'B' does not exist\n",
         )
 
@@ -775,7 +840,10 @@ class Bundle(ResourceTest):
         self.fixture_bundle("B")
         self.fixture_primitive("R1", bundle="B")
         self.assert_pcs_fail(
-            "resource create R2 ocf:heartbeat:Dummy --no-default-ops bundle B",
+            (
+                "resource create R2 ocf:heartbeat:Dummy --no-default-ops "
+                "bundle B"
+            ).split(),
             (
                 "Error: bundle 'B' already contains resource 'R1', a bundle "
                 "may contain at most one resource\n"
@@ -785,7 +853,10 @@ class Bundle(ResourceTest):
     def test_success(self):
         self.fixture_bundle("B")
         self.assert_effect(
-            "resource create R1 ocf:heartbeat:Dummy --no-default-ops bundle B",
+            (
+                "resource create R1 ocf:heartbeat:Dummy --no-default-ops "
+                "bundle B"
+            ).split(),
             """
                 <resources>
                     <bundle id="B">
@@ -809,31 +880,37 @@ class Bundle(ResourceTest):
 class FailOrWarn(ResourceTest):
     def test_error_group_clone_combination(self):
         self.assert_pcs_fail(
-            "resource create R ocf:heartbeat:Dummy --no-default-ops clone"
-            " --group G",
+            (
+                "resource create R ocf:heartbeat:Dummy --no-default-ops "
+                "clone --group G"
+            ).split(),
             "Error: you can specify only one of clone, promotable, bundle or "
             "--group\n",
         )
 
     def test_error_bundle_clone_combination(self):
         self.assert_pcs_fail(
-            "resource create R ocf:heartbeat:Dummy --no-default-ops clone"
-            " bundle bundle_id",
+            (
+                "resource create R ocf:heartbeat:Dummy --no-default-ops "
+                "clone bundle bundle_id"
+            ).split(),
             "Error: you can specify only one of clone, promotable, bundle or "
             "--group\n",
         )
 
     def test_error_bundle_group_combination(self):
         self.assert_pcs_fail(
-            "resource create R ocf:heartbeat:Dummy --no-default-ops --group G"
-            " bundle bundle_id",
+            (
+                "resource create R ocf:heartbeat:Dummy --no-default-ops "
+                "--group G bundle bundle_id"
+            ).split(),
             "Error: you can specify only one of clone, promotable, bundle or "
             "--group\n",
         )
 
     def test_fail_when_nonexisting_agent(self):
         self.assert_pcs_fail(
-            "resource create R ocf:heartbeat:NoExisting",
+            "resource create R ocf:heartbeat:NoExisting".split(),
             # pacemaker 1.1.18 changes -5 to Input/output error
             stdout_regexp=re.compile(
                 "^"
@@ -848,7 +925,7 @@ class FailOrWarn(ResourceTest):
 
     def test_warn_when_forcing_noexistent_agent(self):
         self.assert_effect(
-            "resource create R ocf:heartbeat:NoExisting --force",
+            "resource create R ocf:heartbeat:NoExisting --force".split(),
             """<resources>
                 <primitive class="ocf" id="R" provider="heartbeat"
                     type="NoExisting"
@@ -873,21 +950,21 @@ class FailOrWarn(ResourceTest):
 
     def test_fail_on_invalid_resource_agent_name(self):
         self.assert_pcs_fail(
-            "resource create R invalid_agent_name",
+            "resource create R invalid_agent_name".split(),
             "Error: Unable to find agent 'invalid_agent_name', try specifying"
             " its full name\n",
         )
 
     def test_fail_on_invalid_resource_agent_name_even_if_forced(self):
         self.assert_pcs_fail(
-            "resource create R invalid_agent_name --force",
+            "resource create R invalid_agent_name --force".split(),
             "Error: Unable to find agent 'invalid_agent_name', try specifying"
             " its full name\n",
         )
 
     def test_fail_when_invalid_agent(self):
         self.assert_pcs_fail(
-            "resource create R ocf:heartbeat: --force",
+            "resource create R ocf:heartbeat: --force".split(),
             "Error: Invalid resource agent name 'ocf:heartbeat:'. Use"
             " standard:provider:type when standard is 'ocf' or"
             " standard:type otherwise. List of standards and providers can"
@@ -897,7 +974,7 @@ class FailOrWarn(ResourceTest):
 
     def test_vail_when_agent_class_is_not_allowed(self):
         self.assert_pcs_fail(
-            "resource create R invalid:Dummy --force",
+            "resource create R invalid:Dummy --force".split(),
             "Error: Invalid resource agent name 'invalid:Dummy'. Use"
             " standard:provider:type when standard is 'ocf' or"
             " standard:type otherwise. List of standards and providers can"
@@ -907,7 +984,7 @@ class FailOrWarn(ResourceTest):
 
     def test_fail_when_missing_provider_with_ocf_resource_agent(self):
         self.assert_pcs_fail(
-            "resource create R ocf:Dummy",
+            "resource create R ocf:Dummy".split(),
             "Error: Invalid resource agent name 'ocf:Dummy'. Use"
             " standard:provider:type when standard is 'ocf' or"
             " standard:type otherwise. List of standards and providers can"
@@ -917,7 +994,7 @@ class FailOrWarn(ResourceTest):
 
     def test_fail_when_provider_appear_with_non_ocf_resource_agent(self):
         self.assert_pcs_fail(
-            "resource create R lsb:provider:Dummy --force",
+            "resource create R lsb:provider:Dummy --force".split(),
             "Error: Invalid resource agent name 'lsb:provider:Dummy'. Use"
             " standard:provider:type when standard is 'ocf' or"
             " standard:type otherwise. List of standards and providers can"
@@ -927,20 +1004,20 @@ class FailOrWarn(ResourceTest):
 
     def test_print_info_about_agent_completion(self):
         self.assert_pcs_success(
-            "resource create R delay",
+            "resource create R delay".split(),
             "Assumed agent name 'ocf:heartbeat:Delay' (deduced from 'delay')\n",
         )
 
     def test_fail_for_unambiguous_agent(self):
         self.assert_pcs_fail(
-            "resource create R Dummy",
+            "resource create R Dummy".split(),
             "Error: Multiple agents match 'Dummy', please specify full name:"
             " 'ocf:heartbeat:Dummy', 'ocf:pacemaker:Dummy'\n",
         )
 
     def test_for_options_not_matching_resource_agent(self):
         self.assert_pcs_fail(
-            "resource create R ocf:heartbeat:Dummy a=b c=d",
+            "resource create R ocf:heartbeat:Dummy a=b c=d".split(),
             "Error: invalid resource options: 'a', 'c', allowed options are: "
             "'fake', 'state', 'trace_file', 'trace_ra', use --force to "
             "override\n" + ERRORS_HAVE_OCURRED,
@@ -948,7 +1025,7 @@ class FailOrWarn(ResourceTest):
 
     def test_for_missing_options_of_resource_agent(self):
         self.assert_pcs_fail(
-            "resource create --no-default-ops R IPaddr2",
+            "resource create --no-default-ops R IPaddr2".split(),
             (
                 "Error: required resource option 'ip' is missing,"
                 " use --force to override\n"
@@ -960,22 +1037,24 @@ class FailOrWarn(ResourceTest):
 
     def test_fail_on_invalid_resource_id(self):
         self.assert_pcs_fail(
-            "resource create #R ocf:heartbeat:Dummy",
+            "resource create #R ocf:heartbeat:Dummy".split(),
             "Error: invalid resource name '#R',"
             " '#' is not a valid first character for a resource name\n",
         )
 
     def test_fail_on_existing_resource_id(self):
-        self.assert_pcs_success("resource create R ocf:heartbeat:Dummy")
+        self.assert_pcs_success("resource create R ocf:heartbeat:Dummy".split())
         self.assert_pcs_fail(
-            "resource create R ocf:heartbeat:Dummy",
+            "resource create R ocf:heartbeat:Dummy".split(),
             "Error: 'R' already exists\n",
         )
 
     def test_fail_on_invalid_operation_id(self):
         self.assert_pcs_fail(
-            "resource create R ocf:heartbeat:Dummy op monitor interval=30 "
-            "id=#O",
+            (
+                "resource create R ocf:heartbeat:Dummy "
+                "op monitor interval=30 id=#O"
+            ).split(),
             (
                 "Error: invalid operation id '#O',"
                 " '#' is not a valid first character for a operation id\n"
@@ -984,29 +1063,36 @@ class FailOrWarn(ResourceTest):
         )
 
     def test_fail_on_existing_operation_id(self):
-        self.assert_pcs_success("resource create R ocf:heartbeat:Dummy")
+        self.assert_pcs_success("resource create R ocf:heartbeat:Dummy".split())
         self.assert_pcs_fail(
-            "resource create S ocf:heartbeat:Dummy op monitor interval=30 id=R",
+            (
+                "resource create S ocf:heartbeat:Dummy "
+                "op monitor interval=30 id=R"
+            ).split(),
             "Error: 'R' already exists\n",
         )
 
     def test_fail_on_duplicate_operation_id(self):
         self.assert_pcs_fail(
-            "resource create R ocf:heartbeat:Dummy"
-            " op monitor interval=30 id=O"
-            " op monitor interval=60 id=O",
+            (
+                "resource create R ocf:heartbeat:Dummy "
+                "op monitor interval=30 id=O op monitor interval=60 id=O"
+            ).split(),
             "Error: 'O' already exists\n",
         )
 
     def test_fail_on_resource_id_same_as_operation_id(self):
         self.assert_pcs_fail(
-            "resource create R ocf:heartbeat:Dummy op monitor interval=30 id=R",
+            (
+                "resource create R ocf:heartbeat:Dummy "
+                "op monitor interval=30 id=R"
+            ).split(),
             "Error: 'R' already exists\n",
         )
 
     def test_fail_on_unknown_operation(self):
         self.assert_pcs_fail(
-            "resource create R ocf:heartbeat:Dummy op monitro interval=100",
+            "resource create R ocf:heartbeat:Dummy op monitro interval=100".split(),
             (
                 "Error: 'monitro' is not a valid operation name value, use"
                 " 'meta-data', 'migrate_from', 'migrate_to', 'monitor',"
@@ -1017,8 +1103,10 @@ class FailOrWarn(ResourceTest):
 
     def test_fail_on_ambiguous_value_of_option(self):
         self.assert_pcs_fail(
-            "resource create R ocf:heartbeat:Dummy op monitor timeout=10"
-            " timeout=20",
+            (
+                "resource create R ocf:heartbeat:Dummy "
+                "op monitor timeout=10 timeout=20"
+            ).split(),
             "Error: duplicate option 'timeout' with different values '10' and"
             " '20'\n",
         )
@@ -1026,10 +1114,10 @@ class FailOrWarn(ResourceTest):
     def test_unique_err(self):
         self.pcs_runner.mock_settings = get_mock_settings("crm_resource_binary")
         self.assert_pcs_success(
-            "resource create R1 ocf:pacemaker:Dummy state=1"
+            "resource create R1 ocf:pacemaker:Dummy state=1".split()
         )
         self.assert_pcs_fail(
-            "resource create R2 ocf:pacemaker:Dummy state=1",
+            "resource create R2 ocf:pacemaker:Dummy state=1".split(),
             (
                 "Error: Value '1' of option 'state' is not unique across "
                 "'ocf:pacemaker:Dummy' resources. Following resources are "
@@ -1041,23 +1129,23 @@ class FailOrWarn(ResourceTest):
     def test_unique_multiple_resources_warn_and_err(self):
         self.pcs_runner.mock_settings = get_mock_settings("crm_resource_binary")
         self.assert_pcs_success(
-            "resource create R1 ocf:pacemaker:Dummy state=1"
+            "resource create R1 ocf:pacemaker:Dummy state=1".split()
         )
         self.assert_pcs_success(
-            "resource create R2 ocf:pacemaker:Dummy state=1 --force",
+            "resource create R2 ocf:pacemaker:Dummy state=1 --force".split(),
             "Warning: Value '1' of option 'state' is not unique across "
             "'ocf:pacemaker:Dummy' resources. Following resources are "
             "configured with the same value of the instance attribute: 'R1'\n",
         )
         self.assert_pcs_success(
-            "resource create R3 ocf:pacemaker:Dummy state=1 --force",
+            "resource create R3 ocf:pacemaker:Dummy state=1 --force".split(),
             "Warning: Value '1' of option 'state' is not unique across "
             "'ocf:pacemaker:Dummy' resources. Following resources are "
             "configured with the same value of the instance attribute: 'R1', "
             "'R2'\n",
         )
         self.assert_pcs_fail(
-            "resource create R4 ocf:pacemaker:Dummy state=1",
+            "resource create R4 ocf:pacemaker:Dummy state=1".split(),
             (
                 "Error: Value '1' of option 'state' is not unique across "
                 "'ocf:pacemaker:Dummy' resources. Following resources are "
@@ -1071,25 +1159,31 @@ class FailOrWarn(ResourceTest):
 class FailOrWarnOp(ResourceTest):
     def test_fail_empty(self):
         self.assert_pcs_fail(
-            "resource create --no-default-ops R ocf:heartbeat:Dummy"
-            " op meta is-managed=false",
+            (
+                "resource create --no-default-ops R ocf:heartbeat:Dummy "
+                "op meta is-managed=false"
+            ).split(),
             "Error: When using 'op' you must specify an operation name and at"
             " least one option\n",
         )
 
     def test_fail_only_name_without_any_option(self):
         self.assert_pcs_fail(
-            "resource create --no-default-ops R ocf:heartbeat:Dummy"
-            " op monitor meta is-managed=false",
+            (
+                "resource create --no-default-ops R ocf:heartbeat:Dummy "
+                "op monitor meta is-managed=false"
+            ).split(),
             "Error: When using 'op' you must specify an operation name and at"
             " least one option\n",
         )
 
     def test_fail_duplicit(self):
         self.assert_pcs_fail(
-            "resource create --no-default-ops R ocf:heartbeat:Dummy op"
-            " monitor interval=1h monitor interval=3600sec"
-            " monitor interval=1min monitor interval=60s",
+            (
+                "resource create --no-default-ops R ocf:heartbeat:Dummy "
+                "op monitor interval=1h monitor interval=3600sec "
+                "monitor interval=1min monitor interval=60s"
+            ).split(),
             (
                 "Error: multiple specification of the same operation with the"
                 " same interval:\n"
@@ -1100,16 +1194,20 @@ class FailOrWarnOp(ResourceTest):
 
     def test_fail_invalid_first_action(self):
         self.assert_pcs_fail(
-            "resource create --no-default-ops R ocf:heartbeat:Dummy op"
-            " mo=nitor interval=1min",
+            (
+                "resource create --no-default-ops R ocf:heartbeat:Dummy "
+                "op mo=nitor interval=1min"
+            ).split(),
             "Error: When using 'op' you must specify an operation name after"
             " 'op'\n",
         )
 
     def test_fail_invalid_option(self):
         self.assert_pcs_fail(
-            "resource create --no-default-ops R ocf:heartbeat:Dummy op"
-            " monitor interval=1min moni=tor timeout=80s",
+            (
+                "resource create --no-default-ops R ocf:heartbeat:Dummy "
+                "op monitor interval=1min moni=tor timeout=80s"
+            ).split(),
             "Error: invalid resource operation option 'moni', allowed options"
             " are: 'OCF_CHECK_LEVEL', 'description', 'enabled', 'id',"
             " 'interval', 'interval-origin', 'name', 'on-fail',"
@@ -1119,8 +1217,10 @@ class FailOrWarnOp(ResourceTest):
 
     def test_fail_on_invalid_role(self):
         self.assert_pcs_fail(
-            "resource create --no-default-ops R ocf:heartbeat:Dummy op"
-            " monitor role=abc",
+            (
+                "resource create --no-default-ops R ocf:heartbeat:Dummy "
+                "op monitor role=abc"
+            ).split(),
             (
                 "Error: 'abc' is not a valid role value, use 'Master', 'Slave',"
                 " 'Started', 'Stopped'\n" + ERRORS_HAVE_OCURRED
@@ -1129,8 +1229,10 @@ class FailOrWarnOp(ResourceTest):
 
     def test_force_invalid_role(self):
         self.assert_pcs_fail(
-            "resource create --no-default-ops R ocf:heartbeat:Dummy op"
-            " monitor role=abc --force",
+            (
+                "resource create --no-default-ops R ocf:heartbeat:Dummy "
+                "op monitor role=abc --force"
+            ).split(),
             (
                 "Error: 'abc' is not a valid role value, use 'Master', 'Slave',"
                 " 'Started', 'Stopped'\n" + ERRORS_HAVE_OCURRED
@@ -1139,8 +1241,10 @@ class FailOrWarnOp(ResourceTest):
 
     def test_fail_on_invalid_on_fail(self):
         self.assert_pcs_fail_regardless_of_force(
-            "resource create --no-default-ops R ocf:heartbeat:Dummy op"
-            " monitor on-fail=Abc",
+            (
+                "resource create --no-default-ops R ocf:heartbeat:Dummy "
+                "op monitor on-fail=Abc"
+            ).split(),
             (
                 "Error: 'Abc' is not a valid on-fail value, use 'block', "
                 "'demote', 'fence', 'ignore', 'restart', 'restart-container', "
@@ -1150,8 +1254,10 @@ class FailOrWarnOp(ResourceTest):
 
     def test_fail_on_invalid_record_pending(self):
         self.assert_pcs_fail_regardless_of_force(
-            "resource create --no-default-ops R ocf:heartbeat:Dummy op"
-            " monitor record-pending=Abc",
+            (
+                "resource create --no-default-ops R ocf:heartbeat:Dummy "
+                "op monitor record-pending=Abc"
+            ).split(),
             (
                 "Error: 'Abc' is not a valid record-pending value, use '0', "
                 "'1', 'false', 'true'\n" + ERRORS_HAVE_OCURRED
@@ -1160,8 +1266,10 @@ class FailOrWarnOp(ResourceTest):
 
     def test_fail_on_invalid_enabled(self):
         self.assert_pcs_fail_regardless_of_force(
-            "resource create --no-default-ops R ocf:heartbeat:Dummy op"
-            " monitor enabled=Abc",
+            (
+                "resource create --no-default-ops R ocf:heartbeat:Dummy "
+                "op monitor enabled=Abc"
+            ).split(),
             (
                 "Error: 'Abc' is not a valid enabled value, use '0', '1', "
                 "'false', 'true'\n" + ERRORS_HAVE_OCURRED
@@ -1170,8 +1278,10 @@ class FailOrWarnOp(ResourceTest):
 
     def test_fail_on_combination_of_start_delay_and_interval_origin(self):
         self.assert_pcs_fail_regardless_of_force(
-            "resource create --no-default-ops R ocf:heartbeat:Dummy op"
-            " monitor start-delay=10 interval-origin=20",
+            (
+                "resource create --no-default-ops R ocf:heartbeat:Dummy "
+                "op monitor start-delay=10 interval-origin=20"
+            ).split(),
             (
                 "Error: Only one of resource operation options "
                 "'interval-origin' and 'start-delay' can be used\n"
@@ -1183,14 +1293,17 @@ class FailOrWarnOp(ResourceTest):
 class FailOrWarnGroup(ResourceTest):
     def test_fail_when_invalid_group(self):
         self.assert_pcs_fail(
-            "resource create R ocf:heartbeat:Dummy --group 1",
+            "resource create R ocf:heartbeat:Dummy --group 1".split(),
             "Error: invalid group name '1', '1' is not a valid first character"
             " for a group name\n",
         )
 
     def test_fail_when_try_use_id_of_another_element(self):
         self.assert_effect(
-            "resource create R1 ocf:heartbeat:Dummy --no-default-ops meta a=b",
+            (
+                "resource create R1 ocf:heartbeat:Dummy --no-default-ops "
+                "meta a=b"
+            ).split(),
             """<resources>
                 <primitive class="ocf" id="R1" provider="heartbeat"
                     type="Dummy"
@@ -1207,69 +1320,74 @@ class FailOrWarnGroup(ResourceTest):
             </resources>""",
         )
         self.assert_pcs_fail(
-            "resource create R2 ocf:heartbeat:Dummy --group R1-meta_attributes",
+            (
+                "resource create R2 ocf:heartbeat:Dummy "
+                "--group R1-meta_attributes"
+            ).split(),
             "Error: 'R1-meta_attributes' is not a group\n",
         )
 
     def test_fail_when_entered_both_after_and_before(self):
         self.assert_pcs_fail(
-            "resource create R ocf:heartbeat:Dummy --group G --after S1 "
-            "--before S2",
+            (
+                "resource create R ocf:heartbeat:Dummy "
+                "--group G --after S1 --before S2"
+            ).split(),
             "Error: you cannot specify both --before and --after\n",
         )
 
     def test_fail_when_after_is_used_without_group(self):
         self.assert_pcs_fail(
-            "resource create R ocf:heartbeat:Dummy --after S1",
+            "resource create R ocf:heartbeat:Dummy --after S1".split(),
             "Error: you cannot use --after without --group\n",
         )
 
     def test_fail_when_before_is_used_without_group(self):
         self.assert_pcs_fail(
-            "resource create R ocf:heartbeat:Dummy --before S1",
+            "resource create R ocf:heartbeat:Dummy --before S1".split(),
             "Error: you cannot use --before without --group\n",
         )
 
     def test_fail_when_before_after_conflicts_and_moreover_without_group(self):
         self.assert_pcs_fail(
-            "resource create R ocf:heartbeat:Dummy --after S1 --before S2",
+            "resource create R ocf:heartbeat:Dummy --after S1 --before S2".split(),
             "Error: you cannot specify both --before and --after"
             " and you have to specify --group\n",
         )
 
     def test_fail_when_before_does_not_exist(self):
         self.assert_pcs_success(
-            "resource create R0 ocf:heartbeat:Dummy --group G1 "
+            "resource create R0 ocf:heartbeat:Dummy --group G1".split()
         )
         self.assert_pcs_fail(
-            "resource create R2 ocf:heartbeat:Dummy --group G1 --before R1",
+            "resource create R2 ocf:heartbeat:Dummy --group G1 --before R1".split(),
             "Error: there is no resource 'R1' in the group 'G1'\n",
         )
 
     def test_fail_when_use_before_with_new_group(self):
         self.assert_pcs_fail(
-            "resource create R2 ocf:heartbeat:Dummy --group G1 --before R1",
+            "resource create R2 ocf:heartbeat:Dummy --group G1 --before R1".split(),
             "Error: there is no resource 'R1' in the group 'G1'\n",
         )
 
     def test_fail_when_after_does_not_exist(self):
         self.assert_pcs_success(
-            "resource create R0 ocf:heartbeat:Dummy --group G1 "
+            "resource create R0 ocf:heartbeat:Dummy --group G1".split()
         )
         self.assert_pcs_fail(
-            "resource create R2 ocf:heartbeat:Dummy --group G1 --after R1",
+            "resource create R2 ocf:heartbeat:Dummy --group G1 --after R1".split(),
             "Error: there is no resource 'R1' in the group 'G1'\n",
         )
 
     def test_fail_when_use_after_with_new_group(self):
         self.assert_pcs_fail(
-            "resource create R2 ocf:heartbeat:Dummy --group G1 --after R1",
+            "resource create R2 ocf:heartbeat:Dummy --group G1 --after R1".split(),
             "Error: there is no resource 'R1' in the group 'G1'\n",
         )
 
     def test_fail_when_on_pacemaker_remote_attempt(self):
         self.assert_pcs_fail(
-            "resource create R2 ocf:pacemaker:remote",
+            "resource create R2 ocf:pacemaker:remote".split(),
             (
                 "Error: this command is not sufficient for creating a remote"
                 " connection, use 'pcs cluster node add-remote'"
@@ -1279,20 +1397,20 @@ class FailOrWarnGroup(ResourceTest):
 
     def test_warn_when_on_pacemaker_remote_attempt(self):
         self.assert_pcs_success(
-            "resource create R2 ocf:pacemaker:remote --force",
+            "resource create R2 ocf:pacemaker:remote --force".split(),
             "Warning: this command is not sufficient for creating a remote"
             " connection, use 'pcs cluster node add-remote'\n",
         )
 
     def test_fail_when_on_pacemaker_remote_conflict_with_existing_node(self):
         self.assert_pcs_success(
-            "resource create R ocf:pacemaker:remote --force",
+            "resource create R ocf:pacemaker:remote --force".split(),
             "Warning: this command is not sufficient for creating a remote"
             " connection, use 'pcs cluster node add-remote'\n",
         )
 
         self.assert_pcs_fail(
-            "resource create R2 ocf:pacemaker:remote server=R --force",
+            "resource create R2 ocf:pacemaker:remote server=R --force".split(),
             (
                 "Error: 'R' already exists\n"
                 + ERRORS_HAVE_OCURRED
@@ -1303,13 +1421,13 @@ class FailOrWarnGroup(ResourceTest):
 
     def test_fail_when_on_pacemaker_remote_conflict_with_existing_id(self):
         self.assert_pcs_success(
-            "resource create R ocf:pacemaker:remote server=R2 --force",
+            "resource create R ocf:pacemaker:remote server=R2 --force".split(),
             "Warning: this command is not sufficient for creating a remote"
             " connection, use 'pcs cluster node add-remote'\n",
         )
 
         self.assert_pcs_fail(
-            "resource create R2 ocf:pacemaker:remote --force",
+            "resource create R2 ocf:pacemaker:remote --force".split(),
             (
                 "Error: 'R2' already exists\n"
                 + ERRORS_HAVE_OCURRED
@@ -1320,13 +1438,16 @@ class FailOrWarnGroup(ResourceTest):
 
     def test_fail_when_on_guest_conflict_with_existing_node(self):
         self.assert_pcs_success(
-            "resource create R ocf:pacemaker:remote --force",
+            "resource create R ocf:pacemaker:remote --force".split(),
             "Warning: this command is not sufficient for creating a remote"
             " connection, use 'pcs cluster node add-remote'\n",
         )
 
         self.assert_pcs_fail(
-            "resource create R2 ocf:heartbeat:Dummy meta remote-node=R --force",
+            (
+                "resource create R2 ocf:heartbeat:Dummy "
+                "meta remote-node=R --force"
+            ).split(),
             (
                 "Error: 'R' already exists\n"
                 + ERRORS_HAVE_OCURRED
@@ -1337,14 +1458,16 @@ class FailOrWarnGroup(ResourceTest):
 
     def test_fail_when_on_guest_conflict_with_existing_node_host(self):
         self.assert_pcs_success(
-            "resource create R ocf:pacemaker:remote server=HOST --force",
+            "resource create R ocf:pacemaker:remote server=HOST --force".split(),
             "Warning: this command is not sufficient for creating a remote"
             " connection, use 'pcs cluster node add-remote'\n",
         )
 
         self.assert_pcs_fail(
-            "resource create R2 ocf:heartbeat:Dummy meta remote-node=HOST"
-            " --force",
+            (
+                "resource create R2 ocf:heartbeat:Dummy "
+                "meta remote-node=HOST --force"
+            ).split(),
             (
                 "Error: 'HOST' already exists\n"
                 + ERRORS_HAVE_OCURRED
@@ -1355,14 +1478,16 @@ class FailOrWarnGroup(ResourceTest):
 
     def test_fail_when_on_guest_conflict_with_existing_node_host_addr(self):
         self.assert_pcs_success(
-            "resource create R ocf:pacemaker:remote server=HOST --force",
+            "resource create R ocf:pacemaker:remote server=HOST --force".split(),
             "Warning: this command is not sufficient for creating a remote"
             " connection, use 'pcs cluster node add-remote'\n",
         )
 
         self.assert_pcs_fail(
-            "resource create R2 ocf:heartbeat:Dummy meta remote-node=A"
-            " remote-addr=HOST --force",
+            (
+                "resource create R2 ocf:heartbeat:Dummy "
+                "meta remote-node=A remote-addr=HOST --force"
+            ).split(),
             (
                 "Error: 'HOST' already exists\n"
                 + ERRORS_HAVE_OCURRED
@@ -1373,21 +1498,23 @@ class FailOrWarnGroup(ResourceTest):
 
     def test_not_fail_when_on_guest_when_conflict_host_with_name(self):
         self.assert_pcs_success(
-            "resource create R ocf:pacemaker:remote server=HOST --force",
+            "resource create R ocf:pacemaker:remote server=HOST --force".split(),
             "Warning: this command is not sufficient for creating a remote"
             " connection, use 'pcs cluster node add-remote'\n",
         )
 
         self.assert_pcs_success(
-            "resource create R2 ocf:heartbeat:Dummy meta remote-node=HOST"
-            " remote-addr=R --force",
+            (
+                "resource create R2 ocf:heartbeat:Dummy "
+                "meta remote-node=HOST remote-addr=R --force"
+            ).split(),
             "Warning: this command is not sufficient for creating a guest "
             "node, use 'pcs cluster node add-guest'\n",
         )
 
     def test_fail_when_on_pacemaker_remote_guest_attempt(self):
         self.assert_pcs_fail(
-            "resource create R2 ocf:heartbeat:Dummy meta remote-node=HOST",
+            "resource create R2 ocf:heartbeat:Dummy meta remote-node=HOST".split(),
             (
                 "Error: this command is not sufficient for creating a guest "
                 "node, use 'pcs cluster node add-guest', use --force to "
@@ -1397,8 +1524,10 @@ class FailOrWarnGroup(ResourceTest):
 
     def test_warn_when_on_pacemaker_remote_guest_attempt(self):
         self.assert_pcs_success(
-            "resource create R2 ocf:heartbeat:Dummy meta remote-node=HOST"
-            " --force",
+            (
+                "resource create R2 ocf:heartbeat:Dummy "
+                "meta remote-node=HOST --force"
+            ).split(),
             "Warning: this command is not sufficient for creating a guest node,"
             " use 'pcs cluster node add-guest'\n",
         )
