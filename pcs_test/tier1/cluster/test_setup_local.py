@@ -3,10 +3,14 @@ from textwrap import dedent
 from unittest import TestCase
 
 from pcs_test.tools.assertions import AssertPcsMixin
-from pcs_test.tools.misc import get_tmp_file
+from pcs_test.tools.misc import (
+    get_tmp_file,
+    skip_unless_root,
+)
 from pcs_test.tools.pcs_runner import PcsRunner
 
 
+@skip_unless_root()
 class SetupLocal(AssertPcsMixin, TestCase):
     def setUp(self):
         self.corosync_conf_file = get_tmp_file(
