@@ -271,9 +271,7 @@ class InvalidUserdefinedOptions(NameBuildTest):
                 "invalid option 'exec_NAME', options may contain "
                 "a-z A-Z 0-9 /_- characters only"
             ),
-            reports.InvalidUserdefinedOptions(
-                ["exec_NAME"], "", "a-z A-Z 0-9 /_-"
-            ),
+            reports.InvalidUserdefinedOptions(["exec_NAME"], "a-z A-Z 0-9 /_-"),
         )
 
     def test_with_type(self):
@@ -283,7 +281,7 @@ class InvalidUserdefinedOptions(NameBuildTest):
                 "contain a-z A-Z 0-9 /_- characters only"
             ),
             reports.InvalidUserdefinedOptions(
-                ["exec_NAME"], "heuristics", "a-z A-Z 0-9 /_-"
+                ["exec_NAME"], "a-z A-Z 0-9 /_-", "heuristics"
             ),
         )
 
@@ -294,7 +292,7 @@ class InvalidUserdefinedOptions(NameBuildTest):
                 "contain a-z A-Z 0-9 /_- characters only"
             ),
             reports.InvalidUserdefinedOptions(
-                ["NAME", "ANOTHER"], "TYPE", "a-z A-Z 0-9 /_-"
+                ["NAME", "ANOTHER"], "a-z A-Z 0-9 /_-", "TYPE"
             ),
         )
 

@@ -347,8 +347,8 @@ class PrerequisiteOptionIsMissing(ReportItemMessage):
 
     option_name: str
     prerequisite_name: str
-    option_type: str = ""
-    prerequisite_type: str = ""
+    option_type: Optional[str] = None
+    prerequisite_type: Optional[str] = None
     _code = codes.PREREQUISITE_OPTION_IS_MISSING
 
     @property
@@ -488,7 +488,7 @@ class InvalidOptions(ReportItemMessage):
 
     option_names: List[str]
     allowed: List[str]
-    option_type: str
+    option_type: Optional[str] = None
     allowed_patterns: List[str] = field(default_factory=list)
     _code = codes.INVALID_OPTIONS
 
@@ -537,8 +537,8 @@ class InvalidUserdefinedOptions(ReportItemMessage):
     """
 
     option_names: List[str]
-    option_type: str
     allowed_characters: str
+    option_type: Optional[str] = None
     _code = codes.INVALID_USERDEFINED_OPTIONS
 
     @property
@@ -586,14 +586,14 @@ class InvalidOptionValue(ReportItemMessage):
 
     option_name -- specified option name whose value is not valid
     option_value -- specified value which is not valid
-    allowed_options -- a list of allowed values or a string description
+    allowed_values -- a list or description of allowed values, may be undefined
     cannot_be_empty -- the value is empty and that is not allowed
     forbidden_characters -- characters the value cannot contain
     """
 
     option_name: str
     option_value: str
-    allowed_values: Union[List[str], str]
+    allowed_values: Union[List[str], str, None]
     cannot_be_empty: bool = False
     forbidden_characters: Optional[str] = None
     _code = codes.INVALID_OPTION_VALUE
@@ -659,7 +659,7 @@ class MutuallyExclusiveOptions(ReportItemMessage):
     """
 
     option_names: List[str]
-    option_type: str
+    option_type: Optional[str] = None
     _code = codes.MUTUALLY_EXCLUSIVE_OPTIONS
 
     @property
