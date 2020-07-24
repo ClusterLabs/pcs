@@ -773,10 +773,10 @@ def resource_move(lib, argv, modifiers):
     """
     Options:
       * -f - CIB file
-      * --master
+      * --main
       * --wait
     """
-    modifiers.ensure_only_supported("-f", "--master", "--wait")
+    modifiers.ensure_only_supported("-f", "--main", "--wait")
 
     if not argv:
         raise CmdLineInputError("must specify a resource to move")
@@ -787,7 +787,7 @@ def resource_move(lib, argv, modifiers):
     lib.resource.move(
         resource_id,
         node=node,
-        master=modifiers.is_specified("--master"),
+        main=modifiers.is_specified("--main"),
         lifetime=lifetime,
         wait=modifiers.get("--wait"),
     )
@@ -797,10 +797,10 @@ def resource_ban(lib, argv, modifiers):
     """
     Options:
       * -f - CIB file
-      * --master
+      * --main
       * --wait
     """
-    modifiers.ensure_only_supported("-f", "--master", "--wait")
+    modifiers.ensure_only_supported("-f", "--main", "--wait")
 
     if not argv:
         raise CmdLineInputError("must specify a resource to ban")
@@ -811,7 +811,7 @@ def resource_ban(lib, argv, modifiers):
     lib.resource.ban(
         resource_id,
         node=node,
-        master=modifiers.is_specified("--master"),
+        main=modifiers.is_specified("--main"),
         lifetime=lifetime,
         wait=modifiers.get("--wait"),
     )
@@ -821,10 +821,10 @@ def resource_unmove_unban(lib, argv, modifiers):
     """
     Options:
       * -f - CIB file
-      * --master
+      * --main
       * --wait
     """
-    modifiers.ensure_only_supported("-f", "--expired", "--master", "--wait")
+    modifiers.ensure_only_supported("-f", "--expired", "--main", "--wait")
 
     if not argv:
         raise CmdLineInputError("must specify a resource to clear")
@@ -836,7 +836,7 @@ def resource_unmove_unban(lib, argv, modifiers):
     lib.resource.unmove_unban(
         resource_id,
         node=node,
-        master=modifiers.is_specified("--master"),
+        main=modifiers.is_specified("--main"),
         expired=modifiers.is_specified("--expired"),
         wait=modifiers.get("--wait"),
     )
@@ -946,10 +946,10 @@ def resource_update(lib, args, modifiers, deal_with_guest_change=True):
     resource = utils.dom_get_resource(dom, res_id)
     if not resource:
         clone = utils.dom_get_clone(dom, res_id)
-        master = utils.dom_get_master(dom, res_id)
-        if clone or master:
-            if master:
-                clone = transform_master_to_clone(master)
+        main = utils.dom_get_main(dom, res_id)
+        if clone or main:
+            if main:
+                clone = transform_main_to_clone(main)
             clone_child = utils.dom_elem_get_clone_ms_resource(clone)
             if clone_child:
                 child_id = clone_child.getAttribute("id")
@@ -1005,12 +1005,12 @@ def resource_update(lib, args, modifiers, deal_with_guest_change=True):
 
     # The "remote-node" meta attribute makes sense (and causes creation of
     # inner pacemaker resource) only for primitive. The meta attribute
-    # "remote-node" has no special meaining for clone/master. So there is no
-    # need for checking this attribute in clone/master.
+    # "remote-node" has no special meaining for clone/main. So there is no
+    # need for checking this attribute in clone/main.
     #
     # It is ok to not to check it until this point in this function:
-    # 1) Only master/clone element is updated if the parameter "res_id" is an id
-    # of the clone/master element. In that case another function is called and
+    # 1) Only main/clone element is updated if the parameter "res_id" is an id
+    # of the clone/main element. In that case another function is called and
     # the code path does not reach this point.
     # 2) No persistent changes happened until this line if the parameter
     # "res_id" is an id of the primitive.
@@ -1136,18 +1136,18 @@ def resource_update_clone(dom, clone, res_id, args, wait, wait_timeout):
     return dom
 
 
-def transform_master_to_clone(master_element):
+def transform_main_to_clone(main_element):
     # create a new clone element with the same id
-    dom = master_element.ownerDocument
+    dom = main_element.ownerDocument
     clone_element = dom.createElement("clone")
-    clone_element.setAttribute("id", master_element.getAttribute("id"))
-    # place it next to the master element
-    master_element.parentNode.insertBefore(clone_element, master_element)
-    # move all master's children to the clone
-    while master_element.firstChild:
-        clone_element.appendChild(master_element.firstChild)
-    # remove the master
-    master_element.parentNode.removeChild(master_element)
+    clone_element.setAttribute("id", main_element.getAttribute("id"))
+    # place it next to the main element
+    main_element.parentNode.insertBefore(clone_element, main_element)
+    # move all main's children to the clone
+    while main_element.firstChild:
+        clone_element.appendChild(main_element.firstChild)
+    # remove the main
+    main_element.parentNode.removeChild(main_element)
     # set meta to make the clone promotable
     utils.dom_update_meta_attr(clone_element, [("promotable", "true")])
     return clone_element
@@ -1188,7 +1188,7 @@ def resource_operation_add(
             "on-fail",
             "OCF_CHECK_LEVEL",
         ]
-        valid_roles = ["Stopped", "Started", "Slave", "Master"]
+        valid_roles = ["Stopped", "Started", "Subordinate", "Main"]
         for key, value in op_properties:
             if key not in valid_attrs:
                 utils.err(
@@ -1382,9 +1382,9 @@ def resource_meta(lib, argv, modifiers):
 
     dom = utils.get_cib_dom()
 
-    master = utils.dom_get_master(dom, res_id)
-    if master:
-        resource_el = transform_master_to_clone(master)
+    main = utils.dom_get_main(dom, res_id)
+    if main:
+        resource_el = transform_main_to_clone(main)
     else:
         resource_el = utils.dom_get_any_resource(dom, res_id)
     if resource_el is None:
@@ -1559,12 +1559,12 @@ def resource_clone_create(
     if not update_existing:
         if utils.dom_get_resource_clone(
             cib_dom, name
-        ) or utils.dom_get_resource_masterslave(cib_dom, name):
+        ) or utils.dom_get_resource_mainsubordinate(cib_dom, name):
             utils.err("%s is already a clone resource" % name)
 
         if utils.dom_get_group_clone(
             cib_dom, name
-        ) or utils.dom_get_group_masterslave(cib_dom, name):
+        ) or utils.dom_get_group_mainsubordinate(cib_dom, name):
             utils.err("cannot clone a group that has already been cloned")
 
     # If element is currently in a group and it's the last member, we get rid
@@ -1602,7 +1602,7 @@ def resource_clone_create(
     return cib_dom, clone.getAttribute("id")
 
 
-def resource_clone_master_remove(lib, argv, modifiers):
+def resource_clone_main_remove(lib, argv, modifiers):
     """
     Options:
       * -f - CIB file
@@ -1731,7 +1731,7 @@ def resource_remove(resource_id, output=True, is_remove_remote_context=False):
             )
 
     dom = utils.get_cib_dom(cib_xml)
-    # if resource is a clone or a master, work with its child instead
+    # if resource is a clone or a main, work with its child instead
     cloned_resource = utils.dom_get_clone_ms_resource(dom, resource_id)
     if cloned_resource:
         resource_id = cloned_resource.getAttribute("id")
@@ -1831,7 +1831,7 @@ def resource_remove(resource_id, output=True, is_remove_remote_context=False):
             resource_remove(res.getAttribute("id"))
         sys.exit(0)
 
-    # now we know resource is not a group, a clone, a master nor a bundle
+    # now we know resource is not a group, a clone, a main nor a bundle
     # because of the conditions above
     if not utils.does_exist(
         '//resources/descendant::primitive[@id="' + resource_id + '"]'
@@ -1893,18 +1893,18 @@ def resource_remove(resource_id, output=True, is_remove_remote_context=False):
             dom = utils.get_cib_dom()
 
     if group == "" or num_resources_in_group > 1:
-        master_xpath = f'//master/primitive[@id="{resource_id}"]/..'
+        main_xpath = f'//main/primitive[@id="{resource_id}"]/..'
         clone_xpath = f'//clone/primitive[@id="{resource_id}"]/..'
         if utils.get_cib_xpath(clone_xpath) != "":
             args = ["cibadmin", "-o", "resources", "-D", "--xpath", clone_xpath]
-        elif utils.get_cib_xpath(master_xpath) != "":
+        elif utils.get_cib_xpath(main_xpath) != "":
             args = [
                 "cibadmin",
                 "-o",
                 "resources",
                 "-D",
                 "--xpath",
-                master_xpath,
+                main_xpath,
             ]
         else:
             args = [
@@ -1924,17 +1924,17 @@ def resource_remove(resource_id, output=True, is_remove_remote_context=False):
                 "referenced in constraints."
             )
     else:
-        top_master_xpath = (
-            f'//master/group/primitive[@id="{resource_id}"]/../..'
+        top_main_xpath = (
+            f'//main/group/primitive[@id="{resource_id}"]/../..'
         )
         top_clone_xpath = f'//clone/group/primitive[@id="{resource_id}"]/../..'
-        top_master = utils.get_cib_xpath(top_master_xpath)
+        top_main = utils.get_cib_xpath(top_main_xpath)
         top_clone = utils.get_cib_xpath(top_clone_xpath)
-        if top_master != "":
-            to_remove_xpath = top_master_xpath
+        if top_main != "":
+            to_remove_xpath = top_main_xpath
             msg = "and group and M/S"
-            to_remove_dom = parseString(top_master).getElementsByTagName(
-                "master"
+            to_remove_dom = parseString(top_main).getElementsByTagName(
+                "main"
             )
             to_remove_id = to_remove_dom[0].getAttribute("id")
             utils.replace_cib_configuration(
@@ -2081,7 +2081,7 @@ def resource_group_rm(cib_dom, group_name, resource_ids):
     # - move the last resource from the group - it stays in the clone
     # So far there has been no request to change this behavior. Unless there is
     # a request / reason to change it, we'll keep it that way.
-    is_cloned_group = group_match.parentNode.tagName in ["clone", "master"]
+    is_cloned_group = group_match.parentNode.tagName in ["clone", "main"]
     res_in_group = len(group_match.getElementsByTagName("primitive"))
     if (
         is_cloned_group
@@ -2468,7 +2468,7 @@ def resource_restart(lib, argv, modifiers):
         node = argv.pop(0)
         if not (
             utils.dom_get_clone(dom, resource)
-            or utils.dom_get_master(dom, resource)
+            or utils.dom_get_main(dom, resource)
             or utils.dom_get_bundle(dom, resource)
         ):
             utils.err(
@@ -2545,7 +2545,7 @@ def resource_force_action(lib, argv, modifiers, action=None):
                 "({1})"
             ).format(action, ",".join(group_resources))
         )
-    if utils.dom_get_clone(dom, resource) or utils.dom_get_master(
+    if utils.dom_get_clone(dom, resource) or utils.dom_get_main(
         dom, resource
     ):
         clone_resource = utils.dom_get_clone_ms_resource(dom, resource)
@@ -2812,7 +2812,7 @@ def resource_node_lines(node):
         for child in node:
             lines.extend(indent(resource_node_lines(child), indent_step=1))
         return lines
-    if node.tag == "master":
+    if node.tag == "main":
         lines.append(
             f"Clone: {node.attrib['id']}" + _get_attrs(node, " (", ")")
         )
@@ -3091,7 +3091,7 @@ def resource_relocate_set_stickiness(cib_dom, resources=None):
     resources_found = set()
     updated_resources = set()
     # set stickiness=0
-    for tagname in ("master", "clone", "group", "primitive"):
+    for tagname in ("main", "clone", "group", "primitive"):
         for res_el in cib_dom.getElementsByTagName(tagname):
             if resources and res_el.getAttribute("id") not in resources:
                 continue
@@ -3206,7 +3206,7 @@ def resource_relocate_location_to_str(location):
         return message.format(
             res=location["id_for_constraint"],
             node=location["promote_on_node"],
-            role=" role=Master",
+            role=" role=Main",
         )
     return ""
 
@@ -3243,7 +3243,7 @@ def resource_relocate_run(cib_dom, resources=None, dry=True):
         new_constraint.setAttribute("score", "INFINITY")
         if "promote_on_node" in location:
             new_constraint.setAttribute("node", location["promote_on_node"])
-            new_constraint.setAttribute("role", "Master")
+            new_constraint.setAttribute("role", "Main")
         elif "start_on_node" in location:
             new_constraint.setAttribute("node", location["start_on_node"])
         constraint_el.appendChild(new_constraint)

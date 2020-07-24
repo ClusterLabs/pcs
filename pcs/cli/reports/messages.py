@@ -72,14 +72,14 @@ class ResourceUnmoveUnbanPcmkExpiredNotSupported(CliReportMessageCustom):
         return "--expired not supported, please upgrade pacemaker"
 
 
-class CannotUnmoveUnbanResourceMasterResourceNotPromotable(
+class CannotUnmoveUnbanResourceMainResourceNotPromotable(
     CliReportMessageCustom
 ):
-    _obj: messages.CannotUnmoveUnbanResourceMasterResourceNotPromotable
+    _obj: messages.CannotUnmoveUnbanResourceMainResourceNotPromotable
 
     @property
     def message(self) -> str:
-        return _resource_move_ban_clear_master_resource_not_promotable(
+        return _resource_move_ban_clear_main_resource_not_promotable(
             self._obj.promotable_id
         )
 
@@ -120,33 +120,33 @@ class NodeCommunicationErrorTimedOut(CliReportMessageCustom):
         )
 
 
-class CannotBanResourceMasterResourceNotPromotable(CliReportMessageCustom):
-    _obj: messages.CannotBanResourceMasterResourceNotPromotable
+class CannotBanResourceMainResourceNotPromotable(CliReportMessageCustom):
+    _obj: messages.CannotBanResourceMainResourceNotPromotable
 
     @property
     def message(self) -> str:
-        return _resource_move_ban_clear_master_resource_not_promotable(
+        return _resource_move_ban_clear_main_resource_not_promotable(
             self._obj.promotable_id
         )
 
 
-class CannotMoveResourceMasterResourceNotPromotable(CliReportMessageCustom):
-    _obj: messages.CannotMoveResourceMasterResourceNotPromotable
+class CannotMoveResourceMainResourceNotPromotable(CliReportMessageCustom):
+    _obj: messages.CannotMoveResourceMainResourceNotPromotable
 
     @property
     def message(self) -> str:
-        return _resource_move_ban_clear_master_resource_not_promotable(
+        return _resource_move_ban_clear_main_resource_not_promotable(
             self._obj.promotable_id
         )
 
 
-class CannotMoveResourcePromotableNotMaster(CliReportMessageCustom):
-    _obj: messages.CannotMoveResourcePromotableNotMaster
+class CannotMoveResourcePromotableNotMain(CliReportMessageCustom):
+    _obj: messages.CannotMoveResourcePromotableNotMain
 
     @property
     def message(self) -> str:
         return (
-            "to move promotable clone resources you must use --master and the "
+            "to move promotable clone resources you must use --main and the "
             f"promotable clone id ({self._obj.promotable_id})"
         )
 
@@ -470,11 +470,11 @@ _file_role_to_option_translation: Mapping[file_type_codes.FileTypeCode, str] = {
 }
 
 
-def _resource_move_ban_clear_master_resource_not_promotable(
+def _resource_move_ban_clear_main_resource_not_promotable(
     promotable_id: str,
 ) -> str:
     return (
-        "when specifying --master you must use the promotable clone id{_id}"
+        "when specifying --main you must use the promotable clone id{_id}"
     ).format(_id=format_optional(promotable_id, " ({})"),)
 
 

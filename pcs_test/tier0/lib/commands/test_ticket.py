@@ -24,9 +24,9 @@ class CreateTest(TestCase):
                 optional_in_conf="""
                     <constraints>
                         <rsc_ticket
-                            id="ticket-ticketA-resourceA-Master"
+                            id="ticket-ticketA-resourceA-Main"
                             rsc="resourceA"
-                            rsc-role="Master"
+                            rsc-role="Main"
                             ticket="ticketA"
                             loss-policy="fence"
                         />
@@ -39,7 +39,7 @@ class CreateTest(TestCase):
             env_assist.get_env(),
             "ticketA",
             "resourceA",
-            {"loss-policy": "fence", "rsc-role": "master"},
+            {"loss-policy": "fence", "rsc-role": "main"},
         )
 
     def test_refuse_for_nonexisting_resource(self):
@@ -50,7 +50,7 @@ class CreateTest(TestCase):
                 env_assist.get_env(),
                 "ticketA",
                 "resourceA",
-                "master",
+                "main",
                 {"loss-policy": "fence"},
             ),
             [
@@ -65,7 +65,7 @@ class CreateTest(TestCase):
                             "bundle",
                             "clone",
                             "group",
-                            "master",
+                            "main",
                             "primitive",
                         ],
                     },

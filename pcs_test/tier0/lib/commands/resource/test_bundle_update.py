@@ -124,7 +124,7 @@ class Basics(TestCase):
 class ContainerParametrized(TestCase):
     allowed_options = [
         "image",
-        "masters",
+        "mains",
         "network",
         "options",
         "promoted-max",
@@ -147,11 +147,11 @@ class ContainerParametrized(TestCase):
         )
 
     @property
-    def fixture_cib_masters(self):
+    def fixture_cib_mains(self):
         return """
             <resources>
                 <bundle id="B1">
-                    <{container_type} image="pcs:test" masters="2" />
+                    <{container_type} image="pcs:test" mains="2" />
                 </bundle>
             </resources>
         """.format(
@@ -170,11 +170,11 @@ class ContainerParametrized(TestCase):
             container_type=self.container_type
         )
 
-    fixture_report_deprecated_masters = (
+    fixture_report_deprecated_mains = (
         severities.WARNING,
         report_codes.DEPRECATED_OPTION,
         {
-            "option_name": "masters",
+            "option_name": "mains",
             "option_type": "container",
             "replaced_by": ["promoted-max"],
         },
@@ -364,7 +364,7 @@ class ContainerParametrized(TestCase):
                 self.env_assist.get_env(),
                 "B1",
                 container_options={
-                    "masters": "-1",
+                    "mains": "-1",
                     "promoted-max": "-2",
                     "replicas": "0",
                     "replicas-per-host": "0",
@@ -373,10 +373,10 @@ class ContainerParametrized(TestCase):
         )
         self.env_assist.assert_reports(
             [
-                self.fixture_report_deprecated_masters,
+                self.fixture_report_deprecated_mains,
                 fixture.error(
                     report_codes.INVALID_OPTION_VALUE,
-                    option_name="masters",
+                    option_name="mains",
                     option_value="-1",
                     allowed_values="a non-negative integer",
                     cannot_be_empty=False,
@@ -394,7 +394,7 @@ class ContainerParametrized(TestCase):
                     severities.ERROR,
                     report_codes.MUTUALLY_EXCLUSIVE_OPTIONS,
                     {
-                        "option_names": ["masters", "promoted-max",],
+                        "option_names": ["mains", "promoted-max",],
                         "option_type": "container",
                     },
                     None,
@@ -425,29 +425,29 @@ class ContainerParametrized(TestCase):
         (
             self.config.runner.cib.load(
                 resources=fixture_resources_minimal(self.container_type)
-            ).env.push_cib(resources=self.fixture_cib_masters)
+            ).env.push_cib(resources=self.fixture_cib_mains)
         )
         resource.bundle_update(
-            self.env_assist.get_env(), "B1", container_options={"masters": "2",}
+            self.env_assist.get_env(), "B1", container_options={"mains": "2",}
         )
-        self.env_assist.assert_reports([self.fixture_report_deprecated_masters])
+        self.env_assist.assert_reports([self.fixture_report_deprecated_mains])
 
     def _test_deprecated_options_remove(self):
         (
             self.config.runner.cib.load(
-                resources=self.fixture_cib_masters
+                resources=self.fixture_cib_mains
             ).env.push_cib(
                 resources=fixture_resources_minimal(self.container_type)
             )
         )
         resource.bundle_update(
-            self.env_assist.get_env(), "B1", container_options={"masters": "",}
+            self.env_assist.get_env(), "B1", container_options={"mains": "",}
         )
 
-    def _test_delete_masters_and_promoted_max(self):
+    def _test_delete_mains_and_promoted_max(self):
         (
             self.config.runner.cib.load(
-                resources=self.fixture_cib_masters
+                resources=self.fixture_cib_mains
             ).env.push_cib(
                 resources=fixture_resources_minimal(self.container_type)
             )
@@ -455,26 +455,26 @@ class ContainerParametrized(TestCase):
         resource.bundle_update(
             self.env_assist.get_env(),
             "B1",
-            container_options={"masters": "", "promoted-max": "",},
+            container_options={"mains": "", "promoted-max": "",},
         )
 
-    def _test_masters_set_after_promoted_max(self):
+    def _test_mains_set_after_promoted_max(self):
         (self.config.runner.cib.load(resources=self.fixture_cib_promoted_max))
         self.env_assist.assert_raise_library_error(
             lambda: resource.bundle_update(
                 self.env_assist.get_env(),
                 "B1",
-                container_options={"masters": "2",},
+                container_options={"mains": "2",},
             )
         )
         self.env_assist.assert_reports(
             [
-                self.fixture_report_deprecated_masters,
+                self.fixture_report_deprecated_mains,
                 (
                     severities.ERROR,
                     report_codes.PREREQUISITE_OPTION_MUST_NOT_BE_SET,
                     {
-                        "option_name": "masters",
+                        "option_name": "mains",
                         "option_type": "container",
                         "prerequisite_name": "promoted-max",
                         "prerequisite_type": "container",
@@ -484,21 +484,21 @@ class ContainerParametrized(TestCase):
             ]
         )
 
-    def _test_masters_set_after_promoted_max_with_remove(self):
+    def _test_mains_set_after_promoted_max_with_remove(self):
         (
             self.config.runner.cib.load(
                 resources=self.fixture_cib_promoted_max
-            ).env.push_cib(resources=self.fixture_cib_masters)
+            ).env.push_cib(resources=self.fixture_cib_mains)
         )
         resource.bundle_update(
             self.env_assist.get_env(),
             "B1",
-            container_options={"masters": "2", "promoted-max": "",},
+            container_options={"mains": "2", "promoted-max": "",},
         )
-        self.env_assist.assert_reports([self.fixture_report_deprecated_masters])
+        self.env_assist.assert_reports([self.fixture_report_deprecated_mains])
 
-    def _test_promoted_max_set_after_masters(self):
-        (self.config.runner.cib.load(resources=self.fixture_cib_masters))
+    def _test_promoted_max_set_after_mains(self):
+        (self.config.runner.cib.load(resources=self.fixture_cib_mains))
         self.env_assist.assert_raise_library_error(
             lambda: resource.bundle_update(
                 self.env_assist.get_env(),
@@ -514,7 +514,7 @@ class ContainerParametrized(TestCase):
                     {
                         "option_name": "promoted-max",
                         "option_type": "container",
-                        "prerequisite_name": "masters",
+                        "prerequisite_name": "mains",
                         "prerequisite_type": "container",
                     },
                     None,
@@ -522,16 +522,16 @@ class ContainerParametrized(TestCase):
             ]
         )
 
-    def _test_promoted_max_set_after_masters_with_remove(self):
+    def _test_promoted_max_set_after_mains_with_remove(self):
         (
             self.config.runner.cib.load(
-                resources=self.fixture_cib_masters
+                resources=self.fixture_cib_mains
             ).env.push_cib(resources=self.fixture_cib_promoted_max)
         )
         resource.bundle_update(
             self.env_assist.get_env(),
             "B1",
-            container_options={"masters": "", "promoted-max": "3",},
+            container_options={"mains": "", "promoted-max": "3",},
         )
 
 
@@ -1137,7 +1137,7 @@ class Meta(TestCase):
     fixture_no_meta = """
         <resources>
             <bundle id="B1">
-                <docker image="pcs:test" masters="3" replicas="6"/>
+                <docker image="pcs:test" mains="3" replicas="6"/>
             </bundle>
         </resources>
     """
@@ -1146,7 +1146,7 @@ class Meta(TestCase):
         <resources>
             <bundle id="B1">
                 <meta_attributes id="B1-meta_attributes" />
-                <docker image="pcs:test" masters="3" replicas="6"/>
+                <docker image="pcs:test" mains="3" replicas="6"/>
             </bundle>
         </resources>
     """
@@ -1158,7 +1158,7 @@ class Meta(TestCase):
                 <nvpair id="B1-meta_attributes-target-role"
                     name="target-role" value="Stopped" />
                 </meta_attributes>
-                <docker image="pcs:test" masters="3" replicas="6"/>
+                <docker image="pcs:test" mains="3" replicas="6"/>
             </bundle>
         </resources>
     """
@@ -1202,7 +1202,7 @@ class Meta(TestCase):
                     <nvpair id="B1-meta_attributes-is-managed"
                         name="is-managed" value="false" />
                     </meta_attributes>
-                    <docker image="pcs:test" masters="3" replicas="6"/>
+                    <docker image="pcs:test" mains="3" replicas="6"/>
                 </bundle>
             </resources>
         """
@@ -1217,7 +1217,7 @@ class Meta(TestCase):
                     <nvpair id="B1-meta_attributes-resource-stickiness"
                         name="resource-stickiness" value="100" />
                     </meta_attributes>
-                    <docker image="pcs:test" masters="3" replicas="6"/>
+                    <docker image="pcs:test" mains="3" replicas="6"/>
                 </bundle>
             </resources>
         """

@@ -1140,7 +1140,7 @@ def dom_get_clone_ms_resource(dom, clone_ms_id):
     """
     Commandline options: no options
     """
-    clone_ms = dom_get_clone(dom, clone_ms_id) or dom_get_master(
+    clone_ms = dom_get_clone(dom, clone_ms_id) or dom_get_main(
         dom, clone_ms_id
     )
     if clone_ms:
@@ -1169,7 +1169,7 @@ def dom_get_resource_clone_ms_parent(dom, resource_id):
         dom, resource_id
     )
     if resource:
-        return dom_get_parent_by_tag_names(resource, ["clone", "master"])
+        return dom_get_parent_by_tag_names(resource, ["clone", "main"])
     return None
 
 
@@ -1183,13 +1183,13 @@ def dom_get_resource_bundle_parent(dom, resource_id):
     return None
 
 
-def dom_get_master(dom, master_id):
+def dom_get_main(dom, main_id):
     """
     Commandline options: no options
     """
-    for master in dom.getElementsByTagName("master"):
-        if master.getAttribute("id") == master_id:
-            return master
+    for main in dom.getElementsByTagName("main"):
+        if main.getAttribute("id") == main_id:
+            return main
     return None
 
 
@@ -1247,12 +1247,12 @@ def dom_get_group_clone(dom, group_id):
     return None
 
 
-def dom_get_group_masterslave(dom, group_id):
+def dom_get_group_mainsubordinate(dom, group_id):
     """
     Commandline options: no options
     """
-    for master in dom.getElementsByTagName("master"):
-        group = dom_get_group(master, group_id)
+    for main in dom.getElementsByTagName("main"):
+        group = dom_get_group(main, group_id)
         if group:
             return group
     return None
@@ -1276,7 +1276,7 @@ def dom_get_any_resource(dom, resource_id):
         dom_get_resource(dom, resource_id)
         or dom_get_group(dom, resource_id)
         or dom_get_clone(dom, resource_id)
-        or dom_get_master(dom, resource_id)
+        or dom_get_main(dom, resource_id)
     )
 
 
@@ -1301,12 +1301,12 @@ def dom_get_resource_clone(dom, resource_id):
     return None
 
 
-def dom_get_resource_masterslave(dom, resource_id):
+def dom_get_resource_mainsubordinate(dom, resource_id):
     """
     Commandline options: no options
     """
-    for master in dom.getElementsByTagName("master"):
-        resource = dom_get_resource(master, resource_id)
+    for main in dom.getElementsByTagName("main"):
+        resource = dom_get_resource(main, resource_id)
         if resource:
             return resource
     return None
@@ -1322,11 +1322,11 @@ def validate_constraint_resource(dom, resource_id):
     """
     resource_el = (
         dom_get_clone(dom, resource_id)
-        or dom_get_master(dom, resource_id)
+        or dom_get_main(dom, resource_id)
         or dom_get_bundle(dom, resource_id)
     )
     if resource_el:
-        # clones, masters and bundles are always valid
+        # clones, mains and bundles are always valid
         return True, "", resource_id
 
     resource_el = dom_get_resource(dom, resource_id) or dom_get_group(
@@ -1339,14 +1339,14 @@ def validate_constraint_resource(dom, resource_id):
         dom, resource_id
     ) or dom_get_resource_bundle_parent(dom, resource_id)
     if not clone_el:
-        # a primitive and a group is valid if not in a clone nor a master nor a
+        # a primitive and a group is valid if not in a clone nor a main nor a
         # bundle
         return True, "", resource_id
 
     if "--force" in pcs_options:
         return True, "", clone_el.getAttribute("id")
 
-    if clone_el.tagName in ["clone", "master"]:
+    if clone_el.tagName in ["clone", "main"]:
         return (
             False,
             "%s is a clone resource, you should use the clone id: %s "
@@ -1491,8 +1491,8 @@ def resource_running_on(resource, passed_state=None, stopped=False):
       * -f - has effect but doesn't make sense to check state of resource
     """
     nodes_started = []
-    nodes_master = []
-    nodes_slave = []
+    nodes_main = []
+    nodes_subordinate = []
     state = passed_state if passed_state else getClusterState()
     resource_original = resource
     resource = get_resource_for_running_check(state, resource, stopped)
@@ -1508,18 +1508,18 @@ def resource_running_on(resource, passed_state=None, stopped=False):
                 node_name = node.getAttribute("name")
                 if res.getAttribute("role") == "Started":
                     nodes_started.append(node_name)
-                elif res.getAttribute("role") == "Master":
-                    nodes_master.append(node_name)
-                elif res.getAttribute("role") == "Slave":
-                    nodes_slave.append(node_name)
-    if not nodes_started and not nodes_master and not nodes_slave:
+                elif res.getAttribute("role") == "Main":
+                    nodes_main.append(node_name)
+                elif res.getAttribute("role") == "Subordinate":
+                    nodes_subordinate.append(node_name)
+    if not nodes_started and not nodes_main and not nodes_subordinate:
         message = "Resource '%s' is not running on any node" % resource_original
     else:
         message_parts = []
         for alist, label in (
             (nodes_started, "running"),
-            (nodes_master, "master"),
-            (nodes_slave, "slave"),
+            (nodes_main, "main"),
+            (nodes_subordinate, "subordinate"),
         ):
             if alist:
                 alist.sort()
@@ -1533,10 +1533,10 @@ def resource_running_on(resource, passed_state=None, stopped=False):
         )
     return {
         "message": message,
-        "is_running": bool(nodes_started or nodes_master or nodes_slave),
+        "is_running": bool(nodes_started or nodes_main or nodes_subordinate),
         "nodes_started": nodes_started,
-        "nodes_master": nodes_master,
-        "nodes_slave": nodes_slave,
+        "nodes_main": nodes_main,
+        "nodes_subordinate": nodes_subordinate,
     }
 
 

@@ -214,7 +214,7 @@ class Normalize(TestCase):
     def test_return_operation_with_the_same_values(self):
         operation = {
             "name": "monitor",
-            "role": "Master",
+            "role": "Main",
             "timeout": "10",
         }
 
@@ -230,7 +230,7 @@ class Normalize(TestCase):
         self.assertEqual(
             {
                 "name": "monitor",
-                "role": "Master",
+                "role": "Main",
                 "timeout": "10",
                 "on-fail": "ignore",
                 "record-pending": "true",
@@ -240,7 +240,7 @@ class Normalize(TestCase):
                 key: operations.normalize(key, value)
                 for key, value in {
                     "name": "monitor",
-                    "role": "master",
+                    "role": "main",
                     "timeout": "10",
                     "on-fail": "Ignore",
                     "record-pending": "True",
@@ -259,7 +259,7 @@ class ValidateOperation(TestCase):
 
     def test_return_empty_report_on_valid_operation(self):
         self.assert_operation_produces_report(
-            {"name": "monitor", "role": "Master"}, []
+            {"name": "monitor", "role": "Main"}, []
         )
 
     def test_validate_all_individual_options(self):
@@ -307,7 +307,7 @@ class ValidateOperation(TestCase):
                     report_codes.INVALID_OPTION_VALUE,
                     option_value="a",
                     option_name="role",
-                    allowed_values=("Master", "Slave", "Started", "Stopped"),
+                    allowed_values=("Main", "Subordinate", "Started", "Stopped"),
                     cannot_be_empty=False,
                     forbidden_characters=None,
                 ),
@@ -374,7 +374,7 @@ class ValidateOperation(TestCase):
 
     def test_return_errror_when_missing_key_name(self):
         self.assert_operation_produces_report(
-            {"role": "Master"},
+            {"role": "Main"},
             [
                 (
                     severities.ERROR,
@@ -447,9 +447,9 @@ class GetResourceOperations(TestCase):
                 <op id="dummy-start" interval="0s" name="start" timeout="20"/>
                 <op id="dummy-stop" interval="0s" name="stop" timeout="20"/>
                 <op id="dummy-monitor-m" interval="10" name="monitor"
-                    role="Master" timeout="20"/>
+                    role="Main" timeout="20"/>
                 <op id="dummy-monitor-s" interval="11" name="monitor"
-                    role="Slave" timeout="20"/>
+                    role="Subordinate" timeout="20"/>
             </operations>
         </primitive>
     """

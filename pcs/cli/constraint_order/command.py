@@ -9,10 +9,10 @@ def create_with_set(lib, argv, modifiers):
     object lib exposes library
     list argv see usage for "constraint colocation set"
     dict like object modifiers can contain
-        "force" allows resource in clone/master and constraint duplicity
+        "force" allows resource in clone/main and constraint duplicity
 
     Options:
-      * --force - allow resource inside clone (or master), allow duplicate
+      * --force - allow resource inside clone (or main), allow duplicate
         element
       * -f - CIB file
     """

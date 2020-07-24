@@ -90,7 +90,7 @@ def fixture_unexpected_element_reports(id_list, expected_types=None):
         fixture.report_unexpected_element(
             _id,
             ValidateCommonTestData.id_to_context_type_map[_id],
-            expected_types=["bundle", "clone", "group", "master", "primitive",]
+            expected_types=["bundle", "clone", "group", "main", "primitive",]
             if expected_types is None
             else expected_types,
         )
@@ -1018,7 +1018,7 @@ class LibraryAddObjRef(TestCase):
 
 
 class ValidateTagUpdateByIds(TestCase):
-    OBJ_REF_EXPCTED_TYPES = ["bundle", "clone", "group", "master", "primitive"]
+    OBJ_REF_EXPCTED_TYPES = ["bundle", "clone", "group", "main", "primitive"]
     test_cib = etree.fromstring(
         """
         <cib>

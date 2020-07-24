@@ -558,7 +558,7 @@ class InputModifiersTest(TestCase):
             "--hide-inactive",
             "--interactive",
             "--local",
-            "--master",
+            "--main",
             "--monitor",
             "--no-default-ops",
             "--no-strict",

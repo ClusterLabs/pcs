@@ -402,7 +402,7 @@ class ResourceMoveBanMixin:
     def test_succes(self):
         self.cli_command(self.lib, ["resource"], dict_to_modifiers(dict()))
         self.lib_command.assert_called_once_with(
-            "resource", lifetime=None, master=False, node=None, wait=False
+            "resource", lifetime=None, main=False, node=None, wait=False
         )
 
     def test_success_node(self):
@@ -410,7 +410,7 @@ class ResourceMoveBanMixin:
             self.lib, ["resource", "node"], dict_to_modifiers(dict())
         )
         self.lib_command.assert_called_once_with(
-            "resource", lifetime=None, master=False, node="node", wait=False
+            "resource", lifetime=None, main=False, node="node", wait=False
         )
 
     def test_success_lifetime(self):
@@ -418,7 +418,7 @@ class ResourceMoveBanMixin:
             self.lib, ["resource", "lifetime=1h"], dict_to_modifiers(dict())
         )
         self.lib_command.assert_called_once_with(
-            "resource", lifetime="P1h", master=False, node=None, wait=False
+            "resource", lifetime="P1h", main=False, node=None, wait=False
         )
 
     def test_success_lifetime_unchanged(self):
@@ -426,7 +426,7 @@ class ResourceMoveBanMixin:
             self.lib, ["resource", "lifetime=T1h"], dict_to_modifiers(dict())
         )
         self.lib_command.assert_called_once_with(
-            "resource", lifetime="T1h", master=False, node=None, wait=False
+            "resource", lifetime="T1h", main=False, node=None, wait=False
         )
 
     def test_succes_node_lifetime(self):
@@ -436,7 +436,7 @@ class ResourceMoveBanMixin:
             dict_to_modifiers(dict()),
         )
         self.lib_command.assert_called_once_with(
-            "resource", lifetime="P1h", master=False, node="node", wait=False
+            "resource", lifetime="P1h", main=False, node="node", wait=False
         )
 
     def test_success_lifetime_node(self):
@@ -446,17 +446,17 @@ class ResourceMoveBanMixin:
             dict_to_modifiers(dict()),
         )
         self.lib_command.assert_called_once_with(
-            "resource", lifetime="P1h", master=False, node="node", wait=False
+            "resource", lifetime="P1h", main=False, node="node", wait=False
         )
 
     def test_success_all_options(self):
         self.cli_command(
             self.lib,
             ["resource", "lifetime=1h", "node"],
-            dict_to_modifiers(dict(master=True, wait="10")),
+            dict_to_modifiers(dict(main=True, wait="10")),
         )
         self.lib_command.assert_called_once_with(
-            "resource", lifetime="P1h", master=True, node="node", wait="10"
+            "resource", lifetime="P1h", main=True, node="node", wait="10"
         )
 
 
@@ -511,7 +511,7 @@ class ResourceClear(TestCase):
             self.lib, ["resource"], dict_to_modifiers(dict())
         )
         self.resource.unmove_unban.assert_called_once_with(
-            "resource", node=None, master=False, expired=False, wait=False
+            "resource", node=None, main=False, expired=False, wait=False
         )
 
     def test_success_node(self):
@@ -519,17 +519,17 @@ class ResourceClear(TestCase):
             self.lib, ["resource", "node"], dict_to_modifiers(dict())
         )
         self.resource.unmove_unban.assert_called_once_with(
-            "resource", node="node", master=False, expired=False, wait=False
+            "resource", node="node", main=False, expired=False, wait=False
         )
 
     def test_success_all_options(self):
         resource.resource_unmove_unban(
             self.lib,
             ["resource", "node"],
-            dict_to_modifiers(dict(master=True, expired=True, wait="10")),
+            dict_to_modifiers(dict(main=True, expired=True, wait="10")),
         )
         self.resource.unmove_unban.assert_called_once_with(
-            "resource", node="node", master=True, expired=True, wait="10"
+            "resource", node="node", main=True, expired=True, wait="10"
         )
 
 

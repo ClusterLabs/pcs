@@ -1,9 +1,9 @@
 """
 Module for stuff related to clones.
 
-Previously, promotable clones were implemented in pacemaker as 'master'
+Previously, promotable clones were implemented in pacemaker as 'main'
 elements whereas regular clones were 'clone' elemets. Since pacemaker-2.0,
-promotable clones are clones with meta attribute promotable=true. Master
+promotable clones are clones with meta attribute promotable=true. Main
 elements are deprecated yet still supported in pacemaker. We provide read-only
 support for them to be able to read, process and display CIBs containing them.
 """
@@ -14,7 +14,7 @@ from pcs.lib.pacemaker.values import is_true
 
 
 TAG_CLONE = "clone"
-TAG_MASTER = "master"
+TAG_MASTER = "main"
 ALL_TAGS = [TAG_CLONE, TAG_MASTER]
 
 
@@ -22,7 +22,7 @@ def is_clone(resource_el):
     return resource_el.tag == TAG_CLONE
 
 
-def is_master(resource_el):
+def is_main(resource_el):
     return resource_el.tag == TAG_MASTER
 
 
@@ -32,7 +32,7 @@ def is_any_clone(resource_el):
 
 def is_promotable_clone(resource_el):
     """
-    Return True if resource_el is a promotable clone, False on clone and master
+    Return True if resource_el is a promotable clone, False on clone and main
     """
     return is_clone(resource_el) and is_true(
         nvpair.get_value(

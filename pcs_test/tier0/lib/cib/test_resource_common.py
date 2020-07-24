@@ -23,9 +23,9 @@ fixture_cib = etree.fromstring(
                 <clone id="B-clone">
                     <primitive id="B" />
                 </clone>
-                <master id="C-master">
+                <main id="C-main">
                     <primitive id="C" />
-                </master>
+                </main>
                 <group id="D">
                     <primitive id="D1" />
                     <primitive id="D2" />
@@ -36,12 +36,12 @@ fixture_cib = etree.fromstring(
                         <primitive id="E2" />
                     </group>
                 </clone>
-                <master id="F-master">
+                <main id="F-main">
                     <group id="F">
                         <primitive id="F1" />
                         <primitive id="F2" />
                     </group>
-                </master>
+                </main>
                 <bundle id="G-bundle" />
                 <bundle id="H-bundle">
                     <primitive id="H" />
@@ -54,11 +54,11 @@ fixture_cib = etree.fromstring(
                         <primitive id="J1" />
                     </group>
                 </clone>
-                <master id="K-master">
+                <main id="K-main">
                     <group id="K">
                         <primitive id="K1" />
                     </group>
-                </master>
+                </main>
             </resources>
         </configuration>
     </cib>
@@ -191,14 +191,14 @@ class FindResourcesMixin:
     def test_group_in_clone(self):
         self.assert_find_resources("E", ["E1", "E2"])
 
-    def test_group_in_master(self):
+    def test_group_in_main(self):
         self.assert_find_resources("F", ["F1", "F2"])
 
     def test_cloned_primitive(self):
         self.assert_find_resources("B-clone", ["B"])
 
-    def test_mastered_primitive(self):
-        self.assert_find_resources("C-master", ["C"])
+    def test_mained_primitive(self):
+        self.assert_find_resources("C-main", ["C"])
 
     def test_bundle_empty(self):
         self.assert_find_resources("G-bundle", [])
@@ -212,7 +212,7 @@ class FindResourcesMixin:
     def test_primitive_in_clone(self):
         raise NotImplementedError()
 
-    def test_primitive_in_master(self):
+    def test_primitive_in_main(self):
         raise NotImplementedError()
 
     def test_primitive_in_group(self):
@@ -224,7 +224,7 @@ class FindResourcesMixin:
     def test_cloned_group(self):
         raise NotImplementedError()
 
-    def test_mastered_group(self):
+    def test_mained_group(self):
         raise NotImplementedError()
 
 
@@ -237,7 +237,7 @@ class FindPrimitives(TestCase, FindResourcesMixin):
     def test_primitive_in_clone(self):
         self.assert_find_resources("B", ["B"])
 
-    def test_primitive_in_master(self):
+    def test_primitive_in_main(self):
         self.assert_find_resources("C", ["C"])
 
     def test_primitive_in_group(self):
@@ -254,8 +254,8 @@ class FindPrimitives(TestCase, FindResourcesMixin):
     def test_cloned_group(self):
         self.assert_find_resources("E-clone", ["E1", "E2"])
 
-    def test_mastered_group(self):
-        self.assert_find_resources("F-master", ["F1", "F2"])
+    def test_mained_group(self):
+        self.assert_find_resources("F-main", ["F1", "F2"])
 
 
 class GetAllInnerResources(TestCase, FindResourcesMixin):
@@ -268,7 +268,7 @@ class GetAllInnerResources(TestCase, FindResourcesMixin):
     def test_primitive_in_clone(self):
         self.assert_find_resources("B", set())
 
-    def test_primitive_in_master(self):
+    def test_primitive_in_main(self):
         self.assert_find_resources("C", set())
 
     def test_primitive_in_group(self):
@@ -285,8 +285,8 @@ class GetAllInnerResources(TestCase, FindResourcesMixin):
     def test_cloned_group(self):
         self.assert_find_resources("E-clone", {"E", "E1", "E2"})
 
-    def test_mastered_group(self):
-        self.assert_find_resources("F-master", {"F", "F1", "F2"})
+    def test_mained_group(self):
+        self.assert_find_resources("F-main", {"F", "F1", "F2"})
 
 
 class GetInnerResources(TestCase, FindResourcesMixin):
@@ -298,7 +298,7 @@ class GetInnerResources(TestCase, FindResourcesMixin):
     def test_primitive_in_clone(self):
         self.assert_find_resources("B", [])
 
-    def test_primitive_in_master(self):
+    def test_primitive_in_main(self):
         self.assert_find_resources("C", [])
 
     def test_primitive_in_group(self):
@@ -312,8 +312,8 @@ class GetInnerResources(TestCase, FindResourcesMixin):
     def test_primitive_in_bundle(self):
         self.assert_find_resources("H", [])
 
-    def test_mastered_group(self):
-        self.assert_find_resources("F-master", ["F"])
+    def test_mained_group(self):
+        self.assert_find_resources("F-main", ["F"])
 
     def test_cloned_group(self):
         self.assert_find_resources("E-clone", ["E"])
@@ -334,7 +334,7 @@ class IsWrapperResource(TestCase):
     def test_primitive_in_clone(self):
         self.assert_is_wrapper("B", False)
 
-    def test_primitive_in_master(self):
+    def test_primitive_in_main(self):
         self.assert_is_wrapper("C", False)
 
     def test_primitive_in_group(self):
@@ -351,8 +351,8 @@ class IsWrapperResource(TestCase):
     def test_cloned_group(self):
         self.assert_is_wrapper("E-clone", True)
 
-    def test_mastered_group(self):
-        self.assert_is_wrapper("F-master", True)
+    def test_mained_group(self):
+        self.assert_is_wrapper("F-main", True)
 
     def test_group(self):
         self.assert_is_wrapper("D", True)
@@ -360,14 +360,14 @@ class IsWrapperResource(TestCase):
     def test_group_in_clone(self):
         self.assert_is_wrapper("E", True)
 
-    def test_group_in_master(self):
+    def test_group_in_main(self):
         self.assert_is_wrapper("F", True)
 
     def test_cloned_primitive(self):
         self.assert_is_wrapper("B-clone", True)
 
-    def test_mastered_primitive(self):
-        self.assert_is_wrapper("C-master", True)
+    def test_mained_primitive(self):
+        self.assert_is_wrapper("C-main", True)
 
     def test_bundle_empty(self):
         self.assert_is_wrapper("G-bundle", True)
@@ -391,8 +391,8 @@ class GetParentResource(TestCase):
     def test_primitive_in_clone(self):
         self.assert_parent_resource("B", "B-clone")
 
-    def test_primitive_in_master(self):
-        self.assert_parent_resource("C", "C-master")
+    def test_primitive_in_main(self):
+        self.assert_parent_resource("C", "C-main")
 
     def test_primitive_in_group(self):
         self.assert_parent_resource("D1", "D")
@@ -408,8 +408,8 @@ class GetParentResource(TestCase):
     def test_cloned_group(self):
         self.assert_parent_resource("E-clone", None)
 
-    def test_mastered_group(self):
-        self.assert_parent_resource("F-master", None)
+    def test_mained_group(self):
+        self.assert_parent_resource("F-main", None)
 
     def test_group(self):
         self.assert_parent_resource("D", None)
@@ -417,14 +417,14 @@ class GetParentResource(TestCase):
     def test_group_in_clone(self):
         self.assert_parent_resource("E", "E-clone")
 
-    def test_group_in_master(self):
-        self.assert_parent_resource("F", "F-master")
+    def test_group_in_main(self):
+        self.assert_parent_resource("F", "F-main")
 
     def test_cloned_primitive(self):
         self.assert_parent_resource("B-clone", None)
 
-    def test_mastered_primitive(self):
-        self.assert_parent_resource("C-master", None)
+    def test_mained_primitive(self):
+        self.assert_parent_resource("C-main", None)
 
     def test_bundle_empty(self):
         self.assert_parent_resource("G-bundle", None)
@@ -453,8 +453,8 @@ class FindResourcesToEnable(TestCase):
     def test_primitive_in_clone(self):
         self.assert_find_resources("B", ["B", "B-clone"])
 
-    def test_primitive_in_master(self):
-        self.assert_find_resources("C", ["C", "C-master"])
+    def test_primitive_in_main(self):
+        self.assert_find_resources("C", ["C", "C-main"])
 
     def test_primitive_in_group(self):
         self.assert_find_resources("D1", ["D1"])
@@ -473,8 +473,8 @@ class FindResourcesToEnable(TestCase):
     def test_group_in_clone(self):
         self.assert_find_resources("E", ["E", "E-clone"])
 
-    def test_group_in_master(self):
-        self.assert_find_resources("F", ["F", "F-master"])
+    def test_group_in_main(self):
+        self.assert_find_resources("F", ["F", "F-main"])
 
     def test_cloned_primitive(self):
         self.assert_find_resources("B-clone", ["B-clone", "B"])
@@ -482,11 +482,11 @@ class FindResourcesToEnable(TestCase):
     def test_cloned_group(self):
         self.assert_find_resources("E-clone", ["E-clone", "E"])
 
-    def test_mastered_primitive(self):
-        self.assert_find_resources("C-master", ["C-master", "C"])
+    def test_mained_primitive(self):
+        self.assert_find_resources("C-main", ["C-main", "C"])
 
-    def test_mastered_group(self):
-        self.assert_find_resources("F-master", ["F-master", "F"])
+    def test_mained_group(self):
+        self.assert_find_resources("F-main", ["F-main", "F"])
 
     def test_bundle_empty(self):
         self.assert_find_resources("G-bundle", ["G-bundle"])
@@ -636,16 +636,16 @@ class FindResourcesToManage(TestCase):
     def test_primitive_in_clone(self):
         self.assert_find_resources("B", ["B", "B-clone"])
 
-    def test_primitive_in_master(self):
-        self.assert_find_resources("C", ["C", "C-master"])
+    def test_primitive_in_main(self):
+        self.assert_find_resources("C", ["C", "C-main"])
 
     def test_primitive_in_group(self):
         self.assert_find_resources("D1", ["D1", "D"])
         self.assert_find_resources("D2", ["D2", "D"])
         self.assert_find_resources("E1", ["E1", "E-clone", "E"])
         self.assert_find_resources("E2", ["E2", "E-clone", "E"])
-        self.assert_find_resources("F1", ["F1", "F-master", "F"])
-        self.assert_find_resources("F2", ["F2", "F-master", "F"])
+        self.assert_find_resources("F1", ["F1", "F-main", "F"])
+        self.assert_find_resources("F2", ["F2", "F-main", "F"])
 
     def test_primitive_in_bundle(self):
         self.assert_find_resources("H", ["H", "H-bundle"])
@@ -656,8 +656,8 @@ class FindResourcesToManage(TestCase):
     def test_group_in_clone(self):
         self.assert_find_resources("E", ["E", "E-clone", "E1", "E2"])
 
-    def test_group_in_master(self):
-        self.assert_find_resources("F", ["F", "F-master", "F1", "F2"])
+    def test_group_in_main(self):
+        self.assert_find_resources("F", ["F", "F-main", "F1", "F2"])
 
     def test_cloned_primitive(self):
         self.assert_find_resources("B-clone", ["B-clone", "B"])
@@ -665,11 +665,11 @@ class FindResourcesToManage(TestCase):
     def test_cloned_group(self):
         self.assert_find_resources("E-clone", ["E-clone", "E", "E1", "E2"])
 
-    def test_mastered_primitive(self):
-        self.assert_find_resources("C-master", ["C-master", "C"])
+    def test_mained_primitive(self):
+        self.assert_find_resources("C-main", ["C-main", "C"])
 
-    def test_mastered_group(self):
-        self.assert_find_resources("F-master", ["F-master", "F", "F1", "F2"])
+    def test_mained_group(self):
+        self.assert_find_resources("F-main", ["F-main", "F", "F1", "F2"])
 
     def test_bundle_empty(self):
         self.assert_find_resources("G-bundle", ["G-bundle"])
@@ -698,7 +698,7 @@ class FindResourcesToUnmanage(TestCase):
     def test_primitive_in_clone(self):
         self.assert_find_resources("B", ["B"])
 
-    def test_primitive_in_master(self):
+    def test_primitive_in_main(self):
         self.assert_find_resources("C", ["C"])
 
     def test_primitive_in_group(self):
@@ -718,7 +718,7 @@ class FindResourcesToUnmanage(TestCase):
     def test_group_in_clone(self):
         self.assert_find_resources("E", ["E1", "E2"])
 
-    def test_group_in_master(self):
+    def test_group_in_main(self):
         self.assert_find_resources("F", ["F1", "F2"])
 
     def test_cloned_primitive(self):
@@ -727,11 +727,11 @@ class FindResourcesToUnmanage(TestCase):
     def test_cloned_group(self):
         self.assert_find_resources("E-clone", ["E1", "E2"])
 
-    def test_mastered_primitive(self):
-        self.assert_find_resources("C-master", ["C"])
+    def test_mained_primitive(self):
+        self.assert_find_resources("C-main", ["C"])
 
-    def test_mastered_group(self):
-        self.assert_find_resources("F-master", ["F1", "F2"])
+    def test_mained_group(self):
+        self.assert_find_resources("F-main", ["F1", "F2"])
 
     def test_bundle_empty(self):
         self.assert_find_resources("G-bundle", ["G-bundle"])
@@ -892,209 +892,209 @@ class ValidateMoveBanClearMixin:
         )
 
     @staticmethod
-    def _fixture_master():
+    def _fixture_main():
         return etree.fromstring(
             """
-            <master id="R-master">
+            <main id="R-main">
                 <primitive id="R" />
-            </master>
+            </main>
             """
         )
 
     @staticmethod
-    def _fixture_group_master():
+    def _fixture_group_main():
         return etree.fromstring(
             """
-            <master id="G-master">
+            <main id="G-main">
                 <group id="G">
                     <primitive id="R" />
                 </group>
-            </master>
+            </main>
             """
         )
 
-    def test_master_true_promotable_clone(self):
+    def test_main_true_promotable_clone(self):
         element = self._fixture_clone(True)
         assert_report_item_list_equal(self.validate(element, True), [])
 
-    def test_master_false_promotable_clone(self):
+    def test_main_false_promotable_clone(self):
         element = self._fixture_clone(True)
         assert_report_item_list_equal(self.validate(element, False), [])
 
-    def test_master_true_clone(self):
+    def test_main_true_clone(self):
         element = self._fixture_clone(False)
         assert_report_item_list_equal(
             self.validate(element, True),
             [
                 fixture.error(
-                    self.report_code_bad_master,
+                    self.report_code_bad_main,
                     resource_id="R-clone",
                     promotable_id=None,
                 ),
             ],
         )
 
-    def test_master_false_clone(self):
+    def test_main_false_clone(self):
         element = self._fixture_clone(False)
         assert_report_item_list_equal(self.validate(element, False), [])
 
-    def test_master_true_master(self):
-        element = self._fixture_master()
+    def test_main_true_main(self):
+        element = self._fixture_main()
         assert_report_item_list_equal(self.validate(element, True), [])
 
-    def test_master_false_master(self):
-        element = self._fixture_master()
+    def test_main_false_main(self):
+        element = self._fixture_main()
         assert_report_item_list_equal(self.validate(element, False), [])
 
-    def test_master_true_promotable_clone_resource(self):
+    def test_main_true_promotable_clone_resource(self):
         element = self._fixture_clone(True)
         assert_report_item_list_equal(
             self.validate(element.find("./primitive"), True),
             [
                 fixture.error(
-                    self.report_code_bad_master,
+                    self.report_code_bad_main,
                     resource_id="R",
                     promotable_id="R-clone",
                 ),
             ],
         )
 
-    def test_master_false_promotable_clone_resource(self):
+    def test_main_false_promotable_clone_resource(self):
         element = self._fixture_clone(True)
         assert_report_item_list_equal(
             self.validate(element.find("./primitive"), False), []
         )
 
-    def test_master_true_promotable_clone_group(self):
+    def test_main_true_promotable_clone_group(self):
         element = self._fixture_group_clone(True)
         assert_report_item_list_equal(
             self.validate(element.find("./group"), True),
             [
                 fixture.error(
-                    self.report_code_bad_master,
+                    self.report_code_bad_main,
                     resource_id="G",
                     promotable_id="G-clone",
                 ),
             ],
         )
 
-    def test_master_false_promotable_clone_group(self):
+    def test_main_false_promotable_clone_group(self):
         element = self._fixture_group_clone(True)
         assert_report_item_list_equal(
             self.validate(element.find("./group"), False), []
         )
 
-    def test_master_true_promotable_clone_group_resource(self):
+    def test_main_true_promotable_clone_group_resource(self):
         element = self._fixture_group_clone(True)
         assert_report_item_list_equal(
             self.validate(element.find("./group/primitive"), True),
             [
                 fixture.error(
-                    self.report_code_bad_master,
+                    self.report_code_bad_main,
                     resource_id="R",
                     promotable_id="G-clone",
                 ),
             ],
         )
 
-    def test_master_false_promotable_clone_group_resource(self):
+    def test_main_false_promotable_clone_group_resource(self):
         element = self._fixture_group_clone(True)
         assert_report_item_list_equal(
             self.validate(element.find("./group/primitive"), False), []
         )
 
-    def test_master_true_clone_resource(self):
+    def test_main_true_clone_resource(self):
         element = self._fixture_clone(False)
         assert_report_item_list_equal(
             self.validate(element.find("./primitive"), True),
             [
                 fixture.error(
-                    self.report_code_bad_master,
+                    self.report_code_bad_main,
                     resource_id="R",
                     promotable_id=None,
                 ),
             ],
         )
 
-    def test_master_false_clone_resource(self):
+    def test_main_false_clone_resource(self):
         element = self._fixture_clone(False)
         assert_report_item_list_equal(
             self.validate(element.find("./primitive"), False), []
         )
 
-    def test_master_true_clone_group(self):
+    def test_main_true_clone_group(self):
         element = self._fixture_group_clone(False)
         assert_report_item_list_equal(
             self.validate(element.find("./group"), True),
             [
                 fixture.error(
-                    self.report_code_bad_master,
+                    self.report_code_bad_main,
                     resource_id="G",
                     promotable_id=None,
                 ),
             ],
         )
 
-    def test_master_false_clone_group(self):
+    def test_main_false_clone_group(self):
         element = self._fixture_group_clone(False)
         assert_report_item_list_equal(
             self.validate(element.find("./group"), False), []
         )
 
-    def test_master_true_clone_group_resource(self):
+    def test_main_true_clone_group_resource(self):
         element = self._fixture_group_clone(False)
         assert_report_item_list_equal(
             self.validate(element.find("./group/primitive"), True),
             [
                 fixture.error(
-                    self.report_code_bad_master,
+                    self.report_code_bad_main,
                     resource_id="R",
                     promotable_id=None,
                 ),
             ],
         )
 
-    def test_master_false_clone_group_resource(self):
+    def test_main_false_clone_group_resource(self):
         element = self._fixture_group_clone(False)
         assert_report_item_list_equal(
             self.validate(element.find("./group/primitive"), False), []
         )
 
-    def test_master_true_master_resource(self):
-        element = self._fixture_master()
+    def test_main_true_main_resource(self):
+        element = self._fixture_main()
         assert_report_item_list_equal(
             self.validate(element.find("./primitive"), True),
             [
                 fixture.error(
-                    self.report_code_bad_master,
+                    self.report_code_bad_main,
                     resource_id="R",
-                    promotable_id="R-master",
+                    promotable_id="R-main",
                 ),
             ],
         )
 
-    def test_master_true_master_group(self):
-        element = self._fixture_group_master()
+    def test_main_true_main_group(self):
+        element = self._fixture_group_main()
         assert_report_item_list_equal(
             self.validate(element.find("./group"), True),
             [
                 fixture.error(
-                    self.report_code_bad_master,
+                    self.report_code_bad_main,
                     resource_id="G",
-                    promotable_id="G-master",
+                    promotable_id="G-main",
                 ),
             ],
         )
 
-    def test_master_true_master_group_resource(self):
-        element = self._fixture_group_master()
+    def test_main_true_main_group_resource(self):
+        element = self._fixture_group_main()
         assert_report_item_list_equal(
             self.validate(element.find("./group/primitive"), True),
             [
                 fixture.error(
-                    self.report_code_bad_master,
+                    self.report_code_bad_main,
                     resource_id="R",
-                    promotable_id="G-master",
+                    promotable_id="G-main",
                 ),
             ],
         )
@@ -1102,7 +1102,7 @@ class ValidateMoveBanClearMixin:
 
 class ValidateMove(ValidateMoveBanClearMixin, TestCase):
     validate = staticmethod(common.validate_move)
-    report_code_bad_master = (
+    report_code_bad_main = (
         report_codes.CANNOT_MOVE_RESOURCE_MASTER_RESOURCE_NOT_PROMOTABLE
     )
 
@@ -1116,7 +1116,7 @@ class ValidateMove(ValidateMoveBanClearMixin, TestCase):
             """
         )
 
-    def test_master_false_promotable_clone(self):
+    def test_main_false_promotable_clone(self):
         element = self._fixture_clone(True)
         assert_report_item_list_equal(
             self.validate(element, False),
@@ -1129,7 +1129,7 @@ class ValidateMove(ValidateMoveBanClearMixin, TestCase):
             ],
         )
 
-    def test_master_true_clone(self):
+    def test_main_true_clone(self):
         element = self._fixture_clone(False)
         assert_report_item_list_equal(
             self.validate(element, True),
@@ -1141,7 +1141,7 @@ class ValidateMove(ValidateMoveBanClearMixin, TestCase):
             ],
         )
 
-    def test_master_false_clone(self):
+    def test_main_false_clone(self):
         element = self._fixture_clone(False)
         assert_report_item_list_equal(
             self.validate(element, False),
@@ -1153,20 +1153,20 @@ class ValidateMove(ValidateMoveBanClearMixin, TestCase):
             ],
         )
 
-    def test_master_false_master(self):
-        element = self._fixture_master()
+    def test_main_false_main(self):
+        element = self._fixture_main()
         assert_report_item_list_equal(
             self.validate(element, False),
             [
                 fixture.error(
                     report_codes.CANNOT_MOVE_RESOURCE_PROMOTABLE_NOT_MASTER,
-                    resource_id="R-master",
-                    promotable_id="R-master",
+                    resource_id="R-main",
+                    promotable_id="R-main",
                 ),
             ],
         )
 
-    def test_master_false_promotable_clone_resource(self):
+    def test_main_false_promotable_clone_resource(self):
         element = self._fixture_clone(True)
         assert_report_item_list_equal(
             self.validate(element.find("./primitive"), False),
@@ -1179,7 +1179,7 @@ class ValidateMove(ValidateMoveBanClearMixin, TestCase):
             ],
         )
 
-    def test_master_false_promotable_clone_group(self):
+    def test_main_false_promotable_clone_group(self):
         element = self._fixture_group_clone(True)
         assert_report_item_list_equal(
             self.validate(element.find("./group"), False),
@@ -1192,7 +1192,7 @@ class ValidateMove(ValidateMoveBanClearMixin, TestCase):
             ],
         )
 
-    def test_master_false_promotable_clone_group_resource(self):
+    def test_main_false_promotable_clone_group_resource(self):
         element = self._fixture_group_clone(True)
         assert_report_item_list_equal(
             self.validate(element.find("./group/primitive"), False),
@@ -1205,7 +1205,7 @@ class ValidateMove(ValidateMoveBanClearMixin, TestCase):
             ],
         )
 
-    def test_master_true_clone_resource(self):
+    def test_main_true_clone_resource(self):
         element = self._fixture_clone(False)
         assert_report_item_list_equal(
             self.validate(element.find("./primitive"), True),
@@ -1216,7 +1216,7 @@ class ValidateMove(ValidateMoveBanClearMixin, TestCase):
             ],
         )
 
-    def test_master_false_clone_resource(self):
+    def test_main_false_clone_resource(self):
         element = self._fixture_clone(False)
         assert_report_item_list_equal(
             self.validate(element.find("./primitive"), False),
@@ -1227,7 +1227,7 @@ class ValidateMove(ValidateMoveBanClearMixin, TestCase):
             ],
         )
 
-    def test_master_true_clone_group(self):
+    def test_main_true_clone_group(self):
         element = self._fixture_group_clone(False)
         assert_report_item_list_equal(
             self.validate(element.find("./group"), True),
@@ -1238,7 +1238,7 @@ class ValidateMove(ValidateMoveBanClearMixin, TestCase):
             ],
         )
 
-    def test_master_false_clone_group(self):
+    def test_main_false_clone_group(self):
         element = self._fixture_group_clone(False)
         assert_report_item_list_equal(
             self.validate(element.find("./group"), False),
@@ -1249,7 +1249,7 @@ class ValidateMove(ValidateMoveBanClearMixin, TestCase):
             ],
         )
 
-    def test_master_true_clone_group_resource(self):
+    def test_main_true_clone_group_resource(self):
         element = self._fixture_group_clone(False)
         assert_report_item_list_equal(
             self.validate(element.find("./group/primitive"), True),
@@ -1260,7 +1260,7 @@ class ValidateMove(ValidateMoveBanClearMixin, TestCase):
             ],
         )
 
-    def test_master_false_clone_group_resource(self):
+    def test_main_false_clone_group_resource(self):
         element = self._fixture_group_clone(False)
         assert_report_item_list_equal(
             self.validate(element.find("./group/primitive"), False),
@@ -1292,14 +1292,14 @@ class ValidateMove(ValidateMoveBanClearMixin, TestCase):
 
 class ValidateBan(ValidateMoveBanClearMixin, TestCase):
     validate = staticmethod(common.validate_ban)
-    report_code_bad_master = (
+    report_code_bad_main = (
         report_codes.CANNOT_BAN_RESOURCE_MASTER_RESOURCE_NOT_PROMOTABLE
     )
 
 
 class ValidateUnmoveUnban(ValidateMoveBanClearMixin, TestCase):
     validate = staticmethod(common.validate_unmove_unban)
-    report_code_bad_master = (
+    report_code_bad_main = (
         report_codes.CANNOT_UNMOVE_UNBAN_RESOURCE_MASTER_RESOURCE_NOT_PROMOTABLE
     )
 
@@ -1326,11 +1326,11 @@ class FindResourcesToDelete(TestCase):
     def test_primitive_in_clone(self):
         self.assert_element2element_list("B", ["B-clone", "B"])
 
-    def test_master(self):
-        self.assert_element2element_list("C-master", ["C-master", "C"])
+    def test_main(self):
+        self.assert_element2element_list("C-main", ["C-main", "C"])
 
-    def test_primitive_in_master(self):
-        self.assert_element2element_list("C", ["C-master", "C"])
+    def test_primitive_in_main(self):
+        self.assert_element2element_list("C", ["C-main", "C"])
 
     def test_group(self):
         self.assert_element2element_list("D", ["D", "D1", "D2"])
@@ -1349,15 +1349,15 @@ class FindResourcesToDelete(TestCase):
     def test_primitive_in_cloned_group(self):
         self.assert_element2element_list("E2", ["E2"])
 
-    def test_master_with_group(self):
+    def test_main_with_group(self):
         self.assert_element2element_list(
-            "F-master", ["F-master", "F", "F1", "F2"],
+            "F-main", ["F-main", "F", "F1", "F2"],
         )
 
-    def test_group_in_master(self):
-        self.assert_element2element_list("F", ["F-master", "F", "F1", "F2"])
+    def test_group_in_main(self):
+        self.assert_element2element_list("F", ["F-main", "F", "F1", "F2"])
 
-    def test_primitive_in_mastered_group(self):
+    def test_primitive_in_mained_group(self):
         self.assert_element2element_list("F1", ["F1"])
 
     def test_empty_bundle(self):
@@ -1384,11 +1384,11 @@ class FindResourcesToDelete(TestCase):
     def test_single_primitive_in_cloned_group(self):
         self.assert_element2element_list("J1", ["J-clone", "J", "J1"])
 
-    def test_master_with_group_with_single_primitive(self):
-        self.assert_element2element_list("K-master", ["K-master", "K", "K1"])
+    def test_main_with_group_with_single_primitive(self):
+        self.assert_element2element_list("K-main", ["K-main", "K", "K1"])
 
-    def test_group_with_single_primitive_in_master(self):
-        self.assert_element2element_list("K", ["K-master", "K", "K1"])
+    def test_group_with_single_primitive_in_main(self):
+        self.assert_element2element_list("K", ["K-main", "K", "K1"])
 
-    def test_single_primitive_in_mastered_group(self):
-        self.assert_element2element_list("K1", ["K-master", "K", "K1"])
+    def test_single_primitive_in_mained_group(self):
+        self.assert_element2element_list("K1", ["K-main", "K", "K1"])

@@ -1448,7 +1448,7 @@ def find_constraints_containing(resource_id, passed_dom=None):
 
     if resource_match:
         if (
-            resource_match.parentNode.tagName == "master"
+            resource_match.parentNode.tagName == "main"
             or resource_match.parentNode.tagName == "clone"
         ):
             constraints_found, set_constraints = find_constraints_containing(
@@ -1504,7 +1504,7 @@ def find_constraints_containing_node(dom, node):
 
 
 # Re-assign any constraints referencing a resource to its parent (a clone
-# or master)
+# or main)
 def constraint_resource_update(old_id, dom):
     """
     Commandline options: no options

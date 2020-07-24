@@ -126,11 +126,11 @@ class GroupAdd(TestCase):
                         <primitive id="RC1" />
                     </group>
                 </clone>
-                <master id="RM1-group-master">
+                <main id="RM1-group-main">
                     <group id="RM1-group">
                         <primitive id="RM1" />
                     </group>
-                </master>
+                </main>
             </resources>
         """
         resources_after = """
@@ -197,7 +197,7 @@ class GroupAdd(TestCase):
                         "bundle",
                         "clone",
                         "group",
-                        "master",
+                        "main",
                         "primitive",
                     ],
                     current_type="meta_attributes",

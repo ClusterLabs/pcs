@@ -29,7 +29,7 @@ def create_with_set(
         {"ids": ["A", "B"], "options": {"sequential": "true"}},
     dict constraint_options is base for building attributes of constraint tag
     bool resource_in_clone_alowed flag for allowing to reference id which is
-        in tag clone or master
+        in tag clone or main
     bool duplication_alowed flag for allowing create duplicate element
     callable duplicate_check takes two elements and decide if they are
         duplicates

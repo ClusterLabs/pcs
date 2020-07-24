@@ -22,7 +22,7 @@ from pcs.lib.cib.resource.clone import (
     get_inner_resource as get_clone_inner_resource,
     get_parent_any_clone,
     is_any_clone,
-    is_master,
+    is_main,
     is_promotable_clone,
 )
 from pcs.lib.cib.resource.group import (
@@ -247,15 +247,15 @@ def find_resources_to_manage(resource_el):
         +
         # its parents
         find_parent(resource_el, "resources").xpath(
-            # a master or a clone which contains a group, a primitve, or a
+            # a main or a clone which contains a group, a primitve, or a
             # grouped primitive with the specified id
             # OR
-            # a group (in a clone, master, etc. - hence //) which contains a
+            # a group (in a clone, main, etc. - hence //) which contains a
             # primitive with the specified id
             # OR
             # a bundle which contains a primitive with the specified id
             """
-                (./master|./clone)[(group|group/primitive|primitive)[@id='{r}']]
+                (./main|./clone)[(group|group/primitive|primitive)[@id='{r}']]
                 |
                 //group[primitive[@id='{r}']]
                 |
@@ -381,12 +381,12 @@ def find_resources_to_delete(resource_el: _Element) -> List[_Element]:
     return result
 
 
-def validate_move(resource_element, master):
+def validate_move(resource_element, main):
     """
     Validate moving a resource to a node
 
     etree resource_element -- the resource to be moved
-    bool master -- limit moving to the master role
+    bool main -- limit moving to the main role
     """
     report_list = []
     analysis = _validate_move_ban_clear_analyzer(resource_element)
@@ -413,24 +413,24 @@ def validate_move(resource_element, master):
         )
         return report_list
 
-    if not master and (
+    if not main and (
         analysis.is_promotable_clone or analysis.is_in_promotable_clone
     ):
-        # We assume users want to move master role. Still we require them to
+        # We assume users want to move main role. Still we require them to
         # actually specify that. 1) To be consistent with command for bannig
-        # resources. 2) To prevent users from accidentally move slave role.
+        # resources. 2) To prevent users from accidentally move subordinate role.
         # This check can be removed if someone requests it.
         report_list.append(
             ReportItem.error(
-                reports.messages.CannotMoveResourcePromotableNotMaster(
+                reports.messages.CannotMoveResourcePromotableNotMain(
                     resource_element.get("id"), analysis.promotable_clone_id,
                 )
             )
         )
-    elif master and not analysis.is_promotable_clone:
+    elif main and not analysis.is_promotable_clone:
         report_list.append(
             ReportItem.error(
-                reports.messages.CannotMoveResourceMasterResourceNotPromotable(
+                reports.messages.CannotMoveResourceMainResourceNotPromotable(
                     resource_element.get("id"),
                     promotable_id=analysis.promotable_clone_id,
                 )
@@ -440,20 +440,20 @@ def validate_move(resource_element, master):
     return report_list
 
 
-def validate_ban(resource_element, master):
+def validate_ban(resource_element, main):
     """
     Validate banning a resource on a node
 
     etree resource_element -- the resource to be banned
-    bool master -- limit banning to the master role
+    bool main -- limit banning to the main role
     """
     report_list = []
     analysis = _validate_move_ban_clear_analyzer(resource_element)
 
-    if master and not analysis.is_promotable_clone:
+    if main and not analysis.is_promotable_clone:
         report_list.append(
             ReportItem.error(
-                reports.messages.CannotBanResourceMasterResourceNotPromotable(
+                reports.messages.CannotBanResourceMainResourceNotPromotable(
                     resource_element.get("id"),
                     promotable_id=analysis.promotable_clone_id,
                 )
@@ -463,21 +463,21 @@ def validate_ban(resource_element, master):
     return report_list
 
 
-def validate_unmove_unban(resource_element, master):
+def validate_unmove_unban(resource_element, main):
     """
     Validate unmoving/unbanning a resource to/on nodes
 
     etree resource_element -- the resource to be unmoved/unbanned
-    bool master -- limit unmoving/unbanning to the master role
+    bool main -- limit unmoving/unbanning to the main role
     """
     report_list = []
     analysis = _validate_move_ban_clear_analyzer(resource_element)
 
-    if master and not analysis.is_promotable_clone:
+    if main and not analysis.is_promotable_clone:
         # pylint: disable=line-too-long
         report_list.append(
             ReportItem.error(
-                reports.messages.CannotUnmoveUnbanResourceMasterResourceNotPromotable(
+                reports.messages.CannotUnmoveUnbanResourceMainResourceNotPromotable(
                     resource_element.get("id"),
                     promotable_id=analysis.promotable_clone_id,
                 )
@@ -515,13 +515,13 @@ def _validate_move_ban_clear_analyzer(resource_element):
         resource_is_bundle = True
     elif is_any_clone(resource_element):
         resource_is_clone = True
-        if is_master(resource_element) or is_promotable_clone(resource_element):
+        if is_main(resource_element) or is_promotable_clone(resource_element):
             resource_is_promotable_clone = True
             promotable_clone_element = resource_element
     elif get_parent_any_clone(resource_element) is not None:
         parent_clone = get_parent_any_clone(resource_element)
         resource_is_in_clone = True
-        if is_master(parent_clone) or is_promotable_clone(parent_clone):
+        if is_main(parent_clone) or is_promotable_clone(parent_clone):
             resource_is_in_promotable_clone = True
             promotable_clone_element = parent_clone
     return _MoveBanClearAnalysis(

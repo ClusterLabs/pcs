@@ -49,9 +49,9 @@ def dom_rule_add(dom_element, options, rule_argv):
         )
         options["score-attribute"] = "pingd"
         options["score"] = None
-    if options.get("role") and options["role"] not in ["master", "slave"]:
+    if options.get("role") and options["role"] not in ["main", "subordinate"]:
         utils.err(
-            "invalid role '%s', use 'master' or 'slave'" % options["role"]
+            "invalid role '%s', use 'main' or 'subordinate'" % options["role"]
         )
     if options.get("id"):
         id_valid, id_error = utils.validate_xml_id(options["id"], "rule id")

@@ -15,7 +15,7 @@ class IsGroup(TestCase):
     def test_is_group(self):
         self.assertTrue(group.is_group(etree.fromstring("<group/>")))
         self.assertFalse(group.is_group(etree.fromstring("<clone/>")))
-        self.assertFalse(group.is_group(etree.fromstring("<master/>")))
+        self.assertFalse(group.is_group(etree.fromstring("<main/>")))
 
 
 @mock.patch("pcs.lib.cib.resource.group.find_element_by_tag_and_id")

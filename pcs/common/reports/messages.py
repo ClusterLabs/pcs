@@ -51,11 +51,11 @@ def _stdout_stderr_to_string(stdout: str, stderr: str, prefix: str = "") -> str:
     return "\n".join(new_lines)
 
 
-def _resource_move_ban_clear_master_resource_not_promotable(
+def _resource_move_ban_clear_main_resource_not_promotable(
     promotable_id: str,
 ) -> str:
     return (
-        "when specifying master you must use the promotable clone id{_id}"
+        "when specifying main you must use the promotable clone id{_id}"
     ).format(_id=format_optional(promotable_id, " ({})"),)
 
 
@@ -110,10 +110,10 @@ _type_translation = {
     "acl_permission": "ACL permission",
     "acl_role": "ACL role",
     "acl_target": "ACL user",
-    # Pacemaker-2.0 deprecated masters. Masters are now called promotable
-    # clones. We treat masters as clones. Do not report we were doing something
-    # with a master, say we were doing it with a clone instead.
-    "master": "clone",
+    # Pacemaker-2.0 deprecated mains. Mains are now called promotable
+    # clones. We treat mains as clones. Do not report we were doing something
+    # with a main, say we were doing it with a clone instead.
+    "main": "clone",
     "primitive": "resource",
 }
 _type_articles = {
@@ -165,8 +165,8 @@ def _typelist_to_string(type_list: Sequence[str], article: bool = False) -> str:
     if not type_list:
         return ""
     # use set to drop duplicate items:
-    # * master is translated to clone
-    # * i.e. "clone, master" is translated to "clone, clone"
+    # * main is translated to clone
+    # * i.e. "clone, main" is translated to "clone, clone"
     # * so we want to drop the second clone
     new_list = sorted(
         {
@@ -5371,9 +5371,9 @@ class CannotMoveResourceClone(ReportItemMessage):
 
 
 @dataclass(frozen=True)
-class CannotMoveResourcePromotableNotMaster(ReportItemMessage):
+class CannotMoveResourcePromotableNotMain(ReportItemMessage):
     """
-    User is trying to move a promotable clone without limiting it to master role
+    User is trying to move a promotable clone without limiting it to main role
 
     resource_id -- id of the resource to be moved
     promotable_id -- id of relevant parent promotable resource
@@ -5386,15 +5386,15 @@ class CannotMoveResourcePromotableNotMaster(ReportItemMessage):
     @property
     def message(self) -> str:
         return (
-            "to move promotable clone resources you must use master and the "
+            "to move promotable clone resources you must use main and the "
             f"promotable clone id ({self.promotable_id})"
         )
 
 
 @dataclass(frozen=True)
-class CannotMoveResourceMasterResourceNotPromotable(ReportItemMessage):
+class CannotMoveResourceMainResourceNotPromotable(ReportItemMessage):
     """
-    User is trying to move a non-promotable resource and limit it to master role
+    User is trying to move a non-promotable resource and limit it to main role
 
     resource_id -- id of the resource to be moved
     promotable_id -- id of relevant parent promotable resource
@@ -5406,7 +5406,7 @@ class CannotMoveResourceMasterResourceNotPromotable(ReportItemMessage):
 
     @property
     def message(self) -> str:
-        return _resource_move_ban_clear_master_resource_not_promotable(
+        return _resource_move_ban_clear_main_resource_not_promotable(
             self.promotable_id
         )
 
@@ -5474,9 +5474,9 @@ class ResourceMovePcmkSuccess(ReportItemMessage):
 
 
 @dataclass(frozen=True)
-class CannotBanResourceMasterResourceNotPromotable(ReportItemMessage):
+class CannotBanResourceMainResourceNotPromotable(ReportItemMessage):
     """
-    User is trying to ban a non-promotable resource and limit it to master role
+    User is trying to ban a non-promotable resource and limit it to main role
 
     resource_id -- id of the resource to be banned
     promotable_id -- id of relevant parent promotable resource
@@ -5488,7 +5488,7 @@ class CannotBanResourceMasterResourceNotPromotable(ReportItemMessage):
 
     @property
     def message(self) -> str:
-        return _resource_move_ban_clear_master_resource_not_promotable(
+        return _resource_move_ban_clear_main_resource_not_promotable(
             self.promotable_id
         )
 
@@ -5559,9 +5559,9 @@ class ResourceBanPcmkSuccess(ReportItemMessage):
 
 
 @dataclass(frozen=True)
-class CannotUnmoveUnbanResourceMasterResourceNotPromotable(ReportItemMessage):
+class CannotUnmoveUnbanResourceMainResourceNotPromotable(ReportItemMessage):
     """
-    User is trying to unmove/unban master of a non-promotable resource
+    User is trying to unmove/unban main of a non-promotable resource
 
     resource_id -- id of the resource to be unmoved/unbanned
     promotable_id -- id of relevant parent promotable resource
@@ -5573,7 +5573,7 @@ class CannotUnmoveUnbanResourceMasterResourceNotPromotable(ReportItemMessage):
 
     @property
     def message(self) -> str:
-        return _resource_move_ban_clear_master_resource_not_promotable(
+        return _resource_move_ban_clear_main_resource_not_promotable(
             self.promotable_id
         )
 

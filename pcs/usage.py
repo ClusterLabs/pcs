@@ -358,13 +358,13 @@ Commands:
         monitoring the resource.  Using --full will give more detailed output.
         This is mainly used for debugging resources that fail to be monitored.
 
-    move <resource id> [destination node] [--master] [lifetime=<lifetime>]
+    move <resource id> [destination node] [--main] [lifetime=<lifetime>]
          [--wait[=n]]
         Move the resource off the node it is currently running on by creating
         a -INFINITY location constraint to ban the node. If destination node is
         specified the resource will be moved to that node by creating
         an INFINITY location constraint to prefer the destination node. If
-        --master is used the scope of the command is limited to the master role
+        --main is used the scope of the command is limited to the main role
         and you must use the promotable clone id (instead of the resource id).
         If lifetime is specified then the constraint will expire after that
         time, otherwise it defaults to infinity and the constraint can be
@@ -375,11 +375,11 @@ Commands:
         If you want the resource to preferably avoid running on some nodes but
         be able to failover to them use 'pcs constraint location avoids'.
 
-    ban <resource id> [node] [--master] [lifetime=<lifetime>] [--wait[=n]]
+    ban <resource id> [node] [--main] [lifetime=<lifetime>] [--wait[=n]]
         Prevent the resource id specified from running on the node (or on the
         current node it is running on if no node is specified) by creating
-        a -INFINITY location constraint. If --master is used the scope of the
-        command is limited to the master role and you must use the promotable
+        a -INFINITY location constraint. If --main is used the scope of the
+        command is limited to the main role and you must use the promotable
         clone id (instead of the resource id). If lifetime is specified then
         the constraint will expire after that time, otherwise it defaults to
         infinity and the constraint can be cleared manually with 'pcs resource
@@ -390,11 +390,11 @@ Commands:
         If you want the resource to preferably avoid running on some nodes but
         be able to failover to them use 'pcs constraint location avoids'.
 
-    clear <resource id> [node] [--master] [--expired] [--wait[=n]]
+    clear <resource id> [node] [--main] [--expired] [--wait[=n]]
         Remove constraints created by move and/or ban on the specified
         resource (and node if specified).
-        If --master is used the scope of the command is limited to the master
-        role and you must use the master id (instead of the resource id).
+        If --main is used the scope of the command is limited to the main
+        role and you must use the main id (instead of the resource id).
         If --expired is specified, only constraints with expired lifetimes will
         be removed.
         If --wait is specified, pcs will wait up to 'n' seconds for the
@@ -1427,7 +1427,7 @@ Commands:
         resource name regular expression regexp%<resource_pattern>.
 
     location <resource> rule [id=<rule id>] [resource-discovery=<option>]
-             [role=master|slave] [constraint-id=<id>]
+             [role=main|subordinate] [constraint-id=<id>]
              [score=<score> | score-attribute=<attribute>] <expression>
         Creates a location constraint with a rule on the specified resource
         where expression looks like one of the following:
@@ -1509,7 +1509,7 @@ Commands:
         mean the resources should not be run on the same node.  Specifying
         'INFINITY' (or '-INFINITY') for the score forces <source resource> to
         run (or not run) with <target resource> (score defaults to "INFINITY").
-        A role can be: 'Master', 'Slave', 'Started', 'Stopped' (if no role is
+        A role can be: 'Main', 'Subordinate', 'Started', 'Stopped' (if no role is
         specified, it defaults to 'Started').
 
     colocation set <resource1> [resourceN]... [options]
@@ -1517,7 +1517,7 @@ Commands:
                [setoptions [constraint_options]]
         Create a colocation constraint with a resource set.
         Available options are sequential=true/false and
-        role=Stopped/Started/Master/Slave. Available constraint_options are id
+        role=Stopped/Started/Main/Subordinate. Available constraint_options are id
         and either of: score, score-attribute, score-attribute-mangle.
 
     colocation delete <source resource id> <target resource id>
@@ -1534,13 +1534,13 @@ Commands:
                [id=<constraint-id>]
         Create a ticket constraint for <resource id>.
         Available option is loss-policy=fence/stop/freeze/demote.
-        A role can be master, slave, started or stopped.
+        A role can be main, subordinate, started or stopped.
 
     ticket set <resource1> [<resourceN>]... [<options>]
                [set <resourceX> ... [<options>]]
                setoptions <constraint_options>
         Create a ticket constraint with a resource set.
-        Available options are role=Stopped/Started/Master/Slave. Required
+        Available options are role=Stopped/Started/Main/Subordinate. Required
         constraint option is ticket=<ticket>. Optional constraint options are
         id=<constraint-id> and loss-policy=fence/stop/freeze/demote.
 
@@ -1559,7 +1559,7 @@ Commands:
     ref <resource>...
         List constraints referencing specified resource.
 
-    rule add <constraint id> [id=<rule id>] [role=master|slave]
+    rule add <constraint id> [id=<rule id>] [role=main|subordinate]
              [score=<score>|score-attribute=<attribute>] <expression>
         Add a rule to a location constraint specified by 'constraint id' where
         the expression looks like one of the following:

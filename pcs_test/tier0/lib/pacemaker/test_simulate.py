@@ -339,7 +339,7 @@ class GetResourcesLeftDemoted(GetResourcesLeftStoppedDemotedMixin, TestCase):
     action_down = "demote"
     call = staticmethod(simulate.get_resources_left_demoted)
 
-    def test_master_move(self):
+    def test_main_move(self):
         self.assertEqual(
             [],
             self.call(
@@ -360,7 +360,7 @@ class GetResourcesLeftDemoted(GetResourcesLeftStoppedDemotedMixin, TestCase):
             ),
         )
 
-    def test_master_stop(self):
+    def test_main_stop(self):
         self.assertEqual(
             ["dummy1"],
             self.call(

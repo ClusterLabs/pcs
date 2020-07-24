@@ -21,7 +21,7 @@ class EnhanceHeadersMixin:
         # the server to indicate that the MIME types advertised in the
         # Content-Type headers should not be changed and be followed. This
         # allows to opt-out of MIME type sniffing, or, in other words, it is a
-        # way to say that the webmasters knew what they were doing.
+        # way to say that the webmains knew what they were doing.
         self.set_header("X-Content-Type-Options", "nosniff")
 
     def enhance_headers(self):

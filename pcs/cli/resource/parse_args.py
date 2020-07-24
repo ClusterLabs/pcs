@@ -50,13 +50,13 @@ def parse_create(arg_list):
         # Print error messages which point users to the changes section in pcs
         # manpage.
         # To be removed in the next significant version.
-        if e.message == "missing value of 'master' option":
+        if e.message == "missing value of 'main' option":
             raise CmdLineInputError(
                 message=e.message,
                 hint=(
-                    "Master/Slave resources have been renamed to promotable "
+                    "Main/Subordinate resources have been renamed to promotable "
                     "clones, please use the 'promotable' keyword instead of "
-                    "'master'. " + SEE_MAN_CHANGES
+                    "'main'. " + SEE_MAN_CHANGES
                 ),
             )
         raise e

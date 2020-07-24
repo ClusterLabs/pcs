@@ -116,7 +116,7 @@ resource_cmd = create_router(
         "ungroup": resource.resource_group_rm_cmd,
         "clone": resource.resource_clone,
         "promotable": partial(resource.resource_clone, promotable=True),
-        "unclone": resource.resource_clone_master_remove,
+        "unclone": resource.resource_clone_main_remove,
         "enable": resource.resource_enable_cmd,
         "disable": resource.resource_disable_cmd,
         "safe-disable": resource.resource_safe_disable_cmd,
@@ -175,7 +175,7 @@ resource_cmd = create_router(
         # These print error messages which point users to the changes section in
         # pcs manpage.
         # To be removed in the next significant version.
-        "master": lambda lib, argv, modifiers: raise_command_replaced(
+        "main": lambda lib, argv, modifiers: raise_command_replaced(
             "pcs resource promotable"
         ),
         "relations": show_resource_relations_cmd,

@@ -26,11 +26,11 @@ class PrepareOptionsPlainTest(TestCase):
                 "id": "generated_id",
                 "loss-policy": "fence",
                 "rsc": "resourceA",
-                "rsc-role": "Master",
+                "rsc-role": "Main",
                 "ticket": "ticket_key",
             },
             self.prepare(
-                {"loss-policy": "fence", "rsc-role": "master"},
+                {"loss-policy": "fence", "rsc-role": "main"},
                 "ticket_key",
                 "resourceA",
             ),
@@ -56,7 +56,7 @@ class PrepareOptionsPlainTest(TestCase):
     def test_refuse_unknown_attributes(self, _):
         assert_raise_library_error(
             lambda: self.prepare(
-                {"unknown": "nonsense", "rsc-role": "master"},
+                {"unknown": "nonsense", "rsc-role": "main"},
                 "ticket_key",
                 "resourceA",
             ),
@@ -87,7 +87,7 @@ class PrepareOptionsPlainTest(TestCase):
                 severities.ERROR,
                 report_codes.INVALID_OPTION_VALUE,
                 {
-                    "allowed_values": ("Master", "Slave", "Started", "Stopped"),
+                    "allowed_values": ("Main", "Subordinate", "Started", "Stopped"),
                     "option_value": "bad_role",
                     "option_name": "rsc-role",
                     "cannot_be_empty": False,
@@ -99,7 +99,7 @@ class PrepareOptionsPlainTest(TestCase):
     def test_refuse_missing_ticket(self, _):
         assert_raise_library_error(
             lambda: self.prepare(
-                {"id": "id", "rsc-role": "master"}, "", "resourceA"
+                {"id": "id", "rsc-role": "main"}, "", "resourceA"
             ),
             (
                 severities.ERROR,
@@ -111,7 +111,7 @@ class PrepareOptionsPlainTest(TestCase):
     def test_refuse_missing_resource_id(self, _):
         assert_raise_library_error(
             lambda: self.prepare(
-                {"id": "id", "rsc-role": "master"}, "ticket_key", ""
+                {"id": "id", "rsc-role": "main"}, "ticket_key", ""
             ),
             (
                 severities.ERROR,
@@ -144,7 +144,7 @@ class PrepareOptionsPlainTest(TestCase):
     @mock.patch("pcs.lib.cib.constraint.ticket._create_id")
     def test_complete_id(self, mock_create_id, _):
         mock_create_id.return_value = "generated_id"
-        options = {"loss-policy": "freeze", "ticket": "T", "rsc-role": "Master"}
+        options = {"loss-policy": "freeze", "ticket": "T", "rsc-role": "Main"}
         ticket_key = "ticket_key"
         resource_id = "resourceA"
         expected_options = options.copy()
@@ -152,7 +152,7 @@ class PrepareOptionsPlainTest(TestCase):
             {
                 "id": "generated_id",
                 "rsc": resource_id,
-                "rsc-role": "Master",
+                "rsc-role": "Main",
                 "ticket": ticket_key,
             }
         )
@@ -160,7 +160,7 @@ class PrepareOptionsPlainTest(TestCase):
             expected_options, self.prepare(options, ticket_key, resource_id,)
         )
         mock_create_id.assert_called_once_with(
-            self.cib, ticket_key, resource_id, "Master",
+            self.cib, ticket_key, resource_id, "Main",
         )
 
 
@@ -257,10 +257,10 @@ class Element:
 class AreDuplicatePlain(TestCase):
     def setUp(self):
         self.first = Element(
-            {"ticket": "ticket_key", "rsc": "resourceA", "rsc-role": "Master"}
+            {"ticket": "ticket_key", "rsc": "resourceA", "rsc-role": "Main"}
         )
         self.second = Element(
-            {"ticket": "ticket_key", "rsc": "resourceA", "rsc-role": "Master"}
+            {"ticket": "ticket_key", "rsc": "resourceA", "rsc-role": "Main"}
         )
 
     def test_returns_true_for_duplicate_elements(self):

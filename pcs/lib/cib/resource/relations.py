@@ -246,7 +246,7 @@ def _get_resource_relation_type(res_el: _Element) -> ResourceRelationType:
         "group": ResourceRelationType.RSC_GROUP,
         "bundle": ResourceRelationType.RSC_BUNDLE,
         "clone": ResourceRelationType.RSC_CLONE,
-        "master": ResourceRelationType.RSC_CLONE,
+        "main": ResourceRelationType.RSC_CLONE,
     }.get(str(res_el.tag), ResourceRelationType.RSC_UNKNOWN)
 
 

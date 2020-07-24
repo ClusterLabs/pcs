@@ -559,7 +559,7 @@ class PcmkShortcuts:
         before=None,
         resource=None,
         node=None,
-        master=None,
+        main=None,
         lifetime=None,
         stdout="",
         stderr="",
@@ -575,7 +575,7 @@ class PcmkShortcuts:
             placed
         string resource -- the id of a resource to be moved
         string node -- the name of a destination node
-        bool master -- limit move to master role
+        bool main -- limit move to main role
         string lifetime -- lifetime of the created moving constraint
         string stdout -- crm_resource's stdout
         string stderr -- crm_resource's stderr
@@ -595,7 +595,7 @@ class PcmkShortcuts:
         before=None,
         resource=None,
         node=None,
-        master=None,
+        main=None,
         lifetime=None,
         stdout="",
         stderr="",
@@ -611,7 +611,7 @@ class PcmkShortcuts:
             placed
         string resource -- the id of a resource to be banned
         string node -- the name of a destination node
-        bool master -- limit ban to master role
+        bool main -- limit ban to main role
         string lifetime -- lifetime of the created banning constraint
         string stdout -- crm_resource's stdout
         string stderr -- crm_resource's stderr
@@ -631,7 +631,7 @@ class PcmkShortcuts:
         before=None,
         resource=None,
         node=None,
-        master=None,
+        main=None,
         expired=None,
         stdout="",
         stderr="",
@@ -647,7 +647,7 @@ class PcmkShortcuts:
             placed
         string resource -- the id of a resource to be unmoved/unbanned
         string node -- the name of a destination node
-        bool master -- limit clearing to master role
+        bool main -- limit clearing to main role
         bool epired -- clear only expired moves and bans
         string stdout -- crm_resource's stdout
         string stderr -- crm_resource's stderr
@@ -668,7 +668,7 @@ class PcmkShortcuts:
         before=None,
         resource=None,
         node=None,
-        master=None,
+        main=None,
         lifetime=None,
         expired=None,
         stdout="",
@@ -680,8 +680,8 @@ class PcmkShortcuts:
             cmd.extend(["--resource", resource])
         if node:
             cmd.extend(["--node", node])
-        if master:
-            cmd.extend(["--master"])
+        if main:
+            cmd.extend(["--main"])
         if lifetime:
             cmd.extend(["--lifetime", lifetime])
         if expired:

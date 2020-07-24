@@ -12,21 +12,21 @@ from pcs.lib.external import CommandRunner
 # pylint: disable=line-too-long
 
 
-def wrap_element_by_master(cib_file, resource_id, master_id=None):
+def wrap_element_by_main(cib_file, resource_id, main_id=None):
     cib_file.seek(0)
     cib_tree = etree.parse(cib_file, etree.XMLParser(huge_tree=True)).getroot()
     element = cib_tree.find(f'.//*[@id="{resource_id}"]')
-    final_master_id = (
-        master_id if master_id is not None else f"{resource_id}-master"
+    final_main_id = (
+        main_id if main_id is not None else f"{resource_id}-main"
     )
-    master_element = _xml_to_element(
+    main_element = _xml_to_element(
         f"""
-        <master id="{final_master_id}">
-        </master>
+        <main id="{final_main_id}">
+        </main>
     """
     )
-    element.getparent().append(master_element)
-    master_element.append(element)
+    element.getparent().append(main_element)
+    main_element.append(element)
     final_xml = etree_to_str(cib_tree)
 
     environ = dict(os.environ)
@@ -45,11 +45,11 @@ def wrap_element_by_master(cib_file, resource_id, master_id=None):
         stdin_string=final_xml,
     )
     assert retval == 0, (
-        "Error running wrap_element_by_master:\n" + stderr + "\n" + stdout
+        "Error running wrap_element_by_main:\n" + stderr + "\n" + stdout
     )
 
 
-def fixture_master_xml(name, all_ops=True, meta_dict=None):
+def fixture_main_xml(name, all_ops=True, meta_dict=None):
     default_ops = f"""
             <op id="{name}-notify-interval-0s" interval="0s" name="notify"
                 timeout="5"
@@ -64,34 +64,34 @@ def fixture_master_xml(name, all_ops=True, meta_dict=None):
     meta_xml = ""
     if meta_dict:
         meta_lines = (
-            [f'<meta_attributes id="{name}-master-meta_attributes">']
+            [f'<meta_attributes id="{name}-main-meta_attributes">']
             + [
-                f'<nvpair id="{name}-master-meta_attributes-{key}" name="{key}" value="{val}"/>'
+                f'<nvpair id="{name}-main-meta_attributes-{key}" name="{key}" value="{val}"/>'
                 for key, val in meta_dict.items()
             ]
             + ["</meta_attributes>"]
         )
         meta_xml = "\n".join(meta_lines)
-    master = f"""
-      <master id="{name}-master">
+    main = f"""
+      <main id="{name}-main">
         <primitive class="ocf" id="{name}" provider="pacemaker" type="Stateful">
           <operations>
             <op id="{name}-monitor-interval-10" interval="10" name="monitor"
-                role="Master" timeout="20"
+                role="Main" timeout="20"
             />
             <op id="{name}-monitor-interval-11" interval="11" name="monitor"
-                role="Slave" timeout="20"
+                role="Subordinate" timeout="20"
             />
     """
     if all_ops:
-        master += default_ops
-    master += f"""
+        main += default_ops
+    main += f"""
           </operations>
         </primitive>
         {meta_xml}
-      </master>
+      </main>
     """
-    return master
+    return main
 
 
 def fixture_to_cib(cib_file, xml):

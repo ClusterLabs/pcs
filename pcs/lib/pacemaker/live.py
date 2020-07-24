@@ -581,37 +581,37 @@ def resource_refresh(
     return join_multilines([stdout, stderr])
 
 
-def resource_move(runner, resource_id, node=None, master=False, lifetime=None):
+def resource_move(runner, resource_id, node=None, main=False, lifetime=None):
     return _resource_move_ban_clear(
         runner,
         "--move",
         resource_id,
         node=node,
-        master=master,
+        main=main,
         lifetime=lifetime,
     )
 
 
-def resource_ban(runner, resource_id, node=None, master=False, lifetime=None):
+def resource_ban(runner, resource_id, node=None, main=False, lifetime=None):
     return _resource_move_ban_clear(
         runner,
         "--ban",
         resource_id,
         node=node,
-        master=master,
+        main=main,
         lifetime=lifetime,
     )
 
 
 def resource_unmove_unban(
-    runner, resource_id, node=None, master=False, expired=False
+    runner, resource_id, node=None, main=False, expired=False
 ):
     return _resource_move_ban_clear(
         runner,
         "--clear",
         resource_id,
         node=node,
-        master=master,
+        main=main,
         expired=expired,
     )
 
@@ -625,7 +625,7 @@ def _resource_move_ban_clear(
     action,
     resource_id,
     node=None,
-    master=False,
+    main=False,
     lifetime=None,
     expired=False,
 ):
@@ -637,8 +637,8 @@ def _resource_move_ban_clear(
     ]
     if node:
         command.extend(["--node", node])
-    if master:
-        command.extend(["--master"])
+    if main:
+        command.extend(["--main"])
     if lifetime:
         command.extend(["--lifetime", lifetime])
     if expired:

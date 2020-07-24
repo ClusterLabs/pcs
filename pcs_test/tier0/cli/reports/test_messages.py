@@ -38,67 +38,67 @@ class ResourceUnmoveUnbanPcmkExpiredNotSupported(CliReportMessageTestBase):
         )
 
 
-class CannotUnmoveUnbanResourceMasterResourceNotPromotable(
+class CannotUnmoveUnbanResourceMainResourceNotPromotable(
     CliReportMessageTestBase
 ):
     def test_with_promotable_id(self):
         self.assert_message(
-            messages.CannotUnmoveUnbanResourceMasterResourceNotPromotable(
+            messages.CannotUnmoveUnbanResourceMainResourceNotPromotable(
                 "R", "P"
             ),
             (
-                "when specifying --master you must use the promotable clone id "
+                "when specifying --main you must use the promotable clone id "
                 "(P)"
             ),
         )
 
     def test_without_promotable_id(self):
         self.assert_message(
-            messages.CannotUnmoveUnbanResourceMasterResourceNotPromotable("R"),
-            "when specifying --master you must use the promotable clone id",
+            messages.CannotUnmoveUnbanResourceMainResourceNotPromotable("R"),
+            "when specifying --main you must use the promotable clone id",
         )
 
 
-class CannotBanResourceMasterResourceNotPromotable(CliReportMessageTestBase):
+class CannotBanResourceMainResourceNotPromotable(CliReportMessageTestBase):
     def test_with_promotable_id(self):
         self.assert_message(
-            messages.CannotBanResourceMasterResourceNotPromotable("R", "P"),
+            messages.CannotBanResourceMainResourceNotPromotable("R", "P"),
             (
-                "when specifying --master you must use the promotable clone id "
+                "when specifying --main you must use the promotable clone id "
                 "(P)"
             ),
         )
 
     def test_without_promotable_id(self):
         self.assert_message(
-            messages.CannotBanResourceMasterResourceNotPromotable("R"),
-            "when specifying --master you must use the promotable clone id",
+            messages.CannotBanResourceMainResourceNotPromotable("R"),
+            "when specifying --main you must use the promotable clone id",
         )
 
 
-class CannotMoveResourceMasterResourceNotPromotable(CliReportMessageTestBase):
+class CannotMoveResourceMainResourceNotPromotable(CliReportMessageTestBase):
     def test_with_promotable_id(self):
         self.assert_message(
-            messages.CannotMoveResourceMasterResourceNotPromotable("R", "P"),
+            messages.CannotMoveResourceMainResourceNotPromotable("R", "P"),
             (
-                "when specifying --master you must use the promotable clone id "
+                "when specifying --main you must use the promotable clone id "
                 "(P)"
             ),
         )
 
     def test_without_promotable_id(self):
         self.assert_message(
-            messages.CannotMoveResourceMasterResourceNotPromotable("R"),
-            "when specifying --master you must use the promotable clone id",
+            messages.CannotMoveResourceMainResourceNotPromotable("R"),
+            "when specifying --main you must use the promotable clone id",
         )
 
 
-class CannotMoveResourcePromotableNotMaster(CliReportMessageTestBase):
+class CannotMoveResourcePromotableNotMain(CliReportMessageTestBase):
     def test_success(self):
         self.assert_message(
-            messages.CannotMoveResourcePromotableNotMaster("R", "P"),
+            messages.CannotMoveResourcePromotableNotMain("R", "P"),
             (
-                "to move promotable clone resources you must use --master and "
+                "to move promotable clone resources you must use --main and "
                 "the promotable clone id (P)"
             ),
         )

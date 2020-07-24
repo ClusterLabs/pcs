@@ -51,11 +51,11 @@ class UtilsTest(TestCase):
                         <nvpair name="globally-unique" value="true" />
                       </meta-attributes>
                   </clone>
-                  <master id="myMaster">
-                      <primitive id="myMasteredResource"
+                  <main id="myMain">
+                      <primitive id="myMainedResource"
                             class="ocf" provider="heartbeat" type="Dummy">
                       </primitive>
-                  </master>
+                  </main>
                   <group id="myGroup">
                       <primitive id="myGroupedResource"
                             class="ocf" provider="heartbeat" type="Dummy">
@@ -68,13 +68,13 @@ class UtilsTest(TestCase):
                           </primitive>
                       </group>
                   </clone>
-                  <master id="myGroupMaster">
-                      <group id="myMasteredGroup">
-                          <primitive id="myMasteredGroupedResource"
+                  <main id="myGroupMain">
+                      <group id="myMainedGroup">
+                          <primitive id="myMainedGroupedResource"
                                 class="ocf" provider="heartbeat" type="Dummy">
                           </primitive>
                       </group>
-                  </master>
+                  </main>
                   <bundle id="myBundle">
                       <primitive id="myBundledResource"
                           class="ocf" provider="heartbeat" type="Dummy" />
@@ -101,23 +101,23 @@ class UtilsTest(TestCase):
             utils.dom_get_resource_clone(cib_dom, "myClonedResource")
         )
         self.assertFalse(
-            utils.dom_get_resource_masterslave(cib_dom, "myMasteredResource")
+            utils.dom_get_resource_mainsubordinate(cib_dom, "myMainedResource")
         )
         self.assertFalse(utils.dom_get_group(cib_dom, "myGroup"))
         self.assertFalse(utils.dom_get_group_clone(cib_dom, "myClonedGroup"))
         self.assertFalse(
-            utils.dom_get_group_masterslave(cib_dom, "myMasteredGroup")
+            utils.dom_get_group_mainsubordinate(cib_dom, "myMainedGroup")
         )
         self.assertFalse(utils.dom_get_clone(cib_dom, "myClone"))
-        self.assertFalse(utils.dom_get_master(cib_dom, "myMaster"))
+        self.assertFalse(utils.dom_get_main(cib_dom, "myMain"))
         self.assertFalse(utils.dom_get_clone_ms_resource(cib_dom, "myClone"))
-        self.assertFalse(utils.dom_get_clone_ms_resource(cib_dom, "myMaster"))
+        self.assertFalse(utils.dom_get_clone_ms_resource(cib_dom, "myMain"))
         self.assertFalse(
             utils.dom_get_resource_clone_ms_parent(cib_dom, "myClonedResource")
         )
         self.assertFalse(
             utils.dom_get_resource_clone_ms_parent(
-                cib_dom, "myMasteredResource"
+                cib_dom, "myMainedResource"
             )
         )
         self.assertIsNone(utils.dom_get_bundle(cib_dom, "myResource"))
@@ -135,16 +135,16 @@ class UtilsTest(TestCase):
                 "myClonedResource",
                 "myUniqueClone",
                 "myUniqueClonedResource",
-                "myMaster",
-                "myMasteredResource",
+                "myMain",
+                "myMainedResource",
                 "myGroup",
                 "myGroupedResource",
                 "myGroupClone",
                 "myClonedGroup",
                 "myClonedGroupedResource",
-                "myGroupMaster",
-                "myMasteredGroup",
-                "myMasteredGroupedResource",
+                "myGroupMain",
+                "myMainedGroup",
+                "myMainedGroupedResource",
                 "myBundledResource",
                 "myBundle",
                 "myEmptyBundle",
@@ -157,9 +157,9 @@ class UtilsTest(TestCase):
                 "myClonedResource",
                 "myUniqueClonedResource",
                 "myGroupedResource",
-                "myMasteredResource",
+                "myMainedResource",
                 "myClonedGroupedResource",
-                "myMasteredGroupedResource",
+                "myMainedGroupedResource",
                 "myBundledResource",
             ]
         )
@@ -184,15 +184,15 @@ class UtilsTest(TestCase):
             all_ids - cloned_ids,
         )
 
-        mastered_ids = set(["myMasteredResource", "myMasteredGroupedResource"])
+        mained_ids = set(["myMainedResource", "myMainedGroupedResource"])
         test_dom_get(
-            utils.dom_get_resource_masterslave,
+            utils.dom_get_resource_mainsubordinate,
             cib_dom,
-            mastered_ids,
-            all_ids - mastered_ids,
+            mained_ids,
+            all_ids - mained_ids,
         )
 
-        group_ids = set(["myGroup", "myClonedGroup", "myMasteredGroup"])
+        group_ids = set(["myGroup", "myClonedGroup", "myMainedGroup"])
         test_dom_get(
             utils.dom_get_group, cib_dom, group_ids, all_ids - group_ids
         )
@@ -210,17 +210,17 @@ class UtilsTest(TestCase):
             utils.dom_get_clone, cib_dom, clone_ids, all_ids - clone_ids
         )
 
-        mastered_group_ids = set(["myMasteredGroup"])
+        mained_group_ids = set(["myMainedGroup"])
         test_dom_get(
-            utils.dom_get_group_masterslave,
+            utils.dom_get_group_mainsubordinate,
             cib_dom,
-            mastered_group_ids,
-            all_ids - mastered_group_ids,
+            mained_group_ids,
+            all_ids - mained_group_ids,
         )
 
-        master_ids = set(["myMaster", "myGroupMaster"])
+        main_ids = set(["myMain", "myGroupMain"])
         test_dom_get(
-            utils.dom_get_master, cib_dom, master_ids, all_ids - master_ids
+            utils.dom_get_main, cib_dom, main_ids, all_ids - main_ids
         )
 
         bundle_ids = set(["myBundle", "myEmptyBundle"])
@@ -237,12 +237,12 @@ class UtilsTest(TestCase):
             "myClonedGroup",
         )
         self.assert_element_id(
-            utils.dom_get_clone_ms_resource(cib_dom, "myMaster"),
-            "myMasteredResource",
+            utils.dom_get_clone_ms_resource(cib_dom, "myMain"),
+            "myMainedResource",
         )
         self.assert_element_id(
-            utils.dom_get_clone_ms_resource(cib_dom, "myGroupMaster"),
-            "myMasteredGroup",
+            utils.dom_get_clone_ms_resource(cib_dom, "myGroupMain"),
+            "myMainedGroup",
         )
 
         self.assert_element_id(
@@ -261,19 +261,19 @@ class UtilsTest(TestCase):
         )
         self.assert_element_id(
             utils.dom_get_resource_clone_ms_parent(
-                cib_dom, "myMasteredResource"
+                cib_dom, "myMainedResource"
             ),
-            "myMaster",
+            "myMain",
         )
         self.assert_element_id(
-            utils.dom_get_resource_clone_ms_parent(cib_dom, "myMasteredGroup"),
-            "myGroupMaster",
+            utils.dom_get_resource_clone_ms_parent(cib_dom, "myMainedGroup"),
+            "myGroupMain",
         )
         self.assert_element_id(
             utils.dom_get_resource_clone_ms_parent(
-                cib_dom, "myMasteredGroupedResource"
+                cib_dom, "myMainedGroupedResource"
             ),
-            "myGroupMaster",
+            "myGroupMain",
         )
         self.assertEqual(
             None, utils.dom_get_resource_clone_ms_parent(cib_dom, "myResource")
@@ -315,10 +315,10 @@ class UtilsTest(TestCase):
             utils.dom_get_resource_bundle_parent(cib_dom, "myClonedResource")
         )
         self.assertIsNone(
-            utils.dom_get_resource_bundle_parent(cib_dom, "myMaster")
+            utils.dom_get_resource_bundle_parent(cib_dom, "myMain")
         )
         self.assertIsNone(
-            utils.dom_get_resource_bundle_parent(cib_dom, "myMasteredGroup")
+            utils.dom_get_resource_bundle_parent(cib_dom, "myMainedGroup")
         )
         self.assertIsNone(
             utils.dom_get_resource_bundle_parent(cib_dom, "myGroup")
@@ -543,12 +543,12 @@ class UtilsTest(TestCase):
             utils.validate_constraint_resource(dom, "myGroupClone"),
         )
         self.assertEqual(
-            (True, "", "myMaster"),
-            utils.validate_constraint_resource(dom, "myMaster"),
+            (True, "", "myMain"),
+            utils.validate_constraint_resource(dom, "myMain"),
         )
         self.assertEqual(
-            (True, "", "myGroupMaster"),
-            utils.validate_constraint_resource(dom, "myGroupMaster"),
+            (True, "", "myGroupMain"),
+            utils.validate_constraint_resource(dom, "myGroupMain"),
         )
         self.assertEqual(
             (True, "", "myBundle"),
@@ -606,25 +606,25 @@ class UtilsTest(TestCase):
             "%s when adding constraints. Use --force to override."
         )
         self.assertEqual(
-            (False, message % ("myMasteredResource", "myMaster"), "myMaster"),
-            utils.validate_constraint_resource(dom, "myMasteredResource"),
+            (False, message % ("myMainedResource", "myMain"), "myMain"),
+            utils.validate_constraint_resource(dom, "myMainedResource"),
         )
         self.assertEqual(
             (
                 False,
-                message % ("myMasteredGroup", "myGroupMaster"),
-                "myGroupMaster",
+                message % ("myMainedGroup", "myGroupMain"),
+                "myGroupMain",
             ),
-            utils.validate_constraint_resource(dom, "myMasteredGroup"),
+            utils.validate_constraint_resource(dom, "myMainedGroup"),
         )
         self.assertEqual(
             (
                 False,
-                message % ("myMasteredGroupedResource", "myGroupMaster"),
-                "myGroupMaster",
+                message % ("myMainedGroupedResource", "myGroupMain"),
+                "myGroupMain",
             ),
             utils.validate_constraint_resource(
-                dom, "myMasteredGroupedResource"
+                dom, "myMainedGroupedResource"
             ),
         )
 
@@ -651,17 +651,17 @@ class UtilsTest(TestCase):
             utils.validate_constraint_resource(dom, "myClonedGroupedResource"),
         )
         self.assertEqual(
-            (True, "", "myMaster"),
-            utils.validate_constraint_resource(dom, "myMasteredResource"),
+            (True, "", "myMain"),
+            utils.validate_constraint_resource(dom, "myMainedResource"),
         )
         self.assertEqual(
-            (True, "", "myGroupMaster"),
-            utils.validate_constraint_resource(dom, "myMasteredGroup"),
+            (True, "", "myGroupMain"),
+            utils.validate_constraint_resource(dom, "myMainedGroup"),
         )
         self.assertEqual(
-            (True, "", "myGroupMaster"),
+            (True, "", "myGroupMain"),
             utils.validate_constraint_resource(
-                dom, "myMasteredGroupedResource"
+                dom, "myMainedGroupedResource"
             ),
         )
         self.assertEqual(
@@ -845,14 +845,14 @@ class UtilsTest(TestCase):
                 <node name="rh70-node3" />
             </resource>
         </clone>
-        <clone id="myMaster">
-            <resource id="myMasteredResource:1" role="Slave">
+        <clone id="myMain">
+            <resource id="myMainedResource:1" role="Subordinate">
                 <node name="rh70-node2" />
             </resource>
-            <resource id="myMasteredResource" role="Slave">
+            <resource id="myMainedResource" role="Subordinate">
                 <node name="rh70-node3" />
             </resource>
-            <resource id="myMasteredResource" role="Master">
+            <resource id="myMainedResource" role="Main">
                 <node name="rh70-node1" />
             </resource>
         </clone>
@@ -883,19 +883,19 @@ class UtilsTest(TestCase):
                  </resource>
             </group>
         </clone>
-        <clone id="myGroupMaster">
-            <group id="myMasteredGroup:0">
-                 <resource id="myMasteredGroupedResource" role="Slave">
+        <clone id="myGroupMain">
+            <group id="myMainedGroup:0">
+                 <resource id="myMainedGroupedResource" role="Subordinate">
                      <node name="rh70-node1" />
                  </resource>
             </group>
-            <group id="myMasteredGroup:1">
-                 <resource id="myMasteredGroupedResource" role="Master">
+            <group id="myMainedGroup:1">
+                 <resource id="myMainedGroupedResource" role="Main">
                      <node name="rh70-node2" />
                  </resource>
             </group>
-            <group id="myMasteredGroup:2">
-                 <resource id="myMasteredGroupedResource" role="Slave">
+            <group id="myMainedGroup:2">
+                 <resource id="myMainedGroupedResource" role="Subordinate">
                      <node name="rh70-node3" />
                  </resource>
             </group>
@@ -912,8 +912,8 @@ class UtilsTest(TestCase):
             {
                 "message": "Resource 'myResource' is running on node rh70-node1.",
                 "is_running": True,
-                "nodes_master": [],
-                "nodes_slave": [],
+                "nodes_main": [],
+                "nodes_subordinate": [],
                 "nodes_started": ["rh70-node1"],
             },
         )
@@ -923,8 +923,8 @@ class UtilsTest(TestCase):
                 "message": "Resource 'myClonedResource' is running on nodes "
                 "rh70-node1, rh70-node2, rh70-node3.",
                 "is_running": True,
-                "nodes_master": [],
-                "nodes_slave": [],
+                "nodes_main": [],
+                "nodes_subordinate": [],
                 "nodes_started": ["rh70-node1", "rh70-node2", "rh70-node3"],
             },
         )
@@ -934,30 +934,30 @@ class UtilsTest(TestCase):
                 "message": "Resource 'myClone' is running on nodes "
                 "rh70-node1, rh70-node2, rh70-node3.",
                 "is_running": True,
-                "nodes_master": [],
-                "nodes_slave": [],
+                "nodes_main": [],
+                "nodes_subordinate": [],
                 "nodes_started": ["rh70-node1", "rh70-node2", "rh70-node3"],
             },
         )
         self.assertEqual(
-            utils.resource_running_on("myMasteredResource", status),
+            utils.resource_running_on("myMainedResource", status),
             {
-                "message": "Resource 'myMasteredResource' is master on node "
-                "rh70-node1; slave on nodes rh70-node2, rh70-node3.",
+                "message": "Resource 'myMainedResource' is main on node "
+                "rh70-node1; subordinate on nodes rh70-node2, rh70-node3.",
                 "is_running": True,
-                "nodes_master": ["rh70-node1"],
-                "nodes_slave": ["rh70-node2", "rh70-node3"],
+                "nodes_main": ["rh70-node1"],
+                "nodes_subordinate": ["rh70-node2", "rh70-node3"],
                 "nodes_started": [],
             },
         )
         self.assertEqual(
-            utils.resource_running_on("myMaster", status),
+            utils.resource_running_on("myMain", status),
             {
-                "message": "Resource 'myMaster' is master on node "
-                "rh70-node1; slave on nodes rh70-node2, rh70-node3.",
+                "message": "Resource 'myMain' is main on node "
+                "rh70-node1; subordinate on nodes rh70-node2, rh70-node3.",
                 "is_running": True,
-                "nodes_master": ["rh70-node1"],
-                "nodes_slave": ["rh70-node2", "rh70-node3"],
+                "nodes_main": ["rh70-node1"],
+                "nodes_subordinate": ["rh70-node2", "rh70-node3"],
                 "nodes_started": [],
             },
         )
@@ -967,8 +967,8 @@ class UtilsTest(TestCase):
                 "message": "Resource 'myGroupedResource' is running on node "
                 "rh70-node2.",
                 "is_running": True,
-                "nodes_master": [],
-                "nodes_slave": [],
+                "nodes_main": [],
+                "nodes_subordinate": [],
                 "nodes_started": ["rh70-node2"],
             },
         )
@@ -978,8 +978,8 @@ class UtilsTest(TestCase):
                 "message": "Resource 'myGroup' is running on node "
                 "rh70-node2.",
                 "is_running": True,
-                "nodes_master": [],
-                "nodes_slave": [],
+                "nodes_main": [],
+                "nodes_subordinate": [],
                 "nodes_started": ["rh70-node2"],
             },
         )
@@ -989,8 +989,8 @@ class UtilsTest(TestCase):
                 "message": "Resource 'myClonedGroupedResource' is running on nodes "
                 "rh70-node1, rh70-node2, rh70-node3, rh70-node3.",
                 "is_running": True,
-                "nodes_master": [],
-                "nodes_slave": [],
+                "nodes_main": [],
+                "nodes_subordinate": [],
                 "nodes_started": [
                     "rh70-node1",
                     "rh70-node2",
@@ -1005,8 +1005,8 @@ class UtilsTest(TestCase):
                 "message": "Resource 'myClonedGroup' is running on nodes "
                 "rh70-node1, rh70-node2, rh70-node3, rh70-node3.",
                 "is_running": True,
-                "nodes_master": [],
-                "nodes_slave": [],
+                "nodes_main": [],
+                "nodes_subordinate": [],
                 "nodes_started": [
                     "rh70-node1",
                     "rh70-node2",
@@ -1021,8 +1021,8 @@ class UtilsTest(TestCase):
                 "message": "Resource 'myGroupClone' is running on nodes "
                 "rh70-node1, rh70-node2, rh70-node3, rh70-node3.",
                 "is_running": True,
-                "nodes_master": [],
-                "nodes_slave": [],
+                "nodes_main": [],
+                "nodes_subordinate": [],
                 "nodes_started": [
                     "rh70-node1",
                     "rh70-node2",
@@ -1032,35 +1032,35 @@ class UtilsTest(TestCase):
             },
         )
         self.assertEqual(
-            utils.resource_running_on("myMasteredGroupedResource", status),
+            utils.resource_running_on("myMainedGroupedResource", status),
             {
-                "message": "Resource 'myMasteredGroupedResource' is master on node "
-                "rh70-node2; slave on nodes rh70-node1, rh70-node3.",
+                "message": "Resource 'myMainedGroupedResource' is main on node "
+                "rh70-node2; subordinate on nodes rh70-node1, rh70-node3.",
                 "is_running": True,
-                "nodes_master": ["rh70-node2"],
-                "nodes_slave": ["rh70-node1", "rh70-node3"],
+                "nodes_main": ["rh70-node2"],
+                "nodes_subordinate": ["rh70-node1", "rh70-node3"],
                 "nodes_started": [],
             },
         )
         self.assertEqual(
-            utils.resource_running_on("myMasteredGroup", status),
+            utils.resource_running_on("myMainedGroup", status),
             {
-                "message": "Resource 'myMasteredGroup' is master on node "
-                "rh70-node2; slave on nodes rh70-node1, rh70-node3.",
+                "message": "Resource 'myMainedGroup' is main on node "
+                "rh70-node2; subordinate on nodes rh70-node1, rh70-node3.",
                 "is_running": True,
-                "nodes_master": ["rh70-node2"],
-                "nodes_slave": ["rh70-node1", "rh70-node3"],
+                "nodes_main": ["rh70-node2"],
+                "nodes_subordinate": ["rh70-node1", "rh70-node3"],
                 "nodes_started": [],
             },
         )
         self.assertEqual(
-            utils.resource_running_on("myGroupMaster", status),
+            utils.resource_running_on("myGroupMain", status),
             {
-                "message": "Resource 'myGroupMaster' is master on node "
-                "rh70-node2; slave on nodes rh70-node1, rh70-node3.",
+                "message": "Resource 'myGroupMain' is main on node "
+                "rh70-node2; subordinate on nodes rh70-node1, rh70-node3.",
                 "is_running": True,
-                "nodes_master": ["rh70-node2"],
-                "nodes_slave": ["rh70-node1", "rh70-node3"],
+                "nodes_main": ["rh70-node2"],
+                "nodes_subordinate": ["rh70-node1", "rh70-node3"],
                 "nodes_started": [],
             },
         )
@@ -1069,8 +1069,8 @@ class UtilsTest(TestCase):
             {
                 "message": "Resource 'notMyResource' is not running on any node",
                 "is_running": False,
-                "nodes_master": [],
-                "nodes_slave": [],
+                "nodes_main": [],
+                "nodes_subordinate": [],
                 "nodes_started": [],
             },
         )
@@ -1079,8 +1079,8 @@ class UtilsTest(TestCase):
             {
                 "message": "Resource 'myStoppedResource' is not running on any node",
                 "is_running": False,
-                "nodes_master": [],
-                "nodes_slave": [],
+                "nodes_main": [],
+                "nodes_subordinate": [],
                 "nodes_started": [],
             },
         )
@@ -1323,36 +1323,36 @@ class UtilsTest(TestCase):
 
         operations = [
             {
-                "id": "myMasteredGroupedResource",
-                "long_id": "myMasteredGroupedResource:0",
+                "id": "myMainedGroupedResource",
+                "long_id": "myMainedGroupedResource:0",
                 "operation": "start",
                 "on_node": "rh7-1",
             },
             {
-                "id": "myMasteredGroupedResource",
-                "long_id": "myMasteredGroupedResource:1",
+                "id": "myMainedGroupedResource",
+                "long_id": "myMainedGroupedResource:1",
                 "operation": "demote",
                 "on_node": "rh7-2",
             },
             {
-                "id": "myMasteredGroupedResource",
-                "long_id": "myMasteredGroupedResource:1",
+                "id": "myMainedGroupedResource",
+                "long_id": "myMainedGroupedResource:1",
                 "operation": "promote",
                 "on_node": "rh7-3",
             },
         ]
         self.assertEqual(
             {
-                "myMasteredGroupedResource:0": {
-                    "id": "myMasteredGroupedResource",
-                    "id_for_constraint": "myGroupMaster",
-                    "long_id": "myMasteredGroupedResource:0",
+                "myMainedGroupedResource:0": {
+                    "id": "myMainedGroupedResource",
+                    "id_for_constraint": "myGroupMain",
+                    "long_id": "myMainedGroupedResource:0",
                     "start_on_node": "rh7-1",
                 },
-                "myMasteredGroupedResource:1": {
-                    "id": "myMasteredGroupedResource",
-                    "id_for_constraint": "myGroupMaster",
-                    "long_id": "myMasteredGroupedResource:1",
+                "myMainedGroupedResource:1": {
+                    "id": "myMainedGroupedResource",
+                    "id_for_constraint": "myGroupMain",
+                    "long_id": "myMainedGroupedResource:1",
                     "promote_on_node": "rh7-3",
                 },
             },

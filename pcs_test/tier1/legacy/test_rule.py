@@ -1910,30 +1910,30 @@ class DomRuleAddTest(TestCase):
             """,
         )
         self.assertExpressionXml(
-            ["role=master", "#uname", "eq", "node1"],
+            ["role=main", "#uname", "eq", "node1"],
             """
 <rsc_location id="location-dummy">
-    <rule id="location-dummy-rule" role="master" score="INFINITY">
+    <rule id="location-dummy-rule" role="main" score="INFINITY">
         <expression attribute="#uname" id="location-dummy-rule-expr" operation="eq" value="node1"/>
     </rule>
 </rsc_location>
             """,
         )
         self.assertExpressionXml(
-            ["role=slave", "#uname", "eq", "node1"],
+            ["role=subordinate", "#uname", "eq", "node1"],
             """
 <rsc_location id="location-dummy">
-    <rule id="location-dummy-rule" role="slave" score="INFINITY">
+    <rule id="location-dummy-rule" role="subordinate" score="INFINITY">
         <expression attribute="#uname" id="location-dummy-rule-expr" operation="eq" value="node1"/>
     </rule>
 </rsc_location>
             """,
         )
         self.assertExpressionXml(
-            ["score=100", "id=myRule", "role=master", "#uname", "eq", "node1"],
+            ["score=100", "id=myRule", "role=main", "#uname", "eq", "node1"],
             """
 <rsc_location id="location-dummy">
-    <rule id="myRule" role="master" score="100">
+    <rule id="myRule" role="main" score="100">
         <expression attribute="#uname" id="myRule-expr" operation="eq" value="node1"/>
     </rule>
 </rsc_location>
@@ -1951,7 +1951,7 @@ class DomRuleAddTest(TestCase):
 
         output, returnVal = pcs(
             self.temp_cib.name,
-            "constraint location dummy1 rule id=MyRule score=100 role=master #uname eq node2".split(),
+            "constraint location dummy1 rule id=MyRule score=100 role=main #uname eq node2".split(),
         )
         ac(output, "")
         self.assertEqual(0, returnVal)
@@ -1975,7 +1975,7 @@ Location Constraints:
       Rule: score=INFINITY (id:location-dummy1-rule)
         Expression: #uname eq node1 (id:location-dummy1-rule-expr)
     Constraint: location-dummy1-1
-      Rule: role=master score=100 (id:MyRule)
+      Rule: role=main score=100 (id:MyRule)
         Expression: #uname eq node2 (id:MyRule-expr)
     Constraint: location-dummy1-2
       Rule: boolean-op=or score=INFINITY (id:complexRule)
@@ -2003,7 +2003,7 @@ Location Constraints:
       Rule: score=INFINITY
         Expression: #uname eq node1
     Constraint: location-dummy1-1
-      Rule: role=master score=100
+      Rule: role=main score=100
         Expression: #uname eq node2
     Constraint: location-dummy1-2
       Rule: boolean-op=or score=INFINITY
@@ -2083,7 +2083,7 @@ Location Constraints:
             self.temp_cib.name,
             "constraint location dummy1 rule role=foo #uname eq node1".split(),
         )
-        ac(output, "Error: invalid role 'foo', use 'master' or 'slave'\n")
+        ac(output, "Error: invalid role 'foo', use 'main' or 'subordinate'\n")
         self.assertEqual(1, returnVal)
 
         output, returnVal = pcs(

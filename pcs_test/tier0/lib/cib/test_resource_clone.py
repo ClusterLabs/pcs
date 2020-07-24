@@ -64,17 +64,17 @@ class AppendNewCommon(TestCase):
 class IsAnyClone(TestCase):
     def test_is_clone(self):
         self.assertTrue(clone.is_clone(etree.fromstring("<clone/>")))
-        self.assertFalse(clone.is_clone(etree.fromstring("<master/>")))
+        self.assertFalse(clone.is_clone(etree.fromstring("<main/>")))
         self.assertFalse(clone.is_clone(etree.fromstring("<group/>")))
 
-    def test_is_master(self):
-        self.assertTrue(clone.is_master(etree.fromstring("<master/>")))
-        self.assertFalse(clone.is_master(etree.fromstring("<clone/>")))
-        self.assertFalse(clone.is_master(etree.fromstring("<group/>")))
+    def test_is_main(self):
+        self.assertTrue(clone.is_main(etree.fromstring("<main/>")))
+        self.assertFalse(clone.is_main(etree.fromstring("<clone/>")))
+        self.assertFalse(clone.is_main(etree.fromstring("<group/>")))
 
     def test_is_any_clone(self):
         self.assertTrue(clone.is_any_clone(etree.fromstring("<clone/>")))
-        self.assertTrue(clone.is_any_clone(etree.fromstring("<master/>")))
+        self.assertTrue(clone.is_any_clone(etree.fromstring("<main/>")))
         self.assertFalse(clone.is_any_clone(etree.fromstring("<group/>")))
 
 
@@ -84,18 +84,18 @@ class IsPromotableClone(TestCase):
             result, clone.is_promotable_clone(etree.fromstring(xml))
         )
 
-    def test_master(self):
-        self.my_assert(False, "<master />")
+    def test_main(self):
+        self.my_assert(False, "<main />")
 
-    def test_master_with_promotable(self):
+    def test_main_with_promotable(self):
         self.my_assert(
             False,
             """
-                <master>
+                <main>
                     <meta_attributes>
                         <nvpair name="promotable" value="true" />
                     </meta_attributes>
-                </master>
+                </main>
             """,
         )
 
@@ -150,9 +150,9 @@ class GetParentAnyClone(TestCase):
                 <clone id="B-clone">
                     <primitive id="B" />
                 </clone>
-                <master id="C-master">
+                <main id="C-main">
                     <primitive id="C" />
-                </master>
+                </main>
                 <group id="D">
                     <primitive id="D1" />
                     <primitive id="D2" />
@@ -163,12 +163,12 @@ class GetParentAnyClone(TestCase):
                         <primitive id="E2" />
                     </group>
                 </clone>
-                <master id="F-master">
+                <main id="F-main">
                     <group id="F">
                         <primitive id="F1" />
                         <primitive id="F2" />
                     </group>
-                </master>
+                </main>
                 <bundle id="G-bundle" />
                 <bundle id="H-bundle">
                     <primitive id="H" />
@@ -199,12 +199,12 @@ class GetParentAnyClone(TestCase):
     def test_primitive_in_clone(self):
         self.my_assert("B", "B-clone")
 
-    def test_master(self):
-        self.my_assert("C-master", None)
-        self.my_assert("F-master", None)
+    def test_main(self):
+        self.my_assert("C-main", None)
+        self.my_assert("F-main", None)
 
-    def test_primitive_in_master(self):
-        self.my_assert("C", "C-master")
+    def test_primitive_in_main(self):
+        self.my_assert("C", "C-main")
 
     def test_grop(self):
         self.my_assert("D", None)
@@ -218,11 +218,11 @@ class GetParentAnyClone(TestCase):
     def test_primitive_in_group_in_clone(self):
         self.my_assert("E1", "E-clone")
 
-    def test_group_in_master(self):
-        self.my_assert("F", "F-master")
+    def test_group_in_main(self):
+        self.my_assert("F", "F-main")
 
-    def test_primitive_in_group_in_master(self):
-        self.my_assert("F1", "F-master")
+    def test_primitive_in_group_in_main(self):
+        self.my_assert("F1", "F-main")
 
     def test_bundle(self):
         self.my_assert("G-bundle", None)

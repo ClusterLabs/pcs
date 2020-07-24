@@ -43,7 +43,7 @@ class AddTest(TestCase):
             "ticket",
             "resource_id",
             "resource_role",
-            {"rsc-role": "master"},
+            {"rsc-role": "main"},
         )
         lib = None
         self.assertRaises(

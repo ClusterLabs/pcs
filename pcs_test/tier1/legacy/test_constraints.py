@@ -13,9 +13,9 @@ from pcs_test.tools.assertions import (
 from pcs_test.tools.bin_mock import get_mock_settings
 from pcs_test.tools.cib import get_assert_pcs_effect_mixin
 from pcs_test.tools.fixture_cib import (
-    fixture_master_xml,
+    fixture_main_xml,
     fixture_to_cib,
-    wrap_element_by_master,
+    wrap_element_by_main,
 )
 from pcs_test.tools.misc import (
     get_test_resource as rc,
@@ -88,7 +88,7 @@ class ConstraintTest(unittest.TestCase):
         write_file_to_tmpfile(empty_cib, self.temp_cib)
         return cib_content
 
-    # Sets up a cluster with Resources, groups, master/slave resource and clones
+    # Sets up a cluster with Resources, groups, main/subordinate resource and clones
     def setupClusterA(self):
         line = "resource create D1 ocf:heartbeat:Dummy".split()
         output, returnVal = pcs(self.temp_cib.name, line)
@@ -118,10 +118,10 @@ class ConstraintTest(unittest.TestCase):
         output, returnVal = pcs(self.temp_cib.name, line)
         assert returnVal == 0 and output == ""
 
-        # pcs no longer allows turning resources into masters but supports
-        # existing ones. In order to test it, we need to put a master in the
+        # pcs no longer allows turning resources into mains but supports
+        # existing ones. In order to test it, we need to put a main in the
         # CIB without pcs.
-        wrap_element_by_master(self.temp_cib, "D4", master_id="Master")
+        wrap_element_by_main(self.temp_cib, "D4", main_id="Main")
 
     def testConstraintRules(self):
         self.fixture_resources()
@@ -498,17 +498,17 @@ Ticket Constraints:
         ), output
 
         output, returnVal = pcs(
-            self.temp_cib.name, "constraint order Master then D5".split()
+            self.temp_cib.name, "constraint order Main then D5".split()
         )
         assert (
             returnVal == 0
             and output
-            == "Adding Master D5 (kind: Mandatory) (Options: first-action=start then-action=start)\n"
+            == "Adding Main D5 (kind: Mandatory) (Options: first-action=start then-action=start)\n"
         ), output
 
         output, returnVal = pcs(
             self.temp_cib.name,
-            "constraint colocation add Master with D5".split(),
+            "constraint colocation add Main with D5".split(),
         )
         assert returnVal == 0 and output == "", output
 
@@ -523,9 +523,9 @@ Ticket Constraints:
                 Enabled on:
                   Node: node1 (score:INFINITY) (id:location-D5-node1-INFINITY)
             Ordering Constraints:
-              start Master then start D5 (kind:Mandatory) (id:order-Master-D5-mandatory)
+              start Main then start D5 (kind:Mandatory) (id:order-Main-D5-mandatory)
             Colocation Constraints:
-              Master with D5 (score:INFINITY) (id:colocation-Master-D5-INFINITY)
+              Main with D5 (score:INFINITY) (id:colocation-Main-D5-INFINITY)
             Ticket Constraints:
             """
             ),
@@ -544,9 +544,9 @@ Ticket Constraints:
                 Enabled on:
                   Node: node1 (score:INFINITY) (id:location-D5-node1-INFINITY)
             Ordering Constraints:
-              start Master then start D5 (kind:Mandatory) (id:order-Master-D5-mandatory)
+              start Main then start D5 (kind:Mandatory) (id:order-Main-D5-mandatory)
             Colocation Constraints:
-              Master with D5 (score:INFINITY) (id:colocation-Master-D5-INFINITY)
+              Main with D5 (score:INFINITY) (id:colocation-Main-D5-INFINITY)
             Ticket Constraints:
             """
             ),
@@ -700,13 +700,13 @@ Ticket Constraints:
     # see also BundleColocation
     def testColocationConstraints(self):
         self.fixture_resources()
-        # pcs no longer allows creating masters but supports existing ones. In
-        # order to test it, we need to put a master in the CIB without pcs.
+        # pcs no longer allows creating mains but supports existing ones. In
+        # order to test it, we need to put a main in the CIB without pcs.
         fixture_to_cib(
             self.temp_cib.name,
             "\n".join(
                 ["<resources>"]
-                + [fixture_master_xml(f"M{i}") for i in range(1, 11)]
+                + [fixture_main_xml(f"M{i}") for i in range(1, 11)]
                 + ["</resources>"]
             ),
         )
@@ -731,37 +731,37 @@ Ticket Constraints:
 
         o, r = pcs(
             self.temp_cib.name,
-            "constraint colocation add Master with D5 100".split(),
+            "constraint colocation add Main with D5 100".split(),
         )
         assert r == 0 and o == "", o
 
         o, r = pcs(
             self.temp_cib.name,
-            "constraint colocation add master M1-master with master M2-master".split(),
+            "constraint colocation add main M1-main with main M2-main".split(),
         )
         assert r == 0 and o == "", o
 
         o, r = pcs(
             self.temp_cib.name,
-            "constraint colocation add M3-master with M4-master".split(),
+            "constraint colocation add M3-main with M4-main".split(),
         )
         assert r == 0 and o == "", o
 
         o, r = pcs(
             self.temp_cib.name,
-            "constraint colocation add slave M5-master with started M6-master 500".split(),
+            "constraint colocation add subordinate M5-main with started M6-main 500".split(),
         )
         assert r == 0 and o == "", o
 
         o, r = pcs(
             self.temp_cib.name,
-            "constraint colocation add M7-master with Master M8-master".split(),
+            "constraint colocation add M7-main with Main M8-main".split(),
         )
         assert r == 0 and o == "", o
 
         o, r = pcs(
             self.temp_cib.name,
-            "constraint colocation add Slave M9-master with M10-master".split(),
+            "constraint colocation add Subordinate M9-main with M10-main".split(),
         )
         assert r == 0 and o == "", o
 
@@ -776,12 +776,12 @@ Ticket Constraints:
               D1 with D3-clone (score:INFINITY)
               D1 with D2 (score:100)
               D1 with D2 (score:-100)
-              Master with D5 (score:100)
-              M1-master with M2-master (score:INFINITY) (rsc-role:Master) (with-rsc-role:Master)
-              M3-master with M4-master (score:INFINITY)
-              M5-master with M6-master (score:500) (rsc-role:Slave) (with-rsc-role:Started)
-              M7-master with M8-master (score:INFINITY) (rsc-role:Started) (with-rsc-role:Master)
-              M9-master with M10-master (score:INFINITY) (rsc-role:Slave) (with-rsc-role:Started)
+              Main with D5 (score:100)
+              M1-main with M2-main (score:INFINITY) (rsc-role:Main) (with-rsc-role:Main)
+              M3-main with M4-main (score:INFINITY)
+              M5-main with M6-main (score:500) (rsc-role:Subordinate) (with-rsc-role:Started)
+              M7-main with M8-main (score:INFINITY) (rsc-role:Started) (with-rsc-role:Main)
+              M9-main with M10-main (score:INFINITY) (rsc-role:Subordinate) (with-rsc-role:Started)
             Ticket Constraints:
             """
             ),
@@ -790,13 +790,13 @@ Ticket Constraints:
 
         o, r = pcs(
             self.temp_cib.name,
-            "constraint colocation delete M1-master M2-master".split(),
+            "constraint colocation delete M1-main M2-main".split(),
         )
         assert r == 0 and o == "", o
 
         o, r = pcs(
             self.temp_cib.name,
-            "constraint colocation remove M5-master M6-master".split(),
+            "constraint colocation remove M5-main M6-main".split(),
         )
         assert r == 0 and o == "", o
 
@@ -811,10 +811,10 @@ Ticket Constraints:
               D1 with D3-clone (score:INFINITY)
               D1 with D2 (score:100)
               D1 with D2 (score:-100)
-              Master with D5 (score:100)
-              M3-master with M4-master (score:INFINITY)
-              M7-master with M8-master (score:INFINITY) (rsc-role:Started) (with-rsc-role:Master)
-              M9-master with M10-master (score:INFINITY) (rsc-role:Slave) (with-rsc-role:Started)
+              Main with D5 (score:100)
+              M3-main with M4-main (score:INFINITY)
+              M7-main with M8-main (score:INFINITY) (rsc-role:Started) (with-rsc-role:Main)
+              M9-main with M10-main (score:INFINITY) (rsc-role:Subordinate) (with-rsc-role:Started)
             Ticket Constraints:
             """
             ),
@@ -833,14 +833,14 @@ Ticket Constraints:
             self.assertEqual(returnVal, 1)
 
         assert_usage("constraint colocation add D1".split())
-        assert_usage("constraint colocation add master D1".split())
+        assert_usage("constraint colocation add main D1".split())
         assert_usage("constraint colocation add D1 with".split())
-        assert_usage("constraint colocation add master D1 with".split())
+        assert_usage("constraint colocation add main D1 with".split())
 
         assert_usage("constraint colocation add D1 D2".split())
-        assert_usage("constraint colocation add master D1 D2".split())
-        assert_usage("constraint colocation add D1 master D2".split())
-        assert_usage("constraint colocation add master D1 master D2".split())
+        assert_usage("constraint colocation add main D1 D2".split())
+        assert_usage("constraint colocation add D1 main D2".split())
+        assert_usage("constraint colocation add main D1 main D2".split())
 
         assert_usage("constraint colocation add D1 D2 D3".split())
 
@@ -920,8 +920,8 @@ Ticket Constraints:
         )
         ac(
             o,
-            "Error: invalid role value 'abc', allowed values are: 'Master', "
-            "'Slave', 'Started', 'Stopped'\n",
+            "Error: invalid role value 'abc', allowed values are: 'Main', "
+            "'Subordinate', 'Started', 'Stopped'\n",
         )
         self.assertEqual(r, 1)
 
@@ -931,8 +931,8 @@ Ticket Constraints:
         )
         ac(
             o,
-            "Error: invalid role value 'def', allowed values are: 'Master', "
-            "'Slave', 'Started', 'Stopped'\n",
+            "Error: invalid role value 'def', allowed values are: 'Main', "
+            "'Subordinate', 'Started', 'Stopped'\n",
         )
         self.assertEqual(r, 1)
 
@@ -942,8 +942,8 @@ Ticket Constraints:
         )
         ac(
             o,
-            "Error: invalid role value 'abc', allowed values are: 'Master', "
-            "'Slave', 'Started', 'Stopped'\n",
+            "Error: invalid role value 'abc', allowed values are: 'Main', "
+            "'Subordinate', 'Started', 'Stopped'\n",
         )
         self.assertEqual(r, 1)
 
@@ -963,49 +963,49 @@ Ticket Constraints:
 
         o, r = pcs(
             self.temp_cib.name,
-            "constraint colocation add master D1 with D2 with D3".split(),
+            "constraint colocation add main D1 with D2 with D3".split(),
         )
         self.assertIn(msg, o)
         self.assertEqual(r, 1)
 
         o, r = pcs(
             self.temp_cib.name,
-            "constraint colocation add D1 with master D2 with D3".split(),
+            "constraint colocation add D1 with main D2 with D3".split(),
         )
         self.assertIn(msg, o)
         self.assertEqual(r, 1)
 
         o, r = pcs(
             self.temp_cib.name,
-            "constraint colocation add D1 with D2 with master D3".split(),
+            "constraint colocation add D1 with D2 with main D3".split(),
         )
         self.assertIn(msg, o)
         self.assertEqual(r, 1)
 
         o, r = pcs(
             self.temp_cib.name,
-            "constraint colocation add master D1 with master D2 with D3".split(),
+            "constraint colocation add main D1 with main D2 with D3".split(),
         )
         self.assertIn(msg, o)
         self.assertEqual(r, 1)
 
         o, r = pcs(
             self.temp_cib.name,
-            "constraint colocation add master D1 with D2 with master D3".split(),
+            "constraint colocation add main D1 with D2 with main D3".split(),
         )
         self.assertIn(msg, o)
         self.assertEqual(r, 1)
 
         o, r = pcs(
             self.temp_cib.name,
-            "constraint colocation add D1 with master D2 with master D3".split(),
+            "constraint colocation add D1 with main D2 with main D3".split(),
         )
         self.assertIn(msg, o)
         self.assertEqual(r, 1)
 
         o, r = pcs(
             self.temp_cib.name,
-            "constraint colocation add master D1 with master D2 with master D3".split(),
+            "constraint colocation add main D1 with main D2 with main D3".split(),
         )
         self.assertIn(msg, o)
         self.assertEqual(r, 1)
@@ -1079,8 +1079,8 @@ Ticket Constraints:
             self.temp_cib.name,
             (
                 "constraint colocation "
-                "set D5 D6 action=stop role=Started set D7 D8 action=promote role=Slave "
-                "set D8 D9 action=demote role=Master"
+                "set D5 D6 action=stop role=Started set D7 D8 action=promote role=Subordinate "
+                "set D8 D9 action=demote role=Main"
             ).split(),
         )
         assert r == 0
@@ -1094,7 +1094,7 @@ Colocation Constraints:
   Resource Sets:
     set D5 D6 D7 require-all=true sequential=false (id:colocation_set_D5D6D7_set) set D8 D9 action=start require-all=false role=Stopped sequential=true (id:colocation_set_D5D6D7_set-1) setoptions score=INFINITY (id:colocation_set_D5D6D7)
     set D5 D6 (id:colocation_set_D5D6_set) setoptions score=INFINITY (id:colocation_set_D5D6)
-    set D5 D6 action=stop role=Started (id:colocation_set_D5D6D7-1_set) set D7 D8 action=promote role=Slave (id:colocation_set_D5D6D7-1_set-1) set D8 D9 action=demote role=Master (id:colocation_set_D5D6D7-1_set-2) setoptions score=INFINITY (id:colocation_set_D5D6D7-1)
+    set D5 D6 action=stop role=Started (id:colocation_set_D5D6D7-1_set) set D7 D8 action=promote role=Subordinate (id:colocation_set_D5D6D7-1_set-1) set D8 D9 action=demote role=Main (id:colocation_set_D5D6D7-1_set-2) setoptions score=INFINITY (id:colocation_set_D5D6D7-1)
 """,
         )
         assert r == 0
@@ -1112,7 +1112,7 @@ Colocation Constraints:
 Colocation Constraints:
   Resource Sets:
     set D5 D6 D7 require-all=true sequential=false (id:colocation_set_D5D6D7_set) set D8 D9 action=start require-all=false role=Stopped sequential=true (id:colocation_set_D5D6D7_set-1) setoptions score=INFINITY (id:colocation_set_D5D6D7)
-    set D5 D6 action=stop role=Started (id:colocation_set_D5D6D7-1_set) set D7 D8 action=promote role=Slave (id:colocation_set_D5D6D7-1_set-1) set D8 D9 action=demote role=Master (id:colocation_set_D5D6D7-1_set-2) setoptions score=INFINITY (id:colocation_set_D5D6D7-1)
+    set D5 D6 action=stop role=Started (id:colocation_set_D5D6D7-1_set) set D7 D8 action=promote role=Subordinate (id:colocation_set_D5D6D7-1_set-1) set D8 D9 action=demote role=Main (id:colocation_set_D5D6D7-1_set-2) setoptions score=INFINITY (id:colocation_set_D5D6D7-1)
 """,
         )
         assert r == 0
@@ -1196,7 +1196,7 @@ Colocation Constraints:
         )
         ac(
             output,
-            "Error: 'foo' is not a valid role value, use 'Master', 'Slave', 'Started', 'Stopped'\n",
+            "Error: 'foo' is not a valid role value, use 'Main', 'Subordinate', 'Started', 'Stopped'\n",
         )
         self.assertEqual(1, retValue)
 
@@ -1495,8 +1495,8 @@ Colocation Constraints:
             (
                 "constraint order "
                 "set D5 D6 action=stop role=Started "
-                "set D7 D8 action=promote role=Slave "
-                "set D8 D9 action=demote role=Master"
+                "set D7 D8 action=promote role=Subordinate "
+                "set D8 D9 action=demote role=Main"
             ).split(),
         )
         assert r == 0
@@ -1511,7 +1511,7 @@ Ordering Constraints:
   Resource Sets:
     set D5 D6 D7 require-all=true sequential=false (id:order_set_D5D6D7_set) set D8 D9 action=start require-all=false role=Stopped sequential=true (id:order_set_D5D6D7_set-1) (id:order_set_D5D6D7)
     set D5 D6 (id:order_set_D5D6_set) (id:order_set_D5D6)
-    set D5 D6 action=stop role=Started (id:order_set_D5D6D7-1_set) set D7 D8 action=promote role=Slave (id:order_set_D5D6D7-1_set-1) set D8 D9 action=demote role=Master (id:order_set_D5D6D7-1_set-2) (id:order_set_D5D6D7-1)
+    set D5 D6 action=stop role=Started (id:order_set_D5D6D7-1_set) set D7 D8 action=promote role=Subordinate (id:order_set_D5D6D7-1_set-1) set D8 D9 action=demote role=Main (id:order_set_D5D6D7-1_set-2) (id:order_set_D5D6D7-1)
 """,
         )
 
@@ -1529,7 +1529,7 @@ Ordering Constraints:
 Ordering Constraints:
   Resource Sets:
     set D5 D6 D7 require-all=true sequential=false (id:order_set_D5D6D7_set) set D8 D9 action=start require-all=false role=Stopped sequential=true (id:order_set_D5D6D7_set-1) (id:order_set_D5D6D7)
-    set D5 D6 action=stop role=Started (id:order_set_D5D6D7-1_set) set D7 D8 action=promote role=Slave (id:order_set_D5D6D7-1_set-1) set D8 D9 action=demote role=Master (id:order_set_D5D6D7-1_set-2) (id:order_set_D5D6D7-1)
+    set D5 D6 action=stop role=Started (id:order_set_D5D6D7-1_set) set D7 D8 action=promote role=Subordinate (id:order_set_D5D6D7-1_set-1) set D8 D9 action=demote role=Main (id:order_set_D5D6D7-1_set-2) (id:order_set_D5D6D7-1)
 """,
         )
 
@@ -1585,7 +1585,7 @@ Ordering Constraints:
         )
         ac(
             output,
-            "Error: 'foo' is not a valid role value, use 'Master', 'Slave', 'Started', 'Stopped'\n",
+            "Error: 'foo' is not a valid role value, use 'Main', 'Subordinate', 'Started', 'Stopped'\n",
         )
         self.assertEqual(1, retValue)
 
@@ -1654,7 +1654,7 @@ Location Constraints:
 Ordering Constraints:
   Resource Sets:
     set D7 require-all=true sequential=false (id:order_set_D5D6D7_set) set D8 D9 action=start require-all=false role=Stopped sequential=true (id:order_set_D5D6D7_set-1) (id:order_set_D5D6D7)
-    set D7 D8 action=promote role=Slave (id:order_set_D5D6D7-1_set-1) set D8 D9 action=demote role=Master (id:order_set_D5D6D7-1_set-2) (id:order_set_D5D6D7-1)
+    set D7 D8 action=promote role=Subordinate (id:order_set_D5D6D7-1_set-1) set D8 D9 action=demote role=Main (id:order_set_D5D6D7-1_set-2) (id:order_set_D5D6D7-1)
     set D1 D2 (id:order_set_D1D2_set) setoptions kind=Mandatory symmetrical=false (id:order_set_D1D2)
 Colocation Constraints:
 Ticket Constraints:
@@ -1786,14 +1786,14 @@ Ticket Constraints:
 
         o, r = pcs(
             self.temp_cib.name,
-            "constraint location D1 rule role=master".split(),
+            "constraint location D1 rule role=main".split(),
         )
         ac(o, "Error: no rule expression was specified\n")
         assert r == 1
 
         o, r = pcs(
             self.temp_cib.name,
-            "constraint location non-existant-resource rule role=master #uname eq rh7-1".split(),
+            "constraint location non-existant-resource rule role=main #uname eq rh7-1".split(),
         )
         ac(o, "Error: Resource 'non-existant-resource' does not exist\n")
         assert r == 1
@@ -1819,13 +1819,13 @@ Ticket Constraints:
         assert returnVal == 1
 
     def testLocationBadRules(self):
-        # pcs no longer allows creating masters but supports existing ones. In
-        # order to test it, we need to put a master in the CIB without pcs.
-        fixture_to_cib(self.temp_cib.name, fixture_master_xml("stateful0"))
+        # pcs no longer allows creating mains but supports existing ones. In
+        # order to test it, we need to put a main in the CIB without pcs.
+        fixture_to_cib(self.temp_cib.name, fixture_main_xml("stateful0"))
 
         o, r = pcs(
             self.temp_cib.name,
-            "constraint location stateful0 rule role=master #uname eq rh7-1 --force".split(),
+            "constraint location stateful0 rule role=main #uname eq rh7-1 --force".split(),
         )
         ac(o, "")
         assert r == 0
@@ -1837,7 +1837,7 @@ Ticket Constraints:
 Location Constraints:
   Resource: stateful0
     Constraint: location-stateful0
-      Rule: role=master score=INFINITY (id:location-stateful0-rule)
+      Rule: role=main score=INFINITY (id:location-stateful0-rule)
         Expression: #uname eq rh7-1 (id:location-stateful0-rule-expr)
 Ordering Constraints:
 Colocation Constraints:
@@ -1846,9 +1846,9 @@ Ticket Constraints:
         )
         assert r == 0
 
-        # pcs no longer allows creating masters but supports existing ones. In
-        # order to test it, we need to put a master in the CIB without pcs.
-        fixture_to_cib(self.temp_cib.name, fixture_master_xml("stateful1"))
+        # pcs no longer allows creating mains but supports existing ones. In
+        # order to test it, we need to put a main in the CIB without pcs.
+        fixture_to_cib(self.temp_cib.name, fixture_main_xml("stateful1"))
 
         o, r = pcs(
             self.temp_cib.name,
@@ -1862,7 +1862,7 @@ Ticket Constraints:
 
         o, r = pcs(
             self.temp_cib.name,
-            "constraint location stateful1 rule role=master rulename #uname eq rh7-1 --force".split(),
+            "constraint location stateful1 rule role=main rulename #uname eq rh7-1 --force".split(),
         )
         ac(
             o,
@@ -1872,7 +1872,7 @@ Ticket Constraints:
 
         o, r = pcs(
             self.temp_cib.name,
-            "constraint location stateful1 rule role=master 25 --force".split(),
+            "constraint location stateful1 rule role=main 25 --force".split(),
         )
         ac(
             o,
@@ -1880,7 +1880,7 @@ Ticket Constraints:
         )
         assert r == 1
 
-    def testMasterSlaveConstraint(self):
+    def testMainSubordinateConstraint(self):
         os.system(
             "CIB_file="
             + self.temp_cib.name
@@ -1894,9 +1894,9 @@ Ticket Constraints:
         ac(o, "")
         assert r == 0
 
-        # pcs no longer allows creating masters but supports existing ones. In
-        # order to test it, we need to put a master in the CIB without pcs.
-        fixture_to_cib(self.temp_cib.name, fixture_master_xml("stateful1"))
+        # pcs no longer allows creating mains but supports existing ones. In
+        # order to test it, we need to put a main in the CIB without pcs.
+        fixture_to_cib(self.temp_cib.name, fixture_main_xml("stateful1"))
 
         o, r = pcs(
             self.temp_cib.name,
@@ -1911,10 +1911,10 @@ Warning: changing a monitor operation interval from 10s to 11 to make the operat
         )
         assert r == 0
 
-        # pcs no longer allows turning resources into masters but supports
-        # existing ones. In order to test it, we need to put a master in the
+        # pcs no longer allows turning resources into mains but supports
+        # existing ones. In order to test it, we need to put a main in the
         # CIB without pcs.
-        wrap_element_by_master(self.temp_cib, "statefulG")
+        wrap_element_by_main(self.temp_cib, "statefulG")
 
         o, r = pcs(
             self.temp_cib.name,
@@ -1922,7 +1922,7 @@ Warning: changing a monitor operation interval from 10s to 11 to make the operat
         )
         ac(
             o,
-            "Error: stateful1 is a clone resource, you should use the clone id: stateful1-master when adding constraints. Use --force to override.\n"
+            "Error: stateful1 is a clone resource, you should use the clone id: stateful1-main when adding constraints. Use --force to override.\n"
             + LOCATION_NODE_VALIDATION_SKIP_WARNING,
         )
         assert r == 1
@@ -1933,7 +1933,7 @@ Warning: changing a monitor operation interval from 10s to 11 to make the operat
         )
         ac(
             o,
-            "Error: statefulG is a clone resource, you should use the clone id: statefulG-master when adding constraints. Use --force to override.\n"
+            "Error: statefulG is a clone resource, you should use the clone id: statefulG-main when adding constraints. Use --force to override.\n"
             + LOCATION_NODE_VALIDATION_SKIP_WARNING,
         )
         assert r == 1
@@ -1944,7 +1944,7 @@ Warning: changing a monitor operation interval from 10s to 11 to make the operat
         )
         ac(
             o,
-            "Error: stateful1 is a clone resource, you should use the clone id: stateful1-master when adding constraints. Use --force to override.\n",
+            "Error: stateful1 is a clone resource, you should use the clone id: stateful1-main when adding constraints. Use --force to override.\n",
         )
         assert r == 1
 
@@ -1954,7 +1954,7 @@ Warning: changing a monitor operation interval from 10s to 11 to make the operat
         )
         ac(
             o,
-            "Error: statefulG is a clone resource, you should use the clone id: statefulG-master when adding constraints. Use --force to override.\n",
+            "Error: statefulG is a clone resource, you should use the clone id: statefulG-main when adding constraints. Use --force to override.\n",
         )
         assert r == 1
 
@@ -1964,7 +1964,7 @@ Warning: changing a monitor operation interval from 10s to 11 to make the operat
         )
         ac(
             o,
-            "Error: stateful1 is a clone resource, you should use the clone id: stateful1-master when adding constraints. Use --force to override.\n",
+            "Error: stateful1 is a clone resource, you should use the clone id: stateful1-main when adding constraints. Use --force to override.\n",
         )
         assert r == 1
 
@@ -1974,7 +1974,7 @@ Warning: changing a monitor operation interval from 10s to 11 to make the operat
         )
         ac(
             o,
-            "Error: statefulG is a clone resource, you should use the clone id: statefulG-master when adding constraints. Use --force to override.\n",
+            "Error: statefulG is a clone resource, you should use the clone id: statefulG-main when adding constraints. Use --force to override.\n",
         )
         assert r == 1
 
@@ -1983,7 +1983,7 @@ Warning: changing a monitor operation interval from 10s to 11 to make the operat
         )
         ac(
             o,
-            "Error: stateful1 is a clone resource, you should use the clone id: stateful1-master when adding constraints, use --force to override\n",
+            "Error: stateful1 is a clone resource, you should use the clone id: stateful1-main when adding constraints, use --force to override\n",
         )
         assert r == 1
 
@@ -1992,7 +1992,7 @@ Warning: changing a monitor operation interval from 10s to 11 to make the operat
         )
         ac(
             o,
-            "Error: statefulG is a clone resource, you should use the clone id: statefulG-master when adding constraints, use --force to override\n",
+            "Error: statefulG is a clone resource, you should use the clone id: statefulG-main when adding constraints, use --force to override\n",
         )
         assert r == 1
 
@@ -2002,7 +2002,7 @@ Warning: changing a monitor operation interval from 10s to 11 to make the operat
         )
         ac(
             o,
-            "Error: stateful1 is a clone resource, you should use the clone id: stateful1-master when adding constraints. Use --force to override.\n",
+            "Error: stateful1 is a clone resource, you should use the clone id: stateful1-main when adding constraints. Use --force to override.\n",
         )
         assert r == 1
 
@@ -2012,7 +2012,7 @@ Warning: changing a monitor operation interval from 10s to 11 to make the operat
         )
         ac(
             o,
-            "Error: statefulG is a clone resource, you should use the clone id: statefulG-master when adding constraints. Use --force to override.\n",
+            "Error: statefulG is a clone resource, you should use the clone id: statefulG-main when adding constraints. Use --force to override.\n",
         )
         assert r == 1
 
@@ -2022,7 +2022,7 @@ Warning: changing a monitor operation interval from 10s to 11 to make the operat
         )
         ac(
             o,
-            "Error: stateful1 is a clone resource, you should use the clone id: stateful1-master when adding constraints, use --force to override\n",
+            "Error: stateful1 is a clone resource, you should use the clone id: stateful1-main when adding constraints, use --force to override\n",
         )
         assert r == 1
 
@@ -2032,7 +2032,7 @@ Warning: changing a monitor operation interval from 10s to 11 to make the operat
         )
         ac(
             o,
-            "Error: statefulG is a clone resource, you should use the clone id: statefulG-master when adding constraints, use --force to override\n",
+            "Error: statefulG is a clone resource, you should use the clone id: statefulG-main when adding constraints, use --force to override\n",
         )
         assert r == 1
 
@@ -2073,7 +2073,7 @@ Warning: changing a monitor operation interval from 10s to 11 to make the operat
         )
         ac(
             o,
-            "Warning: stateful1 is a clone resource, you should use the clone id: stateful1-master when adding constraints\n",
+            "Warning: stateful1 is a clone resource, you should use the clone id: stateful1-main when adding constraints\n",
         )
         assert r == 0
 
@@ -2090,7 +2090,7 @@ Warning: changing a monitor operation interval from 10s to 11 to make the operat
         )
         ac(
             o,
-            "Warning: stateful1 is a clone resource, you should use the clone id: stateful1-master when adding constraints\n",
+            "Warning: stateful1 is a clone resource, you should use the clone id: stateful1-main when adding constraints\n",
         )
         assert r == 0
 
@@ -2359,14 +2359,14 @@ Ticket Constraints:
             + ' cibadmin -R --scope nodes --xml-text \'<nodes><node id="1" uname="rh7-1"/><node id="2" uname="rh7-2"/></nodes>\''
         )
 
-        # pcs no longer allows creating masters but supports existing ones. In
-        # order to test it, we need to put a master in the CIB without pcs.
-        fixture_to_cib(self.temp_cib.name, fixture_master_xml("stateful0"))
+        # pcs no longer allows creating mains but supports existing ones. In
+        # order to test it, we need to put a main in the CIB without pcs.
+        fixture_to_cib(self.temp_cib.name, fixture_main_xml("stateful0"))
 
         os.system(
             "CIB_file="
             + self.temp_cib.name
-            + ' cibadmin -R --scope constraints --xml-text \'<constraints><rsc_location id="cli-prefer-stateful0-master" role="Master" rsc="stateful0-master" node="rh7-1" score="INFINITY"/><rsc_location id="cli-ban-stateful0-master-on-rh7-1" rsc="stateful0-master" role="Slave" node="rh7-1" score="-INFINITY"/></constraints>\''
+            + ' cibadmin -R --scope constraints --xml-text \'<constraints><rsc_location id="cli-prefer-stateful0-main" role="Main" rsc="stateful0-main" node="rh7-1" score="INFINITY"/><rsc_location id="cli-ban-stateful0-main-on-rh7-1" rsc="stateful0-main" role="Subordinate" node="rh7-1" score="-INFINITY"/></constraints>\''
         )
 
         o, r = pcs(self.temp_cib.name, ["constraint"])
@@ -2375,11 +2375,11 @@ Ticket Constraints:
             outdent(
                 """\
             Location Constraints:
-              Resource: stateful0-master
+              Resource: stateful0-main
                 Enabled on:
-                  Node: rh7-1 (score:INFINITY) (role:Master)
+                  Node: rh7-1 (score:INFINITY) (role:Main)
                 Disabled on:
-                  Node: rh7-1 (score:-INFINITY) (role:Slave)
+                  Node: rh7-1 (score:-INFINITY) (role:Subordinate)
             Ordering Constraints:
             Colocation Constraints:
             Ticket Constraints:
@@ -3679,19 +3679,19 @@ class TicketCreateWithSet(ConstraintBaseTest):
 class TicketAdd(ConstraintBaseTest):
     def test_create_ticket(self):
         self.assert_pcs_success(
-            "constraint ticket add T master A loss-policy=fence".split()
+            "constraint ticket add T main A loss-policy=fence".split()
         )
         self.assert_pcs_success(
             "constraint ticket show".split(),
             stdout_full=[
                 "Ticket Constraints:",
-                "  Master A loss-policy=fence ticket=T",
+                "  Main A loss-policy=fence ticket=T",
             ],
         )
 
     def test_refuse_noexistent_resource_id(self):
         self.assert_pcs_fail(
-            "constraint ticket add T master AA loss-policy=fence".split(),
+            "constraint ticket add T main AA loss-policy=fence".split(),
             ["Error: bundle/clone/group/resource 'AA' does not exist"],
         )
 
@@ -3700,32 +3700,32 @@ class TicketAdd(ConstraintBaseTest):
             "constraint ticket add T bad-role A loss-policy=fence".split(),
             [
                 "Error: 'bad-role' is not a valid rsc-role value, use "
-                + "'Master', 'Slave', 'Started', 'Stopped'",
+                + "'Main', 'Subordinate', 'Started', 'Stopped'",
             ],
         )
 
     def test_refuse_duplicate_ticket(self):
         self.assert_pcs_success(
-            "constraint ticket add T master A loss-policy=fence".split()
+            "constraint ticket add T main A loss-policy=fence".split()
         )
         self.assert_pcs_fail(
-            "constraint ticket add T master A loss-policy=fence".split(),
+            "constraint ticket add T main A loss-policy=fence".split(),
             (
                 "Error: duplicate constraint already exists, use --force to "
                 "override\n" + ERRORS_HAVE_OCURRED + "Duplicate constraints:\n"
-                "  Master A loss-policy=fence ticket=T (id:ticket-T-A-Master)\n"
+                "  Main A loss-policy=fence ticket=T (id:ticket-T-A-Main)\n"
             ),
         )
 
     def test_accept_duplicate_ticket_with_force(self):
         self.assert_pcs_success(
-            "constraint ticket add T master A loss-policy=fence".split()
+            "constraint ticket add T main A loss-policy=fence".split()
         )
         self.assert_pcs_success(
-            "constraint ticket add T master A loss-policy=fence --force".split(),
+            "constraint ticket add T main A loss-policy=fence --force".split(),
             [
                 "Duplicate constraints:",
-                "  Master A loss-policy=fence ticket=T (id:ticket-T-A-Master)",
+                "  Main A loss-policy=fence ticket=T (id:ticket-T-A-Main)",
                 "Warning: duplicate constraint already exists",
             ],
         )
@@ -3733,8 +3733,8 @@ class TicketAdd(ConstraintBaseTest):
             "constraint ticket show".split(),
             stdout_full=[
                 "Ticket Constraints:",
-                "  Master A loss-policy=fence ticket=T",
-                "  Master A loss-policy=fence ticket=T",
+                "  Main A loss-policy=fence ticket=T",
+                "  Main A loss-policy=fence ticket=T",
             ],
         )
 
@@ -3824,13 +3824,13 @@ class TicketShow(ConstraintBaseTest):
             "constraint ticket set A B setoptions ticket=T".split()
         )
         self.assert_pcs_success(
-            "constraint ticket add T master A loss-policy=fence".split()
+            "constraint ticket add T main A loss-policy=fence".split()
         )
         self.assert_pcs_success(
             "constraint ticket show".split(),
             [
                 "Ticket Constraints:",
-                "  Master A loss-policy=fence ticket=T",
+                "  Main A loss-policy=fence ticket=T",
                 "  Resource Sets:",
                 "    set A B setoptions ticket=T",
             ],

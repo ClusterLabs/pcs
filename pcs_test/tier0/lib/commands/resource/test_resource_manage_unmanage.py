@@ -40,8 +40,8 @@ fixture_primitive_cib_managed_op_enabled = """
             <operations>
                 <op id="A-start" name="start" />
                 <op id="A-stop" name="stop" />
-                <op id="A-monitor-m" name="monitor" role="Master" />
-                <op id="A-monitor-s" name="monitor" role="Slave" />
+                <op id="A-monitor-m" name="monitor" role="Main" />
+                <op id="A-monitor-s" name="monitor" role="Subordinate" />
             </operations>
         </primitive>
     </resources>
@@ -53,8 +53,8 @@ fixture_primitive_cib_managed_with_meta_op_enabled = """
             <operations>
                 <op id="A-start" name="start" />
                 <op id="A-stop" name="stop" />
-                <op id="A-monitor-m" name="monitor" role="Master" />
-                <op id="A-monitor-s" name="monitor" role="Slave" />
+                <op id="A-monitor-m" name="monitor" role="Main" />
+                <op id="A-monitor-s" name="monitor" role="Subordinate" />
             </operations>
         </primitive>
     </resources>
@@ -66,9 +66,9 @@ fixture_primitive_cib_managed_with_meta_op_disabled = """
             <operations>
                 <op id="A-start" name="start" />
                 <op id="A-stop" name="stop" />
-                <op id="A-monitor-m" name="monitor" role="Master"
+                <op id="A-monitor-m" name="monitor" role="Main"
                     enabled="false" />
-                <op id="A-monitor-s" name="monitor" role="Slave"
+                <op id="A-monitor-s" name="monitor" role="Subordinate"
                     enabled="false" />
             </operations>
         </primitive>
@@ -84,8 +84,8 @@ fixture_primitive_cib_unmanaged_op_enabled = """
             <operations>
                 <op id="A-start" name="start" />
                 <op id="A-stop" name="stop" />
-                <op id="A-monitor-m" name="monitor" role="Master" />
-                <op id="A-monitor-s" name="monitor" role="Slave" />
+                <op id="A-monitor-m" name="monitor" role="Main" />
+                <op id="A-monitor-s" name="monitor" role="Subordinate" />
             </operations>
         </primitive>
     </resources>
@@ -100,9 +100,9 @@ fixture_primitive_cib_unmanaged_op_disabled = """
             <operations>
                 <op id="A-start" name="start" />
                 <op id="A-stop" name="stop" />
-                <op id="A-monitor-m" name="monitor" role="Master"
+                <op id="A-monitor-m" name="monitor" role="Main"
                     enabled="false" />
-                <op id="A-monitor-s" name="monitor" role="Slave"
+                <op id="A-monitor-s" name="monitor" role="Subordinate"
                     enabled="false" />
             </operations>
         </primitive>
@@ -274,71 +274,71 @@ fixture_clone_cib_unmanaged_primitive_op_disabled = """
     </resources>
 """
 
-fixture_master_cib_managed = """
+fixture_main_cib_managed = """
     <resources>
-        <master id="A-master">
+        <main id="A-main">
             <primitive id="A" class="ocf" provider="heartbeat" type="Dummy">
             </primitive>
-        </master>
+        </main>
     </resources>
 """
-fixture_master_cib_managed_with_master_meta = """
+fixture_main_cib_managed_with_main_meta = """
     <resources>
-        <master id="A-master">
-            <meta_attributes id="A-master-meta_attributes" />
+        <main id="A-main">
+            <meta_attributes id="A-main-meta_attributes" />
             <primitive id="A" class="ocf" provider="heartbeat" type="Dummy">
             </primitive>
-        </master>
+        </main>
     </resources>
 """
-fixture_master_cib_managed_with_primitive_meta = """
+fixture_main_cib_managed_with_primitive_meta = """
     <resources>
-        <master id="A-master">
-            <primitive id="A" class="ocf" provider="heartbeat" type="Dummy">
-                <meta_attributes id="A-meta_attributes" />
-            </primitive>
-        </master>
-    </resources>
-"""
-fixture_master_cib_managed_with_both_meta = """
-    <resources>
-        <master id="A-master">
-            <meta_attributes id="A-master-meta_attributes" />
+        <main id="A-main">
             <primitive id="A" class="ocf" provider="heartbeat" type="Dummy">
                 <meta_attributes id="A-meta_attributes" />
             </primitive>
-        </master>
+        </main>
     </resources>
 """
-fixture_master_cib_unmanaged_master = """
+fixture_main_cib_managed_with_both_meta = """
     <resources>
-        <master id="A-master">
-            <meta_attributes id="A-master-meta_attributes">
-                <nvpair id="A-master-meta_attributes-is-managed"
+        <main id="A-main">
+            <meta_attributes id="A-main-meta_attributes" />
+            <primitive id="A" class="ocf" provider="heartbeat" type="Dummy">
+                <meta_attributes id="A-meta_attributes" />
+            </primitive>
+        </main>
+    </resources>
+"""
+fixture_main_cib_unmanaged_main = """
+    <resources>
+        <main id="A-main">
+            <meta_attributes id="A-main-meta_attributes">
+                <nvpair id="A-main-meta_attributes-is-managed"
                     name="is-managed" value="false" />
             </meta_attributes>
             <primitive id="A" class="ocf" provider="heartbeat" type="Dummy">
             </primitive>
-        </master>
+        </main>
     </resources>
 """
-fixture_master_cib_unmanaged_primitive = """
+fixture_main_cib_unmanaged_primitive = """
     <resources>
-        <master id="A-master">
+        <main id="A-main">
             <primitive id="A" class="ocf" provider="heartbeat" type="Dummy">
                 <meta_attributes id="A-meta_attributes">
                     <nvpair id="A-meta_attributes-is-managed"
                         name="is-managed" value="false" />
                 </meta_attributes>
             </primitive>
-        </master>
+        </main>
     </resources>
 """
-fixture_master_cib_unmanaged_both = """
+fixture_main_cib_unmanaged_both = """
     <resources>
-        <master id="A-master">
-            <meta_attributes id="A-master-meta_attributes">
-                <nvpair id="A-master-meta_attributes-is-managed"
+        <main id="A-main">
+            <meta_attributes id="A-main-meta_attributes">
+                <nvpair id="A-main-meta_attributes-is-managed"
                     name="is-managed" value="false" />
             </meta_attributes>
             <primitive id="A" class="ocf" provider="heartbeat" type="Dummy">
@@ -347,13 +347,13 @@ fixture_master_cib_unmanaged_both = """
                         name="is-managed" value="false" />
                 </meta_attributes>
             </primitive>
-        </master>
+        </main>
     </resources>
 """
 
-fixture_master_cib_managed_op_enabled = """
+fixture_main_cib_managed_op_enabled = """
     <resources>
-        <master id="A-master">
+        <main id="A-main">
             <primitive id="A" class="ocf" provider="heartbeat" type="Dummy">
                 <operations>
                     <op id="A-start" name="start" />
@@ -361,12 +361,12 @@ fixture_master_cib_managed_op_enabled = """
                     <op id="A-monitor" name="monitor"/>
                 </operations>
             </primitive>
-        </master>
+        </main>
     </resources>
 """
-fixture_master_cib_unmanaged_primitive_op_disabled = """
+fixture_main_cib_unmanaged_primitive_op_disabled = """
     <resources>
-        <master id="A-master">
+        <main id="A-main">
             <primitive id="A" class="ocf" provider="heartbeat" type="Dummy">
                 <meta_attributes id="A-meta_attributes">
                     <nvpair id="A-meta_attributes-is-managed"
@@ -378,7 +378,7 @@ fixture_master_cib_unmanaged_primitive_op_disabled = """
                     <op id="A-monitor" name="monitor" enabled="false"/>
                 </operations>
             </primitive>
-        </master>
+        </main>
     </resources>
 """
 
@@ -960,47 +960,47 @@ class ManageClone(TestCase):
         resource.manage(self.env_assist.get_env(), ["A-clone"])
 
 
-class UnmanageMaster(TestCase):
+class UnmanageMain(TestCase):
     def setUp(self):
         self.env_assist, self.config = get_env_tools(test_case=self)
 
     def test_primitive(self):
         (
             self.config.runner.cib.load(
-                resources=fixture_master_cib_managed
-            ).env.push_cib(resources=fixture_master_cib_unmanaged_primitive)
+                resources=fixture_main_cib_managed
+            ).env.push_cib(resources=fixture_main_cib_unmanaged_primitive)
         )
         resource.unmanage(self.env_assist.get_env(), ["A"])
 
-    def test_master(self):
+    def test_main(self):
         (
             self.config.runner.cib.load(
-                resources=fixture_master_cib_managed
-            ).env.push_cib(resources=fixture_master_cib_unmanaged_primitive)
+                resources=fixture_main_cib_managed
+            ).env.push_cib(resources=fixture_main_cib_unmanaged_primitive)
         )
-        resource.unmanage(self.env_assist.get_env(), ["A-master"])
+        resource.unmanage(self.env_assist.get_env(), ["A-main"])
 
 
-class ManageMaster(TestCase):
+class ManageMain(TestCase):
     def setUp(self):
         self.env_assist, self.config = get_env_tools(test_case=self)
 
     def test_primitive(self):
         (
             self.config.runner.cib.load(
-                resources=fixture_master_cib_unmanaged_primitive
+                resources=fixture_main_cib_unmanaged_primitive
             ).env.push_cib(
-                resources=fixture_master_cib_managed_with_primitive_meta
+                resources=fixture_main_cib_managed_with_primitive_meta
             )
         )
         resource.manage(self.env_assist.get_env(), ["A"])
 
-    def test_primitive_unmanaged_master(self):
+    def test_primitive_unmanaged_main(self):
         (
             self.config.runner.cib.load(
-                resources=fixture_master_cib_unmanaged_master
+                resources=fixture_main_cib_unmanaged_main
             ).env.push_cib(
-                resources=fixture_master_cib_managed_with_master_meta
+                resources=fixture_main_cib_managed_with_main_meta
             )
         )
         resource.manage(self.env_assist.get_env(), ["A"])
@@ -1008,38 +1008,38 @@ class ManageMaster(TestCase):
     def test_primitive_unmanaged_both(self):
         (
             self.config.runner.cib.load(
-                resources=fixture_master_cib_unmanaged_both
-            ).env.push_cib(resources=fixture_master_cib_managed_with_both_meta)
+                resources=fixture_main_cib_unmanaged_both
+            ).env.push_cib(resources=fixture_main_cib_managed_with_both_meta)
         )
         resource.manage(self.env_assist.get_env(), ["A"])
 
-    def test_master(self):
+    def test_main(self):
         (
             self.config.runner.cib.load(
-                resources=fixture_master_cib_unmanaged_master
+                resources=fixture_main_cib_unmanaged_main
             ).env.push_cib(
-                resources=fixture_master_cib_managed_with_master_meta
+                resources=fixture_main_cib_managed_with_main_meta
             )
         )
-        resource.manage(self.env_assist.get_env(), ["A-master"])
+        resource.manage(self.env_assist.get_env(), ["A-main"])
 
-    def test_master_unmanaged_primitive(self):
+    def test_main_unmanaged_primitive(self):
         (
             self.config.runner.cib.load(
-                resources=fixture_master_cib_unmanaged_primitive
+                resources=fixture_main_cib_unmanaged_primitive
             ).env.push_cib(
-                resources=fixture_master_cib_managed_with_primitive_meta
+                resources=fixture_main_cib_managed_with_primitive_meta
             )
         )
-        resource.manage(self.env_assist.get_env(), ["A-master"])
+        resource.manage(self.env_assist.get_env(), ["A-main"])
 
-    def test_master_unmanaged_both(self):
+    def test_main_unmanaged_both(self):
         (
             self.config.runner.cib.load(
-                resources=fixture_master_cib_unmanaged_both
-            ).env.push_cib(resources=fixture_master_cib_managed_with_both_meta)
+                resources=fixture_main_cib_unmanaged_both
+            ).env.push_cib(resources=fixture_main_cib_managed_with_both_meta)
         )
-        resource.manage(self.env_assist.get_env(), ["A-master"])
+        resource.manage(self.env_assist.get_env(), ["A-main"])
 
 
 class UnmanageClonedGroup(TestCase):
@@ -1439,22 +1439,22 @@ class WithMonitor(TestCase):
         )
         resource.unmanage(self.env_assist.get_env(), ["A"], True)
 
-    def test_unmanage_master(self):
+    def test_unmanage_main(self):
         (
             self.config.runner.cib.load(
-                resources=fixture_master_cib_managed_op_enabled
+                resources=fixture_main_cib_managed_op_enabled
             ).env.push_cib(
-                resources=fixture_master_cib_unmanaged_primitive_op_disabled
+                resources=fixture_main_cib_unmanaged_primitive_op_disabled
             )
         )
-        resource.unmanage(self.env_assist.get_env(), ["A-master"], True)
+        resource.unmanage(self.env_assist.get_env(), ["A-main"], True)
 
-    def test_unmanage_in_master(self):
+    def test_unmanage_in_main(self):
         (
             self.config.runner.cib.load(
-                resources=fixture_master_cib_managed_op_enabled
+                resources=fixture_main_cib_managed_op_enabled
             ).env.push_cib(
-                resources=fixture_master_cib_unmanaged_primitive_op_disabled
+                resources=fixture_main_cib_unmanaged_primitive_op_disabled
             )
         )
         resource.unmanage(self.env_assist.get_env(), ["A"], True)

@@ -49,7 +49,7 @@ def find_valid_resource_id(
 
     report_msg = reports.messages.ResourceForConstraintIsMultiinstance(
         resource_element.attrib["id"],
-        "clone" if clone.tag == "master" else clone.tag,
+        "clone" if clone.tag == "main" else clone.tag,
         clone.attrib["id"],
     )
     if in_clone_allowed:

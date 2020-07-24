@@ -12,9 +12,9 @@ from pcs_test.tools.assertions import (
 from pcs_test.tools.bin_mock import get_mock_settings
 from pcs_test.tools.cib import get_assert_pcs_effect_mixin
 from pcs_test.tools.fixture_cib import (
-    fixture_master_xml,
+    fixture_main_xml,
     fixture_to_cib,
-    wrap_element_by_master,
+    wrap_element_by_main,
 )
 from pcs_test.tools.misc import (
     get_test_resource as rc,
@@ -166,7 +166,7 @@ class Resource(TestCase, AssertPcsMixin):
         self.temp_cib.close()
         self.temp_large_cib.close()
 
-    # Setups up a cluster with Resources, groups, master/slave resource & clones
+    # Setups up a cluster with Resources, groups, main/subordinate resource & clones
     def setupClusterA(self):
         self.assert_pcs_success(
             (
@@ -211,10 +211,10 @@ class Resource(TestCase, AssertPcsMixin):
             "resource group add TestGroup2 ClusterIP2 ClusterIP3".split()
         )
         self.assert_pcs_success("resource clone ClusterIP4".split())
-        # pcs no longer allows turning resources into masters but supports
-        # existing ones. In order to test it, we need to put a master in the
+        # pcs no longer allows turning resources into mains but supports
+        # existing ones. In order to test it, we need to put a main in the
         # CIB without pcs.
-        wrap_element_by_master(self.temp_cib, "ClusterIP5", master_id="Master")
+        wrap_element_by_main(self.temp_cib, "ClusterIP5", main_id="Main")
 
     def testCaseInsensitive(self):
         o, r = pcs(
@@ -724,7 +724,7 @@ monitor interval=60s OCF_CHECK_LEVEL=1 (OPTest7-monitor-interval-60s)
             outdent(
                 """\
                 Error: operation monitor with interval 10s already specified for state:
-                monitor interval=10s role=Master timeout=20s (state-monitor-interval-10s)
+                monitor interval=10s role=Main timeout=20s (state-monitor-interval-10s)
                 """
             ),
         )
@@ -734,13 +734,13 @@ monitor interval=60s OCF_CHECK_LEVEL=1 (OPTest7-monitor-interval-60s)
             outdent(
                 """\
                 Error: operation monitor with interval 10s already specified for state:
-                monitor interval=10s role=Master timeout=20s (state-monitor-interval-10s)
+                monitor interval=10s role=Main timeout=20s (state-monitor-interval-10s)
                 """
             ),
         )
 
         self.assert_pcs_success(
-            "resource op add state monitor interval=15 role=Master --force".split()
+            "resource op add state monitor interval=15 role=Main --force".split()
         )
 
         self.assert_pcs_success(
@@ -748,9 +748,9 @@ monitor interval=60s OCF_CHECK_LEVEL=1 (OPTest7-monitor-interval-60s)
             outdent(
                 """\
              Resource: state (class=ocf provider=pacemaker type=Stateful)
-              Operations: monitor interval=10s role=Master timeout=20s (state-monitor-interval-10s)
-                          monitor interval=11 role=Slave timeout=20s (state-monitor-interval-11)
-                          monitor interval=15 role=Master (state-monitor-interval-15)
+              Operations: monitor interval=10s role=Main timeout=20s (state-monitor-interval-10s)
+                          monitor interval=11 role=Subordinate timeout=20s (state-monitor-interval-11)
+                          monitor interval=15 role=Main (state-monitor-interval-15)
             """
             ),
         )
@@ -1166,7 +1166,7 @@ monitor interval=20 (A-monitor-interval-20)
 
         output, returnVal = pcs(
             self.temp_cib.name,
-            "resource update B op monitor interval=100 role=Master".split(),
+            "resource update B op monitor interval=100 role=Main".split(),
         )
         ac(output, "")
         self.assertEqual(0, returnVal)
@@ -1178,7 +1178,7 @@ monitor interval=20 (A-monitor-interval-20)
  Resource: B (class=ocf provider=heartbeat type=Dummy)
   Operations: monitor interval=33 (B-monitor-interval-33)
               start interval=0 timeout=20 (B-start-interval-0)
-              monitor interval=100 role=Master (B-monitor-interval-100)
+              monitor interval=100 role=Main (B-monitor-interval-100)
 """,
         )
         self.assertEqual(0, returnVal)
@@ -1197,7 +1197,7 @@ monitor interval=20 (A-monitor-interval-20)
  Resource: B (class=ocf provider=heartbeat type=Dummy)
   Operations: monitor interval=33 (B-monitor-interval-33)
               start interval=0 timeout=22 (B-start-interval-0)
-              monitor interval=100 role=Master (B-monitor-interval-100)
+              monitor interval=100 role=Main (B-monitor-interval-100)
 """,
         )
         self.assertEqual(0, returnVal)
@@ -1494,7 +1494,7 @@ monitor interval=20 (A-monitor-interval-20)
               Resource: ClusterIP4 (class=ocf provider=heartbeat type=IPaddr2)
                Attributes: cidr_netmask=32 ip=192.168.0.94
                Operations: monitor interval=30s (ClusterIP4-monitor-interval-30s)
-             Clone: Master
+             Clone: Main
               Meta Attrs: promotable=true
               Resource: ClusterIP5 (class=ocf provider=heartbeat type=IPaddr2)
                Attributes: cidr_netmask=32 ip=192.168.0.95
@@ -1628,7 +1628,7 @@ monitor interval=20 (A-monitor-interval-20)
         assert returnVal == 0
 
     @skip_unless_crm_rule()
-    def testMasterSlaveRemove(self):
+    def testMainSubordinateRemove(self):
         self.setupClusterA()
         output, returnVal = pcs(
             self.temp_cib.name,
@@ -1639,16 +1639,16 @@ monitor interval=20 (A-monitor-interval-20)
 
         output, returnVal = pcs(
             self.temp_cib.name,
-            "constraint location Master prefers rh7-2".split(),
+            "constraint location Main prefers rh7-2".split(),
         )
         assert returnVal == 0
         assert output == LOCATION_NODE_VALIDATION_SKIP_WARNING
 
         self.assert_pcs_success(
-            "resource delete Master".split(),
+            "resource delete Main".split(),
             outdent(
                 """\
-            Removing Constraint - location-Master-rh7-2-INFINITY
+            Removing Constraint - location-Main-rh7-2-INFINITY
             Removing Constraint - location-ClusterIP5-rh7-1-INFINITY
             Deleting Resource - ClusterIP5
             """
@@ -1774,10 +1774,10 @@ monitor interval=20 (A-monitor-interval-20)
         )
         del self.pcs_runner.mock_settings["corosync_conf_file"]
 
-        # pcs no longer allows turning resources into masters but supports
-        # existing ones. In order to test it, we need to put a master in the
+        # pcs no longer allows turning resources into mains but supports
+        # existing ones. In order to test it, we need to put a main in the
         # CIB without pcs.
-        wrap_element_by_master(self.temp_large_cib, "dummylarge")
+        wrap_element_by_main(self.temp_large_cib, "dummylarge")
 
         output, returnVal = pcs(
             self.temp_large_cib.name, "resource delete dummylarge".split()
@@ -1785,7 +1785,7 @@ monitor interval=20 (A-monitor-interval-20)
         ac(output, "Deleting Resource - dummylarge\n")
         assert returnVal == 0
 
-    def testMasterSlaveGroupLargeResourceRemove(self):
+    def testMainSubordinateGroupLargeResourceRemove(self):
         output, returnVal = pcs(
             self.temp_large_cib.name,
             "resource group add dummies dummylarge".split(),
@@ -1793,10 +1793,10 @@ monitor interval=20 (A-monitor-interval-20)
         ac(output, "")
         assert returnVal == 0
 
-        # pcs no longer allows turning resources into masters but supports
-        # existing ones. In order to test it, we need to put a master in the
+        # pcs no longer allows turning resources into mains but supports
+        # existing ones. In order to test it, we need to put a main in the
         # CIB without pcs.
-        wrap_element_by_master(self.temp_large_cib, "dummies")
+        wrap_element_by_main(self.temp_large_cib, "dummies")
 
         output, returnVal = pcs(
             self.temp_large_cib.name, "resource delete dummies".split()
@@ -1834,16 +1834,16 @@ monitor interval=20 (A-monitor-interval-20)
         assert returnVal == 0
         assert output == "", [output]
 
-        # pcs no longer allows turning resources into masters but supports
-        # existing ones. In order to test it, we need to put a master in the
+        # pcs no longer allows turning resources into mains but supports
+        # existing ones. In order to test it, we need to put a main in the
         # CIB without pcs.
-        wrap_element_by_master(self.temp_cib, "Group", master_id="GroupMaster")
+        wrap_element_by_main(self.temp_cib, "Group", main_id="GroupMain")
 
         self.assert_pcs_success(
             "resource config".split(),
             outdent(
                 """\
-             Clone: GroupMaster
+             Clone: GroupMain
               Meta Attrs: promotable=true
               Group: Group
                Resource: D0 (class=ocf provider=heartbeat type=Dummy)
@@ -2032,7 +2032,7 @@ monitor interval=20 (A-monitor-interval-20)
             ),
         )
 
-    def testUncloneMaster(self):
+    def testUncloneMain(self):
         # see also BundleClone
         self.assert_pcs_success(
             "resource create --no-default-ops dummy1 ocf:pacemaker:Stateful".split(),
@@ -2064,10 +2064,10 @@ monitor interval=20 (A-monitor-interval-20)
         self.assertEqual(1, returnVal)
 
         # unclone with a cloned primitive specified
-        # pcs no longer allows turning resources into masters but supports
-        # existing ones. In order to test it, we need to put a master in the
+        # pcs no longer allows turning resources into mains but supports
+        # existing ones. In order to test it, we need to put a main in the
         # CIB without pcs.
-        wrap_element_by_master(self.temp_cib, "dummy2")
+        wrap_element_by_main(self.temp_cib, "dummy2")
 
         self.assert_pcs_success(
             "resource config".split(),
@@ -2075,13 +2075,13 @@ monitor interval=20 (A-monitor-interval-20)
                 """\
              Group: gr
               Resource: dummy1 (class=ocf provider=pacemaker type=Stateful)
-               Operations: monitor interval=10s role=Master timeout=20s (dummy1-monitor-interval-10s)
-                           monitor interval=11 role=Slave timeout=20s (dummy1-monitor-interval-11)
-             Clone: dummy2-master
+               Operations: monitor interval=10s role=Main timeout=20s (dummy1-monitor-interval-10s)
+                           monitor interval=11 role=Subordinate timeout=20s (dummy1-monitor-interval-11)
+             Clone: dummy2-main
               Meta Attrs: promotable=true
               Resource: dummy2 (class=ocf provider=pacemaker type=Stateful)
-               Operations: monitor interval=10s role=Master timeout=20s (dummy2-monitor-interval-10s)
-                           monitor interval=11 role=Slave timeout=20s (dummy2-monitor-interval-11)
+               Operations: monitor interval=10s role=Main timeout=20s (dummy2-monitor-interval-10s)
+                           monitor interval=11 role=Subordinate timeout=20s (dummy2-monitor-interval-11)
             """
             ),
         )
@@ -2098,11 +2098,11 @@ monitor interval=20 (A-monitor-interval-20)
                 """\
              Group: gr
               Resource: dummy1 (class=ocf provider=pacemaker type=Stateful)
-               Operations: monitor interval=10s role=Master timeout=20s (dummy1-monitor-interval-10s)
-                           monitor interval=11 role=Slave timeout=20s (dummy1-monitor-interval-11)
+               Operations: monitor interval=10s role=Main timeout=20s (dummy1-monitor-interval-10s)
+                           monitor interval=11 role=Subordinate timeout=20s (dummy1-monitor-interval-11)
              Resource: dummy2 (class=ocf provider=pacemaker type=Stateful)
-              Operations: monitor interval=10s role=Master timeout=20s (dummy2-monitor-interval-10s)
-                          monitor interval=11 role=Slave timeout=20s (dummy2-monitor-interval-11)
+              Operations: monitor interval=10s role=Main timeout=20s (dummy2-monitor-interval-10s)
+                          monitor interval=11 role=Subordinate timeout=20s (dummy2-monitor-interval-11)
             """
             ),
         )
@@ -2114,30 +2114,30 @@ monitor interval=20 (A-monitor-interval-20)
         ac(output, "")
         self.assertEqual(0, returnVal)
 
-        # pcs no longer allows turning resources into masters but supports
-        # existing ones. In order to test it, we need to put a master in the
+        # pcs no longer allows turning resources into mains but supports
+        # existing ones. In order to test it, we need to put a main in the
         # CIB without pcs.
-        wrap_element_by_master(self.temp_cib, "gr")
+        wrap_element_by_main(self.temp_cib, "gr")
 
         self.assert_pcs_success(
             "resource config".split(),
             outdent(
                 """\
-             Clone: gr-master
+             Clone: gr-main
               Meta Attrs: promotable=true
               Group: gr
                Resource: dummy1 (class=ocf provider=pacemaker type=Stateful)
-                Operations: monitor interval=10s role=Master timeout=20s (dummy1-monitor-interval-10s)
-                            monitor interval=11 role=Slave timeout=20s (dummy1-monitor-interval-11)
+                Operations: monitor interval=10s role=Main timeout=20s (dummy1-monitor-interval-10s)
+                            monitor interval=11 role=Subordinate timeout=20s (dummy1-monitor-interval-11)
                Resource: dummy2 (class=ocf provider=pacemaker type=Stateful)
-                Operations: monitor interval=10s role=Master timeout=20s (dummy2-monitor-interval-10s)
-                            monitor interval=11 role=Slave timeout=20s (dummy2-monitor-interval-11)
+                Operations: monitor interval=10s role=Main timeout=20s (dummy2-monitor-interval-10s)
+                            monitor interval=11 role=Subordinate timeout=20s (dummy2-monitor-interval-11)
             """
             ),
         )
 
         output, returnVal = pcs(
-            self.temp_cib.name, "resource unclone gr-master".split()
+            self.temp_cib.name, "resource unclone gr-main".split()
         )
         ac(output, "")
         self.assertEqual(0, returnVal)
@@ -2148,34 +2148,34 @@ monitor interval=20 (A-monitor-interval-20)
                 """\
              Group: gr
               Resource: dummy1 (class=ocf provider=pacemaker type=Stateful)
-               Operations: monitor interval=10s role=Master timeout=20s (dummy1-monitor-interval-10s)
-                           monitor interval=11 role=Slave timeout=20s (dummy1-monitor-interval-11)
+               Operations: monitor interval=10s role=Main timeout=20s (dummy1-monitor-interval-10s)
+                           monitor interval=11 role=Subordinate timeout=20s (dummy1-monitor-interval-11)
               Resource: dummy2 (class=ocf provider=pacemaker type=Stateful)
-               Operations: monitor interval=10s role=Master timeout=20s (dummy2-monitor-interval-10s)
-                           monitor interval=11 role=Slave timeout=20s (dummy2-monitor-interval-11)
+               Operations: monitor interval=10s role=Main timeout=20s (dummy2-monitor-interval-10s)
+                           monitor interval=11 role=Subordinate timeout=20s (dummy2-monitor-interval-11)
             """
             ),
         )
 
         # unclone with a cloned group specified
-        # pcs no longer allows turning resources into masters but supports
-        # existing ones. In order to test it, we need to put a master in the
+        # pcs no longer allows turning resources into mains but supports
+        # existing ones. In order to test it, we need to put a main in the
         # CIB without pcs.
-        wrap_element_by_master(self.temp_cib, "gr")
+        wrap_element_by_main(self.temp_cib, "gr")
 
         self.assert_pcs_success(
             "resource config".split(),
             outdent(
                 """\
-             Clone: gr-master
+             Clone: gr-main
               Meta Attrs: promotable=true
               Group: gr
                Resource: dummy1 (class=ocf provider=pacemaker type=Stateful)
-                Operations: monitor interval=10s role=Master timeout=20s (dummy1-monitor-interval-10s)
-                            monitor interval=11 role=Slave timeout=20s (dummy1-monitor-interval-11)
+                Operations: monitor interval=10s role=Main timeout=20s (dummy1-monitor-interval-10s)
+                            monitor interval=11 role=Subordinate timeout=20s (dummy1-monitor-interval-11)
                Resource: dummy2 (class=ocf provider=pacemaker type=Stateful)
-                Operations: monitor interval=10s role=Master timeout=20s (dummy2-monitor-interval-10s)
-                            monitor interval=11 role=Slave timeout=20s (dummy2-monitor-interval-11)
+                Operations: monitor interval=10s role=Main timeout=20s (dummy2-monitor-interval-10s)
+                            monitor interval=11 role=Subordinate timeout=20s (dummy2-monitor-interval-11)
             """
             ),
         )
@@ -2192,11 +2192,11 @@ monitor interval=20 (A-monitor-interval-20)
                 """\
              Group: gr
               Resource: dummy1 (class=ocf provider=pacemaker type=Stateful)
-               Operations: monitor interval=10s role=Master timeout=20s (dummy1-monitor-interval-10s)
-                           monitor interval=11 role=Slave timeout=20s (dummy1-monitor-interval-11)
+               Operations: monitor interval=10s role=Main timeout=20s (dummy1-monitor-interval-10s)
+                           monitor interval=11 role=Subordinate timeout=20s (dummy1-monitor-interval-11)
               Resource: dummy2 (class=ocf provider=pacemaker type=Stateful)
-               Operations: monitor interval=10s role=Master timeout=20s (dummy2-monitor-interval-10s)
-                           monitor interval=11 role=Slave timeout=20s (dummy2-monitor-interval-11)
+               Operations: monitor interval=10s role=Main timeout=20s (dummy2-monitor-interval-10s)
+                           monitor interval=11 role=Subordinate timeout=20s (dummy2-monitor-interval-11)
             """
             ),
         )
@@ -2208,24 +2208,24 @@ monitor interval=20 (A-monitor-interval-20)
         ac(output, "")
         self.assertEqual(0, returnVal)
 
-        # pcs no longer allows turning resources into masters but supports
-        # existing ones. In order to test it, we need to put a master in the
+        # pcs no longer allows turning resources into mains but supports
+        # existing ones. In order to test it, we need to put a main in the
         # CIB without pcs.
-        wrap_element_by_master(self.temp_cib, "gr")
+        wrap_element_by_main(self.temp_cib, "gr")
 
         self.assert_pcs_success(
             "resource config".split(),
             outdent(
                 """\
              Resource: dummy2 (class=ocf provider=pacemaker type=Stateful)
-              Operations: monitor interval=10s role=Master timeout=20s (dummy2-monitor-interval-10s)
-                          monitor interval=11 role=Slave timeout=20s (dummy2-monitor-interval-11)
-             Clone: gr-master
+              Operations: monitor interval=10s role=Main timeout=20s (dummy2-monitor-interval-10s)
+                          monitor interval=11 role=Subordinate timeout=20s (dummy2-monitor-interval-11)
+             Clone: gr-main
               Meta Attrs: promotable=true
               Group: gr
                Resource: dummy1 (class=ocf provider=pacemaker type=Stateful)
-                Operations: monitor interval=10s role=Master timeout=20s (dummy1-monitor-interval-10s)
-                            monitor interval=11 role=Slave timeout=20s (dummy1-monitor-interval-11)
+                Operations: monitor interval=10s role=Main timeout=20s (dummy1-monitor-interval-10s)
+                            monitor interval=11 role=Subordinate timeout=20s (dummy1-monitor-interval-11)
             """
             ),
         )
@@ -2241,11 +2241,11 @@ monitor interval=20 (A-monitor-interval-20)
             outdent(
                 """\
              Resource: dummy2 (class=ocf provider=pacemaker type=Stateful)
-              Operations: monitor interval=10s role=Master timeout=20s (dummy2-monitor-interval-10s)
-                          monitor interval=11 role=Slave timeout=20s (dummy2-monitor-interval-11)
+              Operations: monitor interval=10s role=Main timeout=20s (dummy2-monitor-interval-10s)
+                          monitor interval=11 role=Subordinate timeout=20s (dummy2-monitor-interval-11)
              Resource: dummy1 (class=ocf provider=pacemaker type=Stateful)
-              Operations: monitor interval=10s role=Master timeout=20s (dummy1-monitor-interval-10s)
-                          monitor interval=11 role=Slave timeout=20s (dummy1-monitor-interval-11)
+              Operations: monitor interval=10s role=Main timeout=20s (dummy1-monitor-interval-10s)
+                          monitor interval=11 role=Subordinate timeout=20s (dummy1-monitor-interval-11)
             """
             ),
         )
@@ -2256,24 +2256,24 @@ monitor interval=20 (A-monitor-interval-20)
         ac(output, "")
         self.assertEqual(0, returnVal)
 
-        # pcs no longer allows turning resources into masters but supports
-        # existing ones. In order to test it, we need to put a master in the
+        # pcs no longer allows turning resources into mains but supports
+        # existing ones. In order to test it, we need to put a main in the
         # CIB without pcs.
-        wrap_element_by_master(self.temp_cib, "gr")
+        wrap_element_by_main(self.temp_cib, "gr")
 
         self.assert_pcs_success(
             "resource config".split(),
             outdent(
                 """\
-             Clone: gr-master
+             Clone: gr-main
               Meta Attrs: promotable=true
               Group: gr
                Resource: dummy1 (class=ocf provider=pacemaker type=Stateful)
-                Operations: monitor interval=10s role=Master timeout=20s (dummy1-monitor-interval-10s)
-                            monitor interval=11 role=Slave timeout=20s (dummy1-monitor-interval-11)
+                Operations: monitor interval=10s role=Main timeout=20s (dummy1-monitor-interval-10s)
+                            monitor interval=11 role=Subordinate timeout=20s (dummy1-monitor-interval-11)
                Resource: dummy2 (class=ocf provider=pacemaker type=Stateful)
-                Operations: monitor interval=10s role=Master timeout=20s (dummy2-monitor-interval-10s)
-                            monitor interval=11 role=Slave timeout=20s (dummy2-monitor-interval-11)
+                Operations: monitor interval=10s role=Main timeout=20s (dummy2-monitor-interval-10s)
+                            monitor interval=11 role=Subordinate timeout=20s (dummy2-monitor-interval-11)
             """
             ),
         )
@@ -2288,15 +2288,15 @@ monitor interval=20 (A-monitor-interval-20)
             "resource config".split(),
             outdent(
                 """\
-             Clone: gr-master
+             Clone: gr-main
               Meta Attrs: promotable=true
               Group: gr
                Resource: dummy1 (class=ocf provider=pacemaker type=Stateful)
-                Operations: monitor interval=10s role=Master timeout=20s (dummy1-monitor-interval-10s)
-                            monitor interval=11 role=Slave timeout=20s (dummy1-monitor-interval-11)
+                Operations: monitor interval=10s role=Main timeout=20s (dummy1-monitor-interval-10s)
+                            monitor interval=11 role=Subordinate timeout=20s (dummy1-monitor-interval-11)
              Resource: dummy2 (class=ocf provider=pacemaker type=Stateful)
-              Operations: monitor interval=10s role=Master timeout=20s (dummy2-monitor-interval-10s)
-                          monitor interval=11 role=Slave timeout=20s (dummy2-monitor-interval-11)
+              Operations: monitor interval=10s role=Main timeout=20s (dummy2-monitor-interval-10s)
+                          monitor interval=11 role=Subordinate timeout=20s (dummy2-monitor-interval-11)
             """
             ),
         )
@@ -2409,7 +2409,7 @@ monitor interval=20 (A-monitor-interval-20)
         )
         assert r == 0
 
-    def testCloneMaster(self):
+    def testCloneMain(self):
         # see also BundleClone
         output, returnVal = pcs(
             self.temp_cib.name,
@@ -2456,17 +2456,17 @@ monitor interval=20 (A-monitor-interval-20)
         assert returnVal == 0
         assert output == "", [output]
 
-        # pcs no longer allows turning resources into masters but supports
-        # existing ones. In order to test it, we need to put a master in the
+        # pcs no longer allows turning resources into mains but supports
+        # existing ones. In order to test it, we need to put a main in the
         # CIB without pcs.
-        wrap_element_by_master(
-            self.temp_cib, "D1", master_id="D1-master-custom"
+        wrap_element_by_main(
+            self.temp_cib, "D1", main_id="D1-main-custom"
         )
 
-        # pcs no longer allows turning resources into masters but supports
-        # existing ones. In order to test it, we need to put a master in the
+        # pcs no longer allows turning resources into mains but supports
+        # existing ones. In order to test it, we need to put a main in the
         # CIB without pcs.
-        wrap_element_by_master(self.temp_cib, "D2")
+        wrap_element_by_main(self.temp_cib, "D2")
 
         self.assert_pcs_success(
             "resource config".split(),
@@ -2479,11 +2479,11 @@ monitor interval=20 (A-monitor-interval-20)
               Meta Attrs: promotable=true
               Resource: D3 (class=ocf provider=heartbeat type=Dummy)
                Operations: monitor interval=10s timeout=20s (D3-monitor-interval-10s)
-             Clone: D1-master-custom
+             Clone: D1-main-custom
               Meta Attrs: promotable=true
               Resource: D1 (class=ocf provider=heartbeat type=Dummy)
                Operations: monitor interval=10s timeout=20s (D1-monitor-interval-10s)
-             Clone: D2-master
+             Clone: D2-main
               Meta Attrs: promotable=true
               Resource: D2 (class=ocf provider=heartbeat type=Dummy)
                Operations: monitor interval=10s timeout=20s (D2-monitor-interval-10s)
@@ -2516,7 +2516,7 @@ monitor interval=20 (A-monitor-interval-20)
               Meta Attrs: promotable=true
               Resource: D3 (class=ocf provider=heartbeat type=Dummy)
                Operations: monitor interval=10s timeout=20s (D3-monitor-interval-10s)
-             Clone: D1-master-custom
+             Clone: D1-main-custom
               Meta Attrs: promotable=true
               Resource: D1 (class=ocf provider=heartbeat type=Dummy)
                Operations: monitor interval=10s timeout=20s (D1-monitor-interval-10s)
@@ -2603,9 +2603,9 @@ monitor interval=20 (A-monitor-interval-20)
         ac(o, "")
         assert r == 0
 
-        # pcs no longer allows creating masters but supports existing ones. In
-        # order to test it, we need to put a master in the CIB without pcs.
-        fixture_to_cib(self.temp_cib.name, fixture_master_xml("D3"))
+        # pcs no longer allows creating mains but supports existing ones. In
+        # order to test it, we need to put a main in the CIB without pcs.
+        fixture_to_cib(self.temp_cib.name, fixture_main_xml("D3"))
 
         o, r = pcs(self.temp_cib.name, "resource debug-start DGroup".split())
         ac(
@@ -2621,10 +2621,10 @@ monitor interval=20 (A-monitor-interval-20)
         )
         assert r == 1
 
-        o, r = pcs(self.temp_cib.name, "resource debug-start D3-master".split())
+        o, r = pcs(self.temp_cib.name, "resource debug-start D3-main".split())
         ac(
             o,
-            "Error: unable to debug-start a master, try the master's resource: D3\n",
+            "Error: unable to debug-start a main, try the main's resource: D3\n",
         )
         assert r == 1
 
@@ -3001,14 +3001,14 @@ monitor interval=20 (A-monitor-interval-20)
         )
         assert r == 0
 
-        # pcs no longer allows turning resources into masters but supports
-        # existing ones. In order to test it, we need to put a master in the
+        # pcs no longer allows turning resources into mains but supports
+        # existing ones. In order to test it, we need to put a main in the
         # CIB without pcs.
-        wrap_element_by_master(self.temp_cib, "AA")
+        wrap_element_by_main(self.temp_cib, "AA")
 
         o, r = pcs(
             self.temp_cib.name,
-            "constraint location AA-master prefers rh7-1".split(),
+            "constraint location AA-main prefers rh7-1".split(),
         )
         assert r == 0
 
@@ -3020,13 +3020,13 @@ monitor interval=20 (A-monitor-interval-20)
             "resource delete A2".split(),
             outdent(
                 """\
-            Removing Constraint - location-AA-master-rh7-1-INFINITY
+            Removing Constraint - location-AA-main-rh7-1-INFINITY
             Deleting Resource (and group and M/S) - A2
             """
             ),
         )
 
-    def testMasteredGroup(self):
+    def testMainedGroup(self):
         o, r = pcs(
             self.temp_cib.name,
             "resource create --no-default-ops A ocf:heartbeat:Dummy --group AG".split(),
@@ -3045,10 +3045,10 @@ monitor interval=20 (A-monitor-interval-20)
         )
         assert r == 0
 
-        # pcs no longer allows turning resources into masters but supports
-        # existing ones. In order to test it, we need to put a master in the
+        # pcs no longer allows turning resources into mains but supports
+        # existing ones. In order to test it, we need to put a main in the
         # CIB without pcs.
-        wrap_element_by_master(self.temp_cib, "AG", master_id="AGMaster")
+        wrap_element_by_main(self.temp_cib, "AG", main_id="AGMain")
 
         self.assert_pcs_fail(
             "resource create --no-default-ops A ocf:heartbeat:Dummy".split(),
@@ -3061,8 +3061,8 @@ monitor interval=20 (A-monitor-interval-20)
         )
 
         self.assert_pcs_fail(
-            "resource create --no-default-ops AGMaster ocf:heartbeat:Dummy".split(),
-            "Error: 'AGMaster' already exists\n",
+            "resource create --no-default-ops AGMain ocf:heartbeat:Dummy".split(),
+            "Error: 'AGMain' already exists\n",
         )
 
         o, r = pcs(self.temp_cib.name, "resource ungroup AG".split())
@@ -3082,7 +3082,7 @@ monitor interval=20 (A-monitor-interval-20)
             "resource config".split(),
             outdent(
                 """\
-             Clone: AGMaster
+             Clone: AGMain
               Meta Attrs: promotable=true
               Resource: A (class=ocf provider=heartbeat type=Dummy)
                Operations: monitor interval=10s timeout=20s (A-monitor-interval-10s)
@@ -3178,7 +3178,7 @@ monitor interval=20 (A-monitor-interval-20)
         ac(
             output,
             """\
-Error: role must be: Stopped, Started, Slave or Master (use --force to override)
+Error: role must be: Stopped, Started, Subordinate or Main (use --force to override)
 """,
         )
         assert returnVal == 1
@@ -3197,17 +3197,17 @@ Error: role must be: Stopped, Started, Slave or Master (use --force to override)
 
         o, r = pcs(
             self.temp_cib.name,
-            "resource update B op monitor interval=30s monitor interval=31s role=master".split(),
+            "resource update B op monitor interval=30s monitor interval=31s role=main".split(),
         )
         ac(
             o,
-            "Error: role must be: Stopped, Started, Slave or Master (use --force to override)\n",
+            "Error: role must be: Stopped, Started, Subordinate or Main (use --force to override)\n",
         )
         assert r == 1
 
         o, r = pcs(
             self.temp_cib.name,
-            "resource update B op monitor interval=30s monitor interval=31s role=Master".split(),
+            "resource update B op monitor interval=30s monitor interval=31s role=Main".split(),
         )
         ac(o, "")
         assert r == 0
@@ -3218,7 +3218,7 @@ Error: role must be: Stopped, Started, Slave or Master (use --force to override)
                 """\
              Resource: B (class=ocf provider=heartbeat type=Dummy)
               Operations: monitor interval=30s (B-monitor-interval-30s)
-                          monitor interval=31s role=Master (B-monitor-interval-31s)
+                          monitor interval=31s role=Main (B-monitor-interval-31s)
              Resource: C (class=ocf provider=heartbeat type=Dummy)
               Operations: monitor interval=10s timeout=20s (C-monitor-interval-10s)
             """
@@ -3359,7 +3359,7 @@ Error: role must be: Stopped, Started, Slave or Master (use --force to override)
             ),
         )
 
-    def testClonedMasteredGroup(self):
+    def testClonedMainedGroup(self):
         output, retVal = pcs(
             self.temp_cib.name,
             "resource create dummy1 ocf:heartbeat:Dummy --no-default-ops --group dummies".split(),
@@ -3490,16 +3490,16 @@ Error: role must be: Stopped, Started, Slave or Master (use --force to override)
         ac(output, "")
         assert retVal == 0
 
-        # pcs no longer allows turning resources into masters but supports
-        # existing ones. In order to test it, we need to put a master in the
+        # pcs no longer allows turning resources into mains but supports
+        # existing ones. In order to test it, we need to put a main in the
         # CIB without pcs.
-        wrap_element_by_master(self.temp_cib, "dummies")
+        wrap_element_by_main(self.temp_cib, "dummies")
 
         self.assert_pcs_success(
-            "resource config dummies-master".split(),
+            "resource config dummies-main".split(),
             outdent(
                 """\
-             Clone: dummies-master
+             Clone: dummies-main
               Meta Attrs: promotable=true
               Group: dummies
                Resource: dummy1 (class=ocf provider=heartbeat type=Dummy)
@@ -3513,7 +3513,7 @@ Error: role must be: Stopped, Started, Slave or Master (use --force to override)
         )
 
         output, retVal = pcs(
-            self.temp_cib.name, "resource unclone dummies-master".split()
+            self.temp_cib.name, "resource unclone dummies-main".split()
         )
         ac(output, "")
         assert retVal == 0
@@ -3544,16 +3544,16 @@ Error: role must be: Stopped, Started, Slave or Master (use --force to override)
             )
         assert retVal == 0
 
-        # pcs no longer allows turning resources into masters but supports
-        # existing ones. In order to test it, we need to put a master in the
+        # pcs no longer allows turning resources into mains but supports
+        # existing ones. In order to test it, we need to put a main in the
         # CIB without pcs.
-        wrap_element_by_master(self.temp_cib, "dummies")
+        wrap_element_by_main(self.temp_cib, "dummies")
 
         self.assert_pcs_success(
-            "resource config dummies-master".split(),
+            "resource config dummies-main".split(),
             outdent(
                 """\
-             Clone: dummies-master
+             Clone: dummies-main
               Meta Attrs: promotable=true
               Group: dummies
                Resource: dummy1 (class=ocf provider=heartbeat type=Dummy)
@@ -3567,7 +3567,7 @@ Error: role must be: Stopped, Started, Slave or Master (use --force to override)
         )
 
         self.assert_pcs_success(
-            "resource delete dummies-master".split(),
+            "resource delete dummies-main".split(),
             outdent(
                 """\
             Removing group: dummies (and all resources within group)
@@ -4619,9 +4619,9 @@ class ResourcesReferencedFromAcl(TestCase, AssertPcsMixin):
         )
 
 
-class CloneMasterUpdate(TestCase, AssertPcsMixin):
+class CloneMainUpdate(TestCase, AssertPcsMixin):
     def setUp(self):
-        self.temp_cib = get_tmp_file("tier1_resource_clone_master_update")
+        self.temp_cib = get_tmp_file("tier1_resource_clone_main_update")
         write_file_to_tmpfile(empty_cib, self.temp_cib)
         self.pcs_runner = PcsRunner(self.temp_cib.name)
 
@@ -4671,52 +4671,52 @@ class CloneMasterUpdate(TestCase, AssertPcsMixin):
             ),
         )
 
-    def test_no_op_allowed_in_master_update(self):
-        # pcs no longer allows creating masters but supports existing ones. In
-        # order to test it, we need to put a master in the CIB without pcs.
-        fixture_to_cib(self.temp_cib.name, fixture_master_xml("dummy"))
+    def test_no_op_allowed_in_main_update(self):
+        # pcs no longer allows creating mains but supports existing ones. In
+        # order to test it, we need to put a main in the CIB without pcs.
+        fixture_to_cib(self.temp_cib.name, fixture_main_xml("dummy"))
         show = outdent(
             """\
-             Clone: dummy-master
+             Clone: dummy-main
               Meta Attrs: promotable=true
               Resource: dummy (class=ocf provider=pacemaker type=Stateful)
-               Operations: monitor interval=10 role=Master timeout=20 (dummy-monitor-interval-10)
-                           monitor interval=11 role=Slave timeout=20 (dummy-monitor-interval-11)
+               Operations: monitor interval=10 role=Main timeout=20 (dummy-monitor-interval-10)
+                           monitor interval=11 role=Subordinate timeout=20 (dummy-monitor-interval-11)
                            notify interval=0s timeout=5 (dummy-notify-interval-0s)
                            start interval=0s timeout=20 (dummy-start-interval-0s)
                            stop interval=0s timeout=20 (dummy-stop-interval-0s)
             """
         )
-        self.assert_pcs_success("resource config dummy-master".split(), show)
+        self.assert_pcs_success("resource config dummy-main".split(), show)
         self.assert_pcs_fail(
-            "resource update dummy-master op stop timeout=300".split(),
+            "resource update dummy-main op stop timeout=300".split(),
             "Error: op settings must be changed on base resource, not the clone\n",
         )
         self.assert_pcs_fail(
-            "resource update dummy-master foo=bar op stop timeout=300".split(),
+            "resource update dummy-main foo=bar op stop timeout=300".split(),
             "Error: op settings must be changed on base resource, not the clone\n",
         )
-        self.assert_pcs_success("resource config dummy-master".split(), show)
+        self.assert_pcs_success("resource config dummy-main".split(), show)
 
 
-class TransforMasterToClone(ResourceTest):
-    def test_transform_master_without_meta_on_meta(self):
-        # pcs no longer allows creating masters but supports existing ones. In
-        # order to test it, we need to put a master in the CIB without pcs.
-        fixture_to_cib(self.temp_cib.name, fixture_master_xml("dummy"))
+class TransforMainToClone(ResourceTest):
+    def test_transform_main_without_meta_on_meta(self):
+        # pcs no longer allows creating mains but supports existing ones. In
+        # order to test it, we need to put a main in the CIB without pcs.
+        fixture_to_cib(self.temp_cib.name, fixture_main_xml("dummy"))
         self.assert_effect(
-            "resource meta dummy-master a=b".split(),
+            "resource meta dummy-main a=b".split(),
             """<resources>
-                <clone id="dummy-master">
+                <clone id="dummy-main">
                     <primitive class="ocf" id="dummy" provider="pacemaker"
                         type="Stateful"
                     >
                         <operations>
                             <op id="dummy-monitor-interval-10" interval="10"
-                                name="monitor" role="Master" timeout="20"
+                                name="monitor" role="Main" timeout="20"
                             />
                             <op id="dummy-monitor-interval-11" interval="11"
-                                name="monitor" role="Slave" timeout="20"
+                                name="monitor" role="Subordinate" timeout="20"
                             />
                             <op id="dummy-notify-interval-0s" interval="0s"
                                 name="notify" timeout="5"
@@ -4729,11 +4729,11 @@ class TransforMasterToClone(ResourceTest):
                             />
                         </operations>
                     </primitive>
-                    <meta_attributes id="dummy-master-meta_attributes">
-                        <nvpair id="dummy-master-meta_attributes-promotable"
+                    <meta_attributes id="dummy-main-meta_attributes">
+                        <nvpair id="dummy-main-meta_attributes-promotable"
                               name="promotable" value="true"
                         />
-                        <nvpair id="dummy-master-meta_attributes-a" name="a"
+                        <nvpair id="dummy-main-meta_attributes-a" name="a"
                             value="b"
                         />
                     </meta_attributes>
@@ -4741,26 +4741,26 @@ class TransforMasterToClone(ResourceTest):
             </resources>""",
         )
 
-    def test_transform_master_with_meta_on_meta(self):
-        # pcs no longer allows creating masters but supports existing ones. In
-        # order to test it, we need to put a master in the CIB without pcs.
+    def test_transform_main_with_meta_on_meta(self):
+        # pcs no longer allows creating mains but supports existing ones. In
+        # order to test it, we need to put a main in the CIB without pcs.
         fixture_to_cib(
             self.temp_cib.name,
-            fixture_master_xml("dummy", meta_dict=dict(a="A", b="B", c="C")),
+            fixture_main_xml("dummy", meta_dict=dict(a="A", b="B", c="C")),
         )
         self.assert_effect(
-            "resource meta dummy-master a=AA b= d=D promotable=".split(),
+            "resource meta dummy-main a=AA b= d=D promotable=".split(),
             """<resources>
-                <clone id="dummy-master">
+                <clone id="dummy-main">
                     <primitive class="ocf" id="dummy" provider="pacemaker"
                         type="Stateful"
                     >
                         <operations>
                             <op id="dummy-monitor-interval-10" interval="10"
-                                name="monitor" role="Master" timeout="20"
+                                name="monitor" role="Main" timeout="20"
                             />
                             <op id="dummy-monitor-interval-11" interval="11"
-                                name="monitor" role="Slave" timeout="20"
+                                name="monitor" role="Subordinate" timeout="20"
                             />
                             <op id="dummy-notify-interval-0s" interval="0s"
                                 name="notify" timeout="5"
@@ -4773,14 +4773,14 @@ class TransforMasterToClone(ResourceTest):
                             />
                         </operations>
                     </primitive>
-                    <meta_attributes id="dummy-master-meta_attributes">
-                        <nvpair id="dummy-master-meta_attributes-a" name="a"
+                    <meta_attributes id="dummy-main-meta_attributes">
+                        <nvpair id="dummy-main-meta_attributes-a" name="a"
                             value="AA"
                         />
-                        <nvpair id="dummy-master-meta_attributes-c" name="c"
+                        <nvpair id="dummy-main-meta_attributes-c" name="c"
                             value="C"
                         />
-                        <nvpair id="dummy-master-meta_attributes-d" name="d"
+                        <nvpair id="dummy-main-meta_attributes-d" name="d"
                             value="D"
                         />
                     </meta_attributes>
@@ -4788,23 +4788,23 @@ class TransforMasterToClone(ResourceTest):
             </resources>""",
         )
 
-    def test_transform_master_without_meta_on_update(self):
-        # pcs no longer allows creating masters but supports existing ones. In
-        # order to test it, we need to put a master in the CIB without pcs.
-        fixture_to_cib(self.temp_cib.name, fixture_master_xml("dummy"))
+    def test_transform_main_without_meta_on_update(self):
+        # pcs no longer allows creating mains but supports existing ones. In
+        # order to test it, we need to put a main in the CIB without pcs.
+        fixture_to_cib(self.temp_cib.name, fixture_main_xml("dummy"))
         self.assert_effect(
-            "resource update dummy-master meta a=b".split(),
+            "resource update dummy-main meta a=b".split(),
             """<resources>
-                <clone id="dummy-master">
+                <clone id="dummy-main">
                     <primitive class="ocf" id="dummy" provider="pacemaker"
                         type="Stateful"
                     >
                         <operations>
                             <op id="dummy-monitor-interval-10" interval="10"
-                                name="monitor" role="Master" timeout="20"
+                                name="monitor" role="Main" timeout="20"
                             />
                             <op id="dummy-monitor-interval-11" interval="11"
-                                name="monitor" role="Slave" timeout="20"
+                                name="monitor" role="Subordinate" timeout="20"
                             />
                             <op id="dummy-notify-interval-0s" interval="0s"
                                 name="notify" timeout="5"
@@ -4817,11 +4817,11 @@ class TransforMasterToClone(ResourceTest):
                             />
                         </operations>
                     </primitive>
-                    <meta_attributes id="dummy-master-meta_attributes">
-                        <nvpair id="dummy-master-meta_attributes-promotable"
+                    <meta_attributes id="dummy-main-meta_attributes">
+                        <nvpair id="dummy-main-meta_attributes-promotable"
                               name="promotable" value="true"
                         />
-                        <nvpair id="dummy-master-meta_attributes-a" name="a"
+                        <nvpair id="dummy-main-meta_attributes-a" name="a"
                             value="b"
                         />
                     </meta_attributes>
@@ -4829,26 +4829,26 @@ class TransforMasterToClone(ResourceTest):
             </resources>""",
         )
 
-    def test_transform_master_with_meta_on_update(self):
-        # pcs no longer allows creating masters but supports existing ones. In
-        # order to test it, we need to put a master in the CIB without pcs.
+    def test_transform_main_with_meta_on_update(self):
+        # pcs no longer allows creating mains but supports existing ones. In
+        # order to test it, we need to put a main in the CIB without pcs.
         fixture_to_cib(
             self.temp_cib.name,
-            fixture_master_xml("dummy", meta_dict=dict(a="A", b="B", c="C")),
+            fixture_main_xml("dummy", meta_dict=dict(a="A", b="B", c="C")),
         )
         self.assert_effect(
-            "resource update dummy-master meta a=AA b= d=D promotable=".split(),
+            "resource update dummy-main meta a=AA b= d=D promotable=".split(),
             """<resources>
-                <clone id="dummy-master">
+                <clone id="dummy-main">
                     <primitive class="ocf" id="dummy" provider="pacemaker"
                         type="Stateful"
                     >
                         <operations>
                             <op id="dummy-monitor-interval-10" interval="10"
-                                name="monitor" role="Master" timeout="20"
+                                name="monitor" role="Main" timeout="20"
                             />
                             <op id="dummy-monitor-interval-11" interval="11"
-                                name="monitor" role="Slave" timeout="20"
+                                name="monitor" role="Subordinate" timeout="20"
                             />
                             <op id="dummy-notify-interval-0s" interval="0s"
                                 name="notify" timeout="5"
@@ -4861,14 +4861,14 @@ class TransforMasterToClone(ResourceTest):
                             />
                         </operations>
                     </primitive>
-                    <meta_attributes id="dummy-master-meta_attributes">
-                        <nvpair id="dummy-master-meta_attributes-a" name="a"
+                    <meta_attributes id="dummy-main-meta_attributes">
+                        <nvpair id="dummy-main-meta_attributes-a" name="a"
                             value="AA"
                         />
-                        <nvpair id="dummy-master-meta_attributes-c" name="c"
+                        <nvpair id="dummy-main-meta_attributes-c" name="c"
                             value="C"
                         />
-                        <nvpair id="dummy-master-meta_attributes-d" name="d"
+                        <nvpair id="dummy-main-meta_attributes-d" name="d"
                             value="D"
                         />
                     </meta_attributes>
@@ -4889,16 +4889,16 @@ class ResourceRemoveWithTicket(TestCase, AssertPcsMixin):
     def test_remove_ticket(self):
         self.assert_pcs_success("resource create A ocf:heartbeat:Dummy".split())
         self.assert_pcs_success(
-            "constraint ticket add T master A loss-policy=fence".split()
+            "constraint ticket add T main A loss-policy=fence".split()
         )
         self.assert_pcs_success(
             "constraint ticket show".split(),
-            ["Ticket Constraints:", "  Master A loss-policy=fence ticket=T",],
+            ["Ticket Constraints:", "  Main A loss-policy=fence ticket=T",],
         )
         self.assert_pcs_success(
             "resource delete A".split(),
             [
-                "Removing Constraint - ticket-T-A-Master",
+                "Removing Constraint - ticket-T-A-Main",
                 "Deleting Resource - A",
             ],
         )

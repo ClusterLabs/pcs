@@ -1735,7 +1735,7 @@ class CannotGroupResourceWrongType(NameBuildTest):
                 "'R' is a clone resource, clone resources cannot be put into "
                 "a group"
             ),
-            reports.CannotGroupResourceWrongType("R", "master"),
+            reports.CannotGroupResourceWrongType("R", "main"),
         )
 
 
@@ -1764,10 +1764,10 @@ class ResourceRunOnNodes(NameBuildTest):
 
     def test_multiple_role_multiple_nodes(self):
         self.assert_message_from_report(
-            "resource 'R' is master on node 'node3'"
+            "resource 'R' is main on node 'node3'"
             "; running on nodes 'node1', 'node2'",
             reports.ResourceRunningOnNodes(
-                "R", {"Started": ["node1", "node2"], "Master": ["node3"],}
+                "R", {"Started": ["node1", "node2"], "Main": ["node3"],}
             ),
         )
 
@@ -3923,28 +3923,28 @@ class CannotMoveResourceClone(NameBuildTest):
         )
 
 
-class CannotMoveResourcePromotableNotMaster(NameBuildTest):
+class CannotMoveResourcePromotableNotMain(NameBuildTest):
     def test_success(self):
         self.assert_message_from_report(
             (
-                "to move promotable clone resources you must use master and "
+                "to move promotable clone resources you must use main and "
                 "the promotable clone id (P)"
             ),
-            reports.CannotMoveResourcePromotableNotMaster("R", "P"),
+            reports.CannotMoveResourcePromotableNotMain("R", "P"),
         )
 
 
-class CannotMoveResourceMasterResourceNotPromotable(NameBuildTest):
+class CannotMoveResourceMainResourceNotPromotable(NameBuildTest):
     def test_without_promotable(self):
         self.assert_message_from_report(
-            "when specifying master you must use the promotable clone id",
-            reports.CannotMoveResourceMasterResourceNotPromotable("R"),
+            "when specifying main you must use the promotable clone id",
+            reports.CannotMoveResourceMainResourceNotPromotable("R"),
         )
 
     def test_with_promotable(self):
         self.assert_message_from_report(
-            "when specifying master you must use the promotable clone id (P)",
-            reports.CannotMoveResourceMasterResourceNotPromotable(
+            "when specifying main you must use the promotable clone id (P)",
+            reports.CannotMoveResourceMainResourceNotPromotable(
                 "R", promotable_id="P"
             ),
         )
@@ -4005,17 +4005,17 @@ class ResourceMovePcmkSuccess(NameBuildTest):
         )
 
 
-class CannotBanResourceMasterResourceNotPromotable(NameBuildTest):
+class CannotBanResourceMainResourceNotPromotable(NameBuildTest):
     def test_without_promotable(self):
         self.assert_message_from_report(
-            "when specifying master you must use the promotable clone id",
-            reports.CannotBanResourceMasterResourceNotPromotable("R"),
+            "when specifying main you must use the promotable clone id",
+            reports.CannotBanResourceMainResourceNotPromotable("R"),
         )
 
     def test_with_promotable(self):
         self.assert_message_from_report(
-            "when specifying master you must use the promotable clone id (P)",
-            reports.CannotBanResourceMasterResourceNotPromotable(
+            "when specifying main you must use the promotable clone id (P)",
+            reports.CannotBanResourceMainResourceNotPromotable(
                 "R", promotable_id="P"
             ),
         )
@@ -4076,17 +4076,17 @@ class ResourceBanPcmkSuccess(NameBuildTest):
         )
 
 
-class CannotUnmoveUnbanResourceMasterResourceNotPromotable(NameBuildTest):
+class CannotUnmoveUnbanResourceMainResourceNotPromotable(NameBuildTest):
     def test_without_promotable(self):
         self.assert_message_from_report(
-            "when specifying master you must use the promotable clone id",
-            reports.CannotUnmoveUnbanResourceMasterResourceNotPromotable("R"),
+            "when specifying main you must use the promotable clone id",
+            reports.CannotUnmoveUnbanResourceMainResourceNotPromotable("R"),
         )
 
     def test_with_promotable(self):
         self.assert_message_from_report(
-            "when specifying master you must use the promotable clone id (P)",
-            reports.CannotUnmoveUnbanResourceMasterResourceNotPromotable(
+            "when specifying main you must use the promotable clone id (P)",
+            reports.CannotUnmoveUnbanResourceMainResourceNotPromotable(
                 "R", promotable_id="P"
             ),
         )

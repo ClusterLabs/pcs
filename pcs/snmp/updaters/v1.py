@@ -190,8 +190,8 @@ def _get_primitives(resource):
         for primitive in resource["members"]:
             primitive_list.extend(_get_primitives(primitive))
         return primitive_list
-    # check master-slave type
-    if res_type in ["clone", "master"]:
+    # check main-subordinate type
+    if res_type in ["clone", "main"]:
         return _get_primitives(resource["member"])
     return []
 

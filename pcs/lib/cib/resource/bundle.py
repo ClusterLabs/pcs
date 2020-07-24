@@ -27,7 +27,7 @@ GENERIC_CONTAINER_TYPES = {"docker", "podman", "rkt"}
 GENERIC_CONTAINER_OPTIONS = frozenset(
     (
         "image",
-        "masters",
+        "mains",
         "network",
         "options",
         "promoted-max",
@@ -393,21 +393,21 @@ def _validate_generic_container_options(container_options, force_options=False):
         ),
         validate.IsRequiredAll(["image"], option_type="container"),
         validate.ValueNotEmpty("image", "image name"),
-        validate.ValueNonnegativeInteger("masters"),
+        validate.ValueNonnegativeInteger("mains"),
         validate.ValueNonnegativeInteger("promoted-max"),
         validate.MutuallyExclusive(
-            ["masters", "promoted-max"], option_type="container",
+            ["mains", "promoted-max"], option_type="container",
         ),
         validate.ValuePositiveInteger("replicas"),
         validate.ValuePositiveInteger("replicas-per-host"),
     ]
 
     deprecation_reports = []
-    if "masters" in container_options:
+    if "mains" in container_options:
         deprecation_reports.append(
             ReportItem.warning(
                 reports.messages.DeprecatedOption(
-                    "masters", ["promoted-max"], "container",
+                    "mains", ["promoted-max"], "container",
                 )
             )
         )
@@ -446,7 +446,7 @@ def _validate_generic_container_options_update(
     container_el, options, force_options
 ):
     validators_optional_options = [
-        validate.ValueNonnegativeInteger("masters"),
+        validate.ValueNonnegativeInteger("mains"),
         validate.ValueNonnegativeInteger("promoted-max"),
         validate.ValuePositiveInteger("replicas"),
         validate.ValuePositiveInteger("replicas-per-host"),
@@ -468,51 +468,51 @@ def _validate_generic_container_options_update(
     # though. Deleting one while setting another also works and is further
     # checked bellow.
     if not (
-        options.get("masters", "") == ""
+        options.get("mains", "") == ""
         or options.get("promoted-max", "") == ""
     ):
         validators.append(
             validate.MutuallyExclusive(
-                ["masters", "promoted-max"], option_type="container",
+                ["mains", "promoted-max"], option_type="container",
             )
         )
 
     deprecation_reports = []
-    if options.get("masters"):
-        # If the user wants to delete the masters option, do not report it is
+    if options.get("mains"):
+        # If the user wants to delete the mains option, do not report it is
         # deprecated. They may be removing it because they just found out it is
         # deprecated.
         deprecation_reports.append(
             ReportItem.warning(
                 reports.messages.DeprecatedOption(
-                    "masters", ["promoted-max"], "container",
+                    "mains", ["promoted-max"], "container",
                 )
             )
         )
-    # Do not allow to set masters if promoted-max is set unless promoted-max is
+    # Do not allow to set mains if promoted-max is set unless promoted-max is
     # going to be removed now. Do the same check also the other way around. CIB
     # only allows one of them to be set.
     if (
-        options.get("masters")
+        options.get("mains")
         and container_el.get("promoted-max")
         and options.get("promoted-max") != ""
     ):
         deprecation_reports.append(
             ReportItem.error(
                 reports.messages.PrerequisiteOptionMustNotBeSet(
-                    "masters", "promoted-max", "container", "container"
+                    "mains", "promoted-max", "container", "container"
                 )
             )
         )
     if (
         options.get("promoted-max")
-        and container_el.get("masters")
-        and options.get("masters") != ""
+        and container_el.get("mains")
+        and options.get("mains") != ""
     ):
         deprecation_reports.append(
             ReportItem.error(
                 reports.messages.PrerequisiteOptionMustNotBeSet(
-                    "promoted-max", "masters", "container", "container"
+                    "promoted-max", "mains", "container", "container"
                 )
             )
         )

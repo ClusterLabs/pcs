@@ -376,8 +376,8 @@ class ResourceRelationsFetcher(TestCase):
     def test_clone(self):
         self._test_wrapper("clone", ResourceRelationType.RSC_CLONE)
 
-    def test_master(self):
-        self._test_wrapper("master", ResourceRelationType.RSC_CLONE)
+    def test_main(self):
+        self._test_wrapper("main", ResourceRelationType.RSC_CLONE)
 
     def test_bundle(self):
         self._test_wrapper("bundle", ResourceRelationType.RSC_BUNDLE)

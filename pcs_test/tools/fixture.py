@@ -4,7 +4,7 @@ from pcs.common.reports import ReportItemSeverity as severities
 from pcs.common.reports import codes as report_codes
 
 
-ALL_RESOURCE_XML_TAGS = ["bundle", "clone", "group", "master", "primitive"]
+ALL_RESOURCE_XML_TAGS = ["bundle", "clone", "group", "main", "primitive"]
 
 
 def state_node(
@@ -263,7 +263,7 @@ def report_unexpected_element(element_id, element_type, expected_types):
 
 def report_not_for_bundles(element_id):
     return report_unexpected_element(
-        element_id, "bundle", ["clone", "master", "group", "primitive"]
+        element_id, "bundle", ["clone", "main", "group", "primitive"]
     )
 
 

@@ -34,7 +34,7 @@ def create(
     string ticket_key ticket for constraining resource
     dict options desired constraint attributes
     bool resource_in_clone_alowed flag for allowing to reference id which is
-        in tag clone or master
+        in tag clone or main
     bool duplication_alowed flag for allowing create duplicate element
     callable duplicate_check takes two elements and decide if they are
         duplicates

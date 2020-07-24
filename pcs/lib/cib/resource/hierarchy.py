@@ -101,7 +101,7 @@ class ValidateMoveResourcesToGroup:
                         resources_already_in_the_group.add(resource_id)
                 elif parent.tag != "resources":
                     # If the primitive is not in a 'group' or 'resources' tag,
-                    # it is either in a clone, master, bundle or similar tag
+                    # it is either in a clone, main, bundle or similar tag
                     # and cannot be put into a group.
                     report_list.append(
                         ReportItem.error(

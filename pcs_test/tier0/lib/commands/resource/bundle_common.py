@@ -154,7 +154,7 @@ class ParametrizedContainerMixin(SetUpMixin):
             resources="""
                 <resources>
                     <bundle id="{bundle_id}">
-                        <{container_type} image="{image}" masters="1" />
+                        <{container_type} image="{image}" mains="1" />
                     </bundle>
                 </resources>
             """.format(
@@ -164,7 +164,7 @@ class ParametrizedContainerMixin(SetUpMixin):
             ),
         )
         self.run_bundle_cmd(
-            container_options={"image": self.image, "masters": "1",},
+            container_options={"image": self.image, "mains": "1",},
         )
         self.env_assist.assert_reports(
             [
@@ -172,7 +172,7 @@ class ParametrizedContainerMixin(SetUpMixin):
                     severities.WARNING,
                     report_codes.DEPRECATED_OPTION,
                     {
-                        "option_name": "masters",
+                        "option_name": "mains",
                         "option_type": "container",
                         "replaced_by": ["promoted-max"],
                     },
@@ -187,7 +187,7 @@ class ParametrizedContainerMixin(SetUpMixin):
                 container_options={
                     "replicas-per-host": "0",
                     "replicas": "0",
-                    "masters": "-1",
+                    "mains": "-1",
                     "promoted-max": "-2",
                 },
                 force_options=True,
@@ -199,7 +199,7 @@ class ParametrizedContainerMixin(SetUpMixin):
                     severities.WARNING,
                     report_codes.DEPRECATED_OPTION,
                     {
-                        "option_name": "masters",
+                        "option_name": "mains",
                         "option_type": "container",
                         "replaced_by": ["promoted-max"],
                     },
@@ -213,7 +213,7 @@ class ParametrizedContainerMixin(SetUpMixin):
                 ),
                 fixture.error(
                     report_codes.INVALID_OPTION_VALUE,
-                    option_name="masters",
+                    option_name="mains",
                     option_value="-1",
                     allowed_values="a non-negative integer",
                     cannot_be_empty=False,
@@ -231,7 +231,7 @@ class ParametrizedContainerMixin(SetUpMixin):
                     severities.ERROR,
                     report_codes.MUTUALLY_EXCLUSIVE_OPTIONS,
                     {
-                        "option_names": ["masters", "promoted-max",],
+                        "option_names": ["mains", "promoted-max",],
                         "option_type": "container",
                     },
                     None,

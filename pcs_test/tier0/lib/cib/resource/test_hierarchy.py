@@ -263,7 +263,7 @@ class ValidateMoveResourcesToGroupByIds(
                         "bundle",
                         "clone",
                         "group",
-                        "master",
+                        "main",
                         "primitive",
                     ],
                     current_type="meta_attributes",
@@ -527,5 +527,5 @@ class MoveResourcesToGroup(TestCase):
     def test_move_last_from_cloned_group(self):
         self._assert_move_last_from_cloned_group("clone")
 
-    def test_move_last_from_mastered_group(self):
-        self._assert_move_last_from_cloned_group("master")
+    def test_move_last_from_mained_group(self):
+        self._assert_move_last_from_cloned_group("main")

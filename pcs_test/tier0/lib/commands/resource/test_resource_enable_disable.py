@@ -284,24 +284,24 @@ fixture_clone_status_unmanaged = fixture_clone_status_template.format(
 )
 
 
-def get_fixture_master_cib(
-    master_disabled=False,
-    master_meta=False,
+def get_fixture_main_cib(
+    main_disabled=False,
+    main_meta=False,
     primitive_disabled=False,
     primitive_meta=False,
 ):
-    parts = ["""<resources><master id="A-master">"""]
-    if master_disabled:
+    parts = ["""<resources><main id="A-main">"""]
+    if main_disabled:
         parts.append(
             """
-            <meta_attributes id="A-master-meta_attributes">
-                <nvpair id="A-master-meta_attributes-target-role"
+            <meta_attributes id="A-main-meta_attributes">
+                <nvpair id="A-main-meta_attributes-target-role"
                     name="target-role" value="Stopped" />
             </meta_attributes>
         """
         )
-    elif master_meta:
-        parts.append("""<meta_attributes id="A-master-meta_attributes" />""")
+    elif main_meta:
+        parts.append("""<meta_attributes id="A-main-meta_attributes" />""")
     parts.append(
         """<primitive id="A" class="ocf" provider="heartbeat" type="Dummy">"""
     )
@@ -316,32 +316,32 @@ def get_fixture_master_cib(
         )
     elif primitive_meta:
         parts.append("""<meta_attributes id="A-meta_attributes" />""")
-    parts.append("""</primitive></master></resources>""")
+    parts.append("""</primitive></main></resources>""")
     return "".join(parts)
 
 
-fixture_master_cib_enabled = get_fixture_master_cib()
-fixture_master_cib_enabled_with_meta_both = get_fixture_master_cib(
-    master_meta=True, primitive_meta=True
+fixture_main_cib_enabled = get_fixture_main_cib()
+fixture_main_cib_enabled_with_meta_both = get_fixture_main_cib(
+    main_meta=True, primitive_meta=True
 )
-fixture_master_cib_enabled_with_meta_master = get_fixture_master_cib(
-    master_meta=True
+fixture_main_cib_enabled_with_meta_main = get_fixture_main_cib(
+    main_meta=True
 )
-fixture_master_cib_enabled_with_meta_primitive = get_fixture_master_cib(
+fixture_main_cib_enabled_with_meta_primitive = get_fixture_main_cib(
     primitive_meta=True
 )
-fixture_master_cib_disabled_master = get_fixture_master_cib(
-    master_disabled=True
+fixture_main_cib_disabled_main = get_fixture_main_cib(
+    main_disabled=True
 )
-fixture_master_cib_disabled_primitive = get_fixture_master_cib(
+fixture_main_cib_disabled_primitive = get_fixture_main_cib(
     primitive_disabled=True
 )
-fixture_master_cib_disabled_both = get_fixture_master_cib(
-    master_disabled=True, primitive_disabled=True
+fixture_main_cib_disabled_both = get_fixture_main_cib(
+    main_disabled=True, primitive_disabled=True
 )
-fixture_master_status_template = """
+fixture_main_status_template = """
     <resources>
-        <clone id="A-master" managed="{managed}" multi_state="true"
+        <clone id="A-main" managed="{managed}" multi_state="true"
             unique="false"
         >
             <resource id="A" managed="{managed}" />
@@ -349,10 +349,10 @@ fixture_master_status_template = """
         </clone>
     </resources>
 """
-fixture_master_status_managed = fixture_master_status_template.format(
+fixture_main_status_managed = fixture_main_status_template.format(
     managed="true"
 )
-fixture_master_status_unmanaged = fixture_master_status_template.format(
+fixture_main_status_unmanaged = fixture_main_status_template.format(
     managed="false"
 )
 
@@ -1393,28 +1393,28 @@ class EnableClone(TestCase):
         )
 
 
-class DisableMaster(TestCase):
+class DisableMain(TestCase):
     # same as clone, minimum tests in here
     def setUp(self):
         self.env_assist, self.config = get_env_tools(test_case=self)
         (
             self.config.runner.cib.load(
-                resources=fixture_master_cib_enabled
-            ).runner.pcmk.load_state(resources=fixture_master_status_managed)
+                resources=fixture_main_cib_enabled
+            ).runner.pcmk.load_state(resources=fixture_main_status_managed)
         )
 
     def test_primitive(self):
         self.config.env.push_cib(
-            resources=fixture_master_cib_disabled_primitive
+            resources=fixture_main_cib_disabled_primitive
         )
         resource.disable(self.env_assist.get_env(), ["A"], False)
 
-    def test_master(self):
-        self.config.env.push_cib(resources=fixture_master_cib_disabled_master)
-        resource.disable(self.env_assist.get_env(), ["A-master"], False)
+    def test_main(self):
+        self.config.env.push_cib(resources=fixture_main_cib_disabled_main)
+        resource.disable(self.env_assist.get_env(), ["A-main"], False)
 
 
-class EnableMaster(TestCase):
+class EnableMain(TestCase):
     # same as clone, minimum tests in here
     def setUp(self):
         self.env_assist, self.config = get_env_tools(test_case=self)
@@ -1422,11 +1422,11 @@ class EnableMaster(TestCase):
     def test_primitive(self):
         (
             self.config.runner.cib.load(
-                resources=fixture_master_cib_disabled_primitive
+                resources=fixture_main_cib_disabled_primitive
             )
-            .runner.pcmk.load_state(resources=fixture_master_status_managed)
+            .runner.pcmk.load_state(resources=fixture_main_status_managed)
             .env.push_cib(
-                resources=fixture_master_cib_enabled_with_meta_primitive
+                resources=fixture_main_cib_enabled_with_meta_primitive
             )
         )
         resource.enable(self.env_assist.get_env(), ["A"], False)
@@ -1434,32 +1434,32 @@ class EnableMaster(TestCase):
     def test_primitive_disabled_both(self):
         (
             self.config.runner.cib.load(
-                resources=fixture_master_cib_disabled_both
+                resources=fixture_main_cib_disabled_both
             )
-            .runner.pcmk.load_state(resources=fixture_master_status_managed)
-            .env.push_cib(resources=fixture_master_cib_enabled_with_meta_both)
+            .runner.pcmk.load_state(resources=fixture_main_status_managed)
+            .env.push_cib(resources=fixture_main_cib_enabled_with_meta_both)
         )
         resource.enable(self.env_assist.get_env(), ["A"], False)
 
-    def test_master(self):
+    def test_main(self):
         (
             self.config.runner.cib.load(
-                resources=fixture_master_cib_disabled_master
+                resources=fixture_main_cib_disabled_main
             )
-            .runner.pcmk.load_state(resources=fixture_master_status_managed)
-            .env.push_cib(resources=fixture_master_cib_enabled_with_meta_master)
+            .runner.pcmk.load_state(resources=fixture_main_status_managed)
+            .env.push_cib(resources=fixture_main_cib_enabled_with_meta_main)
         )
-        resource.enable(self.env_assist.get_env(), ["A-master"], False)
+        resource.enable(self.env_assist.get_env(), ["A-main"], False)
 
-    def test_master_disabled_both(self):
+    def test_main_disabled_both(self):
         (
             self.config.runner.cib.load(
-                resources=fixture_master_cib_disabled_both
+                resources=fixture_main_cib_disabled_both
             )
-            .runner.pcmk.load_state(resources=fixture_master_status_managed)
-            .env.push_cib(resources=fixture_master_cib_enabled_with_meta_both)
+            .runner.pcmk.load_state(resources=fixture_main_status_managed)
+            .env.push_cib(resources=fixture_main_cib_enabled_with_meta_both)
         )
-        resource.enable(self.env_assist.get_env(), ["A-master"], False)
+        resource.enable(self.env_assist.get_env(), ["A-main"], False)
 
 
 class DisableClonedGroup(TestCase):
@@ -1874,7 +1874,7 @@ class DisableSafeFixturesMixin:
           </synapse>
         </transition_graph>
     """
-    fixture_transitions_master_demoted = """
+    fixture_transitions_main_demoted = """
         <transition_graph>
           <synapse>
             <action_set>
@@ -1897,7 +1897,7 @@ class DisableSafeFixturesMixin:
           </synapse>
         </transition_graph>
     """
-    fixture_transitions_master_migrated = """
+    fixture_transitions_main_migrated = """
         <transition_graph>
           <synapse>
             <action_set>
@@ -1930,17 +1930,17 @@ class DisableSafeFixturesMixin:
           </synapse>
         </transition_graph>
     """
-    fixture_cib_with_master = """
+    fixture_cib_with_main = """
         <resources>
             <primitive class="ocf" id="A" provider="heartbeat" type="Dummy">
             </primitive>
-            <master id="B-master">
+            <main id="B-main">
                 <primitive class="ocf" id="B" provider="heartbeat" type="Dummy">
                 </primitive>
-            </master>
+            </main>
         </resources>
     """
-    fixture_cib_with_master_primitive_disabled = """
+    fixture_cib_with_main_primitive_disabled = """
         <resources>
             <primitive class="ocf" id="A" provider="heartbeat" type="Dummy">
                 <meta_attributes id="A-meta_attributes">
@@ -1948,16 +1948,16 @@ class DisableSafeFixturesMixin:
                         name="target-role" value="Stopped" />
                 </meta_attributes>
             </primitive>
-            <master id="B-master">
+            <main id="B-main">
                 <primitive class="ocf" id="B" provider="heartbeat" type="Dummy">
                 </primitive>
-            </master>
+            </main>
         </resources>
     """
-    fixture_status_with_master_managed = """
+    fixture_status_with_main_managed = """
         <resources>
             <resource id="A" managed="true" />
-            <clone id="B-master" managed="true" multi_state="true"
+            <clone id="B-main" managed="true" multi_state="true"
                 unique="false"
             >
                 <resource id="B" managed="true" />
@@ -2312,9 +2312,9 @@ class DisableSafeMixin(DisableSafeFixturesMixin):
             expected_in_processor=False,
         )
 
-    def test_master_demoted(self, mock_write_tmpfile):
+    def test_main_demoted(self, mock_write_tmpfile):
         self.tmpfile_transitions.read.return_value = (
-            self.fixture_transitions_master_demoted
+            self.fixture_transitions_main_demoted
         )
         mock_write_tmpfile.side_effect = [
             self.tmpfile_new_cib,
@@ -2322,15 +2322,15 @@ class DisableSafeMixin(DisableSafeFixturesMixin):
             AssertionError("No other write_tmpfile call expected"),
         ]
         (
-            self.config.runner.cib.load(resources=self.fixture_cib_with_master)
+            self.config.runner.cib.load(resources=self.fixture_cib_with_main)
             .runner.pcmk.load_state(
-                resources=self.fixture_status_with_master_managed
+                resources=self.fixture_status_with_main_managed
             )
             .runner.pcmk.simulate_cib(
                 self.tmpfile_new_cib.name,
                 self.tmpfile_transitions.name,
                 stdout="simulate output",
-                resources=self.fixture_cib_with_master_primitive_disabled,
+                resources=self.fixture_cib_with_main_primitive_disabled,
             )
         )
         self.env_assist.assert_raise_library_error(
@@ -2390,9 +2390,9 @@ class DisableSafeMixin(DisableSafeFixturesMixin):
                 <clone id="B-clone">
                     <primitive id="B" />
                 </clone>
-                <master id="C-master">
+                <main id="C-main">
                     <primitive id="C" />
-                </master>
+                </main>
                 <group id="D">
                     <primitive id="D1" />
                     <primitive id="D2" />
@@ -2403,12 +2403,12 @@ class DisableSafeMixin(DisableSafeFixturesMixin):
                         <primitive id="E2" />
                     </group>
                 </clone>
-                <master id="F-master">
+                <main id="F-main">
                     <group id="F">
                         <primitive id="F1" />
                         <primitive id="F2" />
                     </group>
-                </master>
+                </main>
                 <bundle id="G-bundle" />
                 <bundle id="H-bundle">
                     <primitive id="H" />
@@ -2424,7 +2424,7 @@ class DisableSafeMixin(DisableSafeFixturesMixin):
                     <resource id="B" managed="true" />
                     <resource id="B" managed="true" />
                 </clone>
-                <clone id="C-master" managed="true" multi_state="true"
+                <clone id="C-main" managed="true" multi_state="true"
                     unique="false"
                 >
                     <resource id="C" managed="true" />
@@ -2446,7 +2446,7 @@ class DisableSafeMixin(DisableSafeFixturesMixin):
                         <resource id="E2" managed="true" />
                     </group>
                 </clone>
-                <clone id="F-master" managed="true" multi_state="true"
+                <clone id="F-main" managed="true" multi_state="true"
                     unique="false"
                 >
                     <group id="F:0" number_resources="2">
@@ -2547,14 +2547,14 @@ class DisableSafeMixin(DisableSafeFixturesMixin):
                         </meta_attributes>
                         <primitive id="B" />
                     </clone>
-                    <master id="C-master">
-                        <meta_attributes id="C-master-meta_attributes">
+                    <main id="C-main">
+                        <meta_attributes id="C-main-meta_attributes">
                             <nvpair name="target-role" value="Stopped"
-                                id="C-master-meta_attributes-target-role"
+                                id="C-main-meta_attributes-target-role"
                             />
                         </meta_attributes>
                         <primitive id="C" />
-                    </master>
+                    </main>
                     <group id="D">
                         <meta_attributes id="D-meta_attributes">
                             <nvpair name="target-role" value="Stopped"
@@ -2575,17 +2575,17 @@ class DisableSafeMixin(DisableSafeFixturesMixin):
                             <primitive id="E2" />
                         </group>
                     </clone>
-                    <master id="F-master">
-                        <meta_attributes id="F-master-meta_attributes">
+                    <main id="F-main">
+                        <meta_attributes id="F-main-meta_attributes">
                             <nvpair name="target-role" value="Stopped"
-                                id="F-master-meta_attributes-target-role"
+                                id="F-main-meta_attributes-target-role"
                             />
                         </meta_attributes>
                         <group id="F">
                             <primitive id="F1" />
                             <primitive id="F2" />
                         </group>
-                    </master>
+                    </main>
                     <bundle id="G-bundle" />
                     <bundle id="H-bundle">
                         <meta_attributes id="H-bundle-meta_attributes">
@@ -2601,7 +2601,7 @@ class DisableSafeMixin(DisableSafeFixturesMixin):
         self.env_assist.assert_raise_library_error(
             lambda: resource.disable_safe(
                 self.env_assist.get_env(),
-                ["B-clone", "C-master", "D", "E-clone", "F-master", "H-bundle"],
+                ["B-clone", "C-main", "D", "E-clone", "F-main", "H-bundle"],
                 self.strict,
                 False,
             ),
@@ -2610,10 +2610,10 @@ class DisableSafeMixin(DisableSafeFixturesMixin):
                     report_codes.RESOURCE_DISABLE_AFFECTS_OTHER_RESOURCES,
                     disabled_resource_list=[
                         "B-clone",
-                        "C-master",
+                        "C-main",
                         "D",
                         "E-clone",
-                        "F-master",
+                        "F-main",
                         "H-bundle",
                     ],
                     affected_resource_list=["A"],
@@ -2641,9 +2641,9 @@ class DisableSafe(DisableSafeMixin, TestCase):
             self.env_assist.get_env(), ["A"], self.strict, False,
         )
 
-    def test_master_migrated(self, mock_write_tmpfile):
+    def test_main_migrated(self, mock_write_tmpfile):
         self.tmpfile_transitions.read.return_value = (
-            self.fixture_transitions_master_migrated
+            self.fixture_transitions_main_migrated
         )
         mock_write_tmpfile.side_effect = [
             self.tmpfile_new_cib,
@@ -2651,18 +2651,18 @@ class DisableSafe(DisableSafeMixin, TestCase):
             AssertionError("No other write_tmpfile call expected"),
         ]
         (
-            self.config.runner.cib.load(resources=self.fixture_cib_with_master)
+            self.config.runner.cib.load(resources=self.fixture_cib_with_main)
             .runner.pcmk.load_state(
-                resources=self.fixture_status_with_master_managed
+                resources=self.fixture_status_with_main_managed
             )
             .runner.pcmk.simulate_cib(
                 self.tmpfile_new_cib.name,
                 self.tmpfile_transitions.name,
                 stdout="simulate output",
-                resources=self.fixture_cib_with_master_primitive_disabled,
+                resources=self.fixture_cib_with_main_primitive_disabled,
             )
             .env.push_cib(
-                resources=self.fixture_cib_with_master_primitive_disabled
+                resources=self.fixture_cib_with_main_primitive_disabled
             )
         )
         resource.disable_safe(
@@ -2697,9 +2697,9 @@ class DisableSafeStrict(DisableSafeMixin, TestCase):
             expected_in_processor=False,
         )
 
-    def test_master_migrated(self, mock_write_tmpfile):
+    def test_main_migrated(self, mock_write_tmpfile):
         self.tmpfile_transitions.read.return_value = (
-            self.fixture_transitions_master_migrated
+            self.fixture_transitions_main_migrated
         )
         mock_write_tmpfile.side_effect = [
             self.tmpfile_new_cib,
@@ -2707,15 +2707,15 @@ class DisableSafeStrict(DisableSafeMixin, TestCase):
             AssertionError("No other write_tmpfile call expected"),
         ]
         (
-            self.config.runner.cib.load(resources=self.fixture_cib_with_master)
+            self.config.runner.cib.load(resources=self.fixture_cib_with_main)
             .runner.pcmk.load_state(
-                resources=self.fixture_status_with_master_managed
+                resources=self.fixture_status_with_main_managed
             )
             .runner.pcmk.simulate_cib(
                 self.tmpfile_new_cib.name,
                 self.tmpfile_transitions.name,
                 stdout="simulate output",
-                resources=self.fixture_cib_with_master_primitive_disabled,
+                resources=self.fixture_cib_with_main_primitive_disabled,
             )
         )
         self.env_assist.assert_raise_library_error(
