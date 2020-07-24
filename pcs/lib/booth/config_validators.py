@@ -125,7 +125,7 @@ def _validate_ticket_options(options, allow_unknown_options):
             constants.TICKET_KEYS,
             option_type="booth ticket",
             banned_name_list=constants.GLOBAL_KEYS,
-            **validate.set_warning(
+            severity=report.item.get_severity(
                 report_codes.FORCE_OPTIONS, allow_unknown_options
             ),
         ),

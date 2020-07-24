@@ -6,7 +6,6 @@ from pcs.common import reports
 from pcs.common.reports import (
     ReportItemList,
     ReportProcessor,
-    codes as report_codes,
 )
 from pcs.common.reports.item import ReportItem
 from pcs.lib import validate
@@ -119,7 +118,9 @@ def normalized_to_operations(normalized_pairs):
 def validate_operation_list(
     operation_list, allowed_operation_name_list, allow_invalid=False
 ):
-    kwargs = validate.set_warning(report_codes.FORCE_OPTIONS, allow_invalid)
+    severity = reports.item.get_severity(
+        reports.codes.FORCE_OPTIONS, allow_invalid
+    )
     option_type = "resource operation"
 
     validators = [
@@ -129,7 +130,7 @@ def validate_operation_list(
             "name",
             allowed_operation_name_list,
             option_name_for_report="operation name",
-            **kwargs,
+            severity=severity,
         ),
         validate.ValueIn("role", RESOURCE_ROLES),
         validate.ValueIn("on-fail", ON_FAIL_VALUES),

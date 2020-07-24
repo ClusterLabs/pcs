@@ -161,7 +161,7 @@ class ValidateNvsetAppendNew:
         validators = [
             validate.NamesIn(
                 ("id", "score"),
-                **validate.set_warning(
+                severity=reports.item.get_severity(
                     reports.codes.FORCE_OPTIONS, force_options
                 ),
             ),

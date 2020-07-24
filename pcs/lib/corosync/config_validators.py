@@ -1,12 +1,13 @@
 # pylint: disable=too-many-lines
 from collections import Counter, defaultdict, namedtuple
 from itertools import zip_longest
+from typing import Optional
 
 from pcs.common import reports
 from pcs.common.reports import (
-    codes as report_codes,
     get_severity,
     ReportItem,
+    ReportItemSeverity,
 )
 from pcs.lib import validate
 from pcs.lib.corosync import constants
@@ -39,20 +40,19 @@ class _ClusterNameGfs2Validator(validate.ValueValidator):
         self,
         option_name,
         option_name_for_report=None,
-        code_for_warning=None,
-        produce_warning=False,
+        severity: Optional[ReportItemSeverity] = None,
     ):
         """
         srring option_name -- name of the option to check
         string option_name_for_report -- optional option_name override
-        string code_for_warning -- which code makes this produce warnings
-        bool produce_warning -- False produces an error, True a warning
+        severity -- severity of produced reports, defaults to error
         """
         super().__init__(
             option_name, option_name_for_report=option_name_for_report
         )
-        self._code_for_warning = code_for_warning
-        self._produce_warning = produce_warning
+        self._severity = (
+            ReportItemSeverity.error() if severity is None else severity
+        )
 
     def _validate_value(self, value):
         if not isinstance(value.normalized, str):
@@ -62,7 +62,7 @@ class _ClusterNameGfs2Validator(validate.ValueValidator):
         ):
             return [
                 ReportItem(
-                    get_severity(self._code_for_warning, self._produce_warning),
+                    self._severity,
                     reports.messages.CorosyncClusterNameInvalidForGfs2(
                         cluster_name=value.original,
                         max_length=32,
@@ -104,8 +104,9 @@ def create(
         _ClusterNameGfs2Validator(
             "name",
             option_name_for_report="cluster name",
-            code_for_warning=report_codes.FORCE_OPTIONS,
-            produce_warning=force_cluster_name,
+            severity=reports.item.get_severity(
+                reports.codes.FORCE_OPTIONS, force_cluster_name
+            ),
         ),
         validate.ValueCorosyncValue(
             "name", option_name_for_report="cluster name"
@@ -1549,8 +1550,8 @@ def add_quorum_device(
                 validate.ValueIn(
                     "model",
                     list(model_validators.keys()),
-                    **validate.set_warning(
-                        report_codes.FORCE_QDEVICE_MODEL, force_model
+                    severity=reports.item.get_severity(
+                        reports.codes.FORCE_QDEVICE_MODEL, force_model
                     ),
                 ),
                 validate.ValueCorosyncValue("model"),
@@ -1703,11 +1704,13 @@ def _qdevice_update_model_net_options(options, node_ids, force_options=False):
 def _get_qdevice_generic_options_validators(
     options, allow_empty_values=False, force_options=False
 ):
-    kwargs = validate.set_warning(report_codes.FORCE_OPTIONS, force_options)
+    severity = reports.item.get_severity(
+        reports.codes.FORCE_OPTIONS, force_options
+    )
 
     validators = [
-        validate.ValuePositiveInteger("sync_timeout", **kwargs),
-        validate.ValuePositiveInteger("timeout", **kwargs),
+        validate.ValuePositiveInteger("sync_timeout", severity=severity),
+        validate.ValuePositiveInteger("timeout", severity=severity),
     ]
     if allow_empty_values:
         for val in validators:
@@ -1719,7 +1722,7 @@ def _get_qdevice_generic_options_validators(
                 ["sync_timeout", "timeout"],
                 option_type="quorum device",
                 banned_name_list=["model"],
-                **kwargs,
+                severity=severity,
             )
         ]
         + _get_unsuitable_keys_and_values_validators(options, "quorum device")
@@ -1741,7 +1744,9 @@ def _split_heuristics_exec_options(options):
 def _get_qdevice_heuristics_nonexec_options_validators(
     allow_empty_values=False, force_options=False
 ):
-    kwargs = validate.set_warning(report_codes.FORCE_OPTIONS, force_options)
+    severity = reports.item.get_severity(
+        reports.codes.FORCE_OPTIONS, force_options
+    )
 
     allowed_options = [
         "interval",
@@ -1750,10 +1755,10 @@ def _get_qdevice_heuristics_nonexec_options_validators(
         "timeout",
     ]
     validators = [
-        validate.ValueIn("mode", ("off", "on", "sync"), **kwargs),
-        validate.ValuePositiveInteger("interval", **kwargs),
-        validate.ValuePositiveInteger("sync_timeout", **kwargs),
-        validate.ValuePositiveInteger("timeout", **kwargs),
+        validate.ValueIn("mode", ("off", "on", "sync"), severity=severity),
+        validate.ValuePositiveInteger("interval", severity=severity),
+        validate.ValuePositiveInteger("sync_timeout", severity=severity),
+        validate.ValuePositiveInteger("timeout", severity=severity),
     ]
 
     if allow_empty_values:
@@ -1764,7 +1769,7 @@ def _get_qdevice_heuristics_nonexec_options_validators(
             allowed_options,
             allowed_option_patterns=["exec_NAME"],
             option_type="heuristics",
-            **kwargs,
+            severity=severity,
         )
     ] + validators
 
@@ -1772,26 +1777,32 @@ def _get_qdevice_heuristics_nonexec_options_validators(
 def _get_qdevice_model_net_options_validators(
     node_ids, allow_empty_values=False, force_options=False
 ):
-    kwargs = validate.set_warning(report_codes.FORCE_OPTIONS, force_options)
+    severity = reports.item.get_severity(
+        reports.codes.FORCE_OPTIONS, force_options
+    )
     allowed_algorithms = ("ffsplit", "lms")
 
     validators_required_options = [
         validate.ValidatorFirstError(
             [
                 validate.ValueNotEmpty("algorithm", allowed_algorithms),
-                validate.ValueIn("algorithm", allowed_algorithms, **kwargs),
+                validate.ValueIn(
+                    "algorithm", allowed_algorithms, severity=severity
+                ),
             ]
         ),
         validate.ValueNotEmpty("host", "a qdevice host address"),
     ]
     validators_optional_options = [
         validate.ValueIntegerInRange(
-            "connect_timeout", 1000, 2 * 60 * 1000, **kwargs
+            "connect_timeout", 1000, 2 * 60 * 1000, severity=severity
         ),
-        validate.ValueIn("force_ip_version", ("0", "4", "6"), **kwargs),
-        validate.ValuePortNumber("port", **kwargs),
         validate.ValueIn(
-            "tie_breaker", ["lowest", "highest"] + node_ids, **kwargs
+            "force_ip_version", ("0", "4", "6"), severity=severity
+        ),
+        validate.ValuePortNumber("port", severity=severity),
+        validate.ValueIn(
+            "tie_breaker", ["lowest", "highest"] + node_ids, severity=severity
         ),
     ]
 
@@ -1803,7 +1814,7 @@ def _get_qdevice_model_net_options_validators(
             validate.NamesIn(
                 _QDEVICE_NET_REQUIRED_OPTIONS + _QDEVICE_NET_OPTIONAL_OPTIONS,
                 option_type="quorum device model",
-                **kwargs,
+                severity=severity,
             )
         ]
         + validators_required_options

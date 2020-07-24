@@ -30,6 +30,9 @@ entered one is reported as not valid.
 from collections import namedtuple
 import ipaddress
 import re
+from typing import (
+    Optional,
+)
 
 from pcs.common import reports
 from pcs.common.reports import (
@@ -322,25 +325,27 @@ class NamesIn(KeyValidator):
         option_type=None,
         allowed_option_patterns=None,
         banned_name_list=None,
-        code_for_warning=None,
-        produce_warning=False,
+        severity: Optional[ReportItemSeverity] = None,
     ):
         """
         mixed allowed_option_patterns -- option patterns to be added to a report
         list banned_name_list -- list of options which cannot be forced
-        string code_for_warning -- which code makes this produce warnings
-        bool produce_warning -- False produces an error, True a warning
+        severity -- severity of produced reports, defaults to error
         """
         super().__init__(option_name_list, option_type=option_type)
         self._allowed_option_patterns = allowed_option_patterns or []
         self._banned_name_set = set(banned_name_list or [])
-        self._code_for_warning = code_for_warning
-        self._produce_warning = produce_warning
+        self._severity = (
+            ReportItemSeverity.error() if severity is None else severity
+        )
 
     def validate(self, option_dict):
         name_set = set(option_dict.keys())
         banned_names = set()
-        if not (self._code_for_warning is None and not self._produce_warning):
+        if not (
+            self._severity.force_code is None
+            and self._severity.level == ReportItemSeverity.ERROR
+        ):
             banned_names = name_set & self._banned_name_set
         invalid_names = name_set - set(self._option_name_list) - banned_names
 
@@ -348,9 +353,7 @@ class NamesIn(KeyValidator):
         if invalid_names:
             report_list.append(
                 ReportItem(
-                    severity=reports.item.get_severity(
-                        self._code_for_warning, self._produce_warning,
-                    ),
+                    severity=self._severity,
                     message=reports.messages.InvalidOptions(
                         sorted(invalid_names),
                         sorted(self._option_name_list),
@@ -413,18 +416,17 @@ class ValuePredicateBase(ValueValidator):
         self,
         option_name,
         option_name_for_report=None,
-        code_for_warning=None,
-        produce_warning=False,
+        severity: Optional[ReportItemSeverity] = None,
     ):
         """
-        string code_for_warning -- which code makes this produce warnings
-        bool produce_warning -- False produces an error, True a warning
+        severity -- severity of produced reports, defaults to error
         """
         super().__init__(
             option_name, option_name_for_report=option_name_for_report
         )
-        self._code_for_warning = code_for_warning
-        self._produce_warning = produce_warning
+        self._severity = (
+            ReportItemSeverity.error() if severity is None else severity
+        )
         self._value_cannot_be_empty = False
         self._forbidden_characters = None
 
@@ -432,9 +434,7 @@ class ValuePredicateBase(ValueValidator):
         if not self._is_valid(value.normalized):
             return [
                 ReportItem(
-                    severity=reports.item.get_severity(
-                        self._code_for_warning, self._produce_warning,
-                    ),
+                    severity=self._severity,
                     message=reports.messages.InvalidOptionValue(
                         self._get_option_name_for_report(),
                         value.original,
@@ -527,17 +527,16 @@ class ValueIn(ValuePredicateBase):
         option_name,
         allowed_value_list,
         option_name_for_report=None,
-        code_for_warning=None,
-        produce_warning=False,
+        severity: Optional[ReportItemSeverity] = None,
     ):
         """
         list of string allowed_value_list -- list of possible values
+        severity -- severity of produced reports, defaults to error
         """
         super().__init__(
             option_name,
             option_name_for_report=option_name_for_report,
-            code_for_warning=code_for_warning,
-            produce_warning=produce_warning,
+            severity=severity,
         )
         self._allowed_value_list = allowed_value_list
 
@@ -560,18 +559,17 @@ class ValueIntegerInRange(ValuePredicateBase):
         at_least,
         at_most,
         option_name_for_report=None,
-        code_for_warning=None,
-        produce_warning=False,
+        severity: Optional[ReportItemSeverity] = None,
     ):
         """
         int at_least -- minimal allowed value
         int at_most -- maximal allowed value
+        severity -- severity of produced reports, defaults to error
         """
         super().__init__(
             option_name,
             option_name_for_report=option_name_for_report,
-            code_for_warning=code_for_warning,
-            produce_warning=produce_warning,
+            severity=severity,
         )
         self._at_least = at_least
         self._at_most = at_most
@@ -617,17 +615,16 @@ class ValueNotEmpty(ValuePredicateBase):
         option_name,
         value_desc_or_enum,
         option_name_for_report=None,
-        code_for_warning=None,
-        produce_warning=False,
+        severity: Optional[ReportItemSeverity] = None,
     ):
         """
         mexed value_desc_or_enum -- a list or a description of possible values
+        severity -- severity of produced reports, defaults to error
         """
         super().__init__(
             option_name,
             option_name_for_report=option_name_for_report,
-            code_for_warning=code_for_warning,
-            produce_warning=produce_warning,
+            severity=severity,
         )
         self._value_desc_or_enum = value_desc_or_enum
         self._value_cannot_be_empty = True
@@ -791,19 +788,3 @@ def matches_regexp(value, regexp):
     if not hasattr(regexp, "match"):
         regexp = re.compile(regexp)
     return regexp.match(value) is not None
-
-
-### tools
-
-
-def set_warning(code_for_warning, produce_warning):
-    """
-    A usefull shortcut for calling validators
-
-    string code_for_warning -- code to force an error
-    bool produce_warning -- report warnings instead of errors
-    """
-    return {
-        "code_for_warning": code_for_warning,
-        "produce_warning": produce_warning,
-    }

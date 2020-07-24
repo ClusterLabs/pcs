@@ -569,7 +569,9 @@ class Agent:
             validate.NamesIn(
                 {param["name"] for param in self.get_parameters()},
                 option_type=self._agent_type_label,
-                **validate.set_warning(reports.codes.FORCE_OPTIONS, force),
+                severity=reports.item.get_severity(
+                    reports.codes.FORCE_OPTIONS, force
+                ),
             ).validate(parameters)
         )
         # TODO remove this "if", see pcs.lib.cib.commands.remote_node.create
@@ -639,7 +641,9 @@ class Agent:
             validate.NamesIn(
                 {param["name"] for param in self.get_parameters()},
                 option_type=self._agent_type_label,
-                **validate.set_warning(reports.codes.FORCE_OPTIONS, force),
+                severity=reports.item.get_severity(
+                    reports.codes.FORCE_OPTIONS, force
+                ),
             ).validate(
                 # Do not report unknown parameters already set in the CIB. They
                 # have been reported already when the were added to the CIB.

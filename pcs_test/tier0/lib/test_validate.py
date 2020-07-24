@@ -451,7 +451,7 @@ class NamesIn(TestCase):
             validate.NamesIn(
                 ["a", "b"],
                 banned_name_list=["x", "y", "z"],
-                code_for_warning=code,
+                severity=reports.item.ReportItemSeverity.error(code),
             ).validate({"x": "X", "a": "A", "z": "Z", "c": "C", "d": "D"}),
             [
                 fixture.error(
@@ -473,13 +473,11 @@ class NamesIn(TestCase):
         )
 
     def test_return_error_on_not_allowed_and_banned_names_forced(self):
-        code = "force_code"
         assert_report_item_list_equal(
             validate.NamesIn(
                 ["a", "b"],
                 banned_name_list=["x", "y", "z"],
-                code_for_warning=code,
-                produce_warning=True,
+                severity=reports.item.ReportItemSeverity.warning(),
             ).validate({"x": "X", "a": "A", "z": "Z", "c": "C", "d": "D"}),
             [
                 fixture.warn(
@@ -515,30 +513,12 @@ class NamesIn(TestCase):
             ],
         )
 
-    def test_return_error_on_not_allowed_names_without_force_code(self):
-        assert_report_item_list_equal(
-            validate.NamesIn(
-                ["a", "b", "c"],
-                # does now work without code_for_warning
-                produce_warning=True,
-            ).validate({"x": "X", "y": "Y"}),
-            [
-                fixture.warn(
-                    reports.codes.INVALID_OPTIONS,
-                    option_names=["x", "y"],
-                    allowed=["a", "b", "c"],
-                    option_type=None,
-                    allowed_patterns=[],
-                )
-            ],
-        )
-
     def test_return_forceable_error_on_not_allowed_names(self):
         assert_report_item_list_equal(
             validate.NamesIn(
                 ["a", "b", "c"],
                 option_type="some option",
-                code_for_warning="FORCE_CODE",
+                severity=reports.item.ReportItemSeverity.error("FORCE_CODE"),
             ).validate({"x": "X", "y": "Y"}),
             [
                 fixture.error(
@@ -557,8 +537,7 @@ class NamesIn(TestCase):
             validate.NamesIn(
                 ["a", "b", "c"],
                 option_type="some option",
-                code_for_warning="FORCE_CODE",
-                produce_warning=True,
+                severity=reports.item.ReportItemSeverity.warning(),
             ).validate({"x": "X", "y": "Y"}),
             [
                 fixture.warn(
@@ -745,7 +724,7 @@ class ValuePredicateBase(TestCase):
     def test_supports_forceable_errors(self):
         assert_report_item_list_equal(
             ValuePredicateImplementation(
-                "a", code_for_warning="FORCE"
+                "a", severity=reports.item.ReportItemSeverity.error("FORCE")
             ).validate({"a": "c"}),
             [
                 fixture.error(
@@ -763,7 +742,7 @@ class ValuePredicateBase(TestCase):
     def test_supports_warning(self):
         assert_report_item_list_equal(
             ValuePredicateImplementation(
-                "a", code_for_warning="FORCE", produce_warning=True
+                "a", severity=reports.item.ReportItemSeverity.warning()
             ).validate({"a": "c"}),
             [
                 fixture.warn(
@@ -989,9 +968,11 @@ class ValueIn(TestCase):
 
     def test_supports_forceable_errors(self):
         assert_report_item_list_equal(
-            validate.ValueIn("a", ["b"], code_for_warning="FORCE").validate(
-                {"a": "c"}
-            ),
+            validate.ValueIn(
+                "a",
+                ["b"],
+                severity=reports.item.ReportItemSeverity.error("FORCE"),
+            ).validate({"a": "c"}),
             [
                 fixture.error(
                     reports.codes.INVALID_OPTION_VALUE,
@@ -1008,7 +989,7 @@ class ValueIn(TestCase):
     def test_supports_warning(self):
         assert_report_item_list_equal(
             validate.ValueIn(
-                "a", ["b"], code_for_warning="FORCE", produce_warning=True
+                "a", ["b"], severity=reports.item.ReportItemSeverity.warning(),
             ).validate({"a": "c"}),
             [
                 fixture.warn(

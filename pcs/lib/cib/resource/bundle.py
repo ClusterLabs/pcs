@@ -1,7 +1,6 @@
 from lxml import etree
 
 from pcs.common import reports
-from pcs.common.reports import codes as report_codes
 from pcs.common.reports.item import ReportItem
 from pcs.lib import validate
 from pcs.lib.cib.nvpair import (
@@ -389,7 +388,9 @@ def _validate_generic_container_options(container_options, force_options=False):
         validate.NamesIn(
             GENERIC_CONTAINER_OPTIONS,
             option_type="container",
-            **validate.set_warning(report_codes.FORCE_OPTIONS, force_options),
+            severity=reports.item.get_severity(
+                reports.codes.FORCE_OPTIONS, force_options
+            ),
         ),
         validate.IsRequiredAll(["image"], option_type="container"),
         validate.ValueNotEmpty("image", "image name"),
@@ -458,7 +459,9 @@ def _validate_generic_container_options_update(
             # allow to remove options even if they are not allowed
             GENERIC_CONTAINER_OPTIONS | _options_to_remove(options),
             option_type="container",
-            **validate.set_warning(report_codes.FORCE_OPTIONS, force_options),
+            severity=reports.item.get_severity(
+                reports.codes.FORCE_OPTIONS, force_options
+            ),
         ),
         # image is a mandatory attribute and cannot be removed
         validate.ValueNotEmpty("image", "image name"),
@@ -524,14 +527,18 @@ def _validate_generic_container_options_update(
 
 
 def _validate_network_options_new(options, force_options):
-    kwargs = validate.set_warning(report_codes.FORCE_OPTIONS, force_options)
+    severity = reports.item.get_severity(
+        reports.codes.FORCE_OPTIONS, force_options
+    )
     validators = [
         # TODO add validators for other keys (ip-range-start - IPv4)
-        validate.NamesIn(NETWORK_OPTIONS, option_type="network", **kwargs),
+        validate.NamesIn(
+            NETWORK_OPTIONS, option_type="network", severity=severity
+        ),
         validate.ValuePortNumber("control-port"),
         # Leaving a possibility to force this validation for the case pacemaker
         # starts supporting IPv6 or other format of the netmask.
-        ValueHostNetmask("host-netmask", **kwargs),
+        ValueHostNetmask("host-netmask", severity=severity),
     ]
     return validate.ValidatorAll(validators).validate(options)
 
@@ -576,7 +583,7 @@ def _validate_network_options_update(
         report_list.append(
             ReportItem(
                 severity=reports.item.get_severity(
-                    report_codes.FORCE_OPTIONS, force_options,
+                    reports.codes.FORCE_OPTIONS, force_options,
                 ),
                 message=reports.messages.ResourceInBundleNotAccessible(
                     bundle_el.get("id"), inner_primitive.get("id"),
@@ -584,13 +591,15 @@ def _validate_network_options_update(
             )
         )
 
-    kwargs = validate.set_warning(report_codes.FORCE_OPTIONS, force_options)
+    severity = reports.item.get_severity(
+        reports.codes.FORCE_OPTIONS, force_options
+    )
     validators_optional_options = [
         # TODO add validators for other keys (ip-range-start - IPv4)
         validate.ValuePortNumber("control-port"),
         # Leaving a possibility to force this validation for the case pacemaker
         # starts supporting IPv6 or other format of the netmask.
-        ValueHostNetmask("host-netmask", **kwargs),
+        ValueHostNetmask("host-netmask", severity=severity),
     ]
     for val in validators_optional_options:
         val.empty_string_valid = True
@@ -599,7 +608,7 @@ def _validate_network_options_update(
             # allow to remove options even if they are not allowed
             NETWORK_OPTIONS | _options_to_remove(options),
             option_type="network",
-            **kwargs,
+            severity=severity,
         )
     ] + validators_optional_options
 
@@ -607,10 +616,14 @@ def _validate_network_options_update(
 
 
 def _validate_port_map_list(options_list, id_provider, force_options):
-    kwargs = validate.set_warning(report_codes.FORCE_OPTIONS, force_options)
+    severity = reports.item.get_severity(
+        reports.codes.FORCE_OPTIONS, force_options
+    )
     option_type = "port-map"
     validators = [
-        validate.NamesIn(PORT_MAP_OPTIONS, option_type=option_type, **kwargs),
+        validate.NamesIn(
+            PORT_MAP_OPTIONS, option_type=option_type, severity=severity
+        ),
         validate.ValueId(
             "id", option_name_for_report="port-map id", id_provider=id_provider
         ),
@@ -624,7 +637,7 @@ def _validate_port_map_list(options_list, id_provider, force_options):
         validate.MutuallyExclusive(["port", "range"], option_type=option_type),
         validate.ValuePortNumber("port"),
         validate.ValuePortNumber("internal-port"),
-        validate.ValuePortRange("range", **kwargs),
+        validate.ValuePortRange("range", severity=severity),
     ]
     validator_all = validate.ValidatorAll(validators)
 
@@ -635,11 +648,13 @@ def _validate_port_map_list(options_list, id_provider, force_options):
 
 
 def _validate_storage_map_list(options_list, id_provider, force_options):
-    kwargs = validate.set_warning(report_codes.FORCE_OPTIONS, force_options)
+    severity = reports.item.get_severity(
+        reports.codes.FORCE_OPTIONS, force_options
+    )
     option_type = "storage-map"
     validators = [
         validate.NamesIn(
-            STORAGE_MAP_OPTIONS, option_type=option_type, **kwargs
+            STORAGE_MAP_OPTIONS, option_type=option_type, severity=severity
         ),
         validate.ValueId(
             "id",
