@@ -190,8 +190,8 @@ class NodesToRemoveUnreachable(CliReportMessageCustom):
         )
 
 
-class UnableToConnectToAllRemainingNode(CliReportMessageCustom):
-    _obj: messages.UnableToConnectToAllRemainingNode
+class UnableToConnectToAllRemainingNodes(CliReportMessageCustom):
+    _obj: messages.UnableToConnectToAllRemainingNodes
 
     @property
     def message(self) -> str:

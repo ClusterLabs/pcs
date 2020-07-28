@@ -1590,7 +1590,7 @@ def remove_nodes(env, node_list, force_flags=None):
         if staying_offline_nodes:
             report_processor.report(
                 ReportItem.warning(
-                    reports.messages.UnableToConnectToAllRemainingNode(
+                    reports.messages.UnableToConnectToAllRemainingNodes(
                         sorted(staying_offline_nodes)
                     )
                 )

@@ -5055,7 +5055,7 @@ class UnableToConnectToAnyRemainingNode(ReportItemMessage):
 
 
 @dataclass(frozen=True)
-class UnableToConnectToAllRemainingNode(ReportItemMessage):
+class UnableToConnectToAllRemainingNodes(ReportItemMessage):
     """
     Some of remaining cluster nodes are unreachable. 'pcs cluster sync' should
     be executed on now online nodes when the offline nodes come back online.

@@ -1,3 +1,4 @@
+import inspect
 from unittest import TestCase
 
 from pcs.common import file_type_codes
@@ -14,6 +15,33 @@ from pcs.common.reports import (
 from pcs.common.types import CibRuleExpressionType
 
 # pylint: disable=too-many-lines
+
+
+class AllClassesTested(TestCase):
+    def test_success(self):
+        self.maxDiff = None
+        message_classes = frozenset(
+            name
+            for name, member in inspect.getmembers(reports, inspect.isclass)
+            if issubclass(member, reports.ReportItemMessage)
+            and member
+            not in {reports.ReportItemMessage, reports.LegacyCommonMessage}
+        )
+        test_classes = frozenset(
+            name
+            for name, member in inspect.getmembers(
+                inspect.getmodule(self), inspect.isclass
+            )
+            if issubclass(member, NameBuildTest)
+        )
+        untested = sorted(message_classes - test_classes)
+        self.assertEqual(
+            untested,
+            [],
+            f"It seems {len(untested)} subclass(es) of 'ReportItemMessage' are "
+            "missing tests. Make sure the test classes have the same name as "
+            "the code classes.",
+        )
 
 
 class NameBuildTest(TestCase):
@@ -419,7 +447,7 @@ class InvalidIdBadChar(NameBuildTest):
         )
 
 
-class InvalidTimeout(NameBuildTest):
+class InvalidTimeoutValue(NameBuildTest):
     def test_all(self):
         self.assert_message_from_report(
             "'24h' is not a valid number of seconds to wait",
@@ -443,7 +471,7 @@ class MultipleScoreOptions(NameBuildTest):
         )
 
 
-class BuildRunExternalStartedTest(NameBuildTest):
+class RunExternalProcessStarted(NameBuildTest):
     def test_build_message_minimal(self):
         self.assert_message_from_report(
             "Running: COMMAND\nEnvironment:\n",
@@ -526,7 +554,7 @@ class RunExternalProcessError(NameBuildTest):
         )
 
 
-class BuildNodeCommunicationStartedTest(NameBuildTest):
+class NodeCommunicationStarted(NameBuildTest):
     def test_build_message_with_data(self):
         self.assert_message_from_report(
             (
@@ -559,7 +587,7 @@ class NodeCommunicationFinished(NameBuildTest):
         )
 
 
-class NodeCommunicationdDebugInfo(NameBuildTest):
+class NodeCommunicationDebugInfo(NameBuildTest):
     def test_all(self):
         self.assert_message_from_report(
             (
@@ -1747,7 +1775,7 @@ class StonithResourcesDoNotExist(NameBuildTest):
         )
 
 
-class ResourceRunOnNodes(NameBuildTest):
+class ResourceRunningOnNodes(NameBuildTest):
     def test_one_node(self):
         self.assert_message_from_report(
             "resource 'R' is running on node 'node1'",
@@ -2015,7 +2043,7 @@ class ResourceRefreshTooTimeConsuming(NameBuildTest):
         )
 
 
-class ResourceOperationIntevalDuplicationTest(NameBuildTest):
+class ResourceOperationIntervalDuplication(NameBuildTest):
     def test_build_message_with_data(self):
         self.assert_message_from_report(
             "multiple specification of the same operation with the same"
@@ -2028,7 +2056,7 @@ class ResourceOperationIntevalDuplicationTest(NameBuildTest):
         )
 
 
-class ResourceOperationIntevalAdaptedTest(NameBuildTest):
+class ResourceOperationIntervalAdapted(NameBuildTest):
     def test_build_message_with_data(self):
         self.assert_message_from_report(
             "changing a monitor operation interval from 10 to 11 to make the"
@@ -2109,7 +2137,7 @@ class MultipleResultsFound(NameBuildTest):
         )
 
 
-class PaceMakerLocalNodeNotFound(NameBuildTest):
+class PacemakerLocalNodeNameNotFound(NameBuildTest):
     def test_all(self):
         self.assert_message_from_report(
             "unable to get local node name from pacemaker: reason",
@@ -2490,7 +2518,7 @@ class UnableToGetAgentMetadata(NameBuildTest):
         )
 
 
-class InvalidResourceAgentNameTest(NameBuildTest):
+class InvalidResourceAgentName(NameBuildTest):
     def test_build_message_with_data(self):
         self.assert_message_from_report(
             "Invalid resource agent name ':name'."
@@ -2502,7 +2530,7 @@ class InvalidResourceAgentNameTest(NameBuildTest):
         )
 
 
-class InvalidiStonithAgentNameTest(NameBuildTest):
+class InvalidStonithAgentName(NameBuildTest):
     def test_build_message_with_data(self):
         self.assert_message_from_report(
             "Invalid stonith agent name 'fence:name'. List of agents can be"
@@ -2513,7 +2541,7 @@ class InvalidiStonithAgentNameTest(NameBuildTest):
         )
 
 
-class AgentNameGuessedTest(NameBuildTest):
+class AgentNameGuessed(NameBuildTest):
     def test_build_message_with_data(self):
         self.assert_message_from_report(
             "Assumed agent name 'ocf:heartbeat:Delay' (deduced from 'Delay')",
@@ -2737,7 +2765,7 @@ class FileDistributionError(NameBuildTest):
         )
 
 
-class FileRemoveFromNodesStarted(NameBuildTest):
+class FilesRemoveFromNodesStarted(NameBuildTest):
     def test_minimal(self):
         self.assert_message_from_report(
             "Requesting remove 'file'",
@@ -2965,7 +2993,7 @@ class SbdDeviceDoesNotExist(NameBuildTest):
         )
 
 
-class SbdDeviceISNotBlockDevice(NameBuildTest):
+class SbdDeviceIsNotBlockDevice(NameBuildTest):
     def test_build_message(self):
         self.assert_message_from_report(
             "node1: device '/dev' is not a block device",
@@ -3714,7 +3742,7 @@ class UnableToConnectToAllRemainingNodes(NameBuildTest):
     def test_single_node(self):
         self.assert_message_from_report(
             ("Remaining cluster node 'node1' could not be reached"),
-            reports.UnableToConnectToAllRemainingNode(["node1"]),
+            reports.UnableToConnectToAllRemainingNodes(["node1"]),
         )
 
     def test_multiple_nodes(self):
@@ -3723,7 +3751,7 @@ class UnableToConnectToAllRemainingNodes(NameBuildTest):
                 "Remaining cluster nodes 'node0', 'node1', 'node2' could not "
                 "be reached"
             ),
-            reports.UnableToConnectToAllRemainingNode(
+            reports.UnableToConnectToAllRemainingNodes(
                 ["node1", "node0", "node2"]
             ),
         )
@@ -4029,7 +4057,7 @@ class CannotBanResourceStoppedNoNodeSpecified(NameBuildTest):
         )
 
 
-class ResourceBanPcmkEerror(NameBuildTest):
+class ResourceBanPcmkError(NameBuildTest):
     def test_success(self):
         self.assert_message_from_report(
             "cannot ban resource 'R'\nstdout1\n  stdout2\nstderr1\n  stderr2",
@@ -4428,7 +4456,7 @@ class BoothConfigDistributionNodeError(NameBuildTest):
         )
 
 
-class BoothFetchingConfigFromNodeTest(NameBuildTest):
+class BoothFetchingConfigFromNode(NameBuildTest):
     def test_empty_name(self):
         self.assert_message_from_report(
             "Fetching booth config from node 'node1'...",
@@ -4483,7 +4511,7 @@ class BoothTicketStatusError(NameBuildTest):
         )
 
 
-class BoothPeersStatusErrorTest(NameBuildTest):
+class BoothPeersStatusError(NameBuildTest):
     def test_minimal(self):
         self.assert_message_from_report(
             "unable to get status of booth peers",
@@ -4497,7 +4525,7 @@ class BoothPeersStatusErrorTest(NameBuildTest):
         )
 
 
-class BoothCannotDetermineLocalSiteIpTest(NameBuildTest):
+class BoothCannotDetermineLocalSiteIp(NameBuildTest):
     def test_success(self):
         self.assert_message_from_report(
             "cannot determine local site ip, please specify site parameter",
@@ -4505,7 +4533,7 @@ class BoothCannotDetermineLocalSiteIpTest(NameBuildTest):
         )
 
 
-class BoothTicketOperationFailedTest(NameBuildTest):
+class BoothTicketOperationFailed(NameBuildTest):
     def test_success(self):
         self.assert_message_from_report(
             (
@@ -4566,7 +4594,7 @@ class TagCannotAddAndRemoveIdsAtTheSameTime(NameBuildTest):
         )
 
 
-class TagCannotAddReferenceIdAlreadyInTheTag(NameBuildTest):
+class TagCannotAddReferenceIdsAlreadyInTheTag(NameBuildTest):
     def test_message_singular(self):
         self.assert_message_from_report(
             "Cannot add reference id already in the tag 'tag_id': 'id1'",

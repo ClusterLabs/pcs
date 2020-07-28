@@ -1,3 +1,4 @@
+import inspect
 from unittest import TestCase
 
 from pcs.common import file_type_codes
@@ -7,6 +8,34 @@ from pcs.common.reports import (
     const,
 )
 from pcs.cli.reports import messages as cli_messages
+
+
+class AllClassesTested(TestCase):
+    def test_success(self):
+        self.maxDiff = None
+        message_classes = frozenset(
+            name
+            for name, member in inspect.getmembers(
+                cli_messages, inspect.isclass
+            )
+            if issubclass(member, cli_messages.CliReportMessageCustom)
+            and member != cli_messages.CliReportMessageCustom
+        )
+        test_classes = frozenset(
+            name
+            for name, member in inspect.getmembers(
+                inspect.getmodule(self), inspect.isclass
+            )
+            if issubclass(member, CliReportMessageTestBase)
+        )
+        untested = sorted(message_classes - test_classes)
+        self.assertEqual(
+            untested,
+            [],
+            f"It seems {len(untested)} subclass(es) of 'CliReportMessageCustom' "
+            "are missing tests. Make sure the test classes have the same name "
+            "as the code classes.",
+        )
 
 
 class CliReportMessageTestBase(TestCase):
@@ -195,10 +224,10 @@ class NodesToRemoveUnreachable(CliReportMessageTestBase):
         )
 
 
-class UnableToConnectToAllRemainingNode(CliReportMessageTestBase):
+class UnableToConnectToAllRemainingNodes(CliReportMessageTestBase):
     def test_one_node(self):
         self.assert_message(
-            messages.UnableToConnectToAllRemainingNode(["node1"]),
+            messages.UnableToConnectToAllRemainingNodes(["node1"]),
             (
                 "Remaining cluster node 'node1' could not be reached, run "
                 "'pcs cluster sync' on any currently online node once the "
@@ -208,7 +237,7 @@ class UnableToConnectToAllRemainingNode(CliReportMessageTestBase):
 
     def test_multiple_nodes(self):
         self.assert_message(
-            messages.UnableToConnectToAllRemainingNode(["node2", "node1"]),
+            messages.UnableToConnectToAllRemainingNodes(["node2", "node1"]),
             (
                 "Remaining cluster nodes 'node1', 'node2' could not be "
                 "reached, run 'pcs cluster sync' on any currently online node "
@@ -508,8 +537,3 @@ class CibNvsetAmbiguousProvideNvsetId(CliReportMessageTestBase):
             "Several options sets exist, please use the 'pcs resource defaults "
             "set update' command and specify an option set ID",
         )
-
-
-# TODO: create test/check that all subclasses of
-# pcs.cli.reports.messages.CliReportMessageCustom have their test class with
-# the same name in this file
