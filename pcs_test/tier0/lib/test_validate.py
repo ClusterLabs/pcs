@@ -6,7 +6,6 @@ from pcs_test.tools import fixture
 from pcs_test.tools.assertions import assert_report_item_list_equal
 
 from pcs.common import reports
-from pcs.common.reports import codes as report_codes
 from pcs.lib import validate
 from pcs.lib.cib.tools import IdProvider
 
@@ -87,19 +86,19 @@ class ValidatorAll(TestCase):
             ).validate({"x": "abcd", "y": "defg", "z": "hijk",}),
             [
                 fixture.error(
-                    report_codes.INVALID_OPTIONS,
+                    reports.codes.INVALID_OPTIONS,
                     option_names=["z"],
                     option_type=None,
                     allowed=["x", "y"],
                     allowed_patterns=[],
                 ),
                 fixture.error(
-                    report_codes.MUTUALLY_EXCLUSIVE_OPTIONS,
+                    reports.codes.MUTUALLY_EXCLUSIVE_OPTIONS,
                     option_names=["x", "y"],
                     option_type=None,
                 ),
                 fixture.error(
-                    report_codes.INVALID_OPTION_VALUE,
+                    reports.codes.INVALID_OPTION_VALUE,
                     option_value="abcd",
                     option_name="x",
                     allowed_values="a positive integer",
@@ -107,7 +106,7 @@ class ValidatorAll(TestCase):
                     forbidden_characters=None,
                 ),
                 fixture.error(
-                    report_codes.INVALID_OPTION_VALUE,
+                    reports.codes.INVALID_OPTION_VALUE,
                     option_value="defg",
                     option_name="y",
                     allowed_values=["a", "b"],
@@ -152,7 +151,7 @@ class ValidatorFirstError(TestCase):
             self.validator.validate({"name1": "a", "name2": "d"}),
             [
                 fixture.error(
-                    report_codes.INVALID_OPTION_VALUE,
+                    reports.codes.INVALID_OPTION_VALUE,
                     option_name="name1",
                     option_value="a",
                     allowed_values="test report",
@@ -167,7 +166,7 @@ class ValidatorFirstError(TestCase):
             self.validator.validate({"name1": "c", "name2": "a"}),
             [
                 fixture.error(
-                    report_codes.INVALID_OPTION_VALUE,
+                    reports.codes.INVALID_OPTION_VALUE,
                     option_name="name2",
                     option_value="a",
                     allowed_values="test report",
@@ -182,7 +181,7 @@ class ValidatorFirstError(TestCase):
             self.validator.validate({"name1": "b", "name2": "a"}),
             [
                 fixture.warn(
-                    report_codes.INVALID_OPTION_VALUE,
+                    reports.codes.INVALID_OPTION_VALUE,
                     option_name="name1",
                     option_value="b",
                     allowed_values="test report",
@@ -190,7 +189,7 @@ class ValidatorFirstError(TestCase):
                     forbidden_characters=None,
                 ),
                 fixture.error(
-                    report_codes.INVALID_OPTION_VALUE,
+                    reports.codes.INVALID_OPTION_VALUE,
                     option_name="name2",
                     option_value="a",
                     allowed_values="test report",
@@ -218,7 +217,7 @@ class CorosyncOption(TestCase):
             ),
             [
                 fixture.error(
-                    report_codes.INVALID_USERDEFINED_OPTIONS,
+                    reports.codes.INVALID_USERDEFINED_OPTIONS,
                     option_names=sorted(bad_names),
                     option_type=None,
                     allowed_characters="a-z A-Z 0-9 /_-",
@@ -234,7 +233,7 @@ class CorosyncOption(TestCase):
             ),
             [
                 fixture.error(
-                    report_codes.INVALID_USERDEFINED_OPTIONS,
+                    reports.codes.INVALID_USERDEFINED_OPTIONS,
                     option_names=sorted(bad_names),
                     option_type="type",
                     allowed_characters="a-z A-Z 0-9 /_-",
@@ -262,7 +261,7 @@ class DependsOnOption(TestCase):
             ).validate({"name": "value"}),
             [
                 fixture.error(
-                    report_codes.PREREQUISITE_OPTION_IS_MISSING,
+                    reports.codes.PREREQUISITE_OPTION_IS_MISSING,
                     option_name="name",
                     option_type="type1",
                     prerequisite_name="prerequisite",
@@ -278,7 +277,7 @@ class DependsOnOption(TestCase):
             ).validate({"name1": "value", "name3": "value",}),
             [
                 fixture.error(
-                    report_codes.PREREQUISITE_OPTION_IS_MISSING,
+                    reports.codes.PREREQUISITE_OPTION_IS_MISSING,
                     option_name=name,
                     option_type=None,
                     prerequisite_name="prerequisite",
@@ -303,7 +302,7 @@ class IsRequiredAll(TestCase):
             validate.IsRequiredAll(["name"], "some type").validate({}),
             [
                 fixture.error(
-                    report_codes.REQUIRED_OPTIONS_ARE_MISSING,
+                    reports.codes.REQUIRED_OPTIONS_ARE_MISSING,
                     option_names=["name"],
                     option_type="some type",
                 ),
@@ -317,7 +316,7 @@ class IsRequiredAll(TestCase):
             ).validate({"name2": "value2"}),
             [
                 fixture.error(
-                    report_codes.REQUIRED_OPTIONS_ARE_MISSING,
+                    reports.codes.REQUIRED_OPTIONS_ARE_MISSING,
                     option_names=["name1", "name3"],
                     option_type="some type",
                 ),
@@ -349,7 +348,7 @@ class IsRequiredSome(TestCase):
             ),
             [
                 fixture.error(
-                    report_codes.REQUIRED_OPTION_OF_ALTERNATIVES_IS_MISSING,
+                    reports.codes.REQUIRED_OPTION_OF_ALTERNATIVES_IS_MISSING,
                     option_names=["first", "second"],
                     option_type="type",
                 ),
@@ -370,7 +369,7 @@ class MutuallyExclusive(TestCase):
             ),
             [
                 fixture.error(
-                    report_codes.MUTUALLY_EXCLUSIVE_OPTIONS,
+                    reports.codes.MUTUALLY_EXCLUSIVE_OPTIONS,
                     option_type=None,
                     option_names=["a", "b"],
                 ),
@@ -384,7 +383,7 @@ class MutuallyExclusive(TestCase):
             ).validate({"a": "A", "b": "B", "c": "C", "d": "D",}),
             [
                 fixture.error(
-                    report_codes.MUTUALLY_EXCLUSIVE_OPTIONS,
+                    reports.codes.MUTUALLY_EXCLUSIVE_OPTIONS,
                     option_type="option",
                     option_names=["a", "b", "c"],
                 ),
@@ -405,7 +404,7 @@ class NamesIn(TestCase):
             ),
             [
                 fixture.error(
-                    report_codes.INVALID_OPTIONS,
+                    reports.codes.INVALID_OPTIONS,
                     option_names=["x", "y"],
                     allowed=["a", "b", "c"],
                     option_type="option",
@@ -421,7 +420,7 @@ class NamesIn(TestCase):
             ).validate({"x": "X", "a": "A", "z": "Z"}),
             [
                 fixture.error(
-                    report_codes.INVALID_OPTIONS,
+                    reports.codes.INVALID_OPTIONS,
                     option_names=["x", "z"],
                     allowed=["a", "b"],
                     option_type=None,
@@ -437,7 +436,7 @@ class NamesIn(TestCase):
             ).validate({"x": "X", "a": "A", "z": "Z", "c": "C"}),
             [
                 fixture.error(
-                    report_codes.INVALID_OPTIONS,
+                    reports.codes.INVALID_OPTIONS,
                     option_names=["c", "x", "z"],
                     allowed=["a", "b"],
                     option_type=None,
@@ -452,11 +451,11 @@ class NamesIn(TestCase):
             validate.NamesIn(
                 ["a", "b"],
                 banned_name_list=["x", "y", "z"],
-                code_for_warning=code,
+                severity=reports.item.ReportItemSeverity.error(code),
             ).validate({"x": "X", "a": "A", "z": "Z", "c": "C", "d": "D"}),
             [
                 fixture.error(
-                    report_codes.INVALID_OPTIONS,
+                    reports.codes.INVALID_OPTIONS,
                     force_code=code,
                     option_names=["c", "d"],
                     allowed=["a", "b"],
@@ -464,7 +463,7 @@ class NamesIn(TestCase):
                     allowed_patterns=[],
                 ),
                 fixture.error(
-                    report_codes.INVALID_OPTIONS,
+                    reports.codes.INVALID_OPTIONS,
                     option_names=["x", "z"],
                     allowed=["a", "b"],
                     option_type=None,
@@ -474,24 +473,22 @@ class NamesIn(TestCase):
         )
 
     def test_return_error_on_not_allowed_and_banned_names_forced(self):
-        code = "force_code"
         assert_report_item_list_equal(
             validate.NamesIn(
                 ["a", "b"],
                 banned_name_list=["x", "y", "z"],
-                code_for_warning=code,
-                produce_warning=True,
+                severity=reports.item.ReportItemSeverity.warning(),
             ).validate({"x": "X", "a": "A", "z": "Z", "c": "C", "d": "D"}),
             [
                 fixture.warn(
-                    report_codes.INVALID_OPTIONS,
+                    reports.codes.INVALID_OPTIONS,
                     option_names=["c", "d"],
                     allowed=["a", "b"],
                     option_type=None,
                     allowed_patterns=[],
                 ),
                 fixture.error(
-                    report_codes.INVALID_OPTIONS,
+                    reports.codes.INVALID_OPTIONS,
                     option_names=["x", "z"],
                     allowed=["a", "b"],
                     option_type=None,
@@ -507,29 +504,11 @@ class NamesIn(TestCase):
             ).validate({"x": "X", "y": "Y"}),
             [
                 fixture.error(
-                    report_codes.INVALID_OPTIONS,
+                    reports.codes.INVALID_OPTIONS,
                     option_names=["x", "y"],
                     allowed=["a", "b", "c"],
                     option_type=None,
                     allowed_patterns=["pattern"],
-                )
-            ],
-        )
-
-    def test_return_error_on_not_allowed_names_without_force_code(self):
-        assert_report_item_list_equal(
-            validate.NamesIn(
-                ["a", "b", "c"],
-                # does now work without code_for_warning
-                produce_warning=True,
-            ).validate({"x": "X", "y": "Y"}),
-            [
-                fixture.warn(
-                    report_codes.INVALID_OPTIONS,
-                    option_names=["x", "y"],
-                    allowed=["a", "b", "c"],
-                    option_type=None,
-                    allowed_patterns=[],
                 )
             ],
         )
@@ -539,11 +518,11 @@ class NamesIn(TestCase):
             validate.NamesIn(
                 ["a", "b", "c"],
                 option_type="some option",
-                code_for_warning="FORCE_CODE",
+                severity=reports.item.ReportItemSeverity.error("FORCE_CODE"),
             ).validate({"x": "X", "y": "Y"}),
             [
                 fixture.error(
-                    report_codes.INVALID_OPTIONS,
+                    reports.codes.INVALID_OPTIONS,
                     force_code="FORCE_CODE",
                     option_names=["x", "y"],
                     allowed=["a", "b", "c"],
@@ -558,12 +537,11 @@ class NamesIn(TestCase):
             validate.NamesIn(
                 ["a", "b", "c"],
                 option_type="some option",
-                code_for_warning="FORCE_CODE",
-                produce_warning=True,
+                severity=reports.item.ReportItemSeverity.warning(),
             ).validate({"x": "X", "y": "Y"}),
             [
                 fixture.warn(
-                    report_codes.INVALID_OPTIONS,
+                    reports.codes.INVALID_OPTIONS,
                     option_names=["x", "y"],
                     allowed=["a", "b", "c"],
                     option_type="some option",
@@ -599,7 +577,7 @@ class ValueValidator(TestCase):
             ValueValidatorImplementation("name").validate({"name": ""}),
             [
                 fixture.error(
-                    report_codes.INVALID_OPTION_VALUE,
+                    reports.codes.INVALID_OPTION_VALUE,
                     option_name="name",
                     option_value="",
                     allowed_values="test report",
@@ -619,7 +597,7 @@ class ValueValidator(TestCase):
             ValueValidatorImplementation("name").validate({"name": "value"}),
             [
                 fixture.error(
-                    report_codes.INVALID_OPTION_VALUE,
+                    reports.codes.INVALID_OPTION_VALUE,
                     option_name="name",
                     option_value="value",
                     allowed_values="test report",
@@ -665,7 +643,7 @@ class ValuePredicateBase(TestCase):
             ValuePredicateImplementation("a").validate({"a": "c"}),
             [
                 fixture.error(
-                    report_codes.INVALID_OPTION_VALUE,
+                    reports.codes.INVALID_OPTION_VALUE,
                     option_name="a",
                     option_value="c",
                     allowed_values="allowed values",
@@ -682,7 +660,7 @@ class ValuePredicateBase(TestCase):
             .validate({"a": "c"}),
             [
                 fixture.error(
-                    report_codes.INVALID_OPTION_VALUE,
+                    reports.codes.INVALID_OPTION_VALUE,
                     option_name="a",
                     option_value="c",
                     allowed_values="allowed values",
@@ -699,7 +677,7 @@ class ValuePredicateBase(TestCase):
             .validate({"a": "c"}),
             [
                 fixture.error(
-                    report_codes.INVALID_OPTION_VALUE,
+                    reports.codes.INVALID_OPTION_VALUE,
                     option_name="a",
                     option_value="c",
                     allowed_values="allowed values",
@@ -716,7 +694,7 @@ class ValuePredicateBase(TestCase):
             ),
             [
                 fixture.error(
-                    report_codes.INVALID_OPTION_VALUE,
+                    reports.codes.INVALID_OPTION_VALUE,
                     option_name="a",
                     option_value="b",
                     allowed_values="allowed values",
@@ -733,7 +711,7 @@ class ValuePredicateBase(TestCase):
             ).validate({"a": "c"}),
             [
                 fixture.error(
-                    report_codes.INVALID_OPTION_VALUE,
+                    reports.codes.INVALID_OPTION_VALUE,
                     option_name="option a",
                     option_value="c",
                     allowed_values="allowed values",
@@ -746,11 +724,11 @@ class ValuePredicateBase(TestCase):
     def test_supports_forceable_errors(self):
         assert_report_item_list_equal(
             ValuePredicateImplementation(
-                "a", code_for_warning="FORCE"
+                "a", severity=reports.item.ReportItemSeverity.error("FORCE")
             ).validate({"a": "c"}),
             [
                 fixture.error(
-                    report_codes.INVALID_OPTION_VALUE,
+                    reports.codes.INVALID_OPTION_VALUE,
                     force_code="FORCE",
                     option_name="a",
                     option_value="c",
@@ -764,11 +742,11 @@ class ValuePredicateBase(TestCase):
     def test_supports_warning(self):
         assert_report_item_list_equal(
             ValuePredicateImplementation(
-                "a", code_for_warning="FORCE", produce_warning=True
+                "a", severity=reports.item.ReportItemSeverity.warning()
             ).validate({"a": "c"}),
             [
                 fixture.warn(
-                    report_codes.INVALID_OPTION_VALUE,
+                    reports.codes.INVALID_OPTION_VALUE,
                     option_name="a",
                     option_value="c",
                     allowed_values="allowed values",
@@ -813,7 +791,7 @@ class ValueCorosyncValue(TestCase):
                     validate.ValueCorosyncValue("a").validate({"a": value}),
                     [
                         fixture.error(
-                            report_codes.INVALID_OPTION_VALUE,
+                            reports.codes.INVALID_OPTION_VALUE,
                             option_value=value,
                             option_name="a",
                             allowed_values=None,
@@ -830,7 +808,7 @@ class ValueId(TestCase):
             validate.ValueId("id").validate({"id": ""}),
             [
                 fixture.error(
-                    report_codes.INVALID_ID_IS_EMPTY, id_description=None,
+                    reports.codes.INVALID_ID_IS_EMPTY, id_description="id",
                 ),
             ],
         )
@@ -842,7 +820,7 @@ class ValueId(TestCase):
             ),
             [
                 fixture.error(
-                    report_codes.INVALID_ID_BAD_CHAR,
+                    reports.codes.INVALID_ID_BAD_CHAR,
                     id="0-test",
                     id_description="test id",
                     invalid_character="0",
@@ -856,9 +834,9 @@ class ValueId(TestCase):
             validate.ValueId("id").validate({"id": "te#st"}),
             [
                 fixture.error(
-                    report_codes.INVALID_ID_BAD_CHAR,
+                    reports.codes.INVALID_ID_BAD_CHAR,
                     id="te#st",
-                    id_description=None,
+                    id_description="id",
                     invalid_character="#",
                     is_first_char=False,
                 ),
@@ -871,7 +849,7 @@ class ValueId(TestCase):
             validate.ValueId("id", id_provider=id_provider).validate(
                 {"id": "used"}
             ),
-            [fixture.error(report_codes.ID_ALREADY_EXISTS, id="used",),],
+            [fixture.error(reports.codes.ID_ALREADY_EXISTS, id="used",),],
         )
 
     def test_pair_invalid(self):
@@ -881,11 +859,11 @@ class ValueId(TestCase):
             ),
             [
                 fixture.error(
-                    report_codes.INVALID_ID_IS_EMPTY,
+                    reports.codes.INVALID_ID_IS_EMPTY,
                     # TODO: This should be INVALID_ID_BAD_CHAR with value
                     # "@&#". However an old validator is used and it doesn't
                     # work with pairs and therefore the empty string is used.
-                    id_description=None,
+                    id_description="id",
                 ),
             ],
         )
@@ -898,7 +876,7 @@ class ValueId(TestCase):
             ),
             [
                 fixture.error(
-                    report_codes.ID_ALREADY_EXISTS,
+                    reports.codes.ID_ALREADY_EXISTS,
                     # TODO: This should be "not-used". However an old
                     # validator is used and it doesn't work with pairs.
                     id="used",
@@ -944,7 +922,7 @@ class ValueIn(TestCase):
             validate.ValueIn("a", ["b"]).validate({"a": "c"}),
             [
                 fixture.error(
-                    report_codes.INVALID_OPTION_VALUE,
+                    reports.codes.INVALID_OPTION_VALUE,
                     option_name="a",
                     option_value="c",
                     allowed_values=["b"],
@@ -961,7 +939,7 @@ class ValueIn(TestCase):
             ),
             [
                 fixture.error(
-                    report_codes.INVALID_OPTION_VALUE,
+                    reports.codes.INVALID_OPTION_VALUE,
                     option_name="a",
                     option_value="C",
                     allowed_values=["b"],
@@ -978,7 +956,7 @@ class ValueIn(TestCase):
             ).validate({"a": "c"}),
             [
                 fixture.error(
-                    report_codes.INVALID_OPTION_VALUE,
+                    reports.codes.INVALID_OPTION_VALUE,
                     option_name="option a",
                     option_value="c",
                     allowed_values=["b"],
@@ -990,12 +968,14 @@ class ValueIn(TestCase):
 
     def test_supports_forceable_errors(self):
         assert_report_item_list_equal(
-            validate.ValueIn("a", ["b"], code_for_warning="FORCE").validate(
-                {"a": "c"}
-            ),
+            validate.ValueIn(
+                "a",
+                ["b"],
+                severity=reports.item.ReportItemSeverity.error("FORCE"),
+            ).validate({"a": "c"}),
             [
                 fixture.error(
-                    report_codes.INVALID_OPTION_VALUE,
+                    reports.codes.INVALID_OPTION_VALUE,
                     force_code="FORCE",
                     option_name="a",
                     option_value="c",
@@ -1009,11 +989,11 @@ class ValueIn(TestCase):
     def test_supports_warning(self):
         assert_report_item_list_equal(
             validate.ValueIn(
-                "a", ["b"], code_for_warning="FORCE", produce_warning=True
+                "a", ["b"], severity=reports.item.ReportItemSeverity.warning(),
             ).validate({"a": "c"}),
             [
                 fixture.warn(
-                    report_codes.INVALID_OPTION_VALUE,
+                    reports.codes.INVALID_OPTION_VALUE,
                     option_name="a",
                     option_value="c",
                     allowed_values=["b"],
@@ -1040,7 +1020,7 @@ class ValueIntegerInRange(TestCase):
             self.fixture_validator().validate({"key": "6"}),
             [
                 fixture.error(
-                    report_codes.INVALID_OPTION_VALUE,
+                    reports.codes.INVALID_OPTION_VALUE,
                     option_name="key",
                     option_value="6",
                     allowed_values="-5..5",
@@ -1073,7 +1053,7 @@ class ValueIpAddress(TestCase):
             self.fixture_validator().validate({"key": "abcd"}),
             [
                 fixture.error(
-                    report_codes.INVALID_OPTION_VALUE,
+                    reports.codes.INVALID_OPTION_VALUE,
                     option_name="key",
                     option_value="abcd",
                     allowed_values="an IP address",
@@ -1096,7 +1076,7 @@ class ValueNonnegativeInteger(TestCase):
             validate.ValueNonnegativeInteger("key").validate({"key": "-10"}),
             [
                 fixture.error(
-                    report_codes.INVALID_OPTION_VALUE,
+                    reports.codes.INVALID_OPTION_VALUE,
                     option_name="key",
                     option_value="-10",
                     allowed_values="a non-negative integer",
@@ -1128,7 +1108,7 @@ class ValueNotEmpty(TestCase):
             validate.ValueNotEmpty("key", "description").validate({"key": ""}),
             [
                 fixture.error(
-                    report_codes.INVALID_OPTION_VALUE,
+                    reports.codes.INVALID_OPTION_VALUE,
                     option_name="key",
                     option_value="",
                     allowed_values="description",
@@ -1151,7 +1131,7 @@ class ValuePortNumber(TestCase):
             validate.ValuePortNumber("key").validate({"key": "65536"}),
             [
                 fixture.error(
-                    report_codes.INVALID_OPTION_VALUE,
+                    reports.codes.INVALID_OPTION_VALUE,
                     option_name="key",
                     option_value="65536",
                     allowed_values="a port number (1..65535)",
@@ -1174,7 +1154,7 @@ class ValuePortRange(TestCase):
             validate.ValuePortRange("key").validate({"key": "10-20-30"}),
             [
                 fixture.error(
-                    report_codes.INVALID_OPTION_VALUE,
+                    reports.codes.INVALID_OPTION_VALUE,
                     option_name="key",
                     option_value="10-20-30",
                     allowed_values="port-port",
@@ -1189,7 +1169,7 @@ class ValuePortRange(TestCase):
             validate.ValuePortRange("key").validate({"key": "0-100"}),
             [
                 fixture.error(
-                    report_codes.INVALID_OPTION_VALUE,
+                    reports.codes.INVALID_OPTION_VALUE,
                     option_name="key",
                     option_value="0-100",
                     allowed_values="port-port",
@@ -1204,7 +1184,7 @@ class ValuePortRange(TestCase):
             validate.ValuePortRange("key").validate({"key": "100-65536"}),
             [
                 fixture.error(
-                    report_codes.INVALID_OPTION_VALUE,
+                    reports.codes.INVALID_OPTION_VALUE,
                     option_name="key",
                     option_value="100-65536",
                     allowed_values="port-port",
@@ -1227,7 +1207,7 @@ class ValuePositiveInteger(TestCase):
             validate.ValuePositiveInteger("key").validate({"key": "0"}),
             [
                 fixture.error(
-                    report_codes.INVALID_OPTION_VALUE,
+                    reports.codes.INVALID_OPTION_VALUE,
                     option_name="key",
                     option_value="0",
                     allowed_values="a positive integer",
@@ -1261,7 +1241,7 @@ class ValueScore(TestCase):
             with self.subTest(score=score):
                 assert_report_item_list_equal(
                     validate.ValueScore("a").validate({"a": score}),
-                    [fixture.error(report_codes.INVALID_SCORE, score=score,),],
+                    [fixture.error(reports.codes.INVALID_SCORE, score=score,),],
                 )
 
 
@@ -1279,7 +1259,7 @@ class ValueTimeInterval(TestCase):
             validate.ValueTimeInterval("a").validate({"a": "invalid_value"}),
             [
                 fixture.error(
-                    report_codes.INVALID_OPTION_VALUE,
+                    reports.codes.INVALID_OPTION_VALUE,
                     option_name="a",
                     option_value="invalid_value",
                     allowed_values="time interval (e.g. 1, 2s, 3m, 4h, ...)",

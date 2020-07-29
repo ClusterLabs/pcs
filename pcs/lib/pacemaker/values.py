@@ -1,7 +1,12 @@
 import re
+from typing import (
+    List,
+    Optional,
+    Union,
+)
 
 from pcs.common import reports
-from pcs.common.reports.item import ReportItem
+from pcs.common.reports.item import ReportItem, ReportItemList
 from pcs.lib.errors import LibraryError
 
 
@@ -41,19 +46,22 @@ def is_false(val) -> bool:
     return val.lower() in _BOOLEAN_FALSE
 
 
-def is_score(value):
+def is_score(value: str) -> bool:
     if not value:
         return False
     unsigned_value = value[1:] if value[0] in ("+", "-") else value
     return unsigned_value == SCORE_INFINITY or unsigned_value.isdigit()
 
 
-def timeout_to_seconds(timeout, return_unknown=False):
+def timeout_to_seconds(
+    timeout: Union[int, str], return_unknown: bool = False
+) -> Union[int, str, None]:
     """
     Transform pacemaker style timeout to number of seconds
-    timeout timeout string
-    return_unknown if timeout is not valid then return None on False or timeout
-        on True (default False)
+
+    timeout -- timeout string
+    return_unknown -- if timeout is not valid then return None on False or
+        timeout on True (default False)
     """
     try:
         candidate = int(timeout)
@@ -62,7 +70,9 @@ def timeout_to_seconds(timeout, return_unknown=False):
         return timeout if return_unknown else None
     except ValueError:
         pass
-    # now we know the timeout is not an integer nor an integer string
+    # Now we know the timeout is not an integer nor an integer string.
+    # Let's make sure mypy knows the timeout is a string as well.
+    timeout = str(timeout)
     suffix_multiplier = {
         "s": 1,
         "sec": 1,
@@ -95,7 +105,11 @@ def get_valid_timeout_seconds(timeout_candidate):
     return wait_timeout
 
 
-def validate_id(id_candidate, description="id", reporter=None):
+def validate_id(
+    id_candidate: str,
+    description: Optional[str] = None,
+    reporter: Union[None, List, ReportItemList] = None,
+):
     """
     Validate a pacemaker id, raise LibraryError on invalid id.
 
@@ -105,6 +119,7 @@ def validate_id(id_candidate, description="id", reporter=None):
     # see NCName definition
     # http://www.w3.org/TR/REC-xml-names/#NT-NCName
     # http://www.w3.org/TR/REC-xml/#NT-Name
+    description = "id" if not description else description  # for mypy
     if not id_candidate:
         report_item = ReportItem.error(
             reports.messages.InvalidIdIsEmpty(description)

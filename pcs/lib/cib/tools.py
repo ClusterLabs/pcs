@@ -2,13 +2,14 @@ import re
 from typing import (
     cast,
     List,
+    Set,
 )
 
 from lxml.etree import _Element
 
 from pcs.common import reports
 from pcs.common.reports import codes as report_codes
-from pcs.common.reports.item import ReportItem
+from pcs.common.reports.item import ReportItem, ReportItemList
 from pcs.common.tools import Version
 from pcs.lib.cib import sections
 from pcs.lib.errors import LibraryError
@@ -26,26 +27,26 @@ class IdProvider:
     Book ids for future use in the CIB and generate new ids accordingly
     """
 
-    def __init__(self, cib_element):
+    def __init__(self, cib_element: _Element):
         """
-        etree cib_element -- any element of the xml to being check against
+        cib_element -- any element of the xml to check against
         """
         self._cib = get_root(cib_element)
-        self._booked_ids = set()
+        self._booked_ids: Set[str] = set()
 
     def allocate_id(self, proposed_id: str) -> str:
         """
         Generate a new unique id based on the proposal and keep track of it
+
         string proposed_id -- requested id
         """
         final_id = find_unique_id(self._cib, proposed_id, self._booked_ids)
         self._booked_ids.add(final_id)
         return final_id
 
-    def book_ids(self, *id_list):
+    def book_ids(self, *id_list: str) -> ReportItemList:
         """
         Check if the ids are not already used and reserve them for future use
-        strings *id_list -- ids
         """
         reported_ids = set()
         report_list = []

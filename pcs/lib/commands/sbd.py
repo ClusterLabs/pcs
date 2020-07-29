@@ -1,6 +1,5 @@
 from pcs import settings
 from pcs.common import reports
-from pcs.common.reports import codes as report_codes
 from pcs.common.reports.item import ReportItem
 from pcs.lib.communication.sbd import (
     CheckSbd,
@@ -69,16 +68,16 @@ def _validate_sbd_options(
         validate.NamesIn(
             ALLOWED_SBD_OPTION_LIST,
             banned_name_list=UNSUPPORTED_SBD_OPTION_LIST,
-            **validate.set_warning(
-                report_codes.FORCE_OPTIONS, allow_unknown_opts
+            severity=reports.item.get_severity(
+                reports.codes.FORCE_OPTIONS, allow_unknown_opts
             ),
         ),
         validate.ValueNonnegativeInteger("SBD_WATCHDOG_TIMEOUT"),
         validate.ValueIn(
             "SBD_TIMEOUT_ACTION",
             TIMEOUT_ACTION_ALLOWED_VALUE_LIST,
-            **validate.set_warning(
-                report_codes.FORCE_OPTIONS, allow_invalid_option_values
+            severity=reports.item.get_severity(
+                reports.codes.FORCE_OPTIONS, allow_invalid_option_values
             ),
         ),
     ]

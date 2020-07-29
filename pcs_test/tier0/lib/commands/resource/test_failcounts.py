@@ -49,9 +49,9 @@ class GetFailcounts(TestCase):
                 fixture.error(
                     report_codes.PREREQUISITE_OPTION_IS_MISSING,
                     option_name="interval",
-                    option_type="",
+                    option_type=None,
                     prerequisite_name="operation",
-                    prerequisite_type="",
+                    prerequisite_type=None,
                 ),
             ],
             expected_in_processor=False,
@@ -84,9 +84,9 @@ class GetFailcounts(TestCase):
                 fixture.error(
                     report_codes.PREREQUISITE_OPTION_IS_MISSING,
                     option_name="interval",
-                    option_type="",
+                    option_type=None,
                     prerequisite_name="operation",
-                    prerequisite_type="",
+                    prerequisite_type=None,
                 ),
                 fixture.error(
                     report_codes.INVALID_OPTION_VALUE,
