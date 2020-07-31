@@ -624,6 +624,7 @@ def get_nodes_status()
   }
 end
 
+# TODO remove, used only to load data into an old web UI template
 def get_resource_agents_avail(auth_user, params)
   code, result = send_cluster_request_with_token(
     auth_user, params[:cluster], 'get_avail_resource_agents'
@@ -641,6 +642,7 @@ def get_resource_agents_avail(auth_user, params)
   end
 end
 
+# TODO remove, used only to load data into an old web UI template
 def get_stonith_agents_avail(auth_user, params)
   code, result = send_cluster_request_with_token(
     auth_user, params[:cluster], 'get_avail_fence_agents'
