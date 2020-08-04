@@ -22,7 +22,12 @@ from pcs.common.types import (
 from pcs.lib.cib import nvpair_multi
 from pcs.lib.cib.rule.expression_part import (
     BOOL_AND,
+    BOOL_OR,
+    NODE_ATTR_OP_DEFINED,
+    NODE_ATTR_OP_GT,
+    NODE_ATTR_TYPE_NUMBER,
     BoolExpr,
+    NodeAttrExpr,
     OpExpr,
     RscExpr,
 )
@@ -63,8 +68,21 @@ class NvsetElementToDto(TestCase):
                 xml = etree.fromstring(
                     f"""
                     <{tag} id="my-id" score="150">
-                        <rule id="my-id-rule" boolean-op="or">
+                        <rule id="my-id-rule" boolean-op="and">
+                            <rsc_expression
+                                id="my-id-rule-rsc-ocf-pacemaker-Dummy"
+                                class="ocf" provider="pacemaker" type="Dummy"
+                            />
                             <op_expression id="my-id-rule-op" name="monitor" />
+                            <rule id="my-id-rule-rule" boolean-op="or">
+                                <expression id="my-id-rule-rule-expr"
+                                    operation="defined" attribute="attr1"
+                                />
+                                <expression id="my-id-rule-rule-expr-1"
+                                    attribute="attr2" operation="gt"
+                                    type="number" value="5"
+                                />
+                            </rule>
                         </rule>
                         <nvpair id="my-id-pair1" name="name1" value="value1" />
                         <nvpair id="my-id-pair2" name="name2" value="value2" />
@@ -81,10 +99,24 @@ class NvsetElementToDto(TestCase):
                             "my-id-rule",
                             CibRuleExpressionType.RULE,
                             False,
-                            {"boolean-op": "or"},
+                            {"boolean-op": "and"},
                             None,
                             None,
                             [
+                                CibRuleExpressionDto(
+                                    "my-id-rule-rsc-ocf-pacemaker-Dummy",
+                                    CibRuleExpressionType.RSC_EXPRESSION,
+                                    False,
+                                    {
+                                        "class": "ocf",
+                                        "provider": "pacemaker",
+                                        "type": "Dummy",
+                                    },
+                                    None,
+                                    None,
+                                    [],
+                                    "resource ocf:pacemaker:Dummy",
+                                ),
                                 CibRuleExpressionDto(
                                     "my-id-rule-op",
                                     CibRuleExpressionType.OP_EXPRESSION,
@@ -95,8 +127,48 @@ class NvsetElementToDto(TestCase):
                                     [],
                                     "op monitor",
                                 ),
+                                CibRuleExpressionDto(
+                                    "my-id-rule-rule",
+                                    CibRuleExpressionType.RULE,
+                                    False,
+                                    {"boolean-op": "or"},
+                                    None,
+                                    None,
+                                    [
+                                        CibRuleExpressionDto(
+                                            "my-id-rule-rule-expr",
+                                            CibRuleExpressionType.EXPRESSION,
+                                            False,
+                                            {
+                                                "operation": "defined",
+                                                "attribute": "attr1",
+                                            },
+                                            None,
+                                            None,
+                                            [],
+                                            "defined attr1",
+                                        ),
+                                        CibRuleExpressionDto(
+                                            "my-id-rule-rule-expr-1",
+                                            CibRuleExpressionType.EXPRESSION,
+                                            False,
+                                            {
+                                                "attribute": "attr2",
+                                                "operation": "gt",
+                                                "type": "number",
+                                                "value": "5",
+                                            },
+                                            None,
+                                            None,
+                                            [],
+                                            "attr2 gt number 5",
+                                        ),
+                                    ],
+                                    "defined attr1 or attr2 gt number 5",
+                                ),
                             ],
-                            "op monitor",
+                            "resource ocf:pacemaker:Dummy and op monitor and "
+                            "(defined attr1 or attr2 gt number 5)",
                         ),
                         [
                             CibNvpairDto("my-id-pair1", "name1", "value1"),
@@ -276,11 +348,11 @@ class ValidateNvsetAppendNew(TestCase):
                 fixture.error(
                     reports.codes.RULE_EXPRESSION_PARSE_ERROR,
                     rule_string="bad rule",
-                    reason='Expected "resource"',
+                    reason='Expected "eq"',
                     rule_line="bad rule",
                     line_number=1,
-                    column_number=1,
-                    position=0,
+                    column_number=5,
+                    position=4,
                 ),
             ],
         )
@@ -341,7 +413,24 @@ class NvsetAppendNew(TestCase):
             {},
             nvset_rule=BoolExpr(
                 BOOL_AND,
-                [RscExpr("ocf", "pacemaker", "Dummy"), OpExpr("start", None)],
+                [
+                    RscExpr("ocf", "pacemaker", "Dummy"),
+                    OpExpr("start", None),
+                    BoolExpr(
+                        BOOL_OR,
+                        [
+                            NodeAttrExpr(
+                                NODE_ATTR_OP_DEFINED, "attr1", None, None
+                            ),
+                            NodeAttrExpr(
+                                NODE_ATTR_OP_GT,
+                                "attr2",
+                                "5",
+                                NODE_ATTR_TYPE_NUMBER,
+                            ),
+                        ],
+                    ),
+                ],
             ),
         )
         assert_xml_equal(
@@ -358,6 +447,17 @@ class NvsetAppendNew(TestCase):
                             <op_expression id="a-meta_attributes-rule-op-start" 
                                 name="start"
                             />
+                            <rule id="a-meta_attributes-rule-rule"
+                                boolean-op="or" score="0"
+                            >
+                                <expression id="a-meta_attributes-rule-rule-expr"
+                                    operation="defined" attribute="attr1"
+                                />
+                                <expression id="a-meta_attributes-rule-rule-expr-1"
+                                    attribute="attr2" operation="gt"
+                                    type="number" value="5"
+                                />
+                            </rule>
                         </rule>
                     </meta_attributes>
                 </context>

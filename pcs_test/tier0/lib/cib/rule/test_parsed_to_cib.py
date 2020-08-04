@@ -9,7 +9,19 @@ from pcs.lib.cib import rule
 from pcs.lib.cib.rule.expression_part import (
     BOOL_AND,
     BOOL_OR,
+    NODE_ATTR_TYPE_NUMBER,
+    NODE_ATTR_TYPE_STRING,
+    NODE_ATTR_TYPE_VERSION,
+    NODE_ATTR_OP_DEFINED,
+    NODE_ATTR_OP_NOT_DEFINED,
+    NODE_ATTR_OP_EQ,
+    NODE_ATTR_OP_NE,
+    NODE_ATTR_OP_GTE,
+    NODE_ATTR_OP_GT,
+    NODE_ATTR_OP_LTE,
+    NODE_ATTR_OP_LT,
     BoolExpr,
+    NodeAttrExpr,
     OpExpr,
     RscExpr,
 )
@@ -69,6 +81,120 @@ class SimpleBool(Base):
                         </rule>
                     """,
                 )
+
+
+class SimpleNodeAttr(Base):
+    def test_defined(self):
+        self.assert_cib(
+            NodeAttrExpr(NODE_ATTR_OP_DEFINED, "pingd", None, None),
+            """
+                <expression attribute="pingd" id="X-expr" operation="defined" />
+            """,
+        )
+
+    def test_not_defined(self):
+        self.assert_cib(
+            NodeAttrExpr(NODE_ATTR_OP_NOT_DEFINED, "pingd", None, None),
+            """
+                <expression attribute="pingd" id="X-expr" operation="not_defined" />
+            """,
+        )
+
+    def test_eq(self):
+        self.assert_cib(
+            NodeAttrExpr(NODE_ATTR_OP_EQ, "#uname", "node1", None),
+            """
+                <expression attribute="#uname" id="X-expr" operation="eq"
+                    value="node1"
+                />
+            """,
+        )
+
+    def test_ne(self):
+        self.assert_cib(
+            NodeAttrExpr(NODE_ATTR_OP_NE, "#uname", "node1", None),
+            """
+                <expression attribute="#uname" id="X-expr" operation="ne"
+                    value="node1"
+                />
+            """,
+        )
+
+    def test_gt(self):
+        self.assert_cib(
+            NodeAttrExpr(NODE_ATTR_OP_GT, "#uname", "node1", None),
+            """
+                <expression attribute="#uname" id="X-expr" operation="gt"
+                    value="node1"
+                />
+            """,
+        )
+
+    def test_gte(self):
+        self.assert_cib(
+            NodeAttrExpr(NODE_ATTR_OP_GTE, "#uname", "node1", None),
+            """
+                <expression attribute="#uname" id="X-expr" operation="gte"
+                    value="node1"
+                />
+            """,
+        )
+
+    def test_lt(self):
+        self.assert_cib(
+            NodeAttrExpr(NODE_ATTR_OP_LT, "#uname", "node1", None),
+            """
+                <expression attribute="#uname" id="X-expr" operation="lt"
+                    value="node1"
+                />
+            """,
+        )
+
+    def test_lte(self):
+        self.assert_cib(
+            NodeAttrExpr(NODE_ATTR_OP_LTE, "#uname", "node1", None),
+            """
+                <expression attribute="#uname" id="X-expr" operation="lte"
+                    value="node1"
+                />
+            """,
+        )
+
+    def test_type_number(self):
+        self.assert_cib(
+            NodeAttrExpr(
+                NODE_ATTR_OP_EQ, "#uname", "12345", NODE_ATTR_TYPE_NUMBER
+            ),
+            """
+                <expression attribute="#uname" id="X-expr" operation="eq"
+                    type="number" value="12345"
+                />
+            """,
+        )
+
+    def test_type_string(self):
+        self.assert_cib(
+            NodeAttrExpr(
+                NODE_ATTR_OP_EQ, "#uname", "node1", NODE_ATTR_TYPE_STRING
+            ),
+            """
+                <expression attribute="#uname" id="X-expr" operation="eq"
+                    type="string" value="node1"
+                />
+            """,
+        )
+
+    def test_type_version(self):
+        self.assert_cib(
+            NodeAttrExpr(
+                NODE_ATTR_OP_EQ, "#uname", "1.2.3", NODE_ATTR_TYPE_VERSION
+            ),
+            """
+                <expression attribute="#uname" id="X-expr" operation="eq"
+                    type="version" value="1.2.3"
+                />
+            """,
+        )
 
 
 class SimpleOp(Base):

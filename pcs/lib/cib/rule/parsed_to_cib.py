@@ -8,6 +8,7 @@ from pcs.lib.cib.tools import (
 
 from .expression_part import (
     BoolExpr,
+    NodeAttrExpr,
     OpExpr,
     RscExpr,
     RuleExprPart,
@@ -42,6 +43,7 @@ def __export_part(
 ) -> _Element:
     part_export_map = {
         BoolExpr: __export_bool,
+        NodeAttrExpr: __export_node_attr,
         OpExpr: __export_op,
         RscExpr: __export_rsc,
     }
@@ -68,6 +70,25 @@ def __export_bool(
     )
     for child in boolean.children:
         __export_part(element, child, id_provider)
+    return element
+
+
+def __export_node_attr(
+    parent_el: _Element, expr: NodeAttrExpr, id_provider: IdProvider
+) -> _Element:
+    element = etree.SubElement(
+        parent_el,
+        "expression",
+        {
+            "id": create_subelement_id(parent_el, "expr", id_provider),
+            "attribute": expr.attr_name,
+            "operation": expr.operator.lower(),
+        },
+    )
+    if expr.attr_value:
+        element.attrib["value"] = expr.attr_value
+    if expr.attr_type:
+        element.attrib["type"] = expr.attr_type.lower()
     return element
 
 

@@ -10,11 +10,47 @@ import pyparsing
 from .expression_part import (
     BOOL_AND,
     BOOL_OR,
+    NODE_ATTR_TYPE_NUMBER,
+    NODE_ATTR_TYPE_STRING,
+    NODE_ATTR_TYPE_VERSION,
+    NODE_ATTR_OP_DEFINED,
+    NODE_ATTR_OP_NOT_DEFINED,
+    NODE_ATTR_OP_EQ,
+    NODE_ATTR_OP_NE,
+    NODE_ATTR_OP_GTE,
+    NODE_ATTR_OP_GT,
+    NODE_ATTR_OP_LTE,
+    NODE_ATTR_OP_LT,
     BoolExpr,
+    NodeAttrExpr,
     OpExpr,
     RscExpr,
     RuleExprPart,
 )
+
+_token_to_node_expr_unary_op = {
+    "defined": NODE_ATTR_OP_DEFINED,
+    "not_defined": NODE_ATTR_OP_NOT_DEFINED,
+}
+
+_token_to_node_expr_binary_op = {
+    "eq": NODE_ATTR_OP_EQ,
+    "ne": NODE_ATTR_OP_NE,
+    "gte": NODE_ATTR_OP_GTE,
+    "gt": NODE_ATTR_OP_GT,
+    "lte": NODE_ATTR_OP_LTE,
+    "lt": NODE_ATTR_OP_LT,
+}
+
+_token_to_node_expr_type = {
+    # TODO deprecated, remove
+    # in old pcs versions, "number" was called "integer"
+    "integer": NODE_ATTR_TYPE_NUMBER,
+    "number": NODE_ATTR_TYPE_NUMBER,
+    "string": NODE_ATTR_TYPE_STRING,
+    "version": NODE_ATTR_TYPE_VERSION,
+}
+
 
 pyparsing.ParserElement.enablePackrat()
 
@@ -117,8 +153,37 @@ def __build_bool_tree(token_list: pyparsing.ParseResults) -> RuleExprPart:
     return operand_left
 
 
+def __build_node_attr_unary_expr(
+    parse_result: pyparsing.ParseResults,
+) -> RuleExprPart:
+    # Those attrs are defined by setResultsName in node_attr_unary_expr grammar
+    # rule
+    return NodeAttrExpr(
+        _token_to_node_expr_unary_op[parse_result.operator],
+        parse_result.attr_name,
+        None,
+        None,
+    )
+
+
+def __build_node_attr_binary_expr(
+    parse_result: pyparsing.ParseResults,
+) -> RuleExprPart:
+    # TODO report when deprecated "integer" is used
+    # Those attrs are defined by setResultsName in node_attr_binary_expr
+    # grammar rule
+    return NodeAttrExpr(
+        _token_to_node_expr_binary_op[parse_result.operator],
+        parse_result.attr_name,
+        parse_result.attr_value,
+        _token_to_node_expr_type[parse_result.attr_type]
+        if parse_result.attr_type
+        else None,
+    )
+
+
 def __build_op_expr(parse_result: pyparsing.ParseResults) -> RuleExprPart:
-    # Those attr are defined by setResultsName in op_expr grammar rule
+    # Those attrs are defined by setResultsName in op_expr grammar rule
     return OpExpr(
         parse_result.name,
         # pyparsing-2.1.0 puts "interval_value" into parse_result.interval as
@@ -141,12 +206,7 @@ def __get_rule_parser(
 ) -> pyparsing.ParserElement:
     # This function defines the rule grammar
 
-    # It was created for 'pcs resource [op] defaults' commands to be able to
-    # set defaults for specified resources and/or operation using rules. When
-    # implementing that feature, there was no time to reimplement all the other
-    # rule expressions from old code. The plan is to move old rule parser code
-    # here once there is time / need to do it.
-    # How to add other rule expressions:
+    # How to add new rule expressions:
     #   1 Create new grammar rules in a way similar to existing rsc_expr and
     #     op_expr. Use setName for better description of a grammar when printed.
     #     Use setResultsName for an easy access to parsed parts.
@@ -157,6 +217,61 @@ def __get_rule_parser(
     #     grammar rules using setParseAction.
     #   4 Add the new expressions into simple_expr_list.
     #   5 Test and debug the whole thing.
+
+    node_attr_unary_expr = pyparsing.And(
+        [
+            # operator
+            pyparsing.Or(
+                [
+                    pyparsing.CaselessKeyword(op)
+                    for op in _token_to_node_expr_unary_op
+                ]
+            ).setResultsName("operator"),
+            # attribute name
+            # It can by any string containing any characters except whitespace
+            # (token separator) and "()" (brackets).
+            pyparsing.Regex(r"[^\s()]+")
+            .setName("<attribute name>")
+            .setResultsName("attr_name"),
+        ]
+    )
+    node_attr_unary_expr.setParseAction(__build_node_attr_unary_expr)
+
+    node_attr_binary_expr = pyparsing.And(
+        [
+            # attribute name
+            # It can by any string containing any characters except whitespace
+            # (token separator) and "()" (brackets).
+            pyparsing.Regex(r"[^\s()]+")
+            .setName("<attribute name>")
+            .setResultsName("attr_name"),
+            # operator
+            pyparsing.Or(
+                [
+                    pyparsing.CaselessKeyword(op)
+                    for op in _token_to_node_expr_binary_op
+                ]
+            ).setResultsName("operator"),
+            # attribute type
+            pyparsing.Optional(
+                pyparsing.Or(
+                    [
+                        pyparsing.CaselessKeyword(type_)
+                        for type_ in _token_to_node_expr_type
+                    ]
+                )
+            )
+            .setName("<attribute type>")
+            .setResultsName("attr_type"),
+            # attribute value
+            # It can by any string containing any characters except whitespace
+            # (token separator) and "()" (brackets).
+            pyparsing.Regex(r"[^\s()]+")
+            .setName("<attribute value>")
+            .setResultsName("attr_value"),
+        ]
+    )
+    node_attr_binary_expr.setParseAction(__build_node_attr_binary_expr)
 
     rsc_expr = pyparsing.And(
         [
@@ -208,7 +323,7 @@ def __get_rule_parser(
     )
     op_expr.setParseAction(__build_op_expr)
 
-    simple_expr_list = []
+    simple_expr_list = [node_attr_unary_expr, node_attr_binary_expr]
     if allow_rsc_expr:
         simple_expr_list.append(rsc_expr)
     if allow_op_expr:

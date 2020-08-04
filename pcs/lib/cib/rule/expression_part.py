@@ -17,6 +17,21 @@ BoolOperator = NewType("BoolOperator", str)
 BOOL_AND = BoolOperator("AND")
 BOOL_OR = BoolOperator("OR")
 
+NodeAttrOperator = NewType("NodeAttrOperator", str)
+NODE_ATTR_OP_DEFINED = NodeAttrOperator("DEFINED")
+NODE_ATTR_OP_NOT_DEFINED = NodeAttrOperator("NOT_DEFINED")
+NODE_ATTR_OP_EQ = NodeAttrOperator("EQ")
+NODE_ATTR_OP_NE = NodeAttrOperator("NE")
+NODE_ATTR_OP_GTE = NodeAttrOperator("GTE")
+NODE_ATTR_OP_GT = NodeAttrOperator("GT")
+NODE_ATTR_OP_LTE = NodeAttrOperator("LTE")
+NODE_ATTR_OP_LT = NodeAttrOperator("LT")
+
+NodeAttrType = NewType("NodeAttrType", str)
+NODE_ATTR_TYPE_NUMBER = NodeAttrType("NUMBER")
+NODE_ATTR_TYPE_STRING = NodeAttrType("STRING")
+NODE_ATTR_TYPE_VERSION = NodeAttrType("VERSION")
+
 
 @dataclass(frozen=True)
 class BoolExpr(RuleExprPart):
@@ -26,6 +41,18 @@ class BoolExpr(RuleExprPart):
 
     operator: BoolOperator
     children: Sequence[RuleExprPart]
+
+
+@dataclass(frozen=True)
+class NodeAttrExpr(RuleExprPart):
+    """
+    Represents a node attribute expression in a rule.
+    """
+
+    operator: NodeAttrOperator
+    attr_name: str
+    attr_value: Optional[str]
+    attr_type: Optional[NodeAttrType]
 
 
 @dataclass(frozen=True)

@@ -110,6 +110,15 @@ class DefaultsCreateMixin:
                         <rsc_expression id="my-id-rule-rsc-ocf-pacemaker-Dummy"
                             class="ocf" provider="pacemaker" type="Dummy"
                         />
+                        <rule id="my-id-rule-rule" boolean-op="or" score="0">
+                            <expression id="my-id-rule-rule-expr"
+                                operation="defined" attribute="attr1"
+                            />
+                            <expression id="my-id-rule-rule-expr-1"
+                                attribute="attr2" operation="gt"
+                                type="number" value="5"
+                            />
+                        </rule>
                     </rule>
                     <nvpair id="my-id-name1" name="name1" value="value1" />
                     <nvpair id="my-id-2name" name="2na#me" value="value2" />
@@ -125,7 +134,10 @@ class DefaultsCreateMixin:
             self.env_assist.get_env(),
             {"name1": "value1", "2na#me": "value2"},
             {"id": "my-id", "score": "10"},
-            nvset_rule="resource ocf:pacemaker:Dummy",
+            nvset_rule=(
+                "resource ocf:pacemaker:Dummy and "
+                "(defined attr1 or attr2 gt number 5)"
+            ),
         )
 
         self.env_assist.assert_reports(
@@ -157,11 +169,11 @@ class DefaultsCreateMixin:
                 fixture.error(
                     reports.codes.RULE_EXPRESSION_PARSE_ERROR,
                     rule_string="bad rule",
-                    reason='Expected "resource"',
+                    reason='Expected "eq"',
                     rule_line="bad rule",
                     line_number=1,
-                    column_number=1,
-                    position=0,
+                    column_number=5,
+                    position=4,
                 ),
             ]
         )
@@ -251,6 +263,19 @@ class DefaultsConfigMixin:
                             id="{self.tag}-meta_attributes-rule-rsc-Dummy"
                             class="ocf" provider="pacemaker" type="Dummy"
                         />
+                        <rule id="{self.tag}-meta_attributes-rule-rule"
+                            boolean-op="or"
+                        >
+                            <expression
+                                id="{self.tag}-meta_attributes-rule-rule-expr"
+                                operation="defined" attribute="attr1"
+                            />
+                            <expression
+                                id="{self.tag}-meta_attributes-rule-rule-expr-1"
+                                attribute="attr2" operation="gt"
+                                type="number" value="5"
+                            />
+                        </rule>
                     </rule>
                     <nvpair id="my-id-pair1" name="name1" value="value1" />
                     <nvpair id="my-id-pair2" name="name2" value="value2" />
@@ -294,8 +319,48 @@ class DefaultsConfigMixin:
                                 [],
                                 "resource ocf:pacemaker:Dummy",
                             ),
+                            CibRuleExpressionDto(
+                                f"{self.tag}-meta_attributes-rule-rule",
+                                CibRuleExpressionType.RULE,
+                                False,
+                                {"boolean-op": "or"},
+                                None,
+                                None,
+                                [
+                                    CibRuleExpressionDto(
+                                        f"{self.tag}-meta_attributes-rule-rule-expr",
+                                        CibRuleExpressionType.EXPRESSION,
+                                        False,
+                                        {
+                                            "operation": "defined",
+                                            "attribute": "attr1",
+                                        },
+                                        None,
+                                        None,
+                                        [],
+                                        "defined attr1",
+                                    ),
+                                    CibRuleExpressionDto(
+                                        f"{self.tag}-meta_attributes-rule-rule-expr-1",
+                                        CibRuleExpressionType.EXPRESSION,
+                                        False,
+                                        {
+                                            "attribute": "attr2",
+                                            "operation": "gt",
+                                            "type": "number",
+                                            "value": "5",
+                                        },
+                                        None,
+                                        None,
+                                        [],
+                                        "attr2 gt number 5",
+                                    ),
+                                ],
+                                "defined attr1 or attr2 gt number 5",
+                            ),
                         ],
-                        "resource ocf:pacemaker:Dummy",
+                        "resource ocf:pacemaker:Dummy and "
+                        "(defined attr1 or attr2 gt number 5)",
                     ),
                     [
                         CibNvpairDto("my-id-pair1", "name1", "value1"),

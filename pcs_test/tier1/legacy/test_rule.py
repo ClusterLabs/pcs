@@ -192,9 +192,11 @@ class ParserTest(TestCase):
     def setUp(self):
         self.parser = rule.RuleParser()
 
+    # already moved to pcs_test/tier0/lib/cib/rule/test_parser.py
     def testEmptyInput(self):
         self.assertRaises(rule.UnexpectedEndOfInput, self.parser.parse, [])
 
+    # already moved to pcs_test/tier0/lib/cib/rule/test_parser.py
     def testSingleLiteral(self):
         self.assertSyntaxError(
             "missing one of 'eq', 'ne', 'lt', 'gt', 'lte', 'gte', 'in_range', "
@@ -222,6 +224,7 @@ class ParserTest(TestCase):
         )
         self.assertUnexpectedEndOfInput(["date-spec"])
 
+    # already moved to pcs_test/tier0/lib/cib/rule/test_parser.py
     def testSimpleExpression(self):
         self.assertEqual(
             "(eq (literal #uname) (literal node1))",
@@ -248,6 +251,7 @@ class ParserTest(TestCase):
             str(self.parser.parse(["int", "lte", "123"])),
         )
 
+    # already moved to pcs_test/tier0/lib/cib/rule/test_parser.py
     def testSimpleExpressionBad(self):
         self.assertSyntaxError("unexpected 'eq'", ["eq"])
         self.assertUnexpectedEndOfInput(["#uname", "eq"])
@@ -275,6 +279,7 @@ class ParserTest(TestCase):
             ["#uname", "eq", "duration", "hours=1"],
         )
 
+    # already moved to pcs_test/tier0/lib/cib/rule/test_parser.py
     def testDefinedExpression(self):
         self.assertEqual(
             "(defined (literal pingd))",
@@ -285,6 +290,7 @@ class ParserTest(TestCase):
             str(self.parser.parse(["not_defined", "pingd"])),
         )
 
+    # already moved to pcs_test/tier0/lib/cib/rule/test_parser.py
     def testDefinedExpressionBad(self):
         self.assertUnexpectedEndOfInput(["defined"])
         self.assertUnexpectedEndOfInput(["not_defined"])
@@ -303,6 +309,7 @@ class ParserTest(TestCase):
             ["defined", "duration", "hours=1"],
         )
 
+    # already moved to pcs_test/tier0/lib/cib/rule/test_parser.py
     def testTypeExpression(self):
         self.assertEqual(
             "(eq (literal #uname) (string (literal node1)))",
@@ -354,6 +361,7 @@ class ParserTest(TestCase):
             ),
         )
 
+    # already moved to pcs_test/tier0/lib/cib/rule/test_parser.py
     def testTypeExpressionBad(self):
         self.assertUnexpectedEndOfInput(["string"])
         self.assertUnexpectedEndOfInput(["#uname", "eq", "string"])
@@ -465,6 +473,7 @@ class ParserTest(TestCase):
             ["date", "in_range", "2014-06-26", "to", "2014-13-26"],
         )
 
+    # already moved to pcs_test/tier0/lib/cib/rule/test_parser.py
     def testAndOrExpression(self):
         self.assertEqual(
             "(and "
@@ -685,6 +694,7 @@ class ParserTest(TestCase):
             ),
         )
 
+    # already moved to pcs_test/tier0/lib/cib/rule/test_parser.py
     def testAndOrExpressionBad(self):
         self.assertSyntaxError("unexpected 'and'", ["and"])
         self.assertSyntaxError("unexpected 'or'", ["or"])
@@ -943,6 +953,7 @@ class CibBuilderTest(TestCase):
             """,
         )
 
+    # already moved to pcs_test/tier0/lib/cib/rule/test_parsed_to_cib.py
     def testSimpleExpression(self):
         self.assertExpressionXml(
             ["#uname", "eq", "node1"],
@@ -1005,6 +1016,7 @@ class CibBuilderTest(TestCase):
             """,
         )
 
+    # already moved to pcs_test/tier0/lib/cib/rule/test_parsed_to_cib.py
     def testTypeExpression(self):
         self.assertExpressionXml(
             ["#uname", "eq", "string", "node1"],
@@ -1037,6 +1049,7 @@ class CibBuilderTest(TestCase):
             """,
         )
 
+    # already moved to pcs_test/tier0/lib/cib/rule/test_parsed_to_cib.py
     def testDefinedExpression(self):
         self.assertExpressionXml(
             ["defined", "pingd"],
