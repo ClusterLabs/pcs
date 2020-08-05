@@ -188,6 +188,7 @@ class DateValueTest(TestCase):
             self.assertEqual(syntax_error, str(e))
 
 
+# already moved to pcs_test/tier0/lib/cib/rule/test_parser.py
 class ParserTest(TestCase):
     def setUp(self):
         self.parser = rule.RuleParser()
@@ -209,6 +210,7 @@ class ParserTest(TestCase):
             ["string", "node1"],
         )
 
+    # already moved to pcs_test/tier0/lib/cib/rule/test_parser.py
     def testSingleLiteralDatespec(self):
         self.assertEqual(
             "(date-spec (literal hours=1))",
@@ -378,6 +380,7 @@ class ParserTest(TestCase):
             ["#uname", "eq", "version", "node1"],
         )
 
+    # already moved to pcs_test/tier0/lib/cib/rule/test_parser.py
     def testDateExpression(self):
         self.assertEqual(
             "(gt (literal date) (literal 2014-06-26))",
@@ -416,6 +419,7 @@ class ParserTest(TestCase):
             ),
         )
 
+    # already moved to pcs_test/tier0/lib/cib/rule/test_parser.py
     def testDateExpressionBad(self):
         self.assertUnexpectedEndOfInput(["date", "in_range"])
         self.assertSyntaxError(
@@ -598,6 +602,7 @@ class ParserTest(TestCase):
             ),
         )
 
+    # already moved to pcs_test/tier0/lib/cib/rule/test_parser.py
     def testAndOrExpressionDateSpec(self):
         self.assertEqual(
             "(and "
@@ -646,6 +651,7 @@ class ParserTest(TestCase):
             ),
         )
 
+    # already moved to pcs_test/tier0/lib/cib/rule/test_parser.py
     def testAndOrExpressionDate(self):
         self.assertEqual(
             "(and "
@@ -727,6 +733,7 @@ class ParserTest(TestCase):
             ["duration", "monthdays=1", "or", "#uname", "ne", "node1"],
         )
 
+    # already moved to pcs_test/tier0/lib/cib/rule/test_parser.py
     def testParenthesizedExpression(self):
         self.assertSyntaxError(
             "missing one of 'eq', 'ne', 'lt', 'gt', 'lte', 'gte', 'in_range', "
@@ -904,6 +911,7 @@ class ParserTest(TestCase):
             ),
         )
 
+    # already moved to pcs_test/tier0/lib/cib/rule/test_parser.py
     def testParenthesizedExpressionBad(self):
         self.assertUnexpectedEndOfInput(["("])
         self.assertSyntaxError("unexpected ')'", ["(", ")"])
@@ -922,11 +930,13 @@ class ParserTest(TestCase):
             self.assertEqual(syntax_error, str(e))
 
 
+# already moved to pcs_test/tier0/lib/cib/rule/test_parsed_to_cib.py
 class CibBuilderTest(TestCase):
     def setUp(self):
         self.parser = rule.RuleParser()
         self.builder = rule.CibBuilder()
 
+    # already moved to pcs_test/tier0/lib/cib/rule/test_parsed_to_cib.py
     def testSingleLiteralDatespec(self):
         self.assertExpressionXml(
             ["date-spec", "hours=1"],
@@ -1072,6 +1082,7 @@ class CibBuilderTest(TestCase):
             """,
         )
 
+    # already moved to pcs_test/tier0/lib/cib/rule/test_parsed_to_cib.py
     def testDateExpression(self):
         self.assertExpressionXml(
             ["date", "gt", "2014-06-26"],
@@ -1116,6 +1127,7 @@ class CibBuilderTest(TestCase):
             """,
         )
 
+    # already moved to pcs_test/tier0/lib/cib/rule/test_parser.py
     def testNotDateExpression(self):
         self.assertExpressionXml(
             ["date", "eq", "2014-06-26"],
@@ -1158,6 +1170,7 @@ class CibBuilderTest(TestCase):
             """,
         )
 
+    # already moved to pcs_test/tier0/lib/cib/rule/test_parsed_to_cib.py
     def testAndOrExpression(self):
         self.assertExpressionXml(
             ["#uname", "ne", "node1", "and", "#uname", "ne", "node2"],
@@ -1280,6 +1293,7 @@ class CibBuilderTest(TestCase):
             """,
         )
 
+    # already moved to pcs_test/tier0/lib/cib/rule/test_parsed_to_cib.py
     def testAndOrExpressionDateSpec(self):
         self.assertExpressionXml(
             ["#uname", "ne", "node1", "and", "date-spec", "hours=1-12"],
@@ -1329,6 +1343,7 @@ class CibBuilderTest(TestCase):
             """,
         )
 
+    # already moved to pcs_test/tier0/lib/cib/rule/test_parsed_to_cib.py
     def testParenthesizedExpression(self):
         self.assertExpressionXml(
             [

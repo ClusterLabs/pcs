@@ -7,7 +7,12 @@ from pcs.lib.cib.tools import (
 )
 
 from .expression_part import (
+    DATE_OP_GT,
+    DATE_OP_LT,
     BoolExpr,
+    DateInRangeExpr,
+    DatespecExpr,
+    DateUnaryExpr,
     NodeAttrExpr,
     OpExpr,
     RscExpr,
@@ -43,6 +48,9 @@ def __export_part(
 ) -> _Element:
     part_export_map = {
         BoolExpr: __export_bool,
+        DateInRangeExpr: __export_date_inrange,
+        DatespecExpr: __export_datespec,
+        DateUnaryExpr: __export_date_unary,
         NodeAttrExpr: __export_node_attr,
         OpExpr: __export_op,
         RscExpr: __export_rsc,
@@ -70,6 +78,66 @@ def __export_bool(
     )
     for child in boolean.children:
         __export_part(element, child, id_provider)
+    return element
+
+
+def __export_date_inrange(
+    parent_el: _Element, expr: DateInRangeExpr, id_provider: IdProvider
+) -> _Element:
+    element = etree.SubElement(
+        parent_el,
+        "date_expression",
+        {
+            "id": create_subelement_id(parent_el, "expr", id_provider),
+            "operation": "in_range",
+            "start": expr.date_start,
+        },
+    )
+    if expr.duration_parts:
+        duration_attrs = dict(expr.duration_parts)
+        duration_attrs["id"] = create_subelement_id(
+            element, "duration", id_provider
+        )
+        etree.SubElement(element, "duration", duration_attrs)
+    elif expr.date_end:
+        element.attrib["end"] = expr.date_end
+    return element
+
+
+def __export_datespec(
+    parent_el: _Element, expr: DatespecExpr, id_provider: IdProvider
+) -> _Element:
+    element = etree.SubElement(
+        parent_el,
+        "date_expression",
+        {
+            "id": create_subelement_id(parent_el, "expr", id_provider),
+            "operation": "date_spec",
+        },
+    )
+    datespec_attrs = dict(expr.date_parts)
+    datespec_attrs["id"] = create_subelement_id(
+        element, "datespec", id_provider
+    )
+    etree.SubElement(element, "date_spec", datespec_attrs)
+    return element
+
+
+def __export_date_unary(
+    parent_el: _Element, expr: DateUnaryExpr, id_provider: IdProvider
+) -> _Element:
+    element = etree.SubElement(
+        parent_el,
+        "date_expression",
+        {
+            "id": create_subelement_id(parent_el, "expr", id_provider),
+            "operation": expr.operator.lower(),
+        },
+    )
+    if expr.operator == DATE_OP_GT:
+        element.attrib["start"] = expr.date
+    elif expr.operator == DATE_OP_LT:
+        element.attrib["end"] = expr.date
     return element
 
 

@@ -9,6 +9,8 @@ from pcs.lib.cib import rule
 from pcs.lib.cib.rule.expression_part import (
     BOOL_AND,
     BOOL_OR,
+    DATE_OP_GT,
+    DATE_OP_LT,
     NODE_ATTR_TYPE_NUMBER,
     NODE_ATTR_TYPE_STRING,
     NODE_ATTR_TYPE_VERSION,
@@ -21,6 +23,9 @@ from pcs.lib.cib.rule.expression_part import (
     NODE_ATTR_OP_LTE,
     NODE_ATTR_OP_LT,
     BoolExpr,
+    DateInRangeExpr,
+    DatespecExpr,
+    DateUnaryExpr,
     NodeAttrExpr,
     OpExpr,
     RscExpr,
@@ -193,6 +198,70 @@ class SimpleNodeAttr(Base):
                 <expression attribute="#uname" id="X-expr" operation="eq"
                     type="version" value="1.2.3"
                 />
+            """,
+        )
+
+
+class SimpleDatespec(Base):
+    def test_1(self):
+        self.assert_cib(
+            DatespecExpr([("hours", "1")]),
+            """
+                <date_expression id="X-expr" operation="date_spec">
+                    <date_spec id="X-expr-datespec" hours="1" />
+                </date_expression>
+            """,
+        )
+
+    def test_2(self):
+        self.assert_cib(
+            DatespecExpr(
+                [("hours", "1-14"), ("monthdays", "20-30"), ("months", "1")]
+            ),
+            """
+                <date_expression id="X-expr" operation="date_spec">
+                    <date_spec id="X-expr-datespec"
+                        hours="1-14" monthdays="20-30" months="1"
+                    />
+                </date_expression>
+            """,
+        )
+
+
+class SimpleDate(Base):
+    def test_gt(self):
+        self.assert_cib(
+            DateUnaryExpr(DATE_OP_GT, "2014-06-26"),
+            """
+                <date_expression id="X-expr" operation="gt" start="2014-06-26" />
+            """,
+        )
+
+    def test_lt(self):
+        self.assert_cib(
+            DateUnaryExpr(DATE_OP_LT, "2014-06-26"),
+            """
+                <date_expression id="X-expr" operation="lt" end="2014-06-26" />
+            """,
+        )
+
+    def test_inrange_start_end(self):
+        self.assert_cib(
+            DateInRangeExpr("2014-06-26", "2014-07-26", None),
+            """
+                <date_expression id="X-expr"
+                    operation="in_range" start="2014-06-26" end="2014-07-26"
+                />
+            """,
+        )
+
+    def test_inrange_start_duration(self):
+        self.assert_cib(
+            DateInRangeExpr("2014-06-26", None, [("years", "1")]),
+            """
+                <date_expression id="X-expr" operation="in_range" start="2014-06-26">
+                    <duration id="X-expr-duration" years="1"/>
+                </date_expression>
             """,
         )
 

@@ -1,4 +1,4 @@
-from dataclasses import fields
+import dataclasses
 from textwrap import dedent
 from unittest import TestCase
 
@@ -18,10 +18,15 @@ def _parsed_to_str(parsed):
         )
 
     parts = [parsed.__class__.__name__]
-    for field in fields(parsed):
+    for field in dataclasses.fields(parsed):
         value = getattr(parsed, field.name)
         if value is not None:
-            parts.append(f"{field.name}={value}")
+            if field.name in ("duration_parts", "date_parts"):
+                parts.append(f"{field.name}=(\n ")
+                parts.extend([f"{key}={val}" for key, val in value])
+                parts.append("\n)")
+            else:
+                parts.append(f"{field.name}={value}")
     return " ".join(parts)
 
 
@@ -501,6 +506,275 @@ class Parser(TestCase):
             with self.subTest(rule_string=rule_string):
                 self._assert_success(rule_string, rule_tree)
 
+    def test_success_date_simple(self):
+        test_data = [
+            (
+                "date gt 2014-06-26",
+                dedent(
+                    """\
+                    BoolExpr AND
+                      DateUnaryExpr operator=GT date=2014-06-26"""
+                ),
+            ),
+            (
+                "date lt 2014-06-26",
+                dedent(
+                    """\
+                    BoolExpr AND
+                      DateUnaryExpr operator=LT date=2014-06-26"""
+                ),
+            ),
+            (
+                "date in_range 2014-06-26 to 2014-07-26",
+                dedent(
+                    """\
+                    BoolExpr AND
+                      DateInRangeExpr date_start=2014-06-26 date_end=2014-07-26"""
+                ),
+            ),
+            (
+                "date in_range 2014-06-26 to duration years=1",
+                dedent(
+                    """\
+                    BoolExpr AND
+                      DateInRangeExpr date_start=2014-06-26 duration_parts=(
+                        years=1 
+                      )"""
+                ),
+            ),
+            (
+                "date in_range 2014-06-26 to duration a=1 b=2 a=3",
+                dedent(
+                    """\
+                    BoolExpr AND
+                      DateInRangeExpr date_start=2014-06-26 duration_parts=(
+                        a=1 b=2 a=3 
+                      )"""
+                ),
+            ),
+        ]
+        for rule_string, rule_tree in test_data:
+            with self.subTest(rule_string=rule_string):
+                self._assert_success(rule_string, rule_tree)
+
+    def test_success_datespec(self):
+        test_data = [
+            (
+                "date-spec hours=1",
+                dedent(
+                    """\
+                    BoolExpr AND
+                      DatespecExpr date_parts=(
+                        hours=1 
+                      )"""
+                ),
+            ),
+            (
+                "date-spec hours=1-14 months=1 hours=14-20",
+                dedent(
+                    """\
+                    BoolExpr AND
+                      DatespecExpr date_parts=(
+                        hours=1-14 months=1 hours=14-20 
+                      )"""
+                ),
+            ),
+        ]
+        for rule_string, rule_tree in test_data:
+            with self.subTest(rule_string=rule_string):
+                self._assert_success(rule_string, rule_tree)
+
+    def test_success_and_or_date_datespec(self):
+        test_data = [
+            (
+                "#uname ne node1 and date-spec hours=1-12",
+                dedent(
+                    """\
+                    BoolExpr AND
+                      NodeAttrExpr operator=NE attr_name=#uname attr_value=node1
+                      DatespecExpr date_parts=(
+                        hours=1-12 
+                      )"""
+                ),
+            ),
+            (
+                "date-spec monthdays=1-12 or #uname ne node1",
+                dedent(
+                    """\
+                    BoolExpr OR
+                      DatespecExpr date_parts=(
+                        monthdays=1-12 
+                      )
+                      NodeAttrExpr operator=NE attr_name=#uname attr_value=node1"""
+                ),
+            ),
+            (
+                "date-spec monthdays=1-10 or date-spec monthdays=11-20",
+                dedent(
+                    """\
+                    BoolExpr OR
+                      DatespecExpr date_parts=(
+                        monthdays=1-10 
+                      )
+                      DatespecExpr date_parts=(
+                        monthdays=11-20 
+                      )"""
+                ),
+            ),
+            (
+                "#uname ne node1 and date in_range 2014-06-26 to 2014-07-26",
+                dedent(
+                    """\
+                    BoolExpr AND
+                      NodeAttrExpr operator=NE attr_name=#uname attr_value=node1
+                      DateInRangeExpr date_start=2014-06-26 date_end=2014-07-26"""
+                ),
+            ),
+            (
+                "date in_range 2014-06-26 to 2014-07-26 and #uname ne node1",
+                dedent(
+                    """\
+                    BoolExpr AND
+                      DateInRangeExpr date_start=2014-06-26 date_end=2014-07-26
+                      NodeAttrExpr operator=NE attr_name=#uname attr_value=node1"""
+                ),
+            ),
+        ]
+        for rule_string, rule_tree in test_data:
+            with self.subTest(rule_string=rule_string):
+                self._assert_success(rule_string, rule_tree)
+
+    def test_success_braces(self):
+        test_data = [
+            (
+                "(date-spec hours=1)",
+                dedent(
+                    """\
+                    BoolExpr AND
+                      DatespecExpr date_parts=(
+                        hours=1 
+                      )"""
+                ),
+            ),
+            (
+                "(#uname eq node1)",
+                dedent(
+                    """\
+                    BoolExpr AND
+                      NodeAttrExpr operator=EQ attr_name=#uname attr_value=node1"""
+                ),
+            ),
+            (
+                "(defined pingd)",
+                dedent(
+                    """\
+                    BoolExpr AND
+                      NodeAttrExpr operator=DEFINED attr_name=pingd"""
+                ),
+            ),
+            (
+                "(#uname ne node1 and #uname ne node2)",
+                dedent(
+                    """\
+                    BoolExpr AND
+                      NodeAttrExpr operator=NE attr_name=#uname attr_value=node1
+                      NodeAttrExpr operator=NE attr_name=#uname attr_value=node2"""
+                ),
+            ),
+            (
+                "(#uname ne node1) and (#uname ne node2)",
+                dedent(
+                    """\
+                    BoolExpr AND
+                      NodeAttrExpr operator=NE attr_name=#uname attr_value=node1
+                      NodeAttrExpr operator=NE attr_name=#uname attr_value=node2"""
+                ),
+            ),
+            (
+                "(#uname ne node1 and #uname ne node2) or #uname eq node3",
+                dedent(
+                    """\
+                    BoolExpr OR
+                      BoolExpr AND
+                        NodeAttrExpr operator=NE attr_name=#uname attr_value=node1
+                        NodeAttrExpr operator=NE attr_name=#uname attr_value=node2
+                      NodeAttrExpr operator=EQ attr_name=#uname attr_value=node3"""
+                ),
+            ),
+            (
+                "#uname ne node1 and (#uname ne node2 or #uname eq node3)",
+                dedent(
+                    """\
+                    BoolExpr AND
+                      NodeAttrExpr operator=NE attr_name=#uname attr_value=node1
+                      BoolExpr OR
+                        NodeAttrExpr operator=NE attr_name=#uname attr_value=node2
+                        NodeAttrExpr operator=EQ attr_name=#uname attr_value=node3"""
+                ),
+            ),
+            (
+                "(((#uname ne node1) and (((#uname ne node2) or (#uname eq node3)))))",
+                dedent(
+                    """\
+                    BoolExpr AND
+                      NodeAttrExpr operator=NE attr_name=#uname attr_value=node1
+                      BoolExpr OR
+                        NodeAttrExpr operator=NE attr_name=#uname attr_value=node2
+                        NodeAttrExpr operator=EQ attr_name=#uname attr_value=node3"""
+                ),
+            ),
+            (
+                "(date in_range 2014-06-26 to 2014-07-26)",
+                dedent(
+                    """\
+                    BoolExpr AND
+                      DateInRangeExpr date_start=2014-06-26 date_end=2014-07-26"""
+                ),
+            ),
+        ]
+        for rule_string, rule_tree in test_data:
+            with self.subTest(rule_string=rule_string):
+                self._assert_success(rule_string, rule_tree)
+
+    def test_success_not_date(self):
+        test_data = [
+            (
+                "date eq 2014-06-26",
+                dedent(
+                    """\
+                    BoolExpr AND
+                      NodeAttrExpr operator=EQ attr_name=date attr_value=2014-06-26"""
+                ),
+            ),
+            (
+                "date gt string 2014-06-26",
+                dedent(
+                    """\
+                    BoolExpr AND
+                      NodeAttrExpr operator=GT attr_name=date attr_value=2014-06-26 attr_type=STRING"""
+                ),
+            ),
+            (
+                "date gt integer 12345",
+                dedent(
+                    """\
+                    BoolExpr AND
+                      NodeAttrExpr operator=GT attr_name=date attr_value=12345 attr_type=NUMBER"""
+                ),
+            ),
+            (
+                "date gt version 1.2.3",
+                dedent(
+                    """\
+                    BoolExpr AND
+                      NodeAttrExpr operator=GT attr_name=date attr_value=1.2.3 attr_type=VERSION"""
+                ),
+            ),
+        ]
+        for rule_string, rule_tree in test_data:
+            with self.subTest(rule_string=rule_string):
+                self._assert_success(rule_string, rule_tree)
+
     def test_not_valid_rule(self):
         test_data = [
             # node attr misc
@@ -519,7 +793,7 @@ class Parser(TestCase):
             ("eq #uname", (1, 4, 3, 'Expected "eq"')),
             ("eq lt", (1, 6, 5, "Expected <attribute value>")),
             ("string #uname eq node1", (1, 8, 7, 'Expected "eq"')),
-            ("date-spec hours=1 eq node1", (1, 11, 10, 'Expected "eq"')),
+            ("date-spec hours=1 eq node1", (1, 19, 18, "Expected end of text")),
             (
                 "#uname eq date-spec hours=1",
                 (1, 21, 20, "Expected end of text"),
@@ -557,14 +831,63 @@ class Parser(TestCase):
                 "duration monthdays=1 or #uname ne node1",
                 (1, 10, 9, 'Expected "eq"'),
             ),
+            # date
+            ("date in_range", (1, 14, 13, "Expected <date>")),
+            ("date in_range 2014-06-26", (1, 25, 24, 'Expected "to"')),
+            ("date in_range 2014-06-26 to", (1, 28, 27, "Expected <date>")),
+            ("in_range 2014-06-26 to 2014-07-26", (1, 10, 9, 'Expected "eq"')),
+            (
+                "date in_range #uname eq node1 to 2014-07-26",
+                (1, 22, 21, 'Expected "to"'),
+            ),
+            (
+                "date in_range 2014-06-26 to #uname eq node1",
+                (1, 36, 35, "Expected end of text"),
+            ),
+            (
+                "date in_range defined pingd to 2014-07-26",
+                (1, 23, 22, 'Expected "to"'),
+            ),
+            (
+                "date in_range 2014-06-26 to defined pingd",
+                (1, 37, 36, "Expected end of text"),
+            ),
+            (
+                "string date in_range 2014-06-26 to 2014-07-26",
+                (1, 8, 7, 'Expected "eq"'),
+            ),
+            (
+                "date in_range string 2014-06-26 to 2014-07-26",
+                (1, 22, 21, 'Expected "to"'),
+            ),
+            (
+                "date in_range 2014-06-26 to string 2014-07-26",
+                (1, 36, 35, "Expected end of text"),
+            ),
+            (
+                "date in_range 2014-06-26 string to 2014-07-26",
+                (1, 26, 25, 'Expected "to"'),
+            ),
+            (
+                "#uname in_range 2014-06-26 to 2014-07-26",
+                (1, 8, 7, 'Expected "eq"'),
+            ),
+            # braces
+            ("(#uname)", (1, 8, 7, 'Expected "eq"')),
+            ("(", (1, 2, 1, 'Expected "date"')),
+            ("()", (1, 2, 1, 'Expected "date"')),
+            ("(#uname", (1, 8, 7, 'Expected "eq"')),
+            ("(#uname eq", (1, 11, 10, "Expected <attribute value>")),
+            ("(#uname eq node1", (1, 17, 16, 'Expected ")"')),
         ]
-
         for rule_string, exception_data in test_data:
             with self.subTest(rule_string=rule_string):
                 with self.assertRaises(rule.RuleParseError) as cm:
                     rule.parse_rule(
                         rule_string, allow_rsc_expr=True, allow_op_expr=True
                     )
-            e = cm.exception
-            self.assertEqual(exception_data, (e.lineno, e.colno, e.pos, e.msg))
-            self.assertEqual(rule_string, e.rule_string)
+                e = cm.exception
+                self.assertEqual(
+                    exception_data, (e.lineno, e.colno, e.pos, e.msg)
+                )
+                self.assertEqual(rule_string, e.rule_string)

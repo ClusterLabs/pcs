@@ -10,6 +10,8 @@ import pyparsing
 from .expression_part import (
     BOOL_AND,
     BOOL_OR,
+    DATE_OP_GT,
+    DATE_OP_LT,
     NODE_ATTR_TYPE_NUMBER,
     NODE_ATTR_TYPE_STRING,
     NODE_ATTR_TYPE_VERSION,
@@ -22,11 +24,20 @@ from .expression_part import (
     NODE_ATTR_OP_LTE,
     NODE_ATTR_OP_LT,
     BoolExpr,
+    DateInRangeExpr,
+    DatespecExpr,
+    DateUnaryExpr,
     NodeAttrExpr,
     OpExpr,
     RscExpr,
     RuleExprPart,
 )
+
+
+_token_to_date_expr_unary_op = {
+    "gt": DATE_OP_GT,
+    "lt": DATE_OP_LT,
+}
 
 _token_to_node_expr_unary_op = {
     "defined": NODE_ATTR_OP_DEFINED,
@@ -153,6 +164,36 @@ def __build_bool_tree(token_list: pyparsing.ParseResults) -> RuleExprPart:
     return operand_left
 
 
+def __build_date_unary_expr(
+    parse_result: pyparsing.ParseResults,
+) -> RuleExprPart:
+    # Those attrs are defined by setResultsName in date_unary_expr grammar rule
+    return DateUnaryExpr(
+        _token_to_date_expr_unary_op[parse_result.operator], parse_result.date
+    )
+
+
+def __build_date_inrange_expr(
+    parse_result: pyparsing.ParseResults,
+) -> RuleExprPart:
+    # Those attrs are defined by setResultsName in date_inrange_expr grammar
+    # rule
+    return DateInRangeExpr(
+        parse_result.date1,
+        parse_result.date2 if parse_result.date2 else None,
+        parse_result.duration if parse_result.duration else None,
+    )
+
+
+def __build_datespec_expr(
+    parse_result: pyparsing.ParseResults,
+) -> RuleExprPart:
+    # Those attrs are defined by setResultsName in datespec_expr grammar rule
+    return DatespecExpr(
+        parse_result.datespec if parse_result.datespec else None
+    )
+
+
 def __build_node_attr_unary_expr(
     parse_result: pyparsing.ParseResults,
 ) -> RuleExprPart:
@@ -198,6 +239,34 @@ def __build_rsc_expr(parse_result: pyparsing.ParseResults) -> RuleExprPart:
     # Those attrs are defined by the regexp in rsc_expr grammar rule
     return RscExpr(
         parse_result.standard, parse_result.provider, parse_result.type
+    )
+
+
+def __get_date_common_parser_part() -> pyparsing.ParserElement:
+    # This only checks for <name>=<value> and returns a list of 2-tuples. The
+    # tuples are expected to be validated elsewhere.
+    return pyparsing.OneOrMore(
+        pyparsing.Group(
+            pyparsing.And(
+                [
+                    # name
+                    # It can by any string containing any characters except
+                    # whitespace (token separator), '=' (name-value separator)
+                    # and "()" (brackets).
+                    pyparsing.Regex(r"[^=\s()]+").setName("<date part name>"),
+                    # Suppress is needed so the '=' doesn't pollute the
+                    # resulting structure produced automatically by pyparsing.
+                    pyparsing.Suppress(
+                        # no spaces allowed around the "="
+                        pyparsing.Literal("=").leaveWhitespace()
+                    ),
+                    # value
+                    # It can by any string containing any characters except
+                    # whitespace (token separator) and "()" (brackets).
+                    pyparsing.Regex(r"[^\s()]+").setName("<date part value>"),
+                ]
+            )
+        )
     )
 
 
@@ -273,6 +342,71 @@ def __get_rule_parser(
     )
     node_attr_binary_expr.setParseAction(__build_node_attr_binary_expr)
 
+    date_unary_expr = pyparsing.And(
+        [
+            pyparsing.CaselessKeyword("date"),
+            # operator
+            pyparsing.Or(
+                [
+                    pyparsing.CaselessKeyword(op)
+                    for op in _token_to_date_expr_unary_op
+                ]
+            ).setResultsName("operator"),
+            # date
+            # It can by any string containing any characters except whitespace
+            # (token separator) and "()" (brackets).
+            # The actual value should be validated elsewhere.
+            pyparsing.Regex(r"[^\s()]+")
+            .setName("<date>")
+            .setResultsName("date"),
+        ]
+    )
+    date_unary_expr.setParseAction(__build_date_unary_expr)
+
+    date_inrange_expr = pyparsing.And(
+        [
+            pyparsing.CaselessKeyword("date"),
+            pyparsing.CaselessKeyword("in_range"),
+            # date
+            # It can by any string containing any characters except whitespace
+            # (token separator) and "()" (brackets).
+            # The actual value should be validated elsewhere.
+            pyparsing.Regex(r"[^\s()]+")
+            .setName("<date>")
+            .setResultsName("date1"),
+            pyparsing.CaselessKeyword("to"),
+            pyparsing.Or(
+                [
+                    # date
+                    # It can by any string containing any characters except
+                    # whitespace (token separator) and "()" (brackets).
+                    # The actual value should be validated elsewhere.
+                    pyparsing.Regex(r"[^\s()]+")
+                    .setName("<date>")
+                    .setResultsName("date2"),
+                    # duration
+                    pyparsing.And(
+                        [
+                            pyparsing.CaselessKeyword("duration"),
+                            __get_date_common_parser_part().setResultsName(
+                                "duration"
+                            ),
+                        ]
+                    ),
+                ]
+            ),
+        ]
+    )
+    date_inrange_expr.setParseAction(__build_date_inrange_expr)
+
+    datespec_expr = pyparsing.And(
+        [
+            pyparsing.CaselessKeyword("date-spec"),
+            __get_date_common_parser_part().setResultsName("datespec"),
+        ]
+    )
+    datespec_expr.setParseAction(__build_datespec_expr)
+
     rsc_expr = pyparsing.And(
         [
             pyparsing.CaselessKeyword("resource"),
@@ -323,7 +457,13 @@ def __get_rule_parser(
     )
     op_expr.setParseAction(__build_op_expr)
 
-    simple_expr_list = [node_attr_unary_expr, node_attr_binary_expr]
+    simple_expr_list = [
+        date_unary_expr,
+        date_inrange_expr,
+        datespec_expr,
+        node_attr_unary_expr,
+        node_attr_binary_expr,
+    ]
     if allow_rsc_expr:
         simple_expr_list.append(rsc_expr)
     if allow_op_expr:
