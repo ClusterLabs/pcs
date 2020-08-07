@@ -172,7 +172,7 @@ class DefaultsCreateMixin:
             {"id": "my-id", "score": "10"},
             nvset_rule=(
                 "resource ocf:pacemaker:Dummy and "
-                "(defined attr1 or attr2 gt number 5 or date lt 2020-08-07 or "
+                "(defined attr1 or attr2 gt integer 5 or date lt 2020-08-07 or "
                 "date in_range 2020-09-01 to 2020-09-11 or "
                 "date in_range 2020-10-01 to duration months=1 or "
                 "date-spec years=2021-2022)"
@@ -419,7 +419,7 @@ class DefaultsConfigMixin:
                                         None,
                                         None,
                                         [],
-                                        "attr2 gt number 5",
+                                        "attr2 gt integer 5",
                                     ),
                                     CibRuleExpressionDto(
                                         f"{self.tag}-meta_attributes-rule-rule-expr-2",
@@ -478,7 +478,7 @@ class DefaultsConfigMixin:
                                         "date-spec years=2021-2022",
                                     ),
                                 ],
-                                "defined attr1 or attr2 gt number 5 or "
+                                "defined attr1 or attr2 gt integer 5 or "
                                 "date lt 2020-08-07 or "
                                 "date in_range 2020-09-01 to 2020-09-11 or "
                                 "date in_range 2020-10-01 to duration months=1 "
@@ -486,7 +486,7 @@ class DefaultsConfigMixin:
                             ),
                         ],
                         "resource ocf:pacemaker:Dummy and "
-                        "(defined attr1 or attr2 gt number 5 or "
+                        "(defined attr1 or attr2 gt integer 5 or "
                         "date lt 2020-08-07 or "
                         "date in_range 2020-09-01 to 2020-09-11 or "
                         "date in_range 2020-10-01 to duration months=1 "

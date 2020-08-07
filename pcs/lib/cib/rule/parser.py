@@ -54,10 +54,13 @@ _token_to_node_expr_binary_op = {
 }
 
 _token_to_node_expr_type = {
-    # TODO deprecated, remove
-    # in old pcs versions, "number" was called "integer"
+    # CIB schema defines "number", pacemaker code treats its values as
+    # integers, Pacemaker Explained uses "integer" instead of "number" and
+    # that's how it has been implemented in pcs. There is an ongoing discussion
+    # to resolve this inconsistency. For now, we stick with what pcs has been
+    # doing so far: use the keyword "integer", validate values to be integers,
+    # save them to attribute "number".
     "integer": NODE_ATTR_TYPE_NUMBER,
-    "number": NODE_ATTR_TYPE_NUMBER,
     "string": NODE_ATTR_TYPE_STRING,
     "version": NODE_ATTR_TYPE_VERSION,
 }
@@ -210,7 +213,6 @@ def __build_node_attr_unary_expr(
 def __build_node_attr_binary_expr(
     parse_result: pyparsing.ParseResults,
 ) -> RuleExprPart:
-    # TODO report when deprecated "integer" is used
     # Those attrs are defined by setResultsName in node_attr_binary_expr
     # grammar rule
     return NodeAttrExpr(

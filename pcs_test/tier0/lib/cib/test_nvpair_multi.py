@@ -185,7 +185,7 @@ class NvsetElementToDto(TestCase):
                                             None,
                                             None,
                                             [],
-                                            "attr2 gt number 5",
+                                            "attr2 gt integer 5",
                                         ),
                                         CibRuleExpressionDto(
                                             "my-id-rule-rule-expr-2",
@@ -244,7 +244,7 @@ class NvsetElementToDto(TestCase):
                                             "date-spec years=2021-2022",
                                         ),
                                     ],
-                                    "defined attr1 or attr2 gt number 5 or "
+                                    "defined attr1 or attr2 gt integer 5 or "
                                     "date lt 2020-08-07 or "
                                     "date in_range 2020-09-01 to 2020-09-11 or "
                                     "date in_range 2020-10-01 to duration months=1 or "
@@ -252,7 +252,7 @@ class NvsetElementToDto(TestCase):
                                 ),
                             ],
                             "resource ocf:pacemaker:Dummy and op monitor and "
-                            "(defined attr1 or attr2 gt number 5 or "
+                            "(defined attr1 or attr2 gt integer 5 or "
                             "date lt 2020-08-07 or "
                             "date in_range 2020-09-01 to 2020-09-11 or "
                             "date in_range 2020-10-01 to duration months=1 "

@@ -370,22 +370,6 @@ class Parser(TestCase):
                 ),
             ),
             (
-                "#uname eq number 12345",
-                dedent(
-                    """\
-                    BoolExpr AND
-                      NodeAttrExpr operator=EQ attr_name=#uname attr_value=12345 attr_type=NUMBER"""
-                ),
-            ),
-            (
-                "#uname eq number -12345",
-                dedent(
-                    """\
-                    BoolExpr AND
-                      NodeAttrExpr operator=EQ attr_name=#uname attr_value=-12345 attr_type=NUMBER"""
-                ),
-            ),
-            (
                 "#uname eq version 1",
                 dedent(
                     """\
