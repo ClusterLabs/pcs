@@ -57,6 +57,7 @@ from pcs.lib.pacemaker.values import (
 from pcs.lib.cib.tools import IdProvider
 
 _INTEGER_RE = re.compile(r"^[+-]?[0-9]+$")
+_PCMK_DATESPEC_PART_RE = re.compile(r"^(?P<since>[0-9]+)(-(?P<until>[0-9]+))?$")
 
 TypeOptionName = str
 TypeOptionValue = str
@@ -679,6 +680,48 @@ class ValueNotEmpty(ValuePredicateBase):
         return self._value_desc_or_enum
 
 
+class ValuePcmkDatespecPart(ValuePredicateBase):
+    """
+    Report INVALID_OPTION_VALUE when the value is not a valid Pacemaker
+    Datespec part:
+      * int or int1-int2
+      * int in specified range
+      * int2 > int1
+    """
+
+    def __init__(
+        self,
+        option_name: TypeOptionName,
+        at_least: Optional[int],
+        at_most: Optional[int],
+        option_name_for_report: Optional[str] = None,
+        severity: Optional[ReportItemSeverity] = None,
+    ):
+        """
+        at_least -- minimal allowed value
+        at_most -- maximal allowed value
+        severity -- severity of produced reports, defaults to error
+        """
+        super().__init__(
+            option_name,
+            option_name_for_report=option_name_for_report,
+            severity=severity,
+        )
+        self._at_least = at_least
+        self._at_most = at_most
+
+    def _is_valid(self, value: TypeOptionValue) -> bool:
+        return is_pcmk_datespec_part(value, self._at_least, self._at_most)
+
+    def _get_allowed_values(self) -> Any:
+        if self._at_least is None or self._at_most is None:
+            return "integer or integer-integer"
+        return (
+            f"{self._at_least}..{self._at_most} or "
+            f"{self._at_least}..{self._at_most-1}-{self._at_least+1}..{self._at_most}"
+        )
+
+
 class ValuePortNumber(ValuePredicateBase):
     """
     Report INVALID_OPTION_VALUE when the value is not a TCP or UDP port number
@@ -814,6 +857,28 @@ def is_ipv6_address(value: TypeOptionValue) -> bool:
     except (TypeError, ValueError):
         # not an IP address
         return False
+
+
+def is_pcmk_datespec_part(
+    value: str, at_least: Optional[int] = None, at_most: Optional[int] = None,
+) -> bool:
+    """
+    Check if the value is a valid Pacemaker Datespec part:
+      * int or int1-int2
+      * int in specified range
+      * int2 > int1
+    """
+    match = _PCMK_DATESPEC_PART_RE.fullmatch(value)
+    if not match:
+        return False
+    if not is_integer(match["since"], at_least, at_most):
+        return False
+    if match["until"] is not None:
+        if not is_integer(match["until"], at_least, at_most):
+            return False
+        if int(match["since"]) >= int(match["until"]):
+            return False
+    return True
 
 
 def is_port_number(value: TypeOptionValue) -> bool:

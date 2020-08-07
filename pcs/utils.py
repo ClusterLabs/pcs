@@ -2070,6 +2070,7 @@ def validate_xml_id(var: str, description: str = "id") -> Tuple[bool, str]:
     return True, ""
 
 
+# deprecated, moved to pcs.lib.pacemaker.live
 def is_iso8601_date(var):
     """
     Commandline options: no options

@@ -68,6 +68,7 @@ COMMAND_COMPLETIONS = {
     "crm_simulate": path.join(settings.pacemaker_binaries, "crm_simulate"),
     "crm_ticket": path.join(settings.pacemaker_binaries, "crm_ticket"),
     "crm_verify": path.join(settings.pacemaker_binaries, "crm_verify"),
+    "iso8601": path.join(settings.pacemaker_binaries, "iso8601"),
     "sbd": settings.sbd_binary,
     "stonith_admin": path.join(settings.pacemaker_binaries, "stonith_admin"),
 }

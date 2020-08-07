@@ -1119,6 +1119,51 @@ class ValueNotEmpty(TestCase):
         )
 
 
+class ValuePcmkDatespecPart(TestCase):
+    # The real code only calls ValuePredicateBase => only basic tests here.
+    def test_empty_report_on_valid_option(self):
+        assert_report_item_list_equal(
+            validate.ValuePcmkDatespecPart("key", None, None).validate(
+                {"key": "10-20"}
+            ),
+            [],
+        )
+
+    def test_report_invalid_value(self):
+        assert_report_item_list_equal(
+            validate.ValuePcmkDatespecPart("key", 10, 20).validate(
+                {"key": "foo-bar"}
+            ),
+            [
+                fixture.error(
+                    reports.codes.INVALID_OPTION_VALUE,
+                    option_name="key",
+                    option_value="foo-bar",
+                    allowed_values="10..20 or 10..19-11..20",
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
+                ),
+            ],
+        )
+
+    def test_report_invalid_value_no_limits(self):
+        assert_report_item_list_equal(
+            validate.ValuePcmkDatespecPart("key", None, None).validate(
+                {"key": "foo-bar"}
+            ),
+            [
+                fixture.error(
+                    reports.codes.INVALID_OPTION_VALUE,
+                    option_name="key",
+                    option_value="foo-bar",
+                    allowed_values="integer or integer-integer",
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
+                ),
+            ],
+        )
+
+
 class ValuePortNumber(TestCase):
     # The real code only calls ValuePredicateBase => only basic tests here.
     def test_empty_report_on_valid_option(self):
@@ -1350,6 +1395,30 @@ class IsIpv6Address(TestCase):
         self.assertFalse(validate.is_ipv6_address("abcd"))
         self.assertFalse(validate.is_ipv6_address("192.168.1.1"))
         self.assertFalse(validate.is_ipv6_address(1234))
+
+
+class IsPcmkDatespecPart(TestCase):
+    def test_valid(self):
+        self.assertTrue(validate.is_pcmk_datespec_part("12"))
+        self.assertTrue(validate.is_pcmk_datespec_part("12-34"))
+
+    def test_valid_with_limits(self):
+        self.assertTrue(validate.is_pcmk_datespec_part("12", 10, 20))
+        self.assertTrue(validate.is_pcmk_datespec_part("12-13", 10, 20))
+
+    def test_bad_not_int(self):
+        self.assertFalse(validate.is_pcmk_datespec_part("foo"))
+        self.assertFalse(validate.is_pcmk_datespec_part("1-foo"))
+        self.assertFalse(validate.is_pcmk_datespec_part("foo-1"))
+
+    def test_bad_since_after_until(self):
+        self.assertFalse(validate.is_pcmk_datespec_part("10-10"))
+        self.assertFalse(validate.is_pcmk_datespec_part("10-9"))
+
+    def test_bad_limits(self):
+        self.assertFalse(validate.is_pcmk_datespec_part("5", 10, 20))
+        self.assertFalse(validate.is_pcmk_datespec_part("5-15", 10, 20))
+        self.assertFalse(validate.is_pcmk_datespec_part("15-25", 10, 20))
 
 
 class IsPortNumber(TestCase):

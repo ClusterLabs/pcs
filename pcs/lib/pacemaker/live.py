@@ -688,6 +688,19 @@ def _run_fence_history_command(runner, command, node=None):
 
 ### tools
 
+
+def parse_isodate(runner: CommandRunner, date: str) -> Optional[int]:
+    """
+    Parse ISO8601 date, return Unix timestamp on success or None on error
+    """
+    stdout, dummy_stderr, retval = runner.run(
+        [__exec("iso8601"), "--date", date, "--epoch"]
+    )
+    if retval != 0:
+        return None
+    return int(stdout.replace("Date: ", "").strip())
+
+
 # shortcut for getting a full path to a pacemaker executable
 def __exec(name):
     return os.path.join(settings.pacemaker_binaries, name)

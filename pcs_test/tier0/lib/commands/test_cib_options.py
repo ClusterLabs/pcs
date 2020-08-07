@@ -8,7 +8,10 @@ from pcs.common.pacemaker.nvset import (
     CibNvpairDto,
     CibNvsetDto,
 )
-from pcs.common.pacemaker.rule import CibRuleExpressionDto
+from pcs.common.pacemaker.rule import (
+    CibRuleDateCommonDto,
+    CibRuleExpressionDto,
+)
 from pcs.common.types import (
     CibNvsetType,
     CibRuleExpressionType,
@@ -118,6 +121,27 @@ class DefaultsCreateMixin:
                                 attribute="attr2" operation="gt"
                                 type="number" value="5"
                             />
+                            <date_expression id="my-id-rule-rule-expr-2"
+                                operation="lt" end="2020-08-07"
+                            />
+                            <date_expression id="my-id-rule-rule-expr-3"
+                                operation="in_range"
+                                start="2020-09-01" end="2020-09-11"
+                            />
+                            <date_expression id="my-id-rule-rule-expr-4"
+                                operation="in_range" start="2020-10-01"
+                            >
+                                <duration id="my-id-rule-rule-expr-4-duration"
+                                    months="1"
+                                />
+                            </date_expression>
+                            <date_expression id="my-id-rule-rule-expr-5"
+                                operation="date_spec"
+                            >
+                                <date_spec id="my-id-rule-rule-expr-5-datespec"
+                                    years="2021-2022"
+                                />
+                            </date_expression>
                         </rule>
                     </rule>
                     <nvpair id="my-id-name1" name="name1" value="value1" />
@@ -128,6 +152,18 @@ class DefaultsCreateMixin:
         self.config.runner.cib.load(
             filename="cib-empty-3.4.xml", instead="runner.cib.load"
         )
+        self.config.runner.pcmk.parse_isodate(
+            "2020-08-07", success_timestamp="1234", name="parse_isodate.1",
+        )
+        self.config.runner.pcmk.parse_isodate(
+            "2020-09-01", success_timestamp="1234", name="parse_isodate.2",
+        )
+        self.config.runner.pcmk.parse_isodate(
+            "2020-09-11", success_timestamp="2345", name="parse_isodate.3",
+        )
+        self.config.runner.pcmk.parse_isodate(
+            "2020-10-01", success_timestamp="1234", name="parse_isodate.4",
+        )
         self.config.env.push_cib(optional_in_conf=defaults_xml)
 
         self.command(
@@ -136,7 +172,10 @@ class DefaultsCreateMixin:
             {"id": "my-id", "score": "10"},
             nvset_rule=(
                 "resource ocf:pacemaker:Dummy and "
-                "(defined attr1 or attr2 gt number 5)"
+                "(defined attr1 or attr2 gt number 5 or date lt 2020-08-07 or "
+                "date in_range 2020-09-01 to 2020-09-11 or "
+                "date in_range 2020-10-01 to duration months=1 or "
+                "date-spec years=2021-2022)"
             ),
         )
 
@@ -275,6 +314,33 @@ class DefaultsConfigMixin:
                                 attribute="attr2" operation="gt"
                                 type="number" value="5"
                             />
+                            <date_expression
+                                id="{self.tag}-meta_attributes-rule-rule-expr-2"
+                                operation="lt" end="2020-08-07"
+                            />
+                            <date_expression
+                                id="{self.tag}-meta_attributes-rule-rule-expr-3"
+                                operation="in_range"
+                                start="2020-09-01" end="2020-09-11"
+                            />
+                            <date_expression
+                                id="{self.tag}-meta_attributes-rule-rule-expr-4"
+                                operation="in_range" start="2020-10-01"
+                            >
+                                <duration
+                                    id="{self.tag}-meta_attributes-rule-rule-expr-4-duration"
+                                    months="1"
+                                />
+                            </date_expression>
+                            <date_expression
+                                id="{self.tag}-meta_attributes-rule-rule-expr-5"
+                                operation="date_spec"
+                            >
+                                <date_spec
+                                    id="{self.tag}-meta_attributes-rule-rule-expr-5-datespec"
+                                    years="2021-2022"
+                                />
+                            </date_expression>
                         </rule>
                     </rule>
                     <nvpair id="my-id-pair1" name="name1" value="value1" />
@@ -355,12 +421,76 @@ class DefaultsConfigMixin:
                                         [],
                                         "attr2 gt number 5",
                                     ),
+                                    CibRuleExpressionDto(
+                                        f"{self.tag}-meta_attributes-rule-rule-expr-2",
+                                        CibRuleExpressionType.DATE_EXPRESSION,
+                                        False,
+                                        {
+                                            "operation": "lt",
+                                            "end": "2020-08-07",
+                                        },
+                                        None,
+                                        None,
+                                        [],
+                                        "date lt 2020-08-07",
+                                    ),
+                                    CibRuleExpressionDto(
+                                        f"{self.tag}-meta_attributes-rule-rule-expr-3",
+                                        CibRuleExpressionType.DATE_EXPRESSION,
+                                        False,
+                                        {
+                                            "operation": "in_range",
+                                            "start": "2020-09-01",
+                                            "end": "2020-09-11",
+                                        },
+                                        None,
+                                        None,
+                                        [],
+                                        "date in_range 2020-09-01 to 2020-09-11",
+                                    ),
+                                    CibRuleExpressionDto(
+                                        f"{self.tag}-meta_attributes-rule-rule-expr-4",
+                                        CibRuleExpressionType.DATE_EXPRESSION,
+                                        False,
+                                        {
+                                            "operation": "in_range",
+                                            "start": "2020-10-01",
+                                        },
+                                        None,
+                                        CibRuleDateCommonDto(
+                                            f"{self.tag}-meta_attributes-rule-rule-expr-4-duration",
+                                            {"months": "1"},
+                                        ),
+                                        [],
+                                        "date in_range 2020-10-01 to duration months=1",
+                                    ),
+                                    CibRuleExpressionDto(
+                                        f"{self.tag}-meta_attributes-rule-rule-expr-5",
+                                        CibRuleExpressionType.DATE_EXPRESSION,
+                                        False,
+                                        {"operation": "date_spec"},
+                                        CibRuleDateCommonDto(
+                                            f"{self.tag}-meta_attributes-rule-rule-expr-5-datespec",
+                                            {"years": "2021-2022"},
+                                        ),
+                                        None,
+                                        [],
+                                        "date-spec years=2021-2022",
+                                    ),
                                 ],
-                                "defined attr1 or attr2 gt number 5",
+                                "defined attr1 or attr2 gt number 5 or "
+                                "date lt 2020-08-07 or "
+                                "date in_range 2020-09-01 to 2020-09-11 or "
+                                "date in_range 2020-10-01 to duration months=1 "
+                                "or date-spec years=2021-2022",
                             ),
                         ],
                         "resource ocf:pacemaker:Dummy and "
-                        "(defined attr1 or attr2 gt number 5)",
+                        "(defined attr1 or attr2 gt number 5 or "
+                        "date lt 2020-08-07 or "
+                        "date in_range 2020-09-01 to 2020-09-11 or "
+                        "date in_range 2020-10-01 to duration months=1 "
+                        "or date-spec years=2021-2022)",
                     ),
                     [
                         CibNvpairDto("my-id-pair1", "name1", "value1"),

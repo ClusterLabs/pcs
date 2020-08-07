@@ -32,6 +32,7 @@ from pcs.lib.cib.tools import (
     IdProvider,
     create_subelement_id,
 )
+from pcs.lib.external import CommandRunner
 from pcs.lib.xml_tools import (
     export_attributes,
     remove_one_element,
@@ -125,9 +126,12 @@ class ValidateNvsetAppendNew:
     Validator for creating new nvset and appending it to CIB
     """
 
+    # pylint: disable=too-many-instance-attributes
+
     def __init__(
         self,
         id_provider: IdProvider,
+        runner: CommandRunner,
         nvpair_dict: Mapping[str, str],
         nvset_options: Mapping[str, str],
         nvset_rule: Optional[str] = None,
@@ -136,6 +140,7 @@ class ValidateNvsetAppendNew:
     ):
         """
         id_provider -- elements' ids generator
+        runner -- a class for running external processes
         nvpair_dict -- nvpairs to be put into the new nvset
         nvset_options -- additional attributes of the created nvset
         nvset_rule -- optional rule describing when the created nvset applies
@@ -143,6 +148,7 @@ class ValidateNvsetAppendNew:
         rule_allows_op_expr -- is op_expression element allowed in nvset_rule?
         """
         self._id_provider = id_provider
+        self._runner = runner
         self._nvpair_dict = nvpair_dict
         self._nvset_options = nvset_options
         self._nvset_rule = nvset_rule
@@ -176,7 +182,6 @@ class ValidateNvsetAppendNew:
         )
 
         # parse and validate rule
-        # TODO write and call parsed rule validation and cleanup and tests
         if self._nvset_rule:
             try:
                 # Allow flags are set to True always, the parsed rule tree is
@@ -189,6 +194,7 @@ class ValidateNvsetAppendNew:
                 report_list.extend(
                     RuleValidator(
                         self._nvset_rule_parsed,
+                        self._runner,
                         allow_rsc_expr=self._allow_rsc_expr,
                         allow_op_expr=self._allow_op_expr,
                     ).get_reports()

@@ -73,6 +73,7 @@ class DateValueTest(TestCase):
             rule.DateSpecValue,
         )
 
+    # already moved to the new architecture tests
     def testDurationValidate(self):
         for value, item in enumerate(rule.DateCommonValue.allowed_items, 1):
             self.assertEqual(
@@ -96,6 +97,7 @@ class DateValueTest(TestCase):
                 rule.DateDurationValue,
             )
 
+    # already moved to the new architecture tests
     def testDateSpecValidation(self):
         for item in rule.DateCommonValue.allowed_items:
             value = 1

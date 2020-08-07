@@ -855,3 +855,36 @@ class PcmkShortcuts:
                 check_stdin=CheckStdinEqualXml(cib_xml),
             ),
         )
+
+    def parse_isodate(
+        self,
+        date,
+        success_timestamp="",
+        error="",
+        name="runner.pcmk.parse_isodate",
+    ):
+        """
+        Create a call for running a tool to convert an iso date to a timestamp
+
+        sting name -- key of the call
+        string date -- a date to be parsed
+        string success_timestamp -- resulting timestamp
+        string errror -- resulting error message
+        """
+        if (not success_timestamp and not error) or (
+            success_timestamp and error
+        ):
+            raise AssertionError(
+                "Exactly one of 'success_timestamp', 'error' must be specified"
+            )
+        self.__calls.place(
+            name,
+            RunnerCall(
+                ["iso8601", "--date", str(date), "--epoch"],
+                stdout=(
+                    f"Date: {success_timestamp}" if success_timestamp else ""
+                ),
+                stderr=(error if error else ""),
+                returncode=(1 if error else 0),
+            ),
+        )

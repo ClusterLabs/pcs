@@ -181,7 +181,7 @@ def __build_date_inrange_expr(
     return DateInRangeExpr(
         parse_result.date1,
         parse_result.date2 if parse_result.date2 else None,
-        parse_result.duration if parse_result.duration else None,
+        parse_result.duration.asList() if parse_result.duration else None,
     )
 
 
@@ -190,7 +190,7 @@ def __build_datespec_expr(
 ) -> RuleExprPart:
     # Those attrs are defined by setResultsName in datespec_expr grammar rule
     return DatespecExpr(
-        parse_result.datespec if parse_result.datespec else None
+        parse_result.datespec.asList() if parse_result.datespec else None
     )
 
 

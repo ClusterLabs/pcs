@@ -14,7 +14,10 @@ from pcs.common.pacemaker.nvset import (
     CibNvpairDto,
     CibNvsetDto,
 )
-from pcs.common.pacemaker.rule import CibRuleExpressionDto
+from pcs.common.pacemaker.rule import (
+    CibRuleDateCommonDto,
+    CibRuleExpressionDto,
+)
 from pcs.common.types import (
     CibNvsetType,
     CibRuleExpressionType,
@@ -82,6 +85,27 @@ class NvsetElementToDto(TestCase):
                                     attribute="attr2" operation="gt"
                                     type="number" value="5"
                                 />
+                                <date_expression id="my-id-rule-rule-expr-2"
+                                    operation="lt" end="2020-08-07"
+                                />
+                                <date_expression id="my-id-rule-rule-expr-3"
+                                    operation="in_range"
+                                    start="2020-09-01" end="2020-09-11"
+                                />
+                                <date_expression id="my-id-rule-rule-expr-4"
+                                    operation="in_range" start="2020-10-01"
+                                >
+                                    <duration id="my-id-rule-rule-expr-4-duration"
+                                        months="1"
+                                    />
+                                </date_expression>
+                                <date_expression id="my-id-rule-rule-expr-5"
+                                    operation="date_spec"
+                                >
+                                    <date_spec id="my-id-rule-rule-expr-5-datespec"
+                                        years="2021-2022"
+                                    />
+                                </date_expression>
                             </rule>
                         </rule>
                         <nvpair id="my-id-pair1" name="name1" value="value1" />
@@ -163,12 +187,76 @@ class NvsetElementToDto(TestCase):
                                             [],
                                             "attr2 gt number 5",
                                         ),
+                                        CibRuleExpressionDto(
+                                            "my-id-rule-rule-expr-2",
+                                            CibRuleExpressionType.DATE_EXPRESSION,
+                                            False,
+                                            {
+                                                "operation": "lt",
+                                                "end": "2020-08-07",
+                                            },
+                                            None,
+                                            None,
+                                            [],
+                                            "date lt 2020-08-07",
+                                        ),
+                                        CibRuleExpressionDto(
+                                            "my-id-rule-rule-expr-3",
+                                            CibRuleExpressionType.DATE_EXPRESSION,
+                                            False,
+                                            {
+                                                "operation": "in_range",
+                                                "start": "2020-09-01",
+                                                "end": "2020-09-11",
+                                            },
+                                            None,
+                                            None,
+                                            [],
+                                            "date in_range 2020-09-01 to 2020-09-11",
+                                        ),
+                                        CibRuleExpressionDto(
+                                            "my-id-rule-rule-expr-4",
+                                            CibRuleExpressionType.DATE_EXPRESSION,
+                                            False,
+                                            {
+                                                "operation": "in_range",
+                                                "start": "2020-10-01",
+                                            },
+                                            None,
+                                            CibRuleDateCommonDto(
+                                                "my-id-rule-rule-expr-4-duration",
+                                                {"months": "1"},
+                                            ),
+                                            [],
+                                            "date in_range 2020-10-01 to duration months=1",
+                                        ),
+                                        CibRuleExpressionDto(
+                                            "my-id-rule-rule-expr-5",
+                                            CibRuleExpressionType.DATE_EXPRESSION,
+                                            False,
+                                            {"operation": "date_spec"},
+                                            CibRuleDateCommonDto(
+                                                "my-id-rule-rule-expr-5-datespec",
+                                                {"years": "2021-2022"},
+                                            ),
+                                            None,
+                                            [],
+                                            "date-spec years=2021-2022",
+                                        ),
                                     ],
-                                    "defined attr1 or attr2 gt number 5",
+                                    "defined attr1 or attr2 gt number 5 or "
+                                    "date lt 2020-08-07 or "
+                                    "date in_range 2020-09-01 to 2020-09-11 or "
+                                    "date in_range 2020-10-01 to duration months=1 or "
+                                    "date-spec years=2021-2022",
                                 ),
                             ],
                             "resource ocf:pacemaker:Dummy and op monitor and "
-                            "(defined attr1 or attr2 gt number 5)",
+                            "(defined attr1 or attr2 gt number 5 or "
+                            "date lt 2020-08-07 or "
+                            "date in_range 2020-09-01 to 2020-09-11 or "
+                            "date in_range 2020-10-01 to duration months=1 "
+                            "or date-spec years=2021-2022)",
                         ),
                         [
                             CibNvpairDto("my-id-pair1", "name1", "value1"),
@@ -240,7 +328,7 @@ class ValidateNvsetAppendNew(TestCase):
 
     def test_success_minimal(self):
         validator = nvpair_multi.ValidateNvsetAppendNew(
-            self.id_provider, {}, {}
+            self.id_provider, "mock runner", {}, {}
         )
         assert_report_item_list_equal(
             validator.validate(force_options=True), []
@@ -250,6 +338,7 @@ class ValidateNvsetAppendNew(TestCase):
     def test_success_full(self):
         validator = nvpair_multi.ValidateNvsetAppendNew(
             self.id_provider,
+            "mock runner",
             {"name": "value"},
             {"id": "some-id", "score": "10"},
             nvset_rule="resource ::stateful",
@@ -268,7 +357,7 @@ class ValidateNvsetAppendNew(TestCase):
 
     def test_id_not_valid(self):
         validator = nvpair_multi.ValidateNvsetAppendNew(
-            self.id_provider, {}, {"id": "123"}
+            self.id_provider, "mock runner", {}, {"id": "123"}
         )
         assert_report_item_list_equal(
             validator.validate(force_options=True),
@@ -278,7 +367,7 @@ class ValidateNvsetAppendNew(TestCase):
 
     def test_id_not_available(self):
         validator = nvpair_multi.ValidateNvsetAppendNew(
-            self.id_provider, {}, {"id": "a"}
+            self.id_provider, "mock runner", {}, {"id": "a"}
         )
         assert_report_item_list_equal(
             validator.validate(force_options=True),
@@ -288,7 +377,7 @@ class ValidateNvsetAppendNew(TestCase):
 
     def test_score_not_valid(self):
         validator = nvpair_multi.ValidateNvsetAppendNew(
-            self.id_provider, {}, {"score": "a"}
+            self.id_provider, "mock runner", {}, {"score": "a"}
         )
         assert_report_item_list_equal(
             validator.validate(force_options=True),
@@ -298,7 +387,7 @@ class ValidateNvsetAppendNew(TestCase):
 
     def test_options_names(self):
         validator = nvpair_multi.ValidateNvsetAppendNew(
-            self.id_provider, {}, {"not_valid": "a"}
+            self.id_provider, "mock runner", {}, {"not_valid": "a"}
         )
         assert_report_item_list_equal(
             validator.validate(),
@@ -317,7 +406,7 @@ class ValidateNvsetAppendNew(TestCase):
 
     def test_options_names_forced(self):
         validator = nvpair_multi.ValidateNvsetAppendNew(
-            self.id_provider, {}, {"not_valid": "a"}
+            self.id_provider, "mock runner", {}, {"not_valid": "a"}
         )
         assert_report_item_list_equal(
             validator.validate(force_options=True),
@@ -336,6 +425,7 @@ class ValidateNvsetAppendNew(TestCase):
     def test_rule_not_valid(self):
         validator = nvpair_multi.ValidateNvsetAppendNew(
             self.id_provider,
+            "mock runner",
             {},
             {},
             "bad rule",
