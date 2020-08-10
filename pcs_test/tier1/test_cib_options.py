@@ -249,13 +249,23 @@ class OpDefaultsSetCreate(
     def test_success_rules(self):
         self.assert_effect(
             self.cli_command
-            + "set create id=X meta nam1=val1 rule resource ::Dummy and op monitor".split(),
+            + (
+                "set create id=X meta nam1=val1 "
+                "rule resource ::Dummy and (op start or op stop)"
+            ).split(),
             f"""\
             <{self.cib_tag}>
                 <meta_attributes id="X">
                     <rule id="X-rule" boolean-op="and" score="INFINITY">
                         <rsc_expression id="X-rule-rsc-Dummy" type="Dummy"/>
-                        <op_expression id="X-rule-op-monitor" name="monitor"/>
+                        <rule id="X-rule-rule" boolean-op="or" score="0">
+                            <op_expression id="X-rule-rule-op-start"
+                                name="start"
+                            />
+                            <op_expression id="X-rule-rule-op-stop"
+                                name="stop"
+                            />
+                        </rule>
                     </rule>
                     <nvpair id="X-nam1" name="nam1" value="val1"/>
                 </meta_attributes>

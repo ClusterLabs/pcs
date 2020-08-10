@@ -59,6 +59,11 @@ def __export_bool(
         {
             "id": create_subelement_id(parent_el, "rule", id_provider),
             "boolean-op": boolean.operator.lower(),
+            # Score or score-attribute is required for nested rules, otherwise
+            # the CIB is not valid. Pacemaker doesn't use the score of nested
+            # rules. Score for the top rule, which is used by pacemaker, is
+            # supposed to be set in the export function above.
+            "score": "0",
         },
     )
     for child in boolean.children:

@@ -185,7 +185,7 @@ class Complex(Base):
             ),
             """
                 <rule id="X-rule" boolean-op="and" score="INFINITY">
-                  <rule id="X-rule-rule" boolean-op="or">
+                  <rule id="X-rule-rule" boolean-op="or" score="0">
                     <rsc_expression id="X-rule-rule-rsc-ocf-pacemaker-Dummy"
                         class="ocf" provider="pacemaker" type="Dummy"
                     />
@@ -197,7 +197,7 @@ class Complex(Base):
                         class="ocf" provider="heartbeat" type="Dummy"
                     />
                   </rule>
-                  <rule id="X-rule-rule-1" boolean-op="or">
+                  <rule id="X-rule-rule-1" boolean-op="or" score="0">
                     <op_expression id="X-rule-rule-1-op-monitor"
                         name="monitor" interval="30s"
                     />
