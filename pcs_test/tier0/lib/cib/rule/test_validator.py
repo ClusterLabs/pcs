@@ -9,10 +9,15 @@ from pcs.lib.cib.rule.expression_part import (
     BOOL_AND,
     BOOL_OR,
     DATE_OP_GT,
+    NODE_ATTR_OP_EQ,
+    NODE_ATTR_TYPE_NUMBER,
+    NODE_ATTR_TYPE_STRING,
+    NODE_ATTR_TYPE_VERSION,
     BoolExpr,
     DateInRangeExpr,
     DatespecExpr,
     DateUnaryExpr,
+    NodeAttrExpr,
     OpExpr,
     RscExpr,
 )
@@ -515,4 +520,83 @@ class DatespecExpression(TestCase):
                     duplicate_option_list=["hours"],
                 ),
             ],
+        )
+
+
+class NodeAttrExpression(TestCase):
+    @staticmethod
+    def fixture_expr(type_, value):
+        return BoolExpr(
+            BOOL_AND, [NodeAttrExpr(NODE_ATTR_OP_EQ, "name", value, type_)]
+        )
+
+    def test_integer_ok(self):
+        assert_report_item_list_equal(
+            Validator(
+                self.fixture_expr(NODE_ATTR_TYPE_NUMBER, "16464"),
+                "mock runner",
+            ).get_reports(),
+            [],
+        )
+
+    def test_integer_bad(self):
+        assert_report_item_list_equal(
+            Validator(
+                self.fixture_expr(NODE_ATTR_TYPE_NUMBER, "16464aa"),
+                "mock runner",
+            ).get_reports(),
+            [
+                fixture.error(
+                    reports.codes.INVALID_OPTION_VALUE,
+                    option_name="value",
+                    option_value="16464aa",
+                    allowed_values="integer",
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
+                )
+            ],
+        )
+
+    def test_version_ok(self):
+        assert_report_item_list_equal(
+            Validator(
+                self.fixture_expr(NODE_ATTR_TYPE_VERSION, "0.10.11"),
+                "mock runner",
+            ).get_reports(),
+            [],
+        )
+
+    def test_version_bad(self):
+        assert_report_item_list_equal(
+            Validator(
+                self.fixture_expr(NODE_ATTR_TYPE_VERSION, "0.10.11c"),
+                "mock runner",
+            ).get_reports(),
+            [
+                fixture.error(
+                    reports.codes.INVALID_OPTION_VALUE,
+                    option_name="value",
+                    option_value="0.10.11c",
+                    allowed_values="version number",
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
+                )
+            ],
+        )
+
+    def test_string(self):
+        assert_report_item_list_equal(
+            Validator(
+                self.fixture_expr(NODE_ATTR_TYPE_STRING, "a string 461.78"),
+                "mock runner",
+            ).get_reports(),
+            [],
+        )
+
+    def test_no_type(self):
+        assert_report_item_list_equal(
+            Validator(
+                self.fixture_expr(None, "a string 461.78"), "mock runner",
+            ).get_reports(),
+            [],
         )

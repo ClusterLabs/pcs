@@ -366,6 +366,7 @@ class ParserTest(TestCase):
         )
 
     # already moved to pcs_test/tier0/lib/cib/rule/test_parser.py
+    # and pcs_test/tier0/lib/cib/rule/test_validator.py
     def testTypeExpressionBad(self):
         self.assertUnexpectedEndOfInput(["string"])
         self.assertUnexpectedEndOfInput(["#uname", "eq", "string"])
@@ -422,6 +423,7 @@ class ParserTest(TestCase):
         )
 
     # already moved to pcs_test/tier0/lib/cib/rule/test_parser.py
+    # and pcs_test/tier0/lib/cib/rule/test_validator.py
     def testDateExpressionBad(self):
         self.assertUnexpectedEndOfInput(["date", "in_range"])
         self.assertSyntaxError(

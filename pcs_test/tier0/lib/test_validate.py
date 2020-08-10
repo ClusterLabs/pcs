@@ -10,6 +10,7 @@ from pcs.lib import validate
 from pcs.lib.cib.tools import IdProvider
 
 # pylint: disable=no-self-use
+# pylint: disable=too-many-lines
 
 ### normalization
 
@@ -1004,6 +1005,33 @@ class ValueIn(TestCase):
         )
 
 
+class ValueInteger(TestCase):
+    # The real code only calls ValuePredicateBase and is_integer which are both
+    # heavily tested on their own => only basic tests here.
+    def fixture_validator(self):
+        return validate.ValueInteger("key")
+
+    def test_empty_report_on_valid_option(self):
+        assert_report_item_list_equal(
+            self.fixture_validator().validate({"key": "2"}), []
+        )
+
+    def test_report_invalid_value(self):
+        assert_report_item_list_equal(
+            self.fixture_validator().validate({"key": "6a"}),
+            [
+                fixture.error(
+                    reports.codes.INVALID_OPTION_VALUE,
+                    option_name="key",
+                    option_value="6a",
+                    allowed_values="integer",
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
+                ),
+            ],
+        )
+
+
 class ValueIntegerInRange(TestCase):
     # The real code only calls ValuePredicateBase and is_integer which are both
     # heavily tested on their own => only basic tests here.
@@ -1308,6 +1336,30 @@ class ValueTimeInterval(TestCase):
                     option_name="a",
                     option_value="invalid_value",
                     allowed_values="time interval (e.g. 1, 2s, 3m, 4h, ...)",
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
+                ),
+            ],
+        )
+
+
+class ValueVersion(TestCase):
+    def test_no_reports_for_valid_time_interval(self):
+        for version in ["123", "123.456", "123.456.789", "1.2.3.4"]:
+            with self.subTest(value=version):
+                assert_report_item_list_equal(
+                    validate.ValueVersion("a").validate({"a": version}), [],
+                )
+
+    def test_reports_about_invalid_interval(self):
+        assert_report_item_list_equal(
+            validate.ValueVersion("a").validate({"a": "1.2.3a"}),
+            [
+                fixture.error(
+                    reports.codes.INVALID_OPTION_VALUE,
+                    option_name="a",
+                    option_value="1.2.3a",
+                    allowed_values="version number",
                     cannot_be_empty=False,
                     forbidden_characters=None,
                 ),

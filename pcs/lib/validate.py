@@ -590,6 +590,18 @@ class ValueIn(ValuePredicateBase):
         return self._allowed_value_list
 
 
+class ValueInteger(ValuePredicateBase):
+    """
+    Report INVALID_OPTION_VALUE when the value is not an integer
+    """
+
+    def _is_valid(self, value: TypeOptionValue) -> bool:
+        return is_integer(value, None, None)
+
+    def _get_allowed_values(self) -> Any:
+        return "integer"
+
+
 class ValueIntegerInRange(ValuePredicateBase):
     """
     Report INVALID_OPTION_VALUE when the value is not an integer such that
@@ -784,6 +796,18 @@ class ValueTimeInterval(ValuePredicateBase):
 
     def _get_allowed_values(self) -> Any:
         return "time interval (e.g. 1, 2s, 3m, 4h, ...)"
+
+
+class ValueVersion(ValuePredicateBase):
+    """
+    Report INVALID_OPTION_VALUE when the value is not a version number
+    """
+
+    def _is_valid(self, value: TypeOptionValue) -> bool:
+        return matches_regexp(value, r"^\d+(\.\d+)*$")
+
+    def _get_allowed_values(self) -> Any:
+        return "version number"
 
 
 ### predicates

@@ -1,4 +1,5 @@
 from collections import Counter
+import dataclasses
 from typing import (
     List,
     Set,
@@ -12,6 +13,8 @@ from pcs.lib.external import CommandRunner
 from pcs.lib.pacemaker.live import parse_isodate
 
 from .expression_part import (
+    NODE_ATTR_TYPE_NUMBER,
+    NODE_ATTR_TYPE_VERSION,
     BoolExpr,
     DateInRangeExpr,
     DatespecExpr,
@@ -223,11 +226,22 @@ class Validator:
 
     @staticmethod
     def _validate_node_attr_expr(expr: NodeAttrExpr) -> reports.ReportItemList:
-        # TODO validate integer and version
-        # integer: r"^-?\d+$"
-        # version: r"^\d+(\.\d+)*$"
-        del expr
-        return []
+        validator_list: List[validate.ValidatorInterface] = []
+        if expr.attr_type == NODE_ATTR_TYPE_NUMBER:
+            validator_list.append(
+                validate.ValueInteger(
+                    "attr_value", option_name_for_report="value"
+                )
+            )
+        if expr.attr_type == NODE_ATTR_TYPE_VERSION:
+            validator_list.append(
+                validate.ValueVersion(
+                    "attr_value", option_name_for_report="value"
+                )
+            )
+        return validate.ValidatorAll(validator_list).validate(
+            dataclasses.asdict(expr)
+        )
 
     def _validate_op_expr(self, expr: OpExpr) -> reports.ReportItemList:
         del expr
