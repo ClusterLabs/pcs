@@ -978,6 +978,14 @@
         pcs commands: resource op defaults set create | delete | remove | update
       </description>
     </capability>
+    <capability id="pcmk.properties.operation-defaults.rule" in-pcs="1" in-pcsd="0">
+      <description>
+        Support for rules with 'attribute', 'date', 'resource' and 'op'
+        expressions in sets of resource operations defaults.
+
+        pcs commands: resource op defaults set create
+      </description>
+    </capability>
     <capability id="pcmk.properties.operation-defaults.rule-rsc-op" in-pcs="1" in-pcsd="0">
       <description>
         Support for rules with 'resource' and 'op' expressions in sets of
@@ -998,6 +1006,14 @@
         Support for managing multiple sets of resources defaults.
 
         pcs commands: resource defaults set create | delete | remove | update
+      </description>
+    </capability>
+    <capability id="pcmk.properties.resource-defaults.rule" in-pcs="1" in-pcsd="0">
+      <description>
+        Support for rules with 'attribute', 'date', and 'resource' and 'op'
+        expressions in sets of resources defaults.
+
+        pcs commands: resource defaults set create
       </description>
     </capability>
     <capability id="pcmk.properties.resource-defaults.rule-rsc-op" in-pcs="1" in-pcsd="0">

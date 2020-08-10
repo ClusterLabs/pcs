@@ -4,8 +4,7 @@
 
 ### Added
 - Support for multiple sets of resource and operation defaults, including
-  support for rules with 'resource' and 'op' expressions ([rhbz#1817547],
-  [rhbz#1867516])
+  support for rules ([rhbz#1817547], [rhbz#1862966], [rhbz#1867516])
 - Support for "demote" value of resource operation's "on-fail" option
   ([rhbz#1843079])
 
@@ -26,6 +25,7 @@
 [rhbz#1817547]: https://bugzilla.redhat.com/show_bug.cgi?id=1817547
 [rhbz#1843079]: https://bugzilla.redhat.com/show_bug.cgi?id=1843079
 [rhbz#1857295]: https://bugzilla.redhat.com/show_bug.cgi?id=1857295
+[rhbz#1862966]: https://bugzilla.redhat.com/show_bug.cgi?id=1862966
 [rhbz#1867516]: https://bugzilla.redhat.com/show_bug.cgi?id=1867516
 [rhbz#1875301]: https://bugzilla.redhat.com/show_bug.cgi?id=1875301
 

@@ -466,16 +466,35 @@ Commands:
         Create a new set of default values for resource operations. You may
         specify a rule describing resources and / or operations to which the set
         applies.
+
         Set options are: id, score
+
         Expression looks like one of the following:
           op <operation name> [interval=<interval>]
           resource [<standard>]:[<provider>]:[<type>]
+          defined|not_defined <node attribute>
+          <node attribute> lt|gt|lte|gte|eq|ne [string|integer|version] <value>
+          date gt|lt <date>
+          date in_range <date> to <date>
+          date in_range <date> to duration <duration options>
+          date-spec <date-spec options>
           <expression> and|or <expression>
-          ( <expression> )
+          (<expression>)
+
         You may specify all or any of 'standard', 'provider' and 'type' in
         a resource expression. For example: 'resource ocf::' matches all
         resources of 'ocf' standard, while 'resource ::Dummy' matches all
         resources of 'Dummy' type regardless of their standard and provider.
+
+        Dates are expected to conform to ISO 8601 format.
+
+        Duration options are: hours, monthdays, weekdays, yearsdays, months,
+        weeks, years, weekyears, moon. Value for these options is an integer.
+
+        Date-spec options are: hours, monthdays, weekdays, yearsdays, months,
+        weeks, years, weekyears, moon. Value for these options is an integer or
+        a range written as integer-integer.
+
         NOTE: Defaults do not apply to resources which override them with their
         own defined values.
 
@@ -624,15 +643,34 @@ Commands:
             [rule [<expression>]]
         Create a new set of default values for resources. You may specify a rule
         describing resources to which the set applies.
+
         Set options are: id, score
+
         Expression looks like one of the following:
           resource [<standard>]:[<provider>]:[<type>]
+          defined|not_defined <node attribute>
+          <node attribute> lt|gt|lte|gte|eq|ne [string|integer|version] <value>
+          date gt|lt <date>
+          date in_range <date> to <date>
+          date in_range <date> to duration <duration options>
+          date-spec <date-spec options>
           <expression> and|or <expression>
-          ( <expression> )
+          (<expression>)
+
         You may specify all or any of 'standard', 'provider' and 'type' in
         a resource expression. For example: 'resource ocf::' matches all
         resources of 'ocf' standard, while 'resource ::Dummy' matches all
         resources of 'Dummy' type regardless of their standard and provider.
+
+        Dates are expected to conform to ISO 8601 format.
+
+        Duration options are: hours, monthdays, weekdays, yearsdays, months,
+        weeks, years, weekyears, moon. Value for these options is an integer.
+
+        Date-spec options are: hours, monthdays, weekdays, yearsdays, months,
+        weeks, years, weekyears, moon. Value for these options is an integer or
+        a range written as integer-integer.
+
         NOTE: Defaults do not apply to resources which override them with their
         own defined values.
 
