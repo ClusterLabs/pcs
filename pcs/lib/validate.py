@@ -599,7 +599,7 @@ class ValueInteger(ValuePredicateBase):
         return is_integer(value, None, None)
 
     def _get_allowed_values(self) -> Any:
-        return "integer"
+        return "an integer"
 
 
 class ValueIntegerInRange(ValuePredicateBase):
@@ -727,7 +727,7 @@ class ValuePcmkDatespecPart(ValuePredicateBase):
 
     def _get_allowed_values(self) -> Any:
         if self._at_least is None or self._at_most is None:
-            return "integer or integer-integer"
+            return "an integer or integer-integer"
         return (
             f"{self._at_least}..{self._at_most} or "
             f"{self._at_least}..{self._at_most-1}-{self._at_least+1}..{self._at_most}"
@@ -807,7 +807,7 @@ class ValueVersion(ValuePredicateBase):
         return matches_regexp(value, r"^\d+(\.\d+)*$")
 
     def _get_allowed_values(self) -> Any:
-        return "version number"
+        return "a version number (e.g. 1, 1.2, 1.23.45, ...)"
 
 
 ### predicates

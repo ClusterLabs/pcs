@@ -230,13 +230,13 @@ class Validator:
         if expr.attr_type == NODE_ATTR_TYPE_NUMBER:
             validator_list.append(
                 validate.ValueInteger(
-                    "attr_value", option_name_for_report="value"
+                    "attr_value", option_name_for_report="attribute"
                 )
             )
         if expr.attr_type == NODE_ATTR_TYPE_VERSION:
             validator_list.append(
                 validate.ValueVersion(
-                    "attr_value", option_name_for_report="value"
+                    "attr_value", option_name_for_report="attribute"
                 )
             )
         return validate.ValidatorAll(validator_list).validate(

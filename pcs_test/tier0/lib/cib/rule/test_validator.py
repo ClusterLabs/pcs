@@ -456,7 +456,7 @@ class DatespecExpression(TestCase):
                     reports.codes.INVALID_OPTION_VALUE,
                     option_name="weekyears",
                     option_value="5-3",
-                    allowed_values="integer or integer-integer",
+                    allowed_values="an integer or integer-integer",
                     cannot_be_empty=False,
                     forbidden_characters=None,
                 ),
@@ -464,7 +464,7 @@ class DatespecExpression(TestCase):
                     reports.codes.INVALID_OPTION_VALUE,
                     option_name="years",
                     option_value="5-3",
-                    allowed_values="integer or integer-integer",
+                    allowed_values="an integer or integer-integer",
                     cannot_be_empty=False,
                     forbidden_characters=None,
                 ),
@@ -548,9 +548,9 @@ class NodeAttrExpression(TestCase):
             [
                 fixture.error(
                     reports.codes.INVALID_OPTION_VALUE,
-                    option_name="value",
+                    option_name="attribute",
                     option_value="16464aa",
-                    allowed_values="integer",
+                    allowed_values="an integer",
                     cannot_be_empty=False,
                     forbidden_characters=None,
                 )
@@ -575,9 +575,9 @@ class NodeAttrExpression(TestCase):
             [
                 fixture.error(
                     reports.codes.INVALID_OPTION_VALUE,
-                    option_name="value",
+                    option_name="attribute",
                     option_value="0.10.11c",
-                    allowed_values="version number",
+                    allowed_values="a version number (e.g. 1, 1.2, 1.23.45, ...)",
                     cannot_be_empty=False,
                     forbidden_characters=None,
                 )

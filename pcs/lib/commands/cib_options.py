@@ -15,6 +15,11 @@ from pcs.lib.cib import (
     nvpair_multi,
     sections,
 )
+from pcs.lib.cib.rule import (
+    RuleParseError,
+    has_rsc_or_op_expression,
+    parse_rule,
+)
 from pcs.lib.cib.tools import IdProvider
 from pcs.lib.env import LibraryEnvironment
 from pcs.lib.errors import LibraryError
@@ -91,7 +96,17 @@ def _defaults_create(
 
     required_cib_version = None
     if nvset_rule:
-        required_cib_version = Version(3, 4, 0)
+        # Parse the rule to see if we need to upgrade CIB schema. All errors
+        # would be properly reported by a validator called bellow, so we can
+        # safely ignore them here.
+        try:
+            if has_rsc_or_op_expression(
+                parse_rule(nvset_rule, allow_rsc_expr=True, allow_op_expr=True)
+            ):
+                required_cib_version = Version(3, 4, 0)
+        except RuleParseError:
+            pass
+
     cib = env.get_cib(required_cib_version)
     id_provider = IdProvider(cib)
 
