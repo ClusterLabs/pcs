@@ -1467,18 +1467,18 @@ def pcs_0_10_6_get_avail_resource_agents(code, out)
     return code, out
   end
   begin
-    new_out = {}
+    agent_map = {}
     JSON.parse(out).each { |agent_name, agent_data|
       if agent_data == {}
         new_data = get_resource_agent_name_structure(agent_name)
         if not new_data.nil?
-          new_out[agent_name] = new_data
+          agent_map[agent_name] = new_data
         end
       else
-        new_out[agent_name] = agent_data
+        agent_map[agent_name] = agent_data
       end
     }
-    return code, JSON.generate(new_out)
+    return code, JSON.generate(agent_map)
   rescue
     return code, out
   end
@@ -1596,16 +1596,17 @@ get '/managec/:cluster/?*' do
     )
 
     # backward compatibility layer BEGIN
-    if code == 200
-      case request
-        # new structured response format added in pcs-0.10.7
-        when '/get_avail_resource_agents', 'get_avail_resource_agents'
-          code, out = pcs_0_10_6_get_avail_resource_agents(code, out)
-      end
+    # function `send_cluster_request_with_token` sometimes removes the leading
+    # slash from the variable `request`; so we must check `request` with
+    # optional leading slash in every `when`!
+    case request
+      # new structured response format added in pcs-0.10.7
+      when /\/?get_avail_resource_agents/
+        return pcs_0_10_6_get_avail_resource_agents(code, out)
     end
     # backward compatibility layer END
+    return code, out
   end
-  return code, out
 end
 
 get '/' do
