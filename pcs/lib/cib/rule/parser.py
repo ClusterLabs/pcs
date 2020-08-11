@@ -176,7 +176,7 @@ def __build_date_inrange_expr(
     # Those attrs are defined by setResultsName in date_inrange_expr grammar
     # rule
     return DateInRangeExpr(
-        parse_result.date1,
+        parse_result.date1 if parse_result.date1 else None,
         parse_result.date2 if parse_result.date2 else None,
         parse_result.duration.asList() if parse_result.duration else None,
     )
@@ -365,9 +365,18 @@ def __get_rule_parser() -> pyparsing.ParserElement:
             # It can by any string containing any characters except whitespace
             # (token separator) and "()" (brackets).
             # The actual value should be validated elsewhere.
-            pyparsing.Regex(r"[^\s()]+")
-            .setName("<date>")
-            .setResultsName("date1"),
+            # The Regex matches 'to'. In order to prevent that, FollowedBy is
+            # used.
+            pyparsing.Optional(
+                pyparsing.And(
+                    [
+                        pyparsing.Regex(r"[^\s()]+")
+                        .setName("[<date>]")
+                        .setResultsName("date1"),
+                        pyparsing.FollowedBy(pyparsing.CaselessKeyword("to")),
+                    ]
+                )
+            ),
             pyparsing.CaselessKeyword("to"),
             pyparsing.Or(
                 [

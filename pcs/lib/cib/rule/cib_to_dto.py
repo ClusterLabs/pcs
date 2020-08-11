@@ -129,7 +129,8 @@ def _date_expr_to_dto(expr_el: _Element) -> CibRuleExpressionDto:
         string_parts.extend(["date", "in_range"])
         # CIB schema allows "start" + "duration" or optional "start" + "end"
         if "start" in expr_el.attrib:
-            string_parts.extend([str(expr_el.get("start", "")), "to"])
+            string_parts.append(str(expr_el.get("start", "")))
+        string_parts.append("to")
         if "end" in expr_el.attrib:
             string_parts.append(str(expr_el.get("end", "")))
         if duration is not None:

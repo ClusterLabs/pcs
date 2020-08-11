@@ -193,7 +193,7 @@ class DateExpressionDtoToLines(RuleDtoToLinesMixin, TestCase):
         )
         self.assert_lines(dto, output)
 
-    def test_inrange(self):
+    def test_inrange_start_end(self):
         dto = CibRuleExpressionDto(
             "rule",
             CibRuleExpressionType.RULE,
@@ -227,7 +227,37 @@ class DateExpressionDtoToLines(RuleDtoToLinesMixin, TestCase):
         )
         self.assert_lines(dto, output)
 
-    def test_inrange_duration(self):
+    def test_inrange_end(self):
+        dto = CibRuleExpressionDto(
+            "rule",
+            CibRuleExpressionType.RULE,
+            False,
+            {},
+            None,
+            None,
+            [
+                CibRuleExpressionDto(
+                    "rule-expr",
+                    CibRuleExpressionType.DATE_EXPRESSION,
+                    False,
+                    {"operation": "in_range", "end": "2014-07-26"},
+                    None,
+                    None,
+                    [],
+                    "date in_range to 2014-07-26",
+                ),
+            ],
+            "date in_range to 2014-07-26",
+        )
+        output = dedent(
+            """\
+              Rule: (id:rule)
+                Expression: date in_range to 2014-07-26 (id:rule-expr)
+            """
+        )
+        self.assert_lines(dto, output)
+
+    def test_inrange_start_duration(self):
         dto = CibRuleExpressionDto(
             "rule",
             CibRuleExpressionType.RULE,

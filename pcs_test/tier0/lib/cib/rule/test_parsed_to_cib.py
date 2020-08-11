@@ -255,6 +255,16 @@ class SimpleDate(Base):
             """,
         )
 
+    def test_inrange_end(self):
+        self.assert_cib(
+            DateInRangeExpr(None, "2014-07-26", None),
+            """
+                <date_expression id="X-expr"
+                    operation="in_range" end="2014-07-26"
+                />
+            """,
+        )
+
     def test_inrange_start_duration(self):
         self.assert_cib(
             DateInRangeExpr("2014-06-26", None, [("years", "1")]),

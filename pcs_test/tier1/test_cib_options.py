@@ -124,6 +124,9 @@ class DefaultsConfigMixin(TestDefaultsMixin, AssertPcsMixin):
                                 months="7-8" weekdays="6-7" years="2019"
                             />
                         </date_expression>
+                        <date_expression id="{tag}-set1-rule-rule-1-expr-4"
+                            operation="in_range" end="2019-12-15"
+                        />
                     </rule>
                 </rule>
                 <nvpair id="{tag}-set1-nam1" name="nam1" value="val1"/>
@@ -157,6 +160,7 @@ class DefaultsConfigMixin(TestDefaultsMixin, AssertPcsMixin):
                         Duration: months=2
                       Expression:
                         Date Spec: months=7-8 weekdays=6-7 years=2019
+                      Expression: date in_range to 2019-12-15
             """
             ),
         )
@@ -288,7 +292,8 @@ class DefaultsSetCreateMixin(TestDefaultsMixin, AssertPcsMixin):
                 "and (date gt 2018-05-17T13:28:19 or "
                 "date in_range 2019-01-01 to 2019-03-15 or "
                 "date in_range 2019-05-01 to duration months=2 or "
-                "date-spec years=2019 months=7-8 weekdays=6-7)"
+                "date-spec years=2019 months=7-8 weekdays=6-7 or "
+                "date in_range to 2019-12-15)"
             ).split(),
             dedent(
                 f"""\
@@ -338,6 +343,9 @@ class DefaultsSetCreateMixin(TestDefaultsMixin, AssertPcsMixin):
                                         months="7-8" weekdays="6-7" years="2019"
                                     />
                                 </date_expression>
+                                <date_expression id="mine-rule-rule-1-expr-4"
+                                      operation="in_range" end="2019-12-15"
+                                />
                             </rule>
                         </rule>
                         <nvpair id="mine-nam1" name="nam1" value="val1"/>

@@ -142,6 +142,9 @@ class DefaultsCreateMixin:
                                     years="2021-2022"
                                 />
                             </date_expression>
+                            <date_expression id="my-id-rule-rule-expr-6"
+                                operation="in_range" end="2020-12-11"
+                            />
                         </rule>
                     </rule>
                     <nvpair id="my-id-name1" name="name1" value="value1" />
@@ -164,6 +167,9 @@ class DefaultsCreateMixin:
         self.config.runner.pcmk.parse_isodate(
             "2020-10-01", success_timestamp="1234", name="parse_isodate.4",
         )
+        self.config.runner.pcmk.parse_isodate(
+            "2020-12-11", success_timestamp="1234", name="parse_isodate.5",
+        )
         self.config.env.push_cib(optional_in_conf=defaults_xml)
 
         self.command(
@@ -175,7 +181,8 @@ class DefaultsCreateMixin:
                 "(defined attr1 or attr2 gt integer 5 or date lt 2020-08-07 or "
                 "date in_range 2020-09-01 to 2020-09-11 or "
                 "date in_range 2020-10-01 to duration months=1 or "
-                "date-spec years=2021-2022)"
+                "date-spec years=2021-2022 or "
+                "date in_range to 2020-12-11)"
             ),
         )
 
@@ -341,6 +348,10 @@ class DefaultsConfigMixin:
                                     years="2021-2022"
                                 />
                             </date_expression>
+                            <date_expression
+                                id="{self.tag}-meta_attributes-rule-rule-expr-6"
+                                operation="in_range" end="2020-12-11"
+                            />
                         </rule>
                     </rule>
                     <nvpair id="my-id-pair1" name="name1" value="value1" />
@@ -477,20 +488,35 @@ class DefaultsConfigMixin:
                                         [],
                                         "date-spec years=2021-2022",
                                     ),
+                                    CibRuleExpressionDto(
+                                        f"{self.tag}-meta_attributes-rule-rule-expr-6",
+                                        CibRuleExpressionType.DATE_EXPRESSION,
+                                        False,
+                                        {
+                                            "operation": "in_range",
+                                            "end": "2020-12-11",
+                                        },
+                                        None,
+                                        None,
+                                        [],
+                                        "date in_range to 2020-12-11",
+                                    ),
                                 ],
                                 "defined attr1 or attr2 gt integer 5 or "
                                 "date lt 2020-08-07 or "
                                 "date in_range 2020-09-01 to 2020-09-11 or "
                                 "date in_range 2020-10-01 to duration months=1 "
-                                "or date-spec years=2021-2022",
+                                "or date-spec years=2021-2022 or "
+                                "date in_range to 2020-12-11",
                             ),
                         ],
                         "resource ocf:pacemaker:Dummy and "
                         "(defined attr1 or attr2 gt integer 5 or "
                         "date lt 2020-08-07 or "
                         "date in_range 2020-09-01 to 2020-09-11 or "
-                        "date in_range 2020-10-01 to duration months=1 "
-                        "or date-spec years=2021-2022)",
+                        "date in_range 2020-10-01 to duration months=1 or "
+                        "date-spec years=2021-2022 or "
+                        "date in_range to 2020-12-11)",
                     ),
                     [
                         CibNvpairDto("my-id-pair1", "name1", "value1"),

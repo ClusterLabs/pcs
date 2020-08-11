@@ -187,6 +187,16 @@ class DateInrangeExpression(TestCase):
             [],
         )
 
+    def test_date_ok(self):
+        self.runner.run.return_value = ("Date: 1234", "", 0)
+        assert_report_item_list_equal(
+            Validator(
+                BoolExpr(BOOL_AND, [DateInRangeExpr(None, "date2", None)]),
+                self.runner,
+            ).get_reports(),
+            [],
+        )
+
     def test_date_duration_ok(self):
         self.runner.run.return_value = ("Date: 1234", "", 0)
         assert_report_item_list_equal(

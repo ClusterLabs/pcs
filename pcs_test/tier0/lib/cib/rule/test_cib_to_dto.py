@@ -241,7 +241,7 @@ class DateExpressionToDto(TestCase):
             ),
         )
 
-    def test_inrange(self):
+    def test_inrange_start_end(self):
         xml = etree.fromstring(
             """
             <rule id="rule">
@@ -280,7 +280,42 @@ class DateExpressionToDto(TestCase):
             ),
         )
 
-    def test_inrange_duration(self):
+    def test_inrange_end(self):
+        xml = etree.fromstring(
+            """
+            <rule id="rule">
+                <date_expression id="rule-expr"
+                    operation="in_range" end="2014-07-26"
+                />
+            </rule>
+        """
+        )
+        self.assertEqual(
+            rule_element_to_dto(xml),
+            CibRuleExpressionDto(
+                "rule",
+                CibRuleExpressionType.RULE,
+                False,
+                {},
+                None,
+                None,
+                [
+                    CibRuleExpressionDto(
+                        "rule-expr",
+                        CibRuleExpressionType.DATE_EXPRESSION,
+                        False,
+                        {"operation": "in_range", "end": "2014-07-26"},
+                        None,
+                        None,
+                        [],
+                        "date in_range to 2014-07-26",
+                    ),
+                ],
+                "date in_range to 2014-07-26",
+            ),
+        )
+
+    def test_inrange_start_duration(self):
         xml = etree.fromstring(
             """
             <rule id="rule">

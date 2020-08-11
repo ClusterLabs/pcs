@@ -106,6 +106,9 @@ class NvsetElementToDto(TestCase):
                                         years="2021-2022"
                                     />
                                 </date_expression>
+                                <date_expression id="my-id-rule-rule-expr-6"
+                                    operation="in_range" end="2020-09-11"
+                                />
                             </rule>
                         </rule>
                         <nvpair id="my-id-pair1" name="name1" value="value1" />
@@ -243,12 +246,26 @@ class NvsetElementToDto(TestCase):
                                             [],
                                             "date-spec years=2021-2022",
                                         ),
+                                        CibRuleExpressionDto(
+                                            "my-id-rule-rule-expr-6",
+                                            CibRuleExpressionType.DATE_EXPRESSION,
+                                            False,
+                                            {
+                                                "operation": "in_range",
+                                                "end": "2020-09-11",
+                                            },
+                                            None,
+                                            None,
+                                            [],
+                                            "date in_range to 2020-09-11",
+                                        ),
                                     ],
                                     "defined attr1 or attr2 gt integer 5 or "
                                     "date lt 2020-08-07 or "
                                     "date in_range 2020-09-01 to 2020-09-11 or "
                                     "date in_range 2020-10-01 to duration months=1 or "
-                                    "date-spec years=2021-2022",
+                                    "date-spec years=2021-2022 or "
+                                    "date in_range to 2020-09-11",
                                 ),
                             ],
                             "resource ocf:pacemaker:Dummy and op monitor and "
@@ -256,7 +273,8 @@ class NvsetElementToDto(TestCase):
                             "date lt 2020-08-07 or "
                             "date in_range 2020-09-01 to 2020-09-11 or "
                             "date in_range 2020-10-01 to duration months=1 "
-                            "or date-spec years=2021-2022)",
+                            "or date-spec years=2021-2022 or "
+                            "date in_range to 2020-09-11)",
                         ),
                         [
                             CibNvpairDto("my-id-pair1", "name1", "value1"),

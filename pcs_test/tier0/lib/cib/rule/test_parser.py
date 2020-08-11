@@ -512,6 +512,14 @@ class Parser(TestCase):
                 ),
             ),
             (
+                "date in_range to 2014-07-26",
+                dedent(
+                    """\
+                    BoolExpr AND
+                      DateInRangeExpr date_end=2014-07-26"""
+                ),
+            ),
+            (
                 "date in_range 2014-06-26 to duration years=1",
                 dedent(
                     """\
@@ -811,13 +819,13 @@ class Parser(TestCase):
                 (1, 10, 9, 'Expected "eq"'),
             ),
             # date
-            ("date in_range", (1, 14, 13, "Expected <date>")),
-            ("date in_range 2014-06-26", (1, 25, 24, 'Expected "to"')),
+            ("date in_range", (1, 14, 13, 'Expected "to"')),
+            ("date in_range 2014-06-26", (1, 15, 14, 'Expected "to"')),
             ("date in_range 2014-06-26 to", (1, 28, 27, "Expected <date>")),
             ("in_range 2014-06-26 to 2014-07-26", (1, 10, 9, 'Expected "eq"')),
             (
                 "date in_range #uname eq node1 to 2014-07-26",
-                (1, 22, 21, 'Expected "to"'),
+                (1, 15, 14, 'Expected "to"'),
             ),
             (
                 "date in_range 2014-06-26 to #uname eq node1",
@@ -825,7 +833,7 @@ class Parser(TestCase):
             ),
             (
                 "date in_range defined pingd to 2014-07-26",
-                (1, 23, 22, 'Expected "to"'),
+                (1, 15, 14, 'Expected "to"'),
             ),
             (
                 "date in_range 2014-06-26 to defined pingd",
@@ -837,7 +845,7 @@ class Parser(TestCase):
             ),
             (
                 "date in_range string 2014-06-26 to 2014-07-26",
-                (1, 22, 21, 'Expected "to"'),
+                (1, 15, 14, 'Expected "to"'),
             ),
             (
                 "date in_range 2014-06-26 to string 2014-07-26",
@@ -845,7 +853,7 @@ class Parser(TestCase):
             ),
             (
                 "date in_range 2014-06-26 string to 2014-07-26",
-                (1, 26, 25, 'Expected "to"'),
+                (1, 15, 14, 'Expected "to"'),
             ),
             (
                 "#uname in_range 2014-06-26 to 2014-07-26",

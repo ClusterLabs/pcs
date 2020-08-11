@@ -90,9 +90,10 @@ def __export_date_inrange(
         {
             "id": create_subelement_id(parent_el, "expr", id_provider),
             "operation": "in_range",
-            "start": expr.date_start,
         },
     )
+    if expr.date_start:
+        element.attrib["start"] = expr.date_start
     if expr.duration_parts:
         duration_attrs = dict(expr.duration_parts)
         duration_attrs["id"] = create_subelement_id(

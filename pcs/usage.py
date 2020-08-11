@@ -475,7 +475,7 @@ Commands:
           defined|not_defined <node attribute>
           <node attribute> lt|gt|lte|gte|eq|ne [string|integer|version] <value>
           date gt|lt <date>
-          date in_range <date> to <date>
+          date in_range [<date>] to <date>
           date in_range <date> to duration <duration options>
           date-spec <date-spec options>
           <expression> and|or <expression>
@@ -651,7 +651,7 @@ Commands:
           defined|not_defined <node attribute>
           <node attribute> lt|gt|lte|gte|eq|ne [string|integer|version] <value>
           date gt|lt <date>
-          date in_range <date> to <date>
+          date in_range [<date>] to <date>
           date in_range <date> to duration <duration options>
           date-spec <date-spec options>
           <expression> and|or <expression>
