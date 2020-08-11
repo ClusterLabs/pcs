@@ -88,23 +88,17 @@ class RuleParseError(Exception):
         self.msg = msg
 
 
-def parse_rule(
-    rule_string: str, allow_rsc_expr: bool = False, allow_op_expr: bool = False
-) -> BoolExpr:
+def parse_rule(rule_string: str) -> BoolExpr:
     """
     Parse a rule string and return a corresponding semantic tree
 
     rule_string -- the whole rule expression
-    allow_rsc_expr -- allow resource expressions in the rule
-    allow_op_expr -- allow resource operation expressions in the rule
     """
     if not rule_string:
         return BoolExpr(BOOL_AND, [])
 
     try:
-        parsed = __get_rule_parser(
-            allow_rsc_expr=allow_rsc_expr, allow_op_expr=allow_op_expr
-        ).parseString(rule_string, parseAll=True)[0]
+        parsed = __get_rule_parser().parseString(rule_string, parseAll=True)[0]
     except pyparsing.ParseException as e:
         raise RuleParseError(
             rule_string, e.line, e.lineno, e.col, e.loc, e.args[2],
@@ -272,9 +266,7 @@ def __get_date_common_parser_part() -> pyparsing.ParserElement:
     )
 
 
-def __get_rule_parser(
-    allow_rsc_expr: bool = False, allow_op_expr: bool = False
-) -> pyparsing.ParserElement:
+def __get_rule_parser() -> pyparsing.ParserElement:
     # This function defines the rule grammar
 
     # How to add new rule expressions:
@@ -286,7 +278,7 @@ def __get_rule_parser(
     #     independent of the parser.
     #   3 Create builders for the new classes and connect them to created
     #     grammar rules using setParseAction.
-    #   4 Add the new expressions into simple_expr_list.
+    #   4 Add the new expressions into simple_expr definition.
     #   5 Test and debug the whole thing.
 
     node_attr_unary_expr = pyparsing.And(
@@ -459,18 +451,17 @@ def __get_rule_parser(
     )
     op_expr.setParseAction(__build_op_expr)
 
-    simple_expr_list = [
-        date_unary_expr,
-        date_inrange_expr,
-        datespec_expr,
-        node_attr_unary_expr,
-        node_attr_binary_expr,
-    ]
-    if allow_rsc_expr:
-        simple_expr_list.append(rsc_expr)
-    if allow_op_expr:
-        simple_expr_list.append(op_expr)
-    simple_expr = pyparsing.Or(simple_expr_list)
+    simple_expr = pyparsing.Or(
+        [
+            date_unary_expr,
+            date_inrange_expr,
+            datespec_expr,
+            node_attr_unary_expr,
+            node_attr_binary_expr,
+            rsc_expr,
+            op_expr,
+        ]
+    )
 
     # See pyparsing examples
     # https://github.com/pyparsing/pyparsing/blob/master/examples/simpleBool.py

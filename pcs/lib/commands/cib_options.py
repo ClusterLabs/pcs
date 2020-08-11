@@ -100,9 +100,7 @@ def _defaults_create(
         # would be properly reported by a validator called bellow, so we can
         # safely ignore them here.
         try:
-            if has_rsc_or_op_expression(
-                parse_rule(nvset_rule, allow_rsc_expr=True, allow_op_expr=True)
-            ):
+            if has_rsc_or_op_expression(parse_rule(nvset_rule)):
                 required_cib_version = Version(3, 4, 0)
         except RuleParseError:
             pass

@@ -33,12 +33,7 @@ def _parsed_to_str(parsed):
 class Parser(TestCase):
     def _assert_success(self, rule_string, rule_tree):
         self.assertEqual(
-            rule_tree,
-            _parsed_to_str(
-                rule.parse_rule(
-                    rule_string, allow_rsc_expr=True, allow_op_expr=True
-                )
-            ),
+            rule_tree, _parsed_to_str(rule.parse_rule(rule_string)),
         )
 
     def test_success_trivial(self):
@@ -867,9 +862,7 @@ class Parser(TestCase):
         for rule_string, exception_data in test_data:
             with self.subTest(rule_string=rule_string):
                 with self.assertRaises(rule.RuleParseError) as cm:
-                    rule.parse_rule(
-                        rule_string, allow_rsc_expr=True, allow_op_expr=True
-                    )
+                    rule.parse_rule(rule_string)
                 e = cm.exception
                 self.assertEqual(
                     exception_data, (e.lineno, e.colno, e.pos, e.msg)

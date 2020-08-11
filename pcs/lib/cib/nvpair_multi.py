@@ -184,13 +184,7 @@ class ValidateNvsetAppendNew:
         # parse and validate rule
         if self._nvset_rule:
             try:
-                # Allow flags are set to True always, the parsed rule tree is
-                # checked in the validator instead. That gives us better error
-                # messages, such as "op expression cannot be used in this
-                # context" instead of a universal "parse error".
-                self._nvset_rule_parsed = parse_rule(
-                    self._nvset_rule, allow_rsc_expr=True, allow_op_expr=True
-                )
+                self._nvset_rule_parsed = parse_rule(self._nvset_rule)
                 report_list.extend(
                     RuleValidator(
                         self._nvset_rule_parsed,
