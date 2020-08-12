@@ -35,7 +35,12 @@ class FenceAgent
   end
 
   def to_json(options = {})
-    JSON.generate({:type => name})
+    JSON.generate({
+      :full_name => "stonith:#{name}",
+      :class => 'stonith',
+      :provider => nil,
+      :type => name,
+    })
   end
 
   def long_desc

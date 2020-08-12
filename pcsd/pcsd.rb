@@ -50,12 +50,6 @@ def getAuthUser()
   }
 end
 
-def _get_resource_agent_list(authUser, params)
-  return get_resource_agents_avail(authUser, params) \
-    .map{|agent_name| get_resource_agent_name_structure(agent_name)} \
-    .select{|structure| structure != nil}
-end
-
 before do
   # nobody is logged in yet
   @auth_user = nil
@@ -772,7 +766,9 @@ get '/managec/:cluster/main' do
   if @nodes == []
     redirect '/manage/'
   end
-  @resource_agent_structures = _get_resource_agent_list(auth_user, params)
+  @resource_agent_structures = get_resource_agents_avail(auth_user, params) \
+    .map{|agent_name| get_resource_agent_name_structure(agent_name)} \
+    .select{|structure| structure != nil}
   @stonith_agents = get_stonith_agents_avail(auth_user, params)
   erb :nodes, :layout => :main
 end
@@ -969,10 +965,6 @@ get '/managec/:cluster/cluster_properties' do
   rescue
     return [400, 'unable to get cluster properties']
   end
-end
-
-get '/managec/:cluster/get_resource_agent_list' do
-  return [200, JSON.generate(_get_resource_agent_list(getAuthUser(), params))]
 end
 
 get '/managec/:cluster/get_resource_agent_metadata' do
@@ -1470,6 +1462,28 @@ def pcs_0_9_138_node_unstandby(auth_user, params)
   )
 end
 
+def pcs_0_10_6_get_avail_resource_agents(code, out)
+  if code != 200
+    return code, out
+  end
+  begin
+    agent_map = {}
+    JSON.parse(out).each { |agent_name, agent_data|
+      if agent_data == {}
+        new_data = get_resource_agent_name_structure(agent_name)
+        if not new_data.nil?
+          agent_map[agent_name] = new_data
+        end
+      else
+        agent_map[agent_name] = agent_data
+      end
+    }
+    return code, JSON.generate(agent_map)
+  rescue
+    return code, out
+  end
+end
+
 post '/managec/:cluster/?*' do
   auth_user = getAuthUser()
   raw_data = request.env["rack.input"].read
@@ -1576,15 +1590,22 @@ get '/managec/:cluster/?*' do
   auth_user = getAuthUser()
   raw_data = request.env["rack.input"].read
   if params[:cluster]
-    send_cluster_request_with_token(
-      auth_user,
-      params[:cluster],
-      "/" + params[:splat].join("/"),
-      false,
-      params,
-      true,
-      raw_data
+    request = "/" + params[:splat].join("/")
+    code, out = send_cluster_request_with_token(
+      auth_user, params[:cluster], request, false, params, true, raw_data
     )
+
+    # backward compatibility layer BEGIN
+    # function `send_cluster_request_with_token` sometimes removes the leading
+    # slash from the variable `request`; so we must check `request` with
+    # optional leading slash in every `when`!
+    case request
+      # new structured response format added in pcs-0.10.7
+      when /\/?get_avail_resource_agents/
+        return pcs_0_10_6_get_avail_resource_agents(code, out)
+    end
+    # backward compatibility layer END
+    return code, out
   end
 end
 
