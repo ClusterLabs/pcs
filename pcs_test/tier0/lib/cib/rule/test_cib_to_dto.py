@@ -1,4 +1,4 @@
-from unittest import TestCase
+from unittest import mock, TestCase
 
 from lxml import etree
 
@@ -6,8 +6,14 @@ from pcs.common.pacemaker.rule import (
     CibRuleDateCommonDto,
     CibRuleExpressionDto,
 )
-from pcs.common.types import CibRuleExpressionType
-from pcs.lib.cib.rule import rule_element_to_dto
+from pcs.common.types import (
+    CibRuleExpiredStatus,
+    CibRuleExpressionType,
+)
+from pcs.lib.cib.rule import (
+    fill_expired_flag_in_dto,
+    rule_element_to_dto,
+)
 
 
 class ExpressionToDto(TestCase):
@@ -26,7 +32,7 @@ class ExpressionToDto(TestCase):
             CibRuleExpressionDto(
                 "my-id",
                 CibRuleExpressionType.RULE,
-                False,
+                CibRuleExpiredStatus.UNKNOWN,
                 {},
                 None,
                 None,
@@ -34,7 +40,7 @@ class ExpressionToDto(TestCase):
                     CibRuleExpressionDto(
                         "my-id-expr",
                         CibRuleExpressionType.EXPRESSION,
-                        False,
+                        CibRuleExpiredStatus.UNKNOWN,
                         {"attribute": "pingd", "operation": "defined"},
                         None,
                         None,
@@ -61,7 +67,7 @@ class ExpressionToDto(TestCase):
             CibRuleExpressionDto(
                 "my-id",
                 CibRuleExpressionType.RULE,
-                False,
+                CibRuleExpiredStatus.UNKNOWN,
                 {},
                 None,
                 None,
@@ -69,7 +75,7 @@ class ExpressionToDto(TestCase):
                     CibRuleExpressionDto(
                         "my-id-expr",
                         CibRuleExpressionType.EXPRESSION,
-                        False,
+                        CibRuleExpiredStatus.UNKNOWN,
                         {
                             "attribute": "my-attr",
                             "operation": "eq",
@@ -100,7 +106,7 @@ class ExpressionToDto(TestCase):
             CibRuleExpressionDto(
                 "my-id",
                 CibRuleExpressionType.RULE,
-                False,
+                CibRuleExpiredStatus.UNKNOWN,
                 {},
                 None,
                 None,
@@ -108,7 +114,7 @@ class ExpressionToDto(TestCase):
                     CibRuleExpressionDto(
                         "my-id-expr",
                         CibRuleExpressionType.EXPRESSION,
-                        False,
+                        CibRuleExpiredStatus.UNKNOWN,
                         {
                             "attribute": "foo",
                             "operation": "gt",
@@ -142,7 +148,7 @@ class DateExpressionToDto(TestCase):
             CibRuleExpressionDto(
                 "rule",
                 CibRuleExpressionType.RULE,
-                False,
+                CibRuleExpiredStatus.UNKNOWN,
                 {},
                 None,
                 None,
@@ -150,7 +156,7 @@ class DateExpressionToDto(TestCase):
                     CibRuleExpressionDto(
                         "rule-expr",
                         CibRuleExpressionType.DATE_EXPRESSION,
-                        False,
+                        CibRuleExpiredStatus.UNKNOWN,
                         {"operation": "gt", "start": "2014-06-26"},
                         None,
                         None,
@@ -177,7 +183,7 @@ class DateExpressionToDto(TestCase):
             CibRuleExpressionDto(
                 "rule",
                 CibRuleExpressionType.RULE,
-                False,
+                CibRuleExpiredStatus.UNKNOWN,
                 {},
                 None,
                 None,
@@ -185,7 +191,7 @@ class DateExpressionToDto(TestCase):
                     CibRuleExpressionDto(
                         "rule-expr",
                         CibRuleExpressionType.DATE_EXPRESSION,
-                        False,
+                        CibRuleExpiredStatus.UNKNOWN,
                         {"operation": "lt", "end": "2014-06-26"},
                         None,
                         None,
@@ -214,7 +220,7 @@ class DateExpressionToDto(TestCase):
             CibRuleExpressionDto(
                 "rule",
                 CibRuleExpressionType.RULE,
-                False,
+                CibRuleExpiredStatus.UNKNOWN,
                 {},
                 None,
                 None,
@@ -222,7 +228,7 @@ class DateExpressionToDto(TestCase):
                     CibRuleExpressionDto(
                         "rule-expr",
                         CibRuleExpressionType.DATE_EXPRESSION,
-                        False,
+                        CibRuleExpiredStatus.UNKNOWN,
                         {"operation": "date_spec"},
                         CibRuleDateCommonDto(
                             "rule-expr-datespec",
@@ -256,7 +262,7 @@ class DateExpressionToDto(TestCase):
             CibRuleExpressionDto(
                 "rule",
                 CibRuleExpressionType.RULE,
-                False,
+                CibRuleExpiredStatus.UNKNOWN,
                 {},
                 None,
                 None,
@@ -264,7 +270,7 @@ class DateExpressionToDto(TestCase):
                     CibRuleExpressionDto(
                         "rule-expr",
                         CibRuleExpressionType.DATE_EXPRESSION,
-                        False,
+                        CibRuleExpiredStatus.UNKNOWN,
                         {
                             "operation": "in_range",
                             "start": "2014-06-26",
@@ -295,7 +301,7 @@ class DateExpressionToDto(TestCase):
             CibRuleExpressionDto(
                 "rule",
                 CibRuleExpressionType.RULE,
-                False,
+                CibRuleExpiredStatus.UNKNOWN,
                 {},
                 None,
                 None,
@@ -303,7 +309,7 @@ class DateExpressionToDto(TestCase):
                     CibRuleExpressionDto(
                         "rule-expr",
                         CibRuleExpressionType.DATE_EXPRESSION,
-                        False,
+                        CibRuleExpiredStatus.UNKNOWN,
                         {"operation": "in_range", "end": "2014-07-26"},
                         None,
                         None,
@@ -332,7 +338,7 @@ class DateExpressionToDto(TestCase):
             CibRuleExpressionDto(
                 "rule",
                 CibRuleExpressionType.RULE,
-                False,
+                CibRuleExpiredStatus.UNKNOWN,
                 {},
                 None,
                 None,
@@ -340,7 +346,7 @@ class DateExpressionToDto(TestCase):
                     CibRuleExpressionDto(
                         "rule-expr",
                         CibRuleExpressionType.DATE_EXPRESSION,
-                        False,
+                        CibRuleExpiredStatus.UNKNOWN,
                         {"operation": "in_range", "start": "2014-06-26",},
                         None,
                         CibRuleDateCommonDto(
@@ -369,7 +375,7 @@ class OpExpressionToDto(TestCase):
             CibRuleExpressionDto(
                 "my-id",
                 CibRuleExpressionType.RULE,
-                False,
+                CibRuleExpiredStatus.UNKNOWN,
                 {},
                 None,
                 None,
@@ -377,7 +383,7 @@ class OpExpressionToDto(TestCase):
                     CibRuleExpressionDto(
                         "my-id-op",
                         CibRuleExpressionType.OP_EXPRESSION,
-                        False,
+                        CibRuleExpiredStatus.UNKNOWN,
                         {"name": "start"},
                         None,
                         None,
@@ -402,7 +408,7 @@ class OpExpressionToDto(TestCase):
             CibRuleExpressionDto(
                 "my-id",
                 CibRuleExpressionType.RULE,
-                False,
+                CibRuleExpiredStatus.UNKNOWN,
                 {},
                 None,
                 None,
@@ -410,7 +416,7 @@ class OpExpressionToDto(TestCase):
                     CibRuleExpressionDto(
                         "my-id-op",
                         CibRuleExpressionType.OP_EXPRESSION,
-                        False,
+                        CibRuleExpiredStatus.UNKNOWN,
                         {"name": "start", "interval": "2min"},
                         None,
                         None,
@@ -460,7 +466,7 @@ class ResourceExpressionToDto(TestCase):
                     CibRuleExpressionDto(
                         "my-id",
                         CibRuleExpressionType.RULE,
-                        False,
+                        CibRuleExpiredStatus.UNKNOWN,
                         {},
                         None,
                         None,
@@ -468,7 +474,7 @@ class ResourceExpressionToDto(TestCase):
                             CibRuleExpressionDto(
                                 "my-id-expr",
                                 CibRuleExpressionType.RSC_EXPRESSION,
-                                False,
+                                CibRuleExpiredStatus.UNKNOWN,
                                 attrs,
                                 None,
                                 None,
@@ -519,7 +525,7 @@ class RuleToDto(TestCase):
             CibRuleExpressionDto(
                 "complex",
                 CibRuleExpressionType.RULE,
-                False,
+                CibRuleExpiredStatus.UNKNOWN,
                 {"boolean-op": "or", "score": "INFINITY"},
                 None,
                 None,
@@ -527,7 +533,7 @@ class RuleToDto(TestCase):
                     CibRuleExpressionDto(
                         "complex-rule-1",
                         CibRuleExpressionType.RULE,
-                        False,
+                        CibRuleExpiredStatus.UNKNOWN,
                         {"boolean-op": "and", "score": "0"},
                         None,
                         None,
@@ -535,7 +541,7 @@ class RuleToDto(TestCase):
                             CibRuleExpressionDto(
                                 "complex-rule-1-expr",
                                 CibRuleExpressionType.DATE_EXPRESSION,
-                                False,
+                                CibRuleExpiredStatus.UNKNOWN,
                                 {"operation": "date_spec"},
                                 CibRuleDateCommonDto(
                                     "complex-rule-1-expr-datespec",
@@ -548,7 +554,7 @@ class RuleToDto(TestCase):
                             CibRuleExpressionDto(
                                 "complex-rule-1-expr-1",
                                 CibRuleExpressionType.DATE_EXPRESSION,
-                                False,
+                                CibRuleExpiredStatus.UNKNOWN,
                                 {
                                     "operation": "in_range",
                                     "start": "2014-07-26",
@@ -568,7 +574,7 @@ class RuleToDto(TestCase):
                     CibRuleExpressionDto(
                         "complex-rule",
                         CibRuleExpressionType.RULE,
-                        False,
+                        CibRuleExpiredStatus.UNKNOWN,
                         {"boolean-op": "and", "score": "0"},
                         None,
                         None,
@@ -576,7 +582,7 @@ class RuleToDto(TestCase):
                             CibRuleExpressionDto(
                                 "complex-rule-expr-1",
                                 CibRuleExpressionType.EXPRESSION,
-                                False,
+                                CibRuleExpiredStatus.UNKNOWN,
                                 {
                                     "attribute": "foo",
                                     "operation": "gt",
@@ -591,7 +597,7 @@ class RuleToDto(TestCase):
                             CibRuleExpressionDto(
                                 "complex-rule-expr",
                                 CibRuleExpressionType.EXPRESSION,
-                                False,
+                                CibRuleExpiredStatus.UNKNOWN,
                                 {
                                     "attribute": "#uname",
                                     "operation": "eq",
@@ -605,7 +611,7 @@ class RuleToDto(TestCase):
                             CibRuleExpressionDto(
                                 "complex-rule-expr-2",
                                 CibRuleExpressionType.EXPRESSION,
-                                False,
+                                CibRuleExpiredStatus.UNKNOWN,
                                 {
                                     "attribute": "#uname",
                                     "operation": "eq",
@@ -626,3 +632,172 @@ class RuleToDto(TestCase):
                 '#uname eq "node3 4" and #uname eq nodeA)',
             ),
         )
+
+
+@mock.patch("pcs.lib.cib.rule.cib_to_dto.get_rules_expired_status")
+class FillExpiredFlagInDto(TestCase):
+    def test_success(self, mock_rules_status):
+        dto_in = CibRuleExpressionDto(
+            "rule1",
+            CibRuleExpressionType.RULE,
+            CibRuleExpiredStatus.UNKNOWN,
+            {"boolean-op": "or", "score": "INFINITY"},
+            None,
+            None,
+            [
+                CibRuleExpressionDto(
+                    "rule2",
+                    CibRuleExpressionType.RULE,
+                    CibRuleExpiredStatus.UNKNOWN,
+                    {"boolean-op": "and", "score": "0"},
+                    None,
+                    None,
+                    [
+                        CibRuleExpressionDto(
+                            "rule3",
+                            CibRuleExpressionType.RULE,
+                            CibRuleExpiredStatus.UNKNOWN,
+                            {"boolean-op": "or", "score": "0"},
+                            None,
+                            None,
+                            [
+                                CibRuleExpressionDto(
+                                    "id1",
+                                    CibRuleExpressionType.OP_EXPRESSION,
+                                    CibRuleExpiredStatus.UNKNOWN,
+                                    {"name": "start"},
+                                    None,
+                                    None,
+                                    [],
+                                    "",
+                                ),
+                            ],
+                            "",
+                        ),
+                        CibRuleExpressionDto(
+                            "id2",
+                            CibRuleExpressionType.RSC_EXPRESSION,
+                            CibRuleExpiredStatus.UNKNOWN,
+                            {"type": "Dummy"},
+                            None,
+                            None,
+                            [],
+                            "",
+                        ),
+                    ],
+                    "",
+                ),
+                CibRuleExpressionDto(
+                    "rule4",
+                    CibRuleExpressionType.RULE,
+                    CibRuleExpiredStatus.UNKNOWN,
+                    {"boolean-op": "and", "score": "0"},
+                    None,
+                    None,
+                    [
+                        CibRuleExpressionDto(
+                            "id3",
+                            CibRuleExpressionType.RSC_EXPRESSION,
+                            CibRuleExpiredStatus.UNKNOWN,
+                            {"type": "Stateful"},
+                            None,
+                            None,
+                            [],
+                            "",
+                        ),
+                    ],
+                    "",
+                ),
+            ],
+            "",
+        )
+
+        dto_expected = CibRuleExpressionDto(
+            "rule1",
+            CibRuleExpressionType.RULE,
+            CibRuleExpiredStatus.UNKNOWN,
+            {"boolean-op": "or", "score": "INFINITY"},
+            None,
+            None,
+            [
+                CibRuleExpressionDto(
+                    "rule2",
+                    CibRuleExpressionType.RULE,
+                    CibRuleExpiredStatus.EXPIRED,
+                    {"boolean-op": "and", "score": "0"},
+                    None,
+                    None,
+                    [
+                        CibRuleExpressionDto(
+                            "rule3",
+                            CibRuleExpressionType.RULE,
+                            CibRuleExpiredStatus.IN_EFFECT,
+                            {"boolean-op": "or", "score": "0"},
+                            None,
+                            None,
+                            [
+                                CibRuleExpressionDto(
+                                    "id1",
+                                    CibRuleExpressionType.OP_EXPRESSION,
+                                    CibRuleExpiredStatus.UNKNOWN,
+                                    {"name": "start"},
+                                    None,
+                                    None,
+                                    [],
+                                    "",
+                                ),
+                            ],
+                            "",
+                        ),
+                        CibRuleExpressionDto(
+                            "id2",
+                            CibRuleExpressionType.RSC_EXPRESSION,
+                            CibRuleExpiredStatus.UNKNOWN,
+                            {"type": "Dummy"},
+                            None,
+                            None,
+                            [],
+                            "",
+                        ),
+                    ],
+                    "",
+                ),
+                CibRuleExpressionDto(
+                    "rule4",
+                    CibRuleExpressionType.RULE,
+                    CibRuleExpiredStatus.NOT_YET_IN_EFFECT,
+                    {"boolean-op": "and", "score": "0"},
+                    None,
+                    None,
+                    [
+                        CibRuleExpressionDto(
+                            "id3",
+                            CibRuleExpressionType.RSC_EXPRESSION,
+                            CibRuleExpiredStatus.UNKNOWN,
+                            {"type": "Stateful"},
+                            None,
+                            None,
+                            [],
+                            "",
+                        ),
+                    ],
+                    "",
+                ),
+            ],
+            "",
+        )
+
+        rules_status = {
+            "rule1": CibRuleExpiredStatus.UNKNOWN,
+            "rule2": CibRuleExpiredStatus.EXPIRED,
+            "rule3": CibRuleExpiredStatus.IN_EFFECT,
+            "rule4": CibRuleExpiredStatus.NOT_YET_IN_EFFECT,
+        }
+        mock_rules_status.return_value = rules_status
+        dto_out = fill_expired_flag_in_dto(
+            "mock runner", etree.fromstring("<cib />"), dto_in
+        )
+        mock_rules_status.assert_called_once_with(
+            "mock runner", "<cib/>", set(rules_status.keys())
+        )
+        self.assertEqual(dto_out, dto_expected)

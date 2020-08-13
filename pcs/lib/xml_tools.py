@@ -103,7 +103,7 @@ def etree_element_attibutes_to_dict(etree_el, required_key_list):
     return {key: etree_el.get(key) for key in required_key_list}
 
 
-def etree_to_str(tree):
+def etree_to_str(tree: _Element) -> str:
     """
     Export a lxml tree to a string
     etree tree - the tree to be exported
@@ -112,7 +112,8 @@ def etree_to_str(tree):
     # python 3 removed .encode() from byte strings
     # run(...) calls subprocess.Popen.communicate which calls encode...
     # so there is bytes to str conversion
-    return etree.tostring(tree).decode()
+    raw = etree.tostring(tree)
+    return raw.decode() if isinstance(raw, bytes) else raw
 
 
 def is_element_useful(element, attribs_important=True):

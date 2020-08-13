@@ -23,6 +23,7 @@ from pcs.lib.cib.rule import (
     RuleParseError,
     RuleRoot,
     RuleValidator,
+    fill_expired_flag_in_dto,
     parse_rule,
     rule_element_to_dto,
     rule_to_cib,
@@ -35,6 +36,7 @@ from pcs.lib.cib.tools import (
 from pcs.lib.external import CommandRunner
 from pcs.lib.xml_tools import (
     export_attributes,
+    get_root,
     remove_one_element,
 )
 
@@ -60,16 +62,27 @@ def nvpair_element_to_dto(nvpair_el: _Element) -> CibNvpairDto:
     )
 
 
-def nvset_element_to_dto(nvset_el: _Element) -> CibNvsetDto:
+def nvset_element_to_dto(
+    nvset_el: _Element, runner: Optional[CommandRunner] = None
+) -> CibNvsetDto:
     """
     Export an nvset xml element to its DTO
+
+    nvset_el -- an nvset element to be exported
     """
+    rule_dto = None
     rule_el = nvset_el.find("./rule")
+    if rule_el is not None:
+        rule_dto = rule_element_to_dto(rule_el)
+        if runner:
+            rule_dto = fill_expired_flag_in_dto(
+                runner, get_root(nvset_el), rule_dto
+            )
     return CibNvsetDto(
         str(nvset_el.get("id", "")),
         _tag_to_type[str(nvset_el.tag)],
         export_attributes(nvset_el, with_id=False),
-        None if rule_el is None else rule_element_to_dto(rule_el),
+        rule_dto,
         [
             nvpair_element_to_dto(nvpair_el)
             for nvpair_el in nvset_el.iterfind("./nvpair")

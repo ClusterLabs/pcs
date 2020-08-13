@@ -1,6 +1,7 @@
 import os.path
 import re
 from typing import (
+    Dict,
     Iterable,
     List,
     Optional,
@@ -13,8 +14,9 @@ from pcs import settings
 from pcs.common import reports
 from pcs.common.reports import ReportProcessor
 from pcs.common.reports.item import ReportItem
-from pcs.common.tools import format_os_error, xml_fromstring
 from pcs.common.str_tools import join_multilines
+from pcs.common.tools import format_os_error, xml_fromstring
+from pcs.common.types import CibRuleExpiredStatus
 from pcs.lib.cib.tools import get_pacemaker_version_by_which_cib_was_validated
 from pcs.lib.errors import LibraryError
 from pcs.lib.external import CommandRunner
@@ -689,9 +691,55 @@ def _run_fence_history_command(runner, command, node=None):
 ### tools
 
 
+def has_rule_expired_status_tool() -> bool:
+    return os.path.isfile(__exec("crm_rule"))
+
+
+def get_rules_expired_status(
+    runner: CommandRunner, cib_xml: str, rule_id_set: Iterable[str]
+) -> Dict[str, CibRuleExpiredStatus]:
+    """
+    Figure out if rules are in effect, expired or not yet in effect
+
+    runner -- a class for running external processes
+    cib_xml -- CIB containing rules
+    rule_id_set -- IDs of rules to be checked
+    """
+    if not has_rule_expired_status_tool():
+        return {
+            rule_id: CibRuleExpiredStatus.UNKNOWN for rule_id in rule_id_set
+        }
+
+    translation_map = {
+        0: CibRuleExpiredStatus.IN_EFFECT,
+        110: CibRuleExpiredStatus.EXPIRED,
+        111: CibRuleExpiredStatus.NOT_YET_IN_EFFECT,
+    }
+    result = {}
+    for rule_id in rule_id_set:
+        dummy_stdout, dummy_stderr, retval = runner.run(
+            [
+                __exec("crm_rule"),
+                "--check",
+                "--rule",
+                rule_id,
+                "--xml-text",
+                "-",
+            ],
+            stdin_string=cib_xml,
+        )
+        result[rule_id] = translation_map.get(
+            retval, CibRuleExpiredStatus.UNKNOWN
+        )
+    return result
+
+
 def parse_isodate(runner: CommandRunner, date: str) -> Optional[int]:
     """
     Parse ISO8601 date, return Unix timestamp on success or None on error
+
+    runner -- a class for running external processes
+    date -- a date to be parsed
     """
     stdout, dummy_stderr, retval = runner.run(
         [__exec("iso8601"), "--date", date, "--epoch"]

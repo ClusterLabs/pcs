@@ -8,6 +8,7 @@ from pcs_test.tools.cib import get_assert_pcs_effect_mixin
 from pcs_test.tools.misc import (
     get_test_resource as rc,
     get_tmp_file,
+    skip_unless_crm_rule,
     skip_unless_pacemaker_supports_rsc_and_op_rules,
     write_data_to_tmpfile,
     write_file_to_tmpfile,
@@ -161,6 +162,60 @@ class DefaultsConfigMixin(TestDefaultsMixin, AssertPcsMixin):
                       Expression:
                         Date Spec: months=7-8 weekdays=6-7 years=2019
                       Expression: date in_range to 2019-12-15
+            """
+            ),
+        )
+
+    @skip_unless_crm_rule()
+    def test_success_rule_expired(self):
+        xml_template = """<{tag}_defaults>
+            <meta_attributes id="{tag}-set1">
+                <rule id="{tag}-set1-rule" boolean-op="and" score="INFINITY">
+                    <date_expression id="{tag}-set1-rule-expr"
+                        operation="gt" start="3000-01-01"
+                    />
+                </rule>
+                <nvpair id="{tag}-set1-name" name="name1" value="value1"/>
+            </meta_attributes>
+            <meta_attributes id="{tag}-set2">
+                <rule id="{tag}-set2-rule" boolean-op="and" score="INFINITY">
+                    <date_expression id="{tag}-set2-rule-expr"
+                        operation="lt" end="1000-01-01"
+                    />
+                </rule>
+                <nvpair id="{tag}-set2-name" name="name2" value="value2"/>
+            </meta_attributes>
+            <meta_attributes id="{tag}-set3">
+                <rule id="{tag}-set3-rule" boolean-op="and" score="INFINITY">
+                    <date_expression id="{tag}-set3-rule-expr"
+                        operation="in_range" start="1000-01-01" end="3000-01-01"
+                    />
+                </rule>
+                <nvpair id="{tag}-set3-name" name="name3" value="value3"/>
+            </meta_attributes>
+        </{tag}_defaults>"""
+        xml_rsc = xml_template.format(tag="rsc")
+        xml_op = xml_template.format(tag="op")
+        xml_manip = XmlManipulation.from_file(empty_cib)
+        xml_manip.append_to_first_tag_name("configuration", xml_rsc, xml_op)
+        write_data_to_tmpfile(str(xml_manip), self.temp_cib)
+
+        self.assert_pcs_success(
+            self.cli_command,
+            stdout_full=dedent(
+                f"""\
+                Meta Attrs: {self.prefix}-set1
+                  name1=value1
+                  Rule (not yet in effect): boolean-op=and score=INFINITY
+                    Expression: date gt 3000-01-01
+                Meta Attrs: {self.prefix}-set2
+                  name2=value2
+                  Rule (expired): boolean-op=and score=INFINITY
+                    Expression: date lt 1000-01-01
+                Meta Attrs: {self.prefix}-set3
+                  name3=value3
+                  Rule: boolean-op=and score=INFINITY
+                    Expression: date in_range 1000-01-01 to 3000-01-01
             """
             ),
         )

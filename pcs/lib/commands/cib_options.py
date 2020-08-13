@@ -22,7 +22,9 @@ from pcs.lib.cib.rule import (
 )
 from pcs.lib.cib.tools import IdProvider
 from pcs.lib.env import LibraryEnvironment
+from pcs.lib.external import CommandRunner
 from pcs.lib.errors import LibraryError
+from pcs.lib.pacemaker.live import has_rule_expired_status_tool
 
 
 def resource_defaults_create(
@@ -153,8 +155,16 @@ def operation_defaults_config(env: LibraryEnvironment) -> List[CibNvsetDto]:
 def _defaults_config(
     env: LibraryEnvironment, cib_section_name: str,
 ) -> List[CibNvsetDto]:
+    runner: Optional[CommandRunner] = env.cmd_runner()
+    if not has_rule_expired_status_tool():
+        runner = None
+        env.report_processor.report(
+            ReportItem.warning(
+                reports.messages.RuleExpiredStatusDetectionNotSupported()
+            )
+        )
     return [
-        nvpair_multi.nvset_element_to_dto(nvset_el)
+        nvpair_multi.nvset_element_to_dto(nvset_el, runner)
         for nvset_el in nvpair_multi.find_nvsets(
             sections.get(env.get_cib(), cib_section_name)
         )

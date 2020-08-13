@@ -4705,6 +4705,17 @@ class TagIdsNotInTheTag(NameBuildTest):
         )
 
 
+class RuleExpiredStatusDetectionNotSupported(NameBuildTest):
+    def test_success(self):
+        self.assert_message_from_report(
+            (
+                "crm_rule is not available, therefore expired parts of "
+                "configuration may not be detected. Consider upgrading pacemaker."
+            ),
+            reports.RuleExpiredStatusDetectionNotSupported(),
+        )
+
+
 class RuleExpressionOptionsDuplication(NameBuildTest):
     def test_success(self):
         self.assert_message_from_report(

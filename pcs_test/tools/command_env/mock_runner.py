@@ -65,6 +65,7 @@ COMMAND_COMPLETIONS = {
     "crm_mon": path.join(settings.pacemaker_binaries, "crm_mon"),
     "crm_node": path.join(settings.pacemaker_binaries, "crm_node"),
     "crm_resource": path.join(settings.pacemaker_binaries, "crm_resource"),
+    "crm_rule": path.join(settings.pacemaker_binaries, "crm_rule"),
     "crm_simulate": path.join(settings.pacemaker_binaries, "crm_simulate"),
     "crm_ticket": path.join(settings.pacemaker_binaries, "crm_ticket"),
     "crm_verify": path.join(settings.pacemaker_binaries, "crm_verify"),

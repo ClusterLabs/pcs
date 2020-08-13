@@ -5,7 +5,16 @@ from pcs.common.str_tools import (
     format_name_value_list,
     indent,
 )
-from pcs.common.types import CibRuleExpressionType
+from pcs.common.types import (
+    CibRuleExpiredStatus,
+    CibRuleExpressionType,
+)
+
+_expired_label_map = {
+    CibRuleExpiredStatus.NOT_YET_IN_EFFECT: "not yet in effect",
+    CibRuleExpiredStatus.IN_EFFECT: None,
+    CibRuleExpiredStatus.EXPIRED: "expired",
+}
 
 
 def rule_expression_dto_to_lines(
@@ -21,8 +30,9 @@ def rule_expression_dto_to_lines(
 def _rule_dto_to_lines(
     rule_expr: CibRuleExpressionDto, with_ids: bool = False
 ) -> List[str]:
+    expired_label = _expired_label_map.get(rule_expr.expired, None)
     heading_parts = [
-        "Rule{0}:".format(" (expired)" if rule_expr.is_expired else "")
+        "Rule{0}:".format(f" ({expired_label})" if expired_label else "")
     ]
     heading_parts.extend(
         format_name_value_list(sorted(rule_expr.options.items()))

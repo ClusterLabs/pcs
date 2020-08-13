@@ -6423,6 +6423,22 @@ class TagIdsNotInTheTag(ReportItemMessage):
 
 
 @dataclass(frozen=True)
+class RuleExpiredStatusDetectionNotSupported(ReportItemMessage):
+    """
+    Pacemaker tool for detecting if a rule is expired or not is not available
+    """
+
+    _code = codes.RULE_EXPIRED_STATUS_DETECTION_NOT_SUPPORTED
+
+    @property
+    def message(self) -> str:
+        return (
+            "crm_rule is not available, therefore expired parts of "
+            "configuration may not be detected. Consider upgrading pacemaker."
+        )
+
+
+@dataclass(frozen=True)
 class RuleExpressionOptionsDuplication(ReportItemMessage):
     """
     Keys are specified more than once in a single rule (sub)expression

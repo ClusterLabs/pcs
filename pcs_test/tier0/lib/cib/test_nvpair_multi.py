@@ -1,4 +1,4 @@
-from unittest import TestCase
+from unittest import mock, TestCase
 
 from lxml import etree
 
@@ -20,6 +20,7 @@ from pcs.common.pacemaker.rule import (
 )
 from pcs.common.types import (
     CibNvsetType,
+    CibRuleExpiredStatus,
     CibRuleExpressionType,
 )
 from pcs.lib.cib import nvpair_multi
@@ -63,6 +64,65 @@ class NvsetElementToDto(TestCase):
                 self.assertEqual(
                     nvpair_multi.nvset_element_to_dto(xml),
                     CibNvsetDto("my-id", nvtype, {}, None, []),
+                )
+
+    @mock.patch("pcs.lib.cib.rule.cib_to_dto.get_rules_expired_status")
+    def test_expired(self, mock_rules_status):
+        mock_rules_status.return_value = {
+            "my-id-rule": CibRuleExpiredStatus.EXPIRED
+        }
+        for tag, nvtype in self.tag_type:
+            mock_rules_status.reset_mock()
+            with self.subTest(tag=tag, nvset_type=nvtype):
+                xml = etree.fromstring(
+                    f"""
+                    <{tag} id="my-id" score="150">
+                        <rule id="my-id-rule" boolean-op="and">
+                            <rsc_expression
+                                id="my-id-rule-rsc-ocf-pacemaker-Dummy"
+                                class="ocf" provider="pacemaker" type="Dummy"
+                            />
+                        </rule>
+                        <nvpair id="my-id-pair1" name="name1" value="value1" />
+                    </{tag}>
+                """
+                )
+                self.assertEqual(
+                    nvpair_multi.nvset_element_to_dto(xml, "mock runner"),
+                    CibNvsetDto(
+                        "my-id",
+                        nvtype,
+                        {"score": "150"},
+                        CibRuleExpressionDto(
+                            "my-id-rule",
+                            CibRuleExpressionType.RULE,
+                            CibRuleExpiredStatus.EXPIRED,
+                            {"boolean-op": "and"},
+                            None,
+                            None,
+                            [
+                                CibRuleExpressionDto(
+                                    "my-id-rule-rsc-ocf-pacemaker-Dummy",
+                                    CibRuleExpressionType.RSC_EXPRESSION,
+                                    CibRuleExpiredStatus.UNKNOWN,
+                                    {
+                                        "class": "ocf",
+                                        "provider": "pacemaker",
+                                        "type": "Dummy",
+                                    },
+                                    None,
+                                    None,
+                                    [],
+                                    "resource ocf:pacemaker:Dummy",
+                                ),
+                            ],
+                            "resource ocf:pacemaker:Dummy",
+                        ),
+                        [CibNvpairDto("my-id-pair1", "name1", "value1"),],
+                    ),
+                )
+                mock_rules_status.assert_called_once_with(
+                    "mock runner", etree_to_str(xml), {"my-id-rule"}
                 )
 
     def test_full(self):
@@ -125,7 +185,7 @@ class NvsetElementToDto(TestCase):
                         CibRuleExpressionDto(
                             "my-id-rule",
                             CibRuleExpressionType.RULE,
-                            False,
+                            CibRuleExpiredStatus.UNKNOWN,
                             {"boolean-op": "and"},
                             None,
                             None,
@@ -133,7 +193,7 @@ class NvsetElementToDto(TestCase):
                                 CibRuleExpressionDto(
                                     "my-id-rule-rsc-ocf-pacemaker-Dummy",
                                     CibRuleExpressionType.RSC_EXPRESSION,
-                                    False,
+                                    CibRuleExpiredStatus.UNKNOWN,
                                     {
                                         "class": "ocf",
                                         "provider": "pacemaker",
@@ -147,7 +207,7 @@ class NvsetElementToDto(TestCase):
                                 CibRuleExpressionDto(
                                     "my-id-rule-op",
                                     CibRuleExpressionType.OP_EXPRESSION,
-                                    False,
+                                    CibRuleExpiredStatus.UNKNOWN,
                                     {"name": "monitor"},
                                     None,
                                     None,
@@ -157,7 +217,7 @@ class NvsetElementToDto(TestCase):
                                 CibRuleExpressionDto(
                                     "my-id-rule-rule",
                                     CibRuleExpressionType.RULE,
-                                    False,
+                                    CibRuleExpiredStatus.UNKNOWN,
                                     {"boolean-op": "or"},
                                     None,
                                     None,
@@ -165,7 +225,7 @@ class NvsetElementToDto(TestCase):
                                         CibRuleExpressionDto(
                                             "my-id-rule-rule-expr",
                                             CibRuleExpressionType.EXPRESSION,
-                                            False,
+                                            CibRuleExpiredStatus.UNKNOWN,
                                             {
                                                 "operation": "defined",
                                                 "attribute": "attr1",
@@ -178,7 +238,7 @@ class NvsetElementToDto(TestCase):
                                         CibRuleExpressionDto(
                                             "my-id-rule-rule-expr-1",
                                             CibRuleExpressionType.EXPRESSION,
-                                            False,
+                                            CibRuleExpiredStatus.UNKNOWN,
                                             {
                                                 "attribute": "attr2",
                                                 "operation": "gt",
@@ -193,7 +253,7 @@ class NvsetElementToDto(TestCase):
                                         CibRuleExpressionDto(
                                             "my-id-rule-rule-expr-2",
                                             CibRuleExpressionType.DATE_EXPRESSION,
-                                            False,
+                                            CibRuleExpiredStatus.UNKNOWN,
                                             {
                                                 "operation": "lt",
                                                 "end": "2020-08-07",
@@ -206,7 +266,7 @@ class NvsetElementToDto(TestCase):
                                         CibRuleExpressionDto(
                                             "my-id-rule-rule-expr-3",
                                             CibRuleExpressionType.DATE_EXPRESSION,
-                                            False,
+                                            CibRuleExpiredStatus.UNKNOWN,
                                             {
                                                 "operation": "in_range",
                                                 "start": "2020-09-01",
@@ -220,7 +280,7 @@ class NvsetElementToDto(TestCase):
                                         CibRuleExpressionDto(
                                             "my-id-rule-rule-expr-4",
                                             CibRuleExpressionType.DATE_EXPRESSION,
-                                            False,
+                                            CibRuleExpiredStatus.UNKNOWN,
                                             {
                                                 "operation": "in_range",
                                                 "start": "2020-10-01",
@@ -236,7 +296,7 @@ class NvsetElementToDto(TestCase):
                                         CibRuleExpressionDto(
                                             "my-id-rule-rule-expr-5",
                                             CibRuleExpressionType.DATE_EXPRESSION,
-                                            False,
+                                            CibRuleExpiredStatus.UNKNOWN,
                                             {"operation": "date_spec"},
                                             CibRuleDateCommonDto(
                                                 "my-id-rule-rule-expr-5-datespec",
@@ -249,7 +309,7 @@ class NvsetElementToDto(TestCase):
                                         CibRuleExpressionDto(
                                             "my-id-rule-rule-expr-6",
                                             CibRuleExpressionType.DATE_EXPRESSION,
-                                            False,
+                                            CibRuleExpiredStatus.UNKNOWN,
                                             {
                                                 "operation": "in_range",
                                                 "end": "2020-09-11",

@@ -24,6 +24,10 @@ AGENT_FILENAME_MAP = {
     "ocf:pacemaker:booth-site": "resource_agent_ocf_pacemaker_booth-site.xml",
 }
 
+RULE_IN_EFFECT_RETURNCODE = 0
+RULE_EXPIRED_RETURNCODE = 110
+RULE_NOT_YET_IN_EFFECT_RETURNCODE = 111
+
 
 def _fixture_state_resources_xml(
     resource_id="A",
@@ -866,10 +870,10 @@ class PcmkShortcuts:
         """
         Create a call for running a tool to convert an iso date to a timestamp
 
-        sting name -- key of the call
         string date -- a date to be parsed
         string success_timestamp -- resulting timestamp
         string errror -- resulting error message
+        sting name -- key of the call
         """
         if (not success_timestamp and not error) or (
             success_timestamp and error
@@ -886,5 +890,32 @@ class PcmkShortcuts:
                 ),
                 stderr=(error if error else ""),
                 returncode=(1 if error else 0),
+            ),
+        )
+
+    def get_rule_expired_status(
+        self,
+        rule_id,
+        returncode=0,
+        name="runner.pcmk.get_rule_expired_status",
+        cib_load_name="runner.cib.load",
+    ):
+        """
+        Create a call for running a tool to get rule expired status
+
+        string rule_id -- id of the rule to be checked
+        int returncode -- result of the check
+        sting name -- key of the call
+        string cib_load_name -- key of a call from whose stdout the cib is taken
+        """
+        cib_xml = self.__calls.get(cib_load_name).stdout
+        self.__calls.place(
+            name,
+            RunnerCall(
+                ["crm_rule", "--check", "--rule", rule_id, "--xml-text", "-"],
+                check_stdin=CheckStdinEqualXml(cib_xml),
+                stdout="",
+                stderr="",
+                returncode=returncode,
             ),
         )

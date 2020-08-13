@@ -1,5 +1,9 @@
-from typing import cast
+from typing import (
+    cast,
+    Set,
+)
 
+import dataclasses
 from lxml.etree import _Element
 
 from pcs.common.pacemaker.rule import (
@@ -10,8 +14,16 @@ from pcs.common.str_tools import (
     format_name_value_list,
     quote,
 )
-from pcs.common.types import CibRuleExpressionType
-from pcs.lib.xml_tools import export_attributes
+from pcs.common.types import (
+    CibRuleExpiredStatus,
+    CibRuleExpressionType,
+)
+from pcs.lib.external import CommandRunner
+from pcs.lib.pacemaker.live import get_rules_expired_status
+from pcs.lib.xml_tools import (
+    etree_to_str,
+    export_attributes,
+)
 
 
 def rule_element_to_dto(rule_el: _Element) -> CibRuleExpressionDto:
@@ -19,6 +31,43 @@ def rule_element_to_dto(rule_el: _Element) -> CibRuleExpressionDto:
     Export a rule xml element including its children to their DTOs
     """
     return _tag_to_export[str(rule_el.tag)](rule_el)
+
+
+def fill_expired_flag_in_dto(
+    runner: CommandRunner, cib: _Element, rule_dto: CibRuleExpressionDto
+) -> CibRuleExpressionDto:
+    """
+    Fill 'expired' flag in rule DTOs and return the new updated DTOs
+
+    runner -- a class for running external processes
+    cib -- cib containing the rule expressions
+    rule_dto -- the rule DTO to be filled
+    """
+    id_to_expired_map = get_rules_expired_status(
+        runner, etree_to_str(cib), _extract_rule_ids_from_dto(rule_dto)
+    )
+
+    def setter(rule_dto: CibRuleExpressionDto) -> CibRuleExpressionDto:
+        if rule_dto.type != CibRuleExpressionType.RULE:
+            return rule_dto
+        new_children = [setter(child) for child in rule_dto.expressions]
+        new_expired = id_to_expired_map.get(
+            rule_dto.id, CibRuleExpiredStatus.UNKNOWN
+        )
+        return dataclasses.replace(
+            rule_dto, expired=new_expired, expressions=new_children
+        )
+
+    return setter(rule_dto)
+
+
+def _extract_rule_ids_from_dto(rule_dto: CibRuleExpressionDto) -> Set[str]:
+    id_set = set()
+    if rule_dto.type == CibRuleExpressionType.RULE:
+        id_set.add(rule_dto.id)
+        for child in rule_dto.expressions:
+            id_set = id_set.union(_extract_rule_ids_from_dto(child))
+    return id_set
 
 
 def _attrs_to_str(el: _Element) -> str:
@@ -48,7 +97,7 @@ def _rule_to_dto(rule_el: _Element) -> CibRuleExpressionDto:
     return CibRuleExpressionDto(
         str(rule_el.get("id", "")),
         _tag_to_type[str(rule_el.tag)],
-        False,  # TODO implement is_expired
+        CibRuleExpiredStatus.UNKNOWN,
         export_attributes(rule_el, with_id=False),
         None,
         None,
@@ -63,7 +112,7 @@ def _common_expr_to_dto(
     return CibRuleExpressionDto(
         str(expr_el.get("id", "")),
         _tag_to_type[str(expr_el.tag)],
-        False,
+        CibRuleExpiredStatus.UNKNOWN,
         export_attributes(expr_el, with_id=False),
         None,
         None,
@@ -147,7 +196,7 @@ def _date_expr_to_dto(expr_el: _Element) -> CibRuleExpressionDto:
     return CibRuleExpressionDto(
         str(expr_el.get("id", "")),
         _tag_to_type[str(expr_el.tag)],
-        False,
+        CibRuleExpiredStatus.UNKNOWN,
         export_attributes(expr_el, with_id=False),
         None if date_spec is None else _date_common_to_dto(date_spec),
         None if duration is None else _date_common_to_dto(duration),

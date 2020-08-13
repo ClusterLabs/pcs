@@ -1,4 +1,7 @@
-from .cib_to_dto import rule_element_to_dto
+from .cib_to_dto import (
+    fill_expired_flag_in_dto,
+    rule_element_to_dto,
+)
 from .expression_part import BoolExpr as RuleRoot
 from .parser import (
     parse_rule,

@@ -16,6 +16,7 @@ from pcs import settings
 from pcs.common.reports import ReportItemSeverity as Severity
 from pcs.common.reports import codes as report_codes
 from pcs.common.tools import Version
+from pcs.common.types import CibRuleExpiredStatus
 import pcs.lib.pacemaker.live as lib
 from pcs.lib.external import CommandRunner
 
@@ -1359,6 +1360,42 @@ class IsInPcmkToolHelp(TestCase):
         mock_runner = get_runner("CDE", "ABC", 0)
         self.assertFalse(
             lib._is_in_pcmk_tool_help(mock_runner, "", ["A", "C", "E"])
+        )
+
+
+@mock.patch("pcs.lib.pacemaker.live.has_rule_expired_status_tool")
+class GetRulesExpiredStatus(LibraryPacemakerTest):
+    def test_tool_not_available(self, mock_has_tool):
+        mock_has_tool.return_value = False
+        expected = {
+            "rule1": CibRuleExpiredStatus.UNKNOWN,
+            "rule2": CibRuleExpiredStatus.UNKNOWN,
+        }
+        self.assertEqual(
+            lib.get_rules_expired_status(
+                "mock runner", "mock cib", expected.keys()
+            ),
+            expected,
+        )
+
+    def test_success(self, mock_has_tool):
+        mock_has_tool.return_value = True
+        expected = {
+            "rule1": CibRuleExpiredStatus.UNKNOWN,
+            "rule2": CibRuleExpiredStatus.EXPIRED,
+            "rule3": CibRuleExpiredStatus.IN_EFFECT,
+            "rule4": CibRuleExpiredStatus.NOT_YET_IN_EFFECT,
+        }
+        runner = mock.MagicMock(spec_set=CommandRunner)
+        runner.run.side_effect = [
+            ("", "", 1),
+            ("", "", 110),
+            ("", "", 0),
+            ("", "", 111),
+        ]
+        self.assertEqual(
+            lib.get_rules_expired_status(runner, "mock cib", expected.keys()),
+            expected,
         )
 
 

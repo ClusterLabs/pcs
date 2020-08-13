@@ -16,6 +16,13 @@ class CibRuleExpressionType(AutoNameEnum):
     RSC_EXPRESSION = auto()
 
 
+class CibRuleExpiredStatus(AutoNameEnum):
+    NOT_YET_IN_EFFECT = auto()
+    IN_EFFECT = auto()
+    EXPIRED = auto()
+    UNKNOWN = auto()
+
+
 class ResourceRelationType(AutoNameEnum):
     ORDER = auto()
     ORDER_SET = auto()
