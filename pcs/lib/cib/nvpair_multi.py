@@ -69,6 +69,7 @@ def nvset_element_to_dto(
     Export an nvset xml element to its DTO
 
     nvset_el -- an nvset element to be exported
+    runner -- a class for running external processes
     """
     rule_dto = None
     rule_el = nvset_el.find("./rule")

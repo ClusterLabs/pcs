@@ -12,8 +12,7 @@ def has_rsc_or_op_expression(rule_expr: RuleExprPart) -> bool:
     if isinstance(rule_expr, RscExpr):
         return True
     if isinstance(rule_expr, BoolExpr):
-        for child in rule_expr.children:
-            rsc_or_op_expr_detected = has_rsc_or_op_expression(child)
-            if rsc_or_op_expr_detected:
-                return True
+        return any(
+            has_rsc_or_op_expression(child) for child in rule_expr.children
+        )
     return False
