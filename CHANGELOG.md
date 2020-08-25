@@ -12,6 +12,8 @@
 ### Fixed
 - Prevent removing non-empty tag by removing tagged resource group or clone
   ([rhbz#1857295])
+- Clarify documentation for 'resource move' and 'resource ban' commands with
+  regards to the 'lifetime' option.
 
 ### Deprecated
 - `pcs resource [op] defaults <name>=<value>...` commands are deprecated now.

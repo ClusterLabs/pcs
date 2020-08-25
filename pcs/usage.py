@@ -366,12 +366,17 @@ Commands:
         an INFINITY location constraint to prefer the destination node. If
         --master is used the scope of the command is limited to the master role
         and you must use the promotable clone id (instead of the resource id).
+
         If lifetime is specified then the constraint will expire after that
         time, otherwise it defaults to infinity and the constraint can be
         cleared manually with 'pcs resource clear' or 'pcs constraint delete'.
+        Lifetime is expected to be specified as ISO 8601 duration (see
+        https://en.wikipedia.org/wiki/ISO_8601#Durations).
+
         If --wait is specified, pcs will wait up to 'n' seconds for the
-        resource to move and then return 0 on success or 1 on error.  If 'n' is
+        resource to move and then return 0 on success or 1 on error. If 'n' is
         not specified it defaults to 60 minutes.
+
         If you want the resource to preferably avoid running on some nodes but
         be able to failover to them use 'pcs constraint location avoids'.
 
@@ -380,13 +385,18 @@ Commands:
         current node it is running on if no node is specified) by creating
         a -INFINITY location constraint. If --master is used the scope of the
         command is limited to the master role and you must use the promotable
-        clone id (instead of the resource id). If lifetime is specified then
-        the constraint will expire after that time, otherwise it defaults to
-        infinity and the constraint can be cleared manually with 'pcs resource
-        clear' or 'pcs constraint delete'. If --wait is specified, pcs will
-        wait up to 'n' seconds for the resource to move and then return 0
-        on success or 1 on error. If 'n' is not specified it defaults to 60
-        minutes.
+        clone id (instead of the resource id).
+
+        If lifetime is specified then the constraint will expire after that
+        time, otherwise it defaults to infinity and the constraint can be
+        cleared manually with 'pcs resource clear' or 'pcs constraint delete'.
+        Lifetime is expected to be specified as ISO 8601 duration (see
+        https://en.wikipedia.org/wiki/ISO_8601#Durations).
+
+        If --wait is specified, pcs will wait up to 'n' seconds for the
+        resource to move and then return 0 on success or 1 on error. If 'n' is
+        not specified it defaults to 60 minutes.
+
         If you want the resource to preferably avoid running on some nodes but
         be able to failover to them use 'pcs constraint location avoids'.
 
