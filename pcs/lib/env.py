@@ -122,23 +122,46 @@ class LibraryEnvironment:
             codes.add(file_type_codes.COROSYNC_CONF)
         return sorted(codes)
 
-    def get_cib(self, minimal_version: Optional[Version] = None) -> _Element:
+    def get_cib(
+        self,
+        minimal_version: Optional[Version] = None,
+        nice_to_have_version: Optional[Version] = None,
+    ) -> _Element:
         if self.__loaded_cib_diff_source is not None:
             raise AssertionError("CIB has already been loaded")
+
         self.__loaded_cib_diff_source = get_cib_xml(self.cmd_runner())
         self.__loaded_cib_to_modify = get_cib(self.__loaded_cib_diff_source)
-        if minimal_version is not None:
-            upgraded_cib = ensure_cib_version(
-                self.cmd_runner(), self.__loaded_cib_to_modify, minimal_version
-            )
-            if upgraded_cib is not None:
-                self.__loaded_cib_to_modify = upgraded_cib
-                self.__loaded_cib_diff_source = etree_to_str(upgraded_cib)
-                if not self._cib_upgrade_reported:
-                    self.report_processor.report(
-                        ReportItem.info(reports.messages.CibUpgradeSuccessful())
-                    )
-                self._cib_upgrade_reported = True
+
+        if (
+            nice_to_have_version is not None
+            and minimal_version is not None
+            and minimal_version >= nice_to_have_version
+        ):
+            nice_to_have_version = None
+
+        for version, mandatory in (
+            (nice_to_have_version, False),
+            (minimal_version, True),
+        ):
+            if version is not None:
+                upgraded_cib, was_upgraded = ensure_cib_version(
+                    self.cmd_runner(),
+                    self.__loaded_cib_to_modify,
+                    version,
+                    fail_if_version_not_met=mandatory,
+                )
+                if was_upgraded:
+                    self.__loaded_cib_to_modify = upgraded_cib
+                    self.__loaded_cib_diff_source = etree_to_str(upgraded_cib)
+                    if not self._cib_upgrade_reported:
+                        self.report_processor.report(
+                            ReportItem.info(
+                                reports.messages.CibUpgradeSuccessful()
+                            )
+                        )
+                    self._cib_upgrade_reported = True
+
         self.__loaded_cib_diff_source_feature_set = get_cib_crm_feature_set(
             self.__loaded_cib_to_modify, none_if_missing=True
         ) or Version(0, 0, 0)

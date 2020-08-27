@@ -18,6 +18,7 @@ from pcs.common.pacemaker.rule import (
     CibRuleDateCommonDto,
     CibRuleExpressionDto,
 )
+from pcs.common.tools import Version
 from pcs.common.types import (
     CibNvsetType,
     CibRuleExpiredStatus,
@@ -143,7 +144,7 @@ class NvsetElementToDto(TestCase):
                                 />
                                 <expression id="my-id-rule-rule-expr-1"
                                     attribute="attr2" operation="gt"
-                                    type="number" value="5"
+                                    type="integer" value="5"
                                 />
                                 <date_expression id="my-id-rule-rule-expr-2"
                                     operation="lt" end="2020-08-07"
@@ -242,7 +243,7 @@ class NvsetElementToDto(TestCase):
                                             {
                                                 "attribute": "attr2",
                                                 "operation": "gt",
-                                                "type": "number",
+                                                "type": "integer",
                                                 "value": "5",
                                             },
                                             None,
@@ -533,7 +534,12 @@ class NvsetAppendNew(TestCase):
         context_element = etree.fromstring("""<context id="a" />""")
         id_provider = IdProvider(context_element)
         nvpair_multi.nvset_append_new(
-            context_element, id_provider, nvpair_multi.NVSET_META, {}, {}
+            context_element,
+            id_provider,
+            Version(3, 5, 0),
+            nvpair_multi.NVSET_META,
+            {},
+            {},
         )
         assert_xml_equal(
             """
@@ -550,6 +556,7 @@ class NvsetAppendNew(TestCase):
         nvpair_multi.nvset_append_new(
             context_element,
             id_provider,
+            Version(3, 5, 0),
             nvpair_multi.NVSET_META,
             {"attr1": "value1", "attr-empty": "", "attr2": "value2"},
             {},
@@ -576,6 +583,7 @@ class NvsetAppendNew(TestCase):
         nvpair_multi.nvset_append_new(
             context_element,
             id_provider,
+            Version(3, 5, 0),
             nvpair_multi.NVSET_META,
             {},
             {},
@@ -639,6 +647,7 @@ class NvsetAppendNew(TestCase):
         nvpair_multi.nvset_append_new(
             context_element,
             id_provider,
+            Version(3, 5, 0),
             nvpair_multi.NVSET_META,
             {},
             {"id": "custom-id"},
@@ -658,6 +667,7 @@ class NvsetAppendNew(TestCase):
         nvpair_multi.nvset_append_new(
             context_element,
             id_provider,
+            Version(3, 5, 0),
             nvpair_multi.NVSET_META,
             {},
             {"score": "INFINITY", "empty-attr": ""},
@@ -677,6 +687,7 @@ class NvsetAppendNew(TestCase):
         nvpair_multi.nvset_append_new(
             context_element,
             id_provider,
+            Version(3, 5, 0),
             nvpair_multi.NVSET_META,
             {"attr1": "value1", "attr-empty": "", "attr2": "value2"},
             {"id": "custom-id", "score": "INFINITY", "empty-attr": ""},

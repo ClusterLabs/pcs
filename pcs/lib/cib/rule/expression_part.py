@@ -29,6 +29,7 @@ NODE_ATTR_OP_LTE = NodeAttrOperator("LTE")
 NODE_ATTR_OP_LT = NodeAttrOperator("LT")
 
 NodeAttrType = NewType("NodeAttrType", str)
+NODE_ATTR_TYPE_INTEGER = NodeAttrType("INTEGER")
 NODE_ATTR_TYPE_NUMBER = NodeAttrType("NUMBER")
 NODE_ATTR_TYPE_STRING = NodeAttrType("STRING")
 NODE_ATTR_TYPE_VERSION = NodeAttrType("VERSION")

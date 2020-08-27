@@ -82,6 +82,66 @@ class UpgradeCib(TestCase):
         env = self.env_assist.get_env()
         env.get_cib(Version(2, 5, 0))
 
+    def test_nice_to_have_lower_than_required(self):
+        (
+            self.config.runner.cib.load(
+                name="load_cib_old", filename="cib-empty-2.6.xml"
+            )
+            .runner.cib.upgrade()
+            .runner.cib.load(filename="cib-empty-2.8.xml")
+        )
+        env = self.env_assist.get_env()
+        env.get_cib(Version(2, 8, 0), Version(2, 7, 0))
+
+        self.env_assist.assert_reports(
+            [fixture.info(report_codes.CIB_UPGRADE_SUCCESSFUL)]
+        )
+
+    def test_nice_to_have_equal_required(self):
+        (
+            self.config.runner.cib.load(
+                name="load_cib_old", filename="cib-empty-2.6.xml"
+            )
+            .runner.cib.upgrade()
+            .runner.cib.load(filename="cib-empty-2.8.xml")
+        )
+        env = self.env_assist.get_env()
+        env.get_cib(Version(2, 8, 0), Version(2, 8, 0))
+
+        self.env_assist.assert_reports(
+            [fixture.info(report_codes.CIB_UPGRADE_SUCCESSFUL)]
+        )
+
+    def test_satisfied_nice_to_have_greater_than_required(self):
+        (
+            self.config.runner.cib.load(
+                name="load_cib_old", filename="cib-empty-2.6.xml"
+            )
+            .runner.cib.upgrade()
+            .runner.cib.load(filename="cib-empty-2.8.xml")
+        )
+        env = self.env_assist.get_env()
+        env.get_cib(Version(2, 7, 0), Version(2, 8, 0))
+
+        self.env_assist.assert_reports(
+            [fixture.info(report_codes.CIB_UPGRADE_SUCCESSFUL)]
+        )
+
+    def test_not_satisfied_nice_to_have_greater_than_required(self):
+        (
+            self.config.runner.cib.load(
+                name="load_cib_old", filename="cib-empty-2.6.xml"
+            )
+            .runner.cib.upgrade()
+            .runner.cib.load(filename="cib-empty-2.8.xml")
+        )
+        env = self.env_assist.get_env()
+        env.get_cib(Version(2, 8, 0), Version(2, 9, 0))
+
+        self.env_assist.assert_reports(
+            [fixture.info(report_codes.CIB_UPGRADE_SUCCESSFUL)]
+        )
+
 
 class GetCib(TestCase, ManageCibAssertionMixin):
     def setUp(self):

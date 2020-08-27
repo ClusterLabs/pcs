@@ -986,6 +986,13 @@
         pcs commands: resource op defaults set create
       </description>
     </capability>
+    <capability id="pcmk.properties.operation-defaults.rule.node-attr-type-number" in-pcs="1" in-pcsd="0">
+      <description>
+        Rules support a node attribute type 'number'.
+
+        pcs commands: resource op defaults set create
+      </description>
+    </capability>
     <capability id="pcmk.properties.operation-defaults.rule-rsc-op" in-pcs="1" in-pcsd="0">
       <description>
         Support for rules with 'resource' and 'op' expressions in sets of
@@ -1010,16 +1017,23 @@
     </capability>
     <capability id="pcmk.properties.resource-defaults.rule" in-pcs="1" in-pcsd="0">
       <description>
-        Support for rules with 'attribute', 'date', and 'resource' and 'op'
-        expressions in sets of resources defaults.
+        Support for rules with 'attribute', 'date' and 'resource' expressions
+        in sets of resources defaults.
+
+        pcs commands: resource defaults set create
+      </description>
+    </capability>
+    <capability id="pcmk.properties.resource-defaults.rule.node-attr-type-number" in-pcs="1" in-pcsd="0">
+      <description>
+        Rules support a node attribute type 'number'.
 
         pcs commands: resource defaults set create
       </description>
     </capability>
     <capability id="pcmk.properties.resource-defaults.rule-rsc-op" in-pcs="1" in-pcsd="0">
       <description>
-        Support for rules with 'resource' and 'op' expressions in sets of
-        resources defaults.
+        Support for rules with 'resource' expressions in sets of resources
+        defaults.
 
         pcs commands: resource defaults set create
       </description>

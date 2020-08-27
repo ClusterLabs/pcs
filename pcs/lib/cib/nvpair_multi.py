@@ -31,6 +31,7 @@ from pcs.lib.cib.rule import (
 from pcs.lib.cib.tools import (
     ElementSearcher,
     IdProvider,
+    Version,
     create_subelement_id,
 )
 from pcs.lib.external import CommandRunner
@@ -230,6 +231,7 @@ class ValidateNvsetAppendNew:
 def nvset_append_new(
     parent_element: _Element,
     id_provider: IdProvider,
+    cib_schema_version: Version,
     nvset_tag: NvsetTag,
     nvpair_dict: Mapping[str, str],
     nvset_options: Mapping[str, str],
@@ -240,6 +242,7 @@ def nvset_append_new(
 
     parent_element -- the created nvset will be appended into this element
     id_provider -- elements' ids generator
+    cib_schema_version -- current CIB schema version
     nvset_tag -- type and actual tag of the nvset
     nvpair_dict -- nvpairs to be put into the new nvset
     nvset_options -- additional attributes of the created nvset
@@ -256,7 +259,7 @@ def nvset_append_new(
         if value != "":
             nvset_el.attrib[name] = value
     if nvset_rule:
-        rule_to_cib(nvset_el, id_provider, nvset_rule)
+        rule_to_cib(nvset_el, id_provider, cib_schema_version, nvset_rule)
     for name, value in nvpair_dict.items():
         _set_nvpair(nvset_el, id_provider, name, value)
     return nvset_el

@@ -10,6 +10,7 @@ from pcs.lib.cib.rule.expression_part import (
     BOOL_OR,
     DATE_OP_GT,
     NODE_ATTR_OP_EQ,
+    NODE_ATTR_TYPE_INTEGER,
     NODE_ATTR_TYPE_NUMBER,
     NODE_ATTR_TYPE_STRING,
     NODE_ATTR_TYPE_VERSION,
@@ -54,7 +55,7 @@ class ComplexExpressions(TestCase):
                     reports.codes.INVALID_OPTION_VALUE,
                     option_name="date",
                     option_value="a date",
-                    allowed_values="ISO8601 date",
+                    allowed_values="ISO 8601 date",
                     cannot_be_empty=False,
                     forbidden_characters=None,
                 ),
@@ -150,7 +151,7 @@ class DateUnaryExpression(TestCase):
                     reports.codes.INVALID_OPTION_VALUE,
                     option_name="date",
                     option_value="a date",
-                    allowed_values="ISO8601 date",
+                    allowed_values="ISO 8601 date",
                     cannot_be_empty=False,
                     forbidden_characters=None,
                 )
@@ -247,7 +248,7 @@ class DateInrangeExpression(TestCase):
                     reports.codes.INVALID_OPTION_VALUE,
                     option_name="date",
                     option_value="date1",
-                    allowed_values="ISO8601 date",
+                    allowed_values="ISO 8601 date",
                     cannot_be_empty=False,
                     forbidden_characters=None,
                 ),
@@ -255,7 +256,7 @@ class DateInrangeExpression(TestCase):
                     reports.codes.INVALID_OPTION_VALUE,
                     option_name="date",
                     option_value="date2",
-                    allowed_values="ISO8601 date",
+                    allowed_values="ISO 8601 date",
                     cannot_be_empty=False,
                     forbidden_characters=None,
                 ),
@@ -543,7 +544,7 @@ class NodeAttrExpression(TestCase):
     def test_integer_ok(self):
         assert_report_item_list_equal(
             Validator(
-                self.fixture_expr(NODE_ATTR_TYPE_NUMBER, "16464"),
+                self.fixture_expr(NODE_ATTR_TYPE_INTEGER, "16464"),
                 "mock runner",
             ).get_reports(),
             [],
@@ -552,15 +553,42 @@ class NodeAttrExpression(TestCase):
     def test_integer_bad(self):
         assert_report_item_list_equal(
             Validator(
-                self.fixture_expr(NODE_ATTR_TYPE_NUMBER, "16464aa"),
+                self.fixture_expr(NODE_ATTR_TYPE_INTEGER, "16464aa"),
                 "mock runner",
             ).get_reports(),
             [
                 fixture.error(
                     reports.codes.INVALID_OPTION_VALUE,
-                    option_name="attribute",
+                    option_name="integer attribute",
                     option_value="16464aa",
                     allowed_values="an integer",
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
+                )
+            ],
+        )
+
+    def test_number_ok(self):
+        assert_report_item_list_equal(
+            Validator(
+                self.fixture_expr(NODE_ATTR_TYPE_NUMBER, "164.64"),
+                "mock runner",
+            ).get_reports(),
+            [],
+        )
+
+    def test_number_bad(self):
+        assert_report_item_list_equal(
+            Validator(
+                self.fixture_expr(NODE_ATTR_TYPE_NUMBER, "164.64aa"),
+                "mock runner",
+            ).get_reports(),
+            [
+                fixture.error(
+                    reports.codes.INVALID_OPTION_VALUE,
+                    option_name="number attribute",
+                    option_value="164.64aa",
+                    allowed_values="a floating-point number",
                     cannot_be_empty=False,
                     forbidden_characters=None,
                 )
@@ -585,7 +613,7 @@ class NodeAttrExpression(TestCase):
             [
                 fixture.error(
                     reports.codes.INVALID_OPTION_VALUE,
-                    option_name="attribute",
+                    option_name="version attribute",
                     option_value="0.10.11c",
                     allowed_values="a version number (e.g. 1, 1.2, 1.23.45, ...)",
                     cannot_be_empty=False,

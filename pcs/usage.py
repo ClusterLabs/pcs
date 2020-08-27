@@ -473,7 +473,8 @@ Commands:
           op <operation name> [interval=<interval>]
           resource [<standard>]:[<provider>]:[<type>]
           defined|not_defined <node attribute>
-          <node attribute> lt|gt|lte|gte|eq|ne [string|integer|version] <value>
+          <node attribute> lt|gt|lte|gte|eq|ne [string|integer|number|version]
+              <value>
           date gt|lt <date>
           date in_range [<date>] to <date>
           date in_range <date> to duration <duration options>
@@ -649,7 +650,8 @@ Commands:
         Expression looks like one of the following:
           resource [<standard>]:[<provider>]:[<type>]
           defined|not_defined <node attribute>
-          <node attribute> lt|gt|lte|gte|eq|ne [string|integer|version] <value>
+          <node attribute> lt|gt|lte|gte|eq|ne [string|integer|number|version]
+              <value>
           date gt|lt <date>
           date in_range [<date>] to <date>
           date in_range <date> to duration <duration options>

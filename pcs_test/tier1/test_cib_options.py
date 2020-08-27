@@ -150,7 +150,7 @@ class DefaultsConfigMixin(TestDefaultsMixin, AssertPcsMixin):
                   Rule: boolean-op=and score=INFINITY
                     Rule: boolean-op=or score=0
                       Expression: defined attr1
-                      Expression: attr2 gte integer 12
+                      Expression: attr2 gte number 12
                       Expression: attr3 lt version 3.2.1
                       Expression: attr4 ne string test
                       Expression: attr5 lt 3
@@ -342,7 +342,7 @@ class DefaultsSetCreateMixin(TestDefaultsMixin, AssertPcsMixin):
             self.cli_command
             + (
                 "set create id=mine score=10 meta nam1=val1 nam2=val2 "
-                "rule (defined attr1 or attr2 gte integer 12 or "
+                "rule (defined attr1 or attr2 gte number 12 or "
                 "attr3 lt version 3.2.1 or attr4 ne string test or attr5 lt 3) "
                 "and (date gt 2018-05-17T13:28:19 or "
                 "date in_range 2019-01-01 to 2019-03-15 or "
@@ -420,7 +420,7 @@ class DefaultsSetCreateMixin(TestDefaultsMixin, AssertPcsMixin):
             self.cli_command
             + (
                 "set create id=mine score=10 meta nam1=val1 nam2=val2 "
-                "rule (defined attr1 or attr2 gte integer 12a or "
+                "rule (defined attr1 or attr2 gte number 12a or "
                 "attr3 lt version 3.2.1a or attr4 ne string test or attr5 lt 3) "
                 "and (date gt 2018-05-1X or "
                 "date in_range 2019-03-05 to 2019-01-11 or "
@@ -428,8 +428,8 @@ class DefaultsSetCreateMixin(TestDefaultsMixin, AssertPcsMixin):
                 "date-spec years=2019 months=7-X weekdays=7-6 years=202a x=y)"
             ).split(),
             (
-                "Error: '12a' is not a valid attribute value, use an integer\n"
-                "Error: '3.2.1a' is not a valid attribute value, "
+                "Error: '12a' is not a valid number attribute value, use a floating-point number\n"
+                "Error: '3.2.1a' is not a valid version attribute value, "
                 "use a version number (e.g. 1, 1.2, 1.23.45, ...)\n"
                 "Error: Since '2019-03-05' is not sooner than until '2019-01-11'\n"
                 "Error: '3a' is not a valid months value, use a positive integer\n"

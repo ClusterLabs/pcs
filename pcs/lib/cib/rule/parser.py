@@ -12,6 +12,7 @@ from .expression_part import (
     BOOL_OR,
     DATE_OP_GT,
     DATE_OP_LT,
+    NODE_ATTR_TYPE_INTEGER,
     NODE_ATTR_TYPE_NUMBER,
     NODE_ATTR_TYPE_STRING,
     NODE_ATTR_TYPE_VERSION,
@@ -54,13 +55,8 @@ _token_to_node_expr_binary_op = {
 }
 
 _token_to_node_expr_type = {
-    # CIB schema defines "number", pacemaker code treats its values as
-    # integers, Pacemaker Explained uses "integer" instead of "number" and
-    # that's how it has been implemented in pcs. There is an ongoing discussion
-    # to resolve this inconsistency. For now, we stick with what pcs has been
-    # doing so far: use the keyword "integer", validate values to be integers,
-    # save them to attribute "number".
-    "integer": NODE_ATTR_TYPE_NUMBER,
+    "integer": NODE_ATTR_TYPE_INTEGER,
+    "number": NODE_ATTR_TYPE_NUMBER,
     "string": NODE_ATTR_TYPE_STRING,
     "version": NODE_ATTR_TYPE_VERSION,
 }

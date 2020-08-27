@@ -73,7 +73,7 @@ class DefaultsCreateMixin:
             [fixture.warn(reports.codes.DEFAULTS_CAN_BE_OVERRIDEN)]
         )
 
-    def test_success_cib_upgrade(self):
+    def test_success_cib_upgrade_rsc_op_rules(self):
         defaults_xml = f"""
             <{self.tag}>
                 <meta_attributes id="{self.tag}-meta_attributes">
@@ -104,6 +104,121 @@ class DefaultsCreateMixin:
             {},
             {},
             nvset_rule="resource ocf:pacemaker:Dummy",
+        )
+
+        self.env_assist.assert_reports(
+            [
+                fixture.info(reports.codes.CIB_UPGRADE_SUCCESSFUL),
+                fixture.warn(reports.codes.DEFAULTS_CAN_BE_OVERRIDEN),
+            ]
+        )
+
+    def test_success_cib_upgrade_node_attr_type_int(self):
+        defaults_xml = f"""
+            <{self.tag}>
+                <meta_attributes id="{self.tag}-meta_attributes">
+                    <rule id="{self.tag}-meta_attributes-rule"
+                        boolean-op="and" score="INFINITY"
+                    >
+                        <expression id="{self.tag}-meta_attributes-rule-expr"
+                            attribute="attr" operation="eq" type="integer" value="5"
+                        />
+                    </rule>
+                </meta_attributes>
+            </{self.tag}>
+        """
+        self.config.runner.cib.load(
+            name="load_cib_old_version",
+            filename="cib-empty-3.3.xml",
+            before="runner.cib.load",
+        )
+        self.config.runner.cib.upgrade(before="runner.cib.load")
+        self.config.runner.cib.load(
+            filename="cib-empty-3.5.xml", instead="runner.cib.load"
+        )
+        self.config.env.push_cib(optional_in_conf=defaults_xml)
+
+        self.command(
+            self.env_assist.get_env(), {}, {}, nvset_rule="attr eq integer 5",
+        )
+
+        self.env_assist.assert_reports(
+            [
+                fixture.info(reports.codes.CIB_UPGRADE_SUCCESSFUL),
+                fixture.warn(reports.codes.DEFAULTS_CAN_BE_OVERRIDEN),
+            ]
+        )
+
+    def test_success_cib_upgrade_node_attr_type_int_not_upgraded(self):
+        defaults_xml = f"""
+            <{self.tag}>
+                <meta_attributes id="{self.tag}-meta_attributes">
+                    <rule id="{self.tag}-meta_attributes-rule"
+                        boolean-op="and" score="INFINITY"
+                    >
+                        <expression id="{self.tag}-meta_attributes-rule-expr"
+                            attribute="attr" operation="eq" type="number" value="5"
+                        />
+                    </rule>
+                </meta_attributes>
+            </{self.tag}>
+        """
+        self.config.runner.cib.load(
+            name="load_cib_old_version",
+            filename="cib-empty-3.3.xml",
+            before="runner.cib.load",
+        )
+        self.config.runner.cib.upgrade(before="runner.cib.load")
+        self.config.runner.cib.load(
+            filename="cib-empty-3.4.xml", instead="runner.cib.load"
+        )
+        self.config.env.push_cib(optional_in_conf=defaults_xml)
+
+        self.command(
+            self.env_assist.get_env(), {}, {}, nvset_rule="attr eq integer 5",
+        )
+
+        self.env_assist.assert_reports(
+            [
+                fixture.info(reports.codes.CIB_UPGRADE_SUCCESSFUL),
+                fixture.warn(reports.codes.DEFAULTS_CAN_BE_OVERRIDEN),
+            ]
+        )
+
+    def test_success_cib_upgrade_mixed(self):
+        defaults_xml = f"""
+            <{self.tag}>
+                <meta_attributes id="{self.tag}-meta_attributes">
+                    <rule id="{self.tag}-meta_attributes-rule"
+                        boolean-op="and" score="INFINITY"
+                    >
+                        <rsc_expression
+                            id="{self.tag}-meta_attributes-rule-rsc-ocf-pacemaker-Dummy"
+                            class="ocf" provider="pacemaker" type="Dummy"
+                        />
+                        <expression id="{self.tag}-meta_attributes-rule-expr"
+                            attribute="attr" operation="eq" type="integer" value="5"
+                        />
+                    </rule>
+                </meta_attributes>
+            </{self.tag}>
+        """
+        self.config.runner.cib.load(
+            name="load_cib_old_version",
+            filename="cib-empty-3.3.xml",
+            before="runner.cib.load",
+        )
+        self.config.runner.cib.upgrade(before="runner.cib.load")
+        self.config.runner.cib.load(
+            filename="cib-empty-3.5.xml", instead="runner.cib.load"
+        )
+        self.config.env.push_cib(optional_in_conf=defaults_xml)
+
+        self.command(
+            self.env_assist.get_env(),
+            {},
+            {},
+            nvset_rule="resource ocf:pacemaker:Dummy and attr eq integer 5",
         )
 
         self.env_assist.assert_reports(
@@ -186,7 +301,7 @@ class DefaultsCreateMixin:
             {"id": "my-id", "score": "10"},
             nvset_rule=(
                 "resource ocf:pacemaker:Dummy and "
-                "(defined attr1 or attr2 gt integer 5 or date lt 2020-08-07 or "
+                "(defined attr1 or attr2 gt number 5 or date lt 2020-08-07 or "
                 "date in_range 2020-09-01 to 2020-09-11 or "
                 "date in_range 2020-10-01 to duration months=1 or "
                 "date-spec years=2021-2022 or "
@@ -361,7 +476,7 @@ class DefaultsConfigMixin:
                             <expression
                                 id="{self.tag}-meta_attributes-rule-rule-expr-1"
                                 attribute="attr2" operation="gt"
-                                type="number" value="5"
+                                type="integer" value="5"
                             />
                             <date_expression
                                 id="{self.tag}-meta_attributes-rule-rule-expr-2"
@@ -470,7 +585,7 @@ class DefaultsConfigMixin:
                                         {
                                             "attribute": "attr2",
                                             "operation": "gt",
-                                            "type": "number",
+                                            "type": "integer",
                                             "value": "5",
                                         },
                                         None,

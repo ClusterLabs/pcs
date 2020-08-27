@@ -5,12 +5,14 @@ from lxml import etree
 from pcs_test.tools.assertions import assert_xml_equal
 from pcs_test.tools.xml import etree_to_str
 
+from pcs.common.tools import Version
 from pcs.lib.cib import rule
 from pcs.lib.cib.rule.expression_part import (
     BOOL_AND,
     BOOL_OR,
     DATE_OP_GT,
     DATE_OP_LT,
+    NODE_ATTR_TYPE_INTEGER,
     NODE_ATTR_TYPE_NUMBER,
     NODE_ATTR_TYPE_STRING,
     NODE_ATTR_TYPE_VERSION,
@@ -35,9 +37,11 @@ from pcs.lib.cib.tools import IdProvider
 
 class Base(TestCase):
     @staticmethod
-    def assert_cib(tree, expected_xml):
+    def assert_cib(tree, expected_xml, schema_version=None):
+        if schema_version is None:
+            schema_version = Version(3, 5, 0)
         xml = etree.fromstring('<root id="X"/>')
-        rule.rule_to_cib(xml, IdProvider(xml), tree)
+        rule.rule_to_cib(xml, IdProvider(xml), schema_version, tree)
         assert_xml_equal(
             '<root id="X">' + expected_xml + "</root>", etree_to_str(xml)
         )
@@ -165,6 +169,31 @@ class SimpleNodeAttr(Base):
             """,
         )
 
+    def test_type_integer(self):
+        self.assert_cib(
+            NodeAttrExpr(
+                NODE_ATTR_OP_EQ, "#uname", "12345", NODE_ATTR_TYPE_INTEGER
+            ),
+            """
+                <expression attribute="#uname" id="X-expr" operation="eq"
+                    type="integer" value="12345"
+                />
+            """,
+        )
+
+    def test_type_integer_old_schema(self):
+        self.assert_cib(
+            NodeAttrExpr(
+                NODE_ATTR_OP_EQ, "#uname", "12345", NODE_ATTR_TYPE_INTEGER
+            ),
+            """
+                <expression attribute="#uname" id="X-expr" operation="eq"
+                    type="number" value="12345"
+                />
+            """,
+            Version(3, 4, 0),
+        )
+
     def test_type_number(self):
         self.assert_cib(
             NodeAttrExpr(
@@ -175,6 +204,19 @@ class SimpleNodeAttr(Base):
                     type="number" value="12345"
                 />
             """,
+        )
+
+    def test_type_number_old_schema(self):
+        self.assert_cib(
+            NodeAttrExpr(
+                NODE_ATTR_OP_EQ, "#uname", "12345", NODE_ATTR_TYPE_NUMBER
+            ),
+            """
+                <expression attribute="#uname" id="X-expr" operation="eq"
+                    type="number" value="12345"
+                />
+            """,
+            Version(3, 4, 0),
         )
 
     def test_type_string(self):

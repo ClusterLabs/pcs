@@ -353,11 +353,27 @@ class Parser(TestCase):
                 dedent(
                     """\
                     BoolExpr AND
-                      NodeAttrExpr operator=EQ attr_name=#uname attr_value=12345 attr_type=NUMBER"""
+                      NodeAttrExpr operator=EQ attr_name=#uname attr_value=12345 attr_type=INTEGER"""
                 ),
             ),
             (
                 "#uname eq integer -12345",
+                dedent(
+                    """\
+                    BoolExpr AND
+                      NodeAttrExpr operator=EQ attr_name=#uname attr_value=-12345 attr_type=INTEGER"""
+                ),
+            ),
+            (
+                "#uname eq number 12345",
+                dedent(
+                    """\
+                    BoolExpr AND
+                      NodeAttrExpr operator=EQ attr_name=#uname attr_value=12345 attr_type=NUMBER"""
+                ),
+            ),
+            (
+                "#uname eq number -12345",
                 dedent(
                     """\
                     BoolExpr AND
@@ -746,7 +762,7 @@ class Parser(TestCase):
                 dedent(
                     """\
                     BoolExpr AND
-                      NodeAttrExpr operator=GT attr_name=date attr_value=12345 attr_type=NUMBER"""
+                      NodeAttrExpr operator=GT attr_name=date attr_value=12345 attr_type=INTEGER"""
                 ),
             ),
             (

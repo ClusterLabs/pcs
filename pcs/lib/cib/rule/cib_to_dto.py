@@ -132,19 +132,7 @@ def _simple_expr_to_dto(expr_el: _Element) -> CibRuleExpressionDto:
             ]
         )
         if "type" in expr_el.attrib:
-            # CIB schema defines "number", pacemaker code treats its values as
-            # integers, Pacemaker Explained uses "integer" instead of "number"
-            # and that's how it has been implemented in pcs rule parser.
-            # Therefore we must export it the same way so that the string is
-            # parsable by pcs.
-            # There is an ongoing discussion to resolve this inconsistency. For
-            # now, we stick with what pcs has been doing so far: use the
-            # keyword "integer", validate values to be integers, save them to
-            # attribute "number".
-            type_ = str(expr_el.get("type", ""))
-            if type_ == "number":
-                type_ = "integer"
-            string_parts.append(type_)
+            string_parts.append(str(expr_el.get("type", "")))
         string_parts.append(quote(str(expr_el.get("value", "")), " "))
     else:
         # "attribute" and "operation" are defined as mandatory in CIB schema

@@ -803,6 +803,33 @@ class ValueCorosyncValue(TestCase):
                 )
 
 
+class ValueFloat(TestCase):
+    # The real code only calls ValuePredicateBase and is_float which are both
+    # heavily tested on their own => only basic tests here.
+    def fixture_validator(self):
+        return validate.ValueFloat("key")
+
+    def test_empty_report_on_valid_option(self):
+        assert_report_item_list_equal(
+            self.fixture_validator().validate({"key": "2.3"}), []
+        )
+
+    def test_report_invalid_value(self):
+        assert_report_item_list_equal(
+            self.fixture_validator().validate({"key": "6a"}),
+            [
+                fixture.error(
+                    reports.codes.INVALID_OPTION_VALUE,
+                    option_name="key",
+                    option_value="6a",
+                    allowed_values="a floating-point number",
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
+                ),
+            ],
+        )
+
+
 class ValueId(TestCase):
     def test_empty_id(self):
         assert_report_item_list_equal(
@@ -1368,6 +1395,50 @@ class ValueVersion(TestCase):
 
 
 ### predicates
+
+
+class IsFloat(TestCase):
+    def test_success(self):
+        self.assertTrue(validate.is_float(123))
+        self.assertTrue(validate.is_float("123"))
+        self.assertTrue(validate.is_float(-123))
+        self.assertTrue(validate.is_float("-123"))
+        self.assertTrue(validate.is_float(+123))
+        self.assertTrue(validate.is_float("+123"))
+
+        self.assertTrue(validate.is_float("123.098"))
+        self.assertTrue(validate.is_float(".123"))
+        self.assertTrue(validate.is_float("123."))
+
+        self.assertTrue(validate.is_float("123e123"))
+        self.assertTrue(validate.is_float("123E123"))
+        self.assertTrue(validate.is_float("123e+123"))
+        self.assertTrue(validate.is_float("123E+123"))
+        self.assertTrue(validate.is_float("+123e123"))
+        self.assertTrue(validate.is_float("+123E123"))
+        self.assertTrue(validate.is_float("+123e+123"))
+        self.assertTrue(validate.is_float("+123E+123"))
+        self.assertTrue(validate.is_float("123e-123"))
+        self.assertTrue(validate.is_float("123E-123"))
+        self.assertTrue(validate.is_float("-123e123"))
+        self.assertTrue(validate.is_float("-123E123"))
+        self.assertTrue(validate.is_float("-123e-123"))
+        self.assertTrue(validate.is_float("-123E-123"))
+        self.assertTrue(validate.is_float("-12.3e-123"))
+        self.assertTrue(validate.is_float("-12.3E-123"))
+
+        self.assertFalse(validate.is_float(" 1"))
+        self.assertFalse(validate.is_float("12_34"))
+        self.assertFalse(validate.is_float("\n-1"))
+        self.assertFalse(validate.is_float("\r+1"))
+        self.assertFalse(validate.is_float("1\n"))
+        self.assertFalse(validate.is_float("-1 "))
+        self.assertFalse(validate.is_float("+1\r"))
+
+        self.assertFalse(validate.is_float(""))
+        self.assertFalse(validate.is_float("1a"))
+        self.assertFalse(validate.is_float("a1"))
+        self.assertFalse(validate.is_float("aaa"))
 
 
 class IsInteger(TestCase):

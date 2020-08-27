@@ -17,10 +17,14 @@ from pcs.lib.cib import (
 )
 from pcs.lib.cib.rule import (
     RuleParseError,
+    has_node_attr_expr_with_type_integer,
     has_rsc_or_op_expression,
     parse_rule,
 )
-from pcs.lib.cib.tools import IdProvider
+from pcs.lib.cib.tools import (
+    IdProvider,
+    get_pacemaker_version_by_which_cib_was_validated,
+)
 from pcs.lib.env import LibraryEnvironment
 from pcs.lib.external import CommandRunner
 from pcs.lib.errors import LibraryError
@@ -97,17 +101,24 @@ def _defaults_create(
     )
 
     required_cib_version = None
+    nice_to_have_cib_version = None
     if nvset_rule:
         # Parse the rule to see if we need to upgrade CIB schema. All errors
         # would be properly reported by a validator called bellow, so we can
         # safely ignore them here.
         try:
-            if has_rsc_or_op_expression(parse_rule(nvset_rule)):
+            rule_tree = parse_rule(nvset_rule)
+            if has_rsc_or_op_expression(rule_tree):
                 required_cib_version = Version(3, 4, 0)
+            if has_node_attr_expr_with_type_integer(rule_tree):
+                nice_to_have_cib_version = Version(3, 5, 0)
         except RuleParseError:
             pass
 
-    cib = env.get_cib(required_cib_version)
+    cib = env.get_cib(
+        minimal_version=required_cib_version,
+        nice_to_have_version=nice_to_have_cib_version,
+    )
     id_provider = IdProvider(cib)
 
     validator = nvpair_multi.ValidateNvsetAppendNew(
@@ -126,6 +137,7 @@ def _defaults_create(
     nvpair_multi.nvset_append_new(
         sections.get(cib, cib_section_name),
         id_provider,
+        get_pacemaker_version_by_which_cib_was_validated(cib),
         nvpair_multi.NVSET_META,
         nvpairs,
         nvset_options,
@@ -316,6 +328,7 @@ def _defaults_update(
             nvpair_multi.nvset_append_new(
                 sections.get(cib, cib_section_name),
                 id_provider,
+                get_pacemaker_version_by_which_cib_was_validated(cib),
                 nvpair_multi.NVSET_META,
                 nvpairs,
                 {},

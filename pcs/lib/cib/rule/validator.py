@@ -13,6 +13,7 @@ from pcs.lib.external import CommandRunner
 from pcs.lib.pacemaker.live import parse_isodate
 
 from .expression_part import (
+    NODE_ATTR_TYPE_INTEGER,
     NODE_ATTR_TYPE_NUMBER,
     NODE_ATTR_TYPE_VERSION,
     BoolExpr,
@@ -106,7 +107,7 @@ class Validator:
                 report_list.append(
                     reports.item.ReportItem.error(
                         message=reports.messages.InvalidOptionValue(
-                            "date", expr.date_start, "ISO8601 date"
+                            "date", expr.date_start, "ISO 8601 date"
                         ),
                     )
                 )
@@ -116,7 +117,7 @@ class Validator:
                 report_list.append(
                     reports.item.ReportItem.error(
                         message=reports.messages.InvalidOptionValue(
-                            "date", expr.date_end, "ISO8601 date"
+                            "date", expr.date_end, "ISO 8601 date"
                         ),
                     )
                 )
@@ -218,7 +219,7 @@ class Validator:
             report_list.append(
                 reports.item.ReportItem.error(
                     message=reports.messages.InvalidOptionValue(
-                        "date", expr.date, "ISO8601 date"
+                        "date", expr.date, "ISO 8601 date"
                     ),
                 )
             )
@@ -227,16 +228,33 @@ class Validator:
     @staticmethod
     def _validate_node_attr_expr(expr: NodeAttrExpr) -> reports.ReportItemList:
         validator_list: List[validate.ValidatorInterface] = []
-        if expr.attr_type == NODE_ATTR_TYPE_NUMBER:
+        if expr.attr_type == NODE_ATTR_TYPE_INTEGER:
             validator_list.append(
                 validate.ValueInteger(
-                    "attr_value", option_name_for_report="attribute"
+                    "attr_value", option_name_for_report="integer attribute"
                 )
             )
-        if expr.attr_type == NODE_ATTR_TYPE_VERSION:
+        elif expr.attr_type == NODE_ATTR_TYPE_NUMBER:
+            # rhbz#1869399
+            # Originally, pacemaker only supported 'number', treated it as an
+            # integer and documented it as 'integer'. With CIB schema 3.5.0+,
+            # 'integer' is supported as well. With crm_feature_set 3.5.0+,
+            # 'number' is treated as a floating point number.
+            # Since pcs never supported 'number' until the above changes in
+            # pacemaker happened and pacemaker was able to handle floating
+            # point numbers before (even though truncating them to integers),
+            # we'll just check for a float here. If that's not good enough, we
+            # can fix it later and validate the value as integer when
+            # crm_feature_set < 3.5.0.
+            validator_list.append(
+                validate.ValueFloat(
+                    "attr_value", option_name_for_report="number attribute"
+                )
+            )
+        elif expr.attr_type == NODE_ATTR_TYPE_VERSION:
             validator_list.append(
                 validate.ValueVersion(
-                    "attr_value", option_name_for_report="attribute"
+                    "attr_value", option_name_for_report="version attribute"
                 )
             )
         return validate.ValidatorAll(validator_list).validate(

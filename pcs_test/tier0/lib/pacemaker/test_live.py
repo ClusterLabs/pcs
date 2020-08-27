@@ -562,46 +562,42 @@ class EnsureCibVersionTest(TestCase):
         self.cib = etree.XML('<cib validate-with="pacemaker-2.3.4"/>')
 
     def test_same_version(self, mock_upgrade, mock_get_cib):
-        self.assertTrue(
-            lib.ensure_cib_version(self.mock_runner, self.cib, Version(2, 3, 4))
-            is None
+        actual_cib, was_upgraded = lib.ensure_cib_version(
+            self.mock_runner, self.cib, Version(2, 3, 4)
         )
+        self.assertEqual(self.cib, actual_cib)
+        self.assertFalse(was_upgraded)
         mock_upgrade.assert_not_called()
         mock_get_cib.assert_not_called()
 
     def test_higher_version(self, mock_upgrade, mock_get_cib):
-        self.assertTrue(
-            lib.ensure_cib_version(self.mock_runner, self.cib, Version(2, 3, 3))
-            is None
+        actual_cib, was_upgraded = lib.ensure_cib_version(
+            self.mock_runner, self.cib, Version(2, 3, 3)
         )
+        self.assertEqual(self.cib, actual_cib)
+        self.assertFalse(was_upgraded)
         mock_upgrade.assert_not_called()
         mock_get_cib.assert_not_called()
 
     def test_upgraded_same_version(self, mock_upgrade, mock_get_cib):
-        upgraded_cib = '<cib validate-with="pacemaker-2.3.5"/>'
-        mock_get_cib.return_value = upgraded_cib
-        assert_xml_equal(
-            upgraded_cib,
-            etree.tostring(
-                lib.ensure_cib_version(
-                    self.mock_runner, self.cib, Version(2, 3, 5)
-                )
-            ).decode(),
+        expected_cib = '<cib validate-with="pacemaker-2.3.5"/>'
+        mock_get_cib.return_value = expected_cib
+        actual_cib, was_upgraded = lib.ensure_cib_version(
+            self.mock_runner, self.cib, Version(2, 3, 5)
         )
+        assert_xml_equal(expected_cib, etree.tostring(actual_cib).decode())
+        self.assertTrue(was_upgraded)
         mock_upgrade.assert_called_once_with(self.mock_runner)
         mock_get_cib.assert_called_once_with(self.mock_runner)
 
     def test_upgraded_higher_version(self, mock_upgrade, mock_get_cib):
-        upgraded_cib = '<cib validate-with="pacemaker-2.3.6"/>'
-        mock_get_cib.return_value = upgraded_cib
-        assert_xml_equal(
-            upgraded_cib,
-            etree.tostring(
-                lib.ensure_cib_version(
-                    self.mock_runner, self.cib, Version(2, 3, 5)
-                )
-            ).decode(),
+        expected_cib = '<cib validate-with="pacemaker-2.3.6"/>'
+        mock_get_cib.return_value = expected_cib
+        actual_cib, was_upgraded = lib.ensure_cib_version(
+            self.mock_runner, self.cib, Version(2, 3, 5)
         )
+        assert_xml_equal(expected_cib, etree.tostring(actual_cib).decode())
+        self.assertTrue(was_upgraded)
         mock_upgrade.assert_called_once_with(self.mock_runner)
         mock_get_cib.assert_called_once_with(self.mock_runner)
 
@@ -617,6 +613,20 @@ class EnsureCibVersionTest(TestCase):
                 {"required_version": "2.3.5", "current_version": "2.3.4"},
             ),
         )
+        mock_upgrade.assert_called_once_with(self.mock_runner)
+        mock_get_cib.assert_called_once_with(self.mock_runner)
+
+    def test_upgraded_lower_version_dont_fail(self, mock_upgrade, mock_get_cib):
+        expected_cib = '<cib validate-with="pacemaker-2.3.4"/>'
+        mock_get_cib.return_value = expected_cib
+        actual_cib, was_upgraded = lib.ensure_cib_version(
+            self.mock_runner,
+            self.cib,
+            Version(2, 3, 5),
+            fail_if_version_not_met=False,
+        )
+        assert_xml_equal(expected_cib, etree.tostring(actual_cib).decode())
+        self.assertFalse(was_upgraded)
         mock_upgrade.assert_called_once_with(self.mock_runner)
         mock_get_cib.assert_called_once_with(self.mock_runner)
 

@@ -56,6 +56,7 @@ from pcs.lib.pacemaker.values import (
 )
 from pcs.lib.cib.tools import IdProvider
 
+_FLOAT_RE = re.compile(r"^[-+]?(\d+|(\d*\.\d+)|(\d+\.\d*))([eE][+-]?\d+)?$")
 _INTEGER_RE = re.compile(r"^[+-]?[0-9]+$")
 _PCMK_DATESPEC_PART_RE = re.compile(r"^(?P<since>[0-9]+)(-(?P<until>[0-9]+))?$")
 
@@ -533,6 +534,18 @@ class ValueCorosyncValue(ValueValidator):
         return []
 
 
+class ValueFloat(ValuePredicateBase):
+    """
+    Report INVALID_OPTION_VALUE when the value is not a float number
+    """
+
+    def _is_valid(self, value: TypeOptionValue) -> bool:
+        return is_float(value)
+
+    def _get_allowed_values(self) -> Any:
+        return "a floating-point number"
+
+
 class ValueId(ValueValidator):
     """
     Report ID errors and optionally book IDs along the way
@@ -822,6 +835,23 @@ def is_empty_string(value: TypeOptionValue) -> bool:
     return isinstance(value, str) and not value
 
 
+def is_float(value: Union[str, int, float],) -> bool:
+    """
+    Check if the specified value is a float number
+
+    value -- value to check
+    """
+    if value is None:
+        return False
+    if isinstance(value, str) and not _FLOAT_RE.fullmatch(value):
+        return False
+    try:
+        float(value)
+    except ValueError:
+        return False
+    return True
+
+
 def is_integer(
     value: Union[str, int, float],
     at_least: Optional[int] = None,
@@ -831,6 +861,8 @@ def is_integer(
     Check if the specified value is an integer, optionally check a range
 
     value -- value to check
+    at_least -- minimal allowed value
+    at_most -- maximal allowed value
     """
     try:
         if value is None or isinstance(value, float):

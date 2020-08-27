@@ -9,13 +9,18 @@ from typing import (
 )
 
 from lxml import etree
+from lxml.etree import _Element
 
 from pcs import settings
 from pcs.common import reports
 from pcs.common.reports import ReportProcessor
 from pcs.common.reports.item import ReportItem
 from pcs.common.str_tools import join_multilines
-from pcs.common.tools import format_os_error, xml_fromstring
+from pcs.common.tools import (
+    format_os_error,
+    xml_fromstring,
+    Version,
+)
 from pcs.common.types import CibRuleExpiredStatus
 from pcs.lib.cib.tools import get_pacemaker_version_by_which_cib_was_validated
 from pcs.lib.errors import LibraryError
@@ -261,21 +266,32 @@ def diff_cibs_xml(
     return stdout.strip()
 
 
-def ensure_cib_version(runner, cib, version):
+def ensure_cib_version(
+    runner: CommandRunner,
+    cib: _Element,
+    version: Version,
+    fail_if_version_not_met: bool = True,
+) -> Tuple[_Element, bool]:
     """
+    Make sure CIB complies to specified schema version (or newer), upgrade CIB
+    if necessary. Raise on error. Raise if CIB cannot be upgraded enough to
+    meet the required version unless fail_if_version_not_met is set to False.
+    Return tuple(upgraded_cib, was_upgraded)
+
     This method ensures that specified cib is verified by pacemaker with
     version 'version' or newer. If cib doesn't correspond to this version,
     method will try to upgrade cib.
     Returns cib which was verified by pacemaker version 'version' or later.
     Raises LibraryError on any failure.
 
-    CommandRunner runner -- runner
-    etree cib -- cib tree
-    pcs.common.tools.Version version -- required cib version
+    runner -- runner
+    cib -- cib tree
+    version -- required cib version
+    fail_if_version_not_met -- allows a 'nice to have' cib upgrade
     """
-    current_version = get_pacemaker_version_by_which_cib_was_validated(cib)
-    if current_version >= version:
-        return None
+    version_pre_upgrade = get_pacemaker_version_by_which_cib_was_validated(cib)
+    if version_pre_upgrade >= version:
+        return cib, False
 
     _upgrade_cib(runner)
     new_cib_xml = get_cib_xml(runner)
@@ -287,14 +303,16 @@ def ensure_cib_version(runner, cib, version):
             ReportItem.error(reports.messages.CibUpgradeFailed(str(e)))
         )
 
-    current_version = get_pacemaker_version_by_which_cib_was_validated(new_cib)
-    if current_version >= version:
-        return new_cib
+    version_post_upgrade = get_pacemaker_version_by_which_cib_was_validated(
+        new_cib
+    )
+    if version_post_upgrade >= version or not fail_if_version_not_met:
+        return new_cib, version_post_upgrade > version_pre_upgrade
 
     raise LibraryError(
         ReportItem.error(
             reports.messages.CibUpgradeFailedToMinimalRequiredVersion(
-                str(current_version), str(version)
+                str(version_post_upgrade), str(version)
             )
         )
     )
