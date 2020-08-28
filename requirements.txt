@@ -4,4 +4,5 @@ pylint==2.5.3
 tornado>=6.0.3
 mypy==0.782
 dacite
-black
+# temporarily stick to previous version until it's convinient to reformat code
+black==19.10b0
