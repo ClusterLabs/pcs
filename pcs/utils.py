@@ -141,6 +141,11 @@ def cluster_upgrade():
     output, retval = run(["cibadmin", "--upgrade", "--force"])
     if retval != 0:
         err("unable to upgrade cluster: %s" % output)
+    if (
+        output.strip()
+        == "Upgrade unnecessary: Schema is already the latest available"
+    ):
+        return
     print("Cluster CIB has been upgraded to latest version")
 
 

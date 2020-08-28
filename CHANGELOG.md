@@ -8,6 +8,7 @@
   [rhbz#1867516], [rhbz#1869399])
 - Support for "demote" value of resource operation's "on-fail" option
   ([rhbz#1843079])
+- Support for 'number' type in rules ([rhbz#1869399])
 
 ### Fixed
 - Prevent removing non-empty tag by removing tagged resource group or clone

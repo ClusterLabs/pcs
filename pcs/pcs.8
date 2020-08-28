@@ -840,9 +840,9 @@ Create a location constraint on a resource to avoid the specified node with scor
 location <resource> rule [id=<rule id>] [resource\-discovery=<option>] [role=master|slave] [constraint\-id=<id>] [score=<score> | score\-attribute=<attribute>] <expression>
 Creates a location constraint with a rule on the specified resource where expression looks like one of the following:
 .br
-  defined|not_defined <attribute>
+  defined|not_defined <node attribute>
 .br
-  <attribute> lt|gt|lte|gte|eq|ne [string|integer|version] <value>
+  <node attribute> lt|gt|lte|gte|eq|ne [string|integer|number|version] <value>
 .br
   date gt|lt <date>
 .br
@@ -927,9 +927,9 @@ List constraints referencing specified resource.
 rule add <constraint id> [id=<rule id>] [role=master|slave] [score=<score>|score\-attribute=<attribute>] <expression>
 Add a rule to a location constraint specified by 'constraint id' where the expression looks like one of the following:
 .br
-  defined|not_defined <attribute>
+  defined|not_defined <node attribute>
 .br
-  <attribute> lt|gt|lte|gte|eq|ne [string|integer|version] <value>
+  <node attribute> lt|gt|lte|gte|eq|ne [string|integer|number|version] <value>
 .br
   date gt|lt <date>
 .br

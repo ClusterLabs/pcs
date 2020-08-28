@@ -24,6 +24,7 @@ from pcs.common.reports.constraints import (
     colocation as colocation_format,
     order as order_format,
 )
+from pcs.common.tools import Version
 from pcs.lib.cib.constraint import resource_set
 from pcs.lib.cib.constraint.order import ATTRIB as order_attrib
 from pcs.lib.node import get_existing_nodes_names
@@ -1151,6 +1152,18 @@ def location_rule(lib, argv, modifiers):
         "resource-discovery" in options and options["resource-discovery"]
     )
 
+    try:
+        # Parse the rule to see if we need to upgrade CIB schema. All errors
+        # would be properly reported by a validator called bellow, so we can
+        # safely ignore them here.
+        parsed_rule = rule_utils.RuleParser().parse(
+            rule_utils.TokenPreprocessor().run(rule_argv)
+        )
+        if rule_utils.has_node_attr_expr_with_type_integer(parsed_rule):
+            utils.checkAndUpgradeCIB(3, 5, 0)
+    except (rule_utils.ParserException, rule_utils.CibBuilderException):
+        pass
+
     required_version = None
     if resource_discovery:
         required_version = 2, 2, 0
@@ -1203,7 +1216,9 @@ def location_rule(lib, argv, modifiers):
     elif rsc_type == RESOURCE_TYPE_REGEXP:
         lc.setAttribute("rsc-pattern", rsc_value)
 
-    rule_utils.dom_rule_add(lc, options, rule_argv)
+    rule_utils.dom_rule_add(
+        lc, options, rule_argv, Version(*utils.getValidateWithVersion(cib))
+    )
     location_rule_check_duplicates(constraints, lc, modifiers.get("--force"))
     utils.replace_cib_configuration(cib)
 
@@ -1546,6 +1561,18 @@ def constraint_rule(lib, argv, modifiers):
     if command == "add":
         modifiers.ensure_only_supported("-f", "--force")
         constraint_id = argv.pop(0)
+        options, rule_argv = rule_utils.parse_argv(argv)
+        try:
+            # Parse the rule to see if we need to upgrade CIB schema. All errors
+            # would be properly reported by a validator called bellow, so we can
+            # safely ignore them here.
+            parsed_rule = rule_utils.RuleParser().parse(
+                rule_utils.TokenPreprocessor().run(rule_argv)
+            )
+            if rule_utils.has_node_attr_expr_with_type_integer(parsed_rule):
+                utils.checkAndUpgradeCIB(3, 5, 0)
+        except (rule_utils.ParserException, rule_utils.CibBuilderException):
+            pass
         cib = utils.get_cib_dom()
         constraint = utils.dom_get_element_with_id(
             cib.getElementsByTagName("constraints")[0],
@@ -1554,8 +1581,12 @@ def constraint_rule(lib, argv, modifiers):
         )
         if not constraint:
             utils.err("Unable to find constraint: " + constraint_id)
-        options, rule_argv = rule_utils.parse_argv(argv)
-        rule_utils.dom_rule_add(constraint, options, rule_argv)
+        rule_utils.dom_rule_add(
+            constraint,
+            options,
+            rule_argv,
+            Version(*utils.getValidateWithVersion(cib)),
+        )
         location_rule_check_duplicates(
             cib, constraint, modifiers.get("--force")
         )

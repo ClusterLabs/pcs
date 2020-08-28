@@ -1481,8 +1481,9 @@ Commands:
              [score=<score> | score-attribute=<attribute>] <expression>
         Creates a location constraint with a rule on the specified resource
         where expression looks like one of the following:
-          defined|not_defined <attribute>
-          <attribute> lt|gt|lte|gte|eq|ne [string|integer|version] <value>
+          defined|not_defined <node attribute>
+          <node attribute> lt|gt|lte|gte|eq|ne [string|integer|number|version]
+              <value>
           date gt|lt <date>
           date in_range <date> to <date>
           date in_range <date> to duration <duration options>...
@@ -1613,8 +1614,9 @@ Commands:
              [score=<score>|score-attribute=<attribute>] <expression>
         Add a rule to a location constraint specified by 'constraint id' where
         the expression looks like one of the following:
-          defined|not_defined <attribute>
-          <attribute> lt|gt|lte|gte|eq|ne [string|integer|version] <value>
+          defined|not_defined <node attribute>
+          <node attribute> lt|gt|lte|gte|eq|ne [string|integer|number|version]
+              <value>
           date gt|lt <date>
           date in_range <date> to <date>
           date in_range <date> to duration <duration options>...

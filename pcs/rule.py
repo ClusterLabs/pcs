@@ -4,6 +4,7 @@ import xml.dom.minidom
 from typing import List, Any, Optional
 
 from pcs import utils
+from pcs.common.tools import Version
 
 # pylint: disable=not-callable
 
@@ -33,7 +34,7 @@ def parse_argv(argv, extra_options=None):
     return options, argv
 
 
-def dom_rule_add(dom_element, options, rule_argv):
+def dom_rule_add(dom_element, options, rule_argv, cib_schema_version):
     # pylint: disable=too-many-branches
     """
     Commandline options: no options
@@ -67,7 +68,7 @@ def dom_rule_add(dom_element, options, rule_argv):
     if not rule_argv:
         utils.err("no rule expression was specified")
     try:
-        dom_rule = CibBuilder().build(
+        dom_rule = CibBuilder(cib_schema_version).build(
             dom_element,
             RuleParser().parse(TokenPreprocessor().run(rule_argv)),
             options.get("id"),
@@ -277,6 +278,31 @@ class ExportAsExpression:
         # unordered
         attributes.sort()
         return attributes
+
+
+def has_node_attr_expr_with_type_integer(rule_tree):
+    if isinstance(rule_tree, SymbolOperator):
+        if rule_tree.symbol_id in RuleParser.boolean_list:
+            return any(
+                has_node_attr_expr_with_type_integer(child)
+                for child in rule_tree.children
+            )
+        if (
+            rule_tree.symbol_id in RuleParser.date_comparison_list
+            and rule_tree.children[0].value == "date"
+            and rule_tree.children[1].is_literal()
+        ) or (
+            isinstance(rule_tree, SymbolTypeDateCommon)
+            and rule_tree.date_value_class == DateSpecValue
+        ):
+            return False
+        if isinstance(rule_tree, SymbolPrefix):
+            return False
+        child = rule_tree.children[1]
+        if isinstance(child, SymbolType) and child.symbol_id == "integer":
+            return True
+        return False
+    return False
 
 
 # generic parser
@@ -752,7 +778,7 @@ class RuleParser(Parser):
     date_comparison_list = ["gt", "lt", "in_range"]
     prefix_list = ["defined", "not_defined"]
     boolean_list = ["and", "or"]
-    simple_type_list = ["string", "integer", "version"]
+    simple_type_list = ["string", "integer", "number", "version"]
     parenthesis_open = "("
     parenthesis_close = ")"
 
@@ -780,7 +806,20 @@ class RuleParser(Parser):
         for operator in RuleParser.simple_type_list:
             symbol_class = self.new_symbol_type(operator, 70)
         self.symbol_table.get_symbol("integer").value_re = re.compile(
-            r"^-?\d+$"
+            r"^[-+]?\d+$"
+        )
+        # rhbz#1869399
+        # Originally, pacemaker only supported 'number', treated it as an
+        # integer and documented it as 'integer'. With CIB schema 3.5.0+,
+        # 'integer' is supported as well. With crm_feature_set 3.5.0+, 'number'
+        # is treated as a floating point number.
+        # Since pcs never supported 'number' until the above changes in
+        # pacemaker happened and pacemaker was able to handle floating point
+        # numbers before (even though truncating them to integers), we'll just
+        # check for a float here. If that's not good enough, we can fix it
+        # later and validate the value as integer when crm_feature_set < 3.5.0.
+        self.symbol_table.get_symbol("number").value_re = re.compile(
+            r"^[-+]?(\d+|(\d*\.\d+)|(\d+\.\d*))([eE][+-]?\d+)?$"
         )
         self.symbol_table.get_symbol("version").value_re = re.compile(
             r"^\d+(\.\d+)*$"
@@ -835,6 +874,9 @@ class RuleParser(Parser):
 
 
 class CibBuilder:
+    def __init__(self, cib_schema_version):
+        self.cib_schema_version = cib_schema_version
+
     def build(self, dom_element, syntactic_tree, rule_id=None):
         dom_rule = self.add_element(
             dom_element,
@@ -890,14 +932,20 @@ class CibBuilder:
         if not isinstance(syntactic_tree, SymbolPrefix):
             child = syntactic_tree.children[1]
             if isinstance(child, SymbolType):
-                dom_expression.setAttribute(
-                    "type",
-                    (
-                        "number"
-                        if child.symbol_id == "integer"
-                        else child.symbol_id
-                    ),
-                )
+                # rhbz#1869399
+                # Pcs was always accepting 'integer', while CIB was only
+                # supporting 'number' (and 'string' and 'version'). Pacemaker
+                # was documenting it as 'integer' and was treating it as
+                # integer (not float). With CIB schema 3.5.0, both 'integer'
+                # and 'number' are accepted by CIB. For older schemas, we turn
+                # 'integer' to 'number'.
+                if (
+                    self.cib_schema_version < Version(3, 5, 0)
+                    and child.symbol_id == "integer"
+                ):
+                    dom_expression.setAttribute("type", "number")
+                else:
+                    dom_expression.setAttribute("type", child.symbol_id)
                 child = child.children[0]
             dom_expression.setAttribute("value", child.value)
 
