@@ -460,6 +460,15 @@ def __get_rule_parser() -> pyparsing.ParserElement:
     )
     op_expr.setParseAction(__build_op_expr)
 
+    # Ordering matters here as the first expression which matches wins. This is
+    # mostly not an issue as the expressions don't overlap and the grammar is
+    # not ambiguous. There are, exceptions, however:
+    # 1) date gt something
+    #   This can be either a date_unary_expr or a node_attr_binary_expr. We
+    #   want it to be a date expression. If the user wants it to be a node
+    #   attribute expression, they can do it like this: 'date gt <type>
+    #   something' where <type> is an item of _token_to_node_expr_type. That
+    #   way, both date and node attribute expression can be realized.
     simple_expr = pyparsing.Or(
         [
             date_unary_expr,
