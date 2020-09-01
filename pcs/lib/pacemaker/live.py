@@ -752,21 +752,6 @@ def get_rules_expired_status(
     return result
 
 
-def parse_isodate(runner: CommandRunner, date: str) -> Optional[int]:
-    """
-    Parse ISO8601 date, return Unix timestamp on success or None on error
-
-    runner -- a class for running external processes
-    date -- a date to be parsed
-    """
-    stdout, dummy_stderr, retval = runner.run(
-        [__exec("iso8601"), "--date", date, "--epoch"]
-    )
-    if retval != 0:
-        return None
-    return int(stdout.replace("Date: ", "").strip())
-
-
 # shortcut for getting a full path to a pacemaker executable
 def __exec(name):
     return os.path.join(settings.pacemaker_binaries, name)

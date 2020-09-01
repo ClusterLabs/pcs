@@ -1,4 +1,4 @@
-from unittest import mock, TestCase
+from unittest import TestCase
 
 from pcs_test.tools import fixture
 from pcs_test.tools.assertions import assert_report_item_list_equal
@@ -23,14 +23,11 @@ from pcs.lib.cib.rule.expression_part import (
     RscExpr,
 )
 from pcs.lib.cib.rule.validator import Validator
-from pcs.lib.external import CommandRunner
 
 
 class ComplexExpressions(TestCase):
     def test_propagate_errors_from_subexpressions(self):
         # pylint: disable=no-self-use
-        mock_runner = mock.MagicMock(spec_set=CommandRunner)
-        mock_runner.run.return_value = ("", "invalid", 1)
         assert_report_item_list_equal(
             Validator(
                 BoolExpr(
@@ -48,7 +45,6 @@ class ComplexExpressions(TestCase):
                         ),
                     ],
                 ),
-                mock_runner,
             ).get_reports(),
             [
                 fixture.error(
@@ -101,7 +97,6 @@ class DisallowedRscOpExpressions(TestCase):
                 assert_report_item_list_equal(
                     Validator(
                         self.rule,
-                        "mock runner",
                         allow_rsc_expr=rsc_allowed,
                         allow_op_expr=op_allowed,
                     ).get_reports(),
@@ -111,10 +106,7 @@ class DisallowedRscOpExpressions(TestCase):
     def test_disallow_missing_op(self):
         assert_report_item_list_equal(
             Validator(
-                self.rule_rsc,
-                "mock runner",
-                allow_rsc_expr=True,
-                allow_op_expr=False,
+                self.rule_rsc, allow_rsc_expr=True, allow_op_expr=False,
             ).get_reports(),
             [],
         )
@@ -122,30 +114,28 @@ class DisallowedRscOpExpressions(TestCase):
     def test_disallow_missing_rsc(self):
         assert_report_item_list_equal(
             Validator(
-                self.rule_op,
-                "mock runner",
-                allow_rsc_expr=False,
-                allow_op_expr=True,
+                self.rule_op, allow_rsc_expr=False, allow_op_expr=True,
             ).get_reports(),
             [],
         )
 
 
 class DateUnaryExpression(TestCase):
-    def setUp(self):
-        self.expr = BoolExpr(BOOL_AND, [DateUnaryExpr(DATE_OP_GT, "a date")])
-        self.runner = mock.MagicMock(spec_set=CommandRunner)
-
     def test_date_ok(self):
-        self.runner.run.return_value = ("Date: 1234", "", 0)
+        # pylint: disable=no-self-use
         assert_report_item_list_equal(
-            Validator(self.expr, self.runner).get_reports(), [],
+            Validator(
+                BoolExpr(BOOL_AND, [DateUnaryExpr(DATE_OP_GT, "2020-02-03")])
+            ).get_reports(),
+            [],
         )
 
     def test_date_bad(self):
-        self.runner.run.return_value = ("", "invalid", 1)
+        # pylint: disable=no-self-use
         assert_report_item_list_equal(
-            Validator(self.expr, self.runner).get_reports(),
+            Validator(
+                BoolExpr(BOOL_AND, [DateUnaryExpr(DATE_OP_GT, "a date")])
+            ).get_reports(),
             [
                 fixture.error(
                     reports.codes.INVALID_OPTION_VALUE,
@@ -172,76 +162,67 @@ class DateInrangeExpression(TestCase):
         "moon",
     }
 
-    def setUp(self):
-        self.runner = mock.MagicMock(spec_set=CommandRunner)
-
     def test_date_date_ok(self):
-        self.runner.run.side_effect = [
-            ("Date: 1234", "", 0),
-            ("Date: 2345", "", 0),
-        ]
+        # pylint: disable=no-self-use
         assert_report_item_list_equal(
             Validator(
-                BoolExpr(BOOL_AND, [DateInRangeExpr("date1", "date2", None)]),
-                self.runner,
+                BoolExpr(
+                    BOOL_AND,
+                    [DateInRangeExpr("2020-01-01", "2020-02-01", None)],
+                ),
             ).get_reports(),
             [],
         )
 
     def test_date_ok(self):
-        self.runner.run.return_value = ("Date: 1234", "", 0)
+        # pylint: disable=no-self-use
         assert_report_item_list_equal(
             Validator(
-                BoolExpr(BOOL_AND, [DateInRangeExpr(None, "date2", None)]),
-                self.runner,
+                BoolExpr(BOOL_AND, [DateInRangeExpr(None, "2020-02-01", None)]),
             ).get_reports(),
             [],
         )
 
     def test_date_duration_ok(self):
-        self.runner.run.return_value = ("Date: 1234", "", 0)
         assert_report_item_list_equal(
             Validator(
                 BoolExpr(
                     BOOL_AND,
                     [
                         DateInRangeExpr(
-                            "date1",
+                            "2020-01-01T01:01:01+01:00",
                             None,
                             [(name, "3") for name in self.part_list],
                         )
                     ],
                 ),
-                self.runner,
             ).get_reports(),
             [],
         )
 
     def test_until_greater_than_since(self):
-        self.runner.run.side_effect = [
-            ("Date: 2345", "", 0),
-            ("Date: 1234", "", 0),
-        ]
+        # pylint: disable=no-self-use
         assert_report_item_list_equal(
             Validator(
-                BoolExpr(BOOL_AND, [DateInRangeExpr("date1", "date2", None)]),
-                self.runner,
+                BoolExpr(
+                    BOOL_AND,
+                    [DateInRangeExpr("2020-02-01", "2020-01-01", None)],
+                ),
             ).get_reports(),
             [
                 fixture.error(
                     reports.codes.RULE_EXPRESSION_SINCE_GREATER_THAN_UNTIL,
-                    since="date1",
-                    until="date2",
+                    since="2020-02-01",
+                    until="2020-01-01",
                 )
             ],
         )
 
     def test_dates_bad(self):
-        self.runner.run.return_value = ("", "invalid", 1)
+        # pylint: disable=no-self-use
         assert_report_item_list_equal(
             Validator(
                 BoolExpr(BOOL_AND, [DateInRangeExpr("date1", "date2", None)]),
-                self.runner,
             ).get_reports(),
             [
                 fixture.error(
@@ -264,21 +245,19 @@ class DateInrangeExpression(TestCase):
         )
 
     def test_duration_bad(self):
-        self.runner.run.return_value = ("Date: 1234", "", 0)
         assert_report_item_list_equal(
             Validator(
                 BoolExpr(
                     BOOL_AND,
                     [
                         DateInRangeExpr(
-                            "date1",
+                            "2020-01-01",
                             None,
                             [(name, "0") for name in self.part_list]
                             + [("hours", "foo"), ("bad", "something")],
                         )
                     ],
                 ),
-                self.runner,
             ).get_reports(),
             [
                 fixture.error(
@@ -388,7 +367,6 @@ class DatespecExpression(TestCase):
                     BOOL_AND,
                     [DatespecExpr([(name, "3") for name in self.part_list])],
                 ),
-                "mock runner",
             ).get_reports(),
             [],
         )
@@ -400,7 +378,6 @@ class DatespecExpression(TestCase):
                     BOOL_AND,
                     [DatespecExpr([(name, "3-5") for name in self.part_list])],
                 ),
-                "mock runner",
             ).get_reports(),
             [],
         )
@@ -412,7 +389,6 @@ class DatespecExpression(TestCase):
                     BOOL_AND,
                     [DatespecExpr([(name, "5-3") for name in self.part_list])],
                 ),
-                "mock runner",
             ).get_reports(),
             [
                 fixture.error(
@@ -494,7 +470,6 @@ class DatespecExpression(TestCase):
         assert_report_item_list_equal(
             Validator(
                 BoolExpr(BOOL_AND, [DatespecExpr([("name", "5-3")])]),
-                "mock runner",
             ).get_reports(),
             [
                 fixture.error(
@@ -523,7 +498,6 @@ class DatespecExpression(TestCase):
                         )
                     ],
                 ),
-                "mock runner",
             ).get_reports(),
             [
                 fixture.error(
@@ -545,7 +519,6 @@ class NodeAttrExpression(TestCase):
         assert_report_item_list_equal(
             Validator(
                 self.fixture_expr(NODE_ATTR_TYPE_INTEGER, "16464"),
-                "mock runner",
             ).get_reports(),
             [],
         )
@@ -554,7 +527,6 @@ class NodeAttrExpression(TestCase):
         assert_report_item_list_equal(
             Validator(
                 self.fixture_expr(NODE_ATTR_TYPE_INTEGER, "16464aa"),
-                "mock runner",
             ).get_reports(),
             [
                 fixture.error(
@@ -572,7 +544,6 @@ class NodeAttrExpression(TestCase):
         assert_report_item_list_equal(
             Validator(
                 self.fixture_expr(NODE_ATTR_TYPE_NUMBER, "164.64"),
-                "mock runner",
             ).get_reports(),
             [],
         )
@@ -581,7 +552,6 @@ class NodeAttrExpression(TestCase):
         assert_report_item_list_equal(
             Validator(
                 self.fixture_expr(NODE_ATTR_TYPE_NUMBER, "164.64aa"),
-                "mock runner",
             ).get_reports(),
             [
                 fixture.error(
@@ -599,7 +569,6 @@ class NodeAttrExpression(TestCase):
         assert_report_item_list_equal(
             Validator(
                 self.fixture_expr(NODE_ATTR_TYPE_VERSION, "0.10.11"),
-                "mock runner",
             ).get_reports(),
             [],
         )
@@ -608,7 +577,6 @@ class NodeAttrExpression(TestCase):
         assert_report_item_list_equal(
             Validator(
                 self.fixture_expr(NODE_ATTR_TYPE_VERSION, "0.10.11c"),
-                "mock runner",
             ).get_reports(),
             [
                 fixture.error(
@@ -626,15 +594,12 @@ class NodeAttrExpression(TestCase):
         assert_report_item_list_equal(
             Validator(
                 self.fixture_expr(NODE_ATTR_TYPE_STRING, "a string 461.78"),
-                "mock runner",
             ).get_reports(),
             [],
         )
 
     def test_no_type(self):
         assert_report_item_list_equal(
-            Validator(
-                self.fixture_expr(None, "a string 461.78"), "mock runner",
-            ).get_reports(),
+            Validator(self.fixture_expr(None, "a string 461.78")).get_reports(),
             [],
         )

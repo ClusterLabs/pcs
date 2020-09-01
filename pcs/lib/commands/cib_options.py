@@ -123,7 +123,6 @@ def _defaults_create(
 
     validator = nvpair_multi.ValidateNvsetAppendNew(
         id_provider,
-        env.cmd_runner(),
         nvpairs,
         nvset_options,
         nvset_rule=nvset_rule,

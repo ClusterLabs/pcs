@@ -1,16 +1,17 @@
 from collections import Counter
 import dataclasses
 from typing import (
+    cast,
     List,
     Set,
 )
+
+from dateutil import parser as dateutil_parser
 
 from pcs.common import reports
 from pcs.common.types import CibRuleExpressionType
 
 from pcs.lib import validate
-from pcs.lib.external import CommandRunner
-from pcs.lib.pacemaker.live import parse_isodate
 
 from .expression_part import (
     NODE_ATTR_TYPE_INTEGER,
@@ -31,18 +32,15 @@ class Validator:
     def __init__(
         self,
         parsed_rule: BoolExpr,
-        runner: CommandRunner,
         allow_rsc_expr: bool = False,
         allow_op_expr: bool = False,
     ):
         """
         parsed_rule -- a rule to be validated
-        runner -- a class for running external processes
         allow_op_expr -- are op expressions allowed in the rule?
         allow_rsc_expr -- are resource expressions allowed in the rule?
         """
         self._rule = parsed_rule
-        self._runner = runner
         self._allow_op_expr = allow_op_expr
         self._allow_rsc_expr = allow_rsc_expr
         self._disallowed_expr_list: Set[CibRuleExpressionType] = set()
@@ -81,8 +79,9 @@ class Validator:
             report_list.extend(self._call_validate(child))
         return report_list
 
+    @staticmethod
     def _validate_date_inrange_expr(
-        self, expr: DateInRangeExpr
+        expr: DateInRangeExpr,
     ) -> reports.ReportItemList:
         # TODO This is taken from the CIB schema. There is an ongoing
         # discussion that the schema doesn't match Pacemaker Explained. Based
@@ -98,12 +97,13 @@ class Validator:
             "weekyears",
             "moon",
         }
-        start_timestamp, end_timestamp = None, None
+        start_date, end_date = None, None
         report_list = []
 
         if expr.date_start is not None:
-            start_timestamp = parse_isodate(self._runner, expr.date_start)
-            if start_timestamp is None:
+            try:
+                start_date = dateutil_parser.isoparse(expr.date_start)
+            except ValueError:
                 report_list.append(
                     reports.item.ReportItem.error(
                         message=reports.messages.InvalidOptionValue(
@@ -112,8 +112,9 @@ class Validator:
                     )
                 )
         if expr.date_end is not None:
-            end_timestamp = parse_isodate(self._runner, expr.date_end)
-            if end_timestamp is None:
+            try:
+                end_date = dateutil_parser.isoparse(expr.date_end)
+            except ValueError:
                 report_list.append(
                     reports.item.ReportItem.error(
                         message=reports.messages.InvalidOptionValue(
@@ -122,16 +123,17 @@ class Validator:
                     )
                 )
         if (
-            expr.date_start is not None
-            and expr.date_end is not None
-            and start_timestamp is not None
-            and end_timestamp is not None
-            and start_timestamp >= end_timestamp
+            start_date is not None
+            and end_date is not None
+            and start_date >= end_date
         ):
             report_list.append(
                 reports.item.ReportItem.error(
                     message=reports.messages.RuleExpressionSinceGreaterThanUntil(
-                        expr.date_start, expr.date_end
+                        expr.date_start,
+                        # If end_date is not None, then expr.date_end is not
+                        # None, but mypy does not see it.
+                        cast(str, expr.date_end),
                     ),
                 )
             )
@@ -210,12 +212,14 @@ class Validator:
             )
         return report_list
 
+    @staticmethod
     def _validate_date_unary_expr(
-        self, expr: DateUnaryExpr
+        expr: DateUnaryExpr,
     ) -> reports.ReportItemList:
         report_list: reports.ReportItemList = []
-        timestamp = parse_isodate(self._runner, expr.date)
-        if timestamp is None:
+        try:
+            dateutil_parser.isoparse(expr.date)
+        except ValueError:
             report_list.append(
                 reports.item.ReportItem.error(
                     message=reports.messages.InvalidOptionValue(

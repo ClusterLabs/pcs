@@ -1407,24 +1407,3 @@ class GetRulesExpiredStatus(LibraryPacemakerTest):
             lib.get_rules_expired_status(runner, "mock cib", expected.keys()),
             expected,
         )
-
-
-class ParseIsodate(LibraryPacemakerTest):
-    def test_success(self):
-        data_input = "abcd"
-        data_output = 1234
-        mock_runner = get_runner(f"Date: {data_output}", "", 0)
-        self.assertEqual(
-            lib.parse_isodate(mock_runner, data_input), data_output
-        )
-        mock_runner.run.assert_called_once_with(
-            [self.path("iso8601"), "--date", data_input, "--epoch"]
-        )
-
-    def test_error(self):
-        data_input = "abcd"
-        mock_runner = get_runner("", "some error", 1)
-        self.assertEqual(lib.parse_isodate(mock_runner, data_input), None)
-        mock_runner.run.assert_called_once_with(
-            [self.path("iso8601"), "--date", data_input, "--epoch"]
-        )

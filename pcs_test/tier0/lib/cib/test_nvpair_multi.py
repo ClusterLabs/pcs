@@ -119,7 +119,7 @@ class NvsetElementToDto(TestCase):
                             ],
                             "resource ocf:pacemaker:Dummy",
                         ),
-                        [CibNvpairDto("my-id-pair1", "name1", "value1"),],
+                        [CibNvpairDto("my-id-pair1", "name1", "value1")],
                     ),
                 )
                 mock_rules_status.assert_called_once_with(
@@ -407,7 +407,7 @@ class ValidateNvsetAppendNew(TestCase):
 
     def test_success_minimal(self):
         validator = nvpair_multi.ValidateNvsetAppendNew(
-            self.id_provider, "mock runner", {}, {}
+            self.id_provider, {}, {}
         )
         assert_report_item_list_equal(
             validator.validate(force_options=True), []
@@ -417,7 +417,6 @@ class ValidateNvsetAppendNew(TestCase):
     def test_success_full(self):
         validator = nvpair_multi.ValidateNvsetAppendNew(
             self.id_provider,
-            "mock runner",
             {"name": "value"},
             {"id": "some-id", "score": "10"},
             nvset_rule="resource ::stateful",
@@ -436,7 +435,7 @@ class ValidateNvsetAppendNew(TestCase):
 
     def test_id_not_valid(self):
         validator = nvpair_multi.ValidateNvsetAppendNew(
-            self.id_provider, "mock runner", {}, {"id": "123"}
+            self.id_provider, {}, {"id": "123"}
         )
         assert_report_item_list_equal(
             validator.validate(force_options=True),
@@ -446,7 +445,7 @@ class ValidateNvsetAppendNew(TestCase):
 
     def test_id_not_available(self):
         validator = nvpair_multi.ValidateNvsetAppendNew(
-            self.id_provider, "mock runner", {}, {"id": "a"}
+            self.id_provider, {}, {"id": "a"}
         )
         assert_report_item_list_equal(
             validator.validate(force_options=True),
@@ -456,7 +455,7 @@ class ValidateNvsetAppendNew(TestCase):
 
     def test_score_not_valid(self):
         validator = nvpair_multi.ValidateNvsetAppendNew(
-            self.id_provider, "mock runner", {}, {"score": "a"}
+            self.id_provider, {}, {"score": "a"}
         )
         assert_report_item_list_equal(
             validator.validate(force_options=True),
@@ -466,7 +465,7 @@ class ValidateNvsetAppendNew(TestCase):
 
     def test_options_names(self):
         validator = nvpair_multi.ValidateNvsetAppendNew(
-            self.id_provider, "mock runner", {}, {"not_valid": "a"}
+            self.id_provider, {}, {"not_valid": "a"}
         )
         assert_report_item_list_equal(
             validator.validate(),
@@ -485,7 +484,7 @@ class ValidateNvsetAppendNew(TestCase):
 
     def test_options_names_forced(self):
         validator = nvpair_multi.ValidateNvsetAppendNew(
-            self.id_provider, "mock runner", {}, {"not_valid": "a"}
+            self.id_provider, {}, {"not_valid": "a"}
         )
         assert_report_item_list_equal(
             validator.validate(force_options=True),
@@ -504,7 +503,6 @@ class ValidateNvsetAppendNew(TestCase):
     def test_rule_not_valid(self):
         validator = nvpair_multi.ValidateNvsetAppendNew(
             self.id_provider,
-            "mock runner",
             {},
             {},
             "bad rule",

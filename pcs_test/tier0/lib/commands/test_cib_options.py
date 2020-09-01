@@ -278,21 +278,6 @@ class DefaultsCreateMixin:
         self.config.runner.cib.load(
             filename="cib-empty-3.4.xml", instead="runner.cib.load"
         )
-        self.config.runner.pcmk.parse_isodate(
-            "2020-08-07", success_timestamp="1234", name="parse_isodate.1",
-        )
-        self.config.runner.pcmk.parse_isodate(
-            "2020-09-01", success_timestamp="1234", name="parse_isodate.2",
-        )
-        self.config.runner.pcmk.parse_isodate(
-            "2020-09-11", success_timestamp="2345", name="parse_isodate.3",
-        )
-        self.config.runner.pcmk.parse_isodate(
-            "2020-10-01", success_timestamp="1234", name="parse_isodate.4",
-        )
-        self.config.runner.pcmk.parse_isodate(
-            "2020-12-11", success_timestamp="1234", name="parse_isodate.5",
-        )
         self.config.env.push_cib(optional_in_conf=defaults_xml)
 
         self.command(

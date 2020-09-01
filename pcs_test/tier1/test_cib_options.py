@@ -428,10 +428,13 @@ class DefaultsSetCreateMixin(TestDefaultsMixin, AssertPcsMixin):
                 "date-spec years=2019 months=7-X weekdays=7-6 years=202a x=y)"
             ).split(),
             (
-                "Error: '12a' is not a valid number attribute value, use a floating-point number\n"
+                "Error: '12a' is not a valid number attribute value, "
+                "use a floating-point number\n"
                 "Error: '3.2.1a' is not a valid version attribute value, "
                 "use a version number (e.g. 1, 1.2, 1.23.45, ...)\n"
+                "Error: '2018-05-1X' is not a valid date value, use ISO 8601 date\n"
                 "Error: Since '2019-03-05' is not sooner than until '2019-01-11'\n"
+                "Error: '2019-05-0X' is not a valid date value, use ISO 8601 date\n"
                 "Error: '3a' is not a valid months value, use a positive integer\n"
                 "Error: invalid duration option 'x', allowed options are: "
                 "'hours', 'monthdays', 'months', 'moon', 'weekdays', "

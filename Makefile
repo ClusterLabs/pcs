@@ -125,8 +125,11 @@ endif
 #      to install dataclasses from specified location (dataclasses are not
 #      installed by default)
 #  `BUNDLE_DACITE_SRC_DIR=/path/to/dacite/sources`
-#      to install dacite from specified location (dacite are not installed by
+#      to install dacite from specified location (dacite is not installed by
 #      default)
+#  `BUNDLE_DATEUTIL_SRC_DIR=/path/to/python-dateutil/sources`
+#      to install python-dateutil from specified location (python-dateutil is
+#      not installed by default)
 BUNDLE_PYAGENTX_VERSION="0.4.pcs.2"
 BUNDLE_PYAGENTX_URI="https://github.com/ondrejmular/pyagentx/archive/v${BUNDLE_PYAGENTX_VERSION}.tar.gz"
 
@@ -143,13 +146,13 @@ ifneq ($(BUNDLE_INSTALL_PYAGENTX),true)
 endif
 
 # There is BUNDLE_TO_INSTALL when BUNDLE_INSTALL_PYAGENTX is true or any of
-# BUNDLE_TORNADO_SRC_DIR, BUNDLE_DATACLASSES_SRC_DIR or BUNDLE_DACITE_SRC_DIR
-# is specified
+# BUNDLE_TORNADO_SRC_DIR, BUNDLE_DATACLASSES_SRC_DIR, BUNDLE_DACITE_SRC_DIR or
+# BUNDLE_DATEUTIL_SRC_DIR is specified
 BUNDLE_TO_INSTALL=false
 ifeq ($(BUNDLE_INSTALL_PYAGENTX), true)
 	BUNDLE_TO_INSTALL=true
 endif
-ifneq ($(and $(BUNDLE_TORNADO_SRC_DIR),$(BUNDLE_DATACLASSES_SRC_DIR),$(BUNDLE_DACITE_SRC_DIR)),)
+ifneq ($(and $(BUNDLE_TORNADO_SRC_DIR),$(BUNDLE_DATACLASSES_SRC_DIR),$(BUNDLE_DACITE_SRC_DIR),$(BUNDLE_DATEUTIL_SRC_DIR)),)
 	BUNDLE_TO_INSTALL=true
 endif
 
@@ -226,6 +229,9 @@ ifdef BUNDLE_DATACLASSES_SRC_DIR
 endif
 ifdef BUNDLE_DACITE_SRC_DIR
 	$(call build_python_bundle,${BUNDLE_DACITE_SRC_DIR},${DEST_BUNDLE_LIB})
+endif
+ifdef BUNDLE_DATEUTIL_SRC_DIR
+	$(call build_python_bundle,${BUNDLE_DATEUTIL_SRC_DIR},${DEST_BUNDLE_LIB})
 endif
 	$(MAKE) PYAGENTX_LIB_DIR=$(DEST_BUNDLE_LIB) bundle_pyagentx
 
