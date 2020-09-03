@@ -860,11 +860,11 @@ class PcmkShortcuts:
             ),
         )
 
-    def get_rule_expired_status(
+    def get_rule_in_effect_status(
         self,
         rule_id,
         returncode=0,
-        name="runner.pcmk.get_rule_expired_status",
+        name="runner.pcmk.get_rule_in_effect_status",
         cib_load_name="runner.cib.load",
     ):
         """

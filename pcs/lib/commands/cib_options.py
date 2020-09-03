@@ -5,6 +5,7 @@ from typing import (
     List,
     Mapping,
     Optional,
+    Type,
 )
 
 from pcs.common import reports
@@ -16,6 +17,9 @@ from pcs.lib.cib import (
     sections,
 )
 from pcs.lib.cib.rule import (
+    RuleInEffectEval,
+    RuleInEffectEvalDummy,
+    RuleInEffectEvalOneByOne,
     RuleParseError,
     has_node_attr_expr_with_type_integer,
     has_rsc_or_op_expression,
@@ -26,9 +30,8 @@ from pcs.lib.cib.tools import (
     get_pacemaker_version_by_which_cib_was_validated,
 )
 from pcs.lib.env import LibraryEnvironment
-from pcs.lib.external import CommandRunner
 from pcs.lib.errors import LibraryError
-from pcs.lib.pacemaker.live import has_rule_expired_status_tool
+from pcs.lib.pacemaker.live import has_rule_in_effect_status_tool
 
 
 def resource_defaults_create(
@@ -166,18 +169,22 @@ def operation_defaults_config(env: LibraryEnvironment) -> List[CibNvsetDto]:
 def _defaults_config(
     env: LibraryEnvironment, cib_section_name: str,
 ) -> List[CibNvsetDto]:
-    runner: Optional[CommandRunner] = env.cmd_runner()
-    if not has_rule_expired_status_tool():
-        runner = None
+    in_effect_eval_class: Type[RuleInEffectEval] = RuleInEffectEvalOneByOne
+    if not has_rule_in_effect_status_tool():
+        in_effect_eval_class = RuleInEffectEvalDummy
         env.report_processor.report(
             ReportItem.warning(
-                reports.messages.RuleExpiredStatusDetectionNotSupported()
+                reports.messages.RuleInEffectStatusDetectionNotSupported()
             )
         )
+    runner = env.cmd_runner()
+    cib = env.get_cib()
     return [
-        nvpair_multi.nvset_element_to_dto(nvset_el, runner)
+        nvpair_multi.nvset_element_to_dto(
+            nvset_el, in_effect_eval_class(cib, runner)
+        )
         for nvset_el in nvpair_multi.find_nvsets(
-            sections.get(env.get_cib(), cib_section_name)
+            sections.get(cib, cib_section_name)
         )
     ]
 

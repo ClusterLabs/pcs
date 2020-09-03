@@ -16,7 +16,7 @@ from pcs import settings
 from pcs.common.reports import ReportItemSeverity as Severity
 from pcs.common.reports import codes as report_codes
 from pcs.common.tools import Version
-from pcs.common.types import CibRuleExpiredStatus
+from pcs.common.types import CibRuleInEffectStatus
 import pcs.lib.pacemaker.live as lib
 from pcs.lib.external import CommandRunner
 
@@ -1373,37 +1373,19 @@ class IsInPcmkToolHelp(TestCase):
         )
 
 
-@mock.patch("pcs.lib.pacemaker.live.has_rule_expired_status_tool")
-class GetRulesExpiredStatus(LibraryPacemakerTest):
-    def test_tool_not_available(self, mock_has_tool):
-        mock_has_tool.return_value = False
-        expected = {
-            "rule1": CibRuleExpiredStatus.UNKNOWN,
-            "rule2": CibRuleExpiredStatus.UNKNOWN,
-        }
-        self.assertEqual(
-            lib.get_rules_expired_status(
-                "mock runner", "mock cib", expected.keys()
-            ),
-            expected,
-        )
-
-    def test_success(self, mock_has_tool):
-        mock_has_tool.return_value = True
-        expected = {
-            "rule1": CibRuleExpiredStatus.UNKNOWN,
-            "rule2": CibRuleExpiredStatus.EXPIRED,
-            "rule3": CibRuleExpiredStatus.IN_EFFECT,
-            "rule4": CibRuleExpiredStatus.NOT_YET_IN_EFFECT,
-        }
-        runner = mock.MagicMock(spec_set=CommandRunner)
-        runner.run.side_effect = [
-            ("", "", 1),
-            ("", "", 110),
-            ("", "", 0),
-            ("", "", 111),
+class GetRulesInEffectStatus(LibraryPacemakerTest):
+    def test_success(self):
+        test_data = [
+            (1, CibRuleInEffectStatus.UNKNOWN),
+            (110, CibRuleInEffectStatus.EXPIRED),
+            (0, CibRuleInEffectStatus.IN_EFFECT),
+            (111, CibRuleInEffectStatus.NOT_YET_IN_EFFECT),
         ]
-        self.assertEqual(
-            lib.get_rules_expired_status(runner, "mock cib", expected.keys()),
-            expected,
-        )
+        for return_code, response in test_data:
+            with self.subTest(return_code=return_code, response=response):
+                runner = mock.MagicMock(spec_set=CommandRunner)
+                runner.run.return_value = ("", "", return_code)
+                self.assertEqual(
+                    lib.get_rule_in_effect_status(runner, "mock cib", "ruleid"),
+                    response,
+                )

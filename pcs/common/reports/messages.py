@@ -6423,12 +6423,12 @@ class TagIdsNotInTheTag(ReportItemMessage):
 
 
 @dataclass(frozen=True)
-class RuleExpiredStatusDetectionNotSupported(ReportItemMessage):
+class RuleInEffectStatusDetectionNotSupported(ReportItemMessage):
     """
     Pacemaker tool for detecting if a rule is expired or not is not available
     """
 
-    _code = codes.RULE_EXPIRED_STATUS_DETECTION_NOT_SUPPORTED
+    _code = codes.RULE_IN_EFFECT_STATUS_DETECTION_NOT_SUPPORTED
 
     @property
     def message(self) -> str:

@@ -16,7 +16,7 @@ class CibRuleExpressionType(AutoNameEnum):
     RSC_EXPRESSION = auto()
 
 
-class CibRuleExpiredStatus(AutoNameEnum):
+class CibRuleInEffectStatus(AutoNameEnum):
     NOT_YET_IN_EFFECT = auto()
     IN_EFFECT = auto()
     EXPIRED = auto()

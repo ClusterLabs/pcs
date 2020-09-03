@@ -20,10 +20,10 @@ from pcs.common.reports import ReportItemList
 from pcs.common.types import CibNvsetType
 from pcs.lib import validate
 from pcs.lib.cib.rule import (
+    RuleInEffectEval,
     RuleParseError,
     RuleRoot,
     RuleValidator,
-    fill_expired_flag_in_dto,
     parse_rule,
     rule_element_to_dto,
     rule_to_cib,
@@ -34,10 +34,8 @@ from pcs.lib.cib.tools import (
     Version,
     create_subelement_id,
 )
-from pcs.lib.external import CommandRunner
 from pcs.lib.xml_tools import (
     export_attributes,
-    get_root,
     remove_one_element,
 )
 
@@ -64,22 +62,18 @@ def nvpair_element_to_dto(nvpair_el: _Element) -> CibNvpairDto:
 
 
 def nvset_element_to_dto(
-    nvset_el: _Element, runner: Optional[CommandRunner] = None
+    nvset_el: _Element, rule_in_effect_eval: RuleInEffectEval
 ) -> CibNvsetDto:
     """
     Export an nvset xml element to its DTO
 
     nvset_el -- an nvset element to be exported
-    runner -- a class for running external processes
+    rule_in_effect_eval -- a class for evaluating if a rule is in effect
     """
     rule_dto = None
     rule_el = nvset_el.find("./rule")
     if rule_el is not None:
-        rule_dto = rule_element_to_dto(rule_el)
-        if runner:
-            rule_dto = fill_expired_flag_in_dto(
-                runner, get_root(nvset_el), rule_dto
-            )
+        rule_dto = rule_element_to_dto(rule_in_effect_eval, rule_el)
     return CibNvsetDto(
         str(nvset_el.get("id", "")),
         _tag_to_type[str(nvset_el.tag)],

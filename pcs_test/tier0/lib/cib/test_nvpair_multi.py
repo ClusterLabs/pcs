@@ -1,4 +1,4 @@
-from unittest import mock, TestCase
+from unittest import TestCase
 
 from lxml import etree
 
@@ -21,10 +21,11 @@ from pcs.common.pacemaker.rule import (
 from pcs.common.tools import Version
 from pcs.common.types import (
     CibNvsetType,
-    CibRuleExpiredStatus,
+    CibRuleInEffectStatus,
     CibRuleExpressionType,
 )
 from pcs.lib.cib import nvpair_multi
+from pcs.lib.cib.rule import RuleInEffectEval
 from pcs.lib.cib.rule.expression_part import (
     BOOL_AND,
     BOOL_OR,
@@ -37,6 +38,21 @@ from pcs.lib.cib.rule.expression_part import (
     RscExpr,
 )
 from pcs.lib.cib.tools import IdProvider
+
+
+class RuleInEffectEvalMock(RuleInEffectEval):
+    def __init__(self, cib, runner, mock_data=None):
+        super().__init__(cib, runner)
+        self._mock_data = mock_data or dict()
+
+    def get_rule_status(self, rule_id):
+        return self._mock_data.get(rule_id, CibRuleInEffectStatus.UNKNOWN)
+
+
+def get_in_effect_eval(mock_data=None):
+    return RuleInEffectEvalMock(
+        etree.fromstring("<mock-cib />"), "mock runner", mock_data
+    )
 
 
 class NvpairElementToDto(TestCase):
@@ -63,17 +79,14 @@ class NvsetElementToDto(TestCase):
             with self.subTest(tag=tag, nvset_type=nvtype):
                 xml = etree.fromstring(f"""<{tag} id="my-id" />""")
                 self.assertEqual(
-                    nvpair_multi.nvset_element_to_dto(xml),
+                    nvpair_multi.nvset_element_to_dto(
+                        xml, get_in_effect_eval()
+                    ),
                     CibNvsetDto("my-id", nvtype, {}, None, []),
                 )
 
-    @mock.patch("pcs.lib.cib.rule.cib_to_dto.get_rules_expired_status")
-    def test_expired(self, mock_rules_status):
-        mock_rules_status.return_value = {
-            "my-id-rule": CibRuleExpiredStatus.EXPIRED
-        }
+    def test_expired(self):
         for tag, nvtype in self.tag_type:
-            mock_rules_status.reset_mock()
             with self.subTest(tag=tag, nvset_type=nvtype):
                 xml = etree.fromstring(
                     f"""
@@ -89,7 +102,12 @@ class NvsetElementToDto(TestCase):
                 """
                 )
                 self.assertEqual(
-                    nvpair_multi.nvset_element_to_dto(xml, "mock runner"),
+                    nvpair_multi.nvset_element_to_dto(
+                        xml,
+                        get_in_effect_eval(
+                            {"my-id-rule": CibRuleInEffectStatus.EXPIRED}
+                        ),
+                    ),
                     CibNvsetDto(
                         "my-id",
                         nvtype,
@@ -97,7 +115,7 @@ class NvsetElementToDto(TestCase):
                         CibRuleExpressionDto(
                             "my-id-rule",
                             CibRuleExpressionType.RULE,
-                            CibRuleExpiredStatus.EXPIRED,
+                            CibRuleInEffectStatus.EXPIRED,
                             {"boolean-op": "and"},
                             None,
                             None,
@@ -105,7 +123,7 @@ class NvsetElementToDto(TestCase):
                                 CibRuleExpressionDto(
                                     "my-id-rule-rsc-ocf-pacemaker-Dummy",
                                     CibRuleExpressionType.RSC_EXPRESSION,
-                                    CibRuleExpiredStatus.UNKNOWN,
+                                    CibRuleInEffectStatus.UNKNOWN,
                                     {
                                         "class": "ocf",
                                         "provider": "pacemaker",
@@ -121,9 +139,6 @@ class NvsetElementToDto(TestCase):
                         ),
                         [CibNvpairDto("my-id-pair1", "name1", "value1")],
                     ),
-                )
-                mock_rules_status.assert_called_once_with(
-                    "mock runner", etree_to_str(xml), {"my-id-rule"}
                 )
 
     def test_full(self):
@@ -178,7 +193,9 @@ class NvsetElementToDto(TestCase):
                 """
                 )
                 self.assertEqual(
-                    nvpair_multi.nvset_element_to_dto(xml),
+                    nvpair_multi.nvset_element_to_dto(
+                        xml, get_in_effect_eval()
+                    ),
                     CibNvsetDto(
                         "my-id",
                         nvtype,
@@ -186,7 +203,7 @@ class NvsetElementToDto(TestCase):
                         CibRuleExpressionDto(
                             "my-id-rule",
                             CibRuleExpressionType.RULE,
-                            CibRuleExpiredStatus.UNKNOWN,
+                            CibRuleInEffectStatus.UNKNOWN,
                             {"boolean-op": "and"},
                             None,
                             None,
@@ -194,7 +211,7 @@ class NvsetElementToDto(TestCase):
                                 CibRuleExpressionDto(
                                     "my-id-rule-rsc-ocf-pacemaker-Dummy",
                                     CibRuleExpressionType.RSC_EXPRESSION,
-                                    CibRuleExpiredStatus.UNKNOWN,
+                                    CibRuleInEffectStatus.UNKNOWN,
                                     {
                                         "class": "ocf",
                                         "provider": "pacemaker",
@@ -208,7 +225,7 @@ class NvsetElementToDto(TestCase):
                                 CibRuleExpressionDto(
                                     "my-id-rule-op",
                                     CibRuleExpressionType.OP_EXPRESSION,
-                                    CibRuleExpiredStatus.UNKNOWN,
+                                    CibRuleInEffectStatus.UNKNOWN,
                                     {"name": "monitor"},
                                     None,
                                     None,
@@ -218,7 +235,7 @@ class NvsetElementToDto(TestCase):
                                 CibRuleExpressionDto(
                                     "my-id-rule-rule",
                                     CibRuleExpressionType.RULE,
-                                    CibRuleExpiredStatus.UNKNOWN,
+                                    CibRuleInEffectStatus.UNKNOWN,
                                     {"boolean-op": "or"},
                                     None,
                                     None,
@@ -226,7 +243,7 @@ class NvsetElementToDto(TestCase):
                                         CibRuleExpressionDto(
                                             "my-id-rule-rule-expr",
                                             CibRuleExpressionType.EXPRESSION,
-                                            CibRuleExpiredStatus.UNKNOWN,
+                                            CibRuleInEffectStatus.UNKNOWN,
                                             {
                                                 "operation": "defined",
                                                 "attribute": "attr1",
@@ -239,7 +256,7 @@ class NvsetElementToDto(TestCase):
                                         CibRuleExpressionDto(
                                             "my-id-rule-rule-expr-1",
                                             CibRuleExpressionType.EXPRESSION,
-                                            CibRuleExpiredStatus.UNKNOWN,
+                                            CibRuleInEffectStatus.UNKNOWN,
                                             {
                                                 "attribute": "attr2",
                                                 "operation": "gt",
@@ -254,7 +271,7 @@ class NvsetElementToDto(TestCase):
                                         CibRuleExpressionDto(
                                             "my-id-rule-rule-expr-2",
                                             CibRuleExpressionType.DATE_EXPRESSION,
-                                            CibRuleExpiredStatus.UNKNOWN,
+                                            CibRuleInEffectStatus.UNKNOWN,
                                             {
                                                 "operation": "lt",
                                                 "end": "2020-08-07",
@@ -267,7 +284,7 @@ class NvsetElementToDto(TestCase):
                                         CibRuleExpressionDto(
                                             "my-id-rule-rule-expr-3",
                                             CibRuleExpressionType.DATE_EXPRESSION,
-                                            CibRuleExpiredStatus.UNKNOWN,
+                                            CibRuleInEffectStatus.UNKNOWN,
                                             {
                                                 "operation": "in_range",
                                                 "start": "2020-09-01",
@@ -281,7 +298,7 @@ class NvsetElementToDto(TestCase):
                                         CibRuleExpressionDto(
                                             "my-id-rule-rule-expr-4",
                                             CibRuleExpressionType.DATE_EXPRESSION,
-                                            CibRuleExpiredStatus.UNKNOWN,
+                                            CibRuleInEffectStatus.UNKNOWN,
                                             {
                                                 "operation": "in_range",
                                                 "start": "2020-10-01",
@@ -297,7 +314,7 @@ class NvsetElementToDto(TestCase):
                                         CibRuleExpressionDto(
                                             "my-id-rule-rule-expr-5",
                                             CibRuleExpressionType.DATE_EXPRESSION,
-                                            CibRuleExpiredStatus.UNKNOWN,
+                                            CibRuleInEffectStatus.UNKNOWN,
                                             {"operation": "date_spec"},
                                             CibRuleDateCommonDto(
                                                 "my-id-rule-rule-expr-5-datespec",
@@ -310,7 +327,7 @@ class NvsetElementToDto(TestCase):
                                         CibRuleExpressionDto(
                                             "my-id-rule-rule-expr-6",
                                             CibRuleExpressionType.DATE_EXPRESSION,
-                                            CibRuleExpiredStatus.UNKNOWN,
+                                            CibRuleInEffectStatus.UNKNOWN,
                                             {
                                                 "operation": "in_range",
                                                 "end": "2020-09-11",

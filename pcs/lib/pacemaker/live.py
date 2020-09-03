@@ -1,7 +1,6 @@
 import os.path
 import re
 from typing import (
-    Dict,
     Iterable,
     List,
     Optional,
@@ -21,7 +20,7 @@ from pcs.common.tools import (
     xml_fromstring,
     Version,
 )
-from pcs.common.types import CibRuleExpiredStatus
+from pcs.common.types import CibRuleInEffectStatus
 from pcs.lib.cib.tools import get_pacemaker_version_by_which_cib_was_validated
 from pcs.lib.errors import LibraryError
 from pcs.lib.external import CommandRunner
@@ -709,47 +708,35 @@ def _run_fence_history_command(runner, command, node=None):
 ### tools
 
 
-def has_rule_expired_status_tool() -> bool:
+def has_rule_in_effect_status_tool() -> bool:
     return os.path.isfile(__exec("crm_rule"))
 
 
-def get_rules_expired_status(
-    runner: CommandRunner, cib_xml: str, rule_id_set: Iterable[str]
-) -> Dict[str, CibRuleExpiredStatus]:
+def get_rule_in_effect_status(
+    runner: CommandRunner, cib_xml: str, rule_id: str
+) -> CibRuleInEffectStatus:
     """
-    Figure out if rules are in effect, expired or not yet in effect
+    Figure out if a rule is in effect, expired or not yet in effect
 
     runner -- a class for running external processes
     cib_xml -- CIB containing rules
-    rule_id_set -- IDs of rules to be checked
+    rule_id -- ID of the rule to be checked
     """
-    if not has_rule_expired_status_tool():
-        return {
-            rule_id: CibRuleExpiredStatus.UNKNOWN for rule_id in rule_id_set
-        }
-
+    # TODO Once crm_rule is capable of evaluating more than one rule per go, we
+    # should make use of it. Running the tool for each rule may really slow pcs
+    # down.
     translation_map = {
-        0: CibRuleExpiredStatus.IN_EFFECT,
-        110: CibRuleExpiredStatus.EXPIRED,
-        111: CibRuleExpiredStatus.NOT_YET_IN_EFFECT,
+        0: CibRuleInEffectStatus.IN_EFFECT,
+        110: CibRuleInEffectStatus.EXPIRED,
+        111: CibRuleInEffectStatus.NOT_YET_IN_EFFECT,
+        # 105:non-existent
+        # 112: undetermined (rule is too complicated for current implementation)
     }
-    result = {}
-    for rule_id in rule_id_set:
-        dummy_stdout, dummy_stderr, retval = runner.run(
-            [
-                __exec("crm_rule"),
-                "--check",
-                "--rule",
-                rule_id,
-                "--xml-text",
-                "-",
-            ],
-            stdin_string=cib_xml,
-        )
-        result[rule_id] = translation_map.get(
-            retval, CibRuleExpiredStatus.UNKNOWN
-        )
-    return result
+    dummy_stdout, dummy_stderr, retval = runner.run(
+        [__exec("crm_rule"), "--check", "--rule", rule_id, "--xml-text", "-"],
+        stdin_string=cib_xml,
+    )
+    return translation_map.get(retval, CibRuleInEffectStatus.UNKNOWN)
 
 
 # shortcut for getting a full path to a pacemaker executable
