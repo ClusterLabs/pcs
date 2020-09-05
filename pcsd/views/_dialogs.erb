@@ -1,16 +1,16 @@
 <div id="dialog_login" style="display:none;">
   <form id="login_form">
-    <div>Your session has expired. Log in again, please.</div>
+    <div><%=@I18n.t(:'promptInfo.sessionExpiredHelper')%></div>
     <div id="login_form_denied" style="color:red; display:none;">
-      Bad username or password
+      <%=@I18n.t(:'errorInfo.messages.bad_username_or_password')%>
     </div>
     <table>
       <tr>
-        <td><label for="login_form_username">Username:</label></td>
+        <td><label for="login_form_username"><%=@I18n.t(:userName)%>:</label></td>
         <td><input type="text" id="login_form_username" name="username"></td>
       </tr>
       <tr>
-        <td><label for="login_form_password">Password:</label></td>
+        <td><label for="login_form_password"><%=@I18n.t(:passWord)%>:</label></td>
         <td><input type="password" id="login_form_password" name="password"></td>
       </tr>
     </table>
@@ -19,56 +19,56 @@
 
 <div id="auth_nodes" style="display:none;">
   <form id="auth_nodes_form">
-    Enter password for user 'hacluster' to authenticate nodes.<br>
+    <%=@I18n.t(:'promptInfo.authenticateHelper')%><br>
     <table class="err_msg_table" style="width: 100%">
-      <tr><td align="center" style="color: red"><span id="auth_failed_error_msg" style="display:none;">Authentication on some nodes failed.</span></td></tr>
+      <tr><td align="center" style="color: red"><span id="auth_failed_error_msg" style="display:none;"><%=@I18n.t(:'errorInfo.messages.authenticationOnSomeNodesFailed')%></span></td></tr>
     </table>
     <p class="addr_port" style="max-width: 40em">
       For each node you can specify an address and a port via which pcsd will
-      communicate with the node. If an address is not specified the node&apos;s
+      communicate with the node. If an address is not specified the node&apos;
       name will be used. If a port is not specified 2224 will be used.
     </p>
     <table id="auth_nodes_list">
     </table>
-    <div id="same_pass"><label><input type="checkbox" name="all" onchange="if ($(this).is(':checked')) {$('#auth_nodes_form').find('.password').each(function(){$(this).hide()}); $('#pass_for_all').show();} else {$('#auth_nodes_form').find('.password').each(function(){$(this).show()}); $('#pass_for_all').hide();}"> Use same password for all nodes:</label>
+    <div id="same_pass"><label><input type="checkbox" name="all" onchange="if ($(this).is(':checked')) {$('#auth_nodes_form').find('.password').each(function(){$(this).hide()}); $('#pass_for_all').show();} else {$('#auth_nodes_form').find('.password').each(function(){$(this).show()}); $('#pass_for_all').hide();}"> <%=@I18n.t(:'promptInfo.useSamePasswordForAllNodes')%>:</label>
       <input type="password" name="pass-all" id="pass_for_all" style="display: none;"></div>
     <div>
       <label>
         <input type="checkbox" name="custom_addr_port"
           onchange="if ($(this).is(':checked')) { $('#auth_nodes_form').find('.addr_port').show(); } else { $('#auth_nodes_form').find('.addr_port').hide(); };"
         >
-        Use custom address(es) and port(s)
+        <%=@I18n.t(:'promptInfo.useCustomAddressAndPort')%>
       </label>
     </div>
   </form>
 </div>
 
 <div id="dialog_verify_remove_clusters" style="display: none;">
-  <p style="font-size:12px;">Are you sure you want to remove the following cluster(s) from the GUI? (This only removes the cluster from the GUI, it does not stop the cluster from running.)</p>
+  <p style="font-size:12px;"><%=@I18n.t(:'promptInfo.removeClusterConfirm')%></p>
   <span class="name_list"></span>
 </div>
 
 <div id="dialog_verify_destroy_cluster" style="display: none;">
-  <p style="font-size:12px;">Are you sure you want to destroy the following cluster?</p>
+  <p style="font-size:12px;"><%=@I18n.t(:'promptInfo.destroyClusterConfirm')%></p>
   <span class="name_list"></span>
-  <p style="font-size:14px; color: red;">The cluster will be stopped and all its configuration files will be deleted. This action cannot be undone.</p>
+  <p style="font-size:14px; color: red;"><%=@I18n.t(:'promptInfo.destroyClusterConfirmExtraMessage')%></p>
 </div>
 
 <div id="dialog_verify_remove_nodes" style="display:none;">
-  <p style="font-size:12px;">Are you sure you want to remove the following node(s)?</p>
+  <p style="font-size:12px;"><%=@I18n.t(:'promptInfo.removeNodeConfirm')%></p>
   <span class="name_list"></span>
   <table class="msg-box" style="width:100%"><tr><td/></tr></table>
 </div>
 
 <div id="dialog_verify_remove_resources" style="display: none;">
-  <p style="font-size:12px;">Are you sure you want to remove the following resource(s)?</p>
+  <p style="font-size:12px;"><%=@I18n.t(:'promptInfo.removeRescourceConfirm')%></p>
   <span class="name_list"></span>
   <input type="checkbox" name="force">
-  Enforce removal (Remove the resources without stopping them first.)
+  <%=@I18n.t(:'promptInfo.EnforceRemoveRescource')%>
 </div>
 
 <div id="dialog_verify_remove_acl_roles" style="display:none;">
-  <p style="font-size:12px;">Are you sure you want to remove the following ACL role(s)?</p>
+  <p style="font-size:12px;"><%=@I18n.t(:'promptInfo.removeACLConfirm')%></p>
   <span class="name_list"></span>
 </div>
 
@@ -77,7 +77,7 @@
     <table>
       <tr>
         <td class="darkdatatable_header">
-          Specify watchdog devices for nodes:
+          <%=@I18n.t(:'table.title.specifyWatchDevicesForNodes')%>:
         </td>
       </tr>
       <tr>
@@ -90,7 +90,7 @@
     <table style="margin-top: 20px;">
       <tr>
         <td class="darkdatatable_header">
-          SBD options:
+          SBD <%=@I18n.t(:options)%>:
         </td>
       </tr>
       <tr>
@@ -134,7 +134,7 @@
       <tr>
         <td>
           <label for="ignore_offline_nodes_enable_sbd">
-            ignore offline nodes
+            <%=@I18n.t(:'table.title.ignoreOfflineNodes')%>
           </label>
         </td>
         <td>
@@ -151,12 +151,12 @@
 
 <div id="disable_sbd_dialog" style="display:none;">
   <form id="disable_sbd_form">
-    Are you sure you want to disable SBD?
+  <%=@I18n.t(:'promptInfo.disableSBDConfirm')%>
     <table>
       <tr>
         <td>
           <label for="ignore_offline_nodes_disable_sbd">
-            ignore offline nodes
+          <%=@I18n.t(:'table.title.ignoreOfflineNodes')%>
           </label>
         </td>
         <td>
@@ -174,16 +174,16 @@
 <div id="sbd_status_dialog" style="display:none;">
   <table>
     <tr>
-      <td class="darkdatatable_header">SBD service status</td>
+      <td class="darkdatatable_header">SBD <%=@I18n.t(:'table.title.serviceStatus')%></td>
     </tr>
     <tr>
       <td>
         <table class="darkdatatable">
           <tr>
-            <th>NODE</th>
-            <th>INSTALLED</th>
-            <th>ENABLED</th>
-            <th>RUNNING</th>
+            <th><%=@I18n.t(:node)%></th>
+            <th><%=@I18n.t(:installed)%></th>
+            <th><%=@I18n.t(:enabled)%></th>
+            <th><%=@I18n.t(:running)%></th>
           </tr>
           {{#each node in Pcs.nodesController}}
           <tr>
@@ -200,7 +200,7 @@
   {{#if Pcs.is_sbd_enabled_or_running}}
   <table style="margin-top: 20px;">
     <tr>
-      <td class="darkdatatable_header">SBD configuration</td>
+      <td class="darkdatatable_header">SBD <%=@I18n.t(:configuration)%></td>
     </tr>
     <tr>
       <td>
@@ -210,7 +210,7 @@
   </table>
   <table style="margin-top: 20px;">
     <tr>
-      <td class="darkdatatable_header">SBD watchdogs</td>
+      <td class="darkdatatable_header">SBD <%=@I18n.t(:watchdogs)%></td>
     </tr>
     <tr>
       <td>
@@ -236,13 +236,13 @@
   <form method=POST onkeypress="if (event.keyCode == 13) {$(this).parent().parent().find('.ui-dialog-buttonpane button:eq(1)').trigger('click');return false;} " action="/resource_group_add">
     <table>
       <tr>
-        <td>Group Name:</td>
+        <td><%=@I18n.t(:group)%> <%=@I18n.t(:name)%>:</td>
         <td>
           <input name="resource_group" type="text" />
         </td>
       </tr>
       <tr>
-        <td style="vertical-align: top;">Change order of resources:</td>
+        <td style="vertical-align: top;"><%=@I18n.t(:'table.title.changeOrderOfResources')%>:</td>
         <td>
           <table id="new_group_resource_list" class="sortable-table">
             <tbody></tbody>

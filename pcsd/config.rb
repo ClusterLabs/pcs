@@ -2,6 +2,12 @@ require 'json'
 
 require 'cluster.rb'
 require 'permissions.rb'
+require 'i18n'
+
+I18n.load_path << Dir[File.expand_path(File.dirname(__FILE__)) + "/locales/*.yml"]
+I18n.enforce_available_locales = true
+I18n.config.available_locales = [:'zh-CN', :'en-US']
+I18n.default_locale = :'en-US' # (note that `en` is already the default!)
 
 class PCSConfig
   CURRENT_FORMAT = 2

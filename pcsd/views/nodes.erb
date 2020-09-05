@@ -1,6 +1,6 @@
   <table id="main">
     <tr id="node_title_row" {{bind-attr style="Pcs.node_page"}}><td id="page_header" colspan=3>
-	NODES
+      <%=@I18n.t(:nodes)%>
       </td>
     </tr>
     <tr id="node_header_row" {{bind-attr style="Pcs.node_page"}}>
@@ -10,14 +10,14 @@
 	</div>
 	<div id="no_coro_support">
     <div class="x sprites"></div>
-    <div class="link" onclick="nodesRemove.dialog.create(); return false;">&nbsp;Remove&nbsp;&nbsp;&nbsp;&nbsp;</div>
+    <div class="link" onclick="nodesRemove.dialog.create(); return false;">&nbsp;<%=@I18n.t(:remove)%>&nbsp;&nbsp;&nbsp;&nbsp;</div>
     <div class="plus sprites"></div>
-    <div class="link" onclick="nodeAdd.dialog.create(); return false;">&nbsp;Add</div>
+    <div class="link" onclick="nodeAdd.dialog.create(); return false;">&nbsp;<%=@I18n.t(:add)%></div>
 	</div>
       </td>
       <td class="borderbottom">&nbsp;</td>
       <td id="tab_name" width="85">
-	<div style="float: left">&nbsp;Edit Node&nbsp;</div><div class="check sprites"></div>
+	<div style="float: left">&nbsp;<%=@I18n.t(:edit)%> <%=@I18n.t(:node)%>&nbsp;</div><div class="check sprites"></div>
       </td>
     </tr>
     <tr id="node_list_row" {{bind-attr style="Pcs.node_page"}}>
@@ -45,7 +45,7 @@
         <div id="node_info_div" style="opacity: 0;">
           <div id="test">
             <div id="node_info_header">
-              <div id="node_info_header_title" class="node_info_header_title">Edit Node&nbsp;</div>
+              <div id="node_info_header_title" class="node_info_header_title"><%=@I18n.t(:edit)%> <%=@I18n.t(:node)%>&nbsp;</div>
               <div id="node_info_header_title_name">
                 {{Pcs.nodesController.cur_node.name}}
               </div>
@@ -63,31 +63,31 @@
                     {{#unless Pcs.nodesController.cur_node.pacemaker_standby}}
                     {{#if Pcs.nodesController.cur_node.pacemaker_maintenance}}
                     <div id="pacemaker_online_status" class="status-standby">
-                      Pacemaker Maintanence
+                      Pacemaker <%=@I18n.t(:maintenance)%>
                     </div>
                     {{else}}
                     <div id="pacemaker_online_status" class="status">
-                      Pacemaker Connected
+                      Pacemaker <%=@I18n.t(:connected)%>
                     </div>
                     {{/if}}
                     {{else}}
                     <div id="pacemaker_online_status" class="status">
-                      Pacemaker Connected
+                      Pacemaker <%=@I18n.t(:connected)%>
                     </div>
                     {{/unless}}
                     {{else}}
                     {{#if Pcs.nodesController.cur_node.pacemaker_standby}}
                     <div id="pacemaker_online_status" class="status-standby">
-                      Pacemaker Standby
+                      Pacemaker <%=@I18n.t(:standby)%>
                     </div>
                     {{else}}
                     {{#if Pcs.nodesController.cur_node.pacemaker_maintenance}}
                     <div id="pacemaker_online_status" class="status-standby">
-                      Pacemaker Maintanence
+                      Pacemaker <%=@I18n.t(:maintenance)%>
                     </div>
                     {{else}}
                     <div id="pacemaker_online_status" class="status-offline">
-                      Pacemaker Not Connected
+                      Pacemaker <%=@I18n.t(:notConnected)%>
                     </div>
                     {{/if}}
                     {{/if}}
@@ -99,11 +99,11 @@
                   <td>
                     {{#if Pcs.nodesController.cur_node.corosync}}
                     <div id="corosync_online_status" class="status">
-                      Corosync Connected
+                      Corosync <%=@I18n.t(:connected)%>
                     </div>
                     {{else}}
                     <div id="corosync_online_status" class="status-offline">
-                      Corosync Not Connected
+                      Corosync <%=@I18n.t(:notConnected)%>
                     </div>
                     {{/if}}
                   </td>
@@ -114,45 +114,45 @@
             <div id="node_options_buttons">
               <div id="node_start" class="link">
                 <div class="restart sprites" style="float: left"></div>
-                &nbsp;Start
+                &nbsp;<%=@I18n.t(:start)%>
               </div>
               <div id="node_stop" class="link">
                 <div class="cancel sprites" style="float: left"></div>
-                &nbsp;Stop
+                &nbsp;<%=@I18n.t(:stop)%>
               </div>
               <div id="node_restart" class="link">
                 <div class="restart sprites" style="float: left"></div>
-                &nbsp;Restart
+                &nbsp;<%=@I18n.t(:restart)%>
               </div>
               <div id="node_unstandby" class="link" {{bind-attr style="Pcs.nodesController.cur_node.unstandby_style"}}>
                 <div class="unstandby sprites" style="float: left"></div>
-                &nbsp;Unstandby
+                &nbsp;<%=@I18n.t(:unstandby)%>
               </div>
               <div id="node_standby" class="link" {{bind-attr style="Pcs.nodesController.cur_node.standby_style"}}>
                 <div class="standby sprites" style="float: left"></div>
-                &nbsp;Standby
+                &nbsp;<%=@I18n.t(:standby)%>
               </div>
               {{#if Pcs.nodesController.cur_node.is_in_maintenance}}
               <div id="node_unmaintenance" class="link" onclick="fade_in_out('#node_unmaintenance');node_unmaintenance(Pcs.nodesController.cur_node.get('name'));">
                 <div class="unstandby sprites" style="float: left"></div>
-                &nbsp;Unmaintenance
+                &nbsp;<%=@I18n.t(:unmaintenance)%>
               </div>
               {{else}}
               <div id="node_maintenance" class="link" onclick="fade_in_out('#node_maintenance');node_maintenance(Pcs.nodesController.cur_node.get('name'));">
                 <div class="standby sprites" style="float: left"></div>
-                &nbsp;Maintenance
+                &nbsp;<%=@I18n.t(:maintenance)%>
               </div>
               {{/if}}
               <div class="configure sprites" style="float: left"></div>
-              <div class="link"><a href="#/fencedevices" onclick="select_menu('FENCE DEVICES');return true;">Configure Fencing</a></div>
+              <div class="link"><a href="#/fencedevices" onclick="select_menu('FENCE DEVICES');return true;"><%=@I18n.t(:configureFencing)%></a></div>
             </div>
 
             <div id="node_details">
               {{#unless Pcs.nodesController.cur_node.status_unknown}}
               <table><tr>
-                <td><div class="reg">Node ID:</div></td>
+                <td><div class="reg"><%=@I18n.t(:node)%> ID:</div></td>
                 <td><div class="bold">{{Pcs.nodesController.cur_node.node_id}}</div></td>
-                <td><div class="reg"> Uptime:</div></td>
+                <td><div class="reg"><%=@I18n.t(:'table.title.uptime')%>:</div></td>
                 <td><div class="bold" id="uptime">{{Pcs.nodesController.cur_node.uptime}}</div></td>
               </tr>
               </table>
@@ -160,30 +160,30 @@
             </div>
 
             <table style="float:left;margin-top:25px">
-              <tr><td class="datatable_header">Cluster Daemons</td></tr>
+              <tr><td class="datatable_header"><%=@I18n.t(:'table.title.clusterDaemons')%></td></tr>
               <tr><td>
                 <div id="clusterdaemons">
                   <table class="datatable">
-                    <tr><th>NAME</th><th>STATUS</th></tr>
+                    <tr><th><%=@I18n.t(:name)%></th><th><%=@I18n.t(:status)%></th></tr>
                     <tr><td>pacemaker</td><td><div style="float:left;margin-right:6px;" class="check sprites"></div>
                       {{#if Pcs.nodesController.cur_node.pacemaker_daemon}}
-                      <span id="pacemaker_status" style="float:left" class="status">Running ({{Pcs.nodesController.cur_node.pacemaker_startup}})</span>
+                      <span id="pacemaker_status" style="float:left" class="status"><%=@I18n.t(:running)%> ({{Pcs.nodesController.cur_node.pacemaker_startup}})</span>
                       {{else}}
                       {{#if Pcs.nodesController.cur_node.pcsd}}
-                      <span id="pacemaker_status" style="float:left" class="status-offline">Stopped ({{Pcs.nodesController.cur_node.pacemaker_startup}})</span>
+                      <span id="pacemaker_status" style="float:left" class="status-offline"><%=@I18n.t(:stopped)%> ({{Pcs.nodesController.cur_node.pacemaker_startup}})</span>
                       {{else}}
-                      <span id="pacemaker_status" style="float:left" class="status-unknown">Unknown ({{Pcs.nodesController.cur_node.pacemaker_startup}})</span>
+                      <span id="pacemaker_status" style="float:left" class="status-unknown"><%=@I18n.t(:unknown)%> ({{Pcs.nodesController.cur_node.pacemaker_startup}})</span>
                       {{/if}}
                       {{/if}}
                     </td></tr>
                     <tr><td>corosync</td><td><div style="float:left;margin-right:6px;" class="check sprites"></div>
                       {{#if Pcs.nodesController.cur_node.corosync_daemon}}
-                      <span id="corosync_status" style="float:left" class="status">Running ({{Pcs.nodesController.cur_node.corosync_startup}})</span>
+                      <span id="corosync_status" style="float:left" class="status"><%=@I18n.t(:running)%> ({{Pcs.nodesController.cur_node.corosync_startup}})</span>
                       {{else}}
                       {{#if Pcs.nodesController.cur_node.pcsd}}
-                      <span id="corosync_status" style="float:left" class="status-offline">Stopped ({{Pcs.nodesController.cur_node.corosync_startup}})</span>
+                      <span id="corosync_status" style="float:left" class="status-offline"><%=@I18n.t(:stopped)%> ({{Pcs.nodesController.cur_node.corosync_startup}})</span>
                       {{else}}
-                      <span id="corosync_status" style="float:left" class="status-unknown">Unknown ({{Pcs.nodesController.cur_node.corosync_startup}})</span>
+                      <span id="corosync_status" style="float:left" class="status-unknown"><%=@I18n.t(:unknown)%> ({{Pcs.nodesController.cur_node.corosync_startup}})</span>
                       {{/if}}
                       {{/if}}
                     </td></tr>
@@ -194,12 +194,12 @@
                     {{/if}}
                     <tr><td>pcsd</td><td><div style="float:left;margin-right:6px;" class="check sprites"></div>
                       {{#if Pcs.nodesController.cur_node.pcsd}}
-                      <span id="pcsd_status" style="float:left" class="status">Running ({{Pcs.nodesController.cur_node.pcsd_startup}})</span>
+                      <span id="pcsd_status" style="float:left" class="status"><%=@I18n.t(:running)%> ({{Pcs.nodesController.cur_node.pcsd_startup}})</span>
                       {{else}}
                       {{#if Pcs.nodesController.cur_node.authorized}}
-                      <span id="pcsd_status" style="float:left" class="status-offline">Stopped ({{Pcs.nodesController.cur_node.pcsd_startup}})</span>
+                      <span id="pcsd_status" style="float:left" class="status-offline"><%=@I18n.t(:stopped)%> ({{Pcs.nodesController.cur_node.pcsd_startup}})</span>
                       {{else}}
-                      <span id="pcsd_status" style="float:left" class="status-offline">Running (not Authorized) ({{Pcs.nodesController.cur_node.pcsd_startup}})</span>
+                      <span id="pcsd_status" style="float:left" class="status-offline"><%=@I18n.t(:running)%> (<%=@I18n.t(:notAuthorized)%>) ({{Pcs.nodesController.cur_node.pcsd_startup}})</span>
                       {{/if}}
                       {{/if}}
                     </td></tr>
@@ -209,11 +209,11 @@
               </tr>
             </table>
             <table style="clear:left;float:left;margin-top:25px;">
-              <tr><td class="datatable_header">Running Resources</td></tr>
+              <tr><td class="datatable_header"><%=@I18n.t(:'table.title.runningResources') %></td></tr>
               <tr><td>
                 <div id="resources_running">
                   <table class="datatable">
-                    <tr><th>NAME</th></tr>
+                    <tr><th><%=@I18n.t(:name) %></th></tr>
                     {{#if Pcs.nodesController.cur_node.running_resources}}
                     {{#each res in Pcs.nodesController.cur_node.running_resources}}
                     <tr><td>
@@ -223,7 +223,7 @@
                     </td></tr>
                     {{/each}}
                     {{else}}
-                    <tr><td style="color: gray;">NONE</td></tr>
+                    <tr><td style="color: gray;"><%=@I18n.t(:none) %></td></tr>
                     {{/if}}
                   </table>
                 </div>
@@ -231,17 +231,17 @@
               </tr>
             </table>
             <table style="clear:left;float:left;margin-top:25px;">
-              <tr><td class="datatable_header">Resource Location Preferences</td></tr>
+              <tr><td class="datatable_header"><%=@I18n.t(:'table.title.resourceLocationPreferences')%></td></tr>
               <tr><td>
                 <div id="locationdep">
                   <table class="datatable">
-                    <tr><th>NAME</th><th>Score</th></tr>
+                    <tr><th><%=@I18n.t(:name) %></th><th><%=@I18n.t(:'table.title.score') %></th></tr>
                     {{#if Pcs.nodesController.cur_node.location_constraints}}
                     {{#each Pcs.nodesController.cur_node.location_constraints}}
                     <tr><td>{{rsc}}</td><td>{{score}}</td><td></td></tr>
                     {{/each}}
                     {{else}}
-                    <tr><td style="color: gray;">NONE</td><td></td></tr>
+                    <tr><td style="color: gray;"><%=@I18n.t(:none) %></td><td></td></tr>
                     {{/if}}
                   </table>
                 </div>
@@ -249,10 +249,10 @@
               </tr>
             </table>
             <table style="clear:left;float:left;margin-top:25px;">
-              <tr><td onclick="show_hide_constraints(this)" class="datatable_header hover-pointer">Node Attributes ({{#if Pcs.nodesController.cur_node_attr.length}}{{Pcs.nodesController.cur_node_attr.length}}{{else}}0{{/if}})<span style="" class="downarrow sprites" id="node_attributes"></span><span style="display: none;" class="rightarrow sprites"></span></td></tr>
+              <tr><td onclick="show_hide_constraints(this)" class="datatable_header hover-pointer"><%=@I18n.t(:'table.title.nodeAttributes') %> ({{#if Pcs.nodesController.cur_node_attr.length}}{{Pcs.nodesController.cur_node_attr.length}}{{else}}0{{/if}})<span style="" class="downarrow sprites" id="node_attributes"></span><span style="display: none;" class="rightarrow sprites"></span></td></tr>
               <tr><td>
                   <table class="datatable">
-                    <tr><th>Attribute</th><th>Value</th><th>Remove</th></tr>
+                    <tr><th><%=@I18n.t(:'table.title.attribute') %></th><th><%=@I18n.t(:'table.title.value') %></th><th><%=@I18n.t(:remove) %></th></tr>
                     {{#each attr in Pcs.nodesController.cur_node_attr}}
                     <tr><td>{{attr.name}}</td>
                       <td>{{attr.value}}</td>
@@ -261,22 +261,22 @@
                       </td>
                     </tr>
                     {{else}}
-                    <tr><td style="color: gray;">NONE</td><td></td><td></td></tr>
+                    <tr><td style="color: gray;"><%=@I18n.t(:none) %></td><td></td><td></td></tr>
                     {{/each}}
                     <tr id="new_node_attr_col">
                       <td><input type="text" name="new_node_attr_key" size="20"></td>
                       <td><input type="text" name="new_node_attr_value" size="20"></td>
-                      <td><button type="button" onclick="add_node_attr('#new_node_attr_col');" name="add">Add</button></td>
+                      <td><button type="button" onclick="add_node_attr('#new_node_attr_col');" name="add" style="width: 80px"><%=@I18n.t(:add) %></button></td>
                     </tr>
                   </table>
               </td>
               </tr>
             </table>
             <table style="clear:left;float:left;margin-top:25px;">
-              <tr><td onclick="show_hide_constraints(this)" class="datatable_header hover-pointer">Fence Levels ({{#if Pcs.nodesController.cur_node_fence_levels.length}}{{Pcs.nodesController.cur_node_fence_levels.length}}{{else}}0{{/if}})<span style="" class="downarrow sprites" id="fence_levels"></span><span style="display: none;" class="rightarrow sprites"></span></td></tr>
+              <tr><td onclick="show_hide_constraints(this)" class="datatable_header hover-pointer">Fence <%=@I18n.t(:levels) %> ({{#if Pcs.nodesController.cur_node_fence_levels.length}}{{Pcs.nodesController.cur_node_fence_levels.length}}{{else}}0{{/if}})<span style="" class="downarrow sprites" id="fence_levels"></span><span style="display: none;" class="rightarrow sprites"></span></td></tr>
               <tr><td>
                   <table class="datatable">
-                    <tr><th>Level</th><th>Fence Devices</th><th>Remove</th></tr>
+                    <tr><th><%=@I18n.t(:level) %></th><th><%=@I18n.t(:fenceDevices) %></th><th><%=@I18n.t(:remove) %></th></tr>
                     {{#each Pcs.nodesController.cur_node_fence_levels}}
                     <tr>
                       <td>{{this.level}}</td>
@@ -287,7 +287,7 @@
                     </tr>
                     {{/each}}
                     {{#unless Pcs.nodesController.cur_node_fence_levels}}
-                    <tr><td style="color: gray;">NONE</td><td></td><td></td></tr>
+                    <tr><td style="color: gray;"><%=@I18n.t(:none) %></td><td></td><td></td></tr>
                     {{/unless}}
                     <tr id="new_fence_level_col">
                       <td><input type="text" name="new_level_level" size="2"></td>
@@ -297,7 +297,7 @@
                         <option {{bind-attr value="this.id"}}>{{this.id}}</option>
                         {{/each }}
                       </select></td>
-                      <td><button type="button" onclick="add_remove_fence_level($(this).parent());" name="add">Add</button></td>
+                      <td><button type="button" onclick="add_remove_fence_level($(this).parent());" name="add"><%=@I18n.t(:add) %></button></td>
                     </tr>
                   </table>
               </td>
@@ -309,6 +309,7 @@
                 entity=Pcs.nodesController.cur_node
                 utilization=Pcs.nodesController.cur_node.utilization
                 table_id="node_utilization_attributes"
+                type=<%=@I18n.t(:node)%>
             }}
             </td></tr></table>
             {{/if}}
@@ -328,12 +329,12 @@
   <form>
     <table id="add_node_selector">
       <tr>
-        <td>Node Name:</td>
+        <td><%=@I18n.t(:node) %> <%=@I18n.t(:name) %>:</td>
         <td><input type=text name=new_nodename></td>
       </tr>
       
       <tr>
-        <td>Node Addresses:</td>
+        <td><%=@I18n.t(:node) %> <%=@I18n.t(:addresses) %>:</td>
         <td class="link-expander">
           <a href="#" onclick="nodeAdd.dialog.toggleLinks();return false;">(+)</a>
         </td>
@@ -345,8 +346,7 @@
             rowspan="8"
             style="max-width: 8em; vertical-align: top; padding-top: 0.5em; padding-right: 0.2em"
           >
-              Please specify the count of links that is compatible with this
-              cluster
+              <%=@I18n.t(:'promptInfo.nodeLinksHelper')%>
           </td>
           <td><input type=text name="links[]"></td>
         </tr>
@@ -360,20 +360,20 @@
       </tbody>
       
       <tr>
-        <td>Start the Node:</td>
+        <td><%=@I18n.t(:'table.title.startTheNode') %> :</td>
         <td><input type="checkbox" name="auto_start" value="1" checked></td>
       </tr>
       
       <tbody class="sbd-features" style="display:none">
         <tr>
-          <td>SBD watchdog:</td>
+          <td>SBD <%=@I18n.t(:watchdog) %>:</td>
           <td>
             <input type="text" name="watchdog" placeholder="/dev/watchdog" />
           </td>
         </tr>
         <tr class="add_node_sbd_device">
           <td>
-            SBD device(s):
+            SBD <%=@I18n.t(:devices) %>:
           </td>
           <td>
             <input type="text" name="devices[]" />
@@ -381,7 +381,7 @@
           </td>
         </tr>
         <tr>
-          <td>Do not validate watchdog:</td>
+          <td><%=@I18n.t(:'table.title.doNotValidateWatchdog') %>:</td>
           <td>
             <input type="checkbox" name="no-watchdog-validation" value="1" >
           </td>

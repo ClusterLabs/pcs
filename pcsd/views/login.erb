@@ -1,11 +1,11 @@
 <div style="width:960px;margin-top: 25px;text-align:center;">
   <% if @tornado_session_username %>
-    <span style="color:red;font-size:24px;">Bad username or password</span>
+    <span style="color:red;font-size:24px;"><%=@I18n.t(:'errorInfo.messages.bad_username_or_password')%></span>
   <% end %>
   <form action="/login" method="post">
     <table style="margin-left: auto; margin-right: auto;">
       <tr>
-        <td style="text-align:right;">Username:</td>
+        <td style="text-align:right;"><%=@I18n.t(:userName)%>:</td>
         <td>
           <input type="text" name="username" <%=
             "value='#{h(@tornado_session_username)}'" if @tornado_session_username
@@ -13,12 +13,12 @@
         </td>
       </tr>
       <tr>
-        <td style="text-align:right;">Password:</td>
+        <td style="text-align:right;"><%=@I18n.t(:passWord)%>:</td>
         <td><input type="password" name="password"></td>
       </tr>
       <tr>
         <td align="center" colspan="2">
-          <input type="submit" name="Login" value="Login">
+          <input type="submit" name="Login" value="<%=@I18n.t(:login)%>">
         </td>
       </tr>
     </table>

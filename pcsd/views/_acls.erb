@@ -5,7 +5,7 @@
 <tr {{bind-attr style="Pcs.acls_page"}}>
   <td id="remove_add" class="borderbottom">
     <div class="x sprites"></div>
-    <div class="link" onclick="verify_remove_acl_roles();return false;">&nbsp;Remove&nbsp;&nbsp;&nbsp;&nbsp;</div>
+    <div class="link" onclick="verify_remove_acl_roles();return false;">&nbsp;<%=@I18n.t(:remove)%>&nbsp;&nbsp;&nbsp;&nbsp;</div>
     <div class="plus sprites"></div>
     <div class="link" onclick="$('#add_acl_role').dialog({
         title: 'Add ACL Role',
@@ -21,11 +21,11 @@
             $(this).dialog('close');
           },
         }
-      }); return false;">&nbsp;Add</div>
+      }); return false;">&nbsp;<%=@I18n.t(:add)%></div>
   </td>
   <td class="borderbottom">&nbsp;</td>
   <td id="tab_name" width="125">
-    <div style="float: left">&nbsp;Edit ACL Role&nbsp;</div>
+    <div style="float: left">&nbsp;<%=@I18n.t(:edit)%> ACL <%=@I18n.t(:role)%>&nbsp;</div>
     <div class="check sprites"></div>
   </td>
 </tr>
@@ -35,7 +35,7 @@
       <tr>
         <th><input type="checkbox" onchange="checkBoxToggle(this,false)"></th>
         <th></th>
-        <th>ROLE&nbsp;NAME</th>
+        <th><%=@I18n.t(:role)%>&nbsp;<%=@I18n.t(:name)%></th>
         <th></th>
       </tr>
       {{#each Pcs.aclsController}}
@@ -57,15 +57,15 @@
   <td id="node_info" colspan=2>
     <div id="role_info_div">
     <table>
-      <tr><td>Role Name:</td><td><input disabled type="text" size="40" {{bind-attr value="Pcs.aclsController.cur_role.name"}}></td></tr>
-      <tr><td>Role Description:</td><td><input disabled type="text" size="40" {{bind-attr value="Pcs.aclsController.cur_role.description"}}></td></tr>
+      <tr><td><%=@I18n.t(:role)%> <%=@I18n.t(:name)%>:</td><td><input disabled type="text" size="40" {{bind-attr value="Pcs.aclsController.cur_role.name"}}></td></tr>
+      <tr><td><%=@I18n.t(:role)%> <%=@I18n.t(:description)%>:</td><td><input disabled type="text" size="40" {{bind-attr value="Pcs.aclsController.cur_role.description"}}></td></tr>
     </table>
     <table>
-      <tr><td colspan=2 style="display: block;" onclick="show_hide_constraints(this)" class="datatable_header hover-pointer"><span style="" class="downarrow sprites"></span><span style="display: none;" class="rightarrow sprites"></span>Permissions ({{#if Pcs.aclsController.cur_role.permissions.length}}{{Pcs.aclsController.cur_role.permissions.length}}{{else}}0{{/if}})</td></tr>
+      <tr><td colspan=2 style="display: block;" onclick="show_hide_constraints(this)" class="datatable_header hover-pointer"><span style="" class="downarrow sprites"></span><span style="display: none;" class="rightarrow sprites"></span><%=@I18n.t(:permissions)%> ({{#if Pcs.aclsController.cur_role.permissions.length}}{{Pcs.aclsController.cur_role.permissions.length}}{{else}}0{{/if}})</td></tr>
       <tr><td colspan=2>
           <div id="">
             <table class="datatable">
-              <tr><th>Type</th><th>XPath/ID</th><th>Query/ID</th><th>Remove</th></tr>
+              <tr><th><%=@I18n.t(:type)%></th><th>XPath/ID</th><th>Query/ID</th><th><%=@I18n.t(:remove)%></th></tr>
                 {{#each perm in Pcs.aclsController.cur_role.permissions}}
                 <tr {{bind-attr acl_perm_id="perm.permission_id"}}>
                   <td>{{perm.type}}</td>
@@ -77,7 +77,7 @@
                 </tr>
               {{/each}}
               {{#unless Pcs.aclsController}}
-                <tr><td style="color: gray;">NONE</td><td></td><td></td></tr>
+                <tr><td style="color: gray;"><%=@I18n.t(:none)%></td><td></td><td></td></tr>
               {{/unless}}
               <tr id="new_acl_perm">
                 <td>
@@ -94,7 +94,7 @@
                   </select>
                 </td>
                 <td><input type="text" name="role_query_id"></td>
-                <td><button type="button" onclick="add_acl_item('#new_acl_perm', 'perm');" name="add">Add</button></td>
+                <td><button type="button" onclick="add_acl_item('#new_acl_perm', 'perm');" name="add"><%=@I18n.t(:add)%></button></td>
               </tr>
             </table>
           </div>
@@ -102,11 +102,11 @@
       </tr>
     </table>
     <table>
-      <tr><td colspan=2 style="display: block;" onclick="show_hide_constraints(this)" class="datatable_header hover-pointer"><span style="" class="downarrow sprites"></span><span style="display: none;" class="rightarrow sprites"></span>Users Assigned ({{#if Pcs.aclsController.cur_role.user_list}}{{Pcs.aclsController.cur_role.user_list.length}}{{else}}0{{/if}})</td></tr>
+      <tr><td colspan=2 style="display: block;" onclick="show_hide_constraints(this)" class="datatable_header hover-pointer"><span style="" class="downarrow sprites"></span><span style="display: none;" class="rightarrow sprites"></span><%=@I18n.t(:'table.title.usersAssigned')%> ({{#if Pcs.aclsController.cur_role.user_list}}{{Pcs.aclsController.cur_role.user_list.length}}{{else}}0{{/if}})</td></tr>
       <tr><td colspan=2>
           <div id="">
             <table class="datatable">
-              <tr><th>User Name</th><th>Remove</th></tr>
+              <tr><th><%=@I18n.t(:user)%> <%=@I18n.t(:name)%></th><th><%=@I18n.t(:remove)%></th></tr>
               {{#each user in Pcs.aclsController.cur_role.user_list}}
               <tr {{bind-attr usergroup_id="user"}} {{bind-attr role_id="Pcs.aclsController.cur_role.name"}}>
                   <td>{{user}}</td>
@@ -116,11 +116,11 @@
                 </tr>
               {{/each}}
               {{#unless Pcs.aclsController.cur_role.user_list}}
-                <tr><td style="color: gray;">NONE</td><td></td></tr>
+                <tr><td style="color: gray;"><%=@I18n.t(:none)%></td><td></td></tr>
               {{/unless}}
               <tr id="new_acl_user">
                 <td><input type="text" name="role_assign_user"></td>
-                <td><button type="button" onclick="add_acl_item('#new_acl_user', 'user');" name="add">Add</button></td>
+                <td><button type="button" onclick="add_acl_item('#new_acl_user', 'user');" name="add"><%=@I18n.t(:add)%></button></td>
               </tr>
             </table>
           </div>
@@ -128,11 +128,11 @@
       </tr>
     </table>
     <table>
-      <tr><td colspan=2 style="display: block;" onclick="show_hide_constraints(this)" class="datatable_header hover-pointer"><span style="" class="downarrow sprites"></span><span style="display: none;" class="rightarrow sprites"></span>Groups Assigned ({{#if Pcs.aclsController.cur_role.group_list}}{{Pcs.aclsController.cur_role.group_list.length}}{{else}}0{{/if}})</td></tr>
+      <tr><td colspan=2 style="display: block;" onclick="show_hide_constraints(this)" class="datatable_header hover-pointer"><span style="" class="downarrow sprites"></span><span style="display: none;" class="rightarrow sprites"></span><%=@I18n.t(:'table.title.groupsAssigned')%> ({{#if Pcs.aclsController.cur_role.group_list}}{{Pcs.aclsController.cur_role.group_list.length}}{{else}}0{{/if}})</td></tr>
       <tr><td colspan=2>
           <div id="">
             <table class="datatable">
-              <tr><th>Group</th><th>Remove</th></tr>
+              <tr><th><%=@I18n.t(:group)%></th><th><%=@I18n.t(:remove)%></th></tr>
               {{#each group in Pcs.aclsController.cur_role.group_list}}
               <tr {{bind-attr usergroup_id="group"}} {{bind-attr role_id="Pcs.aclsController.cur_role.name"}}>
                 <td>{{group}}</td>
@@ -142,11 +142,11 @@
               </tr>
               {{/each}}
               {{#unless Pcs.aclsController.cur_role.group_list}}
-                <tr><td style="color: gray;">NONE</td><td></td></tr>
+                <tr><td style="color: gray;"><%=@I18n.t(:none)%></td><td></td></tr>
               {{/unless}}
               <tr id="new_acl_group">
                 <td><input type="text" name="role_assign_user"></td>
-                <td><button type="button" onclick="add_acl_item('#new_acl_group', 'group');" name="add">Add</button></td>
+                <td><button type="button" onclick="add_acl_item('#new_acl_group', 'group');" name="add"><%=@I18n.t(:add)%></button></td>
               </tr>
             </table>
           </div>
@@ -160,11 +160,11 @@
   <div id="add_acl_role" style="display: none;">
     <table>
       <tr>
-        <td>Role Name:</td>
+        <td><%=@I18n.t(:role)%> <%=@I18n.t(:name)%>:</td>
         <td><input type="text" name="name" size="40"></td>
       </tr>
       <tr>
-        <td>Role Description:</td>
+        <td><%=@I18n.t(:role)%> <%=@I18n.t(:description)%>:</td>
         <td><input type="text" name="description" size="40"></td>
       </tr>
     </table>

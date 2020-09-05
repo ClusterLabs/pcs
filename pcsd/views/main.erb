@@ -86,7 +86,7 @@
   <div style="width: 450px;">
     <table cellpadding="0" cellspacing="0" class="tree-view" style="width: 100%; border: none;">
       <tr>
-        <th style="width:27px;"><input type="checkbox" onchange="checkBoxToggle(this,false)"></th><th style="width:47px;"></th><th>NAME</th><th style="width:220px;">TYPE</th><th style="width:18px;"></th>
+        <th style="width:27px;"><input type="checkbox" onchange="checkBoxToggle(this,false)"></th><th style="width:47px;"></th><th><%=@I18n.t(:name)%></th><th style="width:220px;"><%=@I18n.t(:type)%></th><th style="width:18px;"></th>
       </tr>
       {{#each element in elements}}
       <tr><td colspan="5" style="padding-top: 0px; padding-bottom: 0px;">
@@ -142,7 +142,7 @@
   <script type="text/x-handlebars" data-template-name="components/resource-edit">
   {{#if resource}}
     <div id="node_info_header">
-      <div class="node_info_header_title" >Edit {{page_name}}&nbsp;</div>
+      <div class="node_info_header_title" ><%=@I18n.t(:edit)%> {{page_name}}&nbsp;</div>
       <div id="node_info_header_title_name">{{resource._id}}</div>
     </div>
     <div id="node_sub_info">
@@ -162,32 +162,32 @@
     <div>
     {{#if resource.stonith}}
       <div class="xdark sprites" style="float: left"></div>
-      <div id="stonith_delete_link" class="link" onclick="verify_remove_fence_devices(curStonith());">Remove</div>
+      <div id="stonith_delete_link" class="link" onclick="verify_remove_fence_devices(curStonith());"><%=@I18n.t(:remove)%></div>
       {{#if Pcs.is_supported_resource_refresh_one_resource}}
         <div class="restart sprites" style="float: left"></div>
-        <div id="stonith_cleanup_link" class="link" onclick="cleanup_stonith();">Cleanup</div>
+        <div id="stonith_cleanup_link" class="link" onclick="cleanup_stonith();"><%=@I18n.t(:cleanup)%></div>
         <div class="restart sprites" style="float: left"></div>
-        <div id="stonith_refresh_link" class="link" onclick="refresh_stonith(true);">Refresh</div>
+        <div id="stonith_refresh_link" class="link" onclick="refresh_stonith(true);"><%=@I18n.t(:refresh)%></div>
       {{else}}
         <div class="restart sprites" style="float: left"></div>
-        <div id="stonith_refresh_link" class="link" onclick="refresh_stonith(false);">Refresh</div>
+        <div id="stonith_refresh_link" class="link" onclick="refresh_stonith(false);"><%=@I18n.t(:refresh)%></div>
       {{/if}}
     {{else}}
       <div class="checkdark sprites" style="float: left"></div>
-      <div id="resource_start_link" class="link" onclick="enable_resource();">Enable</div>
+      <div id="resource_start_link" class="link" onclick="enable_resource();"><%=@I18n.t(:enable)%></div>
       <div class="cancel sprites" style="float: left"></div>
-      <div id="resource_stop_link" class="link" onclick="disable_resource();">Disable</div>
+      <div id="resource_stop_link" class="link" onclick="disable_resource();"><%=@I18n.t(:disable)%></div>
       {{#if Pcs.is_supported_resource_refresh_one_resource}}
         <div class="restart sprites" style="float: left"></div>
-        <div id="resource_cleanup_link" class="link" onclick="cleanup_resource();">Cleanup</div>
+        <div id="resource_cleanup_link" class="link" onclick="cleanup_resource();"><%=@I18n.t(:cleanup)%></div>
         <div class="restart sprites" style="float: left"></div>
-        <div id="resource_refresh_link" class="link" onclick="refresh_resource(true);">Refresh</div>
+        <div id="resource_refresh_link" class="link" onclick="refresh_resource(true);"><%=@I18n.t(:refresh)%></div>
       {{else}}
         <div class="restart sprites" style="float: left"></div>
-        <div id="resource_refresh_link" class="link" onclick="refresh_resource(false);">Refresh</div>
+        <div id="resource_refresh_link" class="link" onclick="refresh_resource(false);"><%=@I18n.t(:refresh)%></div>
       {{/if}}
       <div class="xdark sprites" style="float: left"></div>
-      <div id="resource_delete_link" class="link" onclick="verify_remove_resources(curResource());">Remove</div>
+      <div id="resource_delete_link" class="link" onclick="verify_remove_resources(curResource());"><%=@I18n.t(:remove)%></div>
       </div>
       <div>
       {{#if Pcs.is_supported_unmanaged_resource}}
@@ -198,7 +198,7 @@
           class="link"
           onclick="manage_resource(curResource());"
         >
-          Manage
+          <%=@I18n.t(:manage)%>
         </div>
         </div>
         <div>
@@ -208,7 +208,7 @@
           class="link"
           onclick="unmanage_resource(curResource());"
         >
-          Unmanage
+        <%=@I18n.t(:unmanage)%>
         </div>
         </div>
       {{/if}}
@@ -216,27 +216,27 @@
     </div>
       <!--
       <div class="move sprites" style="float: left"></div>
-      <div id="resource_move_link" class="link">Move</div>
+      <div id="resource_move_link" class="link"><%=@I18n.t(:move)%></div>
       <div class="history sprites" style="float: left"></div>
-      <div id="resource_history_link" class="link">History</div>
+      <div id="resource_history_link" class="link"><%=@I18n.t(:history)%></div>
       -->
     </div>
     <br>
     <div id="resource_issues">
-      {{issues-table table_name="Errors" table_name_style="color:red;" issue_list=resource.error_list issue_class="error_table"}}
-      {{issues-table table_name="Warnings" table_name_style="color:orange;" issue_list=resource.warning_list issue_class="warning_table"}}
+      {{issues-table table_name="<%=@I18n.t(:error)%>" table_name_style="color:red;" issue_list=resource.error_list issue_class="error_table"}}
+      {{issues-table table_name="<%=@I18n.t(:warnings)%>" table_name_style="color:orange;" issue_list=resource.warning_list issue_class="warning_table"}}
     </div>
     <div id="node_details">
       <table style="margin-bottom:25px;">
         <tr>
-          <td class="bold" nowrap>Type:</td>
+          <td class="bold" nowrap><%=@I18n.t(:type)%>:</td>
           <td class="reg" nowrap>{{resource.res_type}}</td>
         </tr>
         {{#if resource.is_primitive}}
         {{#if resource.resource_agent.shortdesc}}
           <tr>
             <td>
-              <div class="bold">Description:</div>
+              <div class="bold"><%=@I18n.t(:description)%>:</div>
             </td>
             <td>
               <span class="reg" style="float:left;">
@@ -256,33 +256,33 @@
         {{#unless resource.stonith}}
         {{#if resource.is_primitive}}
           <tr>
-            <td class="bold" nowrap>Current Location:</td>
+            <td class="bold" nowrap><%=@I18n.t(:'table.title.currentLocation')%>:</td>
             <td id="cur_res_loc" class="reg">{{resource.nodes_running_on_string}}</td>
           </tr>
           {{#unless resource.parent}}
             <tr>
-              <td class="bold" nowrap>Clone:</td>
-              <td id="cur_res_loc" class="reg" title="Makes the resource run multiple times on the cluster. By default the resource will run once on each of the nodes.">
-                <input type="button" onclick="resource_clone(curResource());" value="Create clone">
+              <td class="bold" nowrap><%=@I18n.t(:'table.title.clone')%>:</td>
+              <td id="cur_res_loc" class="reg" title="<%=@I18n.t(:'promptInfo.createClone')%>">
+                <input type="button" onclick="resource_clone(curResource());" value="<%=@I18n.t(:'button.createClone')%>">
               </td>
             </tr>
             {{#if Pcs.is_supported_resource_promotable}}
               <tr>
-                <td class="bold" nowrap>Promotable Clone:</td>
-                <td id="cur_res_loc" class="reg" title="Makes the resource run multiple times on the cluster and distinguish between Promoted and Demoted operating mode for each instance. By default the resource will run on one node in Promoted mode and on all other nodes in Demoted mode.">
-                  <input type="button" onclick="resource_promotable(curResource());" value="Create promotable">
+                <td class="bold" nowrap><%=@I18n.t(:'table.title.promotableClone')%>:</td>
+                <td id="cur_res_loc" class="reg" title="<%=@I18n.t(:'promptInfo.createPromotable')%>">
+                  <input type="button" onclick="resource_promotable(curResource());" value="<%=@I18n.t(:'button.createPromotable')%>">
                 </td>
               </tr>
             {{else}}
               <tr>
-                <td class="bold" nowrap>Master/Slave:</td>
-                <td id="cur_res_loc" class="reg" title="Makes the resource run multiple times on the cluster and distinguish between Master and Slave operating mode for each instance. By default the resource will run on one node in Master mode and on all other nodes in Slave mode.">
-                  <input type="button" onclick="resource_master(curResource());" value="Create master/slave">
+                <td class="bold" nowrap><%=@I18n.t(:'table.title.masterSlave')%>:</td>
+                <td id="cur_res_loc" class="reg" title="<%=@I18n.t(:'promptInfo.createMasterSlave')%>">
+                  <input type="button" onclick="resource_master(curResource());" value="<%=@I18n.t(:'button.createMasterSlave')%>">
                 </td>
               </tr>
             {{/if}}
             <tr>
-              <td class="bold" nowrap>Group:</td>
+              <td class="bold" nowrap><%=@I18n.t(:group)%>:</td>
               <td id="cur_res_loc" class="reg">
                 {{group-selector resource_id=resource._id}}
               </td>
@@ -291,7 +291,7 @@
             {{#if resource.parent.is_group}}
             {{#if resource.show_group_selector}}
             <tr>
-              <td class="bold" nowrap>Group:</td>
+              <td class="bold" nowrap><%=@I18n.t(:group)%>:</td>
               <td id="cur_res_loc" class="reg">
                 {{group-selector resource_id=resource._id}}
               </td>
@@ -304,31 +304,31 @@
         {{#if resource.is_group}}
         {{#unless resource.parent}}
           <tr>
-            <td class="bold" nowrap>Clone:</td>
-            <td id="cur_res_loc" class="reg" title="Makes the resource run multiple times on the cluster. By default the resource will run once on each of the nodes.">
-              <input type="button" onclick="resource_clone(curResource());" value="Create clone">
+            <td class="bold" nowrap><%=@I18n.t(:'table.title.clone')%>:</td>
+            <td id="cur_res_loc" class="reg" title="<%=@I18n.t(:'promptInfo.createClone')%>">
+              <input type="button" onclick="resource_clone(curResource());" value="<%=@I18n.t(:'button.createClone')%>">
             </td>
           </tr>
           {{#if Pcs.is_supported_resource_promotable}}
             <tr>
-              <td class="bold" nowrap>Promotable Clone:</td>
-              <td id="cur_res_loc" class="reg" title="Makes the resource run multiple times on the cluster and distinguish between Promoted and Demoted operating mode for each instance. By default the resource will run on one node in Promoted mode and on all other nodes in Demoted mode.">
-                <input type="button" onclick="resource_promotable(curResource());" value="Create promotable">
+              <td class="bold" nowrap><%=@I18n.t(:'table.title.promotableClone')%>:</td>
+              <td id="cur_res_loc" class="reg" title="<%=@I18n.t(:'promptInfo.createPromotable')%>">
+                <input type="button" onclick="resource_promotable(curResource());" value="<%=@I18n.t(:'button.createPromotable')%>">
               </td>
             </tr>
           {{else}}
             <tr>
-              <td class="bold" nowrap>Master/Slave:</td>
-              <td id="cur_res_loc" class="reg" title="Makes the resource run multiple times on the cluster and distinguish between Master and Slave operating mode for each instance. By default the resource will run on one node in Master mode and on all other nodes in Slave mode.">
-                <input type="button" onclick="resource_master(curResource());" value="Create master/slave">
+              <td class="bold" nowrap><%=@I18n.t(:'table.title.masterSlave')%>:</td>
+              <td id="cur_res_loc" class="reg" title="<%=@I18n.t(:'promptInfo.createMasterSlave')%>">
+                <input type="button" onclick="resource_master(curResource());" value="<%=@I18n.t(:'button.createMasterSlave')%>">
               </td>
             </tr>
           {{/if}}
           {{#unless old_pcsd}}
             <tr>
-              <td class="bold" nowrap>Group:</td>
+              <td class="bold" nowrap><%=@I18n.t(:group)%>:</td>
               <td id="cur_res_loc" class="reg">
-                <input type="button" onclick="resource_ungroup(curResource());" value="Ungroup">
+                <input type="button" onclick="resource_ungroup(curResource());" value="<%=@I18n.t(:'button.ungroup')%>">
               </td>
             </tr>
           {{/unless}}
@@ -336,9 +336,9 @@
         {{/if}}
         {{#if resource.is_multi_instance}}
           <tr>
-            <td class="bold" nowrap>Clone:</td>
+            <td class="bold" nowrap><%=@I18n.t(:'table.title.clone')%>:</td>
             <td id="cur_res_loc" class="reg">
-              <input type="button" onclick="resource_unclone(curResource());" value="Unclone">
+              <input type="button" onclick="resource_unclone(curResource());" value="<%=@I18n.t(:'button.unclone')%>">
             </td>
           </tr>
         {{/if}}
@@ -361,7 +361,7 @@
             {{utilization-table
                 entity=resource
                 utilization=resource.utilization
-                type="resource"
+                type="<%=@I18n.t(:'table.title.resource')%>"
                 table_id="resource_utilization_attributes"
             }}
           {{/if}}
@@ -390,20 +390,21 @@
     {{/if}}
   {{else}}
     {{#if stonith}}
-      NO FENCE DEVICE IN CLUSTER
+      <%=@I18n.t(:'promptInfo.noFenceDeviceInCluster')%>
     {{else}}
-      NO RESOURCES IN CLUSTER
+      <%=@I18n.t(:'promptInfo.noResourcesInCluster')%>
     {{/if}}
   {{/if}}
   </script>
 
   <script type="text/x-handlebars" data-template-name="components/location_constraints-table">
     <table style="clear:left;float:left">
-		<tr><td style="display: block;" onclick="show_hide_constraints(this)" class="datatable_header hover-pointer" id="location_constraints"><span style="" class="downarrow sprites"></span><span style="display: none;" class="rightarrow sprites"></span>Resource Location Preferences ({{#if constraints}}{{constraints.length}}{{else}}0{{/if}})</td></tr>
+    <tr>
+    <td style="display: block;" onclick="show_hide_constraints(this)" class="datatable_header hover-pointer" id="location_constraints"><span style="" class="downarrow sprites"></span><span style="display: none;" class="rightarrow sprites"></span><%=@I18n.t(:'table.title.resourceLocationPreferences')%> ({{#if constraints}}{{constraints.length}}{{else}}0{{/if}})</td></tr>
 		<tr><td>
 		    <div id="locationdep">
 		      <table class="datatable">
-			<tr><th>Node/Rule</th><th>Score</th><th>Remove</th></tr>
+			<tr><th><%=@I18n.t(:'table.title.nodeRule')%></th><th><%=@I18n.t(:'table.title.score')%></th><th><%=@I18n.t(:remove)%></th></tr>
 			{{#each cons in constraints}}
 			<tr>
 			{{#if cons.rule_string}}
@@ -425,12 +426,12 @@
 			{{/if}}
 			</tr>
 			{{else}}
-			<tr><td style="color: gray;">NONE</td><td></td><td></td></tr>
+			<tr><td style="color: gray;"><%=@I18n.t(:none)%></td><td></td><td></td></tr>
 		        {{/each}}
 			<tr id="new_res_loc">
 			  <td><input type="text" name="node_id"></td>
 			  <td><input type="text" name="score" size="5"></td>
-			  <td><button type="button" onclick="add_constraint('#new_res_loc','loc', false);" name="add">Add</button></td>
+			  <td><button type="button" onclick="add_constraint('#new_res_loc','loc', false);" name="add"><%=@I18n.t(:add)%></button></td>
 			</tr>
 		      </table>
 		    </div>
@@ -441,11 +442,11 @@
 
   <script type="text/x-handlebars" data-template-name="components/ordering_constraints-table">
     <table style="clear:left;float:left;">
-		<tr><td style="display: block;" onclick="show_hide_constraints(this)" class="datatable_header hover-pointer" id="ordering_constraints"><span style="" class="downarrow sprites"></span><span style="display: none;" class="rightarrow sprites"></span>Resource Ordering Preferences ({{#if constraints.length}}{{constraints.length}}{{else}}0{{/if}})</td></tr>
+		<tr><td style="display: block;" onclick="show_hide_constraints(this)" class="datatable_header hover-pointer" id="ordering_constraints"><span style="" class="downarrow sprites"></span><span style="display: none;" class="rightarrow sprites"></span><%=@I18n.t(:'table.title.resourceOrderingPreferences')%> ({{#if constraints.length}}{{constraints.length}}{{else}}0{{/if}})</td></tr>
 		<tr><td>
 		    <div id="locationdep">
 		      <table class="datatable">
-			<tr><th>Resource</th><th>Action</th><th>Before/After</th><th>Action</th><th>Score</th><th>Remove</th></tr>
+			<tr><th><%=@I18n.t(:'table.title.resource')%></th><th><%=@I18n.t(:'table.title.action')%></th><th><%=@I18n.t(:'table.title.beforeAfter')%></th><th><%=@I18n.t(:'table.title.action')%></th><th><%=@I18n.t(:'table.title.score')%></th><th><%=@I18n.t(:remove)%></th></tr>
 		        {{#each cons in constraints}}
 			  <tr><td>{{cons.other_rsc}}</td>
 			    {{#if cons.before}}
@@ -463,7 +464,7 @@
 			    </td>
 			  </tr>
 			{{else}}
-			<tr><td style="color: gray;">NONE</td><td></td><td></td><td></td><td></td><td></td></tr>
+			<tr><td style="color: gray;"><%=@I18n.t(:none)%></td><td></td><td></td><td></td><td></td><td></td></tr>
  			{{/each}}
 			<tr id="new_res_orc">
 			  <td><input type="text" name="target_res_id"></td>
@@ -491,7 +492,7 @@
 			    </select>
 			  </td>
 			  <td><input type="text" name="score" size="5"></td>
-			  <td><button type="button" onclick="add_constraint('#new_res_orc','ord', false);" name="add">Add</button></td>
+			  <td><button type="button" onclick="add_constraint('#new_res_orc','ord', false);" name="add"><%=@I18n.t(:add)%></button></td>
 			</tr>
 		      </table>
 		    </div>
@@ -502,13 +503,13 @@
 
   <script type="text/x-handlebars" data-template-name="components/ordering_set_constraints-table">
     <table style="clear:left;float:left;">
-          <tr><td style="display: block;" onclick="show_hide_constraints(this)" class="datatable_header hover-pointer" id="ordering_set_constraints"><span style="" class="downarrow sprites"></span><span style="display: none;" class="rightarrow sprites"></span>Resource Ordering Set Preferences ({{#if constraints.length}}{{constraints.length}}{{else}}0{{/if}})</td></tr>
+          <tr><td style="display: block;" onclick="show_hide_constraints(this)" class="datatable_header hover-pointer" id="ordering_set_constraints"><span style="" class="downarrow sprites"></span><span style="display: none;" class="rightarrow sprites"></span><%=@I18n.t(:'table.title.resourceOrderingSetPreferences')%> ({{#if constraints.length}}{{constraints.length}}{{else}}0{{/if}})</td></tr>
           <tr><td>
             <div id="locationdep">
               <table class="datatable">
                 <tr>
-                  <th>Preference Name/Set of Resources</th>
-                  <th style="text-align: center;">Remove</th>
+                  <th><%=@I18n.t(:'table.title.preferenceNameSetofresources')%></th>
+                  <th style="text-align: center;"><%=@I18n.t(:remove)%></th>
                 </tr>
                 {{#each cons in constraints}}
                 <tr>
@@ -519,20 +520,18 @@
                 </tr>
                 {{#each set in cons.sets}}
                 <tr>
-                  <td style="padding-left:2em;">Set:{{#each rsc in set.resources}} {{rsc}}{{/each}}</td>
+                  <td style="padding-left:2em;"><%=@I18n.t(:set)%>:{{#each rsc in set.resources}} {{rsc}}{{/each}}</td>
                   <td></td>
                 </tr>
                 {{/each}}
                 {{else}}
-                <tr><td style="color: gray;">NONE</td><td></td></tr>
+                <tr><td style="color: gray;"><%=@I18n.t(:none)%></td><td></td></tr>
                 {{/each}}
-                <tr id="new_res_orc_set" title="Enter the resources you want to be in one set into the 'Set' field separated by space.
-Use the 'New Set' button to create more sets.
-Use the 'Add' button to submit the form.">
-                  <td>Set: <input type="text" name="resource_ids[]"></td>
+                <tr id="new_res_orc_set" title="<%=@I18n.t(:'promptInfo.resourceSet')%>">
+                  <td><%=@I18n.t(:set)%>: <input type="text" name="resource_ids[]"></td>
                   <td style="vertical-align: bottom;">
-                    <button type="button" onclick="new_constraint_set_row('#new_res_orc_set');" name="new-row">New Set</button>
-                    <button type="button" onclick="add_constraint_set('#new_res_orc_set', 'ord', false);" name="add">Add</button>
+                    <button type="button" onclick="new_constraint_set_row('#new_res_orc_set');" name="new-row"><%=@I18n.t(:'button.newSet')%></button>
+                    <button type="button" onclick="add_constraint_set('#new_res_orc_set', 'ord', false);" name="add"><%=@I18n.t(:add)%></button>
                   </td>
                 </tr>
               </table>
@@ -555,7 +554,7 @@ Use the 'Add' button to submit the form.">
         >
           <span style="" class="downarrow sprites"></span>
           <span style="display: none;" class="rightarrow sprites"></span>
-          Resource Ticket Preferences
+          <%=@I18n.t(:'table.title.resourceTicketPreferences')%>
           ({{#if constraints.length}}{{constraints.length}}{{else}}0{{/if}})
         </td>
       </tr>
@@ -564,10 +563,10 @@ Use the 'Add' button to submit the form.">
           <div id="locationdep">
             <table class="datatable">
               <tr>
-                <th>Ticket</th>
-                <th>Resource Role</th>
-                <th>Loss Policy</th>
-                <th>Remove</th>
+                <th><%=@I18n.t(:'table.title.ticket')%></th>
+                <th><%=@I18n.t(:'table.title.resourceRole')%></th>
+                <th><%=@I18n.t(:'table.title.lossPolicy')%></th>
+                <th><%=@I18n.t(:remove)%></th>
               </tr>
               {{#each cons in constraints}}
                 <tr>
@@ -587,7 +586,7 @@ Use the 'Add' button to submit the form.">
                 </tr>
               {{else}}
                 <tr>
-                  <td colspan="4" style="color: gray;">NONE</td>
+                  <td colspan="4" style="color: gray;"><%=@I18n.t(:none)%></td>
                 </tr>
               {{/each}}
               <tr id="new_ticket_constraint">
@@ -619,7 +618,7 @@ Use the 'Add' button to submit the form.">
                       'ticket',
                       false
                     );"
-                  >Add</button>
+                  ><%=@I18n.t(:add)%></button>
                 </td>
               </tr>
             </table>
@@ -643,7 +642,7 @@ Use the 'Add' button to submit the form.">
         >
           <span style="" class="downarrow sprites"></span>
           <span style="display: none;" class="rightarrow sprites"></span>
-          Resource Ticket Set Preferences
+          <%=@I18n.t(:'table.title.resourceTicketSetPreferences')%>
           ({{#if constraints.length}}{{constraints.length}}{{else}}0{{/if}})
         </td>
       </tr>
@@ -652,10 +651,10 @@ Use the 'Add' button to submit the form.">
           <div id="locationdep">
             <table class="datatable">
               <tr>
-                <th>Preference Name/Set of Resources</th>
-                <th>Ticket</th>
-                <th>Loss Policy</th>
-                <th style="text-align: center;">Remove</th>
+                <th><%=@I18n.t(:'table.title.resourceTicketSetPreferences')%></th>
+                <th><%=@I18n.t(:'table.title.ticket')%></th>
+                <th><%=@I18n.t(:'table.title.lossPolicy')%></th>
+                <th style="text-align: center;"><%=@I18n.t(:remove)%></th>
               </tr>
               {{#each cons in constraints}}
                 <tr>
@@ -676,12 +675,12 @@ Use the 'Add' button to submit the form.">
                 {{#each set in cons.sets}}
                 <tr>
                   <td style="padding-left:2em;" colspan="4">
-                    Set:{{#each rsc in set.resources}} {{rsc}}{{/each}}
+                    <%=@I18n.t(:set)%>:{{#each rsc in set.resources}} {{rsc}}{{/each}}
                   </td>
                 </tr>
                 {{/each}}
               {{else}}
-                <tr><td style="color: gray;" colspan="4">NONE</td></tr>
+                <tr><td style="color: gray;" colspan="4"><%=@I18n.t(:none)%></td></tr>
               {{/each}}
               <tr id="new_ticket_constraint_resource_set" title="
                 Enter the resources you want to be in one set into the 'Set'
@@ -689,7 +688,7 @@ Use the 'Add' button to submit the form.">
                 Use the 'New Set' button to create more sets.
                 Use the 'Add' button to submit the form.
               ">
-                <td>Set: <input type="text" name="resource_ids[]"></td>
+                <td><%=@I18n.t(:set)%>: <input type="text" name="resource_ids[]"></td>
                 <td class="constraint-ticket-add-attribute">
                   <input type="text" name="ticket"/>
                 </td>
@@ -707,14 +706,14 @@ Use the 'Add' button to submit the form.">
                     onclick="new_constraint_set_row(
                       '#new_ticket_constraint_resource_set'
                     );"
-                  >New Set</button>
+                  ><%=@I18n.t(:'button.newSet')%></button>
                   <button type="button" name="add"
                     onclick="add_constraint_set(
                       '#new_ticket_constraint_resource_set',
                       'ticket',
                       false
                     );"
-                  >Add</button>
+                  ><%=@I18n.t(:add)%></button>
                 </td>
               </tr>
             </table>
@@ -726,11 +725,11 @@ Use the 'Add' button to submit the form.">
 
   <script type="text/x-handlebars" data-template-name="components/colocation_constraints-table">
     <table style="clear:left;float:left">
-		<tr><td onclick="show_hide_constraints(this)" class="datatable_header hover-pointer" id="colocation_constraints"><span style="" class="downarrow sprites"></span><span style="display: none;" class="rightarrow sprites"></span>Resource Colocation Preferences ({{#if constraints.length}}{{constraints.length}}{{else}}0{{/if}})</td></tr>
+		<tr><td onclick="show_hide_constraints(this)" class="datatable_header hover-pointer" id="colocation_constraints"><span style="" class="downarrow sprites"></span><span style="display: none;" class="rightarrow sprites"></span><%=@I18n.t(:'table.title.resourceColocationPreferences')%> ({{#if constraints.length}}{{constraints.length}}{{else}}0{{/if}})</td></tr>
 		<tr><td>
 		    <div id="locationdep">
 		      <table class="datatable">
-			<tr><th>Resource</th><th>Together/Apart</th><th>Score</th><th>Remove</th></tr>
+			<tr><th><%=@I18n.t(:'table.title.resource')%></th><th><%=@I18n.t(:'table.title.togetherApart')%></th><th><%=@I18n.t(:'table.title.score')%></th><th><%=@I18n.t(:remove)%></th></tr>
 			{{#each cons in constraints}}
 			  <tr><td>{{cons.other_rsc}}</td>
 			    <td>{{cons.together}}</td>
@@ -740,13 +739,13 @@ Use the 'Add' button to submit the form.">
 			    </td>
 			  </tr>
 			  {{else}}
-			  <tr><td style="color: gray;">NONE</td><td></td><td></td><td></td></tr>
+			  <tr><td style="color: gray;"><%=@I18n.t(:none)%></td><td></td><td></td><td></td></tr>
               {{/each}}
 			<tr id="new_res_col">
 			  <td><input type="text" name="target_res_id"></td>
 			  <td><select name="colocate"><option value="together">Together<option value="apart">Apart</select></td>
 			  <td><input type="text" name="score" size="5"></td>
-			  <td><button type="button" onclick="add_constraint('#new_res_col','col', false);" name="add">Add</button></td>
+			  <td><button type="button" onclick="add_constraint('#new_res_col','col', false);" name="add"><%=@I18n.t(:add)%></button></td>
 			</tr>
 
 		      </table>
@@ -758,13 +757,13 @@ Use the 'Add' button to submit the form.">
 
   <script type="text/x-handlebars" data-template-name="components/colocation_set_constraints-table">
     <table style="clear:left;float:left;">
-          <tr><td style="display: block;" onclick="show_hide_constraints(this)" class="datatable_header hover-pointer" id="colocation_set_constraints"><span style="" class="downarrow sprites"></span><span style="display: none;" class="rightarrow sprites"></span>Resource Colocation Set Preferences ({{#if constraints.length}}{{constraints.length}}{{else}}0{{/if}})</td></tr>
+          <tr><td style="display: block;" onclick="show_hide_constraints(this)" class="datatable_header hover-pointer" id="colocation_set_constraints"><span style="" class="downarrow sprites"></span><span style="display: none;" class="rightarrow sprites"></span><%=@I18n.t(:'table.title.resourceColocationSetPreferences')%> ({{#if constraints.length}}{{constraints.length}}{{else}}0{{/if}})</td></tr>
           <tr><td>
             <div id="locationdep">
               <table class="datatable">
                 <tr>
-                  <th>Preference Name/Set of Resources</th>
-                  <th style="text-align: center;">Remove</th>
+                  <th><%=@I18n.t(:'table.title.preferenceNameSetofresources')%></th>
+                  <th style="text-align: center;"><%=@I18n.t(:remove)%></th>
                 </tr>
                 {{#each cons in constraints}}
                 <tr>
@@ -775,20 +774,20 @@ Use the 'Add' button to submit the form.">
                 </tr>
                 {{#each set in cons.sets}}
                 <tr>
-                  <td style="padding-left:2em;">Set:{{#each rsc in set.resources}} {{rsc}}{{/each}}</td>
+                  <td style="padding-left:2em;"><%=@I18n.t(:set)%>:{{#each rsc in set.resources}} {{rsc}}{{/each}}</td>
                   <td></td>
                 </tr>
                 {{/each}}
                 {{else}}
-                <tr><td style="color: gray;">NONE</td><td></td></tr>
+                <tr><td style="color: gray;"><%=@I18n.t(:none)%></td><td></td></tr>
                 {{/each}}
                 <tr id="new_res_col_set" title="Enter the resources you want to be in one set into the 'Set' field separated by space.
 Use the 'New Set' button to create more sets.
 Use the 'Add' button to submit the form.">
-                  <td>Set: <input type="text" name="resource_ids[]"></td>
+                  <td><%=@I18n.t(:set)%>: <input type="text" name="resource_ids[]"></td>
                   <td style="vertical-align: bottom;">
-                    <button type="button" onclick="new_constraint_set_row('#new_res_col_set');" name="new-row">New Set</button>
-                    <button type="button" onclick="add_constraint_set('#new_res_col_set', 'col', false);" name="add">Add</button>
+                    <button type="button" onclick="new_constraint_set_row('#new_res_col_set');" name="new-row"><%=@I18n.t(:'button.newSet')%></button>
+                    <button type="button" onclick="add_constraint_set('#new_res_col_set', 'col', false);" name="add"><%=@I18n.t(:add)%></button>
                   </td>
                 </tr>
               </table>
@@ -799,11 +798,11 @@ Use the 'Add' button to submit the form.">
 
   <script type="text/x-handlebars" data-template-name="components/meta_attributes-table">
     <table style="clear:left;float:left">
-		<tr><td onclick="show_hide_constraints(this)" class="datatable_header hover-pointer" id="meta_attributes"><span style="" class="downarrow sprites"></span><span style="display: none;" class="rightarrow sprites"></span>Resource Meta Attributes ({{#if resource.meta_attr.length}}{{resource.meta_attr.length}}{{else}}0{{/if}})</td></tr>
+		<tr><td onclick="show_hide_constraints(this)" class="datatable_header hover-pointer" id="meta_attributes"><span style="" class="downarrow sprites"></span><span style="display: none;" class="rightarrow sprites"></span><%=@I18n.t(:'table.title.resource')%> <%=@I18n.t(:'table.title.metaAttribute')%> ({{#if resource.meta_attr.length}}{{resource.meta_attr.length}}{{else}}0{{/if}})</td></tr>
 		<tr><td>
 		    <div id="locationdep">
 		      <table class="datatable">
-			<tr><th>Meta Attribute</th><th>Value</th><th>Remove</th></tr>
+			<tr><th><%=@I18n.t(:'table.title.metaAttribute')%></th><th><%=@I18n.t(:'table.title.value')%></th><th><%=@I18n.t(:remove)%></th></tr>
 			{{#each meta in resource.meta_attr}}
 			<tr><td>{{meta.name}}</td>
 			    <td>{{meta.value}}</td>
@@ -812,12 +811,12 @@ Use the 'Add' button to submit the form.">
 			    </td>
 			  </tr>
 			  {{else}}
-			  <tr><td style="color: gray;">NONE</td><td></td><td></td></tr>
+			  <tr><td style="color: gray;"><%=@I18n.t(:none)%></td><td></td><td></td></tr>
 			  {{/each}}
 			<tr id="new_meta_col">
 			  <td><input type="text" name="new_meta_key" size="20"></td>
 			  <td><input type="text" name="new_meta_value" size="20"></td>
-			  <td><button type="button" onclick="add_meta_attr('#new_meta_col');" name="add">Add</button></td>
+			  <td><button type="button" onclick="add_meta_attr('#new_meta_col');" name="add"><%=@I18n.t(:add)%></button></td>
 			</tr>
 		      </table>
 		    </div>
@@ -839,7 +838,7 @@ Use the 'Add' button to submit the form.">
           {{else}}
             <span class="rightarrow sprites"></span>
           {{/if}}
-          <span style="text-transform: capitalize;">{{type}} Utilization Attributes ({{util_count}})</span>
+          <span style="text-transform: capitalize;">{{type}} <%=@I18n.t(:'table.title.utilizationAttribute')%> ({{util_count}})</span>
         </td>
       </tr>
       {{#if show_content}}
@@ -848,7 +847,7 @@ Use the 'Add' button to submit the form.">
           <div class="utilization_table">
             <table class="datatable">
               <tr>
-                <th>Utilization Attribute</th><th>Value</th><th>Remove</th>
+                <th><%=@I18n.t(:'table.title.utilizationAttribute')%></th><th><%=@I18n.t(:'table.title.value')%></th><th><%=@I18n.t(:remove)%></th>
               </tr>
               {{#each util in utilization}}
               <tr>
@@ -860,7 +859,7 @@ Use the 'Add' button to submit the form.">
               </tr>
               {{else}}
               <tr>
-                <td style="color: gray;">NONE</td><td></td><td></td>
+                <td style="color: gray;"><%=@I18n.t(:none)%></td><td></td><td></td>
               </tr>
               {{/each}}
               <tr {{bind-attr id=form_id}}>
@@ -871,7 +870,7 @@ Use the 'Add' button to submit the form.">
                   <input type="text" name="new_utilization_value" size="20">
                 </td>
                 <td>
-                  <button {{action add form_id}} type="button" name="add">Add</button>
+                  <button {{action add form_id}} type="button" name="add"><%=@I18n.t(:add)%></button>
                 </td>
               </tr>
             </table>
@@ -969,7 +968,7 @@ Use the 'Add' button to submit the form.">
               <tbody>
                 <tr>
                   <td>
-                    <div class="bold">Description:</div>
+                    <div class="bold"><%=@I18n.t(:description)%>:</div>
                   </td>
                   <td>
                     <span class="reg" style="float:left;">
@@ -984,10 +983,10 @@ Use the 'Add' button to submit the form.">
                     <div class="long_desc_div reg" style="display:none; font-size:12px; max-width:350px;">{{{agent.longdesc_html}}}</div>
                   </td>
                 </tr>
-                <tr title="Select a group to add the resource to.">
+                <tr title="<%=@I18n.t(:'promptInfo.resourceSelectGroupHelper')%>">
                   <td nowrap>
                     <div class="bold">
-                      Resource Group:
+                    <%=@I18n.t(:'table.title.resourceGroup')%>:
                     </div>
                   </td>
                   <td>
@@ -997,10 +996,10 @@ Use the 'Add' button to submit the form.">
                     }}
                   </td>
                 </tr>
-                <tr title='Makes the resource run multiple times on the cluster. By default the resource will run once on each of the nodes.'>
+                <tr title='<%=@I18n.t(:'promptInfo.createClone')%>'>
                   <td nowrap>
                     <div class="bold">
-                      Clone:
+                      <%=@I18n.t(:'table.title.clone')%>:
                     </div>
                   </td>
                   <td>
@@ -1009,10 +1008,10 @@ Use the 'Add' button to submit the form.">
                   </td>
                 </tr>
                 {{#if Pcs.is_supported_resource_create_promotable}}
-                  <tr title='Makes the resource run multiple times on the cluster and distinguish between Promoted and Demoted operating mode for each instance. By default the resource will run on one node in Promoted mode and on all other nodes in Demoted mode.'>
+                  <tr title='<%=@I18n.t(:'promptInfo.createPromotable')%>'>
                     <td nowrap>
                       <div class="bold">
-                        Promotable Clone:
+                        <%=@I18n.t(:'table.title.promotableClone')%>:
                       </div>
                     </td>
                     <td>
@@ -1021,10 +1020,10 @@ Use the 'Add' button to submit the form.">
                     </td>
                   </tr>
                 {{else}}
-                  <tr title='Makes the resource run multiple times on the cluster and distinguish between Master and Slave operating mode for each instance. By default the resource will run on one node in Master mode and on all other nodes in Slave mode.'>
+                  <tr title='<%=@I18n.t(:'promptInfo.createMasterSlave')%>'>
                     <td nowrap>
                       <div class="bold">
-                        Master/Slave:
+                        <%=@I18n.t(:'table.title.masterSlave')%>:
                       </div>
                     </td>
                     <td>
@@ -1033,10 +1032,10 @@ Use the 'Add' button to submit the form.">
                     </td>
                   </tr>
                 {{/if}}
-                <tr title="Do not start the resource automatically after creating.">
+                <tr title="<%=@I18n.t(:'promptInfo.reaourceCreatingInfo')%>">
                   <td nowrap>
                     <div class="bold"
-                      >Disabled:
+                      ><%=@I18n.t(:'table.title.disabled')%>:
                     </div>
                   </td>
                   <td>
@@ -1045,7 +1044,7 @@ Use the 'Add' button to submit the form.">
                 </tr>
                 <tr>
                   <td class="reg">
-                    Resource ID
+                    <%=@I18n.t(:'table.title.resourceID')%>
                   </td>
                   <td>
                     <input style="margin-right: 50px;" type="text" name="name" size="30" class="text_field">
@@ -1058,20 +1057,20 @@ Use the 'Add' button to submit the form.">
         {{parameters-table
             table_id="required_args"
             table_id_suffix=table_id_suffix
-            table_name="Required Arguments"
+            table_name="<%=@I18n.t(:'table.title.requiredArguments')%>"
             parameters=agent.required_parameters
             show_content=true
         }}
         {{parameters-table
             table_id="optional_args"
             table_id_suffix=table_id_suffix
-            table_name="Optional Arguments"
+            table_name="<%=@I18n.t(:'table.title.optionalArguments')%>"
             parameters=agent.optional_parameters
         }}
         {{parameters-table
             table_id="advanced_args"
             table_id_suffix=table_id_suffix
-            table_name="Advanced Arguments"
+            table_name="<%=@I18n.t(:'table.title.advancedArguments')%>"
             parameters=agent.advanced_parameters
         }}
         {{#if resource}}
@@ -1079,19 +1078,19 @@ Use the 'Add' button to submit the form.">
             {{parameters-table
                 table_id="deprecated_args"
                 table_id_suffix=table_id_suffix
-                table_name="Deprecated Arguments"
+                table_name="<%=@I18n.t(:'table.title.deprecatedArguments')%>"
                 parameters=agent.deprecated_parameters
             }}
           {{/if}}
         {{/if}}
         {{#if resource}}
           <input class="apply_changes" type="button" onclick="$(this).hide();create_resource($(this)
-          .parents('form'),true); return false;" value="Apply Changes" style="margin-top: 1em;" />
-          <input type="button" onclick="tree_view_onclick(curResource()); return false;"  value="Refresh" />
+          .parents('form'),true); return false;" value="<%=@I18n.t(:'button.applyChanges')%>" style="margin-top: 1em;" />
+          <input type="button" onclick="tree_view_onclick(curResource()); return false;"  value="<%=@I18n.t(:refresh)%>" />
         {{else}}
           <center>
             <input class="apply_changes" type="button" onclick="$(this).hide();create_resource($(this)
-            .parents('form'),false); return false;" value="Create Resource" style="margin-top: 1em;" />
+            .parents('form'),false); return false;" value="<%=@I18n.t(:'button.createResource')%>" style="margin-top: 1em;" />
           </center>
         {{/if}}
       </form>
@@ -1111,7 +1110,7 @@ Use the 'Add' button to submit the form.">
               {{#if agent.shortdesc}}
               <tr>
                 <td>
-                  <div class="bold">Description:</div>
+                  <div class="bold"><%=@I18n.t(:description)%>:</div>
                 </td>
                 <td>
                   <span class="reg" style="float:left;">
@@ -1129,7 +1128,7 @@ Use the 'Add' button to submit the form.">
               {{/if}}
               <tr>
                 <td class="reg">
-                  Fence Instance Name
+                  <%=@I18n.t(:'table.title.fenceInstanceName')%>
                 </td>
                 <td>
                   <input style="margin-right: 50px;" type="text" name="name" size="30" class="text_field">
@@ -1141,20 +1140,20 @@ Use the 'Add' button to submit the form.">
         {{parameters-table
             table_id="required_fenceargs"
             table_id_suffix=table_id_suffix
-            table_name="Required Arguments"
+            table_name="<%=@I18n.t(:'table.title.requiredArguments')%>"
             parameters=agent.required_parameters
             show_content=true
         }}
         {{parameters-table
             table_id="optional_fenceargs"
             table_id_suffix=table_id_suffix
-            table_name="Optional Arguments"
+            table_name="<%=@I18n.t(:'table.title.optionalArguments')%>"
             parameters=agent.optional_parameters
         }}
         {{parameters-table
             table_id="advanced_fenceargs"
             table_id_suffix=table_id_suffix
-            table_name="Advanced Arguments"
+            table_name="<%=@I18n.t(:'table.title.advancedArguments')%>"
             parameters=agent.advanced_parameters
         }}
         {{#if resource}}
@@ -1162,17 +1161,17 @@ Use the 'Add' button to submit the form.">
             {{parameters-table
                 table_id="deprecated_fenceargs"
                 table_id_suffix=table_id_suffix
-                table_name="Deprecated Arguments"
+                table_name="<%=@I18n.t(:'table.title.deprecatedArguments')%>"
                 parameters=agent.deprecated_parameters
             }}
           {{/if}}
         {{/if}}
         {{#if resource}}
-          <input class="apply_changes" type="button" onclick="$(this).hide();create_resource($(this).parents('form'), true, true); return false;" value="Apply Changes" style="margin-top: 1em;" />
-          <input type="button" onclick="tree_view_onclick(curStonith()); return false;" value="Refresh" />
+          <input class="apply_changes" type="button" onclick="$(this).hide();create_resource($(this).parents('form'), true, true); return false;" value="<%=@I18n.t(:'button.applyChanges')%>" style="margin-top: 1em;" />
+          <input type="button" onclick="tree_view_onclick(curStonith()); return false;" value="<%=@I18n.t(:refresh)%>" />
         {{else}}
           <center>
-            <input class="apply_changes" type="button" type="submit" onclick="$(this).hide();create_resource($(this).parents('form'), false, true); return false;" value="Create Fence Instance" style="margin-top: 1em;" />
+            <input class="apply_changes" type="button" type="submit" onclick="$(this).hide();create_resource($(this).parents('form'), false, true); return false;" value="<%=@I18n.t(:'button.createFenceInstance')%>" style="margin-top: 1em;" />
           </center>
         {{/if}}
       </form>
@@ -1249,9 +1248,9 @@ Use the 'Add' button to submit the form.">
           return false;
         "
       >
-        Update group
+      <%=@I18n.t(:'button.updateGroup')%>
       </button>
-      <button {{action refresh}}>Refresh</button>
+      <button {{action refresh}}><%=@I18n.t(:refresh)%></button>
     {{/if}}
 
   </script>
@@ -1289,7 +1288,7 @@ Use the 'Add' button to submit the form.">
                       </div>
                       <div style="width:100%;" class="menu">
                         <% if not @manage %>
-                          <a href="/manage" class="menu-item">Manage&nbsp;Clusters&nbsp;&nbsp;</a>
+                          <a href="/manage" class="menu-item"><%=@I18n.t(:'manageClusters')%></a>
                         <% end %>
                         <% @clusters.each { |c| %>
                           <a href="<%=c.ui_address%>" class="menu-item"><%=c.name%>&nbsp;&nbsp;</a>
@@ -1305,7 +1304,7 @@ Use the 'Add' button to submit the form.">
                     <div class="menuheader">
                       <div id="dropdownr" class="label"><%=@tornado_session_username%><div style="float:right;" class="downarrow sprites"></div></div>
                       <div style="width:100%" class="menu">
-                        <a href="/logout" class="menu-item">Logout&nbsp;&nbsp;</a>
+                        <a href="/logout" class="menu-item"><%=@I18n.t(:logout)%>&nbsp;&nbsp;</a>
                       </div>
                     </div>
                     <!-- <div id="dropdownr">
@@ -1319,17 +1318,17 @@ Use the 'Add' button to submit the form.">
           <table>
             <% if !@manage %>
               <tr>
-                <td class="menuitem first">{{#link-to "Nodes" }}NODES{{/link-to}}</td>
-                <td class="menuitem">{{#link-to "Resources" }}RESOURCES{{/link-to}}</td>
-                <td class="menuitem">{{#link-to "Fence Devices" }}FENCE DEVICES{{/link-to}}</td>
+                <td class="menuitem first">{{#link-to "Nodes" }}<%=@I18n.t(:nodes)%>{{/link-to}}</td>
+                <td class="menuitem">{{#link-to "Resources" }}<%=@I18n.t(:resources)%>{{/link-to}}</td>
+                <td class="menuitem">{{#link-to "Fence Devices" }}<%=@I18n.t(:fenceDevices)%>{{/link-to}}</td>
                 <td class="menuitem">{{#link-to "ACLs" }}ACLS{{/link-to}}</td>
-                <td class="menuitem">{{#link-to "Configuration" }}CLUSTER PROPERTIES{{/link-to}}</td>
-                <td class="menuitem"><a href="/manage">MANAGE CLUSTERS</a></td>
+                <td class="menuitem">{{#link-to "Configuration" }}<%=@I18n.t(:clusterProperties)%>{{/link-to}}</td>
+                <td class="menuitem"><a href="/manage"><%=@I18n.t(:manageClusters)%></a></td>
               </tr>
             <% else %>
               <tr>
-                <td class="menuitem first"><a href="/manage">MANAGE CLUSTERS</a></td>
-                <td class="menuitem"><a href="/permissions">PERMISSIONS</a></td>
+                <td class="menuitem first"><a href="/manage"><%=@I18n.t(:manageClusters)%></a></td>
+                <td class="menuitem"><a href="/permissions"><%=@I18n.t(:permissions)%></a></td>
               </tr>
             <% end %>
           </table>

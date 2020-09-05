@@ -1,6 +1,10 @@
 <% @pageName = @myView == "resource" ? "Resource" : "Fence Device" %>
 <tr id="<%=@myView%>_title_row" {{bind-attr style="Pcs.<%=@myView%>_page"}}><td id="page_header" colspan=3>
-<%= @myView == "resource" ? "RESOURCES" : "FENCE DEVICES" %>
+<% if @myView == "resource" %>
+  <%=@I18n.t(:resources)%>
+<% else %>
+  <%=@I18n.t(:fenceDevices)%>
+<% end %>
     </td>
   </tr>
   <tr id="<%=@myView%>_header_row" {{bind-attr style="Pcs.<%=@myView%>_page"}}>
@@ -11,16 +15,16 @@
 	<% else %>
 	  <a href="#" onclick='verify_remove_fence_devices(); return false;'>
 	<% end %>
-      Remove</a>&nbsp;&nbsp;&nbsp;&nbsp;</div>
+  <%=@I18n.t(:remove)%></a>&nbsp;&nbsp;&nbsp;&nbsp;</div>
   <div class="plus sprites"></div><div class="link">&nbsp;
     <% if @myView == "resource" %>
       <a href="#" onclick="show_add_resource_dialog();return false;">
     <% else %>
       <a href="#" onclick="$('#new_stonith_agent').dialog({title: 'Add Fence Device', modal:true, width: 'auto'});return false;">
     <% end %>
-  Add</a>&nbsp;&nbsp;&nbsp;&nbsp;</div>
+  <%=@I18n.t(:add)%></a>&nbsp;&nbsp;&nbsp;&nbsp;</div>
     <% if @myView == "resource" %>
-      <div class="plus sprites"></div><div class="link">&nbsp;<a href="#" onclick="create_group();return false;">Create Group</a></div>
+      <div class="plus sprites"></div><div class="link">&nbsp;<a href="#" onclick="create_group();return false;"><%=@I18n.t(:create)%> <%=@I18n.t(:group)%></a></div>
     <% else %>
         <div class="configurelight sprites"></div>
         <div class="link"> &nbsp;
@@ -34,7 +38,7 @@
     </td>
     <td class="borderbottom">&nbsp;</td>
     <td id="tab_name" width="125">
-      <div style="float: left">&nbsp;Edit <%= @pageName%>&nbsp;</div><div class="check sprites"></div>
+      <div style="float: left">&nbsp;<%=@I18n.t(:edit)%> <%= @pageName%>&nbsp;</div><div class="check sprites"></div>
     </td>
   </tr>
   <tr id="<%=@myView%>_list_row" {{bind-attr style="Pcs.<%=@myView%>_page"}}>
@@ -44,9 +48,9 @@
   <td id="node_info" colspan=2>
     <div id="<%=@myView%>_info_div">
     <% if @myView == "resource" %>
-      {{resource-edit resource=Pcs.resourcesContainer.cur_resource page_name="Resource" old_pcsd=Pcs.resourcesContainer.is_version_1 utilization_support=Pcs.nodesController.utilization_support}}
+      {{resource-edit resource=Pcs.resourcesContainer.cur_resource page_name="<%=@I18n.t(:resources)%>" old_pcsd=Pcs.resourcesContainer.is_version_1 utilization_support=Pcs.nodesController.utilization_support}}
     <% else %>
-      {{resource-edit resource=Pcs.resourcesContainer.cur_fence page_name="Fence device" stonith=1 old_pcsd=Pcs.resourcesContainer.is_version_1}}
+      {{resource-edit resource=Pcs.resourcesContainer.cur_fence page_name="<%=@I18n.t(:fenceDevices)%>" stonith=1 old_pcsd=Pcs.resourcesContainer.is_version_1}}
     <% end %>
     </div>
     </td>
@@ -57,7 +61,7 @@
     <div id="new_resource_agent" style="display: none;">
       <table id="resource_selector" style="clear:left;float:left;margin-top:25px;">
 	<tr>
-	  <td class="bold">Class/Provider</td>
+	  <td class="bold"><%=@I18n.t(:'table.title.classProvider')%></td>
 	  <td>
 	    <select id="resource_class_provider_selector">
         <% @resource_agent_structures.map{|a| a[:class_provider]}.uniq.sort.each{|cp| %>
@@ -70,7 +74,7 @@
 	  </td>
 	</tr>
 	<tr>
-	  <td class="bold">Type</td>
+	  <td class="bold"><%=@I18n.t(:type)%></td>
 	  <td>
 	    <select id="all_ra_types" style="display:none;">
         <% @resource_agent_structures.sort_by{|a| a[:full_name].downcase}.each{|a| %>
@@ -94,7 +98,7 @@
     <div id="new_stonith_agent" style="display: none;">
       <table id="stonith_selector" style="clear:left;float:left;margin-top:25px;">
 	<tr>
-	  <td class="bold">Type</td>
+	  <td class="bold"><%=@I18n.t(:type)%></td>
 	  <td>
 	    <select id="add_stonith_type" onchange="load_resource_form(this.value,true);">
 	      <% @stonith_agents.keys.sort_by{|a|a.downcase}.each { |name| %>

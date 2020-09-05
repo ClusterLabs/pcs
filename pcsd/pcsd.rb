@@ -25,11 +25,11 @@ set :app_file, __FILE__
 set :logging, false
 
 def __msg_cluster_name_already_used(cluster_name)
-  return "The cluster name '#{cluster_name}' has already been added. You may not add two clusters with the same name."
+  return I18n.t(:'promptInfo.clusterNameAlreadyUsed', clusterName: cluster_name)
 end
 
 def __msg_node_name_already_used(node_name, cluster_name)
-  return "The node '#{node_name}' is already a part of the '#{cluster_name}' cluster. You may not add a node to two different clusters."
+  return I18n.t(:'promptInfo.nodeNameAlreadyUsed', clusterName: cluster_name, nodeName: node_name)
 end
 
 def __msg_sync_conflict_detected(please_repeat=nil)
@@ -52,6 +52,7 @@ end
 
 before do
   # nobody is logged in yet
+  @I18n = I18n
   @auth_user = nil
   @tornado_session_username = Thread.current[:tornado_username]
   @tornado_session_groups = Thread.current[:tornado_groups]

@@ -1,6 +1,6 @@
 <div id="node_info_header">
   <div id="node_info_header_title">
-    PERMISSIONS FOR CLUSTER <%= h(@cluster_name).upcase %>
+    <%=@I18n.t(:'table.title.PermissionsForCluster')%> <%= h(@cluster_name).upcase %>
   </div>
 </div>
 <div id="node_sub_info">
@@ -13,14 +13,14 @@
     <script type="text/javascript">
       permissions_dependencies["<%= h(@cluster_name) %>"] = {};
     </script>
-    <b>Error: </b><span style="color:red;"><%= h(@error) %></span>
+    <b><%=@I18n.t(:error)%>: </b><span style="color:red;"><%= h(@error) %></span>
     <div style="padding-top:20px;">
       <button type="button"
         onclick="
           show_loading_screen();
           permissions_load_cluster('<%= h(@cluster_name)%>', hide_loading_screen);
         "
-      >Refresh</button>
+      ><%=@I18n.t(:refresh)%></button>
     </div>
   <% else %>
     <script type="text/javascript">
@@ -30,12 +30,12 @@
       <input type="hidden" name="cluster_name" value="<%= h(@cluster_name) %>">
       <table class="datatable">
         <tr>
-          <th>Name</th>
-          <th>Type</th>
+          <th><%=@I18n.t(:name)%></th>
+          <th><%=@I18n.t(:type)%></th>
           <% @permission_types.each { |type| %>
             <th title="<%= h(type['description']) %>"><%= h(type['label']) %></th>
           <% } %>
-          <th>Remove</th>
+          <th><%=@I18n.t(:remove)%></th>
         </tr>
         <% @users_permissions.each_with_index { |user, index| %>
           <tr>
@@ -96,7 +96,7 @@
                 permissions_add_row($(this).parents('tr').first());
                 this.disabled = false;
               "
-            >Add</button>
+            ><%=@I18n.t(:add)%></button>
           </td>
         </tr>
       </table>
@@ -106,14 +106,14 @@
             show_loading_screen();
             permissions_load_cluster('<%= h(@cluster_name) %>', hide_loading_screen);
           "
-        >Refresh</button>
+        ><%=@I18n.t(:refresh)%></button>
         <button type="button"
           onclick="
             this.disabled = true;
             permissions_save_cluster($(this).parents('form').first());
             this.disabled = false;
           "
-        >Apply Changes</button>
+        ><%=@I18n.t(:'button.applyChanges')%></button>
       </div>
     </form>
   <% end %>

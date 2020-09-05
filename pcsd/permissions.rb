@@ -12,12 +12,12 @@ module Permissions
     return [
       {
         'code' => TYPE_USER,
-        'label' => 'User',
+        'label' => I18n.t(:user),
         'description' => '',
       },
       {
         'code' => TYPE_GROUP,
-        'label' => 'Group',
+        'label' => I18n.t(:group),
         'description' => '',
       }
     ]
@@ -27,24 +27,23 @@ module Permissions
     return [
       {
         'code' => READ,
-        'label' => 'Read',
-        'description' => 'Allows to view cluster settings',
+        'label' => I18n.t(:'table.title.read'),
+        'description' => I18n.t(:'promptInfo.readDescription'),
       },
       {
         'code' => WRITE,
-        'label' => 'Write',
-        'description' => 'Allows to modify cluster settings except permissions and ACLs',
+        'label' => I18n.t(:'table.title.write'),
+        'description' => I18n.t(:'promptInfo.writeDescription'),
       },
       {
         'code' => GRANT,
-        'label' => 'Grant',
-        'description' => 'Allows to modify cluster permissions and ACLs',
+        'label' => I18n.t(:'table.title.grant'),
+        'description' => I18n.t(:'promptInfo.grantDescription'),
       },
       {
         'code' => FULL,
-        'label' => 'Full',
-        'description' => ('Allows unrestricted access to a cluster including '\
-          + 'adding and removing nodes and access to keys and certificates'),
+        'label' => I18n.t(:'table.title.full'),
+        'description' => I18n.t(:'promptInfo.fullDescription'),
       }
     ]
   end

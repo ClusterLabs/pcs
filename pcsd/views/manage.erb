@@ -2,31 +2,31 @@
   <tr id="cluster_title_row" {{bind-attr style=Pcs.manage_page}}><td id="page_header" colspan=3 style="vertical-align:middle;">
       <table id="manage_cluster_commands"><tr>
 	  <td>
-	    MANAGE CLUSTERS
+      <%=@I18n.t(:manageClusters)%>
 	  </td>
 	  </td>
 	  <td>
 	      <a href="#" class="x sprites"></a>
 	    <div class="link">
-	      <a id="manage_remove_cluster" href="#" onclick="verify_remove_clusters();">Remove</a>
+	      <a id="manage_remove_cluster" href="#" onclick="verify_remove_clusters();"><%=@I18n.t(:remove)%></a>
 	    </div>
 	  </td>
 	  <td>
 	    <a href="#" class="plus sprites"></a>
 	    <div class="link">
-	      <a id="manage_add_cluster" href="#" onclick="add_existing_dialog();">Add Existing</a>
+	      <a id="manage_add_cluster" href="#" onclick="add_existing_dialog();"><%=@I18n.t(:addExisting)%></a>
 	    </div>
 	  </td>
 	  <td>
 	    <a href="#" class="x sprites"></a>
 	    <div class="link">
-	      <a id="manage_destroy_cluster" href="#" onclick="clusterDestroy.dialog.create();">Destroy</a>
+	      <a id="manage_destroy_cluster" href="#" onclick="clusterDestroy.dialog.create();"><%=@I18n.t(:destroy)%></a>
 	    </div>
 	  </td>
 	  <td>
 	    <a href="#" class="plus sprites"></a>
 	    <div class="link">
-	      <a id="manage_create_cluster" href="#" onclick="clusterSetup.dialog.create();">Create New</a>
+	      <a id="manage_create_cluster" href="#" onclick="clusterSetup.dialog.create();"><%=@I18n.t(:'button.createNew')%></a>
 	    </div>
 	  </td>
 	</tr>
@@ -43,7 +43,7 @@
     </td>
     <td id="node_info" colspan=2>
       <div id="node_info_header">
-	<div id="node_info_header_title">INFORMATION ABOUT CLUSTERS</div>
+	<div id="node_info_header_title"><%=@I18n.t(:'table.title.informationAboutClusters')%></div>
       </div>
       <div id="node_sub_info">
         {{#if Pcs.clusterController.cur_cluster}}
@@ -51,7 +51,7 @@
           <table>
             <tr>
               <td style="text-align:right">
-                <b>Cluster:</b>&nbsp;
+                <b><%=@I18n.t(:cluster)%>:</b>&nbsp;
               </td>
               <td>
                 {{#if Pcs.clusterController.cur_cluster.forbidden}}
@@ -62,13 +62,13 @@
               </td>
             </tr>
             {{#if Pcs.clusterController.cur_cluster.error_list}}
-              <tr><td style="text-align:right"><b>Errors:</b>&nbsp;</td><td></td></tr>
+              <tr><td style="text-align:right"><b><%=@I18n.t(:errors)%>:</b>&nbsp;</td><td></td></tr>
             {{/if}}
             {{#each Pcs.clusterController.cur_cluster.error_list}}
               <tr><td></td><td style="color: red;">{{{message}}}</td></tr>
             {{/each}}
             {{#if Pcs.clusterController.cur_cluster.warning_list}}
-              <tr><td style="text-align:right"><b>Warnings:</b>&nbsp;</td><td></td></tr>
+              <tr><td style="text-align:right"><b><%=@I18n.t(:warnings)%>:</b>&nbsp;</td><td></td></tr>
             {{/if}}
             {{#each Pcs.clusterController.cur_cluster.warning_list}}
               <tr><td></td><td style="color: orange;">{{{message}}}</td></tr>
@@ -80,17 +80,17 @@
               <td class="datatable_header hover-pointer" onclick="show_hide_dashboard(this, 'nodes');">
                 <span style="display: none;" class="downarrow sprites"></span>
                 <span style="" class="rightarrow sprites"></span>
-                Nodes ({{Pcs.clusterController.cur_cluster.nodes.length}} | {{#if Pcs.clusterController.cur_cluster.nodes_failed}}<span style="color: red">issues: {{Pcs.clusterController.cur_cluster.nodes_failed}}{{else}}<span style="color: green;">OK{{/if}}</span>)
-              <span style="font-size: 10px;">(displaying {{#if Pcs.clusterController.show_all_nodes}}all{{else}}only issues{{/if}})</span>
+                <%=@I18n.t(:nodes)%> ({{Pcs.clusterController.cur_cluster.nodes.length}} | {{#if Pcs.clusterController.cur_cluster.nodes_failed}}<span style="color: red">issues: {{Pcs.clusterController.cur_cluster.nodes_failed}}{{else}}<span style="color: green;">OK{{/if}}</span>)
+              <span style="font-size: 10px;">({{#if Pcs.clusterController.show_all_nodes}}<%=@I18n.t(:'promptInfo.displayAll')%>{{else}}<%=@I18n.t(:'promptInfo.displayIssue')%>{{/if}})</span>
               </td>
             </tr>
             <tr>
               <td>
                 <table class="datatable">
                   <tr>
-                    <th style="width: 150px;">NODE</th>
-                    <th style="width: 100px;">STATUS</th>
-                    <th style="width: 70px;">QUORUM</th>
+                    <th style="width: 150px;"><%=@I18n.t(:node)%></th>
+                    <th style="width: 100px;"><%=@I18n.t(:status)%></th>
+                    <th style="width: 70px;">Quorum</th>
                   </tr>
                   {{#each node in Pcs.clusterController.cur_cluster.nodes}}
                   <tr {{bind-attr title=node.tooltip}} {{bind-attr class=node.status_class}}>
@@ -109,16 +109,16 @@
               <td class="datatable_header hover-pointer" onclick="show_hide_dashboard(this, 'resources');">
                 <span style="display: none;" class="downarrow sprites"></span>
                 <span style="" class="rightarrow sprites"></span>
-                Resources ({{Pcs.clusterController.cur_cluster.resource_list.length}} | {{#if Pcs.clusterController.cur_cluster.resources_failed}}<span style="color: red">issues: {{Pcs.clusterController.cur_cluster.resources_failed}}{{else}}<span style="color: green;">OK{{/if}}</span>)
-              <span style="font-size: 10px;">(displaying {{#if Pcs.clusterController.show_all_resources}}all{{else}}only issues{{/if}})</span>
+                <%=@I18n.t(:resources)%> ({{Pcs.clusterController.cur_cluster.resource_list.length}} | {{#if Pcs.clusterController.cur_cluster.resources_failed}}<span style="color: red">issues: {{Pcs.clusterController.cur_cluster.resources_failed}}{{else}}<span style="color: green;">OK{{/if}}</span>)
+              <span style="font-size: 10px;">({{#if Pcs.clusterController.show_all_resources}}<%=@I18n.t(:'promptInfo.displayAll')%>{{else}}<%=@I18n.t(:'promptInfo.displayIssue')%>{{/if}})</span>
               </td>
             </tr>
             <tr>
               <td>
                 <table class="datatable">
                   <tr>
-                    <th style="width: 170px;">RESOURCE</th>
-                    <th style="width: 150px;">STATUS</th>
+                    <th style="width: 170px;"><%=@I18n.t(:'table.title.resource')%></th>
+                    <th style="width: 150px;"><%=@I18n.t(:status)%></th>
                   </tr>
                   {{#each r in Pcs.clusterController.cur_cluster.resource_list}}
                   <tr {{bind-attr title=r.tooltip}} {{bind-attr class=r.status_class}}>
@@ -126,13 +126,13 @@
                     <td {{bind-attr style=r.status_style}}>
                       {{{r.status_icon}}}{{r.status}}
                       {{#if r.is_unmanaged}}
-                        (unmanaged)
+                        (<%=@I18n.t(:unmanaged)%>)
                       {{/if}}
                     </td>
                   </tr>
                   {{else}}
                   <tr>
-                    <td>No resources</td>
+                    <td><%=@I18n.t(:none)%></td>
                     <td></td>
                   </tr>
                   {{/each}}
@@ -145,16 +145,16 @@
               <td class="datatable_header hover-pointer" onclick="show_hide_dashboard(this, 'fence');">
                 <span style="display: none;" class="downarrow sprites"></span>
                 <span style="" class="rightarrow sprites"></span>
-                Fence-devices ({{Pcs.clusterController.cur_cluster.fence_list.length}} | {{#if Pcs.clusterController.cur_cluster.fence_failed}}<span style="color: red">issues: {{Pcs.clusterController.cur_cluster.fence_failed}}{{else}}<span style="color: green;">OK{{/if}}</span>)
-              <span style="font-size: 10px;">(displaying {{#if Pcs.clusterController.show_all_fence}}all{{else}}only issues{{/if}})</span>
+                Fence <%=@I18n.t(:devices)%> ({{Pcs.clusterController.cur_cluster.fence_list.length}} | {{#if Pcs.clusterController.cur_cluster.fence_failed}}<span style="color: red">issues: {{Pcs.clusterController.cur_cluster.fence_failed}}{{else}}<span style="color: green;">OK{{/if}}</span>)
+              <span style="font-size: 10px;">({{#if Pcs.clusterController.show_all_fence}}<%=@I18n.t(:"promptInfo.displayAll")%>{{else}}<%=@I18n.t(:"promptInfo.displayIssue")%>{{/if}})</span>
               </td>
             </tr>
             <tr>
               <td>
                 <table class="datatable">
                   <tr>
-                    <th style="width: 170px;">FENCE-DEVICE</th>
-                    <th style="width: 150px;">STATUS</th>
+                    <th style="width: 170px;">FENCE <%=@I18n.t(:devices)%></th>
+                    <th style="width: 150px;"><%=@I18n.t(:status)%></th>
                   </tr>
                   {{#each f in Pcs.clusterController.cur_cluster.fence_list}}
                   <tr {{bind-attr title=f.tooltip}} {{bind-attr class=f.status_class_fence}}>
@@ -163,7 +163,7 @@
                   </tr>
                   {{else}}
                   <tr>
-                    <td>No fence devices</td>
+                    <td><%=@I18n.t(:none)%></td>
                     <td></td>
                   </tr>
                   {{/each}}
@@ -175,7 +175,7 @@
           {{/unless}}
         </div>
         {{else}}
-        <div id="no_cluster_selected">Select a cluster to view more detailed cluster information</div>
+        <div id="no_cluster_selected"><%=@I18n.t(:'promptInfo.clusterInfoHelper')%></div>
         {{/if}}
       </div>
     </td>
@@ -185,17 +185,17 @@
 <div id="add_existing_cluster" style="display: none;">
   <form id="add_existing_cluster_form" action="/manage/existingcluster" method="post">
     <br>
-    Enter the name of a node in a cluster that you would like to manage:
+    <%=@I18n.t(:'promptInfo.clusterNameHelper')%>:
     <br>
     <br>
     <table class="err_msg_table" style="width: 100%">
-      <tr><td align=center style="color: red" colspan=2"><span id="unable_to_connect_error_msg_ae" style="display:none;">Unable to contact node.<br>Please make sure pcsd is started.<br/></span>
+      <tr><td align=center style="color: red" colspan=2"><span id="unable_to_connect_error_msg_ae" style="display:none;"><%=@I18n.t(:'errorInfo.messages.unableToContactNode')%><br><%=@I18n.t(:'errorInfo.messages.pleaseMakeSurePcsdIsStarted')%><br/></span>
         <span id="add_existing_cluster_error_msg" style="display:none;">
         </span>
       </td></tr>
     </table>
     <table>
-      <tr><td align=right>Node Name:</td><td><input size="50" name="node-name" type="text"></td></tr>
+      <tr><td align=right><%=@I18n.t(:node)%> <%=@I18n.t(:name)%>:</td><td><input size="50" name="node-name" type="text"></td></tr>
     </table>
   </form>
 </div>
@@ -695,24 +695,24 @@ It is very useful when combined with Last Man Standing.
   <form class="step cluster-name-nodes">
 
     <p>
-    Cluster Name: <input type="text" name="clustername"></input>
+    <%=@I18n.t(:cluster)%> <%=@I18n.t(:name)%>: <input type="text" name="clustername"></input>
     </p>
     <fieldset>
-      <legend>Nodes</legend>
+      <legend><%=@I18n.t(:nodes)%></legend>
       <p>
-      Enter the names of the nodes you would like to use to create a cluster.
+      <%=@I18n.t(:'promptInfo.clusterNodeNameHelper')%>
       </p>
       <table>
         <tr>
-          <td>Node 1:</td>
+          <td><%=@I18n.t(:node)%> 1:</td>
           <td><input type="text" name="node[]"/></td>
         </tr>
         <tr>
-          <td>Node 2:</td>
+          <td><%=@I18n.t(:node)%> 2:</td>
           <td><input type="text" name="node[]"/></td>
         </tr>
         <tr>
-          <td>Node 3:</td>
+          <td><%=@I18n.t(:node)%> 3:</td>
           <td><input type="text" name="node[]"/></td>
         </tr>
         <tr>
@@ -721,7 +721,7 @@ It is very useful when combined with Last Man Standing.
             class="action-link add-nodes"
             onclick="clusterSetup.dialog.addNode();"
             >
-            More nodes...
+            <%=@I18n.t(:'table.title.moreNodes') %>
           </td>
         </tr>
       </table>
@@ -730,14 +730,14 @@ It is very useful when combined with Last Man Standing.
 
   <div class="step cluster-settings">
     <ul>
-      <li><a href="#csetup-transport">Transport</a></li>
+      <li><a href="#csetup-transport"><%=@I18n.t(:transport) %></a></li>
       <li><a href="#csetup-quorum">Quorum</a></li>
       <li><a href="#csetup-totem">Totem</a></li>
     </ul>
 
     <div id="csetup-transport">
       <fieldset class="transport-types">
-        <legend>Select transport type</legend>
+        <legend><%=@I18n.t(:'promptInfo.selectTransportType')%></legend>
         <div title="<%= h(transport_type_knet) %>">
           <input type="radio"
             name="transport"
@@ -767,13 +767,13 @@ It is very useful when combined with Last Man Standing.
       <div class="csetup-transport-sections">
         <ol>
           <li>
-            <a href="#csetup-transport-netmaps">Addresses and Links</a>
+            <a href="#csetup-transport-netmaps"><%=@I18n.t(:addresses) %> <%=@I18n.t(:and) %> <%=@I18n.t(:links) %></a>
           </li>
-          <li><a href="#csetup-transport-options">Options</a></li>
+          <li><a href="#csetup-transport-options"><%=@I18n.t(:options) %></a></li>
         </ol>
 
         <div id="csetup-transport-netmaps">
-          <div class="action-link add-link">Add link...</div>
+          <div class="action-link add-link"><%=@I18n.t(:add) %> <%=@I18n.t(:link) %></div>
           <!--
             For each transport type (knet, udp, udpu)
             the snippet transport-links-setting is put here (in js code).
@@ -782,11 +782,11 @@ It is very useful when combined with Last Man Standing.
 
         <div id="csetup-transport-options">
           <fieldset class="options-container">
-            <legend>Transport options</legend>
+            <legend><%=@I18n.t(:transport) %> <%=@I18n.t(:options) %></legend>
           </fieldset>
 
           <fieldset class="compression-options">
-            <legend>Compression options</legend>
+            <legend><%=@I18n.t(:compression) %> <%=@I18n.t(:options) %></legend>
             <table class="key-value knet-only">
               <tr title="<%= h(knet_compression_model) %>">
                 <td>Model:</td>
@@ -802,18 +802,18 @@ It is very useful when combined with Last Man Standing.
               </tr>
             </table>
             <p class="without-knet">
-            Compression is supported only with knet.
+            <%=@I18n.t(:'promptInfo.compressionHelper')%>
             </p>
           </fieldset>
 
           <fieldset class="crypto-options">
-            <legend>Crypto options</legend>
+            <legend><%=@I18n.t(:crypto) %> <%=@I18n.t(:options) %></legend>
             <table class="key-value knet-only">
               <tr title="<%= h(knet_crypto_model) %>">
                 <td>Model:</td>
                 <td>
                   <select name="model">
-                    <option value="">(Default)</option>
+                    <option value="">(<%=@I18n.t(:default) %>)</option>
                     <option value="nss">nss</option>
                     <option value="openssl">openssl</option>
                   </select>
@@ -823,7 +823,7 @@ It is very useful when combined with Last Man Standing.
                 <td>Hash:</td>
                 <td>
                   <select name="hash">
-                    <option value="">(Default)</option>
+                    <option value="">(<%=@I18n.t(:default) %>)</option>
                     <option value="none">none</option>
                     <option value="md5">md5</option>
                     <option value="sha1">sha1</option>
@@ -837,7 +837,7 @@ It is very useful when combined with Last Man Standing.
                 <td>Cipher:</td>
                 <td>
                   <select name="cipher">
-                    <option value="">(Default)</option>
+                    <option value="">(<%=@I18n.t(:default) %>)</option>
                     <option value="none">none</option>
                     <option value="3des">3des</option>
                     <option value="aes128">aes128</option>
@@ -848,7 +848,7 @@ It is very useful when combined with Last Man Standing.
               </tr>
             </table>
             <p class="without-knet">
-            Encryption is supported only with knet.
+            <%=@I18n.t(:'promptInfo.encryptionHelper')%>
             </p>
           </fieldset>
         </div>
@@ -951,7 +951,7 @@ It is very useful when combined with Last Man Standing.
         <td>Auto Tie Breaker:</td>
         <td>
           <select name="auto_tie_breaker">
-            <option value="">(Default)</option>
+            <option value="">(<%=@I18n.t(:default) %>)</option>
             <option value="on">on</option>
             <option value="off">off</option>
           </select>
@@ -961,7 +961,7 @@ It is very useful when combined with Last Man Standing.
         <td>Last Man Standing:</td>
         <td>
           <select name="last_man_standing">
-            <option value="">(Default)</option>
+            <option value="">(<%=@I18n.t(:default) %>)</option>
             <option value="on">on</option>
             <option value="off">off</option>
           </select>
@@ -975,7 +975,7 @@ It is very useful when combined with Last Man Standing.
         <td>Wait for All:</td>
         <td>
           <select name="wait_for_all">
-            <option value="">(Default)</option>
+            <option value="">(<%=@I18n.t(:default) %>)</option>
             <option value="on">on</option>
             <option value="off">off</option>
           </select>
@@ -987,7 +987,7 @@ It is very useful when combined with Last Man Standing.
   </div>
 
   <form class="step cluster-start">
-    <p> Cluster has been succesfully created. </p>
+    <p><%=@I18n.t(:"promptInfo.clusterHasBeenCreated")%></p>
     <p>
       <input type="checkbox"
         id="cluster-setup-start"
@@ -995,7 +995,7 @@ It is very useful when combined with Last Man Standing.
         value="1"
         checked
       />
-      <label for="cluster-setup-start">Start the Cluster</label>
+      <label for="cluster-setup-start"><%=@I18n.t(:'promptInfo.startCluster')%></label>
     </p>
   </form>
 
@@ -1014,7 +1014,7 @@ It is very useful when combined with Last Man Standing.
     <td>IP Version: </td>
     <td>
       <select data-name="ip_version">
-        <option value="">(Default)</option>
+        <option value="">(<%=@I18n.t(:default) %>)</option>
         <option value="ipv4">IPv4</option>
         <option value="ipv6">IPv6</option>
         <option value="ipv4-6">IPv4 if available, IPv6 otherwise</option>
@@ -1030,7 +1030,7 @@ It is very useful when combined with Last Man Standing.
     <td>Link Mode: </td>
     <td>
       <select data-name="link_mode">
-        <option value="">(Default)</option>
+        <option value="">(<%=@I18n.t(:default) %>)</option>
         <option value="passive">passive</option>
         <option value="active">active</option>
         <option value="rr">round-robin</option>
@@ -1044,7 +1044,7 @@ It is very useful when combined with Last Man Standing.
     <td>IP Version: </td>
     <td>
       <select data-name="ip_version">
-        <option value="">(Default)</option>
+        <option value="">(<%=@I18n.t(:default) %>)</option>
         <option value="ipv4">IPv4</option>
         <option value="ipv6">IPv6</option>
         <option value="ipv4-6">IPv4 if available, IPv6 otherwise</option>
@@ -1061,18 +1061,18 @@ It is very useful when combined with Last Man Standing.
 <li data-snippet="transport-link" class="transport-link">
   <span class="link-label">
     <span class="x sprites delete"></span>
-    <span class="label">Link</span> <span class="link-nr"></span>
+    <span class="label"><%=@I18n.t(:link) %></span> <span class="link-nr"></span>
   </span>
 </li>
 
 <div data-snippet="transport-link-detail" class="detail">
   <fieldset class="addresses">
-    <legend>Addresses</legend>
+    <legend><%=@I18n.t(:addresses) %></legend>
     <table class="transport-addresses key-value"></table>
   </fieldset>
 
   <fieldset class="options">
-    <legend>Options</legend>
+    <legend><%=@I18n.t(:options) %></legend>
   </fieldset>
 </div>
 
@@ -1115,7 +1115,7 @@ It is very useful when combined with Last Man Standing.
     <td>Transport:</td>
     <td>
       <select data-name="transport">
-        <option value="">(Default)</option>
+        <option value="">(<%=@I18n.t(:default) %>)</option>
         <option value="udp">udp</option>
         <option value="sctp">sctp</option>
       </select>
@@ -1132,7 +1132,7 @@ It is very useful when combined with Last Man Standing.
     <td>Broadcast:</td>
     <td>
       <select data-name="broadcast">
-        <option value="">(Default)</option>
+        <option value="">(<%=@I18n.t(:default) %>)</option>
         <option value="yes">yes</option>
         <option value="no">no</option>
       </select>
