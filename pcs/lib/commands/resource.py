@@ -362,6 +362,7 @@ def create_as_clone(
     meta_attributes: Mapping[str, str],
     instance_attributes: Mapping[str, str],
     clone_meta_options: Mapping[str, str],
+    clone_id: Optional[str] = None,
     allow_absent_agent: bool = False,
     allow_invalid_operation: bool = False,
     allow_invalid_instance_attributes: bool = False,
@@ -438,11 +439,17 @@ def create_as_clone(
             allow_invalid_instance_attributes,
             use_default_operations,
         )
+        if clone_id is not None:
+            if env.report_processor.report_list(
+                resource.clone.validate_clone_id(clone_id, id_provider),
+            ).has_errors:
+                raise LibraryError()
         clone_element = resource.clone.append_new(
             resources_section,
             id_provider,
             primitive_element,
             clone_meta_options,
+            clone_id=clone_id,
         )
         if ensure_disabled:
             resource.common.disable(clone_element, id_provider)

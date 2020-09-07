@@ -62,6 +62,7 @@ def create_clone(
     meta_attributes=None,
     clone_options=None,
     operation_list=None,
+    clone_id=None,
 ):
     return resource.create_as_clone(
         env,
@@ -71,6 +72,7 @@ def create_clone(
         meta_attributes=meta_attributes if meta_attributes else {},
         instance_attributes={},
         clone_meta_options=clone_options if clone_options else {},
+        clone_id=clone_id,
         wait=wait,
         ensure_disabled=disabled,
     )
@@ -249,6 +251,7 @@ fixture_cib_resources_xml_clone_simplest = """<resources>
     </clone>
 </resources>"""
 
+
 fixture_cib_resources_xml_clone_simplest_disabled = """<resources>
     <clone id="A-clone">
         <meta_attributes id="A-clone-meta_attributes">
@@ -257,6 +260,34 @@ fixture_cib_resources_xml_clone_simplest_disabled = """<resources>
                 value="Stopped"
             />
         </meta_attributes>
+        <primitive class="ocf" id="A" provider="heartbeat" type="Dummy">
+            <operations>
+                <op id="A-migrate_from-interval-0s" interval="0s"
+                    name="migrate_from" timeout="20"
+                />
+                <op id="A-migrate_to-interval-0s" interval="0s"
+                    name="migrate_to" timeout="20"
+                />
+                <op id="A-monitor-interval-10" interval="10" name="monitor"
+                    timeout="20"
+                />
+                <op id="A-reload-interval-0s" interval="0s" name="reload"
+                    timeout="20"
+                />
+                <op id="A-start-interval-0s" interval="0s" name="start"
+                    timeout="20"
+                />
+                <op id="A-stop-interval-0s" interval="0s" name="stop"
+                    timeout="20"
+                />
+            </operations>
+        </primitive>
+    </clone>
+</resources>"""
+
+
+fixture_cib_resources_xml_clone_custom_id = """<resources>
+    <clone id="CustomCloneId">
         <primitive class="ocf" id="A" provider="heartbeat" type="Dummy">
             <operations>
                 <op id="A-migrate_from-interval-0s" interval="0s"
@@ -984,6 +1015,27 @@ class CreateAsClone(TestCase):
             )
         )
         create_clone(self.env_assist.get_env(), wait=False)
+
+    def test_custom_clone_id(self):
+        (
+            self.config.remove(name="runner.pcmk.can_wait").env.push_cib(
+                resources=fixture_cib_resources_xml_clone_custom_id
+            )
+        )
+        create_clone(
+            self.env_assist.get_env(), wait=False, clone_id="CustomCloneId"
+        )
+
+    def test_custom_clone_id_error(self):
+        self.config.remove(name="runner.pcmk.can_wait")
+        self.env_assist.assert_raise_library_error(
+            lambda: create_clone(
+                self.env_assist.get_env(), wait=False, clone_id="1invalid"
+            ),
+        )
+        self.env_assist.assert_reports(
+            [fixture.report_invalid_id("1invalid", "1")],
+        )
 
     def test_cib_upgrade_on_onfail_demote(self):
         self.config.remove(name="runner.pcmk.can_wait")

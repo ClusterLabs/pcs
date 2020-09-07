@@ -691,6 +691,7 @@ def resource_create(lib, argv, modifiers):
         allow_not_suitable_command=modifiers.get("--force"),
     )
 
+    clone_id = parts["clone_id"] if "clone_id" in parts else None
     if "clone" in parts:
         lib.resource.create_as_clone(
             ra_id,
@@ -699,6 +700,7 @@ def resource_create(lib, argv, modifiers):
             parts["meta"],
             parts["options"],
             parts["clone"],
+            clone_id=clone_id,
             **settings,
         )
     elif "promotable" in parts:
@@ -709,6 +711,7 @@ def resource_create(lib, argv, modifiers):
             parts["meta"],
             parts["options"],
             dict(**parts["promotable"], promotable="true"),
+            clone_id=clone_id,
             **settings,
         )
     elif "bundle" in parts:

@@ -34,6 +34,18 @@ class ParseCreateArgs(TestCase):
             },
         )
 
+    def test_only_clone_with_custom_id(self):
+        self.assert_produce(
+            ["clone", "CustomCloneId", "a=b", "c=d"],
+            {
+                "meta": {},
+                "options": {},
+                "op": [],
+                "clone": {"a": "b", "c": "d",},
+                "clone_id": "CustomCloneId",
+            },
+        )
+
     def test_only_promotable(self):
         self.assert_produce(
             ["promotable", "a=b", "c=d"],
@@ -42,6 +54,18 @@ class ParseCreateArgs(TestCase):
                 "options": {},
                 "op": [],
                 "promotable": {"a": "b", "c": "d",},
+            },
+        )
+
+    def test_only_promotable_with_custom_id(self):
+        self.assert_produce(
+            ["promotable", "CustomCloneId", "a=b", "c=d"],
+            {
+                "meta": {},
+                "options": {},
+                "op": [],
+                "promotable": {"a": "b", "c": "d",},
+                "clone_id": "CustomCloneId",
             },
         )
 

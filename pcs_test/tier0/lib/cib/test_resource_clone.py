@@ -1,7 +1,11 @@
 from unittest import TestCase
 from lxml import etree
 
-from pcs_test.tools.assertions import assert_xml_equal
+from pcs_test.tools import fixture
+from pcs_test.tools.assertions import (
+    assert_report_item_list_equal,
+    assert_xml_equal,
+)
 
 from pcs.lib.cib.resource import clone
 from pcs.lib.cib.tools import IdProvider
@@ -21,9 +25,13 @@ class AppendNewCommon(TestCase):
         self.resources = self.cib.find(".//resources")
         self.primitive = self.cib.find(".//primitive")
 
-    def assert_clone_effect(self, options, xml):
+    def assert_clone_effect(self, options, xml, clone_id=None):
         clone.append_new(
-            self.resources, IdProvider(self.resources), self.primitive, options
+            self.resources,
+            IdProvider(self.resources),
+            self.primitive,
+            options,
+            clone_id=clone_id,
         )
         assert_xml_equal(etree.tostring(self.cib).decode(), xml)
 
@@ -58,6 +66,41 @@ class AppendNewCommon(TestCase):
                 </resources>
             </cib>
         """,
+        )
+
+    def test_add_without_options_and_with_custom_id(self):
+        self.assert_clone_effect(
+            {},
+            """
+            <cib>
+                <resources>
+                    <clone id="MyCustomCloneId">
+                        <primitive id="R"/>
+                    </clone>
+                </resources>
+            </cib>
+            """,
+            clone_id="MyCustomCloneId",
+        )
+
+    def test_add_with_options_and_with_custom_id(self):
+        self.assert_clone_effect(
+            {"a": "b"},
+            """
+            <cib>
+                <resources>
+                    <clone id="MyCustomCloneId">
+                        <primitive id="R"/>
+                        <meta_attributes id="MyCustomCloneId-meta_attributes">
+                            <nvpair id="MyCustomCloneId-meta_attributes-a"
+                                name="a" value="b"
+                            />
+                        </meta_attributes>
+                    </clone>
+                </resources>
+            </cib>
+            """,
+            clone_id="MyCustomCloneId",
         )
 
 
@@ -261,4 +304,41 @@ class GetInnerResource(TestCase):
                     <meta_attributes />
                 </clone>
             """,
+        )
+
+
+class ValidateCloneId(TestCase):
+    def setUp(self):
+        self.cib = etree.fromstring(
+            """
+            <cib>
+                <resources>
+                    <clone id="CloneId">
+                        <meta_attributes id="CloneId-meta_attributes"/>
+                    </clone>
+                </resources>
+            </cib>
+            """
+        )
+        self.resources = self.cib.find(".//resources")
+        self.id_provider = IdProvider(self.resources)
+
+    def assert_validate_clone_id(self, clone_id, expected_report_item_list):
+        assert_report_item_list_equal(
+            clone.validate_clone_id(clone_id, self.id_provider),
+            expected_report_item_list,
+        )
+
+    def test_valid_id(self):
+        self.assert_validate_clone_id("UniqueCloneId", [])
+
+    def test_invalid_id_character(self):
+        self.assert_validate_clone_id(
+            "0CloneId", [fixture.report_invalid_id("0CloneId", "0")],
+        )
+
+    def test_clone_id_exist(self):
+        self.assert_validate_clone_id(
+            "CloneId-meta_attributes",
+            [fixture.report_id_already_exist("CloneId-meta_attributes")],
         )

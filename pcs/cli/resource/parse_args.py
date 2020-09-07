@@ -41,8 +41,12 @@ def parse_create(arg_list):
         }
 
         if "clone" in groups:
+            if groups["clone"] and "=" not in groups["clone"][0]:
+                parts["clone_id"] = groups["clone"].pop(0)
             parts["clone"] = prepare_options(groups["clone"])
         if "promotable" in groups:
+            if groups["promotable"] and "=" not in groups["promotable"][0]:
+                parts["clone_id"] = groups["promotable"].pop(0)
             parts["promotable"] = prepare_options(groups["promotable"])
         if "bundle" in groups:
             parts["bundle"] = groups["bundle"]
