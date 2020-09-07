@@ -242,7 +242,8 @@ Commands:
     create <resource id> [<standard>:[<provider>:]]<type> [resource options]
            [op <operation action> <operation options> [<operation action>
            <operation options>]...] [meta <meta options>...]
-           [clone [<clone options>] | promotable [<promotable options>] |
+           [clone [<clone id>] [<clone options>] |
+           promotable [<clone id>] [<promotable options>] |
            --group <group id> [--before <resource id> | --after <resource id>] |
            bundle <bundle id>] [--disabled] [--no-default-ops] [--wait[=n]]
         Create specified resource. If clone is used a clone resource is
@@ -569,14 +570,15 @@ Commands:
         and the return 0 on success or 1 on error.  If 'n' is not specified it
         defaults to 60 minutes.
 
-    clone <resource id | group id> [clone options]... [--wait[=n]]
+    clone <resource id | group id> [<clone id] [clone options]... [--wait[=n]]
         Set up the specified resource or group as a clone. If --wait is
         specified, pcs will wait up to 'n' seconds for the operation to finish
         (including starting clone instances if appropriate) and then return 0
         on success or 1 on error. If 'n' is not specified it defaults to 60
         minutes.
 
-    promotable <resource id | group id> [clone options]... [--wait[=n]]
+    promotable <resource id | group id> [<clone id>] [clone options]...
+            [--wait[=n]]
         Set up the specified resource or group as a promotable clone. This is
         an alias for 'pcs resource clone <resource id> promotable=true'.
 
