@@ -21,6 +21,42 @@ def parse_create_simple(arg_list):
     return parts
 
 
+def parse_clone(arg_list, promotable=False):
+    parts = {
+        "clone_id": None,
+        "meta": {},
+    }
+    allowed_keywords = set(["op", "meta"])
+    if (
+        arg_list
+        and arg_list[0] not in allowed_keywords
+        and "=" not in arg_list[0]
+    ):
+        parts["clone_id"] = arg_list.pop(0)
+    groups = group_by_keywords(
+        arg_list,
+        allowed_keywords,
+        implicit_first_group_key="options",
+        group_repeated_keywords=["op"],
+        only_found_keywords=True,
+    )
+    if "op" in groups:
+        raise CmdLineInputError(
+            "op settings must be changed on base resource, not the clone",
+        )
+    parts["meta"] = prepare_options(
+        groups.get("options", []) + groups.get("meta", []),
+    )
+    if promotable:
+        if "promotable" in parts["meta"]:
+            raise CmdLineInputError(
+                "you cannot specify both promotable option and promotable "
+                "keyword"
+            )
+        parts["meta"]["promotable"] = "true"
+    return parts
+
+
 def parse_create(arg_list):
     groups = group_by_keywords(
         arg_list,
