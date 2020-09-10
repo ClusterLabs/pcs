@@ -1,6 +1,7 @@
 import os
 import signal
 import socket
+import tornado
 from pathlib import Path
 
 from tornado.ioloop import IOLoop
@@ -16,6 +17,7 @@ from pcs.daemon import (
     systemd,
 )
 from pcs.daemon.app import (
+    async_api,
     sinatra_remote,
     sinatra_ui,
     ui,
@@ -23,6 +25,7 @@ from pcs.daemon.app import (
 from pcs.daemon.app.common import RedirectHandler
 from pcs.daemon.env import prepare_env
 from pcs.daemon.http_server import HttpsServerManage
+from pcs.daemon.scheduler.scheduler import Scheduler
 
 
 class SignalInfo:
@@ -53,8 +56,14 @@ def config_sync(sync_config_lock: Lock, ruby_pcsd_wrapper: ruby_pcsd.Wrapper):
 
     return config_synchronization
 
+async def run_scheduler(scheduler):
+    while True:
+        await scheduler.perform_actions()
+        await tornado.gen.sleep(settings.async_api_scheduler_interval_ms/1000)
+
 
 def configure_app(
+    async_scheduler: Scheduler,
     session_storage: session.Storage,
     ruby_pcsd_wrapper: ruby_pcsd.Wrapper,
     sync_config_lock: Lock,
@@ -68,11 +77,15 @@ def configure_app(
             reload its SSL certificates). A relevant handler should get this
             object via the method `initialize`.
         """
+
         routes = sinatra_remote.get_routes(
             ruby_pcsd_wrapper,
             sync_config_lock,
             https_server_manage,
         )
+
+        if not settings.async_api_scheduler_enable:
+            routes.extend(async_api.get_routes(async_scheduler))
 
         if not disable_gui:
             routes.extend(
@@ -108,12 +121,15 @@ def main():
     if env.PCSD_DEBUG:
         log.enable_debug()
 
+    async_scheduler = Scheduler()
+
     sync_config_lock = Lock()
     ruby_pcsd_wrapper = ruby_pcsd.Wrapper(
         settings.pcsd_ruby_socket,
         debug=env.PCSD_DEBUG,
     )
     make_app = configure_app(
+        async_scheduler,
         session.Storage(env.PCSD_SESSION_LIFETIME),
         ruby_pcsd_wrapper,
         sync_config_lock,
@@ -150,6 +166,7 @@ def main():
         raise SystemExit(1) from e
 
     ioloop = IOLoop.current()
+    #ioloop.add_callback(run_scheduler(async_scheduler))
     ioloop.add_callback(sign_ioloop_started)
     if systemd.is_systemd() and env.NOTIFY_SOCKET:
         ioloop.add_callback(systemd.notify, env.NOTIFY_SOCKET)
