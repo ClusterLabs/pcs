@@ -17,8 +17,7 @@ from pcs.lib.cib.rule import (
 
 
 class RuleInEffectEvalMock(RuleInEffectEval):
-    def __init__(self, cib, runner, mock_data=None):
-        super().__init__(cib, runner)
+    def __init__(self, mock_data=None):
         self._mock_data = mock_data or dict()
 
     def get_rule_status(self, rule_id):
@@ -26,9 +25,7 @@ class RuleInEffectEvalMock(RuleInEffectEval):
 
 
 def get_in_effect_eval(mock_data=None):
-    return RuleInEffectEvalMock(
-        etree.fromstring("<mock-cib />"), "mock runner", mock_data
-    )
+    return RuleInEffectEvalMock(mock_data)
 
 
 class ExpressionToDto(TestCase):

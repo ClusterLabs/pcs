@@ -12,15 +12,6 @@ class RuleInEffectEval:
     based on which one suits your needs and environment the best.
     """
 
-    def __init__(self, cib: _Element, runner: CommandRunner):
-        """
-        cib -- the whole cib containing the rule expressions
-        runner -- a class for running external processes
-        """
-        self._runner = runner
-        self._cib = cib
-        self._cib_xml = etree_to_str(cib)
-
     def get_rule_status(self, rule_id: str) -> CibRuleInEffectStatus:
         """
         Figure out if a rule is expired, in effect, not yet in effect
@@ -44,6 +35,15 @@ class RuleInEffectEvalOneByOne(RuleInEffectEval):
     """
     Evaluate a rule by running a pacemaker tool.
     """
+
+    def __init__(self, cib: _Element, runner: CommandRunner):
+        """
+        cib -- the whole cib containing the rule expressions
+        runner -- a class for running external processes
+        """
+        self._runner = runner
+        self._cib = cib
+        self._cib_xml = etree_to_str(cib)
 
     def get_rule_status(self, rule_id: str) -> CibRuleInEffectStatus:
         return get_rule_in_effect_status(self._runner, self._cib_xml, rule_id)

@@ -197,8 +197,8 @@ Remove specified operation (note: you must specify the exact operation propertie
 op remove <operation id>
 Remove the specified operation id.
 .TP
-op defaults [config] [\fB\-\-full\fR]
-List currently configured default values for operations. If \fB\-\-full\fR is specified, also list ids.
+op defaults [config] [\fB\-\-all\fR] [\fB\-\-full\fR] [\fB\-\-no\-check\-expired\fR]
+List currently configured default values for operations. If \fB\-\-all\fR is specified, also list expired sets of values. If \fB\-\-full\fR is specified, also list ids. If \fB\-\-no\-expire\-check\fR is specified, do not evaluate whether sets of values are expired.
 .TP
 op defaults <name>=<value>
 Set default values for operations.
@@ -302,8 +302,8 @@ Set resources listed to managed mode (default). If \fB\-\-monitor\fR is specifie
 unmanage <resource id | tag id>... [\fB\-\-monitor\fR]
 Set resources listed to unmanaged mode. When a resource is in unmanaged mode, the cluster is not allowed to start nor stop the resource. If \fB\-\-monitor\fR is specified, disable all monitor operations of the resources.
 .TP
-defaults [config] [\fB\-\-full\fR]
-List currently configured default values for resources. If \fB\-\-full\fR is specified, also list ids.
+defaults [config] [\fB\-\-all\fR] [\fB\-\-full\fR] [\fB\-\-no\-check\-expired\fR]
+List currently configured default values for resources. If \fB\-\-all\fR is specified, also list expired sets of values. If \fB\-\-full\fR is specified, also list ids. If \fB\-\-no\-expire\-check\fR is specified, do not evaluate whether sets of values are expired.
 .TP
 defaults <name>=<value>
 Set default values for resources.

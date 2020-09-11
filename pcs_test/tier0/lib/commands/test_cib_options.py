@@ -431,14 +431,14 @@ class DefaultsConfigMixin:
 
     def test_empty(self):
         defaults_xml = f"""<{self.tag} />"""
+        self.config.runner.cib.load(
+            filename="cib-empty-3.4.xml", optional_in_conf=defaults_xml
+        )
         self.config.fs.isfile(
             (os.path.join(settings.pacemaker_binaries, "crm_rule")),
             return_value=True,
         )
-        self.config.runner.cib.load(
-            filename="cib-empty-3.4.xml", optional_in_conf=defaults_xml
-        )
-        self.assertEqual([], self.command(self.env_assist.get_env()))
+        self.assertEqual([], self.command(self.env_assist.get_env(), True))
 
     def test_full(self):
         defaults_xml = f"""
@@ -507,12 +507,12 @@ class DefaultsConfigMixin:
                 </meta_attributes>
             </{self.tag}>
         """
+        self.config.runner.cib.load(
+            filename="cib-empty-3.4.xml", optional_in_conf=defaults_xml
+        )
         self.config.fs.isfile(
             (os.path.join(settings.pacemaker_binaries, "crm_rule")),
             return_value=False,
-        )
-        self.config.runner.cib.load(
-            filename="cib-empty-3.4.xml", optional_in_conf=defaults_xml
         )
         self.assertEqual(
             [
@@ -684,7 +684,7 @@ class DefaultsConfigMixin:
                     [CibNvpairDto("my-id-pair3", "name1", "value1")],
                 ),
             ],
-            self.command(self.env_assist.get_env()),
+            self.command(self.env_assist.get_env(), True),
         )
         self.env_assist.assert_reports(
             [
@@ -694,7 +694,7 @@ class DefaultsConfigMixin:
             ]
         )
 
-    def _setup_rule_in_effect(self):
+    def _setup_rule_in_effect(self, crm_rule_check=True, crm_rule_present=True):
         defaults_xml = f"""
             <{self.tag}>
                 <meta_attributes id="my-id">
@@ -708,12 +708,34 @@ class DefaultsConfigMixin:
                 </meta_attributes>
             </{self.tag}>
         """
-        self.config.fs.isfile(
-            (os.path.join(settings.pacemaker_binaries, "crm_rule")),
-            return_value=True,
-        )
         self.config.runner.cib.load(
             filename="cib-empty-3.4.xml", optional_in_conf=defaults_xml
+        )
+        if crm_rule_check:
+            self.config.fs.isfile(
+                (os.path.join(settings.pacemaker_binaries, "crm_rule")),
+                return_value=crm_rule_present,
+            )
+
+    def test_crm_rule_missing(self):
+        self._setup_rule_in_effect(crm_rule_present=False)
+        self.assertEqual(
+            [self.fixture_expired_dto(CibRuleInEffectStatus.UNKNOWN)],
+            self.command(self.env_assist.get_env(), True),
+        )
+        self.env_assist.assert_reports(
+            [
+                fixture.warn(
+                    reports.codes.RULE_IN_EFFECT_STATUS_DETECTION_NOT_SUPPORTED
+                ),
+            ]
+        )
+
+    def test_no_expire_check(self):
+        self._setup_rule_in_effect(crm_rule_check=False)
+        self.assertEqual(
+            [self.fixture_expired_dto(CibRuleInEffectStatus.UNKNOWN)],
+            self.command(self.env_assist.get_env(), False),
         )
 
     def test_expired(self):
@@ -723,7 +745,7 @@ class DefaultsConfigMixin:
         )
         self.assertEqual(
             [self.fixture_expired_dto(CibRuleInEffectStatus.EXPIRED)],
-            self.command(self.env_assist.get_env()),
+            self.command(self.env_assist.get_env(), True),
         )
 
     def test_not_yet_in_effect(self):
@@ -733,7 +755,7 @@ class DefaultsConfigMixin:
         )
         self.assertEqual(
             [self.fixture_expired_dto(CibRuleInEffectStatus.NOT_YET_IN_EFFECT)],
-            self.command(self.env_assist.get_env()),
+            self.command(self.env_assist.get_env(), True),
         )
 
     def test_in_effect(self):
@@ -743,7 +765,7 @@ class DefaultsConfigMixin:
         )
         self.assertEqual(
             [self.fixture_expired_dto(CibRuleInEffectStatus.IN_EFFECT)],
-            self.command(self.env_assist.get_env()),
+            self.command(self.env_assist.get_env(), True),
         )
 
     def test_expired_error(self):
@@ -753,7 +775,7 @@ class DefaultsConfigMixin:
         )
         self.assertEqual(
             [self.fixture_expired_dto(CibRuleInEffectStatus.UNKNOWN)],
-            self.command(self.env_assist.get_env()),
+            self.command(self.env_assist.get_env(), True),
         )
 
 

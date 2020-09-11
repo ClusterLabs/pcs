@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Optional
 
 from pcs.common.pacemaker.rule import CibRuleExpressionDto
 from pcs.common.str_tools import (
@@ -17,6 +17,10 @@ _in_effect_label_map = {
 }
 
 
+def get_in_effect_label(rule: CibRuleExpressionDto) -> Optional[str]:
+    return _in_effect_label_map.get(rule.in_effect, None)
+
+
 def rule_expression_dto_to_lines(
     rule_expr: CibRuleExpressionDto, with_ids: bool = False
 ) -> List[str]:
@@ -30,7 +34,7 @@ def rule_expression_dto_to_lines(
 def _rule_dto_to_lines(
     rule_expr: CibRuleExpressionDto, with_ids: bool = False
 ) -> List[str]:
-    in_effect_label = _in_effect_label_map.get(rule_expr.in_effect, None)
+    in_effect_label = get_in_effect_label(rule_expr)
     heading_parts = [
         "Rule{0}:".format(f" ({in_effect_label})" if in_effect_label else "")
     ]

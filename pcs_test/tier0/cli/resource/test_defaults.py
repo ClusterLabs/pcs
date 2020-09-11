@@ -13,6 +13,7 @@ from pcs.common.pacemaker.rule import CibRuleExpressionDto
 from pcs.common.reports import codes as report_codes
 from pcs.common.types import (
     CibNvsetType,
+    CibRuleInEffectStatus,
     CibRuleExpressionType,
 )
 
@@ -44,7 +45,7 @@ class DefaultsConfigMixin(DefaultsBaseMixin):
             CibRuleExpressionDto(
                 "my-meta-rule",
                 CibRuleExpressionType.RULE,
-                False,
+                CibRuleInEffectStatus.EXPIRED,
                 {"boolean-op": "and", "score": "INFINITY"},
                 None,
                 None,
@@ -52,7 +53,7 @@ class DefaultsConfigMixin(DefaultsBaseMixin):
                     CibRuleExpressionDto(
                         "my-meta-rule-rsc",
                         CibRuleExpressionType.RSC_EXPRESSION,
-                        False,
+                        CibRuleInEffectStatus.UNKNOWN,
                         {
                             "class": "ocf",
                             "provider": "pacemaker",
@@ -90,7 +91,7 @@ class DefaultsConfigMixin(DefaultsBaseMixin):
     def test_no_args(self, mock_print):
         self.lib_command.return_value = []
         self._call_cmd([])
-        self.lib_command.assert_called_once_with()
+        self.lib_command.assert_called_once_with(True)
         mock_print.assert_called_once_with("No defaults set")
 
     def test_usage(self, mock_print):
@@ -103,21 +104,41 @@ class DefaultsConfigMixin(DefaultsBaseMixin):
     def test_full(self, mock_print):
         self.lib_command.return_value = []
         self._call_cmd([], {"full": True})
-        self.lib_command.assert_called_once_with()
+        self.lib_command.assert_called_once_with(True)
+        mock_print.assert_called_once_with("No defaults set")
+
+    def test_no_expire_check(self, mock_print):
+        self.lib_command.return_value = []
+        self._call_cmd([], {"no-expire-check": True})
+        self.lib_command.assert_called_once_with(False)
         mock_print.assert_called_once_with("No defaults set")
 
     def test_print(self, mock_print):
         self.lib_command.return_value = self.dto_list
-        self._call_cmd([])
-        self.lib_command.assert_called_once_with()
+        self._call_cmd([], {"all": True})
+        self.lib_command.assert_called_once_with(True)
         mock_print.assert_called_once_with(
             dedent(
                 '''\
-                Meta Attrs: my-meta_attributes
+                Meta Attrs (expired): my-meta_attributes
                   name1=value1
                   name2=value2
-                  Rule: boolean-op=and score=INFINITY
+                  Rule (expired): boolean-op=and score=INFINITY
                     Expression: resource ocf:pacemaker:Dummy
+                Attributes: instance
+                  inst=ance
+                Meta Attrs: meta-plain score=123
+                  "name 1"="value 1"'''
+            )
+        )
+
+    def test_print_exclude_expired(self, mock_print):
+        self.lib_command.return_value = self.dto_list
+        self._call_cmd([], {"all": False})
+        self.lib_command.assert_called_once_with(True)
+        mock_print.assert_called_once_with(
+            dedent(
+                '''\
                 Attributes: instance
                   inst=ance
                 Meta Attrs: meta-plain score=123
@@ -127,15 +148,15 @@ class DefaultsConfigMixin(DefaultsBaseMixin):
 
     def test_print_full(self, mock_print):
         self.lib_command.return_value = self.dto_list
-        self._call_cmd([], {"full": True})
-        self.lib_command.assert_called_once_with()
+        self._call_cmd([], {"all": True, "full": True})
+        self.lib_command.assert_called_once_with(True)
         mock_print.assert_called_once_with(
             dedent(
                 '''\
-                Meta Attrs: my-meta_attributes
+                Meta Attrs (expired): my-meta_attributes
                   name1=value1
                   name2=value2
-                  Rule: boolean-op=and score=INFINITY (id:my-meta-rule)
+                  Rule (expired): boolean-op=and score=INFINITY (id:my-meta-rule)
                     Expression: resource ocf:pacemaker:Dummy (id:my-meta-rule-rsc)
                 Attributes: instance
                   inst=ance

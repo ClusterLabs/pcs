@@ -561,6 +561,7 @@ class InputModifiersTest(TestCase):
             "--master",
             "--monitor",
             "--no-default-ops",
+            "--no-expire-check",
             "--no-strict",
             "--no-watchdog-validation",
             "--nodesc",

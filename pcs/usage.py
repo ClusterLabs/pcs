@@ -452,9 +452,11 @@ Commands:
     op remove <operation id>
         Remove the specified operation id.
 
-    op defaults [config] [--full]
-        List currently configured default values for operations. If --full is
-        specified, also list ids.
+    op defaults [config] [--all] [--full] [--no-expire-check]
+        List currently configured default values for operations. If --all is
+        specified, also list expired sets of values. If --full is specified,
+        also list ids. If --no-expire-check is specified, do not evaluate
+        whether sets of values are expired.
 
     op defaults <name>=<value>...
         Set default values for operations.
@@ -631,9 +633,11 @@ Commands:
         --monitor is specified, disable all monitor operations of the
         resources.
 
-    defaults [config] [--full]
-        List currently configured default values for resources. If --full is
-        specified, also list ids.
+    defaults [config] [--all] [--full] [--no-expire-check]
+        List currently configured default values for resources. If --all is
+        specified, also list expired sets of values. If --full is specified,
+        also list ids. If --no-expire-check is specified, do not evaluate
+        whether sets of values are expired.
 
     defaults <name>=<value>...
         Set default values for resources.

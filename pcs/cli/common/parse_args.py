@@ -73,6 +73,8 @@ PCS_LONG_OPTIONS = [
     "groups",
     # "pcs resource clear --expired" - only clear expired moves and bans
     "expired",
+    # disable evaluating whether rules are expired
+    "no-expire-check",
     # allow overwriting existing files, currently meant for / used in CLI only
     "overwrite",
 ]
@@ -426,6 +428,7 @@ class InputModifiers:
                 "--monitor": "--monitor" in options,
                 "--no-default-ops": "--no-default-ops" in options,
                 "--nodesc": "--nodesc" in options,
+                "--no-expire-check": "--no-expire-check" in options,
                 "--no-keys-sync": "--no-keys-sync" in options,
                 "--no-strict": "--no-strict" in options,
                 "--no-watchdog-validation": "--no-watchdog-validation"

@@ -5,7 +5,6 @@ from typing import (
     List,
     Mapping,
     Optional,
-    Type,
 )
 
 from pcs.common import reports
@@ -152,37 +151,53 @@ def _defaults_create(
     env.push_cib()
 
 
-def resource_defaults_config(env: LibraryEnvironment) -> List[CibNvsetDto]:
+def resource_defaults_config(
+    env: LibraryEnvironment, evaluate_expired: bool
+) -> List[CibNvsetDto]:
     """
     List all resource defaults nvsets
+
+    env --
+    evaluate_expired -- also evaluate whether rules are expired or in effect
     """
-    return _defaults_config(env, sections.RSC_DEFAULTS)
+    return _defaults_config(env, sections.RSC_DEFAULTS, evaluate_expired)
 
 
-def operation_defaults_config(env: LibraryEnvironment) -> List[CibNvsetDto]:
+def operation_defaults_config(
+    env: LibraryEnvironment, evaluate_expired: bool
+) -> List[CibNvsetDto]:
     """
     List all operation defaults nvsets
+
+    env --
+    evaluate_expired -- also evaluate whether rules are expired or in effect
     """
-    return _defaults_config(env, sections.OP_DEFAULTS)
+    return _defaults_config(env, sections.OP_DEFAULTS, evaluate_expired)
 
 
 def _defaults_config(
-    env: LibraryEnvironment, cib_section_name: str,
+    env: LibraryEnvironment, cib_section_name: str, evaluate_expired: bool
 ) -> List[CibNvsetDto]:
-    in_effect_eval_class: Type[RuleInEffectEval] = RuleInEffectEvalOneByOne
-    if not has_rule_in_effect_status_tool():
-        in_effect_eval_class = RuleInEffectEvalDummy
-        env.report_processor.report(
-            ReportItem.warning(
-                reports.messages.RuleInEffectStatusDetectionNotSupported()
-            )
-        )
     runner = env.cmd_runner()
     cib = env.get_cib()
+
+    if evaluate_expired:
+        if has_rule_in_effect_status_tool():
+            in_effect_eval: RuleInEffectEval = RuleInEffectEvalOneByOne(
+                cib, runner
+            )
+        else:
+            in_effect_eval = RuleInEffectEvalDummy()
+            env.report_processor.report(
+                ReportItem.warning(
+                    reports.messages.RuleInEffectStatusDetectionNotSupported()
+                )
+            )
+    else:
+        in_effect_eval = RuleInEffectEvalDummy()
+
     return [
-        nvpair_multi.nvset_element_to_dto(
-            nvset_el, in_effect_eval_class(cib, runner)
-        )
+        nvpair_multi.nvset_element_to_dto(nvset_el, in_effect_eval)
         for nvset_el in nvpair_multi.find_nvsets(
             sections.get(cib, cib_section_name)
         )
