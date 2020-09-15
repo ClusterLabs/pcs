@@ -140,17 +140,6 @@ class CannotMoveResourceMasterResourceNotPromotable(CliReportMessageCustom):
         )
 
 
-class CannotMoveResourcePromotableNotMaster(CliReportMessageCustom):
-    _obj: messages.CannotMoveResourcePromotableNotMaster
-
-    @property
-    def message(self) -> str:
-        return (
-            "to move promotable clone resources you must use --master and the "
-            f"promotable clone id ({self._obj.promotable_id})"
-        )
-
-
 class SbdWatchdogTestMultipleDevices(CliReportMessageCustom):
     _obj: messages.SbdWatchdogTestMultipleDevices
 

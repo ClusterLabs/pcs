@@ -14,6 +14,8 @@
   ([rhbz#1857295])
 - Clarify documentation for 'resource move' and 'resource ban' commands with
   regards to the 'lifetime' option.
+- Allow moving both promoted and demoted promotable clone resources
+  ([rhbz#1875301])
 
 ### Deprecated
 - `pcs resource [op] defaults <name>=<value>...` commands are deprecated now.
@@ -25,6 +27,7 @@
 [rhbz#1843079]: https://bugzilla.redhat.com/show_bug.cgi?id=1843079
 [rhbz#1857295]: https://bugzilla.redhat.com/show_bug.cgi?id=1857295
 [rhbz#1867516]: https://bugzilla.redhat.com/show_bug.cgi?id=1867516
+[rhbz#1875301]: https://bugzilla.redhat.com/show_bug.cgi?id=1875301
 
 
 ## [0.10.6] - 2020-06-11

@@ -413,16 +413,18 @@ def validate_move(resource_element, master):
         )
         return report_list
 
-    if not master and (
-        analysis.is_promotable_clone or analysis.is_in_promotable_clone
-    ):
-        # We assume users want to move master role. Still we require them to
-        # actually specify that. 1) To be consistent with command for bannig
-        # resources. 2) To prevent users from accidentally move slave role.
-        # This check can be removed if someone requests it.
+    # Allow moving both promoted and demoted instances of promotable clones
+    # (analysis.is_promotable_clone). Do not allow to move promoted instances
+    # of promotables' inner resources (analysis.is_in_promotable_clone) as that
+    # would create a constraint for the promoted role of a group or a primitve
+    # which would not make sense if the group or primitive is later moved out
+    # of its promotable clone. To be consistent, we do not allow to move
+    # demoted instances of promotables' inner resources either. See
+    # rhbz#1875301 for details.
+    if not master and analysis.is_in_promotable_clone:
         report_list.append(
             ReportItem.error(
-                reports.messages.CannotMoveResourcePromotableNotMaster(
+                reports.messages.CannotMoveResourcePromotableInner(
                     resource_element.get("id"), analysis.promotable_clone_id,
                 )
             )

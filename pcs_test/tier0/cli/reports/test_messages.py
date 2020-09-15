@@ -122,17 +122,6 @@ class CannotMoveResourceMasterResourceNotPromotable(CliReportMessageTestBase):
         )
 
 
-class CannotMoveResourcePromotableNotMaster(CliReportMessageTestBase):
-    def test_success(self):
-        self.assert_message(
-            messages.CannotMoveResourcePromotableNotMaster("R", "P"),
-            (
-                "to move promotable clone resources you must use --master and "
-                "the promotable clone id (P)"
-            ),
-        )
-
-
 class InvalidCibContent(CliReportMessageTestBase):
     def test_message_can_be_more_verbose(self):
         report = "no verbose\noutput\n"

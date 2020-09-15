@@ -3949,14 +3949,14 @@ class CannotMoveResourceClone(NameBuildTest):
         )
 
 
-class CannotMoveResourcePromotableNotMaster(NameBuildTest):
+class CannotMoveResourcePromotableInner(NameBuildTest):
     def test_success(self):
         self.assert_message_from_report(
             (
-                "to move promotable clone resources you must use master and "
+                "to move promotable clone resources you must use "
                 "the promotable clone id (P)"
             ),
-            reports.CannotMoveResourcePromotableNotMaster("R", "P"),
+            reports.CannotMoveResourcePromotableInner("R", "P"),
         )
 
 

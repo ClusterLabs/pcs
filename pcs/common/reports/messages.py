@@ -5371,9 +5371,9 @@ class CannotMoveResourceClone(ReportItemMessage):
 
 
 @dataclass(frozen=True)
-class CannotMoveResourcePromotableNotMaster(ReportItemMessage):
+class CannotMoveResourcePromotableInner(ReportItemMessage):
     """
-    User is trying to move a promotable clone without limiting it to master role
+    User is trying to move a promotable clone's inner resource
 
     resource_id -- id of the resource to be moved
     promotable_id -- id of relevant parent promotable resource
@@ -5381,12 +5381,12 @@ class CannotMoveResourcePromotableNotMaster(ReportItemMessage):
 
     resource_id: str
     promotable_id: str
-    _code = codes.CANNOT_MOVE_RESOURCE_PROMOTABLE_NOT_MASTER
+    _code = codes.CANNOT_MOVE_RESOURCE_PROMOTABLE_INNER
 
     @property
     def message(self) -> str:
         return (
-            "to move promotable clone resources you must use master and the "
+            "to move promotable clone resources you must use the "
             f"promotable clone id ({self.promotable_id})"
         )
 
