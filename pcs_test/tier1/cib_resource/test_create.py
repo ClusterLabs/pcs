@@ -214,7 +214,10 @@ class Success(ResourceTest):
 
     def test_with_custom_clone_id(self):
         self.assert_effect(
-            "resource create R ocf:heartbeat:Dummy --no-default-ops clone CustomId".split(),
+            (
+                "resource create R ocf:heartbeat:Dummy --no-default-ops clone "
+                "CustomId"
+            ).split(),
             """<resources>
                 <clone id="CustomId">
                     <primitive class="ocf" id="R" provider="heartbeat"

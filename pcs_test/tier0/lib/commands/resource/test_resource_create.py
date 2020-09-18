@@ -224,8 +224,8 @@ fixture_cib_resources_xml_group_simplest_disabled = """<resources>
 </resources>"""
 
 
-fixture_cib_resources_xml_clone_simplest = """<resources>
-    <clone id="A-clone">
+fixture_cib_resources_xml_clone_simplest_template = """<resources>
+    <clone id="{clone_id}">
         <primitive class="ocf" id="A" provider="heartbeat" type="Dummy">
             <operations>
                 <op id="A-migrate_from-interval-0s" interval="0s"
@@ -250,6 +250,16 @@ fixture_cib_resources_xml_clone_simplest = """<resources>
         </primitive>
     </clone>
 </resources>"""
+
+
+fixture_cib_resources_xml_clone_simplest = fixture_cib_resources_xml_clone_simplest_template.format(
+    clone_id="A-clone"
+)
+
+
+fixture_cib_resources_xml_clone_custom_id = fixture_cib_resources_xml_clone_simplest_template.format(
+    clone_id="CustomCloneId"
+)
 
 
 fixture_cib_resources_xml_clone_simplest_disabled = """<resources>
@@ -260,34 +270,6 @@ fixture_cib_resources_xml_clone_simplest_disabled = """<resources>
                 value="Stopped"
             />
         </meta_attributes>
-        <primitive class="ocf" id="A" provider="heartbeat" type="Dummy">
-            <operations>
-                <op id="A-migrate_from-interval-0s" interval="0s"
-                    name="migrate_from" timeout="20"
-                />
-                <op id="A-migrate_to-interval-0s" interval="0s"
-                    name="migrate_to" timeout="20"
-                />
-                <op id="A-monitor-interval-10" interval="10" name="monitor"
-                    timeout="20"
-                />
-                <op id="A-reload-interval-0s" interval="0s" name="reload"
-                    timeout="20"
-                />
-                <op id="A-start-interval-0s" interval="0s" name="start"
-                    timeout="20"
-                />
-                <op id="A-stop-interval-0s" interval="0s" name="stop"
-                    timeout="20"
-                />
-            </operations>
-        </primitive>
-    </clone>
-</resources>"""
-
-
-fixture_cib_resources_xml_clone_custom_id = """<resources>
-    <clone id="CustomCloneId">
         <primitive class="ocf" id="A" provider="heartbeat" type="Dummy">
             <operations>
                 <op id="A-migrate_from-interval-0s" interval="0s"
@@ -1026,7 +1008,7 @@ class CreateAsClone(TestCase):
             self.env_assist.get_env(), wait=False, clone_id="CustomCloneId"
         )
 
-    def test_custom_clone_id_error(self):
+    def test_custom_clone_id_error_invalid_id(self):
         self.config.remove(name="runner.pcmk.can_wait")
         self.env_assist.assert_raise_library_error(
             lambda: create_clone(
@@ -1036,6 +1018,30 @@ class CreateAsClone(TestCase):
         self.env_assist.assert_reports(
             [fixture.report_invalid_id("1invalid", "1")],
         )
+
+    def test_custom_clone_id_error_id_already_exist(self):
+        self.config.remove(name="runner.pcmk.can_wait")
+        self.config.remove(name="runner.cib.load")
+        self.config.runner.cib.load(
+            resources="""
+                <resources>
+                    <primitive class="ocf" id="C" provider="heartbeat"
+                        type="Dummy"
+                    >
+                        <operations>
+                            <op id="C-monitor-interval-10s" interval="10s"
+                                name="monitor" timeout="20s"/>
+                        </operations>
+                    </primitive>
+                </resources>
+            """,
+        )
+        self.env_assist.assert_raise_library_error(
+            lambda: create_clone(
+                self.env_assist.get_env(), wait=False, clone_id="C"
+            ),
+        )
+        self.env_assist.assert_reports([fixture.report_id_already_exist("C")])
 
     def test_cib_upgrade_on_onfail_demote(self):
         self.config.remove(name="runner.pcmk.can_wait")

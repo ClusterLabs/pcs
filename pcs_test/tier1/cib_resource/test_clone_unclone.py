@@ -29,22 +29,11 @@ FIXTURE_PRIMITIVE_FOR_CLONE = """
     </primitive>
 """
 
-FIXTURE_CLONE = """
-    <clone id="C-clone">
-       {0}
-    </clone>
-""".format(
-    FIXTURE_PRIMITIVE_FOR_CLONE
-)
+FIXTURE_CLONE = f"""<clone id="C-clone">{FIXTURE_PRIMITIVE_FOR_CLONE}</clone>"""
 
-FIXTURE_CLONE_WITH_OPTIONS = """
+FIXTURE_CLONE_WITH_OPTIONS = f"""
     <clone id="CustomCloneId">
-        <primitive class="ocf" id="C" provider="heartbeat" type="Dummy">
-            <operations>
-                <op id="C-monitor-interval-10s" interval="10s"
-                    name="monitor" timeout="20s"/>
-            </operations>
-        </primitive>
+        {FIXTURE_PRIMITIVE_FOR_CLONE}
         <meta_attributes id="CustomCloneId-meta_attributes">
             <nvpair id="CustomCloneId-meta_attributes-a" name="a" value="b"/>
             <nvpair id="CustomCloneId-meta_attributes-c" name="c" value="d"/>
@@ -266,13 +255,11 @@ class Clone(
     empty_cib = rc("cib-empty.xml")
 
     def setUp(self):
-        # pylint: disable=invalid-name
         self.temp_cib = get_tmp_file("tier1_cib_resource_clone_unclone_clone")
         self.pcs_runner = PcsRunner(self.temp_cib.name)
         self.set_cib_file(FIXTURE_PRIMITIVE_FOR_CLONE)
 
     def tearDown(self):
-        # pylint: disable=invalid-name
         self.temp_cib.close()
 
     def set_cib_file(self, *xml_string_list):
@@ -292,7 +279,7 @@ class Clone(
             fixture_resources_xml(fixture_clone("CustomCloneId", "C")),
         )
 
-    def test_clone_id_incerment(self):
+    def test_clone_id_increment(self):
         self.set_cib_file(
             fixture_clone("C-clone", "Dummy"), FIXTURE_PRIMITIVE_FOR_CLONE,
         )

@@ -382,6 +382,8 @@ def create_as_clone(
     meta_attributes -- contains attributes for primitive/meta_attributes
     instance_attributes -- contains attributes for primitive/instance_attributes
     clone_meta_options -- contains attributes for clone/meta_attributes
+    clone_id -- optional custom clone id, if not set then clone id is generated
+        from primitive resource or group id
     allow_absent_agent -- is a flag for allowing agent that is not installed
         in a system
     allow_invalid_operation -- is a flag for allowing to use operations that

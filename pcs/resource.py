@@ -692,7 +692,7 @@ def resource_create(lib, argv, modifiers):
         allow_not_suitable_command=modifiers.get("--force"),
     )
 
-    clone_id = parts["clone_id"] if "clone_id" in parts else None
+    clone_id = parts.get("clone_id", None)
     if "clone" in parts:
         lib.resource.create_as_clone(
             ra_id,
