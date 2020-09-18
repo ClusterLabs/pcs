@@ -197,8 +197,8 @@ Remove specified operation (note: you must specify the exact operation propertie
 op remove <operation id>
 Remove the specified operation id.
 .TP
-op defaults [config] [\fB\-\-full\fR]
-List currently configured default values for operations. If \fB\-\-full\fR is specified, also list ids.
+op defaults [config] [\fB\-\-all\fR] [\fB\-\-full\fR] [\fB\-\-no\-check\-expired\fR]
+List currently configured default values for operations. If \fB\-\-all\fR is specified, also list expired sets of values. If \fB\-\-full\fR is specified, also list ids. If \fB\-\-no\-expire\-check\fR is specified, do not evaluate whether sets of values are expired.
 .TP
 op defaults <name>=<value>
 Set default values for operations.
@@ -207,21 +207,39 @@ NOTE: Defaults do not apply to resources which override them with their own defi
 .TP
 op defaults set create [<set options>] [meta [<name>=<value>]...] [rule [<expression>]]
 Create a new set of default values for resource operations. You may specify a rule describing resources and / or operations to which the set applies.
-.br
+
 Set options are: id, score
-.br
+
 Expression looks like one of the following:
 .br
   op <operation name> [interval=<interval>]
 .br
   resource [<standard>]:[<provider>]:[<type>]
 .br
+  defined|not_defined <node attribute>
+.br
+  <node attribute> lt|gt|lte|gte|eq|ne [string|integer|number|version] <value>
+.br
+  date gt|lt <date>
+.br
+  date in_range [<date>] to <date>
+.br
+  date in_range <date> to duration <duration options>
+.br
+  date\-spec <date\-spec options>
+.br
   <expression> and|or <expression>
 .br
-  ( <expression> )
-.br
+  (<expression>)
+
 You may specify all or any of 'standard', 'provider' and 'type' in a resource expression. For example: 'resource ocf::' matches all resources of 'ocf' standard, while 'resource ::Dummy' matches all resources of 'Dummy' type regardless of their standard and provider.
-.br
+
+Dates are expected to conform to ISO 8601 format.
+
+Duration options are: hours, monthdays, weekdays, yearsdays, months, weeks, years, weekyears, moon. Value for these options is an integer.
+
+Date\-spec options are: hours, monthdays, weekdays, yearsdays, months, weeks, years, weekyears, moon. Value for these options is an integer or a range written as integer\-integer.
+
 NOTE: Defaults do not apply to resources which override them with their own defined values.
 .TP
 op defaults set delete [<set id>]...
@@ -284,8 +302,8 @@ Set resources listed to managed mode (default). If \fB\-\-monitor\fR is specifie
 unmanage <resource id | tag id>... [\fB\-\-monitor\fR]
 Set resources listed to unmanaged mode. When a resource is in unmanaged mode, the cluster is not allowed to start nor stop the resource. If \fB\-\-monitor\fR is specified, disable all monitor operations of the resources.
 .TP
-defaults [config] [\fB\-\-full\fR]
-List currently configured default values for resources. If \fB\-\-full\fR is specified, also list ids.
+defaults [config] [\fB\-\-all\fR] [\fB\-\-full\fR] [\fB\-\-no\-check\-expired\fR]
+List currently configured default values for resources. If \fB\-\-all\fR is specified, also list expired sets of values. If \fB\-\-full\fR is specified, also list ids. If \fB\-\-no\-expire\-check\fR is specified, do not evaluate whether sets of values are expired.
 .TP
 defaults <name>=<value>
 Set default values for resources.
@@ -294,19 +312,37 @@ NOTE: Defaults do not apply to resources which override them with their own defi
 .TP
 defaults set create [<set options>] [meta [<name>=<value>]...] [rule [<expression>]]
 Create a new set of default values for resources. You may specify a rule describing resources to which the set applies.
-.br
+
 Set options are: id, score
-.br
+
 Expression looks like one of the following:
 .br
   resource [<standard>]:[<provider>]:[<type>]
 .br
+  defined|not_defined <node attribute>
+.br
+  <node attribute> lt|gt|lte|gte|eq|ne [string|integer|number|version] <value>
+.br
+  date gt|lt <date>
+.br
+  date in_range [<date>] to <date>
+.br
+  date in_range <date> to duration <duration options>
+.br
+  date\-spec <date\-spec options>
+.br
   <expression> and|or <expression>
 .br
-  ( <expression> )
-.br
+  (<expression>)
+
 You may specify all or any of 'standard', 'provider' and 'type' in a resource expression. For example: 'resource ocf::' matches all resources of 'ocf' standard, while 'resource ::Dummy' matches all resources of 'Dummy' type regardless of their standard and provider.
-.br
+
+Dates are expected to conform to ISO 8601 format.
+
+Duration options are: hours, monthdays, weekdays, yearsdays, months, weeks, years, weekyears, moon. Value for these options is an integer.
+
+Date\-spec options are: hours, monthdays, weekdays, yearsdays, months, weeks, years, weekyears, moon. Value for these options is an integer or a range written as integer\-integer.
+
 NOTE: Defaults do not apply to resources which override them with their own defined values.
 .TP
 defaults set delete [<set id>]...
@@ -804,9 +840,9 @@ Create a location constraint on a resource to avoid the specified node with scor
 location <resource> rule [id=<rule id>] [resource\-discovery=<option>] [role=master|slave] [constraint\-id=<id>] [score=<score> | score\-attribute=<attribute>] <expression>
 Creates a location constraint with a rule on the specified resource where expression looks like one of the following:
 .br
-  defined|not_defined <attribute>
+  defined|not_defined <node attribute>
 .br
-  <attribute> lt|gt|lte|gte|eq|ne [string|integer|version] <value>
+  <node attribute> lt|gt|lte|gte|eq|ne [string|integer|number|version] <value>
 .br
   date gt|lt <date>
 .br
@@ -891,9 +927,9 @@ List constraints referencing specified resource.
 rule add <constraint id> [id=<rule id>] [role=master|slave] [score=<score>|score\-attribute=<attribute>] <expression>
 Add a rule to a location constraint specified by 'constraint id' where the expression looks like one of the following:
 .br
-  defined|not_defined <attribute>
+  defined|not_defined <node attribute>
 .br
-  <attribute> lt|gt|lte|gte|eq|ne [string|integer|version] <value>
+  <node attribute> lt|gt|lte|gte|eq|ne [string|integer|number|version] <value>
 .br
   date gt|lt <date>
 .br

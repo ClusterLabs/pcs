@@ -4705,6 +4705,33 @@ class TagIdsNotInTheTag(NameBuildTest):
         )
 
 
+class RuleInEffectStatusDetectionNotSupported(NameBuildTest):
+    def test_success(self):
+        self.assert_message_from_report(
+            (
+                "crm_rule is not available, therefore expired parts of "
+                "configuration may not be detected. Consider upgrading pacemaker."
+            ),
+            reports.RuleInEffectStatusDetectionNotSupported(),
+        )
+
+
+class RuleExpressionOptionsDuplication(NameBuildTest):
+    def test_success(self):
+        self.assert_message_from_report(
+            "Duplicate options in a single (sub)expression: 'key', 'name'",
+            reports.RuleExpressionOptionsDuplication(["name", "key"]),
+        )
+
+
+class RuleExpressionSinceGreaterThanUntil(NameBuildTest):
+    def test_success(self):
+        self.assert_message_from_report(
+            "Since '987' is not sooner than until '654'",
+            reports.RuleExpressionSinceGreaterThanUntil("987", "654"),
+        )
+
+
 class RuleExpressionParseError(NameBuildTest):
     def test_success(self):
         self.assert_message_from_report(

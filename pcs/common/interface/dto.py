@@ -45,6 +45,7 @@ def from_dict(cls: Type[DtoType], data: DtoPayload) -> DtoType:
         config=dacite.Config(
             cast=[
                 types.CibNvsetType,
+                types.CibRuleInEffectStatus,
                 types.CibRuleExpressionType,
                 types.DrRole,
                 types.ResourceRelationType,

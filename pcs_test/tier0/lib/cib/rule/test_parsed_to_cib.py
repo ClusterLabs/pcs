@@ -5,11 +5,30 @@ from lxml import etree
 from pcs_test.tools.assertions import assert_xml_equal
 from pcs_test.tools.xml import etree_to_str
 
+from pcs.common.tools import Version
 from pcs.lib.cib import rule
 from pcs.lib.cib.rule.expression_part import (
     BOOL_AND,
     BOOL_OR,
+    DATE_OP_GT,
+    DATE_OP_LT,
+    NODE_ATTR_TYPE_INTEGER,
+    NODE_ATTR_TYPE_NUMBER,
+    NODE_ATTR_TYPE_STRING,
+    NODE_ATTR_TYPE_VERSION,
+    NODE_ATTR_OP_DEFINED,
+    NODE_ATTR_OP_NOT_DEFINED,
+    NODE_ATTR_OP_EQ,
+    NODE_ATTR_OP_NE,
+    NODE_ATTR_OP_GTE,
+    NODE_ATTR_OP_GT,
+    NODE_ATTR_OP_LTE,
+    NODE_ATTR_OP_LT,
     BoolExpr,
+    DateInRangeExpr,
+    DatespecExpr,
+    DateUnaryExpr,
+    NodeAttrExpr,
     OpExpr,
     RscExpr,
 )
@@ -18,9 +37,11 @@ from pcs.lib.cib.tools import IdProvider
 
 class Base(TestCase):
     @staticmethod
-    def assert_cib(tree, expected_xml):
+    def assert_cib(tree, expected_xml, schema_version=None):
+        if schema_version is None:
+            schema_version = Version(3, 5, 0)
         xml = etree.fromstring('<root id="X"/>')
-        rule.rule_to_cib(xml, IdProvider(xml), tree)
+        rule.rule_to_cib(xml, IdProvider(xml), schema_version, tree)
         assert_xml_equal(
             '<root id="X">' + expected_xml + "</root>", etree_to_str(xml)
         )
@@ -69,6 +90,232 @@ class SimpleBool(Base):
                         </rule>
                     """,
                 )
+
+
+class SimpleNodeAttr(Base):
+    def test_defined(self):
+        self.assert_cib(
+            NodeAttrExpr(NODE_ATTR_OP_DEFINED, "pingd", None, None),
+            """
+                <expression attribute="pingd" id="X-expr" operation="defined" />
+            """,
+        )
+
+    def test_not_defined(self):
+        self.assert_cib(
+            NodeAttrExpr(NODE_ATTR_OP_NOT_DEFINED, "pingd", None, None),
+            """
+                <expression attribute="pingd" id="X-expr" operation="not_defined" />
+            """,
+        )
+
+    def test_eq(self):
+        self.assert_cib(
+            NodeAttrExpr(NODE_ATTR_OP_EQ, "#uname", "node1", None),
+            """
+                <expression attribute="#uname" id="X-expr" operation="eq"
+                    value="node1"
+                />
+            """,
+        )
+
+    def test_ne(self):
+        self.assert_cib(
+            NodeAttrExpr(NODE_ATTR_OP_NE, "#uname", "node1", None),
+            """
+                <expression attribute="#uname" id="X-expr" operation="ne"
+                    value="node1"
+                />
+            """,
+        )
+
+    def test_gt(self):
+        self.assert_cib(
+            NodeAttrExpr(NODE_ATTR_OP_GT, "#uname", "node1", None),
+            """
+                <expression attribute="#uname" id="X-expr" operation="gt"
+                    value="node1"
+                />
+            """,
+        )
+
+    def test_gte(self):
+        self.assert_cib(
+            NodeAttrExpr(NODE_ATTR_OP_GTE, "#uname", "node1", None),
+            """
+                <expression attribute="#uname" id="X-expr" operation="gte"
+                    value="node1"
+                />
+            """,
+        )
+
+    def test_lt(self):
+        self.assert_cib(
+            NodeAttrExpr(NODE_ATTR_OP_LT, "#uname", "node1", None),
+            """
+                <expression attribute="#uname" id="X-expr" operation="lt"
+                    value="node1"
+                />
+            """,
+        )
+
+    def test_lte(self):
+        self.assert_cib(
+            NodeAttrExpr(NODE_ATTR_OP_LTE, "#uname", "node1", None),
+            """
+                <expression attribute="#uname" id="X-expr" operation="lte"
+                    value="node1"
+                />
+            """,
+        )
+
+    def test_type_integer(self):
+        self.assert_cib(
+            NodeAttrExpr(
+                NODE_ATTR_OP_EQ, "#uname", "12345", NODE_ATTR_TYPE_INTEGER
+            ),
+            """
+                <expression attribute="#uname" id="X-expr" operation="eq"
+                    type="integer" value="12345"
+                />
+            """,
+        )
+
+    def test_type_integer_old_schema(self):
+        self.assert_cib(
+            NodeAttrExpr(
+                NODE_ATTR_OP_EQ, "#uname", "12345", NODE_ATTR_TYPE_INTEGER
+            ),
+            """
+                <expression attribute="#uname" id="X-expr" operation="eq"
+                    type="number" value="12345"
+                />
+            """,
+            Version(3, 4, 0),
+        )
+
+    def test_type_number(self):
+        self.assert_cib(
+            NodeAttrExpr(
+                NODE_ATTR_OP_EQ, "#uname", "12345", NODE_ATTR_TYPE_NUMBER
+            ),
+            """
+                <expression attribute="#uname" id="X-expr" operation="eq"
+                    type="number" value="12345"
+                />
+            """,
+        )
+
+    def test_type_number_old_schema(self):
+        self.assert_cib(
+            NodeAttrExpr(
+                NODE_ATTR_OP_EQ, "#uname", "12345", NODE_ATTR_TYPE_NUMBER
+            ),
+            """
+                <expression attribute="#uname" id="X-expr" operation="eq"
+                    type="number" value="12345"
+                />
+            """,
+            Version(3, 4, 0),
+        )
+
+    def test_type_string(self):
+        self.assert_cib(
+            NodeAttrExpr(
+                NODE_ATTR_OP_EQ, "#uname", "node1", NODE_ATTR_TYPE_STRING
+            ),
+            """
+                <expression attribute="#uname" id="X-expr" operation="eq"
+                    type="string" value="node1"
+                />
+            """,
+        )
+
+    def test_type_version(self):
+        self.assert_cib(
+            NodeAttrExpr(
+                NODE_ATTR_OP_EQ, "#uname", "1.2.3", NODE_ATTR_TYPE_VERSION
+            ),
+            """
+                <expression attribute="#uname" id="X-expr" operation="eq"
+                    type="version" value="1.2.3"
+                />
+            """,
+        )
+
+
+class SimpleDatespec(Base):
+    def test_1(self):
+        self.assert_cib(
+            DatespecExpr([("hours", "1")]),
+            """
+                <date_expression id="X-expr" operation="date_spec">
+                    <date_spec id="X-expr-datespec" hours="1" />
+                </date_expression>
+            """,
+        )
+
+    def test_2(self):
+        self.assert_cib(
+            DatespecExpr(
+                [("hours", "1-14"), ("monthdays", "20-30"), ("months", "1")]
+            ),
+            """
+                <date_expression id="X-expr" operation="date_spec">
+                    <date_spec id="X-expr-datespec"
+                        hours="1-14" monthdays="20-30" months="1"
+                    />
+                </date_expression>
+            """,
+        )
+
+
+class SimpleDate(Base):
+    def test_gt(self):
+        self.assert_cib(
+            DateUnaryExpr(DATE_OP_GT, "2014-06-26"),
+            """
+                <date_expression id="X-expr" operation="gt" start="2014-06-26" />
+            """,
+        )
+
+    def test_lt(self):
+        self.assert_cib(
+            DateUnaryExpr(DATE_OP_LT, "2014-06-26"),
+            """
+                <date_expression id="X-expr" operation="lt" end="2014-06-26" />
+            """,
+        )
+
+    def test_inrange_start_end(self):
+        self.assert_cib(
+            DateInRangeExpr("2014-06-26", "2014-07-26", None),
+            """
+                <date_expression id="X-expr"
+                    operation="in_range" start="2014-06-26" end="2014-07-26"
+                />
+            """,
+        )
+
+    def test_inrange_end(self):
+        self.assert_cib(
+            DateInRangeExpr(None, "2014-07-26", None),
+            """
+                <date_expression id="X-expr"
+                    operation="in_range" end="2014-07-26"
+                />
+            """,
+        )
+
+    def test_inrange_start_duration(self):
+        self.assert_cib(
+            DateInRangeExpr("2014-06-26", None, [("years", "1")]),
+            """
+                <date_expression id="X-expr" operation="in_range" start="2014-06-26">
+                    <duration id="X-expr-duration" years="1"/>
+                </date_expression>
+            """,
+        )
 
 
 class SimpleOp(Base):

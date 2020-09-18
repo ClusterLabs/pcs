@@ -7,7 +7,10 @@ from pcs.common.pacemaker.rule import (
     CibRuleDateCommonDto,
     CibRuleExpressionDto,
 )
-from pcs.common.types import CibRuleExpressionType
+from pcs.common.types import (
+    CibRuleInEffectStatus,
+    CibRuleExpressionType,
+)
 
 
 class RuleDtoToLinesMixin:
@@ -32,7 +35,7 @@ class ExpressionDtoToLines(RuleDtoToLinesMixin, TestCase):
         dto = CibRuleExpressionDto(
             "my-id",
             CibRuleExpressionType.RULE,
-            False,
+            CibRuleInEffectStatus.UNKNOWN,
             {},
             None,
             None,
@@ -40,7 +43,7 @@ class ExpressionDtoToLines(RuleDtoToLinesMixin, TestCase):
                 CibRuleExpressionDto(
                     "my-id-expr",
                     CibRuleExpressionType.EXPRESSION,
-                    False,
+                    CibRuleInEffectStatus.UNKNOWN,
                     {"attribute": "pingd", "operation": "defined"},
                     None,
                     None,
@@ -62,7 +65,7 @@ class ExpressionDtoToLines(RuleDtoToLinesMixin, TestCase):
         dto = CibRuleExpressionDto(
             "my-id",
             CibRuleExpressionType.RULE,
-            False,
+            CibRuleInEffectStatus.UNKNOWN,
             {},
             None,
             None,
@@ -70,7 +73,7 @@ class ExpressionDtoToLines(RuleDtoToLinesMixin, TestCase):
                 CibRuleExpressionDto(
                     "my-id-expr",
                     CibRuleExpressionType.EXPRESSION,
-                    False,
+                    CibRuleInEffectStatus.UNKNOWN,
                     {
                         "attribute": "my-attr",
                         "operation": "eq",
@@ -96,7 +99,7 @@ class ExpressionDtoToLines(RuleDtoToLinesMixin, TestCase):
         dto = CibRuleExpressionDto(
             "my-id",
             CibRuleExpressionType.RULE,
-            False,
+            CibRuleInEffectStatus.UNKNOWN,
             {},
             None,
             None,
@@ -104,7 +107,7 @@ class ExpressionDtoToLines(RuleDtoToLinesMixin, TestCase):
                 CibRuleExpressionDto(
                     "my-id-expr",
                     CibRuleExpressionType.EXPRESSION,
-                    False,
+                    CibRuleInEffectStatus.UNKNOWN,
                     {
                         "attribute": "foo",
                         "operation": "gt",
@@ -133,7 +136,7 @@ class DateExpressionDtoToLines(RuleDtoToLinesMixin, TestCase):
         dto = CibRuleExpressionDto(
             "rule",
             CibRuleExpressionType.RULE,
-            False,
+            CibRuleInEffectStatus.UNKNOWN,
             {},
             None,
             None,
@@ -141,7 +144,7 @@ class DateExpressionDtoToLines(RuleDtoToLinesMixin, TestCase):
                 CibRuleExpressionDto(
                     "rule-expr",
                     CibRuleExpressionType.DATE_EXPRESSION,
-                    False,
+                    CibRuleInEffectStatus.UNKNOWN,
                     {"operation": "gt", "start": "2014-06-26"},
                     None,
                     None,
@@ -163,7 +166,7 @@ class DateExpressionDtoToLines(RuleDtoToLinesMixin, TestCase):
         dto = CibRuleExpressionDto(
             "rule",
             CibRuleExpressionType.RULE,
-            False,
+            CibRuleInEffectStatus.UNKNOWN,
             {},
             None,
             None,
@@ -171,7 +174,7 @@ class DateExpressionDtoToLines(RuleDtoToLinesMixin, TestCase):
                 CibRuleExpressionDto(
                     "rule-expr",
                     CibRuleExpressionType.DATE_EXPRESSION,
-                    False,
+                    CibRuleInEffectStatus.UNKNOWN,
                     {"operation": "date_spec"},
                     CibRuleDateCommonDto(
                         "rule-expr-datespec",
@@ -193,11 +196,11 @@ class DateExpressionDtoToLines(RuleDtoToLinesMixin, TestCase):
         )
         self.assert_lines(dto, output)
 
-    def test_inrange(self):
+    def test_inrange_start_end(self):
         dto = CibRuleExpressionDto(
             "rule",
             CibRuleExpressionType.RULE,
-            False,
+            CibRuleInEffectStatus.UNKNOWN,
             {},
             None,
             None,
@@ -205,7 +208,7 @@ class DateExpressionDtoToLines(RuleDtoToLinesMixin, TestCase):
                 CibRuleExpressionDto(
                     "rule-expr",
                     CibRuleExpressionType.DATE_EXPRESSION,
-                    False,
+                    CibRuleInEffectStatus.UNKNOWN,
                     {
                         "operation": "in_range",
                         "start": "2014-06-26",
@@ -227,11 +230,11 @@ class DateExpressionDtoToLines(RuleDtoToLinesMixin, TestCase):
         )
         self.assert_lines(dto, output)
 
-    def test_inrange_duration(self):
+    def test_inrange_end(self):
         dto = CibRuleExpressionDto(
             "rule",
             CibRuleExpressionType.RULE,
-            False,
+            CibRuleInEffectStatus.UNKNOWN,
             {},
             None,
             None,
@@ -239,7 +242,37 @@ class DateExpressionDtoToLines(RuleDtoToLinesMixin, TestCase):
                 CibRuleExpressionDto(
                     "rule-expr",
                     CibRuleExpressionType.DATE_EXPRESSION,
-                    False,
+                    CibRuleInEffectStatus.UNKNOWN,
+                    {"operation": "in_range", "end": "2014-07-26"},
+                    None,
+                    None,
+                    [],
+                    "date in_range to 2014-07-26",
+                ),
+            ],
+            "date in_range to 2014-07-26",
+        )
+        output = dedent(
+            """\
+              Rule: (id:rule)
+                Expression: date in_range to 2014-07-26 (id:rule-expr)
+            """
+        )
+        self.assert_lines(dto, output)
+
+    def test_inrange_start_duration(self):
+        dto = CibRuleExpressionDto(
+            "rule",
+            CibRuleExpressionType.RULE,
+            CibRuleInEffectStatus.UNKNOWN,
+            {},
+            None,
+            None,
+            [
+                CibRuleExpressionDto(
+                    "rule-expr",
+                    CibRuleExpressionType.DATE_EXPRESSION,
+                    CibRuleInEffectStatus.UNKNOWN,
                     {"operation": "in_range", "start": "2014-06-26",},
                     None,
                     CibRuleDateCommonDto("rule-expr-duration", {"years": "1"}),
@@ -264,7 +297,7 @@ class OpExpressionDtoToLines(RuleDtoToLinesMixin, TestCase):
         dto = CibRuleExpressionDto(
             "my-id",
             CibRuleExpressionType.RULE,
-            False,
+            CibRuleInEffectStatus.UNKNOWN,
             {},
             None,
             None,
@@ -272,7 +305,7 @@ class OpExpressionDtoToLines(RuleDtoToLinesMixin, TestCase):
                 CibRuleExpressionDto(
                     "my-id-op",
                     CibRuleExpressionType.OP_EXPRESSION,
-                    False,
+                    CibRuleInEffectStatus.UNKNOWN,
                     {"name": "start"},
                     None,
                     None,
@@ -294,7 +327,7 @@ class OpExpressionDtoToLines(RuleDtoToLinesMixin, TestCase):
         dto = CibRuleExpressionDto(
             "my-id",
             CibRuleExpressionType.RULE,
-            False,
+            CibRuleInEffectStatus.UNKNOWN,
             {},
             None,
             None,
@@ -302,7 +335,7 @@ class OpExpressionDtoToLines(RuleDtoToLinesMixin, TestCase):
                 CibRuleExpressionDto(
                     "my-id-op",
                     CibRuleExpressionType.OP_EXPRESSION,
-                    False,
+                    CibRuleInEffectStatus.UNKNOWN,
                     {"name": "start", "interval": "2min"},
                     None,
                     None,
@@ -326,7 +359,7 @@ class ResourceExpressionDtoToLines(RuleDtoToLinesMixin, TestCase):
         dto = CibRuleExpressionDto(
             "my-id",
             CibRuleExpressionType.RULE,
-            False,
+            CibRuleInEffectStatus.UNKNOWN,
             {},
             None,
             None,
@@ -334,7 +367,7 @@ class ResourceExpressionDtoToLines(RuleDtoToLinesMixin, TestCase):
                 CibRuleExpressionDto(
                     "my-id-expr",
                     CibRuleExpressionType.RSC_EXPRESSION,
-                    False,
+                    CibRuleInEffectStatus.UNKNOWN,
                     {"class": "ocf", "provider": "pacemaker", "type": "Dummy"},
                     None,
                     None,
@@ -353,12 +386,71 @@ class ResourceExpressionDtoToLines(RuleDtoToLinesMixin, TestCase):
         self.assert_lines(dto, output)
 
 
+class InEffect(RuleDtoToLinesMixin, TestCase):
+    @staticmethod
+    def fixture_dto(expired):
+        return CibRuleExpressionDto(
+            "my-id",
+            CibRuleExpressionType.RULE,
+            expired,
+            {},
+            None,
+            None,
+            [
+                CibRuleExpressionDto(
+                    "my-id-expr",
+                    CibRuleExpressionType.EXPRESSION,
+                    CibRuleInEffectStatus.UNKNOWN,
+                    {"attribute": "pingd", "operation": "defined"},
+                    None,
+                    None,
+                    [],
+                    "defined pingd",
+                ),
+            ],
+            "defined pingd",
+        )
+
+    def test_unknown(self):
+        self.assert_lines(
+            self.fixture_dto(CibRuleInEffectStatus.UNKNOWN),
+            dedent(
+                """\
+                  Rule: (id:my-id)
+                    Expression: defined pingd (id:my-id-expr)
+                """
+            ),
+        )
+
+    def test_expired(self):
+        self.assert_lines(
+            self.fixture_dto(CibRuleInEffectStatus.EXPIRED),
+            dedent(
+                """\
+                  Rule (expired): (id:my-id)
+                    Expression: defined pingd (id:my-id-expr)
+                """
+            ),
+        )
+
+    def test_not_yet_effective(self):
+        self.assert_lines(
+            self.fixture_dto(CibRuleInEffectStatus.NOT_YET_IN_EFFECT),
+            dedent(
+                """\
+                  Rule (not yet in effect): (id:my-id)
+                    Expression: defined pingd (id:my-id-expr)
+                """
+            ),
+        )
+
+
 class RuleDtoToLines(RuleDtoToLinesMixin, TestCase):
     def test_complex_rule(self):
         dto = CibRuleExpressionDto(
             "complex",
             CibRuleExpressionType.RULE,
-            False,
+            CibRuleInEffectStatus.UNKNOWN,
             {"boolean-op": "or", "score": "INFINITY"},
             None,
             None,
@@ -366,7 +458,7 @@ class RuleDtoToLines(RuleDtoToLinesMixin, TestCase):
                 CibRuleExpressionDto(
                     "complex-rule-1",
                     CibRuleExpressionType.RULE,
-                    False,
+                    CibRuleInEffectStatus.UNKNOWN,
                     {"boolean-op": "and", "score": "0"},
                     None,
                     None,
@@ -374,7 +466,7 @@ class RuleDtoToLines(RuleDtoToLinesMixin, TestCase):
                         CibRuleExpressionDto(
                             "complex-rule-1-expr",
                             CibRuleExpressionType.DATE_EXPRESSION,
-                            False,
+                            CibRuleInEffectStatus.UNKNOWN,
                             {"operation": "date_spec"},
                             CibRuleDateCommonDto(
                                 "complex-rule-1-expr-datespec",
@@ -387,7 +479,7 @@ class RuleDtoToLines(RuleDtoToLinesMixin, TestCase):
                         CibRuleExpressionDto(
                             "complex-rule-1-expr-1",
                             CibRuleExpressionType.DATE_EXPRESSION,
-                            False,
+                            CibRuleInEffectStatus.UNKNOWN,
                             {"operation": "in_range", "start": "2014-07-26",},
                             None,
                             CibRuleDateCommonDto(
@@ -403,7 +495,7 @@ class RuleDtoToLines(RuleDtoToLinesMixin, TestCase):
                 CibRuleExpressionDto(
                     "complex-rule",
                     CibRuleExpressionType.RULE,
-                    False,
+                    CibRuleInEffectStatus.UNKNOWN,
                     {"boolean-op": "and", "score": "0"},
                     None,
                     None,
@@ -411,7 +503,7 @@ class RuleDtoToLines(RuleDtoToLinesMixin, TestCase):
                         CibRuleExpressionDto(
                             "complex-rule-expr-1",
                             CibRuleExpressionType.EXPRESSION,
-                            False,
+                            CibRuleInEffectStatus.UNKNOWN,
                             {
                                 "attribute": "foo",
                                 "operation": "gt",
@@ -426,7 +518,7 @@ class RuleDtoToLines(RuleDtoToLinesMixin, TestCase):
                         CibRuleExpressionDto(
                             "complex-rule-expr",
                             CibRuleExpressionType.EXPRESSION,
-                            False,
+                            CibRuleInEffectStatus.UNKNOWN,
                             {
                                 "attribute": "#uname",
                                 "operation": "eq",
@@ -440,7 +532,7 @@ class RuleDtoToLines(RuleDtoToLinesMixin, TestCase):
                         CibRuleExpressionDto(
                             "complex-rule-expr-2",
                             CibRuleExpressionType.EXPRESSION,
-                            False,
+                            CibRuleInEffectStatus.UNKNOWN,
                             {
                                 "attribute": "#uname",
                                 "operation": "eq",

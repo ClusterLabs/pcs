@@ -8,6 +8,7 @@ from pcs_test.tools.cib import get_assert_pcs_effect_mixin
 from pcs_test.tools.misc import (
     get_test_resource as rc,
     get_tmp_file,
+    skip_unless_crm_rule,
     skip_unless_pacemaker_supports_rsc_and_op_rules,
     write_data_to_tmpfile,
     write_file_to_tmpfile,
@@ -78,6 +79,172 @@ class DefaultsConfigMixin(TestDefaultsMixin, AssertPcsMixin):
             ),
         )
 
+    def test_success_rule(self):
+        xml_template = """<{tag}_defaults>
+            <meta_attributes id="{tag}-set1">
+                <rule id="{tag}-set1-rule" boolean-op="and" score="INFINITY">
+                    <rule id="{tag}-set1-rule-rule" boolean-op="or" score="0">
+                        <expression id="{tag}-set1-rule-rule-expr"
+                            operation="defined" attribute="attr1"
+                        />
+                        <expression id="{tag}-set1-rule-rule-expr-1"
+                            attribute="attr2" operation="gte"
+                            type="number" value="12"
+                        />
+                        <expression id="{tag}-set1-rule-rule-expr-2"
+                            attribute="attr3" operation="lt"
+                            type="version" value="3.2.1"
+                        />
+                        <expression id="{tag}-set1-rule-rule-expr-3"
+                            attribute="attr4" operation="ne"
+                            type="string" value="test"
+                        />
+                        <expression id="{tag}-set1-rule-rule-expr-4"
+                            attribute="attr5" operation="lt" value="3"
+                        />
+                    </rule>
+                    <rule id="{tag}-set1-rule-rule-1" boolean-op="or" score="0">
+                        <date_expression id="{tag}-set1-rule-rule-1-expr"
+                            operation="gt" start="2018-05-17T13:28:19"
+                        />
+                        <date_expression id="{tag}-set1-rule-rule-1-expr-1"
+                            operation="in_range"
+                            start="2019-01-01" end="2019-03-15"
+                        />
+                        <date_expression id="{tag}-set1-rule-rule-1-expr-2"
+                             operation="in_range" start="2019-05-01"
+                        >
+                            <duration id="{tag}-set1-rule-rule-1-expr-2-duration"
+                                months="2"
+                            />
+                        </date_expression>
+                        <date_expression id="{tag}-set1-rule-rule-1-expr-3"
+                            operation="date_spec"
+                        >
+                            <date_spec id="{tag}-set1-rule-rule-1-expr-3-datespec"
+                                months="7-8" weekdays="6-7" years="2019"
+                            />
+                        </date_expression>
+                        <date_expression id="{tag}-set1-rule-rule-1-expr-4"
+                            operation="in_range" end="2019-12-15"
+                        />
+                    </rule>
+                </rule>
+                <nvpair id="{tag}-set1-nam1" name="nam1" value="val1"/>
+                <nvpair id="{tag}-set1-nam2" name="nam2" value="val2"/>
+            </meta_attributes>
+        </{tag}_defaults>"""
+        xml_rsc = xml_template.format(tag="rsc")
+        xml_op = xml_template.format(tag="op")
+        xml_manip = XmlManipulation.from_file(empty_cib)
+        xml_manip.append_to_first_tag_name("configuration", xml_rsc, xml_op)
+        write_data_to_tmpfile(str(xml_manip), self.temp_cib)
+
+        self.assert_pcs_success(
+            self.cli_command,
+            stdout_full=dedent(
+                f"""\
+                Meta Attrs: {self.prefix}-set1
+                  nam1=val1
+                  nam2=val2
+                  Rule: boolean-op=and score=INFINITY
+                    Rule: boolean-op=or score=0
+                      Expression: defined attr1
+                      Expression: attr2 gte number 12
+                      Expression: attr3 lt version 3.2.1
+                      Expression: attr4 ne string test
+                      Expression: attr5 lt 3
+                    Rule: boolean-op=or score=0
+                      Expression: date gt 2018-05-17T13:28:19
+                      Expression: date in_range 2019-01-01 to 2019-03-15
+                      Expression: date in_range 2019-05-01 to duration
+                        Duration: months=2
+                      Expression:
+                        Date Spec: months=7-8 weekdays=6-7 years=2019
+                      Expression: date in_range to 2019-12-15
+            """
+            ),
+        )
+
+    xml_expired_template = """<{tag}_defaults>
+        <meta_attributes id="{tag}-set1">
+            <rule id="{tag}-set1-rule" boolean-op="and" score="INFINITY">
+                <date_expression id="{tag}-set1-rule-expr"
+                    operation="gt" start="3000-01-01"
+                />
+            </rule>
+            <nvpair id="{tag}-set1-name" name="name1" value="value1"/>
+        </meta_attributes>
+        <meta_attributes id="{tag}-set2">
+            <rule id="{tag}-set2-rule" boolean-op="and" score="INFINITY">
+                <date_expression id="{tag}-set2-rule-expr"
+                    operation="lt" end="1000-01-01"
+                />
+            </rule>
+            <nvpair id="{tag}-set2-name" name="name2" value="value2"/>
+        </meta_attributes>
+        <meta_attributes id="{tag}-set3">
+            <rule id="{tag}-set3-rule" boolean-op="and" score="INFINITY">
+                <date_expression id="{tag}-set3-rule-expr"
+                    operation="in_range" start="1000-01-01" end="3000-01-01"
+                />
+            </rule>
+            <nvpair id="{tag}-set3-name" name="name3" value="value3"/>
+        </meta_attributes>
+    </{tag}_defaults>"""
+
+    @skip_unless_crm_rule()
+    def test_success_rule_expired(self):
+        xml_rsc = self.xml_expired_template.format(tag="rsc")
+        xml_op = self.xml_expired_template.format(tag="op")
+        xml_manip = XmlManipulation.from_file(empty_cib)
+        xml_manip.append_to_first_tag_name("configuration", xml_rsc, xml_op)
+        write_data_to_tmpfile(str(xml_manip), self.temp_cib)
+
+        self.assert_pcs_success(
+            self.cli_command,
+            stdout_full=dedent(
+                f"""\
+                Meta Attrs (not yet in effect): {self.prefix}-set1
+                  name1=value1
+                  Rule (not yet in effect): boolean-op=and score=INFINITY
+                    Expression: date gt 3000-01-01
+                Meta Attrs: {self.prefix}-set3
+                  name3=value3
+                  Rule: boolean-op=and score=INFINITY
+                    Expression: date in_range 1000-01-01 to 3000-01-01
+            """
+            ),
+        )
+
+    @skip_unless_crm_rule()
+    def test_success_rule_expired_all(self):
+        xml_rsc = self.xml_expired_template.format(tag="rsc")
+        xml_op = self.xml_expired_template.format(tag="op")
+        xml_manip = XmlManipulation.from_file(empty_cib)
+        xml_manip.append_to_first_tag_name("configuration", xml_rsc, xml_op)
+        write_data_to_tmpfile(str(xml_manip), self.temp_cib)
+
+        self.assert_pcs_success(
+            self.cli_command + ["--all"],
+            stdout_full=dedent(
+                f"""\
+                Meta Attrs (not yet in effect): {self.prefix}-set1
+                  name1=value1
+                  Rule (not yet in effect): boolean-op=and score=INFINITY
+                    Expression: date gt 3000-01-01
+                Meta Attrs (expired): {self.prefix}-set2
+                  name2=value2
+                  Rule (expired): boolean-op=and score=INFINITY
+                    Expression: date lt 1000-01-01
+                Meta Attrs: {self.prefix}-set3
+                  name3=value3
+                  Rule: boolean-op=and score=INFINITY
+                    Expression: date in_range 1000-01-01 to 3000-01-01
+            """
+            ),
+        )
+
 
 class RscDefaultsConfig(
     DefaultsConfigMixin, TestCase,
@@ -86,7 +253,7 @@ class RscDefaultsConfig(
     prefix = "rsc"
 
     @skip_unless_pacemaker_supports_rsc_and_op_rules()
-    def test_success_rules(self):
+    def test_success_rules_rsc_op(self):
         xml = """
             <rsc_defaults>
                 <meta_attributes id="X">
@@ -121,7 +288,7 @@ class OpDefaultsConfig(
     prefix = "op"
 
     @skip_unless_pacemaker_supports_rsc_and_op_rules()
-    def test_success_rules(self):
+    def test_success_rules_rsc_op(self):
         xml = """
             <op_defaults>
                 <meta_attributes id="X">
@@ -151,7 +318,7 @@ class OpDefaultsConfig(
         )
 
 
-class DefaultsSetCreateMixin(TestDefaultsMixin):
+class DefaultsSetCreateMixin(TestDefaultsMixin, AssertPcsMixin):
     cli_command = []
     cib_tag = ""
 
@@ -195,6 +362,121 @@ class DefaultsSetCreateMixin(TestDefaultsMixin):
             ),
         )
 
+    def test_success_rule(self):
+        self.assert_effect(
+            self.cli_command
+            + (
+                "set create id=mine score=10 meta nam1=val1 nam2=val2 "
+                "rule (defined attr1 or attr2 gte number 12 or "
+                "attr3 lt version 3.2.1 or attr4 ne string test or attr5 lt 3) "
+                "and (date gt 2018-05-17T13:28:19 or "
+                "date in_range 2019-01-01 to 2019-03-15 or "
+                "date in_range 2019-05-01 to duration months=2 or "
+                "date-spec years=2019 months=7-8 weekdays=6-7 or "
+                "date in_range to 2019-12-15)"
+            ).split(),
+            dedent(
+                f"""\
+                <{self.cib_tag}>
+                    <meta_attributes id="mine" score="10">
+                        <rule id="mine-rule" boolean-op="and" score="INFINITY">
+                            <rule id="mine-rule-rule" boolean-op="or" score="0">
+                                <expression id="mine-rule-rule-expr"
+                                    operation="defined" attribute="attr1"
+                                />
+                                <expression id="mine-rule-rule-expr-1"
+                                    attribute="attr2" operation="gte"
+                                    type="number" value="12"
+                                />
+                                <expression id="mine-rule-rule-expr-2"
+                                    attribute="attr3" operation="lt"
+                                    type="version" value="3.2.1"
+                                />
+                                <expression id="mine-rule-rule-expr-3"
+                                    attribute="attr4" operation="ne"
+                                    type="string" value="test"
+                                />
+                                <expression id="mine-rule-rule-expr-4"
+                                    attribute="attr5" operation="lt" value="3"
+                                />
+                            </rule>
+                            <rule id="mine-rule-rule-1" boolean-op="or" score="0">
+                                <date_expression id="mine-rule-rule-1-expr"
+                                    operation="gt" start="2018-05-17T13:28:19"
+                                />
+                                <date_expression id="mine-rule-rule-1-expr-1"
+                                    operation="in_range"
+                                    start="2019-01-01" end="2019-03-15"
+                                />
+                                <date_expression id="mine-rule-rule-1-expr-2"
+                                    operation="in_range" start="2019-05-01"
+                                >
+                                    <duration id="mine-rule-rule-1-expr-2-duration"
+                                        months="2"
+                                    />
+                                </date_expression>
+                                <date_expression id="mine-rule-rule-1-expr-3"
+                                    operation="date_spec"
+                                >
+                                    <date_spec
+                                        id="mine-rule-rule-1-expr-3-datespec"
+                                        months="7-8" weekdays="6-7" years="2019"
+                                    />
+                                </date_expression>
+                                <date_expression id="mine-rule-rule-1-expr-4"
+                                      operation="in_range" end="2019-12-15"
+                                />
+                            </rule>
+                        </rule>
+                        <nvpair id="mine-nam1" name="nam1" value="val1"/>
+                        <nvpair id="mine-nam2" name="nam2" value="val2"/>
+                    </meta_attributes>
+                </{self.cib_tag}>
+            """
+            ),
+            output=(
+                "Warning: Defaults do not apply to resources which override "
+                "them with their own defined values\n"
+            ),
+        )
+
+    def test_rule_error_messages(self):
+        self.assert_pcs_fail(
+            self.cli_command
+            + (
+                "set create id=mine score=10 meta nam1=val1 nam2=val2 "
+                "rule (defined attr1 or attr2 gte number 12a or "
+                "attr3 lt version 3.2.1a or attr4 ne string test or attr5 lt 3) "
+                "and (date gt 2018-05-1X or "
+                "date in_range 2019-03-05 to 2019-01-11 or "
+                "date in_range 2019-05-0X to duration months=2 months=3a x=y or "
+                "date-spec years=2019 months=7-X weekdays=7-6 years=202a x=y)"
+            ).split(),
+            (
+                "Error: '12a' is not a valid number attribute value, "
+                "use a floating-point number\n"
+                "Error: '3.2.1a' is not a valid version attribute value, "
+                "use a version number (e.g. 1, 1.2, 1.23.45, ...)\n"
+                "Error: '2018-05-1X' is not a valid date value, use ISO 8601 date\n"
+                "Error: Since '2019-03-05' is not sooner than until '2019-01-11'\n"
+                "Error: '2019-05-0X' is not a valid date value, use ISO 8601 date\n"
+                "Error: '3a' is not a valid months value, use a positive integer\n"
+                "Error: invalid duration option 'x', allowed options are: "
+                "'hours', 'monthdays', 'months', 'moon', 'weekdays', "
+                "'weeks', 'weekyears', 'years', 'yearsdays'\n"
+                "Error: Duplicate options in a single (sub)expression: 'months'\n"
+                "Error: '7-X' is not a valid months value, use 1..12 or 1..11-2..12\n"
+                "Error: '7-6' is not a valid weekdays value, use 1..7 or 1..6-2..7\n"
+                "Error: '202a' is not a valid years value, use an integer or "
+                "integer-integer\n"
+                "Error: invalid datespec option 'x', allowed options are: "
+                "'hours', 'monthdays', 'months', 'moon', 'weekdays', "
+                "'weeks', 'weekyears', 'years', 'yearsdays'\n"
+                "Error: Duplicate options in a single (sub)expression: 'years'\n"
+                "Error: Errors have occurred, therefore pcs is unable to continue\n"
+            ),
+        )
+
 
 class RscDefaultsSetCreate(
     get_assert_pcs_effect_mixin(
@@ -210,7 +492,7 @@ class RscDefaultsSetCreate(
     cib_tag = "rsc_defaults"
 
     @skip_unless_pacemaker_supports_rsc_and_op_rules()
-    def test_success_rules(self):
+    def test_success_rules_rsc_op(self):
         self.assert_effect(
             self.cli_command
             + "set create id=X meta nam1=val1 rule resource ::Dummy".split(),
@@ -246,7 +528,7 @@ class OpDefaultsSetCreate(
     cib_tag = "op_defaults"
 
     @skip_unless_pacemaker_supports_rsc_and_op_rules()
-    def test_success_rules(self):
+    def test_success_rules_rsc_op(self):
         self.assert_effect(
             self.cli_command
             + (

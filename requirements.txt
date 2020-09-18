@@ -6,3 +6,4 @@ mypy==0.782
 dacite
 # temporarily stick to previous version until it's convinient to reformat code
 black==19.10b0
+python-dateutil>=2.7.0

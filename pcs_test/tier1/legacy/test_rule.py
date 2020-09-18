@@ -2,7 +2,8 @@
 from unittest import TestCase
 import xml.dom.minidom
 
-from pcs import rule
+from pcs import rule, utils
+from pcs.common.tools import Version
 from pcs_test.tools.assertions import ac, assert_xml_equal
 from pcs_test.tools.misc import (
     get_test_resource as rc,
@@ -15,7 +16,7 @@ from pcs_test.tools.pcs_runner import pcs
 # pylint: disable=invalid-name
 # pylint: disable=line-too-long
 
-empty_cib = rc("cib-empty.xml")
+empty_cib = rc("cib-empty-3.2.xml")
 
 
 class DateValueTest(TestCase):
@@ -73,6 +74,7 @@ class DateValueTest(TestCase):
             rule.DateSpecValue,
         )
 
+    # already moved to the new architecture tests
     def testDurationValidate(self):
         for value, item in enumerate(rule.DateCommonValue.allowed_items, 1):
             self.assertEqual(
@@ -96,6 +98,7 @@ class DateValueTest(TestCase):
                 rule.DateDurationValue,
             )
 
+    # already moved to the new architecture tests
     def testDateSpecValidation(self):
         for item in rule.DateCommonValue.allowed_items:
             value = 1
@@ -188,13 +191,16 @@ class DateValueTest(TestCase):
             self.assertEqual(syntax_error, str(e))
 
 
+# already moved to pcs_test/tier0/lib/cib/rule/test_parser.py
 class ParserTest(TestCase):
     def setUp(self):
         self.parser = rule.RuleParser()
 
+    # already moved to pcs_test/tier0/lib/cib/rule/test_parser.py
     def testEmptyInput(self):
         self.assertRaises(rule.UnexpectedEndOfInput, self.parser.parse, [])
 
+    # already moved to pcs_test/tier0/lib/cib/rule/test_parser.py
     def testSingleLiteral(self):
         self.assertSyntaxError(
             "missing one of 'eq', 'ne', 'lt', 'gt', 'lte', 'gte', 'in_range', "
@@ -207,6 +213,7 @@ class ParserTest(TestCase):
             ["string", "node1"],
         )
 
+    # already moved to pcs_test/tier0/lib/cib/rule/test_parser.py
     def testSingleLiteralDatespec(self):
         self.assertEqual(
             "(date-spec (literal hours=1))",
@@ -222,6 +229,7 @@ class ParserTest(TestCase):
         )
         self.assertUnexpectedEndOfInput(["date-spec"])
 
+    # already moved to pcs_test/tier0/lib/cib/rule/test_parser.py
     def testSimpleExpression(self):
         self.assertEqual(
             "(eq (literal #uname) (literal node1))",
@@ -248,6 +256,7 @@ class ParserTest(TestCase):
             str(self.parser.parse(["int", "lte", "123"])),
         )
 
+    # already moved to pcs_test/tier0/lib/cib/rule/test_parser.py
     def testSimpleExpressionBad(self):
         self.assertSyntaxError("unexpected 'eq'", ["eq"])
         self.assertUnexpectedEndOfInput(["#uname", "eq"])
@@ -275,6 +284,7 @@ class ParserTest(TestCase):
             ["#uname", "eq", "duration", "hours=1"],
         )
 
+    # already moved to pcs_test/tier0/lib/cib/rule/test_parser.py
     def testDefinedExpression(self):
         self.assertEqual(
             "(defined (literal pingd))",
@@ -285,6 +295,7 @@ class ParserTest(TestCase):
             str(self.parser.parse(["not_defined", "pingd"])),
         )
 
+    # already moved to pcs_test/tier0/lib/cib/rule/test_parser.py
     def testDefinedExpressionBad(self):
         self.assertUnexpectedEndOfInput(["defined"])
         self.assertUnexpectedEndOfInput(["not_defined"])
@@ -303,6 +314,7 @@ class ParserTest(TestCase):
             ["defined", "duration", "hours=1"],
         )
 
+    # already moved to pcs_test/tier0/lib/cib/rule/test_parser.py
     def testTypeExpression(self):
         self.assertEqual(
             "(eq (literal #uname) (string (literal node1)))",
@@ -315,6 +327,50 @@ class ParserTest(TestCase):
         self.assertEqual(
             "(eq (literal #uname) (integer (literal -12345)))",
             str(self.parser.parse(["#uname", "eq", "integer", "-12345"])),
+        )
+        self.assertEqual(
+            "(eq (literal #uname) (number (literal 12345)))",
+            str(self.parser.parse(["#uname", "eq", "number", "12345"])),
+        )
+        self.assertEqual(
+            "(eq (literal #uname) (number (literal 12.345)))",
+            str(self.parser.parse(["#uname", "eq", "number", "12.345"])),
+        )
+        self.assertEqual(
+            "(eq (literal #uname) (number (literal 12345.)))",
+            str(self.parser.parse(["#uname", "eq", "number", "12345."])),
+        )
+        self.assertEqual(
+            "(eq (literal #uname) (number (literal .12345)))",
+            str(self.parser.parse(["#uname", "eq", "number", ".12345"])),
+        )
+        self.assertEqual(
+            "(eq (literal #uname) (number (literal 123e45)))",
+            str(self.parser.parse(["#uname", "eq", "number", "123e45"])),
+        )
+        self.assertEqual(
+            "(eq (literal #uname) (number (literal 123E45)))",
+            str(self.parser.parse(["#uname", "eq", "number", "123E45"])),
+        )
+        self.assertEqual(
+            "(eq (literal #uname) (number (literal 123e+45)))",
+            str(self.parser.parse(["#uname", "eq", "number", "123e+45"])),
+        )
+        self.assertEqual(
+            "(eq (literal #uname) (number (literal 123E-45)))",
+            str(self.parser.parse(["#uname", "eq", "number", "123E-45"])),
+        )
+        self.assertEqual(
+            "(eq (literal #uname) (number (literal 12.34e5)))",
+            str(self.parser.parse(["#uname", "eq", "number", "12.34e5"])),
+        )
+        self.assertEqual(
+            "(eq (literal #uname) (number (literal +12.34e5)))",
+            str(self.parser.parse(["#uname", "eq", "number", "+12.34e5"])),
+        )
+        self.assertEqual(
+            "(eq (literal #uname) (number (literal -12.34e5)))",
+            str(self.parser.parse(["#uname", "eq", "number", "-12.34e5"])),
         )
         self.assertEqual(
             "(eq (literal #uname) (version (literal 1)))",
@@ -354,6 +410,8 @@ class ParserTest(TestCase):
             ),
         )
 
+    # already moved to pcs_test/tier0/lib/cib/rule/test_parser.py
+    # and pcs_test/tier0/lib/cib/rule/test_validator.py
     def testTypeExpressionBad(self):
         self.assertUnexpectedEndOfInput(["string"])
         self.assertUnexpectedEndOfInput(["#uname", "eq", "string"])
@@ -362,14 +420,23 @@ class ParserTest(TestCase):
             ["string", "#uname", "eq", "node1"],
         )
         self.assertSyntaxError(
-            "invalid integer value 'node1'",
-            ["#uname", "eq", "integer", "node1"],
+            "invalid integer value '123.45'",
+            ["#uname", "eq", "integer", "123.45"],
+        )
+        self.assertSyntaxError(
+            "invalid number value '123e45E67'",
+            ["#uname", "eq", "number", "123e45E67"],
+        )
+        self.assertSyntaxError(
+            "invalid number value '123.45.67'",
+            ["#uname", "eq", "number", "123.45.67"],
         )
         self.assertSyntaxError(
             "invalid version value 'node1'",
             ["#uname", "eq", "version", "node1"],
         )
 
+    # already moved to pcs_test/tier0/lib/cib/rule/test_parser.py
     def testDateExpression(self):
         self.assertEqual(
             "(gt (literal date) (literal 2014-06-26))",
@@ -408,6 +475,8 @@ class ParserTest(TestCase):
             ),
         )
 
+    # already moved to pcs_test/tier0/lib/cib/rule/test_parser.py
+    # and pcs_test/tier0/lib/cib/rule/test_validator.py
     def testDateExpressionBad(self):
         self.assertUnexpectedEndOfInput(["date", "in_range"])
         self.assertSyntaxError(
@@ -465,6 +534,7 @@ class ParserTest(TestCase):
             ["date", "in_range", "2014-06-26", "to", "2014-13-26"],
         )
 
+    # already moved to pcs_test/tier0/lib/cib/rule/test_parser.py
     def testAndOrExpression(self):
         self.assertEqual(
             "(and "
@@ -589,6 +659,7 @@ class ParserTest(TestCase):
             ),
         )
 
+    # already moved to pcs_test/tier0/lib/cib/rule/test_parser.py
     def testAndOrExpressionDateSpec(self):
         self.assertEqual(
             "(and "
@@ -637,6 +708,7 @@ class ParserTest(TestCase):
             ),
         )
 
+    # already moved to pcs_test/tier0/lib/cib/rule/test_parser.py
     def testAndOrExpressionDate(self):
         self.assertEqual(
             "(and "
@@ -685,6 +757,7 @@ class ParserTest(TestCase):
             ),
         )
 
+    # already moved to pcs_test/tier0/lib/cib/rule/test_parser.py
     def testAndOrExpressionBad(self):
         self.assertSyntaxError("unexpected 'and'", ["and"])
         self.assertSyntaxError("unexpected 'or'", ["or"])
@@ -717,6 +790,7 @@ class ParserTest(TestCase):
             ["duration", "monthdays=1", "or", "#uname", "ne", "node1"],
         )
 
+    # already moved to pcs_test/tier0/lib/cib/rule/test_parser.py
     def testParenthesizedExpression(self):
         self.assertSyntaxError(
             "missing one of 'eq', 'ne', 'lt', 'gt', 'lte', 'gte', 'in_range', "
@@ -894,6 +968,7 @@ class ParserTest(TestCase):
             ),
         )
 
+    # already moved to pcs_test/tier0/lib/cib/rule/test_parser.py
     def testParenthesizedExpressionBad(self):
         self.assertUnexpectedEndOfInput(["("])
         self.assertSyntaxError("unexpected ')'", ["(", ")"])
@@ -912,11 +987,117 @@ class ParserTest(TestCase):
             self.assertEqual(syntax_error, str(e))
 
 
-class CibBuilderTest(TestCase):
-    def setUp(self):
-        self.parser = rule.RuleParser()
-        self.builder = rule.CibBuilder()
+# already moved to pcs_test/tier0/lib/cib/rule/test_tools.py
+class HasNodeAttrExprWithTypeInteger(TestCase):
+    @staticmethod
+    def fixture_has_integer(rule_expression):
+        return rule.has_node_attr_expr_with_type_integer(
+            rule.RuleParser().parse(
+                rule.TokenPreprocessor().run(rule_expression)
+            )
+        )
 
+    def test_node_attr_no_type(self):
+        self.assertFalse(
+            self.fixture_has_integer(
+                [
+                    "(",
+                    "a",
+                    "eq",
+                    "A",
+                    "and",
+                    "b",
+                    "eq",
+                    "123",
+                    ")",
+                    "or",
+                    "a",
+                    "eq",
+                    "AA",
+                ]
+            )
+        )
+
+    def test_node_attr_no_integer(self):
+        self.assertFalse(
+            self.fixture_has_integer(
+                [
+                    "(",
+                    "a",
+                    "eq",
+                    "A",
+                    "and",
+                    "b",
+                    "eq",
+                    "number",
+                    "123",
+                    ")",
+                    "or",
+                    "a",
+                    "eq",
+                    "AA",
+                ]
+            )
+        )
+
+    def test_node_attr_integer(self):
+        self.assertTrue(
+            self.fixture_has_integer(
+                [
+                    "(",
+                    "a",
+                    "eq",
+                    "A",
+                    "and",
+                    "b",
+                    "eq",
+                    "integer",
+                    "123",
+                    ")",
+                    "or",
+                    "a",
+                    "eq",
+                    "AA",
+                ]
+            )
+        )
+
+    def test_node_attr_integer_not_date_expression(self):
+        self.assertTrue(
+            self.fixture_has_integer(["date", "gt", "integer", "123"])
+        )
+
+    def test_no_node_attr(self):
+        self.assertFalse(
+            self.fixture_has_integer(
+                [
+                    "(",
+                    "date-spec",
+                    "hours=1",
+                    "or",
+                    "defined",
+                    "pingd",
+                    ")",
+                    "or",
+                    "(",
+                    "date",
+                    "gt",
+                    "2014-06-26",
+                    "or",
+                    "date",
+                    "in_range",
+                    "2014-06-26",
+                    "to",
+                    "2014-07-26",
+                    ")",
+                ]
+            )
+        )
+
+
+# already moved to pcs_test/tier0/lib/cib/rule/test_parsed_to_cib.py
+class CibBuilderTest(TestCase):
+    # already moved to pcs_test/tier0/lib/cib/rule/test_parsed_to_cib.py
     def testSingleLiteralDatespec(self):
         self.assertExpressionXml(
             ["date-spec", "hours=1"],
@@ -943,6 +1124,7 @@ class CibBuilderTest(TestCase):
             """,
         )
 
+    # already moved to pcs_test/tier0/lib/cib/rule/test_parsed_to_cib.py
     def testSimpleExpression(self):
         self.assertExpressionXml(
             ["#uname", "eq", "node1"],
@@ -1005,6 +1187,7 @@ class CibBuilderTest(TestCase):
             """,
         )
 
+    # already moved to pcs_test/tier0/lib/cib/rule/test_parsed_to_cib.py
     def testTypeExpression(self):
         self.assertExpressionXml(
             ["#uname", "eq", "string", "node1"],
@@ -1012,6 +1195,16 @@ class CibBuilderTest(TestCase):
 <rsc_location id="location-dummy">
     <rule id="location-dummy-rule">
         <expression attribute="#uname" id="location-dummy-rule-expr" operation="eq" type="string" value="node1"/>
+    </rule>
+</rsc_location>
+            """,
+        )
+        self.assertExpressionXml(
+            ["#uname", "eq", "number", "12345"],
+            """
+<rsc_location id="location-dummy">
+    <rule id="location-dummy-rule">
+        <expression attribute="#uname" id="location-dummy-rule-expr" operation="eq" type="number" value="12345"/>
     </rule>
 </rsc_location>
             """,
@@ -1027,6 +1220,17 @@ class CibBuilderTest(TestCase):
             """,
         )
         self.assertExpressionXml(
+            ["#uname", "eq", "integer", "12345"],
+            """
+<rsc_location id="location-dummy">
+    <rule id="location-dummy-rule">
+        <expression attribute="#uname" id="location-dummy-rule-expr" operation="eq" type="integer" value="12345"/>
+    </rule>
+</rsc_location>
+            """,
+            cib_file=rc("cib-empty-3.5.xml"),
+        )
+        self.assertExpressionXml(
             ["#uname", "eq", "version", "1.2.3"],
             """
 <rsc_location id="location-dummy">
@@ -1037,6 +1241,7 @@ class CibBuilderTest(TestCase):
             """,
         )
 
+    # already moved to pcs_test/tier0/lib/cib/rule/test_parsed_to_cib.py
     def testDefinedExpression(self):
         self.assertExpressionXml(
             ["defined", "pingd"],
@@ -1059,6 +1264,7 @@ class CibBuilderTest(TestCase):
             """,
         )
 
+    # already moved to pcs_test/tier0/lib/cib/rule/test_parsed_to_cib.py
     def testDateExpression(self):
         self.assertExpressionXml(
             ["date", "gt", "2014-06-26"],
@@ -1103,6 +1309,7 @@ class CibBuilderTest(TestCase):
             """,
         )
 
+    # already moved to pcs_test/tier0/lib/cib/rule/test_parser.py
     def testNotDateExpression(self):
         self.assertExpressionXml(
             ["date", "eq", "2014-06-26"],
@@ -1125,7 +1332,7 @@ class CibBuilderTest(TestCase):
             """,
         )
         self.assertExpressionXml(
-            ["date", "gt", "integer", "12345"],
+            ["date", "gt", "number", "12345"],
             """
 <rsc_location id="location-dummy">
     <rule id="location-dummy-rule">
@@ -1145,6 +1352,7 @@ class CibBuilderTest(TestCase):
             """,
         )
 
+    # already moved to pcs_test/tier0/lib/cib/rule/test_parsed_to_cib.py
     def testAndOrExpression(self):
         self.assertExpressionXml(
             ["#uname", "ne", "node1", "and", "#uname", "ne", "node2"],
@@ -1267,6 +1475,7 @@ class CibBuilderTest(TestCase):
             """,
         )
 
+    # already moved to pcs_test/tier0/lib/cib/rule/test_parsed_to_cib.py
     def testAndOrExpressionDateSpec(self):
         self.assertExpressionXml(
             ["#uname", "ne", "node1", "and", "date-spec", "hours=1-12"],
@@ -1316,6 +1525,7 @@ class CibBuilderTest(TestCase):
             """,
         )
 
+    # already moved to pcs_test/tier0/lib/cib/rule/test_parsed_to_cib.py
     def testParenthesizedExpression(self):
         self.assertExpressionXml(
             [
@@ -1444,17 +1654,20 @@ class CibBuilderTest(TestCase):
             """,
         )
 
-    def assertExpressionXml(self, rule_expression, rule_xml):
-        cib_dom = xml.dom.minidom.parse(empty_cib)
+    @staticmethod
+    def assertExpressionXml(rule_expression, rule_xml, cib_file=None):
+        cib_dom = xml.dom.minidom.parse(
+            cib_file if cib_file is not None else empty_cib
+        )
         constraints = cib_dom.getElementsByTagName("constraints")[0]
         constraint_el = constraints.appendChild(
             cib_dom.createElement("rsc_location")
         )
         constraint_el.setAttribute("id", "location-dummy")
         assert_xml_equal(
-            self.builder.build(
-                constraint_el, self.parser.parse(rule_expression)
-            ).parentNode.toprettyxml(indent="    "),
+            rule.CibBuilder(Version(*utils.getValidateWithVersion(cib_dom)))
+            .build(constraint_el, rule.RuleParser().parse(rule_expression))
+            .parentNode.toprettyxml(indent="    "),
             rule_xml.lstrip().rstrip(" "),
         )
 
@@ -1783,7 +1996,7 @@ class TokenPreprocessorTest(TestCase):
 
 
 class ExportAsExpressionTest(TestCase):
-    def test_success(self):
+    def test_success1(self):
         self.assertXmlExport(
             """
             <rule id="location-dummy-rule" score="INFINITY">
@@ -1794,6 +2007,8 @@ class ExportAsExpressionTest(TestCase):
             "#uname eq node1",
             "#uname eq string node1",
         )
+
+    def test_success2(self):
         self.assertXmlExport(
             """
             <rule id="location-dummy-rule" score="INFINITY">
@@ -1804,6 +2019,8 @@ class ExportAsExpressionTest(TestCase):
             "foo gt version 1.2.3",
             "foo gt version 1.2.3",
         )
+
+    def test_success3(self):
         self.assertXmlExport(
             """
 <rule boolean-op="or" id="complexRule" score="INFINITY">
@@ -1823,6 +2040,30 @@ class ExportAsExpressionTest(TestCase):
             """,
             '(date-spec hours=12-23 weekdays=1-5 and date in_range 2014-07-26 to duration months=1) or (foo gt version 1.2 and #uname eq "node3 4")',
             '(#uname eq string "node3 4" and foo gt version 1.2) or (date in_range 2014-07-26 to duration months=1 and date-spec hours=12-23 weekdays=1-5)',
+        )
+
+    def test_success_integer(self):
+        self.assertXmlExport(
+            """
+            <rule id="location-dummy-rule" score="INFINITY">
+                <expression attribute="foo" id="location-dummy-rule-expr"
+                    operation="gt" type="integer" value="123"/>
+            </rule>
+            """,
+            "foo gt integer 123",
+            "foo gt integer 123",
+        )
+
+    def test_success_number(self):
+        self.assertXmlExport(
+            """
+            <rule id="location-dummy-rule" score="INFINITY">
+                <expression attribute="foo" id="location-dummy-rule-expr"
+                    operation="gt" type="number" value="123"/>
+            </rule>
+            """,
+            "foo gt number 123",
+            "foo gt number 123",
         )
 
     @staticmethod
@@ -1845,19 +2086,7 @@ class ExportAsExpressionTest(TestCase):
         )
 
 
-class DomRuleAddTest(TestCase):
-    def setUp(self):
-        self.temp_cib = get_tmp_file("tier1_rule_dom_rule_add")
-        write_file_to_tmpfile(empty_cib, self.temp_cib)
-        output, returnVal = pcs(
-            self.temp_cib.name,
-            "resource create dummy1 ocf:heartbeat:Dummy".split(),
-        )
-        assert returnVal == 0 and output == ""
-
-    def tearDown(self):
-        self.temp_cib.close()
-
+class DomRuleAddXmlTest(TestCase):
     def test_success_xml(self):
         self.assertExpressionXml(
             ["#uname", "eq", "node1"],
@@ -1939,6 +2168,64 @@ class DomRuleAddTest(TestCase):
 </rsc_location>
             """,
         )
+        self.assertExpressionXml(
+            ["#uname", "eq", "integer", "12345"],
+            """
+<rsc_location id="location-dummy">
+    <rule id="location-dummy-rule" score="INFINITY">
+        <expression attribute="#uname" id="location-dummy-rule-expr" operation="eq" type="number" value="12345"/>
+    </rule>
+</rsc_location>
+            """,
+        )
+        self.assertExpressionXml(
+            ["#uname", "eq", "integer", "12345"],
+            """
+<rsc_location id="location-dummy">
+    <rule id="location-dummy-rule" score="INFINITY">
+        <expression attribute="#uname" id="location-dummy-rule-expr" operation="eq" type="integer" value="12345"/>
+    </rule>
+</rsc_location>
+            """,
+            cib_file=rc("cib-empty-3.5.xml"),
+        )
+
+    @staticmethod
+    def assertExpressionXml(rule_expression, rule_xml, cib_file=None):
+        cib_dom = xml.dom.minidom.parse(
+            cib_file if cib_file is not None else empty_cib
+        )
+        constraints = cib_dom.getElementsByTagName("constraints")[0]
+        constraint_el = constraints.appendChild(
+            cib_dom.createElement("rsc_location")
+        )
+        constraint_el.setAttribute("id", "location-dummy")
+        options, rule_argv = rule.parse_argv(rule_expression)
+        rule.dom_rule_add(
+            constraint_el,
+            options,
+            rule_argv,
+            Version(*utils.getValidateWithVersion(cib_dom)),
+        )
+        assert_xml_equal(
+            constraint_el.toprettyxml(indent="    "),
+            rule_xml.lstrip().rstrip(" "),
+        )
+
+
+class DomRuleAddTest(TestCase):
+    def setUp(self):
+        self.temp_cib = get_tmp_file("tier1_rule_dom_rule_add")
+        write_file_to_tmpfile(empty_cib, self.temp_cib)
+        output, returnVal = pcs(
+            self.temp_cib.name,
+            "resource create dummy1 ocf:heartbeat:Dummy".split(),
+        )
+        self.assertEqual(output, "")
+        self.assertEqual(returnVal, 0)
+
+    def tearDown(self):
+        self.temp_cib.close()
 
     @skip_unless_crm_rule()
     def test_success(self):
@@ -2141,18 +2428,3 @@ Location Constraints:
             "Error: id 'MyRule' is already in use, please specify another one\n",
         )
         self.assertEqual(1, returnVal)
-
-    @staticmethod
-    def assertExpressionXml(rule_expression, rule_xml):
-        cib_dom = xml.dom.minidom.parse(empty_cib)
-        constraints = cib_dom.getElementsByTagName("constraints")[0]
-        constraint_el = constraints.appendChild(
-            cib_dom.createElement("rsc_location")
-        )
-        constraint_el.setAttribute("id", "location-dummy")
-        options, rule_argv = rule.parse_argv(rule_expression)
-        rule.dom_rule_add(constraint_el, options, rule_argv)
-        assert_xml_equal(
-            constraint_el.toprettyxml(indent="    "),
-            rule_xml.lstrip().rstrip(" "),
-        )

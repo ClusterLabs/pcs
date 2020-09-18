@@ -141,6 +141,11 @@ def cluster_upgrade():
     output, retval = run(["cibadmin", "--upgrade", "--force"])
     if retval != 0:
         err("unable to upgrade cluster: %s" % output)
+    if (
+        output.strip()
+        == "Upgrade unnecessary: Schema is already the latest available"
+    ):
+        return
     print("Cluster CIB has been upgraded to latest version")
 
 
@@ -2070,6 +2075,7 @@ def validate_xml_id(var: str, description: str = "id") -> Tuple[bool, str]:
     return True, ""
 
 
+# deprecated, moved to pcs.lib.pacemaker.live
 def is_iso8601_date(var):
     """
     Commandline options: no options

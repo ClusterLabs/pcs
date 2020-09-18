@@ -452,9 +452,11 @@ Commands:
     op remove <operation id>
         Remove the specified operation id.
 
-    op defaults [config] [--full]
-        List currently configured default values for operations. If --full is
-        specified, also list ids.
+    op defaults [config] [--all] [--full] [--no-expire-check]
+        List currently configured default values for operations. If --all is
+        specified, also list expired sets of values. If --full is specified,
+        also list ids. If --no-expire-check is specified, do not evaluate
+        whether sets of values are expired.
 
     op defaults <name>=<value>...
         Set default values for operations.
@@ -466,16 +468,36 @@ Commands:
         Create a new set of default values for resource operations. You may
         specify a rule describing resources and / or operations to which the set
         applies.
+
         Set options are: id, score
+
         Expression looks like one of the following:
           op <operation name> [interval=<interval>]
           resource [<standard>]:[<provider>]:[<type>]
+          defined|not_defined <node attribute>
+          <node attribute> lt|gt|lte|gte|eq|ne [string|integer|number|version]
+              <value>
+          date gt|lt <date>
+          date in_range [<date>] to <date>
+          date in_range <date> to duration <duration options>
+          date-spec <date-spec options>
           <expression> and|or <expression>
-          ( <expression> )
+          (<expression>)
+
         You may specify all or any of 'standard', 'provider' and 'type' in
         a resource expression. For example: 'resource ocf::' matches all
         resources of 'ocf' standard, while 'resource ::Dummy' matches all
         resources of 'Dummy' type regardless of their standard and provider.
+
+        Dates are expected to conform to ISO 8601 format.
+
+        Duration options are: hours, monthdays, weekdays, yearsdays, months,
+        weeks, years, weekyears, moon. Value for these options is an integer.
+
+        Date-spec options are: hours, monthdays, weekdays, yearsdays, months,
+        weeks, years, weekyears, moon. Value for these options is an integer or
+        a range written as integer-integer.
+
         NOTE: Defaults do not apply to resources which override them with their
         own defined values.
 
@@ -611,9 +633,11 @@ Commands:
         --monitor is specified, disable all monitor operations of the
         resources.
 
-    defaults [config] [--full]
-        List currently configured default values for resources. If --full is
-        specified, also list ids.
+    defaults [config] [--all] [--full] [--no-expire-check]
+        List currently configured default values for resources. If --all is
+        specified, also list expired sets of values. If --full is specified,
+        also list ids. If --no-expire-check is specified, do not evaluate
+        whether sets of values are expired.
 
     defaults <name>=<value>...
         Set default values for resources.
@@ -624,15 +648,35 @@ Commands:
             [rule [<expression>]]
         Create a new set of default values for resources. You may specify a rule
         describing resources to which the set applies.
+
         Set options are: id, score
+
         Expression looks like one of the following:
           resource [<standard>]:[<provider>]:[<type>]
+          defined|not_defined <node attribute>
+          <node attribute> lt|gt|lte|gte|eq|ne [string|integer|number|version]
+              <value>
+          date gt|lt <date>
+          date in_range [<date>] to <date>
+          date in_range <date> to duration <duration options>
+          date-spec <date-spec options>
           <expression> and|or <expression>
-          ( <expression> )
+          (<expression>)
+
         You may specify all or any of 'standard', 'provider' and 'type' in
         a resource expression. For example: 'resource ocf::' matches all
         resources of 'ocf' standard, while 'resource ::Dummy' matches all
         resources of 'Dummy' type regardless of their standard and provider.
+
+        Dates are expected to conform to ISO 8601 format.
+
+        Duration options are: hours, monthdays, weekdays, yearsdays, months,
+        weeks, years, weekyears, moon. Value for these options is an integer.
+
+        Date-spec options are: hours, monthdays, weekdays, yearsdays, months,
+        weeks, years, weekyears, moon. Value for these options is an integer or
+        a range written as integer-integer.
+
         NOTE: Defaults do not apply to resources which override them with their
         own defined values.
 
@@ -1441,8 +1485,9 @@ Commands:
              [score=<score> | score-attribute=<attribute>] <expression>
         Creates a location constraint with a rule on the specified resource
         where expression looks like one of the following:
-          defined|not_defined <attribute>
-          <attribute> lt|gt|lte|gte|eq|ne [string|integer|version] <value>
+          defined|not_defined <node attribute>
+          <node attribute> lt|gt|lte|gte|eq|ne [string|integer|number|version]
+              <value>
           date gt|lt <date>
           date in_range <date> to <date>
           date in_range <date> to duration <duration options>...
@@ -1573,8 +1618,9 @@ Commands:
              [score=<score>|score-attribute=<attribute>] <expression>
         Add a rule to a location constraint specified by 'constraint id' where
         the expression looks like one of the following:
-          defined|not_defined <attribute>
-          <attribute> lt|gt|lte|gte|eq|ne [string|integer|version] <value>
+          defined|not_defined <node attribute>
+          <node attribute> lt|gt|lte|gte|eq|ne [string|integer|number|version]
+              <value>
           date gt|lt <date>
           date in_range <date> to <date>
           date in_range <date> to duration <duration options>...

@@ -15,9 +15,22 @@ from pcs.lib.cib import (
     nvpair_multi,
     sections,
 )
-from pcs.lib.cib.tools import IdProvider
+from pcs.lib.cib.rule import (
+    RuleInEffectEval,
+    RuleInEffectEvalDummy,
+    RuleInEffectEvalOneByOne,
+    RuleParseError,
+    has_node_attr_expr_with_type_integer,
+    has_rsc_or_op_expression,
+    parse_rule,
+)
+from pcs.lib.cib.tools import (
+    IdProvider,
+    get_pacemaker_version_by_which_cib_was_validated,
+)
 from pcs.lib.env import LibraryEnvironment
 from pcs.lib.errors import LibraryError
+from pcs.lib.pacemaker.live import has_rule_in_effect_status_tool
 
 
 def resource_defaults_create(
@@ -90,9 +103,24 @@ def _defaults_create(
     )
 
     required_cib_version = None
+    nice_to_have_cib_version = None
     if nvset_rule:
-        required_cib_version = Version(3, 4, 0)
-    cib = env.get_cib(required_cib_version)
+        # Parse the rule to see if we need to upgrade CIB schema. All errors
+        # would be properly reported by a validator called bellow, so we can
+        # safely ignore them here.
+        try:
+            rule_tree = parse_rule(nvset_rule)
+            if has_rsc_or_op_expression(rule_tree):
+                required_cib_version = Version(3, 4, 0)
+            if has_node_attr_expr_with_type_integer(rule_tree):
+                nice_to_have_cib_version = Version(3, 5, 0)
+        except RuleParseError:
+            pass
+
+    cib = env.get_cib(
+        minimal_version=required_cib_version,
+        nice_to_have_version=nice_to_have_cib_version,
+    )
     id_provider = IdProvider(cib)
 
     validator = nvpair_multi.ValidateNvsetAppendNew(
@@ -110,6 +138,7 @@ def _defaults_create(
     nvpair_multi.nvset_append_new(
         sections.get(cib, cib_section_name),
         id_provider,
+        get_pacemaker_version_by_which_cib_was_validated(cib),
         nvpair_multi.NVSET_META,
         nvpairs,
         nvset_options,
@@ -122,27 +151,55 @@ def _defaults_create(
     env.push_cib()
 
 
-def resource_defaults_config(env: LibraryEnvironment) -> List[CibNvsetDto]:
+def resource_defaults_config(
+    env: LibraryEnvironment, evaluate_expired: bool
+) -> List[CibNvsetDto]:
     """
     List all resource defaults nvsets
+
+    env --
+    evaluate_expired -- also evaluate whether rules are expired or in effect
     """
-    return _defaults_config(env, sections.RSC_DEFAULTS)
+    return _defaults_config(env, sections.RSC_DEFAULTS, evaluate_expired)
 
 
-def operation_defaults_config(env: LibraryEnvironment) -> List[CibNvsetDto]:
+def operation_defaults_config(
+    env: LibraryEnvironment, evaluate_expired: bool
+) -> List[CibNvsetDto]:
     """
     List all operation defaults nvsets
+
+    env --
+    evaluate_expired -- also evaluate whether rules are expired or in effect
     """
-    return _defaults_config(env, sections.OP_DEFAULTS)
+    return _defaults_config(env, sections.OP_DEFAULTS, evaluate_expired)
 
 
 def _defaults_config(
-    env: LibraryEnvironment, cib_section_name: str,
+    env: LibraryEnvironment, cib_section_name: str, evaluate_expired: bool
 ) -> List[CibNvsetDto]:
+    runner = env.cmd_runner()
+    cib = env.get_cib()
+
+    if evaluate_expired:
+        if has_rule_in_effect_status_tool():
+            in_effect_eval: RuleInEffectEval = RuleInEffectEvalOneByOne(
+                cib, runner
+            )
+        else:
+            in_effect_eval = RuleInEffectEvalDummy()
+            env.report_processor.report(
+                ReportItem.warning(
+                    reports.messages.RuleInEffectStatusDetectionNotSupported()
+                )
+            )
+    else:
+        in_effect_eval = RuleInEffectEvalDummy()
+
     return [
-        nvpair_multi.nvset_element_to_dto(nvset_el)
+        nvpair_multi.nvset_element_to_dto(nvset_el, in_effect_eval)
         for nvset_el in nvpair_multi.find_nvsets(
-            sections.get(env.get_cib(), cib_section_name)
+            sections.get(cib, cib_section_name)
         )
     ]
 
@@ -292,6 +349,7 @@ def _defaults_update(
             nvpair_multi.nvset_append_new(
                 sections.get(cib, cib_section_name),
                 id_provider,
+                get_pacemaker_version_by_which_cib_was_validated(cib),
                 nvpair_multi.NVSET_META,
                 nvpairs,
                 {},

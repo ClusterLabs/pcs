@@ -16,6 +16,7 @@ from pcs import settings
 from pcs.common.reports import ReportItemSeverity as Severity
 from pcs.common.reports import codes as report_codes
 from pcs.common.tools import Version
+from pcs.common.types import CibRuleInEffectStatus
 import pcs.lib.pacemaker.live as lib
 from pcs.lib.external import CommandRunner
 
@@ -561,46 +562,42 @@ class EnsureCibVersionTest(TestCase):
         self.cib = etree.XML('<cib validate-with="pacemaker-2.3.4"/>')
 
     def test_same_version(self, mock_upgrade, mock_get_cib):
-        self.assertTrue(
-            lib.ensure_cib_version(self.mock_runner, self.cib, Version(2, 3, 4))
-            is None
+        actual_cib, was_upgraded = lib.ensure_cib_version(
+            self.mock_runner, self.cib, Version(2, 3, 4)
         )
+        self.assertEqual(self.cib, actual_cib)
+        self.assertFalse(was_upgraded)
         mock_upgrade.assert_not_called()
         mock_get_cib.assert_not_called()
 
     def test_higher_version(self, mock_upgrade, mock_get_cib):
-        self.assertTrue(
-            lib.ensure_cib_version(self.mock_runner, self.cib, Version(2, 3, 3))
-            is None
+        actual_cib, was_upgraded = lib.ensure_cib_version(
+            self.mock_runner, self.cib, Version(2, 3, 3)
         )
+        self.assertEqual(self.cib, actual_cib)
+        self.assertFalse(was_upgraded)
         mock_upgrade.assert_not_called()
         mock_get_cib.assert_not_called()
 
     def test_upgraded_same_version(self, mock_upgrade, mock_get_cib):
-        upgraded_cib = '<cib validate-with="pacemaker-2.3.5"/>'
-        mock_get_cib.return_value = upgraded_cib
-        assert_xml_equal(
-            upgraded_cib,
-            etree.tostring(
-                lib.ensure_cib_version(
-                    self.mock_runner, self.cib, Version(2, 3, 5)
-                )
-            ).decode(),
+        expected_cib = '<cib validate-with="pacemaker-2.3.5"/>'
+        mock_get_cib.return_value = expected_cib
+        actual_cib, was_upgraded = lib.ensure_cib_version(
+            self.mock_runner, self.cib, Version(2, 3, 5)
         )
+        assert_xml_equal(expected_cib, etree.tostring(actual_cib).decode())
+        self.assertTrue(was_upgraded)
         mock_upgrade.assert_called_once_with(self.mock_runner)
         mock_get_cib.assert_called_once_with(self.mock_runner)
 
     def test_upgraded_higher_version(self, mock_upgrade, mock_get_cib):
-        upgraded_cib = '<cib validate-with="pacemaker-2.3.6"/>'
-        mock_get_cib.return_value = upgraded_cib
-        assert_xml_equal(
-            upgraded_cib,
-            etree.tostring(
-                lib.ensure_cib_version(
-                    self.mock_runner, self.cib, Version(2, 3, 5)
-                )
-            ).decode(),
+        expected_cib = '<cib validate-with="pacemaker-2.3.6"/>'
+        mock_get_cib.return_value = expected_cib
+        actual_cib, was_upgraded = lib.ensure_cib_version(
+            self.mock_runner, self.cib, Version(2, 3, 5)
         )
+        assert_xml_equal(expected_cib, etree.tostring(actual_cib).decode())
+        self.assertTrue(was_upgraded)
         mock_upgrade.assert_called_once_with(self.mock_runner)
         mock_get_cib.assert_called_once_with(self.mock_runner)
 
@@ -616,6 +613,20 @@ class EnsureCibVersionTest(TestCase):
                 {"required_version": "2.3.5", "current_version": "2.3.4"},
             ),
         )
+        mock_upgrade.assert_called_once_with(self.mock_runner)
+        mock_get_cib.assert_called_once_with(self.mock_runner)
+
+    def test_upgraded_lower_version_dont_fail(self, mock_upgrade, mock_get_cib):
+        expected_cib = '<cib validate-with="pacemaker-2.3.4"/>'
+        mock_get_cib.return_value = expected_cib
+        actual_cib, was_upgraded = lib.ensure_cib_version(
+            self.mock_runner,
+            self.cib,
+            Version(2, 3, 5),
+            fail_if_version_not_met=False,
+        )
+        assert_xml_equal(expected_cib, etree.tostring(actual_cib).decode())
+        self.assertFalse(was_upgraded)
         mock_upgrade.assert_called_once_with(self.mock_runner)
         mock_get_cib.assert_called_once_with(self.mock_runner)
 
@@ -1360,3 +1371,21 @@ class IsInPcmkToolHelp(TestCase):
         self.assertFalse(
             lib._is_in_pcmk_tool_help(mock_runner, "", ["A", "C", "E"])
         )
+
+
+class GetRulesInEffectStatus(LibraryPacemakerTest):
+    def test_success(self):
+        test_data = [
+            (1, CibRuleInEffectStatus.UNKNOWN),
+            (110, CibRuleInEffectStatus.EXPIRED),
+            (0, CibRuleInEffectStatus.IN_EFFECT),
+            (111, CibRuleInEffectStatus.NOT_YET_IN_EFFECT),
+        ]
+        for return_code, response in test_data:
+            with self.subTest(return_code=return_code, response=response):
+                runner = mock.MagicMock(spec_set=CommandRunner)
+                runner.run.return_value = ("", "", return_code)
+                self.assertEqual(
+                    lib.get_rule_in_effect_status(runner, "mock cib", "ruleid"),
+                    response,
+                )

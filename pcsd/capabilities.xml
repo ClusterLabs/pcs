@@ -819,7 +819,15 @@
       <description>
         Can create rule location constraints.
 
-        pcs commands. constraint location rule
+        pcs commands: constraint location rule
+        daemon urls: add_constraint_rule_remote (param: c_type=loc)
+      </description>
+    </capability>
+    <capability id="pcmk.constraint.location.simple.rule.node-attr-type-number" in-pcs="1" in-pcsd="1">
+      <description>
+        Rules support a node attribute type 'number'.
+
+        pcs commands: constraint location rule
         daemon urls: add_constraint_rule_remote (param: c_type=loc)
       </description>
     </capability>
@@ -978,6 +986,31 @@
         pcs commands: resource op defaults set create | delete | remove | update
       </description>
     </capability>
+    <capability id="pcmk.properties.operation-defaults.rule" in-pcs="1" in-pcsd="0">
+      <description>
+        Support for rules with 'attribute', 'date', 'resource' and 'op'
+        expressions in sets of resource operations defaults.
+
+        pcs commands: resource op defaults set create
+      </description>
+    </capability>
+    <capability id="pcmk.properties.operation-defaults.rule.hide-expired" in-pcs="1" in-pcsd="0">
+      <description>
+        Sets of operation defaults with expired rules are not listed by
+        default. When --all option is specified, expired sets and rules are
+        denoted with "(expired)". Use --no-expire-check to disable evaluating
+        whether rules are expired.
+
+        pcs commands: resource op defaults [config] --all | --no-check-expired
+      </description>
+    </capability>
+    <capability id="pcmk.properties.operation-defaults.rule.node-attr-type-number" in-pcs="1" in-pcsd="0">
+      <description>
+        Rules support a node attribute type 'number'.
+
+        pcs commands: resource op defaults set create
+      </description>
+    </capability>
     <capability id="pcmk.properties.operation-defaults.rule-rsc-op" in-pcs="1" in-pcsd="0">
       <description>
         Support for rules with 'resource' and 'op' expressions in sets of
@@ -1000,10 +1033,35 @@
         pcs commands: resource defaults set create | delete | remove | update
       </description>
     </capability>
+    <capability id="pcmk.properties.resource-defaults.rule" in-pcs="1" in-pcsd="0">
+      <description>
+        Support for rules with 'attribute', 'date' and 'resource' expressions
+        in sets of resources defaults.
+
+        pcs commands: resource defaults set create
+      </description>
+    </capability>
+    <capability id="pcmk.properties.resource-defaults.rule.hide-expired" in-pcs="1" in-pcsd="0">
+      <description>
+        Sets of resource defaults with expired rules are not listed by
+        default. When --all option is specified, expired sets and rules are
+        denoted with "(expired)". Use --no-expire-check to disable evaluating
+        whether rules are expired.
+
+        pcs commands: resource defaults [config] --all | --no-check-expired
+      </description>
+    </capability>
+    <capability id="pcmk.properties.resource-defaults.rule.node-attr-type-number" in-pcs="1" in-pcsd="0">
+      <description>
+        Rules support a node attribute type 'number'.
+
+        pcs commands: resource defaults set create
+      </description>
+    </capability>
     <capability id="pcmk.properties.resource-defaults.rule-rsc-op" in-pcs="1" in-pcsd="0">
       <description>
-        Support for rules with 'resource' and 'op' expressions in sets of
-        resources defaults.
+        Support for rules with 'resource' expressions in sets of resources
+        defaults.
 
         pcs commands: resource defaults set create
       </description>

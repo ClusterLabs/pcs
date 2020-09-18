@@ -6423,6 +6423,39 @@ class TagIdsNotInTheTag(ReportItemMessage):
 
 
 @dataclass(frozen=True)
+class RuleInEffectStatusDetectionNotSupported(ReportItemMessage):
+    """
+    Pacemaker tool for detecting if a rule is expired or not is not available
+    """
+
+    _code = codes.RULE_IN_EFFECT_STATUS_DETECTION_NOT_SUPPORTED
+
+    @property
+    def message(self) -> str:
+        return (
+            "crm_rule is not available, therefore expired parts of "
+            "configuration may not be detected. Consider upgrading pacemaker."
+        )
+
+
+@dataclass(frozen=True)
+class RuleExpressionOptionsDuplication(ReportItemMessage):
+    """
+    Keys are specified more than once in a single rule (sub)expression
+
+    duplicate_option_list -- list of keys duplicated in a single (sub)expression
+    """
+
+    duplicate_option_list: List[str]
+    _code = codes.RULE_EXPRESSION_OPTIONS_DUPLICATION
+
+    @property
+    def message(self) -> str:
+        options = format_list(self.duplicate_option_list)
+        return f"Duplicate options in a single (sub)expression: {options}"
+
+
+@dataclass(frozen=True)
 class RuleExpressionParseError(ReportItemMessage):
     """
     Unable to parse pacemaker cib rule expression string
@@ -6476,6 +6509,21 @@ class RuleExpressionNotAllowed(ReportItemMessage):
             f"Keyword '{type_map[self.expression_type]}' cannot be used "
             "in a rule in this command"
         )
+
+
+@dataclass(frozen=True)
+class RuleExpressionSinceGreaterThanUntil(ReportItemMessage):
+    """
+    In a date expression, 'until' predates 'since'
+    """
+
+    since: str
+    until: str
+    _code = codes.RULE_EXPRESSION_SINCE_GREATER_THAN_UNTIL
+
+    @property
+    def message(self) -> str:
+        return f"Since '{self.since}' is not sooner than until '{self.until}'"
 
 
 @dataclass(frozen=True)

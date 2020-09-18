@@ -10,6 +10,7 @@ from pcs.lib import validate
 from pcs.lib.cib.tools import IdProvider
 
 # pylint: disable=no-self-use
+# pylint: disable=too-many-lines
 
 ### normalization
 
@@ -802,6 +803,33 @@ class ValueCorosyncValue(TestCase):
                 )
 
 
+class ValueFloat(TestCase):
+    # The real code only calls ValuePredicateBase and is_float which are both
+    # heavily tested on their own => only basic tests here.
+    def fixture_validator(self):
+        return validate.ValueFloat("key")
+
+    def test_empty_report_on_valid_option(self):
+        assert_report_item_list_equal(
+            self.fixture_validator().validate({"key": "2.3"}), []
+        )
+
+    def test_report_invalid_value(self):
+        assert_report_item_list_equal(
+            self.fixture_validator().validate({"key": "6a"}),
+            [
+                fixture.error(
+                    reports.codes.INVALID_OPTION_VALUE,
+                    option_name="key",
+                    option_value="6a",
+                    allowed_values="a floating-point number",
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
+                ),
+            ],
+        )
+
+
 class ValueId(TestCase):
     def test_empty_id(self):
         assert_report_item_list_equal(
@@ -1004,6 +1032,33 @@ class ValueIn(TestCase):
         )
 
 
+class ValueInteger(TestCase):
+    # The real code only calls ValuePredicateBase and is_integer which are both
+    # heavily tested on their own => only basic tests here.
+    def fixture_validator(self):
+        return validate.ValueInteger("key")
+
+    def test_empty_report_on_valid_option(self):
+        assert_report_item_list_equal(
+            self.fixture_validator().validate({"key": "2"}), []
+        )
+
+    def test_report_invalid_value(self):
+        assert_report_item_list_equal(
+            self.fixture_validator().validate({"key": "6a"}),
+            [
+                fixture.error(
+                    reports.codes.INVALID_OPTION_VALUE,
+                    option_name="key",
+                    option_value="6a",
+                    allowed_values="an integer",
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
+                ),
+            ],
+        )
+
+
 class ValueIntegerInRange(TestCase):
     # The real code only calls ValuePredicateBase and is_integer which are both
     # heavily tested on their own => only basic tests here.
@@ -1113,6 +1168,51 @@ class ValueNotEmpty(TestCase):
                     option_value="",
                     allowed_values="description",
                     cannot_be_empty=True,
+                    forbidden_characters=None,
+                ),
+            ],
+        )
+
+
+class ValuePcmkDatespecPart(TestCase):
+    # The real code only calls ValuePredicateBase => only basic tests here.
+    def test_empty_report_on_valid_option(self):
+        assert_report_item_list_equal(
+            validate.ValuePcmkDatespecPart("key", None, None).validate(
+                {"key": "10-20"}
+            ),
+            [],
+        )
+
+    def test_report_invalid_value(self):
+        assert_report_item_list_equal(
+            validate.ValuePcmkDatespecPart("key", 10, 20).validate(
+                {"key": "foo-bar"}
+            ),
+            [
+                fixture.error(
+                    reports.codes.INVALID_OPTION_VALUE,
+                    option_name="key",
+                    option_value="foo-bar",
+                    allowed_values="10..20 or 10..19-11..20",
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
+                ),
+            ],
+        )
+
+    def test_report_invalid_value_no_limits(self):
+        assert_report_item_list_equal(
+            validate.ValuePcmkDatespecPart("key", None, None).validate(
+                {"key": "foo-bar"}
+            ),
+            [
+                fixture.error(
+                    reports.codes.INVALID_OPTION_VALUE,
+                    option_name="key",
+                    option_value="foo-bar",
+                    allowed_values="an integer or integer-integer",
+                    cannot_be_empty=False,
                     forbidden_characters=None,
                 ),
             ],
@@ -1270,7 +1370,75 @@ class ValueTimeInterval(TestCase):
         )
 
 
+class ValueVersion(TestCase):
+    def test_no_reports_for_valid_time_interval(self):
+        for version in ["123", "123.456", "123.456.789", "1.2.3.4"]:
+            with self.subTest(value=version):
+                assert_report_item_list_equal(
+                    validate.ValueVersion("a").validate({"a": version}), [],
+                )
+
+    def test_reports_about_invalid_interval(self):
+        assert_report_item_list_equal(
+            validate.ValueVersion("a").validate({"a": "1.2.3a"}),
+            [
+                fixture.error(
+                    reports.codes.INVALID_OPTION_VALUE,
+                    option_name="a",
+                    option_value="1.2.3a",
+                    allowed_values="a version number (e.g. 1, 1.2, 1.23.45, ...)",
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
+                ),
+            ],
+        )
+
+
 ### predicates
+
+
+class IsFloat(TestCase):
+    def test_success(self):
+        self.assertTrue(validate.is_float(123))
+        self.assertTrue(validate.is_float("123"))
+        self.assertTrue(validate.is_float(-123))
+        self.assertTrue(validate.is_float("-123"))
+        self.assertTrue(validate.is_float(+123))
+        self.assertTrue(validate.is_float("+123"))
+
+        self.assertTrue(validate.is_float("123.098"))
+        self.assertTrue(validate.is_float(".123"))
+        self.assertTrue(validate.is_float("123."))
+
+        self.assertTrue(validate.is_float("123e123"))
+        self.assertTrue(validate.is_float("123E123"))
+        self.assertTrue(validate.is_float("123e+123"))
+        self.assertTrue(validate.is_float("123E+123"))
+        self.assertTrue(validate.is_float("+123e123"))
+        self.assertTrue(validate.is_float("+123E123"))
+        self.assertTrue(validate.is_float("+123e+123"))
+        self.assertTrue(validate.is_float("+123E+123"))
+        self.assertTrue(validate.is_float("123e-123"))
+        self.assertTrue(validate.is_float("123E-123"))
+        self.assertTrue(validate.is_float("-123e123"))
+        self.assertTrue(validate.is_float("-123E123"))
+        self.assertTrue(validate.is_float("-123e-123"))
+        self.assertTrue(validate.is_float("-123E-123"))
+        self.assertTrue(validate.is_float("-12.3e-123"))
+        self.assertTrue(validate.is_float("-12.3E-123"))
+
+        self.assertFalse(validate.is_float(" 1"))
+        self.assertFalse(validate.is_float("12_34"))
+        self.assertFalse(validate.is_float("\n-1"))
+        self.assertFalse(validate.is_float("\r+1"))
+        self.assertFalse(validate.is_float("1\n"))
+        self.assertFalse(validate.is_float("-1 "))
+        self.assertFalse(validate.is_float("+1\r"))
+
+        self.assertFalse(validate.is_float(""))
+        self.assertFalse(validate.is_float("1a"))
+        self.assertFalse(validate.is_float("a1"))
+        self.assertFalse(validate.is_float("aaa"))
 
 
 class IsInteger(TestCase):
@@ -1350,6 +1518,30 @@ class IsIpv6Address(TestCase):
         self.assertFalse(validate.is_ipv6_address("abcd"))
         self.assertFalse(validate.is_ipv6_address("192.168.1.1"))
         self.assertFalse(validate.is_ipv6_address(1234))
+
+
+class IsPcmkDatespecPart(TestCase):
+    def test_valid(self):
+        self.assertTrue(validate.is_pcmk_datespec_part("12"))
+        self.assertTrue(validate.is_pcmk_datespec_part("12-34"))
+
+    def test_valid_with_limits(self):
+        self.assertTrue(validate.is_pcmk_datespec_part("12", 10, 20))
+        self.assertTrue(validate.is_pcmk_datespec_part("12-13", 10, 20))
+
+    def test_bad_not_int(self):
+        self.assertFalse(validate.is_pcmk_datespec_part("foo"))
+        self.assertFalse(validate.is_pcmk_datespec_part("1-foo"))
+        self.assertFalse(validate.is_pcmk_datespec_part("foo-1"))
+
+    def test_bad_since_after_until(self):
+        self.assertFalse(validate.is_pcmk_datespec_part("10-10"))
+        self.assertFalse(validate.is_pcmk_datespec_part("10-9"))
+
+    def test_bad_limits(self):
+        self.assertFalse(validate.is_pcmk_datespec_part("5", 10, 20))
+        self.assertFalse(validate.is_pcmk_datespec_part("5-15", 10, 20))
+        self.assertFalse(validate.is_pcmk_datespec_part("15-25", 10, 20))
 
 
 class IsPortNumber(TestCase):

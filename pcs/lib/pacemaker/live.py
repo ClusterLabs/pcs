@@ -8,13 +8,19 @@ from typing import (
 )
 
 from lxml import etree
+from lxml.etree import _Element
 
 from pcs import settings
 from pcs.common import reports
 from pcs.common.reports import ReportProcessor
 from pcs.common.reports.item import ReportItem
-from pcs.common.tools import format_os_error, xml_fromstring
 from pcs.common.str_tools import join_multilines
+from pcs.common.tools import (
+    format_os_error,
+    xml_fromstring,
+    Version,
+)
+from pcs.common.types import CibRuleInEffectStatus
 from pcs.lib.cib.tools import get_pacemaker_version_by_which_cib_was_validated
 from pcs.lib.errors import LibraryError
 from pcs.lib.external import CommandRunner
@@ -259,21 +265,32 @@ def diff_cibs_xml(
     return stdout.strip()
 
 
-def ensure_cib_version(runner, cib, version):
+def ensure_cib_version(
+    runner: CommandRunner,
+    cib: _Element,
+    version: Version,
+    fail_if_version_not_met: bool = True,
+) -> Tuple[_Element, bool]:
     """
+    Make sure CIB complies to specified schema version (or newer), upgrade CIB
+    if necessary. Raise on error. Raise if CIB cannot be upgraded enough to
+    meet the required version unless fail_if_version_not_met is set to False.
+    Return tuple(upgraded_cib, was_upgraded)
+
     This method ensures that specified cib is verified by pacemaker with
     version 'version' or newer. If cib doesn't correspond to this version,
     method will try to upgrade cib.
     Returns cib which was verified by pacemaker version 'version' or later.
     Raises LibraryError on any failure.
 
-    CommandRunner runner -- runner
-    etree cib -- cib tree
-    pcs.common.tools.Version version -- required cib version
+    runner -- runner
+    cib -- cib tree
+    version -- required cib version
+    fail_if_version_not_met -- allows a 'nice to have' cib upgrade
     """
-    current_version = get_pacemaker_version_by_which_cib_was_validated(cib)
-    if current_version >= version:
-        return None
+    version_pre_upgrade = get_pacemaker_version_by_which_cib_was_validated(cib)
+    if version_pre_upgrade >= version:
+        return cib, False
 
     _upgrade_cib(runner)
     new_cib_xml = get_cib_xml(runner)
@@ -285,14 +302,16 @@ def ensure_cib_version(runner, cib, version):
             ReportItem.error(reports.messages.CibUpgradeFailed(str(e)))
         )
 
-    current_version = get_pacemaker_version_by_which_cib_was_validated(new_cib)
-    if current_version >= version:
-        return new_cib
+    version_post_upgrade = get_pacemaker_version_by_which_cib_was_validated(
+        new_cib
+    )
+    if version_post_upgrade >= version or not fail_if_version_not_met:
+        return new_cib, version_post_upgrade > version_pre_upgrade
 
     raise LibraryError(
         ReportItem.error(
             reports.messages.CibUpgradeFailedToMinimalRequiredVersion(
-                str(current_version), str(version)
+                str(version_post_upgrade), str(version)
             )
         )
     )
@@ -687,6 +706,38 @@ def _run_fence_history_command(runner, command, node=None):
 
 
 ### tools
+
+
+def has_rule_in_effect_status_tool() -> bool:
+    return os.path.isfile(__exec("crm_rule"))
+
+
+def get_rule_in_effect_status(
+    runner: CommandRunner, cib_xml: str, rule_id: str
+) -> CibRuleInEffectStatus:
+    """
+    Figure out if a rule is in effect, expired or not yet in effect
+
+    runner -- a class for running external processes
+    cib_xml -- CIB containing rules
+    rule_id -- ID of the rule to be checked
+    """
+    # TODO Once crm_rule is capable of evaluating more than one rule per go, we
+    # should make use of it. Running the tool for each rule may really slow pcs
+    # down.
+    translation_map = {
+        0: CibRuleInEffectStatus.IN_EFFECT,
+        110: CibRuleInEffectStatus.EXPIRED,
+        111: CibRuleInEffectStatus.NOT_YET_IN_EFFECT,
+        # 105:non-existent
+        # 112: undetermined (rule is too complicated for current implementation)
+    }
+    dummy_stdout, dummy_stderr, retval = runner.run(
+        [__exec("crm_rule"), "--check", "--rule", rule_id, "--xml-text", "-"],
+        stdin_string=cib_xml,
+    )
+    return translation_map.get(retval, CibRuleInEffectStatus.UNKNOWN)
+
 
 # shortcut for getting a full path to a pacemaker executable
 def __exec(name):

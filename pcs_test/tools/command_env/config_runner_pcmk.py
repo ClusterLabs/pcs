@@ -24,6 +24,10 @@ AGENT_FILENAME_MAP = {
     "ocf:pacemaker:booth-site": "resource_agent_ocf_pacemaker_booth-site.xml",
 }
 
+RULE_IN_EFFECT_RETURNCODE = 0
+RULE_EXPIRED_RETURNCODE = 110
+RULE_NOT_YET_IN_EFFECT_RETURNCODE = 111
+
 
 def _fixture_state_resources_xml(
     resource_id="A",
@@ -853,5 +857,32 @@ class PcmkShortcuts:
                 stderr=stderr,
                 returncode=returncode,
                 check_stdin=CheckStdinEqualXml(cib_xml),
+            ),
+        )
+
+    def get_rule_in_effect_status(
+        self,
+        rule_id,
+        returncode=0,
+        name="runner.pcmk.get_rule_in_effect_status",
+        cib_load_name="runner.cib.load",
+    ):
+        """
+        Create a call for running a tool to get rule expired status
+
+        string rule_id -- id of the rule to be checked
+        int returncode -- result of the check
+        sting name -- key of the call
+        string cib_load_name -- key of a call from whose stdout the cib is taken
+        """
+        cib_xml = self.__calls.get(cib_load_name).stdout
+        self.__calls.place(
+            name,
+            RunnerCall(
+                ["crm_rule", "--check", "--rule", rule_id, "--xml-text", "-"],
+                check_stdin=CheckStdinEqualXml(cib_xml),
+                stdout="",
+                stderr="",
+                returncode=returncode,
             ),
         )

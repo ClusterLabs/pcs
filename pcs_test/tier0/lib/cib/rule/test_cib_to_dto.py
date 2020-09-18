@@ -6,8 +6,26 @@ from pcs.common.pacemaker.rule import (
     CibRuleDateCommonDto,
     CibRuleExpressionDto,
 )
-from pcs.common.types import CibRuleExpressionType
-from pcs.lib.cib.rule import rule_element_to_dto
+from pcs.common.types import (
+    CibRuleInEffectStatus,
+    CibRuleExpressionType,
+)
+from pcs.lib.cib.rule import (
+    RuleInEffectEval,
+    rule_element_to_dto,
+)
+
+
+class RuleInEffectEvalMock(RuleInEffectEval):
+    def __init__(self, mock_data=None):
+        self._mock_data = mock_data or dict()
+
+    def get_rule_status(self, rule_id):
+        return self._mock_data.get(rule_id, CibRuleInEffectStatus.UNKNOWN)
+
+
+def get_in_effect_eval(mock_data=None):
+    return RuleInEffectEvalMock(mock_data)
 
 
 class ExpressionToDto(TestCase):
@@ -22,11 +40,11 @@ class ExpressionToDto(TestCase):
         """
         )
         self.assertEqual(
-            rule_element_to_dto(xml),
+            rule_element_to_dto(get_in_effect_eval(), xml),
             CibRuleExpressionDto(
                 "my-id",
                 CibRuleExpressionType.RULE,
-                False,
+                CibRuleInEffectStatus.UNKNOWN,
                 {},
                 None,
                 None,
@@ -34,7 +52,7 @@ class ExpressionToDto(TestCase):
                     CibRuleExpressionDto(
                         "my-id-expr",
                         CibRuleExpressionType.EXPRESSION,
-                        False,
+                        CibRuleInEffectStatus.UNKNOWN,
                         {"attribute": "pingd", "operation": "defined"},
                         None,
                         None,
@@ -57,11 +75,11 @@ class ExpressionToDto(TestCase):
         """
         )
         self.assertEqual(
-            rule_element_to_dto(xml),
+            rule_element_to_dto(get_in_effect_eval(), xml),
             CibRuleExpressionDto(
                 "my-id",
                 CibRuleExpressionType.RULE,
-                False,
+                CibRuleInEffectStatus.UNKNOWN,
                 {},
                 None,
                 None,
@@ -69,7 +87,7 @@ class ExpressionToDto(TestCase):
                     CibRuleExpressionDto(
                         "my-id-expr",
                         CibRuleExpressionType.EXPRESSION,
-                        False,
+                        CibRuleInEffectStatus.UNKNOWN,
                         {
                             "attribute": "my-attr",
                             "operation": "eq",
@@ -96,11 +114,11 @@ class ExpressionToDto(TestCase):
         """
         )
         self.assertEqual(
-            rule_element_to_dto(xml),
+            rule_element_to_dto(get_in_effect_eval(), xml),
             CibRuleExpressionDto(
                 "my-id",
                 CibRuleExpressionType.RULE,
-                False,
+                CibRuleInEffectStatus.UNKNOWN,
                 {},
                 None,
                 None,
@@ -108,7 +126,7 @@ class ExpressionToDto(TestCase):
                     CibRuleExpressionDto(
                         "my-id-expr",
                         CibRuleExpressionType.EXPRESSION,
-                        False,
+                        CibRuleInEffectStatus.UNKNOWN,
                         {
                             "attribute": "foo",
                             "operation": "gt",
@@ -138,11 +156,11 @@ class DateExpressionToDto(TestCase):
         """
         )
         self.assertEqual(
-            rule_element_to_dto(xml),
+            rule_element_to_dto(get_in_effect_eval(), xml),
             CibRuleExpressionDto(
                 "rule",
                 CibRuleExpressionType.RULE,
-                False,
+                CibRuleInEffectStatus.UNKNOWN,
                 {},
                 None,
                 None,
@@ -150,7 +168,7 @@ class DateExpressionToDto(TestCase):
                     CibRuleExpressionDto(
                         "rule-expr",
                         CibRuleExpressionType.DATE_EXPRESSION,
-                        False,
+                        CibRuleInEffectStatus.UNKNOWN,
                         {"operation": "gt", "start": "2014-06-26"},
                         None,
                         None,
@@ -173,11 +191,11 @@ class DateExpressionToDto(TestCase):
         """
         )
         self.assertEqual(
-            rule_element_to_dto(xml),
+            rule_element_to_dto(get_in_effect_eval(), xml),
             CibRuleExpressionDto(
                 "rule",
                 CibRuleExpressionType.RULE,
-                False,
+                CibRuleInEffectStatus.UNKNOWN,
                 {},
                 None,
                 None,
@@ -185,7 +203,7 @@ class DateExpressionToDto(TestCase):
                     CibRuleExpressionDto(
                         "rule-expr",
                         CibRuleExpressionType.DATE_EXPRESSION,
-                        False,
+                        CibRuleInEffectStatus.UNKNOWN,
                         {"operation": "lt", "end": "2014-06-26"},
                         None,
                         None,
@@ -210,11 +228,11 @@ class DateExpressionToDto(TestCase):
         """
         )
         self.assertEqual(
-            rule_element_to_dto(xml),
+            rule_element_to_dto(get_in_effect_eval(), xml),
             CibRuleExpressionDto(
                 "rule",
                 CibRuleExpressionType.RULE,
-                False,
+                CibRuleInEffectStatus.UNKNOWN,
                 {},
                 None,
                 None,
@@ -222,7 +240,7 @@ class DateExpressionToDto(TestCase):
                     CibRuleExpressionDto(
                         "rule-expr",
                         CibRuleExpressionType.DATE_EXPRESSION,
-                        False,
+                        CibRuleInEffectStatus.UNKNOWN,
                         {"operation": "date_spec"},
                         CibRuleDateCommonDto(
                             "rule-expr-datespec",
@@ -241,7 +259,7 @@ class DateExpressionToDto(TestCase):
             ),
         )
 
-    def test_inrange(self):
+    def test_inrange_start_end(self):
         xml = etree.fromstring(
             """
             <rule id="rule">
@@ -252,11 +270,11 @@ class DateExpressionToDto(TestCase):
         """
         )
         self.assertEqual(
-            rule_element_to_dto(xml),
+            rule_element_to_dto(get_in_effect_eval(), xml),
             CibRuleExpressionDto(
                 "rule",
                 CibRuleExpressionType.RULE,
-                False,
+                CibRuleInEffectStatus.UNKNOWN,
                 {},
                 None,
                 None,
@@ -264,7 +282,7 @@ class DateExpressionToDto(TestCase):
                     CibRuleExpressionDto(
                         "rule-expr",
                         CibRuleExpressionType.DATE_EXPRESSION,
-                        False,
+                        CibRuleInEffectStatus.UNKNOWN,
                         {
                             "operation": "in_range",
                             "start": "2014-06-26",
@@ -280,7 +298,42 @@ class DateExpressionToDto(TestCase):
             ),
         )
 
-    def test_inrange_duration(self):
+    def test_inrange_end(self):
+        xml = etree.fromstring(
+            """
+            <rule id="rule">
+                <date_expression id="rule-expr"
+                    operation="in_range" end="2014-07-26"
+                />
+            </rule>
+        """
+        )
+        self.assertEqual(
+            rule_element_to_dto(get_in_effect_eval(), xml),
+            CibRuleExpressionDto(
+                "rule",
+                CibRuleExpressionType.RULE,
+                CibRuleInEffectStatus.UNKNOWN,
+                {},
+                None,
+                None,
+                [
+                    CibRuleExpressionDto(
+                        "rule-expr",
+                        CibRuleExpressionType.DATE_EXPRESSION,
+                        CibRuleInEffectStatus.UNKNOWN,
+                        {"operation": "in_range", "end": "2014-07-26"},
+                        None,
+                        None,
+                        [],
+                        "date in_range to 2014-07-26",
+                    ),
+                ],
+                "date in_range to 2014-07-26",
+            ),
+        )
+
+    def test_inrange_start_duration(self):
         xml = etree.fromstring(
             """
             <rule id="rule">
@@ -293,11 +346,11 @@ class DateExpressionToDto(TestCase):
         """
         )
         self.assertEqual(
-            rule_element_to_dto(xml),
+            rule_element_to_dto(get_in_effect_eval(), xml),
             CibRuleExpressionDto(
                 "rule",
                 CibRuleExpressionType.RULE,
-                False,
+                CibRuleInEffectStatus.UNKNOWN,
                 {},
                 None,
                 None,
@@ -305,7 +358,7 @@ class DateExpressionToDto(TestCase):
                     CibRuleExpressionDto(
                         "rule-expr",
                         CibRuleExpressionType.DATE_EXPRESSION,
-                        False,
+                        CibRuleInEffectStatus.UNKNOWN,
                         {"operation": "in_range", "start": "2014-06-26",},
                         None,
                         CibRuleDateCommonDto(
@@ -330,11 +383,11 @@ class OpExpressionToDto(TestCase):
         """
         )
         self.assertEqual(
-            rule_element_to_dto(xml),
+            rule_element_to_dto(get_in_effect_eval(), xml),
             CibRuleExpressionDto(
                 "my-id",
                 CibRuleExpressionType.RULE,
-                False,
+                CibRuleInEffectStatus.UNKNOWN,
                 {},
                 None,
                 None,
@@ -342,7 +395,7 @@ class OpExpressionToDto(TestCase):
                     CibRuleExpressionDto(
                         "my-id-op",
                         CibRuleExpressionType.OP_EXPRESSION,
-                        False,
+                        CibRuleInEffectStatus.UNKNOWN,
                         {"name": "start"},
                         None,
                         None,
@@ -363,11 +416,11 @@ class OpExpressionToDto(TestCase):
         """
         )
         self.assertEqual(
-            rule_element_to_dto(xml),
+            rule_element_to_dto(get_in_effect_eval(), xml),
             CibRuleExpressionDto(
                 "my-id",
                 CibRuleExpressionType.RULE,
-                False,
+                CibRuleInEffectStatus.UNKNOWN,
                 {},
                 None,
                 None,
@@ -375,7 +428,7 @@ class OpExpressionToDto(TestCase):
                     CibRuleExpressionDto(
                         "my-id-op",
                         CibRuleExpressionType.OP_EXPRESSION,
-                        False,
+                        CibRuleInEffectStatus.UNKNOWN,
                         {"name": "start", "interval": "2min"},
                         None,
                         None,
@@ -421,11 +474,11 @@ class ResourceExpressionToDto(TestCase):
                 """
                 )
                 self.assertEqual(
-                    rule_element_to_dto(xml),
+                    rule_element_to_dto(get_in_effect_eval(), xml),
                     CibRuleExpressionDto(
                         "my-id",
                         CibRuleExpressionType.RULE,
-                        False,
+                        CibRuleInEffectStatus.UNKNOWN,
                         {},
                         None,
                         None,
@@ -433,7 +486,7 @@ class ResourceExpressionToDto(TestCase):
                             CibRuleExpressionDto(
                                 "my-id-expr",
                                 CibRuleExpressionType.RSC_EXPRESSION,
-                                False,
+                                CibRuleInEffectStatus.UNKNOWN,
                                 attrs,
                                 None,
                                 None,
@@ -480,11 +533,11 @@ class RuleToDto(TestCase):
         """
         )
         self.assertEqual(
-            rule_element_to_dto(xml),
+            rule_element_to_dto(get_in_effect_eval(), xml),
             CibRuleExpressionDto(
                 "complex",
                 CibRuleExpressionType.RULE,
-                False,
+                CibRuleInEffectStatus.UNKNOWN,
                 {"boolean-op": "or", "score": "INFINITY"},
                 None,
                 None,
@@ -492,7 +545,7 @@ class RuleToDto(TestCase):
                     CibRuleExpressionDto(
                         "complex-rule-1",
                         CibRuleExpressionType.RULE,
-                        False,
+                        CibRuleInEffectStatus.UNKNOWN,
                         {"boolean-op": "and", "score": "0"},
                         None,
                         None,
@@ -500,7 +553,7 @@ class RuleToDto(TestCase):
                             CibRuleExpressionDto(
                                 "complex-rule-1-expr",
                                 CibRuleExpressionType.DATE_EXPRESSION,
-                                False,
+                                CibRuleInEffectStatus.UNKNOWN,
                                 {"operation": "date_spec"},
                                 CibRuleDateCommonDto(
                                     "complex-rule-1-expr-datespec",
@@ -513,7 +566,7 @@ class RuleToDto(TestCase):
                             CibRuleExpressionDto(
                                 "complex-rule-1-expr-1",
                                 CibRuleExpressionType.DATE_EXPRESSION,
-                                False,
+                                CibRuleInEffectStatus.UNKNOWN,
                                 {
                                     "operation": "in_range",
                                     "start": "2014-07-26",
@@ -533,7 +586,7 @@ class RuleToDto(TestCase):
                     CibRuleExpressionDto(
                         "complex-rule",
                         CibRuleExpressionType.RULE,
-                        False,
+                        CibRuleInEffectStatus.UNKNOWN,
                         {"boolean-op": "and", "score": "0"},
                         None,
                         None,
@@ -541,7 +594,7 @@ class RuleToDto(TestCase):
                             CibRuleExpressionDto(
                                 "complex-rule-expr-1",
                                 CibRuleExpressionType.EXPRESSION,
-                                False,
+                                CibRuleInEffectStatus.UNKNOWN,
                                 {
                                     "attribute": "foo",
                                     "operation": "gt",
@@ -556,7 +609,7 @@ class RuleToDto(TestCase):
                             CibRuleExpressionDto(
                                 "complex-rule-expr",
                                 CibRuleExpressionType.EXPRESSION,
-                                False,
+                                CibRuleInEffectStatus.UNKNOWN,
                                 {
                                     "attribute": "#uname",
                                     "operation": "eq",
@@ -570,7 +623,7 @@ class RuleToDto(TestCase):
                             CibRuleExpressionDto(
                                 "complex-rule-expr-2",
                                 CibRuleExpressionType.EXPRESSION,
-                                False,
+                                CibRuleInEffectStatus.UNKNOWN,
                                 {
                                     "attribute": "#uname",
                                     "operation": "eq",
@@ -589,5 +642,107 @@ class RuleToDto(TestCase):
                 "(date-spec hours=12-23 weekdays=1-5 and date in_range "
                 "2014-07-26 to duration months=1) or (foo gt version 1.2 and "
                 '#uname eq "node3 4" and #uname eq nodeA)',
+            ),
+        )
+
+
+class InEffectFlagInDto(TestCase):
+    def test_success(self):
+        xml = etree.fromstring(
+            """
+            <rule id="rule1" boolean-op="or" score="INFINITY">
+                <rule id="rule2" boolean-op="and" score="0">
+                    <rule id="rule3" boolean-op="or" score="0">
+                        <op_expression id="id1" name="start" />
+                    </rule>
+                    <rsc_expression id="id2" type="Dummy" />
+                </rule>
+                <rule id="rule4" boolean-op="and" score="0">
+                    <rsc_expression id="id3" type="Stateful" />
+                </rule>
+            </rule>
+        """
+        )
+        rules_status = {
+            "rule1": CibRuleInEffectStatus.UNKNOWN,
+            "rule2": CibRuleInEffectStatus.EXPIRED,
+            "rule3": CibRuleInEffectStatus.IN_EFFECT,
+            "rule4": CibRuleInEffectStatus.NOT_YET_IN_EFFECT,
+        }
+        self.assertEqual(
+            rule_element_to_dto(get_in_effect_eval(rules_status), xml),
+            CibRuleExpressionDto(
+                "rule1",
+                CibRuleExpressionType.RULE,
+                CibRuleInEffectStatus.UNKNOWN,
+                {"boolean-op": "or", "score": "INFINITY"},
+                None,
+                None,
+                [
+                    CibRuleExpressionDto(
+                        "rule2",
+                        CibRuleExpressionType.RULE,
+                        CibRuleInEffectStatus.EXPIRED,
+                        {"boolean-op": "and", "score": "0"},
+                        None,
+                        None,
+                        [
+                            CibRuleExpressionDto(
+                                "rule3",
+                                CibRuleExpressionType.RULE,
+                                CibRuleInEffectStatus.IN_EFFECT,
+                                {"boolean-op": "or", "score": "0"},
+                                None,
+                                None,
+                                [
+                                    CibRuleExpressionDto(
+                                        "id1",
+                                        CibRuleExpressionType.OP_EXPRESSION,
+                                        CibRuleInEffectStatus.UNKNOWN,
+                                        {"name": "start"},
+                                        None,
+                                        None,
+                                        [],
+                                        "op start",
+                                    ),
+                                ],
+                                "op start",
+                            ),
+                            CibRuleExpressionDto(
+                                "id2",
+                                CibRuleExpressionType.RSC_EXPRESSION,
+                                CibRuleInEffectStatus.UNKNOWN,
+                                {"type": "Dummy"},
+                                None,
+                                None,
+                                [],
+                                "resource ::Dummy",
+                            ),
+                        ],
+                        "(op start) and resource ::Dummy",
+                    ),
+                    CibRuleExpressionDto(
+                        "rule4",
+                        CibRuleExpressionType.RULE,
+                        CibRuleInEffectStatus.NOT_YET_IN_EFFECT,
+                        {"boolean-op": "and", "score": "0"},
+                        None,
+                        None,
+                        [
+                            CibRuleExpressionDto(
+                                "id3",
+                                CibRuleExpressionType.RSC_EXPRESSION,
+                                CibRuleInEffectStatus.UNKNOWN,
+                                {"type": "Stateful"},
+                                None,
+                                None,
+                                [],
+                                "resource ::Stateful",
+                            ),
+                        ],
+                        "resource ::Stateful",
+                    ),
+                ],
+                "((op start) and resource ::Dummy) or (resource ::Stateful)",
             ),
         )

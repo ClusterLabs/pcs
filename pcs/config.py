@@ -176,7 +176,9 @@ def _config_show_cib_lines(lib):
     all_lines.extend(
         indent(
             nvset_dto_list_to_lines(
-                lib.cib_options.resource_defaults_config(),
+                lib.cib_options.resource_defaults_config(
+                    evaluate_expired=False
+                ),
                 with_ids=modifiers.get("--full"),
                 text_if_empty="No defaults set",
             )
@@ -186,7 +188,9 @@ def _config_show_cib_lines(lib):
     all_lines.extend(
         indent(
             nvset_dto_list_to_lines(
-                lib.cib_options.operation_defaults_config(),
+                lib.cib_options.operation_defaults_config(
+                    evaluate_expired=False
+                ),
                 with_ids=modifiers.get("--full"),
                 text_if_empty="No defaults set",
             )

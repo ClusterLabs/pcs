@@ -180,16 +180,21 @@ def _defaults_config_cmd(
     """
     Options:
       * -f - CIB file
+      * --all - display all nvsets including the ones with expired rules
       * --full - verbose output
+      * --no-expire-check -- disable evaluating whether rules are expired
     """
     if argv:
         raise CmdLineInputError()
-    modifiers.ensure_only_supported("-f", "--full")
+    modifiers.ensure_only_supported(
+        "-f", "--all", "--full", "--no-expire-check"
+    )
     print(
         "\n".join(
             nvset_dto_list_to_lines(
-                lib_command(),
+                lib_command(not modifiers.get("--no-expire-check")),
                 with_ids=cast(bool, modifiers.get("--full")),
+                include_expired=cast(bool, modifiers.get("--all")),
                 text_if_empty="No defaults set",
             )
         )

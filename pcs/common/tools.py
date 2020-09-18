@@ -3,6 +3,7 @@ from enum import Enum
 import threading
 from typing import (
     MutableSet,
+    Optional,
     TypeVar,
 )
 
@@ -64,7 +65,12 @@ class AutoNameEnum(str, Enum):
 
 
 class Version(namedtuple("Version", ["major", "minor", "revision"])):
-    def __new__(cls, major, minor=None, revision=None):
+    def __new__(
+        cls,
+        major: int,
+        minor: Optional[int] = None,
+        revision: Optional[int] = None,
+    ):
         return super(Version, cls).__new__(cls, major, minor, revision)
 
     @property

@@ -20,6 +20,7 @@ from pcs.common.reports import ReportItemList
 from pcs.common.types import CibNvsetType
 from pcs.lib import validate
 from pcs.lib.cib.rule import (
+    RuleInEffectEval,
     RuleParseError,
     RuleRoot,
     RuleValidator,
@@ -30,6 +31,7 @@ from pcs.lib.cib.rule import (
 from pcs.lib.cib.tools import (
     ElementSearcher,
     IdProvider,
+    Version,
     create_subelement_id,
 )
 from pcs.lib.xml_tools import (
@@ -59,16 +61,24 @@ def nvpair_element_to_dto(nvpair_el: _Element) -> CibNvpairDto:
     )
 
 
-def nvset_element_to_dto(nvset_el: _Element) -> CibNvsetDto:
+def nvset_element_to_dto(
+    nvset_el: _Element, rule_in_effect_eval: RuleInEffectEval
+) -> CibNvsetDto:
     """
     Export an nvset xml element to its DTO
+
+    nvset_el -- an nvset element to be exported
+    rule_in_effect_eval -- a class for evaluating if a rule is in effect
     """
+    rule_dto = None
     rule_el = nvset_el.find("./rule")
+    if rule_el is not None:
+        rule_dto = rule_element_to_dto(rule_in_effect_eval, rule_el)
     return CibNvsetDto(
         str(nvset_el.get("id", "")),
         _tag_to_type[str(nvset_el.tag)],
         export_attributes(nvset_el, with_id=False),
-        None if rule_el is None else rule_element_to_dto(rule_el),
+        rule_dto,
         [
             nvpair_element_to_dto(nvpair_el)
             for nvpair_el in nvset_el.iterfind("./nvpair")
@@ -125,6 +135,8 @@ class ValidateNvsetAppendNew:
     Validator for creating new nvset and appending it to CIB
     """
 
+    # pylint: disable=too-many-instance-attributes
+
     def __init__(
         self,
         id_provider: IdProvider,
@@ -176,16 +188,9 @@ class ValidateNvsetAppendNew:
         )
 
         # parse and validate rule
-        # TODO write and call parsed rule validation and cleanup and tests
         if self._nvset_rule:
             try:
-                # Allow flags are set to True always, the parsed rule tree is
-                # checked in the validator instead. That gives us better error
-                # messages, such as "op expression cannot be used in this
-                # context" instead of a universal "parse error".
-                self._nvset_rule_parsed = parse_rule(
-                    self._nvset_rule, allow_rsc_expr=True, allow_op_expr=True
-                )
+                self._nvset_rule_parsed = parse_rule(self._nvset_rule)
                 report_list.extend(
                     RuleValidator(
                         self._nvset_rule_parsed,
@@ -216,6 +221,7 @@ class ValidateNvsetAppendNew:
 def nvset_append_new(
     parent_element: _Element,
     id_provider: IdProvider,
+    cib_schema_version: Version,
     nvset_tag: NvsetTag,
     nvpair_dict: Mapping[str, str],
     nvset_options: Mapping[str, str],
@@ -226,6 +232,7 @@ def nvset_append_new(
 
     parent_element -- the created nvset will be appended into this element
     id_provider -- elements' ids generator
+    cib_schema_version -- current CIB schema version
     nvset_tag -- type and actual tag of the nvset
     nvpair_dict -- nvpairs to be put into the new nvset
     nvset_options -- additional attributes of the created nvset
@@ -242,7 +249,7 @@ def nvset_append_new(
         if value != "":
             nvset_el.attrib[name] = value
     if nvset_rule:
-        rule_to_cib(nvset_el, id_provider, nvset_rule)
+        rule_to_cib(nvset_el, id_provider, cib_schema_version, nvset_rule)
     for name, value in nvpair_dict.items():
         _set_nvpair(nvset_el, id_provider, name, value)
     return nvset_el
