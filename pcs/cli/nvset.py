@@ -12,6 +12,7 @@ from pcs.cli.rule import (
 from pcs.common.pacemaker.nvset import CibNvsetDto
 from pcs.common.str_tools import (
     format_name_value_list,
+    format_optional,
     indent,
 )
 from pcs.common.types import (
@@ -28,16 +29,16 @@ def nvset_dto_list_to_lines(
 ) -> List[str]:
     if not nvset_dto_list:
         return [text_if_empty] if text_if_empty else []
-    nvset_dto_filtered_list = [
-        nvset_dto
-        for nvset_dto in nvset_dto_list
-        if include_expired
-        or not nvset_dto.rule
-        or nvset_dto.rule.in_effect != CibRuleInEffectStatus.EXPIRED
-    ]
+    if not include_expired:
+        nvset_dto_list = [
+            nvset_dto
+            for nvset_dto in nvset_dto_list
+            if not nvset_dto.rule
+            or nvset_dto.rule.in_effect != CibRuleInEffectStatus.EXPIRED
+        ]
     return [
         line
-        for nvset_dto in nvset_dto_filtered_list
+        for nvset_dto in nvset_dto_list
         for line in nvset_dto_to_lines(nvset_dto, with_ids=with_ids)
     ]
 
@@ -48,7 +49,7 @@ def nvset_dto_to_lines(nvset: CibNvsetDto, with_ids: bool = False) -> List[str]:
     heading_parts = [
         "{label}{in_effect}: {id}".format(
             label=nvset_label,
-            in_effect=f" ({in_effect_label})" if in_effect_label else "",
+            in_effect=format_optional(in_effect_label, " ({})"),
             id=nvset.id,
         )
     ]
