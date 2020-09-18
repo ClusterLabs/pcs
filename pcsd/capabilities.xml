@@ -1081,6 +1081,13 @@
         daemon urls: update_resource (param: resource_id not set)
       </description>
     </capability>
+    <capability id="pcmk.resource.create.clone.custom-id" in-pcs="1" in-pcsd="0">
+      <description>
+        It is possible to set custom id for a clone.
+
+        pcs commands: resource create ... clone
+      </description>
+    </capability>
     <capability id="pcmk.resource.create.in-existing-bundle" in-pcs="1" in-pcsd="0">
       <description>
         Put a newly created resource into an existing bundle.
@@ -1102,6 +1109,13 @@
 
         pcs commands: resource create ... promotable
         daemon urls: update_resource (param: resource_id not set)
+      </description>
+    </capability>
+    <capability id="pcmk.resource.create.promotable.custom-id" in-pcs="1" in-pcsd="0">
+      <description>
+        It is possible to set custom id for a promotable clone.
+
+        pcs commands: resource create ... promotable
       </description>
     </capability>
     <capability id="pcmk.resource.create.meta" in-pcs="1" in-pcsd="0">
@@ -1269,6 +1283,13 @@
         daemon urls: update_resource, resource_clone, resource_unclone
       </description>
     </capability>
+    <capability id="pcmk.resource.clone.custom-id" in-pcs="1" in-pcsd="0">
+      <description>
+        It is possible to set custom id for a clone.
+
+        pcs commands: resource clone
+      </description>
+    </capability>
     <capability id="pcmk.resource.clone.wait" in-pcs="1" in-pcsd="0">
       <description>
         Wait for the changes to take effect.
@@ -1289,6 +1310,13 @@
         way around.
 
         pcs commands: resource promotable, resource unclone
+      </description>
+    </capability>
+    <capability id="pcmk.resource.promotable.custom-id" in-pcs="1" in-pcsd="0">
+      <description>
+        It is possible to set custom id for a promotable clone.
+
+        pcs commands: resource promotable
       </description>
     </capability>
     <capability id="pcmk.resource.promotable.wait" in-pcs="1" in-pcsd="0">

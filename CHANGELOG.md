@@ -9,6 +9,8 @@
 - Support for "demote" value of resource operation's "on-fail" option
   ([rhbz#1843079])
 - Support for 'number' type in rules ([rhbz#1869399])
+- It is possible to set custom (promotable) clone id in `pcs resource create`
+  and `pcs resource clone/promotable` commands ([rhbz#1741056])
 
 ### Fixed
 - Prevent removing non-empty tag by removing tagged resource group or clone
@@ -25,6 +27,7 @@
   several sets of defaults. ([rhbz#1817547])
 
 [rhbz#1222691]: https://bugzilla.redhat.com/show_bug.cgi?id=1222691
+[rhbz#1741056]: https://bugzilla.redhat.com/show_bug.cgi?id=1741056
 [rhbz#1817547]: https://bugzilla.redhat.com/show_bug.cgi?id=1817547
 [rhbz#1843079]: https://bugzilla.redhat.com/show_bug.cgi?id=1843079
 [rhbz#1857295]: https://bugzilla.redhat.com/show_bug.cgi?id=1857295
