@@ -230,6 +230,14 @@ def report_invalid_id(_id, invalid_char, id_description="id"):
     )
 
 
+def report_id_already_exist(_id):
+    return (
+        severities.ERROR,
+        report_codes.ID_ALREADY_EXISTS,
+        {"id": _id,},
+    )
+
+
 def report_resource_not_running(resource, severity=severities.INFO):
     return (
         severity,

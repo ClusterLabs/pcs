@@ -4,6 +4,83 @@ from pcs.cli.resource import parse_args
 from pcs.cli.common.errors import CmdLineInputError
 
 
+class ParseCloneArgs(TestCase):
+    def assert_produce(self, arg_list, result, promotable=False):
+        self.assertEqual(
+            parse_args.parse_clone(arg_list, promotable=promotable), result,
+        )
+
+    def assert_raises_cmdline(self, args, expected_msg, promotable=False):
+        with self.assertRaises(CmdLineInputError) as cm:
+            parse_args.parse_clone(args, promotable=promotable)
+        self.assertEqual(cm.exception.message, expected_msg)
+
+    def test_no_args(self):
+        self.assert_produce([], {"clone_id": None, "meta": {}})
+
+    def test_clone_id(self):
+        self.assert_produce(
+            ["CustomCloneId"], {"clone_id": "CustomCloneId", "meta": {}},
+        )
+
+    def test_clone_options(self):
+        self.assert_produce(
+            ["a=b", "c=d"], {"clone_id": None, "meta": {"a": "b", "c": "d"}},
+        )
+
+    def test_meta_options(self):
+        self.assert_produce(
+            ["meta", "a=b", "c=d"],
+            {"clone_id": None, "meta": {"a": "b", "c": "d"}},
+        )
+
+    def test_clone_id_and_clone_meta_options(self):
+        self.assert_produce(
+            ["CustomCloneId", "a=b", "c=d", "meta", "e=f", "g=h"],
+            {
+                "clone_id": "CustomCloneId",
+                "meta": {"a": "b", "c": "d", "e": "f", "g": "h"},
+            },
+        )
+
+    def test_op_options(self):
+        self.assert_raises_cmdline(
+            ["op", "start", "timeout=30s"],
+            "op settings must be changed on base resource, not the clone",
+        )
+
+    def test_op_options_and_clone_id(self):
+        self.assert_raises_cmdline(
+            ["CloneId", "op", "start", "timeout=30s"],
+            "op settings must be changed on base resource, not the clone",
+        )
+
+    def test_missing_option_value(self):
+        self.assert_raises_cmdline(
+            ["CloneId", "a"], "missing value of 'a' option"
+        )
+
+    def test_missing_meta_option_value(self):
+        self.assert_raises_cmdline(["meta", "m"], "missing value of 'm' option")
+
+    def test_promotable_keyword_and_option(self):
+        self.assert_raises_cmdline(
+            ["CloneId", "promotable=true", "meta", "promotable=true"],
+            "you cannot specify both promotable option and promotable keyword",
+            promotable=True,
+        )
+
+    def test_different_values_of_option_and_meta_option(self):
+        self.assert_raises_cmdline(
+            ["CloneId", "promotable=true", "meta", "promotable=false"],
+            (
+                "duplicate option 'promotable' with different values 'true' and"
+                " 'false'"
+            ),
+            promotable=True,
+        )
+
+
 class ParseCreateArgs(TestCase):
     def assert_produce(self, arg_list, result):
         self.assertEqual(parse_args.parse_create(arg_list), result)
@@ -34,6 +111,18 @@ class ParseCreateArgs(TestCase):
             },
         )
 
+    def test_only_clone_with_custom_id(self):
+        self.assert_produce(
+            ["clone", "CustomCloneId", "a=b", "c=d"],
+            {
+                "meta": {},
+                "options": {},
+                "op": [],
+                "clone": {"a": "b", "c": "d",},
+                "clone_id": "CustomCloneId",
+            },
+        )
+
     def test_only_promotable(self):
         self.assert_produce(
             ["promotable", "a=b", "c=d"],
@@ -42,6 +131,18 @@ class ParseCreateArgs(TestCase):
                 "options": {},
                 "op": [],
                 "promotable": {"a": "b", "c": "d",},
+            },
+        )
+
+    def test_only_promotable_with_custom_id(self):
+        self.assert_produce(
+            ["promotable", "CustomCloneId", "a=b", "c=d"],
+            {
+                "meta": {},
+                "options": {},
+                "op": [],
+                "promotable": {"a": "b", "c": "d",},
+                "clone_id": "CustomCloneId",
             },
         )
 

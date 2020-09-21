@@ -62,6 +62,7 @@ def create_clone(
     meta_attributes=None,
     clone_options=None,
     operation_list=None,
+    clone_id=None,
 ):
     return resource.create_as_clone(
         env,
@@ -71,6 +72,7 @@ def create_clone(
         meta_attributes=meta_attributes if meta_attributes else {},
         instance_attributes={},
         clone_meta_options=clone_options if clone_options else {},
+        clone_id=clone_id,
         wait=wait,
         ensure_disabled=disabled,
     )
@@ -222,8 +224,8 @@ fixture_cib_resources_xml_group_simplest_disabled = """<resources>
 </resources>"""
 
 
-fixture_cib_resources_xml_clone_simplest = """<resources>
-    <clone id="A-clone">
+fixture_cib_resources_xml_clone_simplest_template = """<resources>
+    <clone id="{clone_id}">
         <primitive class="ocf" id="A" provider="heartbeat" type="Dummy">
             <operations>
                 <op id="A-migrate_from-interval-0s" interval="0s"
@@ -248,6 +250,17 @@ fixture_cib_resources_xml_clone_simplest = """<resources>
         </primitive>
     </clone>
 </resources>"""
+
+
+fixture_cib_resources_xml_clone_simplest = fixture_cib_resources_xml_clone_simplest_template.format(
+    clone_id="A-clone"
+)
+
+
+fixture_cib_resources_xml_clone_custom_id = fixture_cib_resources_xml_clone_simplest_template.format(
+    clone_id="CustomCloneId"
+)
+
 
 fixture_cib_resources_xml_clone_simplest_disabled = """<resources>
     <clone id="A-clone">
@@ -984,6 +997,51 @@ class CreateAsClone(TestCase):
             )
         )
         create_clone(self.env_assist.get_env(), wait=False)
+
+    def test_custom_clone_id(self):
+        (
+            self.config.remove(name="runner.pcmk.can_wait").env.push_cib(
+                resources=fixture_cib_resources_xml_clone_custom_id
+            )
+        )
+        create_clone(
+            self.env_assist.get_env(), wait=False, clone_id="CustomCloneId"
+        )
+
+    def test_custom_clone_id_error_invalid_id(self):
+        self.config.remove(name="runner.pcmk.can_wait")
+        self.env_assist.assert_raise_library_error(
+            lambda: create_clone(
+                self.env_assist.get_env(), wait=False, clone_id="1invalid"
+            ),
+        )
+        self.env_assist.assert_reports(
+            [fixture.report_invalid_id("1invalid", "1")],
+        )
+
+    def test_custom_clone_id_error_id_already_exist(self):
+        self.config.remove(name="runner.pcmk.can_wait")
+        self.config.remove(name="runner.cib.load")
+        self.config.runner.cib.load(
+            resources="""
+                <resources>
+                    <primitive class="ocf" id="C" provider="heartbeat"
+                        type="Dummy"
+                    >
+                        <operations>
+                            <op id="C-monitor-interval-10s" interval="10s"
+                                name="monitor" timeout="20s"/>
+                        </operations>
+                    </primitive>
+                </resources>
+            """,
+        )
+        self.env_assist.assert_raise_library_error(
+            lambda: create_clone(
+                self.env_assist.get_env(), wait=False, clone_id="C"
+            ),
+        )
+        self.env_assist.assert_reports([fixture.report_id_already_exist("C")])
 
     def test_cib_upgrade_on_onfail_demote(self):
         self.config.remove(name="runner.pcmk.can_wait")

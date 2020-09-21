@@ -7,10 +7,15 @@ promotable clones are clones with meta attribute promotable=true. Master
 elements are deprecated yet still supported in pacemaker. We provide read-only
 support for them to be able to read, process and display CIBs containing them.
 """
-from lxml import etree
+from typing import Mapping, Optional
 
+from lxml import etree
+from lxml.etree import _Element
+
+from pcs.common.reports import ReportItemList
 from pcs.lib.cib import nvpair
-from pcs.lib.pacemaker.values import is_true
+from pcs.lib.cib.tools import IdProvider
+from pcs.lib.pacemaker.values import is_true, validate_id
 
 
 TAG_CLONE = "clone"
@@ -61,7 +66,13 @@ def get_parent_any_clone(resource_el):
     return None
 
 
-def append_new(resources_section, id_provider, primitive_element, options):
+def append_new(
+    resources_section: _Element,
+    id_provider: IdProvider,
+    primitive_element: _Element,
+    options: Mapping[str, str],
+    clone_id: Optional[str] = None,
+):
     """
     Append a new clone element (containing the primitive_element) to the
     resources_section.
@@ -75,8 +86,10 @@ def append_new(resources_section, id_provider, primitive_element, options):
         resources_section,
         TAG_CLONE,
         id=id_provider.allocate_id(
-            "{0}-{1}".format(primitive_element.get("id"), TAG_CLONE)
-        ),
+            "{0}-{1}".format(str(primitive_element.get("id")), TAG_CLONE)
+        )
+        if clone_id is None
+        else clone_id,
     )
     clone_element.append(primitive_element)
 
@@ -88,3 +101,16 @@ def append_new(resources_section, id_provider, primitive_element, options):
 
 def get_inner_resource(clone_el):
     return clone_el.xpath("./primitive | ./group")[0]
+
+
+def validate_clone_id(clone_id: str, id_provider: IdProvider) -> ReportItemList:
+    """
+    Validate that clone_id is an valid xml id an it is uniqe in the cib.
+
+    clone_id -- identifier of clone element
+    id_provider -- elements' ids generator
+    """
+    report_list: ReportItemList = []
+    validate_id(clone_id, reporter=report_list)
+    report_list.extend(id_provider.book_ids(clone_id))
+    return report_list

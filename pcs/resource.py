@@ -37,6 +37,7 @@ from pcs.cli.resource.parse_args import (
     parse_bundle_create_options,
     parse_bundle_reset_options,
     parse_bundle_update_options,
+    parse_clone as parse_clone_args,
     parse_create as parse_create_args,
 )
 from pcs.common import reports
@@ -65,7 +66,7 @@ from pcs.lib.pacemaker.state import (
     get_cluster_state_dom,
     get_resource_state,
 )
-from pcs.lib.pacemaker.values import timeout_to_seconds
+from pcs.lib.pacemaker.values import validate_id, timeout_to_seconds
 import pcs.lib.resource_agent as lib_ra
 
 # pylint: disable=invalid-name
@@ -691,6 +692,7 @@ def resource_create(lib, argv, modifiers):
         allow_not_suitable_command=modifiers.get("--force"),
     )
 
+    clone_id = parts.get("clone_id", None)
     if "clone" in parts:
         lib.resource.create_as_clone(
             ra_id,
@@ -699,6 +701,7 @@ def resource_create(lib, argv, modifiers):
             parts["meta"],
             parts["options"],
             parts["clone"],
+            clone_id=clone_id,
             **settings,
         )
     elif "promotable" in parts:
@@ -709,6 +712,7 @@ def resource_create(lib, argv, modifiers):
             parts["meta"],
             parts["options"],
             dict(**parts["promotable"], promotable="true"),
+            clone_id=clone_id,
             **settings,
         )
     elif "bundle" in parts:
@@ -1571,6 +1575,10 @@ def resource_clone_create(
             cib_dom, name
         ) or utils.dom_get_group_masterslave(cib_dom, name):
             utils.err("cannot clone a group that has already been cloned")
+    else:
+        if element.parentNode.tagName != "clone":
+            utils.err("%s is not currently a clone" % name)
+        clone = element.parentNode
 
     # If element is currently in a group and it's the last member, we get rid
     # of the group
@@ -1580,29 +1588,26 @@ def resource_clone_create(
     ):
         element.parentNode.parentNode.removeChild(element.parentNode)
 
-    if update_existing:
-        if element.parentNode.tagName != "clone":
-            utils.err("%s is not currently a clone" % name)
-        clone = element.parentNode
-    else:
+    parts = parse_clone_args(argv, promotable=promotable)
+    if not update_existing:
+        clone_id = parts["clone_id"]
+        if clone_id is not None:
+            report_list = []
+            validate_id(clone_id, reporter=report_list)
+            if report_list:
+                raise CmdLineInputError("invalid id '{}'".format(clone_id))
+            if utils.does_id_exist(cib_dom, clone_id):
+                raise CmdLineInputError(
+                    "id '{}' already exists".format(clone_id),
+                )
+        else:
+            clone_id = utils.find_unique_id(cib_dom, name + "-clone")
         clone = cib_dom.createElement("clone")
-        clone.setAttribute("id", utils.find_unique_id(cib_dom, name + "-clone"))
+        clone.setAttribute("id", clone_id)
         clone.appendChild(element)
         resources_el.appendChild(clone)
 
-    generic_values, op_values, meta_values = parse_resource_options(argv)
-    if op_values:
-        utils.err("op settings must be changed on base resource, not the clone")
-    final_meta = prepare_options(generic_values + meta_values)
-    if promotable:
-        if "promotable" in final_meta:
-            utils.err(
-                "you cannot specify both promotable option and promotable "
-                "keyword"
-            )
-        else:
-            final_meta["promotable"] = "true"
-    utils.dom_update_meta_attr(clone, sorted(final_meta.items()))
+    utils.dom_update_meta_attr(clone, sorted(parts["meta"].items()))
 
     return cib_dom, clone.getAttribute("id")
 

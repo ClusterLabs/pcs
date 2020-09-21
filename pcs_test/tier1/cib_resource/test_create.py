@@ -212,6 +212,27 @@ class Success(ResourceTest):
             </resources>""",
         )
 
+    def test_with_custom_clone_id(self):
+        self.assert_effect(
+            (
+                "resource create R ocf:heartbeat:Dummy --no-default-ops clone "
+                "CustomId"
+            ).split(),
+            """<resources>
+                <clone id="CustomId">
+                    <primitive class="ocf" id="R" provider="heartbeat"
+                        type="Dummy"
+                    >
+                        <operations>
+                            <op id="R-monitor-interval-10s" interval="10s"
+                                name="monitor" timeout="20s"
+                            />
+                        </operations>
+                    </primitive>
+                </clone>
+            </resources>""",
+        )
+
     def test_with_clone_options(self):
         self.assert_effect(
             (
@@ -747,6 +768,7 @@ class Promotable(TestCase, AssertPcsMixin):
             {},
             {},
             {"a": "b", "c": "d", "promotable": "true"},
+            clone_id=None,
             **self.fixture_options(),
         )
 
