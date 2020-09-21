@@ -84,7 +84,7 @@ def resource_environment(
 
 def _push_cib_wait(
     env: LibraryEnvironment,
-    wait: Optional[Union[bool, int]] = False,
+    wait: WaitType = False,
     wait_for_resource_ids: Optional[Iterable[str]] = None,
     resource_state_reporter: Callable[
         [_Element, str], ReportItem
@@ -991,7 +991,7 @@ def _disable_run_simulate(
 def disable(
     env: LibraryEnvironment,
     resource_or_tag_ids: Iterable[str],
-    wait: Optional[Union[bool, int]],
+    wait: WaitType = False,
 ):
     """
     Disallow specified resources to be started by the cluster
@@ -1012,7 +1012,7 @@ def disable_safe(
     env: LibraryEnvironment,
     resource_or_tag_ids: Iterable[str],
     strict: bool,
-    wait: Optional[Union[bool, int]],
+    wait: WaitType = False,
 ):
     """
     Disallow specified resources to be started by the cluster only if there is
@@ -1101,7 +1101,9 @@ def disable_simulate(
 
 
 def enable(
-    env: LibraryEnvironment, resource_or_tag_ids: Iterable[str], wait: WaitType,
+    env: LibraryEnvironment,
+    resource_or_tag_ids: Iterable[str],
+    wait: WaitType = False,
 ):
     """
     Allow specified resources to be started by the cluster
