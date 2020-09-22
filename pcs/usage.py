@@ -570,7 +570,7 @@ Commands:
         and the return 0 on success or 1 on error.  If 'n' is not specified it
         defaults to 60 minutes.
 
-    clone <resource id | group id> [<clone id] [clone options]... [--wait[=n]]
+    clone <resource id | group id> [<clone id>] [clone options]... [--wait[=n]]
         Set up the specified resource or group as a clone. If --wait is
         specified, pcs will wait up to 'n' seconds for the operation to finish
         (including starting clone instances if appropriate) and then return 0
