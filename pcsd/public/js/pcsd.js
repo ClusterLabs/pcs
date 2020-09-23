@@ -548,7 +548,7 @@ function resource_stonith_cleanup_refresh(
   }
   data = {"resource": resource};
   if (full_refresh) {
-    data["full"] = 1;
+    data["strict"] = 1;
   }
   fade_in_out(action_button_id);
   ajax_wrapper({
