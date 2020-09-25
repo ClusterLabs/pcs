@@ -2,9 +2,7 @@ from dataclasses import dataclass
 from enum import auto, Enum
 from typing import (
     Any,
-    Dict,
-    List,
-    Union
+    Union,
 )
 
 from pcs.common.reports import ReportItemDto
@@ -16,7 +14,7 @@ class MessageType(Enum):
 
 @dataclass(frozen=True)
 class TaskExecuted:
-    pid: int
+    worker_pid: int
 
 @dataclass(frozen=True)
 class TaskFinished:

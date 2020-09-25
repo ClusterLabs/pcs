@@ -107,3 +107,6 @@ worker_task_limit = 5
 
 task_unresponsive_timeout_seconds = 60 * 60
 task_abandoned_timeout_seconds = 1 * 60
+
+worker_logs_location = "/var/log/pcsd/worker_logs/"
+async_api_log_location = "/var/log/pcsd/async_api.log"
