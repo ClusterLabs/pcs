@@ -19,6 +19,7 @@
   regards to the 'lifetime' option.
 - Allow moving both promoted and demoted promotable clone resources
   ([rhbz#1875301])
+- Improved error message with a hint in `pcs cluster cib-push` ([ghissue#241])
 
 ### Deprecated
 - `pcs resource [op] defaults <name>=<value>...` commands are deprecated now.
@@ -26,6 +27,7 @@
   one set of defaults, or `pcs resource [op] defaults set` if you manage
   several sets of defaults. ([rhbz#1817547])
 
+[ghissue#241]: https://github.com/ClusterLabs/pcs/issues/241
 [rhbz#1222691]: https://bugzilla.redhat.com/show_bug.cgi?id=1222691
 [rhbz#1741056]: https://bugzilla.redhat.com/show_bug.cgi?id=1741056
 [rhbz#1817547]: https://bugzilla.redhat.com/show_bug.cgi?id=1817547

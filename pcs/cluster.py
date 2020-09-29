@@ -833,7 +833,17 @@ def cluster_push(lib, argv, modifiers):
         if scope:
             command.append("--scope=%s" % scope)
         output, retval = utils.run(command)
-        if retval != 0:
+        # 103 (CRM_EX_OLD) - update older than existing config
+        if retval == 103:
+            utils.err(
+                "Unable to push to the CIB because pushed configuration "
+                "is older than existing one. If you are sure you want to "
+                "push this configuration, try to use --config to replace only "
+                "configuration part instead of whole CIB. Otherwise get current"
+                " configuration by running command 'pcs cluster cib' and update"
+                " that."
+            )
+        elif retval != 0:
             utils.err("unable to push cib\n" + output)
 
     print("CIB updated")
