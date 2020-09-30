@@ -1,7 +1,7 @@
 import datetime
 import os
 
-from enum import auto, Enum, IntEnum
+from enum import auto
 from typing import (
     Any,
     List,
@@ -12,6 +12,7 @@ from typing import (
 from pcs.common.interface.dto import ImplementsToDto
 from pcs.daemon.scheduler.commands import WorkerCommand
 from pcs.daemon.scheduler.dto import TaskResultDto
+from pcs.common.tools import AutoNameEnum
 from pcs.settings import (
     task_abandoned_timeout_seconds,
     task_unresponsive_timeout_seconds,
@@ -23,7 +24,7 @@ if TYPE_CHECKING:
     from pcs.daemon.scheduler.messaging import TaskExecuted, TaskFinished
 
 
-class TaskFinishType(Enum):
+class TaskFinishType(AutoNameEnum):
     UNFINISHED = auto()
     UNHANDLED_EXCEPTION = auto()
     FAIL = auto()
@@ -32,11 +33,11 @@ class TaskFinishType(Enum):
     USER_KILL = auto()
 
 
-class TaskState(IntEnum):
-    CREATED = 1
-    QUEUED = 2
-    EXECUTED = 3
-    FINISHED = 4
+class TaskState(AutoNameEnum):
+    CREATED = auto()
+    QUEUED = auto()
+    EXECUTED = auto()
+    FINISHED = auto()
 
 
 class Task(ImplementsToDto):

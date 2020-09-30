@@ -58,19 +58,27 @@ class Scheduler:
         except IndexError:
             raise TaskNotFoundError(task_ident)
 
-        if task.state == TaskState.EXECUTED:
+        if task.state == TaskState.CREATED:
+            self._created_tasks_index.remove(task_ident)
+            self._logger.debug(f"User is killing CREATED task {task_ident}.")
+        elif task.state == TaskState.EXECUTED:
             task.kill()
             self._logger.debug(f"User is killing EXECUTED task {task_ident}.")
 
-        # Task states before EXECUTED will be killed upon delivery of
-        # TaskExecuted message in its handler because of setting USER_KILL.
+        # QUEUED tasks will be killed upon delivery of TaskExecuted message
+        # in its handler by checking that TaskFinishType is USER_KILL
         # FINISHED tasks require no action.
-        self._logger.debug(f"User is killing non-EXECUTED task {task_ident}.")
+        self._logger.debug(
+            f"User is killing QUEUED or FINISHED task {task_ident}."
+        )
 
         task.task_finish_type = TaskFinishType.USER_KILL
 
     def new_task(self, command: Command) -> str:
         task_ident: str = uuid.uuid4().hex
+        while task_ident in self._task_register:
+            task_ident = uuid.uuid4().hex
+
         self._task_register[task_ident] = Task(task_ident, command)
         self._created_tasks_index.append(task_ident)
         self._logger.debug(f"New task {task_ident} created.")
@@ -79,7 +87,7 @@ class Scheduler:
     async def _garbage_collection(self) -> None:
         # TODO: Run less frequently
         # self._logger.debug("Running garbage collection.")
-        for _, task in self._task_register:
+        for _, task in self._task_register.items():
             if task.is_abandoned() or task.is_defunct():
                 task.task_finish_type = TaskFinishType.SCHEDULER_KILL
                 task.kill()
@@ -128,5 +136,6 @@ class Scheduler:
                 sys.exit(1)
 
     def terminate_nowait(self):
+        # TODO: Make scheduler exit cleanly on daemon exit
         self._proc_pool.terminate()
         self._logger.info("Scheduler is correctly terminated.")

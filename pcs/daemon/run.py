@@ -1,9 +1,9 @@
 import os
 import signal
 import socket
-import tornado
 from pathlib import Path
 
+from tornado.gen import sleep as async_sleep
 from tornado.ioloop import IOLoop
 from tornado.locks import Lock
 from tornado.web import Application
@@ -60,7 +60,7 @@ def config_sync(sync_config_lock: Lock, ruby_pcsd_wrapper: ruby_pcsd.Wrapper):
 async def run_scheduler(scheduler):
     while True:
         await scheduler.perform_actions()
-        await tornado.gen.sleep(settings.async_api_scheduler_interval_ms / 1000)
+        await async_sleep(settings.async_api_scheduler_interval_ms / 1000)
 
 
 def configure_app(
@@ -167,7 +167,7 @@ def main():
         raise SystemExit(1) from e
 
     ioloop = IOLoop.current()
-    ioloop.add_callback(run_scheduler, [async_scheduler])
+    ioloop.add_callback(run_scheduler, async_scheduler)
     ioloop.add_callback(sign_ioloop_started)
     if systemd.is_systemd() and env.NOTIFY_SOCKET:
         ioloop.add_callback(systemd.notify, env.NOTIFY_SOCKET)

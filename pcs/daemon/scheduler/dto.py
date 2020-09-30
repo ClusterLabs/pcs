@@ -25,7 +25,7 @@ if TYPE_CHECKING:
 
 def from_dict(cls: Type[DtoType], data: DtoPayload) -> DtoType:
     """Redefinition from common with module-specific enums"""
-    cast_config = [Type["TaskState"], Type["TaskFinishType"]]
+    cast_config: list = [Type["TaskState"], Type["TaskFinishType"]]
     return from_dict_unconfigured(cls, data, cast_config)
 
 

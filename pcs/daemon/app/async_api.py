@@ -47,20 +47,6 @@ class BaseAPIHandler(RequestHandler):
                     error_msg="Malformed JSON data",
                 )
 
-    def validate_task_ident(self, task_ident: str) -> None:
-        """Task_ident format validation"""
-        try:
-            if not re.fullmatch(r"[a-fA-F0-9]{32}", task_ident):
-                self.write_error(
-                    400,
-                    http_error="Bad Request",
-                    error_msg="Malformed task_ident",
-                )
-        except re.error:
-            self.write_error(
-                400, http_error="Bad Request", error_msg="Malformed task_ident"
-            )
-
     def write_error(
         self,
         status_code: int,
@@ -137,8 +123,6 @@ class TaskInfoHandler(BaseAPIHandler):
                 error_msg="Non-optional argument task_ident is missing.",
             )
             return
-        self.validate_task_ident(task_ident)
-
         try:
             self.write(json.dumps(to_dict(self.scheduler.get_task(task_ident))))
         except TaskNotFoundError:
@@ -154,7 +138,7 @@ class KillTaskHandler(BaseAPIHandler):
 
     def get(self) -> None:
         try:
-            task_ident = self.get_query_argument("task_ident")
+            task_ident: str = self.get_query_argument("task_ident")
         except tornado.web.MissingArgumentError:
             self.write_error(
                 400,
@@ -162,7 +146,6 @@ class KillTaskHandler(BaseAPIHandler):
                 error_msg="Non-optional argument task_ident is missing.",
             )
             return None
-        self.validate_task_ident(task_ident)
         try:
             self.scheduler.kill_task(task_ident)
         except TaskNotFoundError:

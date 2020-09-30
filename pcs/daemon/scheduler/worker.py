@@ -23,15 +23,21 @@ logger: Optional[Logger] = None
 def worker_init():
     import signal
 
-    def ignore_signals(sig_num, frame):
-        pass
-
-    signal.signal(signal.SIGINT, ignore_signals)
-    # signal.signal(signal.SIGTERM, finish_logging)
     # Create and configure new logger
     global logger
     logger = setup_worker_logger()
     logger.info("Worker initialized.")
+
+    def ignore_signals(sig_num, frame):
+        pass
+
+    def flush_logs(sig_num, frame):
+        for handler in logger.handlers:
+            handler.flush()
+            handler.close()
+
+    signal.signal(signal.SIGINT, ignore_signals)
+    signal.signal(signal.SIGTERM, flush_logs)
 
 
 def task_executor(task: WorkerCommand, worker_com: mp.Queue) -> None:
