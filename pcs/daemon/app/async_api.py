@@ -26,8 +26,8 @@ class BaseAPIHandler(RequestHandler):
     and HTTP(S) settings.
     """
 
-    def initialize(self, scheduler) -> None:
-        self.scheduler: scheduler.Scheduler = scheduler
+    def initialize(self, scheduler: scheduler.Scheduler) -> None:
+        self.scheduler = scheduler
         # TODO: Turn into a constant
         self.logger: logging.Logger = logging.getLogger("pcs_scheduler")
 
