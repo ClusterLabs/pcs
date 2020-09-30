@@ -1,6 +1,6 @@
 # Change Log
 
-## [Unreleased]
+## [0.10.7] - 2020-09-30
 
 ### Added
 - Support for multiple sets of resource and operation defaults, including
