@@ -176,8 +176,9 @@ class KillTaskHandler(BaseAPIHandler):
 
 
 def get_routes(scheduler) -> List[Tuple[str, Type[BaseAPIHandler], dict]]:
+    params = dict(scheduler=scheduler)
     return [
-        ("/async_api/task/create", NewTaskHandler, dict(scheduler=scheduler)),
-        ("/async_api/task/result", TaskInfoHandler, dict(scheduler=scheduler)),
-        ("/async_api/task/kill", KillTaskHandler, dict(scheduler=scheduler)),
+        ("/async_api/task/result", TaskInfoHandler, params),
+        ("/async_api/task/create", NewTaskHandler, params),
+        ("/async_api/task/kill", KillTaskHandler, params),
     ]
