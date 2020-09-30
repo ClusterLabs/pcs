@@ -56,10 +56,11 @@ def config_sync(sync_config_lock: Lock, ruby_pcsd_wrapper: ruby_pcsd.Wrapper):
 
     return config_synchronization
 
+
 async def run_scheduler(scheduler):
     while True:
         await scheduler.perform_actions()
-        await tornado.gen.sleep(settings.async_api_scheduler_interval_ms/1000)
+        await tornado.gen.sleep(settings.async_api_scheduler_interval_ms / 1000)
 
 
 def configure_app(
@@ -84,7 +85,7 @@ def configure_app(
             https_server_manage,
         )
 
-        if not settings.async_api_scheduler_enable:
+        if settings.async_api_scheduler_enable:
             routes.extend(async_api.get_routes(async_scheduler))
 
         if not disable_gui:
@@ -166,7 +167,7 @@ def main():
         raise SystemExit(1) from e
 
     ioloop = IOLoop.current()
-    #ioloop.add_callback(run_scheduler(async_scheduler))
+    ioloop.add_callback(run_scheduler, [async_scheduler])
     ioloop.add_callback(sign_ioloop_started)
     if systemd.is_systemd() and env.NOTIFY_SOCKET:
         ioloop.add_callback(systemd.notify, env.NOTIFY_SOCKET)

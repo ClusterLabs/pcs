@@ -3,28 +3,34 @@ import sys
 import uuid
 
 from collections import deque
+from logging import Logger
 from typing import (
     Dict,
     Deque,
 )
 
 from pcs import settings
-from .commands import Command
-from .messaging import (
+from pcs.daemon.scheduler.commands import Command
+from pcs.daemon.scheduler.dto import TaskResultDto
+from pcs.daemon.scheduler.logging import setup_scheduler_logger
+from pcs.daemon.scheduler.messaging import (
     Message,
     MessageType,
 )
-from .task import (
+from pcs.daemon.scheduler.task import (
     Task,
-    TaskResult,
     TaskState,
     TaskFinishType,
 )
-from .worker import (
-    worker_init,
-    worker_error,
-    task_executor
-)
+from pcs.daemon.scheduler.worker import worker_init, task_executor
+
+
+class TaskNotFoundError(Exception):
+    """Task with requested task_ident was not found in task_register"""
+
+    def __init__(self, task_ident: str):
+        self.task_ident: str = task_ident
+
 
 class Scheduler:
     def __init__(self) -> None:
@@ -37,44 +43,49 @@ class Scheduler:
         self._created_tasks_index: Deque[str] = deque()
         self._task_register: Dict[str, Task] = dict()
         self._worker_message_q: mp.Queue = mp.Queue()
+        self._logger: Logger = setup_scheduler_logger()
+        self._logger.info("Scheduler was successfully initialized.")
 
-    def get_task(self, task_ident: str) -> TaskResult:
+    def get_task(self, task_ident: str) -> TaskResultDto:
         try:
-            return self._task_register[task_ident].to_task_result()
-            #TODO JSON conversion
-        except IndexError as e:
-            #TODO Raise to the API? Custom exception?
-            raise e
+            return self._task_register[task_ident].to_dto()
+        except IndexError:
+            raise TaskNotFoundError(task_ident)
 
     def kill_task(self, task_ident: str) -> None:
         try:
             task: Task = self._task_register[task_ident]
-            #TODO JSON conversion
-        except IndexError as e:
-            #TODO Raise to the API? Custom exception?
-            raise e
+        except IndexError:
+            raise TaskNotFoundError(task_ident)
 
-        if task.state >= TaskState.EXECUTED:
+        if task.state == TaskState.EXECUTED:
             task.kill()
+            self._logger.debug(f"User is killing EXECUTED task {task_ident}.")
 
-        task.state = TaskState.FINISHED
+        # Task states before EXECUTED will be killed upon delivery of
+        # TaskExecuted message in its handler because of setting USER_KILL.
+        # FINISHED tasks require no action.
+        self._logger.debug(f"User is killing non-EXECUTED task {task_ident}.")
+
         task.task_finish_type = TaskFinishType.USER_KILL
 
     def new_task(self, command: Command) -> str:
         task_ident: str = uuid.uuid4().hex
         self._task_register[task_ident] = Task(task_ident, command)
         self._created_tasks_index.append(task_ident)
+        self._logger.debug(f"New task {task_ident} created.")
         return task_ident
-        #TODO JSON conversion
 
     async def _garbage_collection(self) -> None:
+        # TODO: Run less frequently
+        # self._logger.debug("Running garbage collection.")
         for _, task in self._task_register:
             if task.is_abandoned() or task.is_defunct():
-                task.state = TaskState.FINISHED
                 task.task_finish_type = TaskFinishType.SCHEDULER_KILL
                 task.kill()
 
     async def perform_actions(self):
+        # self._logger.debug("Scheduler tick.")
         await self._schedule_tasks()
         await self._receive_messages()
         await self._garbage_collection()
@@ -95,21 +106,27 @@ class Scheduler:
             elif message.message_type == MessageType.TASK_FINISHED:
                 task.message_finished(message.payload)
             else:
-                #TODO Scheduler internal error, log and exit
+                self._logger.critical(
+                    f"Message with unknown message type "
+                    f"({message.message_type}) was received by the scheduler."
+                )
                 sys.exit(1)
 
             message_count -= 1
 
     async def _schedule_tasks(self) -> None:
         while self._created_tasks_index:
-            next_task: Task = \
-                self._task_register[self._created_tasks_index.popleft()]
+            next_task: Task = self._task_register[
+                self._created_tasks_index.popleft()
+            ]
             try:
                 self._proc_pool.apply_async(
-                    func=task_executor,
-                    args=[next_task.to_worker_command()],
-                    error_callback=worker_error,
+                    func=task_executor, args=[next_task.to_worker_command()],
                 )
             except ValueError:
-                #TODO Pool is not running - internal error, log and exit
+                self._logger.critical("Process pool is not running.")
                 sys.exit(1)
+
+    def terminate_nowait(self):
+        self._proc_pool.terminate()
+        self._logger.info("Scheduler is correctly terminated.")

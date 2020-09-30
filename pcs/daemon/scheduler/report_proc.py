@@ -1,10 +1,11 @@
 import multiprocessing as mp
 
 from pcs.common import reports as pcs_reports
-from .messaging import (
+from pcs.daemon.scheduler.messaging import (
     Message,
     MessageType,
 )
+
 
 class WorkerReportProcessor(pcs_reports.ReportProcessor):
     def __init__(self, worker_com: mp.Queue, task_ident: str) -> None:
@@ -16,11 +17,9 @@ class WorkerReportProcessor(pcs_reports.ReportProcessor):
         try:
             self._worker_communicator.put(
                 Message(
-                    self._task_ident,
-                    MessageType.REPORT,
-                    report_item.to_dto()
+                    self._task_ident, MessageType.REPORT, report_item.to_dto()
                 )
             )
         except mp.Queue.queue.Full:
             pass
-            #TODO Log and exit
+            # TODO Log and exit

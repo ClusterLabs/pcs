@@ -7,12 +7,13 @@ from typing import (
     Any,
     Dict,
     Iterable,
+    List,
     NewType,
     Type,
     TypeVar,
     Union,
 )
-
+from enum import Enum
 import dacite
 
 from pcs.common import types
@@ -98,7 +99,9 @@ def _convert_payload(klass: Type[DTOTYPE], data: DtoPayload) -> DtoPayload:
     return new_dict
 
 
-def from_dict(cls: Type[DTOTYPE], data: DtoPayload) -> DTOTYPE:
+def from_dict_unconfigured(
+    cls: Type[DTOTYPE], data: DtoPayload, cast_config: List[Type[Enum]],
+) -> DTOTYPE:
     return dacite.from_dict(
         data_class=cls,
         data=_convert_payload(cls, data),
@@ -114,6 +117,16 @@ def from_dict(cls: Type[DTOTYPE], data: DtoPayload) -> DTOTYPE:
             ]
         ),
     )
+
+
+def from_dict(cls: Type[DtoType], data: DtoPayload) -> DtoType:
+    cast_config: List[Type[Enum]] = [
+        types.CibNvsetType,
+        types.CibRuleExpressionType,
+        types.DrRole,
+        types.ResourceRelationType,
+    ]
+    return from_dict_unconfigured(cls, data, cast_config)
 
 
 class ImplementsToDto:
