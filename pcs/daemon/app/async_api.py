@@ -1,9 +1,7 @@
 import json
 import logging
-import re
 import tornado
 
-from tornado.web import RequestHandler
 from typing import (
     Any,
     Dict,
@@ -12,10 +10,12 @@ from typing import (
     Type,
 )
 
-from pcs.common.interface.dto import to_dict
-from pcs.daemon.async_tasks.commands import Command
-from pcs.daemon.async_tasks.dto import CommandDto, from_dict
-from pcs.daemon.async_tasks.scheduler import TaskNotFoundError
+from dacite import DaciteError, MissingValueError, UnexpectedDataError
+from tornado.web import RequestHandler
+
+from pcs.common.interface.dto import from_dict, to_dict
+from pcs.daemon.async_tasks.dto import CommandDto, TaskIdentDto
+from pcs.daemon.async_tasks.scheduler import Scheduler, TaskNotFoundError
 
 
 class BaseAPIHandler(RequestHandler):
@@ -26,7 +26,7 @@ class BaseAPIHandler(RequestHandler):
     and HTTP(S) settings.
     """
 
-    def initialize(self, scheduler: scheduler.Scheduler) -> None:
+    def initialize(self, scheduler: Scheduler) -> None:
         self.scheduler = scheduler
         # TODO: Turn into a constant
         self.logger: logging.Logger = logging.getLogger("pcs_scheduler")
@@ -44,7 +44,7 @@ class BaseAPIHandler(RequestHandler):
                 self.write_error(
                     400,
                     http_error="Bad Request",
-                    error_msg="Malformed JSON data",
+                    error_msg="Malformed JSON data.",
                 )
 
     def write_error(
@@ -70,7 +70,7 @@ class BaseAPIHandler(RequestHandler):
         self.set_status(status_code, http_error)
         response: Dict[str, str] = {}
         if status_code:
-            response["http_code"] = status_code
+            response["http_code"] = str(status_code)
         if http_error:
             response["http_error"] = http_error
         if error_msg:
@@ -89,25 +89,36 @@ class NewTaskHandler(BaseAPIHandler):
             self.write_error(
                 400,
                 http_error="Bad Request",
-                error_msg="Task assignment is missing",
+                error_msg="Task assignment is missing.",
             )
-        # Simple data validation
-        expected_keys: List[str] = ["command_name", "params"]
-        if (
-            len(self.json) != 2
-            or list(self.json.keys()).sort() != expected_keys.sort()
-        ):
+
+        try:
+            command_dto = from_dict(CommandDto, self.json, strict=True)
+        except MissingValueError:
+            self.write_error(
+                400,
+                http_error="Bad Request",
+                error_msg="Required value of task assignment is missing.",
+            )
+            return
+        except UnexpectedDataError:
+            self.write_error(
+                400,
+                http_error="Bad Request",
+                error_msg="Unexpected data in task assignment.",
+            )
+            return
+        except DaciteError:
             self.write_error(
                 400,
                 http_error="Bad Request",
                 error_msg="Malformed task assignment.",
             )
+            return
 
-        command_dto = from_dict(CommandDto, self.json)
+        task_ident = self.scheduler.new_task(command_dto)
 
-        task_ident = self.scheduler.new_task(Command.from_dto(command_dto))
-
-        self.write(json.dumps(dict(task_ident=task_ident)))
+        self.write(json.dumps(to_dict(TaskIdentDto(task_ident))))
 
 
 class TaskInfoHandler(BaseAPIHandler):

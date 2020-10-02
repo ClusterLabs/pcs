@@ -97,7 +97,9 @@ def _convert_payload(klass: Type[DTOTYPE], data: DtoPayload) -> DtoPayload:
     return new_dict
 
 
-def from_dict(cls: Type[DTOTYPE], data: DtoPayload) -> DTOTYPE:
+def from_dict(
+    cls: Type[DTOTYPE], data: DtoPayload, strict: bool = False
+) -> DTOTYPE:
     return dacite.from_dict(
         data_class=cls,
         data=_convert_payload(cls, data),
@@ -110,7 +112,10 @@ def from_dict(cls: Type[DTOTYPE], data: DtoPayload) -> DTOTYPE:
                 types.CorosyncTransportType,
                 types.DrRole,
                 types.ResourceRelationType,
-            ]
+                types.TaskFinishType,
+                types.TaskState,
+            ],
+            strict=strict,
         ),
     )
 

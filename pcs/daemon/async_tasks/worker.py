@@ -2,25 +2,24 @@ import multiprocessing as mp
 import os
 
 from logging import Logger
-from typing import Optional
 
-from pcs.daemon.async_tasks.command_mapping import command_map
-from pcs.daemon.async_tasks.logging import setup_worker_logger
-from pcs.daemon.async_tasks.messaging import (
+from pcs.lib.env import LibraryEnvironment
+from pcs.lib.errors import LibraryError
+from .command_mapping import command_map
+from .logging import setup_worker_logger
+from .messaging import (
     Message,
     MessageType,
     TaskExecuted,
     TaskFinished,
 )
-from pcs.daemon.async_tasks.report_proc import WorkerReportProcessor
-from pcs.daemon.async_tasks.task import WorkerCommand, TaskFinishType
-from pcs.lib.env import LibraryEnvironment
-from pcs.lib.errors import LibraryError
+from .report_proc import WorkerReportProcessor
+from .task import WorkerCommand, TaskFinishType
 
-logger: Optional[Logger] = None
+logger: Logger
 
 
-def worker_init():
+def worker_init() -> None:
     import signal
 
     # Create and configure new logger
@@ -74,7 +73,7 @@ def task_executor(task: WorkerCommand, worker_com: mp.Queue) -> None:
         )
         logger.exception("Task raised a LibraryException.")
         return
-    except Exception as e:
+    except Exception:
         # For unhandled exceptions during execution
         worker_com.put(
             Message(

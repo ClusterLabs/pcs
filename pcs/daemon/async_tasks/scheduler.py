@@ -3,100 +3,101 @@ import sys
 import uuid
 
 from collections import deque
-from logging import Logger
 from typing import (
     Dict,
     Deque,
 )
 
 from pcs import settings
-from pcs.daemon.async_tasks.commands import Command
-from pcs.daemon.async_tasks.dto import TaskResultDto
-from pcs.daemon.async_tasks.logging import setup_scheduler_logger
-from pcs.daemon.async_tasks.messaging import (
+from .dto import CommandDto, TaskResultDto
+from .logging import setup_scheduler_logger
+from .messaging import (
     Message,
     MessageType,
 )
-from pcs.daemon.async_tasks.task import (
+from .task import (
     Task,
     TaskState,
     TaskFinishType,
 )
-from pcs.daemon.async_tasks.worker import worker_init, task_executor
+from .worker import worker_init, task_executor
 
 
 class TaskNotFoundError(Exception):
     """Task with requested task_ident was not found in task_register"""
 
     def __init__(self, task_ident: str):
-        self.task_ident: str = task_ident
+        self.task_ident = task_ident
 
 
 class Scheduler:
     def __init__(self) -> None:
-        self._proc_pool: mp.pool.Pool = mp.Pool(
+        self._proc_pool = mp.Pool(
             processes=settings.worker_count,
             maxtasksperchild=settings.worker_task_limit,
             initializer=worker_init,
         )
-        self._proc_pool_manager: mp.Manager = mp.Manager()
+        self._proc_pool_manager = mp.Manager()
         self._created_tasks_index: Deque[str] = deque()
         self._task_register: Dict[str, Task] = dict()
-        self._worker_message_q: mp.Queue = mp.Queue()
-        self._logger: Logger = setup_scheduler_logger()
+        self._worker_message_q = self._proc_pool_manager.Queue()
+        self._logger = setup_scheduler_logger()
         self._logger.info("Scheduler was successfully initialized.")
 
     def get_task(self, task_ident: str) -> TaskResultDto:
         try:
-            return self._task_register[task_ident].to_dto()
-        except IndexError:
+            task_result_dto = self._task_register[task_ident].to_dto()
+        except KeyError:
             raise TaskNotFoundError(task_ident)
+
+        return task_result_dto
 
     def kill_task(self, task_ident: str) -> None:
         try:
-            task: Task = self._task_register[task_ident]
-        except IndexError:
+            task = self._task_register[task_ident]
+        except KeyError:
             raise TaskNotFoundError(task_ident)
 
-        if task.state == TaskState.CREATED:
-            self._created_tasks_index.remove(task_ident)
-            self._logger.debug(f"User is killing CREATED task {task_ident}.")
-        elif task.state == TaskState.EXECUTED:
-            task.kill()
-            self._logger.debug(f"User is killing EXECUTED task {task_ident}.")
-
-        # QUEUED tasks will be killed upon delivery of TaskExecuted message
-        # in its handler by checking that TaskFinishType is USER_KILL
-        # FINISHED tasks require no action.
-        self._logger.debug(
-            f"User is killing QUEUED or FINISHED task {task_ident}."
-        )
+        self._logger.debug(f"User is killing a task {task_ident}.")
 
         task.task_finish_type = TaskFinishType.USER_KILL
 
-    def new_task(self, command: Command) -> str:
-        task_ident: str = uuid.uuid4().hex
-        while task_ident in self._task_register:
+    def new_task(self, command_dto: CommandDto) -> str:
+        is_duplicate = True
+        while is_duplicate:
             task_ident = uuid.uuid4().hex
+            is_duplicate = task_ident in self._task_register
 
-        self._task_register[task_ident] = Task(task_ident, command)
+        self._task_register[task_ident] = Task(task_ident, command_dto)
         self._created_tasks_index.append(task_ident)
         self._logger.debug(f"New task {task_ident} created.")
         return task_ident
 
-    async def _garbage_collection(self) -> None:
-        # TODO: Run less frequently
-        # self._logger.debug("Running garbage collection.")
+    async def _garbage_hunting(self) -> None:
+        # TODO: Run less frequently (once in 30 minutes?)
+        # self._logger.debug("Running garbage hunting.")
         for _, task in self._task_register.items():
             if task.is_abandoned() or task.is_defunct():
                 task.task_finish_type = TaskFinishType.SCHEDULER_KILL
+
+    async def _garbage_collection(self) -> None:
+        # self._logger.debug("Running garbage collection.")
+        for _, task in self._task_register.items():
+            if task.state == TaskState.EXECUTED and task.state in [
+                TaskFinishType.SCHEDULER_KILL,
+                TaskFinishType.USER_KILL,
+            ]:
                 task.kill()
 
     async def perform_actions(self):
         # self._logger.debug("Scheduler tick.")
         await self._schedule_tasks()
         await self._receive_messages()
+        # Garbage collection needs to run right after receiving messages to
+        # kill executed tasks most quickly
         await self._garbage_collection()
+        # TODO: Run hunting less frequently
+        await self._garbage_hunting()
 
     async def _receive_messages(self):
         # Unreliable message count, since this is the only consumer, there
@@ -127,13 +128,20 @@ class Scheduler:
             next_task: Task = self._task_register[
                 self._created_tasks_index.popleft()
             ]
+            if next_task.task_finish_type == TaskFinishType.USER_KILL:
+                continue
             try:
                 self._proc_pool.apply_async(
-                    func=task_executor, args=[next_task.to_worker_command()],
+                    func=task_executor,
+                    args=[
+                        next_task.to_worker_command(),
+                        self._worker_message_q,
+                    ],
                 )
             except ValueError:
                 self._logger.critical("Process pool is not running.")
                 sys.exit(1)
+            next_task.state = TaskState.QUEUED
 
     def terminate_nowait(self):
         # TODO: Make scheduler exit cleanly on daemon exit

@@ -1,32 +1,12 @@
-from enum import Enum
 from dataclasses import dataclass
 from typing import (
     Any,
     Dict,
     List,
-    Type,
-    TYPE_CHECKING,
 )
 
-from pcs.common.interface.dto import (
-    DataTransferObject,
-    DtoPayload,
-    DtoType,
-    from_dict_unconfigured,
-)
-
-if TYPE_CHECKING:
-    from pcs.daemon.async_tasks.commands import Command
-    from pcs.daemon.async_tasks.task import (
-        TaskFinishType,
-        TaskState,
-    )
-
-
-def from_dict(cls: Type[DtoType], data: DtoPayload) -> DtoType:
-    """Redefinition from common with module-specific enums"""
-    cast_config: list = [Type["TaskState"], Type["TaskFinishType"]]
-    return from_dict_unconfigured(cls, data, cast_config)
+from pcs.common.types import TaskFinishType, TaskState
+from pcs.common.interface.dto import DataTransferObject
 
 
 @dataclass(frozen=True)
@@ -36,10 +16,15 @@ class CommandDto(DataTransferObject):
 
 
 @dataclass(frozen=True)
+class TaskIdentDto(DataTransferObject):
+    task_ident: str
+
+
+@dataclass(frozen=True)
 class TaskResultDto(DataTransferObject):
     task_ident: str
-    command: "Command"
+    command: CommandDto
     reports: List[Any]
-    state: "TaskState"
-    task_finish_type: "TaskFinishType"
+    state: TaskState
+    task_finish_type: TaskFinishType
     result: Any
