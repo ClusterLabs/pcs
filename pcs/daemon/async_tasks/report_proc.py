@@ -1,7 +1,7 @@
 import multiprocessing as mp
 
 from pcs.common import reports as pcs_reports
-from pcs.daemon.scheduler.messaging import (
+from pcs.daemon.async_tasks.messaging import (
     Message,
     MessageType,
 )

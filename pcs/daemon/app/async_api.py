@@ -13,9 +13,9 @@ from typing import (
 )
 
 from pcs.common.interface.dto import to_dict
-from pcs.daemon.scheduler.commands import Command
-from pcs.daemon.scheduler.dto import CommandDto, from_dict
-from pcs.daemon.scheduler.scheduler import TaskNotFoundError
+from pcs.daemon.async_tasks.commands import Command
+from pcs.daemon.async_tasks.dto import CommandDto, from_dict
+from pcs.daemon.async_tasks.scheduler import TaskNotFoundError
 
 
 class BaseAPIHandler(RequestHandler):

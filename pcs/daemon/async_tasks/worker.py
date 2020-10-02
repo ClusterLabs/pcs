@@ -4,16 +4,16 @@ import os
 from logging import Logger
 from typing import Optional
 
-from pcs.daemon.scheduler.command_mapping import command_map
-from pcs.daemon.scheduler.logging import setup_worker_logger
-from pcs.daemon.scheduler.messaging import (
+from pcs.daemon.async_tasks.command_mapping import command_map
+from pcs.daemon.async_tasks.logging import setup_worker_logger
+from pcs.daemon.async_tasks.messaging import (
     Message,
     MessageType,
     TaskExecuted,
     TaskFinished,
 )
-from pcs.daemon.scheduler.report_proc import WorkerReportProcessor
-from pcs.daemon.scheduler.task import WorkerCommand, TaskFinishType
+from pcs.daemon.async_tasks.report_proc import WorkerReportProcessor
+from pcs.daemon.async_tasks.task import WorkerCommand, TaskFinishType
 from pcs.lib.env import LibraryEnvironment
 from pcs.lib.errors import LibraryError
 

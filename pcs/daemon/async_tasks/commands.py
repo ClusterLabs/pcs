@@ -8,7 +8,7 @@ from typing import (
 from pcs.common.interface.dto import ImplementsFromDto
 
 if TYPE_CHECKING:
-    from pcs.daemon.scheduler.dto import CommandDto
+    from pcs.daemon.async_tasks.dto import CommandDto
 
 
 @dataclass(frozen=True)

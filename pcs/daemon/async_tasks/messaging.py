@@ -8,7 +8,7 @@ from typing import (
 
 if TYPE_CHECKING:
     from pcs.common.reports import ReportItemDto
-    from pcs.daemon.scheduler.task import TaskFinishType
+    from pcs.daemon.async_tasks.task import TaskFinishType
 
 
 class MessageType(Enum):

@@ -16,8 +16,8 @@ from pcs.common.interface.dto import (
 )
 
 if TYPE_CHECKING:
-    from pcs.daemon.scheduler.commands import Command
-    from pcs.daemon.scheduler.task import (
+    from pcs.daemon.async_tasks.commands import Command
+    from pcs.daemon.async_tasks.task import (
         TaskFinishType,
         TaskState,
     )

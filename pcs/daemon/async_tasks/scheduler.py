@@ -10,19 +10,19 @@ from typing import (
 )
 
 from pcs import settings
-from pcs.daemon.scheduler.commands import Command
-from pcs.daemon.scheduler.dto import TaskResultDto
-from pcs.daemon.scheduler.logging import setup_scheduler_logger
-from pcs.daemon.scheduler.messaging import (
+from pcs.daemon.async_tasks.commands import Command
+from pcs.daemon.async_tasks.dto import TaskResultDto
+from pcs.daemon.async_tasks.logging import setup_scheduler_logger
+from pcs.daemon.async_tasks.messaging import (
     Message,
     MessageType,
 )
-from pcs.daemon.scheduler.task import (
+from pcs.daemon.async_tasks.task import (
     Task,
     TaskState,
     TaskFinishType,
 )
-from pcs.daemon.scheduler.worker import worker_init, task_executor
+from pcs.daemon.async_tasks.worker import worker_init, task_executor
 
 
 class TaskNotFoundError(Exception):

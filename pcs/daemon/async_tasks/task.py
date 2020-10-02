@@ -10,8 +10,8 @@ from typing import (
 )
 
 from pcs.common.interface.dto import ImplementsToDto
-from pcs.daemon.scheduler.commands import WorkerCommand
-from pcs.daemon.scheduler.dto import TaskResultDto
+from pcs.daemon.async_tasks.commands import WorkerCommand
+from pcs.daemon.async_tasks.dto import TaskResultDto
 from pcs.common.tools import AutoNameEnum
 from pcs.settings import (
     task_abandoned_timeout_seconds,
@@ -19,9 +19,9 @@ from pcs.settings import (
 )
 
 if TYPE_CHECKING:
-    from pcs.daemon.scheduler.commands import Command
+    from pcs.daemon.async_tasks.commands import Command
     from pcs.common.reports.dto import ReportItemDto
-    from pcs.daemon.scheduler.messaging import TaskExecuted, TaskFinished
+    from pcs.daemon.async_tasks.messaging import TaskExecuted, TaskFinished
 
 
 class TaskFinishType(AutoNameEnum):
