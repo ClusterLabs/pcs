@@ -3231,10 +3231,8 @@ def resource_relocate_run(cib_dom, resources=None, dry=True):
     resources = [] if resources is None else resources
     was_error = False
     anything_changed = False
-    if not dry:
-        utils.check_pacemaker_supports_resource_wait()
-        if utils.usefile:
-            utils.err("This command cannot be used with -f")
+    if not dry and utils.usefile:
+        utils.err("This command cannot be used with -f")
 
     # create constraints
     cib_dom, constraint_el = constraint.getCurrentConstraints(cib_dom)

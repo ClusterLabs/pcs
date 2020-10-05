@@ -268,7 +268,6 @@ class MoveBanWaitMixin:
     # pylint: disable=invalid-name
     def setUp(self):
         self.env_assist, self.config = get_env_tools(self)
-        self.config.runner.pcmk.can_wait()
         self.config.runner.cib.load(resources=resources_primitive)
 
     def test_state_before_action_fail(self):
@@ -573,7 +572,6 @@ class UnmoveUnbanWait(UnmoveUnbanMixin, TestCase):
     def setUp(self):
         self.env_assist, self.config = get_env_tools(self)
 
-        self.config.runner.pcmk.can_wait()
         self.config.runner.cib.load(resources=resources_primitive)
         self.config_pcmk_action()
 

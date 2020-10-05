@@ -439,7 +439,6 @@ class PushLoadedCib(TestCase, ManageCibAssertionMixin):
     def test_wait(self):
         (
             self.config.runner.cib.load(filename=self.cib_can_diff)
-            .runner.pcmk.can_wait()
             .runner.cib.diff(self.tmpfile_old.name, self.tmpfile_new.name)
             .runner.cib.push_diff()
             .runner.pcmk.wait(timeout=self.wait_timeout)
@@ -453,7 +452,6 @@ class PushLoadedCib(TestCase, ManageCibAssertionMixin):
     def test_wait_cannot_diff(self):
         (
             self.config.runner.cib.load(filename=self.cib_cannot_diff)
-            .runner.pcmk.can_wait()
             .runner.cib.push()
             .runner.pcmk.wait(timeout=self.wait_timeout)
         )
@@ -463,27 +461,8 @@ class PushLoadedCib(TestCase, ManageCibAssertionMixin):
         env.push_cib(wait=self.wait_timeout)
         self.env_assist.assert_reports(self.push_full_forced_reports("3.0.8"))
 
-    def test_wait_not_supported(self):
-        (
-            self.config.runner.cib.load(
-                filename=self.cib_can_diff
-            ).runner.pcmk.can_wait(stdout="cannot wait")
-        )
-        env = self.env_assist.get_env()
-
-        env.get_cib()
-        self.env_assist.assert_raise_library_error(
-            lambda: env.push_cib(wait=self.wait_timeout),
-            [fixture.error(report_codes.WAIT_FOR_IDLE_NOT_SUPPORTED),],
-            expected_in_processor=False,
-        )
-
     def test_wait_raises_on_invalid_value(self):
-        (
-            self.config.runner.cib.load(
-                filename=self.cib_can_diff
-            ).runner.pcmk.can_wait()
-        )
+        self.config.runner.cib.load(filename=self.cib_can_diff)
         env = self.env_assist.get_env()
 
         env.get_cib()
@@ -516,28 +495,15 @@ class PushCustomCib(TestCase, ManageCibAssertionMixin):
 
     def test_wait(self):
         (
-            self.config.runner.pcmk.can_wait()
-            .runner.cib.push_independent(self.custom_cib)
-            .runner.pcmk.wait(timeout=self.wait_timeout)
+            self.config.runner.cib.push_independent(
+                self.custom_cib
+            ).runner.pcmk.wait(timeout=self.wait_timeout)
         )
         env = self.env_assist.get_env()
 
         env.push_cib(etree.XML(self.custom_cib), wait=self.wait_timeout)
 
-    def test_wait_not_supported(self):
-        self.config.runner.pcmk.can_wait(stdout="cannot wait")
-        env = self.env_assist.get_env()
-
-        self.env_assist.assert_raise_library_error(
-            lambda: env.push_cib(
-                etree.XML(self.custom_cib), wait=self.wait_timeout
-            ),
-            [fixture.error(report_codes.WAIT_FOR_IDLE_NOT_SUPPORTED),],
-            expected_in_processor=False,
-        )
-
     def test_wait_raises_on_invalid_value(self):
-        self.config.runner.pcmk.can_wait()
         env = self.env_assist.get_env()
 
         self.env_assist.assert_raise_library_error(

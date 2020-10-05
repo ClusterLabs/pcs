@@ -709,7 +709,7 @@ class PcmkShortcuts:
         string stderr -- crm_resource help text
         """
         self.__calls.place(
-            name, RunnerCall(["crm_resource", "-?"], stderr=stderr),
+            name, RunnerCall(["crm_resource", "--help-all"], stderr=stderr),
         )
 
     def wait(
@@ -741,21 +741,6 @@ class PcmkShortcuts:
                 stderr=stderr,
                 returncode=returncode,
             ),
-        )
-
-    def can_wait(
-        self, name="runner.pcmk.can_wait", before=None, stdout="--wait"
-    ):
-        """
-        Create call that checks that wait for idle is supported
-
-        string name -- key of the call
-        string before -- key of call before which this new call is to be placed
-        """
-        self.__calls.place(
-            name,
-            RunnerCall(["crm_resource", "-?"], stdout=stdout),
-            before=before,
         )
 
     def verify(

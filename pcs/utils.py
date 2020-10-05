@@ -68,7 +68,6 @@ from pcs.lib.external import (
 )
 from pcs.lib.file.instance import FileInstance as LibFileInstance
 from pcs.lib.interface.config import ParserErrorException
-from pcs.lib.pacemaker.live import has_wait_for_idle_support
 from pcs.lib.pacemaker.state import ClusterState
 from pcs.lib.pacemaker.values import (
     is_boolean,
@@ -1545,24 +1544,14 @@ def resource_running_on(resource, passed_state=None, stopped=False):
     }
 
 
-def check_pacemaker_supports_resource_wait():
-    """
-    Commandline options: no options
-    """
-    if not has_wait_for_idle_support(cmd_runner()):
-        err("crm_resource does not support --wait, please upgrade pacemaker")
-
-
 def validate_wait_get_timeout(need_cib_support=True):
     """
     Commandline options:
       * --wait
       * -f - to check if -f and --wait are not used simultaneously
     """
-    if need_cib_support:
-        check_pacemaker_supports_resource_wait()
-        if usefile:
-            err("Cannot use '-f' together with '--wait'")
+    if need_cib_support and usefile:
+        err("Cannot use '-f' together with '--wait'")
     wait_timeout = pcs_options["--wait"]
     if wait_timeout is None:
         return wait_timeout

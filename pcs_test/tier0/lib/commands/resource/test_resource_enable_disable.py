@@ -844,7 +844,6 @@ class MoreResources(TestCase):
 class Wait(TestCase):
     def setUp(self):
         self.env_assist, self.config = get_env_tools(test_case=self)
-        self.config.runner.pcmk.can_wait()
 
     fixture_status_running = """
         <resources>
@@ -1088,7 +1087,6 @@ class WaitClone(TestCase):
 
     def setUp(self):
         self.env_assist, self.config = get_env_tools(test_case=self)
-        self.config.runner.pcmk.can_wait()
 
     def test_disable_clone(self):
         (
@@ -2349,7 +2347,6 @@ class DisableSafeMixin(DisableSafeFixturesMixin):
         )
 
     def test_wait_success(self, mock_write_tmpfile):
-        self.config.runner.pcmk.can_wait()
         self.fixture_disable_both_resources(mock_write_tmpfile)
         (
             self.config.runner.pcmk.simulate_cib(

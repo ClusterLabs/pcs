@@ -1214,62 +1214,6 @@ class ResourceRefreshTest(LibraryPacemakerTest):
 
 
 class ResourcesWaitingTest(LibraryPacemakerTest):
-    def test_has_support(self):
-        expected_stdout = ""
-        expected_stderr = "something --wait something else"
-        expected_retval = 1
-        mock_runner = get_runner(
-            expected_stdout, expected_stderr, expected_retval
-        )
-
-        self.assertTrue(lib.has_wait_for_idle_support(mock_runner))
-        mock_runner.run.assert_called_once_with(
-            [self.path("crm_resource"), "-?"]
-        )
-
-    def test_has_support_stdout(self):
-        expected_stdout = "something --wait something else"
-        expected_stderr = ""
-        expected_retval = 1
-        mock_runner = get_runner(
-            expected_stdout, expected_stderr, expected_retval
-        )
-
-        self.assertTrue(lib.has_wait_for_idle_support(mock_runner))
-        mock_runner.run.assert_called_once_with(
-            [self.path("crm_resource"), "-?"]
-        )
-
-    def test_doesnt_have_support(self):
-        expected_stdout = "something something else"
-        expected_stderr = "something something else"
-        expected_retval = 1
-        mock_runner = get_runner(
-            expected_stdout, expected_stderr, expected_retval
-        )
-
-        self.assertFalse(lib.has_wait_for_idle_support(mock_runner))
-        mock_runner.run.assert_called_once_with(
-            [self.path("crm_resource"), "-?"]
-        )
-
-    @mock.patch(
-        "pcs.lib.pacemaker.live.has_wait_for_idle_support", autospec=True
-    )
-    def test_ensure_support_success(self, mock_obj):
-        mock_obj.return_value = True
-        self.assertEqual(None, lib.ensure_wait_for_idle_support(mock.Mock()))
-
-    @mock.patch(
-        "pcs.lib.pacemaker.live.has_wait_for_idle_support", autospec=True
-    )
-    def test_ensure_support_error(self, mock_obj):
-        mock_obj.return_value = False
-        assert_raise_library_error(
-            lambda: lib.ensure_wait_for_idle_support(mock.Mock()),
-            (Severity.ERROR, report_codes.WAIT_FOR_IDLE_NOT_SUPPORTED, {}),
-        )
-
     def test_wait_success(self):
         expected_stdout = "expected output"
         expected_stderr = "expected stderr"

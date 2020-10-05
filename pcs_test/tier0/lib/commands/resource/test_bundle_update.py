@@ -1287,9 +1287,9 @@ class Wait(TestCase):
     def setUp(self):
         self.env_assist, self.config = get_env_tools(test_case=self)
         (
-            self.config.runner.pcmk.can_wait()
-            .runner.cib.load(resources=self.fixture_cib_pre)
-            .env.push_cib(
+            self.config.runner.cib.load(
+                resources=self.fixture_cib_pre
+            ).env.push_cib(
                 resources=self.fixture_resources_bundle_simple, wait=TIMEOUT
             )
         )

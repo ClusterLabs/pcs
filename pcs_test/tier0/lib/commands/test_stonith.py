@@ -387,7 +387,6 @@ class CreateMixin:
             )
             .runner.cib.load()
             .runner.pcmk.load_fenced_metadata()
-            .runner.pcmk.can_wait(before="runner.cib.load")
             .env.push_cib(
                 resources=self._expected_cib(expected_cib_simple), wait=timeout
             )

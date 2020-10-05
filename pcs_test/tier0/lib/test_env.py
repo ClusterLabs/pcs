@@ -177,9 +177,7 @@ class EnsureValidWait(TestCase):
         )
 
     @patch_env("get_valid_timeout_seconds")
-    @patch_env("ensure_wait_for_idle_support")
-    def test_do_checks(self, ensure_wait_for_idle_support, get_valid_timeout):
+    def test_do_checks(self, get_valid_timeout):
         env = self.env_live
         env.ensure_wait_satisfiable(10)
-        ensure_wait_for_idle_support.assert_called_once_with(env.cmd_runner())
         get_valid_timeout.assert_called_once_with(10)

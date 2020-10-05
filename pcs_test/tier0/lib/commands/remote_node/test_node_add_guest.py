@@ -775,7 +775,6 @@ class WithWait(TestCase):
         self.env_assist, self.config = get_env_tools(self)
         (
             self.config.env.set_known_hosts_dests(KNOWN_HOSTS_DESTS)
-            .runner.pcmk.can_wait()
             .local.load_cib()
             .corosync_conf.load(node_name_list=[NODE_1, NODE_2])
             .http.host.check_auth(

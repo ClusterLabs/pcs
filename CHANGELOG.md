@@ -3,6 +3,7 @@
 ## [Unreleased]
 
 ### Fixed
+- Option --wait was not working with pacemaker 2.0.5+ ([ghissue#260])
 - Explicitly close libcurl connections to prevent stalled TCP connections in
   CLOSE-WAIT state ([ghissue#261], [rhbz#1885841])
 
@@ -10,6 +11,7 @@
 - Commands `pcs config import-cman` and `pcs config export
   pcs-commands|pcs-commands-verbose` have been deprecated ([rhbz#1851335])
 
+[ghissue#260]: https://github.com/ClusterLabs/pcs/issues/260
 [ghissue#261]: https://github.com/ClusterLabs/pcs/issues/261
 [rhbz#1851335]: https://bugzilla.redhat.com/show_bug.cgi?id=1851335
 [rhbz#1885841]: https://bugzilla.redhat.com/show_bug.cgi?id=1885841

@@ -36,7 +36,6 @@ from pcs.lib.node_communication import (
 from pcs.lib.pacemaker.live import (
     diff_cibs_xml,
     ensure_cib_version,
-    ensure_wait_for_idle_support,
     get_cib,
     get_cib_xml,
     get_cluster_status_xml,
@@ -187,7 +186,6 @@ class LibraryEnvironment:
                         reports.messages.WaitForIdleNotLiveCluster()
                     )
                 )
-            ensure_wait_for_idle_support(self.cmd_runner())
             self.__timeout_cache[wait] = get_valid_timeout_seconds(wait)
         return self.__timeout_cache[wait]
 

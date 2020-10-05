@@ -412,17 +412,6 @@ def simulate_cib(runner, cib):
 ### wait for idle
 
 
-def has_wait_for_idle_support(runner):
-    return __is_in_crm_resource_help(runner, "--wait")
-
-
-def ensure_wait_for_idle_support(runner):
-    if not has_wait_for_idle_support(runner):
-        raise LibraryError(
-            ReportItem.error(reports.messages.WaitForIdleNotSupported())
-        )
-
-
 def wait_for_idle(runner, timeout=None):
     """
     Run waiting command. Raise LibraryError if command failed.
@@ -636,7 +625,7 @@ def resource_unmove_unban(
 
 
 def has_resource_unmove_unban_expired_support(runner):
-    return __is_in_crm_resource_help(runner, "--expired")
+    return _is_in_pcmk_tool_help(runner, "crm_resource", ["--expired"])
 
 
 def _resource_move_ban_clear(
@@ -742,13 +731,6 @@ def get_rule_in_effect_status(
 # shortcut for getting a full path to a pacemaker executable
 def __exec(name):
     return os.path.join(settings.pacemaker_binaries, name)
-
-
-def __is_in_crm_resource_help(runner, text):
-    # returns 1 on success so we don't care about retval
-    stdout, stderr, dummy_retval = runner.run([__exec("crm_resource"), "-?"])
-    # help goes to stderr but we check stdout as well if that gets changed
-    return text in stderr or text in stdout
 
 
 def _is_in_pcmk_tool_help(

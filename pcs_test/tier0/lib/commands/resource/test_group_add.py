@@ -267,9 +267,9 @@ class GroupAddWait(TestCase):
         """
         self.timeout = 10
         (
-            self.config.runner.pcmk.can_wait()
-            .runner.cib.load(resources=resources_before)
-            .env.push_cib(resources=resources_after, wait=self.timeout)
+            self.config.runner.cib.load(
+                resources=resources_before
+            ).env.push_cib(resources=resources_after, wait=self.timeout)
         )
 
     def test_group_running(self):

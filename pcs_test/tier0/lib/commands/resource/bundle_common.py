@@ -1149,11 +1149,7 @@ class WaitMixin(FixturesMixin):
     def setUp(self):
         # pylint: disable=invalid-name
         self.env_assist, self.config = get_env_tools(test_case=self)
-        (
-            self.config.runner.pcmk.can_wait().runner.cib.load(
-                resources=self.initial_resources
-            )
-        )
+        self.config.runner.cib.load(resources=self.initial_resources)
 
     def test_wait_fail(self):
         wait_error_message = dedent(

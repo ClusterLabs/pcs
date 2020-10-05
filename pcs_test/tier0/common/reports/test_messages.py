@@ -1946,14 +1946,6 @@ class BadClusterStateFormat(NameBuildTest):
         )
 
 
-class WaitForIdleNotSupported(NameBuildTest):
-    def test_all(self):
-        self.assert_message_from_report(
-            "crm_resource does not support --wait, please upgrade pacemaker",
-            reports.WaitForIdleNotSupported(),
-        )
-
-
 class WaitForIdleTimedOut(NameBuildTest):
     def test_all(self):
         self.assert_message_from_report(

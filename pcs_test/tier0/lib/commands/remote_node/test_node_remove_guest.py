@@ -130,8 +130,7 @@ class RemoveGuestOthers(TestCase):
     def test_success_with_wait(self):
         wait = 10
         (
-            self.config.runner.pcmk.can_wait()
-            .runner.cib.load(resources=FIXTURE_RESOURCES)
+            self.config.runner.cib.load(resources=FIXTURE_RESOURCES)
             .local.destroy_pacemaker_remote(
                 label=NODE_NAME, dest_list=NODE_DEST_LIST
             )

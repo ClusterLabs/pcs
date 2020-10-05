@@ -2953,19 +2953,6 @@ class BadClusterStateFormat(ReportItemMessage):
 
 
 @dataclass(frozen=True)
-class WaitForIdleNotSupported(ReportItemMessage):
-    """
-    crm_resource does not support --wait
-    """
-
-    _code = codes.WAIT_FOR_IDLE_NOT_SUPPORTED
-
-    @property
-    def message(self) -> str:
-        return "crm_resource does not support --wait, please upgrade pacemaker"
-
-
-@dataclass(frozen=True)
 class WaitForIdleTimedOut(ReportItemMessage):
     """
     Waiting for resources (crm_resource --wait) failed, timeout expired
