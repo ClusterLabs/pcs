@@ -1133,15 +1133,6 @@ Show differences between the two specified checkpoints. Use checkpoint number 'l
 .TP
 checkpoint restore <checkpoint_number>
 Restore cluster configuration to specified checkpoint.
-.TP
-import\-cman output=<filename> [input=<filename>] [\fB\-\-interactive\fR] [output\-format=corosync.conf] [dist=<dist>]
-Converts CMAN cluster configuration to Pacemaker cluster configuration. Converted configuration will be saved to 'output' file. To send the configuration to the cluster nodes the 'pcs config restore' command can be used. If \fB\-\-interactive\fR is specified you will be prompted to solve incompatibilities manually. If no input is specified /etc/cluster/cluster.conf will be used. Optionally you can specify output version by setting 'dist' option e. g. redhat,7.3 or debian,7 or ubuntu,trusty. You can get the list of supported dist values by running the "clufter \-\-list-dists" command. If 'dist' is not specified, it defaults to this node's version.
-.TP
-import\-cman output=<filename> [input=<filename>] [\fB\-\-interactive\fR] output\-format=pcs\-commands|pcs\-commands\-verbose [dist=<dist>]
-Converts CMAN cluster configuration to a list of pcs commands which recreates the same cluster as Pacemaker cluster when executed. Commands will be saved to 'output' file. For other options see above.
-.TP
-export pcs\-commands|pcs\-commands\-verbose [output=<filename>] [dist=<dist>]
-Creates a list of pcs commands which upon execution recreates the current cluster running on this node. Commands will be saved to 'output' file or written to stdout if 'output' is not specified. Use pcs\-commands to get a simple list of commands, whereas pcs\-commands\-verbose creates a list including comments and debug messages. Optionally specify output version by setting 'dist' option e. g. redhat,7.3 or debian,7 or ubuntu,trusty. You can get the list of supported dist values by running the "clufter \-\-list-dists" command. If 'dist' is not specified, it defaults to this node's version.
 .SS "pcsd"
 .TP
 certkey <certificate file> <key file>

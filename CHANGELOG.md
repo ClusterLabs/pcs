@@ -1,5 +1,14 @@
 # Change Log
 
+## [Unreleased]
+
+### Deprecated
+- Commands `pcs config import-cman` and `pcs config export
+  pcs-commands|pcs-commands-verbose` have been deprecated ([rhbz#1851335])
+
+[rhbz#1851335]: https://bugzilla.redhat.com/show_bug.cgi?id=1851335
+
+
 ## [0.10.7] - 2020-09-30
 
 ### Added

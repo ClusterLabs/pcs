@@ -23,6 +23,7 @@ except ImportError:
     no_distro_package = True
     import platform
 
+# TODO remove, deprecated
 try:
     import clufter.facts
     import clufter.format_manager
@@ -50,6 +51,7 @@ from pcs.cli.common.errors import CmdLineInputError
 from pcs.cli.constraint import command as constraint_command
 from pcs.cli.nvset import nvset_dto_list_to_lines
 from pcs.cli.reports import process_library_reports
+from pcs.cli.reports.output import warn
 from pcs.common.reports import constraints as constraints_reports
 from pcs.common.str_tools import indent
 from pcs.lib.commands import quorum as lib_quorum
@@ -807,6 +809,7 @@ def config_checkpoint_restore(lib, argv, modifiers):
     utils.replace_cib_configuration(snapshot_dom)
 
 
+# TODO remove, deprecated command
 def config_import_cman(lib, argv, modifiers):
     """
     Options:
@@ -816,6 +819,7 @@ def config_import_cman(lib, argv, modifiers):
     """
     # pylint: disable=no-member
     del lib
+    warn("This command is deprecated and will be removed.")
     modifiers.ensure_only_supported(
         "--force", "interactive", "--request-timeout",
     )
@@ -1027,6 +1031,7 @@ def _get_linux_dist():
     return ",".join(distribution)
 
 
+# TODO remove, deprecated command
 def config_export_pcs_commands(lib, argv, modifiers, verbose=False):
     """
     Options:
@@ -1036,6 +1041,7 @@ def config_export_pcs_commands(lib, argv, modifiers, verbose=False):
       * --corosync_conf
     """
     del lib
+    warn("This command is deprecated and will be removed.")
     modifiers.ensure_only_supported(
         "--force", "--interactive", "-f", "--corosync_conf"
     )
@@ -1125,6 +1131,7 @@ def config_export_pcs_commands(lib, argv, modifiers, verbose=False):
             utils.err(message)
 
 
+# TODO remove, deprecated
 def run_clufter(cmd_name, cmd_args, debug, force, err_prefix):
     """
     Commandline options: no options used but messages which include --force,

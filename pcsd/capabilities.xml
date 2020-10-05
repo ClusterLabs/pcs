@@ -79,7 +79,7 @@
 
 
 
-    <capability id="cluster.config.export.to-pcs-commands" in-pcs="1" in-pcsd="0">
+    <capability id="cluster.config.export.to-pcs-commands" in-pcs="0" in-pcsd="0">
       <description>
         Creates a list of pcs commands which upon execution recreates
         the current cluster running on the local host.
@@ -87,7 +87,7 @@
         pcs commands: config export pcs-commands[-verbose]
       </description>
     </capability>
-    <capability id="cluster.config.import-cman" in-pcs="1" in-pcsd="0">
+    <capability id="cluster.config.import-cman" in-pcs="0" in-pcsd="0">
       <description>
         Converts CMAN cluster configuration files to a Corosync/Pacemaker
         cluster config files or pcs commands.
