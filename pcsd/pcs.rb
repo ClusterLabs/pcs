@@ -501,8 +501,11 @@ def send_request(
   })
   req.compose_header('Expect', '')
   return_code = req.perform
+  response_code = req.response_code
+  response_body = req.response_body
+  req.cleanup
   if return_code == :ok
-    return req.response_code, req.response_body
+    return response_code, response_body
   else
     if is_proxy_set(ENV)
       $logger.warn(

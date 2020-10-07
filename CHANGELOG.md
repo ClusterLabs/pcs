@@ -29,6 +29,8 @@
 - Allow moving both promoted and demoted promotable clone resources
   ([rhbz#1875301])
 - Improved error message with a hint in `pcs cluster cib-push` ([ghissue#241])
+- Explicitly close libcurl connections to prevent stalled TCP connections in
+  CLOSE-WAIT state ([ghissue#261], [rhbz#1885841])
 
 ### Deprecated
 - `pcs resource [op] defaults <name>=<value>...` commands are deprecated now.
@@ -37,6 +39,7 @@
   several sets of defaults. ([rhbz#1817547])
 
 [ghissue#241]: https://github.com/ClusterLabs/pcs/issues/241
+[ghissue#261]: https://github.com/ClusterLabs/pcs/issues/261
 [rhbz#1222691]: https://bugzilla.redhat.com/show_bug.cgi?id=1222691
 [rhbz#1741056]: https://bugzilla.redhat.com/show_bug.cgi?id=1741056
 [rhbz#1817547]: https://bugzilla.redhat.com/show_bug.cgi?id=1817547
@@ -46,6 +49,7 @@
 [rhbz#1867516]: https://bugzilla.redhat.com/show_bug.cgi?id=1867516
 [rhbz#1869399]: https://bugzilla.redhat.com/show_bug.cgi?id=1869399
 [rhbz#1875301]: https://bugzilla.redhat.com/show_bug.cgi?id=1875301
+[rhbz#1885841]: https://bugzilla.redhat.com/show_bug.cgi?id=1885841
 
 
 ## [0.10.6] - 2020-06-11
