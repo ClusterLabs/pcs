@@ -14,12 +14,6 @@ class WorkerReportProcessor(pcs_reports.ReportProcessor):
         self._task_ident: str = task_ident
 
     def _do_report(self, report_item: pcs_reports.item.ReportItem) -> None:
-        try:
-            self._worker_communicator.put(
-                Message(
-                    self._task_ident, MessageType.REPORT, report_item.to_dto()
-                )
-            )
-        except mp.Queue.queue.Full:
-            pass
-            # TODO Log and exit
+        self._worker_communicator.put(
+            Message(self._task_ident, MessageType.REPORT, report_item.to_dto())
+        )
