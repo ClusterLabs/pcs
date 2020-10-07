@@ -3,12 +3,10 @@ from enum import auto, Enum
 from typing import (
     Any,
     Union,
-    TYPE_CHECKING,
 )
 
-if TYPE_CHECKING:
-    from pcs.common.reports import ReportItemDto
-    from pcs.daemon.async_tasks.task import TaskFinishType
+from pcs.common.async_tasks.types import TaskFinishType
+from pcs.common.reports import ReportItemDto
 
 
 class MessageType(Enum):
@@ -24,7 +22,7 @@ class TaskExecuted:
 
 @dataclass(frozen=True)
 class TaskFinished:
-    task_finish_type: "TaskFinishType"
+    task_finish_type: TaskFinishType
     result: Any
 
 
@@ -33,5 +31,5 @@ class Message:
     task_ident: str
     message_type: MessageType
     payload: Union[
-        "ReportItemDto", TaskExecuted, TaskFinished,
+        ReportItemDto, TaskExecuted, TaskFinished,
     ]

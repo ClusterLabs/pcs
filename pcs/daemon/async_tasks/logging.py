@@ -10,13 +10,14 @@ def setup_scheduler_logger() -> logging.Logger:
     Creates and configures scheduler's logger
     :return: Logger instance
     """
-    logger: logging.Logger = logging.getLogger("pcs_scheduler")
+    logger = logging.getLogger("pcs_scheduler")
     logger.setLevel(logging.DEBUG)
 
     file_handler = logging.FileHandler(
         settings.async_api_log_filename, "w", "utf8"
     )
     file_handler.setLevel(logging.DEBUG)
+    logger.addHandler(file_handler)
 
     formatter = logging.Formatter(
         "{asctime} | {levelname}: {message}", style="{"
@@ -31,7 +32,7 @@ def setup_worker_logger() -> logging.Logger:
     Creates and configures worker's logger
     :return: Logger instance
     """
-    logger: logging.Logger = logging.getLogger(f"pcs_worker_{os.getpid()}")
+    logger = logging.getLogger(f"pcs_worker_{os.getpid()}")
     logger.setLevel(logging.DEBUG)
 
     file_handler = logging.FileHandler(
@@ -42,6 +43,7 @@ def setup_worker_logger() -> logging.Logger:
         "utf8",
     )
     file_handler.setLevel(logging.DEBUG)
+    logger.addHandler(file_handler)
 
     formatter = logging.Formatter(
         "{asctime} | {levelname}: {message}", style="{"

@@ -9,24 +9,26 @@ from typing import (
 )
 
 from pcs import settings
-from .dto import CommandDto, TaskResultDto
+from pcs.common.async_tasks.dto import CommandDto, TaskResultDto
+from pcs.common.async_tasks.types import (
+    TaskFinishType,
+    TaskState,
+    TaskKillOrigin,
+)
 from .logging import setup_scheduler_logger
 from .messaging import (
     Message,
     MessageType,
 )
-from .task import (
-    Task,
-    TaskState,
-    TaskFinishType,
-)
+from .task import Task
 from .worker import worker_init, task_executor
 
 
 class TaskNotFoundError(Exception):
     """Task with requested task_ident was not found in task_register"""
 
-    def __init__(self, task_ident: str):
+    def __init__(self, task_ident: str, message: str = ""):
+        super().__init__(message)
         self.task_ident = task_ident
 
 
@@ -50,6 +52,10 @@ class Scheduler:
         except KeyError:
             raise TaskNotFoundError(task_ident)
 
+        # Task deletion after first retrieval of finished task
+        if task_result_dto.state == TaskState.FINISHED:
+            del self._task_register[task_ident]
+
         return task_result_dto
 
     def kill_task(self, task_ident: str) -> None:
@@ -59,8 +65,8 @@ class Scheduler:
             raise TaskNotFoundError(task_ident)
 
         self._logger.debug(f"User is killing a task {task_ident}.")
-
-        task.task_finish_type = TaskFinishType.USER_KILL
+        task.task_finish_type = TaskFinishType.KILL
+        task.kill_scheduled = TaskKillOrigin.USER
 
     def new_task(self, command_dto: CommandDto) -> str:
         is_duplicate = True
@@ -74,19 +80,17 @@ class Scheduler:
         return task_ident
 
     async def _garbage_hunting(self) -> None:
-        # TODO: Run less frequently (once in 30 minutes?)
+        # TODO: Run less frequently (kill timeout/4?)
         # self._logger.debug("Running garbage hunting.")
         for _, task in self._task_register.items():
             if task.is_abandoned() or task.is_defunct():
-                task.task_finish_type = TaskFinishType.SCHEDULER_KILL
+                task.task_finish_type = TaskFinishType.KILL
+                task.kill_scheduled = TaskKillOrigin.SCHEDULER
 
     async def _garbage_collection(self) -> None:
         # self._logger.debug("Running garbage collection.")
         for _, task in self._task_register.items():
-            if task.state == TaskState.EXECUTED and task.state in [
-                TaskFinishType.SCHEDULER_KILL,
-                TaskFinishType.USER_KILL,
-            ]:
+            if task.state == TaskState.EXECUTED and task.kill_scheduled:
                 task.kill()
 
     async def perform_actions(self):
@@ -128,7 +132,9 @@ class Scheduler:
             next_task: Task = self._task_register[
                 self._created_tasks_index.popleft()
             ]
-            if next_task.task_finish_type == TaskFinishType.USER_KILL:
+            if next_task.kill_scheduled:
+                # Mark task FINISHED for proper deletion from task_register
+                next_task.state = TaskState.FINISHED
                 continue
             try:
                 self._proc_pool.apply_async(
@@ -143,7 +149,7 @@ class Scheduler:
                 sys.exit(1)
             next_task.state = TaskState.QUEUED
 
-    def terminate_nowait(self):
+    def terminate_nowait(self) -> None:
         # TODO: Make scheduler exit cleanly on daemon exit
         self._proc_pool.terminate()
         self._logger.info("Scheduler is correctly terminated.")

@@ -14,7 +14,7 @@ from dacite import DaciteError, MissingValueError, UnexpectedDataError
 from tornado.web import RequestHandler
 
 from pcs.common.interface.dto import from_dict, to_dict
-from pcs.daemon.async_tasks.dto import CommandDto, TaskIdentDto
+from pcs.common.async_tasks.dto import CommandDto, TaskIdentDto
 from pcs.daemon.async_tasks.scheduler import Scheduler, TaskNotFoundError
 
 

@@ -5,7 +5,7 @@ from typing import (
     List,
 )
 
-from pcs.common.types import TaskFinishType, TaskState
+from pcs.common.async_tasks.types import TaskFinishType, TaskState
 from pcs.common.interface.dto import DataTransferObject
 
 

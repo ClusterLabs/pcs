@@ -7,26 +7,31 @@ from typing import (
     Optional,
 )
 
-from pcs.common.types import TaskFinishType, TaskState
+from pcs.common.async_tasks.types import (
+    TaskFinishType,
+    TaskState,
+    TaskKillOrigin,
+)
 from pcs.common.interface.dto import ImplementsToDto
 from pcs.common.reports.dto import ReportItemDto
 from pcs.settings import (
     task_abandoned_timeout_seconds,
     task_unresponsive_timeout_seconds,
 )
-from .commands import WorkerCommand
-from .dto import CommandDto, TaskResultDto
+from pcs.common.async_tasks.dto import CommandDto, TaskResultDto
 from .messaging import TaskExecuted, TaskFinished
+from .worker import WorkerCommand
 
 
 class Task(ImplementsToDto):
     def __init__(self, task_ident: str, command: CommandDto) -> None:
+        self.task_ident: str = task_ident
         self.command: CommandDto = command
         self.reports: List[Any] = list()
         self.result: Any = None
         self.state: TaskState = TaskState.CREATED
-        self.task_ident: str = task_ident
         self.task_finish_type: TaskFinishType = TaskFinishType.UNFINISHED
+        self.kill_scheduled: Optional[TaskKillOrigin] = None
         self._last_message_at: Optional[datetime.datetime] = None
         self._worker_pid: int = -1
 
@@ -49,7 +54,13 @@ class Task(ImplementsToDto):
         )
 
     def kill(self) -> None:
-        os.kill(self._worker_pid, 15)
+        try:
+            os.kill(self._worker_pid, 15)
+            self.state = TaskState.FINISHED
+        except ProcessLookupError:
+            # PID doesn't exist, process might have died on its own or
+            # finished
+            pass
 
     # Message handlers
     def message_executed(self, message_payload: TaskExecuted) -> None:

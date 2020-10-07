@@ -1,8 +1,11 @@
 import multiprocessing as mp
 import os
 
+from dataclasses import dataclass
 from logging import Logger
 
+from pcs.common.async_tasks.dto import CommandDto
+from pcs.common.async_tasks.types import TaskFinishType
 from pcs.lib.env import LibraryEnvironment
 from pcs.lib.errors import LibraryError
 from .command_mapping import command_map
@@ -14,9 +17,14 @@ from .messaging import (
     TaskFinished,
 )
 from .report_proc import WorkerReportProcessor
-from .task import WorkerCommand, TaskFinishType
 
 logger: Logger
+
+
+@dataclass(frozen=True)
+class WorkerCommand:
+    task_ident: str
+    command: CommandDto
 
 
 def worker_init() -> None:
@@ -62,6 +70,7 @@ def task_executor(task: WorkerCommand, worker_com: mp.Queue) -> None:
     except LibraryError as e:
         # Some code uses args for storing ReportList, sending them to the report
         # processor here
+
         for report in e.args:
             worker_com.put(Message(task.task_ident, MessageType.REPORT, report))
         worker_com.put(
@@ -71,7 +80,7 @@ def task_executor(task: WorkerCommand, worker_com: mp.Queue) -> None:
                 TaskFinished(TaskFinishType.FAIL, None),
             )
         )
-        logger.exception("Task raised a LibraryException.")
+        logger.exception(f"Task {task.task_ident} raised a LibraryException.")
         return
     except Exception:
         # For unhandled exceptions during execution
