@@ -33,10 +33,11 @@ class BaseAPIHandler(RequestHandler):
 
     def prepare(self) -> None:
         """JSON preprocessing"""
-        self.add_header("Content-Type", "application/x-json")
+        self.add_header("Content-Type", "application/json")
+        self.json = None
         if (
             "Content-Type" in self.request.headers
-            and self.request.headers["Content-Type"] == "application/x-json"
+            and self.request.headers["Content-Type"] == "application/json"
         ):
             try:
                 self.json: Dict[str, Any] = json.loads(self.request.body)
@@ -147,18 +148,39 @@ class TaskInfoHandler(BaseAPIHandler):
 class KillTaskHandler(BaseAPIHandler):
     """Stop execution of a task"""
 
-    def get(self) -> None:
-        try:
-            task_ident: str = self.get_query_argument("task_ident")
-        except tornado.web.MissingArgumentError:
+    def post(self) -> None:
+        if not self.json:
             self.write_error(
                 400,
                 http_error="Bad Request",
-                error_msg="Non-optional argument task_ident is missing.",
+                error_msg="Task assignment is missing.",
             )
-            return None
+
         try:
-            self.scheduler.kill_task(task_ident)
+            task_ident_dto = from_dict(TaskIdentDto, self.json, strict=True)
+        except MissingValueError:
+            self.write_error(
+                400,
+                http_error="Bad Request",
+                error_msg="Task_ident is missing.",
+            )
+            return
+        except UnexpectedDataError:
+            self.write_error(
+                400,
+                http_error="Bad Request",
+                error_msg="Unexpected data in request body.",
+            )
+            return
+        except DaciteError:
+            self.write_error(
+                400,
+                http_error="Bad Request",
+                error_msg="Malformed request body.",
+            )
+            return
+        try:
+            self.scheduler.kill_task(task_ident_dto.task_ident)
         except TaskNotFoundError:
             self.write_error(
                 400,

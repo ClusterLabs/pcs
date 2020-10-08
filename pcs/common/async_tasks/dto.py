@@ -3,10 +3,11 @@ from typing import (
     Any,
     Dict,
     List,
+    Optional,
 )
 
-from pcs.common.async_tasks.types import TaskFinishType, TaskState
 from pcs.common.interface.dto import DataTransferObject
+from .types import TaskFinishType, TaskKillReason, TaskState
 
 
 @dataclass(frozen=True)
@@ -27,4 +28,5 @@ class TaskResultDto(DataTransferObject):
     reports: List[Any]
     state: TaskState
     task_finish_type: TaskFinishType
+    kill_reason: Optional[TaskKillReason]
     result: Any

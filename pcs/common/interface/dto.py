@@ -115,7 +115,7 @@ def from_dict(
                 types.ResourceRelationType,
                 async_tasks_types.TaskFinishType,
                 async_tasks_types.TaskState,
-                async_tasks_types.TaskKillOrigin,
+                async_tasks_types.TaskKillReason,
             ],
             strict=strict,
         ),

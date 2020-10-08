@@ -56,7 +56,7 @@ def task_executor(task: WorkerCommand, worker_com: mp.Queue) -> None:
             TaskExecuted(os.getpid()),
         )
     )
-    logger.info(f"Task %s executed.", task.task_ident)
+    logger.info("Task %s executed.", task.task_ident)
 
     env = LibraryEnvironment(
         logger, WorkerReportProcessor(worker_com, task.task_ident),
@@ -80,7 +80,7 @@ def task_executor(task: WorkerCommand, worker_com: mp.Queue) -> None:
                 TaskFinished(TaskFinishType.FAIL, None),
             )
         )
-        logger.exception(f"Task %s raised a LibraryException.", task.task_ident)
+        logger.exception("Task %s raised a LibraryException.", task.task_ident)
         return
     except Exception:
         # For unhandled exceptions during execution

@@ -18,6 +18,8 @@ class TaskState(AutoNameEnum):
     FINISHED = auto()
 
 
-class TaskKillOrigin(AutoNameEnum):
+class TaskKillReason(AutoNameEnum):
     USER = auto()
-    SCHEDULER = auto()
+    COMPLETION_TIMEOUT = auto()
+    ABANDONED = auto()
+    INTERNAL_MESSAGING_ERROR = auto()

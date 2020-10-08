@@ -11,16 +11,12 @@ from typing import (
 from pcs import settings
 from pcs.common.async_tasks.dto import CommandDto, TaskResultDto
 from pcs.common.async_tasks.types import (
-    TaskFinishType,
     TaskState,
-    TaskKillOrigin,
+    TaskKillReason,
 )
 from .logging import setup_scheduler_logger
-from .messaging import (
-    Message,
-    MessageType,
-)
-from .task import Task
+from .messaging import Message
+from .task import Task, UnknownMessageError
 from .worker import worker_init, task_executor
 
 
@@ -47,10 +43,7 @@ class Scheduler:
         self._logger.info("Scheduler was successfully initialized.")
 
     def get_task(self, task_ident: str) -> TaskResultDto:
-        try:
-            task_result_dto = self._task_register[task_ident].to_dto()
-        except KeyError:
-            raise TaskNotFoundError(task_ident)
+        task_result_dto = self.return_task(task_ident).to_dto()
 
         # Task deletion after first retrieval of finished task
         if task_result_dto.state == TaskState.FINISHED:
@@ -59,14 +52,10 @@ class Scheduler:
         return task_result_dto
 
     def kill_task(self, task_ident: str) -> None:
-        try:
-            task = self._task_register[task_ident]
-        except KeyError:
-            raise TaskNotFoundError(task_ident)
+        task = self.return_task(task_ident)
 
-        self._logger.debug(f"User is killing a task {task_ident}.")
-        task.task_finish_type = TaskFinishType.KILL
-        task.kill_scheduled = TaskKillOrigin.USER
+        self._logger.debug("User is killing a task %s.", task_ident)
+        task.request_kill(TaskKillReason.USER)
 
     def new_task(self, command_dto: CommandDto) -> str:
         is_duplicate = True
@@ -76,21 +65,27 @@ class Scheduler:
 
         self._task_register[task_ident] = Task(task_ident, command_dto)
         self._created_tasks_index.append(task_ident)
-        self._logger.debug(f"New task {task_ident} created.")
+        self._logger.debug(
+            "New task %s created (command: %s, parameters: %s)",
+            task_ident,
+            command_dto.command_name,
+            command_dto.params,
+        )
         return task_ident
 
     async def _garbage_hunting(self) -> None:
         # TODO: Run less frequently (kill timeout/4?)
         # self._logger.debug("Running garbage hunting.")
-        for _, task in self._task_register.items():
-            if task.is_abandoned() or task.is_defunct():
-                task.task_finish_type = TaskFinishType.KILL
-                task.kill_scheduled = TaskKillOrigin.SCHEDULER
+        for task in self._task_register.values():
+            if task.is_defunct():
+                task.request_kill(TaskKillReason.COMPLETION_TIMEOUT)
+            if task.is_abandoned():
+                task.request_kill(TaskKillReason.ABANDONED)
 
     async def _garbage_collection(self) -> None:
         # self._logger.debug("Running garbage collection.")
-        for _, task in self._task_register.items():
-            if task.state == TaskState.EXECUTED and task.kill_scheduled:
+        for task in self._task_register.values():
+            if task.kill_requested:
                 task.kill()
 
     async def perform_actions(self):
@@ -103,38 +98,37 @@ class Scheduler:
         # TODO: Run hunting less frequently
         await self._garbage_hunting()
 
-    async def _receive_messages(self):
+    async def _receive_messages(self) -> None:
         # Unreliable message count, since this is the only consumer, there
         # should not be less messages
-        message_count: int = self._worker_message_q.qsize()
-
-        while message_count:
+        for _ in range(self._worker_message_q.qsize()):
             message: Message = self._worker_message_q.get_nowait()
             task: Task = self._task_register[message.task_ident]
-
-            if message.message_type == MessageType.REPORT:
-                task.store_reports(message.payload)
-            elif message.message_type == MessageType.TASK_EXECUTED:
-                task.message_executed(message.payload)
-            elif message.message_type == MessageType.TASK_FINISHED:
-                task.message_finished(message.payload)
-            else:
+            try:
+                task.receive_message(message)
+            except UnknownMessageError:
                 self._logger.critical(
-                    f"Message with unknown message type "
-                    f"({message.message_type}) was received by the scheduler."
+                    'Message with unknown message type "%s" was received by '
+                    "the scheduler.",
+                    message.message_type,
                 )
-                sys.exit(1)
-
-            message_count -= 1
+                task.request_kill(TaskKillReason.INTERNAL_MESSAGING_ERROR)
 
     async def _schedule_tasks(self) -> None:
         while self._created_tasks_index:
-            next_task: Task = self._task_register[
-                self._created_tasks_index.popleft()
-            ]
-            if next_task.kill_scheduled:
-                # Mark task FINISHED for proper deletion from task_register
-                next_task.state = TaskState.FINISHED
+            try:
+                next_task_ident = self._created_tasks_index.popleft()
+                next_task: Task = self._task_register[next_task_ident]
+            except KeyError:
+                self._logger.error(
+                    "Task %s is not located in task register and it should "
+                    "because its task_ident was located in created tasks "
+                    "index.",
+                    next_task_ident,
+                )
+                continue
+            if next_task.kill_requested:
+                next_task.kill()
                 continue
             try:
                 self._proc_pool.apply_async(
@@ -145,9 +139,18 @@ class Scheduler:
                     ],
                 )
             except ValueError:
-                self._logger.critical("Process pool is not running.")
+                self._logger.critical(
+                    "Unable to send task %s to worker pool.",
+                    next_task.task_ident,
+                )
                 sys.exit(1)
             next_task.state = TaskState.QUEUED
+
+    def return_task(self, task_ident: str) -> Task:
+        try:
+            return self._task_register[task_ident]
+        except KeyError:
+            raise TaskNotFoundError(task_ident)
 
     def terminate_nowait(self) -> None:
         # TODO: Make scheduler exit cleanly on daemon exit

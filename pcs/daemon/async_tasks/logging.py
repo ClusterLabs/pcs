@@ -14,7 +14,7 @@ def setup_scheduler_logger() -> logging.Logger:
     logger.setLevel(logging.DEBUG)
 
     file_handler = logging.FileHandler(
-        settings.async_api_log_filename, "w", "utf8"
+        settings.async_api_log_filename, "a", "utf8"
     )
     file_handler.setLevel(logging.DEBUG)
     logger.addHandler(file_handler)
