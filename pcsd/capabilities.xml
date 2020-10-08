@@ -103,7 +103,7 @@
         Set up a new cluster.
 
         pcs commands: cluster setup
-        daemon urls: cluster_setup
+        daemon urls: /api/v1/cluster-setup/v1
       </description>
     </capability>
     <capability id="cluster.create.separated-name-and-address" in-pcs="1" in-pcsd="1">
@@ -112,7 +112,7 @@
         Corosync will communicate with the node via the specified address(es).
 
         pcs commands: cluster setup
-        daemon urls: cluster_setup
+        daemon urls: /api/v1/cluster-setup/v1
       </description>
     </capability>
     <capability id="cluster.create.transport.knet" in-pcs="1" in-pcsd="1">
@@ -120,7 +120,7 @@
         Knet transport is supported including encryption and compression.
 
         pcs commands: cluster setup
-        daemon urls: cluster_setup
+        daemon urls: /api/v1/cluster-setup/v1
       </description>
     </capability>
     <capability id="cluster.create.transport.udp-udpu" in-pcs="1" in-pcsd="1">
@@ -128,7 +128,7 @@
         Udp and udpu transports are supported.
 
         pcs commands: cluster setup
-        daemon urls: cluster_setup
+        daemon urls: /api/v1/cluster-setup/v1
       </description>
     </capability>
     <capability id="cluster.create.transport.udp-udpu.no-rrp" in-pcs="1" in-pcsd="1">
@@ -136,7 +136,7 @@
         Redundant ring protocol (rrp) is not supported.
 
         pcs commands: cluster setup
-        daemon urls: cluster_setup
+        daemon urls: /api/v1/cluster-setup/v1
       </description>
     </capability>
     <capability id="cluster.create.enable" in-pcs="1" in-pcsd="1">
@@ -144,7 +144,7 @@
         Enable cluster services on cluster nodes during cluster setup.
 
         pcs commands: cluster setup --enable
-        daemon urls: cluster_setup
+        daemon urls: /api/v1/cluster-setup/v1
       </description>
     </capability>
     <capability id="cluster.create.start" in-pcs="1" in-pcsd="1">
@@ -152,7 +152,7 @@
         Start cluster services on cluster nodes during cluster setup.
 
         pcs commands: cluster setup --start
-        daemon urls: cluster_setup
+        daemon urls: /api/v1/cluster-setup/v1
       </description>
     </capability>
     <capability id="cluster.create.start.wait" in-pcs="1" in-pcsd="1">
@@ -160,7 +160,7 @@
         Wait for cluster nodes to start during cluster setup if start requested.
 
         pcs commands: cluster setup --start --wait[=timeout]
-        daemon urls: cluster_setup
+        daemon urls: /api/v1/cluster-setup/v1
       </description>
     </capability>
     <capability id="cluster.create.no-keys-sync" in-pcs="1" in-pcsd="1">
@@ -172,7 +172,7 @@
          * corosync authkey
 
         pcs commands: cluster setup --no-keys-sync
-        daemon urls: cluster_setup
+        daemon urls: /api/v1/cluster-setup/v1
       </description>
     </capability>
     <capability id="cluster.create.local" in-pcs="1" in-pcsd="0">
@@ -381,7 +381,7 @@
         Add a new node to a cluster.
 
         pcs commands: cluster node add
-        daemon urls: cluster_add_nodes
+        daemon urls: /api/v1/cluster-add-nodes/v1
       </description>
     </capability>
     <capability id="node.add.separated-name-and-address" in-pcs="1" in-pcsd="1">
@@ -390,7 +390,7 @@
         Corosync will communicate with the node via the specified address(es).
 
         pcs commands: cluster node add
-        daemon urls: cluster_add_nodes
+        daemon urls: /api/v1/cluster-add-nodes/v1
       </description>
     </capability>
     <capability id="node.add.enable" in-pcs="1" in-pcsd="1">
@@ -398,7 +398,7 @@
         Enable cluster services on the new cluster node during adding a node.
 
         pcs commands: cluster node add --enable
-        daemon urls: cluster_add_nodes
+        daemon urls: /api/v1/cluster-add-nodes/v1
       </description>
     </capability>
     <capability id="node.add.start" in-pcs="1" in-pcsd="1">
@@ -406,7 +406,7 @@
         Start cluster services on the new cluster node during adding a node.
 
         pcs commands: cluster node add --start
-        daemon urls: cluster_add_nodes
+        daemon urls: /api/v1/cluster-add-nodes/v1
       </description>
     </capability>
     <capability id="node.add.start.wait" in-pcs="1" in-pcsd="1">
@@ -415,14 +415,14 @@
         start requested.
 
         pcs commands: cluster node add --start --wait[=timeout]
-        daemon urls: cluster_add_nodes
+        daemon urls: /api/v1/cluster-add-nodes/v1
       </description>
     </capability>
     <capability id="node.add.list" in-pcs="0" in-pcsd="1">
       <description>
         Add several nodes to a cluster at once.
 
-        daemon urls: cluster_add_nodes
+        daemon urls: /api/v1/cluster-add-nodes/v1
       </description>
     </capability>
     <capability id="node.remove" in-pcs="1" in-pcsd="1">
@@ -430,7 +430,7 @@
         Remove a node from a cluster.
 
         pcs commands: cluster node ( delete | remove )
-        daemon urls: cluster_remove_nodes
+        daemon urls: /api/v1/cluster-remove-nodes/v1
       </description>
     </capability>
     <capability id="node.remove.list" in-pcs="1" in-pcsd="1">
@@ -438,7 +438,7 @@
         Remove several nodes from a cluster at once.
 
         pcs commands: cluster node ( delete | remove )
-        daemon urls: cluster_remove_nodes
+        daemon urls: /api/v1/cluster-remove-nodes/v1
       </description>
     </capability>
     <capability id="node.remove-from-caches" in-pcs="1" in-pcsd="0">
@@ -567,18 +567,20 @@
         pcs commands: node ( maintenance | unmaintenance ) --all
       </description>
     </capability>
-    <capability id="node.maintenance.list" in-pcs="1" in-pcsd="0">
+    <capability id="node.maintenance.list" in-pcs="1" in-pcsd="1">
       <description>
         Put specified nodes in a cluster to and from maintenance mode.
 
         pcs commands: node ( maintenance | unmaintenance ) node1 node2 ...
+        daemon urls: /api/v1/node-maintenance-unmaintenance/v1
       </description>
     </capability>
-    <capability id="node.maintenance.wait" in-pcs="1" in-pcsd="0">
+    <capability id="node.maintenance.wait" in-pcs="1" in-pcsd="1">
       <description>
         Wait for nodes to finish transition to or from maintenance mode.
 
         pcs commands: node ( maintenance | unmaintenance ) --wait[=timeout]
+        daemon urls: /api/v1/node-maintenance-unmaintenance/v1
       </description>
     </capability>
     <capability id="node.standby" in-pcs="1" in-pcsd="1">
@@ -599,18 +601,20 @@
         pcs commands: node ( standby | unstandby ) --all
       </description>
     </capability>
-    <capability id="node.standby.list" in-pcs="1" in-pcsd="0">
+    <capability id="node.standby.list" in-pcs="1" in-pcsd="1">
       <description>
         Put specified nodes in a cluster to and from standby mode.
 
         pcs commands: node ( standby | unstandby ) node1 node2 ...
+        daemon urls: /api/v1/node-standby-unstandby/v1
       </description>
     </capability>
-    <capability id="node.standby.wait" in-pcs="1" in-pcsd="0">
+    <capability id="node.standby.wait" in-pcs="1" in-pcsd="1">
       <description>
         Wait for nodes to finish transition to or from standby mode.
 
         pcs commands: node ( standby | unstandby ) --wait[=timeout]
+        daemon urls: /api/v1/node-standby-unstandby/v1
       </description>
     </capability>
     <capability id="node.utilization" in-pcs="1" in-pcsd="1">
@@ -1078,7 +1082,9 @@
         creation.
 
         pcs commands: resource create
-        daemon urls: update_resource (param: resource_id not set)
+        daemon urls: /api/v1/resource-create/v1
+                     /api/v1/resource-create-as-clone/v1
+                     /api/v1/resource-create-in-group/v1
       </description>
     </capability>
     <capability id="pcmk.resource.create.clone.custom-id" in-pcs="1" in-pcsd="0">
@@ -1100,7 +1106,9 @@
         It is not possible to create master resources.
 
         pcs commands: resource create
-        daemon urls: update_resource (param: resource_id not set)
+        daemon urls: /api/v1/resource-create/v1
+                     /api/v1/resource-create-as-clone/v1
+                     /api/v1/resource-create-in-group/v1
       </description>
     </capability>
     <capability id="pcmk.resource.create.promotable" in-pcs="1" in-pcsd="1">
@@ -1108,7 +1116,7 @@
         Put a newly created resource into a promotable clone.
 
         pcs commands: resource create ... promotable
-        daemon urls: update_resource (param: resource_id not set)
+        daemon urls: /api/v1/resource-create-as-clone/v1
       </description>
     </capability>
     <capability id="pcmk.resource.create.promotable.custom-id" in-pcs="1" in-pcsd="0">
@@ -1118,35 +1126,47 @@
         pcs commands: resource create ... promotable
       </description>
     </capability>
-    <capability id="pcmk.resource.create.meta" in-pcs="1" in-pcsd="0">
+    <capability id="pcmk.resource.create.meta" in-pcs="1" in-pcsd="1">
       <description>
         Set resource meta attributes when creating a resource. When creating a
         resource as a clone resource, it is possible to set clone meta
         attributes.
 
         pcs commands: resource create
+        daemon urls: /api/v1/resource-create/v1
+                     /api/v1/resource-create-as-clone/v1
+                     /api/v1/resource-create-in-group/v1
       </description>
     </capability>
-    <capability id="pcmk.resource.create.operations" in-pcs="1" in-pcsd="0">
+    <capability id="pcmk.resource.create.operations" in-pcs="1" in-pcsd="1">
       <description>
         Set resource operations when creating a resource, also allow to disable
         copying operations from a resource agent.
 
         pcs commands: resource create ... op
+        daemon urls: /api/v1/resource-create/v1
+                     /api/v1/resource-create-as-clone/v1
+                     /api/v1/resource-create-in-group/v1
       </description>
     </capability>
-    <capability id="pcmk.resource.create.operations.onfail-demote" in-pcs="1" in-pcsd="0">
+    <capability id="pcmk.resource.create.operations.onfail-demote" in-pcs="1" in-pcsd="1">
       <description>
         Support for "demote" value of resource operation's "on-fail" option
 
         pcs commands: resource create ... op
+        daemon urls: /api/v1/resource-create/v1
+                     /api/v1/resource-create-as-clone/v1
+                     /api/v1/resource-create-in-group/v1
       </description>
     </capability>
-    <capability id="pcmk.resource.create.wait" in-pcs="1" in-pcsd="0">
+    <capability id="pcmk.resource.create.wait" in-pcs="1" in-pcsd="1">
       <description>
         Wait for the created resource to start.
 
         pcs commands: resource create ... --wait
+        daemon urls: /api/v1/resource-create/v1
+                     /api/v1/resource-create-as-clone/v1
+                     /api/v1/resource-create-in-group/v1
       </description>
     </capability>
 
@@ -1408,14 +1428,17 @@
         Disable and enable a resource.
 
         pcs commands: resource disable, resource enable
-        daemon urls: resource_stop, resource_start
+        daemon urls: /api/v1/resource-disable/v1
+                     /api/v1/resource-enable/v1
       </description>
     </capability>
-    <capability id="pcmk.resource.enable-disable.list" in-pcs="1" in-pcsd="0">
+    <capability id="pcmk.resource.enable-disable.list" in-pcs="1" in-pcsd="1">
       <description>
         Disable or enable several resources at once.
 
         pcs commands: resource disable, resource enable
+        daemon urls: /api/v1/resource-disable/v1
+                     /api/v1/resource-enable/v1
       </description>
     </capability>
     <capability id="pcmk.resource.enable-disable.tag" in-pcs="1" in-pcsd="1">
@@ -1423,13 +1446,17 @@
         Disable or enable resources in specified tags at once.
 
         pcs commands: resource disable, resource enable
+        daemon urls: /api/v1/resource-disable/v1
+                     /api/v1/resource-enable/v1
       </description>
     </capability>
-    <capability id="pcmk.resource.enable-disable.wait" in-pcs="1" in-pcsd="0">
+    <capability id="pcmk.resource.enable-disable.wait" in-pcs="1" in-pcsd="1">
       <description>
         Wait for resources to start or stop.
 
         pcs commands: resource disable --wait, resource enable --wait
+        daemon urls: /api/v1/resource-disable/v1
+                     /api/v1/resource-enable/v1
       </description>
     </capability>
     <capability id="pcmk.resource.disable.safe" in-pcs="1" in-pcsd="0">
@@ -1478,7 +1505,8 @@
         Put a resource into unmanaged and managed mode.
 
         pcs commands: resource unmanage, resource manage
-        daemon urls: manage_resource, unmanage_resource
+        daemon urls: /api/v1/resource-manage/v1
+                     /api/v1/resource-unmanage/v1
       </description>
     </capability>
     <capability id="pcmk.resource.manage-unmanage.list" in-pcs="1" in-pcsd="1">
@@ -1486,7 +1514,8 @@
         Put several resources into unmanaged or managed mode at once.
 
         pcs commands: resource unmanage, resource manage
-        daemon urls: manage_resource, unmanage_resource
+        daemon urls: /api/v1/resource-manage/v1
+                     /api/v1/resource-unmanage/v1
       </description>
     </capability>
     <capability id="pcmk.resource.manage-unmanage.tag" in-pcs="1" in-pcsd="1">
@@ -1494,14 +1523,18 @@
         Put resources in specified tags into unmanaged or managed mode at once.
 
         pcs commands: resource unmanage, resource manage
+        daemon urls: /api/v1/resource-manage/v1
+                     /api/v1/resource-unmanage/v1
       </description>
     </capability>
-    <capability id="pcmk.resource.manage-unmanage.with-monitor" in-pcs="1" in-pcsd="0">
+    <capability id="pcmk.resource.manage-unmanage.with-monitor" in-pcs="1" in-pcsd="1">
       <description>
         Optionally disable or enable monitor operations when putting resources
         into unmanaged or managed mode respectively.
 
         pcs commands: resource ( unmanage | manage ) --with-monitor
+        daemon urls: /api/v1/resource-manage/v1
+                     /api/v1/resource-unmanage/v1
       </description>
     </capability>
     <capability id="pcmk.resource.utilization" in-pcs="1" in-pcsd="1">
@@ -1644,7 +1677,7 @@
         disable the resource upon its creation.
 
         pcs commands: stonith create
-        daemon urls: update_fence_device (param: resource_id not set)
+        daemon urls: /api/v1/stonith-create/v1
       </description>
     </capability>
     <capability id="pcmk.stonith.create.in-group" in-pcs="1" in-pcsd="0">
@@ -1655,39 +1688,36 @@
         pcs commands: stonith create ... group
       </description>
     </capability>
-    <capability id="pcmk.stonith.create.meta" in-pcs="1" in-pcsd="0">
+    <capability id="pcmk.stonith.create.meta" in-pcs="1" in-pcsd="1">
       <description>
         Set resource meta attributes when creating a stonith resource.
 
         pcs commands: stonith create ... meta
+        daemon urls: /api/v1/stonith-create/v1
       </description>
     </capability>
-    <capability id="pcmk.stonith.create.operations" in-pcs="1" in-pcsd="0">
+    <capability id="pcmk.stonith.create.operations" in-pcs="1" in-pcsd="1">
       <description>
         Set resource operations when creating a stonith resource.
 
         pcs commands: stonith create ... op
+        daemon urls: /api/v1/stonith-create/v1
       </description>
     </capability>
-    <capability id="pcmk.stonith.create.operations" in-pcs="1" in-pcsd="0">
-      <description>
-        Set resource operations when creating a stonith resource.
-
-        pcs commands: stonith create ... op
-      </description>
-    </capability>
-    <capability id="pcmk.stonith.create.operations.onfail-demote" in-pcs="1" in-pcsd="0">
+    <capability id="pcmk.stonith.create.operations.onfail-demote" in-pcs="1" in-pcsd="1">
       <description>
         Support for "demote" value of resource operation's "on-fail" option
 
         pcs commands: stonith create ... op
+        daemon urls: /api/v1/stonith-create/v1
       </description>
     </capability>
-    <capability id="pcmk.stonith.create.wait" in-pcs="1" in-pcsd="0">
+    <capability id="pcmk.stonith.create.wait" in-pcs="1" in-pcsd="1">
       <description>
         Wait for the created resource to start.
 
         pcs commands: stonith create ... --wait
+        daemon urls: /api/v1/stonith-create/v1
       </description>
     </capability>
     <capability id="pcmk.stonith.delete" in-pcs="1" in-pcsd="0">

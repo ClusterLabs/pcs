@@ -256,7 +256,7 @@ def cluster_status_plaintext(params, request, auth_user)
   if not allowed_for_local_cluster(auth_user, Permissions::READ)
     return 403, 'Permission denied'
   end
-  return pcs_internal_proxy(
+  return pcs_internal_proxy_old(
     auth_user,
     params.fetch(:data_json, ""),
     "status.full_cluster_status_plaintext"
@@ -811,7 +811,7 @@ def cluster_add_nodes(params, request, auth_user)
   if not allowed_for_local_cluster(auth_user, Permissions::FULL)
     return 403, 'Permission denied'
   end
-  return pcs_internal_proxy(
+  return pcs_internal_proxy_old(
     auth_user, params.fetch(:data_json, ""), "cluster.add_nodes"
   )
 end
@@ -820,7 +820,7 @@ def cluster_remove_nodes(params, request, auth_user)
   if not allowed_for_local_cluster(auth_user, Permissions::FULL)
     return 403, 'Permission denied'
   end
-  return pcs_internal_proxy(
+  return pcs_internal_proxy_old(
     auth_user, params.fetch(:data_json, ""), "cluster.remove_nodes"
   )
 end
@@ -829,7 +829,7 @@ def cluster_setup(params, request, auth_user)
   if not allowed_for_superuser(auth_user)
     return 403, 'Permission denied'
   end
-  return pcs_internal_proxy(
+  return pcs_internal_proxy_old(
     auth_user, params.fetch(:data_json, ""), "cluster.setup"
   )
 end

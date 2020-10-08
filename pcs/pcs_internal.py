@@ -5,9 +5,9 @@ import logging
 from pcs import settings, utils
 from pcs.cli.common.env_cli import Env
 from pcs.cli.common.lib_wrapper import Library
+from pcs.common.interface import dto
 from pcs.common.reports import (
     ReportItem,
-    ReportItemDto,
     ReportItemList,
     ReportProcessor,
 )
@@ -15,10 +15,20 @@ from pcs.lib.errors import LibraryError
 
 
 SUPPORTED_COMMANDS = {
-    "cluster.setup",
     "cluster.add_nodes",
     "cluster.remove_nodes",
+    "cluster.setup",
+    "node.maintenance_unmaintenance_list",
+    "node.standby_unstandby_list",
+    "resource.create",
+    "resource.create_as_clone",
+    "resource.create_in_group",
+    "resource.disable",
+    "resource.enable",
+    "resource.manage",
+    "resource.unmanage",
     "status.full_cluster_status_plaintext",
+    "stonith.create",
 }
 
 
@@ -61,15 +71,8 @@ def export_reports(report_list):
     return [report_item_to_dict(report) for report in report_list]
 
 
-def report_item_to_dict(report_item: ReportItem):
-    dto_obj: ReportItemDto = report_item.to_dto()
-    return dict(
-        severity=dto_obj.severity.level,
-        code=dto_obj.message.code,
-        info=dto_obj.message.payload,
-        forceable=dto_obj.severity.force_code,
-        report_text=dto_obj.message.message,
-    )
+def report_item_to_dict(report_item: ReportItem) -> dto.DtoPayload:
+    return dto.to_dict(report_item.to_dto())
 
 
 def main():
@@ -96,7 +99,11 @@ def main():
             report_list=export_reports(
                 cli_env.report_processor.processed_items
             ),
-            data=output_data,
+            data=(
+                dto.to_dict(output_data)
+                if isinstance(output_data, dto.DataTransferObject)
+                else output_data
+            ),
         )
     except LibraryError as e:
         _exit(

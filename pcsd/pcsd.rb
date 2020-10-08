@@ -18,6 +18,7 @@ require 'pcs.rb'
 require 'auth.rb'
 require 'cfgsync.rb'
 require 'permissions.rb'
+require 'api_v1.rb'
 
 use Rack::CommonLogger
 
@@ -57,7 +58,7 @@ before do
   @tornado_session_groups = Thread.current[:tornado_groups]
   @tornado_is_authenticated = Thread.current[:tornado_is_authenticated]
 
-  if(request.path.start_with?('/remote/') and request.path != "/remote/auth") or request.path == '/run_pcs'
+  if(request.path.start_with?('/remote/') and request.path != "/remote/auth") or request.path == '/run_pcs' or request.path.start_with?('/api/')
     # Sets @auth_user to a hash containing info about logged in user or halts
     # the request processing if login credentials are incorrect.
     protect_by_token!
@@ -156,6 +157,14 @@ end
 
 post '/remote/?:command?' do
   return remote(params, request, @auth_user)
+end
+
+post '/api/v1/?*' do
+  return route_api_v1(@auth_user, params, request)
+end
+
+get '/api/v1/?*' do
+  return route_api_v1(@auth_user, params, request)
 end
 
 post '/run_pcs' do
@@ -1481,6 +1490,24 @@ def pcs_0_10_6_get_avail_resource_agents(code, out)
     return code, JSON.generate(agent_map)
   rescue
     return code, out
+  end
+end
+
+post '/managec/:cluster/api/v1/:command' do
+  auth_user = getAuthUser()
+  if params[:cluster] and params[:command]
+    return send_cluster_request_with_token(
+      auth_user, params[:cluster], '/api/v1/' + params[:command] + '/v1', true, params, false, request.env['rack.input'].read
+    )
+  end
+end
+
+get '/managec/:cluster/api/v1/:command' do
+  auth_user = getAuthUser()
+  if params[:cluster] and params[:command]
+    return send_cluster_request_with_token(
+      auth_user, params[:cluster], '/api/v1/' + params[:command] + '/v1', false, params, false, request.env['rack.input'].read
+    )
   end
 end
 
