@@ -8,14 +8,15 @@ Release: 99.git.%{numcommit}.%{commit}.1%{?dist}
 # https://docs.fedoraproject.org/en-US/packaging-guidelines/LicensingGuidelines/
 # https://fedoraproject.org/wiki/Licensing:Main?rd=Licensing#Good_Licenses
 # GPLv2: pcs
-# ASL 2.0: dataclasses, dateutil, tornado
-# MIT: handlebars, backports, dacite, daemons, ethon, mustermann, rack,
-#      rack-protection, rack-test, sinatra, tilt
+# ASL 2.0: dataclasses, tornado
+# ASL 2.0 or BSD: dateutil
+# MIT: backports, dacite, daemons, ember, ethon, handlebars, jquery, jquery-ui,
+#      mustermann, rack, rack-protection, rack-test, sinatra, tilt
 # GPLv2 or Ruby: eventmachne, json
 # (GPLv2 or Ruby) and BSD: thin
 # BSD or Ruby: open4, ruby2_keywords
 # BSD and MIT: ffi
-License: GPLv2 and ASL 2.0 and MIT and BSD and (GPLv2 or Ruby) and (BSD or Ruby)
+License: GPLv2 and ASL 2.0 and MIT and BSD and (GPLv2 or Ruby) and (BSD or Ruby) and (ASL 2.0 or BSD)
 URL: https://github.com/ClusterLabs/pcs
 Summary: Pacemaker Configuration System
 
@@ -51,6 +52,12 @@ Summary: Pacemaker Configuration System
 %global version_rubygem_sinatra  2.0.8.1
 %global version_rubygem_thin  1.7.2
 %global version_rubygem_tilt  2.0.10
+
+# javascript bundled libraries for old web-ui
+%global ember_version 1.4.0
+%global handlebars_version 1.2.1
+%global jquery_ui_version 1.10.1
+%global jquery_version 1.9.1
 
 %if "%{python3_version}" == "3.6"
 %define dataclasses_required 1
@@ -126,6 +133,8 @@ BuildRequires: python3-setuptools
 %if 0%{?rhel} >= 8
 BuildRequires: platform-python
 BuildRequires: platform-python-setuptools
+# for bundled python dateutil
+BuildRequires: python3-setuptools_scm
 %endif
 
 BuildRequires: python3-devel
@@ -165,8 +174,14 @@ Requires: platform-python-setuptools
 Requires: python3-lxml
 Requires: python3-pycurl
 Requires: python3-pyparsing
+%if 0%{?fedora} <= 32
 # clufter and its dependencies
 Requires: python3-clufter => 0.70.0
+%endif
+%if 0%{?rhel} < 9
+# clufter and its dependencies
+Requires: python3-clufter => 0.70.0
+%endif
 %if "%{python3_version}" != "3.6" && "%{python3_version}" != "3.7"
 Requires: python3-distro
 %endif
@@ -217,6 +232,12 @@ Provides: bundled(ruby2_keywords) = %{version_rubygem_ruby2_keywords}
 Provides: bundled(sinatra) = %{version_rubygem_sinatra}
 Provides: bundled(thin) = %{version_rubygem_thin}
 Provides: bundled(tilt) = %{version_rubygem_tilt}
+
+# javascript bundled libraries for old web-ui
+Provides: bundled(ember) = %{ember_version}
+Provides: bundled(handlebars) = %{handlebars_version}
+Provides: bundled(jquery) = %{jquery_version}
+Provides: bundled(jquery-ui) = %{jquery_ui_version}
 
 %description
 pcs is a corosync and pacemaker configuration tool.  It permits users to
