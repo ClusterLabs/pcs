@@ -8,6 +8,10 @@ from pcs.daemon.async_tasks.messaging import (
 
 
 class WorkerReportProcessor(pcs_reports.ReportProcessor):
+    """
+    Report processor for tasks running inside of the worker pool
+    """
+
     def __init__(self, worker_com: mp.Queue, task_ident: str) -> None:
         super().__init__()
         self._worker_communicator: mp.Queue = worker_com

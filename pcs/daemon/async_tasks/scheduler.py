@@ -21,7 +21,9 @@ from .worker import worker_init, task_executor
 
 
 class TaskNotFoundError(Exception):
-    """Task with requested task_ident was not found in task_register"""
+    """
+    Task with requested task_ident was not found in task_register
+    """
 
     def __init__(self, task_ident: str, message: str = ""):
         super().__init__(message)
@@ -29,6 +31,10 @@ class TaskNotFoundError(Exception):
 
 
 class Scheduler:
+    """
+    Task management core intended as an interface to the REST API
+    """
+
     def __init__(self) -> None:
         self._proc_pool = mp.Pool(
             processes=settings.worker_count,
@@ -43,7 +49,10 @@ class Scheduler:
         self._logger.info("Scheduler was successfully initialized.")
 
     def get_task(self, task_ident: str) -> TaskResultDto:
-        task_result_dto = self.return_task(task_ident).to_dto()
+        """
+        Fetches all information about task for the client
+        """
+        task_result_dto = self._return_task(task_ident).to_dto()
 
         # Task deletion after first retrieval of finished task
         if task_result_dto.state == TaskState.FINISHED:
@@ -52,12 +61,23 @@ class Scheduler:
         return task_result_dto
 
     def kill_task(self, task_ident: str) -> None:
-        task = self.return_task(task_ident)
+        """
+        Terminates the specified task
+
+        This method only marks the task to be killed, all killing is done by
+        the garbage collector
+        """
+        task = self._return_task(task_ident)
 
         self._logger.debug("User is killing a task %s.", task_ident)
-        task.request_kill(TaskKillReason.USER)
+        task.kill_requested = TaskKillReason.USER
 
     def new_task(self, command_dto: CommandDto) -> str:
+        """
+        Creates a new task that will be executed by the scheduler
+        :param command_dto: Command and its parameters
+        :return: Task identifier
+        """
         is_duplicate = True
         while is_duplicate:
             task_ident = uuid.uuid4().hex
@@ -74,31 +94,43 @@ class Scheduler:
         return task_ident
 
     async def _garbage_hunting(self) -> None:
-        # TODO: Run less frequently (kill timeout/4?)
+        """
+        Marks tasks for garbage collection
+        """
+        # TODO: (optimization) Run less frequently (kill timeout/4?)
         # self._logger.debug("Running garbage hunting.")
         for task in self._task_register.values():
             if task.is_defunct():
-                task.request_kill(TaskKillReason.COMPLETION_TIMEOUT)
-            if task.is_abandoned():
-                task.request_kill(TaskKillReason.ABANDONED)
+                task.kill_requested = TaskKillReason.COMPLETION_TIMEOUT
+            elif task.is_abandoned():
+                task.kill_requested = TaskKillReason.ABANDONED
 
     async def _garbage_collection(self) -> None:
+        """
+        Deletes tasks after certain timeouts from the task register
+        """
         # self._logger.debug("Running garbage collection.")
         for task in self._task_register.values():
             if task.kill_requested:
                 task.kill()
 
-    async def perform_actions(self):
+    async def perform_actions(self) -> None:
+        """
+        Calls all actions that are done by the scheduler in one pass
+        """
         # self._logger.debug("Scheduler tick.")
         await self._schedule_tasks()
         await self._receive_messages()
         # Garbage collection needs to run right after receiving messages to
         # kill executed tasks most quickly
         await self._garbage_collection()
-        # TODO: Run hunting less frequently
+        # TODO: (optimization) Run hunting less frequently
         await self._garbage_hunting()
 
     async def _receive_messages(self) -> None:
+        """
+        Processes all incoming messages from workers
+        """
         # Unreliable message count, since this is the only consumer, there
         # should not be less messages
         for _ in range(self._worker_message_q.qsize()):
@@ -112,12 +144,15 @@ class Scheduler:
                     "the scheduler.",
                     message.message_type,
                 )
-                task.request_kill(TaskKillReason.INTERNAL_MESSAGING_ERROR)
+                task.kill_requested = TaskKillReason.INTERNAL_MESSAGING_ERROR
 
     async def _schedule_tasks(self) -> None:
+        """
+        Inserts tasks into the process pool
+        """
         while self._created_tasks_index:
+            next_task_ident = self._created_tasks_index.popleft()
             try:
-                next_task_ident = self._created_tasks_index.popleft()
                 next_task: Task = self._task_register[next_task_ident]
             except KeyError:
                 self._logger.error(
@@ -128,7 +163,6 @@ class Scheduler:
                 )
                 continue
             if next_task.kill_requested:
-                next_task.kill()
                 continue
             try:
                 self._proc_pool.apply_async(
@@ -140,19 +174,25 @@ class Scheduler:
                 )
             except ValueError:
                 self._logger.critical(
-                    "Unable to send task %s to worker pool.",
-                    next_task.task_ident,
+                    "Unable to send task %s to worker pool.", next_task_ident,
                 )
                 sys.exit(1)
             next_task.state = TaskState.QUEUED
 
-    def return_task(self, task_ident: str) -> Task:
+    def _return_task(self, task_ident: str) -> Task:
+        """
+        Helper method for accessing tasks in the task register
+        :param task_ident: Task identifier
+        :return: Task instance
+        """
         try:
             return self._task_register[task_ident]
-        except KeyError:
-            raise TaskNotFoundError(task_ident)
+        except KeyError as exc:
+            raise TaskNotFoundError(task_ident) from exc
 
     def terminate_nowait(self) -> None:
-        # TODO: Make scheduler exit cleanly on daemon exit
+        """
+        Cleanly terminates the scheduler
+        """
         self._proc_pool.terminate()
         self._logger.info("Scheduler is correctly terminated.")

@@ -99,7 +99,6 @@ ruby_executable = "/usr/bin/ruby"
 gui_session_lifetime_seconds = 60 * 60
 
 # Scheduler settings
-async_api_scheduler_enable = False
 async_api_scheduler_interval_ms = 300
 
 worker_count = multiprocessing.cpu_count()

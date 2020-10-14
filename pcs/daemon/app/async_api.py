@@ -1,19 +1,21 @@
 import json
 import logging
-import tornado
 
 from typing import (
     Any,
     Dict,
     List,
+    Optional,
     Tuple,
     Type,
 )
 
+import tornado
+
 from dacite import DaciteError, MissingValueError, UnexpectedDataError
 from tornado.web import RequestHandler
 
-from pcs.common.interface.dto import from_dict, to_dict
+from pcs.common.interface.dto import DataTransferObject, from_dict, to_dict
 from pcs.common.async_tasks.dto import CommandDto, TaskIdentDto
 from pcs.daemon.async_tasks.scheduler import Scheduler, TaskNotFoundError
 
@@ -27,20 +29,21 @@ class BaseAPIHandler(RequestHandler):
     """
 
     def initialize(self, scheduler: Scheduler) -> None:
+        # pylint: disable=attribute-defined-outside-init
         self.scheduler = scheduler
+        self.json: Optional[Dict[str, Any]] = None
         # TODO: Turn into a constant
         self.logger: logging.Logger = logging.getLogger("pcs_scheduler")
 
     def prepare(self) -> None:
         """JSON preprocessing"""
         self.add_header("Content-Type", "application/json")
-        self.json = None
         if (
             "Content-Type" in self.request.headers
             and self.request.headers["Content-Type"] == "application/json"
         ):
             try:
-                self.json: Dict[str, Any] = json.loads(self.request.body)
+                self.json = json.loads(self.request.body)
             except json.JSONDecodeError:
                 self.write_error(
                     400,
@@ -48,13 +51,39 @@ class BaseAPIHandler(RequestHandler):
                     error_msg="Malformed JSON data.",
                 )
 
+    def from_dict_exc_handled(
+        self, convert_to: Type[DataTransferObject]
+    ) -> DataTransferObject:
+        try:
+            dto = from_dict(convert_to, self.json, strict=True)
+        except MissingValueError as exc:
+            self.write_error(
+                400,
+                http_error="Bad Request",
+                error_msg=f"Required value {exc.field_path} is missing.",
+            )
+        except UnexpectedDataError as exc:
+            self.write_error(
+                400,
+                http_error="Bad Request",
+                error_msg=f"Unexpected data ({', '.join(exc.keys)}) in "
+                f"request body.",
+            )
+        except DaciteError:
+            self.write_error(
+                400,
+                http_error="Bad Request",
+                error_msg="Malformed request body.",
+            )
+        return dto
+
     def write_error(
         self,
         status_code: int,
         http_error: str = None,
         error_msg: str = None,
         hints: str = None,
-        **kwargs,
+        **kwargs: Any,
     ) -> None:
         """
         Error responder for all handlers
@@ -134,7 +163,6 @@ class TaskInfoHandler(BaseAPIHandler):
                 http_error="Bad Request",
                 error_msg="Non-optional argument task_ident is missing.",
             )
-            return
         try:
             self.write(json.dumps(to_dict(self.scheduler.get_task(task_ident))))
         except TaskNotFoundError:
@@ -191,7 +219,14 @@ class KillTaskHandler(BaseAPIHandler):
         self.finish()
 
 
-def get_routes(scheduler) -> List[Tuple[str, Type[BaseAPIHandler], dict]]:
+def get_routes(
+    scheduler: Scheduler,
+) -> List[Tuple[str, Type[BaseAPIHandler], dict]]:
+    """
+    Returns mapping of URL routes to functions and links API to the scheduler
+    :param scheduler: Scheduler's instance
+    :return: URL to handler mapping
+    """
     params = dict(scheduler=scheduler)
     return [
         ("/async_api/task/result", TaskInfoHandler, params),

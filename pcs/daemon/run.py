@@ -30,6 +30,7 @@ from pcs.daemon.async_tasks.scheduler import Scheduler
 
 class SignalInfo:
     # pylint: disable=too-few-public-methods
+    async_scheduler = None
     server_manage = None
     ioloop_started = False
 
@@ -39,6 +40,8 @@ def handle_signal(incoming_signal, frame):
     log.pcsd.warning("Caught signal: %s, shutting down", incoming_signal)
     if SignalInfo.server_manage:
         SignalInfo.server_manage.stop()
+    if SignalInfo.async_scheduler:
+        SignalInfo.async_scheduler.terminate_nowait()
     if SignalInfo.ioloop_started:
         IOLoop.current().stop()
     raise SystemExit(0)
@@ -84,9 +87,7 @@ def configure_app(
             sync_config_lock,
             https_server_manage,
         )
-
-        if settings.async_api_scheduler_enable:
-            routes.extend(async_api.get_routes(async_scheduler))
+        routes.extend(async_api.get_routes(async_scheduler))
 
         if not disable_gui:
             routes.extend(
@@ -123,6 +124,7 @@ def main():
         log.enable_debug()
 
     async_scheduler = Scheduler()
+    SignalInfo.async_scheduler = async_scheduler
 
     sync_config_lock = Lock()
     ruby_pcsd_wrapper = ruby_pcsd.Wrapper(

@@ -1,5 +1,6 @@
 import multiprocessing as mp
 import os
+import signal
 
 from dataclasses import dataclass
 from logging import Logger
@@ -28,17 +29,20 @@ class WorkerCommand:
 
 
 def worker_init() -> None:
-    import signal
-
+    """
+    Runs in every new worker process after its creation
+    """
     # Create and configure new logger
     global logger
     logger = setup_worker_logger()
     logger.info("Worker initialized.")
 
     def ignore_signals(sig_num, frame):
+        # pylint: disable=unused-argument
         pass
 
     def flush_logs(sig_num, frame):
+        # pylint: disable=unused-argument
         for handler in logger.handlers:
             handler.flush()
             handler.close()
@@ -48,6 +52,12 @@ def worker_init() -> None:
 
 
 def task_executor(task: WorkerCommand, worker_com: mp.Queue) -> None:
+    """
+    Launches the task inside the worker
+    :param task: Task identifier, command and parameter object
+    :param worker_com: Queue instance for sending messages to scheduler
+    """
+    # pylint: disable=broad-except
     global logger
     worker_com.put(
         Message(
