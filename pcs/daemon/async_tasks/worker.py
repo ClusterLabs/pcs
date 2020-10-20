@@ -37,11 +37,11 @@ def worker_init() -> None:
     logger = setup_worker_logger()
     logger.info("Worker initialized.")
 
-    def ignore_signals(sig_num, frame):
+    def ignore_signals(sig_num, frame):  # type: ignore
         # pylint: disable=unused-argument
         pass
 
-    def flush_logs(sig_num, frame):
+    def flush_logs(sig_num, frame):  # type: ignore
         # pylint: disable=unused-argument
         for handler in logger.handlers:
             handler.flush()
@@ -68,7 +68,7 @@ def task_executor(task: WorkerCommand, worker_com: mp.Queue) -> None:
     )
     logger.info("Task %s executed.", task.task_ident)
 
-    env = LibraryEnvironment(
+    env = LibraryEnvironment(  # type: ignore
         logger, WorkerReportProcessor(worker_com, task.task_ident),
     )
 

@@ -70,7 +70,7 @@ class Scheduler:
         task = self._return_task(task_ident)
 
         self._logger.debug("User is killing a task %s.", task_ident)
-        task.kill_requested = TaskKillReason.USER
+        task.request_kill(TaskKillReason.USER)
 
     def new_task(self, command_dto: CommandDto) -> str:
         """
@@ -101,9 +101,9 @@ class Scheduler:
         # self._logger.debug("Running garbage hunting.")
         for task in self._task_register.values():
             if task.is_defunct():
-                task.kill_requested = TaskKillReason.COMPLETION_TIMEOUT
+                task.request_kill(TaskKillReason.COMPLETION_TIMEOUT)
             elif task.is_abandoned():
-                task.kill_requested = TaskKillReason.ABANDONED
+                task.request_kill(TaskKillReason.ABANDONED)
 
     async def _garbage_collection(self) -> None:
         """
@@ -111,7 +111,7 @@ class Scheduler:
         """
         # self._logger.debug("Running garbage collection.")
         for task in self._task_register.values():
-            if task.kill_requested:
+            if task.is_kill_requested():
                 task.kill()
 
     async def perform_actions(self) -> None:
@@ -144,7 +144,7 @@ class Scheduler:
                     "the scheduler.",
                     message.message_type,
                 )
-                task.kill_requested = TaskKillReason.INTERNAL_MESSAGING_ERROR
+                task.request_kill(TaskKillReason.INTERNAL_MESSAGING_ERROR)
 
     async def _schedule_tasks(self) -> None:
         """
@@ -162,7 +162,7 @@ class Scheduler:
                     next_task_ident,
                 )
                 continue
-            if next_task.kill_requested:
+            if next_task.is_kill_requested():
                 continue
             try:
                 self._proc_pool.apply_async(

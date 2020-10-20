@@ -2,6 +2,7 @@ import datetime
 import os
 
 from typing import (
+    cast,
     Any,
     List,
     Optional,
@@ -69,8 +70,9 @@ class Task(ImplementsToDto):
         :return: True if last message was delivered sooner than now - timeout,
             False otherwise
         """
-        if self._last_message_at:
-            return datetime.datetime.now() - self._get_last_updated_timestamp() > datetime.timedelta(
+        last_message_at = self._get_last_updated_timestamp()
+        if last_message_at:
+            return datetime.datetime.now() - last_message_at > datetime.timedelta(
                 seconds=timeout_s
             )
         return False
@@ -109,7 +111,7 @@ class Task(ImplementsToDto):
         """
         self._last_message_at = datetime.datetime.now()
 
-    def _get_last_updated_timestamp(self) -> datetime.datetime:
+    def _get_last_updated_timestamp(self) -> Optional[datetime.datetime]:
         """
         Helper function for getting timestamp of the last message received
 
@@ -125,8 +127,7 @@ class Task(ImplementsToDto):
     def is_kill_requested(self) -> bool:
         return self._kill_requested is not None
 
-    @kill_requested.setter
-    def kill_requested(self, reason: TaskKillReason) -> None:
+    def request_kill(self, reason: TaskKillReason) -> None:
         """
         Marks the task for cleanup to the garbage collector
         :param reason: Reason for killing the task
@@ -160,11 +161,11 @@ class Task(ImplementsToDto):
         """
         self._task_updated()
         if message.message_type == MessageType.REPORT:
-            self._store_reports(message.payload)
+            self._store_reports(cast(ReportItemDto, message.payload))
         elif message.message_type == MessageType.TASK_EXECUTED:
-            self._message_executed(message.payload)
+            self._message_executed(cast(TaskExecuted, message.payload))
         elif message.message_type == MessageType.TASK_FINISHED:
-            self._message_finished(message.payload)
+            self._message_finished(cast(TaskFinished, message.payload))
         else:
             raise UnknownMessageError(message)
 
