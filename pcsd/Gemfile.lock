@@ -43,6 +43,3 @@ DEPENDENCIES
   sinatra
   thin
   tilt
-
-BUNDLED WITH
-   1.16.1
