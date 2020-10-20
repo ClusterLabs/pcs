@@ -25,7 +25,7 @@ class TaskIdentDto(DataTransferObject):
 class TaskResultDto(DataTransferObject):
     task_ident: str
     command: CommandDto
-    reports: List[Any]
+    reports: List[ReportItemDto]
     state: TaskState
     task_finish_type: TaskFinishType
     kill_requested: Optional[TaskKillReason]

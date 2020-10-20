@@ -122,9 +122,8 @@ class Task(ImplementsToDto):
             self._task_updated()
         return self._last_message_at
 
-    @property
-    def kill_requested(self) -> Optional[TaskKillReason]:
-        return self._kill_requested
+    def is_kill_requested(self) -> bool:
+        return self._kill_requested is not None
 
     @kill_requested.setter
     def kill_requested(self, reason: TaskKillReason) -> None:
@@ -151,6 +150,7 @@ class Task(ImplementsToDto):
                 pass
 
         self._state = TaskState.FINISHED
+        self._task_finish_type = TaskFinishType.KILL
 
     # Message handlers
     def receive_message(self, message: Message) -> None:
