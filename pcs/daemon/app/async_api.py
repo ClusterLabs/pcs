@@ -72,15 +72,11 @@ class BaseAPIHandler(RequestHandler):
             try:
                 self.json = json.loads(self.request.body)
             except json.JSONDecodeError:
-                self.write_error(
-                    400,
-                    http_error="Bad Request",
-                    error_msg="Malformed JSON data.",
-                )
+                raise APIError(http_code=400, error_msg="Malformed JSON data.")
 
-    @classmethod
+    @staticmethod
     def _from_dict_exc_handled(
-        cls, convert_to: Type[DtoType], dictionary: Dict[str, Any]
+        convert_to: Type[DtoType], dictionary: Dict[str, Any]
     ) -> DtoType:
         """
         Dacite conversion to DTO from JSON with handled exceptions
@@ -140,7 +136,7 @@ class NewTaskHandler(BaseAPIHandler):
 
     def post(self) -> None:
         if self.json is None:
-            raise RequestBodyMissingError
+            raise RequestBodyMissingError()
 
         command_dto = self._from_dict_exc_handled(CommandDto, self.json)
         task_ident = self.scheduler.new_task(command_dto)
@@ -175,7 +171,7 @@ class KillTaskHandler(BaseAPIHandler):
 
     def post(self) -> None:
         if self.json is None:
-            raise RequestBodyMissingError
+            raise RequestBodyMissingError()
 
         task_ident_dto = self._from_dict_exc_handled(TaskIdentDto, self.json)
         try:
