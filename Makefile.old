@@ -29,14 +29,6 @@ ifndef BASH_COMPLETION_DIR
   BASH_COMPLETION_DIR=/etc/bash_completion.d
 endif
 
-ifndef CONF_DIR
-  ifeq ($(IS_DEBIAN),true)
-    CONF_DIR = /etc/default
-  else
-    CONF_DIR = /etc/sysconfig
-  endif
-endif
-
 ifndef LIB_DIR
   ifeq ($(IS_DEBIAN),true)
     LIB_DIR = /usr/share

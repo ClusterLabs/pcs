@@ -65,6 +65,12 @@ if test "$SYSTEMD" == yes; then
 fi
 AM_CONDITIONAL([SYSTEMD], [test "$SYSTEMD" == yes])
 
+AC_ARG_WITH([default-config-dir],
+	    [  --with-default-config-dir=DIR  pcs config directory. Default: $sysconfdir/sysconfig ],
+	    [ CONF_DIR="$withval" ],
+	    [ CONF_DIR="$sysconfdir/sysconfig" ])
+AC_SUBST([CONF_DIR])
+
 AC_CONFIG_FILES([Makefile])
 
 AC_OUTPUT
