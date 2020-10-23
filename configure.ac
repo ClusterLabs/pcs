@@ -1,0 +1,59 @@
+# Process this file with autoconf to produce a configure script.
+
+AC_PREREQ([2.63])
+
+AC_INIT([pcs],
+	m4_esyscmd([make/git-version-gen .tarball-version]),
+	[developers@clusterlabs.org])
+
+AC_CONFIG_AUX_DIR([.])
+
+AM_INIT_AUTOMAKE([dist-bzip2 dist-xz])
+
+AC_CONFIG_MACRO_DIR([m4])
+AC_CONFIG_SRCDIR([setup.py])
+
+AC_CANONICAL_HOST
+
+AC_LANG([C])
+
+# Sanitize path
+
+if test "$prefix" = "NONE"; then
+	prefix="/usr"
+	if test "$localstatedir" = "\${prefix}/var"; then
+		localstatedir="/var"
+	fi
+	if test "$sysconfdir" = "\${prefix}/etc"; then
+		sysconfdir="/etc"
+	fi
+	if test "$libdir" = "\${exec_prefix}/lib"; then
+		if test -e /usr/lib64; then
+			libdir="/usr/lib64"
+		else
+			libdir="/usr/lib"
+		fi
+	fi
+fi
+
+case $exec_prefix in
+  NONE)   exec_prefix=$prefix;;
+  prefix) exec_prefix=$prefix;;
+esac
+
+# Checks for programs.
+
+# check stolen from gnulib/m4/gnu-make.m4
+if ! ${MAKE-make} --version /cannot/make/this >/dev/null 2>&1; then
+	AC_MSG_ERROR([you don't seem to have GNU make; it is required])
+fi
+
+AC_PROG_LN_S
+AC_PROG_INSTALL
+AC_PROG_MAKE_SET
+AC_PROG_AWK
+PKG_PROG_PKG_CONFIG
+
+AC_CONFIG_FILES([Makefile])
+
+AC_OUTPUT
