@@ -2,12 +2,10 @@
 UNAME_OS_GNU := $(shell if uname -o | grep -q "GNU/Linux" ; then echo true; else echo false; fi)
 DISTRO_DEBIAN := $(shell if [ -e /etc/debian_version ] ; then echo true; else echo false; fi)
 IS_DEBIAN=false
-DISTRO_DEBIAN_VER_8=false
 
 ifeq ($(UNAME_OS_GNU),true)
   ifeq ($(DISTRO_DEBIAN),true)
     IS_DEBIAN=true
-    DISTRO_DEBIAN_VER_8 := $(shell if grep -q -i "^8\|jessie" /etc/debian_version ; then echo true; else echo false; fi)
   endif
 endif
 
