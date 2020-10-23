@@ -1486,14 +1486,19 @@ def update_transport_knet(
         allow_empty_values=True,
     )
 
-    effective_crypto_hash = crypto_options.get(
+    # there are 2 possibilities how to disable crypto options:
+    #   1. set it to "none"
+    #   2. set it to default, which is "none" according to `man corosync.conf`,
+    #      by using value of empty string
+    crypto_cipher_enabled = crypto_options.get(
+        "cipher", current_crypto_options.get("cipher", "none"),
+    ) not in ["none", ""]
+
+    crypto_hash_disabled = crypto_options.get(
         "hash", current_crypto_options.get("hash", "none"),
-    )
-    if (
-        # default values taken from `man corosync.conf`
-        crypto_options.get("cipher", "none") != "none"
-        and effective_crypto_hash == "none"
-    ):
+    ) in ["none", ""]
+
+    if crypto_cipher_enabled and crypto_hash_disabled:
         report_items.append(
             ReportItem.error(
                 reports.messages.PrerequisiteOptionMustBeEnabledAsWell(
