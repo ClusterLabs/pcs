@@ -71,6 +71,12 @@ AC_ARG_WITH([default-config-dir],
 	    [ CONF_DIR="$sysconfdir/sysconfig" ])
 AC_SUBST([CONF_DIR])
 
+AC_ARG_WITH([pcs-lib-dir],
+	    [  --with-pcs-lib-dir=DIR         pcs lib directory. Default: $libdir ],
+	    [ LIB_DIR="$withval" ],
+	    [ LIB_DIR="$libdir" ])
+AC_SUBST([LIB_DIR])
+
 AC_CONFIG_FILES([Makefile])
 
 AC_OUTPUT

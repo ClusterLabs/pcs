@@ -29,14 +29,6 @@ ifndef BASH_COMPLETION_DIR
   BASH_COMPLETION_DIR=/etc/bash_completion.d
 endif
 
-ifndef LIB_DIR
-  ifeq ($(IS_DEBIAN),true)
-    LIB_DIR = /usr/share
-  else
-    LIB_DIR = ${PREFIX}/lib
-  endif
-endif
-
 ifndef BUNDLE_LOCAL_DIR
   BUNDLE_LOCAL_DIR=./pcs/bundled/
 endif
