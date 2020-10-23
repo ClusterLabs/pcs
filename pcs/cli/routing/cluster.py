@@ -15,10 +15,7 @@ cluster_cmd = create_router(
         "help": lambda lib, argv, modifiers: usage.cluster(argv),
         "setup": cluster.cluster_setup,
         "config": create_router(
-            {
-                "show": cluster.config_show,
-                "update": cluster.config_update,
-            },
+            {"show": cluster.config_show, "update": cluster.config_update,},
             ["cluster", "config"],
             default_cmd="show",
         ),
