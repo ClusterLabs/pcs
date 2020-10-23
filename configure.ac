@@ -55,6 +55,16 @@ AC_PROG_AWK
 PKG_PROG_PKG_CONFIG
 AM_PATH_PYTHON([3.6])
 
+# check for systemd
+PKG_CHECK_MODULES([systemd], [systemd], [SYSTEMD=yes], [SYSTEMD=no])
+if test "$SYSTEMD" == yes; then
+	PKG_CHECK_VAR([SYSTEMD_UNIT_DIR], [systemd], [systemdsystemunitdir])
+	if test "x$SYSTEMD_UNIT_DIR" == "x"; then
+		AC_MSG_ERROR([Unable to detect systemd unit dir automatically])
+	fi
+fi
+AM_CONDITIONAL([SYSTEMD], [test "$SYSTEMD" == yes])
+
 AC_CONFIG_FILES([Makefile])
 
 AC_OUTPUT
