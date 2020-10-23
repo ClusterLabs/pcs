@@ -77,6 +77,12 @@ AC_ARG_WITH([pcs-lib-dir],
 	    [ LIB_DIR="$libdir" ])
 AC_SUBST([LIB_DIR])
 
+AC_ARG_WITH([snmp-mibs-dir],
+	    [  --with-snmp-mibs-dir=DIR      snmp MIB directory. Default: $prefix/share/snmp/mibs ],
+	    [ SNMP_MIB_DIR="$withval" ],
+	    [ SNMP_MIB_DIR="$prefix/share/snmp/mibs" ])
+AC_SUBST([SNMP_MIB_DIR])
+
 AC_CONFIG_FILES([Makefile])
 
 AC_OUTPUT

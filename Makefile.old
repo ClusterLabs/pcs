@@ -33,10 +33,6 @@ ifndef BUNDLE_LOCAL_DIR
   BUNDLE_LOCAL_DIR=./pcs/bundled/
 endif
 
-ifndef SNMP_MIB_DIR
-  SNMP_MIB_DIR=/share/snmp/mibs/
-endif
-
 # INSTALLATION FINE DETAIL CONTROLL
 # =================================
 #  `BUNDLE_INSTALL_PYAGENTX=false`
