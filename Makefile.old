@@ -278,22 +278,6 @@ endif
 bundle_pyagentx_local:
 	$(MAKE) PYAGENTX_LIB_DIR=$(DEST_BUNDLE_LOCAL) bundle_pyagentx
 
-uninstall:
-	rm -f ${DEST_PREFIX}/sbin/pcs
-	rm -rf ${DEST_PYTHON_SITELIB}/pcs
-	rm -rf ${DEST_LIB}/pcsd
-	rm -rf ${DEST_LIB}/pcs
-ifeq ($(IS_DEBIAN)$(IS_SYSTEMCTL),truefalse)
-	rm -f ${DEST_INIT}/pcsd
-else
-	rm -f ${DEST_SYSTEMD_SYSTEM}/pcsd.service
-	rm -f ${DEST_SYSTEMD_SYSTEM}/pcsd-ruby.service
-	rm -f ${DEST_SYSTEMD_SYSTEM}/pcs_snmp_agent.service
-endif
-	rm -f ${DESTDIR}/etc/pam.d/pcsd
-	rm -rf ${DESTDIR}/var/lib/pcsd
-	rm -f ${DEST_SNMP_MIB}/PCMK-PCS*-MIB.txt
-
 newversion:
 	$(PYTHON) newversion.py
 
