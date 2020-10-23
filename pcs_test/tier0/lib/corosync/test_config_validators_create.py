@@ -1,6 +1,11 @@
 # pylint: disable=too-many-lines
 from unittest import TestCase
 
+from pcs_test.tier0.lib.corosync.test_config_validators_common import (
+    TotemBase,
+    TransportKnetBase,
+    TransportUdpBase,
+)
 from pcs_test.tools import fixture
 from pcs_test.tools.assertions import assert_report_item_list_equal
 from pcs_test.tools.custom_mock import patch_getaddrinfo
@@ -1570,681 +1575,99 @@ class CreateLinkListKnet(CreateLinkListCommonMixin, TestCase):
         )
 
 
-class CreateTransportUdp(TestCase):
-    def test_no_options(self):
-        assert_report_item_list_equal(
-            config_validators.create_transport_udp({}, {}, {}), []
+class CreateTransportUdp(TransportUdpBase, TestCase):
+    def call_function(
+        self, generic_options, compression_options, crypto_options
+    ):
+        return config_validators.create_transport_udp(
+            generic_options, compression_options, crypto_options
         )
 
-    def test_all_valid(self):
+    def test_empty_values_not_allowed(self):
         assert_report_item_list_equal(
-            config_validators.create_transport_udp(
-                {"ip_version": "ipv4", "netmtu": "1234",}, {}, {}
-            ),
-            [],
-        )
-
-    def test_invalid_all_values(self):
-        assert_report_item_list_equal(
-            config_validators.create_transport_udp(
-                {"ip_version": "ipv5", "netmtu": "-5",}, {}, {}
-            ),
+            self.call_function({"ip_version": "", "netmtu": ""}, {}, {}),
             [
                 fixture.error(
                     report_codes.INVALID_OPTION_VALUE,
-                    option_value="ipv5",
+                    option_value="",
                     option_name="ip_version",
                     allowed_values=("ipv4", "ipv6", "ipv4-6", "ipv6-4"),
-                    cannot_be_empty=False,
-                    forbidden_characters=None,
-                ),
-                fixture.error(
-                    report_codes.INVALID_OPTION_VALUE,
-                    option_value="-5",
-                    option_name="netmtu",
-                    allowed_values="a positive integer",
-                    cannot_be_empty=False,
-                    forbidden_characters=None,
-                ),
-            ],
-        )
-
-    def test_invalid_option(self):
-        assert_report_item_list_equal(
-            config_validators.create_transport_udp(
-                {"knet_pmtud_interval": "1234", "link_mode": "active",},
-                {"level": "5", "model": "zlib", "threshold": "1234",},
-                {"cipher": "aes256", "hash": "sha256", "model": "nss",},
-            ),
-            [
-                fixture.error(
-                    report_codes.INVALID_OPTIONS,
-                    option_names=["knet_pmtud_interval", "link_mode"],
-                    option_type="udp/udpu transport",
-                    allowed=["ip_version", "netmtu"],
-                    allowed_patterns=[],
-                ),
-                fixture.error(
-                    report_codes.COROSYNC_TRANSPORT_UNSUPPORTED_OPTIONS,
-                    option_type="compression",
-                    actual_transport="udp/udpu",
-                    required_transports=["knet"],
-                ),
-                fixture.error(
-                    report_codes.COROSYNC_TRANSPORT_UNSUPPORTED_OPTIONS,
-                    option_type="crypto",
-                    actual_transport="udp/udpu",
-                    required_transports=["knet"],
-                ),
-            ],
-        )
-
-    def test_forbidden_characters(self):
-        assert_report_item_list_equal(
-            config_validators.create_transport_udp(
-                {
-                    "ip_version": "}ipv4{",
-                    "netmtu": "\r1234\n",
-                    "op:.tion": "va}l{ue",
-                },
-                {},
-                {},
-            ),
-            [
-                fixture.error(
-                    report_codes.INVALID_OPTIONS,
-                    option_names=["op:.tion"],
-                    option_type="udp/udpu transport",
-                    allowed=["ip_version", "netmtu"],
-                    allowed_patterns=[],
-                ),
-                fixture.error(
-                    report_codes.INVALID_OPTION_VALUE,
-                    option_value="}ipv4{",
-                    option_name="ip_version",
-                    allowed_values=("ipv4", "ipv6", "ipv4-6", "ipv6-4"),
-                    cannot_be_empty=False,
-                    forbidden_characters=None,
-                ),
-                fixture.error(
-                    report_codes.INVALID_OPTION_VALUE,
-                    option_value="\r1234\n",
-                    option_name="netmtu",
-                    allowed_values="a positive integer",
-                    cannot_be_empty=False,
-                    forbidden_characters=None,
-                ),
-                fixture.error(
-                    report_codes.INVALID_USERDEFINED_OPTIONS,
-                    option_names=["op:.tion"],
-                    option_type="udp/udpu transport",
-                    allowed_characters="a-z A-Z 0-9 /_-",
-                ),
-                fixture.error(
-                    report_codes.INVALID_OPTION_VALUE,
-                    option_value="}ipv4{",
-                    option_name="ip_version",
-                    **forbidden_characters_kwargs,
-                ),
-                fixture.error(
-                    report_codes.INVALID_OPTION_VALUE,
-                    option_value="\r1234\n",
-                    option_name="netmtu",
-                    **forbidden_characters_kwargs,
-                ),
-                fixture.error(
-                    report_codes.INVALID_OPTION_VALUE,
-                    option_value="va}l{ue",
-                    option_name="op:.tion",
-                    **forbidden_characters_kwargs,
-                ),
-            ],
-        )
-
-
-class CreateTransportKnet(TestCase):
-    def test_no_options(self):
-        assert_report_item_list_equal(
-            config_validators.create_transport_knet({}, {}, {}), []
-        )
-
-    def test_all_valid(self):
-        assert_report_item_list_equal(
-            config_validators.create_transport_knet(
-                {
-                    "ip_version": "ipv4",
-                    "knet_pmtud_interval": "1234",
-                    "link_mode": "active",
-                },
-                {"level": "5", "model": "zlib", "threshold": "1234",},
-                {"cipher": "aes256", "hash": "sha256", "model": "nss",},
-            ),
-            [],
-        )
-
-    def test_invalid_all_values(self):
-        assert_report_item_list_equal(
-            config_validators.create_transport_knet(
-                {
-                    "ip_version": "ipv5",
-                    "knet_pmtud_interval": "a minute",
-                    "link_mode": "random",
-                },
-                {"level": "maximum", "model": "", "threshold": "reasonable",},
-                {"cipher": "strongest", "hash": "fastest", "model": "best",},
-            ),
-            [
-                fixture.error(
-                    report_codes.INVALID_OPTION_VALUE,
-                    option_value="ipv5",
-                    option_name="ip_version",
-                    allowed_values=("ipv4", "ipv6", "ipv4-6", "ipv6-4"),
-                    cannot_be_empty=False,
-                    forbidden_characters=None,
-                ),
-                fixture.error(
-                    report_codes.INVALID_OPTION_VALUE,
-                    option_value="a minute",
-                    option_name="knet_pmtud_interval",
-                    allowed_values="a non-negative integer",
-                    cannot_be_empty=False,
-                    forbidden_characters=None,
-                ),
-                fixture.error(
-                    report_codes.INVALID_OPTION_VALUE,
-                    option_value="random",
-                    option_name="link_mode",
-                    allowed_values=("active", "passive", "rr"),
-                    cannot_be_empty=False,
-                    forbidden_characters=None,
-                ),
-                fixture.error(
-                    report_codes.INVALID_OPTION_VALUE,
-                    option_value="maximum",
-                    option_name="level",
-                    allowed_values="a non-negative integer",
                     cannot_be_empty=False,
                     forbidden_characters=None,
                 ),
                 fixture.error(
                     report_codes.INVALID_OPTION_VALUE,
                     option_value="",
-                    option_name="model",
-                    allowed_values=(
-                        "a compression model e.g. zlib, lz4 or bzip2"
-                    ),
-                    cannot_be_empty=True,
-                    forbidden_characters=None,
-                ),
-                fixture.error(
-                    report_codes.INVALID_OPTION_VALUE,
-                    option_value="reasonable",
-                    option_name="threshold",
-                    allowed_values="a non-negative integer",
-                    cannot_be_empty=False,
-                    forbidden_characters=None,
-                ),
-                fixture.error(
-                    report_codes.INVALID_OPTION_VALUE,
-                    option_value="strongest",
-                    option_name="cipher",
-                    allowed_values=("none", "aes256", "aes192", "aes128"),
-                    cannot_be_empty=False,
-                    forbidden_characters=None,
-                ),
-                fixture.error(
-                    report_codes.INVALID_OPTION_VALUE,
-                    option_value="fastest",
-                    option_name="hash",
-                    allowed_values=(
-                        "none",
-                        "md5",
-                        "sha1",
-                        "sha256",
-                        "sha384",
-                        "sha512",
-                    ),
-                    cannot_be_empty=False,
-                    forbidden_characters=None,
-                ),
-                fixture.error(
-                    report_codes.INVALID_OPTION_VALUE,
-                    option_value="best",
-                    option_name="model",
-                    allowed_values=("nss", "openssl"),
+                    option_name="netmtu",
+                    allowed_values="a positive integer",
                     cannot_be_empty=False,
                     forbidden_characters=None,
                 ),
             ],
         )
 
-    def test_invalid_options(self):
-        assert_report_item_list_equal(
-            config_validators.create_transport_knet(
-                {"level": "5", "netmtu": "1500",},
-                {"cipher": "aes256", "hash": "sha256",},
-                {"ip_version": "ipv4", "link_mode": "active",},
-            ),
-            [
-                fixture.error(
-                    report_codes.INVALID_OPTIONS,
-                    option_names=["level", "netmtu"],
-                    option_type="knet transport",
-                    allowed=["ip_version", "knet_pmtud_interval", "link_mode"],
-                    allowed_patterns=[],
-                ),
-                fixture.error(
-                    report_codes.INVALID_OPTIONS,
-                    option_names=["cipher", "hash"],
-                    option_type="compression",
-                    allowed=["level", "model", "threshold"],
-                    allowed_patterns=[],
-                ),
-                fixture.error(
-                    report_codes.INVALID_OPTIONS,
-                    option_names=["ip_version", "link_mode"],
-                    option_type="crypto",
-                    allowed=["cipher", "hash", "model"],
-                    allowed_patterns=[],
-                ),
-            ],
+
+class CreateTransportKnet(TransportKnetBase, TestCase):
+    def call_function(
+        self,
+        generic_options,
+        compression_options,
+        crypto_options,
+        current_crypto_options=None,
+    ):
+        # pylint: disable=unused-argument
+        return config_validators.create_transport_knet(
+            generic_options, compression_options, crypto_options
         )
 
-    def test_crypto_disabled(self):
-        assert_report_item_list_equal(
-            config_validators.create_transport_knet(
-                {}, {}, {"cipher": "none", "hash": "none",}
-            ),
-            [],
+    def test_empty_values_not_allowed(self):
+        option_allowed_values = (
+            ("ip_version", ("ipv4", "ipv6", "ipv4-6", "ipv6-4")),
+            ("knet_pmtud_interval", "a non-negative integer"),
+            ("link_mode", ("active", "passive", "rr")),
+            ("level", "a non-negative integer"),
+            ("model", ("a compression model e.g. zlib, lz4 or bzip2")),
+            ("threshold", "a non-negative integer"),
+            ("cipher", ("none", "aes256", "aes192", "aes128")),
+            ("hash", ("none", "md5", "sha1", "sha256", "sha384", "sha512")),
+            ("model", ("nss", "openssl")),
         )
-
-    def test_crypto_enabled_cipher_disabled_hash(self):
         assert_report_item_list_equal(
-            config_validators.create_transport_knet(
-                {}, {}, {"cipher": "aes256", "hash": "none",}
-            ),
-            [
-                fixture.error(
-                    report_codes.PREREQUISITE_OPTION_MUST_BE_ENABLED_AS_WELL,
-                    option_name="cipher",
-                    option_type="crypto",
-                    prerequisite_name="hash",
-                    prerequisite_type="crypto",
-                )
-            ],
-        )
-
-    def test_crypto_enabled_cipher_default_hash(self):
-        assert_report_item_list_equal(
-            config_validators.create_transport_knet(
-                {}, {}, {"cipher": "aes256",}
-            ),
-            [
-                fixture.error(
-                    report_codes.PREREQUISITE_OPTION_MUST_BE_ENABLED_AS_WELL,
-                    option_name="cipher",
-                    option_type="crypto",
-                    prerequisite_name="hash",
-                    prerequisite_type="crypto",
-                )
-            ],
-        )
-
-    def test_crypto_disabled_cipher_default_hash(self):
-        assert_report_item_list_equal(
-            config_validators.create_transport_knet(
-                {}, {}, {"cipher": "none",}
-            ),
-            [],
-        )
-
-    def test_crypto_enabled_hash_disabled_cipher(self):
-        assert_report_item_list_equal(
-            config_validators.create_transport_knet(
-                {}, {}, {"cipher": "none", "hash": "sha256",}
-            ),
-            [],
-        )
-
-    def test_crypto_enabled_hash_default_cipher(self):
-        assert_report_item_list_equal(
-            config_validators.create_transport_knet(
-                {}, {}, {"hash": "sha256",}
-            ),
-            [],
-        )
-
-    def test_crypto_disabled_hash_default_cipher(self):
-        assert_report_item_list_equal(
-            config_validators.create_transport_knet({}, {}, {"hash": "none",}),
-            [],
-        )
-
-    def test_forbidden_characters(self):
-        assert_report_item_list_equal(
-            config_validators.create_transport_knet(
-                {
-                    "ip_version": "ipv4\r",
-                    "knet_pmtud_interval": "\n1234",
-                    "link_mode": "a{ctive",
-                    "op:.tionA": "va}l{ueA",
-                },
-                {
-                    "level": "}5",
-                    "model": "zl\rib",
-                    "threshold": "1\n234",
-                    "op:.tionB": "va}l{ueB",
-                },
-                {
-                    "cipher": "aes{256",
-                    "hash": "sha256}",
-                    "model": "nss\n",
-                    "op:.tionC": "va}l{ueC",
-                },
-            ),
-            [
-                fixture.error(
-                    report_codes.INVALID_OPTIONS,
-                    option_names=["op:.tionA"],
-                    option_type="knet transport",
-                    allowed=["ip_version", "knet_pmtud_interval", "link_mode"],
-                    allowed_patterns=[],
-                ),
-                fixture.error(
-                    report_codes.INVALID_OPTION_VALUE,
-                    option_value="ipv4\r",
-                    option_name="ip_version",
-                    allowed_values=("ipv4", "ipv6", "ipv4-6", "ipv6-4"),
-                    cannot_be_empty=False,
-                    forbidden_characters=None,
-                ),
-                fixture.error(
-                    report_codes.INVALID_OPTION_VALUE,
-                    option_value="\n1234",
-                    option_name="knet_pmtud_interval",
-                    allowed_values="a non-negative integer",
-                    cannot_be_empty=False,
-                    forbidden_characters=None,
-                ),
-                fixture.error(
-                    report_codes.INVALID_OPTION_VALUE,
-                    option_value="a{ctive",
-                    option_name="link_mode",
-                    allowed_values=("active", "passive", "rr"),
-                    cannot_be_empty=False,
-                    forbidden_characters=None,
-                ),
-                fixture.error(
-                    report_codes.INVALID_USERDEFINED_OPTIONS,
-                    option_names=["op:.tionA"],
-                    option_type="knet transport",
-                    allowed_characters="a-z A-Z 0-9 /_-",
-                ),
-                fixture.error(
-                    report_codes.INVALID_OPTION_VALUE,
-                    option_value="ipv4\r",
-                    option_name="ip_version",
-                    **forbidden_characters_kwargs,
-                ),
-                fixture.error(
-                    report_codes.INVALID_OPTION_VALUE,
-                    option_value="\n1234",
-                    option_name="knet_pmtud_interval",
-                    **forbidden_characters_kwargs,
-                ),
-                fixture.error(
-                    report_codes.INVALID_OPTION_VALUE,
-                    option_value="a{ctive",
-                    option_name="link_mode",
-                    **forbidden_characters_kwargs,
-                ),
-                fixture.error(
-                    report_codes.INVALID_OPTION_VALUE,
-                    option_value="va}l{ueA",
-                    option_name="op:.tionA",
-                    **forbidden_characters_kwargs,
-                ),
-                fixture.error(
-                    report_codes.INVALID_OPTIONS,
-                    option_names=["op:.tionB"],
-                    option_type="compression",
-                    allowed=["level", "model", "threshold"],
-                    allowed_patterns=[],
-                ),
-                fixture.error(
-                    report_codes.INVALID_OPTION_VALUE,
-                    option_value="}5",
-                    option_name="level",
-                    allowed_values="a non-negative integer",
-                    cannot_be_empty=False,
-                    forbidden_characters=None,
-                ),
-                fixture.error(
-                    report_codes.INVALID_OPTION_VALUE,
-                    option_value="1\n234",
-                    option_name="threshold",
-                    allowed_values="a non-negative integer",
-                    cannot_be_empty=False,
-                    forbidden_characters=None,
-                ),
-                fixture.error(
-                    report_codes.INVALID_USERDEFINED_OPTIONS,
-                    option_names=["op:.tionB"],
-                    option_type="compression",
-                    allowed_characters="a-z A-Z 0-9 /_-",
-                ),
-                fixture.error(
-                    report_codes.INVALID_OPTION_VALUE,
-                    option_value="}5",
-                    option_name="level",
-                    **forbidden_characters_kwargs,
-                ),
-                fixture.error(
-                    report_codes.INVALID_OPTION_VALUE,
-                    option_value="zl\rib",
-                    option_name="model",
-                    **forbidden_characters_kwargs,
-                ),
-                fixture.error(
-                    report_codes.INVALID_OPTION_VALUE,
-                    option_value="1\n234",
-                    option_name="threshold",
-                    **forbidden_characters_kwargs,
-                ),
-                fixture.error(
-                    report_codes.INVALID_OPTION_VALUE,
-                    option_value="va}l{ueB",
-                    option_name="op:.tionB",
-                    **forbidden_characters_kwargs,
-                ),
-                fixture.error(
-                    report_codes.INVALID_OPTIONS,
-                    option_names=["op:.tionC"],
-                    option_type="crypto",
-                    allowed=["cipher", "hash", "model"],
-                    allowed_patterns=[],
-                ),
-                fixture.error(
-                    report_codes.INVALID_OPTION_VALUE,
-                    option_value="aes{256",
-                    option_name="cipher",
-                    allowed_values=("none", "aes256", "aes192", "aes128"),
-                    cannot_be_empty=False,
-                    forbidden_characters=None,
-                ),
-                fixture.error(
-                    report_codes.INVALID_OPTION_VALUE,
-                    option_value="sha256}",
-                    option_name="hash",
-                    allowed_values=(
-                        "none",
-                        "md5",
-                        "sha1",
-                        "sha256",
-                        "sha384",
-                        "sha512",
-                    ),
-                    cannot_be_empty=False,
-                    forbidden_characters=None,
-                ),
-                fixture.error(
-                    report_codes.INVALID_OPTION_VALUE,
-                    option_value="nss\n",
-                    option_name="model",
-                    allowed_values=("nss", "openssl"),
-                    cannot_be_empty=False,
-                    forbidden_characters=None,
-                ),
-                fixture.error(
-                    report_codes.INVALID_USERDEFINED_OPTIONS,
-                    option_names=["op:.tionC"],
-                    option_type="crypto",
-                    allowed_characters="a-z A-Z 0-9 /_-",
-                ),
-                fixture.error(
-                    report_codes.INVALID_OPTION_VALUE,
-                    option_value="aes{256",
-                    option_name="cipher",
-                    **forbidden_characters_kwargs,
-                ),
-                fixture.error(
-                    report_codes.INVALID_OPTION_VALUE,
-                    option_value="sha256}",
-                    option_name="hash",
-                    **forbidden_characters_kwargs,
-                ),
-                fixture.error(
-                    report_codes.INVALID_OPTION_VALUE,
-                    option_value="nss\n",
-                    option_name="model",
-                    **forbidden_characters_kwargs,
-                ),
-                fixture.error(
-                    report_codes.INVALID_OPTION_VALUE,
-                    option_value="va}l{ueC",
-                    option_name="op:.tionC",
-                    **forbidden_characters_kwargs,
-                ),
-            ],
-        )
-
-
-class CreateTotem(TestCase):
-    allowed_options = [
-        "consensus",
-        "downcheck",
-        "fail_recv_const",
-        "heartbeat_failures_allowed",
-        "hold",
-        "join",
-        "max_messages",
-        "max_network_delay",
-        "merge",
-        "miss_count_const",
-        "send_join",
-        "seqno_unchanged_const",
-        "token",
-        "token_coefficient",
-        "token_retransmit",
-        "token_retransmits_before_loss_const",
-        "window_size",
-    ]
-
-    def test_no_options(self):
-        assert_report_item_list_equal(config_validators.create_totem({}), [])
-
-    def test_all_valid(self):
-        assert_report_item_list_equal(
-            config_validators.create_totem(
-                {name: value for value, name in enumerate(self.allowed_options)}
-            ),
-            [],
-        )
-
-    def test_invalid_all_values(self):
-        assert_report_item_list_equal(
-            config_validators.create_totem(
-                {name: "x" for name in self.allowed_options}
+            self.call_function(
+                {"ip_version": "", "knet_pmtud_interval": "", "link_mode": "",},
+                {"level": "", "model": "", "threshold": "",},
+                {"cipher": "", "hash": "", "model": "",},
             ),
             [
                 fixture.error(
                     report_codes.INVALID_OPTION_VALUE,
-                    option_value="x",
+                    option_value="",
                     option_name=name,
+                    allowed_values=allowed,
+                    cannot_be_empty="compression" in allowed or False,
+                    forbidden_characters=None,
+                )
+                for name, allowed in option_allowed_values
+            ],
+        )
+
+
+class CreateTotem(TotemBase, TestCase):
+    def call_function(self, options):
+        return config_validators.create_totem(options)
+
+    def test_empty_values_not_allowed(self):
+        assert_report_item_list_equal(
+            self.call_function({name: "" for name in self.allowed_options}),
+            [
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_name=name,
+                    option_value="",
                     allowed_values="a non-negative integer",
                     cannot_be_empty=False,
                     forbidden_characters=None,
                 )
                 for name in self.allowed_options
-            ],
-        )
-
-    def test_invalid_options(self):
-        assert_report_item_list_equal(
-            config_validators.create_totem(
-                {"nonsense1": "0", "nonsense2": "doesnt matter",}
-            ),
-            [
-                fixture.error(
-                    report_codes.INVALID_OPTIONS,
-                    option_names=["nonsense1", "nonsense2"],
-                    option_type="totem",
-                    allowed=self.allowed_options,
-                    allowed_patterns=[],
-                ),
-            ],
-        )
-
-    def test_forbidden_characters(self):
-        forbidden = "{}\r\n"
-        options = {
-            name: f"{value}{forbidden[value % len(forbidden)]}"
-            for value, name in enumerate(self.allowed_options)
-        }
-        all_options = dict(options)
-        all_options["op:.tion"] = "va}l{ue"
-
-        assert_report_item_list_equal(
-            config_validators.create_totem(all_options),
-            [
-                fixture.error(
-                    report_codes.INVALID_OPTION_VALUE,
-                    option_value=value,
-                    option_name=name,
-                    **forbidden_characters_kwargs,
-                )
-                for name, value in options.items()
-            ]
-            + [
-                fixture.error(
-                    report_codes.INVALID_OPTION_VALUE,
-                    option_value=value,
-                    option_name=name,
-                    allowed_values="a non-negative integer",
-                    cannot_be_empty=False,
-                    forbidden_characters=None,
-                )
-                for name, value in options.items()
-            ]
-            + [
-                fixture.error(
-                    report_codes.INVALID_USERDEFINED_OPTIONS,
-                    option_names=["op:.tion"],
-                    option_type="totem",
-                    allowed_characters="a-z A-Z 0-9 /_-",
-                ),
-                fixture.error(
-                    report_codes.INVALID_OPTIONS,
-                    option_names=["op:.tion"],
-                    option_type="totem",
-                    allowed=self.allowed_options,
-                    allowed_patterns=[],
-                ),
-                fixture.error(
-                    report_codes.INVALID_OPTION_VALUE,
-                    option_value="va}l{ue",
-                    option_name="op:.tion",
-                    **forbidden_characters_kwargs,
-                ),
             ],
         )

@@ -1295,7 +1295,6 @@ def create_transport_udp(
     )
 
 
-# TODO: tests
 def update_transport_udp(
     generic_options: Mapping[str, str],
     compression_options: Mapping[str, str],
@@ -1464,7 +1463,6 @@ def create_transport_knet(
     return report_items
 
 
-# TODO: tests
 def update_transport_knet(
     generic_options: Mapping[str, str],
     compression_options: Mapping[str, str],
@@ -1571,7 +1569,6 @@ def create_totem(options: Mapping[str, str]) -> ReportItemList:
     return _validate_totem_options(options, allow_empty_values=False)
 
 
-# TODO: tests
 def update_totem(options: Mapping[str, str]) -> ReportItemList:
     """
     Validate updating the "totem" section
