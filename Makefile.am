@@ -37,6 +37,9 @@ gen-ChangeLog:
 		mv $(distdir)/cl-t $(distdir)/ChangeLog;		\
 	fi
 
+clean-local:
+	$(PYTHON) setup.py clean
+
 # this will get rid of "libtoolized" m4 files
 maintainer-clean-local:
 	rm -rf $(filter-out \

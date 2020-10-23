@@ -376,13 +376,6 @@ check: black_check python_static_code_analysis tests
 
 BUNDLE_CONGIG_FILE := $(RPM_BUILD_DIR)/pcsd-bundle-config
 
-clean:
-	$(PYTHON) setup.py clean
-	rm -rf $(RPM_BUILD_DIR)
-	rm -f $(SPEC)
-	rm -rf $(BUNDLE_LOCAL_DIR)
-	rm -f pcs-*.tar.gz
-
 $(BUNDLE_CONGIG_FILE): $(RPM_BUILD_DIR)
 	rm -f $@
 	echo '---' >> $@
