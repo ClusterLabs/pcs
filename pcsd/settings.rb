@@ -6,6 +6,7 @@ PCSD_DEFAULT_PORT = 2224
 CRT_FILE = PCSD_VAR_LOCATION + 'pcsd.crt'
 KEY_FILE = PCSD_VAR_LOCATION + 'pcsd.key'
 COOKIE_FILE = PCSD_VAR_LOCATION + 'pcsd.cookiesecret'
+DH_KEY_FILE = PCSD_EXEC_LOCATION + 'rfc7919-ffdhe2048.pem'
 
 PENGINE = "/usr/libexec/pacemaker/pengine"
 CIB_BINARY = '/usr/libexec/pacemaker/cib'

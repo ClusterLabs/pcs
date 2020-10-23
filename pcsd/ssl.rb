@@ -157,7 +157,23 @@ dh_key_bits = 0
 if ENV['PCSD_SSL_DH_KEX_BITS']
   dh_key_bits = Integer(ENV['PCSD_SSL_DH_KEX_BITS']) rescue 0
 end
-if dh_key_bits > 0
+dh_key_file = DH_KEY_FILE
+if ENV['PCSD_SSL_DH_KEX_FILE']
+  dh_key_file = ENV['PCSD_SSL_DH_KEX_FILE']
+end
+
+dh_key = nil
+if not dh_key_file.empty?()
+  $logger.info "Using '#{dh_key_file}' as a DH key..."
+  begin
+    dh_key = OpenSSL::PKey::DH.new(File.read(dh_key_file))
+    dh_key.generate_key!
+    $logger.info "DH key loaded"
+  rescue => e
+    $logger.error "Unable to read DH key file: #{e}"
+    exit 1
+  end
+elsif dh_key_bits > 0
   $logger.info "Generating #{dh_key_bits}bits long DH key..."
   dh_key = OpenSSL::PKey::DH.generate(dh_key_bits)
   $logger.info "DH key created"
@@ -187,7 +203,7 @@ webrick_options = {
   :SSLCertName        => [[ "CN", server_name ]],
   :SSLOptions         => get_ssl_options(),
 }
-if dh_key_bits > 0
+if not dh_key.nil?()
   webrick_options[:SSLTmpDhCallback] = lambda {|ctx, is_export, keylen| dh_key }
 end
 

@@ -5,6 +5,7 @@
 ### Security
 - Web UI sends HTTP header Content-Security-Policy as an alternative to
   X-Frame-Options
+- Added support for loading DH keys from a file ([rhbz#1888479])
 
 ### Added
 - `pcs resource [safe-]disable --simulate` has a new option `--brief` to print
@@ -23,6 +24,7 @@
 [rhbz#1833115]: https://bugzilla.redhat.com/show_bug.cgi?id=1833115
 [rhbz#1843593]: https://bugzilla.redhat.com/show_bug.cgi?id=1843593
 [rhbz#1870551]: https://bugzilla.redhat.com/show_bug.cgi?id=1870551
+[rhbz#1888479]: https://bugzilla.redhat.com/show_bug.cgi?id=1888479
 
 
 ## [0.9.169] - 2020-04-09
