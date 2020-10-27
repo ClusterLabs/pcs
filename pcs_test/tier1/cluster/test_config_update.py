@@ -202,6 +202,7 @@ class UpdateLocal(AssertPcsMixin, TestCase):
                 Error: invalid totem option 'down_check', allowed options are: 'consensus', 'downcheck', 'fail_recv_const', 'heartbeat_failures_allowed', 'hold', 'join', 'max_messages', 'max_network_delay', 'merge', 'miss_count_const', 'send_join', 'seqno_unchanged_const', 'token', 'token_coefficient', 'token_retransmit', 'token_retransmits_before_loss_const', 'window_size'
                 Error: 'ipvx' is not a valid ip_version value, use 'ipv4', 'ipv4-6', 'ipv6', 'ipv6-4'
                 Error: 'NaN' is not a valid threshold value, use a non-negative integer
+                Error: If crypto option 'cipher' is enabled, crypto option 'hash' must be enabled as well
                 Error: Errors have occurred, therefore pcs is unable to continue
                 """
             ),
