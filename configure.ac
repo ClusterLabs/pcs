@@ -77,6 +77,18 @@ AC_ARG_ENABLE([local-build],
 	      [  --enable-local-build           Download and install all dependencies as user / bundles], [local_build="yes"])
 AM_CONDITIONAL([LOCAL_BUILD], [test "x$local_build" == "xyes"])
 
+# used only for testing and reformatting
+# if binary is not availalbe in the system, it will be installed by local-build (if enabled)
+AC_CHECK_PROGS([BLACK], [black])
+if test "x$local_build" != "xyes"; then
+	if test "x$BLACK" == "x"; then
+		AC_MSG_WARN([Unable to find black binary. black test disable. Either execute make install_python_deps or install python black])
+	fi
+else
+	BLACK="black"
+	AC_SUBST([BLACK])
+fi
+
 AC_ARG_WITH([default-config-dir],
 	    [  --with-default-config-dir=DIR  pcs config directory. Default: $sysconfdir/sysconfig ],
 	    [ CONF_DIR="$withval" ],

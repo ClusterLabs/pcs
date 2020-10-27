@@ -34,7 +34,16 @@ install_python_deps: requirements.txt
 pylint: pylintrc
 	$(TIME) $(PYTHON) -m pylint --rcfile pylintrc --persistent=n --reports=n --score=n --disable similarities pcs pcs_test
 
-check-local: pylint
+black_check: pyproject.toml
+	$(TIME) $(BLACK) --config pyproject.toml --check .
+
+black: pyproject.toml
+	$(BLACK) --config pyproject.toml .
+
+if LOCAL_BUILD
+check-local: install_python_deps
+endif
+check-local: pylint black_check
 
 # old compat wrapper
 install_pip: install_python_deps
