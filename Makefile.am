@@ -20,12 +20,21 @@ ACLOCAL_AMFLAGS		= -I m4
 
 SUBDIRS			= 
 
+
+# depedency management
+
 if LOCAL_BUILD
 PIP_FLAGS		= --user
 endif
 
 install_python_deps: requirements.txt
 	$(PIP) install --upgrade $(PIP_FLAGS) --no-use-pep517 -r $< || $(PIP) install --upgrade -r $<
+
+# testing
+pylint: pylintrc
+	$(TIME) $(PYTHON) -m pylint --rcfile pylintrc --persistent=n --reports=n --score=n --disable similarities pcs pcs_test
+
+check-local: pylint
 
 # old compat wrapper
 install_pip: install_python_deps

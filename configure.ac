@@ -55,11 +55,13 @@ AC_PROG_AWK
 PKG_PROG_PKG_CONFIG
 AM_PATH_PYTHON([3.6])
 
-# required only to install python requirements
+# required to install python requirements
 AC_CHECK_PROGS([PIP], [pip])
 if test x$PIP == x; then
 	AC_MSG_ERROR([Unable to find pip binary])
 fi
+# used to measure time for some tests, not critical if not available
+AC_CHECK_PROGS([TIME], [time])
 
 # check for systemd
 PKG_CHECK_MODULES([systemd], [systemd], [SYSTEMD=yes], [SYSTEMD=no])
