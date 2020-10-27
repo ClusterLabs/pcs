@@ -238,11 +238,6 @@ newversion:
 # CODE QUALITY
 # ===========
 
-install_pip: requirements.txt
-	$(PYTHON) -m pip install --upgrade -r $<
-
-pylint_requirements: install_pip
-
 pylint:
 	time $(PYTHON) -m pylint --rcfile pylintrc --persistent=n --reports=n --score=n --disable similarities pcs pcs_test
 

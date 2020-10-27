@@ -20,6 +20,17 @@ ACLOCAL_AMFLAGS		= -I m4
 
 SUBDIRS			= 
 
+if LOCAL_BUILD
+PIP_FLAGS		= --user
+endif
+
+install_python_deps: requirements.txt
+	$(PIP) install --upgrade $(PIP_FLAGS) --no-use-pep517 -r $< || $(PIP) install --upgrade -r $<
+
+# old compat wrapper
+install_pip: install_python_deps
+pylint_requirements: install_pip
+
 BUILT_SOURCES = .version
 .version:
 	echo $(VERSION) > $@-t && mv $@-t $@

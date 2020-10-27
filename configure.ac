@@ -55,6 +55,12 @@ AC_PROG_AWK
 PKG_PROG_PKG_CONFIG
 AM_PATH_PYTHON([3.6])
 
+# required only to install python requirements
+AC_CHECK_PROGS([PIP], [pip])
+if test x$PIP == x; then
+	AC_MSG_ERROR([Unable to find pip binary])
+fi
+
 # check for systemd
 PKG_CHECK_MODULES([systemd], [systemd], [SYSTEMD=yes], [SYSTEMD=no])
 if test "$SYSTEMD" == yes; then
@@ -64,6 +70,10 @@ if test "$SYSTEMD" == yes; then
 	fi
 fi
 AM_CONDITIONAL([SYSTEMD], [test "$SYSTEMD" == yes])
+
+AC_ARG_ENABLE([local-build],
+	      [  --enable-local-build           Download and install all dependencies as user / bundles], [local_build="yes"])
+AM_CONDITIONAL([LOCAL_BUILD], [test "x$local_build" == "xyes"])
 
 AC_ARG_WITH([default-config-dir],
 	    [  --with-default-config-dir=DIR  pcs config directory. Default: $sysconfdir/sysconfig ],
