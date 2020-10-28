@@ -78,4 +78,4 @@ if choice != "y":
     sys.exit(0)
 
 print(os.system("git commit -a -m 'Bumped to " + new_version + "'"))
-print(os.system("git tag " + new_version))
+print(os.system("git tag -a " + new_version))
