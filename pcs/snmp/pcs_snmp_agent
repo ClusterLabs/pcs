@@ -9,7 +9,7 @@ sys.path.insert(0, PACKAGE_DIR)
 
 import pcs
 
-pcs.settings.pcs_bundled_pacakges_dir = os.path.join(
+pcs.settings.pcs_bundled_packages_dir = os.path.join(
     PACKAGE_DIR, "pcs/bundled/packages"
 )
 pcs.settings.pcsd_exec_location = os.path.join(PACKAGE_DIR, "pcsd")

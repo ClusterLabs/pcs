@@ -18,8 +18,8 @@ from pcs import (
     settings,
 )
 
-if settings.pcs_bundled_pacakges_dir not in sys.path:
-    sys.path.insert(0, settings.pcs_bundled_pacakges_dir)
+if settings.pcs_bundled_packages_dir not in sys.path:
+    sys.path.insert(0, settings.pcs_bundled_packages_dir)
 
 settings.pcsd_exec_location = os.path.join(PACKAGE_DIR, "pcsd")
 pcs_internal.main()

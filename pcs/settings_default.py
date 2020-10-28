@@ -70,7 +70,7 @@ booth_config_dir = "/etc/booth"
 booth_binary = "/usr/sbin/booth"
 default_request_timeout = 60
 pcs_bundled_dir = "/usr/lib/pcs/bundled/"
-pcs_bundled_pacakges_dir = os.path.join(pcs_bundled_dir, "packages")
+pcs_bundled_packages_dir = os.path.join(pcs_bundled_dir, "packages")
 
 default_ssl_ciphers = "DEFAULT:!RC4:!3DES:@STRENGTH"
 
