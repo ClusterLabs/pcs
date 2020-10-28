@@ -23,15 +23,44 @@ SUBDIRS			=
 
 # depedency management
 
+# 1 - sources directory - with python package sources
+# 2 - destination directory - python package will be installed into the
+#     `packages` subdirectory of this destination directory
+define build_python_bundle
+	cd $(1) && \
+	PYTHONPATH=$(2)/packages/ \
+	LC_ALL=C.utf8 \
+	$(PYTHON) setup.py install --install-lib /packages/ --root $(2)
+endef
+
+if BUILD_PYMOD_PYAGENTX
+PYAGENTX_VERSION="0.4.pcs.2"
+PYAGENTX_URI="https://github.com/ondrejmular/pyagentx/archive/v${PYAGENTX_VERSION}.tar.gz"
+
+# For running pcs_snmp_agent from a local (git clone) directory (without full
+# pcs installation) it is necessary to have pyagentx installed in expected
+# location inside the local directory.
+install_python_pyagentx:
+	mkdir -p $(BUNDLE_DIR_LOCAL)/src
+	rm -rf $(BUNDLE_DIR_LOCAL)/src/pyagentx-${PYAGENTX_VERSION} $(BUNDLE_DIR_LOCAL)/packages/pyagentx*
+	$(WGET) -qO- ${PYAGENTX_URI} | $(TAR) xvz -C ${BUNDLE_DIR_LOCAL}/src
+	$(call build_python_bundle,${abs_srcdir}/$(BUNDLE_DIR_LOCAL)/src/pyagentx-${PYAGENTX_VERSION},${abs_builddir}/$(BUNDLE_DIR))
+	rm -rf $(BUNDLE_DIR_LOCAL)/src/pyagentx-${PYAGENTX_VERSION}
+else
+install_python_pyagentx:
+endif
+
 if LOCAL_BUILD
 PIP_FLAGS		= --user
 endif
 
-install_python_deps: requirements.txt
+install_python_pip_deps: requirements.txt
 	$(PIP) install --upgrade $(PIP_FLAGS) --no-use-pep517 -r $< || $(PIP) install --upgrade -r $<
 
+install_python_deps: install_python_pip_deps install_python_pyagentx
+
 # testing
-pylint: pylintrc
+pylint:
 	$(TIME) $(PYTHON) -m pylint --rcfile pylintrc --persistent=n --reports=n --score=n --disable similarities pcs pcs_test
 
 black_check: pyproject.toml
@@ -40,10 +69,16 @@ black_check: pyproject.toml
 black: pyproject.toml
 	$(BLACK) --config pyproject.toml .
 
+mypy:
+	$(TIME) $(MYPY) -p pcs
+
 if LOCAL_BUILD
-check-local: install_python_deps
+check-local-deps: install_python_deps
+else
+check-local-deps:
 endif
-check-local: pylint black_check
+
+check-local: check-local-deps pylint black_check mypy
 
 # old compat wrapper
 install_pip: install_python_deps
@@ -71,6 +106,7 @@ clean-local:
 
 # this will get rid of "libtoolized" m4 files
 maintainer-clean-local:
+	rm -rf pcs/bundled
 	rm -rf $(filter-out \
 	         $(top_srcdir)/m4/ac_python_module.m4,$(wildcard \
 		                                        $(top_srcdir)/m4/*.m4))

@@ -29,17 +29,8 @@ ifndef BASH_COMPLETION_DIR
   BASH_COMPLETION_DIR=/etc/bash_completion.d
 endif
 
-ifndef BUNDLE_LOCAL_DIR
-  BUNDLE_LOCAL_DIR=./pcs/bundled/
-endif
-
 # INSTALLATION FINE DETAIL CONTROLL
 # =================================
-#  `BUNDLE_INSTALL_PYAGENTX=false`
-#      to disable the default automatic pyagentx instalation
-#  `BUNDLE_PYAGENTX_SRC_DIR=/path/to/pyagentx/sources`
-#      to install pyagentx from the given location instead of using default
-#      location for downloading sources and an installation
 #  `BUNDLE_TORNADO_SRC_DIR=/path/to/tornado/sources`
 #      to install tornado from specified location (tornado is not installed by
 #      default)
@@ -52,28 +43,11 @@ endif
 #  `BUNDLE_DATEUTIL_SRC_DIR=/path/to/python-dateutil/sources`
 #      to install python-dateutil from specified location (python-dateutil is
 #      not installed by default)
-BUNDLE_PYAGENTX_VERSION="0.4.pcs.2"
-BUNDLE_PYAGENTX_URI="https://github.com/ondrejmular/pyagentx/archive/v${BUNDLE_PYAGENTX_VERSION}.tar.gz"
-
-ifndef BUNDLE_INSTALL_PYAGENTX
-	BUNDLE_INSTALL_PYAGENTX=true
-endif
-
-BUNDLE_PYAGENTX_SRC_DOWNLOAD=false
-ifndef BUNDLE_PYAGENTX_SRC_DIR
-	BUNDLE_PYAGENTX_SRC_DOWNLOAD=true
-endif
-ifneq ($(BUNDLE_INSTALL_PYAGENTX),true)
-	BUNDLE_PYAGENTX_SRC_DOWNLOAD=false
-endif
 
 # There is BUNDLE_TO_INSTALL when BUNDLE_INSTALL_PYAGENTX is true or any of
 # BUNDLE_TORNADO_SRC_DIR, BUNDLE_DATACLASSES_SRC_DIR, BUNDLE_DACITE_SRC_DIR or
 # BUNDLE_DATEUTIL_SRC_DIR is specified
 BUNDLE_TO_INSTALL=false
-ifeq ($(BUNDLE_INSTALL_PYAGENTX), true)
-	BUNDLE_TO_INSTALL=true
-endif
 ifneq ($(and $(BUNDLE_TORNADO_SRC_DIR),$(BUNDLE_DATACLASSES_SRC_DIR),$(BUNDLE_DACITE_SRC_DIR),$(BUNDLE_DATEUTIL_SRC_DIR)),)
 	BUNDLE_TO_INSTALL=true
 endif
@@ -112,32 +86,8 @@ define use-alternative-file
 	install -m644 $(1) $(2)
 endef
 
-# 1 - sources directory - with python package sources
-# 2 - destination directory - python package will be installed into the
-#     `packages` subdirectory of this destination directory
-define build_python_bundle
-	cd $(1) && \
-	PYTHONPATH=$(2)/packages/ \
-	LC_ALL=C.utf8 \
-	$(PYTHON) setup.py install --install-lib /packages/ --root $(2)
-endef
-
 # TARGETS
 # =======
-
-bundle_pyagentx:
-ifeq ($(BUNDLE_PYAGENTX_SRC_DOWNLOAD),true)
-	mkdir -p ${DEST_BUNDLE_LOCAL}/src
-	$(eval BUNDLE_PYAGENTX_SRC_DIR=${DEST_BUNDLE_LOCAL}/src/pyagentx-${BUNDLE_PYAGENTX_VERSION})
-	rm -rf ${BUNDLE_PYAGENTX_SRC_DIR}
-	wget -qO- ${BUNDLE_PYAGENTX_URI} | tar xvz -C ${DEST_BUNDLE_LOCAL}/src
-endif
-ifeq ($(BUNDLE_INSTALL_PYAGENTX),true)
-	$(call build_python_bundle,${BUNDLE_PYAGENTX_SRC_DIR},$(PYAGENTX_LIB_DIR))
-endif
-ifeq ($(BUNDLE_PYAGENTX_SRC_DOWNLOAD),true)
-	rm -rf ${BUNDLE_PYAGENTX_SRC_DIR}
-endif
 
 install_bundled_libs:
 ifeq ($(BUNDLE_TO_INSTALL),true)
@@ -155,7 +105,6 @@ endif
 ifdef BUNDLE_DATEUTIL_SRC_DIR
 	$(call build_python_bundle,${BUNDLE_DATEUTIL_SRC_DIR},${DEST_BUNDLE_LIB})
 endif
-	$(MAKE) PYAGENTX_LIB_DIR=$(DEST_BUNDLE_LIB) bundle_pyagentx
 
 install_python_part: install_bundled_libs
 	# make Python interpreter execution sane (via -Es flags)
@@ -225,27 +174,12 @@ endif
 		$(if $(font_path),ln -s -f $(font_path) ${DEST_LIB}/pcsd/public/css/$(font_file);,$(error Font $(font_def) not found)) \
 	)
 
-# For running pcs_snmp_agent from a local (git clone) directory (without full
-# pcs installation) it is necessary to have pyagentx installed in expected
-# location inside the local directory.
-bundle_pyagentx_local:
-	$(MAKE) PYAGENTX_LIB_DIR=$(DEST_BUNDLE_LOCAL) bundle_pyagentx
-
 newversion:
 	$(PYTHON) newversion.py
 
 
 # CODE QUALITY
 # ===========
-
-get_lxml_stubs:
-	mkdir -p $(BUNDLE_LOCAL_DIR)/stubs
-	git clone https://github.com/JelleZijlstra/lxml-stubs.git $(BUNDLE_LOCAL_DIR)/stubs
-
-mypy_requirements: install_pip bundle_pyagentx_local get_lxml_stubs
-
-mypy:
-	time $(PYTHON) -m mypy -p pcs
 
 python_static_code_analysis_reqirements: pylint_requirements mypy_requirements
 
@@ -261,7 +195,7 @@ python_tests_tier1:
 
 tests: python_tests
 
-check: black_check python_static_code_analysis tests
+check: python_static_code_analysis tests
 
 
 BUNDLE_CONGIG_FILE := $(RPM_BUILD_DIR)/pcsd-bundle-config

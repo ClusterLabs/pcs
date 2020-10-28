@@ -55,14 +55,6 @@ AC_PROG_AWK
 PKG_PROG_PKG_CONFIG
 AM_PATH_PYTHON([3.6])
 
-# required to install python requirements
-AC_CHECK_PROGS([PIP], [pip])
-if test x$PIP == x; then
-	AC_MSG_ERROR([Unable to find pip binary])
-fi
-# used to measure time for some tests, not critical if not available
-AC_CHECK_PROGS([TIME], [time])
-
 # check for systemd
 PKG_CHECK_MODULES([systemd], [systemd], [SYSTEMD=yes], [SYSTEMD=no])
 if test "$SYSTEMD" == yes; then
@@ -77,17 +69,62 @@ AC_ARG_ENABLE([local-build],
 	      [  --enable-local-build           Download and install all dependencies as user / bundles], [local_build="yes"])
 AM_CONDITIONAL([LOCAL_BUILD], [test "x$local_build" == "xyes"])
 
+BUNDLE_DIR_LOCAL="pcs/bundled"
+AC_SUBST([BUNDLE_DIR_LOCAL])
+if test "x$local_build" == "xyes"; then
+	BUNDLE_DIR="pcs/bundled"
+else
+	BUNDLE_DIR="$libdir/pcs/bundled"
+fi
+AC_SUBST([BUNDLE_DIR])
+
+# required to install python requirements
+AC_CHECK_PROGS([PIP], [pip])
+if test "x$local_build" == "xyes"; then
+	if test x$PIP == x; then
+		AC_MSG_ERROR([Unable to find pip binary])
+	fi
+fi
+
+# used to measure time for some tests, not critical if not available
+AC_CHECK_PROGS([TIME], [time])
+
 # used only for testing and reformatting
 # if binary is not availalbe in the system, it will be installed by local-build (if enabled)
 AC_CHECK_PROGS([BLACK], [black])
 if test "x$local_build" != "xyes"; then
 	if test "x$BLACK" == "x"; then
-		AC_MSG_WARN([Unable to find black binary. black test disable. Either execute make install_python_deps or install python black])
+		AC_MSG_ERROR([Unable to find black binary. Either execute make install_python_deps or install python black])
 	fi
 else
 	BLACK="black"
 	AC_SUBST([BLACK])
 fi
+
+# if binary is not availalbe in the system, it will be installed by local-build (if enabled)
+AC_CHECK_PROGS([MYPY], [mypy])
+if test "x$local_build" != "xyes"; then
+	if test "x$MYPY" == "x"; then
+		AC_MSG_ERROR([Unable to find mypy binary. Either execute make install_python_deps or install python black])
+	fi
+else
+	MYPY=mypy
+	AC_SUBST([MYPY])
+fi
+
+# download / build / install / bundle pyagentx only if not available in the system
+AC_PYTHON_MODULE([pyagentx])
+if test "x$HAVE_PYMOD_PYAGENTX" == "xno"; then
+	AC_CHECK_PROGS([WGET], [wget])
+	if test "x$WGET" == "x"; then
+		AC_MSG_ERROR([Unable to find wget binary.])
+	fi
+	AC_CHECK_PROGS([TAR], [tar])
+	if test "x$TAR" == "x"; then
+		AC_MSG_ERROR([Unable to find tar binary.])
+	fi
+fi
+AM_CONDITIONAL([BUILD_PYMOD_PYAGENTX], [test "x$HAVE_PYMOD_PYAGENTX" == "xno"])
 
 AC_ARG_WITH([default-config-dir],
 	    [  --with-default-config-dir=DIR  pcs config directory. Default: $sysconfdir/sysconfig ],
