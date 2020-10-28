@@ -28,3 +28,4 @@ config.status
 libtool
 m4/lt*
 m4/lib*
+.version
