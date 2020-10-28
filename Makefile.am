@@ -80,10 +80,6 @@ endif
 
 check-local: check-local-deps pylint black_check mypy
 
-# old compat wrapper
-install_pip: install_python_deps
-pylint_requirements: install_pip
-
 BUILT_SOURCES = .version
 .version:
 	echo $(VERSION) > $@-t && mv $@-t $@
