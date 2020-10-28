@@ -177,23 +177,6 @@ endif
 # CODE QUALITY
 # ===========
 
-python_static_code_analysis_reqirements: pylint_requirements mypy_requirements
-
-python_static_code_analysis: mypy pylint
-
-python_tests: python_tests_tier0 python_tests_tier1
-
-python_tests_tier0:
-	$(PYTHON) pcs_test/suite.py --tier0
-
-python_tests_tier1:
-	$(PYTHON) pcs_test/suite.py --tier1
-
-tests: python_tests
-
-check: python_static_code_analysis tests
-
-
 BUNDLE_CONGIG_FILE := $(RPM_BUILD_DIR)/pcsd-bundle-config
 
 $(BUNDLE_CONGIG_FILE): $(RPM_BUILD_DIR)

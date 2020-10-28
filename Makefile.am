@@ -36,7 +36,6 @@ define build_python_bundle
 	$(PYTHON) setup.py install --install-lib /packages/ --root $(2)
 endef
 
-if BUILD_PYMOD_PYAGENTX
 PYAGENTX_VERSION="0.4.pcs.2"
 PYAGENTX_URI="https://github.com/ondrejmular/pyagentx/archive/v${PYAGENTX_VERSION}.tar.gz"
 
@@ -44,13 +43,12 @@ PYAGENTX_URI="https://github.com/ondrejmular/pyagentx/archive/v${PYAGENTX_VERSIO
 # pcs installation) it is necessary to have pyagentx installed in expected
 # location inside the local directory.
 install_python_pyagentx:
+if BUILD_PYMOD_PYAGENTX
 	mkdir -p $(BUNDLE_DIR_LOCAL)/src
 	rm -rf $(BUNDLE_DIR_LOCAL)/src/pyagentx-${PYAGENTX_VERSION} $(BUNDLE_DIR_LOCAL)/packages/pyagentx*
 	$(WGET) -qO- ${PYAGENTX_URI} | $(TAR) xvz -C ${BUNDLE_DIR_LOCAL}/src
 	$(call build_python_bundle,${abs_srcdir}/$(BUNDLE_DIR_LOCAL)/src/pyagentx-${PYAGENTX_VERSION},${abs_builddir}/$(BUNDLE_DIR))
 	rm -rf $(BUNDLE_DIR_LOCAL)/src/pyagentx-${PYAGENTX_VERSION}
-else
-install_python_pyagentx:
 endif
 
 if LOCAL_BUILD
@@ -75,13 +73,21 @@ black: pyproject.toml
 mypy:
 	$(TIME) $(MYPY) -p pcs
 
+tests_tier0:
+	$(PYTHON) pcs_test/suite.py -v --vanilla --tier0
+
+tests_tier1:
+if EXECUTE_TIER1_TESTS
+	$(PYTHON) pcs_test/suite.py -v --vanilla --tier1
+endif
+
 if LOCAL_BUILD
 check-local-deps: install_python_deps
 else
 check-local-deps:
 endif
 
-check-local: check-local-deps pylint black_check mypy
+check-local: check-local-deps pylint black_check mypy tests_tier0 tests_tier1
 
 BUILT_SOURCES = .version
 .version:

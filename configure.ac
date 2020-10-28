@@ -65,6 +65,10 @@ if test "$SYSTEMD" == yes; then
 fi
 AM_CONDITIONAL([SYSTEMD], [test "$SYSTEMD" == yes])
 
+AC_ARG_ENABLE([destructive-tests],
+	      [  --enable-destructive-tests           Automatically execute potentially dangerous tests when running make check (default: no)], [destructive_tests="yes"])
+AM_CONDITIONAL([EXECUTE_TIER1_TESTS], [test "x$destructive_tests" == "xyes"])
+
 AC_ARG_ENABLE([local-build],
 	      [  --enable-local-build           Download and install all dependencies as user / bundles], [local_build="yes"])
 AM_CONDITIONAL([LOCAL_BUILD], [test "x$local_build" == "xyes"])
