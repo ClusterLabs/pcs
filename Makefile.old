@@ -174,10 +174,6 @@ endif
 		$(if $(font_path),ln -s -f $(font_path) ${DEST_LIB}/pcsd/public/css/$(font_file);,$(error Font $(font_def) not found)) \
 	)
 
-newversion:
-	$(PYTHON) newversion.py
-
-
 # CODE QUALITY
 # ===========
 

@@ -20,6 +20,9 @@ ACLOCAL_AMFLAGS		= -I m4
 
 SUBDIRS			= 
 
+# release
+newversion:
+	$(PYTHON) newversion.py
 
 # depedency management
 
