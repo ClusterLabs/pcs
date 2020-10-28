@@ -130,6 +130,16 @@ if test "x$HAVE_PYMOD_PYAGENTX" == "xno"; then
 fi
 AM_CONDITIONAL([BUILD_PYMOD_PYAGENTX], [test "x$HAVE_PYMOD_PYAGENTX" == "xno"])
 
+PYMOD_FAILURE=""
+if test "x$local_build" != "xyes"; then
+	PYMOD_FAILURE=yes
+fi
+AC_PYTHON_MODULE([astroid], [$PYMOD_FAILURE])
+AC_PYTHON_MODULE([pylint], [$PYMOD_FAILURE])
+AC_PYTHON_MODULE([tornado], [$PYMOD_FAILURE])
+AC_PYTHON_MODULE([dacite], [$PYMOD_FAILURE])
+AC_PYTHON_MODULE([dateutil], [$PYMOD_FAILURE])
+
 AC_ARG_WITH([default-config-dir],
 	    [  --with-default-config-dir=DIR  pcs config directory. Default: $sysconfdir/sysconfig ],
 	    [ CONF_DIR="$withval" ],
