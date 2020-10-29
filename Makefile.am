@@ -18,9 +18,7 @@ TARFILES		= $(PACKAGE_NAME)-$(VERSION).tar.bz2 \
 
 ACLOCAL_AMFLAGS		= -I m4
 
-SUBDIRS			= pcs
-
-dist_man8_MANS		= pcsd/pcsd.8
+SUBDIRS			= pcs pcsd
 
 # release
 newversion:

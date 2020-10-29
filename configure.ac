@@ -159,6 +159,7 @@ AC_ARG_WITH([snmp-mibs-dir],
 AC_SUBST([SNMP_MIB_DIR])
 
 AC_CONFIG_FILES([Makefile
-		 pcs/Makefile])
+		 pcs/Makefile
+		 pcsd/Makefile])
 
 AC_OUTPUT
