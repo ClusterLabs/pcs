@@ -20,6 +20,10 @@ ACLOCAL_AMFLAGS		= -I m4
 
 SUBDIRS			= 
 
+# install
+bashcompletiondir	= $(sysconfdir)/bash_completion.d
+bashcompletion_DATA	= pcs/bash_completion/pcs
+
 # release
 newversion:
 	$(PYTHON) newversion.py
