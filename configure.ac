@@ -158,6 +158,7 @@ AC_ARG_WITH([snmp-mibs-dir],
 	    [ SNMP_MIB_DIR="$prefix/share/snmp/mibs" ])
 AC_SUBST([SNMP_MIB_DIR])
 
-AC_CONFIG_FILES([Makefile])
+AC_CONFIG_FILES([Makefile
+		 pcs/Makefile])
 
 AC_OUTPUT

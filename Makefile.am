@@ -18,13 +18,9 @@ TARFILES		= $(PACKAGE_NAME)-$(VERSION).tar.bz2 \
 
 ACLOCAL_AMFLAGS		= -I m4
 
-SUBDIRS			= 
+SUBDIRS			= pcs
 
-# install
-bashcompletiondir	= $(sysconfdir)/bash_completion.d
-bashcompletion_DATA	= pcs/bash_completion/pcs
-
-dist_man8_MANS		= pcs/pcs.8 pcs/snmp/pcs_snmp_agent.8 pcsd/pcsd.8
+dist_man8_MANS		= pcsd/pcsd.8
 
 # release
 newversion:
