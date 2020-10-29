@@ -53,7 +53,6 @@ endif
 
 DEST_PYTHON_SITELIB = ${DESTDIR}${PYTHON_SITELIB}
 DEST_PYTHON_SCRIPT_DIR=${DESTDIR}$(shell $(PYTHON) setup.py scriptdir | tail --lines=1)
-DEST_MAN=${DESTDIR}/usr/share/man/man8
 DEST_SYSTEMD_SYSTEM = ${DESTDIR}${SYSTEMD_UNIT_DIR}
 DEST_INIT = ${DESTDIR}${INIT_DIR}
 DEST_CONF = ${DESTDIR}${CONF_DIR}
@@ -115,7 +114,6 @@ install_python_part: install_bundled_libs
 	mkdir -p ${DEST_PREFIX}/sbin/
 	mv ${DEST_PYTHON_SCRIPT_DIR}/pcs ${DEST_PREFIX}/sbin/pcs
 	mv ${DEST_PYTHON_SCRIPT_DIR}/pcsd ${DEST_PREFIX}/sbin/pcsd
-	install -m644 -D pcs/pcs.8 ${DEST_MAN}/pcs.8
 	# pcs_internal
 	mkdir -p ${DEST_LIB}/pcs/
 	mv ${DEST_PYTHON_SCRIPT_DIR}/pcs_internal ${DEST_LIB}/pcs/pcs_internal
@@ -124,7 +122,6 @@ install_python_part: install_bundled_libs
 	install -d ${DEST_SNMP_MIB}
 	install -m 644 pcs/snmp/mibs/PCMK-PCS*-MIB.txt ${DEST_SNMP_MIB}
 	install -m 644 -D pcs/snmp/pcs_snmp_agent.conf ${DEST_CONF}/pcs_snmp_agent
-	install -m 644 -D pcs/snmp/pcs_snmp_agent.8 ${DEST_MAN}/pcs_snmp_agent.8
 ifeq ($(IS_DEBIAN),true)
 	$(call use-alternative-file,pcs/settings.py.debian,${DEST_PYTHON_SITELIB}/pcs/settings.py)
 endif
@@ -160,7 +157,6 @@ endif
 	
 	install -m 700 -d ${DESTDIR}/var/lib/pcsd
 	install -m 644 -D pcsd/pcsd.logrotate ${DESTDIR}/etc/logrotate.d/pcsd
-	install -m644 -D pcsd/pcsd.8 ${DEST_MAN}/pcsd.8
 	$(foreach font,$(pcsd_fonts),\
 		$(eval font_file = $(word 1,$(subst ;, ,$(font)))) \
 		$(eval font_def = $(word 2,$(subst ;, ,$(font)))) \

@@ -24,6 +24,8 @@ SUBDIRS			=
 bashcompletiondir	= $(sysconfdir)/bash_completion.d
 bashcompletion_DATA	= pcs/bash_completion/pcs
 
+dist_man8_MANS		= pcs/pcs.8 pcs/snmp/pcs_snmp_agent.8 pcsd/pcsd.8
+
 # release
 newversion:
 	$(PYTHON) newversion.py
