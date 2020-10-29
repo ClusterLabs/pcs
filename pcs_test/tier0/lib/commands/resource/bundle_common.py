@@ -1,8 +1,11 @@
 from textwrap import dedent
+from unittest import mock
 
 from pcs_test.tools import fixture
 from pcs_test.tools.command_env import get_env_tools
+from pcs_test.tools.misc import get_test_resource as rc
 
+from pcs import settings
 from pcs.common import reports
 from pcs.common.reports import ReportItemSeverity as severities
 from pcs.common.reports import codes as report_codes
@@ -1071,7 +1074,7 @@ class AllOptionsMixin(SetUpMixin):
         )
 
 
-class WaitMixin(FixturesMixin):
+class WaitMixin(FixturesMixin, SetUpMixin):
     initial_resources = "<resources/>"
     bundle_id = None
     image = None
@@ -1146,11 +1149,6 @@ class WaitMixin(FixturesMixin):
             bundle_id=self.bundle_id, image=self.image
         )
 
-    def setUp(self):
-        # pylint: disable=invalid-name
-        self.env_assist, self.config = get_env_tools(test_case=self)
-        self.config.runner.cib.load(resources=self.initial_resources)
-
     def test_wait_fail(self):
         wait_error_message = dedent(
             """\
@@ -1176,6 +1174,9 @@ class WaitMixin(FixturesMixin):
             expected_in_processor=False,
         )
 
+    @mock.patch.object(
+        settings, "crm_mon_schema", rc("crm_mon_rng/crm_mon.rng")
+    )
     def test_wait_ok_run_ok(self):
         (
             self.config.env.push_cib(
@@ -1191,6 +1192,9 @@ class WaitMixin(FixturesMixin):
             ]
         )
 
+    @mock.patch.object(
+        settings, "crm_mon_schema", rc("crm_mon_rng/crm_mon.rng")
+    )
     def test_wait_ok_run_fail(self):
         (
             self.config.env.push_cib(
@@ -1208,6 +1212,9 @@ class WaitMixin(FixturesMixin):
             ]
         )
 
+    @mock.patch.object(
+        settings, "crm_mon_schema", rc("crm_mon_rng/crm_mon.rng")
+    )
     def test_disabled_wait_ok_run_ok(self):
         (
             self.config.env.push_cib(
@@ -1227,6 +1234,9 @@ class WaitMixin(FixturesMixin):
             ]
         )
 
+    @mock.patch.object(
+        settings, "crm_mon_schema", rc("crm_mon_rng/crm_mon.rng")
+    )
     def test_disabled_wait_ok_run_fail(self):
         (
             self.config.env.push_cib(

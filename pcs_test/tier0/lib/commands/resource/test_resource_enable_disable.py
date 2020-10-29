@@ -1,4 +1,5 @@
-# pylint: disable=too-many-lines,line-too-long
+# pylint: disable=too-many-lines
+# pylint: disable=line-too-long
 from unittest import mock, TestCase
 
 from pcs_test.tier0.lib.commands.tag.tag_common import fixture_tags_xml
@@ -9,6 +10,7 @@ from pcs_test.tools.misc import (
     outdent,
 )
 
+from pcs import settings
 from pcs.common import reports
 from pcs.common.reports import ReportItemSeverity as severities
 from pcs.common.reports import codes as report_codes
@@ -197,6 +199,10 @@ fixture_group_cib_disabled_primitive_with_meta_group = get_fixture_group_cib(
 fixture_group_cib_disabled_both = get_fixture_group_cib(
     group_disabled=True, primitive1_disabled=True
 )
+# 'disabled' attribute is always set to 'false' even for the test cases where it
+# should be set to 'true'. For now it doesn't matter, because pcs doesn't work
+# with that attribute. However, if that changes in a future, we may need to
+# update the fixtures.
 fixture_group_status_template = """
     <resources>
         <group id="A" number_resources="2">
@@ -266,6 +272,11 @@ fixture_clone_cib_disabled_primitive = get_fixture_clone_cib(
 fixture_clone_cib_disabled_both = get_fixture_clone_cib(
     clone_disabled=True, primitive_disabled=True
 )
+
+# 'disabled' attribute is always set to 'false' even for the test cases where it
+# should be set to 'true'. For now it doesn't matter, because pcs doesn't work
+# with that attribute. However, if that changes in a future, we may need to
+# update the fixtures.
 fixture_clone_status_template = """
     <resources>
         <clone id="A-clone" managed="{managed}" multi_state="false"
@@ -339,6 +350,11 @@ fixture_master_cib_disabled_primitive = get_fixture_master_cib(
 fixture_master_cib_disabled_both = get_fixture_master_cib(
     master_disabled=True, primitive_disabled=True
 )
+
+# 'disabled' attribute is always set to 'false' even for the test cases where it
+# should be set to 'true'. For now it doesn't matter, because pcs doesn't work
+# with that attribute. However, if that changes in a future, we may need to
+# update the fixtures.
 fixture_master_status_template = """
     <resources>
         <clone id="A-master" managed="{managed}" multi_state="true"
@@ -456,6 +472,11 @@ fixture_clone_group_cib_disabled_clone_group_with_meta_primitive = get_fixture_c
 fixture_clone_group_cib_disabled_all = get_fixture_clone_group_cib(
     clone_disabled=True, group_disabled=True, primitive1_disabled=True
 )
+
+# 'disabled' attribute is always set to 'false' even for the test cases where it
+# should be set to 'true'. For now it doesn't matter, because pcs doesn't work
+# with that attribute. However, if that changes in a future, we may need to
+# update the fixtures.
 fixture_clone_group_status_template = """
     <resources>
         <clone id="A-clone" managed="{managed}" multi_state="false"
@@ -572,6 +593,7 @@ def fixture_report_unmanaged(resource_id):
     )
 
 
+@mock.patch.object(settings, "crm_mon_schema", rc("crm_mon_rng/crm_mon.rng"))
 class DisablePrimitive(TestCase):
     def setUp(self):
         self.env_assist, self.config = get_env_tools(test_case=self)
@@ -630,6 +652,7 @@ class DisablePrimitive(TestCase):
         self.env_assist.assert_reports([fixture_report_unmanaged("A")])
 
 
+@mock.patch.object(settings, "crm_mon_schema", rc("crm_mon_rng/crm_mon.rng"))
 class EnablePrimitive(TestCase):
     def setUp(self):
         self.env_assist, self.config = get_env_tools(test_case=self)
@@ -688,6 +711,7 @@ class EnablePrimitive(TestCase):
         self.env_assist.assert_reports([fixture_report_unmanaged("A")])
 
 
+@mock.patch.object(settings, "crm_mon_schema", rc("crm_mon_rng/crm_mon.rng"))
 class MoreResources(TestCase):
     fixture_cib_enabled = """
         <resources>
@@ -841,10 +865,8 @@ class MoreResources(TestCase):
         )
 
 
+@mock.patch.object(settings, "crm_mon_schema", rc("crm_mon_rng/crm_mon.rng"))
 class Wait(TestCase):
-    def setUp(self):
-        self.env_assist, self.config = get_env_tools(test_case=self)
-
     fixture_status_running = """
         <resources>
             <resource id="A" managed="true" role="Started">
@@ -878,6 +900,9 @@ class Wait(TestCase):
         Error performing operation: Timer expired
         """
     ).strip()
+
+    def setUp(self):
+        self.env_assist, self.config = get_env_tools(test_case=self)
 
     def test_enable_dont_wait_on_error(self):
         self.config.runner.cib.load(resources=fixture_primitive_cib_disabled)
@@ -1061,6 +1086,7 @@ class Wait(TestCase):
         )
 
 
+@mock.patch.object(settings, "crm_mon_schema", rc("crm_mon_rng/crm_mon.rng"))
 class WaitClone(TestCase):
     fixture_status_running = """
         <resources>
@@ -1143,6 +1169,7 @@ class WaitClone(TestCase):
         )
 
 
+@mock.patch.object(settings, "crm_mon_schema", rc("crm_mon_rng/crm_mon.rng"))
 class DisableGroup(TestCase):
     def setUp(self):
         self.env_assist, self.config = get_env_tools(test_case=self)
@@ -1187,6 +1214,7 @@ class DisableGroup(TestCase):
         )
 
 
+@mock.patch.object(settings, "crm_mon_schema", rc("crm_mon_rng/crm_mon.rng"))
 class EnableGroup(TestCase):
     def setUp(self):
         self.env_assist, self.config = get_env_tools(test_case=self)
@@ -1266,6 +1294,7 @@ class EnableGroup(TestCase):
         )
 
 
+@mock.patch.object(settings, "crm_mon_schema", rc("crm_mon_rng/crm_mon.rng"))
 class DisableClone(TestCase):
     def setUp(self):
         self.env_assist, self.config = get_env_tools(test_case=self)
@@ -1310,6 +1339,7 @@ class DisableClone(TestCase):
         )
 
 
+@mock.patch.object(settings, "crm_mon_schema", rc("crm_mon_rng/crm_mon.rng"))
 class EnableClone(TestCase):
     def setUp(self):
         self.env_assist, self.config = get_env_tools(test_case=self)
@@ -1391,6 +1421,7 @@ class EnableClone(TestCase):
         )
 
 
+@mock.patch.object(settings, "crm_mon_schema", rc("crm_mon_rng/crm_mon.rng"))
 class DisableMaster(TestCase):
     # same as clone, minimum tests in here
     def setUp(self):
@@ -1412,6 +1443,7 @@ class DisableMaster(TestCase):
         resource.disable(self.env_assist.get_env(), ["A-master"], False)
 
 
+@mock.patch.object(settings, "crm_mon_schema", rc("crm_mon_rng/crm_mon.rng"))
 class EnableMaster(TestCase):
     # same as clone, minimum tests in here
     def setUp(self):
@@ -1460,6 +1492,7 @@ class EnableMaster(TestCase):
         resource.enable(self.env_assist.get_env(), ["A-master"], False)
 
 
+@mock.patch.object(settings, "crm_mon_schema", rc("crm_mon_rng/crm_mon.rng"))
 class DisableClonedGroup(TestCase):
     def setUp(self):
         self.env_assist, self.config = get_env_tools(test_case=self)
@@ -1546,6 +1579,7 @@ class DisableClonedGroup(TestCase):
         )
 
 
+@mock.patch.object(settings, "crm_mon_schema", rc("crm_mon_rng/crm_mon.rng"))
 class EnableClonedGroup(TestCase):
     def setUp(self):
         self.env_assist, self.config = get_env_tools(test_case=self)
@@ -1692,6 +1726,7 @@ class EnableClonedGroup(TestCase):
         )
 
 
+@mock.patch.object(settings, "crm_mon_schema", rc("crm_mon_rng/crm_mon.rng"))
 class DisableBundle(TestCase):
     def setUp(self):
         self.env_assist, self.config = get_env_tools(test_case=self)
@@ -1735,6 +1770,7 @@ class DisableBundle(TestCase):
         )
 
 
+@mock.patch.object(settings, "crm_mon_schema", rc("crm_mon_rng/crm_mon.rng"))
 class EnableBundle(TestCase):
     def setUp(self):
         self.env_assist, self.config = get_env_tools(test_case=self)
@@ -2011,6 +2047,7 @@ class DisableSafeFixturesMixin:
 
 
 @mock.patch("pcs.lib.pacemaker.live.write_tmpfile")
+@mock.patch.object(settings, "crm_mon_schema", rc("crm_mon_rng/crm_mon.rng"))
 class DisableSimulate(DisableSafeFixturesMixin, TestCase):
     def test_not_live(self, mock_write_tmpfile):
         mock_write_tmpfile.side_effect = [
@@ -2622,6 +2659,7 @@ class DisableSafeMixin(DisableSafeFixturesMixin):
 
 
 @mock.patch("pcs.lib.pacemaker.live.write_tmpfile")
+@mock.patch.object(settings, "crm_mon_schema", rc("crm_mon_rng/crm_mon.rng"))
 class DisableSafe(DisableSafeMixin, TestCase):
     strict = False
 
@@ -2668,6 +2706,7 @@ class DisableSafe(DisableSafeMixin, TestCase):
 
 
 @mock.patch("pcs.lib.pacemaker.live.write_tmpfile")
+@mock.patch.object(settings, "crm_mon_schema", rc("crm_mon_rng/crm_mon.rng"))
 class DisableSafeStrict(DisableSafeMixin, TestCase):
     strict = True
 
@@ -2731,6 +2770,7 @@ class DisableSafeStrict(DisableSafeMixin, TestCase):
         )
 
 
+@mock.patch.object(settings, "crm_mon_schema", rc("crm_mon_rng/crm_mon.rng"))
 class DisableTags(TestCase):
     def setUp(self):
         self.env_assist, self.config = get_env_tools(test_case=self)
@@ -2748,6 +2788,7 @@ class DisableTags(TestCase):
         resource.disable(self.env_assist.get_env(), ["T"], False)
 
 
+@mock.patch.object(settings, "crm_mon_schema", rc("crm_mon_rng/crm_mon.rng"))
 class EnableTags(TestCase):
     def setUp(self):
         self.env_assist, self.config = get_env_tools(test_case=self)

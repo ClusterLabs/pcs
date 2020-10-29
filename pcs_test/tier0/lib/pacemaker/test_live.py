@@ -832,6 +832,7 @@ class SimulateCib(TestCase):
         )
 
 
+@mock.patch.object(settings, "crm_mon_schema", rc("crm_mon_rng/crm_mon.rng"))
 class GetLocalNodeStatusTest(TestCase):
     def setUp(self):
         self.env_assist, self.config = get_env_tools(test_case=self)
@@ -1042,6 +1043,9 @@ class ResourceRefreshTest(LibraryPacemakerTest):
         doc.find("/summary/resources_configured").set("number", str(resources))
         return str(XmlManipulation(doc))
 
+    @mock.patch.object(
+        settings, "crm_mon_schema", rc("crm_mon_rng/crm_mon.rng")
+    )
     def test_basic(self):
         expected_stdout = "expected output"
         expected_stderr = "expected stderr"
@@ -1063,6 +1067,9 @@ class ResourceRefreshTest(LibraryPacemakerTest):
         mock_runner.run.assert_has_calls(call_list)
         self.assertEqual(expected_stdout + "\n" + expected_stderr, real_output)
 
+    @mock.patch.object(
+        settings, "crm_mon_schema", rc("crm_mon_rng/crm_mon.rng")
+    )
     def test_threshold_exceeded(self):
         mock_runner = get_runner(self.fixture_status_xml(1000, 1000), "", 0)
 
@@ -1180,6 +1187,9 @@ class ResourceRefreshTest(LibraryPacemakerTest):
 
         mock_runner.run.assert_called_once_with(self.crm_mon_cmd())
 
+    @mock.patch.object(
+        settings, "crm_mon_schema", rc("crm_mon_rng/crm_mon.rng")
+    )
     def test_error_refresh(self):
         expected_stdout = "some info"
         expected_stderr = "some error"

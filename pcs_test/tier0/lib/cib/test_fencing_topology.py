@@ -1,4 +1,4 @@
-from unittest import TestCase
+from unittest import mock, TestCase
 from lxml import etree
 
 from pcs_test.tools import fixture
@@ -7,9 +7,13 @@ from pcs_test.tools.assertions import (
     assert_xml_equal,
 )
 from pcs_test.tools.custom_mock import MockLibraryReportProcessor
-from pcs_test.tools.misc import create_patcher
+from pcs_test.tools.misc import (
+    create_patcher,
+    get_test_resource as rc,
+)
 from pcs_test.tools.xml import etree_to_str
 
+from pcs import settings
 from pcs.common import reports
 from pcs.common.reports import codes as report_codes
 from pcs.common.fencing_topology import (
@@ -82,7 +86,7 @@ class StatusNodesMixin:
     def get_status(self):
         return ClusterState(
             """
-            <crm_mon version="2.0.3">
+            <crm_mon version="2.0.5">
                 <summary>
                     <stack type="corosync" />
                     <current_dc present="true" />
@@ -94,7 +98,7 @@ class StatusNodesMixin:
                     <resources_configured number="0" disabled="0" blocked="0" />
                     <cluster_options stonith-enabled="true"
                         symmetric-cluster="true" no-quorum-policy="stop"
-                        maintenance-mode="false"
+                        maintenance-mode="false" stop-all-resources="false"
                     />
                 </summary>
                 <nodes>
@@ -685,6 +689,9 @@ class Verify(TestCase, CibMixin, StatusNodesMixin):
         el = etree.SubElement(tree, "primitive", id=name, type="fence_dummy")
         el.set("class", "stonith")
 
+    @mock.patch.object(
+        settings, "crm_mon_schema", rc("crm_mon_rng/crm_mon.rng")
+    )
     def test_empty(self):
         resources = etree.fromstring("<resources />")
         topology = etree.fromstring("<fencing-topology />")
@@ -693,6 +700,9 @@ class Verify(TestCase, CibMixin, StatusNodesMixin):
 
         assert_report_item_list_equal(report_list, [])
 
+    @mock.patch.object(
+        settings, "crm_mon_schema", rc("crm_mon_rng/crm_mon.rng")
+    )
     def test_success(self):
         resources = etree.fromstring("<resources />")
         for name in ["d1", "d2", "d3", "d4", "d5", "dR", "dR-special"]:
@@ -834,21 +844,19 @@ class ValidateTargetTypewise(TestCase):
         assert_report_item_list_equal(report_list, report)
 
 
+@mock.patch.object(settings, "crm_mon_schema", rc("crm_mon_rng/crm_mon.rng"))
 class ValidateTargetValuewise(TestCase, StatusNodesMixin):
-    def setUp(self):
-        self.state = self.get_status()
-
     def test_node_valid(self):
+        state = self.get_status()
         assert_report_item_list_equal(
-            lib._validate_target_valuewise(
-                self.state, TARGET_TYPE_NODE, "nodeA"
-            ),
+            lib._validate_target_valuewise(state, TARGET_TYPE_NODE, "nodeA"),
             [],
         )
 
     def test_node_empty(self):
+        state = self.get_status()
         report_list = lib._validate_target_valuewise(
-            self.state, TARGET_TYPE_NODE, ""
+            state, TARGET_TYPE_NODE, ""
         )
         report = [
             (
@@ -861,8 +869,9 @@ class ValidateTargetValuewise(TestCase, StatusNodesMixin):
         assert_report_item_list_equal(report_list, report)
 
     def test_node_invalid(self):
+        state = self.get_status()
         report_list = lib._validate_target_valuewise(
-            self.state, TARGET_TYPE_NODE, "rh7-x"
+            state, TARGET_TYPE_NODE, "rh7-x"
         )
         report = [
             (
@@ -875,8 +884,9 @@ class ValidateTargetValuewise(TestCase, StatusNodesMixin):
         assert_report_item_list_equal(report_list, report)
 
     def test_node_invalid_force(self):
+        state = self.get_status()
         report_list = lib._validate_target_valuewise(
-            self.state, TARGET_TYPE_NODE, "rh7-x", force_node=True
+            state, TARGET_TYPE_NODE, "rh7-x", force_node=True
         )
         report = [
             (
@@ -889,8 +899,9 @@ class ValidateTargetValuewise(TestCase, StatusNodesMixin):
         assert_report_item_list_equal(report_list, report)
 
     def test_node_invalid_not_forceable(self):
+        state = self.get_status()
         report_list = lib._validate_target_valuewise(
-            self.state, TARGET_TYPE_NODE, "rh7-x", allow_force=False
+            state, TARGET_TYPE_NODE, "rh7-x", allow_force=False
         )
         report = [
             (

@@ -41,9 +41,18 @@ def complete_state_resources(resource_status):
                 "role": "Started",
             },
         )
+    for group in resource_status.xpath(".//group"):
+        _default_element_attributes(
+            group, {"disabled": "false", "managed": "true",}
+        )
     for clone in resource_status.xpath(".//clone"):
         _default_element_attributes(
-            clone, {"failed": "false", "failure_ignored": "false",}
+            clone,
+            {
+                "disabled": "false",
+                "failed": "false",
+                "failure_ignored": "false",
+            },
         )
     for bundle in resource_status.xpath(".//bundle"):
         _default_element_attributes(

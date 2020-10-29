@@ -1,10 +1,14 @@
 # pylint: disable=too-many-lines
-from unittest import TestCase
+from unittest import mock, TestCase
 
 from pcs_test.tools import fixture
 from pcs_test.tools.command_env import get_env_tools
-from pcs_test.tools.misc import outdent
+from pcs_test.tools.misc import (
+    get_test_resource as rc,
+    outdent,
+)
 
+from pcs import settings
 from pcs.common import reports
 from pcs.common.reports import codes as report_codes
 from pcs.lib.commands import resource
@@ -656,6 +660,7 @@ class Create(TestCase):
         )
 
 
+@mock.patch.object(settings, "crm_mon_schema", rc("crm_mon_rng/crm_mon.rng"))
 class CreateWait(TestCase):
     def setUp(self):
         self.env_assist, self.config = get_env_tools(test_case=self)
@@ -897,6 +902,9 @@ class CreateInGroup(TestCase):
             expected_in_processor=False,
         )
 
+    @mock.patch.object(
+        settings, "crm_mon_schema", rc("crm_mon_rng/crm_mon.rng")
+    )
     def test_wait_ok_run_fail(self):
         (
             self.config.env.push_cib(
@@ -910,6 +918,9 @@ class CreateInGroup(TestCase):
             [fixture.error(report_codes.RESOURCE_DOES_NOT_RUN, resource_id="A")]
         )
 
+    @mock.patch.object(
+        settings, "crm_mon_schema", rc("crm_mon_rng/crm_mon.rng")
+    )
     def test_wait_ok_run_ok(self):
         (
             self.config.env.push_cib(
@@ -927,6 +938,9 @@ class CreateInGroup(TestCase):
             ]
         )
 
+    @mock.patch.object(
+        settings, "crm_mon_schema", rc("crm_mon_rng/crm_mon.rng")
+    )
     def test_wait_ok_disable_fail(self):
         (
             self.config.env.push_cib(
@@ -948,6 +962,9 @@ class CreateInGroup(TestCase):
             ]
         )
 
+    @mock.patch.object(
+        settings, "crm_mon_schema", rc("crm_mon_rng/crm_mon.rng")
+    )
     def test_wait_ok_disable_ok(self):
         (
             self.config.env.push_cib(
@@ -960,6 +977,9 @@ class CreateInGroup(TestCase):
             [fixture.info(report_codes.RESOURCE_DOES_NOT_RUN, resource_id="A",)]
         )
 
+    @mock.patch.object(
+        settings, "crm_mon_schema", rc("crm_mon_rng/crm_mon.rng")
+    )
     def test_wait_ok_disable_ok_by_target_role(self):
         (
             self.config.env.push_cib(
@@ -1104,6 +1124,9 @@ class CreateAsClone(TestCase):
             expected_in_processor=False,
         )
 
+    @mock.patch.object(
+        settings, "crm_mon_schema", rc("crm_mon_rng/crm_mon.rng")
+    )
     def test_wait_ok_run_fail(self):
         (
             self.config.env.push_cib(
@@ -1117,6 +1140,9 @@ class CreateAsClone(TestCase):
             [fixture.error(report_codes.RESOURCE_DOES_NOT_RUN, resource_id="A")]
         )
 
+    @mock.patch.object(
+        settings, "crm_mon_schema", rc("crm_mon_rng/crm_mon.rng")
+    )
     def test_wait_ok_run_ok(self):
         (
             self.config.env.push_cib(
@@ -1134,6 +1160,9 @@ class CreateAsClone(TestCase):
             ]
         )
 
+    @mock.patch.object(
+        settings, "crm_mon_schema", rc("crm_mon_rng/crm_mon.rng")
+    )
     def test_wait_ok_disable_fail(self):
         (
             self.config.env.push_cib(
@@ -1155,6 +1184,9 @@ class CreateAsClone(TestCase):
             ]
         )
 
+    @mock.patch.object(
+        settings, "crm_mon_schema", rc("crm_mon_rng/crm_mon.rng")
+    )
     def test_wait_ok_disable_ok(self):
         (
             self.config.env.push_cib(
@@ -1167,6 +1199,9 @@ class CreateAsClone(TestCase):
             [fixture.info(report_codes.RESOURCE_DOES_NOT_RUN, resource_id="A",)]
         )
 
+    @mock.patch.object(
+        settings, "crm_mon_schema", rc("crm_mon_rng/crm_mon.rng")
+    )
     def test_wait_ok_disable_ok_by_target_role(self):
         (
             self.config.env.push_cib(
@@ -1219,6 +1254,9 @@ class CreateAsClone(TestCase):
             [fixture.info(report_codes.RESOURCE_DOES_NOT_RUN, resource_id="A",)]
         )
 
+    @mock.patch.object(
+        settings, "crm_mon_schema", rc("crm_mon_rng/crm_mon.rng")
+    )
     def test_wait_ok_disable_ok_by_target_role_in_clone(self):
         (
             self.config.env.push_cib(
@@ -1269,6 +1307,9 @@ class CreateAsClone(TestCase):
             [fixture.info(report_codes.RESOURCE_DOES_NOT_RUN, resource_id="A",)]
         )
 
+    @mock.patch.object(
+        settings, "crm_mon_schema", rc("crm_mon_rng/crm_mon.rng")
+    )
     def test_wait_ok_disable_ok_by_clone_max(self):
         (
             self.config.env.push_cib(
@@ -1319,6 +1360,9 @@ class CreateAsClone(TestCase):
             [fixture.info(report_codes.RESOURCE_DOES_NOT_RUN, resource_id="A",)]
         )
 
+    @mock.patch.object(
+        settings, "crm_mon_schema", rc("crm_mon_rng/crm_mon.rng")
+    )
     def test_wait_ok_disable_ok_by_clone_node_max(self):
         (
             self.config.env.push_cib(
@@ -1653,6 +1697,9 @@ class CreateInToBundle(TestCase):
             expected_in_processor=False,
         )
 
+    @mock.patch.object(
+        settings, "crm_mon_schema", rc("crm_mon_rng/crm_mon.rng")
+    )
     def test_wait_ok_run_ok(self):
         (
             self.config.runner.pcmk.load_agent()
@@ -1669,6 +1716,9 @@ class CreateInToBundle(TestCase):
             [fixture.report_resource_running("A", {"Started": ["node1"]}),]
         )
 
+    @mock.patch.object(
+        settings, "crm_mon_schema", rc("crm_mon_rng/crm_mon.rng")
+    )
     def test_wait_ok_run_fail(self):
         (
             self.config.runner.pcmk.load_agent()
@@ -1687,6 +1737,9 @@ class CreateInToBundle(TestCase):
             [fixture.error(report_codes.RESOURCE_DOES_NOT_RUN, resource_id="A")]
         )
 
+    @mock.patch.object(
+        settings, "crm_mon_schema", rc("crm_mon_rng/crm_mon.rng")
+    )
     def test_disabled_wait_ok_not_running(self):
         (
             self.config.runner.pcmk.load_agent()
@@ -1703,6 +1756,9 @@ class CreateInToBundle(TestCase):
             [fixture.report_resource_not_running("A")]
         )
 
+    @mock.patch.object(
+        settings, "crm_mon_schema", rc("crm_mon_rng/crm_mon.rng")
+    )
     def test_disabled_wait_ok_running(self):
         (
             self.config.runner.pcmk.load_agent()

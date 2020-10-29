@@ -1,12 +1,14 @@
 from textwrap import dedent
-from unittest import TestCase
+from unittest import mock, TestCase
 
 from lxml import etree
 
 from pcs_test.tools import fixture
 from pcs_test.tools.command_env import get_env_tools
+from pcs_test.tools.misc import get_test_resource as rc
 from pcs_test.tools.xml import etree_to_str
 
+from pcs import settings
 from pcs.common.reports import ReportItemSeverity as severities
 from pcs.common.reports import codes as report_codes
 from pcs.lib.commands import resource
@@ -270,6 +272,9 @@ class MoveBanWaitMixin:
         self.env_assist, self.config = get_env_tools(self)
         self.config.runner.cib.load(resources=resources_primitive)
 
+    @mock.patch.object(
+        settings, "crm_mon_schema", rc("crm_mon_rng/crm_mon.rng")
+    )
     def test_state_before_action_fail(self):
         self.config.runner.pcmk.load_state(
             stdout="state stdout", stderr="state stderr", returncode=1
@@ -285,6 +290,9 @@ class MoveBanWaitMixin:
             expected_in_processor=False,
         )
 
+    @mock.patch.object(
+        settings, "crm_mon_schema", rc("crm_mon_rng/crm_mon.rng")
+    )
     def test_state_before_action_not_xml(self):
         self.config.runner.pcmk.load_state(stdout="state stdout")
         self.env_assist.assert_raise_library_error(
@@ -293,6 +301,9 @@ class MoveBanWaitMixin:
             expected_in_processor=False,
         )
 
+    @mock.patch.object(
+        settings, "crm_mon_schema", rc("crm_mon_rng/crm_mon.rng")
+    )
     def test_pcmk_fail(self):
         self.config.runner.pcmk.load_state()
         self.config_pcmk_action(returncode=1)
@@ -309,6 +320,9 @@ class MoveBanWaitMixin:
             expected_in_processor=False,
         )
 
+    @mock.patch.object(
+        settings, "crm_mon_schema", rc("crm_mon_rng/crm_mon.rng")
+    )
     def test_wait_fail(self):
         self.config.runner.pcmk.load_state()
         self.config_pcmk_action()
@@ -336,6 +350,9 @@ class MoveBanWaitMixin:
             ]
         )
 
+    @mock.patch.object(
+        settings, "crm_mon_schema", rc("crm_mon_rng/crm_mon.rng")
+    )
     def test_state_after_action_fail(self):
         self.config.runner.pcmk.load_state()
         self.config_pcmk_action()
@@ -367,6 +384,9 @@ class MoveBanWaitMixin:
             ]
         )
 
+    @mock.patch.object(
+        settings, "crm_mon_schema", rc("crm_mon_rng/crm_mon.rng")
+    )
     def test_state_after_action_not_xml(self):
         self.config.runner.pcmk.load_state()
         self.config_pcmk_action()
@@ -476,6 +496,7 @@ class MoveBanWaitMixin:
         )
 
 
+@mock.patch.object(settings, "crm_mon_schema", rc("crm_mon_rng/crm_mon.rng"))
 class MoveWait(MoveMixin, MoveBanWaitMixin, TestCase):
     def test_running_on_specified_node(self):
         self.success_config(
@@ -522,6 +543,7 @@ class MoveWait(MoveMixin, MoveBanWaitMixin, TestCase):
         )
 
 
+@mock.patch.object(settings, "crm_mon_schema", rc("crm_mon_rng/crm_mon.rng"))
 class BanWait(BanMixin, MoveBanWaitMixin, TestCase):
     def test_running_on_specified_node(self):
         self.success_config(
@@ -568,10 +590,10 @@ class BanWait(BanMixin, MoveBanWaitMixin, TestCase):
         )
 
 
+@mock.patch.object(settings, "crm_mon_schema", rc("crm_mon_rng/crm_mon.rng"))
 class UnmoveUnbanWait(UnmoveUnbanMixin, TestCase):
     def setUp(self):
         self.env_assist, self.config = get_env_tools(self)
-
         self.config.runner.cib.load(resources=resources_primitive)
         self.config_pcmk_action()
 

@@ -1,12 +1,16 @@
 # pylint: disable=too-many-lines
 from functools import partial
 from textwrap import dedent
-from unittest import TestCase
+from unittest import mock, TestCase
 
 from pcs_test.tools import fixture
 from pcs_test.tools.command_env import get_env_tools
-from pcs_test.tools.misc import ParametrizedTestMetaClass
+from pcs_test.tools.misc import (
+    get_test_resource as rc,
+    ParametrizedTestMetaClass,
+)
 
+from pcs import settings
 from pcs.common import reports
 from pcs.common.reports import ReportItemSeverity as severities
 from pcs.common.reports import codes as report_codes
@@ -1319,6 +1323,9 @@ class Wait(TestCase):
             expected_in_processor=False,
         )
 
+    @mock.patch.object(
+        settings, "crm_mon_schema", rc("crm_mon_rng/crm_mon.rng")
+    )
     def test_wait_ok_running(self):
         (
             self.config.runner.pcmk.load_state(
@@ -1334,6 +1341,9 @@ class Wait(TestCase):
             ]
         )
 
+    @mock.patch.object(
+        settings, "crm_mon_schema", rc("crm_mon_rng/crm_mon.rng")
+    )
     def test_wait_ok_not_running(self):
         (
             self.config.runner.pcmk.load_state(

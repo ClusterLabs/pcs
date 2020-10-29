@@ -430,6 +430,18 @@ class CibNvsetAmbiguousProvideNvsetId(CliReportMessageCustom):
         )
 
 
+class UnableToGetAgentMetadata(CliReportMessageCustom):
+    _obj: messages.UnableToGetAgentMetadata
+
+    @property
+    def message(self) -> str:
+        reason = ", ".join(self._obj.reason.splitlines())
+        return (
+            f"Agent '{self._obj.agent}' is not installed or does not provide "
+            f"valid metadata: {reason}"
+        )
+
+
 def _create_report_msg_map() -> Dict[str, type]:
     result: Dict[str, type] = {}
     for report_msg_cls in get_all_subclasses(CliReportMessageCustom):

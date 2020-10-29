@@ -3,6 +3,7 @@ from pcs_test.tier1.cib_resource.stonith_common import need_load_xvm_fence_agent
 from pcs_test.tools.misc import is_minimum_pacemaker_version
 
 PCMK_2_0_3_PLUS = is_minimum_pacemaker_version(2, 0, 3)
+PCMK_2_0_5_PLUS = is_minimum_pacemaker_version(2, 0, 5)
 ERRORS_HAVE_OCURRED = (
     "Error: Errors have occurred, therefore pcs is unable to continue\n"
 )
@@ -53,7 +54,14 @@ class PlainStonith(ResourceTest):
         )
 
     def test_error_when_not_valid_agent(self):
-        if PCMK_2_0_3_PLUS:
+        if PCMK_2_0_5_PLUS:
+            error = (
+                "Error: Agent 'absent' is not installed or does not provide "
+                "valid metadata: crm_resource: Metadata query for "
+                "stonith:absent failed: No such device, Error performing "
+                "operation: No such device, use --force to override\n"
+            )
+        elif PCMK_2_0_3_PLUS:
             error = (
                 "Error: Agent 'absent' is not installed or does not provide "
                 "valid metadata: Metadata query for stonith:absent failed: "
@@ -63,7 +71,7 @@ class PlainStonith(ResourceTest):
             error = (
                 "Error: Agent 'absent' is not installed or does not provide "
                 "valid metadata: Agent absent not found or does not support "
-                "meta-data: Invalid argument (22)\n"
+                "meta-data: Invalid argument (22), "
                 "Metadata query for stonith:absent failed: Input/output error, "
                 "use --force to override\n"
             )
@@ -72,7 +80,14 @@ class PlainStonith(ResourceTest):
         )
 
     def test_warning_when_not_valid_agent(self):
-        if PCMK_2_0_3_PLUS:
+        if PCMK_2_0_5_PLUS:
+            error = (
+                "Warning: Agent 'absent' is not installed or does not provide "
+                "valid metadata: crm_resource: Metadata query for "
+                "stonith:absent failed: No such device, Error performing "
+                "operation: No such device\n"
+            )
+        elif PCMK_2_0_3_PLUS:
             error = (
                 "Warning: Agent 'absent' is not installed or does not provide "
                 "valid metadata: Metadata query for stonith:absent failed: "
@@ -82,7 +97,7 @@ class PlainStonith(ResourceTest):
             error = (
                 "Warning: Agent 'absent' is not installed or does not provide "
                 "valid metadata: Agent absent not found or does not support "
-                "meta-data: Invalid argument (22)\n"
+                "meta-data: Invalid argument (22), "
                 "Metadata query for stonith:absent failed: Input/output error\n"
             )
         self.assert_effect(

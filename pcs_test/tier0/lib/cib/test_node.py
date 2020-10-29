@@ -5,8 +5,10 @@ from pcs_test.tools.assertions import (
     assert_raise_library_error,
     assert_xml_equal,
 )
+from pcs_test.tools.misc import get_test_resource as rc
 from pcs_test.tools.xml import etree_to_str
 
+from pcs import settings
 from pcs.common.reports import ReportItemSeverity as severity
 from pcs.common.reports import codes as report_codes
 from pcs.lib.cib.tools import IdProvider
@@ -205,9 +207,11 @@ class EnsureNodeExists(TestCase):
         self.nodes = etree.Element("nodes")
         self.nodes.append(self.node1)
 
-        self.state = ClusterState(
+    @staticmethod
+    def fixture_state():
+        return ClusterState(
             """
-            <crm_mon version="2.0.3">
+            <crm_mon version="2.0.5">
                 <summary>
                     <stack type="corosync" />
                     <current_dc present="true" />
@@ -219,7 +223,7 @@ class EnsureNodeExists(TestCase):
                     <resources_configured number="0" disabled="0" blocked="0" />
                     <cluster_options stonith-enabled="true"
                         symmetric-cluster="true" no-quorum-policy="stop"
-                        maintenance-mode="false"
+                        maintenance-mode="false" stop-all-resources="false"
                     />
                 </summary>
                 <nodes>
@@ -257,10 +261,13 @@ class EnsureNodeExists(TestCase):
             ),
         )
 
+    @mock.patch.object(
+        settings, "crm_mon_schema", rc("crm_mon_rng/crm_mon.rng")
+    )
     def test_node_missing_not_in_state(self):
         assert_raise_library_error(
             lambda: node._ensure_node_exists(
-                self.nodes, "name-missing", self.state
+                self.nodes, "name-missing", self.fixture_state()
             ),
             (
                 severity.ERROR,
@@ -270,10 +277,15 @@ class EnsureNodeExists(TestCase):
             ),
         )
 
+    @mock.patch.object(
+        settings, "crm_mon_schema", rc("crm_mon_rng/crm_mon.rng")
+    )
     def test_node_missing_and_gets_created(self):
         assert_xml_equal(
             etree_to_str(
-                node._ensure_node_exists(self.nodes, "name-test2", self.state)
+                node._ensure_node_exists(
+                    self.nodes, "name-test2", self.fixture_state()
+                )
             ),
             etree_to_str(self.node2),
         )

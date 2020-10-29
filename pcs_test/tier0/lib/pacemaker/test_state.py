@@ -9,6 +9,7 @@ from pcs_test.tools.assertions import (
 from pcs_test.tools.misc import get_test_resource as rc
 from pcs_test.tools.xml import get_xml_manipulation_creator_from_file
 
+from pcs import settings
 from pcs.common.reports import ReportItemSeverity as severities
 from pcs.common.reports import codes as report_codes
 from pcs.lib.pacemaker import state
@@ -76,6 +77,9 @@ class TestBase(TestCase):
 
 
 class ClusterStatusTest(TestBase):
+    @mock.patch.object(
+        settings, "crm_mon_schema", rc("crm_mon_rng/crm_mon.rng")
+    )
     def test_minimal_crm_mon_is_valid(self):
         ClusterState(str(self.covered_status))
 
@@ -98,6 +102,7 @@ class ClusterStatusTest(TestBase):
         )
 
 
+@mock.patch.object(settings, "crm_mon_schema", rc("crm_mon_rng/crm_mon.rng"))
 class WorkWithClusterStatusNodesTest(TestBase):
     def fixture_node_string(self, **kwargs):
         attrs = dict(name="name", id="id", type="member")
@@ -149,6 +154,7 @@ class WorkWithClusterStatusNodesTest(TestBase):
         )
 
 
+@mock.patch.object(settings, "crm_mon_schema", rc("crm_mon_rng/crm_mon.rng"))
 class WorkWithClusterStatusSummaryTest(TestBase):
     def test_nodes_count(self):
         xml = str(self.covered_status)

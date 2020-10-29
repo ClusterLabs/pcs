@@ -1,11 +1,13 @@
-from unittest import TestCase
+from unittest import mock, TestCase
 
 from lxml import etree
 
 from pcs_test.tools import fixture
 from pcs_test.tools.command_env import get_env_tools
+from pcs_test.tools.misc import get_test_resource as rc
 from pcs_test.tools.xml import etree_to_str
 
+from pcs import settings
 from pcs.common.reports import codes as report_codes
 from pcs.lib.commands import resource
 
@@ -248,6 +250,7 @@ class GroupAdd(TestCase):
         )
 
 
+@mock.patch.object(settings, "crm_mon_schema", rc("crm_mon_rng/crm_mon.rng"))
 class GroupAddWait(TestCase):
     def setUp(self):
         self.env_assist, self.config = get_env_tools(self)

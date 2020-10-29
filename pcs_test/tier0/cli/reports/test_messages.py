@@ -526,3 +526,14 @@ class CibNvsetAmbiguousProvideNvsetId(CliReportMessageTestBase):
             "Several options sets exist, please use the 'pcs resource defaults "
             "set update' command and specify an option set ID",
         )
+
+
+class UnableToGetAgentMetadata(CliReportMessageTestBase):
+    def test_all(self):
+        self.assert_message(
+            messages.UnableToGetAgentMetadata(
+                "agent-name", "reason\non multiple lines"
+            ),
+            "Agent 'agent-name' is not installed or does not provide valid "
+            "metadata: reason, on multiple lines",
+        )

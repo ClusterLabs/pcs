@@ -81,7 +81,7 @@ class StonithDescribeTest(TestCase, AssertPcsMixin):
             stdout_full=(
                 "Error: Agent 'fence_noexist' is not installed or does not "
                 "provide valid metadata: Agent fence_noexist not found or does "
-                "not support meta-data: Invalid argument (22)\n"
+                "not support meta-data: Invalid argument (22), "
                 "Metadata query for stonith:fence_noexist failed: Input/output "
                 "error\n"
             ),
@@ -120,7 +120,7 @@ class StonithTest(TestCase, AssertPcsMixin):
             stdout_full=(
                 "Error: Agent 'fence_noexist' is not installed or does not "
                 "provide valid metadata: Agent fence_noexist not found or does "
-                "not support meta-data: Invalid argument (22)\n"
+                "not support meta-data: Invalid argument (22), "
                 "Metadata query for stonith:fence_noexist failed: Input/output "
                 "error, use --force to override\n"
             ),
@@ -131,7 +131,7 @@ class StonithTest(TestCase, AssertPcsMixin):
             stdout_full=(
                 "Warning: Agent 'fence_noexist' is not installed or does not "
                 "provide valid metadata: Agent fence_noexist not found or does "
-                "not support meta-data: Invalid argument (22)\n"
+                "not support meta-data: Invalid argument (22), "
                 "Metadata query for stonith:fence_noexist failed: Input/output "
                 "error\n"
             ),

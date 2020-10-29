@@ -934,12 +934,15 @@ class FailOrWarn(ResourceTest):
         self.assert_pcs_fail(
             "resource create R ocf:heartbeat:NoExisting".split(),
             # pacemaker 1.1.18 changes -5 to Input/output error
+            # pacemaker 2.0.5 adds 'crm_resource:' and
+            #   'Error performing operation: Input/output error'
             stdout_regexp=re.compile(
                 "^"
                 "Error: Agent 'ocf:heartbeat:NoExisting' is not installed or "
-                "does not provide valid metadata: Metadata query for "
-                "ocf:heartbeat:NoExisting failed: (-5|Input/output error), use "
-                "--force to override\n"
+                "does not provide valid metadata:( crm_resource:)? Metadata "
+                "query for ocf:heartbeat:NoExisting failed: "
+                "(-5|Input/output error)(, Error performing operation: "
+                "Input/output error)?, use --force to override\n"
                 "$",
                 re.MULTILINE,
             ),
@@ -960,11 +963,15 @@ class FailOrWarn(ResourceTest):
                 </primitive>
             </resources>""",
             # pacemaker 1.1.18 changes -5 to Input/output error
+            # pacemaker 2.0.5 adds 'crm_resource:' and
+            #   'Error performing operation: Input/output error'
             output_regexp=re.compile(
                 "^"
                 "Warning: Agent 'ocf:heartbeat:NoExisting' is not installed or "
-                "does not provide valid metadata: Metadata query for "
-                "ocf:heartbeat:NoExisting failed: (-5|Input/output error)\n"
+                "does not provide valid metadata:( crm_resource:)? Metadata "
+                "query for ocf:heartbeat:NoExisting failed: "
+                "(-5|Input/output error)(, Error performing operation: "
+                "Input/output error)?\n"
                 "$",
                 re.MULTILINE,
             ),

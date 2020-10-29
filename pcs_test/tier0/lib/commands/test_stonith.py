@@ -1,9 +1,11 @@
 from functools import partial
-from unittest import TestCase
+from unittest import mock, TestCase
 
 from pcs_test.tools import fixture
 from pcs_test.tools.command_env import get_env_tools
+from pcs_test.tools.misc import get_test_resource as rc
 
+from pcs import settings
 from pcs.common.reports import codes as report_codes
 from pcs.lib.commands import stonith
 from pcs.lib.resource_agent import StonithAgent
@@ -359,6 +361,9 @@ class CreateMixin:
             ]
         )
 
+    @mock.patch.object(
+        settings, "crm_mon_schema", rc("crm_mon_rng/crm_mon.rng")
+    )
     def test_minimal_wait_ok_run_ok(self):
         agent_name = "test_simple"
         instance_name = "stonith-test"
