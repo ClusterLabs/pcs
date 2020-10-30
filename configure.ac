@@ -160,6 +160,7 @@ AC_SUBST([SNMP_MIB_DIR])
 
 AC_CONFIG_FILES([Makefile
 		 pcs/Makefile
-		 pcsd/Makefile])
+		 pcsd/Makefile
+		 pcsd/logrotate/pcsd])
 
 AC_OUTPUT

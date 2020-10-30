@@ -3,6 +3,7 @@
 pcs.spec
 /MANIFEST
 /dist/
+/pcsd/logrotate/pcsd
 /pcs/bash_completion.d.pcs
 /pcs/bundled/
 /pcsd/.bundle

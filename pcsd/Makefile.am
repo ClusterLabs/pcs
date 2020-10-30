@@ -1,9 +1,13 @@
 EXTRA_DIST		= 
 
-MAINTAINERCLEANFILES	= Makefile.in
+MAINTAINERCLEANFILES	= Makefile.in \
+			  logrotate/pcsd
 
 # install
 dist_man8_MANS		= pcsd.8
 
-sysconfigdir		= $(CONF_DIR)
-dist_sysconfig_DATA	= conf/pcsd
+defconfigdir		= $(CONF_DIR)
+dist_defconfig_DATA	= conf/pcsd
+
+logrotatedir		= $(sysconfdir)/logrotate.d
+logrotate_DATA		= logrotate/pcsd
