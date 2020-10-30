@@ -60,7 +60,6 @@ DEST_LIB = ${DESTDIR}${LIB_DIR}
 DEST_PREFIX = ${DESTDIR}${PREFIX}
 DEST_BUNDLE_LIB=${DEST_LIB}/pcs/bundled
 DEST_BUNDLE_LOCAL=$(shell readlink -f ${BUNDLE_LOCAL_DIR})
-DEST_SNMP_MIB=${DEST_PREFIX}${SNMP_MIB_DIR}
 
 # OTHER
 # =====
@@ -119,8 +118,6 @@ install_python_part: install_bundled_libs
 	mv ${DEST_PYTHON_SCRIPT_DIR}/pcs_internal ${DEST_LIB}/pcs/pcs_internal
 	# pcs SNMP install
 	mv ${DEST_PYTHON_SCRIPT_DIR}/pcs_snmp_agent ${DEST_LIB}/pcs/pcs_snmp_agent
-	install -d ${DEST_SNMP_MIB}
-	install -m 644 pcs/snmp/mibs/PCMK-PCS*-MIB.txt ${DEST_SNMP_MIB}
 	install -m 644 -D pcs/snmp/pcs_snmp_agent.conf ${DEST_CONF}/pcs_snmp_agent
 ifeq ($(IS_DEBIAN),true)
 	$(call use-alternative-file,pcs/settings.py.debian,${DEST_PYTHON_SITELIB}/pcs/settings.py)

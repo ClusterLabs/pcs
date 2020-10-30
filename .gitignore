@@ -9,7 +9,7 @@ pcs.spec
 /pcsd/vendor
 /pcsd/public/ui
 /rpm_build/
-pcs-*.tar.gz
+pcs-*.tar.*
 .mypy_cache/
 
 aclocal.m4
