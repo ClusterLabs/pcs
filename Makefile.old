@@ -55,7 +55,6 @@ DEST_PYTHON_SITELIB = ${DESTDIR}${PYTHON_SITELIB}
 DEST_PYTHON_SCRIPT_DIR=${DESTDIR}$(shell $(PYTHON) setup.py scriptdir | tail --lines=1)
 DEST_SYSTEMD_SYSTEM = ${DESTDIR}${SYSTEMD_UNIT_DIR}
 DEST_INIT = ${DESTDIR}${INIT_DIR}
-DEST_CONF = ${DESTDIR}${CONF_DIR}
 DEST_LIB = ${DESTDIR}${LIB_DIR}
 DEST_PREFIX = ${DESTDIR}${PREFIX}
 DEST_BUNDLE_LIB=${DEST_LIB}/pcs/bundled
@@ -118,7 +117,6 @@ install_python_part: install_bundled_libs
 	mv ${DEST_PYTHON_SCRIPT_DIR}/pcs_internal ${DEST_LIB}/pcs/pcs_internal
 	# pcs SNMP install
 	mv ${DEST_PYTHON_SCRIPT_DIR}/pcs_snmp_agent ${DEST_LIB}/pcs/pcs_snmp_agent
-	install -m 644 -D pcs/snmp/pcs_snmp_agent.conf ${DEST_CONF}/pcs_snmp_agent
 ifeq ($(IS_DEBIAN),true)
 	$(call use-alternative-file,pcs/settings.py.debian,${DEST_PYTHON_SITELIB}/pcs/settings.py)
 endif
@@ -135,7 +133,6 @@ endif
 	install -d -m 700 ${DESTDIR}/var/log/pcsd
 	mkdir -p ${DEST_LIB}/pcsd/
 	cp -r pcsd ${DEST_LIB}
-	install -m 644 -D pcsd/pcsd.conf ${DEST_CONF}/pcsd
 	install -d ${DESTDIR}/etc/pam.d
 	install -m 644 pcsd/pcsd.pam ${DESTDIR}/etc/pam.d/pcsd
 ifeq ($(IS_DEBIAN),true)

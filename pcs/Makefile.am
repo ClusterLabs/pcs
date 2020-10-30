@@ -11,3 +11,6 @@ dist_snmpmibs_DATA	= snmp/mibs/PCMK-PCS-MIB.txt \
 			  snmp/mibs/PCMK-PCS-V1-MIB.txt
 
 dist_man8_MANS		= pcs.8 snmp/pcs_snmp_agent.8
+
+sysconfigdir		= $(CONF_DIR)
+dist_sysconfig_DATA	= snmp/conf/pcs_snmp_agent
