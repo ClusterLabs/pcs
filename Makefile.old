@@ -1,28 +1,9 @@
-# Compatibility with GNU/Linux [i.e. Debian] based distros
-UNAME_OS_GNU := $(shell if uname -o | grep -q "GNU/Linux" ; then echo true; else echo false; fi)
-DISTRO_DEBIAN := $(shell if [ -e /etc/debian_version ] ; then echo true; else echo false; fi)
-IS_DEBIAN=false
-
-ifeq ($(UNAME_OS_GNU),true)
-  ifeq ($(DISTRO_DEBIAN),true)
-    IS_DEBIAN=true
-  endif
-endif
-
-ifeq ($(IS_DEBIAN),true)
-  EXTRA_SETUP_OPTS="--install-layout=deb"
-endif
-
 # VARIABLES OVERRIDABLE FROM OUTSIDE
 # ==================================
 
 # Check for an override for building gems
 ifndef BUILD_GEMS
   BUILD_GEMS=true
-endif
-
-ifndef INIT_DIR
-  INIT_DIR=/etc/init.d
 endif
 
 # INSTALLATION FINE DETAIL CONTROLL
@@ -54,7 +35,6 @@ endif
 DEST_PYTHON_SITELIB = ${DESTDIR}${PYTHON_SITELIB}
 DEST_PYTHON_SCRIPT_DIR=${DESTDIR}$(shell $(PYTHON) setup.py scriptdir | tail --lines=1)
 DEST_SYSTEMD_SYSTEM = ${DESTDIR}${SYSTEMD_UNIT_DIR}
-DEST_INIT = ${DESTDIR}${INIT_DIR}
 DEST_LIB = ${DESTDIR}${LIB_DIR}
 DEST_PREFIX = ${DESTDIR}${PREFIX}
 DEST_BUNDLE_LIB=${DEST_LIB}/pcs/bundled
@@ -138,9 +118,6 @@ endif
 ifeq ($(IS_DEBIAN),true)
 	$(call use-alternative-file,pcsd/settings.rb.debian,${DEST_LIB}/pcsd/settings.rb)
 endif
-ifeq ($(IS_DEBIAN)$(IS_SYSTEMCTL),truefalse)
-	install -m 755 -D pcsd/pcsd.debian ${DEST_INIT}/pcsd
-else
 	install -d ${DEST_SYSTEMD_SYSTEM}
 	install -m 644 ${SYSTEMD_SERVICE_FILE} ${DEST_SYSTEMD_SYSTEM}/pcsd.service
 	install -m 644 pcsd/pcsd-ruby.service ${DEST_SYSTEMD_SYSTEM}/pcsd-ruby.service
