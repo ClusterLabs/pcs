@@ -8,7 +8,7 @@ MAINTAINERCLEANFILES	= Makefile.in aclocal.m4 configure depcomp \
 			  config.guess config.sub missing install-sh \
 			  autoheader automake autoconf libtool libtoolize \
 			  ltmain.sh compile autoscan.log \
-			  configure.scan
+			  configure.scan requirements.txt
 
 SPEC			= $(PACKAGE_NAME).spec
 

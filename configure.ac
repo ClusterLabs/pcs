@@ -134,7 +134,7 @@ fi
 
 # python section
 
-PYTHON_LIST="pyagentx astroid pylint tornado dacite dateutil"
+PYTHON_LIST="astroid pylint tornado dacite dateutil"
 
 # commodity function
 PYTHON_LIST_EMBEDDED=""
@@ -151,9 +151,15 @@ for i in $PYTHON_LIST; do
 	PCS_CHECK_PYMOD([$i], [$MOD_FAILURE])
 done
 
-if test -n "$PYTHON_LIST_EMBEDDED"; then
-	AC_MSG_RESULT([The following python modules will be embedded in the build: $PYTHON_LIST_EMBEDDED])
-fi
+# generate requirements.txt here or in Makefile?
+rm -rf requirements.txt
+touch requirements.txt
+for i in $PYTHON_LIST_EMBEDDED; do
+	echo $i >> requirements.txt
+done
+
+# special case, because we need to download from github
+AC_PYTHON_MODULE([pyagentx], [$MOD_FAILURE])
 
 # special case, because we need to download from github
 if test "x$HAVE_PYMOD_PYAGENTX" == "xno"; then
@@ -165,8 +171,13 @@ if test "x$HAVE_PYMOD_PYAGENTX" == "xno"; then
 	if test "x$TAR" == "x"; then
 		AC_MSG_ERROR([Unable to find tar binary.])
 	fi
+	PYTHON_LIST_EMBEDDED="pyagentx $PYTHON_LIST_EMBEDDED"
 fi
 AM_CONDITIONAL([BUILD_PYMOD_PYAGENTX], [test "x$HAVE_PYMOD_PYAGENTX" == "xno"])
+
+if test -n "$PYTHON_LIST_EMBEDDED"; then
+	AC_MSG_RESULT([The following python modules will be embedded in the build: $PYTHON_LIST_EMBEDDED])
+fi
 
 # ruby gem section
 
