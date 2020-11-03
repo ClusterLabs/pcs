@@ -8,8 +8,8 @@ Requires=pcsd-ruby.service
 After=pcsd-ruby.service
 
 [Service]
-EnvironmentFile=/etc/sysconfig/pcsd
-ExecStart=/usr/sbin/pcsd
+EnvironmentFile=@CONF_DIR@/pcsd
+ExecStart=@sbindir@/pcsd
 Type=notify
 
 [Install]

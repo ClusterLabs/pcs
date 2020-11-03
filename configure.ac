@@ -220,6 +220,7 @@ AC_CONFIG_FILES([Makefile
 		 pcs/Makefile
 		 pcs/snmp/pcs_snmp_agent.service
 		 pcsd/Makefile
+		 pcsd/pcsd.service
 		 pcsd/logrotate/pcsd])
 
 AC_OUTPUT

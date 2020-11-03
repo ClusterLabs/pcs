@@ -1,7 +1,8 @@
 EXTRA_DIST		= 
 
 MAINTAINERCLEANFILES	= Makefile.in \
-			  logrotate/pcsd
+			  logrotate/pcsd \
+			  pcsd.service
 
 # install
 dist_man8_MANS		= pcsd.8
@@ -11,3 +12,6 @@ dist_defconfig_DATA	= conf/pcsd
 
 logrotatedir		= $(sysconfdir)/logrotate.d
 logrotate_DATA		= logrotate/pcsd
+
+servicedir		= $(SYSTEMD_UNIT_DIR)
+service_DATA		= pcsd.service

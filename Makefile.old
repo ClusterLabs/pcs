@@ -110,7 +110,6 @@ ifeq ($(IS_DEBIAN),true)
 	$(call use-alternative-file,pcsd/settings.rb.debian,${DEST_LIB}/pcsd/settings.rb)
 endif
 	install -d ${DEST_SYSTEMD_SYSTEM}
-	install -m 644 ${SYSTEMD_SERVICE_FILE} ${DEST_SYSTEMD_SYSTEM}/pcsd.service
 	install -m 644 pcsd/pcsd-ruby.service ${DEST_SYSTEMD_SYSTEM}/pcsd-ruby.service
 endif
 	# ${DEST_LIB}/pcsd/pcsd holds the selinux context
