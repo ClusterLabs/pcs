@@ -1,11 +1,6 @@
 # VARIABLES OVERRIDABLE FROM OUTSIDE
 # ==================================
 
-# Check for an override for building gems
-ifndef BUILD_GEMS
-  BUILD_GEMS=true
-endif
-
 # INSTALLATION FINE DETAIL CONTROLL
 # =================================
 #  `BUNDLE_TORNADO_SRC_DIR=/path/to/tornado/sources`
@@ -106,9 +101,6 @@ ifeq ($(IS_SYSTEMCTL),true)
 endif
 
 install: install_python_part
-ifeq ($(BUILD_GEMS),true)
-	make -C pcsd build_gems
-endif
 	install -d -m 700 ${DESTDIR}/var/log/pcsd
 	mkdir -p ${DEST_LIB}/pcsd/
 	cp -r pcsd ${DEST_LIB}

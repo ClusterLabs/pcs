@@ -63,6 +63,19 @@ if test "x$SYSTEMD_UNIT_DIR" == "x"; then
 fi
 AC_SUBST([SYSTEMD_UNIT_DIR])
 
+# check for ruby
+PKG_CHECK_MODULES([ruby], [ruby >= 2.5])
+PKG_CHECK_VAR([RUBY_VER], [ruby], [ruby_version])
+if test "x$RUBY_VER" == "x"; then
+	AC_MSG_ERROR([Unable to detect ruby version dir automatically])
+fi
+AC_SUBST([RUBY_VER])
+AC_CHECK_PROGS([GEM], [gem])
+if test x$GEM == x; then
+	AC_MSG_ERROR([Unable to find gem binary])
+fi
+AC_SUBST([GEM])
+
 AC_ARG_ENABLE([destructive-tests],
 	      [  --enable-destructive-tests           Automatically execute potentially dangerous tests when running make check (default: no)], [destructive_tests="yes"])
 AM_CONDITIONAL([EXECUTE_TIER1_TESTS], [test "x$destructive_tests" == "xyes"])
@@ -137,6 +150,28 @@ AC_PYTHON_MODULE([pylint], [$PYMOD_FAILURE])
 AC_PYTHON_MODULE([tornado], [$PYMOD_FAILURE])
 AC_PYTHON_MODULE([dacite], [$PYMOD_FAILURE])
 AC_PYTHON_MODULE([dateutil], [$PYMOD_FAILURE])
+
+RUBY_GEM_FAILURE=""
+if test "x$local_build" != "xyes"; then
+	RUBY_GEM_FAILURE=yes
+fi
+AC_RUBY_GEM([backports], [$RUBY_GEM_FAILURE])
+AC_RUBY_GEM([daemons], [$RUBY_GEM_FAILURE])
+AC_RUBY_GEM([ethon], [$RUBY_GEM_FAILURE])
+AC_RUBY_GEM([ffi], [$RUBY_GEM_FAILURE])
+AC_RUBY_GEM([eventmachine], [$RUBY_GEM_FAILURE])
+AC_RUBY_GEM([json], [$RUBY_GEM_FAILURE])
+AC_RUBY_GEM([mustermann], [$RUBY_GEM_FAILURE])
+AC_RUBY_GEM([ruby2_keywords], [$RUBY_GEM_FAILURE])
+AC_RUBY_GEM([open4], [$RUBY_GEM_FAILURE])
+AC_RUBY_GEM([power_assert], [$RUBY_GEM_FAILURE])
+AC_RUBY_GEM([rack], [$RUBY_GEM_FAILURE])
+AC_RUBY_GEM([rack-protection], [$RUBY_GEM_FAILURE])
+AC_RUBY_GEM([rack-test], [$RUBY_GEM_FAILURE])
+AC_RUBY_GEM([sinatra], [$RUBY_GEM_FAILURE])
+AC_RUBY_GEM([tilt], [$RUBY_GEM_FAILURE])
+AC_RUBY_GEM([test-unit], [$RUBY_GEM_FAILURE])
+AC_RUBY_GEM([thin], [$RUBY_GEM_FAILURE])
 
 AC_ARG_WITH([default-config-dir],
 	    [  --with-default-config-dir=DIR  pcs config directory. Default: $sysconfdir/sysconfig ],
