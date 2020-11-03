@@ -11,6 +11,7 @@ pcs.spec
 /pcsd/.bundle
 /pcsd/vendor
 /pcsd/public/ui
+/pcsd/Gemfile*
 /rpm_build/
 pcs-*.tar.*
 .mypy_cache/

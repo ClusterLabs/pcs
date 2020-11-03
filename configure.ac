@@ -205,6 +205,14 @@ if test -n "$GEM_LIST_EMBEDDED"; then
 	AC_MSG_RESULT([The following gems will be embedded in the build: $GEM_LIST_EMBEDDED])
 fi
 
+# generate pcsd/Gemfile here or in Makefile?
+rm -rf pcsd/Gemfile pcsd/Gemfile.lock
+echo "source 'https://rubygems.org'" > pcsd/Gemfile
+echo "" >> pcsd/Gemfile
+for i in $GEM_LIST_EMBEDDED; do
+	echo "gem '$i'" >> pcsd/Gemfile
+done
+
 AC_ARG_WITH([default-config-dir],
 	    [  --with-default-config-dir=DIR  pcs config directory. Default: $sysconfdir/sysconfig ],
 	    [ CONF_DIR="$withval" ],
