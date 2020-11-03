@@ -367,7 +367,7 @@ class DefaultsSetCreateMixin(TestDefaultsMixin, AssertPcsMixin):
             self.cli_command
             + (
                 "set create id=mine score=10 meta nam1=val1 nam2=val2 "
-                "rule (defined attr1 or attr2 gte number 12 or "
+                "rule (defined attr1 or attr2 gte number -1.2 or "
                 "attr3 lt version 3.2.1 or attr4 ne string test or attr5 lt 3) "
                 "and (date gt 2018-05-17T13:28:19 or "
                 "date in_range 2019-01-01 to 2019-03-15 or "
@@ -386,7 +386,7 @@ class DefaultsSetCreateMixin(TestDefaultsMixin, AssertPcsMixin):
                                 />
                                 <expression id="mine-rule-rule-expr-1"
                                     attribute="attr2" operation="gte"
-                                    type="number" value="12"
+                                    type="number" value="-1.2"
                                 />
                                 <expression id="mine-rule-rule-expr-2"
                                     attribute="attr3" operation="lt"

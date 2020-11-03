@@ -335,8 +335,16 @@ def is_num(arg):
     return arg.isdigit() or arg.lower() == "infinity"
 
 
-def is_negative_num(arg):
-    return arg.startswith("-") and is_num(arg[1:])
+def _is_float(arg: str) -> bool:
+    try:
+        float(arg)
+        return True
+    except ValueError:
+        return False
+
+
+def is_negative_num(arg: str) -> bool:
+    return arg.startswith("-") and (is_num(arg[1:]) or _is_float(arg))
 
 
 def is_short_option_expecting_value(arg):
@@ -366,12 +374,17 @@ def filter_out_non_option_negative_numbers(arg_list):
     Return arg_list without non-option negative numbers.
     Negative numbers following the option expecting value are kept.
 
-    There is the problematic legacy.
-    Argumet "--" has special meaning: can be used to signal that no more
+    There is the problematic legacy:
+    Argument "--" has special meaning: it can be used to signal that no more
     options will follow. This would solve the problem with negative numbers in
     a standard way: there would be no special approach to negative numbers,
-    everything would be left in the hands of users. But now it would be
-    backward incompatible change.
+    everything would be left in the hands of users.
+    We cannot use "--" as it would be a backward incompatible change:
+    * "pcs ... -infinity" would not work any more, users would have to switch
+      to "pcs ... -- ... -infinity"
+    * previously, position of some --options mattered, for example
+      "--clone <clone options>", this syntax would not be possible with the "--"
+      in place
 
     list arg_list contains command line arguments
     """
@@ -387,6 +400,8 @@ def filter_out_non_option_negative_numbers(arg_list):
 def filter_out_options(arg_list):
     """
     Return arg_list without options and its negative numbers.
+
+    See a comment in filter_out_non_option_negative_numbers.
 
     list arg_list contains command line arguments
     """
