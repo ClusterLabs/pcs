@@ -128,13 +128,13 @@ fi
 PYTHON_LIST="astroid pylint tornado dacite dateutil"
 
 # commodity function
-PYTHON_LIST_EMBEDDED=""
+PYTHON_LIST_PIP=""
 
 AC_DEFUN([PCS_CHECK_PYMOD],[
 	  AC_PYTHON_MODULE([$1], [$2])
 	  res=$(eval echo "$AS_TR_CPP([HAVE_PYMOD_$1])")
 	  if test "x$res" == "xno"; then
-		  PYTHON_LIST_EMBEDDED="$1 $PYTHON_LIST_EMBEDDED"
+		  PYTHON_LIST_PIP="$1 $PYTHON_LIST_PIP"
 	  fi
 	  ])
 
@@ -145,14 +145,19 @@ done
 # generate requirements.txt here or in Makefile?
 rm -rf requirements.txt
 touch requirements.txt
-for i in $PYTHON_LIST_EMBEDDED; do
+for i in $PYTHON_LIST_PIP; do
 	echo $i >> requirements.txt
 done
+
+if test -n "$PYTHON_LIST_PIP"; then
+	AC_MSG_RESULT([The following python modules will be pip installed: $PYTHON_LIST_PIP])
+fi
 
 # special case, because we need to download from github
 AC_PYTHON_MODULE([pyagentx], [$MOD_FAILURE])
 
 # special case, because we need to download from github
+PYTHON_LIST_EMBEDDED=""
 if test "x$HAVE_PYMOD_PYAGENTX" == "xno"; then
 	AC_CHECK_PROGS([WGET], [wget])
 	if test "x$WGET" == "x"; then
