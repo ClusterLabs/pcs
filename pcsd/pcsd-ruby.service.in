@@ -10,10 +10,10 @@ StopWhenUnneeded=true
 PartOf=pcsd.service
 
 [Service]
-EnvironmentFile=/etc/sysconfig/pcsd
-Environment=GEM_HOME=/usr/lib/pcsd/vendor/bundle/ruby
+EnvironmentFile=@CONF_DIR@/pcsd
+@SYSTEMD_GEM_HOME@
 # This file holds the selinux context
-ExecStart=/usr/lib/pcsd/pcsd
+ExecStart=@LIB_DIR@/pcsd/pcsd
 Type=notify
 
 [Install]

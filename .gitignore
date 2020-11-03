@@ -6,7 +6,7 @@ pcs.spec
 /pcsd/logrotate/pcsd
 /pcs/snmp/pcs_snmp_agent.service
 /pcsd/pcsd.service
-/pcs/bash_completion.d.pcs
+/pcsd/pcsd-ruby.service
 /pcs/bundled/
 /pcsd/.bundle
 /pcsd/vendor

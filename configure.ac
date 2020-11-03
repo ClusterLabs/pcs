@@ -210,6 +210,14 @@ AC_ARG_WITH([pcs-lib-dir],
 	    [ LIB_DIR="$libdir" ])
 AC_SUBST([LIB_DIR])
 
+# we need to do this after defining LIB_DIR
+if test -n "$GEM_LIST_EMBEDDED"; then
+	GEM_HOME="$LIB_DIR/pcsd/vendor/bundle/ruby/$RUBY_VER/"
+	SYSTEMD_GEM_HOME="Environment=GEM_HOME=$GEM_HOME"
+fi
+AC_SUBST([GEM_HOME])
+AC_SUBST([SYSTEMD_GEM_HOME])
+
 AC_ARG_WITH([snmp-mibs-dir],
 	    [  --with-snmp-mibs-dir=DIR      snmp MIB directory. Default: $prefix/share/snmp/mibs ],
 	    [ SNMP_MIB_DIR="$withval" ],
@@ -220,6 +228,7 @@ AC_CONFIG_FILES([Makefile
 		 pcs/Makefile
 		 pcs/snmp/pcs_snmp_agent.service
 		 pcsd/Makefile
+		 pcsd/pcsd-ruby.service
 		 pcsd/pcsd.service
 		 pcsd/logrotate/pcsd])
 
