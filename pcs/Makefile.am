@@ -1,6 +1,7 @@
 EXTRA_DIST		= 
 
-MAINTAINERCLEANFILES	= Makefile.in
+MAINTAINERCLEANFILES	= Makefile.in \
+			  snmp/pcs_snmp_agent
 
 # install
 bashcompletiondir	= $(sysconfdir)/bash_completion.d
@@ -14,3 +15,6 @@ dist_man8_MANS		= pcs.8 snmp/pcs_snmp_agent.8
 
 sysconfigdir		= $(CONF_DIR)
 dist_sysconfig_DATA	= snmp/conf/pcs_snmp_agent
+
+servicedir		= $(SYSTEMD_UNIT_DIR)
+service_DATA		= snmp/pcs_snmp_agent.service

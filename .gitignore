@@ -4,6 +4,7 @@ pcs.spec
 /MANIFEST
 /dist/
 /pcsd/logrotate/pcsd
+/pcs/snmp/pcs_snmp_agent.service
 /pcs/bash_completion.d.pcs
 /pcs/bundled/
 /pcsd/.bundle

@@ -4,8 +4,8 @@ Documentation=man:pcs_snmp_agent(8)
 Requires=snmpd.service
 
 [Service]
-EnvironmentFile=/etc/sysconfig/pcs_snmp_agent
-ExecStart=/usr/lib/pcs/pcs_snmp_agent
+EnvironmentFile=@CONF_DIR@/pcs_snmp_agent
+ExecStart=@LIB_DIR@/pcs/pcs_snmp_agent
 Type=simple
 TimeoutSec=500
 

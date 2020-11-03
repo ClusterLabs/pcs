@@ -56,14 +56,12 @@ PKG_PROG_PKG_CONFIG
 AM_PATH_PYTHON([3.6])
 
 # check for systemd
-PKG_CHECK_MODULES([systemd], [systemd], [SYSTEMD=yes], [SYSTEMD=no])
-if test "$SYSTEMD" == yes; then
-	PKG_CHECK_VAR([SYSTEMD_UNIT_DIR], [systemd], [systemdsystemunitdir])
-	if test "x$SYSTEMD_UNIT_DIR" == "x"; then
-		AC_MSG_ERROR([Unable to detect systemd unit dir automatically])
-	fi
+PKG_CHECK_MODULES([systemd], [systemd])
+PKG_CHECK_VAR([SYSTEMD_UNIT_DIR], [systemd], [systemdsystemunitdir])
+if test "x$SYSTEMD_UNIT_DIR" == "x"; then
+	AC_MSG_ERROR([Unable to detect systemd unit dir automatically])
 fi
-AM_CONDITIONAL([SYSTEMD], [test "$SYSTEMD" == yes])
+AC_SUBST([SYSTEMD_UNIT_DIR])
 
 AC_ARG_ENABLE([destructive-tests],
 	      [  --enable-destructive-tests           Automatically execute potentially dangerous tests when running make check (default: no)], [destructive_tests="yes"])
@@ -160,6 +158,7 @@ AC_SUBST([SNMP_MIB_DIR])
 
 AC_CONFIG_FILES([Makefile
 		 pcs/Makefile
+		 pcs/snmp/pcs_snmp_agent.service
 		 pcsd/Makefile
 		 pcsd/logrotate/pcsd])
 
