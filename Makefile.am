@@ -113,8 +113,9 @@ clean-local:
 maintainer-clean-local:
 	rm -rf pcs/bundled
 	rm -rf $(filter-out \
-	         $(top_srcdir)/m4/ac_python_module.m4,$(wildcard \
-		                                        $(top_srcdir)/m4/*.m4))
+	         $(top_srcdir)/m4/ac_python_module.m4 \
+		 $(top_srcdir)/m4/ac_ruby_gem.m4, \
+		 $(wildcard $(top_srcdir)/m4/*.m4))
 
 ## make rpm/srpm section.
 $(SPEC): $(SPEC).in

@@ -1,7 +1,6 @@
 EXTRA_DIST		= 
 
-MAINTAINERCLEANFILES	= Makefile.in \
-			  snmp/pcs_snmp_agent
+MAINTAINERCLEANFILES	= Makefile.in
 
 # install
 bashcompletiondir	= $(sysconfdir)/bash_completion.d
