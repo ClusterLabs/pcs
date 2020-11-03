@@ -127,8 +127,35 @@ else
 	AC_SUBST([MYPY])
 fi
 
-# download / build / install / bundle pyagentx only if not available in the system
-AC_PYTHON_MODULE([pyagentx])
+MOD_FAILURE=""
+if test "x$local_build" != "xyes"; then
+	MOD_FAILURE=yes
+fi
+
+# python section
+
+PYTHON_LIST="pyagentx astroid pylint tornado dacite dateutil"
+
+# commodity function
+PYTHON_LIST_EMBEDDED=""
+
+AC_DEFUN([PCS_CHECK_PYMOD],[
+	  AC_PYTHON_MODULE([$1], [$2])
+	  res=$(eval echo "$AS_TR_CPP([HAVE_PYMOD_$1])")
+	  if test "x$res" == "xno"; then
+		  PYTHON_LIST_EMBEDDED="$1 $PYTHON_LIST_EMBEDDED"
+	  fi
+	  ])
+
+for i in $PYTHON_LIST; do
+	PCS_CHECK_PYMOD([$i], [$MOD_FAILURE])
+done
+
+if test -n "$PYTHON_LIST_EMBEDDED"; then
+	AC_MSG_RESULT([The following python modules will be embedded in the build: $PYTHON_LIST_EMBEDDED])
+fi
+
+# special case, because we need to download from github
 if test "x$HAVE_PYMOD_PYAGENTX" == "xno"; then
 	AC_CHECK_PROGS([WGET], [wget])
 	if test "x$WGET" == "x"; then
@@ -140,16 +167,6 @@ if test "x$HAVE_PYMOD_PYAGENTX" == "xno"; then
 	fi
 fi
 AM_CONDITIONAL([BUILD_PYMOD_PYAGENTX], [test "x$HAVE_PYMOD_PYAGENTX" == "xno"])
-
-PYMOD_FAILURE=""
-if test "x$local_build" != "xyes"; then
-	PYMOD_FAILURE=yes
-fi
-AC_PYTHON_MODULE([astroid], [$PYMOD_FAILURE])
-AC_PYTHON_MODULE([pylint], [$PYMOD_FAILURE])
-AC_PYTHON_MODULE([tornado], [$PYMOD_FAILURE])
-AC_PYTHON_MODULE([dacite], [$PYMOD_FAILURE])
-AC_PYTHON_MODULE([dateutil], [$PYMOD_FAILURE])
 
 # ruby gem section
 
