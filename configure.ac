@@ -84,15 +84,6 @@ AC_ARG_ENABLE([local-build],
 	      [  --enable-local-build           Download and install all dependencies as user / bundles], [local_build="yes"])
 AM_CONDITIONAL([LOCAL_BUILD], [test "x$local_build" == "xyes"])
 
-BUNDLE_DIR_LOCAL="pcs/bundled"
-AC_SUBST([BUNDLE_DIR_LOCAL])
-if test "x$local_build" == "xyes"; then
-	BUNDLE_DIR="pcs/bundled"
-else
-	BUNDLE_DIR="$libdir/pcs/bundled"
-fi
-AC_SUBST([BUNDLE_DIR])
-
 # required to install python requirements
 AC_CHECK_PROGS([PIP], [pip])
 if test "x$local_build" == "xyes"; then
@@ -222,6 +213,15 @@ AC_ARG_WITH([pcs-lib-dir],
 AC_SUBST([LIB_DIR])
 
 # we need to do this after defining LIB_DIR
+BUNDLE_DIR_LOCAL="pcs/bundled"
+AC_SUBST([BUNDLE_DIR_LOCAL])
+if test "x$local_build" == "xyes"; then
+	BUNDLE_DIR="pcs/bundled"
+else
+	BUNDLE_DIR="$LIB_DIR/pcs/bundled"
+fi
+AC_SUBST([BUNDLE_DIR])
+
 if test -n "$GEM_LIST_EMBEDDED"; then
 	GEM_HOME="$LIB_DIR/pcsd/vendor/bundle/ruby/$RUBY_VER/"
 	SYSTEMD_GEM_HOME="Environment=GEM_HOME=$GEM_HOME"
