@@ -151,27 +151,35 @@ AC_PYTHON_MODULE([tornado], [$PYMOD_FAILURE])
 AC_PYTHON_MODULE([dacite], [$PYMOD_FAILURE])
 AC_PYTHON_MODULE([dateutil], [$PYMOD_FAILURE])
 
+# ruby gem section
+
+# keep the list of gems requirements
+
+GEM_LIST="backports daemons ethon ffi eventmachine json mustermann ruby2_keywords open4 power_assert rack rack-protection rack-test sinatra tilt test-unit thin"
+
+# commodity function
+GEM_LIST_EMBEDDED=""
+
+AC_DEFUN([PCS_CHECK_GEM],[
+	  AC_RUBY_GEM([$1], [$2])
+	  res=$(eval echo "$AS_TR_CPP([HAVE_RUBYGEM_$1])")
+	  if test "x$res" == "xno"; then
+		  GEM_LIST_EMBEDDED="$1 $GEM_LIST_EMBEDDED"
+	  fi
+	  ])
+
 RUBY_GEM_FAILURE=""
 if test "x$local_build" != "xyes"; then
 	RUBY_GEM_FAILURE=yes
 fi
-AC_RUBY_GEM([backports], [$RUBY_GEM_FAILURE])
-AC_RUBY_GEM([daemons], [$RUBY_GEM_FAILURE])
-AC_RUBY_GEM([ethon], [$RUBY_GEM_FAILURE])
-AC_RUBY_GEM([ffi], [$RUBY_GEM_FAILURE])
-AC_RUBY_GEM([eventmachine], [$RUBY_GEM_FAILURE])
-AC_RUBY_GEM([json], [$RUBY_GEM_FAILURE])
-AC_RUBY_GEM([mustermann], [$RUBY_GEM_FAILURE])
-AC_RUBY_GEM([ruby2_keywords], [$RUBY_GEM_FAILURE])
-AC_RUBY_GEM([open4], [$RUBY_GEM_FAILURE])
-AC_RUBY_GEM([power_assert], [$RUBY_GEM_FAILURE])
-AC_RUBY_GEM([rack], [$RUBY_GEM_FAILURE])
-AC_RUBY_GEM([rack-protection], [$RUBY_GEM_FAILURE])
-AC_RUBY_GEM([rack-test], [$RUBY_GEM_FAILURE])
-AC_RUBY_GEM([sinatra], [$RUBY_GEM_FAILURE])
-AC_RUBY_GEM([tilt], [$RUBY_GEM_FAILURE])
-AC_RUBY_GEM([test-unit], [$RUBY_GEM_FAILURE])
-AC_RUBY_GEM([thin], [$RUBY_GEM_FAILURE])
+
+for i in $GEM_LIST; do
+	PCS_CHECK_GEM([$i], [$RUBY_GEM_FAILURE])
+done
+
+if test -n "$GEM_LIST_EMBEDDED"; then
+	AC_MSG_RESULT([The following gems will be embedded in the build: $GEM_LIST_EMBEDDED])
+fi
 
 AC_ARG_WITH([default-config-dir],
 	    [  --with-default-config-dir=DIR  pcs config directory. Default: $sysconfdir/sysconfig ],
