@@ -8,7 +8,7 @@ pcs.spec
 /pcsd/pcsd.service
 /pcsd/pcsd-ruby.service
 /pcs/bundled/
-/pcsd/.bundle
+/.bundle
 /pcsd/vendor
 /pcsd/public/ui
 /Gemfile*
