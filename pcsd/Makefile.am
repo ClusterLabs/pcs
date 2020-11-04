@@ -121,3 +121,11 @@ dist_pcsdpubcssimgs_DATA= \
 			  public/css/images/ui-bg_glass_20_555555_1x400.png \
 			  public/css/images/pbar-ani.gif \
 			  public/css/images/ui-icons_ffffff_256x240.png
+
+install-data-local:
+	$(MKDIR_P) $(DESTDIR)$(localstatedir)/log/pcsd
+	$(MKDIR_P) $(DESTDIR)$(localstatedir)/lib/pcsd
+
+uninstall-local:
+	rmdir $(DESTDIR)$(localstatedir)/log/pcsd 2>/dev/null || :
+	rmdir $(DESTDIR)$(localstatedir)/lib/pcsd 2>/dev/null || :

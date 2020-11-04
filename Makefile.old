@@ -71,14 +71,12 @@ endif
 	$(PYTHON) -m compileall -fl ${DEST_PYTHON_SITELIB}/pcs/settings.py
 
 install: install_python_part
-	install -d -m 700 ${DESTDIR}/var/log/pcsd
 	install -d ${DESTDIR}/etc/pam.d
 	install -m 644 pcsd/pcsd.pam ${DESTDIR}/etc/pam.d/pcsd
 ifeq ($(IS_DEBIAN),true)
 	$(call use-alternative-file,pcsd/settings.rb.debian,${DEST_LIB}/pcsd/settings.rb)
 endif
 
-	install -m 700 -d ${DESTDIR}/var/lib/pcsd
 	$(foreach font,$(pcsd_fonts),\
 		$(eval font_file = $(word 1,$(subst ;, ,$(font)))) \
 		$(eval font_def = $(word 2,$(subst ;, ,$(font)))) \
