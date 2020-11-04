@@ -123,9 +123,16 @@ dist_pcsdpubcssimgs_DATA= \
 			  public/css/images/ui-icons_ffffff_256x240.png
 
 install-data-local:
+if INSTALL_EMBEDDED_GEMS
+	$(MKDIR_P) $(DESTDIR)${GEM_HOME}
+	cp -rp vendor/bundled/ruby/${RUBY_VER}/* $(DESTDIR)${GEM_HOME}
+endif
 	$(MKDIR_P) $(DESTDIR)$(localstatedir)/log/pcsd
 	$(MKDIR_P) $(DESTDIR)$(localstatedir)/lib/pcsd
 
 uninstall-local:
+if INSTALL_EMBEDDED_GEMS
+	rm -rf $(DESTDIR)${GEM_HOME}
+endif
 	rmdir $(DESTDIR)$(localstatedir)/log/pcsd 2>/dev/null || :
 	rmdir $(DESTDIR)$(localstatedir)/lib/pcsd 2>/dev/null || :

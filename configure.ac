@@ -266,6 +266,7 @@ if test -n "$GEM_LIST_EMBEDDED"; then
 fi
 AC_SUBST([GEM_HOME])
 AC_SUBST([SYSTEMD_GEM_HOME])
+AM_CONDITIONAL([INSTALL_EMBEDDED_GEMS], [test -n "$GEM_HOME"])
 
 AC_ARG_WITH([snmp-mibs-dir],
 	    [  --with-snmp-mibs-dir=DIR      snmp MIB directory. Default: $prefix/share/snmp/mibs ],

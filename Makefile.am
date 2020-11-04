@@ -99,6 +99,7 @@ pcsd-tests:
 
 if LOCAL_BUILD
 check-local-deps: install_python_deps install_ruby_deps
+all: check-local-deps
 else
 check-local-deps:
 endif
