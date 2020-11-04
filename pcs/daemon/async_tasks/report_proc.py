@@ -1,10 +1,7 @@
 import multiprocessing as mp
 
 from pcs.common import reports as pcs_reports
-from pcs.daemon.async_tasks.messaging import (
-    Message,
-    MessageType,
-)
+from pcs.daemon.async_tasks.messaging import Message
 
 
 class WorkerReportProcessor(pcs_reports.ReportProcessor):
@@ -19,5 +16,5 @@ class WorkerReportProcessor(pcs_reports.ReportProcessor):
 
     def _do_report(self, report_item: pcs_reports.item.ReportItem) -> None:
         self._worker_communicator.put(
-            Message(self._task_ident, MessageType.REPORT, report_item.to_dto())
+            Message(self._task_ident, report_item.to_dto())
         )

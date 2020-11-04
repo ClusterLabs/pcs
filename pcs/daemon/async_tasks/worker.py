@@ -13,7 +13,6 @@ from .command_mapping import command_map
 from .logging import setup_worker_logger
 from .messaging import (
     Message,
-    MessageType,
     TaskExecuted,
     TaskFinished,
 )
@@ -59,13 +58,7 @@ def task_executor(task: WorkerCommand, worker_com: mp.Queue) -> None:
     """
     # pylint: disable=broad-except
     global logger
-    worker_com.put(
-        Message(
-            task.task_ident,
-            MessageType.TASK_EXECUTED,
-            TaskExecuted(os.getpid()),
-        )
-    )
+    worker_com.put(Message(task.task_ident, TaskExecuted(os.getpid()),))
     logger.info("Task %s executed.", task.task_ident)
 
     env = LibraryEnvironment(  # type: ignore
@@ -82,13 +75,9 @@ def task_executor(task: WorkerCommand, worker_com: mp.Queue) -> None:
         # processor here
 
         for report in e.args:
-            worker_com.put(Message(task.task_ident, MessageType.REPORT, report))
+            worker_com.put(Message(task.task_ident, report))
         worker_com.put(
-            Message(
-                task.task_ident,
-                MessageType.TASK_FINISHED,
-                TaskFinished(TaskFinishType.FAIL, None),
-            )
+            Message(task.task_ident, TaskFinished(TaskFinishType.FAIL, None),)
         )
         logger.exception("Task %s raised a LibraryException.", task.task_ident)
         return
@@ -97,7 +86,6 @@ def task_executor(task: WorkerCommand, worker_com: mp.Queue) -> None:
         worker_com.put(
             Message(
                 task.task_ident,
-                MessageType.TASK_FINISHED,
                 TaskFinished(TaskFinishType.UNHANDLED_EXCEPTION, None),
             )
         )
@@ -107,9 +95,7 @@ def task_executor(task: WorkerCommand, worker_com: mp.Queue) -> None:
         return
     worker_com.put(
         Message(
-            task.task_ident,
-            MessageType.TASK_FINISHED,
-            TaskFinished(TaskFinishType.SUCCESS, task_retval),
+            task.task_ident, TaskFinished(TaskFinishType.SUCCESS, task_retval),
         )
     )
     logger.info("Task %s finished.", task.task_ident)

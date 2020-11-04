@@ -20,7 +20,7 @@ from pcs.settings import (
     task_unresponsive_timeout_seconds,
 )
 from pcs.common.async_tasks.dto import CommandDto, TaskResultDto
-from .messaging import Message, MessageType, TaskExecuted, TaskFinished
+from .messaging import Message, TaskExecuted, TaskFinished
 from .worker import WorkerCommand
 
 
@@ -62,6 +62,19 @@ class Task(ImplementsToDto):
         :param state: New task state
         """
         self._state = state
+
+    def _get_last_updated_timestamp(self) -> Optional[datetime.datetime]:
+        """
+        Helper function for getting timestamp of the last message received
+
+        This function forces a time of setting the task to FINISHED for the
+        task that haven't received any messages.
+        :return: Date and time of receiving the last message
+        """
+        if self._last_message_at is None and self.state == TaskState.FINISHED:
+            # Update the timestamp of last message
+            self._task_updated()
+        return self._last_message_at
 
     def _is_timed_out(self, timeout_s: int) -> bool:
         """
@@ -111,19 +124,6 @@ class Task(ImplementsToDto):
         """
         self._last_message_at = datetime.datetime.now()
 
-    def _get_last_updated_timestamp(self) -> Optional[datetime.datetime]:
-        """
-        Helper function for getting timestamp of the last message received
-
-        This function forces a time of setting the task to FINISHED for the
-        task that haven't received any messages.
-        :return: Date and time of receiving the last message
-        """
-        if self._last_message_at is None and self.state == TaskState.FINISHED:
-            # Update the timestamp of last message
-            self._task_updated()
-        return self._last_message_at
-
     def is_kill_requested(self) -> bool:
         return self._kill_requested is not None
 
@@ -159,15 +159,15 @@ class Task(ImplementsToDto):
         Main message handler
         :param message: Message instance
         """
-        self._task_updated()
-        if message.message_type == MessageType.REPORT:
-            self._store_reports(cast(ReportItemDto, message.payload))
-        elif message.message_type == MessageType.TASK_EXECUTED:
-            self._message_executed(cast(TaskExecuted, message.payload))
-        elif message.message_type == MessageType.TASK_FINISHED:
-            self._message_finished(cast(TaskFinished, message.payload))
+        if isinstance(message.payload, ReportItemDto):
+            self._store_reports(message.payload)
+        elif isinstance(message.payload, TaskExecuted):
+            self._message_executed(message.payload)
+        elif isinstance(message.payload, TaskFinished):
+            self._message_finished(message.payload)
         else:
             raise UnknownMessageError(message)
+        self._task_updated()
 
     def _message_executed(self, message_payload: TaskExecuted) -> None:
         """
