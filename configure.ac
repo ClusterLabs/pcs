@@ -202,15 +202,19 @@ for i in $GEM_LIST; do
 done
 
 if test -n "$GEM_LIST_EMBEDDED"; then
+	AC_CHECK_PROGS([BUNDLE], [bundle])
+	if test "x$BUNDLE" == "x"; then
+		AC_MSG_ERROR([Unable to find bundle binary required to install missing ruby gems])
+	fi
 	AC_MSG_RESULT([The following gems will be embedded in the build: $GEM_LIST_EMBEDDED])
 fi
 
 # generate pcsd/Gemfile here or in Makefile?
-rm -rf pcsd/Gemfile pcsd/Gemfile.lock
-echo "source 'https://rubygems.org'" > pcsd/Gemfile
-echo "" >> pcsd/Gemfile
+rm -rf Gemfile Gemfile.lock
+echo "source 'https://rubygems.org'" > Gemfile
+echo "" >> Gemfile
 for i in $GEM_LIST_EMBEDDED; do
-	echo "gem '$i'" >> pcsd/Gemfile
+	echo "gem '$i'" >> Gemfile
 done
 
 AC_ARG_WITH([default-config-dir],
@@ -226,17 +230,23 @@ AC_ARG_WITH([pcs-lib-dir],
 AC_SUBST([LIB_DIR])
 
 # we need to do this after defining LIB_DIR
-BUNDLE_DIR_LOCAL="pcs/bundled"
-AC_SUBST([BUNDLE_DIR_LOCAL])
+PCS_BUNDLED_DIR_LOCAL="pcs/bundled"
+AC_SUBST([PCS_BUNDLED_DIR_LOCAL])
 if test "x$local_build" == "xyes"; then
-	BUNDLE_DIR="pcs/bundled"
+	PCS_BUNDLED_DIR="pcs/bundled"
 else
-	BUNDLE_DIR="$LIB_DIR/pcs/bundled"
+	PCS_BUNDLED_DIR="$LIB_DIR/pcs/bundled"
 fi
-AC_SUBST([BUNDLE_DIR])
+AC_SUBST([PCS_BUNDLED_DIR])
+
+PCSD_BUNDLED_DIR_ROOT_LOCAL="pcsd/vendor/bundled/"
+PCSD_BUNDLED_DIR_LOCAL="$PCSD_BUNDLED_DIR_ROOT_LOCAL/ruby/$RUBY_VER/"
+
+AC_SUBST([PCSD_BUNDLED_DIR_ROOT_LOCAL])
+AC_SUBST([PCSD_BUNDLED_DIR_LOCAL])
 
 if test -n "$GEM_LIST_EMBEDDED"; then
-	GEM_HOME="$LIB_DIR/pcsd/vendor/bundle/ruby/$RUBY_VER/"
+	GEM_HOME="$LIB_DIR/$PCSD_BUNDLED_DIR_LOCAL"
 	SYSTEMD_GEM_HOME="Environment=GEM_HOME=$GEM_HOME"
 fi
 AC_SUBST([GEM_HOME])

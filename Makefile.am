@@ -8,7 +8,7 @@ MAINTAINERCLEANFILES	= Makefile.in aclocal.m4 configure depcomp \
 			  config.guess config.sub missing install-sh \
 			  autoheader automake autoconf libtool libtoolize \
 			  ltmain.sh compile autoscan.log \
-			  configure.scan requirements.txt
+			  configure.scan requirements.txt Gemfile Gemfile.lock
 
 SPEC			= $(PACKAGE_NAME).spec
 
@@ -44,11 +44,11 @@ PYAGENTX_URI="https://github.com/ondrejmular/pyagentx/archive/v${PYAGENTX_VERSIO
 # location inside the local directory.
 install_python_pyagentx:
 if BUILD_PYMOD_PYAGENTX
-	mkdir -p $(BUNDLE_DIR_LOCAL)/src
-	rm -rf $(BUNDLE_DIR_LOCAL)/src/pyagentx-${PYAGENTX_VERSION} $(BUNDLE_DIR_LOCAL)/packages/pyagentx*
-	$(WGET) -qO- ${PYAGENTX_URI} | $(TAR) xvz -C ${BUNDLE_DIR_LOCAL}/src
-	$(call build_python_bundle,${abs_srcdir}/$(BUNDLE_DIR_LOCAL)/src/pyagentx-${PYAGENTX_VERSION},${abs_builddir}/$(BUNDLE_DIR))
-	rm -rf $(BUNDLE_DIR_LOCAL)/src/pyagentx-${PYAGENTX_VERSION}
+	mkdir -p $(PCS_BUNDLED_DIR_LOCAL)/src
+	rm -rf $(PCS_BUNDLED_DIR_LOCAL)/src/pyagentx-${PYAGENTX_VERSION} $(PCS_BUNDLED_DIR_LOCAL)/packages/pyagentx*
+	$(WGET) -qO- ${PYAGENTX_URI} | $(TAR) xvz -C ${PCS_BUNDLED_DIR_LOCAL}/src
+	$(call build_python_bundle,${abs_srcdir}/$(PCS_BUNDLED_DIR_LOCAL)/src/pyagentx-${PYAGENTX_VERSION},${abs_builddir}/$(PCS_BUNDLED_DIR))
+	rm -rf $(PCS_BUNDLED_DIR_LOCAL)/src/pyagentx-${PYAGENTX_VERSION}
 endif
 
 if LOCAL_BUILD
@@ -81,8 +81,17 @@ if EXECUTE_TIER1_TESTS
 	$(PYTHON) pcs_test/suite.py -v --vanilla --tier1
 endif
 
+install_ruby_deps:
+	rm -rf .bundle Gemfile.lock
+	mkdir -p .bundle
+	echo '---' > .bundle/config
+	echo 'BUNDLE_DISABLE_SHARED_GEMS: "1"' >> .bundle/config
+	echo 'BUNDLE_PATH: "${PCSD_BUNDLED_DIR_ROOT_LOCAL}"' >> .bundle/config
+	$(BUNDLE)
+	rm -rf .bundle Gemfile.lock
+
 if LOCAL_BUILD
-check-local-deps: install_python_deps
+check-local-deps: install_python_deps install_ruby_deps
 else
 check-local-deps:
 endif
@@ -108,10 +117,11 @@ gen-ChangeLog:
 
 clean-local:
 	$(PYTHON) setup.py clean
+	rm -rf Gemfile.lock .bundle
 
 # this will get rid of "libtoolized" m4 files
 maintainer-clean-local:
-	rm -rf pcs/bundled
+	rm -rf ${PCS_BUNDLED_DIR_LOCAL} ${PCSD_BUNDLED_DIR_ROOT_LOCAL}
 	rm -rf $(filter-out \
 	         $(top_srcdir)/m4/ac_python_module.m4 \
 		 $(top_srcdir)/m4/ac_ruby_gem.m4, \

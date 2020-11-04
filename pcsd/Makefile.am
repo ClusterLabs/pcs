@@ -2,8 +2,7 @@ EXTRA_DIST		=
 
 MAINTAINERCLEANFILES	= Makefile.in \
 			  logrotate/pcsd \
-			  pcsd.service pcsd-ruby.service \
-			  Gemfile Gemfile.lock
+			  pcsd.service pcsd-ruby.service
 
 # install
 dist_man8_MANS		= pcsd.8
