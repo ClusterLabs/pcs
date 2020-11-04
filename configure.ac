@@ -89,7 +89,7 @@ AC_ARG_ENABLE([local-build],
 AM_CONDITIONAL([LOCAL_BUILD], [test "x$local_build" == "xyes"])
 
 # required to install python requirements
-AC_CHECK_PROGS([PIP], [pip])
+AC_CHECK_PROGS([PIP], [pip pip3])
 if test "x$local_build" == "xyes"; then
 	if test x$PIP == x; then
 		AC_MSG_ERROR([Unable to find pip binary])
