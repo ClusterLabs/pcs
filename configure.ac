@@ -189,7 +189,7 @@ fi
 
 # keep the list of gems requirements
 
-GEM_LIST="backports daemons ethon ffi eventmachine json mustermann ruby2_keywords open4 power_assert rack rack-protection rack-test sinatra tilt test-unit thin"
+GEM_LIST="backports daemons ethon ffi eventmachine json mustermann open4 power_assert rack rack-protection rack-test sinatra tilt test-unit thin"
 
 # commodity function
 GEM_LIST_EMBEDDED=""
