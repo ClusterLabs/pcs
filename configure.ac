@@ -41,6 +41,9 @@ case $exec_prefix in
   prefix) exec_prefix=$prefix;;
 esac
 
+eval SBINDIR="`eval echo ${sbindir}`"
+AC_SUBST([SBINDIR])
+
 # Checks for programs.
 
 # check stolen from gnulib/m4/gnu-make.m4

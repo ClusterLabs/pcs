@@ -9,7 +9,7 @@ After=pcsd-ruby.service
 
 [Service]
 EnvironmentFile=@CONF_DIR@/pcsd
-ExecStart=@sbindir@/pcsd
+ExecStart=@SBINDIR@/pcsd
 Type=notify
 
 [Install]
