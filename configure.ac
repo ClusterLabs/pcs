@@ -64,6 +64,10 @@ fi
 AC_SUBST([SYSTEMD_UNIT_DIR])
 
 # check for ruby
+AC_CHECK_PROGS([RUBY], [ruby])
+if test x$RUBY == x; then
+	AC_MSG_ERROR([Unable to find ruby binary])
+fi
 PKG_CHECK_MODULES([ruby], [ruby >= 2.5])
 PKG_CHECK_VAR([RUBY_VER], [ruby], [ruby_version])
 if test "x$RUBY_VER" == "x"; then

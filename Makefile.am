@@ -90,13 +90,20 @@ install_ruby_deps:
 	$(BUNDLE)
 	rm -rf .bundle Gemfile.lock
 
+pcsd-tests:
+	GEM_HOME=${abs_top_srcdir}/${PCSD_BUNDLED_DIR_LOCAL} \
+		$(RUBY) \
+		-I${abs_top_srcdir}/pcsd \
+		-I${abs_top_srcdir}/pcsd/test \
+		${abs_top_srcdir}/pcsd/test/test_all_suite.rb
+
 if LOCAL_BUILD
 check-local-deps: install_python_deps install_ruby_deps
 else
 check-local-deps:
 endif
 
-check-local: check-local-deps pylint black_check mypy tests_tier0 tests_tier1
+check-local: check-local-deps pylint black_check mypy tests_tier0 tests_tier1 pcsd-tests
 
 BUILT_SOURCES = .version
 .version:
