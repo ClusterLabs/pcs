@@ -146,6 +146,13 @@ for i in $PYTHON_LIST; do
 	PCS_CHECK_PYMOD([$i], [$MOD_FAILURE])
 done
 
+# special case lxml-stubs, it can be installed via pip
+# but it cannot be detected as python module
+AC_PIP_MODULE([lxml-stubs], [$MOD_FAILURE])
+if test "$HAVE_PIPMOD_LXML_STUBS" == "no"; then
+	PYTHON_LIST_PIP="lxml-stubs $PYTHON_LIST_PIP"
+fi
+
 # generate requirements.txt here or in Makefile?
 rm -rf requirements.txt
 touch requirements.txt
@@ -160,7 +167,6 @@ fi
 # special case, because we need to download from github
 AC_PYTHON_MODULE([pyagentx], [$MOD_FAILURE])
 
-# special case, because we need to download from github
 PYTHON_LIST_EMBEDDED=""
 if test "x$HAVE_PYMOD_PYAGENTX" == "xno"; then
 	AC_CHECK_PROGS([WGET], [wget])

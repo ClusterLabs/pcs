@@ -131,6 +131,7 @@ maintainer-clean-local:
 	rm -rf ${PCS_BUNDLED_DIR_LOCAL} ${PCSD_BUNDLED_DIR_ROOT_LOCAL}
 	rm -rf $(filter-out \
 	         $(top_srcdir)/m4/ac_python_module.m4 \
+	         $(top_srcdir)/m4/ac_pip_module.m4 \
 		 $(top_srcdir)/m4/ac_ruby_gem.m4, \
 		 $(wildcard $(top_srcdir)/m4/*.m4))
 
