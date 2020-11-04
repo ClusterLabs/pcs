@@ -432,12 +432,16 @@ class ConfigFacade(FacadeInterface):
             default = sec.get_attribute_value(option, default)
         return default
 
-    def _has_changed(
+    def _is_changed(
         self, section: str, option_name: str, new_value: Optional[str]
     ) -> bool:
         if new_value is None:
             return False
-        return self._get_option_value(section, option_name) != new_value
+        old_value = self._get_option_value(section, option_name)
+        # old_value is not present or empty and new_value is empty
+        if not old_value and not new_value:
+            return False
+        return old_value != new_value
 
     # TODO: tests
     def set_transport_options(
@@ -453,6 +457,11 @@ class ConfigFacade(FacadeInterface):
         compression_options -- compression options
         crypto_options -- crypto options
         """
+        if any(
+            self._is_changed("totem", opt, transport_options.get(opt))
+            for opt in constants.TRANSPORT_RUNTIME_CHANGE_BANNED_OPTIONS
+        ):
+            self._need_stopped_cluster = True
         transport_type = self.get_transport()
         if transport_type in constants.TRANSPORTS_KNET:
             self._set_transport_knet_options(
@@ -460,11 +469,6 @@ class ConfigFacade(FacadeInterface):
             )
         elif transport_type in constants.TRANSPORTS_UDP:
             self._set_transport_udp_options(transport_options)
-        if any(
-            self._has_changed("totem", opt, transport_options.get(opt))
-            for opt in constants.TRANSPORT_RUNTIME_CHANGE_BANNED_OPTIONS
-        ):
-            self._need_stopped_cluster = True
 
     def _set_transport_udp_options(self, options):
         """
