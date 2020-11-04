@@ -478,6 +478,7 @@ class ConfigFacade(FacadeInterface):
         """
         totem_section_list = self.__ensure_section(self.config, "totem")
         self.__set_section_options(totem_section_list, options)
+        self.__remove_empty_sections(self.config)
 
     def _set_transport_knet_options(
         self, generic_options, compression_options, crypto_options
