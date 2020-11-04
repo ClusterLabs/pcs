@@ -15,3 +15,109 @@ logrotate_DATA		= logrotate/pcsd
 
 servicedir		= $(SYSTEMD_UNIT_DIR)
 service_DATA		= pcsd.service pcsd-ruby.service
+
+pcsddir			= $(LIB_DIR)/pcsd
+dist_pcsd_SCRIPTS	= pcsd \
+			  pcsd-cli.rb
+
+dist_pcsd_DATA		= \
+			  corosyncconf.rb \
+			  pcsd_exchange_format.rb \
+			  capabilities.xml \
+			  pcsd_remove_file.rb \
+			  cfgsync.rb \
+			  cluster.rb \
+			  cluster_entity.rb \
+			  api_v1.rb \
+			  pcsd_file.rb \
+			  rserver.rb \
+			  pcsd.rb \
+			  resource.rb \
+			  fenceagent.rb \
+			  auth.rb \
+			  remote.rb \
+			  pcs.rb \
+			  permissions.rb \
+			  bootstrap.rb \
+			  pcsd_action_command.rb \
+			  config.rb \
+			  settings.rb
+
+pcsdviewsdir		= ${pcsddir}/views
+
+dist_pcsdviews_DATA	= \
+			  views/_permissions_cluster.erb \
+			  views/manage.erb \
+			  views/permissions.erb \
+			  views/login.erb \
+			  views/_dialogs.erb \
+			  views/_resource_list.erb \
+			  views/_configure.erb \
+			  views/main.erb \
+			  views/_acls.erb \
+			  views/_resource.erb \
+			  views/nodes.erb \
+			  views/_cluster_list.erb
+
+pcsdpubdir		= ${pcsddir}/public
+dist_pcsdpub_DATA	= \
+			  public/ui_instructions.html
+
+pcsdpubjsdir		= ${pcsddir}/public/js
+dist_pcsdpubjs_DATA	= \
+			  public/js/jquery-1.9.1.min.js \
+			  public/js/node-remove.js \
+			  public/js/cluster-destroy.js \
+			  public/js/api.js \
+			  public/js/ember-1.4.0.js \
+			  public/js/node-add.js \
+			  public/js/handlebars-v1.2.1.js \
+			  public/js/tools.js \
+			  public/js/cluster-setup.js \
+			  public/js/pcsd.js \
+			  public/js/jquery-ui-1.10.1.custom.min.js \
+			  public/js/nodes-ember.js
+
+pcsdpubjsdevdir		= ${pcsddir}/public/js/dev
+dist_pcsdpubjsdev_DATA	= \
+			  public/js/dev/tests-cluster-setup.js \
+			  public/js/dev/cluster_status.mock.js \
+			  public/js/dev/tests-node-add.js \
+			  public/js/dev/tests-node-remove.js \
+			  public/js/dev/clusters-overview-mock.js \
+			  public/js/dev/tests-cluster-destroy.js \
+			  public/js/dev/dev.js
+
+pcsdpubimagesdir	= ${pcsddir}/public/images
+dist_pcsdpubimages_DATA	= \
+			  public/images/HAM-logo.png \
+			  public/images/favicon.png \
+			  public/images/Shell_bg.png \
+			  public/images/action-icons.png \
+			  public/images/field_bg.png
+
+pcsdpubcssdir		= ${pcsddir}/public/css
+dist_pcsdpubcss_DATA	= \
+			  public/css/liberation.css \
+			  public/css/overpass.css \
+			  public/css/style.css \
+			  public/css/jquery-ui-1.10.1.custom.css
+
+pcsdpubcssimgsdir	= ${pcsddir}/public/css/images
+dist_pcsdpubcssimgs_DATA= \
+			  public/css/images/ui-bg_inset-soft_30_f58400_1x100.png \
+			  public/css/images/ui-icons_cccccc_256x240.png \
+			  public/css/images/ui-bg_inset-soft_25_000000_1x100.png \
+			  public/css/images/ui-bg_glass_40_0078a3_1x400.png \
+			  public/css/images/ui-icons_4b8e0b_256x240.png \
+			  public/css/images/ui-bg_flat_50_5c5c5c_40x100.png \
+			  public/css/images/ui-icons_a83300_256x240.png \
+			  public/css/images/ui-icons_222222_256x240.png \
+			  public/css/images/animated-overlay.gif \
+			  public/css/images/ui-bg_highlight-soft_80_eeeeee_1x100.png \
+			  public/css/images/ui-bg_glass_40_ffc73d_1x400.png \
+			  public/css/images/ui-bg_flat_30_cccccc_40x100.png \
+			  public/css/images/ui-bg_gloss-wave_25_333333_500x100.png \
+			  public/css/images/ui-bg_glass_20_555555_1x400.png \
+			  public/css/images/pbar-ani.gif \
+			  public/css/images/ui-icons_ffffff_256x240.png

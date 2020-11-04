@@ -72,17 +72,12 @@ endif
 
 install: install_python_part
 	install -d -m 700 ${DESTDIR}/var/log/pcsd
-	mkdir -p ${DEST_LIB}/pcsd/
-	cp -r pcsd ${DEST_LIB}
 	install -d ${DESTDIR}/etc/pam.d
 	install -m 644 pcsd/pcsd.pam ${DESTDIR}/etc/pam.d/pcsd
 ifeq ($(IS_DEBIAN),true)
 	$(call use-alternative-file,pcsd/settings.rb.debian,${DEST_LIB}/pcsd/settings.rb)
 endif
-	# ${DEST_LIB}/pcsd/pcsd holds the selinux context
-	install -m 755 pcsd/pcsd.service-runner ${DEST_LIB}/pcsd/pcsd
-	rm ${DEST_LIB}/pcsd/pcsd.service-runner
-	
+
 	install -m 700 -d ${DESTDIR}/var/lib/pcsd
 	$(foreach font,$(pcsd_fonts),\
 		$(eval font_file = $(word 1,$(subst ;, ,$(font)))) \
