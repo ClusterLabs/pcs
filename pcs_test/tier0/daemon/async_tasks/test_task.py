@@ -77,7 +77,7 @@ class TestReceiveMessage(TaskBaseTestCase, MockDateTimeNowMixin):
         message = messaging.Message(TASK_IDENT, 3)
         with self.assertRaises(tasks.UnknownMessageError) as thrown_exc:
             self.task.receive_message(message)
-        self.assertEqual(message, thrown_exc.exception.unknown_message)
+        self.assertEqual(type(3).__name__, thrown_exc.exception.payload_type)
         mock_datetime.assert_not_called()
 
 

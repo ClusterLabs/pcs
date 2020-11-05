@@ -31,7 +31,7 @@ class UnknownMessageError(Exception):
 
     def __init__(self, unknown_message: Message):
         super().__init__(self)
-        self.unknown_message = unknown_message
+        self.payload_type = type(unknown_message.payload).__name__
 
 
 class Task(ImplementsToDto):

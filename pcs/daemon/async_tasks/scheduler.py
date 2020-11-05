@@ -138,11 +138,11 @@ class Scheduler:
             task: Task = self._task_register[message.task_ident]
             try:
                 task.receive_message(message)
-            except UnknownMessageError:
+            except UnknownMessageError as exc:
                 self._logger.critical(
                     'Message with unknown message type "%s" was received by '
                     "the scheduler.",
-                    message.message_type,
+                    exc.payload_type,
                 )
                 task.request_kill(TaskKillReason.INTERNAL_MESSAGING_ERROR)
 
