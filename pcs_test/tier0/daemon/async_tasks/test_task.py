@@ -41,7 +41,7 @@ class TestReceiveMessage(TaskBaseTestCase, MockDateTimeNowMixin):
         payload = mock.MagicMock(ReportItemDto)
         message = messaging.Message(TASK_IDENT, payload)
         self.task.receive_message(message)
-        self.assertEqual(payload, self.task.to_dto().reports[0])
+        self.assertEqual([payload], self.task.to_dto().reports)
         self.assertEqual(DATETIME_NOW, self.task._last_message_at)
         mock_datetime.now.assert_called_once()
 
