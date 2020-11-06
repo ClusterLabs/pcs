@@ -16,7 +16,7 @@ from pcs.cli.common import (
     parse_args,
     routing,
 )
-from pcs.cli.reports import process_library_reports
+from pcs.cli.reports import process_library_reports, output
 from pcs.cli.routing import (
     acl,
     alert,
@@ -148,21 +148,41 @@ def main(argv=None):
     argv = new_argv
 
     try:
-        pcs_options, dummy_argv = getopt.gnu_getopt(
-            parse_args.filter_out_non_option_negative_numbers(argv),
-            parse_args.PCS_SHORT_OPTIONS,
-            parse_args.PCS_LONG_OPTIONS,
-        )
+        if "--" in argv:
+            pcs_options, argv = getopt.gnu_getopt(
+                argv, parse_args.PCS_SHORT_OPTIONS, parse_args.PCS_LONG_OPTIONS
+            )
+        else:
+            # DEPRECATED
+            # TODO remove
+            # We want to support only the -- version
+            (
+                args_without_negative_nums,
+                args_filtered_out,
+            ) = parse_args.filter_out_non_option_negative_numbers(argv)
+            if args_filtered_out:
+                options_str = "', '".join(args_filtered_out)
+                output.warn(
+                    f"Using '{options_str}' without '--' is deprecated, those "
+                    "parameters will be considered position independent "
+                    "options in future pcs versions"
+                )
+            pcs_options, dummy_argv = getopt.gnu_getopt(
+                args_without_negative_nums,
+                parse_args.PCS_SHORT_OPTIONS,
+                parse_args.PCS_LONG_OPTIONS,
+            )
+            argv = parse_args.filter_out_options(argv)
     except getopt.GetoptError as err:
         usage.main()
         print(err)
         if err.opt in {"V", "clone", "device", "watchdog"}:
             # Print error messages which point users to the changes section in
             # pcs manpage.
+            # TODO remove
             # To be removed in the next significant version.
             print(f"Hint: {errors.HINT_SYNTAX_CHANGE}")
         sys.exit(1)
-    argv = parse_args.filter_out_options(argv)
 
     full = False
     for option, dummy_value in pcs_options:

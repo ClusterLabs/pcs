@@ -9,8 +9,8 @@ from pcs.cli.common.parse_args import (
     split_option,
     filter_out_non_option_negative_numbers,
     filter_out_options,
-    is_num,
-    is_negative_num,
+    _is_num,
+    _is_negative_num,
     is_short_option_expecting_value,
     is_long_option_expecting_value,
     is_option_expecting_value,
@@ -341,56 +341,59 @@ class ParseTypedArg(TestCase):
 class FilterOutNonOptionNegativeNumbers(TestCase):
     def test_does_not_remove_anything_when_no_negative_numbers(self):
         args = ["first", "second"]
-        self.assertEqual(args, filter_out_non_option_negative_numbers(args))
+        self.assertEqual(
+            (args, []), filter_out_non_option_negative_numbers(args)
+        )
 
     def test_remove_negative_number(self):
         self.assertEqual(
-            ["first"], filter_out_non_option_negative_numbers(["first", "-1"])
+            (["first"], ["-1"]),
+            filter_out_non_option_negative_numbers(["first", "-1"]),
         )
 
     def test_remove_negative_infinity(self):
         self.assertEqual(
-            ["first"],
+            (["first"], ["-INFINITY"]),
             filter_out_non_option_negative_numbers(["first", "-INFINITY"]),
         )
         self.assertEqual(
-            ["first"],
+            (["first"], ["-infinity"]),
             filter_out_non_option_negative_numbers(["first", "-infinity"]),
         )
 
     def test_not_remove_follower_of_short_signed_option(self):
         self.assertEqual(
-            ["first", "-f", "-1"],
+            (["first", "-f", "-1"], []),
             filter_out_non_option_negative_numbers(["first", "-f", "-1"]),
         )
 
     def test_remove_follower_of_short_unsigned_option(self):
         self.assertEqual(
-            ["first", "-h"],
+            (["first", "-h"], ["-1"]),
             filter_out_non_option_negative_numbers(["first", "-h", "-1"]),
         )
 
     def test_not_remove_follower_of_long_signed_option(self):
         self.assertEqual(
-            ["first", "--name", "-1"],
+            (["first", "--name", "-1"], []),
             filter_out_non_option_negative_numbers(["first", "--name", "-1"]),
         )
 
     def test_remove_follower_of_long_unsigned_option(self):
         self.assertEqual(
-            ["first", "--clone"],
+            (["first", "--clone"], ["-1"]),
             filter_out_non_option_negative_numbers(["first", "--clone", "-1"]),
         )
 
     def test_does_not_remove_dash(self):
         self.assertEqual(
-            ["first", "-"],
+            (["first", "-"], []),
             filter_out_non_option_negative_numbers(["first", "-"]),
         )
 
     def test_does_not_remove_dash_dash(self):
         self.assertEqual(
-            ["first", "--"],
+            (["first", "--"], []),
             filter_out_non_option_negative_numbers(["first", "--"]),
         )
 
@@ -442,27 +445,27 @@ class FilterOutOptions(TestCase):
 
 class IsNum(TestCase):
     def test_returns_true_on_number(self):
-        self.assertTrue(is_num("10"))
+        self.assertTrue(_is_num("10"))
 
     def test_returns_true_on_infinity(self):
-        self.assertTrue(is_num("infinity"))
+        self.assertTrue(_is_num("infinity"))
 
     def test_returns_false_on_no_number(self):
-        self.assertFalse(is_num("no-num"))
+        self.assertFalse(_is_num("no-num"))
 
 
 class IsNegativeNum(TestCase):
     def test_returns_true_on_negative_number(self):
-        self.assertTrue(is_negative_num("-10"))
+        self.assertTrue(_is_negative_num("-10"))
 
     def test_returns_true_on_infinity(self):
-        self.assertTrue(is_negative_num("-INFINITY"))
+        self.assertTrue(_is_negative_num("-INFINITY"))
 
     def test_returns_false_on_positive_number(self):
-        self.assertFalse(is_negative_num("10"))
+        self.assertFalse(_is_negative_num("10"))
 
     def test_returns_false_on_no_number(self):
-        self.assertFalse(is_negative_num("no-num"))
+        self.assertFalse(_is_negative_num("no-num"))
 
 
 class IsShortOptionExpectingValue(TestCase):

@@ -1016,7 +1016,7 @@ class LevelAdd(LevelTestsBase):
             ),
         )
         self.assert_pcs_fail(
-            "stonith level add -10 rh7-1 F1".split(),
+            "-- stonith level add -10 rh7-1 F1".split(),
             (
                 "Error: '-10' is not a valid level value, use a positive "
                 "integer\n" + ERRORS_HAVE_OCURRED
