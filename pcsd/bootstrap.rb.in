@@ -7,8 +7,7 @@ require 'settings.rb'
 
 def is_systemctl()
   systemctl_paths = [
-      '/run/systemd/system',
-      '/var/run/systemd/system',
+      @SYSTEMD_UNIT_PATH_RUBY@
   ]
   systemctl_paths.each { |path|
     return true if File.directory?(path)

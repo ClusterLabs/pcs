@@ -126,6 +126,8 @@ gen-ChangeLog:
 clean-local:
 	$(PYTHON) setup.py clean
 	rm -rf Gemfile.lock .bundle
+	find ${abs_top_srcdir} -type d -name __pycache__ -exec rm -rf {} \; 2>/dev/null || :
+	find ${abs_top_builddir} -type d -name __pycache__ -exec rm -rf {} \; 2>/dev/null || :
 
 # this will get rid of "libtoolized" m4 files
 maintainer-clean-local:

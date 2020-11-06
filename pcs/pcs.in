@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env @PYTHON_ENV@
 import os.path
 import sys
 
@@ -13,13 +13,14 @@ PACKAGE_DIR = os.path.dirname(CURRENT_DIR)
 sys.path.insert(0, PACKAGE_DIR)
 
 
-from pcs import (
-    pcs_internal,
-    settings,
-)
+if "-d" in sys.argv:
+    from pcs.daemon.run import main
+    main()
+else:
+    from pcs import (
+        app,
+        settings,
+    )
 
-if settings.pcs_bundled_packages_dir not in sys.path:
-    sys.path.insert(0, settings.pcs_bundled_packages_dir)
-
-settings.pcsd_exec_location = os.path.join(PACKAGE_DIR, "pcsd")
-pcs_internal.main()
+    settings.pcsd_exec_location = os.path.join(PACKAGE_DIR, "pcsd")
+    app.main(sys.argv[1:])

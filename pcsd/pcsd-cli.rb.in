@@ -1,4 +1,4 @@
-#!/usr/bin/ruby
+#!@RUBY@
 
 require 'rubygems'
 require 'etc'

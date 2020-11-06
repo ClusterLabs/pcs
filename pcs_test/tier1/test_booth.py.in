@@ -18,7 +18,7 @@ from pcs_test.tools.pcs_runner import PcsRunner
 EMPTY_CIB = rc("cib-empty.xml")
 
 BOOTH_RESOURCE_AGENT_INSTALLED = os.path.exists(
-    "/usr/lib/ocf/resource.d/pacemaker/booth-site"
+    "@OCFROOT@/pacemaker/booth-site"
 )
 need_booth_resource_agent = skipUnless(
     BOOTH_RESOURCE_AGENT_INSTALLED,

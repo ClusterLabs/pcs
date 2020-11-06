@@ -1,8 +1,6 @@
-EXTRA_DIST		= 
+EXTRA_DIST		=
 
-MAINTAINERCLEANFILES	= Makefile.in \
-			  logrotate/pcsd \
-			  pcsd.service pcsd-ruby.service
+MAINTAINERCLEANFILES	= Makefile.in
 
 # install
 dist_man8_MANS		= pcsd.8
@@ -17,7 +15,8 @@ servicedir		= $(SYSTEMD_UNIT_DIR)
 service_DATA		= pcsd.service pcsd-ruby.service
 
 pcsddir			= $(LIB_DIR)/pcsd
-dist_pcsd_SCRIPTS	= pcsd \
+pcsd_SCRIPTS		= \
+			  pcsd \
 			  pcsd-cli.rb
 
 dist_pcsd_DATA		= \
@@ -31,16 +30,17 @@ dist_pcsd_DATA		= \
 			  api_v1.rb \
 			  pcsd_file.rb \
 			  rserver.rb \
-			  pcsd.rb \
 			  resource.rb \
 			  fenceagent.rb \
 			  auth.rb \
 			  remote.rb \
-			  pcs.rb \
 			  permissions.rb \
 			  bootstrap.rb \
 			  pcsd_action_command.rb \
-			  config.rb \
+			  config.rb
+
+pcsd_DATA		= \
+			  pcs.rb \
 			  settings.rb
 
 pcsdviewsdir		= ${pcsddir}/views

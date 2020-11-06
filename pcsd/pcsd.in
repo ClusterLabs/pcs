@@ -1,4 +1,4 @@
-#!/usr/bin/ruby
+#!@RUBY@
 # This file is a runner for ruby part of pcsd callable from a systemd unit.
 # It also serves as a holder of a selinux context.
 
@@ -8,7 +8,7 @@ begin
   $LOAD_PATH.unshift(libdir) unless $LOAD_PATH.include?(libdir)
 
   # change current directory (ruby -C)
-  Dir.chdir('/var/lib/pcsd')
+  Dir.chdir('@LOCALSTATEDIR@/lib/pcsd')
 
   # import and run ruby daemon
   require 'rserver.rb'

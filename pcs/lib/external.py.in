@@ -275,7 +275,7 @@ def kill_services(runner, services):
     """
     # make killall not report that a process is not running
     stdout, stderr, retval = runner.run(
-        ["/usr/bin/killall", "--quiet", "--signal", "9", "--"] + list(services)
+        ["@KILLALL@", "--quiet", "--signal", "9", "--"] + list(services)
     )
     # If a process isn't running, killall will still return 1 even with --quiet.
     # We don't consider that an error, so we check for output string as well.
