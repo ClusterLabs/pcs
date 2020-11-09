@@ -27,13 +27,13 @@ class WorkerCommand:
     command: CommandDto
 
 
-def worker_init(message_q: mp.Queue) -> None:
+def worker_init(message_q: mp.Queue, logging_q: mp.Queue) -> None:
     """
     Runs in every new worker process after its creation
     :param message_q: Queue instance for sending messages to scheduler
     """
     # Create and configure new logger
-    logger = setup_worker_logger()
+    logger = setup_worker_logger(logging_q)
     logger.info("Worker initialized.")
 
     # Let task_executor use worker_com for sending messages to the scheduler
@@ -44,14 +44,7 @@ def worker_init(message_q: mp.Queue) -> None:
         # pylint: disable=unused-argument
         pass
 
-    def flush_logs(sig_num, frame):  # type: ignore
-        # pylint: disable=unused-argument
-        for handler in logger.handlers:
-            handler.flush()
-            handler.close()
-
     signal.signal(signal.SIGINT, ignore_signals)
-    signal.signal(signal.SIGTERM, flush_logs)
 
 
 def pause_worker() -> None:

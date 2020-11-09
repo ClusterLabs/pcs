@@ -3,6 +3,7 @@ import sys
 import uuid
 
 from collections import deque
+from logging import handlers
 from typing import (
     Dict,
     Deque,
@@ -12,7 +13,11 @@ from queue import Empty
 from pcs import settings
 from pcs.common.async_tasks.dto import CommandDto, TaskResultDto
 from pcs.common.async_tasks.types import TaskKillReason
-from .logging import setup_scheduler_logger
+from pcs.common.async_tasks.types import (
+    TaskState,
+    TaskKillReason,
+)
+from pcs.daemon.log import pcsd as pcsd_logger
 from .messaging import Message
 from .task import Task, TaskState, UnknownMessageError
 from .worker import worker_init, task_executor
@@ -36,22 +41,31 @@ class Scheduler:
     def __init__(self) -> None:
         self._proc_pool_manager = mp.Manager()
         self._worker_message_q = self._proc_pool_manager.Queue()
+        self._logger = pcsd_logger
+        self._logging_q: mp.Queue = self._proc_pool_manager.Queue()
+        self._worker_log_listener = self._init_worker_logging()
         self._proc_pool = mp.Pool(
             processes=settings.worker_count,
             maxtasksperchild=settings.worker_task_limit,
             initializer=worker_init,
-            initargs=[self._worker_message_q],
+            initargs=[self._worker_message_q, self._logging_q],
         )
         self._created_tasks_index: Deque[str] = deque()
         self._task_register: Dict[str, Task] = dict()
-        self._logger = setup_scheduler_logger()
-        self._logger.info(f"Scheduler was successfully initialized.")
+        self._logger.info("Scheduler was successfully initialized.")
         self._logger.debug(
             "Process pool initialized with %d workers that reset "
             "after %d tasks",
             settings.worker_count,
             settings.worker_task_limit,
         )
+
+    def _init_worker_logging(self) -> handlers.QueueListener:
+        q_listener = handlers.QueueListener(
+            self._logging_q, *self._logger.handlers
+        )
+        q_listener.start()
+        return q_listener
 
     def get_task(self, task_ident: str) -> TaskResultDto:
         """
@@ -229,5 +243,7 @@ class Scheduler:
         """
         Cleanly terminates the scheduler
         """
+        self._worker_log_listener.stop()
+        self._logging_q.close()
         self._proc_pool.terminate()
         self._logger.info("Scheduler is correctly terminated.")

@@ -8,6 +8,7 @@ from typing import (
     Optional,
 )
 
+from pcs.common.async_tasks.dto import CommandDto, TaskResultDto
 from pcs.common.async_tasks.types import (
     TaskFinishType,
     TaskState,
@@ -19,7 +20,6 @@ from pcs.settings import (
     task_abandoned_timeout_seconds,
     task_unresponsive_timeout_seconds,
 )
-from pcs.common.async_tasks.dto import CommandDto, TaskResultDto
 from .messaging import Message, TaskExecuted, TaskFinished
 from .worker import WorkerCommand
 

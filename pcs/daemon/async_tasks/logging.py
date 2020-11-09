@@ -1,33 +1,12 @@
 import datetime
 import logging
+import multiprocessing as mp
 import os
 
 import pcs.settings as settings
 
 
-def setup_scheduler_logger() -> logging.Logger:
-    """
-    Creates and configures scheduler's logger
-    :return: Logger instance
-    """
-    logger = logging.getLogger("pcs_scheduler")
-    logger.setLevel(logging.DEBUG)
-
-    file_handler = logging.FileHandler(
-        settings.async_api_log_filename, "a", "utf8"
-    )
-    file_handler.setLevel(logging.DEBUG)
-    logger.addHandler(file_handler)
-
-    formatter = logging.Formatter(
-        "{asctime} | {levelname}: {message}", style="{"
-    )
-    file_handler.setFormatter(formatter)
-
-    return logger
-
-
-def setup_worker_logger() -> logging.Logger:
+def setup_worker_logger(queue: mp.Queue) -> logging.Logger:
     """
     Creates and configures worker's logger
     :return: Logger instance
@@ -35,19 +14,8 @@ def setup_worker_logger() -> logging.Logger:
     logger = logging.getLogger("pcs_worker")
     logger.setLevel(logging.DEBUG)
 
-    file_handler = logging.FileHandler(
-        f"{settings.worker_logs_path}/"
-        f"{datetime.datetime.now().strftime('%Y%m%d%H%M')}_"
-        f"{os.getpid()}.log",
-        "w",
-        "utf8",
-    )
-    file_handler.setLevel(logging.DEBUG)
-    logger.addHandler(file_handler)
-
-    formatter = logging.Formatter(
-        "{asctime} | {levelname}: {message}", style="{"
-    )
-    file_handler.setFormatter(formatter)
+    queue_handler = logging.handlers.QueueHandler(queue)
+    queue_handler.setLevel(logging.DEBUG)
+    logger.addHandler(queue_handler)
 
     return logger
