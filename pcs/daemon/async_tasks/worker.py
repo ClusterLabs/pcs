@@ -75,7 +75,7 @@ def task_executor(task: WorkerCommand, worker_com: mp.Queue) -> None:
         # processor here
 
         for report in e.args:
-            worker_com.put(Message(task.task_ident, report))
+            worker_com.put(Message(task.task_ident, report.to_dto()))
         worker_com.put(
             Message(task.task_ident, TaskFinished(TaskFinishType.FAIL, None),)
         )
