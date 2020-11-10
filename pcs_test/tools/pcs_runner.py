@@ -42,10 +42,11 @@ def pcs(cib_file, args, corosync_conf_opt=None, mock_settings=None):
     if test_installed:
         env["PCS_TEST.TEST_INSTALLED"] = "1"
 
-    cmd = [__pcs_location] + args
+    cmd = [__pcs_location]
     if cib_file:
         cmd.extend(["-f", cib_file])
     if corosync_conf_opt:
         cmd.extend(["--corosync_conf", corosync_conf_opt])
+    cmd += args
 
     return utils.run(cmd, env_extend=env)

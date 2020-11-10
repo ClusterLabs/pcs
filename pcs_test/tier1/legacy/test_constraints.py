@@ -725,7 +725,7 @@ Ticket Constraints:
 
         o, r = pcs(
             self.temp_cib.name,
-            "constraint colocation add D1 with D2 -100 --force".split(),
+            "--force -- constraint colocation add D1 with D2 -100".split(),
         )
         assert r == 0 and o == "", o
 
@@ -893,7 +893,7 @@ Ticket Constraints:
 
         output, returnVal = pcs(
             self.temp_cib.name,
-            "constraint colocation add D1 with D2 -100 id=abcd node-attribute=y".split(),
+            "-- constraint colocation add D1 with D2 -100 id=abcd node-attribute=y".split(),
         )
         self.assertEqual(output, "")
         self.assertEqual(returnVal, 0)
@@ -1332,7 +1332,7 @@ Colocation Constraints:
 
         o, r = pcs(
             self.temp_cib.name,
-            "constraint location add my_constraint_id crd my_node -INFINITY resource-discovery=always".split(),
+            "-- constraint location add my_constraint_id crd my_node -INFINITY resource-discovery=always".split(),
         )
         ac(
             o,
@@ -1343,7 +1343,7 @@ Colocation Constraints:
 
         o, r = pcs(
             self.temp_cib.name,
-            "constraint location add my_constraint_id2 crd1 my_node -INFINITY resource-discovery=never".split(),
+            "-- constraint location add my_constraint_id2 crd1 my_node -INFINITY resource-discovery=never".split(),
         )
         ac(o, LOCATION_NODE_VALIDATION_SKIP_WARNING)
         assert r == 0
@@ -1370,7 +1370,7 @@ Colocation Constraints:
 
         o, r = pcs(
             self.temp_cib.name,
-            "constraint location add my_constraint_id3 crd1 my_node2 -INFINITY bad-opt=test".split(),
+            "-- constraint location add my_constraint_id3 crd1 my_node2 -INFINITY bad-opt=test".split(),
         )
         ac(o, "Error: bad option 'bad-opt', use --force to override\n")
         assert r == 1
