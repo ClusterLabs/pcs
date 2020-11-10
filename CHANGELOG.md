@@ -7,15 +7,19 @@
 - Option --wait was not working with pacemaker 2.0.5+ ([ghissue#260])
 - Explicitly close libcurl connections to prevent stalled TCP connections in
   CLOSE-WAIT state ([ghissue#261], [rhbz#1885841])
+- Fixed parsing negative float numbers on command line ([rhbz#1869399])
 
 ### Deprecated
 - Commands `pcs config import-cman` and `pcs config export
   pcs-commands|pcs-commands-verbose` have been deprecated ([rhbz#1851335])
+- Entering values starting with '-' (negative numbers) without '--' on command
+  line is now deprecated ([rhbz#1869399])
 
 [ghissue#241]: https://github.com/ClusterLabs/pcs/issues/241
 [ghissue#260]: https://github.com/ClusterLabs/pcs/issues/260
 [ghissue#261]: https://github.com/ClusterLabs/pcs/issues/261
 [rhbz#1851335]: https://bugzilla.redhat.com/show_bug.cgi?id=1851335
+[rhbz#1869399]: https://bugzilla.redhat.com/show_bug.cgi?id=1869399
 [rhbz#1885841]: https://bugzilla.redhat.com/show_bug.cgi?id=1885841
 
 
