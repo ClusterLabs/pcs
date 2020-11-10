@@ -431,6 +431,7 @@ fi
 AC_CONFIG_FILES([Makefile
 		 newversion.py
 		 setup.py
+		 setup.cfg
 		 pcs/Makefile
 		 pcs/settings_default.py
 		 pcs/utils.py

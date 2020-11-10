@@ -29,8 +29,6 @@ ifdef BUNDLE_DATEUTIL_SRC_DIR
 endif
 
 install_python_part: install_bundled_libs
-	# make Python interpreter execution sane (via -Es flags)
-	printf "[build]\nexecutable = $(PYTHON) -Es\n" > setup.cfg
 	$(PYTHON) setup.py install --root=$(or ${DESTDIR}, /) ${EXTRA_SETUP_OPTS}
 	# fix excessive script interpreting "executable" quoting with old setuptools:
 	# https://github.com/pypa/setuptools/issues/188
@@ -38,7 +36,6 @@ install_python_part: install_bundled_libs
 	sed -i '1s|^\(#!\)"\(.*\)"$$|\1\2|' ${DEST_PYTHON_SCRIPT_DIR}/pcs
 	sed -i '1s|^\(#!\)"\(.*\)"$$|\1\2|' ${DEST_PYTHON_SCRIPT_DIR}/pcs_snmp_agent
 	sed -i '1s|^\(#!\)"\(.*\)"$$|\1\2|' ${DEST_PYTHON_SCRIPT_DIR}/pcs_internal
-	rm setup.cfg
 	mkdir -p ${DEST_PREFIX}/sbin/
 	mv ${DEST_PYTHON_SCRIPT_DIR}/pcs ${DEST_PREFIX}/sbin/pcs
 	mv ${DEST_PYTHON_SCRIPT_DIR}/pcsd ${DEST_PREFIX}/sbin/pcsd

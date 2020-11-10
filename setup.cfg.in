@@ -1,0 +1,2 @@
+[build]
+executable = /usr/bin/env @PYTHON_ENV@ -Es
