@@ -122,7 +122,22 @@ dist_pcsdpubcssimgs_DATA= \
 			  public/css/images/pbar-ani.gif \
 			  public/css/images/ui-icons_ffffff_256x240.png
 
+pcsd_fonts		= \
+			  LiberationSans-Regular.ttf;LiberationSans:style=Regular \
+			  LiberationSans-Bold.ttf;LiberationSans:style=Bold \
+			  LiberationSans-BoldItalic.ttf;LiberationSans:style=BoldItalic \
+			  LiberationSans-Italic.ttf;LiberationSans:style=Italic \
+			  Overpass-Regular.ttf;Overpass:style=Regular \
+			  Overpass-Bold.ttf;Overpass:style=Bold
+
 install-data-local:
+	$(MKDIR_P) $(DESTDIR)/${pcsdpubcssdir}
+	$(foreach font,$(pcsd_fonts),\
+		$(eval font_file = $(word 1,$(subst ;, ,$(font)))) \
+		$(eval font_def = $(word 2,$(subst ;, ,$(font)))) \
+		$(eval font_path = $(shell $(FCMATCH) '--format=%{file}' '$(font_def)')) \
+		$(if $(font_path),ln -s -f $(font_path) $(DESTDIR)/${pcsdpubcssdir}/$(font_file);,$(error Font $(font_def) not found)) \
+	)
 if INSTALL_EMBEDDED_GEMS
 	$(MKDIR_P) $(DESTDIR)${GEM_HOME}
 	cp -rp vendor/bundled/ruby/${RUBY_VER}/* $(DESTDIR)${GEM_HOME}
@@ -131,6 +146,11 @@ endif
 	$(MKDIR_P) $(DESTDIR)$(localstatedir)/lib/pcsd
 
 uninstall-local:
+	$(foreach font,$(pcsd_fonts),\
+		$(eval font_file = $(word 1,$(subst ;, ,$(font)))) \
+		$(if $(font_file),rm -f $(DESTDIR)/${pcsdpubcssdir}/$(font_file);,$(error Font $(font_file) not found)) \
+	)
+	rmdir $(DESTDIR)/${pcsdpubcssdir} || :
 if INSTALL_EMBEDDED_GEMS
 	rm -rf $(DESTDIR)${GEM_HOME}
 endif

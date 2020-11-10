@@ -98,6 +98,10 @@ AC_CHECK_PROGS([GEM], [gem])
 if test x$GEM == x; then
 	AC_MSG_ERROR([Unable to find gem binary])
 fi
+AC_CHECK_PROGS([FCMATCH], [fc-match])
+if test x$FCMATCH == x; then
+	AC_MSG_ERROR([Unable to find fc-match binary])
+fi
 
 AC_ARG_ENABLE([destructive-tests],
 	      [  --enable-destructive-tests           Automatically execute potentially dangerous tests when running make check (default: no)], [destructive_tests="yes"])

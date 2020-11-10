@@ -11,14 +11,6 @@ DEST_BUNDLE_LOCAL=$(shell readlink -f ${BUNDLE_LOCAL_DIR})
 # OTHER
 # =====
 
-pcsd_fonts = \
-	LiberationSans-Regular.ttf;LiberationSans:style=Regular \
-	LiberationSans-Bold.ttf;LiberationSans:style=Bold \
-	LiberationSans-BoldItalic.ttf;LiberationSans:style=BoldItalic \
-	LiberationSans-Italic.ttf;LiberationSans:style=Italic \
-	Overpass-Regular.ttf;Overpass:style=Regular \
-	Overpass-Bold.ttf;Overpass:style=Bold
-
 # 1 - an alternative file
 # 2 - a file which will be replaced by the alternative file
 define use-alternative-file
@@ -73,13 +65,6 @@ endif
 install: install_python_part
 	install -d ${DESTDIR}/etc/pam.d
 	install -m 644 pcsd/pcsd.pam ${DESTDIR}/etc/pam.d/pcsd
-
-	$(foreach font,$(pcsd_fonts),\
-		$(eval font_file = $(word 1,$(subst ;, ,$(font)))) \
-		$(eval font_def = $(word 2,$(subst ;, ,$(font)))) \
-		$(eval font_path = $(shell fc-match '--format=%{file}' '$(font_def)')) \
-		$(if $(font_path),ln -s -f $(font_path) ${DEST_LIB}/pcsd/public/css/$(font_file);,$(error Font $(font_def) not found)) \
-	)
 
 # CODE QUALITY
 # ===========
