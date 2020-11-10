@@ -1153,3 +1153,95 @@ class GetTotemOptions(GetOptionsDictMixin, TestCase):
             FIXTURE_TOTEM_TOKEN_OPTIONS,
             self._transport_options_template,
         )
+
+
+class SetTotemOptionsTest(TestCase):
+    _fixture_totem_token_config = dedent(
+        """\
+        totem {
+            consensus: 3600
+            downcheck: 1000
+            fail_recv_const: 2500
+            heartbeat_failures_allowed: 0
+            hold: 180
+            join: 50
+            max_messages: 17
+            max_network_delay: 50
+            merge: 200
+            miss_count_const: 5
+            send_join: 0
+            seqno_unchanged_const: 30
+            token: 3000
+            token_coefficient: 650
+            token_retransmit: 238
+            token_retransmits_before_loss_const: 4
+            window_size: 50
+        }
+    """,
+    )
+
+    def _assert_set_totem_options(self, options, before, after):
+        facade = lib.ConfigFacade.from_string(before)
+        facade.set_totem_options(options)
+        self.assertFalse(facade.need_stopped_cluster)
+        self.assertFalse(facade.need_qdevice_reload)
+        self.assertEqual(after, facade.config.export())
+
+    def test_add_totem_options(self):
+        self._assert_set_totem_options(
+            FIXTURE_TOTEM_TOKEN_OPTIONS, "", self._fixture_totem_token_config,
+        )
+
+    def test_remove_totem_options(self):
+        self._assert_set_totem_options(
+            FIXTURE_EMPTY_TOTEM_TOKEN_OPTIONS,
+            self._fixture_totem_token_config,
+            "",
+        )
+
+    def test_modify_totem_options(self):
+        self._assert_set_totem_options(
+            {
+                "consensus": "7200",
+                "downcheck": "2000",
+                "fail_recv_const": "5000",
+                "heartbeat_failures_allowed": "1",
+                "hold": "360",
+                "join": "100",
+                "max_messages": "20",
+                "max_network_delay": "100",
+                "merge": "400",
+                "miss_count_const": "10",
+                "send_join": "1",
+                "seqno_unchanged_const": "60",
+                "token": "6000",
+                "token_coefficient": "1300",
+                "token_retransmit": "476",
+                "token_retransmits_before_loss_const": "8",
+                "window_size": "100",
+            },
+            self._fixture_totem_token_config,
+            dedent(
+                """\
+                totem {
+                    consensus: 7200
+                    downcheck: 2000
+                    fail_recv_const: 5000
+                    heartbeat_failures_allowed: 1
+                    hold: 360
+                    join: 100
+                    max_messages: 20
+                    max_network_delay: 100
+                    merge: 400
+                    miss_count_const: 10
+                    send_join: 1
+                    seqno_unchanged_const: 60
+                    token: 6000
+                    token_coefficient: 1300
+                    token_retransmit: 476
+                    token_retransmits_before_loss_const: 8
+                    window_size: 100
+                }
+            """,
+            ),
+        )
