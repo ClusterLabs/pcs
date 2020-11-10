@@ -8,7 +8,7 @@ AC_INIT([pcs],
 
 AC_CONFIG_AUX_DIR([.])
 
-AM_INIT_AUTOMAKE([dist-bzip2 dist-xz])
+AM_INIT_AUTOMAKE([dist-bzip2 dist-xz -Wno-portability])
 
 AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_SRCDIR([setup.py.in])
