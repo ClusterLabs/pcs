@@ -81,7 +81,7 @@ class NeedsStoppedClusterTest(TestCase):
         self._assert_needs_stoped_cluster(config, False, not_banned_options)
 
 
-class SetTransportOptionsKnetBase:
+class SetTransportOptionsKnetMixin:
     # pylint: disable=no-member
     knet_transport = None
 
@@ -430,15 +430,19 @@ class SetTransportOptionsKnetBase:
         )
 
 
-class SetTransportOptionsDefaultKnetTest(SetTransportOptionsKnetBase, TestCase):
+class SetTransportOptionsDefaultKnetTest(
+    SetTransportOptionsKnetMixin, TestCase
+):
     knet_transport = ""
 
 
-class SetTransportOptionsDefinedKnetTest(SetTransportOptionsKnetBase, TestCase):
+class SetTransportOptionsDefinedKnetTest(
+    SetTransportOptionsKnetMixin, TestCase
+):
     knet_transport = "\n    transport: knet"
 
 
-class SetTransportOptionsUdpBase:
+class SetTransportOptionsUdpMixin:
     # pylint: disable=no-member
     udp_transport = None
 
@@ -768,11 +772,11 @@ class SetTransportOptionsUdpBase:
         )
 
 
-class SetTransportOptionsUdpTest(SetTransportOptionsUdpBase, TestCase):
+class SetTransportOptionsUdpTest(SetTransportOptionsUdpMixin, TestCase):
     udp_transport = "udp"
 
 
-class SetTransportOptionsUdpuTest(SetTransportOptionsUdpBase, TestCase):
+class SetTransportOptionsUdpuTest(SetTransportOptionsUdpMixin, TestCase):
     udp_transport = "udpu"
 
 
