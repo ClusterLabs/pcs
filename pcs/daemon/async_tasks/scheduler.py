@@ -36,15 +36,16 @@ class Scheduler:
     """
 
     def __init__(self) -> None:
+        self._proc_pool_manager = mp.Manager()
+        self._worker_message_q = self._proc_pool_manager.Queue()
         self._proc_pool = mp.Pool(
             processes=settings.worker_count,
             maxtasksperchild=settings.worker_task_limit,
             initializer=worker_init,
+            initargs=[self._worker_message_q],
         )
-        self._proc_pool_manager = mp.Manager()
         self._created_tasks_index: Deque[str] = deque()
         self._task_register: Dict[str, Task] = dict()
-        self._worker_message_q = self._proc_pool_manager.Queue()
         self._logger = setup_scheduler_logger()
         self._logger.info("Scheduler was successfully initialized.")
 
@@ -166,11 +167,7 @@ class Scheduler:
                 continue
             try:
                 self._proc_pool.apply_async(
-                    func=task_executor,
-                    args=[
-                        next_task.to_worker_command(),
-                        self._worker_message_q,
-                    ],
+                    func=task_executor, args=[next_task.to_worker_command()],
                 )
             except ValueError:
                 self._logger.critical(

@@ -32,7 +32,7 @@ def setup_worker_logger() -> logging.Logger:
     Creates and configures worker's logger
     :return: Logger instance
     """
-    logger = logging.getLogger(f"pcs_worker_{os.getpid()}")
+    logger = logging.getLogger(f"pcs_worker")
     logger.setLevel(logging.DEBUG)
 
     file_handler = logging.FileHandler(

@@ -3,7 +3,7 @@ import os
 import signal
 
 from dataclasses import dataclass
-from logging import Logger
+from logging import getLogger
 
 from pcs.common.async_tasks.dto import CommandDto
 from pcs.common.async_tasks.types import TaskFinishType
@@ -18,7 +18,7 @@ from .messaging import (
 )
 from .report_proc import WorkerReportProcessor
 
-logger: Logger
+worker_com: mp.Queue
 
 
 @dataclass(frozen=True)
@@ -27,14 +27,18 @@ class WorkerCommand:
     command: CommandDto
 
 
-def worker_init() -> None:
+def worker_init(message_q: mp.Queue) -> None:
     """
     Runs in every new worker process after its creation
+    :param message_q: Queue instance for sending messages to scheduler
     """
     # Create and configure new logger
-    global logger
     logger = setup_worker_logger()
     logger.info("Worker initialized.")
+
+    # Let task_executor use worker_com for sending messages to the scheduler
+    global worker_com
+    worker_com = message_q
 
     def ignore_signals(sig_num, frame):  # type: ignore
         # pylint: disable=unused-argument
@@ -50,14 +54,15 @@ def worker_init() -> None:
     signal.signal(signal.SIGTERM, flush_logs)
 
 
-def task_executor(task: WorkerCommand, worker_com: mp.Queue) -> None:
+def task_executor(task: WorkerCommand) -> None:
     """
     Launches the task inside the worker
     :param task: Task identifier, command and parameter object
-    :param worker_com: Queue instance for sending messages to scheduler
     """
     # pylint: disable=broad-except
-    global logger
+    logger = getLogger("pcs_worker")
+
+    global worker_com
     worker_com.put(Message(task.task_ident, TaskExecuted(os.getpid()),))
     logger.info("Task %s executed.", task.task_ident)
 
