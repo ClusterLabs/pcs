@@ -49,10 +49,6 @@ install_python_part: install_bundled_libs
 	mv ${DEST_PYTHON_SCRIPT_DIR}/pcs_snmp_agent ${DEST_LIB}/pcs/pcs_snmp_agent
 	$(PYTHON) -m compileall -fl ${DEST_PYTHON_SITELIB}/pcs/settings.py
 
-install: install_python_part
-	install -d ${DESTDIR}/etc/pam.d
-	install -m 644 pcsd/pcsd.pam ${DESTDIR}/etc/pam.d/pcsd
-
 # CODE QUALITY
 # ===========
 

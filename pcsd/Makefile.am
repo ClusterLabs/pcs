@@ -5,6 +5,9 @@ MAINTAINERCLEANFILES	= Makefile.in
 # install
 dist_man8_MANS		= pcsd.8
 
+pamdir			= $(sysconfdir)/pam.d
+dist_pam_DATA		= pam/pcsd
+
 defconfigdir		= $(CONF_DIR)
 dist_defconfig_DATA	= conf/pcsd
 
