@@ -916,3 +916,240 @@ class SetTransportOptionsGeneralTest(TestCase):
                     self._transport_option_tmplt.format(transport=transport),
                     self._transport_option_tmplt.format(transport=transport),
                 )
+
+
+class GetOptionsDictMixin:
+    _empty_transport_options_template = dedent(
+        """
+        totem {{
+            version: 2
+            cluster_name: test99
+            transport: {transport}
+            ip_version:
+            netmtu:
+            knet_pmtud_interval:
+            link_mode:
+            knet_compression_level:
+            knet_compression_model:
+            knet_compression_threshold:
+            crypto_cipher:
+            crypto_hash:
+            crypto_model:
+            consensus:
+            downcheck:
+            fail_recv_const:
+            heartbeat_failures_allowed:
+            hold:
+            join:
+            max_messages:
+            max_network_delay:
+            merge:
+            miss_count_const:
+            send_join:
+            seqno_unchanged_const:
+            token:
+            token_coefficient:
+            token_retransmit:
+            token_retransmits_before_loss_const:
+            window_size:
+        }}
+    """
+    )
+
+    _transport_options_template = dedent(
+        """
+        totem {{
+            version: 2
+            cluster_name: test99
+            transport: {transport}
+            ip_version: ipv4-6
+            netmtu: 1500
+            knet_pmtud_interval: 1234
+            link_mode: active
+            knet_compression_level: 5
+            knet_compression_model: zlib
+            knet_compression_threshold: 100
+            crypto_cipher: aes256
+            crypto_hash: sha256
+            crypto_model: nss
+            consensus: 3600
+            downcheck: 1000
+            fail_recv_const: 2500
+            heartbeat_failures_allowed: 0
+            hold: 180
+            join: 50
+            max_messages: 17
+            max_network_delay: 50
+            merge: 200
+            miss_count_const: 5
+            send_join: 0
+            seqno_unchanged_const: 30
+            token: 3000
+            token_coefficient: 650
+            token_retransmit: 238
+            token_retransmits_before_loss_const: 4
+            window_size: 50
+        }}
+    """
+    )
+
+    def _assert_option_dict(self, expected_dict, config):
+        facade = lib.ConfigFacade.from_string(config)
+        self.assertFalse(facade.need_stopped_cluster)
+        self.assertFalse(facade.need_qdevice_reload)
+        self.assertEqual(expected_dict, self.getter(facade))
+
+    def _assert_transport_option_dict(
+        self, transport_list, expected_dict, config_template
+    ):
+        for transport in transport_list:
+            with self.subTest(transport=transport):
+                self._assert_option_dict(
+                    expected_dict, config_template.format(transport=transport)
+                )
+
+    def test_empty_config(self):
+        self._assert_option_dict({}, "")
+
+    def test_empty_totem_section(self):
+        self._assert_option_dict({}, "totem {\n}\n")
+
+
+class GetTransportOptions(GetOptionsDictMixin, TestCase):
+    @staticmethod
+    def getter(facade):
+        return facade.get_transport_options()
+
+    def test_empty_options_knet(self):
+        self._assert_transport_option_dict(
+            ["", "knet"],
+            {"ip_version": "", "knet_pmtud_interval": "", "link_mode": ""},
+            self._empty_transport_options_template,
+        )
+
+    def test_empty_options_udp(self):
+        self._assert_transport_option_dict(
+            ["udp", "udpu"],
+            {"ip_version": "", "netmtu": ""},
+            self._empty_transport_options_template,
+        )
+
+    def test_options_knet(self):
+        self._assert_transport_option_dict(
+            ["", "knet"],
+            {
+                "ip_version": "ipv4-6",
+                "knet_pmtud_interval": "1234",
+                "link_mode": "active",
+            },
+            self._transport_options_template,
+        )
+
+    def test_options_udp(self):
+        self._assert_transport_option_dict(
+            ["udp", "udpu"],
+            {"ip_version": "ipv4-6", "netmtu": "1500"},
+            self._transport_options_template,
+        )
+
+
+class GetCompressionOptions(GetOptionsDictMixin, TestCase):
+    @staticmethod
+    def getter(facade):
+        return facade.get_compression_options()
+
+    def test_empty_compression_options(self):
+        self._assert_transport_option_dict(
+            ["", "knet", "udp", "udpu"],
+            {"level": "", "model": "", "threshold": ""},
+            self._empty_transport_options_template,
+        )
+
+    def test_compression_options(self):
+        self._assert_transport_option_dict(
+            ["", "knet", "udp", "udpu"],
+            {"level": "5", "model": "zlib", "threshold": "100"},
+            self._transport_options_template,
+        )
+
+
+class GetCryptoOptions(GetOptionsDictMixin, TestCase):
+    @staticmethod
+    def getter(facade):
+        return facade.get_crypto_options()
+
+    def test_empty_crypto_options(self):
+        self._assert_transport_option_dict(
+            ["", "knet", "udp", "udpu"],
+            {"cipher": "", "hash": "", "model": ""},
+            self._empty_transport_options_template,
+        )
+
+    def test_crypto_options(self):
+        self._assert_transport_option_dict(
+            ["", "knet", "udp", "udpu"],
+            {"cipher": "aes256", "hash": "sha256", "model": "nss"},
+            self._transport_options_template,
+        )
+
+
+FIXTURE_TOTEM_TOKEN_OPTIONS = {
+    "consensus": "3600",
+    "downcheck": "1000",
+    "fail_recv_const": "2500",
+    "heartbeat_failures_allowed": "0",
+    "hold": "180",
+    "join": "50",
+    "max_messages": "17",
+    "max_network_delay": "50",
+    "merge": "200",
+    "miss_count_const": "5",
+    "send_join": "0",
+    "seqno_unchanged_const": "30",
+    "token": "3000",
+    "token_coefficient": "650",
+    "token_retransmit": "238",
+    "token_retransmits_before_loss_const": "4",
+    "window_size": "50",
+}
+
+
+FIXTURE_EMPTY_TOTEM_TOKEN_OPTIONS = {
+    "consensus": "",
+    "downcheck": "",
+    "fail_recv_const": "",
+    "heartbeat_failures_allowed": "",
+    "hold": "",
+    "join": "",
+    "max_messages": "",
+    "max_network_delay": "",
+    "merge": "",
+    "miss_count_const": "",
+    "send_join": "",
+    "seqno_unchanged_const": "",
+    "token": "",
+    "token_coefficient": "",
+    "token_retransmit": "",
+    "token_retransmits_before_loss_const": "",
+    "window_size": "",
+}
+
+
+class GetTotemOptions(GetOptionsDictMixin, TestCase):
+    @staticmethod
+    def getter(facade):
+        return facade.get_totem_options()
+
+    def test_empty_totem_options(self):
+        self._assert_transport_option_dict(
+            ["", "knet", "udp", "udpu"],
+            FIXTURE_EMPTY_TOTEM_TOKEN_OPTIONS,
+            self._empty_transport_options_template,
+        )
+
+    def test_totem_options(self):
+        self._assert_transport_option_dict(
+            ["", "knet", "udp", "udpu"],
+            FIXTURE_TOTEM_TOKEN_OPTIONS,
+            self._transport_options_template,
+        )
