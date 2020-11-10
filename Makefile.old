@@ -8,16 +8,6 @@ DEST_PREFIX = ${DESTDIR}${PREFIX}
 DEST_BUNDLE_LIB=${DEST_LIB}/pcs/bundled
 DEST_BUNDLE_LOCAL=$(shell readlink -f ${BUNDLE_LOCAL_DIR})
 
-# OTHER
-# =====
-
-# 1 - an alternative file
-# 2 - a file which will be replaced by the alternative file
-define use-alternative-file
-	rm -f  $(2)
-	install -m644 $(1) $(2)
-endef
-
 # TARGETS
 # =======
 
@@ -57,9 +47,6 @@ install_python_part: install_bundled_libs
 	mv ${DEST_PYTHON_SCRIPT_DIR}/pcs_internal ${DEST_LIB}/pcs/pcs_internal
 	# pcs SNMP install
 	mv ${DEST_PYTHON_SCRIPT_DIR}/pcs_snmp_agent ${DEST_LIB}/pcs/pcs_snmp_agent
-ifeq ($(IS_DEBIAN),true)
-	$(call use-alternative-file,pcs/settings.py.debian,${DEST_PYTHON_SITELIB}/pcs/settings.py)
-endif
 	$(PYTHON) -m compileall -fl ${DEST_PYTHON_SITELIB}/pcs/settings.py
 
 install: install_python_part
