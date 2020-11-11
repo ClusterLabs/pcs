@@ -89,6 +89,8 @@ endif
 	rm -rf $(or ${DESTDIR}, /)/$(PYTHON_SITELIB)/pcs/deinstall.txt
 	rmdir ${DESTDIR}/$(LIB_DIR)/pcs
 
+dist_doc_DATA	= README.md
+
 # testing
 pylint:
 	$(TIME) $(PYTHON) -m pylint --rcfile pylintrc --persistent=n --reports=n --score=n --disable similarities pcs pcs_test
