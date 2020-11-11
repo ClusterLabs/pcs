@@ -367,7 +367,6 @@ EXTRA_DIST		= \
 			  resources/resource_agent_ocf_heartbeat_ipaddr2.xml \
 			  resources/cib-empty-2.5.xml \
 			  resources/cib-empty-2.0.xml \
-			  resources/.gitignore \
 			  resources/cib-tags.xml \
 			  resources/cib-empty-2.5-withnodes.xml \
 			  resources/cib-empty-3.1.xml \
