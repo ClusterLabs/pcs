@@ -43,6 +43,8 @@ pcsd/pcsd-cli.rb
 pcsd/settings.rb
 pcsd/remote.rb
 pcsd/bootstrap.rb
+build/
+*.egg-info
 
 aclocal.m4
 autom4te.cache/

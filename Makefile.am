@@ -39,16 +39,26 @@ endef
 PYAGENTX_VERSION="0.4.pcs.2"
 PYAGENTX_URI="https://github.com/ondrejmular/pyagentx/archive/v${PYAGENTX_VERSION}.tar.gz"
 
+${abs_srcdir}/$(PCS_BUNDLED_DIR_LOCAL)/src/pyagentx-${PYAGENTX_VERSION}:
+if BUILD_PYMOD_PYAGENTX
+	if [ ! -d $(PCS_BUNDLED_DIR_LOCAL)/src/pyagentx-${PYAGENTX_VERSION} ]; then \
+		$(MKDIR_P) $(PCS_BUNDLED_DIR_LOCAL)/src; \
+		$(WGET) -qO- ${PYAGENTX_URI} | $(TAR) xvz -C ${PCS_BUNDLED_DIR_LOCAL}/src; \
+	fi
+endif
+
 # For running pcs_snmp_agent from a local (git clone) directory (without full
 # pcs installation) it is necessary to have pyagentx installed in expected
 # location inside the local directory.
-install_python_pyagentx:
+install_python_pyagentx_local: ${abs_srcdir}/$(PCS_BUNDLED_DIR_LOCAL)/src/pyagentx-${PYAGENTX_VERSION}
 if BUILD_PYMOD_PYAGENTX
-	mkdir -p $(PCS_BUNDLED_DIR_LOCAL)/src
-	rm -rf $(PCS_BUNDLED_DIR_LOCAL)/src/pyagentx-${PYAGENTX_VERSION} $(PCS_BUNDLED_DIR_LOCAL)/packages/pyagentx*
-	$(WGET) -qO- ${PYAGENTX_URI} | $(TAR) xvz -C ${PCS_BUNDLED_DIR_LOCAL}/src
-	$(call build_python_bundle,${abs_srcdir}/$(PCS_BUNDLED_DIR_LOCAL)/src/pyagentx-${PYAGENTX_VERSION},${abs_builddir}/$(PCS_BUNDLED_DIR))
-	rm -rf $(PCS_BUNDLED_DIR_LOCAL)/src/pyagentx-${PYAGENTX_VERSION}
+	rm -rf $(PCS_BUNDLED_DIR_LOCAL)/packages/pyagentx*
+	$(call build_python_bundle,${abs_srcdir}/$(PCS_BUNDLED_DIR_LOCAL)/src/pyagentx-${PYAGENTX_VERSION},${abs_builddir}/$(PCS_BUNDLED_DIR_LOCAL))
+endif
+
+install_python_pyagentx: ${abs_srcdir}/$(PCS_BUNDLED_DIR_LOCAL)/src/pyagentx-${PYAGENTX_VERSION}
+if BUILD_PYMOD_PYAGENTX
+	$(call build_python_bundle,${abs_srcdir}/$(PCS_BUNDLED_DIR_LOCAL)/src/pyagentx-${PYAGENTX_VERSION},$(or ${DESTDIR}, /)/$(LIB_DIR)/$(PCS_BUNDLED_DIR))
 endif
 
 if LOCAL_BUILD
@@ -58,7 +68,26 @@ endif
 install_python_pip_deps: requirements.txt
 	$(PIP) install --upgrade $(PIP_FLAGS) --no-use-pep517 -r $< || $(PIP) install --upgrade -r $<
 
-install_python_deps: install_python_pip_deps install_python_pyagentx
+install_python_deps: install_python_pip_deps install_python_pyagentx_local
+
+install-exec-local: check-local-deps install_python_pyagentx
+	$(PYTHON) setup.py install --root=$(or ${DESTDIR}, /) ${EXTRA_SETUP_OPTS} --record $(or ${DESTDIR}, /)/$(PYTHON_SITELIB)/pcs/deinstall.txt
+	$(MKDIR_P) ${DESTDIR}/$(LIB_DIR)/pcs
+	mv ${DESTDIR}/$(SBINDIR)/pcs_internal ${DESTDIR}/$(LIB_DIR)/pcs/pcs_internal
+	mv ${DESTDIR}/$(SBINDIR)/pcs_snmp_agent ${DESTDIR}/$(LIB_DIR)/pcs/pcs_snmp_agent
+	$(PYTHON) -m compileall -fl $(or ${DESTDIR}, /)/$(PYTHON_SITELIB)/pcs/settings.py
+
+uninstall-local:
+if BUILD_PYMOD_PYAGENTX
+	rm -rf $(or ${DESTDIR}, /)/$(LIB_DIR)/$(PCS_BUNDLED_DIR)
+endif
+	mv ${DESTDIR}/$(LIB_DIR)/pcs/pcs_internal ${DESTDIR}/$(SBINDIR)/pcs_internal || :
+	mv ${DESTDIR}/$(LIB_DIR)/pcs/pcs_snmp_agent ${DESTDIR}/$(SBINDIR)/pcs_snmp_agent || :
+	for i in $(shell cat $(or ${DESTDIR}, /)/$(PYTHON_SITELIB)/pcs/deinstall.txt); do \
+		rm -rf $(or ${DESTDIR}, /)/$${i}; \
+	done
+	rm -rf $(or ${DESTDIR}, /)/$(PYTHON_SITELIB)/pcs/deinstall.txt
+	rmdir ${DESTDIR}/$(LIB_DIR)/pcs
 
 # testing
 pylint:
@@ -83,7 +112,7 @@ endif
 
 install_ruby_deps:
 	rm -rf .bundle Gemfile.lock
-	mkdir -p .bundle
+	$(MKDIR_P) .bundle
 	echo '---' > .bundle/config
 	echo 'BUNDLE_DISABLE_SHARED_GEMS: "1"' >> .bundle/config
 	echo 'BUNDLE_PATH: "${PCSD_BUNDLED_DIR_ROOT_LOCAL}"' >> .bundle/config
