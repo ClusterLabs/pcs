@@ -82,7 +82,6 @@ class NeedsStoppedClusterTest(TestCase):
 
 
 class SetTransportOptionsKnetMixin:
-    # pylint: disable=no-member
     knet_transport = None
 
     def test_add_knet_transport_options(self):
@@ -443,7 +442,6 @@ class SetTransportOptionsDefinedKnetTest(
 
 
 class SetTransportOptionsUdpMixin:
-    # pylint: disable=no-member
     udp_transport = None
 
     def test_add_udp_transport_options_generic_only(self):
