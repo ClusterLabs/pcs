@@ -145,8 +145,8 @@ if INSTALL_EMBEDDED_GEMS
 	$(MKDIR_P) $(DESTDIR)${GEM_HOME}
 	cp -rp vendor/bundled/ruby/${RUBY_VER}/* $(DESTDIR)${GEM_HOME}
 endif
-	$(MKDIR_P) $(DESTDIR)$(localstatedir)/log/pcsd
-	$(MKDIR_P) $(DESTDIR)$(localstatedir)/lib/pcsd
+	$(MKDIR_P) -m 0700 $(DESTDIR)$(localstatedir)/log/pcsd
+	$(MKDIR_P) -m 0700 $(DESTDIR)$(localstatedir)/lib/pcsd
 
 uninstall-local:
 	$(foreach font,$(pcsd_fonts),\
