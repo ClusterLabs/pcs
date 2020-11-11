@@ -673,6 +673,14 @@ class InputModifiersTest(TestCase):
     def test_wait_default(self):
         self.assertFalse(InputModifiers({}).get("--wait"))
 
+    def test_output_format(self):
+        opt = "--output-format"
+        val = "json"
+        self.assertEqual(val, InputModifiers({opt: val}).get(opt))
+
+    def test_output_format_default(self):
+        self.assertEqual("text", InputModifiers({}).get("--output-format"))
+
     def test_explicit_default(self):
         val = "something"
         self.assertEqual(val, InputModifiers({}).get("--force", default=val))
