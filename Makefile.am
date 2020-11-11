@@ -1,6 +1,10 @@
 EXTRA_DIST		= autogen.sh \
 			  .version make/release.mk \
-			  make/git-version-gen make/gitlog-to-changelog
+			  make/git-version-gen make/gitlog-to-changelog \
+			  .eslintrc .gitlab-ci.yml CHANGELOG.md \
+			  MANIFEST.in .travis.yml pcs.spec.in \
+			  mypy.ini pyproject.toml pylintrc \
+			  test/fedora31/Dockerfile test/fedora32/Dockerfile test/centos8/Dockerfile
 
 AUTOMAKE_OPTIONS	= foreign
 
@@ -18,7 +22,7 @@ TARFILES		= $(PACKAGE_NAME)-$(VERSION).tar.bz2 \
 
 ACLOCAL_AMFLAGS		= -I m4
 
-SUBDIRS			= pcs pcsd
+SUBDIRS			= pcs pcsd pcs_test
 
 # release
 newversion:
@@ -162,6 +166,7 @@ clean-local:
 
 # this will get rid of "libtoolized" m4 files
 maintainer-clean-local:
+	rm -rf .mypy_cache
 	rm -rf ${PCS_BUNDLED_DIR_LOCAL} ${PCSD_BUNDLED_DIR_ROOT_LOCAL}
 	rm -rf $(filter-out \
 	         $(top_srcdir)/m4/ac_python_module.m4 \

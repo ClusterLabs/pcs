@@ -8,7 +8,7 @@ AC_INIT([pcs],
 
 AC_CONFIG_AUX_DIR([.])
 
-AM_INIT_AUTOMAKE([dist-bzip2 dist-xz -Wno-portability])
+AM_INIT_AUTOMAKE([dist-bzip2 dist-xz -Wno-portability tar-pax])
 
 AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_SRCDIR([setup.py.in])
@@ -442,6 +442,7 @@ AC_CONFIG_FILES([Makefile
 		 pcs/common/system.py
 		 pcs/snmp/pcs_snmp_agent.service
 		 pcs/snmp/settings.py
+		 pcs_test/Makefile
 		 pcs_test/tier0/lib/test_resource_agent.py
 		 pcs_test/tier0/lib/test_external.py
 		 pcs_test/tier0/lib/corosync/test_live.py

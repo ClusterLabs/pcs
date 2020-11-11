@@ -1,4 +1,11 @@
-EXTRA_DIST		=
+EXTRA_DIST		= \
+			  test/test_resource.rb test/test_cluster_entity.rb \
+			  test/cluster.conf test/pcs_settings.conf test/test_pcs.rb \
+			  test/corosync.conf test/pcsd_test_utils.rb test/test_cfgsync.rb \
+			  test/test_all_suite.rb test/corosync.conf.tmp test/known-hosts \
+			  test/test_cluster.rb test/cib1.xml test/crm1.xml test/test_config.rb \
+			  test/test_corosyncconf.rb test/cfgsync_ctl.tmp test/test_permissions.rb \
+			  test/test_auth.rb test/pcs_users.conf.tmp
 
 MAINTAINERCLEANFILES	= Makefile.in
 
@@ -40,7 +47,8 @@ dist_pcsd_DATA		= \
 			  permissions.rb \
 			  bootstrap.rb \
 			  pcsd_action_command.rb \
-			  config.rb
+			  config.rb \
+			  pcsd.rb
 
 pcsd_DATA		= \
 			  pcs.rb \
