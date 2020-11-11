@@ -200,7 +200,7 @@ def get_local_sbd_config():
             ReportItem.error(
                 reports.messages.UnableToGetSbdConfig("local node", str(e))
             )
-        )
+        ) from e
 
 
 def get_sbd_service_name() -> str:

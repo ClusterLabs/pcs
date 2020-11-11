@@ -38,7 +38,6 @@ from pcs.constraint import LOCATION_NODE_VALIDATION_SKIP_MSG
 
 # pylint: disable=invalid-name
 # pylint: disable=no-self-use
-# pylint: disable=bad-whitespace
 # pylint: disable=line-too-long
 # pylint: disable=too-many-public-methods
 # pylint: disable=redefined-outer-name

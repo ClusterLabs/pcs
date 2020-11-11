@@ -21,51 +21,51 @@ class ConfigFacade:
         """
         try:
             return cls(config_parser.parse_string(config_string))
-        except config_parser.MissingClosingBraceException:
+        except config_parser.MissingClosingBraceException as e:
             raise LibraryError(
                 ReportItem.error(
                     reports.messages.ParseErrorCorosyncConfMissingClosingBrace()
                 )
-            )
-        except config_parser.UnexpectedClosingBraceException:
+            ) from e
+        except config_parser.UnexpectedClosingBraceException as e:
             # pylint: disable=line-too-long
             raise LibraryError(
                 ReportItem.error(
                     reports.messages.ParseErrorCorosyncConfUnexpectedClosingBrace()
                 )
-            )
-        except config_parser.MissingSectionNameBeforeOpeningBraceException:
+            ) from e
+        except config_parser.MissingSectionNameBeforeOpeningBraceException as e:
             # pylint: disable=line-too-long
             raise LibraryError(
                 ReportItem.error(
                     reports.messages.ParseErrorCorosyncConfMissingSectionNameBeforeOpeningBrace()
                 )
-            )
-        except config_parser.ExtraCharactersAfterOpeningBraceException:
+            ) from e
+        except config_parser.ExtraCharactersAfterOpeningBraceException as e:
             # pylint: disable=line-too-long
             raise LibraryError(
                 ReportItem.error(
                     reports.messages.ParseErrorCorosyncConfExtraCharactersAfterOpeningBrace()
                 )
-            )
-        except config_parser.ExtraCharactersBeforeOrAfterClosingBraceException:
+            ) from e
+        except config_parser.ExtraCharactersBeforeOrAfterClosingBraceException as e:
             # pylint: disable=line-too-long
             raise LibraryError(
                 ReportItem.error(
                     reports.messages.ParseErrorCorosyncConfExtraCharactersBeforeOrAfterClosingBrace()
                 )
-            )
-        except config_parser.LineIsNotSectionNorKeyValueException:
+            ) from e
+        except config_parser.LineIsNotSectionNorKeyValueException as e:
             # pylint: disable=line-too-long
             raise LibraryError(
                 ReportItem.error(
                     reports.messages.ParseErrorCorosyncConfLineIsNotSectionNorKeyValue()
                 )
-            )
-        except config_parser.CorosyncConfParserException:
+            ) from e
+        except config_parser.CorosyncConfParserException as e:
             raise LibraryError(
                 ReportItem.error(reports.messages.ParseErrorCorosyncConf())
-            )
+            ) from e
 
     @classmethod
     def create(cls, cluster_name, node_list, transport):
@@ -267,7 +267,9 @@ class ConfigFacade:
                 try:
                     available_link_numbers.remove(int(link["linknumber"]))
                 except ValueError as e:
-                    raise AssertionError("Invalid link number: {}".format(e))
+                    raise AssertionError(
+                        "Invalid link number: {}".format(e)
+                    ) from e
                 links.append(dict(link))
             else:
                 linknumber_missing.append(link)
@@ -279,7 +281,7 @@ class ConfigFacade:
             except IndexError as e:
                 raise AssertionError(
                     "Link number no longer available: {}".format(e)
-                )
+                ) from e
             links.append(link)
 
         for link in sorted(links, key=lambda item: item["linknumber"]):

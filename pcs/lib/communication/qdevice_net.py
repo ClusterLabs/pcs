@@ -20,7 +20,7 @@ from pcs.lib.communication.qdevice import QdeviceBase
 
 class GetCaCert(AllSameDataMixin, AllAtOnceStrategyMixin, RunRemotelyBase):
     def __init__(self, report_processor):
-        super(GetCaCert, self).__init__(report_processor)
+        super().__init__(report_processor)
         self._data = []
 
     def _get_request_data(self):
@@ -59,7 +59,7 @@ class ClientSetup(
         skip_offline_targets=False,
         allow_skip_offline=True,
     ):
-        super(ClientSetup, self).__init__(report_processor)
+        super().__init__(report_processor)
         if allow_skip_offline:
             self._set_skip_offline(skip_offline_targets)
         self._ca_cert = ca_cert
@@ -73,7 +73,7 @@ class ClientSetup(
 
 class SignCertificate(AllAtOnceStrategyMixin, RunRemotelyBase):
     def __init__(self, report_processor):
-        super(SignCertificate, self).__init__(report_processor)
+        super().__init__(report_processor)
         self._output_data = []
         self._input_data = []
 
@@ -128,7 +128,7 @@ class ClientImportCertificateAndKey(
         skip_offline_targets=False,
         allow_skip_offline=True,
     ):
-        super(ClientImportCertificateAndKey, self).__init__(report_processor)
+        super().__init__(report_processor)
         if allow_skip_offline:
             self._set_skip_offline(skip_offline_targets)
         self._pk12 = pk12

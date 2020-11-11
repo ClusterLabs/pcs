@@ -24,7 +24,6 @@ from pcs_test.tools.pcs_runner import (
 
 # pylint: disable=invalid-name
 # pylint: disable=line-too-long
-# pylint: disable=bad-whitespace
 
 PCMK_2_0_3_PLUS = is_minimum_pacemaker_version(2, 0, 3)
 ERRORS_HAVE_OCURRED = (
@@ -1410,7 +1409,7 @@ class LevelConfig(LevelTestsBase):
 @skip_unless_fencing_level_supported
 class LevelClear(LevelTestsBase):
     def setUp(self):
-        super(LevelClear, self).setUp()
+        super().setUp()
         self.fixture_full_configuration()
 
     def test_clear_all(self):

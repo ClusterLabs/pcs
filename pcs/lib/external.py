@@ -136,7 +136,7 @@ class CommandRunner:
                         log_args, e.strerror,
                     )
                 )
-            )
+            ) from e
 
         self._logger.debug(
             (

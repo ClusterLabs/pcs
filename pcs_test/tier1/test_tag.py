@@ -320,7 +320,7 @@ class PcsConfigTagsTest(TestTagMixin, TestCase):
     )
 
     def setUp(self):
-        super(PcsConfigTagsTest, self).setUp()
+        super().setUp()
         self.pcs_runner.mock_settings = {
             "corosync_conf_file": rc("corosync.conf")
         }

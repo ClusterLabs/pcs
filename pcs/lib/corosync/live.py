@@ -20,7 +20,7 @@ def get_local_corosync_conf():
             ReportItem.error(
                 reports.messages.UnableToReadCorosyncConfig(path, e.strerror)
             )
-        )
+        ) from e
 
 
 def get_quorum_status_text(runner):
@@ -139,8 +139,8 @@ class QuorumStatus:
                                 "Unable to read number of votes needed for "
                                 "quorum"
                             )
-        except (ValueError, IndexError):
-            raise QuorumStatusParsingException()
+        except (ValueError, IndexError) as e:
+            raise QuorumStatusParsingException() from e
         missing_sections = [
             required
             for required in ("quorum", "quorate", "node_list")

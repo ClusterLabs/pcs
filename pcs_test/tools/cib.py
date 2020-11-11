@@ -45,7 +45,7 @@ def get_assert_pcs_effect_mixin(get_cib_part):
                     "{0}\n\nCopy format ;)\n{1}".format(
                         e.args[0], xml_format(xml.decode())
                     )
-                )
+                ) from e
 
         def assert_effect_single(
             self,

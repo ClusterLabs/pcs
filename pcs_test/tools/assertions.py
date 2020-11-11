@@ -231,13 +231,13 @@ class ExtendedAssertionsMixin:
             for prop, value in property_dict.items():
                 try:
                     self.assertEqual(value, getattr(e, prop))
-                except AttributeError:
+                except AttributeError as e:
                     raise AssertionError(
                         "Property {property} doesn't exist in exception"
                         " {exception}".format(
                             property=prop, exception=e.__class__.__name__
                         )
-                    )
+                    ) from e
 
 
 def assert_xml_equal(expected_xml, got_xml, context_explanation=""):

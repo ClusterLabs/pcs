@@ -255,10 +255,10 @@ def config_text(env: LibraryEnvironment, instance_name=None, node_name=None):
         # TODO switch to new file transfer commands (not implemented yet)
         # which send and receive configs as bytes instead of strings
         return remote_data["config"]["data"].encode("utf-8")
-    except KeyError:
+    except KeyError as e:
         raise LibraryError(
             ReportItem.error(reports.messages.InvalidResponseFormat(node_name))
-        )
+        ) from e
 
 
 def config_ticket_add(
@@ -633,7 +633,7 @@ def enable_booth(env: LibraryEnvironment, instance_name=None):
                     instance=instance_name,
                 )
             )
-        )
+        ) from e
     env.report_processor.report(
         ReportItem.info(
             reports.messages.ServiceActionSucceeded(
@@ -669,7 +669,7 @@ def disable_booth(env: LibraryEnvironment, instance_name=None):
                     instance=instance_name,
                 )
             )
-        )
+        ) from e
     env.report_processor.report(
         ReportItem.info(
             reports.messages.ServiceActionSucceeded(
@@ -707,7 +707,7 @@ def start_booth(env: LibraryEnvironment, instance_name=None):
                     instance=instance_name,
                 )
             )
-        )
+        ) from e
     env.report_processor.report(
         ReportItem.info(
             reports.messages.ServiceActionSucceeded(
@@ -743,7 +743,7 @@ def stop_booth(env: LibraryEnvironment, instance_name=None):
                     instance=instance_name,
                 )
             )
-        )
+        ) from e
     env.report_processor.report(
         ReportItem.info(
             reports.messages.ServiceActionSucceeded(
@@ -811,10 +811,10 @@ def pull_config(env: LibraryEnvironment, node_name, instance_name=None):
         )
     except RawFileError as e:
         report_processor.report(raw_file_error_report(e))
-    except KeyError:
+    except KeyError as e:
         raise LibraryError(
             ReportItem.error(reports.messages.InvalidResponseFormat(node_name))
-        )
+        ) from e
     if report_processor.has_errors:
         raise LibraryError()
 

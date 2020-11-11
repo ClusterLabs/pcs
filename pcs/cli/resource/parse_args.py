@@ -98,8 +98,8 @@ def parse_create(arg_list):
                     "clones, please use the 'promotable' keyword instead of "
                     "'master'. " + SEE_MAN_CHANGES
                 ),
-            )
-        raise e
+            ) from e
+        raise
 
     return parts
 

@@ -27,9 +27,7 @@ def get_text_test_result_class(
     class ColorTextTestResult(TextTestResult):
         # pylint: disable=bad-super-call, invalid-name
         def __init__(self, stream, descriptions, verbosity):
-            super(ColorTextTestResult, self).__init__(
-                stream, descriptions, verbosity
-            )
+            super().__init__(stream, descriptions, verbosity)
             self.verbosity = 2 if traditional_verbose else verbosity
 
             self.reportWriter = self.__chooseWriter()(

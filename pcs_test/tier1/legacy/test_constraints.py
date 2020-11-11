@@ -39,7 +39,6 @@ from pcs.constraint import (
 # pylint: disable=too-many-public-methods
 # pylint: disable=invalid-name
 # pylint: disable=no-self-use
-# pylint: disable=bad-whitespace
 # pylint: disable=redefined-outer-name
 # pylint: disable=too-many-statements
 
@@ -4262,13 +4261,13 @@ class Bundle(ConstraintEffect):
     empty_cib = rc("cib-empty-2.8.xml")
 
     def setUp(self):
-        super(Bundle, self).setUp()
+        super().setUp()
         self.fixture_bundle("B")
 
     def fixture_primitive(self, name, bundle=None):
         # pylint:disable=arguments-differ
         if not bundle:
-            super(Bundle, self).fixture_primitive(name)
+            super().fixture_primitive(name)
             return
         self.assert_pcs_success(
             [
@@ -4413,7 +4412,7 @@ class BundleLocation(Bundle):
 @skip_unless_pacemaker_supports_bundle()
 class BundleColocation(Bundle):
     def setUp(self):
-        super(BundleColocation, self).setUp()
+        super().setUp()
         self.fixture_primitive("X")
 
     def test_bundle(self):
@@ -4491,7 +4490,7 @@ class BundleColocation(Bundle):
 @skip_unless_pacemaker_supports_bundle()
 class BundleOrder(Bundle):
     def setUp(self):
-        super(BundleOrder, self).setUp()
+        super().setUp()
         self.fixture_primitive("X")
 
     def test_bundle(self):

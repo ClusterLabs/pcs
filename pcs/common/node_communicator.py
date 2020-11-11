@@ -27,7 +27,7 @@ def _find_value_for_possible_keys(value_dict, possible_key_list):
 
 class HostNotFound(Exception):
     def __init__(self, name):
-        super(HostNotFound, self).__init__()
+        super().__init__()
         self.name = name
 
 
@@ -415,7 +415,7 @@ class MultiaddressCommunicator(Communicator):
     """
 
     def start_loop(self):
-        for response in super(MultiaddressCommunicator, self).start_loop():
+        for response in super().start_loop():
             if response.was_connected:
                 yield response
                 continue

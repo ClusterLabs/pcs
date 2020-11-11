@@ -107,7 +107,7 @@ class RawFile(RawFileInterface):
             # anyone can and should check that using the exists method.
             raise RawFileError(
                 self.metadata, RawFileError.ACTION_READ, format_os_error(e)
-            )
+            ) from e
 
     def write(self, file_data, can_overwrite=False):
         try:
@@ -139,13 +139,13 @@ class RawFile(RawFileInterface):
                     except LookupError as e:
                         raise RawFileError(
                             self.metadata, RawFileError.ACTION_CHOWN, str(e)
-                        )
+                        ) from e
                     except OSError as e:
                         raise RawFileError(
                             self.metadata,
                             RawFileError.ACTION_CHOWN,
                             format_os_error(e),
-                        )
+                        ) from e
 
                 if self.metadata.permissions is not None:
                     try:
@@ -155,7 +155,7 @@ class RawFile(RawFileInterface):
                             self.metadata,
                             RawFileError.ACTION_CHMOD,
                             format_os_error(e),
-                        )
+                        ) from e
                 # Write file data
                 my_file.write(
                     file_data
@@ -163,11 +163,11 @@ class RawFile(RawFileInterface):
                     else file_data.decode("utf-8")
                 )
         except FileExistsError as e:
-            raise FileAlreadyExists(self.metadata)
+            raise FileAlreadyExists(self.metadata) from e
         except OSError as e:
             raise RawFileError(
                 self.metadata, RawFileError.ACTION_WRITE, format_os_error(e)
-            )
+            ) from e
 
     def remove(self, fail_if_file_not_found=True):
         get_raw_file_error = lambda e: RawFileError(
@@ -177,9 +177,9 @@ class RawFile(RawFileInterface):
             os.remove(self.metadata.path)
         except FileNotFoundError as e:
             if fail_if_file_not_found:
-                raise get_raw_file_error(e)
+                raise get_raw_file_error(e) from e
         except OSError as e:
-            raise get_raw_file_error(e)
+            raise get_raw_file_error(e) from e
 
     def backup(self):
         # TODO implement

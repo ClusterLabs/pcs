@@ -30,7 +30,7 @@ class BoothSendConfig(
         authfile_data=None,
         skip_offline_targets=False,
     ):
-        super(BoothSendConfig, self).__init__(report_processor)
+        super().__init__(report_processor)
         self._set_skip_offline(skip_offline_targets)
         self._booth_name = booth_name
         self._config_data = config_data.decode("utf-8")
@@ -101,7 +101,7 @@ class BoothGetConfig(
     RunRemotelyBase,
 ):
     def __init__(self, report_processor, booth_name):
-        super(BoothGetConfig, self).__init__(report_processor)
+        super().__init__(report_processor)
         self._booth_name = booth_name
 
     def _get_request_data(self):
@@ -117,7 +117,7 @@ class BoothSaveFiles(
     RunRemotelyBase,
 ):
     def __init__(self, report_processor, file_list, rewrite_existing=True):
-        super(BoothSaveFiles, self).__init__(report_processor)
+        super().__init__(report_processor)
         self._file_list = file_list
         self._rewrite_existing = rewrite_existing
         self._output_data = []

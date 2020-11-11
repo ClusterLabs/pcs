@@ -27,11 +27,11 @@ def config(lib: Any, argv: Sequence[str], modifiers: InputModifiers,) -> None:
     config_raw = lib.dr.get_config()
     try:
         config_dto = dto.from_dict(DrConfigDto, config_raw)
-    except (KeyError, TypeError, ValueError):
+    except (KeyError, TypeError, ValueError) as e:
         raise error(
             "Unable to communicate with pcsd, received response:\n"
             f"{config_raw}"
-        )
+        ) from e
 
     lines = ["Local site:"]
     lines.extend(indent(_config_site_lines(config_dto.local_site)))
@@ -84,11 +84,11 @@ def status(lib: Any, argv: Sequence[str], modifiers: InputModifiers,) -> None:
             dto.from_dict(DrSiteStatusDto, status_raw)
             for status_raw in status_list_raw
         ]
-    except (KeyError, TypeError, ValueError):
+    except (KeyError, TypeError, ValueError) as e:
         raise error(
             "Unable to communicate with pcsd, received response:\n"
             f"{status_list_raw}"
-        )
+        ) from e
 
     has_errors = False
     plaintext_parts = []

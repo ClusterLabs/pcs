@@ -2990,7 +2990,7 @@ class PullConfigBase(TestCase, FixtureMixin):
 
 class PullConfigSuccess(PullConfigBase):
     def setUp(self):
-        super(PullConfigSuccess, self).setUp()
+        super().setUp()
         (
             self.config.http.booth.get_config(
                 self.name,
@@ -3243,7 +3243,7 @@ class PullConfigFailure(PullConfigBase):
 
 class PullConfigWithAuthfile(PullConfigBase):
     def setUp(self):
-        super(PullConfigWithAuthfile, self).setUp()
+        super().setUp()
         self.authfile_path = self.fixture_key_path()
         self.authfile = os.path.basename(self.authfile_path)
         self.authfile_data = b"auth"
@@ -3261,7 +3261,7 @@ class PullConfigWithAuthfile(PullConfigBase):
 
 class PullConfigWithAuthfileSuccess(PullConfigWithAuthfile):
     def setUp(self):
-        super(PullConfigWithAuthfileSuccess, self).setUp()
+        super().setUp()
         (
             self.config.raw_file.write(
                 file_type_codes.BOOTH_KEY,
@@ -3285,7 +3285,7 @@ class PullConfigWithAuthfileSuccess(PullConfigWithAuthfile):
 
 class PullConfigWithAuthfileFailure(PullConfigWithAuthfile):
     def setUp(self):
-        super(PullConfigWithAuthfileFailure, self).setUp()
+        super().setUp()
         self.reason = "reason"
 
     def test_authfile_write_failure(self):

@@ -68,10 +68,10 @@ def qdevice_status_text(
         return qdevice_net.qdevice_status_generic_text(
             runner, verbose
         ) + qdevice_net.qdevice_status_cluster_text(runner, cluster, verbose)
-    except qdevice_net.QnetdNotRunningException:
+    except qdevice_net.QnetdNotRunningException as e:
         raise LibraryError(
             ReportItem.error(reports.messages.QdeviceNotRunning(model))
-        )
+        ) from e
 
 
 def qdevice_enable(lib_env: LibraryEnvironment, model):
@@ -133,7 +133,7 @@ def qdevice_net_sign_certificate_request(
     """
     try:
         certificate_request_data = base64.b64decode(certificate_request)
-    except (TypeError, binascii.Error):
+    except (TypeError, binascii.Error) as e:
         raise LibraryError(
             ReportItem.error(
                 reports.messages.InvalidOptionValue(
@@ -142,7 +142,7 @@ def qdevice_net_sign_certificate_request(
                     ["base64 encoded certificate"],
                 )
             )
-        )
+        ) from e
     return base64.b64encode(
         qdevice_net.qdevice_sign_certificate_request(
             lib_env.cmd_runner(), certificate_request_data, cluster_name
@@ -157,7 +157,7 @@ def client_net_setup(lib_env: LibraryEnvironment, ca_certificate):
     """
     try:
         ca_certificate_data = base64.b64decode(ca_certificate)
-    except (TypeError, binascii.Error):
+    except (TypeError, binascii.Error) as e:
         raise LibraryError(
             ReportItem.error(
                 reports.messages.InvalidOptionValue(
@@ -166,7 +166,7 @@ def client_net_setup(lib_env: LibraryEnvironment, ca_certificate):
                     ["base64 encoded certificate"],
                 )
             )
-        )
+        ) from e
     qdevice_net.client_setup(lib_env.cmd_runner(), ca_certificate_data)
 
 
@@ -177,7 +177,7 @@ def client_net_import_certificate(lib_env: LibraryEnvironment, certificate):
     """
     try:
         certificate_data = base64.b64decode(certificate)
-    except (TypeError, binascii.Error):
+    except (TypeError, binascii.Error) as e:
         raise LibraryError(
             ReportItem.error(
                 reports.messages.InvalidOptionValue(
@@ -186,7 +186,7 @@ def client_net_import_certificate(lib_env: LibraryEnvironment, certificate):
                     ["base64 encoded certificate"],
                 )
             )
-        )
+        ) from e
     qdevice_net.client_import_certificate_and_key(
         lib_env.cmd_runner(), certificate_data
     )
@@ -250,7 +250,7 @@ def _service_start(lib_env: LibraryEnvironment, func):
                     reports.const.SERVICE_ACTION_START, e.service, e.message
                 )
             )
-        )
+        ) from e
     lib_env.report_processor.report(
         ReportItem.info(
             reports.messages.ServiceActionSucceeded(
@@ -277,7 +277,7 @@ def _service_stop(lib_env: LibraryEnvironment, func):
                     reports.const.SERVICE_ACTION_STOP, e.service, e.message
                 )
             )
-        )
+        ) from e
     lib_env.report_processor.report(
         ReportItem.info(
             reports.messages.ServiceActionSucceeded(
@@ -300,7 +300,7 @@ def _service_kill(lib_env: LibraryEnvironment, func):
                 )
                 for service in e.service
             ]
-        )
+        ) from e
     lib_env.report_processor.report(
         ReportItem.info(
             reports.messages.ServiceActionSucceeded(
@@ -320,7 +320,7 @@ def _service_enable(lib_env: LibraryEnvironment, func):
                     reports.const.SERVICE_ACTION_ENABLE, e.service, e.message,
                 )
             )
-        )
+        ) from e
     lib_env.report_processor.report(
         ReportItem.info(
             reports.messages.ServiceActionSucceeded(
@@ -340,7 +340,7 @@ def _service_disable(lib_env: LibraryEnvironment, func):
                     reports.const.SERVICE_ACTION_DISABLE, e.service, e.message,
                 )
             )
-        )
+        ) from e
     lib_env.report_processor.report(
         ReportItem.info(
             reports.messages.ServiceActionSucceeded(

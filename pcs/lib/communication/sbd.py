@@ -116,7 +116,7 @@ class SetSbdConfig(
     SimpleResponseProcessingMixin, AllAtOnceStrategyMixin, RunRemotelyBase
 ):
     def __init__(self, report_processor):
-        super(SetSbdConfig, self).__init__(report_processor)
+        super().__init__(report_processor)
         self._request_data_list = []
 
     def _prepare_initial_requests(self):
@@ -144,7 +144,7 @@ class SetSbdConfig(
 
 class GetSbdConfig(AllSameDataMixin, AllAtOnceStrategyMixin, RunRemotelyBase):
     def __init__(self, report_processor):
-        super(GetSbdConfig, self).__init__(report_processor)
+        super().__init__(report_processor)
         self._config_list = []
         self._successful_target_list = []
 
@@ -182,7 +182,7 @@ class GetSbdConfig(AllSameDataMixin, AllAtOnceStrategyMixin, RunRemotelyBase):
 
 class GetSbdStatus(AllSameDataMixin, AllAtOnceStrategyMixin, RunRemotelyBase):
     def __init__(self, report_processor):
-        super(GetSbdStatus, self).__init__(report_processor)
+        super().__init__(report_processor)
         self._status_list = []
         self._successful_target_list = []
 
@@ -241,7 +241,7 @@ class GetSbdStatus(AllSameDataMixin, AllAtOnceStrategyMixin, RunRemotelyBase):
 
 class CheckSbd(AllAtOnceStrategyMixin, RunRemotelyBase):
     def __init__(self, report_processor):
-        super(CheckSbd, self).__init__(report_processor)
+        super().__init__(report_processor)
         self._request_data_list = []
 
     def _prepare_initial_requests(self):

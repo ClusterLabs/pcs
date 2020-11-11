@@ -155,7 +155,7 @@ class Wrapper:
                 "Cannot connect to ruby daemon (message: '%s'). Is it running?",
                 e,
             )
-            raise HTTPError(500)
+            raise HTTPError(500) from e
         except HTTPClientError as e:
             # This error we can get e.g. when rack protection raises exception.
             log.pcsd.error(
@@ -166,7 +166,7 @@ class Wrapper:
                 ),
                 e,
             )
-            raise HTTPError(500)
+            raise HTTPError(500) from e
 
     async def run_ruby(
         self,
@@ -237,7 +237,7 @@ class Wrapper:
                 log_request()
 
             log.pcsd.error("Cannot decode json from ruby pcsd wrapper: '%s'", e)
-            raise HTTPError(500)
+            raise HTTPError(500) from e
 
     async def request_gui(
         self, request: HTTPServerRequest, user, groups, is_authenticated

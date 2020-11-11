@@ -1738,7 +1738,7 @@ def cluster_setup(lib, argv, modifiers):
                 ),
                 force_code=reports.codes.FORCE_OVERWRITE,
             )
-        )
+        ) from e
     except pcs_file.RawFileError as e:
         raise LibraryError(
             reports.ReportItem.error(
@@ -1749,7 +1749,7 @@ def cluster_setup(lib, argv, modifiers):
                     file_path=e.metadata.path,
                 )
             )
-        )
+        ) from e
 
 
 def _parse_add_node(argv):

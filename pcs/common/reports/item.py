@@ -88,8 +88,8 @@ class ReportItemMessage(ImplementsToDto):
         if hasattr(self.__class__, "__annotations__"):
             try:
                 annotations = self.__class__.__annotations__
-            except AttributeError:
-                raise AssertionError()
+            except AttributeError as e:
+                raise AssertionError() from e
             for attr_name in annotations.keys():
                 if attr_name.startswith("_") or attr_name in ("message",):
                     continue

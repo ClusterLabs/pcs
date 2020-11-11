@@ -121,7 +121,7 @@ def status_text(lib_env):
             ReportItem.error(
                 reports.messages.CorosyncQuorumGetStatusError(e.reason)
             )
-        )
+        ) from e
 
 
 def status_device_text(lib_env, verbose=False):
@@ -408,6 +408,6 @@ def set_expected_votes_live(lib_env, expected_votes):
                     "expected votes", expected_votes, "positive integer"
                 )
             )
-        )
+        ) from None
 
     corosync_live.set_expected_votes(lib_env.cmd_runner(), votes_int)

@@ -23,7 +23,7 @@ class GetOnlineTargets(
     AllSameDataMixin, AllAtOnceStrategyMixin, RunRemotelyBase
 ):
     def __init__(self, report_processor, ignore_offline_targets=False):
-        super(GetOnlineTargets, self).__init__(report_processor)
+        super().__init__(report_processor)
         self._ignore_offline_targets = ignore_offline_targets
         self._online_target_list = []
 
@@ -81,7 +81,7 @@ class CheckReachability(
 
 class CheckAuth(AllSameDataMixin, AllAtOnceStrategyMixin, RunRemotelyBase):
     def __init__(self, report_processor):
-        super(CheckAuth, self).__init__(report_processor)
+        super().__init__(report_processor)
         self._not_authorized_host_name_list = []
 
     def _get_request_data(self):
@@ -156,7 +156,7 @@ class RunActionBase(
         skip_offline_targets=False,
         allow_fails=False,
     ):
-        super(RunActionBase, self).__init__(report_processor)
+        super().__init__(report_processor)
         self._set_skip_offline(skip_offline_targets)
         self._init_properties()
         self._action_error_force = _force(self._force_code, allow_fails)
@@ -289,7 +289,7 @@ class FileActionBase(RunActionBase):
 class DistributeFiles(FileActionBase):
     # pylint: disable=too-many-ancestors
     def _init_properties(self):
-        super(DistributeFiles, self)._init_properties()
+        super()._init_properties()
         self._request_url = "remote/put_file"
         self._code_message_map = {"conflict": "File already exists"}
 
@@ -333,7 +333,7 @@ class DistributeFilesWithoutForces(DistributeFiles):
 class RemoveFiles(FileActionBase):
     # pylint: disable=too-many-ancestors
     def _init_properties(self):
-        super(RemoveFiles, self)._init_properties()
+        super()._init_properties()
         self._request_url = "remote/remove_file"
         self._code_message_map = {}
 

@@ -346,15 +346,15 @@ def _find_valid_agent_by_name(
     try:
         return PresentAgentClass(runner, name).validate_metadata()
     except (InvalidResourceAgentName, InvalidStonithAgentName) as e:
-        raise LibraryError(resource_agent_error_to_report_item(e))
+        raise LibraryError(resource_agent_error_to_report_item(e)) from e
     except UnableToGetAgentMetadata as e:
         if not absent_agent_supported:
-            raise LibraryError(resource_agent_error_to_report_item(e))
+            raise LibraryError(resource_agent_error_to_report_item(e)) from e
 
         if not AbsentAgentClass:
             raise LibraryError(
                 resource_agent_error_to_report_item(e, forceable=True)
-            )
+            ) from e
 
         report_processor.report(
             resource_agent_error_to_report_item(
@@ -784,7 +784,7 @@ class Agent:
             #    etree.DTD(file=settings.agent_metadata_schema).assertValid(dom)
             return dom
         except (etree.XMLSyntaxError, etree.DocumentInvalid) as e:
-            raise UnableToGetAgentMetadata(self.get_name(), str(e))
+            raise UnableToGetAgentMetadata(self.get_name(), str(e)) from e
 
     def _get_text_from_dom_element(self, element):
         if element is None or element.text is None:
@@ -820,9 +820,7 @@ class FencedMetadata(FakeAgentMetadata):
         return "pacemaker-fenced"
 
     def _get_parameter(self, parameter_element):
-        parameter = super(FencedMetadata, self)._get_parameter(
-            parameter_element
-        )
+        parameter = super()._get_parameter(parameter_element)
         # Metadata are written in such a way that a longdesc text is a
         # continuation of a shortdesc text.
         parameter["longdesc"] = "{0}\n{1}".format(
@@ -850,7 +848,7 @@ class CrmAgent(Agent):
         init
         CommandRunner runner
         """
-        super(CrmAgent, self).__init__(runner)
+        super().__init__(runner)
         self._name_parts = self._prepare_name_parts(name)
 
     def _prepare_name_parts(self, name):
@@ -925,7 +923,7 @@ class ResourceAgent(CrmAgent):
         return self._get_full_name()
 
     def get_parameters(self):
-        parameters = super(ResourceAgent, self).get_parameters()
+        parameters = super().get_parameters()
         if self.get_standard() == "ocf" and (
             self.get_provider() in ("heartbeat", "pacemaker")
         ):
@@ -1050,7 +1048,7 @@ class StonithAgent(CrmAgent):
 
     def get_parameters(self):
         return (
-            self._filter_parameters(super(StonithAgent, self).get_parameters())
+            self._filter_parameters(super().get_parameters())
             + self._get_fenced_metadata().get_parameters()
         )
 
@@ -1062,7 +1060,7 @@ class StonithAgent(CrmAgent):
         # for details
         do_not_report_instance_attribute_server_exists=False,
     ):
-        report_list = super(StonithAgent, self).validate_parameters_create(
+        report_list = super().validate_parameters_create(
             parameters, force=force
         )
         report_list.extend(
@@ -1073,7 +1071,7 @@ class StonithAgent(CrmAgent):
     def validate_parameters_update(
         self, current_parameters, new_parameters, force=False
     ):
-        report_list = super(StonithAgent, self).validate_parameters_update(
+        report_list = super().validate_parameters_update(
             current_parameters, new_parameters, force=force
         )
         report_list.extend(

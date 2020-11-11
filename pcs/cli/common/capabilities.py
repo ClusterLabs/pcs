@@ -22,7 +22,7 @@ def get_capabilities_definition():
             "Cannot read capabilities definition file '{0}': '{1}'".format(
                 filename, str(e)
             )
-        )
+        ) from e
     capabilities = []
     for feat_xml in capabilities_xml.findall(".//capability"):
         feat = dict(feat_xml.attrib)

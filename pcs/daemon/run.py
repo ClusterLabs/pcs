@@ -130,15 +130,15 @@ def main():
         log.pcsd.error(
             "Unable to bind to specific address(es), exiting: %s ", e
         )
-        raise SystemExit(1)
+        raise SystemExit(1) from e
     except OSError as e:
         log.pcsd.error("Unable to start pcsd daemon, exiting: %s ", e)
-        raise SystemExit(1)
+        raise SystemExit(1) from e
     except ssl.SSLCertKeyException as e:
         for error in e.args:
             log.pcsd.error(error)
         log.pcsd.error("Invalid SSL certificate and/or key, exiting")
-        raise SystemExit(1)
+        raise SystemExit(1) from e
 
     ioloop = IOLoop.current()
     ioloop.add_callback(sign_ioloop_started)

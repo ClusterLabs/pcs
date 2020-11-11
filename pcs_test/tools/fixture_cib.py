@@ -128,10 +128,10 @@ def _replace(element_to_replace, new_element):
 def _xml_to_element(xml):
     try:
         new_element = etree.fromstring(xml)
-    except etree.XMLSyntaxError:
+    except etree.XMLSyntaxError as e:
         raise AssertionError(
             "Cannot put to the cib a non-xml fragment:\n'{0}'".format(xml)
-        )
+        ) from e
     return new_element
 
 

@@ -32,7 +32,7 @@ def cib(filename, touch_cib_file):
             except EnvironmentError as e:
                 raise error(
                     "Cannot read cib file '{0}': '{1}'".format(filename, str(e))
-                )
+                ) from e
             env.cib_data = original_content
 
         result_of_next = next_in_line(env, *args, **kwargs)
@@ -46,7 +46,7 @@ def cib(filename, touch_cib_file):
                     "Cannot write cib file '{0}': '{1}'".format(
                         filename, str(e)
                     )
-                )
+                ) from e
 
         return result_of_next
 
@@ -63,7 +63,7 @@ def corosync_conf_existing(local_file_path):
                     "Unable to read {0}: {1}".format(
                         local_file_path, e.strerror
                     )
-                )
+                ) from e
 
         result_of_next = next_in_line(env, *args, **kwargs)
 
@@ -77,7 +77,7 @@ def corosync_conf_existing(local_file_path):
                     "Unable to write {0}: {1}".format(
                         local_file_path, e.strerror
                     )
-                )
+                ) from e
         return result_of_next
 
     return apply

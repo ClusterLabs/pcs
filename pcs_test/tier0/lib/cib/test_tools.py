@@ -37,7 +37,7 @@ class CibToolsTest(TestCase):
 
 class IdProviderTest(CibToolsTest):
     def setUp(self):
-        super(IdProviderTest, self).setUp()
+        super().setUp()
         self.provider = lib.IdProvider(self.cib.tree)
 
     @staticmethod

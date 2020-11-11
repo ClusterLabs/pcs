@@ -46,7 +46,7 @@ def middleware_config(config_path, key_path):
                         file_path=e.metadata.path,
                     )
                 )
-            )
+            ) from e
         return {
             "config_data": config_data,
             "key_data": key_data,
@@ -80,7 +80,7 @@ def middleware_config(config_path, key_path):
                         file_path=e.metadata.path,
                     )
                 )
-            )
+            ) from e
 
     def apply(next_in_line, env, *args, **kwargs):
         env.booth = create_booth_env() if is_mocked_environment else {}

@@ -23,7 +23,7 @@ class CheckCorosyncOffline(
         skip_offline_targets=False,
         allow_skip_offline=True,
     ):
-        super(CheckCorosyncOffline, self).__init__(report_processor)
+        super().__init__(report_processor)
         if allow_skip_offline:
             self._set_skip_offline(skip_offline_targets)
 
@@ -87,7 +87,7 @@ class DistributeCorosyncConf(
         skip_offline_targets=False,
         allow_skip_offline=True,
     ):
-        super(DistributeCorosyncConf, self).__init__(report_processor)
+        super().__init__(report_processor)
         self._config_text = config_text
         if allow_skip_offline:
             self._set_skip_offline(skip_offline_targets)

@@ -57,7 +57,7 @@ class JsonParser(ParserInterface):
             # json.loads handles bytes, it expects utf-8, 16 or 32 encoding
             return json.loads(raw_file_data)
         except json.JSONDecodeError as e:
-            raise JsonParserException(e)
+            raise JsonParserException(e) from e
 
     @staticmethod
     def exception_to_report_list(

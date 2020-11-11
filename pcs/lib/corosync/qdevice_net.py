@@ -140,7 +140,7 @@ def qdevice_destroy():
             ReportItem.error(
                 reports.messages.QdeviceDestroyError(__model, e.strerror)
             )
-        )
+        ) from e
 
 
 def qdevice_status_generic_text(runner, verbose=False):
@@ -307,7 +307,7 @@ def client_setup(runner, ca_certificate):
                     __model, e.strerror,
                 )
             )
-        )
+        ) from e
     # initialize client's certificate storage
     stdout, stderr, retval = runner.run(
         [__qdevice_certutil, "-i", "-c", ca_file_path]
@@ -343,7 +343,7 @@ def client_destroy():
             ReportItem.error(
                 reports.messages.QdeviceDestroyError(__model, e.strerror)
             )
-        )
+        ) from e
 
 
 def client_generate_certificate_request(runner, cluster_name):
@@ -446,7 +446,9 @@ def _store_to_tmpfile(data, report_item_message):
     try:
         return write_tmpfile(data, binary=True)
     except EnvironmentError as e:
-        raise LibraryError(ReportItem.error(report_item_message(e.strerror)))
+        raise LibraryError(
+            ReportItem.error(report_item_message(e.strerror))
+        ) from e
 
 
 def _get_output_certificate(cert_tool_output, report_message_func):
@@ -470,4 +472,4 @@ def _get_output_certificate(cert_tool_output, report_message_func):
                     "{path}: {error}".format(path=filename, error=e.strerror)
                 )
             )
-        )
+        ) from e

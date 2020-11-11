@@ -420,7 +420,7 @@ class LibraryEnvironment:
                         ReportItem.error(
                             reports.messages.CibSaveTmpError(str(e))
                         )
-                    )
+                    ) from e
             runner_env["CIB_file"] = self._cib_data_tmp_file.name
 
         return CommandRunner(self.logger, self.report_processor, runner_env)

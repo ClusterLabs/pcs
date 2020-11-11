@@ -402,7 +402,7 @@ class SymbolType(SymbolPrefix):
     value_re = None
 
     def null_denotation(self):
-        super(SymbolType, self).null_denotation()
+        super().null_denotation()
         if self.value_re and not self.value_re.match(self.children[0].value):
             raise SyntaxError(
                 "invalid %s value '%s'"
@@ -687,7 +687,7 @@ class DateSpecValue(DateCommonValue):
     }
 
     def __init__(self, parts_string):
-        super(DateSpecValue, self).__init__(parts_string, self.KEYWORD)
+        super().__init__(parts_string, self.KEYWORD)
 
     def validate(self):
         for name, value in self.parts.items():
@@ -725,7 +725,7 @@ class DateDurationValue(DateCommonValue):
     KEYWORD = "duration"
 
     def __init__(self, parts_string):
-        super(DateDurationValue, self).__init__(parts_string, self.KEYWORD)
+        super().__init__(parts_string, self.KEYWORD)
 
     def validate(self):
         for name, value in self.parts.items():
@@ -758,12 +758,12 @@ class SymbolTernaryInRange(SymbolTernary):
     symbol_second_id = "to"
 
     def is_allowed_child(self, child_symbol, child_position):
-        return super(SymbolTernaryInRange, self).is_allowed_child(
-            child_symbol, child_position
-        ) and (child_position != 0 or child_symbol.value == "date")
+        return super().is_allowed_child(child_symbol, child_position) and (
+            child_position != 0 or child_symbol.value == "date"
+        )
 
     def left_denotation(self, left):
-        super(SymbolTernaryInRange, self).left_denotation(left)
+        super().left_denotation(left)
         for child in self.children[1:]:
             if child.is_literal() and not utils.is_iso8601_date(child.value):
                 raise SyntaxError(
@@ -783,7 +783,7 @@ class RuleParser(Parser):
     parenthesis_close = ")"
 
     def __init__(self):
-        super(RuleParser, self).__init__()
+        super().__init__()
 
         for operator in RuleParser.comparison_list:
             if operator == "in_range":
@@ -841,7 +841,7 @@ class RuleParser(Parser):
         )
 
     def parse(self, program):
-        syntactic_tree = super(RuleParser, self).parse(program)
+        syntactic_tree = super().parse(program)
         if syntactic_tree.is_literal() or (
             isinstance(syntactic_tree, SymbolType)
             and not (

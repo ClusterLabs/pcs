@@ -150,7 +150,7 @@ class LibCommunicatorLogger(CommunicatorLoggerInterface):
 
 class NodeTargetLibFactory(NodeTargetFactory):
     def __init__(self, known_hosts, report_processor: ReportProcessor):
-        super(NodeTargetLibFactory, self).__init__(known_hosts)
+        super().__init__(known_hosts)
         self._report_processor = report_processor
 
     def get_target_list_with_reports(

@@ -42,12 +42,12 @@ class _Attrs:
                     attr_name, attr_transform = attr_specification
                     return attr_transform(self.attrib[attr_name])
                 return self.attrib[attr_specification]
-            except KeyError:
+            except KeyError as e:
                 raise AttributeError(
                     "Missing attribute '{0}' ('{1}' in source) in '{2}'".format(
                         name, self.required_attrs[name], self.owner_name
                     )
-                )
+                ) from e
 
         raise AttributeError(
             "'{0}' does not declare attribute '{1}'".format(
@@ -159,10 +159,10 @@ def get_cluster_state_dom(xml):
         dom = xml_fromstring(xml)
         _validate_cluster_state_dom(dom)
         return dom
-    except (etree.XMLSyntaxError, etree.DocumentInvalid):
+    except (etree.XMLSyntaxError, etree.DocumentInvalid) as e:
         raise LibraryError(
             ReportItem.error(reports.messages.BadClusterStateFormat())
-        )
+        ) from e
 
 
 class ClusterState(_Element):
@@ -173,7 +173,7 @@ class ClusterState(_Element):
 
     def __init__(self, xml):
         self.dom = get_cluster_state_dom(xml)
-        super(ClusterState, self).__init__(self.dom)
+        super().__init__(self.dom)
 
 
 def _id_xpath_predicate(resource_id):

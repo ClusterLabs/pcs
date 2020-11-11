@@ -110,9 +110,7 @@ class ImprovedVerboseWriter(StandardVerboseWriter):
     def __init__(
         self, stream, descriptions, traceback_highlight=False, fast_info=False,
     ):
-        super(ImprovedVerboseWriter, self).__init__(
-            stream, descriptions, traceback_highlight, fast_info
-        )
+        super().__init__(stream, descriptions, traceback_highlight, fast_info)
         self.last_test = None
 
     def __is_new_module(self, test):

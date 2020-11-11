@@ -205,7 +205,7 @@ def history_get_text(env: LibraryEnvironment, node: Optional[str] = None):
                     str(e), reports.const.FENCE_HISTORY_COMMAND_SHOW
                 )
             )
-        )
+        ) from e
 
 
 def history_cleanup(env: LibraryEnvironment, node: Optional[str] = None):
@@ -230,7 +230,7 @@ def history_cleanup(env: LibraryEnvironment, node: Optional[str] = None):
                     str(e), reports.const.FENCE_HISTORY_COMMAND_CLEANUP
                 )
             )
-        )
+        ) from e
 
 
 def history_update(env: LibraryEnvironment):
@@ -254,4 +254,4 @@ def history_update(env: LibraryEnvironment):
                     str(e), reports.const.FENCE_HISTORY_COMMAND_UPDATE
                 )
             )
-        )
+        ) from e

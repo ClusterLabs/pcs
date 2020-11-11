@@ -147,8 +147,8 @@ class CallListBuilder:
             index = self.__name_list.index(name)
             del self.__call_list[index]
             del self.__name_list[index]
-        except ValueError:
-            raise self.__name_not_exists(name)
+        except ValueError as e:
+            raise self.__name_not_exists(name) from e
 
     def get(self, name):
         """
@@ -158,8 +158,8 @@ class CallListBuilder:
         """
         try:
             return self.__call_list[self.__name_list.index(name)]
-        except ValueError:
-            raise self.__name_not_exists(name)
+        except ValueError as e:
+            raise self.__name_not_exists(name) from e
 
     def place(self, name, call, before=None, instead=None):
         """

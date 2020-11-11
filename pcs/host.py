@@ -39,7 +39,7 @@ def _parse_addr(addr):
     try:
         port = url.port
     except ValueError:
-        raise common_exception
+        raise common_exception from None
     # urlparse allow 0 as valid port number, pcs does not
     if port == 0:
         raise common_exception

@@ -134,7 +134,7 @@ def get_cib(xml):
     except (etree.XMLSyntaxError, etree.DocumentInvalid) as e:
         raise LibraryError(
             ReportItem.error(reports.messages.CibLoadErrorBadFormat(str(e)))
-        )
+        ) from e
 
 
 def verify(runner, verbose=False):
@@ -238,7 +238,7 @@ def diff_cibs_xml(
     except EnvironmentError as e:
         raise LibraryError(
             ReportItem.error(reports.messages.CibSaveTmpError(str(e)))
-        )
+        ) from e
     command = [
         __exec("crm_diff"),
         "--original",
@@ -300,7 +300,7 @@ def ensure_cib_version(
     except (etree.XMLSyntaxError, etree.DocumentInvalid) as e:
         raise LibraryError(
             ReportItem.error(reports.messages.CibUpgradeFailed(str(e)))
-        )
+        ) from e
 
     version_post_upgrade = get_pacemaker_version_by_which_cib_was_validated(
         new_cib
@@ -353,7 +353,7 @@ def simulate_cib_xml(runner, cib_xml):
             ReportItem.error(
                 reports.messages.CibSimulateError(format_os_error(e))
             )
-        )
+        ) from e
 
     cmd = [
         __exec("crm_simulate"),
@@ -383,7 +383,7 @@ def simulate_cib_xml(runner, cib_xml):
             ReportItem.error(
                 reports.messages.CibSimulateError(format_os_error(e))
             )
-        )
+        ) from e
 
 
 def simulate_cib(runner, cib):
@@ -406,7 +406,7 @@ def simulate_cib(runner, cib):
     except (etree.XMLSyntaxError, etree.DocumentInvalid) as e:
         raise LibraryError(
             ReportItem.error(reports.messages.CibSimulateError(str(e)))
-        )
+        ) from e
 
 
 ### wait for idle

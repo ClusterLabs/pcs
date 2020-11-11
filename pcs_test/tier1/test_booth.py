@@ -70,18 +70,16 @@ class BoothMixin(AssertPcsMixin):
 
     def assert_pcs_success(self, command, *args, **kwargs):
         # pylint: disable=signature-differs
-        return super(BoothMixin, self).assert_pcs_success(
+        return super().assert_pcs_success(
             self.fake_file(command), *args, **kwargs
         )
 
     def assert_pcs_fail(self, command, *args, **kwargs):
         # pylint: disable=signature-differs
-        return super(BoothMixin, self).assert_pcs_fail(
-            self.fake_file(command), *args, **kwargs
-        )
+        return super().assert_pcs_fail(self.fake_file(command), *args, **kwargs)
 
     def assert_pcs_fail_original(self, *args, **kwargs):
-        return super(BoothMixin, self).assert_pcs_fail(*args, **kwargs)
+        return super().assert_pcs_fail(*args, **kwargs)
 
 
 class SetupTest(BoothMixin, TestCase):
