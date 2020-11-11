@@ -3,7 +3,7 @@ EXTRA_DIST		=
 MAINTAINERCLEANFILES	= Makefile.in
 
 # install
-bashcompletiondir	= $(sysconfdir)/bash_completion.d
+bashcompletiondir	= $(prefix)/share/bash-completion/completions/
 dist_bashcompletion_DATA= bash_completion/pcs
 
 snmpmibsdir		= $(SNMP_MIB_DIR)
