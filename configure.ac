@@ -429,6 +429,16 @@ PKG_CHECK_VAR([COROLOGDIR], [corosync], [logdir])
 if test "x$COROLOGDIR" == "x"; then
 	AC_MSG_ERROR([Unable to detect corosync logdir automatically])
 fi
+PKG_CHECK_MODULES([COROSYNCQDEV], [corosync-qdevice])
+PKG_CHECK_VAR([COROQDEVEXECPREFIX], [corosync-qdevice], [exec_prefix])
+if test "x$COROQDEVEXECPREFIX" == "x"; then
+	AC_MSG_ERROR([Unable to detect corosync-qdevice exec_prefix automatically])
+fi
+PKG_CHECK_VAR([COROQDEVCONFDIR], [corosync-qdevice], [confdir])
+if test "x$COROQDEVCONFDIR" == "x"; then
+	AC_MSG_ERROR([Unable to detect corosync-qdevice confdir automatically])
+fi
+
 
 AC_CONFIG_FILES([Makefile
 		 newversion.py
@@ -447,6 +457,8 @@ AC_CONFIG_FILES([Makefile
 		 pcs_test/tier0/lib/test_external.py
 		 pcs_test/tier0/lib/corosync/test_live.py
 		 pcs_test/tier0/lib/pacemaker/test_live.py
+		 pcs_test/tier0/lib/corosync/test_qdevice_net.py
+		 pcs_test/tier0/lib/corosync/test_qdevice_client.py
 		 pcs_test/tier1/test_booth.py
 		 pcsd/Makefile
 		 pcsd/pcs.rb

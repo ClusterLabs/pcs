@@ -36,6 +36,8 @@ pcs_test/tier0/lib/corosync/test_live.py
 pcs_test/tier0/lib/pacemaker/test_live.py
 pcs_test/tier0/lib/test_external.py
 pcs_test/tier0/lib/test_resource_agent.py
+pcs_test/tier0/lib/corosync/test_qdevice_client.py
+pcs_test/tier0/lib/corosync/test_qdevice_net.py
 pcs_test/tier1/test_booth.py
 pcs_test/resources/*.tmp
 pcs_test/resources/temp*.xml

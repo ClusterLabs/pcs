@@ -159,7 +159,6 @@ EXTRA_DIST		= \
 			  tier0/lib/corosync/test_config_facade_nodes.py \
 			  tier0/lib/corosync/test_config_parser.py \
 			  tier0/lib/corosync/test_config_facade_misc.py \
-			  tier0/lib/corosync/test_qdevice_client.py \
 			  tier0/lib/corosync/test_config_facade_quorum_device.py \
 			  tier0/lib/corosync/test_config_validators_quorum.py \
 			  tier0/lib/corosync/test_config_facade_quorum.py \
@@ -168,7 +167,6 @@ EXTRA_DIST		= \
 			  tier0/lib/corosync/test_config_validators_create.py \
 			  tier0/lib/corosync/test_config_validators_nodes.py \
 			  tier0/lib/corosync/__init__.py \
-			  tier0/lib/corosync/test_qdevice_net.py \
 			  tier0/lib/test_env_cib.py \
 			  tier0/lib/test_node_communication.py \
 			  tier0/lib/pacemaker/test_simulate.py \

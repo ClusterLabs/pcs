@@ -17,11 +17,11 @@ import pcs.lib.corosync.qdevice_net as lib
 
 # pylint: disable=no-self-use
 
-_qnetd_cert_dir = "/etc/corosync/qnetd/nssdb"
-_qnetd_cert_tool = "/usr/bin/corosync-qnetd-certutil"
-_qnetd_tool = "/usr/bin/corosync-qnetd-tool"
-_client_cert_dir = "/etc/corosync/qdevice/net/nssdb"
-_client_cert_tool = "/usr/sbin/corosync-qdevice-net-certutil"
+_qnetd_cert_dir = "@COROQDEVCONFDIR@/qnetd/nssdb"
+_qnetd_cert_tool = "@COROQDEVEXECPREFIX@/bin/corosync-qnetd-certutil"
+_qnetd_tool = "@COROQDEVEXECPREFIX@/bin/corosync-qnetd-tool"
+_client_cert_dir = "@COROQDEVCONFDIR@/qdevice/net/nssdb"
+_client_cert_tool = "@COROQDEVEXECPREFIX@/sbin/corosync-qdevice-net-certutil"
 
 
 def cert_to_url(cert):

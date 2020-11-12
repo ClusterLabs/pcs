@@ -12,7 +12,7 @@ import pcs.lib.corosync.qdevice_client as lib
 class GetStatusTextTest(TestCase):
     def setUp(self):
         self.mock_runner = mock.MagicMock(spec_set=CommandRunner)
-        self.qdevice_tool = "/usr/sbin/corosync-qdevice-tool"
+        self.qdevice_tool = "@COROQDEVEXECPREFIX@/sbin/corosync-qdevice-tool"
 
     def test_success(self):
         self.mock_runner.run.return_value = ("status info", "", 0)

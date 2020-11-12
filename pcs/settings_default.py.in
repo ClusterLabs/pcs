@@ -6,15 +6,16 @@ service_binary = "@SERVICE@"
 # Used only in utils.py in deprecated funcion
 pacemaker_binaries = "@PCMKEXECPREFIX@/sbin/"
 corosync_binaries = "@COROEXECPREFIX@/sbin"
-corosync_qnet_binaries = "/usr/bin/"
+corosync_qnet_binaries = "@COROQDEVEXECPREFIX@/bin/"
 corosync_conf_dir = "@COROCONFDIR@/corosync/"
 corosync_conf_file = os.path.join(corosync_conf_dir, "corosync.conf")
 corosync_uidgid_dir = os.path.join(corosync_conf_dir, "uidgid.d/")
+corosync_qdevice_conf_dir = "@COROQDEVCONFDIR@"
 corosync_qdevice_net_server_certs_dir = os.path.join(
-    corosync_conf_dir, "qnetd/nssdb"
+    corosync_qdevice_conf_dir, "qnetd/nssdb"
 )
 corosync_qdevice_net_client_certs_dir = os.path.join(
-    corosync_conf_dir, "qdevice/net/nssdb"
+    corosync_qdevice_conf_dir, "qdevice/net/nssdb"
 )
 corosync_qdevice_net_client_ca_file_name = "qnetd-cacert.crt"
 corosync_authkey_file = os.path.join(corosync_conf_dir, "authkey")
