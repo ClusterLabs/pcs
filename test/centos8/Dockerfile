@@ -36,7 +36,7 @@ RUN dnf install -y \
         booth-site \
         # utils
         findutils \
-        git \
+        git-core \
         make \
         tar \
         time \
