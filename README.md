@@ -32,7 +32,7 @@ These are the runtime dependencies of pcs and pcsd:
 * python3-setuptools
 * python3-pyOpenSSL (python3-openssl)
 * python3-pyparsing
-* python3-tornado 6.x
+* python3-tornado 6.1.0+
 * python dataclasses (`pip install dataclasses`; required only for python 3.6,
   already included in 3.7+)
 * [dacite](https://github.com/konradhalas/dacite)
