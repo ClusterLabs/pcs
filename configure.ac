@@ -395,12 +395,6 @@ else
 fi
 AC_SUBST([PCMKCONFDIR])
 AC_SUBST([PCMKLOCALSTATEDIR])
-# we will take this one from resource-agents once it´s available
-PKG_CHECK_MODULES([PCMK_SERVICE], [pacemaker-service])
-PKG_CHECK_VAR([OCFROOT], [pacemaker-service], [ocfdir])
-if test "x$OCFROOT" == "x"; then
-	AC_MSG_ERROR([Unable to detect pacemaker-service ocfdir automatically])
-fi
 PKG_CHECK_MODULES([PCMK_CIB], [pacemaker-cib])
 PKG_CHECK_VAR([PCMK_CIB_DIR], [pacemaker-cib], [configdir])
 if test "x$PCMK_CIB_DIR" == "x"; then
@@ -443,7 +437,6 @@ PKG_CHECK_VAR([SBDCONFDIR], [sbd], [confdir])
 if test "x$SBDCONFDIR" == "x"; then
 	AC_MSG_ERROR([Unable to detect sbd confdir automatically])
 fi
-
 PKG_CHECK_VAR([SBDEXECPREFIX], [sbd], [exec_prefix])
 if test "x$SBDEXECPREFIX" == "x"; then
 	AC_MSG_ERROR([Unable to detect sbd exec_prefix automatically])
@@ -452,6 +445,19 @@ PKG_CHECK_MODULES([FAS], [fence-agents])
 PKG_CHECK_VAR([FASEXECPREFIX], [fence-agents], [exec_prefix])
 if test "x$FASEXECPREFIX" == "x"; then
 	AC_MSG_ERROR([Unable to detect fence-agents exec_prefix automatically])
+fi
+PKG_CHECK_MODULES([RAS], [resource-agents])
+PKG_CHECK_VAR([OCFROOT], [resource-agents], [ocfdir])
+if test "x$OCFROOT" == "x"; then
+	AC_MSG_ERROR([Unable to detect resource-agents ocfdir automatically])
+fi
+PKG_CHECK_VAR([RA_API_DTD], [resource-agents], [ra_api_dtd])
+if test "x$RA_API_DTD" == "x"; then
+	AC_MSG_ERROR([Unable to detect resource-agents ra_api_dtd automatically])
+fi
+PKG_CHECK_VAR([RA_TMP_DIR], [resource-agents], [ra_tmp_dir])
+if test "x$RA_TMP_DIR" == "x"; then
+	AC_MSG_ERROR([Unable to detect resource-agents ra_tmp_dir automatically])
 fi
 
 AC_CONFIG_FILES([Makefile
