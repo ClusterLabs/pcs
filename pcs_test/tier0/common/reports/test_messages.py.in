@@ -4572,12 +4572,10 @@ class BoothUnsupportedFileLocation(NameBuildTest):
         self.assert_message_from_report(
             (
                 "Booth configuration '/some/file' is outside of supported "
-                "booth config directory '/etc/booth/', ignoring the file"
+                "booth config directory '@BOOTHCONFDIR@/', ignoring the file"
             ),
             reports.BoothUnsupportedFileLocation(
-                "/some/file",
-                "/etc/booth/",
-                file_type_codes.BOOTH_CONFIG,
+                "/some/file", "@BOOTHCONFDIR@/", file_type_codes.BOOTH_CONFIG,
             ),
         )
 

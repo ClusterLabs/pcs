@@ -459,6 +459,15 @@ PKG_CHECK_VAR([RA_TMP_DIR], [resource-agents], [ra_tmp_dir])
 if test "x$RA_TMP_DIR" == "x"; then
 	AC_MSG_ERROR([Unable to detect resource-agents ra_tmp_dir automatically])
 fi
+PKG_CHECK_MODULES([BOOTH], [booth])
+PKG_CHECK_VAR([BOOTHCONFDIR], [booth], [confdir])
+if test "x$BOOTHCONFDIR" == "x"; then
+	AC_MSG_ERROR([Unable to detect booth confdir automatically])
+fi
+PKG_CHECK_VAR([BOOTHEXECPREFIX], [booth], [exec_prefix])
+if test "x$BOOTHEXECPREFIX" == "x"; then
+	AC_MSG_ERROR([Unable to detect booth exec_prefix automatically])
+fi
 
 AC_CONFIG_FILES([Makefile
 		 newversion.py
@@ -477,7 +486,9 @@ AC_CONFIG_FILES([Makefile
 		 pcs_test/tier0/common/reports/test_messages.py
 		 pcs_test/tier0/lib/test_resource_agent.py
 		 pcs_test/tier0/lib/test_external.py
+		 pcs_test/tier0/lib/booth/test_config_files.py
 		 pcs_test/tier0/lib/commands/remote_node/fixtures_add.py
+		 pcs_test/tier0/lib/commands/test_booth.py
 		 pcs_test/tier0/lib/corosync/test_live.py
 		 pcs_test/tier0/lib/pacemaker/test_live.py
 		 pcs_test/tier0/lib/corosync/test_qdevice_net.py

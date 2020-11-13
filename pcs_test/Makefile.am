@@ -45,7 +45,6 @@ EXTRA_DIST		= \
 			  tier0/lib/communication/test_qdevice_net.py \
 			  tier0/lib/test_env.py \
 			  tier0/lib/commands/test_qdevice.py \
-			  tier0/lib/commands/test_booth.py \
 			  tier0/lib/commands/test_quorum.py \
 			  tier0/lib/commands/test_resource_agent.py \
 			  tier0/lib/commands/test_ticket.py \
@@ -174,7 +173,6 @@ EXTRA_DIST		= \
 			  tier0/lib/pacemaker/test_values.py \
 			  tier0/lib/pacemaker/__init__.py \
 			  tier0/lib/__init__.py \
-			  tier0/lib/booth/test_config_files.py \
 			  tier0/lib/booth/test_env.py \
 			  tier0/lib/booth/test_config_parser.py \
 			  tier0/lib/booth/test_config_facade.py \
