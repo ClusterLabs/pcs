@@ -448,6 +448,11 @@ PKG_CHECK_VAR([SBDEXECPREFIX], [sbd], [exec_prefix])
 if test "x$SBDEXECPREFIX" == "x"; then
 	AC_MSG_ERROR([Unable to detect sbd exec_prefix automatically])
 fi
+PKG_CHECK_MODULES([FAS], [fence-agents])
+PKG_CHECK_VAR([FASEXECPREFIX], [fence-agents], [exec_prefix])
+if test "x$FASEXECPREFIX" == "x"; then
+	AC_MSG_ERROR([Unable to detect fence-agents exec_prefix automatically])
+fi
 
 AC_CONFIG_FILES([Makefile
 		 newversion.py

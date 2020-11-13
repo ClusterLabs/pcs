@@ -32,7 +32,7 @@ booth_authkey_bytes = 64
 # cluster conf is obsoleted and didn't support out-of-tree installation / run
 # hence it can stay hardcoded
 cluster_conf_file = "/etc/cluster/cluster.conf"
-fence_agent_binaries = "/usr/sbin/"
+fence_agent_binaries = "@FASEXECPREFIX@/sbin/"
 pacemaker_schedulerd = "@PCMK_DAEMON_DIR@/pacemaker-schedulerd"
 pacemaker_controld = "@PCMK_DAEMON_DIR@/pacemaker-controld"
 pacemaker_based = "@PCMK_DAEMON_DIR@/pacemaker-based"
