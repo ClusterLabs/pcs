@@ -474,8 +474,10 @@ AC_CONFIG_FILES([Makefile
 		 pcs/snmp/settings.py
 		 pcs_test/Makefile
 		 pcs_test/tools/misc.py
+		 pcs_test/tier0/common/reports/test_messages.py
 		 pcs_test/tier0/lib/test_resource_agent.py
 		 pcs_test/tier0/lib/test_external.py
+		 pcs_test/tier0/lib/commands/remote_node/fixtures_add.py
 		 pcs_test/tier0/lib/corosync/test_live.py
 		 pcs_test/tier0/lib/pacemaker/test_live.py
 		 pcs_test/tier0/lib/corosync/test_qdevice_net.py

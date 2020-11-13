@@ -33,6 +33,8 @@ pcs_test/suite.py
 pcs_test/smoke.sh
 pcs_test/tools/bin_mock/pcmk/crm_resource
 pcs_test/tools/misc.py
+pcs_test/tier0/common/reports/test_messages.py
+pcs_test/tier0/lib/commands/remote_node/fixtures_add.py
 pcs_test/tier0/lib/corosync/test_live.py
 pcs_test/tier0/lib/pacemaker/test_live.py
 pcs_test/tier0/lib/test_external.py

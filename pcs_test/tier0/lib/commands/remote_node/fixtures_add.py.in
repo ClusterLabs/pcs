@@ -16,7 +16,7 @@ FAIL_HTTP_KWARGS = dict(
 
 
 class EnvConfigMixin:
-    PCMK_AUTHKEY_PATH = "/etc/pacemaker/authkey"
+    PCMK_AUTHKEY_PATH = "@PCMKCONFDIR@/pacemaker/authkey"
 
     def __init__(self, call_collection, wrap_helper, config):
         # pylint: disable=unused-argument
