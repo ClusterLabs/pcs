@@ -438,7 +438,16 @@ PKG_CHECK_VAR([COROQDEVCONFDIR], [corosync-qdevice], [confdir])
 if test "x$COROQDEVCONFDIR" == "x"; then
 	AC_MSG_ERROR([Unable to detect corosync-qdevice confdir automatically])
 fi
+PKG_CHECK_MODULES([SBD], [sbd])
+PKG_CHECK_VAR([SBDCONFDIR], [sbd], [confdir])
+if test "x$SBDCONFDIR" == "x"; then
+	AC_MSG_ERROR([Unable to detect sbd confdir automatically])
+fi
 
+PKG_CHECK_VAR([SBDEXECPREFIX], [sbd], [exec_prefix])
+if test "x$SBDEXECPREFIX" == "x"; then
+	AC_MSG_ERROR([Unable to detect sbd exec_prefix automatically])
+fi
 
 AC_CONFIG_FILES([Makefile
 		 newversion.py

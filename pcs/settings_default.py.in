@@ -63,9 +63,9 @@ pcsd_config = "@CONF_DIR@/pcsd"
 cib_dir = "@PCMK_CIB_DIR@"
 pacemaker_uname = "@PCMK_USER@"
 pacemaker_gname = "@PCMK_GROUP@"
-sbd_binary = "/usr/sbin/sbd"
+sbd_binary = "@SBDEXECPREFIX@/sbin/sbd"
 sbd_watchdog_default = "/dev/watchdog"
-sbd_config = "/etc/sysconfig/sbd"
+sbd_config = "@SBDCONFDIR@/sbd"
 # this limit is also mentioned in docs, change there as well
 sbd_max_device_num = 3
 # message types are also mentioned in docs, change there as well
