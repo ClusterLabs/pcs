@@ -155,7 +155,7 @@ def _get_current_pacemaker_version():
 def _get_current_cib_schema_version():
     regexp = re.compile(r"pacemaker-((\d+)\.(\d+))")
     all_versions = set()
-    xml = etree.parse("/usr/share/pacemaker/versions.rng").getroot()
+    xml = etree.parse("@PCMK_SCHEMA_DIR@/versions.rng").getroot()
     for value_el in xml.xpath(
         ".//x:attribute[@name='validate-with']//x:value",
         namespaces={"x": "http://relaxng.org/ns/structure/1.0"},

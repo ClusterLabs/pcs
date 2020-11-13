@@ -473,6 +473,7 @@ AC_CONFIG_FILES([Makefile
 		 pcs/snmp/pcs_snmp_agent.service
 		 pcs/snmp/settings.py
 		 pcs_test/Makefile
+		 pcs_test/tools/misc.py
 		 pcs_test/tier0/lib/test_resource_agent.py
 		 pcs_test/tier0/lib/test_external.py
 		 pcs_test/tier0/lib/corosync/test_live.py
