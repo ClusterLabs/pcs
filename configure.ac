@@ -114,7 +114,7 @@ AC_ARG_ENABLE([local-build],
 AM_CONDITIONAL([LOCAL_BUILD], [test "x$local_build" == "xyes"])
 
 # required to install python requirements
-AC_CHECK_PROGS([PIP], [pip pip3])
+AC_CHECK_PROGS([PIP], [pip3 pip])
 if test "x$local_build" == "xyes"; then
 	if test x$PIP == x; then
 		AC_MSG_ERROR([Unable to find pip binary])
@@ -140,7 +140,7 @@ fi
 AC_CHECK_PROGS([MYPY], [mypy])
 if test "x$local_build" != "xyes"; then
 	if test "x$MYPY" == "x"; then
-		AC_MSG_ERROR([Unable to find mypy binary. Either execute make install_python_deps or install python black])
+		AC_MSG_ERROR([Unable to find mypy binary. Either execute make install_python_deps or install python mypy])
 	fi
 else
 	MYPY=mypy
@@ -328,42 +328,6 @@ fi
 AC_PATH_PROG([FIND], [find])
 if test "x$FIND" == "x"; then
 	AC_MSG_ERROR([Unable to find find in $PATH])
-fi
-AC_PATH_PROG([CRM_MON], [crm_mon])
-if test "x$CRM_MON" == "x"; then
-	AC_MSG_ERROR([Unable to find crm_mon in $PATH])
-fi
-AC_PATH_PROG([CRM_REPORT], [crm_report])
-if test "x$CRM_REPORT" == "x"; then
-	AC_MSG_ERROR([Unable to find crm_report in $PATH])
-fi
-AC_PATH_PROG([CRM_RESOURCE], [crm_resource])
-if test "x$CRM_RESOURCE" == "x"; then
-	AC_MSG_ERROR([Unable to find crm_resource in $PATH])
-fi
-AC_PATH_PROG([CRM_RULE], [crm_rule])
-if test "x$CRM_RULE" == "x"; then
-	AC_MSG_ERROR([Unable to find crm_rule in $PATH])
-fi
-AC_PATH_PROG([CRM_NODE], [crm_node])
-if test "x$CRM_NODE" == "x"; then
-	AC_MSG_ERROR([Unable to find crm_node in $PATH])
-fi
-AC_PATH_PROG([CRM_VERIFY], [crm_verify])
-if test "x$CRM_VERIFY" == "x"; then
-	AC_MSG_ERROR([Unable to find crm_verify in $PATH])
-fi
-AC_PATH_PROG([CRM_DIFF], [crm_diff])
-if test "x$CRM_DIFF" == "x"; then
-	AC_MSG_ERROR([Unable to find crm_diff in $PATH])
-fi
-AC_PATH_PROG([CIBADMIN], [cibadmin])
-if test "x$CIBADMIN" == "x"; then
-	AC_MSG_ERROR([Unable to find cibadmin in $PATH])
-fi
-AC_PATH_PROG([PACEMAKERD], [pacemakerd])
-if test "x$PACEMAKERD" == "x"; then
-	AC_MSG_ERROR([Unable to find pacemakerd in $PATH])
 fi
 PKG_CHECK_MODULES([PCMK], [pacemaker])
 PKG_CHECK_VAR([PCMK_USER], [pacemaker], [daemon_user])
