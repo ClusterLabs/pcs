@@ -100,13 +100,13 @@ pylint:
 	$(TIME) $(PYTHON) -m pylint --rcfile pylintrc --persistent=n --reports=n --score=n --disable similarities pcs pcs_test
 
 black_check: pyproject.toml
-	$(TIME) $(BLACK) --config pyproject.toml --check .
+	$(TIME) $(PYTHON) -m black --config pyproject.toml --check .
 
 black: pyproject.toml
-	$(BLACK) --config pyproject.toml .
+	$(PYTHON) -m black --config pyproject.toml .
 
 mypy:
-	$(TIME) $(MYPY) -p pcs
+	$(TIME) $(PYTHON) -m mypy -p pcs
 
 tests_tier0:
 	$(PYTHON) pcs_test/suite.py -v --vanilla --tier0

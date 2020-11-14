@@ -124,29 +124,6 @@ fi
 # used to measure time for some tests, not critical if not available
 AC_CHECK_PROGS([TIME], [time])
 
-# used only for testing and reformatting
-# if binary is not availalbe in the system, it will be installed by local-build (if enabled)
-AC_CHECK_PROGS([BLACK], [black])
-if test "x$local_build" != "xyes"; then
-	if test "x$BLACK" == "x"; then
-		AC_MSG_ERROR([Unable to find black binary. Either execute make install_python_deps or install python black])
-	fi
-else
-	BLACK="black"
-	AC_SUBST([BLACK])
-fi
-
-# if binary is not availalbe in the system, it will be installed by local-build (if enabled)
-AC_CHECK_PROGS([MYPY], [mypy])
-if test "x$local_build" != "xyes"; then
-	if test "x$MYPY" == "x"; then
-		AC_MSG_ERROR([Unable to find mypy binary. Either execute make install_python_deps or install python mypy])
-	fi
-else
-	MYPY=mypy
-	AC_SUBST([MYPY])
-fi
-
 MOD_FAILURE=""
 if test "x$local_build" != "xyes"; then
 	MOD_FAILURE=yes
@@ -154,7 +131,7 @@ fi
 
 # python section
 
-PYTHON_LIST="astroid pylint tornado dacite dateutil"
+PYTHON_LIST="astroid pylint mypy black tornado dacite dateutil"
 
 # commodity function
 PYTHON_LIST_PIP=""
