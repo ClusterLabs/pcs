@@ -3222,7 +3222,7 @@ class FileIoError(NameBuildTest):
         self.assert_message_from_report(
             (
                 "Unable to change ownership of pcsd configuration "
-                "@CONF_DIR@/pcsd': Failed"
+                "'@CONF_DIR@/pcsd': Failed"
             ),
             reports.FileIoError(
                 file_type_codes.PCSD_ENVIRONMENT_CONFIG,
