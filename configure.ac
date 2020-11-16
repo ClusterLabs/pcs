@@ -139,6 +139,11 @@ fi
 
 PYTHON_LIST="astroid pylint mypy black tornado dacite dateutil"
 
+# python 3.6 needs dataclasses as well
+if test "$PYTHON_VERSION" == "3.6"; then
+	PYTHON_LIST="$PYTHON_LIST dataclasses"
+fi
+
 # commodity function
 PYTHON_LIST_PIP=""
 
