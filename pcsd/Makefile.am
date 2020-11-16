@@ -2,10 +2,10 @@ EXTRA_DIST		= \
 			  test/test_resource.rb test/test_cluster_entity.rb \
 			  test/cluster.conf test/pcs_settings.conf test/test_pcs.rb \
 			  test/corosync.conf test/pcsd_test_utils.rb test/test_cfgsync.rb \
-			  test/test_all_suite.rb test/corosync.conf.tmp test/known-hosts \
+			  test/test_all_suite.rb test/known-hosts \
 			  test/test_cluster.rb test/cib1.xml test/crm1.xml test/test_config.rb \
-			  test/test_corosyncconf.rb test/cfgsync_ctl.tmp test/test_permissions.rb \
-			  test/test_auth.rb test/pcs_users.conf.tmp
+			  test/test_corosyncconf.rb test/test_permissions.rb \
+			  test/test_auth.rb
 
 MAINTAINERCLEANFILES	= Makefile.in
 
@@ -140,6 +140,9 @@ pcsd_fonts		= \
 			  LiberationSans-Italic.ttf;LiberationSans:style=Italic \
 			  Overpass-Regular.ttf;Overpass:style=Regular \
 			  Overpass-Bold.ttf;Overpass:style=Bold
+
+clean-local:
+	rm -f test/*.tmp
 
 install-data-local:
 	$(MKDIR_P) $(DESTDIR)/${pcsdpubcssdir}
