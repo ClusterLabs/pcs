@@ -421,10 +421,54 @@ if test "x$BOOTHEXECPREFIX" == "x"; then
 	AC_MSG_ERROR([Unable to detect booth exec_prefix automatically])
 fi
 
+# required for man page and spec file generation
+AX_PROG_DATE
+AS_IF([test "$ax_cv_prog_date_gnu_date:$ax_cv_prog_date_gnu_utc" = yes:yes],
+	[UTC_DATE_AT="date -u -d@"],
+	[AS_IF([test "x$ax_cv_prog_date_bsd_date" = xyes],
+		[UTC_DATE_AT="date -u -r"],
+		[AC_MSG_ERROR([date utility unable to convert epoch to UTC])])])
+AC_SUBST([UTC_DATE_AT])
+
+AC_ARG_VAR([SOURCE_EPOCH],[last modification date of the source])
+AC_MSG_NOTICE([trying to determine source epoch])
+AC_MSG_CHECKING([for source epoch in \$SOURCE_EPOCH])
+AS_IF([test -n "$SOURCE_EPOCH"],
+	[AC_MSG_RESULT([yes])],
+	[AC_MSG_RESULT([no])
+	 AC_MSG_CHECKING([for source epoch in source_epoch file])
+	 AS_IF([test -e "$srcdir/source_epoch"],
+		[read SOURCE_EPOCH <"$srcdir/source_epoch"
+		 AC_MSG_RESULT([yes])],
+		[AC_MSG_RESULT([no])
+		 AC_MSG_CHECKING([for source epoch baked in by gitattributes export-subst])
+		 SOURCE_EPOCH='$Format:%at$' # template for rewriting by git-archive
+		 AS_CASE([$SOURCE_EPOCH],
+			[?Format:*], # was not rewritten
+				[AC_MSG_RESULT([no])
+				 AC_MSG_CHECKING([for source epoch in \$SOURCE_DATE_EPOCH])
+				 AS_IF([test "x$SOURCE_DATE_EPOCH" != x],
+					[SOURCE_EPOCH="$SOURCE_DATE_EPOCH"
+					 AC_MSG_RESULT([yes])],
+					[AC_MSG_RESULT([no])
+					 AC_MSG_CHECKING([whether git log can provide a source epoch])
+					 SOURCE_EPOCH=f${SOURCE_EPOCH#\$F} # convert into git log --pretty format
+					 SOURCE_EPOCH=$(cd "$srcdir" && git log -1 --pretty=${SOURCE_EPOCH%$} 2>/dev/null)
+					 AS_IF([test -n "$SOURCE_EPOCH"],
+						[AC_MSG_RESULT([yes])],
+						[AC_MSG_RESULT([no, using current time and breaking reproducibility])
+						 SOURCE_EPOCH=$(date +%s)])])],
+			[AC_MSG_RESULT([yes])]
+		 )])
+	])
+AC_MSG_NOTICE([using source epoch $($UTC_DATE_AT$SOURCE_EPOCH +'%F')])
+UTC_DATE=$($UTC_DATE_AT$SOURCE_EPOCH +'%F')
+AC_SUBST([UTC_DATE])
+
 AC_CONFIG_FILES([Makefile
-		 newversion.py
 		 setup.py
 		 setup.cfg
+		 CHANGELOG.md
 		 pcs/Makefile
 		 pcs/settings_default.py
 		 pcs/utils.py
@@ -433,6 +477,8 @@ AC_CONFIG_FILES([Makefile
 		 pcs/common/system.py
 		 pcs/snmp/pcs_snmp_agent.service
 		 pcs/snmp/settings.py
+		 pcs/snmp/pcs_snmp_agent.8
+		 pcs/pcs.8
 		 pcs_test/Makefile
 		 pcs_test/tools/misc.py
 		 pcs_test/tier0/common/reports/test_messages.py
@@ -447,6 +493,7 @@ AC_CONFIG_FILES([Makefile
 		 pcs_test/tier0/lib/corosync/test_qdevice_client.py
 		 pcs_test/tier1/test_booth.py
 		 pcsd/Makefile
+		 pcsd/pcsd.8
 		 pcsd/pcs.rb
 		 pcsd/pcsd
 		 pcsd/pcsd-cli.rb

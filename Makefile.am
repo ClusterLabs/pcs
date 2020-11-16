@@ -1,7 +1,7 @@
 EXTRA_DIST		= autogen.sh \
 			  .version make/release.mk \
 			  make/git-version-gen make/gitlog-to-changelog \
-			  .eslintrc .gitlab-ci.yml CHANGELOG.md \
+			  .eslintrc .gitlab-ci.yml \
 			  MANIFEST.in .travis.yml pcs.spec.in \
 			  mypy.ini pyproject.toml pylintrc \
 			  test/fedora31/Dockerfile test/fedora32/Dockerfile test/centos8/Dockerfile
@@ -23,10 +23,6 @@ TARFILES		= $(PACKAGE_NAME)-$(VERSION).tar.bz2 \
 ACLOCAL_AMFLAGS		= -I m4
 
 SUBDIRS			= pcs pcsd pcs_test
-
-# release
-newversion:
-	$(PYTHON) newversion.py
 
 # depedency management
 
@@ -94,7 +90,7 @@ endif
 	rm -rf $(or ${DESTDIR}, /)/$(PYTHON_SITELIB)/pcs/deinstall.txt
 	rmdir ${DESTDIR}/$(LIB_DIR)/pcs
 
-dist_doc_DATA	= README.md
+dist_doc_DATA	= README.md CHANGELOG.md
 
 # testing
 pylint:
@@ -224,7 +220,8 @@ distclean-local:
 	rm -rf $(filter-out \
 	         $(top_builddir)/m4/ac_python_module.m4 \
 	         $(top_builddir)/m4/ac_pip_module.m4 \
-		 $(top_builddir)/m4/ac_ruby_gem.m4, \
+		 $(top_builddir)/m4/ac_ruby_gem.m4 \
+		 $(top_builddir)/m4/ax_prog_date.m4, \
 		 $(wildcard $(top_builddir)/m4/*.m4))
 
 ## make rpm/srpm section.

@@ -10,7 +10,7 @@ EXTRA_DIST		= \
 MAINTAINERCLEANFILES	= Makefile.in
 
 # install
-dist_man8_MANS		= pcsd.8
+man8_MANS		= pcsd.8
 
 pamdir			= $(sysconfdir)/pam.d
 dist_pam_DATA		= pam/pcsd

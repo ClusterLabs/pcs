@@ -1,13 +1,12 @@
 # Change Log
 
-## [Unreleased]
+## [@VERSION@] - @UTC_DATE@
 
 ### Fixed
 - Node attribute expressions are now correctly reported as not allowed in
   resource defaults rules ([rhbz#1896458])
 
 [rhbz#1896458]: https://bugzilla.redhat.com/show_bug.cgi?id=1896458
-
 
 ## [0.10.8] - 2021-02-01
 

@@ -47,6 +47,8 @@ pcs_test/tier1/test_booth.py
 pcs_test/resources/*.tmp
 pcs_test/resources/temp*.xml
 pcs_test/resources/temp-*
+*.8
+CHANGELOG.md
 
 pcsd/pcs.rb
 pcsd/pcsd
