@@ -43,26 +43,26 @@ endef
 PYAGENTX_VERSION="0.4.pcs.2"
 PYAGENTX_URI="https://github.com/ondrejmular/pyagentx/archive/v${PYAGENTX_VERSION}.tar.gz"
 
-${abs_srcdir}/$(PCS_BUNDLED_DIR_LOCAL)/src/pyagentx-${PYAGENTX_VERSION}:
+${abs_top_builddir}/$(PCS_BUNDLED_DIR_LOCAL)/src/pyagentx-${PYAGENTX_VERSION}:
 if BUILD_PYMOD_PYAGENTX
-	if [ ! -d $(PCS_BUNDLED_DIR_LOCAL)/src/pyagentx-${PYAGENTX_VERSION} ]; then \
-		$(MKDIR_P) $(PCS_BUNDLED_DIR_LOCAL)/src; \
-		$(WGET) -qO- ${PYAGENTX_URI} | $(TAR) xvz -C ${PCS_BUNDLED_DIR_LOCAL}/src; \
+	if [ ! -d ${abs_top_builddir}/$(PCS_BUNDLED_DIR_LOCAL)/src/pyagentx-${PYAGENTX_VERSION} ]; then \
+		$(MKDIR_P) ${abs_top_builddir}/$(PCS_BUNDLED_DIR_LOCAL)/src; \
+		$(WGET) -qO- ${PYAGENTX_URI} | $(TAR) xvz -C ${abs_top_builddir}/${PCS_BUNDLED_DIR_LOCAL}/src; \
 	fi
 endif
 
 # For running pcs_snmp_agent from a local (git clone) directory (without full
 # pcs installation) it is necessary to have pyagentx installed in expected
 # location inside the local directory.
-install_python_pyagentx_local: ${abs_srcdir}/$(PCS_BUNDLED_DIR_LOCAL)/src/pyagentx-${PYAGENTX_VERSION}
+install_python_pyagentx_local: ${abs_top_builddir}/$(PCS_BUNDLED_DIR_LOCAL)/src/pyagentx-${PYAGENTX_VERSION}
 if BUILD_PYMOD_PYAGENTX
-	rm -rf $(PCS_BUNDLED_DIR_LOCAL)/packages/pyagentx*
-	$(call build_python_bundle,${abs_srcdir}/$(PCS_BUNDLED_DIR_LOCAL)/src/pyagentx-${PYAGENTX_VERSION},${abs_builddir}/$(PCS_BUNDLED_DIR_LOCAL))
+	rm -rf ${abs_top_builddir}/$(PCS_BUNDLED_DIR_LOCAL)/packages/pyagentx*
+	$(call build_python_bundle,${abs_top_builddir}/$(PCS_BUNDLED_DIR_LOCAL)/src/pyagentx-${PYAGENTX_VERSION},/${abs_top_builddir}/$(PCS_BUNDLED_DIR_LOCAL))
 endif
 
-install_python_pyagentx: ${abs_srcdir}/$(PCS_BUNDLED_DIR_LOCAL)/src/pyagentx-${PYAGENTX_VERSION}
+install_python_pyagentx: ${abs_top_builddir}/$(PCS_BUNDLED_DIR_LOCAL)/src/pyagentx-${PYAGENTX_VERSION}
 if BUILD_PYMOD_PYAGENTX
-	$(call build_python_bundle,${abs_srcdir}/$(PCS_BUNDLED_DIR_LOCAL)/src/pyagentx-${PYAGENTX_VERSION},$(or ${DESTDIR}, /)/$(LIB_DIR)/$(PCS_BUNDLED_DIR))
+	$(call build_python_bundle,${abs_top_builddir}/$(PCS_BUNDLED_DIR_LOCAL)/src/pyagentx-${PYAGENTX_VERSION},$(or ${DESTDIR}, /)/$(LIB_DIR)/$(PCS_BUNDLED_DIR))
 endif
 
 if LOCAL_BUILD
@@ -75,6 +75,7 @@ install_python_pip_deps: requirements.txt
 install_python_deps: install_python_pip_deps install_python_pyagentx_local
 
 install-exec-local: check-local-deps install_python_pyagentx
+	$(MKDIR_P) $(or ${DESTDIR}, /)/$(PYTHON_SITELIB)/pcs/
 	$(PYTHON) setup.py install --root=$(or ${DESTDIR}, /) ${EXTRA_SETUP_OPTS} --record $(or ${DESTDIR}, /)/$(PYTHON_SITELIB)/pcs/deinstall.txt
 	$(MKDIR_P) ${DESTDIR}/$(LIB_DIR)/pcs
 	mv ${DESTDIR}/$(SBINDIR)/pcs_internal ${DESTDIR}/$(LIB_DIR)/pcs/pcs_internal
@@ -109,11 +110,11 @@ mypy:
 	$(TIME) $(PYTHON) -m mypy -p pcs
 
 tests_tier0:
-	$(PYTHON) pcs_test/suite.py -v --vanilla --tier0
+	$(PYTHON) ${abs_builddir}/pcs_test/suite.py -v --vanilla --tier0
 
 tests_tier1:
 if EXECUTE_TIER1_TESTS
-	$(PYTHON) pcs_test/suite.py -v --vanilla --tier1
+	$(PYTHON) ${abs_builddir}/pcs_test/suite.py -v --vanilla --tier1
 endif
 
 install_ruby_deps:
@@ -126,11 +127,11 @@ install_ruby_deps:
 	rm -rf .bundle Gemfile.lock
 
 pcsd-tests:
-	GEM_HOME=${abs_top_srcdir}/${PCSD_BUNDLED_DIR_LOCAL} \
+	GEM_HOME=${abs_top_builddir}/${PCSD_BUNDLED_DIR_LOCAL} \
 		$(RUBY) \
-		-I${abs_top_srcdir}/pcsd \
-		-I${abs_top_srcdir}/pcsd/test \
-		${abs_top_srcdir}/pcsd/test/test_all_suite.rb
+		-I${abs_top_builddir}/pcsd \
+		-I${abs_top_builddir}/pcsd/test \
+		${abs_top_builddir}/pcsd/test/test_all_suite.rb
 
 if LOCAL_BUILD
 check-local-deps: install_python_deps install_ruby_deps
@@ -139,7 +140,60 @@ else
 check-local-deps:
 endif
 
-check-local: check-local-deps pylint black_check mypy tests_tier0 tests_tier1 pcsd-tests
+test-tree-prep:
+	if [ "${abs_top_builddir}" != "${abs_top_srcdir}" ]; then \
+		echo "Generating builddir symlinks for testing"; \
+		src_realpath=$(shell realpath ${abs_top_srcdir}); \
+		for i in `find "$$src_realpath/" -type d | \
+			grep -v "${abs_top_builddir}" | \
+			sed -e 's#^'$$src_realpath'/##g'`; do \
+			$(MKDIR_P) ${abs_top_builddir}/$${i}; \
+		done; \
+		find "$$src_realpath/" -type f | { while read src; do \
+			process=no; \
+			copy=no; \
+			case $$src in \
+				${abs_top_builddir}*) \
+					;; \
+				*Makefile.*|*.in) \
+					;; \
+				*pcs_test/resources/*.conf) \
+					copy=yes; \
+					;; \
+				*pcs_test/resources/qdevice-certs*) \
+					copy=yes; \
+					;; \
+				*pcsd/test/*.conf*) \
+					copy=yes; \
+					;; \
+				*) \
+					process=yes; \
+					;; \
+			esac ; \
+			dst=`echo $$src | sed -e 's#^'$$src_realpath'/##g'`; \
+			if [ $${process} == yes ]; then \
+				rm -f ${abs_top_builddir}/$$dst; \
+				$(LN_S) $$src ${abs_top_builddir}/$$dst; \
+			fi; \
+			if [ $${copy} == yes ]; then \
+				rm -f ${abs_top_builddir}/$$dst; \
+				cp $$src ${abs_top_builddir}/$$dst; \
+				chmod u+w ${abs_top_builddir}/$$dst; \
+			fi; \
+		done; }; \
+	fi
+
+test-tree-clean:
+	if [ "${abs_top_builddir}" != "${abs_top_srcdir}" ]; then \
+		echo "Cleaning symlinks for testing" ; \
+		find "${abs_top_builddir}/" -type l -delete; \
+		find ${abs_top_builddir} -type d -name qdevice-certs -exec rm -rf {} \; 2>/dev/null || : ;\
+		find ${abs_top_builddir} -type f -name "*.conf*" -exec rm -rf {} \; 2>/dev/null || : ;\
+		find "${abs_top_builddir}/" -type d -empty -delete; \
+	fi
+	find ${abs_top_builddir} -type d -name __pycache__ -exec rm -rf {} \; 2>/dev/null || :
+
+check-local: check-local-deps test-tree-prep pylint black_check mypy tests_tier0 tests_tier1 pcsd-tests test-tree-clean
 
 BUILT_SOURCES = .version
 .version:
@@ -158,21 +212,20 @@ gen-ChangeLog:
 		mv $(distdir)/cl-t $(distdir)/ChangeLog;		\
 	fi
 
-clean-local:
+clean-local: test-tree-clean
 	$(PYTHON) setup.py clean
 	rm -rf Gemfile.lock .bundle
-	find ${abs_top_srcdir} -type d -name __pycache__ -exec rm -rf {} \; 2>/dev/null || :
-	find ${abs_top_builddir} -type d -name __pycache__ -exec rm -rf {} \; 2>/dev/null || :
 
 # this will get rid of "libtoolized" m4 files
-maintainer-clean-local:
+distclean-local:
+	rm -rf Gemfile requirements.txt
 	rm -rf .mypy_cache
-	rm -rf ${PCS_BUNDLED_DIR_LOCAL} ${PCSD_BUNDLED_DIR_ROOT_LOCAL}
+	rm -rf ${abs_top_builddir}/${PCS_BUNDLED_DIR_LOCAL} ${abs_top_builddir}/${PCSD_BUNDLED_DIR_ROOT_LOCAL}
 	rm -rf $(filter-out \
-	         $(top_srcdir)/m4/ac_python_module.m4 \
-	         $(top_srcdir)/m4/ac_pip_module.m4 \
-		 $(top_srcdir)/m4/ac_ruby_gem.m4, \
-		 $(wildcard $(top_srcdir)/m4/*.m4))
+	         $(top_builddir)/m4/ac_python_module.m4 \
+	         $(top_builddir)/m4/ac_pip_module.m4 \
+		 $(top_builddir)/m4/ac_ruby_gem.m4, \
+		 $(wildcard $(top_builddir)/m4/*.m4))
 
 ## make rpm/srpm section.
 $(SPEC): $(SPEC).in

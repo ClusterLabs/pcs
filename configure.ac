@@ -73,10 +73,16 @@ AC_SUBST([PYTHON_SITELIB])
 
 # check for systemd
 PKG_CHECK_MODULES([systemd], [systemd])
-PKG_CHECK_VAR([SYSTEMD_UNIT_DIR], [systemd], [systemdsystemunitdir])
-if test "x$SYSTEMD_UNIT_DIR" == "x"; then
+PKG_CHECK_VAR([SYSTEMD_UNIT_DIR_TMP], [systemd], [systemdsystemunitdir])
+if test "x$SYSTEMD_UNIT_DIR_TMP" == "x"; then
 	AC_MSG_ERROR([Unable to detect systemd unit dir automatically])
 fi
+if test "${prefix}" != "/usr"; then
+	SYSTEMD_UNIT_DIR="${prefix}/$SYSTEMD_UNIT_DIR_TMP"
+else
+	SYSTEMD_UNIT_DIR="$SYSTEMD_UNIT_DIR_TMP"
+fi
+AC_SUBST([SYSTEMD_UNIT_DIR])
 PKG_CHECK_VAR([SYSTEMD_UNIT_PATH], [systemd], [systemdsystemunitpath])
 if test "x$SYSTEMD_UNIT_PATH" == "x"; then
 	AC_MSG_ERROR([Unable to detect systemd unit path automatically])

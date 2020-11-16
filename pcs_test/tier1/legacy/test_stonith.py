@@ -527,7 +527,7 @@ class StonithTest(TestCase, AssertPcsMixin):
         )
 
     def testStonithDeleteRemovesLevel(self):
-        shutil.copy(rc("cib-empty-with3nodes.xml"), self.temp_cib.name)
+        shutil.copyfile(rc("cib-empty-with3nodes.xml"), self.temp_cib.name)
 
         self.assert_pcs_success(
             "stonith create n1-ipmi fence_apc --force".split(),
