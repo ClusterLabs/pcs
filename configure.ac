@@ -311,7 +311,6 @@ AC_PATH_PROG([FIND], [find])
 if test "x$FIND" == "x"; then
 	AC_MSG_ERROR([Unable to find find in $PATH])
 fi
-PKG_CHECK_MODULES([PCMK], [pacemaker])
 PKG_CHECK_VAR([PCMK_USER], [pacemaker], [daemon_user])
 if test "x$PCMK_USER" == "x"; then
 	AC_MSG_ERROR([Unable to detect pacemaker daemon_user automatically])
@@ -341,7 +340,6 @@ else
 fi
 AC_SUBST([PCMKCONFDIR])
 AC_SUBST([PCMKLOCALSTATEDIR])
-PKG_CHECK_MODULES([PCMK_CIB], [pacemaker-cib])
 PKG_CHECK_VAR([PCMK_CIB_DIR], [pacemaker-cib], [configdir])
 if test "x$PCMK_CIB_DIR" == "x"; then
 	AC_MSG_ERROR([Unable to detect pacemaker-cib configdir automatically])
@@ -350,7 +348,6 @@ PKG_CHECK_VAR([PCMK_SCHEMA_DIR], [pacemaker-cib], [schemadir])
 if test "x$PCMK_SCHEMA_DIR" == "x"; then
 	AC_MSG_ERROR([Unable to detect pacemaker-cib schemadir automatically])
 fi
-PKG_CHECK_MODULES([COROSYNC], [corosync])
 PKG_CHECK_VAR([COROEXECPREFIX], [corosync], [exec_prefix])
 if test "x$COROEXECPREFIX" == "x"; then
 	AC_MSG_ERROR([Unable to detect corosync exec_prefix automatically])
@@ -369,7 +366,6 @@ PKG_CHECK_VAR([COROLOGDIR], [corosync], [logdir])
 if test "x$COROLOGDIR" == "x"; then
 	AC_MSG_ERROR([Unable to detect corosync logdir automatically])
 fi
-PKG_CHECK_MODULES([COROSYNCQDEV], [corosync-qdevice])
 PKG_CHECK_VAR([COROQDEVEXECPREFIX], [corosync-qdevice], [exec_prefix])
 if test "x$COROQDEVEXECPREFIX" == "x"; then
 	AC_MSG_ERROR([Unable to detect corosync-qdevice exec_prefix automatically])
@@ -378,7 +374,6 @@ PKG_CHECK_VAR([COROQDEVCONFDIR], [corosync-qdevice], [confdir])
 if test "x$COROQDEVCONFDIR" == "x"; then
 	AC_MSG_ERROR([Unable to detect corosync-qdevice confdir automatically])
 fi
-PKG_CHECK_MODULES([SBD], [sbd])
 PKG_CHECK_VAR([SBDCONFDIR], [sbd], [confdir])
 if test "x$SBDCONFDIR" == "x"; then
 	AC_MSG_ERROR([Unable to detect sbd confdir automatically])
@@ -387,12 +382,10 @@ PKG_CHECK_VAR([SBDEXECPREFIX], [sbd], [exec_prefix])
 if test "x$SBDEXECPREFIX" == "x"; then
 	AC_MSG_ERROR([Unable to detect sbd exec_prefix automatically])
 fi
-PKG_CHECK_MODULES([FAS], [fence-agents])
 PKG_CHECK_VAR([FASEXECPREFIX], [fence-agents], [exec_prefix])
 if test "x$FASEXECPREFIX" == "x"; then
 	AC_MSG_ERROR([Unable to detect fence-agents exec_prefix automatically])
 fi
-PKG_CHECK_MODULES([RAS], [resource-agents])
 PKG_CHECK_VAR([OCFROOT], [resource-agents], [ocfdir])
 if test "x$OCFROOT" == "x"; then
 	AC_MSG_ERROR([Unable to detect resource-agents ocfdir automatically])
@@ -405,7 +398,6 @@ PKG_CHECK_VAR([RA_TMP_DIR], [resource-agents], [ra_tmp_dir])
 if test "x$RA_TMP_DIR" == "x"; then
 	AC_MSG_ERROR([Unable to detect resource-agents ra_tmp_dir automatically])
 fi
-PKG_CHECK_MODULES([BOOTH], [booth])
 PKG_CHECK_VAR([BOOTHCONFDIR], [booth], [confdir])
 if test "x$BOOTHCONFDIR" == "x"; then
 	AC_MSG_ERROR([Unable to detect booth confdir automatically])
