@@ -96,13 +96,11 @@ EXTRA_DIST		= \
 			  tier0/lib/commands/test_stonith_history.py \
 			  tier0/lib/commands/test_cib_options.py \
 			  tier0/lib/commands/cluster/test_add_link.py \
-			  tier0/lib/commands/cluster/test_remove_nodes.py \
 			  tier0/lib/commands/cluster/test_verify.py \
 			  tier0/lib/commands/cluster/test_node_clear.py \
 			  tier0/lib/commands/cluster/test_setup.py \
 			  tier0/lib/commands/cluster/test_update_link.py \
 			  tier0/lib/commands/cluster/test_add_nodes_validation.py \
-			  tier0/lib/commands/cluster/test_add_nodes.py \
 			  tier0/lib/commands/cluster/test_remove_links.py \
 			  tier0/lib/commands/cluster/test_remove_nodes_from_cib.py \
 			  tier0/lib/commands/cluster/__init__.py \
@@ -156,7 +154,6 @@ EXTRA_DIST		= \
 			  tier0/lib/test_validate.py \
 			  tier0/lib/corosync/test_config_facade_links.py \
 			  tier0/lib/corosync/test_config_facade_nodes.py \
-			  tier0/lib/corosync/test_config_parser.py \
 			  tier0/lib/corosync/test_config_facade_misc.py \
 			  tier0/lib/corosync/test_config_facade_quorum_device.py \
 			  tier0/lib/corosync/test_config_validators_quorum.py \
@@ -233,7 +230,6 @@ EXTRA_DIST		= \
 			  tier1/legacy/test_rule.py \
 			  tier1/test_cluster_pcmk_remote.py \
 			  tier1/test_cib_options.py \
-			  tier1/cluster/test_setup_local.py \
 			  tier1/cluster/test_cib_push.py \
 			  tier1/cluster/__init__.py \
 			  tier1/cib_resource/test_clone_unclone.py \

@@ -222,7 +222,7 @@ gen-ChangeLog:
 
 clean-local: test-tree-clean
 	$(PYTHON) setup.py clean
-	rm -rf Gemfile.lock .bundle
+	rm -rf Gemfile.lock .bundle pcs_test/resources/temp
 
 # this will get rid of "libtoolized" m4 files
 distclean-local:

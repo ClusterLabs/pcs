@@ -63,7 +63,7 @@ RUN cd $src_path && \
     ./configure --enable-local-build --enable-dev-tests --enable-destructive-tests \
 	PCMKEXECPREFIX=/usr \
 	PCMKPREFIX=/usr \
-	COROLOGDIR=/var/log/corosync \
+	COROLOGDIR=/var/log/cluster \
 	COROQDEVEXECPREFIX=/usr \
 	COROQDEVCONFDIR=/etc/corosync \
 	SBDCONFDIR=/etc/sysconfig \

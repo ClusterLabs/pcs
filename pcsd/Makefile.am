@@ -4,8 +4,7 @@ EXTRA_DIST		= \
 			  test/corosync.conf test/pcsd_test_utils.rb test/test_cfgsync.rb \
 			  test/test_all_suite.rb test/known-hosts \
 			  test/test_cluster.rb test/cib1.xml test/crm1.xml test/test_config.rb \
-			  test/test_corosyncconf.rb test/test_permissions.rb \
-			  test/test_auth.rb
+			  test/test_permissions.rb test/test_auth.rb
 
 MAINTAINERCLEANFILES	= Makefile.in
 

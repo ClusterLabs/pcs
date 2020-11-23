@@ -474,11 +474,15 @@ AC_CONFIG_FILES([Makefile
 		 pcs_test/tier0/lib/booth/test_config_files.py
 		 pcs_test/tier0/lib/commands/remote_node/fixtures_add.py
 		 pcs_test/tier0/lib/commands/test_booth.py
+		 pcs_test/tier0/lib/commands/cluster/test_add_nodes.py
+		 pcs_test/tier0/lib/commands/cluster/test_remove_nodes.py
 		 pcs_test/tier0/lib/corosync/test_live.py
+		 pcs_test/tier0/lib/corosync/test_config_parser.py
 		 pcs_test/tier0/lib/pacemaker/test_live.py
 		 pcs_test/tier0/lib/corosync/test_qdevice_net.py
 		 pcs_test/tier0/lib/corosync/test_qdevice_client.py
 		 pcs_test/tier1/test_booth.py
+		 pcs_test/tier1/cluster/test_setup_local.py
 		 pcsd/Makefile
 		 pcsd/pcsd.8
 		 pcsd/pcs.rb
@@ -489,6 +493,7 @@ AC_CONFIG_FILES([Makefile
 		 pcsd/bootstrap.rb
 		 pcsd/settings.rb
 		 pcsd/remote.rb
+		 pcsd/test/test_corosyncconf.rb
 		 pcsd/logrotate/pcsd])
 
 AC_CONFIG_FILES([pcs/pcs], [chmod +x pcs/pcs])

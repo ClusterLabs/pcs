@@ -79,7 +79,7 @@ class SetupLocal(AssertPcsMixin, TestCase):
 
             logging {{
                 to_logfile: yes
-                logfile: /var/log/cluster/corosync.log
+                logfile: @COROLOGDIR@/corosync.log
                 to_syslog: yes
                 timestamp: on
             }}
@@ -242,7 +242,7 @@ class SetupLocal(AssertPcsMixin, TestCase):
 
                 logging {
                     to_logfile: yes
-                    logfile: /var/log/cluster/corosync.log
+                    logfile: @COROLOGDIR@/corosync.log
                     to_syslog: yes
                     timestamp: on
                 }

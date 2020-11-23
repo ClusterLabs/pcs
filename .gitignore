@@ -37,16 +37,20 @@ pcs_test/tier0/common/reports/test_messages.py
 pcs_test/tier0/lib/booth/test_config_files.py
 pcs_test/tier0/lib/commands/test_booth.py
 pcs_test/tier0/lib/commands/remote_node/fixtures_add.py
+pcs_test/tier0/lib/commands/cluster/test_add_nodes.py
+pcs_test/tier0/lib/commands/cluster/test_remove_nodes.py
 pcs_test/tier0/lib/corosync/test_live.py
+pcs_test/tier0/lib/corosync/test_config_parser.py
 pcs_test/tier0/lib/pacemaker/test_live.py
 pcs_test/tier0/lib/test_external.py
 pcs_test/tier0/lib/test_resource_agent.py
 pcs_test/tier0/lib/corosync/test_qdevice_client.py
 pcs_test/tier0/lib/corosync/test_qdevice_net.py
 pcs_test/tier1/test_booth.py
+pcs_test/tier1/cluster/test_setup_local.py
 pcs_test/resources/*.tmp
 pcs_test/resources/temp*.xml
-pcs_test/resources/temp-*
+pcs_test/resources/temp*
 *.8
 CHANGELOG.md
 
@@ -56,6 +60,7 @@ pcsd/pcsd-cli.rb
 pcsd/settings.rb
 pcsd/remote.rb
 pcsd/bootstrap.rb
+pcsd/test/test_corosyncconf.rb
 build/
 *.egg-info
 

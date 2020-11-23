@@ -80,7 +80,7 @@ def corosync_conf_fixture(
 
         logging {{
             to_logfile: yes
-            logfile: /var/log/cluster/corosync.log
+            logfile: @COROLOGDIR@/corosync.log
             to_syslog: yes
         }}
         """
