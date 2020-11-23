@@ -128,8 +128,9 @@ install_ruby_deps:
 	rm -rf .bundle Gemfile.lock
 	$(MKDIR_P) .bundle
 	echo '---' > .bundle/config
-	echo 'BUNDLE_DISABLE_SHARED_GEMS: "1"' >> .bundle/config
+	echo 'BUNDLE_DISABLE_SHARED_GEMS: "true"' >> .bundle/config
 	echo 'BUNDLE_PATH: "${PCSD_BUNDLED_DIR_ROOT_LOCAL}"' >> .bundle/config
+	echo 'BUNDLE_BUILD: \"$(ruby_LIBS)\"' >> .bundle/config
 	$(BUNDLE)
 	rm -rf .bundle Gemfile.lock
 

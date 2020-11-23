@@ -158,8 +158,9 @@ PCS_CHECK_PYMOD([python-dateutil], [>= 2.7.0])
 if test "$PYTHON_VERSION" == "3.6"; then
 	PCS_CHECK_PYMOD([dataclasses])
 fi
+
 # python 3.8+ needs distro as well (removed from upstream lib)
-if ! printf '%s\n%s\n' "3.8" "$PYTHON_VERSION" | sort -V -C; then
+if printf '%s\n%s\n' "3.8" "$PYTHON_VERSION" | sort -V -C; then
 	PCS_CHECK_PYMOD([distro])
 fi
 

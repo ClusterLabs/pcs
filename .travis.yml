@@ -7,18 +7,8 @@ env:
     - SRC_PATH=/src/pcs
   matrix:
     - DIST=fedora31
-      RUBY_BIN=/usr/bin/ruby
-      PYTHON_TEST0_ARGS=""
-      PYTHON_TEST1_ARGS=""
     - DIST=fedora32
-      RUBY_BIN=/usr/bin/ruby
-      PYTHON_TEST0_ARGS=""
-      PYTHON_TEST1_ARGS=""
     - DIST=centos8
-      RUBY_BIN=/usr/bin/ruby
-      PYTHON_TEST0_ARGS=""
-      PYTHON_TEST1_ARGS=""
-      GEM_HOME=$SRC_PATH/pcsd/vendor/bundle/ruby
 
 services:
   - docker
@@ -31,19 +21,4 @@ before_install:
     .
 
 script:
-  # python test suite
-  - docker run $DIST $SRC_PATH/pcs_test/suite.py -v --vanilla --tier0 $PYTHON_TEST0_ARGS
-  - docker run $DIST $SRC_PATH/pcs_test/suite.py -v --vanilla --tier1 $PYTHON_TEST1_ARGS
-  # python static types check
-  - docker run $DIST make -C $SRC_PATH mypy
-  # python linter
-  - docker run $DIST make -C $SRC_PATH pylint
-  # python code format check
-  - docker run $DIST make -C $SRC_PATH black_check
-  # ruby test suite
-  - docker run
-     -e "GEM_HOME=$GEM_HOME"
-     $DIST $RUBY_BIN
-     -I $SRC_PATH/pcsd
-     -I $SRC_PATH/pcsd/test
-     $SRC_PATH/pcsd/test/test_all_suite.rb
+  - docker run $DIST make -C $SRC_PATH check
