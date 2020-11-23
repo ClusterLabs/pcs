@@ -65,9 +65,15 @@ if LOCAL_BUILD
 PIP_FLAGS		= --user
 endif
 
+# when running in virtual environment, we need to drop --user
 install_python_pip_deps: requirements.txt
 	mv setup.cfg setup.cfg.tmp
-	$(PIP) install --upgrade $(PIP_FLAGS) --no-use-pep517 -r $< || $(PIP) install --upgrade $(PIP_FLAGS) -r $<
+	if test "x$${VIRTUAL_ENV}" = "x"; then \
+		PIP_FLAGS="$(PIP_FLAGS)"; \
+	else \
+		PIP_FLAGS="";\
+	fi && \
+	$(PIP) install --upgrade $${PIP_FLAGS} --no-use-pep517 -r $< || $(PIP) install --upgrade $${PIP_FLAGS} -r $<
 	mv setup.cfg.tmp setup.cfg
 	touch setup.cfg
 
