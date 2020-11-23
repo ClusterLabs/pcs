@@ -40,7 +40,7 @@ PYAGENTX_VERSION="0.4.pcs.2"
 PYAGENTX_URI="https://github.com/ondrejmular/pyagentx/archive/v${PYAGENTX_VERSION}.tar.gz"
 
 ${abs_top_builddir}/$(PCS_BUNDLED_DIR_LOCAL)/src/pyagentx-${PYAGENTX_VERSION}:
-if BUILD_PYMOD_PYAGENTX
+if BUILD_PIPMOD_PYAGENTX
 	if [ ! -d ${abs_top_builddir}/$(PCS_BUNDLED_DIR_LOCAL)/src/pyagentx-${PYAGENTX_VERSION} ]; then \
 		$(MKDIR_P) ${abs_top_builddir}/$(PCS_BUNDLED_DIR_LOCAL)/src; \
 		$(WGET) -qO- ${PYAGENTX_URI} | $(TAR) xvz -C ${abs_top_builddir}/${PCS_BUNDLED_DIR_LOCAL}/src; \
@@ -51,13 +51,13 @@ endif
 # pcs installation) it is necessary to have pyagentx installed in expected
 # location inside the local directory.
 install_python_pyagentx_local: ${abs_top_builddir}/$(PCS_BUNDLED_DIR_LOCAL)/src/pyagentx-${PYAGENTX_VERSION}
-if BUILD_PYMOD_PYAGENTX
+if BUILD_PIPMOD_PYAGENTX
 	rm -rf ${abs_top_builddir}/$(PCS_BUNDLED_DIR_LOCAL)/packages/pyagentx*
 	$(call build_python_bundle,${abs_top_builddir}/$(PCS_BUNDLED_DIR_LOCAL)/src/pyagentx-${PYAGENTX_VERSION},/${abs_top_builddir}/$(PCS_BUNDLED_DIR_LOCAL))
 endif
 
 install_python_pyagentx: ${abs_top_builddir}/$(PCS_BUNDLED_DIR_LOCAL)/src/pyagentx-${PYAGENTX_VERSION}
-if BUILD_PYMOD_PYAGENTX
+if BUILD_PIPMOD_PYAGENTX
 	$(call build_python_bundle,${abs_top_builddir}/$(PCS_BUNDLED_DIR_LOCAL)/src/pyagentx-${PYAGENTX_VERSION},$(or ${DESTDIR}, /)/$(LIB_DIR)/$(PCS_BUNDLED_DIR))
 endif
 
@@ -66,7 +66,10 @@ PIP_FLAGS		= --user
 endif
 
 install_python_pip_deps: requirements.txt
-	$(PIP) install --upgrade $(PIP_FLAGS) --no-use-pep517 -r $< || $(PIP) install --upgrade -r $<
+	mv setup.cfg setup.cfg.tmp
+	$(PIP) install --upgrade $(PIP_FLAGS) --no-use-pep517 -r $< || $(PIP) install --upgrade $(PIP_FLAGS) -r $<
+	mv setup.cfg.tmp setup.cfg
+	touch setup.cfg
 
 install_python_deps: install_python_pip_deps install_python_pyagentx_local
 
@@ -79,7 +82,7 @@ install-exec-local: check-local-deps install_python_pyagentx
 	$(PYTHON) -m compileall -fl $(or ${DESTDIR}, /)/$(PYTHON_SITELIB)/pcs/settings.py
 
 uninstall-local:
-if BUILD_PYMOD_PYAGENTX
+if BUILD_PIPMOD_PYAGENTX
 	rm -rf $(or ${DESTDIR}, /)/$(LIB_DIR)/$(PCS_BUNDLED_DIR)
 endif
 	mv ${DESTDIR}/$(LIB_DIR)/pcs/pcs_internal ${DESTDIR}/$(SBINDIR)/pcs_internal || :
@@ -94,16 +97,24 @@ dist_doc_DATA	= README.md CHANGELOG.md
 
 # testing
 pylint:
+if DEV_TESTS
 	$(TIME) $(PYTHON) -m pylint --rcfile pylintrc --persistent=n --reports=n --score=n --disable similarities pcs pcs_test
+endif
 
 black_check: pyproject.toml
+if DEV_TESTS
 	$(TIME) $(PYTHON) -m black --config pyproject.toml --check .
+endif
 
 black: pyproject.toml
+if DEV_TESTS
 	$(PYTHON) -m black --config pyproject.toml .
+endif
 
 mypy:
+if DEV_TESTS
 	$(TIME) $(PYTHON) -m mypy -p pcs
+endif
 
 tests_tier0:
 	$(PYTHON) ${abs_builddir}/pcs_test/suite.py -v --vanilla --tier0
@@ -218,7 +229,7 @@ distclean-local:
 	rm -rf .mypy_cache
 	rm -rf ${abs_top_builddir}/${PCS_BUNDLED_DIR_LOCAL} ${abs_top_builddir}/${PCSD_BUNDLED_DIR_ROOT_LOCAL}
 	rm -rf $(filter-out \
-	         $(top_builddir)/m4/ac_python_module.m4 \
+	         $(top_builddir)/m4/ac_compare_versions.m4 \
 	         $(top_builddir)/m4/ac_pip_module.m4 \
 		 $(top_builddir)/m4/ac_ruby_gem.m4 \
 		 $(top_builddir)/m4/ax_prog_date.m4, \

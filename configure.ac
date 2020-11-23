@@ -111,6 +111,10 @@ if test x$FCMATCH == x; then
 	AC_MSG_ERROR([Unable to find fc-match binary])
 fi
 
+AC_ARG_ENABLE([dev-tests],
+	      [  --enable-dev-tests           Enable extra developers tests (black, mypy, pylint) (default: no)], [dev_tests="yes"])
+AM_CONDITIONAL([DEV_TESTS], [test "x$dev_tests" == "xyes"])
+
 AC_ARG_ENABLE([destructive-tests],
 	      [  --enable-destructive-tests           Automatically execute potentially dangerous tests when running make check (default: no)], [destructive_tests="yes"])
 AM_CONDITIONAL([EXECUTE_TIER1_TESTS], [test "x$destructive_tests" == "xyes"])
@@ -130,58 +134,48 @@ fi
 # used to measure time for some tests, not critical if not available
 AC_CHECK_PROGS([TIME], [time])
 
-MOD_FAILURE=""
-if test "x$local_build" != "xyes"; then
-	MOD_FAILURE=yes
-fi
-
-# python section
-
-PYTHON_LIST="astroid pylint mypy black tornado dacite dateutil"
-
-# python 3.6 needs dataclasses as well
-if test "$PYTHON_VERSION" == "3.6"; then
-	PYTHON_LIST="$PYTHON_LIST dataclasses"
-fi
-
-# commodity function
-PYTHON_LIST_PIP=""
-
-AC_DEFUN([PCS_CHECK_PYMOD],[
-	  AC_PYTHON_MODULE([$1], [$2])
-	  res=$(eval echo "$AS_TR_CPP([HAVE_PYMOD_$1])")
-	  if test "x$res" == "xno"; then
-		  PYTHON_LIST_PIP="$1 $PYTHON_LIST_PIP"
-	  fi
-	  ])
-
-for i in $PYTHON_LIST; do
-	PCS_CHECK_PYMOD([$i], [$MOD_FAILURE])
-done
-
-# special case lxml-stubs, it can be installed via pip
-# but it cannot be detected as python module
-AC_PIP_MODULE([lxml-stubs], [$MOD_FAILURE])
-if test "$HAVE_PIPMOD_LXML_STUBS" == "no"; then
-	PYTHON_LIST_PIP="lxml-stubs $PYTHON_LIST_PIP"
-fi
-
-# generate requirements.txt here or in Makefile?
 rm -rf requirements.txt
 touch requirements.txt
-for i in $PYTHON_LIST_PIP; do
-	echo $i >> requirements.txt
-done
 
-if test -n "$PYTHON_LIST_PIP"; then
-	AC_MSG_RESULT([The following python modules will be pip installed: $PYTHON_LIST_PIP])
+AC_DEFUN([PCS_CHECK_PYMOD], [
+	 if test "x$local_build" == "xyes"; then
+		AC_PIP_MODULE([$1], [$2], [$3], [echo "$1 $2" | sed -e 's# ##g' >> requirements.txt])
+	 else
+		AC_PIP_MODULE([$1], [$2], [$3], [AC_MSG_ERROR([Python module $1 not found])])
+	 fi
+])
+
+PCS_CHECK_PYMOD([lxml])
+PCS_CHECK_PYMOD([pycurl])
+PCS_CHECK_PYMOD([pyparsing])
+PCS_CHECK_PYMOD([pyOpenSSL])
+PCS_CHECK_PYMOD([dacite])
+PCS_CHECK_PYMOD([setuptools])
+PCS_CHECK_PYMOD([tornado], [>= 6.0.0])
+PCS_CHECK_PYMOD([python-dateutil], [>= 2.7.0])
+
+# python 3.6 needs dataclasses as well (added in 3.7)
+if test "$PYTHON_VERSION" == "3.6"; then
+	PCS_CHECK_PYMOD([dataclasses])
+fi
+# python 3.8+ needs distro as well (removed from upstream lib)
+if ! printf '%s\n%s\n' "3.8" "$PYTHON_VERSION" | sort -V -C; then
+	PCS_CHECK_PYMOD([distro])
+fi
+
+if test "x$dev_tests" != "x"; then
+	PCS_CHECK_PYMOD([lxml-stubs])
+	PCS_CHECK_PYMOD([pylint], [== 2.6.0])
+	PCS_CHECK_PYMOD([astroid], [== 2.4.2])
+	PCS_CHECK_PYMOD([mypy], [== 0.790])
+	PCS_CHECK_PYMOD([black], [== 19.10b0])
 fi
 
 # special case, because we need to download from github
-AC_PYTHON_MODULE([pyagentx], [$MOD_FAILURE])
+AC_PIP_MODULE([pyagentx])
 
 PYTHON_LIST_EMBEDDED=""
-if test "x$HAVE_PYMOD_PYAGENTX" == "xno"; then
+if test "x$HAVE_PIPMOD_PYAGENTX" == "xno"; then
 	AC_CHECK_PROGS([WGET], [wget])
 	if test "x$WGET" == "x"; then
 		AC_MSG_ERROR([Unable to find wget binary.])
@@ -192,7 +186,7 @@ if test "x$HAVE_PYMOD_PYAGENTX" == "xno"; then
 	fi
 	PYTHON_LIST_EMBEDDED="pyagentx $PYTHON_LIST_EMBEDDED"
 fi
-AM_CONDITIONAL([BUILD_PYMOD_PYAGENTX], [test "x$HAVE_PYMOD_PYAGENTX" == "xno"])
+AM_CONDITIONAL([BUILD_PIPMOD_PYAGENTX], [test "x$HAVE_PIPMOD_PYAGENTX" == "xno"])
 
 if test -n "$PYTHON_LIST_EMBEDDED"; then
 	AC_MSG_RESULT([The following python modules will be embedded in the build: $PYTHON_LIST_EMBEDDED])
@@ -200,29 +194,37 @@ fi
 
 # ruby gem section
 
-# keep the list of gems requirements
-
-GEM_LIST="backports daemons ethon ffi eventmachine json mustermann open4 power_assert rack rack-protection rack-test sinatra tilt test-unit thin"
+rm -rf Gemfile Gemfile.lock
+echo "source 'https://rubygems.org'" > Gemfile
+echo "" >> Gemfile
 
 # commodity function
 GEM_LIST_EMBEDDED=""
 
-AC_DEFUN([PCS_CHECK_GEM],[
-	  AC_RUBY_GEM([$1], [$2])
-	  res=$(eval echo "$AS_TR_CPP([HAVE_RUBYGEM_$1])")
-	  if test "x$res" == "xno"; then
-		  GEM_LIST_EMBEDDED="$1 $GEM_LIST_EMBEDDED"
-	  fi
-	  ])
+AC_DEFUN([PCS_CHECK_GEM], [
+	 if test "x$local_build" == "xyes"; then
+		AC_RUBY_GEM([$1], [$2], [$3], [echo "gem '$1'" >> Gemfile && GEM_LIST_EMBEDDED="$1 $GEM_LIST_EMBEDDED"])
+	 else
+		AC_RUBY_GEM([$1], [$2], [$3], [AC_MSG_ERROR([ruby gem $1 not found])])
+	 fi
+])
 
-RUBY_GEM_FAILURE=""
-if test "x$local_build" != "xyes"; then
-	RUBY_GEM_FAILURE=yes
-fi
-
-for i in $GEM_LIST; do
-	PCS_CHECK_GEM([$i], [$RUBY_GEM_FAILURE])
-done
+PCS_CHECK_GEM([backports])
+PCS_CHECK_GEM([daemons])
+PCS_CHECK_GEM([ethon])
+PCS_CHECK_GEM([ffi])
+PCS_CHECK_GEM([eventmachine])
+PCS_CHECK_GEM([json])
+PCS_CHECK_GEM([mustermann])
+PCS_CHECK_GEM([open4])
+PCS_CHECK_GEM([power_assert])
+PCS_CHECK_GEM([rack])
+PCS_CHECK_GEM([rack-protection])
+PCS_CHECK_GEM([rack-test])
+PCS_CHECK_GEM([sinatra])
+PCS_CHECK_GEM([tilt])
+PCS_CHECK_GEM([test-unit])
+PCS_CHECK_GEM([thin])
 
 if test -n "$GEM_LIST_EMBEDDED"; then
 	AC_CHECK_PROGS([BUNDLE], [bundle])
@@ -231,14 +233,6 @@ if test -n "$GEM_LIST_EMBEDDED"; then
 	fi
 	AC_MSG_RESULT([The following gems will be embedded in the build: $GEM_LIST_EMBEDDED])
 fi
-
-# generate pcsd/Gemfile here or in Makefile?
-rm -rf Gemfile Gemfile.lock
-echo "source 'https://rubygems.org'" > Gemfile
-echo "" >> Gemfile
-for i in $GEM_LIST_EMBEDDED; do
-	echo "gem '$i'" >> Gemfile
-done
 
 AC_ARG_WITH([default-config-dir],
 	    [  --with-default-config-dir=DIR  pcs config directory. Default: $sysconfdir/sysconfig ],
