@@ -65,7 +65,7 @@ AC_PROG_MKDIR_P
 PKG_PROG_PKG_CONFIG
 AM_PATH_PYTHON([3.6])
 AC_CHECK_PROGS([PYTHON_ENV], [python3 python])
-if test "x$PYTHON_ENV" == "x"; then
+if test "x$PYTHON_ENV" = "x"; then
 	AC_MSG_ERROR([Unable to detect python/python3 binary automatically])
 fi
 eval PYTHON_SITELIB="`eval echo ${pythondir}`"
@@ -74,7 +74,7 @@ AC_SUBST([PYTHON_SITELIB])
 # check for systemd
 PKG_CHECK_MODULES([systemd], [systemd])
 PKG_CHECK_VAR([SYSTEMD_UNIT_DIR_TMP], [systemd], [systemdsystemunitdir])
-if test "x$SYSTEMD_UNIT_DIR_TMP" == "x"; then
+if test "x$SYSTEMD_UNIT_DIR_TMP" = "x"; then
 	AC_MSG_ERROR([Unable to detect systemd unit dir automatically])
 fi
 if test "${prefix}" != "/usr"; then
@@ -84,7 +84,7 @@ else
 fi
 AC_SUBST([SYSTEMD_UNIT_DIR])
 PKG_CHECK_VAR([SYSTEMD_UNIT_PATH], [systemd], [systemdsystemunitpath])
-if test "x$SYSTEMD_UNIT_PATH" == "x"; then
+if test "x$SYSTEMD_UNIT_PATH" = "x"; then
 	AC_MSG_ERROR([Unable to detect systemd unit path automatically])
 fi
 SYSTEMD_UNIT_PATH_PYTHON="$(echo \"$SYSTEMD_UNIT_PATH\", | sed -e 's#:#\", \"#g')"
@@ -94,39 +94,39 @@ AC_SUBST([SYSTEMD_UNIT_PATH_RUBY])
 
 # check for ruby
 AC_PATH_PROG([RUBY], [ruby])
-if test x$RUBY == x; then
+if test x$RUBY = x; then
 	AC_MSG_ERROR([Unable to find ruby binary])
 fi
 PKG_CHECK_MODULES([ruby], [ruby >= 2.5])
 PKG_CHECK_VAR([RUBY_VER], [ruby], [ruby_version])
-if test "x$RUBY_VER" == "x"; then
+if test "x$RUBY_VER" = "x"; then
 	AC_MSG_ERROR([Unable to detect ruby version dir automatically])
 fi
 AC_CHECK_PROGS([GEM], [gem])
-if test x$GEM == x; then
+if test "x$GEM" = "x"; then
 	AC_MSG_ERROR([Unable to find gem binary])
 fi
 AC_CHECK_PROGS([FCMATCH], [fc-match])
-if test x$FCMATCH == x; then
+if test "x$FCMATCH" = "x"; then
 	AC_MSG_ERROR([Unable to find fc-match binary])
 fi
 
 AC_ARG_ENABLE([dev-tests],
 	      [  --enable-dev-tests           Enable extra developers tests (black, mypy, pylint) (default: no)], [dev_tests="yes"])
-AM_CONDITIONAL([DEV_TESTS], [test "x$dev_tests" == "xyes"])
+AM_CONDITIONAL([DEV_TESTS], [test "x$dev_tests" = "xyes"])
 
 AC_ARG_ENABLE([destructive-tests],
 	      [  --enable-destructive-tests           Automatically execute potentially dangerous tests when running make check (default: no)], [destructive_tests="yes"])
-AM_CONDITIONAL([EXECUTE_TIER1_TESTS], [test "x$destructive_tests" == "xyes"])
+AM_CONDITIONAL([EXECUTE_TIER1_TESTS], [test "x$destructive_tests" = "xyes"])
 
 AC_ARG_ENABLE([local-build],
 	      [  --enable-local-build           Download and install all dependencies as user / bundles], [local_build="yes"])
-AM_CONDITIONAL([LOCAL_BUILD], [test "x$local_build" == "xyes"])
+AM_CONDITIONAL([LOCAL_BUILD], [test "x$local_build" = "xyes"])
 
 # required to install python requirements
 AC_CHECK_PROGS([PIP], [pip3 pip])
-if test "x$local_build" == "xyes"; then
-	if test x$PIP == x; then
+if test "x$local_build" = "xyes"; then
+	if test "x$PIP" = "x"; then
 		AC_MSG_ERROR([Unable to find pip binary])
 	fi
 fi
@@ -138,7 +138,7 @@ rm -rf requirements.txt
 touch requirements.txt
 
 AC_DEFUN([PCS_CHECK_PYMOD], [
-	 if test "x$local_build" == "xyes"; then
+	 if test "x$local_build" = "xyes"; then
 		AC_PIP_MODULE([$1], [$2], [$3], [echo "$1 $2" | sed -e 's# ##g' >> requirements.txt])
 	 else
 		AC_PIP_MODULE([$1], [$2], [$3], [AC_MSG_ERROR([Python module $1 not found])])
@@ -155,7 +155,7 @@ PCS_CHECK_PYMOD([tornado], [>= 6.0.0])
 PCS_CHECK_PYMOD([python-dateutil], [>= 2.7.0])
 
 # python 3.6 needs dataclasses as well (added in 3.7)
-if test "$PYTHON_VERSION" == "3.6"; then
+if test "$PYTHON_VERSION" = "3.6"; then
 	PCS_CHECK_PYMOD([dataclasses])
 fi
 
@@ -176,18 +176,18 @@ fi
 AC_PIP_MODULE([pyagentx])
 
 PYTHON_LIST_EMBEDDED=""
-if test "x$HAVE_PIPMOD_PYAGENTX" == "xno"; then
+if test "x$HAVE_PIPMOD_PYAGENTX" = "xno"; then
 	AC_CHECK_PROGS([WGET], [wget])
-	if test "x$WGET" == "x"; then
+	if test "x$WGET" = "x"; then
 		AC_MSG_ERROR([Unable to find wget binary.])
 	fi
 	AC_CHECK_PROGS([TAR], [tar])
-	if test "x$TAR" == "x"; then
+	if test "x$TAR" = "x"; then
 		AC_MSG_ERROR([Unable to find tar binary.])
 	fi
 	PYTHON_LIST_EMBEDDED="pyagentx $PYTHON_LIST_EMBEDDED"
 fi
-AM_CONDITIONAL([BUILD_PIPMOD_PYAGENTX], [test "x$HAVE_PIPMOD_PYAGENTX" == "xno"])
+AM_CONDITIONAL([BUILD_PIPMOD_PYAGENTX], [test "x$HAVE_PIPMOD_PYAGENTX" = "xno"])
 
 if test -n "$PYTHON_LIST_EMBEDDED"; then
 	AC_MSG_RESULT([The following python modules will be embedded in the build: $PYTHON_LIST_EMBEDDED])
@@ -203,7 +203,7 @@ echo "" >> Gemfile
 GEM_LIST_EMBEDDED=""
 
 AC_DEFUN([PCS_CHECK_GEM], [
-	 if test "x$local_build" == "xyes"; then
+	 if test "x$local_build" = "xyes"; then
 		AC_RUBY_GEM([$1], [$2], [$3], [echo "gem '$1'" >> Gemfile && GEM_LIST_EMBEDDED="$1 $GEM_LIST_EMBEDDED"])
 	 else
 		AC_RUBY_GEM([$1], [$2], [$3], [AC_MSG_ERROR([ruby gem $1 not found])])
@@ -229,7 +229,7 @@ PCS_CHECK_GEM([thin])
 
 if test -n "$GEM_LIST_EMBEDDED"; then
 	AC_CHECK_PROGS([BUNDLE], [bundle])
-	if test "x$BUNDLE" == "x"; then
+	if test "x$BUNDLE" = "x"; then
 		AC_MSG_ERROR([Unable to find bundle binary required to install missing ruby gems])
 	fi
 	AC_MSG_RESULT([The following gems will be embedded in the build: $GEM_LIST_EMBEDDED])
@@ -250,7 +250,7 @@ AC_SUBST([LIB_DIR])
 # we need to do this after defining LIB_DIR
 PCS_BUNDLED_DIR_LOCAL="pcs/bundled"
 AC_SUBST([PCS_BUNDLED_DIR_LOCAL])
-if test "x$local_build" == "xyes"; then
+if test "x$local_build" = "xyes"; then
 	PCS_BUNDLED_DIR="pcs/bundled"
 else
 	PCS_BUNDLED_DIR="$LIB_DIR/pcs/bundled"
@@ -283,56 +283,56 @@ AC_SUBST([SNMP_MIB_DIR])
 
 # detect different paths required to generate default settings
 AC_PATH_PROG([BASH], [bash])
-if test "x$BASH" == "x"; then
+if test "x$BASH" = "x"; then
 	AC_MSG_ERROR([Unable to find bash in $PATH])
 fi
 AC_PATH_PROG([SYSTEMCTL], [systemctl])
-if test "x$SYSTEMCTL" == "x"; then
+if test "x$SYSTEMCTL" = "x"; then
 	AC_MSG_ERROR([Unable to find systemctl in $PATH])
 fi
 AC_PATH_PROG([SERVICE], [service])
-if test "x$SERVICE" == "x"; then
+if test "x$SERVICE" = "x"; then
 	AC_MSG_ERROR([Unable to find service in $PATH])
 fi
 AC_PATH_PROG([OPENSSL], [openssl])
-if test "x$OPENSSL" == "x"; then
+if test "x$OPENSSL" = "x"; then
 	AC_MSG_ERROR([Unable to find openssl in $PATH])
 fi
 AC_PATH_PROG([KILLALL], [killall])
-if test "x$KILLALL" == "x"; then
+if test "x$KILLALL" = "x"; then
 	AC_MSG_ERROR([Unable to find killall in $PATH])
 fi
 # yes this is absurd but we need full path for some
 # python calls
 AC_PATH_PROG([RM], [rm])
-if test "x$RM" == "x"; then
+if test "x$RM" = "x"; then
 	AC_MSG_ERROR([Unable to find rm in $PATH])
 fi
 AC_PATH_PROG([FIND], [find])
-if test "x$FIND" == "x"; then
+if test "x$FIND" = "x"; then
 	AC_MSG_ERROR([Unable to find find in $PATH])
 fi
 PKG_CHECK_VAR([PCMK_USER], [pacemaker], [daemon_user])
-if test "x$PCMK_USER" == "x"; then
+if test "x$PCMK_USER" = "x"; then
 	AC_MSG_ERROR([Unable to detect pacemaker daemon_user automatically])
 fi
 PKG_CHECK_VAR([PCMK_GROUP], [pacemaker], [daemon_group])
-if test "x$PCMK_GROUP" == "x"; then
+if test "x$PCMK_GROUP" = "x"; then
 	AC_MSG_ERROR([Unable to detect pacemaker daemon_group automatically])
 fi
 PKG_CHECK_VAR([PCMK_DAEMON_DIR], [pacemaker], [daemondir])
-if test "x$PCMK_DAEMON_DIR" == "x"; then
+if test "x$PCMK_DAEMON_DIR" = "x"; then
 	AC_MSG_ERROR([Unable to detect pacemaker daemondir automatically])
 fi
 PKG_CHECK_VAR([PCMKEXECPREFIX], [pacemaker], [exec_prefix])
-if test "x$PCMKEXECPREFIX" == "x"; then
+if test "x$PCMKEXECPREFIX" = "x"; then
 	AC_MSG_ERROR([Unable to detect pacemaker exec_prefix automatically])
 fi
 PKG_CHECK_VAR([PCMKPREFIX], [pacemaker], [prefix])
-if test "x$PCMKPREFIX" == "x"; then
+if test "x$PCMKPREFIX" = "x"; then
 	AC_MSG_ERROR([Unable to detect pacemaker prefix automatically])
 fi
-if test "$PCMKPREFIX" == "/usr"; then
+if test "$PCMKPREFIX" = "/usr"; then
 	PCMKCONFDIR="/etc"
 	PCMKLOCALSTATEDIR="/var"
 else
@@ -342,69 +342,69 @@ fi
 AC_SUBST([PCMKCONFDIR])
 AC_SUBST([PCMKLOCALSTATEDIR])
 PKG_CHECK_VAR([PCMK_CIB_DIR], [pacemaker-cib], [configdir])
-if test "x$PCMK_CIB_DIR" == "x"; then
+if test "x$PCMK_CIB_DIR" = "x"; then
 	AC_MSG_ERROR([Unable to detect pacemaker-cib configdir automatically])
 fi
 PKG_CHECK_VAR([PCMK_SCHEMA_DIR], [pacemaker-cib], [schemadir])
-if test "x$PCMK_SCHEMA_DIR" == "x"; then
+if test "x$PCMK_SCHEMA_DIR" = "x"; then
 	AC_MSG_ERROR([Unable to detect pacemaker-cib schemadir automatically])
 fi
 PKG_CHECK_VAR([COROEXECPREFIX], [corosync], [exec_prefix])
-if test "x$COROEXECPREFIX" == "x"; then
+if test "x$COROEXECPREFIX" = "x"; then
 	AC_MSG_ERROR([Unable to detect corosync exec_prefix automatically])
 fi
 PKG_CHECK_VAR([COROPREFIX], [corosync], [prefix])
-if test "x$COROPREFIX" == "x"; then
+if test "x$COROPREFIX" = "x"; then
 	AC_MSG_ERROR([Unable to detect corosync prefix automatically])
 fi
-if test "$COROPREFIX" == "/usr"; then
+if test "$COROPREFIX" = "/usr"; then
 	COROCONFDIR="/etc"
 else
 	COROCONFDIR="$COROPREFIX/etc"
 fi
 AC_SUBST([COROCONFDIR])
 PKG_CHECK_VAR([COROLOGDIR], [corosync], [logdir])
-if test "x$COROLOGDIR" == "x"; then
+if test "x$COROLOGDIR" = "x"; then
 	AC_MSG_ERROR([Unable to detect corosync logdir automatically])
 fi
 PKG_CHECK_VAR([COROQDEVEXECPREFIX], [corosync-qdevice], [exec_prefix])
-if test "x$COROQDEVEXECPREFIX" == "x"; then
+if test "x$COROQDEVEXECPREFIX" = "x"; then
 	AC_MSG_ERROR([Unable to detect corosync-qdevice exec_prefix automatically])
 fi
 PKG_CHECK_VAR([COROQDEVCONFDIR], [corosync-qdevice], [confdir])
-if test "x$COROQDEVCONFDIR" == "x"; then
+if test "x$COROQDEVCONFDIR" = "x"; then
 	AC_MSG_ERROR([Unable to detect corosync-qdevice confdir automatically])
 fi
 PKG_CHECK_VAR([SBDCONFDIR], [sbd], [confdir])
-if test "x$SBDCONFDIR" == "x"; then
+if test "x$SBDCONFDIR" = "x"; then
 	AC_MSG_ERROR([Unable to detect sbd confdir automatically])
 fi
 PKG_CHECK_VAR([SBDEXECPREFIX], [sbd], [exec_prefix])
-if test "x$SBDEXECPREFIX" == "x"; then
+if test "x$SBDEXECPREFIX" = "x"; then
 	AC_MSG_ERROR([Unable to detect sbd exec_prefix automatically])
 fi
 PKG_CHECK_VAR([FASEXECPREFIX], [fence-agents], [exec_prefix])
-if test "x$FASEXECPREFIX" == "x"; then
+if test "x$FASEXECPREFIX" = "x"; then
 	AC_MSG_ERROR([Unable to detect fence-agents exec_prefix automatically])
 fi
 PKG_CHECK_VAR([OCFROOT], [resource-agents], [ocfdir])
-if test "x$OCFROOT" == "x"; then
+if test "x$OCFROOT" = "x"; then
 	AC_MSG_ERROR([Unable to detect resource-agents ocfdir automatically])
 fi
 PKG_CHECK_VAR([RA_API_DTD], [resource-agents], [ra_api_dtd])
-if test "x$RA_API_DTD" == "x"; then
+if test "x$RA_API_DTD" = "x"; then
 	AC_MSG_ERROR([Unable to detect resource-agents ra_api_dtd automatically])
 fi
 PKG_CHECK_VAR([RA_TMP_DIR], [resource-agents], [ra_tmp_dir])
-if test "x$RA_TMP_DIR" == "x"; then
+if test "x$RA_TMP_DIR" = "x"; then
 	AC_MSG_ERROR([Unable to detect resource-agents ra_tmp_dir automatically])
 fi
 PKG_CHECK_VAR([BOOTHCONFDIR], [booth], [confdir])
-if test "x$BOOTHCONFDIR" == "x"; then
+if test "x$BOOTHCONFDIR" = "x"; then
 	AC_MSG_ERROR([Unable to detect booth confdir automatically])
 fi
 PKG_CHECK_VAR([BOOTHEXECPREFIX], [booth], [exec_prefix])
-if test "x$BOOTHEXECPREFIX" == "x"; then
+if test "x$BOOTHEXECPREFIX" = "x"; then
 	AC_MSG_ERROR([Unable to detect booth exec_prefix automatically])
 fi
 
