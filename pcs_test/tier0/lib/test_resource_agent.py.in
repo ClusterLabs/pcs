@@ -14,6 +14,7 @@ from pcs_test.tools import fixture
 from pcs_test.tools.misc import create_patcher
 from pcs_test.tools.xml import XmlManipulation
 
+from pcs import settings
 from pcs.common.reports import ReportItemSeverity as severity
 from pcs.common.reports import codes as report_codes
 from pcs.lib import resource_agent as lib_ra
@@ -1715,9 +1716,7 @@ class CrmAgentMetadataGetMetadataTest(TestCase, ExtendedAssertionsMixin):
                 "--show-metadata",
                 self.agent._get_full_name(),
             ],
-            env_extend={
-                "PATH": "/usr/sbin/:/bin/:/usr/bin/",
-            },
+            env_extend={"PATH": f"{settings.fence_agent_binaries}:/bin/:/usr/bin/",},
         )
 
     def test_failed_to_get_xml(self):
@@ -1738,9 +1737,7 @@ class CrmAgentMetadataGetMetadataTest(TestCase, ExtendedAssertionsMixin):
                 "--show-metadata",
                 self.agent._get_full_name(),
             ],
-            env_extend={
-                "PATH": "/usr/sbin/:/bin/:/usr/bin/",
-            },
+            env_extend={"PATH": f"{settings.fence_agent_binaries}:/bin/:/usr/bin/",},
         )
 
     def test_invalid_xml(self):
@@ -1761,9 +1758,7 @@ class CrmAgentMetadataGetMetadataTest(TestCase, ExtendedAssertionsMixin):
                 "--show-metadata",
                 self.agent._get_full_name(),
             ],
-            env_extend={
-                "PATH": "/usr/sbin/:/bin/:/usr/bin/",
-            },
+            env_extend={"PATH": f"{settings.fence_agent_binaries}:/bin/:/usr/bin/",},
         )
 
 
@@ -1826,9 +1821,7 @@ class StonithAgentMetadataGetMetadataTest(TestCase, ExtendedAssertionsMixin):
                 "--show-metadata",
                 "stonith:{0}".format(self.agent_name),
             ],
-            env_extend={
-                "PATH": "/usr/sbin/:/bin/:/usr/bin/",
-            },
+            env_extend={"PATH": f"{settings.fence_agent_binaries}:/bin/:/usr/bin/",},
         )
 
 
@@ -1972,9 +1965,7 @@ class StonithAgentMetadataGetParametersTest(TestCase):
                         "--show-metadata",
                         "stonith:{0}".format(self.agent_name),
                     ],
-                    env_extend={
-                        "PATH": "/usr/sbin/:/bin/:/usr/bin/",
-                    },
+                    env_extend={"PATH": f"{settings.fence_agent_binaries}:/bin/:/usr/bin/",},
                 ),
                 mock.call(
                     ["@PCMK_DAEMON_DIR@/pacemaker-fenced", "metadata"]
