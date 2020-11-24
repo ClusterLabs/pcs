@@ -56,7 +56,7 @@ COMMAND_COMPLETIONS = {
         settings.corosync_binaries, "corosync-cfgtool"
     ),
     "corosync-qdevice-net-certutil": path.join(
-        settings.corosync_binaries, "corosync-qdevice-net-certutil"
+        settings.corosync_qdevice_binaries, "corosync-qdevice-net-certutil"
     ),
     "corosync-quorumtool": path.join(
         settings.corosync_binaries, "corosync-quorumtool"

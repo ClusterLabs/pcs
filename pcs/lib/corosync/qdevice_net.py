@@ -23,7 +23,7 @@ __qnetd_tool = os.path.join(
     settings.corosync_qnet_binaries, "corosync-qnetd-tool"
 )
 __qdevice_certutil = os.path.join(
-    settings.corosync_binaries, "corosync-qdevice-net-certutil"
+    settings.corosync_qdevice_binaries, "corosync-qdevice-net-certutil"
 )
 __nss_certificate_db_files = (
     # old NSS DB format

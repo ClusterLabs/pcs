@@ -13,7 +13,9 @@ def get_status_text(runner, verbose=False):
     bool verbose get more detailed output
     """
     cmd = [
-        os.path.join(settings.corosync_binaries, "corosync-qdevice-tool"),
+        os.path.join(
+            settings.corosync_qdevice_binaries, "corosync-qdevice-tool"
+        ),
         "-s",
     ]
     if verbose:

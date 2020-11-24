@@ -7,6 +7,7 @@ service_binary = "@SERVICE@"
 pacemaker_binaries = "@PCMKEXECPREFIX@/sbin/"
 corosync_binaries = "@COROEXECPREFIX@/sbin"
 corosync_qnet_binaries = "@COROQDEVEXECPREFIX@/bin/"
+corosync_qdevice_binaries = "@COROQDEVEXECPREFIX@/sbin/"
 corosync_conf_dir = "@COROCONFDIR@/corosync/"
 corosync_conf_file = os.path.join(corosync_conf_dir, "corosync.conf")
 corosync_uidgid_dir = os.path.join(corosync_conf_dir, "uidgid.d/")
