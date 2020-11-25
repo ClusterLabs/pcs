@@ -1,4 +1,5 @@
 from typing import (
+    get_type_hints,
     Any,
     Dict,
     Mapping,
@@ -44,7 +45,7 @@ class CliReportMessageCustom(CliReportMessage):
 
     def __init__(self, dto_obj: dto.ReportItemMessageDto) -> None:
         super().__init__(dto_obj)
-        self._obj = self.__class__.__annotations__.get("_obj")(  # type: ignore
+        self._obj = get_type_hints(self.__class__).get("_obj")(  # type: ignore
             **dto_obj.payload
         )
 
@@ -446,9 +447,11 @@ def _create_report_msg_map() -> Dict[str, type]:
     result: Dict[str, type] = {}
     for report_msg_cls in get_all_subclasses(CliReportMessageCustom):
         # pylint: disable=protected-access
-        code = report_msg_cls.__annotations__.get(
-            "_obj", item.ReportItemMessage
-        )._code
+        code = (
+            get_type_hints(report_msg_cls)
+            .get("_obj", item.ReportItemMessage)
+            ._code
+        )
         if code:
             if code in result:
                 raise AssertionError()
