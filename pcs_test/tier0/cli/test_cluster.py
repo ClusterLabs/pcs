@@ -1,3 +1,6 @@
+import json
+
+from textwrap import dedent
 from unittest import mock, TestCase
 
 from pcs_test.tools.misc import (
@@ -8,6 +11,13 @@ from pcs_test.tools.misc import (
 from pcs import cluster
 from pcs.cli.common.errors import CmdLineInputError
 from pcs.common.reports import codes as report_codes
+from pcs.common.corosync_conf import (
+    CorosyncConfDto,
+    CorosyncNodeAddressDto,
+    CorosyncNodeDto,
+    CorosyncQuorumDeviceSettingsDto,
+)
+from pcs.common.types import CorosyncTransportType
 
 
 def _node(name, **kwargs):
@@ -1095,4 +1105,462 @@ class UpdateLink(TestCase):
         self.assertEqual(
             "Specified option '--start' is not supported in this command",
             cm.exception.message,
+        )
+
+
+class ConfigUpdate(TestCase):
+    def setUp(self):
+        self.lib = mock.Mock(spec_set=["cluster"])
+        self.cluster = mock.Mock(
+            spec_set=["config_update", "config_update_local"],
+        )
+        self.lib.cluster = self.cluster
+
+    def assert_update_called_with(self, transport, compression, crypto, totem):
+        self.cluster.config_update.assert_called_once_with(
+            transport, compression, crypto, totem
+        )
+        self.cluster.config_update_local.assert_not_called()
+
+    def assert_config_update_local_called_with(
+        self, transport, compression, crypto, totem
+    ):
+        self.cluster.config_update_local.assert_called_once_with(
+            b"", transport, compression, crypto, totem
+        )
+        self.cluster.config_update.assert_not_called()
+
+    def call_cmd(self, argv, modifiers=None):
+        cluster.config_update(
+            self.lib, argv, dict_to_modifiers(modifiers or {})
+        )
+
+    def test_no_args(self):
+        self.call_cmd([])
+        self.assert_update_called_with({}, {}, {}, {})
+
+    def test_unknown_keyword(self):
+        with self.assertRaises(CmdLineInputError) as cm:
+            self.call_cmd(["unknown_keyword"])
+        self.assertIsNone(cm.exception.message)
+
+    def test_unknown_keyword_with_options(self):
+        with self.assertRaises(CmdLineInputError) as cm:
+            self.call_cmd(
+                ["unknown_keyword", "a=b", "c=d", "compression", "e=f", "g=h"],
+            )
+        self.assertIsNone(cm.exception.message)
+
+    def test_supported_keywords_without_options(self):
+        self.call_cmd(["transport", "compression", "crypto", "totem"])
+        self.assert_update_called_with({}, {}, {}, {})
+
+    def test_supported_keywords_with_options(self):
+        self.call_cmd(
+            [
+                "transport",
+                "a=b",
+                "c=d",
+                "compression",
+                "e=f",
+                "g=h",
+                "crypto",
+                "i=j",
+                "k=l",
+                "totem",
+                "m=n",
+                "o=p",
+            ],
+        )
+        self.assert_update_called_with(
+            {"a": "b", "c": "d"},
+            {"e": "f", "g": "h"},
+            {"i": "j", "k": "l"},
+            {"m": "n", "o": "p"},
+        )
+
+    def test_repeated_keywords_with_options(self):
+        self.call_cmd(
+            [
+                "crypto",
+                "a=b",
+                "c=d",
+                "totem",
+                "i=j",
+                "k=l",
+                "crypto",
+                "e=f",
+                "g=h",
+                "totem",
+                "m=n",
+                "o=p",
+            ],
+        )
+        self.assert_update_called_with(
+            {},
+            {},
+            {"a": "b", "c": "d", "e": "f", "g": "h"},
+            {"i": "j", "k": "l", "m": "n", "o": "p"},
+        )
+
+    def test_missing_option_name(self):
+        with self.assertRaises(CmdLineInputError) as cm:
+            self.call_cmd(
+                ["transport", "=b", "c=d", "compression", "e=f", "=h"],
+            )
+        self.assertEqual("missing key in '=b' option", cm.exception.message)
+
+    def test_missing_option_value(self):
+        with self.assertRaises(CmdLineInputError) as cm:
+            self.call_cmd(
+                ["transport", "a=b", "c=d", "compression", "e", "g=h"],
+            )
+        self.assertEqual("missing value of 'e' option", cm.exception.message)
+
+    def test_empty_option_values_allowed(self):
+        self.call_cmd(["transport", "a=", "c=d", "crypto", "e=f", "g="],)
+        self.assert_update_called_with(
+            {"a": "", "c": "d"}, {}, {"e": "f", "g": ""}, {}
+        )
+
+    def test_duplicate_options(self):
+        with self.assertRaises(CmdLineInputError) as cm:
+            self.call_cmd(["transport", "a=b", "a=c", "crypto", "b=c", "b=d"])
+        self.assertEqual(
+            "duplicate option 'a' with different values 'b' and 'c'",
+            cm.exception.message,
+        )
+
+    def test_duplicate_options_same_value(self):
+        self.call_cmd(["transport", "a=b", "a=b", "crypto", "b=c", "b=c"])
+        self.assert_update_called_with({"a": "b"}, {}, {"b": "c"}, {})
+
+    def test_unsupported_modifier(self):
+        with self.assertRaises(CmdLineInputError) as cm:
+            self.call_cmd(["transport", "a=b", "c=d"], {"skip-offline": True})
+        self.assertEqual(
+            (
+                "Specified option '--skip-offline' is not supported in this "
+                "command"
+            ),
+            cm.exception.message,
+        )
+
+    def test_corosync_conf_modifier(self):
+        corosync_conf_data = b"new corosync.conf"
+        self.cluster.config_update_local.return_value = corosync_conf_data
+        with get_tmp_file("test_cluster_corosync.conf", "rb") as output_file:
+            self.call_cmd(
+                [
+                    "transport",
+                    "a=b",
+                    "c=d",
+                    "compression",
+                    "e=f",
+                    "g=h",
+                    "crypto",
+                    "i=j",
+                    "k=l",
+                    "totem",
+                    "m=n",
+                    "o=p",
+                ],
+                {"corosync_conf": output_file.name},
+            )
+            self.assertEqual(output_file.read(), corosync_conf_data)
+        self.assert_config_update_local_called_with(
+            {"a": "b", "c": "d"},
+            {"e": "f", "g": "h"},
+            {"i": "j", "k": "l"},
+            {"m": "n", "o": "p"},
+        )
+
+
+@mock.patch("pcs.cluster.print")
+class ConfigShow(TestCase):
+    def setUp(self):
+        self.lib_call = mock.Mock()
+        self.lib = mock.Mock(spec_set=["cluster"])
+        self.cluster = mock.Mock(spec_set=["get_corosync_conf_struct"])
+        self.cluster.get_corosync_conf_struct = self.lib_call
+        self.lib.cluster = self.cluster
+        self.lib_call.return_value = CorosyncConfDto(
+            cluster_name="HACluster",
+            transport=CorosyncTransportType.KNET,
+            totem_options={"census": "3600", "join": "50", "token": "3000"},
+            transport_options={"ip_version": "ipv4-6", "link_mode": "passive"},
+            compression_options={
+                "level": "5",
+                "model": "zlib",
+                "threshold": "100",
+            },
+            crypto_options={"cipher": "aes256", "hash": "sha256"},
+            nodes=[
+                CorosyncNodeDto(
+                    name="node1",
+                    nodeid="1",
+                    addrs=[
+                        CorosyncNodeAddressDto(
+                            addr="node1", link="0", type="FQDN",
+                        ),
+                        CorosyncNodeAddressDto(
+                            addr="10.0.0.1", link="1", type="IPv4",
+                        ),
+                    ],
+                ),
+                CorosyncNodeDto(
+                    name="node2",
+                    nodeid="2",
+                    addrs=[
+                        CorosyncNodeAddressDto(
+                            addr="node2", link="0", type="FQDN",
+                        ),
+                        CorosyncNodeAddressDto(
+                            addr="10.0.0.2", link="1", type="IPv4",
+                        ),
+                    ],
+                ),
+            ],
+            links_options={
+                "0": {
+                    "linknumber": "0",
+                    "link_priority": "100",
+                    "ping_interval": "750",
+                    "ping_timeout": "1500",
+                    "transport": "udp",
+                },
+                "1": {
+                    "linknumber": "1",
+                    "link_priority": "200",
+                    "ping_interval": "750",
+                    "ping_timeout": "1500",
+                    "transport": "udp",
+                },
+            },
+            quorum_options={
+                "last_man_standing": "1",
+                "last_man_standing_window": "1000",
+            },
+            quorum_device=CorosyncQuorumDeviceSettingsDto(
+                model="net",
+                model_options={"algorithm": "ffsplit", "host": "node-qdevice"},
+                generic_options={"sync_timeout": "5000", "timeout": "5000"},
+                heuristics_options={
+                    "mode": "on",
+                    "exec_ping": "/usr/bin/ping -c 1 127.0.0.1",
+                },
+            ),
+        )
+        self.output_text = dedent(
+            """\
+            Cluster Name: HACluster
+            Transport: knet
+            Nodes:
+              node1 (nodeid: 1)
+                node1 (link: 0)
+                10.0.0.1 (link: 1)
+              node2 (nodeid: 2)
+                node2 (link: 0)
+                10.0.0.2 (link: 1)
+            Links
+              Link 0:
+                link_priority: 100
+                linknumber: 0
+                ping_interval: 750
+                ping_timeout: 1500
+                transport: udp
+              Link 1:
+                link_priority: 200
+                linknumber: 1
+                ping_interval: 750
+                ping_timeout: 1500
+                transport: udp
+            Transport Options:
+              ip_version: ipv4-6
+              link_mode: passive
+            Compression Options:
+              level: 5
+              model: zlib
+              threshold: 100
+            Crypto Options:
+              cipher: aes256
+              hash: sha256
+            Totem Options:
+              census: 3600
+              join: 50
+              token: 3000
+            Quorum Options:
+              last_man_standing: 1
+              last_man_standing_window: 1000
+            Quorum Device: net
+              Options:
+                sync_timeout: 5000
+                timeout: 5000
+              Model Options:
+                algorithm: ffsplit
+                host: node-qdevice
+              Heuristics:
+                exec_ping: /usr/bin/ping -c 1 127.0.0.1
+                mode: on"""
+        )
+
+    def assert_called(self):
+        self.cluster.get_corosync_conf_struct.assert_called_once_with()
+
+    def call_cmd(self, argv, modifiers=None):
+        cluster.config_show(self.lib, argv, dict_to_modifiers(modifiers or {}))
+
+    def test_args_not_allowd(self, mock_print):
+        with self.assertRaises(CmdLineInputError) as cm:
+            self.call_cmd(["arg"])
+        self.assertIsNone(cm.exception.message)
+        self.cluster.get_corosync_conf_struct.assert_not_called()
+        mock_print.assert_not_called()
+
+    def test_unsupported_option(self, mock_print):
+        with self.assertRaises(CmdLineInputError) as cm:
+            self.call_cmd([], {"unsupported-option": True})
+        self.assertEqual(
+            (
+                "Specified option '--unsupported-option' is not supported in "
+                "this command"
+            ),
+            cm.exception.message,
+        )
+        self.cluster.get_corosync_conf_struct.assert_not_called()
+        mock_print.assert_not_called()
+
+    def test_output_format_unknown(self, mock_print):
+        with self.assertRaises(CmdLineInputError) as cm:
+            self.call_cmd([], {"output-format": "unknown"})
+        self.assertEqual(
+            (
+                "Unknown value 'unknown' for '--output-format' option. "
+                "Supported values are: 'cmd', 'json', 'text'"
+            ),
+            cm.exception.message,
+        )
+        self.cluster.get_corosync_conf_struct.assert_not_called()
+        mock_print.assert_not_called()
+
+    def test_output_format_default(self, mock_print):
+        self.call_cmd([], {"corosync_conf": "some_file_name"})
+        self.assert_called()
+        mock_print.assert_called_once_with(self.output_text)
+
+    def test_output_format_text(self, mock_print):
+        self.call_cmd([], {"output-format": "text"})
+        self.assert_called()
+        mock_print.assert_called_once_with(self.output_text)
+
+    def test_output_format_json(self, mock_print):
+        output_json_dict = {
+            "cluster_name": "HACluster",
+            "transport": "KNET",
+            "totem_options": {"census": "3600", "join": "50", "token": "3000"},
+            "transport_options": {
+                "ip_version": "ipv4-6",
+                "link_mode": "passive",
+            },
+            "compression_options": {
+                "level": "5",
+                "model": "zlib",
+                "threshold": "100",
+            },
+            "crypto_options": {"cipher": "aes256", "hash": "sha256"},
+            "nodes": [
+                {
+                    "name": "node1",
+                    "nodeid": "1",
+                    "addrs": [
+                        {"addr": "node1", "link": "0", "type": "FQDN"},
+                        {"addr": "10.0.0.1", "link": "1", "type": "IPv4"},
+                    ],
+                },
+                {
+                    "name": "node2",
+                    "nodeid": "2",
+                    "addrs": [
+                        {"addr": "node2", "link": "0", "type": "FQDN"},
+                        {"addr": "10.0.0.2", "link": "1", "type": "IPv4"},
+                    ],
+                },
+            ],
+            "links_options": {
+                "0": {
+                    "linknumber": "0",
+                    "link_priority": "100",
+                    "ping_interval": "750",
+                    "ping_timeout": "1500",
+                    "transport": "udp",
+                },
+                "1": {
+                    "linknumber": "1",
+                    "link_priority": "200",
+                    "ping_interval": "750",
+                    "ping_timeout": "1500",
+                    "transport": "udp",
+                },
+            },
+            "quorum_options": {
+                "last_man_standing": "1",
+                "last_man_standing_window": "1000",
+            },
+            "quorum_device": {
+                "model": "net",
+                "model_options": {
+                    "algorithm": "ffsplit",
+                    "host": "node-qdevice",
+                },
+                "generic_options": {"sync_timeout": "5000", "timeout": "5000"},
+                "heuristics_options": {
+                    "mode": "on",
+                    "exec_ping": "/usr/bin/ping -c 1 127.0.0.1",
+                },
+            },
+        }
+        self.call_cmd([], {"output-format": "json"})
+        self.assert_called()
+        mock_print.assert_called_once_with(json.dumps(output_json_dict))
+
+    def test_output_format_cmd(self, mock_print):
+        self.call_cmd([], {"output-format": "cmd"})
+        self.assert_called()
+        mock_print.assert_called_once_with(
+            dedent(
+                """\
+                pcs cluster setup HACluster \\
+                  node1 addr=node1 addr=10.0.0.1 \\
+                  node2 addr=node2 addr=10.0.0.2 \\
+                  transport \\
+                  knet \\
+                      ip_version=ipv4-6 \\
+                      link_mode=passive \\
+                    link \\
+                      link_priority=100 \\
+                      linknumber=0 \\
+                      ping_interval=750 \\
+                      ping_timeout=1500 \\
+                      transport=udp \\
+                    link \\
+                      link_priority=200 \\
+                      linknumber=1 \\
+                      ping_interval=750 \\
+                      ping_timeout=1500 \\
+                      transport=udp \\
+                    compression \\
+                      level=5 \\
+                      model=zlib \\
+                      threshold=100 \\
+                    crypto \\
+                      cipher=aes256 \\
+                      hash=sha256 \\
+                  totem \\
+                    census=3600 \\
+                    join=50 \\
+                    token=3000 \\
+                  quorum \\
+                    last_man_standing=1 \\
+                    last_man_standing_window=1000"""
+            )
         )
