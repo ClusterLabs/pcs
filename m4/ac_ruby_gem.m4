@@ -1,4 +1,4 @@
-dnl @synopsis AC_RUBY_GEM(gem[, version][, action-if-found] [, action-if-not-found])
+dnl @synopsis AC_RUBY_GEM(gem[, version][, action-if-found][, action-if-not-found][, gemhome])
 dnl
 dnl Checks for Ruby gem.
 dnl
@@ -11,7 +11,11 @@ AC_DEFUN([AC_RUBY_GEM],[
 	module="$1"
 	reqversion="$2"
 	AC_MSG_CHECKING([ruby gem: $module])
-	gemoutput=$($GEM list --local | grep "^$module " 2>/dev/null)
+	if test -n "$5"; then
+		gemoutput=$(GEM_HOME=$5 $GEM list --local | grep "^$module " 2>/dev/null)
+	else
+		gemoutput=$($GEM list --local | grep "^$module " 2>/dev/null)
+	fi
 	if test "x$gemoutput" != "x"; then
 		curversion=$(echo $gemoutput | sed -e 's#.*(##g' -e 's#)##'g -e 's#default: ##g')
 		if test "x$reqversion" != x; then

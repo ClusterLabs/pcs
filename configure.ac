@@ -247,7 +247,7 @@ GEM_LIST_EMBEDDED=""
 
 AC_DEFUN([PCS_CHECK_GEM], [
 	 if test "x$local_build" = "xyes"; then
-		AC_RUBY_GEM([$1], [$2], [$3], [echo "gem '$1'" >> Gemfile && GEM_LIST_EMBEDDED="$1 $GEM_LIST_EMBEDDED"])
+		AC_RUBY_GEM([$1], [$2], [$3], [echo "gem '$1'" >> Gemfile && GEM_LIST_EMBEDDED="$1 $GEM_LIST_EMBEDDED"], [$PCSD_BUNDLED_DIR_LOCAL])
 	 else
 		AC_RUBY_GEM([$1], [$2], [$3], [AC_MSG_ERROR([ruby gem $1 not found])])
 	 fi
