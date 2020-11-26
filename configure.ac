@@ -63,6 +63,8 @@ AC_PROG_AWK
 AC_PROG_MKDIR_P
 
 PKG_PROG_PKG_CONFIG
+
+# check for python
 AM_PATH_PYTHON([3.6])
 AC_CHECK_PROGS([PYTHON_ENV], [python3 python])
 if test "x$PYTHON_ENV" = "x"; then
@@ -106,11 +108,15 @@ AC_CHECK_PROGS([GEM], [gem])
 if test "x$GEM" = "x"; then
 	AC_MSG_ERROR([Unable to find gem binary])
 fi
+# required by pcsd build/install to symlink BaseOS fonts
 AC_CHECK_PROGS([FCMATCH], [fc-match])
 if test "x$FCMATCH" = "x"; then
 	AC_MSG_ERROR([Unable to find fc-match binary])
 fi
+# used to measure time for some tests, not critical if not available
+AC_CHECK_PROGS([TIME], [time])
 
+# configure options section
 AC_ARG_ENABLE([dev-tests],
 	      [AS_HELP_STRING([--enable-dev-tests], [Enable extra developers tests (black, mypy, pylint) (default: no)])],
 	      [dev_tests="yes"])
@@ -144,6 +150,7 @@ AC_ARG_WITH([snmp-mibs-dir],
 	    [SNMP_MIB_DIR="$prefix/share/snmp/mibs"])
 AC_SUBST([SNMP_MIB_DIR])
 
+# python detection section
 # required to install python requirements
 AC_CHECK_PROGS([PIP], [pip3 pip])
 if test "x$local_build" = "xyes"; then
@@ -152,8 +159,14 @@ if test "x$local_build" = "xyes"; then
 	fi
 fi
 
-# used to measure time for some tests, not critical if not available
-AC_CHECK_PROGS([TIME], [time])
+PCS_BUNDLED_DIR_LOCAL="pcs/bundled"
+AC_SUBST([PCS_BUNDLED_DIR_LOCAL])
+if test "x$local_build" = "xyes"; then
+	PCS_BUNDLED_DIR="pcs/bundled"
+else
+	PCS_BUNDLED_DIR="$LIB_DIR/pcs/bundled"
+fi
+AC_SUBST([PCS_BUNDLED_DIR])
 
 rm -rf requirements.txt
 touch requirements.txt
@@ -215,6 +228,18 @@ if test -n "$PYTHON_LIST_EMBEDDED"; then
 fi
 
 # ruby gem section
+AC_CHECK_PROGS([BUNDLE], [bundle])
+if test "x$local_build" = "xyes"; then
+	if test "x$BUNDLE" = "x"; then
+		AC_MSG_ERROR([Unable to find bundle binary required to install missing ruby gems])
+	fi
+fi
+
+PCSD_BUNDLED_DIR_ROOT_LOCAL="pcsd/vendor/bundled/"
+PCSD_BUNDLED_DIR_LOCAL="$PCSD_BUNDLED_DIR_ROOT_LOCAL/ruby/$RUBY_VER/"
+AC_SUBST([PCSD_BUNDLED_DIR_ROOT_LOCAL])
+AC_SUBST([PCSD_BUNDLED_DIR_LOCAL])
+
 
 rm -rf Gemfile Gemfile.lock
 echo "source 'https://rubygems.org'" > Gemfile
@@ -249,30 +274,7 @@ PCS_CHECK_GEM([test-unit])
 PCS_CHECK_GEM([thin])
 
 if test -n "$GEM_LIST_EMBEDDED"; then
-	AC_CHECK_PROGS([BUNDLE], [bundle])
-	if test "x$BUNDLE" = "x"; then
-		AC_MSG_ERROR([Unable to find bundle binary required to install missing ruby gems])
-	fi
 	AC_MSG_RESULT([The following gems will be embedded in the build: $GEM_LIST_EMBEDDED])
-fi
-
-# we need to do this after defining LIB_DIR
-PCS_BUNDLED_DIR_LOCAL="pcs/bundled"
-AC_SUBST([PCS_BUNDLED_DIR_LOCAL])
-if test "x$local_build" = "xyes"; then
-	PCS_BUNDLED_DIR="pcs/bundled"
-else
-	PCS_BUNDLED_DIR="$LIB_DIR/pcs/bundled"
-fi
-AC_SUBST([PCS_BUNDLED_DIR])
-
-PCSD_BUNDLED_DIR_ROOT_LOCAL="pcsd/vendor/bundled/"
-PCSD_BUNDLED_DIR_LOCAL="$PCSD_BUNDLED_DIR_ROOT_LOCAL/ruby/$RUBY_VER/"
-
-AC_SUBST([PCSD_BUNDLED_DIR_ROOT_LOCAL])
-AC_SUBST([PCSD_BUNDLED_DIR_LOCAL])
-
-if test -n "$GEM_LIST_EMBEDDED"; then
 	GEM_HOME="$LIB_DIR/$PCSD_BUNDLED_DIR_LOCAL"
 	SYSTEMD_GEM_HOME="Environment=GEM_HOME=$GEM_HOME"
 	PCS_GEM_HOME="pcsd_gem_path = '$GEM_HOME'"
