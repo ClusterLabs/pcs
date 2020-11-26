@@ -112,16 +112,37 @@ if test "x$FCMATCH" = "x"; then
 fi
 
 AC_ARG_ENABLE([dev-tests],
-	      [  --enable-dev-tests           Enable extra developers tests (black, mypy, pylint) (default: no)], [dev_tests="yes"])
+	      [AS_HELP_STRING([--enable-dev-tests], [Enable extra developers tests (black, mypy, pylint) (default: no)])],
+	      [dev_tests="yes"])
 AM_CONDITIONAL([DEV_TESTS], [test "x$dev_tests" = "xyes"])
 
 AC_ARG_ENABLE([destructive-tests],
-	      [  --enable-destructive-tests           Automatically execute potentially dangerous tests when running make check (default: no)], [destructive_tests="yes"])
+	      [AS_HELP_STRING([--enable-destructive-tests], [Automatically execute potentially dangerous tests when running make check (default: no)])],
+	      [destructive_tests="yes"])
 AM_CONDITIONAL([EXECUTE_TIER1_TESTS], [test "x$destructive_tests" = "xyes"])
 
 AC_ARG_ENABLE([local-build],
-	      [  --enable-local-build           Download and install all dependencies as user / bundles], [local_build="yes"])
+	      [AS_HELP_STRING([--enable-local-build], [Download and install all dependencies as user / bundles])],
+	      [local_build="yes"])
 AM_CONDITIONAL([LOCAL_BUILD], [test "x$local_build" = "xyes"])
+
+AC_ARG_WITH([default-config-dir],
+	    [AS_HELP_STRING([--with-default-config-dir=DIR], [pcs config directory. Default: $sysconfdir/sysconfig])],
+	    [CONF_DIR="$withval"],
+	    [CONF_DIR="$sysconfdir/sysconfig"])
+AC_SUBST([CONF_DIR])
+
+AC_ARG_WITH([pcs-lib-dir],
+	    [AS_HELP_STRING([--with-pcs-lib-dir=DIR], [pcs lib directory. Default: $LIBDIR])],
+	    [LIB_DIR="$withval"],
+	    [LIB_DIR="$LIBDIR"])
+AC_SUBST([LIB_DIR])
+
+AC_ARG_WITH([snmp-mibs-dir],
+	    [AS_HELP_STRING([--with-snmp-mibs-dir=DIR], [snmp MIB directory. Default: $prefix/share/snmp/mibs])],
+	    [SNMP_MIB_DIR="$withval"],
+	    [SNMP_MIB_DIR="$prefix/share/snmp/mibs"])
+AC_SUBST([SNMP_MIB_DIR])
 
 # required to install python requirements
 AC_CHECK_PROGS([PIP], [pip3 pip])
@@ -235,18 +256,6 @@ if test -n "$GEM_LIST_EMBEDDED"; then
 	AC_MSG_RESULT([The following gems will be embedded in the build: $GEM_LIST_EMBEDDED])
 fi
 
-AC_ARG_WITH([default-config-dir],
-	    [  --with-default-config-dir=DIR  pcs config directory. Default: $sysconfdir/sysconfig ],
-	    [ CONF_DIR="$withval" ],
-	    [ CONF_DIR="$sysconfdir/sysconfig" ])
-AC_SUBST([CONF_DIR])
-
-AC_ARG_WITH([pcs-lib-dir],
-	    [  --with-pcs-lib-dir=DIR         pcs lib directory. Default: $LIBDIR ],
-	    [ LIB_DIR="$withval" ],
-	    [ LIB_DIR="$LIBDIR" ])
-AC_SUBST([LIB_DIR])
-
 # we need to do this after defining LIB_DIR
 PCS_BUNDLED_DIR_LOCAL="pcs/bundled"
 AC_SUBST([PCS_BUNDLED_DIR_LOCAL])
@@ -274,12 +283,6 @@ AC_SUBST([GEM_HOME])
 AC_SUBST([PCS_GEM_HOME])
 AC_SUBST([SYSTEMD_GEM_HOME])
 AM_CONDITIONAL([INSTALL_EMBEDDED_GEMS], [test -n "$GEM_HOME"])
-
-AC_ARG_WITH([snmp-mibs-dir],
-	    [  --with-snmp-mibs-dir=DIR      snmp MIB directory. Default: $prefix/share/snmp/mibs ],
-	    [ SNMP_MIB_DIR="$withval" ],
-	    [ SNMP_MIB_DIR="$prefix/share/snmp/mibs" ])
-AC_SUBST([SNMP_MIB_DIR])
 
 # detect different paths required to generate default settings
 AC_PATH_PROG([BASH], [bash])
