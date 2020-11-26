@@ -72,6 +72,11 @@ if test "x$PYTHON_ENV" = "x"; then
 fi
 eval PYTHON_SITELIB="`eval echo ${pythondir}`"
 AC_SUBST([PYTHON_SITELIB])
+# required to detect / install python modules
+AC_CHECK_PROGS([PIP], [pip3 pip])
+if test "x$PIP" = "x"; then
+	AC_MSG_ERROR([Unable to find pip binary])
+fi
 
 # check for systemd
 PKG_CHECK_MODULES([systemd], [systemd])
@@ -151,14 +156,6 @@ AC_ARG_WITH([snmp-mibs-dir],
 AC_SUBST([SNMP_MIB_DIR])
 
 # python detection section
-# required to install python requirements
-AC_CHECK_PROGS([PIP], [pip3 pip])
-if test "x$local_build" = "xyes"; then
-	if test "x$PIP" = "x"; then
-		AC_MSG_ERROR([Unable to find pip binary])
-	fi
-fi
-
 PCS_BUNDLED_DIR_LOCAL="pcs/bundled"
 AC_SUBST([PCS_BUNDLED_DIR_LOCAL])
 if test "x$local_build" = "xyes"; then
