@@ -204,7 +204,7 @@ if test "x$dev_tests" != "x"; then
 fi
 
 # special case, because we need to download from github
-AC_PIP_MODULE([pyagentx])
+AC_PIP_MODULE([pyagentx], [], [], [], [$PCS_BUNDLED_DIR_LOCAL/packages])
 
 PYTHON_LIST_EMBEDDED=""
 if test "x$HAVE_PIPMOD_PYAGENTX" = "xno"; then

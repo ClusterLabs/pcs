@@ -1,4 +1,4 @@
-dnl @synopsis AC_PIP_MODULE(modname[, version][, action-if-found] [, action-if-not-found])
+dnl @synopsis AC_PIP_MODULE(modname[, version][, action-if-found][, action-if-not-found][, pythonpath])
 dnl
 dnl Checks for pip module.
 dnl
@@ -14,7 +14,11 @@ AC_DEFUN([AC_PIP_MODULE],[
 	module="$1"
 	reqversion="$2"
 	AC_MSG_CHECKING([pip module: $module $reqversion])
-	pipoutput=$($PIP list --format freeze | grep ^${module}==)
+	if test -n "$5"; then
+		pipoutput=$(PYTHONPATH=$5 $PIP list --format freeze | grep ^${module}==)
+	else
+		pipoutput=$($PIP list --format freeze | grep ^${module}==)
+	fi
 	if test "x$pipoutput" != "x"; then
 		curversion=$(echo $pipoutput | sed -e 's#.*==##g')
 		if test "x$reqversion" != x; then
