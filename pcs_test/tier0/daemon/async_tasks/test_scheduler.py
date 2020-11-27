@@ -4,8 +4,8 @@ import multiprocessing as mp
 
 from collections import deque
 from unittest import TestCase, mock
+from queue import Empty
 from tornado.testing import AsyncTestCase, gen_test
-from tornado.gen import sleep as async_sleep
 
 from pcs.common.async_tasks.dto import CommandDto, TaskResultDto
 from pcs.common.async_tasks.types import (
@@ -230,8 +230,9 @@ class ReceiveMessagesTest(SchedulerBaseAsyncTestCase):
         worker_com.put(
             Message(_task_ident_from_idx(1), "definitely not a payload")
         )
-        await async_sleep(0.2)
-        await self.scheduler._receive_messages()
+        received = 0
+        while received < 2:
+            received += await self.scheduler._receive_messages()
         task1_dto = self.scheduler.get_task(_task_ident_from_idx(1))
         task2_dto = self.scheduler.get_task(_task_ident_from_idx(2))
         self.assertEqual(
@@ -246,8 +247,9 @@ class ReceiveMessagesTest(SchedulerBaseAsyncTestCase):
             Message(_task_ident_from_idx(1), TaskExecuted(WORKER1_PID))
         )
         self.worker_com.put("definitely not a message")
-        await async_sleep(0.2)
-        await self.scheduler._receive_messages()
+        received = 0
+        while received < 2:
+            received += await self.scheduler._receive_messages()
         self.logger_mock.error.assert_called_once()
 
     @gen_test
@@ -262,9 +264,11 @@ class ReceiveMessagesTest(SchedulerBaseAsyncTestCase):
                         ReportItem.error(CibUpgradeSuccessful()).to_dto(),
                     )
                 )
-        await async_sleep(0.2)
-        await self.scheduler._receive_messages()
-        self.assertEqual(0, self.worker_com.qsize())
+        received = 0
+        while received < 9:
+            received += await self.scheduler._receive_messages()
+        with self.assertRaises(Empty):
+            self.worker_com.get_nowait()
 
 
 class ScheduleTasksTest(SchedulerBaseAsyncTestCase):

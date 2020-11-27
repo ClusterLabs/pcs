@@ -7,6 +7,7 @@ from typing import (
     Dict,
     Deque,
 )
+from queue import Empty
 
 from pcs import settings
 from pcs.common.async_tasks.dto import CommandDto, TaskResultDto
@@ -128,20 +129,28 @@ class Scheduler:
         # TODO: (optimization) Run hunting less frequently
         await self._garbage_hunting()
 
-    async def _receive_messages(self) -> None:
+    async def _receive_messages(self) -> int:
         """
         Processes all incoming messages from workers
+        :return: Number of received messages
         """
         # Unreliable message count, since this is the only consumer, there
         # should not be less messages
+        received_total = 0
         for _ in range(self._worker_message_q.qsize()):
-            message: Message = self._worker_message_q.get_nowait()
+            try:
+                message: Message = self._worker_message_q.get_nowait()
+            except Empty:
+                # This may happen when messages are on the way but not quite
+                # delivered yet. We'll get them later.
+                return received_total
             if not isinstance(message, Message):
                 self._logger.error(
                     "Scheduler received something that is not a valid message."
                     'The type was: "%s".',
                     type(message).__name__,
                 )
+                received_total += 1
                 continue
             task: Task = self._task_register[message.task_ident]
             try:
@@ -153,6 +162,8 @@ class Scheduler:
                     exc.payload_type,
                 )
                 task.request_kill(TaskKillReason.INTERNAL_MESSAGING_ERROR)
+            received_total += 1
+        return received_total
 
     async def _schedule_tasks(self) -> None:
         """
