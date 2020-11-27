@@ -78,22 +78,30 @@ if test "x$PIP" = "x"; then
 	AC_MSG_ERROR([Unable to find pip binary])
 fi
 
+# use a wrapper to call into PKG_CHECK_VAR to allow to set a default
+AC_DEFUN([PCS_PKG_CHECK_VAR], [
+	  varname=$1
+	  default=$4
+	  AC_MSG_CHECKING([for pkg-conf $2 var $3])
+	  PKG_CHECK_VAR([$1], [$2], [$3])
+	  AS_VAR_IF([$1], [""],
+		    [AS_VAR_IF([default], [""],
+			      AC_MSG_ERROR([not found]),
+			      [AS_VAR_COPY([$varname], [default]) && AC_MSG_RESULT([not found, using default ${!varname}])])],
+		    [AC_MSG_RESULT([yes (detected: ${!varname})])])
+])
+
 # check for systemd
 PKG_CHECK_MODULES([systemd], [systemd])
-PKG_CHECK_VAR([SYSTEMD_UNIT_DIR_TMP], [systemd], [systemdsystemunitdir])
-if test "x$SYSTEMD_UNIT_DIR_TMP" = "x"; then
-	AC_MSG_ERROR([Unable to detect systemd unit dir automatically])
-fi
+PCS_PKG_CHECK_VAR([SYSTEMD_UNIT_DIR_TMP], [systemd], [systemdsystemunitdir], [/usr/lib/systemd/system])
 if test "${prefix}" != "/usr"; then
 	SYSTEMD_UNIT_DIR="${prefix}/$SYSTEMD_UNIT_DIR_TMP"
 else
 	SYSTEMD_UNIT_DIR="$SYSTEMD_UNIT_DIR_TMP"
 fi
 AC_SUBST([SYSTEMD_UNIT_DIR])
-PKG_CHECK_VAR([SYSTEMD_UNIT_PATH], [systemd], [systemdsystemunitpath])
-if test "x$SYSTEMD_UNIT_PATH" = "x"; then
-	AC_MSG_ERROR([Unable to detect systemd unit path automatically])
-fi
+PCS_PKG_CHECK_VAR([SYSTEMD_UNIT_PATH], [systemd], [systemdsystemunitpath],
+		  [/etc/systemd/system:/etc/systemd/system:/run/systemd/system:/usr/local/lib/systemd/system:/usr/lib/systemd/system:/usr/lib/systemd/system:/lib/systemd/system])
 SYSTEMD_UNIT_PATH_PYTHON="$(echo \"$SYSTEMD_UNIT_PATH\", | sed -e 's#:#\", \"#g')"
 AC_SUBST([SYSTEMD_UNIT_PATH_PYTHON])
 SYSTEMD_UNIT_PATH_RUBY="$(echo \'$SYSTEMD_UNIT_PATH\', | sed -e 's#:#\", \"#g' -e "s#\"#\'#g")"
@@ -105,10 +113,7 @@ if test x$RUBY = x; then
 	AC_MSG_ERROR([Unable to find ruby binary])
 fi
 PKG_CHECK_MODULES([ruby], [ruby >= 2.5])
-PKG_CHECK_VAR([RUBY_VER], [ruby], [ruby_version])
-if test "x$RUBY_VER" = "x"; then
-	AC_MSG_ERROR([Unable to detect ruby version dir automatically])
-fi
+PCS_PKG_CHECK_VAR([RUBY_VER], [ruby], [ruby_version])
 AC_CHECK_PROGS([GEM], [gem])
 if test "x$GEM" = "x"; then
 	AC_MSG_ERROR([Unable to find gem binary])
@@ -314,26 +319,14 @@ AC_PATH_PROG([FIND], [find])
 if test "x$FIND" = "x"; then
 	AC_MSG_ERROR([Unable to find find in $PATH])
 fi
-PKG_CHECK_VAR([PCMK_USER], [pacemaker], [daemon_user])
-if test "x$PCMK_USER" = "x"; then
-	AC_MSG_ERROR([Unable to detect pacemaker daemon_user automatically])
-fi
-PKG_CHECK_VAR([PCMK_GROUP], [pacemaker], [daemon_group])
-if test "x$PCMK_GROUP" = "x"; then
-	AC_MSG_ERROR([Unable to detect pacemaker daemon_group automatically])
-fi
-PKG_CHECK_VAR([PCMK_DAEMON_DIR], [pacemaker], [daemondir])
-if test "x$PCMK_DAEMON_DIR" = "x"; then
-	AC_MSG_ERROR([Unable to detect pacemaker daemondir automatically])
-fi
-PKG_CHECK_VAR([PCMKEXECPREFIX], [pacemaker], [exec_prefix])
-if test "x$PCMKEXECPREFIX" = "x"; then
-	AC_MSG_ERROR([Unable to detect pacemaker exec_prefix automatically])
-fi
-PKG_CHECK_VAR([PCMKPREFIX], [pacemaker], [prefix])
-if test "x$PCMKPREFIX" = "x"; then
-	AC_MSG_ERROR([Unable to detect pacemaker prefix automatically])
-fi
+
+# NOTE: some of those pacemaker var are only available
+# in pacemaker.pc with pacemaker >= 2.0.5
+PCS_PKG_CHECK_VAR([PCMK_USER], [pacemaker], [daemon_user], [hacluster])
+PCS_PKG_CHECK_VAR([PCMK_GROUP], [pacemaker], [daemon_group], [haclient])
+PCS_PKG_CHECK_VAR([PCMK_DAEMON_DIR], [pacemaker], [daemondir], [/usr/libexec/pacemaker])
+PCS_PKG_CHECK_VAR([PCMKEXECPREFIX], [pacemaker], [exec_prefix], [/usr])
+PCS_PKG_CHECK_VAR([PCMKPREFIX], [pacemaker], [prefix], [/usr])
 if test "$PCMKPREFIX" = "/usr"; then
 	PCMKCONFDIR="/etc"
 	PCMKLOCALSTATEDIR="/var"
@@ -343,72 +336,32 @@ else
 fi
 AC_SUBST([PCMKCONFDIR])
 AC_SUBST([PCMKLOCALSTATEDIR])
-PKG_CHECK_VAR([PCMK_CIB_DIR], [pacemaker-cib], [configdir])
-if test "x$PCMK_CIB_DIR" = "x"; then
-	AC_MSG_ERROR([Unable to detect pacemaker-cib configdir automatically])
-fi
-PKG_CHECK_VAR([PCMK_SCHEMA_DIR], [pacemaker-cib], [schemadir])
-if test "x$PCMK_SCHEMA_DIR" = "x"; then
-	AC_MSG_ERROR([Unable to detect pacemaker-cib schemadir automatically])
-fi
-PKG_CHECK_VAR([COROEXECPREFIX], [corosync], [exec_prefix])
-if test "x$COROEXECPREFIX" = "x"; then
-	AC_MSG_ERROR([Unable to detect corosync exec_prefix automatically])
-fi
-PKG_CHECK_VAR([COROPREFIX], [corosync], [prefix])
-if test "x$COROPREFIX" = "x"; then
-	AC_MSG_ERROR([Unable to detect corosync prefix automatically])
-fi
+PCS_PKG_CHECK_VAR([PCMK_CIB_DIR], [pacemaker], [configdir])
+PCS_PKG_CHECK_VAR([PCMK_SCHEMA_DIR], [pacemaker], [schemadir])
+
+PCS_PKG_CHECK_VAR([COROEXECPREFIX], [corosync], [exec_prefix], [/usr])
+PCS_PKG_CHECK_VAR([COROPREFIX], [corosync], [prefix], [/usr])
 if test "$COROPREFIX" = "/usr"; then
 	COROCONFDIR="/etc"
 else
 	COROCONFDIR="$COROPREFIX/etc"
 fi
 AC_SUBST([COROCONFDIR])
-PKG_CHECK_VAR([COROLOGDIR], [corosync], [logdir])
-if test "x$COROLOGDIR" = "x"; then
-	AC_MSG_ERROR([Unable to detect corosync logdir automatically])
-fi
-PKG_CHECK_VAR([COROQDEVEXECPREFIX], [corosync-qdevice], [exec_prefix])
-if test "x$COROQDEVEXECPREFIX" = "x"; then
-	AC_MSG_ERROR([Unable to detect corosync-qdevice exec_prefix automatically])
-fi
-PKG_CHECK_VAR([COROQDEVCONFDIR], [corosync-qdevice], [confdir])
-if test "x$COROQDEVCONFDIR" = "x"; then
-	AC_MSG_ERROR([Unable to detect corosync-qdevice confdir automatically])
-fi
-PKG_CHECK_VAR([SBDCONFDIR], [sbd], [confdir])
-if test "x$SBDCONFDIR" = "x"; then
-	AC_MSG_ERROR([Unable to detect sbd confdir automatically])
-fi
-PKG_CHECK_VAR([SBDEXECPREFIX], [sbd], [exec_prefix])
-if test "x$SBDEXECPREFIX" = "x"; then
-	AC_MSG_ERROR([Unable to detect sbd exec_prefix automatically])
-fi
-PKG_CHECK_VAR([FASEXECPREFIX], [fence-agents], [exec_prefix])
-if test "x$FASEXECPREFIX" = "x"; then
-	AC_MSG_ERROR([Unable to detect fence-agents exec_prefix automatically])
-fi
-PKG_CHECK_VAR([OCFROOT], [resource-agents], [ocfdir])
-if test "x$OCFROOT" = "x"; then
-	AC_MSG_ERROR([Unable to detect resource-agents ocfdir automatically])
-fi
-PKG_CHECK_VAR([RA_API_DTD], [resource-agents], [ra_api_dtd])
-if test "x$RA_API_DTD" = "x"; then
-	AC_MSG_ERROR([Unable to detect resource-agents ra_api_dtd automatically])
-fi
-PKG_CHECK_VAR([RA_TMP_DIR], [resource-agents], [ra_tmp_dir])
-if test "x$RA_TMP_DIR" = "x"; then
-	AC_MSG_ERROR([Unable to detect resource-agents ra_tmp_dir automatically])
-fi
-PKG_CHECK_VAR([BOOTHCONFDIR], [booth], [confdir])
-if test "x$BOOTHCONFDIR" = "x"; then
-	AC_MSG_ERROR([Unable to detect booth confdir automatically])
-fi
-PKG_CHECK_VAR([BOOTHEXECPREFIX], [booth], [exec_prefix])
-if test "x$BOOTHEXECPREFIX" = "x"; then
-	AC_MSG_ERROR([Unable to detect booth exec_prefix automatically])
-fi
+PCS_PKG_CHECK_VAR([COROLOGDIR], [corosync], [logdir], [/var/log/cluster])
+PCS_PKG_CHECK_VAR([COROQDEVEXECPREFIX], [corosync-qdevice], [exec_prefix], [/usr])
+PCS_PKG_CHECK_VAR([COROQDEVCONFDIR], [corosync-qdevice], [confdir], [/etc/corosync])
+
+PCS_PKG_CHECK_VAR([SBDCONFDIR], [sbd], [confdir], [/etc/sysconfig])
+PCS_PKG_CHECK_VAR([SBDEXECPREFIX], [sbd], [exec_prefix], [/usr])
+
+PCS_PKG_CHECK_VAR([FASEXECPREFIX], [fence-agents], [exec_prefix], [/usr])
+
+PCS_PKG_CHECK_VAR([OCFROOT], [resource-agents], [ocfdir], [/usr/lib/ocf])
+PCS_PKG_CHECK_VAR([RA_API_DTD], [resource-agents], [ra_api_dtd], [/usr/share/resource-agents/ra-api-1.dtd])
+PCS_PKG_CHECK_VAR([RA_TMP_DIR], [resource-agents], [ra_tmp_dir], [/var/run/resource-agents])
+
+PCS_PKG_CHECK_VAR([BOOTHCONFDIR], [booth], [confdir], [/etc/booth])
+PCS_PKG_CHECK_VAR([BOOTHEXECPREFIX], [booth], [exec_prefix], [/usr])
 
 # required for man page and spec file generation
 AX_PROG_DATE
