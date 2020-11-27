@@ -136,6 +136,13 @@ class Scheduler:
         # should not be less messages
         for _ in range(self._worker_message_q.qsize()):
             message: Message = self._worker_message_q.get_nowait()
+            if not isinstance(message, Message):
+                self._logger.error(
+                    "Scheduler received something that is not a valid message."
+                    'The type was: "%s".',
+                    type(message).__name__,
+                )
+                continue
             task: Task = self._task_register[message.task_ident]
             try:
                 task.receive_message(message)
@@ -184,8 +191,8 @@ class Scheduler:
         """
         try:
             return self._task_register[task_ident]
-        except KeyError as exc:
-            raise TaskNotFoundError(task_ident) from exc
+        except KeyError:
+            raise TaskNotFoundError(task_ident) from None
 
     def terminate_nowait(self) -> None:
         """
