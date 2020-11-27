@@ -25,12 +25,6 @@ class TestExecutor(TestCase):
     because tests are running concurrently
     """
 
-    def _assert_executor_not_raises_exc(self, worker_command):
-        try:
-            worker.task_executor(worker_command)
-        except Exception:
-            self.fail("Task executor cannot raise exceptions.")
-
     def _get_payload_from_worker_com(self, worker_com):
         message = worker_com.get()
         self.assertTrue(isinstance(message, messaging.Message))
@@ -44,7 +38,7 @@ class TestExecutor(TestCase):
     @mock.patch("pcs.daemon.async_tasks.worker.worker_com", Queue())
     def test_successful_run(self, mock_getpid):
         mock_getpid.return_value = WORKER_PID
-        self._assert_executor_not_raises_exc(
+        worker.task_executor(
             worker.WorkerCommand(TASK_IDENT, CommandDto("success", {}))
         )
         # 1. TaskExecuted
@@ -58,7 +52,7 @@ class TestExecutor(TestCase):
     @mock.patch("pcs.daemon.async_tasks.worker.worker_com", Queue())
     def test_unsuccessful_run(self, mock_getpid):
         mock_getpid.return_value = WORKER_PID
-        self._assert_executor_not_raises_exc(
+        worker.task_executor(
             worker.WorkerCommand(TASK_IDENT, CommandDto("lib_exc", {}))
         )
         # 1. TaskExecuted
@@ -72,7 +66,7 @@ class TestExecutor(TestCase):
     @mock.patch("pcs.daemon.async_tasks.worker.worker_com", Queue())
     def test_unsuccessful_run_additional_reports(self, mock_getpid):
         mock_getpid.return_value = WORKER_PID
-        self._assert_executor_not_raises_exc(
+        worker.task_executor(
             worker.WorkerCommand(TASK_IDENT, CommandDto("lib_exc_reports", {}))
         )
         # 1. TaskExecuted
@@ -89,7 +83,7 @@ class TestExecutor(TestCase):
     @mock.patch("pcs.daemon.async_tasks.worker.worker_com", Queue())
     def test_unhandled_exception(self, mock_getpid):
         mock_getpid.return_value = WORKER_PID
-        self._assert_executor_not_raises_exc(
+        worker.task_executor(
             worker.WorkerCommand(TASK_IDENT, CommandDto("unhandled_exc", {}))
         )
         # 1. TaskExecuted
