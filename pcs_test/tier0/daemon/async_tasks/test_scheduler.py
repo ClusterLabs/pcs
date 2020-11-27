@@ -7,7 +7,6 @@ from unittest import TestCase, mock
 from tornado.testing import AsyncTestCase, gen_test
 from tornado.gen import sleep as async_sleep
 
-from pcs import settings
 from pcs.common.async_tasks.dto import CommandDto, TaskResultDto
 from pcs.common.async_tasks.types import (
     TaskState,
@@ -15,10 +14,10 @@ from pcs.common.async_tasks.types import (
     TaskFinishType,
 )
 from pcs.common.reports import ReportItem
+from pcs.common.reports.messages import CibUpgradeSuccessful
 from pcs.daemon.async_tasks import scheduler
 from pcs.daemon.async_tasks.messaging import Message, TaskExecuted
-from pcs.daemon.async_tasks.worker import task_executor, worker_init
-from .helpers import StubReportItem
+from pcs.daemon.async_tasks.worker import task_executor
 
 TASK_IDENT = "00000000000000000123456789abcdef"
 WORKER1_PID = 2222
@@ -42,7 +41,7 @@ class FakeSchedulerMixin:
         # We can patch Queue here because every method will instantiate its own
         self.worker_com = mp.Queue()
         mock_mp_manager.return_value.Queue.return_value = self.worker_com
-        self.mp_pool_mock = mock_mp_pool  # .apply_async = mock.Mock()
+        self.mp_pool_mock = mock_mp_pool.return_value = mock.Mock()
         self.logger_mock = mock_get_logger.return_value = mock.Mock(
             spec=logging.Logger
         )
@@ -260,7 +259,7 @@ class ReceiveMessagesTest(SchedulerBaseAsyncTestCase):
                 self.worker_com.put(
                     Message(
                         _task_ident_from_idx(idx),
-                        ReportItem.error(StubReportItem()).to_dto(),
+                        ReportItem.error(CibUpgradeSuccessful()).to_dto(),
                     )
                 )
         await async_sleep(0.2)
@@ -293,18 +292,12 @@ class ScheduleTasksTest(SchedulerBaseAsyncTestCase):
         del self.scheduler._task_register[_task_ident_from_idx(1)]
         await self.scheduler._schedule_tasks()
         self.logger_mock.error.assert_called_once()
-        self.mp_pool_mock.assert_has_calls(
+        self.mp_pool_mock.apply_async.assert_has_calls(
             [
                 mock.call(
-                    initargs=[self.worker_com],
-                    initializer=worker_init,
-                    maxtasksperchild=settings.worker_task_limit,
-                    processes=settings.worker_count,
-                ),
-                mock.call().apply_async(
                     func=task_executor, args=[tasks[1].to_worker_command()],
                 ),
-                mock.call().apply_async(
+                mock.call(
                     func=task_executor, args=[tasks[2].to_worker_command()],
                 ),
             ]
@@ -329,18 +322,12 @@ class ScheduleTasksTest(SchedulerBaseAsyncTestCase):
             TaskState.QUEUED,
             self.scheduler.get_task(_task_ident_from_idx(3)).state,
         )
-        self.mp_pool_mock.assert_has_calls(
+        self.mp_pool_mock.apply_async.assert_has_calls(
             [
                 mock.call(
-                    initargs=[self.worker_com],
-                    initializer=worker_init,
-                    maxtasksperchild=settings.worker_task_limit,
-                    processes=settings.worker_count,
-                ),
-                mock.call().apply_async(
                     func=task_executor, args=[tasks[0].to_worker_command()],
                 ),
-                mock.call().apply_async(
+                mock.call(
                     func=task_executor, args=[tasks[2].to_worker_command()],
                 ),
             ]
