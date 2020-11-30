@@ -4,15 +4,12 @@ EXTRA_DIST		= \
 			  test/corosync.conf test/pcsd_test_utils.rb test/test_cfgsync.rb \
 			  test/test_all_suite.rb test/known-hosts \
 			  test/test_cluster.rb test/cib1.xml test/crm1.xml test/test_config.rb \
-			  test/test_permissions.rb test/test_auth.rb
+			  test/test_permissions.rb test/test_auth.rb pam/pcsd.fedora pam/pcsd.debian
 
 MAINTAINERCLEANFILES	= Makefile.in
 
 # install
 man8_MANS		= pcsd.8
-
-pamdir			= $(sysconfdir)/pam.d
-dist_pam_DATA		= pam/pcsd
 
 defconfigdir		= $(CONF_DIR)
 dist_defconfig_DATA	= conf/pcsd
@@ -144,6 +141,8 @@ clean-local:
 	rm -f test/*.tmp
 
 install-data-local:
+	$(MKDIR_P) $(DESTDIR)/$(sysconfdir)/pam.d
+	$(INSTALL_DATA) pam/pcsd.$(DISTROEXT) $(DESTDIR)/$(sysconfdir)/pam.d/pcsd
 	$(MKDIR_P) $(DESTDIR)/${pcsdpubcssdir}
 	$(foreach font,$(pcsd_fonts),\
 		$(eval font_file = $(word 1,$(subst ;, ,$(font)))) \
@@ -159,13 +158,15 @@ endif
 	$(MKDIR_P) -m 0700 $(DESTDIR)$(localstatedir)/lib/pcsd
 
 uninstall-local:
+	rm -rf $(DESTDIR)/$(sysconfdir)/pam.d/pcsd
+	rmdir $(DESTDIR)/$(sysconfdir)/pam.d 2>/dev/null || :
 	$(foreach font,$(pcsd_fonts),\
 		$(eval font_file = $(word 1,$(subst ;, ,$(font)))) \
 		$(if $(font_file),rm -f $(DESTDIR)/${pcsdpubcssdir}/$(font_file);,$(error Font $(font_file) not found)) \
 	)
 	rmdir $(DESTDIR)/${pcsdpubcssdir} || :
 if INSTALL_EMBEDDED_GEMS
-	rm -rf $(DESTDIR)${GEM_HOME}
+	rm -rf $(DESTDIR)/${GEM_HOME}
 endif
-	rmdir $(DESTDIR)$(localstatedir)/log/pcsd 2>/dev/null || :
-	rmdir $(DESTDIR)$(localstatedir)/lib/pcsd 2>/dev/null || :
+	rmdir $(DESTDIR)/$(localstatedir)/log/pcsd 2>/dev/null || :
+	rmdir $(DESTDIR)/$(localstatedir)/lib/pcsd 2>/dev/null || :

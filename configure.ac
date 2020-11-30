@@ -142,16 +142,68 @@ AC_ARG_ENABLE([local-build],
 	      [local_build="yes"])
 AM_CONDITIONAL([LOCAL_BUILD], [test "x$local_build" = "xyes"])
 
+# this will catch both ID and ID_LIKE from os-release
+AC_ARG_WITH([distro],
+	    [AS_HELP_STRING([--with-distro=DIR], [Set defaults to specified distro. Default: autodetected])],
+	    [DISTRO="$withval"])
+
+if test "x$DISTRO" = "x"; then
+	AC_MSG_CHECKING([linux distribution])
+	if test -f /etc/os-release; then
+		DISTRO=$(cat /etc/os-release | grep ^ID= | cut -d "=" -f 2 | sed -s 's#"##g')
+		if test "x$DISTRO" = "x"; then
+			AC_MSG_ERROR([Unable to detect linux distribution. Please specify --with-distro=])
+		fi
+		DISTROS=$(cat /etc/os-release | grep ^ID_LIKE= | cut -d "=" -f 2 | sed -s 's#"##g')
+	fi
+	AC_MSG_RESULT([$DISTRO])
+else
+	AC_MSG_RESULT([Distro detection disabled. Setting forced to: $DISTRO])
+fi
+
+AC_MSG_CHECKING([default settings for $DISTRO $DISTROS])
+for i in $DISTRO $DISTROS; do
+	case $i in
+		debian|ubuntu)
+			FOUND_DISTRO=1
+			CONFIGDIR="$sysconfdir/default"
+			PCSLIBDIR="$prefix/share"
+			PCMKDAEMONDIR="$prefix/lib/pacemaker"
+			COROSYNCLOGDIR="$localstatedir/log/corosync"
+			DISTROEXT=debian
+			break
+		;;
+		fedora|rhel|centos)
+			FOUND_DISTRO=1
+			CONFIGDIR="$sysconfdir/sysconfig"
+			PCSLIBDIR="$LIBDIR"
+			PCMKDAEMONDIR="$prefix/libexec/pacemaker"
+			COROSYNCLOGDIR="$localstatedir/log/cluster"
+			DISTROEXT=fedora
+			break
+		;;
+	esac
+done
+
+if test "x$FOUND_DISTRO" = "x"; then
+	AC_MSG_RESULT([not found])
+	AC_MSG_ERROR([Unknown distribution $DISTRO. Please contact pcs upstream project to add support, or check --with-distro= value])
+else
+	AC_MSG_RESULT([$i (or alike) default settings will be used])
+fi
+
+AC_SUBST([DISTROEXT])
+
 AC_ARG_WITH([default-config-dir],
-	    [AS_HELP_STRING([--with-default-config-dir=DIR], [pcs config directory. Default: $sysconfdir/sysconfig])],
+	    [AS_HELP_STRING([--with-default-config-dir=DIR], [pcs config directory. Default: autodetected])],
 	    [CONF_DIR="$withval"],
-	    [CONF_DIR="$sysconfdir/sysconfig"])
+	    [CONF_DIR="$CONFIGDIR"])
 AC_SUBST([CONF_DIR])
 
 AC_ARG_WITH([pcs-lib-dir],
-	    [AS_HELP_STRING([--with-pcs-lib-dir=DIR], [pcs lib directory. Default: $LIBDIR])],
+	    [AS_HELP_STRING([--with-pcs-lib-dir=DIR], [pcs lib directory. Default: autodetected])],
 	    [LIB_DIR="$withval"],
-	    [LIB_DIR="$LIBDIR"])
+	    [LIB_DIR="$PCSLIBDIR"])
 AC_SUBST([LIB_DIR])
 
 AC_ARG_WITH([snmp-mibs-dir],
@@ -324,7 +376,7 @@ fi
 # in pacemaker.pc with pacemaker >= 2.0.5
 PCS_PKG_CHECK_VAR([PCMK_USER], [pacemaker], [daemon_user], [hacluster])
 PCS_PKG_CHECK_VAR([PCMK_GROUP], [pacemaker], [daemon_group], [haclient])
-PCS_PKG_CHECK_VAR([PCMK_DAEMON_DIR], [pacemaker], [daemondir], [/usr/libexec/pacemaker])
+PCS_PKG_CHECK_VAR([PCMK_DAEMON_DIR], [pacemaker], [daemondir], [$PCMKDAEMONDIR])
 PCS_PKG_CHECK_VAR([PCMKEXECPREFIX], [pacemaker], [exec_prefix], [/usr])
 PCS_PKG_CHECK_VAR([PCMKPREFIX], [pacemaker], [prefix], [/usr])
 if test "$PCMKPREFIX" = "/usr"; then
@@ -336,8 +388,8 @@ else
 fi
 AC_SUBST([PCMKCONFDIR])
 AC_SUBST([PCMKLOCALSTATEDIR])
-PCS_PKG_CHECK_VAR([PCMK_CIB_DIR], [pacemaker], [configdir])
-PCS_PKG_CHECK_VAR([PCMK_SCHEMA_DIR], [pacemaker], [schemadir])
+PCS_PKG_CHECK_VAR([PCMK_CIB_DIR], [pacemaker], [configdir], [/var/lib/pacemaker/cib])
+PCS_PKG_CHECK_VAR([PCMK_SCHEMA_DIR], [pacemaker], [schemadir], [/usr/share/pacemaker])
 
 PCS_PKG_CHECK_VAR([COROEXECPREFIX], [corosync], [exec_prefix], [/usr])
 PCS_PKG_CHECK_VAR([COROPREFIX], [corosync], [prefix], [/usr])
@@ -347,18 +399,18 @@ else
 	COROCONFDIR="$COROPREFIX/etc"
 fi
 AC_SUBST([COROCONFDIR])
-PCS_PKG_CHECK_VAR([COROLOGDIR], [corosync], [logdir], [/var/log/cluster])
+PCS_PKG_CHECK_VAR([COROLOGDIR], [corosync], [logdir], [$COROSYNCLOGDIR])
 PCS_PKG_CHECK_VAR([COROQDEVEXECPREFIX], [corosync-qdevice], [exec_prefix], [/usr])
 PCS_PKG_CHECK_VAR([COROQDEVCONFDIR], [corosync-qdevice], [confdir], [/etc/corosync])
 
-PCS_PKG_CHECK_VAR([SBDCONFDIR], [sbd], [confdir], [/etc/sysconfig])
+PCS_PKG_CHECK_VAR([SBDCONFDIR], [sbd], [confdir], [$CONFIGDIR])
 PCS_PKG_CHECK_VAR([SBDEXECPREFIX], [sbd], [exec_prefix], [/usr])
 
 PCS_PKG_CHECK_VAR([FASEXECPREFIX], [fence-agents], [exec_prefix], [/usr])
 
 PCS_PKG_CHECK_VAR([OCFROOT], [resource-agents], [ocfrootdir], [/usr/lib/ocf])
 PCS_PKG_CHECK_VAR([RA_API_DTD], [resource-agents], [ra_api_dtd], [/usr/share/resource-agents/ra-api-1.dtd])
-PCS_PKG_CHECK_VAR([RA_TMP_DIR], [resource-agents], [ra_tmp_dir], [/var/run/resource-agents])
+PCS_PKG_CHECK_VAR([RA_TMP_DIR], [resource-agents], [ra_tmp_dir], [/run/resource-agents])
 
 PCS_PKG_CHECK_VAR([BOOTHCONFDIR], [booth], [confdir], [/etc/booth])
 PCS_PKG_CHECK_VAR([BOOTHEXECPREFIX], [booth], [exec_prefix], [/usr])
