@@ -1,3 +1,4 @@
+# pylint: disable=too-many-lines
 import json
 
 from textwrap import dedent
@@ -10,13 +11,14 @@ from pcs_test.tools.misc import (
 
 from pcs import cluster
 from pcs.cli.common.errors import CmdLineInputError
-from pcs.common.reports import codes as report_codes
 from pcs.common.corosync_conf import (
     CorosyncConfDto,
     CorosyncNodeAddressDto,
     CorosyncNodeDto,
     CorosyncQuorumDeviceSettingsDto,
 )
+from pcs.common.interface import dto
+from pcs.common.reports import codes as report_codes
 from pcs.common.types import CorosyncTransportType
 
 
@@ -1281,9 +1283,9 @@ class ConfigShow(TestCase):
     def setUp(self):
         self.lib_call = mock.Mock()
         self.lib = mock.Mock(spec_set=["cluster"])
-        self.cluster = mock.Mock(spec_set=["get_corosync_conf_struct"])
-        self.cluster.get_corosync_conf_struct = self.lib_call
-        self.lib.cluster = self.cluster
+        self.lib.cluster = mock.Mock(spec_set=["get_corosync_conf_struct"])
+        self.lib.cluster.get_corosync_conf_struct = self.lib_call
+
         self.lib_call.return_value = CorosyncConfDto(
             cluster_name="HACluster",
             transport=CorosyncTransportType.KNET,
@@ -1404,9 +1406,6 @@ class ConfigShow(TestCase):
                 mode: on"""
         )
 
-    def assert_called(self):
-        self.cluster.get_corosync_conf_struct.assert_called_once_with()
-
     def call_cmd(self, argv, modifiers=None):
         cluster.config_show(self.lib, argv, dict_to_modifiers(modifiers or {}))
 
@@ -1414,7 +1413,7 @@ class ConfigShow(TestCase):
         with self.assertRaises(CmdLineInputError) as cm:
             self.call_cmd(["arg"])
         self.assertIsNone(cm.exception.message)
-        self.cluster.get_corosync_conf_struct.assert_not_called()
+        self.lib_call.assert_not_called()
         mock_print.assert_not_called()
 
     def test_unsupported_option(self, mock_print):
@@ -1427,7 +1426,7 @@ class ConfigShow(TestCase):
             ),
             cm.exception.message,
         )
-        self.cluster.get_corosync_conf_struct.assert_not_called()
+        self.lib_call.assert_not_called()
         mock_print.assert_not_called()
 
     def test_output_format_unknown(self, mock_print):
@@ -1440,92 +1439,29 @@ class ConfigShow(TestCase):
             ),
             cm.exception.message,
         )
-        self.cluster.get_corosync_conf_struct.assert_not_called()
+        self.lib_call.assert_not_called()
         mock_print.assert_not_called()
 
     def test_output_format_default(self, mock_print):
         self.call_cmd([], {"corosync_conf": "some_file_name"})
-        self.assert_called()
+        self.lib_call.assert_called_once_with()
         mock_print.assert_called_once_with(self.output_text)
 
     def test_output_format_text(self, mock_print):
         self.call_cmd([], {"output-format": "text"})
-        self.assert_called()
+        self.lib_call.assert_called_once_with()
         mock_print.assert_called_once_with(self.output_text)
 
     def test_output_format_json(self, mock_print):
-        output_json_dict = {
-            "cluster_name": "HACluster",
-            "transport": "KNET",
-            "totem_options": {"census": "3600", "join": "50", "token": "3000"},
-            "transport_options": {
-                "ip_version": "ipv4-6",
-                "link_mode": "passive",
-            },
-            "compression_options": {
-                "level": "5",
-                "model": "zlib",
-                "threshold": "100",
-            },
-            "crypto_options": {"cipher": "aes256", "hash": "sha256"},
-            "nodes": [
-                {
-                    "name": "node1",
-                    "nodeid": "1",
-                    "addrs": [
-                        {"addr": "node1", "link": "0", "type": "FQDN"},
-                        {"addr": "10.0.0.1", "link": "1", "type": "IPv4"},
-                    ],
-                },
-                {
-                    "name": "node2",
-                    "nodeid": "2",
-                    "addrs": [
-                        {"addr": "node2", "link": "0", "type": "FQDN"},
-                        {"addr": "10.0.0.2", "link": "1", "type": "IPv4"},
-                    ],
-                },
-            ],
-            "links_options": {
-                "0": {
-                    "linknumber": "0",
-                    "link_priority": "100",
-                    "ping_interval": "750",
-                    "ping_timeout": "1500",
-                    "transport": "udp",
-                },
-                "1": {
-                    "linknumber": "1",
-                    "link_priority": "200",
-                    "ping_interval": "750",
-                    "ping_timeout": "1500",
-                    "transport": "udp",
-                },
-            },
-            "quorum_options": {
-                "last_man_standing": "1",
-                "last_man_standing_window": "1000",
-            },
-            "quorum_device": {
-                "model": "net",
-                "model_options": {
-                    "algorithm": "ffsplit",
-                    "host": "node-qdevice",
-                },
-                "generic_options": {"sync_timeout": "5000", "timeout": "5000"},
-                "heuristics_options": {
-                    "mode": "on",
-                    "exec_ping": "/usr/bin/ping -c 1 127.0.0.1",
-                },
-            },
-        }
         self.call_cmd([], {"output-format": "json"})
-        self.assert_called()
-        mock_print.assert_called_once_with(json.dumps(output_json_dict))
+        self.lib_call.assert_called_once_with()
+        mock_print.assert_called_once_with(
+            json.dumps(dto.to_dict(self.lib_call.return_value))
+        )
 
     def test_output_format_cmd(self, mock_print):
         self.call_cmd([], {"output-format": "cmd"})
-        self.assert_called()
+        self.lib_call.assert_called_once_with()
         mock_print.assert_called_once_with(
             dedent(
                 """\
