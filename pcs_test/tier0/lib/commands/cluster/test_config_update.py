@@ -429,6 +429,27 @@ class UpdateConfigLocal(TestCase):
             b"",
         )
 
+    def test_invalid_custom_corosync_conf(self):
+        self.env_assist.assert_raise_library_error(
+            lambda: cluster.config_update_local(
+                self.env_assist.get_env(),
+                b"totem {\n    option.name: value\n}",
+                {},
+                {},
+                {},
+                {},
+            ),
+            [
+                fixture.error(
+                    report_codes.COROSYNC_CONFIG_CANNOT_SAVE_INVALID_NAMES_VALUES,
+                    section_name_list=[],
+                    attribute_name_list=["totem.option.name"],
+                    attribute_value_pairs=[],
+                )
+            ],
+            expected_in_processor=False,
+        )
+
     def test_add_modify_remove_options(self):
         before = fixture_totem(
             transport_options={
