@@ -79,7 +79,7 @@ PCS_LONG_OPTIONS = [
     # allow overwriting existing files, currently meant for / used in CLI only
     "overwrite",
     # output format of commands, e.g: json, cmd, text, ...
-    "output-format",
+    "output-format=",
 ]
 
 
