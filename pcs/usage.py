@@ -933,6 +933,41 @@ Commands:
             pcs cluster setup newcluster node1 node2 \\
                 transport udp link mcastport=55405
 
+    config [show] [--output-format <cmd|json|text>] [--corosync_conf <path>]
+        Show options currently configured in cluster configuration file
+        corosync.conf. There are available 3 different formats of output: cmd,
+        json and text. Default is text. Format 'cmd' outputs a cluster setup
+        command which allows to recreate cluster with the current
+        configuration, format 'json' is machine oriented output with cluster
+        configuration and format 'text' is human friendly output. If
+        --corosync_conf is specified, configuration file specified by <path> is
+        used instead of current cluster configuration.
+
+    config update [transport <transport options>]
+            [compression <compression options>] [crypto <crypto options>]
+            [totem <totem options>] [--corosync_conf <path>]
+        Update cluster configuration at runtime. If --corosync_conf is
+        specified, update cluster configuration in file specified by <path>.
+        All options are documented in corosync.conf(5) man page. There are
+        different transport options for transport types. Compression
+        and crypto options are only available for knet transport. Totem options
+        can be set regardless of the transport type.
+
+        Transport options for knet transport are:
+            ip_version, knet_pmtud_interval, link_mode
+        Transport options for udp and updu transports are:
+            ip_version, netmtu
+        Compression options are:
+            level, model, threshold
+        Crypto options are:
+            cipher, hash, model
+        Totem options are:
+            consensus, downcheck, fail_recv_const, heartbeat_failures_allowed,
+            hold, join, max_messages, max_network_delay, merge,
+            miss_count_const, send_join, seqno_unchanged_const, token,
+            token_coefficient, token_retransmit,
+            token_retransmits_before_loss_const, window_size
+
     start [--all | <node>... ] [--wait[=<n>]] [--request-timeout=<seconds>]
         Start a cluster on specified node(s). If no nodes are specified then
         start a cluster on the local node. If --all is specified then start
