@@ -13,36 +13,20 @@ from pcs.common.corosync_conf import (
 from pcs.common.reports import codes as report_codes
 from pcs.common.types import CorosyncTransportType
 from pcs.lib.commands import cluster
+from pcs.lib.corosync.constants import (
+    TOTEM_OPTIONS,
+    TRANSPORT_KNET_CRYPTO_OPTIONS,
+    TRANSPORT_KNET_COMPRESSION_OPTIONS,
+    TRANSPORT_KNET_GENERIC_OPTIONS,
+)
 
-ALLOWED_COMPRESSION_OPTIONS = ["level", "model", "threshold"]
+ALLOWED_COMPRESSION_OPTIONS = list(TRANSPORT_KNET_COMPRESSION_OPTIONS)
 
-ALLOWED_CRYPTO_OPTIONS = ["cipher", "hash", "model"]
+ALLOWED_CRYPTO_OPTIONS = list(TRANSPORT_KNET_CRYPTO_OPTIONS)
 
-ALLOWED_TOTEM_OPTIONS = [
-    "consensus",
-    "downcheck",
-    "fail_recv_const",
-    "heartbeat_failures_allowed",
-    "hold",
-    "join",
-    "max_messages",
-    "max_network_delay",
-    "merge",
-    "miss_count_const",
-    "send_join",
-    "seqno_unchanged_const",
-    "token",
-    "token_coefficient",
-    "token_retransmit",
-    "token_retransmits_before_loss_const",
-    "window_size",
-]
+ALLOWED_TOTEM_OPTIONS = list(TOTEM_OPTIONS)
 
-ALLOWED_KNET_TRANSPORT_OPTIONS = [
-    "ip_version",
-    "knet_pmtud_interval",
-    "link_mode",
-]
+ALLOWED_KNET_TRANSPORT_OPTIONS = list(TRANSPORT_KNET_GENERIC_OPTIONS)
 
 TRANSPORT_OPTIONS = {
     "ip_version": "ipv4",
@@ -54,25 +38,7 @@ COMPRESSION_OPTIONS = {"level": "5", "model": "zlib", "threshold": "1234"}
 
 CRYPTO_OPTIONS = {"cipher": "aes256", "hash": "sha256", "model": "nss"}
 
-TOTEM_OPTIONS = {
-    "consensus": "0",
-    "downcheck": "1",
-    "fail_recv_const": "2",
-    "heartbeat_failures_allowed": "3",
-    "hold": "4",
-    "join": "5",
-    "max_messages": "6",
-    "max_network_delay": "7",
-    "merge": "8",
-    "miss_count_const": "9",
-    "send_join": "10",
-    "seqno_unchanged_const": "11",
-    "token": "12",
-    "token_coefficient": "13",
-    "token_retransmit": "14",
-    "token_retransmits_before_loss_const": "15",
-    "window_size": "16",
-}
+TOTEM_OPTIONS = {opt: str(num) for num, opt in enumerate(ALLOWED_TOTEM_OPTIONS)}
 
 TOTEM_TEMPLATE = """\
 totem {{
