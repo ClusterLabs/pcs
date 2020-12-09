@@ -1863,6 +1863,11 @@ def config_show(
         )
     corosync_conf_dto = lib.cluster.get_corosync_conf_struct()
     if output_format == "cmd":
+        if corosync_conf_dto.quorum_device is not None:
+            warn(
+                "Quorum device configuration detected but not yet supported by "
+                "this command."
+            )
         output = " \\\n".join(_config_get_cmd(corosync_conf_dto))
     elif output_format == "json":
         output = json.dumps(dto.to_dict(corosync_conf_dto))
@@ -1952,7 +1957,6 @@ def _section_to_lines(
 
 
 def _config_get_cmd(corosync_conf: CorosyncConfDto) -> List[str]:
-    # TODO: print warning in case qdevice is set up
     lines = [f"pcs cluster setup {corosync_conf.cluster_name}"]
     lines += indent(
         [

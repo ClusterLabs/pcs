@@ -1280,13 +1280,21 @@ class ConfigUpdate(TestCase):
 
 @mock.patch("pcs.cluster.print")
 class ConfigShow(TestCase):
-    def setUp(self):
-        self.lib_call = mock.Mock()
-        self.lib = mock.Mock(spec_set=["cluster"])
-        self.lib.cluster = mock.Mock(spec_set=["get_corosync_conf_struct"])
-        self.lib.cluster.get_corosync_conf_struct = self.lib_call
+    @staticmethod
+    def fixture_corosync_dto(with_qdevice=True):
+        qdevice = None
+        if with_qdevice:
+            qdevice = CorosyncQuorumDeviceSettingsDto(
+                model="net",
+                model_options={"algorithm": "ffsplit", "host": "node-qdevice"},
+                generic_options={"sync_timeout": "5000", "timeout": "5000"},
+                heuristics_options={
+                    "mode": "on",
+                    "exec_ping": "/usr/bin/ping -c 1 127.0.0.1",
+                },
+            )
 
-        self.lib_call.return_value = CorosyncConfDto(
+        return CorosyncConfDto(
             cluster_name="HACluster",
             transport=CorosyncTransportType.KNET,
             totem_options={"census": "3600", "join": "50", "token": "3000"},
@@ -1343,16 +1351,16 @@ class ConfigShow(TestCase):
                 "last_man_standing": "1",
                 "last_man_standing_window": "1000",
             },
-            quorum_device=CorosyncQuorumDeviceSettingsDto(
-                model="net",
-                model_options={"algorithm": "ffsplit", "host": "node-qdevice"},
-                generic_options={"sync_timeout": "5000", "timeout": "5000"},
-                heuristics_options={
-                    "mode": "on",
-                    "exec_ping": "/usr/bin/ping -c 1 127.0.0.1",
-                },
-            ),
+            quorum_device=qdevice,
         )
+
+    def setUp(self):
+        self.lib_call = mock.Mock()
+        self.lib = mock.Mock(spec_set=["cluster"])
+        self.lib.cluster = mock.Mock(spec_set=["get_corosync_conf_struct"])
+        self.lib.cluster.get_corosync_conf_struct = self.lib_call
+
+        self.lib_call.return_value = self.fixture_corosync_dto()
         self.output_text = dedent(
             """\
             Cluster Name: HACluster
@@ -1459,44 +1467,56 @@ class ConfigShow(TestCase):
             json.dumps(dto.to_dict(self.lib_call.return_value))
         )
 
-    def test_output_format_cmd(self, mock_print):
+    cmd_output = dedent(
+        """\
+        pcs cluster setup HACluster \\
+          node1 addr=node1 addr=10.0.0.1 \\
+          node2 addr=node2 addr=10.0.0.2 \\
+          transport \\
+          knet \\
+              ip_version=ipv4-6 \\
+              link_mode=passive \\
+            link \\
+              link_priority=100 \\
+              linknumber=0 \\
+              ping_interval=750 \\
+              ping_timeout=1500 \\
+              transport=udp \\
+            link \\
+              link_priority=200 \\
+              linknumber=1 \\
+              ping_interval=750 \\
+              ping_timeout=1500 \\
+              transport=udp \\
+            compression \\
+              level=5 \\
+              model=zlib \\
+              threshold=100 \\
+            crypto \\
+              cipher=aes256 \\
+              hash=sha256 \\
+          totem \\
+            census=3600 \\
+            join=50 \\
+            token=3000 \\
+          quorum \\
+            last_man_standing=1 \\
+            last_man_standing_window=1000"""
+    )
+
+    @mock.patch("pcs.cluster.warn")
+    def test_output_format_cmd_with_qdevice(self, mock_warn, mock_print):
         self.call_cmd([], {"output-format": "cmd"})
         self.lib_call.assert_called_once_with()
-        mock_print.assert_called_once_with(
-            dedent(
-                """\
-                pcs cluster setup HACluster \\
-                  node1 addr=node1 addr=10.0.0.1 \\
-                  node2 addr=node2 addr=10.0.0.2 \\
-                  transport \\
-                  knet \\
-                      ip_version=ipv4-6 \\
-                      link_mode=passive \\
-                    link \\
-                      link_priority=100 \\
-                      linknumber=0 \\
-                      ping_interval=750 \\
-                      ping_timeout=1500 \\
-                      transport=udp \\
-                    link \\
-                      link_priority=200 \\
-                      linknumber=1 \\
-                      ping_interval=750 \\
-                      ping_timeout=1500 \\
-                      transport=udp \\
-                    compression \\
-                      level=5 \\
-                      model=zlib \\
-                      threshold=100 \\
-                    crypto \\
-                      cipher=aes256 \\
-                      hash=sha256 \\
-                  totem \\
-                    census=3600 \\
-                    join=50 \\
-                    token=3000 \\
-                  quorum \\
-                    last_man_standing=1 \\
-                    last_man_standing_window=1000"""
-            )
+        mock_print.assert_called_once_with(self.cmd_output)
+        mock_warn.assert_called_once()
+
+    @mock.patch("pcs.cluster.warn")
+    def test_output_format_cmd(self, mock_warn, mock_print):
+        self.lib_call.return_value = self.fixture_corosync_dto(
+            with_qdevice=False
         )
+        self.call_cmd([], {"output-format": "cmd"})
+        self.lib_call.assert_called_once_with()
+        mock_print.assert_called_once_with(self.cmd_output)
+        mock_warn.assert_not_called()
