@@ -9,10 +9,17 @@ CALL_TYPE_PUSH_COROSYNC_CONF = "CALL_TYPE_PUSH_COROSYNC_CONF"
 class Call:
     type = CALL_TYPE_PUSH_COROSYNC_CONF
 
-    def __init__(self, corosync_conf_text, skip_offline_targets, raises=False):
+    def __init__(
+        self,
+        corosync_conf_text,
+        skip_offline_targets,
+        raises=False,
+        need_stopped_cluster=False,
+    ):
         self.corosync_conf_text = corosync_conf_text
         self.skip_offline_targets = skip_offline_targets
         self.raises = raises
+        self.need_stopped_cluster = need_stopped_cluster
 
     def __repr__(self):
         return str("<CorosyncConfPush skip-offline='{0}'>").format(
@@ -52,6 +59,16 @@ def get_push_corosync_conf(call_queue):
                 ).format(
                     expected_call.skip_offline_targets, skip_offline_nodes,
                 )
+            )
+        if (
+            corosync_conf_facade.need_stopped_cluster
+            != expected_call.need_stopped_cluster
+        ):
+            raise AssertionError(
+                "Tryint to call env.push_corosync_conf but stopped cluster "
+                "requirement (corosync_conf_facade.need_stopped_cluster) "
+                f"differs. Expected: {expected_call.need_stopped_cluster}; "
+                f"Actual: {corosync_conf_facade.need_stopped_cluster}"
             )
         if expected_call.raises:
             raise LibraryError()

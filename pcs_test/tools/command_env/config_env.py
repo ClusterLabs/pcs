@@ -137,13 +137,17 @@ class EnvConfig:
         corosync_conf_text="",
         skip_offline_targets=False,
         raises=False,
+        need_stopped_cluster=False,
         before=None,
         instead=None,
     ):
         self.__calls.place(
             name,
             PushCorosyncConfCall(
-                corosync_conf_text, skip_offline_targets, raises=raises
+                corosync_conf_text,
+                skip_offline_targets,
+                raises=raises,
+                need_stopped_cluster=need_stopped_cluster,
             ),
             instead=instead,
             before=before,

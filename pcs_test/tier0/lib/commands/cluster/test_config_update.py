@@ -142,7 +142,8 @@ class UpdateConfig(TestCase):
                 compression_options=COMPRESSION_OPTIONS,
                 crypto_options=CRYPTO_OPTIONS,
                 totem_options=TOTEM_OPTIONS,
-            )
+            ),
+            need_stopped_cluster=True,
         )
         cluster.config_update(
             self.env_assist.get_env(),
@@ -186,7 +187,8 @@ class UpdateConfig(TestCase):
                 compression_options=modified_compression_options,
                 crypto_options=modified_crypto_options,
                 totem_options=modified_totem_options,
-            )
+            ),
+            need_stopped_cluster=True,
         )
         cluster.config_update(
             self.env_assist.get_env(),
@@ -206,7 +208,9 @@ class UpdateConfig(TestCase):
                 totem_options=TOTEM_OPTIONS,
             )
         )
-        self.config.env.push_corosync_conf(corosync_conf_text=fixture_totem())
+        self.config.env.push_corosync_conf(
+            corosync_conf_text=fixture_totem(), need_stopped_cluster=True,
+        )
         cluster.config_update(
             self.env_assist.get_env(),
             {option: "" for option in ALLOWED_KNET_TRANSPORT_OPTIONS},

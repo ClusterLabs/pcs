@@ -89,7 +89,9 @@ class UpdateLink(TestCase):
         (
             self.config.corosync_conf.load_content(
                 self.before
-            ).env.push_corosync_conf(corosync_conf_text=self.before)
+            ).env.push_corosync_conf(
+                corosync_conf_text=self.before, need_stopped_cluster=True
+            )
         )
         cluster.update_link(self.env_assist.get_env(), "0", {}, {})
         # Reports from pushing corosync.conf are produced in env. That code is
@@ -102,7 +104,9 @@ class UpdateLink(TestCase):
             self.config.corosync_conf.load_content(
                 self.before
             ).env.push_corosync_conf(
-                corosync_conf_text=self.after, skip_offline_targets=True,
+                corosync_conf_text=self.after,
+                skip_offline_targets=True,
+                need_stopped_cluster=True,
             )
         )
         cluster.update_link(
@@ -138,7 +142,9 @@ class UpdateLink(TestCase):
         (
             self.config.corosync_conf.load_content(
                 self.before
-            ).env.push_corosync_conf(corosync_conf_text=self.after)
+            ).env.push_corosync_conf(
+                corosync_conf_text=self.after, need_stopped_cluster=True,
+            )
         )
         cluster.update_link(
             self.env_assist.get_env(),
@@ -225,7 +231,9 @@ class UpdateLinkKnet(TestCase):
         (
             self.config.corosync_conf.load_content(
                 self.before
-            ).env.push_corosync_conf(corosync_conf_text=after)
+            ).env.push_corosync_conf(
+                corosync_conf_text=after, need_stopped_cluster=True
+            )
         )
         cluster.update_link(
             self.env_assist.get_env(),
@@ -375,7 +383,9 @@ class UpdateLinkUdp(TestCase):
         (
             self.config.corosync_conf.load_content(
                 self.before
-            ).env.push_corosync_conf(corosync_conf_text=after)
+            ).env.push_corosync_conf(
+                corosync_conf_text=after, need_stopped_cluster=True
+            )
         )
         cluster.update_link(
             self.env_assist.get_env(),
