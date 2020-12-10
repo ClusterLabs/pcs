@@ -154,7 +154,7 @@ class UpdateConfig(TestCase):
         )
         self.env_assist.assert_reports([])
 
-    def test_modify_all_options(self):
+    def _test_modify(self, transport_options, need_stopped_cluster):
         self.config.corosync_conf.load_content(
             fixture_totem(
                 transport_options=TRANSPORT_OPTIONS,
@@ -163,11 +163,8 @@ class UpdateConfig(TestCase):
                 totem_options=TOTEM_OPTIONS,
             )
         )
-        modified_transport_options = {
-            "ip_version": "ipv4-6",
-            "link_mode": "passive",
-            "knet_pmtud_interval": "1000",
-        }
+        modified_transport_options = dict(TRANSPORT_OPTIONS)
+        modified_transport_options.update(transport_options)
         modified_compression_options = {
             "level": "9",
             "model": "lz4",
@@ -188,7 +185,7 @@ class UpdateConfig(TestCase):
                 crypto_options=modified_crypto_options,
                 totem_options=modified_totem_options,
             ),
-            need_stopped_cluster=True,
+            need_stopped_cluster=need_stopped_cluster,
         )
         cluster.config_update(
             self.env_assist.get_env(),
@@ -198,6 +195,22 @@ class UpdateConfig(TestCase):
             modified_totem_options,
         )
         self.env_assist.assert_reports([])
+
+    def test_modify_all_options(self):
+        self._test_modify(
+            {
+                "ip_version": "ipv4-6",
+                "link_mode": "passive",
+                "knet_pmtud_interval": "1000",
+            },
+            need_stopped_cluster=True,
+        )
+
+    def test_modify_no_need_for_stopped_cluster(self):
+        self._test_modify(
+            {"link_mode": "passive", "knet_pmtud_interval": "1000"},
+            need_stopped_cluster=False,
+        )
 
     def test_remove_all_options(self):
         self.config.corosync_conf.load_content(
