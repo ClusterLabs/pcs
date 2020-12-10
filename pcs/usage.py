@@ -934,24 +934,23 @@ Commands:
                 transport udp link mcastport=55405
 
     config [show] [--output-format <cmd|json|text>] [--corosync_conf <path>]
-        Show options currently configured in cluster configuration file
-        corosync.conf. There are available 3 different formats of output: cmd,
-        json and text. Default is text. Format 'cmd' outputs a cluster setup
-        command which allows to recreate cluster with the current
-        configuration, format 'json' is machine oriented output with cluster
-        configuration and format 'text' is human friendly output. If
+        Show cluster configuration. There are available 3 different formats of
+        output: cmd, json and text. Default is text. Format 'text' is human
+        friendly output. Format 'cmd' outputs a cluster setup command which
+        allows to recreate cluster with the same configuration, format 'json'
+        is machine oriented output with cluster configuration. If
         --corosync_conf is specified, configuration file specified by <path> is
         used instead of current cluster configuration.
 
     config update [transport <transport options>]
             [compression <compression options>] [crypto <crypto options>]
             [totem <totem options>] [--corosync_conf <path>]
-        Update cluster configuration at runtime. If --corosync_conf is
-        specified, update cluster configuration in file specified by <path>.
-        All options are documented in corosync.conf(5) man page. There are
-        different transport options for transport types. Compression
-        and crypto options are only available for knet transport. Totem options
-        can be set regardless of the transport type.
+        Update cluster configuration. If --corosync_conf is specified, update
+        cluster configuration in file specified by <path>. All options are
+        documented in corosync.conf(5) man page. There are different transport
+        options for transport types. Compression and crypto options are only
+        available for knet transport. Totem options can be set regardless of
+        the transport type.
 
         Transport options for knet transport are:
             ip_version, knet_pmtud_interval, link_mode
