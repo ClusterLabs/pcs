@@ -443,7 +443,6 @@ class ConfigFacade(FacadeInterface):
             return False
         return old_value != new_value
 
-    # TODO: tests
     def set_transport_options(
         self,
         transport_options: Mapping[str, str],
@@ -522,7 +521,6 @@ class ConfigFacade(FacadeInterface):
                     options[name[len(prefix) :]] = value
         return options
 
-    # TODO: tests, generalize for transport options
     def get_transport_options(self) -> Dict[str, str]:
         """
         Get configurable generic transport options
@@ -538,7 +536,6 @@ class ConfigFacade(FacadeInterface):
             )
         return {}
 
-    # TODO: tests, generalize for transport options
     def get_compression_options(self) -> Dict[str, str]:
         """
         Get configurable compression options
@@ -549,7 +546,6 @@ class ConfigFacade(FacadeInterface):
             _KNET_COMPRESSION_OPTIONS_PREFIX,
         )
 
-    # TODO: tests, generalize for transport options
     def get_crypto_options(self) -> Dict[str, str]:
         """
         Get configurable crypto options
@@ -578,7 +574,6 @@ class ConfigFacade(FacadeInterface):
         # Note: all options in totem section supported by pcs are runtime
         # configurable.
 
-    # TODO: tests, generalize for transport options
     def get_totem_options(self) -> Dict[str, str]:
         """
         Get configurable totem options

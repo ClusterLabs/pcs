@@ -1841,7 +1841,6 @@ def _format_nodes(nodes: Iterable[CorosyncNodeDto]) -> List[str]:
     return output
 
 
-# TODO: update usage.py
 def config_show(
     lib: Any, argv: List[str], modifiers: parse_args.InputModifiers
 ) -> None:
