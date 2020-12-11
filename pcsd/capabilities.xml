@@ -224,11 +224,25 @@
         daemon urls: get_corosync_conf
       </description>
     </capability>
+    <capability id="corosync.config.get.struct" in-pcs="1" in-pcsd="0">
+      <description>
+        Provide the local corosync.conf in a structured format.
+
+        pcs commands: cluster config show
+      </description>
+    </capability>
     <capability id="corosync.config.set" in-pcs="0" in-pcsd="1">
       <description>
         Save a corosync.conf file to the local host.
 
         daemon urls: set_corosync_conf
+      </description>
+    </capability>
+    <capability id="corosync.config.update" in-pcs="1" in-pcsd="0">
+      <description>
+        Update all corosync settings in runtime.
+
+        pcs commands: cluster config update
       </description>
     </capability>
     <capability id="corosync.config.reload" in-pcs="1" in-pcsd="0">
