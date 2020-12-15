@@ -39,6 +39,7 @@ EXTRA_DIST		= \
 			  daemon/systemd.py \
 			  usage.py \
 			  constraint.py \
+			  common/corosync_conf.py \
 			  common/dr.py \
 			  common/node_communicator.py \
 			  common/file_type_codes.py \
@@ -71,6 +72,13 @@ EXTRA_DIST		= \
 			  common/pacemaker/rule.py \
 			  common/__init__.py \
 			  common/types.py \
+			  common/validate.py \
+			  entry_points/__init__.py \
+			  entry_points/cli.py \
+			  entry_points/common.py \
+			  entry_points/daemon.py \
+			  entry_points/internal.py \
+			  entry_points/snmp_agent.py \
 			  pcs_internal.py \
 			  client.py \
 			  app.py \
@@ -201,7 +209,6 @@ EXTRA_DIST		= \
 			  settings.py \
 			  pcsd.py \
 			  alert.py \
-			  run.py \
 			  status.py \
 			  quorum.py \
 			  __init__.py \

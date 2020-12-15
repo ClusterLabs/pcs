@@ -112,8 +112,14 @@ AC_PATH_PROG([RUBY], [ruby])
 if test x$RUBY = x; then
 	AC_MSG_ERROR([Unable to find ruby binary])
 fi
-PKG_CHECK_MODULES([ruby], [ruby >= 2.5])
-PCS_PKG_CHECK_VAR([RUBY_VER], [ruby], [ruby_version])
+
+# opensuse has a versioned ruby-$version.pc file
+# that does not match fedora or rhel ruby.pc
+# so we need to detect it
+rubymod=`pkg-config --list-all | awk '{print $1}' | grep ^ruby | sort -n | tail -n 1`
+
+PKG_CHECK_MODULES([ruby], [$rubymod >= 2.5])
+PCS_PKG_CHECK_VAR([RUBY_VER], [$rubymod], [ruby_version])
 AC_CHECK_PROGS([GEM], [gem])
 if test "x$GEM" = "x"; then
 	AC_MSG_ERROR([Unable to find gem binary])
@@ -125,6 +131,16 @@ if test "x$FCMATCH" = "x"; then
 fi
 # used to measure time for some tests, not critical if not available
 AC_CHECK_PROGS([TIME], [time])
+
+# required to build rpm and pyagentx
+AC_CHECK_PROGS([WGET], [wget])
+if test "x$WGET" = "x"; then
+	AC_MSG_ERROR([Unable to find wget binary.])
+fi
+AC_CHECK_PROGS([TAR], [tar])
+if test "x$TAR" = "x"; then
+	AC_MSG_ERROR([Unable to find tar binary.])
+fi
 
 # configure options section
 AC_ARG_ENABLE([dev-tests],
@@ -141,6 +157,10 @@ AC_ARG_ENABLE([local-build],
 	      [AS_HELP_STRING([--enable-local-build], [Download and install all dependencies as user / bundles])],
 	      [local_build="yes"])
 AM_CONDITIONAL([LOCAL_BUILD], [test "x$local_build" = "xyes"])
+
+AC_ARG_ENABLE([use-local-cache-only],
+	      [AS_HELP_STRING([--enable-use-local-cache-only], [Use only local cache to build bundles and disable downloads])],
+	      [cache_only="yes"])
 
 # this will catch both ID and ID_LIKE from os-release
 AC_ARG_WITH([distro],
@@ -173,7 +193,7 @@ for i in $DISTRO $DISTROS; do
 			DISTROEXT=debian
 			break
 		;;
-		fedora|rhel|centos)
+		fedora|rhel|centos|opensuse*)
 			FOUND_DISTRO=1
 			CONFIGDIR="$sysconfdir/sysconfig"
 			PCSLIBDIR="$LIBDIR"
@@ -222,64 +242,115 @@ else
 fi
 AC_SUBST([PCS_BUNDLED_DIR])
 
-rm -rf requirements.txt
-touch requirements.txt
+mkdir -p $ac_pwd/stamps
+mkdir -p $ac_pwd/rpm/
+mkdir -p $ac_pwd/dev_src
+rm -rf $ac_pwd/rpm/requirements.txt $ac_pwd/dev_src/requirements.txt
+touch $ac_pwd/rpm/requirements.txt
+touch $ac_pwd/dev_src/requirements.txt
+
+# PCS_CHECK_PYMOD([module], [version], [embedded=yes], [devel_module])
 
 AC_DEFUN([PCS_CHECK_PYMOD], [
 	 if test "x$local_build" = "xyes"; then
-		AC_PIP_MODULE([$1], [$2], [$3], [echo "$1 $2" | sed -e 's# ##g' >> requirements.txt])
+		if test "x$3" = "xyes"; then
+			# don´t pass the version since the module will be embedded
+			AC_PIP_MODULE([$1])
+		else
+			AC_PIP_MODULE([$1], [$2], [], [AC_MSG_ERROR([Python module $1 not found])])
+		fi
 	 else
-		AC_PIP_MODULE([$1], [$2], [$3], [AC_MSG_ERROR([Python module $1 not found])])
+		AC_PIP_MODULE([$1], [$2], [], [AC_MSG_ERROR([Python module $1 not found])])
+	 fi
+	 if test "x$3" = "xyes" && test "x$4" = "x"; then
+		 echo "$1 $2" | sed -e 's# ##g' >> $ac_pwd/rpm/requirements.txt
+		 if test "x$cache_only" = "xyes"; then
+			src=`ls rpm/$1-*`
+			if test "x$src" = "x"; then
+				 AC_MSG_ERROR([cache only build required but no source detected in rpm/])
+			fi
+		 fi
+	 fi
+	 if test "x$4" = "xyes"; then
+		 echo "$1 $2" | sed -e 's# ##g' >> $ac_pwd/dev_src/requirements.txt
 	 fi
 ])
 
+# required by rpm build
+PYAGENTX_VERSION=0.4.pcs.2
+AC_SUBST([PYAGENTX_VERSION])
+
+# those MUST be available in BaseOS
+
+# required for --no-build-isolation
+AC_PIP_MODULE([pip], [>= 10.0.0], [have_isolation=yes], [have_isolation=no])
+AM_CONDITIONAL([PIP_HAS_ISOLATION], [test "x$have_isolation" = xyes])
+
+PCS_CHECK_PYMOD([setuptools])
+PCS_CHECK_PYMOD([setuptools-scm])
+if test "x$local_build" = "xyes"; then
+	PCS_CHECK_PYMOD([wheel])
+fi
 PCS_CHECK_PYMOD([lxml])
 PCS_CHECK_PYMOD([pycurl])
 PCS_CHECK_PYMOD([pyparsing])
 PCS_CHECK_PYMOD([pyOpenSSL])
-PCS_CHECK_PYMOD([dacite])
-PCS_CHECK_PYMOD([setuptools])
-PCS_CHECK_PYMOD([tornado], [>= 6.0.0])
-PCS_CHECK_PYMOD([python-dateutil], [>= 2.7.0])
+
+# those are kind of problematic.
+# use them all from the BaseOS or embedded them all as necessary (--enable-local-build)
+PCS_CHECK_PYMOD([dacite], [], [yes])
+PCS_CHECK_PYMOD([tornado], [>= 6.0.0], [yes])
+PCS_CHECK_PYMOD([python-dateutil], [>= 2.7.0], [yes])
 
 # python 3.6 needs dataclasses as well (added in 3.7)
 if test "$PYTHON_VERSION" = "3.6"; then
-	PCS_CHECK_PYMOD([dataclasses])
+	PCS_CHECK_PYMOD([dataclasses], [], [yes])
+	builddataclasses=yes
+else
+	echo dataclasses >> $ac_pwd/rpm/requirements.txt
+	builddataclasses=no
 fi
+AM_CONDITIONAL([NOT_BUILD_DATACLASSES], [test "$builddataclasses" = "no"])
 
 # python 3.8+ needs distro as well (removed from upstream lib)
 if printf '%s\n%s\n' "3.8" "$PYTHON_VERSION" | sort -V -C; then
-	PCS_CHECK_PYMOD([distro])
+	PCS_CHECK_PYMOD([distro], [], [yes])
+	builddistro=yes
+else
+	echo distro >> $ac_pwd/rpm/requirements.txt
+	builddistro=no
 fi
+AM_CONDITIONAL([NOT_BUILD_DISTRO], [test "$builddistro" = "no"])
 
 if test "x$dev_tests" != "x"; then
-	PCS_CHECK_PYMOD([lxml-stubs])
-	PCS_CHECK_PYMOD([pylint], [== 2.6.0])
-	PCS_CHECK_PYMOD([astroid], [== 2.4.2])
-	PCS_CHECK_PYMOD([mypy], [== 0.790])
-	PCS_CHECK_PYMOD([black], [== 19.10b0])
+	# those one needs to be available in BaseOS
+	PCS_CHECK_PYMOD([lazy-object-proxy])
+	PCS_CHECK_PYMOD([isort])
+	PCS_CHECK_PYMOD([regex])
+	PCS_CHECK_PYMOD([attrs])
+	PCS_CHECK_PYMOD([typed-ast])
+	PCS_CHECK_PYMOD([pathspec])
+	PCS_CHECK_PYMOD([typing-extensions])
+	# those ones can be embedded
+	PCS_CHECK_PYMOD([lxml-stubs], [], [yes], [yes])
+	PCS_CHECK_PYMOD([toml], [], [yes], [yes])
+	PCS_CHECK_PYMOD([pylint], [== 2.6.0], [yes], [yes])
+	PCS_CHECK_PYMOD([astroid], [== 2.4.2], [yes], [yes])
+	PCS_CHECK_PYMOD([mypy], [== 0.790], [yes], [yes])
+	PCS_CHECK_PYMOD([mypy_extensions], [], [yes], [yes])
+	PCS_CHECK_PYMOD([black], [== 19.10b0], [yes], [yes])
 fi
+
+AC_SUBST([PYTHON_DEVEL])
 
 # special case, because we need to download from github
-AC_PIP_MODULE([pyagentx], [], [], [], [$PCS_BUNDLED_DIR_LOCAL/packages])
+AC_PIP_MODULE([pyagentx])
 
-PYTHON_LIST_EMBEDDED=""
-if test "x$HAVE_PIPMOD_PYAGENTX" = "xno"; then
-	AC_CHECK_PROGS([WGET], [wget])
-	if test "x$WGET" = "x"; then
-		AC_MSG_ERROR([Unable to find wget binary.])
-	fi
-	AC_CHECK_PROGS([TAR], [tar])
-	if test "x$TAR" = "x"; then
-		AC_MSG_ERROR([Unable to find tar binary.])
-	fi
-	PYTHON_LIST_EMBEDDED="pyagentx $PYTHON_LIST_EMBEDDED"
+if test "x$HAVE_PIPMOD_PYAGENTX" = "xno" && test "x$local_build" != "xyes"; then
+	AC_MSG_ERROR([Python module pyagentx not found])
 fi
+
 AM_CONDITIONAL([BUILD_PIPMOD_PYAGENTX], [test "x$HAVE_PIPMOD_PYAGENTX" = "xno"])
-
-if test -n "$PYTHON_LIST_EMBEDDED"; then
-	AC_MSG_RESULT([The following python modules will be embedded in the build: $PYTHON_LIST_EMBEDDED])
-fi
 
 # ruby gem section
 AC_CHECK_PROGS([BUNDLE], [bundle])
@@ -294,20 +365,23 @@ PCSD_BUNDLED_DIR_LOCAL="$PCSD_BUNDLED_DIR_ROOT_LOCAL/ruby/$RUBY_VER/"
 AC_SUBST([PCSD_BUNDLED_DIR_ROOT_LOCAL])
 AC_SUBST([PCSD_BUNDLED_DIR_LOCAL])
 
-
 rm -rf Gemfile Gemfile.lock
 echo "source 'https://rubygems.org'" > Gemfile
 echo "" >> Gemfile
 
-# commodity function
-GEM_LIST_EMBEDDED=""
-
 AC_DEFUN([PCS_CHECK_GEM], [
 	 if test "x$local_build" = "xyes"; then
-		AC_RUBY_GEM([$1], [$2], [$3], [echo "gem '$1'" >> Gemfile && GEM_LIST_EMBEDDED="$1 $GEM_LIST_EMBEDDED"], [$PCSD_BUNDLED_DIR_LOCAL])
+		AC_RUBY_GEM([$1], [$2], [$3])
+		if test "x$cache_only" = "xyes"; then
+			src=`ls $PCSD_BUNDLED_DIR_LOCAL/cache/$1-*`
+			if test "x$src" = "x"; then
+				AC_MSG_ERROR([cache only build required but no source detected in rpm/])
+			fi
+		fi
 	 else
 		AC_RUBY_GEM([$1], [$2], [$3], [AC_MSG_ERROR([ruby gem $1 not found])])
 	 fi
+	 echo "gem '$1'" >> Gemfile
 ])
 
 PCS_CHECK_GEM([backports])
@@ -326,9 +400,10 @@ PCS_CHECK_GEM([sinatra])
 PCS_CHECK_GEM([tilt])
 PCS_CHECK_GEM([test-unit])
 PCS_CHECK_GEM([thin])
+PCS_CHECK_GEM([rexml])
+PCS_CHECK_GEM([webrick])
 
-if test -n "$GEM_LIST_EMBEDDED"; then
-	AC_MSG_RESULT([The following gems will be embedded in the build: $GEM_LIST_EMBEDDED])
+if test "x$local_build" = "xyes"; then
 	GEM_HOME="$LIB_DIR/$PCSD_BUNDLED_DIR_LOCAL"
 	SYSTEMD_GEM_HOME="Environment=GEM_HOME=$GEM_HOME"
 	PCS_GEM_HOME="pcsd_gem_path = '$GEM_HOME'"
@@ -339,6 +414,8 @@ AC_SUBST([GEM_HOME])
 AC_SUBST([PCS_GEM_HOME])
 AC_SUBST([SYSTEMD_GEM_HOME])
 AM_CONDITIONAL([INSTALL_EMBEDDED_GEMS], [test -n "$GEM_HOME"])
+
+AM_CONDITIONAL([ENABLE_DOWNLOAD], [test "x$cache_only" != "xyes"])
 
 # detect different paths required to generate default settings
 AC_PATH_PROG([BASH], [bash])
@@ -399,6 +476,7 @@ else
 	COROCONFDIR="$COROPREFIX/etc"
 fi
 AC_SUBST([COROCONFDIR])
+eval COROSYNCLOGDIR="`eval echo ${COROSYNCLOGDIR}`"
 PCS_PKG_CHECK_VAR([COROLOGDIR], [corosync], [logdir], [$COROSYNCLOGDIR])
 PCS_PKG_CHECK_VAR([COROQDEVEXECPREFIX], [corosync-qdevice], [exec_prefix], [/usr])
 PCS_PKG_CHECK_VAR([COROQDEVCONFDIR], [corosync-qdevice], [confdir], [/etc/corosync])

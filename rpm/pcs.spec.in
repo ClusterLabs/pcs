@@ -1,0 +1,368 @@
+%global numcomm @numcomm@
+%global alphatag @alphatag@
+%global dirty @dirty@
+
+Name: pcs
+Version: @version@
+Release: 1%{?numcomm:.%{numcomm}}%{?alphatag:.%{alphatag}}%{?dirty:.%{dirty}}%{?dist}
+# https://docs.fedoraproject.org/en-US/packaging-guidelines/LicensingGuidelines/
+# https://fedoraproject.org/wiki/Licensing:Main?rd=Licensing#Good_Licenses
+# GPLv2: pcs
+# ASL 2.0: dataclasses, tornado
+# ASL 2.0 or BSD: dateutil
+# MIT: backports, dacite, daemons, ember, ethon, handlebars, jquery, jquery-ui,
+#      mustermann, rack, rack-protection, rack-test, sinatra, tilt
+# GPLv2 or Ruby: eventmachne, json
+# (GPLv2 or Ruby) and BSD: thin
+# BSD or Ruby: open4, ruby2_keywords
+# BSD and MIT: ffi
+License: GPLv2 and ASL 2.0 and MIT and BSD and (GPLv2 or Ruby) and (BSD or Ruby) and (ASL 2.0 or BSD)
+URL: https://github.com/ClusterLabs/pcs
+Summary: Pacemaker Configuration System
+
+%global pcs_snmp_pkg_name  pcs-snmp
+
+%global pyagentx_version   @pyagentx_version@
+
+# javascript bundled libraries for old web-ui
+%global ember_version 1.4.0
+%global handlebars_version 1.2.1
+%global jquery_ui_version 1.10.1
+%global jquery_version 1.9.1
+
+%if "%{python3_version}" == "3.6"
+%define dataclasses_required 1
+%endif
+
+%if "%{python3_version}" >= "3.8"
+%define distro_required 1
+%endif
+
+# mangling shebang in /usr/lib/pcsd/vendor/bundle/ruby/gems/rack-2.0.5/test/cgi/test from /usr/bin/env ruby to #!/usr/bin/ruby
+#*** ERROR: ./usr/lib/pcsd/vendor/bundle/ruby/gems/rack-2.0.5/test/cgi/test.ru has shebang which doesn't start with '/' (../../bin/rackup)
+#mangling shebang in /usr/lib/pcsd/vendor/bundle/ruby/gems/rack-2.0.5/test/cgi/rackup_stub.rb from /usr/bin/env ruby to #!/usr/bin/ruby
+#*** WARNING: ./usr/lib/pcsd/vendor/bundle/ruby/gems/rack-2.0.5/test/cgi/sample_rackup.ru is executable but has empty or no shebang, removing executable bit
+#*** WARNING: ./usr/lib/pcsd/vendor/bundle/ruby/gems/rack-2.0.5/test/cgi/lighttpd.conf is executable but has empty or no shebang, removing executable bit
+#*** ERROR: ambiguous python shebang in /usr/lib/pcsd/vendor/bundle/ruby/gems/ffi-1.9.25/ext/ffi_c/libffi/generate-darwin-source-and-headers.py: #!/usr/bin/env python. Change it to python3 (or python2) explicitly.
+%undefine __brp_mangle_shebangs
+
+# https://fedoraproject.org/wiki/Changes/Avoid_usr_bin_python_in_RPM_Build#Python_bytecompilation
+# Enforce python3 because bytecompilation of tornado produced warnings:
+# DEPRECATION WARNING: python2 invoked with /usr/bin/python.
+#    Use /usr/bin/python3 or /usr/bin/python2
+#    /usr/bin/python will be removed or switched to Python 3 in the future.
+#global __python {__python3}
+
+Source0: %{name}-%{version}%{?numcomm:.%{numcomm}}%{?alphatag:-%{alphatag}}%{?dirty:-%{dirty}}.tar.gz
+
+Source41: pyagentx-%{pyagentx_version}.tar.gz
+@pysrc@
+
+@gemsrc@
+
+# python for pcs
+%if 0%{?fedora} >= 30
+BuildRequires: python3 >= 3.6
+BuildRequires: python3-setuptools
+%endif
+
+%if 0%{?rhel} >= 8
+BuildRequires: platform-python
+BuildRequires: platform-python-setuptools
+# for bundled python dateutil
+BuildRequires: python3-setuptools_scm
+%endif
+
+BuildRequires: python3-devel
+# for tier0 tests
+BuildRequires: python3-pyparsing
+# required to pass ./configure
+BuildRequires: python3-wheel
+BuildRequires: python3-lxml
+BuildRequires: python3-pycurl
+
+# gcc for compiling custom rubygems
+BuildRequires: gcc
+BuildRequires: gcc-c++
+# ruby and gems for pcsd
+BuildRequires: ruby >= 2.5
+BuildRequires: ruby-devel
+BuildRequires: rubygems
+# for post, preun and postun macros
+BuildRequires: systemd
+# pcsd fonts and font management tools for creating symlinks to fonts
+BuildRequires: fontconfig
+%if %{undefined suse_version}
+BuildRequires: liberation-sans-fonts
+BuildRequires: overpass-fonts
+%endif
+
+Requires: python3-lxml
+Requires: python3-pycurl
+Requires: python3-pyparsing
+%if 0%{?fedora} <= 32
+# clufter and its dependencies
+Requires: python3-clufter => 0.70.0
+%endif
+%if 0%{?rhel} < 9
+# clufter and its dependencies
+Requires: python3-clufter => 0.70.0
+%endif
+# ruby and gems for pcsd
+Requires: ruby >= 2.2.0
+Requires: rubygems
+# for killall
+Requires: psmisc
+# for working with certificates (validation etc.)
+Requires: openssl
+Requires: python3-pyOpenSSL
+# cluster stack and related packages
+Requires: pacemaker >= 2.0.0
+Requires: corosync >= 3.0
+# pcs enables corosync encryption by default so we require libknet1-plugins-all
+Requires: libknet1-plugins-all
+# for post, preun and postun macros
+Requires(post): systemd
+Requires(preun): systemd
+Requires(postun): systemd
+# pam is used for authentication inside daemon (python ctypes)
+# more details: https://bugzilla.redhat.com/show_bug.cgi?id=1717113
+Requires: pam
+# needs logrotate for /etc/logrotate.d/pcsd
+Requires: logrotate
+# pcsd fonts
+Recommends: liberation-sans-fonts
+Recommends: overpass-fonts
+
+@pybundle@
+%if %{defined dataclasses_required}
+@pydataclassesbundle@
+%endif
+%if %{defined distro_required}
+@pydistrobundle@
+%endif
+
+@gembundle@
+
+# javascript bundled libraries for old web-ui
+Provides: bundled(ember) = %{ember_version}
+Provides: bundled(handlebars) = %{handlebars_version}
+Provides: bundled(jquery) = %{jquery_version}
+Provides: bundled(jquery-ui) = %{jquery_ui_version}
+
+%description
+pcs is a corosync and pacemaker configuration tool.  It permits users to
+easily view, modify and create pacemaker based clusters.
+
+# pcs-snmp package definition
+%package -n %{pcs_snmp_pkg_name}
+Group: System Environment/Base
+Summary: Pacemaker cluster SNMP agent
+# https://fedoraproject.org/wiki/Licensing:Main?rd=Licensing#Good_Licenses
+# GPLv2: pcs
+# BSD-2-Clause: pyagentx
+License: GPLv2 and BSD-2-Clause
+URL: https://github.com/ClusterLabs/pcs
+
+Requires: pcs = %{version}-%{release}
+Requires: pacemaker
+Requires: net-snmp
+
+Provides: bundled(pyagentx) = %{pyagentx_version}
+
+%description -n %{pcs_snmp_pkg_name}
+SNMP agent that provides information about pacemaker cluster to the master agent (snmpd)
+
+%prep
+%autosetup -n %{name}-%{version}%{?numcomm:.%{numcomm}}%{?alphatag:-%{alphatag}}%{?dirty:-%{dirty}}
+
+# prepare dirs/files necessary for building all bundles
+# -----------------------------------------------------
+# 2) rubygems sources
+rubymod=`pkg-config --list-all | awk '{print $1}' | grep ^ruby | sort -n | tail -n 1`
+rubyver=`pkg-config --variable=ruby_version $rubymod`
+@gemcache@
+
+# 3) dir for python bundles
+@pycache@
+
+%build
+%define debug_package %{nil}
+./autogen.sh
+%{configure} --enable-local-build --enable-use-local-cache-only
+make all
+
+%install
+make install DESTDIR=%{buildroot}
+
+%if %{defined suse_version}
+rm -rf %{buildroot}/usr/share/doc/pcs/
+%endif
+
+# With this file there is "File is not stripped" problem during rpmdiff
+# See https://docs.engineering.redhat.com/display/HTD/rpmdiff-elf-stripping
+for fname in `find %{buildroot} -type f -name "*.so"`; do
+  strip ${fname}
+done
+for dname in `find %{buildroot} -type d -name "ext"`; do
+  rm -rf ${dname}
+done
+
+# prepare dynamic file list
+
+mkdir -p dynamic_files
+
+# pcs/pcsd
+rm -rf dynamic_files/pcs
+
+# gem license files
+for i in license gnu copying; do
+ for x in `find %{buildroot} -type f -iname "${i}*" | grep ruby | grep -v dynamic_files`; do
+  srcfile=`echo $x | sed -e 's#.*\/##g'`
+  srcpkg=`echo $x | sed -e 's#.*gems/##g' -e 's/\(.*\)-\(.*\)/\1/'`
+  mv $x dynamic_files/${srcpkg}_${srcfile}
+  echo "@license dynamic_files/${srcpkg}_${srcfile}" >> dynamic_files/pcs
+ done
+done
+
+# python modules licenses
+for i in license; do
+ for x in `find pcs -type f -iname "${i}*" | grep -v pyagentx`; do
+  srcfile=`echo $x | sed -e 's#.*\/##g'`
+  srcpkg=`echo $x | sed -e 's#.*src/##g' -e 's/\(.*\)-\(.*\)/\1/'`
+  mv $x dynamic_files/${srcpkg}_${srcfile}
+  echo "@license dynamic_files/${srcpkg}_${srcfile}" >> dynamic_files/pcs
+ done
+done
+
+# python modules docs
+# tornado has some extra README in the demos section
+for i in readme contributors; do
+ for x in `find pcs -type f -iname "${i}*" | grep -v pyagentx |grep -v demos`; do
+  srcfile=`echo $x | sed -e 's#.*\/##g'`
+  srcpkg=`echo $x | sed -e 's#.*src/##g' -e 's/\(.*\)-\(.*\)/\1/'`
+  mv $x dynamic_files/${srcpkg}_${srcfile}
+  echo "@doc dynamic_files/${srcpkg}_${srcfile}" >> dynamic_files/pcs
+ done
+done
+
+# escaping % in spec file is "interesting"
+sed -i -e 's#^@#%#g' dynamic_files/pcs
+
+# pcs-snmp
+
+rm -rf dynamic_files/pcs-snms
+# python modules licenses
+for i in license; do
+ for x in `find pcs -type f -iname "${i}*" | grep pyagentx`; do
+  srcfile=`echo $x | sed -e 's#.*\/##g'`
+  srcpkg=`echo $x | sed -e 's#.*src/##g' -e 's/\(.*\)-\(.*\)/\1/'`
+  mv $x dynamic_files/${srcpkg}_${srcfile}
+  echo "@license dynamic_files/${srcpkg}_${srcfile}" >> dynamic_files/pcs-snmp
+ done
+done
+
+# python modules docs
+for i in readme contributors; do
+ for x in `find pcs -type f -iname "${i}*" | grep pyagentx`; do
+  srcfile=`echo $x | sed -e 's#.*\/##g'`
+  srcpkg=`echo $x | sed -e 's#.*src/##g' -e 's/\(.*\)-\(.*\)/\1/'`
+  mv $x dynamic_files/${srcpkg}_${srcfile}
+  echo "@doc dynamic_files/${srcpkg}_${srcfile}" >> dynamic_files/pcs-snmp
+ done
+done
+
+# escaping % in spec file is "interesting"
+sed -i -e 's#^@#%#g' dynamic_files/pcs-snmp
+
+%posttrans
+# Make sure the new version of the daemon is runnning.
+# Also, make sure to start pcsd-ruby if it hasn't been started or even
+# installed before. This is done by restarting pcsd.service.
+%{_bindir}/systemctl daemon-reload
+%{_bindir}/systemctl try-restart pcsd.service
+
+%post
+%systemd_post pcsd.service
+%systemd_post pcsd-ruby.service
+
+%post -n %{pcs_snmp_pkg_name}
+%systemd_post pcs_snmp_agent.service
+
+%preun
+%systemd_preun pcsd.service
+%systemd_preun pcsd-ruby.service
+
+%preun -n %{pcs_snmp_pkg_name}
+%systemd_preun pcs_snmp_agent.service
+
+%postun
+%systemd_postun_with_restart pcsd.service
+%systemd_postun_with_restart pcsd-ruby.service
+
+%postun -n %{pcs_snmp_pkg_name}
+%systemd_postun_with_restart pcs_snmp_agent.service
+
+%files -f dynamic_files/pcs
+%doc CHANGELOG.md
+%doc README.md
+%license COPYING
+
+# pcs
+%{_sbindir}/pcs
+%{python3_sitelib}/*
+%exclude %{python3_sitelib}/pcs/pcs
+%{_libdir}/pcs/*
+%exclude %{_libdir}/pcs/pcs_snmp_agent
+%exclude %{_libdir}/pcs/bundled/u*
+%exclude %{_libdir}/pcs/bundled/packages/pyagentx*
+
+# bash completion
+%{_datadir}/bash-completion/completions/pcs
+
+# man page
+%{_mandir}/man8/pcs.*
+
+# pcsd
+%{_sbindir}/pcsd
+%{_libdir}/pcsd/*
+
+# config files
+%config(noreplace) %{_sysconfdir}/logrotate.d/pcsd
+%config(noreplace) %{_sysconfdir}/sysconfig/pcsd
+%config(noreplace) %{_sysconfdir}/pam.d/pcsd
+
+# systemd unit
+%{_unitdir}/pcsd.service
+%{_unitdir}/pcsd-ruby.service
+
+# log dir
+%dir %{_var}/log/pcsd
+
+# var/lib/pcsd
+%{_sharedstatedir}/pcsd
+%ghost %config(noreplace) %attr(0600,root,root) %{_sharedstatedir}/pcsd/cfgsync_ctl
+%ghost %config(noreplace) %attr(0600,root,root) %{_sharedstatedir}/pcsd/known-hosts
+%ghost %config(noreplace) %attr(0600,root,root) %{_sharedstatedir}/pcsd/pcsd.cookiesecret
+%ghost %config(noreplace) %attr(0600,root,root) %{_sharedstatedir}/pcsd/pcsd.crt
+%ghost %config(noreplace) %attr(0600,root,root) %{_sharedstatedir}/pcsd/pcsd.key
+%ghost %config(noreplace) %attr(0644,root,root) %{_sharedstatedir}/pcsd/pcs_settings.conf
+%ghost %config(noreplace) %attr(0644,root,root) %{_sharedstatedir}/pcsd/pcs_users.conf
+
+# man page
+%{_mandir}/man8/pcsd.*
+
+%files -n %{pcs_snmp_pkg_name} -f dynamic_files/pcs-snmp
+%{_libdir}/pcs/pcs_snmp_agent
+%{_libdir}/pcs/bundled/packages/pyagentx*
+%{_unitdir}/pcs_snmp_agent.service
+%{_datadir}/snmp/mibs/PCMK-PCS*-MIB.txt
+%{_mandir}/man8/pcs_snmp_agent.*
+%config(noreplace) %{_sysconfdir}/sysconfig/pcs_snmp_agent
+%doc CHANGELOG.md
+%license COPYING
+
+%changelog
+* @date@ Autotools generated version <nobody@nowhere.org> - @version@-1-@numcomm@.@alphatag@.@dirty@
+- Autotools generated version
+- These aren't the droids you're looking for.

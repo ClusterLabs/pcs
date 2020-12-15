@@ -14,22 +14,35 @@ AC_DEFUN([AC_PIP_MODULE],[
 	module="$1"
 	reqversion="$2"
 	AC_MSG_CHECKING([pip module: $module $reqversion])
+	pipcommonopts="list --format freeze --disable-pip-version-check"
 	if test -n "$5"; then
-		pipoutput=$(PYTHONPATH=$5 $PIP list --format freeze | grep ^${module}==)
+		pipoutput=$(PYTHONPATH=$5 $PIP $pipcommonopts | grep ^${module}==)
 	else
-		pipoutput=$($PIP list --format freeze | grep ^${module}==)
+		pipoutput=$($PIP $pipcommonopts | grep ^${module}==)
 	fi
 	if test "x$pipoutput" != "x"; then
 		curversion=$(echo $pipoutput | sed -e 's#.*==##g')
+		checkver=ok
 		if test "x$reqversion" != x; then
 			comp=$(echo $reqversion | cut -d " " -f 1)
 			tmpversion=$(echo $reqversion | cut -d " " -f 2)
-			AC_COMPARE_VERSIONS([$curversion], [$comp], [$tmpversion],, [AC_MSG_ERROR([python $module version $curversion detected. Requested "$comp $tmpversion"])])
+			AC_COMPARE_VERSIONS([$curversion], [$comp], [$tmpversion], [checkver=ok], [checkver=nok])
 		fi
-		AC_MSG_RESULT([yes (detected: $curversion)])
-		eval AS_TR_CPP(HAVE_PIPMOD_$module)=yes
-		eval AS_TR_CPP(HAVE_PIPMOD_$module_version)=$curversion
-		$3
+		if test "x$checkver" = "xok"; then
+			AC_MSG_RESULT([yes (detected: $curversion)])
+			eval AS_TR_CPP(HAVE_PIPMOD_$module)=yes
+			eval AS_TR_CPP(HAVE_PIPMOD_$module_version)=$curversion
+			$3
+		else
+			if test -n "$4"; then
+				AC_MSG_RESULT([no (detected: $curversion)])
+				eval AS_TR_CPP(HAVE_PIPMOD_$module)=no
+				eval AS_TR_CPP(HAVE_PIPMOD_$module_version)=$curversion
+				$4
+			else
+				AC_MSG_ERROR([python $module version $curversion detected. Requested "$comp $tmpversion"])
+			fi
+		fi
 	else
 		AC_MSG_RESULT([no])
 		eval AS_TR_CPP(HAVE_PIPMOD_$module)=no

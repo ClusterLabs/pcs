@@ -14,8 +14,7 @@ pcs/snmp/pcs_snmp_agent.service
 /pcsd/vendor
 /pcsd/public/ui
 /Gemfile*
-/rpm_build/
-pcs-*.tar.*
+pcs-*
 .mypy_cache/
 requirements.txt
 newversion.py
@@ -32,6 +31,7 @@ pcs_test/pcs_for_tests
 pcs_test/suite.py
 pcs_test/smoke.sh
 pcs_test/tools/bin_mock/pcmk/crm_resource
+pcs_test/tools/bin_mock/pcmk/crm_resource.d/*\:*
 pcs_test/tools/misc.py
 pcs_test/tier0/common/reports/test_messages.py
 pcs_test/tier0/lib/booth/test_config_files.py
@@ -63,6 +63,12 @@ pcsd/bootstrap.rb
 pcsd/test/test_corosyncconf.rb
 build/
 *.egg-info
+
+rpm/*.gem
+rpm/*.tar*
+rpm/*.rpm
+
+stamps*
 
 aclocal.m4
 autom4te.cache/

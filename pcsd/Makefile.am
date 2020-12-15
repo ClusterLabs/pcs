@@ -142,7 +142,7 @@ clean-local:
 
 install-data-local:
 	$(MKDIR_P) $(DESTDIR)/$(sysconfdir)/pam.d
-	$(INSTALL_DATA) pam/pcsd.$(DISTROEXT) $(DESTDIR)/$(sysconfdir)/pam.d/pcsd
+	$(INSTALL_DATA) $(srcdir)/pam/pcsd.$(DISTROEXT) $(DESTDIR)/$(sysconfdir)/pam.d/pcsd
 	$(MKDIR_P) $(DESTDIR)/${pcsdpubcssdir}
 	$(foreach font,$(pcsd_fonts),\
 		$(eval font_file = $(word 1,$(subst ;, ,$(font)))) \
@@ -153,6 +153,7 @@ install-data-local:
 if INSTALL_EMBEDDED_GEMS
 	$(MKDIR_P) $(DESTDIR)${GEM_HOME}
 	cp -rp vendor/bundled/ruby/${RUBY_VER}/* $(DESTDIR)${GEM_HOME}
+	rm -rf $(DESTDIR)${GEM_HOME}/cache
 endif
 	$(MKDIR_P) -m 0700 $(DESTDIR)$(localstatedir)/log/pcsd
 	$(MKDIR_P) -m 0700 $(DESTDIR)$(localstatedir)/lib/pcsd
