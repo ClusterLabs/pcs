@@ -1856,9 +1856,10 @@ def config_show(
     supported_formats = ["text", "cmd", "json"]
     if not output_format in supported_formats:
         raise CmdLineInputError(
-            "Unknown value '{}' for '--output-format' option. Supported values are: {}".format(
-                output_format, format_list(supported_formats)
-            )
+            (
+                "Unknown value '{}' for '--output-format' option. Supported "
+                "values are: {}"
+            ).format(output_format, format_list(supported_formats))
         )
     corosync_conf_dto = lib.cluster.get_corosync_conf_struct()
     if output_format == "cmd":
@@ -1882,7 +1883,7 @@ def _config_get_text(corosync_conf: CorosyncConfDto) -> List[str]:
     ]
     lines.extend(_format_nodes(corosync_conf.nodes))
     if corosync_conf.links_options:
-        lines.append("Links")
+        lines.append("Links:")
         for linknum, link_options in sorted(
             corosync_conf.links_options.items()
         ):

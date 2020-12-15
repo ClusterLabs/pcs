@@ -934,13 +934,13 @@ Commands:
                 transport udp link mcastport=55405
 
     config [show] [--output-format <cmd|json|text>] [--corosync_conf <path>]
-        Show cluster configuration. There are available 3 different formats of
-        output: cmd, json and text. Default is text. Format 'text' is human
-        friendly output. Format 'cmd' outputs a cluster setup command which
-        allows to recreate cluster with the same configuration, format 'json'
-        is machine oriented output with cluster configuration. If
-        --corosync_conf is specified, configuration file specified by <path> is
-        used instead of current cluster configuration.
+        Show cluster configuration. There are 3 formats of output available:
+        'cmd', 'json' and 'text', default is 'text'. Format 'text' is a human
+        friendly output. Format 'cmd' prints a cluster setup command which
+        recreates a cluster with the same configuration. Format 'json' is a
+        machine oriented output with cluster configuration. If --corosync_conf
+        is specified, configuration file specified by <path> is used instead of
+        the current cluster configuration.
 
     config update [transport <transport options>]
             [compression <compression options>] [crypto <crypto options>]

@@ -687,6 +687,17 @@ def config_update(
     crypto_options: Mapping[str, str],
     totem_options: Mapping[str, str],
 ) -> None:
+    """
+    Update corosync.conf in the local cluster
+
+    env
+    transport_options -- transport specific options
+    compression_options -- only available for knet transport. In
+        corosync.conf they are prefixed 'knet_compression_'
+    crypto_options -- only available for knet transport. In corosync.conf
+        they are prefixed 'crypto_'
+    totem_options -- options of section 'totem' in corosync.conf
+    """
     _ensure_live_env(env)
     corosync_conf = env.get_corosync_conf()
     _config_update(
@@ -708,7 +719,19 @@ def config_update_local(
     crypto_options: Mapping[str, str],
     totem_options: Mapping[str, str],
 ) -> bytes:
-    # As we are getting a cocosync.conf content as an argument, we want to make
+    """
+    Update corosync.conf passed as an argument and return the updated conf
+
+    env
+    corosync_conf_content -- corosync.conf to be updated
+    transport_options -- transport specific options
+    compression_options -- only available for knet transport. In
+        corosync.conf they are prefixed 'knet_compression_'
+    crypto_options -- only available for knet transport. In corosync.conf
+        they are prefixed 'crypto_'
+    totem_options -- options of section 'totem' in corosync.conf
+    """
+    # As we are getting a corosync.conf content as an argument, we want to make
     # sure it was not given to LibraryEnvironment as well. Also we don't
     # allow/need CIB to be handled by LibraryEnvironment.
     _ensure_live_env(env)
@@ -728,6 +751,9 @@ def config_update_local(
 
 
 def get_corosync_conf_struct(env: LibraryEnvironment) -> CorosyncConfDto:
+    """
+    Read corosync.conf from the local node and return it in a structured form
+    """
     corosync_conf = env.get_corosync_conf()
     quorum_device_dto: Optional[CorosyncQuorumDeviceSettingsDto] = None
     if corosync_conf.has_quorum_device():

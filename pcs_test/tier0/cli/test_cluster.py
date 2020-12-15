@@ -1113,24 +1113,23 @@ class UpdateLink(TestCase):
 class ConfigUpdate(TestCase):
     def setUp(self):
         self.lib = mock.Mock(spec_set=["cluster"])
-        self.cluster = mock.Mock(
+        self.lib.cluster = mock.Mock(
             spec_set=["config_update", "config_update_local"],
         )
-        self.lib.cluster = self.cluster
 
     def assert_update_called_with(self, transport, compression, crypto, totem):
-        self.cluster.config_update.assert_called_once_with(
+        self.lib.cluster.config_update.assert_called_once_with(
             transport, compression, crypto, totem
         )
-        self.cluster.config_update_local.assert_not_called()
+        self.lib.cluster.config_update_local.assert_not_called()
 
     def assert_config_update_local_called_with(
         self, transport, compression, crypto, totem
     ):
-        self.cluster.config_update_local.assert_called_once_with(
+        self.lib.cluster.config_update_local.assert_called_once_with(
             b"", transport, compression, crypto, totem
         )
-        self.cluster.config_update.assert_not_called()
+        self.lib.cluster.config_update.assert_not_called()
 
     def call_cmd(self, argv, modifiers=None):
         cluster.config_update(
@@ -1250,7 +1249,7 @@ class ConfigUpdate(TestCase):
 
     def test_corosync_conf_modifier(self):
         corosync_conf_data = b"new corosync.conf"
-        self.cluster.config_update_local.return_value = corosync_conf_data
+        self.lib.cluster.config_update_local.return_value = corosync_conf_data
         with get_tmp_file("test_cluster_corosync.conf", "rb") as output_file:
             self.call_cmd(
                 [
@@ -1372,7 +1371,7 @@ class ConfigShow(TestCase):
               node2 (nodeid: 2)
                 node2 (link: 0)
                 10.0.0.2 (link: 1)
-            Links
+            Links:
               Link 0:
                 link_priority: 100
                 linknumber: 0
@@ -1509,7 +1508,10 @@ class ConfigShow(TestCase):
         self.call_cmd([], {"output-format": "cmd"})
         self.lib_call.assert_called_once_with()
         mock_print.assert_called_once_with(self.cmd_output)
-        mock_warn.assert_called_once()
+        mock_warn.assert_called_once_with(
+            "Quorum device configuration detected but not yet supported by "
+            "this command."
+        )
 
     @mock.patch("pcs.cluster.warn")
     def test_output_format_cmd(self, mock_warn, mock_print):

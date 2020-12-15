@@ -97,7 +97,7 @@ class ClusterConfigMixin(AssertPcsMixin):
 
     def setUp(self):
         self.corosync_conf_file = get_tmp_file(
-            "tier1_cluster_config_update_corosync.conf"
+            "tier1_cluster_config_show_corosync.conf"
         )
         self.pcs_runner = PcsRunner(
             cib_file=None, corosync_conf_opt=self.corosync_conf_file.name,
@@ -135,10 +135,9 @@ class ClusterConfigMixin(AssertPcsMixin):
     def test_output_format_unsupported_value(self):
         self.assert_pcs_fail(
             (self.command + " --output-format=xml").split(),
-            stdout_full=dedent(
-                """\
-                Error: Unknown value 'xml' for '--output-format' option. Supported values are: 'cmd', 'json', 'text'
-                """
+            stdout_full=(
+                "Error: Unknown value 'xml' for '--output-format' option. "
+                "Supported values are: 'cmd', 'json', 'text'\n"
             ),
         )
 

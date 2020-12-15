@@ -15,12 +15,10 @@ from pcs.lib.corosync.constants import (
 
 from .common import fixture_totem
 
+
 ALLOWED_COMPRESSION_OPTIONS = list(TRANSPORT_KNET_COMPRESSION_OPTIONS)
-
 ALLOWED_CRYPTO_OPTIONS = list(TRANSPORT_KNET_CRYPTO_OPTIONS)
-
 ALLOWED_TOTEM_OPTIONS = list(TOTEM_OPTIONS)
-
 ALLOWED_KNET_TRANSPORT_OPTIONS = list(TRANSPORT_KNET_GENERIC_OPTIONS)
 
 TRANSPORT_OPTIONS = {
@@ -28,11 +26,8 @@ TRANSPORT_OPTIONS = {
     "knet_pmtud_interval": "1234",
     "link_mode": "active",
 }
-
 COMPRESSION_OPTIONS = {"level": "5", "model": "zlib", "threshold": "1234"}
-
 CRYPTO_OPTIONS = {"cipher": "aes256", "hash": "sha256", "model": "nss"}
-
 TOTEM_OPTIONS = {opt: str(num) for num, opt in enumerate(ALLOWED_TOTEM_OPTIONS)}
 
 
