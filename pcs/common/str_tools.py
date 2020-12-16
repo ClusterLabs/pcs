@@ -1,6 +1,7 @@
-from collections.abc import Iterable
+from collections.abc import Iterable as IterableAbc
 from typing import (
     Any,
+    Iterable,
     List,
     Mapping,
     Optional,
@@ -11,7 +12,7 @@ from typing import (
 )
 
 
-def indent(line_list: List[str], indent_step: int = 2) -> List[str]:
+def indent(line_list: Iterable[str], indent_step: int = 2) -> List[str]:
     """
     return line list where each line of input is prefixed by N spaces
 
@@ -129,7 +130,7 @@ def _add_s(word):
 
 
 def format_plural(
-    depends_on: Union[int, Iterable],
+    depends_on: Union[int, Iterable[Any]],
     singular: str,
     plural: Optional[str] = None,
 ) -> str:
@@ -164,4 +165,4 @@ def transform(items: List[T], mapping: Mapping[T, str]) -> List[str]:
 
 
 def is_iterable_not_str(value):
-    return isinstance(value, Iterable) and not isinstance(value, str)
+    return isinstance(value, IterableAbc) and not isinstance(value, str)

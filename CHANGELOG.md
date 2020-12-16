@@ -2,6 +2,12 @@
 
 ## [Unreleased]
 
+### Added
+- Support for changing corosync configuration in an existing cluster
+  ([rhbz#1457314], [rhbz#1667061], [rhbz#1856397], [rhbz#1774143])
+- Command to show structured corosync configuration (see `pcs cluster
+  config show` command) ([rhbz#1667066])
+
 ### Fixed
 - Improved error message with a hint in `pcs cluster cib-push` ([ghissue#241])
 - Option --wait was not working with pacemaker 2.0.5+ ([ghissue#260])
@@ -18,7 +24,12 @@
 [ghissue#241]: https://github.com/ClusterLabs/pcs/issues/241
 [ghissue#260]: https://github.com/ClusterLabs/pcs/issues/260
 [ghissue#261]: https://github.com/ClusterLabs/pcs/issues/261
+[rhbz#1457314]: https://bugzilla.redhat.com/show_bug.cgi?id=1457314
+[rhbz#1667061]: https://bugzilla.redhat.com/show_bug.cgi?id=1667061
+[rhbz#1667066]: https://bugzilla.redhat.com/show_bug.cgi?id=1667066
+[rhbz#1774143]: https://bugzilla.redhat.com/show_bug.cgi?id=1774143
 [rhbz#1851335]: https://bugzilla.redhat.com/show_bug.cgi?id=1851335
+[rhbz#1856397]: https://bugzilla.redhat.com/show_bug.cgi?id=1856397
 [rhbz#1869399]: https://bugzilla.redhat.com/show_bug.cgi?id=1869399
 [rhbz#1885841]: https://bugzilla.redhat.com/show_bug.cgi?id=1885841
 

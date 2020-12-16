@@ -2127,7 +2127,11 @@ class RemoveDeviceNetTest(TestCase):
         )
 
     def fixture_config_success(
-        self, cluster_nodes, original_corosync_conf, expected_corosync_conf
+        self,
+        cluster_nodes,
+        original_corosync_conf,
+        expected_corosync_conf,
+        need_stopped_cluster=False,
     ):
         self.config.corosync_conf.load_content(original_corosync_conf)
         self.config.http.corosync.qdevice_client_disable(
@@ -2136,7 +2140,8 @@ class RemoveDeviceNetTest(TestCase):
         self.config.http.corosync.qdevice_client_stop(node_labels=cluster_nodes)
         self.fixture_config_http_qdevice_net_destroy(cluster_nodes)
         self.config.env.push_corosync_conf(
-            corosync_conf_text=expected_corosync_conf
+            corosync_conf_text=expected_corosync_conf,
+            need_stopped_cluster=need_stopped_cluster,
         )
 
     def fixture_config_success_sbd_part(self, sbd_installed, sbd_enabled):
@@ -2289,7 +2294,12 @@ class RemoveDeviceNetTest(TestCase):
         cluster_nodes, original_conf, expected_conf = self.conf_2nodes(
             "auto_tie_breaker: 1"
         )
-        self.fixture_config_success(cluster_nodes, original_conf, expected_conf)
+        self.fixture_config_success(
+            cluster_nodes,
+            original_conf,
+            expected_conf,
+            need_stopped_cluster=True,
+        )
         self.fixture_config_success_sbd_part(True, True)
         lib.remove_device(self.env_assist.get_env())
         self.env_assist.assert_reports(

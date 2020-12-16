@@ -5,6 +5,54 @@ TRANSPORTS_KNET = ("knet",)
 TRANSPORTS_UDP = ("udp", "udpu")
 TRANSPORTS_ALL = TRANSPORTS_KNET + TRANSPORTS_UDP
 
+TRANSPORT_KNET_CRYPTO_OPTIONS = (
+    "cipher",
+    "hash",
+    "model",
+)
+
+TRANSPORT_KNET_COMPRESSION_OPTIONS = (
+    "level",
+    "model",
+    "threshold",
+)
+
+TRANSPORT_KNET_GENERIC_OPTIONS = (
+    "ip_version",  # It tells knet which IP to prefer.
+    "knet_pmtud_interval",
+    "link_mode",
+)
+
+TRANSPORT_UDP_GENERIC_OPTIONS = (
+    "ip_version",
+    "netmtu",
+)
+
+TRANSPORT_RUNTIME_CHANGE_BANNED_OPTIONS = (
+    "ip_version",
+    "netmtu",
+)
+
+TOTEM_OPTIONS = (
+    "consensus",
+    "downcheck",
+    "fail_recv_const",
+    "heartbeat_failures_allowed",
+    "hold",
+    "join",
+    "max_messages",
+    "max_network_delay",
+    "merge",
+    "miss_count_const",
+    "send_join",
+    "seqno_unchanged_const",
+    "token",
+    "token_coefficient",
+    "token_retransmit",
+    "token_retransmits_before_loss_const",
+    "window_size",
+)
+
 LINKS_UDP_MIN = 1
 LINKS_UDP_MAX = 1
 LINKS_KNET_MIN = 1

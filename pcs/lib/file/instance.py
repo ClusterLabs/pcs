@@ -4,6 +4,7 @@ from pcs.lib.file import (
     raw_file,
     toolbox,
 )
+from pcs.lib.interface.config import FacadeInterface
 
 
 class FileInstance:
@@ -68,6 +69,13 @@ class FileInstance:
         Factory for disaster-recovery config file
         """
         return cls._for_common(file_type_codes.PCS_DR_CONFIG)
+
+    @classmethod
+    def for_corosync_conf(cls) -> "FileInstance":
+        """
+        Factory for corosync config file
+        """
+        return cls._for_common(file_type_codes.COROSYNC_CONF)
 
     @classmethod
     def _for_common(
@@ -148,6 +156,9 @@ class FileInstance:
         bytes raw_file_data -- data to be parsed
         """
         return self._toolbox.parser.parse(raw_file_data)
+
+    def facade_to_raw(self, facade: FacadeInterface) -> bytes:
+        return self._toolbox.exporter.export(facade.config)
 
     def write_facade(self, facade, can_overwrite=False):
         self.write_structure(facade.config, can_overwrite=can_overwrite)

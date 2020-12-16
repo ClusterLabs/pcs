@@ -38,3 +38,22 @@ class ResourceRelationType(AutoNameEnum):
 class DrRole(AutoNameEnum):
     PRIMARY = auto()
     RECOVERY = auto()
+
+
+class UnknownCorosyncTransportTypeException(Exception):
+    def __init__(self, transport: str) -> None:
+        super().__init__()
+        self.transport = transport
+
+
+class CorosyncTransportType(AutoNameEnum):
+    UDP = auto()
+    UDPU = auto()
+    KNET = auto()
+
+    @classmethod
+    def from_str(cls, transport: str) -> "CorosyncTransportType":
+        try:
+            return cls(transport.upper())
+        except ValueError:
+            raise UnknownCorosyncTransportTypeException(transport) from None

@@ -421,7 +421,8 @@ class EvenNumOfNodes(TestCase):
         self.config.env.push_corosync_conf(
             corosync_conf_text=_get_corosync_conf_text_with_atb(
                 self.corosync_conf_name
-            )
+            ),
+            need_stopped_cluster=True,
         )
         self.config.http.sbd.set_sbd_config(
             config_generator=config_generator, node_labels=self.node_list,
@@ -612,6 +613,7 @@ class OfflineNodes(TestCase):
                 self.corosync_conf_name
             ),
             skip_offline_targets=True,
+            need_stopped_cluster=True,
         )
         self.config.http.sbd.set_sbd_config(
             config_generator=self.sbd_config_generator,
@@ -1161,7 +1163,8 @@ class FailureHandling(TestCase):
         self.config.env.push_corosync_conf(
             corosync_conf_text=_get_corosync_conf_text_with_atb(
                 self.corosync_conf_name
-            )
+            ),
+            need_stopped_cluster=True,
         )
         self.config.http.sbd.set_sbd_config(
             config_generator=self.sbd_config_generator,
@@ -1407,6 +1410,7 @@ class FailureHandling(TestCase):
                 self.corosync_conf_name
             ),
             raises=True,
+            need_stopped_cluster=True,
         )
         self.env_assist.assert_raise_library_error(
             lambda: enable_sbd(

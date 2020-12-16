@@ -17,6 +17,10 @@ from pcs.common import (
     reports,
     ssl,
 )
+from pcs.common.corosync_conf import (
+    CorosyncConfDto,
+    CorosyncQuorumDeviceSettingsDto,
+)
 from pcs.common.file import RawFileError
 from pcs.common.node_communicator import HostNotFound
 from pcs.common.reports import (
@@ -25,6 +29,10 @@ from pcs.common.reports import (
 )
 from pcs.common.reports.item import ReportItem
 from pcs.common.tools import format_environment_error
+from pcs.common.types import (
+    CorosyncTransportType,
+    UnknownCorosyncTransportTypeException,
+)
 from pcs.common.str_tools import join_multilines
 from pcs.lib import node_communication_format, sbd, validate
 from pcs.lib.booth import sync as booth_sync
@@ -71,6 +79,7 @@ from pcs.lib.corosync import (
     qdevice_net,
 )
 from pcs.lib.env import LibraryEnvironment
+from pcs.lib.file.instance import FileInstance
 from pcs.lib.node import get_existing_nodes_names
 from pcs.lib.errors import LibraryError
 from pcs.lib.external import is_service_running
@@ -624,15 +633,165 @@ def _create_corosync_conf(
     corosync_conf.set_totem_options(totem_options)
     corosync_conf.set_quorum_options(quorum_options)
     corosync_conf.create_link_list(link_list)
-    if transport_type in corosync_constants.TRANSPORTS_KNET:
-        corosync_conf.set_transport_knet_options(
-            transport_options, compression_options, crypto_options
-        )
-    elif transport_type in corosync_constants.TRANSPORTS_UDP:
-        corosync_conf.set_transport_udp_options(transport_options)
+    corosync_conf.set_transport_options(
+        transport_options, compression_options, crypto_options,
+    )
 
     _verify_corosync_conf(corosync_conf)  # raises if corosync not valid
     return corosync_conf
+
+
+def _config_update(
+    report_processor: ReportProcessor,
+    corosync_conf: config_facade.ConfigFacade,
+    transport_options: Mapping[str, str],
+    compression_options: Mapping[str, str],
+    crypto_options: Mapping[str, str],
+    totem_options: Mapping[str, str],
+) -> None:
+    transport_type = corosync_conf.get_transport()
+    report_list = config_validators.update_totem(totem_options)
+    if transport_type in corosync_constants.TRANSPORTS_KNET:
+        report_list += config_validators.update_transport_knet(
+            transport_options,
+            compression_options,
+            crypto_options,
+            corosync_conf.get_crypto_options(),
+        )
+    elif transport_type in corosync_constants.TRANSPORTS_UDP:
+        report_list += config_validators.update_transport_udp(
+            transport_options, compression_options, crypto_options,
+        )
+    else:
+        report_processor.report(
+            ReportItem.error(
+                reports.messages.CorosyncConfigUnsupportedTransport(
+                    transport_type, sorted(corosync_constants.TRANSPORTS_ALL)
+                )
+            )
+        )
+    if report_processor.report_list(report_list).has_errors:
+        raise LibraryError()
+
+    corosync_conf.set_totem_options(totem_options)
+    corosync_conf.set_transport_options(
+        transport_options, compression_options, crypto_options,
+    )
+    _verify_corosync_conf(corosync_conf)  # raises if corosync not valid
+
+
+def config_update(
+    env: LibraryEnvironment,
+    transport_options: Mapping[str, str],
+    compression_options: Mapping[str, str],
+    crypto_options: Mapping[str, str],
+    totem_options: Mapping[str, str],
+) -> None:
+    """
+    Update corosync.conf in the local cluster
+
+    env
+    transport_options -- transport specific options
+    compression_options -- only available for knet transport. In
+        corosync.conf they are prefixed 'knet_compression_'
+    crypto_options -- only available for knet transport. In corosync.conf
+        they are prefixed 'crypto_'
+    totem_options -- options of section 'totem' in corosync.conf
+    """
+    _ensure_live_env(env)
+    corosync_conf = env.get_corosync_conf()
+    _config_update(
+        env.report_processor,
+        corosync_conf,
+        transport_options,
+        compression_options,
+        crypto_options,
+        totem_options,
+    )
+    env.push_corosync_conf(corosync_conf)
+
+
+def config_update_local(
+    env: LibraryEnvironment,
+    corosync_conf_content: bytes,
+    transport_options: Mapping[str, str],
+    compression_options: Mapping[str, str],
+    crypto_options: Mapping[str, str],
+    totem_options: Mapping[str, str],
+) -> bytes:
+    """
+    Update corosync.conf passed as an argument and return the updated conf
+
+    env
+    corosync_conf_content -- corosync.conf to be updated
+    transport_options -- transport specific options
+    compression_options -- only available for knet transport. In
+        corosync.conf they are prefixed 'knet_compression_'
+    crypto_options -- only available for knet transport. In corosync.conf
+        they are prefixed 'crypto_'
+    totem_options -- options of section 'totem' in corosync.conf
+    """
+    # As we are getting a corosync.conf content as an argument, we want to make
+    # sure it was not given to LibraryEnvironment as well. Also we don't
+    # allow/need CIB to be handled by LibraryEnvironment.
+    _ensure_live_env(env)
+    corosync_conf_instance = FileInstance.for_corosync_conf()
+    corosync_conf: config_facade.ConfigFacade = corosync_conf_instance.raw_to_facade(
+        corosync_conf_content
+    )
+    _config_update(
+        env.report_processor,
+        corosync_conf,
+        transport_options,
+        compression_options,
+        crypto_options,
+        totem_options,
+    )
+    return corosync_conf_instance.facade_to_raw(corosync_conf)
+
+
+def get_corosync_conf_struct(env: LibraryEnvironment) -> CorosyncConfDto:
+    """
+    Read corosync.conf from the local node and return it in a structured form
+    """
+    corosync_conf = env.get_corosync_conf()
+    quorum_device_dto: Optional[CorosyncQuorumDeviceSettingsDto] = None
+    if corosync_conf.has_quorum_device():
+        (
+            qd_model,
+            qd_model_options,
+            qd_generic_options,
+            qd_heuristics_options,
+        ) = corosync_conf.get_quorum_device_settings()
+        quorum_device_dto = CorosyncQuorumDeviceSettingsDto(
+            model=qd_model,
+            model_options=qd_model_options,
+            generic_options=qd_generic_options,
+            heuristics_options=qd_heuristics_options,
+        )
+    try:
+        return CorosyncConfDto(
+            cluster_name=corosync_conf.get_cluster_name(),
+            transport=CorosyncTransportType.from_str(
+                corosync_conf.get_transport()
+            ),
+            totem_options=corosync_conf.get_totem_options(),
+            transport_options=corosync_conf.get_transport_options(),
+            compression_options=corosync_conf.get_compression_options(),
+            crypto_options=corosync_conf.get_crypto_options(),
+            nodes=[node.to_dto() for node in corosync_conf.get_nodes()],
+            links_options=corosync_conf.get_links_options(),
+            quorum_options=corosync_conf.get_quorum_options(),
+            quorum_device=quorum_device_dto,
+        )
+    except UnknownCorosyncTransportTypeException as e:
+        raise LibraryError(
+            ReportItem.error(
+                reports.messages.CorosyncConfigUnsupportedTransport(
+                    e.transport, sorted(corosync_constants.TRANSPORTS_ALL)
+                )
+            )
+        ) from e
 
 
 def add_nodes(

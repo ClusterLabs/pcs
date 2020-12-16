@@ -1,12 +1,17 @@
 # pylint: disable=too-many-lines
 from collections import Counter, defaultdict, namedtuple
 from itertools import zip_longest
-from typing import Optional
+from typing import (
+    List,
+    Mapping,
+    Optional,
+)
 
 from pcs.common import reports
 from pcs.common.reports import (
     get_severity,
     ReportItem,
+    ReportItemList,
     ReportItemSeverity,
 )
 from pcs.lib import validate
@@ -1209,32 +1214,47 @@ def _report_non_unique_addresses(existing_addrs, new_addrs):
     return report_items
 
 
-def create_transport_udp(generic_options, compression_options, crypto_options):
-    """
-    Validate creating udp/udpu transport options
-
-    dict generic_options -- generic transport options
-    dict compression_options -- compression options
-    dict crypto_options -- crypto options
-    """
+def _get_transport_udp_generic_validators(
+    options: Mapping[str, str], allow_empty_values: bool,
+) -> List[validate.ValidatorInterface]:
     # No need to support force:
     # * values are either an enum or numbers with no range set - nothing to
     #   force
     # * names are strictly set as we cannot risk the user overwrites some
     #   setting they should not to
     # * changes to names and values in corosync are very rare
-    allowed_options = [
-        "ip_version",
-        "netmtu",
-    ]
     validators = [
-        validate.NamesIn(allowed_options, option_type="udp/udpu transport"),
         validate.ValueIn("ip_version", constants.IP_VERSION_VALUES),
         validate.ValuePositiveInteger("netmtu"),
-    ] + _get_unsuitable_keys_and_values_validators(
-        generic_options, option_type="udp/udpu transport"
+    ]
+    if allow_empty_values:
+        for val in validators:
+            val.empty_string_valid = True
+    return (
+        [
+            validate.NamesIn(
+                constants.TRANSPORT_UDP_GENERIC_OPTIONS,
+                option_type="udp/udpu transport",
+            )
+        ]
+        + _get_unsuitable_keys_and_values_validators(
+            options, option_type="udp/udpu transport"
+        )
+        + validators
     )
-    report_items = validate.ValidatorAll(validators).validate(generic_options)
+
+
+def _validate_transport_udp(
+    generic_options: Mapping[str, str],
+    compression_options: Mapping[str, str],
+    crypto_options: Mapping[str, str],
+    allow_empty_values: bool,
+) -> ReportItemList:
+    report_items = validate.ValidatorAll(
+        _get_transport_udp_generic_validators(
+            generic_options, allow_empty_values=allow_empty_values
+        )
+    ).validate(generic_options)
 
     if compression_options:
         report_items.append(
@@ -1252,76 +1272,176 @@ def create_transport_udp(generic_options, compression_options, crypto_options):
                 )
             )
         )
-
     return report_items
 
 
-def create_transport_knet(generic_options, compression_options, crypto_options):
+def create_transport_udp(
+    generic_options: Mapping[str, str],
+    compression_options: Mapping[str, str],
+    crypto_options: Mapping[str, str],
+) -> ReportItemList:
     """
-    Validate creating knet transport options
+    Validate creating udp/udpu transport options
 
     dict generic_options -- generic transport options
     dict compression_options -- compression options
     dict crypto_options -- crypto options
     """
+    return _validate_transport_udp(
+        generic_options,
+        compression_options,
+        crypto_options,
+        allow_empty_values=False,
+    )
+
+
+def update_transport_udp(
+    generic_options: Mapping[str, str],
+    compression_options: Mapping[str, str],
+    crypto_options: Mapping[str, str],
+) -> ReportItemList:
+    """
+    Validate updating udp/udpu transport options
+
+    generic_options -- generic transport options
+    compression_options -- compression options
+    crypto_options -- crypto options
+    """
+    return _validate_transport_udp(
+        generic_options,
+        compression_options,
+        crypto_options,
+        allow_empty_values=True,
+    )
+
+
+def _get_transport_knet_generic_validators(
+    options: Mapping[str, str], allow_empty_values: bool,
+) -> List[validate.ValidatorInterface]:
+    validators = [
+        validate.ValueIn("ip_version", constants.IP_VERSION_VALUES),
+        validate.ValueNonnegativeInteger("knet_pmtud_interval"),
+        validate.ValueIn("link_mode", ("active", "passive", "rr")),
+    ]
+    if allow_empty_values:
+        for val in validators:
+            val.empty_string_valid = True
+    return (
+        [
+            validate.NamesIn(
+                constants.TRANSPORT_KNET_GENERIC_OPTIONS,
+                option_type="knet transport",
+            )
+        ]
+        + _get_unsuitable_keys_and_values_validators(
+            options, option_type="knet transport"
+        )
+        + validators
+    )
+
+
+def _get_transport_knet_compression_validators(
+    options: Mapping[str, str], allow_empty_values: bool,
+) -> List[validate.ValidatorInterface]:
+    validators = [
+        validate.ValueNonnegativeInteger("level"),
+        validate.ValueNotEmpty(
+            "model", "a compression model e.g. zlib, lz4 or bzip2"
+        ),
+        validate.ValueNonnegativeInteger("threshold"),
+    ]
+    if allow_empty_values:
+        for val in validators:
+            val.empty_string_valid = True
+    return (
+        [
+            validate.NamesIn(
+                constants.TRANSPORT_KNET_COMPRESSION_OPTIONS,
+                option_type="compression",
+            )
+        ]
+        + _get_unsuitable_keys_and_values_validators(
+            options, option_type="compression"
+        )
+        + validators
+    )
+
+
+def _get_transport_knet_crypto_validators(
+    options: Mapping[str, str], allow_empty_values: bool,
+) -> List[validate.ValidatorInterface]:
+    validators = [
+        validate.ValueIn("cipher", ("none", "aes256", "aes192", "aes128")),
+        validate.ValueIn(
+            "hash", ("none", "md5", "sha1", "sha256", "sha384", "sha512")
+        ),
+        validate.ValueIn("model", ("nss", "openssl")),
+    ]
+    if allow_empty_values:
+        for val in validators:
+            val.empty_string_valid = True
+    return (
+        [
+            validate.NamesIn(
+                constants.TRANSPORT_KNET_CRYPTO_OPTIONS, option_type="crypto",
+            )
+        ]
+        + _get_unsuitable_keys_and_values_validators(
+            options, option_type="crypto"
+        )
+        + validators
+    )
+
+
+def _validate_transport_knet(
+    generic_options: Mapping[str, str],
+    compression_options: Mapping[str, str],
+    crypto_options: Mapping[str, str],
+    allow_empty_values: bool,
+) -> ReportItemList:
     # No need to support force:
     # * values are either an enum or numbers with no range set - nothing to
     #   force
     # * names are strictly set as we cannot risk the user overwrites some
     #   setting they should not to
     # * changes to names and values in corosync are very rare
-    generic_allowed = [
-        "ip_version",  # It tells knet which IP to prefer.
-        "knet_pmtud_interval",
-        "link_mode",
-    ]
-    generic_validators = [
-        validate.NamesIn(generic_allowed, option_type="knet transport"),
-        validate.ValueIn("ip_version", constants.IP_VERSION_VALUES),
-        validate.ValueNonnegativeInteger("knet_pmtud_interval"),
-        validate.ValueIn("link_mode", ("active", "passive", "rr")),
-    ] + _get_unsuitable_keys_and_values_validators(
-        generic_options, option_type="knet transport"
+
+    generic_validators = _get_transport_knet_generic_validators(
+        generic_options, allow_empty_values=allow_empty_values,
+    )
+    crypto_validators = _get_transport_knet_crypto_validators(
+        crypto_options, allow_empty_values=allow_empty_values,
+    )
+    compression_validators = _get_transport_knet_compression_validators(
+        compression_options, allow_empty_values=allow_empty_values,
     )
 
-    compression_allowed = [
-        "level",
-        "model",
-        "threshold",
-    ]
-    compression_validators = [
-        validate.NamesIn(compression_allowed, option_type="compression"),
-        validate.ValueNonnegativeInteger("level"),
-        validate.ValueNotEmpty(
-            "model", "a compression model e.g. zlib, lz4 or bzip2"
-        ),
-        validate.ValueNonnegativeInteger("threshold"),
-    ] + _get_unsuitable_keys_and_values_validators(
-        compression_options, option_type="compression"
-    )
-
-    crypto_allowed = [
-        "cipher",
-        "hash",
-        "model",
-    ]
-    crypto_validators = [
-        validate.NamesIn(crypto_allowed, option_type="crypto"),
-        validate.ValueIn("cipher", ("none", "aes256", "aes192", "aes128")),
-        validate.ValueIn(
-            "hash", ("none", "md5", "sha1", "sha256", "sha384", "sha512")
-        ),
-        validate.ValueIn("model", ("nss", "openssl")),
-    ] + _get_unsuitable_keys_and_values_validators(
-        crypto_options, option_type="crypto"
-    )
-
-    report_items = (
+    return (
         validate.ValidatorAll(generic_validators).validate(generic_options)
         + validate.ValidatorAll(compression_validators).validate(
             compression_options
         )
         + validate.ValidatorAll(crypto_validators).validate(crypto_options)
+    )
+
+
+def create_transport_knet(
+    generic_options: Mapping[str, str],
+    compression_options: Mapping[str, str],
+    crypto_options: Mapping[str, str],
+) -> ReportItemList:
+    """
+    Validate creating knet transport options
+
+    generic_options -- generic transport options
+    compression_options -- compression options
+    crypto_options -- crypto options
+    """
+    report_items = _validate_transport_knet(
+        generic_options,
+        compression_options,
+        crypto_options,
+        allow_empty_values=False,
     )
 
     if (
@@ -1343,38 +1463,63 @@ def create_transport_knet(generic_options, compression_options, crypto_options):
     return report_items
 
 
-def create_totem(options):
+def update_transport_knet(
+    generic_options: Mapping[str, str],
+    compression_options: Mapping[str, str],
+    crypto_options: Mapping[str, str],
+    current_crypto_options: Mapping[str, str],
+) -> ReportItemList:
     """
-    Validate creating the "totem" section
+    Validate updating knet transport options
 
-    dict options -- totem options
+    generic_options -- generic transport options
+    compression_options -- compression options
+    crypto_options -- crypto options
+    current_crypto_options -- crypto options currently configured
     """
+    report_items = _validate_transport_knet(
+        generic_options,
+        compression_options,
+        crypto_options,
+        allow_empty_values=True,
+    )
+
+    # there are 2 possibilities how to disable crypto options:
+    #   1. set it to "none"
+    #   2. set it to default, which is "none" according to `man corosync.conf`,
+    #      by using value of empty string
+    crypto_cipher_enabled = crypto_options.get(
+        "cipher", current_crypto_options.get("cipher", "none"),
+    ) not in ["none", ""]
+
+    crypto_hash_disabled = crypto_options.get(
+        "hash", current_crypto_options.get("hash", "none"),
+    ) in ["none", ""]
+
+    if crypto_cipher_enabled and crypto_hash_disabled:
+        report_items.append(
+            ReportItem.error(
+                reports.messages.PrerequisiteOptionMustBeEnabledAsWell(
+                    "cipher",
+                    "hash",
+                    option_type="crypto",
+                    prerequisite_type="crypto",
+                )
+            )
+        )
+
+    return report_items
+
+
+def _get_totem_options_validators(
+    options: Mapping[str, str], allow_empty_values: bool = False
+) -> List[validate.ValidatorInterface]:
     # No need to support force:
     # * values are either bool or numbers with no range set - nothing to force
     # * names are strictly set as we cannot risk the user overwrites some
     #   setting they should not to
     # * changes to names and values in corosync are very rare
-    allowed_options = [
-        "consensus",
-        "downcheck",
-        "fail_recv_const",
-        "heartbeat_failures_allowed",
-        "hold",
-        "join",
-        "max_messages",
-        "max_network_delay",
-        "merge",
-        "miss_count_const",
-        "send_join",
-        "seqno_unchanged_const",
-        "token",
-        "token_coefficient",
-        "token_retransmit",
-        "token_retransmits_before_loss_const",
-        "window_size",
-    ]
     validators = [
-        validate.NamesIn(allowed_options, option_type="totem"),
         validate.ValueNonnegativeInteger("consensus"),
         validate.ValueNonnegativeInteger("downcheck"),
         validate.ValueNonnegativeInteger("fail_recv_const"),
@@ -1392,8 +1537,45 @@ def create_totem(options):
         validate.ValueNonnegativeInteger("token_retransmit"),
         validate.ValueNonnegativeInteger("token_retransmits_before_loss_const"),
         validate.ValueNonnegativeInteger("window_size"),
-    ] + _get_unsuitable_keys_and_values_validators(options, option_type="totem")
-    return validate.ValidatorAll(validators).validate(options)
+    ]
+    if allow_empty_values:
+        for val in validators:
+            val.empty_string_valid = True
+    return (
+        [validate.NamesIn(constants.TOTEM_OPTIONS, option_type="totem")]
+        + _get_unsuitable_keys_and_values_validators(
+            options, option_type="totem"
+        )
+        + validators
+    )
+
+
+def _validate_totem_options(
+    options: Mapping[str, str], allow_empty_values: bool
+) -> ReportItemList:
+    return validate.ValidatorAll(
+        _get_totem_options_validators(
+            options, allow_empty_values=allow_empty_values
+        )
+    ).validate(options)
+
+
+def create_totem(options: Mapping[str, str]) -> ReportItemList:
+    """
+    Validate creating the "totem" section
+
+    options -- totem options
+    """
+    return _validate_totem_options(options, allow_empty_values=False)
+
+
+def update_totem(options: Mapping[str, str]) -> ReportItemList:
+    """
+    Validate updating the "totem" section
+
+    options -- totem options
+    """
+    return _validate_totem_options(options, allow_empty_values=True)
 
 
 def create_quorum_options(options, has_qdevice):

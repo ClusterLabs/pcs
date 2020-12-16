@@ -5,6 +5,10 @@ from pcs.lib.validate import (
     is_ipv4_address,
     is_ipv6_address,
 )
+from pcs.common.corosync_conf import (
+    CorosyncNodeAddressDto,
+    CorosyncNodeDto,
+)
 
 ADDR_IPV4 = "IPv4"
 ADDR_IPV6 = "IPv6"
@@ -12,6 +16,7 @@ ADDR_FQDN = "FQDN"
 ADDR_UNRESOLVABLE = "unresolvable"
 
 
+# TODO: add pcs.common.interface.dto.ImplementsToDto inheritance
 class CorosyncNodeAddress(namedtuple("CorosyncNodeAddress", "addr link")):
     """An address of a node loaded from corosync.conf"""
 
@@ -26,7 +31,13 @@ class CorosyncNodeAddress(namedtuple("CorosyncNodeAddress", "addr link")):
     def _get_type(self):
         return get_address_type(self.addr, resolve=False)
 
+    def to_dto(self) -> CorosyncNodeAddressDto:
+        return CorosyncNodeAddressDto(
+            addr=self.addr, link=self.link, type=self.type,
+        )
 
+
+# TODO: add pcs.common.interface.dto.ImplementsToDto inheritance
 class CorosyncNode(namedtuple("CorosyncNode", "name addrs nodeid")):
     """A node loaded from corosync.conf"""
 
@@ -49,6 +60,13 @@ class CorosyncNode(namedtuple("CorosyncNode", "name addrs nodeid")):
         if self._addrs_plain is None:
             self._addrs_plain = [addr.addr for addr in self.addrs]
         return self._addrs_plain
+
+    def to_dto(self) -> CorosyncNodeDto:
+        return CorosyncNodeDto(
+            name=self.name,
+            nodeid=self.nodeid,
+            addrs=[addr.to_dto() for addr in self.addrs],
+        )
 
 
 def get_address_type(address, resolve=False):
